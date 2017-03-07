@@ -6,35 +6,29 @@ import {IDocumentStore} from '../IDocumentStore';
 import {RequestExecutor} from '../../Http/RequestExecutor';
 import {DocumentConventions} from '../Conventions/DocumentConventions';
 
-export class DocumentSession implements IDocumentSession
-{
-  protected Database: string;
-  protected DocumentStore: IDocumentStore;
-  protected _NumberOfRequestsInSession: number;
-  protected _DocumentsByEntity: IDocument[];
+export class DocumentSession implements IDocumentSession {
+  protected database: string;
+  protected documentStore: IDocumentStore;
+  private _numberOfRequestsInSession: number;
+  private _documentsByEntity: IDocument[];
 
-  public get NumberOfRequestsInSession(): number
-  {
-    return this._NumberOfRequestsInSession;
+  public get numberOfRequestsInSession(): number {
+    return this._numberOfRequestsInSession;
   }
 
-  public get EntitiesAndMetadata(): IDocument[]
-  {
-    return this._DocumentsByEntity;
+  public get entitiesAndMetadata(): IDocument[] {
+    return this._documentsByEntity;
   }
         
-  public get Conventions(): DocumentConventions
-  {
-    return this.DocumentStore.Conventions;
+  public get conventions(): DocumentConventions {
+    return this.documentStore.conventions;
   }       
 
-  constructor (Database: string, DocumentStore: IDocumentStore, RequestsExecutor: RequestExecutor, SessionId: string, ForceReadFromMaster: boolean)
-  {
+  constructor (database: string, documentStore: IDocumentStore, requestsExecutor: RequestExecutor, sessionId: string, forceReadFromMaster: boolean) {
       
   }
 
-  public Query<T>(): IDocumentQuery<T>
-  {
+  public query<T>(): IDocumentQuery<T> {
     return new DocumentQuery<T>();
   }
 }

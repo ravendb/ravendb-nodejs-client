@@ -5,56 +5,48 @@ import {DocumentSession} from "./Session/DocumentSession";
 import {RequestExecutor} from '../Http/RequestExecutor';
 import {DocumentConventions} from './Conventions/DocumentConventions';
 
-export class DocumentStore implements IDocumentStore
-{
-  protected Url: string;
-  protected Database: string;
-  protected ApiKey?: string;
-  protected _RequestExecutor: RequestExecutor;
-  protected _Conventions: DocumentConventions; 
+export class DocumentStore implements IDocumentStore {
+  protected url: string;
+  protected database: string;
+  protected apiKey?: string;
+  private _requestExecutor: RequestExecutor;
+  private _conventions: DocumentConventions;
 
-  public get RequestExecutor(): RequestExecutor
-  {
-    if (!this._RequestExecutor) {
+  public get requestExecutor(): RequestExecutor {
+    if (!this._requestExecutor) {
       //TODO create
     }
 
-    return this._RequestExecutor;
+    return this._requestExecutor;
   }
 
-  public get Conventions(): DocumentConventions
-  {
-    if (!this._Conventions) {
+  public get conventions(): DocumentConventions {
+    if (!this._conventions) {
       //TODO create
     }
 
-    return this._Conventions;
+    return this._conventions;
   }
 
-  constructor(Url: string, DefaultDatabase: string, ApiKey?: string)
-  {
-    this.Url = Url;
-    this.Database = DefaultDatabase;
-    this.ApiKey = ApiKey;
+  constructor(url: string, defaultDatabase: string, apiKey?: string) {
+    this.url = url;
+    this.database = defaultDatabase;
+    this.apiKey = apiKey;
   }
 
-  static Create(Url: string, DefaultDatabase: string, ApiKey?: string): IDocumentStore
-  {
-    return new DocumentStore(Url, DefaultDatabase, ApiKey);
+  static create(url: string, defaultDatabase: string, apiKey?: string): IDocumentStore {
+    return new DocumentStore(url, defaultDatabase, apiKey);
   }
 
-  public Initialize(): IDocumentStore
-  {
+  public initialize(): IDocumentStore {
     return this;
   }
 
-  public OpenSession(Database?: string, ForceReadFromMaster: boolean = false): IDocumentSession
-  {
-    //return new DocumentSession();
+  public openSession(database?: string, forceReadFromMaster: boolean = false): IDocumentSession {
+    return new DocumentSession(database, this, this.requestExecutor, "", forceReadFromMaster);
   }
 
-  public GenerateId(Database: string, Entity: IDocument): string
-  {
+  public generateId(database: string, entity: IDocument): string {
     return '';
   }
 }
