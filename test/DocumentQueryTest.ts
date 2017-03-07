@@ -13,11 +13,21 @@ describe('DocumentSession', () => {
   beforeEach(() => subject = DocumentStore.create('localhost:8080', 'Northwind').openSession());
 
   describe('Count()', () => {
-    it('should return records count', () => {
+    /*it('should return promise', () => {
       const query = subject.query<Document>();
-      const count = query.count();
+      const promise: Promise<number> = query.count();
 
-      expect(count).to.equals(1);
+      expect(promise).to.be.instanceof(Promise);
+    });*/
+
+    it('should return records count', (next) => {
+      const query = subject.query<Document>();
+      const promise: Promise<number> = query.count();
+
+      promise.then(count => {
+        expect(count).to.equals(1);
+        next();
+      })
     });
   });
 });
