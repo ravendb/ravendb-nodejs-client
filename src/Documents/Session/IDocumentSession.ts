@@ -1,6 +1,16 @@
+import {IDocumentSession} from "./IDocumentSession";
+import {IDocumentQuery} from "./IDocumentQuery";
 import {IDocument} from '../IDocument';
-import {IDocumentQuery} from './IDocumentQuery';
+import {DocumentConventions} from '../Conventions/DocumentConventions';
+import {DocumentCallback} from '../Callbacks/DocumentCallback';
 
 export interface IDocumentSession {
+  numberOfRequestsInSession: number;
+  conventions: DocumentConventions;
+
+  load<T extends IDocument>(keyOrKeys: string | string[], includes?: string[], callback?: DocumentCallback<T>): Promise<T>;
+  delete<T extends IDocument>(keyOrEntity: string | IDocument, callback?: DocumentCallback<T>): Promise<T>;
+  store<T extends IDocument>(entity: IDocument, key?: string, etag?: string, forceConcurrencyCheck?: boolean, callback?: DocumentCallback<T>): Promise<T>;
   query<T extends IDocument>(): IDocumentQuery<T>;
+  incrementRequestsCount(): void;
 }
