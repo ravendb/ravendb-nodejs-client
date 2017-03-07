@@ -13,11 +13,11 @@ describe('DocumentStore', () => {
 
   describe('Initialize()', () => {
     it('should initialize', () => {
-      expect(subject.Initialize()).to.be.a.instanceof(DocumentStore);
+      expect(subject.initialize()).to.be.a.instanceof(DocumentStore);
     });
 
     it('should open session', () => {
-      expect(subject.OpenSession()).to.be.a.instanceof(DocumentSession);
+      expect(subject.openSession()).to.be.a.instanceof(DocumentSession);
     });
   });
 });

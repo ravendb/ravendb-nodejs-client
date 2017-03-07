@@ -1,4 +1,3 @@
-export interface IDocumentQuery<T>
-{
-  Count(): number;
+export interface IDocumentQuery<T> {
+  count(): number;
 }
