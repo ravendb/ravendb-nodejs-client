@@ -5,6 +5,7 @@ import {IDocument} from '../IDocument';
 import {IDocumentStore} from '../IDocumentStore';
 import {RequestExecutor} from '../../Http/RequestExecutor';
 import {DocumentConventions} from '../Conventions/DocumentConventions';
+import {DocumentCallback} from '../Callbacks/DocumentCallback';
 
 export class DocumentSession implements IDocumentSession {
   protected database: string;
@@ -28,7 +29,23 @@ export class DocumentSession implements IDocumentSession {
       
   }
 
-  public query<T>(): IDocumentQuery<T> {
+  public load<T extends IDocument>(keyOrKeys: string | string[], includes?: string[], callback?: DocumentCallback<T>): Promise<T> {
+    return new Promise<T>(()=>{});
+  }
+
+  public delete<T extends IDocument>(keyOrEntity: string | IDocument, callback?: DocumentCallback<T>): Promise<T> {
+    return new Promise<T>(()=>{});
+  }
+
+  public store<T extends IDocument>(entity: IDocument, key?: string, etag?: string, forceConcurrencyCheck: boolean = false, callback?: DocumentCallback<T>): Promise<T> {
+    return new Promise<T>(()=>{});
+  }
+
+  public incrementRequestsCount(): void {
+
+  }
+
+  public query<T extends IDocument>(): IDocumentQuery<T> {
     return new DocumentQuery<T>();
   }
 }
