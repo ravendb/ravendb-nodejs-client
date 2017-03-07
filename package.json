@@ -1,0 +1,49 @@
+{
+  "name": "ravendb-node",
+  "version": "0.0.1",
+  "description": "RavenDB client for nodeJS",
+  "files": [
+    "lib/"
+  ],
+  "main": "lib/ravendb-node.js",
+  "typings": "lib/ravendb-node.d.ts",
+  "scripts": {
+    "_prepublish": "npm run bundle",
+    "quick-build": "tsc --pretty",
+    "bundle": "node scripts/build-bundle.js",
+    "pretest": "node scripts/build-tests.js",
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@git.devs.domerp.com:frontend-projects/ravendb-node.git"
+  },
+  "keywords": [
+    "ravendb",
+    "typescript",
+    "node",
+    "nodejs",
+    "nosql"
+  ],
+  "author": "Hybernating Rhinos",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/chai": "^3.4.35",
+    "@types/mocha": "^2.2.39",
+    "chai": "^3.5.0",
+    "mocha": "^3.2.0",
+    "rimraf": "^2.6.1",
+    "typescript": "^2.2.1",
+    "uglify-js-harmony": "^2.7.5"
+  },
+  "dependencies": {
+    "@types/bluebird": "^3.0.37",
+    "@types/request": "0.0.40",
+    "@types/request-promise": "^4.1.33",
+    "@types/uuid": "^2.0.29",
+    "bluebird": "^3.4.7",
+    "request": "^2.79.0",
+    "request-promise": "^4.1.1",
+    "uuid": "^3.0.1"
+  }
+}
