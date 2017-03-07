@@ -6,6 +6,7 @@ import {IDocumentStore} from '../IDocumentStore';
 import {RequestExecutor} from '../../Http/RequestExecutor';
 import {DocumentConventions} from '../Conventions/DocumentConventions';
 import {DocumentCallback} from '../Callbacks';
+import * as Promise from 'bluebird'
 
 export class DocumentSession implements IDocumentSession {
   protected database: string;

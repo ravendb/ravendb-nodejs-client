@@ -3,6 +3,7 @@ import {IDocumentQuery} from "./IDocumentQuery";
 import {IDocument} from '../IDocument';
 import {DocumentConventions} from '../Conventions/DocumentConventions';
 import {DocumentCallback} from '../Callbacks';
+import * as Promise from 'bluebird'
 
 export interface IDocumentSession {
   numberOfRequestsInSession: number;
