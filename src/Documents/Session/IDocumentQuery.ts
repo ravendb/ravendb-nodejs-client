@@ -1,6 +1,7 @@
 import {IDocument} from '../IDocument';
 import {IDocumentQueryConditions} from './IDocumentQueryConditions';
 import {DocumentCallback, DocumentQueryCallback, DocumentCountQueryCallback} from '../Callbacks';
+import * as Promise from 'bluebird'
 
 export interface IDocumentQuery<T extends IDocument> {
   select(...args: string[]): IDocumentQuery<T>;
