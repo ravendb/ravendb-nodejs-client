@@ -1,4 +1,5 @@
 // typings
+export {DocumentCallback} from './Documents/Callbacks/DocumentCallback';
 export {IDocument} from './Documents/IDocument';
 export {IDocumentStore} from './Documents/IDocumentStore';
 export {IDocumentSession} from './Documents/Session/IDocumentSession';
