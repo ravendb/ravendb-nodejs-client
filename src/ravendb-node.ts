@@ -1,8 +1,9 @@
 // typings
-export {DocumentCallback} from './Documents/Callbacks/DocumentCallback';
+export {DocumentCallback, DocumentQueryCallback, DocumentCountQueryCallback} from './Documents/Callbacks';
 export {IDocument} from './Documents/IDocument';
 export {IDocumentStore} from './Documents/IDocumentStore';
 export {IDocumentSession} from './Documents/Session/IDocumentSession';
+export {IDocumentQueryConditions} from './Documents/Session/IDocumentQueryConditions';
 export {IDocumentQuery} from './Documents/Session/IDocumentQuery';
 
 // classes

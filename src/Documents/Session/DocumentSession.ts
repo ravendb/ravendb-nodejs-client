@@ -5,7 +5,7 @@ import {IDocument} from '../IDocument';
 import {IDocumentStore} from '../IDocumentStore';
 import {RequestExecutor} from '../../Http/RequestExecutor';
 import {DocumentConventions} from '../Conventions/DocumentConventions';
-import {DocumentCallback} from '../Callbacks/DocumentCallback';
+import {DocumentCallback} from '../Callbacks';
 
 export class DocumentSession implements IDocumentSession {
   protected database: string;
@@ -24,7 +24,7 @@ export class DocumentSession implements IDocumentSession {
       
   }
 
-  public load<T extends IDocument>(keyOrKeys: string | string[], includes?: string[], callback?: DocumentCallback<T>): Promise<T> {
+  public load<T extends IDocument>(keyOrKeys: string | string[], callback?: DocumentCallback<T>): Promise<T> {
     return new Promise<T>(()=>{});
   }
 
