@@ -1,6 +1,6 @@
 {
-  "name": "ravendb-node",
-  "version": "0.0.1",
+  "name": "ravendb-client",
+  "version": "0.0.2",
   "description": "RavenDB client for nodeJS",
   "files": [
     "lib/"
@@ -9,14 +9,13 @@
   "typings": "lib/ravendb-node.d.ts",
   "scripts": {
     "_prepublish": "npm run bundle",
-    "quick-build": "tsc --pretty",
     "bundle": "node scripts/build-bundle.js",
     "pretest": "node scripts/build-tests.js",
     "test": "mocha"
   },
   "repository": {
     "type": "git",
-    "url": "git@git.devs.domerp.com:frontend-projects/ravendb-node.git"
+    "url": "https://github.com/ravendb/ravendb-nodejs-client"
   },
   "keywords": [
     "ravendb",
@@ -25,8 +24,8 @@
     "nodejs",
     "nosql"
   ],
-  "author": "Hybernating Rhinos",
-  "license": "ISC",
+  "author": "Hibernating Rhinos LTD",
+  "license": "MIT",
   "devDependencies": {
     "@types/chai": "^3.4.35",
     "@types/mocha": "^2.2.39",
