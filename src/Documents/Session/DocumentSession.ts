@@ -5,7 +5,7 @@ import {IDocument} from '../IDocument';
 import {IDocumentStore} from '../IDocumentStore';
 import {RequestExecutor} from '../../Http/RequestExecutor';
 import {DocumentConventions} from '../Conventions/DocumentConventions';
-import {DocumentCallback} from '../Callbacks';
+import {EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
 import * as Promise from 'bluebird'
 
 export class DocumentSession implements IDocumentSession {
@@ -25,20 +25,20 @@ export class DocumentSession implements IDocumentSession {
       
   }
 
-  public load<T extends IDocument>(keyOrKeys: string | string[], callback?: DocumentCallback<T>): Promise<T> {
-    return new Promise<T>(()=>{});
+  public load(keyOrKeys: string | string[], callback?: EntityCallback<IDocument>): Promise<IDocument> {
+    return new Promise<IDocument>(()=>{});
   }
 
-  public delete<T extends IDocument>(keyOrEntity: string | IDocument, callback?: DocumentCallback<T>): Promise<T> {
-    return new Promise<T>(()=>{});
+  public delete(keyOrEntity: string | IDocument, callback?: EntityCallback<IDocument> | EntitiesArrayCallback<IDocument>): Promise<IDocument> | Promise<IDocument[]> {
+    return new Promise<IDocument>(()=>{});
   }
 
-  public store<T extends IDocument>(entity: IDocument, key?: string, etag?: string, forceConcurrencyCheck: boolean = false, callback?: DocumentCallback<T>): Promise<T> {
-    return new Promise<T>(()=>{});
+  public store(entity: IDocument, key?: string, etag?: string, forceConcurrencyCheck?: boolean, callback?: EntityCallback<IDocument>): Promise<IDocument> {
+    return new Promise<IDocument>(()=>{});
   }
 
-  public query<T extends IDocument>(): IDocumentQuery<T> {
-    return new DocumentQuery<T>();
+  public query(): IDocumentQuery {
+    return new DocumentQuery();
   }
 
   public incrementRequestsCount(): void {

@@ -2,16 +2,16 @@ import {IDocumentSession} from "./IDocumentSession";
 import {IDocumentQuery} from "./IDocumentQuery";
 import {IDocument} from '../IDocument';
 import {DocumentConventions} from '../Conventions/DocumentConventions';
-import {DocumentCallback} from '../Callbacks';
+import {EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
 import * as Promise from 'bluebird'
 
 export interface IDocumentSession {
   numberOfRequestsInSession: number;
   conventions: DocumentConventions;
 
-  load<T extends IDocument>(keyOrKeys: string | string[], callback?: DocumentCallback<T>): Promise<T>;
-  delete<T extends IDocument>(keyOrEntity: string | IDocument, callback?: DocumentCallback<T>): Promise<T>;
-  store<T extends IDocument>(entity: IDocument, key?: string, etag?: string, forceConcurrencyCheck?: boolean, callback?: DocumentCallback<T>): Promise<T>;
-  query<T extends IDocument>(): IDocumentQuery<T>;
+  load(keyOrKeys: string | string[], callback?: EntityCallback<IDocument>): Promise<IDocument>;
+  delete(keyOrEntity: string | IDocument, callback?: EntityCallback<IDocument> | EntitiesArrayCallback<IDocument>): Promise<IDocument> | Promise<IDocument[]>;
+  store(entity: IDocument, key?: string, etag?: string, forceConcurrencyCheck?: boolean, callback?: EntityCallback<IDocument>): Promise<IDocument>;
+  query(): IDocumentQuery;
   incrementRequestsCount(): void;
 }

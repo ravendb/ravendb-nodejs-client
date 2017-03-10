@@ -1,99 +1,99 @@
 import {IDocument} from "../IDocument";
 import {IDocumentQuery} from "./IDocumentQuery";
 import {IDocumentQueryConditions} from './IDocumentQueryConditions';
-import {DocumentCallback, DocumentQueryCallback, DocumentCountQueryCallback} from '../Callbacks';
+import {EntityCallback, EntitiesArrayCallback, EntitiesCountCallback} from '../../Utility/Callbacks';
 import * as Promise from 'bluebird'
 
-export class DocumentQuery<T extends IDocument> implements IDocumentQuery<T> {
-  select(...args): IDocumentQuery<T> {
+export class DocumentQuery implements IDocumentQuery {
+  select(...args): IDocumentQuery {
     return this;
   }
 
-  where(conditions: IDocumentQueryConditions): IDocumentQuery<T> {
+  where(conditions: IDocumentQueryConditions): IDocumentQuery {
     return this;
   }
 
-  whereEquals<V>(fieldName: string, value: V): IDocumentQuery<T> {
+  whereEquals<V>(fieldName: string, value: V): IDocumentQuery {
     return this;
   }
 
-  whereEndsWith<V>(fieldName: string, value: V): IDocumentQuery<T> {
+  whereEndsWith<V>(fieldName: string, value: V): IDocumentQuery {
     return this;
   }
 
-  whereStartsWith<V>(fieldName: string, value: V): IDocumentQuery<T> {
+  whereStartsWith<V>(fieldName: string, value: V): IDocumentQuery {
     return this;
   }
 
-  whereIn<V>(fieldName: string, values: V[]): IDocumentQuery<T> {
+  whereIn<V>(fieldName: string, values: V[]): IDocumentQuery {
     return this;
   }
 
-  whereBetween<V>(fieldName: string, start: V, end: V): IDocumentQuery<T> {
+  whereBetween<V>(fieldName: string, start: V, end: V): IDocumentQuery {
     return this;
   }
 
-  whereBetweenOrEqual<V>(fieldName: string, start: V, end: V): IDocumentQuery<T> {
+  whereBetweenOrEqual<V>(fieldName: string, start: V, end: V): IDocumentQuery {
     return this;
   }
 
-  whereGreaterThan<V>(fieldName: string, value: V): IDocumentQuery<T> {
+  whereGreaterThan<V>(fieldName: string, value: V): IDocumentQuery {
     return this;
   }
 
-  whereGreaterThanOrEqual<V>(fieldName: string, value: V): IDocumentQuery<T> {
+  whereGreaterThanOrEqual<V>(fieldName: string, value: V): IDocumentQuery {
     return this;
   }
 
-  whereLessThan<V>(fieldName: string, value: V): IDocumentQuery<T> {
+  whereLessThan<V>(fieldName: string, value: V): IDocumentQuery {
     return this;
   }
 
-  whereLessThanOrEqual<V>(fieldName: string, value: V): IDocumentQuery<T> {
+  whereLessThanOrEqual<V>(fieldName: string, value: V): IDocumentQuery {
     return this;
   }
 
-  whereIsNull(fieldName: string): IDocumentQuery<T> {
+  whereIsNull(fieldName: string): IDocumentQuery {
     return this;
   }
 
-  whereNotNull(fieldName: string): IDocumentQuery<T> {
+  whereNotNull(fieldName: string): IDocumentQuery {
     return this;
   }
 
-  orderBy(fieldsNames: string|string[]): IDocumentQuery<T> {
+  orderBy(fieldsNames: string|string[]): IDocumentQuery {
     return this;
   }
 
-  orderByDescending(fieldsNames: string|string[]): IDocumentQuery<T> {
+  orderByDescending(fieldsNames: string|string[]): IDocumentQuery {
     return this;
   }
 
-  andAlso(): IDocumentQuery<T> {
+  andAlso(): IDocumentQuery {
     return this;
   }
 
-  orElse(): IDocumentQuery<T> {
+  orElse(): IDocumentQuery {
     return this;
   }
 
-  addNot(): IDocumentQuery<T> {
+  addNot(): IDocumentQuery {
     return this;
   }
 
-  boost(value): IDocumentQuery<T> {
+  boost(value): IDocumentQuery {
     return this;
   }
 
-  first(callback?: DocumentCallback<T>): Promise<T> {
-    return new Promise<T>(() => {});
+  first(callback?: EntityCallback<IDocument>): Promise<IDocument> {
+    return new Promise<IDocument>(() => {});
   }
 
-  get(callback?: DocumentQueryCallback<T>): Promise<T> {
-    return new Promise<T>(() => {});
+  get(callback?: EntitiesArrayCallback<IDocument>): Promise<IDocument[]> {
+    return new Promise<IDocument[]>(() => {});
   }
 
-  count(callback?: DocumentCountQueryCallback): Promise<number> {
+  count(callback?: EntitiesCountCallback): Promise<number> {
     return new Promise<number>((resolve) => resolve(1));
   }
 }
