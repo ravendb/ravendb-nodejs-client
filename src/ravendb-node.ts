@@ -2,7 +2,7 @@
 
 // typings
 export {AbstractCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback} from './Utility/Callbacks';
-export {PromiseResolver, PromiseResolve, PromiseReject} from './Utility/PromiseResolver';
+export {PromiseThenable, PromiseResolver, PromiseResolve, PromiseReject} from './Utility/PromiseResolver';
 export {IDocument} from './Documents/IDocument';
 export {IDocumentStore} from './Documents/IDocumentStore';
 export {IDocumentSession} from './Documents/Session/IDocumentSession';
