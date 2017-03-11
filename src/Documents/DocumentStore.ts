@@ -1,11 +1,13 @@
-import {IDocument} from './IDocument';
+import {DocumentID, IDocument} from './IDocument';
 import {IDocumentStore} from './IDocumentStore';
 import {IDocumentSession} from "./Session/IDocumentSession";
 import {DocumentSession} from "./Session/DocumentSession";
 import {RequestExecutor} from '../Http/RequestExecutor';
+import {IDCallback} from '../Utility/Callbacks';
 import {DocumentConventions} from './Conventions/DocumentConventions';
 import {InvalidOperationException} from '../Database/DatabaseExceptions';
 import * as uuid from 'uuid';
+import * as Promise from 'bluebird';
 
 export class DocumentStore implements IDocumentStore {
   protected url: string;
@@ -75,7 +77,7 @@ export class DocumentStore implements IDocumentStore {
     return new DocumentSession(dbName, this, executor, this.sessionId, forceReadFromMaster);
   }
 
-  public generateId(database: string, entity: IDocument): string {
-    return '';
+  public generateId(database: string, entity: IDocument, callback?: IDCallback): Promise<DocumentID> {
+    return new Promise<DocumentID>(() => {});
   }
 }
