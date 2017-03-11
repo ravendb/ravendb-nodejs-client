@@ -5,7 +5,7 @@ import {DocumentConventions} from './Conventions/DocumentConventions';
 
 export interface IDocumentStore {
   requestExecutor: RequestExecutor;
-  conventions: DocumentConventions;
+  conventions: DocumentConventions<IDocument>;
   initialize(): IDocumentStore;
   openSession(database?: string, forceReadFromMaster?: boolean) : IDocumentSession;
   generateId(database: string, entity: IDocument): string;

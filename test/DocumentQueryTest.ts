@@ -9,7 +9,7 @@ import * as Promise from 'bluebird'
 describe('DocumentSession', () => {
   let query : IDocumentQuery;
 
-  beforeEach(() => query = DocumentStore.create('localhost:8080', 'Northwind').openSession().query());
+  beforeEach(() => query = DocumentStore.create('localhost:8080', 'Northwind').initialize().openSession().query());
 
   describe('Count()', () => {
     it('should return promise', () => {

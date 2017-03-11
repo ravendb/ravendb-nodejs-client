@@ -4,25 +4,30 @@ import {IDocumentSession} from "./Session/IDocumentSession";
 import {DocumentSession} from "./Session/DocumentSession";
 import {RequestExecutor} from '../Http/RequestExecutor';
 import {DocumentConventions} from './Conventions/DocumentConventions';
+import {InvalidOperationException} from '../Database/DatabaseExceptions';
+import * as uuid from 'uuid';
 
 export class DocumentStore implements IDocumentStore {
   protected url: string;
   protected database: string;
   protected apiKey?: string;
+  protected sessionId: string;
+  protected generator;
+  protected initialized: boolean = false;
   private _requestExecutor: RequestExecutor;
-  private _conventions: DocumentConventions;
+  private _conventions: DocumentConventions<IDocument>;
 
   public get requestExecutor(): RequestExecutor {
     if (!this._requestExecutor) {
-      //TODO create
+      this._requestExecutor = new RequestExecutor();
     }
 
     return this._requestExecutor;
   }
 
-  public get conventions(): DocumentConventions {
+  public get conventions(): DocumentConventions<IDocument> {
     if (!this._conventions) {
-      //TODO create
+      this._conventions = new DocumentConventions<Document>(Document);
     }
 
     return this._conventions;
@@ -39,11 +44,35 @@ export class DocumentStore implements IDocumentStore {
   }
 
   public initialize(): IDocumentStore {
+    if (!this.initialized) {
+      if (!this.database) {
+        throw new InvalidOperationException("Default database isn't set.");
+      }
+
+
+    }
+
+    this.initialized = true;
     return this;
   }
 
   public openSession(database?: string, forceReadFromMaster: boolean = false): IDocumentSession {
-    return new DocumentSession(database, this, this.requestExecutor, "", forceReadFromMaster);
+    if (!this.initialized) {
+      throw new InvalidOperationException("You cannot open a session or access the database commands\
+ before initializing the document store. Did you forget calling initialize()?"
+      );
+    }
+
+    let dbName: string = this.database;
+    let executor: RequestExecutor = this.requestExecutor;
+
+    if (database) {
+      dbName = database;
+      executor = new RequestExecutor();
+    }
+
+    this.sessionId = uuid();
+    return new DocumentSession(dbName, this, executor, this.sessionId, forceReadFromMaster);
   }
 
   public generateId(database: string, entity: IDocument): string {

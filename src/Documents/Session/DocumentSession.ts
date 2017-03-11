@@ -22,7 +22,7 @@ export class DocumentSession implements IDocumentSession {
     return this._numberOfRequestsInSession;
   }
 
-  public get conventions(): DocumentConventions {
+  public get conventions(): DocumentConventions<IDocument> {
     return this.documentStore.conventions;
   }       
 

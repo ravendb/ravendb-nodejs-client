@@ -7,7 +7,7 @@ import * as Promise from 'bluebird'
 
 export interface IDocumentSession {
   numberOfRequestsInSession: number;
-  conventions: DocumentConventions;
+  conventions: DocumentConventions<IDocument>;
 
   create(attributes?: Object): IDocument;
   load(keyOrKeys: string | string[], callback?: EntityCallback<IDocument> | EntitiesArrayCallback<IDocument>): Promise<IDocument> | Promise<IDocument[]>;

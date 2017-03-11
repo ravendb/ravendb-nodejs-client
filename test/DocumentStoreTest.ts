@@ -17,7 +17,7 @@ describe('DocumentStore', () => {
     });
 
     it('should open session', () => {
-      expect(subject.openSession()).to.be.a.instanceof(DocumentSession);
+      expect(subject.initialize().openSession()).to.be.a.instanceof(DocumentSession);
     });
   });
 });

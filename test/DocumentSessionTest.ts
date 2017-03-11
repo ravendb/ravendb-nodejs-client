@@ -13,7 +13,7 @@ describe('DocumentSession', () => {
   let json : Object;
 
   beforeEach(() => {
-    subject = DocumentStore.create('localhost:8080', 'Northwind').openSession()
+    subject = DocumentStore.create('localhost:8080', 'Northwind').initialize().openSession()
     json = {
       stringProp: "string",
       numberProp: 2,

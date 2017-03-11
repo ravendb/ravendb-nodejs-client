@@ -28,6 +28,7 @@
     "@types/bluebird": "^3.0.37",
     "@types/chai": "^3.4.35",
     "@types/mocha": "^2.2.39",
+    "@types/pluralize": "0.0.27",
     "@types/request": "0.0.40",
     "@types/request-promise": "^4.1.33",
     "@types/uuid": "^2.0.29",
@@ -38,11 +39,12 @@
     "gulp-mocha": "^4.1.0",
     "gulp-transform": "^1.1.0",
     "gulp-typescript": "^3.1.5",
+    "gulp-uglify-harmony": "https://github.com/jiborobot/gulp-uglify-harmony.git#master",
     "mocha": "^3.2.0",
+    "pluralize": "^4.0.0",
     "rimraf": "^2.6.1",
     "typescript": "^2.2.1",
-    "uglify-js-harmony": "^2.7.5",
-    "gulp-uglify-harmony": "https://github.com/jiborobot/gulp-uglify-harmony.git#master"
+    "uglify-js-harmony": "^2.7.5"
   },
   "dependencies": {
     "bluebird": "^3.4.7",
