@@ -1,5 +1,5 @@
 // typings
-export {EntityCallback, EntitiesArrayCallback, EntitiesCountCallback} from './Utility/Callbacks';
+export {AbstractCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback} from './Utility/Callbacks';
 export {IDocument} from './Documents/IDocument';
 export {IDocumentStore} from './Documents/IDocumentStore';
 export {IDocumentSession} from './Documents/Session/IDocumentSession';
