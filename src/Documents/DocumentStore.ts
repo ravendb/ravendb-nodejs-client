@@ -81,6 +81,6 @@ export class DocumentStore implements IDocumentStore {
   }
 
   public generateId(database: string, entity: IDocument, callback?: IDCallback): Promise<DocumentID> {
-    return new Promise<DocumentID>(() => {});
+    return this.generator.generateDocumentKey(database, entity, callback);
   }
 }
