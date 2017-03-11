@@ -9,8 +9,9 @@ export interface IDocumentSession {
   numberOfRequestsInSession: number;
   conventions: DocumentConventions;
 
-  load(keyOrKeys: string | string[], callback?: EntityCallback<IDocument>): Promise<IDocument>;
-  delete(keyOrEntity: string | IDocument, callback?: EntityCallback<IDocument> | EntitiesArrayCallback<IDocument>): Promise<IDocument> | Promise<IDocument[]>;
+  create(attributes?: Object): IDocument;
+  load(keyOrKeys: string | string[], callback?: EntityCallback<IDocument> | EntitiesArrayCallback<IDocument>): Promise<IDocument> | Promise<IDocument[]>;
+  delete(keyOrEntity: string | IDocument, callback?: EntityCallback<IDocument>): Promise<IDocument>;
   store(entity: IDocument, key?: string, etag?: string, forceConcurrencyCheck?: boolean, callback?: EntityCallback<IDocument>): Promise<IDocument>;
   query(): IDocumentQuery;
   incrementRequestsCount(): void;

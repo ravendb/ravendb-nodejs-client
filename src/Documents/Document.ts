@@ -5,6 +5,9 @@ export class Document extends Object implements IDocument {
   constructor(attributes?: Object)
   {
     super();
-    Serializer.fromJSON<Document>(Document, attributes, this);
+
+    if (attributes instanceof Object) {
+      Serializer.fromJSON<Document>(Document, attributes, this);
+    }
   }
 }

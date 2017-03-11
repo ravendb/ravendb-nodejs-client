@@ -1,10 +1,21 @@
 import {IDocument} from "../IDocument";
 import {IDocumentQuery} from "./IDocumentQuery";
+import {IDocumentSession} from "./IDocumentSession";
+import {RequestExecutor} from "../../Http/RequestExecutor";
 import {IDocumentQueryConditions} from './IDocumentQueryConditions';
 import {EntityCallback, EntitiesArrayCallback, EntitiesCountCallback} from '../../Utility/Callbacks';
+import {PromiseResolve, PromiseResolver} from '../../Utility/PromiseResolver';
 import * as Promise from 'bluebird'
 
 export class DocumentQuery implements IDocumentQuery {
+  protected session: IDocumentSession;
+  protected requestsExecutor: RequestExecutor;
+
+  constructor(session: IDocumentSession, requestsExecutor: RequestExecutor) {
+    this.session = session;
+    this.requestsExecutor = requestsExecutor;
+  }
+
   select(...args): IDocumentQuery {
     return this;
   }
@@ -86,14 +97,26 @@ export class DocumentQuery implements IDocumentQuery {
   }
 
   first(callback?: EntityCallback<IDocument>): Promise<IDocument> {
-    return new Promise<IDocument>(() => {});
+    const result = this.session.create();
+
+    return new Promise<IDocument>((resolve: PromiseResolve<IDocument>) =>
+      PromiseResolver.resolve(result, resolve, callback)
+    );
   }
 
   get(callback?: EntitiesArrayCallback<IDocument>): Promise<IDocument[]> {
-    return new Promise<IDocument[]>(() => {});
+    const result = [this.session.create()];
+
+    return new Promise<IDocument[]>((resolve: PromiseResolve<IDocument[]>) =>
+      PromiseResolver.resolve(result, resolve, callback)
+    );
   }
 
   count(callback?: EntitiesCountCallback): Promise<number> {
-    return new Promise<number>((resolve) => resolve(1));
+    const result = 1;
+
+    return new Promise<number>((resolve: PromiseResolve<number>) =>
+      PromiseResolver.resolve(result, resolve, callback)
+    );
   }
 }
