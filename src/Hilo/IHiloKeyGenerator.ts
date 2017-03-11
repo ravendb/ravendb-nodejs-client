@@ -3,9 +3,6 @@ import {IDCallback} from '../Utility/Callbacks';
 import * as Promise from 'bluebird';
 
 export interface IHiloKeyGenerator {
-  generateDocumentKey(dbName: string, entity: IDocument, callback?: IDCallback): Promise<DocumentID>;
-  generateDocumentKey(entity: IDocument, callback?: IDCallback): Promise<DocumentID>;
-  generateDocumentKey(callback?: IDCallback): Promise<DocumentID>;
+  generateDocumentKey(...args: (IDocument | IDCallback | string)[]): Promise<DocumentID>;
   returnUnusedRange(): void;
 }
-

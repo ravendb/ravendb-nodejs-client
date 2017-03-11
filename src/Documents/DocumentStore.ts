@@ -1,4 +1,5 @@
 import {DocumentID, IDocument} from './IDocument';
+import {Document} from './Document';
 import {IDocumentStore} from './IDocumentStore';
 import {IDocumentSession} from "./Session/IDocumentSession";
 import {DocumentSession} from "./Session/DocumentSession";
@@ -6,6 +7,8 @@ import {RequestExecutor} from '../Http/RequestExecutor';
 import {IDCallback} from '../Utility/Callbacks';
 import {DocumentConventions} from './Conventions/DocumentConventions';
 import {InvalidOperationException} from '../Database/DatabaseExceptions';
+import {IHiloKeyGenerator} from '../Hilo/IHiloKeyGenerator';
+import {HiloMultiDatabaseKeyGenerator} from '../Hilo/HiloMultiDatabaseKeyGenerator';
 import * as uuid from 'uuid';
 import * as Promise from 'bluebird';
 
@@ -14,7 +17,7 @@ export class DocumentStore implements IDocumentStore {
   protected database: string;
   protected apiKey?: string;
   protected sessionId: string;
-  protected generator;
+  protected generator: IHiloKeyGenerator;
   protected initialized: boolean = false;
   private _requestExecutor: RequestExecutor;
   private _conventions: DocumentConventions<IDocument>;
@@ -51,7 +54,7 @@ export class DocumentStore implements IDocumentStore {
         throw new InvalidOperationException("Default database isn't set.");
       }
 
-
+      this.generator = new HiloMultiDatabaseKeyGenerator(this);
     }
 
     this.initialized = true;

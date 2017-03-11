@@ -6,6 +6,7 @@ export {IDocumentStore} from './Documents/IDocumentStore';
 export {IDocumentSession} from './Documents/Session/IDocumentSession';
 export {IDocumentQueryConditions} from './Documents/Session/IDocumentQueryConditions';
 export {IDocumentQuery} from './Documents/Session/IDocumentQuery';
+export {IHiloKeyGenerator} from './Hilo/IHiloKeyGenerator';
 
 // classes
 export {AbstractException, InvalidOperationException, ErrorResponseException, DocumentDoesNotExistsException, NonUniqueObjectException, FetchConcurrencyException, ArgumentOutOfRangeException, DatabaseDoesNotExistException} from './Database/DatabaseExceptions';
@@ -16,6 +17,13 @@ export {DocumentSession} from './Documents/Session/DocumentSession';
 export {DocumentQuery} from './Documents/Session/DocumentQuery';
 export {Failover, DocumentConventions} from './Documents/Conventions/DocumentConventions';
 export {RequestExecutor} from './Http/RequestExecutor';
+export {AbstractHiloKeyGenerator} from './Hilo/AbstractHiloKeyGenerator';
+export {HiloKeyGenerator} from './Hilo/HiloKeyGenerator';
+export {HiloMultiDatabaseKeyGenerator} from './Hilo/HiloMultiDatabaseKeyGenerator';
+export {HiloMultiTypeKeyGenerator} from './Hilo/HiloMultiTypeKeyGenerator';
+export {HiloNextCommand} from './Hilo/HiloNextCommand';
+export {HiloReturnCommand} from './Hilo/HiloReturnCommand';
+export {HiloRangeValue} from './Hilo/HiloRangeValue';
 
 declare var uuid: Function;
 declare var module: { exports: any };
