@@ -2,30 +2,33 @@
 /// <reference path="../node_modules/@types/chai/index.d.ts" />
 
 import {expect} from 'chai';
-import {Document} from '../src/Documents/Document';
 import {DocumentStore} from '../src/Documents/DocumentStore';
-import {DocumentSession} from '../src/Documents/Session/DocumentSession';
-import {IDocumentSession} from '../src/Documents/Session/IDocumentSession';
+import {IDocumentQuery} from '../src/Documents/Session/IDocumentQuery';
 import * as Promise from 'bluebird'
 
 describe('DocumentSession', () => {
-  let subject : IDocumentSession;
+  let query : IDocumentQuery;
 
-  beforeEach(() => subject = DocumentStore.create('localhost:8080', 'Northwind').openSession());
+  beforeEach(() => query = DocumentStore.create('localhost:8080', 'Northwind').openSession().query());
 
   describe('Count()', () => {
     it('should return promise', () => {
-      const query = subject.query<Document>();
       const promise: Promise<number> = query.count();
 
       expect(promise).to.be.instanceof(Promise);
     });
 
     it('should return records count', (next) => {
-      const query = subject.query<Document>();
       const promise: Promise<number> = query.count();
 
       promise.then(count => {
+        expect(count).to.equals(1);
+        next();
+      })
+    });
+
+    it('should support also callbacks', (next) => {
+      query.count((count?: number, error?: Error) => {
         expect(count).to.equals(1);
         next();
       })
