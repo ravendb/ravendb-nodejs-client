@@ -3,7 +3,8 @@ import {Document} from './Document';
 import {IDocumentStore} from './IDocumentStore';
 import {IDocumentSession} from "./Session/IDocumentSession";
 import {DocumentSession} from "./Session/DocumentSession";
-import {RequestExecutor} from '../Http/RequestExecutor';
+import {ServerNode} from '../Http/ServerNode';
+import {RequestsExecutor} from '../Http/RequestsExecutor';
 import {IDCallback} from '../Utility/Callbacks';
 import {DocumentConventions} from './Conventions/DocumentConventions';
 import {InvalidOperationException} from '../Database/DatabaseExceptions';
@@ -19,15 +20,15 @@ export class DocumentStore implements IDocumentStore {
   protected sessionId: string;
   protected generator: IHiloKeyGenerator;
   protected initialized: boolean = false;
-  private _requestExecutor: RequestExecutor;
+  private _requestsExecutor: RequestsExecutor;
   private _conventions: DocumentConventions<IDocument>;
 
-  public get requestExecutor(): RequestExecutor {
-    if (!this._requestExecutor) {
-      this._requestExecutor = new RequestExecutor();
+  public get requestsExecutor(): RequestsExecutor {
+    if (!this._requestsExecutor) {
+      this._requestsExecutor = this.createRequestsExecutor();
     }
 
-    return this._requestExecutor;
+    return this._requestsExecutor;
   }
 
   public get conventions(): DocumentConventions<IDocument> {
@@ -61,6 +62,10 @@ export class DocumentStore implements IDocumentStore {
     return this;
   }
 
+  public finalize(): IDocumentStore {
+    return this;
+  }
+
   public openSession(database?: string, forceReadFromMaster: boolean = false): IDocumentSession {
     if (!this.initialized) {
       throw new InvalidOperationException("You cannot open a session or access the database commands\
@@ -69,11 +74,11 @@ export class DocumentStore implements IDocumentStore {
     }
 
     let dbName: string = this.database;
-    let executor: RequestExecutor = this.requestExecutor;
+    let executor: RequestsExecutor = this.requestsExecutor;
 
-    if (database) {
+    if (database && (database !== dbName)) {
       dbName = database;
-      executor = new RequestExecutor();
+      executor = this.createRequestsExecutor(dbName);
     }
 
     this.sessionId = uuid();
@@ -82,5 +87,9 @@ export class DocumentStore implements IDocumentStore {
 
   public generateId(database: string, entity: IDocument, callback?: IDCallback): Promise<DocumentID> {
     return this.generator.generateDocumentKey(database, entity, callback);
+  }
+
+  protected createRequestsExecutor(database?: string) {
+    return new RequestsExecutor(new ServerNode(this.url, database || this.database, this.apiKey), this.conventions);
   }
 }

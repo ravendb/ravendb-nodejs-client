@@ -1,7 +1,7 @@
 import {IDocument} from "../IDocument";
 import {IDocumentQuery} from "./IDocumentQuery";
 import {IDocumentSession} from "./IDocumentSession";
-import {RequestExecutor} from "../../Http/RequestExecutor";
+import {RequestsExecutor} from "../../Http/RequestsExecutor";
 import {IDocumentQueryConditions} from './IDocumentQueryConditions';
 import {EntityCallback, EntitiesArrayCallback, EntitiesCountCallback} from '../../Utility/Callbacks';
 import {PromiseResolve, PromiseResolver} from '../../Utility/PromiseResolver';
@@ -9,9 +9,9 @@ import * as Promise from 'bluebird'
 
 export class DocumentQuery implements IDocumentQuery {
   protected session: IDocumentSession;
-  protected requestsExecutor: RequestExecutor;
+  protected requestsExecutor: RequestsExecutor;
 
-  constructor(session: IDocumentSession, requestsExecutor: RequestExecutor) {
+  constructor(session: IDocumentSession, requestsExecutor: RequestsExecutor) {
     this.session = session;
     this.requestsExecutor = requestsExecutor;
   }

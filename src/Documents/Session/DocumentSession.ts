@@ -4,7 +4,7 @@ import {DocumentQuery} from "./DocumentQuery";
 import {Document} from '../Document';
 import {IDocument} from '../IDocument';
 import {IDocumentStore} from '../IDocumentStore';
-import {RequestExecutor} from '../../Http/RequestExecutor';
+import {RequestsExecutor} from '../../Http/RequestsExecutor';
 import {DocumentConventions} from '../Conventions/DocumentConventions';
 import {EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
 import {PromiseResolve, PromiseResolver} from '../../Utility/PromiseResolver';
@@ -13,7 +13,7 @@ import * as Promise from 'bluebird'
 export class DocumentSession implements IDocumentSession {
   protected database: string;
   protected documentStore: IDocumentStore;
-  protected requestsExecutor: RequestExecutor;
+  protected requestsExecutor: RequestsExecutor;
   protected sessionId: string;
   protected forceReadFromMaster: boolean;
   private _numberOfRequestsInSession: number;
@@ -26,7 +26,7 @@ export class DocumentSession implements IDocumentSession {
     return this.documentStore.conventions;
   }       
 
-  constructor (database: string, documentStore: IDocumentStore, requestsExecutor: RequestExecutor, sessionId: string, forceReadFromMaster: boolean) {
+  constructor (database: string, documentStore: IDocumentStore, requestsExecutor: RequestsExecutor, sessionId: string, forceReadFromMaster: boolean) {
     this.database = database;
     this.documentStore = documentStore;
     this.requestsExecutor = requestsExecutor;
