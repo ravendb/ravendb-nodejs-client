@@ -19,13 +19,13 @@ export {DocumentQuery} from './Documents/Session/DocumentQuery';
 export {Failover, DocumentConventions} from './Documents/Conventions/DocumentConventions';
 export {ServerNode} from './Http/ServerNode';
 export {RequestMethods, RequestMethod, RequestsExecutor} from './Http/RequestsExecutor';
+export {HiloRangeValue} from './Hilo/HiloRangeValue';
 export {AbstractHiloKeyGenerator} from './Hilo/AbstractHiloKeyGenerator';
 export {HiloKeyGenerator} from './Hilo/HiloKeyGenerator';
 export {HiloMultiDatabaseKeyGenerator} from './Hilo/HiloMultiDatabaseKeyGenerator';
 export {HiloMultiTypeKeyGenerator} from './Hilo/HiloMultiTypeKeyGenerator';
-export {HiloNextCommand} from './Hilo/HiloNextCommand';
-export {HiloReturnCommand} from './Hilo/HiloReturnCommand';
-export {HiloRangeValue} from './Hilo/HiloRangeValue';
+export {HiloNextCommand} from './Hilo/Commands/HiloNextCommand';
+export {HiloReturnCommand} from './Hilo/Commands/HiloReturnCommand';
 
 declare var uuid: Function;
 declare var module: { exports: any };

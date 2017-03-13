@@ -10,7 +10,7 @@ export abstract class RavenCommand {
   protected adminCommand: boolean = false;
   private readonly _ravenCommand: boolean = true;
 
-  construct(endPoint?: string, method: RequestMethod = RequestMethods.Get, params?: Object, payload?: Object, headers: Object = {}, adminCommand: boolean = false) {
+  constructor(endPoint: string, method: RequestMethod = RequestMethods.Get, params?: Object, payload?: Object, headers: Object = {}, adminCommand: boolean = false) {
     this._endPoint = endPoint;
     this.method = method;
     this.params = params;
