@@ -10,6 +10,7 @@ export {IHiloKeyGenerator} from './Hilo/IHiloKeyGenerator';
 
 // classes
 export {AbstractException, InvalidOperationException, ErrorResponseException, DocumentDoesNotExistsException, NonUniqueObjectException, FetchConcurrencyException, ArgumentOutOfRangeException, DatabaseDoesNotExistException} from './Database/DatabaseExceptions';
+export {RavenCommand} from './Database/RavenCommand';
 export {Serializer} from './Json/Serializer';
 export {Document} from './Documents/Document';
 export {DocumentStore} from './Documents/DocumentStore';
@@ -17,7 +18,7 @@ export {DocumentSession} from './Documents/Session/DocumentSession';
 export {DocumentQuery} from './Documents/Session/DocumentQuery';
 export {Failover, DocumentConventions} from './Documents/Conventions/DocumentConventions';
 export {ServerNode} from './Http/ServerNode';
-export {RequestsExecutor} from './Http/RequestsExecutor';
+export {RequestMethods, RequestMethod, RequestsExecutor} from './Http/RequestsExecutor';
 export {AbstractHiloKeyGenerator} from './Hilo/AbstractHiloKeyGenerator';
 export {HiloKeyGenerator} from './Hilo/HiloKeyGenerator';
 export {HiloMultiDatabaseKeyGenerator} from './Hilo/HiloMultiDatabaseKeyGenerator';
