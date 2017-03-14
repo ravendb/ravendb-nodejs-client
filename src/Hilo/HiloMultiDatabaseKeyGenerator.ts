@@ -1,4 +1,5 @@
 import {IHiloKeyGenerator} from './IHiloKeyGenerator';
+import {HiloMultiTypeKeyGenerator} from './HiloMultiTypeKeyGenerator';
 import {IDocumentStore} from '../Documents/IDocumentStore';
 import {AbstractHiloKeyGenerator} from './AbstractHiloKeyGenerator';
 import {DocumentID, IDocument} from '../Documents/IDocument';
@@ -10,11 +11,17 @@ export class HiloMultiDatabaseKeyGenerator extends AbstractHiloKeyGenerator impl
     super(store);
   }
 
-  public generateDocumentKey(dbName: string, entity: IDocument, callback?: IDCallback): Promise<DocumentID> {
-    return new Promise<DocumentID>(() => {});
+  public generateDocumentKey(entity: IDocument, dbName?: string, callback?: IDCallback): Promise<DocumentID> {
+    return this
+      .getGeneratorForDatabase(dbName || this.store.database)
+      .generateDocumentKey(entity, callback);
   }
 
-  returnUnusedRange(): void {
+  protected getGeneratorForDatabase(dbName: string): IHiloKeyGenerator {
+    if (!(dbName in this.generators)) {
+      this.generators[dbName] = new HiloMultiTypeKeyGenerator(this.store, dbName);
+    }
 
+    return this.generators[dbName];
   }
 }

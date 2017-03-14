@@ -3,7 +3,7 @@ import {RequestMethod, RequestMethods} from '../Http/RequestsExecutor';
 
 export abstract class RavenCommand {
   protected method: RequestMethod = RequestMethods.Get;
-  private _endPoint?: string;
+  protected endPoint?: string;
   protected params?: Object;
   protected payload?: Object;
   protected headers: Object = {};
@@ -11,7 +11,7 @@ export abstract class RavenCommand {
   private readonly _ravenCommand: boolean = true;
 
   constructor(endPoint: string, method: RequestMethod = RequestMethods.Get, params?: Object, payload?: Object, headers: Object = {}, adminCommand: boolean = false) {
-    this._endPoint = endPoint;
+    this.endPoint = endPoint;
     this.method = method;
     this.params = params;
     this.payload = payload;

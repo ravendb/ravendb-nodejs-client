@@ -8,8 +8,4 @@ export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloK
   public generateDocumentKey(callback?: IDCallback): Promise<DocumentID> {
     return new Promise<DocumentID>(() => {});
   }
-
-  returnUnusedRange(): void {
-
-  }
 }

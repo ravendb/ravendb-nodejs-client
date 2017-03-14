@@ -6,7 +6,7 @@ export {IDocumentStore} from './Documents/IDocumentStore';
 export {IDocumentSession} from './Documents/Session/IDocumentSession';
 export {IDocumentQueryConditions} from './Documents/Session/IDocumentQueryConditions';
 export {IDocumentQuery} from './Documents/Session/IDocumentQuery';
-export {IHiloKeyGenerator} from './Hilo/IHiloKeyGenerator';
+export {IHiloKeyGenerator, IHiloKeyGeneratorsCollection} from './Hilo/IHiloKeyGenerator';
 
 // classes
 export {AbstractException, InvalidOperationException, ErrorResponseException, DocumentDoesNotExistsException, NonUniqueObjectException, FetchConcurrencyException, ArgumentOutOfRangeException, DatabaseDoesNotExistException} from './Database/DatabaseExceptions';
@@ -29,3 +29,4 @@ export {HiloReturnCommand} from './Hilo/Commands/HiloReturnCommand';
 
 declare var uuid: Function;
 declare var module: { exports: any };
+declare class AsyncLock{ acquire: any };

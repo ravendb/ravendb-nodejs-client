@@ -6,9 +6,10 @@ import {IDCallback} from '../Utility/Callbacks';
 import * as Promise from 'bluebird';
 
 export interface IDocumentStore {
+  database: string;
   requestsExecutor: RequestsExecutor;
   conventions: DocumentConventions<IDocument>;
   initialize(): IDocumentStore;
   openSession(database?: string, forceReadFromMaster?: boolean) : IDocumentSession;
-  generateId(database: string, entity: IDocument, callback?: IDCallback): Promise<DocumentID>;
+  generateId(entity: IDocument, database?: string, callback?: IDCallback): Promise<DocumentID>;
 }

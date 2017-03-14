@@ -25,6 +25,7 @@
   "author": "Hibernating Rhinos LTD",
   "license": "MIT",
   "devDependencies": {
+    "@types/async-lock": "0.0.19",
     "@types/bluebird": "^3.0.37",
     "@types/chai": "^3.4.35",
     "@types/mocha": "^2.2.39",
@@ -32,6 +33,7 @@
     "@types/request": "0.0.40",
     "@types/request-promise": "^4.1.33",
     "@types/uuid": "^2.0.29",
+    "async-lock": "^0.3.9",
     "chai": "^3.5.0",
     "gulp": "^3.9.1",
     "gulp-append": "^0.3.4",

@@ -15,13 +15,17 @@ import * as Promise from 'bluebird';
 
 export class DocumentStore implements IDocumentStore {
   protected url: string;
-  protected database: string;
   protected apiKey?: string;
   protected sessionId: string;
   protected generator: IHiloKeyGenerator;
   protected initialized: boolean = false;
+  private _database: string;
   private _requestsExecutor: RequestsExecutor;
   private _conventions: DocumentConventions<IDocument>;
+
+  public get database(): string {
+    return this._database;
+  }
 
   public get requestsExecutor(): RequestsExecutor {
     if (!this._requestsExecutor) {
@@ -41,7 +45,7 @@ export class DocumentStore implements IDocumentStore {
 
   constructor(url: string, defaultDatabase: string, apiKey?: string) {
     this.url = url;
-    this.database = defaultDatabase;
+    this._database = defaultDatabase;
     this.apiKey = apiKey;
   }
 
@@ -51,8 +55,8 @@ export class DocumentStore implements IDocumentStore {
 
   public initialize(): IDocumentStore {
     if (!this.initialized) {
-      if (!this.database) {
-        throw new InvalidOperationException("Default database isn't set.");
+      if (!this._database) {
+        throw new InvalidOperationException("Default _database isn't set.");
       }
 
       this.generator = new HiloMultiDatabaseKeyGenerator(this);
@@ -63,17 +67,18 @@ export class DocumentStore implements IDocumentStore {
   }
 
   public finalize(): IDocumentStore {
+    this.generator.returnUnusedRange();
     return this;
   }
 
   public openSession(database?: string, forceReadFromMaster: boolean = false): IDocumentSession {
     if (!this.initialized) {
-      throw new InvalidOperationException("You cannot open a session or access the database commands\
+      throw new InvalidOperationException("You cannot open a session or access the _database commands\
  before initializing the document store. Did you forget calling initialize()?"
       );
     }
 
-    let dbName: string = this.database;
+    let dbName: string = this._database;
     let executor: RequestsExecutor = this.requestsExecutor;
 
     if (database && (database !== dbName)) {
@@ -85,11 +90,11 @@ export class DocumentStore implements IDocumentStore {
     return new DocumentSession(dbName, this, executor, this.sessionId, forceReadFromMaster);
   }
 
-  public generateId(database: string, entity: IDocument, callback?: IDCallback): Promise<DocumentID> {
-    return this.generator.generateDocumentKey(database, entity, callback);
+  public generateId(entity: IDocument, database?: string, callback?: IDCallback): Promise<DocumentID> {
+    return this.generator.generateDocumentKey(entity, database, callback);
   }
 
   protected createRequestsExecutor(database?: string) {
-    return new RequestsExecutor(new ServerNode(this.url, database || this.database, this.apiKey), this.conventions);
+    return new RequestsExecutor(new ServerNode(this.url, database || this._database, this.apiKey), this.conventions);
   }
 }
