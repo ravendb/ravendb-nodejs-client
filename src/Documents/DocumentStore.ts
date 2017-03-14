@@ -56,7 +56,7 @@ export class DocumentStore implements IDocumentStore {
   public initialize(): IDocumentStore {
     if (!this.initialized) {
       if (!this._database) {
-        throw new InvalidOperationException("Default _database isn't set.");
+        throw new InvalidOperationException("Default database isn't set.");
       }
 
       this.generator = new HiloMultiDatabaseKeyGenerator(this);

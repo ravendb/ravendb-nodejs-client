@@ -21,7 +21,7 @@ export class HiloMultiTypeKeyGenerator extends AbstractHiloKeyGenerator implemen
 
     return this.createGeneratorForTag(tag)
       .then((generator: IHiloKeyGenerator) =>
-        generator.generateDocumentKey()
+        generator.generateDocumentKey(callback)
       );
   }
 
