@@ -28,5 +28,6 @@ export {HiloNextCommand} from './Hilo/Commands/HiloNextCommand';
 export {HiloReturnCommand} from './Hilo/Commands/HiloReturnCommand';
 
 declare var uuid: Function;
+declare var moment: Function;
 declare var module: { exports: any };
 declare class AsyncLock{ acquire: any };

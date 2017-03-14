@@ -16,12 +16,12 @@ export abstract class AbstractHiloKeyGenerator implements IHiloKeyGenerator {
     this.tag = tag;
     this.store = store;
     this.conventions = store.conventions;
-    this.dbName = dbName;
+    this.dbName = dbName || store.database;
   }
 
   public abstract generateDocumentKey(...args: (IDocument | IDCallback | string)[]): Promise<DocumentID>;
 
-  public returnUnusedRange() {
+  public returnUnusedRange(): void {
     for (let key in this.generators) {
       this.generators[key].returnUnusedRange();
     }

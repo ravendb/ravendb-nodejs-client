@@ -12,15 +12,19 @@ export class HiloRangeValue {
     this._current = minId - 1;
   }
 
-  get minId(): DocumentID {
+  public get minId(): DocumentID {
     return this._minId;
   }
 
-  get maxId(): DocumentID {
+  public get maxId(): DocumentID {
     return this._maxId;
   }
 
-  get current(): DocumentID {
+  public get current(): DocumentID {
     return this._current;
+  }
+
+  public increment(): DocumentID {
+    return ++this._current;
   }
 }

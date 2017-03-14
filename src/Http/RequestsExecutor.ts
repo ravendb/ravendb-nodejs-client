@@ -1,6 +1,8 @@
 import {ServerNode} from './ServerNode';
+import {RavenCommand} from '../Database/RavenCommand';
 import {IDocument} from '../Documents/IDocument';
 import {DocumentConventions} from '../Documents/Conventions/DocumentConventions';
+import * as Promise from 'bluebird';
 
 export type RequestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS';
 
@@ -23,5 +25,9 @@ export class RequestsExecutor {
     this.conventions = conventions;
     this.forceGetTopology = forceGetTopology;
     this.serverNode = this._primaryServerNode = serverNode;
+  }
+
+  execute(command: RavenCommand): Promise<Object> {
+    return new Promise<Object>((resolve: Object) => {});
   }
 }
