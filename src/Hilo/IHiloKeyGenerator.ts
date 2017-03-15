@@ -1,12 +1,16 @@
-import {DocumentID, IDocument} from '../Documents/IDocument';
-import {IDCallback} from '../Utility/Callbacks';
+import {DocumentKey, IDocument} from '../Documents/IDocument';
+import {EntityKeyCallback} from '../Utility/Callbacks';
 import * as Promise from 'bluebird';
+
+export interface IHiloLockDoneCallback {
+  (err?: Error, ret?: any): void;
+}
 
 export interface IHiloKeyGeneratorsCollection {
   [key: string]: IHiloKeyGenerator;
 }
 
 export interface IHiloKeyGenerator {
-  generateDocumentKey(...args: (IDocument | IDCallback | string)[]): Promise<DocumentID>;
+  generateDocumentKey(...args: (IDocument | EntityKeyCallback | string)[]): Promise<DocumentKey>;
   returnUnusedRange(): void;
 }

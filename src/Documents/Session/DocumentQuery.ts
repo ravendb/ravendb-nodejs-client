@@ -108,7 +108,7 @@ export class DocumentQuery implements IDocumentQuery {
     const result = [this.session.create()];
 
     return new Promise<IDocument[]>((resolve: PromiseResolve<IDocument[]>) =>
-      PromiseResolver.resolve(result, resolve, callback)
+      PromiseResolver.resolve<IDocument[]>(result, resolve, callback)
     );
   }
 

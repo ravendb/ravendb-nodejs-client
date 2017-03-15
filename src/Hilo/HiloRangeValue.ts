@@ -1,4 +1,4 @@
-import {DocumentID} from '../Documents/IDocument';
+import {DocumentID, DocumentKey} from '../Documents/IDocument';
 
 export class HiloRangeValue {
   private _minId: DocumentID;

@@ -1,11 +1,11 @@
-import {DocumentID, IDocument} from './IDocument';
+import {DocumentKey, IDocument} from './IDocument';
 import {Document} from './Document';
 import {IDocumentStore} from './IDocumentStore';
 import {IDocumentSession} from "./Session/IDocumentSession";
 import {DocumentSession} from "./Session/DocumentSession";
 import {ServerNode} from '../Http/ServerNode';
 import {RequestsExecutor} from '../Http/RequestsExecutor';
-import {IDCallback} from '../Utility/Callbacks';
+import {EntityKeyCallback} from '../Utility/Callbacks';
 import {DocumentConventions} from './Conventions/DocumentConventions';
 import {InvalidOperationException} from '../Database/DatabaseExceptions';
 import {IHiloKeyGenerator} from '../Hilo/IHiloKeyGenerator';
@@ -90,7 +90,7 @@ export class DocumentStore implements IDocumentStore {
     return new DocumentSession(dbName, this, executor, this.sessionId, forceReadFromMaster);
   }
 
-  public generateId(entity: IDocument, database?: string, callback?: IDCallback): Promise<DocumentID> {
+  public generateId(entity: IDocument, database?: string, callback?: EntityKeyCallback): Promise<DocumentKey> {
     return this.generator.generateDocumentKey(entity, database, callback);
   }
 

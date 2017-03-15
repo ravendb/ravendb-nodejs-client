@@ -2,7 +2,7 @@ import {IDocumentSession} from "./IDocumentSession";
 import {IDocumentQuery} from "./IDocumentQuery";
 import {DocumentQuery} from "./DocumentQuery";
 import {Document} from '../Document';
-import {IDocument} from '../IDocument';
+import {IDocument, DocumentKey} from '../IDocument';
 import {IDocumentStore} from '../IDocumentStore';
 import {RequestsExecutor} from '../../Http/RequestsExecutor';
 import {DocumentConventions} from '../Conventions/DocumentConventions';
@@ -38,7 +38,7 @@ export class DocumentSession implements IDocumentSession {
     return new Document(attributes);
   }
 
-  public load(keyOrKeys: string | string[], callback?: EntityCallback<IDocument> | EntitiesArrayCallback<IDocument>): Promise<IDocument> | Promise<IDocument[]> {
+  public load(keyOrKeys: DocumentKey | DocumentKey[], callback?: EntityCallback<IDocument> | EntitiesArrayCallback<IDocument>): Promise<IDocument> | Promise<IDocument[]> {
     const result = this.create();
 
     if (Array.isArray(keyOrKeys)) {
@@ -52,7 +52,7 @@ export class DocumentSession implements IDocumentSession {
     }
   }
 
-  public delete(keyOrEntity: string | IDocument, callback?: EntityCallback<IDocument>): Promise<IDocument> {
+  public delete(keyOrEntity: DocumentKey | IDocument, callback?: EntityCallback<IDocument>): Promise<IDocument> {
     const result = this.create();
 
     return new Promise<IDocument>((resolve: PromiseResolve<IDocument>) =>
@@ -60,7 +60,7 @@ export class DocumentSession implements IDocumentSession {
     );
   }
 
-  public store(entity: IDocument, key?: string, etag?: string, forceConcurrencyCheck?: boolean, callback?: EntityCallback<IDocument>): Promise<IDocument> {
+  public store(entity: IDocument, key?: DocumentKey, etag?: string, forceConcurrencyCheck?: boolean, callback?: EntityCallback<IDocument>): Promise<IDocument> {
     const result = this.create();
 
     return new Promise<IDocument>((resolve: PromiseResolve<IDocument>) =>

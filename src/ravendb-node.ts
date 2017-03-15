@@ -1,12 +1,12 @@
 // typings
-export {AbstractCallback, IDCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback} from './Utility/Callbacks';
+export {AbstractCallback, EntityKeyCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback} from './Utility/Callbacks';
 export {PromiseThenable, PromiseResolver, PromiseResolve, PromiseReject} from './Utility/PromiseResolver';
-export {DocumentID, IDocument} from './Documents/IDocument';
+export {DocumentID, DocumentKey, IDocument} from './Documents/IDocument';
 export {IDocumentStore} from './Documents/IDocumentStore';
 export {IDocumentSession} from './Documents/Session/IDocumentSession';
 export {IDocumentQueryConditions} from './Documents/Session/IDocumentQueryConditions';
 export {IDocumentQuery} from './Documents/Session/IDocumentQuery';
-export {IHiloKeyGenerator, IHiloKeyGeneratorsCollection} from './Hilo/IHiloKeyGenerator';
+export {IHiloLockDoneCallback, IHiloKeyGenerator, IHiloKeyGeneratorsCollection} from './Hilo/IHiloKeyGenerator';
 
 // classes
 export {AbstractException, InvalidOperationException, ErrorResponseException, DocumentDoesNotExistsException, NonUniqueObjectException, FetchConcurrencyException, ArgumentOutOfRangeException, DatabaseDoesNotExistException} from './Database/DatabaseExceptions';

@@ -1,10 +1,10 @@
-import {IHiloKeyGenerator} from './IHiloKeyGenerator';
+import {IHiloKeyGenerator, IHiloLockDoneCallback} from './IHiloKeyGenerator';
 import {AbstractHiloKeyGenerator} from './AbstractHiloKeyGenerator';
 import {HiloRangeValue} from './HiloRangeValue';
 import {FetchConcurrencyException} from '../Database/DatabaseExceptions';
 import {IDocumentStore} from '../Documents/IDocumentStore';
-import {DocumentID} from '../Documents/IDocument';
-import {IDCallback} from '../Utility/Callbacks';
+import {DocumentID, DocumentKey} from '../Documents/IDocument';
+import {EntityKeyCallback} from '../Utility/Callbacks';
 import {StringUtil} from '../Utility/StringUtil';
 import {PromiseResolver, PromiseResolve, PromiseReject} from '../Utility/PromiseResolver';
 import {HiloNextCommand} from './Commands/HiloNextCommand';
@@ -30,8 +30,8 @@ export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloK
     this._lock = new AsyncLock();
   }
 
-  public generateDocumentKey(callback?: IDCallback): Promise<DocumentID> {
-    return new Promise<DocumentID>((resolve, reject) => {
+  public generateDocumentKey(callback?: EntityKeyCallback): Promise<DocumentKey> {
+    return new Promise<DocumentKey>((resolve: PromiseResolve<DocumentKey>, reject: PromiseReject) => {
       this.tryRequestNextRange(resolve, reject, callback);
     });
   }
@@ -58,23 +58,27 @@ export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloK
     });
   }
 
-  protected tryRequestNextRange(resolve: PromiseResolve<number>, reject: PromiseReject, callback?: IDCallback): void {
+  protected tryRequestNextRange(resolve: PromiseResolve<DocumentKey>, reject: PromiseReject, callback?: EntityKeyCallback): void {
     this._lock.acquire(
       StringUtil.format('lock:tag:{0}:range:{1}:{2}',
       this.tag, this._range.minId, this._range.maxId
-    ), (done) => {
+    ), (done: IHiloLockDoneCallback) => {
       this._range.increment();
       this.getNextRange()
         .then((range: HiloRangeValue) => done(null, range))
         .catch((error: Error) => done(error));
     }, (result?: HiloRangeValue, error?: Error) => {
       if (result) {
-        PromiseResolver.resolve<number>(result.current, resolve, callback);
+        PromiseResolver.resolve<DocumentKey>(this.getDocumentKeyFromId(result.current), resolve, callback);
       } else if (!(error instanceof FetchConcurrencyException)) {
         PromiseResolver.reject(error, reject, callback);
       } else {
         this.tryRequestNextRange(resolve, reject, callback);
       }
     });
+  }
+
+  protected getDocumentKeyFromId(id: DocumentID): DocumentKey {
+    return StringUtil.format('{0}{1}', (this._prefix || ''), id);
   }
 }
