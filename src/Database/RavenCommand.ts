@@ -1,5 +1,5 @@
 import {ServerNode} from '../Http/ServerNode';
-import {RequestMethod, RequestMethods} from '../Http/RequestsExecutor';
+import {RequestMethod, RequestMethods} from '../Http/RequestMethod';
 
 export abstract class RavenCommand {
   protected method: RequestMethod = RequestMethods.Get;

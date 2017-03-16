@@ -1,5 +1,5 @@
 import {ServerNode} from '../../Http/ServerNode';
-import {RequestMethods} from '../../Http/RequestsExecutor';
+import {RequestMethods} from '../../Http/RequestMethod';
 import {RavenCommand} from '../../Database/RavenCommand';
 
 export class HiloNextCommand extends RavenCommand {
