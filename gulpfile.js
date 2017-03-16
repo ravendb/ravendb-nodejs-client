@@ -8,6 +8,7 @@ const concat = require('gulp-concat');
 const uglify = require('gulp-uglify-harmony');
 
 const preamble = '/** RavenDB Client - (c) Hibernating Rhinos 2017 */';
+const exportDefault = 'export default DocumentStore;';
 const options = {
     src: './src',
     tests: './test',
@@ -39,12 +40,15 @@ gulp.task('run:tests', ['clean', 'build:tests'], (next) => gulp
 
 gulp.task('build:exports', ['clean'], () => gulp
     .src(options.src + '/ravendb-node.ts')
-    .pipe(transform(contents => preamble + "\n" + contents
-        .toString()
-        .split('\n')
-        .filter(line => !line.startsWith('import'))
-        .map(line => line.replace(/ from.*;/, ';'))
-        .join('\n')))
+    .pipe(transform(contents => preamble + "\n"
+        + contents
+            .toString()
+            .split('\n')
+            .filter(line => !line.startsWith('import'))
+            .map(line => line.replace(/ from.*;/, ';'))
+            .join('\n')
+        + "\n\n" + exportDefault + "\n"
+    ))
     .pipe(gulp.dest(options.tmp))
 );
 
