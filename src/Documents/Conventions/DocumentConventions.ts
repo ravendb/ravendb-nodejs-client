@@ -3,19 +3,12 @@ import {InvalidOperationException} from "../../Database/DatabaseExceptions";
 import * as pluralize from 'pluralize';
 import {IMetadata} from "../../Database/Metadata";
 import {SortOption, SortOptions} from "../../Database/Indexes/SortOption";
-
-export enum Failover {
-  FailImmediately = 0,
-  AllowReadsFromSecondaries = 1,
-  AllowReadsFromSecondariesAndWritesToSecondaries = 3,
-  ReadFromAllDervers = 1024
-}
+import {StringUtil} from "../../Utility/StringUtil";
 
 export class DocumentConventions<T extends IDocument> {
   readonly maxNumberOfRequestPerSession: number = 30;
   readonly maxIdsToCatch: number = 32;
   readonly timeout: number = 30;
-  readonly failoverBehavior: number = Failover.AllowReadsFromSecondaries;
   readonly defaultUseOptimisticConcurrency:boolean = false;
   readonly maxLengthOfQueryUsingGetUrl = 1024 + 512;
   readonly identityPartsSeparator = "/";
@@ -92,6 +85,17 @@ export class DocumentConventions<T extends IDocument> {
 
   public usesRangeType(queryFilterValue: any): boolean {
     return 'number' === (typeof queryFilterValue);
+  }
+
+  public rangedFieldName(fieldName: string, queryFilterValue: any): string {
+    if ('number' === (typeof queryFilterValue)) {
+      return StringUtil.format(
+        '{1}_{0}_Range', fieldName,
+        Number.isInteger(queryFilterValue) ? 'L': 'D'
+      );
+    }
+
+    return fieldName;
   }
 
   public getDefaultSortOption(queryFilterValue: any): SortOption | null {

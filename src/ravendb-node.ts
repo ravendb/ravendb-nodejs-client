@@ -12,6 +12,8 @@ export {QueryOperators, QueryOperator} from './Database/Operations/QueryOperator
 export {FieldIndexingOption, FieldIndexingOptions} from './Database/Indexes/FieldIndexingOption';
 export {IndexLockMode} from './Database/Indexes/IndexLockMode';
 export {SortOption, SortOptions} from './Database/Indexes/SortOption';
+export {ReadBehavior, ReadBehaviors} from './Documents/Conventions/ReadBehavior';
+export {WriteBehavior, WriteBehaviors} from './Documents/Conventions/WriteBehavior';
 export {IMetadata, Metadata} from './Database/Metadata';
 
 // classes
@@ -22,7 +24,7 @@ export {Document} from './Documents/Document';
 export {DocumentStore} from './Documents/DocumentStore';
 export {DocumentSession} from './Documents/Session/DocumentSession';
 export {DocumentQuery} from './Documents/Session/DocumentQuery';
-export {Failover, DocumentConventions} from './Documents/Conventions/DocumentConventions';
+export {DocumentConventions} from './Documents/Conventions/DocumentConventions';
 export {ServerNode} from './Http/ServerNode';
 export {RequestsExecutor} from './Http/RequestsExecutor';
 export {HiloRangeValue} from './Hilo/HiloRangeValue';

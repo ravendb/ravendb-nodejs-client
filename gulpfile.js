@@ -16,6 +16,8 @@ const options = {
     dest: './lib',
 };
 
+//@see https://github.com/IdanHaim/RavenDB-Python-Client/commit/267c178fa4ec5e9855028bfb80ed672d3d031b5e
+
 gulp.task('clean', (next) => rmdir(options.tmp, next));
 
 gulp.task('build:tests', ['clean'], () => gulp
