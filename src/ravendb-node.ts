@@ -26,6 +26,7 @@ export {DocumentSession} from './Documents/Session/DocumentSession';
 export {DocumentQuery} from './Documents/Session/DocumentQuery';
 export {DocumentConventions} from './Documents/Conventions/DocumentConventions';
 export {ServerNode} from './Http/ServerNode';
+export {Topology} from './Http/Topology';
 export {RequestsExecutor} from './Http/RequestsExecutor';
 export {HiloRangeValue} from './Hilo/HiloRangeValue';
 export {AbstractHiloKeyGenerator} from './Hilo/AbstractHiloKeyGenerator';

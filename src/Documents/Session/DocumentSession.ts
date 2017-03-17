@@ -60,7 +60,7 @@ export class DocumentSession implements IDocumentSession {
     );
   }
 
-  public store(entity: IDocument, key?: DocumentKey, etag?: string, forceConcurrencyCheck?: boolean, callback?: EntityCallback<IDocument>): Promise<IDocument> {
+  public store(entity: IDocument, key?: DocumentKey, etag?: number, forceConcurrencyCheck?: boolean, callback?: EntityCallback<IDocument>): Promise<IDocument> {
     const result = this.create();
 
     return new Promise<IDocument>((resolve: PromiseResolve<IDocument>) =>

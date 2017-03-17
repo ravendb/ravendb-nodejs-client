@@ -3,6 +3,8 @@ export class ServerNode {
   private _url: string;
   private _apiKey?: string;
   private _currentToken?: string;
+  private _responseTime: number[] = [];
+  private _isRateSurpassed?: boolean = null;
   private _isFailed: boolean = false;
 
   constructor(url: string, database: string, apiKey?: string, currentToken?: string, isFailed: boolean = false) {
@@ -13,23 +15,49 @@ export class ServerNode {
     this._isFailed = isFailed;
   }
 
-  get database(): string {
+  public get database(): string {
     return this._database;
   }
 
-  get url(): string {
+  public get url(): string {
     return this._url;
   }
 
-  get apiKey(): string {
+  public get apiKey(): string {
     return this._apiKey;
   }
 
-  get currentToken(): string {
+  public get currentToken(): string {
     return this._currentToken;
   }
 
-  get isFailed(): boolean {
+  public get isFailed(): boolean {
     return this._isFailed;
+  }
+
+  public get responseTime(): number[] {
+    return this._responseTime;
+  }
+
+  public get ewma(): number {
+    let ewma: number = 0;
+    let divide: number = this._responseTime.length;
+
+    if (0 === divide) {
+      return ewma;
+    }
+
+    ewma = this._responseTime.reduce((total: number, time: number) => (total + time));
+    return (0 === ewma) ? 0 : ewma / divide;
+  }
+
+  public addResponseTime(value: number) {
+    this._responseTime[this._responseTime.length % 5] = value;
+  }
+
+  public isRateSurpassed(requestTimeSlaThresholdInMilliseconds): boolean {
+    return this._isRateSurpassed = this.ewma
+      >= (this._isRateSurpassed ? 0.75 : 1)
+      * requestTimeSlaThresholdInMilliseconds;
   }
 }
