@@ -1,7 +1,7 @@
-export type SortOption = 'Long' | 'Double' | 'Custom';
+export type SortOption = 'None' | 'String' | 'Numeric';
 
 export class SortOptions {
-  public static readonly Long: SortOption = 'Long';
-  public static readonly Float: SortOption = 'Double';
-  public static readonly Custom: SortOption = 'Custom';
+  public static readonly None: SortOption = 'None';
+  public static readonly Str: SortOption = 'String';
+  public static readonly Numeric: SortOption = 'Numeric';
 }

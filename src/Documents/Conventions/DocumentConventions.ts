@@ -99,11 +99,13 @@ export class DocumentConventions<T extends IDocument> {
   }
 
   public getDefaultSortOption(queryFilterValue: any): SortOption | null {
-    if ('number' === (typeof queryFilterValue)) {
-      return Number.isInteger(queryFilterValue)
-        ? SortOptions.Long : SortOptions.Float;
+    switch (typeof queryFilterValue) {
+      case 'number':
+        return SortOptions.Numeric;
+      case 'string':
+        return SortOptions.Str;
+      default:
+        return SortOptions.None;
     }
-
-    return null;
   }
 }

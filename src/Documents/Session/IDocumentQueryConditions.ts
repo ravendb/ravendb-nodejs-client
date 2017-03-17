@@ -1,3 +1,5 @@
-export interface IDocumentQueryConditions {
-  [propName: string]: any | any[];
+import {IOptionsSet} from "../../Utility/IOptionsSet";
+
+export interface IDocumentQueryConditions extends IOptionsSet {
+
 }

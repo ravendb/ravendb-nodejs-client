@@ -11,13 +11,17 @@ export {IHiloKeyGenerator} from './Hilo/IHiloKeyGenerator';
 export {RequestMethods, RequestMethod} from './Http/RequestMethod';
 export {QueryOperators, QueryOperator} from './Documents/Session/QueryOperator';
 export {FieldIndexingOption, FieldIndexingOptions} from './Database/Indexes/FieldIndexingOption';
-export {IndexLockMode} from './Database/Indexes/IndexLockMode';
+export {IndexLockMode, IndexLockModes} from './Database/Indexes/IndexLockMode';
 export {SortOption, SortOptions} from './Database/Indexes/SortOption';
+export {FieldStorageFlag, FieldStorageFlags} from './Database/Indexes/FieldStorageFlag';
+export {FieldTermVectorOption, FieldTermVectorOptions} from './Database/Indexes/FieldTermVectorOption';
+export {IndexPriority, IndexPriorities} from './Database/Indexes/IndexPriority';
 export {ReadBehavior, ReadBehaviors} from './Documents/Conventions/ReadBehavior';
 export {WriteBehavior, WriteBehaviors} from './Documents/Conventions/WriteBehavior';
 export {IMetadata, Metadata} from './Database/Metadata';
 export {ILockDoneCallback, ILockCallback} from './Lock/LockCallbacks';
 export {IHashCollection} from './Utility/IHashCollection';
+export {IOptionsSet} from './Utility/IOptionsSet';
 export {BulkOperationOptions} from './Database/Operations/BulkOperationOptions';
 
 // classes
