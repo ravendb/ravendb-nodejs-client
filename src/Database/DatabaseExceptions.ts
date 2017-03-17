@@ -39,3 +39,12 @@ export class ArgumentOutOfRangeException extends AbstractException {
 export class DatabaseDoesNotExistException extends AbstractException {
 
 }
+
+export class AuthorizationException extends AbstractException {
+
+}
+
+export class IndexDoesNotExistException extends AbstractException {
+
+}
+

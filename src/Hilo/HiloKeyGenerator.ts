@@ -1,4 +1,4 @@
-import {IHiloKeyGenerator, IHiloLockDoneCallback} from './IHiloKeyGenerator';
+import {IHiloKeyGenerator} from './IHiloKeyGenerator';
 import {AbstractHiloKeyGenerator} from './AbstractHiloKeyGenerator';
 import {HiloRangeValue} from './HiloRangeValue';
 import {FetchConcurrencyException} from '../Database/DatabaseExceptions';
@@ -9,25 +9,26 @@ import {StringUtil} from '../Utility/StringUtil';
 import {PromiseResolver, PromiseResolve, PromiseReject} from '../Utility/PromiseResolver';
 import {HiloNextCommand} from './Commands/HiloNextCommand';
 import {HiloReturnCommand} from './Commands/HiloReturnCommand';
+import {ILockDoneCallback} from '../Lock/LockCallbacks';
+import {DateUtil} from '../Utility/DateUtil';
+import {Lock} from '../Lock/Lock';
 import * as Promise from 'bluebird';
-import * as AsyncLock from 'async-lock';
-import * as moment from 'moment';
 
 export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloKeyGenerator {
   private _lastRangeAt: Date;
   private _range: HiloRangeValue;
   private _identityPartsSeparator: string;
-  private _lock: AsyncLock;
+  private _lock: Lock;
   private _prefix?: string = null;
   private _lastBatchSize: number = 0;
 
   constructor(store: IDocumentStore, dbName?: string, tag?: string) {
     super(store, dbName, tag);
 
-    this._lastRangeAt = moment([1, 1, 1]).toDate();
+    this._lastRangeAt = DateUtil.zeroDate();
     this._range = new HiloRangeValue();
     this._identityPartsSeparator = this.conventions.identityPartsSeparator;
-    this._lock = new AsyncLock();
+    this._lock = Lock.getInstance();
   }
 
   public generateDocumentKey(callback?: EntityKeyCallback): Promise<DocumentKey> {
@@ -52,22 +53,20 @@ export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloK
     .then((response: Object) => {
       this._prefix = response['prefix'];
       this._lastBatchSize = response['last_size'];
-      this._lastRangeAt = moment(response['last_range_at'], 'YYYY-MM-DDTHH:mm:ss.SSS').toDate();
+      this._lastRangeAt = DateUtil.parseTimestamp(response['last_range_at']);
 
       return new HiloRangeValue(response['low'], response['high']);
     });
   }
 
   protected tryRequestNextRange(resolve: PromiseResolve<DocumentKey>, reject: PromiseReject, callback?: EntityKeyCallback): void {
-    this._lock.acquire(
-      StringUtil.format('lock:tag:{0}:range:{1}:{2}',
-      this.tag, this._range.minId, this._range.maxId
-    ), (done: IHiloLockDoneCallback) => {
+    this._lock.acquireKey(this.tag, this._range,
+    (done: ILockDoneCallback): any => {
       this._range.increment();
       this.getNextRange()
         .then((range: HiloRangeValue) => done(null, range))
         .catch((error: Error) => done(error));
-    }, (result?: HiloRangeValue, error?: Error) => {
+    }, (error?: Error, result?: HiloRangeValue) => {
       if (result) {
         PromiseResolver.resolve<DocumentKey>(this.getDocumentKeyFromId(result.current), resolve, callback);
       } else if (!(error instanceof FetchConcurrencyException)) {

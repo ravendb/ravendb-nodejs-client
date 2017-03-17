@@ -4,16 +4,16 @@ import {IDocumentStore} from '../Documents/IDocumentStore';
 import {AbstractHiloKeyGenerator} from './AbstractHiloKeyGenerator';
 import {DocumentKey, IDocument} from '../Documents/IDocument';
 import {EntityKeyCallback} from '../Utility/Callbacks';
-import {StringUtil} from '../Utility/StringUtil';
+import {Lock} from '../Lock/Lock';
 import * as Promise from 'bluebird';
-import * as AsyncLock from 'async-lock';
+
 
 export class HiloMultiTypeKeyGenerator extends AbstractHiloKeyGenerator implements IHiloKeyGenerator {
-  private _lock: AsyncLock;
+  private _lock: Lock;
 
   constructor(store: IDocumentStore, dbName?: string) {
     super(store, dbName);
-    this._lock = new AsyncLock();
+    this._lock = Lock.getInstance();
   }
 
   public generateDocumentKey(entity: IDocument, callback?: EntityKeyCallback): Promise<DocumentKey> {
@@ -26,8 +26,8 @@ export class HiloMultiTypeKeyGenerator extends AbstractHiloKeyGenerator implemen
   }
 
   protected createGeneratorForTag(tag: string): Promise<IHiloKeyGenerator> {
-    return new Promise<IHiloKeyGenerator>((resolve) => this._lock.acquire(
-      StringUtil.format('lock:generator:tag:{0}', tag), () => {
+    return new Promise<IHiloKeyGenerator>((resolve) => this._lock
+      .acquireTagGenerator(tag, () => {
         let generator: IHiloKeyGenerator = this.generators[tag];
 
         if (!generator) {
