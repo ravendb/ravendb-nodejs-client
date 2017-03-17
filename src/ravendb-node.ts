@@ -9,7 +9,7 @@ export {IDocumentQuery} from './Documents/Session/IDocumentQuery';
 export {EscapeQueryOptions} from './Documents/Session/EscapeQueryOptions';
 export {IHiloKeyGenerator} from './Hilo/IHiloKeyGenerator';
 export {RequestMethods, RequestMethod} from './Http/RequestMethod';
-export {QueryOperators, QueryOperator} from './Database/Operations/QueryOperator';
+export {QueryOperators, QueryOperator} from './Documents/Session/QueryOperator';
 export {FieldIndexingOption, FieldIndexingOptions} from './Database/Indexes/FieldIndexingOption';
 export {IndexLockMode} from './Database/Indexes/IndexLockMode';
 export {SortOption, SortOptions} from './Database/Indexes/SortOption';
@@ -18,6 +18,7 @@ export {WriteBehavior, WriteBehaviors} from './Documents/Conventions/WriteBehavi
 export {IMetadata, Metadata} from './Database/Metadata';
 export {ILockDoneCallback, ILockCallback} from './Lock/LockCallbacks';
 export {IHashCollection} from './Utility/IHashCollection';
+export {BulkOperationOptions} from './Database/Operations/BulkOperationOptions';
 
 // classes
 export {AbstractException, InvalidOperationException, ErrorResponseException, DocumentDoesNotExistsException, NonUniqueObjectException, FetchConcurrencyException, ArgumentOutOfRangeException, DatabaseDoesNotExistException, AuthorizationException, IndexDoesNotExistException} from './Database/DatabaseExceptions';
