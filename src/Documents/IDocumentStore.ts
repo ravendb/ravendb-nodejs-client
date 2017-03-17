@@ -7,9 +7,9 @@ import * as Promise from 'bluebird';
 
 export interface IDocumentStore {
   database: string;
-  requestsExecutor: RequestsExecutor;
   conventions: DocumentConventions<IDocument>;
   initialize(): IDocumentStore;
   openSession(database?: string, forceReadFromMaster?: boolean) : IDocumentSession;
   generateId(entity: IDocument, database?: string, callback?: EntityKeyCallback): Promise<DocumentKey>;
+  getRequestsExecutor(database?: string): RequestsExecutor;
 }

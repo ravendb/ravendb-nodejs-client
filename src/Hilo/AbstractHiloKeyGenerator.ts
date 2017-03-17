@@ -1,12 +1,13 @@
-import {IHiloKeyGenerator, IHiloKeyGeneratorsCollection} from './IHiloKeyGenerator';
+import {IHiloKeyGenerator} from './IHiloKeyGenerator';
 import {IDocumentStore} from '../Documents/IDocumentStore';
 import {DocumentConventions} from '../Documents/Conventions/DocumentConventions';
 import {DocumentKey, IDocument} from '../Documents/IDocument';
 import {EntityKeyCallback} from '../Utility/Callbacks';
 import * as Promise from 'bluebird';
+import {IHashCollection} from "../Utility/IHashCollection";
 
 export abstract class AbstractHiloKeyGenerator implements IHiloKeyGenerator {
-  protected generators: IHiloKeyGeneratorsCollection = {};
+  protected generators: IHashCollection<IHiloKeyGenerator> = {};
   protected store: IDocumentStore;
   protected conventions: DocumentConventions<IDocument>;
   protected dbName: string;

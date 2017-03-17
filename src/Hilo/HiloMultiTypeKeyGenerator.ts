@@ -7,7 +7,6 @@ import {EntityKeyCallback} from '../Utility/Callbacks';
 import {Lock} from '../Lock/Lock';
 import * as Promise from 'bluebird';
 
-
 export class HiloMultiTypeKeyGenerator extends AbstractHiloKeyGenerator implements IHiloKeyGenerator {
   private _lock: Lock;
 

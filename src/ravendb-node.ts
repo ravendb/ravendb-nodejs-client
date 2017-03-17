@@ -6,7 +6,7 @@ export {IDocumentStore} from './Documents/IDocumentStore';
 export {IDocumentSession} from './Documents/Session/IDocumentSession';
 export {IDocumentQueryConditions} from './Documents/Session/IDocumentQueryConditions';
 export {IDocumentQuery} from './Documents/Session/IDocumentQuery';
-export {IHiloKeyGenerator, IHiloKeyGeneratorsCollection} from './Hilo/IHiloKeyGenerator';
+export {IHiloKeyGenerator} from './Hilo/IHiloKeyGenerator';
 export {RequestMethods, RequestMethod} from './Http/RequestMethod';
 export {QueryOperators, QueryOperator} from './Database/Operations/QueryOperator';
 export {FieldIndexingOption, FieldIndexingOptions} from './Database/Indexes/FieldIndexingOption';
@@ -16,6 +16,7 @@ export {ReadBehavior, ReadBehaviors} from './Documents/Conventions/ReadBehavior'
 export {WriteBehavior, WriteBehaviors} from './Documents/Conventions/WriteBehavior';
 export {IMetadata, Metadata} from './Database/Metadata';
 export {ILockDoneCallback, ILockCallback} from './Lock/LockCallbacks';
+export {IHashCollection} from './Utility/IHashCollection';
 
 // classes
 export {AbstractException, InvalidOperationException, ErrorResponseException, DocumentDoesNotExistsException, NonUniqueObjectException, FetchConcurrencyException, ArgumentOutOfRangeException, DatabaseDoesNotExistException, AuthorizationException, IndexDoesNotExistException} from './Database/DatabaseExceptions';

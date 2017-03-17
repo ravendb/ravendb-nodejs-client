@@ -40,13 +40,13 @@ export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloK
   public returnUnusedRange(): void {
     const range = this._range;
 
-    this.store.requestsExecutor.execute(new HiloReturnCommand(
+    this.store.getRequestsExecutor().execute(new HiloReturnCommand(
       this.tag, range.current, range.maxId
     ));
   }
 
   protected getNextRange(): Promise<HiloRangeValue> {
-    return this.store.requestsExecutor.execute(new HiloNextCommand(
+    return this.store.getRequestsExecutor().execute(new HiloNextCommand(
       this.tag, this._lastBatchSize, this._lastRangeAt,
       this._identityPartsSeparator, this._range.maxId
     ))

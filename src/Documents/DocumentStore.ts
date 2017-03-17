@@ -12,6 +12,7 @@ import {IHiloKeyGenerator} from '../Hilo/IHiloKeyGenerator';
 import {HiloMultiDatabaseKeyGenerator} from '../Hilo/HiloMultiDatabaseKeyGenerator';
 import * as uuid from 'uuid';
 import * as Promise from 'bluebird';
+import {IHashCollection} from "../Utility/IHashCollection";
 
 export class DocumentStore implements IDocumentStore {
   protected url: string;
@@ -20,19 +21,21 @@ export class DocumentStore implements IDocumentStore {
   protected generator: IHiloKeyGenerator;
   protected initialized: boolean = false;
   private _database: string;
-  private _requestsExecutor: RequestsExecutor;
   private _conventions: DocumentConventions<IDocument>;
+  private _requestsExecutors: IHashCollection<RequestsExecutor> = {};
 
   public get database(): string {
     return this._database;
   }
 
-  public get requestsExecutor(): RequestsExecutor {
-    if (!this._requestsExecutor) {
-      this._requestsExecutor = this.createRequestsExecutor();
+  public getRequestsExecutor(database?: string): RequestsExecutor {
+    const dbName = database || this._database;
+
+    if (!(dbName in this._requestsExecutors)) {
+      this._requestsExecutors[dbName] = this.createRequestsExecutor(dbName);
     }
 
-    return this._requestsExecutor;
+    return this._requestsExecutors[dbName];
   }
 
   public get conventions(): DocumentConventions<IDocument> {
@@ -78,13 +81,8 @@ export class DocumentStore implements IDocumentStore {
       );
     }
 
-    let dbName: string = this._database;
-    let executor: RequestsExecutor = this.requestsExecutor;
-
-    if (database && (database !== dbName)) {
-      dbName = database;
-      executor = this.createRequestsExecutor(dbName);
-    }
+    let dbName: string = database || this._database;
+    let executor: RequestsExecutor = this.getRequestsExecutor(dbName);
 
     this.sessionId = uuid();
     return new DocumentSession(dbName, this, executor, this.sessionId, forceReadFromMaster);
@@ -94,7 +92,7 @@ export class DocumentStore implements IDocumentStore {
     return this.generator.generateDocumentKey(entity, database, callback);
   }
 
-  protected createRequestsExecutor(database?: string) {
+  protected createRequestsExecutor(database?: string): RequestsExecutor {
     return new RequestsExecutor(new ServerNode(this.url, database || this._database, this.apiKey), this.conventions);
   }
 }
