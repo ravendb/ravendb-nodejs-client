@@ -6,6 +6,7 @@ export {IDocumentStore} from './Documents/IDocumentStore';
 export {IDocumentSession} from './Documents/Session/IDocumentSession';
 export {IDocumentQueryConditions} from './Documents/Session/IDocumentQueryConditions';
 export {IDocumentQuery} from './Documents/Session/IDocumentQuery';
+export {EscapeQueryOptions} from './Documents/Session/EscapeQueryOptions';
 export {IHiloKeyGenerator} from './Hilo/IHiloKeyGenerator';
 export {RequestMethods, RequestMethod} from './Http/RequestMethod';
 export {QueryOperators, QueryOperator} from './Database/Operations/QueryOperator';
