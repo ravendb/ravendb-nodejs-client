@@ -13,13 +13,14 @@ describe('DocumentSession', () => {
   let json : Object;
 
   beforeEach(() => {
-    subject = DocumentStore.create('localhost:8080', 'Northwind').initialize().openSession()
+    subject = DocumentStore.create('localhost:8080', 'Northwind').initialize().openSession();
     json = {
       stringProp: "string",
       numberProp: 2,
       numberFloatProp: 2.5,
       booleanProp: true,
       nullProp: null,
+      undefinedProp: undefined,
       objectProp: {
         stringProp: "string",
         numberProp: 2,
@@ -68,6 +69,12 @@ describe('DocumentSession', () => {
       expect(document.booleanProp).to.be.a('boolean');
       expect(document.booleanProp).to.equals(true);
       expect(document.nullProp).to.be.null;
+    });
+
+    it('should skip undefined props', () => {
+      const document: IDocument = subject.create(json);
+
+      expect(document).to.not.have.property('undefinedProp');
     });
 
     it('should parse arrays', () => {

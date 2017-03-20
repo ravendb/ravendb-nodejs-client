@@ -2,13 +2,13 @@ import {IDocument} from '../IDocument';
 import {IDocumentQueryConditions} from './IDocumentQueryConditions';
 import {EntityCallback, EntitiesArrayCallback, EntitiesCountCallback} from '../../Utility/Callbacks';
 import * as Promise from 'bluebird'
-import {EscapeQueryOptions} from "./EscapeQueryOptions";
+import {EscapeQueryOption, EscapeQueryOptions} from "./EscapeQueryOptions";
 
 export interface IDocumentQuery {
   select(...args: string[]): IDocumentQuery;
-  search(fieldName: string, searchTerms: string | string[], escapeQueryOptions: EscapeQueryOptions, boost: number): IDocumentQuery;
+  search(fieldName: string, searchTerms: string | string[], escapeQueryOptions: EscapeQueryOption, boost: number): IDocumentQuery;
   where(conditions: IDocumentQueryConditions): IDocumentQuery;
-  whereEquals<V>(fieldName: string, value: V, escapeQueryOptions: EscapeQueryOptions): IDocumentQuery;
+  whereEquals<V>(fieldName: string, value: V, escapeQueryOptions: EscapeQueryOption): IDocumentQuery;
   whereEndsWith<V>(fieldName: string, value: V): IDocumentQuery;
   whereStartsWith<V>(fieldName: string, value: V): IDocumentQuery;
   whereIn<V>(fieldName: string, values: V[]): IDocumentQuery;

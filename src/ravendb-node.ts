@@ -6,7 +6,7 @@ export {IDocumentStore} from './Documents/IDocumentStore';
 export {IDocumentSession} from './Documents/Session/IDocumentSession';
 export {IDocumentQueryConditions} from './Documents/Session/IDocumentQueryConditions';
 export {IDocumentQuery} from './Documents/Session/IDocumentQuery';
-export {EscapeQueryOptions} from './Documents/Session/EscapeQueryOptions';
+export {EscapeQueryOption, EscapeQueryOptions} from './Documents/Session/EscapeQueryOptions';
 export {IHiloKeyGenerator} from './Hilo/IHiloKeyGenerator';
 export {RequestMethods, RequestMethod} from './Http/RequestMethod';
 export {QueryOperators, QueryOperator} from './Documents/Session/QueryOperator';
@@ -25,7 +25,7 @@ export {IOptionsSet} from './Utility/IOptionsSet';
 export {BulkOperationOptions} from './Database/Operations/BulkOperationOptions';
 
 // classes
-export {AbstractException, InvalidOperationException, ErrorResponseException, DocumentDoesNotExistsException, NonUniqueObjectException, FetchConcurrencyException, ArgumentOutOfRangeException, DatabaseDoesNotExistException, AuthorizationException, IndexDoesNotExistException} from './Database/DatabaseExceptions';
+export {RavenException, InvalidOperationException, ErrorResponseException, DocumentDoesNotExistsException, NonUniqueObjectException, FetchConcurrencyException, ArgumentOutOfRangeException, DatabaseDoesNotExistException, AuthorizationException, IndexDoesNotExistException} from './Database/DatabaseExceptions';
 export {RavenCommand} from './Database/RavenCommand';
 export {Serializer} from './Json/Serializer';
 export {Document} from './Documents/Document';

@@ -1,4 +1,4 @@
-export abstract class AbstractException extends Error {
+export abstract class RavenException extends Error {
   constructor(message) {
     super(message);
 
@@ -12,39 +12,39 @@ export abstract class AbstractException extends Error {
   }
 }
 
-export class InvalidOperationException extends AbstractException {
+export class InvalidOperationException extends RavenException {
 
 }
 
-export class ErrorResponseException extends AbstractException {
+export class ErrorResponseException extends RavenException {
 
 }
 
-export class DocumentDoesNotExistsException extends AbstractException {
+export class DocumentDoesNotExistsException extends RavenException {
 
 }
 
-export class NonUniqueObjectException extends AbstractException {
+export class NonUniqueObjectException extends RavenException {
 
 }
 
-export class FetchConcurrencyException extends AbstractException {
+export class FetchConcurrencyException extends RavenException {
 
 }
 
-export class ArgumentOutOfRangeException extends AbstractException {
+export class ArgumentOutOfRangeException extends RavenException {
 
 }
 
-export class DatabaseDoesNotExistException extends AbstractException {
+export class DatabaseDoesNotExistException extends RavenException {
 
 }
 
-export class AuthorizationException extends AbstractException {
+export class AuthorizationException extends RavenException {
 
 }
 
-export class IndexDoesNotExistException extends AbstractException {
+export class IndexDoesNotExistException extends RavenException {
 
 }
 

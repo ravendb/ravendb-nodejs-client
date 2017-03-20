@@ -5,7 +5,7 @@ import {RequestsExecutor} from "../../Http/RequestsExecutor";
 import {IDocumentQueryConditions} from './IDocumentQueryConditions';
 import {EntityCallback, EntitiesArrayCallback, EntitiesCountCallback} from '../../Utility/Callbacks';
 import {PromiseResolve, PromiseResolver} from '../../Utility/PromiseResolver';
-import {EscapeQueryOptions} from "./EscapeQueryOptions";
+import {EscapeQueryOption, EscapeQueryOptions} from "./EscapeQueryOptions";
 import * as Promise from 'bluebird'
 
 export class DocumentQuery implements IDocumentQuery {
@@ -21,7 +21,7 @@ export class DocumentQuery implements IDocumentQuery {
     return this;
   }
 
-  search(fieldName: string, searchTerms: string | string[], escapeQueryOptions: EscapeQueryOptions = EscapeQueryOptions.RawQuery, boost: number = 1): IDocumentQuery {
+  search(fieldName: string, searchTerms: string | string[], escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.RawQuery, boost: number = 1): IDocumentQuery {
     return this;
   }
 
@@ -29,7 +29,7 @@ export class DocumentQuery implements IDocumentQuery {
     return this;
   }
 
-  whereEquals<V>(fieldName: string, value: V, escapeQueryOptions: EscapeQueryOptions = EscapeQueryOptions.EscapeAll): IDocumentQuery {
+  whereEquals<V>(fieldName: string, value: V, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll): IDocumentQuery {
     return this;
   }
 

@@ -20,7 +20,11 @@ export class Serializer {
     };
 
     Object.keys(sourceObject).forEach((key: string) => {
-      targetObject[key] = transform(sourceObject[key]);
+      let source: any = sourceObject[key];
+
+      if ('undefined' !== (typeof source)) {
+        targetObject[key] = transform(source);
+      }
     });
 
     return targetObject;
