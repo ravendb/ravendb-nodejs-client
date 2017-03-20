@@ -4,8 +4,9 @@ import {IndexPriority} from './IndexPriority';
 import {IHashCollection} from '../../Utility/IHashCollection';
 import {IndexFieldOptions} from './IndexFieldOptions';
 import {ArrayUtil} from '../../Utility/ArrayUtil';
+import {IJsonSerializable} from '../../Json/IJsonSerializable';
 
-export class IndexDefinition {
+export class IndexDefinition implements IJsonSerializable {
   protected name: string;
   protected maps: string[];
   protected indexId: number = 0;

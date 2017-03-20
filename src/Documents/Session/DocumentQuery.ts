@@ -1,7 +1,7 @@
 import {IDocument} from "../IDocument";
 import {IDocumentQuery} from "./IDocumentQuery";
 import {IDocumentSession} from "./IDocumentSession";
-import {RequestsExecutor} from "../../Http/RequestsExecutor";
+import {RequestsExecutor} from "../../Http/Request/RequestsExecutor";
 import {IDocumentQueryConditions} from './IDocumentQueryConditions';
 import {EntityCallback, EntitiesArrayCallback, EntitiesCountCallback} from '../../Utility/Callbacks';
 import {PromiseResolve, PromiseResolver} from '../../Utility/PromiseResolver';

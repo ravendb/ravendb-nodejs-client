@@ -1,7 +1,7 @@
-import {ServerNode} from './ServerNode';
-import {RavenCommand} from '../Database/RavenCommand';
-import {IDocument} from '../Documents/IDocument';
-import {DocumentConventions} from '../Documents/Conventions/DocumentConventions';
+import {ServerNode} from '../ServerNode';
+import {RavenCommand} from '../../Database/RavenCommand';
+import {IDocument} from '../../Documents/IDocument';
+import {DocumentConventions} from '../../Documents/Conventions/DocumentConventions';
 import * as Promise from 'bluebird';
 
 export class RequestsExecutor {

@@ -4,7 +4,7 @@ import {DocumentQuery} from "./DocumentQuery";
 import {Document} from '../Document';
 import {IDocument, DocumentKey} from '../IDocument';
 import {IDocumentStore} from '../IDocumentStore';
-import {RequestsExecutor} from '../../Http/RequestsExecutor';
+import {RequestsExecutor} from '../../Http/Request/RequestsExecutor';
 import {DocumentConventions} from '../Conventions/DocumentConventions';
 import {EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
 import {PromiseResolve, PromiseResolver} from '../../Utility/PromiseResolver';

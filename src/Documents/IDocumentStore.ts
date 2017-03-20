@@ -1,6 +1,6 @@
 import {DocumentKey, IDocument} from './IDocument';
 import {IDocumentSession} from "./Session/IDocumentSession";
-import {RequestsExecutor} from '../Http/RequestsExecutor';
+import {RequestsExecutor} from '../Http/Request/RequestsExecutor';
 import {DocumentConventions} from './Conventions/DocumentConventions';
 import {EntityKeyCallback} from '../Utility/Callbacks';
 import * as Promise from 'bluebird';

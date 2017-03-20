@@ -8,7 +8,7 @@ export {IDocumentQueryConditions} from './Documents/Session/IDocumentQueryCondit
 export {IDocumentQuery} from './Documents/Session/IDocumentQuery';
 export {EscapeQueryOption, EscapeQueryOptions} from './Documents/Session/EscapeQueryOptions';
 export {IHiloKeyGenerator} from './Hilo/IHiloKeyGenerator';
-export {RequestMethods, RequestMethod} from './Http/RequestMethod';
+export {RequestMethods, RequestMethod} from './Http/Request/RequestMethod';
 export {QueryOperators, QueryOperator} from './Documents/Session/QueryOperator';
 export {FieldIndexingOption, FieldIndexingOptions} from './Database/Indexes/FieldIndexingOption';
 export {IndexLockMode, IndexLockModes} from './Database/Indexes/IndexLockMode';
@@ -23,10 +23,19 @@ export {ILockDoneCallback, ILockCallback} from './Lock/LockCallbacks';
 export {IHashCollection} from './Utility/IHashCollection';
 export {IOptionsSet} from './Utility/IOptionsSet';
 export {BulkOperationOptions} from './Database/Operations/BulkOperationOptions';
+export {IJsonSerializable} from './Json/IJsonSerializable';
 
 // classes
 export {RavenException, InvalidOperationException, ErrorResponseException, DocumentDoesNotExistsException, NonUniqueObjectException, FetchConcurrencyException, ArgumentOutOfRangeException, DatabaseDoesNotExistException, AuthorizationException, IndexDoesNotExistException} from './Database/DatabaseExceptions';
 export {RavenCommand} from './Database/RavenCommand';
+export {GetDocumentCommand} from './Database/Commands/GetDocumentCommand';
+export {DeleteDocumentCommand} from './Database/Commands/DeleteDocumentCommand';
+export {PutDocumentCommand} from './Database/Commands/PutDocumentCommand';
+export {QueryCommand} from './Database/Commands/QueryCommand';
+export {GetTopologyCommand} from './Database/Commands/GetTopologyCommand';
+export {RavenCommandData} from './Database/RavenCommandData';
+export {PutCommandData} from './Database/Commands/Data/PutCommandData';
+export {DeleteCommandData} from './Database/Commands/Data/DeleteCommandData';
 export {Serializer} from './Json/Serializer';
 export {Document} from './Documents/Document';
 export {DocumentStore} from './Documents/DocumentStore';
@@ -42,7 +51,8 @@ export {Lock} from './Lock/Lock';
 export {DateUtil} from './Utility/DateUtil';
 export {StringUtil} from './Utility/StringUtil';
 export {ArrayUtil} from './Utility/ArrayUtil';
-export {RequestsExecutor} from './Http/RequestsExecutor';
+export {RequestsExecutor} from './Http/Request/RequestsExecutor';
+export {PatchRequest} from './Http/Request/PatchRequest';
 export {HiloRangeValue} from './Hilo/HiloRangeValue';
 export {AbstractHiloKeyGenerator} from './Hilo/AbstractHiloKeyGenerator';
 export {HiloKeyGenerator} from './Hilo/HiloKeyGenerator';
