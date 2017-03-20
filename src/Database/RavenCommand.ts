@@ -2,6 +2,7 @@ import {ServerNode} from '../Http/ServerNode';
 import {RequestMethod, RequestMethods} from '../Http/Request/RequestMethod';
 import {IRavenCommandResponse} from "./IRavenCommandResponse";
 import {IResponse} from "../Http/IResponse";
+import {IHeaders} from "../Http/IHeaders";
 
 export abstract class RavenCommand {
   protected method: RequestMethod = RequestMethods.Get;
@@ -15,7 +16,7 @@ export abstract class RavenCommand {
   protected authenticationRetries: number = 0;
   private readonly _ravenCommand: boolean = true;
 
-  constructor(endPoint: string, method: RequestMethod = RequestMethods.Get, params?: Object, payload?: Object, headers: Object = {}, isReadRequest: boolean = false) {
+  constructor(endPoint: string, method: RequestMethod = RequestMethods.Get, params?: Object, payload?: Object, headers: IHeaders = {}, isReadRequest: boolean = false) {
     this.endPoint = endPoint;
     this.method = method;
     this.params = params;
