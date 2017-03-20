@@ -45,7 +45,9 @@ export class DeleteDocumentCommand extends RavenCommand {
 
     if (!responseBody) {
       throw new DocumentDoesNotExistsException(StringUtil.format('Couldn\'t find The Document {0}', this.key));
-    } else if ((204 !== responseBody.statusCode) && responseBody.Error) {
+    }
+
+    if ((204 !== responseBody.statusCode) && responseBody.Error) {
       throw new ErrorResponseException(responseBody.Error);
     }
   }

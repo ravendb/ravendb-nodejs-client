@@ -9,5 +9,6 @@ export interface IResponse extends IHash {
 
 export interface IResponseBody extends IHash {
   Error?: string,
-  Results?: Hash | Hash[]
+  Results?: Hash | Hash[],
+  ActualEtag?: number
 }
