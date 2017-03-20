@@ -16,7 +16,7 @@ export class GetDocumentCommand extends RavenCommand {
   constructor(keyOrKeys: DocumentKey | DocumentKey[], includes?: string[],
     metadataOnly: boolean = false, forceReadFromMaster: boolean = false
   ) {
-    super('', RequestMethods.Get, null, null, {}, true);
+    super('', RequestMethods.Get, null, null, null, true);
 
     this.keyOrKeys = keyOrKeys;
     this.includes = includes;
@@ -24,7 +24,7 @@ export class GetDocumentCommand extends RavenCommand {
     this.forceReadFromMaster = forceReadFromMaster;
   }
 
-  protected createRequest(serverNode: ServerNode): void {
+  public createRequest(serverNode: ServerNode): void {
     if (!this.keyOrKeys) {
       throw new InvalidOperationException('Null Key is not valid');
     }
@@ -63,7 +63,7 @@ export class GetDocumentCommand extends RavenCommand {
     }
   }
 
-  protected setResponse(response: IResponse): IRavenCommandResponse | null | void {
+  public setResponse(response: IResponse): IRavenCommandResponse | null | void {
     const responseBody: IResponseBody = response.body;
 
     if (!responseBody) {

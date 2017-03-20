@@ -16,11 +16,11 @@ export class HiloReturnCommand extends RavenCommand {
     this.end = end;
   }
 
-  protected createRequest(serverNode: ServerNode): void {
+  public createRequest(serverNode: ServerNode): void {
 
   }
 
-  protected setResponse(response: IResponse): IRavenCommandResponse | null | void {
+  public setResponse(response: IResponse): IRavenCommandResponse | null | void {
 
   }
 }

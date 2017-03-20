@@ -4,9 +4,9 @@ import {IRavenCommandResponse} from "../IRavenCommandResponse";
 import {IResponse} from "../../Http/IResponse";
 
 export class PutDocumentCommand extends RavenCommand {
-  protected createRequest(serverNode: ServerNode): void {
+  public createRequest(serverNode: ServerNode): void {
   }
 
-  protected setResponse(response: IResponse): IRavenCommandResponse | null | void {
+  public setResponse(response: IResponse): IRavenCommandResponse | null | void {
   }
 }

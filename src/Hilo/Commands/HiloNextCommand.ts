@@ -20,11 +20,11 @@ export class HiloNextCommand extends RavenCommand {
     this.identityPartsSeparator = identityPartsSeparator;
   }
 
-  protected createRequest(serverNode: ServerNode): void {
+  public createRequest(serverNode: ServerNode): void {
 
   }
 
-  protected setResponse(response: IResponse): IRavenCommandResponse | null | void {
+  public setResponse(response: IResponse): IRavenCommandResponse | null | void {
 
   }
 }
