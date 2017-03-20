@@ -1,7 +1,8 @@
 import {IDocument, DocumentKey} from './IDocument';
 import {Serializer} from '../Json/Serializer';
+import {Hash} from '../Utility/Hash';
 
-export class Document extends Object implements IDocument {
+export class Document extends Hash implements IDocument {
   _id: DocumentKey;
   [propName: string]: any | any[];
 

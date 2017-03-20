@@ -1,5 +1,6 @@
 const gulp = require('gulp');
 const rmdir = require('rimraf');
+const sort = require('gulp-sort');
 const mocha = require('gulp-mocha');
 const ts = require('gulp-typescript');
 const append = require('gulp-append');
@@ -9,6 +10,7 @@ const uglify = require('gulp-uglify-harmony');
 
 const preamble = '/** RavenDB Client - (c) Hibernating Rhinos 2017 */';
 const exportDefault = 'export default DocumentStore;';
+const prioritizedClasses = ['Hash.ts', 'RavenCommand.ts'];
 const options = {
     src: './src',
     tests: './test',
@@ -56,6 +58,16 @@ gulp.task('build:exports', ['clean'], () => gulp
 
 gulp.task('build:concat', ['clean'], () => gulp
     .src(options.src + '/[A-Z]*/**/*.ts')
+    .pipe(sort({
+        comparator: (file, anotherFile) => {
+            const isPrioritized = (file) => prioritizedClasses
+                .some((className) => !!~file.path.indexOf(className));
+
+            return isPrioritized(file) ? -1 : (
+                isPrioritized(anotherFile) ? 1 : 0
+            );
+        }
+    }))
     .pipe(concat('ravendb-node.bundle.ts'))
     .pipe(transform(contents => contents
         .toString()

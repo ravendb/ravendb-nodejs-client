@@ -24,9 +24,13 @@ export {IHashCollection} from './Utility/IHashCollection';
 export {IOptionsSet} from './Utility/IOptionsSet';
 export {BulkOperationOptions} from './Database/Operations/BulkOperationOptions';
 export {IJsonSerializable} from './Json/IJsonSerializable';
+export {IRavenCommandResponse} from './Database/IRavenCommandResponse';
+export {IHeaders} from './Http/IHeaders';
+export {IResponse, IResponseBody} from './Http/IResponse';
 
 // classes
 export {RavenException, InvalidOperationException, ErrorResponseException, DocumentDoesNotExistsException, NonUniqueObjectException, FetchConcurrencyException, ArgumentOutOfRangeException, DatabaseDoesNotExistException, AuthorizationException, IndexDoesNotExistException} from './Database/DatabaseExceptions';
+export {IHash, Hash} from './Utility/Hash';
 export {RavenCommand} from './Database/RavenCommand';
 export {GetDocumentCommand} from './Database/Commands/GetDocumentCommand';
 export {DeleteDocumentCommand} from './Database/Commands/DeleteDocumentCommand';
