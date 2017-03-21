@@ -10,13 +10,16 @@ import {ErrorResponseException} from "../DatabaseExceptions";
 export class GetTopologyCommand extends RavenCommand {
   constructor() {
     super('', RequestMethods.Get, null, null, {}, true);
+    this.avoidFailover = true;
   }
 
   public createRequest(serverNode: ServerNode): void {
     this.endPoint = StringUtil.format(
-      '{0}/databases/{1}/stats',
+      '{0}/databases/{1}/topology',
       serverNode.url, serverNode.database
     );
+
+    this.params = {url: serverNode.url};
   }
 
   public setResponse(response: IResponse): IRavenCommandResponse | null | void {
