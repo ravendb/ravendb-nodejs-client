@@ -9,6 +9,7 @@ import {IDocument} from "../../Documents/IDocument";
 import {InvalidOperationException, ErrorResponseException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {QueryOperators} from "../../Documents/Session/QueryOperator";
+import {QueryString} from "../../Http/QueryString";
 
 export class QueryCommand extends RavenCommand {
   protected indexName: string;
@@ -49,13 +50,12 @@ export class QueryCommand extends RavenCommand {
   public createRequest(serverNode: ServerNode): void {
     const query = this.indexQuery;
 
+    this.params = {pageSize: query.pageSize};
     this.endPoint = StringUtil.format(
       '{0}/databases/{1}/queries/{2}',
       serverNode.url, serverNode.database,
       encodeURIComponent(this.indexName)
     );
-
-    this.params = {pageSize: query.pageSize};
 
     query.query && this.addParams('query', query.query);
     query.fetch && this.addParams('fetch', query.fetch);
@@ -67,7 +67,9 @@ export class QueryCommand extends RavenCommand {
     QueryOperators.isAnd(query.defaultOperator) && this.addParams('operator', query.defaultOperator);
     query.waitForNonStaleResultsTimeout && this.addParams('waitForNonStaleResultsTimeout', query.waitForNonStaleResultsTimeout);
 
-    //TODO: check length
+    if ((this.endPoint + '?' + QueryString.stringify(this.params)).length > this.conventions.maxLengthOfQueryUsingGetUrl) {
+      this.method = RequestMethods.Post;
+    }
   }
 
   public setResponse(response: IResponse): IRavenCommandResponse | null | void {
