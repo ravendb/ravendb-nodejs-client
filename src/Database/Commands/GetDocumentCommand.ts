@@ -42,9 +42,7 @@ export class GetDocumentCommand extends RavenCommand {
     });
 
     if (Array.isArray(this.keyOrKeys)) {
-      this.metadataOnly && Object.assign(this.params, {
-        'metadata-only': 'True'
-      });
+      this.metadataOnly && this.addParams('metadata-only', 'True');
 
       if (this.keyOrKeys.map((key: DocumentKey) => key.length)
           .reduce((sum: number, len: number) => sum + len) > 1024
@@ -52,14 +50,10 @@ export class GetDocumentCommand extends RavenCommand {
         this.payload = this.keyOrKeys;
         this.method = RequestMethods.Post;
       } else {
-        Object.assign(this.params, {
-          id: this.keyOrKeys as DocumentKey[]
-        });
+        this.addParams('id', this.keyOrKeys as DocumentKey[]);
       }
     } else {
-      Object.assign(this.params, {
-        id: this.keyOrKeys as DocumentKey
-      });
+      this.addParams('id', this.keyOrKeys as DocumentKey);
     }
   }
 

@@ -36,6 +36,11 @@ export abstract class RavenCommand {
     return (nodes.size > 0) && nodes.has(node);
   }
 
+  protected addParams(params: Object | string, value?: any): void {
+    Object.assign(this.params, ('object' === (typeof params))
+      ? params as Object : {[params as string]: value});
+  }
+
   protected abstract createRequest(serverNode: ServerNode): void;
   protected abstract setResponse(response: IResponse): IRavenCommandResponse | null | void;
 }

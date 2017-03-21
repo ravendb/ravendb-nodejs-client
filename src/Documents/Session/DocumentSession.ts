@@ -38,7 +38,7 @@ export class DocumentSession implements IDocumentSession {
     return new Document(attributes);
   }
 
-  public load(keyOrKeys: DocumentKey | DocumentKey[], callback?: EntityCallback<IDocument> | EntitiesArrayCallback<IDocument>): Promise<IDocument> | Promise<IDocument[]> {
+  public load(keyOrKeys: DocumentKey | DocumentKey[], includes?: string[], callback?: EntityCallback<IDocument> | EntitiesArrayCallback<IDocument>): Promise<IDocument> | Promise<IDocument[]> {
     const result = this.create();
 
     if (Array.isArray(keyOrKeys)) {
