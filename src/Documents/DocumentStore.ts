@@ -92,7 +92,7 @@ export class DocumentStore implements IDocumentStore {
     return this.generator.generateDocumentKey(entity, database, callback);
   }
 
-  public createRequestsExecutor(database?: string): RequestsExecutor {
+  protected createRequestsExecutor(database?: string): RequestsExecutor {
     return new RequestsExecutor(new ServerNode(this.url, database || this._database, this.apiKey), this.conventions);
   }
 }

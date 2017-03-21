@@ -1,7 +1,7 @@
 import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
 import {IRavenCommandResponse} from "../IRavenCommandResponse";
-import {IResponse, IResponseBody} from "../../Http/IResponse";
+import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {DocumentKey} from "../../Documents/IDocument";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {ErrorResponseException, InvalidOperationException} from "../DatabaseExceptions";
@@ -16,7 +16,7 @@ export class GetDocumentCommand extends RavenCommand {
   constructor(keyOrKeys: DocumentKey | DocumentKey[], includes?: string[],
     metadataOnly: boolean = false, forceReadFromMaster: boolean = false
   ) {
-    super('', RequestMethods.Get, null, null, null, true);
+    super('', RequestMethods.Get, null, null, {}, true);
 
     this.keyOrKeys = keyOrKeys;
     this.includes = includes;

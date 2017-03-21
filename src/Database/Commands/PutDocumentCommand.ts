@@ -1,6 +1,6 @@
 import {ServerNode} from '../../Http/ServerNode';
 import {IRavenCommandResponse} from "../IRavenCommandResponse";
-import {IResponse, IResponseBody} from "../../Http/IResponse";
+import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {DocumentKey} from "../../Documents/IDocument";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {DeleteDocumentCommand} from './DeleteDocumentCommand';

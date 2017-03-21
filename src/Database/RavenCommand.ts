@@ -1,7 +1,7 @@
 import {ServerNode} from '../Http/ServerNode';
 import {RequestMethod, RequestMethods} from '../Http/Request/RequestMethod';
 import {IRavenCommandResponse} from "./IRavenCommandResponse";
-import {IResponse} from "../Http/IResponse";
+import {IResponse} from "../Http/Response/IResponse";
 import {IHeaders} from "../Http/IHeaders";
 
 export abstract class RavenCommand {

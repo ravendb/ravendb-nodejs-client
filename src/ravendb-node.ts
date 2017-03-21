@@ -18,6 +18,7 @@ export {FieldTermVectorOption, FieldTermVectorOptions} from './Database/Indexes/
 export {IndexPriority, IndexPriorities} from './Database/Indexes/IndexPriority';
 export {ReadBehavior, ReadBehaviors} from './Documents/Conventions/ReadBehavior';
 export {WriteBehavior, WriteBehaviors} from './Documents/Conventions/WriteBehavior';
+export {StatusCode, StatusCodes} from './Http/Response/StatusCode';
 export {IMetadata, Metadata} from './Database/Metadata';
 export {ILockDoneCallback, ILockCallback} from './Lock/LockCallbacks';
 export {IHashCollection} from './Utility/IHashCollection';
@@ -26,7 +27,7 @@ export {BulkOperationOptions} from './Database/Operations/BulkOperationOptions';
 export {IJsonSerializable} from './Json/IJsonSerializable';
 export {IRavenCommandResponse} from './Database/IRavenCommandResponse';
 export {IHeaders} from './Http/IHeaders';
-export {IResponse, IResponseBody} from './Http/IResponse';
+export {IResponse, IResponseBody} from './Http/Response/IResponse';
 
 // classes
 export {RavenException, InvalidOperationException, ErrorResponseException, DocumentDoesNotExistsException, NonUniqueObjectException, FetchConcurrencyException, ArgumentOutOfRangeException, DatabaseDoesNotExistException, AuthorizationException, IndexDoesNotExistException} from './Database/DatabaseExceptions';

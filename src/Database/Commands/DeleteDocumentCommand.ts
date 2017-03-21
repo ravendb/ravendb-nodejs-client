@@ -1,11 +1,12 @@
 import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
 import {IRavenCommandResponse} from "../IRavenCommandResponse";
-import {IResponse, IResponseBody} from "../../Http/IResponse";
+import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {DocumentKey} from "../../Documents/IDocument";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {InvalidOperationException, DocumentDoesNotExistsException, ErrorResponseException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
+import {StatusCodes} from "../../Http/Response/StatusCode";
 
 export class DeleteDocumentCommand extends RavenCommand {
   protected key?: DocumentKey;
@@ -47,7 +48,7 @@ export class DeleteDocumentCommand extends RavenCommand {
       throw new DocumentDoesNotExistsException(StringUtil.format('Couldn\'t find The Document {0}', this.key));
     }
 
-    if ((204 !== responseBody.statusCode) && responseBody.Error) {
+    if (!StatusCodes.isNoContent(response.statusCode) && responseBody.Error) {
       throw new ErrorResponseException(responseBody.Error);
     }
   }

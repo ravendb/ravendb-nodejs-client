@@ -2,7 +2,7 @@ import {ServerNode} from '../../Http/ServerNode';
 import {RequestMethods} from '../../Http/Request/RequestMethod';
 import {RavenCommand} from '../../Database/RavenCommand';
 import {IRavenCommandResponse} from "../../Database/IRavenCommandResponse";
-import {IResponse} from "../../Http/IResponse";
+import {IResponse} from "../../Http/Response/IResponse";
 
 export class HiloNextCommand extends RavenCommand {
   protected tag: string;

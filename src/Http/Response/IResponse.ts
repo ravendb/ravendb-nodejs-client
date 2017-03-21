@@ -1,8 +1,9 @@
-import {IHash, Hash} from '../Utility/Hash';
-import {IHeaders} from './IHeaders';
+import {IHash, Hash} from '../../Utility/Hash';
+import {IHeaders} from '../IHeaders';
+import {StatusCode} from "./StatusCode";
 
 export interface IResponse extends IHash {
-  statusCode: number;
+  statusCode: StatusCode;
   headers: IHeaders;
   body?: IResponseBody;
 }
