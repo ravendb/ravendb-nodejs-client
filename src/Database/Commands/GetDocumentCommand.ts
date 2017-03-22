@@ -29,17 +29,9 @@ export class GetDocumentCommand extends RavenCommand {
       throw new InvalidOperationException('Null Key is not valid');
     }
 
-    this.endPoint = StringUtil.format(
-      '{0}/databases/{1}/docs',
-      serverNode.url,
-      serverNode.database
-    );
-
     this.params = {};
-
-    this.includes && Object.assign(this.params, {
-      includes: this.includes
-    });
+    this.endPoint = StringUtil.format('{url}/databases/{database}/docs', serverNode);
+    this.includes && this.addParams('includes', this.includes);
 
     if (Array.isArray(this.keyOrKeys)) {
       this.metadataOnly && this.addParams('metadata-only', 'True');

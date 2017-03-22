@@ -1,4 +1,5 @@
 import {StringUtil} from "../Utility/StringUtil";
+
 export class QueryString {
   public static stringify(params: Object): string {
     let result: string[] = [];

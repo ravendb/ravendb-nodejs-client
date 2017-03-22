@@ -28,17 +28,12 @@ export class DeleteDocumentCommand extends RavenCommand {
       throw new InvalidOperationException('Key must be a string');
     }
 
-    this.params = {id: this.key};
-
     if (this.etag) {
       this.headers = {'If-Match': StringUtil.format('"{0}"', this.etag)};
     }
 
-    this.endPoint = StringUtil.format(
-      '{0}/databases/{1}/docs',
-      serverNode.url,
-      serverNode.database
-    );
+    this.params = {id: this.key};
+    this.endPoint = StringUtil.format('{url}/databases/{database}/docs', serverNode);
   }
 
   public setResponse(response: IResponse): IRavenCommandResponse | null | void {

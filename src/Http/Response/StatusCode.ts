@@ -1,4 +1,4 @@
-export type StatusCode = 200 | 201 | 202 | 204 | 301 | 302 | 304 | 400 | 401 | 403 | 404 | 500 | 502 | 503 | 504;
+export type StatusCode = 200 | 201 | 202 | 204 | 301 | 302 | 304 | 400 | 401 | 403 | 404 | 409 | 500 | 502 | 503 | 504;
 
 export class StatusCodes {
   public static readonly Ok: StatusCode = 200;
@@ -12,6 +12,7 @@ export class StatusCodes {
   public static readonly Unauthorized: StatusCode = 401;
   public static readonly Forbidden: StatusCode = 403;
   public static readonly NotFound: StatusCode = 404;
+  public static readonly Conflict: StatusCode = 409;
   public static readonly InternalServerError: StatusCode = 500;
   public static readonly BadGateway: StatusCode = 502;
   public static readonly ServiceUnavailable: StatusCode = 503;
@@ -59,6 +60,10 @@ export class StatusCodes {
 
   public static isNotFound(statusCode: StatusCode): boolean {
     return statusCode === StatusCodes.NotFound;
+  }
+
+  public static isConflict(statusCode: StatusCode): boolean {
+    return statusCode === StatusCodes.Conflict;
   }
 
   public static isInternalServerError(statusCode: StatusCode): boolean {
