@@ -48,3 +48,8 @@ export class IndexDoesNotExistException extends RavenException {
 
 }
 
+export class TimeoutException extends RavenException {
+
+}
+
+

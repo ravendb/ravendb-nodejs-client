@@ -13,6 +13,7 @@ import {HiloMultiDatabaseKeyGenerator} from '../Hilo/HiloMultiDatabaseKeyGenerat
 import * as uuid from 'uuid';
 import * as Promise from 'bluebird';
 import {IHashCollection} from "../Utility/IHashCollection";
+import {Operations} from "../Database/Operations/Operations";
 
 export class DocumentStore implements IDocumentStore {
   protected url: string;
@@ -21,6 +22,7 @@ export class DocumentStore implements IDocumentStore {
   protected generator: IHiloKeyGenerator;
   protected initialized: boolean = false;
   private _database: string;
+  private _operations: Operations;
   private _conventions: DocumentConventions<IDocument>;
   private _requestsExecutors: IHashCollection<RequestsExecutor> = {};
 
@@ -44,6 +46,16 @@ export class DocumentStore implements IDocumentStore {
     }
 
     return this._conventions;
+  }
+
+  public get operations(): Operations {
+    this.assertInitialize();
+
+    if (!this._operations) {
+      this._operations = new Operations(this.getRequestsExecutor());
+    }
+
+    return this._operations;
   }
 
   constructor(url: string, defaultDatabase: string, apiKey?: string) {
@@ -75,11 +87,7 @@ export class DocumentStore implements IDocumentStore {
   }
 
   public openSession(database?: string, forceReadFromMaster: boolean = false): IDocumentSession {
-    if (!this.initialized) {
-      throw new InvalidOperationException("You cannot open a session or access the _database commands\
- before initializing the document store. Did you forget calling initialize()?"
-      );
-    }
+    this.assertInitialize();
 
     let dbName: string = database || this._database;
     let executor: RequestsExecutor = this.getRequestsExecutor(dbName);
@@ -90,6 +98,14 @@ export class DocumentStore implements IDocumentStore {
 
   public generateId(entity: IDocument, database?: string, callback?: EntityKeyCallback): Promise<DocumentKey> {
     return this.generator.generateDocumentKey(entity, database, callback);
+  }
+
+  protected assertInitialize(): void {
+    if (!this.initialized) {
+      throw new InvalidOperationException("You cannot open a session or access the _database commands\
+ before initializing the document store. Did you forget calling initialize()?"
+      );
+    }
   }
 
   protected createRequestsExecutor(database?: string): RequestsExecutor {

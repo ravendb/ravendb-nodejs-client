@@ -1,4 +1,4 @@
-export class BulkOperationOptions {
+export class QueryOperationOptions {
   protected allowStale: boolean = true;
   protected staleTimeout?: number = null;
   protected maxOpsPerSec?: number = null;

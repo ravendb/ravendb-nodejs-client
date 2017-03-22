@@ -3,6 +3,7 @@ import {RavenCommand} from '../../Database/RavenCommand';
 import {IDocument} from '../../Documents/IDocument';
 import {DocumentConventions} from '../../Documents/Conventions/DocumentConventions';
 import * as Promise from 'bluebird';
+import {IRavenCommandResponse} from "../../Database/IRavenCommandResponse";
 
 export class RequestsExecutor {
   protected serverNode: ServerNode;
@@ -16,7 +17,7 @@ export class RequestsExecutor {
     this.serverNode = this._primaryServerNode = serverNode;
   }
 
-  execute(command: RavenCommand): Promise<Object> {
-    return new Promise<Object>((resolve: Object) => {});
+  execute(command: RavenCommand): Promise<IRavenCommandResponse> {
+    return new Promise<IRavenCommandResponse>((resolve: IRavenCommandResponse) => ({} as IRavenCommandResponse));
   }
 }
