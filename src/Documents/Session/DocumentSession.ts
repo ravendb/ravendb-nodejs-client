@@ -26,7 +26,9 @@ export class DocumentSession implements IDocumentSession {
     return this.documentStore.conventions;
   }       
 
-  constructor (database: string, documentStore: IDocumentStore, requestsExecutor: RequestsExecutor, sessionId: string, forceReadFromMaster: boolean) {
+  constructor (database: string, documentStore: IDocumentStore, requestsExecutor: RequestsExecutor,
+     sessionId: string, forceReadFromMaster: boolean
+  ) {
     this.database = database;
     this.documentStore = documentStore;
     this.requestsExecutor = requestsExecutor;
@@ -38,7 +40,9 @@ export class DocumentSession implements IDocumentSession {
     return new Document(attributes);
   }
 
-  public load(keyOrKeys: DocumentKey | DocumentKey[], includes?: string[], callback?: EntityCallback<IDocument> | EntitiesArrayCallback<IDocument>): Promise<IDocument> | Promise<IDocument[]> {
+  public load(keyOrKeys: DocumentKey | DocumentKey[], includes?: string[], callback?: EntityCallback<IDocument>
+    | EntitiesArrayCallback<IDocument>
+  ): Promise<IDocument> | Promise<IDocument[]> {
     const result = this.create();
 
     if (Array.isArray(keyOrKeys)) {
@@ -60,7 +64,9 @@ export class DocumentSession implements IDocumentSession {
     );
   }
 
-  public store(entity: IDocument, key?: DocumentKey, etag?: number, forceConcurrencyCheck?: boolean, callback?: EntityCallback<IDocument>): Promise<IDocument> {
+  public store(entity: IDocument, key?: DocumentKey, etag?: number, forceConcurrencyCheck?: boolean,
+     callback?: EntityCallback<IDocument>
+  ): Promise<IDocument> {
     const result = this.create();
 
     return new Promise<IDocument>((resolve: PromiseResolve<IDocument>) =>
@@ -68,7 +74,9 @@ export class DocumentSession implements IDocumentSession {
     );
   }
 
-  public query(): IDocumentQuery {
+  public query(indexName?: string, usingDefaultOperator?: boolean, waitForNonStaleResults: boolean = false,
+     includes?: string[], withStatistics: boolean = false
+  ): IDocumentQuery {
     return new DocumentQuery(this, this.requestsExecutor);
   }
 

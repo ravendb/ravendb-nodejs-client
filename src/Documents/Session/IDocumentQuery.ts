@@ -1,8 +1,8 @@
 import {IDocument} from '../IDocument';
 import {IDocumentQueryConditions} from './IDocumentQueryConditions';
-import {EntityCallback, EntitiesArrayCallback, EntitiesCountCallback} from '../../Utility/Callbacks';
+import {EntitiesArrayCallback} from '../../Utility/Callbacks';
 import * as Promise from 'bluebird'
-import {EscapeQueryOption, EscapeQueryOptions} from "./EscapeQueryOptions";
+import {EscapeQueryOption} from "./EscapeQueryOptions";
 
 export interface IDocumentQuery {
   select(...args: string[]): IDocumentQuery;
@@ -26,7 +26,5 @@ export interface IDocumentQuery {
   orElse(): IDocumentQuery;
   addNot(): IDocumentQuery;
   boost(value): IDocumentQuery;
-  first(callback?: EntityCallback<IDocument>): Promise<IDocument>;
   get(callback?: EntitiesArrayCallback<IDocument>): Promise<IDocument[]>;
-  count(callback?: EntitiesCountCallback): Promise<number>;
 }
