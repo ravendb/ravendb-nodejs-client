@@ -1,6 +1,7 @@
-export type LuceneOperator = 'in' | 'between' | 'equal_between' | 'search' | 'starts_with' | 'ends_with';
+export type LuceneOperator = 'in' | 'between' | 'equal_between' | 'search' | 'starts_with' | 'ends_with' | 'equals';
 
 export class LuceneOperators {
+  public static readonly Equals: LuceneOperator = 'equals';
   public static readonly In: LuceneOperator = 'in';
   public static readonly Between: LuceneOperator = 'between';
   public static readonly EqualBetween: LuceneOperator = 'equal_between';

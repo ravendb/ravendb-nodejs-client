@@ -3,15 +3,26 @@ import {LuceneConditionValue, LuceneValue, LuceneRangeValue} from "./LuceneValue
 import {EscapeQueryOption, EscapeQueryOptions} from "../Session/EscapeQueryOptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {TypeUtil} from "../../Utility/TypeUtil";
+import {DocumentConventions} from "../Conventions/DocumentConventions";
+import {IDocument} from "../IDocument";
 
 export class LuceneBuilder {
   protected static readonly emptyString = '[[EMPTY_STRING]]';
   protected static readonly nullValue = '[[NULL_VALUE]]';
 
-  public static buildCondition<T extends LuceneConditionValue>(fieldName: string, value: T,
-    operator?: LuceneOperator, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll
+  public static buildCondition<T extends LuceneConditionValue>(conventions: DocumentConventions<IDocument>,
+    fieldName: string, value: T, operator?: LuceneOperator,
+    escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll
   ): string {
-    const luceneText: string = this.escapeAndConvertValue<T>(value, operator, escapeQueryOptions);
+    let luceneField: string = fieldName;
+    let luceneText: string = this.escapeAndConvertValue<T>(value, operator, escapeQueryOptions);
+
+    switch (operator) {
+      case LuceneOperators.Search:
+      case LuceneOperators.Equals:
+        luceneText = StringUtil.format('{0}:{1}', luceneField, luceneText);
+        break;
+    }
 
     return luceneText;
   }
@@ -22,11 +33,11 @@ export class LuceneBuilder {
     let escapedValue: T = value;
 
     if ('string' == (typeof value)) {
-      let escapedString = StringUtil.escape(escapedValue as string, false, false);
+      let escapedString: string = StringUtil.escape(escapedValue as string, false, false);
 
       switch (escapeQueryOptions) {
         case EscapeQueryOptions.AllowAllWildcards:
-          //TODO: escapedString = re.sub(r'"\\\*(\s|$)"', "*${1}", escapedString)
+          escapedString = escapedString.replace(/"\\\*(\s|$)"/g, "*$1");
           break;
         case EscapeQueryOptions.RawQuery:
           escapedString = escapedString.replace('\\\\*', '*');

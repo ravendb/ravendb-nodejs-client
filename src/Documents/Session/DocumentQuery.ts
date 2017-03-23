@@ -9,8 +9,13 @@ import {EscapeQueryOption, EscapeQueryOptions} from "./EscapeQueryOptions";
 import * as Promise from 'bluebird'
 import {LuceneValue, LuceneConditionValue} from "../Lucene/LuceneValue";
 import {IRavenCommandResponse} from "../../Database/IRavenCommandResponse";
-import {LuceneOperator} from "../Lucene/LuceneOperator";
+import {LuceneOperator, LuceneOperators} from "../Lucene/LuceneOperator";
 import {LuceneBuilder} from "../Lucene/LuceneBuilder";
+import {ArgumentOutOfRangeException, InvalidOperationException} from "../../Database/DatabaseExceptions";
+import {StringUtil} from "../../Utility/StringUtil";
+import {QueryString} from "../../Http/QueryString";
+import {ArrayUtil} from "../../Utility/ArrayUtil";
+import {TypeUtil} from "../../Utility/TypeUtil";
 
 export class DocumentQuery implements IDocumentQuery {
   protected indexName: string;
@@ -38,19 +43,51 @@ export class DocumentQuery implements IDocumentQuery {
     this.indexName = [(indexName || 'dynamic'), session.conventions.documentsCollectionName].join('/');
   }
 
-  public select(...args): IDocumentQuery {
+  public select(...args: string[]): IDocumentQuery {
+    if (args && args.length) {
+      this.fetch = args;
+    }
+
     return this;
   }
 
   public search(fieldName: string, searchTerms: string | string[], escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.RawQuery, boost: number = 1): IDocumentQuery {
+    if (boost < 0) {
+      throw new ArgumentOutOfRangeException('Boost factor must be a positive number');
+    }
+
+    let quotedTerms = Array.isArray(searchTerms)
+      ? (searchTerms as string[]).join(' ')
+      : (searchTerms as string);
+
+    quotedTerms = QueryString.encode(quotedTerms);
+    this.addLuceneCondition<string>(fieldName, quotedTerms, LuceneOperators.Search, escapeQueryOptions);
+
+    if (boost != 1) {
+      this.queryBuilder += StringUtil.format("^{0}", boost);
+    }
+
     return this;
   }
 
   public where(conditions: IDocumentQueryConditions): IDocumentQuery {
+    ArrayUtil.mapObject(conditions, (value: any, fieldName: string): any => {
+      if (Array.isArray(value)) {
+        this.whereIn<LuceneValue>(fieldName, value as LuceneValue[]);
+      } else {
+        this.whereEquals<LuceneValue>(fieldName, value as LuceneValue);
+      }
+    });
+
     return this;
   }
 
   public whereEquals<V>(fieldName: string, value: V, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll): IDocumentQuery {
+    if (!fieldName) {
+      throw new InvalidOperationException('Empty field name is invalid');
+    }
+
+    this.addLuceneCondition<V>(fieldName, value, LuceneOperators.Equals, escapeQueryOptions);
     return this;
   }
 
@@ -130,10 +167,11 @@ export class DocumentQuery implements IDocumentQuery {
     return new Promise<IRavenCommandResponse>((resolve: PromiseResolve<IRavenCommandResponse>) => resolve([]));
   }
 
-  protected buildLuceneCondition<T extends LuceneConditionValue>(fieldName: string, condition: T,
+  protected addLuceneCondition<T extends LuceneConditionValue>(fieldName: string, condition: T,
     operator?: LuceneOperator, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll
   ): void {
-    const luceneCondition: string = LuceneBuilder.buildCondition(fieldName, condition, operator, escapeQueryOptions);
+    const luceneCondition: string = LuceneBuilder.buildCondition<T>(this.session.conventions, fieldName,
+      condition, operator, escapeQueryOptions);
 
     if ((this.queryBuilder.length > 0) && !this.queryBuilder.endsWith(' ')) {
       this.queryBuilder += ' ';
