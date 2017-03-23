@@ -13,7 +13,7 @@ export class Serializer {
       }
 
       if (value instanceof Object) {
-        return Serializer.fromJSON<T>(className, value);
+        return this.fromJSON<T>(className, value);
       }
 
       return value;

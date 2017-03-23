@@ -7,6 +7,9 @@ import {EntitiesArrayCallback} from '../../Utility/Callbacks';
 import {PromiseResolve, PromiseResolver} from '../../Utility/PromiseResolver';
 import {EscapeQueryOption, EscapeQueryOptions} from "./EscapeQueryOptions";
 import * as Promise from 'bluebird'
+import {LuceneValue, LuceneConditionValue} from "../Lucene/LuceneValue";
+import {IRavenCommandResponse} from "../../Database/IRavenCommandResponse";
+import {LuceneOperator} from "../Lucene/LuceneOperator";
 
 export class DocumentQuery implements IDocumentQuery {
   protected indexName: string;
@@ -34,95 +37,101 @@ export class DocumentQuery implements IDocumentQuery {
     this.indexName = [(indexName || 'dynamic'), session.conventions.documentsCollectionName].join('/');
   }
 
-  select(...args): IDocumentQuery {
+  public select(...args): IDocumentQuery {
     return this;
   }
 
-  search(fieldName: string, searchTerms: string | string[], escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.RawQuery, boost: number = 1): IDocumentQuery {
+  public search(fieldName: string, searchTerms: string | string[], escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.RawQuery, boost: number = 1): IDocumentQuery {
     return this;
   }
 
-  where(conditions: IDocumentQueryConditions): IDocumentQuery {
+  public where(conditions: IDocumentQueryConditions): IDocumentQuery {
     return this;
   }
 
-  whereEquals<V>(fieldName: string, value: V, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll): IDocumentQuery {
+  public whereEquals<V>(fieldName: string, value: V, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll): IDocumentQuery {
     return this;
   }
 
-  whereEndsWith<V>(fieldName: string, value: V): IDocumentQuery {
+  public whereEndsWith(fieldName: string, value: string): IDocumentQuery {
     return this;
   }
 
-  whereStartsWith<V>(fieldName: string, value: V): IDocumentQuery {
+  public whereStartsWith(fieldName: string, value: string): IDocumentQuery {
     return this;
   }
 
-  whereIn<V>(fieldName: string, values: V[]): IDocumentQuery {
+  public whereIn<V extends LuceneValue>(fieldName: string, values: V[]): IDocumentQuery {
     return this;
   }
 
-  whereBetween<V>(fieldName: string, start: V, end: V): IDocumentQuery {
+  public whereBetween<V extends LuceneValue>(fieldName: string, start: V, end: V): IDocumentQuery {
     return this;
   }
 
-  whereBetweenOrEqual<V>(fieldName: string, start: V, end: V): IDocumentQuery {
+  public whereBetweenOrEqual<V extends LuceneValue>(fieldName: string, start: V, end: V): IDocumentQuery {
     return this;
   }
 
-  whereGreaterThan<V>(fieldName: string, value: V): IDocumentQuery {
+  public whereGreaterThan<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery {
     return this;
   }
 
-  whereGreaterThanOrEqual<V>(fieldName: string, value: V): IDocumentQuery {
+  public whereGreaterThanOrEqual<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery {
     return this;
   }
 
-  whereLessThan<V>(fieldName: string, value: V): IDocumentQuery {
+  public whereLessThan<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery {
     return this;
   }
 
-  whereLessThanOrEqual<V>(fieldName: string, value: V): IDocumentQuery {
+  public whereLessThanOrEqual<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery {
     return this;
   }
 
-  whereIsNull(fieldName: string): IDocumentQuery {
+  public whereIsNull(fieldName: string): IDocumentQuery {
     return this;
   }
 
-  whereNotNull(fieldName: string): IDocumentQuery {
+  public whereNotNull(fieldName: string): IDocumentQuery {
     return this;
   }
 
-  orderBy(fieldsNames: string|string[]): IDocumentQuery {
+  public orderBy(fieldsNames: string|string[]): IDocumentQuery {
     return this;
   }
 
-  orderByDescending(fieldsNames: string|string[]): IDocumentQuery {
+  public orderByDescending(fieldsNames: string|string[]): IDocumentQuery {
     return this;
   }
 
-  andAlso(): IDocumentQuery {
+  public andAlso(): IDocumentQuery {
     return this;
   }
 
-  orElse(): IDocumentQuery {
+  public orElse(): IDocumentQuery {
     return this;
   }
 
-  addNot(): IDocumentQuery {
+  public addNot(): IDocumentQuery {
     return this;
   }
 
-  boost(value): IDocumentQuery {
-    return this;
-  }
-
-  get(callback?: EntitiesArrayCallback<IDocument>): Promise<IDocument[]> {
+  public get(callback?: EntitiesArrayCallback<IDocument>): Promise<IDocument[]> {
     const result = [this.session.create()];
 
     return new Promise<IDocument[]>((resolve: PromiseResolve<IDocument[]>) =>
       PromiseResolver.resolve<IDocument[]>(result, resolve, callback)
     );
+  }
+
+  protected executeQuery(): Promise<IRavenCommandResponse> {
+    return new Promise<IRavenCommandResponse>((resolve: PromiseResolve<IRavenCommandResponse>) => resolve([]));
+  }
+
+  protected buildLuceneCondition<T extends LuceneConditionValue>(fieldName: string, condition: T,
+    operator?: LuceneOperator, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll
+  ): void {
+
   }
 }

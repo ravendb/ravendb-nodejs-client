@@ -12,4 +12,8 @@ export class StringUtil {
         (inputArgs[placeholder] || '').toString()
     );
   }
+
+  public static escape(string: string, allowWildCards: boolean = false, makePhrase: boolean = false): string {
+    return string;
+  }
 }

@@ -5,10 +5,10 @@ export class QueryOperators {
   public static readonly AND: QueryOperator = 'AND';
 
   public static isAnd(operator: QueryOperator): boolean {
-    return QueryOperators.AND === operator;
+    return this.AND === operator;
   }
 
   public static isOr(operator: QueryOperator): boolean {
-    return QueryOperators.OR === operator;
+    return this.OR === operator;
   }
 }

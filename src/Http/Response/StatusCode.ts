@@ -19,65 +19,65 @@ export class StatusCodes {
   public static readonly GatewayTimeout: StatusCode = 504;
 
   public static isOk(statusCode: StatusCode): boolean {
-    return statusCode === StatusCodes.Ok;
+    return statusCode === this.Ok;
   }
 
   public static isCreated(statusCode: StatusCode): boolean {
-    return statusCode === StatusCodes.Created;
+    return statusCode === this.Created;
   }
 
   public static isAccepted(statusCode: StatusCode): boolean {
-    return statusCode === StatusCodes.Accepted;
+    return statusCode === this.Accepted;
   }
 
   public static isNoContent(statusCode: StatusCode): boolean {
-    return statusCode === StatusCodes.NoContent;
+    return statusCode === this.NoContent;
   }
 
   public static isMovedPermanently(statusCode: StatusCode): boolean {
-    return statusCode === StatusCodes.MovedPermanently;
+    return statusCode === this.MovedPermanently;
   }
 
   public static isFound(statusCode: StatusCode): boolean {
-    return statusCode === StatusCodes.Found;
+    return statusCode === this.Found;
   }
 
   public static isNotModified(statusCode: StatusCode): boolean {
-    return statusCode === StatusCodes.NotModified;
+    return statusCode === this.NotModified;
   }
 
   public static isBadRequest(statusCode: StatusCode): boolean {
-    return statusCode === StatusCodes.BadRequest;
+    return statusCode === this.BadRequest;
   }
 
   public static isUnauthorized(statusCode: StatusCode): boolean {
-    return statusCode === StatusCodes.Unauthorized;
+    return statusCode === this.Unauthorized;
   }
 
   public static isForbidden(statusCode: StatusCode): boolean {
-    return statusCode === StatusCodes.Forbidden;
+    return statusCode === this.Forbidden;
   }
 
   public static isNotFound(statusCode: StatusCode): boolean {
-    return statusCode === StatusCodes.NotFound;
+    return statusCode === this.NotFound;
   }
 
   public static isConflict(statusCode: StatusCode): boolean {
-    return statusCode === StatusCodes.Conflict;
+    return statusCode === this.Conflict;
   }
 
   public static isInternalServerError(statusCode: StatusCode): boolean {
-    return statusCode === StatusCodes.InternalServerError;
+    return statusCode === this.InternalServerError;
   }
 
   public static isBadGateway(statusCode: StatusCode): boolean {
-    return statusCode === StatusCodes.BadGateway;
+    return statusCode === this.BadGateway;
   }
   public static isServiceUnavailable(statusCode: StatusCode): boolean {
-    return statusCode === StatusCodes.ServiceUnavailable;
+    return statusCode === this.ServiceUnavailable;
   }
 
   public static isGatewayTimeout(statusCode: StatusCode): boolean {
-    return statusCode === StatusCodes.GatewayTimeout;
+    return statusCode === this.GatewayTimeout;
   }
 }

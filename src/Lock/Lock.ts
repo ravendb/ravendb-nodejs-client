@@ -12,11 +12,11 @@ export class Lock {
   }
 
   public static getInstance(): Lock {
-    if (!Lock._instance) {
-      Lock._instance = new Lock();
+    if (!this._instance) {
+      this._instance = new Lock();
     }
 
-    return Lock._instance;
+    return this._instance;
   }
 
   public acquireTagGenerator(tag: string, callback: ILockCallback): PromiseLike<any> {
