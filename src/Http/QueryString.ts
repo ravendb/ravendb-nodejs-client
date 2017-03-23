@@ -4,8 +4,8 @@ export class QueryString {
   public static encode(string: string, isSlashReserved: boolean = false) {
     const reserved = '%:=&?~#+!$,;\\\'*[]' + (isSlashReserved ? '/' : '');
 
-    return string.split('').map((char: string) => !~reserved
-      .indexOf(char) ? char : encodeURIComponent(char)).join('');
+    return string.split('').map((char: string) => reserved
+      .includes(char) ? encodeURIComponent(char) : char).join('');
   }
 
   public static stringify(params: Object): string {

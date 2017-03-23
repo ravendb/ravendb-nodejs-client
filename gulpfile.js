@@ -32,7 +32,8 @@ gulp.task('build:tests', ['clean'], () => gulp
     .pipe(ts({
         target: 'ES6',
         module: 'commonjs',
-        removeComments: true
+        removeComments: true,
+        lib: ["dom", "es7"]
     }))
     .pipe(gulp.dest(options.tmp))
 );
@@ -94,7 +95,8 @@ gulp.task('build:compile', ['clean', 'build:exports', 'build:concat', 'build:bun
         target: 'ES6',
         module: 'commonjs',
         removeComments: true,
-        declaration: true
+        declaration: true,
+        lib: ["dom", "es7"]
     }))
     .pipe(gulp.dest(options.dest))
 );
