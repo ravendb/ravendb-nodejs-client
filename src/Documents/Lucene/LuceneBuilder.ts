@@ -1,6 +1,8 @@
 import {LuceneOperator, LuceneOperators} from "./LuceneOperator";
-import {LuceneConditionValue, LuceneValue} from "./LuceneValue";
+import {LuceneConditionValue, LuceneValue, LuceneRangeValue} from "./LuceneValue";
 import {EscapeQueryOption, EscapeQueryOptions} from "../Session/EscapeQueryOptions";
+import {StringUtil} from "../../Utility/StringUtil";
+import {TypeUtil} from "../../Utility/TypeUtil";
 
 export class LuceneBuilder {
   protected static readonly emptyString = '[[EMPTY_STRING]]';
@@ -20,29 +22,47 @@ export class LuceneBuilder {
     return '';
   }
 
-  protected static toLucene<T extends LuceneConditionValue>(value: T, operator: LuceneOperator): string {
+  protected static toLucene<T extends LuceneConditionValue>(value: T, operator: LuceneOperator): string | null {
     let queryText = '';
 
     switch (operator) {
       case LuceneOperators.In:
-        (value as LuceneValue[]).map(()=>{});
+        const inConditionValues: LuceneValue[] = value as LuceneValue[];
+        const valueFormatter = (value: LuceneValue) => ('string' === (typeof value))
+          ? StringUtil.format('"{0}"', value) : value.toString();
+
+        if (!inConditionValues || (0 === inConditionValues.length)) {
+          return null;
+        }
+
+        queryText = StringUtil.format('({0})', inConditionValues.map(valueFormatter).join(', '));
         break;
       case LuceneOperators.Between:
-        break;
       case LuceneOperators.EqualBetween:
+        const conditionRange = value as LuceneRangeValue;
+        const conditionTemplate = (operator === LuceneOperators.EqualBetween)
+          ? '[{0} TO {1}]' : '{{{0} TO {1}}}';
+
+        queryText = StringUtil.format(conditionTemplate,
+          this.valueToLuceneSyntax(conditionRange.min, '*'),
+          this.valueToLuceneSyntax(conditionRange.max, 'NULL')
+        );
         break;
       case LuceneOperators.Search:
+        queryText = StringUtil.format('({0})', (value as LuceneValue).toString());
         break;
     }
 
     return queryText;
   }
 
-  protected static numericToLucene(value?: number): string {
-    if (!value) {
-      return (0 === value) ? this.emptyString : this.nullValue;
+  protected static valueToLuceneSyntax(value?: LuceneValue, nullString: string = '*'): string {
+    if (TypeUtil.isNone(value)) {
+      return nullString;
     }
 
-    return value.toString();
+    const stringValue = value.toString();
+
+    return ('' == stringValue) ? this.emptyString : stringValue;
   }
 }

@@ -61,6 +61,7 @@ export {Lock} from './Lock/Lock';
 export {DateUtil} from './Utility/DateUtil';
 export {StringUtil} from './Utility/StringUtil';
 export {ArrayUtil} from './Utility/ArrayUtil';
+export {TypeUtil} from './Utility/TypeUtil';
 export {RequestsExecutor} from './Http/Request/RequestsExecutor';
 export {PatchRequest} from './Http/Request/PatchRequest';
 export {HiloRangeValue} from './Hilo/HiloRangeValue';
