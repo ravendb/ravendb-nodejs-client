@@ -19,7 +19,24 @@ export class LuceneBuilder {
   protected static escapeAndConvertValue<T extends LuceneConditionValue>(value: T,
     operator?: LuceneOperator, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll
   ): string {
-    return '';
+    let escapedValue: T = value;
+
+    if ('string' == (typeof value)) {
+      let escapedString = StringUtil.escape(escapedValue as string, false, false);
+
+      switch (escapeQueryOptions) {
+        case EscapeQueryOptions.AllowAllWildcards:
+          //TODO: escapedString = re.sub(r'"\\\*(\s|$)"', "*${1}", escapedString)
+          break;
+        case EscapeQueryOptions.RawQuery:
+          escapedString = escapedString.replace('\\\\*', '*');
+          break;
+      }
+
+      escapedValue = (escapedValue as T);
+    }
+
+    return this.toLucene(escapedValue, operator);
   }
 
   protected static toLucene<T extends LuceneConditionValue>(value: T, operator: LuceneOperator): string | null {
@@ -50,6 +67,13 @@ export class LuceneBuilder {
         break;
       case LuceneOperators.Search:
         queryText = StringUtil.format('({0})', (value as LuceneValue).toString());
+        break;
+      default:
+        if (('string' === typeof(value)) && (value as string).includes(' ')) {
+          queryText = StringUtil.format('"{0}"', value as string);
+        } else {
+          queryText = TypeUtil.isNone(value) ? this.nullValue : value.toString();
+        }
         break;
     }
 

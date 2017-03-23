@@ -10,6 +10,7 @@ import * as Promise from 'bluebird'
 import {LuceneValue, LuceneConditionValue} from "../Lucene/LuceneValue";
 import {IRavenCommandResponse} from "../../Database/IRavenCommandResponse";
 import {LuceneOperator} from "../Lucene/LuceneOperator";
+import {LuceneBuilder} from "../Lucene/LuceneBuilder";
 
 export class DocumentQuery implements IDocumentQuery {
   protected indexName: string;
@@ -132,6 +133,17 @@ export class DocumentQuery implements IDocumentQuery {
   protected buildLuceneCondition<T extends LuceneConditionValue>(fieldName: string, condition: T,
     operator?: LuceneOperator, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll
   ): void {
+    const luceneCondition: string = LuceneBuilder.buildCondition(fieldName, condition, operator, escapeQueryOptions);
 
+    if ((this.queryBuilder.length > 0) && !this.queryBuilder.endsWith(' ')) {
+      this.queryBuilder += ' ';
+    }
+
+    if (this.negate) {
+      this.negate = false;
+      this.queryBuilder += '-';
+    }
+
+    this.queryBuilder += luceneCondition;
   }
 }
