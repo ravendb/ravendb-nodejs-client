@@ -1,8 +1,8 @@
 export type LuceneValue = string | number | boolean | null;
 
-export interface LuceneRangeValue {
-  min?: LuceneValue,
-  max?: LuceneValue
+export interface LuceneRangeValue<T extends LuceneValue> {
+  min?: T,
+  max?: T
 }
 
-export type LuceneConditionValue = LuceneValue | LuceneValue[] | LuceneRangeValue;
+export type LuceneConditionValue = LuceneValue | LuceneValue[] | LuceneRangeValue<LuceneValue>;

@@ -26,7 +26,7 @@ export class LuceneBuilder {
         break;
       case LuceneOperators.Between:
       case LuceneOperators.EqualBetween:
-        const rangedValue: LuceneRangeValue = value as LuceneRangeValue;
+        const rangedValue: LuceneRangeValue<LuceneValue> = value as LuceneRangeValue<LuceneValue>;
         const minOrMax: LuceneValue = rangedValue.min || rangedValue.max;
 
         if (conventions.usesRangeType(minOrMax) && !luceneField.endsWith('_Range')) {
@@ -100,7 +100,7 @@ export class LuceneBuilder {
         break;
       case LuceneOperators.Between:
       case LuceneOperators.EqualBetween:
-        const conditionRange = value as LuceneRangeValue;
+        const conditionRange: LuceneRangeValue<LuceneValue> = value as LuceneRangeValue<LuceneValue>;
         const conditionTemplate = (operator === LuceneOperators.EqualBetween)
           ? '[{0} TO {1}]' : '{{{0} TO {1}}}';
 

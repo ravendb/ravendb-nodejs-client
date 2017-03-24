@@ -9,12 +9,12 @@ export interface IDocumentQuery {
   select(...args: string[]): IDocumentQuery;
   search(fieldName: string, searchTerms: string | string[], escapeQueryOptions: EscapeQueryOption, boost: number): IDocumentQuery;
   where(conditions: IDocumentQueryConditions): IDocumentQuery;
-  whereEquals<V extends LuceneValue>(fieldName: string, value: V, escapeQueryOptions: EscapeQueryOption): IDocumentQuery;
+  whereEquals<V extends LuceneValue>(fieldName: string, value: V, escapeQueryOptions?: EscapeQueryOption): IDocumentQuery;
   whereEndsWith(fieldName: string, value: string): IDocumentQuery;
   whereStartsWith(fieldName: string, value: string): IDocumentQuery;
   whereIn<V extends LuceneValue>(fieldName: string, values: V[]): IDocumentQuery;
-  whereBetween<V extends LuceneValue>(fieldName: string, start: V, end: V): IDocumentQuery;
-  whereBetweenOrEqual<V extends LuceneValue>(fieldName: string, start: V, end: V): IDocumentQuery;
+  whereBetween<V extends LuceneValue>(fieldName: string, start?: V, end?: V): IDocumentQuery;
+  whereBetweenOrEqual<V extends LuceneValue>(fieldName: string, start?: V, end?: V): IDocumentQuery;
   whereGreaterThan<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery;
   whereGreaterThanOrEqual<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery;
   whereLessThan<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery;
@@ -27,4 +27,6 @@ export interface IDocumentQuery {
   orElse(): IDocumentQuery;
   addNot(): IDocumentQuery;
   get(callback?: EntitiesArrayCallback<IDocument>): Promise<IDocument[]>;
+  addSpace(): IDocumentQuery;
+  addStatement(statement: string): IDocumentQuery;
 }
