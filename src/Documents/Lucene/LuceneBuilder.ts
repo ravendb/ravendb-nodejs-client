@@ -15,21 +15,54 @@ export class LuceneBuilder {
     escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll
   ): string {
     let luceneField: string = fieldName;
-    let luceneText: string = this.escapeAndConvertValue<T>(value, operator, escapeQueryOptions);
+    let luceneText: string | null = this.escapeAndConvertValue<T>(value, operator, escapeQueryOptions);
+
+    switch (operator) {
+      case LuceneOperators.StartsWith:
+      case LuceneOperators.EndsWith:
+        if (!TypeUtil.isNone(value) && ('string' !== (typeof value))) {
+          luceneField = conventions.rangedFieldName(fieldName, value);
+        }
+        break;
+      case LuceneOperators.Between:
+      case LuceneOperators.EqualBetween:
+        const rangedValue: LuceneRangeValue = value as LuceneRangeValue;
+        const minOrMax: LuceneValue = rangedValue.min || rangedValue.max;
+
+        if (conventions.usesRangeType(minOrMax) && !luceneField.endsWith('_Range')) {
+          luceneField = conventions.rangedFieldName(fieldName, minOrMax);
+        }
+        break;
+    }
 
     switch (operator) {
       case LuceneOperators.Search:
       case LuceneOperators.Equals:
+      case LuceneOperators.Between:
+      case LuceneOperators.EqualBetween:
         luceneText = StringUtil.format('{0}:{1}', luceneField, luceneText);
+        break;
+      case LuceneOperators.StartsWith:
+        luceneText = StringUtil.format('{0}:{1}*', luceneField, luceneText);
+        break;
+      case LuceneOperators.EndsWith:
+        luceneText = StringUtil.format('{0}:*{1}', luceneField, luceneText);
+        break;
+      case LuceneOperators.In:
+        if (TypeUtil.isNone(luceneText)) {
+          luceneText = StringUtil.format('@emptyIn<{0}>:(no-result)', luceneField);
+        } else {
+          luceneText = StringUtil.format('@in<{0}>:{1}', luceneField, luceneText);
+        }
         break;
     }
 
-    return luceneText;
+    return luceneText as string;
   }
 
   protected static escapeAndConvertValue<T extends LuceneConditionValue>(value: T,
     operator?: LuceneOperator, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll
-  ): string {
+  ): string | null {
     let escapedValue: T = value;
 
     if ('string' == (typeof value)) {

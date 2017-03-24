@@ -15,7 +15,6 @@ import {ArgumentOutOfRangeException, InvalidOperationException} from "../../Data
 import {StringUtil} from "../../Utility/StringUtil";
 import {QueryString} from "../../Http/QueryString";
 import {ArrayUtil} from "../../Utility/ArrayUtil";
-import {TypeUtil} from "../../Utility/TypeUtil";
 
 export class DocumentQuery implements IDocumentQuery {
   protected indexName: string;
