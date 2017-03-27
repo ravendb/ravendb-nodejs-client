@@ -5,6 +5,7 @@ import {IHashCollection} from '../../Utility/IHashCollection';
 import {IndexFieldOptions} from './IndexFieldOptions';
 import {ArrayUtil} from '../../Utility/ArrayUtil';
 import {IJsonSerializable} from '../../Json/IJsonSerializable';
+import {TypeUtil} from "../../Utility/TypeUtil";
 
 export class IndexDefinition implements IJsonSerializable {
   protected name: string;
@@ -26,7 +27,7 @@ export class IndexDefinition implements IJsonSerializable {
     this.priority = initOptions.priority || null;
     this.isTestIndex = initOptions.is_test_index || false;
     this.fields = initOptions.fields || {};
-    this.maps = Array.isArray(indexMap) ? (indexMap as string[]) : [indexMap as string];
+    this.maps = TypeUtil.isArray(indexMap) ? (indexMap as string[]) : [indexMap as string];
   }
 
   public get type(): string {

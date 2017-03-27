@@ -7,6 +7,7 @@ import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {InvalidOperationException, DocumentDoesNotExistsException, ErrorResponseException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {StatusCodes} from "../../Http/Response/StatusCode";
+import {TypeUtil} from "../../Utility/TypeUtil";
 
 export class DeleteDocumentCommand extends RavenCommand {
   protected key?: DocumentKey;
@@ -24,7 +25,7 @@ export class DeleteDocumentCommand extends RavenCommand {
       throw new InvalidOperationException('Null Key is not valid');
     }
 
-    if (!('string' === (typeof this.key))) {
+    if (!TypeUtil.isString(this.key)) {
       throw new InvalidOperationException('Key must be a string');
     }
 

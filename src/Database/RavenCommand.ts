@@ -3,6 +3,7 @@ import {RequestMethod, RequestMethods} from '../Http/Request/RequestMethod';
 import {IRavenCommandResponse} from "./IRavenCommandResponse";
 import {IResponse} from "../Http/Response/IResponse";
 import {IHeaders} from "../Http/IHeaders";
+import {TypeUtil} from "../Utility/TypeUtil";
 
 export abstract class RavenCommand {
   protected method: RequestMethod = RequestMethods.Get;
@@ -37,7 +38,7 @@ export abstract class RavenCommand {
   }
 
   protected addParams(params: Object | string, value?: any): void {
-    Object.assign(this.params, ('object' === (typeof params))
+    Object.assign(this.params, TypeUtil.isObject(params)
       ? params as Object : {[params as string]: value});
   }
 

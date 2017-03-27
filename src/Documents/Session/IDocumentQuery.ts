@@ -1,9 +1,10 @@
 import {IDocument} from '../IDocument';
 import {IDocumentQueryConditions} from './IDocumentQueryConditions';
-import {EntitiesArrayCallback} from '../../Utility/Callbacks';
 import * as Promise from 'bluebird'
 import {EscapeQueryOption} from "./EscapeQueryOptions";
 import {LuceneValue} from "../Lucene/LuceneValue";
+import {DocumentQueryResult} from "./DocumentQuery";
+import {QueryResultsCallback} from "../../Utility/Callbacks";
 
 export interface IDocumentQuery {
   select(...args: string[]): IDocumentQuery;
@@ -26,7 +27,7 @@ export interface IDocumentQuery {
   andAlso(): IDocumentQuery;
   orElse(): IDocumentQuery;
   addNot(): IDocumentQuery;
-  get(callback?: EntitiesArrayCallback<IDocument>): Promise<IDocument[]>;
+  get(callback?: QueryResultsCallback<DocumentQueryResult<IDocument>>): Promise<DocumentQueryResult<IDocument>>;
   addSpace(): IDocumentQuery;
   addStatement(statement: string): IDocumentQuery;
 }

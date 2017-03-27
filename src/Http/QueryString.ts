@@ -1,4 +1,5 @@
 import {StringUtil} from "../Utility/StringUtil";
+import {TypeUtil} from "../Utility/TypeUtil";
 
 export class QueryString {
   public static encode(string: string, isSlashReserved: boolean = false) {
@@ -19,7 +20,7 @@ export class QueryString {
 
       if (null === value) {
         result.push(param);
-      } else if (Array.isArray(value)) {
+      } else if (TypeUtil.isArray(value)) {
         (value as any[]).forEach((item: any) => result.push(render(param, item)));
       } else {
         result.push(render(param, value));

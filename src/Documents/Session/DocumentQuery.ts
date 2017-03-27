@@ -3,19 +3,27 @@ import {IDocumentQuery} from "./IDocumentQuery";
 import {IDocumentSession} from "./IDocumentSession";
 import {RequestsExecutor} from "../../Http/Request/RequestsExecutor";
 import {IDocumentQueryConditions} from './IDocumentQueryConditions';
-import {EntitiesArrayCallback} from '../../Utility/Callbacks';
-import {PromiseResolve, PromiseResolver} from '../../Utility/PromiseResolver';
+import {QueryResultsCallback} from '../../Utility/Callbacks';
+import {PromiseResolve, PromiseResolver, PromiseReject} from '../../Utility/PromiseResolver';
 import {EscapeQueryOption, EscapeQueryOptions} from "./EscapeQueryOptions";
-import * as Promise from 'bluebird'
 import {LuceneValue, LuceneConditionValue, LuceneRangeValue} from "../Lucene/LuceneValue";
 import {IRavenCommandResponse} from "../../Database/IRavenCommandResponse";
 import {LuceneOperator, LuceneOperators} from "../Lucene/LuceneOperator";
 import {LuceneBuilder} from "../Lucene/LuceneBuilder";
-import {ArgumentOutOfRangeException, InvalidOperationException} from "../../Database/DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {QueryString} from "../../Http/QueryString";
 import {ArrayUtil} from "../../Utility/ArrayUtil";
-import {QueryOperators} from "./QueryOperator";
+import {QueryOperators, QueryOperator} from "./QueryOperator";
+import {DocumentConventions, IDocumentConversionResult} from "../Conventions/DocumentConventions";
+import * as Promise from 'bluebird'
+import * as moment from "moment";
+import {IndexQuery} from "../../Database/Indexes/IndexQuery";
+import {IOptionsSet} from "../../Utility/IOptionsSet";
+import {QueryCommand} from "../../Database/Commands/QueryCommand";
+import {TypeUtil} from "../../Utility/TypeUtil";
+import {ArgumentOutOfRangeException, InvalidOperationException, ErrorResponseException} from "../../Database/DatabaseExceptions";
+
+export type DocumentQueryResult<T> = Array<T> | {results: T[], response: IRavenCommandResponse};
 
 export class DocumentQuery implements IDocumentQuery {
   protected indexName: string;
@@ -28,11 +36,11 @@ export class DocumentQuery implements IDocumentQuery {
   protected sortHints?: string[] = null;
   protected sortFields?: string[] = null;
   protected withStatistics: boolean = false;
-  protected usingDefaultOperator?: boolean = null;
+  protected usingDefaultOperator?: QueryOperator = null;
   protected waitForNonStaleResults: boolean = false;
 
   constructor(session: IDocumentSession, requestsExecutor: RequestsExecutor, indexName?: string,  usingDefaultOperator
-    ?: boolean, waitForNonStaleResults: boolean = false, includes?: string[], withStatistics: boolean = false
+    ?: QueryOperator, waitForNonStaleResults: boolean = false, includes?: string[], withStatistics: boolean = false
   ) {
     this.session = session;
     this.includes = includes;
@@ -56,7 +64,7 @@ export class DocumentQuery implements IDocumentQuery {
       throw new ArgumentOutOfRangeException('Boost factor must be a positive number');
     }
 
-    let quotedTerms = Array.isArray(searchTerms)
+    let quotedTerms = TypeUtil.isArray(searchTerms)
       ? (searchTerms as string[]).join(' ')
       : (searchTerms as string);
 
@@ -72,7 +80,7 @@ export class DocumentQuery implements IDocumentQuery {
 
   public where(conditions: IDocumentQueryConditions): IDocumentQuery {
     ArrayUtil.mapObject(conditions, (value: any, fieldName: string): any => {
-      if (Array.isArray(value)) {
+      if (TypeUtil.isArray(value)) {
         this.whereIn<LuceneValue>(fieldName, value as LuceneValue[]);
       } else {
         this.whereEquals<LuceneValue>(fieldName, value as LuceneValue);
@@ -169,7 +177,7 @@ export class DocumentQuery implements IDocumentQuery {
   }
 
   public orderBy(fieldsNames: string|string[]): IDocumentQuery {
-    const fields: string[] = Array.isArray(fieldsNames)
+    const fields: string[] = TypeUtil.isArray(fieldsNames)
       ? (fieldsNames as string[])
       : [fieldsNames as string];
 
@@ -192,7 +200,7 @@ export class DocumentQuery implements IDocumentQuery {
   }
 
   public orderByDescending(fieldsNames: string|string[]): IDocumentQuery {
-    const fields: string[] = Array.isArray(fieldsNames)
+    const fields: string[] = TypeUtil.isArray(fieldsNames)
       ? (fieldsNames as string[])
       : [fieldsNames as string];
 
@@ -229,16 +237,75 @@ export class DocumentQuery implements IDocumentQuery {
     return this;
   }
 
-  public get(callback?: EntitiesArrayCallback<IDocument>): Promise<IDocument[]> {
-    const result = [this.session.create()];
+  public get(callback?: QueryResultsCallback<DocumentQueryResult<IDocument>>): Promise<DocumentQueryResult<IDocument>> {
+    return new Promise<DocumentQueryResult<IDocument>>((resolve: PromiseResolve<DocumentQueryResult<IDocument>>, reject: PromiseReject) =>
+      this.executeQuery()
+        .catch((error: Error) => reject(error))
+        .then((response: IRavenCommandResponse) => {
+          let result: DocumentQueryResult<IDocument> = [] as DocumentQueryResult<IDocument>;
 
-    return new Promise<IDocument[]>((resolve: PromiseResolve<IDocument[]>) =>
-      PromiseResolver.resolve<IDocument[]>(result, resolve, callback)
+          if (response.Results.length > 0) {
+            let results: IDocument[] = [];
+
+            response.Results.forEach((result: Object) => results.push(
+              this.session.conventions
+                .tryConvertToDocument(result, this.fetch)
+                .document
+            ));
+
+            if (this.withStatistics) {
+              result = {
+                results: results,
+                response: response
+              } as DocumentQueryResult<IDocument>;
+            } else {
+              result = results as DocumentQueryResult<IDocument>;
+            }
+          }
+
+          PromiseResolver.resolve<DocumentQueryResult<IDocument>>(result, resolve, callback)
+        })
     );
   }
 
   protected executeQuery(): Promise<IRavenCommandResponse> {
-    return new Promise<IRavenCommandResponse>((resolve: PromiseResolve<IRavenCommandResponse>) => resolve([]));
+    const queryOptions: IOptionsSet = {
+      sort_hints: this.sortHints,
+      sort_fields: this.sortFields,
+      fetch: this.fetch,
+      wait_for_non_stale_results: this.waitForNonStaleResults
+    };
+
+    const session: IDocumentSession = this.session;
+    const conventions: DocumentConventions<IDocument> = session.conventions;
+    const endTime: number = moment().unix() + conventions.timeout;
+    const query: IndexQuery = new IndexQuery(this.queryBuilder, 0, 0, this.usingDefaultOperator, queryOptions);
+    const queryCommand: QueryCommand = new QueryCommand(this.indexName, query, conventions, this.includes);
+
+    return new Promise<IRavenCommandResponse>((resolve: PromiseResolve<IRavenCommandResponse>, reject: PromiseReject) => {
+      const request = () => {
+        this.requestsExecutor.execute(queryCommand)
+          .catch((error: Error) => reject(error))
+          .then((response: IRavenCommandResponse | null) => {
+            if (TypeUtil.isNone(response)) {
+              resolve({
+                Results: [] as IDocument[],
+                Includes: [] as string[]
+              } as IRavenCommandResponse);
+            } else if (response.IsStale && this.waitForNonStaleResults) {
+              if (moment().unix() > endTime) {
+                reject(new ErrorResponseException('The index is still stale after reached the timeout'));
+              } else {
+                setTimeout(request, 100);
+              }
+            } else {
+              resolve(response);
+            }
+          });
+      };
+
+      request();
+    });
   }
 
   protected addLuceneCondition<T extends LuceneConditionValue>(fieldName: string, condition: T,

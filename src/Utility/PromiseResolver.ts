@@ -1,4 +1,5 @@
 import {AbstractCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback} from './Callbacks';
+import {TypeUtil} from "./TypeUtil";
 
 export interface PromiseThenable<R> {
   then<U>(onFulfilled: (value: R) => U | PromiseThenable<U>, onRejected?: (error: any) => U | PromiseThenable<U>): PromiseThenable<U>;
@@ -13,9 +14,9 @@ export class PromiseResolver {
     resolve(result);
 
     if (callback) {
-      if ("number" == (typeof result)) {
+      if (TypeUtil.isNumber(result)) {
         (callback as EntitiesCountCallback)(result as number);
-      } else if (Array.isArray(result)) {
+      } else if (TypeUtil.isArray(result)) {
         (callback as EntitiesArrayCallback<T>)(result as T[]);
       } else {
         (callback as EntityCallback<T>)(result as T);

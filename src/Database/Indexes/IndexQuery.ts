@@ -1,4 +1,4 @@
-import {QueryOperator} from "../../Documents/Session/QueryOperator";
+import {QueryOperator, QueryOperators} from "../../Documents/Session/QueryOperator";
 import {IOptionsSet} from "../../Utility/IOptionsSet";
 
 export class IndexQuery {
@@ -20,10 +20,10 @@ export class IndexQuery {
     this._query = query;
     this.totalSize = totalSize;
     this.skippedResults = skippedResults;
-    this._defaultOperator = defaultOperator;
     this._fetch = options.fetch || [];
     this._sortHints = options.sort_hints || [];
     this._sortFields = options.sort_fields || [];
+    this._defaultOperator = defaultOperator || QueryOperators.OR;
     this.waitForNonStaleResults = options.wait_for_non_stale_results || false;
     this._waitForNonStaleResultsTimeout = options.wait_for_non_stale_results_timeout || null;
 

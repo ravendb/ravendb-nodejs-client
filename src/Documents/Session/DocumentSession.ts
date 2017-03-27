@@ -9,6 +9,7 @@ import {DocumentConventions} from '../Conventions/DocumentConventions';
 import {EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
 import {PromiseResolve, PromiseResolver} from '../../Utility/PromiseResolver';
 import * as Promise from 'bluebird'
+import {TypeUtil} from "../../Utility/TypeUtil";
 
 export class DocumentSession implements IDocumentSession {
   protected database: string;
@@ -45,7 +46,7 @@ export class DocumentSession implements IDocumentSession {
   ): Promise<IDocument> | Promise<IDocument[]> {
     const result = this.create();
 
-    if (Array.isArray(keyOrKeys)) {
+    if (TypeUtil.isArray(keyOrKeys)) {
       return new Promise<IDocument[]>((resolve: PromiseResolve<IDocument[]>) =>
         PromiseResolver.resolve([result], resolve, callback)
       );

@@ -6,6 +6,7 @@ import {DocumentKey} from "../../Documents/IDocument";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {ErrorResponseException, InvalidOperationException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
+import {TypeUtil} from "../../Utility/TypeUtil";
 
 export class GetDocumentCommand extends RavenCommand {
   protected keyOrKeys?: DocumentKey | DocumentKey[];
@@ -33,10 +34,10 @@ export class GetDocumentCommand extends RavenCommand {
     this.endPoint = StringUtil.format('{url}/databases/{database}/docs', serverNode);
     this.includes && this.addParams('includes', this.includes);
 
-    if (Array.isArray(this.keyOrKeys)) {
+    if (TypeUtil.isArray(this.keyOrKeys)) {
       this.metadataOnly && this.addParams('metadata-only', 'True');
 
-      if (this.keyOrKeys.map((key: DocumentKey) => key.length)
+      if ((this.keyOrKeys as DocumentKey[]).map((key: DocumentKey) => key.length)
           .reduce((sum: number, len: number) => sum + len) > 1024
       ) {
         this.payload = this.keyOrKeys;

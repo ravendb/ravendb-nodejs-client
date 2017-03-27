@@ -4,6 +4,14 @@ import * as pluralize from 'pluralize';
 import {IMetadata} from "../../Database/Metadata";
 import {SortOption, SortOptions} from "../../Database/Indexes/SortOption";
 import {StringUtil} from "../../Utility/StringUtil";
+import {TypeUtil} from "../../Utility/TypeUtil";
+import * as _ from 'lodash';
+
+export interface IDocumentConversionResult<T extends IDocument> {
+  document: T,
+  metadata: IMetadata,
+  originalMetadata: IMetadata
+}
 
 export class DocumentConventions<T extends IDocument> {
   readonly maxNumberOfRequestPerSession: number = 30;
@@ -13,9 +21,9 @@ export class DocumentConventions<T extends IDocument> {
   readonly maxLengthOfQueryUsingGetUrl = 1024 + 512;
   readonly identityPartsSeparator = "/";
   private _systemDatabase: string = "system";
-  private _documentEntityClass: { new(): T; };
+  private _documentEntityClass: { new(attributes?: Object): T; };
 
-  constructor(documentEntityClass: { new(): T; }) {
+  constructor(documentEntityClass: { new(attributes?: Object): T; }) {
     this._documentEntityClass = documentEntityClass;
   }
 
@@ -37,6 +45,25 @@ export class DocumentConventions<T extends IDocument> {
 
   public get systemDatabase(): string {
     return this._systemDatabase;
+  }
+
+  public tryConvertToDocument(rawEntity: Object, fetch: string[] | null | boolean = false): IDocumentConversionResult<T> {
+    const metadata: IMetadata = rawEntity['@metadata'];
+    const originalMetadata: IMetadata = _.clone(metadata);
+    const idProperty: string = this.documentIdPropertyName;
+    let document: T = new this._documentEntityClass(_.omit(rawEntity, '@metadata'));
+
+    if (idProperty in document) {
+      this.trySetIdOnEntity(document, metadata['@id'] || null);
+    }
+
+    //TODO: datetime conversion
+
+    return {
+      document: document,
+      metadata: metadata,
+      originalMetadata: originalMetadata
+    } as IDocumentConversionResult<T>;
   }
 
   public trySetIdOnEntity(entity: T, key: DocumentKey): T {
@@ -84,14 +111,14 @@ export class DocumentConventions<T extends IDocument> {
   }
 
   public usesRangeType(queryFilterValue: any): boolean {
-    return 'number' === (typeof queryFilterValue);
+    return TypeUtil.isNumber(queryFilterValue);
   }
 
   public rangedFieldName(fieldName: string, queryFilterValue: any): string {
-    if ('number' === (typeof queryFilterValue)) {
+    if (TypeUtil.isNumber(queryFilterValue)) {
       return StringUtil.format(
         '{1}_{0}_Range', fieldName,
-        Number.isInteger(queryFilterValue) ? 'L': 'D'
+        _.isInteger(queryFilterValue) ? 'L': 'D'
       );
     }
 

@@ -20,7 +20,7 @@ export class LuceneBuilder {
     switch (operator) {
       case LuceneOperators.StartsWith:
       case LuceneOperators.EndsWith:
-        if (!TypeUtil.isNone(value) && ('string' !== (typeof value))) {
+        if (!TypeUtil.isNone(value) && !TypeUtil.isString(value)) {
           luceneField = conventions.rangedFieldName(fieldName, value);
         }
         break;
@@ -65,7 +65,7 @@ export class LuceneBuilder {
   ): string | null {
     let escapedValue: T = value;
 
-    if ('string' == (typeof value)) {
+    if (TypeUtil.isString(value)) {
       let escapedString: string = StringUtil.escape(escapedValue as string, false, false);
 
       switch (escapeQueryOptions) {
@@ -89,7 +89,7 @@ export class LuceneBuilder {
     switch (operator) {
       case LuceneOperators.In:
         const inConditionValues: LuceneValue[] = value as LuceneValue[];
-        const valueFormatter = (value: LuceneValue) => ('string' === (typeof value))
+        const valueFormatter = (value: LuceneValue) => TypeUtil.isString(value)
           ? StringUtil.format('"{0}"', value) : value.toString();
 
         if (!inConditionValues || (0 === inConditionValues.length)) {
@@ -113,7 +113,7 @@ export class LuceneBuilder {
         queryText = StringUtil.format('({0})', (value as LuceneValue).toString());
         break;
       default:
-        if (('string' === typeof(value)) && (value as string).includes(' ')) {
+        if (TypeUtil.isString(value) && (value as string).includes(' ')) {
           queryText = StringUtil.format('"{0}"', value as string);
         } else {
           queryText = TypeUtil.isNone(value) ? this.nullValue : value.toString();
