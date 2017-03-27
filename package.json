@@ -10,6 +10,7 @@
   "scripts": {
     "_prepublish": "gulp bundle",
     "test": "gulp test"
+
   },
   "repository": {
     "type": "git",
