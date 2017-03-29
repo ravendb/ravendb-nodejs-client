@@ -4,27 +4,31 @@ import {ServerNode} from "../../Http/ServerNode";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {IRavenCommandResponse} from "../IRavenCommandResponse";
 import {StringUtil} from "../../Utility/StringUtil";
-import {ErrorResponseException} from "../DatabaseExceptions";
+import {ErrorResponseException, InvalidOperationException} from "../DatabaseExceptions";
 
-export class GetOperationStateCommand extends RavenCommand {
-  protected id: string;
+export class GetApiKeyCommand extends RavenCommand {
+  protected name: string;
 
-  constructor(id: string) {
+  constructor(name: string) {
     super('', RequestMethods.Get);
-    this.id = id;
+
+    if (!name) {
+      throw new InvalidOperationException('Api key name isn\'t set');
+    }
+
+    this.name = name;
   }
 
   protected createRequest(serverNode: ServerNode): void {
-    this.params = {id: this.id};
-    this.endPoint = StringUtil.format('{url}/databases/{databases}/operations/state', serverNode);
+    this.params = {name: this.name};
+    this.endPoint = StringUtil.format('{url}/admin/api-keys', serverNode);
   }
-
 
   protected setResponse(response: IResponse): IRavenCommandResponse | null | void {
     const responseBody: IResponseBody = response.body;
 
-    if (responseBody) {
-      return responseBody as IRavenCommandResponse;
+    if (responseBody && responseBody.Results) {
+      return responseBody.Results as IRavenCommandResponse;
     }
 
     throw new ErrorResponseException('Invalid server response');

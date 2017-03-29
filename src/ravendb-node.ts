@@ -30,7 +30,7 @@ export {IHeaders} from './Http/IHeaders';
 export {IResponse, IResponseBody} from './Http/Response/IResponse';
 
 // classes
-export {RavenException, InvalidOperationException, ErrorResponseException, DocumentDoesNotExistsException, NonUniqueObjectException, FetchConcurrencyException, ArgumentOutOfRangeException, DatabaseDoesNotExistException, AuthorizationException, IndexDoesNotExistException, TimeoutException} from './Database/DatabaseExceptions';
+export {RavenException, InvalidOperationException, ErrorResponseException, DocumentDoesNotExistsException, NonUniqueObjectException, FetchConcurrencyException, ArgumentOutOfRangeException, DatabaseDoesNotExistException, AuthorizationException, IndexDoesNotExistException, TimeoutException, AuthenticationException} from './Database/DatabaseExceptions';
 export {IHash, Hash} from './Utility/Hash';
 export {RavenCommand} from './Database/RavenCommand';
 export {GetDocumentCommand} from './Database/Commands/GetDocumentCommand';
@@ -42,8 +42,13 @@ export {GetOperationStateCommand} from './Database/Commands/GetOperationStateCom
 export {RavenCommandData} from './Database/RavenCommandData';
 export {PutCommandData} from './Database/Commands/Data/PutCommandData';
 export {DeleteCommandData} from './Database/Commands/Data/DeleteCommandData';
+export {GetApiKeyCommand} from './Database/Commands/GetApiKeyCommand';
+export {PutApiKeyCommand} from './Database/Commands/PutApiKeyCommand';
 export {QueryOperationOptions} from './Database/Operations/QueryOperationOptions';
 export {Operations} from './Database/Operations/Operations';
+export {AccessMode, AccessModes, ResourcesAccessModes} from './Database/Auth/AccessMode';
+export {ApiKeyDefinition} from './Database/Auth/ApiKeyDefinition';
+export {ApiKeyAuthenticator, IAuthServerRequest} from './Database/Auth/ApiKeyAuthenticator';
 export {Serializer} from './Json/Serializer';
 export {Document} from './Documents/Document';
 export {DocumentStore} from './Documents/DocumentStore';

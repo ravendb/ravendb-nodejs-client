@@ -17,6 +17,8 @@ export abstract class RavenCommand {
   protected authenticationRetries: number = 0;
   private readonly _ravenCommand: boolean = true;
 
+  protected abstract createRequest(serverNode: ServerNode): void;
+
   constructor(endPoint: string, method: RequestMethod = RequestMethods.Get, params?: Object, payload?: Object, headers: IHeaders = {}, isReadRequest: boolean = false) {
     this.endPoint = endPoint;
     this.method = method;
@@ -42,6 +44,7 @@ export abstract class RavenCommand {
       ? params as Object : {[params as string]: value});
   }
 
-  protected abstract createRequest(serverNode: ServerNode): void;
-  protected abstract setResponse(response: IResponse): IRavenCommandResponse | null | void;
+  protected setResponse(response: IResponse): IRavenCommandResponse | null | void {
+    return null;
+  }
 }

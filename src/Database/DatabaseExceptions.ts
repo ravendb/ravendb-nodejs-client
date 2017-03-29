@@ -54,4 +54,9 @@ export class TimeoutException extends RavenException {
 
 }
 
+export class AuthenticationException extends RavenException {
+
+}
+
+
 
