@@ -22,7 +22,7 @@ export class IndexDefinition implements IJsonSerializable {
     this.name = name;
     this.configuration = configuration || {};
     this.reduce = initOptions.reduce  || 0;
-    this.indexId = initOptions.index_id|| null;
+    this.indexId = initOptions.indexid|| null;
     this.lockMode = initOptions.lock_mod || null;
     this.priority = initOptions.priority || null;
     this.isTestIndex = initOptions.is_test_index || false;

@@ -18,7 +18,7 @@ import {IRavenCommandResponse} from "../Database/IRavenCommandResponse";
 export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloKeyGenerator {
   private _lastRangeAt: Date;
   private _range: HiloRangeValue;
-  private _identityPartsSeparator: string;
+  private identityPartsSeparator: string;
   private _lock: Lock;
   private _prefix?: string = null;
   private _lastBatchSize: number = 0;
@@ -28,7 +28,7 @@ export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloK
 
     this._lastRangeAt = DateUtil.zeroDate();
     this._range = new HiloRangeValue();
-    this._identityPartsSeparator = this.conventions.identityPartsSeparator;
+    this.identityPartsSeparator = this.conventions.identityPartsSeparator;
     this._lock = Lock.getInstance();
   }
 
@@ -49,7 +49,7 @@ export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloK
   protected getNextRange(): Promise<HiloRangeValue> {
     return this.store.getRequestsExecutor().execute(new HiloNextCommand(
       this.tag, this._lastBatchSize, this._lastRangeAt,
-      this._identityPartsSeparator, this._range.maxId
+      this.identityPartsSeparator, this._range.maxId
     ))
     .then((response: IRavenCommandResponse) => {
       this._prefix = response['prefix'];

@@ -16,7 +16,7 @@ export class HiloMultiTypeKeyGenerator extends AbstractHiloKeyGenerator implemen
   }
 
   public generateDocumentKey(entity: IDocument, callback?: EntityKeyCallback): Promise<DocumentKey> {
-    const tag: string = this.conventions.documentEntityName;
+    const tag: string = this.conventions.defaultDocumentType;
 
     return this.createGeneratorForTag(tag)
       .then((generator: IHiloKeyGenerator) =>

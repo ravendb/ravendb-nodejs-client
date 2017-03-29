@@ -2,7 +2,7 @@ import {IDocumentSession} from "./IDocumentSession";
 import {IDocumentQuery} from "./IDocumentQuery";
 import {DocumentQuery} from "./DocumentQuery";
 import {Document} from '../Document';
-import {IDocument, DocumentKey} from '../IDocument';
+import {IDocument, DocumentKey, IDocumentType} from '../IDocument';
 import {IDocumentStore} from '../IDocumentStore';
 import {RequestsExecutor} from '../../Http/Request/RequestsExecutor';
 import {DocumentConventions} from '../Conventions/DocumentConventions';
@@ -10,6 +10,7 @@ import {EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
 import {PromiseResolve, PromiseResolver} from '../../Utility/PromiseResolver';
 import * as Promise from 'bluebird'
 import {TypeUtil} from "../../Utility/TypeUtil";
+import {IMetadata} from "../../Database/Metadata";
 
 export class DocumentSession implements IDocumentSession {
   protected database: string;
@@ -37,8 +38,12 @@ export class DocumentSession implements IDocumentSession {
     this.forceReadFromMaster = forceReadFromMaster;
   }
 
-  public create(attributes?: Object): IDocument {
-    return new Document(attributes);
+  public create(attributes?: Object, documentType?: IDocumentType): IDocument {
+    let document: IDocument = new Document(attributes);
+    const conventions: DocumentConventions<IDocument> = this.documentStore.conventions;
+
+    document['@metadata'] = conventions.buildDefaultMetadata(document, documentType);
+    return document;
   }
 
   public load(keyOrKeys: DocumentKey | DocumentKey[], includes?: string[], callback?: EntityCallback<IDocument>
@@ -65,7 +70,7 @@ export class DocumentSession implements IDocumentSession {
     );
   }
 
-  public store(entity: IDocument, key?: DocumentKey, etag?: number, forceConcurrencyCheck?: boolean,
+  public store(entity: IDocument, documentType?: IDocumentType, key?: DocumentKey, etag?: number, forceConcurrencyCheck?: boolean,
      callback?: EntityCallback<IDocument>
   ): Promise<IDocument> {
     const result = this.create();
@@ -75,10 +80,10 @@ export class DocumentSession implements IDocumentSession {
     );
   }
 
-  public query(indexName?: string, usingDefaultOperator?: boolean, waitForNonStaleResults: boolean = false,
+  public query(documentType?: IDocumentType, indexName?: string, usingDefaultOperator?: boolean, waitForNonStaleResults: boolean = false,
      includes?: string[], withStatistics: boolean = false
   ): IDocumentQuery {
-    return new DocumentQuery(this, this.requestsExecutor);
+    return new DocumentQuery(this, this.requestsExecutor, documentType);
   }
 
   public incrementRequestsCount(): void {

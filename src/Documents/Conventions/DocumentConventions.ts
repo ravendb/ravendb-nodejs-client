@@ -1,4 +1,4 @@
-import {IDocument, DocumentKey} from '../IDocument';
+import {IDocument, DocumentKey, IDocumentType, DocumentConstructor} from '../IDocument';
 import {InvalidOperationException} from "../../Database/DatabaseExceptions";
 import * as pluralize from 'pluralize';
 import {IMetadata} from "../../Database/Metadata";
@@ -21,43 +21,51 @@ export class DocumentConventions<T extends IDocument> {
   readonly maxLengthOfQueryUsingGetUrl = 1024 + 512;
   readonly identityPartsSeparator = "/";
   private _systemDatabase: string = "system";
-  private _documentEntityClass: { new(attributes?: Object): T; };
+  private _documentEntityClass: DocumentConstructor<T>;
 
-  constructor(documentEntityClass: { new(attributes?: Object): T; }) {
+  constructor(documentEntityClass: DocumentConstructor<T>) {
     this._documentEntityClass = documentEntityClass;
   }
 
-  public get documentEntity(): string {
+  public get documentClass(): string {
     return this._documentEntityClass.name;
   }
 
-  public get documentEntityName(): string {
-     return this.documentEntity.toLowerCase();
+  public get defaultDocumentType(): IDocumentType {
+     return this.getDocumentType();
   }
 
-  public get documentsCollectionName(): string {
-    return pluralize(this.documentEntityName);
+  public get defaultCollection(): string {
+    return this.getDocumentsColleciton();
   }
 
   public get documentIdPropertyName(): string {
-    return '_id';
+    return 'id';
   }
 
   public get systemDatabase(): string {
     return this._systemDatabase;
   }
 
-  public tryConvertToDocument(rawEntity: Object, fetch: string[] | null | boolean = false): IDocumentConversionResult<T> {
-    const metadata: IMetadata = rawEntity['@metadata'];
+  public getDocumentType(type?: IDocumentType): IDocumentType {
+    return type || this.documentClass.toLowerCase();
+  }
+
+  public getDocumentsColleciton(type?: IDocumentType): string {
+    return pluralize(this.getDocumentType(type));
+  }
+
+  public tryConvertToDocument(rawEntity: Object): IDocumentConversionResult<T> {
+    const metadata: IMetadata = _.get(rawEntity, '@metadata') || {};
     const originalMetadata: IMetadata = _.clone(metadata);
     const idProperty: string = this.documentIdPropertyName;
-    let document: T = new this._documentEntityClass(_.omit(rawEntity, '@metadata'));
+    const documentClass: DocumentConstructor<T> = this._documentEntityClass;
+    const documentAttributes = _.omit(rawEntity, '@metadata');
+    let document: T = new documentClass(documentAttributes, metadata);
 
     if (idProperty in document) {
       this.trySetIdOnEntity(document, metadata['@id'] || null);
     }
-
-    //TODO: datetime conversion
 
     return {
       document: document,
@@ -91,15 +99,20 @@ export class DocumentConventions<T extends IDocument> {
     return entity[idProperty];
   }
 
-  public buildDefaultMetadata(entity?: T): IMetadata {
+  public buildDefaultMetadata(entity?: T, documentType?: IDocumentType): IMetadata {
+    let metadata: IMetadata = {};
+
     if (entity) {
-      return {
-        '@collection': this.documentsCollectionName,
-        'Raven-Node-Type': this.documentEntityName
-      }
+      metadata = {
+        '@collection': this.getDocumentsColleciton(documentType),
+        '@object_type': this.getDocumentType(documentType),
+        'Raven-Node-Type': this.defaultDocumentType
+      };
+
+      //TODO: put datetime fields to metadata
     }
 
-    return {};
+    return metadata;
   }
 
   public tryGetTypeFromMetadata(metadata: IMetadata): string | null {

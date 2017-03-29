@@ -1,4 +1,4 @@
-import {IDocument} from "../IDocument";
+import {IDocument, IDocumentType} from "../IDocument";
 import {IDocumentQuery} from "./IDocumentQuery";
 import {IDocumentSession} from "./IDocumentSession";
 import {RequestsExecutor} from "../../Http/Request/RequestsExecutor";
@@ -29,6 +29,7 @@ export class DocumentQuery implements IDocumentQuery {
   protected indexName: string;
   protected session: IDocumentSession;
   protected requestsExecutor: RequestsExecutor;
+  protected documentType?: IDocumentType = null;
   protected includes?: string[] = null;
   protected queryBuilder: string = '';
   protected negate: boolean = false;
@@ -39,7 +40,7 @@ export class DocumentQuery implements IDocumentQuery {
   protected usingDefaultOperator?: QueryOperator = null;
   protected waitForNonStaleResults: boolean = false;
 
-  constructor(session: IDocumentSession, requestsExecutor: RequestsExecutor, indexName?: string,  usingDefaultOperator
+  constructor(session: IDocumentSession, requestsExecutor: RequestsExecutor, documentType?: IDocumentType, indexName?: string, usingDefaultOperator
     ?: QueryOperator, waitForNonStaleResults: boolean = false, includes?: string[], withStatistics: boolean = false
   ) {
     this.session = session;
@@ -48,7 +49,7 @@ export class DocumentQuery implements IDocumentQuery {
     this.requestsExecutor = requestsExecutor;
     this.usingDefaultOperator = usingDefaultOperator;
     this.waitForNonStaleResults = waitForNonStaleResults;
-    this.indexName = [(indexName || 'dynamic'), session.conventions.documentsCollectionName].join('/');
+    this.indexName = [(indexName || 'dynamic'), session.conventions.getDocumentsColleciton(documentType)].join('/');
   }
 
   public select(...args: string[]): IDocumentQuery {
@@ -249,7 +250,7 @@ export class DocumentQuery implements IDocumentQuery {
 
             response.Results.forEach((result: Object) => results.push(
               this.session.conventions
-                .tryConvertToDocument(result, this.fetch)
+                .tryConvertToDocument(result)
                 .document
             ));
 
