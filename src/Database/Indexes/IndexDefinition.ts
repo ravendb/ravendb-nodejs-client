@@ -8,7 +8,6 @@ import {IJsonSerializable} from '../../Json/IJsonSerializable';
 import {TypeUtil} from "../../Utility/TypeUtil";
 
 export class IndexDefinition implements IJsonSerializable {
-  protected name: string;
   protected maps: string[];
   protected indexId: number = 0;
   protected isTestIndex: boolean = false;
@@ -17,9 +16,10 @@ export class IndexDefinition implements IJsonSerializable {
   protected priority?: IndexPriority = null;
   protected configuration: IOptionsSet = {};
   protected fields: IHashCollection<IndexFieldOptions> = {};
+  private _name: string;
 
   constructor(name: string, indexMap: string | string[], configuration?: IOptionsSet, initOptions: IOptionsSet = {}) {
-    this.name = name;
+    this._name = name;
     this.configuration = configuration || {};
     this.reduce = initOptions.reduce  || 0;
     this.indexId = initOptions.indexid|| null;
@@ -30,10 +30,14 @@ export class IndexDefinition implements IJsonSerializable {
     this.maps = TypeUtil.isArray(indexMap) ? (indexMap as string[]) : [indexMap as string];
   }
 
+  public get name(): string {
+    return this._name;
+  }
+
   public get type(): string {
     let result = 'Map';
 
-    if ((this.name && (0 === this.name.indexOf('Auto/')))) {
+    if ((this._name && (0 === this._name.indexOf('Auto/')))) {
       result = 'Auto' + result;
     }
 
@@ -76,7 +80,7 @@ export class IndexDefinition implements IJsonSerializable {
       "IsTestIndex": this.isTestIndex,
       "LockMode": lockModeJson,
       "Maps": this.maps,
-      "Name": this.name,
+      "Name": this._name,
       "Reduce": this.reduce,
       "OutputReduceToCollection": null,
       "Priority": priorityJson,

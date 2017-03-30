@@ -5,11 +5,13 @@ import {expect} from 'chai';
 import {IDocumentStore} from "../src/Documents/IDocumentStore";
 import {DocumentStore} from '../src/Documents/DocumentStore';
 import {DocumentSession} from "../src/Documents/Session/DocumentSession";
+import {StringUtil} from "../src/Utility/StringUtil";
+import {ravenServer} from "./config/raven.server";
 
 describe('DocumentStore', () => {
   let subject : IDocumentStore;
 
-  beforeEach(() => subject = DocumentStore.create('localhost:8080', 'Northwind'));
+  beforeEach(() => subject = DocumentStore.create(StringUtil.format('{host}:{port}', ravenServer), ravenServer.dbName));
 
   describe('Initialize()', () => {
     it('should initialize', () => {

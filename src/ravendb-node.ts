@@ -45,6 +45,7 @@ export {DeleteCommandData} from './Database/Commands/Data/DeleteCommandData';
 export {GetApiKeyCommand} from './Database/Commands/GetApiKeyCommand';
 export {PutApiKeyCommand} from './Database/Commands/PutApiKeyCommand';
 export {QueryOperationOptions} from './Database/Operations/QueryOperationOptions';
+export {PutIndexesCommand} from './Database/Commands/PutIndexesCommand';
 export {Operations} from './Database/Operations/Operations';
 export {AccessMode, AccessModes, ResourcesAccessModes} from './Database/Auth/AccessMode';
 export {ApiKeyDefinition} from './Database/Auth/ApiKeyDefinition';
