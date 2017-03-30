@@ -29,7 +29,6 @@ export class DocumentQuery implements IDocumentQuery {
   protected indexName: string;
   protected session: IDocumentSession;
   protected requestsExecutor: RequestsExecutor;
-  protected documentType?: IDocumentType = null;
   protected includes?: string[] = null;
   protected queryBuilder: string = '';
   protected negate: boolean = false;
@@ -92,59 +91,36 @@ export class DocumentQuery implements IDocumentQuery {
   }
 
   public whereEquals<V extends LuceneValue>(fieldName: string, value: V, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll): IDocumentQuery {
-    if (!fieldName) {
-      throw new InvalidOperationException('Empty field name is invalid');
-    }
-
-    this.addLuceneCondition<V>(fieldName, value, LuceneOperators.Equals, escapeQueryOptions);
-    return this;
+    return this.assertFieldName(fieldName)
+      .addLuceneCondition<V>(fieldName, value, LuceneOperators.Equals, escapeQueryOptions) as IDocumentQuery;
   }
 
   public whereEndsWith(fieldName: string, value: string): IDocumentQuery {
-    if (!fieldName) {
-      throw new InvalidOperationException('Empty field name is invalid');
-    }
-
-    this.addLuceneCondition<string>(fieldName, value, LuceneOperators.EndsWith);
-    return this;
+    return this.assertFieldName(fieldName)
+      .addLuceneCondition<string>(fieldName, value, LuceneOperators.EndsWith) as IDocumentQuery;
   }
 
   public whereStartsWith(fieldName: string, value: string): IDocumentQuery {
-    if (!fieldName) {
-      throw new InvalidOperationException('Empty field name is invalid');
-    }
-
-    this.addLuceneCondition<string>(fieldName, value, LuceneOperators.StartsWith);
-    return this;
+    return this.assertFieldName(fieldName)
+      .addLuceneCondition<string>(fieldName, value, LuceneOperators.StartsWith) as IDocumentQuery;
   }
 
   public whereIn<V extends LuceneValue>(fieldName: string, values: V[]): IDocumentQuery {
-    if (!fieldName) {
-      throw new InvalidOperationException('Empty field name is invalid');
-    }
-
-    this.addLuceneCondition<V[]>(fieldName, values, LuceneOperators.In);
-    return this;
+    return this.assertFieldName(fieldName)
+      .addLuceneCondition<V[]>(fieldName, values, LuceneOperators.In) as IDocumentQuery;
   }
 
   public whereBetween<V extends LuceneValue>(fieldName: string, start?: V, end?: V): IDocumentQuery {
-    //TODO: DateTime
-    if (!fieldName) {
-      throw new InvalidOperationException('Empty field name is invalid');
-    }
-
-    this.addLuceneCondition<LuceneRangeValue<V>>(fieldName, {min: start, max: end}, LuceneOperators.Between);
-    return this;
+    return this.assertFieldName(fieldName)
+      .addLuceneCondition<LuceneRangeValue<V>>(
+        fieldName, {min: start, max: end}, LuceneOperators.Between
+      ) as IDocumentQuery;
   }
 
   public whereBetweenOrEqual<V extends LuceneValue>(fieldName: string, start?: V, end?: V): IDocumentQuery {
-    //TODO: DateTime
-    if (!fieldName) {
-      throw new InvalidOperationException('Empty field name is invalid');
-    }
-
-    this.addLuceneCondition<LuceneRangeValue<V>>(fieldName, {min: start, max: end}, LuceneOperators.EqualBetween);
-    return this;
+    return this.assertFieldName(fieldName).addLuceneCondition<LuceneRangeValue<V>>(
+      fieldName, {min: start, max: end}, LuceneOperators.EqualBetween
+    ) as IDocumentQuery;
   }
 
   public whereGreaterThan<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery {
@@ -168,12 +144,12 @@ export class DocumentQuery implements IDocumentQuery {
   }
 
   public whereNotNull(fieldName: string): IDocumentQuery {
-    return this.addSpace()
+    return (this.addSpace()
       .addStatement('(')
         .whereEquals<string>(fieldName, '*')
         .andAlso()
         .addNot()
-        .whereEquals<null>(fieldName, null)
+        .whereEquals<null>(fieldName, null) as DocumentQuery)
     .addStatement(')');
   }
 
@@ -222,22 +198,6 @@ export class DocumentQuery implements IDocumentQuery {
     return this;
   }
 
-  public addSpace(): IDocumentQuery {
-    if ((this.queryBuilder.length > 0) && !this.queryBuilder.endsWith(' ')) {
-      this.addStatement(' ');
-    }
-
-    return this;
-  }
-
-  public addStatement(statement: string): IDocumentQuery {
-    if (this.queryBuilder.length > 0) {
-      this.queryBuilder += statement;
-    }
-
-    return this;
-  }
-
   public get(callback?: QueryResultsCallback<DocumentQueryResult<IDocument>>): Promise<DocumentQueryResult<IDocument>> {
     return new Promise<DocumentQueryResult<IDocument>>((resolve: PromiseResolve<DocumentQueryResult<IDocument>>, reject: PromiseReject) =>
       this.executeQuery()
@@ -267,6 +227,47 @@ export class DocumentQuery implements IDocumentQuery {
           PromiseResolver.resolve<DocumentQueryResult<IDocument>>(result, resolve, callback)
         })
     );
+  }
+
+  protected addSpace(): DocumentQuery {
+    if ((this.queryBuilder.length > 0) && !this.queryBuilder.endsWith(' ')) {
+      this.addStatement(' ');
+    }
+
+    return this;
+  }
+
+  protected addStatement(statement: string): DocumentQuery {
+    if (this.queryBuilder.length > 0) {
+      this.queryBuilder += statement;
+    }
+
+    return this;
+  }
+
+  protected addLuceneCondition<T extends LuceneConditionValue>(fieldName: string, condition: T,
+    operator?: LuceneOperator, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll
+  ): DocumentQuery {
+    const luceneCondition: string = LuceneBuilder.buildCondition<T>(this.session.conventions, fieldName,
+      condition, operator, escapeQueryOptions);
+
+    this.addSpace();
+
+    if (this.negate) {
+      this.negate = false;
+      this.addStatement('-');
+    }
+
+    this.queryBuilder += luceneCondition;
+    return this;
+  }
+
+  protected assertFieldName(fieldName?: string): DocumentQuery {
+    if (!fieldName) {
+      throw new InvalidOperationException('Empty field name is invalid');
+    }
+
+    return this;
   }
 
   protected executeQuery(): Promise<IRavenCommandResponse> {
@@ -307,21 +308,5 @@ export class DocumentQuery implements IDocumentQuery {
 
       request();
     });
-  }
-
-  protected addLuceneCondition<T extends LuceneConditionValue>(fieldName: string, condition: T,
-    operator?: LuceneOperator, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll
-  ): void {
-    const luceneCondition: string = LuceneBuilder.buildCondition<T>(this.session.conventions, fieldName,
-      condition, operator, escapeQueryOptions);
-
-    this.addSpace();
-
-    if (this.negate) {
-      this.negate = false;
-      this.addStatement('-');
-    }
-
-    this.queryBuilder += luceneCondition;
   }
 }

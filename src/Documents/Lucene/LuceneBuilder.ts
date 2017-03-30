@@ -1,3 +1,4 @@
+import * as _ from 'lodash';
 import {LuceneOperator, LuceneOperators} from "./LuceneOperator";
 import {LuceneConditionValue, LuceneValue, LuceneRangeValue} from "./LuceneValue";
 import {EscapeQueryOption, EscapeQueryOptions} from "../Session/EscapeQueryOptions";
@@ -5,6 +6,7 @@ import {StringUtil} from "../../Utility/StringUtil";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {DocumentConventions} from "../Conventions/DocumentConventions";
 import {IDocument} from "../IDocument";
+import {DateUtil} from "../../Utility/DateUtil";
 
 export class LuceneBuilder {
   protected static readonly emptyString = '[[EMPTY_STRING]]';
@@ -90,13 +92,18 @@ export class LuceneBuilder {
       case LuceneOperators.In:
         const inConditionValues: LuceneValue[] = value as LuceneValue[];
         const valueFormatter = (value: LuceneValue) => TypeUtil.isString(value)
-          ? StringUtil.format('"{0}"', value) : value.toString();
+          ? StringUtil.format('"{0}"', value) : this.valueToLuceneString(value as LuceneValue);
 
         if (!inConditionValues || (0 === inConditionValues.length)) {
           return null;
         }
 
-        queryText = StringUtil.format('({0})', inConditionValues.map(valueFormatter).join(', '));
+        queryText = StringUtil.format('({0})', inConditionValues
+          .map(valueFormatter)
+          .filter(_.negate(_.isEmpty))
+          .join(', ')
+        );
+
         break;
       case LuceneOperators.Between:
       case LuceneOperators.EqualBetween:
@@ -110,13 +117,13 @@ export class LuceneBuilder {
         );
         break;
       case LuceneOperators.Search:
-        queryText = StringUtil.format('({0})', (value as LuceneValue).toString());
+        queryText = StringUtil.format('({0})', (value as LuceneValue) as string);
         break;
       default:
         if (TypeUtil.isString(value) && (value as string).includes(' ')) {
           queryText = StringUtil.format('"{0}"', value as string);
         } else {
-          queryText = TypeUtil.isNone(value) ? this.nullValue : value.toString();
+          queryText = TypeUtil.isNone(value) ? this.nullValue : this.valueToLuceneString(value as LuceneValue);
         }
         break;
     }
@@ -124,12 +131,28 @@ export class LuceneBuilder {
     return queryText;
   }
 
+  protected static valueToLuceneString(value?: LuceneValue): string {
+    if (TypeUtil.isNone(value)) {
+      return '';
+    }
+
+    if (TypeUtil.isDate(value)) {
+      return DateUtil.stringify(value as Date);
+    }
+
+    if (!TypeUtil.isString(value)) {
+      return value.toString();
+    }
+
+    return value as string;
+  }
+
   protected static valueToLuceneSyntax(value?: LuceneValue, nullString: string = '*'): string {
     if (TypeUtil.isNone(value)) {
       return nullString;
     }
 
-    const stringValue = value.toString();
+    const stringValue = this.valueToLuceneString(value);
 
     return ('' == stringValue) ? this.emptyString : stringValue;
   }

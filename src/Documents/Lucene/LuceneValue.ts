@@ -1,4 +1,4 @@
-export type LuceneValue = string | number | boolean | null;
+export type LuceneValue = string | number | boolean | Date | null;
 
 export interface LuceneRangeValue<T extends LuceneValue> {
   min?: T,

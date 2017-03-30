@@ -10,15 +10,13 @@ const uglify = require('gulp-uglify-harmony');
 
 const preamble = '/** RavenDB Client - (c) Hibernating Rhinos 2017 */';
 const exportDefault = 'export default DocumentStore;';
-const prioritizedClasses = ['Hash.ts', 'RavenCommand.ts'];
+const prioritizedClasses = ['Hash.ts', 'RavenCommand.ts', 'AbstractHiloKeyGenerator.ts'];
 const options = {
     src: './src',
     tests: './test',
     tmp: './.build',
     dest: './lib',
 };
-
-//@see https://github.com/IdanHaim/RavenDB-Python-Client/commit/267c178fa4ec5e9855028bfb80ed672d3d031b5e
 
 gulp.task('clean', (next) => rmdir(options.tmp, next));
 

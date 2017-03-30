@@ -24,4 +24,8 @@ export class TypeUtil {
   public static isFunction(value: any): boolean {
     return _.isFunction(value);
   }
+
+  public static isDate(value: any): boolean {
+    return _.isDate(value);
+  }
 }

@@ -1,4 +1,5 @@
 import {TypeUtil} from "../Utility/TypeUtil";
+import {DateUtil} from "../Utility/DateUtil";
 
 export class Serializer {
   public static fromJSON<T extends Object>(className: { new(): T; }, source: Object | string, metadata: Object = {}, target?: T)
@@ -9,11 +10,19 @@ export class Serializer {
     let targetObject: T = (target instanceof className)
       ? target : new className();
 
-    const transform: (value: any) => any = (value) => {
-      //TODO: walk on @metadata and convert datetime fields
+    const mapping: Object = metadata && metadata['@nested_object_types']
+      ? metadata['@nested_object_types'] : {};
+
+    const transform: (value: any, key?: string) => any = (value, key) => {
+      if (key in mapping) {
+        switch (mapping[key]) {
+          case Date.name:
+            return DateUtil.parse(value);
+        }
+      }
 
       if (TypeUtil.isArray(value)) {
-        return value.map((item) => transform(item))
+        return value.map((item) => transform(item, key))
       }
 
       if (value instanceof Object) {
@@ -27,7 +36,7 @@ export class Serializer {
       let source: any = sourceObject[key];
 
       if ('undefined' !== (typeof source)) {
-        targetObject[key] = transform(source);
+        targetObject[key] = transform(source, key);
       }
     });
 

@@ -28,6 +28,4 @@ export interface IDocumentQuery {
   orElse(): IDocumentQuery;
   addNot(): IDocumentQuery;
   get(callback?: QueryResultsCallback<DocumentQueryResult<IDocument>>): Promise<DocumentQueryResult<IDocument>>;
-  addSpace(): IDocumentQuery;
-  addStatement(statement: string): IDocumentQuery;
 }

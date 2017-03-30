@@ -101,6 +101,8 @@ export class DocumentConventions<T extends IDocument> {
 
   public buildDefaultMetadata(entity?: T, documentType?: IDocumentType): IMetadata {
     let metadata: IMetadata = {};
+    let nestedTypes: Object = {};
+    let property: string, value : any;
 
     if (entity) {
       metadata = {
@@ -109,7 +111,19 @@ export class DocumentConventions<T extends IDocument> {
         'Raven-Node-Type': this.defaultDocumentType
       };
 
-      //TODO: put datetime fields to metadata
+      for (property in entity) {
+        if (entity.hasOwnProperty(property)) {
+          value = entity[property];
+
+          if (value instanceof Date) {
+            nestedTypes[property] = Date.name;
+          }
+        }
+      }
+
+      if (!_.isEmpty(nestedTypes)) {
+        metadata['@nested_object_types'] = nestedTypes;
+      }
     }
 
     return metadata;

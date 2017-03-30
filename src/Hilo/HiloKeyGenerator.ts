@@ -54,7 +54,7 @@ export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloK
     .then((response: IRavenCommandResponse) => {
       this._prefix = response['prefix'];
       this._lastBatchSize = response['last_size'];
-      this._lastRangeAt = DateUtil.parseTimestamp(response['last_range_at']);
+      this._lastRangeAt = DateUtil.parse(response['last_range_at']);
 
       return new HiloRangeValue(response['low'], response['high']);
     });
