@@ -1,4 +1,5 @@
 // typings
+import {RequestPromise} from "request-promise";
 export {AbstractCallback, EntityKeyCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback, QueryResultsCallback} from './Utility/Callbacks';
 export {PromiseThenable, PromiseResolver, PromiseResolve, PromiseReject} from './Utility/PromiseResolver';
 export {DocumentID, DocumentKey, IDocumentType, IDocument, DocumentConstructor} from './Documents/IDocument';
@@ -78,8 +79,10 @@ export {HiloMultiTypeKeyGenerator} from './Hilo/HiloMultiTypeKeyGenerator';
 export {HiloNextCommand} from './Hilo/Commands/HiloNextCommand';
 export {HiloReturnCommand} from './Hilo/Commands/HiloReturnCommand';
 
-declare var _: {[property: string]: any};
-declare var uuid: Function;
-declare var moment: Function;
-declare var module: { exports: any }
-declare class AsyncLock{ acquire: any }
+declare var RequestPromise: any;
+declare var _: any;
+declare var sodium: any;
+declare var uuid: any;
+declare var moment: any;
+declare var module: { exports: any };
+declare class AsyncLock { acquire: any };
