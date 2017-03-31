@@ -47,6 +47,10 @@ export class DocumentConventions<T extends IDocument> {
     return this._systemDatabase;
   }
 
+  public get emptyEtag(): number {
+    return 0;
+  }
+
   public getDocumentType(type?: IDocumentType): IDocumentType {
     return type || this.documentClass.toLowerCase();
   }

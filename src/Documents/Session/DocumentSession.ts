@@ -7,7 +7,7 @@ import {IDocumentStore} from '../IDocumentStore';
 import {RequestsExecutor} from '../../Http/Request/RequestsExecutor';
 import {DocumentConventions} from '../Conventions/DocumentConventions';
 import {EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
-import {PromiseResolve, PromiseResolver, PromiseReject} from '../../Utility/PromiseResolver';
+import {PromiseResolver} from '../../Utility/PromiseResolver';
 import * as _ from 'lodash';
 import * as Promise from 'bluebird'
 import {TypeUtil} from "../../Utility/TypeUtil";
@@ -17,6 +17,7 @@ import {StringUtil} from "../../Utility/StringUtil";
 import {GetDocumentCommand} from "../../Database/Commands/GetDocumentCommand";
 import {IRavenCommandResponse} from "../../Database/IRavenCommandResponse";
 import {DeleteDocumentCommand} from "../../Database/Commands/DeleteDocumentCommand";
+import {PutDocumentCommand} from "../../Database/Commands/PutDocumentCommand";
 
 export class DocumentSession implements IDocumentSession {
   protected database: string;
@@ -119,11 +120,22 @@ export class DocumentSession implements IDocumentSession {
      callback?: EntityCallback<IDocument>
   ): Promise<IDocument> {
     this.incrementRequestsCount();
-    const result = this.create();
 
-    return new Promise<IDocument>((resolve: PromiseResolve<IDocument>) =>
-      PromiseResolver.resolve(result, resolve, callback)
-    );
+    return this.prepareDocumentToStore(entity, documentType, key, etag, forceConcurrencyCheck)
+      .then((entity: IDocument) => {
+        let tag: number = null;
+        const metadata = entity['@metadata'];
+        const conventions: DocumentConventions<IDocument> = this.conventions;
+        const documentKey: DocumentKey = conventions.tryGetIdFromInstance(entity);
+
+        if (conventions.defaultUseOptimisticConcurrency || metadata['force_concurrency_check']) {
+          tag = (metadata['@tag'] as number) || conventions.emptyEtag;
+        }
+
+        return this.requestsExecutor
+          .execute(new PutDocumentCommand(documentKey, entity, tag))
+          .then((): IDocument => entity);
+      });
   }
 
   public query(documentType?: IDocumentType, indexName?: string, usingDefaultOperator?: boolean, waitForNonStaleResults: boolean = false,
@@ -185,19 +197,23 @@ export class DocumentSession implements IDocumentSession {
       })
       .then((entity: IDocument) => {
         let documentKey: DocumentKey = key;
-        const conventions = this.conventions;
+        const conventions: DocumentConventions<IDocument> = this.conventions;
 
         if (TypeUtil.isNone(documentKey)) {
           documentKey = conventions.tryGetIdFromInstance(entity);
         } else {
           conventions.trySetIdOnEntity(entity, documentKey);
+          entity['@metadata']['@id'] = documentKey;
         }
+
+        entity['@metadata'] = conventions.buildDefaultMetadata(entity, documentType);
 
         if (TypeUtil.isNone(documentKey)) {
           return this.documentStore
             .generateId(entity, documentType)
             .then((documentKey: DocumentKey): IDocument => {
               conventions.trySetIdOnEntity(entity, documentKey);
+              entity['@metadata']['@id'] = documentKey;
               return entity;
             })
         }
