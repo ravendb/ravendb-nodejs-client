@@ -7,13 +7,14 @@ import {ServerNode} from '../Http/ServerNode';
 import {RequestsExecutor} from '../Http/Request/RequestsExecutor';
 import {EntityKeyCallback} from '../Utility/Callbacks';
 import {DocumentConventions} from './Conventions/DocumentConventions';
-import {InvalidOperationException} from '../Database/DatabaseExceptions';
+import {InvalidOperationException, RavenException} from '../Database/DatabaseExceptions';
 import {IHiloKeyGenerator} from '../Hilo/IHiloKeyGenerator';
 import {HiloMultiDatabaseKeyGenerator} from '../Hilo/HiloMultiDatabaseKeyGenerator';
 import * as uuid from 'uuid';
 import * as Promise from 'bluebird';
 import {IHashCollection} from "../Utility/IHashCollection";
 import {Operations} from "../Database/Operations/Operations";
+import {PromiseResolver} from "../Utility/PromiseResolver";
 
 export class DocumentStore implements IDocumentStore {
   protected url: string;
@@ -97,7 +98,12 @@ export class DocumentStore implements IDocumentStore {
   }
 
   public generateId(entity: IDocument, database?: string, callback?: EntityKeyCallback): Promise<DocumentKey> {
-    return this.generator.generateDocumentKey(entity, database, callback);
+    return this.generator.generateDocumentKey(entity, database)
+      .then((documentKey: DocumentKey) => {
+        PromiseResolver.resolve<DocumentKey>(documentKey, null, callback);
+        return documentKey;
+      })
+      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
   protected assertInitialize(): void {

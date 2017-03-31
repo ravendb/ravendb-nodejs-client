@@ -7,12 +7,12 @@ import {IDocumentStore} from '../IDocumentStore';
 import {RequestsExecutor} from '../../Http/Request/RequestsExecutor';
 import {DocumentConventions} from '../Conventions/DocumentConventions';
 import {EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
-import {PromiseResolve, PromiseResolver} from '../../Utility/PromiseResolver';
+import {PromiseResolve,  PromiseResolver} from '../../Utility/PromiseResolver';
 import * as _ from 'lodash';
 import * as Promise from 'bluebird'
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {IMetadata} from "../../Database/Metadata";
-import {InvalidOperationException, DocumentDoesNotExistsException} from "../../Database/DatabaseExceptions";
+import { InvalidOperationException, DocumentDoesNotExistsException, RavenException} from "../../Database/DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {GetDocumentCommand} from "../../Database/Commands/GetDocumentCommand";
 import {IRavenCommandResponse} from "../../Database/IRavenCommandResponse";
@@ -75,10 +75,14 @@ export class DocumentSession implements IDocumentSession {
         const results = responseResults.map((result: Object) => this
           .conventions.tryConvertToDocument(result).document);
 
-        return TypeUtil.isArray(keyOrKeys)
+        const result = TypeUtil.isArray(keyOrKeys)
           ? _.first(results) as IDocument
           : results as IDocument[];
+
+        PromiseResolver.resolve<IDocument | IDocument[]>(result, null, callback);
+        return result;
       })
+      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
   public delete(keyOrEntity: DocumentKey | IDocument, callback?: EntityCallback<IDocument>): Promise<IDocument> {
@@ -101,8 +105,12 @@ export class DocumentSession implements IDocumentSession {
 
         return this.requestsExecutor
           .execute(new DeleteDocumentCommand(key, etag))
-          .then(() => document) as Promise<IDocument>;
-      });
+          .then(() => {
+            PromiseResolver.resolve<IDocument>(document, null, callback);
+            return document;
+          }) as Promise<IDocument>;
+      })
+      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
   public store(entity: IDocument, documentType?: IDocumentType, key?: DocumentKey, etag?: number, forceConcurrencyCheck?: boolean,

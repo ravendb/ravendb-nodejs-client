@@ -2,7 +2,6 @@ import {IHiloKeyGenerator} from './IHiloKeyGenerator';
 import {IDocumentStore} from '../Documents/IDocumentStore';
 import {DocumentConventions} from '../Documents/Conventions/DocumentConventions';
 import {DocumentKey, IDocument} from '../Documents/IDocument';
-import {EntityKeyCallback} from '../Utility/Callbacks';
 import * as Promise from 'bluebird';
 import {IHashCollection} from "../Utility/IHashCollection";
 
@@ -20,7 +19,7 @@ export abstract class AbstractHiloKeyGenerator implements IHiloKeyGenerator {
     this.dbName = dbName || store.database;
   }
 
-  public abstract generateDocumentKey(...args: (IDocument | EntityKeyCallback | string)[]): Promise<DocumentKey>;
+  public abstract generateDocumentKey(...args: (IDocument | string)[]): Promise<DocumentKey>;
 
   public returnUnusedRange(): Promise<void> {
     return Promise

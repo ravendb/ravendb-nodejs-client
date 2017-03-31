@@ -14,14 +14,14 @@ import {StringUtil} from "../../Utility/StringUtil";
 import {QueryString} from "../../Http/QueryString";
 import {ArrayUtil} from "../../Utility/ArrayUtil";
 import {QueryOperators, QueryOperator} from "./QueryOperator";
-import {DocumentConventions, IDocumentConversionResult} from "../Conventions/DocumentConventions";
+import {DocumentConventions} from "../Conventions/DocumentConventions";
 import * as Promise from 'bluebird'
 import * as moment from "moment";
 import {IndexQuery} from "../../Database/Indexes/IndexQuery";
 import {IOptionsSet} from "../../Utility/IOptionsSet";
 import {QueryCommand} from "../../Database/Commands/QueryCommand";
 import {TypeUtil} from "../../Utility/TypeUtil";
-import {ArgumentOutOfRangeException, InvalidOperationException, ErrorResponseException} from "../../Database/DatabaseExceptions";
+import {ArgumentOutOfRangeException, InvalidOperationException, ErrorResponseException, RavenException} from "../../Database/DatabaseExceptions";
 
 export type DocumentQueryResult<T> = Array<T> | {results: T[], response: IRavenCommandResponse};
 
@@ -201,6 +201,7 @@ export class DocumentQuery implements IDocumentQuery {
   public get(callback?: QueryResultsCallback<DocumentQueryResult<IDocument>>): Promise<DocumentQueryResult<IDocument>> {
     return new Promise<DocumentQueryResult<IDocument>>((resolve: PromiseResolve<DocumentQueryResult<IDocument>>, reject: PromiseReject) =>
       this.executeQuery()
+        .catch((error: RavenException) => PromiseResolver.reject(error, reject, callback))
         .then((response: IRavenCommandResponse) => {
           let result: DocumentQueryResult<IDocument> = [] as DocumentQueryResult<IDocument>;
 

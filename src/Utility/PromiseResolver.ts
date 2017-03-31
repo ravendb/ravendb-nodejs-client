@@ -10,8 +10,10 @@ export type PromiseResolve<T> = (thenableOrResult?: PromiseThenable<T | T[] | nu
 export type PromiseReject = (error: Error) => void;
 
 export class PromiseResolver {
-  public static resolve<T>(result: T | T[] | number, resolve: PromiseResolve<T>, callback?: EntityCallback<T> | EntitiesArrayCallback<T> | EntitiesCountCallback) {
-    resolve(result);
+  public static resolve<T>(result: T | T[] | number, resolve?: PromiseResolve<T>, callback?: EntityCallback<T> | EntitiesArrayCallback<T> | EntitiesCountCallback): void {
+    if (resolve) {
+      resolve(result);
+    }
 
     if (callback) {
       if (TypeUtil.isNumber(result)) {
@@ -24,8 +26,10 @@ export class PromiseResolver {
     }
   }
 
-  public static reject(error: Error, reject: PromiseReject, callback?: AbstractCallback<null>) {
-    reject(error);
+  public static reject(error: Error, reject?: PromiseReject, callback?: AbstractCallback<null>): void {
+    if (reject) {
+      reject(error);
+    }
 
     if (callback) {
       callback(null, error);

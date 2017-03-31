@@ -3,7 +3,6 @@ import {HiloMultiTypeKeyGenerator} from './HiloMultiTypeKeyGenerator';
 import {IDocumentStore} from '../Documents/IDocumentStore';
 import {AbstractHiloKeyGenerator} from './AbstractHiloKeyGenerator';
 import {DocumentKey, IDocument} from '../Documents/IDocument';
-import {EntityKeyCallback} from '../Utility/Callbacks';
 import * as Promise from 'bluebird';
 
 export class HiloMultiDatabaseKeyGenerator extends AbstractHiloKeyGenerator implements IHiloKeyGenerator {
@@ -11,10 +10,10 @@ export class HiloMultiDatabaseKeyGenerator extends AbstractHiloKeyGenerator impl
     super(store);
   }
 
-  public generateDocumentKey(entity: IDocument, dbName?: string, callback?: EntityKeyCallback): Promise<DocumentKey> {
+  public generateDocumentKey(entity: IDocument, dbName?: string,): Promise<DocumentKey> {
     return this
       .getGeneratorForDatabase(dbName || this.store.database)
-      .generateDocumentKey(entity, callback);
+      .generateDocumentKey(entity);
   }
 
   protected getGeneratorForDatabase(dbName: string): IHiloKeyGenerator {

@@ -94,8 +94,9 @@ export class ApiKeyAuthenticator {
       method: RequestMethods.Get,
       resolveWithFullResponse: true,
       uri: StringUtil.format('{0}/api-key/public-key')
-    }).catch(() => Promise.reject(new AuthenticationException('Bad response from server')))
-      .then((response: IResponse) => {
+    })
+    .catch(() => Promise.reject(new AuthenticationException('Bad response from server')))
+    .then((response: IResponse) => {
       let publicKey: Buffer, body: IResponseBody;
 
       if (!StatusCodes.isOk(response.statusCode)
