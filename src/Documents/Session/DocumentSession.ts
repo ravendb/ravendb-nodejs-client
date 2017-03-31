@@ -8,11 +8,14 @@ import {RequestsExecutor} from '../../Http/Request/RequestsExecutor';
 import {DocumentConventions} from '../Conventions/DocumentConventions';
 import {EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
 import {PromiseResolve, PromiseResolver} from '../../Utility/PromiseResolver';
+import * as _ from 'lodash';
 import * as Promise from 'bluebird'
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {IMetadata} from "../../Database/Metadata";
-import {InvalidOperationException} from "../../Database/DatabaseExceptions";
+import {InvalidOperationException, DocumentDoesNotExistsException} from "../../Database/DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
+import {GetDocumentCommand} from "../../Database/Commands/GetDocumentCommand";
+import {IRavenCommandResponse} from "../../Database/IRavenCommandResponse";
 
 export class DocumentSession implements IDocumentSession {
   protected database: string;
@@ -51,17 +54,30 @@ export class DocumentSession implements IDocumentSession {
   public load(keyOrKeys: DocumentKey | DocumentKey[], includes?: string[], callback?: EntityCallback<IDocument>
     | EntitiesArrayCallback<IDocument>
   ): Promise<IDocument> | Promise<IDocument[]> {
-    const result = this.create();
+    return this.requestsExecutor
+      .execute(new GetDocumentCommand(keyOrKeys, includes))
+      .then((response: IRavenCommandResponse) => {
+        let responseResults: Object[];
 
-    if (TypeUtil.isArray(keyOrKeys)) {
-      return new Promise<IDocument[]>((resolve: PromiseResolve<IDocument[]>) =>
-        PromiseResolver.resolve([result], resolve, callback)
-      );
-    } else {
-      return new Promise<IDocument>((resolve) =>
-        PromiseResolver.resolve(result, resolve, callback)
-      );
-    }
+        if (_.isEmpty(keyOrKeys)) {
+          return Promise.reject(new InvalidOperationException('Document key isn\'t set or keys list is empty'));
+        }
+
+        if (includes && !TypeUtil.isArray(includes)) {
+          includes = _.isString(includes) ? [includes as string] : null;
+        }
+
+        if (!(responseResults = response.Results) || (responseResults.length <= 0)) {
+          return Promise.reject(new DocumentDoesNotExistsException('Requested document(s) doesn\'t exists'));
+        }
+
+        const results = responseResults.map((result: Object) => this
+          .conventions.tryConvertToDocument(result).document);
+
+        return TypeUtil.isArray(keyOrKeys)
+          ? _.first(results) as IDocument
+          : results as IDocument[];
+      })
   }
 
   public delete(keyOrEntity: DocumentKey | IDocument, callback?: EntityCallback<IDocument>): Promise<IDocument> {
