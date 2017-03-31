@@ -48,7 +48,9 @@ export abstract class RavenCommand {
     let options: RavenCommandRequestOptions = {
       json: true,
       uri: this.endPoint,
-      headers: this.headers
+      method: this.method,
+      headers: this.headers,
+      resolveWithFullResponse: true,
     };
 
     const params = this.params;

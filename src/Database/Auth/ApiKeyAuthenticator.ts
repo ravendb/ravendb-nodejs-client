@@ -40,6 +40,7 @@ export class ApiKeyAuthenticator {
           headers: headers,
           method: RequestMethods.Post,
           url: '/api-key/validate',
+          resolveWithFullResponse: true,
           qs: {
             apiKey: name
           }
