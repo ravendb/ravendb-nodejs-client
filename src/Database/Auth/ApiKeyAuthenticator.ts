@@ -44,6 +44,7 @@ export class ApiKeyAuthenticator {
             apiKey: name
           }
         })
+        .catch(() => Promise.reject(new AuthenticationException('Bad response from server')))
         .then((response: IResponse) => {
           const code: StatusCode = response.statusCode;
 
@@ -93,7 +94,8 @@ export class ApiKeyAuthenticator {
       method: RequestMethods.Get,
       resolveWithFullResponse: true,
       uri: StringUtil.format('{0}/api-key/public-key')
-    }).then((response: IResponse) => {
+    }).catch(() => Promise.reject(new AuthenticationException('Bad response from server')))
+      .then((response: IResponse) => {
       let publicKey: Buffer, body: IResponseBody;
 
       if (!StatusCodes.isOk(response.statusCode)

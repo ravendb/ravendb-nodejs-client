@@ -201,7 +201,6 @@ export class DocumentQuery implements IDocumentQuery {
   public get(callback?: QueryResultsCallback<DocumentQueryResult<IDocument>>): Promise<DocumentQueryResult<IDocument>> {
     return new Promise<DocumentQueryResult<IDocument>>((resolve: PromiseResolve<DocumentQueryResult<IDocument>>, reject: PromiseReject) =>
       this.executeQuery()
-        .catch((error: Error) => reject(error))
         .then((response: IRavenCommandResponse) => {
           let result: DocumentQueryResult<IDocument> = [] as DocumentQueryResult<IDocument>;
 

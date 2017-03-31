@@ -16,6 +16,7 @@ import {InvalidOperationException, DocumentDoesNotExistsException} from "../../D
 import {StringUtil} from "../../Utility/StringUtil";
 import {GetDocumentCommand} from "../../Database/Commands/GetDocumentCommand";
 import {IRavenCommandResponse} from "../../Database/IRavenCommandResponse";
+import {DeleteDocumentCommand} from "../../Database/Commands/DeleteDocumentCommand";
 
 export class DocumentSession implements IDocumentSession {
   protected database: string;
@@ -81,11 +82,27 @@ export class DocumentSession implements IDocumentSession {
   }
 
   public delete(keyOrEntity: DocumentKey | IDocument, callback?: EntityCallback<IDocument>): Promise<IDocument> {
-    const result = this.create();
+    return (((keyOrEntity instanceof Document)
+      ? Promise.resolve(keyOrEntity)
+      : this.load(keyOrEntity as DocumentKey)) as Promise<IDocument>)
+      .then((document: IDocument) => {
+        let etag: number | null = null;
+        const conventions = this.conventions;
+        const metadata: IMetadata = document['@metadata'];
+        const key: DocumentKey = conventions.tryGetIdFromInstance(document);
 
-    return new Promise<IDocument>((resolve: PromiseResolve<IDocument>) =>
-      PromiseResolver.resolve(result, resolve, callback)
-    );
+        if ('Raven-Read-Only' in metadata) {
+          return Promise.reject(new InvalidOperationException('Document is marked as read only and cannot be deleted'));
+        }
+
+        if (conventions.defaultUseOptimisticConcurrency) {
+          etag = metadata['@tag'] || null;
+        }
+
+        return this.requestsExecutor
+          .execute(new DeleteDocumentCommand(key, etag))
+          .then(() => document) as Promise<IDocument>;
+      });
   }
 
   public store(entity: IDocument, documentType?: IDocumentType, key?: DocumentKey, etag?: number, forceConcurrencyCheck?: boolean,
