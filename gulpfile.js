@@ -47,8 +47,10 @@ gulp.task('build:exports', ['clean'], () => gulp
         + contents
             .toString()
             .split('\n')
-            .filter(line => !line.startsWith('import'))
-            .map(line => line.replace(/ from.*;/, ';'))
+            .map(line => line.startsWith('export')
+                ? line.replace(/ from.*;/, ';')
+                : line
+            )
             .join('\n')
         + "\n\n" + exportDefault + "\n"
     ))
