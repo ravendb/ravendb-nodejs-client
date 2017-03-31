@@ -105,11 +105,11 @@ export class DocumentConventions<T extends IDocument> {
     let property: string, value : any;
 
     if (entity) {
-      metadata = {
+      _.assign(metadata, entity['@metadata'] || {}, {
         '@collection': this.getDocumentsColleciton(documentType),
         '@object_type': this.getDocumentType(documentType),
         'Raven-Node-Type': this.defaultDocumentType
-      };
+      });
 
       for (property in entity) {
         if (entity.hasOwnProperty(property)) {

@@ -2,7 +2,7 @@ import {IHiloKeyGenerator} from './IHiloKeyGenerator';
 import {HiloKeyGenerator} from './HiloKeyGenerator';
 import {IDocumentStore} from '../Documents/IDocumentStore';
 import {AbstractHiloKeyGenerator} from './AbstractHiloKeyGenerator';
-import {DocumentKey, IDocument} from '../Documents/IDocument';
+import {DocumentKey, IDocument, IDocumentType} from '../Documents/IDocument';
 import {Lock} from '../Lock/Lock';
 import * as Promise from 'bluebird';
 
@@ -14,8 +14,8 @@ export class HiloMultiTypeKeyGenerator extends AbstractHiloKeyGenerator implemen
     this._lock = Lock.getInstance();
   }
 
-  public generateDocumentKey(entity: IDocument): Promise<DocumentKey> {
-    const tag: string = this.conventions.defaultDocumentType;
+  public generateDocumentKey(entity: IDocument, documentType?: IDocumentType): Promise<DocumentKey> {
+    let tag: string = this.conventions.getDocumentType(documentType);
 
     return this.createGeneratorForTag(tag)
       .then((generator: IHiloKeyGenerator) =>

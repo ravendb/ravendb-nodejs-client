@@ -1,4 +1,4 @@
-import {DocumentKey, IDocument} from './IDocument';
+import {DocumentKey, IDocument, IDocumentType} from './IDocument';
 import {Document} from './Document';
 import {IDocumentStore} from './IDocumentStore';
 import {IDocumentSession} from "./Session/IDocumentSession";
@@ -97,8 +97,8 @@ export class DocumentStore implements IDocumentStore {
     return new DocumentSession(dbName, this, executor, this.sessionId, forceReadFromMaster);
   }
 
-  public generateId(entity: IDocument, database?: string, callback?: EntityKeyCallback): Promise<DocumentKey> {
-    return this.generator.generateDocumentKey(entity, database)
+  public generateId(entity: IDocument, documentType?: IDocumentType, database?: string, callback?: EntityKeyCallback): Promise<DocumentKey> {
+    return this.generator.generateDocumentKey(entity, documentType, database)
       .then((documentKey: DocumentKey) => {
         PromiseResolver.resolve<DocumentKey>(documentKey, null, callback);
         return documentKey;

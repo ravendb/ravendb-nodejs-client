@@ -7,7 +7,7 @@ import {IDocumentStore} from '../IDocumentStore';
 import {RequestsExecutor} from '../../Http/Request/RequestsExecutor';
 import {DocumentConventions} from '../Conventions/DocumentConventions';
 import {EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
-import {PromiseResolve,  PromiseResolver} from '../../Utility/PromiseResolver';
+import {PromiseResolve, PromiseResolver, PromiseReject} from '../../Utility/PromiseResolver';
 import * as _ from 'lodash';
 import * as Promise from 'bluebird'
 import {TypeUtil} from "../../Utility/TypeUtil";
@@ -55,6 +55,8 @@ export class DocumentSession implements IDocumentSession {
   public load(keyOrKeys: DocumentKey | DocumentKey[], includes?: string[], callback?: EntityCallback<IDocument>
     | EntitiesArrayCallback<IDocument>
   ): Promise<IDocument> | Promise<IDocument[]> {
+    this.incrementRequestsCount();
+
     return this.requestsExecutor
       .execute(new GetDocumentCommand(keyOrKeys, includes))
       .then((response: IRavenCommandResponse) => {
@@ -86,36 +88,37 @@ export class DocumentSession implements IDocumentSession {
   }
 
   public delete(keyOrEntity: DocumentKey | IDocument, callback?: EntityCallback<IDocument>): Promise<IDocument> {
-    return (((keyOrEntity instanceof Document)
-      ? Promise.resolve(keyOrEntity)
-      : this.load(keyOrEntity as DocumentKey)) as Promise<IDocument>)
-      .then((document: IDocument) => {
-        let etag: number | null = null;
-        const conventions = this.conventions;
-        const metadata: IMetadata = document['@metadata'];
-        const key: DocumentKey = conventions.tryGetIdFromInstance(document);
+    this.incrementRequestsCount();
 
-        if ('Raven-Read-Only' in metadata) {
-          return Promise.reject(new InvalidOperationException('Document is marked as read only and cannot be deleted'));
-        }
+    return this.prefetchDocument(keyOrEntity)
+    .then((document: IDocument) => {
+      let etag: number | null = null;
+      const conventions = this.conventions;
+      const metadata: IMetadata = document['@metadata'];
+      const key: DocumentKey = conventions.tryGetIdFromInstance(document);
 
-        if (conventions.defaultUseOptimisticConcurrency) {
-          etag = metadata['@tag'] || null;
-        }
+      if ('Raven-Read-Only' in metadata) {
+        return Promise.reject(new InvalidOperationException('Document is marked as read only and cannot be deleted'));
+      }
 
-        return this.requestsExecutor
-          .execute(new DeleteDocumentCommand(key, etag))
-          .then(() => {
-            PromiseResolver.resolve<IDocument>(document, null, callback);
-            return document;
-          }) as Promise<IDocument>;
-      })
-      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
+      if (conventions.defaultUseOptimisticConcurrency) {
+        etag = metadata['@tag'] || null;
+      }
+
+      return this.requestsExecutor
+        .execute(new DeleteDocumentCommand(key, etag))
+        .then(() => {
+          PromiseResolver.resolve<IDocument>(document, null, callback);
+          return document;
+        }) as Promise<IDocument>;
+    })
+    .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
   public store(entity: IDocument, documentType?: IDocumentType, key?: DocumentKey, etag?: number, forceConcurrencyCheck?: boolean,
      callback?: EntityCallback<IDocument>
   ): Promise<IDocument> {
+    this.incrementRequestsCount();
     const result = this.create();
 
     return new Promise<IDocument>((resolve: PromiseResolve<IDocument>) =>
@@ -146,5 +149,60 @@ export class DocumentSession implements IDocumentSession {
         more responsive application.", maxRequests
       ));
     }
+  }
+
+  protected prefetchDocument(keyOrEntity: DocumentKey | IDocument): Promise<IDocument> {
+    if (keyOrEntity instanceof Document) {
+      return Promise.resolve(keyOrEntity) as Promise<IDocument>;
+    }
+
+    return this.load(keyOrEntity as DocumentKey) as Promise<IDocument>;
+  }
+
+  protected prepareDocumentToStore(entity: IDocument, documentType?: IDocumentType, key?: DocumentKey,
+    etag?: number, forceConcurrencyCheck?: boolean
+  ): Promise<IDocument> {
+    if (!entity || !(entity instanceof Document)) {
+      return Promise.reject(
+        new InvalidOperationException('Document must be set and be an insstance of IDocument')
+      ) as Promise<IDocument>;
+    }
+
+    return Promise.resolve(entity)
+      .then((entity: IDocument) => {
+        entity['@metadata']['force_concurrency_check'] = forceConcurrencyCheck || false;
+
+        if (key && TypeUtil.isNone(etag)) {
+          return this.prefetchDocument(key)
+            .then((document: IDocument) => {
+              entity['@metadata']['@tag'] = document['@metadata']['@tag'];
+              return entity;
+            });
+        }
+
+        entity['@metadata']['@tag'] = etag;
+        return entity;
+      })
+      .then((entity: IDocument) => {
+        let documentKey: DocumentKey = key;
+        const conventions = this.conventions;
+
+        if (TypeUtil.isNone(documentKey)) {
+          documentKey = conventions.tryGetIdFromInstance(entity);
+        } else {
+          conventions.trySetIdOnEntity(entity, documentKey);
+        }
+
+        if (TypeUtil.isNone(documentKey)) {
+          return this.documentStore
+            .generateId(entity, documentType)
+            .then((documentKey: DocumentKey): IDocument => {
+              conventions.trySetIdOnEntity(entity, documentKey);
+              return entity;
+            })
+        }
+
+        return entity;
+      });
   }
 }

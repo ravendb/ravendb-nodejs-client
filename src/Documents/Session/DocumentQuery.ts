@@ -279,6 +279,8 @@ export class DocumentQuery implements IDocumentQuery {
     };
 
     const session: IDocumentSession = this.session;
+    session.incrementRequestsCount();
+
     const conventions: DocumentConventions<IDocument> = session.conventions;
     const endTime: number = moment().unix() + conventions.timeout;
     const query: IndexQuery = new IndexQuery(this.queryBuilder, 0, 0, this.usingDefaultOperator, queryOptions);
