@@ -1,9 +1,9 @@
 // global imports
+import {Box, Random, Key} from 'sodium';
 import * as _ from 'lodash';
 import * as uuid from 'uuid';
 import * as moment from 'moment';
 import * as Promise from 'bluebird';
-import {api as sodium} from 'sodium';
 import * as pluralize from 'pluralize';
 import * as AsyncLock from 'async-lock';
 import * as RequestPromise from 'request-promise';
@@ -60,6 +60,7 @@ export {Operations} from './Database/Operations/Operations';
 export {AccessMode, AccessModes, ResourcesAccessModes} from './Database/Auth/AccessMode';
 export {ApiKeyDefinition} from './Database/Auth/ApiKeyDefinition';
 export {ApiKeyAuthenticator, IAuthServerRequest} from './Database/Auth/ApiKeyAuthenticator';
+export {CryptMessage, ICipherBox} from './Utility/Crypt';
 export {Serializer} from './Json/Serializer';
 export {Document} from './Documents/Document';
 export {DocumentStore} from './Documents/DocumentStore';

@@ -1,4 +1,4 @@
-import {api as sodium} from 'sodium';
+import {Box, Random, Key} from 'sodium';
 import * as Promise from 'bluebird';
 import * as RequestPromise from 'request-promise';
 import {IHeaders} from "../../Http/IHeaders";
@@ -8,6 +8,7 @@ import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {StatusCodes, StatusCode} from "../../Http/Response/StatusCode";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
+import {ICipherBox} from "../../Utility/Crypt";
 
 export interface IAuthServerRequest {
   payload: Object,
@@ -72,10 +73,13 @@ export class ApiKeyAuthenticator {
           return Promise.reject(new AuthenticationException(body.Error)) as Promise<Buffer>;
         }
 
-        const token: string = atob(body.Token);
-        const nonce: string = atob(body.Nonce);
+        const sodiumBox: Box = new Box(publicKey, secretKey);
+        const cipherBox: ICipherBox = {
+          cipherText: new Buffer(atob(body.Token)),
+          nonce: new Buffer(atob(body.Nonce))
+        };
 
-        return new Buffer(sodium.crypto_box_open(token, nonce, publicKey, secretKey));
+        return sodiumBox.decrypt(cipherBox) as Buffer;
       });
   }
 
@@ -111,15 +115,19 @@ trying to get public key`));
   }
 
   protected buildServerRequest(secret: string, serverPublicKey: Buffer): IAuthServerRequest {
-    //TODO: generate
+    const keyPair: Key.Box = new Key.Box();
+    const sodiumBox: Box = new Box(serverPublicKey, keyPair.getSecretKey());
+    const secretToEncode: string = secret + Random.buffer(64 - (secret.length % 64)).toString();
+    const cipherBox: ICipherBox = sodiumBox.encrypt(new Buffer(secretToEncode));
+
     return {
-      secretKey: new Buffer(''),
+      secretKey: keyPair.getSecretKey(),
       payload: {
-        'Secret'    : '',
-        'PublicKey' : '',
-        'Nonce'     : '',
-        'ServerKey' : ''
+        'Secret'    : btoa(cipherBox.cipherText.toString()),
+        'PublicKey' : btoa(keyPair.getPublicKey().toString()),
+        'Nonce'     : btoa(cipherBox.nonce.toString()),
+        'ServerKey' : btoa(serverPublicKey.toString())
       }
-    }
+    };
   }
 }
