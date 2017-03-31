@@ -134,8 +134,12 @@ export class DocumentSession implements IDocumentSession {
 
         return this.requestsExecutor
           .execute(new PutDocumentCommand(documentKey, entity, tag))
-          .then((): IDocument => entity);
-      });
+          .then((): IDocument => {
+            PromiseResolver.resolve<IDocument>(entity, null, callback);
+            return entity;
+          });
+      })
+      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
   public query(documentType?: IDocumentType, indexName?: string, usingDefaultOperator?: boolean, waitForNonStaleResults: boolean = false,
