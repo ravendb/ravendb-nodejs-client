@@ -3,7 +3,7 @@ import {DocumentKey} from '../Documents/IDocument';
 import {IMetadata} from './Metadata';
 import {RequestMethod} from "../Http/Request/RequestMethod";
 
-export abstract class RavenCommandData implements IJsonSerializable {
+export abstract class RavenCommandPayload implements IJsonSerializable {
   private readonly _command: boolean = true;
   protected method: RequestMethod;
   protected key: DocumentKey;

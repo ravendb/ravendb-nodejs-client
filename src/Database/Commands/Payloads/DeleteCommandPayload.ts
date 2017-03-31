@@ -1,8 +1,8 @@
-import {RavenCommandData} from '../../RavenCommandData';
+import {RavenCommandPayload} from '../../RavenCommandPayload';
 import {DocumentKey} from '../../../Documents/IDocument';
 import {RequestMethods} from "../../../Http/Request/RequestMethod";
 
-export class DeleteCommandData extends RavenCommandData {
+export class DeleteCommandPayload extends RavenCommandPayload {
   constructor(key: DocumentKey, etag?: number) {
     super(key, etag, null);
 

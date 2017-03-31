@@ -1,9 +1,9 @@
-import {RavenCommandData} from '../../RavenCommandData';
+import {RavenCommandPayload} from '../../RavenCommandPayload';
 import {DocumentKey} from '../../../Documents/IDocument';
 import {IMetadata} from '../../Metadata';
 import {RequestMethods} from "../../../Http/Request/RequestMethod";
 
-export class PutCommandData extends RavenCommandData {
+export class PutCommandPayload extends RavenCommandPayload {
   protected document: Object;
 
   constructor(key: DocumentKey, document: Object, etag?: number, metadata?: IMetadata) {
