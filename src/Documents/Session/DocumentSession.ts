@@ -154,15 +154,16 @@ export class DocumentSession implements IDocumentSession {
     this._numberOfRequestsInSession++;
 
     if (this._numberOfRequestsInSession > maxRequests) {
+      //TODO: probably we need to implement batchUpdate / batchDelete as separate API methods in session. But we need discuss this with Rhinos
+
       throw new InvalidOperationException(StringUtil.format(
         "The maximum number of requests ({0}) allowed for this session has been reached. Raven limits the number \
-        of remote calls that a session is allowed to make as an early warning system. Sessions are expected to \
-        be short lived, and Raven provides facilities like batch saves (call save_changes() only once).\
-        You can increase the limit by setting DocumentConvention.\
-        MaxNumberOfRequestsPerSession or MaxNumberOfRequestsPerSession, but it is advisable \
-        that you'll look into reducing the number of remote calls first, \
-        since that will speed up your application significantly and result in a\
-        more responsive application.", maxRequests
+of remote calls that a session is allowed to make as an early warning system. Sessions are expected to \
+be short lived. You can increase the limit by setting DocumentConvention.\
+MaxNumberOfRequestsPerSession or MaxNumberOfRequestsPerSession, but it is advisable \
+that you'll look into reducing the number of remote calls first, \
+since that will speed up your application significantly and result in a\
+more responsive application.", maxRequests
       ));
     }
   }
