@@ -81,9 +81,9 @@ export class DocumentStore implements IDocumentStore {
     return this;
   }
 
-  public finalize(): IDocumentStore {
-    this.generator.returnUnusedRange();
-    return this;
+  public finalize(): Promise<IDocumentStore> {
+    return this.generator.returnUnusedRange()
+      .then((): IDocumentStore => this);
   }
 
   public openSession(database?: string, forceReadFromMaster: boolean = false): IDocumentSession {

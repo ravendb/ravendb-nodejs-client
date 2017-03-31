@@ -38,12 +38,14 @@ export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloK
     });
   }
 
-  public returnUnusedRange(): void {
+  public returnUnusedRange(): Promise<void> {
     const range = this._range;
 
-    this.store.getRequestsExecutor().execute(new HiloReturnCommand(
-      this.tag, range.current, range.maxId
-    ));
+    return this.store.getRequestsExecutor()
+      .execute(new HiloReturnCommand(
+        this.tag, range.current, range.maxId
+      ))
+      .then((): void => {});
   }
 
   protected getNextRange(): Promise<HiloRangeValue> {

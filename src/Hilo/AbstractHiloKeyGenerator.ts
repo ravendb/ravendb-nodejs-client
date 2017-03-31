@@ -22,9 +22,11 @@ export abstract class AbstractHiloKeyGenerator implements IHiloKeyGenerator {
 
   public abstract generateDocumentKey(...args: (IDocument | EntityKeyCallback | string)[]): Promise<DocumentKey>;
 
-  public returnUnusedRange(): void {
-    for (let key in this.generators) {
-      this.generators[key].returnUnusedRange();
-    }
+  public returnUnusedRange(): Promise<void> {
+    return Promise
+      .all(Object.keys(this.generators)
+        .map((key: string): IHiloKeyGenerator => this.generators[key])
+        .map((generator: IHiloKeyGenerator): Promise<void> => generator.returnUnusedRange()))
+      .then((): void => {});
   };
 }

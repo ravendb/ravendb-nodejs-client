@@ -11,6 +11,8 @@ import {PromiseResolve, PromiseResolver} from '../../Utility/PromiseResolver';
 import * as Promise from 'bluebird'
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {IMetadata} from "../../Database/Metadata";
+import {InvalidOperationException} from "../../Database/DatabaseExceptions";
+import {StringUtil} from "../../Utility/StringUtil";
 
 export class DocumentSession implements IDocumentSession {
   protected database: string;
@@ -87,6 +89,21 @@ export class DocumentSession implements IDocumentSession {
   }
 
   public incrementRequestsCount(): void {
+    const maxRequests: number = this.conventions.maxNumberOfRequestPerSession;
 
+    this._numberOfRequestsInSession++;
+
+    if (this._numberOfRequestsInSession > maxRequests) {
+      throw new InvalidOperationException(StringUtil.format(
+        "The maximum number of requests ({0}) allowed for this session has been reached. Raven limits the number \
+        of remote calls that a session is allowed to make as an early warning system. Sessions are expected to \
+        be short lived, and Raven provides facilities like batch saves (call save_changes() only once).\
+        You can increase the limit by setting DocumentConvention.\
+        MaxNumberOfRequestsPerSession or MaxNumberOfRequestsPerSession, but it is advisable \
+        that you'll look into reducing the number of remote calls first, \
+        since that will speed up your application significantly and result in a\
+        more responsive application.", maxRequests
+      ));
+    }
   }
 }
