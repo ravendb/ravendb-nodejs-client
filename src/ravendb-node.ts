@@ -6,11 +6,12 @@ import * as moment from 'moment';
 import * as Promise from 'bluebird';
 import * as pluralize from 'pluralize';
 import * as AsyncLock from 'async-lock';
+import * as Request from 'request';
 import * as RequestPromise from 'request-promise';
 
 // typings
 export {AbstractCallback, EntityKeyCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback, QueryResultsCallback} from './Utility/Callbacks';
-export {PromiseThenable, PromiseResolver, PromiseResolve, PromiseReject} from './Utility/PromiseResolver';
+export {PromiseResolver, PromiseResolve, PromiseReject} from './Utility/PromiseResolver';
 export {DocumentID, DocumentKey, IDocumentType, IDocument, DocumentConstructor} from './Documents/IDocument';
 export {IDocumentStore} from './Documents/IDocumentStore';
 export {IDocumentSession} from './Documents/Session/IDocumentSession';
@@ -42,7 +43,7 @@ export {IResponse, IResponseBody} from './Http/Response/IResponse';
 // classes
 export {RavenException, InvalidOperationException, ErrorResponseException, DocumentDoesNotExistsException, NonUniqueObjectException, FetchConcurrencyException, ArgumentOutOfRangeException, DatabaseDoesNotExistException, AuthorizationException, IndexDoesNotExistException, TimeoutException, AuthenticationException} from './Database/DatabaseExceptions';
 export {IHash, Hash} from './Utility/Hash';
-export {RavenCommand} from './Database/RavenCommand';
+export {RavenCommandRequestOptions, RavenCommand} from './Database/RavenCommand';
 export {GetDocumentCommand} from './Database/Commands/GetDocumentCommand';
 export {DeleteDocumentCommand} from './Database/Commands/DeleteDocumentCommand';
 export {PutDocumentCommand} from './Database/Commands/PutDocumentCommand';

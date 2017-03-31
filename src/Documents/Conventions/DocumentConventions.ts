@@ -52,7 +52,7 @@ export class DocumentConventions<T extends IDocument> {
   }
 
   public getDocumentType(type?: IDocumentType): IDocumentType {
-    return type || this.documentClass.toLowerCase();
+    return (type || this.documentClass).toLowerCase();
   }
 
   public getDocumentsColleciton(type?: IDocumentType): string {

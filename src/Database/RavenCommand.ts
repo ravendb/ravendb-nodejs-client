@@ -4,6 +4,11 @@ import {IRavenCommandResponse} from "./IRavenCommandResponse";
 import {IResponse} from "../Http/Response/IResponse";
 import {IHeaders} from "../Http/IHeaders";
 import {TypeUtil} from "../Utility/TypeUtil";
+import * as _ from 'lodash';
+import * as Request from 'request';
+import * as RequestPromise from 'request-promise';
+
+export type RavenCommandRequestOptions = RequestPromise.RequestPromiseOptions & Request.RequiredUriUrl;
 
 export abstract class RavenCommand {
   protected method: RequestMethod = RequestMethods.Get;
@@ -37,6 +42,26 @@ export abstract class RavenCommand {
     const nodes = this.failedNodes;
 
     return (nodes.size > 0) && nodes.has(node);
+  }
+
+  public toRequestOptions(): RavenCommandRequestOptions {
+    let options: RavenCommandRequestOptions = {
+      json: true,
+      uri: this.endPoint,
+      headers: this.headers
+    };
+
+    const params = this.params;
+    const payload = this.payload;
+
+    const check: (target?: Object) => boolean = (target: Object) => {
+      return !TypeUtil.isNone(target) && !_.isEmpty(target);
+    };
+
+    check(params) && (options.qs = params);
+    check(payload) && (options.body = payload);
+
+    return options;
   }
 
   protected addParams(params: Object | string, value?: any): void {
