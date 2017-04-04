@@ -6,10 +6,15 @@ import * as Promise from 'bluebird';
 import {IRavenCommandResponse} from "../../Database/IRavenCommandResponse";
 import {Topology} from "../Topology";
 import {TypeUtil} from "../../Utility/TypeUtil";
+import {IHeaders} from "../IHeaders";
+import {ApiKeyAuthenticator} from "../../Database/Auth/ApiKeyAuthenticator";
 
 export class RequestsExecutor {
   protected conventions?: DocumentConventions<IDocument>;
+  protected headers: IHeaders;
   protected requestsCount: number = 0;
+  protected topologyChangeCounter: number = 0;
+  private _authenticator: ApiKeyAuthenticator;
   private _topology: Topology;
   private _apiKey?: string = null;
   private _primary: boolean = false;
@@ -20,6 +25,13 @@ export class RequestsExecutor {
 
     this.conventions = conventions;
     this._apiKey = apiKey;
+    this._authenticator = new ApiKeyAuthenticator();
+    this._topology = new Topology(Number.MIN_SAFE_INTEGER, serverNode);
+    this.headers = {
+      "Accept": "application/json",
+      "Has-Api-key": TypeUtil.isNone(apiKey) ? 'false' : 'true',
+      "Raven-Client-Version": "4.0.0.0"
+    };
 
     setTimeout(() => this.updateFailingNodesStatus(), 60);
     setTimeout(() => this.getReplicationTopology(), 1);
