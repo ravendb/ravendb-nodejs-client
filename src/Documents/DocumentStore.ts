@@ -115,6 +115,6 @@ export class DocumentStore implements IDocumentStore {
   }
 
   protected createRequestsExecutor(database?: string): RequestsExecutor {
-    return new RequestsExecutor(new ServerNode(this.url, database || this._database, this.apiKey), this.conventions);
+    return new RequestsExecutor(this.url, database || this._database, this.apiKey, this.conventions);
   }
 }

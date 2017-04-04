@@ -4,20 +4,74 @@ import {IDocument} from '../../Documents/IDocument';
 import {DocumentConventions} from '../../Documents/Conventions/DocumentConventions';
 import * as Promise from 'bluebird';
 import {IRavenCommandResponse} from "../../Database/IRavenCommandResponse";
+import {Topology} from "../Topology";
+import {TypeUtil} from "../../Utility/TypeUtil";
 
 export class RequestsExecutor {
-  protected serverNode: ServerNode;
   protected conventions?: DocumentConventions<IDocument>;
-  protected forceGetTopology: boolean = false;
-  private _primaryServerNode: ServerNode;
+  protected requestsCount: number = 0;
+  private _topology: Topology;
+  private _apiKey?: string = null;
+  private _primary: boolean = false;
+  private _unauthorizedHandlerInitialized: boolean = false;
 
-  constructor(serverNode: ServerNode, conventions?: DocumentConventions<IDocument>, forceGetTopology: boolean = false) {
+  constructor(url: string, database: string, apiKey?: string, conventions?: DocumentConventions<IDocument>) {
+    const serverNode: ServerNode = new ServerNode(url, database, apiKey);
+
     this.conventions = conventions;
-    this.forceGetTopology = forceGetTopology;
-    this.serverNode = this._primaryServerNode = serverNode;
+    this._apiKey = apiKey;
+
+    setTimeout(() => this.updateFailingNodesStatus(), 60);
+    setTimeout(() => this.getReplicationTopology(), 1);
   }
 
-  execute(command: RavenCommand): Promise<IRavenCommandResponse> {
+  public execute(command: RavenCommand): Promise<IRavenCommandResponse> {
     return new Promise<IRavenCommandResponse>((resolve: IRavenCommandResponse) => ({} as IRavenCommandResponse));
+  }
+
+  protected getReplicationTopology(): void {
+    Promise.resolve()
+      .then(() => setTimeout(
+        () => this.getReplicationTopology(), 60 * 5
+      ));
+  }
+
+  protected updateFailingNodesStatus(): void {
+    Promise.resolve()
+      .then(() => setTimeout(
+        () => this.updateFailingNodesStatus(), 60
+    ));
+  }
+
+  protected handleUnauthorized(serverNode: ServerNode, shouldThrow: boolean = true): Promise<any> {
+    return Promise.resolve()
+      .then(() => {
+        if (!this._unauthorizedHandlerInitialized) {
+          this._unauthorizedHandlerInitialized = true;
+          this.updateCurrentToken();
+        }
+      });
+  }
+
+  protected updateCurrentToken(): void {
+    const topology: Topology = this._topology;
+    const leader: ServerNode | null = topology.leaderNode;
+    let nodes: ServerNode[] = topology.nodes;
+    const setTimer: () => void = () => {
+      setTimeout(() => this.updateCurrentToken(), 60 * 20);
+    };
+
+    if (!this._unauthorizedHandlerInitialized) {
+      return setTimer();
+    }
+
+    if (!TypeUtil.isNone(leader)) {
+      nodes = nodes.concat(leader as ServerNode);
+    }
+
+    Promise.all(nodes
+      .map((node: ServerNode): Promise<any> => this
+      .handleUnauthorized(node, false)))
+      .then(() => setTimer());
   }
 }
