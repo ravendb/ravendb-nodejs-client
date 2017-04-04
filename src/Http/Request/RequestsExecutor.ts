@@ -8,23 +8,36 @@ import {Topology} from "../Topology";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {IHeaders} from "../IHeaders";
 import {ApiKeyAuthenticator} from "../../Database/Auth/ApiKeyAuthenticator";
+import {IHash} from "../../Utility/Hash";
+import {ReadBehavior} from "../../Documents/Conventions/ReadBehavior";
+import {WriteBehavior} from "../../Documents/Conventions/WriteBehavior";
+import {Lock} from "../../Lock/Lock";
+import {ILockDoneCallback} from "../../Lock/LockCallbacks";
+import {GetTopologyCommand} from "../../Database/Commands/GetTopologyCommand";
+import {RavenException} from "../../Database/DatabaseExceptions";
 
 export class RequestsExecutor {
   protected conventions?: DocumentConventions<IDocument>;
   protected headers: IHeaders;
   protected requestsCount: number = 0;
   protected topologyChangeCounter: number = 0;
+  private _lock: Lock;
   private _authenticator: ApiKeyAuthenticator;
   private _topology: Topology;
   private _apiKey?: string = null;
   private _primary: boolean = false;
   private _unauthorizedHandlerInitialized: boolean = false;
+  private _initUrl: string;
+  private _initDatabase: string;
 
   constructor(url: string, database: string, apiKey?: string, conventions?: DocumentConventions<IDocument>) {
     const serverNode: ServerNode = new ServerNode(url, database, apiKey);
 
-    this.conventions = conventions;
     this._apiKey = apiKey;
+    this._initUrl = url;
+    this._initDatabase = database;
+    this.conventions = conventions;
+    this._lock = Lock.getInstance();
     this._authenticator = new ApiKeyAuthenticator();
     this._topology = new Topology(Number.MIN_SAFE_INTEGER, serverNode);
     this.headers = {
@@ -42,10 +55,40 @@ export class RequestsExecutor {
   }
 
   protected getReplicationTopology(): void {
-    Promise.resolve()
-      .then(() => setTimeout(
-        () => this.getReplicationTopology(), 60 * 5
-      ));
+    this._lock.acquireTopology(
+      this._initUrl, this._initDatabase,
+      (done: ILockDoneCallback) => {
+        this.execute(new GetTopologyCommand())
+          .catch((error: RavenException) => done(error))
+          .then((response?: IRavenCommandResponse) => {
+            if (response) {
+              const newTopology = this.jsonToTopology(response);
+
+              if (this._topology.etag < newTopology.etag) {
+                this._topology = newTopology;
+              }
+            }
+
+            done();
+          });
+    },() => setTimeout(
+      () => this.getReplicationTopology(), 60 * 5
+    ));
+  }
+
+  protected jsonToTopology(jsonResponse: IRavenCommandResponse): Topology {
+    return new Topology(
+      parseInt(jsonResponse.Etag as string),
+      this.jsonToServerNode(jsonResponse.LeaderNode),
+      jsonResponse.ReadBehavior as ReadBehavior,
+      jsonResponse.WriteBehavior as WriteBehavior,
+      jsonResponse.Nodes.map((jsonNode) => this.jsonToServerNode(jsonNode)),
+      ('SLA' in jsonResponse) ? parseFloat(jsonResponse.SLA.RequestTimeThresholdInMilliseconds) / 1000 : 0
+    );
+  }
+
+  protected jsonToServerNode(json: IHash): ServerNode {
+    return new ServerNode(json.Url, json.Database, json.ApiKey || null);
   }
 
   protected updateFailingNodesStatus(): void {
