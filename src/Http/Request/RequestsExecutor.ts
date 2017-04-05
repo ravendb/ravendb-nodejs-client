@@ -114,7 +114,27 @@ export class RequestsExecutor {
         throw new RequestException(
           'Tried all nodes in the cluster but failed getting a response'
         );
-      //TODO: leader_with_failover_when_request_time_sla_threshold_is_reached
+      case ReadBehaviors.LeaderWithFailoverWhenRequestTimeSlaThresholdIsReached:
+        if (!leaderNode.isFailed && !command.isFailedWithNode(leaderNode)
+          && leaderNode.isRateSurpassed(topology.sla)
+        ) {
+          return {node: leaderNode};
+        }
+
+        const nonFailedNodes: ServerNode[] = [leaderNode]
+          .concat(topology.nodes || [])
+          .filter((node: ServerNode): boolean => !node.isFailed)
+          .sort((node: ServerNode, anoterNode: ServerNode): number =>
+            node.ewma - anoterNode.ewma
+          );
+
+        if (nonFailedNodes.length > 0) {
+          return {node: nonFailedNodes[0], skippedNodes: nonFailedNodes.slice(1)};
+        }
+
+        throw new RequestException(
+          'Tried all nodes in the cluster but failed getting a response'
+        );
       default:
         throw new InvalidOperationException(
           StringUtil.format('Invalid read behavior value: {readBehavior}', topology)

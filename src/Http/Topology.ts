@@ -3,7 +3,7 @@ import {ReadBehavior, ReadBehaviors} from '../Documents/Conventions/ReadBehavior
 import {WriteBehavior, WriteBehaviors} from '../Documents/Conventions/WriteBehavior';
 
 export class Topology {
-  protected sla?: number = null;
+  private _sla?: number = null;
   private _etag: number = 0;
   private _nodes?: ServerNode[] = null;
   private _leaderNode?: ServerNode = null;
@@ -20,7 +20,7 @@ export class Topology {
     this._readBehavior = readBehavior;
     this._writeBehavior = writeBehavior;
     this._nodes = nodes || [];
-    this.sla = sla || .1;
+    this._sla = sla || .1;
   }
 
   public get nodes(): ServerNode[] {
@@ -41,5 +41,9 @@ export class Topology {
 
   public get etag(): number {
     return this._etag;
+  }
+
+  public get sla(): number {
+    return this._sla;
   }
 }
