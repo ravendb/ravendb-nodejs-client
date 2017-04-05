@@ -1,4 +1,4 @@
-export type StatusCode = 200 | 201 | 202 | 204 | 301 | 302 | 304 | 400 | 401 | 412 | 403 | 404 | 409 | 417 | 500 | 502 | 503 | 504;
+export type StatusCode = 200 | 201 | 202 | 204 | 301 | 302 | 304 | 400 | 401 | 412 | 403 | 404 | 408 | 409 | 417 | 500 | 502 | 503 | 504;
 
 export class StatusCodes {
   public static readonly Ok: StatusCode = 200;
@@ -12,6 +12,7 @@ export class StatusCodes {
   public static readonly Unauthorized: StatusCode = 401;
   public static readonly Forbidden: StatusCode = 403;
   public static readonly NotFound: StatusCode = 404;
+  public static readonly RequestTimeout: StatusCode = 408;
   public static readonly Conflict: StatusCode = 409;
   public static readonly PreconditionFailed: StatusCode = 412;
   public static readonly ExpectationFailed: StatusCode = 417;
@@ -62,6 +63,10 @@ export class StatusCodes {
 
   public static isNotFound(statusCode: StatusCode): boolean {
     return statusCode === this.NotFound;
+  }
+
+  public static isRequestTimeout(statusCode: StatusCode): boolean {
+    return statusCode === this.RequestTimeout;
   }
 
   public static isConflict(statusCode: StatusCode): boolean {

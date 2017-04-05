@@ -19,12 +19,12 @@ export class GetApiKeyCommand extends RavenCommand {
     this.name = name;
   }
 
-  protected createRequest(serverNode: ServerNode): void {
+  public createRequest(serverNode: ServerNode): void {
     this.params = {name: this.name};
     this.endPoint = StringUtil.format('{url}/admin/api-keys', serverNode);
   }
 
-  protected setResponse(response: IResponse): IRavenCommandResponse | null | void {
+  public setResponse(response: IResponse): IRavenCommandResponse | null | void {
     const responseBody: IResponseBody = response.body;
 
     if (responseBody && responseBody.Results) {

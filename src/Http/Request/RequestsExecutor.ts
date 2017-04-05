@@ -15,11 +15,11 @@ import {WriteBehavior, WriteBehaviors} from "../../Documents/Conventions/WriteBe
 import {Lock} from "../../Lock/Lock";
 import {ILockDoneCallback} from "../../Lock/LockCallbacks";
 import {GetTopologyCommand} from "../../Database/Commands/GetTopologyCommand";
-import {RavenException, InvalidOperationException, RequestException} from "../../Database/DatabaseExceptions";
+import {RavenException, InvalidOperationException, RequestException, AuthorizationException} from "../../Database/DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {DateUtil} from "../../Utility/DateUtil";
 import {IResponse} from "../Response/IResponse";
-import {StatusCodes} from "../Response/StatusCode";
+import {StatusCodes, StatusCode} from "../Response/StatusCode";
 
 export interface IChooseNodeResponse {
   node: ServerNode,
@@ -61,8 +61,88 @@ export class RequestsExecutor {
     setTimeout(() => this.getReplicationTopology(), 1 * 1000);
   }
 
-  public execute(command: RavenCommand): Promise<IRavenCommandResponse> {
-    return new Promise<IRavenCommandResponse>((resolve: IRavenCommandResponse) => ({} as IRavenCommandResponse));
+  public execute(command: RavenCommand): Promise<IRavenCommandResponse | null | void> {
+    if (!command.ravenCommand) {
+      return Promise.reject(new InvalidOperationException('Not a valid command'));
+    }
+
+    return this.chooseNodeForRequest(command)
+      .then((chosenNodeResponse: IChooseNodeResponse) => {
+        let chosenNode = chosenNodeResponse.node;
+
+        const execute: () => Promise<IRavenCommandResponse | null | void> = () => {
+          const startTime: number = DateUtil.timestampMs();
+          const failNode: () => Promise<IRavenCommandResponse | null | void> = () => {
+            chosenNode.isFailed = true;
+            command.addFailedNode(chosenNode);
+
+            return this.chooseNodeForRequest(command)
+              .then((chosenNodeResponse: IChooseNodeResponse) => {
+                chosenNode = chosenNodeResponse.node;
+                return execute();
+              });
+          };
+
+          return RequestPromise(this.prepareCommand(command, chosenNode))
+            .catch(failNode)
+            .finally(() => {
+              chosenNode.addResponseTime(DateUtil.timestampMs() - startTime);
+            })
+            .then((response: IResponse): Promise<IRavenCommandResponse | null | void> | (IRavenCommandResponse | null | void) => {
+              const code: StatusCode = response.statusCode;
+              const isServerError: boolean = [
+                StatusCodes.RequestTimeout,
+                StatusCodes.BadGateway,
+                StatusCodes.GatewayTimeout,
+                StatusCodes.ServiceUnavailable
+              ].includes(code);
+
+              if (StatusCodes.isNotFound(code) || (isServerError && command.avoidFailover)) {
+                delete response.body;
+              } else {
+                if (isServerError) {
+                  return failNode();
+                }
+
+                if (StatusCodes.isForbidden(code)) {
+                  return Promise.reject(new AuthorizationException(
+                    StringUtil.format(
+                      'Forbidden access to {url}. Make sure you\'re using the correct api-key.',
+                      chosenNode
+                    )
+                  )) as Promise<IRavenCommandResponse | null | void>;
+                }
+
+                if ([StatusCodes.Unauthorized, StatusCodes.PreconditionFailed]
+                    .includes(response.statusCode)
+                ) {
+                  if (!this._apiKey) {
+                    return Promise.reject(StringUtil.format(
+                      'Got unauthorized response for {url}. Please specify an api-key.',
+                      chosenNode
+                    )) as Promise<IRavenCommandResponse | null | void>;
+                  }
+
+                  command.increaseAuthenticationRetries();
+
+                  if (command.authenticationRetries > 1) {
+                    return Promise.reject(StringUtil.format(
+                      'Got unauthorized response for {url} after trying to authenticate using specified api-key.',
+                      chosenNode
+                    )) as Promise<IRavenCommandResponse | null | void>;
+                  }
+
+                  this.handleUnauthorized(chosenNode);
+                  return execute();
+                }
+              }
+
+              return command.setResponse(response);
+            });
+        };
+
+        return execute();
+      });
   }
 
   protected prepareCommand(command: RavenCommand, node: ServerNode): RavenCommandRequestOptions {
@@ -71,6 +151,10 @@ export class RequestsExecutor {
     command.createRequest(node);
     options = command.toRequestOptions();
     Object.assign(options.headers, this.headers);
+
+    if (!TypeUtil.isNone(node.currentToken)) {
+      options.headers['Raven-Authorization'] = node.currentToken;
+    }
 
     return options;
   }

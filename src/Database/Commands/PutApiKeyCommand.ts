@@ -28,7 +28,7 @@ export class PutApiKeyCommand extends RavenCommand {
     this.apiKey = apiKey;
   }
 
-  protected createRequest(serverNode: ServerNode): void {
+  public createRequest(serverNode: ServerNode): void {
     this.params = {name: this.name};
     this.payload = this.apiKey.toJson();
     this.endPoint = StringUtil.format('{url}/admin/api-keys', serverNode);

@@ -10,7 +10,7 @@ import {ErrorResponseException} from "../DatabaseExceptions";
 export class GetTopologyCommand extends RavenCommand {
   constructor() {
     super('', RequestMethods.Get, null, null, {}, true);
-    this.avoidFailover = true;
+    this._avoidFailover = true;
   }
 
   public createRequest(serverNode: ServerNode): void {

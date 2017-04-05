@@ -14,13 +14,13 @@ export class GetOperationStateCommand extends RavenCommand {
     this.id = id;
   }
 
-  protected createRequest(serverNode: ServerNode): void {
+  public createRequest(serverNode: ServerNode): void {
     this.params = {id: this.id};
     this.endPoint = StringUtil.format('{url}/databases/{databases}/operations/state', serverNode);
   }
 
 
-  protected setResponse(response: IResponse): IRavenCommandResponse | null | void {
+  public setResponse(response: IResponse): IRavenCommandResponse | null | void {
     const responseBody: IResponseBody = response.body;
 
     if (responseBody) {

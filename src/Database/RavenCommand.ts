@@ -16,11 +16,11 @@ export abstract class RavenCommand {
   protected params?: Object;
   protected payload?: Object;
   protected headers: Object = {};
-  protected avoidFailover: boolean = false;
   protected failedNodes: Set<ServerNode>;
-  protected authenticationRetries: number = 0;
+  protected _avoidFailover: boolean = false;
   private readonly _ravenCommand: boolean = true;
   private _isReadRequest: boolean = false;
+  private _authenticationRetries: number = 0;
 
   public abstract createRequest(serverNode: ServerNode): void;
 
@@ -42,10 +42,26 @@ export abstract class RavenCommand {
     return this._isReadRequest;
   }
 
+  public get avoidFailover(): boolean {
+    return this._avoidFailover;
+  }
+
+  public get authenticationRetries(): number {
+    return this._authenticationRetries;
+  }
+
+  public addFailedNode(node: ServerNode): void {
+    this.failedNodes.add(node);
+  }
+
   public isFailedWithNode(node: ServerNode): boolean {
     const nodes = this.failedNodes;
 
     return (nodes.size > 0) && nodes.has(node);
+  }
+
+  public increaseAuthenticationRetries(): void {
+    this._authenticationRetries++;
   }
 
   public toRequestOptions(): RavenCommandRequestOptions {
@@ -70,12 +86,12 @@ export abstract class RavenCommand {
     return options;
   }
 
+  public setResponse(response: IResponse): IRavenCommandResponse | null | void {
+    return null;
+  }
+
   protected addParams(params: Object | string, value?: any): void {
     Object.assign(this.params, TypeUtil.isObject(params)
       ? params as Object : {[params as string]: value});
-  }
-
-  protected setResponse(response: IResponse): IRavenCommandResponse | null | void {
-    return null;
   }
 }
