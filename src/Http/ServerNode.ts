@@ -39,6 +39,10 @@ export class ServerNode {
     return this._isFailed;
   }
 
+  public set isFailed(value: boolean) {
+    this._isFailed = value;
+  }
+
   public get responseTime(): number[] {
     return this._responseTime;
   }

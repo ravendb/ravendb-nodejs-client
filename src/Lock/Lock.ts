@@ -42,4 +42,13 @@ export class Lock {
 
     this._lock.acquire(key, callback, doneCallback);
   }
+
+  public acquireNodesStatuses(url: string, database: string, callback: ILockCallback, doneCallback: ILockDoneCallback): void {
+    const key: string = StringUtil.format(
+      'lock:update:failed:nodes:statuses:url:{0}:database:{1}',
+      url, database
+    );
+
+    this._lock.acquire(key, callback, doneCallback);
+  }
 }

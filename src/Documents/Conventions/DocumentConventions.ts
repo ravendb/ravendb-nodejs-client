@@ -6,6 +6,7 @@ import {SortOption, SortOptions} from "../../Database/Indexes/SortOption";
 import {StringUtil} from "../../Utility/StringUtil";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import * as _ from 'lodash';
+import {Serializer} from "../../Json/Serializer";
 
 export interface IDocumentConversionResult<T extends IDocument> {
   document: T,
@@ -76,6 +77,13 @@ export class DocumentConventions<T extends IDocument> {
       metadata: metadata,
       originalMetadata: originalMetadata
     } as IDocumentConversionResult<T>;
+  }
+
+  public tryConvertToRawEntity(document: T): Object {
+    return Serializer.toJSON<T>(
+      this._documentEntityClass, document,
+      document['@metadata'] || {}
+    );
   }
 
   public trySetIdOnEntity(entity: T, key: DocumentKey): T {

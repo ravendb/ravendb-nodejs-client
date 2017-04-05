@@ -133,7 +133,7 @@ export class DocumentSession implements IDocumentSession {
         }
 
         return this.requestsExecutor
-          .execute(new PutDocumentCommand(documentKey, entity, tag))
+          .execute(new PutDocumentCommand(documentKey, conventions.tryConvertToRawEntity(entity), tag))
           .then((): IDocument => {
             PromiseResolver.resolve<IDocument>(entity, null, callback);
             return entity;

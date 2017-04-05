@@ -22,7 +22,7 @@ export abstract class RavenCommand {
   private readonly _ravenCommand: boolean = true;
   private _isReadRequest: boolean = false;
 
-  protected abstract createRequest(serverNode: ServerNode): void;
+  public abstract createRequest(serverNode: ServerNode): void;
 
   constructor(endPoint: string, method: RequestMethod = RequestMethods.Get, params?: Object, payload?: Object, headers: IHeaders = {}, isReadRequest: boolean = false) {
     this.endPoint = endPoint;

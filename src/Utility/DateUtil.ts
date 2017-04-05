@@ -4,6 +4,11 @@ export class DateUtil {
   public static timestamp(): number {
     return moment().unix();
   }
+
+  public static timestampMs(): number {
+    return moment().valueOf();
+  }
+
   public static zeroDate(): Date {
     return moment([1, 1, 1]).toDate();
   }

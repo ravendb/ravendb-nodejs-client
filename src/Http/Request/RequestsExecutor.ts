@@ -1,6 +1,7 @@
 import * as Promise from 'bluebird';
+import * as RequestPromise from 'request-promise';
 import {ServerNode} from '../ServerNode';
-import {RavenCommand} from '../../Database/RavenCommand';
+import {RavenCommand, RavenCommandRequestOptions} from '../../Database/RavenCommand';
 import {IDocument} from '../../Documents/IDocument';
 import {DocumentConventions} from '../../Documents/Conventions/DocumentConventions';
 import {IRavenCommandResponse} from "../../Database/IRavenCommandResponse";
@@ -16,6 +17,9 @@ import {ILockDoneCallback} from "../../Lock/LockCallbacks";
 import {GetTopologyCommand} from "../../Database/Commands/GetTopologyCommand";
 import {RavenException, InvalidOperationException, RequestException} from "../../Database/DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
+import {DateUtil} from "../../Utility/DateUtil";
+import {IResponse} from "../Response/IResponse";
+import {StatusCodes} from "../Response/StatusCode";
 
 export interface IChooseNodeResponse {
   node: ServerNode,
@@ -53,12 +57,22 @@ export class RequestsExecutor {
       "Raven-Client-Version": "4.0.0.0"
     };
 
-    setTimeout(() => this.updateFailingNodesStatus(), 60 * 1000);
+    setTimeout(() => this.updateFailingNodesStatuses(), 60 * 1000);
     setTimeout(() => this.getReplicationTopology(), 1 * 1000);
   }
 
   public execute(command: RavenCommand): Promise<IRavenCommandResponse> {
     return new Promise<IRavenCommandResponse>((resolve: IRavenCommandResponse) => ({} as IRavenCommandResponse));
+  }
+
+  protected prepareCommand(command: RavenCommand, node: ServerNode): RavenCommandRequestOptions {
+    let options: RavenCommandRequestOptions;
+
+    command.createRequest(node);
+    options = command.toRequestOptions();
+    Object.assign(options.headers, this.headers);
+
+    return options;
   }
 
   protected chooseNodeForRequest(command: RavenCommand): Promise<IChooseNodeResponse> {
@@ -201,7 +215,8 @@ export class RequestsExecutor {
 
             done();
           });
-    },() => setTimeout(
+    },
+    () => setTimeout(
       () => this.getReplicationTopology(), 60 * 5 * 1000
     ));
   }
@@ -221,11 +236,47 @@ export class RequestsExecutor {
     return new ServerNode(json.Url, json.Database, json.ApiKey || null);
   }
 
-  protected updateFailingNodesStatus(): void {
-    Promise.resolve()
-      .then(() => setTimeout(
-        () => this.updateFailingNodesStatus(), 60 * 1000
+  protected updateFailingNodesStatuses(): void {
+    this._lock.acquireNodesStatuses(this._initUrl, this._initDatabase,
+    (done: ILockDoneCallback) => {
+      const topology = this._topology;
+
+      [topology.leaderNode].concat(topology.nodes || [])
+        .filter((node?: ServerNode) => node instanceof ServerNode)
+        .filter((node?: ServerNode) => node.isFailed)
+        .forEach((node: ServerNode) => setTimeout(this
+        .updateFailingNodeStatus(node), 5 * 1000));
+
+      done();
+    },
+    () => setTimeout(
+        () => this.updateFailingNodesStatuses(), 60 * 1000
     ));
+  }
+
+  protected updateFailingNodeStatus(node: ServerNode): void {
+    const command: GetTopologyCommand = new GetTopologyCommand();
+    const startTime: number = DateUtil.timestampMs();
+
+    RequestPromise(this.prepareCommand(command, node))
+      .then((response: IResponse) => {
+        if (StatusCodes.isOk(response.statusCode)) {
+          node.isFailed = false;
+        }
+
+        if ([StatusCodes.Unauthorized, StatusCodes.PreconditionFailed]
+            .includes(response.statusCode)
+        ) {
+          this.handleUnauthorized(node, false);
+        }
+      })
+      .finally(() => {
+        node.addResponseTime(DateUtil.timestampMs() - startTime);
+
+        if (node.isFailed) {
+          setTimeout(this.updateFailingNodeStatus(node), 5 * 1000);
+        }
+      });
   }
 
   protected handleUnauthorized(serverNode: ServerNode, shouldThrow: boolean = true): Promise<void> {
