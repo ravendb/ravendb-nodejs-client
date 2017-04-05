@@ -41,7 +41,7 @@ export {IHeaders} from './Http/IHeaders';
 export {IResponse, IResponseBody} from './Http/Response/IResponse';
 
 // classes
-export {RavenException, InvalidOperationException, ErrorResponseException, DocumentDoesNotExistsException, NonUniqueObjectException, FetchConcurrencyException, ArgumentOutOfRangeException, DatabaseDoesNotExistException, AuthorizationException, IndexDoesNotExistException, TimeoutException, AuthenticationException} from './Database/DatabaseExceptions';
+export {RavenException, InvalidOperationException, ErrorResponseException, DocumentDoesNotExistsException, NonUniqueObjectException, FetchConcurrencyException, ArgumentOutOfRangeException, DatabaseDoesNotExistException, AuthorizationException, IndexDoesNotExistException, TimeoutException, AuthenticationException, RequestException} from './Database/DatabaseExceptions';
 export {IHash, Hash} from './Utility/Hash';
 export {RavenCommandRequestOptions, RavenCommand} from './Database/RavenCommand';
 export {GetDocumentCommand} from './Database/Commands/GetDocumentCommand';
@@ -77,7 +77,7 @@ export {DateUtil} from './Utility/DateUtil';
 export {StringUtil} from './Utility/StringUtil';
 export {ArrayUtil} from './Utility/ArrayUtil';
 export {TypeUtil} from './Utility/TypeUtil';
-export {RequestsExecutor} from './Http/Request/RequestsExecutor';
+export {RequestsExecutor, IChooseNodeResponse} from './Http/Request/RequestsExecutor';
 export {PatchRequest} from './Http/Request/PatchRequest';
 export {HiloRangeValue} from './Hilo/HiloRangeValue';
 export {AbstractHiloKeyGenerator} from './Hilo/AbstractHiloKeyGenerator';

@@ -18,9 +18,9 @@ export abstract class RavenCommand {
   protected headers: Object = {};
   protected avoidFailover: boolean = false;
   protected failedNodes: Set<ServerNode>;
-  protected isReadRequest: boolean = false;
   protected authenticationRetries: number = 0;
   private readonly _ravenCommand: boolean = true;
+  private _isReadRequest: boolean = false;
 
   protected abstract createRequest(serverNode: ServerNode): void;
 
@@ -30,12 +30,16 @@ export abstract class RavenCommand {
     this.params = params;
     this.payload = payload;
     this.headers = headers;
-    this.isReadRequest = isReadRequest;
+    this._isReadRequest = isReadRequest;
     this.failedNodes = new Set<ServerNode>();
   }
 
-  get ravenCommand(): boolean {
+  public get ravenCommand(): boolean {
     return this._ravenCommand;
+  }
+
+  public get isReadRequest(): boolean {
+    return this._isReadRequest;
   }
 
   public isFailedWithNode(node: ServerNode): boolean {

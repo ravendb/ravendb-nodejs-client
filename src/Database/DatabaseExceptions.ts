@@ -58,5 +58,10 @@ export class AuthenticationException extends RavenException {
 
 }
 
+export class RequestException extends RavenException {
+
+}
+
+
 
 

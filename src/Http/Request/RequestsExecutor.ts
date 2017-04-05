@@ -1,20 +1,26 @@
+import * as Promise from 'bluebird';
 import {ServerNode} from '../ServerNode';
 import {RavenCommand} from '../../Database/RavenCommand';
 import {IDocument} from '../../Documents/IDocument';
 import {DocumentConventions} from '../../Documents/Conventions/DocumentConventions';
-import * as Promise from 'bluebird';
 import {IRavenCommandResponse} from "../../Database/IRavenCommandResponse";
 import {Topology} from "../Topology";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {IHeaders} from "../IHeaders";
 import {ApiKeyAuthenticator} from "../../Database/Auth/ApiKeyAuthenticator";
 import {IHash} from "../../Utility/Hash";
-import {ReadBehavior} from "../../Documents/Conventions/ReadBehavior";
-import {WriteBehavior} from "../../Documents/Conventions/WriteBehavior";
+import {ReadBehavior, ReadBehaviors} from "../../Documents/Conventions/ReadBehavior";
+import {WriteBehavior, WriteBehaviors} from "../../Documents/Conventions/WriteBehavior";
 import {Lock} from "../../Lock/Lock";
 import {ILockDoneCallback} from "../../Lock/LockCallbacks";
 import {GetTopologyCommand} from "../../Database/Commands/GetTopologyCommand";
-import {RavenException} from "../../Database/DatabaseExceptions";
+import {RavenException, InvalidOperationException, RequestException} from "../../Database/DatabaseExceptions";
+import {StringUtil} from "../../Utility/StringUtil";
+
+export interface IChooseNodeResponse {
+  node: ServerNode,
+  skippedNodes?: ServerNode[]
+}
 
 export class RequestsExecutor {
   protected conventions?: DocumentConventions<IDocument>;
@@ -26,6 +32,7 @@ export class RequestsExecutor {
   private _topology: Topology;
   private _apiKey?: string = null;
   private _primary: boolean = false;
+  private _topologyInitialized: boolean = false;
   private _unauthorizedHandlerInitialized: boolean = false;
   private _initUrl: string;
   private _initDatabase: string;
@@ -46,12 +53,111 @@ export class RequestsExecutor {
       "Raven-Client-Version": "4.0.0.0"
     };
 
-    setTimeout(() => this.updateFailingNodesStatus(), 60);
-    setTimeout(() => this.getReplicationTopology(), 1);
+    setTimeout(() => this.updateFailingNodesStatus(), 60 * 1000);
+    setTimeout(() => this.getReplicationTopology(), 1 * 1000);
   }
 
   public execute(command: RavenCommand): Promise<IRavenCommandResponse> {
     return new Promise<IRavenCommandResponse>((resolve: IRavenCommandResponse) => ({} as IRavenCommandResponse));
+  }
+
+  protected chooseNodeForRequest(command: RavenCommand): Promise<IChooseNodeResponse> {
+    let response: IChooseNodeResponse;
+
+    if (!this._topologyInitialized && !(command instanceof GetTopologyCommand)) {
+      return Promise.delay(1 * 1000)
+        .then((): Promise<IChooseNodeResponse> => this
+        .chooseNodeForRequest(command)
+      );
+    }
+
+    try {
+      response = (command.isReadRequest)
+        ? this.chooseNodeForRead(command)
+        : this.chooseNodeForWrite(command);
+    } catch (error) {
+      return Promise.reject(error as RavenException) as Promise<IChooseNodeResponse>;
+    }
+
+    return Promise.resolve(response) as Promise<IChooseNodeResponse>;
+  }
+
+  protected chooseNodeForRead(command: RavenCommand): IChooseNodeResponse {
+    const topology: Topology = this._topology;
+    const leaderNode: ServerNode = topology.leaderNode;
+
+    switch (topology.readBehavior) {
+      case ReadBehaviors.LeaderOnly:
+        if (!command.isFailedWithNode(leaderNode)) {
+          return {node: leaderNode};
+        }
+
+        throw new RequestException(
+          'Leader node failed to make this request. The current read behavior is set to LeaderOnly'
+        );
+      case ReadBehaviors.RoundRobin:
+        let nonFailedNode: ServerNode;
+        let skippedNodes: ServerNode[] = [];
+
+        if ([leaderNode].concat(topology.nodes).some((node: ServerNode): boolean => {
+            const nonFailed = !node.isFailed && !command.isFailedWithNode(node);
+
+            nonFailed
+               ? (nonFailedNode = node)
+              : skippedNodes.push(node);
+
+            return nonFailed
+          })) {
+          return {node: nonFailedNode, skippedNodes: skippedNodes};
+        }
+
+        throw new RequestException(
+          'Tried all nodes in the cluster but failed getting a response'
+        );
+      //TODO: leader_with_failover_when_request_time_sla_threshold_is_reached
+      default:
+        throw new InvalidOperationException(
+          StringUtil.format('Invalid read behavior value: {readBehavior}', topology)
+        );
+    }
+  }
+
+  protected chooseNodeForWrite(command: RavenCommand): IChooseNodeResponse {
+    const topology: Topology = this._topology;
+    const leaderNode: ServerNode = topology.leaderNode;
+
+    switch (topology.writeBehavior) {
+      case WriteBehaviors.LeaderOnly:
+        if (!command.isFailedWithNode(leaderNode)) {
+          return {node: leaderNode};
+        }
+
+        throw new RequestException(
+          'Leader node failed to make this request. The current write behavior is set to LeaderOnly'
+        );
+      case WriteBehaviors.LeaderWithFailover:
+        let nonFailedNode: ServerNode;
+
+        if ([leaderNode].concat(topology.nodes).some((node: ServerNode): boolean => {
+          const nonFailed = !node.isFailed && !command.isFailedWithNode(node);
+
+          if (nonFailed) {
+            nonFailedNode = node;
+          }
+
+          return nonFailed
+        })) {
+          return {node: nonFailedNode};
+        }
+
+        throw new RequestException(
+          'Tried all nodes in the cluster but failed getting a response'
+        );
+      default:
+        throw new InvalidOperationException(
+          StringUtil.format('Invalid write behavior value: {writeBehavior}', topology)
+        );
+    }
   }
 
   protected getReplicationTopology(): void {
@@ -66,13 +172,17 @@ export class RequestsExecutor {
 
               if (this._topology.etag < newTopology.etag) {
                 this._topology = newTopology;
+
+                if (!this._topologyInitialized) {
+                  this._topologyInitialized = true;
+                }
               }
             }
 
             done();
           });
     },() => setTimeout(
-      () => this.getReplicationTopology(), 60 * 5
+      () => this.getReplicationTopology(), 60 * 5 * 1000
     ));
   }
 
@@ -94,18 +204,29 @@ export class RequestsExecutor {
   protected updateFailingNodesStatus(): void {
     Promise.resolve()
       .then(() => setTimeout(
-        () => this.updateFailingNodesStatus(), 60
+        () => this.updateFailingNodesStatus(), 60 * 1000
     ));
   }
 
-  protected handleUnauthorized(serverNode: ServerNode, shouldThrow: boolean = true): Promise<any> {
-    return Promise.resolve()
-      .then(() => {
-        if (!this._unauthorizedHandlerInitialized) {
-          this._unauthorizedHandlerInitialized = true;
-          this.updateCurrentToken();
-        }
-      });
+  protected handleUnauthorized(serverNode: ServerNode, shouldThrow: boolean = true): Promise<void> {
+    return this._authenticator.authenticate(
+      serverNode.url, serverNode.apiKey, this.headers
+    )
+    .then((token: Buffer): void => {
+      serverNode.currentToken = token.toString();
+
+      if (!this._unauthorizedHandlerInitialized) {
+        this._unauthorizedHandlerInitialized = true;
+        this.updateCurrentToken();
+      }
+    })
+    .catch((error: RavenException) => {
+      if (shouldThrow) {
+        return Promise.reject(error) as Promise<void>;
+      }
+
+      return Promise.resolve()  as Promise<void>;
+    });
   }
 
   protected updateCurrentToken(): void {
@@ -113,7 +234,7 @@ export class RequestsExecutor {
     const leader: ServerNode | null = topology.leaderNode;
     let nodes: ServerNode[] = topology.nodes;
     const setTimer: () => void = () => {
-      setTimeout(() => this.updateCurrentToken(), 60 * 20);
+      setTimeout(() => this.updateCurrentToken(), 60 * 20 * 1000);
     };
 
     if (!this._unauthorizedHandlerInitialized) {
@@ -125,7 +246,7 @@ export class RequestsExecutor {
     }
 
     Promise.all(nodes
-      .map((node: ServerNode): Promise<any> => this
+      .map((node: ServerNode): Promise<void> => this
       .handleUnauthorized(node, false)))
       .then(() => setTimer());
   }
