@@ -1,5 +1,6 @@
 const gulp = require('gulp');
 const rmdir = require('rimraf');
+const sort = require('gulp-sort');
 const mocha = require('gulp-mocha');
 const ts = require('gulp-typescript');
 const append = require('gulp-append');
@@ -9,14 +10,13 @@ const uglify = require('gulp-uglify-harmony');
 
 const preamble = '/** RavenDB Client - (c) Hibernating Rhinos 2017 */';
 const exportDefault = 'export default DocumentStore;';
+const prioritizedClasses = ['Hash.ts', 'RavenCommand.ts', 'AbstractHiloKeyGenerator.ts'];
 const options = {
     src: './src',
     tests: './test',
     tmp: './.build',
     dest: './lib',
 };
-
-//@see https://github.com/IdanHaim/RavenDB-Python-Client/commit/267c178fa4ec5e9855028bfb80ed672d3d031b5e
 
 gulp.task('clean', (next) => rmdir(options.tmp, next));
 
@@ -30,7 +30,8 @@ gulp.task('build:tests', ['clean'], () => gulp
     .pipe(ts({
         target: 'ES6',
         module: 'commonjs',
-        removeComments: true
+        removeComments: true,
+        lib: ["dom", "es7"]
     }))
     .pipe(gulp.dest(options.tmp))
 );
@@ -46,8 +47,10 @@ gulp.task('build:exports', ['clean'], () => gulp
         + contents
             .toString()
             .split('\n')
-            .filter(line => !line.startsWith('import'))
-            .map(line => line.replace(/ from.*;/, ';'))
+            .map(line => line.startsWith('export')
+                ? line.replace(/ from.*;/, ';')
+                : line
+            )
             .join('\n')
         + "\n\n" + exportDefault + "\n"
     ))
@@ -56,6 +59,16 @@ gulp.task('build:exports', ['clean'], () => gulp
 
 gulp.task('build:concat', ['clean'], () => gulp
     .src(options.src + '/[A-Z]*/**/*.ts')
+    .pipe(sort({
+        comparator: (file, anotherFile) => {
+            const isPrioritized = (file) => prioritizedClasses
+                .some((className) => !!~file.path.indexOf(className));
+
+            return isPrioritized(file) ? -1 : (
+                isPrioritized(anotherFile) ? 1 : 0
+            );
+        }
+    }))
     .pipe(concat('ravendb-node.bundle.ts'))
     .pipe(transform(contents => contents
         .toString()
@@ -82,7 +95,8 @@ gulp.task('build:compile', ['clean', 'build:exports', 'build:concat', 'build:bun
         target: 'ES6',
         module: 'commonjs',
         removeComments: true,
-        declaration: true
+        declaration: true,
+        lib: ["dom", "es7"]
     }))
     .pipe(gulp.dest(options.dest))
 );

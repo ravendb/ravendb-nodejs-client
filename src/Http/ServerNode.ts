@@ -31,8 +31,16 @@ export class ServerNode {
     return this._currentToken;
   }
 
+  public set currentToken(value: string) {
+    this._currentToken = value;
+  }
+
   public get isFailed(): boolean {
     return this._isFailed;
+  }
+
+  public set isFailed(value: boolean) {
+    this._isFailed = value;
   }
 
   public get responseTime(): number[] {

@@ -1,17 +1,20 @@
-import {DocumentKey, IDocument} from './IDocument';
+import {DocumentKey, IDocument, IDocumentType} from './IDocument';
 import {Document} from './Document';
 import {IDocumentStore} from './IDocumentStore';
 import {IDocumentSession} from "./Session/IDocumentSession";
 import {DocumentSession} from "./Session/DocumentSession";
 import {ServerNode} from '../Http/ServerNode';
-import {RequestsExecutor} from '../Http/RequestsExecutor';
+import {RequestsExecutor} from '../Http/Request/RequestsExecutor';
 import {EntityKeyCallback} from '../Utility/Callbacks';
 import {DocumentConventions} from './Conventions/DocumentConventions';
-import {InvalidOperationException} from '../Database/DatabaseExceptions';
+import {InvalidOperationException, RavenException} from '../Database/DatabaseExceptions';
 import {IHiloKeyGenerator} from '../Hilo/IHiloKeyGenerator';
 import {HiloMultiDatabaseKeyGenerator} from '../Hilo/HiloMultiDatabaseKeyGenerator';
 import * as uuid from 'uuid';
 import * as Promise from 'bluebird';
+import {IHashCollection} from "../Utility/IHashCollection";
+import {Operations} from "../Database/Operations/Operations";
+import {PromiseResolver} from "../Utility/PromiseResolver";
 
 export class DocumentStore implements IDocumentStore {
   protected url: string;
@@ -20,19 +23,22 @@ export class DocumentStore implements IDocumentStore {
   protected generator: IHiloKeyGenerator;
   protected initialized: boolean = false;
   private _database: string;
-  private _requestsExecutor: RequestsExecutor;
+  private _operations: Operations;
   private _conventions: DocumentConventions<IDocument>;
+  private _requestsExecutors: IHashCollection<RequestsExecutor> = {};
 
   public get database(): string {
     return this._database;
   }
 
-  public get requestsExecutor(): RequestsExecutor {
-    if (!this._requestsExecutor) {
-      this._requestsExecutor = this.createRequestsExecutor();
+  public getRequestsExecutor(database?: string): RequestsExecutor {
+    const dbName = database || this._database;
+
+    if (!(dbName in this._requestsExecutors)) {
+      this._requestsExecutors[dbName] = this.createRequestsExecutor(dbName);
     }
 
-    return this._requestsExecutor;
+    return this._requestsExecutors[dbName];
   }
 
   public get conventions(): DocumentConventions<IDocument> {
@@ -41,6 +47,16 @@ export class DocumentStore implements IDocumentStore {
     }
 
     return this._conventions;
+  }
+
+  public get operations(): Operations {
+    this.assertInitialize();
+
+    if (!this._operations) {
+      this._operations = new Operations(this.getRequestsExecutor());
+    }
+
+    return this._operations;
   }
 
   constructor(url: string, defaultDatabase: string, apiKey?: string) {
@@ -66,35 +82,39 @@ export class DocumentStore implements IDocumentStore {
     return this;
   }
 
-  public finalize(): IDocumentStore {
-    this.generator.returnUnusedRange();
-    return this;
+  public finalize(): Promise<IDocumentStore> {
+    return this.generator.returnUnusedRange()
+      .then((): IDocumentStore => this);
   }
 
   public openSession(database?: string, forceReadFromMaster: boolean = false): IDocumentSession {
-    if (!this.initialized) {
-      throw new InvalidOperationException("You cannot open a session or access the _database commands\
- before initializing the document store. Did you forget calling initialize()?"
-      );
-    }
+    this.assertInitialize();
 
-    let dbName: string = this._database;
-    let executor: RequestsExecutor = this.requestsExecutor;
-
-    if (database && (database !== dbName)) {
-      dbName = database;
-      executor = this.createRequestsExecutor(dbName);
-    }
+    let dbName: string = database || this._database;
+    let executor: RequestsExecutor = this.getRequestsExecutor(dbName);
 
     this.sessionId = uuid();
     return new DocumentSession(dbName, this, executor, this.sessionId, forceReadFromMaster);
   }
 
-  public generateId(entity: IDocument, database?: string, callback?: EntityKeyCallback): Promise<DocumentKey> {
-    return this.generator.generateDocumentKey(entity, database, callback);
+  public generateId(entity: IDocument, documentType?: IDocumentType, database?: string, callback?: EntityKeyCallback): Promise<DocumentKey> {
+    return this.generator.generateDocumentKey(entity, documentType, database)
+      .then((documentKey: DocumentKey) => {
+        PromiseResolver.resolve<DocumentKey>(documentKey, null, callback);
+        return documentKey;
+      })
+      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
-  protected createRequestsExecutor(database?: string) {
-    return new RequestsExecutor(new ServerNode(this.url, database || this._database, this.apiKey), this.conventions);
+  protected assertInitialize(): void {
+    if (!this.initialized) {
+      throw new InvalidOperationException("You cannot open a session or access the _database commands\
+ before initializing the document store. Did you forget calling initialize()?"
+      );
+    }
+  }
+
+  protected createRequestsExecutor(database?: string): RequestsExecutor {
+    return new RequestsExecutor(this.url, database || this._database, this.apiKey, this.conventions);
   }
 }

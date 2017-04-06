@@ -13,5 +13,9 @@
   "exclude": [
     "node_modules",
     "lib"
+  ],
+  "lib": [
+    "dom",
+    "es7"
   ]
 }

@@ -7,19 +7,22 @@ import {IDocument} from '../src/Documents/IDocument';
 import {DocumentStore} from '../src/Documents/DocumentStore';
 import {IDocumentSession} from '../src/Documents/Session/IDocumentSession';
 import {DocumentQuery} from '../src/Documents/Session/DocumentQuery';
+import {ravenServer} from "./config/raven.server";
+import {StringUtil} from "../src/Utility/StringUtil";
 
 describe('DocumentSession', () => {
   let subject : IDocumentSession;
   let json : Object;
 
   beforeEach(() => {
-    subject = DocumentStore.create('localhost:8080', 'Northwind').initialize().openSession()
+    subject = DocumentStore.create(StringUtil.format('{host}:{port}', ravenServer), ravenServer.dbName).initialize().openSession();
     json = {
       stringProp: "string",
       numberProp: 2,
       numberFloatProp: 2.5,
       booleanProp: true,
       nullProp: null,
+      undefinedProp: undefined,
       objectProp: {
         stringProp: "string",
         numberProp: 2,
@@ -68,6 +71,12 @@ describe('DocumentSession', () => {
       expect(document.booleanProp).to.be.a('boolean');
       expect(document.booleanProp).to.equals(true);
       expect(document.nullProp).to.be.null;
+    });
+
+    it('should skip undefined props', () => {
+      const document: IDocument = subject.create(json);
+
+      expect(document).to.not.have.property('undefinedProp');
     });
 
     it('should parse arrays', () => {
@@ -136,7 +145,7 @@ describe('DocumentSession', () => {
       const deepObject: IDocument = document.deepArrayObjectProp[2];
       const deepArrayInObject: IDocument = deepObject.someArray;
       const deepArray: any[] = document.deepArrayObjectProp[4];
-      const deepObjectinArray: IDocument = deepArray[2];
+      const deepObjectInArray: IDocument = deepArray[2];
       
       expect(deepObject).to.be.a('object');
       expect(deepObject).to.be.an.instanceOf(Document);
@@ -151,9 +160,9 @@ describe('DocumentSession', () => {
       expect(deepArray[0]).to.equal(7);      
       expect(deepArray[1]).to.equal(8);      
 
-      expect(deepObjectinArray).to.be.a('object');
-      expect(deepObjectinArray).to.be.an.instanceOf(Document);
-      expect(deepObjectinArray).to.have.property('someProp', 'someValue');  
+      expect(deepObjectInArray).to.be.a('object');
+      expect(deepObjectInArray).to.be.an.instanceOf(Document);
+      expect(deepObjectInArray).to.have.property('someProp', 'someValue');
     });
   });
 

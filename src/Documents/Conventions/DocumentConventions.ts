@@ -1,9 +1,18 @@
-import {IDocument, DocumentKey} from '../IDocument';
+import {IDocument, DocumentKey, IDocumentType, DocumentConstructor} from '../IDocument';
 import {InvalidOperationException} from "../../Database/DatabaseExceptions";
 import * as pluralize from 'pluralize';
 import {IMetadata} from "../../Database/Metadata";
 import {SortOption, SortOptions} from "../../Database/Indexes/SortOption";
 import {StringUtil} from "../../Utility/StringUtil";
+import {TypeUtil} from "../../Utility/TypeUtil";
+import * as _ from 'lodash';
+import {Serializer} from "../../Json/Serializer";
+
+export interface IDocumentConversionResult<T extends IDocument> {
+  document: T,
+  metadata: IMetadata,
+  originalMetadata: IMetadata
+}
 
 export class DocumentConventions<T extends IDocument> {
   readonly maxNumberOfRequestPerSession: number = 30;
@@ -13,30 +22,68 @@ export class DocumentConventions<T extends IDocument> {
   readonly maxLengthOfQueryUsingGetUrl = 1024 + 512;
   readonly identityPartsSeparator = "/";
   private _systemDatabase: string = "system";
-  private _documentEntityClass: { new(): T; };
+  private _documentEntityClass: DocumentConstructor<T>;
 
-  constructor(documentEntityClass: { new(): T; }) {
+  constructor(documentEntityClass: DocumentConstructor<T>) {
     this._documentEntityClass = documentEntityClass;
   }
 
-  public get documentEntity(): string {
+  public get documentClass(): string {
     return this._documentEntityClass.name;
   }
 
-  public get documentEntityName(): string {
-     return this.documentEntity.toLowerCase();
+  public get defaultDocumentType(): IDocumentType {
+     return this.getDocumentType();
   }
 
-  public get documentsCollectionName(): string {
-    return pluralize(this.documentEntityName);
+  public get defaultCollection(): string {
+    return this.getDocumentsColleciton();
   }
 
   public get documentIdPropertyName(): string {
-    return '_id';
+    return 'id';
   }
 
   public get systemDatabase(): string {
     return this._systemDatabase;
+  }
+
+  public get emptyEtag(): number {
+    return 0;
+  }
+
+  public getDocumentType(type?: IDocumentType): IDocumentType {
+    return (type || this.documentClass).toLowerCase();
+  }
+
+  public getDocumentsColleciton(type?: IDocumentType): string {
+    return pluralize(this.getDocumentType(type));
+  }
+
+  public tryConvertToDocument(rawEntity: Object): IDocumentConversionResult<T> {
+    const metadata: IMetadata = _.get(rawEntity, '@metadata') || {};
+    const originalMetadata: IMetadata = _.clone(metadata);
+    const idProperty: string = this.documentIdPropertyName;
+    const documentClass: DocumentConstructor<T> = this._documentEntityClass;
+    const documentAttributes = _.omit(rawEntity, '@metadata');
+    let document: T = new documentClass(documentAttributes, metadata);
+
+    if (idProperty in document) {
+      this.trySetIdOnEntity(document, metadata['@id'] || null);
+    }
+
+    return {
+      document: document,
+      metadata: metadata,
+      originalMetadata: originalMetadata
+    } as IDocumentConversionResult<T>;
+  }
+
+  public tryConvertToRawEntity(document: T): Object {
+    return Serializer.toJSON<T>(
+      this._documentEntityClass, document,
+      document['@metadata'] || {}
+    );
   }
 
   public trySetIdOnEntity(entity: T, key: DocumentKey): T {
@@ -64,15 +111,34 @@ export class DocumentConventions<T extends IDocument> {
     return entity[idProperty];
   }
 
-  public buildDefaultMetadata(entity?: T): IMetadata {
+  public buildDefaultMetadata(entity?: T, documentType?: IDocumentType): IMetadata {
+    let metadata: IMetadata = {};
+    let nestedTypes: Object = {};
+    let property: string, value : any;
+
     if (entity) {
-      return {
-        '@collection': this.documentsCollectionName,
-        'Raven-Node-Type': this.documentEntityName
+      _.assign(metadata, entity['@metadata'] || {}, {
+        '@collection': this.getDocumentsColleciton(documentType),
+        '@object_type': this.getDocumentType(documentType),
+        'Raven-Node-Type': this.defaultDocumentType
+      });
+
+      for (property in entity) {
+        if (entity.hasOwnProperty(property)) {
+          value = entity[property];
+
+          if (value instanceof Date) {
+            nestedTypes[property] = Date.name;
+          }
+        }
+      }
+
+      if (!_.isEmpty(nestedTypes)) {
+        metadata['@nested_object_types'] = nestedTypes;
       }
     }
 
-    return {};
+    return metadata;
   }
 
   public tryGetTypeFromMetadata(metadata: IMetadata): string | null {
@@ -84,14 +150,14 @@ export class DocumentConventions<T extends IDocument> {
   }
 
   public usesRangeType(queryFilterValue: any): boolean {
-    return 'number' === (typeof queryFilterValue);
+    return TypeUtil.isNumber(queryFilterValue);
   }
 
   public rangedFieldName(fieldName: string, queryFilterValue: any): string {
-    if ('number' === (typeof queryFilterValue)) {
+    if (TypeUtil.isNumber(queryFilterValue)) {
       return StringUtil.format(
         '{1}_{0}_Range', fieldName,
-        Number.isInteger(queryFilterValue) ? 'L': 'D'
+        _.isInteger(queryFilterValue) ? 'L': 'D'
       );
     }
 
@@ -99,11 +165,13 @@ export class DocumentConventions<T extends IDocument> {
   }
 
   public getDefaultSortOption(queryFilterValue: any): SortOption | null {
-    if ('number' === (typeof queryFilterValue)) {
-      return Number.isInteger(queryFilterValue)
-        ? SortOptions.Long : SortOptions.Float;
+    switch (typeof queryFilterValue) {
+      case 'number':
+        return SortOptions.Numeric;
+      case 'string':
+        return SortOptions.Str;
+      default:
+        return SortOptions.None;
     }
-
-    return null;
   }
 }
