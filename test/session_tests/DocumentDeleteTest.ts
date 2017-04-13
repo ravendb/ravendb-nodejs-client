@@ -1,15 +1,15 @@
-/// <reference path="../node_modules/@types/mocha/index.d.ts" />
-/// <reference path="../node_modules/@types/chai/index.d.ts" />
+/// <reference path="../../node_modules/@types/mocha/index.d.ts" />
+/// <reference path="../../node_modules/@types/chai/index.d.ts" />
 
 import {expect} from 'chai';
-import {IDocumentStore} from "../src/Documents/IDocumentStore";
-import {DocumentStore} from "../src/Documents/DocumentStore";
-import {StringUtil} from "../src/Utility/StringUtil";
+import {IDocumentStore} from "../../src/Documents/IDocumentStore";
+import {DocumentStore} from "../../src/Documents/DocumentStore";
+import {StringUtil} from "../../src/Utility/StringUtil";
 import {ravenServer} from "./config/raven.server";
-import {IDocumentSession} from "../src/Documents/Session/IDocumentSession";
+import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import * as Promise from 'bluebird'
-import {Document} from "../src/Documents/Document";
-import {DocumentKey, IDocument} from "../src/Documents/IDocument";
+import {Document} from "../../src/Documents/Document";
+import {DocumentKey, IDocument} from "../../src/Documents/IDocument";
 
 describe('Document session', () => {
     let store: IDocumentStore;
@@ -21,10 +21,10 @@ describe('Document session', () => {
         const session: IDocumentSession = store.openSession();
 
         Promise.all([
-            session.store(new Document({_id: 'products/101', name: 'test'})),
-            session.store(new Document({_id: 'products/10', name: 'test'})),
-            session.store(new Document({_id: 'products/106', name: 'test'})),
-            session.store(new Document({_id: 'products/107', name: 'test'}))
+            session.store(session.create({_id: 'products/101', name: 'test'},'product')),
+            session.store(session.create({_id: 'products/10', name: 'test'},'product')),
+            session.store(session.create({_id: 'products/106', name: 'test'},'product')),
+            session.store(session.create({_id: 'products/107', name: 'test'},'product'))
         ]).then(() => done())
     });
 

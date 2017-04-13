@@ -1,15 +1,15 @@
-/// <reference path="../node_modules/@types/mocha/index.d.ts" />
-/// <reference path="../node_modules/@types/chai/index.d.ts" />
+/// <reference path="../../node_modules/@types/mocha/index.d.ts" />
+/// <reference path="../../node_modules/@types/chai/index.d.ts" />
 
 import {expect} from 'chai';
-import {DocumentStore} from '../src/Documents/DocumentStore';
+import {DocumentStore} from '../../src/Documents/DocumentStore';
 import * as Promise from 'bluebird';
-import {DocumentKey, IDocument} from "../src/Documents/IDocument";
-import {Document} from "../src/Documents/Document";
-import {IDocumentStore} from "../src/Documents/IDocumentStore";
-import {IDocumentSession} from "../src/Documents/Session/IDocumentSession";
+import {DocumentKey, IDocument} from "../../src/Documents/IDocument";
+import {Document} from "../../src/Documents/Document";
+import {IDocumentStore} from "../../src/Documents/IDocumentStore";
+import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {ravenServer} from "./config/raven.server";
-import {StringUtil} from "../src/Utility/StringUtil";
+import {StringUtil} from "../../src/Utility/StringUtil";
 
 describe('DocumentSession', () => {
     let store: IDocumentStore;
@@ -21,10 +21,10 @@ describe('DocumentSession', () => {
         const session: IDocumentSession = store.openSession();
 
         Promise.all([
-            session.store(new Document({_id: 'products/101', name: 'test'})),
-            session.store(new Document({_id: 'products/10', name: 'test'})),
-            session.store(new Document({_id: 'orders/105', name: 'testing_order', key: 92, product_id: 'products/101'})),
-            session.store(new Document({_id: 'company/1', name: 'test', product: { name: 'testing_nested'}}))
+            session.store(session.create({_id: 'products/101', name: 'test'}, 'product')),
+            session.store(session.create({_id: 'products/10', name: 'test'}, 'order')),
+            session.store(session.create({_id: 'orders/105', name: 'testing_order', key: 92, product_id: 'products/101'}, 'order')),
+            session.store(session.create({_id: 'company/1', name: 'test', product: { name: 'testing_nested'}}, 'company'))
         ]).then(() => done());
     });
 
@@ -34,6 +34,7 @@ describe('DocumentSession', () => {
 
             (session.load("products/101" as DocumentKey) as Promise<IDocument>)
                 .then((document: IDocument) => {
+                    expect(document['@metadata']['@object_type']).to.equals('product');
                     expect(document.name).to.equals('test');
                     done();
             });
@@ -89,6 +90,7 @@ describe('DocumentSession', () => {
                 .then((document: IDocument) => {
                     expect(document.product).to.be.an('object');
                     expect(document.product).to.be.an.instanceOf(Document);
+                    expect(document['@metadata']['@object_type']).to.equals('company');
                     done();
                 });
         })

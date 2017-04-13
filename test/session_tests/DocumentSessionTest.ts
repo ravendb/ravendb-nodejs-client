@@ -1,14 +1,14 @@
-/// <reference path="../node_modules/@types/mocha/index.d.ts" />
-/// <reference path="../node_modules/@types/chai/index.d.ts" />
+/// <reference path="../../node_modules/@types/mocha/index.d.ts" />
+/// <reference path="../../node_modules/@types/chai/index.d.ts" />
 
 import {expect} from 'chai';
-import {Document} from '../src/Documents/Document';
-import {IDocument} from '../src/Documents/IDocument';
-import {DocumentStore} from '../src/Documents/DocumentStore';
-import {IDocumentSession} from '../src/Documents/Session/IDocumentSession';
-import {DocumentQuery} from '../src/Documents/Session/DocumentQuery';
+import {Document} from '../../src/Documents/Document';
+import {IDocument} from '../../src/Documents/IDocument';
+import {DocumentStore} from '../../src/Documents/DocumentStore';
+import {IDocumentSession} from '../../src/Documents/Session/IDocumentSession';
+import {DocumentQuery} from '../../src/Documents/Session/DocumentQuery';
 import {ravenServer} from "./config/raven.server";
-import {StringUtil} from "../src/Utility/StringUtil";
+import {StringUtil} from "../../src/Utility/StringUtil";
 
 describe('DocumentSession', () => {
   let subject : IDocumentSession;

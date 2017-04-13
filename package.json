@@ -49,6 +49,7 @@
     "uglify-js-harmony": "^2.7.5"
   },
   "dependencies": {
+    "@types/chai-as-promised": "0.0.30",
     "async-lock": "^0.3.9",
     "bluebird": "^3.4.7",
     "lodash": "^4.17.4",

@@ -9,7 +9,7 @@ export interface IDocumentSession {
   numberOfRequestsInSession: number;
   conventions: DocumentConventions<IDocument>;
 
-  create(attributes?: Object): IDocument;
+  create(attributes?: Object, documentType?: IDocumentType): IDocument;
   load(keyOrKeys: DocumentKey | DocumentKey[], includes?: string[], callback?: EntityCallback<IDocument> | EntitiesArrayCallback<IDocument>): Promise<IDocument> | Promise<IDocument[]>;
   delete(keyOrEntity: DocumentKey | IDocument, callback?: EntityCallback<IDocument>): Promise<IDocument>;
   store(entity: IDocument, documentType?: IDocumentType, key?: DocumentKey, etag?: number, forceConcurrencyCheck?: boolean, callback?: EntityCallback<IDocument>): Promise<IDocument>;

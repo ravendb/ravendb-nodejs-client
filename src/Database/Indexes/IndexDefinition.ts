@@ -21,8 +21,8 @@ export class IndexDefinition implements IJsonSerializable {
   constructor(name: string, indexMap: string | string[], configuration?: IOptionsSet, initOptions: IOptionsSet = {}) {
     this._name = name;
     this.configuration = configuration || {};
-    this.reduce = initOptions.reduce  || 0;
-    this.indexId = initOptions.index_id|| null;
+    this.reduce = initOptions.reduce || 0;
+    this.indexId = initOptions.index_id || null;
     this.lockMode = initOptions.lock_mod || null;
     this.priority = initOptions.priority || null;
     this.isTestIndex = initOptions.is_test_index || false;
