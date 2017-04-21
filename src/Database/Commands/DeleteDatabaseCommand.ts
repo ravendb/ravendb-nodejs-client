@@ -1,47 +1,43 @@
+import * as _ from 'lodash';
 import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
 import {IRavenCommandResponse} from "../IRavenCommandResponse";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
-import {DocumentKey} from "../../Documents/IDocument";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {ErrorResponseException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {StatusCodes} from "../../Http/Response/StatusCode";
-import {TypeUtil} from "../../Utility/TypeUtil";
 
 export class DeleteDatabaseCommand extends RavenCommand {
-    protected name?: DocumentKey;
-    protected hardDelete?: boolean;
+    protected databaseId?: string;
+    protected hardDelete: boolean = false;
 
-    constructor(name: DocumentKey, hardDelete?: boolean) {
+    constructor(databaseId: string, hardDelete: boolean = false) {
         super('', RequestMethods.Delete);
 
-        this.name = name;
+        this.databaseId = databaseId;
         this.hardDelete = hardDelete;
     }
 
     public createRequest(serverNode: ServerNode): void {
-        let dbName = this.name.replace('Rave/Databases/', '');
+        let dbName: string = this.databaseId.replace('Rave/Databases/', '');
 
-        this.params = {id: this.name};
-        this.endPoint = StringUtil.format('{url}/admin/databases?name={database}', StringUtil.format(dbName));
-
-        if(this.hardDelete) {
-            this.endPoint += "'&'+hardDelete+'=true'";
-        }
+        this.params = {name: dbName};
+        this.hardDelete && this.addParams({'hard-delete': 'true'});
+        this.endPoint = StringUtil.format('{url}/admin/databases', serverNode);
     }
 
     public setResponse(response: IResponse): IRavenCommandResponse | null | void {
-
-        const body: IResponseBody = response.body;
+        const body: IResponseBody[] = response.body as IResponseBody[];
 
         if (StatusCodes.isOk(response.statusCode)) {
-            return body as IRavenCommandResponse;
+            const firstResult = _.first(body);
+
+            if(!firstResult.Deleted) {
+                throw new ErrorResponseException(firstResult.Error);
+            }
         }
 
-        if(!response[0]['Deleted']) {
-            throw new ErrorResponseException(response[0]['Error']);
-        }
         return null;
     }
 }

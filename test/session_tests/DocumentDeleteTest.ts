@@ -2,64 +2,65 @@
 /// <reference path="../../node_modules/@types/chai/index.d.ts" />
 
 import {expect} from 'chai';
-import {IDocumentStore} from "../../src/Documents/IDocumentStore";
+import * as Promise from 'bluebird';
+import {IHash} from "../../src/Utility/Hash";
 import {DocumentStore} from "../../src/Documents/DocumentStore";
-import {StringUtil} from "../../src/Utility/StringUtil";
-import {ravenServer} from "./config/raven.server";
-import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
-import * as Promise from 'bluebird'
-import {Document} from "../../src/Documents/Document";
+import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {DocumentKey, IDocument} from "../../src/Documents/IDocument";
+import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 
-describe('Document session', () => {
-    let store: IDocumentStore;
+describe('Document delete test', () => {
+  let store: IDocumentStore;
+  let defaultDatabase: string, defaultUrl: string;
 
-    beforeEach((done: MochaDone) => {
-        store = DocumentStore.create(StringUtil.format('{host}:{port}', ravenServer), ravenServer.dbName);
-        store.initialize();
+  beforeEach(function(): void {
+    ({defaultDatabase, defaultUrl} = (this.currentTest as IHash));
+  });
 
-        const session: IDocumentSession = store.openSession();
+  beforeEach((done: MochaDone) => {
+    store = DocumentStore.create(defaultUrl, defaultDatabase);
+    store.initialize();
+    const session: IDocumentSession = store.openSession();
 
-        Promise.all([
-            session.store(session.create({_id: 'products/101', name: 'test'},'product')),
-            session.store(session.create({_id: 'products/10', name: 'test'},'product')),
-            session.store(session.create({_id: 'products/106', name: 'test'},'product')),
-            session.store(session.create({_id: 'products/107', name: 'test'},'product'))
-        ]).then(() => done())
+    Promise.all([
+      session.store(session.create({_id: 'products/101', name: 'test'}, 'product')),
+      session.store(session.create({_id: 'products/10', name: 'test'}, 'product')),
+      session.store(session.create({_id: 'products/106', name: 'test'}, 'product')),
+      session.store(session.create({_id: 'products/107', name: 'test'}, 'product'))
+    ])
+    .then((): void => done());
+  });
+
+  describe('Document delete', () => {
+    it('should delete with key and save session', (done: MochaDone) => {
+      const documentKey: DocumentKey = "products/101";
+
+      store.openSession().delete(documentKey)
+        .then((): Promise.Thenable<IDocument> =>
+          store.openSession().load(documentKey)
+        )
+        .then((document: IDocument): void => {
+            expect(document).not.to.exist;
+            done();
+        });
     });
 
-    describe('Document delete', () => {
-        it('should delete with key and save session', (done: MochaDone) => {
-            let session: IDocumentSession = store.openSession();
+    it('should delete after change', (done: MochaDone) => {
+      const documentKey: DocumentKey = "products/106";
 
-            (session.delete("products/101" as DocumentKey) as Promise<IDocument>)
-                .then(() => {
-                    session = store.openSession();
-                    (session.load("products/101" as DocumentKey) as Promise<IDocument>)
-                        .then((document: IDocument) => {
-                            expect(document).not.to.exist;
-                            done();
-                        });
-                });
+      store.openSession().load(documentKey)
+        .then((document: IDocument): Promise.Thenable<IDocument> => {
+          document.name = 'testing';
+
+          return store.openSession().delete(documentKey);
+        })
+        .then((document: IDocument): Promise.Thenable<IDocument> =>
+          store.openSession().load(documentKey)
+        )
+        .then((document: IDocument) => {
+          expect(document).not.to.exist;
+          done();
         });
-
-        it('should delete after change',(done: MochaDone) => {
-            let session: IDocumentSession = store.openSession();
-
-            (session.load("products/106" as DocumentKey) as Promise<IDocument>)
-                .then((document: IDocument) => {
-                    document.name = 'testing';
-                    session = store.openSession();
-                    (session.delete("products/106" as DocumentKey) as Promise<IDocument>)
-                        .then(() => {
-                            session = store.openSession();
-                            (session.load("products/106" as DocumentKey) as Promise<IDocument>)
-                                .then((document: IDocument) => {
-                                    expect(document).not.to.exist;
-                                    done();
-                                });
-                    })
-                })
-        });
-    })
+    });
+  })
 });

@@ -5,7 +5,7 @@ import {StatusCode} from "./StatusCode";
 export interface IResponse extends IHash {
   statusCode: StatusCode;
   headers: IHeaders;
-  body?: IResponseBody;
+  body?: IResponseBody | IResponseBody[];
 }
 
 export interface IResponseBody extends IHash {

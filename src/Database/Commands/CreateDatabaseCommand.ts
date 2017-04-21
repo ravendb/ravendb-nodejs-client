@@ -6,34 +6,34 @@ import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {InvalidOperationException, ErrorResponseException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {StatusCodes} from "../../Http/Response/StatusCode";
-import {DatabaseDocument} from "../../Documents/DatabaseDocument";
+import {DatabaseDocument} from "../DatabaseDocument";
 
 export class CreateDatabaseCommand extends RavenCommand {
-    protected databaseDocument?: DatabaseDocument;
-    protected data? : any;
+    protected databaseDocument: DatabaseDocument;
 
     constructor(databaseDocument: DatabaseDocument) {
         super('', RequestMethods.Put);
-
         this.databaseDocument = databaseDocument;
     }
 
     public createRequest(serverNode: ServerNode): void {
-        if(this.databaseDocument.settings != 'Raven/DataDir') {
+        const dbName: string = this.databaseDocument.databaseId.replace('Raven/Databases/', '');
+
+        StringUtil.validateDBName(dbName);
+
+        if (!('Raven/DataDir' in this.databaseDocument.settings)) {
             throw new InvalidOperationException("The Raven/DataDir setting is mandatory");
         }
 
-        let dbName = this.databaseDocument.databaseId.replace('Raven/Databases/', '');
-
-        this.params = {name:dbName};
-        this.endPoint = StringUtil.format('{url}/admin/databases', serverNode, this.params);
+        this.params = {name: dbName};
+        this.endPoint = StringUtil.format('{url}/admin/databases', serverNode);
         this.payload = this.databaseDocument.toJson();
     }
 
     public setResponse(response: IResponse): IRavenCommandResponse | null | void {
         const body: IResponseBody = response.body;
 
-        if (!response) {
+        if (!body) {
             throw new ErrorResponseException('Response is invalid.')
         }
 

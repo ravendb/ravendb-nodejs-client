@@ -53,6 +53,8 @@ export class DocumentSession implements IDocumentSession {
     return document;
   }
 
+  public load(keyOrKeys: DocumentKey, includes?: string[], callback?: EntityCallback<IDocument>): Promise<IDocument>;
+  public load(keyOrKeys: DocumentKey[], includes?: string[], callback?: EntitiesArrayCallback<IDocument>): Promise<IDocument[]>;
   public load(keyOrKeys: DocumentKey | DocumentKey[], includes?: string[], callback?: EntityCallback<IDocument>
     | EntitiesArrayCallback<IDocument>
   ): Promise<IDocument> | Promise<IDocument[]> {
