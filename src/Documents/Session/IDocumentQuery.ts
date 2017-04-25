@@ -3,7 +3,7 @@ import {IDocumentQueryConditions} from './IDocumentQueryConditions';
 import * as Promise from 'bluebird'
 import {EscapeQueryOption} from "./EscapeQueryOptions";
 import {LuceneValue} from "../Lucene/LuceneValue";
-import {DocumentQueryResult} from "./DocumentQuery";
+import {QueryResultsWithStatistics} from "./DocumentQuery";
 import {QueryResultsCallback} from "../../Utility/Callbacks";
 
 export interface IDocumentQuery {
@@ -27,5 +27,6 @@ export interface IDocumentQuery {
   andAlso(): IDocumentQuery;
   orElse(): IDocumentQuery;
   addNot(): IDocumentQuery;
-  get(callback?: QueryResultsCallback<DocumentQueryResult<IDocument>>): Promise<DocumentQueryResult<IDocument>>;
+  get(callback?: QueryResultsCallback<IDocument[]>): Promise<IDocument[]>;
+  get(callback?: QueryResultsCallback<QueryResultsWithStatistics<IDocument>>): Promise<QueryResultsWithStatistics<IDocument>>;
 }

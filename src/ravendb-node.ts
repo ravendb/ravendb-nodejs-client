@@ -63,7 +63,7 @@ export {Serializer} from './Json/Serializer';
 export {Document} from './Documents/Document';
 export {DocumentStore} from './Documents/DocumentStore';
 export {DocumentSession} from './Documents/Session/DocumentSession';
-export {DocumentQuery, DocumentQueryResult} from './Documents/Session/DocumentQuery';
+export {DocumentQuery, QueryResultsWithStatistics} from './Documents/Session/DocumentQuery';
 export {DocumentConventions, IDocumentConversionResult} from './Documents/Conventions/DocumentConventions';
 export {IndexDefinition} from './Database/Indexes/IndexDefinition';
 export {IndexFieldOptions} from './Database/Indexes/IndexFieldOptions';

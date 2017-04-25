@@ -10,7 +10,7 @@ import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {IHash} from "../../src/Utility/Hash";
 
-describe('DocumentSession', () => {
+describe('Document load test', () => {
   let store: IDocumentStore;
   let defaultDatabase: string, defaultUrl: string;
 

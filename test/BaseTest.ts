@@ -3,9 +3,9 @@
 
 import * as Promise from 'bluebird';
 import * as _ from 'lodash';
+import * as chai from 'chai';
+import * as chaiAsPromised from 'chai-as-promised';
 import {RequestsExecutor} from "../src/Http/Request/RequestsExecutor";
-import {IDocumentStore} from "../src/Documents/IDocumentStore";
-import {IDocumentSession} from "../src/Documents/Session/IDocumentSession";
 import {IndexDefinition} from "../src/Database/Indexes/IndexDefinition";
 import {DocumentConventions} from "../src/Documents/Conventions/DocumentConventions";
 import {IDocument} from "../src/Documents/IDocument";
@@ -21,6 +21,10 @@ const defaultDatabase: string = "NorthWindTest";
 let requestsExecutor: RequestsExecutor;
 let indexMap: string;
 let index: IndexDefinition;
+
+before(() => {
+  chai.use(chaiAsPromised);
+});
 
 beforeEach(function(done: MochaDone): void {
   requestsExecutor = new RequestsExecutor(

@@ -23,7 +23,7 @@ import {QueryCommand} from "../../Database/Commands/QueryCommand";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {ArgumentOutOfRangeException, InvalidOperationException, ErrorResponseException, RavenException} from "../../Database/DatabaseExceptions";
 
-export type DocumentQueryResult<T> = Array<T> | {results: T[], response: IRavenCommandResponse};
+export type QueryResultsWithStatistics<T> = {results: T[], response: IRavenCommandResponse};
 
 export class DocumentQuery implements IDocumentQuery {
   protected indexName: string;
@@ -198,35 +198,46 @@ export class DocumentQuery implements IDocumentQuery {
     return this;
   }
 
-  public get(callback?: QueryResultsCallback<DocumentQueryResult<IDocument>>): Promise<DocumentQueryResult<IDocument>> {
-    return new Promise<DocumentQueryResult<IDocument>>((resolve: PromiseResolve<DocumentQueryResult<IDocument>>, reject: PromiseReject) =>
-      this.executeQuery()
-        .catch((error: RavenException) => PromiseResolver.reject(error, reject, callback))
-        .then((response: IRavenCommandResponse) => {
-          let result: DocumentQueryResult<IDocument> = [] as DocumentQueryResult<IDocument>;
+  public get(callback?: QueryResultsCallback<IDocument[]>): Promise<IDocument[]>;
+  public get(callback?: QueryResultsCallback<QueryResultsWithStatistics<IDocument>>): Promise<QueryResultsWithStatistics<IDocument>>;
+  public get(callback?: QueryResultsCallback<IDocument[]> | QueryResultsCallback<QueryResultsWithStatistics<IDocument>>)
+    : Promise<IDocument[]> | Promise<QueryResultsWithStatistics<IDocument>> {
+    const responseToDocuments: (response: IRavenCommandResponse, resolve: PromiseResolve<IDocument[]>
+      | PromiseResolve<QueryResultsWithStatistics<IDocument>>) => void = (response: IRavenCommandResponse,
+      resolve: PromiseResolve<IDocument[]> | PromiseResolve<QueryResultsWithStatistics<IDocument>>) => {
+      let result: IDocument[] | QueryResultsWithStatistics<IDocument>  = [] as IDocument[];
 
-          if (response.Results.length > 0) {
-            let results: IDocument[] = [];
+      if (response.Results.length > 0) {
+        let results: IDocument[] = [];
 
-            response.Results.forEach((result: Object) => results.push(
-              this.session.conventions
-                .tryConvertToDocument(result)
-                .document
-            ));
+        response.Results.forEach((result: Object) => results.push(
+          this.session.conventions
+            .tryConvertToDocument(result)
+            .document
+        ));
 
-            if (this.withStatistics) {
-              result = {
-                results: results,
-                response: response
-              } as DocumentQueryResult<IDocument>;
-            } else {
-              result = results as DocumentQueryResult<IDocument>;
-            }
-          }
+        if (this.withStatistics) {
+          result = {
+            results: results,
+            response: response
+          } as QueryResultsWithStatistics<IDocument>;
+        } else {
+          result = results as IDocument[];
+        }
+      }
 
-          PromiseResolver.resolve<DocumentQueryResult<IDocument>>(result, resolve, callback)
-        })
-    );
+      PromiseResolver.resolve<IDocument[] | QueryResultsWithStatistics<IDocument>>(result, resolve, callback)
+    };
+
+    return this.withStatistics
+      ? new Promise<QueryResultsWithStatistics<IDocument>>((resolve: PromiseResolve<QueryResultsWithStatistics<IDocument>>, reject: PromiseReject) =>
+        this.executeQuery()
+          .catch((error: RavenException) => PromiseResolver.reject(error, reject, callback))
+          .then((response: IRavenCommandResponse) => responseToDocuments(response, resolve)))
+      : new Promise<IDocument[]>((resolve: PromiseResolve<IDocument[]>, reject: PromiseReject) =>
+        this.executeQuery()
+          .catch((error: RavenException) => PromiseResolver.reject(error, reject, callback))
+          .then((response: IRavenCommandResponse) => responseToDocuments(response, resolve)));
   }
 
   protected addSpace(): DocumentQuery {

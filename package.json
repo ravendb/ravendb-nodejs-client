@@ -28,6 +28,7 @@
     "@types/async-lock": "0.0.19",
     "@types/bluebird": "^3.0.37",
     "@types/chai": "^3.4.35",
+    "@types/chai-as-promised": "0.0.30",
     "@types/lodash": "^4.14.58",
     "@types/mocha": "^2.2.39",
     "@types/pluralize": "0.0.27",
@@ -35,6 +36,7 @@
     "@types/request-promise": "^4.1.33",
     "@types/uuid": "^2.0.29",
     "chai": "^3.5.0",
+    "chai-as-promised": "^6.0.0",
     "gulp": "^3.9.1",
     "gulp-append": "^0.3.4",
     "gulp-concat": "^2.6.1",
@@ -49,7 +51,6 @@
     "uglify-js-harmony": "^2.7.5"
   },
   "dependencies": {
-    "@types/chai-as-promised": "0.0.30",
     "async-lock": "^0.3.9",
     "bluebird": "^3.4.7",
     "lodash": "^4.17.4",

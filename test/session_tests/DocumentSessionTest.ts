@@ -7,15 +7,20 @@ import {IDocument} from '../../src/Documents/IDocument';
 import {DocumentStore} from '../../src/Documents/DocumentStore';
 import {IDocumentSession} from '../../src/Documents/Session/IDocumentSession';
 import {DocumentQuery} from '../../src/Documents/Session/DocumentQuery';
-import {ravenServer} from "./config/raven.server";
-import {StringUtil} from "../../src/Utility/StringUtil";
+import {IHash} from "../../src/Utility/Hash";
 
-describe('DocumentSession', () => {
-  let subject : IDocumentSession;
+describe('Document session test', () => {
+  let session : IDocumentSession;
   let json : Object;
+  let defaultDatabase: string, defaultUrl: string;
+
+  beforeEach(function (): void {
+    ({defaultDatabase, defaultUrl} = (this.currentTest as IHash));
+  });
 
   beforeEach(() => {
-    subject = DocumentStore.create(StringUtil.format('{host}:{port}', ravenServer), ravenServer.dbName).initialize().openSession();
+    session = DocumentStore.create(defaultUrl, defaultDatabase).initialize().openSession();
+
     json = {
       stringProp: "string",
       numberProp: 2,
@@ -54,13 +59,13 @@ describe('DocumentSession', () => {
   
   describe('create()', () => {
     it('should return Document instance', () => {
-      const document: IDocument = subject.create(json);
+      const document: IDocument = session.create(json);
 
       expect(document).to.be.an.instanceof(Document);
     });
 
     it('should parse scalars', () => {
-      const document: IDocument = subject.create(json);
+      const document: IDocument = session.create(json);
 
       expect(document.stringProp).to.be.a('string');
       expect(document.stringProp).to.equals('string');
@@ -74,13 +79,13 @@ describe('DocumentSession', () => {
     });
 
     it('should skip undefined props', () => {
-      const document: IDocument = subject.create(json);
+      const document: IDocument = session.create(json);
 
       expect(document).to.not.have.property('undefinedProp');
     });
 
     it('should parse arrays', () => {
-      const document: IDocument = subject.create(json);
+      const document: IDocument = session.create(json);
 
       expect(document.arrayProp).to.be.a('array');
       expect(document.arrayProp).to.have.length(3);
@@ -88,7 +93,7 @@ describe('DocumentSession', () => {
     });
 
     it('should parse deep arrays', () => {
-      const document: IDocument = subject.create(json);
+      const document: IDocument = session.create(json);
       const deep: number[] = document.deepArrayProp[2];
 
       expect(document.deepArrayProp).to.be.a('array');
@@ -101,7 +106,7 @@ describe('DocumentSession', () => {
     });
 
     it('should parse objects', () => {
-      const document: IDocument = subject.create(json);
+      const document: IDocument = session.create(json);
       
       expect(document.objectProp).to.be.a('object');
       expect(document.objectProp).to.be.an.instanceOf(Document);
@@ -128,7 +133,7 @@ describe('DocumentSession', () => {
     });
 
     it('should parse deep objects', () => {
-      const document: IDocument = subject.create(json);
+      const document: IDocument = session.create(json);
       const deep: IDocument = document.deepObjectProp.someObject;
       
       expect(document.deepObjectProp).to.be.a('object');
@@ -141,7 +146,7 @@ describe('DocumentSession', () => {
     });
 
     it('should parse mixed deep arrays/objects', () => {
-      const document: IDocument = subject.create(json);
+      const document: IDocument = session.create(json);
       const deepObject: IDocument = document.deepArrayObjectProp[2];
       const deepArrayInObject: IDocument = deepObject.someArray;
       const deepArray: any[] = document.deepArrayObjectProp[4];
@@ -168,7 +173,7 @@ describe('DocumentSession', () => {
 
   describe('query()', () => {
     it('should return DocumentQuery instance', () => {
-      const query = subject.query();
+      const query = session.query();
 
       expect(query).to.be.an.instanceof(DocumentQuery);
     });

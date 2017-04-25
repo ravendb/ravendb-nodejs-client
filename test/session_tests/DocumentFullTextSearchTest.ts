@@ -13,7 +13,7 @@ import {IndexFieldOptions} from "../../src/Database/Indexes/IndexFieldOptions";
 import {PutIndexesCommand} from "../../src/Database/Commands/PutIndexesCommand";
 import {IHash} from "../../src/Utility/Hash";
 
-describe('Document Session', () => {
+describe('Document full text search', () => {
   let store: IDocumentStore;
   let query: IDocumentQuery;
   let requestExecutor: RequestsExecutor;

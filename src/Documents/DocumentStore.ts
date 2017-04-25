@@ -3,7 +3,6 @@ import {Document} from './Document';
 import {IDocumentStore} from './IDocumentStore';
 import {IDocumentSession} from "./Session/IDocumentSession";
 import {DocumentSession} from "./Session/DocumentSession";
-import {ServerNode} from '../Http/ServerNode';
 import {RequestsExecutor} from '../Http/Request/RequestsExecutor';
 import {EntityKeyCallback} from '../Utility/Callbacks';
 import {DocumentConventions} from './Conventions/DocumentConventions';
