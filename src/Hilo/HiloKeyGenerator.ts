@@ -12,7 +12,7 @@ import {ILockDoneCallback} from '../Lock/LockCallbacks';
 import {DateUtil} from '../Utility/DateUtil';
 import {Lock} from '../Lock/Lock';
 import * as Promise from 'bluebird';
-import {IRavenCommandResponse} from "../Database/IRavenCommandResponse";
+import {RavenCommandResponse} from "../Database/RavenCommandResponse";
 
 export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloKeyGenerator {
   private _lastRangeAt: Date;
@@ -53,7 +53,7 @@ export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloK
       this.tag, this._lastBatchSize, this._lastRangeAt,
       this.identityPartsSeparator, this._range.maxId
     ))
-    .then((response: IRavenCommandResponse) => {
+    .then((response: RavenCommandResponse) => {
       this._prefix = response['prefix'];
       this._lastBatchSize = response['last_size'];
       this._lastRangeAt = DateUtil.parse(response['last_range_at']);

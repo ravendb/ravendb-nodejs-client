@@ -15,7 +15,7 @@ import {IMetadata} from "../../Database/Metadata";
 import { InvalidOperationException, DocumentDoesNotExistsException, RavenException} from "../../Database/DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {GetDocumentCommand} from "../../Database/Commands/GetDocumentCommand";
-import {IRavenCommandResponse} from "../../Database/IRavenCommandResponse";
+import {RavenCommandResponse} from "../../Database/RavenCommandResponse";
 import {DeleteDocumentCommand} from "../../Database/Commands/DeleteDocumentCommand";
 import {PutDocumentCommand} from "../../Database/Commands/PutDocumentCommand";
 
@@ -62,7 +62,7 @@ export class DocumentSession implements IDocumentSession {
 
     return this.requestsExecutor
       .execute(new GetDocumentCommand(keyOrKeys, includes))
-      .then((response: IRavenCommandResponse) => {
+      .then((response: RavenCommandResponse) => {
         let responseResults: Object[];
 
         if (_.isEmpty(keyOrKeys)) {

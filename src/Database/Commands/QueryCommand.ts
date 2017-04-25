@@ -1,6 +1,6 @@
 import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
-import {IRavenCommandResponse} from "../IRavenCommandResponse";
+import {RavenCommandResponse} from "../RavenCommandResponse";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {IndexQuery} from "../Indexes/IndexQuery";
 import {DocumentConventions} from "../../Documents/Conventions/DocumentConventions";
@@ -72,7 +72,7 @@ export class QueryCommand extends RavenCommand {
     }
   }
 
-  public setResponse(response: IResponse): IRavenCommandResponse | null | void {
+  public setResponse(response: IResponse): RavenCommandResponse | null | void {
     const responseBody: IResponseBody = response.body;
 
     if (!responseBody) {
@@ -83,6 +83,6 @@ export class QueryCommand extends RavenCommand {
       throw new ErrorResponseException(responseBody.Error);
     }
 
-    return responseBody as IRavenCommandResponse;
+    return responseBody as RavenCommandResponse;
   }
 }

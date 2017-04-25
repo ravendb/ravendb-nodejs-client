@@ -1,7 +1,7 @@
 import * as _ from 'lodash';
 import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
-import {IRavenCommandResponse} from "../IRavenCommandResponse";
+import {RavenCommandResponse} from "../RavenCommandResponse";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {ErrorResponseException} from "../DatabaseExceptions";
@@ -27,7 +27,7 @@ export class DeleteDatabaseCommand extends RavenCommand {
         this.endPoint = StringUtil.format('{url}/admin/databases', serverNode);
     }
 
-    public setResponse(response: IResponse): IRavenCommandResponse | null | void {
+    public setResponse(response: IResponse): RavenCommandResponse | null | void {
         const body: IResponseBody[] = response.body as IResponseBody[];
 
         if (StatusCodes.isOk(response.statusCode)) {

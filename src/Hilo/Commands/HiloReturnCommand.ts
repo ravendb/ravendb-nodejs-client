@@ -1,7 +1,7 @@
 import {ServerNode} from '../../Http/ServerNode';
 import {RequestMethods} from '../../Http/Request/RequestMethod';
 import {RavenCommand} from '../../Database/RavenCommand';
-import {IRavenCommandResponse} from "../../Database/IRavenCommandResponse";
+import {RavenCommandResponse} from "../../Database/RavenCommandResponse";
 import {IResponse} from "../../Http/Response/IResponse";
 import {StringUtil} from "../../Utility/StringUtil";
 
@@ -22,7 +22,7 @@ export class HiloReturnCommand extends RavenCommand {
     this.endPoint = StringUtil.format('{url}/databases/{database}/hilo/return', serverNode);
   }
 
-  public setResponse(response: IResponse): IRavenCommandResponse | null | void {
+  public setResponse(response: IResponse): RavenCommandResponse | null | void {
     return null;
   }
 }

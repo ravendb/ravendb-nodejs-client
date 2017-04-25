@@ -36,7 +36,7 @@ export {ILockDoneCallback, ILockCallback} from './Lock/LockCallbacks';
 export {IHashCollection} from './Utility/IHashCollection';
 export {IOptionsSet} from './Utility/IOptionsSet';
 export {IJsonSerializable} from './Json/IJsonSerializable';
-export {IRavenCommandResponse} from './Database/IRavenCommandResponse';
+export {RavenCommandResponse} from './Database/RavenCommandResponse';
 export {IHeaders} from './Http/IHeaders';
 export {IResponse, IResponseBody} from './Http/Response/IResponse';
 

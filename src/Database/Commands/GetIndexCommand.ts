@@ -1,6 +1,6 @@
 import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
-import {IRavenCommandResponse} from "../IRavenCommandResponse";
+import {RavenCommandResponse} from "../RavenCommandResponse";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {StringUtil} from "../../Utility/StringUtil";
@@ -20,13 +20,13 @@ export class GetIndexCommand extends RavenCommand {
 
     }
 
-    public setResponse(response: IResponse): IRavenCommandResponse | null | void {
+    public setResponse(response: IResponse): RavenCommandResponse | null | void {
         const responseBody: IResponseBody = response.body;
 
         if (!responseBody) {
             return null
         }
 
-        return responseBody.toJson() as IRavenCommandResponse;
+        return responseBody.toJson() as RavenCommandResponse;
     }
 }

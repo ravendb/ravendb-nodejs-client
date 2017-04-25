@@ -1,6 +1,6 @@
 import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
-import {IRavenCommandResponse} from "../IRavenCommandResponse";
+import {RavenCommandResponse} from "../RavenCommandResponse";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {DocumentKey} from "../../Documents/IDocument";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
@@ -50,7 +50,7 @@ export class GetDocumentCommand extends RavenCommand {
     }
   }
 
-  public setResponse(response: IResponse): IRavenCommandResponse | null | void {
+  public setResponse(response: IResponse): RavenCommandResponse | null | void {
     const responseBody: IResponseBody = response.body;
 
     if (!responseBody) {
@@ -62,6 +62,6 @@ please check the connection to the server');
       throw new ErrorResponseException(responseBody.Error);
     }
 
-    return responseBody as IRavenCommandResponse;
+    return responseBody as RavenCommandResponse;
   }
 }

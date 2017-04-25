@@ -3,7 +3,7 @@ import * as Promise from "bluebird";
 import {PromiseResolve, PromiseReject} from "../../Utility/PromiseResolver";
 import {DateUtil} from "../../Utility/DateUtil";
 import {GetOperationStateCommand} from "../Commands/GetOperationStateCommand";
-import {IRavenCommandResponse} from "../IRavenCommandResponse";
+import {RavenCommandResponse} from "../RavenCommandResponse";
 import {TimeoutException, InvalidOperationException} from "../DatabaseExceptions";
 
 export class Operations {
@@ -13,15 +13,15 @@ export class Operations {
     this.requestsExecutor = requestsExecutor;
   }
 
-  public waitForOperationComplete(operationId: string, timeout?: number): Promise<IRavenCommandResponse> {
-    return new Promise<null>((resolve: PromiseResolve<IRavenCommandResponse>, reject: PromiseReject) => {
+  public waitForOperationComplete(operationId: string, timeout?: number): Promise<RavenCommandResponse> {
+    return new Promise<null>((resolve: PromiseResolve<RavenCommandResponse>, reject: PromiseReject) => {
       const startTime: number = DateUtil.timestamp();
       const getOperationCommand: GetOperationStateCommand = new GetOperationStateCommand(operationId);
 
       const execute: () => void = () => {
         this.requestsExecutor.execute(getOperationCommand)
           .catch((error: Error) => reject(error))
-          .then((response: IRavenCommandResponse) => {
+          .then((response: RavenCommandResponse) => {
             if (timeout && ((DateUtil.timestamp() - startTime) > timeout)) {
               reject(new TimeoutException('The operation did not finish before the timeout end'));
             } else if (response.Status == 'Completed') {

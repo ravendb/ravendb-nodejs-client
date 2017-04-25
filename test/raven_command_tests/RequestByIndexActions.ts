@@ -6,7 +6,7 @@ import {expect} from 'chai';
 import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
 import RavenTestFixture from "../../test/RavenTestFixture";
 import {PutDocumentCommand, PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand";
-import {IRavenCommandResponse} from "../../src/Database/IRavenCommandResponse";
+import {RavenCommandResponse} from "../../src/Database/RavenCommandResponse";
 import {IndexDefinition} from "../../src/Database/Indexes/IndexDefinition";
 import {IndexFieldOptions} from "../../src/Database/Indexes/IndexFieldOptions";
 import {SortOptions} from "../../src/Database/Indexes/SortOption";
@@ -35,7 +35,7 @@ describe('DocumentSession', () => {
         });
         const patch: PatchRequest = new PatchRequest("Name = 'Patched';");
         executor.execute(new PutIndexesCommand(indexDefinition))
-            .then((result: IRavenCommandResponse)=>{
+            .then((result: RavenCommandResponse)=>{
                 response = result;
                 let putCommand: any;
                 for(let i= 0; i<100; i++) {

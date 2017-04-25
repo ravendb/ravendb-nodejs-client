@@ -5,7 +5,7 @@ import {expect} from 'chai';
 import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
 import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand";
 import {DeleteDocumentCommand} from "../../src/Database/Commands/DeleteDocumentCommand";
-import {IRavenCommandResponse} from "../../src/Database/IRavenCommandResponse";
+import {RavenCommandResponse} from "../../src/Database/RavenCommandResponse";
 import {ErrorResponseException, RavenException} from "../../src/Database/DatabaseExceptions";
 import {GetDocumentCommand} from "../../src/Database/Commands/GetDocumentCommand";
 import RavenTestFixture from "../../test/RavenTestFixture";
@@ -16,12 +16,12 @@ describe('DocumentSession', () => {
 
     before((done: MochaDone) => {
         executor.execute(new PutDocumentCommand('products/101', {'Name': 'test', '@metadata': {}}))
-            .then((result: IRavenCommandResponse)=>{
+            .then((result: RavenCommandResponse)=>{
                 putCommand = result;
 
                 return executor.execute(new PutDocumentCommand('products/10', {'Name': 'test', '@metadata': {}}));
             })
-            .then((result: IRavenCommandResponse) => {
+            .then((result: RavenCommandResponse) => {
                 otherPutCommand = result;
 
                 return executor.execute(new GetDocumentCommand('products/101'))

@@ -1,6 +1,6 @@
 import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
-import {IRavenCommandResponse} from "../IRavenCommandResponse";
+import {RavenCommandResponse} from "../RavenCommandResponse";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {ErrorResponseException, InvalidOperationException} from "../DatabaseExceptions";
@@ -62,10 +62,10 @@ export class PatchCommand extends RavenCommand {
 
     }
 
-    public setResponse(response: IResponse): IRavenCommandResponse | null | void {
+    public setResponse(response: IResponse): RavenCommandResponse | null | void {
 
         if (response && response.statusCode == 200) {
-            return response.toJson() as IRavenCommandResponse;
+            return response.toJson() as RavenCommandResponse;
         }
     }
 }
