@@ -1,4 +1,4 @@
-import {assign} from 'lodash';
+import * as _ from 'lodash';
 import {RavenCommandData} from '../../RavenCommandData';
 import {DocumentKey} from '../../../Documents/IDocument';
 import {RequestMethods} from "../../../Http/Request/RequestMethod";
@@ -35,11 +35,11 @@ export class PatchCommandData extends RavenCommandData implements IJsonSerializa
     };
     
     if (!TypeUtil.isNone(this.etag)) {
-      assign(json, {Etag: this.etag});
+      _.assign(json, {Etag: this.etag});
     }
 
     if (!TypeUtil.isNone(this.patchIfMissing)) {
-      assign(json, {PatchIfMissing: this.patchIfMissing.toJson()});
+      _.assign(json, {PatchIfMissing: this.patchIfMissing.toJson()});
     }
 
     return json;

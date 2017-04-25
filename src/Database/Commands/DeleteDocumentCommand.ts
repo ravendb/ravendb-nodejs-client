@@ -38,7 +38,7 @@ export class DeleteDocumentCommand extends RavenCommand {
   }
 
   public setResponse(response: IResponse): RavenCommandResponse | null | void {
-    const responseBody: IResponseBody = response.body;
+    const responseBody: IResponseBody = response.body as IResponseBody;
 
     if (!responseBody) {
       throw new DocumentDoesNotExistsException(StringUtil.format('Couldn\'t find The Document {0}', this.key));

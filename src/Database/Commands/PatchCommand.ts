@@ -56,7 +56,7 @@ export class PatchCommand extends RavenCommand {
   }
 
   public setResponse(response: IResponse): RavenCommandResponse | null | void {
-    const responseBody: IResponseBody = response.body;
+    const responseBody: IResponseBody = response.body as IResponseBody;
 
     if (response && StatusCodes.isOk(response.statusCode)) {
       return responseBody as RavenCommandResponse;

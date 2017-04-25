@@ -26,7 +26,7 @@ export class PutDocumentCommand extends DeleteDocumentCommand {
   }
 
   public setResponse(response: IResponse): RavenCommandResponse | null | void {
-    const responseBody: IResponseBody = response.body;
+    const responseBody: IResponseBody = response.body as IResponseBody;
 
     if (!responseBody) {
       throw new ErrorResponseException('Failed to load document from the database \

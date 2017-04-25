@@ -9,6 +9,7 @@ import {StatusCodes, StatusCode} from "../../Http/Response/StatusCode";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {ICipherBox} from "../../Utility/Crypt";
+import {IHash} from "../../Utility/Hash";
 
 export interface IAuthServerRequest {
   payload: Object,
@@ -69,7 +70,7 @@ export class ApiKeyAuthenticator {
 
     return tryAuthenticate()
       .then((response: IResponse) => {
-        const body = response.body;
+        const body = response.body as IHash;
 
         if (body.Error) {
           return Promise.reject(new AuthenticationException(body.Error)) as Promise<Buffer>;
@@ -101,14 +102,14 @@ export class ApiKeyAuthenticator {
       let publicKey: Buffer, body: IResponseBody;
 
       if (!StatusCodes.isOk(response.statusCode)
-        && !TypeUtil.isObject(body = response.body) && !body.PublicKey
+        && !TypeUtil.isObject(body = response.body as IResponseBody) && !body.PublicKey
       ) {
         return Promise.reject(new AuthenticationException(`Bad response from server when \ 
 trying to get public key`));
       }
 
       try {
-        publicKey = new Buffer(atob(response.body.PublicKey));
+        publicKey = new Buffer(atob(body.PublicKey));
         this._serverPublicKeys[url] = publicKey;
       } catch (exception) {
         return Promise.reject(new AuthenticationException(`Error decoding public key: ${exception.message}`));

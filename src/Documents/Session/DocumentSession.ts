@@ -18,6 +18,7 @@ import {GetDocumentCommand} from "../../Database/Commands/GetDocumentCommand";
 import {RavenCommandResponse} from "../../Database/RavenCommandResponse";
 import {DeleteDocumentCommand} from "../../Database/Commands/DeleteDocumentCommand";
 import {PutDocumentCommand} from "../../Database/Commands/PutDocumentCommand";
+import {IHash} from "../../Utility/Hash";
 
 export class DocumentSession implements IDocumentSession {
   protected database: string;
@@ -64,6 +65,7 @@ export class DocumentSession implements IDocumentSession {
       .execute(new GetDocumentCommand(keyOrKeys, includes))
       .then((response: RavenCommandResponse) => {
         let responseResults: Object[];
+        const commandResponse: IHash = response as IHash;
 
         if (_.isEmpty(keyOrKeys)) {
           return Promise.reject(new InvalidOperationException('Document key isn\'t set or keys list is empty'));
@@ -73,7 +75,7 @@ export class DocumentSession implements IDocumentSession {
           includes = _.isString(includes) ? [includes as string] : null;
         }
 
-        if (!(responseResults = response.Results) || (responseResults.length <= 0)) {
+        if (!(responseResults = commandResponse.Results) || (responseResults.length <= 0)) {
           return Promise.reject(new DocumentDoesNotExistsException('Requested document(s) doesn\'t exists'));
         }
 

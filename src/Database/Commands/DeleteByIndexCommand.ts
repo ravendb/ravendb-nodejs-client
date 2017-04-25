@@ -20,14 +20,14 @@ export class DeleteByIndexCommand extends IndexQueryBasedCommand {
   }
 
   public setResponse(response: IResponse): RavenCommandResponse | null | void {
-    const responseBody: IResponseBody = response.body;
+    const responseBody: IResponseBody = response.body as IResponseBody;
     const status: StatusCode = response.statusCode;
 
     if (!responseBody) {
       throw new ErrorResponseException(StringUtil.format('Could not find index {0}', this.indexName));
     }
 
-    if (![StatusCodes.isOk, StatusCodes.isAccepted].includes(status)) {
+    if (![StatusCodes.Ok, StatusCodes.Accepted].includes(status)) {
       throw new ErrorResponseException(responseBody.Error)
     }
 

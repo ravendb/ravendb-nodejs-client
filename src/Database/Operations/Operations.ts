@@ -5,6 +5,7 @@ import {DateUtil} from "../../Utility/DateUtil";
 import {GetOperationStateCommand} from "../Commands/GetOperationStateCommand";
 import {RavenCommandResponse} from "../RavenCommandResponse";
 import {TimeoutException, InvalidOperationException} from "../DatabaseExceptions";
+import {IHash} from "../../Utility/Hash";
 
 export class Operations {
   protected requestsExecutor: RequestsExecutor;
@@ -22,12 +23,14 @@ export class Operations {
         this.requestsExecutor.execute(getOperationCommand)
           .catch((error: Error) => reject(error))
           .then((response: RavenCommandResponse) => {
+            const commandResponse = response as IHash;
+
             if (timeout && ((DateUtil.timestamp() - startTime) > timeout)) {
               reject(new TimeoutException('The operation did not finish before the timeout end'));
-            } else if (response.Status == 'Completed') {
+            } else if (commandResponse.Status == 'Completed') {
               resolve(response);
-            } else if (response.Status == 'Faulted') {
-              reject(new InvalidOperationException(response.Result.Error));
+            } else if (commandResponse.Status == 'Faulted') {
+              reject(new InvalidOperationException(commandResponse.Result.Error));
             } else {
               setTimeout(() => execute(), 500);
             }

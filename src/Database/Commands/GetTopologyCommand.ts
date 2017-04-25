@@ -19,7 +19,7 @@ export class GetTopologyCommand extends RavenCommand {
   }
 
   public setResponse(response: IResponse): RavenCommandResponse | null | void {
-    const responseBody: IResponseBody = response.body;
+    const responseBody: IResponseBody = response.body as IResponseBody;
     const status: StatusCode = response.statusCode;
 
     if (responseBody && StatusCodes.isOk(status)) {

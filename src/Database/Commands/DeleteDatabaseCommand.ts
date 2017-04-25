@@ -20,7 +20,7 @@ export class DeleteDatabaseCommand extends RavenCommand {
     }
 
     public createRequest(serverNode: ServerNode): void {
-        let dbName: string = this.databaseId.replace('Rave/Databases/', '');
+        let dbName: string = this.databaseId.replace('Raven/Databases/', '');
 
         this.params = {name: dbName};
         this.hardDelete && this.addParams({'hard-delete': 'true'});

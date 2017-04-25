@@ -22,6 +22,7 @@ import {IOptionsSet} from "../../Utility/IOptionsSet";
 import {QueryCommand} from "../../Database/Commands/QueryCommand";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {ArgumentOutOfRangeException, InvalidOperationException, ErrorResponseException, RavenException} from "../../Database/DatabaseExceptions";
+import {IHash} from "../../Utility/Hash";
 
 export type QueryResultsWithStatistics<T> = {results: T[], response: RavenCommandResponse};
 
@@ -206,11 +207,12 @@ export class DocumentQuery implements IDocumentQuery {
       | PromiseResolve<QueryResultsWithStatistics<IDocument>>) => void = (response: RavenCommandResponse,
       resolve: PromiseResolve<IDocument[]> | PromiseResolve<QueryResultsWithStatistics<IDocument>>) => {
       let result: IDocument[] | QueryResultsWithStatistics<IDocument>  = [] as IDocument[];
+      const commandResponse: IHash = response as IHash;
 
-      if (response.Results.length > 0) {
+      if (commandResponse.Results.length > 0) {
         let results: IDocument[] = [];
 
-        response.Results.forEach((result: Object) => results.push(
+        commandResponse.Results.forEach((result: Object) => results.push(
           this.session.conventions
             .tryConvertToDocument(result)
             .document
@@ -302,12 +304,14 @@ export class DocumentQuery implements IDocumentQuery {
         this.requestsExecutor.execute(queryCommand)
           .catch((error: Error) => reject(error))
           .then((response: RavenCommandResponse | null) => {
-            if (TypeUtil.isNone(response)) {
+            const commandResponse: IHash = response as IHash;
+
+            if (TypeUtil.isNone(commandResponse)) {
               resolve({
                 Results: [] as IDocument[],
                 Includes: [] as string[]
               } as RavenCommandResponse);
-            } else if (response.IsStale && this.waitForNonStaleResults) {
+            } else if (commandResponse.IsStale && this.waitForNonStaleResults) {
               if (moment().unix() > endTime) {
                 reject(new ErrorResponseException('The index is still stale after reached the timeout'));
               } else {

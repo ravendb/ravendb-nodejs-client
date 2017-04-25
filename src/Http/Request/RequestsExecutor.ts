@@ -305,7 +305,9 @@ export class RequestsExecutor {
     ));
   }
 
-  protected jsonToTopology(jsonResponse: RavenCommandResponse): Topology {
+  protected jsonToTopology(response: RavenCommandResponse): Topology {
+    const jsonResponse = response as IHash;
+
     return new Topology(
       parseInt(jsonResponse.Etag as string),
       this.jsonToServerNode(jsonResponse.LeaderNode),
