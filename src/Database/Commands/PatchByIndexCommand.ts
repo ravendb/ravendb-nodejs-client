@@ -1,40 +1,45 @@
-// class PatchByIndexCommand(RavenCommand):
-// def __init__(self, index_name, query_to_update, patch=None, options=None):
-// """
-// @param index_name: name of an index to perform a query on
-//     :type str
-// @param query_to_update: query that will be performed
-//     :type IndexQuery
-// @param options: various operation options e.g. AllowStale or MaxOpsPerSec
-//     :type QueryOperationOptions
-// @param patch: JavaScript patch that will be executed on query results( Used only when update)
-// :type PatchRequest
-// @return: json
-//     :rtype: dict
-// """
-// super(PatchByIndexCommand, self).__init__(method="PATCH")
-// self.index_name = index_name
-// self.query_to_update = query_to_update
-// self.patch = patch
-// self.options = options
-//
-// def create_request(self, server_node):
-// if not isinstance(self.query_to_update, IndexQuery):
-// raise ValueError("query must be IndexQuery Type")
-//
-// if self.patch:
-// if not isinstance(self.patch, PatchRequest):
-// raise ValueError("scripted_patch must be ScriptedPatchRequest Type")
-// self.patch = self.patch.to_json()
-//
-// self.url = "{0}/databases/{1}/{2}".format(server_node.url, server_node.database,
-//     Utils.build_path(self.index_name, self.query_to_update, self.options))
-// self.data = self.patch
-//
-// def set_response(self, response):
-// if response is None:
-//     raise exceptions.ErrorResponseException("Could not find index {0}".format(self.index_name))
-//
-// if response.status_code != 200 and response.status_code != 202:
-// raise response.raise_for_status()
-// return response.json()
+import {IndexQueryBasedCommand} from "./IndexQueryBasedCommand";
+import {IndexQuery} from "../Indexes/IndexQuery";
+import {PatchRequest} from "../../Http/Request/PatchRequest";
+import {QueryOperationOptions} from "../Operations/QueryOperationOptions";
+import {RequestMethods} from "../../Http/Request/RequestMethod";
+import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
+import {RavenCommandResponse} from "../RavenCommandResponse";
+import {StatusCode, StatusCodes} from "../../Http/Response/StatusCode";
+import {ErrorResponseException, InvalidOperationException} from "../DatabaseExceptions";
+import {StringUtil} from "../../Utility/StringUtil";
+import {ServerNode} from "../../Http/ServerNode";
+
+export class PatchByIndexCommand extends IndexQueryBasedCommand {
+  protected patch?: PatchRequest = null;
+
+  constructor(indexName: string, queryToUpdate: IndexQuery, patch?: PatchRequest, options?: QueryOperationOptions) {
+    super(RequestMethods.Patch, indexName, queryToUpdate, options);
+    this.patch = patch;
+  }
+
+  public createRequest(serverNode: ServerNode): void {
+    if (!(this.patch instanceof PatchRequest)) {
+      throw new InvalidOperationException('Patch must me instanceof PatchRequest class');
+    }
+
+    this.payload = this.patch.toJson();
+    this.endPoint = StringUtil.format('{url}/databases/{database}', serverNode,this.params);
+    super.createRequest(serverNode);
+  }
+
+  public setResponse(response: IResponse): RavenCommandResponse | null | void {
+    const responseBody: IResponseBody = response.body;
+    const status: StatusCode = response.statusCode;
+
+    if(!responseBody) {
+      throw new ErrorResponseException(StringUtil.format('Could not find index {0}', this.indexName));
+    }
+
+    if (![StatusCodes.isOk, StatusCodes.isAccepted].includes(status)) {
+      throw new ErrorResponseException('Invalid response from server');
+    }
+
+    return responseBody as RavenCommandResponse;
+  }
+}

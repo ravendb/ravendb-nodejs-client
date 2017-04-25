@@ -1,11 +1,27 @@
-// class GetStatisticsCommand(RavenCommand):
-// def __init__(self):
-// super(GetStatisticsCommand, self).__init__(method="GET")
-//
-// def create_request(self, server_node):
-// self.url = "{0}/databases/{1}/stats".format(server_node.url, server_node.database)
-//
-// def set_response(self, response):
-// if response and response.status_code == 200:
-// return response.json()
-// return None
+import {RavenCommand} from "../RavenCommand";
+import {RequestMethods} from "../../Http/Request/RequestMethod";
+import {ServerNode} from "../../Http/ServerNode";
+import {StringUtil} from "../../Utility/StringUtil";
+import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
+import {RavenCommandResponse} from "../RavenCommandResponse";
+import {StatusCodes} from "../../Http/Response/StatusCode";
+
+export class GetStatisticsCommand extends RavenCommand {
+  constructor() {
+    super('', RequestMethods.Get);
+  }
+
+  public createRequest(serverNode: ServerNode): void {
+    this.endPoint = StringUtil.format('{url}/databases/{database}/stats', serverNode);
+  }
+
+  public setResponse(response: IResponse): RavenCommandResponse | null | void {
+    const responseBody: IResponseBody = response.body;
+
+    if (responseBody && StatusCodes.isOk(response.statusCode)) {
+      return responseBody as RavenCommandResponse;
+    }
+
+    return null;
+  }
+}
