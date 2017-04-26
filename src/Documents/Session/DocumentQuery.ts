@@ -22,6 +22,7 @@ import {IOptionsSet} from "../../Utility/IOptionsSet";
 import {QueryCommand} from "../../Database/Commands/QueryCommand";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {ArgumentOutOfRangeException, InvalidOperationException, ErrorResponseException, RavenException} from "../../Database/DatabaseExceptions";
+import {IHash} from "../../Utility/Hash";
 
 export type QueryResultsWithStatistics<T> = {results: T[], response: RavenCommandResponse};
 
@@ -59,7 +60,7 @@ export class DocumentQuery implements IDocumentQuery {
     return this;
   }
 
-  public search(fieldName: string, searchTerms: string | string[], escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.RawQuery, boost: number = 1): IDocumentQuery {
+  public search(fieldName: string, searchTerms: string | string[], escapeQueryOptions?: EscapeQueryOption, boost: number = 1): IDocumentQuery {
     if (boost < 0) {
       throw new ArgumentOutOfRangeException('Boost factor must be a positive number');
     }
@@ -69,7 +70,7 @@ export class DocumentQuery implements IDocumentQuery {
       : (searchTerms as string);
 
     quotedTerms = QueryString.encode(quotedTerms);
-    this.addLuceneCondition<string>(fieldName, quotedTerms, LuceneOperators.Search, escapeQueryOptions);
+    this.addLuceneCondition<string>(fieldName, quotedTerms, LuceneOperators.Search, escapeQueryOptions || EscapeQueryOptions.RawQuery);
 
     if (boost != 1) {
       this.addStatement(StringUtil.format("^{0}", boost));

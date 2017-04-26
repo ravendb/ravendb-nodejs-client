@@ -8,7 +8,7 @@ import {QueryResultsCallback} from "../../Utility/Callbacks";
 
 export interface IDocumentQuery {
   select(...args: string[]): IDocumentQuery;
-  search(fieldName: string, searchTerms: string | string[], escapeQueryOptions: EscapeQueryOption, boost: number): IDocumentQuery;
+  search(fieldName: string, searchTerms: string | string[], escapeQueryOptions?: EscapeQueryOption, boost?: number): IDocumentQuery;
   where(conditions: IDocumentQueryConditions): IDocumentQuery;
   whereEquals<V extends LuceneValue>(fieldName: string, value: V, escapeQueryOptions?: EscapeQueryOption): IDocumentQuery;
   whereEndsWith(fieldName: string, value: string): IDocumentQuery;
