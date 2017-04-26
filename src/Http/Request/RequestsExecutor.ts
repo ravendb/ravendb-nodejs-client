@@ -4,7 +4,7 @@ import {ServerNode} from '../ServerNode';
 import {RavenCommand, RavenCommandRequestOptions} from '../../Database/RavenCommand';
 import {IDocument} from '../../Documents/IDocument';
 import {DocumentConventions} from '../../Documents/Conventions/DocumentConventions';
-import {RavenCommandResponse} from "../../Database/RavenCommandResponse";
+import {RavenCommandResponse, IRavenResponse} from "../../Database/RavenCommandResponse";
 import {Topology} from "../Topology";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {IHeaders} from "../IHeaders";
@@ -306,7 +306,7 @@ export class RequestsExecutor {
   }
 
   protected jsonToTopology(response: RavenCommandResponse): Topology {
-    const jsonResponse = response as IHash;
+    const jsonResponse = response as IRavenResponse;
 
     return new Topology(
       parseInt(jsonResponse.Etag as string),

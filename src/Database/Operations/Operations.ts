@@ -3,9 +3,8 @@ import * as Promise from "bluebird";
 import {PromiseResolve, PromiseReject} from "../../Utility/PromiseResolver";
 import {DateUtil} from "../../Utility/DateUtil";
 import {GetOperationStateCommand} from "../Commands/GetOperationStateCommand";
-import {RavenCommandResponse} from "../RavenCommandResponse";
+import {RavenCommandResponse, IRavenResponse} from "../RavenCommandResponse";
 import {TimeoutException, InvalidOperationException} from "../DatabaseExceptions";
-import {IHash} from "../../Utility/Hash";
 
 export class Operations {
   protected requestsExecutor: RequestsExecutor;
@@ -23,7 +22,7 @@ export class Operations {
         this.requestsExecutor.execute(getOperationCommand)
           .catch((error: Error) => reject(error))
           .then((response: RavenCommandResponse) => {
-            const commandResponse = response as IHash;
+            const commandResponse: IRavenResponse = response as IRavenResponse;
 
             if (timeout && ((DateUtil.timestamp() - startTime) > timeout)) {
               reject(new TimeoutException('The operation did not finish before the timeout end'));

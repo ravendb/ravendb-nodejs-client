@@ -1,3 +1,4 @@
 import {IHash} from '../Utility/Hash';
 
-export type RavenCommandResponse = IHash | IHash[];
+export interface IRavenResponse extends IHash {};
+export type RavenCommandResponse = IRavenResponse | IRavenResponse[];

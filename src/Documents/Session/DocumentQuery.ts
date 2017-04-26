@@ -7,7 +7,7 @@ import {QueryResultsCallback} from '../../Utility/Callbacks';
 import {PromiseResolve, PromiseResolver, PromiseReject} from '../../Utility/PromiseResolver';
 import {EscapeQueryOption, EscapeQueryOptions} from "./EscapeQueryOptions";
 import {LuceneValue, LuceneConditionValue, LuceneRangeValue} from "../Lucene/LuceneValue";
-import {RavenCommandResponse} from "../../Database/RavenCommandResponse";
+import {RavenCommandResponse, IRavenResponse} from "../../Database/RavenCommandResponse";
 import {LuceneOperator, LuceneOperators} from "../Lucene/LuceneOperator";
 import {LuceneBuilder} from "../Lucene/LuceneBuilder";
 import {StringUtil} from "../../Utility/StringUtil";
@@ -22,7 +22,6 @@ import {IOptionsSet} from "../../Utility/IOptionsSet";
 import {QueryCommand} from "../../Database/Commands/QueryCommand";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {ArgumentOutOfRangeException, InvalidOperationException, ErrorResponseException, RavenException} from "../../Database/DatabaseExceptions";
-import {IHash} from "../../Utility/Hash";
 
 export type QueryResultsWithStatistics<T> = {results: T[], response: RavenCommandResponse};
 
@@ -207,7 +206,7 @@ export class DocumentQuery implements IDocumentQuery {
       | PromiseResolve<QueryResultsWithStatistics<IDocument>>) => void = (response: RavenCommandResponse,
       resolve: PromiseResolve<IDocument[]> | PromiseResolve<QueryResultsWithStatistics<IDocument>>) => {
       let result: IDocument[] | QueryResultsWithStatistics<IDocument>  = [] as IDocument[];
-      const commandResponse: IHash = response as IHash;
+      const commandResponse: IRavenResponse = response as IRavenResponse;
 
       if (commandResponse.Results.length > 0) {
         let results: IDocument[] = [];
@@ -304,7 +303,7 @@ export class DocumentQuery implements IDocumentQuery {
         this.requestsExecutor.execute(queryCommand)
           .catch((error: Error) => reject(error))
           .then((response: RavenCommandResponse | null) => {
-            const commandResponse: IHash = response as IHash;
+            const commandResponse: IRavenResponse = response as IRavenResponse;
 
             if (TypeUtil.isNone(commandResponse)) {
               resolve({
