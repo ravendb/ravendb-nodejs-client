@@ -11,6 +11,7 @@ import {DeleteCommandData} from "../../src/Database/Commands/Data/DeleteCommandD
 import {RavenCommandResponse, IRavenResponse} from "../../src/Database/RavenCommandResponse";
 import {PatchCommandData} from "../../src/Database/Commands/Data/PatchCommandData";
 import {IHash} from "../../src/Utility/Hash";
+import {IMetadata} from "../../src/Database/Metadata";
 
 describe('Batch command test', () => {
   let requestsExecutor: RequestsExecutor;
@@ -24,7 +25,7 @@ describe('Batch command test', () => {
   });
 
   beforeEach(() => {
-    const metadata = {'Raven-Node-Type': 'Document', '@collection': 'products', 'object_type': 'product'};
+    const metadata: IMetadata = {'Raven-Node-Type': 'Document', '@collection': 'products', 'object_type': 'product'};
 
     putCommand1 = new PutCommandData('products/999', {'Name': 'tests', 'Category': 'testing'}, null, metadata);
     putCommand2 = new PutCommandData('products/1000', {'Name': 'tests', 'Category': 'testing'}, null, metadata);

@@ -52,6 +52,8 @@ beforeEach(function(done: MochaDone): void {
   ))
   .then((): void => {
     _.assign(this.currentTest, {
+      indexDefinition: index,
+      indexMap: indexMap,
       requestsExecutor: requestsExecutor,
       defaultUrl: defaultUrl,
       defaultDatabase: defaultDatabase
