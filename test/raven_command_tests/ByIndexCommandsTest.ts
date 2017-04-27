@@ -1,101 +1,120 @@
 /// <reference path="../../node_modules/@types/mocha/index.d.ts" />
 /// <reference path="../../node_modules/@types/chai/index.d.ts" />
 
+import * as _ from 'lodash';
 import * as Promise from 'bluebird';
 import {expect} from 'chai';
 import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
-import {PutDocumentCommand, PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand";
-import {RavenCommandResponse} from "../../src/Database/RavenCommandResponse";
+import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand";
+import {RavenCommandResponse, IRavenResponse} from "../../src/Database/RavenCommandResponse";
 import {IndexDefinition} from "../../src/Database/Indexes/IndexDefinition";
 import {IndexFieldOptions} from "../../src/Database/Indexes/IndexFieldOptions";
 import {SortOptions} from "../../src/Database/Indexes/SortOption";
 import {PutIndexesCommand} from "../../src/Database/Commands/PutIndexesCommand";
-import {PatchRequest, PatchRequest} from "../../src/Http/Request/PatchRequest";
-import {Document} from "../../src/Documents/Document";
-import {IDocumentQuery} from "../../src/Documents/Session/IDocumentQuery";
+import {PatchRequest} from "../../src/Http/Request/PatchRequest";
 import {QueryCommand} from "../../src/Database/Commands/QueryCommand";
 import {IndexQuery} from "../../src/Database/Indexes/IndexQuery";
 import {DocumentConventions} from "../../src/Documents/Conventions/DocumentConventions";
 import {QueryOperationOptions} from "../../src/Database/Operations/QueryOperationOptions";
+import {Operations} from "../../src/Database/Operations/Operations";
+import {IHash} from "../../src/Utility/Hash";
+import {IDocument} from "../../src/Documents/IDocument";
+import {Document} from "../../src/Documents/Document";
+import {PatchByIndexCommand} from "../../src/Database/Commands/PatchByIndexCommand";
+import {DeleteByIndexCommand} from "../../src/Database/Commands/DeleteByIndexCommand";
 
 describe('DocumentSession', () => {
+  let requestsExecutor: RequestsExecutor;
+  let patch: PatchRequest;
+  let operations: Operations;
 
-  let executor: RequestsExecutor = RavenTestFixture.requestsExecutor;
-  let query: IDocumentQuery;
-  let response, otherResponse;
+  beforeEach(function(): void {
+    ({requestsExecutor} = this.currentTest as IHash);
+  });
 
   before((done: MochaDone) => {
+    const indexMap: string = [
+      "from doc in docs.Testings ",
+      "select new{",
+      "Name = doc.Name,",
+      "DocNumber = doc.DocNumber} "
+    ].join('');
 
-    const indexMap: string = "from doc in docs.Testings  select new {Name = doc.Name,DocNumber = doc.DocNumber}";
-    const indexDefinition: IndexDefinition = new IndexDefinition('Testing_Sort', indexMap, null, {
+    const indexSort: IndexDefinition = new IndexDefinition('Testing_Sort', indexMap, null, {
       fields: {
         "DocNumber": new IndexFieldOptions(SortOptions.Numeric)
       }
     });
-    const patch: PatchRequest = new PatchRequest("Name = 'Patched';");
-    executor.execute(new PutIndexesCommand(indexDefinition))
-      .then((result: RavenCommandResponse) => {
-        response = result;
-        let putCommand: any;
-        for (let i = 0; i < 100; i++) {
-          let command: PutDocumentCommand;
-          command = new PutDocumentCommand("testing/" + i, {
-            "Name": "test" + i,
-            "DocNumber": i,
-            "@metadata": {"@collection": "Testings"}
-          });
-          putCommand.push(command);
-          return Promise.all(putCommand)
-        }
-        executor.execute(putCommand).then(() => {
-          done()
-        })
-      })
+
+    patch = new PatchRequest("Name = 'Patched';");
+    operations = new Operations(requestsExecutor);
+
+    requestsExecutor.execute(new PutIndexesCommand(indexSort))
+      .then(() => Promise.all(_.range(0, 100).map((i) => requestsExecutor
+        .execute(new PutDocumentCommand(`testing/${i}`, {
+          Name: `test${i}`, DocNumber: i,
+          '@metadata': {"@collection": "Testings"}
+        }))
+      )))
+      .then(() => done());
   });
 
 
   describe('Actions by Index', () => {
+    it('update by index success', (done: MochaDone) => {
+      const indexQuery: IndexQuery = new IndexQuery('Name:*', 0, 0, null, {wait_for_non_stale_results: true});
+      const queryCommand: QueryCommand = new QueryCommand('Testing_Sort', indexQuery, new DocumentConventions<IDocument>(Document));
+      const patchByIndexCommand: PatchByIndexCommand = new PatchByIndexCommand('Testing_Sort', new IndexQuery('Name:*'), patch, new QueryOperationOptions(false));
 
-    it('should update with index to success', () => {
-      executor.execute(new QueryCommand('Testing_Sort', new IndexQuery('Name:*'), new DocumentConventions())).then(() => {
-        executor.execute(new PatchRequest('Testing_sort', {
-          IndexQuery(
-          'Name:*'), /* what patch?*/, new QueryOperationOptions(false)
-      }))
-        .
-        then((result) => {
-          expect(result).not.to.be.null;
-          expect(result['Result']['Total']).to.be.at.least(50)
+      requestsExecutor
+        .execute(queryCommand)
+        .then(() => requestsExecutor
+        .execute(patchByIndexCommand)
+        .then((response: RavenCommandResponse) => operations
+        .waitForOperationComplete((response as IRavenResponse).OperationId))
+        .then((response: RavenCommandResponse) => {
+          expect(response).not.to.be.null;
+          expect((response as IRavenResponse).Result.Total).not.to.be.lessThan(50);
+          done();
         })
-      })
+      );
     });
 
-    it('should update with index to fail', () => {
-      executor.execute(new PatchRequest('', {IndexQuery('Name:test'),
-      /* what patch?*/
-    }))
-      .
-      then((result) => {
-        expect(result).should.be.rejected;
-      })
-
+    it ('update by index fail', (done: MochaDone) => {
+      expect(
+        requestsExecutor
+          .execute(new PatchByIndexCommand('', new IndexQuery('Name:test'), patch))
+          .then((response: RavenCommandResponse) =>  operations
+          .waitForOperationComplete((response as IRavenResponse).OperationId))
+      ).to.be.rejected.and.notify(done);
     });
 
-    it('should delete with index to fail', () => {
-      executor.execute(new /* where is method delete by index?*/('region2', new IndexQuery('Name:Western')))
-        .then((result) => {
-          expect(result).should.be.rejected;
-        })
+    it ('delete by index fail', (done: MochaDone) => {
+      expect(
+        requestsExecutor
+          .execute(new DeleteByIndexCommand('region2', new IndexQuery('Name:Western')))
+          .then((response: RavenCommandResponse) =>  operations
+            .waitForOperationComplete((response as IRavenResponse).OperationId))
+      ).to.be.rejected.and.notify(done)
     });
 
-    it('should delete with index to success', () => {
-      executor.execute(new QueryCommand('Testing_Sort', new IndexQuery('DocNumber_D_Range:[0 TO 49]', /*wait_for_non_stale_results=True*/), new DocumentConventions()))
-        .then((result) => {
-          executor.execute(new /* where is method delete by index?*/('Testing_Sort', new IndexQuery('DocNumber_D_Range:[0 TO 49]'), new QueryOperationOptions(false)))
-            .then((result) => {
-              expect(result).to.be.fulfilled
-            })
-        })
+    it('delete by index success', (done: MochaDone) => {
+      const query: string = 'DocNumber_D_Range:[0 TO 49]';
+      const indexQuery: IndexQuery = new IndexQuery(query, 0, 0, null, {wait_for_non_stale_results: true});
+      const queryCommand: QueryCommand = new QueryCommand('Testing_Sort', indexQuery, new DocumentConventions<IDocument>(Document));
+      const deleteByIndexCommand: DeleteByIndexCommand = new DeleteByIndexCommand('Testing_Sort', new IndexQuery(query), new QueryOperationOptions(false));
+
+      requestsExecutor
+        .execute(queryCommand)
+        .then(() => requestsExecutor
+          .execute(deleteByIndexCommand)
+          .then((response: RavenCommandResponse) => operations
+            .waitForOperationComplete((response as IRavenResponse).OperationId))
+          .then((response: RavenCommandResponse) => {
+            expect((response as IRavenResponse).Status).to.equals('Completed');
+            done();
+          })
+        );
     });
   });
 });
