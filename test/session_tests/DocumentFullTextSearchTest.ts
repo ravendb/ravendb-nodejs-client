@@ -77,7 +77,7 @@ describe('Document full text search', () => {
   describe('Text search', () => {
     it('should search one result', (done: MochaDone) => {
       store.openSession()
-        .query('LastFm', 'LastFmAnalyzed', null, true)
+        .query('LastFm', 'LastFmAnalyzed', {waitForNonStaleResults: true})
         .search('query', 'Me')
         .get()
         .then((results) => {
@@ -89,7 +89,7 @@ describe('Document full text search', () => {
 
     it('should search two results', (done: MochaDone) => {
       store.openSession()
-        .query('LastFm', 'LastFmAnalyzed', null, true)
+        .query('LastFm', 'LastFmAnalyzed', {waitForNonStaleResults: true})
         .search('query', 'Me')
         .search('query', 'Bobo')
         .get()
@@ -101,7 +101,7 @@ describe('Document full text search', () => {
 
     it('should search full text with boost', (done: MochaDone) => {
       store.openSession()
-        .query('LastFm', 'LastFmAnalyzed', null, true)
+        .query('LastFm', 'LastFmAnalyzed', {waitForNonStaleResults: true})
         .search('query', 'Me', null, 10)
         .search('query', 'Bobo', null, 2)
         .get()

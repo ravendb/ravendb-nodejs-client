@@ -22,7 +22,6 @@ import {IOptionsSet} from "../../Utility/IOptionsSet";
 import {QueryCommand} from "../../Database/Commands/QueryCommand";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {ArgumentOutOfRangeException, InvalidOperationException, ErrorResponseException, RavenException} from "../../Database/DatabaseExceptions";
-import {IHash} from "../../Utility/Hash";
 
 export type QueryResultsWithStatistics<T> = {results: T[], response: RavenCommandResponse};
 

@@ -5,6 +5,14 @@ import {EscapeQueryOption} from "./EscapeQueryOptions";
 import {LuceneValue} from "../Lucene/LuceneValue";
 import {QueryResultsWithStatistics} from "./DocumentQuery";
 import {QueryResultsCallback} from "../../Utility/Callbacks";
+import {QueryOperator} from "./QueryOperator";
+
+export interface IDocumentQueryOptions {
+  usingDefaultOperator?: QueryOperator;
+  waitForNonStaleResults?: boolean;
+  includes?: string[];
+  withStatistics?: boolean;
+}
 
 export interface IDocumentQuery {
   select(...args: string[]): IDocumentQuery;

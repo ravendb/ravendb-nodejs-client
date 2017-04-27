@@ -16,7 +16,7 @@ export {DocumentID, DocumentKey, IDocumentType, IDocument, DocumentConstructor} 
 export {IDocumentStore} from './Documents/IDocumentStore';
 export {IDocumentSession} from './Documents/Session/IDocumentSession';
 export {IDocumentQueryConditions} from './Documents/Session/IDocumentQueryConditions';
-export {IDocumentQuery} from './Documents/Session/IDocumentQuery';
+export {IDocumentQuery, IDocumentQueryOptions} from './Documents/Session/IDocumentQuery';
 export {EscapeQueryOption, EscapeQueryOptions} from './Documents/Session/EscapeQueryOptions';
 export {IHiloKeyGenerator} from './Hilo/IHiloKeyGenerator';
 export {RequestMethods, RequestMethod} from './Http/Request/RequestMethod';
@@ -36,7 +36,7 @@ export {ILockDoneCallback, ILockCallback} from './Lock/LockCallbacks';
 export {IHashCollection} from './Utility/IHashCollection';
 export {IOptionsSet} from './Utility/IOptionsSet';
 export {IJsonSerializable} from './Json/IJsonSerializable';
-export {RavenCommandResponse} from './Database/RavenCommandResponse';
+export {RavenCommandResponse, IRavenResponse} from './Database/RavenCommandResponse';
 export {IHeaders} from './Http/IHeaders';
 export {IResponse, IResponseBody} from './Http/Response/IResponse';
 

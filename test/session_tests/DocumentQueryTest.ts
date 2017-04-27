@@ -139,7 +139,7 @@ describe('Document query test', () => {
 
       it('should success query with index', (done: MochaDone) => {
         session = store.openSession();
-        session.query(null, 'Testing_Sort', null, true).where({'key': [4, 6, 90]}).get().then((results: IDocument[]) => {
+        session.query(null, 'Testing_Sort', {waitForNonStaleResults: true}).where({'key': [4, 6, 90]}).get().then((results: IDocument[]) => {
           expect(results).to.have.lengthOf(3);
           done();
         });
@@ -147,7 +147,7 @@ describe('Document query test', () => {
 
       it('should find between result', (done: MochaDone) => {
         session = store.openSession();
-        session.query(null, 'Testing_Sort', null, true).whereBetween('key', 2, 4).get().then((results: IDocument[]) => {
+        session.query(null, 'Testing_Sort', {waitForNonStaleResults: true}).whereBetween('key', 2, 4).get().then((results: IDocument[]) => {
           expect(results).to.have.lengthOf(1);
           done();
         });
@@ -155,7 +155,7 @@ describe('Document query test', () => {
 
       it('should find between or equal result', (done: MochaDone) => {
         session = store.openSession();
-        session.query(null, 'Testing_Sort', null, true).whereBetweenOrEqual('key', 2, 4).get().then((results: IDocument[]) => {
+        session.query(null, 'Testing_Sort', {waitForNonStaleResults: true}).whereBetweenOrEqual('key', 2, 4).get().then((results: IDocument[]) => {
           expect(results).to.have.lengthOf(3);
           done();
         });
@@ -163,7 +163,7 @@ describe('Document query test', () => {
 
       it('should be ordered', (done: MochaDone) => {
         session = store.openSession();
-        session.query(null, null, null, true).whereNotNull('order').get().then((results: IDocument[]) => {
+        session.query(null, null, {waitForNonStaleResults: true}).whereNotNull('order').get().then((results: IDocument[]) => {
           expect(results[0].order).to.be('a');
           done();
         });
@@ -171,7 +171,7 @@ describe('Document query test', () => {
 
       it('should be ordered descending', (done: MochaDone) => {
         session = store.openSession();
-        session.query(null, null, null, true).whereNotNull('order').orderByDescending('order').get().then((results: IDocument[]) => {
+        session.query(null, null, {waitForNonStaleResults: true}).whereNotNull('order').orderByDescending('order').get().then((results: IDocument[]) => {
           expect(results[0].order).to.be('d');
           done();
         });
@@ -179,7 +179,7 @@ describe('Document query test', () => {
 
       it('should not be null', (done: MochaDone) => {
         session = store.openSession();
-        session.query(null, null, null, true).whereNotNull('order').get().then((results: IDocument[]) => {
+        session.query(null, null, {waitForNonStaleResults: true}).whereNotNull('order').get().then((results: IDocument[]) => {
           expect(_.some(results, (result) => result.order === null)).to.be.false;
           done();
         });
@@ -187,7 +187,7 @@ describe('Document query test', () => {
 
       it('should include product', (done: MochaDone) => {
         session = store.openSession();
-        session.query(null, null, null, true, ['product_id']).where({'key': 92}).get().then(() => {
+        session.query(null, null, {waitForNonStaleResults: true, includes: ['product_id']} ).where({'key': 92}).get().then(() => {
           (session.load("product/108" as DocumentKey) as Promise<IDocument>)
             .then(() => {
               expect(session.numberOfRequestsInSession).to.equals(1);
@@ -209,7 +209,7 @@ describe('Document query test', () => {
 
     it('should make query with fetch terms', (done: MochaDone) => {
       session = store.openSession();
-      session.query(null, 'Testing_Sort', null, true)
+      session.query(null, 'Testing_Sort', {waitForNonStaleResults: true})
         .whereBetweenOrEqual('key', 2, 4).select('doc_id')
         .get().then((results: IDocument[]) => {
           expect(_.every(results, (result) => result.hasOwnProperty('doc_id'))).to.be.true;

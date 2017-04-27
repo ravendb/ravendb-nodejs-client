@@ -170,13 +170,5 @@ describe('Document session test', () => {
       expect(deepObjectInArray).to.have.property('someProp', 'someValue');
     });
   });
-
-  describe('query()', () => {
-    it('should return DocumentQuery instance', () => {
-      const query = session.query();
-
-      expect(query).to.be.an.instanceof(DocumentQuery);
-    });
-  });
 });
 

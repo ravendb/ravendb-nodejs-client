@@ -1,5 +1,5 @@
 import {IDocumentSession} from "./IDocumentSession";
-import {IDocumentQuery} from "./IDocumentQuery";
+import {IDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
 import {DocumentQuery} from "./DocumentQuery";
 import {Document} from '../Document';
 import {IDocument, DocumentKey, IDocumentType} from '../IDocument';
@@ -18,6 +18,7 @@ import {GetDocumentCommand} from "../../Database/Commands/GetDocumentCommand";
 import {RavenCommandResponse, IRavenResponse} from "../../Database/RavenCommandResponse";
 import {DeleteDocumentCommand} from "../../Database/Commands/DeleteDocumentCommand";
 import {PutDocumentCommand} from "../../Database/Commands/PutDocumentCommand";
+import {QueryOperator} from "./QueryOperator";
 
 export class DocumentSession implements IDocumentSession {
   protected database: string;
@@ -145,10 +146,22 @@ export class DocumentSession implements IDocumentSession {
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
-  public query(documentType?: IDocumentType, indexName?: string, usingDefaultOperator?: boolean, waitForNonStaleResults: boolean = false,
-     includes?: string[], withStatistics: boolean = false
-  ): IDocumentQuery {
-    return new DocumentQuery(this, this.requestsExecutor, documentType);
+  public query(documentType?: IDocumentType, indexName?: string, options?: IDocumentQueryOptions): IDocumentQuery {
+    let usingDefaultOperator: QueryOperator = null;
+    let waitForNonStaleResults: boolean = null;
+    let includes: string[] = null;
+    let withStatistics: boolean = null;
+
+    if (options) {
+      usingDefaultOperator = options.usingDefaultOperator || null;
+      waitForNonStaleResults = options.waitForNonStaleResults || null;
+      includes = options.includes || null;
+      withStatistics = options.withStatistics || null;
+    }
+
+    return new DocumentQuery(this, this.requestsExecutor, documentType, indexName,
+      usingDefaultOperator, waitForNonStaleResults, includes, withStatistics
+    );
   }
 
   public incrementRequestsCount(): void {
