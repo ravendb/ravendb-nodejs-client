@@ -94,7 +94,7 @@ describe('DocumentSession', () => {
         requestsExecutor
           .execute(new DeleteByIndexCommand('region2', new IndexQuery('Name:Western')))
           .then((response: RavenCommandResponse) =>  operations
-            .waitForOperationComplete((response as IRavenResponse).OperationId))
+          .waitForOperationComplete((response as IRavenResponse).OperationId))
       ).to.be.rejected.and.notify(done)
     });
 
@@ -107,14 +107,13 @@ describe('DocumentSession', () => {
       requestsExecutor
         .execute(queryCommand)
         .then(() => requestsExecutor
-          .execute(deleteByIndexCommand)
-          .then((response: RavenCommandResponse) => operations
-            .waitForOperationComplete((response as IRavenResponse).OperationId))
-          .then((response: RavenCommandResponse) => {
-            expect((response as IRavenResponse).Status).to.equals('Completed');
-            done();
-          })
-        );
+        .execute(deleteByIndexCommand))
+        .then((response: RavenCommandResponse) => operations
+        .waitForOperationComplete((response as IRavenResponse).OperationId))
+        .then((response: RavenCommandResponse) => {
+          expect((response as IRavenResponse).Status).to.equals('Completed');
+          done();
+        });
     });
   });
 });

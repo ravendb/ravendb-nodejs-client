@@ -89,6 +89,7 @@ export class RequestsExecutor {
               chosenNode.addResponseTime(DateUtil.timestampMs() - startTime);
             })
             .then((response: IResponse): Promise<RavenCommandResponse | null | void> | (RavenCommandResponse | null | void) => {
+              let commandResponse: RavenCommandResponse | null | void = null;
               const code: StatusCode = response.statusCode;
               const isServerError: boolean = [
                 StatusCodes.RequestTimeout,
@@ -137,7 +138,13 @@ export class RequestsExecutor {
                 }
               }
 
-              return command.setResponse(response);
+              try {
+                commandResponse = command.setResponse(response);
+              } catch (exception) {
+                return Promise.reject(exception);
+              }
+
+              return commandResponse;
             });
         };
 
