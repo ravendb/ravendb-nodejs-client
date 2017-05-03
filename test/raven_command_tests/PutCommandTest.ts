@@ -5,7 +5,7 @@ import {expect} from 'chai';
 import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand";
 import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
 import {GetDocumentCommand} from "../../src/Database/Commands/GetDocumentCommand";
-import {IRavenResponse, IRavenResponse} from "../../src/Database/RavenCommandResponse";
+import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 import {IHash} from "../../src/Utility/Hash";
 
 describe('Put command tets', () => {
@@ -19,7 +19,7 @@ describe('Put command tets', () => {
     requestsExecutor.execute(new PutDocumentCommand('testing/1', {'name': 'test', '@metadata': {}}))
       .then(() => requestsExecutor.execute(new GetDocumentCommand('testing/1')))
       .then((result: IRavenResponse) => {
-        expect((result as IRavenResponse).Results[0]['@metadata']['@id']).to.equals('testing/1');
+        expect(result.Results[0]['@metadata']['@id']).to.equals('testing/1');
         done();
       });
   });

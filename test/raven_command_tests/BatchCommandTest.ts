@@ -2,16 +2,17 @@
 /// <reference path="../../node_modules/@types/chai/index.d.ts" />
 
 import {expect} from 'chai';
+import * as Promise from 'bluebird';
 import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
 import {BatchCommand} from "../../src/Database/Commands/BatchCommand";
-import {PatchCommand} from "../../src/Database/Commands/PatchCommand";
 import {PatchRequest} from "../../src/Http/Request/PatchRequest";
 import {PutCommandData} from "../../src/Database/Commands/Data/PutCommandData";
 import {DeleteCommandData} from "../../src/Database/Commands/Data/DeleteCommandData";
-import {IRavenResponse, IRavenResponse} from "../../src/Database/RavenCommandResponse";
+import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 import {PatchCommandData} from "../../src/Database/Commands/Data/PatchCommandData";
 import {IHash} from "../../src/Utility/Hash";
 import {IMetadata} from "../../src/Database/Metadata";
+import {GetDocumentCommand} from "../../src/Database/Commands/GetDocumentCommand";
 
 describe('Batch command test', () => {
   let requestsExecutor: RequestsExecutor;
@@ -35,24 +36,28 @@ describe('Batch command test', () => {
 
   describe('Batch request', () => {
     it('should be success with one command', (done: MochaDone) => {
-      requestsExecutor.execute(new BatchCommand([putCommand1])).then((result: IRavenResponse) => {
-        expect(result as IRavenResponse[]).to.be.lengthOf(1);
+      requestsExecutor.execute(new BatchCommand([putCommand1])).then((result: IRavenResponse[]) => {
+        expect(result).to.be.lengthOf(1);
         done()
-      })
+      });
     });
 
     it('should be success with multi commands', (done: MochaDone) => {
-      requestsExecutor.execute(new BatchCommand([putCommand1, putCommand2, deleteCommand])).then((result: IRavenResponse) => {
-        expect(result as IRavenResponse[]).to.be.lengthOf(3);
+      requestsExecutor.execute(new BatchCommand([putCommand1, putCommand2, deleteCommand])).then((result: IRavenResponse[]) => {
+        expect(result).to.be.lengthOf(3);
         done()
-      })
+      });
     });
 
     it('should be a scripted patch', (done: MochaDone) => {
-      requestsExecutor.execute(new BatchCommand([putCommand1, scriptedPatchCommand])).then((result: IRavenResponse) => {
-        expect((result as IRavenResponse).Results[0].Name).to.equals('testing');
-        done()
-      })
+      requestsExecutor
+        .execute(new BatchCommand([putCommand1, scriptedPatchCommand]))
+        .then((): Promise.Thenable<IRavenResponse> => requestsExecutor
+        .execute(new GetDocumentCommand('products/999')))
+        .then((result: IRavenResponse) => {
+          expect((result).Results[0].Name).to.equals('testing');
+          done()
+      });
     });
 
     it('should fail the test', (done: MochaDone) => {

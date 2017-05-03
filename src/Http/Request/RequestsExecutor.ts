@@ -29,13 +29,10 @@ export interface IChooseNodeResponse {
 export class RequestsExecutor {
   protected conventions?: DocumentConventions<IDocument>;
   protected headers: IHeaders;
-  protected requestsCount: number = 0;
-  protected topologyChangeCounter: number = 0;
   private _lock: Lock;
   private _authenticator: ApiKeyAuthenticator;
   private _topology: Topology;
   private _apiKey?: string = null;
-  private _primary: boolean = false;
   private _topologyInitialized: boolean = false;
   private _unauthorizedHandlerInitialized: boolean = false;
   private _initUrl: string;

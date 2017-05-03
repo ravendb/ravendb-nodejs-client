@@ -5,7 +5,7 @@ import {expect} from 'chai';
 import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
 import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand";
 import {DeleteDocumentCommand} from "../../src/Database/Commands/DeleteDocumentCommand";
-import {IRavenResponse, IRavenResponse} from "../../src/Database/RavenCommandResponse";
+import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 import {IHash} from "../../src/Utility/Hash";
 
 describe('Delete command test', () => {
@@ -19,12 +19,12 @@ describe('Delete command test', () => {
   beforeEach((done: MochaDone) => {
     requestsExecutor.execute(new PutDocumentCommand('products/101', {'Name': 'test', '@metadata': {}}))
       .then((result: IRavenResponse) => {
-        response = result as IRavenResponse;
+        response = result;
 
         return requestsExecutor.execute(new PutDocumentCommand('products/102', {'Name': 'test', '@metadata': {}}));
       })
       .then((result: IRavenResponse) => {
-        otherResponse = result as IRavenResponse;
+        otherResponse = result;
         done();
       })
   });

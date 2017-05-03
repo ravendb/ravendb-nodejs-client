@@ -6,7 +6,7 @@ import * as Promise from 'bluebird';
 import {expect} from 'chai';
 import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
 import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand";
-import {IRavenResponse, IRavenResponse} from "../../src/Database/RavenCommandResponse";
+import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 import {IndexDefinition} from "../../src/Database/Indexes/IndexDefinition";
 import {IndexFieldOptions} from "../../src/Database/Indexes/IndexFieldOptions";
 import {SortOptions} from "../../src/Database/Indexes/SortOption";
@@ -71,7 +71,7 @@ describe('DocumentSession', () => {
         .then(() => requestsExecutor
         .execute(patchByIndexCommand)
         .then((response: IRavenResponse) => operations
-        .waitForOperationComplete((response as IRavenResponse).OperationId))
+        .waitForOperationComplete(response.OperationId))
         .then((response: IRavenResponse) => {
           expect(response).not.to.be.null;
           expect((response as IRavenResponse).Result.Total).not.to.be.lessThan(50);
@@ -85,7 +85,7 @@ describe('DocumentSession', () => {
         requestsExecutor
           .execute(new PatchByIndexCommand('', new IndexQuery('Name:test'), patch))
           .then((response: IRavenResponse) =>  operations
-          .waitForOperationComplete((response as IRavenResponse).OperationId))
+          .waitForOperationComplete(response.OperationId))
       ).to.be.rejected.and.notify(done);
     });
 
@@ -94,7 +94,7 @@ describe('DocumentSession', () => {
         requestsExecutor
           .execute(new DeleteByIndexCommand('region2', new IndexQuery('Name:Western')))
           .then((response: IRavenResponse) =>  operations
-          .waitForOperationComplete((response as IRavenResponse).OperationId))
+          .waitForOperationComplete(response.OperationId))
       ).to.be.rejected.and.notify(done)
     });
 
@@ -109,7 +109,7 @@ describe('DocumentSession', () => {
         .then(() => requestsExecutor
         .execute(deleteByIndexCommand))
         .then((response: IRavenResponse) => operations
-        .waitForOperationComplete((response as IRavenResponse).OperationId))
+        .waitForOperationComplete(response.OperationId))
         .then((response: IRavenResponse) => {
           expect((response as IRavenResponse).Status).to.equals('Completed');
           done();

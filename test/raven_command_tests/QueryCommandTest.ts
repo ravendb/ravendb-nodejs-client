@@ -14,7 +14,7 @@ import {IndexDefinition} from "../../src/Database/Indexes/IndexDefinition";
 import {IHash} from "../../src/Utility/Hash";
 import {IDocument} from "../../src/Documents/IDocument";
 import {Document} from "../../src/Documents/Document";
-import {IRavenResponse, IRavenResponse} from "../../src/Database/RavenCommandResponse";
+import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 
 describe('DocumentSession', () => {
   const tag = 'Tag:Products';
@@ -39,7 +39,7 @@ describe('DocumentSession', () => {
         .execute(new PutIndexesCommand(indexDefinition))
         .then(() => requestsExecutor.execute(new QueryCommand('Testing', new IndexQuery(tag), conventions)))
         .then((result: IRavenResponse) => {
-          expect((result as IRavenResponse).Results[0]["Name"]).to.equals('test');
+          expect(result.Results[0]["Name"]).to.equals('test');
           done()
         });
     });
@@ -49,7 +49,7 @@ describe('DocumentSession', () => {
         .execute(new PutIndexesCommand(indexDefinition))
         .then(() => requestsExecutor.execute(new QueryCommand('Testing', new IndexQuery(tag), conventions, null, true)))
         .then((result: IRavenResponse) => {
-          expect((result as IRavenResponse).Results[0]).not.to.include('Name');
+          expect(result.Results[0]).not.to.include('Name');
           done()
         });
     });
@@ -59,7 +59,7 @@ describe('DocumentSession', () => {
         .execute(new PutIndexesCommand(indexDefinition))
         .then(() => requestsExecutor.execute(new QueryCommand('Testing', new IndexQuery(tag), conventions, null, null, true)))
         .then((result: IRavenResponse) => {
-          expect((result as IRavenResponse).Results[0]).not.to.include('@metadata');
+          expect(result.Results[0]).not.to.include('@metadata');
           done()
         });
     });
