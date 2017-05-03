@@ -12,7 +12,7 @@ import {IDocument} from "../src/Documents/IDocument";
 import {Document} from "../src/Documents/Document";
 import {CreateDatabaseCommand} from "../src/Database/Commands/CreateDatabaseCommand";
 import {DatabaseDocument} from "../src/Database/DatabaseDocument";
-import {RavenCommandResponse} from "../src/Database/RavenCommandResponse";
+import {IRavenResponse} from "../src/Database/RavenCommandResponse";
 import {PutIndexesCommand} from "../src/Database/Commands/PutIndexesCommand";
 import {DeleteDatabaseCommand} from "../src/Database/Commands/DeleteDatabaseCommand";
 
@@ -47,7 +47,7 @@ beforeEach(function(done: MochaDone): void {
       new DatabaseDocument(defaultDatabase, {"Raven/DataDir": "test"})
     )
   )
-  .then((): Promise.Thenable<RavenCommandResponse> => requestsExecutor.execute(
+  .then((): Promise.Thenable<IRavenResponse> => requestsExecutor.execute(
     new PutIndexesCommand(index)
   ))
   .then((): void => {
@@ -64,6 +64,10 @@ beforeEach(function(done: MochaDone): void {
 });
 
 afterEach(function(done: MochaDone): void {
+  ['currentTest', 'indexDefinition', 'indexMap',
+   'requestsExecutor', 'defaultUrl', 'defaultDatabase']
+   .forEach((key: string) => delete this.currentTest[key]);
+
   requestsExecutor
     .execute(new DeleteDatabaseCommand(defaultDatabase, true))
     .then((): void => done());

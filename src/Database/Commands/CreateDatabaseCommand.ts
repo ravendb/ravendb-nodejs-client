@@ -1,6 +1,6 @@
 import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
-import {RavenCommandResponse} from "../RavenCommandResponse";
+import {IRavenResponse} from "../RavenCommandResponse";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {InvalidOperationException, ErrorResponseException} from "../DatabaseExceptions";
@@ -30,7 +30,7 @@ export class CreateDatabaseCommand extends RavenCommand {
         this.payload = this.databaseDocument.toJson();
     }
 
-    public setResponse(response: IResponse): RavenCommandResponse | null | void {
+    public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
         const body: IResponseBody = response.body;
 
         if (!body) {
@@ -38,12 +38,11 @@ export class CreateDatabaseCommand extends RavenCommand {
         }
 
         if (StatusCodes.isOk(response.statusCode)) {
-            return body as RavenCommandResponse;
+            return body;
         }
 
         if (StatusCodes.isBadRequest(response.statusCode)) {
             throw new ErrorResponseException(body.Message);
         }
-
     }
 }

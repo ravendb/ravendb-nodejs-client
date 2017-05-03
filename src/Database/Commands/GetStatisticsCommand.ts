@@ -3,7 +3,7 @@ import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {ServerNode} from "../../Http/ServerNode";
 import {StringUtil} from "../../Utility/StringUtil";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
-import {RavenCommandResponse} from "../RavenCommandResponse";
+import {IRavenResponse} from "../RavenCommandResponse";
 import {StatusCodes} from "../../Http/Response/StatusCode";
 
 export class GetStatisticsCommand extends RavenCommand {
@@ -15,11 +15,11 @@ export class GetStatisticsCommand extends RavenCommand {
     this.endPoint = StringUtil.format('{url}/databases/{database}/stats', serverNode);
   }
 
-  public setResponse(response: IResponse): RavenCommandResponse | null | void {
-    const responseBody: IResponseBody = response.body as IResponseBody;
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
+    const responseBody: IResponseBody = response.body;
 
     if (responseBody && StatusCodes.isOk(response.statusCode)) {
-      return responseBody as RavenCommandResponse;
+      return responseBody;
     }
 
     return null;

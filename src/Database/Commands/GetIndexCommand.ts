@@ -1,6 +1,6 @@
 import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
-import {RavenCommandResponse} from "../RavenCommandResponse";
+import {IRavenResponse} from "../RavenCommandResponse";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {StringUtil} from "../../Utility/StringUtil";
@@ -21,13 +21,13 @@ export class GetIndexCommand extends RavenCommand {
     this.indexName && this.addParams('name', this.indexName);
   }
 
-  public setResponse(response: IResponse): RavenCommandResponse | null | void {
-    const responseBody: IResponseBody = response.body as IResponseBody;
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
+    const responseBody: IResponseBody = response.body;
 
     if (!responseBody) {
       return null
     }
 
-    return responseBody.Results as RavenCommandResponse;
+    return responseBody.Results;
   }
 }

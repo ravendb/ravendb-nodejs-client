@@ -1,7 +1,7 @@
 import {ServerNode} from '../../Http/ServerNode';
 import {RequestMethods} from '../../Http/Request/RequestMethod';
 import {RavenCommand} from '../../Database/RavenCommand';
-import {RavenCommandResponse} from "../../Database/RavenCommandResponse";
+import {IRavenResponse} from "../../Database/RavenCommandResponse";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {StringUtil} from "../../Utility/StringUtil";
 import {StatusCode, StatusCodes} from "../../Http/Response/StatusCode";
@@ -35,7 +35,7 @@ export class HiloNextCommand extends RavenCommand {
     this.endPoint = StringUtil.format('{url}/databases/{database}/hilo/next', serverNode);
   }
 
-  public setResponse(response: IResponse): RavenCommandResponse | null | void {
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
     let code: StatusCode = response.statusCode;
     let responseBody: IResponseBody = response.body;
 
@@ -46,7 +46,7 @@ export class HiloNextCommand extends RavenCommand {
         "prefix": responseBody.Prefix,
         "last_size": responseBody.LastSize,
         "last_range_at": responseBody.LastRangeAt
-      } as RavenCommandResponse;
+      };
     }
 
     if (StatusCodes.isInternalServerError(code)) {

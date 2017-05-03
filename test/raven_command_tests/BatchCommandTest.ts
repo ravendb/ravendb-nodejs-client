@@ -8,7 +8,7 @@ import {PatchCommand} from "../../src/Database/Commands/PatchCommand";
 import {PatchRequest} from "../../src/Http/Request/PatchRequest";
 import {PutCommandData} from "../../src/Database/Commands/Data/PutCommandData";
 import {DeleteCommandData} from "../../src/Database/Commands/Data/DeleteCommandData";
-import {RavenCommandResponse, IRavenResponse} from "../../src/Database/RavenCommandResponse";
+import {IRavenResponse, IRavenResponse} from "../../src/Database/RavenCommandResponse";
 import {PatchCommandData} from "../../src/Database/Commands/Data/PatchCommandData";
 import {IHash} from "../../src/Utility/Hash";
 import {IMetadata} from "../../src/Database/Metadata";
@@ -35,21 +35,21 @@ describe('Batch command test', () => {
 
   describe('Batch request', () => {
     it('should be success with one command', (done: MochaDone) => {
-      requestsExecutor.execute(new BatchCommand([putCommand1])).then((result: RavenCommandResponse) => {
+      requestsExecutor.execute(new BatchCommand([putCommand1])).then((result: IRavenResponse) => {
         expect(result as IRavenResponse[]).to.be.lengthOf(1);
         done()
       })
     });
 
     it('should be success with multi commands', (done: MochaDone) => {
-      requestsExecutor.execute(new BatchCommand([putCommand1, putCommand2, deleteCommand])).then((result: RavenCommandResponse) => {
+      requestsExecutor.execute(new BatchCommand([putCommand1, putCommand2, deleteCommand])).then((result: IRavenResponse) => {
         expect(result as IRavenResponse[]).to.be.lengthOf(3);
         done()
       })
     });
 
     it('should be a scripted patch', (done: MochaDone) => {
-      requestsExecutor.execute(new BatchCommand([putCommand1, scriptedPatchCommand])).then((result: RavenCommandResponse) => {
+      requestsExecutor.execute(new BatchCommand([putCommand1, scriptedPatchCommand])).then((result: IRavenResponse) => {
         expect((result as IRavenResponse).Results[0].Name).to.equals('testing');
         done()
       })

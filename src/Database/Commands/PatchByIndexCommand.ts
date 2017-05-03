@@ -4,7 +4,7 @@ import {PatchRequest} from "../../Http/Request/PatchRequest";
 import {QueryOperationOptions} from "../Operations/QueryOperationOptions";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
-import {RavenCommandResponse} from "../RavenCommandResponse";
+import {IRavenResponse} from "../RavenCommandResponse";
 import {StatusCode, StatusCodes} from "../../Http/Response/StatusCode";
 import {ErrorResponseException, InvalidOperationException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
@@ -28,8 +28,8 @@ export class PatchByIndexCommand extends IndexQueryBasedCommand {
     super.createRequest(serverNode);
   }
 
-  public setResponse(response: IResponse): RavenCommandResponse | null | void {
-    const responseBody: IResponseBody = response.body as IResponseBody;
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
+    const responseBody: IResponseBody = response.body;
     const status: StatusCode = response.statusCode;
 
     if(!responseBody) {
@@ -40,6 +40,6 @@ export class PatchByIndexCommand extends IndexQueryBasedCommand {
       throw new ErrorResponseException('Invalid response from server');
     }
 
-    return responseBody as RavenCommandResponse;
+    return responseBody;
   }
 }

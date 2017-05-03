@@ -2,7 +2,7 @@ import {RavenCommand} from "../RavenCommand";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {ServerNode} from "../../Http/ServerNode";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
-import {RavenCommandResponse} from "../RavenCommandResponse";
+import {IRavenResponse} from "../RavenCommandResponse";
 import {StringUtil} from "../../Utility/StringUtil";
 import {ErrorResponseException, InvalidOperationException} from "../DatabaseExceptions";
 
@@ -24,11 +24,11 @@ export class GetApiKeyCommand extends RavenCommand {
     this.endPoint = StringUtil.format('{url}/admin/api-keys', serverNode);
   }
 
-  public setResponse(response: IResponse): RavenCommandResponse | null | void {
-    const responseBody: IResponseBody = response.body as IResponseBody;
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
+    const responseBody: IResponseBody = response.body;
 
     if (responseBody && responseBody.Results) {
-      return responseBody.Results as RavenCommandResponse;
+      return responseBody.Results;
     }
 
     throw new ErrorResponseException('Invalid server response');

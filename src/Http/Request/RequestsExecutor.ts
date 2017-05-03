@@ -4,7 +4,7 @@ import {ServerNode} from '../ServerNode';
 import {RavenCommand, RavenCommandRequestOptions} from '../../Database/RavenCommand';
 import {IDocument} from '../../Documents/IDocument';
 import {DocumentConventions} from '../../Documents/Conventions/DocumentConventions';
-import {RavenCommandResponse, IRavenResponse} from "../../Database/RavenCommandResponse";
+import {IRavenResponse} from "../../Database/RavenCommandResponse";
 import {Topology} from "../Topology";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {IHeaders} from "../IHeaders";
@@ -61,7 +61,7 @@ export class RequestsExecutor {
     setTimeout(() => this.getReplicationTopology(), 1 * 1000);
   }
 
-  public execute(command: RavenCommand): Promise<RavenCommandResponse | null | void> {
+  public execute(command: RavenCommand): Promise<IRavenResponse | IRavenResponse[] | null | void> {
     if (!command.ravenCommand) {
       return Promise.reject(new InvalidOperationException('Not a valid command'));
     }
@@ -70,9 +70,9 @@ export class RequestsExecutor {
       .then((chosenNodeResponse: IChooseNodeResponse) => {
         let chosenNode = chosenNodeResponse.node;
 
-        const execute: () => Promise<RavenCommandResponse | null | void> = () => {
+        const execute: () => Promise<IRavenResponse | IRavenResponse[] | null | void> = () => {
           const startTime: number = DateUtil.timestampMs();
-          const failNode: () => Promise<RavenCommandResponse | null | void> = () => {
+          const failNode: () => Promise<IRavenResponse | IRavenResponse[] | null | void> = () => {
             chosenNode.isFailed = true;
             command.addFailedNode(chosenNode);
 
@@ -88,8 +88,8 @@ export class RequestsExecutor {
             .finally(() => {
               chosenNode.addResponseTime(DateUtil.timestampMs() - startTime);
             })
-            .then((response: IResponse): Promise<RavenCommandResponse | null | void> | (RavenCommandResponse | null | void) => {
-              let commandResponse: RavenCommandResponse | null | void = null;
+            .then((response: IResponse): Promise<IRavenResponse | IRavenResponse[] | null | void> | (IRavenResponse | IRavenResponse[] | null | void) => {
+              let commandResponse: IRavenResponse | IRavenResponse[] | null | void = null;
               const code: StatusCode = response.statusCode;
               const isServerError: boolean = [
                 StatusCodes.RequestTimeout,
@@ -111,7 +111,7 @@ export class RequestsExecutor {
                       'Forbidden access to {url}. Make sure you\'re using the correct api-key.',
                       chosenNode
                     )
-                  )) as Promise<RavenCommandResponse | null | void>;
+                  ));
                 }
 
                 if ([StatusCodes.Unauthorized, StatusCodes.PreconditionFailed]
@@ -121,7 +121,7 @@ export class RequestsExecutor {
                     return Promise.reject(StringUtil.format(
                       'Got unauthorized response for {url}. Please specify an api-key.',
                       chosenNode
-                    )) as Promise<RavenCommandResponse | null | void>;
+                    ));
                   }
 
                   command.increaseAuthenticationRetries();
@@ -130,7 +130,7 @@ export class RequestsExecutor {
                     return Promise.reject(StringUtil.format(
                       'Got unauthorized response for {url} after trying to authenticate using specified api-key.',
                       chosenNode
-                    )) as Promise<RavenCommandResponse | null | void>;
+                    ));
                   }
 
                   this.handleUnauthorized(chosenNode);
@@ -291,7 +291,7 @@ export class RequestsExecutor {
       (done: ILockDoneCallback) => {
         this.execute(new GetTopologyCommand())
           .catch((error: RavenException) => done(error))
-          .then((response?: RavenCommandResponse) => {
+          .then((response?: IRavenResponse) => {
             if (response) {
               const newTopology = this.jsonToTopology(response);
 
@@ -312,16 +312,14 @@ export class RequestsExecutor {
     ));
   }
 
-  protected jsonToTopology(response: RavenCommandResponse): Topology {
-    const jsonResponse = response as IRavenResponse;
-
+  protected jsonToTopology(response: IRavenResponse): Topology {
     return new Topology(
-      parseInt(jsonResponse.Etag as string),
-      this.jsonToServerNode(jsonResponse.LeaderNode),
-      jsonResponse.ReadBehavior as ReadBehavior,
-      jsonResponse.WriteBehavior as WriteBehavior,
-      jsonResponse.Nodes.map((jsonNode) => this.jsonToServerNode(jsonNode)),
-      ('SLA' in jsonResponse) ? parseFloat(jsonResponse.SLA.RequestTimeThresholdInMilliseconds) / 1000 : 0
+      parseInt(response.Etag as string),
+      this.jsonToServerNode(response.LeaderNode),
+      response.ReadBehavior as ReadBehavior,
+      response.WriteBehavior as WriteBehavior,
+      response.Nodes.map((jsonNode) => this.jsonToServerNode(jsonNode)),
+      ('SLA' in response) ? parseFloat(response.SLA.RequestTimeThresholdInMilliseconds) / 1000 : 0
     );
   }
 

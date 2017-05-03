@@ -1,6 +1,6 @@
 import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
-import {RavenCommandResponse} from "../RavenCommandResponse";
+import {IRavenResponse} from "../RavenCommandResponse";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {ErrorResponseException, InvalidOperationException} from "../DatabaseExceptions";
@@ -55,11 +55,11 @@ export class PatchCommand extends RavenCommand {
     };
   }
 
-  public setResponse(response: IResponse): RavenCommandResponse | null | void {
-    const responseBody: IResponseBody = response.body as IResponseBody;
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
+    const responseBody: IResponseBody = response.body;
 
     if (response && StatusCodes.isOk(response.statusCode)) {
-      return responseBody as RavenCommandResponse;
+      return responseBody;
     }
   }
 }

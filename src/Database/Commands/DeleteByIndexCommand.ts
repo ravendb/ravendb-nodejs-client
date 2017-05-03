@@ -5,7 +5,7 @@ import {StringUtil} from "../../Utility/StringUtil";
 import {IndexQuery} from "../Indexes/IndexQuery";
 import {QueryOperationOptions} from "../Operations/QueryOperationOptions";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
-import {RavenCommandResponse} from "../RavenCommandResponse";
+import {IRavenResponse} from "../RavenCommandResponse";
 import {StatusCode, StatusCodes} from "../../Http/Response/StatusCode";
 import {IndexQueryBasedCommand} from "./IndexQueryBasedCommand";
 
@@ -19,8 +19,8 @@ export class DeleteByIndexCommand extends IndexQueryBasedCommand {
     super.createRequest(serverNode);
   }
 
-  public setResponse(response: IResponse): RavenCommandResponse | null | void {
-    const responseBody: IResponseBody = response.body as IResponseBody;
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
+    const responseBody: IResponseBody = response.body;
     const status: StatusCode = response.statusCode;
 
     if (!responseBody) {
@@ -31,6 +31,6 @@ export class DeleteByIndexCommand extends IndexQueryBasedCommand {
       throw new ErrorResponseException(responseBody.Error)
     }
 
-    return responseBody as RavenCommandResponse;
+    return responseBody;
   }
 }

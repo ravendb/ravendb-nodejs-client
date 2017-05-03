@@ -1,6 +1,6 @@
 import {ServerNode} from '../Http/ServerNode';
 import {RequestMethod, RequestMethods} from '../Http/Request/RequestMethod';
-import {RavenCommandResponse} from "./RavenCommandResponse";
+import {IRavenResponse} from "./RavenCommandResponse";
 import {IResponse} from "../Http/Response/IResponse";
 import {IHeaders} from "../Http/IHeaders";
 import {TypeUtil} from "../Utility/TypeUtil";
@@ -86,7 +86,7 @@ export abstract class RavenCommand {
     return options;
   }
 
-  public setResponse(response: IResponse): RavenCommandResponse | null | void {
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
     return null;
   }
 

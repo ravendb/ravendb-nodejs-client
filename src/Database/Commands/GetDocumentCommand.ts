@@ -1,6 +1,6 @@
 import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
-import {RavenCommandResponse} from "../RavenCommandResponse";
+import {IRavenResponse} from "../RavenCommandResponse";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {DocumentKey} from "../../Documents/IDocument";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
@@ -50,8 +50,8 @@ export class GetDocumentCommand extends RavenCommand {
     }
   }
 
-  public setResponse(response: IResponse): RavenCommandResponse | null | void {
-    const responseBody: IResponseBody = response.body as IResponseBody;
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
+    const responseBody: IResponseBody = response.body;
 
     if (!responseBody) {
       throw new ErrorResponseException('Failed to load document from the database \
@@ -62,6 +62,6 @@ please check the connection to the server');
       throw new ErrorResponseException(responseBody.Error);
     }
 
-    return responseBody as RavenCommandResponse;
+    return responseBody;
   }
 }

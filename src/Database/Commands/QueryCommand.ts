@@ -1,6 +1,6 @@
 import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
-import {RavenCommandResponse} from "../RavenCommandResponse";
+import {IRavenResponse} from "../RavenCommandResponse";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {IndexQuery} from "../Indexes/IndexQuery";
 import {DocumentConventions} from "../../Documents/Conventions/DocumentConventions";
@@ -72,8 +72,8 @@ export class QueryCommand extends RavenCommand {
     }
   }
 
-  public setResponse(response: IResponse): RavenCommandResponse | null | void {
-    const responseBody: IResponseBody = response.body as IResponseBody;
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
+    const responseBody: IResponseBody = response.body;
 
     if (!responseBody) {
       throw new ErrorResponseException(StringUtil.format('Could not find index {0}', this.indexName));
@@ -83,6 +83,6 @@ export class QueryCommand extends RavenCommand {
       throw new ErrorResponseException(responseBody.Error);
     }
 
-    return responseBody as RavenCommandResponse;
+    return responseBody;
   }
 }

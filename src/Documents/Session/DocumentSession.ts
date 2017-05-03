@@ -15,7 +15,7 @@ import {IMetadata} from "../../Database/Metadata";
 import { InvalidOperationException, DocumentDoesNotExistsException, RavenException} from "../../Database/DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {GetDocumentCommand} from "../../Database/Commands/GetDocumentCommand";
-import {RavenCommandResponse, IRavenResponse} from "../../Database/RavenCommandResponse";
+import {IRavenResponse} from "../../Database/RavenCommandResponse";
 import {DeleteDocumentCommand} from "../../Database/Commands/DeleteDocumentCommand";
 import {PutDocumentCommand} from "../../Database/Commands/PutDocumentCommand";
 import {QueryOperator} from "./QueryOperator";
@@ -63,9 +63,9 @@ export class DocumentSession implements IDocumentSession {
 
     return this.requestsExecutor
       .execute(new GetDocumentCommand(keyOrKeys, includes))
-      .then((response: RavenCommandResponse) => {
+      .then((response: IRavenResponse) => {
         let responseResults: Object[];
-        const commandResponse: IRavenResponse = response as IRavenResponse;
+        const commandResponse: IRavenResponse = response;
 
         if (_.isEmpty(keyOrKeys)) {
           return Promise.reject(new InvalidOperationException('Document key isn\'t set or keys list is empty'));

@@ -5,7 +5,7 @@ import {expect} from 'chai';
 import * as Promise from 'bluebird';
 import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
 import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand";
-import {RavenCommandResponse, IRavenResponse} from "../../src/Database/RavenCommandResponse";
+import {IRavenResponse, IRavenResponse} from "../../src/Database/RavenCommandResponse";
 import {GetDocumentCommand} from "../../src/Database/Commands/GetDocumentCommand";
 import {IHash} from "../../src/Utility/Hash";
 
@@ -27,12 +27,12 @@ describe('DocumentSession', () => {
         .then(() => requestsExecutor
           .execute(new GetDocumentCommand('products/101'))
         )
-        .then((result: RavenCommandResponse) => response = result as IRavenResponse),
+        .then((result: IRavenResponse) => response = result as IRavenResponse),
       requestsExecutor.execute(otherPutCommand)
         .then(() => requestsExecutor
           .execute(new GetDocumentCommand('products/10'))
         )
-        .then((result: RavenCommandResponse) => otherResponse = result as IRavenResponse)
+        .then((result: IRavenResponse) => otherResponse = result as IRavenResponse)
     ])
     .then(() => done());
   });

@@ -1,6 +1,6 @@
 import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
-import {RavenCommandResponse} from "../RavenCommandResponse";
+import {IRavenResponse} from "../RavenCommandResponse";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {ErrorResponseException, InvalidOperationException} from "../DatabaseExceptions";
@@ -27,7 +27,7 @@ export class BatchCommand extends RavenCommand {
     });
   }
 
-  public setResponse(response: IResponse): RavenCommandResponse | null | void {
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
     const body: IResponseBody = response.body;
 
     if (!body) {
@@ -38,6 +38,6 @@ export class BatchCommand extends RavenCommand {
       throw new ErrorResponseException(body.Error);
     }
 
-    return body.Results as RavenCommandResponse;
+    return body.Results;
   }
 }

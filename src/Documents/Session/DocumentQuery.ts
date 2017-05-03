@@ -7,7 +7,7 @@ import {QueryResultsCallback} from '../../Utility/Callbacks';
 import {PromiseResolve, PromiseResolver, PromiseReject} from '../../Utility/PromiseResolver';
 import {EscapeQueryOption, EscapeQueryOptions} from "./EscapeQueryOptions";
 import {LuceneValue, LuceneConditionValue, LuceneRangeValue} from "../Lucene/LuceneValue";
-import {RavenCommandResponse, IRavenResponse} from "../../Database/RavenCommandResponse";
+import {IRavenResponse} from "../../Database/RavenCommandResponse";
 import {LuceneOperator, LuceneOperators} from "../Lucene/LuceneOperator";
 import {LuceneBuilder} from "../Lucene/LuceneBuilder";
 import {StringUtil} from "../../Utility/StringUtil";
@@ -23,7 +23,7 @@ import {QueryCommand} from "../../Database/Commands/QueryCommand";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {ArgumentOutOfRangeException, InvalidOperationException, ErrorResponseException, RavenException} from "../../Database/DatabaseExceptions";
 
-export type QueryResultsWithStatistics<T> = {results: T[], response: RavenCommandResponse};
+export type QueryResultsWithStatistics<T> = {results: T[], response: IRavenResponse};
 
 export class DocumentQuery implements IDocumentQuery {
   protected indexName: string;
@@ -202,8 +202,8 @@ export class DocumentQuery implements IDocumentQuery {
   public get(callback?: QueryResultsCallback<QueryResultsWithStatistics<IDocument>>): Promise<QueryResultsWithStatistics<IDocument>>;
   public get(callback?: QueryResultsCallback<IDocument[]> | QueryResultsCallback<QueryResultsWithStatistics<IDocument>>)
     : Promise<IDocument[]> | Promise<QueryResultsWithStatistics<IDocument>> {
-    const responseToDocuments: (response: RavenCommandResponse, resolve: PromiseResolve<IDocument[]>
-      | PromiseResolve<QueryResultsWithStatistics<IDocument>>) => void = (response: RavenCommandResponse,
+    const responseToDocuments: (response: IRavenResponse, resolve: PromiseResolve<IDocument[]>
+      | PromiseResolve<QueryResultsWithStatistics<IDocument>>) => void = (response: IRavenResponse,
       resolve: PromiseResolve<IDocument[]> | PromiseResolve<QueryResultsWithStatistics<IDocument>>) => {
       let result: IDocument[] | QueryResultsWithStatistics<IDocument>  = [] as IDocument[];
       const commandResponse: IRavenResponse = response as IRavenResponse;
@@ -234,11 +234,11 @@ export class DocumentQuery implements IDocumentQuery {
       ? new Promise<QueryResultsWithStatistics<IDocument>>((resolve: PromiseResolve<QueryResultsWithStatistics<IDocument>>, reject: PromiseReject) =>
         this.executeQuery()
           .catch((error: RavenException) => PromiseResolver.reject(error, reject, callback))
-          .then((response: RavenCommandResponse) => responseToDocuments(response, resolve)))
+          .then((response: IRavenResponse) => responseToDocuments(response, resolve)))
       : new Promise<IDocument[]>((resolve: PromiseResolve<IDocument[]>, reject: PromiseReject) =>
         this.executeQuery()
           .catch((error: RavenException) => PromiseResolver.reject(error, reject, callback))
-          .then((response: RavenCommandResponse) => responseToDocuments(response, resolve)));
+          .then((response: IRavenResponse) => responseToDocuments(response, resolve)));
   }
 
   protected addSpace(): DocumentQuery {
@@ -282,7 +282,7 @@ export class DocumentQuery implements IDocumentQuery {
     return this;
   }
 
-  protected executeQuery(): Promise<RavenCommandResponse> {
+  protected executeQuery(): Promise<IRavenResponse> {
     const queryOptions: IOptionsSet = {
       sort_hints: this.sortHints,
       sort_fields: this.sortFields,
@@ -298,19 +298,17 @@ export class DocumentQuery implements IDocumentQuery {
     const query: IndexQuery = new IndexQuery(this.queryBuilder, 0, 0, this.usingDefaultOperator, queryOptions);
     const queryCommand: QueryCommand = new QueryCommand(this.indexName, query, conventions, this.includes);
 
-    return new Promise<RavenCommandResponse>((resolve: PromiseResolve<RavenCommandResponse>, reject: PromiseReject) => {
+    return new Promise<IRavenResponse>((resolve: PromiseResolve<IRavenResponse>, reject: PromiseReject) => {
       const request = () => {
         this.requestsExecutor.execute(queryCommand)
           .catch((error: Error) => reject(error))
-          .then((response: RavenCommandResponse | null) => {
-            const commandResponse: IRavenResponse = response as IRavenResponse;
-
-            if (TypeUtil.isNone(commandResponse)) {
+          .then((response: IRavenResponse | null) => {
+            if (TypeUtil.isNone(response)) {
               resolve({
                 Results: [] as IDocument[],
                 Includes: [] as string[]
-              } as RavenCommandResponse);
-            } else if (commandResponse.IsStale && this.waitForNonStaleResults) {
+              } as IRavenResponse);
+            } else if (response.IsStale && this.waitForNonStaleResults) {
               if (moment().unix() > endTime) {
                 reject(new ErrorResponseException('The index is still stale after reached the timeout'));
               } else {

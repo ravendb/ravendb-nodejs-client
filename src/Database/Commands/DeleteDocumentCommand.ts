@@ -1,6 +1,6 @@
 import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
-import {RavenCommandResponse} from "../RavenCommandResponse";
+import {IRavenResponse} from "../RavenCommandResponse";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {DocumentKey} from "../../Documents/IDocument";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
@@ -37,7 +37,7 @@ export class DeleteDocumentCommand extends RavenCommand {
     this.endPoint = StringUtil.format('{url}/databases/{database}/docs', serverNode);
   }
 
-  public setResponse(response: IResponse): RavenCommandResponse | null | void {
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
     const responseBody: IResponseBody = response.body as IResponseBody;
 
     if (!responseBody) {

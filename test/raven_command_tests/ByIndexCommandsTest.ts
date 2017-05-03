@@ -6,7 +6,7 @@ import * as Promise from 'bluebird';
 import {expect} from 'chai';
 import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
 import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand";
-import {RavenCommandResponse, IRavenResponse} from "../../src/Database/RavenCommandResponse";
+import {IRavenResponse, IRavenResponse} from "../../src/Database/RavenCommandResponse";
 import {IndexDefinition} from "../../src/Database/Indexes/IndexDefinition";
 import {IndexFieldOptions} from "../../src/Database/Indexes/IndexFieldOptions";
 import {SortOptions} from "../../src/Database/Indexes/SortOption";
@@ -70,9 +70,9 @@ describe('DocumentSession', () => {
         .execute(queryCommand)
         .then(() => requestsExecutor
         .execute(patchByIndexCommand)
-        .then((response: RavenCommandResponse) => operations
+        .then((response: IRavenResponse) => operations
         .waitForOperationComplete((response as IRavenResponse).OperationId))
-        .then((response: RavenCommandResponse) => {
+        .then((response: IRavenResponse) => {
           expect(response).not.to.be.null;
           expect((response as IRavenResponse).Result.Total).not.to.be.lessThan(50);
           done();
@@ -84,7 +84,7 @@ describe('DocumentSession', () => {
       expect(
         requestsExecutor
           .execute(new PatchByIndexCommand('', new IndexQuery('Name:test'), patch))
-          .then((response: RavenCommandResponse) =>  operations
+          .then((response: IRavenResponse) =>  operations
           .waitForOperationComplete((response as IRavenResponse).OperationId))
       ).to.be.rejected.and.notify(done);
     });
@@ -93,7 +93,7 @@ describe('DocumentSession', () => {
       expect(
         requestsExecutor
           .execute(new DeleteByIndexCommand('region2', new IndexQuery('Name:Western')))
-          .then((response: RavenCommandResponse) =>  operations
+          .then((response: IRavenResponse) =>  operations
           .waitForOperationComplete((response as IRavenResponse).OperationId))
       ).to.be.rejected.and.notify(done)
     });
@@ -108,9 +108,9 @@ describe('DocumentSession', () => {
         .execute(queryCommand)
         .then(() => requestsExecutor
         .execute(deleteByIndexCommand))
-        .then((response: RavenCommandResponse) => operations
+        .then((response: IRavenResponse) => operations
         .waitForOperationComplete((response as IRavenResponse).OperationId))
-        .then((response: RavenCommandResponse) => {
+        .then((response: IRavenResponse) => {
           expect((response as IRavenResponse).Status).to.equals('Completed');
           done();
         });

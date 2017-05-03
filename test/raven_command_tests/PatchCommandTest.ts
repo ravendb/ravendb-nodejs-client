@@ -7,7 +7,7 @@ import {PatchCommand} from "../../src/Database/Commands/PatchCommand";
 import {PatchRequest} from "../../src/Http/Request/PatchRequest";
 import {IHash} from "../../src/Utility/Hash";
 import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand";
-import {RavenCommandResponse} from "../../src/Database/RavenCommandResponse";
+import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 
 describe('Patch command test', () => {
   let requestsExecutor: RequestsExecutor;
@@ -27,7 +27,7 @@ describe('Patch command test', () => {
     it('should patch success ignoring missing', (done: MochaDone) => {
       requestsExecutor
         .execute(new PatchCommand('products/10', new PatchRequest("this.Name = 'testing'")))
-        .then((result: RavenCommandResponse) => {
+        .then((result: IRavenResponse) => {
           expect(result).not.to.be.null;
           done();
         });
@@ -36,7 +36,7 @@ describe('Patch command test', () => {
     it('should patch success not ignoring missing', (done: MochaDone) => {
       requestsExecutor
         .execute(new PatchCommand('products/10', new PatchRequest("this.Name = 'testing'"), null, null, true))
-        .then((result: RavenCommandResponse) => {
+        .then((result: IRavenResponse) => {
           expect(result).not.to.be.null;
           done();
         });

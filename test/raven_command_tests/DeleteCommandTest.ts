@@ -5,7 +5,7 @@ import {expect} from 'chai';
 import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
 import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand";
 import {DeleteDocumentCommand} from "../../src/Database/Commands/DeleteDocumentCommand";
-import {RavenCommandResponse, IRavenResponse} from "../../src/Database/RavenCommandResponse";
+import {IRavenResponse, IRavenResponse} from "../../src/Database/RavenCommandResponse";
 import {IHash} from "../../src/Utility/Hash";
 
 describe('Delete command test', () => {
@@ -18,12 +18,12 @@ describe('Delete command test', () => {
 
   beforeEach((done: MochaDone) => {
     requestsExecutor.execute(new PutDocumentCommand('products/101', {'Name': 'test', '@metadata': {}}))
-      .then((result: RavenCommandResponse) => {
+      .then((result: IRavenResponse) => {
         response = result as IRavenResponse;
 
         return requestsExecutor.execute(new PutDocumentCommand('products/102', {'Name': 'test', '@metadata': {}}));
       })
-      .then((result: RavenCommandResponse) => {
+      .then((result: IRavenResponse) => {
         otherResponse = result as IRavenResponse;
         done();
       })
@@ -33,7 +33,7 @@ describe('Delete command test', () => {
     it('should delete with no etag', (done: MochaDone) => {
       let command: DeleteDocumentCommand = new DeleteDocumentCommand('products/10');
 
-      requestsExecutor.execute(command).then((result: RavenCommandResponse) => {
+      requestsExecutor.execute(command).then((result: IRavenResponse) => {
         expect(result).not.to.be.null;
         done();
       })
@@ -42,7 +42,7 @@ describe('Delete command test', () => {
     it('should delete with etag', (done: MochaDone) => {
       let command2: DeleteDocumentCommand = new DeleteDocumentCommand('products/102', otherResponse.etag);
 
-      requestsExecutor.execute(command2).then((result: RavenCommandResponse) => {
+      requestsExecutor.execute(command2).then((result: IRavenResponse) => {
         expect(result).not.to.be.null;
         done();
       })

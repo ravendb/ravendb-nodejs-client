@@ -8,7 +8,7 @@ import {PutIndexesCommand} from "../../src/Database/Commands/PutIndexesCommand";
 import {GetIndexCommand} from "../../src/Database/Commands/GetIndexCommand";
 import {DeleteIndexCommand} from "../../src/Database/Commands/DeleteIndexCommand";
 import {IHash} from "../../src/Utility/Hash";
-import {RavenCommandResponse} from "../../src/Database/RavenCommandResponse";
+import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 
 describe('Index commands test', () => {
   let requestsExecutor: RequestsExecutor;
@@ -31,7 +31,7 @@ describe('Index commands test', () => {
       expect(requestsExecutor.execute(new PutIndexesCommand(index)))
         .to.be.fulfilled.and.notify(() => requestsExecutor
         .execute(new GetIndexCommand('get_index'))
-        .then((result: RavenCommandResponse) => {
+        .then((result: IRavenResponse) => {
           expect(result).not.to.be.null;
           done();
         }));
@@ -40,7 +40,7 @@ describe('Index commands test', () => {
     it('should get index with fail', (done: MochaDone) => {
       requestsExecutor
         .execute(new GetIndexCommand('reg', false))
-        .then((result: RavenCommandResponse) => {
+        .then((result: IRavenResponse) => {
           expect(result).to.be.null;
           done();
       });
