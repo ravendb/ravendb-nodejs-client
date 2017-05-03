@@ -8,8 +8,6 @@ import * as chaiAsPromised from 'chai-as-promised';
 import {RequestsExecutor} from "../src/Http/Request/RequestsExecutor";
 import {IndexDefinition} from "../src/Database/Indexes/IndexDefinition";
 import {DocumentConventions} from "../src/Documents/Conventions/DocumentConventions";
-import {IDocument} from "../src/Documents/IDocument";
-import {Document} from "../src/Documents/Document";
 import {CreateDatabaseCommand} from "../src/Database/Commands/CreateDatabaseCommand";
 import {DatabaseDocument} from "../src/Database/DatabaseDocument";
 import {IRavenResponse} from "../src/Database/RavenCommandResponse";
@@ -29,7 +27,7 @@ before(() => {
 beforeEach(function(done: MochaDone): void {
   requestsExecutor = new RequestsExecutor(
     defaultUrl, defaultDatabase, null,
-    new DocumentConventions<IDocument>(Document)
+    new DocumentConventions()
   );
 
   indexMap = [

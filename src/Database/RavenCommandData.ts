@@ -1,17 +1,15 @@
 import {IJsonSerializable} from '../Json/IJsonSerializable';
-import {DocumentKey} from '../Documents/IDocument';
-import {IMetadata} from './Metadata';
 import {RequestMethod} from "../Http/Request/RequestMethod";
 
 export abstract class RavenCommandData implements IJsonSerializable {
   private readonly _command: boolean = true;
   protected method: RequestMethod;
-  protected key: DocumentKey;
+  protected key: string;
   protected etag?: number = null;
-  protected metadata?: IMetadata = null;
+  protected metadata?: Object = null;
   protected additionalData?: Object = null;
 
-  constructor(key: DocumentKey, etag?: number, metadata?: IMetadata) {
+  constructor(key: string, etag?: number, metadata?: Object) {
     this.key = key;
     this.etag = etag;
     this.metadata = metadata;

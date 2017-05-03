@@ -2,7 +2,6 @@ import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
 import {IRavenResponse} from "../RavenCommandResponse";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
-import {DocumentKey} from "../../Documents/IDocument";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {InvalidOperationException, DocumentDoesNotExistsException, ErrorResponseException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
@@ -10,10 +9,10 @@ import {StatusCodes} from "../../Http/Response/StatusCode";
 import {TypeUtil} from "../../Utility/TypeUtil";
 
 export class DeleteDocumentCommand extends RavenCommand {
-  protected key?: DocumentKey;
+  protected key?: string;
   protected etag?: number;
 
-  constructor(key: DocumentKey, etag?: number) {
+  constructor(key: string, etag?: number) {
     super('', RequestMethods.Delete);
 
     this.key = key;

@@ -5,7 +5,6 @@ import {expect} from 'chai';
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {DocumentStore} from '../../src/Documents/DocumentStore';
 import {DocumentSession} from "../../src/Documents/Session/DocumentSession";
-import {DocumentKey, IDocument} from "../../src/Documents/IDocument";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {IHash} from "../../src/Utility/Hash";
 
@@ -33,8 +32,8 @@ describe('Document store test', () => {
   describe('Store', () => {
     it('should be without key', (done: MochaDone) => {
       session.store(session.create({name: 'test', key: 10}))
-        .then(() => store.openSession().load("test" as DocumentKey))
-        .then((document: IDocument) => {
+        .then(() => store.openSession().load("test" as string))
+        .then((document: Object) => {
           expect(document.name).to.equals('test');
           done();
         });
@@ -43,7 +42,7 @@ describe('Document store test', () => {
     it('should be with key', (done: MochaDone) => {
       session.store(session.create({name: 'test', key: 20}, 'testingStore/1'))
         .then(() => store.openSession().load("testingStore/1"))
-        .then((document: IDocument) => {
+        .then((document: Object) => {
           expect(document.key).to.equals(20);
           done();
         });

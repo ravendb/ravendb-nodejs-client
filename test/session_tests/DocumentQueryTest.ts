@@ -7,7 +7,6 @@ import * as _ from 'lodash';
 import * as Promise from 'bluebird';
 import {DocumentStore} from '../../src/Documents/DocumentStore';
 import {IDocumentQuery} from '../../src/Documents/Session/IDocumentQuery';
-import {DocumentKey, IDocument} from "../../src/Documents/IDocument";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {PutIndexesCommand} from "../../src/Database/Commands/PutIndexesCommand";
@@ -48,7 +47,7 @@ describe('Document query test', () => {
 
     store.getRequestsExecutor()
       .execute(new PutIndexesCommand(indexSort))
-      .then((): Promise.Thenable<IDocument> => {
+      .then((): Promise.Thenable<Object> => {
         session = store.openSession();
 
         return Promise.all([
@@ -75,7 +74,7 @@ describe('Document query test', () => {
   describe('Index checking', () => {
     it('should equal dynamic index', (done: MochaDone) => {
       session = store.openSession();
-      session.query().whereEquals('name', 'test101').get().then((results: IDocument[]) => {
+      session.query().whereEquals('name', 'test101').get().then((results: Object[]) => {
         expect(results[0].name).to.equals('test101');
         done();
       });
@@ -83,14 +82,14 @@ describe('Document query test', () => {
 
     it('should equal double index', (done: MochaDone) => {
       session = store.openSession();
-      session.query().whereEquals('name', 'test101').whereEquals('key', 4).get().then((results: IDocument[]) => {
+      session.query().whereEquals('name', 'test101').whereEquals('key', 4).get().then((results: Object[]) => {
         expect(results).to.have.lengthOf(2);
         done();
       });
 
       it('should equal double index and operator', (done: MochaDone) => {
         session = store.openSession();
-        session.query('product', null, true).whereEquals('name', 'test107').whereEquals('key', 5).get().then((results: IDocument[]) => {
+        session.query('product', null, true).whereEquals('name', 'test107').whereEquals('key', 5).get().then((results: Object[]) => {
           expect(results).to.have.lengthOf(1);
           done();
         });
@@ -98,7 +97,7 @@ describe('Document query test', () => {
 
       it('should be query result in query', (done: MochaDone) => {
         session = store.openSession();
-        session.query().whereIn('name', ['test101', 'test107', 'test106']).get().then((results: IDocument[]) => {
+        session.query().whereIn('name', ['test101', 'test107', 'test106']).get().then((results: Object[]) => {
           expect(results).to.have.lengthOf(4);
           done();
         });
@@ -106,7 +105,7 @@ describe('Document query test', () => {
 
       it('should starts with its name', (done: MochaDone) => {
         session = store.openSession();
-        session.query('product').whereStartsWith('name', 'n').get().then((results: IDocument[]) => {
+        session.query('product').whereStartsWith('name', 'n').get().then((results: Object[]) => {
           expect(results[0].name).to.be('new_testing');
           done();
         });
@@ -114,7 +113,7 @@ describe('Document query test', () => {
 
       it('should ends with its name', (done: MochaDone) => {
         session = store.openSession();
-        session.query('product').whereEndsWith('name', '7').get().then((results: IDocument[]) => {
+        session.query('product').whereEndsWith('name', '7').get().then((results: Object[]) => {
           expect(results[0].name).to.be('test107');
           done();
         });
@@ -122,7 +121,7 @@ describe('Document query test', () => {
 
       it('should fail query with some index', (done: MochaDone) => {
         session = store.openSession();
-        session.query(null, 's').where({'tag': 'products'}).get().then((results: IDocument[]) => {
+        session.query(null, 's').where({'tag': 'products'}).get().then((results: Object[]) => {
           expect(results).should.be.rejected;
           done();
         });
@@ -130,7 +129,7 @@ describe('Document query test', () => {
 
       it('should success query with document', (done: MochaDone) => {
         session = store.openSession();
-        session.query().where({'name': 'test101', 'key': [4, 6, 90]}).get().then((results: IDocument[]) => {
+        session.query().where({'name': 'test101', 'key': [4, 6, 90]}).get().then((results: Object[]) => {
           expect(results).should.be.fulfilled;
           done();
 
@@ -139,7 +138,7 @@ describe('Document query test', () => {
 
       it('should success query with index', (done: MochaDone) => {
         session = store.openSession();
-        session.query(null, 'Testing_Sort', {waitForNonStaleResults: true}).where({'key': [4, 6, 90]}).get().then((results: IDocument[]) => {
+        session.query(null, 'Testing_Sort', {waitForNonStaleResults: true}).where({'key': [4, 6, 90]}).get().then((results: Object[]) => {
           expect(results).to.have.lengthOf(3);
           done();
         });
@@ -147,7 +146,7 @@ describe('Document query test', () => {
 
       it('should find between result', (done: MochaDone) => {
         session = store.openSession();
-        session.query(null, 'Testing_Sort', {waitForNonStaleResults: true}).whereBetween('key', 2, 4).get().then((results: IDocument[]) => {
+        session.query(null, 'Testing_Sort', {waitForNonStaleResults: true}).whereBetween('key', 2, 4).get().then((results: Object[]) => {
           expect(results).to.have.lengthOf(1);
           done();
         });
@@ -155,7 +154,7 @@ describe('Document query test', () => {
 
       it('should find between or equal result', (done: MochaDone) => {
         session = store.openSession();
-        session.query(null, 'Testing_Sort', {waitForNonStaleResults: true}).whereBetweenOrEqual('key', 2, 4).get().then((results: IDocument[]) => {
+        session.query(null, 'Testing_Sort', {waitForNonStaleResults: true}).whereBetweenOrEqual('key', 2, 4).get().then((results: Object[]) => {
           expect(results).to.have.lengthOf(3);
           done();
         });
@@ -163,7 +162,7 @@ describe('Document query test', () => {
 
       it('should be ordered', (done: MochaDone) => {
         session = store.openSession();
-        session.query(null, null, {waitForNonStaleResults: true}).whereNotNull('order').get().then((results: IDocument[]) => {
+        session.query(null, null, {waitForNonStaleResults: true}).whereNotNull('order').get().then((results: Object[]) => {
           expect(results[0].order).to.be('a');
           done();
         });
@@ -171,7 +170,7 @@ describe('Document query test', () => {
 
       it('should be ordered descending', (done: MochaDone) => {
         session = store.openSession();
-        session.query(null, null, {waitForNonStaleResults: true}).whereNotNull('order').orderByDescending('order').get().then((results: IDocument[]) => {
+        session.query(null, null, {waitForNonStaleResults: true}).whereNotNull('order').orderByDescending('order').get().then((results: Object[]) => {
           expect(results[0].order).to.be('d');
           done();
         });
@@ -179,7 +178,7 @@ describe('Document query test', () => {
 
       it('should not be null', (done: MochaDone) => {
         session = store.openSession();
-        session.query(null, null, {waitForNonStaleResults: true}).whereNotNull('order').get().then((results: IDocument[]) => {
+        session.query(null, null, {waitForNonStaleResults: true}).whereNotNull('order').get().then((results: Object[]) => {
           expect(_.some(results, (result) => result.order === null)).to.be.false;
           done();
         });
@@ -188,7 +187,7 @@ describe('Document query test', () => {
       it('should include product', (done: MochaDone) => {
         session = store.openSession();
         session.query(null, null, {waitForNonStaleResults: true, includes: ['product_id']} ).where({'key': 92}).get().then(() => {
-          (session.load("product/108" as DocumentKey) as Promise<IDocument>)
+          (session.load("product/108" as string) as Promise<Object>)
             .then(() => {
               expect(session.numberOfRequestsInSession).to.equals(1);
               done();
@@ -196,10 +195,10 @@ describe('Document query test', () => {
         });
       });
 
-      it('should have nested object', (done: MochaDone) => {
+      it('should have nested Object', (done: MochaDone) => {
         session = store.openSession();
         session.query('company').whereEquals('name', 'withNesting').get()
-          .then((results: IDocument[]) => {
+          .then((results: Object[]) => {
             expect(results[0].product).to.equals('product');
             expect(results[0]).to.equals('company')
             done();
@@ -211,7 +210,7 @@ describe('Document query test', () => {
       session = store.openSession();
       session.query(null, 'Testing_Sort', {waitForNonStaleResults: true})
         .whereBetweenOrEqual('key', 2, 4).select('doc_id')
-        .get().then((results: IDocument[]) => {
+        .get().then((results: Object[]) => {
           expect(_.every(results, (result) => result.hasOwnProperty('doc_id'))).to.be.true;
       });
     });

@@ -3,15 +3,14 @@ import {ServerNode} from '../../Http/ServerNode';
 import {IRavenResponse} from "../RavenCommandResponse";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
-import {ErrorResponseException, InvalidOperationException} from "../DatabaseExceptions";
+import {InvalidOperationException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
-import {DocumentKey} from "../../Documents/IDocument";
 import {StatusCodes} from "../../Http/Response/StatusCode";
 import {PatchRequest} from "../../Http/Request/PatchRequest";
 import {TypeUtil} from "../../Utility/TypeUtil";
 
 export class PatchCommand extends RavenCommand {
-  protected key?: DocumentKey;
+  protected key?: string;
   protected patch: PatchRequest;
   protected etag?: number = null;
   protected patchIfMissing?: PatchRequest = null;
@@ -19,7 +18,7 @@ export class PatchCommand extends RavenCommand {
   protected returnDebugInformation: boolean;
   protected path: string;
 
-  constructor(key: DocumentKey, patch, etag?, patchIfMissing?: PatchRequest, skipPatchIfEtagMismatch: boolean = false, returnDebugInformation: boolean = false) {
+  constructor(key: string, patch, etag?, patchIfMissing?: PatchRequest, skipPatchIfEtagMismatch: boolean = false, returnDebugInformation: boolean = false) {
     super('', RequestMethods.Patch);
 
     this.key = key;

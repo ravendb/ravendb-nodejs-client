@@ -4,8 +4,6 @@
 import {expect} from 'chai';
 import {DocumentStore} from '../../src/Documents/DocumentStore';
 import * as Promise from 'bluebird';
-import {DocumentKey, IDocument} from "../../src/Documents/IDocument";
-import {Document} from "../../src/Documents/Document";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {IHash} from "../../src/Utility/Hash";
@@ -42,7 +40,7 @@ describe('Document load test', () => {
       const session: IDocumentSession = store.openSession();
 
       session.load("products/101")
-        .then((document: IDocument) => {
+        .then((document: Object) => {
           expect(document['@metadata']['@object_type']).to.equals('product');
           expect(document.name).to.equals('test');
           done();
@@ -52,8 +50,8 @@ describe('Document load test', () => {
     it('should not load missing document', (done: MochaDone) => {
       const session: IDocumentSession = store.openSession();
 
-      session.load("products/0" as DocumentKey)
-        .then((document: IDocument) => {
+      session.load("products/0" as string)
+        .then((document: Object) => {
           expect(document.name).to.equals(null);
           done();
         });
@@ -63,7 +61,7 @@ describe('Document load test', () => {
       const session: IDocumentSession = store.openSession();
 
       session.load(["products/101", "products/10"])
-        .then((document: IDocument[]) => {
+        .then((document: Object[]) => {
           expect(document).to.have.lengthOf(2);
           done();
         });
@@ -73,7 +71,7 @@ describe('Document load test', () => {
       const session: IDocumentSession = store.openSession();
 
       session.load(["products/101", "products/101", "products/101"])
-        .then((document: IDocument[]) => {
+        .then((document: Object[]) => {
           expect(document).to.have.lengthOf(3);
 
           for (let key of document) {
@@ -87,19 +85,19 @@ describe('Document load test', () => {
     it('should load track entity', (done: MochaDone) => {
       const session: IDocumentSession = store.openSession();
 
-      session.load("products/101" as DocumentKey)
-        .then((document: IDocument) => {
+      session.load("products/101" as string)
+        .then((document: Object) => {
           expect(document).to.be.an.instanceOf(Document);
           done();
         });
     });
 
-    it('should key of document be an object', (done: MochaDone) => {
+    it('should key of document be an Object', (done: MochaDone) => {
       const session: IDocumentSession = store.openSession();
 
-      session.load("company/1"  as DocumentKey)
-        .then((document: IDocument) => {
-          expect(document.product).to.be.an('object');
+      session.load("company/1"  as string)
+        .then((document: Object) => {
+          expect(document.product).to.be.an('Object');
           expect(document.product).to.be.an.instanceOf(Document);
           expect(document['@metadata']['@object_type']).to.equals('company');
           done();

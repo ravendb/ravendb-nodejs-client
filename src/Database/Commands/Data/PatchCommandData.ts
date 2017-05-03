@@ -1,10 +1,8 @@
 import * as _ from 'lodash';
 import {RavenCommandData} from '../../RavenCommandData';
-import {DocumentKey} from '../../../Documents/IDocument';
 import {RequestMethods} from "../../../Http/Request/RequestMethod";
 import {IJsonSerializable} from "../../../Json/IJsonSerializable";
 import {PatchRequest} from "../../../Http/Request/PatchRequest";
-import {IMetadata} from "../../Metadata";
 import {IHash} from "../../../Utility/Hash";
 import {TypeUtil} from "../../../Utility/TypeUtil";
 
@@ -14,7 +12,7 @@ export class PatchCommandData extends RavenCommandData implements IJsonSerializa
   protected additionalData?: IHash = null;
   protected debugMode: boolean = false;
 
-  constructor(key: DocumentKey, scriptedPatch: PatchRequest, etag?: number, metadata?: IMetadata,
+  constructor(key: string, scriptedPatch: PatchRequest, etag?: number, metadata?: Object,
     patchIfMissing?: PatchRequest, additionalData?: IHash, debugMode: boolean = false) {
     super(key, etag, metadata || {});
 
@@ -31,7 +29,7 @@ export class PatchCommandData extends RavenCommandData implements IJsonSerializa
       "Method": this.method,
       "Patch": this.scriptedPatch.toJson(),
       "DebugMode": this.debugMode,
-      "Metadata": this.metadata
+      "Object": this.metadata
     };
     
     if (!TypeUtil.isNone(this.etag)) {

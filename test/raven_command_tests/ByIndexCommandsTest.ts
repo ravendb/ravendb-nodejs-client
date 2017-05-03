@@ -18,8 +18,6 @@ import {DocumentConventions} from "../../src/Documents/Conventions/DocumentConve
 import {QueryOperationOptions} from "../../src/Database/Operations/QueryOperationOptions";
 import {Operations} from "../../src/Database/Operations/Operations";
 import {IHash} from "../../src/Utility/Hash";
-import {IDocument} from "../../src/Documents/IDocument";
-import {Document} from "../../src/Documents/Document";
 import {PatchByIndexCommand} from "../../src/Database/Commands/PatchByIndexCommand";
 import {DeleteByIndexCommand} from "../../src/Database/Commands/DeleteByIndexCommand";
 
@@ -63,7 +61,7 @@ describe('DocumentSession', () => {
   describe('Actions by Index', () => {
     it('update by index success', (done: MochaDone) => {
       const indexQuery: IndexQuery = new IndexQuery('Name:*', 0, 0, null, {wait_for_non_stale_results: true});
-      const queryCommand: QueryCommand = new QueryCommand('Testing_Sort', indexQuery, new DocumentConventions<IDocument>(Document));
+      const queryCommand: QueryCommand = new QueryCommand('Testing_Sort', indexQuery, new DocumentConventions());
       const patchByIndexCommand: PatchByIndexCommand = new PatchByIndexCommand('Testing_Sort', new IndexQuery('Name:*'), patch, new QueryOperationOptions(false));
 
       requestsExecutor
@@ -101,7 +99,7 @@ describe('DocumentSession', () => {
     it('delete by index success', (done: MochaDone) => {
       const query: string = 'DocNumber_D_Range:[0 TO 49]';
       const indexQuery: IndexQuery = new IndexQuery(query, 0, 0, null, {wait_for_non_stale_results: true});
-      const queryCommand: QueryCommand = new QueryCommand('Testing_Sort', indexQuery, new DocumentConventions<IDocument>(Document));
+      const queryCommand: QueryCommand = new QueryCommand('Testing_Sort', indexQuery, new DocumentConventions());
       const deleteByIndexCommand: DeleteByIndexCommand = new DeleteByIndexCommand('Testing_Sort', new IndexQuery(query), new QueryOperationOptions(false));
 
       requestsExecutor

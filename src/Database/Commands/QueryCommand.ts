@@ -5,7 +5,6 @@ import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {IndexQuery} from "../Indexes/IndexQuery";
 import {DocumentConventions} from "../../Documents/Conventions/DocumentConventions";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
-import {IDocument} from "../../Documents/IDocument";
 import {InvalidOperationException, ErrorResponseException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {QueryOperators} from "../../Documents/Session/QueryOperator";
@@ -14,13 +13,13 @@ import {QueryString} from "../../Http/QueryString";
 export class QueryCommand extends RavenCommand {
   protected indexName: string;
   protected indexQuery: IndexQuery;
-  protected conventions: DocumentConventions<IDocument>;
+  protected conventions: DocumentConventions;
   protected includes?: string[];
   protected metadataOnly: boolean = false;
   protected indexEntriesOnly: boolean = false;
   protected forceReadFromMaster: boolean = false;
 
-  constructor(indexName: string, indexQuery: IndexQuery, conventions: DocumentConventions<IDocument>,
+  constructor(indexName: string, indexQuery: IndexQuery, conventions: DocumentConventions,
     includes?: string[], metadataOnly: boolean = false, indexEntriesOnly: boolean = false,
     forceReadFromMaster: boolean = false
   ) {

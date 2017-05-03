@@ -1,19 +1,18 @@
 import {IDocumentSession} from "./IDocumentSession";
 import {IDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
-import {IDocument, DocumentKey, IDocumentType} from '../IDocument';
-import {DocumentConventions} from '../Conventions/DocumentConventions';
+import {DocumentConventions, DocumentConstructor, INestedObjectTypes} from '../Conventions/DocumentConventions';
 import {EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
 import * as Promise from 'bluebird'
 
 export interface IDocumentSession {
   numberOfRequestsInSession: number;
-  conventions: DocumentConventions<IDocument>;
+  conventions: DocumentConventions;
 
-  create(attributes?: Object, documentType?: IDocumentType): IDocument;
-  load(keyOrKeys: DocumentKey, includes?: string[], callback?: EntityCallback<IDocument>): Promise<IDocument>;
-  load(keyOrKeys: DocumentKey[], includes?: string[], callback?: EntitiesArrayCallback<IDocument>): Promise<IDocument[]>;
-  delete(keyOrEntity: DocumentKey | IDocument, callback?: EntityCallback<IDocument>): Promise<IDocument>;
-  store(entity: IDocument, documentType?: IDocumentType, key?: DocumentKey, etag?: number, forceConcurrencyCheck?: boolean, callback?: EntityCallback<IDocument>): Promise<IDocument>;
-  query(documentType?: IDocumentType, indexName?: string, options?: IDocumentQueryOptions): IDocumentQuery;
+  create<T extends Object>(attributes?: Object, documentTypeOrObjectType?: string | DocumentConstructor<T>, nestedObjectTypes?: INestedObjectTypes): T;
+  load<T extends Object>(keyOrKeys: string, documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes?: INestedObjectTypes, callback?: EntityCallback<T>): Promise<T>;
+  load<T extends Object>(keyOrKeys: string[], documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes?: INestedObjectTypes, callback?: EntitiesArrayCallback<T>): Promise<T[]>;
+  delete(keyOrEntity: string | Object, callback?: EntityCallback<Object>): Promise<Object>;
+  store(entity: Object, documentType?: string, key?: string, etag?: number, forceConcurrencyCheck?: boolean, callback?: EntityCallback<Object>): Promise<Object>;
+  query(documentType?: string, indexName?: string, options?: IDocumentQueryOptions): IDocumentQuery;
   incrementRequestsCount(): void;
 }

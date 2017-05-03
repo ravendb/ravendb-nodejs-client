@@ -1,4 +1,3 @@
-import {IDocument} from '../IDocument';
 import {IDocumentQueryConditions} from './IDocumentQueryConditions';
 import * as Promise from 'bluebird'
 import {EscapeQueryOption} from "./EscapeQueryOptions";
@@ -35,6 +34,6 @@ export interface IDocumentQuery {
   andAlso(): IDocumentQuery;
   orElse(): IDocumentQuery;
   addNot(): IDocumentQuery;
-  get(callback?: QueryResultsCallback<IDocument[]>): Promise<IDocument[]>;
-  get(callback?: QueryResultsCallback<QueryResultsWithStatistics<IDocument>>): Promise<QueryResultsWithStatistics<IDocument>>;
+  get(callback?: QueryResultsCallback<Object[]>): Promise<Object[]>;
+  get(callback?: QueryResultsCallback<QueryResultsWithStatistics<Object>>): Promise<QueryResultsWithStatistics<Object>>;
 }

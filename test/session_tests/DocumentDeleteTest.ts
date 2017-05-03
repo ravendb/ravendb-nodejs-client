@@ -6,7 +6,7 @@ import * as Promise from 'bluebird';
 import {IHash} from "../../src/Utility/Hash";
 import {DocumentStore} from "../../src/Documents/DocumentStore";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
-import {DocumentKey, IDocument} from "../../src/Documents/IDocument";
+import {string, Object} from "../../src/Documents/Object";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 
 describe('Document delete test', () => {
@@ -33,31 +33,31 @@ describe('Document delete test', () => {
 
   describe('Document delete', () => {
     it('should delete with key and save session', (done: MochaDone) => {
-      const documentKey: DocumentKey = "products/101";
+      const string: string = "products/101";
 
-      store.openSession().delete(documentKey)
-        .then((): Promise.Thenable<IDocument> =>
-          store.openSession().load(documentKey)
+      store.openSession().delete(string)
+        .then((): Promise.Thenable<Object> =>
+          store.openSession().load(string)
         )
-        .then((document: IDocument): void => {
+        .then((document: Object): void => {
             expect(document).not.to.exist;
             done();
         });
     });
 
     it('should delete after change', (done: MochaDone) => {
-      const documentKey: DocumentKey = "products/106";
+      const string: string = "products/106";
 
-      store.openSession().load(documentKey)
-        .then((document: IDocument): Promise.Thenable<IDocument> => {
+      store.openSession().load(string)
+        .then((document: Object): Promise.Thenable<Object> => {
           document.name = 'testing';
 
-          return store.openSession().delete(documentKey);
+          return store.openSession().delete(string);
         })
-        .then((document: IDocument): Promise.Thenable<IDocument> =>
-          store.openSession().load(documentKey)
+        .then((document: Object): Promise.Thenable<Object> =>
+          store.openSession().load(string)
         )
-        .then((document: IDocument) => {
+        .then((document: Object) => {
           expect(document).not.to.exist;
           done();
         });

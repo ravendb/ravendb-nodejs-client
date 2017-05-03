@@ -30,9 +30,9 @@ describe('Document full text search', () => {
     const indexMap: string = [
       "from song in docs.LastFms ",
       "select new {",
-      "query = new object[] {",
+      "query = new Object[] {",
       "song.artist,",
-      "((object)song.datetime_time),",
+      "((Object)song.datetime_time),",
       "song.tags,",
       "song.title,",
       "song.track_id}}"

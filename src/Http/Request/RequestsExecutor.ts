@@ -2,7 +2,6 @@ import * as Promise from 'bluebird';
 import * as RequestPromise from 'request-promise';
 import {ServerNode} from '../ServerNode';
 import {RavenCommand, RavenCommandRequestOptions} from '../../Database/RavenCommand';
-import {IDocument} from '../../Documents/IDocument';
 import {DocumentConventions} from '../../Documents/Conventions/DocumentConventions';
 import {IRavenResponse} from "../../Database/RavenCommandResponse";
 import {Topology} from "../Topology";
@@ -27,7 +26,7 @@ export interface IChooseNodeResponse {
 }
 
 export class RequestsExecutor {
-  protected conventions?: DocumentConventions<IDocument>;
+  protected conventions?: DocumentConventions;
   protected headers: IHeaders;
   private _lock: Lock;
   private _authenticator: ApiKeyAuthenticator;
@@ -38,7 +37,7 @@ export class RequestsExecutor {
   private _initUrl: string;
   private _initDatabase: string;
 
-  constructor(url: string, database: string, apiKey?: string, conventions?: DocumentConventions<IDocument>) {
+  constructor(url: string, database: string, apiKey?: string, conventions?: DocumentConventions) {
     const serverNode: ServerNode = new ServerNode(url, database, apiKey);
 
     this._apiKey = apiKey;

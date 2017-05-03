@@ -9,11 +9,8 @@ import {DocumentConventions} from "../../src/Documents/Conventions/DocumentConve
 import {IndexQuery} from "../../src/Database/Indexes/IndexQuery";
 import {DocumentQuery} from "../../src/Documents/Session/DocumentQuery";
 import {PutIndexesCommand} from "../../src/Database/Commands/PutIndexesCommand";
-import {IMetadata} from "../../src/Database/Metadata";
 import {IndexDefinition} from "../../src/Database/Indexes/IndexDefinition";
 import {IHash} from "../../src/Utility/Hash";
-import {IDocument} from "../../src/Documents/IDocument";
-import {Document} from "../../src/Documents/Document";
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 
 describe('DocumentSession', () => {
@@ -21,14 +18,14 @@ describe('DocumentSession', () => {
   let query: DocumentQuery;
   let requestsExecutor: RequestsExecutor;
   let indexDefinition: IndexDefinition;
-  const conventions: DocumentConventions<IDocument> = new DocumentConventions<IDocument>(Document);
+  const conventions: DocumentConventions = new DocumentConventions();
 
   beforeEach(function(): void {
     ({requestsExecutor, indexDefinition} = this.currentTest as IHash);
   });
 
   beforeEach((done: MochaDone) => {
-    const metadata: IMetadata = {'Raven-Node-Type': 'Document', '@collection': 'Products', 'object_type': 'product'};
+    const metadata: Object = {'Raven-Node-Type': 'Document', '@collection': 'Products', 'object_type': 'product'};
 
     requestsExecutor.execute(new PutDocumentCommand('products/10', {"Name": "test", '@metadata': metadata})).then(() => done());
   });

@@ -1,7 +1,6 @@
 import {ServerNode} from '../../Http/ServerNode';
 import {IRavenResponse} from "../RavenCommandResponse";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
-import {DocumentKey} from "../../Documents/IDocument";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {DeleteDocumentCommand} from './DeleteDocumentCommand';
 import {InvalidOperationException, ErrorResponseException, FetchConcurrencyException} from "../DatabaseExceptions";
@@ -9,7 +8,7 @@ import {InvalidOperationException, ErrorResponseException, FetchConcurrencyExcep
 export class PutDocumentCommand extends DeleteDocumentCommand {
   protected document?: Object;
 
-  constructor(key: DocumentKey, document: Object, etag?: number) {
+  constructor(key: string, document: Object, etag?: number) {
     super(key, etag);
 
     this.document = document;
@@ -18,7 +17,7 @@ export class PutDocumentCommand extends DeleteDocumentCommand {
 
   public createRequest(serverNode: ServerNode): void {
     if (!this.document) {
-      throw new InvalidOperationException('Document must be an object');
+      throw new InvalidOperationException('Document must be an Object');
     }
 
     this.payload = this.document;

@@ -73,4 +73,12 @@ export class StringUtil {
       throw new InvalidOperationException('Database name can only contain only A-Z, a-z, \"_\", \".\" or \"-\"');
     }
   }
+
+  public static ucFirst(string: string): string {
+    return string.charAt(0).toUpperCase() + string.substring(1);
+  }
+
+  public static lcFirst(string: string): string {
+    return string.charAt(0).toLowerCase() + string.substring(1);
+  }
 }

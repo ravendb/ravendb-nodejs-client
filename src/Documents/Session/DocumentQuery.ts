@@ -1,4 +1,3 @@
-import {IDocument, IDocumentType} from "../IDocument";
 import {IDocumentQuery} from "./IDocumentQuery";
 import {IDocumentSession} from "./IDocumentSession";
 import {RequestsExecutor} from "../../Http/Request/RequestsExecutor";
@@ -39,7 +38,7 @@ export class DocumentQuery implements IDocumentQuery {
   protected usingDefaultOperator?: QueryOperator = null;
   protected waitForNonStaleResults: boolean = false;
 
-  constructor(session: IDocumentSession, requestsExecutor: RequestsExecutor, documentType?: IDocumentType, indexName?: string, usingDefaultOperator
+  constructor(session: IDocumentSession, requestsExecutor: RequestsExecutor, documentType?: string, indexName?: string, usingDefaultOperator
     ?: QueryOperator, waitForNonStaleResults: boolean = false, includes?: string[], withStatistics: boolean = false
   ) {
     this.session = session;
@@ -198,18 +197,18 @@ export class DocumentQuery implements IDocumentQuery {
     return this;
   }
 
-  public get(callback?: QueryResultsCallback<IDocument[]>): Promise<IDocument[]>;
-  public get(callback?: QueryResultsCallback<QueryResultsWithStatistics<IDocument>>): Promise<QueryResultsWithStatistics<IDocument>>;
-  public get(callback?: QueryResultsCallback<IDocument[]> | QueryResultsCallback<QueryResultsWithStatistics<IDocument>>)
-    : Promise<IDocument[]> | Promise<QueryResultsWithStatistics<IDocument>> {
-    const responseToDocuments: (response: IRavenResponse, resolve: PromiseResolve<IDocument[]>
-      | PromiseResolve<QueryResultsWithStatistics<IDocument>>) => void = (response: IRavenResponse,
-      resolve: PromiseResolve<IDocument[]> | PromiseResolve<QueryResultsWithStatistics<IDocument>>) => {
-      let result: IDocument[] | QueryResultsWithStatistics<IDocument>  = [] as IDocument[];
+  public get(callback?: QueryResultsCallback<Object[]>): Promise<Object[]>;
+  public get(callback?: QueryResultsCallback<QueryResultsWithStatistics<Object>>): Promise<QueryResultsWithStatistics<Object>>;
+  public get(callback?: QueryResultsCallback<Object[]> | QueryResultsCallback<QueryResultsWithStatistics<Object>>)
+    : Promise<Object[]> | Promise<QueryResultsWithStatistics<Object>> {
+    const responseToDocuments: (response: IRavenResponse, resolve: PromiseResolve<Object[]>
+      | PromiseResolve<QueryResultsWithStatistics<Object>>) => void = (response: IRavenResponse,
+      resolve: PromiseResolve<Object[]> | PromiseResolve<QueryResultsWithStatistics<Object>>) => {
+      let result: Object[] | QueryResultsWithStatistics<Object>  = [] as Object[];
       const commandResponse: IRavenResponse = response as IRavenResponse;
 
       if (commandResponse.Results.length > 0) {
-        let results: IDocument[] = [];
+        let results: Object[] = [];
 
         commandResponse.Results.forEach((result: Object) => results.push(
           this.session.conventions
@@ -221,21 +220,21 @@ export class DocumentQuery implements IDocumentQuery {
           result = {
             results: results,
             response: response
-          } as QueryResultsWithStatistics<IDocument>;
+          } as QueryResultsWithStatistics<Object>;
         } else {
-          result = results as IDocument[];
+          result = results as Object[];
         }
       }
 
-      PromiseResolver.resolve<IDocument[] | QueryResultsWithStatistics<IDocument>>(result, resolve, callback)
+      PromiseResolver.resolve<Object[] | QueryResultsWithStatistics<Object>>(result, resolve, callback)
     };
 
     return this.withStatistics
-      ? new Promise<QueryResultsWithStatistics<IDocument>>((resolve: PromiseResolve<QueryResultsWithStatistics<IDocument>>, reject: PromiseReject) =>
+      ? new Promise<QueryResultsWithStatistics<Object>>((resolve: PromiseResolve<QueryResultsWithStatistics<Object>>, reject: PromiseReject) =>
         this.executeQuery()
           .catch((error: RavenException) => PromiseResolver.reject(error, reject, callback))
           .then((response: IRavenResponse) => responseToDocuments(response, resolve)))
-      : new Promise<IDocument[]>((resolve: PromiseResolve<IDocument[]>, reject: PromiseReject) =>
+      : new Promise<Object[]>((resolve: PromiseResolve<Object[]>, reject: PromiseReject) =>
         this.executeQuery()
           .catch((error: RavenException) => PromiseResolver.reject(error, reject, callback))
           .then((response: IRavenResponse) => responseToDocuments(response, resolve)));
@@ -293,7 +292,7 @@ export class DocumentQuery implements IDocumentQuery {
     const session: IDocumentSession = this.session;
     session.incrementRequestsCount();
 
-    const conventions: DocumentConventions<IDocument> = session.conventions;
+    const conventions: DocumentConventions = session.conventions;
     const endTime: number = moment().unix() + conventions.timeout;
     const query: IndexQuery = new IndexQuery(this.queryBuilder, 0, 0, this.usingDefaultOperator, queryOptions);
     const queryCommand: QueryCommand = new QueryCommand(this.indexName, query, conventions, this.includes);
@@ -305,7 +304,7 @@ export class DocumentQuery implements IDocumentQuery {
           .then((response: IRavenResponse | null) => {
             if (TypeUtil.isNone(response)) {
               resolve({
-                Results: [] as IDocument[],
+                Results: [] as Object[],
                 Includes: [] as string[]
               } as IRavenResponse);
             } else if (response.IsStale && this.waitForNonStaleResults) {
