@@ -117,8 +117,8 @@ export class DocumentSession implements IDocumentSession {
         .execute(new DeleteDocumentCommand(key, etag))
         .then(() => {
           PromiseResolver.resolve<T>(document, null, callback);
-          return document;
-        }) as Promise<Object>;
+          return document as T;
+        }) as Promise<T>;
     })
     .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
@@ -129,7 +129,7 @@ export class DocumentSession implements IDocumentSession {
     this.incrementRequestsCount();
 
     return this.prepareDocumentToStore<T>(entity, key, etag, forceConcurrencyCheck)
-      .then((entity: Object) => {
+      .then((entity: T) => {
         let tag: number = null;
         const metadata = entity['@metadata'];
         const conventions: DocumentConventions = this.conventions;
@@ -141,29 +141,31 @@ export class DocumentSession implements IDocumentSession {
 
         return this.requestsExecutor
           .execute(new PutDocumentCommand(documentKey, conventions.tryConvertToRawEntity(entity), tag))
-          .then((): Object => {
+          .then((): T => {
             PromiseResolver.resolve<Object>(entity, null, callback);
-            return entity;
+            return entity as T;
           });
       })
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
-  public query(documentType?: string, indexName?: string, options?: IDocumentQueryOptions): IDocumentQuery {
+  public query<T extends Object>(documentTypeOrObjectType?: string | DocumentConstructor<T>, indexName?: string, options?: IDocumentQueryOptions): IDocumentQuery<T> {
     let usingDefaultOperator: QueryOperator = null;
     let waitForNonStaleResults: boolean = null;
     let includes: string[] = null;
     let withStatistics: boolean = null;
+    let nestedObjectTypes: INestedObjectTypes = {} as INestedObjectTypes;
 
     if (options) {
       usingDefaultOperator = options.usingDefaultOperator || null;
       waitForNonStaleResults = options.waitForNonStaleResults || null;
       includes = options.includes || null;
       withStatistics = options.withStatistics || null;
+      nestedObjectTypes = options.nestedObjectTypes || {};
     }
 
-    return new DocumentQuery(this, this.requestsExecutor, documentType, indexName,
-      usingDefaultOperator, waitForNonStaleResults, includes, withStatistics
+    return new DocumentQuery(this, this.requestsExecutor, documentTypeOrObjectType, indexName,
+      usingDefaultOperator, waitForNonStaleResults, includes, nestedObjectTypes, withStatistics
     );
   }
 
@@ -231,9 +233,10 @@ more responsive application.", maxRequests
         if (TypeUtil.isNone(documentKey)) {
           return this.documentStore
             .generateId(entity, entity.constructor as DocumentConstructor<T>)
-            .then((documentKey: string): Object => {
+            .then((documentKey: string): T => {
               conventions.trySetIdOnEntity(entity, documentKey);
               entity['@metadata']['@id'] = documentKey;
+
               return entity;
             })
         }

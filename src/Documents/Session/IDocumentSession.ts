@@ -11,8 +11,8 @@ export interface IDocumentSession {
   create<T extends Object>(attributes?: Object, documentTypeOrObjectType?: string | DocumentConstructor<T>, nestedObjectTypes?: INestedObjectTypes): T;
   load<T extends Object>(keyOrKeys: string, documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes?: INestedObjectTypes, callback?: EntityCallback<T>): Promise<T>;
   load<T extends Object>(keyOrKeys: string[], documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes?: INestedObjectTypes, callback?: EntitiesArrayCallback<T>): Promise<T[]>;
-  delete(keyOrEntity: string | Object, callback?: EntityCallback<Object>): Promise<Object>;
-  store(entity: Object, documentType?: string, key?: string, etag?: number, forceConcurrencyCheck?: boolean, callback?: EntityCallback<Object>): Promise<Object>;
-  query(documentType?: string, indexName?: string, options?: IDocumentQueryOptions): IDocumentQuery;
+  delete<T extends Object>(keyOrEntity: string | T, callback?: EntityCallback<Object>): Promise<T>;
+  store<T extends Object>(entity: T, key?: string, etag?: number, forceConcurrencyCheck?: boolean, callback?: EntityCallback<T>): Promise<T>;
+  query<T extends Object>(documentTypeOrObjectType?: string | DocumentConstructor<T>, indexName?: string, options?: IDocumentQueryOptions): IDocumentQuery<T>;
   incrementRequestsCount(): void;
 }

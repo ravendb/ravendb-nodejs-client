@@ -5,35 +5,37 @@ import {LuceneValue} from "../Lucene/LuceneValue";
 import {QueryResultsWithStatistics} from "./DocumentQuery";
 import {QueryResultsCallback} from "../../Utility/Callbacks";
 import {QueryOperator} from "./QueryOperator";
+import {INestedObjectTypes} from "../Conventions/DocumentConventions";
 
 export interface IDocumentQueryOptions {
   usingDefaultOperator?: QueryOperator;
   waitForNonStaleResults?: boolean;
   includes?: string[];
+  nestedObjectTypes?: INestedObjectTypes;
   withStatistics?: boolean;
 }
 
-export interface IDocumentQuery {
-  select(...args: string[]): IDocumentQuery;
-  search(fieldName: string, searchTerms: string | string[], escapeQueryOptions?: EscapeQueryOption, boost?: number): IDocumentQuery;
-  where(conditions: IDocumentQueryConditions): IDocumentQuery;
-  whereEquals<V extends LuceneValue>(fieldName: string, value: V, escapeQueryOptions?: EscapeQueryOption): IDocumentQuery;
-  whereEndsWith(fieldName: string, value: string): IDocumentQuery;
-  whereStartsWith(fieldName: string, value: string): IDocumentQuery;
-  whereIn<V extends LuceneValue>(fieldName: string, values: V[]): IDocumentQuery;
-  whereBetween<V extends LuceneValue>(fieldName: string, start?: V, end?: V): IDocumentQuery;
-  whereBetweenOrEqual<V extends LuceneValue>(fieldName: string, start?: V, end?: V): IDocumentQuery;
-  whereGreaterThan<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery;
-  whereGreaterThanOrEqual<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery;
-  whereLessThan<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery;
-  whereLessThanOrEqual<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery;
-  whereIsNull(fieldName: string): IDocumentQuery;
-  whereNotNull(fieldName: string): IDocumentQuery;
-  orderBy(fieldsNames: string | string[]): IDocumentQuery;
-  orderByDescending(fieldsNames: string | string[]): IDocumentQuery;
-  andAlso(): IDocumentQuery;
-  orElse(): IDocumentQuery;
-  addNot(): IDocumentQuery;
-  get(callback?: QueryResultsCallback<Object[]>): Promise<Object[]>;
-  get(callback?: QueryResultsCallback<QueryResultsWithStatistics<Object>>): Promise<QueryResultsWithStatistics<Object>>;
+export interface IDocumentQuery<T> {
+  select(...args: string[]): IDocumentQuery<T>;
+  search(fieldName: string, searchTerms: string | string[], escapeQueryOptions?: EscapeQueryOption, boost?: number): IDocumentQuery<T>;
+  where(conditions: IDocumentQueryConditions): IDocumentQuery<T>;
+  whereEquals<V extends LuceneValue>(fieldName: string, value: V, escapeQueryOptions?: EscapeQueryOption): IDocumentQuery<T>;
+  whereEndsWith(fieldName: string, value: string): IDocumentQuery<T>;
+  whereStartsWith(fieldName: string, value: string): IDocumentQuery<T>;
+  whereIn<V extends LuceneValue>(fieldName: string, values: V[]): IDocumentQuery<T>;
+  whereBetween<V extends LuceneValue>(fieldName: string, start?: V, end?: V): IDocumentQuery<T>;
+  whereBetweenOrEqual<V extends LuceneValue>(fieldName: string, start?: V, end?: V): IDocumentQuery<T>;
+  whereGreaterThan<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery<T>;
+  whereGreaterThanOrEqual<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery<T>;
+  whereLessThan<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery<T>;
+  whereLessThanOrEqual<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery<T>;
+  whereIsNull(fieldName: string): IDocumentQuery<T>;
+  whereNotNull(fieldName: string): IDocumentQuery<T>;
+  orderBy(fieldsNames: string | string[]): IDocumentQuery<T>;
+  orderByDescending(fieldsNames: string | string[]): IDocumentQuery<T>;
+  andAlso(): IDocumentQuery<T>;
+  orElse(): IDocumentQuery<T>;
+  addNot(): IDocumentQuery<T>;
+  get(callback?: QueryResultsCallback<T[]>): Promise<T[]>;
+  get(callback?: QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<QueryResultsWithStatistics<T>>;
 }

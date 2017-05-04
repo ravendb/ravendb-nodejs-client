@@ -4,7 +4,7 @@
 import {expect} from 'chai';
 import {DocumentStore} from '../../src/Documents/DocumentStore';
 import {IDocumentSession} from '../../src/Documents/Session/IDocumentSession';
-import {IHash} from "../../src/Utility/Hash";
+import {IHash, Hash} from "../../src/Utility/Hash";
 
 describe('Document serializing test', () => {
   let session : IDocumentSession;
@@ -25,7 +25,7 @@ describe('Document serializing test', () => {
       booleanProp: true,
       nullProp: null,
       undefinedProp: undefined,
-      IDocumentProp: {
+      objectProp: {
         stringProp: "string",
         numberProp: 2,
         numberFloatProp: 2.5,
@@ -56,13 +56,13 @@ describe('Document serializing test', () => {
   
   describe('create()', () => {
     it('should return Document instance', () => {
-      const document: Object = session.create(json);
+      const document: Hash = session.create<IHash>(json);
 
       expect(document).to.be.an.instanceof(Document);
     });
 
     it('should parse scalars', () => {
-      const document: Object = session.create(json);
+      const document: Hash = session.create<IHash>(json);
 
       expect(document.stringProp).to.be.a('string');
       expect(document.stringProp).to.equals('string');
@@ -82,7 +82,7 @@ describe('Document serializing test', () => {
     });
 
     it('should parse arrays', () => {
-      const document: Object = session.create(json);
+      const document: Hash = session.create<IHash>(json);
 
       expect(document.arrayProp).to.be.a('array');
       expect(document.arrayProp).to.have.length(3);
@@ -90,7 +90,7 @@ describe('Document serializing test', () => {
     });
 
     it('should parse deep arrays', () => {
-      const document: Object = session.create(json);
+      const document: Hash = session.create<IHash>(json);
       const deep: number[] = document.deepArrayProp[2];
 
       expect(document.deepArrayProp).to.be.a('array');
@@ -103,34 +103,34 @@ describe('Document serializing test', () => {
     });
 
     it('should parse Objects', () => {
-      const document: Object = session.create(json);
+      const document: Hash = session.create<IHash>(json);
       
-      expect(document.IDocumentProp).to.be.a('Object');
-      expect(document.IDocumentProp).to.be.an.instanceOf(Document);
-      expect(document.IDocumentProp).to.have.property('stringProp');
-      expect(document.IDocumentProp).to.have.property('numberProp');
-      expect(document.IDocumentProp).to.have.property('numberFloatProp');
-      expect(document.IDocumentProp).to.have.property('booleanProp');
-      expect(document.IDocumentProp).to.have.property('nullProp');
-      expect(document.IDocumentProp).to.have.property('arrayProp');
+      expect(document.objectProp).to.be.a('Object');
+      expect(document.objectProp).to.be.an.instanceOf(Document);
+      expect(document.objectProp).to.have.property('stringProp');
+      expect(document.objectProp).to.have.property('numberProp');
+      expect(document.objectProp).to.have.property('numberFloatProp');
+      expect(document.objectProp).to.have.property('booleanProp');
+      expect(document.objectProp).to.have.property('nullProp');
+      expect(document.objectProp).to.have.property('arrayProp');
 
-      expect(document.IDocumentProp.stringProp).to.be.a('string');
-      expect(document.IDocumentProp.stringProp).to.equals('string');
-      expect(document.IDocumentProp.numberProp).to.be.a('number');
-      expect(document.IDocumentProp.numberProp).to.equals(2);
-      expect(document.IDocumentProp.numberFloatProp).to.be.a('number');
-      expect(document.IDocumentProp.numberFloatProp).to.equals(2.5);
-      expect(document.IDocumentProp.booleanProp).to.be.a('boolean');
-      expect(document.IDocumentProp.booleanProp).to.equals(true);
-      expect(document.IDocumentProp.nullProp).to.be.null;
+      expect(document.objectProp.stringProp).to.be.a('string');
+      expect(document.objectProp.stringProp).to.equals('string');
+      expect(document.objectProp.numberProp).to.be.a('number');
+      expect(document.objectProp.numberProp).to.equals(2);
+      expect(document.objectProp.numberFloatProp).to.be.a('number');
+      expect(document.objectProp.numberFloatProp).to.equals(2.5);
+      expect(document.objectProp.booleanProp).to.be.a('boolean');
+      expect(document.objectProp.booleanProp).to.equals(true);
+      expect(document.objectProp.nullProp).to.be.null;
 
-      expect(document.IDocumentProp.arrayProp).to.be.a('array');
-      expect(document.IDocumentProp.arrayProp).to.have.length(3);
-      expect(document.IDocumentProp.arrayProp).to.deep.equal([1, 2, 3]);
+      expect(document.objectProp.arrayProp).to.be.a('array');
+      expect(document.objectProp.arrayProp).to.have.length(3);
+      expect(document.objectProp.arrayProp).to.deep.equal([1, 2, 3]);
     });
 
     it('should parse deep Objects', () => {
-      const document: Object = session.create(json);
+      const document: Hash = session.create<IHash>(json);
       const deep: Object = document.deepObjectProp.someObject;
       
       expect(document.deepObjectProp).to.be.a('Object');
@@ -143,9 +143,9 @@ describe('Document serializing test', () => {
     });
 
     it('should parse mixed deep arrays/Objects', () => {
-      const document: Object = session.create(json);
-      const deepObject: Object = document.deepArrayObjectProp[2];
-      const deepArrayInObject: Object = deepObject.someArray;
+      const document: Hash = session.create<IHash>(json);
+      const deepObject: Hash = <IHash>document.deepArrayObjectProp[2];
+      const deepArrayInObject: number[] = deepObject.someArray;
       const deepArray: any[] = document.deepArrayObjectProp[4];
       const deepObjectInArray: Object = deepArray[2];
       

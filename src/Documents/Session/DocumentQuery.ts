@@ -13,7 +13,7 @@ import {StringUtil} from "../../Utility/StringUtil";
 import {QueryString} from "../../Http/QueryString";
 import {ArrayUtil} from "../../Utility/ArrayUtil";
 import {QueryOperators, QueryOperator} from "./QueryOperator";
-import {DocumentConventions} from "../Conventions/DocumentConventions";
+import {DocumentConventions, DocumentConstructor, INestedObjectTypes} from "../Conventions/DocumentConventions";
 import * as Promise from 'bluebird'
 import * as moment from "moment";
 import {IndexQuery} from "../../Database/Indexes/IndexQuery";
@@ -24,7 +24,7 @@ import {ArgumentOutOfRangeException, InvalidOperationException, ErrorResponseExc
 
 export type QueryResultsWithStatistics<T> = {results: T[], response: IRavenResponse};
 
-export class DocumentQuery implements IDocumentQuery {
+export class DocumentQuery<T> implements IDocumentQuery<T> {
   protected indexName: string;
   protected session: IDocumentSession;
   protected requestsExecutor: RequestsExecutor;
@@ -37,9 +37,11 @@ export class DocumentQuery implements IDocumentQuery {
   protected withStatistics: boolean = false;
   protected usingDefaultOperator?: QueryOperator = null;
   protected waitForNonStaleResults: boolean = false;
+  protected objectType?: DocumentConstructor<T> = null;
+  protected nestedObjectTypes: INestedObjectTypes = {};
 
-  constructor(session: IDocumentSession, requestsExecutor: RequestsExecutor, documentType?: string, indexName?: string, usingDefaultOperator
-    ?: QueryOperator, waitForNonStaleResults: boolean = false, includes?: string[], withStatistics: boolean = false
+  constructor(session: IDocumentSession, requestsExecutor: RequestsExecutor, documentTypeOrObjectType?: string | DocumentConstructor<T>, indexName?: string, usingDefaultOperator
+    ?: QueryOperator, waitForNonStaleResults: boolean = false, includes?: string[], nestedObjectTypes?: INestedObjectTypes, withStatistics: boolean = false
   ) {
     this.session = session;
     this.includes = includes;
@@ -47,10 +49,12 @@ export class DocumentQuery implements IDocumentQuery {
     this.requestsExecutor = requestsExecutor;
     this.usingDefaultOperator = usingDefaultOperator;
     this.waitForNonStaleResults = waitForNonStaleResults;
-    this.indexName = [(indexName || 'dynamic'), session.conventions.getDocumentsColleciton(documentType)].join('/');
+    this.nestedObjectTypes = nestedObjectTypes || {} as INestedObjectTypes;
+    this.objectType = session.conventions.tryGetObjectType(documentTypeOrObjectType);
+    this.indexName = [(indexName || 'dynamic'), session.conventions.getDocumentsColleciton(documentTypeOrObjectType)].join('/');
   }
 
-  public select(...args: string[]): IDocumentQuery {
+  public select(...args: string[]): IDocumentQuery<T> {
     if (args && args.length) {
       this.fetch = args;
     }
@@ -58,7 +62,7 @@ export class DocumentQuery implements IDocumentQuery {
     return this;
   }
 
-  public search(fieldName: string, searchTerms: string | string[], escapeQueryOptions?: EscapeQueryOption, boost: number = 1): IDocumentQuery {
+  public search(fieldName: string, searchTerms: string | string[], escapeQueryOptions?: EscapeQueryOption, boost: number = 1): IDocumentQuery<T> {
     if (boost < 0) {
       throw new ArgumentOutOfRangeException('Boost factor must be a positive number');
     }
@@ -77,7 +81,7 @@ export class DocumentQuery implements IDocumentQuery {
     return this;
   }
 
-  public where(conditions: IDocumentQueryConditions): IDocumentQuery {
+  public where(conditions: IDocumentQueryConditions): IDocumentQuery<T> {
     ArrayUtil.mapObject(conditions, (value: any, fieldName: string): any => {
       if (TypeUtil.isArray(value)) {
         this.whereIn<LuceneValue>(fieldName, value as LuceneValue[]);
@@ -89,70 +93,70 @@ export class DocumentQuery implements IDocumentQuery {
     return this;
   }
 
-  public whereEquals<V extends LuceneValue>(fieldName: string, value: V, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll): IDocumentQuery {
+  public whereEquals<V extends LuceneValue>(fieldName: string, value: V, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll): IDocumentQuery<T> {
     return this.assertFieldName(fieldName)
-      .addLuceneCondition<V>(fieldName, value, LuceneOperators.Equals, escapeQueryOptions) as IDocumentQuery;
+      .addLuceneCondition<V>(fieldName, value, LuceneOperators.Equals, escapeQueryOptions) as IDocumentQuery<T>;
   }
 
-  public whereEndsWith(fieldName: string, value: string): IDocumentQuery {
+  public whereEndsWith(fieldName: string, value: string): IDocumentQuery<T> {
     return this.assertFieldName(fieldName)
-      .addLuceneCondition<string>(fieldName, value, LuceneOperators.EndsWith) as IDocumentQuery;
+      .addLuceneCondition<string>(fieldName, value, LuceneOperators.EndsWith) as IDocumentQuery<T>;
   }
 
-  public whereStartsWith(fieldName: string, value: string): IDocumentQuery {
+  public whereStartsWith(fieldName: string, value: string): IDocumentQuery<T> {
     return this.assertFieldName(fieldName)
-      .addLuceneCondition<string>(fieldName, value, LuceneOperators.StartsWith) as IDocumentQuery;
+      .addLuceneCondition<string>(fieldName, value, LuceneOperators.StartsWith) as IDocumentQuery<T>;
   }
 
-  public whereIn<V extends LuceneValue>(fieldName: string, values: V[]): IDocumentQuery {
+  public whereIn<V extends LuceneValue>(fieldName: string, values: V[]): IDocumentQuery<T> {
     return this.assertFieldName(fieldName)
-      .addLuceneCondition<V[]>(fieldName, values, LuceneOperators.In) as IDocumentQuery;
+      .addLuceneCondition<V[]>(fieldName, values, LuceneOperators.In) as IDocumentQuery<T>;
   }
 
-  public whereBetween<V extends LuceneValue>(fieldName: string, start?: V, end?: V): IDocumentQuery {
+  public whereBetween<V extends LuceneValue>(fieldName: string, start?: V, end?: V): IDocumentQuery<T> {
     return this.assertFieldName(fieldName)
       .addLuceneCondition<LuceneRangeValue<V>>(
         fieldName, {min: start, max: end}, LuceneOperators.Between
-      ) as IDocumentQuery;
+      ) as IDocumentQuery<T>;
   }
 
-  public whereBetweenOrEqual<V extends LuceneValue>(fieldName: string, start?: V, end?: V): IDocumentQuery {
+  public whereBetweenOrEqual<V extends LuceneValue>(fieldName: string, start?: V, end?: V): IDocumentQuery<T> {
     return this.assertFieldName(fieldName).addLuceneCondition<LuceneRangeValue<V>>(
       fieldName, {min: start, max: end}, LuceneOperators.EqualBetween
-    ) as IDocumentQuery;
+    ) as IDocumentQuery<T>;
   }
 
-  public whereGreaterThan<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery {
+  public whereGreaterThan<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery<T> {
     return this.whereBetween<V>(fieldName, value);
   }
 
-  public whereGreaterThanOrEqual<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery {
+  public whereGreaterThanOrEqual<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery<T> {
     return this.whereBetweenOrEqual<V>(fieldName, value);
   }
 
-  public whereLessThan<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery {
+  public whereLessThan<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery<T> {
     return this.whereBetween<V>(fieldName, null, value);
   }
 
-  public whereLessThanOrEqual<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery {
+  public whereLessThanOrEqual<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery<T> {
     return this.whereBetweenOrEqual<V>(fieldName, null, value);
   }
 
-  public whereIsNull(fieldName: string): IDocumentQuery {
+  public whereIsNull(fieldName: string): IDocumentQuery<T> {
     return this.whereEquals<null>(fieldName, null);
   }
 
-  public whereNotNull(fieldName: string): IDocumentQuery {
+  public whereNotNull(fieldName: string): IDocumentQuery<T> {
     return (this.addSpace()
       .addStatement('(')
         .whereEquals<string>(fieldName, '*')
         .andAlso()
         .addNot()
-        .whereEquals<null>(fieldName, null) as DocumentQuery)
+        .whereEquals<null>(fieldName, null) as DocumentQuery<T>)
     .addStatement(')');
   }
 
-  public orderBy(fieldsNames: string|string[]): IDocumentQuery {
+  public orderBy(fieldsNames: string|string[]): IDocumentQuery<T> {
     const fields: string[] = TypeUtil.isArray(fieldsNames)
       ? (fieldsNames as string[])
       : [fieldsNames as string];
@@ -175,7 +179,7 @@ export class DocumentQuery implements IDocumentQuery {
     return this;
   }
 
-  public orderByDescending(fieldsNames: string|string[]): IDocumentQuery {
+  public orderByDescending(fieldsNames: string|string[]): IDocumentQuery<T> {
     const fields: string[] = TypeUtil.isArray(fieldsNames)
       ? (fieldsNames as string[])
       : [fieldsNames as string];
@@ -183,36 +187,36 @@ export class DocumentQuery implements IDocumentQuery {
     return this.orderBy(fields.map((field) => `-${field}`));
   }
 
-  public andAlso(): IDocumentQuery {
+  public andAlso(): IDocumentQuery<T> {
     return this.addSpace().addStatement(QueryOperators.AND);
   }
 
-  public orElse(): IDocumentQuery {
+  public orElse(): IDocumentQuery<T> {
     return this.addSpace().addStatement(QueryOperators.OR);
   }
 
-  public addNot(): IDocumentQuery {
+  public addNot(): IDocumentQuery<T> {
     this.negate = true;
 
     return this;
   }
 
-  public get(callback?: QueryResultsCallback<Object[]>): Promise<Object[]>;
-  public get(callback?: QueryResultsCallback<QueryResultsWithStatistics<Object>>): Promise<QueryResultsWithStatistics<Object>>;
-  public get(callback?: QueryResultsCallback<Object[]> | QueryResultsCallback<QueryResultsWithStatistics<Object>>)
-    : Promise<Object[]> | Promise<QueryResultsWithStatistics<Object>> {
-    const responseToDocuments: (response: IRavenResponse, resolve: PromiseResolve<Object[]>
+  public get(callback?: QueryResultsCallback<T[]>): Promise<T[]>;
+  public get(callback?: QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<QueryResultsWithStatistics<T>>;
+  public get(callback?: QueryResultsCallback<T[]> | QueryResultsCallback<QueryResultsWithStatistics<T>>)
+    : Promise<T[]> | Promise<QueryResultsWithStatistics<T>> {
+    const responseToDocuments: (response: IRavenResponse, resolve: PromiseResolve<T[]>
       | PromiseResolve<QueryResultsWithStatistics<Object>>) => void = (response: IRavenResponse,
-      resolve: PromiseResolve<Object[]> | PromiseResolve<QueryResultsWithStatistics<Object>>) => {
-      let result: Object[] | QueryResultsWithStatistics<Object>  = [] as Object[];
+      resolve: PromiseResolve<T[]> | PromiseResolve<QueryResultsWithStatistics<T>>) => {
+      let result: T[] | QueryResultsWithStatistics<T>  = [] as T[];
       const commandResponse: IRavenResponse = response as IRavenResponse;
 
       if (commandResponse.Results.length > 0) {
-        let results: Object[] = [];
+        let results: T[] = [] as T[];
 
-        commandResponse.Results.forEach((result: Object) => results.push(
+        commandResponse.Results.forEach((result: T) => results.push(
           this.session.conventions
-            .tryConvertToDocument(result)
+            .tryConvertToDocument<T>(result, this.objectType, this.nestedObjectTypes || {})
             .document
         ));
 
@@ -220,27 +224,27 @@ export class DocumentQuery implements IDocumentQuery {
           result = {
             results: results,
             response: response
-          } as QueryResultsWithStatistics<Object>;
+          } as QueryResultsWithStatistics<T>;
         } else {
-          result = results as Object[];
+          result = results as T[];
         }
       }
 
-      PromiseResolver.resolve<Object[] | QueryResultsWithStatistics<Object>>(result, resolve, callback)
+      PromiseResolver.resolve<T[] | QueryResultsWithStatistics<T>>(result, resolve, callback)
     };
 
     return this.withStatistics
-      ? new Promise<QueryResultsWithStatistics<Object>>((resolve: PromiseResolve<QueryResultsWithStatistics<Object>>, reject: PromiseReject) =>
+      ? new Promise<QueryResultsWithStatistics<T>>((resolve: PromiseResolve<QueryResultsWithStatistics<T>>, reject: PromiseReject) =>
         this.executeQuery()
           .catch((error: RavenException) => PromiseResolver.reject(error, reject, callback))
           .then((response: IRavenResponse) => responseToDocuments(response, resolve)))
-      : new Promise<Object[]>((resolve: PromiseResolve<Object[]>, reject: PromiseReject) =>
+      : new Promise<T[]>((resolve: PromiseResolve<T[]>, reject: PromiseReject) =>
         this.executeQuery()
           .catch((error: RavenException) => PromiseResolver.reject(error, reject, callback))
           .then((response: IRavenResponse) => responseToDocuments(response, resolve)));
   }
 
-  protected addSpace(): DocumentQuery {
+  protected addSpace(): DocumentQuery<T> {
     if ((this.queryBuilder.length > 0) && !this.queryBuilder.endsWith(' ')) {
       this.addStatement(' ');
     }
@@ -248,7 +252,7 @@ export class DocumentQuery implements IDocumentQuery {
     return this;
   }
 
-  protected addStatement(statement: string): DocumentQuery {
+  protected addStatement(statement: string): DocumentQuery<T> {
     if (this.queryBuilder.length > 0) {
       this.queryBuilder += statement;
     }
@@ -256,10 +260,10 @@ export class DocumentQuery implements IDocumentQuery {
     return this;
   }
 
-  protected addLuceneCondition<T extends LuceneConditionValue>(fieldName: string, condition: T,
+  protected addLuceneCondition<C extends LuceneConditionValue>(fieldName: string, condition: C,
     operator?: LuceneOperator, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll
-  ): DocumentQuery {
-    const luceneCondition: string = LuceneBuilder.buildCondition<T>(this.session.conventions, fieldName,
+  ): DocumentQuery<T> {
+    const luceneCondition: string = LuceneBuilder.buildCondition<C>(this.session.conventions, fieldName,
       condition, operator, escapeQueryOptions);
 
     this.addSpace();
@@ -273,7 +277,7 @@ export class DocumentQuery implements IDocumentQuery {
     return this;
   }
 
-  protected assertFieldName(fieldName?: string): DocumentQuery {
+  protected assertFieldName(fieldName?: string): DocumentQuery<T> {
     if (!fieldName) {
       throw new InvalidOperationException('Empty field name is invalid');
     }

@@ -99,7 +99,7 @@ export class DocumentStore implements IDocumentStore {
     let documentType: string = documentTypeOrObjectType as string;
 
     if (!TypeUtil.isString(documentType)) {
-      documentType = documentTypeOrObjectType.name;
+      documentType = (documentTypeOrObjectType as DocumentConstructor<Object>).name;
     }
 
     return this.generator.generateDocumentKey(entity, documentType, database)

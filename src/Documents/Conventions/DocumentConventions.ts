@@ -40,7 +40,7 @@ export class DocumentConventions {
 
   public getDocumentType(typeOrConstructor: string | DocumentConstructor<Object>): string {
     const documentType: string = TypeUtil.isString(typeOrConstructor)
-      ? typeOrConstructor : typeOrConstructor.name;
+      ? typeOrConstructor as string : (typeOrConstructor as DocumentConstructor<Object>).name;
 
     return documentType.toLowerCase();
   }
@@ -107,7 +107,7 @@ export class DocumentConventions {
     return entity[idProperty];
   }
 
-  public buildDefaultMetadata<T extends Object>(entity: T, typeOrConstructor: string | DocumentConstructor<Object>): Object {
+  public buildDefaultMetadata<T extends Object>(entity: T, typeOrConstructor: string | DocumentConstructor<T>): Object {
     let metadata: Object = {};
     let nestedTypes: Object = {};
     let property: string, value : any;
@@ -117,7 +117,7 @@ export class DocumentConventions {
         '@collection': this.getDocumentsColleciton(typeOrConstructor),
         'Raven-Node-Type': TypeUtil.isString(typeOrConstructor)
           ? StringUtil.ucFirst(typeOrConstructor as string)
-          : typeOrConstructor.name
+          : (typeOrConstructor as DocumentConstructor<T>).name
       });
 
       for (property in entity) {

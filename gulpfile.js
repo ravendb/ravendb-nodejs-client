@@ -52,7 +52,6 @@ gulp.task('build:exports', ['clean'], () => gulp
                 : line
             )
             .join('\n')
-        + "\n\n" + exportDefault + "\n"
     ))
     .pipe(gulp.dest(options.tmp))
 );
@@ -76,6 +75,7 @@ gulp.task('build:concat', ['clean'], () => gulp
         .filter(line => !line.startsWith('import'))
         .map(line => line.replace(/export /, ''))
         .join('\n')
+      + "\n\n" + exportDefault + "\n"
     ))
     .pipe(gulp.dest(options.tmp))
 );

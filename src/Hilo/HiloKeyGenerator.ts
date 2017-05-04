@@ -70,7 +70,7 @@ export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloK
         .catch((error: Error) => done(error));
     }, (error?: Error, result?: HiloRangeValue) => {
       if (result) {
-        PromiseResolver.resolve<string>(this.getstringFromId(result.current), resolve);
+        PromiseResolver.resolve<string>(this.getDocumentKeyFromId(result.current), resolve);
       } else if (!(error instanceof FetchConcurrencyException)) {
         PromiseResolver.reject(error, reject);
       } else {
@@ -79,7 +79,7 @@ export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloK
     });
   }
 
-  protected getstringFromId(id: number): string {
+  protected getDocumentKeyFromId(id: number): string {
     return StringUtil.format('{0}{1}', (this._prefix || ''), id);
   }
 }
