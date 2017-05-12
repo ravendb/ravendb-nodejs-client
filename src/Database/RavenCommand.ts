@@ -1,6 +1,6 @@
 import {ServerNode} from '../Http/ServerNode';
 import {RequestMethod, RequestMethods} from '../Http/Request/RequestMethod';
-import {IRavenCommandResponse} from "./IRavenCommandResponse";
+import {IRavenResponse} from "./RavenCommandResponse";
 import {IResponse} from "../Http/Response/IResponse";
 import {IHeaders} from "../Http/IHeaders";
 import {TypeUtil} from "../Utility/TypeUtil";
@@ -14,7 +14,7 @@ export abstract class RavenCommand {
   protected method: RequestMethod = RequestMethods.Get;
   protected endPoint?: string;
   protected params?: Object;
-  protected payload?: Object;
+  protected payload?: Object | Object[];
   protected headers: Object = {};
   protected failedNodes: Set<ServerNode>;
   protected _avoidFailover: boolean = false;
@@ -86,8 +86,8 @@ export abstract class RavenCommand {
     return options;
   }
 
-  public setResponse(response: IResponse): IRavenCommandResponse | null | void {
-    return null;
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
+    return;
   }
 
   protected addParams(params: Object | string, value?: any): void {

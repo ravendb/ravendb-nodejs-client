@@ -1,30 +1,28 @@
-import {DocumentID} from '../Documents/IDocument';
-
 export class HiloRangeValue {
-  private _minId: DocumentID;
-  private _maxId: DocumentID;
-  private _current: DocumentID;
+  private _minId: number;
+  private _maxId: number;
+  private _current: number;
 
-  constructor(minId: DocumentID = 1, maxId: DocumentID = 0)
+  constructor(minId: number = 1, maxId: number = 0)
   {
     this._minId = minId;
-    this._maxId = minId;
+    this._maxId = maxId;
     this._current = minId - 1;
   }
 
-  public get minId(): DocumentID {
+  public get minId(): number {
     return this._minId;
   }
 
-  public get maxId(): DocumentID {
+  public get maxId(): number {
     return this._maxId;
   }
 
-  public get current(): DocumentID {
+  public get current(): number {
     return this._current;
   }
 
-  public increment(): DocumentID {
+  public increment(): number {
     return ++this._current;
   }
 }

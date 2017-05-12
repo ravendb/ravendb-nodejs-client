@@ -1,20 +1,18 @@
-import {DocumentKey, IDocument, IDocumentType} from './IDocument';
-import {Document} from './Document';
 import {IDocumentStore} from './IDocumentStore';
 import {IDocumentSession} from "./Session/IDocumentSession";
 import {DocumentSession} from "./Session/DocumentSession";
-import {ServerNode} from '../Http/ServerNode';
 import {RequestsExecutor} from '../Http/Request/RequestsExecutor';
 import {EntityKeyCallback} from '../Utility/Callbacks';
-import {DocumentConventions} from './Conventions/DocumentConventions';
+import {DocumentConventions, DocumentConstructor} from './Conventions/DocumentConventions';
 import {InvalidOperationException, RavenException} from '../Database/DatabaseExceptions';
 import {IHiloKeyGenerator} from '../Hilo/IHiloKeyGenerator';
 import {HiloMultiDatabaseKeyGenerator} from '../Hilo/HiloMultiDatabaseKeyGenerator';
 import * as uuid from 'uuid';
 import * as Promise from 'bluebird';
-import {IHashCollection} from "../Utility/IHashCollection";
+import {IRavenObject} from "../Database/IRavenObject";
 import {Operations} from "../Database/Operations/Operations";
 import {PromiseResolver} from "../Utility/PromiseResolver";
+import {TypeUtil} from "../Utility/TypeUtil";
 
 export class DocumentStore implements IDocumentStore {
   protected url: string;
@@ -24,8 +22,8 @@ export class DocumentStore implements IDocumentStore {
   protected initialized: boolean = false;
   private _database: string;
   private _operations: Operations;
-  private _conventions: DocumentConventions<IDocument>;
-  private _requestsExecutors: IHashCollection<RequestsExecutor> = {};
+  private _conventions: DocumentConventions;
+  private _requestsExecutors: IRavenObject<RequestsExecutor> = {};
 
   public get database(): string {
     return this._database;
@@ -41,9 +39,9 @@ export class DocumentStore implements IDocumentStore {
     return this._requestsExecutors[dbName];
   }
 
-  public get conventions(): DocumentConventions<IDocument> {
+  public get conventions(): DocumentConventions {
     if (!this._conventions) {
-      this._conventions = new DocumentConventions<Document>(Document);
+      this._conventions = new DocumentConventions();
     }
 
     return this._conventions;
@@ -97,11 +95,17 @@ export class DocumentStore implements IDocumentStore {
     return new DocumentSession(dbName, this, executor, this.sessionId, forceReadFromMaster);
   }
 
-  public generateId(entity: IDocument, documentType?: IDocumentType, database?: string, callback?: EntityKeyCallback): Promise<DocumentKey> {
+  public generateId(entity: Object, documentTypeOrObjectType?: string | DocumentConstructor, database?: string, callback?: EntityKeyCallback): Promise<string> {
+    let documentType: string = documentTypeOrObjectType as string;
+
+    if (!TypeUtil.isString(documentType)) {
+      documentType = (documentTypeOrObjectType as DocumentConstructor).name;
+    }
+
     return this.generator.generateDocumentKey(entity, documentType, database)
-      .then((documentKey: DocumentKey) => {
-        PromiseResolver.resolve<DocumentKey>(documentKey, null, callback);
-        return documentKey;
+      .then((string: string) => {
+        PromiseResolver.resolve<string>(string, null, callback);
+        return string;
       })
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
