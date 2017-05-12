@@ -2,10 +2,10 @@ import {IHiloKeyGenerator} from './IHiloKeyGenerator';
 import {IDocumentStore} from '../Documents/IDocumentStore';
 import {DocumentConventions} from '../Documents/Conventions/DocumentConventions';
 import * as Promise from 'bluebird';
-import {IHashCollection} from "../Utility/IHashCollection";
+import {IRavenObject} from "../Database/IRavenObject";
 
 export abstract class AbstractHiloKeyGenerator implements IHiloKeyGenerator {
-  protected generators: IHashCollection<IHiloKeyGenerator> = {};
+  protected generators: IRavenObject<IHiloKeyGenerator> = {};
   protected store: IDocumentStore;
   protected conventions: DocumentConventions;
   protected dbName: string;

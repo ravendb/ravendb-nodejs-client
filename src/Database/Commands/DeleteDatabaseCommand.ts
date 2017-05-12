@@ -4,7 +4,7 @@ import {ServerNode} from '../../Http/ServerNode';
 import {IRavenResponse} from "../RavenCommandResponse";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
-import {ErrorResponseException} from "../DatabaseExceptions";
+import {DatabaseDoesNotExistException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {StatusCodes} from "../../Http/Response/StatusCode";
 
@@ -27,17 +27,11 @@ export class DeleteDatabaseCommand extends RavenCommand {
         this.endPoint = StringUtil.format('{url}/admin/databases', serverNode);
     }
 
-    public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
-        const body: IResponseBody[] = response.body as IResponseBody[];
+    public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
+        const body: IResponseBody = response.body;
 
-        if (StatusCodes.isOk(response.statusCode)) {
-            const firstResult = _.first(body);
-
-            if(!firstResult.Deleted) {
-                throw new ErrorResponseException(firstResult.Error);
-            }
+        if (body.Error) {
+            throw new DatabaseDoesNotExistException(body.Message);
         }
-
-        return null;
     }
 }

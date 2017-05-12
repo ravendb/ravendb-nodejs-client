@@ -9,7 +9,7 @@ import {StatusCodes, StatusCode} from "../../Http/Response/StatusCode";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {ICipherBox} from "../../Utility/Crypt";
-import {IHash} from "../../Utility/Hash";
+import {IRavenObject} from "../IRavenObject";
 
 export interface IAuthServerRequest {
   payload: Object,
@@ -70,7 +70,7 @@ export class ApiKeyAuthenticator {
 
     return tryAuthenticate()
       .then((response: IResponse) => {
-        const body = response.body as IHash;
+        const body: IRavenObject = response.body;
 
         if (body.Error) {
           return Promise.reject(new AuthenticationException(body.Error)) as Promise<Buffer>;

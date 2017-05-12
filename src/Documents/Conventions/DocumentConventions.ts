@@ -5,14 +5,11 @@ import {StringUtil} from "../../Utility/StringUtil";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import * as _ from 'lodash';
 import {Serializer} from "../../Json/Serializer";
+import {IRavenObject} from "../../Database/IRavenObject";
 
-export type DocumentConstructor<T extends Object> = { new(): T; };
+export type DocumentConstructor<T extends Object = IRavenObject> = { new(): T; };
 
-export interface INestedObjectTypes {
-  [property: string]: DocumentConstructor<Object>
-}
-
-export interface IDocumentConversionResult<T extends Object> {
+export interface IDocumentConversionResult<T extends Object = IRavenObject> {
   document: T,
   metadata: Object,
   originalMetadata: Object
@@ -38,18 +35,18 @@ export class DocumentConventions {
     return 0;
   }
 
-  public getDocumentType(typeOrConstructor: string | DocumentConstructor<Object>): string {
+  public getDocumentType(typeOrConstructor: string | DocumentConstructor): string {
     const documentType: string = TypeUtil.isString(typeOrConstructor)
-      ? typeOrConstructor as string : (typeOrConstructor as DocumentConstructor<Object>).name;
+      ? typeOrConstructor as string : (typeOrConstructor as DocumentConstructor).name;
 
     return documentType.toLowerCase();
   }
 
-  public getDocumentsColleciton(typeOrConstructor: string | DocumentConstructor<Object>): string {
+  public getDocumentsColleciton(typeOrConstructor: string | DocumentConstructor): string {
     return pluralize(this.getDocumentType(typeOrConstructor));
   }
 
-  public tryGetObjectType<T extends Object>(objectType?: DocumentConstructor<T> | string): DocumentConstructor<T> | null {
+  public tryGetObjectType<T extends Object = IRavenObject>(objectType?: DocumentConstructor<T> | string): DocumentConstructor<T> | null {
     if (objectType && !TypeUtil.isString(objectType)) {
       return objectType as DocumentConstructor<T>;
     }
@@ -57,7 +54,7 @@ export class DocumentConventions {
     return null;
   }
 
-  public tryConvertToDocument<T extends Object>(rawEntity: Object, objectType?: DocumentConstructor<T>, nestedObjectTypes: INestedObjectTypes = {}): IDocumentConversionResult<T> {
+  public tryConvertToDocument<T extends Object = IRavenObject>(rawEntity: Object, objectType?: DocumentConstructor<T>, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): IDocumentConversionResult<T> {
     const metadata: Object = _.get(rawEntity, '@metadata') || {};
     const originalMetadata: Object = _.clone(metadata);
     const idProperty: string = this.idPropertyName;
@@ -78,11 +75,11 @@ export class DocumentConventions {
     } as IDocumentConversionResult<T>;
   }
 
-  public tryConvertToRawEntity<T extends Object>(document: T): Object {
+  public tryConvertToRawEntity<T extends Object = IRavenObject>(document: T): Object {
     return Serializer.toJSON<T>(document, document['@metadata'] || {});
   }
 
-  public trySetIdOnEntity<T extends Object>(entity: T, key: string): T {
+  public trySetIdOnEntity<T extends Object = IRavenObject>(entity: T, key: string): T {
     const idProperty = this.idPropertyName;
 
     if (!entity.hasOwnProperty(idProperty)) {
@@ -93,7 +90,7 @@ export class DocumentConventions {
     return entity;
   }
 
-  public tryGetIdFromInstance<T extends Object>(entity?: T): string {
+  public tryGetIdFromInstance<T extends Object = IRavenObject>(entity?: T): string {
     const idProperty = this.idPropertyName;
 
     if (!entity) {
@@ -107,7 +104,7 @@ export class DocumentConventions {
     return entity[idProperty];
   }
 
-  public buildDefaultMetadata<T extends Object>(entity: T, typeOrConstructor: string | DocumentConstructor<T>): Object {
+  public buildDefaultMetadata<T extends Object = IRavenObject>(entity: T, typeOrConstructor: string | DocumentConstructor<T>): Object {
     let metadata: Object = {};
     let nestedTypes: Object = {};
     let property: string, value : any;
@@ -116,7 +113,7 @@ export class DocumentConventions {
       _.assign(metadata, entity['@metadata'] || {}, {
         '@collection': this.getDocumentsColleciton(typeOrConstructor),
         'Raven-Node-Type': TypeUtil.isString(typeOrConstructor)
-          ? StringUtil.ucFirst(typeOrConstructor as string)
+          ? StringUtil.capitalize(typeOrConstructor as string)
           : (typeOrConstructor as DocumentConstructor<T>).name
       });
 

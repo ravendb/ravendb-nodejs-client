@@ -74,11 +74,11 @@ export class StringUtil {
     }
   }
 
-  public static ucFirst(string: string): string {
+  public static capitalize(string: string): string {
     return string.charAt(0).toUpperCase() + string.substring(1);
   }
 
-  public static lcFirst(string: string): string {
+  public static uncapitalize(string: string): string {
     return string.charAt(0).toLowerCase() + string.substring(1);
   }
 }

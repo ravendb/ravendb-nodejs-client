@@ -1,7 +1,7 @@
 import {IOptionsSet} from '../../Utility/IOptionsSet';
 import {IndexLockMode} from './IndexLockMode';
 import {IndexPriority} from './IndexPriority';
-import {IHashCollection} from '../../Utility/IHashCollection';
+import {IRavenObject} from '../../Database/IRavenObject';
 import {IndexFieldOptions} from './IndexFieldOptions';
 import {ArrayUtil} from '../../Utility/ArrayUtil';
 import {IJsonSerializable} from '../../Json/IJsonSerializable';
@@ -15,7 +15,7 @@ export class IndexDefinition implements IJsonSerializable {
   protected lockMode?: IndexLockMode = null;
   protected priority?: IndexPriority = null;
   protected configuration: IOptionsSet = {};
-  protected fields: IHashCollection<IndexFieldOptions> = {};
+  protected fields: IRavenObject<IndexFieldOptions> = {};
   private _name: string;
 
   constructor(name: string, indexMap: string | string[], configuration?: IOptionsSet, initOptions: IOptionsSet = {}) {

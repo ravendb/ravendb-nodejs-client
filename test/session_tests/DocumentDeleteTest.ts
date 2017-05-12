@@ -3,10 +3,9 @@
 
 import {expect} from 'chai';
 import * as Promise from 'bluebird';
-import {IHash} from "../../src/Utility/Hash";
+import {IRavenObject} from "../../src/Database/IRavenObject";
 import {DocumentStore} from "../../src/Documents/DocumentStore";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
-import {string, Object} from "../../src/Documents/Object";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 
 describe('Document delete test', () => {
@@ -14,7 +13,7 @@ describe('Document delete test', () => {
   let defaultDatabase: string, defaultUrl: string;
 
   beforeEach(function(): void {
-    ({defaultDatabase, defaultUrl} = (this.currentTest as IHash));
+    ({defaultDatabase, defaultUrl} = (this.currentTest as IRavenObject));
   });
 
   beforeEach((done: MochaDone) => {

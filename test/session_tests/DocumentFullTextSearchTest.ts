@@ -11,16 +11,15 @@ import {DocumentStore} from "../../src/Documents/DocumentStore";
 import {IndexDefinition} from "../../src/Database/Indexes/IndexDefinition";
 import {IndexFieldOptions} from "../../src/Database/Indexes/IndexFieldOptions";
 import {PutIndexesCommand} from "../../src/Database/Commands/PutIndexesCommand";
-import {IHash} from "../../src/Utility/Hash";
+import {IRavenObject} from "../../src/Database/IRavenObject";
 
 describe('Document full text search', () => {
   let store: IDocumentStore;
-  let query: IDocumentQuery;
   let requestExecutor: RequestsExecutor;
   let defaultDatabase: string, defaultUrl: string;
 
   beforeEach(function(): void {
-    ({defaultDatabase, defaultUrl, requestExecutor} = (this.currentTest as IHash));
+    ({defaultDatabase, defaultUrl, requestExecutor} = (this.currentTest as IRavenObject));
   });
 
   beforeEach((done: MochaDone) => {
@@ -77,7 +76,11 @@ describe('Document full text search', () => {
   describe('Text search', () => {
     it('should search one result', (done: MochaDone) => {
       store.openSession()
-        .query('LastFm', 'LastFmAnalyzed', {waitForNonStaleResults: true})
+        .query({
+          documentTypeOrObjectType: 'LastFm', 
+          indexName: 'LastFmAnalyzed',
+          waitForNonStaleResults: true
+        })
         .search('query', 'Me')
         .get()
         .then((results) => {
@@ -89,7 +92,11 @@ describe('Document full text search', () => {
 
     it('should search two results', (done: MochaDone) => {
       store.openSession()
-        .query('LastFm', 'LastFmAnalyzed', {waitForNonStaleResults: true})
+        .query({
+          documentTypeOrObjectType: 'LastFm', 
+          indexName: 'LastFmAnalyzed',
+          waitForNonStaleResults: true
+        })
         .search('query', 'Me')
         .search('query', 'Bobo')
         .get()
@@ -101,7 +108,11 @@ describe('Document full text search', () => {
 
     it('should search full text with boost', (done: MochaDone) => {
       store.openSession()
-        .query('LastFm', 'LastFmAnalyzed', {waitForNonStaleResults: true})
+        .query({
+          documentTypeOrObjectType: 'LastFm', 
+          indexName: 'LastFmAnalyzed',
+          waitForNonStaleResults: true
+        })
         .search('query', 'Me', null, 10)
         .search('query', 'Bobo', null, 2)
         .get()

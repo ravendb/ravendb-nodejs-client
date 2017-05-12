@@ -1,10 +1,11 @@
 import {TypeUtil} from "../Utility/TypeUtil";
 import {DateUtil} from "../Utility/DateUtil";
 import {ArrayUtil} from "../Utility/ArrayUtil";
-import {INestedObjectTypes, DocumentConstructor} from "../Documents/Conventions/DocumentConventions";
+import {DocumentConstructor} from "../Documents/Conventions/DocumentConventions";
+import {IRavenObject} from "../Database/IRavenObject";
 
 export class Serializer {
-  public static fromJSON<T extends Object>(target: T, source: Object | string, metadata: Object = {}, nestedObjectTypes: INestedObjectTypes = {}): T
+  public static fromJSON<T extends Object = IRavenObject>(target: T, source: Object | string, metadata: Object = {}, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T
   {
     let sourceObject: Object = TypeUtil.isString(source)
       ? JSON.parse(source as string) : source;
@@ -13,7 +14,7 @@ export class Serializer {
       ? metadata['@nested_object_types'] : {};
 
     const transform: (value: any, key?: string) => any = (value, key) => {
-      let nestedObjectConstructor: DocumentConstructor<Object>;
+      let nestedObjectConstructor: DocumentConstructor;
 
       if ((key in mapping) && (Date.name === mapping[key])) {
           return DateUtil.parse(value);
@@ -49,7 +50,7 @@ export class Serializer {
     return target;
   }
 
-  public static toJSON<T extends Object>(source: T, metadata: Object = {}): Object
+  public static toJSON<T extends Object = IRavenObject>(source: T, metadata: Object = {}): Object
   {
     const mapping: Object = metadata && metadata['@nested_object_types']
       ? metadata['@nested_object_types'] : {};
@@ -64,7 +65,7 @@ export class Serializer {
       }
 
       if (TypeUtil.isObject(value)) {
-        return this.toJSON<object>(value, value['@metadata'] || {});
+        return this.toJSON<Object>(value, value['@metadata'] || {});
       }
 
       if (TypeUtil.isArray(value)) {

@@ -24,11 +24,11 @@ export class PatchByIndexCommand extends IndexQueryBasedCommand {
     }
 
     this.payload = this.patch.toJson();
-    this.endPoint = StringUtil.format('{url}/databases/{database}', serverNode,this.params);
+    this.endPoint = StringUtil.format('{url}/databases/{database}', serverNode);
     super.createRequest(serverNode);
   }
 
-  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
     const responseBody: IResponseBody = response.body;
     const status: StatusCode = response.statusCode;
 

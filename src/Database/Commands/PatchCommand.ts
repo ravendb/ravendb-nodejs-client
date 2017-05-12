@@ -9,6 +9,13 @@ import {StatusCodes} from "../../Http/Response/StatusCode";
 import {PatchRequest} from "../../Http/Request/PatchRequest";
 import {TypeUtil} from "../../Utility/TypeUtil";
 
+export interface IPatchCommandOptions {
+  etag?: number, 
+  patchIfMissing?: PatchRequest, 
+  skipPatchIfEtagMismatch?: boolean,
+  returnDebugInformation?: boolean
+}
+
 export class PatchCommand extends RavenCommand {
   protected key?: string;
   protected patch: PatchRequest;
@@ -18,15 +25,17 @@ export class PatchCommand extends RavenCommand {
   protected returnDebugInformation: boolean;
   protected path: string;
 
-  constructor(key: string, patch, etag?, patchIfMissing?: PatchRequest, skipPatchIfEtagMismatch: boolean = false, returnDebugInformation: boolean = false) {
+  constructor(key: string, patch: PatchRequest, options?: IPatchCommandOptions) {
     super('', RequestMethods.Patch);
+
+    const opts: IPatchCommandOptions = options || {};
 
     this.key = key;
     this.patch = patch;
-    this.etag = etag;
-    this.patchIfMissing = patchIfMissing;
-    this.skipPatchIfEtagMismatch = skipPatchIfEtagMismatch;
-    this.returnDebugInformation = returnDebugInformation;
+    this.etag = opts.etag;
+    this.patchIfMissing = opts.patchIfMissing;
+    this.skipPatchIfEtagMismatch = opts.skipPatchIfEtagMismatch || false;
+    this.returnDebugInformation = opts.returnDebugInformation || false;
   }
 
   public createRequest(serverNode: ServerNode): void {
@@ -54,7 +63,7 @@ export class PatchCommand extends RavenCommand {
     };
   }
 
-  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
     const responseBody: IResponseBody = response.body;
 
     if (response && StatusCodes.isOk(response.statusCode)) {

@@ -10,7 +10,7 @@ import {PutCommandData} from "../../src/Database/Commands/Data/PutCommandData";
 import {DeleteCommandData} from "../../src/Database/Commands/Data/DeleteCommandData";
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 import {PatchCommandData} from "../../src/Database/Commands/Data/PatchCommandData";
-import {IHash} from "../../src/Utility/Hash";
+import {IRavenObject} from "../../src/Database/IRavenObject";
 import {GetDocumentCommand} from "../../src/Database/Commands/GetDocumentCommand";
 
 describe('Batch command test', () => {
@@ -21,7 +21,7 @@ describe('Batch command test', () => {
   let scriptedPatchCommand: PatchCommandData;
 
   beforeEach(function(): void {
-    ({requestsExecutor} = this.currentTest as IHash);
+    ({requestsExecutor} = this.currentTest as IRavenObject);
   });
 
   beforeEach(() => {

@@ -105,7 +105,6 @@ gulp.task('build:uglify', ['clean', 'build:exports', 'build:concat', 'build:bund
     .src(options.dest + '/ravendb-node.js')
     .pipe(uglify({
         mangle: {
-            sort: true,
             toplevel: true
         },
         output: {

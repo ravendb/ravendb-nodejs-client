@@ -34,7 +34,7 @@ export class PutIndexesCommand extends RavenCommand {
     this.payload = this.indexes;
   }
 
-  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
     const responseBody: IResponseBody = response.body;
 
     if (!responseBody) {

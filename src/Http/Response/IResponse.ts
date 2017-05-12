@@ -1,15 +1,16 @@
-import {IHash, Hash} from '../../Utility/Hash';
+import {IRavenObject} from '../../Database/IRavenObject';
 import {IHeaders} from '../IHeaders';
 import {StatusCode} from "./StatusCode";
 
-export interface IResponse extends IHash {
+export interface IResponse extends IRavenObject {
   statusCode: StatusCode;
   headers: IHeaders;
-  body?: IResponseBody | IResponseBody[];
+  body?: IResponseBody;
 }
 
-export interface IResponseBody extends IHash {
+export interface IResponseBody extends IRavenObject {
+  Message?: string,
   Error?: string,
-  Results?: Hash | Hash[],
+  Results?: IRavenObject | IRavenObject[],
   ActualEtag?: number
 }

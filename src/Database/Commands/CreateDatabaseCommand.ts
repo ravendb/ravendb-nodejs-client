@@ -30,7 +30,7 @@ export class CreateDatabaseCommand extends RavenCommand {
         this.payload = this.databaseDocument.toJson();
     }
 
-    public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
+    public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
         const body: IResponseBody = response.body;
 
         if (!body) {

@@ -21,11 +21,11 @@ export class GetIndexCommand extends RavenCommand {
     this.indexName && this.addParams('name', this.indexName);
   }
 
-  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
     const responseBody: IResponseBody = response.body;
 
     if (!responseBody) {
-      return null
+      return;
     }
 
     return responseBody.Results;

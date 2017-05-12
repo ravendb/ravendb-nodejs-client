@@ -19,7 +19,7 @@ export class DeleteByIndexCommand extends IndexQueryBasedCommand {
     super.createRequest(serverNode);
   }
 
-  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
     const responseBody: IResponseBody = response.body;
     const status: StatusCode = response.statusCode;
 

@@ -35,7 +35,7 @@ export class HiloNextCommand extends RavenCommand {
     this.endPoint = StringUtil.format('{url}/databases/{database}/hilo/next', serverNode);
   }
 
-  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
     let code: StatusCode = response.statusCode;
     let responseBody: IResponseBody = response.body;
 

@@ -18,7 +18,7 @@ export class GetTopologyCommand extends RavenCommand {
     this.endPoint = StringUtil.format('{url}/databases/{database}/topology', serverNode);
   }
 
-  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
     const responseBody: IResponseBody = response.body;
     const status: StatusCode = response.statusCode;
 
@@ -29,7 +29,5 @@ export class GetTopologyCommand extends RavenCommand {
     if (StatusCodes.isBadRequest(status)) {
       throw new ErrorResponseException(responseBody.Error);
     }
-
-    return null;
   }
 }

@@ -5,13 +5,16 @@ import {LuceneValue} from "../Lucene/LuceneValue";
 import {QueryResultsWithStatistics} from "./DocumentQuery";
 import {QueryResultsCallback} from "../../Utility/Callbacks";
 import {QueryOperator} from "./QueryOperator";
-import {INestedObjectTypes} from "../Conventions/DocumentConventions";
+import {IRavenObject} from "../../Database/IRavenObject";
+import {DocumentConstructor} from "../Conventions/DocumentConventions";
 
-export interface IDocumentQueryOptions {
+export interface IDocumentQueryOptions<T> {
+  documentTypeOrObjectType?: string | DocumentConstructor<T>, 
+  indexName?: string;
   usingDefaultOperator?: QueryOperator;
   waitForNonStaleResults?: boolean;
   includes?: string[];
-  nestedObjectTypes?: INestedObjectTypes;
+  nestedObjectTypes?: IRavenObject<DocumentConstructor>;
   withStatistics?: boolean;
 }
 

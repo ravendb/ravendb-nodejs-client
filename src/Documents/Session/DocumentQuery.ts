@@ -13,10 +13,11 @@ import {StringUtil} from "../../Utility/StringUtil";
 import {QueryString} from "../../Http/QueryString";
 import {ArrayUtil} from "../../Utility/ArrayUtil";
 import {QueryOperators, QueryOperator} from "./QueryOperator";
-import {DocumentConventions, DocumentConstructor, INestedObjectTypes} from "../Conventions/DocumentConventions";
+import {DocumentConventions, DocumentConstructor} from "../Conventions/DocumentConventions";
 import * as Promise from 'bluebird'
 import * as moment from "moment";
 import {IndexQuery} from "../../Database/Indexes/IndexQuery";
+import {IRavenObject} from "../../Database/IRavenObject";
 import {IOptionsSet} from "../../Utility/IOptionsSet";
 import {QueryCommand} from "../../Database/Commands/QueryCommand";
 import {TypeUtil} from "../../Utility/TypeUtil";
@@ -38,10 +39,10 @@ export class DocumentQuery<T> implements IDocumentQuery<T> {
   protected usingDefaultOperator?: QueryOperator = null;
   protected waitForNonStaleResults: boolean = false;
   protected objectType?: DocumentConstructor<T> = null;
-  protected nestedObjectTypes: INestedObjectTypes = {};
+  protected nestedObjectTypes: IRavenObject<DocumentConstructor> = {};
 
   constructor(session: IDocumentSession, requestsExecutor: RequestsExecutor, documentTypeOrObjectType?: string | DocumentConstructor<T>, indexName?: string, usingDefaultOperator
-    ?: QueryOperator, waitForNonStaleResults: boolean = false, includes?: string[], nestedObjectTypes?: INestedObjectTypes, withStatistics: boolean = false
+    ?: QueryOperator, waitForNonStaleResults: boolean = false, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, withStatistics: boolean = false
   ) {
     this.session = session;
     this.includes = includes;
@@ -49,7 +50,7 @@ export class DocumentQuery<T> implements IDocumentQuery<T> {
     this.requestsExecutor = requestsExecutor;
     this.usingDefaultOperator = usingDefaultOperator;
     this.waitForNonStaleResults = waitForNonStaleResults;
-    this.nestedObjectTypes = nestedObjectTypes || {} as INestedObjectTypes;
+    this.nestedObjectTypes = nestedObjectTypes || {} as IRavenObject<DocumentConstructor>;
     this.objectType = session.conventions.tryGetObjectType(documentTypeOrObjectType);
     this.indexName = [(indexName || 'dynamic'), session.conventions.getDocumentsColleciton(documentTypeOrObjectType)].join('/');
   }

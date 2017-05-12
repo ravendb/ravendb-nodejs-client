@@ -7,7 +7,7 @@ import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
 import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand";
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 import {GetDocumentCommand} from "../../src/Database/Commands/GetDocumentCommand";
-import {IHash} from "../../src/Utility/Hash";
+import {IRavenObject} from "../../src/Database/IRavenObject";
 
 describe('DocumentSession', () => {
   let requestsExecutor: RequestsExecutor;
@@ -15,7 +15,7 @@ describe('DocumentSession', () => {
   let response: IRavenResponse, otherResponse: IRavenResponse;
 
   beforeEach(function(): void {
-    ({requestsExecutor} = this.currentTest as IHash);
+    ({requestsExecutor} = this.currentTest as IRavenObject);
   });
 
   beforeEach((done: MochaDone) => {

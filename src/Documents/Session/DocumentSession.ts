@@ -3,7 +3,7 @@ import {IDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
 import {DocumentQuery} from "./DocumentQuery";
 import {IDocumentStore} from '../IDocumentStore';
 import {RequestsExecutor} from '../../Http/Request/RequestsExecutor';
-import {DocumentConventions, DocumentConstructor, INestedObjectTypes} from '../Conventions/DocumentConventions';
+import {DocumentConventions, DocumentConstructor} from '../Conventions/DocumentConventions';
 import {EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
 import {PromiseResolver} from '../../Utility/PromiseResolver';
 import * as _ from 'lodash';
@@ -17,6 +17,7 @@ import {DeleteDocumentCommand} from "../../Database/Commands/DeleteDocumentComma
 import {PutDocumentCommand} from "../../Database/Commands/PutDocumentCommand";
 import {QueryOperator} from "./QueryOperator";
 import {Serializer} from "../../Json/Serializer";
+import {IRavenObject} from "../../Database/IRavenObject";
 
 export class DocumentSession implements IDocumentSession {
   protected database: string;
@@ -44,7 +45,7 @@ export class DocumentSession implements IDocumentSession {
     this.forceReadFromMaster = forceReadFromMaster;
   }
 
-  public create<T extends Object>(attributes?: Object, documentTypeOrObjectType?: string | DocumentConstructor<T>, nestedObjectTypes: INestedObjectTypes = {}): T {
+  public create<T extends Object = IRavenObject>(attributes?: Object, documentTypeOrObjectType?: string | DocumentConstructor<T>, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T {
     const conventions: DocumentConventions = this.documentStore.conventions;
     const objectType: DocumentConstructor<T> | null = conventions.tryGetObjectType(documentTypeOrObjectType);
     let document: T = objectType ? new objectType() : ({} as T);
@@ -54,9 +55,9 @@ export class DocumentSession implements IDocumentSession {
     return document as T;
   }
 
-  public load<T extends Object>(keyOrKeys: string, documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes?: INestedObjectTypes, callback?: EntityCallback<T>): Promise<T>;
-  public load<T extends Object>(keyOrKeys: string[], documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes?: INestedObjectTypes, callback?: EntitiesArrayCallback<T>): Promise<T[]>;
-  public load<T extends Object>(keyOrKeys: string | string[], documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes: INestedObjectTypes = {}, callback?: EntityCallback<T>
+  public load<T extends Object = IRavenObject>(keyOrKeys: string, documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntityCallback<T>): Promise<T>;
+  public load<T extends Object = IRavenObject>(keyOrKeys: string[], documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntitiesArrayCallback<T>): Promise<T[]>;
+  public load<T extends Object = IRavenObject>(keyOrKeys: string | string[], documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes: IRavenObject<DocumentConstructor> = {}, callback?: EntityCallback<T>
     | EntitiesArrayCallback<T>
   ): Promise<T> | Promise<T[]> {
     this.incrementRequestsCount();
@@ -95,7 +96,7 @@ export class DocumentSession implements IDocumentSession {
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
-  public delete<T extends Object>(keyOrEntity: string | T, callback?: EntityCallback<Object>): Promise<T> {
+  public delete<T extends Object = IRavenObject>(keyOrEntity: string | T, callback?: EntityCallback<Object>): Promise<T> {
     this.incrementRequestsCount();
 
     return this.prefetchDocument<T>(keyOrEntity)
@@ -123,7 +124,7 @@ export class DocumentSession implements IDocumentSession {
     .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
-  public store<T extends Object>(entity: T, key?: string, etag?: number, forceConcurrencyCheck?: boolean,
+  public store<T extends Object = IRavenObject>(entity: T, key?: string, etag?: number, forceConcurrencyCheck?: boolean,
      callback?: EntityCallback<T>
   ): Promise<T> {
     this.incrementRequestsCount();
@@ -149,12 +150,14 @@ export class DocumentSession implements IDocumentSession {
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
-  public query<T extends Object>(documentTypeOrObjectType?: string | DocumentConstructor<T>, indexName?: string, options?: IDocumentQueryOptions): IDocumentQuery<T> {
+  public query<T extends Object = IRavenObject>(options?: IDocumentQueryOptions<T>): IDocumentQuery<T> {
     let usingDefaultOperator: QueryOperator = null;
     let waitForNonStaleResults: boolean = null;
     let includes: string[] = null;
     let withStatistics: boolean = null;
-    let nestedObjectTypes: INestedObjectTypes = {} as INestedObjectTypes;
+    let indexName: string = null;
+    let documentTypeOrObjectType: string | DocumentConstructor<T> = null;
+    let nestedObjectTypes: IRavenObject<DocumentConstructor> = {} as IRavenObject<DocumentConstructor>;
 
     if (options) {
       usingDefaultOperator = options.usingDefaultOperator || null;
@@ -162,9 +165,11 @@ export class DocumentSession implements IDocumentSession {
       includes = options.includes || null;
       withStatistics = options.withStatistics || null;
       nestedObjectTypes = options.nestedObjectTypes || {};
+      indexName = options.indexName || null;
+      documentTypeOrObjectType = options.documentTypeOrObjectType || null;
     }
 
-    return new DocumentQuery(this, this.requestsExecutor, documentTypeOrObjectType, indexName,
+    return new DocumentQuery<T>(this, this.requestsExecutor, documentTypeOrObjectType, indexName,
       usingDefaultOperator, waitForNonStaleResults, includes, nestedObjectTypes, withStatistics
     );
   }
@@ -189,13 +194,13 @@ more responsive application.", maxRequests
     }
   }
 
-  protected prefetchDocument<T extends Object>(keyOrEntity: string | T, documentTypeOrObjectType?: string | DocumentConstructor<T>): Promise<T> {
+  protected prefetchDocument<T extends Object = IRavenObject>(keyOrEntity: string | T, documentTypeOrObjectType?: string | DocumentConstructor<T>): Promise<T> {
     return TypeUtil.isString(keyOrEntity)
       ? this.load(keyOrEntity as string, documentTypeOrObjectType)
       : Promise.resolve(keyOrEntity) as Promise<T>;
   }
 
-  protected prepareDocumentToStore<T extends Object>(entity: T, key?: string, etag?: number, forceConcurrencyCheck?: boolean): Promise<T> {
+  protected prepareDocumentToStore<T extends Object = IRavenObject>(entity: T, key?: string, etag?: number, forceConcurrencyCheck?: boolean): Promise<T> {
     if (!entity || !TypeUtil.isObject(entity)) {
       return Promise.reject(
         new InvalidOperationException('Document must be set and be an insstance of Object')

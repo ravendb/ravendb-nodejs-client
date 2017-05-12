@@ -17,7 +17,7 @@ import {IndexQuery} from "../../src/Database/Indexes/IndexQuery";
 import {DocumentConventions} from "../../src/Documents/Conventions/DocumentConventions";
 import {QueryOperationOptions} from "../../src/Database/Operations/QueryOperationOptions";
 import {Operations} from "../../src/Database/Operations/Operations";
-import {IHash} from "../../src/Utility/Hash";
+import {IRavenObject} from "../../src/Database/IRavenObject";
 import {PatchByIndexCommand} from "../../src/Database/Commands/PatchByIndexCommand";
 import {DeleteByIndexCommand} from "../../src/Database/Commands/DeleteByIndexCommand";
 
@@ -27,7 +27,7 @@ describe('DocumentSession', () => {
   let operations: Operations;
 
   beforeEach(function(): void {
-    ({requestsExecutor} = this.currentTest as IHash);
+    ({requestsExecutor} = this.currentTest as IRavenObject);
   });
 
   before((done: MochaDone) => {

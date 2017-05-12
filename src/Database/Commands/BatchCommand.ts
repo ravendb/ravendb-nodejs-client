@@ -27,7 +27,7 @@ export class BatchCommand extends RavenCommand {
     });
   }
 
-  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
     const body: IResponseBody = response.body;
 
     if (!body) {

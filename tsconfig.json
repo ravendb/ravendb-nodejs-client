@@ -1,5 +1,5 @@
 {
-  "version": "2.2",
+  "version": "2.3.2",
   "compilerOptions": {
     "target": "es6",
     "module": "commonjs",

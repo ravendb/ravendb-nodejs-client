@@ -6,14 +6,14 @@ import {DocumentStore} from '../../src/Documents/DocumentStore';
 import * as Promise from 'bluebird';
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
-import {IHash} from "../../src/Utility/Hash";
+import {IRavenObject} from "../../src/Database/IRavenObject";
 
 describe('Document load test', () => {
   let store: IDocumentStore;
   let defaultDatabase: string, defaultUrl: string;
 
   beforeEach(function(): void {
-    ({defaultDatabase, defaultUrl} = (this.currentTest as IHash));
+    ({defaultDatabase, defaultUrl} = (this.currentTest as IRavenObject));
   });
 
   beforeEach((done: MochaDone) => {

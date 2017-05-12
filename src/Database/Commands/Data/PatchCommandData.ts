@@ -3,17 +3,17 @@ import {RavenCommandData} from '../../RavenCommandData';
 import {RequestMethods} from "../../../Http/Request/RequestMethod";
 import {IJsonSerializable} from "../../../Json/IJsonSerializable";
 import {PatchRequest} from "../../../Http/Request/PatchRequest";
-import {IHash} from "../../../Utility/Hash";
+import {IRavenObject} from "../../../Database/IRavenObject";
 import {TypeUtil} from "../../../Utility/TypeUtil";
 
 export class PatchCommandData extends RavenCommandData implements IJsonSerializable {
   protected scriptedPatch: PatchRequest;
   protected patchIfMissing?: PatchRequest = null;
-  protected additionalData?: IHash = null;
+  protected additionalData?: IRavenObject = null;
   protected debugMode: boolean = false;
 
   constructor(key: string, scriptedPatch: PatchRequest, etag?: number, metadata?: Object,
-    patchIfMissing?: PatchRequest, additionalData?: IHash, debugMode: boolean = false) {
+    patchIfMissing?: PatchRequest, additionalData?: IRavenObject, debugMode: boolean = false) {
     super(key, etag, metadata || {});
 
     this.method = RequestMethods.Patch;

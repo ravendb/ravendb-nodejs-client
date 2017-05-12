@@ -15,13 +15,11 @@ export class GetStatisticsCommand extends RavenCommand {
     this.endPoint = StringUtil.format('{url}/databases/{database}/stats', serverNode);
   }
 
-  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
     const responseBody: IResponseBody = response.body;
 
     if (responseBody && StatusCodes.isOk(response.statusCode)) {
       return responseBody;
     }
-
-    return null;
   }
 }

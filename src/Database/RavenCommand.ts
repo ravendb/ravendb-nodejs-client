@@ -86,8 +86,8 @@ export abstract class RavenCommand {
     return options;
   }
 
-  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
-    return null;
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
+    return;
   }
 
   protected addParams(params: Object | string, value?: any): void {

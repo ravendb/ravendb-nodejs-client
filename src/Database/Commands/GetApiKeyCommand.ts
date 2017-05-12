@@ -24,7 +24,7 @@ export class GetApiKeyCommand extends RavenCommand {
     this.endPoint = StringUtil.format('{url}/admin/api-keys', serverNode);
   }
 
-  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
     const responseBody: IResponseBody = response.body;
 
     if (responseBody && responseBody.Results) {

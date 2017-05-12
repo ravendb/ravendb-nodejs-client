@@ -7,7 +7,7 @@ import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
 import {PutIndexesCommand} from "../../src/Database/Commands/PutIndexesCommand";
 import {GetIndexCommand} from "../../src/Database/Commands/GetIndexCommand";
 import {DeleteIndexCommand} from "../../src/Database/Commands/DeleteIndexCommand";
-import {IHash} from "../../src/Utility/Hash";
+import {IRavenObject} from "../../src/Database/IRavenObject";
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 
 describe('Index commands test', () => {
@@ -15,7 +15,7 @@ describe('Index commands test', () => {
   let indexMap: string;
 
   beforeEach(function (): void {
-    ({requestsExecutor, indexMap} = this.currentTest as IHash);
+    ({requestsExecutor, indexMap} = this.currentTest as IRavenObject);
   });
 
   describe('Index actions', () => {

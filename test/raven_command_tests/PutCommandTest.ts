@@ -6,13 +6,13 @@ import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand
 import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
 import {GetDocumentCommand} from "../../src/Database/Commands/GetDocumentCommand";
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
-import {IHash} from "../../src/Utility/Hash";
+import {IRavenObject} from "../../src/Database/IRavenObject";
 
 describe('Put command tets', () => {
   let requestsExecutor: RequestsExecutor;
 
   beforeEach(function(): void {
-    ({requestsExecutor} = this.currentTest as IHash);
+    ({requestsExecutor} = this.currentTest as IRavenObject);
   });
 
   it('should put successfully', (done: MochaDone) => {

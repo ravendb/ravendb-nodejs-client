@@ -24,8 +24,8 @@ export class PutDocumentCommand extends DeleteDocumentCommand {
     super.createRequest(serverNode);
   }
 
-  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
-    const responseBody: IResponseBody = response.body as IResponseBody;
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
+    const responseBody: IResponseBody = response.body;
 
     if (!responseBody) {
       throw new ErrorResponseException('Failed to load document from the database \

@@ -8,7 +8,7 @@ import {Topology} from "../Topology";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {IHeaders} from "../IHeaders";
 import {ApiKeyAuthenticator} from "../../Database/Auth/ApiKeyAuthenticator";
-import {IHash} from "../../Utility/Hash";
+import {IRavenObject} from "../../Database/IRavenObject";
 import {ReadBehavior, ReadBehaviors} from "../../Documents/Conventions/ReadBehavior";
 import {WriteBehavior, WriteBehaviors} from "../../Documents/Conventions/WriteBehavior";
 import {Lock} from "../../Lock/Lock";
@@ -57,7 +57,7 @@ export class RequestsExecutor {
     setTimeout(() => this.getReplicationTopology(), 1 * 1000);
   }
 
-  public execute(command: RavenCommand): Promise<IRavenResponse | IRavenResponse[] | null | void> {
+  public execute(command: RavenCommand): Promise<IRavenResponse | IRavenResponse[] | void> {
     if (!command.ravenCommand) {
       return Promise.reject(new InvalidOperationException('Not a valid command'));
     }
@@ -66,9 +66,9 @@ export class RequestsExecutor {
       .then((chosenNodeResponse: IChooseNodeResponse) => {
         let chosenNode = chosenNodeResponse.node;
 
-        const execute: () => Promise<IRavenResponse | IRavenResponse[] | null | void> = () => {
+        const execute: () => Promise<IRavenResponse | IRavenResponse[] | void> = () => {
           const startTime: number = DateUtil.timestampMs();
-          const failNode: () => Promise<IRavenResponse | IRavenResponse[] | null | void> = () => {
+          const failNode: () => Promise<IRavenResponse | IRavenResponse[] | void> = () => {
             chosenNode.isFailed = true;
             command.addFailedNode(chosenNode);
 
@@ -84,8 +84,8 @@ export class RequestsExecutor {
             .finally(() => {
               chosenNode.addResponseTime(DateUtil.timestampMs() - startTime);
             })
-            .then((response: IResponse): Promise<IRavenResponse | IRavenResponse[] | null | void> | (IRavenResponse | IRavenResponse[] | null | void) => {
-              let commandResponse: IRavenResponse | IRavenResponse[] | null | void = null;
+            .then((response: IResponse): Promise<IRavenResponse | IRavenResponse[] | void> | (IRavenResponse | IRavenResponse[] | void) => {
+              let commandResponse: IRavenResponse | IRavenResponse[] | void = null;
               const code: StatusCode = response.statusCode;
               const isServerError: boolean = [
                 StatusCodes.RequestTimeout,
@@ -319,7 +319,7 @@ export class RequestsExecutor {
     );
   }
 
-  protected jsonToServerNode(json: IHash): ServerNode {
+  protected jsonToServerNode(json: IRavenObject): ServerNode {
     return new ServerNode(json.Url, json.Database, json.ApiKey || null);
   }
 

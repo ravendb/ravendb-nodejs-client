@@ -10,7 +10,7 @@ import {IndexQuery} from "../../src/Database/Indexes/IndexQuery";
 import {DocumentQuery} from "../../src/Documents/Session/DocumentQuery";
 import {PutIndexesCommand} from "../../src/Database/Commands/PutIndexesCommand";
 import {IndexDefinition} from "../../src/Database/Indexes/IndexDefinition";
-import {IHash} from "../../src/Utility/Hash";
+import {IRavenObject} from "../../src/Database/IRavenObject";
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 
 describe('DocumentSession', () => {
@@ -21,7 +21,7 @@ describe('DocumentSession', () => {
   const conventions: DocumentConventions = new DocumentConventions();
 
   beforeEach(function(): void {
-    ({requestsExecutor, indexDefinition} = this.currentTest as IHash);
+    ({requestsExecutor, indexDefinition} = this.currentTest as IRavenObject);
   });
 
   beforeEach((done: MochaDone) => {

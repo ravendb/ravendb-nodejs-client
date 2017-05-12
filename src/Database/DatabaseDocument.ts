@@ -1,5 +1,5 @@
 import {IJsonSerializable} from "../Json/IJsonSerializable";
-import {IHash} from "../Utility/Hash";
+import {IRavenObject} from "../Database/IRavenObject";
 
 export class DatabaseDocument implements IJsonSerializable {
   protected secureSettings: {};
@@ -7,7 +7,7 @@ export class DatabaseDocument implements IJsonSerializable {
   private _databaseId: string;
   private _settings: {};
 
-  constructor(databaseId: string, settings: IHash = {}, secureSettings: IHash = {}, disabled: boolean = false) {
+  constructor(databaseId: string, settings: IRavenObject = {}, secureSettings: IRavenObject = {}, disabled: boolean = false) {
     this._databaseId = databaseId;
     this._settings = settings;
     this.secureSettings = secureSettings;

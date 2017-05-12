@@ -6,14 +6,14 @@ import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
 import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand";
 import {DeleteDocumentCommand} from "../../src/Database/Commands/DeleteDocumentCommand";
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
-import {IHash} from "../../src/Utility/Hash";
+import {IRavenObject} from "../../src/Database/IRavenObject";
 
 describe('Delete command test', () => {
   let requestsExecutor: RequestsExecutor;
   let response: IRavenResponse, otherResponse: IRavenResponse;
 
   beforeEach(function(): void {
-    ({requestsExecutor} = this.currentTest as IHash);
+    ({requestsExecutor} = this.currentTest as IRavenObject);
   });
 
   beforeEach((done: MochaDone) => {

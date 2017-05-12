@@ -71,7 +71,7 @@ export class QueryCommand extends RavenCommand {
     }
   }
 
-  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | null | void {
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
     const responseBody: IResponseBody = response.body;
 
     if (!responseBody) {

@@ -1,3 +1,3 @@
-import {IHash} from '../Utility/Hash';
+import {IRavenObject} from '../Database/IRavenObject';
 
-export interface IRavenResponse extends IHash {}
+export interface IRavenResponse extends IRavenObject {}
