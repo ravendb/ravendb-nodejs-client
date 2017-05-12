@@ -1,20 +1,24 @@
 import {IJsonSerializable} from '../../Json/IJsonSerializable';
 
 export class PatchRequest implements IJsonSerializable {
-  protected script: string;
+  private _script: string;
   protected values: Object = {};
 
   constructor(script: string, values?: Object) {
-    this.script = script;
+    this._script = script;
 
     if (values) {
       this.values = values;
     }
   }
 
+  public get script(): string {
+    return this._script;
+  }
+
   public toJson(): Object {
     return {
-      "Script": this.script,
+      "Script": this._script,
       "Values": this.values
     };
   }

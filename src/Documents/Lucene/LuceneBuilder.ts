@@ -5,14 +5,13 @@ import {EscapeQueryOption, EscapeQueryOptions} from "../Session/EscapeQueryOptio
 import {StringUtil} from "../../Utility/StringUtil";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {DocumentConventions} from "../Conventions/DocumentConventions";
-import {IDocument} from "../IDocument";
 import {DateUtil} from "../../Utility/DateUtil";
 
 export class LuceneBuilder {
   protected static readonly emptyString = '[[EMPTY_STRING]]';
   protected static readonly nullValue = '[[NULL_VALUE]]';
 
-  public static buildCondition<T extends LuceneConditionValue>(conventions: DocumentConventions<IDocument>,
+  public static buildCondition<T extends LuceneConditionValue>(conventions: DocumentConventions,
     fieldName: string, value: T, operator?: LuceneOperator,
     escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll
   ): string {

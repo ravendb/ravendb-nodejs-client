@@ -1,14 +1,13 @@
 import {IHiloKeyGenerator} from './IHiloKeyGenerator';
 import {IDocumentStore} from '../Documents/IDocumentStore';
 import {DocumentConventions} from '../Documents/Conventions/DocumentConventions';
-import {DocumentKey, IDocument} from '../Documents/IDocument';
 import * as Promise from 'bluebird';
-import {IHashCollection} from "../Utility/IHashCollection";
+import {IRavenObject} from "../Database/IRavenObject";
 
 export abstract class AbstractHiloKeyGenerator implements IHiloKeyGenerator {
-  protected generators: IHashCollection<IHiloKeyGenerator> = {};
+  protected generators: IRavenObject<IHiloKeyGenerator> = {};
   protected store: IDocumentStore;
-  protected conventions: DocumentConventions<IDocument>;
+  protected conventions: DocumentConventions;
   protected dbName: string;
   protected tag: string;
 
@@ -19,7 +18,7 @@ export abstract class AbstractHiloKeyGenerator implements IHiloKeyGenerator {
     this.dbName = dbName || store.database;
   }
 
-  public abstract generateDocumentKey(...args: (IDocument | string)[]): Promise<DocumentKey>;
+  public abstract generateDocumentKey(...args: (Object | string)[]): Promise<string>;
 
   public returnUnusedRange(): Promise<void> {
     return Promise

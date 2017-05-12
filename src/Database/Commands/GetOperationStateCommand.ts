@@ -2,7 +2,7 @@ import {RavenCommand} from "../RavenCommand";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {ServerNode} from "../../Http/ServerNode";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
-import {IRavenCommandResponse} from "../IRavenCommandResponse";
+import {IRavenResponse} from "../RavenCommandResponse";
 import {StringUtil} from "../../Utility/StringUtil";
 import {ErrorResponseException} from "../DatabaseExceptions";
 
@@ -20,11 +20,11 @@ export class GetOperationStateCommand extends RavenCommand {
   }
 
 
-  public setResponse(response: IResponse): IRavenCommandResponse | null | void {
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
     const responseBody: IResponseBody = response.body;
 
     if (responseBody) {
-      return responseBody as IRavenCommandResponse;
+      return responseBody;
     }
 
     throw new ErrorResponseException('Invalid server response');

@@ -10,7 +10,7 @@ const uglify = require('gulp-uglify-harmony');
 
 const preamble = '/** RavenDB Client - (c) Hibernating Rhinos 2017 */';
 const exportDefault = 'export default DocumentStore;';
-const prioritizedClasses = ['Hash.ts', 'RavenCommand.ts', 'AbstractHiloKeyGenerator.ts'];
+const prioritizedClasses = ['Hash.ts', 'RavenCommand.ts', 'AbstractHiloKeyGenerator.ts', 'IndexQueryBasedCommand.ts'];
 const options = {
     src: './src',
     tests: './test',
@@ -52,7 +52,6 @@ gulp.task('build:exports', ['clean'], () => gulp
                 : line
             )
             .join('\n')
-        + "\n\n" + exportDefault + "\n"
     ))
     .pipe(gulp.dest(options.tmp))
 );
@@ -76,6 +75,7 @@ gulp.task('build:concat', ['clean'], () => gulp
         .filter(line => !line.startsWith('import'))
         .map(line => line.replace(/export /, ''))
         .join('\n')
+      + "\n\n" + exportDefault + "\n"
     ))
     .pipe(gulp.dest(options.tmp))
 );
@@ -105,7 +105,6 @@ gulp.task('build:uglify', ['clean', 'build:exports', 'build:concat', 'build:bund
     .src(options.dest + '/ravendb-node.js')
     .pipe(uglify({
         mangle: {
-            sort: true,
             toplevel: true
         },
         output: {

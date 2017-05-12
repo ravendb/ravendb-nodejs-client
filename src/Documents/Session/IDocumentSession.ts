@@ -1,18 +1,19 @@
 import {IDocumentSession} from "./IDocumentSession";
-import {IDocumentQuery} from "./IDocumentQuery";
-import {IDocument, DocumentKey, IDocumentType} from '../IDocument';
-import {DocumentConventions} from '../Conventions/DocumentConventions';
+import {IDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
+import {DocumentConventions, DocumentConstructor} from '../Conventions/DocumentConventions';
 import {EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
+import {IRavenObject} from "../../Database/IRavenObject";
 import * as Promise from 'bluebird'
 
 export interface IDocumentSession {
   numberOfRequestsInSession: number;
-  conventions: DocumentConventions<IDocument>;
+  conventions: DocumentConventions;
 
-  create(attributes?: Object): IDocument;
-  load(keyOrKeys: DocumentKey | DocumentKey[], includes?: string[], callback?: EntityCallback<IDocument> | EntitiesArrayCallback<IDocument>): Promise<IDocument> | Promise<IDocument[]>;
-  delete(keyOrEntity: DocumentKey | IDocument, callback?: EntityCallback<IDocument>): Promise<IDocument>;
-  store(entity: IDocument, documentType?: IDocumentType, key?: DocumentKey, etag?: number, forceConcurrencyCheck?: boolean, callback?: EntityCallback<IDocument>): Promise<IDocument>;
-  query(documentType?: IDocumentType, indexName?: string, usingDefaultOperator?: boolean, waitForNonStaleResults?: boolean, includes?: string[], withStatistics?: boolean): IDocumentQuery;
+  create<T extends Object = IRavenObject>(attributes?: Object, documentTypeOrObjectType?: string | DocumentConstructor<T>, nestedObjectTypes?: IRavenObject<DocumentConstructor>): T;
+  load<T extends Object = IRavenObject>(keyOrKeys: string, documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntityCallback<T>): Promise<T>;
+  load<T extends Object = IRavenObject>(keyOrKeys: string[], documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntitiesArrayCallback<T>): Promise<T[]>;
+  delete<T extends Object = IRavenObject>(keyOrEntity: string | T, callback?: EntityCallback<Object>): Promise<T>;
+  store<T extends Object = IRavenObject>(entity: T, key?: string, etag?: number, forceConcurrencyCheck?: boolean, callback?: EntityCallback<T>): Promise<T>;
+  query<T extends Object = IRavenObject>(options?: IDocumentQueryOptions<T>): IDocumentQuery<T>;
   incrementRequestsCount(): void;
 }

@@ -1,3 +1,6 @@
+import {TypeUtil} from "./TypeUtil";
+import {InvalidOperationException} from "../Database/DatabaseExceptions";
+
 export class StringUtil {
   public static format(string: string, args?: Object, ...arrayArgs: any[]): string {
     let inputArgs: any[] | Object = args;
@@ -59,5 +62,23 @@ export class StringUtil {
     }
 
     return buffer;
+  }
+
+  public static validateDBName(dbName?: string): void {
+    if (TypeUtil.isNone(dbName) || !dbName) {
+      throw new InvalidOperationException('Empty name is not valid');
+    }
+
+    if (!/^[A-Za-z0-9_\-\.]+$/.test(dbName)) {
+      throw new InvalidOperationException('Database name can only contain only A-Z, a-z, \"_\", \".\" or \"-\"');
+    }
+  }
+
+  public static capitalize(string: string): string {
+    return string.charAt(0).toUpperCase() + string.substring(1);
+  }
+
+  public static uncapitalize(string: string): string {
+    return string.charAt(0).toLowerCase() + string.substring(1);
   }
 }
