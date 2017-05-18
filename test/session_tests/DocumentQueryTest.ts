@@ -46,7 +46,7 @@ describe('Document query test', () => {
 
     store.getRequestsExecutor()
       .execute(new PutIndexesCommand(indexSort))
-      .then((): Promise.Thenable<Object> => {
+      .then((): Promise.Thenable<object> => {
         session = store.openSession();
 
         return Promise.all([
@@ -215,7 +215,7 @@ describe('Document query test', () => {
         });
       });
 
-      it('should have nested Object', (done: MochaDone) => {
+      it('should have nested object', (done: MochaDone) => {
         session = store.openSession();
         session.query({
           documentTypeOrObjectType: 'company'

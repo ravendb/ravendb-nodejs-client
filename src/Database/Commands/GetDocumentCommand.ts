@@ -34,18 +34,20 @@ export class GetDocumentCommand extends RavenCommand {
     this.includes && this.addParams('includes', this.includes);
 
     if (TypeUtil.isArray(this.keyOrKeys)) {
+      const keys: string[] = <string[]>this.keyOrKeys;
+
       this.metadataOnly && this.addParams('metadata-only', 'True');
 
-      if ((this.keyOrKeys as string[]).map((key: string) => key.length)
+      if (keys.map((key: string) => key.length)
           .reduce((sum: number, len: number) => sum + len) > 1024
       ) {
-        this.payload = this.keyOrKeys;
+        this.payload = keys;
         this.method = RequestMethods.Post;
       } else {
-        this.addParams('id', this.keyOrKeys as string[]);
+        this.addParams('id', keys);
       }
     } else {
-      this.addParams('id', this.keyOrKeys as string);
+      this.addParams('id', this.keyOrKeys);
     }
   }
 

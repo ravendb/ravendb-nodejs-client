@@ -29,9 +29,9 @@ describe('Document full text search', () => {
     const indexMap: string = [
       "from song in docs.LastFms ",
       "select new {",
-      "query = new Object[] {",
+      "query = new object[] {",
       "song.artist,",
-      "((Object)song.datetime_time),",
+      "((object)song.datetime_time),",
       "song.tags,",
       "song.title,",
       "song.track_id}}"
@@ -83,7 +83,7 @@ describe('Document full text search', () => {
         })
         .search('query', 'Me')
         .get()
-        .then((results) => {
+        .then((results: IRavenObject[]) => {
           expect(results[0].title).to.equals('Me');
           expect(results[1].title).to.equals('Me');
           done();
@@ -100,7 +100,7 @@ describe('Document full text search', () => {
         .search('query', 'Me')
         .search('query', 'Bobo')
         .get()
-        .then((results) => {
+        .then((results: IRavenObject[]) => {
           expect(results).to.be.lengthOf(3);
           done();
         });
@@ -116,7 +116,7 @@ describe('Document full text search', () => {
         .search('query', 'Me', null, 10)
         .search('query', 'Bobo', null, 2)
         .get()
-        .then((results) => {
+        .then((results: IRavenObject[]) => {
           expect(results[0].title).to.equals('Me');
           expect(results[1].title).to.equals('Me');
           expect(results[2].title).to.equals('Spanish Grease');

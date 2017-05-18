@@ -12,6 +12,6 @@ export interface IDocumentStore {
   initialize(): IDocumentStore;
   finalize(): Promise<IDocumentStore>;
   openSession(database?: string, forceReadFromMaster?: boolean) : IDocumentSession;
-  generateId(entity: Object, documentTypeOrObjectType?: string | DocumentConstructor, database?: string, callback?: EntityKeyCallback): Promise<string>;
+  generateId(entity: object, documentTypeOrObjectType?: string | DocumentConstructor, database?: string, callback?: EntityKeyCallback): Promise<string>;
   getRequestsExecutor(database?: string): RequestsExecutor;
 }

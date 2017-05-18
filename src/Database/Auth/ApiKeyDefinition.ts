@@ -24,9 +24,9 @@ export class ApiKeyDefinition implements IJsonSerializable {
     this.resourcesAccessMode = resourcesAccessMode;
   }
 
-  public toJson(): Object {
+  public toJson(): object {
     const resourcesAccessModeJSON = this.resourcesAccessMode
-      ? (this.resourcesAccessMode as Object) : {};
+      ? (this.resourcesAccessMode as object) : {};
 
     return {
       "Enabled": this.enabled,

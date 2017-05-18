@@ -3,16 +3,16 @@ import {RequestMethods} from "../../../Http/Request/RequestMethod";
 import {IJsonSerializable} from "../../../Json/IJsonSerializable";
 
 export class PutCommandData extends RavenCommandData implements IJsonSerializable  {
-  protected document: Object;
+  protected document: object;
 
-  constructor(key: string, document: Object, etag?: number, metadata?: Object) {
+  constructor(key: string, document: object, etag?: number, metadata?: object) {
     super(key, etag, metadata);
 
     this.method = RequestMethods.Put;
     this.document = document;
   }
 
-  public toJson(): Object {
+  public toJson(): object {
     return {
       "Method": this.method,
       "Key": this.key,

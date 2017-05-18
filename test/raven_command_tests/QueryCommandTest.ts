@@ -15,7 +15,6 @@ import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 
 describe('DocumentSession', () => {
   const tag = 'Tag:Products';
-  let query: DocumentQuery;
   let requestsExecutor: RequestsExecutor;
   let indexDefinition: IndexDefinition;
   const conventions: DocumentConventions = new DocumentConventions();
@@ -25,7 +24,7 @@ describe('DocumentSession', () => {
   });
 
   beforeEach((done: MochaDone) => {
-    const metadata: Object = {'Raven-Node-Type': 'Document', '@collection': 'Products', 'object_type': 'product'};
+    const metadata: object = {'Raven-Node-Type': 'Document', '@collection': 'Products', 'object_type': 'product'};
 
     requestsExecutor.execute(new PutDocumentCommand('products/10', {"Name": "test", '@metadata': metadata})).then(() => done());
   });

@@ -1,3 +1,3 @@
 export interface IJsonSerializable {
-  toJson(): Object;
+  toJson(): object;
 }

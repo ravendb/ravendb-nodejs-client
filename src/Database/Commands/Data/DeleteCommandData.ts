@@ -9,7 +9,7 @@ export class DeleteCommandData extends RavenCommandData implements IJsonSerializ
     this.method = RequestMethods.Delete;
   }
 
-  public toJson(): Object {
+  public toJson(): object {
     return {
       "Method": this.method,
       "Key": this.key,

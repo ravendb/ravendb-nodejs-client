@@ -22,7 +22,7 @@ export class DatabaseDocument implements IJsonSerializable {
     return this._settings;
   }
 
-  toJson(): Object {
+  toJson(): object {
     return {
       "Disabled": this.disabled,
       "SecuredSettings": this.secureSettings,

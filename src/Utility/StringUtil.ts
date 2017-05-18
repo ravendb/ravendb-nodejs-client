@@ -2,11 +2,12 @@ import {TypeUtil} from "./TypeUtil";
 import {InvalidOperationException} from "../Database/DatabaseExceptions";
 
 export class StringUtil {
-  public static format(string: string, args?: Object, ...arrayArgs: any[]): string {
-    let inputArgs: any[] | Object = args;
+  public static format(string: string, args?: object | any, ...arrayArgs: any[]
+  ): string {
+    let inputArgs: any[] | object = [args];
 
-    if (!(inputArgs instanceof Object)) {
-      inputArgs = [args].concat(arrayArgs);
+    if (!TypeUtil.isObject(args)) {
+      inputArgs = (<any[]>inputArgs).concat(arrayArgs);
     }
 
     return string.replace(

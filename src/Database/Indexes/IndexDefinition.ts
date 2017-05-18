@@ -68,7 +68,7 @@ export class IndexDefinition implements IJsonSerializable {
     this.maps.push(value);
   }
 
-  public toJson(): Object {
+  public toJson(): object {
     const lockModeJson: string | null = this.lockMode ? (this.lockMode as string) : null;
     const priorityJson: string | null = this.priority ? (this.priority as string) : null;
     const fieldsJson = ArrayUtil.mapObject(this.fields, (field: IndexFieldOptions) => field.toJson());

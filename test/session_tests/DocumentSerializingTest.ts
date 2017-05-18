@@ -8,7 +8,7 @@ import {IRavenObject} from "../../src/Database/IRavenObject";
 
 describe('Document serializing test', () => {
   let session : IDocumentSession;
-  let json : Object;
+  let json : object;
   let defaultDatabase: string, defaultUrl: string;
 
   beforeEach(function (): void {
@@ -56,13 +56,13 @@ describe('Document serializing test', () => {
   
   describe('create()', () => {
     it('should return Document instance', () => {
-      const document: IRavenObject = session.create<IRavenObject>(json);
+      const document: IRavenObject = session.create(json);
 
       expect(document).to.be.an.instanceof(Document);
     });
 
     it('should parse scalars', () => {
-      const document: IRavenObject = session.create<IRavenObject>(json);
+      const document: IRavenObject = session.create(json);
 
       expect(document.stringProp).to.be.a('string');
       expect(document.stringProp).to.equals('string');
@@ -76,13 +76,13 @@ describe('Document serializing test', () => {
     });
 
     it('should skip undefined props', () => {
-      const document: Object = session.create(json);
+      const document: IRavenObject = session.create(json);
 
       expect(document).to.not.have.property('undefinedProp');
     });
 
     it('should parse arrays', () => {
-      const document: IRavenObject = session.create<IRavenObject>(json);
+      const document: IRavenObject = session.create(json);
 
       expect(document.arrayProp).to.be.a('array');
       expect(document.arrayProp).to.have.length(3);
@@ -90,7 +90,7 @@ describe('Document serializing test', () => {
     });
 
     it('should parse deep arrays', () => {
-      const document: IRavenObject = session.create<IRavenObject>(json);
+      const document: IRavenObject = session.create(json);
       const deep: number[] = document.deepArrayProp[2];
 
       expect(document.deepArrayProp).to.be.a('array');
@@ -103,9 +103,9 @@ describe('Document serializing test', () => {
     });
 
     it('should parse Objects', () => {
-      const document: IRavenObject = session.create<IRavenObject>(json);
+      const document: IRavenObject = session.create(json);
       
-      expect(document.objectProp).to.be.a('Object');
+      expect(document.objectProp).to.be.a('object');
       expect(document.objectProp).to.be.an.instanceOf(Document);
       expect(document.objectProp).to.have.property('stringProp');
       expect(document.objectProp).to.have.property('numberProp');
@@ -130,27 +130,25 @@ describe('Document serializing test', () => {
     });
 
     it('should parse deep Objects', () => {
-      const document: IRavenObject = session.create<IRavenObject>(json);
-      const deep: Object = document.deepObjectProp.someObject;
+      const document: IRavenObject = session.create(json);
+      const deep: object = document.deepObjectProp.someObject;
       
-      expect(document.deepObjectProp).to.be.a('Object');
+      expect(document.deepObjectProp).to.be.a('object');
       expect(document.deepObjectProp).to.be.an.instanceOf(Document);
       expect(document.deepObjectProp).to.have.property('someProp', 'someValue');
 
-      expect(deep).to.be.a('Object');
-      expect(deep).to.be.an.instanceOf(Document);
+      expect(deep).to.be.a('object');
       expect(deep).to.have.property('someProp', 'someValue');
     });
 
     it('should parse mixed deep arrays/Objects', () => {
-      const document: IRavenObject = session.create<IRavenObject>(json);
+      const document: IRavenObject = session.create(json);
       const deepObject: IRavenObject = <IRavenObject>document.deepArrayObjectProp[2];
       const deepArrayInObject: number[] = deepObject.someArray;
       const deepArray: any[] = document.deepArrayObjectProp[4];
-      const deepObjectInArray: Object = deepArray[2];
+      const deepObjectInArray: object = deepArray[2];
       
-      expect(deepObject).to.be.a('Object');
-      expect(deepObject).to.be.an.instanceOf(Document);
+      expect(deepObject).to.be.a('object');
       expect(deepObject).to.have.property('someProp', 'someValue');    
 
       expect(deepArrayInObject).to.be.a('array');
@@ -162,8 +160,7 @@ describe('Document serializing test', () => {
       expect(deepArray[0]).to.equal(7);      
       expect(deepArray[1]).to.equal(8);      
 
-      expect(deepObjectInArray).to.be.a('Object');
-      expect(deepObjectInArray).to.be.an.instanceOf(Document);
+      expect(deepObjectInArray).to.be.a('object');
       expect(deepObjectInArray).to.have.property('someProp', 'someValue');
     });
   });

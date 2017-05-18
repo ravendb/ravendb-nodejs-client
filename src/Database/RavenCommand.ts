@@ -13,9 +13,9 @@ export type RavenCommandRequestOptions = RequestPromise.RequestPromiseOptions & 
 export abstract class RavenCommand {
   protected method: RequestMethod = RequestMethods.Get;
   protected endPoint?: string;
-  protected params?: Object;
-  protected payload?: Object | Object[];
-  protected headers: Object = {};
+  protected params?: object;
+  protected payload?: object;
+  protected headers: object = {};
   protected failedNodes: Set<ServerNode>;
   protected _avoidFailover: boolean = false;
   private readonly _ravenCommand: boolean = true;
@@ -24,7 +24,7 @@ export abstract class RavenCommand {
 
   public abstract createRequest(serverNode: ServerNode): void;
 
-  constructor(endPoint: string, method: RequestMethod = RequestMethods.Get, params?: Object, payload?: Object, headers: IHeaders = {}, isReadRequest: boolean = false) {
+  constructor(endPoint: string, method: RequestMethod = RequestMethods.Get, params?: object, payload?: object, headers: IHeaders = {}, isReadRequest: boolean = false) {
     this.endPoint = endPoint;
     this.method = method;
     this.params = params;
@@ -76,7 +76,7 @@ export abstract class RavenCommand {
     const params = this.params;
     const payload = this.payload;
 
-    const check: (target?: Object) => boolean = (target: Object) => {
+    const check: (target?: object) => boolean = (target: object) => {
       return !TypeUtil.isNone(target) && !_.isEmpty(target);
     };
 
@@ -90,8 +90,8 @@ export abstract class RavenCommand {
     return;
   }
 
-  protected addParams(params: Object | string, value?: any): void {
+  protected addParams(params: object | string, value?: any): void {
     Object.assign(this.params, TypeUtil.isObject(params)
-      ? params as Object : {[params as string]: value});
+      ? params : {[params as string]: value});
   }
 }

@@ -45,7 +45,7 @@ export class DocumentSession implements IDocumentSession {
     this.forceReadFromMaster = forceReadFromMaster;
   }
 
-  public create<T extends Object = IRavenObject>(attributes?: Object, documentTypeOrObjectType?: string | DocumentConstructor<T>, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T {
+  public create<T extends Object = IRavenObject>(attributes?: object, documentTypeOrObjectType?: string | DocumentConstructor<T>, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T {
     const conventions: DocumentConventions = this.documentStore.conventions;
     const objectType: DocumentConstructor<T> | null = conventions.tryGetObjectType(documentTypeOrObjectType);
     let document: T = objectType ? new objectType() : ({} as T);
@@ -65,7 +65,7 @@ export class DocumentSession implements IDocumentSession {
     return this.requestsExecutor
       .execute(new GetDocumentCommand(keyOrKeys, includes))
       .then((response: IRavenResponse) => {
-        let responseResults: Object[];
+        let responseResults: object[];
         const commandResponse: IRavenResponse = response;
         const conventions: DocumentConventions = this.documentStore.conventions;
         const objectType: DocumentConstructor<T> | null = conventions.tryGetObjectType(documentTypeOrObjectType);
@@ -82,7 +82,7 @@ export class DocumentSession implements IDocumentSession {
           return Promise.reject(new DocumentDoesNotExistsException('Requested document(s) doesn\'t exists'));
         }
 
-        const results = responseResults.map((result: Object) => this
+        const results = responseResults.map((result: object) => this
           .conventions.tryConvertToDocument<T>(result, objectType, nestedObjectTypes)
           .document as T);
 
@@ -96,14 +96,14 @@ export class DocumentSession implements IDocumentSession {
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
-  public delete<T extends Object = IRavenObject>(keyOrEntity: string | T, callback?: EntityCallback<Object>): Promise<T> {
+  public delete<T extends Object = IRavenObject>(keyOrEntity: string | T, callback?: EntityCallback<T>): Promise<T> {
     this.incrementRequestsCount();
 
     return this.prefetchDocument<T>(keyOrEntity)
     .then((document: T) => {
       let etag: number | null = null;
       const conventions = this.conventions;
-      const metadata: Object = document['@metadata'];
+      const metadata: object = document['@metadata'];
       const key: string = conventions.tryGetIdFromInstance(document);
 
       if ('Raven-Read-Only' in metadata) {
@@ -143,7 +143,7 @@ export class DocumentSession implements IDocumentSession {
         return this.requestsExecutor
           .execute(new PutDocumentCommand(documentKey, conventions.tryConvertToRawEntity(entity), tag))
           .then((): T => {
-            PromiseResolver.resolve<Object>(entity, null, callback);
+            PromiseResolver.resolve<T>(entity, null, callback);
             return entity as T;
           });
       })
@@ -203,7 +203,7 @@ more responsive application.", maxRequests
   protected prepareDocumentToStore<T extends Object = IRavenObject>(entity: T, key?: string, etag?: number, forceConcurrencyCheck?: boolean): Promise<T> {
     if (!entity || !TypeUtil.isObject(entity)) {
       return Promise.reject(
-        new InvalidOperationException('Document must be set and be an insstance of Object')
+        new InvalidOperationException('Document must be set and be an insstance of object')
       ) as Promise<T>;
     }
 

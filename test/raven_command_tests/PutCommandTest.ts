@@ -25,6 +25,6 @@ describe('Put command tets', () => {
   });
 
   it('should fail with invalid json', (done: MochaDone) => {
-    expect(requestsExecutor.execute(new PutDocumentCommand('testing/2', 'document' as Object))).to.be.rejected.and.notify(done);
+    expect(requestsExecutor.execute(new PutDocumentCommand('testing/2', <any>'document'))).to.be.rejected.and.notify(done);
   });
 });
