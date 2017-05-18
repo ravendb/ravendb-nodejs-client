@@ -33,7 +33,7 @@ describe('Document store test', () => {
     it('should be without key', (done: MochaDone) => {
       session.store(session.create({name: 'test', key: 10}))
         .then(() => store.openSession().load("test" as string))
-        .then((document: Object) => {
+        .then((document: IRavenObject) => {
           expect(document.name).to.equals('test');
           done();
         });
@@ -42,19 +42,17 @@ describe('Document store test', () => {
     it('should be with key', (done: MochaDone) => {
       session.store(session.create({name: 'test', key: 20}, 'testingStore/1'))
         .then(() => store.openSession().load("testingStore/1"))
-        .then((document: Object) => {
+        .then((document: IRavenObject) => {
           expect(document.key).to.equals(20);
           done();
         });
     });
 
     it('should be after delete fail', (done: MochaDone) => {
-      session.store(session.create({name: 'test', key: 20}, 'testingStore'))
-        .then(() => store.openSession().delete("testingStore"))
-        .then((results) => {
-          expect(results).should.be.rejected;
-          done();
-        });
+      expect(
+        session.store(session.create({name: 'test', key: 20}, 'testingStore'))
+          .then(() => store.openSession().delete("testingStore"))
+      ).to.be.rejected.and.notify(done);
     });
   });
 });

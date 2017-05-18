@@ -15,7 +15,6 @@ import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 
 describe('DocumentSession', () => {
   const tag = 'Tag:Products';
-  let query: DocumentQuery;
   let requestsExecutor: RequestsExecutor;
   let indexDefinition: IndexDefinition;
   const conventions: DocumentConventions = new DocumentConventions();

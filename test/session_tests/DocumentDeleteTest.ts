@@ -35,10 +35,10 @@ describe('Document delete test', () => {
       const string: string = "products/101";
 
       store.openSession().delete(string)
-        .then((): Promise.Thenable<Object> =>
+        .then((): Promise.Thenable<IRavenObject> =>
           store.openSession().load(string)
         )
-        .then((document: Object): void => {
+        .then((document: IRavenObject): void => {
             expect(document).not.to.exist;
             done();
         });
@@ -48,15 +48,15 @@ describe('Document delete test', () => {
       const string: string = "products/106";
 
       store.openSession().load(string)
-        .then((document: Object): Promise.Thenable<Object> => {
+        .then((document: IRavenObject): Promise.Thenable<IRavenObject> => {
           document.name = 'testing';
 
           return store.openSession().delete(string);
         })
-        .then((document: Object): Promise.Thenable<Object> =>
+        .then((document: IRavenObject): Promise.Thenable<IRavenObject> =>
           store.openSession().load(string)
         )
-        .then((document: Object) => {
+        .then((document: IRavenObject) => {
           expect(document).not.to.exist;
           done();
         });

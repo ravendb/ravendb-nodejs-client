@@ -5,8 +5,7 @@ import {DocumentConstructor} from "../Documents/Conventions/DocumentConventions"
 import {IRavenObject} from "../Database/IRavenObject";
 
 export class Serializer {
-  public static fromJSON<T extends Object = IRavenObject>(target: T, source: Object | string, metadata: Object = {}, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T
-  {
+  public static fromJSON<T extends Object = IRavenObject>(target: T, source: Object | string, metadata: Object = {}, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T {
     let sourceObject: Object = TypeUtil.isString(source)
       ? JSON.parse(source as string) : source;
 
@@ -50,8 +49,7 @@ export class Serializer {
     return target;
   }
 
-  public static toJSON<T extends Object = IRavenObject>(source: T, metadata: Object = {}): Object
-  {
+  public static toJSON<T extends Object = IRavenObject>(source: T, metadata: Object = {}): Object {
     const mapping: Object = metadata && metadata['@nested_object_types']
       ? metadata['@nested_object_types'] : {};
 
