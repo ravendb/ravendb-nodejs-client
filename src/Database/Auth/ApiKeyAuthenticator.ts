@@ -12,7 +12,7 @@ import {ICipherBox} from "../../Utility/Crypt";
 import {IRavenObject} from "../IRavenObject";
 
 export interface IAuthServerRequest {
-  payload: Object,
+  payload: object,
   secretKey: Buffer
 }
 

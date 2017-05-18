@@ -18,7 +18,7 @@ export abstract class AbstractHiloKeyGenerator implements IHiloKeyGenerator {
     this.dbName = dbName || store.database;
   }
 
-  public abstract generateDocumentKey(...args: (Object | string)[]): Promise<string>;
+  public abstract generateDocumentKey(...args: (object | string)[]): Promise<string>;
 
   public returnUnusedRange(): Promise<void> {
     return Promise

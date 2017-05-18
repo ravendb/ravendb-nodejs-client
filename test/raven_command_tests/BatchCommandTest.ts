@@ -25,7 +25,7 @@ describe('Batch command test', () => {
   });
 
   beforeEach(() => {
-    const metadata: Object = {'Raven-Node-Type': 'Document', '@collection': 'products', 'object_type': 'product'};
+    const metadata: object = {'Raven-Node-Type': 'Document', '@collection': 'products', 'object_type': 'product'};
 
     putCommand1 = new PutCommandData('products/999', {'Name': 'tests', 'Category': 'testing'}, null, metadata);
     putCommand2 = new PutCommandData('products/1000', {'Name': 'tests', 'Category': 'testing'}, null, metadata);

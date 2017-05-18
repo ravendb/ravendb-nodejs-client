@@ -6,10 +6,10 @@ export abstract class RavenCommandData implements IJsonSerializable {
   protected method: RequestMethod;
   protected key: string;
   protected etag?: number = null;
-  protected metadata?: Object = null;
-  protected additionalData?: Object = null;
+  protected metadata?: object = null;
+  protected additionalData?: object = null;
 
-  constructor(key: string, etag?: number, metadata?: Object) {
+  constructor(key: string, etag?: number, metadata?: object) {
     this.key = key;
     this.etag = etag;
     this.metadata = metadata;
@@ -19,5 +19,5 @@ export abstract class RavenCommandData implements IJsonSerializable {
     return this._command;
   }
 
-  public abstract toJson(): Object;
+  public abstract toJson(): object;
 }

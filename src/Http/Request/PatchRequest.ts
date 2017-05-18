@@ -2,9 +2,9 @@ import {IJsonSerializable} from '../../Json/IJsonSerializable';
 
 export class PatchRequest implements IJsonSerializable {
   private _script: string;
-  protected values: Object = {};
+  protected values: object = {};
 
-  constructor(script: string, values?: Object) {
+  constructor(script: string, values?: object) {
     this._script = script;
 
     if (values) {
@@ -16,7 +16,7 @@ export class PatchRequest implements IJsonSerializable {
     return this._script;
   }
 
-  public toJson(): Object {
+  public toJson(): object {
     return {
       "Script": this._script,
       "Values": this.values

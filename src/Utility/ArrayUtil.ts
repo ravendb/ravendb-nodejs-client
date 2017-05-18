@@ -1,6 +1,6 @@
 export class ArrayUtil {
-  public static mapObject(input: Object, mapper: (item: any, key?: string) => any): Object {
-    let result: Object = {};
+  public static mapObject(input: object, mapper: (item: any, key?: string) => any): object {
+    let result: object = {};
     let property: string;
 
     for (property in input) {

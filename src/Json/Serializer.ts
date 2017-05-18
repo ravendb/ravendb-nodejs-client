@@ -5,11 +5,11 @@ import {DocumentConstructor} from "../Documents/Conventions/DocumentConventions"
 import {IRavenObject} from "../Database/IRavenObject";
 
 export class Serializer {
-  public static fromJSON<T extends Object = IRavenObject>(target: T, source: Object | string, metadata: Object = {}, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T {
-    let sourceObject: Object = TypeUtil.isString(source)
+  public static fromJSON<T extends Object = IRavenObject>(target: T, source: object | string, metadata: object = {}, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T {
+    let sourceObject: object = TypeUtil.isString(source)
       ? JSON.parse(source as string) : source;
 
-    const mapping: Object = metadata && metadata['@nested_object_types']
+    const mapping: object = metadata && metadata['@nested_object_types']
       ? metadata['@nested_object_types'] : {};
 
     const transform: (value: any, key?: string) => any = (value, key) => {
@@ -20,14 +20,14 @@ export class Serializer {
       }
 
       if (TypeUtil.isObject(value)) {
-        let nestedObject: Object = {};
+        let nestedObject: IRavenObject = {};
 
         if ((key in nestedObjectTypes) && (nestedObjectConstructor = nestedObjectTypes[key])
           && (!(key in mapping) || (nestedObjectConstructor.name === mapping[key]))) {
           nestedObject = new nestedObjectConstructor();
         }
 
-        return this.fromJSON<Object>(nestedObject, value, value['@metadata'] || {});
+        return this.fromJSON<typeof nestedObject>(nestedObject, value, value['@metadata'] || {});
       }
 
       if (TypeUtil.isArray(value)) {
@@ -49,8 +49,8 @@ export class Serializer {
     return target;
   }
 
-  public static toJSON<T extends Object = IRavenObject>(source: T, metadata: Object = {}): Object {
-    const mapping: Object = metadata && metadata['@nested_object_types']
+  public static toJSON<T extends Object = IRavenObject>(source: T, metadata: object = {}): object {
+    const mapping: object = metadata && metadata['@nested_object_types']
       ? metadata['@nested_object_types'] : {};
 
     const transform: (value: any, key?: string) => any = (value, key) => {
@@ -63,7 +63,7 @@ export class Serializer {
       }
 
       if (TypeUtil.isObject(value)) {
-        return this.toJSON<Object>(value, value['@metadata'] || {});
+        return this.toJSON<IRavenObject>(value, value['@metadata'] || {});
       }
 
       if (TypeUtil.isArray(value)) {

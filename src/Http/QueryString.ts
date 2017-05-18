@@ -9,7 +9,7 @@ export class QueryString {
       .includes(char) ? encodeURIComponent(char) : char).join('');
   }
 
-  public static stringify(params: Object): string {
+  public static stringify(params: object): string {
     let result: string[] = [];
 
     const render = (param: string, value: any): string => StringUtil

@@ -11,8 +11,8 @@ export type DocumentConstructor<T extends Object = IRavenObject> = { new(): T; }
 
 export interface IDocumentConversionResult<T extends Object = IRavenObject> {
   document: T,
-  metadata: Object,
-  originalMetadata: Object
+  metadata: object,
+  originalMetadata: object
 }
 
 export class DocumentConventions {
@@ -54,11 +54,11 @@ export class DocumentConventions {
     return null;
   }
 
-  public tryConvertToDocument<T extends Object = IRavenObject>(rawEntity: Object, objectType?: DocumentConstructor<T>, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): IDocumentConversionResult<T> {
-    const metadata: Object = _.get(rawEntity, '@metadata') || {};
-    const originalMetadata: Object = _.clone(metadata);
+  public tryConvertToDocument<T extends Object = IRavenObject>(rawEntity: object, objectType?: DocumentConstructor<T>, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): IDocumentConversionResult<T> {
+    const metadata: object = _.get(rawEntity, '@metadata') || {};
+    const originalMetadata: object = _.clone(metadata);
     const idProperty: string = this.idPropertyName;
-    const documentAttributes: Object = _.omit(rawEntity, '@metadata');
+    const documentAttributes: object = _.omit(rawEntity, '@metadata');
     let document: T = Serializer.fromJSON<T>(
       objectType ? new objectType : ({} as T),
       documentAttributes, metadata, nestedObjectTypes
@@ -69,13 +69,13 @@ export class DocumentConventions {
     }
 
     return {
-      document: document,
+      document: document as T,
       metadata: metadata,
       originalMetadata: originalMetadata
     } as IDocumentConversionResult<T>;
   }
 
-  public tryConvertToRawEntity<T extends Object = IRavenObject>(document: T): Object {
+  public tryConvertToRawEntity<T extends Object = IRavenObject>(document: T): object {
     return Serializer.toJSON<T>(document, document['@metadata'] || {});
   }
 
@@ -83,7 +83,7 @@ export class DocumentConventions {
     const idProperty = this.idPropertyName;
 
     if (!entity.hasOwnProperty(idProperty)) {
-      throw new InvalidOperationException("Invalid entity provided. It should implement Object interface");
+      throw new InvalidOperationException("Invalid entity provided. It should implement object interface");
     }
 
     entity[idProperty] = key;
@@ -98,15 +98,15 @@ export class DocumentConventions {
     }
 
     if (!entity.hasOwnProperty(idProperty)) {
-      throw new InvalidOperationException("Invalid entity provided. It should implement Object interface");
+      throw new InvalidOperationException("Invalid entity provided. It should implement object interface");
     }
 
     return entity[idProperty];
   }
 
-  public buildDefaultMetadata<T extends Object = IRavenObject>(entity: T, typeOrConstructor: string | DocumentConstructor<T>): Object {
-    let metadata: Object = {};
-    let nestedTypes: Object = {};
+  public buildDefaultMetadata<T extends Object = IRavenObject>(entity: T, typeOrConstructor: string | DocumentConstructor<T>): object {
+    let metadata: object = {};
+    let nestedTypes: object = {};
     let property: string, value : any;
 
     if (entity) {
@@ -126,7 +126,7 @@ export class DocumentConventions {
           } else if (TypeUtil.isObject(value)) {
             let objectType: string = value.constructor.name;
 
-            if ('Object' !== objectType) {
+            if ('object' !== objectType) {
               nestedTypes[property] = objectType;
             }
           }
@@ -141,7 +141,7 @@ export class DocumentConventions {
     return metadata;
   }
 
-  public tryGetTypeFromMetadata(metadata: Object): string | null {
+  public tryGetTypeFromMetadata(metadata: object): string | null {
     if ('Raven-Node-Type' in metadata) {
       return metadata['Raven-Node-Type'];
     }

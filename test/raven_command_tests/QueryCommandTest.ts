@@ -24,7 +24,7 @@ describe('DocumentSession', () => {
   });
 
   beforeEach((done: MochaDone) => {
-    const metadata: Object = {'Raven-Node-Type': 'Document', '@collection': 'Products', 'object_type': 'product'};
+    const metadata: object = {'Raven-Node-Type': 'Document', '@collection': 'Products', 'object_type': 'product'};
 
     requestsExecutor.execute(new PutDocumentCommand('products/10', {"Name": "test", '@metadata': metadata})).then(() => done());
   });

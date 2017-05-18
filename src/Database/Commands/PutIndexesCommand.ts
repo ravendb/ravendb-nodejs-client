@@ -8,7 +8,7 @@ import {StringUtil} from "../../Utility/StringUtil";
 import {IndexDefinition} from "../Indexes/IndexDefinition";
 
 export class PutIndexesCommand extends RavenCommand {
-  protected indexes?: Object[];
+  protected indexes?: object[];
 
   constructor(...indexes: IndexDefinition[]) {
     super('', RequestMethods.Put);

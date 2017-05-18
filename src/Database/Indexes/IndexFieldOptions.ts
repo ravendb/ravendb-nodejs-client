@@ -22,7 +22,7 @@ export class IndexFieldOptions implements IJsonSerializable {
     this.analyzer = analyzer;
   }
 
-  public toJson(): Object {
+  public toJson(): object {
     const indexingJson: string = this.indexing ? (this.indexing as string) : null;
     const termVectorJson: string = this.termVector ? (this.termVector as string) : null;
     const sortOptionsJson: string = this.sortOptions ? (this.sortOptions as string) : null;

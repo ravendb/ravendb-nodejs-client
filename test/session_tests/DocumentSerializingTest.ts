@@ -8,7 +8,7 @@ import {IRavenObject} from "../../src/Database/IRavenObject";
 
 describe('Document serializing test', () => {
   let session : IDocumentSession;
-  let json : Object;
+  let json : object;
   let defaultDatabase: string, defaultUrl: string;
 
   beforeEach(function (): void {
@@ -105,7 +105,7 @@ describe('Document serializing test', () => {
     it('should parse Objects', () => {
       const document: IRavenObject = session.create(json);
       
-      expect(document.objectProp).to.be.a('Object');
+      expect(document.objectProp).to.be.a('object');
       expect(document.objectProp).to.be.an.instanceOf(Document);
       expect(document.objectProp).to.have.property('stringProp');
       expect(document.objectProp).to.have.property('numberProp');
@@ -131,7 +131,7 @@ describe('Document serializing test', () => {
 
     it('should parse deep Objects', () => {
       const document: IRavenObject = session.create(json);
-      const deep: Object = document.deepObjectProp.someObject;
+      const deep: object = document.deepObjectProp.someObject;
       
       expect(document.deepObjectProp).to.be.a('object');
       expect(document.deepObjectProp).to.be.an.instanceOf(Document);
@@ -146,7 +146,7 @@ describe('Document serializing test', () => {
       const deepObject: IRavenObject = <IRavenObject>document.deepArrayObjectProp[2];
       const deepArrayInObject: number[] = deepObject.someArray;
       const deepArray: any[] = document.deepArrayObjectProp[4];
-      const deepObjectInArray: Object = deepArray[2];
+      const deepObjectInArray: object = deepArray[2];
       
       expect(deepObject).to.be.a('object');
       expect(deepObject).to.have.property('someProp', 'someValue');    

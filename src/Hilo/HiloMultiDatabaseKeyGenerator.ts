@@ -9,7 +9,7 @@ export class HiloMultiDatabaseKeyGenerator extends AbstractHiloKeyGenerator impl
     super(store);
   }
 
-  public generateDocumentKey(entity: Object, documentType?: string, dbName?: string): Promise<string> {
+  public generateDocumentKey(entity: object, documentType?: string, dbName?: string): Promise<string> {
     return this
       .getGeneratorForDatabase(dbName || this.store.database)
       .generateDocumentKey(entity, documentType);

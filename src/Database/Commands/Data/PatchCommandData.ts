@@ -12,7 +12,7 @@ export class PatchCommandData extends RavenCommandData implements IJsonSerializa
   protected additionalData?: IRavenObject = null;
   protected debugMode: boolean = false;
 
-  constructor(key: string, scriptedPatch: PatchRequest, etag?: number, metadata?: Object,
+  constructor(key: string, scriptedPatch: PatchRequest, etag?: number, metadata?: object,
     patchIfMissing?: PatchRequest, additionalData?: IRavenObject, debugMode: boolean = false) {
     super(key, etag, metadata || {});
 
@@ -23,13 +23,13 @@ export class PatchCommandData extends RavenCommandData implements IJsonSerializa
     this.debugMode = debugMode
   }
 
-  public toJson(): Object {
-    let json: Object = {
+  public toJson(): object {
+    let json: object = {
       "Key": this.key, 
       "Method": this.method,
       "Patch": this.scriptedPatch.toJson(),
       "DebugMode": this.debugMode,
-      "Object": this.metadata
+      "object": this.metadata
     };
     
     if (!TypeUtil.isNone(this.etag)) {

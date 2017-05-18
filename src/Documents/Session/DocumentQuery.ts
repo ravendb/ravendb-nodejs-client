@@ -207,7 +207,7 @@ export class DocumentQuery<T> implements IDocumentQuery<T> {
   public get(callback?: QueryResultsCallback<T[]> | QueryResultsCallback<QueryResultsWithStatistics<T>>)
     : Promise<T[]> | Promise<QueryResultsWithStatistics<T>> {
     const responseToDocuments: (response: IRavenResponse, resolve: PromiseResolve<T[]>
-      | PromiseResolve<QueryResultsWithStatistics<Object>>) => void = (response: IRavenResponse,
+      | PromiseResolve<QueryResultsWithStatistics<T>>) => void = (response: IRavenResponse,
       resolve: PromiseResolve<T[]> | PromiseResolve<QueryResultsWithStatistics<T>>) => {
       let result: T[] | QueryResultsWithStatistics<T>  = [] as T[];
       const commandResponse: IRavenResponse = response as IRavenResponse;
@@ -215,7 +215,7 @@ export class DocumentQuery<T> implements IDocumentQuery<T> {
       if (commandResponse.Results.length > 0) {
         let results: T[] = [] as T[];
 
-        commandResponse.Results.forEach((result: T) => results.push(
+        commandResponse.Results.forEach((result: object) => results.push(
           this.session.conventions
             .tryConvertToDocument<T>(result, this.objectType, this.nestedObjectTypes || {})
             .document
@@ -309,7 +309,7 @@ export class DocumentQuery<T> implements IDocumentQuery<T> {
           .then((response: IRavenResponse | null) => {
             if (TypeUtil.isNone(response)) {
               resolve({
-                Results: [] as Object[],
+                Results: [] as object[],
                 Includes: [] as string[]
               } as IRavenResponse);
             } else if (response.IsStale && this.waitForNonStaleResults) {

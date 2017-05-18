@@ -13,7 +13,7 @@ export class HiloMultiTypeKeyGenerator extends AbstractHiloKeyGenerator implemen
     this._lock = Lock.getInstance();
   }
 
-  public generateDocumentKey(entity: Object, documentType?: string): Promise<string> {
+  public generateDocumentKey(entity: object, documentType?: string): Promise<string> {
     let tag: string = this.conventions.getDocumentType(documentType);
 
     return this.createGeneratorForTag(tag)

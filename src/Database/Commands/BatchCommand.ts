@@ -18,7 +18,7 @@ export class BatchCommand extends RavenCommand {
   public createRequest(serverNode: ServerNode): void {
     this.endPoint = StringUtil.format('{url}/databases/{database}/bulk_docs', serverNode);
 
-    this.payload = this.commandsArray.map((data: RavenCommandData): Object => {
+    this.payload = this.commandsArray.map((data: RavenCommandData): object => {
       if (!data.command) {
         throw new InvalidOperationException('Not a valid command');
       }

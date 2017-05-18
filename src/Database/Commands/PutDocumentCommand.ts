@@ -6,9 +6,9 @@ import {DeleteDocumentCommand} from './DeleteDocumentCommand';
 import {InvalidOperationException, ErrorResponseException, FetchConcurrencyException} from "../DatabaseExceptions";
 
 export class PutDocumentCommand extends DeleteDocumentCommand {
-  protected document?: Object;
+  protected document?: object;
 
-  constructor(key: string, document: Object, etag?: number) {
+  constructor(key: string, document: object, etag?: number) {
     super(key, etag);
 
     this.document = document;
@@ -17,7 +17,7 @@ export class PutDocumentCommand extends DeleteDocumentCommand {
 
   public createRequest(serverNode: ServerNode): void {
     if (!this.document) {
-      throw new InvalidOperationException('Document must be an Object');
+      throw new InvalidOperationException('Document must be an object');
     }
 
     this.payload = this.document;
