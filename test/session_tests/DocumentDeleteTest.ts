@@ -2,7 +2,7 @@
 /// <reference path="../../node_modules/@types/chai/index.d.ts" />
 
 import {expect} from 'chai';
-import * as Promise from 'bluebird';
+import * as BluebirdPromise from 'bluebird';
 import {IRavenObject} from "../../src/Database/IRavenObject";
 import {DocumentStore} from "../../src/Documents/DocumentStore";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
@@ -21,7 +21,7 @@ describe('Document delete test', () => {
     store.initialize();
     const session: IDocumentSession = store.openSession();
 
-    Promise.all([
+    BluebirdPromise.all([
       session.store(session.create({_id: 'products/101', name: 'test'}, 'product')),
       session.store(session.create({_id: 'products/10', name: 'test'}, 'product')),
       session.store(session.create({_id: 'products/106', name: 'test'}, 'product')),
@@ -35,7 +35,7 @@ describe('Document delete test', () => {
       const string: string = "products/101";
 
       store.openSession().delete(string)
-        .then((): Promise.Thenable<IRavenObject> =>
+        .then((): BluebirdPromise.Thenable<IRavenObject> =>
           store.openSession().load(string)
         )
         .then((document: IRavenObject): void => {
@@ -45,16 +45,16 @@ describe('Document delete test', () => {
     });
 
     it('should delete after change', (done: MochaDone) => {
-      const string: string = "products/106";
+      const key: string = "products/106";
 
-      store.openSession().load(string)
-        .then((document: IRavenObject): Promise.Thenable<IRavenObject> => {
+      store.openSession().load(key)
+        .then((document: IRavenObject): Promise<IRavenObject> => {
           document.name = 'testing';
 
-          return store.openSession().delete(string);
+          return store.openSession().delete<IRavenObject>(key);
         })
-        .then((document: IRavenObject): Promise.Thenable<IRavenObject> =>
-          store.openSession().load(string)
+        .then((document: IRavenObject): Promise<IRavenObject> =>
+          store.openSession().load(key)
         )
         .then((document: IRavenObject) => {
           expect(document).not.to.exist;

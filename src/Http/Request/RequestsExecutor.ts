@@ -1,4 +1,4 @@
-import * as Promise from 'bluebird';
+import * as BluebirdPromise from 'bluebird';
 import * as RequestPromise from 'request-promise';
 import {ServerNode} from '../ServerNode';
 import {RavenCommand, RavenCommandRequestOptions} from '../../Database/RavenCommand';
@@ -57,18 +57,18 @@ export class RequestsExecutor {
     setTimeout(() => this.getReplicationTopology(), 1 * 1000);
   }
 
-  public execute(command: RavenCommand): Promise<IRavenResponse | IRavenResponse[] | void> {
+  public execute(command: RavenCommand): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> {
     if (!command.ravenCommand) {
-      return Promise.reject(new InvalidOperationException('Not a valid command'));
+      return BluebirdPromise.reject(new InvalidOperationException('Not a valid command'));
     }
 
     return this.chooseNodeForRequest(command)
       .then((chosenNodeResponse: IChooseNodeResponse) => {
         let chosenNode = chosenNodeResponse.node;
 
-        const execute: () => Promise<IRavenResponse | IRavenResponse[] | void> = () => {
+        const execute: () => BluebirdPromise<IRavenResponse | IRavenResponse[] | void> = () => {
           const startTime: number = DateUtil.timestampMs();
-          const failNode: () => Promise<IRavenResponse | IRavenResponse[] | void> = () => {
+          const failNode: () => BluebirdPromise<IRavenResponse | IRavenResponse[] | void> = () => {
             chosenNode.isFailed = true;
             command.addFailedNode(chosenNode);
 
@@ -84,7 +84,7 @@ export class RequestsExecutor {
             .finally(() => {
               chosenNode.addResponseTime(DateUtil.timestampMs() - startTime);
             })
-            .then((response: IResponse): Promise<IRavenResponse | IRavenResponse[] | void> | (IRavenResponse | IRavenResponse[] | void) => {
+            .then((response: IResponse): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> | (IRavenResponse | IRavenResponse[] | void) => {
               let commandResponse: IRavenResponse | IRavenResponse[] | void = null;
               const code: StatusCode = response.statusCode;
               const isServerError: boolean = [
@@ -102,7 +102,7 @@ export class RequestsExecutor {
                 }
 
                 if (StatusCodes.isForbidden(code)) {
-                  return Promise.reject(new AuthorizationException(
+                  return BluebirdPromise.reject(new AuthorizationException(
                     StringUtil.format(
                       'Forbidden access to {url}. Make sure you\'re using the correct api-key.',
                       chosenNode
@@ -114,7 +114,7 @@ export class RequestsExecutor {
                     .includes(response.statusCode)
                 ) {
                   if (!this._apiKey) {
-                    return Promise.reject(StringUtil.format(
+                    return BluebirdPromise.reject(StringUtil.format(
                       'Got unauthorized response for {url}. Please specify an api-key.',
                       chosenNode
                     ));
@@ -123,7 +123,7 @@ export class RequestsExecutor {
                   command.increaseAuthenticationRetries();
 
                   if (command.authenticationRetries > 1) {
-                    return Promise.reject(StringUtil.format(
+                    return BluebirdPromise.reject(StringUtil.format(
                       'Got unauthorized response for {url} after trying to authenticate using specified api-key.',
                       chosenNode
                     ));
@@ -137,7 +137,7 @@ export class RequestsExecutor {
               try {
                 commandResponse = command.setResponse(response);
               } catch (exception) {
-                return Promise.reject(exception);
+                return BluebirdPromise.reject(exception);
               }
 
               return commandResponse;
@@ -162,12 +162,12 @@ export class RequestsExecutor {
     return options;
   }
 
-  protected chooseNodeForRequest(command: RavenCommand): Promise<IChooseNodeResponse> {
+  protected chooseNodeForRequest(command: RavenCommand): BluebirdPromise<IChooseNodeResponse> {
     let response: IChooseNodeResponse;
 
     if (!this._topologyInitialized && !(command instanceof GetTopologyCommand)) {
-      return Promise.delay(1 * 1000)
-        .then((): Promise<IChooseNodeResponse> => this
+      return BluebirdPromise.delay(1 * 1000)
+        .then((): BluebirdPromise<IChooseNodeResponse> => this
         .chooseNodeForRequest(command)
       );
     }
@@ -177,10 +177,10 @@ export class RequestsExecutor {
         ? this.chooseNodeForRead(command)
         : this.chooseNodeForWrite(command);
     } catch (error) {
-      return Promise.reject(error as RavenException) as Promise<IChooseNodeResponse>;
+      return BluebirdPromise.reject(error as RavenException) as BluebirdPromise<IChooseNodeResponse>;
     }
 
-    return Promise.resolve(response) as Promise<IChooseNodeResponse>;
+    return BluebirdPromise.resolve(response) as BluebirdPromise<IChooseNodeResponse>;
   }
 
   protected chooseNodeForRead(command: RavenCommand): IChooseNodeResponse {
@@ -366,7 +366,7 @@ export class RequestsExecutor {
       });
   }
 
-  protected handleUnauthorized(serverNode: ServerNode, shouldThrow: boolean = true): Promise<void> {
+  protected handleUnauthorized(serverNode: ServerNode, shouldThrow: boolean = true): BluebirdPromise<void> {
     return this._authenticator.authenticate(
       serverNode.url, serverNode.apiKey, this.headers
     )
@@ -380,10 +380,10 @@ export class RequestsExecutor {
     })
     .catch((error: RavenException) => {
       if (shouldThrow) {
-        return Promise.reject(error) as Promise<void>;
+        return BluebirdPromise.reject(error) as BluebirdPromise<void>;
       }
 
-      return Promise.resolve()  as Promise<void>;
+      return BluebirdPromise.resolve()  as BluebirdPromise<void>;
     });
   }
 
@@ -403,8 +403,8 @@ export class RequestsExecutor {
       nodes = nodes.concat(leader as ServerNode);
     }
 
-    Promise.all(nodes
-      .map((node: ServerNode): Promise<void> => this
+    BluebirdPromise.all(nodes
+      .map((node: ServerNode): BluebirdPromise<void> => this
       .handleUnauthorized(node, false)))
       .then(() => setTimer());
   }

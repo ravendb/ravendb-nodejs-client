@@ -1,5 +1,5 @@
 import {RequestsExecutor} from "../../Http/Request/RequestsExecutor";
-import * as Promise from "bluebird";
+import * as BluebirdPromise from "bluebird";
 import {PromiseResolve, PromiseReject} from "../../Utility/PromiseResolver";
 import {DateUtil} from "../../Utility/DateUtil";
 import {GetOperationStateCommand} from "../Commands/GetOperationStateCommand";
@@ -13,8 +13,8 @@ export class Operations {
     this.requestsExecutor = requestsExecutor;
   }
 
-  public waitForOperationComplete(operationId: string, timeout?: number): Promise<IRavenResponse> {
-    return new Promise<null>((resolve: PromiseResolve<IRavenResponse>, reject: PromiseReject) => {
+  public waitForOperationComplete(operationId: string, timeout?: number): BluebirdPromise<IRavenResponse> {
+    return new BluebirdPromise<null>((resolve: PromiseResolve<IRavenResponse>, reject: PromiseReject) => {
       const startTime: number = DateUtil.timestamp();
       const getOperationCommand: GetOperationStateCommand = new GetOperationStateCommand(operationId);
 

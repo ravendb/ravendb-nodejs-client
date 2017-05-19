@@ -10,7 +10,7 @@ import {HiloReturnCommand} from './Commands/HiloReturnCommand';
 import {ILockDoneCallback} from '../Lock/LockCallbacks';
 import {DateUtil} from '../Utility/DateUtil';
 import {Lock} from '../Lock/Lock';
-import * as Promise from 'bluebird';
+import * as BluebirdPromise from 'bluebird';
 import {IRavenResponse} from "../Database/RavenCommandResponse";
 
 export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloKeyGenerator {
@@ -30,14 +30,14 @@ export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloK
     this._lock = Lock.getInstance();
   }
 
-  public generateDocumentKey(): Promise<string> {
-    return new Promise<string>(
+  public generateDocumentKey(): BluebirdPromise<string> {
+    return new BluebirdPromise<string>(
       (resolve: PromiseResolve<string>, reject: PromiseReject) => this
         .tryRequestNextRange(resolve, reject)
     );
   }
 
-  public returnUnusedRange(): Promise<void> {
+  public returnUnusedRange(): BluebirdPromise<void> {
     const range = this._range;
 
     return this.store.getRequestsExecutor()
@@ -47,7 +47,7 @@ export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloK
       .then((): void => {});
   }
 
-  protected getNextRange(): Promise<HiloRangeValue> {
+  protected getNextRange(): BluebirdPromise<HiloRangeValue> {
     return this.store.getRequestsExecutor().execute(new HiloNextCommand(
       this.tag, this._lastBatchSize, this._lastRangeAt,
       this.identityPartsSeparator, this._range.maxId

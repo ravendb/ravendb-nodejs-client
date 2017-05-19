@@ -3,26 +3,29 @@
 
 import {expect} from 'chai';
 import {DocumentStore} from '../../src/Documents/DocumentStore';
-import * as Promise from 'bluebird';
+import * as BluebirdPromise from 'bluebird';
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {IRavenObject} from "../../src/Database/IRavenObject";
 
 describe('Document load test', () => {
   let store: IDocumentStore;
+  let document: IRavenObject;
+  let documents: IRavenObject[];
+  let session: IDocumentSession;
   let defaultDatabase: string, defaultUrl: string;
 
   beforeEach(function(): void {
     ({defaultDatabase, defaultUrl} = (this.currentTest as IRavenObject));
   });
 
-  beforeEach((done: MochaDone) => {
+  beforeEach(async () => {
     store = DocumentStore.create(defaultUrl, defaultDatabase);
     store.initialize();
 
-    const session: IDocumentSession = store.openSession();
+    session = store.openSession();
 
-    Promise.all([
+    await Promise.all([
       session.store(session.create({_id: 'products/101', name: 'test'}, 'product')),
       session.store(session.create({_id: 'orders/10', name: 'test'}, 'order')),
       session.store(session.create({
@@ -32,75 +35,55 @@ describe('Document load test', () => {
         product_id: 'products/101'
       }, 'order')),
       session.store(session.create({_id: 'company/1', name: 'test', product: {name: 'testing_nested'}}, 'company'))
-    ]).then(() => done());
+    ]);
   });
 
   describe('Document Load', () => {
-    it('should load existing document', (done: MochaDone) => {
-      const session: IDocumentSession = store.openSession();
+    it('should load existing document', async () => {
+      session = store.openSession();
+      document = await session.load("products/101");
 
-      session.load("products/101")
-        .then((document: IRavenObject) => {
-          expect(document['@metadata']['@object_type']).to.equals('product');
-          expect(document.name).to.equals('test');
-          done();
-        });
+      expect(document['@metadata']['@object_type']).to.equals('product');
+      expect(document.name).to.equals('test');
     });
 
-    it('should not load missing document', (done: MochaDone) => {
-      const session: IDocumentSession = store.openSession();
+    it('should not load missing document', async () => {
+      session = store.openSession();
+      document = await session.load("products/0");
 
-      session.load("products/0" as string)
-        .then((document: IRavenObject) => {
-          expect(document.name).to.equals(null);
-          done();
-        });
+      expect(document.name).to.equals(null);      
     });
 
-    it('should load few documents', (done: MochaDone) => {
-      const session: IDocumentSession = store.openSession();
-
-      session.load(["products/101", "products/10"])
-        .then((document: IRavenObject[]) => {
-          expect(document).to.have.lengthOf(2);
-          done();
-        });
+    it('should load few documents', async () => {
+      session = store.openSession();
+      documents = await session.load(["products/101", "products/10"]);
+      
+      expect(documents).to.have.lengthOf(2);
     });
 
-    it('should load few documents with duplicate id', (done: MochaDone) => {
-      const session: IDocumentSession = store.openSession();
+    it('should load few documents with duplicate id', async () => {
+      session = store.openSession();
+      documents = await session.load(["products/101", "products/101", "products/101"]);
 
-      session.load(["products/101", "products/101", "products/101"])
-        .then((document: IRavenObject[]) => {
-          expect(document).to.have.lengthOf(3);
-
-          for (let key of document) {
-            expect(key.name).not.to.equals(null);
-          }
-
-          done();
-        });
+      expect(documents).to.have.lengthOf(3);
+      for (let document of documents) {
+        expect(document.name).not.to.equals(null);
+      }
     });
 
-    it('should load track entity', (done: MochaDone) => {
-      const session: IDocumentSession = store.openSession();
+    it('should load track entity', async () => {
+      session = store.openSession();
+      document = await session.load("products/101");
 
-      session.load("products/101" as string)
-        .then((document: IRavenObject) => {
-          expect(document).to.be.an('object');
-          done();
-        });
+      expect(document).to.be.an('object');
     });
 
-    it('should key of document be an object', (done: MochaDone) => {
-      const session: IDocumentSession = store.openSession();
+    it('should key of document be an object', async () => {
+      session = store.openSession();
+      document = await session.load("company/1");
 
-      session.load("company/1"  as string)
-        .then((document: IRavenObject) => {
-          expect(document.product).to.be.an('object');
-          expect(document['@metadata']['@object_type']).to.equals('company');
-          done();
-        });
+      expect(document.product).to.be.an('object');
+      expect(document['@metadata']['@object_type']).to.equals('company');
     })
   });
 });

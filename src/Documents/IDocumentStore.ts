@@ -2,7 +2,6 @@ import {IDocumentSession} from "./Session/IDocumentSession";
 import {RequestsExecutor} from '../Http/Request/RequestsExecutor';
 import {DocumentConventions, DocumentConstructor} from './Conventions/DocumentConventions';
 import {EntityKeyCallback} from '../Utility/Callbacks';
-import * as Promise from 'bluebird';
 import {Operations} from "../Database/Operations/Operations";
 
 export interface IDocumentStore {

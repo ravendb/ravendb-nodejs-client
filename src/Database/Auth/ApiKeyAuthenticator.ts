@@ -1,5 +1,5 @@
 import {Box, Random, Key} from 'sodium';
-import * as Promise from 'bluebird';
+import * as BluebirdPromise from 'bluebird';
 import * as RequestPromise from 'request-promise';
 import {IHeaders} from "../../Http/IHeaders";
 import {AuthenticationException} from "../DatabaseExceptions";
@@ -21,9 +21,9 @@ export class ApiKeyAuthenticator {
     [url: string]: Buffer
   };
 
-  public authenticate(url: string, apiKey: string, headers: IHeaders): Promise<Buffer> {
+  public authenticate(url: string, apiKey: string, headers: IHeaders): BluebirdPromise<Buffer> {
     if (!apiKey) {
-      return Promise.reject(new AuthenticationException('Api key is empty')) as Promise<Buffer>;
+      return BluebirdPromise.reject(new AuthenticationException('Api key is empty')) as BluebirdPromise<Buffer>;
     }
 
     let name: string, secret: string;
@@ -31,7 +31,7 @@ export class ApiKeyAuthenticator {
 
     [name, secret] = apiKey.split('/', 2);
 
-    const tryAuthenticate: () => Promise<IResponse> = () => this.getServerPublicKey(url)
+    const tryAuthenticate: () => BluebirdPromise<IResponse> = () => this.getServerPublicKey(url)
       .then((receivedKey: Buffer) => {
         const request: IAuthServerRequest = this.buildServerRequest(secret, receivedKey);
 
@@ -46,7 +46,7 @@ export class ApiKeyAuthenticator {
             apiKey: name
           }
         })
-        .catch(() => Promise.reject(new AuthenticationException('Bad response from server')))
+        .catch(() => BluebirdPromise.reject(new AuthenticationException('Bad response from server')))
         .then((response: IResponse) => {
           const code: StatusCode = response.statusCode;
 
@@ -59,7 +59,7 @@ export class ApiKeyAuthenticator {
           if (![StatusCodes.Forbidden, StatusCodes.Ok,
               StatusCodes.InternalServerError].includes(code)
           ) {
-            return Promise.reject(new AuthenticationException('Bad response from server')) as Promise<IResponse>;
+            return BluebirdPromise.reject(new AuthenticationException('Bad response from server')) as BluebirdPromise<IResponse>;
           }
 
           secretKey = request.secretKey;
@@ -73,7 +73,7 @@ export class ApiKeyAuthenticator {
         const body: IRavenObject = response.body;
 
         if (body.Error) {
-          return Promise.reject(new AuthenticationException(body.Error)) as Promise<Buffer>;
+          return BluebirdPromise.reject(new AuthenticationException(body.Error)) as BluebirdPromise<Buffer>;
         }
 
         const sodiumBox: Box = new Box(publicKey, secretKey);
@@ -86,9 +86,9 @@ export class ApiKeyAuthenticator {
       });
   }
 
-  protected getServerPublicKey(url: string): Promise<Buffer> {
+  protected getServerPublicKey(url: string): BluebirdPromise<Buffer> {
     if (url in this._serverPublicKeys) {
-      return Promise.resolve(this._serverPublicKeys[url]) as Promise<Buffer>;
+      return BluebirdPromise.resolve(this._serverPublicKeys[url]) as BluebirdPromise<Buffer>;
     }
 
     return RequestPromise({
@@ -97,14 +97,14 @@ export class ApiKeyAuthenticator {
       resolveWithFullResponse: true,
       uri: StringUtil.format('{0}/api-key/public-key')
     })
-    .catch(() => Promise.reject(new AuthenticationException('Bad response from server')))
+    .catch(() => BluebirdPromise.reject(new AuthenticationException('Bad response from server')))
     .then((response: IResponse) => {
       let publicKey: Buffer, body: IResponseBody;
 
       if (!StatusCodes.isOk(response.statusCode)
         && !TypeUtil.isObject(body = response.body as IResponseBody) && !body.PublicKey
       ) {
-        return Promise.reject(new AuthenticationException(`Bad response from server when \ 
+        return BluebirdPromise.reject(new AuthenticationException(`Bad response from server when \ 
 trying to get public key`));
       }
 
@@ -112,11 +112,11 @@ trying to get public key`));
         publicKey = new Buffer(atob(body.PublicKey));
         this._serverPublicKeys[url] = publicKey;
       } catch (exception) {
-        return Promise.reject(new AuthenticationException(`Error decoding public key: ${exception.message}`));
+        return BluebirdPromise.reject(new AuthenticationException(`Error decoding public key: ${exception.message}`));
       }
 
       return publicKey;
-    }) as Promise<Buffer>;
+    }) as BluebirdPromise<Buffer>;
   }
 
   protected buildServerRequest(secret: string, serverPublicKey: Buffer): IAuthServerRequest {

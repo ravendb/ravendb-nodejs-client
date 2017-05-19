@@ -2,7 +2,7 @@
 /// <reference path="../../node_modules/@types/chai/index.d.ts" />
 
 import * as _ from 'lodash';
-import * as Promise from 'bluebird';
+import * as BluebirdPromise from 'bluebird';
 import {expect} from 'chai';
 import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
 import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand";
@@ -48,7 +48,7 @@ describe('DocumentSession', () => {
     operations = new Operations(requestsExecutor);
 
     requestsExecutor.execute(new PutIndexesCommand(indexSort))
-      .then(() => Promise.all(_.range(0, 100).map((i) => requestsExecutor
+      .then(() => BluebirdPromise.all(_.range(0, 100).map((i) => requestsExecutor
         .execute(new PutDocumentCommand(`testing/${i}`, {
           Name: `test${i}`, DocNumber: i,
           '@metadata': {"@collection": "Testings"}
