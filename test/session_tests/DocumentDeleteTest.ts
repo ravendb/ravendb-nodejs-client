@@ -16,49 +16,46 @@ describe('Document delete test', () => {
     ({defaultDatabase, defaultUrl} = (this.currentTest as IRavenObject));
   });
 
-  beforeEach((done: MochaDone) => {
+  beforeEach((): Promise<any> => {
     store = DocumentStore.create(defaultUrl, defaultDatabase);
     store.initialize();
     const session: IDocumentSession = store.openSession();
 
-    BluebirdPromise.all([
+    return Promise.all([
       session.store(session.create({_id: 'products/101', name: 'test'}, 'product')),
       session.store(session.create({_id: 'products/10', name: 'test'}, 'product')),
       session.store(session.create({_id: 'products/106', name: 'test'}, 'product')),
       session.store(session.create({_id: 'products/107', name: 'test'}, 'product'))
-    ])
-    .then((): void => done());
+    ]);
   });
 
   describe('Document delete', () => {
-    it('should delete with key and save session', (done: MochaDone) => {
-      const string: string = "products/101";
+    it('should delete with key and save session', (): Promise<any> => {
+      const key: string = "products/101";
 
-      store.openSession().delete(string)
-        .then((): BluebirdPromise.Thenable<IRavenObject> =>
-          store.openSession().load(string)
+      return store.openSession().delete(key)
+        .then((): Promise<IRavenObject> =>
+          store.openSession().load(key)
         )
         .then((document: IRavenObject): void => {
             expect(document).not.to.exist;
-            done();
         });
     });
 
-    it('should delete after change', (done: MochaDone) => {
+    it('should delete after change', (): Promise<any> => {
       const key: string = "products/106";
 
-      store.openSession().load(key)
+      return store.openSession().load(key)
         .then((document: IRavenObject): Promise<IRavenObject> => {
           document.name = 'testing';
 
-          return store.openSession().delete<IRavenObject>(key);
+          return store.openSession().delete(key);
         })
         .then((document: IRavenObject): Promise<IRavenObject> =>
           store.openSession().load(key)
         )
         .then((document: IRavenObject) => {
           expect(document).not.to.exist;
-          done();
         });
     });
   })
