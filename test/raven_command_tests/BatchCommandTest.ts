@@ -2,7 +2,7 @@
 /// <reference path="../../node_modules/@types/chai/index.d.ts" />
 
 import {expect} from 'chai';
-import * as Promise from 'bluebird';
+import * as BluebirdPromise from 'bluebird';
 import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
 import {BatchCommand} from "../../src/Database/Commands/BatchCommand";
 import {PatchRequest} from "../../src/Http/Request/PatchRequest";
@@ -51,7 +51,7 @@ describe('Batch command test', () => {
     it('should be a scripted patch', (done: MochaDone) => {
       requestsExecutor
         .execute(new BatchCommand([putCommand1, scriptedPatchCommand]))
-        .then((): Promise.Thenable<IRavenResponse> => requestsExecutor
+        .then((): BluebirdPromise.Thenable<IRavenResponse> => requestsExecutor
         .execute(new GetDocumentCommand('products/999')))
         .then((result: IRavenResponse) => {
           expect((result).Results[0].Name).to.equals('testing');

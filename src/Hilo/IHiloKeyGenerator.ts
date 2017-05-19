@@ -1,6 +1,6 @@
-import * as Promise from 'bluebird';
+import * as BluebirdPromise from 'bluebird';
 
 export interface IHiloKeyGenerator {
-  generateDocumentKey(...args: (object | string | string)[]): Promise<string>;
-  returnUnusedRange(): Promise<void>;
+  generateDocumentKey(...args: (object | string | string)[]): BluebirdPromise<string>;
+  returnUnusedRange(): BluebirdPromise<void>;
 }

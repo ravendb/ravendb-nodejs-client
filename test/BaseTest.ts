@@ -1,7 +1,7 @@
 /// <reference path="../node_modules/@types/mocha/index.d.ts" />
 /// <reference path="../node_modules/@types/chai/index.d.ts" />
 
-import * as Promise from 'bluebird';
+import * as BluebirdPromise from 'bluebird';
 import * as _ from 'lodash';
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
@@ -45,7 +45,7 @@ beforeEach(function(done: MochaDone): void {
       new DatabaseDocument(defaultDatabase, {"Raven/DataDir": "test"})
     )
   )
-  .then((): Promise.Thenable<IRavenResponse> => requestsExecutor.execute(
+  .then((): BluebirdPromise.Thenable<IRavenResponse> => requestsExecutor.execute(
     new PutIndexesCommand(index)
   ))
   .then((): void => {

@@ -14,7 +14,7 @@ import {QueryString} from "../../Http/QueryString";
 import {ArrayUtil} from "../../Utility/ArrayUtil";
 import {QueryOperators, QueryOperator} from "./QueryOperator";
 import {DocumentConventions, DocumentConstructor} from "../Conventions/DocumentConventions";
-import * as Promise from 'bluebird'
+import * as BluebirdPromise from 'bluebird'
 import * as moment from "moment";
 import {IndexQuery} from "../../Database/Indexes/IndexQuery";
 import {IRavenObject} from "../../Database/IRavenObject";
@@ -202,10 +202,10 @@ export class DocumentQuery<T> implements IDocumentQuery<T> {
     return this;
   }
 
-  public get(callback?: QueryResultsCallback<T[]>): Promise<T[]>;
-  public get(callback?: QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<QueryResultsWithStatistics<T>>;
-  public get(callback?: QueryResultsCallback<T[]> | QueryResultsCallback<QueryResultsWithStatistics<T>>)
-    : Promise<T[]> | Promise<QueryResultsWithStatistics<T>> {
+  public async get(callback?: QueryResultsCallback<T[]>): Promise<T[]>;
+  public async get(callback?: QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<QueryResultsWithStatistics<T>>;
+  public async get(callback?: QueryResultsCallback<T[]> | QueryResultsCallback<QueryResultsWithStatistics<T>>)
+    : Promise<T[] | QueryResultsWithStatistics<T>> {
     const responseToDocuments: (response: IRavenResponse, resolve: PromiseResolve<T[]>
       | PromiseResolve<QueryResultsWithStatistics<T>>) => void = (response: IRavenResponse,
       resolve: PromiseResolve<T[]> | PromiseResolve<QueryResultsWithStatistics<T>>) => {
@@ -286,7 +286,7 @@ export class DocumentQuery<T> implements IDocumentQuery<T> {
     return this;
   }
 
-  protected executeQuery(): Promise<IRavenResponse> {
+  protected executeQuery(): BluebirdPromise<IRavenResponse> {
     const queryOptions: IOptionsSet = {
       sort_hints: this.sortHints,
       sort_fields: this.sortFields,
@@ -302,7 +302,7 @@ export class DocumentQuery<T> implements IDocumentQuery<T> {
     const query: IndexQuery = new IndexQuery(this.queryBuilder, 0, 0, this.usingDefaultOperator, queryOptions);
     const queryCommand: QueryCommand = new QueryCommand(this.indexName, query, conventions, this.includes);
 
-    return new Promise<IRavenResponse>((resolve: PromiseResolve<IRavenResponse>, reject: PromiseReject) => {
+    return new BluebirdPromise<IRavenResponse>((resolve: PromiseResolve<IRavenResponse>, reject: PromiseReject) => {
       const request = () => {
         this.requestsExecutor.execute(queryCommand)
           .catch((error: Error) => reject(error))

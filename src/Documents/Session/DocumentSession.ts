@@ -1,3 +1,5 @@
+import * as _ from 'lodash';
+import * as BluebirdPromise from 'bluebird'
 import {IDocumentSession} from "./IDocumentSession";
 import {IDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
 import {DocumentQuery} from "./DocumentQuery";
@@ -6,8 +8,6 @@ import {RequestsExecutor} from '../../Http/Request/RequestsExecutor';
 import {DocumentConventions, DocumentConstructor} from '../Conventions/DocumentConventions';
 import {EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
 import {PromiseResolver} from '../../Utility/PromiseResolver';
-import * as _ from 'lodash';
-import * as Promise from 'bluebird'
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {InvalidOperationException, DocumentDoesNotExistsException, RavenException} from "../../Database/DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
@@ -16,8 +16,8 @@ import {IRavenResponse} from "../../Database/RavenCommandResponse";
 import {DeleteDocumentCommand} from "../../Database/Commands/DeleteDocumentCommand";
 import {PutDocumentCommand} from "../../Database/Commands/PutDocumentCommand";
 import {QueryOperator} from "./QueryOperator";
-import {Serializer} from "../../Json/Serializer";
 import {IRavenObject} from "../../Database/IRavenObject";
+import {Serializer} from "../../Json/Serializer";
 
 export class DocumentSession implements IDocumentSession {
   protected database: string;
@@ -55,76 +55,50 @@ export class DocumentSession implements IDocumentSession {
     return document as T;
   }
 
-  public load<T extends Object = IRavenObject>(keyOrKeys: string, documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntityCallback<T>): Promise<T>;
-  public load<T extends Object = IRavenObject>(keyOrKeys: string[], documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntitiesArrayCallback<T>): Promise<T[]>;
-  public load<T extends Object = IRavenObject>(keyOrKeys: string | string[], documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes: IRavenObject<DocumentConstructor> = {}, callback?: EntityCallback<T>
+  public async load<T extends Object = IRavenObject>(keyOrKeys: string, documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntityCallback<T>): Promise<T>;
+  public async load<T extends Object = IRavenObject>(keyOrKeys: string[], documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntitiesArrayCallback<T>): Promise<T[]>;
+  public async load<T extends Object = IRavenObject>(keyOrKeys: string | string[], documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes: IRavenObject<DocumentConstructor> = {}, callback?: EntityCallback<T>
     | EntitiesArrayCallback<T>
-  ): Promise<T> | Promise<T[]> {
+  ): Promise<T | T[]> {
+    return this.loadDocument<T>(keyOrKeys, documentTypeOrObjectType, includes, nestedObjectTypes)
+      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback))
+      .then((results: T | T[]): T | T[] =>  {
+        PromiseResolver.resolve<T | T[]>(results, null, callback);
+        return results;
+      });
+  }
+
+  public async delete<T extends Object = IRavenObject>(keyOrEntity: string, callback?: EntityCallback<T>): Promise<T>;
+  public async delete<T extends Object = IRavenObject>(keyOrEntity: T, callback?: EntityCallback<T>): Promise<T>;
+  public async delete<T extends Object = IRavenObject>(keyOrEntity: string | T, callback?: EntityCallback<T>): Promise<T> {
     this.incrementRequestsCount();
 
-    return this.requestsExecutor
-      .execute(new GetDocumentCommand(keyOrKeys, includes))
-      .then((response: IRavenResponse) => {
-        let responseResults: object[];
-        const commandResponse: IRavenResponse = response;
-        const conventions: DocumentConventions = this.documentStore.conventions;
-        const objectType: DocumentConstructor<T> | null = conventions.tryGetObjectType(documentTypeOrObjectType);
+    return this.prefetchDocument<T>(keyOrEntity)
+      .then((document: T) => {
+        let etag: number | null = null;
+        const conventions = this.conventions;
+        const metadata: object = document['@metadata'];
+        const key: string = conventions.tryGetIdFromInstance(document);
 
-        if (_.isEmpty(keyOrKeys)) {
-          return Promise.reject(new InvalidOperationException('Document key isn\'t set or keys list is empty'));
+        if ('Raven-Read-Only' in metadata) {
+          return BluebirdPromise.reject(new InvalidOperationException('Document is marked as read only and cannot be deleted'));
         }
 
-        if (includes && !TypeUtil.isArray(includes)) {
-          includes = _.isString(includes) ? [includes as string] : null;
+        if (conventions.defaultUseOptimisticConcurrency) {
+          etag = metadata['@tag'] || null;
         }
 
-        if (!(responseResults = commandResponse.Results) || (responseResults.length <= 0)) {
-          return Promise.reject(new DocumentDoesNotExistsException('Requested document(s) doesn\'t exists'));
-        }
-
-        const results = responseResults.map((result: object) => this
-          .conventions.tryConvertToDocument<T>(result, objectType, nestedObjectTypes)
-          .document as T);
-
-        const result: T | T[] = TypeUtil.isArray(keyOrKeys)
-          ? _.first(results) as T
-          : results as T[];
-
-        PromiseResolver.resolve<T | T[]>(result as T | T[], null, callback);
-        return result;
+        return this.requestsExecutor
+          .execute(new DeleteDocumentCommand(key, etag))
+          .then(() => {
+            PromiseResolver.resolve<T>(document, null, callback);
+            return document as T;
+          }) as BluebirdPromise<T>;
       })
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
-  public delete<T extends Object = IRavenObject>(keyOrEntity: string | T, callback?: EntityCallback<T>): Promise<T> {
-    this.incrementRequestsCount();
-
-    return this.prefetchDocument<T>(keyOrEntity)
-    .then((document: T) => {
-      let etag: number | null = null;
-      const conventions = this.conventions;
-      const metadata: object = document['@metadata'];
-      const key: string = conventions.tryGetIdFromInstance(document);
-
-      if ('Raven-Read-Only' in metadata) {
-        return Promise.reject(new InvalidOperationException('Document is marked as read only and cannot be deleted'));
-      }
-
-      if (conventions.defaultUseOptimisticConcurrency) {
-        etag = metadata['@tag'] || null;
-      }
-
-      return this.requestsExecutor
-        .execute(new DeleteDocumentCommand(key, etag))
-        .then(() => {
-          PromiseResolver.resolve<T>(document, null, callback);
-          return document as T;
-        }) as Promise<T>;
-    })
-    .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
-  }
-
-  public store<T extends Object = IRavenObject>(entity: T, key?: string, etag?: number, forceConcurrencyCheck?: boolean,
+  public async store<T extends Object = IRavenObject>(entity: T, key?: string, etag?: number, forceConcurrencyCheck?: boolean,
      callback?: EntityCallback<T>
   ): Promise<T> {
     this.incrementRequestsCount();
@@ -194,20 +168,55 @@ more responsive application.", maxRequests
     }
   }
 
-  protected prefetchDocument<T extends Object = IRavenObject>(keyOrEntity: string | T, documentTypeOrObjectType?: string | DocumentConstructor<T>): Promise<T> {
-    return TypeUtil.isString(keyOrEntity)
-      ? this.load(keyOrEntity as string, documentTypeOrObjectType)
-      : Promise.resolve(keyOrEntity) as Promise<T>;
+  protected loadDocument<T extends Object = IRavenObject>(keyOrKeys: string | string[], documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): BluebirdPromise<T | T[]> {
+    this.incrementRequestsCount();
+
+    return this.requestsExecutor
+      .execute(new GetDocumentCommand(keyOrKeys, includes))
+      .then((response: IRavenResponse) => {
+        let responseResults: object[];
+        const commandResponse: IRavenResponse = response;
+        const conventions: DocumentConventions = this.documentStore.conventions;
+        const objectType: DocumentConstructor<T> | null = conventions.tryGetObjectType(documentTypeOrObjectType);
+
+        if (_.isEmpty(keyOrKeys)) {
+          return BluebirdPromise.reject(new InvalidOperationException('Document key isn\'t set or keys list is empty'));
+        }
+
+        if (includes && !TypeUtil.isArray(includes)) {
+          includes = _.isString(includes) ? [includes as string] : null;
+        }
+
+        if (!(responseResults = commandResponse.Results) || (responseResults.length <= 0)) {
+          return BluebirdPromise.reject(new DocumentDoesNotExistsException('Requested document(s) doesn\'t exists'));
+        }
+
+        const results = responseResults.map((result: object) => this
+          .conventions.tryConvertToDocument<T>(result, objectType, nestedObjectTypes)
+          .document as T);
+
+        const result: T | T[] = TypeUtil.isArray(keyOrKeys)
+          ? _.first(results) as T
+          : results as T[];
+
+        return result;
+      });
   }
 
-  protected prepareDocumentToStore<T extends Object = IRavenObject>(entity: T, key?: string, etag?: number, forceConcurrencyCheck?: boolean): Promise<T> {
+  protected prefetchDocument<T extends Object = IRavenObject>(keyOrEntity: string | T, documentTypeOrObjectType?: string | DocumentConstructor<T>): BluebirdPromise<T> {
+    return <BluebirdPromise<T>>(!TypeUtil.isString(keyOrEntity) 
+        ? BluebirdPromise.resolve<T>(keyOrEntity as T)
+        : this.loadDocument<T>(keyOrEntity as string, documentTypeOrObjectType));
+  }
+
+  protected prepareDocumentToStore<T extends Object = IRavenObject>(entity: T, key?: string, etag?: number, forceConcurrencyCheck?: boolean): BluebirdPromise<T> {
     if (!entity || !TypeUtil.isObject(entity)) {
-      return Promise.reject(
+      return BluebirdPromise.reject(
         new InvalidOperationException('Document must be set and be an insstance of object')
-      ) as Promise<T>;
+      ) as BluebirdPromise<T>;
     }
 
-    return Promise.resolve(entity)
+    return BluebirdPromise.resolve(entity)
       .then((entity: T) => {
         entity['@metadata']['force_concurrency_check'] = forceConcurrencyCheck || false;
 

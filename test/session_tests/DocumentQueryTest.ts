@@ -4,7 +4,7 @@
 
 import {expect} from 'chai';
 import * as _ from 'lodash';
-import * as Promise from 'bluebird';
+import * as BluebirdPromise from 'bluebird';
 import {DocumentStore} from '../../src/Documents/DocumentStore';
 import {IDocumentQuery} from '../../src/Documents/Session/IDocumentQuery';
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
@@ -46,10 +46,10 @@ describe('Document query test', () => {
 
     store.getRequestsExecutor()
       .execute(new PutIndexesCommand(indexSort))
-      .then((): Promise.Thenable<object> => {
+      .then((): BluebirdPromise.Thenable<object> => {
         session = store.openSession();
 
-        return Promise.all([
+        return BluebirdPromise.all([
           session.store(session.create({name: 'test101', key: 2, order: 'a'}, 'product'), 'products/101'),
           session.store(session.create({name: 'test10', key: 3, order: 'test'}, 'product'), 'products/10'),
           session.store(session.create({name: 'test106', key: 4, order: 'c'}, 'product'), 'products/106'),
@@ -207,7 +207,7 @@ describe('Document query test', () => {
           waitForNonStaleResults: true, 
           includes: ['product_id']
         }).where({'key': 92}).get().then(() => {
-          (session.load("product/108") as Promise<IRavenObject>)
+          session.load("product/108")
             .then(() => {
               expect(session.numberOfRequestsInSession).to.equals(1);
               done();

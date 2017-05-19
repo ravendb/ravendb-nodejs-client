@@ -3,7 +3,7 @@ import {Box, Random, Key} from 'sodium';
 import * as _ from 'lodash';
 import * as uuid from 'uuid';
 import * as moment from 'moment';
-import * as Promise from 'bluebird';
+import * as BluebirdPromise from 'bluebird';
 import * as pluralize from 'pluralize';
 import * as AsyncLock from 'async-lock';
 import * as Request from 'request';

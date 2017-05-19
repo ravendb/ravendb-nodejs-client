@@ -2,7 +2,7 @@
 /// <reference path="../../node_modules/@types/chai/index.d.ts" />
 
 import {expect} from 'chai';
-import * as Promise from 'bluebird';
+import * as BluebirdPromise from 'bluebird';
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
 import {IDocumentQuery} from "../../src/Documents/Session/IDocumentQuery";
@@ -48,7 +48,7 @@ describe('Document full text search', () => {
       .then(() => {
         const session: IDocumentSession = store.openSession();
 
-        return Promise.all([
+        return BluebirdPromise.all([
           session.store(session.create({
             artist: 'Tania Maria',
             track_id: 'TRALPJJ128F9311763',

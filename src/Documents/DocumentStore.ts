@@ -8,7 +8,7 @@ import {InvalidOperationException, RavenException} from '../Database/DatabaseExc
 import {IHiloKeyGenerator} from '../Hilo/IHiloKeyGenerator';
 import {HiloMultiDatabaseKeyGenerator} from '../Hilo/HiloMultiDatabaseKeyGenerator';
 import * as uuid from 'uuid';
-import * as Promise from 'bluebird';
+import * as BluebirdPromise from 'bluebird';
 import {IRavenObject} from "../Database/IRavenObject";
 import {Operations} from "../Database/Operations/Operations";
 import {PromiseResolver} from "../Utility/PromiseResolver";
@@ -80,7 +80,7 @@ export class DocumentStore implements IDocumentStore {
     return this;
   }
 
-  public finalize(): Promise<IDocumentStore> {
+  public async finalize(): Promise<IDocumentStore> {
     return this.generator.returnUnusedRange()
       .then((): IDocumentStore => this);
   }
@@ -95,7 +95,7 @@ export class DocumentStore implements IDocumentStore {
     return new DocumentSession(dbName, this, executor, this.sessionId, forceReadFromMaster);
   }
 
-  public generateId(entity: object, documentTypeOrObjectType?: string | DocumentConstructor, database?: string, callback?: EntityKeyCallback): Promise<string> {
+  public async generateId(entity: object, documentTypeOrObjectType?: string | DocumentConstructor, database?: string, callback?: EntityKeyCallback): Promise<string> {
     let documentType: string = documentTypeOrObjectType as string;
 
     if (!TypeUtil.isString(documentType)) {
