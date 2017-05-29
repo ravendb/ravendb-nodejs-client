@@ -3,7 +3,7 @@ import {RavenCommandData} from '../../RavenCommandData';
 import {RequestMethods} from "../../../Http/Request/RequestMethod";
 import {IJsonSerializable} from "../../../Json/IJsonSerializable";
 import {PatchRequest} from "../../../Http/Request/PatchRequest";
-import {IRavenObject} from "../../../Database/IRavenObject";
+import {IRavenObject} from "../../IRavenObject";
 import {TypeUtil} from "../../../Utility/TypeUtil";
 
 export class PatchCommandData extends RavenCommandData implements IJsonSerializable {

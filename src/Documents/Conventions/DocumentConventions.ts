@@ -10,9 +10,19 @@ import {IRavenObject} from "../../Database/IRavenObject";
 export type DocumentConstructor<T extends Object = IRavenObject> = { new(): T; };
 
 export interface IDocumentConversionResult<T extends Object = IRavenObject> {
-  document: T,
-  metadata: object,
-  originalMetadata: object
+  rawEntity: object,
+  document: T;
+  metadata: object;
+  originalMetadata: object;
+}
+
+export interface IStoredRawEntityInfo {
+  originalValue: object;
+  metadata: object;
+  originalMetadata: object;
+  key: string;
+  etag?: number | null;
+  forceConcurrencyCheck: boolean;
 }
 
 export class DocumentConventions {
@@ -56,7 +66,7 @@ export class DocumentConventions {
 
   public tryConvertToDocument<T extends Object = IRavenObject>(rawEntity: object, objectType?: DocumentConstructor<T>, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): IDocumentConversionResult<T> {
     const metadata: object = _.get(rawEntity, '@metadata') || {};
-    const originalMetadata: object = _.clone(metadata);
+    const originalMetadata: object = _.cloneDeep(metadata);
     const idProperty: string = this.idPropertyName;
     const documentAttributes: object = _.omit(rawEntity, '@metadata');
     let document: T = Serializer.fromJSON<T>(
@@ -69,6 +79,7 @@ export class DocumentConventions {
     }
 
     return {
+      rawEntity: rawEntity,
       document: document as T,
       metadata: metadata,
       originalMetadata: originalMetadata

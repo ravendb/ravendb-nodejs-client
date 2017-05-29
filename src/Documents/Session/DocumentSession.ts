@@ -5,7 +5,7 @@ import {IDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
 import {DocumentQuery} from "./DocumentQuery";
 import {IDocumentStore} from '../IDocumentStore';
 import {RequestsExecutor} from '../../Http/Request/RequestsExecutor';
-import {DocumentConventions, DocumentConstructor, IDocumentConversionResult} from '../Conventions/DocumentConventions';
+import {DocumentConventions, DocumentConstructor, IDocumentConversionResult, IStoredRawEntityInfo} from '../Conventions/DocumentConventions';
 import {EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
 import {PromiseResolver} from '../../Utility/PromiseResolver';
 import {TypeUtil} from "../../Utility/TypeUtil";
@@ -27,11 +27,11 @@ export class DocumentSession implements IDocumentSession {
   protected sessionId: string;
   protected forceReadFromMaster: boolean;
   protected documentsById: IRavenObject<IRavenObject>;
-  protected includedDocumentsByKey: IRavenObject<object>
-  protected deletedEntities: Set<IRavenObject>;
-  protected documentsByEntity: WeakMap<IRavenObject, IRavenObject>;
+  protected includedRawEntitiesByKey: IRavenObject<object>
+  protected deletedDocuments: Set<IRavenObject>;
   protected knownMissingIds: Set<string>;
   protected deferCommands: Set<RavenCommandData>;
+  protected rawEntitiesByDocument: WeakMap<IRavenObject, IStoredRawEntityInfo>;
 
   private _numberOfRequestsInSession: number;
 
@@ -52,9 +52,9 @@ export class DocumentSession implements IDocumentSession {
     this.sessionId = sessionId;
     this.forceReadFromMaster = forceReadFromMaster;
     this.documentsById = {};
-    this.includedDocumentsByKey = {};
-    this.deletedEntities = new Set<IRavenObject>();
-    this.documentsByEntity = new WeakMap<IRavenObject, IRavenObject>();
+    this.includedRawEntitiesByKey = {};
+    this.deletedDocuments = new Set<IRavenObject>();
+    this.rawEntitiesByDocument = new WeakMap<IRavenObject, IStoredRawEntityInfo>();
     this.knownMissingIds = new Set<string>();
     this.deferCommands = new Set<RavenCommandData>();
   }
@@ -298,10 +298,36 @@ more responsive application.", maxRequests
   }
 
   protected onIncludesFetched(includes: object[]): void {
+    if (includes && includes.length) {
+      includes.forEach((include: object) => {
+        const documentKey: string = include["@metadata"]["@id"];
 
+        if (!(documentKey in this.documentsById)) {
+          this.includedRawEntitiesByKey[documentKey] = include;
+        }
+      });
+    }
   }
 
-  protected onDocumentFetched<T>(conversionResult: IDocumentConversionResult<T>): void {
-    
+  protected onDocumentFetched<T>(conversionResult?: IDocumentConversionResult<T>, forceConcurrencyCheck: boolean = false): void {
+    if (conversionResult) {
+      const documentKey: string = conversionResult.originalMetadata['@id'];
+
+      if (documentKey) {
+        this.knownMissingIds.delete(documentKey);
+
+        if (!(documentKey in this.documentsById)) {
+          this.documentsById[documentKey] = conversionResult.document;
+          this.rawEntitiesByDocument.set(this.documentsById[documentKey], {
+            originalValue: _.cloneDeep(conversionResult.rawEntity),
+            originalMetadata: conversionResult.originalMetadata,
+            metadata: conversionResult.metadata,
+            etag: conversionResult.metadata['etag'] || null,
+            key: documentKey,
+            forceConcurrencyCheck: forceConcurrencyCheck
+          });
+        }
+      }
+    }
   }
 }
