@@ -5,7 +5,7 @@ import {IDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
 import {DocumentQuery} from "./DocumentQuery";
 import {IDocumentStore} from '../IDocumentStore';
 import {RequestsExecutor} from '../../Http/Request/RequestsExecutor';
-import {DocumentConventions, DocumentConstructor} from '../Conventions/DocumentConventions';
+import {DocumentConventions, DocumentConstructor, IDocumentConversionResult} from '../Conventions/DocumentConventions';
 import {EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
 import {PromiseResolver} from '../../Utility/PromiseResolver';
 import {TypeUtil} from "../../Utility/TypeUtil";
@@ -143,9 +143,23 @@ export class DocumentSession implements IDocumentSession {
       documentTypeOrObjectType = options.documentTypeOrObjectType || null;
     }
 
-    return new DocumentQuery<T>(this, this.requestsExecutor, documentTypeOrObjectType, indexName,
+    const query: DocumentQuery<T> = new DocumentQuery<T>(this, this.requestsExecutor, documentTypeOrObjectType, indexName,
       usingDefaultOperator, waitForNonStaleResults, includes, nestedObjectTypes, withStatistics
     );
+
+    query.on(
+      DocumentQuery.EVENT_DOCUMENT_FETCHED, 
+      (conversionResult: IDocumentConversionResult<T>) => 
+      this.onDocumentFetchedFromQuery<T>(conversionResult)
+    );
+
+    query.on(
+      DocumentQuery.EVENT_INCLUDES_FETCHED, 
+      (includes: object[]) => 
+      this.onIncludesFetchedFromQuery(includes)
+    );
+
+    return query;
   }
 
   public async saveChanges(): Promise<void> {
@@ -261,5 +275,13 @@ more responsive application.", maxRequests
 
         return entity;
       });
+  }
+
+  protected onIncludesFetchedFromQuery(includes: object[]): void {
+
+  }
+
+  protected onDocumentFetchedFromQuery<T>(conversionResult: IDocumentConversionResult<T>): void {
+    
   }
 }

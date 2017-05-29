@@ -6,6 +6,7 @@ import * as moment from 'moment';
 import * as BluebirdPromise from 'bluebird';
 import * as pluralize from 'pluralize';
 import * as AsyncLock from 'async-lock';
+import * as EventEmitter from 'events';
 import * as Request from 'request';
 import * as RequestPromise from 'request-promise';
 
@@ -37,6 +38,7 @@ export {IJsonSerializable} from './Json/IJsonSerializable';
 export {IRavenResponse} from './Database/RavenCommandResponse';
 export {IHeaders} from './Http/IHeaders';
 export {IResponse, IResponseBody} from './Http/Response/IResponse';
+export {CryptMessage, ICipherBox} from './Utility/Crypt';
 
 // classes
 export {RavenException, InvalidOperationException, ErrorResponseException, DocumentDoesNotExistsException, NonUniqueObjectException, FetchConcurrencyException, ArgumentOutOfRangeException, DatabaseDoesNotExistException, AuthorizationException, IndexDoesNotExistException, TimeoutException, AuthenticationException, RequestException} from './Database/DatabaseExceptions';
@@ -69,7 +71,6 @@ export {Operations} from './Database/Operations/Operations';
 export {AccessMode, AccessModes, ResourcesAccessModes} from './Database/Auth/AccessMode';
 export {ApiKeyDefinition} from './Database/Auth/ApiKeyDefinition';
 export {ApiKeyAuthenticator, IAuthServerRequest} from './Database/Auth/ApiKeyAuthenticator';
-export {CryptMessage, ICipherBox} from './Utility/Crypt';
 export {Serializer} from './Json/Serializer';
 export {DatabaseDocument} from './Database/DatabaseDocument';
 export {DocumentStore} from './Documents/DocumentStore';
