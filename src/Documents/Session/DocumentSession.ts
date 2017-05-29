@@ -13,6 +13,7 @@ import {InvalidOperationException, DocumentDoesNotExistsException, RavenExceptio
 import {StringUtil} from "../../Utility/StringUtil";
 import {GetDocumentCommand} from "../../Database/Commands/GetDocumentCommand";
 import {IRavenResponse} from "../../Database/RavenCommandResponse";
+import {RavenCommandData} from "../../Database/RavenCommandData";
 import {DeleteDocumentCommand} from "../../Database/Commands/DeleteDocumentCommand";
 import {PutDocumentCommand} from "../../Database/Commands/PutDocumentCommand";
 import {QueryOperator} from "./QueryOperator";
@@ -25,6 +26,13 @@ export class DocumentSession implements IDocumentSession {
   protected requestsExecutor: RequestsExecutor;
   protected sessionId: string;
   protected forceReadFromMaster: boolean;
+  protected documentsById: IRavenObject<IRavenObject>;
+  protected includedDocumentsByKey: IRavenObject<object>
+  protected deletedEntities: Set<IRavenObject>;
+  protected documentsByEntity: WeakMap<IRavenObject, IRavenObject>;
+  protected knownMissingIds: Set<string>;
+  protected deferCommands: Set<RavenCommandData>;
+
   private _numberOfRequestsInSession: number;
 
   public get numberOfRequestsInSession(): number {
@@ -43,6 +51,12 @@ export class DocumentSession implements IDocumentSession {
     this.requestsExecutor = requestsExecutor;
     this.sessionId = sessionId;
     this.forceReadFromMaster = forceReadFromMaster;
+    this.documentsById = {};
+    this.includedDocumentsByKey = {};
+    this.deletedEntities = new Set<IRavenObject>();
+    this.documentsByEntity = new WeakMap<IRavenObject, IRavenObject>();
+    this.knownMissingIds = new Set<string>();
+    this.deferCommands = new Set<RavenCommandData>();
   }
 
   public create<T extends Object = IRavenObject>(attributes?: object, documentTypeOrObjectType?: string | DocumentConstructor<T>, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T {
@@ -150,13 +164,13 @@ export class DocumentSession implements IDocumentSession {
     query.on(
       DocumentQuery.EVENT_DOCUMENT_FETCHED, 
       (conversionResult: IDocumentConversionResult<T>) => 
-      this.onDocumentFetchedFromQuery<T>(conversionResult)
+      this.onDocumentFetched<T>(conversionResult)
     );
 
     query.on(
       DocumentQuery.EVENT_INCLUDES_FETCHED, 
       (includes: object[]) => 
-      this.onIncludesFetchedFromQuery(includes)
+      this.onIncludesFetched(includes)
     );
 
     return query;
@@ -209,15 +223,21 @@ more responsive application.", maxRequests
           return BluebirdPromise.reject(new DocumentDoesNotExistsException('Requested document(s) doesn\'t exists'));
         }
 
-        const results = responseResults.map((result: object) => this
-          .conventions.tryConvertToDocument<T>(result, objectType, nestedObjectTypes)
-          .document as T);
+        const results: IDocumentConversionResult<T>[] = responseResults.map((result: object) => {
+          const conversionResult: IDocumentConversionResult<T> =  this
+            .conventions.tryConvertToDocument<T>(result, objectType, nestedObjectTypes);
 
-        const result: T | T[] = TypeUtil.isArray(keyOrKeys)
-          ? _.first(results) as T
-          : results as T[];
+          this.onDocumentFetched(conversionResult);  
+          return conversionResult;  
+        });
+        
+        if (commandResponse.Includes && commandResponse.Includes.length) {
+          this.onIncludesFetched(commandResponse.Includes);
+        }
 
-        return result;
+        return TypeUtil.isArray(keyOrKeys)
+          ? _.first(results).document as T
+          : results.map((result: IDocumentConversionResult<T>): T => result.document);
       });
   }
 
@@ -277,11 +297,11 @@ more responsive application.", maxRequests
       });
   }
 
-  protected onIncludesFetchedFromQuery(includes: object[]): void {
+  protected onIncludesFetched(includes: object[]): void {
 
   }
 
-  protected onDocumentFetchedFromQuery<T>(conversionResult: IDocumentConversionResult<T>): void {
+  protected onDocumentFetched<T>(conversionResult: IDocumentConversionResult<T>): void {
     
   }
 }
