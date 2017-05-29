@@ -7,7 +7,7 @@ export class SaveChangesData {
   protected deferredCommandCount: number;
   protected entities: IRavenObject[];
 
-  constructor(commands?, deferredCommandCount: number = 0, entities?: IRavenObject[]) {
+  constructor(commands?: RavenCommand[], deferredCommandCount: number = 0, entities?: IRavenObject[]) {
     this.commands = commands || [];
     this.entities = entities || [];
     this.deferredCommandCount = deferredCommandCount;
