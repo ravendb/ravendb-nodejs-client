@@ -1,4 +1,4 @@
-import {IDocumentStore} from './IDocumentStore';
+import {IDocumentStore, ITransaction, ISessionOptions} from './IDocumentStore';
 import {IDocumentSession} from "./Session/IDocumentSession";
 import {DocumentSession} from "./Session/DocumentSession";
 import {RequestsExecutor} from '../Http/Request/RequestsExecutor';
@@ -85,14 +85,42 @@ export class DocumentStore implements IDocumentStore {
       .then((): IDocumentStore => this);
   }
 
-  public openSession(database?: string, forceReadFromMaster: boolean = false): IDocumentSession {
+  public async openSession(transaction: ITransaction) : Promise<void>;
+  public async openSession(options: ISessionOptions, transaction: ITransaction) : Promise<void>;
+  public openSession(database?: string, forceReadFromMaster?: boolean) : IDocumentSession;
+  public openSession(firstArg?: string | ITransaction | ISessionOptions, secondArg?: ITransaction | boolean): IDocumentSession | Promise<void> {
     this.assertInitialize();
 
-    let dbName: string = database || this._database;
+    const transaction: ITransaction = (TypeUtil.isFunction(firstArg) 
+      ? firstArg : (TypeUtil.isFunction(secondArg) 
+      ? secondArg : null)) as ITransaction;
+
+    let opts: ISessionOptions = TypeUtil.isObject(firstArg)
+      ? (firstArg as ISessionOptions) : {forceReadFromMaster: false};
+
+    if (TypeUtil.isString(firstArg)) {
+      opts.database = firstArg as string;
+    }
+
+    if (TypeUtil.isBool(secondArg)) {
+      opts.forceReadFromMaster = secondArg as boolean;
+    }    
+
+    let dbName: string = opts.database || this._database;
     let executor: RequestsExecutor = this.getRequestsExecutor(dbName);
 
     this.sessionId = uuid();
-    return new DocumentSession(dbName, this, executor, this.sessionId, forceReadFromMaster);
+    
+    const session: IDocumentSession = new DocumentSession(dbName, this, executor, this.sessionId, opts.forceReadFromMaster);
+
+    if (!transaction) {
+      return session;
+    }
+
+    return transaction(session)
+      .then(() => session.saveChanges())
+      .then(() => this.finalize())
+      .then(() => Promise.resolve<void>(void 0));
   }
 
   public async generateId(entity: object, documentTypeOrObjectType?: string | DocumentConstructor, database?: string, callback?: EntityKeyCallback): Promise<string> {

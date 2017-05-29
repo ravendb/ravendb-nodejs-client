@@ -28,4 +28,8 @@ export class TypeUtil {
   public static isDate(value: any): boolean {
     return _.isDate(value);
   }
+
+  public static isBool(value: any): boolean {
+    return _.isBoolean(value);
+  }
 }

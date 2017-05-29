@@ -148,6 +148,10 @@ export class DocumentSession implements IDocumentSession {
     );
   }
 
+  public async saveChanges(): Promise<void> {
+    return Promise.resolve();
+  }
+
   public incrementRequestsCount(): void {
     const maxRequests: number = this.conventions.maxNumberOfRequestPerSession;
 
