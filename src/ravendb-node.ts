@@ -85,6 +85,7 @@ export {ServerNode} from './Http/ServerNode';
 export {Topology} from './Http/Topology';
 export {QueryString} from './Http/QueryString';
 export {Lock} from './Lock/Lock';
+export {Observable} from './Utility/Observable';
 export {DateUtil} from './Utility/DateUtil';
 export {StringUtil} from './Utility/StringUtil';
 export {ArrayUtil} from './Utility/ArrayUtil';

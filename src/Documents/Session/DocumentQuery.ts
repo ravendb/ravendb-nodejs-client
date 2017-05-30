@@ -16,17 +16,17 @@ import {QueryOperators, QueryOperator} from "./QueryOperator";
 import {DocumentConventions, DocumentConstructor, IDocumentConversionResult} from "../Conventions/DocumentConventions";
 import * as BluebirdPromise from 'bluebird'
 import * as moment from "moment";
-import * as EventEmitter from "events";
 import {IndexQuery} from "../../Database/Indexes/IndexQuery";
 import {IRavenObject} from "../../Database/IRavenObject";
 import {IOptionsSet} from "../../Utility/IOptionsSet";
 import {QueryCommand} from "../../Database/Commands/QueryCommand";
 import {TypeUtil} from "../../Utility/TypeUtil";
+import {Observable} from "../../Utility/Observable";
 import {ArgumentOutOfRangeException, InvalidOperationException, ErrorResponseException, RavenException} from "../../Database/DatabaseExceptions";
 
 export type QueryResultsWithStatistics<T> = {results: T[], response: IRavenResponse};
 
-export class DocumentQuery<T> extends EventEmitter implements IDocumentQuery<T> {
+export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   public static readonly EVENT_DOCUMENT_FETCHED = 'fetched:document';
   public static readonly EVENT_INCLUDES_FETCHED = 'fetched:includes';
 
@@ -227,11 +227,18 @@ export class DocumentQuery<T> extends EventEmitter implements IDocumentQuery<T> 
               .tryConvertToDocument<T>(result, this.objectType, this.nestedObjectTypes || {});
 
           results.push(conversionResult.document);
-          this.emit(DocumentQuery.EVENT_DOCUMENT_FETCHED, result);
+
+          this.emit<IDocumentConversionResult<T>>(
+            DocumentQuery.EVENT_DOCUMENT_FETCHED, 
+            conversionResult
+          );
         });
        
         if (commandResponse.Includes && commandResponse.Includes.length) {
-          this.emit(DocumentQuery.EVENT_INCLUDES_FETCHED, commandResponse.Includes);
+          this.emit<object[]>(
+            DocumentQuery.EVENT_INCLUDES_FETCHED, 
+            commandResponse.Includes as object[]
+          );
         }
 
         if (this.withStatistics) {

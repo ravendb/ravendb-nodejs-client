@@ -3,6 +3,7 @@ node_modules/
 lib/
 dist/
 .build/
+tryouts/*.js
 .DS_Store
 .tscache
 .settings

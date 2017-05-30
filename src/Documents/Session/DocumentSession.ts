@@ -31,7 +31,7 @@ export class DocumentSession implements IDocumentSession {
   protected deletedDocuments: Set<IRavenObject>;
   protected knownMissingIds: Set<string>;
   protected deferCommands: Set<RavenCommandData>;
-  protected rawEntitiesByDocument: WeakMap<IRavenObject, IStoredRawEntityInfo>;
+  protected rawEntitiesAndMetadata: WeakMap<IRavenObject, IStoredRawEntityInfo>;
 
   private _numberOfRequestsInSession: number;
 
@@ -54,7 +54,7 @@ export class DocumentSession implements IDocumentSession {
     this.documentsById = {};
     this.includedRawEntitiesByKey = {};
     this.deletedDocuments = new Set<IRavenObject>();
-    this.rawEntitiesByDocument = new WeakMap<IRavenObject, IStoredRawEntityInfo>();
+    this.rawEntitiesAndMetadata = new WeakMap<IRavenObject, IStoredRawEntityInfo>();
     this.knownMissingIds = new Set<string>();
     this.deferCommands = new Set<RavenCommandData>();
   }
@@ -161,13 +161,13 @@ export class DocumentSession implements IDocumentSession {
       usingDefaultOperator, waitForNonStaleResults, includes, nestedObjectTypes, withStatistics
     );
 
-    query.on(
+    query.on<IDocumentConversionResult<T>>(
       DocumentQuery.EVENT_DOCUMENT_FETCHED, 
-      (conversionResult: IDocumentConversionResult<T>) => 
+      (conversionResult?: IDocumentConversionResult<T>) => 
       this.onDocumentFetched<T>(conversionResult)
     );
 
-    query.on(
+    query.on<object[]>(
       DocumentQuery.EVENT_INCLUDES_FETCHED, 
       (includes: object[]) => 
       this.onIncludesFetched(includes)
@@ -227,7 +227,7 @@ more responsive application.", maxRequests
           const conversionResult: IDocumentConversionResult<T> =  this
             .conventions.tryConvertToDocument<T>(result, objectType, nestedObjectTypes);
 
-          this.onDocumentFetched(conversionResult);  
+          this.onDocumentFetched<T>(conversionResult);  
           return conversionResult;  
         });
         
@@ -309,7 +309,7 @@ more responsive application.", maxRequests
     }
   }
 
-  protected onDocumentFetched<T>(conversionResult?: IDocumentConversionResult<T>, forceConcurrencyCheck: boolean = false): void {
+  protected onDocumentFetched<T extends Object = IRavenObject>(conversionResult?: IDocumentConversionResult<T>, forceConcurrencyCheck: boolean = false): void {
     if (conversionResult) {
       const documentKey: string = conversionResult.originalMetadata['@id'];
 
@@ -318,7 +318,7 @@ more responsive application.", maxRequests
 
         if (!(documentKey in this.documentsById)) {
           this.documentsById[documentKey] = conversionResult.document;
-          this.rawEntitiesByDocument.set(this.documentsById[documentKey], {
+          this.rawEntitiesAndMetadata.set(this.documentsById[documentKey], {
             originalValue: _.cloneDeep(conversionResult.rawEntity),
             originalMetadata: conversionResult.originalMetadata,
             metadata: conversionResult.metadata,

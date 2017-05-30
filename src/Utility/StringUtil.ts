@@ -2,18 +2,21 @@ import {TypeUtil} from "./TypeUtil";
 import {InvalidOperationException} from "../Database/DatabaseExceptions";
 
 export class StringUtil {
-  public static format(string: string, args?: object | any, ...arrayArgs: any[]
-  ): string {
-    let inputArgs: any[] | object = [args];
-
-    if (!TypeUtil.isObject(args)) {
-      inputArgs = (<any[]>inputArgs).concat(arrayArgs);
+  public static format(string: string, vars?: object | any, ...varsArray: any[]): string {
+    if (TypeUtil.isObject(vars)) {
+      return string.replace(
+        /\{([\w\d\-]+)\}/g,
+        (match: string, placeholder: string): string =>
+          (vars[placeholder] || '').toString()
+      );
     }
 
+    let inputVars: any[] = [vars].concat(varsArray);
+
     return string.replace(
-      /\{([\w\d\-]+)\}/g,
+      /\{([\d]+)\}/g,
       (match: string, placeholder: string): string =>
-        (inputArgs[placeholder] || '').toString()
+        (inputVars[parseInt(placeholder)] || '').toString()
     );
   }
 
