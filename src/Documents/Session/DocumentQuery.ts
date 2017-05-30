@@ -27,8 +27,9 @@ import {ArgumentOutOfRangeException, InvalidOperationException, ErrorResponseExc
 export type QueryResultsWithStatistics<T> = {results: T[], response: IRavenResponse};
 
 export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
-  public static readonly EVENT_DOCUMENT_FETCHED = 'fetched:document';
-  public static readonly EVENT_INCLUDES_FETCHED = 'fetched:includes';
+  public static readonly EVENT_DOCUMENTS_QUERIED : string = 'queried:documents';
+  public static readonly EVENT_DOCUMENT_FETCHED  : string = 'fetched:document';
+  public static readonly EVENT_INCLUDES_FETCHED  : string = 'fetched:includes';
 
   protected indexName: string;
   protected session: IDocumentSession;
@@ -314,9 +315,9 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
       wait_for_non_stale_results: this.waitForNonStaleResults
     };
 
-    const session: IDocumentSession = this.session;
-    session.incrementRequestsCount();
+    this.emit(DocumentQuery.EVENT_DOCUMENTS_QUERIED);
 
+    const session: IDocumentSession = this.session;
     const conventions: DocumentConventions = session.conventions;
     const endTime: number = moment().unix() + conventions.timeout;
     const query: IndexQuery = new IndexQuery(this.queryBuilder, 0, 0, this.usingDefaultOperator, queryOptions);

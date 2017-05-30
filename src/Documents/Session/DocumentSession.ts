@@ -6,7 +6,7 @@ import {DocumentQuery} from "./DocumentQuery";
 import {IDocumentStore} from '../IDocumentStore';
 import {RequestsExecutor} from '../../Http/Request/RequestsExecutor';
 import {DocumentConventions, DocumentConstructor, IDocumentConversionResult, IStoredRawEntityInfo} from '../Conventions/DocumentConventions';
-import {EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
+import {EmptyCallback, EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
 import {PromiseResolver} from '../../Utility/PromiseResolver';
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {InvalidOperationException, DocumentDoesNotExistsException, RavenException} from "../../Database/DatabaseExceptions";
@@ -16,6 +16,7 @@ import {IRavenResponse} from "../../Database/RavenCommandResponse";
 import {RavenCommandData} from "../../Database/RavenCommandData";
 import {DeleteDocumentCommand} from "../../Database/Commands/DeleteDocumentCommand";
 import {PutDocumentCommand} from "../../Database/Commands/PutDocumentCommand";
+import {SaveChangesData} from "../../Database/Commands/Data/SaveChangesData";
 import {QueryOperator} from "./QueryOperator";
 import {IRavenObject} from "../../Database/IRavenObject";
 import {Serializer} from "../../Json/Serializer";
@@ -138,6 +139,35 @@ export class DocumentSession implements IDocumentSession {
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
+  public async saveChanges(callback?: EmptyCallback): Promise<void> {
+    const changes: SaveChangesData = new SaveChangesData(
+      Array.from<RavenCommandData>(this.deferCommands),
+      this.deferCommands.size
+    );
+
+    this.deferCommands.clear();
+    this.prepareDeleteCommands(changes);
+    this.prepareUpdateCommands(changes);
+
+    if (!changes.commandsCount) {
+      return Promise.resolve();
+    }
+
+    return this.requestsExecutor
+      .execute(changes.createBatchCommand())
+      .then((results?: IRavenResponse[]) => {
+        if (TypeUtil.isNone(results)) {
+          return BluebirdPromise.reject(new InvalidOperationException(
+            "Cannot call Save Changes after the document store was disposed."
+          ));
+        }
+
+        this.processBatchCommandResults(results, changes);
+        PromiseResolver.resolve<void>(null, null, callback);
+      })
+      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
+  }
+
   public query<T extends Object = IRavenObject>(options?: IDocumentQueryOptions<T>): IDocumentQuery<T> {
     let usingDefaultOperator: QueryOperator = null;
     let waitForNonStaleResults: boolean = null;
@@ -161,6 +191,11 @@ export class DocumentSession implements IDocumentSession {
       usingDefaultOperator, waitForNonStaleResults, includes, nestedObjectTypes, withStatistics
     );
 
+    query.on(
+      DocumentQuery.EVENT_DOCUMENTS_QUERIED, 
+      () => this.incrementRequestsCount()      
+    );
+
     query.on<IDocumentConversionResult<T>>(
       DocumentQuery.EVENT_DOCUMENT_FETCHED, 
       (conversionResult?: IDocumentConversionResult<T>) => 
@@ -176,11 +211,7 @@ export class DocumentSession implements IDocumentSession {
     return query;
   }
 
-  public async saveChanges(): Promise<void> {
-    return Promise.resolve();
-  }
-
-  public incrementRequestsCount(): void {
+  protected incrementRequestsCount(): void {
     const maxRequests: number = this.conventions.maxNumberOfRequestPerSession;
 
     this._numberOfRequestsInSession++;
@@ -295,6 +326,18 @@ more responsive application.", maxRequests
 
         return entity;
       });
+  }
+
+  protected prepareUpdateCommands(changes: SaveChangesData): void {
+
+  }
+
+  protected prepareDeleteCommands(changes: SaveChangesData): void {
+    
+  }
+
+  protected processBatchCommandResults(results: IRavenResponse[], changes: SaveChangesData): void {
+
   }
 
   protected isDocumentChanged<T extends Object = IRavenObject>(document: T): boolean {

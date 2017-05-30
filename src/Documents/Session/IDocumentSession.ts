@@ -17,5 +17,4 @@ export interface IDocumentSession {
   store<T extends Object = IRavenObject>(entity: T, key?: string, etag?: number, forceConcurrencyCheck?: boolean, callback?: EntityCallback<T>): Promise<T>;
   query<T extends Object = IRavenObject>(options?: IDocumentQueryOptions<T>): IDocumentQuery<T>;
   saveChanges(): Promise<void>;
-  incrementRequestsCount(): void;
 }

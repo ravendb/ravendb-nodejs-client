@@ -11,7 +11,7 @@ import * as Request from 'request';
 import * as RequestPromise from 'request-promise';
 
 // typings
-export {AbstractCallback, EntityKeyCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback, QueryResultsCallback} from './Utility/Callbacks';
+export {AbstractCallback, EmptyCallback, EntityKeyCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback, QueryResultsCallback} from './Utility/Callbacks';
 export {PromiseResolver, PromiseResolve, PromiseReject} from './Utility/PromiseResolver';
 export {IDocumentStore, ITransaction, ISessionOptions} from './Documents/IDocumentStore';
 export {IDocumentSession} from './Documents/Session/IDocumentSession';
