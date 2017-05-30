@@ -67,6 +67,7 @@ export {RavenCommandData} from './Database/RavenCommandData';
 export {DeleteCommandData} from './Database/Commands/Data/DeleteCommandData';
 export {PutCommandData} from './Database/Commands/Data/PutCommandData';
 export {PatchCommandData} from './Database/Commands/Data/PatchCommandData';
+export {SaveChangesData} from './Database/Commands/Data/SaveChangesData';
 export {Operations} from './Database/Operations/Operations';
 export {AccessMode, AccessModes, ResourcesAccessModes} from './Database/Auth/AccessMode';
 export {ApiKeyDefinition} from './Database/Auth/ApiKeyDefinition';
