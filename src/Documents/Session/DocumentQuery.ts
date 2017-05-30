@@ -56,7 +56,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     this.usingDefaultOperator = usingDefaultOperator;
     this.waitForNonStaleResults = waitForNonStaleResults;
     this.nestedObjectTypes = nestedObjectTypes || {} as IRavenObject<DocumentConstructor>;
-    this.objectType = session.conventions.tryGetObjectType(documentTypeOrObjectType);
+    this.objectType = session.conventions.getObjectType(documentTypeOrObjectType);
     this.indexName = [(indexName || 'dynamic'), session.conventions.getDocumentsColleciton(documentTypeOrObjectType)].join('/');
   }
 
@@ -224,7 +224,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
         commandResponse.Results.forEach((result: object) => {
           const conversionResult: IDocumentConversionResult<T> = this.session.conventions
-              .tryConvertToDocument<T>(result, this.objectType, this.nestedObjectTypes || {});
+              .convertToDocument<T>(result, this.objectType, this.nestedObjectTypes || {});
 
           results.push(conversionResult.document);
 

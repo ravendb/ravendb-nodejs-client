@@ -56,7 +56,7 @@ export class DocumentConventions {
     return pluralize(this.getDocumentType(typeOrConstructor));
   }
 
-  public tryGetObjectType<T extends Object = IRavenObject>(objectType?: DocumentConstructor<T> | string): DocumentConstructor<T> | null {
+  public getObjectType<T extends Object = IRavenObject>(objectType?: DocumentConstructor<T> | string): DocumentConstructor<T> | null {
     if (objectType && !TypeUtil.isString(objectType)) {
       return objectType as DocumentConstructor<T>;
     }
@@ -64,7 +64,7 @@ export class DocumentConventions {
     return null;
   }
 
-  public tryConvertToDocument<T extends Object = IRavenObject>(rawEntity: object, objectType?: DocumentConstructor<T>, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): IDocumentConversionResult<T> {
+  public convertToDocument<T extends Object = IRavenObject>(rawEntity: object, objectType?: DocumentConstructor<T>, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): IDocumentConversionResult<T> {
     const metadata: object = _.get(rawEntity, '@metadata') || {};
     const originalMetadata: object = _.cloneDeep(metadata);
     const idProperty: string = this.idPropertyName;
@@ -75,7 +75,7 @@ export class DocumentConventions {
     );
 
     if (idProperty in document) {
-      this.trySetIdOnEntity(document, metadata['@id'] || null);
+      this.setIdOnEntity(document, metadata['@id'] || null);
     }
 
     return {
@@ -86,11 +86,11 @@ export class DocumentConventions {
     } as IDocumentConversionResult<T>;
   }
 
-  public tryConvertToRawEntity<T extends Object = IRavenObject>(document: T): object {
+  public convertToRawEntity<T extends Object = IRavenObject>(document: T): object {
     return Serializer.toJSON<T>(document, document['@metadata'] || {});
   }
 
-  public trySetIdOnEntity<T extends Object = IRavenObject>(entity: T, key: string): T {
+  public setIdOnEntity<T extends Object = IRavenObject>(entity: T, key: string): T {
     const idProperty = this.idPropertyName;
 
     if (!entity.hasOwnProperty(idProperty)) {
@@ -101,7 +101,7 @@ export class DocumentConventions {
     return entity;
   }
 
-  public tryGetIdFromInstance<T extends Object = IRavenObject>(entity?: T): string {
+  public getIdFromInstance<T extends Object = IRavenObject>(entity?: T): string {
     const idProperty = this.idPropertyName;
 
     if (!entity) {
@@ -152,7 +152,7 @@ export class DocumentConventions {
     return metadata;
   }
 
-  public tryGetTypeFromMetadata(metadata: object): string | null {
+  public getTypeFromMetadata(metadata: object): string | null {
     if ('Raven-Node-Type' in metadata) {
       return metadata['Raven-Node-Type'];
     }
