@@ -35,6 +35,12 @@ for (let i = 1; i <= 10; i++) {
 for (let entity of map.keys()) {
   console.log(entity);
 }
+console.log(' ');
+
+for (let entity of entities) {
+  console.log(`set has ${entity.subject}: `, (new Set<Entity>(entities)).has(entity));
+}
+console.log(' ');
 
 for (let i = 0; i < 10; i++) {
   let entity: Entity = entities[i];

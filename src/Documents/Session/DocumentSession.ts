@@ -9,7 +9,7 @@ import {DocumentConventions, DocumentConstructor, IDocumentConversionResult, ISt
 import {EmptyCallback, EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
 import {PromiseResolver} from '../../Utility/PromiseResolver';
 import {TypeUtil} from "../../Utility/TypeUtil";
-import {InvalidOperationException, DocumentDoesNotExistsException, RavenException} from "../../Database/DatabaseExceptions";
+import {InvalidOperationException, DocumentDoesNotExistsException, RavenException, NonUniqueObjectException} from "../../Database/DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {GetDocumentCommand} from "../../Database/Commands/GetDocumentCommand";
 import {IRavenResponse} from "../../Database/RavenCommandResponse";
@@ -135,25 +135,51 @@ export class DocumentSession implements IDocumentSession {
   public async store<T extends Object = IRavenObject>(document: T, key?: string, etag?: number, forceConcurrencyCheck?: boolean,
      callback?: EntityCallback<T>
   ): Promise<T> {
-    this.incrementRequestsCount();
+    let originalMetadata: object;
+    let isNewDocument: boolean = false;
+    const conventions: DocumentConventions = this.conventions;
 
-    return this.prepareDocumentToStore<T>(document, key, etag, forceConcurrencyCheck)
-      .then((document: T) => {
-        let tag: number = null;
-        const metadata = document['@metadata'];
-        const conventions: DocumentConventions = this.conventions;
-        const documentKey: string = conventions.getIdFromInstance<T>(document);
+    return this.checkDocumentAndEtagBeforeStore<T>(document, key, etag, forceConcurrencyCheck)
+      .then((isNew: boolean): T | BluebirdPromise.Thenable<T> => {
+        if (isNewDocument = isNew) {
+          originalMetadata = _.cloneDeep(document['@metadata'] || {});
+          return this.prepareDocumentIdBeforeStore<T>(document, key, etag, forceConcurrencyCheck);
+        }  
 
-        if (conventions.defaultUseOptimisticConcurrency || metadata['force_concurrency_check']) {
-          tag = (metadata['@tag'] as number) || conventions.emptyEtag;
+        return document;
+      })
+      .then((document: T): T | BluebirdPromise.Thenable<T> => {
+        if (isNewDocument) {
+          const key: string = conventions.getIdFromInstance(document);
+
+          for (let command of this.deferCommands.values()) {
+            if (command.documentKey === key) {
+              return BluebirdPromise.reject(new InvalidOperationException(StringUtil.format(
+                "Can't store document, there is a deferred command registered " + 
+                "for this document in the session. Document id: {0}", key
+              )));
+            }
+          }
+
+          if (this.deletedDocuments.has(document)) {
+            return BluebirdPromise.reject(new InvalidOperationException(StringUtil.format(
+                "Can't store object, it was already deleted in this " + 
+                "session. Document id: {0}", key
+              )));
+          }
+
+          this.deletedDocuments.delete(document);
+          document['@metadata'] = conventions.buildDefaultMetadata(document, document.constructor as DocumentConstructor<T>);          
+          this.onDocumentFetched<T>(<IDocumentConversionResult<T>>{
+            document: document,
+            metadata: document['@metadata'],
+            originalMetadata: originalMetadata,
+            rawEntity: conventions.convertToRawEntity(document)
+          });
         }
 
-        return this.requestsExecutor
-          .execute(new PutDocumentCommand(documentKey, conventions.convertToRawEntity<T>(document), tag))
-          .then((): T => {
-            PromiseResolver.resolve<T>(document, null, callback);
-            return document as T;
-          });
+        PromiseResolver.resolve<T>(document, null, callback);
+        return document;
       })
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
@@ -307,53 +333,69 @@ more responsive application.", maxRequests
         : this.loadDocument<T>(keyOrEntity as string, documentTypeOrObjectType));
   }
 
-  protected prepareDocumentToStore<T extends Object = IRavenObject>(document: T, key?: string, etag?: number, forceConcurrencyCheck?: boolean): BluebirdPromise<T> {
+  protected checkDocumentAndEtagBeforeStore<T extends Object = IRavenObject>(document: T, key?: string, etag?: number, forceConcurrencyCheck?: boolean): BluebirdPromise<boolean> {
     if (!document || !TypeUtil.isObject(document)) {
       return BluebirdPromise.reject(
         new InvalidOperationException('Document must be set and be an instance of object')
-      ) as BluebirdPromise<T>;
+      ) as BluebirdPromise<boolean>;
     }
 
-    return BluebirdPromise.resolve(document)
-      .then((entity: T) => {
-        entity['@metadata']['force_concurrency_check'] = forceConcurrencyCheck || false;
+    return BluebirdPromise.resolve<boolean>(true)
+      .then((): boolean => {
+        const conventions: DocumentConventions = this.conventions;
+        const store: IDocumentStore = this.documentStore;
 
-        if (key && TypeUtil.isNone(etag)) {
-          return this.prefetchDocument<T>(key, entity.constructor as DocumentConstructor<T>)
-            .then((document: T) => {
-              entity['@metadata']['@tag'] = document['@metadata']['@tag'];
-              return entity;
+        if (this.rawEntitiesAndMetadata.has(document)) {
+          let info: IStoredRawEntityInfo = this.rawEntitiesAndMetadata.get(document);
+          let metadata: object = document['@metadata'];
+
+          if (!TypeUtil.isNone(etag)) {
+            info.etag = metadata['@etag'] = etag;
+          }
+
+          info.forceConcurrencyCheck = forceConcurrencyCheck;
+          this.rawEntitiesAndMetadata.set(document, info);
+
+          return false;
+        }
+      });
+  }
+
+  protected prepareDocumentIdBeforeStore<T extends Object = IRavenObject>(document: T, key?: string, etag?: number, forceConcurrencyCheck?: boolean): BluebirdPromise<T> {
+    return BluebirdPromise.resolve(document)
+      .then((document: T) => {
+        const conventions: DocumentConventions = this.conventions;
+        const store: IDocumentStore = this.documentStore;
+
+        let documentKey: string = key;
+
+        if (TypeUtil.isNone(documentKey)) {
+          documentKey = conventions.getIdFromInstance<T>(document);
+        } else {
+          conventions.setIdOnEntity(document, documentKey);
+          document['@metadata']['@id'] = documentKey;
+        }
+
+        if (!TypeUtil.isNone(documentKey) && !documentKey.endsWith('/') && (documentKey in this.documentsById)) {
+            if (!(new Set<IRavenObject>([this.documentsById[documentKey]]).has(document))) {
+                return BluebirdPromise.reject(new NonUniqueObjectException(StringUtil.format(
+                  "Attempted to associate a different object with id '{0}'.", documentKey
+                )));
+            } 
+        }
+
+        if (TypeUtil.isNone(documentKey)) {
+          return store
+            .generateId(document, document.constructor as DocumentConstructor<T>)
+            .then((documentKey: string): T => {
+              conventions.setIdOnEntity(document, documentKey);
+              document['@metadata']['@id'] = documentKey;
+
+              return document;
             });
         }
 
-        entity['@metadata']['@tag'] = etag;
-        return entity;
-      })
-      .then((entity: T) => {
-        let documentKey: string = key;
-        const conventions: DocumentConventions = this.conventions;
-
-        if (TypeUtil.isNone(documentKey)) {
-          documentKey = conventions.getIdFromInstance<T>(entity);
-        } else {
-          conventions.setIdOnEntity(entity, documentKey);
-          entity['@metadata']['@id'] = documentKey;
-        }
-
-        entity['@metadata'] = conventions.buildDefaultMetadata(entity, entity.constructor as DocumentConstructor<T>);
-
-        if (TypeUtil.isNone(documentKey)) {
-          return this.documentStore
-            .generateId(entity, entity.constructor as DocumentConstructor<T>)
-            .then((documentKey: string): T => {
-              conventions.setIdOnEntity(entity, documentKey);
-              entity['@metadata']['@id'] = documentKey;
-
-              return entity;
-            })
-        }
-
-        return entity;
+        return document;
       });
   }
 
