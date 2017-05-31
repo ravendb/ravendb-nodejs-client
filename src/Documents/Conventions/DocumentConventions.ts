@@ -112,7 +112,7 @@ export class DocumentConventions {
       throw new InvalidOperationException("Invalid entity provided. It should implement object interface");
     }
 
-    return entity[idProperty];
+    return entity[idProperty] || (entity['@metadata'] || {})[idProperty] || null;
   }
 
   public buildDefaultMetadata<T extends Object = IRavenObject>(entity: T, typeOrConstructor: string | DocumentConstructor<T>): object {

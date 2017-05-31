@@ -86,32 +86,48 @@ export class DocumentSession implements IDocumentSession {
       });
   }
 
-  public async delete<T extends Object = IRavenObject>(keyOrDocument: string, callback?: EntityCallback<T>): Promise<T>;
-  public async delete<T extends Object = IRavenObject>(keyOrDocument: T, callback?: EntityCallback<T>): Promise<T>;
-  public async delete<T extends Object = IRavenObject>(keyOrDocument: string | T, callback?: EntityCallback<T>): Promise<T> {
-    this.incrementRequestsCount();
-
-    return this.prefetchDocument<T>(keyOrDocument)
-      .then((document: T) => {
-        let etag: number | null = null;
+  public async delete<T extends Object = IRavenObject>(keyOrDocument: string, callback?: EmptyCallback): Promise<void>;
+  public async delete<T extends Object = IRavenObject>(keyOrDocument: T, callback?: EmptyCallback): Promise<void>;
+  public async delete<T extends Object = IRavenObject>(keyOrDocument: string | T, callback?: EmptyCallback): Promise<void> {
+    return BluebirdPromise.resolve()
+      .then(() => {
         const conventions = this.conventions;
-        const metadata: object = document['@metadata'];
-        const key: string = conventions.getIdFromInstance(document);
+        let key: string, document: T = null;
+        let originalMetadata: object;
 
-        if ('Raven-Read-Only' in metadata) {
-          return BluebirdPromise.reject(new InvalidOperationException('Document is marked as read only and cannot be deleted'));
+        if (TypeUtil.isString(keyOrDocument)) { 
+          key = keyOrDocument as string;
+
+          if (keyOrDocument in this.documentsById) {
+            document = this.documentsById[key] as T;
+
+            if (this.isDocumentChanged(document)) {
+              return BluebirdPromise.reject(new InvalidOperationException('Can\'t delete changed document using identifier. Pass document instance instead'));
+            }
+          }            
+        } else {
+          document = keyOrDocument as T;
+          key = conventions.getIdFromInstance<T>(document);
         }
 
-        if (conventions.defaultUseOptimisticConcurrency) {
-          etag = metadata['@tag'] || null;
+        if (!document) {
+          this.deferCommands.add(new DeleteCommandData(key));
+        } else {
+          if (!this.rawEntitiesAndMetadata.has(document)) {
+            return BluebirdPromise.reject(new InvalidOperationException('Document is not associated with the session, cannot delete unknown document instance'));
+          }
+
+          ({originalMetadata, key} = this.rawEntitiesAndMetadata.get(document));
+
+          if ('Raven-Read-Only' in originalMetadata) {
+            return BluebirdPromise.reject(new InvalidOperationException('Document is marked as read only and cannot be deleted'));
+          }
+
+          this.deletedDocuments.add(document);
+          this.knownMissingIds.add(key);
         }
 
-        return this.requestsExecutor
-          .execute(new DeleteDocumentCommand(key, etag))
-          .then(() => {
-            PromiseResolver.resolve<T>(document, null, callback);
-            return document as T;
-          }) as BluebirdPromise<T>;
+        PromiseResolver.resolve<void>(null, null, callback); 
       })
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
@@ -126,14 +142,14 @@ export class DocumentSession implements IDocumentSession {
         let tag: number = null;
         const metadata = document['@metadata'];
         const conventions: DocumentConventions = this.conventions;
-        const documentKey: string = conventions.getIdFromInstance(document);
+        const documentKey: string = conventions.getIdFromInstance<T>(document);
 
         if (conventions.defaultUseOptimisticConcurrency || metadata['force_concurrency_check']) {
           tag = (metadata['@tag'] as number) || conventions.emptyEtag;
         }
 
         return this.requestsExecutor
-          .execute(new PutDocumentCommand(documentKey, conventions.convertToRawEntity(document), tag))
+          .execute(new PutDocumentCommand(documentKey, conventions.convertToRawEntity<T>(document), tag))
           .then((): T => {
             PromiseResolver.resolve<T>(document, null, callback);
             return document as T;
@@ -225,7 +241,9 @@ export class DocumentSession implements IDocumentSession {
       throw new InvalidOperationException(StringUtil.format(
         "The maximum number of requests ({0}) allowed for this session has been reached. Raven limits the number \
 of remote calls that a session is allowed to make as an early warning system. Sessions are expected to \
-be short lived. You can increase the limit by setting DocumentConvention.\
+be short lived, and Raven provides facilities like batch saves (call saveChanges() only once \
+or wrap your actions into transaction callback when calling openSession()  \
+You can increase the limit by setting DocumentConvention.\
 MaxNumberOfRequestsPerSession or MaxNumberOfRequestsPerSession, but it is advisable \
 that you'll look into reducing the number of remote calls first, \
 since that will speed up your application significantly and result in a\
@@ -275,6 +293,14 @@ more responsive application.", maxRequests
       });
   }
 
+  protected findInAssignedOrPrefetch<T extends Object = IRavenObject>(keyOrEntity: string | T, documentTypeOrObjectType?: string | DocumentConstructor<T>): BluebirdPromise<T> {
+    const key = keyOrEntity as string;
+
+    return <BluebirdPromise<T>>((!TypeUtil.isString(key) || !(key in this.documentsById))
+      ? this.prefetchDocument<T>(keyOrEntity, documentTypeOrObjectType)
+      : BluebirdPromise.resolve<T>(<T>this.documentsById[key]));
+  }
+
   protected prefetchDocument<T extends Object = IRavenObject>(keyOrEntity: string | T, documentTypeOrObjectType?: string | DocumentConstructor<T>): BluebirdPromise<T> {
     return <BluebirdPromise<T>>(!TypeUtil.isString(keyOrEntity) 
         ? BluebirdPromise.resolve<T>(keyOrEntity as T)
@@ -284,7 +310,7 @@ more responsive application.", maxRequests
   protected prepareDocumentToStore<T extends Object = IRavenObject>(document: T, key?: string, etag?: number, forceConcurrencyCheck?: boolean): BluebirdPromise<T> {
     if (!document || !TypeUtil.isObject(document)) {
       return BluebirdPromise.reject(
-        new InvalidOperationException('Document must be set and be an insstance of object')
+        new InvalidOperationException('Document must be set and be an instance of object')
       ) as BluebirdPromise<T>;
     }
 
@@ -308,7 +334,7 @@ more responsive application.", maxRequests
         const conventions: DocumentConventions = this.conventions;
 
         if (TypeUtil.isNone(documentKey)) {
-          documentKey = conventions.getIdFromInstance(entity);
+          documentKey = conventions.getIdFromInstance<T>(entity);
         } else {
           conventions.setIdOnEntity(entity, documentKey);
           entity['@metadata']['@id'] = documentKey;
