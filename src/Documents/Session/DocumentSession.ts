@@ -16,10 +16,13 @@ import {IRavenResponse} from "../../Database/RavenCommandResponse";
 import {RavenCommandData} from "../../Database/RavenCommandData";
 import {DeleteDocumentCommand} from "../../Database/Commands/DeleteDocumentCommand";
 import {PutDocumentCommand} from "../../Database/Commands/PutDocumentCommand";
+import {PutCommandData} from "../../Database/Commands/Data/PutCommandData";
+import {DeleteCommandData} from "../../Database/Commands/Data/DeleteCommandData";
 import {SaveChangesData} from "../../Database/Commands/Data/SaveChangesData";
 import {QueryOperator} from "./QueryOperator";
 import {IRavenObject} from "../../Database/IRavenObject";
 import {Serializer} from "../../Json/Serializer";
+import {RequestMethods} from "../../Http/Request/RequestMethod";
 
 export class DocumentSession implements IDocumentSession {
   protected database: string;
@@ -32,7 +35,7 @@ export class DocumentSession implements IDocumentSession {
   protected deletedDocuments: Set<IRavenObject>;
   protected knownMissingIds: Set<string>;
   protected deferCommands: Set<RavenCommandData>;
-  protected rawEntitiesAndMetadata: WeakMap<IRavenObject, IStoredRawEntityInfo>;
+  protected rawEntitiesAndMetadata: Map<IRavenObject, IStoredRawEntityInfo>;
 
   private _numberOfRequestsInSession: number;
 
@@ -55,7 +58,7 @@ export class DocumentSession implements IDocumentSession {
     this.documentsById = {};
     this.includedRawEntitiesByKey = {};
     this.deletedDocuments = new Set<IRavenObject>();
-    this.rawEntitiesAndMetadata = new WeakMap<IRavenObject, IStoredRawEntityInfo>();
+    this.rawEntitiesAndMetadata = new Map<IRavenObject, IStoredRawEntityInfo>();
     this.knownMissingIds = new Set<string>();
     this.deferCommands = new Set<RavenCommandData>();
   }
@@ -329,15 +332,76 @@ more responsive application.", maxRequests
   }
 
   protected prepareUpdateCommands(changes: SaveChangesData): void {
+    for (let document of this.rawEntitiesAndMetadata.keys()) {
+      if (!this.isDocumentChanged(document)) {
+        continue;
+      }
 
+      let etag: number = null;
+      const conventions: DocumentConventions = this.conventions;
+      const info: IStoredRawEntityInfo = this.rawEntitiesAndMetadata.get(document);
+      const key: string = info.key;
+      const rawEntity: object = _.omit(conventions.convertToRawEntity(document), conventions.idPropertyName);
+
+      if (this.conventions.defaultUseOptimisticConcurrency || info.forceConcurrencyCheck) {
+        etag = info.etag || info.metadata['@etag'] || conventions.emptyEtag;
+      }
+
+      delete this.documentsById[key];
+      changes.addDocument(document);
+      changes.addCommand(new PutCommandData(key, _.cloneDeep(rawEntity), etag, info.metadata));
+    }
   }
 
   protected prepareDeleteCommands(changes: SaveChangesData): void {
-    
+    this.deletedDocuments.forEach((document: IRavenObject) => {
+      const key: string = this.rawEntitiesAndMetadata.get(document).key;
+      let existingDocument: IRavenObject = null;
+      let etag: number = null;
+
+      if (key in this.documentsById) {
+        existingDocument = this.documentsById[key];
+
+        if (this.conventions.defaultUseOptimisticConcurrency && 
+          this.rawEntitiesAndMetadata.has(existingDocument)
+        ) {
+          etag = this.rawEntitiesAndMetadata.get(existingDocument).metadata['@etag'];
+        }
+
+        this.rawEntitiesAndMetadata.delete(existingDocument);
+        delete this.documentsById[key];
+      }
+
+      changes.addDocument(existingDocument);
+      changes.addCommand(new DeleteCommandData(key, etag));
+    });
+
+    this.deletedDocuments.clear();
   }
 
   protected processBatchCommandResults(results: IRavenResponse[], changes: SaveChangesData): void {
+    for (let index: number = changes.deferredCommandsCount; index < results.length; index++) {
+      const commandResult: IRavenObject = results[index];
 
+      if (RequestMethods.Put === commandResult.Method) {
+        const document: IRavenObject = changes.getDocument(index - changes.deferredCommandsCount);
+
+        if (this.rawEntitiesAndMetadata.has(document)) {
+          const metadata: object = _.omit(commandResult, 'Method');
+          const info: IStoredRawEntityInfo = this.rawEntitiesAndMetadata.get(document);
+
+          _.assign(info, {
+            etag: commandResult['@etag'],
+            metadata: metadata,
+            originalValue: _.cloneDeep(this.conventions.convertToRawEntity(document)),
+            originalMetadata: _.cloneDeep(metadata)
+          });
+
+          this.documentsById[commandResult['@id']] = document;
+          this.rawEntitiesAndMetadata.set(document, info);
+        }
+      } 
+    }
   }
 
   protected isDocumentChanged<T extends Object = IRavenObject>(document: T): boolean {
@@ -371,9 +435,16 @@ more responsive application.", maxRequests
         this.knownMissingIds.delete(documentKey);
 
         if (!(documentKey in this.documentsById)) {
+          let originalValueSource: object = conversionResult.rawEntity;
+
+          if (!originalValueSource) {
+            originalValueSource = this.conventions
+              .convertToRawEntity<T>(conversionResult.document);
+          }
+
           this.documentsById[documentKey] = conversionResult.document;
           this.rawEntitiesAndMetadata.set(this.documentsById[documentKey], {
-            originalValue: _.cloneDeep(conversionResult.rawEntity),
+            originalValue: _.cloneDeep(originalValueSource),
             originalMetadata: conversionResult.originalMetadata,
             metadata: conversionResult.metadata,
             etag: conversionResult.metadata['etag'] || null,

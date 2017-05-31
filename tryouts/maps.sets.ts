@@ -19,7 +19,7 @@ interface IEntityWithMetadata {
 
 const entities: Entity[] = [];
 const set: Set<Entity> = new Set<Entity>();
-const map: WeakMap<Entity, IEntityWithMetadata> = new WeakMap<Entity, IEntityWithMetadata>();
+const map: Map<Entity, IEntityWithMetadata> = new Map<Entity, IEntityWithMetadata>();
 
 for (let i = 1; i <= 10; i++) {
   let entity: Entity = new Entity(i, `subject ${i}`);
@@ -30,6 +30,10 @@ for (let i = 1; i <= 10; i++) {
     entity: entity,
     metadata: entity.raw
   });
+}
+
+for (let entity of map.keys()) {
+  console.log(entity);
 }
 
 for (let i = 0; i < 10; i++) {

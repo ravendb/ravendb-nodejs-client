@@ -10,7 +10,7 @@ import {IRavenObject} from "../../Database/IRavenObject";
 export type DocumentConstructor<T extends Object = IRavenObject> = { new(): T; };
 
 export interface IDocumentConversionResult<T extends Object = IRavenObject> {
-  rawEntity: object,
+  rawEntity?: object,
   document: T;
   metadata: object;
   originalMetadata: object;
