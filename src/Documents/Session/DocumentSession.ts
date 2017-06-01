@@ -78,12 +78,69 @@ export class DocumentSession implements IDocumentSession {
   public async load<T extends Object = IRavenObject>(keyOrKeys: string | string[], documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes: IRavenObject<DocumentConstructor> = {}, callback?: EntityCallback<T>
     | EntitiesArrayCallback<T>
   ): Promise<T | T[]> {
-    return this.loadDocument<T>(keyOrKeys, documentTypeOrObjectType, includes, nestedObjectTypes)
-      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback))
-      .then((results: T | T[]): T | T[] =>  {
-        PromiseResolver.resolve<T | T[]>(results, null, callback);
-        return results;
+    if (_.isEmpty(keyOrKeys)) {
+      return BluebirdPromise.reject(new InvalidOperationException('Document key isn\'t set or keys list is empty'));
+    }
+
+    const loadingOneDoc: boolean = !TypeUtil.isArray(keyOrKeys); 
+    const keys: string[] = loadingOneDoc ? [<string>keyOrKeys] : <string[]>keyOrKeys;
+    let idsOfNonExistingDocuments: Set<string> = new Set<string>(keys);
+
+    if (includes && !TypeUtil.isArray(includes)) {
+      includes = _.isString(includes) ? [includes as string] : null;
+    }
+
+    if (!includes) {
+      const conventions: DocumentConventions = this.documentStore.conventions;
+      const objectType: DocumentConstructor<T> | null = conventions.getObjectType(documentTypeOrObjectType);
+
+      Array.from<string>(idsOfNonExistingDocuments)
+        .filter((key: string): boolean => key 
+          in this.includedRawEntitiesByKey
+        )
+        .forEach((key: string) => {
+          this.makeDocument(
+            this.includedRawEntitiesByKey[key], 
+            objectType, nestedObjectTypes
+          );
+
+          delete this.includedRawEntitiesByKey[key];
       });
+
+      idsOfNonExistingDocuments = new Set<string>(
+        Array.from<string>(idsOfNonExistingDocuments)
+          .filter((key: string): boolean => !(key in this.documentsById)
+      ));  
+    }
+
+    idsOfNonExistingDocuments = new Set<string>(
+      Array.from<string>(idsOfNonExistingDocuments)
+        .filter((key: string): boolean => !this.knownMissingIds.has(key)
+    ));
+   
+    return BluebirdPromise.resolve<void>(void 0)   
+      .then((): void | BluebirdPromise.Thenable<void> => {
+        if (idsOfNonExistingDocuments.size) {
+          return this.fetchDocuments<T>(
+            Array.from<string>(idsOfNonExistingDocuments), 
+            documentTypeOrObjectType, includes, nestedObjectTypes
+          );
+        }
+      })
+      .then((): T[] => keys.map((key: string): T => (!this.knownMissingIds.has(key) 
+        && (key in this.documentsById)) ? this.documentsById[key] as T : null 
+      ))
+      .then((results: T[]): T | T[] =>  {
+        let result : T | T[] = results;
+
+        if (loadingOneDoc) {
+          result = _.first(results) as T;
+        }
+        
+        PromiseResolver.resolve<T | T[]>(result, null, callback);
+        return results;
+      })
+      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
   public async delete<T extends Object = IRavenObject>(keyOrDocument: string, callback?: EmptyCallback): Promise<void>;
@@ -262,8 +319,6 @@ export class DocumentSession implements IDocumentSession {
     this._numberOfRequestsInSession++;
 
     if (this._numberOfRequestsInSession > maxRequests) {
-      //TODO: probably we need to implement batchUpdate / batchDelete as separate API methods in session. But we need discuss this with Rhinos
-
       throw new InvalidOperationException(StringUtil.format(
         "The maximum number of requests ({0}) allowed for this session has been reached. Raven limits the number \
 of remote calls that a session is allowed to make as an early warning system. Sessions are expected to \
@@ -278,59 +333,36 @@ more responsive application.", maxRequests
     }
   }
 
-  protected loadDocument<T extends Object = IRavenObject>(keyOrKeys: string | string[], documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): BluebirdPromise<T | T[]> {
+  protected fetchDocuments<T extends Object = IRavenObject>(keys: string[], documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): BluebirdPromise<T[]> {
     this.incrementRequestsCount();
 
     return this.requestsExecutor
-      .execute(new GetDocumentCommand(keyOrKeys, includes))
-      .then((response: IRavenResponse) => {
+      .execute(new GetDocumentCommand(keys, includes))
+      .then((response: IRavenResponse): T[] | BluebirdPromise.Thenable<T[]> => {
         let responseResults: object[];
         const commandResponse: IRavenResponse = response;
         const conventions: DocumentConventions = this.documentStore.conventions;
         const objectType: DocumentConstructor<T> | null = conventions.getObjectType(documentTypeOrObjectType);
 
-        if (_.isEmpty(keyOrKeys)) {
-          return BluebirdPromise.reject(new InvalidOperationException('Document key isn\'t set or keys list is empty'));
-        }
-
-        if (includes && !TypeUtil.isArray(includes)) {
-          includes = _.isString(includes) ? [includes as string] : null;
-        }
-
         if (!(responseResults = commandResponse.Results) || (responseResults.length <= 0)) {
           return BluebirdPromise.reject(new DocumentDoesNotExistsException('Requested document(s) doesn\'t exists'));
         }
 
-        const results: IDocumentConversionResult<T>[] = responseResults.map((result: object) => {
-          const conversionResult: IDocumentConversionResult<T> =  this
-            .conventions.convertToDocument<T>(result, objectType, nestedObjectTypes);
+        const results: T[] = responseResults.map((result: object, index: number) => {
+          if (TypeUtil.isNone(result)) {
+            this.knownMissingIds.add(keys[index]);
+            return null;
+          }
 
-          this.onDocumentFetched<T>(conversionResult);  
-          return conversionResult;  
+          return this.makeDocument<T>(result, objectType, nestedObjectTypes);  
         });
-        
+
         if (commandResponse.Includes && commandResponse.Includes.length) {
           this.onIncludesFetched(commandResponse.Includes);
         }
 
-        return TypeUtil.isArray(keyOrKeys)
-          ? _.first(results).document as T
-          : results.map((result: IDocumentConversionResult<T>): T => result.document);
+        return results;
       });
-  }
-
-  protected findInAssignedOrPrefetch<T extends Object = IRavenObject>(keyOrEntity: string | T, documentTypeOrObjectType?: string | DocumentConstructor<T>): BluebirdPromise<T> {
-    const key = keyOrEntity as string;
-
-    return <BluebirdPromise<T>>((!TypeUtil.isString(key) || !(key in this.documentsById))
-      ? this.prefetchDocument<T>(keyOrEntity, documentTypeOrObjectType)
-      : BluebirdPromise.resolve<T>(<T>this.documentsById[key]));
-  }
-
-  protected prefetchDocument<T extends Object = IRavenObject>(keyOrEntity: string | T, documentTypeOrObjectType?: string | DocumentConstructor<T>): BluebirdPromise<T> {
-    return <BluebirdPromise<T>>(!TypeUtil.isString(keyOrEntity) 
-        ? BluebirdPromise.resolve<T>(keyOrEntity as T)
-        : this.loadDocument<T>(keyOrEntity as string, documentTypeOrObjectType));
   }
 
   protected checkDocumentAndEtagBeforeStore<T extends Object = IRavenObject>(document: T, key?: string, etag?: number, forceConcurrencyCheck?: boolean): BluebirdPromise<boolean> {
@@ -481,6 +513,14 @@ more responsive application.", maxRequests
     }
 
     return false;
+  }
+
+  protected makeDocument<T extends Object = IRavenObject>(commandResult: object, objectType?: DocumentConstructor<T>, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T {
+     const conversionResult: IDocumentConversionResult<T> =  this.conventions
+      .convertToDocument<T>(commandResult, objectType, nestedObjectTypes);
+
+     this.onDocumentFetched<T>(conversionResult);  
+     return conversionResult.document as T; 
   }
 
   protected onIncludesFetched(includes: object[]): void {
