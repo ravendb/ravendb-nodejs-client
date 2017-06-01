@@ -1,4 +1,4 @@
-type MyClassConstructor<T> = {new(message?: string): T; };
+type MyClassConstructor<T> = {new(...args: any[]): T; };
 
 class MyClass
 {
@@ -19,10 +19,19 @@ class MyClass
 
 class Factory
 {
-  public static create<T>(className: MyClassConstructor<T>, message?: string): T
+  public static create<T extends Object>(classNameOrDocumentType: string | MyClassConstructor<T>, message?: string): T
   {
-    return new className(message);
+    if ('function' === (typeof classNameOrDocumentType)) {
+      return new (classNameOrDocumentType as MyClassConstructor<T>)(message);
+    }    
+
+    let result: T = {} as T;
+
+    Object.assign(result, {message: message});
+
+    return result;
   }
 }
 
-Factory.create(MyClass).print();
+console.log(Factory.create<MyClass>(MyClass, '123'));
+console.log(Factory.create<MyClass>('MyClass', '123'));

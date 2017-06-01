@@ -11,6 +11,7 @@ import {DocumentConventions} from "../src/Documents/Conventions/DocumentConventi
 import {CreateDatabaseCommand} from "../src/Database/Commands/CreateDatabaseCommand";
 import {DatabaseDocument} from "../src/Database/DatabaseDocument";
 import {IRavenResponse} from "../src/Database/RavenCommandResponse";
+import {IRavenObject} from "../src/Database/IRavenObject";
 import {PutIndexesCommand} from "../src/Database/Commands/PutIndexesCommand";
 import {DeleteDatabaseCommand} from "../src/Database/Commands/DeleteDatabaseCommand";
 
@@ -20,6 +21,49 @@ let requestsExecutor: RequestsExecutor;
 let indexMap: string;
 let index: IndexDefinition;
 
+export class Foo implements IRavenObject {
+  constructor(
+    public id: string,
+    public name: string    
+  ) {}        
+}
+
+export class Product implements IRavenObject {
+  constructor(
+    public id?: string,
+    public name: string = "",
+    public order?: string 
+  ) {}
+}
+
+export class Company implements IRavenObject {
+  constructor(
+    public id?: string,
+    public name: string = "",
+    public product?: Product
+  ) {}
+}
+
+export class Order implements IRavenObject {
+  constructor(
+    public id?: string,
+    public name: string = "",
+    public key?: string | number,
+    public product_id?: string
+  ) {}
+}
+
+export class LastFm implements IRavenObject {
+  constructor(
+    public id?: string,
+    public artist: string = "",
+    public track_id: string = "",
+    public title: string = "",
+    public datetime_time: Date = new Date(),
+    public tags: string[] = [] 
+  ) {}
+}
+    
 before(() => {
   chai.use(chaiAsPromised);
 });

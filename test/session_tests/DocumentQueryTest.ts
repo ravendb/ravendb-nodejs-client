@@ -50,7 +50,7 @@ describe('Document query test', () => {
         session = store.openSession();
 
         return BluebirdPromise.all([
-          session.store(session.create({name: 'test101', key: 2, order: 'a'}, 'product'), 'products/101'),
+          /*session.store(session.create({name: 'test101', key: 2, order: 'a'}, 'product'), 'products/101'),
           session.store(session.create({name: 'test10', key: 3, order: 'test'}, 'product'), 'products/10'),
           session.store(session.create({name: 'test106', key: 4, order: 'c'}, 'product'), 'products/106'),
           session.store(session.create({name: 'test107', key: 5, order: null}, 'product'), 'products/107'),
@@ -64,7 +64,7 @@ describe('Document query test', () => {
           session.store(session.create({
             name: 'withNesting',
             product: {name: 'testing_order', key: 4, order: null}
-          }, 'company'), 'company/1')
+          }, 'company'), 'company/1')*/
         ])
         .then(() => done());
       });
