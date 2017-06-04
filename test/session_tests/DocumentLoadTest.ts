@@ -26,7 +26,7 @@ describe('Document load test', () => {
     store = DocumentStore.create(defaultUrl, defaultDatabase);
     store.initialize();
 
-    store.openSession(async (session: IDocumentSession): Promise<void> => {
+    await store.openSession(async (session: IDocumentSession): Promise<void> => {
       let product101: Product = session.create<Product>(new Product("products/101", "test"));
       let product10: Product = session.create<Product>(new Product("products/10", "test"));
       let order: Order = session.create<Order>(new Order("orders/105", "testing_order", 92, "products/101"));

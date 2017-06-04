@@ -7,52 +7,57 @@ import {DocumentStore} from '../../src/Documents/DocumentStore';
 import {DocumentSession} from "../../src/Documents/Session/DocumentSession";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {IRavenObject} from "../../src/Database/IRavenObject";
+import {Foo} from "../BaseTest";
 
 describe('Document store test', () => {
   let store: IDocumentStore;
-  let session: IDocumentSession;
   let defaultDatabase: string, defaultUrl: string;
 
   beforeEach(function (): void {
     ({defaultDatabase, defaultUrl} = (this.currentTest as IRavenObject));
   });
 
-  beforeEach(() => store = DocumentStore.create(defaultUrl, defaultDatabase));
-
-  describe('Initialize()', () => {
-    it('should initialize', () => {
-      expect(store.initialize()).to.be.a.instanceof(DocumentStore);
-    });
-
-    it('should open session', () => {
-      expect(store.initialize().openSession()).to.be.a.instanceof(DocumentSession);
-    });
-  });
+  beforeEach(() => store = DocumentStore.create(defaultUrl, defaultDatabase).initialize());
 
   describe('Store', () => {
-    it('should be without key', (done: MochaDone) => {
-      session.store(session.create({name: 'test', key: 10}))
-        .then(() => store.openSession().load("test" as string))
-        .then((document: IRavenObject) => {
-          expect(document.name).to.equals('test');
-          done();
-        });
+    it('should store without key', async () => {
+      let foo: Foo;
+
+      await store.openSession(async (session: IDocumentSession) => {
+        foo = session.create<Foo>(new Foo(null, 'test', 10));
+        await session.store<Foo>(foo);
+      });
+
+      foo = await store.openSession().load<Foo>(foo.id, Foo);
+      expect(foo.name).to.equals('test');
     });
 
-    it('should be with key', (done: MochaDone) => {
-      session.store(session.create({name: 'test', key: 20}, 'testingStore/1'))
-        .then(() => store.openSession().load("testingStore/1"))
-        .then((document: IRavenObject) => {
-          expect(document.key).to.equals(20);
-          done();
-        });
+    it('should store with key', async () => {
+      let foo: Foo;
+      const key: string = 'testongStore/1';
+
+      await store.openSession(async (session: IDocumentSession) => {
+        foo = session.create<Foo>(new Foo(key, 'test', 20));
+        await session.store<Foo>(foo);
+      });
+
+      foo = await store.openSession().load<Foo>(key, Foo);
+      expect(foo.order).to.equals(20);      
     });
 
-    it('should be after delete fail', (done: MochaDone) => {
-      expect(
-        session.store(session.create({name: 'test', key: 20}, 'testingStore'))
-          .then(() => store.openSession().delete("testingStore"))
-      ).to.be.rejected.and.notify(done);
+    it('should fail after delete', async () => {
+      let foo: Foo;
+      const key: string = 'testongStore';
+
+      await store.openSession(async (session: IDocumentSession) => {
+        foo = session.create<Foo>(new Foo(key, 'test', 20));
+        await session.store<Foo>(foo);
+      });
+      
+      await expect(store.openSession(async (session: IDocumentSession) => {
+        await session.delete<Foo>(key);
+        await session.store<Foo>(foo);
+      })).to.be.rejected;      
     });
   });
 });
