@@ -30,7 +30,7 @@ describe('DocumentSession', () => {
     ({requestsExecutor} = this.currentTest as IRavenObject);
   });
 
-  before((done: MochaDone) => {
+  before(async() => {
     const indexMap: string = [
       "from doc in docs.Testings ",
       "select new{",
@@ -47,24 +47,23 @@ describe('DocumentSession', () => {
     patch = new PatchRequest("Name = 'Patched';");
     operations = new Operations(requestsExecutor);
 
-    requestsExecutor.execute(new PutIndexesCommand(indexSort))
+    return requestsExecutor.execute(new PutIndexesCommand(indexSort))
       .then(() => BluebirdPromise.all(_.range(0, 100).map((i) => requestsExecutor
         .execute(new PutDocumentCommand(`testing/${i}`, {
           Name: `test${i}`, DocNumber: i,
           '@metadata': {"@collection": "Testings"}
         }))
-      )))
-      .then(() => done());
+      )));
   });
 
 
   describe('Actions by Index', () => {
-    it('update by index success', (done: MochaDone) => {
+    it('update by index success', async () => {
       const indexQuery: IndexQuery = new IndexQuery('Name:*', 0, 0, null, {wait_for_non_stale_results: true});
       const queryCommand: QueryCommand = new QueryCommand('Testing_Sort', indexQuery, new DocumentConventions());
       const patchByIndexCommand: PatchByIndexCommand = new PatchByIndexCommand('Testing_Sort', new IndexQuery('Name:*'), patch, new QueryOperationOptions(false));
 
-      requestsExecutor
+      return requestsExecutor
         .execute(queryCommand)
         .then(() => requestsExecutor
         .execute(patchByIndexCommand)
@@ -73,45 +72,39 @@ describe('DocumentSession', () => {
         .then((response: IRavenResponse) => {
           expect(response).not.to.be.null;
           expect((response as IRavenResponse).Result.Total).not.to.be.lessThan(50);
-          done();
         })
       );
     });
 
-    it ('update by index fail', (done: MochaDone) => {
-      expect(
-        requestsExecutor
-          .execute(new PatchByIndexCommand('', new IndexQuery('Name:test'), patch))
-          .then((response: IRavenResponse) =>  operations
-          .waitForOperationComplete(response.OperationId))
-      ).to.be.rejected.and.notify(done);
-    });
+    it('update by index fail', async () => expect(
+      requestsExecutor
+        .execute(new PatchByIndexCommand('', new IndexQuery('Name:test'), patch))
+        .then((response: IRavenResponse) =>  operations
+        .waitForOperationComplete(response.OperationId))
+      ).to.be.rejected
+    );
 
-    it ('delete by index fail', (done: MochaDone) => {
-      expect(
-        requestsExecutor
-          .execute(new DeleteByIndexCommand('region2', new IndexQuery('Name:Western')))
-          .then((response: IRavenResponse) =>  operations
-          .waitForOperationComplete(response.OperationId))
-      ).to.be.rejected.and.notify(done)
-    });
+    it('delete by index fail', async () => expect(
+      requestsExecutor
+        .execute(new DeleteByIndexCommand('region2', new IndexQuery('Name:Western')))
+        .then((response: IRavenResponse) =>  operations
+        .waitForOperationComplete(response.OperationId))
+      ).to.be.rejected
+    );
 
-    it('delete by index success', (done: MochaDone) => {
+    it('delete by index success', async () => {
       const query: string = 'DocNumber_D_Range:[0 TO 49]';
       const indexQuery: IndexQuery = new IndexQuery(query, 0, 0, null, {wait_for_non_stale_results: true});
       const queryCommand: QueryCommand = new QueryCommand('Testing_Sort', indexQuery, new DocumentConventions());
       const deleteByIndexCommand: DeleteByIndexCommand = new DeleteByIndexCommand('Testing_Sort', new IndexQuery(query), new QueryOperationOptions(false));
 
-      requestsExecutor
+      return requestsExecutor
         .execute(queryCommand)
         .then(() => requestsExecutor
         .execute(deleteByIndexCommand))
         .then((response: IRavenResponse) => operations
         .waitForOperationComplete(response.OperationId))
-        .then((response: IRavenResponse) => {
-          expect((response as IRavenResponse).Status).to.equals('Completed');
-          done();
-        });
+        .then((response: IRavenResponse) => expect((response as IRavenResponse).Status).to.equals('Completed'));
     });
   });
 });

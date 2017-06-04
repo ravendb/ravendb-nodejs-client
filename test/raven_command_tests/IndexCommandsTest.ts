@@ -19,46 +19,37 @@ describe('Index commands test', () => {
   });
 
   describe('Index actions', () => {
-    it('should put index with success', (done: MochaDone) => {
+    it('should put index with success', async () => {
       const index: IndexDefinition = new IndexDefinition('region', indexMap);
 
-      expect(requestsExecutor.execute(new PutIndexesCommand(index))).to.be.fulfilled.and.notify(done);
+      return expect(requestsExecutor.execute(new PutIndexesCommand(index))).to.be.fulfilled;
     });
 
-    it('should get index with success', (done: MochaDone) => {
+    it('should get index with success', async () => {
       const index: IndexDefinition = new IndexDefinition('region', indexMap);
 
-      expect(requestsExecutor.execute(new PutIndexesCommand(index)))
-        .to.be.fulfilled.and.notify(() => requestsExecutor
+      return expect(requestsExecutor.execute(new PutIndexesCommand(index)))
+        .to.be.fulfilled.then(() => requestsExecutor
         .execute(new GetIndexCommand('get_index'))
-        .then((result: IRavenResponse) => {
-          expect(result).not.to.be.null;
-          done();
-        }));
+        .then((result: IRavenResponse) => expect(result).not.to.be.null));
     });
 
-    it('should get index with fail', (done: MochaDone) => {
-      requestsExecutor
-        .execute(new GetIndexCommand('reg', false))
-        .then((result: IRavenResponse) => {
-          expect(result).to.be.null;
-          done();
-      });
-    });
+    it('should get index with fail', async () => requestsExecutor
+      .execute(new GetIndexCommand('reg', false))
+      .then((result: IRavenResponse) => expect(result).to.be.null)
+    );
 
-    it('should delete index with success', (done: MochaDone) => {
+    it('should delete index with success', async () => {
       let index: IndexDefinition = new IndexDefinition('delete', indexMap);
 
-      requestsExecutor.execute(new PutIndexesCommand(index))
+      return requestsExecutor.execute(new PutIndexesCommand(index))
         .then(() => requestsExecutor.execute(new DeleteIndexCommand('delete')))
-        .then((result) => {
-          expect(result).to.be.null;
-          done();
-        });
-      })
+        .then((result) => expect(result).to.be.null);
     });
 
-    it('should delete index with fail', (done: MochaDone) => {
-      expect(requestsExecutor.execute(new DeleteIndexCommand(null))).should.be.rejected.and.notify(done);
-    });
+    it('should delete index with fail', async () => expect(
+        requestsExecutor.execute(new DeleteIndexCommand(null))
+      ).should.be.rejected
+    );
+  });
 });

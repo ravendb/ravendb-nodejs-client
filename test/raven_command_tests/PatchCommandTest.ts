@@ -16,37 +16,28 @@ describe('Patch command test', () => {
     ({requestsExecutor} = this.currentTest as IRavenObject);
   });
 
-  beforeEach((done: MochaDone) => {
-    requestsExecutor.execute(
+  beforeEach(async () => requestsExecutor
+    .execute(
       new PutDocumentCommand("products/10", {"Name": "test", "@metadata": {}})
-    )
-    .then(() => done());
-  });
+    )    
+  );
 
   describe('Patch request', () => {
-    it('should patch success ignoring missing', (done: MochaDone) => {
-      requestsExecutor
-        .execute(new PatchCommand('products/10', new PatchRequest("this.Name = 'testing'")))
-        .then((result: IRavenResponse) => {
-          expect(result).not.to.be.null;
-          done();
-        });
-    });
+    it('should patch success ignoring missing', async() => requestsExecutor
+      .execute(new PatchCommand('products/10', new PatchRequest("this.Name = 'testing'")))
+      .then((result: IRavenResponse) => expect(result).not.to.be.null)
+    );
 
-    it('should patch success not ignoring missing', (done: MochaDone) => {
-      requestsExecutor
-        .execute(new PatchCommand('products/10', new PatchRequest("this.Name = 'testing'"), {skipPatchIfEtagMismatch: true}))
-        .then((result: IRavenResponse) => {
-          expect(result).not.to.be.null;
-          done();
-        });
-    });
+    it('should patch success not ignoring missing', async() => requestsExecutor
+      .execute(new PatchCommand('products/10', new PatchRequest("this.Name = 'testing'"), {skipPatchIfEtagMismatch: true}))
+      .then((result: IRavenResponse) => expect(result).not.to.be.null)
+    );
 
-    it('should patch fail not ignoring missing', (done: MochaDone) => {
-      expect(requestsExecutor.execute(
-        new PatchCommand('products/10', new PatchRequest("this.Name = 'testing'"), {skipPatchIfEtagMismatch: false})
-      )).to.be.rejected.and.notify(done);
-    });
+    it('should patch fail not ignoring missing', async () => expect(
+      requestsExecutor.execute(
+        new PatchCommand('products/10', new PatchRequest("this.Name = 'testing'"), {skipPatchIfEtagMismatch: false}))
+      ).to.be.rejected
+    );
   })
 });
 

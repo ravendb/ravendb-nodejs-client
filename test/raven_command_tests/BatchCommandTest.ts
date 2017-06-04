@@ -34,34 +34,27 @@ describe('Batch command test', () => {
   });
 
   describe('Batch request', () => {
-    it('should be success with one command', (done: MochaDone) => {
-      requestsExecutor.execute(new BatchCommand([putCommand1])).then((result: IRavenResponse[]) => {
-        expect(result).to.be.lengthOf(1);
-        done()
-      });
-    });
+    it('should be success with one command', async () => requestsExecutor
+      .execute(new BatchCommand([putCommand1]))
+      .then((result: IRavenResponse[]) => expect(result).to.be.lengthOf(1))
+    );
 
-    it('should be success with multi commands', (done: MochaDone) => {
-      requestsExecutor.execute(new BatchCommand([putCommand1, putCommand2, deleteCommand])).then((result: IRavenResponse[]) => {
-        expect(result).to.be.lengthOf(3);
-        done()
-      });
-    });
+    it('should be success with multi commands', async () => requestsExecutor
+      .execute(new BatchCommand([putCommand1, putCommand2, deleteCommand]))
+      .then((result: IRavenResponse[]) => expect(result).to.be.lengthOf(3))
+    );
 
-    it('should be a scripted patch', (done: MochaDone) => {
-      requestsExecutor
+    it('should be success with a scripted patch', async () => requestsExecutor
         .execute(new BatchCommand([putCommand1, scriptedPatchCommand]))
         .then((): BluebirdPromise.Thenable<IRavenResponse> => requestsExecutor
         .execute(new GetDocumentCommand('products/999')))
-        .then((result: IRavenResponse) => {
-          expect((result).Results[0].Name).to.equals('testing');
-          done()
-      });
-    });
+        .then((result: IRavenResponse) => expect((result).Results[0].Name).to.equals('testing'))
+    );
 
-    it('should fail the test', (done: MochaDone) => {
-      expect(requestsExecutor.execute(new BatchCommand([putCommand1, putCommand2, null]))).to.be.rejected.and.notify(done)
-    });
+    it('should fail the test', (done: MochaDone) => expect(
+        requestsExecutor.execute(new BatchCommand([putCommand1, putCommand2, null]))
+      ).to.be.rejected
+    );
   })
 });
 

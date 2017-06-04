@@ -127,14 +127,11 @@ export class ProductsTestingSort {
   }
 }
 
-
-
-    
 before(() => {
   chai.use(chaiAsPromised);
 });
 
-beforeEach(function(done: MochaDone): void {
+beforeEach(async function() {
   requestsExecutor = new RequestsExecutor(
     defaultUrl, defaultDatabase, null,
     new DocumentConventions()
@@ -150,7 +147,7 @@ beforeEach(function(done: MochaDone): void {
 
   index = new IndexDefinition("Testing", indexMap);
 
-  requestsExecutor.execute(
+  return requestsExecutor.execute(
     new CreateDatabaseCommand(
       new DatabaseDocument(defaultDatabase, {"Raven/DataDir": "test"})
     )
@@ -158,25 +155,22 @@ beforeEach(function(done: MochaDone): void {
   .then((): BluebirdPromise.Thenable<IRavenResponse> => requestsExecutor.execute(
     new PutIndexesCommand(index)
   ))
-  .then((): void => {
+  .then(() => 
     _.assign(this.currentTest, {
       indexDefinition: index,
       indexMap: indexMap,
       requestsExecutor: requestsExecutor,
       defaultUrl: defaultUrl,
       defaultDatabase: defaultDatabase
-    });
-
-    done();
-  });
+    })
+  );
 });
 
-afterEach(function(done: MochaDone): void {
+afterEach(async function() {
   ['currentTest', 'indexDefinition', 'indexMap',
    'requestsExecutor', 'defaultUrl', 'defaultDatabase']
    .forEach((key: string) => delete this.currentTest[key]);
 
-  requestsExecutor
-    .execute(new DeleteDatabaseCommand(defaultDatabase, true))
-    .then((): void => done());
+  return requestsExecutor
+    .execute(new DeleteDatabaseCommand(defaultDatabase, true));
 });
