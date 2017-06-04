@@ -70,6 +70,15 @@ export class LastFm implements IRavenObject {
   ) {}
 }
 
+export class TestConversion implements IRavenObject {
+  constructor(
+    public id?: string,
+    public date: Date = new Date(),
+    public foo?: Foo,
+    public foos: Foo[] = []
+  ) {}
+}
+
 export class LastFmAnalyzed {
   protected indexDefinition: IndexDefinition;
 

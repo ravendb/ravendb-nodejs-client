@@ -74,7 +74,7 @@ describe('Document serializing test', () => {
     };
   });
   
-  describe('create()', () => {
+  describe('fromJson() / toJson()', () => {
     it('should parse scalars', () => {
       let document: IRavenObject = {};
       Serializer.fromJSON(document, json, {}, nestedObjectTypes);

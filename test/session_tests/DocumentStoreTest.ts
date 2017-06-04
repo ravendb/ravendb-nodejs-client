@@ -34,7 +34,7 @@ describe('Document store test', () => {
 
     it('should store with key', async () => {
       let foo: Foo;
-      const key: string = 'testongStore/1';
+      const key: string = 'testingStore/1';
 
       await store.openSession(async (session: IDocumentSession) => {
         foo = session.create<Foo>(new Foo(key, 'test', 20));
@@ -47,7 +47,7 @@ describe('Document store test', () => {
 
     it('should fail after delete', async () => {
       let foo: Foo;
-      const key: string = 'testongStore';
+      const key: string = 'testingStore';
 
       await store.openSession(async (session: IDocumentSession) => {
         foo = session.create<Foo>(new Foo(key, 'test', 20));
