@@ -37,8 +37,8 @@ describe('Document full text search', () => {
 
   describe('Text search', () => {
     it('should search by single keyword', async() => {
-      const results: IRavenObject[] = await store.openSession()
-        .query({
+      const results: LastFm[] = await store.openSession()
+        .query<LastFm>({
           documentTypeOrObjectType: LastFm, 
           indexName: LastFmAnalyzed.name,
           waitForNonStaleResults: true
@@ -51,8 +51,8 @@ describe('Document full text search', () => {
     });
 
     it('should search by two keywords', async() => {
-      const results: IRavenObject[] = await store.openSession()
-        .query({
+      const results: LastFm[] = await store.openSession()
+        .query<LastFm>({
           documentTypeOrObjectType: LastFm, 
           indexName: LastFmAnalyzed.name,
           waitForNonStaleResults: true
@@ -65,8 +65,8 @@ describe('Document full text search', () => {
     });
 
     it('should search full text with boost', async () => {
-      const results: IRavenObject[] = await store.openSession()
-        .query({
+      const results: LastFm[] = await store.openSession()
+        .query<LastFm>({
           documentTypeOrObjectType: LastFm, 
           indexName: LastFmAnalyzed.name,
           waitForNonStaleResults: true
