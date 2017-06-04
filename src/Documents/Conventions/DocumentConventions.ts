@@ -137,7 +137,7 @@ export class DocumentConventions {
           } else if (TypeUtil.isObject(value)) {
             let objectType: string = value.constructor.name;
 
-            if ('object' !== objectType) {
+            if ('Object' !== objectType) {
               nestedTypes[property] = objectType;
             }
           }

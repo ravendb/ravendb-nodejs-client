@@ -2,23 +2,19 @@
 /// <reference path="../../node_modules/@types/chai/index.d.ts" />
 
 import {expect} from 'chai';
-import {DocumentStore} from '../../src/Documents/DocumentStore';
-import {IDocumentSession} from '../../src/Documents/Session/IDocumentSession';
+import {Serializer} from "../../src/Json/Serializer";
+import {DateUtil} from "../../src/Utility/DateUtil";
 import {IRavenObject} from "../../src/Database/IRavenObject";
+import {DocumentConstructor} from "../../src/Documents/Conventions/DocumentConventions";
+import {Foo} from "../BaseTest";
 
 describe('Document serializing test', () => {
-  let session : IDocumentSession;
   let json : object;
-  let defaultDatabase: string, defaultUrl: string;
-
-  beforeEach(function (): void {
-    ({defaultDatabase, defaultUrl} = (this.currentTest as IRavenObject));
-  });
-
+  let nestedObjectTypes: IRavenObject<DocumentConstructor>;
+  
   beforeEach(() => {
-    session = DocumentStore.create(defaultUrl, defaultDatabase).initialize().openSession();
-
     json = {
+      '@metadata': {},
       stringProp: "string",
       numberProp: 2,
       numberFloatProp: 2.5,
@@ -50,19 +46,38 @@ describe('Document serializing test', () => {
         }, [5, 6], [7, 8, {
           someProp: "someValue",
         }]
-      ]
+      ],
+      dateProp: '2017-06-04T18:39:05.1230000',
+      deepFooProp: {
+        '@metadata': {},
+        id: 'foo1',
+        name: 'Foo #1',
+        order: 1
+      },
+      deepArrayFooProp: [{
+        '@metadata': {},
+        id: 'foo2',
+        name: 'Foo #2',
+        order: 2
+      },{
+        '@metadata': {},
+        id: 'foo3',
+        name: 'Foo #3',
+        order: 3
+      }]
+    };
+
+    nestedObjectTypes = {
+      dateProp: Date,
+      deepFooProp: Foo,
+      deepArrayFooProp: Foo
     };
   });
   
   describe('create()', () => {
-    it('should return Document instance', () => {
-      const document: IRavenObject = session.create(json);
-
-      expect(document).to.be.an.instanceof(Document);
-    });
-
     it('should parse scalars', () => {
-      const document: IRavenObject = session.create(json);
+      let document: IRavenObject = {};
+      Serializer.fromJSON(document, json, {}, nestedObjectTypes);
 
       expect(document.stringProp).to.be.a('string');
       expect(document.stringProp).to.equals('string');
@@ -76,13 +91,15 @@ describe('Document serializing test', () => {
     });
 
     it('should skip undefined props', () => {
-      const document: IRavenObject = session.create(json);
+      let document: IRavenObject = {};
+      Serializer.fromJSON(document, json, {}, nestedObjectTypes);
 
       expect(document).to.not.have.property('undefinedProp');
     });
 
     it('should parse arrays', () => {
-      const document: IRavenObject = session.create(json);
+      let document: IRavenObject = {};
+      Serializer.fromJSON(document, json, {}, nestedObjectTypes);
 
       expect(document.arrayProp).to.be.a('array');
       expect(document.arrayProp).to.have.length(3);
@@ -90,7 +107,9 @@ describe('Document serializing test', () => {
     });
 
     it('should parse deep arrays', () => {
-      const document: IRavenObject = session.create(json);
+      let document: IRavenObject = {};
+      Serializer.fromJSON(document, json, {}, nestedObjectTypes);
+
       const deep: number[] = document.deepArrayProp[2];
 
       expect(document.deepArrayProp).to.be.a('array');
@@ -103,10 +122,10 @@ describe('Document serializing test', () => {
     });
 
     it('should parse Objects', () => {
-      const document: IRavenObject = session.create(json);
+      let document: IRavenObject = {};
+      Serializer.fromJSON(document, json, {}, nestedObjectTypes);
       
       expect(document.objectProp).to.be.a('object');
-      expect(document.objectProp).to.be.an.instanceOf(Document);
       expect(document.objectProp).to.have.property('stringProp');
       expect(document.objectProp).to.have.property('numberProp');
       expect(document.objectProp).to.have.property('numberFloatProp');
@@ -130,11 +149,12 @@ describe('Document serializing test', () => {
     });
 
     it('should parse deep Objects', () => {
-      const document: IRavenObject = session.create(json);
+      let document: IRavenObject = {};
+      Serializer.fromJSON(document, json, {}, nestedObjectTypes);
+
       const deep: object = document.deepObjectProp.someObject;
       
       expect(document.deepObjectProp).to.be.a('object');
-      expect(document.deepObjectProp).to.be.an.instanceOf(Document);
       expect(document.deepObjectProp).to.have.property('someProp', 'someValue');
 
       expect(deep).to.be.a('object');
@@ -142,7 +162,9 @@ describe('Document serializing test', () => {
     });
 
     it('should parse mixed deep arrays/Objects', () => {
-      const document: IRavenObject = session.create(json);
+      let document: IRavenObject = {};
+      Serializer.fromJSON(document, json, {}, nestedObjectTypes);
+
       const deepObject: IRavenObject = <IRavenObject>document.deepArrayObjectProp[2];
       const deepArrayInObject: number[] = deepObject.someArray;
       const deepArray: any[] = document.deepArrayObjectProp[4];
@@ -162,6 +184,42 @@ describe('Document serializing test', () => {
 
       expect(deepObjectInArray).to.be.a('object');
       expect(deepObjectInArray).to.have.property('someProp', 'someValue');
+    });
+
+    it('should parse dates', () => {
+      let document: IRavenObject = {};
+      Serializer.fromJSON(document, json, {}, nestedObjectTypes);
+      
+      expect(document.dateProp).to.be.a('object');
+      expect(document.dateProp).to.be.an.instanceOf(Date);
+      expect(DateUtil.stringify(document.dateProp)).to.equal((<IRavenObject>json).dateProp);
+    });
+
+    it('should parse deep objects and arrays according to specified nested objects types', () => {
+      let document: IRavenObject = {};
+      Serializer.fromJSON(document, json, {}, nestedObjectTypes);
+      
+      expect(document.deepArrayFooProp).to.be.an('array');
+
+      const target: IRavenObject[] = [document.deepFooProp].concat(document.deepArrayFooProp);
+      const source: IRavenObject[] = [(<IRavenObject>json).deepFooProp].concat((<IRavenObject>json).deepArrayFooProp);
+
+      target.forEach((item: IRavenObject, index: number) => {
+        expect(item).to.be.a('object');
+        expect(item).to.be.an.instanceOf(Foo);
+        expect(item).to.have.property('id', (<IRavenObject>source[index]).id);
+        expect(item).to.have.property('name', (<IRavenObject>source[index]).name);
+        expect(item).to.have.property('order', (<IRavenObject>source[index]).order);
+      });
+    });
+
+    it('should serialize back to source json', () => {
+      let document: IRavenObject = {};
+      Serializer.fromJSON(document, json, {}, nestedObjectTypes);
+      
+      let serialized: object = Serializer.toJSON(document, {});
+
+      expect(serialized).to.deep.equals(json);
     });
   });
 });

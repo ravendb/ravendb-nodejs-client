@@ -67,7 +67,7 @@ export class DocumentSession implements IDocumentSession {
     let document: T = attributesOrDocument as T;
     const conventions: DocumentConventions = this.documentStore.conventions;
 
-    if (!TypeUtil.isNone(documentTypeOrObjectType) || !_.isEmpty(nestedObjectTypes)) {
+    if (('object' !== (typeof attributesOrDocument)) || ('Object' === attributesOrDocument.constructor.name)) {
       const objectType: DocumentConstructor<T> | null = conventions.getObjectType(documentTypeOrObjectType);
       
       document = objectType ? new objectType() : ({} as T);
