@@ -13,7 +13,7 @@ import {StringUtil} from "../../Utility/StringUtil";
 import {QueryString} from "../../Http/QueryString";
 import {ArrayUtil} from "../../Utility/ArrayUtil";
 import {QueryOperators, QueryOperator} from "./QueryOperator";
-import {DocumentConventions, DocumentConstructor} from "../Conventions/DocumentConventions";
+import {DocumentConventions, DocumentConstructor, IDocumentConversionResult} from "../Conventions/DocumentConventions";
 import * as BluebirdPromise from 'bluebird'
 import * as moment from "moment";
 import {IndexQuery} from "../../Database/Indexes/IndexQuery";
@@ -21,11 +21,16 @@ import {IRavenObject} from "../../Database/IRavenObject";
 import {IOptionsSet} from "../../Utility/IOptionsSet";
 import {QueryCommand} from "../../Database/Commands/QueryCommand";
 import {TypeUtil} from "../../Utility/TypeUtil";
+import {Observable} from "../../Utility/Observable";
 import {ArgumentOutOfRangeException, InvalidOperationException, ErrorResponseException, RavenException} from "../../Database/DatabaseExceptions";
 
 export type QueryResultsWithStatistics<T> = {results: T[], response: IRavenResponse};
 
-export class DocumentQuery<T> implements IDocumentQuery<T> {
+export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
+  public static readonly EVENT_DOCUMENTS_QUERIED : string = 'queried:documents';
+  public static readonly EVENT_DOCUMENT_FETCHED  : string = 'fetched:document';
+  public static readonly EVENT_INCLUDES_FETCHED  : string = 'fetched:includes';
+
   protected indexName: string;
   protected session: IDocumentSession;
   protected requestsExecutor: RequestsExecutor;
@@ -40,10 +45,11 @@ export class DocumentQuery<T> implements IDocumentQuery<T> {
   protected waitForNonStaleResults: boolean = false;
   protected objectType?: DocumentConstructor<T> = null;
   protected nestedObjectTypes: IRavenObject<DocumentConstructor> = {};
-
+  
   constructor(session: IDocumentSession, requestsExecutor: RequestsExecutor, documentTypeOrObjectType?: string | DocumentConstructor<T>, indexName?: string, usingDefaultOperator
     ?: QueryOperator, waitForNonStaleResults: boolean = false, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, withStatistics: boolean = false
   ) {
+    super();
     this.session = session;
     this.includes = includes;
     this.withStatistics = withStatistics;
@@ -51,7 +57,7 @@ export class DocumentQuery<T> implements IDocumentQuery<T> {
     this.usingDefaultOperator = usingDefaultOperator;
     this.waitForNonStaleResults = waitForNonStaleResults;
     this.nestedObjectTypes = nestedObjectTypes || {} as IRavenObject<DocumentConstructor>;
-    this.objectType = session.conventions.tryGetObjectType(documentTypeOrObjectType);
+    this.objectType = session.conventions.getObjectType(documentTypeOrObjectType);
     this.indexName = [(indexName || 'dynamic'), session.conventions.getDocumentsColleciton(documentTypeOrObjectType)].join('/');
   }
 
@@ -214,12 +220,27 @@ export class DocumentQuery<T> implements IDocumentQuery<T> {
 
       if (commandResponse.Results.length > 0) {
         let results: T[] = [] as T[];
+        const fetchingFullDocs: boolean = !this.fetch 
+          || (TypeUtil.isArray(this.fetch) && !this.fetch.length);
 
-        commandResponse.Results.forEach((result: object) => results.push(
-          this.session.conventions
-            .tryConvertToDocument<T>(result, this.objectType, this.nestedObjectTypes || {})
-            .document
-        ));
+        commandResponse.Results.forEach((result: object) => {
+          const conversionResult: IDocumentConversionResult<T> = this.session.conventions
+              .convertToDocument<T>(result, this.objectType, this.nestedObjectTypes || {});
+
+          results.push(conversionResult.document);
+
+          this.emit<IDocumentConversionResult<T>>(
+            DocumentQuery.EVENT_DOCUMENT_FETCHED, 
+            conversionResult
+          );
+        });
+       
+        if (commandResponse.Includes && commandResponse.Includes.length) {
+          this.emit<object[]>(
+            DocumentQuery.EVENT_INCLUDES_FETCHED, 
+            commandResponse.Includes as object[]
+          );
+        }
 
         if (this.withStatistics) {
           result = {
@@ -294,9 +315,9 @@ export class DocumentQuery<T> implements IDocumentQuery<T> {
       wait_for_non_stale_results: this.waitForNonStaleResults
     };
 
-    const session: IDocumentSession = this.session;
-    session.incrementRequestsCount();
+    this.emit(DocumentQuery.EVENT_DOCUMENTS_QUERIED);
 
+    const session: IDocumentSession = this.session;
     const conventions: DocumentConventions = session.conventions;
     const endTime: number = moment().unix() + conventions.timeout;
     const query: IndexQuery = new IndexQuery(this.queryBuilder, 0, 0, this.usingDefaultOperator, queryOptions);
