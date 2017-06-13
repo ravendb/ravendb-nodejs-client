@@ -85,42 +85,15 @@ export class DocumentStore implements IDocumentStore {
       .then((): IDocumentStore => this);
   }
 
-  public async openSession(transaction: ITransaction) : Promise<void>;
-  public async openSession(options: ISessionOptions, transaction: ITransaction) : Promise<void>;
-  public openSession(database?: string, forceReadFromMaster?: boolean) : IDocumentSession;
-  public openSession(firstArg?: string | ITransaction | ISessionOptions, secondArg?: ITransaction | boolean): IDocumentSession | Promise<void> {
+  public openSession(database?: string, forceReadFromMaster?: boolean) : IDocumentSession {
     this.assertInitialize();
 
-    const transaction: ITransaction = (TypeUtil.isFunction(firstArg) 
-      ? firstArg : (TypeUtil.isFunction(secondArg) 
-      ? secondArg : null)) as ITransaction;
-
-    let opts: ISessionOptions = TypeUtil.isObject(firstArg)
-      ? (firstArg as ISessionOptions) : {forceReadFromMaster: false};
-
-    if (TypeUtil.isString(firstArg)) {
-      opts.database = firstArg as string;
-    }
-
-    if (TypeUtil.isBool(secondArg)) {
-      opts.forceReadFromMaster = secondArg as boolean;
-    }    
-
-    let dbName: string = opts.database || this._database;
+    let dbName: string = database || this._database;
     let executor: RequestsExecutor = this.getRequestsExecutor(dbName);
 
     this.sessionId = uuid();
     
-    const session: IDocumentSession = new DocumentSession(dbName, this, executor, this.sessionId, opts.forceReadFromMaster);
-
-    if (!transaction) {
-      return session;
-    }
-
-    return transaction(session)
-      .then(() => session.saveChanges())
-      .then(() => this.finalize())
-      .then(() => Promise.resolve<void>(void 0));
+    return new DocumentSession(dbName, this, executor, this.sessionId, forceReadFromMaster);
   }
 
   public async generateId(entity: object, documentTypeOrObjectType?: string | DocumentConstructor, database?: string, callback?: EntityKeyCallback): Promise<string> {
