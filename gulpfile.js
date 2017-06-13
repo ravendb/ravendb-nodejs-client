@@ -53,7 +53,7 @@ gulp.task('run:tests', ['clean', 'build:tests'], (next) => {
         tests.unshift(options.tmp + '/test/TestBase.js');
     }
 
-    return gulp.src(tests).pipe(mocha());
+    return gulp.src(tests).pipe(mocha()).on('error', () => process.exit(-1));
 });
 
 gulp.task('build:exports', ['clean'], () => gulp
