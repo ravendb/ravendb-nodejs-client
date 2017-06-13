@@ -18,7 +18,7 @@ export class TypeUtil {
   }
 
   public static isObject(value: any): boolean {
-    return _.isObject(value);
+    return _.isObject(value) && !this.isArray(value);
   }
 
   public static isFunction(value: any): boolean {
@@ -27,5 +27,9 @@ export class TypeUtil {
 
   public static isDate(value: any): boolean {
     return _.isDate(value);
+  }
+
+  public static isBool(value: any): boolean {
+    return _.isBoolean(value);
   }
 }

@@ -1,4 +1,4 @@
-import {IDocumentStore} from './IDocumentStore';
+import {IDocumentStore, ITransaction, ISessionOptions} from './IDocumentStore';
 import {IDocumentSession} from "./Session/IDocumentSession";
 import {DocumentSession} from "./Session/DocumentSession";
 import {RequestsExecutor} from '../Http/Request/RequestsExecutor';
@@ -85,13 +85,14 @@ export class DocumentStore implements IDocumentStore {
       .then((): IDocumentStore => this);
   }
 
-  public openSession(database?: string, forceReadFromMaster: boolean = false): IDocumentSession {
+  public openSession(database?: string, forceReadFromMaster?: boolean) : IDocumentSession {
     this.assertInitialize();
 
     let dbName: string = database || this._database;
     let executor: RequestsExecutor = this.getRequestsExecutor(dbName);
 
     this.sessionId = uuid();
+    
     return new DocumentSession(dbName, this, executor, this.sessionId, forceReadFromMaster);
   }
 

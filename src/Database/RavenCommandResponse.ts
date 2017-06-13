@@ -1,3 +1,3 @@
-import {IRavenObject} from '../Database/IRavenObject';
+import {IRavenObject} from './IRavenObject';
 
 export interface IRavenResponse extends IRavenObject {}

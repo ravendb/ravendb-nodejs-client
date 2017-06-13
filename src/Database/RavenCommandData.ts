@@ -19,5 +19,9 @@ export abstract class RavenCommandData implements IJsonSerializable {
     return this._command;
   }
 
+  public get documentKey(): string {
+    return this.key;
+  }
+
   public abstract toJson(): object;
 }

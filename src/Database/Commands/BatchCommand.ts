@@ -38,6 +38,6 @@ export class BatchCommand extends RavenCommand {
       throw new ErrorResponseException(body.Error);
     }
 
-    return body.Results;
+    return body.Results as IRavenResponse[];
   }
 }
