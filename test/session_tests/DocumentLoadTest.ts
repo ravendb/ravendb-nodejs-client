@@ -23,20 +23,19 @@ describe('Document load test', () => {
   });
 
   beforeEach(async () => {
-    store = DocumentStore.create(defaultUrl, defaultDatabase);
-    store.initialize();
+    store = DocumentStore.create(defaultUrl, defaultDatabase).initialize();
+    session = store.openSession();
 
-    await store.openSession(async (session: IDocumentSession): Promise<void> => {
-      let product101: Product = session.create<Product>(new Product("products/101", "test"));
-      let product10: Product = session.create<Product>(new Product("products/10", "test"));
-      let order: Order = session.create<Order>(new Order("orders/105", "testing_order", 92, "products/101"));
-      let company: Company = session.create<Company>(new Company("company/1", "test", new Product(null, "testing_nested")));
+    let product101: Product = session.create<Product>(new Product("products/101", "test"));
+    let product10: Product = session.create<Product>(new Product("products/10", "test"));
+    order = session.create<Order>(new Order("orders/105", "testing_order", 92, "products/101"));
+    company = session.create<Company>(new Company("company/1", "test", new Product(null, "testing_nested")));
 
-      await session.store<Product>(product101);
-      await session.store<Product>(product10);
-      await session.store<Order>(order);
-      await session.store<Company>(company);
-    });
+    await session.store<Product>(product101);
+    await session.store<Product>(product10);
+    await session.store<Order>(order);
+    await session.store<Company>(company);
+    await session.saveChanges();
   });
 
   describe('Document Load', () => {

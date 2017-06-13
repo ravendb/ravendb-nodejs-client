@@ -11,6 +11,7 @@ import {Foo} from "../BaseTest";
 
 describe('Document store test', () => {
   let store: IDocumentStore;
+  let session: IDocumentSession;
   let defaultDatabase: string, defaultUrl: string;
 
   beforeEach(function (): void {
@@ -22,24 +23,24 @@ describe('Document store test', () => {
   describe('Store', () => {
     it('should store without key', async () => {
       let foo: Foo;
+      session = store.openSession();
 
-      await store.openSession(async (session: IDocumentSession) => {
-        foo = session.create<Foo>(new Foo(null, 'test', 10));
-        await session.store<Foo>(foo);
-      });
+      foo = session.create<Foo>(new Foo(null, 'test', 10));
+      await session.store<Foo>(foo);
+      await session.saveChanges();
 
       foo = await store.openSession().load<Foo>(foo.id, Foo);
       expect(foo.name).to.equals('test');
     });
 
     it('should store with key', async () => {
-      let foo: Foo;
+      let foo: Foo;    
       const key: string = 'testingStore/1';
+      session = store.openSession();
 
-      await store.openSession(async (session: IDocumentSession) => {
-        foo = session.create<Foo>(new Foo(key, 'test', 20));
-        await session.store<Foo>(foo);
-      });
+      foo = session.create<Foo>(new Foo(key, 'test', 20));
+      await session.store<Foo>(foo);
+      await session.saveChanges();
 
       foo = await store.openSession().load<Foo>(key, Foo);
       expect(foo.order).to.equals(20);      
@@ -48,16 +49,14 @@ describe('Document store test', () => {
     it('should fail after delete', async () => {
       let foo: Foo;
       const key: string = 'testingStore';
+      session = store.openSession();
 
-      await store.openSession(async (session: IDocumentSession) => {
-        foo = session.create<Foo>(new Foo(key, 'test', 20));
-        await session.store<Foo>(foo);
-      });
+      foo = session.create<Foo>(new Foo(key, 'test', 20));
+      await session.store<Foo>(foo);
+      await session.saveChanges();   
       
-      await expect(store.openSession(async (session: IDocumentSession) => {
-        await session.delete<Foo>(key);
-        await session.store<Foo>(foo);
-      })).to.be.rejected;      
+      await session.delete<Foo>(key);   
+      await expect(session.store<Foo>(foo)).to.be.rejected;      
     });
   });
 });

@@ -11,7 +11,9 @@ import {DocumentConstructor} from "../../src/Documents/Conventions/DocumentConve
 import {Foo, TestConversion} from "../BaseTest";
 
 describe('Document conversion test', () => {
+  const now: Date = new Date();
   let store: IDocumentStore;
+  let session: IDocumentSession;
   let defaultDatabase: string, defaultUrl: string;
 
   const nestedObjectTypes: IRavenObject<DocumentConstructor> = {
@@ -20,8 +22,8 @@ describe('Document conversion test', () => {
     date: Date
   };
 
-  const makeDocument = (id: string = null): TestConversion => new TestConversion(
-    id, new Date(),
+  const makeDocument = (id: string = null, date: Date = now): TestConversion => new TestConversion(
+    id, date,
     new Foo('Foo/1', 'Foo #1', 1), [
       new Foo('Foo/2', 'Foo #2', 2),
       new Foo('Foo/3', 'Foo #3', 3)
@@ -53,44 +55,55 @@ describe('Document conversion test', () => {
 
   beforeEach(async () => {
     store = DocumentStore.create(defaultUrl, defaultDatabase).initialize();
+    session = store.openSession();
 
-    await store.openSession(async (session: IDocumentSession) => {
-      await session.store<TestConversion>(session.create<TestConversion>(makeDocument('TestConversion/1')));    
-    });
+    await session.store<TestConversion>(session.create<TestConversion>(makeDocument('TestConversion/1'))); 
+    await session.store<TestConversion>(session.create<TestConversion>(makeDocument('TestConversion/2', new Date(now.getTime() + 1000 * 60 * 60 * 24)))); 
+    await session.saveChanges();   
   });
 
   describe('Conversion', () => {
     it('should convert on load', async () => {
-      await store.openSession(async (session: IDocumentSession) => {
-        const doc: TestConversion = await session.load<TestConversion>('TestConversion/1', TestConversion, [], nestedObjectTypes);
+      let doc: TestConversion;
 
-        checkDoc(doc);
-      });
+      session = store.openSession();
+      doc = await session.load<TestConversion>('TestConversion/1', TestConversion, [], nestedObjectTypes);
+
+      checkDoc(doc);
     });
 
     it('should convert on store then on re-load', async () => {
+      let doc: TestConversion;
       const key: string = 'TestingConversion/New';
 
-      await store.openSession(async (session: IDocumentSession) => {
-        await session.store<TestConversion>(session.create<TestConversion>(makeDocument(key)));  
-      });
+      session = store.openSession();
 
-      await store.openSession(async (session: IDocumentSession) => {
-        const doc: TestConversion = await session.load<TestConversion>(key, TestConversion, [], nestedObjectTypes);
+      await session.store<TestConversion>(session.create<TestConversion>(makeDocument(key)));  
+      await session.saveChanges();
 
-        checkDoc(doc);
-      }); 
+      session = store.openSession();
+      doc = await session.load<TestConversion>(key, TestConversion, [], nestedObjectTypes);
+
+      checkDoc(doc);
     });
 
     it('should convert on query', async () => {
-      await store.openSession(async (session: IDocumentSession) => {
-        const docs: TestConversion[] = await session.query<TestConversion>({
-          documentTypeOrObjectType: TestConversion,
-          nestedObjectTypes: nestedObjectTypes
-        }).get();
+      let doc: TestConversion;
+      let docs: TestConversion[];
+      session = store.openSession();
 
-        docs.forEach((doc: TestConversion) => checkDoc(doc));
-      });
+      docs = await session.query<TestConversion>({
+        documentTypeOrObjectType: TestConversion,
+        nestedObjectTypes: nestedObjectTypes
+      })
+      .whereGreaterThan<Date>('date', now)
+      .get();
+      
+      expect(docs).to.have.lengthOf(1);
+      
+      [doc] = docs;      
+      expect(doc).to.have.property('id', 'TestConversion/2');
+      checkDoc(doc);      
     });
   });
 });

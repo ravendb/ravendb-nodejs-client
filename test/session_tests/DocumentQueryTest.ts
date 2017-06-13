@@ -5,6 +5,7 @@
 import {expect} from 'chai';
 import * as _ from 'lodash';
 import * as BluebirdPromise from 'bluebird';
+import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
 import {DocumentStore} from '../../src/Documents/DocumentStore';
 import {IDocumentQuery} from '../../src/Documents/Session/IDocumentQuery';
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
@@ -20,6 +21,7 @@ import {TypeUtil} from "../../src/Utility/TypeUtil";
 
 describe('Document query test', () => {
   let store: IDocumentStore;
+  let session: IDocumentSession;
   let defaultDatabase: string, defaultUrl: string;
 
   beforeEach(function (): void {
@@ -27,20 +29,22 @@ describe('Document query test', () => {
   });
 
   beforeEach(async () => {
-    store = DocumentStore.create(defaultUrl, defaultDatabase);
-    store.initialize();
+    store = DocumentStore.create(defaultUrl, defaultDatabase).initialize();
+    session = store.openSession();
 
-    await (new ProductsTestingSort(store.getRequestsExecutor())).execute();
-    await store.openSession(async(session: IDocumentSession) => {
-      await session.store<Product>(session.create<Product>(new Product('products/101', 'test101', 2, 'a')));
-      await session.store<Product>(session.create<Product>(new Product('products/10', 'test10', 3, 'b')));
-      await session.store<Product>(session.create<Product>(new Product('products/106', 'test106', 4, 'c')));
-      await session.store<Product>(session.create<Product>(new Product('products/107', 'test107', 5)));
-      await session.store<Product>(session.create<Product>(new Product('products/103', 'test107', 6)));
-      await session.store<Product>(session.create<Product>(new Product('products/108', 'new_testing', 90, 'd')));
-      await session.store<Order>(session.create<Order>(new Order('orders/105', 'testing_order', 92, 'products/108')));
-      await session.store<Company>(session.create<Company>(new Company('company/1', 'withNesting', new Product(null, 'testing_order', 4))));
-    });
+    const requestsExecutor: RequestsExecutor = store.getRequestsExecutor();
+    const productsTestingSort: ProductsTestingSort = new ProductsTestingSort(requestsExecutor);
+
+    await productsTestingSort.execute();
+    await session.store<Product>(session.create<Product>(new Product('products/101', 'test101', 2, 'a')));
+    await session.store<Product>(session.create<Product>(new Product('products/10', 'test10', 3, 'b')));
+    await session.store<Product>(session.create<Product>(new Product('products/106', 'test106', 4, 'c')));
+    await session.store<Product>(session.create<Product>(new Product('products/107', 'test107', 5)));
+    await session.store<Product>(session.create<Product>(new Product('products/103', 'test107', 6)));
+    await session.store<Product>(session.create<Product>(new Product('products/108', 'new_testing', 90, 'd')));
+    await session.store<Order>(session.create<Order>(new Order('orders/105', 'testing_order', 92, 'products/108')));
+    await session.store<Company>(session.create<Company>(new Company('company/1', 'withNesting', new Product(null, 'testing_order', 4))));
+    await session.saveChanges();
   });
 
   describe('Index checking', () => {
@@ -168,15 +172,15 @@ describe('Document query test', () => {
     });
 
     it('should query with includes', async() => {
-      await store.openSession(async(session: IDocumentSession) => {
-        await session.query({
-          waitForNonStaleResults: true, 
-          includes: ['product_id']
-        }).where({uid: 92}).get();
+      session = store.openSession();
 
-        await session.load('product/108');
-        expect(session.numberOfRequestsInSession).to.equals(1);
-      });      
+      await session.query({
+        waitForNonStaleResults: true, 
+        includes: ['product_id']
+      }).where({uid: 92}).get();
+
+      await session.load('product/108');
+      expect(session.numberOfRequestsInSession).to.equals(1);            
     });
 
     it('should query with nested objects', async() => {

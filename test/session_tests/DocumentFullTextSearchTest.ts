@@ -16,6 +16,7 @@ import {LastFm, LastFmAnalyzed} from "../BaseTest";
 
 describe('Document full text search', () => {
   let store: IDocumentStore;
+  let session: IDocumentSession;
   let requestExecutor: RequestsExecutor;
   let defaultDatabase: string, defaultUrl: string;
 
@@ -24,15 +25,16 @@ describe('Document full text search', () => {
   });
 
   beforeEach(async () => {
-    store = DocumentStore.create(defaultUrl, defaultDatabase);
-    store.initialize();
+    const lastFmAnalyzed: LastFmAnalyzed = new LastFmAnalyzed(requestExecutor);
 
-    await (new LastFmAnalyzed(requestExecutor)).execute();
-    await store.openSession(async(session:IDocumentSession) => {
-      await session.store<LastFm>(session.create<LastFm>(new LastFm("LastFms/1", "Tania Maria", "TRALPJJ128F9311763", "Come With Me")));
-      await session.store<LastFm>(session.create<LastFm>(new LastFm("LastFms/2", "Meghan Trainor", "TRBCNGI128F42597B4", "Me Too")));
-      await session.store<LastFm>(session.create<LastFm>(new LastFm("LastFms/3", "Willie Bobo", "TRAACNS128F14A2DF5", "Spanish Grease")));
-    });
+    store = DocumentStore.create(defaultUrl, defaultDatabase).initialize();
+    session = store.openSession();
+
+    await lastFmAnalyzed.execute();    
+    await session.store<LastFm>(session.create<LastFm>(new LastFm("LastFms/1", "Tania Maria", "TRALPJJ128F9311763", "Come With Me")));
+    await session.store<LastFm>(session.create<LastFm>(new LastFm("LastFms/2", "Meghan Trainor", "TRBCNGI128F42597B4", "Me Too")));
+    await session.store<LastFm>(session.create<LastFm>(new LastFm("LastFms/3", "Willie Bobo", "TRAACNS128F14A2DF5", "Spanish Grease")));
+    await session.saveChanges();
   });
 
   describe('Text search', () => {

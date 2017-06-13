@@ -11,6 +11,7 @@ import {Product} from "../BaseTest";
 
 describe('Document delete test', () => {
   let store: IDocumentStore;
+  let session: IDocumentSession;
   let defaultDatabase: string, defaultUrl: string;
 
   beforeEach(function(): void {
@@ -18,68 +19,65 @@ describe('Document delete test', () => {
   });
 
   beforeEach(async () => {
-    store = DocumentStore.create(defaultUrl, defaultDatabase);
-    store.initialize();
+    store = DocumentStore.create(defaultUrl, defaultDatabase).initialize();
+    session = store.openSession();
 
-    await store.openSession(async (session: IDocumentSession) => {
-      for (let id of [101, 10, 106, 107]) {
-        let product: Product = new Product(`products/${id}`, 'test');
+    for (let id of [101, 10, 106, 107]) {
+      let product: Product = new Product(`products/${id}`, 'test');
+      await session.store<Product>(session.create<Product>(product));
+    }
 
-        await session.store<Product>(session.create<Product>(product));
-      }
-    });
+    await session.saveChanges();
   });
 
   describe('Document delete', () => {
     it('should delete with key with save session', async() => {
-      const key: string = "products/101";
+      let product: Product;
+      const key: string = "products/101";      
+      session = store.openSession();
 
-      await store.openSession(async (session: IDocumentSession) => {
-        await session.delete<Product>(key);
-        await session.saveChanges();
+      await session.delete<Product>(key);
+      await session.saveChanges();
+      product = await session.load<Product>(key, Product);
 
-        const product: Product = await session.load<Product>(key, Product);
-
-        expect(product).to.not.exist;
-      });
+      expect(product).to.not.exist;
     });
 
-    it('should delete with key with save session', async() => {
+    it('should delete with key without save session', async() => {
+      let product: Product;
       const key: string = "products/10";
+      session = store.openSession();
 
-      await store.openSession(async (session: IDocumentSession) => {
-        await session.delete<Product>(key);
+      await session.delete<Product>(key);
+      product = await session.load<Product>(key, Product);
 
-        const product: Product = await session.load<Product>(key, Product);
-
-        expect(product).to.not.exist;
-      });
+      expect(product).to.not.exist;
     });
 
     it('should fail trying delete document by key after it has been changed', async() => {
+      let product: Product;
       const key: string = "products/106";
+      session = store.openSession();
 
-      await expect(store.openSession(async (session: IDocumentSession) => {
-        let product: Product = await session.load<Product>(key, Product);
-        product.name = "testing";
+      product = await session.load<Product>(key, Product);
+      product.name = "testing";
 
-        await session.delete<Product>(key);
-      })).to.be.rejected;
+      await expect(session.delete<Product>(key)).to.be.rejected;
     });
 
     it('should delete document after it has been changed and save session', async() => {
+      let product: Product;
       const key: string = "products/107";
+      session = store.openSession();
 
-      await store.openSession(async (session: IDocumentSession) => {
-        let product: Product = await session.load<Product>(key, Product);
+      product = await session.load<Product>(key, Product);
+      product.name = "testing";
 
-        product.name = "testing";
-        await session.delete<Product>(product);
-        await session.saveChanges();
-        product = await session.load<Product>(key, Product);
+      await session.delete<Product>(product);
+      await session.saveChanges();
+      product = await session.load<Product>(key, Product);
 
-        expect(product).to.not.exist;
-      });
+      expect(product).to.not.exist;
     });
   })
 });
