@@ -6,7 +6,7 @@ import {Serializer} from "../../src/Json/Serializer";
 import {DateUtil} from "../../src/Utility/DateUtil";
 import {IRavenObject} from "../../src/Database/IRavenObject";
 import {DocumentConstructor} from "../../src/Documents/Conventions/DocumentConventions";
-import {Foo} from "../BaseTest";
+import {Foo} from "../TestClasses";
 
 describe('Document serializing test', () => {
   let json : object;

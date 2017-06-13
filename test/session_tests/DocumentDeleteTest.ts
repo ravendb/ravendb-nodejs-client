@@ -7,7 +7,7 @@ import {IRavenObject} from "../../src/Database/IRavenObject";
 import {DocumentStore} from "../../src/Documents/DocumentStore";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
-import {Product} from "../BaseTest";
+import {Product} from "../TestClasses";
 
 describe('Document delete test', () => {
   let store: IDocumentStore;

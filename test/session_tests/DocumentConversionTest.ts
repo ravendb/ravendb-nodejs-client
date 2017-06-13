@@ -8,7 +8,7 @@ import {DocumentSession} from "../../src/Documents/Session/DocumentSession";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {IRavenObject} from "../../src/Database/IRavenObject";
 import {DocumentConstructor} from "../../src/Documents/Conventions/DocumentConventions";
-import {Foo, TestConversion} from "../BaseTest";
+import {Foo, TestConversion} from "../TestClasses";
 
 describe('Document conversion test', () => {
   const now: Date = new Date();

@@ -7,6 +7,7 @@ const append = require('gulp-append');
 const transform = require('gulp-transform');
 const concat = require('gulp-concat');
 const uglify = require('gulp-uglify-harmony');
+const args = require('command-line-args');
 
 const preamble = '/** RavenDB Client - (c) Hibernating Rhinos 2017 */';
 const exportDefault = 'export default DocumentStore;';
@@ -18,10 +19,16 @@ const options = {
     dest: './lib',
 };
 
+const argsDefs = [
+  { name: 'no-fixtures', alias: 'f', type: Boolean, defaultValue: false },
+  { name: 'test', alias: 't', type: String, multiple: true, defaultValue: ['*'] }
+];
+
 gulp.task('clean', (next) => rmdir(options.tmp, next));
 
 gulp.task('build:tests', ['clean'], () => gulp
     .src([
+        options.tests + '/Test*.ts',
         options.tests + '/**/*Test.ts',
         options.src + '/[A-Z]*/**/*.ts'
     ], {
@@ -36,10 +43,18 @@ gulp.task('build:tests', ['clean'], () => gulp
     .pipe(gulp.dest(options.tmp))
 );
 
-gulp.task('run:tests', ['clean', 'build:tests'], (next) => gulp
-    .src(options.tmp + '/test/**/*Test.js')
-    .pipe(mocha())
-);
+gulp.task('run:tests', ['clean', 'build:tests'], (next) => {
+    const opts = args(argsDefs);
+    let tests = opts.test.map(
+        (test) => `${options.tmp}/test/**/${test}Test.js`
+    );
+
+    if (true !== opts['no-fixtures']) {
+        tests.unshift(options.tmp + '/test/TestBase.js');
+    }
+
+    return gulp.src(tests).pipe(mocha());
+});
 
 gulp.task('build:exports', ['clean'], () => gulp
     .src(options.src + '/ravendb-node.ts')

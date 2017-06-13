@@ -7,7 +7,7 @@ import {DocumentStore} from '../../src/Documents/DocumentStore';
 import {DocumentSession} from "../../src/Documents/Session/DocumentSession";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {IRavenObject} from "../../src/Database/IRavenObject";
-import {Foo} from "../BaseTest";
+import {Foo} from "../TestClasses";
 
 describe('Document store test', () => {
   let store: IDocumentStore;

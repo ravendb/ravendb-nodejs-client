@@ -15,7 +15,7 @@ import {IndexDefinition} from "../../src/Database/Indexes/IndexDefinition";
 import {IndexFieldOptions} from "../../src/Database/Indexes/IndexFieldOptions";
 import {SortOptions} from "../../src/Database/Indexes/SortOption";
 import {IRavenObject} from "../../src/Database/IRavenObject";
-import {Product, Order, Company, ProductsTestingSort} from "../BaseTest";
+import {Product, Order, Company, ProductsTestingSort} from "../TestClasses";
 import {QueryOperators} from "../../src/Documents/Session/QueryOperator";
 import {TypeUtil} from "../../src/Utility/TypeUtil";
 

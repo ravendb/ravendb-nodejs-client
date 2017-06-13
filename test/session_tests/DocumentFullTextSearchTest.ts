@@ -12,7 +12,7 @@ import {IndexDefinition} from "../../src/Database/Indexes/IndexDefinition";
 import {IndexFieldOptions} from "../../src/Database/Indexes/IndexFieldOptions";
 import {PutIndexesCommand} from "../../src/Database/Commands/PutIndexesCommand";
 import {IRavenObject} from "../../src/Database/IRavenObject";
-import {LastFm, LastFmAnalyzed} from "../BaseTest";
+import {LastFm, LastFmAnalyzed} from "../TestClasses";
 
 describe('Document full text search', () => {
   let store: IDocumentStore;

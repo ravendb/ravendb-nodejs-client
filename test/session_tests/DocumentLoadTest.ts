@@ -7,7 +7,7 @@ import * as BluebirdPromise from 'bluebird';
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {IRavenObject} from "../../src/Database/IRavenObject";
-import {Product, Company, Order} from "../BaseTest";
+import {Product, Company, Order} from "../TestClasses";
 
 describe('Document load test', () => {
   let store: IDocumentStore;
