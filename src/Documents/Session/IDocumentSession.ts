@@ -9,7 +9,7 @@ export interface IDocumentSession {
   numberOfRequestsInSession: number;
   conventions: DocumentConventions;
 
-  create<T extends Object = IRavenObject>(attributes?: object, documentTypeOrObjectType?: string | DocumentConstructor<T>, nestedObjectTypes?: IRavenObject<DocumentConstructor>): T;
+  create<T extends Object = IRavenObject>(attributesOrDocument?: object | T, documentTypeOrObjectType?: string | DocumentConstructor<T>, nestedObjectTypes?: IRavenObject<DocumentConstructor>): T;
   load<T extends Object = IRavenObject>(keyOrKeys: string, documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntityCallback<T>): Promise<T>;
   load<T extends Object = IRavenObject>(keyOrKeys: string[], documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntitiesArrayCallback<T>): Promise<T[]>;
   delete<T extends Object = IRavenObject>(keyOrEntity: string, callback?: EntityCallback<T>): Promise<T>;

@@ -1,3 +1,4 @@
+import * as _ from "lodash";
 import {TypeUtil} from "../Utility/TypeUtil";
 import {DateUtil} from "../Utility/DateUtil";
 import {ArrayUtil} from "../Utility/ArrayUtil";
@@ -9,8 +10,20 @@ export class Serializer {
     let sourceObject: object = TypeUtil.isString(source)
       ? JSON.parse(source as string) : source;
 
-    const mapping: object = metadata && metadata['@nested_object_types']
-      ? metadata['@nested_object_types'] : {};
+    let mapping: object = {};
+    
+    if (metadata && metadata['@nested_object_types']) {
+      _.assign(mapping, metadata['@nested_object_types']);
+    }
+
+    if (nestedObjectTypes && !_.isEmpty(nestedObjectTypes)) {
+      _.forIn<IRavenObject<DocumentConstructor>>(
+        nestedObjectTypes, (documentConstructor: DocumentConstructor, attribute: string) => {
+        if (documentConstructor === Date) {
+          mapping[attribute] = Date.name;
+        }  
+      });
+    }
 
     const transform: (value: any, key?: string) => any = (value, key) => {
       let nestedObjectConstructor: DocumentConstructor;
@@ -58,7 +71,7 @@ export class Serializer {
         return value;
       }
 
-      if ((key in mapping) && (Date.name === mapping[key]) && (value instanceof Date)) {
+      if (value instanceof Date) {
         return DateUtil.stringify(value);
       }
 

@@ -1,4 +1,4 @@
-import {IDocumentStore, ITransaction, ISessionOptions} from './IDocumentStore';
+import {IDocumentStore} from './IDocumentStore';
 import {IDocumentSession} from "./Session/IDocumentSession";
 import {DocumentSession} from "./Session/DocumentSession";
 import {RequestsExecutor} from '../Http/Request/RequestsExecutor';

@@ -15,16 +15,14 @@ describe('Put command tets', () => {
     ({requestsExecutor} = this.currentTest as IRavenObject);
   });
 
-  it('should put successfully', (done: MochaDone) => {
-    requestsExecutor.execute(new PutDocumentCommand('testing/1', {'name': 'test', '@metadata': {}}))
-      .then(() => requestsExecutor.execute(new GetDocumentCommand('testing/1')))
-      .then((result: IRavenResponse) => {
-        expect(result.Results[0]['@metadata']['@id']).to.equals('testing/1');
-        done();
-      });
-  });
+  it('should put successfully', async() => requestsExecutor
+    .execute(new PutDocumentCommand('testing/1', {'name': 'test', '@metadata': {}}))
+    .then(() => requestsExecutor.execute(new GetDocumentCommand('testing/1')))
+    .then((result: IRavenResponse) => expect(result.Results[0]['@metadata']['@id']).to.equals('testing/1'))
+  );
 
-  it('should fail with invalid json', (done: MochaDone) => {
-    expect(requestsExecutor.execute(new PutDocumentCommand('testing/2', <any>'document'))).to.be.rejected.and.notify(done);
-  });
+  it('should fail with invalid json', async() => expect(
+      requestsExecutor.execute(new PutDocumentCommand('testing/2', <any>'document'))
+    ).to.be.rejected
+  );
 });

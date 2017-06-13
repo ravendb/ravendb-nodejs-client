@@ -63,12 +63,17 @@ export class DocumentSession implements IDocumentSession {
     this.deferCommands = new Set<RavenCommandData>();
   }
 
-  public create<T extends Object = IRavenObject>(attributes?: object, documentTypeOrObjectType?: string | DocumentConstructor<T>, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T {
+  public create<T extends Object = IRavenObject>(attributesOrDocument?: object | T, documentTypeOrObjectType?: string | DocumentConstructor<T>, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T {
+    let document: T = attributesOrDocument as T;
     const conventions: DocumentConventions = this.documentStore.conventions;
-    const objectType: DocumentConstructor<T> | null = conventions.getObjectType(documentTypeOrObjectType);
-    let document: T = objectType ? new objectType() : ({} as T);
 
-    Serializer.fromJSON<T>(document, attributes || {}, {}, nestedObjectTypes);
+    if (('object' !== (typeof attributesOrDocument)) || ('Object' === attributesOrDocument.constructor.name)) {
+      const objectType: DocumentConstructor<T> | null = conventions.getObjectType(documentTypeOrObjectType);
+      
+      document = objectType ? new objectType() : ({} as T);
+      Serializer.fromJSON<T>(document, (attributesOrDocument as object) || {}, {}, nestedObjectTypes);
+    }
+
     document['@metadata'] = conventions.buildDefaultMetadata(document, documentTypeOrObjectType);
     return document as T;
   }

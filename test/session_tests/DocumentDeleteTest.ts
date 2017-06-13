@@ -7,56 +7,77 @@ import {IRavenObject} from "../../src/Database/IRavenObject";
 import {DocumentStore} from "../../src/Documents/DocumentStore";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
+import {Product} from "../BaseTest";
 
 describe('Document delete test', () => {
   let store: IDocumentStore;
+  let session: IDocumentSession;
   let defaultDatabase: string, defaultUrl: string;
 
   beforeEach(function(): void {
     ({defaultDatabase, defaultUrl} = (this.currentTest as IRavenObject));
   });
 
-  beforeEach((): Promise<any> => {
-    store = DocumentStore.create(defaultUrl, defaultDatabase);
-    store.initialize();
-    const session: IDocumentSession = store.openSession();
+  beforeEach(async () => {
+    store = DocumentStore.create(defaultUrl, defaultDatabase).initialize();
+    session = store.openSession();
 
-    return Promise.all([
-      session.store(session.create({_id: 'products/101', name: 'test'}, 'product')),
-      session.store(session.create({_id: 'products/10', name: 'test'}, 'product')),
-      session.store(session.create({_id: 'products/106', name: 'test'}, 'product')),
-      session.store(session.create({_id: 'products/107', name: 'test'}, 'product'))
-    ]);
+    for (let id of [101, 10, 106, 107]) {
+      let product: Product = new Product(`products/${id}`, 'test');
+      await session.store<Product>(session.create<Product>(product));
+    }
+
+    await session.saveChanges();
   });
 
   describe('Document delete', () => {
-    it('should delete with key and save session', (): Promise<any> => {
-      const key: string = "products/101";
+    it('should delete with key with save session', async() => {
+      let product: Product;
+      const key: string = "products/101";      
+      session = store.openSession();
 
-      return store.openSession().delete(key)
-        .then((): Promise<IRavenObject> =>
-          store.openSession().load(key)
-        )
-        .then((document: IRavenObject): void => {
-            expect(document).not.to.exist;
-        });
+      await session.delete<Product>(key);
+      await session.saveChanges();
+      product = await session.load<Product>(key, Product);
+
+      expect(product).to.not.exist;
     });
 
-    it('should delete after change', (): Promise<any> => {
+    it('should delete with key without save session', async() => {
+      let product: Product;
+      const key: string = "products/10";
+      session = store.openSession();
+
+      await session.delete<Product>(key);
+      product = await session.load<Product>(key, Product);
+
+      expect(product).to.not.exist;
+    });
+
+    it('should fail trying delete document by key after it has been changed', async() => {
+      let product: Product;
       const key: string = "products/106";
+      session = store.openSession();
 
-      return store.openSession().load(key)
-        .then((document: IRavenObject): Promise<IRavenObject> => {
-          document.name = 'testing';
+      product = await session.load<Product>(key, Product);
+      product.name = "testing";
 
-          return store.openSession().delete(key);
-        })
-        .then((document: IRavenObject): Promise<IRavenObject> =>
-          store.openSession().load(key)
-        )
-        .then((document: IRavenObject) => {
-          expect(document).not.to.exist;
-        });
+      await expect(session.delete<Product>(key)).to.be.rejected;
+    });
+
+    it('should delete document after it has been changed and save session', async() => {
+      let product: Product;
+      const key: string = "products/107";
+      session = store.openSession();
+
+      product = await session.load<Product>(key, Product);
+      product.name = "testing";
+
+      await session.delete<Product>(product);
+      await session.saveChanges();
+      product = await session.load<Product>(key, Product);
+
+      expect(product).to.not.exist;
     });
   })
 });

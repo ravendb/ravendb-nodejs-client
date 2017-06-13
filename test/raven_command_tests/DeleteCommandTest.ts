@@ -16,41 +16,37 @@ describe('Delete command test', () => {
     ({requestsExecutor} = this.currentTest as IRavenObject);
   });
 
-  beforeEach((done: MochaDone) => {
-    requestsExecutor.execute(new PutDocumentCommand('products/101', {'Name': 'test', '@metadata': {}}))
-      .then((result: IRavenResponse) => {
-        response = result;
+  beforeEach(async () => requestsExecutor
+    .execute(new PutDocumentCommand('products/101', {'Name': 'test', '@metadata': {}}))
+    .then((result: IRavenResponse) => {
+      response = result;
 
-        return requestsExecutor.execute(new PutDocumentCommand('products/102', {'Name': 'test', '@metadata': {}}));
-      })
-      .then((result: IRavenResponse) => {
-        otherResponse = result;
-        done();
-      })
-  });
+      return requestsExecutor.execute(new PutDocumentCommand('products/102', {'Name': 'test', '@metadata': {}}));
+    })
+    .then((result: IRavenResponse) => otherResponse = result)
+  );
 
   describe('Delete()', () => {
-    it('should delete with no etag', (done: MochaDone) => {
+    it('should delete with no etag', async () => {
       let command: DeleteDocumentCommand = new DeleteDocumentCommand('products/10');
 
-      requestsExecutor.execute(command).then((result: IRavenResponse) => {
-        expect(result).not.to.be.null;
-        done();
-      })
+      return requestsExecutor
+        .execute(command)
+        .then((result: IRavenResponse) => expect(result).not.to.be.null)
     });
 
-    it('should delete with etag', (done: MochaDone) => {
+    it('should delete with etag', async() => {
       let command2: DeleteDocumentCommand = new DeleteDocumentCommand('products/102', otherResponse.etag);
 
-      requestsExecutor.execute(command2).then((result: IRavenResponse) => {
-        expect(result).not.to.be.null;
-        done();
-      })
+      return requestsExecutor
+        .execute(command2)
+        .then((result: IRavenResponse) => expect(result).not.to.be.null)
     });
 
-    it('should fail delete', (done: MochaDone) => {
-      expect(requestsExecutor.execute(new DeleteDocumentCommand('products/101', response.etag + 10))).should.be.rejected.and.notify(done);
-
-    })
+    it('should fail delete', async() => expect(
+      requestsExecutor
+        .execute(new DeleteDocumentCommand('products/101', response.etag + 10))
+      ).should.be.rejected
+    )
   })
 });

@@ -7,7 +7,7 @@ import * as _ from 'lodash';
 import {Serializer} from "../../Json/Serializer";
 import {IRavenObject} from "../../Database/IRavenObject";
 
-export type DocumentConstructor<T extends Object = IRavenObject> = { new(): T; };
+export type DocumentConstructor<T extends Object = IRavenObject> = { new(...args: any[]): T; };
 
 export interface IDocumentConversionResult<T extends Object = IRavenObject> {
   rawEntity?: object,
@@ -57,7 +57,7 @@ export class DocumentConventions {
   }
 
   public getObjectType<T extends Object = IRavenObject>(objectType?: DocumentConstructor<T> | string): DocumentConstructor<T> | null {
-    if (objectType && !TypeUtil.isString(objectType)) {
+    if (objectType && TypeUtil.isFunction(objectType)) {
       return objectType as DocumentConstructor<T>;
     }
 
@@ -137,7 +137,7 @@ export class DocumentConventions {
           } else if (TypeUtil.isObject(value)) {
             let objectType: string = value.constructor.name;
 
-            if ('object' !== objectType) {
+            if ('Object' !== objectType) {
               nestedTypes[property] = objectType;
             }
           }

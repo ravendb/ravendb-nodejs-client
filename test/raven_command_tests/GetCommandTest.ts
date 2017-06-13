@@ -18,11 +18,11 @@ describe('DocumentSession', () => {
     ({requestsExecutor} = this.currentTest as IRavenObject);
   });
 
-  beforeEach((done: MochaDone) => {
+  beforeEach(async() => {
     putCommand = new PutDocumentCommand('products/101', {'Name': 'test', '@metadata': {}});
     otherPutCommand = new PutDocumentCommand('products/10', {'Name': 'test', '@metadata': {}});
 
-    BluebirdPromise.all([
+    return BluebirdPromise.all([
       requestsExecutor.execute(putCommand)
         .then(() => requestsExecutor
           .execute(new GetDocumentCommand('products/101'))
@@ -34,7 +34,6 @@ describe('DocumentSession', () => {
         )
         .then((result: IRavenResponse) => otherResponse = result)
     ])
-    .then(() => done());
   });
 
   describe('Get()', () => {
@@ -46,11 +45,10 @@ describe('DocumentSession', () => {
       expect(response.Results[0]['@metadata']['@id']).not.to.equals(otherResponse.Results[0]['@metadata']['@id'])
     });
 
-    it('should be null', () => {
-      requestsExecutor.execute(new GetDocumentCommand('product')).then((result) => {
-        expect(result).to.be.null;
-      })
-    })
-  })
+    it('should be null', async() => requestsExecutor
+      .execute(new GetDocumentCommand('product'))
+      .then((result) => expect(result).to.be.null)
+    )
+  });
 });
 
