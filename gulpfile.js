@@ -7,7 +7,7 @@ const append = require('gulp-append');
 const transform = require('gulp-transform');
 const concat = require('gulp-concat');
 const uglify = require('gulp-uglify-harmony');
-const args = require('command-line-args');
+const args = require('./args');
 
 const preamble = '/** RavenDB Client - (c) Hibernating Rhinos 2017 */';
 const exportDefault = 'export default DocumentStore;';
@@ -19,14 +19,16 @@ const options = {
     dest: './lib',
 };
 
-const argsDefs = [
-  { name: 'no-fixtures', alias: 'f', type: Boolean, defaultValue: false },
-  { name: 'test', alias: 't', type: String, multiple: true, defaultValue: ['*'] }
-];
-
 gulp.task('clean', (next) => rmdir(options.tmp, next));
 
-gulp.task('build:tests', ['clean'], () => gulp
+gulp.task('build:tests:args', ['clean'], () => gulp
+    .src('./args.js', {
+        base: __dirname
+    })
+    .pipe(gulp.dest(options.tmp))
+);
+
+gulp.task('build:tests', ['clean', 'build:tests:args'], () => gulp
     .src([
         options.tests + '/Test*.ts',
         options.tests + '/**/*Test.ts',
@@ -35,6 +37,7 @@ gulp.task('build:tests', ['clean'], () => gulp
         base: __dirname
     })
     .pipe(ts({
+        allowJs: true,
         target: 'ES6',
         module: 'commonjs',
         removeComments: true,
@@ -44,16 +47,20 @@ gulp.task('build:tests', ['clean'], () => gulp
 );
 
 gulp.task('run:tests', ['clean', 'build:tests'], (next) => {
-    const opts = args(argsDefs);
-    let tests = opts.test.map(
+    let tests = args.test.map(
         (test) => `${options.tmp}/test/**/${test}Test.js`
     );
 
-    if (true !== opts['no-fixtures']) {
+    if (args.test.includes('*') || (true !== args['no-fixtures'])) {
         tests.unshift(options.tmp + '/test/TestBase.js');
     }
 
-    return gulp.src(tests).pipe(mocha()).on('error', () => process.exit(-1));
+    return gulp.src(tests)
+        .pipe(mocha({
+            "ravendb-host": args["ravendb-host"], 
+            "ravendb-port": args["ravendb-port"]
+        }))
+        .on('error', () => process.exit(-1));
 });
 
 gulp.task('build:exports', ['clean'], () => gulp

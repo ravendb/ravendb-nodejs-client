@@ -5,6 +5,7 @@ import * as BluebirdPromise from 'bluebird';
 import * as _ from 'lodash';
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
+import * as args from '../args';
 import {RequestsExecutor} from "../src/Http/Request/RequestsExecutor";
 import {IndexDefinition} from "../src/Database/Indexes/IndexDefinition";
 import {FieldIndexingOptions} from "../src/Database/Indexes/FieldIndexingOption";
@@ -17,8 +18,9 @@ import {IRavenObject} from "../src/Database/IRavenObject";
 import {PutIndexesCommand} from "../src/Database/Commands/PutIndexesCommand";
 import {DeleteDatabaseCommand} from "../src/Database/Commands/DeleteDatabaseCommand";
 import {SortOptions} from "../src/Database/Indexes/SortOption";
+import {StringUtil} from "../src/Utility/StringUtil";
 
-const defaultUrl: string = "http://localhost.fiddler:8080";
+const defaultUrl: string = StringUtil.format("http://{ravendb-host}:{ravendb-port}", args);
 const defaultDatabase: string = "NorthWindTest";
 let requestsExecutor: RequestsExecutor;
 let indexMap: string;
