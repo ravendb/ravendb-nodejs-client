@@ -1,6 +1,7 @@
 /// <reference path="../../node_modules/@types/mocha/index.d.ts" />
 /// <reference path="../../node_modules/@types/chai/index.d.ts" />
 
+import * as _ from "lodash";
 import {expect} from 'chai';
 import {Serializer} from "../../src/Json/Serializer";
 import {DateUtil} from "../../src/Utility/DateUtil";
@@ -152,7 +153,7 @@ describe('Document serializing test', () => {
       let document: IRavenObject = {};
       Serializer.fromJSON(document, json, {}, nestedObjectTypes);
 
-      const deep: object = document.deepObjectProp.someObject;
+      const deep: object = document.deepObjectProp.someObject;      
       
       expect(document.deepObjectProp).to.be.a('object');
       expect(document.deepObjectProp).to.have.property('someProp', 'someValue');
@@ -189,8 +190,8 @@ describe('Document serializing test', () => {
     it('should parse dates', () => {
       let document: IRavenObject = {};
       Serializer.fromJSON(document, json, {}, nestedObjectTypes);
-      
-      expect(document.dateProp).to.be.a('object');
+
+      expect(typeof document.dateProp).to.equal('object');
       expect(document.dateProp).to.be.an.instanceOf(Date);
       expect(DateUtil.stringify(document.dateProp)).to.equal((<IRavenObject>json).dateProp);
     });
@@ -214,12 +215,13 @@ describe('Document serializing test', () => {
     });
 
     it('should serialize back to source json', () => {
-      let document: IRavenObject = {};
+      let document: IRavenObject = {};      
       Serializer.fromJSON(document, json, {}, nestedObjectTypes);
       
       let serialized: object = Serializer.toJSON(document, {});
-
-      expect(serialized).to.deep.equals(json);
+      let sampleToCompare: object = _.omit(_.cloneDeep(json), 'undefinedProp');
+      
+      expect(serialized).to.deep.equals(sampleToCompare);
     });
   });
 });

@@ -41,7 +41,7 @@ describe('Document conversion test', () => {
   const checkDoc: (doc: TestConversion) => void = (doc: TestConversion) => {
     expect(doc).to.be.a('object');
     expect(doc).to.be.a.instanceOf(TestConversion);
-    expect(doc.date).to.be.a('object');
+    expect(typeof doc.date).to.equal('object');
     expect(doc.date).to.be.a.instanceOf(Date);
     checkFoo(doc.foo);
 
