@@ -22,7 +22,11 @@ import {StringUtil} from "../src/Utility/StringUtil";
 
 const defaultUrl: string = StringUtil.format("http://{ravendb-host}:{ravendb-port}", args);
 const defaultDatabase: string = "NorthWindTest";
-let requestsExecutor: RequestsExecutor;
+const requestsExecutor: RequestsExecutor = new RequestsExecutor(
+  defaultUrl, defaultDatabase, null,
+  new DocumentConventions()
+);
+
 let indexMap: string;
 let index: IndexDefinition;
 
@@ -31,11 +35,6 @@ before(() => {
 });
 
 beforeEach(async function() {
-  requestsExecutor = new RequestsExecutor(
-    defaultUrl, defaultDatabase, null,
-    new DocumentConventions()
-  );
-
   indexMap = [
     'from doc in docs ',
     'select new{',
@@ -45,7 +44,7 @@ beforeEach(async function() {
   ].join('');
 
   index = new IndexDefinition("Testing", indexMap);
-  //new PutIndexesCommand(index);
+  new PutIndexesCommand(index);
 
   return requestsExecutor.execute(
     new CreateDatabaseCommand(

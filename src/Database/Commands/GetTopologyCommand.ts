@@ -14,8 +14,8 @@ export class GetTopologyCommand extends RavenCommand {
   }
 
   public createRequest(serverNode: ServerNode): void {
-    this.params = {url: serverNode.url};
-    this.endPoint = StringUtil.format('{url}/databases/{database}/topology', serverNode);
+    this.params = {name: serverNode.database};
+    this.endPoint = StringUtil.format('{url}/topology', serverNode);
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {

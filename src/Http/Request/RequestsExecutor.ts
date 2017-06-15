@@ -1,3 +1,4 @@
+import * as _ from 'lodash';
 import * as BluebirdPromise from 'bluebird';
 import * as RequestPromise from 'request-promise';
 import {ServerNode} from '../ServerNode';
@@ -79,6 +80,7 @@ export class RequestsExecutor {
           };
 
           return RequestPromise(this.prepareCommand(command, chosenNode))
+            //.catch((e) => {console.log(e.message);return failNode()})
             .catch(failNode)
             .finally(() => {
               chosenNode.addResponseTime(DateUtil.timestampMs() - startTime);
@@ -297,18 +299,23 @@ export class RequestsExecutor {
   }
 
   protected jsonToTopology(response: IRavenResponse): Topology {
+    let leaderNode: ServerNode = this.jsonToServerNode(
+      response.LeaderNode ? response.LeaderNode
+      : _.first(response.Nodes)
+    );
+
     return new Topology(
-      parseInt(response.Etag as string),
-      this.jsonToServerNode(response.LeaderNode),
-      response.ReadBehavior as ReadBehavior,
-      response.WriteBehavior as WriteBehavior,
+      parseInt(response.Etag as string) || 0,
+      leaderNode,
+      response.ReadBehavior as ReadBehavior || ReadBehaviors.LeaderOnly,
+      response.WriteBehavior as WriteBehavior || WriteBehaviors.LeaderOnly,
       response.Nodes.map((jsonNode) => this.jsonToServerNode(jsonNode)),
       ('SLA' in response) ? parseFloat(response.SLA.RequestTimeThresholdInMilliseconds) / 1000 : 0
     );
   }
 
   protected jsonToServerNode(json: IRavenObject): ServerNode {
-    return new ServerNode(json.Url, json.Database, json.ApiKey || null);
+    return new ServerNode(json.Url, json.Database || this._initDatabase, json.ApiKey || null);
   }
 
   protected updateFailingNodesStatuses(): void {

@@ -41,7 +41,7 @@ export class GetDocumentCommand extends RavenCommand {
       if (keys.map((key: string) => key.length)
           .reduce((sum: number, len: number) => sum + len) > 1024
       ) {
-        this.payload = keys;
+        this.payload = {"documentsIds": keys};
         this.method = RequestMethods.Post;
       } else {
         this.addParams('id', keys);
