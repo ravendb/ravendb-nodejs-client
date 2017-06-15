@@ -37,18 +37,18 @@ describe('DocumentSession', () => {
   });
 
   describe('Get()', () => {
-    it('should equal', () => {
+    it('document id should be equal after load', () => {
       expect(response.Results[0]['@metadata']['@id']).to.equals('products/101')
     });
 
-    it('should not equal', () => {
+    it('different document ids shouln\'t be equals after load', () => {
       expect(response.Results[0]['@metadata']['@id']).not.to.equals(otherResponse.Results[0]['@metadata']['@id'])
     });
 
-    it('should be null', async() => requestsExecutor
+    it('unexisting document loading attempt should return void response', async() => requestsExecutor
       .execute(new GetDocumentCommand('product'))
-      .then((result) => expect(result).to.be.null)
-    )
+      .then((result) => expect(result).to.be.undefined)
+    );
   });
 });
 

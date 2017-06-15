@@ -6,6 +6,7 @@ import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {ErrorResponseException, InvalidOperationException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {TypeUtil} from "../../Utility/TypeUtil";
+import {StatusCodes} from "../../Http/Response/StatusCode";
 
 export class GetDocumentCommand extends RavenCommand {
   protected keyOrKeys?: string | string[];
@@ -53,6 +54,10 @@ export class GetDocumentCommand extends RavenCommand {
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
     const responseBody: IResponseBody = response.body;
+
+    if (StatusCodes.isNotFound(response.statusCode)) {
+      return;
+    }
 
     if (!responseBody) {
       throw new ErrorResponseException('Failed to load document from the database \
