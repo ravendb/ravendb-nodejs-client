@@ -30,7 +30,7 @@ describe('DocumentSession', () => {
     ({requestsExecutor} = this.currentTest as IRavenObject);
   });
 
-  before(async() => {
+  beforeEach(async() => {
     const indexMap: string = [
       "from doc in docs.Testings ",
       "select new{",
