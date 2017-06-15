@@ -6,14 +6,6 @@ export class DeleteCommandData extends RavenCommandData implements IJsonSerializ
   constructor(key: string, etag?: number) {
     super(key, etag, null);
 
-    this.method = RequestMethods.Delete;
-  }
-
-  public toJson(): object {
-    return {
-      "Method": this.method,
-      "Key": this.key,
-      "Etag": this.etag
-    };
+    this.type = RequestMethods.Delete;
   }
 }

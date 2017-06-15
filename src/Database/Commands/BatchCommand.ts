@@ -16,15 +16,14 @@ export class BatchCommand extends RavenCommand {
   }
 
   public createRequest(serverNode: ServerNode): void {
+    const commands: RavenCommandData[] = this.commandsArray;
+
+    if (!commands.every((data: RavenCommandData): boolean => !!(data && data.command))) {
+      throw new InvalidOperationException('Not a valid command');
+    }
+
     this.endPoint = StringUtil.format('{url}/databases/{database}/bulk_docs', serverNode);
-
-    this.payload = {"bulk_docs": this.commandsArray.map((data: RavenCommandData): object => {
-      if (!data.command) {
-        throw new InvalidOperationException('Not a valid command');
-      }
-
-      return data.toJson();
-    })};
+    this.payload = {"Commands": this.commandsArray.map((data: RavenCommandData): object => data.toJson())};
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {

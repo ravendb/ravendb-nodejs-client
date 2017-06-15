@@ -67,6 +67,7 @@ export class RequestsExecutor {
         let chosenNode = chosenNodeResponse.node;
         
         const execute: () => BluebirdPromise<IRavenResponse | IRavenResponse[] | void> = () => {
+          let requestOptions: RavenCommandRequestOptions;
           const startTime: number = DateUtil.timestampMs();
           const failNode: () => BluebirdPromise<IRavenResponse | IRavenResponse[] | void> = () => {
             chosenNode.isFailed = true;
@@ -79,7 +80,13 @@ export class RequestsExecutor {
               });
           };
 
-          return RequestPromise(this.prepareCommand(command, chosenNode))
+          try {
+            requestOptions = this.prepareCommand(command, chosenNode);
+          } catch (exception) {
+            return BluebirdPromise.reject(exception);
+          }
+
+          return RequestPromise(requestOptions)
             //.catch((e) => {console.log(e.message);return failNode()})
             .catch(failNode)
             .finally(() => {

@@ -16,7 +16,7 @@ export class PatchCommandData extends RavenCommandData implements IJsonSerializa
     patchIfMissing?: PatchRequest, additionalData?: IRavenObject, debugMode: boolean = false) {
     super(key, etag, metadata || {});
 
-    this.method = RequestMethods.Patch;
+    this.type = RequestMethods.Patch;
     this.scriptedPatch = scriptedPatch;
     this.patchIfMissing = patchIfMissing;
     this.additionalData = additionalData;
@@ -24,16 +24,14 @@ export class PatchCommandData extends RavenCommandData implements IJsonSerializa
   }
 
   public toJson(): object {
-    let json: object = {
-      "Key": this.key, 
-      "Method": this.method,
+    let json: object = _.assign(super.toJson(), {
       "Patch": this.scriptedPatch.toJson(),
       "DebugMode": this.debugMode,
       "object": this.metadata
-    };
+    });
     
-    if (!TypeUtil.isNone(this.etag)) {
-      _.assign(json, {Etag: this.etag});
+    if (TypeUtil.isNone(this.etag)) {
+      delete json['Etag'];
     }
 
     if (!TypeUtil.isNone(this.patchIfMissing)) {

@@ -3,7 +3,7 @@ import {RequestMethod} from "../Http/Request/RequestMethod";
 
 export abstract class RavenCommandData implements IJsonSerializable {
   private readonly _command: boolean = true;
-  protected method: RequestMethod;
+  protected type: RequestMethod;
   protected key: string;
   protected etag?: number = null;
   protected metadata?: object = null;
@@ -23,5 +23,12 @@ export abstract class RavenCommandData implements IJsonSerializable {
     return this.key;
   }
 
-  public abstract toJson(): object;
+  public toJson(): object {
+    return {
+      "Type": this.type,
+      "Id": this.documentKey,
+      "IdPrefixed": true,
+      "Etag": this.etag
+    };
+  }
 }
