@@ -49,7 +49,7 @@ describe('Index commands test', () => {
 
     it('should delete index with fail', async () => expect(
         requestsExecutor.execute(new DeleteIndexCommand(null))
-      ).should.be.rejected
+      ).to.be.rejected
     );
   });
 });
