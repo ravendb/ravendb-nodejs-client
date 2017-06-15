@@ -32,7 +32,6 @@ export class RequestsExecutor {
   private _authenticator: ApiKeyAuthenticator;
   private _topology: Topology;
   private _apiKey?: string = null;
-  private _topologyInitialized: boolean = false;
   private _unauthorizedHandlerInitialized: boolean = false;
   private _initUrl: string;
   private _initDatabase: string;
@@ -65,7 +64,7 @@ export class RequestsExecutor {
     return this.chooseNodeForRequest(command)
       .then((chosenNodeResponse: IChooseNodeResponse) => {
         let chosenNode = chosenNodeResponse.node;
-
+        
         const execute: () => BluebirdPromise<IRavenResponse | IRavenResponse[] | void> = () => {
           const startTime: number = DateUtil.timestampMs();
           const failNode: () => BluebirdPromise<IRavenResponse | IRavenResponse[] | void> = () => {
@@ -164,13 +163,6 @@ export class RequestsExecutor {
 
   protected chooseNodeForRequest(command: RavenCommand): BluebirdPromise<IChooseNodeResponse> {
     let response: IChooseNodeResponse;
-
-    if (!this._topologyInitialized && !(command instanceof GetTopologyCommand)) {
-      return BluebirdPromise.delay(1 * 1000)
-        .then((): BluebirdPromise<IChooseNodeResponse> => this
-        .chooseNodeForRequest(command)
-      );
-    }
 
     try {
       response = (command.isReadRequest)
@@ -293,10 +285,6 @@ export class RequestsExecutor {
 
               if (this._topology.etag < newTopology.etag) {
                 this._topology = newTopology;
-
-                if (!this._topologyInitialized) {
-                  this._topologyInitialized = true;
-                }
               }
             }
 

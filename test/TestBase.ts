@@ -45,6 +45,7 @@ beforeEach(async function() {
   ].join('');
 
   index = new IndexDefinition("Testing", indexMap);
+  //new PutIndexesCommand(index);
 
   return requestsExecutor.execute(
     new CreateDatabaseCommand(
