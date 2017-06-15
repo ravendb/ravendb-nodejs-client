@@ -36,7 +36,7 @@ describe('Index commands test', () => {
 
     it('should get index with fail', async () => requestsExecutor
       .execute(new GetIndexCommand('reg', false))
-      .then((result: IRavenResponse) => expect(result).to.be.null)
+      .then((result: IRavenResponse) => expect(result).to.be.undefined)
     );
 
     it('should delete index with success', async () => {
@@ -44,7 +44,7 @@ describe('Index commands test', () => {
 
       return requestsExecutor.execute(new PutIndexesCommand(index))
         .then(() => requestsExecutor.execute(new DeleteIndexCommand('delete')))
-        .then((result) => expect(result).to.be.null);
+        .then((result) => expect(result).to.be.undefined);
     });
 
     it('should delete index with fail', async () => expect(
