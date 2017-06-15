@@ -18,7 +18,7 @@ import {GetTopologyCommand} from "../../Database/Commands/GetTopologyCommand";
 import {RavenException, InvalidOperationException, RequestException, AuthorizationException} from "../../Database/DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {DateUtil} from "../../Utility/DateUtil";
-import {IResponse} from "../Response/IResponse";
+import {IResponse, IErrorResponse} from "../Response/IResponse";
 import {StatusCodes, StatusCode} from "../Response/StatusCode";
 
 export interface IChooseNodeResponse {
@@ -87,8 +87,13 @@ export class RequestsExecutor {
           }
 
           return RequestPromise(requestOptions)
-            //.catch((e) => {console.log(e.message);return failNode()})
-            .catch(failNode)
+            .catch((errorResponse: IErrorResponse) => {
+              if (errorResponse.response) {
+                return BluebirdPromise.resolve(errorResponse.response);
+              }
+
+              return failNode();
+            })
             .finally(() => {
               chosenNode.addResponseTime(DateUtil.timestampMs() - startTime);
             })

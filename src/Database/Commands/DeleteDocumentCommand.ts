@@ -38,13 +38,14 @@ export class DeleteDocumentCommand extends RavenCommand {
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
     const responseBody: IResponseBody = response.body as IResponseBody;
+    let message: string = `Could not delete document ${this.key}`;
 
-    if (!responseBody) {
-      throw new DocumentDoesNotExistsException(StringUtil.format('Couldn\'t find The Document {0}', this.key));
-    }
+    if (!StatusCodes.isNoContent(response.statusCode)) {
+      if (responseBody && responseBody.Error) {
+        message = responseBody.Error;
+      }
 
-    if (!StatusCodes.isNoContent(response.statusCode) && responseBody.Error) {
-      throw new ErrorResponseException(responseBody.Error);
+      throw new ErrorResponseException(message);
     }
   }
 }

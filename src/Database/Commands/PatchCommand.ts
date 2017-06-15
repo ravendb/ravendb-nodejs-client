@@ -65,9 +65,18 @@ export class PatchCommand extends RavenCommand {
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
     const responseBody: IResponseBody = response.body;
+    let message: string = `Could not patch document ${this.key}`;
 
-    if (response && StatusCodes.isOk(response.statusCode)) {
-      return responseBody;
-    }
+    if (response) {
+      if ([StatusCodes.NotModified, StatusCodes.Ok].includes(response.statusCode)) {
+        return responseBody || null;
+      }
+
+      if (responseBody && responseBody.Error) {
+        message = responseBody.Error;
+      }  
+    } 
+
+    throw new InvalidOperationException(message);
   }
 }
