@@ -42,17 +42,13 @@ export class PutIndexesCommand extends RavenCommand {
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    const responseBody: IResponseBody = response.body;
+    const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
 
-    if (!responseBody) {
+    if (!response.body) {
       throw new ErrorResponseException('Failed to put indexes to the database \
 please check the connection to the server');
     }
-
-    if (responseBody.Error) {
-      throw new ErrorResponseException(responseBody.Error);
-    }
-
-    return responseBody;
+    
+    return result;
   }
 }

@@ -5,7 +5,7 @@ import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {IndexQuery} from "../Indexes/IndexQuery";
 import {DocumentConventions} from "../../Documents/Conventions/DocumentConventions";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
-import {InvalidOperationException, ErrorResponseException} from "../DatabaseExceptions";
+import {InvalidOperationException, IndexDoesNotExistException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {QueryOperators} from "../../Documents/Session/QueryOperator";
 import {QueryString} from "../../Http/QueryString";
@@ -72,16 +72,12 @@ export class QueryCommand extends RavenCommand {
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    const responseBody: IResponseBody = response.body;
+    const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
 
-    if (!responseBody) {
-      throw new ErrorResponseException(StringUtil.format('Could not find index {0}', this.indexName));
+    if (!response.body) {
+      throw new IndexDoesNotExistException(StringUtil.format('Could not find index {0}', this.indexName));
     }
 
-    if (responseBody.Error) {
-      throw new ErrorResponseException(responseBody.Error);
-    }
-
-    return responseBody;
+    return result;
   }
 }

@@ -5,7 +5,7 @@ import {IRavenResponse} from "../../Database/RavenCommandResponse";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {StringUtil} from "../../Utility/StringUtil";
 import {StatusCode, StatusCodes} from "../../Http/Response/StatusCode";
-import {DatabaseDoesNotExistException, FetchConcurrencyException, ErrorResponseException} from "../../Database/DatabaseExceptions";
+import {DatabaseDoesNotExistException, ConcurrencyException, ErrorResponseException} from "../../Database/DatabaseExceptions";
 
 export class HiloNextCommand extends RavenCommand {
   protected tag: string;
@@ -36,6 +36,8 @@ export class HiloNextCommand extends RavenCommand {
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
+    super.setResponse(response);
+
     let code: StatusCode = response.statusCode;
     let responseBody: IResponseBody = response.body;
 
@@ -47,14 +49,6 @@ export class HiloNextCommand extends RavenCommand {
         "last_size": responseBody.LastSize,
         "last_range_at": responseBody.LastRangeAt
       };
-    }
-
-    if (StatusCodes.isInternalServerError(code)) {
-      throw new DatabaseDoesNotExistException(responseBody.Error);
-    }
-
-    if (StatusCodes.isConflict(code)) {
-      throw new FetchConcurrencyException(responseBody.Error);
     }
 
     throw new ErrorResponseException("Something is wrong with the request");

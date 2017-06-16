@@ -4,7 +4,7 @@ import {PromiseResolve, PromiseReject} from "../../Utility/PromiseResolver";
 import {DateUtil} from "../../Utility/DateUtil";
 import {GetOperationStateCommand} from "../Commands/GetOperationStateCommand";
 import {IRavenResponse} from "../RavenCommandResponse";
-import {TimeoutException, InvalidOperationException} from "../DatabaseExceptions";
+import {DatabaseLoadTimeoutException, InvalidOperationException} from "../DatabaseExceptions";
 
 export class Operations {
   protected requestsExecutor: RequestsExecutor;
@@ -25,7 +25,7 @@ export class Operations {
             const commandResponse: IRavenResponse = response;
 
             if (timeout && ((DateUtil.timestamp() - startTime) > timeout)) {
-              reject(new TimeoutException('The operation did not finish before the timeout end'));
+              reject(new DatabaseLoadTimeoutException('The operation did not finish before the timeout end'));
             } else if (commandResponse.Status == 'Completed') {
               resolve(response);
             } else if (commandResponse.Status == 'Faulted') {

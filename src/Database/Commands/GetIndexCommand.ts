@@ -22,12 +22,12 @@ export class GetIndexCommand extends RavenCommand {
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    const responseBody: IResponseBody = response.body;
+    const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
 
-    if (!responseBody) {
+    if (!response.body) {
       return;
     }
 
-    return responseBody.Results;
+    return <IRavenResponse[]>result.Results;
   }
 }

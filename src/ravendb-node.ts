@@ -40,8 +40,72 @@ export {IHeaders} from './Http/IHeaders';
 export {IResponse, IResponseBody} from './Http/Response/IResponse';
 export {CryptMessage, ICipherBox} from './Utility/Crypt';
 
+//exceptions
+export {
+  RavenException, 
+  InvalidOperationException, 
+  ErrorResponseException, 
+  DocumentDoesNotExistsException, 
+  NonUniqueObjectException, 
+  ConcurrencyException, 
+  ArgumentOutOfRangeException, 
+  DatabaseDoesNotExistException, 
+  AuthorizationException, 
+  IndexDoesNotExistException, 
+  DatabaseLoadTimeoutException, 
+  AuthenticationException, 
+  BadRequestException,
+  BulkInsertAbortedException,
+  BulkInsertProtocolViolationException,
+  IndexCompilationException,
+  TransformerCompilationException,
+  DocumentConflictException,
+  DocumentDoesNotExistException,
+  DocumentParseException,
+  IndexInvalidException,
+  IndexOrTransformerAlreadyExistException,
+  JavaScriptException,
+  JavaScriptParseException,
+  SubscriptionClosedException,
+  SubscriptionDoesNotBelongToNodeException,
+  SubscriptionDoesNotExistException,
+  SubscriptionException,
+  SubscriptionInUseException,
+  TransformerDoesNotExistException,
+  VersioningDisabledException,
+  AllTopologyNodesDownException,
+  BadResponseException,
+  ChangeProcessingException,
+  CommandExecutionException,
+  NoLeaderException,
+  CompilationException,
+  ConflictException,
+  DatabaseConcurrentLoadTimeoutException,
+  DatabaseDisabledException,
+  DatabaseLoadFailureException,
+  DatabaseNotFoundException,
+  NotSupportedOsException,
+  SecurityException,
+  ServerLoadFailureException,
+  UnsuccessfulRequestException,
+  CriticalIndexingException,
+  IndexAnalyzerException,
+  IndexCorruptionException,
+  IndexOpenException,
+  IndexWriteException,
+  IndexWriterCreationException,
+  StorageException,
+  StreamDisposedException,
+  LowMemoryException,
+  IncorrectDllException,
+  DiskFullException,
+  InvalidJournalFlushRequestException,
+  QuotaException,
+  VoronUnrecoverableErrorException,
+  NonDurableFileSystemException
+} from './Database/DatabaseExceptions';
+
 // classes
-export {RavenException, InvalidOperationException, ErrorResponseException, DocumentDoesNotExistsException, NonUniqueObjectException, FetchConcurrencyException, ArgumentOutOfRangeException, DatabaseDoesNotExistException, AuthorizationException, IndexDoesNotExistException, TimeoutException, AuthenticationException, RequestException} from './Database/DatabaseExceptions';
 export {RavenCommandRequestOptions, RavenCommand} from './Database/RavenCommand';
 export {GetDocumentCommand} from './Database/Commands/GetDocumentCommand';
 export {DeleteDocumentCommand} from './Database/Commands/DeleteDocumentCommand';
@@ -91,6 +155,7 @@ export {DateUtil} from './Utility/DateUtil';
 export {StringUtil} from './Utility/StringUtil';
 export {ArrayUtil} from './Utility/ArrayUtil';
 export {TypeUtil} from './Utility/TypeUtil';
+export {ExceptionThrower} from './Utility/ExceptionThrower';
 export {RequestsExecutor, IChooseNodeResponse} from './Http/Request/RequestsExecutor';
 export {PatchRequest} from './Http/Request/PatchRequest';
 export {HiloRangeValue} from './Hilo/HiloRangeValue';

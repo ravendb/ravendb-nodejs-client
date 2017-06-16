@@ -27,7 +27,6 @@ export abstract class RavenCommandData implements IJsonSerializable {
     return {
       "Type": this.type,
       "Id": this.documentKey,
-      "IdPrefixed": true,
       "Etag": this.etag
     };
   }

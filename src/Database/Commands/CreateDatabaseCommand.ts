@@ -9,40 +9,34 @@ import {StatusCodes} from "../../Http/Response/StatusCode";
 import {DatabaseDocument} from "../DatabaseDocument";
 
 export class CreateDatabaseCommand extends RavenCommand {
-    protected databaseDocument: DatabaseDocument;
+  protected databaseDocument: DatabaseDocument;
 
-    constructor(databaseDocument: DatabaseDocument) {
-        super('', RequestMethods.Put);
-        this.databaseDocument = databaseDocument;
+  constructor(databaseDocument: DatabaseDocument) {
+    super('', RequestMethods.Put);
+    this.databaseDocument = databaseDocument;
+  }
+
+  public createRequest(serverNode: ServerNode): void {
+    const dbName: string = this.databaseDocument.databaseId.replace('Raven/Databases/', '');
+
+    StringUtil.validateDBName(dbName);
+
+    if (!('Raven/DataDir' in this.databaseDocument.settings)) {
+      throw new InvalidOperationException("The Raven/DataDir setting is mandatory");
     }
 
-    public createRequest(serverNode: ServerNode): void {
-        const dbName: string = this.databaseDocument.databaseId.replace('Raven/Databases/', '');
+    this.params = {name: dbName};
+    this.endPoint = StringUtil.format('{url}/admin/databases', serverNode);
+    this.payload = this.databaseDocument.toJson();
+  }
 
-        StringUtil.validateDBName(dbName);
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
+    const result: IRavenResponse = <IRavenResponse>super.setResponse(response);  
 
-        if (!('Raven/DataDir' in this.databaseDocument.settings)) {
-            throw new InvalidOperationException("The Raven/DataDir setting is mandatory");
-        }
-
-        this.params = {name: dbName};
-        this.endPoint = StringUtil.format('{url}/admin/databases', serverNode);
-        this.payload = this.databaseDocument.toJson();
+    if (!response.body) {
+      throw new ErrorResponseException('Response is invalid.')
     }
 
-    public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-        const body: IResponseBody = response.body;
-
-        if (!body) {
-            throw new ErrorResponseException('Response is invalid.')
-        }
-
-        if (StatusCodes.isOk(response.statusCode)) {
-            return body;
-        }
-
-        if (StatusCodes.isBadRequest(response.statusCode)) {
-            throw new ErrorResponseException(body.Message);
-        }
-    }
+    return result;
+  }
 }

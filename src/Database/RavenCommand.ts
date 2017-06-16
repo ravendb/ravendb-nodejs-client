@@ -4,6 +4,7 @@ import {IRavenResponse} from "./RavenCommandResponse";
 import {IResponse} from "../Http/Response/IResponse";
 import {IHeaders} from "../Http/IHeaders";
 import {TypeUtil} from "../Utility/TypeUtil";
+import {ExceptionThrower} from "../Utility/ExceptionThrower";
 import * as _ from 'lodash';
 import * as Request from 'request';
 import * as RequestPromise from 'request-promise';
@@ -87,7 +88,11 @@ export abstract class RavenCommand {
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    return;
+    ExceptionThrower.throwFrom(response);    
+
+    if (response.body) {
+      return <IRavenResponse>response.body;
+    }
   }
 
   protected addParams(params: object | string, value?: any): void {

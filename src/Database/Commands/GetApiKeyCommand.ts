@@ -25,10 +25,10 @@ export class GetApiKeyCommand extends RavenCommand {
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    const responseBody: IResponseBody = response.body;
-
-    if (responseBody && responseBody.Results) {
-      return responseBody.Results;
+    const result: IRavenResponse = <IRavenResponse>super.setResponse(response);    
+    
+    if (result && result.Results) {
+      return <IRavenResponse>result.Results;
     }
 
     throw new ErrorResponseException('Invalid server response');

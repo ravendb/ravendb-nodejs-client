@@ -19,15 +19,10 @@ export class GetTopologyCommand extends RavenCommand {
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    const responseBody: IResponseBody = response.body;
-    const status: StatusCode = response.statusCode;
+    const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
 
-    if (responseBody && StatusCodes.isOk(status)) {
-      return responseBody;
-    }
-
-    if (StatusCodes.isBadRequest(status)) {
-      throw new ErrorResponseException(responseBody.Error);
+    if (response.body) {
+      return result;
     }
   }
 }

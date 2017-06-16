@@ -42,7 +42,7 @@ export class GetDocumentCommand extends RavenCommand {
       if (keys.map((key: string) => key.length)
           .reduce((sum: number, len: number) => sum + len) > 1024
       ) {
-        this.payload = {"documentsIds": keys};
+        this.payload = {"Ids": keys};
         this.method = RequestMethods.Post;
       } else {
         this.addParams('id', keys);
@@ -53,21 +53,17 @@ export class GetDocumentCommand extends RavenCommand {
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    const responseBody: IResponseBody = response.body;
+    const result: IRavenResponse = <IRavenResponse>super.setResponse(response);    
 
     if (StatusCodes.isNotFound(response.statusCode)) {
       return;
     }
 
-    if (!responseBody) {
+    if (!response.body) {
       throw new ErrorResponseException('Failed to load document from the database \
 please check the connection to the server');
     }
 
-    if (responseBody.Error) {
-      throw new ErrorResponseException(responseBody.Error);
-    }
-
-    return responseBody;
+    return result;
   }
 }

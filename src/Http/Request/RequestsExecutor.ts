@@ -15,7 +15,7 @@ import {WriteBehavior, WriteBehaviors} from "../../Documents/Conventions/WriteBe
 import {Lock} from "../../Lock/Lock";
 import {ILockDoneCallback} from "../../Lock/LockCallbacks";
 import {GetTopologyCommand} from "../../Database/Commands/GetTopologyCommand";
-import {RavenException, InvalidOperationException, RequestException, AuthorizationException} from "../../Database/DatabaseExceptions";
+import {RavenException, InvalidOperationException, BadRequestException, AuthorizationException} from "../../Database/DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {DateUtil} from "../../Utility/DateUtil";
 import {IResponse, IErrorResponse} from "../Response/IResponse";
@@ -199,7 +199,7 @@ export class RequestsExecutor {
           return {node: leaderNode};
         }
 
-        throw new RequestException(
+        throw new BadRequestException(
           'Leader node failed to make this request. The current read behavior is set to LeaderOnly'
         );
       case ReadBehaviors.RoundRobin:
@@ -218,7 +218,7 @@ export class RequestsExecutor {
           return {node: nonFailedNode, skippedNodes: skippedNodes};
         }
 
-        throw new RequestException(
+        throw new BadRequestException(
           'Tried all nodes in the cluster but failed getting a response'
         );
       case ReadBehaviors.LeaderWithFailoverWhenRequestTimeSlaThresholdIsReached:
@@ -239,7 +239,7 @@ export class RequestsExecutor {
           return {node: nonFailedNodes[0], skippedNodes: nonFailedNodes.slice(1)};
         }
 
-        throw new RequestException(
+        throw new BadRequestException(
           'Tried all nodes in the cluster but failed getting a response'
         );
       default:
@@ -259,7 +259,7 @@ export class RequestsExecutor {
           return {node: leaderNode};
         }
 
-        throw new RequestException(
+        throw new BadRequestException(
           'Leader node failed to make this request. The current write behavior is set to LeaderOnly'
         );
       case WriteBehaviors.LeaderWithFailover:
@@ -277,7 +277,7 @@ export class RequestsExecutor {
           return {node: nonFailedNode};
         }
 
-        throw new RequestException(
+        throw new BadRequestException(
           'Tried all nodes in the cluster but failed getting a response'
         );
       default:

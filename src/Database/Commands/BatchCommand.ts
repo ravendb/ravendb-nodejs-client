@@ -27,16 +27,12 @@ export class BatchCommand extends RavenCommand {
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    const body: IResponseBody = response.body;
+    const result: IRavenResponse = <IRavenResponse>super.setResponse(response);    
 
-    if (!body) {
+    if (!response.body) {
       throw new InvalidOperationException('Invalid response body received');
     }
 
-    if (body.Error) {
-      throw new ErrorResponseException(body.Error);
-    }
-
-    return body.Results as IRavenResponse[];
+    return result.Results as IRavenResponse[];
   }
 }
