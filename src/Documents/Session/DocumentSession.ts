@@ -452,7 +452,7 @@ more responsive application.", maxRequests
 
       delete this.documentsById[key];
       changes.addDocument(document);
-      changes.addCommand(new PutCommandData(key, _.cloneDeep(rawEntity), etag, info.metadata));
+      changes.addCommand(new PutCommandData(key, _.cloneDeep(rawEntity), etag));
     }
   }
 

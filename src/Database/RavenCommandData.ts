@@ -6,13 +6,11 @@ export abstract class RavenCommandData implements IJsonSerializable {
   protected type: RequestMethod;
   protected key: string;
   protected etag?: number = null;
-  protected metadata?: object = null;
   protected additionalData?: object = null;
 
-  constructor(key: string, etag?: number, metadata?: object) {
+  constructor(key: string, etag?: number) {
     this.key = key;
     this.etag = etag;
-    this.metadata = metadata;
   }
 
   public get command(): boolean {

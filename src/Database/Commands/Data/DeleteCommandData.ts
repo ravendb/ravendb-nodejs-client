@@ -4,7 +4,7 @@ import {IJsonSerializable} from "../../../Json/IJsonSerializable";
 
 export class DeleteCommandData extends RavenCommandData implements IJsonSerializable {
   constructor(key: string, etag?: number) {
-    super(key, etag, null);
+    super(key, etag);
 
     this.type = RequestMethods.Delete;
   }
