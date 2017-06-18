@@ -93,4 +93,11 @@ export abstract class RavenCommand {
     Object.assign(this.params, TypeUtil.isObject(params)
       ? params : {[params as string]: value});
   }
+
+  protected removeParams(params: string[] | string, ...otherParams: string[]) {
+    const paramsToRemove = Array.isArray(params) 
+      ? params : [params as string].concat(otherParams || []);
+
+    paramsToRemove.forEach((param: string) => delete this.params[param]);  
+  }
 }

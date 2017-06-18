@@ -12,17 +12,15 @@ export class GetDocumentCommand extends RavenCommand {
   protected keyOrKeys?: string | string[];
   protected includes?: string[];
   protected metadataOnly: boolean = false;
-  protected forceReadFromMaster: boolean = false;
 
   constructor(keyOrKeys: string | string[], includes?: string[],
-    metadataOnly: boolean = false, forceReadFromMaster: boolean = false
+    metadataOnly: boolean = false
   ) {
     super('', RequestMethods.Get, null, null, {});
 
     this.keyOrKeys = keyOrKeys;
     this.includes = includes;
     this.metadataOnly = metadataOnly;
-    this.forceReadFromMaster = forceReadFromMaster;
   }
 
   public createRequest(serverNode: ServerNode): void {

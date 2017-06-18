@@ -17,11 +17,9 @@ export class QueryCommand extends RavenCommand {
   protected includes?: string[];
   protected metadataOnly: boolean = false;
   protected indexEntriesOnly: boolean = false;
-  protected forceReadFromMaster: boolean = false;
 
   constructor(indexName: string, indexQuery: IndexQuery, conventions: DocumentConventions,
-    includes?: string[], metadataOnly: boolean = false, indexEntriesOnly: boolean = false,
-    forceReadFromMaster: boolean = false
+    includes?: string[], metadataOnly: boolean = false, indexEntriesOnly: boolean = false
   ) {
     super('', RequestMethods.Get, null, null, {});
 
@@ -43,7 +41,6 @@ export class QueryCommand extends RavenCommand {
     this.includes = includes;
     this.metadataOnly = metadataOnly;
     this.indexEntriesOnly = indexEntriesOnly;
-    this.forceReadFromMaster = forceReadFromMaster;
   }
 
   public createRequest(serverNode: ServerNode): void {

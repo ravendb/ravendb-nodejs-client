@@ -29,7 +29,6 @@ export class DocumentSession implements IDocumentSession {
   protected documentStore: IDocumentStore;
   protected requestsExecutor: RequestsExecutor;
   protected sessionId: string;
-  protected forceReadFromMaster: boolean;
   protected documentsById: IRavenObject<IRavenObject>;
   protected includedRawEntitiesByKey: IRavenObject<object>
   protected deletedDocuments: Set<IRavenObject>;
@@ -48,13 +47,12 @@ export class DocumentSession implements IDocumentSession {
   }       
 
   constructor (database: string, documentStore: IDocumentStore, requestsExecutor: RequestsExecutor,
-     sessionId: string, forceReadFromMaster: boolean
+     sessionId: string
   ) {
     this.database = database;
     this.documentStore = documentStore;
     this.requestsExecutor = requestsExecutor;
     this.sessionId = sessionId;
-    this.forceReadFromMaster = forceReadFromMaster;
     this.documentsById = {};
     this.includedRawEntitiesByKey = {};
     this.deletedDocuments = new Set<IRavenObject>();

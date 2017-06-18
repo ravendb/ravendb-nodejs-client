@@ -85,7 +85,7 @@ export class DocumentStore implements IDocumentStore {
       .then((): IDocumentStore => this);
   }
 
-  public openSession(database?: string, forceReadFromMaster?: boolean) : IDocumentSession {
+  public openSession(database?: string) : IDocumentSession {
     this.assertInitialize();
 
     let dbName: string = database || this._database;
@@ -93,7 +93,7 @@ export class DocumentStore implements IDocumentStore {
 
     this.sessionId = uuid();
     
-    return new DocumentSession(dbName, this, executor, this.sessionId, forceReadFromMaster);
+    return new DocumentSession(dbName, this, executor, this.sessionId);
   }
 
   public async generateId(entity: object, documentTypeOrObjectType?: string | DocumentConstructor, database?: string, callback?: EntityKeyCallback): Promise<string> {

@@ -26,7 +26,7 @@ describe('Index commands test', () => {
     });
 
     it('should get index with success', async () => {
-      const index: IndexDefinition = new IndexDefinition('region', indexMap);
+      const index: IndexDefinition = new IndexDefinition('get_index', indexMap);
 
       return expect(requestsExecutor.execute(new PutIndexesCommand(index)))
         .to.be.fulfilled.then(() => requestsExecutor
@@ -35,7 +35,7 @@ describe('Index commands test', () => {
     });
 
     it('should get index with fail', async () => requestsExecutor
-      .execute(new GetIndexCommand('reg', false))
+      .execute(new GetIndexCommand('non_existing_index'))
       .then((result: IRavenResponse) => expect(result).to.be.undefined)
     );
 

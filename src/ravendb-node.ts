@@ -122,6 +122,7 @@ export {DeleteByIndexCommand} from './Database/Commands/DeleteByIndexCommand';
 export {DeleteDatabaseCommand} from './Database/Commands/DeleteDatabaseCommand';
 export {DeleteIndexCommand} from './Database/Commands/DeleteIndexCommand';
 export {GetIndexCommand} from './Database/Commands/GetIndexCommand';
+export {GetIndexesCommand} from './Database/Commands/GetIndexesCommand';
 export {GetStatisticsCommand} from './Database/Commands/GetStatisticsCommand';
 export {PatchByIndexCommand} from './Database/Commands/PatchByIndexCommand';
 export {PatchCommand, IPatchCommandOptions} from './Database/Commands/PatchCommand';

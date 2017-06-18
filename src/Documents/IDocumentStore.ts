@@ -10,7 +10,7 @@ export interface IDocumentStore {
   conventions: DocumentConventions;
   initialize(): IDocumentStore;
   finalize(): Promise<IDocumentStore>;
-  openSession(database?: string, forceReadFromMaster?: boolean) : IDocumentSession;
+  openSession(database?: string) : IDocumentSession;
   generateId(entity: object, documentTypeOrObjectType?: string | DocumentConstructor, database?: string, callback?: EntityKeyCallback): Promise<string>;
   getRequestsExecutor(database?: string): RequestsExecutor;
 }
