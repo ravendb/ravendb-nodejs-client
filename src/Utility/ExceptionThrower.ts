@@ -4,8 +4,6 @@ import {StatusCodes} from "../Http/Response/StatusCode";
 import {RavenException} from "../Database/DatabaseExceptions";
 import * as exceptions from "../Database/DatabaseExceptions";
 
-const exceptionsByType: IRavenObject<typeof RavenException> = <IRavenObject<typeof RavenException>><any>exceptions;
-
 export class ExceptionThrower {
   public static throw(message: string): never;
   public static throw(type: string, message: string): never;
@@ -16,9 +14,9 @@ export class ExceptionThrower {
     if (typeOrMessage && messageString) {
       message = messageString;
 
-      Object.keys(exceptionsByType).some((name: string) => {
+      Object.keys(this._exceptionsByType).some((name: string) => {
         if (typeOrMessage.includes(name)) {
-          exceptionCtor = exceptionsByType[name];
+          exceptionCtor = this._exceptionsByType[name];
 
           return true;
         }
@@ -48,4 +46,6 @@ export class ExceptionThrower {
       }
     }
   }
+
+  private static _exceptionsByType: IRavenObject<typeof RavenException> = <IRavenObject<typeof RavenException>><any>exceptions;
 }

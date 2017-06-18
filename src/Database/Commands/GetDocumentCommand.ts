@@ -17,7 +17,7 @@ export class GetDocumentCommand extends RavenCommand {
   constructor(keyOrKeys: string | string[], includes?: string[],
     metadataOnly: boolean = false, forceReadFromMaster: boolean = false
   ) {
-    super('', RequestMethods.Get, null, null, {}, true);
+    super('', RequestMethods.Get, null, null, {});
 
     this.keyOrKeys = keyOrKeys;
     this.includes = includes;

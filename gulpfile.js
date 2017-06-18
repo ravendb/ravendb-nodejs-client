@@ -1,3 +1,5 @@
+const _ = require('lodash');
+const fs = require('fs');
 const gulp = require('gulp');
 const rmdir = require('rimraf');
 const sort = require('gulp-sort');
@@ -11,7 +13,7 @@ const args = require('./args');
 
 const preamble = '/** RavenDB Client - (c) Hibernating Rhinos 2017 */';
 const exportDefault = 'export default DocumentStore;';
-const prioritizedClasses = ['Hash.ts', 'RavenCommand.ts', 'AbstractHiloKeyGenerator.ts', 'IndexQueryBasedCommand.ts'];
+const prioritizedClasses = ['Hash.ts', 'RavenCommand.ts', 'DatabaseExceptions.ts', 'AbstractHiloKeyGenerator.ts', 'IndexQueryBasedCommand.ts'];
 const options = {
     src: './src',
     tests: './test',
@@ -69,38 +71,49 @@ gulp.task('build:exports', ['clean'], () => gulp
         + contents
             .toString()
             .split('\n')
-            .map(line => line.startsWith('export')
+            .map(line => (line.startsWith('export') 
+                || line.startsWith('} from'))
                 ? line.replace(/ from.*;/, ';')
                 : line
-            )
+            )            
             .join('\n')
     ))
     .pipe(gulp.dest(options.tmp))
 );
 
-gulp.task('build:concat', ['clean'], () => gulp
-    .src(options.src + '/[A-Z]*/**/*.ts')
-    .pipe(sort({
-        comparator: (file, anotherFile) => {
-            const isPrioritized = (file) => prioritizedClasses
-                .some((className) => !!~file.path.indexOf(className));
+gulp.task('build:concat', ['clean'], () => {
+    const allExceptions = fs
+        .readFileSync(`${options.src}/Database/DatabaseExceptions.ts`)
+        .toString().match(/class\s+([\w\d]+)\s*/g)
+        .map((match) => match.replace(/class\s+/, ''));  
 
-            return isPrioritized(file) ? -1 : (
-                isPrioritized(anotherFile) ? 1 : 0
-            );
-        }
-    }))
-    .pipe(concat('ravendb-node.bundle.ts'))
-    .pipe(transform(contents => contents
-        .toString()
-        .split('\n')
-        .filter(line => !line.startsWith('import'))
-        .map(line => line.replace(/export /, ''))
-        .join('\n')
-      + "\n\n" + exportDefault + "\n"
-    ))
-    .pipe(gulp.dest(options.tmp))
-);
+    return gulp
+        .src(options.src + '/[A-Z]*/**/*.ts')
+        .pipe(sort({
+            comparator: (file, anotherFile) => {
+                const isPrioritized = (file) => prioritizedClasses
+                    .some((className) => !!~file.path.indexOf(className));
+
+                return isPrioritized(file) ? -1 : (
+                    isPrioritized(anotherFile) ? 1 : 0
+                );
+            }
+        }))
+        .pipe(concat('ravendb-node.bundle.ts'))
+        .pipe(transform(contents => contents
+            .toString()
+            .split('\n')
+            .filter(line => !line.startsWith('import'))
+            .map(line => line.replace(/export /, ''))
+            .map(line => line.replace(
+                '<IRavenObject<typeof RavenException>><any>exceptions',
+                `{ ${allExceptions.join(', ')} }`
+            ))
+            .join('\n')
+            + "\n\n" + exportDefault + "\n"
+        ))
+        .pipe(gulp.dest(options.tmp));
+});
 
 gulp.task('build:bundle', ['clean', 'build:exports', 'build:concat'], () => gulp
     .src([

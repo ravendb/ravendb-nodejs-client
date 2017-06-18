@@ -10,7 +10,7 @@ export class GetIndexCommand extends RavenCommand {
   protected forceReadFromMaster: boolean = false;
 
   constructor(indexName: string, forceReadFromMaster: boolean = false) {
-    super('', RequestMethods.Get, null, null, {}, true);
+    super('', RequestMethods.Get, null, null, {});
     this.indexName = indexName;
     this.forceReadFromMaster = forceReadFromMaster;
   }

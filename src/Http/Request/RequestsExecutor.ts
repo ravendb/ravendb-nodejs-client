@@ -10,8 +10,6 @@ import {TypeUtil} from "../../Utility/TypeUtil";
 import {IHeaders} from "../IHeaders";
 import {ApiKeyAuthenticator} from "../../Database/Auth/ApiKeyAuthenticator";
 import {IRavenObject} from "../../Database/IRavenObject";
-import {ReadBehavior, ReadBehaviors} from "../../Documents/Conventions/ReadBehavior";
-import {WriteBehavior, WriteBehaviors} from "../../Documents/Conventions/WriteBehavior";
 import {Lock} from "../../Lock/Lock";
 import {ILockDoneCallback} from "../../Lock/LockCallbacks";
 import {GetTopologyCommand} from "../../Database/Commands/GetTopologyCommand";
@@ -20,11 +18,6 @@ import {StringUtil} from "../../Utility/StringUtil";
 import {DateUtil} from "../../Utility/DateUtil";
 import {IResponse, IErrorResponse} from "../Response/IResponse";
 import {StatusCodes, StatusCode} from "../Response/StatusCode";
-
-export interface IChooseNodeResponse {
-  node: ServerNode,
-  skippedNodes?: ServerNode[]
-}
 
 export class RequestsExecutor {
   protected conventions?: DocumentConventions;
@@ -46,7 +39,7 @@ export class RequestsExecutor {
     this.conventions = conventions;
     this._lock = Lock.getInstance();
     this._authenticator = new ApiKeyAuthenticator();
-    this._topology = new Topology(Number.MIN_SAFE_INTEGER, serverNode);
+    this._topology = new Topology(Number.MIN_SAFE_INTEGER, [serverNode]);
     this.headers = {
       "Accept": "application/json",
       "Has-Api-key": TypeUtil.isNone(apiKey) ? 'false' : 'true',
@@ -63,9 +56,9 @@ export class RequestsExecutor {
     }
 
     return this.chooseNodeForRequest(command)
-      .then((chosenNodeResponse: IChooseNodeResponse) => {
-        let chosenNode = chosenNodeResponse.node;
-        
+      .then((node: ServerNode) => {      
+        let chosenNode: ServerNode = node;
+
         const execute: () => BluebirdPromise<IRavenResponse | IRavenResponse[] | void> = () => {
           let requestOptions: RavenCommandRequestOptions;
           const startTime: number = DateUtil.timestampMs();
@@ -74,8 +67,8 @@ export class RequestsExecutor {
             command.addFailedNode(chosenNode);
 
             return this.chooseNodeForRequest(command)
-              .then((chosenNodeResponse: IChooseNodeResponse) => {
-                chosenNode = chosenNodeResponse.node;
+              .then((node: ServerNode) => {
+                chosenNode = node;
                 return execute();
               });
           };
@@ -175,116 +168,22 @@ export class RequestsExecutor {
     return options;
   }
 
-  protected chooseNodeForRequest(command: RavenCommand): BluebirdPromise<IChooseNodeResponse> {
-    let response: IChooseNodeResponse;
-
-    try {
-      response = (command.isReadRequest)
-        ? this.chooseNodeForRead(command)
-        : this.chooseNodeForWrite(command);
-    } catch (error) {
-      return BluebirdPromise.reject(error as RavenException) as BluebirdPromise<IChooseNodeResponse>;
-    }
-
-    return BluebirdPromise.resolve(response) as BluebirdPromise<IChooseNodeResponse>;
-  }
-
-  protected chooseNodeForRead(command: RavenCommand): IChooseNodeResponse {
+  protected chooseNodeForRequest(command: RavenCommand): BluebirdPromise<ServerNode> {
     const topology: Topology = this._topology;
-    const leaderNode: ServerNode = topology.leaderNode;
+    let nonFailedNode: ServerNode;
 
-    switch (topology.readBehavior) {
-      case ReadBehaviors.LeaderOnly:
-        if (!command.isFailedWithNode(leaderNode)) {
-          return {node: leaderNode};
-        }
+    if (!topology.nodes.some((node: ServerNode): boolean => {
+        const nonFailed = !node.isFailed && !command.isFailedWithNode(node);
 
-        throw new BadRequestException(
-          'Leader node failed to make this request. The current read behavior is set to LeaderOnly'
-        );
-      case ReadBehaviors.RoundRobin:
-        let nonFailedNode: ServerNode;
-        let skippedNodes: ServerNode[] = [];
-
-        if ([leaderNode].concat(topology.nodes).some((node: ServerNode): boolean => {
-            const nonFailed = !node.isFailed && !command.isFailedWithNode(node);
-
-            nonFailed
-               ? (nonFailedNode = node)
-              : skippedNodes.push(node);
-
-            return nonFailed
-          })) {
-          return {node: nonFailedNode, skippedNodes: skippedNodes};
-        }
-
-        throw new BadRequestException(
-          'Tried all nodes in the cluster but failed getting a response'
-        );
-      case ReadBehaviors.LeaderWithFailoverWhenRequestTimeSlaThresholdIsReached:
-        if (!leaderNode.isFailed && !command.isFailedWithNode(leaderNode)
-          && leaderNode.isRateSurpassed(topology.sla)
-        ) {
-          return {node: leaderNode};
-        }
-
-        const nonFailedNodes: ServerNode[] = [leaderNode]
-          .concat(topology.nodes || [])
-          .filter((node: ServerNode): boolean => !node.isFailed)
-          .sort((node: ServerNode, anoterNode: ServerNode): number =>
-            node.ewma - anoterNode.ewma
-          );
-
-        if (nonFailedNodes.length > 0) {
-          return {node: nonFailedNodes[0], skippedNodes: nonFailedNodes.slice(1)};
-        }
-
-        throw new BadRequestException(
-          'Tried all nodes in the cluster but failed getting a response'
-        );
-      default:
-        throw new InvalidOperationException(
-          StringUtil.format('Invalid read behavior value: {readBehavior}', topology)
-        );
+        nonFailed && (nonFailedNode = node);
+        return nonFailed
+      })) {
+      return BluebirdPromise.reject(new BadRequestException(
+        'Tried all nodes in the cluster but failed getting a response'
+      )) as BluebirdPromise<ServerNode>;
     }
-  }
 
-  protected chooseNodeForWrite(command: RavenCommand): IChooseNodeResponse {
-    const topology: Topology = this._topology;
-    const leaderNode: ServerNode = topology.leaderNode;
-
-    switch (topology.writeBehavior) {
-      case WriteBehaviors.LeaderOnly:
-        if (!command.isFailedWithNode(leaderNode)) {
-          return {node: leaderNode};
-        }
-
-        throw new BadRequestException(
-          'Leader node failed to make this request. The current write behavior is set to LeaderOnly'
-        );
-      case WriteBehaviors.LeaderWithFailover:
-        let nonFailedNode: ServerNode;
-
-        if ([leaderNode].concat(topology.nodes).some((node: ServerNode): boolean => {
-          const nonFailed = !node.isFailed && !command.isFailedWithNode(node);
-
-          if (nonFailed) {
-            nonFailedNode = node;
-          }
-
-          return nonFailed
-        })) {
-          return {node: nonFailedNode};
-        }
-
-        throw new BadRequestException(
-          'Tried all nodes in the cluster but failed getting a response'
-        );
-      default:
-        throw new InvalidOperationException(
-          StringUtil.format('Invalid write behavior value: {writeBehavior}', topology)
-        );
-    }
+    return BluebirdPromise.resolve(nonFailedNode) as BluebirdPromise<ServerNode>;
   }
 
   protected getReplicationTopology(): void {
@@ -318,9 +217,6 @@ export class RequestsExecutor {
 
     return new Topology(
       parseInt(response.Etag as string) || 0,
-      leaderNode,
-      response.ReadBehavior as ReadBehavior || ReadBehaviors.LeaderOnly,
-      response.WriteBehavior as WriteBehavior || WriteBehaviors.LeaderOnly,
       response.Nodes.map((jsonNode) => this.jsonToServerNode(jsonNode)),
       ('SLA' in response) ? parseFloat(response.SLA.RequestTimeThresholdInMilliseconds) / 1000 : 0
     );

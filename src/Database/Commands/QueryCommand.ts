@@ -23,7 +23,7 @@ export class QueryCommand extends RavenCommand {
     includes?: string[], metadataOnly: boolean = false, indexEntriesOnly: boolean = false,
     forceReadFromMaster: boolean = false
   ) {
-    super('', RequestMethods.Get, null, null, {}, true);
+    super('', RequestMethods.Get, null, null, {});
 
     if (!indexName) {
       throw new InvalidOperationException('Index name cannot be empty');
