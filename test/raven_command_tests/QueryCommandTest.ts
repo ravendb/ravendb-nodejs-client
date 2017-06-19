@@ -18,11 +18,10 @@ describe('DocumentSession', () => {
   const tag: string = 'Tag:products';
   const indexName: string = 'Testing';
   let requestsExecutor: RequestsExecutor;
-  let indexDefinition: IndexDefinition;
   const conventions: DocumentConventions = new DocumentConventions();
 
   beforeEach(function(): void {
-    ({requestsExecutor, indexDefinition} = this.currentTest as IRavenObject);
+    ({requestsExecutor} = this.currentTest as IRavenObject);
   });
 
   beforeEach(async () => {
@@ -33,9 +32,8 @@ describe('DocumentSession', () => {
 
   describe('Query Command', () => {
     it('should do query', async () => requestsExecutor
-      .execute(new PutIndexesCommand(indexDefinition))
-      .then(() => requestsExecutor.execute(new QueryCommand(indexName, new IndexQuery(tag), conventions)))
-      .then((result: IRavenResponse) => expect(result.Results[0]["Name"]).to.equals('test'))
+      .execute(new QueryCommand(indexName, new IndexQuery(tag), conventions))
+      .then((result: IRavenResponse) => expect(result.Results[0]).to.have.property('Name', 'test'))
       .then(() => requestsExecutor.execute(new QueryCommand(indexName, new IndexQuery(tag), conventions, null, true)))
       .then((result: IRavenResponse) => expect(result.Results[0]).not.to.have.property('Name'))
       .then(() => requestsExecutor.execute(new QueryCommand(indexName, new IndexQuery(tag), conventions, null, null, true)))

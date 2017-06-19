@@ -55,6 +55,7 @@ describe('Document store test', () => {
       await session.store<Foo>(foo);
       await session.saveChanges();   
       
+      session = store.openSession();
       await session.delete<Foo>(key);   
       await expect(session.store<Foo>(foo)).to.be.rejected;      
     });
