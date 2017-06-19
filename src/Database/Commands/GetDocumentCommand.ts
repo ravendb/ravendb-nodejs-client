@@ -38,7 +38,7 @@ export class GetDocumentCommand extends RavenCommand {
       this.metadataOnly && this.addParams('metadata-only', 'True');
 
       if (keys.map((key: string) => key.length)
-          .reduce((sum: number, len: number) => sum + len) > 1024
+          .reduce((sum: number, len: number) => sum + len, 0) > 1024
       ) {
         this.payload = {"Ids": keys};
         this.method = RequestMethods.Post;

@@ -49,10 +49,10 @@ export class DocumentConventions {
     const documentType: string = TypeUtil.isString(typeOrConstructor)
       ? typeOrConstructor as string : (typeOrConstructor as DocumentConstructor).name;
 
-    return documentType.toLowerCase();
+    return documentType;
   }
 
-  public getDocumentsColleciton(typeOrConstructor: string | DocumentConstructor): string {
+  public getDocumentsCollection(typeOrConstructor: string | DocumentConstructor): string {
     return pluralize(this.getDocumentType(typeOrConstructor));
   }
 
@@ -120,26 +120,35 @@ export class DocumentConventions {
     let nestedTypes: object = {};
     let property: string, value : any;
 
+    const findNestedType = (property, value: any): void => {
+      if (value instanceof Date) {
+        nestedTypes[property] = Date.name;
+      } else if (TypeUtil.isObject(value)) {
+        let objectType: string = value.constructor.name;
+
+        if ('Object' !== objectType) {
+          nestedTypes[property] = objectType;
+        }
+      }
+    };
+    
     if (entity) {
       _.assign(metadata, entity['@metadata'] || {}, {
-        '@collection': this.getDocumentsColleciton(typeOrConstructor),
+        '@collection': this.getDocumentsCollection(typeOrConstructor),
         'Raven-Node-Type': TypeUtil.isString(typeOrConstructor)
           ? StringUtil.capitalize(typeOrConstructor as string)
           : (typeOrConstructor as DocumentConstructor<T>).name
       });
 
       for (property in entity) {
+        
         if (entity.hasOwnProperty(property)) {
           value = entity[property];
 
-          if (value instanceof Date) {
-            nestedTypes[property] = Date.name;
-          } else if (TypeUtil.isObject(value)) {
-            let objectType: string = value.constructor.name;
-
-            if ('Object' !== objectType) {
-              nestedTypes[property] = objectType;
-            }
+          if (Array.isArray(value)) {
+            value.length && findNestedType(property, _.first(value));
+          } else {
+            findNestedType(property, value);
           }
         }
       }

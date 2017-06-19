@@ -66,6 +66,9 @@ export abstract class RavenCommand {
       method: this.method,
       headers: this.headers,
       resolveWithFullResponse: true,
+      qsStringifyOptions: {
+        arrayFormat: 'repeat'
+      }
     };
 
     const params = this.params;

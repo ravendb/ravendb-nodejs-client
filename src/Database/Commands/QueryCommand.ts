@@ -50,7 +50,7 @@ export class QueryCommand extends RavenCommand {
     this.endPoint = StringUtil.format(
       '{0}/databases/{1}/queries/{2}',
       serverNode.url, serverNode.database,
-      encodeURIComponent(this.indexName)
+      this.indexName
     );
 
     query.query && this.addParams('query', query.query);

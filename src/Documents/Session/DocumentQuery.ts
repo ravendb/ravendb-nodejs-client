@@ -58,7 +58,11 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     this.waitForNonStaleResults = waitForNonStaleResults;
     this.nestedObjectTypes = nestedObjectTypes || {} as IRavenObject<DocumentConstructor>;
     this.objectType = session.conventions.getObjectType(documentTypeOrObjectType);
-    this.indexName = [(indexName || 'dynamic'), session.conventions.getDocumentsColleciton(documentTypeOrObjectType)].join('/');
+    this.indexName = indexName || 'dynamic';
+    
+    if (documentTypeOrObjectType) {
+      this.indexName += "/" + session.conventions.getDocumentsCollection(documentTypeOrObjectType);
+    }
   }
 
   public select(...args: string[]): IDocumentQuery<T> {
@@ -258,12 +262,12 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     return this.withStatistics
       ? new Promise<QueryResultsWithStatistics<T>>((resolve: PromiseResolve<QueryResultsWithStatistics<T>>, reject: PromiseReject) =>
         this.executeQuery()
-          .catch((error: RavenException) => PromiseResolver.reject(error, reject, callback))
-          .then((response: IRavenResponse) => responseToDocuments(response, resolve)))
+          .then((response: IRavenResponse) => responseToDocuments(response, resolve))
+          .catch((error: RavenException) => PromiseResolver.reject(error, reject, callback)))
       : new Promise<T[]>((resolve: PromiseResolve<T[]>, reject: PromiseReject) =>
-        this.executeQuery()
-          .catch((error: RavenException) => PromiseResolver.reject(error, reject, callback))
-          .then((response: IRavenResponse) => responseToDocuments(response, resolve)));
+        this.executeQuery()          
+          .then((response: IRavenResponse) => responseToDocuments(response, resolve))
+          .catch((error: RavenException) => PromiseResolver.reject(error, reject, callback)));
   }
 
   protected addSpace(): DocumentQuery<T> {

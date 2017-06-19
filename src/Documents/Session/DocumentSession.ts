@@ -65,7 +65,9 @@ export class DocumentSession implements IDocumentSession {
     let document: T = attributesOrDocument as T;
     const conventions: DocumentConventions = this.documentStore.conventions;
 
-    if (('object' !== (typeof attributesOrDocument)) || ('Object' === attributesOrDocument.constructor.name)) {
+    if (('object' === (typeof attributesOrDocument)) && ('Object' !== attributesOrDocument.constructor.name)) {
+      documentTypeOrObjectType || (documentTypeOrObjectType = attributesOrDocument.constructor as DocumentConstructor<T>);
+    } else {
       const objectType: DocumentConstructor<T> | null = conventions.getObjectType(documentTypeOrObjectType);
       
       document = objectType ? new objectType() : ({} as T);
@@ -141,7 +143,7 @@ export class DocumentSession implements IDocumentSession {
         }
         
         PromiseResolver.resolve<T | T[]>(result, null, callback);
-        return results;
+        return result;
       })
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
@@ -208,7 +210,7 @@ export class DocumentSession implements IDocumentSession {
 
         return document;
       })
-      .then((document: T): T | BluebirdPromise.Thenable<T> => {
+      .then((document: T): T | BluebirdPromise.Thenable<T> => {      
         if (isNewDocument) {
           const key: string = conventions.getIdFromInstance(document);
 
@@ -375,12 +377,13 @@ more responsive application.", maxRequests
       ) as BluebirdPromise<boolean>;
     }
 
-    return BluebirdPromise.resolve<boolean>(true)
+    return BluebirdPromise.resolve()
       .then((): boolean => {
         const conventions: DocumentConventions = this.conventions;
         const store: IDocumentStore = this.documentStore;
+        const isNew: boolean = !this.rawEntitiesAndMetadata.has(document);
 
-        if (this.rawEntitiesAndMetadata.has(document)) {
+        if (!isNew) {
           let info: IStoredRawEntityInfo = this.rawEntitiesAndMetadata.get(document);
           let metadata: object = document['@metadata'];
 
@@ -390,9 +393,9 @@ more responsive application.", maxRequests
 
           info.forceConcurrencyCheck = forceConcurrencyCheck;
           this.rawEntitiesAndMetadata.set(document, info);
-
-          return false;
         }
+
+        return isNew;
       });
   }
 
@@ -406,7 +409,9 @@ more responsive application.", maxRequests
 
         if (TypeUtil.isNone(documentKey)) {
           documentKey = conventions.getIdFromInstance<T>(document);
-        } else {
+        } 
+        
+        if (!TypeUtil.isNone(documentKey)) {
           conventions.setIdOnEntity(document, documentKey);
           document['@metadata']['@id'] = documentKey;
         }
@@ -486,11 +491,11 @@ more responsive application.", maxRequests
     for (let index: number = changes.deferredCommandsCount; index < results.length; index++) {
       const commandResult: IRavenObject = results[index];
 
-      if (RequestMethods.Put === commandResult.Method) {
+      if (RequestMethods.Put === commandResult.Type) {
         const document: IRavenObject = changes.getDocument(index - changes.deferredCommandsCount);
 
         if (this.rawEntitiesAndMetadata.has(document)) {
-          const metadata: object = _.omit(commandResult, 'Method');
+          const metadata: object = _.omit(commandResult, 'Type');
           const info: IStoredRawEntityInfo = this.rawEntitiesAndMetadata.get(document);
 
           _.assign(info, {
@@ -540,7 +545,10 @@ more responsive application.", maxRequests
 
   protected onDocumentFetched<T extends Object = IRavenObject>(conversionResult?: IDocumentConversionResult<T>, forceConcurrencyCheck: boolean = false): void {
     if (conversionResult) {
-      const documentKey: string = conversionResult.originalMetadata['@id'];
+      const documentKey: string = this.conventions
+        .getIdFromInstance(conversionResult.document)
+        || conversionResult.originalMetadata['@id']
+        || conversionResult.metadata['@id'];
 
       if (documentKey) {
         this.knownMissingIds.delete(documentKey);

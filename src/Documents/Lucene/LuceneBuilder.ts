@@ -108,7 +108,7 @@ export class LuceneBuilder {
       case LuceneOperators.EqualBetween:
         const conditionRange: LuceneRangeValue<LuceneValue> = value as LuceneRangeValue<LuceneValue>;
         const conditionTemplate = (operator === LuceneOperators.EqualBetween)
-          ? '[{0} TO {1}]' : '{{{0} TO {1}}}';
+          ? '[{0} TO {1}]' : '{{0} TO {1}}';
 
         queryText = StringUtil.format(conditionTemplate,
           this.valueToLuceneSyntax(conditionRange.min, '*'),
