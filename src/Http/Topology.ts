@@ -16,10 +16,6 @@ export class Topology {
     return this._nodes;
   }
 
-  public get leaderNode(): ServerNode {
-    return this.nodes.length ? _.first(this.nodes) : null;
-  }
-
   public get etag(): number {
     return this._etag;
   }

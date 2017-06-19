@@ -210,11 +210,6 @@ export class RequestsExecutor {
   }
 
   protected jsonToTopology(response: IRavenResponse): Topology {
-    let leaderNode: ServerNode = this.jsonToServerNode(
-      response.LeaderNode ? response.LeaderNode
-      : _.first(response.Nodes)
-    );
-
     return new Topology(
       parseInt(response.Etag as string) || 0,
       response.Nodes.map((jsonNode) => this.jsonToServerNode(jsonNode)),
@@ -231,7 +226,7 @@ export class RequestsExecutor {
     (done: ILockDoneCallback) => {
       const topology = this._topology;
 
-      [topology.leaderNode].concat(topology.nodes || [])
+      (topology.nodes || [])
         .filter((node?: ServerNode) => node instanceof ServerNode)
         .filter((node?: ServerNode) => node.isFailed)
         .forEach((node: ServerNode) => setTimeout(this
@@ -292,18 +287,13 @@ export class RequestsExecutor {
 
   protected updateCurrentToken(): void {
     const topology: Topology = this._topology;
-    const leader: ServerNode | null = topology.leaderNode;
-    let nodes: ServerNode[] = topology.nodes;
+    const nodes: ServerNode[] = topology.nodes;
     const setTimer: () => void = () => {
       setTimeout(() => this.updateCurrentToken(), 60 * 20 * 1000);
     };
 
     if (!this._unauthorizedHandlerInitialized) {
       return setTimer();
-    }
-
-    if (!TypeUtil.isNone(leader)) {
-      nodes = nodes.concat(leader as ServerNode);
     }
 
     BluebirdPromise.all(nodes
