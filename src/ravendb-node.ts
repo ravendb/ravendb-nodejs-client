@@ -46,6 +46,7 @@ export {
   DocumentDoesNotExistsException, 
   NonUniqueObjectException, 
   ConcurrencyException, 
+  ArgumentNullException,
   ArgumentOutOfRangeException, 
   DatabaseDoesNotExistException, 
   AuthorizationException, 

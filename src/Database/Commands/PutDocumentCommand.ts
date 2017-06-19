@@ -25,13 +25,14 @@ export class PutDocumentCommand extends DeleteDocumentCommand {
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
+    super.setResponse(response);
+    return <IRavenResponse>response.body;
+  }
 
+  protected checkResponse(response: IResponse): void {
     if (!response.body) {
       throw new ErrorResponseException('Failed to store document to the database \
 please check the connection to the server');
     }
-
-    return result;    
   }
 }

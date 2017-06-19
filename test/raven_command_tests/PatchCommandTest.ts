@@ -28,12 +28,12 @@ describe('Patch command test', () => {
   describe('Patch request', () => {
     it('should patch success ignoring missing', async() => requestsExecutor
       .execute(new PatchCommand(key, new PatchRequest("this.Name = 'testing'")))
-      .then((result: IRavenResponse) => expect(result).not.to.be.null)
+      .then((result: IRavenResponse) => expect(result).not.to.be.undefined)
     );
 
     it('should patch success not ignoring missing', async() => requestsExecutor
       .execute(new PatchCommand(key, new PatchRequest("this.Name = 'testing'"), {etag: etag + 1, skipPatchIfEtagMismatch: true}))
-      .then((result: IRavenResponse) => expect(result).to.be.null)
+      .then((result: IRavenResponse) => expect(result).to.be.undefined)
     );
 
     it('should patch fail not ignoring missing', async () => expect(requestsExecutor

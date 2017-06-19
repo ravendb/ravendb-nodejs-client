@@ -176,7 +176,7 @@ export class RequestsExecutor {
         const nonFailed = !node.isFailed && !command.isFailedWithNode(node);
 
         nonFailed && (nonFailedNode = node);
-        return nonFailed
+        return nonFailed;
       })) {
       return BluebirdPromise.reject(new BadRequestException(
         'Tried all nodes in the cluster but failed getting a response'

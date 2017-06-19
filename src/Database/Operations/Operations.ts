@@ -14,13 +14,12 @@ export class Operations {
   }
 
   public waitForOperationComplete(operationId: string, timeout?: number): BluebirdPromise<IRavenResponse> {
-    return new BluebirdPromise<null>((resolve: PromiseResolve<IRavenResponse>, reject: PromiseReject) => {
+    return new BluebirdPromise<IRavenResponse>((resolve: PromiseResolve<IRavenResponse>, reject: PromiseReject) => {
       const startTime: number = DateUtil.timestamp();
       const getOperationCommand: GetOperationStateCommand = new GetOperationStateCommand(operationId);
 
       const execute: () => void = () => {
-        this.requestsExecutor.execute(getOperationCommand)
-          .catch((error: Error) => reject(error))
+        this.requestsExecutor.execute(getOperationCommand)          
           .then((response: IRavenResponse) => {
             const commandResponse: IRavenResponse = response;
 
@@ -34,6 +33,7 @@ export class Operations {
               setTimeout(() => execute(), 500);
             }
           })
+          .catch((error: Error) => reject(error))
       };
 
       execute();

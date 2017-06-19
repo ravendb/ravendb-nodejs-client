@@ -34,9 +34,10 @@ describe('Index commands test', () => {
         .then((result: IRavenResponse) => expect(result).not.to.be.null));
     });
 
-    it('should get index with fail', async () => requestsExecutor
-      .execute(new GetIndexCommand('non_existing_index'))
-      .then((result: IRavenResponse) => expect(result).to.be.undefined)
+    it('should get index with fail', async () => expect(
+      requestsExecutor
+        .execute(new GetIndexCommand('non_existing_index'))
+      ).to.be.rejected
     );
 
     it('should delete index with success', async () => {

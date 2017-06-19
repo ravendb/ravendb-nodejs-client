@@ -16,7 +16,7 @@ export class GetOperationStateCommand extends RavenCommand {
 
   public createRequest(serverNode: ServerNode): void {
     this.params = {id: this.id};
-    this.endPoint = StringUtil.format('{url}/databases/{databases}/operations/state', serverNode);
+    this.endPoint = StringUtil.format('{url}/databases/{database}/operations/state', serverNode);
   }
 
 

@@ -22,11 +22,11 @@ export class StatusCodes {
   public static readonly GatewayTimeout: StatusCode = 504;
 
   public static isSuccess(statusCode: StatusCode): boolean {
-    return [1,2,3].includes((statusCode % 1000) - (statusCode % 100) / 100);
+    return (statusCode >= 200) && (statusCode < 400);
   }
 
   public static isError(statusCode: StatusCode): boolean {
-    return [4,5].includes((statusCode % 1000) - (statusCode % 100) / 100);
+    return statusCode >= 400;
   }
 
   public static isOk(statusCode: StatusCode): boolean {

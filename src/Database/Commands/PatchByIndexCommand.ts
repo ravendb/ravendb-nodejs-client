@@ -30,7 +30,7 @@ export class PatchByIndexCommand extends IndexQueryBasedCommand {
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
     const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
-    
+
     if(!response.body) {
       throw new IndexDoesNotExistException(StringUtil.format('Could not find index {0}', this.indexName));
     }

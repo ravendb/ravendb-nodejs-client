@@ -19,6 +19,7 @@ export class ErrorResponseException extends RavenException {}
 export class DocumentDoesNotExistsException extends RavenException {}
 export class NonUniqueObjectException extends RavenException {}
 export class ConcurrencyException extends RavenException {}
+export class ArgumentNullException extends RavenException {}
 export class ArgumentOutOfRangeException extends RavenException {}
 export class DatabaseDoesNotExistException extends RavenException {}
 export class AuthorizationException extends RavenException {}
