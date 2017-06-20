@@ -177,7 +177,7 @@ export class DocumentConventions {
   public rangedFieldName(fieldName: string, queryFilterValue: any): string {
     if (TypeUtil.isNumber(queryFilterValue)) {
       return StringUtil.format(
-        '{1}_{0}_Range', fieldName,
+        '{0}_{1}_Range', fieldName,
         _.isInteger(queryFilterValue) ? 'L': 'D'
       );
     }

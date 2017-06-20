@@ -48,7 +48,7 @@ describe('Document query test', () => {
   });
 
   describe('Index checking', () => {
-    /*it('should query by dynamic index', async () => {
+    it('should query by dynamic index', async () => {
       const results: Product[] = await store.openSession().query<Product>({
         documentTypeOrObjectType: Product
       }).whereEquals<string>('name', 'test101').get();
@@ -84,14 +84,14 @@ describe('Document query test', () => {
       }).whereIn<string>('name', ['test101', 'test107', 'test106']).get();
       
       expect(results).to.have.lengthOf(4);      
-    });*/
+    });
 
-    /*it('should query by startsWith', async() => {
+    it('should query by startsWith', async() => {
       const results: Product[] = await store.openSession().query<Product>({
         documentTypeOrObjectType: Product
       }).whereStartsWith('name', 'n').get();
       
-      expect(results[0].name).to.be('new_testing');
+      expect(results[0].name).to.equals('new_testing');
     });
 
     it('should query by endsWith', async() => {
@@ -99,8 +99,8 @@ describe('Document query test', () => {
         documentTypeOrObjectType: Product
       }).whereEndsWith('name', '7').get();
       
-      expect(results[0].name).to.be('test107');
-    });*/
+      expect(results[0].name).to.equals('test107');
+    });
 
     it('should fail query with non-existing index', async () => expect(
         store.openSession().query({
@@ -109,12 +109,13 @@ describe('Document query test', () => {
       ).to.be.rejected
     );
 
-    /*it('should query with where', async() => {
-      await expect(store.openSession().query().where({
-        name: 'test101', 
-        uid: [4, 6, 90]
-      })).to.be.fulfilled;
-    });
+    it('should query with where', async() => expect(
+        store.openSession().query().where({
+          name: 'test101', 
+          uid: [4, 6, 90]
+        }).get()
+      ).to.be.fulfilled
+    );
 
     it('should query with index', async() => {
       const results: Product[] = await store.openSession().query<Product>({
@@ -148,12 +149,20 @@ describe('Document query test', () => {
       expect(results).to.have.lengthOf(3);
     });
 
+    it('should query by notNull', async () => {
+      const results: IRavenObject[] = await store.openSession().query({
+        waitForNonStaleResults: true
+      }).whereNotNull('order').get();
+       
+      expect(_.some(results, (result: IRavenObject) => TypeUtil.isNone(result.order))).to.be.false; 
+    });
+
     it('should query with ordering', async() => {
       const results: IRavenObject[] = await store.openSession().query({
         waitForNonStaleResults: true
       }).whereNotNull('order').orderBy('order').get();
 
-      expect(results[0].order).to.be('a');
+      expect(results[0].order).to.equals('a');
     });
 
     it('should query with descending ordering', async() => {
@@ -161,15 +170,7 @@ describe('Document query test', () => {
         waitForNonStaleResults: true
       }).whereNotNull('order').orderByDescending('order').get();
 
-      expect(results[0].order).to.be('d');
-    });
-
-    it('should query by notNull', async () => {
-      const results: IRavenObject[] = await store.openSession().query({
-        waitForNonStaleResults: true
-      }).whereNotNull('order').get();
-       
-      expect(_.some(results, (result: IRavenObject) => TypeUtil.isNone(result.order))).to.be.false; 
+      expect(results[0].order).to.equals('d');
     });
 
     it('should query with includes', async() => {
@@ -180,7 +181,7 @@ describe('Document query test', () => {
         includes: ['product_id']
       }).where({uid: 92}).get();
 
-      await session.load('product/108');
+      await session.load('Products/108');
       expect(session.numberOfRequestsInSession).to.equals(1);            
     });
 
@@ -203,7 +204,7 @@ describe('Document query test', () => {
       .whereBetweenOrEqual<number>('uid', 2, 4).select('doc_id').get();
       
       expect(_.every(results, (result: Product) => result.hasOwnProperty('doc_id'))).to.be.true;
-    });*/
+    });
   });  
 });
 

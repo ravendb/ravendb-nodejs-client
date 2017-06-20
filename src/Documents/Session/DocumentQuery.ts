@@ -60,10 +60,10 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     this.waitForNonStaleResults = waitForNonStaleResults;
     this.nestedObjectTypes = nestedObjectTypes || {} as IRavenObject<DocumentConstructor>;
     this.objectType = session.conventions.getObjectType(documentTypeOrObjectType);
-    this.indexName = indexName;
+    this.indexName = indexName ||  "dynamic";
     
     if (!indexName && documentTypeOrObjectType) {
-      this.indexName = "dynamic/" + session.conventions.getDocumentsCollection(documentTypeOrObjectType);
+      this.indexName += "/" + session.conventions.getDocumentsCollection(documentTypeOrObjectType);
     }
   }
 
@@ -174,6 +174,8 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
       ? (fieldsNames as string[])
       : [fieldsNames as string];
 
+    this.sortFields = this.sortFields || [];
+
     fields.forEach((field) => {
       const fieldName: string = (field.charAt(0) == '-') ? field.substr(1) : field;
       let index: number = this.sortFields.indexOf(fieldName);
@@ -250,8 +252,8 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
             conversionResult
           );
         });
-       
-        if (commandResponse.Includes && commandResponse.Includes.length) {
+
+        if (Array.isArray(commandResponse.Includes) && commandResponse.Includes.length) {
           this.emit<object[]>(
             DocumentQuery.EVENT_INCLUDES_FETCHED, 
             commandResponse.Includes as object[]
@@ -286,9 +288,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   }
 
   protected addStatement(statement: string): DocumentQuery<T> {
-    if (this.queryBuilder.length > 0) {
-      this.queryBuilder += statement;
-    }
+    this.queryBuilder += statement;
 
     return this;
   }

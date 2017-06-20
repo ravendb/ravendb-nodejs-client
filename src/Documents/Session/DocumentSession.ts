@@ -327,8 +327,7 @@ export class DocumentSession implements IDocumentSession {
       throw new InvalidOperationException(StringUtil.format(
         "The maximum number of requests ({0}) allowed for this session has been reached. Raven limits the number \
 of remote calls that a session is allowed to make as an early warning system. Sessions are expected to \
-be short lived, and Raven provides facilities like batch saves (call saveChanges() only once \
-or wrap your actions into transaction callback when calling openSession()  \
+be short lived, and Raven provides facilities like batch saves (call saveChanges() only once) \
 You can increase the limit by setting DocumentConvention.\
 MaxNumberOfRequestsPerSession or MaxNumberOfRequestsPerSession, but it is advisable \
 that you'll look into reducing the number of remote calls first, \
