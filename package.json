@@ -1,10 +1,11 @@
 {
-  "name": "ravendb-client",
-  "version": "0.0.2",
-  "description": "RavenDB client for nodeJS",
+  "name": "ravendb",
+  "version": "4.0.0",
+  "description": "RavenDB client for Node.js",
   "files": [
     "lib/"
   ],
+  "homepage": "http://ravendb.net",
   "main": "lib/ravendb-node.js",
   "typings": "lib/ravendb-node.d.ts",
   "scripts": {
@@ -15,6 +16,16 @@
     "type": "git",
     "url": "https://github.com/ravendb/ravendb-nodejs-client"
   },
+  "bugs":{
+    "email": "support@ravendb.net",
+    "url": "http://issues.hibernatingrhinos.com"
+  },
+  "contributors":[
+    "Hibernating Rhinos"
+  ],
+  "engines": {
+    "node": ">=6.0.0"
+  },
   "keywords": [
     "ravendb",
     "typescript",
@@ -22,7 +33,7 @@
     "nodejs",
     "nosql"
   ],
-  "author": "Hibernating Rhinos LTD",
+  "author": "Hibernating Rhinos",
   "license": "MIT",
   "devDependencies": {
     "@types/async-lock": "0.0.19",
