@@ -80,15 +80,15 @@ export class RequestsExecutor {
           }
 
           return RequestPromise(requestOptions)
+            .finally(() => {
+              chosenNode.addResponseTime(DateUtil.timestampMs() - startTime);
+            })
             .catch((errorResponse: IErrorResponse) => {
               if (errorResponse.response) {
                 return BluebirdPromise.resolve(errorResponse.response);
               }
 
               return failNode();
-            })
-            .finally(() => {
-              chosenNode.addResponseTime(DateUtil.timestampMs() - startTime);
             })
             .then((response: IResponse): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> | (IRavenResponse | IRavenResponse[] | void) => {
               let commandResponse: IRavenResponse | IRavenResponse[] | void = null;

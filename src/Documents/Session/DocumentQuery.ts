@@ -230,9 +230,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   public async get(callback?: QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<QueryResultsWithStatistics<T>>;
   public async get(callback?: QueryResultsCallback<T[]> | QueryResultsCallback<QueryResultsWithStatistics<T>>)
     : Promise<T[] | QueryResultsWithStatistics<T>> {
-    const responseToDocuments: (response: IRavenResponse, resolve: PromiseResolve<T[]>
-      | PromiseResolve<QueryResultsWithStatistics<T>>) => void = (response: IRavenResponse,
-      resolve: PromiseResolve<T[]> | PromiseResolve<QueryResultsWithStatistics<T>>) => {
+    const responseToDocuments = (response: IRavenResponse): T[] | QueryResultsWithStatistics<T> => {
       let result: T[] | QueryResultsWithStatistics<T>  = [] as T[];
       const commandResponse: IRavenResponse = response as IRavenResponse;
 
@@ -270,18 +268,13 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
         }
       }
 
-      PromiseResolver.resolve<T[] | QueryResultsWithStatistics<T>>(result, resolve, callback)
+      PromiseResolver.resolve<T[] | QueryResultsWithStatistics<T>>(result, null, callback);
+      return result as T[] | QueryResultsWithStatistics<T>;
     };
 
-    return this.withStatistics
-      ? new Promise<QueryResultsWithStatistics<T>>((resolve: PromiseResolve<QueryResultsWithStatistics<T>>, reject: PromiseReject) =>
-        this.executeQuery()
-          .then((response: IRavenResponse) => responseToDocuments(response, resolve))
-          .catch((error: RavenException) => PromiseResolver.reject(error, reject, callback)))
-      : new Promise<T[]>((resolve: PromiseResolve<T[]>, reject: PromiseReject) =>
-        this.executeQuery()          
-          .then((response: IRavenResponse) => responseToDocuments(response, resolve))
-          .catch((error: RavenException) => PromiseResolver.reject(error, reject, callback)));
+    return this.executeQuery()
+      .then((response: IRavenResponse): T[] | QueryResultsWithStatistics<T> => responseToDocuments(response))
+      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
   protected addSpace(): DocumentQuery<T> {
@@ -341,29 +334,25 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     const query: IndexQuery = new IndexQuery(this.queryBuilder, this._take, this._skip, this.usingDefaultOperator, queryOptions);
     const queryCommand: QueryCommand = new QueryCommand(this.indexName, query, conventions, this.includes);
 
-    return new BluebirdPromise<IRavenResponse>((resolve: PromiseResolve<IRavenResponse>, reject: PromiseReject) => {
-      const request = () => {
-        this.requestsExecutor.execute(queryCommand)
-          .catch((error: Error) => reject(error))
-          .then((response: IRavenResponse | null) => {
-            if (TypeUtil.isNone(response)) {
-              resolve({
-                Results: [] as object[],
-                Includes: [] as string[]
-              } as IRavenResponse);
-            } else if (response.IsStale && this.waitForNonStaleResults) {
-              if (moment().unix() > endTime) {
-                reject(new ErrorResponseException('The index is still stale after reached the timeout'));
-              } else {
-                setTimeout(request, 100);
-              }
-            } else {
-              resolve(response);
-            }
-          });
-      };
+    const request = () => this.requestsExecutor
+      .execute(queryCommand)          
+      .then((response: IRavenResponse | null): IRavenResponse | BluebirdPromise.Thenable<IRavenResponse> => {
+        if (TypeUtil.isNone(response)) {
+          return {
+            Results: [] as object[],
+            Includes: [] as string[]
+          } as IRavenResponse;
+        } else if (response.IsStale && this.waitForNonStaleResults) {
+          if (moment().unix() > endTime) {
+            return BluebirdPromise.reject(new ErrorResponseException('The index is still stale after reached the timeout'));
+          } else {
+            return BluebirdPromise.delay(100).then(() => request());
+          }
+        } else {
+          return response as IRavenResponse;
+        }
+      });
 
-      request();
-    });
+    return request();
   }
 }
