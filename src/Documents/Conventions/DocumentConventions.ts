@@ -74,9 +74,10 @@ export class DocumentConventions {
       documentAttributes, metadata, nestedObjectTypes
     );
 
-    if (idProperty in document) {
-      this.setIdOnEntity(document, metadata['@id'] || null);
-    }
+    this.setIdOnEntity(
+      document, metadata
+      ['@id'] || null
+    );
 
     return {
       rawEntity: rawEntity,
@@ -93,7 +94,7 @@ export class DocumentConventions {
   public setIdOnEntity<T extends Object = IRavenObject>(entity: T, key: string): T {
     const idProperty = this.idPropertyName;
 
-    if (!entity.hasOwnProperty(idProperty)) {
+    if ('object' !== (typeof entity)) {
       throw new InvalidOperationException("Invalid entity provided. It should implement object interface");
     }
 

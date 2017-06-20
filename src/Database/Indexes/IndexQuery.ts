@@ -2,24 +2,22 @@ import {QueryOperator, QueryOperators} from "../../Documents/Session/QueryOperat
 import {IOptionsSet} from "../../Utility/IOptionsSet";
 
 export class IndexQuery {
-  protected totalSize: number = 0;
-  protected skippedResults: number = 0;
   protected waitForNonStaleResults: boolean = false;
   private _fetch: string[] = [];
   private _sortHints: string[] = [];
   private _sortFields: string[] = [];
   private _query: string = '';
-  private _pageSize: number = 128;
-  private _isPageSizeSet: boolean = false;
+  private _start: number;
+  private _pageSize: number;
   private _defaultOperator?: QueryOperator = null;
   private _waitForNonStaleResultsTimeout?: number = null;
 
-  constructor(query: string = '', totalSize: number = 0, skippedResults: number = 0,
+  constructor(query: string = '', pageSize: number = 128, skippedResults: number = 0,
     defaultOperator?: QueryOperator, options: IOptionsSet = {}
   ) {
     this._query = query;
-    this.totalSize = totalSize;
-    this.skippedResults = skippedResults;
+    this._pageSize = pageSize || 128;
+    this._start = skippedResults || 0;
     this._fetch = options.fetch || [];
     this._sortHints = options.sort_hints || [];
     this._sortFields = options.sort_fields || [];
@@ -38,7 +36,14 @@ export class IndexQuery {
 
   public set pageSize(pageSize: number) {
     this._pageSize = pageSize;
-    this._isPageSizeSet = true;
+  }
+
+  public get start(): number {
+    return this._start;
+  }
+
+  public set start(start: number) {
+    this._start = start;
   }
 
   public get defaultOperator(): QueryOperator {

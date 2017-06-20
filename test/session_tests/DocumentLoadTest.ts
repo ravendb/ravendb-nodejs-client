@@ -26,10 +26,10 @@ describe('Document load test', () => {
     store = DocumentStore.create(defaultUrl, defaultDatabase).initialize();
     session = store.openSession();
 
-    let product101: Product = session.create<Product>(new Product("products/101", "test"));
-    let product10: Product = session.create<Product>(new Product("products/10", "test"));
-    order = session.create<Order>(new Order("orders/105", "testing_order", 92, "products/101"));
-    company = session.create<Company>(new Company("company/1", "test", new Product(null, "testing_nested")));
+    let product101: Product = session.create<Product>(new Product("Products/101", "test"));
+    let product10: Product = session.create<Product>(new Product("Products/10", "test"));
+    order = session.create<Order>(new Order("Orders/105", "testing_order", 92, "Products/101"));
+    company = session.create<Company>(new Company("companies/1", "test", new Product(null, "testing_nested")));
 
     await session.store<Product>(product101);
     await session.store<Product>(product10);
@@ -41,28 +41,28 @@ describe('Document load test', () => {
   describe('Document Load', () => {
     it('should load existing document', async () => {
       session = store.openSession();
-      product = await session.load<Product>("products/101");
+      product = await session.load<Product>("Products/101");
 
       expect(product.name).to.equals('test');
     });
 
     it('should not load missing document', async () => {
       session = store.openSession();
-      product = await session.load<Product>("products/0");
+      product = await session.load<Product>("Products/0");
 
-      expect(product).to.equals(null);      
+      expect(product).to.be.null;      
     });
 
     it('should load few documents', async () => {
       session = store.openSession();
-      products = await session.load<Product>(["products/101", "products/10"]);
+      products = await session.load<Product>(["Products/101", "Products/10"]);
       
       expect(products).to.have.lengthOf(2);
     });
 
     it('should load few documents with duplicate id', async () => {
       session = store.openSession();
-      products = await session.load<Product>(["products/101", "products/101", "products/101"]);
+      products = await session.load<Product>(["Products/101", "Products/101", "Products/101"]);
 
       expect(products).to.have.lengthOf(3);
 
@@ -73,31 +73,31 @@ describe('Document load test', () => {
 
     it('should load track entity', async () => {
       session = store.openSession();
-      product = await session.load<Product>("products/101");
+      product = await session.load<Product>("Products/101");
 
       expect(product).to.be.an('object');
-      expect(product['@metadata']['@object_type']).to.equals('Product');      
+      expect(product['@metadata']['Raven-Node-Type']).to.equals('Product');      
     });
 
     it('should load track entity with nested object', async () => {
       session = store.openSession();
-      company = await session.load<Company>("company/1");
+      company = await session.load<Company>("companies/1");
 
       expect(company).to.be.an('object');
-      expect(company['@metadata']['@object_type']).to.equals('Company');      
-      expect(company.product['@metadata']['@object_type']).to.equals('Product');      
+      expect(company.product).to.be.an('object');      
+      expect(company.product).to.have.property('name', 'testing_nested');
     });
 
     it('should load track entity with object type', async () => {
       session = store.openSession();
-      product = await session.load<Product>("products/101", Product);
+      product = await session.load<Product>("Products/101", Product);
 
       expect(product).to.be.an.instanceOf(Product);
     });
 
     it('should load track entity with object type and nested object types', async () => {
       session = store.openSession();
-      company = await session.load<Company>("company/1", Company, null, {product: Product});
+      company = await session.load<Company>("companies/1", Company, null, {product: Product});
 
       expect(company).to.be.an.instanceOf(Company);
       expect(company.product).to.be.an.instanceOf(Product);
@@ -106,8 +106,8 @@ describe('Document load test', () => {
     it('should load with includes', async () => {
       session = store.openSession();
       
-      await session.load<Order>("orders/105", Order, ["product_id"]);
-      await session.load<Product>("products/101");
+      await session.load<Order>("Orders/105", Order, ["product_id"]);
+      await session.load<Product>("Products/101");
 
       expect(session.numberOfRequestsInSession).to.equals(1);
     });

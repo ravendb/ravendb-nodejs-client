@@ -30,7 +30,7 @@ export class GetDocumentCommand extends RavenCommand {
 
     this.params = {};
     this.endPoint = StringUtil.format('{url}/databases/{database}/docs', serverNode);
-    this.includes && this.addParams('includes', this.includes);
+    this.includes && this.addParams('include', this.includes);
 
     if (TypeUtil.isArray(this.keyOrKeys)) {
       const keys: string[] = <string[]>this.keyOrKeys;

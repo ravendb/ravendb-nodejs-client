@@ -45,6 +45,8 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   protected waitForNonStaleResults: boolean = false;
   protected objectType?: DocumentConstructor<T> = null;
   protected nestedObjectTypes: IRavenObject<DocumentConstructor> = {};
+  private _take?: number = null;
+  private _skip?: number = null;
   
   constructor(session: IDocumentSession, requestsExecutor: RequestsExecutor, documentTypeOrObjectType?: string | DocumentConstructor<T>, indexName?: string, usingDefaultOperator
     ?: QueryOperator, waitForNonStaleResults: boolean = false, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, withStatistics: boolean = false
@@ -212,6 +214,18 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     return this;
   }
 
+  public take(docsCount: number): IDocumentQuery<T> {
+    this._take = docsCount;
+    
+    return this;
+  }
+
+  public skip(skipCount: number): IDocumentQuery<T> {
+    this._skip = skipCount;
+
+    return this;
+  }
+
   public async get(callback?: QueryResultsCallback<T[]>): Promise<T[]>;
   public async get(callback?: QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<QueryResultsWithStatistics<T>>;
   public async get(callback?: QueryResultsCallback<T[]> | QueryResultsCallback<QueryResultsWithStatistics<T>>)
@@ -324,7 +338,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     const session: IDocumentSession = this.session;
     const conventions: DocumentConventions = session.conventions;
     const endTime: number = moment().unix() + conventions.timeout;
-    const query: IndexQuery = new IndexQuery(this.queryBuilder, 0, 0, this.usingDefaultOperator, queryOptions);
+    const query: IndexQuery = new IndexQuery(this.queryBuilder, this._take, this._skip, this.usingDefaultOperator, queryOptions);
     const queryCommand: QueryCommand = new QueryCommand(this.indexName, query, conventions, this.includes);
 
     return new BluebirdPromise<IRavenResponse>((resolve: PromiseResolve<IRavenResponse>, reject: PromiseReject) => {

@@ -12,7 +12,7 @@ export class Serializer {
     let sourceObject: object = TypeUtil.isString(source)
       ? JSON.parse(source as string) : source;
     
-    const prepareMappings: (objectTypes: object) => void = (objectTypes: object): void => {
+    const mergeMaps: (objectTypes: object) => void = (objectTypes: object): void => {
       for (let key in objectTypes) {
         let objectType: Function | DocumentConstructor | string;
         let existingObjectType: Function | DocumentConstructor | string;
@@ -26,6 +26,12 @@ export class Serializer {
         }
       }
     };
+
+    const filterMaps: () => void = (): void => {
+      Object.keys(mapping).forEach((key: string) => 
+        ('function' === (typeof mapping[key]) || (delete mapping[key]))
+      );
+    }
     
     const transform: (value: any, key?: string) => any = (value, key) => {
       let nestedObjectConstructor: DocumentConstructor = null;
@@ -56,14 +62,15 @@ export class Serializer {
     };
 
     if (metadata && metadata['@nested_object_types']) {
-      prepareMappings(metadata['@nested_object_types']);
+      mergeMaps(metadata['@nested_object_types']);
     }
 
-    
     if (nestedObjectTypes && _.size(nestedObjectTypes)) {
-      prepareMappings(nestedObjectTypes);
+      mergeMaps(nestedObjectTypes);
     }
-  
+
+    filterMaps();
+
     Object.keys(sourceObject).forEach((key: string) => {
       let source: any = sourceObject[key];
 

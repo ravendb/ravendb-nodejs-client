@@ -39,6 +39,8 @@ export interface IDocumentQuery<T> {
   andAlso(): IDocumentQuery<T>;
   orElse(): IDocumentQuery<T>;
   addNot(): IDocumentQuery<T>;
+  take(docsCount: number): IDocumentQuery<T>;
+  skip(skipCount: number): IDocumentQuery<T>;
   get(callback?: QueryResultsCallback<T[]>): Promise<T[]>;
   get(callback?: QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<QueryResultsWithStatistics<T>>;
 }

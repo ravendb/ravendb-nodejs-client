@@ -36,7 +36,7 @@ export class DocumentSession implements IDocumentSession {
   protected deferCommands: Set<RavenCommandData>;
   protected rawEntitiesAndMetadata: Map<IRavenObject, IStoredRawEntityInfo>;
 
-  private _numberOfRequestsInSession: number;
+  private _numberOfRequestsInSession: number = 0;
 
   public get numberOfRequestsInSession(): number {
     return this._numberOfRequestsInSession;
@@ -186,9 +186,9 @@ export class DocumentSession implements IDocumentSession {
           }
 
           this.deletedDocuments.add(document);
-          this.knownMissingIds.add(key);
         }
 
+        this.knownMissingIds.add(key);
         PromiseResolver.resolve<void>(null, null, callback); 
       })
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
@@ -344,13 +344,20 @@ more responsive application.", maxRequests
     return this.requestsExecutor
       .execute(new GetDocumentCommand(keys, includes))
       .then((response: IRavenResponse): T[] | BluebirdPromise.Thenable<T[]> => {
-        let responseResults: object[];
+        let responseResults: object[] = [];
+        let responseIncludes: object[] = [];
         const commandResponse: IRavenResponse = response;
         const conventions: DocumentConventions = this.documentStore.conventions;
         const objectType: DocumentConstructor<T> | null = conventions.getObjectType(documentTypeOrObjectType);
 
-        if (!(responseResults = commandResponse.Results) || (responseResults.length <= 0)) {
-          return BluebirdPromise.reject(new DocumentDoesNotExistsException('Requested document(s) doesn\'t exists'));
+        if (commandResponse) { 
+          if (('Results' in commandResponse) && Array.isArray(commandResponse.Results)) {
+            responseResults = <object[]>commandResponse.Results || [];
+          }
+
+          if (('Includes' in commandResponse) && Array.isArray(commandResponse.Includes)) {
+            responseIncludes = commandResponse.Includes;
+          }
         }
 
         const results: T[] = responseResults.map((result: object, index: number) => {
@@ -362,8 +369,8 @@ more responsive application.", maxRequests
           return this.makeDocument<T>(result, objectType, nestedObjectTypes);  
         });
 
-        if (commandResponse.Includes && commandResponse.Includes.length) {
-          this.onIncludesFetched(commandResponse.Includes);
+        if (responseIncludes.length) {
+          this.onIncludesFetched(responseIncludes);
         }
 
         return results;

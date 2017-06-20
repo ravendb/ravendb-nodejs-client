@@ -46,7 +46,11 @@ export class QueryCommand extends RavenCommand {
   public createRequest(serverNode: ServerNode): void {
     const query = this.indexQuery;
 
-    this.params = {pageSize: query.pageSize, start: 0};
+    this.params = {
+      pageSize: query.pageSize,
+      start: query.start
+    };
+
     this.endPoint = StringUtil.format(
       '{0}/databases/{1}/queries/{2}',
       serverNode.url, serverNode.database,
