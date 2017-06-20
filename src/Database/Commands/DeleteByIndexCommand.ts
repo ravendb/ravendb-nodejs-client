@@ -1,6 +1,6 @@
 import {ServerNode} from '../../Http/ServerNode';
 import {RequestMethods} from "../../Http/Request/RequestMethod";
-import {ErrorResponseException} from "../DatabaseExceptions";
+import {IndexDoesNotExistException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {IndexQuery} from "../Indexes/IndexQuery";
 import {QueryOperationOptions} from "../Operations/QueryOperationOptions";
@@ -20,17 +20,12 @@ export class DeleteByIndexCommand extends IndexQueryBasedCommand {
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    const responseBody: IResponseBody = response.body;
-    const status: StatusCode = response.statusCode;
+    const result: IRavenResponse = <IRavenResponse>super.setResponse(response);    
 
-    if (!responseBody) {
-      throw new ErrorResponseException(StringUtil.format('Could not find index {0}', this.indexName));
+    if (!response.body) {
+      throw new IndexDoesNotExistException(StringUtil.format('Could not find index {0}', this.indexName));
     }
 
-    if (![StatusCodes.Ok, StatusCodes.Accepted].includes(status)) {
-      throw new ErrorResponseException(responseBody.Error)
-    }
-
-    return responseBody;
+    return result;
   }
 }

@@ -1,9 +1,11 @@
 /// <reference path="../../node_modules/@types/mocha/index.d.ts" />
 /// <reference path="../../node_modules/@types/chai/index.d.ts" />
 
+import * as BluebirdPromise from "bluebird";
 import {expect} from 'chai';
 import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
 import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand";
+import {GetDocumentCommand} from "../../src/Database/Commands/GetDocumentCommand";
 import {QueryCommand} from "../../src/Database/Commands/QueryCommand";
 import {DocumentConventions} from "../../src/Documents/Conventions/DocumentConventions";
 import {IndexQuery} from "../../src/Database/Indexes/IndexQuery";
@@ -12,50 +14,46 @@ import {PutIndexesCommand} from "../../src/Database/Commands/PutIndexesCommand";
 import {IndexDefinition} from "../../src/Database/Indexes/IndexDefinition";
 import {IRavenObject} from "../../src/Database/IRavenObject";
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
+import {InvalidOperationException} from "../../src/Database/DatabaseExceptions";
 
 describe('DocumentSession', () => {
-  const tag = 'Tag:Products';
+  const tag: string = 'Tag:Products';
+  const indexName: string = 'Testing';
   let requestsExecutor: RequestsExecutor;
-  let indexDefinition: IndexDefinition;
   const conventions: DocumentConventions = new DocumentConventions();
 
   beforeEach(function(): void {
-    ({requestsExecutor, indexDefinition} = this.currentTest as IRavenObject);
+    ({requestsExecutor} = this.currentTest as IRavenObject);
   });
 
-  beforeEach(async () => {
-    const metadata: object = {'Raven-Node-Type': 'Document', '@collection': 'Products', 'object_type': 'product'};
-
-    return requestsExecutor.execute(new PutDocumentCommand('products/10', {"Name": "test", '@metadata': metadata}));
-  });
+  beforeEach(async () => requestsExecutor
+      .execute(new PutDocumentCommand('Products/10', {
+        "Name": "test", 
+        '@metadata': {
+          'Raven-Node-Type': 'Product', 
+          '@collection': 'Products'
+        }
+      }))
+  );
 
   describe('Query Command', () => {
-    it('should do only query', async () => requestsExecutor
-      .execute(new PutIndexesCommand(indexDefinition))
-      .then(() => requestsExecutor.execute(new QueryCommand('Testing', new IndexQuery(tag), conventions)))
-      .then((result: IRavenResponse) => expect(result.Results[0]["Name"]).to.equals('test'))
+    it('should do query', async () => BluebirdPromise.delay(1000)
+      .then(() => requestsExecutor.execute(new QueryCommand(indexName, new IndexQuery(tag), conventions))
+      .then((result: IRavenResponse) => expect(result.Results[0]).to.have.property('Name', 'test'))
+      .then(() => requestsExecutor.execute(new QueryCommand(indexName, new IndexQuery(tag), conventions, null, true)))
+      .then((result: IRavenResponse) => expect(result.Results[0]).not.to.have.property('Name'))
+      .then(() => requestsExecutor.execute(new QueryCommand(indexName, new IndexQuery(tag), conventions, null, null, true)))
+      .then((result: IRavenResponse) => expect(result.Results[0]).not.to.have.property('@metadata')))
     );
 
-    it('should get only metadata', async () => requestsExecutor
-      .execute(new PutIndexesCommand(indexDefinition))
-      .then(() => requestsExecutor.execute(new QueryCommand('Testing', new IndexQuery(tag), conventions, null, true)))
-      .then((result: IRavenResponse) => expect(result.Results[0]).not.to.include('Name'))
-    );
-
-    it('should get only index entries', async () => requestsExecutor
-      .execute(new PutIndexesCommand(indexDefinition))
-      .then(() => requestsExecutor.execute(new QueryCommand('Testing', new IndexQuery(tag), conventions, null, null, true)))
-      .then((result: IRavenResponse) => expect(result.Results[0]).not.to.include('@metadata'))
-    );
-
-    it('should fail with null index', async () => expect(
+    it('should fail with null index', async () => expect(() =>
         requestsExecutor.execute(new QueryCommand(null, new IndexQuery(tag), conventions))
-      ).should.be.rejected
+      ).to.throw
     );
 
     it('should fail with no existing index', async () => expect(
         requestsExecutor.execute(new QueryCommand('IndexIsNotExists', new IndexQuery(tag), conventions))
-      ).should.be.rejected
+      ).to.be.rejected
     );
   });
 });

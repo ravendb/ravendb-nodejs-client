@@ -26,12 +26,4 @@ export class DeleteDatabaseCommand extends RavenCommand {
         this.hardDelete && this.addParams({'hard-delete': 'true'});
         this.endPoint = StringUtil.format('{url}/admin/databases', serverNode);
     }
-
-    public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-        const body: IResponseBody = response.body;
-
-        if (body.Error) {
-            throw new DatabaseDoesNotExistException(body.Message);
-        }
-    }
 }

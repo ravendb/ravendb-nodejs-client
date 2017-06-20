@@ -6,41 +6,52 @@ import {DocumentConstructor} from "../Documents/Conventions/DocumentConventions"
 import {IRavenObject} from "../Database/IRavenObject";
 
 export class Serializer {
-  public static fromJSON<T extends Object = IRavenObject>(target: T, source: object | string, metadata: object = {}, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T {
+  public static fromJSON<T extends Object = IRavenObject>(target: T, source: object | string, metadata: object | null = {}, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T {
+    let mapping: object = {};
+
     let sourceObject: object = TypeUtil.isString(source)
       ? JSON.parse(source as string) : source;
-
-    let mapping: object = {};
     
-    if (metadata && metadata['@nested_object_types']) {
-      _.assign(mapping, metadata['@nested_object_types']);
-    }
+    const mergeMaps: (objectTypes: object) => void = (objectTypes: object): void => {
+      for (let key in objectTypes) {
+        let objectType: Function | DocumentConstructor | string;
+        let existingObjectType: Function | DocumentConstructor | string;
+      
+        if ((objectType = objectTypes[key]) && (!(key in mapping) 
+          || (('string' === (typeof (existingObjectType = mapping[key]))) 
+          && ('function' === (typeof objectType)) 
+          && (existingObjectType === (<Function>objectType).name))
+        )) {
+          mapping[key] = objectType;
+        }
+      }
+    };
 
-    if (nestedObjectTypes && !_.isEmpty(nestedObjectTypes)) {
-      _.forIn<IRavenObject<DocumentConstructor>>(
-        nestedObjectTypes, (documentConstructor: DocumentConstructor, attribute: string) => {
-        if (documentConstructor === Date) {
-          mapping[attribute] = Date.name;
-        }  
-      });
+    const filterMaps: () => void = (): void => {
+      Object.keys(mapping).forEach((key: string) => 
+        ('function' === (typeof mapping[key]) || (delete mapping[key]))
+      );
     }
-
+    
     const transform: (value: any, key?: string) => any = (value, key) => {
-      let nestedObjectConstructor: DocumentConstructor;
+      let nestedObjectConstructor: DocumentConstructor = null;
+      let nestedObject: IRavenObject = {};
 
-      if ((key in mapping) && (Date.name === mapping[key])) {
-          return DateUtil.parse(value);
+      if ((key in mapping) && ('function' === (typeof (nestedObjectConstructor = mapping[key])))) {
+        if (nestedObjectConstructor === Date) {
+          return DateUtil.parse(value)
+        }
       }
 
       if (TypeUtil.isObject(value)) {
-        let nestedObject: IRavenObject = {};
-
-        if ((key in nestedObjectTypes) && (nestedObjectConstructor = nestedObjectTypes[key])
-          && (!(key in mapping) || (nestedObjectConstructor.name === mapping[key]))) {
+        if (nestedObjectConstructor) {
           nestedObject = new nestedObjectConstructor();
         }
 
-        return this.fromJSON<typeof nestedObject>(nestedObject, value, value['@metadata'] || {});
+        return this.fromJSON<typeof nestedObject>(
+          nestedObject, value, (key in mapping)  
+          ? value['@metadata'] || {} : null
+        );
       }
 
       if (TypeUtil.isArray(value)) {
@@ -50,6 +61,16 @@ export class Serializer {
       return value;
     };
 
+    if (metadata && metadata['@nested_object_types']) {
+      mergeMaps(metadata['@nested_object_types']);
+    }
+
+    if (nestedObjectTypes && _.size(nestedObjectTypes)) {
+      mergeMaps(nestedObjectTypes);
+    }
+
+    filterMaps();
+
     Object.keys(sourceObject).forEach((key: string) => {
       let source: any = sourceObject[key];
 
@@ -58,7 +79,10 @@ export class Serializer {
       }
     });
 
-    target['@metadata'] = metadata || {};
+    if (!TypeUtil.isNone(metadata)) {
+      target['@metadata'] = metadata || {};
+    }
+    
     return target;
   }
 

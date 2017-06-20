@@ -4,6 +4,7 @@ import {IRavenResponse} from "./RavenCommandResponse";
 import {IResponse} from "../Http/Response/IResponse";
 import {IHeaders} from "../Http/IHeaders";
 import {TypeUtil} from "../Utility/TypeUtil";
+import {ExceptionThrower} from "../Utility/ExceptionThrower";
 import * as _ from 'lodash';
 import * as Request from 'request';
 import * as RequestPromise from 'request-promise';
@@ -19,28 +20,22 @@ export abstract class RavenCommand {
   protected failedNodes: Set<ServerNode>;
   protected _avoidFailover: boolean = false;
   private readonly _ravenCommand: boolean = true;
-  private _isReadRequest: boolean = false;
   private _authenticationRetries: number = 0;
 
   public abstract createRequest(serverNode: ServerNode): void;
 
-  constructor(endPoint: string, method: RequestMethod = RequestMethods.Get, params?: object, payload?: object, headers: IHeaders = {}, isReadRequest: boolean = false) {
+  constructor(endPoint: string, method: RequestMethod = RequestMethods.Get, params?: object, payload?: object, headers: IHeaders = {}) {
     this.endPoint = endPoint;
     this.method = method;
     this.params = params;
     this.payload = payload;
     this.headers = headers;
-    this._isReadRequest = isReadRequest;
     this.failedNodes = new Set<ServerNode>();
   }
 
   public get ravenCommand(): boolean {
     return this._ravenCommand;
-  }
-
-  public get isReadRequest(): boolean {
-    return this._isReadRequest;
-  }
+  }  
 
   public get avoidFailover(): boolean {
     return this._avoidFailover;
@@ -71,6 +66,9 @@ export abstract class RavenCommand {
       method: this.method,
       headers: this.headers,
       resolveWithFullResponse: true,
+      qsStringifyOptions: {
+        arrayFormat: 'repeat'
+      }
     };
 
     const params = this.params;
@@ -87,11 +85,22 @@ export abstract class RavenCommand {
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    return;
+    ExceptionThrower.throwFrom(response);    
+
+    if (response.body) {
+      return <IRavenResponse>response.body;
+    }
   }
 
   protected addParams(params: object | string, value?: any): void {
     Object.assign(this.params, TypeUtil.isObject(params)
       ? params : {[params as string]: value});
+  }
+
+  protected removeParams(params: string[] | string, ...otherParams: string[]) {
+    const paramsToRemove = Array.isArray(params) 
+      ? params : [params as string].concat(otherParams || []);
+
+    paramsToRemove.forEach((param: string) => delete this.params[param]);  
   }
 }

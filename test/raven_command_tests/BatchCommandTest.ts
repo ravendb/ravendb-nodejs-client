@@ -25,10 +25,10 @@ describe('Batch command test', () => {
   });
 
   beforeEach(() => {
-    const metadata: object = {'Raven-Node-Type': 'Document', '@collection': 'products', 'object_type': 'product'};
+    const metadata: object = {'Raven-Node-Type': 'Product', '@collection': 'products'};
 
-    putCommand1 = new PutCommandData('products/999', {'Name': 'tests', 'Category': 'testing'}, null, metadata);
-    putCommand2 = new PutCommandData('products/1000', {'Name': 'tests', 'Category': 'testing'}, null, metadata);
+    putCommand1 = new PutCommandData('products/999', {'Name': 'tests', 'Category': 'testing', '@metadata': metadata});
+    putCommand2 = new PutCommandData('products/1000', {'Name': 'tests', 'Category': 'testing', '@metadata': metadata});
     deleteCommand = new DeleteCommandData('products/1000');
     scriptedPatchCommand = new PatchCommandData('products/999', new PatchRequest("this.Name = 'testing';"));
   });
@@ -51,7 +51,7 @@ describe('Batch command test', () => {
         .then((result: IRavenResponse) => expect((result).Results[0].Name).to.equals('testing'))
     );
 
-    it('should fail the test', (done: MochaDone) => expect(
+    it('should fail the test', async () => expect(
         requestsExecutor.execute(new BatchCommand([putCommand1, putCommand2, null]))
       ).to.be.rejected
     );

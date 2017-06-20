@@ -8,7 +8,7 @@ import {GetDocumentCommand} from "../../src/Database/Commands/GetDocumentCommand
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 import {IRavenObject} from "../../src/Database/IRavenObject";
 
-describe('Put command tets', () => {
+describe('Put command tests', () => {
   let requestsExecutor: RequestsExecutor;
 
   beforeEach(function(): void {

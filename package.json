@@ -48,6 +48,7 @@
     "@types/uuid": "^2.0.29",
     "chai": "^3.5.0",
     "chai-as-promised": "^6.0.0",
+    "command-line-args": "^4.0.6",
     "gulp": "^3.9.1",
     "gulp-append": "^0.3.4",
     "gulp-concat": "^2.6.1",

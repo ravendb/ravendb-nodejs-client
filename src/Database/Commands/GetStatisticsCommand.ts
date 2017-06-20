@@ -5,6 +5,7 @@ import {StringUtil} from "../../Utility/StringUtil";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {IRavenResponse} from "../RavenCommandResponse";
 import {StatusCodes} from "../../Http/Response/StatusCode";
+import {ErrorResponseException} from "../DatabaseExceptions";
 
 export class GetStatisticsCommand extends RavenCommand {
   constructor() {
@@ -16,10 +17,12 @@ export class GetStatisticsCommand extends RavenCommand {
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    const responseBody: IResponseBody = response.body;
+    const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
 
-    if (responseBody && StatusCodes.isOk(response.statusCode)) {
-      return responseBody;
+    if (response.body) {
+      return result;
     }
+
+    throw new ErrorResponseException('Invalid server response');
   }
 }

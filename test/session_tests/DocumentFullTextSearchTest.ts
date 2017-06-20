@@ -12,7 +12,7 @@ import {IndexDefinition} from "../../src/Database/Indexes/IndexDefinition";
 import {IndexFieldOptions} from "../../src/Database/Indexes/IndexFieldOptions";
 import {PutIndexesCommand} from "../../src/Database/Commands/PutIndexesCommand";
 import {IRavenObject} from "../../src/Database/IRavenObject";
-import {LastFm, LastFmAnalyzed} from "../BaseTest";
+import {LastFm, LastFmAnalyzed} from "../TestClasses";
 
 describe('Document full text search', () => {
   let store: IDocumentStore;
@@ -21,15 +21,15 @@ describe('Document full text search', () => {
   let defaultDatabase: string, defaultUrl: string;
 
   beforeEach(function(): void {
-    ({defaultDatabase, defaultUrl, requestExecutor} = (this.currentTest as IRavenObject));
+    ({defaultDatabase, defaultUrl} = (this.currentTest as IRavenObject));
   });
 
   beforeEach(async () => {
-    const lastFmAnalyzed: LastFmAnalyzed = new LastFmAnalyzed(requestExecutor);
-
     store = DocumentStore.create(defaultUrl, defaultDatabase).initialize();
     session = store.openSession();
 
+    const lastFmAnalyzed: LastFmAnalyzed = new LastFmAnalyzed(store.getRequestsExecutor(defaultDatabase));
+        
     await lastFmAnalyzed.execute();    
     await session.store<LastFm>(session.create<LastFm>(new LastFm("LastFms/1", "Tania Maria", "TRALPJJ128F9311763", "Come With Me")));
     await session.store<LastFm>(session.create<LastFm>(new LastFm("LastFms/2", "Meghan Trainor", "TRBCNGI128F42597B4", "Me Too")));

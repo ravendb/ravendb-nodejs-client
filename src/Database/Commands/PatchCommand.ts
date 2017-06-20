@@ -64,10 +64,14 @@ export class PatchCommand extends RavenCommand {
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    const responseBody: IResponseBody = response.body;
+    const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
 
-    if (response && StatusCodes.isOk(response.statusCode)) {
-      return responseBody;
+    if (![StatusCodes.NotModified, StatusCodes.Ok].includes(response.statusCode)) {
+      throw new InvalidOperationException(StringUtil.format('Could not patch document {0}', this.key));
+    }
+
+    if (response.body) {
+      return result;
     }
   }
 }

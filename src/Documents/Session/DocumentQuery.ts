@@ -45,6 +45,8 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   protected waitForNonStaleResults: boolean = false;
   protected objectType?: DocumentConstructor<T> = null;
   protected nestedObjectTypes: IRavenObject<DocumentConstructor> = {};
+  private _take?: number = null;
+  private _skip?: number = null;
   
   constructor(session: IDocumentSession, requestsExecutor: RequestsExecutor, documentTypeOrObjectType?: string | DocumentConstructor<T>, indexName?: string, usingDefaultOperator
     ?: QueryOperator, waitForNonStaleResults: boolean = false, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, withStatistics: boolean = false
@@ -58,7 +60,11 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     this.waitForNonStaleResults = waitForNonStaleResults;
     this.nestedObjectTypes = nestedObjectTypes || {} as IRavenObject<DocumentConstructor>;
     this.objectType = session.conventions.getObjectType(documentTypeOrObjectType);
-    this.indexName = [(indexName || 'dynamic'), session.conventions.getDocumentsColleciton(documentTypeOrObjectType)].join('/');
+    this.indexName = indexName ||  "dynamic";
+    
+    if (!indexName && documentTypeOrObjectType) {
+      this.indexName += "/" + session.conventions.getDocumentsCollection(documentTypeOrObjectType);
+    }
   }
 
   public select(...args: string[]): IDocumentQuery<T> {
@@ -168,6 +174,8 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
       ? (fieldsNames as string[])
       : [fieldsNames as string];
 
+    this.sortFields = this.sortFields || [];
+
     fields.forEach((field) => {
       const fieldName: string = (field.charAt(0) == '-') ? field.substr(1) : field;
       let index: number = this.sortFields.indexOf(fieldName);
@@ -208,13 +216,23 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     return this;
   }
 
+  public take(docsCount: number): IDocumentQuery<T> {
+    this._take = docsCount;
+    
+    return this;
+  }
+
+  public skip(skipCount: number): IDocumentQuery<T> {
+    this._skip = skipCount;
+
+    return this;
+  }
+
   public async get(callback?: QueryResultsCallback<T[]>): Promise<T[]>;
   public async get(callback?: QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<QueryResultsWithStatistics<T>>;
   public async get(callback?: QueryResultsCallback<T[]> | QueryResultsCallback<QueryResultsWithStatistics<T>>)
     : Promise<T[] | QueryResultsWithStatistics<T>> {
-    const responseToDocuments: (response: IRavenResponse, resolve: PromiseResolve<T[]>
-      | PromiseResolve<QueryResultsWithStatistics<T>>) => void = (response: IRavenResponse,
-      resolve: PromiseResolve<T[]> | PromiseResolve<QueryResultsWithStatistics<T>>) => {
+    const responseToDocuments = (response: IRavenResponse): T[] | QueryResultsWithStatistics<T> => {
       let result: T[] | QueryResultsWithStatistics<T>  = [] as T[];
       const commandResponse: IRavenResponse = response as IRavenResponse;
 
@@ -234,8 +252,8 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
             conversionResult
           );
         });
-       
-        if (commandResponse.Includes && commandResponse.Includes.length) {
+
+        if (Array.isArray(commandResponse.Includes) && commandResponse.Includes.length) {
           this.emit<object[]>(
             DocumentQuery.EVENT_INCLUDES_FETCHED, 
             commandResponse.Includes as object[]
@@ -252,18 +270,13 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
         }
       }
 
-      PromiseResolver.resolve<T[] | QueryResultsWithStatistics<T>>(result, resolve, callback)
+      PromiseResolver.resolve<T[] | QueryResultsWithStatistics<T>>(result, null, callback);
+      return result as T[] | QueryResultsWithStatistics<T>;
     };
 
-    return this.withStatistics
-      ? new Promise<QueryResultsWithStatistics<T>>((resolve: PromiseResolve<QueryResultsWithStatistics<T>>, reject: PromiseReject) =>
-        this.executeQuery()
-          .catch((error: RavenException) => PromiseResolver.reject(error, reject, callback))
-          .then((response: IRavenResponse) => responseToDocuments(response, resolve)))
-      : new Promise<T[]>((resolve: PromiseResolve<T[]>, reject: PromiseReject) =>
-        this.executeQuery()
-          .catch((error: RavenException) => PromiseResolver.reject(error, reject, callback))
-          .then((response: IRavenResponse) => responseToDocuments(response, resolve)));
+    return this.executeQuery()
+      .then((response: IRavenResponse): T[] | QueryResultsWithStatistics<T> => responseToDocuments(response))
+      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
   protected addSpace(): DocumentQuery<T> {
@@ -275,9 +288,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   }
 
   protected addStatement(statement: string): DocumentQuery<T> {
-    if (this.queryBuilder.length > 0) {
-      this.queryBuilder += statement;
-    }
+    this.queryBuilder += statement;
 
     return this;
   }
@@ -320,32 +331,28 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     const session: IDocumentSession = this.session;
     const conventions: DocumentConventions = session.conventions;
     const endTime: number = moment().unix() + conventions.timeout;
-    const query: IndexQuery = new IndexQuery(this.queryBuilder, 0, 0, this.usingDefaultOperator, queryOptions);
+    const query: IndexQuery = new IndexQuery(this.queryBuilder, this._take, this._skip, this.usingDefaultOperator, queryOptions);
     const queryCommand: QueryCommand = new QueryCommand(this.indexName, query, conventions, this.includes);
 
-    return new BluebirdPromise<IRavenResponse>((resolve: PromiseResolve<IRavenResponse>, reject: PromiseReject) => {
-      const request = () => {
-        this.requestsExecutor.execute(queryCommand)
-          .catch((error: Error) => reject(error))
-          .then((response: IRavenResponse | null) => {
-            if (TypeUtil.isNone(response)) {
-              resolve({
-                Results: [] as object[],
-                Includes: [] as string[]
-              } as IRavenResponse);
-            } else if (response.IsStale && this.waitForNonStaleResults) {
-              if (moment().unix() > endTime) {
-                reject(new ErrorResponseException('The index is still stale after reached the timeout'));
-              } else {
-                setTimeout(request, 100);
-              }
-            } else {
-              resolve(response);
-            }
-          });
-      };
+    const request = () => this.requestsExecutor
+      .execute(queryCommand)          
+      .then((response: IRavenResponse | null): IRavenResponse | BluebirdPromise.Thenable<IRavenResponse> => {
+        if (TypeUtil.isNone(response)) {
+          return {
+            Results: [] as object[],
+            Includes: [] as string[]
+          } as IRavenResponse;
+        } else if (response.IsStale && this.waitForNonStaleResults) {
+          if (moment().unix() > endTime) {
+            return BluebirdPromise.reject(new ErrorResponseException('The index is still stale after reached the timeout'));
+          } else {
+            return BluebirdPromise.delay(100).then(() => request());
+          }
+        } else {
+          return response as IRavenResponse;
+        }
+      });
 
-      request();
-    });
+    return request();
   }
 }

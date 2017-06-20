@@ -5,7 +5,7 @@ import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {IndexQuery} from "../Indexes/IndexQuery";
 import {DocumentConventions} from "../../Documents/Conventions/DocumentConventions";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
-import {InvalidOperationException, ErrorResponseException} from "../DatabaseExceptions";
+import {InvalidOperationException, IndexDoesNotExistException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {QueryOperators} from "../../Documents/Session/QueryOperator";
 import {QueryString} from "../../Http/QueryString";
@@ -17,13 +17,11 @@ export class QueryCommand extends RavenCommand {
   protected includes?: string[];
   protected metadataOnly: boolean = false;
   protected indexEntriesOnly: boolean = false;
-  protected forceReadFromMaster: boolean = false;
 
   constructor(indexName: string, indexQuery: IndexQuery, conventions: DocumentConventions,
-    includes?: string[], metadataOnly: boolean = false, indexEntriesOnly: boolean = false,
-    forceReadFromMaster: boolean = false
+    includes?: string[], metadataOnly: boolean = false, indexEntriesOnly: boolean = false
   ) {
-    super('', RequestMethods.Get, null, null, {}, true);
+    super('', RequestMethods.Get, null, null, {});
 
     if (!indexName) {
       throw new InvalidOperationException('Index name cannot be empty');
@@ -43,17 +41,20 @@ export class QueryCommand extends RavenCommand {
     this.includes = includes;
     this.metadataOnly = metadataOnly;
     this.indexEntriesOnly = indexEntriesOnly;
-    this.forceReadFromMaster = forceReadFromMaster;
   }
 
   public createRequest(serverNode: ServerNode): void {
     const query = this.indexQuery;
 
-    this.params = {pageSize: query.pageSize};
+    this.params = {
+      pageSize: query.pageSize,
+      start: query.start
+    };
+
     this.endPoint = StringUtil.format(
       '{0}/databases/{1}/queries/{2}',
       serverNode.url, serverNode.database,
-      encodeURIComponent(this.indexName)
+      this.indexName
     );
 
     query.query && this.addParams('query', query.query);
@@ -72,16 +73,12 @@ export class QueryCommand extends RavenCommand {
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    const responseBody: IResponseBody = response.body;
+    const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
 
-    if (!responseBody) {
-      throw new ErrorResponseException(StringUtil.format('Could not find index {0}', this.indexName));
+    if (!response.body) {
+      throw new IndexDoesNotExistException(StringUtil.format('Could not find index {0}', this.indexName));
     }
 
-    if (responseBody.Error) {
-      throw new ErrorResponseException(responseBody.Error);
-    }
-
-    return responseBody;
+    return result;
   }
 }

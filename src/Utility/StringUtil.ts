@@ -7,7 +7,7 @@ export class StringUtil {
       return string.replace(
         /\{([\w\d\-]+)\}/g,
         (match: string, placeholder: string): string =>
-          (vars[placeholder] || '').toString()
+          ((placeholder in vars) ? vars[placeholder] : '').toString()
       );
     }
 
@@ -15,9 +15,11 @@ export class StringUtil {
 
     return string.replace(
       /\{([\d]+)\}/g,
-      (match: string, placeholder: string): string =>
-        (inputVars[parseInt(placeholder)] || '').toString()
-    );
+      (match: string, placeholder: string): string => {
+        let value: any = inputVars[parseInt(placeholder)];
+        
+        return (TypeUtil.isNone(value) ? '' : value).toString()
+    });
   }
 
   public static escape(string?: string, allowWildCards: boolean = false, makePhrase: boolean = false): string {

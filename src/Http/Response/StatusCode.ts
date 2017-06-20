@@ -21,6 +21,14 @@ export class StatusCodes {
   public static readonly ServiceUnavailable: StatusCode = 503;
   public static readonly GatewayTimeout: StatusCode = 504;
 
+  public static isSuccess(statusCode: StatusCode): boolean {
+    return (statusCode >= 200) && (statusCode < 400);
+  }
+
+  public static isError(statusCode: StatusCode): boolean {
+    return statusCode >= 400;
+  }
+
   public static isOk(statusCode: StatusCode): boolean {
     return statusCode === this.Ok;
   }

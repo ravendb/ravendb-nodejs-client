@@ -7,7 +7,7 @@ import {IRavenObject} from "../../src/Database/IRavenObject";
 import {DocumentStore} from "../../src/Documents/DocumentStore";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
-import {Product} from "../BaseTest";
+import {Product} from "../TestClasses";
 
 describe('Document delete test', () => {
   let store: IDocumentStore;
@@ -40,7 +40,7 @@ describe('Document delete test', () => {
       await session.saveChanges();
       product = await session.load<Product>(key, Product);
 
-      expect(product).to.not.exist;
+      expect(product).to.be.null;
     });
 
     it('should delete with key without save session', async() => {
@@ -51,7 +51,7 @@ describe('Document delete test', () => {
       await session.delete<Product>(key);
       product = await session.load<Product>(key, Product);
 
-      expect(product).to.not.exist;
+      expect(product).to.be.null;
     });
 
     it('should fail trying delete document by key after it has been changed', async() => {
@@ -77,7 +77,7 @@ describe('Document delete test', () => {
       await session.saveChanges();
       product = await session.load<Product>(key, Product);
 
-      expect(product).to.not.exist;
+      expect(product).to.be.null;
     });
   })
 });

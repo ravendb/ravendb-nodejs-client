@@ -21,7 +21,7 @@ import {IRavenObject} from "../../src/Database/IRavenObject";
 import {PatchByIndexCommand} from "../../src/Database/Commands/PatchByIndexCommand";
 import {DeleteByIndexCommand} from "../../src/Database/Commands/DeleteByIndexCommand";
 
-describe('DocumentSession', () => {
+describe('IndexBasedCommand tests', () => {
   let requestsExecutor: RequestsExecutor;
   let patch: PatchRequest;
   let operations: Operations;
@@ -30,7 +30,7 @@ describe('DocumentSession', () => {
     ({requestsExecutor} = this.currentTest as IRavenObject);
   });
 
-  before(async() => {
+  beforeEach(async() => {
     const indexMap: string = [
       "from doc in docs.Testings ",
       "select new{",

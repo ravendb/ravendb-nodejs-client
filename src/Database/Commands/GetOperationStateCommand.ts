@@ -16,15 +16,15 @@ export class GetOperationStateCommand extends RavenCommand {
 
   public createRequest(serverNode: ServerNode): void {
     this.params = {id: this.id};
-    this.endPoint = StringUtil.format('{url}/databases/{databases}/operations/state', serverNode);
+    this.endPoint = StringUtil.format('{url}/databases/{database}/operations/state', serverNode);
   }
 
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    const responseBody: IResponseBody = response.body;
+    const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
 
-    if (responseBody) {
-      return responseBody;
+    if (response.body) {
+      return result;
     }
 
     throw new ErrorResponseException('Invalid server response');

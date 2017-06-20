@@ -1,7 +1,7 @@
 import {IHiloKeyGenerator} from './IHiloKeyGenerator';
 import {AbstractHiloKeyGenerator} from './AbstractHiloKeyGenerator';
 import {HiloRangeValue} from './HiloRangeValue';
-import {FetchConcurrencyException} from '../Database/DatabaseExceptions';
+import {ConcurrencyException} from '../Database/DatabaseExceptions';
 import {IDocumentStore} from '../Documents/IDocumentStore';
 import {StringUtil} from '../Utility/StringUtil';
 import {PromiseResolver, PromiseResolve, PromiseReject} from '../Utility/PromiseResolver';
@@ -71,7 +71,7 @@ export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloK
     }, (error?: Error, result?: HiloRangeValue) => {
       if (result) {
         PromiseResolver.resolve<string>(this.getDocumentKeyFromId(result.current), resolve);
-      } else if (!(error instanceof FetchConcurrencyException)) {
+      } else if (!(error instanceof ConcurrencyException)) {
         PromiseResolver.reject(error, reject);
       } else {
         this.tryRequestNextRange(resolve, reject);

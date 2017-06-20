@@ -26,7 +26,7 @@ describe('Index commands test', () => {
     });
 
     it('should get index with success', async () => {
-      const index: IndexDefinition = new IndexDefinition('region', indexMap);
+      const index: IndexDefinition = new IndexDefinition('get_index', indexMap);
 
       return expect(requestsExecutor.execute(new PutIndexesCommand(index)))
         .to.be.fulfilled.then(() => requestsExecutor
@@ -34,9 +34,10 @@ describe('Index commands test', () => {
         .then((result: IRavenResponse) => expect(result).not.to.be.null));
     });
 
-    it('should get index with fail', async () => requestsExecutor
-      .execute(new GetIndexCommand('reg', false))
-      .then((result: IRavenResponse) => expect(result).to.be.null)
+    it('should get index with fail', async () => expect(
+      requestsExecutor
+        .execute(new GetIndexCommand('non_existing_index'))
+      ).to.be.rejected
     );
 
     it('should delete index with success', async () => {
@@ -44,12 +45,12 @@ describe('Index commands test', () => {
 
       return requestsExecutor.execute(new PutIndexesCommand(index))
         .then(() => requestsExecutor.execute(new DeleteIndexCommand('delete')))
-        .then((result) => expect(result).to.be.null);
+        .then((result) => expect(result).to.be.undefined);
     });
 
     it('should delete index with fail', async () => expect(
         requestsExecutor.execute(new DeleteIndexCommand(null))
-      ).should.be.rejected
+      ).to.be.rejected
     );
   });
 });

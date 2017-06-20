@@ -26,8 +26,6 @@ export {IndexLockMode, IndexLockModes} from './Database/Indexes/IndexLockMode';
 export {SortOption, SortOptions} from './Database/Indexes/SortOption';
 export {FieldTermVectorOption, FieldTermVectorOptions} from './Database/Indexes/FieldTermVectorOption';
 export {IndexPriority, IndexPriorities} from './Database/Indexes/IndexPriority';
-export {ReadBehavior, ReadBehaviors} from './Documents/Conventions/ReadBehavior';
-export {WriteBehavior, WriteBehaviors} from './Documents/Conventions/WriteBehavior';
 export {StatusCode, StatusCodes} from './Http/Response/StatusCode';
 export {LuceneOperator, LuceneOperators} from './Documents/Lucene/LuceneOperator';
 export {LuceneValue, LuceneRangeValue, LuceneConditionValue} from './Documents/Lucene/LuceneValue';
@@ -40,8 +38,73 @@ export {IHeaders} from './Http/IHeaders';
 export {IResponse, IResponseBody} from './Http/Response/IResponse';
 export {CryptMessage, ICipherBox} from './Utility/Crypt';
 
+//exceptions
+export {
+  RavenException, 
+  InvalidOperationException, 
+  ErrorResponseException, 
+  DocumentDoesNotExistsException, 
+  NonUniqueObjectException, 
+  ConcurrencyException, 
+  ArgumentNullException,
+  ArgumentOutOfRangeException, 
+  DatabaseDoesNotExistException, 
+  AuthorizationException, 
+  IndexDoesNotExistException, 
+  DatabaseLoadTimeoutException, 
+  AuthenticationException, 
+  BadRequestException,
+  BulkInsertAbortedException,
+  BulkInsertProtocolViolationException,
+  IndexCompilationException,
+  TransformerCompilationException,
+  DocumentConflictException,
+  DocumentDoesNotExistException,
+  DocumentParseException,
+  IndexInvalidException,
+  IndexOrTransformerAlreadyExistException,
+  JavaScriptException,
+  JavaScriptParseException,
+  SubscriptionClosedException,
+  SubscriptionDoesNotBelongToNodeException,
+  SubscriptionDoesNotExistException,
+  SubscriptionException,
+  SubscriptionInUseException,
+  TransformerDoesNotExistException,
+  VersioningDisabledException,
+  AllTopologyNodesDownException,
+  BadResponseException,
+  ChangeProcessingException,
+  CommandExecutionException,
+  NoLeaderException,
+  CompilationException,
+  ConflictException,
+  DatabaseConcurrentLoadTimeoutException,
+  DatabaseDisabledException,
+  DatabaseLoadFailureException,
+  DatabaseNotFoundException,
+  NotSupportedOsException,
+  SecurityException,
+  ServerLoadFailureException,
+  UnsuccessfulRequestException,
+  CriticalIndexingException,
+  IndexAnalyzerException,
+  IndexCorruptionException,
+  IndexOpenException,
+  IndexWriteException,
+  IndexWriterCreationException,
+  StorageException,
+  StreamDisposedException,
+  LowMemoryException,
+  IncorrectDllException,
+  DiskFullException,
+  InvalidJournalFlushRequestException,
+  QuotaException,
+  VoronUnrecoverableErrorException,
+  NonDurableFileSystemException
+} from './Database/DatabaseExceptions';
+
 // classes
-export {RavenException, InvalidOperationException, ErrorResponseException, DocumentDoesNotExistsException, NonUniqueObjectException, FetchConcurrencyException, ArgumentOutOfRangeException, DatabaseDoesNotExistException, AuthorizationException, IndexDoesNotExistException, TimeoutException, AuthenticationException, RequestException} from './Database/DatabaseExceptions';
 export {RavenCommandRequestOptions, RavenCommand} from './Database/RavenCommand';
 export {GetDocumentCommand} from './Database/Commands/GetDocumentCommand';
 export {DeleteDocumentCommand} from './Database/Commands/DeleteDocumentCommand';
@@ -60,6 +123,7 @@ export {DeleteByIndexCommand} from './Database/Commands/DeleteByIndexCommand';
 export {DeleteDatabaseCommand} from './Database/Commands/DeleteDatabaseCommand';
 export {DeleteIndexCommand} from './Database/Commands/DeleteIndexCommand';
 export {GetIndexCommand} from './Database/Commands/GetIndexCommand';
+export {GetIndexesCommand} from './Database/Commands/GetIndexesCommand';
 export {GetStatisticsCommand} from './Database/Commands/GetStatisticsCommand';
 export {PatchByIndexCommand} from './Database/Commands/PatchByIndexCommand';
 export {PatchCommand, IPatchCommandOptions} from './Database/Commands/PatchCommand';
@@ -91,7 +155,8 @@ export {DateUtil} from './Utility/DateUtil';
 export {StringUtil} from './Utility/StringUtil';
 export {ArrayUtil} from './Utility/ArrayUtil';
 export {TypeUtil} from './Utility/TypeUtil';
-export {RequestsExecutor, IChooseNodeResponse} from './Http/Request/RequestsExecutor';
+export {ExceptionThrower} from './Utility/ExceptionThrower';
+export {RequestsExecutor} from './Http/Request/RequestsExecutor';
 export {PatchRequest} from './Http/Request/PatchRequest';
 export {HiloRangeValue} from './Hilo/HiloRangeValue';
 export {AbstractHiloKeyGenerator} from './Hilo/AbstractHiloKeyGenerator';

@@ -6,22 +6,21 @@ import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {ErrorResponseException, InvalidOperationException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {TypeUtil} from "../../Utility/TypeUtil";
+import {StatusCodes} from "../../Http/Response/StatusCode";
 
 export class GetDocumentCommand extends RavenCommand {
   protected keyOrKeys?: string | string[];
   protected includes?: string[];
   protected metadataOnly: boolean = false;
-  protected forceReadFromMaster: boolean = false;
 
   constructor(keyOrKeys: string | string[], includes?: string[],
-    metadataOnly: boolean = false, forceReadFromMaster: boolean = false
+    metadataOnly: boolean = false
   ) {
-    super('', RequestMethods.Get, null, null, {}, true);
+    super('', RequestMethods.Get, null, null, {});
 
     this.keyOrKeys = keyOrKeys;
     this.includes = includes;
     this.metadataOnly = metadataOnly;
-    this.forceReadFromMaster = forceReadFromMaster;
   }
 
   public createRequest(serverNode: ServerNode): void {
@@ -31,7 +30,7 @@ export class GetDocumentCommand extends RavenCommand {
 
     this.params = {};
     this.endPoint = StringUtil.format('{url}/databases/{database}/docs', serverNode);
-    this.includes && this.addParams('includes', this.includes);
+    this.includes && this.addParams('include', this.includes);
 
     if (TypeUtil.isArray(this.keyOrKeys)) {
       const keys: string[] = <string[]>this.keyOrKeys;
@@ -39,9 +38,9 @@ export class GetDocumentCommand extends RavenCommand {
       this.metadataOnly && this.addParams('metadata-only', 'True');
 
       if (keys.map((key: string) => key.length)
-          .reduce((sum: number, len: number) => sum + len) > 1024
+          .reduce((sum: number, len: number) => sum + len, 0) > 1024
       ) {
-        this.payload = keys;
+        this.payload = {"Ids": keys};
         this.method = RequestMethods.Post;
       } else {
         this.addParams('id', keys);
@@ -52,17 +51,17 @@ export class GetDocumentCommand extends RavenCommand {
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    const responseBody: IResponseBody = response.body;
+    const result: IRavenResponse = <IRavenResponse>super.setResponse(response);    
 
-    if (!responseBody) {
+    if (StatusCodes.isNotFound(response.statusCode)) {
+      return;
+    }
+
+    if (!response.body) {
       throw new ErrorResponseException('Failed to load document from the database \
 please check the connection to the server');
     }
 
-    if (responseBody.Error) {
-      throw new ErrorResponseException(responseBody.Error);
-    }
-
-    return responseBody;
+    return result;
   }
 }

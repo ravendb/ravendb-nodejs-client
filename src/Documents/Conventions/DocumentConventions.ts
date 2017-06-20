@@ -49,10 +49,10 @@ export class DocumentConventions {
     const documentType: string = TypeUtil.isString(typeOrConstructor)
       ? typeOrConstructor as string : (typeOrConstructor as DocumentConstructor).name;
 
-    return documentType.toLowerCase();
+    return documentType;
   }
 
-  public getDocumentsColleciton(typeOrConstructor: string | DocumentConstructor): string {
+  public getDocumentsCollection(typeOrConstructor: string | DocumentConstructor): string {
     return pluralize(this.getDocumentType(typeOrConstructor));
   }
 
@@ -74,9 +74,10 @@ export class DocumentConventions {
       documentAttributes, metadata, nestedObjectTypes
     );
 
-    if (idProperty in document) {
-      this.setIdOnEntity(document, metadata['@id'] || null);
-    }
+    this.setIdOnEntity(
+      document, metadata
+      ['@id'] || null
+    );
 
     return {
       rawEntity: rawEntity,
@@ -93,7 +94,7 @@ export class DocumentConventions {
   public setIdOnEntity<T extends Object = IRavenObject>(entity: T, key: string): T {
     const idProperty = this.idPropertyName;
 
-    if (!entity.hasOwnProperty(idProperty)) {
+    if ('object' !== (typeof entity)) {
       throw new InvalidOperationException("Invalid entity provided. It should implement object interface");
     }
 
@@ -112,7 +113,7 @@ export class DocumentConventions {
       throw new InvalidOperationException("Invalid entity provided. It should implement object interface");
     }
 
-    return entity[idProperty] || (entity['@metadata'] || {})[idProperty] || null;
+    return entity[idProperty] || (entity['@metadata'] || {})['@id'] || null;
   }
 
   public buildDefaultMetadata<T extends Object = IRavenObject>(entity: T, typeOrConstructor: string | DocumentConstructor<T>): object {
@@ -120,26 +121,35 @@ export class DocumentConventions {
     let nestedTypes: object = {};
     let property: string, value : any;
 
+    const findNestedType = (property, value: any): void => {
+      if (value instanceof Date) {
+        nestedTypes[property] = Date.name;
+      } else if (TypeUtil.isObject(value)) {
+        let objectType: string = value.constructor.name;
+
+        if ('Object' !== objectType) {
+          nestedTypes[property] = objectType;
+        }
+      }
+    };
+    
     if (entity) {
       _.assign(metadata, entity['@metadata'] || {}, {
-        '@collection': this.getDocumentsColleciton(typeOrConstructor),
+        '@collection': this.getDocumentsCollection(typeOrConstructor),
         'Raven-Node-Type': TypeUtil.isString(typeOrConstructor)
           ? StringUtil.capitalize(typeOrConstructor as string)
           : (typeOrConstructor as DocumentConstructor<T>).name
       });
 
       for (property in entity) {
+        
         if (entity.hasOwnProperty(property)) {
           value = entity[property];
 
-          if (value instanceof Date) {
-            nestedTypes[property] = Date.name;
-          } else if (TypeUtil.isObject(value)) {
-            let objectType: string = value.constructor.name;
-
-            if ('Object' !== objectType) {
-              nestedTypes[property] = objectType;
-            }
+          if (Array.isArray(value)) {
+            value.length && findNestedType(property, _.first(value));
+          } else {
+            findNestedType(property, value);
           }
         }
       }
@@ -167,7 +177,7 @@ export class DocumentConventions {
   public rangedFieldName(fieldName: string, queryFilterValue: any): string {
     if (TypeUtil.isNumber(queryFilterValue)) {
       return StringUtil.format(
-        '{1}_{0}_Range', fieldName,
+        '{0}_{1}_Range', fieldName,
         _.isInteger(queryFilterValue) ? 'L': 'D'
       );
     }

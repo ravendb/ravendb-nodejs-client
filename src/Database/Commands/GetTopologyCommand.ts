@@ -9,25 +9,20 @@ import {ErrorResponseException} from "../DatabaseExceptions";
 
 export class GetTopologyCommand extends RavenCommand {
   constructor() {
-    super('', RequestMethods.Get, null, null, {}, true);
+    super('', RequestMethods.Get, null, null, {});
     this._avoidFailover = true;
   }
 
   public createRequest(serverNode: ServerNode): void {
-    this.params = {url: serverNode.url};
-    this.endPoint = StringUtil.format('{url}/databases/{database}/topology', serverNode);
+    this.params = {name: serverNode.database};
+    this.endPoint = StringUtil.format('{url}/topology', serverNode);
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    const responseBody: IResponseBody = response.body;
-    const status: StatusCode = response.statusCode;
+    const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
 
-    if (responseBody && StatusCodes.isOk(status)) {
-      return responseBody;
-    }
-
-    if (StatusCodes.isBadRequest(status)) {
-      throw new ErrorResponseException(responseBody.Error);
+    if (response.body) {
+      return result;
     }
   }
 }

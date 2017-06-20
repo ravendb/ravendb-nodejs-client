@@ -29,7 +29,6 @@ export class DocumentSession implements IDocumentSession {
   protected documentStore: IDocumentStore;
   protected requestsExecutor: RequestsExecutor;
   protected sessionId: string;
-  protected forceReadFromMaster: boolean;
   protected documentsById: IRavenObject<IRavenObject>;
   protected includedRawEntitiesByKey: IRavenObject<object>
   protected deletedDocuments: Set<IRavenObject>;
@@ -37,7 +36,7 @@ export class DocumentSession implements IDocumentSession {
   protected deferCommands: Set<RavenCommandData>;
   protected rawEntitiesAndMetadata: Map<IRavenObject, IStoredRawEntityInfo>;
 
-  private _numberOfRequestsInSession: number;
+  private _numberOfRequestsInSession: number = 0;
 
   public get numberOfRequestsInSession(): number {
     return this._numberOfRequestsInSession;
@@ -48,13 +47,12 @@ export class DocumentSession implements IDocumentSession {
   }       
 
   constructor (database: string, documentStore: IDocumentStore, requestsExecutor: RequestsExecutor,
-     sessionId: string, forceReadFromMaster: boolean
+     sessionId: string
   ) {
     this.database = database;
     this.documentStore = documentStore;
     this.requestsExecutor = requestsExecutor;
     this.sessionId = sessionId;
-    this.forceReadFromMaster = forceReadFromMaster;
     this.documentsById = {};
     this.includedRawEntitiesByKey = {};
     this.deletedDocuments = new Set<IRavenObject>();
@@ -67,7 +65,9 @@ export class DocumentSession implements IDocumentSession {
     let document: T = attributesOrDocument as T;
     const conventions: DocumentConventions = this.documentStore.conventions;
 
-    if (('object' !== (typeof attributesOrDocument)) || ('Object' === attributesOrDocument.constructor.name)) {
+    if (('object' === (typeof attributesOrDocument)) && ('Object' !== attributesOrDocument.constructor.name)) {
+      documentTypeOrObjectType || (documentTypeOrObjectType = attributesOrDocument.constructor as DocumentConstructor<T>);
+    } else {
       const objectType: DocumentConstructor<T> | null = conventions.getObjectType(documentTypeOrObjectType);
       
       document = objectType ? new objectType() : ({} as T);
@@ -143,7 +143,7 @@ export class DocumentSession implements IDocumentSession {
         }
         
         PromiseResolver.resolve<T | T[]>(result, null, callback);
-        return results;
+        return result;
       })
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
@@ -186,9 +186,9 @@ export class DocumentSession implements IDocumentSession {
           }
 
           this.deletedDocuments.add(document);
-          this.knownMissingIds.add(key);
         }
 
+        this.knownMissingIds.add(key);
         PromiseResolver.resolve<void>(null, null, callback); 
       })
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
@@ -210,7 +210,7 @@ export class DocumentSession implements IDocumentSession {
 
         return document;
       })
-      .then((document: T): T | BluebirdPromise.Thenable<T> => {
+      .then((document: T): T | BluebirdPromise.Thenable<T> => {      
         if (isNewDocument) {
           const key: string = conventions.getIdFromInstance(document);
 
@@ -327,8 +327,7 @@ export class DocumentSession implements IDocumentSession {
       throw new InvalidOperationException(StringUtil.format(
         "The maximum number of requests ({0}) allowed for this session has been reached. Raven limits the number \
 of remote calls that a session is allowed to make as an early warning system. Sessions are expected to \
-be short lived, and Raven provides facilities like batch saves (call saveChanges() only once \
-or wrap your actions into transaction callback when calling openSession()  \
+be short lived, and Raven provides facilities like batch saves (call saveChanges() only once) \
 You can increase the limit by setting DocumentConvention.\
 MaxNumberOfRequestsPerSession or MaxNumberOfRequestsPerSession, but it is advisable \
 that you'll look into reducing the number of remote calls first, \
@@ -344,13 +343,20 @@ more responsive application.", maxRequests
     return this.requestsExecutor
       .execute(new GetDocumentCommand(keys, includes))
       .then((response: IRavenResponse): T[] | BluebirdPromise.Thenable<T[]> => {
-        let responseResults: object[];
+        let responseResults: object[] = [];
+        let responseIncludes: object[] = [];
         const commandResponse: IRavenResponse = response;
         const conventions: DocumentConventions = this.documentStore.conventions;
         const objectType: DocumentConstructor<T> | null = conventions.getObjectType(documentTypeOrObjectType);
 
-        if (!(responseResults = commandResponse.Results) || (responseResults.length <= 0)) {
-          return BluebirdPromise.reject(new DocumentDoesNotExistsException('Requested document(s) doesn\'t exists'));
+        if (commandResponse) { 
+          if (('Results' in commandResponse) && Array.isArray(commandResponse.Results)) {
+            responseResults = <object[]>commandResponse.Results || [];
+          }
+
+          if (('Includes' in commandResponse) && Array.isArray(commandResponse.Includes)) {
+            responseIncludes = commandResponse.Includes;
+          }
         }
 
         const results: T[] = responseResults.map((result: object, index: number) => {
@@ -362,8 +368,8 @@ more responsive application.", maxRequests
           return this.makeDocument<T>(result, objectType, nestedObjectTypes);  
         });
 
-        if (commandResponse.Includes && commandResponse.Includes.length) {
-          this.onIncludesFetched(commandResponse.Includes);
+        if (responseIncludes.length) {
+          this.onIncludesFetched(responseIncludes);
         }
 
         return results;
@@ -377,12 +383,13 @@ more responsive application.", maxRequests
       ) as BluebirdPromise<boolean>;
     }
 
-    return BluebirdPromise.resolve<boolean>(true)
+    return BluebirdPromise.resolve()
       .then((): boolean => {
         const conventions: DocumentConventions = this.conventions;
         const store: IDocumentStore = this.documentStore;
+        const isNew: boolean = !this.rawEntitiesAndMetadata.has(document);
 
-        if (this.rawEntitiesAndMetadata.has(document)) {
+        if (!isNew) {
           let info: IStoredRawEntityInfo = this.rawEntitiesAndMetadata.get(document);
           let metadata: object = document['@metadata'];
 
@@ -392,9 +399,9 @@ more responsive application.", maxRequests
 
           info.forceConcurrencyCheck = forceConcurrencyCheck;
           this.rawEntitiesAndMetadata.set(document, info);
-
-          return false;
         }
+
+        return isNew;
       });
   }
 
@@ -408,7 +415,9 @@ more responsive application.", maxRequests
 
         if (TypeUtil.isNone(documentKey)) {
           documentKey = conventions.getIdFromInstance<T>(document);
-        } else {
+        } 
+        
+        if (!TypeUtil.isNone(documentKey)) {
           conventions.setIdOnEntity(document, documentKey);
           document['@metadata']['@id'] = documentKey;
         }
@@ -454,7 +463,7 @@ more responsive application.", maxRequests
 
       delete this.documentsById[key];
       changes.addDocument(document);
-      changes.addCommand(new PutCommandData(key, _.cloneDeep(rawEntity), etag, info.metadata));
+      changes.addCommand(new PutCommandData(key, _.cloneDeep(rawEntity), etag));
     }
   }
 
@@ -488,11 +497,11 @@ more responsive application.", maxRequests
     for (let index: number = changes.deferredCommandsCount; index < results.length; index++) {
       const commandResult: IRavenObject = results[index];
 
-      if (RequestMethods.Put === commandResult.Method) {
+      if (RequestMethods.Put === commandResult.Type) {
         const document: IRavenObject = changes.getDocument(index - changes.deferredCommandsCount);
 
         if (this.rawEntitiesAndMetadata.has(document)) {
-          const metadata: object = _.omit(commandResult, 'Method');
+          const metadata: object = _.omit(commandResult, 'Type');
           const info: IStoredRawEntityInfo = this.rawEntitiesAndMetadata.get(document);
 
           _.assign(info, {
@@ -542,7 +551,10 @@ more responsive application.", maxRequests
 
   protected onDocumentFetched<T extends Object = IRavenObject>(conversionResult?: IDocumentConversionResult<T>, forceConcurrencyCheck: boolean = false): void {
     if (conversionResult) {
-      const documentKey: string = conversionResult.originalMetadata['@id'];
+      const documentKey: string = this.conventions
+        .getIdFromInstance(conversionResult.document)
+        || conversionResult.originalMetadata['@id']
+        || conversionResult.metadata['@id'];
 
       if (documentKey) {
         this.knownMissingIds.delete(documentKey);

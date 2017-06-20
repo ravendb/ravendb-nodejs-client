@@ -15,7 +15,7 @@ import {IndexDefinition} from "../../src/Database/Indexes/IndexDefinition";
 import {IndexFieldOptions} from "../../src/Database/Indexes/IndexFieldOptions";
 import {SortOptions} from "../../src/Database/Indexes/SortOption";
 import {IRavenObject} from "../../src/Database/IRavenObject";
-import {Product, Order, Company, ProductsTestingSort} from "../BaseTest";
+import {Product, Order, Company, ProductsTestingSort} from "../TestClasses";
 import {QueryOperators} from "../../src/Documents/Session/QueryOperator";
 import {TypeUtil} from "../../src/Utility/TypeUtil";
 
@@ -36,14 +36,14 @@ describe('Document query test', () => {
     const productsTestingSort: ProductsTestingSort = new ProductsTestingSort(requestsExecutor);
 
     await productsTestingSort.execute();
-    await session.store<Product>(session.create<Product>(new Product('products/101', 'test101', 2, 'a')));
-    await session.store<Product>(session.create<Product>(new Product('products/10', 'test10', 3, 'b')));
-    await session.store<Product>(session.create<Product>(new Product('products/106', 'test106', 4, 'c')));
-    await session.store<Product>(session.create<Product>(new Product('products/107', 'test107', 5)));
-    await session.store<Product>(session.create<Product>(new Product('products/103', 'test107', 6)));
-    await session.store<Product>(session.create<Product>(new Product('products/108', 'new_testing', 90, 'd')));
-    await session.store<Order>(session.create<Order>(new Order('orders/105', 'testing_order', 92, 'products/108')));
-    await session.store<Company>(session.create<Company>(new Company('company/1', 'withNesting', new Product(null, 'testing_order', 4))));
+    await session.store<Product>(session.create<Product>(new Product('Products/101', 'test101', 2, 'a')));
+    await session.store<Product>(session.create<Product>(new Product('Products/10', 'test10', 3, 'b')));
+    await session.store<Product>(session.create<Product>(new Product('Products/106', 'test106', 4, 'c')));
+    await session.store<Product>(session.create<Product>(new Product('Products/107', 'test107', 5)));
+    await session.store<Product>(session.create<Product>(new Product('Products/103', 'test107', 6)));
+    await session.store<Product>(session.create<Product>(new Product('Products/108', 'new_testing', 90, 'd')));
+    await session.store<Order>(session.create<Order>(new Order('Orders/105', 'testing_order', 92, 'Products/108')));
+    await session.store<Company>(session.create<Company>(new Company('Companies/1', 'withNesting', new Product(null, 'testing_order', 4))));
     await session.saveChanges();
   });
 
@@ -91,29 +91,31 @@ describe('Document query test', () => {
         documentTypeOrObjectType: Product
       }).whereStartsWith('name', 'n').get();
       
-      expect(results[0].name).to.be('new_testing');
+      expect(results[0].name).to.equals('new_testing');
     });
 
-    it('should query by endWith', async() => {
+    it('should query by endsWith', async() => {
       const results: Product[] = await store.openSession().query<Product>({
         documentTypeOrObjectType: Product
       }).whereEndsWith('name', '7').get();
       
-      expect(results[0].name).to.be('test107');
+      expect(results[0].name).to.equals('test107');
     });
 
-    it('should fail query with non-existing index', async () => {
-      await expect(store.openSession().query({
-        indexName: 's'
-      }).where({'Tag': 'products'}).get()).to.be.rejected;
-    });
+    it('should fail query with non-existing index', async () => expect(
+        store.openSession().query({
+          indexName: 's'
+        }).where({'Tag': 'Products'}).get()
+      ).to.be.rejected
+    );
 
-    it('should query with where', async() => {
-      await expect(store.openSession().query().where({
-        name: 'test101', 
-        uid: [4, 6, 90]
-      })).to.be.fulfilled;
-    });
+    it('should query with where', async() => expect(
+        store.openSession().query().where({
+          name: 'test101', 
+          uid: [4, 6, 90]
+        }).get()
+      ).to.be.fulfilled
+    );
 
     it('should query with index', async() => {
       const results: Product[] = await store.openSession().query<Product>({
@@ -147,12 +149,20 @@ describe('Document query test', () => {
       expect(results).to.have.lengthOf(3);
     });
 
+    it('should query by notNull', async () => {
+      const results: IRavenObject[] = await store.openSession().query({
+        waitForNonStaleResults: true
+      }).whereNotNull('order').get();
+       
+      expect(_.some(results, (result: IRavenObject) => TypeUtil.isNone(result.order))).to.be.false; 
+    });
+
     it('should query with ordering', async() => {
       const results: IRavenObject[] = await store.openSession().query({
         waitForNonStaleResults: true
       }).whereNotNull('order').orderBy('order').get();
 
-      expect(results[0].order).to.be('a');
+      expect(results[0].order).to.equals('a');
     });
 
     it('should query with descending ordering', async() => {
@@ -160,15 +170,7 @@ describe('Document query test', () => {
         waitForNonStaleResults: true
       }).whereNotNull('order').orderByDescending('order').get();
 
-      expect(results[0].order).to.be('d');
-    });
-
-    it('should query by notNull', async () => {
-      const results: IRavenObject[] = await store.openSession().query({
-        waitForNonStaleResults: true
-      }).whereNotNull('order').get();
-       
-      expect(_.some(results, (result: IRavenObject) => TypeUtil.isNone(result.order))).to.be.false; 
+      expect(results[0].order).to.equals('d');
     });
 
     it('should query with includes', async() => {
@@ -179,7 +181,7 @@ describe('Document query test', () => {
         includes: ['product_id']
       }).where({uid: 92}).get();
 
-      await session.load('product/108');
+      await session.load('Products/108');
       expect(session.numberOfRequestsInSession).to.equals(1);            
     });
 
