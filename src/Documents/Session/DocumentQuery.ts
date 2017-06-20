@@ -60,10 +60,10 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     this.waitForNonStaleResults = waitForNonStaleResults;
     this.nestedObjectTypes = nestedObjectTypes || {} as IRavenObject<DocumentConstructor>;
     this.objectType = session.conventions.getObjectType(documentTypeOrObjectType);
-    this.indexName = indexName || 'dynamic';
+    this.indexName = indexName;
     
-    if (documentTypeOrObjectType) {
-      this.indexName += "/" + session.conventions.getDocumentsCollection(documentTypeOrObjectType);
+    if (!indexName && documentTypeOrObjectType) {
+      this.indexName = "dynamic/" + session.conventions.getDocumentsCollection(documentTypeOrObjectType);
     }
   }
 
