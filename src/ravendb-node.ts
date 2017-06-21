@@ -1,17 +1,168 @@
+// global imports
+import {Box, Random, Key} from 'sodium';
+import * as _ from 'lodash';
+import * as uuid from 'uuid';
+import * as moment from 'moment';
+import * as BluebirdPromise from 'bluebird';
+import * as pluralize from 'pluralize';
+import * as AsyncLock from 'async-lock';
+import * as EventEmitter from 'events';
+import * as Request from 'request';
+import * as RequestPromise from 'request-promise';
+
 // typings
-export {DocumentCallback, DocumentQueryCallback, DocumentCountQueryCallback} from './Documents/Callbacks';
-export {IDocument} from './Documents/IDocument';
+export {AbstractCallback, EmptyCallback, EntityKeyCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback, QueryResultsCallback} from './Utility/Callbacks';
+export {PromiseResolver, PromiseResolve, PromiseReject} from './Utility/PromiseResolver';
 export {IDocumentStore} from './Documents/IDocumentStore';
 export {IDocumentSession} from './Documents/Session/IDocumentSession';
 export {IDocumentQueryConditions} from './Documents/Session/IDocumentQueryConditions';
-export {IDocumentQuery} from './Documents/Session/IDocumentQuery';
+export {IDocumentQuery, IDocumentQueryOptions} from './Documents/Session/IDocumentQuery';
+export {EscapeQueryOption, EscapeQueryOptions} from './Documents/Session/EscapeQueryOptions';
+export {IHiloKeyGenerator} from './Hilo/IHiloKeyGenerator';
+export {RequestMethods, RequestMethod} from './Http/Request/RequestMethod';
+export {QueryOperators, QueryOperator} from './Documents/Session/QueryOperator';
+export {FieldIndexingOption, FieldIndexingOptions} from './Database/Indexes/FieldIndexingOption';
+export {IndexLockMode, IndexLockModes} from './Database/Indexes/IndexLockMode';
+export {SortOption, SortOptions} from './Database/Indexes/SortOption';
+export {FieldTermVectorOption, FieldTermVectorOptions} from './Database/Indexes/FieldTermVectorOption';
+export {IndexPriority, IndexPriorities} from './Database/Indexes/IndexPriority';
+export {StatusCode, StatusCodes} from './Http/Response/StatusCode';
+export {LuceneOperator, LuceneOperators} from './Documents/Lucene/LuceneOperator';
+export {LuceneValue, LuceneRangeValue, LuceneConditionValue} from './Documents/Lucene/LuceneValue';
+export {ILockDoneCallback, ILockCallback} from './Lock/LockCallbacks';
+export {IRavenObject} from './Database/IRavenObject';
+export {IOptionsSet} from './Utility/IOptionsSet';
+export {IJsonSerializable} from './Json/IJsonSerializable';
+export {IRavenResponse} from './Database/RavenCommandResponse';
+export {IHeaders} from './Http/IHeaders';
+export {IResponse, IResponseBody} from './Http/Response/IResponse';
+export {CryptMessage, ICipherBox} from './Utility/Crypt';
+
+//exceptions
+export {
+  RavenException, 
+  InvalidOperationException, 
+  ErrorResponseException, 
+  DocumentDoesNotExistsException, 
+  NonUniqueObjectException, 
+  ConcurrencyException, 
+  ArgumentNullException,
+  ArgumentOutOfRangeException, 
+  DatabaseDoesNotExistException, 
+  AuthorizationException, 
+  IndexDoesNotExistException, 
+  DatabaseLoadTimeoutException, 
+  AuthenticationException, 
+  BadRequestException,
+  BulkInsertAbortedException,
+  BulkInsertProtocolViolationException,
+  IndexCompilationException,
+  TransformerCompilationException,
+  DocumentConflictException,
+  DocumentDoesNotExistException,
+  DocumentParseException,
+  IndexInvalidException,
+  IndexOrTransformerAlreadyExistException,
+  JavaScriptException,
+  JavaScriptParseException,
+  SubscriptionClosedException,
+  SubscriptionDoesNotBelongToNodeException,
+  SubscriptionDoesNotExistException,
+  SubscriptionException,
+  SubscriptionInUseException,
+  TransformerDoesNotExistException,
+  VersioningDisabledException,
+  AllTopologyNodesDownException,
+  BadResponseException,
+  ChangeProcessingException,
+  CommandExecutionException,
+  NoLeaderException,
+  CompilationException,
+  ConflictException,
+  DatabaseConcurrentLoadTimeoutException,
+  DatabaseDisabledException,
+  DatabaseLoadFailureException,
+  DatabaseNotFoundException,
+  NotSupportedOsException,
+  SecurityException,
+  ServerLoadFailureException,
+  UnsuccessfulRequestException,
+  CriticalIndexingException,
+  IndexAnalyzerException,
+  IndexCorruptionException,
+  IndexOpenException,
+  IndexWriteException,
+  IndexWriterCreationException,
+  StorageException,
+  StreamDisposedException,
+  LowMemoryException,
+  IncorrectDllException,
+  DiskFullException,
+  InvalidJournalFlushRequestException,
+  QuotaException,
+  VoronUnrecoverableErrorException,
+  NonDurableFileSystemException
+} from './Database/DatabaseExceptions';
 
 // classes
-export {Document} from './Documents/Document';
+export {RavenCommandRequestOptions, RavenCommand} from './Database/RavenCommand';
+export {GetDocumentCommand} from './Database/Commands/GetDocumentCommand';
+export {DeleteDocumentCommand} from './Database/Commands/DeleteDocumentCommand';
+export {PutDocumentCommand} from './Database/Commands/PutDocumentCommand';
+export {QueryCommand} from './Database/Commands/QueryCommand';
+export {GetTopologyCommand} from './Database/Commands/GetTopologyCommand';
+export {GetOperationStateCommand} from './Database/Commands/GetOperationStateCommand';
+export {GetApiKeyCommand} from './Database/Commands/GetApiKeyCommand';
+export {PutApiKeyCommand} from './Database/Commands/PutApiKeyCommand';
+export {QueryOperationOptions} from './Database/Operations/QueryOperationOptions';
+export {PutIndexesCommand} from './Database/Commands/PutIndexesCommand';
+export {BatchCommand} from './Database/Commands/BatchCommand';
+export {IndexQueryBasedCommand} from './Database/Commands/IndexQueryBasedCommand';
+export {CreateDatabaseCommand} from './Database/Commands/CreateDatabaseCommand';
+export {DeleteByIndexCommand} from './Database/Commands/DeleteByIndexCommand';
+export {DeleteDatabaseCommand} from './Database/Commands/DeleteDatabaseCommand';
+export {DeleteIndexCommand} from './Database/Commands/DeleteIndexCommand';
+export {GetIndexCommand} from './Database/Commands/GetIndexCommand';
+export {GetIndexesCommand} from './Database/Commands/GetIndexesCommand';
+export {GetStatisticsCommand} from './Database/Commands/GetStatisticsCommand';
+export {PatchByIndexCommand} from './Database/Commands/PatchByIndexCommand';
+export {PatchCommand, IPatchCommandOptions} from './Database/Commands/PatchCommand';
+export {RavenCommandData} from './Database/RavenCommandData';
+export {DeleteCommandData} from './Database/Commands/Data/DeleteCommandData';
+export {PutCommandData} from './Database/Commands/Data/PutCommandData';
+export {PatchCommandData} from './Database/Commands/Data/PatchCommandData';
+export {SaveChangesData} from './Database/Commands/Data/SaveChangesData';
+export {Operations} from './Database/Operations/Operations';
+export {AccessMode, AccessModes, ResourcesAccessModes} from './Database/Auth/AccessMode';
+export {ApiKeyDefinition} from './Database/Auth/ApiKeyDefinition';
+export {ApiKeyAuthenticator, IAuthServerRequest} from './Database/Auth/ApiKeyAuthenticator';
+export {Serializer} from './Json/Serializer';
+export {DatabaseDocument} from './Database/DatabaseDocument';
 export {DocumentStore} from './Documents/DocumentStore';
 export {DocumentSession} from './Documents/Session/DocumentSession';
-export {DocumentQuery} from './Documents/Session/DocumentQuery';
-export {DocumentConventions} from './Documents/Conventions/DocumentConventions';
-export {RequestExecutor} from './Http/RequestExecutor';
+export {DocumentQuery, QueryResultsWithStatistics} from './Documents/Session/DocumentQuery';
+export {DocumentConventions, IDocumentConversionResult, DocumentConstructor, IStoredRawEntityInfo} from './Documents/Conventions/DocumentConventions';
+export {IndexDefinition} from './Database/Indexes/IndexDefinition';
+export {IndexFieldOptions} from './Database/Indexes/IndexFieldOptions';
+export {IndexQuery} from './Database/Indexes/IndexQuery';
+export {LuceneBuilder} from './Documents/Lucene/LuceneBuilder';
+export {ServerNode} from './Http/ServerNode';
+export {Topology} from './Http/Topology';
+export {QueryString} from './Http/QueryString';
+export {Lock} from './Lock/Lock';
+export {Observable} from './Utility/Observable';
+export {DateUtil} from './Utility/DateUtil';
+export {StringUtil} from './Utility/StringUtil';
+export {ArrayUtil} from './Utility/ArrayUtil';
+export {TypeUtil} from './Utility/TypeUtil';
+export {ExceptionThrower} from './Utility/ExceptionThrower';
+export {RequestsExecutor} from './Http/Request/RequestsExecutor';
+export {PatchRequest} from './Http/Request/PatchRequest';
+export {HiloRangeValue} from './Hilo/HiloRangeValue';
+export {AbstractHiloKeyGenerator} from './Hilo/AbstractHiloKeyGenerator';
+export {HiloKeyGenerator} from './Hilo/HiloKeyGenerator';
+export {HiloMultiDatabaseKeyGenerator} from './Hilo/HiloMultiDatabaseKeyGenerator';
+export {HiloMultiTypeKeyGenerator} from './Hilo/HiloMultiTypeKeyGenerator';
+export {HiloNextCommand} from './Hilo/Commands/HiloNextCommand';
+export {HiloReturnCommand} from './Hilo/Commands/HiloReturnCommand';
 
-declare var module: { exports: any };

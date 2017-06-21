@@ -1,21 +1,37 @@
-import {IDocument} from '../IDocument';
 import {IDocumentQueryConditions} from './IDocumentQueryConditions';
-import {DocumentCallback, DocumentQueryCallback, DocumentCountQueryCallback} from '../Callbacks';
-import * as Promise from 'bluebird'
+import * as BluebirdPromise from 'bluebird'
+import {EscapeQueryOption} from "./EscapeQueryOptions";
+import {LuceneValue} from "../Lucene/LuceneValue";
+import {QueryResultsWithStatistics} from "./DocumentQuery";
+import {QueryResultsCallback} from "../../Utility/Callbacks";
+import {QueryOperator} from "./QueryOperator";
+import {IRavenObject} from "../../Database/IRavenObject";
+import {DocumentConstructor} from "../Conventions/DocumentConventions";
 
-export interface IDocumentQuery<T extends IDocument> {
+export interface IDocumentQueryOptions<T> {
+  documentTypeOrObjectType?: string | DocumentConstructor<T>, 
+  indexName?: string;
+  usingDefaultOperator?: QueryOperator;
+  waitForNonStaleResults?: boolean;
+  includes?: string[];
+  nestedObjectTypes?: IRavenObject<DocumentConstructor>;
+  withStatistics?: boolean;
+}
+
+export interface IDocumentQuery<T> {
   select(...args: string[]): IDocumentQuery<T>;
+  search(fieldName: string, searchTerms: string | string[], escapeQueryOptions?: EscapeQueryOption, boost?: number): IDocumentQuery<T>;
   where(conditions: IDocumentQueryConditions): IDocumentQuery<T>;
-  whereEquals<V>(fieldName: string, value: V): IDocumentQuery<T>;
-  whereEndsWith<V>(fieldName: string, value: V): IDocumentQuery<T>;
-  whereStartsWith<V>(fieldName: string, value: V): IDocumentQuery<T>;
-  whereIn<V>(fieldName: string, values: V[]): IDocumentQuery<T>;
-  whereBetween<V>(fieldName: string, start: V, end: V): IDocumentQuery<T>;
-  whereBetweenOrEqual<V>(fieldName: string, start: V, end: V): IDocumentQuery<T>;
-  whereGreaterThan<V>(fieldName: string, value: V): IDocumentQuery<T>;
-  whereGreaterThanOrEqual<V>(fieldName: string, value: V): IDocumentQuery<T>;
-  whereLessThan<V>(fieldName: string, value: V): IDocumentQuery<T>;
-  whereLessThanOrEqual<V>(fieldName: string, value: V): IDocumentQuery<T>;
+  whereEquals<V extends LuceneValue>(fieldName: string, value: V, escapeQueryOptions?: EscapeQueryOption): IDocumentQuery<T>;
+  whereEndsWith(fieldName: string, value: string): IDocumentQuery<T>;
+  whereStartsWith(fieldName: string, value: string): IDocumentQuery<T>;
+  whereIn<V extends LuceneValue>(fieldName: string, values: V[]): IDocumentQuery<T>;
+  whereBetween<V extends LuceneValue>(fieldName: string, start?: V, end?: V): IDocumentQuery<T>;
+  whereBetweenOrEqual<V extends LuceneValue>(fieldName: string, start?: V, end?: V): IDocumentQuery<T>;
+  whereGreaterThan<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery<T>;
+  whereGreaterThanOrEqual<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery<T>;
+  whereLessThan<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery<T>;
+  whereLessThanOrEqual<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery<T>;
   whereIsNull(fieldName: string): IDocumentQuery<T>;
   whereNotNull(fieldName: string): IDocumentQuery<T>;
   orderBy(fieldsNames: string | string[]): IDocumentQuery<T>;
@@ -23,8 +39,8 @@ export interface IDocumentQuery<T extends IDocument> {
   andAlso(): IDocumentQuery<T>;
   orElse(): IDocumentQuery<T>;
   addNot(): IDocumentQuery<T>;
-  boost(value): IDocumentQuery<T>;
-  first(callback?: DocumentCallback<T>): Promise<T>;
-  get(callback?: DocumentQueryCallback<T>): Promise<T>;
-  count(callback?: DocumentCountQueryCallback): Promise<number>;
+  take(docsCount: number): IDocumentQuery<T>;
+  skip(skipCount: number): IDocumentQuery<T>;
+  get(callback?: QueryResultsCallback<T[]>): Promise<T[]>;
+  get(callback?: QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<QueryResultsWithStatistics<T>>;
 }

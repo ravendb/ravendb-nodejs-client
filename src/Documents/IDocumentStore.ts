@@ -1,12 +1,16 @@
-import {IDocument} from './IDocument';
 import {IDocumentSession} from "./Session/IDocumentSession";
-import {RequestExecutor} from '../Http/RequestExecutor';
-import {DocumentConventions} from './Conventions/DocumentConventions';
+import {RequestsExecutor} from '../Http/Request/RequestsExecutor';
+import {DocumentConventions, DocumentConstructor} from './Conventions/DocumentConventions';
+import {EntityKeyCallback} from '../Utility/Callbacks';
+import {Operations} from "../Database/Operations/Operations";
 
 export interface IDocumentStore {
-  requestExecutor: RequestExecutor;
+  database: string;
+  operations: Operations;
   conventions: DocumentConventions;
   initialize(): IDocumentStore;
-  openSession(database?: string, forceReadFromMaster?: boolean) : IDocumentSession;
-  generateId(database: string, entity: IDocument): string;
+  finalize(): Promise<IDocumentStore>;
+  openSession(database?: string) : IDocumentSession;
+  generateId(entity: object, documentTypeOrObjectType?: string | DocumentConstructor, database?: string, callback?: EntityKeyCallback): Promise<string>;
+  getRequestsExecutor(database?: string): RequestsExecutor;
 }
