@@ -26,14 +26,14 @@
   "license": "MIT",
   "devDependencies": {
     "@types/async-lock": "0.0.19",
-    "@types/bluebird": "^3.0.37",
+    "@types/bluebird": "^3.5.6",
     "@types/chai": "^3.4.35",
     "@types/chai-as-promised": "0.0.30",
     "@types/lodash": "^4.14.58",
     "@types/mocha": "^2.2.39",
     "@types/pluralize": "0.0.27",
     "@types/request": "0.0.40",
-    "@types/request-promise": "^4.1.33",
+    "@types/request-promise": "^4.1.35",
     "@types/uuid": "^2.0.29",
     "chai": "^3.5.0",
     "chai-as-promised": "^6.0.0",
@@ -45,10 +45,10 @@
     "gulp-sort": "^2.0.0",
     "gulp-transform": "^1.1.0",
     "gulp-typescript": "^3.1.5",
-    "gulp-uglify-harmony": "https://github.com/jiborobot/gulp-uglify-harmony.git#master",
+    "gulp-uglify-harmony": "git+https://github.com/jiborobot/gulp-uglify-harmony.git#master",
     "mocha": "^3.2.0",
     "rimraf": "^2.6.1",
-    "typescript": "^2.2.1",
+    "typescript": "^2.3.4",
     "uglify-js-harmony": "^2.7.5"
   },
   "dependencies": {
@@ -60,6 +60,6 @@
     "request": "^2.79.0",
     "request-promise": "^4.1.1",
     "sodium": "^2.0.1",
-    "uuid": "^3.0.1"
+    "uuid": "^3.1.0"
   }
 }

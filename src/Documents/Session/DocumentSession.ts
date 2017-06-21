@@ -123,8 +123,8 @@ export class DocumentSession implements IDocumentSession {
         .filter((key: string): boolean => !this.knownMissingIds.has(key)
     ));
    
-    return BluebirdPromise.resolve<void>(void 0)   
-      .then((): void | BluebirdPromise.Thenable<void> => {
+    return BluebirdPromise.resolve()   
+      .then((): BluebirdPromise.Thenable<void | T[]> => {
         if (idsOfNonExistingDocuments.size) {
           return this.fetchDocuments<T>(
             Array.from<string>(idsOfNonExistingDocuments), 
