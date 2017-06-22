@@ -172,12 +172,9 @@ export class RequestsExecutor {
     const topology: Topology = this._topology;
     let nonFailedNode: ServerNode;
 
-    if (!topology.nodes.some((node: ServerNode): boolean => {
-        const nonFailed = !node.isFailed && !command.isFailedWithNode(node);
-
-        nonFailed && (nonFailedNode = node);
-        return nonFailed;
-      })) {
+    if (!(nonFailedNode = topology.nodes.find((node: ServerNode): boolean => 
+        !node.isFailed && !command.isFailedWithNode(node)))
+    ) {
       return BluebirdPromise.reject(new BadRequestException(
         'Tried all nodes in the cluster but failed getting a response'
       )) as BluebirdPromise<ServerNode>;
