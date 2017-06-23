@@ -14,11 +14,11 @@ import {PromiseResolver} from "../Utility/PromiseResolver";
 import {TypeUtil} from "../Utility/TypeUtil";
 
 export class DocumentStore implements IDocumentStore {
-  protected url: string;
-  protected apiKey?: string;
+  protected url: string;  
   protected sessionId: string;
   protected generator: IHiloKeyGenerator;
   protected initialized: boolean = false;
+  protected _apiKey?: string;
   private _database: string;
   private _operations: Operations;
   private _conventions: DocumentConventions;
@@ -26,6 +26,10 @@ export class DocumentStore implements IDocumentStore {
 
   public get database(): string {
     return this._database;
+  }
+
+  public get apiKey(): string {
+    return this._apiKey;
   }
 
   public getRequestExecutor(database?: string): RequestExecutor {
@@ -59,7 +63,7 @@ export class DocumentStore implements IDocumentStore {
   constructor(url: string, defaultDatabase: string, apiKey?: string) {
     this.url = url;
     this._database = defaultDatabase;
-    this.apiKey = apiKey;
+    this._apiKey = apiKey;
   }
 
   static create(url: string, defaultDatabase: string, apiKey?: string): IDocumentStore {
@@ -119,6 +123,6 @@ export class DocumentStore implements IDocumentStore {
   }
 
   protected createRequestExecutor(database?: string): RequestExecutor {
-    return new RequestExecutor(this.url, database || this._database, this.apiKey, this.conventions);
+    return new RequestExecutor(this.url, database || this._database, this._apiKey, this.conventions);
   }
 }
