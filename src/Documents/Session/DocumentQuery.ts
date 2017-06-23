@@ -67,7 +67,13 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     }
   }
 
-  public select(...args: string[]): IDocumentQuery<T> {
+  public get not(): IDocumentQuery<T> {
+    this.negateNext();
+
+    return this;
+  }
+
+  public selectFields(...args: string[]): IDocumentQuery<T> {
     if (args && args.length) {
       this.fetch = args;
     }
@@ -164,8 +170,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
       .addStatement('(')
         .whereEquals<string>(fieldName, '*')
         .andAlso()
-        .addNot()
-        .whereEquals<null>(fieldName, null) as DocumentQuery<T>)
+        .not.whereEquals<null>(fieldName, null) as DocumentQuery<T>)
     .addStatement(')');
   }
 
@@ -210,7 +215,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     return this.addSpace().addStatement(QueryOperators.OR);
   }
 
-  public addNot(): IDocumentQuery<T> {
+  public negateNext(): IDocumentQuery<T> {
     this.negate = true;
 
     return this;

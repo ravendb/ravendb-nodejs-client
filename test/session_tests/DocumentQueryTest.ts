@@ -195,7 +195,7 @@ describe('Document query test', () => {
         waitForNonStaleResults: true,
         indexName: 'Testing_Sort'
       })
-      .whereBetweenOrEqual<number>('uid', 2, 4).select('doc_id').get();
+      .whereBetweenOrEqual<number>('uid', 2, 4).selectFields('doc_id').get();
       
       expect(_.every(results, (result: Product) => result.hasOwnProperty('doc_id'))).to.be.true;
     });

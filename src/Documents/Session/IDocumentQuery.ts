@@ -18,7 +18,8 @@ export interface IDocumentQueryOptions<T> {
 }
 
 export interface IDocumentQuery<T> {
-  select(...args: string[]): IDocumentQuery<T>;
+  not: IDocumentQuery<T>;
+  selectFields(...args: string[]): IDocumentQuery<T>;
   search(fieldName: string, searchTerms: string | string[], escapeQueryOptions?: EscapeQueryOption, boost?: number): IDocumentQuery<T>;
   where(conditions: IDocumentQueryConditions): IDocumentQuery<T>;
   whereEquals<V extends LuceneValue>(fieldName: string, value: V, escapeQueryOptions?: EscapeQueryOption): IDocumentQuery<T>;
@@ -37,7 +38,7 @@ export interface IDocumentQuery<T> {
   orderByDescending(fieldsNames: string | string[]): IDocumentQuery<T>;
   andAlso(): IDocumentQuery<T>;
   orElse(): IDocumentQuery<T>;
-  addNot(): IDocumentQuery<T>;
+  negateNext(): IDocumentQuery<T>;
   take(docsCount: number): IDocumentQuery<T>;
   skip(skipCount: number): IDocumentQuery<T>;
   get(callback?: QueryResultsCallback<T[]>): Promise<T[]>;
