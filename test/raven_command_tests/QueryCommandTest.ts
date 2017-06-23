@@ -10,12 +10,18 @@ import {DocumentConventions} from "../../src/Documents/Conventions/DocumentConve
 import {IndexQuery} from "../../src/Database/Indexes/IndexQuery";
 import {IRavenObject} from "../../src/Database/IRavenObject";
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
+import {QueryOperators} from "../../src/Documents/Session/QueryOperator";
 
 describe('DocumentSession', () => {
   const tag: string = 'Tag:Products';
   const indexName: string = 'Testing';
   let requestsExecutor: RequestsExecutor;
   const conventions: DocumentConventions = new DocumentConventions();
+
+  const indexQuery = (): IndexQuery => new IndexQuery(
+    tag, 128, 0, QueryOperators.OR, 
+    {wait_for_non_stale_results: true}
+  );
 
   beforeEach(function(): void {
     ({requestsExecutor} = this.currentTest as IRavenObject);
@@ -32,13 +38,19 @@ describe('DocumentSession', () => {
   );
 
   describe('Query Command', () => {
-    it('should do query', async () => BluebirdPromise.delay(1000)
-      .then(() => requestsExecutor.execute(new QueryCommand(indexName, new IndexQuery(tag), conventions))
+    it('should do query', async () => requestsExecutor
+      .execute(new QueryCommand(indexName, indexQuery(), conventions))
       .then((result: IRavenResponse) => expect(result.Results[0]).to.have.property('Name', 'test'))
-      .then(() => requestsExecutor.execute(new QueryCommand(indexName, new IndexQuery(tag), conventions, null, true)))
+    );
+
+    it('should query only metadata', async () => requestsExecutor
+      .execute(new QueryCommand(indexName, indexQuery(), conventions, null, true))
       .then((result: IRavenResponse) => expect(result.Results[0]).not.to.have.property('Name'))
-      .then(() => requestsExecutor.execute(new QueryCommand(indexName, new IndexQuery(tag), conventions, null, null, true)))
-      .then((result: IRavenResponse) => expect(result.Results[0]).not.to.have.property('@metadata')))
+    );
+
+    it('should query only documents', async () => requestsExecutor
+      .execute(new QueryCommand(indexName, indexQuery(), conventions, null, null, true))
+      .then((result: IRavenResponse) => expect(result.Results[0]).not.to.have.property('@metadata'))
     );
 
     it('should fail with null index', async () => expect(() =>

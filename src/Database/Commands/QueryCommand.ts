@@ -65,6 +65,7 @@ export class QueryCommand extends RavenCommand {
     query.sortFields && this.addParams('sort', query.sortFields);
     query.sortHints && query.sortHints.forEach((hint: string) => this.addParams(hint, null));
     QueryOperators.isAnd(query.defaultOperator) && this.addParams('operator', query.defaultOperator);
+    query.waitForNonStaleResults && this.addParams('waitForNonStaleResultsAsOfNow', 'true');
     query.waitForNonStaleResultsTimeout && this.addParams('waitForNonStaleResultsTimeout', query.waitForNonStaleResultsTimeout);
 
     if ((this.endPoint + '?' + QueryString.stringify(this.params)).length > this.conventions.maxLengthOfQueryUsingGetUrl) {
