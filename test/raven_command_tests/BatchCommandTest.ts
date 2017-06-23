@@ -3,7 +3,7 @@
 
 import {expect} from 'chai';
 import * as BluebirdPromise from 'bluebird';
-import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
+import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 import {BatchCommand} from "../../src/Database/Commands/BatchCommand";
 import {PatchRequest} from "../../src/Http/Request/PatchRequest";
 import {PutCommandData} from "../../src/Database/Commands/Data/PutCommandData";
@@ -14,14 +14,14 @@ import {IRavenObject} from "../../src/Database/IRavenObject";
 import {GetDocumentCommand} from "../../src/Database/Commands/GetDocumentCommand";
 
 describe('Batch command test', () => {
-  let requestsExecutor: RequestsExecutor;
+  let requestExecutor: RequestExecutor;
   let putCommand1: PutCommandData;
   let putCommand2: PutCommandData;
   let deleteCommand: DeleteCommandData;
   let scriptedPatchCommand: PatchCommandData;
 
   beforeEach(function(): void {
-    ({requestsExecutor} = this.currentTest as IRavenObject);
+    ({requestExecutor} = this.currentTest as IRavenObject);
   });
 
   beforeEach(() => {
@@ -34,25 +34,25 @@ describe('Batch command test', () => {
   });
 
   describe('Batch request', () => {
-    it('should be success with one command', async () => requestsExecutor
+    it('should be success with one command', async () => requestExecutor
       .execute(new BatchCommand([putCommand1]))
       .then((result: IRavenResponse[]) => expect(result).to.be.lengthOf(1))
     );
 
-    it('should be success with multi commands', async () => requestsExecutor
+    it('should be success with multi commands', async () => requestExecutor
       .execute(new BatchCommand([putCommand1, putCommand2, deleteCommand]))
       .then((result: IRavenResponse[]) => expect(result).to.be.lengthOf(3))
     );
 
-    it('should be success with a scripted patch', async () => requestsExecutor
+    it('should be success with a scripted patch', async () => requestExecutor
         .execute(new BatchCommand([putCommand1, scriptedPatchCommand]))
-        .then((): BluebirdPromise.Thenable<IRavenResponse> => requestsExecutor
+        .then((): BluebirdPromise.Thenable<IRavenResponse> => requestExecutor
         .execute(new GetDocumentCommand('products/999')))
         .then((result: IRavenResponse) => expect((result).Results[0].Name).to.equals('testing'))
     );
 
     it('should fail the test', async () => expect(
-        requestsExecutor.execute(new BatchCommand([putCommand1, putCommand2, null]))
+        requestExecutor.execute(new BatchCommand([putCommand1, putCommand2, null]))
       ).to.be.rejected
     );
   })

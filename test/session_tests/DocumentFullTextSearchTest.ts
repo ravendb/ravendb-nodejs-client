@@ -21,7 +21,7 @@ describe('Document full text search', () => {
     store = DocumentStore.create(defaultUrl, defaultDatabase).initialize();
     session = store.openSession();
 
-    const lastFmAnalyzed: LastFmAnalyzed = new LastFmAnalyzed(store.getRequestsExecutor(defaultDatabase));
+    const lastFmAnalyzed: LastFmAnalyzed = new LastFmAnalyzed(store.getRequestExecutor(defaultDatabase));
         
     await lastFmAnalyzed.execute();    
     await session.store<LastFm>(session.create<LastFm>(new LastFm("LastFms/1", "Tania Maria", "TRALPJJ128F9311763", "Come With Me")));

@@ -1,4 +1,4 @@
-import {RequestsExecutor} from "../src/Http/Request/RequestsExecutor";
+import {RequestExecutor} from "../src/Http/Request/RequestExecutor";
 import {IndexDefinition} from "../src/Database/Indexes/IndexDefinition";
 import {FieldIndexingOptions} from "../src/Database/Indexes/FieldIndexingOption";
 import {IRavenResponse} from "../src/Database/RavenCommandResponse";
@@ -66,7 +66,7 @@ export class LastFmAnalyzed {
   protected indexDefinition: IndexDefinition;
 
   constructor(
-    protected executor: RequestsExecutor
+    protected executor: RequestExecutor
   ) {
     const indexMap: string = [
       "from song in docs.LastFms ",
@@ -96,7 +96,7 @@ export class ProductsTestingSort {
   protected indexDefinition: IndexDefinition;
 
   constructor(
-    protected executor: RequestsExecutor
+    protected executor: RequestExecutor
   ) {
     const indexMap: string = [
       'from doc in docs ',

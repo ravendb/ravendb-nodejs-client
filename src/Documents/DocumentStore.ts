@@ -1,7 +1,7 @@
 import {IDocumentStore} from './IDocumentStore';
 import {IDocumentSession} from "./Session/IDocumentSession";
 import {DocumentSession} from "./Session/DocumentSession";
-import {RequestsExecutor} from '../Http/Request/RequestsExecutor';
+import {RequestExecutor} from '../Http/Request/RequestExecutor';
 import {EntityKeyCallback} from '../Utility/Callbacks';
 import {DocumentConventions, DocumentConstructor} from './Conventions/DocumentConventions';
 import {InvalidOperationException, RavenException} from '../Database/DatabaseExceptions';
@@ -22,20 +22,20 @@ export class DocumentStore implements IDocumentStore {
   private _database: string;
   private _operations: Operations;
   private _conventions: DocumentConventions;
-  private _requestsExecutors: IRavenObject<RequestsExecutor> = {};
+  private _requestExecutors: IRavenObject<RequestExecutor> = {};
 
   public get database(): string {
     return this._database;
   }
 
-  public getRequestsExecutor(database?: string): RequestsExecutor {
+  public getRequestExecutor(database?: string): RequestExecutor {
     const dbName = database || this._database;
 
-    if (!(dbName in this._requestsExecutors)) {
-      this._requestsExecutors[dbName] = this.createRequestsExecutor(dbName);
+    if (!(dbName in this._requestExecutors)) {
+      this._requestExecutors[dbName] = this.createRequestExecutor(dbName);
     }
 
-    return this._requestsExecutors[dbName];
+    return this._requestExecutors[dbName];
   }
 
   public get conventions(): DocumentConventions {
@@ -50,7 +50,7 @@ export class DocumentStore implements IDocumentStore {
     this.assertInitialize();
 
     if (!this._operations) {
-      this._operations = new Operations(this.getRequestsExecutor());
+      this._operations = new Operations(this.getRequestExecutor());
     }
 
     return this._operations;
@@ -88,7 +88,7 @@ export class DocumentStore implements IDocumentStore {
     this.assertInitialize();
 
     let dbName: string = database || this._database;
-    let executor: RequestsExecutor = this.getRequestsExecutor(dbName);
+    let executor: RequestExecutor = this.getRequestExecutor(dbName);
 
     this.sessionId = uuid();
     
@@ -118,7 +118,7 @@ export class DocumentStore implements IDocumentStore {
     }
   }
 
-  protected createRequestsExecutor(database?: string): RequestsExecutor {
-    return new RequestsExecutor(this.url, database || this._database, this.apiKey, this.conventions);
+  protected createRequestExecutor(database?: string): RequestExecutor {
+    return new RequestExecutor(this.url, database || this._database, this.apiKey, this.conventions);
   }
 }

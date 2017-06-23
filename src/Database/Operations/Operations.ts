@@ -1,4 +1,4 @@
-import {RequestsExecutor} from "../../Http/Request/RequestsExecutor";
+import {RequestExecutor} from "../../Http/Request/RequestExecutor";
 import * as BluebirdPromise from "bluebird";
 import {PromiseResolve, PromiseReject} from "../../Utility/PromiseResolver";
 import {DateUtil} from "../../Utility/DateUtil";
@@ -7,10 +7,10 @@ import {IRavenResponse} from "../RavenCommandResponse";
 import {DatabaseLoadTimeoutException, InvalidOperationException} from "../DatabaseExceptions";
 
 export class Operations {
-  protected requestsExecutor: RequestsExecutor;
+  protected requestExecutor: RequestExecutor;
 
-  constructor(requestsExecutor: RequestsExecutor) {
-    this.requestsExecutor = requestsExecutor;
+  constructor(requestExecutor: RequestExecutor) {
+    this.requestExecutor = requestExecutor;
   }
 
   public waitForOperationComplete(operationId: string, timeout?: number): BluebirdPromise<IRavenResponse> {
@@ -19,7 +19,7 @@ export class Operations {
       const getOperationCommand: GetOperationStateCommand = new GetOperationStateCommand(operationId);
 
       const execute: () => void = () => {
-        this.requestsExecutor.execute(getOperationCommand)          
+        this.requestExecutor.execute(getOperationCommand)          
           .then((response: IRavenResponse) => {
             const commandResponse: IRavenResponse = response;
 

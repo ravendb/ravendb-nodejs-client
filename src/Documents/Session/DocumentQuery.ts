@@ -1,6 +1,6 @@
 import {IDocumentQuery} from "./IDocumentQuery";
 import {IDocumentSession} from "./IDocumentSession";
-import {RequestsExecutor} from "../../Http/Request/RequestsExecutor";
+import {RequestExecutor} from "../../Http/Request/RequestExecutor";
 import {IDocumentQueryConditions} from './IDocumentQueryConditions';
 import {QueryResultsCallback} from '../../Utility/Callbacks';
 import {PromiseResolver} from '../../Utility/PromiseResolver';
@@ -33,7 +33,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   protected indexName: string;
   protected session: IDocumentSession;
-  protected requestsExecutor: RequestsExecutor;
+  protected requestExecutor: RequestExecutor;
   protected includes?: string[] = null;
   protected queryBuilder: string = '';
   protected negate: boolean = false;
@@ -48,14 +48,14 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   private _take?: number = null;
   private _skip?: number = null;
   
-  constructor(session: IDocumentSession, requestsExecutor: RequestsExecutor, documentTypeOrObjectType?: string | DocumentConstructor<T>, indexName?: string, usingDefaultOperator
+  constructor(session: IDocumentSession, requestExecutor: RequestExecutor, documentTypeOrObjectType?: string | DocumentConstructor<T>, indexName?: string, usingDefaultOperator
     ?: QueryOperator, waitForNonStaleResults: boolean = false, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, withStatistics: boolean = false
   ) {
     super();
     this.session = session;
     this.includes = includes;
     this.withStatistics = withStatistics;
-    this.requestsExecutor = requestsExecutor;
+    this.requestExecutor = requestExecutor;
     this.usingDefaultOperator = usingDefaultOperator;
     this.waitForNonStaleResults = waitForNonStaleResults;
     this.nestedObjectTypes = nestedObjectTypes || {} as IRavenObject<DocumentConstructor>;
@@ -334,7 +334,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     const query: IndexQuery = new IndexQuery(this.queryBuilder, this._take, this._skip, this.usingDefaultOperator, queryOptions);
     const queryCommand: QueryCommand = new QueryCommand(this.indexName, query, conventions, this.includes);
 
-    const request = () => this.requestsExecutor
+    const request = () => this.requestExecutor
       .execute(queryCommand)          
       .then((response: IRavenResponse | null): IRavenResponse | BluebirdPromise.Thenable<IRavenResponse> => {
         if (TypeUtil.isNone(response)) {

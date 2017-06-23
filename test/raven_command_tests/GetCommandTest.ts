@@ -3,19 +3,19 @@
 
 import {expect} from 'chai';
 import * as BluebirdPromise from 'bluebird';
-import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
+import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand";
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 import {GetDocumentCommand} from "../../src/Database/Commands/GetDocumentCommand";
 import {IRavenObject} from "../../src/Database/IRavenObject";
 
 describe('DocumentSession', () => {
-  let requestsExecutor: RequestsExecutor;
+  let requestExecutor: RequestExecutor;
   let putCommand: PutDocumentCommand, otherPutCommand: PutDocumentCommand;
   let response: IRavenResponse, otherResponse: IRavenResponse;
 
   beforeEach(function(): void {
-    ({requestsExecutor} = this.currentTest as IRavenObject);
+    ({requestExecutor} = this.currentTest as IRavenObject);
   });
 
   beforeEach(async() => {
@@ -23,13 +23,13 @@ describe('DocumentSession', () => {
     otherPutCommand = new PutDocumentCommand('products/10', {'Name': 'test', '@metadata': {}});
 
     return BluebirdPromise.all([
-      requestsExecutor.execute(putCommand)
-        .then(() => requestsExecutor
+      requestExecutor.execute(putCommand)
+        .then(() => requestExecutor
           .execute(new GetDocumentCommand('products/101'))
         )
         .then((result: IRavenResponse) => response = result),
-      requestsExecutor.execute(otherPutCommand)
-        .then(() => requestsExecutor
+      requestExecutor.execute(otherPutCommand)
+        .then(() => requestExecutor
           .execute(new GetDocumentCommand('products/10'))
         )
         .then((result: IRavenResponse) => otherResponse = result)
@@ -45,7 +45,7 @@ describe('DocumentSession', () => {
       expect(response.Results[0]['@metadata']['@id']).not.to.equals(otherResponse.Results[0]['@metadata']['@id'])
     });
 
-    it('unexisting document loading attempt should return void response', async() => requestsExecutor
+    it('unexisting document loading attempt should return void response', async() => requestExecutor
       .execute(new GetDocumentCommand('product'))
       .then((result) => expect(result).to.be.undefined)
     );

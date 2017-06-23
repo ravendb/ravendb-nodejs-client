@@ -4,7 +4,7 @@
 
 import {expect} from 'chai';
 import * as _ from 'lodash';
-import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
+import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 import {DocumentStore} from '../../src/Documents/DocumentStore';
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
@@ -26,8 +26,8 @@ describe('Document query test', () => {
     store = DocumentStore.create(defaultUrl, defaultDatabase).initialize();
     session = store.openSession();
 
-    const requestsExecutor: RequestsExecutor = store.getRequestsExecutor();
-    const productsTestingSort: ProductsTestingSort = new ProductsTestingSort(requestsExecutor);
+    const requestExecutor: RequestExecutor = store.getRequestExecutor();
+    const productsTestingSort: ProductsTestingSort = new ProductsTestingSort(requestExecutor);
 
     await productsTestingSort.execute();
     await session.store<Product>(session.create<Product>(new Product('Products/101', 'test101', 2, 'a')));

@@ -3,26 +3,26 @@
 
 import {expect} from 'chai';
 import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand";
-import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
+import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 import {GetDocumentCommand} from "../../src/Database/Commands/GetDocumentCommand";
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 import {IRavenObject} from "../../src/Database/IRavenObject";
 
 describe('Put command tests', () => {
-  let requestsExecutor: RequestsExecutor;
+  let requestExecutor: RequestExecutor;
 
   beforeEach(function(): void {
-    ({requestsExecutor} = this.currentTest as IRavenObject);
+    ({requestExecutor} = this.currentTest as IRavenObject);
   });
 
-  it('should put successfully', async() => requestsExecutor
+  it('should put successfully', async() => requestExecutor
     .execute(new PutDocumentCommand('testing/1', {'name': 'test', '@metadata': {}}))
-    .then(() => requestsExecutor.execute(new GetDocumentCommand('testing/1')))
+    .then(() => requestExecutor.execute(new GetDocumentCommand('testing/1')))
     .then((result: IRavenResponse) => expect(result.Results[0]['@metadata']['@id']).to.equals('testing/1'))
   );
 
   it('should fail with invalid json', async() => expect(
-      requestsExecutor.execute(new PutDocumentCommand('testing/2', <any>'document'))
+      requestExecutor.execute(new PutDocumentCommand('testing/2', <any>'document'))
     ).to.be.rejected
   );
 });
