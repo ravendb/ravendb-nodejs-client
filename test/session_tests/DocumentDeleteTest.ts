@@ -2,7 +2,6 @@
 /// <reference path="../../node_modules/@types/chai/index.d.ts" />
 
 import {expect} from 'chai';
-import * as BluebirdPromise from 'bluebird';
 import {IRavenObject} from "../../src/Database/IRavenObject";
 import {DocumentStore} from "../../src/Documents/DocumentStore";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";

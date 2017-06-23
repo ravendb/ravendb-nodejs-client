@@ -1,5 +1,4 @@
 import {IDocumentQueryConditions} from './IDocumentQueryConditions';
-import * as BluebirdPromise from 'bluebird'
 import {EscapeQueryOption} from "./EscapeQueryOptions";
 import {LuceneValue} from "../Lucene/LuceneValue";
 import {QueryResultsWithStatistics} from "./DocumentQuery";

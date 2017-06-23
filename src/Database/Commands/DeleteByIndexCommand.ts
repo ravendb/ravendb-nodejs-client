@@ -4,9 +4,8 @@ import {IndexDoesNotExistException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {IndexQuery} from "../Indexes/IndexQuery";
 import {QueryOperationOptions} from "../Operations/QueryOperationOptions";
-import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
+import {IResponse} from "../../Http/Response/IResponse";
 import {IRavenResponse} from "../RavenCommandResponse";
-import {StatusCode, StatusCodes} from "../../Http/Response/StatusCode";
 import {IndexQueryBasedCommand} from "./IndexQueryBasedCommand";
 
 export class DeleteByIndexCommand extends IndexQueryBasedCommand {

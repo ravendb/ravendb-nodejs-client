@@ -4,16 +4,10 @@
 
 import {expect} from 'chai';
 import * as _ from 'lodash';
-import * as BluebirdPromise from 'bluebird';
 import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
 import {DocumentStore} from '../../src/Documents/DocumentStore';
-import {IDocumentQuery} from '../../src/Documents/Session/IDocumentQuery';
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
-import {PutIndexesCommand} from "../../src/Database/Commands/PutIndexesCommand";
-import {IndexDefinition} from "../../src/Database/Indexes/IndexDefinition";
-import {IndexFieldOptions} from "../../src/Database/Indexes/IndexFieldOptions";
-import {SortOptions} from "../../src/Database/Indexes/SortOption";
 import {IRavenObject} from "../../src/Database/IRavenObject";
 import {Product, Order, Company, ProductsTestingSort} from "../TestClasses";
 import {QueryOperators} from "../../src/Documents/Session/QueryOperator";

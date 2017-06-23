@@ -1,4 +1,3 @@
-import * as _ from 'lodash';
 import {ServerNode} from './ServerNode';
 
 export class Topology {

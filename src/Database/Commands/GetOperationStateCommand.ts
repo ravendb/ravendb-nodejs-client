@@ -1,7 +1,7 @@
 import {RavenCommand} from "../RavenCommand";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {ServerNode} from "../../Http/ServerNode";
-import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
+import {IResponse} from "../../Http/Response/IResponse";
 import {IRavenResponse} from "../RavenCommandResponse";
 import {StringUtil} from "../../Utility/StringUtil";
 import {ErrorResponseException} from "../DatabaseExceptions";

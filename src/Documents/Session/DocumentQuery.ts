@@ -3,7 +3,7 @@ import {IDocumentSession} from "./IDocumentSession";
 import {RequestsExecutor} from "../../Http/Request/RequestsExecutor";
 import {IDocumentQueryConditions} from './IDocumentQueryConditions';
 import {QueryResultsCallback} from '../../Utility/Callbacks';
-import {PromiseResolve, PromiseResolver, PromiseReject} from '../../Utility/PromiseResolver';
+import {PromiseResolver} from '../../Utility/PromiseResolver';
 import {EscapeQueryOption, EscapeQueryOptions} from "./EscapeQueryOptions";
 import {LuceneValue, LuceneConditionValue, LuceneRangeValue} from "../Lucene/LuceneValue";
 import {IRavenResponse} from "../../Database/RavenCommandResponse";

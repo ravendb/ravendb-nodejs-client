@@ -8,7 +8,6 @@ import {InvalidOperationException, RavenException} from '../Database/DatabaseExc
 import {IHiloKeyGenerator} from '../Hilo/IHiloKeyGenerator';
 import {HiloMultiDatabaseKeyGenerator} from '../Hilo/HiloMultiDatabaseKeyGenerator';
 import * as uuid from 'uuid';
-import * as BluebirdPromise from 'bluebird';
 import {IRavenObject} from "../Database/IRavenObject";
 import {Operations} from "../Database/Operations/Operations";
 import {PromiseResolver} from "../Utility/PromiseResolver";

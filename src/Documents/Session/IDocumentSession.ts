@@ -3,7 +3,6 @@ import {IDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
 import {DocumentConventions, DocumentConstructor} from '../Conventions/DocumentConventions';
 import {EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
 import {IRavenObject} from "../../Database/IRavenObject";
-import * as BluebirdPromise from 'bluebird'
 
 export interface IDocumentSession {
   numberOfRequestsInSession: number;

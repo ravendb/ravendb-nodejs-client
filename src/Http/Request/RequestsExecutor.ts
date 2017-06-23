@@ -1,4 +1,3 @@
-import * as _ from 'lodash';
 import * as BluebirdPromise from 'bluebird';
 import * as RequestPromise from 'request-promise';
 import {ServerNode} from '../ServerNode';

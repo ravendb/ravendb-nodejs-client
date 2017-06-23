@@ -9,13 +9,11 @@ import {DocumentConventions, DocumentConstructor, IDocumentConversionResult, ISt
 import {EmptyCallback, EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
 import {PromiseResolver} from '../../Utility/PromiseResolver';
 import {TypeUtil} from "../../Utility/TypeUtil";
-import {InvalidOperationException, DocumentDoesNotExistsException, RavenException, NonUniqueObjectException} from "../../Database/DatabaseExceptions";
+import {InvalidOperationException, RavenException, NonUniqueObjectException} from "../../Database/DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {GetDocumentCommand} from "../../Database/Commands/GetDocumentCommand";
 import {IRavenResponse} from "../../Database/RavenCommandResponse";
 import {RavenCommandData} from "../../Database/RavenCommandData";
-import {DeleteDocumentCommand} from "../../Database/Commands/DeleteDocumentCommand";
-import {PutDocumentCommand} from "../../Database/Commands/PutDocumentCommand";
 import {PutCommandData} from "../../Database/Commands/Data/PutCommandData";
 import {DeleteCommandData} from "../../Database/Commands/Data/DeleteCommandData";
 import {SaveChangesData} from "../../Database/Commands/Data/SaveChangesData";

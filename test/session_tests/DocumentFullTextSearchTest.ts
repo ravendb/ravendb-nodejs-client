@@ -2,22 +2,15 @@
 /// <reference path="../../node_modules/@types/chai/index.d.ts" />
 
 import {expect} from 'chai';
-import * as BluebirdPromise from 'bluebird';
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
-import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
-import {IDocumentQuery} from "../../src/Documents/Session/IDocumentQuery";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {DocumentStore} from "../../src/Documents/DocumentStore";
-import {IndexDefinition} from "../../src/Database/Indexes/IndexDefinition";
-import {IndexFieldOptions} from "../../src/Database/Indexes/IndexFieldOptions";
-import {PutIndexesCommand} from "../../src/Database/Commands/PutIndexesCommand";
 import {IRavenObject} from "../../src/Database/IRavenObject";
 import {LastFm, LastFmAnalyzed} from "../TestClasses";
 
 describe('Document full text search', () => {
   let store: IDocumentStore;
   let session: IDocumentSession;
-  let requestExecutor: RequestsExecutor;
   let defaultDatabase: string, defaultUrl: string;
 
   beforeEach(function(): void {

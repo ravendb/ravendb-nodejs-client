@@ -1,9 +1,9 @@
 import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
 import {IRavenResponse} from "../RavenCommandResponse";
-import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
+import {IResponse} from "../../Http/Response/IResponse";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
-import {InvalidOperationException, DocumentDoesNotExistsException, ErrorResponseException} from "../DatabaseExceptions";
+import {InvalidOperationException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {StatusCodes} from "../../Http/Response/StatusCode";
 import {TypeUtil} from "../../Utility/TypeUtil";
@@ -37,7 +37,7 @@ export class DeleteDocumentCommand extends RavenCommand {
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
+    <IRavenResponse>super.setResponse(response);
 
     this.checkResponse(response);
   }

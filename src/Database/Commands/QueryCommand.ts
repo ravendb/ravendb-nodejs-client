@@ -1,7 +1,7 @@
 import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
 import {IRavenResponse} from "../RavenCommandResponse";
-import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
+import {IResponse} from "../../Http/Response/IResponse";
 import {IndexQuery} from "../Indexes/IndexQuery";
 import {DocumentConventions} from "../../Documents/Conventions/DocumentConventions";
 import {RequestMethods} from "../../Http/Request/RequestMethod";

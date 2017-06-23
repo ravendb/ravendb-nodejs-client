@@ -5,16 +5,11 @@ import * as BluebirdPromise from "bluebird";
 import {expect} from 'chai';
 import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
 import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand";
-import {GetDocumentCommand} from "../../src/Database/Commands/GetDocumentCommand";
 import {QueryCommand} from "../../src/Database/Commands/QueryCommand";
 import {DocumentConventions} from "../../src/Documents/Conventions/DocumentConventions";
 import {IndexQuery} from "../../src/Database/Indexes/IndexQuery";
-import {DocumentQuery} from "../../src/Documents/Session/DocumentQuery";
-import {PutIndexesCommand} from "../../src/Database/Commands/PutIndexesCommand";
-import {IndexDefinition} from "../../src/Database/Indexes/IndexDefinition";
 import {IRavenObject} from "../../src/Database/IRavenObject";
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
-import {InvalidOperationException} from "../../src/Database/DatabaseExceptions";
 
 describe('DocumentSession', () => {
   const tag: string = 'Tag:Products';

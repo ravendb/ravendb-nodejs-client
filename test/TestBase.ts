@@ -8,16 +8,12 @@ import * as chaiAsPromised from 'chai-as-promised';
 import * as args from '../args';
 import {RequestsExecutor} from "../src/Http/Request/RequestsExecutor";
 import {IndexDefinition} from "../src/Database/Indexes/IndexDefinition";
-import {FieldIndexingOptions} from "../src/Database/Indexes/FieldIndexingOption";
 import {IRavenResponse} from "../src/Database/RavenCommandResponse";
-import {IndexFieldOptions} from "../src/Database/Indexes/IndexFieldOptions";
 import {DocumentConventions} from "../src/Documents/Conventions/DocumentConventions";
 import {CreateDatabaseCommand} from "../src/Database/Commands/CreateDatabaseCommand";
 import {DatabaseDocument} from "../src/Database/DatabaseDocument";
-import {IRavenObject} from "../src/Database/IRavenObject";
 import {PutIndexesCommand} from "../src/Database/Commands/PutIndexesCommand";
 import {DeleteDatabaseCommand} from "../src/Database/Commands/DeleteDatabaseCommand";
-import {SortOptions} from "../src/Database/Indexes/SortOption";
 import {StringUtil} from "../src/Utility/StringUtil";
 
 const defaultUrl: string = StringUtil.format("http://{ravendb-host}:{ravendb-port}", args);
