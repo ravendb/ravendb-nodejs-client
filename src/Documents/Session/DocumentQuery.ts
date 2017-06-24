@@ -1,9 +1,9 @@
 import {IDocumentQuery} from "./IDocumentQuery";
 import {IDocumentSession} from "./IDocumentSession";
-import {RequestsExecutor} from "../../Http/Request/RequestsExecutor";
+import {RequestExecutor} from "../../Http/Request/RequestExecutor";
 import {IDocumentQueryConditions} from './IDocumentQueryConditions';
 import {QueryResultsCallback} from '../../Utility/Callbacks';
-import {PromiseResolve, PromiseResolver, PromiseReject} from '../../Utility/PromiseResolver';
+import {PromiseResolver} from '../../Utility/PromiseResolver';
 import {EscapeQueryOption, EscapeQueryOptions} from "./EscapeQueryOptions";
 import {LuceneValue, LuceneConditionValue, LuceneRangeValue} from "../Lucene/LuceneValue";
 import {IRavenResponse} from "../../Database/RavenCommandResponse";
@@ -33,7 +33,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   protected indexName: string;
   protected session: IDocumentSession;
-  protected requestsExecutor: RequestsExecutor;
+  protected requestExecutor: RequestExecutor;
   protected includes?: string[] = null;
   protected queryBuilder: string = '';
   protected negate: boolean = false;
@@ -48,14 +48,14 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   private _take?: number = null;
   private _skip?: number = null;
   
-  constructor(session: IDocumentSession, requestsExecutor: RequestsExecutor, documentTypeOrObjectType?: string | DocumentConstructor<T>, indexName?: string, usingDefaultOperator
+  constructor(session: IDocumentSession, requestExecutor: RequestExecutor, documentTypeOrObjectType?: string | DocumentConstructor<T>, indexName?: string, usingDefaultOperator
     ?: QueryOperator, waitForNonStaleResults: boolean = false, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, withStatistics: boolean = false
   ) {
     super();
     this.session = session;
     this.includes = includes;
     this.withStatistics = withStatistics;
-    this.requestsExecutor = requestsExecutor;
+    this.requestExecutor = requestExecutor;
     this.usingDefaultOperator = usingDefaultOperator;
     this.waitForNonStaleResults = waitForNonStaleResults;
     this.nestedObjectTypes = nestedObjectTypes || {} as IRavenObject<DocumentConstructor>;
@@ -67,7 +67,13 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     }
   }
 
-  public select(...args: string[]): IDocumentQuery<T> {
+  public get not(): IDocumentQuery<T> {
+    this.negateNext();
+
+    return this;
+  }
+
+  public selectFields(...args: string[]): IDocumentQuery<T> {
     if (args && args.length) {
       this.fetch = args;
     }
@@ -164,8 +170,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
       .addStatement('(')
         .whereEquals<string>(fieldName, '*')
         .andAlso()
-        .addNot()
-        .whereEquals<null>(fieldName, null) as DocumentQuery<T>)
+        .not.whereEquals<null>(fieldName, null) as DocumentQuery<T>)
     .addStatement(')');
   }
 
@@ -210,7 +215,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     return this.addSpace().addStatement(QueryOperators.OR);
   }
 
-  public addNot(): IDocumentQuery<T> {
+  public negateNext(): IDocumentQuery<T> {
     this.negate = true;
 
     return this;
@@ -334,7 +339,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     const query: IndexQuery = new IndexQuery(this.queryBuilder, this._take, this._skip, this.usingDefaultOperator, queryOptions);
     const queryCommand: QueryCommand = new QueryCommand(this.indexName, query, conventions, this.includes);
 
-    const request = () => this.requestsExecutor
+    const request = () => this.requestExecutor
       .execute(queryCommand)          
       .then((response: IRavenResponse | null): IRavenResponse | BluebirdPromise.Thenable<IRavenResponse> => {
         if (TypeUtil.isNone(response)) {

@@ -1,9 +1,9 @@
 import {ServerNode} from '../../Http/ServerNode';
 import {IRavenResponse} from "../RavenCommandResponse";
-import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
+import {IResponse} from "../../Http/Response/IResponse";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {DeleteDocumentCommand} from './DeleteDocumentCommand';
-import {InvalidOperationException, ErrorResponseException, ConcurrencyException} from "../DatabaseExceptions";
+import {InvalidOperationException, ErrorResponseException} from "../DatabaseExceptions";
 
 export class PutDocumentCommand extends DeleteDocumentCommand {
   protected document?: object;

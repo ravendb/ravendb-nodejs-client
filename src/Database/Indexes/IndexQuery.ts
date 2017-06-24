@@ -2,7 +2,6 @@ import {QueryOperator, QueryOperators} from "../../Documents/Session/QueryOperat
 import {IOptionsSet} from "../../Utility/IOptionsSet";
 
 export class IndexQuery {
-  protected waitForNonStaleResults: boolean = false;
   private _fetch: string[] = [];
   private _sortHints: string[] = [];
   private _sortFields: string[] = [];
@@ -10,6 +9,7 @@ export class IndexQuery {
   private _start: number;
   private _pageSize: number;
   private _defaultOperator?: QueryOperator = null;
+  private _waitForNonStaleResults: boolean = false;
   private _waitForNonStaleResultsTimeout?: number = null;
 
   constructor(query: string = '', pageSize: number = 128, skippedResults: number = 0,
@@ -22,10 +22,10 @@ export class IndexQuery {
     this._sortHints = options.sort_hints || [];
     this._sortFields = options.sort_fields || [];
     this._defaultOperator = defaultOperator || QueryOperators.OR;
-    this.waitForNonStaleResults = options.wait_for_non_stale_results || false;
+    this._waitForNonStaleResults = options.wait_for_non_stale_results || false;
     this._waitForNonStaleResultsTimeout = options.wait_for_non_stale_results_timeout || null;
 
-    if (this.waitForNonStaleResults && !this._waitForNonStaleResultsTimeout) {
+    if (this._waitForNonStaleResults && !this._waitForNonStaleResultsTimeout) {
       this._waitForNonStaleResultsTimeout = 15 * 60;
     }
   }
@@ -64,6 +64,10 @@ export class IndexQuery {
 
   public get sortFields(): string[] {
     return this._sortFields;
+  }
+
+  public get waitForNonStaleResults(): boolean {
+    return this._waitForNonStaleResults;
   }
 
   public get waitForNonStaleResultsTimeout(): number {

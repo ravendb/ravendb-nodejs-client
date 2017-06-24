@@ -2,7 +2,7 @@
 /// <reference path="../../node_modules/@types/chai/index.d.ts" />
 
 import {expect} from 'chai';
-import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
+import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 import {PatchCommand} from "../../src/Database/Commands/PatchCommand";
 import {PatchRequest} from "../../src/Http/Request/PatchRequest";
 import {IRavenObject} from "../../src/Database/IRavenObject";
@@ -12,31 +12,31 @@ import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 
 describe('Patch command test', () => {
   const key: string = "products/10";
-  let requestsExecutor: RequestsExecutor;
+  let requestExecutor: RequestExecutor;
   let etag: number;
 
   beforeEach(function(): void {
-    ({requestsExecutor} = this.currentTest as IRavenObject);
+    ({requestExecutor} = this.currentTest as IRavenObject);
   });
 
-  beforeEach(async () => requestsExecutor
+  beforeEach(async () => requestExecutor
     .execute(new PutDocumentCommand(key, {"Name": "test", "@metadata": {}}))
-    .then(() => requestsExecutor.execute(new GetDocumentCommand(key)))
+    .then(() => requestExecutor.execute(new GetDocumentCommand(key)))
     .then((result: IRavenResponse) => etag = result.Results[0]["@metadata"]["@etag"])    
   );
 
   describe('Patch request', () => {
-    it('should patch success ignoring missing', async() => requestsExecutor
+    it('should patch success ignoring missing', async() => requestExecutor
       .execute(new PatchCommand(key, new PatchRequest("this.Name = 'testing'")))
       .then((result: IRavenResponse) => expect(result).not.to.be.undefined)
     );
 
-    it('should patch success not ignoring missing', async() => requestsExecutor
+    it('should patch success not ignoring missing', async() => requestExecutor
       .execute(new PatchCommand(key, new PatchRequest("this.Name = 'testing'"), {etag: etag + 1, skipPatchIfEtagMismatch: true}))
       .then((result: IRavenResponse) => expect(result).to.be.undefined)
     );
 
-    it('should patch fail not ignoring missing', async () => expect(requestsExecutor
+    it('should patch fail not ignoring missing', async () => expect(requestExecutor
         .execute(new PatchCommand(key, new PatchRequest("this.Name = 'testing'"), {etag: etag + 1, skipPatchIfEtagMismatch: false}))
       ).to.be.rejected
     );

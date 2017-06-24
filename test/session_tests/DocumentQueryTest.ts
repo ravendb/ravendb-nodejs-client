@@ -4,16 +4,10 @@
 
 import {expect} from 'chai';
 import * as _ from 'lodash';
-import * as BluebirdPromise from 'bluebird';
-import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
+import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 import {DocumentStore} from '../../src/Documents/DocumentStore';
-import {IDocumentQuery} from '../../src/Documents/Session/IDocumentQuery';
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
-import {PutIndexesCommand} from "../../src/Database/Commands/PutIndexesCommand";
-import {IndexDefinition} from "../../src/Database/Indexes/IndexDefinition";
-import {IndexFieldOptions} from "../../src/Database/Indexes/IndexFieldOptions";
-import {SortOptions} from "../../src/Database/Indexes/SortOption";
 import {IRavenObject} from "../../src/Database/IRavenObject";
 import {Product, Order, Company, ProductsTestingSort} from "../TestClasses";
 import {QueryOperators} from "../../src/Documents/Session/QueryOperator";
@@ -32,8 +26,8 @@ describe('Document query test', () => {
     store = DocumentStore.create(defaultUrl, defaultDatabase).initialize();
     session = store.openSession();
 
-    const requestsExecutor: RequestsExecutor = store.getRequestsExecutor();
-    const productsTestingSort: ProductsTestingSort = new ProductsTestingSort(requestsExecutor);
+    const requestExecutor: RequestExecutor = store.getRequestExecutor();
+    const productsTestingSort: ProductsTestingSort = new ProductsTestingSort(requestExecutor);
 
     await productsTestingSort.execute();
     await session.store<Product>(session.create<Product>(new Product('Products/101', 'test101', 2, 'a')));
@@ -201,7 +195,7 @@ describe('Document query test', () => {
         waitForNonStaleResults: true,
         indexName: 'Testing_Sort'
       })
-      .whereBetweenOrEqual<number>('uid', 2, 4).select('doc_id').get();
+      .whereBetweenOrEqual<number>('uid', 2, 4).selectFields('doc_id').get();
       
       expect(_.every(results, (result: Product) => result.hasOwnProperty('doc_id'))).to.be.true;
     });

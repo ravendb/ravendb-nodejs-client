@@ -1,8 +1,6 @@
 import {ServerNode} from '../../Http/ServerNode';
 import {RequestMethods} from '../../Http/Request/RequestMethod';
 import {RavenCommand} from '../../Database/RavenCommand';
-import {IRavenResponse} from "../../Database/RavenCommandResponse";
-import {IResponse} from "../../Http/Response/IResponse";
 import {StringUtil} from "../../Utility/StringUtil";
 
 export class HiloReturnCommand extends RavenCommand {

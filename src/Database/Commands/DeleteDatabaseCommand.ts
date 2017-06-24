@@ -1,12 +1,7 @@
-import * as _ from 'lodash';
 import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
-import {IRavenResponse} from "../RavenCommandResponse";
-import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
-import {DatabaseDoesNotExistException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
-import {StatusCodes} from "../../Http/Response/StatusCode";
 
 export class DeleteDatabaseCommand extends RavenCommand {
     protected databaseId?: string;

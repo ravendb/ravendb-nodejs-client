@@ -1,4 +1,3 @@
-import * as _ from 'lodash';
 import * as BluebirdPromise from 'bluebird';
 import * as RequestPromise from 'request-promise';
 import {ServerNode} from '../ServerNode';
@@ -19,7 +18,7 @@ import {DateUtil} from "../../Utility/DateUtil";
 import {IResponse, IErrorResponse} from "../Response/IResponse";
 import {StatusCodes, StatusCode} from "../Response/StatusCode";
 
-export class RequestsExecutor {
+export class RequestExecutor {
   protected conventions?: DocumentConventions;
   protected headers: IHeaders;
   private _lock: Lock;

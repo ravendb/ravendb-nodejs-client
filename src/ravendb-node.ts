@@ -156,7 +156,7 @@ export {StringUtil} from './Utility/StringUtil';
 export {ArrayUtil} from './Utility/ArrayUtil';
 export {TypeUtil} from './Utility/TypeUtil';
 export {ExceptionThrower} from './Utility/ExceptionThrower';
-export {RequestsExecutor} from './Http/Request/RequestsExecutor';
+export {RequestExecutor} from './Http/Request/RequestExecutor';
 export {PatchRequest} from './Http/Request/PatchRequest';
 export {HiloRangeValue} from './Hilo/HiloRangeValue';
 export {AbstractHiloKeyGenerator} from './Hilo/AbstractHiloKeyGenerator';

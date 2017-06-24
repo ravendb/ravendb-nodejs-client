@@ -6,23 +6,19 @@ import * as _ from 'lodash';
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import * as args from '../args';
-import {RequestsExecutor} from "../src/Http/Request/RequestsExecutor";
+import {RequestExecutor} from "../src/Http/Request/RequestExecutor";
 import {IndexDefinition} from "../src/Database/Indexes/IndexDefinition";
-import {FieldIndexingOptions} from "../src/Database/Indexes/FieldIndexingOption";
 import {IRavenResponse} from "../src/Database/RavenCommandResponse";
-import {IndexFieldOptions} from "../src/Database/Indexes/IndexFieldOptions";
 import {DocumentConventions} from "../src/Documents/Conventions/DocumentConventions";
 import {CreateDatabaseCommand} from "../src/Database/Commands/CreateDatabaseCommand";
 import {DatabaseDocument} from "../src/Database/DatabaseDocument";
-import {IRavenObject} from "../src/Database/IRavenObject";
 import {PutIndexesCommand} from "../src/Database/Commands/PutIndexesCommand";
 import {DeleteDatabaseCommand} from "../src/Database/Commands/DeleteDatabaseCommand";
-import {SortOptions} from "../src/Database/Indexes/SortOption";
 import {StringUtil} from "../src/Utility/StringUtil";
 
 const defaultUrl: string = StringUtil.format("http://{ravendb-host}:{ravendb-port}", args);
 const defaultDatabase: string = "NorthWindTest";
-const requestsExecutor: RequestsExecutor = new RequestsExecutor(
+const requestExecutor: RequestExecutor = new RequestExecutor(
   defaultUrl, defaultDatabase, null,
   new DocumentConventions()
 );
@@ -45,19 +41,19 @@ beforeEach(async function() {
 
   index = new IndexDefinition("Testing", indexMap);
   
-  return requestsExecutor.execute(
+  return requestExecutor.execute(
     new CreateDatabaseCommand(
       new DatabaseDocument(defaultDatabase, {"Raven/DataDir": "test"})
     )
   )
-  .then((): BluebirdPromise.Thenable<IRavenResponse> => requestsExecutor.execute(
+  .then((): BluebirdPromise.Thenable<IRavenResponse> => requestExecutor.execute(
     new PutIndexesCommand(index)
   ))
   .then(() => 
     _.assign(this.currentTest, {
       indexDefinition: index,
       indexMap: indexMap,
-      requestsExecutor: requestsExecutor,
+      requestExecutor: requestExecutor,
       defaultUrl: defaultUrl,
       defaultDatabase: defaultDatabase
     })
@@ -66,9 +62,9 @@ beforeEach(async function() {
 
 afterEach(async function() {
   ['currentTest', 'indexDefinition', 'indexMap',
-   'requestsExecutor', 'defaultUrl', 'defaultDatabase']
+   'requestExecutor', 'defaultUrl', 'defaultDatabase']
    .forEach((key: string) => delete this.currentTest[key]);
 
-  return requestsExecutor
+  return requestExecutor
     .execute(new DeleteDatabaseCommand(defaultDatabase, true));
 });

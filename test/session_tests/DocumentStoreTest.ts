@@ -4,7 +4,6 @@
 import {expect} from 'chai';
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {DocumentStore} from '../../src/Documents/DocumentStore';
-import {DocumentSession} from "../../src/Documents/Session/DocumentSession";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {IRavenObject} from "../../src/Database/IRavenObject";
 import {Foo} from "../TestClasses";

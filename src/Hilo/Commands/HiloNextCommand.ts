@@ -5,7 +5,7 @@ import {IRavenResponse} from "../../Database/RavenCommandResponse";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {StringUtil} from "../../Utility/StringUtil";
 import {StatusCode, StatusCodes} from "../../Http/Response/StatusCode";
-import {DatabaseDoesNotExistException, ConcurrencyException, ErrorResponseException} from "../../Database/DatabaseExceptions";
+import {ErrorResponseException} from "../../Database/DatabaseExceptions";
 
 export class HiloNextCommand extends RavenCommand {
   protected tag: string;

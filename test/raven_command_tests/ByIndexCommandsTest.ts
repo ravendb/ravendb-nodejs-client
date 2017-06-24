@@ -4,7 +4,7 @@
 import * as _ from 'lodash';
 import * as BluebirdPromise from 'bluebird';
 import {expect} from 'chai';
-import {RequestsExecutor} from "../../src/Http/Request/RequestsExecutor";
+import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand";
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 import {IndexDefinition} from "../../src/Database/Indexes/IndexDefinition";
@@ -22,12 +22,12 @@ import {PatchByIndexCommand} from "../../src/Database/Commands/PatchByIndexComma
 import {DeleteByIndexCommand} from "../../src/Database/Commands/DeleteByIndexCommand";
 
 describe('IndexBasedCommand tests', () => {
-  let requestsExecutor: RequestsExecutor;
+  let requestExecutor: RequestExecutor;
   let patch: PatchRequest;
   let operations: Operations;
 
   beforeEach(function(): void {
-    ({requestsExecutor} = this.currentTest as IRavenObject);
+    ({requestExecutor} = this.currentTest as IRavenObject);
   });
 
   beforeEach(async() => {
@@ -45,10 +45,10 @@ describe('IndexBasedCommand tests', () => {
     });
 
     patch = new PatchRequest("Name = 'Patched';");
-    operations = new Operations(requestsExecutor);
+    operations = new Operations(requestExecutor);
 
-    return requestsExecutor.execute(new PutIndexesCommand(indexSort))
-      .then(() => BluebirdPromise.all(_.range(0, 100).map((i) => requestsExecutor
+    return requestExecutor.execute(new PutIndexesCommand(indexSort))
+      .then(() => BluebirdPromise.all(_.range(0, 100).map((i) => requestExecutor
         .execute(new PutDocumentCommand(`testing/${i}`, {
           Name: `test${i}`, DocNumber: i,
           '@metadata': {"@collection": "Testings"}
@@ -63,9 +63,9 @@ describe('IndexBasedCommand tests', () => {
       const queryCommand: QueryCommand = new QueryCommand('Testing_Sort', indexQuery, new DocumentConventions());
       const patchByIndexCommand: PatchByIndexCommand = new PatchByIndexCommand('Testing_Sort', new IndexQuery('Name:*'), patch, new QueryOperationOptions(false));
 
-      return requestsExecutor
+      return requestExecutor
         .execute(queryCommand)
-        .then(() => requestsExecutor
+        .then(() => requestExecutor
         .execute(patchByIndexCommand)
         .then((response: IRavenResponse) => operations
         .waitForOperationComplete(response.OperationId))
@@ -77,7 +77,7 @@ describe('IndexBasedCommand tests', () => {
     });
 
     it('update by index fail', async () => expect(
-      requestsExecutor
+      requestExecutor
         .execute(new PatchByIndexCommand('', new IndexQuery('Name:test'), patch))
         .then((response: IRavenResponse) =>  operations
         .waitForOperationComplete(response.OperationId))
@@ -85,7 +85,7 @@ describe('IndexBasedCommand tests', () => {
     );
 
     it('delete by index fail', async () => expect(
-      requestsExecutor
+      requestExecutor
         .execute(new DeleteByIndexCommand('region2', new IndexQuery('Name:Western')))
         .then((response: IRavenResponse) =>  operations
         .waitForOperationComplete(response.OperationId))
@@ -98,9 +98,9 @@ describe('IndexBasedCommand tests', () => {
       const queryCommand: QueryCommand = new QueryCommand('Testing_Sort', indexQuery, new DocumentConventions());
       const deleteByIndexCommand: DeleteByIndexCommand = new DeleteByIndexCommand('Testing_Sort', new IndexQuery(query), new QueryOperationOptions(false));
 
-      return requestsExecutor
+      return requestExecutor
         .execute(queryCommand)
-        .then(() => requestsExecutor
+        .then(() => requestExecutor
         .execute(deleteByIndexCommand))
         .then((response: IRavenResponse) => operations
         .waitForOperationComplete(response.OperationId))

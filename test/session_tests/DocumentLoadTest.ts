@@ -3,7 +3,6 @@
 
 import {expect} from 'chai';
 import {DocumentStore} from '../../src/Documents/DocumentStore';
-import * as BluebirdPromise from 'bluebird';
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {IRavenObject} from "../../src/Database/IRavenObject";

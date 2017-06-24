@@ -4,18 +4,16 @@ import {IDocumentSession} from "./IDocumentSession";
 import {IDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
 import {DocumentQuery} from "./DocumentQuery";
 import {IDocumentStore} from '../IDocumentStore';
-import {RequestsExecutor} from '../../Http/Request/RequestsExecutor';
+import {RequestExecutor} from '../../Http/Request/RequestExecutor';
 import {DocumentConventions, DocumentConstructor, IDocumentConversionResult, IStoredRawEntityInfo} from '../Conventions/DocumentConventions';
 import {EmptyCallback, EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
 import {PromiseResolver} from '../../Utility/PromiseResolver';
 import {TypeUtil} from "../../Utility/TypeUtil";
-import {InvalidOperationException, DocumentDoesNotExistsException, RavenException, NonUniqueObjectException} from "../../Database/DatabaseExceptions";
+import {InvalidOperationException, RavenException, NonUniqueObjectException} from "../../Database/DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {GetDocumentCommand} from "../../Database/Commands/GetDocumentCommand";
 import {IRavenResponse} from "../../Database/RavenCommandResponse";
 import {RavenCommandData} from "../../Database/RavenCommandData";
-import {DeleteDocumentCommand} from "../../Database/Commands/DeleteDocumentCommand";
-import {PutDocumentCommand} from "../../Database/Commands/PutDocumentCommand";
 import {PutCommandData} from "../../Database/Commands/Data/PutCommandData";
 import {DeleteCommandData} from "../../Database/Commands/Data/DeleteCommandData";
 import {SaveChangesData} from "../../Database/Commands/Data/SaveChangesData";
@@ -27,7 +25,7 @@ import {RequestMethods} from "../../Http/Request/RequestMethod";
 export class DocumentSession implements IDocumentSession {
   protected database: string;
   protected documentStore: IDocumentStore;
-  protected requestsExecutor: RequestsExecutor;
+  protected requestExecutor: RequestExecutor;
   protected sessionId: string;
   protected documentsById: IRavenObject<IRavenObject>;
   protected includedRawEntitiesByKey: IRavenObject<object>
@@ -46,12 +44,12 @@ export class DocumentSession implements IDocumentSession {
     return this.documentStore.conventions;
   }       
 
-  constructor (database: string, documentStore: IDocumentStore, requestsExecutor: RequestsExecutor,
+  constructor (database: string, documentStore: IDocumentStore, requestExecutor: RequestExecutor,
      sessionId: string
   ) {
     this.database = database;
     this.documentStore = documentStore;
-    this.requestsExecutor = requestsExecutor;
+    this.requestExecutor = requestExecutor;
     this.sessionId = sessionId;
     this.documentsById = {};
     this.includedRawEntitiesByKey = {};
@@ -260,7 +258,7 @@ export class DocumentSession implements IDocumentSession {
       return Promise.resolve();
     }
 
-    return this.requestsExecutor
+    return this.requestExecutor
       .execute(changes.createBatchCommand())
       .then((results?: IRavenResponse[]) => {
         if (TypeUtil.isNone(results)) {
@@ -294,7 +292,7 @@ export class DocumentSession implements IDocumentSession {
       documentTypeOrObjectType = options.documentTypeOrObjectType || null;
     }
 
-    const query: DocumentQuery<T> = new DocumentQuery<T>(this, this.requestsExecutor, documentTypeOrObjectType, indexName,
+    const query: DocumentQuery<T> = new DocumentQuery<T>(this, this.requestExecutor, documentTypeOrObjectType, indexName,
       usingDefaultOperator, waitForNonStaleResults, includes, nestedObjectTypes, withStatistics
     );
 
@@ -340,7 +338,7 @@ more responsive application.", maxRequests
   protected fetchDocuments<T extends Object = IRavenObject>(keys: string[], documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): BluebirdPromise<T[]> {
     this.incrementRequestsCount();
 
-    return this.requestsExecutor
+    return this.requestExecutor
       .execute(new GetDocumentCommand(keys, includes))
       .then((response: IRavenResponse): T[] | BluebirdPromise.Thenable<T[]> => {
         let responseResults: object[] = [];

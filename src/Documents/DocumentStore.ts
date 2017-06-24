@@ -1,42 +1,45 @@
 import {IDocumentStore} from './IDocumentStore';
 import {IDocumentSession} from "./Session/IDocumentSession";
 import {DocumentSession} from "./Session/DocumentSession";
-import {RequestsExecutor} from '../Http/Request/RequestsExecutor';
+import {RequestExecutor} from '../Http/Request/RequestExecutor';
 import {EntityKeyCallback} from '../Utility/Callbacks';
 import {DocumentConventions, DocumentConstructor} from './Conventions/DocumentConventions';
 import {InvalidOperationException, RavenException} from '../Database/DatabaseExceptions';
 import {IHiloKeyGenerator} from '../Hilo/IHiloKeyGenerator';
 import {HiloMultiDatabaseKeyGenerator} from '../Hilo/HiloMultiDatabaseKeyGenerator';
 import * as uuid from 'uuid';
-import * as BluebirdPromise from 'bluebird';
 import {IRavenObject} from "../Database/IRavenObject";
 import {Operations} from "../Database/Operations/Operations";
 import {PromiseResolver} from "../Utility/PromiseResolver";
 import {TypeUtil} from "../Utility/TypeUtil";
 
 export class DocumentStore implements IDocumentStore {
-  protected url: string;
-  protected apiKey?: string;
+  protected url: string;  
   protected sessionId: string;
   protected generator: IHiloKeyGenerator;
   protected initialized: boolean = false;
+  protected _apiKey?: string;
   private _database: string;
   private _operations: Operations;
   private _conventions: DocumentConventions;
-  private _requestsExecutors: IRavenObject<RequestsExecutor> = {};
+  private _requestExecutors: IRavenObject<RequestExecutor> = {};
 
   public get database(): string {
     return this._database;
   }
 
-  public getRequestsExecutor(database?: string): RequestsExecutor {
+  public get apiKey(): string {
+    return this._apiKey;
+  }
+
+  public getRequestExecutor(database?: string): RequestExecutor {
     const dbName = database || this._database;
 
-    if (!(dbName in this._requestsExecutors)) {
-      this._requestsExecutors[dbName] = this.createRequestsExecutor(dbName);
+    if (!(dbName in this._requestExecutors)) {
+      this._requestExecutors[dbName] = this.createRequestExecutor(dbName);
     }
 
-    return this._requestsExecutors[dbName];
+    return this._requestExecutors[dbName];
   }
 
   public get conventions(): DocumentConventions {
@@ -51,7 +54,7 @@ export class DocumentStore implements IDocumentStore {
     this.assertInitialize();
 
     if (!this._operations) {
-      this._operations = new Operations(this.getRequestsExecutor());
+      this._operations = new Operations(this.getRequestExecutor());
     }
 
     return this._operations;
@@ -60,7 +63,7 @@ export class DocumentStore implements IDocumentStore {
   constructor(url: string, defaultDatabase: string, apiKey?: string) {
     this.url = url;
     this._database = defaultDatabase;
-    this.apiKey = apiKey;
+    this._apiKey = apiKey;
   }
 
   static create(url: string, defaultDatabase: string, apiKey?: string): IDocumentStore {
@@ -89,7 +92,7 @@ export class DocumentStore implements IDocumentStore {
     this.assertInitialize();
 
     let dbName: string = database || this._database;
-    let executor: RequestsExecutor = this.getRequestsExecutor(dbName);
+    let executor: RequestExecutor = this.getRequestExecutor(dbName);
 
     this.sessionId = uuid();
     
@@ -119,7 +122,7 @@ export class DocumentStore implements IDocumentStore {
     }
   }
 
-  protected createRequestsExecutor(database?: string): RequestsExecutor {
-    return new RequestsExecutor(this.url, database || this._database, this.apiKey, this.conventions);
+  protected createRequestExecutor(database?: string): RequestExecutor {
+    return new RequestExecutor(this.url, database || this._database, this._apiKey, this.conventions);
   }
 }
