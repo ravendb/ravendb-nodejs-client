@@ -21,6 +21,7 @@ import {QueryOperator} from "./QueryOperator";
 import {IRavenObject} from "../../Database/IRavenObject";
 import {Serializer} from "../../Json/Serializer";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
+import {ConcurrencyCheckMode, ConcurrencyCheckModes} from "../../Database/ConcurrencyCheckMode";
 
 export class DocumentSession implements IDocumentSession {
   protected database: string;
@@ -146,9 +147,9 @@ export class DocumentSession implements IDocumentSession {
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
-  public async delete<T extends Object = IRavenObject>(keyOrDocument: string, callback?: EmptyCallback): Promise<void>;
-  public async delete<T extends Object = IRavenObject>(keyOrDocument: T, callback?: EmptyCallback): Promise<void>;
-  public async delete<T extends Object = IRavenObject>(keyOrDocument: string | T, callback?: EmptyCallback): Promise<void> {
+  public async delete<T extends Object = IRavenObject>(keyOrDocument: string, expectedEtag?: number, callback?: EmptyCallback): Promise<void>;
+  public async delete<T extends Object = IRavenObject>(keyOrDocument: T, expectedEtag?: number, callback?: EmptyCallback): Promise<void>;
+  public async delete<T extends Object = IRavenObject>(keyOrDocument: string | T, expectedEtag?: number, callback?: EmptyCallback): Promise<void> {
     return BluebirdPromise.resolve()
       .then(() => {
         const conventions = this.conventions;
@@ -171,16 +172,22 @@ export class DocumentSession implements IDocumentSession {
         }
 
         if (!document) {
-          this.deferCommands.add(new DeleteCommandData(key));
+          this.deferCommands.add(new DeleteCommandData(key, expectedEtag));
         } else {
           if (!this.rawEntitiesAndMetadata.has(document)) {
             return BluebirdPromise.reject(new InvalidOperationException('Document is not associated with the session, cannot delete unknown document instance'));
           }
 
-          ({originalMetadata, key} = this.rawEntitiesAndMetadata.get(document));
+          let info: IStoredRawEntityInfo = this.rawEntitiesAndMetadata.get(document);
+          ({originalMetadata, key} = info);
 
           if ('Raven-Read-Only' in originalMetadata) {
             return BluebirdPromise.reject(new InvalidOperationException('Document is marked as read only and cannot be deleted'));
+          }
+
+          if (!TypeUtil.isNone(expectedEtag)) {
+            info.expectedEtag = expectedEtag;
+            this.rawEntitiesAndMetadata.set(document, info);
           }
 
           this.deletedDocuments.add(document);
@@ -192,18 +199,16 @@ export class DocumentSession implements IDocumentSession {
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
-  public async store<T extends Object = IRavenObject>(document: T, key?: string, etag?: number, forceConcurrencyCheck?: boolean,
-     callback?: EntityCallback<T>
-  ): Promise<T> {
+  public async store<T extends Object = IRavenObject>(document: T, key?: string, etag?: number, callback?: EntityCallback<T>): Promise<T> {
     let originalMetadata: object;
     let isNewDocument: boolean = false;
     const conventions: DocumentConventions = this.conventions;
 
-    return this.checkDocumentAndEtagBeforeStore<T>(document, key, etag, forceConcurrencyCheck)
+    return this.checkDocumentAndEtagBeforeStore<T>(document, key, etag)
       .then((isNew: boolean): T | BluebirdPromise.Thenable<T> => {
         if (isNewDocument = isNew) {
           originalMetadata = _.cloneDeep(document['@metadata'] || {});
-          return this.prepareDocumentIdBeforeStore<T>(document, key, etag, forceConcurrencyCheck);
+          return this.prepareDocumentIdBeforeStore<T>(document, key, etag);
         }  
 
         return document;
@@ -374,7 +379,7 @@ more responsive application.", maxRequests
       });
   }
 
-  protected checkDocumentAndEtagBeforeStore<T extends Object = IRavenObject>(document: T, key?: string, etag?: number, forceConcurrencyCheck?: boolean): BluebirdPromise<boolean> {
+  protected checkDocumentAndEtagBeforeStore<T extends Object = IRavenObject>(document: T, key?: string, etag?: number): BluebirdPromise<boolean> {
     if (!document || !TypeUtil.isObject(document)) {
       return BluebirdPromise.reject(
         new InvalidOperationException('Document must be set and be an instance of object')
@@ -390,12 +395,24 @@ more responsive application.", maxRequests
         if (!isNew) {
           let info: IStoredRawEntityInfo = this.rawEntitiesAndMetadata.get(document);
           let metadata: object = document['@metadata'];
+          let documentKey: string = key;
+          let checkMode: ConcurrencyCheckMode = ConcurrencyCheckModes.Forced;
 
-          if (!TypeUtil.isNone(etag)) {
+          if (TypeUtil.isNone(documentKey)) {
+            documentKey = conventions.getIdFromInstance<T>(document);
+          } 
+
+          if (TypeUtil.isNone(etag)) {
+            checkMode = ConcurrencyCheckModes.Disabled;
+          } else {
             info.etag = metadata['@etag'] = etag;
+
+            if (!TypeUtil.isNone(documentKey)) {
+              checkMode = ConcurrencyCheckModes.Auto;
+            }
           }
 
-          info.forceConcurrencyCheck = forceConcurrencyCheck;
+          info.concurrencyCheckMode = checkMode;
           this.rawEntitiesAndMetadata.set(document, info);
         }
 
@@ -403,7 +420,7 @@ more responsive application.", maxRequests
       });
   }
 
-  protected prepareDocumentIdBeforeStore<T extends Object = IRavenObject>(document: T, key?: string, etag?: number, forceConcurrencyCheck?: boolean): BluebirdPromise<T> {
+  protected prepareDocumentIdBeforeStore<T extends Object = IRavenObject>(document: T, key?: string, etag?: number): BluebirdPromise<T> {
     return BluebirdPromise.resolve(document)
       .then((document: T) => {
         const conventions: DocumentConventions = this.conventions;
@@ -455,7 +472,9 @@ more responsive application.", maxRequests
       const key: string = info.key;
       const rawEntity: object = _.omit(conventions.convertToRawEntity(document), conventions.idPropertyName);
 
-      if (this.conventions.defaultUseOptimisticConcurrency || info.forceConcurrencyCheck) {
+      if ((this.conventions.defaultUseOptimisticConcurrency && (ConcurrencyCheckModes.Disabled 
+        !== info.concurrencyCheckMode)) || (ConcurrencyCheckModes.Forced === info.concurrencyCheckMode)
+      ) {
         etag = info.etag || info.metadata['@etag'] || conventions.emptyEtag;
       }
 
@@ -469,18 +488,24 @@ more responsive application.", maxRequests
     this.deletedDocuments.forEach((document: IRavenObject) => {
       const key: string = this.rawEntitiesAndMetadata.get(document).key;
       let existingDocument: IRavenObject = null;
+      let info: IStoredRawEntityInfo = null;
       let etag: number = null;
 
       if (key in this.documentsById) {
-        existingDocument = this.documentsById[key];
+        existingDocument = this.documentsById[key];        
 
-        if (this.conventions.defaultUseOptimisticConcurrency && 
-          this.rawEntitiesAndMetadata.has(existingDocument)
-        ) {
-          etag = this.rawEntitiesAndMetadata.get(existingDocument).metadata['@etag'];
+        if (this.rawEntitiesAndMetadata.has(existingDocument)) {
+          info = this.rawEntitiesAndMetadata.get(existingDocument);
+
+          if (!TypeUtil.isNone(info.expectedEtag)) {
+            etag = info.expectedEtag;
+          } else if (this.conventions.defaultUseOptimisticConcurrency) {
+            etag = info.etag || info.metadata['@etag'];
+          }
+
+          this.rawEntitiesAndMetadata.delete(existingDocument);
         }
 
-        this.rawEntitiesAndMetadata.delete(existingDocument);
         delete this.documentsById[key];
       }
 
@@ -547,7 +572,7 @@ more responsive application.", maxRequests
     }
   }
 
-  protected onDocumentFetched<T extends Object = IRavenObject>(conversionResult?: IDocumentConversionResult<T>, forceConcurrencyCheck: boolean = false): void {
+  protected onDocumentFetched<T extends Object = IRavenObject>(conversionResult?: IDocumentConversionResult<T>): void {
     if (conversionResult) {
       const documentKey: string = this.conventions
         .getIdFromInstance(conversionResult.document)
@@ -572,7 +597,7 @@ more responsive application.", maxRequests
             metadata: conversionResult.metadata,
             etag: conversionResult.metadata['etag'] || null,
             key: documentKey,
-            forceConcurrencyCheck: forceConcurrencyCheck
+            concurrencyCheckMode: ConcurrencyCheckModes.Auto
           });
         }
       }

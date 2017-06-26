@@ -73,6 +73,18 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     return this;
   }
 
+  public get and(): IDocumentQuery<T> {
+    this.andAlso();
+
+    return this;
+  }
+
+  public get or(): IDocumentQuery<T> {
+    this.orElse();
+
+    return this;
+  }
+
   public selectFields(...args: string[]): IDocumentQuery<T> {
     if (args && args.length) {
       this.fetch = args;
@@ -169,8 +181,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     return (this.addSpace()
       .addStatement('(')
         .whereEquals<string>(fieldName, '*')
-        .andAlso()
-        .not.whereEquals<null>(fieldName, null) as DocumentQuery<T>)
+        .and.not.whereEquals<null>(fieldName, null) as DocumentQuery<T>)
     .addStatement(')');
   }
 

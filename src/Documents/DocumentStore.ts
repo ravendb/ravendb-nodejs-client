@@ -1,5 +1,5 @@
 import {IDocumentStore} from './IDocumentStore';
-import {IDocumentSession} from "./Session/IDocumentSession";
+import {IDocumentSession, ISessionOptions} from "./Session/IDocumentSession";
 import {DocumentSession} from "./Session/DocumentSession";
 import {RequestExecutor} from '../Http/Request/RequestExecutor';
 import {EntityKeyCallback} from '../Utility/Callbacks';
@@ -15,7 +15,6 @@ import {TypeUtil} from "../Utility/TypeUtil";
 
 export class DocumentStore implements IDocumentStore {
   protected url: string;  
-  protected sessionId: string;
   protected generator: IHiloKeyGenerator;
   protected initialized: boolean = false;
   protected _apiKey?: string;
@@ -88,15 +87,23 @@ export class DocumentStore implements IDocumentStore {
       .then((): IDocumentStore => this);
   }
 
-  public openSession(database?: string) : IDocumentSession {
+  public openSession(database?: string) : IDocumentSession;
+  public openSession(options?: ISessionOptions) : IDocumentSession;
+  public openSession(database?: string, options?: ISessionOptions) : IDocumentSession;
+  public openSession(databaseOrOptions?: string, options?: ISessionOptions) : IDocumentSession {
     this.assertInitialize();
+    let database: string = <string>databaseOrOptions;
+    let sessionOptions: ISessionOptions = <ISessionOptions>(options || {});
+
+    if (TypeUtil.isObject(databaseOrOptions)) {
+      sessionOptions = <ISessionOptions>databaseOrOptions;
+      database = sessionOptions.database;
+    }
 
     let dbName: string = database || this._database;
-    let executor: RequestExecutor = this.getRequestExecutor(dbName);
+    let executor: RequestExecutor = sessionOptions.requestExecutor || this.getRequestExecutor(dbName);
 
-    this.sessionId = uuid();
-    
-    return new DocumentSession(dbName, this, executor, this.sessionId);
+    return new DocumentSession(dbName, this, executor, uuid());
   }
 
   public async generateId(entity: object, documentTypeOrObjectType?: string | DocumentConstructor, database?: string, callback?: EntityKeyCallback): Promise<string> {

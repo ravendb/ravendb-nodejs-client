@@ -14,7 +14,7 @@ import * as RequestPromise from 'request-promise';
 export {AbstractCallback, EmptyCallback, EntityKeyCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback, QueryResultsCallback} from './Utility/Callbacks';
 export {PromiseResolver, PromiseResolve, PromiseReject} from './Utility/PromiseResolver';
 export {IDocumentStore} from './Documents/IDocumentStore';
-export {IDocumentSession} from './Documents/Session/IDocumentSession';
+export {IDocumentSession, ISessionOptions} from './Documents/Session/IDocumentSession';
 export {IDocumentQueryConditions} from './Documents/Session/IDocumentQueryConditions';
 export {IDocumentQuery, IDocumentQueryOptions} from './Documents/Session/IDocumentQuery';
 export {EscapeQueryOption, EscapeQueryOptions} from './Documents/Session/EscapeQueryOptions';
@@ -25,6 +25,7 @@ export {FieldIndexingOption, FieldIndexingOptions} from './Database/Indexes/Fiel
 export {IndexLockMode, IndexLockModes} from './Database/Indexes/IndexLockMode';
 export {SortOption, SortOptions} from './Database/Indexes/SortOption';
 export {FieldTermVectorOption, FieldTermVectorOptions} from './Database/Indexes/FieldTermVectorOption';
+export {ConcurrencyCheckMode, ConcurrencyCheckModes} from './Database/ConcurrencyCheckMode';
 export {IndexPriority, IndexPriorities} from './Database/Indexes/IndexPriority';
 export {StatusCode, StatusCodes} from './Http/Response/StatusCode';
 export {LuceneOperator, LuceneOperators} from './Documents/Lucene/LuceneOperator';

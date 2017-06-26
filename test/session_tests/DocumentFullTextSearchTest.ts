@@ -7,19 +7,21 @@ import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {DocumentStore} from "../../src/Documents/DocumentStore";
 import {IRavenObject} from "../../src/Database/IRavenObject";
 import {LastFm, LastFmAnalyzed} from "../TestClasses";
+import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 
 describe('Document full text search', () => {
   let store: IDocumentStore;
   let session: IDocumentSession;
+  let requestExecutor: RequestExecutor;
   let defaultDatabase: string, defaultUrl: string;
 
   beforeEach(function(): void {
-    ({defaultDatabase, defaultUrl} = (this.currentTest as IRavenObject));
+    ({defaultDatabase, defaultUrl, requestExecutor} = (this.currentTest as IRavenObject));
   });
 
   beforeEach(async () => {
     store = DocumentStore.create(defaultUrl, defaultDatabase).initialize();
-    session = store.openSession();
+    session = store.openSession({requestExecutor});
 
     const lastFmAnalyzed: LastFmAnalyzed = new LastFmAnalyzed(store.getRequestExecutor(defaultDatabase));
         
@@ -32,7 +34,7 @@ describe('Document full text search', () => {
 
   describe('Text search', () => {
     it('should search by single keyword', async() => {
-      const results: LastFm[] = await store.openSession()
+      const results: LastFm[] = await store.openSession({requestExecutor})
         .query<LastFm>({
           documentTypeOrObjectType: LastFm, 
           indexName: LastFmAnalyzed.name,
@@ -46,7 +48,7 @@ describe('Document full text search', () => {
     });
 
     it('should search by two keywords', async() => {
-      const results: LastFm[] = await store.openSession()
+      const results: LastFm[] = await store.openSession({requestExecutor})
         .query<LastFm>({
           documentTypeOrObjectType: LastFm, 
           indexName: LastFmAnalyzed.name,
@@ -60,7 +62,7 @@ describe('Document full text search', () => {
     });
 
     it('should search full text with boost', async () => {
-      const results: LastFm[] = await store.openSession()
+      const results: LastFm[] = await store.openSession({requestExecutor})
         .query<LastFm>({
           documentTypeOrObjectType: LastFm, 
           indexName: LastFmAnalyzed.name,

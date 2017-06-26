@@ -6,6 +6,7 @@ import {TypeUtil} from "../../Utility/TypeUtil";
 import * as _ from 'lodash';
 import {Serializer} from "../../Json/Serializer";
 import {IRavenObject} from "../../Database/IRavenObject";
+import {ConcurrencyCheckMode} from "../../Database/ConcurrencyCheckMode";
 
 export type DocumentConstructor<T extends Object = IRavenObject> = { new(...args: any[]): T; };
 
@@ -22,7 +23,8 @@ export interface IStoredRawEntityInfo {
   originalMetadata: object;
   key: string;
   etag?: number | null;
-  forceConcurrencyCheck: boolean;
+  expectedEtag?: number | null;
+  concurrencyCheckMode: ConcurrencyCheckMode;
 }
 
 export class DocumentConventions {

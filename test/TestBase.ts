@@ -31,6 +31,9 @@ before(() => {
 });
 
 beforeEach(async function() {
+  const dbDoc: DatabaseDocument = new DatabaseDocument
+    (defaultDatabase, {"Raven/DataDir": "test"});
+
   indexMap = [
     'from doc in docs ',
     'select new{',
@@ -41,23 +44,16 @@ beforeEach(async function() {
 
   index = new IndexDefinition("Testing", indexMap);
   
-  return requestExecutor.execute(
-    new CreateDatabaseCommand(
-      new DatabaseDocument(defaultDatabase, {"Raven/DataDir": "test"})
-    )
-  )
-  .then((): BluebirdPromise.Thenable<IRavenResponse> => requestExecutor.execute(
-    new PutIndexesCommand(index)
-  ))
-  .then(() => 
-    _.assign(this.currentTest, {
-      indexDefinition: index,
-      indexMap: indexMap,
-      requestExecutor: requestExecutor,
-      defaultUrl: defaultUrl,
-      defaultDatabase: defaultDatabase
-    })
-  );
+  await requestExecutor.execute(new CreateDatabaseCommand(dbDoc));
+  await requestExecutor.execute(new PutIndexesCommand(index));
+
+  _.assign(this.currentTest, {
+    indexDefinition: index,
+    indexMap: indexMap,
+    requestExecutor: requestExecutor,
+    defaultUrl: defaultUrl,
+    defaultDatabase: defaultDatabase
+  });
 });
 
 afterEach(async function() {
