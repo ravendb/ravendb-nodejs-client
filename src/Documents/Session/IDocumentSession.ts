@@ -3,6 +3,12 @@ import {IDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
 import {DocumentConventions, DocumentConstructor} from '../Conventions/DocumentConventions';
 import {EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
 import {IRavenObject} from "../../Database/IRavenObject";
+import {RequestExecutor} from '../../Http/Request/RequestExecutor';
+
+export interface ISessionOptions {
+  database?: string;
+  requestExecutor?: RequestExecutor;
+}
 
 export interface IDocumentSession {
   numberOfRequestsInSession: number;

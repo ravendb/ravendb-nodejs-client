@@ -8,11 +8,13 @@ import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {IRavenObject} from "../../src/Database/IRavenObject";
 import {DocumentConstructor} from "../../src/Documents/Conventions/DocumentConventions";
 import {Foo, TestConversion} from "../TestClasses";
+import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 
 describe('Document conversion test', () => {
   const now: Date = new Date();
   let store: IDocumentStore;
   let session: IDocumentSession;
+  let requestExecutor: RequestExecutor;
   let defaultDatabase: string, defaultUrl: string;
 
   const nestedObjectTypes: IRavenObject<DocumentConstructor> = {
@@ -50,12 +52,12 @@ describe('Document conversion test', () => {
   };
 
   beforeEach(function (): void {
-    ({defaultDatabase, defaultUrl} = (this.currentTest as IRavenObject));
+    ({defaultDatabase, defaultUrl, requestExecutor} = (this.currentTest as IRavenObject));
   });
 
   beforeEach(async () => {
     store = DocumentStore.create(defaultUrl, defaultDatabase).initialize();
-    session = store.openSession();
+    session = store.openSession({requestExecutor});
 
     await session.store<TestConversion>(session.create<TestConversion>(makeDocument('TestConversion/1'))); 
     await session.store<TestConversion>(session.create<TestConversion>(makeDocument('TestConversion/2', new Date(now.getTime() + 1000 * 60 * 60 * 24)))); 
@@ -67,7 +69,7 @@ describe('Document conversion test', () => {
       let doc: TestConversion;
       const key: string = 'TestConversion/1';
 
-      session = store.openSession();
+      session = store.openSession({requestExecutor});
       doc = await session.load<TestConversion>(key, TestConversion, [], nestedObjectTypes);
       
       checkDoc(key, doc);
@@ -77,12 +79,12 @@ describe('Document conversion test', () => {
       let doc: TestConversion;
       const key: string = 'TestingConversion/New';
 
-      session = store.openSession();
+      session = store.openSession({requestExecutor});
 
       await session.store<TestConversion>(session.create<TestConversion>(makeDocument(key)));  
       await session.saveChanges();
 
-      session = store.openSession();
+      session = store.openSession({requestExecutor});
       doc = await session.load<TestConversion>(key, TestConversion, [], nestedObjectTypes);
 
       checkDoc(key, doc);
@@ -91,7 +93,7 @@ describe('Document conversion test', () => {
     it('should convert on query', async () => {
       let doc: TestConversion;
       let docs: TestConversion[];
-      session = store.openSession();
+      session = store.openSession({requestExecutor});
 
       docs = await session.query<TestConversion>({
         documentTypeOrObjectType: TestConversion,

@@ -7,19 +7,21 @@ import {DocumentStore} from "../../src/Documents/DocumentStore";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {Product} from "../TestClasses";
+import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 
 describe('Document delete test', () => {
   let store: IDocumentStore;
   let session: IDocumentSession;
+  let requestExecutor: RequestExecutor;
   let defaultDatabase: string, defaultUrl: string;
 
   beforeEach(function(): void {
-    ({defaultDatabase, defaultUrl} = (this.currentTest as IRavenObject));
+    ({defaultDatabase, defaultUrl, requestExecutor} = (this.currentTest as IRavenObject));
   });
 
   beforeEach(async () => {
     store = DocumentStore.create(defaultUrl, defaultDatabase).initialize();
-    session = store.openSession();
+    session = store.openSession({requestExecutor});
 
     for (let id of [101, 10, 106, 107]) {
       let product: Product = new Product(`products/${id}`, 'test');
@@ -33,7 +35,7 @@ describe('Document delete test', () => {
     it('should delete with key with save session', async() => {
       let product: Product;
       const key: string = "products/101";      
-      session = store.openSession();
+      session = store.openSession({requestExecutor});
 
       await session.delete<Product>(key);
       await session.saveChanges();
@@ -45,7 +47,7 @@ describe('Document delete test', () => {
     it('should delete with key without save session', async() => {
       let product: Product;
       const key: string = "products/10";
-      session = store.openSession();
+      session = store.openSession({requestExecutor});
 
       await session.delete<Product>(key);
       product = await session.load<Product>(key, Product);
@@ -56,7 +58,7 @@ describe('Document delete test', () => {
     it('should fail trying delete document by key after it has been changed', async() => {
       let product: Product;
       const key: string = "products/106";
-      session = store.openSession();
+      session = store.openSession({requestExecutor});
 
       product = await session.load<Product>(key, Product);
       product.name = "testing";
@@ -67,7 +69,7 @@ describe('Document delete test', () => {
     it('should delete document after it has been changed and save session', async() => {
       let product: Product;
       const key: string = "products/107";
-      session = store.openSession();
+      session = store.openSession({requestExecutor});
 
       product = await session.load<Product>(key, Product);
       product.name = "testing";

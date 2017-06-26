@@ -14,7 +14,7 @@ import * as RequestPromise from 'request-promise';
 export {AbstractCallback, EmptyCallback, EntityKeyCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback, QueryResultsCallback} from './Utility/Callbacks';
 export {PromiseResolver, PromiseResolve, PromiseReject} from './Utility/PromiseResolver';
 export {IDocumentStore} from './Documents/IDocumentStore';
-export {IDocumentSession} from './Documents/Session/IDocumentSession';
+export {IDocumentSession, ISessionOptions} from './Documents/Session/IDocumentSession';
 export {IDocumentQueryConditions} from './Documents/Session/IDocumentQueryConditions';
 export {IDocumentQuery, IDocumentQueryOptions} from './Documents/Session/IDocumentQuery';
 export {EscapeQueryOption, EscapeQueryOptions} from './Documents/Session/EscapeQueryOptions';
