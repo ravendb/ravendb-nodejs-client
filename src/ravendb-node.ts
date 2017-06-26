@@ -25,6 +25,7 @@ export {FieldIndexingOption, FieldIndexingOptions} from './Database/Indexes/Fiel
 export {IndexLockMode, IndexLockModes} from './Database/Indexes/IndexLockMode';
 export {SortOption, SortOptions} from './Database/Indexes/SortOption';
 export {FieldTermVectorOption, FieldTermVectorOptions} from './Database/Indexes/FieldTermVectorOption';
+export {ConcurrencyCheckMode, ConcurrencyCheckModes} from './Database/ConcurrencyCheckMode';
 export {IndexPriority, IndexPriorities} from './Database/Indexes/IndexPriority';
 export {StatusCode, StatusCodes} from './Http/Response/StatusCode';
 export {LuceneOperator, LuceneOperators} from './Documents/Lucene/LuceneOperator';

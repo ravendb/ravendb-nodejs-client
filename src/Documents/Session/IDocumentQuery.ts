@@ -18,6 +18,8 @@ export interface IDocumentQueryOptions<T> {
 }
 
 export interface IDocumentQuery<T> {
+  or: IDocumentQuery<T>;
+  and: IDocumentQuery<T>;
   not: IDocumentQuery<T>;
   selectFields(...args: string[]): IDocumentQuery<T>;
   search(fieldName: string, searchTerms: string | string[], escapeQueryOptions?: EscapeQueryOption, boost?: number): IDocumentQuery<T>;
