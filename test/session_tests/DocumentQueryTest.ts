@@ -44,7 +44,7 @@ describe('Document query test', () => {
   describe('Index checking', () => {
     it('should query by dynamic index', async () => {
       const results: Product[] = await store.openSession({requestExecutor}).query<Product>({
-        documentTypeOrObjectType: Product
+        documentType: Product
       }).whereEquals<string>('name', 'test101').get();
         
       expect(results[0].name).to.equals('test101');
@@ -52,7 +52,7 @@ describe('Document query test', () => {
 
     it('should query by double index joined by "OR" operator', async () => {
       const results: Product[] = await store.openSession({requestExecutor}).query<Product>({
-        documentTypeOrObjectType: Product
+        documentType: Product
       })
       .whereEquals<string>('name', 'test101')
       .whereEquals<number>('uid', 4).get();
@@ -62,7 +62,7 @@ describe('Document query test', () => {
 
     it('should query by double index joined by "AND" operator', async() => {
       const results: Product[] = await store.openSession({requestExecutor}).query<Product>({
-        documentTypeOrObjectType: Product,
+        documentType: Product,
         waitForNonStaleResults: true,
         usingDefaultOperator: QueryOperators.AND
       })
@@ -74,7 +74,7 @@ describe('Document query test', () => {
 
     it('should query by whereIn', async() => {
       const results: Product[] = await store.openSession({requestExecutor}).query<Product>({
-        documentTypeOrObjectType: Product
+        documentType: Product
       }).whereIn<string>('name', ['test101', 'test107', 'test106']).get();
       
       expect(results).to.have.lengthOf(4);      
@@ -82,7 +82,7 @@ describe('Document query test', () => {
 
     it('should query by startsWith', async() => {
       const results: Product[] = await store.openSession({requestExecutor}).query<Product>({
-        documentTypeOrObjectType: Product
+        documentType: Product
       }).whereStartsWith('name', 'n').get();
       
       expect(results[0].name).to.equals('new_testing');
@@ -90,7 +90,7 @@ describe('Document query test', () => {
 
     it('should query by endsWith', async() => {
       const results: Product[] = await store.openSession({requestExecutor}).query<Product>({
-        documentTypeOrObjectType: Product
+        documentType: Product
       }).whereEndsWith('name', '7').get();
       
       expect(results[0].name).to.equals('test107');
@@ -113,7 +113,7 @@ describe('Document query test', () => {
 
     it('should query with index', async() => {
       const results: Product[] = await store.openSession({requestExecutor}).query<Product>({
-        documentTypeOrObjectType: Product,
+        documentType: Product,
         indexName: 'Testing_Sort',
         waitForNonStaleResults: true
       }).where({
@@ -125,7 +125,7 @@ describe('Document query test', () => {
 
     it('should query by between', async() => {
       const results: Product[] = await store.openSession({requestExecutor}).query<Product>({
-        documentTypeOrObjectType: Product,
+        documentType: Product,
         indexName: 'Testing_Sort',
         waitForNonStaleResults: true
       }).whereBetween<number>('uid', 2, 4).get();
@@ -135,7 +135,7 @@ describe('Document query test', () => {
 
     it('should query by between or equal', async() => {
       const results: Product[] = await store.openSession({requestExecutor}).query<Product>({
-        documentTypeOrObjectType: Product,
+        documentType: Product,
         indexName: 'Testing_Sort',
         waitForNonStaleResults: true
       }).whereBetweenOrEqual<number>('uid', 2, 4).get();
@@ -181,7 +181,7 @@ describe('Document query test', () => {
 
     it('should query with nested objects', async() => {
       const results: Company[] = await store.openSession({requestExecutor}).query<Company>({
-        documentTypeOrObjectType: Company,
+        documentType: Company,
         nestedObjectTypes: {product: Product}
       }).whereEquals<string>('name', 'withNesting').get();
 
@@ -191,7 +191,7 @@ describe('Document query test', () => {
 
     it('should make query with fetch terms', async() => {
       const results: Product[] = await store.openSession({requestExecutor}).query<Product>({
-        documentTypeOrObjectType: Product,
+        documentType: Product,
         waitForNonStaleResults: true,
         indexName: 'Testing_Sort'
       })

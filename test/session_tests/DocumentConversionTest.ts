@@ -96,7 +96,7 @@ describe('Document conversion test', () => {
       session = store.openSession({requestExecutor});
 
       docs = await session.query<TestConversion>({
-        documentTypeOrObjectType: TestConversion,
+        documentType: TestConversion,
         nestedObjectTypes: nestedObjectTypes
       })
       .whereGreaterThan<Date>('date', now)

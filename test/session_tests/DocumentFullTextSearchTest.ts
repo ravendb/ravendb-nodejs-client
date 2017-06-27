@@ -36,7 +36,7 @@ describe('Document full text search', () => {
     it('should search by single keyword', async() => {
       const results: LastFm[] = await store.openSession({requestExecutor})
         .query<LastFm>({
-          documentTypeOrObjectType: LastFm, 
+          documentType: LastFm, 
           indexName: LastFmAnalyzed.name,
           waitForNonStaleResults: true
         })
@@ -50,7 +50,7 @@ describe('Document full text search', () => {
     it('should search by two keywords', async() => {
       const results: LastFm[] = await store.openSession({requestExecutor})
         .query<LastFm>({
-          documentTypeOrObjectType: LastFm, 
+          documentType: LastFm, 
           indexName: LastFmAnalyzed.name,
           waitForNonStaleResults: true
         })
@@ -64,7 +64,7 @@ describe('Document full text search', () => {
     it('should search full text with boost', async () => {
       const results: LastFm[] = await store.openSession({requestExecutor})
         .query<LastFm>({
-          documentTypeOrObjectType: LastFm, 
+          documentType: LastFm, 
           indexName: LastFmAnalyzed.name,
           waitForNonStaleResults: true
         })

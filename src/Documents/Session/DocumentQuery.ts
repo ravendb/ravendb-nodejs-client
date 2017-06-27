@@ -13,7 +13,7 @@ import {StringUtil} from "../../Utility/StringUtil";
 import {QueryString} from "../../Http/QueryString";
 import {ArrayUtil} from "../../Utility/ArrayUtil";
 import {QueryOperators, QueryOperator} from "./QueryOperator";
-import {DocumentConventions, DocumentConstructor, IDocumentConversionResult} from "../Conventions/DocumentConventions";
+import {DocumentConventions, DocumentConstructor, IDocumentConversionResult, DocumentType} from "../Conventions/DocumentConventions";
 import * as BluebirdPromise from 'bluebird'
 import * as moment from "moment";
 import {IndexQuery} from "../../Database/Indexes/IndexQuery";
@@ -43,12 +43,12 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   protected withStatistics: boolean = false;
   protected usingDefaultOperator?: QueryOperator = null;
   protected waitForNonStaleResults: boolean = false;
-  protected objectType?: DocumentConstructor<T> = null;
+  protected documentType?: DocumentType<T> = null;
   protected nestedObjectTypes: IRavenObject<DocumentConstructor> = {};
   private _take?: number = null;
   private _skip?: number = null;
   
-  constructor(session: IDocumentSession, requestExecutor: RequestExecutor, documentTypeOrObjectType?: string | DocumentConstructor<T>, indexName?: string, usingDefaultOperator
+  constructor(session: IDocumentSession, requestExecutor: RequestExecutor, documentType?: DocumentType<T>, indexName?: string, usingDefaultOperator
     ?: QueryOperator, waitForNonStaleResults: boolean = false, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, withStatistics: boolean = false
   ) {
     super();
@@ -59,11 +59,11 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     this.usingDefaultOperator = usingDefaultOperator;
     this.waitForNonStaleResults = waitForNonStaleResults;
     this.nestedObjectTypes = nestedObjectTypes || {} as IRavenObject<DocumentConstructor>;
-    this.objectType = session.conventions.getObjectType(documentTypeOrObjectType);
+    this.documentType = documentType;
     this.indexName = indexName ||  "dynamic";
     
-    if (!indexName && documentTypeOrObjectType) {
-      this.indexName += "/" + session.conventions.getDocumentsCollection(documentTypeOrObjectType);
+    if (!indexName && documentType) {
+      this.indexName += "/" + session.conventions.getCollectionName(documentType);
     }
   }
 
@@ -259,7 +259,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
         commandResponse.Results.forEach((result: object) => {
           const conversionResult: IDocumentConversionResult<T> = this.session.conventions
-              .convertToDocument<T>(result, this.objectType, this.nestedObjectTypes || {});
+              .convertToDocument<T>(result, this.documentType, this.nestedObjectTypes || {});
 
           results.push(conversionResult.document);
 
@@ -346,7 +346,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
     const session: IDocumentSession = this.session;
     const conventions: DocumentConventions = session.conventions;
-    const endTime: number = moment().unix() + conventions.timeout;
+    const endTime: number = moment().unix() + conventions.requestTimeout;
     const query: IndexQuery = new IndexQuery(this.queryBuilder, this._take, this._skip, this.usingDefaultOperator, queryOptions);
     const queryCommand: QueryCommand = new QueryCommand(this.indexName, query, conventions, this.includes);
 

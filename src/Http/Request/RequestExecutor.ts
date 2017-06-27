@@ -46,7 +46,7 @@ export class RequestExecutor {
     };
 
     setTimeout(() => this.updateFailingNodesStatuses(), 60 * 1000);
-    setTimeout(() => this.getReplicationTopology(), 1 * 1000);
+    conventions.topologyUpdatesEnabled && setTimeout(() => this.getReplicationTopology(), 1 * 1000);
   }
 
   public execute(command: RavenCommand): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> {
