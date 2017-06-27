@@ -103,11 +103,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
       : (searchTerms as string);
 
     quotedTerms = QueryString.encode(quotedTerms);
-    this.addLuceneCondition<string>(fieldName, quotedTerms, LuceneOperators.Search, escapeQueryOptions || EscapeQueryOptions.RawQuery);
-
-    if (boost != 1) {
-      this.addStatement(StringUtil.format("^{0}", boost));
-    }
+    this.addLuceneCondition<string>(fieldName, quotedTerms, LuceneOperators.Search, escapeQueryOptions || EscapeQueryOptions.RawQuery, boost);
 
     return this;
   }
@@ -310,10 +306,11 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   }
 
   protected addLuceneCondition<C extends LuceneConditionValue>(fieldName: string, condition: C,
-    operator?: LuceneOperator, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll
+    operator?: LuceneOperator, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll,
+    boost: number = 1
   ): DocumentQuery<T> {
     const luceneCondition: string = LuceneBuilder.buildCondition<C>(this.session.conventions, fieldName,
-      condition, operator, escapeQueryOptions);
+      condition, operator, escapeQueryOptions, boost);
 
     this.addSpace();
 
