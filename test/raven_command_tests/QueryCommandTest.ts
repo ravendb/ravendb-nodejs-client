@@ -18,9 +18,11 @@ describe('DocumentSession', () => {
   let requestExecutor: RequestExecutor;
   const conventions: DocumentConventions = new DocumentConventions();
 
-  const indexQuery = (): IndexQuery => new IndexQuery(
-    tag, 128, 0, QueryOperators.OR, 
-    {wait_for_non_stale_results: true}
+  const waitForNonStaleResults = (): BluebirdPromise.Thenable<any> | void => 
+    requestExecutor
+      .execute(new QueryCommand(indexName, new IndexQuery(tag), conventions))
+      .then((result: IRavenResponse) => !result.IsStale ? (void 0)
+      : BluebirdPromise.delay(120).then(() => waitForNonStaleResults())
   );
 
   beforeEach(function(): void {
@@ -35,21 +37,22 @@ describe('DocumentSession', () => {
           '@collection': 'Products'
         }
       }))
+      .then(() => waitForNonStaleResults())
   );
 
   describe('Query Command', () => {
     it('should do query', async () => requestExecutor
-      .execute(new QueryCommand(indexName, indexQuery(), conventions))
+      .execute(new QueryCommand(indexName, new IndexQuery(tag), conventions))
       .then((result: IRavenResponse) => expect(result.Results[0]).to.have.property('Name', 'test'))
     );
 
     it('should query only metadata', async () => requestExecutor
-      .execute(new QueryCommand(indexName, indexQuery(), conventions, null, true))
+      .execute(new QueryCommand(indexName, new IndexQuery(tag), conventions, null, true))
       .then((result: IRavenResponse) => expect(result.Results[0]).not.to.have.property('Name'))
     );
 
     it('should query only documents', async () => requestExecutor
-      .execute(new QueryCommand(indexName, indexQuery(), conventions, null, null, true))
+      .execute(new QueryCommand(indexName, new IndexQuery(tag), conventions, null, null, true))
       .then((result: IRavenResponse) => expect(result.Results[0]).not.to.have.property('@metadata'))
     );
 

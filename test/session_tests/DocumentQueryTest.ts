@@ -38,7 +38,7 @@ describe('Document query test', () => {
     await session.store<Product>(session.create<Product>(new Product('Products/108', 'new_testing', 90, 'd')));
     await session.store<Order>(session.create<Order>(new Order('Orders/105', 'testing_order', 92, 'Products/108')));
     await session.store<Company>(session.create<Company>(new Company('Companies/1', 'withNesting', new Product(null, 'testing_order', 4))));
-    await session.saveChanges();
+    await session.saveChanges();    
   });
 
   describe('Index checking', () => {

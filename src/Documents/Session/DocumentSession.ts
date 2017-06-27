@@ -74,7 +74,7 @@ export class DocumentSession implements IDocumentSession {
       Serializer.fromJSON<T>(document, (attributesOrDocument as object) || {}, {}, nestedObjectTypes, conventions);
     }
 
-    document['@metadata'] = conventions.buildDefaultMetadata(document, documentType);
+    document['@metadata'] = conventions.buildDefaultMetadata(document, docType);
     return document as T;
   }
 

@@ -27,9 +27,10 @@ export class Serializer {
       }
     };
 
-    const filterMaps: () => void = (): void => {
+    const prepareMaps: () => void = (): void => {
       Object.keys(mapping).forEach((key: string) => 
-        ('function' === (typeof mapping[key]) || (delete mapping[key]))
+        (('function' === (typeof mapping[key]))  || ('function' === (typeof (mapping[key] 
+        = conventions.getDocumentConstructor(mapping[key])))) || (delete mapping[key]))
       );
     }
     
@@ -69,7 +70,7 @@ export class Serializer {
       mergeMaps(nestedObjectTypes);
     }
 
-    filterMaps();
+    prepareMaps();
 
     Object.keys(sourceObject).forEach((key: string) => {
       let source: any = sourceObject[key];

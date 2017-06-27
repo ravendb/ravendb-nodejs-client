@@ -338,17 +338,16 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     const queryOptions: IOptionsSet = {
       sort_hints: this.sortHints,
       sort_fields: this.sortFields,
-      fetch: this.fetch,
-      wait_for_non_stale_results: this.waitForNonStaleResults
+      fetch: this.fetch
     };
 
     this.emit(DocumentQuery.EVENT_DOCUMENTS_QUERIED);
 
     const session: IDocumentSession = this.session;
     const conventions: DocumentConventions = session.conventions;
-    const endTime: number = moment().unix() + conventions.requestTimeout;
     const query: IndexQuery = new IndexQuery(this.queryBuilder, this._take, this._skip, this.usingDefaultOperator, queryOptions);
     const queryCommand: QueryCommand = new QueryCommand(this.indexName, query, conventions, this.includes);
+    const endTime: number = moment().unix() + Math.max(conventions.requestTimeout, query.waitForNonStaleResultsTimeout);
 
     const request = () => this.requestExecutor
       .execute(queryCommand)          
