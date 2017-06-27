@@ -5,7 +5,7 @@ import {IDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
 import {DocumentQuery} from "./DocumentQuery";
 import {IDocumentStore} from '../IDocumentStore';
 import {RequestExecutor} from '../../Http/Request/RequestExecutor';
-import {DocumentConventions, DocumentConstructor, IDocumentConversionResult, IStoredRawEntityInfo} from '../Conventions/DocumentConventions';
+import {DocumentConventions, DocumentConstructor, IDocumentConversionResult, IStoredRawEntityInfo, DocumentType} from '../Conventions/DocumentConventions';
 import {EmptyCallback, EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
 import {PromiseResolver} from '../../Utility/PromiseResolver';
 import {TypeUtil} from "../../Utility/TypeUtil";
@@ -60,26 +60,27 @@ export class DocumentSession implements IDocumentSession {
     this.deferCommands = new Set<RavenCommandData>();
   }
 
-  public create<T extends Object = IRavenObject>(attributesOrDocument?: object | T, documentTypeOrObjectType?: string | DocumentConstructor<T>, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T {
+  public create<T extends Object = IRavenObject>(attributesOrDocument?: object | T, documentType?: DocumentType<T>, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T {
     let document: T = attributesOrDocument as T;
+    let docType: DocumentType<T> = documentType;
     const conventions: DocumentConventions = this.documentStore.conventions;
 
     if (('object' === (typeof attributesOrDocument)) && ('Object' !== attributesOrDocument.constructor.name)) {
-      documentTypeOrObjectType || (documentTypeOrObjectType = attributesOrDocument.constructor as DocumentConstructor<T>);
+      docType || (docType = attributesOrDocument.constructor as DocumentType<T>);
     } else {
-      const objectType: DocumentConstructor<T> | null = conventions.getObjectType(documentTypeOrObjectType);
+      const documentCtor: DocumentConstructor<T> | null = conventions.getDocumentConstructor(documentType);
       
-      document = objectType ? new objectType() : ({} as T);
-      Serializer.fromJSON<T>(document, (attributesOrDocument as object) || {}, {}, nestedObjectTypes);
+      document = documentCtor ? new documentCtor() : ({} as T);
+      Serializer.fromJSON<T>(document, (attributesOrDocument as object) || {}, {}, nestedObjectTypes, conventions);
     }
 
-    document['@metadata'] = conventions.buildDefaultMetadata(document, documentTypeOrObjectType);
+    document['@metadata'] = conventions.buildDefaultMetadata(document, docType);
     return document as T;
   }
 
-  public async load<T extends Object = IRavenObject>(keyOrKeys: string, documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntityCallback<T>): Promise<T>;
-  public async load<T extends Object = IRavenObject>(keyOrKeys: string[], documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntitiesArrayCallback<T>): Promise<T[]>;
-  public async load<T extends Object = IRavenObject>(keyOrKeys: string | string[], documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes: IRavenObject<DocumentConstructor> = {}, callback?: EntityCallback<T>
+  public async load<T extends Object = IRavenObject>(keyOrKeys: string, documentType?: DocumentType<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntityCallback<T>): Promise<T>;
+  public async load<T extends Object = IRavenObject>(keyOrKeys: string[], documentType?: DocumentType<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntitiesArrayCallback<T>): Promise<T[]>;
+  public async load<T extends Object = IRavenObject>(keyOrKeys: string | string[], documentType?: DocumentType<T>, includes?: string[], nestedObjectTypes: IRavenObject<DocumentConstructor> = {}, callback?: EntityCallback<T>
     | EntitiesArrayCallback<T>
   ): Promise<T | T[]> {
     if (_.isEmpty(keyOrKeys)) {
@@ -96,7 +97,6 @@ export class DocumentSession implements IDocumentSession {
 
     if (!includes) {
       const conventions: DocumentConventions = this.documentStore.conventions;
-      const objectType: DocumentConstructor<T> | null = conventions.getObjectType(documentTypeOrObjectType);
 
       Array.from<string>(idsOfNonExistingDocuments)
         .filter((key: string): boolean => key 
@@ -105,7 +105,7 @@ export class DocumentSession implements IDocumentSession {
         .forEach((key: string) => {
           this.makeDocument(
             this.includedRawEntitiesByKey[key], 
-            objectType, nestedObjectTypes
+            documentType, nestedObjectTypes
           );
 
           delete this.includedRawEntitiesByKey[key];
@@ -127,7 +127,7 @@ export class DocumentSession implements IDocumentSession {
         if (idsOfNonExistingDocuments.size) {
           return this.fetchDocuments<T>(
             Array.from<string>(idsOfNonExistingDocuments), 
-            documentTypeOrObjectType, includes, nestedObjectTypes
+            documentType, includes, nestedObjectTypes
           );
         }
       })
@@ -153,6 +153,7 @@ export class DocumentSession implements IDocumentSession {
     return BluebirdPromise.resolve()
       .then(() => {
         const conventions = this.conventions;
+        let info: IStoredRawEntityInfo;
         let key: string, document: T = null;
         let originalMetadata: object;
 
@@ -168,7 +169,8 @@ export class DocumentSession implements IDocumentSession {
           }            
         } else {
           document = keyOrDocument as T;
-          key = conventions.getIdFromInstance<T>(document);
+          info = this.rawEntitiesAndMetadata.get(document);
+          key = conventions.getIdFromDocument<T>(document, <DocumentType<T>>info.documentType);
         }
 
         if (!document) {
@@ -178,7 +180,6 @@ export class DocumentSession implements IDocumentSession {
             return BluebirdPromise.reject(new InvalidOperationException('Document is not associated with the session, cannot delete unknown document instance'));
           }
 
-          let info: IStoredRawEntityInfo = this.rawEntitiesAndMetadata.get(document);
           ({originalMetadata, key} = info);
 
           if ('Raven-Read-Only' in originalMetadata) {
@@ -215,7 +216,7 @@ export class DocumentSession implements IDocumentSession {
       })
       .then((document: T): T | BluebirdPromise.Thenable<T> => {      
         if (isNewDocument) {
-          const key: string = conventions.getIdFromInstance(document);
+          const key: string = conventions.getIdFromDocument(document);
 
           for (let command of this.deferCommands.values()) {
             if (command.documentKey === key) {
@@ -284,7 +285,7 @@ export class DocumentSession implements IDocumentSession {
     let includes: string[] = null;
     let withStatistics: boolean = null;
     let indexName: string = null;
-    let documentTypeOrObjectType: string | DocumentConstructor<T> = null;
+    let documentType: DocumentType<T> = null;
     let nestedObjectTypes: IRavenObject<DocumentConstructor> = {} as IRavenObject<DocumentConstructor>;
 
     if (options) {
@@ -294,10 +295,10 @@ export class DocumentSession implements IDocumentSession {
       withStatistics = options.withStatistics || null;
       nestedObjectTypes = options.nestedObjectTypes || {};
       indexName = options.indexName || null;
-      documentTypeOrObjectType = options.documentTypeOrObjectType || null;
+      documentType = options.documentType || null;
     }
 
-    const query: DocumentQuery<T> = new DocumentQuery<T>(this, this.requestExecutor, documentTypeOrObjectType, indexName,
+    const query: DocumentQuery<T> = new DocumentQuery<T>(this, this.requestExecutor, documentType, indexName,
       usingDefaultOperator, waitForNonStaleResults, includes, nestedObjectTypes, withStatistics
     );
 
@@ -340,7 +341,7 @@ more responsive application.", maxRequests
     }
   }
 
-  protected fetchDocuments<T extends Object = IRavenObject>(keys: string[], documentTypeOrObjectType?: string | DocumentConstructor<T>, includes?: string[], nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): BluebirdPromise<T[]> {
+  protected fetchDocuments<T extends Object = IRavenObject>(keys: string[], documentType?: DocumentType<T>, includes?: string[], nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): BluebirdPromise<T[]> {
     this.incrementRequestsCount();
 
     return this.requestExecutor
@@ -350,7 +351,6 @@ more responsive application.", maxRequests
         let responseIncludes: object[] = [];
         const commandResponse: IRavenResponse = response;
         const conventions: DocumentConventions = this.documentStore.conventions;
-        const objectType: DocumentConstructor<T> | null = conventions.getObjectType(documentTypeOrObjectType);
 
         if (commandResponse) { 
           if (('Results' in commandResponse) && Array.isArray(commandResponse.Results)) {
@@ -368,7 +368,7 @@ more responsive application.", maxRequests
             return null;
           }
 
-          return this.makeDocument<T>(result, objectType, nestedObjectTypes);  
+          return this.makeDocument<T>(result, documentType, nestedObjectTypes);  
         });
 
         if (responseIncludes.length) {
@@ -399,7 +399,7 @@ more responsive application.", maxRequests
           let checkMode: ConcurrencyCheckMode = ConcurrencyCheckModes.Forced;
 
           if (TypeUtil.isNone(documentKey)) {
-            documentKey = conventions.getIdFromInstance<T>(document);
+            documentKey = conventions.getIdFromDocument<T>(document, <DocumentType<T>>info.documentType);
           } 
 
           if (TypeUtil.isNone(etag)) {
@@ -429,11 +429,11 @@ more responsive application.", maxRequests
         let documentKey: string = key;
 
         if (TypeUtil.isNone(documentKey)) {
-          documentKey = conventions.getIdFromInstance<T>(document);
+          documentKey = conventions.getIdFromDocument<T>(document);
         } 
         
         if (!TypeUtil.isNone(documentKey)) {
-          conventions.setIdOnEntity(document, documentKey);
+          conventions.setIdOnDocument(document, documentKey);
           document['@metadata']['@id'] = documentKey;
         }
 
@@ -447,9 +447,9 @@ more responsive application.", maxRequests
 
         if (TypeUtil.isNone(documentKey)) {
           return store
-            .generateId(document, document.constructor as DocumentConstructor<T>)
+            .generateId(document, conventions.getTypeFromDocument(document))
             .then((documentKey: string): T => {
-              conventions.setIdOnEntity(document, documentKey);
+              conventions.setIdOnDocument(document, documentKey);
               document['@metadata']['@id'] = documentKey;
 
               return document;
@@ -470,7 +470,10 @@ more responsive application.", maxRequests
       const conventions: DocumentConventions = this.conventions;
       const info: IStoredRawEntityInfo = this.rawEntitiesAndMetadata.get(document);
       const key: string = info.key;
-      const rawEntity: object = _.omit(conventions.convertToRawEntity(document), conventions.idPropertyName);
+      const rawEntity: object = _.omit(
+        conventions.convertToRawEntity(document), 
+        conventions.getIdPropertyName(info.documentType)
+      );
 
       if ((this.conventions.defaultUseOptimisticConcurrency && (ConcurrencyCheckModes.Disabled 
         !== info.concurrencyCheckMode)) || (ConcurrencyCheckModes.Forced === info.concurrencyCheckMode)
@@ -552,9 +555,9 @@ more responsive application.", maxRequests
     return false;
   }
 
-  protected makeDocument<T extends Object = IRavenObject>(commandResult: object, objectType?: DocumentConstructor<T>, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T {
+  protected makeDocument<T extends Object = IRavenObject>(commandResult: object, documentType?: DocumentType<T>, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T {
      const conversionResult: IDocumentConversionResult<T> =  this.conventions
-      .convertToDocument<T>(commandResult, objectType, nestedObjectTypes);
+      .convertToDocument<T>(commandResult, documentType, nestedObjectTypes);
 
      this.onDocumentFetched<T>(conversionResult);  
      return conversionResult.document as T; 
@@ -575,9 +578,8 @@ more responsive application.", maxRequests
   protected onDocumentFetched<T extends Object = IRavenObject>(conversionResult?: IDocumentConversionResult<T>): void {
     if (conversionResult) {
       const documentKey: string = this.conventions
-        .getIdFromInstance(conversionResult.document)
-        || conversionResult.originalMetadata['@id']
-        || conversionResult.metadata['@id'];
+        .getIdFromDocument(conversionResult.document, conversionResult.documentType)
+        || conversionResult.originalMetadata['@id'] || conversionResult.metadata['@id'];
 
       if (documentKey) {
         this.knownMissingIds.delete(documentKey);
@@ -597,7 +599,8 @@ more responsive application.", maxRequests
             metadata: conversionResult.metadata,
             etag: conversionResult.metadata['etag'] || null,
             key: documentKey,
-            concurrencyCheckMode: ConcurrencyCheckModes.Auto
+            concurrencyCheckMode: ConcurrencyCheckModes.Auto,
+            documentType: conversionResult.documentType
           });
         }
       }

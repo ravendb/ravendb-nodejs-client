@@ -13,10 +13,11 @@ export class LuceneBuilder {
 
   public static buildCondition<T extends LuceneConditionValue>(conventions: DocumentConventions,
     fieldName: string, value: T, operator?: LuceneOperator,
-    escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll
+    escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll,
+    boost: number = 1
   ): string {
     let luceneField: string = fieldName;
-    let luceneText: string | null = this.escapeAndConvertValue<T>(value, operator, escapeQueryOptions);
+    let luceneText: string | null = this.escapeAndConvertValue<T>(value, operator, escapeQueryOptions, boost);
 
     switch (operator) {
       case LuceneOperators.StartsWith:
@@ -62,7 +63,8 @@ export class LuceneBuilder {
   }
 
   protected static escapeAndConvertValue<T extends LuceneConditionValue>(value: T,
-    operator?: LuceneOperator, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll
+    operator?: LuceneOperator, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll,
+    boost: number = 1
   ): string | null {
     let escapedValue: T = value;
 
@@ -81,10 +83,10 @@ export class LuceneBuilder {
       escapedValue = (escapedValue as T);
     }
 
-    return this.toLucene(escapedValue, operator);
+    return this.toLucene(escapedValue, operator, boost);
   }
 
-  protected static toLucene<T extends LuceneConditionValue>(value: T, operator: LuceneOperator): string | null {
+  protected static toLucene<T extends LuceneConditionValue>(value: T, operator: LuceneOperator, boost: number = 1): string | null {
     let queryText = '';
 
     switch (operator) {
@@ -116,7 +118,10 @@ export class LuceneBuilder {
         );
         break;
       case LuceneOperators.Search:
-        queryText = StringUtil.format('({0})', (value as LuceneValue) as string);
+        queryText = StringUtil.format(
+          '({0}{1})', <string><LuceneValue>value,
+          (boost == 1) ? '' : `^${boost}`
+        );
         break;
       default:
         if (TypeUtil.isString(value) && (value as string).includes(' ')) {

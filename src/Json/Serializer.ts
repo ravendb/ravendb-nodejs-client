@@ -2,34 +2,37 @@ import * as _ from "lodash";
 import {TypeUtil} from "../Utility/TypeUtil";
 import {DateUtil} from "../Utility/DateUtil";
 import {ArrayUtil} from "../Utility/ArrayUtil";
-import {DocumentConstructor} from "../Documents/Conventions/DocumentConventions";
+import {DocumentConventions, DocumentConstructor} from "../Documents/Conventions/DocumentConventions";
 import {IRavenObject} from "../Database/IRavenObject";
 
 export class Serializer {
-  public static fromJSON<T extends Object = IRavenObject>(target: T, source: object | string, metadata: object | null = {}, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T {
+  public static fromJSON<T extends Object = IRavenObject>(target: T, source: object | string, metadata: object | null = {}, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}, conventions?: DocumentConventions): T {
     let mapping: object = {};
 
     let sourceObject: object = TypeUtil.isString(source)
       ? JSON.parse(source as string) : source;
     
-    const mergeMaps: (objectTypes: object) => void = (objectTypes: object): void => {
-      for (let key in objectTypes) {
-        let objectType: Function | DocumentConstructor | string;
+    const mergeMaps: (documentTypes: object) => void = (documentTypes: object): void => {
+      for (let key in documentTypes) {
+        let documentType: Function | DocumentConstructor | string;
         let existingObjectType: Function | DocumentConstructor | string;
       
-        if ((objectType = objectTypes[key]) && (!(key in mapping) 
+        if ((documentType = documentTypes[key]) && (!(key in mapping) 
           || (('string' === (typeof (existingObjectType = mapping[key]))) 
-          && ('function' === (typeof objectType)) 
-          && (existingObjectType === (<Function>objectType).name))
+          && ('function' === (typeof documentType)) 
+          && (existingObjectType === (<Function>documentType).name))
         )) {
-          mapping[key] = objectType;
+          mapping[key] = documentType;
         }
       }
     };
 
-    const filterMaps: () => void = (): void => {
+    const prepareMaps: () => void = (): void => {
       Object.keys(mapping).forEach((key: string) => 
-        ('function' === (typeof mapping[key]) || (delete mapping[key]))
+        ('function' === (typeof mapping[key])) 
+        || ('function' === (typeof (mapping[key] = 
+        conventions.getDocumentConstructor(mapping[key]))))
+        || (delete mapping[key])
       );
     }
     
@@ -69,7 +72,7 @@ export class Serializer {
       mergeMaps(nestedObjectTypes);
     }
 
-    filterMaps();
+    prepareMaps();
 
     Object.keys(sourceObject).forEach((key: string) => {
       let source: any = sourceObject[key];

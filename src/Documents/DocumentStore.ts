@@ -3,7 +3,7 @@ import {IDocumentSession, ISessionOptions} from "./Session/IDocumentSession";
 import {DocumentSession} from "./Session/DocumentSession";
 import {RequestExecutor} from '../Http/Request/RequestExecutor';
 import {EntityKeyCallback} from '../Utility/Callbacks';
-import {DocumentConventions, DocumentConstructor} from './Conventions/DocumentConventions';
+import {DocumentConventions, DocumentConstructor, DocumentType} from './Conventions/DocumentConventions';
 import {InvalidOperationException, RavenException} from '../Database/DatabaseExceptions';
 import {IHiloKeyGenerator} from '../Hilo/IHiloKeyGenerator';
 import {HiloMultiDatabaseKeyGenerator} from '../Hilo/HiloMultiDatabaseKeyGenerator';
@@ -106,11 +106,11 @@ export class DocumentStore implements IDocumentStore {
     return new DocumentSession(dbName, this, executor, uuid());
   }
 
-  public async generateId(entity: object, documentTypeOrObjectType?: string | DocumentConstructor, database?: string, callback?: EntityKeyCallback): Promise<string> {
-    let documentType: string = documentTypeOrObjectType as string;
+  public async generateId(entity: object, documentType?: DocumentType, database?: string, callback?: EntityKeyCallback): Promise<string> {
+    let documentTypeName: string = <string>documentType;
 
     if (!TypeUtil.isString(documentType)) {
-      documentType = (documentTypeOrObjectType as DocumentConstructor).name;
+      documentType = (<DocumentConstructor>documentType).name;
     }
 
     return this.generator.generateDocumentKey(entity, documentType, database)

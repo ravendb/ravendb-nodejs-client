@@ -14,7 +14,7 @@ export class HiloMultiTypeKeyGenerator extends AbstractHiloKeyGenerator implemen
   }
 
   public generateDocumentKey(entity: object, documentType?: string): BluebirdPromise<string> {
-    let tag: string = this.conventions.getDocumentType(documentType);
+    let tag: string = this.conventions.getDocumentTypeName(documentType);
 
     return this.createGeneratorForTag(tag)
       .then((generator: IHiloKeyGenerator) =>

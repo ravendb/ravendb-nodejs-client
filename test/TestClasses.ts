@@ -62,6 +62,13 @@ export class TestConversion implements IRavenObject {
   ) {}
 }
 
+export class TestCustomIdProperty implements IRavenObject {
+  constructor(
+    public Id: string,
+    public Title: string
+  ) {}
+}
+
 export class LastFmAnalyzed {
   protected indexDefinition: IndexDefinition;
 

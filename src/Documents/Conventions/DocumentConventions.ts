@@ -1,4 +1,4 @@
-import {InvalidOperationException} from "../../Database/DatabaseExceptions";
+import {InvalidOperationException, ArgumentNullException} from "../../Database/DatabaseExceptions";
 import * as pluralize from 'pluralize';
 import {SortOption, SortOptions} from "../../Database/Indexes/SortOption";
 import {StringUtil} from "../../Utility/StringUtil";
@@ -9,12 +9,19 @@ import {IRavenObject} from "../../Database/IRavenObject";
 import {ConcurrencyCheckMode} from "../../Database/ConcurrencyCheckMode";
 
 export type DocumentConstructor<T extends Object = IRavenObject> = { new(...args: any[]): T; };
+export type DocumentType<T extends Object = IRavenObject> = DocumentConstructor<T> | string;
+
+export interface IDocumentInfoResolvable {
+  resolveConstructor?: (typeName: string) => DocumentConstructor;
+  resolveIdProperty?: (typeName: string, ctor?: DocumentConstructor) => string;
+}
 
 export interface IDocumentConversionResult<T extends Object = IRavenObject> {
   rawEntity?: object,
   document: T;
   metadata: object;
   originalMetadata: object;
+  documentType: DocumentType<T>;
 }
 
 export interface IStoredRawEntityInfo {
@@ -25,67 +32,141 @@ export interface IStoredRawEntityInfo {
   etag?: number | null;
   expectedEtag?: number | null;
   concurrencyCheckMode: ConcurrencyCheckMode;
+  documentType: DocumentType;
 }
 
 export class DocumentConventions {
   readonly maxNumberOfRequestPerSession: number = 30;
-  readonly timeout: number = 30;
+  readonly requestTimeout: number = 30;
   readonly defaultUseOptimisticConcurrency:boolean = false;
   readonly maxLengthOfQueryUsingGetUrl = 1024 + 512;
   readonly identityPartsSeparator = "/";
-  private _systemDatabase: string = "system";
-
-  public get idPropertyName(): string {
-    return 'id';
-  }
-
-  public get systemDatabase(): string {
-    return this._systemDatabase;
-  }
+  private _disableTopologyUpdates: boolean = false;
+  private _resolvers: IDocumentInfoResolvable[] = [];
+  private _idsNamesCache: Map<string, string> = new Map<string, string>();
+  private _ctorsCache: Map<string, DocumentConstructor> = new Map<string, DocumentConstructor>();
 
   public get emptyEtag(): number {
     return 0;
   }
 
-  public getDocumentType(typeOrConstructor: string | DocumentConstructor): string {
-    const documentType: string = TypeUtil.isString(typeOrConstructor)
-      ? typeOrConstructor as string : (typeOrConstructor as DocumentConstructor).name;
+  public get topologyUpdatesEnabled(): boolean {
+    return !this._disableTopologyUpdates;
+  } 
 
-    return documentType;
-  }
-
-  public getDocumentsCollection(typeOrConstructor: string | DocumentConstructor): string {
-    return pluralize(this.getDocumentType(typeOrConstructor));
-  }
-
-  public getObjectType<T extends Object = IRavenObject>(objectType?: DocumentConstructor<T> | string): DocumentConstructor<T> | null {
-    if (objectType && TypeUtil.isFunction(objectType)) {
-      return objectType as DocumentConstructor<T>;
+  public addDocumentInfoResolver(resolver: IDocumentInfoResolvable): void {
+    if (!resolver) {
+      throw new ArgumentNullException('Invalid resolver provided');
     }
 
-    return null;
+    this._resolvers.push(resolver);
   }
 
-  public convertToDocument<T extends Object = IRavenObject>(rawEntity: object, objectType?: DocumentConstructor<T>, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): IDocumentConversionResult<T> {
+  public disableTopologyUpdates(): void {
+    this._disableTopologyUpdates = true;
+  }
+
+  public enableTopologyUpdates(): void {
+    this._disableTopologyUpdates = false;
+  }
+  
+  public getCollectionName(documentType: DocumentType): string {
+    return pluralize(this.getDocumentTypeName(documentType));
+  }
+
+  public getDocumentTypeName(documentType: DocumentType): string {
+    return TypeUtil.isString(documentType)
+      ? <string>documentType 
+      : (<DocumentConstructor>documentType).name;
+  }
+
+  public getDocumentConstructor<T extends Object = IRavenObject>(documentType?: DocumentType<T>): DocumentConstructor<T> | null {
+    const typeName: string = <string>documentType;
+    let foundCtor: DocumentConstructor<T>;
+
+    if (!documentType) {
+      return null;
+    }  
+
+    if (TypeUtil.isFunction(documentType)) {
+      return documentType as DocumentConstructor<T>;      
+    }
+
+    if (this._ctorsCache.has(typeName)) {
+      foundCtor = <DocumentConstructor<T>>this._ctorsCache.get(typeName);
+    } else {
+      for (let resolver of this._resolvers) {
+        try {
+          foundCtor = <DocumentConstructor<T>>resolver.resolveConstructor(typeName);
+        } catch (exception) {
+          foundCtor = null;
+        }
+
+        if (!TypeUtil.isNone(foundCtor)) {
+          this._ctorsCache.set(typeName, foundCtor);
+          break;
+        }
+      }
+    }
+
+    return foundCtor;
+  }
+
+  public getIdPropertyName<T extends Object = IRavenObject>(documentType?: DocumentType<T>): string {
+    let typeName: string = <string>documentType;
+    let foundIdPropertyName: string;
+    let ctor: DocumentConstructor<T> = <DocumentConstructor<T>>documentType;
+
+    if (TypeUtil.isFunction(ctor)) {
+      typeName = ctor.name;
+    } else {
+      ctor = null;
+    }
+
+    if (this._idsNamesCache.has(typeName)) {
+      foundIdPropertyName = this._idsNamesCache.get(typeName);
+    } else {
+      for (let resolver of this._resolvers) {
+        try {
+          foundIdPropertyName = resolver.resolveIdProperty(typeName, ctor);
+        } catch (exception) {
+          foundIdPropertyName = null;
+        }
+
+        if (!TypeUtil.isNone(foundIdPropertyName)) {
+          this._idsNamesCache.set(typeName, foundIdPropertyName);
+          break;
+        }
+      }
+    }
+    
+    return foundIdPropertyName || 'id';
+  }
+
+  public convertToDocument<T extends Object = IRavenObject>(rawEntity: object, documentType?: DocumentType<T>, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): IDocumentConversionResult<T> {
     const metadata: object = _.get(rawEntity, '@metadata') || {};
     const originalMetadata: object = _.cloneDeep(metadata);
-    const idProperty: string = this.idPropertyName;
+    const docType: DocumentType<T> = documentType || metadata['Raven-Node-Type'];
+    const docCtor: DocumentConstructor<T> = this.getDocumentConstructor(docType);
+    const idProperty: string = this.getIdPropertyName(docType);
+    
     const documentAttributes: object = _.omit(rawEntity, '@metadata');
     let document: T = Serializer.fromJSON<T>(
-      objectType ? new objectType : ({} as T),
-      documentAttributes, metadata, nestedObjectTypes
+      docCtor ? new docCtor() : ({} as T),
+      documentAttributes, metadata, nestedObjectTypes, this
     );
 
-    this.setIdOnEntity(
+    this.setIdOnDocument(
       document, metadata
-      ['@id'] || null
+      ['@id'] || null, docType
     );
 
     return {
       rawEntity: rawEntity,
       document: document as T,
       metadata: metadata,
-      originalMetadata: originalMetadata
+      originalMetadata: originalMetadata,
+      documentType: documentType
     } as IDocumentConversionResult<T>;
   }
 
@@ -93,32 +174,44 @@ export class DocumentConventions {
     return Serializer.toJSON<T>(document, document['@metadata'] || {});
   }
 
-  public setIdOnEntity<T extends Object = IRavenObject>(entity: T, key: string): T {
-    const idProperty = this.idPropertyName;
+  public setIdOnDocument<T extends Object = IRavenObject>(document: T, key: string, documentType?: DocumentType<T>): T {
+    const docType: DocumentType<T> = documentType || this.getTypeFromDocument(document);
+    const idProperty = this.getIdPropertyName(docType);
 
-    if ('object' !== (typeof entity)) {
+    if ('object' !== (typeof document)) {
       throw new InvalidOperationException("Invalid entity provided. It should implement object interface");
     }
 
-    entity[idProperty] = key;
-    return entity;
+    document[idProperty] = key;
+    return document;
   }
 
-  public getIdFromInstance<T extends Object = IRavenObject>(entity?: T): string {
-    const idProperty = this.idPropertyName;
+  public getIdFromDocument<T extends Object = IRavenObject>(document?: T, documentType?: DocumentType<T>): string {
+    const docType: DocumentType<T> = documentType || this.getTypeFromDocument(document);
+    const idProperty = this.getIdPropertyName(docType);
 
-    if (!entity) {
+    if (!document) {
       throw new InvalidOperationException("Empty entity provided.");
     }
 
-    if (!entity.hasOwnProperty(idProperty)) {
+    if (!document.hasOwnProperty(idProperty)) {
       throw new InvalidOperationException("Invalid entity provided. It should implement object interface");
     }
 
-    return entity[idProperty] || (entity['@metadata'] || {})['@id'] || null;
+    return document[idProperty] || (document['@metadata'] || {})['@id'] || null;
   }
 
-  public buildDefaultMetadata<T extends Object = IRavenObject>(entity: T, typeOrConstructor: string | DocumentConstructor<T>): object {
+  public getTypeFromDocument<T extends Object = IRavenObject>(document?: T): DocumentType<T> {
+    let docType: DocumentType<T> = <DocumentConstructor<T>>document.constructor;
+    
+    if ('Object' === docType.name) {
+      docType = document['@metadata']['Raven-Node-Type'];
+    }
+
+    return docType;
+  }
+
+  public buildDefaultMetadata<T extends Object = IRavenObject>(entity: T, documentType: DocumentType<T>): object {
     let metadata: object = {};
     let nestedTypes: object = {};
     let property: string, value : any;
@@ -127,20 +220,20 @@ export class DocumentConventions {
       if (value instanceof Date) {
         nestedTypes[property] = Date.name;
       } else if (TypeUtil.isObject(value)) {
-        let objectType: string = value.constructor.name;
+        let documentType: string = value.constructor.name;
 
-        if ('Object' !== objectType) {
-          nestedTypes[property] = objectType;
+        if ('Object' !== documentType) {
+          nestedTypes[property] = documentType;
         }
       }
     };
     
     if (entity) {
       _.assign(metadata, entity['@metadata'] || {}, {
-        '@collection': this.getDocumentsCollection(typeOrConstructor),
-        'Raven-Node-Type': TypeUtil.isString(typeOrConstructor)
-          ? StringUtil.capitalize(typeOrConstructor as string)
-          : (typeOrConstructor as DocumentConstructor<T>).name
+        '@collection': this.getCollectionName(documentType),
+        'Raven-Node-Type': TypeUtil.isString(documentType)
+          ? StringUtil.capitalize(documentType as string)
+          : (documentType as DocumentConstructor<T>).name
       });
 
       for (property in entity) {
@@ -162,14 +255,6 @@ export class DocumentConventions {
     }
 
     return metadata;
-  }
-
-  public getTypeFromMetadata(metadata: object): string | null {
-    if ('Raven-Node-Type' in metadata) {
-      return metadata['Raven-Node-Type'];
-    }
-
-    return null;
   }
 
   public usesRangeType(queryFilterValue: any): boolean {

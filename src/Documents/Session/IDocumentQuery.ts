@@ -5,10 +5,10 @@ import {QueryResultsWithStatistics} from "./DocumentQuery";
 import {QueryResultsCallback} from "../../Utility/Callbacks";
 import {QueryOperator} from "./QueryOperator";
 import {IRavenObject} from "../../Database/IRavenObject";
-import {DocumentConstructor} from "../Conventions/DocumentConventions";
+import {DocumentConstructor, DocumentType} from "../Conventions/DocumentConventions";
 
 export interface IDocumentQueryOptions<T> {
-  documentTypeOrObjectType?: string | DocumentConstructor<T>, 
+  documentType?: DocumentType<T>, 
   indexName?: string;
   usingDefaultOperator?: QueryOperator;
   waitForNonStaleResults?: boolean;
