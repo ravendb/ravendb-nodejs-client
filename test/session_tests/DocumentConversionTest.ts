@@ -7,7 +7,7 @@ import {DocumentStore} from '../../src/Documents/DocumentStore';
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {IRavenObject} from "../../src/Database/IRavenObject";
 import {DocumentConstructor} from "../../src/Documents/Conventions/DocumentConventions";
-import {Foo, TestConversion} from "../TestClasses";
+import {Foo, TestConversion, TestCustomIdProperty} from "../TestClasses";
 import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 
 describe('Document conversion test', () => {
@@ -59,15 +59,15 @@ describe('Document conversion test', () => {
     store = DocumentStore.create(defaultUrl, defaultDatabase).initialize();
     session = store.openSession({requestExecutor});
 
-    await session.store<TestConversion>(session.create<TestConversion>(makeDocument('TestConversion/1'))); 
-    await session.store<TestConversion>(session.create<TestConversion>(makeDocument('TestConversion/2', new Date(now.getTime() + 1000 * 60 * 60 * 24)))); 
+    await session.store<TestConversion>(session.create<TestConversion>(makeDocument('TestConversions/1'))); 
+    await session.store<TestConversion>(session.create<TestConversion>(makeDocument('TestConversions/2', new Date(now.getTime() + 1000 * 60 * 60 * 24)))); 
     await session.saveChanges();   
   });
 
   describe('Conversion', () => {
     it('should convert on load', async () => {
       let doc: TestConversion;
-      const key: string = 'TestConversion/1';
+      const key: string = 'TestConversions/1';
 
       session = store.openSession({requestExecutor});
       doc = await session.load<TestConversion>(key, TestConversion, [], nestedObjectTypes);
@@ -105,7 +105,59 @@ describe('Document conversion test', () => {
       expect(docs).to.have.lengthOf(1);
       
       [doc] = docs;            
-      checkDoc('TestConversion/2', doc);      
+      checkDoc('TestConversions/2', doc);      
+    });
+
+    it('should resolve document constructors', async () => {
+      let docs: TestConversion[] = [];
+      
+      session = store.openSession({requestExecutor});
+      store.conventions.addDocumentInfoResolver({
+        resolveConstructor: (typeName: string): DocumentConstructor => 
+          <DocumentConstructor>(require('../TestClasses')[typeName])
+      });
+
+      await session.load<TestConversion>('TestConversions/1')
+        .then((result: TestConversion) => docs.push(result));
+
+      await session.query<TestConversion>().get()
+        .then((result: TestConversion[]) => 
+          docs = docs.concat(result)
+        );
+
+      expect(docs).to.have.lengthOf(3);
+      
+      [1, 1, 2].forEach((id: number, index: number) => 
+        checkDoc(`TestConversions/${id}`, docs[index])
+      );
+    });
+
+    it('should resolve custom id property name', async () => {
+      const key: string = 'TestingCustomIdProperty/New';
+      const title: string = 'Testing custom id property';
+      let doc: TestCustomIdProperty = new TestCustomIdProperty(key, title);
+
+      session = store.openSession({requestExecutor});
+      store.conventions.addDocumentInfoResolver({
+        resolveIdProperty: (typeName: string): string => {
+          if (TestCustomIdProperty.name === typeName) {
+            return 'Id';
+          }
+        },
+        resolveConstructor: (typeName: string): DocumentConstructor => 
+          <DocumentConstructor>(require('../TestClasses')[typeName]),
+      });
+
+      await session.store<TestCustomIdProperty>(session.create<TestCustomIdProperty>(doc));  
+      await session.saveChanges();
+
+      session = store.openSession({requestExecutor});
+      doc = await session.load<TestCustomIdProperty>(key);
+
+      expect(doc).to.be.an('object');
+      expect(doc).to.be.a.instanceOf(TestCustomIdProperty);
+      expect(doc).to.have.property('Id', key);
+      expect(doc).to.have.property('Title', title);
     });
   });
 });

@@ -147,12 +147,12 @@ export class DocumentConventions {
     const metadata: object = _.get(rawEntity, '@metadata') || {};
     const originalMetadata: object = _.cloneDeep(metadata);
     const docType: DocumentType<T> = documentType || metadata['Raven-Node-Type'];
-    const docCtor: DocumentConstructor<T> = this.getDocumentConstructor(documentType);
+    const docCtor: DocumentConstructor<T> = this.getDocumentConstructor(docType);
     const idProperty: string = this.getIdPropertyName(docType);
     
     const documentAttributes: object = _.omit(rawEntity, '@metadata');
     let document: T = Serializer.fromJSON<T>(
-      documentType ? new docCtor : ({} as T),
+      docCtor ? new docCtor() : ({} as T),
       documentAttributes, metadata, nestedObjectTypes, this
     );
 
