@@ -23,6 +23,27 @@ describe('Document conversion test', () => {
     date: Date
   };
 
+  const resolveIdProperty = (typeName: string): string => {
+    if (TestCustomIdProperty.name === typeName) {
+      return 'Id';
+    }
+  };
+
+  const resolveConstructor = (typeName: string): DocumentConstructor => {
+    const classesMap: IRavenObject<DocumentConstructor> =
+      <IRavenObject<DocumentConstructor>>require('../TestClasses');
+
+    let foundCtor: DocumentConstructor;  
+
+    if (Date.name === typeName) {
+      return Date;
+    } else if ((typeName in classesMap) && ('function' === 
+      (typeof (foundCtor = classesMap[typeName])))
+    ) {
+      return foundCtor;
+    } 
+  };
+          
   const makeDocument = (id: string = null, date: Date = now): TestConversion => new TestConversion(
     id, date,
     new Foo('Foo/1', 'Foo #1', 1), [
@@ -112,10 +133,7 @@ describe('Document conversion test', () => {
       let docs: TestConversion[] = [];
       
       session = store.openSession({requestExecutor});
-      store.conventions.addDocumentInfoResolver({
-        resolveConstructor: (typeName: string): DocumentConstructor => 
-          <DocumentConstructor>(require('../TestClasses')[typeName])
-      });
+      store.conventions.addDocumentInfoResolver({ resolveConstructor });
 
       await session.load<TestConversion>('TestConversions/1')
         .then((result: TestConversion) => docs.push(result));
@@ -138,15 +156,7 @@ describe('Document conversion test', () => {
       let doc: TestCustomIdProperty = new TestCustomIdProperty(key, title);
 
       session = store.openSession({requestExecutor});
-      store.conventions.addDocumentInfoResolver({
-        resolveIdProperty: (typeName: string): string => {
-          if (TestCustomIdProperty.name === typeName) {
-            return 'Id';
-          }
-        },
-        resolveConstructor: (typeName: string): DocumentConstructor => 
-          <DocumentConstructor>(require('../TestClasses')[typeName]),
-      });
+      store.conventions.addDocumentInfoResolver({ resolveIdProperty, resolveConstructor });
 
       await session.store<TestCustomIdProperty>(session.create<TestCustomIdProperty>(doc));  
       await session.saveChanges();

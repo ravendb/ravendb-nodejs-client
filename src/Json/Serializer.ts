@@ -28,17 +28,12 @@ export class Serializer {
     };
 
     const prepareMaps: () => void = (): void => {
-      Object.keys(mapping).forEach((key: string) => {
-        if (Date.name === mapping[key]) {
-          mapping[key] = Date;
-        } else if ('function' !== (typeof mapping[key])) {
-          mapping[key] = conventions.getDocumentConstructor(mapping[key])
-        }
-
-        if ('function' !== (typeof mapping[key])) {
-          delete mapping[key];
-        }
-      });
+      Object.keys(mapping).forEach((key: string) => 
+        ('function' === (typeof mapping[key])) 
+        || ('function' === (typeof (mapping[key] = 
+        conventions.getDocumentConstructor(mapping[key]))))
+        || (delete mapping[key])
+      );
     }
     
     const transform: (value: any, key?: string) => any = (value, key) => {
