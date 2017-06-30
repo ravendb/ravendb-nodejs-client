@@ -30,14 +30,14 @@ describe('Document query test', () => {
     session = store.openSession({requestExecutor});
 
     await productsTestingSort.execute();
-    await session.store<Product>(session.create<Product>(new Product('Products/101', 'test101', 2, 'a')));
-    await session.store<Product>(session.create<Product>(new Product('Products/10', 'test10', 3, 'b')));
-    await session.store<Product>(session.create<Product>(new Product('Products/106', 'test106', 4, 'c')));
-    await session.store<Product>(session.create<Product>(new Product('Products/107', 'test107', 5)));
-    await session.store<Product>(session.create<Product>(new Product('Products/103', 'test107', 6)));
-    await session.store<Product>(session.create<Product>(new Product('Products/108', 'new_testing', 90, 'd')));
-    await session.store<Order>(session.create<Order>(new Order('Orders/105', 'testing_order', 92, 'Products/108')));
-    await session.store<Company>(session.create<Company>(new Company('Companies/1', 'withNesting', new Product(null, 'testing_order', 4))));
+    await session.store<Product>(new Product('Products/101', 'test101', 2, 'a'));
+    await session.store<Product>(new Product('Products/10', 'test10', 3, 'b'));
+    await session.store<Product>(new Product('Products/106', 'test106', 4, 'c'));
+    await session.store<Product>(new Product('Products/107', 'test107', 5));
+    await session.store<Product>(new Product('Products/103', 'test107', 6));
+    await session.store<Product>(new Product('Products/108', 'new_testing', 90, 'd'));
+    await session.store<Order>(new Order('Orders/105', 'testing_order', 92, 'Products/108'));
+    await session.store<Company>(new Company('Companies/1', 'withNesting', new Product(null, 'testing_order', 4)));
     await session.saveChanges();    
   });
 

@@ -28,7 +28,7 @@ describe('Document delete test', () => {
 
     for (let id of ids) {
       let product: Product = new Product(`Products/${id}`, 'test');
-      await session.store<Product>(session.create<Product>(product));
+      await session.store<Product>(product);
     }
 
     await session.saveChanges();

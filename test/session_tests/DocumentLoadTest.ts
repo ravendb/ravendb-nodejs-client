@@ -27,10 +27,10 @@ describe('Document load test', () => {
     store = DocumentStore.create(defaultUrl, defaultDatabase).initialize();
     session = store.openSession({requestExecutor});
 
-    let product101: Product = session.create<Product>(new Product("Products/101", "test"));
-    let product10: Product = session.create<Product>(new Product("Products/10", "test"));
-    order = session.create<Order>(new Order("Orders/105", "testing_order", 92, "Products/101"));
-    company = session.create<Company>(new Company("companies/1", "test", new Product(null, "testing_nested")));
+    let product101: Product = new Product("Products/101", "test");
+    let product10: Product = new Product("Products/10", "test");
+    order = new Order("Orders/105", "testing_order", 92, "Products/101");
+    company = new Company("companies/1", "test", new Product(null, "testing_nested"));
 
     await session.store<Product>(product101);
     await session.store<Product>(product10);
