@@ -14,7 +14,7 @@ export type DocumentType<T extends Object = IRavenObject> = DocumentConstructor<
 export interface IDocumentInfoResolvable {
   resolveConstructor?: (typeName: string) => DocumentConstructor;
   resolveIdProperty?: (typeName: string, document?: object | IRavenObject) => string;
-  resolveDocumentType?: (plainDocument: object, key?: string, specifiedType?: DocumentType) => string;
+  resolveDocumentType?: (plainDocument: object, id?: string, specifiedType?: DocumentType) => string;
 }
 
 export interface IDocumentConversionResult<T extends Object = IRavenObject> {
@@ -34,7 +34,7 @@ export interface IStoredRawEntityInfo {
   originalValue: object;
   metadata: object;
   originalMetadata: object;
-  key: string;
+  id: string;
   etag?: number | null;
   expectedEtag?: number | null;
   concurrencyCheckMode: ConcurrencyCheckMode;
@@ -179,7 +179,7 @@ export class DocumentConventions {
     return Serializer.toJSON<T>(document, document['@metadata'] || {});
   }
 
-  public setIdOnDocument<T extends Object = IRavenObject>(document: T, key: string, documentType?: DocumentType<T>): T {
+  public setIdOnDocument<T extends Object = IRavenObject>(document: T, id: string, documentType?: DocumentType<T>): T {
     const docType: DocumentType<T> = documentType || this.getTypeFromDocument(document);
     const idProperty = this.getIdPropertyName(docType, document);
 
@@ -187,7 +187,7 @@ export class DocumentConventions {
       throw new InvalidOperationException("Invalid entity provided. It should implement object interface");
     }
 
-    document[idProperty] = key;
+    document[idProperty] = id;
     return document;
   }
 
@@ -206,7 +206,7 @@ export class DocumentConventions {
     return document[idProperty] || (document['@metadata'] || {})['@id'] || null;
   }
 
-  public getTypeFromDocument<T extends Object = IRavenObject>(document?: T, key?: string, documentType?: DocumentType<T>): DocumentType<T> {
+  public getTypeFromDocument<T extends Object = IRavenObject>(document?: T, id?: string, documentType?: DocumentType<T>): DocumentType<T> {
     const metadata: object = document['@metadata'];
     
     if ('Object' !== document.constructor.name) {
@@ -232,7 +232,7 @@ export class DocumentConventions {
     
     for (let resolver of this._resolvers) {
       try {
-        foundDocType = <DocumentType<T>>resolver.resolveDocumentType(<object>document, key, documentType);
+        foundDocType = <DocumentType<T>>resolver.resolveDocumentType(<object>document, id, documentType);
       } catch (exception) {
         foundDocType = null;
       }
@@ -246,7 +246,7 @@ export class DocumentConventions {
       return foundDocType;
     }
 
-    if (key && (matches = /^(\w{1}[\w\d]+)\/\d*$/i.exec(key))) {
+    if (id && (matches = /^(\w{1}[\w\d]+)\/\d*$/i.exec(id))) {
       return StringUtil.capitalize(pluralize.singular(matches[1]));
     }
 

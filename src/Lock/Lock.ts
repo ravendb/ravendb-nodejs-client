@@ -25,7 +25,7 @@ export class Lock {
     return this._lock.acquire(key, callback);
   }
 
-  public acquireKey(tag: string, range: HiloRangeValue, callback: ILockCallback, doneCallback: ILockDoneCallback): void {
+  public acquireIdGenerator(tag: string, range: HiloRangeValue, callback: ILockCallback, doneCallback: ILockDoneCallback): void {
     const key: string = StringUtil.format(
       'lock:tag:{0}:range:{1}:{2}', tag,
       range.minId, range.maxId, range.current
@@ -34,7 +34,7 @@ export class Lock {
     return this._lock.acquire(key, callback, doneCallback);
   }
 
-  public acquireTopology(url: string, database: string, callback: ILockCallback, doneCallback: ILockDoneCallback): void {
+  public acquireTopologyUpdate(url: string, database: string, callback: ILockCallback, doneCallback: ILockDoneCallback): void {
     const key: string = StringUtil.format(
       'lock:topology:url:{0}:database:{1}',
       url, database

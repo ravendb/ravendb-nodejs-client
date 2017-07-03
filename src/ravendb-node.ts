@@ -11,14 +11,14 @@ import * as Request from 'request';
 import * as RequestPromise from 'request-promise';
 
 // typings
-export {AbstractCallback, EmptyCallback, EntityKeyCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback, QueryResultsCallback} from './Utility/Callbacks';
+export {AbstractCallback, EmptyCallback, EntityIdCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback, QueryResultsCallback} from './Utility/Callbacks';
 export {PromiseResolver, PromiseResolve, PromiseReject} from './Utility/PromiseResolver';
 export {IDocumentStore} from './Documents/IDocumentStore';
 export {IDocumentSession, ISessionOptions} from './Documents/Session/IDocumentSession';
 export {IDocumentQueryConditions} from './Documents/Session/IDocumentQueryConditions';
 export {IDocumentQuery, IDocumentQueryOptions} from './Documents/Session/IDocumentQuery';
 export {EscapeQueryOption, EscapeQueryOptions} from './Documents/Session/EscapeQueryOptions';
-export {IHiloKeyGenerator} from './Hilo/IHiloKeyGenerator';
+export {IHiloIdGenerator} from './Hilo/IHiloIdGenerator';
 export {RequestMethods, RequestMethod} from './Http/Request/RequestMethod';
 export {QueryOperators, QueryOperator} from './Documents/Session/QueryOperator';
 export {FieldIndexingOption, FieldIndexingOptions} from './Database/Indexes/FieldIndexingOption';
@@ -160,10 +160,10 @@ export {ExceptionThrower} from './Utility/ExceptionThrower';
 export {RequestExecutor} from './Http/Request/RequestExecutor';
 export {PatchRequest} from './Http/Request/PatchRequest';
 export {HiloRangeValue} from './Hilo/HiloRangeValue';
-export {AbstractHiloKeyGenerator} from './Hilo/AbstractHiloKeyGenerator';
-export {HiloKeyGenerator} from './Hilo/HiloKeyGenerator';
-export {HiloMultiDatabaseKeyGenerator} from './Hilo/HiloMultiDatabaseKeyGenerator';
-export {HiloMultiTypeKeyGenerator} from './Hilo/HiloMultiTypeKeyGenerator';
+export {AbstractHiloIdGenerator} from './Hilo/AbstractHiloIdGenerator';
+export {HiloIdGenerator} from './Hilo/HiloIdGenerator';
+export {HiloMultiDatabaseIdGenerator} from './Hilo/HiloMultiDatabaseIdGenerator';
+export {HiloMultiTypeIdGenerator} from './Hilo/HiloMultiTypeIdGenerator';
 export {HiloNextCommand} from './Hilo/Commands/HiloNextCommand';
 export {HiloReturnCommand} from './Hilo/Commands/HiloReturnCommand';
 

@@ -183,7 +183,7 @@ export class RequestExecutor {
   }
 
   protected getReplicationTopology(): void {
-    this._lock.acquireTopology(
+    this._lock.acquireTopologyUpdate(
       this._initUrl, this._initDatabase,
       (done: ILockDoneCallback) => {
         this.execute(new GetTopologyCommand())

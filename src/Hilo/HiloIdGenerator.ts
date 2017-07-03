@@ -1,5 +1,5 @@
-import {IHiloKeyGenerator} from './IHiloKeyGenerator';
-import {AbstractHiloKeyGenerator} from './AbstractHiloKeyGenerator';
+import {IHiloIdGenerator} from './IHiloIdGenerator';
+import {AbstractHiloIdGenerator} from './AbstractHiloIdGenerator';
 import {HiloRangeValue} from './HiloRangeValue';
 import {ConcurrencyException} from '../Database/DatabaseExceptions';
 import {IDocumentStore} from '../Documents/IDocumentStore';
@@ -13,7 +13,7 @@ import {Lock} from '../Lock/Lock';
 import * as BluebirdPromise from 'bluebird';
 import {IRavenResponse} from "../Database/RavenCommandResponse";
 
-export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloKeyGenerator {
+export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdGenerator {
   private _lastRangeAt: Date;
   private _range: HiloRangeValue;
   private identityPartsSeparator: string;
@@ -30,7 +30,7 @@ export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloK
     this._lock = Lock.getInstance();
   }
 
-  public generateDocumentKey(): BluebirdPromise<string> {
+  public generateDocumentId(): BluebirdPromise<string> {
     return new BluebirdPromise<string>(
       (resolve: PromiseResolve<string>, reject: PromiseReject) => this
         .tryRequestNextRange(resolve, reject)
@@ -62,7 +62,7 @@ export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloK
   }
 
   protected tryRequestNextRange(resolve: PromiseResolve<string>, reject: PromiseReject): void {
-    this._lock.acquireKey(this.tag, this._range,
+    this._lock.acquireIdGenerator(this.tag, this._range,
     (done: ILockDoneCallback): any => {
       this._range.increment();
       this.getNextRange()
@@ -70,7 +70,7 @@ export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloK
         .catch((error: Error) => done(error));
     }, (error?: Error, result?: HiloRangeValue) => {
       if (result) {
-        PromiseResolver.resolve<string>(this.getDocumentKeyFromId(result.current), resolve);
+        PromiseResolver.resolve<string>(this.assembleDocumentId(result.current), resolve);
       } else if (!(error instanceof ConcurrencyException)) {
         PromiseResolver.reject(error, reject);
       } else {
@@ -79,7 +79,7 @@ export class HiloKeyGenerator extends AbstractHiloKeyGenerator implements IHiloK
     });
   }
 
-  protected getDocumentKeyFromId(id: number): string {
-    return StringUtil.format('{0}{1}', (this._prefix || ''), id);
+  protected assembleDocumentId(currentRangeValue: number): string {
+    return StringUtil.format('{0}{1}', (this._prefix || ''), currentRangeValue);
   }
 }
