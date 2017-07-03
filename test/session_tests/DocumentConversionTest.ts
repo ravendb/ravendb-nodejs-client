@@ -80,15 +80,15 @@ describe('Document conversion test', () => {
     store = DocumentStore.create(defaultUrl, defaultDatabase).initialize();
     session = store.openSession({requestExecutor});
 
-    await session.store<TestConversion>(makeDocument('TestConversions/1')); 
-    await session.store<TestConversion>(makeDocument('TestConversions/2', new Date(now.getTime() + 1000 * 60 * 60 * 24))); 
+    await session.store<TestConversion>(makeDocument('TestConversion/1')); 
+    await session.store<TestConversion>(makeDocument('TestConversion/2', new Date(now.getTime() + 1000 * 60 * 60 * 24))); 
     await session.saveChanges();   
   });
 
   describe('Conversion', () => {
     it('should convert on load', async () => {
       let doc: TestConversion;
-      const key: string = 'TestConversions/1';
+      const key: string = 'TestConversion/1';
 
       session = store.openSession({requestExecutor});
       doc = await session.load<TestConversion>(key, TestConversion, [], nestedObjectTypes);
@@ -126,7 +126,7 @@ describe('Document conversion test', () => {
       expect(docs).to.have.lengthOf(1);
       
       [doc] = docs;            
-      checkDoc('TestConversions/2', doc);      
+      checkDoc('TestConversion/2', doc);      
     });
 
     it('should resolve document constructors', async () => {
@@ -135,7 +135,7 @@ describe('Document conversion test', () => {
       session = store.openSession({requestExecutor});
       store.conventions.addDocumentInfoResolver({ resolveConstructor });
 
-      await session.load<TestConversion>('TestConversions/1')
+      await session.load<TestConversion>('TestConversion/1')
         .then((result: TestConversion) => docs.push(result));
 
       await session.query<TestConversion>().get()
@@ -146,7 +146,7 @@ describe('Document conversion test', () => {
       expect(docs).to.have.lengthOf(3);
       
       [1, 1, 2].forEach((id: number, index: number) => 
-        checkDoc(`TestConversions/${id}`, docs[index])
+        checkDoc(`TestConversion/${id}`, docs[index])
       );
     });
 

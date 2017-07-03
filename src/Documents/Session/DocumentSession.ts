@@ -450,7 +450,7 @@ more responsive application.", maxRequests
             } 
         }
 
-        if (TypeUtil.isNone(documentKey)) {
+        if (TypeUtil.isNone(documentKey) || documentKey.endsWith('/')) {
           return store
             .generateId(document, conventions.getTypeFromDocument(document))
             .then((documentKey: string): T => {

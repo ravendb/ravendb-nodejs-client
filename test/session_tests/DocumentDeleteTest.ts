@@ -27,14 +27,14 @@ describe('Document delete test', () => {
     session = store.openSession({requestExecutor});
 
     for (let id of ids) {
-      let product: Product = new Product(`Products/${id}`, 'test');
+      let product: Product = new Product(`Product/${id}`, 'test');
       await session.store<Product>(product);
     }
 
     await session.saveChanges();
 
     let products: Product[] = await store.openSession({requestExecutor})
-      .load<Product>(ids.map((id: number): string => `Products/${id}`), Product);
+      .load<Product>(ids.map((id: number): string => `Product/${id}`), Product);
 
     eTags = products.map((product: Product) => product['@metadata']['@etag']);  
   });
@@ -42,7 +42,7 @@ describe('Document delete test', () => {
   describe('Document delete', () => {
     it('should delete with key with save session', async() => {
       let product: Product;
-      const key: string = "Products/101";      
+      const key: string = "Product/101";      
       session = store.openSession({requestExecutor});
 
       await session.delete<Product>(key);
@@ -54,7 +54,7 @@ describe('Document delete test', () => {
 
     it('should delete with key without save session', async() => {
       let product: Product;
-      const key: string = "Products/10";
+      const key: string = "Product/10";
       session = store.openSession({requestExecutor});
 
       await session.delete<Product>(key);
@@ -65,7 +65,7 @@ describe('Document delete test', () => {
 
     it('should fail trying delete document by key after it has been changed', async() => {
       let product: Product;
-      const key: string = "Products/106";
+      const key: string = "Product/106";
       session = store.openSession({requestExecutor});
 
       product = await session.load<Product>(key, Product);
@@ -76,7 +76,7 @@ describe('Document delete test', () => {
 
     it('should delete document after it has been changed and save session', async() => {
       let product: Product;
-      const key: string = "Products/107";
+      const key: string = "Product/107";
       session = store.openSession({requestExecutor});
 
       product = await session.load<Product>(key, Product);
@@ -93,7 +93,7 @@ describe('Document delete test', () => {
       session = store.openSession({requestExecutor});
 
       for (let i: number = 0; i < ids.length; i++) {
-        await session.delete<Product>(`Products/${ids[i]}`, eTags[i]);
+        await session.delete<Product>(`Product/${ids[i]}`, eTags[i]);
       }
       
       await expect(session.saveChanges()).to.be.fulfilled;        
@@ -103,7 +103,7 @@ describe('Document delete test', () => {
       session = store.openSession({requestExecutor});
 
       for (let i: number = 0; i < ids.length; i++) {
-        await session.delete<Product>(`Products/${ids[i]}`, eTags[i] + 10);
+        await session.delete<Product>(`Product/${ids[i]}`, eTags[i] + 10);
       }
       
       await expect(session.saveChanges()).to.be.rejected;        

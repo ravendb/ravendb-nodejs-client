@@ -14,7 +14,7 @@ export class DateUtil {
   }
 
   public static parse(dateString: string): Date {
-    const stripped = dateString.substring(dateString.length - 1);
+    const stripped = dateString.substring(0, dateString.length - 1);
     const format = 'YYYY-MM-DDTHH:mm:ss.SSS0000';
 
     if (!dateString.endsWith('Z')) {

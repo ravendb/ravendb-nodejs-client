@@ -4,6 +4,7 @@ import {RavenCommand} from '../../Database/RavenCommand';
 import {IRavenResponse} from "../../Database/RavenCommandResponse";
 import {IResponse, IResponseBody} from "../../Http/Response/IResponse";
 import {StringUtil} from "../../Utility/StringUtil";
+import {DateUtil} from "../../Utility/DateUtil";
 import {StatusCode, StatusCodes} from "../../Http/Response/StatusCode";
 import {ErrorResponseException} from "../../Database/DatabaseExceptions";
 
@@ -28,7 +29,7 @@ export class HiloNextCommand extends RavenCommand {
       tag: this.tag,
       lastMax: this.lastRangeMax,
       lastBatchSize: this.lastBatchSize,
-      lastRangeAt: this.lastRangeAt,
+      lastRangeAt: DateUtil.stringify(this.lastRangeAt),
       identityPartsSeparator: this.identityPartsSeparator
     };
 

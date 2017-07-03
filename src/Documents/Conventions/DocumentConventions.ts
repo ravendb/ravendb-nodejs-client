@@ -247,7 +247,7 @@ export class DocumentConventions {
     }
 
     if (key && (matches = /^(\w{1}[\w\d]+)\/\d*$/i.exec(key))) {
-      return StringUtil.capitalize(matches[1]);
+      return StringUtil.capitalize(pluralize.singular(matches[1]));
     }
 
     return null;
