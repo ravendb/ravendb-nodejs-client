@@ -5,7 +5,7 @@ import {IDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
 import {DocumentQuery} from "./DocumentQuery";
 import {IDocumentStore} from '../IDocumentStore';
 import {RequestExecutor} from '../../Http/Request/RequestExecutor';
-import {DocumentConventions, DocumentConstructor, IDocumentConversionResult, IStoredRawEntityInfo, DocumentType} from '../Conventions/DocumentConventions';
+import {DocumentConventions, DocumentConstructor, IDocumentConversionResult, IStoredRawEntityInfo, DocumentType, IDocumentAssociationCheckResult} from '../Conventions/DocumentConventions';
 import {EmptyCallback, EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
 import {PromiseResolver} from '../../Utility/PromiseResolver';
 import {TypeUtil} from "../../Utility/TypeUtil";
@@ -189,7 +189,9 @@ export class DocumentSession implements IDocumentSession {
 
     return this.checkDocumentAndMetadataBeforeStore<T>(document, key, documentType)
       .then((document: T) => this.checkAssociationAndETagBeforeStore<T>(document, key, etag))
-      .then((isNew: boolean): T | BluebirdPromise.Thenable<T> => {
+      .then((result: IDocumentAssociationCheckResult<T>): T | BluebirdPromise.Thenable<T> => {
+        let {isNew, document} = result;
+
         if (isNewDocument = isNew) {
           originalMetadata = _.cloneDeep(document['@metadata'] || {});
           return this.prepareDocumentIdBeforeStore<T>(document, key, etag);
@@ -197,9 +199,10 @@ export class DocumentSession implements IDocumentSession {
 
         return document;
       })
-      .then((document: T): T | BluebirdPromise.Thenable<T> => {      
+      .then((document: T): T | BluebirdPromise.Thenable<T> => {   
         if (isNewDocument) {
           const key: string = conventions.getIdFromDocument(document);
+          const docType: DocumentType<T> = conventions.getTypeFromDocument(document, key, documentType);
 
           for (let command of this.deferCommands.values()) {
             if (command.documentKey === key) {
@@ -218,7 +221,7 @@ export class DocumentSession implements IDocumentSession {
           }
 
           this.deletedDocuments.delete(document);
-          document['@metadata'] = conventions.buildDefaultMetadata(document, document.constructor as DocumentConstructor<T>);          
+          document['@metadata'] = conventions.buildDefaultMetadata(document, docType);          
           this.onDocumentFetched<T>(<IDocumentConversionResult<T>>{
             document: document,
             metadata: document['@metadata'],
@@ -387,9 +390,9 @@ more responsive application.", maxRequests
     return BluebirdPromise.resolve<T>(doc);
   }
 
-  protected checkAssociationAndETagBeforeStore<T extends Object = IRavenObject>(document: T, key?: string, etag?: number): BluebirdPromise<boolean> {
+  protected checkAssociationAndETagBeforeStore<T extends Object = IRavenObject>(document: T, key?: string, etag?: number): BluebirdPromise<IDocumentAssociationCheckResult<T>> {
     return BluebirdPromise.resolve()
-      .then((): boolean => {
+      .then((): IDocumentAssociationCheckResult<T> => {
         const conventions: DocumentConventions = this.conventions;
         const store: IDocumentStore = this.documentStore;
         const isNew: boolean = !this.rawEntitiesAndMetadata.has(document);
@@ -418,7 +421,7 @@ more responsive application.", maxRequests
           this.rawEntitiesAndMetadata.set(document, info);
         }
 
-        return isNew;
+        return {document, isNew};
       });
   }
 
@@ -474,7 +477,7 @@ more responsive application.", maxRequests
       const key: string = info.key;
       const rawEntity: object = _.omit(
         conventions.convertToRawEntity(document), 
-        conventions.getIdPropertyName(info.documentType)
+        conventions.getIdPropertyName(info.documentType, document)
       );
 
       if ((this.conventions.defaultUseOptimisticConcurrency && (ConcurrencyCheckModes.Disabled 
