@@ -2,11 +2,12 @@
 /// <reference path="../../node_modules/@types/chai/index.d.ts" />
 
 import {expect} from 'chai';
+import {DocumentType} from "../../src/Documents/Conventions/DocumentConventions";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {DocumentStore} from '../../src/Documents/DocumentStore';
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {IRavenObject} from "../../src/Database/IRavenObject";
-import {Foo} from "../TestClasses";
+import {Foo, Product} from "../TestClasses";
 import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 
 describe('Document store test', () => {
@@ -14,6 +15,18 @@ describe('Document store test', () => {
   let session: IDocumentSession;
   let requestExecutor: RequestExecutor;
   let defaultDatabase: string, defaultUrl: string;
+
+  const resolveDocumentType = (plainDocument: object, key?: string, specifiedType?: DocumentType): string => {
+    const propsMap = {
+      Product: ['name', 'uid', 'order']
+    };
+
+    if (!specifiedType && !key) {
+      return Object.keys(propsMap).find((documentType: string): boolean => 
+        propsMap[documentType].every((prop: string) => prop in plainDocument)
+      );
+    }
+  };
 
   beforeEach(function (): void {
     ({defaultDatabase, defaultUrl, requestExecutor} = (this.currentTest as IRavenObject));
@@ -59,6 +72,115 @@ describe('Document store test', () => {
       session = store.openSession({requestExecutor});
       await session.delete<Foo>(key);   
       await expect(session.store<Foo>(foo)).to.be.rejected;      
+    });
+
+    it('should generate id and set collection', async () => {
+      let product: Product = new Product(null, "New Product");    
+      session = store.openSession({requestExecutor});
+      
+      product = await session.store<Product>(product);
+      await session.saveChanges();
+
+      expect(product.id).to.match(/^Product\/\d+$/);
+
+      product = await store.openSession({requestExecutor}).load<Product>(product.id, Product);
+      expect(product['@metadata']['Raven-Node-Type']).to.equals('Product');  
+      expect(product['@metadata']['@collection']).to.equals('Products');      
+    });
+
+    it('should set id and collection on plain object with specified key or key prefix', async () => {
+      let product: Product = <Product>{name: "New Product"};    
+      session = store.openSession({requestExecutor});
+      
+      product = await session.store<Product>(product, 'Product/1');
+      await session.saveChanges();
+
+      expect(product.id).to.equals('Product/1');
+
+      product = await store.openSession({requestExecutor}).load<Product>(product.id);
+      
+      expect(product['@metadata']['Raven-Node-Type']).to.equals('Product');  
+      expect(product['@metadata']['@collection']).to.equals('Products');      
+   
+      product = <Product>{name: "New Product"};    
+      session = store.openSession({requestExecutor});
+      
+      product = await session.store<Product>(product, 'Products/');
+      await session.saveChanges();
+
+      expect(product.id).to.match(/^Product\/\d+$/);
+
+      product = await store.openSession({requestExecutor}).load<Product>(product.id);
+      expect(product['@metadata']['Raven-Node-Type']).to.equals('Product');  
+      expect(product['@metadata']['@collection']).to.equals('Products');      
+    });
+
+    it('should set id and collection on plain object with prefilled document type or metadata', async () => {
+      let product: Product = <Product>{name: "New Product"};    
+      session = store.openSession({requestExecutor});
+      
+      product = await session.store<Product>(product, null, "Product");
+      await session.saveChanges();
+
+      expect(product.id).to.match(/^Product\/\d+$/);
+
+      product = await store.openSession({requestExecutor}).load<Product>(product.id);
+      expect(product['@metadata']['Raven-Node-Type']).to.equals('Product');  
+      expect(product['@metadata']['@collection']).to.equals('Products');      
+
+      product = <Product>{name: "New Product", "@metadata": {"Raven-Node-Type": "Product"}};    
+      session = store.openSession({requestExecutor});
+      
+      product = await session.store<Product>(product);
+      await session.saveChanges();
+
+      expect(product.id).to.match(/^Product\/\d+$/);
+
+      product = await store.openSession({requestExecutor}).load<Product>(product.id);
+      expect(product['@metadata']['Raven-Node-Type']).to.equals('Product');  
+      expect(product['@metadata']['@collection']).to.equals('Products');      
+   
+      product = <Product>{name: "New Product", "@metadata": {"@collection": "Products"}};    
+      session = store.openSession({requestExecutor});
+      
+      product = await session.store<Product>(product);
+      await session.saveChanges();
+
+      expect(product.id).to.match(/^Product\/\d+$/);
+
+      product = await store.openSession({requestExecutor}).load<Product>(product.id);
+      expect(product['@metadata']['Raven-Node-Type']).to.equals('Product');  
+      expect(product['@metadata']['@collection']).to.equals('Products'); 
+    });
+
+    it('should set id and collection on plain object with document type resolver', async () => {
+      let product: Product = <Product>{name: "New Product", uid: null, order: null};    
+
+      store.conventions.addDocumentInfoResolver({ resolveDocumentType });
+      session = store.openSession({requestExecutor});
+      
+      product = await session.store<Product>(product);
+      await session.saveChanges();
+
+      expect(product.id).to.match(/^Product\/\d+$/);
+
+      product = await store.openSession({requestExecutor}).load<Product>(product.id);
+      expect(product['@metadata']['Raven-Node-Type']).to.equals('Product');  
+      expect(product['@metadata']['@collection']).to.equals('Products');      
+    });
+
+    it('should set @empty collection and uuid() as id on plain object which has unresolved document type', async () => {
+      let product: Product = <Product>{name: "New Product"};    
+
+      session = store.openSession({requestExecutor});      
+      product = await session.store<Product>(product);
+      await session.saveChanges();
+
+      expect(product.id).to.match(/^[a-f0-9]{8}\-[a-f0-9]{4}\-[a-f0-9]{4}\-[a-f0-9]{4}\-[a-f0-9]{12}$/);
+
+      product = await store.openSession({requestExecutor}).load<Product>(product.id);
+      expect(product['@metadata']['Raven-Node-Type']).to.not.exist;  
+      expect(product['@metadata']['@collection']).to.equals('@empty');      
     });
   });
 });
