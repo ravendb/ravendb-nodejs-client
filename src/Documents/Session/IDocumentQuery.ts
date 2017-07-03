@@ -2,7 +2,7 @@ import {IDocumentQueryConditions} from './IDocumentQueryConditions';
 import {EscapeQueryOption} from "./EscapeQueryOptions";
 import {LuceneValue} from "../Lucene/LuceneValue";
 import {QueryResultsWithStatistics} from "./DocumentQuery";
-import {QueryResultsCallback} from "../../Utility/Callbacks";
+import {QueryResultsCallback, EntityCallback, EntitiesCountCallback} from "../../Utility/Callbacks";
 import {QueryOperator} from "./QueryOperator";
 import {IRavenObject} from "../../Database/IRavenObject";
 import {DocumentConstructor, DocumentType} from "../Conventions/DocumentConventions";
@@ -45,4 +45,6 @@ export interface IDocumentQuery<T> {
   skip(skipCount: number): IDocumentQuery<T>;
   get(callback?: QueryResultsCallback<T[]>): Promise<T[]>;
   get(callback?: QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<QueryResultsWithStatistics<T>>;
+  first(callback?: EntityCallback<T>): Promise<T>;
+  count(callback?: EntitiesCountCallback): Promise<number>;
 }

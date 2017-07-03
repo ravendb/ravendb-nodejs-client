@@ -205,7 +205,7 @@ export class DocumentSession implements IDocumentSession {
           const docType: DocumentType<T> = conventions.getTypeFromDocument(document, key, documentType);
 
           for (let command of this.deferCommands.values()) {
-            if (command.documentKey === key) {
+            if (command.documentId === key) {
               return BluebirdPromise.reject(new InvalidOperationException(StringUtil.format(
                 "Can't store document, there is a deferred command registered " + 
                 "for this document in the session. Document id: {0}", key

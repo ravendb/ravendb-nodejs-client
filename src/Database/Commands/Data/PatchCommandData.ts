@@ -12,9 +12,9 @@ export class PatchCommandData extends RavenCommandData implements IJsonSerializa
   protected additionalData?: IRavenObject = null;
   protected debugMode: boolean = false;
 
-  constructor(key: string, scriptedPatch: PatchRequest, etag?: number,
+  constructor(id: string, scriptedPatch: PatchRequest, etag?: number,
     patchIfMissing?: PatchRequest) {
-    super(key, etag);
+    super(id, etag);
 
     this.type = RequestMethods.Patch;
     this.scriptedPatch = scriptedPatch;

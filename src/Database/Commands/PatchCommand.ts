@@ -17,7 +17,7 @@ export interface IPatchCommandOptions {
 }
 
 export class PatchCommand extends RavenCommand {
-  protected key?: string;
+  protected id?: string;
   protected patch: PatchRequest;
   protected etag?: number = null;
   protected patchIfMissing?: PatchRequest = null;
@@ -25,12 +25,12 @@ export class PatchCommand extends RavenCommand {
   protected returnDebugInformation: boolean;
   protected path: string;
 
-  constructor(key: string, patch: PatchRequest, options?: IPatchCommandOptions) {
+  constructor(id: string, patch: PatchRequest, options?: IPatchCommandOptions) {
     super('', RequestMethods.Patch);
 
     const opts: IPatchCommandOptions = options || {};
 
-    this.key = key;
+    this.id = id;
     this.patch = patch;
     this.etag = opts.etag;
     this.patchIfMissing = opts.patchIfMissing;
@@ -39,19 +39,19 @@ export class PatchCommand extends RavenCommand {
   }
 
   public createRequest(serverNode: ServerNode): void {
-    if (TypeUtil.isNone(this.key)) {
-      throw new InvalidOperationException('None key is invalid');
+    if (TypeUtil.isNone(this.id)) {
+      throw new InvalidOperationException('Empty ID is invalid');
     }
 
     if (TypeUtil.isNone(this.patch)) {
-      throw new InvalidOperationException('None patch is invalid');
+      throw new InvalidOperationException('Empty patch is invalid');
     }
 
     if (this.patchIfMissing && (!this.patchIfMissing || !this.patchIfMissing.script)) {
-      throw new InvalidOperationException('None or Empty script is invalid');
+      throw new InvalidOperationException('Empty script is invalid');
     }
 
-    this.params = {id: this.key};
+    this.params = {id: this.id};
     this.endPoint = StringUtil.format('{url}/databases/{database}/docs', serverNode);
     this.skipPatchIfEtagMismatch && this.addParams('skipPatchIfEtagMismatch', 'true');
     this.returnDebugInformation && this.addParams('debug', 'true');
@@ -67,7 +67,7 @@ export class PatchCommand extends RavenCommand {
     const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
 
     if (![StatusCodes.NotModified, StatusCodes.Ok].includes(response.statusCode)) {
-      throw new InvalidOperationException(StringUtil.format('Could not patch document {0}', this.key));
+      throw new InvalidOperationException(StringUtil.format('Could not patch document {0}', this.id));
     }
 
     if (response.body) {

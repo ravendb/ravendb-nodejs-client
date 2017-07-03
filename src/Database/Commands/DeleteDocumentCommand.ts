@@ -9,30 +9,30 @@ import {StatusCodes} from "../../Http/Response/StatusCode";
 import {TypeUtil} from "../../Utility/TypeUtil";
 
 export class DeleteDocumentCommand extends RavenCommand {
-  protected key?: string;
+  protected id?: string;
   protected etag?: number;
 
-  constructor(key: string, etag?: number) {
+  constructor(id: string, etag?: number) {
     super('', RequestMethods.Delete);
 
-    this.key = key;
+    this.id = id;
     this.etag = etag;
   }
 
   public createRequest(serverNode: ServerNode): void {
-    if (!this.key) {
-      throw new InvalidOperationException('Null Key is not valid');
+    if (!this.id) {
+      throw new InvalidOperationException('Null Id is not valid');
     }
 
-    if (!TypeUtil.isString(this.key)) {
-      throw new InvalidOperationException('Key must be a string');
+    if (!TypeUtil.isString(this.id)) {
+      throw new InvalidOperationException('Id must be a string');
     }
 
     if (this.etag) {
       this.headers = {'If-Match': StringUtil.format('"{0}"', this.etag)};
     }
 
-    this.params = {id: this.key};
+    this.params = {id: this.id};
     this.endPoint = StringUtil.format('{url}/databases/{database}/docs', serverNode);
   }
 
@@ -44,7 +44,7 @@ export class DeleteDocumentCommand extends RavenCommand {
 
   protected checkResponse(response: IResponse): void {
     if (!StatusCodes.isNoContent(response.statusCode)) {
-      throw new InvalidOperationException(StringUtil.format('Could not delete document {0}', this.key));
+      throw new InvalidOperationException(StringUtil.format('Could not delete document {0}', this.id));
     }
   }
 }
