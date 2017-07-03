@@ -1,8 +1,11 @@
+import * as BluebirdPromise from 'bluebird'
+import * as moment from "moment";
+import * as _ from "lodash";
 import {IDocumentQuery} from "./IDocumentQuery";
 import {IDocumentSession} from "./IDocumentSession";
 import {RequestExecutor} from "../../Http/Request/RequestExecutor";
 import {IDocumentQueryConditions} from './IDocumentQueryConditions';
-import {QueryResultsCallback} from '../../Utility/Callbacks';
+import {QueryResultsCallback, EntityCallback, EntitiesCountCallback} from '../../Utility/Callbacks';
 import {PromiseResolver} from '../../Utility/PromiseResolver';
 import {EscapeQueryOption, EscapeQueryOptions} from "./EscapeQueryOptions";
 import {LuceneValue, LuceneConditionValue, LuceneRangeValue} from "../Lucene/LuceneValue";
@@ -14,8 +17,6 @@ import {QueryString} from "../../Http/QueryString";
 import {ArrayUtil} from "../../Utility/ArrayUtil";
 import {QueryOperators, QueryOperator} from "./QueryOperator";
 import {DocumentConventions, DocumentConstructor, IDocumentConversionResult, DocumentType} from "../Conventions/DocumentConventions";
-import * as BluebirdPromise from 'bluebird'
-import * as moment from "moment";
 import {IndexQuery} from "../../Database/Indexes/IndexQuery";
 import {IRavenObject} from "../../Database/IRavenObject";
 import {IOptionsSet} from "../../Utility/IOptionsSet";
@@ -244,51 +245,60 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   public async get(callback?: QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<QueryResultsWithStatistics<T>>;
   public async get(callback?: QueryResultsCallback<T[]> | QueryResultsCallback<QueryResultsWithStatistics<T>>)
     : Promise<T[] | QueryResultsWithStatistics<T>> {
-    const responseToDocuments = (response: IRavenResponse): T[] | QueryResultsWithStatistics<T> => {
-      let result: T[] | QueryResultsWithStatistics<T>  = [] as T[];
-      const commandResponse: IRavenResponse = response as IRavenResponse;
-
-      if (commandResponse.Results.length > 0) {
-        let results: T[] = [] as T[];
-        const fetchingFullDocs: boolean = !this.fetch 
-          || (TypeUtil.isArray(this.fetch) && !this.fetch.length);
-
-        commandResponse.Results.forEach((result: object) => {
-          const conversionResult: IDocumentConversionResult<T> = this.session.conventions
-              .convertToDocument<T>(result, this.documentType, this.nestedObjectTypes || {});
-
-          results.push(conversionResult.document);
-
-          this.emit<IDocumentConversionResult<T>>(
-            DocumentQuery.EVENT_DOCUMENT_FETCHED, 
-            conversionResult
-          );
-        });
-
-        if (Array.isArray(commandResponse.Includes) && commandResponse.Includes.length) {
-          this.emit<object[]>(
-            DocumentQuery.EVENT_INCLUDES_FETCHED, 
-            commandResponse.Includes as object[]
-          );
-        }
-
-        if (this.withStatistics) {
-          result = {
-            results: results,
-            response: response
-          } as QueryResultsWithStatistics<T>;
-        } else {
-          result = results as T[];
-        }
-      }
-
-      PromiseResolver.resolve<T[] | QueryResultsWithStatistics<T>>(result, null, callback);
-      return result as T[] | QueryResultsWithStatistics<T>;
-    };
-
     return this.executeQuery()
-      .then((response: IRavenResponse): T[] | QueryResultsWithStatistics<T> => responseToDocuments(response))
+      .then((response: IRavenResponse): T[] | QueryResultsWithStatistics<T> => {        
+        const result: T[] | QueryResultsWithStatistics<T> = this.convertResponseToDocuments(response);
+
+        PromiseResolver.resolve<T[] | QueryResultsWithStatistics<T>>(result, null, callback);
+        return result;
+      })
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
+  }
+
+  public async first(callback?: EntityCallback<T>): Promise<T> {
+    const take: number = this._take;
+    const skip: number = this._skip;
+    const withStatistics: boolean = this.withStatistics;
+
+    this._take = 1;
+    this._skip = 0;
+    this.withStatistics = false;
+
+    return this.executeQuery()      
+      .then((response: IRavenResponse): T => {                
+        const results: T[] = <T[]>this.convertResponseToDocuments(response);
+        const result: T = results.length ? _.first(results) : null;
+
+        PromiseResolver.resolve<T>(result, null, callback);
+        return result;
+      })
+      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback))
+      .finally(() => {
+        this._take = take;
+        this._skip = skip;
+        this.withStatistics = withStatistics;
+      });
+  }
+
+  public async count(callback?: EntitiesCountCallback): Promise<number> {
+    const take: number = this._take;
+    const skip: number = this._skip;
+
+    this._take = 0;
+    this._skip = 0;
+
+    return this.executeQuery()      
+      .then((response: IRavenResponse): number => {                
+        const result: number = <number>response.TotalResults || 0;
+
+        PromiseResolver.resolve<number>(result, null, callback);
+        return result;
+      })
+      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback))
+      .finally(() => {
+        this._take = take;
+        this._skip = skip;
+      });
   }
 
   protected addSpace(): DocumentQuery<T> {
@@ -366,5 +376,46 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
       });
 
     return request();
+  }
+
+  protected convertResponseToDocuments(response: IRavenResponse): T[] | QueryResultsWithStatistics<T> {
+    let result: T[] | QueryResultsWithStatistics<T>  = [] as T[];
+      const commandResponse: IRavenResponse = response as IRavenResponse;
+
+      if (commandResponse.Results.length > 0) {
+        let results: T[] = [] as T[];
+        const fetchingFullDocs: boolean = !this.fetch 
+          || (TypeUtil.isArray(this.fetch) && !this.fetch.length);
+
+        commandResponse.Results.forEach((result: object) => {
+          const conversionResult: IDocumentConversionResult<T> = this.session.conventions
+              .convertToDocument<T>(result, this.documentType, this.nestedObjectTypes || {});
+
+          results.push(conversionResult.document);
+
+          this.emit<IDocumentConversionResult<T>>(
+            DocumentQuery.EVENT_DOCUMENT_FETCHED, 
+            conversionResult
+          );
+        });
+
+        if (Array.isArray(commandResponse.Includes) && commandResponse.Includes.length) {
+          this.emit<object[]>(
+            DocumentQuery.EVENT_INCLUDES_FETCHED, 
+            commandResponse.Includes as object[]
+          );
+        }
+
+        if (this.withStatistics) {
+          result = {
+            results: results,
+            response: response
+          } as QueryResultsWithStatistics<T>;
+        } else {
+          result = results as T[];
+        }
+      }
+      
+      return result as T[] | QueryResultsWithStatistics<T>;
   }
 }

@@ -29,7 +29,7 @@ export class DocumentSession implements IDocumentSession {
   protected requestExecutor: RequestExecutor;
   protected sessionId: string;
   protected documentsById: IRavenObject<IRavenObject>;
-  protected includedRawEntitiesByKey: IRavenObject<object>
+  protected includedRawEntitiesById: IRavenObject<object>
   protected deletedDocuments: Set<IRavenObject>;
   protected knownMissingIds: Set<string>;
   protected deferCommands: Set<RavenCommandData>;
@@ -53,25 +53,25 @@ export class DocumentSession implements IDocumentSession {
     this.requestExecutor = requestExecutor;
     this.sessionId = sessionId;
     this.documentsById = {};
-    this.includedRawEntitiesByKey = {};
+    this.includedRawEntitiesById = {};
     this.deletedDocuments = new Set<IRavenObject>();
     this.rawEntitiesAndMetadata = new Map<IRavenObject, IStoredRawEntityInfo>();
     this.knownMissingIds = new Set<string>();
     this.deferCommands = new Set<RavenCommandData>();
   }
 
-  public async load<T extends Object = IRavenObject>(keyOrKeys: string, documentType?: DocumentType<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntityCallback<T>): Promise<T>;
-  public async load<T extends Object = IRavenObject>(keyOrKeys: string[], documentType?: DocumentType<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntitiesArrayCallback<T>): Promise<T[]>;
-  public async load<T extends Object = IRavenObject>(keyOrKeys: string | string[], documentType?: DocumentType<T>, includes?: string[], nestedObjectTypes: IRavenObject<DocumentConstructor> = {}, callback?: EntityCallback<T>
+  public async load<T extends Object = IRavenObject>(idOrIds: string, documentType?: DocumentType<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntityCallback<T>): Promise<T>;
+  public async load<T extends Object = IRavenObject>(idOrIds: string[], documentType?: DocumentType<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntitiesArrayCallback<T>): Promise<T[]>;
+  public async load<T extends Object = IRavenObject>(idOrIds: string | string[], documentType?: DocumentType<T>, includes?: string[], nestedObjectTypes: IRavenObject<DocumentConstructor> = {}, callback?: EntityCallback<T>
     | EntitiesArrayCallback<T>
   ): Promise<T | T[]> {
-    if (_.isEmpty(keyOrKeys)) {
-      return BluebirdPromise.reject(new InvalidOperationException('Document key isn\'t set or keys list is empty'));
+    if (_.isEmpty(idOrIds)) {
+      return BluebirdPromise.reject(new InvalidOperationException('Document ID isn\'t set or ids list is empty'));
     }
 
-    const loadingOneDoc: boolean = !TypeUtil.isArray(keyOrKeys); 
-    const keys: string[] = loadingOneDoc ? [<string>keyOrKeys] : <string[]>keyOrKeys;
-    let idsOfNonExistingDocuments: Set<string> = new Set<string>(keys);
+    const loadingOneDoc: boolean = !TypeUtil.isArray(idOrIds); 
+    const ids: string[] = loadingOneDoc ? [<string>idOrIds] : <string[]>idOrIds;
+    let idsOfNonExistingDocuments: Set<string> = new Set<string>(ids);
 
     if (includes && !TypeUtil.isArray(includes)) {
       includes = _.isString(includes) ? [includes as string] : null;
@@ -81,27 +81,27 @@ export class DocumentSession implements IDocumentSession {
       const conventions: DocumentConventions = this.documentStore.conventions;
 
       Array.from<string>(idsOfNonExistingDocuments)
-        .filter((key: string): boolean => key 
-          in this.includedRawEntitiesByKey
+        .filter((id: string): boolean => id 
+          in this.includedRawEntitiesById
         )
-        .forEach((key: string) => {
+        .forEach((id: string) => {
           this.makeDocument(
-            this.includedRawEntitiesByKey[key], 
+            this.includedRawEntitiesById[id], 
             documentType, nestedObjectTypes
           );
 
-          delete this.includedRawEntitiesByKey[key];
+          delete this.includedRawEntitiesById[id];
       });
 
       idsOfNonExistingDocuments = new Set<string>(
         Array.from<string>(idsOfNonExistingDocuments)
-          .filter((key: string): boolean => !(key in this.documentsById)
+          .filter((id: string): boolean => !(id in this.documentsById)
       ));  
     }
 
     idsOfNonExistingDocuments = new Set<string>(
       Array.from<string>(idsOfNonExistingDocuments)
-        .filter((key: string): boolean => !this.knownMissingIds.has(key)
+        .filter((id: string): boolean => !this.knownMissingIds.has(id)
     ));
    
     return BluebirdPromise.resolve()   
@@ -113,8 +113,8 @@ export class DocumentSession implements IDocumentSession {
           );
         }
       })
-      .then((): T[] => keys.map((key: string): T => (!this.knownMissingIds.has(key) 
-        && (key in this.documentsById)) ? this.documentsById[key] as T : null 
+      .then((): T[] => ids.map((id: string): T => (!this.knownMissingIds.has(id) 
+        && (id in this.documentsById)) ? this.documentsById[id] as T : null 
       ))
       .then((results: T[]): T | T[] =>  {
         let result : T | T[] = results;
@@ -129,40 +129,40 @@ export class DocumentSession implements IDocumentSession {
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
-  public async delete<T extends Object = IRavenObject>(keyOrDocument: string, expectedEtag?: number, callback?: EmptyCallback): Promise<void>;
-  public async delete<T extends Object = IRavenObject>(keyOrDocument: T, expectedEtag?: number, callback?: EmptyCallback): Promise<void>;
-  public async delete<T extends Object = IRavenObject>(keyOrDocument: string | T, expectedEtag?: number, callback?: EmptyCallback): Promise<void> {
+  public async delete<T extends Object = IRavenObject>(idOrDocument: string, expectedEtag?: number, callback?: EmptyCallback): Promise<void>;
+  public async delete<T extends Object = IRavenObject>(idOrDocument: T, expectedEtag?: number, callback?: EmptyCallback): Promise<void>;
+  public async delete<T extends Object = IRavenObject>(idOrDocument: string | T, expectedEtag?: number, callback?: EmptyCallback): Promise<void> {
     return BluebirdPromise.resolve()
       .then(() => {
         const conventions = this.conventions;
         let info: IStoredRawEntityInfo;
-        let key: string, document: T = null;
+        let id: string, document: T = null;
         let originalMetadata: object;
 
-        if (TypeUtil.isString(keyOrDocument)) { 
-          key = keyOrDocument as string;
+        if (TypeUtil.isString(idOrDocument)) { 
+          id = idOrDocument as string;
 
-          if (keyOrDocument in this.documentsById) {
-            document = this.documentsById[key] as T;
+          if (idOrDocument in this.documentsById) {
+            document = this.documentsById[id] as T;
 
             if (this.isDocumentChanged(document)) {
               return BluebirdPromise.reject(new InvalidOperationException('Can\'t delete changed document using identifier. Pass document instance instead'));
             }
           }            
         } else {
-          document = keyOrDocument as T;
+          document = idOrDocument as T;
           info = this.rawEntitiesAndMetadata.get(document);
-          key = conventions.getIdFromDocument<T>(document, <DocumentType<T>>info.documentType);
+          id = conventions.getIdFromDocument<T>(document, <DocumentType<T>>info.documentType);
         }
 
         if (!document) {
-          this.deferCommands.add(new DeleteCommandData(key, expectedEtag));
+          this.deferCommands.add(new DeleteCommandData(id, expectedEtag));
         } else {
           if (!this.rawEntitiesAndMetadata.has(document)) {
             return BluebirdPromise.reject(new InvalidOperationException('Document is not associated with the session, cannot delete unknown document instance'));
           }
 
-          ({originalMetadata, key} = info);
+          ({originalMetadata, id} = info);
 
           if ('Raven-Read-Only' in originalMetadata) {
             return BluebirdPromise.reject(new InvalidOperationException('Document is marked as read only and cannot be deleted'));
@@ -176,39 +176,39 @@ export class DocumentSession implements IDocumentSession {
           this.deletedDocuments.add(document);
         }
 
-        this.knownMissingIds.add(key);
+        this.knownMissingIds.add(id);
         PromiseResolver.resolve<void>(null, null, callback); 
       })
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
-  public async store<T extends Object = IRavenObject>(document: T, key?: string, documentType?: DocumentType<T>, etag?: number, callback?: EntityCallback<T>): Promise<T> {
+  public async store<T extends Object = IRavenObject>(document: T, id?: string, documentType?: DocumentType<T>, etag?: number, callback?: EntityCallback<T>): Promise<T> {
     let originalMetadata: object;
     let isNewDocument: boolean = false;
     const conventions: DocumentConventions = this.conventions;
 
-    return this.checkDocumentAndMetadataBeforeStore<T>(document, key, documentType)
-      .then((document: T) => this.checkAssociationAndETagBeforeStore<T>(document, key, etag))
+    return this.checkDocumentAndMetadataBeforeStore<T>(document, id, documentType)
+      .then((document: T) => this.checkAssociationAndETagBeforeStore<T>(document, id, etag))
       .then((result: IDocumentAssociationCheckResult<T>): T | BluebirdPromise.Thenable<T> => {
         let {isNew, document} = result;
 
         if (isNewDocument = isNew) {
           originalMetadata = _.cloneDeep(document['@metadata'] || {});
-          return this.prepareDocumentIdBeforeStore<T>(document, key, etag);
+          return this.prepareDocumentIdBeforeStore<T>(document, id, etag);
         }  
 
         return document;
       })
       .then((document: T): T | BluebirdPromise.Thenable<T> => {   
         if (isNewDocument) {
-          const key: string = conventions.getIdFromDocument(document);
-          const docType: DocumentType<T> = conventions.getTypeFromDocument(document, key, documentType);
+          const id: string = conventions.getIdFromDocument(document);
+          const docType: DocumentType<T> = conventions.getTypeFromDocument(document, id, documentType);
 
           for (let command of this.deferCommands.values()) {
-            if (command.documentKey === key) {
+            if (command.documentId === id) {
               return BluebirdPromise.reject(new InvalidOperationException(StringUtil.format(
                 "Can't store document, there is a deferred command registered " + 
-                "for this document in the session. Document id: {0}", key
+                "for this document in the session. Document id: {0}", id
               )));
             }
           }
@@ -216,7 +216,7 @@ export class DocumentSession implements IDocumentSession {
           if (this.deletedDocuments.has(document)) {
             return BluebirdPromise.reject(new InvalidOperationException(StringUtil.format(
                 "Can't store object, it was already deleted in this " + 
-                "session. Document id: {0}", key
+                "session. Document id: {0}", id
               )));
           }
 
@@ -327,11 +327,11 @@ more responsive application.", maxRequests
     }
   }
 
-  protected fetchDocuments<T extends Object = IRavenObject>(keys: string[], documentType?: DocumentType<T>, includes?: string[], nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): BluebirdPromise<T[]> {
+  protected fetchDocuments<T extends Object = IRavenObject>(ids: string[], documentType?: DocumentType<T>, includes?: string[], nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): BluebirdPromise<T[]> {
     this.incrementRequestsCount();
 
     return this.requestExecutor
-      .execute(new GetDocumentCommand(keys, includes))
+      .execute(new GetDocumentCommand(ids, includes))
       .then((response: IRavenResponse): T[] | BluebirdPromise.Thenable<T[]> => {
         let responseResults: object[] = [];
         let responseIncludes: object[] = [];
@@ -350,7 +350,7 @@ more responsive application.", maxRequests
 
         const results: T[] = responseResults.map((result: object, index: number) => {
           if (TypeUtil.isNone(result)) {
-            this.knownMissingIds.add(keys[index]);
+            this.knownMissingIds.add(ids[index]);
             return null;
           }
 
@@ -365,7 +365,7 @@ more responsive application.", maxRequests
       });
   }
 
-  public checkDocumentAndMetadataBeforeStore<T extends Object = IRavenObject>(document?: object | T, key?: string, documentType?: DocumentType<T>): BluebirdPromise<T> {
+  public checkDocumentAndMetadataBeforeStore<T extends Object = IRavenObject>(document?: object | T, id?: string, documentType?: DocumentType<T>): BluebirdPromise<T> {
     const conventions: DocumentConventions = this.documentStore.conventions;
     let doc: T = <T>document;
 
@@ -376,7 +376,7 @@ more responsive application.", maxRequests
     }
 
     if (!this.rawEntitiesAndMetadata.has(document)) {
-      const docType: DocumentType<T> = conventions.getTypeFromDocument<T>(doc, key, documentType);
+      const docType: DocumentType<T> = conventions.getTypeFromDocument<T>(doc, id, documentType);
       const docCtor: DocumentConstructor<T> = conventions.getDocumentConstructor<T>(docType);
 
       if ('function' !== (typeof docType)) {
@@ -390,7 +390,7 @@ more responsive application.", maxRequests
     return BluebirdPromise.resolve<T>(doc);
   }
 
-  protected checkAssociationAndETagBeforeStore<T extends Object = IRavenObject>(document: T, key?: string, etag?: number): BluebirdPromise<IDocumentAssociationCheckResult<T>> {
+  protected checkAssociationAndETagBeforeStore<T extends Object = IRavenObject>(document: T, id?: string, etag?: number): BluebirdPromise<IDocumentAssociationCheckResult<T>> {
     return BluebirdPromise.resolve()
       .then((): IDocumentAssociationCheckResult<T> => {
         const conventions: DocumentConventions = this.conventions;
@@ -400,11 +400,11 @@ more responsive application.", maxRequests
         if (!isNew) {
           let info: IStoredRawEntityInfo = this.rawEntitiesAndMetadata.get(document);
           let metadata: object = document['@metadata'];
-          let documentKey: string = key;
+          let documentId: string = id;
           let checkMode: ConcurrencyCheckMode = ConcurrencyCheckModes.Forced;
 
-          if (TypeUtil.isNone(documentKey)) {
-            documentKey = conventions.getIdFromDocument<T>(document, <DocumentType<T>>info.documentType);
+          if (TypeUtil.isNone(documentId)) {
+            documentId = conventions.getIdFromDocument<T>(document, <DocumentType<T>>info.documentType);
           } 
 
           if (TypeUtil.isNone(etag)) {
@@ -412,7 +412,7 @@ more responsive application.", maxRequests
           } else {
             info.etag = metadata['@etag'] = etag;
 
-            if (!TypeUtil.isNone(documentKey)) {
+            if (!TypeUtil.isNone(documentId)) {
               checkMode = ConcurrencyCheckModes.Auto;
             }
           }
@@ -425,37 +425,37 @@ more responsive application.", maxRequests
       });
   }
 
-  protected prepareDocumentIdBeforeStore<T extends Object = IRavenObject>(document: T, key?: string, etag?: number): BluebirdPromise<T> {
+  protected prepareDocumentIdBeforeStore<T extends Object = IRavenObject>(document: T, id?: string, etag?: number): BluebirdPromise<T> {
     return BluebirdPromise.resolve(document)
       .then((document: T) => {
         const conventions: DocumentConventions = this.conventions;
         const store: IDocumentStore = this.documentStore;
 
-        let documentKey: string = key;
+        let documentId: string = id;
 
-        if (TypeUtil.isNone(documentKey)) {
-          documentKey = conventions.getIdFromDocument<T>(document);
+        if (TypeUtil.isNone(documentId)) {
+          documentId = conventions.getIdFromDocument<T>(document);
         } 
         
-        if (!TypeUtil.isNone(documentKey)) {
-          conventions.setIdOnDocument(document, documentKey);
-          document['@metadata']['@id'] = documentKey;
+        if (!TypeUtil.isNone(documentId)) {
+          conventions.setIdOnDocument(document, documentId);
+          document['@metadata']['@id'] = documentId;
         }
 
-        if (!TypeUtil.isNone(documentKey) && !documentKey.endsWith('/') && (documentKey in this.documentsById)) {
-            if (!(new Set<IRavenObject>([this.documentsById[documentKey]]).has(document))) {
+        if (!TypeUtil.isNone(documentId) && !documentId.endsWith('/') && (documentId in this.documentsById)) {
+            if (!(new Set<IRavenObject>([this.documentsById[documentId]]).has(document))) {
                 return BluebirdPromise.reject(new NonUniqueObjectException(StringUtil.format(
-                  "Attempted to associate a different object with id '{0}'.", documentKey
+                  "Attempted to associate a different object with id '{0}'.", documentId
                 )));
             } 
         }
 
-        if (TypeUtil.isNone(documentKey) || documentKey.endsWith('/')) {
+        if (TypeUtil.isNone(documentId) || documentId.endsWith('/')) {
           return store
             .generateId(document, conventions.getTypeFromDocument(document))
-            .then((documentKey: string): T => {
-              conventions.setIdOnDocument(document, documentKey);
-              document['@metadata']['@id'] = documentKey;
+            .then((documentId: string): T => {
+              conventions.setIdOnDocument(document, documentId);
+              document['@metadata']['@id'] = documentId;
 
               return document;
             });
@@ -474,7 +474,7 @@ more responsive application.", maxRequests
       let etag: number = null;
       const conventions: DocumentConventions = this.conventions;
       const info: IStoredRawEntityInfo = this.rawEntitiesAndMetadata.get(document);
-      const key: string = info.key;
+      const id: string = info.id;
       const rawEntity: object = _.omit(
         conventions.convertToRawEntity(document), 
         conventions.getIdPropertyName(info.documentType, document)
@@ -486,21 +486,21 @@ more responsive application.", maxRequests
         etag = info.etag || info.metadata['@etag'] || conventions.emptyEtag;
       }
 
-      delete this.documentsById[key];
+      delete this.documentsById[id];
       changes.addDocument(document);
-      changes.addCommand(new PutCommandData(key, _.cloneDeep(rawEntity), etag));
+      changes.addCommand(new PutCommandData(id, _.cloneDeep(rawEntity), etag));
     }
   }
 
   protected prepareDeleteCommands(changes: SaveChangesData): void {
     this.deletedDocuments.forEach((document: IRavenObject) => {
-      const key: string = this.rawEntitiesAndMetadata.get(document).key;
+      const id: string = this.rawEntitiesAndMetadata.get(document).id;
       let existingDocument: IRavenObject = null;
       let info: IStoredRawEntityInfo = null;
       let etag: number = null;
 
-      if (key in this.documentsById) {
-        existingDocument = this.documentsById[key];        
+      if (id in this.documentsById) {
+        existingDocument = this.documentsById[id];        
 
         if (this.rawEntitiesAndMetadata.has(existingDocument)) {
           info = this.rawEntitiesAndMetadata.get(existingDocument);
@@ -514,11 +514,11 @@ more responsive application.", maxRequests
           this.rawEntitiesAndMetadata.delete(existingDocument);
         }
 
-        delete this.documentsById[key];
+        delete this.documentsById[id];
       }
 
       changes.addDocument(existingDocument);
-      changes.addCommand(new DeleteCommandData(key, etag));
+      changes.addCommand(new DeleteCommandData(id, etag));
     });
 
     this.deletedDocuments.clear();
@@ -571,10 +571,10 @@ more responsive application.", maxRequests
   protected onIncludesFetched(includes: object[]): void {
     if (includes && includes.length) {
       includes.forEach((include: object) => {
-        const documentKey: string = include["@metadata"]["@id"];
+        const documentId: string = include["@metadata"]["@id"];
 
-        if (!(documentKey in this.documentsById)) {
-          this.includedRawEntitiesByKey[documentKey] = include;
+        if (!(documentId in this.documentsById)) {
+          this.includedRawEntitiesById[documentId] = include;
         }
       });
     }
@@ -582,14 +582,14 @@ more responsive application.", maxRequests
 
   protected onDocumentFetched<T extends Object = IRavenObject>(conversionResult?: IDocumentConversionResult<T>): void {
     if (conversionResult) {
-      const documentKey: string = this.conventions
+      const documentId: string = this.conventions
         .getIdFromDocument(conversionResult.document, conversionResult.documentType)
         || conversionResult.originalMetadata['@id'] || conversionResult.metadata['@id'];
 
-      if (documentKey) {
-        this.knownMissingIds.delete(documentKey);
+      if (documentId) {
+        this.knownMissingIds.delete(documentId);
 
-        if (!(documentKey in this.documentsById)) {
+        if (!(documentId in this.documentsById)) {
           let originalValueSource: object = conversionResult.rawEntity;
 
           if (!originalValueSource) {
@@ -597,13 +597,13 @@ more responsive application.", maxRequests
               .convertToRawEntity<T>(conversionResult.document);
           }
 
-          this.documentsById[documentKey] = conversionResult.document;
-          this.rawEntitiesAndMetadata.set(this.documentsById[documentKey], {
+          this.documentsById[documentId] = conversionResult.document;
+          this.rawEntitiesAndMetadata.set(this.documentsById[documentId], {
             originalValue: _.cloneDeep(originalValueSource),
             originalMetadata: conversionResult.originalMetadata,
             metadata: conversionResult.metadata,
             etag: conversionResult.metadata['etag'] || null,
-            key: documentKey,
+            id: documentId,
             concurrencyCheckMode: ConcurrencyCheckModes.Auto,
             documentType: conversionResult.documentType
           });

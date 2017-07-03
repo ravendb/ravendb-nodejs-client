@@ -12,7 +12,7 @@ import {IRavenObject} from "../../src/Database/IRavenObject";
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 import {QueryOperators} from "../../src/Documents/Session/QueryOperator";
 
-describe('DocumentSession', () => {
+describe('QueryCommand Tests', () => {
   const tag: string = 'Tag:Products';
   const indexName: string = 'Testing';
   let requestExecutor: RequestExecutor;

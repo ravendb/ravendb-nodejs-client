@@ -36,6 +36,7 @@ describe('Document query test', () => {
     await session.store<Product>(new Product('Product/107', 'test107', 5));
     await session.store<Product>(new Product('Product/103', 'test107', 6));
     await session.store<Product>(new Product('Product/108', 'new_testing', 90, 'd'));
+    await session.store<Product>(new Product('Product/110', 'paginate_testing', 95));
     await session.store<Order>(new Order('Order/105', 'testing_order', 92, 'Product/108'));
     await session.store<Company>(new Company('Company/1', 'withNesting', new Product(null, 'testing_order', 4)));
     await session.saveChanges();    
@@ -167,6 +168,31 @@ describe('Document query test', () => {
       expect(results[0].order).to.equals('d');
     });
 
+    it('should paginate', async() => {
+      const expectedUids: number[][] = [[2,3],[4,5],[6,90],[110]];
+      const pageSize: number = 2;
+      
+      const totalCount: number = await store.openSession({requestExecutor}).query<Product>({
+        documentType: Product,
+        waitForNonStaleResults: true
+      }).whereNotNull('uid').count();
+
+      const totalPages: number = Math.ceil(totalCount / pageSize);
+
+      expect(totalCount).to.equals(7);
+      expect(totalPages).to.equals(4);
+
+      for (let page: number = 1; page < totalPages; page++) {
+        const products: Product[] = await store.openSession({requestExecutor}).query<Product>({
+          documentType: Product,
+          waitForNonStaleResults: true
+        }).whereNotNull('uid').orderBy('uid').skip((page - 1) * pageSize).take(pageSize).get();
+
+        expect(products).to.have.length.lte(pageSize);
+        products.forEach((product: Product, index: number) => expect(product.uid).to.equals(expectedUids[page - 1][index]));
+      }
+    });
+
     it('should query with includes', async() => {
       session = store.openSession({requestExecutor});
 
@@ -201,4 +227,3 @@ describe('Document query test', () => {
     });
   });  
 });
-

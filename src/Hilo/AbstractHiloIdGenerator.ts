@@ -1,11 +1,11 @@
-import {IHiloKeyGenerator} from './IHiloKeyGenerator';
+import {IHiloIdGenerator} from './IHiloIdGenerator';
 import {IDocumentStore} from '../Documents/IDocumentStore';
 import {DocumentConventions} from '../Documents/Conventions/DocumentConventions';
 import * as BluebirdPromise from 'bluebird';
 import {IRavenObject} from "../Database/IRavenObject";
 
-export abstract class AbstractHiloKeyGenerator implements IHiloKeyGenerator {
-  protected generators: IRavenObject<IHiloKeyGenerator> = {};
+export abstract class AbstractHiloIdGenerator implements IHiloIdGenerator {
+  protected generators: IRavenObject<IHiloIdGenerator> = {};
   protected store: IDocumentStore;
   protected conventions: DocumentConventions;
   protected dbName: string;
@@ -18,13 +18,13 @@ export abstract class AbstractHiloKeyGenerator implements IHiloKeyGenerator {
     this.dbName = dbName || store.database;
   }
 
-  public abstract generateDocumentKey(...args: (object | string)[]): BluebirdPromise<string>;
+  public abstract generateDocumentId(...args: (object | string)[]): BluebirdPromise<string>;
 
   public returnUnusedRange(): BluebirdPromise<void> {
     return BluebirdPromise
       .all(Object.keys(this.generators)
-        .map((key: string): IHiloKeyGenerator => this.generators[key])
-        .map((generator: IHiloKeyGenerator): BluebirdPromise<void> => generator.returnUnusedRange()))
+        .map((key: string): IHiloIdGenerator => this.generators[key])
+        .map((generator: IHiloIdGenerator): BluebirdPromise<void> => generator.returnUnusedRange()))
       .then((): void => {});
   };
 }

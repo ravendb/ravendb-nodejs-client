@@ -6,8 +6,8 @@ import {IJsonSerializable} from "../../../Json/IJsonSerializable";
 export class PutCommandData extends RavenCommandData implements IJsonSerializable  {
   protected document: object;
 
-  constructor(key: string, document: object, etag?: number) {
-    super(key, etag);
+  constructor(id: string, document: object, etag?: number) {
+    super(id, etag);
 
     this.type = RequestMethods.Put;
     this.document = document;
