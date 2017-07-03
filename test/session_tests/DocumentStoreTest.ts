@@ -26,7 +26,7 @@ describe('Document store test', () => {
       let foo: Foo;
       session = store.openSession({requestExecutor});
 
-      foo = session.create<Foo>(new Foo(null, 'test', 10));
+      foo = new Foo(null, 'test', 10);
       await session.store<Foo>(foo);
       await session.saveChanges();
 
@@ -39,7 +39,7 @@ describe('Document store test', () => {
       const key: string = 'testingStore/1';
       session = store.openSession({requestExecutor});
 
-      foo = session.create<Foo>(new Foo(key, 'test', 20));
+      foo = new Foo(key, 'test', 20);
       await session.store<Foo>(foo);
       await session.saveChanges();
 
@@ -52,7 +52,7 @@ describe('Document store test', () => {
       const key: string = 'testingStore';
       session = store.openSession({requestExecutor});
 
-      foo = session.create<Foo>(new Foo(key, 'test', 20));
+      foo = new Foo(key, 'test', 20);
       await session.store<Foo>(foo);
       await session.saveChanges();   
       

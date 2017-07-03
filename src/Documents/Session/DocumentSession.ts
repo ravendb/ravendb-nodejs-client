@@ -60,24 +60,6 @@ export class DocumentSession implements IDocumentSession {
     this.deferCommands = new Set<RavenCommandData>();
   }
 
-  public create<T extends Object = IRavenObject>(attributesOrDocument?: object | T, documentType?: DocumentType<T>, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T {
-    let document: T = attributesOrDocument as T;
-    let docType: DocumentType<T> = documentType;
-    const conventions: DocumentConventions = this.documentStore.conventions;
-
-    if (('object' === (typeof attributesOrDocument)) && ('Object' !== attributesOrDocument.constructor.name)) {
-      docType || (docType = attributesOrDocument.constructor as DocumentType<T>);
-    } else {
-      const documentCtor: DocumentConstructor<T> | null = conventions.getDocumentConstructor(documentType);
-      
-      document = documentCtor ? new documentCtor() : ({} as T);
-      Serializer.fromJSON<T>(document, (attributesOrDocument as object) || {}, {}, nestedObjectTypes, conventions);
-    }
-
-    document['@metadata'] = conventions.buildDefaultMetadata(document, docType);
-    return document as T;
-  }
-
   public async load<T extends Object = IRavenObject>(keyOrKeys: string, documentType?: DocumentType<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntityCallback<T>): Promise<T>;
   public async load<T extends Object = IRavenObject>(keyOrKeys: string[], documentType?: DocumentType<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntitiesArrayCallback<T>): Promise<T[]>;
   public async load<T extends Object = IRavenObject>(keyOrKeys: string | string[], documentType?: DocumentType<T>, includes?: string[], nestedObjectTypes: IRavenObject<DocumentConstructor> = {}, callback?: EntityCallback<T>
@@ -200,12 +182,13 @@ export class DocumentSession implements IDocumentSession {
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
-  public async store<T extends Object = IRavenObject>(document: T, key?: string, etag?: number, callback?: EntityCallback<T>): Promise<T> {
+  public async store<T extends Object = IRavenObject>(document: T, key?: string, documentType?: DocumentType<T>, etag?: number, callback?: EntityCallback<T>): Promise<T> {
     let originalMetadata: object;
     let isNewDocument: boolean = false;
     const conventions: DocumentConventions = this.conventions;
 
-    return this.checkDocumentAndEtagBeforeStore<T>(document, key, etag)
+    return this.checkDocumentAndMetadataBeforeStore<T>(document, key, documentType)
+      .then((document: T) => this.checkAssociationAndETagBeforeStore<T>(document, key, etag))
       .then((isNew: boolean): T | BluebirdPromise.Thenable<T> => {
         if (isNewDocument = isNew) {
           originalMetadata = _.cloneDeep(document['@metadata'] || {});
@@ -379,13 +362,32 @@ more responsive application.", maxRequests
       });
   }
 
-  protected checkDocumentAndEtagBeforeStore<T extends Object = IRavenObject>(document: T, key?: string, etag?: number): BluebirdPromise<boolean> {
+  public checkDocumentAndMetadataBeforeStore<T extends Object = IRavenObject>(document?: object | T, key?: string, documentType?: DocumentType<T>): BluebirdPromise<T> {
+    const conventions: DocumentConventions = this.documentStore.conventions;
+    let doc: T = <T>document;
+
     if (!document || !TypeUtil.isObject(document)) {
       return BluebirdPromise.reject(
         new InvalidOperationException('Document must be set and be an instance of object')
-      ) as BluebirdPromise<boolean>;
+      ) as BluebirdPromise<T>;
     }
 
+    if (!this.rawEntitiesAndMetadata.has(document)) {
+      const docType: DocumentType<T> = conventions.getTypeFromDocument<T>(doc, key, documentType);
+      const docCtor: DocumentConstructor<T> = conventions.getDocumentConstructor<T>(docType);
+
+      if ('function' !== (typeof docType)) {
+        doc = docCtor ? new docCtor() : <T>{};
+        Serializer.fromJSON<T>(doc, <object>document || {}, {}, {}, conventions);
+      }
+
+      doc['@metadata'] = conventions.buildDefaultMetadata(document, docType);
+    }
+    
+    return BluebirdPromise.resolve<T>(doc);
+  }
+
+  protected checkAssociationAndETagBeforeStore<T extends Object = IRavenObject>(document: T, key?: string, etag?: number): BluebirdPromise<boolean> {
     return BluebirdPromise.resolve()
       .then((): boolean => {
         const conventions: DocumentConventions = this.conventions;

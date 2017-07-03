@@ -80,8 +80,8 @@ describe('Document conversion test', () => {
     store = DocumentStore.create(defaultUrl, defaultDatabase).initialize();
     session = store.openSession({requestExecutor});
 
-    await session.store<TestConversion>(session.create<TestConversion>(makeDocument('TestConversions/1'))); 
-    await session.store<TestConversion>(session.create<TestConversion>(makeDocument('TestConversions/2', new Date(now.getTime() + 1000 * 60 * 60 * 24)))); 
+    await session.store<TestConversion>(makeDocument('TestConversions/1')); 
+    await session.store<TestConversion>(makeDocument('TestConversions/2', new Date(now.getTime() + 1000 * 60 * 60 * 24))); 
     await session.saveChanges();   
   });
 
@@ -102,7 +102,7 @@ describe('Document conversion test', () => {
 
       session = store.openSession({requestExecutor});
 
-      await session.store<TestConversion>(session.create<TestConversion>(makeDocument(key)));  
+      await session.store<TestConversion>(makeDocument(key));  
       await session.saveChanges();
 
       session = store.openSession({requestExecutor});
@@ -158,7 +158,7 @@ describe('Document conversion test', () => {
       session = store.openSession({requestExecutor});
       store.conventions.addDocumentInfoResolver({ resolveIdProperty, resolveConstructor });
 
-      await session.store<TestCustomIdProperty>(session.create<TestCustomIdProperty>(doc));  
+      await session.store<TestCustomIdProperty>(doc);  
       await session.saveChanges();
 
       session = store.openSession({requestExecutor});

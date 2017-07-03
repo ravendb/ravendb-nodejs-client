@@ -14,6 +14,7 @@ export type DocumentType<T extends Object = IRavenObject> = DocumentConstructor<
 export interface IDocumentInfoResolvable {
   resolveConstructor?: (typeName: string) => DocumentConstructor;
   resolveIdProperty?: (typeName: string, ctor?: DocumentConstructor) => string;
+  resolveDocumentType?: (plainDocument: object, key?: string, documentType?: DocumentType) => string;
 }
 
 export interface IDocumentConversionResult<T extends Object = IRavenObject> {
@@ -71,7 +72,9 @@ export class DocumentConventions {
   }
   
   public getCollectionName(documentType: DocumentType): string {
-    return pluralize(this.getDocumentTypeName(documentType));
+    const typeName: string = this.getDocumentTypeName(documentType);
+
+    return !typeName ? '@empty' : pluralize(typeName);
   }
 
   public getDocumentTypeName(documentType: DocumentType): string {
@@ -201,17 +204,48 @@ export class DocumentConventions {
     return document[idProperty] || (document['@metadata'] || {})['@id'] || null;
   }
 
-  public getTypeFromDocument<T extends Object = IRavenObject>(document?: T): DocumentType<T> {
-    let docType: DocumentType<T> = <DocumentConstructor<T>>document.constructor;
+  public getTypeFromDocument<T extends Object = IRavenObject>(document?: T, key?: string, documentType?: DocumentType<T>): DocumentType<T> {
+    const metadata: object = document['@metadata'];
     
-    if ('Object' === docType.name) {
-      docType = document['@metadata']['Raven-Node-Type'];
+    if ('Object' !== document.constructor.name) {
+      return <DocumentConstructor<T>>document.constructor;
     }
 
-    return docType;
+    if (documentType) {
+      return documentType;
+    }
+
+    if (metadata && metadata['Raven-Node-Type']) {
+      return metadata['Raven-Node-Type'];
+    }
+
+    let foundDocType: DocumentType<T>;
+    let matches: string[];
+    
+    for (let resolver of this._resolvers) {
+      try {
+        foundDocType = <DocumentType<T>>resolver.resolveDocumentType(<object>document, key, documentType);
+      } catch (exception) {
+        foundDocType = null;
+      }
+
+      if (foundDocType) {
+        break;
+      }
+    }
+
+    if (foundDocType) {
+      return foundDocType;
+    }
+
+    if (key && (matches = /^(\w{1}[\w\d]+)\/\d*$/i.exec(key))) {
+      return StringUtil.capitalize(matches[1]);
+    }
+
+    return null;
   }
 
-  public buildDefaultMetadata<T extends Object = IRavenObject>(entity: T, documentType: DocumentType<T>): object {
+  public buildDefaultMetadata<T extends Object = IRavenObject>(document: T, documentType: DocumentType<T>): object {
     let metadata: object = {};
     let nestedTypes: object = {};
     let property: string, value : any;
@@ -228,18 +262,17 @@ export class DocumentConventions {
       }
     };
     
-    if (entity) {
-      _.assign(metadata, entity['@metadata'] || {}, {
+    if (document) {
+      _.assign(metadata, document['@metadata'] || {}, {
         '@collection': this.getCollectionName(documentType),
         'Raven-Node-Type': TypeUtil.isString(documentType)
           ? StringUtil.capitalize(documentType as string)
           : (documentType as DocumentConstructor<T>).name
       });
 
-      for (property in entity) {
-        
-        if (entity.hasOwnProperty(property)) {
-          value = entity[property];
+      for (property in document) {        
+        if (document.hasOwnProperty(property)) {
+          value = document[property];
 
           if (Array.isArray(value)) {
             value.length && findNestedType(property, _.first(value));
