@@ -169,7 +169,7 @@ describe('Document query test', () => {
     });
 
     it('should paginate', async() => {
-      const expectedUids: number[][] = [[2,3],[4,5],[6,90],[110]];
+      const expectedUids: number[][] = [[2,3],[4,5],[6,90],[95]];
       const pageSize: number = 2;
       
       const totalCount: number = await store.openSession({requestExecutor}).query<Product>({
@@ -182,7 +182,7 @@ describe('Document query test', () => {
       expect(totalCount).to.equals(7);
       expect(totalPages).to.equals(4);
 
-      for (let page: number = 1; page < totalPages; page++) {
+      for (let page: number = 1; page <= totalPages; page++) {
         const products: Product[] = await store.openSession({requestExecutor}).query<Product>({
           documentType: Product,
           waitForNonStaleResults: true
