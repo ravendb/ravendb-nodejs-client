@@ -45,6 +45,7 @@ export class SubscriptionException extends RavenException {}
 export class SubscriptionInUseException extends RavenException {}
 export class TransformerDoesNotExistException extends RavenException {}
 export class VersioningDisabledException extends RavenException {}
+export class TopologyNodeDownException extends RavenException {}
 export class AllTopologyNodesDownException extends RavenException {}
 export class BadResponseException extends RavenException {}
 export class ChangeProcessingException extends RavenException {}

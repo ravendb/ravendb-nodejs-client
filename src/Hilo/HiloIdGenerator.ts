@@ -40,7 +40,7 @@ export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdG
   public returnUnusedRange(): BluebirdPromise<void> {
     const range = this._range;
 
-    return this.store.getRequestExecutor()
+    return this.store.getRequestExecutor(this.dbName)
       .execute(new HiloReturnCommand(
         this.tag, range.current, range.maxId
       ))
@@ -48,7 +48,7 @@ export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdG
   }
 
   protected getNextRange(): BluebirdPromise<HiloRangeValue> {
-    return this.store.getRequestExecutor().execute(new HiloNextCommand(
+    return this.store.getRequestExecutor(this.dbName).execute(new HiloNextCommand(
       this.tag, this._lastBatchSize, this._lastRangeAt,
       this.identityPartsSeparator, this._range.maxId
     ))

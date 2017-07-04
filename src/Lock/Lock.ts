@@ -34,21 +34,21 @@ export class Lock {
     return this._lock.acquire(key, callback, doneCallback);
   }
 
-  public acquireTopologyUpdate(url: string, database: string, callback: ILockCallback, doneCallback: ILockDoneCallback): void {
+  public acquireTopologyUpdate(url: string, database: string, callback: ILockCallback): PromiseLike<any> {
     const key: string = StringUtil.format(
       'lock:topology:url:{0}:database:{1}',
       url, database
     );
 
-    this._lock.acquire(key, callback, doneCallback);
+    return this._lock.acquire(key, callback);
   }
 
-  public acquireNodesStatuses(url: string, database: string, callback: ILockCallback, doneCallback: ILockDoneCallback): void {
+  public acquireNodeStatus(url: string, database: string, callback: ILockCallback): PromiseLike<any> {
     const key: string = StringUtil.format(
-      'lock:update:failed:nodes:statuses:url:{0}:database:{1}',
+      'lock:update:failed:node:status:url:{0}:database:{1}',
       url, database
     );
 
-    this._lock.acquire(key, callback, doneCallback);
+    return this._lock.acquire(key, callback);
   }
 }

@@ -148,6 +148,7 @@ export {IndexFieldOptions} from './Database/Indexes/IndexFieldOptions';
 export {IndexQuery} from './Database/Indexes/IndexQuery';
 export {LuceneBuilder} from './Documents/Lucene/LuceneBuilder';
 export {ServerNode} from './Http/ServerNode';
+export {NodeSelector} from './Http/Request/NodeSelector';
 export {Topology} from './Http/Topology';
 export {QueryString} from './Http/QueryString';
 export {Lock} from './Lock/Lock';

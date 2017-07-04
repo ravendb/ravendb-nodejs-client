@@ -19,7 +19,7 @@ import {StringUtil} from "../src/Utility/StringUtil";
 const defaultUrl: string = StringUtil.format("http://{ravendb-host}:{ravendb-port}", args);
 const defaultDatabase: string = "NorthWindTest";
 const requestExecutor: RequestExecutor = new RequestExecutor(
-  defaultUrl, defaultDatabase, null,
+  [defaultUrl], defaultDatabase, null,
   new DocumentConventions()
 );
 
