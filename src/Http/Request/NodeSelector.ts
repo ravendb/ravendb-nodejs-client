@@ -70,6 +70,7 @@ export class NodeSelector {
 
     if (nodes.includes(failedNode)) {
       const failedNodeIndex: number = nodes.indexOf(failedNode);
+      failedNode.isFailed = false;
       
       if (this.currentNodeIndex > failedNodeIndex) {
         this.currentNodeIndex = failedNodeIndex;

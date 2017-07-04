@@ -235,7 +235,6 @@ export class RequestExecutor extends Observable {
       RequestPromise(this.prepareCommand(command, node))
         .then((response: IResponse) => {
           if (StatusCodes.isOk(response.statusCode)) {
-            node.isFailed = false;
             this.emit<ServerNode>(NODE_STATUS_UPDATED, node);
           }
 
