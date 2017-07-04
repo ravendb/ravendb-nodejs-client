@@ -47,7 +47,6 @@ export class DocumentConventions {
   readonly defaultUseOptimisticConcurrency:boolean = false;
   readonly maxLengthOfQueryUsingGetUrl = 1024 + 512;
   readonly identityPartsSeparator = "/";
-  private _disableTopologyUpdates: boolean = false;
   private _resolvers: IDocumentInfoResolvable[] = [];
   private _idsNamesCache: Map<string, string> = new Map<string, string>();
   private _ctorsCache: Map<string, DocumentConstructor> = new Map<string, DocumentConstructor>();
@@ -56,24 +55,12 @@ export class DocumentConventions {
     return 0;
   }
 
-  public get topologyUpdatesEnabled(): boolean {
-    return !this._disableTopologyUpdates;
-  } 
-
   public addDocumentInfoResolver(resolver: IDocumentInfoResolvable): void {
     if (!resolver) {
       throw new ArgumentNullException('Invalid resolver provided');
     }
 
     this._resolvers.push(resolver);
-  }
-
-  public disableTopologyUpdates(): void {
-    this._disableTopologyUpdates = true;
-  }
-
-  public enableTopologyUpdates(): void {
-    this._disableTopologyUpdates = false;
   }
   
   public getCollectionName(documentType: DocumentType): string {

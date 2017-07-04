@@ -12,9 +12,10 @@ import {IRavenObject} from "../Database/IRavenObject";
 import {Operations} from "../Database/Operations/Operations";
 import {PromiseResolver} from "../Utility/PromiseResolver";
 import {TypeUtil} from "../Utility/TypeUtil";
+import {QueryString} from "../Http/QueryString";
 
 export class DocumentStore implements IDocumentStore {
-  protected url: string;  
+  protected urls: string[];  
   protected generator: IHiloIdGenerator;
   protected initialized: boolean = false;
   protected _apiKey?: string;
@@ -59,14 +60,14 @@ export class DocumentStore implements IDocumentStore {
     return this._operations;
   }
 
-  constructor(url: string, defaultDatabase: string, apiKey?: string) {
-    this.url = url;
+  constructor(urlOrUrls: string | string[], defaultDatabase: string, apiKey?: string) {
+    this.urls = QueryString.parseUrls(urlOrUrls);
     this._database = defaultDatabase;
     this._apiKey = apiKey;
   }
 
-  static create(url: string, defaultDatabase: string, apiKey?: string): IDocumentStore {
-    return new DocumentStore(url, defaultDatabase, apiKey);
+  static create(urlOrUrls: string | string[], defaultDatabase: string, apiKey?: string): IDocumentStore {
+    return new DocumentStore(urlOrUrls, defaultDatabase, apiKey);
   }
 
   public initialize(): IDocumentStore {
@@ -137,6 +138,6 @@ export class DocumentStore implements IDocumentStore {
   }
 
   protected createRequestExecutor(database?: string): RequestExecutor {
-    return new RequestExecutor(this.url, database || this._database, this._apiKey, this.conventions);
+    return new RequestExecutor(this.urls, database || this._database, this._apiKey, this.conventions);
   }
 }

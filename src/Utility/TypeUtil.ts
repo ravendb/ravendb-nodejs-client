@@ -25,6 +25,11 @@ export class TypeUtil {
     return _.isFunction(value);
   }
 
+  public static isDocumentConstructor(value: any): boolean {
+    return _.isFunction(value) && ('name' in value)
+       && ('Object' !== value.name);
+  }
+
   public static isDate(value: any): boolean {
     return _.isDate(value);
   }

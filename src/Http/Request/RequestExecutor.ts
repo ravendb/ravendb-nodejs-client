@@ -12,145 +12,70 @@ import {IRavenObject} from "../../Database/IRavenObject";
 import {Lock} from "../../Lock/Lock";
 import {ILockDoneCallback} from "../../Lock/LockCallbacks";
 import {GetTopologyCommand} from "../../Database/Commands/GetTopologyCommand";
-import {RavenException, InvalidOperationException, BadRequestException, AuthorizationException} from "../../Database/DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {DateUtil} from "../../Utility/DateUtil";
 import {IResponse, IErrorResponse} from "../Response/IResponse";
 import {StatusCodes, StatusCode} from "../Response/StatusCode";
+import {Observable} from "../../Utility/Observable";
+import {NodeSelector} from "./NodeSelector";
+import {RavenException, InvalidOperationException, BadRequestException, AuthorizationException, TopologyNodeDownException, AllTopologyNodesDownException} from "../../Database/DatabaseExceptions";
 
-export class RequestExecutor {
+export class RequestExecutor extends Observable {
+  public static readonly REQUEST_FAILED      = 'request:failed';
+  public static readonly TOPOLOGY_UPDATED    = 'topology:updated';
+  public static readonly NODE_STATUS_UPDATED = 'node:status:updated';
+
   protected conventions?: DocumentConventions;
   protected headers: IHeaders;
   private _lock: Lock;
   private _authenticator: ApiKeyAuthenticator;
-  private _topology: Topology;
   private _apiKey?: string = null;
   private _unauthorizedHandlerInitialized: boolean = false;
-  private _initUrl: string;
+  private _firstTopologyUpdateCompleted: boolean = false;
+  private _disableTopologyUpdates: boolean;
+  private _nodeSelector: NodeSelector;
+  private _initialUrls: string[];
   private _initDatabase: string;
 
-  constructor(url: string, database: string, apiKey?: string, conventions?: DocumentConventions) {
-    const serverNode: ServerNode = new ServerNode(url, database, apiKey);
+  constructor(urls: string[], database: string, apiKey?: string, conventions?: DocumentConventions) {
+    super();
 
-    this._apiKey = apiKey;
-    this._initUrl = url;
-    this._initDatabase = database;
-    this.conventions = conventions;
-    this._lock = Lock.getInstance();
-    this._authenticator = new ApiKeyAuthenticator();
-    this._topology = new Topology(Number.MIN_SAFE_INTEGER, [serverNode]);
     this.headers = {
       "Accept": "application/json",
       "Has-Api-key": TypeUtil.isNone(apiKey) ? 'false' : 'true',
-      "Raven-Client-Version": "4.0.0.0"
+      "Raven-Client-Version": "4.0.0.0",
     };
 
-    setTimeout(() => this.updateFailingNodesStatuses(), 60 * 1000);
-    conventions.topologyUpdatesEnabled && setTimeout(() => this.getReplicationTopology(), 1 * 1000);
+    this._apiKey = apiKey;
+    this._initialUrls = urls;
+    this._initDatabase = database;
+    this.conventions = conventions;
+    this._lock = Lock.getInstance();
+    this._disableTopologyUpdates = urls.length < 2;
+    this._authenticator = new ApiKeyAuthenticator();
+    this._nodeSelector = new NodeSelector(this, urls, database, apiKey);
+
+    this.updateReplicationTopology();
   }
 
   public execute(command: RavenCommand): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> {
-    if (!command.ravenCommand) {
-      return BluebirdPromise.reject(new InvalidOperationException('Not a valid command'));
-    }
+    const chosenNode: ServerNode = this._nodeSelector.currentNode;
 
-    return this.chooseNodeForRequest(command)
-      .then((node: ServerNode) => {      
-        let chosenNode: ServerNode = node;
+    return this.awaitForTopology()
+      .then(() => this.executeCommand(command, chosenNode))
+      .catch((exception: RavenException) => {
+        if (exception instanceof TopologyNodeDownException) {
+          return this.fallbackToNextNode(command, chosenNode);
+        }
 
-        const execute: () => BluebirdPromise<IRavenResponse | IRavenResponse[] | void> = () => {
-          let requestOptions: RavenCommandRequestOptions;
-          const startTime: number = DateUtil.timestampMs();
-          const failNode: () => BluebirdPromise<IRavenResponse | IRavenResponse[] | void> = () => {
-            chosenNode.isFailed = true;
-            command.addFailedNode(chosenNode);
-
-            return this.chooseNodeForRequest(command)
-              .then((node: ServerNode) => {
-                chosenNode = node;
-                return execute();
-              });
-          };
-
-          try {
-            requestOptions = this.prepareCommand(command, chosenNode);
-          } catch (exception) {
-            return BluebirdPromise.reject(exception);
-          }
-
-          return RequestPromise(requestOptions)
-            .finally(() => {
-              chosenNode.addResponseTime(DateUtil.timestampMs() - startTime);
-            })
-            .catch((errorResponse: IErrorResponse) => {
-              if (errorResponse.response) {
-                return BluebirdPromise.resolve(errorResponse.response);
-              }
-
-              return failNode();
-            })
-            .then((response: IResponse): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> | (IRavenResponse | IRavenResponse[] | void) => {
-              let commandResponse: IRavenResponse | IRavenResponse[] | void = null;
-              const code: StatusCode = response.statusCode;
-              const isServerError: boolean = [
-                StatusCodes.RequestTimeout,
-                StatusCodes.BadGateway,
-                StatusCodes.GatewayTimeout,
-                StatusCodes.ServiceUnavailable
-              ].includes(code);
-
-              if (StatusCodes.isNotFound(code) || (isServerError && command.avoidFailover)) {
-                delete response.body;
-              } else {
-                if (isServerError) {
-                  return failNode();
-                }
-
-                if (StatusCodes.isForbidden(code)) {
-                  return BluebirdPromise.reject(new AuthorizationException(
-                    StringUtil.format(
-                      'Forbidden access to {url}. Make sure you\'re using the correct api-key.',
-                      chosenNode
-                    )
-                  ));
-                }
-
-                if ([StatusCodes.Unauthorized, StatusCodes.PreconditionFailed]
-                    .includes(response.statusCode)
-                ) {
-                  if (!this._apiKey) {
-                    return BluebirdPromise.reject(StringUtil.format(
-                      'Got unauthorized response for {url}. Please specify an api-key.',
-                      chosenNode
-                    ));
-                  }
-
-                  command.increaseAuthenticationRetries();
-
-                  if (command.authenticationRetries > 1) {
-                    return BluebirdPromise.reject(StringUtil.format(
-                      'Got unauthorized response for {url} after trying to authenticate using specified api-key.',
-                      chosenNode
-                    ));
-                  }
-
-                  this.handleUnauthorized(chosenNode);
-                  return execute();
-                }
-              }
-
-              try {
-                commandResponse = command.setResponse(response);
-              } catch (exception) {
-                return BluebirdPromise.reject(exception);
-              }
-
-              return commandResponse;
-            });
-        };
-
-        return execute();
+        return BluebirdPromise.reject(exception);
       });
+  }
+
+  protected awaitForTopology(): BluebirdPromise<void> {
+    return this._firstTopologyUpdateCompleted 
+      ? BluebirdPromise.resolve() : BluebirdPromise.delay(100)
+      .then(() => this.awaitForTopology());
   }
 
   protected prepareCommand(command: RavenCommand, node: ServerNode): RavenCommandRequestOptions {
@@ -164,100 +89,163 @@ export class RequestExecutor {
       options.headers['Raven-Authorization'] = node.currentToken;
     }
 
+    if (!this._disableTopologyUpdates) {
+      options.headers["Topology-Etag"] = this._nodeSelector.topologyEtag;
+    }
+
     return options;
   }
 
-  protected chooseNodeForRequest(command: RavenCommand): BluebirdPromise<ServerNode> {
-    const topology: Topology = this._topology;
-    let nonFailedNode: ServerNode;
+  protected executeCommand(command: RavenCommand, node: ServerNode): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> {
+    let requestOptions: RavenCommandRequestOptions;
+    const startTime: number = DateUtil.timestampMs();
 
-    if (!(nonFailedNode = topology.nodes.find((node: ServerNode): boolean => 
-        !node.isFailed && !command.isFailedWithNode(node)))
-    ) {
-      return BluebirdPromise.reject(new BadRequestException(
-        'Tried all nodes in the cluster but failed getting a response'
-      )) as BluebirdPromise<ServerNode>;
+    if (!command.ravenCommand) {
+      return BluebirdPromise.reject(new InvalidOperationException('Not a valid command'));
     }
 
-    return BluebirdPromise.resolve(nonFailedNode) as BluebirdPromise<ServerNode>;
-  }
+    try {
+      requestOptions = this.prepareCommand(command, node);
+    } catch (exception) {
+      return BluebirdPromise.reject(exception);
+    }
 
-  protected getReplicationTopology(): void {
-    this._lock.acquireTopologyUpdate(
-      this._initUrl, this._initDatabase,
-      (done: ILockDoneCallback) => {
-        this.execute(new GetTopologyCommand())
-          .catch((error: RavenException) => done(error))
-          .then((response?: IRavenResponse) => {
-            if (response) {
-              const newTopology = this.jsonToTopology(response);
+    return RequestPromise(requestOptions)
+      .finally(() => {
+        node.addResponseTime(DateUtil.timestampMs() - startTime);
+      })
+      .catch((errorResponse: IErrorResponse) => {
+        if (errorResponse.response) {
+          return BluebirdPromise.resolve(errorResponse.response);
+        }
 
-              if (this._topology.etag < newTopology.etag) {
-                this._topology = newTopology;
-              }
+        return BluebirdPromise.reject(new TopologyNodeDownException(`Node ${node.url} is down`));
+      })
+      .then((response: IResponse): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> | (IRavenResponse | IRavenResponse[] | void) => {
+        let commandResponse: IRavenResponse | IRavenResponse[] | void = null;
+        const code: StatusCode = response.statusCode;
+        const isServerError: boolean = [
+          StatusCodes.RequestTimeout,
+          StatusCodes.BadGateway,
+          StatusCodes.GatewayTimeout,
+          StatusCodes.ServiceUnavailable
+        ].includes(code);
+
+        if (StatusCodes.isNotFound(code) || (isServerError && command.avoidFailover)) {
+          delete response.body;
+        } else {
+          if (isServerError) {
+            return BluebirdPromise.reject(new TopologyNodeDownException(`Node ${node.url} is down`));
+          }
+
+          if (StatusCodes.isForbidden(code)) {
+            return BluebirdPromise.reject(new AuthorizationException(
+              StringUtil.format(
+                'Forbidden access to {url}. Make sure you\'re using the correct api-key.',
+                node
+              )
+            ));
+          }
+
+          if ([StatusCodes.Unauthorized, StatusCodes.PreconditionFailed]
+              .includes(response.statusCode)
+          ) {
+            if (!this._apiKey) {
+              return BluebirdPromise.reject(StringUtil.format(
+                'Got unauthorized response for {url}. Please specify an api-key.',
+                node
+              ));
             }
 
-            done();
-          });
-    },
-    () => setTimeout(
-      () => this.getReplicationTopology(), 60 * 5 * 1000
-    ));
+            command.increaseAuthenticationRetries();
+
+            if (command.authenticationRetries > 1) {
+              return BluebirdPromise.reject(StringUtil.format(
+                'Got unauthorized response for {url} after trying to authenticate using specified api-key.',
+                node
+              ));
+            }
+
+            this.handleUnauthorized(node);
+            return this.executeCommand(command, node);
+          }
+        }
+
+        if ("Refresh-Topology" in response.headers) {
+          this.updateReplicationTopology();
+        }
+
+        try {
+          commandResponse = command.setResponse(response);
+        } catch (exception) {
+          return BluebirdPromise.reject(exception);
+        }
+
+        return commandResponse;
+      });
   }
 
-  protected jsonToTopology(response: IRavenResponse): Topology {
-    return new Topology(
-      parseInt(response.Etag as string) || 0,
-      response.Nodes.map((jsonNode) => this.jsonToServerNode(jsonNode)),
-      ('SLA' in response) ? parseFloat(response.SLA.RequestTimeThresholdInMilliseconds) / 1000 : 0
-    );
+  protected fallbackToNextNode(command: RavenCommand, failedNode: ServerNode): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> {
+    let nextNode: ServerNode;
+    const nodeSelector: NodeSelector = this._nodeSelector;
+    const {REQUEST_FAILED} = <typeof RequestExecutor>this.constructor;
+
+    command.addFailedNode(failedNode);
+    this.emit<ServerNode>(REQUEST_FAILED, failedNode);
+    setTimeout(this.updateFailingNodeStatus(failedNode), 5 * 1000);
+
+    if (!(nextNode = nodeSelector.currentNode) || command.isFailedWithNode(nextNode)) {
+      return BluebirdPromise.reject(new AllTopologyNodesDownException(
+        'Tried all nodes in the cluster but failed getting a response'
+      ));
+    }
+
+    return this.executeCommand(command, nextNode);
   }
 
-  protected jsonToServerNode(json: IRavenObject): ServerNode {
-    return new ServerNode(json.Url, json.Database || this._initDatabase, json.ApiKey || null);
-  }
+  protected updateReplicationTopology(): void {
+    const {TOPOLOGY_UPDATED} = <typeof RequestExecutor>this.constructor;
 
-  protected updateFailingNodesStatuses(): void {
-    this._lock.acquireNodesStatuses(this._initUrl, this._initDatabase,
-    (done: ILockDoneCallback) => {
-      const topology = this._topology;
+    BluebirdPromise.some(this._initialUrls.map((url: string): PromiseLike<void> => {
+      const node = new ServerNode(url, this._initDatabase);
 
-      (topology.nodes || [])
-        .filter((node?: ServerNode) => node instanceof ServerNode)
-        .filter((node?: ServerNode) => node.isFailed)
-        .forEach((node: ServerNode) => setTimeout(this
-        .updateFailingNodeStatus(node), 5 * 1000));
-
-      done();
-    },
-    () => setTimeout(
-        () => this.updateFailingNodesStatuses(), 60 * 1000
-    ));
+      return this._lock.acquireTopologyUpdate(node.url, node.database, (): PromiseLike<void> =>
+        this.executeCommand(new GetTopologyCommand(), node)
+          .then((response?: IRavenResponse) => {this
+          .emit<IRavenResponse>(TOPOLOGY_UPDATED, response)}
+        )          
+      )
+    }), 1)
+    .finally(() => setTimeout(
+      () => this.updateReplicationTopology(), 60 * 5 * 1000
+    ));    
   }
 
   protected updateFailingNodeStatus(node: ServerNode): void {
     const command: GetTopologyCommand = new GetTopologyCommand();
     const startTime: number = DateUtil.timestampMs();
 
-    RequestPromise(this.prepareCommand(command, node))
-      .then((response: IResponse) => {
-        if (StatusCodes.isOk(response.statusCode)) {
-          node.isFailed = false;
-        }
+    this._lock.acquireNodeStatus(node.url, node.database, (): PromiseLike<void> => 
+      RequestPromise(this.prepareCommand(command, node))
+        .then((response: IResponse) => {
+          if (StatusCodes.isOk(response.statusCode)) {
+            node.isFailed = false;
+          }
 
-        if ([StatusCodes.Unauthorized, StatusCodes.PreconditionFailed]
-            .includes(response.statusCode)
-        ) {
-          this.handleUnauthorized(node, false);
-        }
-      })
-      .finally(() => {
-        node.addResponseTime(DateUtil.timestampMs() - startTime);
+          if ([StatusCodes.Unauthorized, StatusCodes.PreconditionFailed]
+              .includes(response.statusCode)
+          ) {
+            this.handleUnauthorized(node, false);
+          }
+        })
+        .finally(() => {
+          node.addResponseTime(DateUtil.timestampMs() - startTime);
 
-        if (node.isFailed) {
-          setTimeout(this.updateFailingNodeStatus(node), 5 * 1000);
-        }
-      });
+          if (node.isFailed) {
+            setTimeout(this.updateFailingNodeStatus(node), 5 * 1000);
+          }
+        })
+    );
   }
 
   protected handleUnauthorized(serverNode: ServerNode, shouldThrow: boolean = true): BluebirdPromise<void> {
@@ -282,8 +270,7 @@ export class RequestExecutor {
   }
 
   protected updateCurrentToken(): void {
-    const topology: Topology = this._topology;
-    const nodes: ServerNode[] = topology.nodes;
+    const nodes: ServerNode[] = this._nodeSelector.nodes;
     const setTimer: () => void = () => {
       setTimeout(() => this.updateCurrentToken(), 60 * 20 * 1000);
     };
