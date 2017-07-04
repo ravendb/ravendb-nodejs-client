@@ -216,12 +216,18 @@ export class RequestExecutor extends Observable {
         )          
       )
     }), 1)
+    .then(() => {
+      if (!this._firstTopologyUpdateCompleted) {
+        this._firstTopologyUpdateCompleted = true;
+      }      
+    })
     .finally(() => setTimeout(
       () => this.updateReplicationTopology(), 60 * 5 * 1000
     ));    
   }
 
   protected updateFailingNodeStatus(node: ServerNode): void {
+    const {NODE_STATUS_UPDATED} = <typeof RequestExecutor>this.constructor;
     const command: GetTopologyCommand = new GetTopologyCommand();
     const startTime: number = DateUtil.timestampMs();
 
@@ -230,6 +236,7 @@ export class RequestExecutor extends Observable {
         .then((response: IResponse) => {
           if (StatusCodes.isOk(response.statusCode)) {
             node.isFailed = false;
+            this.emit<ServerNode>(NODE_STATUS_UPDATED, node);
           }
 
           if ([StatusCodes.Unauthorized, StatusCodes.PreconditionFailed]
