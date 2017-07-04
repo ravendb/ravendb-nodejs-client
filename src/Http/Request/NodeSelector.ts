@@ -28,13 +28,13 @@ export class NodeSelector {
 
   constructor(requestExecutor: RequestExecutor, urlsOrNodes: Array<string | ServerNode>, database: string, apiKey?: string) {
     const {TOPOLOGY_UPDATED, REQUEST_FAILED, NODE_STATUS_UPDATED} = RequestExecutor;
-    const initialNodes: ServerNode[] = urlsOrNodes.map(
-      (urlOrNode: string | ServerNode): ServerNode => (urlOrNode instanceof ServerNode)
-        ? <ServerNode>urlOrNode : this.jsonToServerNode({Url: <string>urlOrNode, ApiKey: apiKey || null})
-      );
 
     this.initialDatabase = database;
-    this.topology = new Topology(Number.MIN_SAFE_INTEGER, initialNodes);    
+    this.topology = new Topology(Number.MIN_SAFE_INTEGER, urlsOrNodes.map(
+      (urlOrNode: string | ServerNode): ServerNode => (urlOrNode instanceof ServerNode)
+        ? <ServerNode>urlOrNode : this.jsonToServerNode({Url: <string>urlOrNode, ApiKey: apiKey || null})
+      )
+    );    
 
     requestExecutor.on<IRavenResponse>(TOPOLOGY_UPDATED, 
       (data: IRavenResponse): void => this.onTopologyUpdated(data)
@@ -53,7 +53,7 @@ export class NodeSelector {
     if (topologyResponse) {
       const newTopology: Topology = this.jsonToTopology(topologyResponse);
 
-      if (this.topology.etag < newTopology.etag) {
+      if (newTopology.nodes.length && (this.topology.etag < newTopology.etag)) {
         this.currentNodeIndex = 0;
         this.topology = newTopology;
       }

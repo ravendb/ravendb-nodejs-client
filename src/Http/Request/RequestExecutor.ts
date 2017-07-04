@@ -35,7 +35,11 @@ export class RequestExecutor extends Observable {
   private _disableTopologyUpdates: boolean;
   private _nodeSelector: NodeSelector;
   private _initialUrls: string[];
-  private _initDatabase: string;
+  private _initialDatabase: string;
+
+  public get initialDatabase(): string {
+    return this._initialDatabase;
+  }
 
   constructor(urls: string[], database: string, apiKey?: string, conventions?: DocumentConventions) {
     super();
@@ -48,7 +52,7 @@ export class RequestExecutor extends Observable {
 
     this._apiKey = apiKey;
     this._initialUrls = urls;
-    this._initDatabase = database;
+    this._initialDatabase = database;
     this.conventions = conventions;
     this._lock = Lock.getInstance();
     this._disableTopologyUpdates = urls.length < 2;
@@ -171,7 +175,7 @@ export class RequestExecutor extends Observable {
           }
         }
 
-        if ("Refresh-Topology" in response.headers) {
+        if (!this._disableTopologyUpdates && ("Refresh-Topology" in response.headers)) {
           this.updateReplicationTopology();
         }
 
@@ -207,7 +211,7 @@ export class RequestExecutor extends Observable {
     const {TOPOLOGY_UPDATED} = <typeof RequestExecutor>this.constructor;
 
     BluebirdPromise.some(this._initialUrls.map((url: string): PromiseLike<void> => {
-      const node = new ServerNode(url, this._initDatabase);
+      const node = new ServerNode(url, this._initialDatabase);
 
       return this._lock.acquireTopologyUpdate(node.url, node.database, (): PromiseLike<void> =>
         this.executeCommand(new GetTopologyCommand(), node)

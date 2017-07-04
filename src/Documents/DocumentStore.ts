@@ -102,8 +102,14 @@ export class DocumentStore implements IDocumentStore {
     }
 
     let dbName: string = database || this._database;
-    let executor: RequestExecutor = sessionOptions.requestExecutor || this.getRequestExecutor(dbName);
-
+    let executor: RequestExecutor = sessionOptions.requestExecutor;
+    
+    if (executor && (executor.initialDatabase === dbName)) {
+      this._requestExecutors[dbName] = executor;
+    } else {
+      executor = this.getRequestExecutor(dbName);
+    }
+    
     return new DocumentSession(dbName, this, executor, uuid());
   }
 
