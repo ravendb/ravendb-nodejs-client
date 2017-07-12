@@ -13,7 +13,13 @@ const args = require('./args');
 
 const preamble = '/** RavenDB Client - (c) Hibernating Rhinos 2017 */';
 const exportDefault = 'export default DocumentStore;';
-const prioritizedClasses = ['Hash.ts', 'RavenCommand.ts', 'DatabaseExceptions.ts', 'AbstractHiloKeyGenerator.ts', 'IndexQueryBasedCommand.ts', 'GetIndexesCommand.ts'];
+
+const prioritizedClasses = [
+    'Hash.ts', 'RavenCommand.ts', 'DatabaseExceptions.ts', 
+    'AbstractHiloKeyGenerator.ts', 'IndexQueryBasedCommand.ts', 
+    'GetIndexesCommand.ts', 'GetTopologyCommand.ts'
+];
+
 const options = {
     src: './src',
     tests: './test',

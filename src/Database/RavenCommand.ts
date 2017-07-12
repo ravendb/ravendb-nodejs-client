@@ -18,8 +18,6 @@ export abstract class RavenCommand {
   protected payload?: object;
   protected headers: object = {};
   protected failedNodes: Set<ServerNode>;
-  protected _avoidFailover: boolean = false;
-  private readonly _ravenCommand: boolean = true;
   private _authenticationRetries: number = 0;
 
   public abstract createRequest(serverNode: ServerNode): void;
@@ -31,14 +29,6 @@ export abstract class RavenCommand {
     this.payload = payload;
     this.headers = headers;
     this.failedNodes = new Set<ServerNode>();
-  }
-
-  public get ravenCommand(): boolean {
-    return this._ravenCommand;
-  }  
-
-  public get avoidFailover(): boolean {
-    return this._avoidFailover;
   }
 
   public get authenticationRetries(): number {
@@ -67,7 +57,8 @@ export abstract class RavenCommand {
       headers: this.headers,
       resolveWithFullResponse: true,
       qsStringifyOptions: {
-        arrayFormat: 'repeat'
+        arrayFormat: 'repeat',
+        strictNullHandling: true
       }
     };
 

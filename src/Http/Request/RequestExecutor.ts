@@ -1,3 +1,9 @@
+// NodeSTatus - keep timer ids, pass update callback from executor
+// update node & topology
+// add cluster executor - use it for operaitons
+// cancel refresh times after topology update
+// check concurrency mode determination
+
 import * as BluebirdPromise from 'bluebird';
 import * as RequestPromise from 'request-promise';
 import {ServerNode} from '../ServerNode';
@@ -104,7 +110,7 @@ export class RequestExecutor extends Observable {
     let requestOptions: RavenCommandRequestOptions;
     const startTime: number = DateUtil.timestampMs();
 
-    if (!command.ravenCommand) {
+    if (!(command instanceof RavenCommand)) {
       return BluebirdPromise.reject(new InvalidOperationException('Not a valid command'));
     }
 
@@ -135,7 +141,7 @@ export class RequestExecutor extends Observable {
           StatusCodes.ServiceUnavailable
         ].includes(code);
 
-        if (StatusCodes.isNotFound(code) || (isServerError && command.avoidFailover)) {
+        if (isServerError || StatusCodes.isNotFound(code)) {
           delete response.body;
         } else {
           if (isServerError) {

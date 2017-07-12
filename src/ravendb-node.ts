@@ -102,7 +102,8 @@ export {
   InvalidJournalFlushRequestException,
   QuotaException,
   VoronUnrecoverableErrorException,
-  NonDurableFileSystemException
+  NonDurableFileSystemException,
+  AggregateException
 } from './Database/DatabaseExceptions';
 
 // classes
@@ -112,6 +113,7 @@ export {DeleteDocumentCommand} from './Database/Commands/DeleteDocumentCommand';
 export {PutDocumentCommand} from './Database/Commands/PutDocumentCommand';
 export {QueryCommand} from './Database/Commands/QueryCommand';
 export {GetTopologyCommand} from './Database/Commands/GetTopologyCommand';
+export {GetClusterTopologyCommand} from './Database/Commands/GetClusterTopologyCommand';
 export {GetOperationStateCommand} from './Database/Commands/GetOperationStateCommand';
 export {GetApiKeyCommand} from './Database/Commands/GetApiKeyCommand';
 export {PutApiKeyCommand} from './Database/Commands/PutApiKeyCommand';

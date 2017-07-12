@@ -1,5 +1,5 @@
 import {StringUtil} from '../Utility/StringUtil';
-import {ILockCallback, ILockDoneCallback} from './LockCallbacks';
+import {ILockCallback} from './LockCallbacks';
 import {HiloRangeValue} from '../Hilo/HiloRangeValue';
 import * as AsyncLock from 'async-lock';
 
@@ -25,13 +25,13 @@ export class Lock {
     return this._lock.acquire(key, callback);
   }
 
-  public acquireIdGenerator(tag: string, range: HiloRangeValue, callback: ILockCallback, doneCallback: ILockDoneCallback): void {
+  public acquireIdGenerator(tag: string, range: HiloRangeValue, callback: ILockCallback): PromiseLike<any> {
     const key: string = StringUtil.format(
       'lock:tag:{0}:range:{1}:{2}', tag,
       range.minId, range.maxId, range.current
     );
 
-    return this._lock.acquire(key, callback, doneCallback);
+    return this._lock.acquire(key, callback);
   }
 
   public acquireTopologyUpdate(url: string, database: string, callback: ILockCallback): PromiseLike<any> {

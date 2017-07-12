@@ -76,3 +76,4 @@ export class InvalidJournalFlushRequestException extends RavenException {}
 export class QuotaException extends RavenException {}
 export class VoronUnrecoverableErrorException extends RavenException {}
 export class NonDurableFileSystemException extends RavenException {}
+export class AggregateException extends RavenException {}
