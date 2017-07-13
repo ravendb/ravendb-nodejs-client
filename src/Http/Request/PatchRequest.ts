@@ -1,6 +1,6 @@
-import {IJsonSerializable} from '../../Json/IJsonSerializable';
+import {IJsonable} from '../../Json/Contracts';
 
-export class PatchRequest implements IJsonSerializable {
+export class PatchRequest implements IJsonable {
   private _script: string;
   protected values: object = {};
 

@@ -33,7 +33,7 @@ export {LuceneValue, LuceneRangeValue, LuceneConditionValue} from './Documents/L
 export {ILockDoneCallback, ILockCallback} from './Lock/LockCallbacks';
 export {IRavenObject} from './Database/IRavenObject';
 export {IOptionsSet} from './Utility/IOptionsSet';
-export {IJsonSerializable} from './Json/IJsonSerializable';
+export {IJsonable} from './Json/Contracts';
 export {IRavenResponse} from './Database/RavenCommandResponse';
 export {IHeaders} from './Http/IHeaders';
 export {IResponse, IResponseBody} from './Http/Response/IResponse';
@@ -160,7 +160,7 @@ export {StringUtil} from './Utility/StringUtil';
 export {ArrayUtil} from './Utility/ArrayUtil';
 export {TypeUtil} from './Utility/TypeUtil';
 export {ExceptionThrower} from './Utility/ExceptionThrower';
-export {RequestExecutor} from './Http/Request/RequestExecutor';
+export {RequestExecutor, ITopologyUpdateEvent} from './Http/Request/RequestExecutor';
 export {PatchRequest} from './Http/Request/PatchRequest';
 export {HiloRangeValue} from './Hilo/HiloRangeValue';
 export {AbstractHiloIdGenerator} from './Hilo/AbstractHiloIdGenerator';

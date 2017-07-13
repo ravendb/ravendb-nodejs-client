@@ -1,9 +1,9 @@
 import {SortOption} from "./SortOption";
 import {FieldIndexingOptions} from "./FieldIndexingOption";
 import {FieldTermVectorOption} from "./FieldTermVectorOption";
-import {IJsonSerializable} from '../../Json/IJsonSerializable';
+import {IJsonable} from '../../Json/Contracts';
 
-export class IndexFieldOptions implements IJsonSerializable {
+export class IndexFieldOptions implements IJsonable {
   protected sortOptions?: SortOption = null;
   protected indexing?: FieldIndexingOptions = null;
   protected storage?: boolean = null;

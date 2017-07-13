@@ -1,18 +1,25 @@
-export class ServerNode {
+import {TypeUtil} from "../Utility/TypeUtil";
+import {IJsonConvertible} from "../Json/Contracts";
+import {IRavenObject} from "../Database/IRavenObject";
+
+export class ServerNode implements IJsonConvertible {
   private _database: string;
   private _url: string;
-  private _apiKey?: string;
-  private _currentToken?: string;
+  private _clusterTag?: string = null;
   private _responseTime: number[] = [];
   private _isRateSurpassed?: boolean = null;
-  private _isFailed: boolean = false;
 
-  constructor(url: string, database: string, apiKey?: string, currentToken?: string, isFailed: boolean = false) {
+  public static fromJson(json: object): ServerNode {
+    const node: ServerNode = new (<typeof ServerNode>this)('', '');
+
+    node.fromJson(json);
+    return node;
+  }
+
+  constructor(url: string, database: string, clusterTag?: string) {
     this._url = url;
     this._database = database;
-    this._apiKey = apiKey;
-    this._currentToken = currentToken;
-    this._isFailed = isFailed;
+    this._clusterTag = clusterTag;
   }
 
   public get database(): string {
@@ -23,30 +30,6 @@ export class ServerNode {
     return this._url;
   }
 
-  public get apiKey(): string {
-    return this._apiKey;
-  }
-
-  public get currentToken(): string {
-    return this._currentToken;
-  }
-
-  public set currentToken(value: string) {
-    this._currentToken = value;
-  }
-
-  public get isFailed(): boolean {
-    return this._isFailed;
-  }
-
-  public set isFailed(value: boolean) {
-    this._isFailed = value;
-  }
-
-  public get responseTime(): number[] {
-    return this._responseTime;
-  }
-
   public get ewma(): number {
     let ewma: number = 0;
     let divide: number = this._responseTime.length;
@@ -55,17 +38,30 @@ export class ServerNode {
       return ewma;
     }
 
-    ewma = this._responseTime.reduce((total: number, time: number) => (total + time));
+    ewma = this._responseTime.reduce((total: number, time: number) => (total + time), 0);
     return (0 === ewma) ? 0 : ewma / divide;
   }
 
-  public addResponseTime(value: number) {
+  public set responseTime(value: number) {
     this._responseTime[this._responseTime.length % 5] = value;
   }
 
   public isRateSurpassed(requestTimeSlaThresholdInMilliseconds): boolean {
-    return this._isRateSurpassed = this.ewma
-      >= (this._isRateSurpassed ? 0.75 : 1)
-      * requestTimeSlaThresholdInMilliseconds;
+    let koeff: number = .75;
+    
+    if (TypeUtil.isNone(this._isRateSurpassed)) {
+      koeff += .25;
+    }
+
+    this._isRateSurpassed = this.ewma >= (koeff * requestTimeSlaThresholdInMilliseconds);
+    return this._isRateSurpassed;
+  }
+
+  public fromJson(json: object): void {
+    const from: IRavenObject = <IRavenObject>json;
+
+    this._url = from.Url;
+    this._database = from.Database;
+    this._clusterTag = from.ClusterTag;
   }
 }

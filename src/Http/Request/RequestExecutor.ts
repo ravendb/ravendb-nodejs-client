@@ -26,6 +26,14 @@ import {Observable} from "../../Utility/Observable";
 import {NodeSelector} from "./NodeSelector";
 import {RavenException, InvalidOperationException, BadRequestException, AuthorizationException, TopologyNodeDownException, AllTopologyNodesDownException} from "../../Database/DatabaseExceptions";
 
+export interface ITopologyUpdateEvent {
+  topologyJson: object;
+  serverNodeUrl: string;
+  requestedDatabase?: string;
+  forceUpdate?: boolean;
+  wasUpdated?: boolean;
+}
+
 export class RequestExecutor extends Observable {
   public static readonly REQUEST_FAILED      = 'request:failed';
   public static readonly TOPOLOGY_UPDATED    = 'topology:updated';
@@ -60,7 +68,7 @@ export class RequestExecutor extends Observable {
     this._initialUrls = urls;
     this._initialDatabase = database;
     this.conventions = conventions;
-    this._lock = Lock.getInstance();
+    this._lock = Lock.make();
     this._disableTopologyUpdates = urls.length < 2;
     this._authenticator = new ApiKeyAuthenticator();
     this._nodeSelector = new NodeSelector(this, urls, database, apiKey);
@@ -122,7 +130,7 @@ export class RequestExecutor extends Observable {
 
     return RequestPromise(requestOptions)
       .finally(() => {
-        node.addResponseTime(DateUtil.timestampMs() - startTime);
+        node.responseTime = DateUtil.timestampMs() - startTime;
       })
       .catch((errorResponse: IErrorResponse) => {
         if (errorResponse.response) {
@@ -155,29 +163,6 @@ export class RequestExecutor extends Observable {
                 node
               )
             ));
-          }
-
-          if ([StatusCodes.Unauthorized, StatusCodes.PreconditionFailed]
-              .includes(response.statusCode)
-          ) {
-            if (!this._apiKey) {
-              return BluebirdPromise.reject(StringUtil.format(
-                'Got unauthorized response for {url}. Please specify an api-key.',
-                node
-              ));
-            }
-
-            command.increaseAuthenticationRetries();
-
-            if (command.authenticationRetries > 1) {
-              return BluebirdPromise.reject(StringUtil.format(
-                'Got unauthorized response for {url} after trying to authenticate using specified api-key.',
-                node
-              ));
-            }
-
-            this.handleUnauthorized(node);
-            return this.executeCommand(command, node);
           }
         }
 
@@ -219,11 +204,19 @@ export class RequestExecutor extends Observable {
     BluebirdPromise.some(this._initialUrls.map((url: string): PromiseLike<void> => {
       const node = new ServerNode(url, this._initialDatabase);
 
-      return this._lock.acquireTopologyUpdate(node.url, node.database, (): PromiseLike<void> =>
+      return this._lock.acquire((): PromiseLike<void> =>
         this.executeCommand(new GetTopologyCommand(), node)
-          .then((response?: IRavenResponse) => {this
-          .emit<IRavenResponse>(TOPOLOGY_UPDATED, response)}
-        )          
+          .then((response?: IRavenResponse) => {
+            let eventData: ITopologyUpdateEvent = {
+              topologyJson: response,
+              serverNodeUrl: node.url,
+              requestedDatabase: node.database,
+              forceUpdate: false
+            };
+
+            this.emit<ITopologyUpdateEvent>(TOPOLOGY_UPDATED, eventData);
+            //TODO: read wasUpdated
+        })          
       )
     }), 1)
     .then(() => {
@@ -240,64 +233,23 @@ export class RequestExecutor extends Observable {
     const {NODE_STATUS_UPDATED} = <typeof RequestExecutor>this.constructor;
     const command: GetTopologyCommand = new GetTopologyCommand();
     const startTime: number = DateUtil.timestampMs();
+    let isStillFailed: boolean = true;
 
     this._lock.acquireNodeStatus(node.url, node.database, (): PromiseLike<void> => 
       RequestPromise(this.prepareCommand(command, node))
         .then((response: IResponse) => {
           if (StatusCodes.isOk(response.statusCode)) {
+            isStillFailed = false;
             this.emit<ServerNode>(NODE_STATUS_UPDATED, node);
-          }
-
-          if ([StatusCodes.Unauthorized, StatusCodes.PreconditionFailed]
-              .includes(response.statusCode)
-          ) {
-            this.handleUnauthorized(node, false);
           }
         })
         .finally(() => {
-          node.addResponseTime(DateUtil.timestampMs() - startTime);
+          node.reponseTime = DateUtil.timestampMs() - startTime;
 
-          if (node.isFailed) {
+          if (isStillFailed) {
             setTimeout(this.updateFailingNodeStatus(node), 5 * 1000);
           }
         })
     );
-  }
-
-  protected handleUnauthorized(serverNode: ServerNode, shouldThrow: boolean = true): BluebirdPromise<void> {
-    return this._authenticator.authenticate(
-      serverNode.url, serverNode.apiKey, this.headers
-    )
-    .then((token: Buffer): void => {
-      serverNode.currentToken = token.toString();
-
-      if (!this._unauthorizedHandlerInitialized) {
-        this._unauthorizedHandlerInitialized = true;
-        this.updateCurrentToken();
-      }
-    })
-    .catch((error: RavenException) => {
-      if (shouldThrow) {
-        return BluebirdPromise.reject(error) as BluebirdPromise<void>;
-      }
-
-      return BluebirdPromise.resolve()  as BluebirdPromise<void>;
-    });
-  }
-
-  protected updateCurrentToken(): void {
-    const nodes: ServerNode[] = this._nodeSelector.nodes;
-    const setTimer: () => void = () => {
-      setTimeout(() => this.updateCurrentToken(), 60 * 20 * 1000);
-    };
-
-    if (!this._unauthorizedHandlerInitialized) {
-      return setTimer();
-    }
-
-    BluebirdPromise.all(nodes
-      .map((node: ServerNode): BluebirdPromise<void> => this
-      .handleUnauthorized(node, false)))
-      .then(() => setTimer());
   }
 }

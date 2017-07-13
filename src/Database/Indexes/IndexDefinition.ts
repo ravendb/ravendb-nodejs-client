@@ -4,10 +4,10 @@ import {IndexPriority} from './IndexPriority';
 import {IRavenObject} from '../IRavenObject';
 import {IndexFieldOptions} from './IndexFieldOptions';
 import {ArrayUtil} from '../../Utility/ArrayUtil';
-import {IJsonSerializable} from '../../Json/IJsonSerializable';
+import {IJsonable} from '../../Json/Contracts';
 import {TypeUtil} from "../../Utility/TypeUtil";
 
-export class IndexDefinition implements IJsonSerializable {
+export class IndexDefinition implements IJsonable {
   protected maps: string[];
   protected indexId: number = 0;
   protected isTestIndex: boolean = false;

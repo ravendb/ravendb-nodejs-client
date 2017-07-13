@@ -1,9 +1,9 @@
-import {IJsonSerializable} from "../../Json/IJsonSerializable";
+import {IJsonable} from "../../Json/Contracts";
 import {ResourcesAccessModes, AccessMode} from "./AccessMode";
 import {ArrayUtil} from "../../Utility/ArrayUtil";
 import {InvalidOperationException} from "../DatabaseExceptions";
 
-export class ApiKeyDefinition implements IJsonSerializable {
+export class ApiKeyDefinition implements IJsonable {
   protected enabled: boolean = true;
   protected secret?: string = null;
   protected serverAdmin: boolean = false;

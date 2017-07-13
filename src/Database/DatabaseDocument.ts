@@ -1,7 +1,7 @@
-import {IJsonSerializable} from "../Json/IJsonSerializable";
+import {IJsonable} from "../Json/Contracts";
 import {IRavenObject} from "./IRavenObject";
 
-export class DatabaseDocument implements IJsonSerializable {
+export class DatabaseDocument implements IJsonable {
   protected secureSettings: {};
   protected disabled: boolean;
   private _databaseId: string;

@@ -28,7 +28,7 @@ export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdG
     this._lastRangeAt = DateUtil.zeroDate();
     this._range = new HiloRangeValue();
     this.identityPartsSeparator = this.conventions.identityPartsSeparator;
-    this._lock = Lock.getInstance();
+    this._lock = Lock.make();
   }
 
   public generateDocumentId(): BluebirdPromise<string> {
@@ -67,8 +67,7 @@ export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdG
     const range: HiloRangeValue =this._range;
     
     return (this._lock
-    .acquireIdGenerator(
-      this.tag, range, (): any => {
+    .acquire((): any => {
         if (!range.needsNewRange) {
           range.increment();
 
