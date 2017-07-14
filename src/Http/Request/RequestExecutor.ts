@@ -14,7 +14,6 @@ import {IRavenResponse} from "../../Database/RavenCommandResponse";
 import {Topology} from "../Topology";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {IHeaders} from "../IHeaders";
-import {ApiKeyAuthenticator} from "../../Database/Auth/ApiKeyAuthenticator";
 import {IRavenObject} from "../../Database/IRavenObject";
 import {Lock} from "../../Lock/Lock";
 import {ILockDoneCallback} from "../../Lock/LockCallbacks";

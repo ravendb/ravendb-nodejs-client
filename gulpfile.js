@@ -1,8 +1,9 @@
 const _ = require('lodash');
 const fs = require('fs');
+const path = require('path');
 const gulp = require('gulp');
 const rmdir = require('rimraf');
-const sort = require('gulp-sort');
+const tssort = require('gulp-typescript-easysort')
 const mocha = require('gulp-mocha');
 const ts = require('gulp-typescript');
 const append = require('gulp-append');
@@ -13,12 +14,6 @@ const args = require('./args');
 
 const preamble = '/** RavenDB Client - (c) Hibernating Rhinos 2017 */';
 const exportDefault = 'export default DocumentStore;';
-
-const prioritizedClasses = [
-    'Observable.ts', 'RequestExecutor.ts', 'RavenCommand.ts',
-    'DatabaseExceptions.ts',  'AbstractHiloKeyGenerator.ts', 'IndexQueryBasedCommand.ts', 
-    'GetIndexesCommand.ts', 'GetTopologyCommand.ts'
-];
 
 const options = {
     src: './src',
@@ -40,7 +35,8 @@ gulp.task('build:tests', ['clean', 'build:tests:args'], () => gulp
     .src([
         options.tests + '/Test*.ts',
         options.tests + '/**/*Test.ts',
-        options.src + '/[A-Z]*/**/*.ts'
+        options.src + '/[A-Z]*/**/*.ts',
+        `!${options.src}/Database/Auth/ApiKeyAuthenticator.ts`
     ], {
         base: __dirname
     })
@@ -92,20 +88,14 @@ gulp.task('build:concat', ['clean'], () => {
         .readFileSync(`${options.src}/Database/DatabaseExceptions.ts`)
         .toString().match(/class\s+([\w\d]+)\s*/g)
         .map((match) => match.replace(/class\s+/, ''));  
-
+    
     return gulp
-        .src(options.src + '/[A-Z]*/**/*.ts')
-        .pipe(sort({
-            comparator: (file, anotherFile) => {
-                const isPrioritized = (file) => prioritizedClasses
-                    .some((className) => !!~file.path.indexOf(className));
-
-                return isPrioritized(file) ? -1 : (
-                    isPrioritized(anotherFile) ? 1 : 0
-                );
-            }
-        }))
-        .pipe(concat('ravendb-node.bundle.ts'))
+        .src([
+            `${options.src}/[A-Z]*/**/*.ts`,
+            `!${options.src}/Database/Auth/ApiKeyAuthenticator.ts`
+        ])
+        .pipe(tssort())
+        .pipe(concat('ravendb-node.bundle.ts'))        
         .pipe(transform(contents => contents
             .toString()
             .split('\n')

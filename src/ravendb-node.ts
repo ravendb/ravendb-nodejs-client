@@ -1,5 +1,4 @@
 // global imports
-import {Box, Random, Key} from 'sodium';
 import * as _ from 'lodash';
 import * as uuid from 'uuid';
 import * as moment from 'moment';
@@ -37,7 +36,6 @@ export {IJsonable, IJsonConvertible} from './Json/Contracts';
 export {IRavenResponse} from './Database/RavenCommandResponse';
 export {IHeaders} from './Http/IHeaders';
 export {IResponse, IResponseBody} from './Http/Response/IResponse';
-export {CryptMessage, ICipherBox} from './Utility/Crypt';
 
 //exceptions
 export {
@@ -138,7 +136,6 @@ export {SaveChangesData} from './Database/Commands/Data/SaveChangesData';
 export {Operations} from './Database/Operations/Operations';
 export {AccessMode, AccessModes, ResourcesAccessModes} from './Database/Auth/AccessMode';
 export {ApiKeyDefinition} from './Database/Auth/ApiKeyDefinition';
-export {ApiKeyAuthenticator, IAuthServerRequest} from './Database/Auth/ApiKeyAuthenticator';
 export {Serializer} from './Json/Serializer';
 export {DatabaseDocument} from './Database/DatabaseDocument';
 export {DocumentStore} from './Documents/DocumentStore';
