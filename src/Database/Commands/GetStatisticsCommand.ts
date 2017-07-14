@@ -8,16 +8,16 @@ import {IRavenResponse} from "../RavenCommandResponse";
 import {ErrorResponseException} from "../DatabaseExceptions";
 
 export class GetStatisticsCommand extends RavenCommand {
-  protected debugTag?: string;
+  protected checkForFailures?: boolean;
 
-  constructor(debugTag?: string) {
+  constructor(checkForFailures: boolean = false) {
     super('', RequestMethods.Get);
-    this.debugTag = debugTag;
+    this.checkForFailures = checkForFailures;
   }
 
   public createRequest(serverNode: ServerNode): void {
     this.endPoint = StringUtil.format('{url}/databases/{database}/stats', serverNode);
-    this.debugTag && this.addParams(this.debugTag, null);
+    this.checkForFailures && this.addParams('failure', 'check');
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {

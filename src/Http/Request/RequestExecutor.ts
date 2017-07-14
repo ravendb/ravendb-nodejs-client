@@ -4,6 +4,7 @@
 // cancel refresh times after topology update
 // check concurrency mode determination
 
+import * as _ from 'lodash';
 import * as BluebirdPromise from 'bluebird';
 import * as RequestPromise from 'request-promise';
 import {ServerNode} from '../ServerNode';
@@ -18,13 +19,15 @@ import {IRavenObject} from "../../Database/IRavenObject";
 import {Lock} from "../../Lock/Lock";
 import {ILockDoneCallback} from "../../Lock/LockCallbacks";
 import {GetTopologyCommand} from "../../Database/Commands/GetTopologyCommand";
+import {GetStatisticsCommand} from "../../Database/Commands/GetStatisticsCommand";
 import {StringUtil} from "../../Utility/StringUtil";
 import {DateUtil} from "../../Utility/DateUtil";
 import {IResponse, IErrorResponse} from "../Response/IResponse";
 import {StatusCodes, StatusCode} from "../Response/StatusCode";
 import {Observable} from "../../Utility/Observable";
 import {NodeSelector} from "./NodeSelector";
-import {RavenException, InvalidOperationException, BadRequestException, AuthorizationException, TopologyNodeDownException, AllTopologyNodesDownException} from "../../Database/DatabaseExceptions";
+import {NodeStatus} from "../NodeStatus";
+import {RavenException, InvalidOperationException, BadRequestException, AuthorizationException, TopologyNodeDownException, AllTopologyNodesDownException, DatabaseLoadFailureException, UnsuccessfulRequestException} from "../../Database/DatabaseExceptions";
 
 export interface ITopologyUpdateEvent {
   topologyJson: object;
@@ -34,66 +37,130 @@ export interface ITopologyUpdateEvent {
   wasUpdated?: boolean;
 }
 
+export interface IRequestExecutorOptions {
+  withoutTopology?: boolean;
+  topologyEtag?: number;
+  singleNodeTopology?: Topology;
+  firstTopologyUpdateUrls?: string[];
+}
+
 export class RequestExecutor extends Observable {
   public static readonly REQUEST_FAILED      = 'request:failed';
   public static readonly TOPOLOGY_UPDATED    = 'topology:updated';
   public static readonly NODE_STATUS_UPDATED = 'node:status:updated';
 
-  protected conventions?: DocumentConventions;
   protected headers: IHeaders;
-  private _lock: Lock;
-  private _authenticator: ApiKeyAuthenticator;
-  private _apiKey?: string = null;
-  private _unauthorizedHandlerInitialized: boolean = false;
-  private _firstTopologyUpdateCompleted: boolean = false;
-  private _disableTopologyUpdates: boolean;
+  private readonly _maxFirstTopologyUpdatesTries: number = 5;
+  private _fistTopologyUpdatesTries: number = 0;
+  private _awaitFirstTopologyLock: Lock;
+  private _updateTopologyLock: Lock;
+  private _updateFailedNodeTimerLock: Lock;
+  private _firstTopologyUpdate: BluebirdPromise<void> = null;
+  private _withoutTopology: boolean;
   private _nodeSelector: NodeSelector;
-  private _initialUrls: string[];
+  private _lastKnownUrls: string[];
   private _initialDatabase: string;
+  private _topologyEtag: number;
+  private _faildedNodesStatuses: Map<ServerNode, NodeStatus>;
 
   public get initialDatabase(): string {
     return this._initialDatabase;
   }
 
-  constructor(urls: string[], database: string, apiKey?: string, conventions?: DocumentConventions) {
+  constructor(database: string, options: IRequestExecutorOptions = {}) {
     super();
+
+    const urls = options.firstTopologyUpdateUrls || [];
 
     this.headers = {
       "Accept": "application/json",
-      "Has-Api-key": TypeUtil.isNone(apiKey) ? 'false' : 'true',
-      "Raven-Client-Version": "4.0.0.0",
+      "Has-Api-key": 'false',
+      "Raven-Client-Version": "4.0.1.2",
     };
 
-    this._apiKey = apiKey;
-    this._initialUrls = urls;
+    this._lastKnownUrls = null;
     this._initialDatabase = database;
-    this.conventions = conventions;
-    this._lock = Lock.make();
-    this._disableTopologyUpdates = urls.length < 2;
-    this._authenticator = new ApiKeyAuthenticator();
-    this._nodeSelector = new NodeSelector(this, urls, database, apiKey);
+    this._withoutTopology = options.withoutTopology || false;
+    this._topologyEtag = options.topologyEtag || 0;
+    this._awaitFirstTopologyLock = Lock.make();
+    this._updateTopologyLock = Lock.make();
+    this._updateFailedNodeTimerLock = Lock.make();
+    this._faildedNodesStatuses = new Map<ServerNode, NodeStatus>();
 
-    this.updateReplicationTopology();
+    if (!this._withoutTopology && urls.length) {
+      this.startFirstTopologyUpdate(urls);
+    } else if (this._withoutTopology && options.singleNodeTopology) {
+      this._nodeSelector = new NodeSelector(this, options.singleNodeTopology);
+    }
+  }
+
+  public static create(urls: string[], database: string): RequestExecutor {
+    const self = <typeof RequestExecutor>this;
+
+    return new self(database, {
+      withoutTopology: false,
+      firstTopologyUpdateUrls: urls
+    });
+  }
+
+  public static createForSingleNode(url: string, database: string): RequestExecutor {
+    const self = <typeof RequestExecutor>this;
+    const topology = new Topology(-1, [new ServerNode(url, database)]);
+
+    return new self(database, {
+      withoutTopology: true,
+      singleNodeTopology: topology,
+      topologyEtag: -2
+    });
   }
 
   public execute(command: RavenCommand): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> {
-    const chosenNode: ServerNode = this._nodeSelector.currentNode;
+    let chosenNode: ServerNode;
+    let chosenNodeIndex: number;
 
-    return this.awaitForTopology()
-      .then(() => this.executeCommand(command, chosenNode))
+    return this.awaitFirstTopologyUpdate()
+      .then(() => { 
+        const selector: NodeSelector = this._nodeSelector;
+
+        chosenNode = selector.currentNode;
+        chosenNodeIndex = selector.currentNodeIndex;
+
+        return this.executeCommand(command, chosenNode)
+      })
       .catch((exception: RavenException) => {
         if (exception instanceof TopologyNodeDownException) {
-          return this.fallbackToNextNode(command, chosenNode);
+          return this.handleServerDown(command, chosenNode, chosenNodeIndex);
         }
 
         return BluebirdPromise.reject(exception);
       });
   }
 
-  protected awaitForTopology(): BluebirdPromise<void> {
-    return this._firstTopologyUpdateCompleted 
-      ? BluebirdPromise.resolve() : BluebirdPromise.delay(100)
-      .then(() => this.awaitForTopology());
+  protected awaitFirstTopologyUpdate(): BluebirdPromise<void> {
+    const firstTopologyUpdate: BluebirdPromise<void> = this._firstTopologyUpdate;
+
+    if (this._withoutTopology) {
+      return BluebirdPromise.resolve();
+    }
+
+    return this._awaitFirstTopologyLock.acquire((): boolean => {
+      let isFulfilled: boolean = false;
+
+      if (firstTopologyUpdate === this._firstTopologyUpdate) {
+        isFulfilled = firstTopologyUpdate.isFulfilled();
+
+        if (firstTopologyUpdate.isRejected()) {
+          this.startFirstTopologyUpdate(this._lastKnownUrls);
+        }
+      }
+      
+      return isFulfilled;
+    })
+    .then((isFulfilled: boolean): BluebirdPromise.Thenable<void> => isFulfilled 
+      ? BluebirdPromise.resolve() : (this.isFirstTopologyUpdateTriesExpired() 
+      ? BluebirdPromise.reject(new DatabaseLoadFailureException('Max topology update tries reched')) 
+      : this.awaitFirstTopologyUpdate())
+    );
   }
 
   protected prepareCommand(command: RavenCommand, node: ServerNode): RavenCommandRequestOptions {
@@ -103,12 +170,8 @@ export class RequestExecutor extends Observable {
     options = command.toRequestOptions();
     Object.assign(options.headers, this.headers);
 
-    if (!TypeUtil.isNone(node.currentToken)) {
-      options.headers['Raven-Authorization'] = node.currentToken;
-    }
-
-    if (!this._disableTopologyUpdates) {
-      options.headers["Topology-Etag"] = this._nodeSelector.topologyEtag;
+    if (!this._withoutTopology) {
+      options.headers["Topology-Etag"] = this._topologyEtag;
     }
 
     return options;
@@ -149,25 +212,26 @@ export class RequestExecutor extends Observable {
           StatusCodes.ServiceUnavailable
         ].includes(code);
 
-        if (isServerError || StatusCodes.isNotFound(code)) {
+        if (StatusCodes.isNotFound(code)) {
           delete response.body;
-        } else {
-          if (isServerError) {
-            return BluebirdPromise.reject(new TopologyNodeDownException(`Node ${node.url} is down`));
-          }
-
-          if (StatusCodes.isForbidden(code)) {
-            return BluebirdPromise.reject(new AuthorizationException(
-              StringUtil.format(
-                'Forbidden access to {url}. Make sure you\'re using the correct api-key.',
-                node
-              )
-            ));
-          }
         }
+        
+        if (isServerError) {
+          if (command.wasFailed) {
+            let message: string = 'Unsuccessfull request';
 
-        if (!this._disableTopologyUpdates && ("Refresh-Topology" in response.headers)) {
-          this.updateReplicationTopology();
+            if (response.body && response.body.Error) {
+              message += `: ${response.body.Error}`;
+            }
+
+            return BluebirdPromise.reject(new UnsuccessfulRequestException(message));
+          }
+
+          return BluebirdPromise.reject(new TopologyNodeDownException(`Node ${node.url} is down`));
+        }
+      
+        if (!this._withoutTopology && ("Refresh-Topology" in response.headers)) {
+          this.updateTopology(node);
         }
 
         try {
@@ -180,33 +244,70 @@ export class RequestExecutor extends Observable {
       });
   }
 
-  protected fallbackToNextNode(command: RavenCommand, failedNode: ServerNode): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> {
+  protected handleServerDown(command: RavenCommand, failedNode: ServerNode, nodeIndex: number): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> {
     let nextNode: ServerNode;
     const nodeSelector: NodeSelector = this._nodeSelector;
     const {REQUEST_FAILED} = <typeof RequestExecutor>this.constructor;
 
     command.addFailedNode(failedNode);
-    this.emit<ServerNode>(REQUEST_FAILED, failedNode);
-    setTimeout(this.updateFailingNodeStatus(failedNode), 5 * 1000);
 
-    if (!(nextNode = nodeSelector.currentNode) || command.isFailedWithNode(nextNode)) {
-      return BluebirdPromise.reject(new AllTopologyNodesDownException(
-        'Tried all nodes in the cluster but failed getting a response'
-      ));
-    }
+    return this._updateFailedNodeTimerLock.acquire(() => {
+      const status: NodeStatus = new NodeStatus(nodeIndex, failedNode, 
+        (status: NodeStatus) => this.checkNodeStatus(status)
+      );
+      
+      this._faildedNodesStatuses.set(failedNode, status);
+      status.startUpdate();
+    })
+    .then((): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> => {
+      this.emit<ServerNode>(REQUEST_FAILED, failedNode);
+    
+      if (!(nextNode = nodeSelector.currentNode) || command.wasFailedWithNode(nextNode)) {
+        return BluebirdPromise.reject(new AllTopologyNodesDownException(
+          'Tried all nodes in the cluster but failed getting a response'
+        ));
+      }
 
-    return this.executeCommand(command, nextNode);
+      return this.executeCommand(command, nextNode);
+    });
   }
 
-  protected updateReplicationTopology(): void {
+  protected startFirstTopologyUpdate(updateTopologyUrls: string[]): void {
+    let url: string = null;
+    const urls: string[] = updateTopologyUrls.reverse();
+
+    const update = (url: string): BluebirdPromise<void> => 
+      this.updateTopology(new ServerNode(url, this._initialDatabase))
+      .catch((error: Error): BluebirdPromise.Thenable<void> => tryNextUrl(error));
+
+    const tryNextUrl = (error: Error): BluebirdPromise.Thenable<void> => {
+      if (url = urls.pop()) {
+        return update(url);
+      }
+
+      return BluebirdPromise.reject<void>(error);
+    }
+
+    this._lastKnownUrls = updateTopologyUrls;
+
+    if (!this.isFirstTopologyUpdateTriesExpired()) {
+      this._fistTopologyUpdatesTries++;
+      this._firstTopologyUpdate = update(urls.pop());
+    }    
+  }
+
+  protected isFirstTopologyUpdateTriesExpired() {
+    return this._fistTopologyUpdatesTries >= this._maxFirstTopologyUpdatesTries;
+  }
+
+  protected updateTopology(node: ServerNode): BluebirdPromise<void> {
     const {TOPOLOGY_UPDATED} = <typeof RequestExecutor>this.constructor;
+    const topologyCommandClass: new() => RavenCommand = this.getUpdateTopologyCommandClass();
 
-    BluebirdPromise.some(this._initialUrls.map((url: string): PromiseLike<void> => {
-      const node = new ServerNode(url, this._initialDatabase);
-
-      return this._lock.acquire((): PromiseLike<void> =>
-        this.executeCommand(new GetTopologyCommand(), node)
-          .then((response?: IRavenResponse) => {
+    return this._updateTopologyLock.acquire((): BluebirdPromise<void> =>
+      this.executeCommand(new topologyCommandClass(), node)
+        .then((response?: IRavenResponse) => {
+          if (this._nodeSelector) {
             let eventData: ITopologyUpdateEvent = {
               topologyJson: response,
               serverNodeUrl: node.url,
@@ -215,41 +316,65 @@ export class RequestExecutor extends Observable {
             };
 
             this.emit<ITopologyUpdateEvent>(TOPOLOGY_UPDATED, eventData);
-            //TODO: read wasUpdated
-        })          
-      )
-    }), 1)
-    .then(() => {
-      if (!this._firstTopologyUpdateCompleted) {
-        this._firstTopologyUpdateCompleted = true;
-      }      
-    })
-    .finally(() => setTimeout(
-      () => this.updateReplicationTopology(), 60 * 5 * 1000
-    ));    
+
+            if (eventData.wasUpdated) {
+              this.cancelFailingNodesTimers();
+            }
+          } else {
+            this._nodeSelector = new NodeSelector(this, Topology.fromJson(response));
+          }
+
+          this._topologyEtag = this._nodeSelector.topologyEtag;
+      })          
+    );   
   }
 
-  protected updateFailingNodeStatus(node: ServerNode): void {
+  protected getUpdateTopologyCommandClass(): new() => RavenCommand {
+    return GetTopologyCommand;
+  }
+
+  protected checkNodeStatus(nodeStatus: NodeStatus): void {
+    const nodes = this._nodeSelector.nodes;
+    const index: number = nodeStatus.nodeIndex;
+    const node: ServerNode = nodeStatus.node;
+
+    if ((index < nodes.length) && (node === nodes[index])) {
+      this.performHealthCheck(node);
+    }
+  }
+
+  protected performHealthCheck(node: ServerNode): void {
     const {NODE_STATUS_UPDATED} = <typeof RequestExecutor>this.constructor;
-    const command: GetTopologyCommand = new GetTopologyCommand();
+    const command: GetStatisticsCommand = new GetStatisticsCommand(true);
     const startTime: number = DateUtil.timestampMs();
-    let isStillFailed: boolean = true;
+    let isStillFailed: boolean = true, status: NodeStatus;
 
-    this._lock.acquireNodeStatus(node.url, node.database, (): PromiseLike<void> => 
-      RequestPromise(this.prepareCommand(command, node))
-        .then((response: IResponse) => {
-          if (StatusCodes.isOk(response.statusCode)) {
-            isStillFailed = false;
-            this.emit<ServerNode>(NODE_STATUS_UPDATED, node);
-          }
-        })
-        .finally(() => {
-          node.reponseTime = DateUtil.timestampMs() - startTime;
+    RequestPromise(this.prepareCommand(command, node))
+      .then((response: IResponse) => {
+        if (StatusCodes.isOk(response.statusCode)) {
+          isStillFailed = false;
+          this.emit<ServerNode>(NODE_STATUS_UPDATED, node);
 
-          if (isStillFailed) {
-            setTimeout(this.updateFailingNodeStatus(node), 5 * 1000);
+          if (status = this._faildedNodesStatuses.get(node)) {
+            status.dispose();
+            this._faildedNodesStatuses.delete(node);
           }
-        })
-    );
+        }
+      })
+      .finally(() => {
+        node.responseTime = DateUtil.timestampMs() - startTime;
+
+        if (isStillFailed && (status = this._faildedNodesStatuses.get(node))) {
+          status.retryUpdate();
+        }
+      });
+  }
+
+  protected cancelFailingNodesTimers(): void {
+    for (let status of this._faildedNodesStatuses.values()) {
+      status.dispose();
+    }
+
+    this._faildedNodesStatuses.clear();
   }
 }

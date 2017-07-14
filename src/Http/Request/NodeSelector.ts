@@ -97,7 +97,6 @@ export class NodeSelector {
   protected onRequestFailed(failedNode: ServerNode): void {
     this.assertTopology();
 
-    //failedNode.isFailed = true;
     this._currentNodeIndex = ++this._currentNodeIndex % this.topology.nodes.length;
   }
 
@@ -106,7 +105,6 @@ export class NodeSelector {
 
     if (nodes.includes(failedNode)) {
       const failedNodeIndex: number = nodes.indexOf(failedNode);
-      //failedNode.isFailed = false;
       
       if (this._currentNodeIndex > failedNodeIndex) {
         this._currentNodeIndex = failedNodeIndex;

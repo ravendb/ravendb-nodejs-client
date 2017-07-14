@@ -18,7 +18,6 @@ export abstract class RavenCommand {
   protected payload?: object;
   protected headers: object = {};
   protected failedNodes: Set<ServerNode>;
-  private _authenticationRetries: number = 0;
 
   public abstract createRequest(serverNode: ServerNode): void;
 
@@ -31,22 +30,20 @@ export abstract class RavenCommand {
     this.failedNodes = new Set<ServerNode>();
   }
 
-  public get authenticationRetries(): number {
-    return this._authenticationRetries;
+  public get wasFailed(): boolean {
+    const nodes = this.failedNodes;
+
+    return nodes.size > 0;
   }
 
   public addFailedNode(node: ServerNode): void {
     this.failedNodes.add(node);
   }
 
-  public isFailedWithNode(node: ServerNode): boolean {
+  public wasFailedWithNode(node: ServerNode): boolean {
     const nodes = this.failedNodes;
 
-    return (nodes.size > 0) && nodes.has(node);
-  }
-
-  public increaseAuthenticationRetries(): void {
-    this._authenticationRetries++;
+    return this.wasFailed && nodes.has(node);
   }
 
   public toRequestOptions(): RavenCommandRequestOptions {

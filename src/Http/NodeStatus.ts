@@ -19,6 +19,14 @@ export class NodeStatus {
     return Math.min(maxPeriod, this._timerPeriod);
   }
 
+  public get nodeIndex(): number {
+    return this._nodeIndex;
+  }
+
+  public get node(): ServerNode {
+    return this._node;
+  }
+
   constructor(nodeIndex: number, node: ServerNode, onUpdate: typeof NodeStatus.prototype._onUpdate) {
     this._onUpdate = onUpdate;
     this._nodeIndex = nodeIndex;
@@ -34,6 +42,10 @@ export class NodeStatus {
       }, 
       this.nextTimerPeriod
     );
+  }
+
+  public retryUpdate(): void {
+    this.startUpdate();
   }
 
   public dispose(): void {

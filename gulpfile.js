@@ -15,8 +15,8 @@ const preamble = '/** RavenDB Client - (c) Hibernating Rhinos 2017 */';
 const exportDefault = 'export default DocumentStore;';
 
 const prioritizedClasses = [
-    'Hash.ts', 'RavenCommand.ts', 'DatabaseExceptions.ts', 
-    'AbstractHiloKeyGenerator.ts', 'IndexQueryBasedCommand.ts', 
+    'Observable.ts', 'RequestExecutor.ts', 'RavenCommand.ts',
+    'DatabaseExceptions.ts',  'AbstractHiloKeyGenerator.ts', 'IndexQueryBasedCommand.ts', 
     'GetIndexesCommand.ts', 'GetTopologyCommand.ts'
 ];
 
