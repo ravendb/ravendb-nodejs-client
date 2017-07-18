@@ -24,7 +24,7 @@ export class Lock {
   }
 
   public static make(): Lock {
-    const self: typeof Lock = <typeof Lock>this.constructor;
+    const self: typeof Lock = <typeof Lock>this;
 
     return new self(uuid());
   }

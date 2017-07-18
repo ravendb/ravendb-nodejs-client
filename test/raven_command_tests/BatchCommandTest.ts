@@ -46,7 +46,7 @@ describe('Batch command test', () => {
 
     it('should be success with a scripted patch', async () => requestExecutor
         .execute(new BatchCommand([putCommand1, scriptedPatchCommand]))
-        .then((): BluebirdPromise.Thenable<IRavenResponse> => requestExecutor
+        .then(() => requestExecutor
         .execute(new GetDocumentCommand('products/999')))
         .then((result: IRavenResponse) => expect((result).Results[0].Name).to.equals('testing'))
     );

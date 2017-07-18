@@ -1,3 +1,4 @@
+import * as _ from "lodash";
 import {ServerNode} from './ServerNode';
 import {IJsonConvertible} from "../Json/Contracts";
 import {IRavenObject} from "../Database/IRavenObject";
@@ -28,9 +29,19 @@ export class Topology implements IJsonConvertible {
 
   public fromJson(json: object): void {
     const from: IRavenObject = <IRavenObject>json;
+    let nodes: object[] = [];
 
     this._etag = from.Etag || 0;
-    this._nodes = (from.Nodes || [])
+
+    if (from.Topology && from.Topology.AllNodes) {
+      _.forIn<string>(from.Topology.AllNodes, (url: string, tag: string) => 
+        nodes.push({Url: url, ClusterTag: tag})
+      );
+    } else if (from.Nodes) {
+      nodes = from.Nodes;
+    }
+
+    this._nodes = nodes
       .map((node: object): ServerNode =>
       ServerNode.fromJson(node)
     );

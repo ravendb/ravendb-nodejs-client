@@ -1,3 +1,5 @@
+import * as _ from 'lodash';
+import {IRavenObject} from '../IRavenObject';
 import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
 import {IRavenResponse} from "../RavenCommandResponse";
@@ -23,7 +25,7 @@ export class GetTopologyCommand extends RavenCommand {
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
     const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
 
-    if (StatusCodes.isOk(response.statusCode) && response.body) {
+    if (response.body && StatusCodes.isOk(response.statusCode)) {
       return result;
     }
   }

@@ -61,7 +61,7 @@ export class ServerNode implements IJsonConvertible {
     const from: IRavenObject = <IRavenObject>json;
 
     this._url = from.Url;
-    this._database = from.Database;
-    this._clusterTag = from.ClusterTag;
+    this._database = from.Database || null;
+    this._clusterTag = from.ClusterTag || null;
   }
 }

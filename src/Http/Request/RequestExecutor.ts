@@ -132,7 +132,7 @@ export class RequestExecutor extends Observable {
         }
 
         return BluebirdPromise.reject(exception);
-      });
+      }) as BluebirdPromise<IRavenResponse | IRavenResponse[] | void>;
   }
 
   protected awaitFirstTopologyUpdate(): BluebirdPromise<void> {
@@ -155,10 +155,10 @@ export class RequestExecutor extends Observable {
       
       return isFulfilled;
     })
-    .then((isFulfilled: boolean): BluebirdPromise.Thenable<void> => isFulfilled 
+    .then((isFulfilled: boolean): BluebirdPromise.Thenable<void> => (isFulfilled 
       ? BluebirdPromise.resolve() : (this.isFirstTopologyUpdateTriesExpired() 
       ? BluebirdPromise.reject(new DatabaseLoadFailureException('Max topology update tries reched')) 
-      : this.awaitFirstTopologyUpdate())
+      : BluebirdPromise.delay(100).then((): BluebirdPromise.Thenable<void> => this.awaitFirstTopologyUpdate())))
     );
   }
 
@@ -273,7 +273,7 @@ export class RequestExecutor extends Observable {
 
   protected startFirstTopologyUpdate(updateTopologyUrls: string[]): void {
     let url: string = null;
-    const urls: string[] = updateTopologyUrls.reverse();
+    let urls: string[] = updateTopologyUrls.reverse();
 
     const update = (url: string): BluebirdPromise<void> => 
       this.updateTopology(new ServerNode(url, this._initialDatabase))
