@@ -20,6 +20,7 @@ export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdG
   private _lock: Lock;
   private _prefix?: string = null;
   private _lastBatchSize: number = 0;
+  private _serverTag: string = null;
 
   constructor(store: IDocumentStore, dbName?: string, tag?: string) {
     super(store, dbName, tag);
@@ -27,14 +28,14 @@ export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdG
     this._lastRangeAt = DateUtil.zeroDate();
     this._range = new HiloRangeValue();
     this.identityPartsSeparator = this.conventions.identityPartsSeparator;
-    this._lock = Lock.getInstance();
+    this._lock = Lock.make();
   }
 
   public generateDocumentId(): BluebirdPromise<string> {
-    return new BluebirdPromise<string>(
-      (resolve: PromiseResolve<string>, reject: PromiseReject) => this
-        .tryRequestNextRange(resolve, reject)
-    );
+    return this.tryRequestNextRange()
+      .then((nextRange: HiloRangeValue): string => 
+        this.assembleDocumentId(nextRange.current)
+      );
   }
 
   public returnUnusedRange(): BluebirdPromise<void> {
@@ -55,31 +56,48 @@ export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdG
     .then((response: IRavenResponse) => {
       this._prefix = response['prefix'];
       this._lastBatchSize = response['last_size'];
+      this._serverTag = response['server_tag'] || null;
       this._lastRangeAt = DateUtil.parse(response['last_range_at']);
 
       return new HiloRangeValue(response['low'], response['high']);
     });
   }
 
-  protected tryRequestNextRange(resolve: PromiseResolve<string>, reject: PromiseReject): void {
-    this._lock.acquireIdGenerator(this.tag, this._range,
-    (done: ILockDoneCallback): any => {
-      this._range.increment();
-      this.getNextRange()
-        .then((range: HiloRangeValue) => done(null, range))
-        .catch((error: Error) => done(error));
-    }, (error?: Error, result?: HiloRangeValue) => {
-      if (result) {
-        PromiseResolver.resolve<string>(this.assembleDocumentId(result.current), resolve);
-      } else if (!(error instanceof ConcurrencyException)) {
-        PromiseResolver.reject(error, reject);
+  protected tryRequestNextRange(): BluebirdPromise<HiloRangeValue> {
+    const range: HiloRangeValue =this._range;
+    
+    return (this._lock
+    .acquire((): any => {
+        if (!range.needsNewRange) {
+          range.increment();
+
+          return BluebirdPromise.resolve<HiloRangeValue>(range);
+        }
+      
+      return this.getNextRange()
+        .then((newRange: HiloRangeValue): HiloRangeValue => {
+          this._range = newRange;
+
+          return newRange;
+        });
+    }) as BluebirdPromise<HiloRangeValue>)
+    .catch((error: Error): BluebirdPromise<HiloRangeValue> => {
+      if (!(error instanceof ConcurrencyException)) {
+        return BluebirdPromise.reject<HiloRangeValue>(error);
       } else {
-        this.tryRequestNextRange(resolve, reject);
+        return this.tryRequestNextRange();
       }
     });
   }
 
   protected assembleDocumentId(currentRangeValue: number): string {
-    return StringUtil.format('{0}{1}', (this._prefix || ''), currentRangeValue);
+    const prefix: string = (this._prefix || '');
+    const serverTag: string = this._serverTag;
+
+    if (serverTag) {
+      return StringUtil.format('{0}{1}-{2}', prefix, currentRangeValue, serverTag);
+    }
+    
+    return StringUtil.format('{0}{1}', prefix, currentRangeValue);
   }
 }

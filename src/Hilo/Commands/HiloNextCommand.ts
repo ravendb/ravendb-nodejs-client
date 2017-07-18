@@ -48,6 +48,7 @@ export class HiloNextCommand extends RavenCommand {
         "high": responseBody.High,
         "prefix": responseBody.Prefix,
         "last_size": responseBody.LastSize,
+        "server_tag": responseBody.ServerTag,
         "last_range_at": responseBody.LastRangeAt
       };
     }

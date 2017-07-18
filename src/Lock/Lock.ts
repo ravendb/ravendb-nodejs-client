@@ -1,54 +1,41 @@
 import {StringUtil} from '../Utility/StringUtil';
 import {ILockCallback, ILockDoneCallback} from './LockCallbacks';
 import {HiloRangeValue} from '../Hilo/HiloRangeValue';
+import * as BluebirdPromise from 'bluebird';
 import * as AsyncLock from 'async-lock';
+import * as uuid from 'uuid';
 
 export class Lock {
-  private static _instance: Lock = null;
-  private _lock: AsyncLock;
+  private _key: string;
+  private static _lock: AsyncLock;
 
-  constructor() {
-    this._lock = new AsyncLock();
-  }
+  protected get lock(): AsyncLock {
+    const self: typeof Lock = <typeof Lock>this.constructor;
 
-  public static getInstance(): Lock {
-    if (!this._instance) {
-      this._instance = new Lock();
+    if (!self._lock) {
+      self._lock = new AsyncLock({Promise: BluebirdPromise});
     }
-
-    return this._instance;
+    
+    return self._lock;
   }
 
-  public acquireTagGenerator(tag: string, callback: ILockCallback): PromiseLike<any> {
-    const key: string = StringUtil.format('lock:generator:tag:{0}', tag);
-
-    return this._lock.acquire(key, callback);
+  constructor(key) {
+    this._key = key;
   }
 
-  public acquireIdGenerator(tag: string, range: HiloRangeValue, callback: ILockCallback, doneCallback: ILockDoneCallback): void {
-    const key: string = StringUtil.format(
-      'lock:tag:{0}:range:{1}:{2}', tag,
-      range.minId, range.maxId, range.current
-    );
+  public static make(): Lock {
+    const self: typeof Lock = <typeof Lock>this;
 
-    return this._lock.acquire(key, callback, doneCallback);
+    return new self(uuid());
   }
 
-  public acquireTopologyUpdate(url: string, database: string, callback: ILockCallback): PromiseLike<any> {
-    const key: string = StringUtil.format(
-      'lock:topology:url:{0}:database:{1}',
-      url, database
-    );
-
-    return this._lock.acquire(key, callback);
-  }
-
-  public acquireNodeStatus(url: string, database: string, callback: ILockCallback): PromiseLike<any> {
-    const key: string = StringUtil.format(
-      'lock:update:failed:node:status:url:{0}:database:{1}',
-      url, database
-    );
-
-    return this._lock.acquire(key, callback);
+  public acquire(wrapped: ILockCallback): BluebirdPromise<any>;
+  public acquire(wrapped: ILockCallback, callback: (done?: ILockDoneCallback) => any): void;
+  public acquire(wrapped: ILockCallback, callback?: (done?: ILockDoneCallback) => any): void | BluebirdPromise<any> {
+    if ('function' !== (typeof callback)) {
+      return <BluebirdPromise<any>>this.lock.acquire(this._key, wrapped);
+    }
+      
+    this.lock.acquire(this._key, wrapped, callback);
   }
 }

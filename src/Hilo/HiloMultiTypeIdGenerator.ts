@@ -10,7 +10,7 @@ export class HiloMultiTypeIdGenerator extends AbstractHiloIdGenerator implements
 
   constructor(store: IDocumentStore, dbName?: string) {
     super(store, dbName);
-    this._lock = Lock.getInstance();
+    this._lock = Lock.make();
   }
 
   public generateDocumentId(entity: object, documentType?: string): BluebirdPromise<string> {
@@ -24,7 +24,7 @@ export class HiloMultiTypeIdGenerator extends AbstractHiloIdGenerator implements
 
   protected createGeneratorForTag(tag: string): BluebirdPromise<IHiloIdGenerator> {
     return new BluebirdPromise<IHiloIdGenerator>((resolve) => this._lock
-      .acquireTagGenerator(tag, () => {
+      .acquire(() => {
         let generator: IHiloIdGenerator = this.generators[tag];
 
         if (!generator) {

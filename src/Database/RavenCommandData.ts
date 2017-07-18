@@ -1,20 +1,14 @@
-import {IJsonSerializable} from '../Json/IJsonSerializable';
+import {IJsonable} from '../Json/Contracts';
 import {RequestMethod} from "../Http/Request/RequestMethod";
 
-export abstract class RavenCommandData implements IJsonSerializable {
-  private readonly _command: boolean = true;
+export abstract class RavenCommandData implements IJsonable {
   protected type: RequestMethod;
   protected id: string;
   protected etag?: number = null;
-  protected additionalData?: object = null;
 
   constructor(id: string, etag?: number) {
     this.id = id;
     this.etag = etag;
-  }
-
-  public get command(): boolean {
-    return this._command;
   }
 
   public get documentId(): string {
@@ -24,7 +18,7 @@ export abstract class RavenCommandData implements IJsonSerializable {
   public toJson(): object {
     return {
       "Type": this.type,
-      "Id": this.documentId,
+      "Id": this.id,
       "Etag": this.etag
     };
   }

@@ -44,15 +44,28 @@ export interface IStoredRawEntityInfo {
 export class DocumentConventions {
   readonly maxNumberOfRequestPerSession: number = 30;
   readonly requestTimeout: number = 30;
-  readonly defaultUseOptimisticConcurrency:boolean = false;
+  readonly defaultUseOptimisticConcurrency:boolean = true;
   readonly maxLengthOfQueryUsingGetUrl = 1024 + 512;
   readonly identityPartsSeparator = "/";
+  private _disableTopologyUpdates: boolean = false;
   private _resolvers: IDocumentInfoResolvable[] = [];
   private _idsNamesCache: Map<string, string> = new Map<string, string>();
   private _ctorsCache: Map<string, DocumentConstructor> = new Map<string, DocumentConstructor>();
 
   public get emptyEtag(): number {
     return 0;
+  }
+
+  public get topologyUpdatesEnabled(): boolean {
+    return !this._disableTopologyUpdates;
+  } 
+
+  public disableTopologyUpdates(): void {
+    this._disableTopologyUpdates = true;
+  }
+
+  public enableTopologyUpdates(): void {
+    this._disableTopologyUpdates = false;
   }
 
   public addDocumentInfoResolver(resolver: IDocumentInfoResolvable): void {

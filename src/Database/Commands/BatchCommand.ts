@@ -18,7 +18,9 @@ export class BatchCommand extends RavenCommand {
   public createRequest(serverNode: ServerNode): void {
     const commands: RavenCommandData[] = this.commandsArray;
 
-    if (!commands.every((data: RavenCommandData): boolean => !!(data && data.command))) {
+    if (!commands.every((data: RavenCommandData): boolean => !!(data 
+      && (data instanceof RavenCommandData)))
+    ) {
       throw new InvalidOperationException('Not a valid command');
     }
 

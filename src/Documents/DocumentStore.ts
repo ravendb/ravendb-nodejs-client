@@ -91,7 +91,7 @@ export class DocumentStore implements IDocumentStore {
   public openSession(database?: string) : IDocumentSession;
   public openSession(options?: ISessionOptions) : IDocumentSession;
   public openSession(database?: string, options?: ISessionOptions) : IDocumentSession;
-  public openSession(databaseOrOptions?: string, options?: ISessionOptions) : IDocumentSession {
+  public openSession(databaseOrOptions?: string | ISessionOptions, options?: ISessionOptions) : IDocumentSession {
     this.assertInitialize();
     let database: string = <string>databaseOrOptions;
     let sessionOptions: ISessionOptions = <ISessionOptions>(options || {});
@@ -144,6 +144,6 @@ export class DocumentStore implements IDocumentStore {
   }
 
   protected createRequestExecutor(database?: string): RequestExecutor {
-    return new RequestExecutor(this.urls, database || this._database, this._apiKey, this.conventions);
+    return RequestExecutor.create(this.urls, database || this._database);
   }
 }

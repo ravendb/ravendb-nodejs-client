@@ -53,9 +53,9 @@
     "gulp-append": "^0.3.4",
     "gulp-concat": "^2.6.1",
     "gulp-mocha": "^4.1.0",
-    "gulp-sort": "^2.0.0",
     "gulp-transform": "^1.1.0",
     "gulp-typescript": "^3.1.5",
+    "gulp-typescript-easysort": "0.0.7",
     "gulp-uglify-harmony": "git+https://github.com/jiborobot/gulp-uglify-harmony.git#master",
     "mocha": "^3.2.0",
     "rimraf": "^2.6.1",
@@ -70,7 +70,6 @@
     "pluralize": "^4.0.0",
     "request": "^2.79.0",
     "request-promise": "^4.1.1",
-    "sodium": "^2.0.1",
     "uuid": "^3.1.0"
   }
 }

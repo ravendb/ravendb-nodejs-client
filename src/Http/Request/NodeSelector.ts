@@ -1,21 +1,26 @@
-import {RequestExecutor} from "./RequestExecutor";
+import * as BluebirdPromise from 'bluebird';
+import {RequestExecutor, ITopologyUpdateEvent} from "./RequestExecutor";
 import {ServerNode} from "../ServerNode";
 import {Topology} from "../Topology";
 import {IRavenObject} from "../../Database/IRavenObject";
 import {InvalidOperationException} from "../../Database/DatabaseExceptions";
 import {IRavenResponse} from "../../Database/RavenCommandResponse";
+import {Lock} from "../../Lock/Lock";
 
 export class NodeSelector {
+  private _lock: Lock;
+  private _currentNodeIndex: number = 0;
   protected initialDatabase: string;
   protected topology: Topology;
-  protected currentNodeIndex: number = 0;
 
   public get nodes(): ServerNode[] {
-    if (!this.topology || !this.topology.nodes || !this.topology.nodes.length) {
-      throw new InvalidOperationException("Empty database topology, this shouldn't happen.");
-    }
+    this.assertTopology();
 
     return this.topology.nodes;
+  }
+
+  public get currentNodeIndex(): number {
+    return this._currentNodeIndex;
   }
 
   public get topologyEtag(): number {
@@ -23,21 +28,17 @@ export class NodeSelector {
   }
 
   public get currentNode(): ServerNode {
-    return this.nodes[this.currentNodeIndex];
+    return this.nodes[this._currentNodeIndex];
   }
 
-  constructor(requestExecutor: RequestExecutor, urlsOrNodes: Array<string | ServerNode>, database: string, apiKey?: string) {
+  constructor(requestExecutor: RequestExecutor, topology: Topology) {
     const {TOPOLOGY_UPDATED, REQUEST_FAILED, NODE_STATUS_UPDATED} = RequestExecutor;
 
-    this.initialDatabase = database;
-    this.topology = new Topology(Number.MIN_SAFE_INTEGER, urlsOrNodes.map(
-      (urlOrNode: string | ServerNode): ServerNode => (urlOrNode instanceof ServerNode)
-        ? <ServerNode>urlOrNode : this.jsonToServerNode({Url: <string>urlOrNode, ApiKey: apiKey || null})
-      )
-    );    
+    this._lock = Lock.make();
+    this.topology = topology;    
 
-    requestExecutor.on<IRavenResponse>(TOPOLOGY_UPDATED, 
-      (data: IRavenResponse): void => this.onTopologyUpdated(data)
+    requestExecutor.on<ITopologyUpdateEvent>(TOPOLOGY_UPDATED, 
+      (data: ITopologyUpdateEvent): void => this.onTopologyUpdated(data)
     );
 
     requestExecutor.on<ServerNode>(REQUEST_FAILED, 
@@ -49,20 +50,54 @@ export class NodeSelector {
     );
   }
 
-  protected onTopologyUpdated(topologyResponse: IRavenResponse): void {
-    if (topologyResponse) {
-      const newTopology: Topology = this.jsonToTopology(topologyResponse);
+  protected assignTopology(topology: Topology, forceUpdate: boolean): BluebirdPromise<void> {
+    const oldTopology: Topology = this.topology;
 
-      if (newTopology.nodes.length && (this.topology.etag < newTopology.etag)) {
-        this.currentNodeIndex = 0;
-        this.topology = newTopology;
+    return this._lock.acquire((): any => {
+      if (!forceUpdate) {
+        this._currentNodeIndex = 0;
+      }
+
+      if (oldTopology === this.topology) {
+        this.topology = topology;
+        return true;
+      }
+
+      return false;
+    })
+    .catch((): boolean => false)
+    .then((wasUpdated): BluebirdPromise.Thenable<void> => {
+      if (!wasUpdated) {
+        return this.assignTopology(topology, forceUpdate);
+      }
+
+      return BluebirdPromise.resolve();
+    });
+  }
+
+  protected onTopologyUpdated(event: ITopologyUpdateEvent): void {
+    let shouldUpdate: boolean = false;
+    const forceUpdate: boolean = (true === event.forceUpdate);
+
+    if (event.topologyJson) {
+      const topology: Topology = Topology.fromJson(event.topologyJson);
+
+      if (topology.nodes.length) {
+        shouldUpdate = forceUpdate || (this.topology.etag < topology.etag);        
+      }
+
+      if (shouldUpdate) {
+        this.assignTopology(topology, forceUpdate);
       }
     }
+
+    event.wasUpdated = shouldUpdate;
   }
 
   protected onRequestFailed(failedNode: ServerNode): void {
-    failedNode.isFailed = true;
-    this.currentNodeIndex = ++this.currentNodeIndex % this.topology.nodes.length;
+    this.assertTopology();
+
+    this._currentNodeIndex = ++this._currentNodeIndex % this.topology.nodes.length;
   }
 
   protected onNodeRestored(failedNode: ServerNode): void {
@@ -70,23 +105,16 @@ export class NodeSelector {
 
     if (nodes.includes(failedNode)) {
       const failedNodeIndex: number = nodes.indexOf(failedNode);
-      failedNode.isFailed = false;
       
-      if (this.currentNodeIndex > failedNodeIndex) {
-        this.currentNodeIndex = failedNodeIndex;
+      if (this._currentNodeIndex > failedNodeIndex) {
+        this._currentNodeIndex = failedNodeIndex;
       }
     }
   }
 
-  protected jsonToTopology(response: IRavenResponse): Topology {
-    return new Topology(
-      parseInt(response.Etag as string) || 0,
-      response.Nodes.map((jsonNode) => this.jsonToServerNode(jsonNode)),
-      ('SLA' in response) ? parseFloat(response.SLA.RequestTimeThresholdInMilliseconds) / 1000 : 0
-    );
+  protected assertTopology(): void | never {
+    if (!this.topology || !this.topology.nodes || !this.topology.nodes.length) {
+      throw new InvalidOperationException("Empty database topology, this shouldn't happen.");
+    }
   }
-
-  protected jsonToServerNode(json: IRavenObject): ServerNode {
-    return new ServerNode(json.Url, json.Database || this.initialDatabase, json.ApiKey || null);
-  }  
 }

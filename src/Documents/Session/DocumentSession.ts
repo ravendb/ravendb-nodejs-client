@@ -177,6 +177,7 @@ export class DocumentSession implements IDocumentSession {
         }
 
         this.knownMissingIds.add(id);
+        delete this.includedRawEntitiesById[id];
         PromiseResolver.resolve<void>(null, null, callback); 
       })
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));

@@ -1,5 +1,4 @@
 // global imports
-import {Box, Random, Key} from 'sodium';
 import * as _ from 'lodash';
 import * as uuid from 'uuid';
 import * as moment from 'moment';
@@ -33,11 +32,10 @@ export {LuceneValue, LuceneRangeValue, LuceneConditionValue} from './Documents/L
 export {ILockDoneCallback, ILockCallback} from './Lock/LockCallbacks';
 export {IRavenObject} from './Database/IRavenObject';
 export {IOptionsSet} from './Utility/IOptionsSet';
-export {IJsonSerializable} from './Json/IJsonSerializable';
+export {IJsonable, IJsonConvertible} from './Json/Contracts';
 export {IRavenResponse} from './Database/RavenCommandResponse';
 export {IHeaders} from './Http/IHeaders';
 export {IResponse, IResponseBody} from './Http/Response/IResponse';
-export {CryptMessage, ICipherBox} from './Utility/Crypt';
 
 //exceptions
 export {
@@ -102,7 +100,8 @@ export {
   InvalidJournalFlushRequestException,
   QuotaException,
   VoronUnrecoverableErrorException,
-  NonDurableFileSystemException
+  NonDurableFileSystemException,
+  AggregateException
 } from './Database/DatabaseExceptions';
 
 // classes
@@ -112,6 +111,7 @@ export {DeleteDocumentCommand} from './Database/Commands/DeleteDocumentCommand';
 export {PutDocumentCommand} from './Database/Commands/PutDocumentCommand';
 export {QueryCommand} from './Database/Commands/QueryCommand';
 export {GetTopologyCommand} from './Database/Commands/GetTopologyCommand';
+export {GetClusterTopologyCommand} from './Database/Commands/GetClusterTopologyCommand';
 export {GetOperationStateCommand} from './Database/Commands/GetOperationStateCommand';
 export {GetApiKeyCommand} from './Database/Commands/GetApiKeyCommand';
 export {PutApiKeyCommand} from './Database/Commands/PutApiKeyCommand';
@@ -136,7 +136,6 @@ export {SaveChangesData} from './Database/Commands/Data/SaveChangesData';
 export {Operations} from './Database/Operations/Operations';
 export {AccessMode, AccessModes, ResourcesAccessModes} from './Database/Auth/AccessMode';
 export {ApiKeyDefinition} from './Database/Auth/ApiKeyDefinition';
-export {ApiKeyAuthenticator, IAuthServerRequest} from './Database/Auth/ApiKeyAuthenticator';
 export {Serializer} from './Json/Serializer';
 export {DatabaseDocument} from './Database/DatabaseDocument';
 export {DocumentStore} from './Documents/DocumentStore';
@@ -149,6 +148,7 @@ export {IndexQuery} from './Database/Indexes/IndexQuery';
 export {LuceneBuilder} from './Documents/Lucene/LuceneBuilder';
 export {ServerNode} from './Http/ServerNode';
 export {NodeSelector} from './Http/Request/NodeSelector';
+export {NodeStatus} from './Http/NodeStatus';
 export {Topology} from './Http/Topology';
 export {QueryString} from './Http/QueryString';
 export {Lock} from './Lock/Lock';
@@ -158,7 +158,8 @@ export {StringUtil} from './Utility/StringUtil';
 export {ArrayUtil} from './Utility/ArrayUtil';
 export {TypeUtil} from './Utility/TypeUtil';
 export {ExceptionThrower} from './Utility/ExceptionThrower';
-export {RequestExecutor} from './Http/Request/RequestExecutor';
+export {RequestExecutor, ITopologyUpdateEvent, IRequestExecutorOptions} from './Http/Request/RequestExecutor';
+export {ClusterRequestExecutor} from './Http/Request/ClusterRequestExecutor';
 export {PatchRequest} from './Http/Request/PatchRequest';
 export {HiloRangeValue} from './Hilo/HiloRangeValue';
 export {AbstractHiloIdGenerator} from './Hilo/AbstractHiloIdGenerator';
