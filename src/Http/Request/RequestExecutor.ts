@@ -1,9 +1,3 @@
-// NodeSTatus - keep timer ids, pass update callback from executor
-// update node & topology
-// add cluster executor - use it for operaitons
-// cancel refresh times after topology update
-// check concurrency mode determination
-
 import * as _ from 'lodash';
 import * as BluebirdPromise from 'bluebird';
 import * as RequestPromise from 'request-promise';
