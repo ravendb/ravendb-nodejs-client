@@ -2,6 +2,7 @@
 /// <reference path="../node_modules/@types/chai/index.d.ts" />
 
 import * as BluebirdPromise from 'bluebird';
+import * as RequestPromise from 'request-promise';
 import * as _ from 'lodash';
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
@@ -25,6 +26,14 @@ let indexMap: string;
 let index: IndexDefinition;
 let requestExecutor: RequestExecutor;
 
+const waitForDatabaseOperationComplete = async (waitFor: 'create' | 'delete'): Promise<void> => {
+  const next = (): Promise<void> => waitForDatabaseOperationComplete(waitFor);
+
+  return RequestPromise(`${defaultUrl}/topology?name=${defaultDatabase}`)
+    .then(() => ('create' === waitFor) ? Promise.resolve() : next())
+    .catch(() => ('delete' === waitFor) ? Promise.resolve() : next())
+};
+
 before(() => {
   chai.use(chaiAsPromised);
 });
@@ -34,6 +43,7 @@ beforeEach(async function() {
     (defaultDatabase, {"Raven/DataDir": "test"});
 
   await clusterRequestExecutor.execute(new CreateDatabaseCommand(dbDoc));
+  await waitForDatabaseOperationComplete('create');
 
   indexMap = [
     'from doc in docs ',
@@ -63,6 +73,8 @@ afterEach(async function() {
     'clusterRequestExecutor', 'requestExecutor', 'defaultDatabase']
    .forEach((key: string) => delete this.currentTest[key]);
 
-  return clusterRequestExecutor
+  await clusterRequestExecutor
     .execute(new DeleteDatabaseCommand(defaultDatabase, true));
+
+  await waitForDatabaseOperationComplete('delete');
 });
