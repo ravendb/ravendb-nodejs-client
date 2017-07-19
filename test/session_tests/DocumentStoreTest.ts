@@ -92,7 +92,7 @@ describe('Document store test', () => {
       let product: Product = <Product>{name: "New Product"};    
       session = store.openSession({requestExecutor});
       
-      product = await session.store<Product>(product, 'Product/1');
+      await session.store<Product>(product, 'Product/1');
       await session.saveChanges();
 
       expect(product.id).to.equals('Product/1');
@@ -105,7 +105,7 @@ describe('Document store test', () => {
       product = <Product>{name: "New Product"};    
       session = store.openSession({requestExecutor});
       
-      product = await session.store<Product>(product, 'Products/');
+      await session.store<Product>(product, 'Products/');
       await session.saveChanges();
 
       expect(product.id).to.match(/^Product\/\d+(\-\w)?$/);
@@ -119,7 +119,7 @@ describe('Document store test', () => {
       let product: Product = <Product>{name: "New Product"};    
       session = store.openSession({requestExecutor});
       
-      product = await session.store<Product>(product, null, "Product");
+      await session.store<Product>(product, null, "Product");
       await session.saveChanges();
 
       expect(product.id).to.match(/^Product\/\d+(\-\w)?$/);
@@ -131,7 +131,7 @@ describe('Document store test', () => {
       product = <Product>{name: "New Product", "@metadata": {"Raven-Node-Type": "Product"}};    
       session = store.openSession({requestExecutor});
       
-      product = await session.store<Product>(product);
+      await session.store<Product>(product);
       await session.saveChanges();
 
       expect(product.id).to.match(/^Product\/\d+(\-\w)?$/);
@@ -143,7 +143,7 @@ describe('Document store test', () => {
       product = <Product>{name: "New Product", "@metadata": {"@collection": "Products"}};    
       session = store.openSession({requestExecutor});
       
-      product = await session.store<Product>(product);
+      await session.store<Product>(product);
       await session.saveChanges();
 
       expect(product.id).to.match(/^Product\/\d+(\-\w)?$/);
@@ -153,13 +153,13 @@ describe('Document store test', () => {
       expect(product['@metadata']['@collection']).to.equals('Products'); 
     });
 
-    it('should set id and collection on plain object with document type resolver', async () => {
+    it('should set id and collection on plain object converted to class instance via document type resolver', async () => {
       let product: Product = <Product>{name: "New Product", uid: null, order: null};    
 
       store.conventions.addDocumentInfoResolver({ resolveDocumentType });
       session = store.openSession({requestExecutor});
       
-      product = await session.store<Product>(product);
+      await session.store<Product>(product);
       await session.saveChanges();
 
       expect(product.id).to.match(/^Product\/\d+(\-\w)?$/);
@@ -173,7 +173,7 @@ describe('Document store test', () => {
       let product: Product = <Product>{name: "New Product"};    
 
       session = store.openSession({requestExecutor});      
-      product = await session.store<Product>(product);
+      await session.store<Product>(product);
       await session.saveChanges();
 
       expect(product.id).to.match(/^[a-f0-9]{8}\-[a-f0-9]{4}\-[a-f0-9]{4}\-[a-f0-9]{4}\-[a-f0-9]{12}$/);

@@ -368,7 +368,6 @@ more responsive application.", maxRequests
 
   public checkDocumentAndMetadataBeforeStore<T extends Object = IRavenObject>(document?: object | T, id?: string, documentType?: DocumentType<T>): BluebirdPromise<T> {
     const conventions: DocumentConventions = this.documentStore.conventions;
-    let doc: T = <T>document;
 
     if (!document || !TypeUtil.isObject(document)) {
       return BluebirdPromise.reject(
@@ -377,18 +376,26 @@ more responsive application.", maxRequests
     }
 
     if (!this.rawEntitiesAndMetadata.has(document)) {
-      const docType: DocumentType<T> = conventions.getTypeFromDocument<T>(doc, id, documentType);
+      const docType: DocumentType<T> = conventions.getTypeFromDocument<T>(<T>document, id, documentType);
       const docCtor: DocumentConstructor<T> = conventions.getDocumentConstructor<T>(docType);
 
       if ('function' !== (typeof docType)) {
-        doc = docCtor ? new docCtor() : <T>{};
-        Serializer.fromJSON<T>(doc, <object>document || {}, {}, {}, conventions);
+        let source: object = _.cloneDeep(<object>document);
+
+        if (docCtor) {
+          _.assign(<T>document, new docCtor(), {
+            constructor: docCtor,
+            __proto__: docCtor.prototype
+          });
+        }
+        
+        Serializer.fromJSON<T>(<T>document, source || {}, {}, {}, conventions);
       }
 
-      doc['@metadata'] = conventions.buildDefaultMetadata(document, docType);
+      document['@metadata'] = conventions.buildDefaultMetadata(document, docType);
     }
     
-    return BluebirdPromise.resolve<T>(doc);
+    return BluebirdPromise.resolve<T>(<T>document);
   }
 
   protected checkAssociationAndETagBeforeStore<T extends Object = IRavenObject>(document: T, id?: string, etag?: number): BluebirdPromise<IDocumentAssociationCheckResult<T>> {

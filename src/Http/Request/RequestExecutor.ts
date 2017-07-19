@@ -150,7 +150,7 @@ export class RequestExecutor extends Observable {
     })
     .then((isFulfilled: boolean): BluebirdPromise.Thenable<void> => (isFulfilled 
       ? BluebirdPromise.resolve() : (this.isFirstTopologyUpdateTriesExpired() 
-      ? BluebirdPromise.reject(new DatabaseLoadFailureException('Max topology update tries reched')) 
+      ? BluebirdPromise.reject(new DatabaseLoadFailureException('Max topology update tries reached')) 
       : BluebirdPromise.delay(100).then((): BluebirdPromise.Thenable<void> => this.awaitFirstTopologyUpdate())))
     );
   }
