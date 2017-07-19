@@ -44,7 +44,7 @@ export class RequestExecutor extends Observable {
 
   protected headers: IHeaders;
   private readonly _maxFirstTopologyUpdatesTries: number = 5;
-  private _fistTopologyUpdatesTries: number = 0;
+  private _firstTopologyUpdatesTries: number = 0;
   private _awaitFirstTopologyLock: Lock;
   private _updateTopologyLock: Lock;
   private _updateFailedNodeTimerLock: Lock;
@@ -67,8 +67,7 @@ export class RequestExecutor extends Observable {
 
     this.headers = {
       "Accept": "application/json",
-      "Has-Api-key": 'false',
-      "Raven-Client-Version": "4.0.1.2",
+      "Raven-Client-Version": "4.0.0-beta",
     };
 
     this._lastKnownUrls = null;
@@ -284,13 +283,13 @@ export class RequestExecutor extends Observable {
     this._lastKnownUrls = updateTopologyUrls;
 
     if (!this.isFirstTopologyUpdateTriesExpired()) {
-      this._fistTopologyUpdatesTries++;
+      this._firstTopologyUpdatesTries++;
       this._firstTopologyUpdate = update(urls.pop());
     }    
   }
 
   protected isFirstTopologyUpdateTriesExpired() {
-    return this._fistTopologyUpdatesTries >= this._maxFirstTopologyUpdatesTries;
+    return this._firstTopologyUpdatesTries >= this._maxFirstTopologyUpdatesTries;
   }
 
   protected updateTopology(node: ServerNode): BluebirdPromise<void> {
