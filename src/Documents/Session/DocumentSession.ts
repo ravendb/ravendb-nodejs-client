@@ -152,7 +152,7 @@ export class DocumentSession implements IDocumentSession {
         } else {
           document = idOrDocument as T;
           info = this.rawEntitiesAndMetadata.get(document);
-          id = conventions.getIdFromDocument<T>(document, <DocumentType<T>>info.documentType);
+          id = conventions.getIdFromDocument<T>(document, {documentType: <DocumentType<T>>info.documentType});
         }
 
         if (!document) {
@@ -412,7 +412,7 @@ more responsive application.", maxRequests
           let checkMode: ConcurrencyCheckMode = ConcurrencyCheckModes.Forced;
 
           if (TypeUtil.isNone(documentId)) {
-            documentId = conventions.getIdFromDocument<T>(document, <DocumentType<T>>info.documentType);
+            documentId = conventions.getIdFromDocument<T>(document, {documentType: <DocumentType<T>>info.documentType});
           } 
 
           if (TypeUtil.isNone(etag)) {
@@ -446,7 +446,10 @@ more responsive application.", maxRequests
         } 
         
         if (!TypeUtil.isNone(documentId)) {
-          conventions.setIdOnDocument(document, documentId);
+          conventions.setIdOnDocument(document, documentId, {
+            setIdIfPropertyIsNotDefined: false
+          });
+
           document['@metadata']['@id'] = documentId;
         }
 
@@ -462,9 +465,11 @@ more responsive application.", maxRequests
           return store
             .generateId(document, conventions.getTypeFromDocument(document))
             .then((documentId: string): T => {
-              conventions.setIdOnDocument(document, documentId);
-              document['@metadata']['@id'] = documentId;
+              conventions.setIdOnDocument(document, documentId, {
+                setIdIfPropertyIsNotDefined: false
+              });
 
+              document['@metadata']['@id'] = documentId;
               return document;
             });
         }
@@ -591,7 +596,7 @@ more responsive application.", maxRequests
   protected onDocumentFetched<T extends Object = IRavenObject>(conversionResult?: IDocumentConversionResult<T>): void {
     if (conversionResult) {
       const documentId: string = this.conventions
-        .getIdFromDocument(conversionResult.document, conversionResult.documentType)
+        .getIdFromDocument(conversionResult.document, {documentType: conversionResult.documentType})
         || conversionResult.originalMetadata['@id'] || conversionResult.metadata['@id'];
 
       if (documentId) {

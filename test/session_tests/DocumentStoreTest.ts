@@ -18,7 +18,7 @@ describe('Document store test', () => {
 
   const resolveDocumentType = (plainDocument: object, key?: string, specifiedType?: DocumentType): string => {
     const propsMap = {
-      Product: ['name', 'uid', 'order']
+      "Product": ['name', 'uid', 'order']
     };
 
     if (!specifiedType && !key) {
@@ -89,7 +89,7 @@ describe('Document store test', () => {
     });
 
     it('should set id and collection on plain object with specified key or key prefix', async () => {
-      let product: Product = <Product>{name: "New Product"};    
+      let product: Product = <Product>{id: null, name: "New Product"};    
       session = store.openSession({requestExecutor});
       
       await session.store<Product>(product, 'Product/1');
@@ -102,7 +102,7 @@ describe('Document store test', () => {
       expect(product['@metadata']['Raven-Node-Type']).to.equals('Product');  
       expect(product['@metadata']['@collection']).to.equals('Products');      
    
-      product = <Product>{name: "New Product"};    
+      product = <Product>{id: null, name: "New Product"};    
       session = store.openSession({requestExecutor});
       
       await session.store<Product>(product, 'Products/');
@@ -116,7 +116,7 @@ describe('Document store test', () => {
     });
 
     it('should set id and collection on plain object with prefilled document type or metadata', async () => {
-      let product: Product = <Product>{name: "New Product"};    
+      let product: Product = <Product>{id: null, name: "New Product"};    
       session = store.openSession({requestExecutor});
       
       await session.store<Product>(product, null, "Product");
@@ -128,7 +128,7 @@ describe('Document store test', () => {
       expect(product['@metadata']['Raven-Node-Type']).to.equals('Product');  
       expect(product['@metadata']['@collection']).to.equals('Products');      
 
-      product = <Product>{name: "New Product", "@metadata": {"Raven-Node-Type": "Product"}};    
+      product = <Product>{id: null, name: "New Product", "@metadata": {"Raven-Node-Type": "Product"}};    
       session = store.openSession({requestExecutor});
       
       await session.store<Product>(product);
@@ -140,7 +140,7 @@ describe('Document store test', () => {
       expect(product['@metadata']['Raven-Node-Type']).to.equals('Product');  
       expect(product['@metadata']['@collection']).to.equals('Products');      
    
-      product = <Product>{name: "New Product", "@metadata": {"@collection": "Products"}};    
+      product = <Product>{id: null, name: "New Product", "@metadata": {"@collection": "Products"}};    
       session = store.openSession({requestExecutor});
       
       await session.store<Product>(product);
@@ -153,8 +153,8 @@ describe('Document store test', () => {
       expect(product['@metadata']['@collection']).to.equals('Products'); 
     });
 
-    it('should set id and collection on plain object converted to class instance via document type resolver', async () => {
-      let product: Product = <Product>{name: "New Product", uid: null, order: null};    
+    it('should set id and collection on plain object converted via document type resolver', async () => {
+      let product: Product = <Product>{id: null, name: "New Product", uid: null, order: null};    
 
       store.conventions.addDocumentInfoResolver({ resolveDocumentType });
       session = store.openSession({requestExecutor});
@@ -170,7 +170,7 @@ describe('Document store test', () => {
     });
 
     it('should set @empty collection and uuid() as id on plain object which has unresolved document type', async () => {
-      let product: Product = <Product>{name: "New Product"};    
+      let product: Product = <Product>{id: null, name: "New Product"};    
 
       session = store.openSession({requestExecutor});      
       await session.store<Product>(product);
@@ -181,6 +181,16 @@ describe('Document store test', () => {
       product = await store.openSession({requestExecutor}).load<Product>(product.id);
       expect(product['@metadata']['Raven-Node-Type']).to.not.exist;  
       expect(product['@metadata']['@collection']).to.equals('@empty');      
+    });
+
+    it('shouldn\'t set id on plain object without id attribute defined', async () => {
+      let product: Product = <Product>{name: "New Product"};    
+
+      session = store.openSession({requestExecutor});      
+      await session.store<Product>(product);
+      await session.saveChanges();
+
+      expect(product.id).to.be.empty;      
     });
   });
 });
