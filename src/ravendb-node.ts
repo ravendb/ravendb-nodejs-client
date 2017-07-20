@@ -141,7 +141,7 @@ export {DatabaseDocument} from './Database/DatabaseDocument';
 export {DocumentStore} from './Documents/DocumentStore';
 export {DocumentSession} from './Documents/Session/DocumentSession';
 export {DocumentQuery, QueryResultsWithStatistics} from './Documents/Session/DocumentQuery';
-export {DocumentConventions, IDocumentConversionResult, DocumentConstructor, IStoredRawEntityInfo, DocumentType, IDocumentInfoResolvable, IDocumentAssociationCheckResult, IGetSetIDOnDocumentOptions} from './Documents/Conventions/DocumentConventions';
+export {DocumentConventions, IDocumentConversionResult, DocumentConstructor, IStoredRawEntityInfo, DocumentType, IDocumentInfoResolvable, IDocumentAssociationCheckResult} from './Documents/Conventions/DocumentConventions';
 export {IndexDefinition} from './Database/Indexes/IndexDefinition';
 export {IndexFieldOptions} from './Database/Indexes/IndexFieldOptions';
 export {IndexQuery} from './Database/Indexes/IndexQuery';

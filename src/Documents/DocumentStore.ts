@@ -47,10 +47,6 @@ export class DocumentStore implements IDocumentStore {
       executorsByDB.set(dbName, this.createRequestExecutor(dbName, forSingleNode));
     }
 
-    if (!(dbName in this._requestExecutors)) {
-      this._requestExecutors[dbName] = this.createRequestExecutor(dbName, forSingleNode);
-    }
-
     return executorsByDB.get(dbName);
   }
 
@@ -117,9 +113,7 @@ export class DocumentStore implements IDocumentStore {
     let dbName: string = database || this._database;
     let executor: RequestExecutor = sessionOptions.requestExecutor;
     
-    if (executor && (executor.initialDatabase === dbName)) {
-      this._requestExecutors[dbName] = executor;
-    } else {
+    if (!executor || (executor.initialDatabase !== dbName)) {
       executor = this.getRequestExecutor(dbName);
     }
     
