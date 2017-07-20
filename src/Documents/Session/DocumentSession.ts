@@ -227,7 +227,7 @@ export class DocumentSession implements IDocumentSession {
             document: document,
             metadata: document['@metadata'],
             originalMetadata: originalMetadata,
-            rawEntity: conventions.convertToRawEntity(document)
+            rawEntity: conventions.convertToRawEntity(document, docType)
           });
         }
 
@@ -368,7 +368,6 @@ more responsive application.", maxRequests
 
   public checkDocumentAndMetadataBeforeStore<T extends Object = IRavenObject>(document?: object | T, id?: string, documentType?: DocumentType<T>): BluebirdPromise<T> {
     const conventions: DocumentConventions = this.documentStore.conventions;
-    let doc: T = <T>document;
 
     if (!document || !TypeUtil.isObject(document)) {
       return BluebirdPromise.reject(
@@ -377,18 +376,26 @@ more responsive application.", maxRequests
     }
 
     if (!this.rawEntitiesAndMetadata.has(document)) {
-      const docType: DocumentType<T> = conventions.getTypeFromDocument<T>(doc, id, documentType);
+      const docType: DocumentType<T> = conventions.getTypeFromDocument<T>(<T>document, id, documentType);
       const docCtor: DocumentConstructor<T> = conventions.getDocumentConstructor<T>(docType);
 
       if ('function' !== (typeof docType)) {
-        doc = docCtor ? new docCtor() : <T>{};
-        Serializer.fromJSON<T>(doc, <object>document || {}, {}, {}, conventions);
+        let source: object = _.cloneDeep(<object>document);
+
+        if (docCtor) {
+          _.assign(<T>document, new docCtor(), {
+            constructor: docCtor,
+            __proto__: docCtor.prototype
+          });
+        }
+        
+        Serializer.fromJSON<T>(<T>document, source || {}, {}, {}, conventions);
       }
 
-      doc['@metadata'] = conventions.buildDefaultMetadata(document, docType);
+      document['@metadata'] = conventions.buildDefaultMetadata(document, docType);
     }
     
-    return BluebirdPromise.resolve<T>(doc);
+    return BluebirdPromise.resolve<T>(<T>document);
   }
 
   protected checkAssociationAndETagBeforeStore<T extends Object = IRavenObject>(document: T, id?: string, etag?: number): BluebirdPromise<IDocumentAssociationCheckResult<T>> {
@@ -440,6 +447,7 @@ more responsive application.", maxRequests
         
         if (!TypeUtil.isNone(documentId)) {
           conventions.setIdOnDocument(document, documentId);
+
           document['@metadata']['@id'] = documentId;
         }
 
@@ -456,8 +464,8 @@ more responsive application.", maxRequests
             .generateId(document, conventions.getTypeFromDocument(document))
             .then((documentId: string): T => {
               conventions.setIdOnDocument(document, documentId);
-              document['@metadata']['@id'] = documentId;
 
+              document['@metadata']['@id'] = documentId;
               return document;
             });
         }
@@ -476,10 +484,7 @@ more responsive application.", maxRequests
       const conventions: DocumentConventions = this.conventions;
       const info: IStoredRawEntityInfo = this.rawEntitiesAndMetadata.get(document);
       const id: string = info.id;
-      const rawEntity: object = _.omit(
-        conventions.convertToRawEntity(document), 
-        conventions.getIdPropertyName(info.documentType, document)
-      );
+      const rawEntity: object = conventions.convertToRawEntity(document, info.documentType);
 
       if ((this.conventions.defaultUseOptimisticConcurrency && (ConcurrencyCheckModes.Disabled 
         !== info.concurrencyCheckMode)) || (ConcurrencyCheckModes.Forced === info.concurrencyCheckMode)
@@ -539,7 +544,7 @@ more responsive application.", maxRequests
           _.assign(info, {
             etag: commandResult['@etag'],
             metadata: metadata,
-            originalValue: _.cloneDeep(this.conventions.convertToRawEntity(document)),
+            originalValue: _.cloneDeep(this.conventions.convertToRawEntity(document, info.documentType)),
             originalMetadata: _.cloneDeep(metadata)
           });
 
@@ -554,7 +559,7 @@ more responsive application.", maxRequests
     if (this.rawEntitiesAndMetadata.has(document)) {
       const info: IStoredRawEntityInfo = this.rawEntitiesAndMetadata.get(document);
       
-      return !_.isEqual(info.originalValue, this.conventions.convertToRawEntity(document))
+      return !_.isEqual(info.originalValue, this.conventions.convertToRawEntity(document, info.documentType))
         || !_.isEqual(info.originalMetadata, info.metadata);
     }
 
@@ -595,7 +600,7 @@ more responsive application.", maxRequests
 
           if (!originalValueSource) {
             originalValueSource = this.conventions
-              .convertToRawEntity<T>(conversionResult.document);
+              .convertToRawEntity<T>(conversionResult.document, conversionResult.documentType);
           }
 
           this.documentsById[documentId] = conversionResult.document;

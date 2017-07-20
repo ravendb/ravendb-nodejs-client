@@ -47,25 +47,15 @@ export class DocumentConventions {
   readonly defaultUseOptimisticConcurrency:boolean = true;
   readonly maxLengthOfQueryUsingGetUrl = 1024 + 512;
   readonly identityPartsSeparator = "/";
-  private _disableTopologyUpdates: boolean = false;
   private _resolvers: IDocumentInfoResolvable[] = [];
   private _idsNamesCache: Map<string, string> = new Map<string, string>();
   private _ctorsCache: Map<string, DocumentConstructor> = new Map<string, DocumentConstructor>();
+  
+  public setIdOnlyIfPropertyIsDefined: boolean = false;
+  public disableTopologyUpdates: boolean = false;
 
   public get emptyEtag(): number {
     return 0;
-  }
-
-  public get topologyUpdatesEnabled(): boolean {
-    return !this._disableTopologyUpdates;
-  } 
-
-  public disableTopologyUpdates(): void {
-    this._disableTopologyUpdates = true;
-  }
-
-  public enableTopologyUpdates(): void {
-    this._disableTopologyUpdates = false;
   }
 
   public addDocumentInfoResolver(resolver: IDocumentInfoResolvable): void {
@@ -175,19 +165,29 @@ export class DocumentConventions {
     } as IDocumentConversionResult<T>;
   }
 
-  public convertToRawEntity<T extends Object = IRavenObject>(document: T): object {
-    return Serializer.toJSON<T>(document, document['@metadata'] || {});
+  public convertToRawEntity<T extends Object = IRavenObject>(document: T, documentType?: DocumentType<T>): object {
+    const idProperty: string = this.getIdPropertyName(documentType, document);
+    let result: object = Serializer.toJSON<T>(document, document['@metadata'] || {});
+
+    if (idProperty) {
+      delete result[idProperty];
+    }
+
+    return result;
   }
 
   public setIdOnDocument<T extends Object = IRavenObject>(document: T, id: string, documentType?: DocumentType<T>): T {
-    const docType: DocumentType<T> = documentType || this.getTypeFromDocument(document);
-    const idProperty = this.getIdPropertyName(docType, document);
-
     if ('object' !== (typeof document)) {
       throw new InvalidOperationException("Invalid entity provided. It should implement object interface");
     }
 
-    document[idProperty] = id;
+    let docType: DocumentType<T> = documentType || this.getTypeFromDocument(document);
+    const idProperty = this.getIdPropertyName(docType, document);
+
+    if (!this.setIdOnlyIfPropertyIsDefined || (idProperty in document)) {
+      document[idProperty] = id;    
+    }
+
     return document;
   }
 

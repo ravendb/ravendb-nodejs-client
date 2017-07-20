@@ -139,18 +139,22 @@ export class RequestExecutor extends Observable {
       let isFulfilled: boolean = false;
 
       if (firstTopologyUpdate === this._firstTopologyUpdate) {
-        isFulfilled = firstTopologyUpdate.isFulfilled();
+        isFulfilled = null === firstTopologyUpdate;
 
-        if (firstTopologyUpdate.isRejected()) {
-          this.startFirstTopologyUpdate(this._lastKnownUrls);
-        }
+        if (!isFulfilled) {
+          isFulfilled = firstTopologyUpdate.isFulfilled();
+
+          if (firstTopologyUpdate.isRejected()) {
+            this.startFirstTopologyUpdate(this._lastKnownUrls);
+          }
+        }        
       }
       
       return isFulfilled;
     })
     .then((isFulfilled: boolean): BluebirdPromise.Thenable<void> => (isFulfilled 
       ? BluebirdPromise.resolve() : (this.isFirstTopologyUpdateTriesExpired() 
-      ? BluebirdPromise.reject(new DatabaseLoadFailureException('Max topology update tries reched')) 
+      ? BluebirdPromise.reject(new DatabaseLoadFailureException('Max topology update tries reached')) 
       : BluebirdPromise.delay(100).then((): BluebirdPromise.Thenable<void> => this.awaitFirstTopologyUpdate())))
     );
   }
@@ -284,7 +288,8 @@ export class RequestExecutor extends Observable {
 
     if (!this.isFirstTopologyUpdateTriesExpired()) {
       this._firstTopologyUpdatesTries++;
-      this._firstTopologyUpdate = update(urls.pop());
+      this._firstTopologyUpdate = update(urls.pop())
+        .then(() => this._firstTopologyUpdate = null);
     }    
   }
 
