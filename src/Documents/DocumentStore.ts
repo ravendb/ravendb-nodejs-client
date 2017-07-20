@@ -1,3 +1,5 @@
+import * as uuid from 'uuid';
+import * as _ from 'lodash';
 import {IDocumentStore} from './IDocumentStore';
 import {IDocumentSession, ISessionOptions} from "./Session/IDocumentSession";
 import {DocumentSession} from "./Session/DocumentSession";
@@ -7,7 +9,6 @@ import {DocumentConventions, DocumentConstructor, DocumentType} from './Conventi
 import {InvalidOperationException, RavenException} from '../Database/DatabaseExceptions';
 import {IHiloIdGenerator} from '../Hilo/IHiloIdGenerator';
 import {HiloMultiDatabaseIdGenerator} from '../Hilo/HiloMultiDatabaseIdGenerator';
-import * as uuid from 'uuid';
 import {IRavenObject} from "../Database/IRavenObject";
 import {Operations} from "../Database/Operations/Operations";
 import {PromiseResolver} from "../Utility/PromiseResolver";
@@ -22,7 +23,7 @@ export class DocumentStore implements IDocumentStore {
   private _database: string;
   private _operations: Operations;
   private _conventions: DocumentConventions;
-  private _requestExecutors: IRavenObject<RequestExecutor> = {};
+  private _requestExecutors: Map<boolean, Map<string, RequestExecutor>>;
 
   public get database(): string {
     return this._database;
@@ -34,12 +35,23 @@ export class DocumentStore implements IDocumentStore {
 
   public getRequestExecutor(database?: string): RequestExecutor {
     const dbName = database || this._database;
+    const forSingleNode: boolean = !this.conventions.topologyUpdatesEnabled;
+    const executors: Map<boolean, Map<string, RequestExecutor>> = this._requestExecutors;
+    let executorsByDB: Map<string, RequestExecutor>;
 
-    if (!(dbName in this._requestExecutors)) {
-      this._requestExecutors[dbName] = this.createRequestExecutor(dbName);
+    if (!(executorsByDB = executors.get(forSingleNode))) {
+      executors.set(forSingleNode, executorsByDB = new Map<string, RequestExecutor>());
     }
 
-    return this._requestExecutors[dbName];
+    if (!executorsByDB.has(dbName)) {
+      executorsByDB.set(dbName, this.createRequestExecutor(dbName, forSingleNode));
+    }
+
+    if (!(dbName in this._requestExecutors)) {
+      this._requestExecutors[dbName] = this.createRequestExecutor(dbName, forSingleNode);
+    }
+
+    return executorsByDB.get(dbName);
   }
 
   public get conventions(): DocumentConventions {
@@ -61,9 +73,10 @@ export class DocumentStore implements IDocumentStore {
   }
 
   constructor(urlOrUrls: string | string[], defaultDatabase: string, apiKey?: string) {
-    this.urls = QueryString.parseUrls(urlOrUrls);
-    this._database = defaultDatabase;
     this._apiKey = apiKey;
+    this._database = defaultDatabase;
+    this.urls = QueryString.parseUrls(urlOrUrls);
+    this._requestExecutors = new Map<boolean, Map<string, RequestExecutor>>();
   }
 
   static create(urlOrUrls: string | string[], defaultDatabase: string, apiKey?: string): IDocumentStore {
@@ -143,7 +156,13 @@ export class DocumentStore implements IDocumentStore {
     }
   }
 
-  protected createRequestExecutor(database?: string): RequestExecutor {
-    return RequestExecutor.create(this.urls, database || this._database);
+  protected createRequestExecutor(database?: string, forSingleNode?: boolean): RequestExecutor {    
+    const dbName: string = database || this._database;
+
+    if (true === forSingleNode) {
+      return RequestExecutor.createForSingleNode(_.first(this.urls), dbName);
+    } 
+
+    return RequestExecutor.create(this.urls, dbName);
   }
 }

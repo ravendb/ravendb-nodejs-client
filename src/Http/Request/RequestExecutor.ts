@@ -139,11 +139,15 @@ export class RequestExecutor extends Observable {
       let isFulfilled: boolean = false;
 
       if (firstTopologyUpdate === this._firstTopologyUpdate) {
-        isFulfilled = firstTopologyUpdate.isFulfilled();
+        isFulfilled = null === firstTopologyUpdate;
 
-        if (firstTopologyUpdate.isRejected()) {
-          this.startFirstTopologyUpdate(this._lastKnownUrls);
-        }
+        if (!isFulfilled) {
+          isFulfilled = firstTopologyUpdate.isFulfilled();
+
+          if (firstTopologyUpdate.isRejected()) {
+            this.startFirstTopologyUpdate(this._lastKnownUrls);
+          }
+        }        
       }
       
       return isFulfilled;
@@ -284,7 +288,8 @@ export class RequestExecutor extends Observable {
 
     if (!this.isFirstTopologyUpdateTriesExpired()) {
       this._firstTopologyUpdatesTries++;
-      this._firstTopologyUpdate = update(urls.pop());
+      this._firstTopologyUpdate = update(urls.pop())
+        .then(() => this._firstTopologyUpdate = null);
     }    
   }
 

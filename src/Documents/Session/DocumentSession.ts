@@ -152,7 +152,7 @@ export class DocumentSession implements IDocumentSession {
         } else {
           document = idOrDocument as T;
           info = this.rawEntitiesAndMetadata.get(document);
-          id = conventions.getIdFromDocument<T>(document, {documentType: <DocumentType<T>>info.documentType});
+          id = conventions.getIdFromDocument<T>(document, <DocumentType<T>>info.documentType);
         }
 
         if (!document) {
@@ -227,7 +227,7 @@ export class DocumentSession implements IDocumentSession {
             document: document,
             metadata: document['@metadata'],
             originalMetadata: originalMetadata,
-            rawEntity: conventions.convertToRawEntity(document)
+            rawEntity: conventions.convertToRawEntity(document, docType)
           });
         }
 
@@ -412,7 +412,7 @@ more responsive application.", maxRequests
           let checkMode: ConcurrencyCheckMode = ConcurrencyCheckModes.Forced;
 
           if (TypeUtil.isNone(documentId)) {
-            documentId = conventions.getIdFromDocument<T>(document, {documentType: <DocumentType<T>>info.documentType});
+            documentId = conventions.getIdFromDocument<T>(document, <DocumentType<T>>info.documentType);
           } 
 
           if (TypeUtil.isNone(etag)) {
@@ -446,9 +446,7 @@ more responsive application.", maxRequests
         } 
         
         if (!TypeUtil.isNone(documentId)) {
-          conventions.setIdOnDocument(document, documentId, {
-            setIdIfPropertyIsNotDefined: false
-          });
+          conventions.setIdOnDocument(document, documentId);
 
           document['@metadata']['@id'] = documentId;
         }
@@ -465,9 +463,7 @@ more responsive application.", maxRequests
           return store
             .generateId(document, conventions.getTypeFromDocument(document))
             .then((documentId: string): T => {
-              conventions.setIdOnDocument(document, documentId, {
-                setIdIfPropertyIsNotDefined: false
-              });
+              conventions.setIdOnDocument(document, documentId);
 
               document['@metadata']['@id'] = documentId;
               return document;
@@ -488,10 +484,7 @@ more responsive application.", maxRequests
       const conventions: DocumentConventions = this.conventions;
       const info: IStoredRawEntityInfo = this.rawEntitiesAndMetadata.get(document);
       const id: string = info.id;
-      const rawEntity: object = _.omit(
-        conventions.convertToRawEntity(document), 
-        conventions.getIdPropertyName(info.documentType, document)
-      );
+      const rawEntity: object = conventions.convertToRawEntity(document, info.documentType);
 
       if ((this.conventions.defaultUseOptimisticConcurrency && (ConcurrencyCheckModes.Disabled 
         !== info.concurrencyCheckMode)) || (ConcurrencyCheckModes.Forced === info.concurrencyCheckMode)
@@ -551,7 +544,7 @@ more responsive application.", maxRequests
           _.assign(info, {
             etag: commandResult['@etag'],
             metadata: metadata,
-            originalValue: _.cloneDeep(this.conventions.convertToRawEntity(document)),
+            originalValue: _.cloneDeep(this.conventions.convertToRawEntity(document, info.documentType)),
             originalMetadata: _.cloneDeep(metadata)
           });
 
@@ -566,7 +559,7 @@ more responsive application.", maxRequests
     if (this.rawEntitiesAndMetadata.has(document)) {
       const info: IStoredRawEntityInfo = this.rawEntitiesAndMetadata.get(document);
       
-      return !_.isEqual(info.originalValue, this.conventions.convertToRawEntity(document))
+      return !_.isEqual(info.originalValue, this.conventions.convertToRawEntity(document, info.documentType))
         || !_.isEqual(info.originalMetadata, info.metadata);
     }
 
@@ -596,7 +589,7 @@ more responsive application.", maxRequests
   protected onDocumentFetched<T extends Object = IRavenObject>(conversionResult?: IDocumentConversionResult<T>): void {
     if (conversionResult) {
       const documentId: string = this.conventions
-        .getIdFromDocument(conversionResult.document, {documentType: conversionResult.documentType})
+        .getIdFromDocument(conversionResult.document, conversionResult.documentType)
         || conversionResult.originalMetadata['@id'] || conversionResult.metadata['@id'];
 
       if (documentId) {
@@ -607,7 +600,7 @@ more responsive application.", maxRequests
 
           if (!originalValueSource) {
             originalValueSource = this.conventions
-              .convertToRawEntity<T>(conversionResult.document);
+              .convertToRawEntity<T>(conversionResult.document, conversionResult.documentType);
           }
 
           this.documentsById[documentId] = conversionResult.document;

@@ -11,11 +11,6 @@ import {ConcurrencyCheckMode} from "../../Database/ConcurrencyCheckMode";
 export type DocumentConstructor<T extends Object = IRavenObject> = { new(...args: any[]): T; };
 export type DocumentType<T extends Object = IRavenObject> = DocumentConstructor<T> | string;
 
-export interface IGetSetIDOnDocumentOptions<T extends Object = IRavenObject> {
-  documentType?: DocumentType<T>;
-  setIdIfPropertyIsNotDefined?: boolean;
-}
-
 export interface IDocumentInfoResolvable {
   resolveConstructor?: (typeName: string) => DocumentConstructor;
   resolveIdProperty?: (typeName: string, document?: object | IRavenObject) => string;
@@ -168,9 +163,8 @@ export class DocumentConventions {
 
     this.setIdOnDocument(
       document, metadata
-      ['@id'] || null, {
-        documentType: docType
-      });
+      ['@id'] || null, docType
+    );
 
     return {
       rawEntity: rawEntity,
@@ -181,27 +175,31 @@ export class DocumentConventions {
     } as IDocumentConversionResult<T>;
   }
 
-  public convertToRawEntity<T extends Object = IRavenObject>(document: T): object {
-    return Serializer.toJSON<T>(document, document['@metadata'] || {});
+  public convertToRawEntity<T extends Object = IRavenObject>(document: T, documentType?: DocumentType<T>): object {
+    const idProperty: string = this.getIdPropertyName(documentType, document);
+    let result: object = Serializer.toJSON<T>(document, document['@metadata'] || {});
+
+    if (idProperty) {
+      delete result[idProperty];
+    }
+
+    return result;
   }
 
-  public setIdOnDocument<T extends Object = IRavenObject>(document: T, id: string, options: IGetSetIDOnDocumentOptions<T> = {}): T {
-    let docType: DocumentType<T> = options.documentType || this.getTypeFromDocument(document);
+  public setIdOnDocument<T extends Object = IRavenObject>(document: T, id: string, documentType?: DocumentType<T>): T {
+    let docType: DocumentType<T> = documentType || this.getTypeFromDocument(document);
     const idProperty = this.getIdPropertyName(docType, document);
 
     if ('object' !== (typeof document)) {
       throw new InvalidOperationException("Invalid entity provided. It should implement object interface");
     }
 
-    if ((false !== options.setIdIfPropertyIsNotDefined) || (idProperty in document)) {
-      document[idProperty] = id;
-    }
-    
+    document[idProperty] = id;    
     return document;
   }
 
-  public getIdFromDocument<T extends Object = IRavenObject>(document?: T, options: IGetSetIDOnDocumentOptions<T> = {}): string {
-    const docType: DocumentType<T> = options.documentType || this.getTypeFromDocument(document);
+  public getIdFromDocument<T extends Object = IRavenObject>(document?: T, documentType?: DocumentType<T>): string {
+    const docType: DocumentType<T> = documentType || this.getTypeFromDocument(document);
     const idProperty = this.getIdPropertyName(docType, document);
 
     if (!document) {
