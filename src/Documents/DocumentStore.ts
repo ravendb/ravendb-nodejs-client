@@ -35,7 +35,7 @@ export class DocumentStore implements IDocumentStore {
 
   public getRequestExecutor(database?: string): RequestExecutor {
     const dbName = database || this._database;
-    const forSingleNode: boolean = !this.conventions.topologyUpdatesEnabled;
+    const forSingleNode: boolean = this.conventions.disableTopologyUpdates;
     const executors: Map<boolean, Map<string, RequestExecutor>> = this._requestExecutors;
     let executorsByDB: Map<string, RequestExecutor>;
 
