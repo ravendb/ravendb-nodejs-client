@@ -37,7 +37,11 @@ export interface IRequestExecutorOptions {
   firstTopologyUpdateUrls?: string[];
 }
 
-export class RequestExecutor extends Observable {
+export interface IRequestExecutor {
+  execute(command: RavenCommand): BluebirdPromise<IRavenResponse | IRavenResponse[] | void>;
+}
+
+export class RequestExecutor extends Observable implements IRequestExecutor {
   public static readonly REQUEST_FAILED      = 'request:failed';
   public static readonly TOPOLOGY_UPDATED    = 'topology:updated';
   public static readonly NODE_STATUS_UPDATED = 'node:status:updated';
@@ -86,7 +90,7 @@ export class RequestExecutor extends Observable {
     }
   }
 
-  public static create(urls: string[], database: string): RequestExecutor {
+  public static create(urls: string[], database: string): IRequestExecutor {
     const self = <typeof RequestExecutor>this;
 
     return new self(database, {
@@ -95,7 +99,7 @@ export class RequestExecutor extends Observable {
     });
   }
 
-  public static createForSingleNode(url: string, database: string): RequestExecutor {
+  public static createForSingleNode(url: string, database: string): IRequestExecutor {
     const self = <typeof RequestExecutor>this;
     const topology = new Topology(-1, [new ServerNode(url, database)]);
 

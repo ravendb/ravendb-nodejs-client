@@ -134,6 +134,7 @@ export {PutCommandData} from './Database/Commands/Data/PutCommandData';
 export {PatchCommandData} from './Database/Commands/Data/PatchCommandData';
 export {SaveChangesData} from './Database/Commands/Data/SaveChangesData';
 export {IOperationStatusResult, OperationStatus, OperationStatuses, OperationAwaiter} from './Database/Operations/OperationAwaiter';
+export {AbstractOperation, Operation, AdminOperation, ServerOperation, PatchOperation, AwaitableOperation} from './Database/Operations/Operation';
 export {AccessMode, AccessModes, ResourcesAccessModes} from './Database/Auth/AccessMode';
 export {ApiKeyDefinition} from './Database/Auth/ApiKeyDefinition';
 export {Serializer} from './Json/Serializer';
