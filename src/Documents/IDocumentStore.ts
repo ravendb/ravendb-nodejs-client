@@ -2,12 +2,10 @@ import {IDocumentSession} from "./Session/IDocumentSession";
 import {RequestExecutor} from '../Http/Request/RequestExecutor';
 import {DocumentConventions, DocumentConstructor, DocumentType} from './Conventions/DocumentConventions';
 import {EntityIdCallback} from '../Utility/Callbacks';
-import {Operations} from '../Database/Operations/Operations';
 import {ISessionOptions} from './Session/IDocumentSession';
 
 export interface IDocumentStore {
   database: string;
-  operations: Operations;
   conventions: DocumentConventions;
   initialize(): IDocumentStore;
   finalize(): Promise<IDocumentStore>;

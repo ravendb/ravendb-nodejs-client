@@ -10,7 +10,6 @@ import {InvalidOperationException, RavenException} from '../Database/DatabaseExc
 import {IHiloIdGenerator} from '../Hilo/IHiloIdGenerator';
 import {HiloMultiDatabaseIdGenerator} from '../Hilo/HiloMultiDatabaseIdGenerator';
 import {IRavenObject} from "../Database/IRavenObject";
-import {Operations} from "../Database/Operations/Operations";
 import {PromiseResolver} from "../Utility/PromiseResolver";
 import {TypeUtil} from "../Utility/TypeUtil";
 import {QueryString} from "../Http/QueryString";
@@ -21,7 +20,6 @@ export class DocumentStore implements IDocumentStore {
   protected initialized: boolean = false;
   protected _apiKey?: string;
   private _database: string;
-  private _operations: Operations;
   private _conventions: DocumentConventions;
   private _requestExecutors: Map<boolean, Map<string, RequestExecutor>>;
 
@@ -56,16 +54,6 @@ export class DocumentStore implements IDocumentStore {
     }
 
     return this._conventions;
-  }
-
-  public get operations(): Operations {
-    this.assertInitialize();
-
-    if (!this._operations) {
-      this._operations = new Operations(this.getRequestExecutor());
-    }
-
-    return this._operations;
   }
 
   constructor(urlOrUrls: string | string[], defaultDatabase: string, apiKey?: string) {
