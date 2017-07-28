@@ -20,7 +20,7 @@ import {StringUtil} from "../src/Utility/StringUtil";
 
 const defaultUrl: string = StringUtil.format("http://{ravendb-host}:{ravendb-port}", args);
 const defaultDatabase: string = "NorthWindTest";
-const clusterRequestExecutor: ClusterRequestExecutor = ClusterRequestExecutor.create([defaultUrl], defaultDatabase);
+const clusterRequestExecutor: ClusterRequestExecutor = <ClusterRequestExecutor>ClusterRequestExecutor.create([defaultUrl]);
 
 let indexMap: string;
 let index: IndexDefinition;
@@ -54,7 +54,7 @@ beforeEach(async function() {
   ].join('');
 
   index = new IndexDefinition("Testing", indexMap);
-  requestExecutor = RequestExecutor.create([defaultUrl], defaultDatabase);
+  requestExecutor = <RequestExecutor>RequestExecutor.create([defaultUrl], defaultDatabase);
  
   await requestExecutor.execute(new PutIndexesCommand(index));
 

@@ -133,6 +133,8 @@ export {DeleteCommandData} from './Database/Commands/Data/DeleteCommandData';
 export {PutCommandData} from './Database/Commands/Data/PutCommandData';
 export {PatchCommandData} from './Database/Commands/Data/PatchCommandData';
 export {SaveChangesData} from './Database/Commands/Data/SaveChangesData';
+export {CreateDatabaseOperation} from './Database/Operations/CreateDatabaseOperation';
+export {DeleteDatabaseOperation} from './Database/Operations/DeleteDatabaseOperation';
 export {IOperationStatusResult, OperationStatus, OperationStatuses, OperationAwaiter} from './Database/Operations/OperationAwaiter';
 export {AbstractOperation, Operation, AdminOperation, ServerOperation, PatchOperation, AwaitableOperation, IOperation} from './Database/Operations/Operation';
 export {AbstractOperationExecutor, AbstractDatabaseOperationExecutor, OperationExecutor, AdminOperationExecutor, ServerOperationExecutor, IOperationExecutor} from './Database/Operations/OperationExecutor';
