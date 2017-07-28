@@ -3,7 +3,7 @@ import {IOperation, AbstractOperation, Operation, AwaitableOperation, PatchResul
 import {IDocumentStore} from '../../Documents/IDocumentStore';
 import {ClusterRequestExecutor} from '../../Http/Request/ClusterRequestExecutor';
 import {IRequestExecutor} from '../../Http/Request/RequestExecutor';
-import {PatchStatus, PatchStatuses} from '../../Http/Request/PatchRequest';
+import {PatchStatus, PatchStatuses, IPatchResult} from '../../Http/Request/PatchRequest';
 import {StatusCodes} from '../../Http/Response/StatusCode';
 import {IRavenResponse} from '../RavenCommandResponse';
 import {IRavenObject} from '../IRavenObject';
@@ -98,7 +98,6 @@ export class OperationExecutor extends AbstractDatabaseOperationExecutor {
     const store: IDocumentStore = this.store;
     const json: IRavenObject = <IRavenObject>response;
     const conventions: DocumentConventions = store.conventions;  
-    let updatedResponse: IRavenResponse = <IRavenResponse>response;
 
     if (operation instanceof AwaitableOperation) {
       const awaiter: OperationAwaiter = new OperationAwaiter(
@@ -109,24 +108,27 @@ export class OperationExecutor extends AbstractDatabaseOperationExecutor {
     }
 
     if (operation instanceof PatchResultOperation) {
+      let patchResult: IPatchResult;
+
       switch (command.serverResponse.statusCode) {
         case StatusCodes.NotModified:
-          updatedResponse = {Status: PatchStatuses.NotModified};
+          patchResult = {Status: PatchStatuses.NotModified};
           break;
         case StatusCodes.NotFound:
-          updatedResponse = {Status: PatchStatuses.DocumentDoesNotExist};
+          patchResult = {Status: PatchStatuses.DocumentDoesNotExist};
           break;
         default:
-          updatedResponse = {
+          patchResult = {
             Status: json.Status,
             Document: conventions.convertToDocument(json.ModifiedDocument)
-          };
-          
+          };          
           break;  
       }
+
+      return super.setResponse(operation, command, <IRavenResponse>patchResult);
     }
 
-    return super.setResponse(operation, command, updatedResponse);
+    return super.setResponse(operation, command, response);
   }
 }
 
