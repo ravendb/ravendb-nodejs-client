@@ -1,10 +1,10 @@
-import {Operation} from './Operation';
+import {ServerOperation} from './Operation';
 import {RavenCommand} from '../RavenCommand';
 import {IDocumentStore} from '../../Documents/IDocumentStore';
 import {DocumentConventions} from '../../Documents/Conventions/DocumentConventions';
 import {DeleteDatabaseCommand} from '../Commands/DeleteDatabaseCommand';
 
-export class DeleteDatabaseOperation extends Operation {
+export class DeleteDatabaseOperation extends ServerOperation {
   protected databaseId?: string;
   protected hardDelete: boolean = false;
 
@@ -15,7 +15,7 @@ export class DeleteDatabaseOperation extends Operation {
     this.hardDelete = hardDelete;
   }
 
-  public getCommand(conventions: DocumentConventions, store?: IDocumentStore): RavenCommand {
+  public getCommand(conventions: DocumentConventions): RavenCommand {
     return new DeleteDatabaseCommand(this.databaseId, this.hardDelete);
   } 
 }

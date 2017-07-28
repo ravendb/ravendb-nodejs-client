@@ -1,11 +1,11 @@
-import {Operation} from './Operation';
+import {ServerOperation} from './Operation';
 import {RavenCommand} from '../RavenCommand';
 import {IDocumentStore} from '../../Documents/IDocumentStore';
 import {DocumentConventions} from '../../Documents/Conventions/DocumentConventions';
 import {DatabaseDocument} from "../DatabaseDocument";
 import {CreateDatabaseCommand} from '../Commands/CreateDatabaseCommand';
 
-export class CreateDatabaseOperation extends Operation {
+export class CreateDatabaseOperation extends ServerOperation {
   protected replicationFactor: number;
   protected databaseDocument: DatabaseDocument;
 
@@ -15,7 +15,7 @@ export class CreateDatabaseOperation extends Operation {
     this.replicationFactor = replicationFactor || 1;
   }
 
-  public getCommand(conventions: DocumentConventions, store?: IDocumentStore): RavenCommand {
+  public getCommand(conventions: DocumentConventions): RavenCommand {
     return new CreateDatabaseCommand(this.databaseDocument, this.replicationFactor);
   } 
 }
