@@ -6,15 +6,8 @@ import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {InvalidOperationException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {StatusCodes} from "../../Http/Response/StatusCode";
-import {PatchRequest} from "../../Http/Request/PatchRequest";
+import {PatchRequest, IPatchRequestOptions} from "../../Http/Request/PatchRequest";
 import {TypeUtil} from "../../Utility/TypeUtil";
-
-export interface IPatchCommandOptions {
-  etag?: number, 
-  patchIfMissing?: PatchRequest, 
-  skipPatchIfEtagMismatch?: boolean,
-  returnDebugInformation?: boolean
-}
 
 export class PatchCommand extends RavenCommand {
   protected id?: string;
@@ -25,10 +18,10 @@ export class PatchCommand extends RavenCommand {
   protected returnDebugInformation: boolean;
   protected path: string;
 
-  constructor(id: string, patch: PatchRequest, options?: IPatchCommandOptions) {
+  constructor(id: string, patch: PatchRequest, options?: IPatchRequestOptions) {
     super('', RequestMethods.Patch);
 
-    const opts: IPatchCommandOptions = options || {};
+    const opts: IPatchRequestOptions = options || {};
 
     this.id = id;
     this.patch = patch;

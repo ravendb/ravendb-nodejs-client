@@ -22,7 +22,7 @@ export abstract class ServerOperation extends AbstractOperation {
   
 }
 
-export abstract class PatchOperation extends Operation {
+export abstract class PatchResultOperation extends Operation {
 
 }
 

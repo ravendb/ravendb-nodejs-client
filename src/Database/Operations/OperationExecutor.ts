@@ -1,5 +1,5 @@
 import * as BluebirdPromise from 'bluebird';
-import {IOperation, AbstractOperation, Operation, AwaitableOperation, PatchOperation} from './Operation';
+import {IOperation, AbstractOperation, Operation, AwaitableOperation, PatchResultOperation, ServerOperation, AdminOperation} from './Operation';
 import {IDocumentStore} from '../../Documents/IDocumentStore';
 import {ClusterRequestExecutor} from '../../Http/Request/ClusterRequestExecutor';
 import {IRequestExecutor} from '../../Http/Request/RequestExecutor';
@@ -31,16 +31,21 @@ export abstract class AbstractOperationExecutor implements IOperationExecutor {
     const store: IDocumentStore = this.store;
     const executor: IRequestExecutor = this.requestExecutor;
     const conventions: DocumentConventions = store.conventions;    
+    let errorMessage: string = 'Invalid object passed as an operation';
     let command: RavenCommand;
     
     if (operation instanceof AbstractOperation) {
-      command = (operation instanceof Operation) 
+      try {
+        command = (operation instanceof Operation) 
         ? operation.getCommand(conventions, store)
         : (<AbstractOperation>operation).getCommand(conventions);    
+      } catch (exception) {
+        errorMessage = `Can't instantiate command required for run operation: ${exception.message}`;
+      }      
     }
     
     if (!command) {
-      return BluebirdPromise.reject(new InvalidOperationException('Invalid object passed as an operation'));
+      return BluebirdPromise.reject(new InvalidOperationException(errorMessage));
     }
 
     return executor.execute(command)
@@ -103,7 +108,7 @@ export class OperationExecutor extends AbstractDatabaseOperationExecutor {
       return awaiter.waitForCompletion();
     }
 
-    if (operation instanceof PatchOperation) {
+    if (operation instanceof PatchResultOperation) {
       switch (command.serverResponse.statusCode) {
         case StatusCodes.NotModified:
           updatedResponse = {Status: PatchStatuses.NotModified};
@@ -134,6 +139,14 @@ export class ServerOperationExecutor extends AbstractOperationExecutor {
       ? ClusterRequestExecutor.createForSingleNode(store.singleNodeUrl)
       : ClusterRequestExecutor.create(store.urls);
   }
+
+  public send(operation: IOperation): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> {
+    if (!(operation instanceof ServerOperation)) {
+      return BluebirdPromise.reject(new InvalidOperationException('Invalid operation passed. It should be derived from ServerOperation'));
+    }
+
+    return super.send(operation);
+  }
 }
 
 export class AdminOperationExecutor extends AbstractDatabaseOperationExecutor {
@@ -145,5 +158,13 @@ export class AdminOperationExecutor extends AbstractDatabaseOperationExecutor {
     }
 
     return this._server;
+  }
+
+  public send(operation: IOperation): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> {
+    if (!(operation instanceof AdminOperation)) {
+      return BluebirdPromise.reject(new InvalidOperationException('Invalid operation passed. It should be derived from ServerOperation'));
+    }
+    
+    return super.send(operation);
   }
 }

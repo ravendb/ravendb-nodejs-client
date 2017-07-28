@@ -1,4 +1,5 @@
 import {IJsonable} from '../../Json/Contracts';
+import {IRavenObject} from '../../Database/IRavenObject';
 
 export type PatchStatus = 'DocumentDoesNotExist' | 'Created' | 'Patched' | 'Skipped' | 'NotModified';
 
@@ -8,6 +9,18 @@ export class PatchStatuses {
   public static readonly Patched: PatchStatus = 'Patched';
   public static readonly Skipped: PatchStatus = 'Skipped';
   public static readonly NotModified: PatchStatus = 'NotModified';
+}
+
+export interface IPatchRequestOptions {
+  etag?: number, 
+  patchIfMissing?: PatchRequest, 
+  skipPatchIfEtagMismatch?: boolean,
+  returnDebugInformation?: boolean
+}
+
+export interface IPatchResult {
+  Status: PatchStatus;
+  Document?: IRavenObject;
 }
 
 export class PatchRequest implements IJsonable {
