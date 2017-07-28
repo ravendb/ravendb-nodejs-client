@@ -125,7 +125,7 @@ export class OperationExecutor extends AbstractDatabaseOperationExecutor {
           break;  
       }
 
-      return super.setResponse(operation, command, <IRavenResponse>patchResult);
+      response = <IRavenResponse>patchResult;
     }
 
     return super.setResponse(operation, command, response);
