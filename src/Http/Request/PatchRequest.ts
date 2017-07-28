@@ -1,5 +1,15 @@
 import {IJsonable} from '../../Json/Contracts';
 
+export type PatchStatus = 'DocumentDoesNotExist' | 'Created' | 'Patched' | 'Skipped' | 'NotModified';
+
+export class PatchStatuses {
+  public static readonly DocumentDoesNotExist: PatchStatus = 'DocumentDoesNotExist';
+  public static readonly Created: PatchStatus = 'Created';
+  public static readonly Patched: PatchStatus = 'Patched';
+  public static readonly Skipped: PatchStatus = 'Skipped';
+  public static readonly NotModified: PatchStatus = 'NotModified';
+}
+
 export class PatchRequest implements IJsonable {
   private _script: string;
   protected values: object = {};
@@ -23,3 +33,4 @@ export class PatchRequest implements IJsonable {
     };
   }
 }
+

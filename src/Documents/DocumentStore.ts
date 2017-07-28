@@ -3,7 +3,7 @@ import * as _ from 'lodash';
 import {IDocumentStore} from './IDocumentStore';
 import {IDocumentSession, ISessionOptions} from "./Session/IDocumentSession";
 import {DocumentSession} from "./Session/DocumentSession";
-import {RequestExecutor} from '../Http/Request/RequestExecutor';
+import {RequestExecutor, IRequestExecutor} from '../Http/Request/RequestExecutor';
 import {EntityIdCallback} from '../Utility/Callbacks';
 import {DocumentConventions, DocumentConstructor, DocumentType} from './Conventions/DocumentConventions';
 import {InvalidOperationException, RavenException} from '../Database/DatabaseExceptions';
@@ -13,15 +13,18 @@ import {IRavenObject} from "../Database/IRavenObject";
 import {PromiseResolver} from "../Utility/PromiseResolver";
 import {TypeUtil} from "../Utility/TypeUtil";
 import {QueryString} from "../Http/QueryString";
+import {OperationExecutor, AdminOperationExecutor} from '../Database/Operations/OperationExecutor';
 
 export class DocumentStore implements IDocumentStore {
-  protected urls: string[];  
   protected generator: IHiloIdGenerator;
   protected initialized: boolean = false;
   protected _apiKey?: string;
+  private _urls: string[];  
   private _database: string;
   private _conventions: DocumentConventions;
   private _requestExecutors: Map<boolean, Map<string, RequestExecutor>>;
+  private _operations: OperationExecutor;
+  private _admin: AdminOperationExecutor;
 
   public get database(): string {
     return this._database;
@@ -29,6 +32,30 @@ export class DocumentStore implements IDocumentStore {
 
   public get apiKey(): string {
     return this._apiKey;
+  }
+
+  public get urls(): string[] {
+    return this._urls;
+  }
+
+  public get singleNodeUrl(): string {
+    return _.first(this._urls);
+  }
+
+  public get operations(): OperationExecutor {
+    if (!this._operations) {
+      this._operations = new OperationExecutor(this, this._database);
+    }
+
+    return this._operations;
+  }
+
+  public get admin(): AdminOperationExecutor {
+    if (!this._admin) {
+      this._admin = new AdminOperationExecutor(this, this._database);
+    }
+
+    return this._admin;
   }
 
   public getRequestExecutor(database?: string): RequestExecutor {
@@ -59,7 +86,7 @@ export class DocumentStore implements IDocumentStore {
   constructor(urlOrUrls: string | string[], defaultDatabase: string, apiKey?: string) {
     this._apiKey = apiKey;
     this._database = defaultDatabase;
-    this.urls = QueryString.parseUrls(urlOrUrls);
+    this._urls = QueryString.parseUrls(urlOrUrls);
     this._requestExecutors = new Map<boolean, Map<string, RequestExecutor>>();
   }
 
@@ -140,11 +167,10 @@ export class DocumentStore implements IDocumentStore {
 
   protected createRequestExecutor(database?: string, forSingleNode?: boolean): RequestExecutor {    
     const dbName: string = database || this._database;
-
-    if (true === forSingleNode) {
-      return RequestExecutor.createForSingleNode(_.first(this.urls), dbName);
-    } 
-
-    return RequestExecutor.create(this.urls, dbName);
+    const executor: IRequestExecutor = (true === forSingleNode)
+      ? RequestExecutor.createForSingleNode(this.singleNodeUrl, dbName)
+      : RequestExecutor.create(this.urls, dbName);
+    
+    return <RequestExecutor>executor;
   }
 }

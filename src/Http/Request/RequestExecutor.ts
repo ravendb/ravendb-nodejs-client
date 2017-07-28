@@ -90,7 +90,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     }
   }
 
-  public static create(urls: string[], database: string): IRequestExecutor {
+  public static create(urls: string[], database?: string): IRequestExecutor {
     const self = <typeof RequestExecutor>this;
 
     return new self(database, {
@@ -99,7 +99,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     });
   }
 
-  public static createForSingleNode(url: string, database: string): IRequestExecutor {
+  public static createForSingleNode(url: string, database?: string): IRequestExecutor {
     const self = <typeof RequestExecutor>this;
     const topology = new Topology(-1, [new ServerNode(url, database)]);
 

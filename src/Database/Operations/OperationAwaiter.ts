@@ -1,4 +1,4 @@
-import {RequestExecutor} from "../../Http/Request/RequestExecutor";
+import {IRequestExecutor} from "../../Http/Request/RequestExecutor";
 import * as BluebirdPromise from "bluebird";
 import {PromiseResolve, PromiseReject} from "../../Utility/PromiseResolver";
 import {DateUtil} from "../../Utility/DateUtil";
@@ -21,11 +21,11 @@ export class OperationStatuses {
 }
 
 export class OperationAwaiter {
-  protected requestExecutor: RequestExecutor;
+  protected requestExecutor: IRequestExecutor;
   protected operationId: string;
   protected timeout?: number = null;
 
-  constructor(requestExecutor: RequestExecutor, operationId: string, timeout?: number) {
+  constructor(requestExecutor: IRequestExecutor, operationId: string, timeout?: number) {
     this.requestExecutor = requestExecutor;
     this.operationId = operationId;
     this.timeout = timeout || null;

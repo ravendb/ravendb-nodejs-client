@@ -2,7 +2,11 @@ import {RavenCommand} from '../RavenCommand';
 import {IDocumentStore} from '../../Documents/IDocumentStore';
 import {DocumentConventions} from '../../Documents/Conventions/DocumentConventions';
 
-export abstract class AbstractOperation {
+export interface IOperation {
+  getCommand(conventions: DocumentConventions, store?: IDocumentStore): RavenCommand;  
+}
+
+export abstract class AbstractOperation implements IOperation {
   public abstract getCommand(conventions: DocumentConventions): RavenCommand;  
 }
 
