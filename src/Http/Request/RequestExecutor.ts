@@ -37,7 +37,11 @@ export interface IRequestExecutorOptions {
   firstTopologyUpdateUrls?: string[];
 }
 
-export class RequestExecutor extends Observable {
+export interface IRequestExecutor {
+  execute(command: RavenCommand): BluebirdPromise<IRavenResponse | IRavenResponse[] | void>;
+}
+
+export class RequestExecutor extends Observable implements IRequestExecutor {
   public static readonly REQUEST_FAILED      = 'request:failed';
   public static readonly TOPOLOGY_UPDATED    = 'topology:updated';
   public static readonly NODE_STATUS_UPDATED = 'node:status:updated';
@@ -86,16 +90,16 @@ export class RequestExecutor extends Observable {
     }
   }
 
-  public static create(urls: string[], database: string): RequestExecutor {
+  public static create(urls: string[], database?: string): IRequestExecutor {
     const self = <typeof RequestExecutor>this;
 
     return new self(database, {
       withoutTopology: false,
-      firstTopologyUpdateUrls: urls
+      firstTopologyUpdateUrls: _.clone(urls)
     });
   }
 
-  public static createForSingleNode(url: string, database: string): RequestExecutor {
+  public static createForSingleNode(url: string, database?: string): IRequestExecutor {
     const self = <typeof RequestExecutor>this;
     const topology = new Topology(-1, [new ServerNode(url, database)]);
 
@@ -149,7 +153,7 @@ export class RequestExecutor extends Observable {
           }
         }        
       }
-      
+
       return isFulfilled;
     })
     .then((isFulfilled: boolean): BluebirdPromise.Thenable<void> => (isFulfilled 
@@ -270,7 +274,7 @@ export class RequestExecutor extends Observable {
 
   protected startFirstTopologyUpdate(updateTopologyUrls: string[]): void {
     let url: string = null;
-    let urls: string[] = updateTopologyUrls.reverse();
+    let urls: string[] = _.clone(updateTopologyUrls.reverse());
 
     const update = (url: string): BluebirdPromise<void> => 
       this.updateTopology(new ServerNode(url, this._initialDatabase))

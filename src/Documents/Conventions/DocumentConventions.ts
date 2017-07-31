@@ -44,7 +44,7 @@ export interface IStoredRawEntityInfo {
 export class DocumentConventions {
   readonly maxNumberOfRequestPerSession: number = 30;
   readonly requestTimeout: number = 30;
-  readonly defaultUseOptimisticConcurrency:boolean = true;
+  readonly defaultUseOptimisticConcurrency:boolean = false;
   readonly maxLengthOfQueryUsingGetUrl = 1024 + 512;
   readonly identityPartsSeparator = "/";
   private _resolvers: IDocumentInfoResolvable[] = [];

@@ -5,12 +5,20 @@ import {IResponse} from "../../Http/Response/IResponse";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {ErrorResponseException, InvalidOperationException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
+import {TypeUtil} from "../../Utility/TypeUtil";
 import {IndexDefinition} from "../Indexes/IndexDefinition";
 
 export class PutIndexesCommand extends RavenCommand {
   protected indexes?: IndexDefinition[];
 
-  constructor(...indexes: IndexDefinition[]) {
+  constructor(indexesToAdd: IndexDefinition | IndexDefinition[], ...moreIndexesToAdd: IndexDefinition[]) {
+    let indexes: IndexDefinition[] = TypeUtil.isArray(indexesToAdd)
+      ? <IndexDefinition[]>indexesToAdd : [<IndexDefinition>indexesToAdd];
+
+    if (TypeUtil.isArray(moreIndexesToAdd) && moreIndexesToAdd.length) {
+      indexes = indexes.concat(moreIndexesToAdd);
+    }
+    
     super('', RequestMethods.Put);
 
     if (!indexes.length) {

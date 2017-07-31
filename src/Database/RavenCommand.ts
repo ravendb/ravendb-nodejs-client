@@ -18,8 +18,13 @@ export abstract class RavenCommand {
   protected payload?: object;
   protected headers: object = {};
   protected failedNodes: Set<ServerNode>;
+  private _lastResponse: IResponse;
 
   public abstract createRequest(serverNode: ServerNode): void;
+
+  public get serverResponse(): IResponse {
+    return this._lastResponse;
+  }
 
   constructor(endPoint: string, method: RequestMethod = RequestMethods.Get, params?: object, payload?: object, headers: IHeaders = {}) {
     this.endPoint = endPoint;
@@ -73,7 +78,7 @@ export abstract class RavenCommand {
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    ExceptionThrower.throwFrom(response);    
+    ExceptionThrower.throwFrom(this._lastResponse = response);    
 
     if (response.body) {
       return <IRavenResponse>response.body;

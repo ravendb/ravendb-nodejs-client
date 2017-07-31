@@ -16,14 +16,13 @@ describe('Document full text search', () => {
   let defaultDatabase: string, defaultUrl: string;
 
   beforeEach(function(): void {
-    ({defaultDatabase, defaultUrl, requestExecutor} = (this.currentTest as IRavenObject));
+    ({defaultDatabase, defaultUrl, requestExecutor, store} = (this.currentTest as IRavenObject));
   });
 
   beforeEach(async () => {
-    store = DocumentStore.create(defaultUrl, defaultDatabase).initialize();
-    session = store.openSession({requestExecutor});
+    session = store.openSession();
 
-    const lastFmAnalyzed: LastFmAnalyzed = new LastFmAnalyzed(requestExecutor);
+    const lastFmAnalyzed: LastFmAnalyzed = new LastFmAnalyzed(store);
         
     await lastFmAnalyzed.execute();    
     await session.store<LastFm>(new LastFm("LastFm/1", "Tania Maria", "TRALPJJ128F9311763", "Come With Me"));
@@ -34,7 +33,7 @@ describe('Document full text search', () => {
 
   describe('Text search', () => {
     it('should search by single keyword', async() => {
-      const results: LastFm[] = await store.openSession({requestExecutor})
+      const results: LastFm[] = await store.openSession()
         .query<LastFm>({
           documentType: LastFm, 
           indexName: LastFmAnalyzed.name,
@@ -48,7 +47,7 @@ describe('Document full text search', () => {
     });
 
     it('should search by two keywords', async() => {
-      const results: LastFm[] = await store.openSession({requestExecutor})
+      const results: LastFm[] = await store.openSession()
         .query<LastFm>({
           documentType: LastFm, 
           indexName: LastFmAnalyzed.name,
@@ -62,7 +61,7 @@ describe('Document full text search', () => {
     });
 
     it('should search full text with boost', async () => {
-      const results: LastFm[] = await store.openSession({requestExecutor})
+      const results: LastFm[] = await store.openSession()
         .query<LastFm>({
           documentType: LastFm, 
           indexName: LastFmAnalyzed.name,
