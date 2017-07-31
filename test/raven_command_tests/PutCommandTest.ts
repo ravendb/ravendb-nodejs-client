@@ -16,7 +16,7 @@ describe('Put command tests', () => {
   });
 
   it('should put successfully', async() => requestExecutor
-    .execute(new PutDocumentCommand('testing/1', {'name': 'test', '@metadata': {}}))
+    .execute(new PutDocumentCommand('testing/1', {'name': 'test', '@metadata': {'@id': 'testing/1','@collection': 'testings'}}))
     .then(() => requestExecutor.execute(new GetDocumentCommand('testing/1')))
     .then((result: IRavenResponse) => expect(result.Results[0]['@metadata']['@id']).to.equals('testing/1'))
   );

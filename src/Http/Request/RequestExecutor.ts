@@ -95,7 +95,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
 
     return new self(database, {
       withoutTopology: false,
-      firstTopologyUpdateUrls: urls
+      firstTopologyUpdateUrls: _.clone(urls)
     });
   }
 
@@ -153,7 +153,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
           }
         }        
       }
-      
+
       return isFulfilled;
     })
     .then((isFulfilled: boolean): BluebirdPromise.Thenable<void> => (isFulfilled 
@@ -274,7 +274,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
 
   protected startFirstTopologyUpdate(updateTopologyUrls: string[]): void {
     let url: string = null;
-    let urls: string[] = updateTopologyUrls.reverse();
+    let urls: string[] = _.clone(updateTopologyUrls.reverse());
 
     const update = (url: string): BluebirdPromise<void> => 
       this.updateTopology(new ServerNode(url, this._initialDatabase))

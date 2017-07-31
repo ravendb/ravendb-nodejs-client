@@ -8,30 +8,32 @@ import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import * as args from '../args';
 import {RequestExecutor} from "../src/Http/Request/RequestExecutor";
-import {ClusterRequestExecutor} from "../src/Http/Request/ClusterRequestExecutor";
 import {IndexDefinition} from "../src/Database/Indexes/IndexDefinition";
 import {IRavenResponse} from "../src/Database/RavenCommandResponse";
 import {DocumentConventions} from "../src/Documents/Conventions/DocumentConventions";
-import {CreateDatabaseCommand} from "../src/Database/Commands/CreateDatabaseCommand";
+import {CreateDatabaseOperation} from "../src/Database/Operations/CreateDatabaseOperation";
 import {DatabaseDocument} from "../src/Database/DatabaseDocument";
-import {PutIndexesCommand} from "../src/Database/Commands/PutIndexesCommand";
-import {DeleteDatabaseCommand} from "../src/Database/Commands/DeleteDatabaseCommand";
+import {PutIndexesOperation} from "../src/Database/Operations/PutIndexesOperation";
+import {DeleteDatabaseOperation} from "../src/Database/Operations/DeleteDatabaseOperation";
 import {StringUtil} from "../src/Utility/StringUtil";
+import {IDocumentStore} from "../src/Documents/IDocumentStore";
+import {DocumentStore} from "../src/Documents/DocumentStore";
 
 const defaultUrl: string = StringUtil.format("http://{ravendb-host}:{ravendb-port}", args);
 const defaultDatabase: string = "NorthWindTest";
-const clusterRequestExecutor: ClusterRequestExecutor = <ClusterRequestExecutor>ClusterRequestExecutor.create([defaultUrl]);
 
 let indexMap: string;
 let index: IndexDefinition;
 let requestExecutor: RequestExecutor;
+let store: IDocumentStore;
 
 const waitForDatabaseOperationComplete = async (waitFor: 'create' | 'delete'): Promise<void> => {
-  const next = (): Promise<void> => waitForDatabaseOperationComplete(waitFor);
+  const next = (): BluebirdPromise<void> => BluebirdPromise
+    .delay(100).then(() => waitForDatabaseOperationComplete(waitFor));
 
   return RequestPromise(`${defaultUrl}/topology?name=${defaultDatabase}`)
-    .then(() => ('create' === waitFor) ? Promise.resolve() : next())
-    .catch(() => ('delete' === waitFor) ? Promise.resolve() : next())
+    .then(() => ('create' === waitFor) ? BluebirdPromise.resolve() : next())
+    .catch(() => ('delete' === waitFor) ? BluebirdPromise.resolve() : next())
 };
 
 before(() => {
@@ -42,7 +44,10 @@ beforeEach(async function() {
   const dbDoc: DatabaseDocument = new DatabaseDocument
     (defaultDatabase, {"Raven/DataDir": "test"});
 
-  await clusterRequestExecutor.execute(new CreateDatabaseCommand(dbDoc));
+  store = DocumentStore.create(defaultUrl,  defaultDatabase);  
+  store.initialize();
+
+  await store.admin.server.send(new CreateDatabaseOperation(dbDoc));
   await waitForDatabaseOperationComplete('create');
 
   indexMap = [
@@ -54,14 +59,14 @@ beforeEach(async function() {
   ].join('');
 
   index = new IndexDefinition("Testing", indexMap);
-  requestExecutor = <RequestExecutor>RequestExecutor.create([defaultUrl], defaultDatabase);
  
-  await requestExecutor.execute(new PutIndexesCommand(index));
+  await store.operations.send(new PutIndexesOperation(index));
+  requestExecutor = store.getRequestExecutor();
 
   _.assign(this.currentTest, {
     indexDefinition: index,
     indexMap,
-    clusterRequestExecutor,
+    store,
     requestExecutor,
     defaultUrl,
     defaultDatabase
@@ -69,12 +74,10 @@ beforeEach(async function() {
 });
 
 afterEach(async function() {
-  ['currentTest', 'indexDefinition', 'indexMap',  'defaultUrl', 
-    'clusterRequestExecutor', 'requestExecutor', 'defaultDatabase']
+  ['indexDefinition', 'indexMap',  'defaultUrl', 
+    'store', 'requestExecutor', 'defaultDatabase']
    .forEach((key: string) => delete this.currentTest[key]);
 
-  await clusterRequestExecutor
-    .execute(new DeleteDatabaseCommand(defaultDatabase, true));
-
-  await waitForDatabaseOperationComplete('delete');
+  await store.admin.server.send(new DeleteDatabaseOperation(defaultDatabase));  
+  await waitForDatabaseOperationComplete('delete');  
 });
