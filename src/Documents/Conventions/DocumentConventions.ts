@@ -35,8 +35,8 @@ export interface IStoredRawEntityInfo {
   metadata: object;
   originalMetadata: object;
   id: string;
-  etag?: number | null;
-  expectedEtag?: number | null;
+  changeVector?: string | null;
+  expectedChangeVector?: string | null;
   concurrencyCheckMode: ConcurrencyCheckMode;
   documentType: DocumentType;
 }
@@ -54,8 +54,8 @@ export class DocumentConventions {
   public setIdOnlyIfPropertyIsDefined: boolean = false;
   public disableTopologyUpdates: boolean = false;
 
-  public get emptyEtag(): number {
-    return 0;
+  public get emptyChangeVector(): string {
+    return null;
   }
 
   public addDocumentInfoResolver(resolver: IDocumentInfoResolvable): void {

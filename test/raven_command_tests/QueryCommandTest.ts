@@ -10,7 +10,6 @@ import {DocumentConventions} from "../../src/Documents/Conventions/DocumentConve
 import {IndexQuery} from "../../src/Database/Indexes/IndexQuery";
 import {IRavenObject} from "../../src/Database/IRavenObject";
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
-import {QueryOperators} from "../../src/Documents/Session/QueryOperator";
 
 describe('QueryCommand Tests', () => {
   const tag: string = 'Tag:Products';
@@ -25,7 +24,7 @@ describe('QueryCommand Tests', () => {
       : BluebirdPromise.delay(120).then(() => waitForNonStaleResults())
   );
 
-  beforeEach(function(): void {
+  /*beforeEach(function(): void {
     ({requestExecutor} = this.currentTest as IRavenObject);
   });
 
@@ -65,6 +64,6 @@ describe('QueryCommand Tests', () => {
         requestExecutor.execute(new QueryCommand('IndexIsNotExists', new IndexQuery(tag), conventions))
       ).to.be.rejected
     );
-  });
+  });*/
 });
 

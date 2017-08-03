@@ -8,8 +8,8 @@ import {InvalidOperationException, ErrorResponseException} from "../DatabaseExce
 export class PutDocumentCommand extends DeleteDocumentCommand {
   protected document?: object;
 
-  constructor(id: string, document: object, etag?: number) {
-    super(id, etag);
+  constructor(id: string, document: object, changeVector?: string) {
+    super(id, changeVector);
 
     this.document = document;
     this.method = RequestMethods.Put;

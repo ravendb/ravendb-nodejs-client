@@ -7,8 +7,8 @@ export class PutCommandData extends RavenCommandData implements IJsonable  {
   protected document: object;
   protected metadata?: object;
 
-  constructor(id: string, document: object, etag?: number, metadata?: object) {
-    super(id, etag);
+  constructor(id: string, document: object, changeVector?: string, metadata?: object) {
+    super(id, changeVector);
 
     this.type = RequestMethods.Put;
     this.document = document;

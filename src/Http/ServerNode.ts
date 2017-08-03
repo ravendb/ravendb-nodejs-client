@@ -26,6 +26,10 @@ export class ServerNode implements IJsonConvertible {
     return this._database;
   }
 
+  public get clusterTag(): string {
+    return this._clusterTag;
+  }
+
   public get url(): string {
     return this._url;
   }

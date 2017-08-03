@@ -8,11 +8,13 @@ import {StringUtil} from "../../Utility/StringUtil";
 import {DatabaseDocument} from "../DatabaseDocument";
 
 export class CreateDatabaseCommand extends RavenCommand {
+  protected replicationFactor: number;
   protected databaseDocument: DatabaseDocument;
 
-  constructor(databaseDocument: DatabaseDocument) {
+  constructor(databaseDocument: DatabaseDocument, replicationFactor: number = 1) {
     super('', RequestMethods.Put);
     this.databaseDocument = databaseDocument;
+    this.replicationFactor = replicationFactor || 1;
   }
 
   public createRequest(serverNode: ServerNode): void {
@@ -24,7 +26,7 @@ export class CreateDatabaseCommand extends RavenCommand {
       throw new InvalidOperationException("The Raven/DataDir setting is mandatory");
     }
 
-    this.params = {name: dbName};
+    this.params = {name: dbName, 'replication-factor': this.replicationFactor};
     this.endPoint = StringUtil.format('{url}/admin/databases', serverNode);
     this.payload = this.databaseDocument.toJson();
   }

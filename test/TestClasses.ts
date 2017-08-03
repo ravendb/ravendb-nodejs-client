@@ -1,11 +1,11 @@
-import {RequestExecutor} from "../src/Http/Request/RequestExecutor";
 import {IndexDefinition} from "../src/Database/Indexes/IndexDefinition";
 import {FieldIndexingOptions} from "../src/Database/Indexes/FieldIndexingOption";
 import {IRavenResponse} from "../src/Database/RavenCommandResponse";
 import {IndexFieldOptions} from "../src/Database/Indexes/IndexFieldOptions";
 import {IRavenObject} from "../src/Database/IRavenObject";
-import {PutIndexesCommand} from "../src/Database/Commands/PutIndexesCommand";
+import {PutIndexesOperation} from "../src/Database/Operations/PutIndexesOperation";
 import {SortOptions} from "../src/Database/Indexes/SortOption";
+import {IDocumentStore} from "../src/Documents/IDocumentStore";
 
 export class Foo implements IRavenObject {
   constructor(
@@ -73,7 +73,7 @@ export class LastFmAnalyzed {
   protected indexDefinition: IndexDefinition;
 
   constructor(
-    protected executor: RequestExecutor
+    protected store: IDocumentStore
   ) {
     const indexMap: string = [
       "from song in docs.LastFms ",
@@ -95,7 +95,7 @@ export class LastFmAnalyzed {
   }
 
   public async execute(): Promise<IRavenResponse | IRavenResponse[] | void> {
-     return this.executor.execute(new PutIndexesCommand(this.indexDefinition)); 
+     return this.store.operations.send(new PutIndexesOperation(this.indexDefinition)); 
   }
 }
 
@@ -103,7 +103,7 @@ export class ProductsTestingSort {
   protected indexDefinition: IndexDefinition;
 
   constructor(
-    protected executor: RequestExecutor
+    protected store: IDocumentStore
   ) {
     const indexMap: string = [
       'from doc in docs ',
@@ -122,6 +122,6 @@ export class ProductsTestingSort {
   }
 
   public async execute(): Promise<IRavenResponse | IRavenResponse[] | void> {
-     return this.executor.execute(new PutIndexesCommand(this.indexDefinition)); 
+     return this.store.operations.send(new PutIndexesOperation(this.indexDefinition)); 
   }
 }

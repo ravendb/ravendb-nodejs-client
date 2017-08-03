@@ -42,7 +42,7 @@ export abstract class IndexQueryBasedCommand extends RavenCommand {
     };
 
     this.endPoint += StringUtil.format('/queries/{0}', this.indexName);
-    query.query && this.addParams('query', query.query);
+    query.query && this.addParams('Query', query.query);
     options.maxOpsPerSec && this.addParams('maxOpsPerSec', options.maxOpsPerSec);
     options.staleTimeout && this.addParams('staleTimeout', options.staleTimeout);
   }

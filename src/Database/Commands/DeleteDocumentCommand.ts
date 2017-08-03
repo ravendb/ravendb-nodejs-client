@@ -10,13 +10,13 @@ import {TypeUtil} from "../../Utility/TypeUtil";
 
 export class DeleteDocumentCommand extends RavenCommand {
   protected id?: string;
-  protected etag?: number;
+  protected changeVector?: string;
 
-  constructor(id: string, etag?: number) {
+  constructor(id: string, changeVector?: string) {
     super('', RequestMethods.Delete);
 
     this.id = id;
-    this.etag = etag;
+    this.changeVector = changeVector;
   }
 
   public createRequest(serverNode: ServerNode): void {
@@ -28,8 +28,8 @@ export class DeleteDocumentCommand extends RavenCommand {
       throw new InvalidOperationException('Id must be a string');
     }
 
-    if (this.etag) {
-      this.headers = {'If-Match': StringUtil.format('"{0}"', this.etag)};
+    if (this.changeVector) {
+      this.headers = {'If-Match': StringUtil.format('"{0}"', this.changeVector)};
     }
 
     this.params = {id: this.id};

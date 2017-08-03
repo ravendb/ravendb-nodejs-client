@@ -12,7 +12,6 @@ import {LuceneValue, LuceneConditionValue, LuceneRangeValue} from "../Lucene/Luc
 import {IRavenResponse} from "../../Database/RavenCommandResponse";
 import {LuceneOperator, LuceneOperators} from "../Lucene/LuceneOperator";
 import {LuceneBuilder} from "../Lucene/LuceneBuilder";
-import {StringUtil} from "../../Utility/StringUtil";
 import {QueryString} from "../../Http/QueryString";
 import {ArrayUtil} from "../../Utility/ArrayUtil";
 import {QueryOperators, QueryOperator} from "./QueryOperator";

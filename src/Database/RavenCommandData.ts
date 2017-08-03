@@ -4,11 +4,11 @@ import {RequestMethod} from "../Http/Request/RequestMethod";
 export abstract class RavenCommandData implements IJsonable {
   protected type: RequestMethod;
   protected id: string;
-  protected etag?: number = null;
+  protected changeVector?: string = null;
 
-  constructor(id: string, etag?: number) {
+  constructor(id: string, changeVector?: string) {
     this.id = id;
-    this.etag = etag;
+    this.changeVector = changeVector;
   }
 
   public get documentId(): string {
@@ -19,7 +19,7 @@ export abstract class RavenCommandData implements IJsonable {
     return {
       "Type": this.type,
       "Id": this.id,
-      "Etag": this.etag
+      "ChangeVector": this.changeVector
     };
   }
 }

@@ -2,7 +2,6 @@
 /// <reference path="../../node_modules/@types/chai/index.d.ts" />
 
 import {expect} from 'chai';
-import * as BluebirdPromise from 'bluebird';
 import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 import {BatchCommand} from "../../src/Database/Commands/BatchCommand";
 import {PatchRequest} from "../../src/Http/Request/PatchRequest";
