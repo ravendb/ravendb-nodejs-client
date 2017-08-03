@@ -35,8 +35,8 @@ export interface IStoredRawEntityInfo {
   metadata: object;
   originalMetadata: object;
   id: string;
-  etag?: number | null;
-  expectedEtag?: number | null;
+  changeVector?: string | null;
+  expectedChangeVector?: string | null;
   concurrencyCheckMode: ConcurrencyCheckMode;
   documentType: DocumentType;
 }
@@ -44,7 +44,7 @@ export interface IStoredRawEntityInfo {
 export class DocumentConventions {
   readonly maxNumberOfRequestPerSession: number = 30;
   readonly requestTimeout: number = 30;
-  readonly defaultUseOptimisticConcurrency:boolean = false;
+  readonly defaultUseOptimisticConcurrency:boolean = true;
   readonly maxLengthOfQueryUsingGetUrl = 1024 + 512;
   readonly identityPartsSeparator = "/";
   private _resolvers: IDocumentInfoResolvable[] = [];
@@ -54,8 +54,8 @@ export class DocumentConventions {
   public setIdOnlyIfPropertyIsDefined: boolean = false;
   public disableTopologyUpdates: boolean = false;
 
-  public get emptyEtag(): number {
-    return 0;
+  public get emptyChangeVector(): string {
+    return null;
   }
 
   public addDocumentInfoResolver(resolver: IDocumentInfoResolvable): void {

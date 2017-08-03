@@ -9,6 +9,7 @@ import {InvalidOperationException, IndexDoesNotExistException} from "../Database
 import {StringUtil} from "../../Utility/StringUtil";
 import {QueryOperators} from "../../Documents/Session/QueryOperator";
 import {QueryString} from "../../Http/QueryString";
+import {log} from "util";
 
 export class QueryCommand extends RavenCommand {
   protected indexName: string;
@@ -21,6 +22,7 @@ export class QueryCommand extends RavenCommand {
   constructor(indexName: string, indexQuery: IndexQuery, conventions: DocumentConventions,
     includes?: string[], metadataOnly: boolean = false, indexEntriesOnly: boolean = false
   ) {
+    // change to Post
     super('', RequestMethods.Get, null, null, {});
 
     if (!indexName) {
@@ -47,18 +49,26 @@ export class QueryCommand extends RavenCommand {
     const query = this.indexQuery;
 
     this.params = {
-      waitForNonStaleResultsAsOfNow: 'false',
-      pageSize: query.pageSize,
-      start: query.start
+      waitForNonStaleResultsAsOfNow: 'true',
+      PageSize: query.pageSize,
+      Start: query.start
     };
 
+    this.payload = {
+      waitForNonStaleResultsAsOfNow: 'true',
+      PageSize: query.pageSize,
+      Start: query.start
+    };
+
+
+    // remove indexName
     this.endPoint = StringUtil.format(
-      '{0}/databases/{1}/queries/{2}',
-      serverNode.url, serverNode.database,
-      this.indexName
+      '{0}/databases/{1}/queries?',
+      serverNode.url,serverNode.database
     );
 
-    query.query && this.addParams('query', query.query);
+
+    query.query && this.addParams('Query', query.query);
     query.fetch && this.addParams('fetch', query.fetch);
     this.includes && this.addParams('include', this.includes);
     this.metadataOnly && this.addParams('metadata-only', 'true');
@@ -85,7 +95,6 @@ export class QueryCommand extends RavenCommand {
     if (!response.body) {
       throw new IndexDoesNotExistException(StringUtil.format('Could not find index {0}', this.indexName));
     }
-
-    return result;
+      return result;
   }
 }

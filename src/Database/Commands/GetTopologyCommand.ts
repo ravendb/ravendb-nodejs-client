@@ -1,5 +1,3 @@
-import * as _ from 'lodash';
-import {IRavenObject} from '../IRavenObject';
 import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
 import {IRavenResponse} from "../RavenCommandResponse";

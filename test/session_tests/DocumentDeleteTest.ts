@@ -3,7 +3,6 @@
 
 import {expect} from 'chai';
 import {IRavenObject} from "../../src/Database/IRavenObject";
-import {DocumentStore} from "../../src/Documents/DocumentStore";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {Product} from "../TestClasses";
@@ -15,11 +14,12 @@ describe('Document delete test', () => {
   let store: IDocumentStore;
   let session: IDocumentSession;
   let requestExecutor: RequestExecutor;
-  let defaultDatabase: string, defaultUrl: string;  
-  let eTags: number[];
+  let defaultUrl: string;
+  let currentDatabase: string;
+  let changeVector: string[];
 
   beforeEach(function(): void {
-    ({defaultDatabase, defaultUrl, requestExecutor, store} = (this.currentTest as IRavenObject));
+    ({currentDatabase, defaultUrl, requestExecutor, store} = (this.currentTest as IRavenObject));
   });
 
   beforeEach(async () => {
@@ -35,13 +35,13 @@ describe('Document delete test', () => {
     let products: Product[] = await store.openSession()
       .load<Product>(ids.map((id: number): string => `Product/${id}`), Product);
 
-    eTags = products.map((product: Product) => product['@metadata']['@etag']);  
+    changeVector = products.map((product: Product) => product['@metadata']['@change-vector']);
   });
 
   describe('Document delete', () => {
     it('should delete with key with save session', async() => {
       let product: Product;
-      const key: string = "Product/101";      
+      const key: string = "Product/101";
       session = store.openSession();
 
       await session.delete<Product>(key);
@@ -88,24 +88,25 @@ describe('Document delete test', () => {
       expect(product).to.be.null;
     });
 
-    it('should delete with correct etag', async() => {
+    it('should delete with correct changeVector', async() => {
       session = store.openSession();
 
       for (let i: number = 0; i < ids.length; i++) {
-        await session.delete<Product>(`Product/${ids[i]}`, eTags[i]);
+        await session.delete<Product>(`Product/${ids[i]}`, changeVector[i]);
       }
-      
-      await expect(session.saveChanges()).to.be.fulfilled;        
+
+      await expect(session.saveChanges()).to.be.fulfilled;
     });
 
-    it('should fail delete when etag mismatches', async() => {
+    it('should fail delete when changeVector mismatches', async() => {
       session = store.openSession();
 
       for (let i: number = 0; i < ids.length; i++) {
-        await session.delete<Product>(`Product/${ids[i]}`, eTags[i] + 10);
+
+          await session.delete<Product>(`Product/${ids[i]}`, `${changeVector[i]}:BROKEN:VECTOR`);
       }
-      
-      await expect(session.saveChanges()).to.be.rejected;        
+
+      await expect(session.saveChanges()).to.be.rejected;
     });
   })
 });

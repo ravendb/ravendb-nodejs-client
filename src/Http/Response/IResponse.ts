@@ -20,5 +20,5 @@ export interface IResponseBody extends IRavenObject {
   Message?: string,
   Error?: string,
   Results?: IRavenObject | IRavenObject[],
-  ActualEtag?: number
+  ActualchangeVector?: string
 }

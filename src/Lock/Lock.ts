@@ -1,6 +1,4 @@
-import {StringUtil} from '../Utility/StringUtil';
 import {ILockCallback, ILockDoneCallback} from './LockCallbacks';
-import {HiloRangeValue} from '../Hilo/HiloRangeValue';
 import * as BluebirdPromise from 'bluebird';
 import * as AsyncLock from 'async-lock';
 import * as uuid from 'uuid';

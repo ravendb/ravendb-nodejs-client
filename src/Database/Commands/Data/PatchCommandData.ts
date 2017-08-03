@@ -12,9 +12,9 @@ export class PatchCommandData extends RavenCommandData implements IJsonable {
   protected additionalData?: IRavenObject = null;
   protected debugMode: boolean = false;
 
-  constructor(id: string, scriptedPatch: PatchRequest, etag?: number,
+  constructor(id: string, scriptedPatch: PatchRequest, changeVector?: string,
     patchIfMissing?: PatchRequest, debugMode?: boolean) {
-    super(id, etag);
+    super(id, changeVector);
 
     this.type = RequestMethods.Patch;
     this.scriptedPatch = scriptedPatch;

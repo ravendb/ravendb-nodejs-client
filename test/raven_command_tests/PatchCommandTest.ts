@@ -14,7 +14,7 @@ import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 describe('Patch command test', () => {
   const id: string = "products/10";
   let requestExecutor: RequestExecutor;
-  let etag: number;
+  let changeVector: string;
   let store: IDocumentStore;
 
   beforeEach(function(): void {
@@ -24,7 +24,7 @@ describe('Patch command test', () => {
   beforeEach(async () => requestExecutor
     .execute(new PutDocumentCommand(id, {"Name": "test", "@metadata": {}}))
     .then(() => requestExecutor.execute(new GetDocumentCommand(id)))
-    .then((result: IRavenResponse) => etag = result.Results[0]["@metadata"]["@etag"])    
+    .then((result: IRavenResponse) => changeVector = result.Results[0]["@metadata"]["@change-vector"])
   );
 
   describe('Patch request', () => {
@@ -37,12 +37,12 @@ describe('Patch command test', () => {
     );
 
     it('should patch success not ignoring missing', async() => store.operations
-      .send(new PatchOperation(id, new PatchRequest("this.Name = 'testing'"), {etag: etag + 1, skipPatchIfEtagMismatch: true}))
+      .send(new PatchOperation(id, new PatchRequest("this.Name = 'testing'"), {changeVector: changeVector + 1, skipPatchIfChangeVectorMismatch: true}))
       .then((result: IRavenResponse) => expect(result).to.not.haveOwnProperty('Document'))
     );
 
     it('should patch fail not ignoring missing', async () => expect(store.operations
-        .send(new PatchOperation(id, new PatchRequest("this.Name = 'testing'"), {etag: etag + 1, skipPatchIfEtagMismatch: false}))
+        .send(new PatchOperation(id, new PatchRequest("this.Name = 'testing'"), {changeVector: changeVector + 1, skipPatchIfChangeVectorMismatch: false}))
       ).to.be.rejected
     );
   })

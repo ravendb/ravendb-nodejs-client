@@ -1,6 +1,5 @@
 import {ServerOperation} from './Operation';
 import {RavenCommand} from '../RavenCommand';
-import {IDocumentStore} from '../../Documents/IDocumentStore';
 import {DocumentConventions} from '../../Documents/Conventions/DocumentConventions';
 import {GetApiKeyCommand} from '../Commands/GetApiKeyCommand';
 

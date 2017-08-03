@@ -5,7 +5,6 @@ import {ServerNode} from "../../Http/ServerNode";
 import {StringUtil} from "../../Utility/StringUtil";
 import {IResponse} from "../../Http/Response/IResponse";
 import {IRavenResponse} from "../RavenCommandResponse";
-import {ErrorResponseException} from "../DatabaseExceptions";
 
 export class GetStatisticsCommand extends RavenCommand {
   protected checkForFailures?: boolean;

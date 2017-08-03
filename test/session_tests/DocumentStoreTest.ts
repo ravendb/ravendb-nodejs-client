@@ -4,7 +4,6 @@
 import {expect} from 'chai';
 import {DocumentType, IStoredRawEntityInfo} from "../../src/Documents/Conventions/DocumentConventions";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
-import {DocumentStore} from '../../src/Documents/DocumentStore';
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {IRavenObject} from "../../src/Database/IRavenObject";
 import {Foo, Product} from "../TestClasses";
@@ -14,7 +13,7 @@ describe('Document store test', () => {
   let store: IDocumentStore;
   let session: IDocumentSession;
   let requestExecutor: RequestExecutor;
-  let defaultDatabase: string, defaultUrl: string;
+  let currentDatabase: string, defaultUrl: string;
 
   const resolveDocumentType = (plainDocument: object, key?: string, specifiedType?: DocumentType): string => {
     const propsMap = {
@@ -29,7 +28,7 @@ describe('Document store test', () => {
   };
 
   beforeEach(function (): void {
-    ({defaultDatabase, defaultUrl, requestExecutor, store} = (this.currentTest as IRavenObject));
+    ({currentDatabase, defaultUrl, requestExecutor, store} = (this.currentTest as IRavenObject));
   });
 
   describe('Store', () => {

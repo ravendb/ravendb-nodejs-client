@@ -26,7 +26,7 @@ describe('IndexBasedCommand tests', () => {
   let patch: PatchRequest;
   let store: IDocumentStore;
   
-  beforeEach(function(): void {
+  /*beforeEach(function(): void {
     ({requestExecutor, store} = this.currentTest as IRavenObject);
   });
 
@@ -96,5 +96,5 @@ describe('IndexBasedCommand tests', () => {
         .send(deleteByIndexOperation))
         .then((response: IRavenResponse) => expect(response.Status).to.equals('Completed'));
     });
-  });
+  });*/
 });

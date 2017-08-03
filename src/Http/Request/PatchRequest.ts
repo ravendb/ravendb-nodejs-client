@@ -12,9 +12,9 @@ export class PatchStatuses {
 }
 
 export interface IPatchRequestOptions {
-  etag?: number, 
+  changeVector?: string,
   patchIfMissing?: PatchRequest, 
-  skipPatchIfEtagMismatch?: boolean,
+  skipPatchIfChangeVectorMismatch?: boolean,
   returnDebugInformation?: boolean
 }
 

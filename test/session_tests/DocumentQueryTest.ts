@@ -5,7 +5,6 @@
 import {expect} from 'chai';
 import * as _ from 'lodash';
 import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
-import {DocumentStore} from '../../src/Documents/DocumentStore';
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {IRavenObject} from "../../src/Database/IRavenObject";
@@ -17,10 +16,10 @@ describe('Document query test', () => {
   let store: IDocumentStore;
   let session: IDocumentSession;
   let requestExecutor: RequestExecutor;
-  let defaultDatabase: string, defaultUrl: string;
+  let currentDatabase: string, defaultUrl: string;
 
-  beforeEach(function (): void {
-    ({defaultDatabase, defaultUrl, requestExecutor, store} = (this.currentTest as IRavenObject));
+  /*beforeEach(function (): void {
+    ({currentDatabase, defaultUrl, requestExecutor, store} = (this.currentTest as IRavenObject));
   });
 
   beforeEach(async () => {
@@ -224,5 +223,5 @@ describe('Document query test', () => {
       
       expect(_.every(results, (result: Product) => result.hasOwnProperty('doc_id'))).to.be.true;
     });
-  });  
+  });  */
 });

@@ -3,7 +3,7 @@ import {IOperation, AbstractOperation, Operation, AwaitableOperation, PatchResul
 import {IDocumentStore} from '../../Documents/IDocumentStore';
 import {ClusterRequestExecutor} from '../../Http/Request/ClusterRequestExecutor';
 import {IRequestExecutor} from '../../Http/Request/RequestExecutor';
-import {PatchStatus, PatchStatuses, IPatchResult} from '../../Http/Request/PatchRequest';
+import {PatchStatuses, IPatchResult} from '../../Http/Request/PatchRequest';
 import {StatusCodes} from '../../Http/Response/StatusCode';
 import {IRavenResponse} from '../RavenCommandResponse';
 import {IRavenObject} from '../IRavenObject';

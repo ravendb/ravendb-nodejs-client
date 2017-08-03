@@ -2,7 +2,6 @@
 /// <reference path="../../node_modules/@types/chai/index.d.ts" />
 
 import {expect} from 'chai';
-import {DocumentStore} from '../../src/Documents/DocumentStore';
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {IRavenObject} from "../../src/Database/IRavenObject";
@@ -17,10 +16,10 @@ describe('Document load test', () => {
   let company: Company;
   let session: IDocumentSession;
   let requestExecutor: RequestExecutor;
-  let defaultDatabase: string, defaultUrl: string;
+  let currentDatabase: string, defaultUrl: string;
 
   beforeEach(function(): void {
-    ({defaultDatabase, defaultUrl, requestExecutor, store} = (this.currentTest as IRavenObject));
+    ({currentDatabase, defaultUrl, requestExecutor, store} = (this.currentTest as IRavenObject));
   });
 
   beforeEach(async () => {

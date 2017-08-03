@@ -9,7 +9,6 @@ import {DocumentConventions, DocumentConstructor, DocumentType} from './Conventi
 import {InvalidOperationException, RavenException} from '../Database/DatabaseExceptions';
 import {IHiloIdGenerator} from '../Hilo/IHiloIdGenerator';
 import {HiloMultiDatabaseIdGenerator} from '../Hilo/HiloMultiDatabaseIdGenerator';
-import {IRavenObject} from "../Database/IRavenObject";
 import {PromiseResolver} from "../Utility/PromiseResolver";
 import {TypeUtil} from "../Utility/TypeUtil";
 import {QueryString} from "../Http/QueryString";

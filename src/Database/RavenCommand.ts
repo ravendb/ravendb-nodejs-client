@@ -61,13 +61,17 @@ export abstract class RavenCommand {
       qsStringifyOptions: {
         arrayFormat: 'repeat',
         strictNullHandling: true
+      },
+      body: {
+        "Query": "from @all_docs"
       }
     };
+
 
     const params = this.params;
     const payload = this.payload;
 
-    const check: (target?: object) => boolean = (target: object) => {
+      const check: (target?: object) => boolean = (target: object) => {
       return !TypeUtil.isNone(target) && !_.isEmpty(target);
     };
 

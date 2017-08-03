@@ -3,24 +3,19 @@ import * as BluebirdPromise from 'bluebird';
 import * as RequestPromise from 'request-promise';
 import {ServerNode} from '../ServerNode';
 import {RavenCommand, RavenCommandRequestOptions} from '../../Database/RavenCommand';
-import {DocumentConventions} from '../../Documents/Conventions/DocumentConventions';
 import {IRavenResponse} from "../../Database/RavenCommandResponse";
 import {Topology} from "../Topology";
-import {TypeUtil} from "../../Utility/TypeUtil";
 import {IHeaders} from "../IHeaders";
-import {IRavenObject} from "../../Database/IRavenObject";
 import {Lock} from "../../Lock/Lock";
-import {ILockDoneCallback} from "../../Lock/LockCallbacks";
 import {GetTopologyCommand} from "../../Database/Commands/GetTopologyCommand";
 import {GetStatisticsCommand} from "../../Database/Commands/GetStatisticsCommand";
-import {StringUtil} from "../../Utility/StringUtil";
 import {DateUtil} from "../../Utility/DateUtil";
 import {IResponse, IErrorResponse} from "../Response/IResponse";
 import {StatusCodes, StatusCode} from "../Response/StatusCode";
 import {Observable} from "../../Utility/Observable";
 import {NodeSelector} from "./NodeSelector";
 import {NodeStatus} from "../NodeStatus";
-import {RavenException, InvalidOperationException, BadRequestException, AuthorizationException, TopologyNodeDownException, AllTopologyNodesDownException, DatabaseLoadFailureException, UnsuccessfulRequestException} from "../../Database/DatabaseExceptions";
+import {RavenException, InvalidOperationException, TopologyNodeDownException, AllTopologyNodesDownException, DatabaseLoadFailureException, UnsuccessfulRequestException} from "../../Database/DatabaseExceptions";
 
 export interface ITopologyUpdateEvent {
   topologyJson: object;
@@ -196,8 +191,8 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
         node.responseTime = DateUtil.timestampMs() - startTime;
       })
       .catch((errorResponse: IErrorResponse) => {
-        if (errorResponse.response) {
-          return BluebirdPromise.resolve(errorResponse.response);
+          if (errorResponse.response) {
+            return BluebirdPromise.resolve(errorResponse.response);
         }
 
         return BluebirdPromise.reject(new TopologyNodeDownException(`Node ${node.url} is down`));
@@ -211,7 +206,6 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
           StatusCodes.GatewayTimeout,
           StatusCodes.ServiceUnavailable
         ].includes(code);
-
         if (StatusCodes.isNotFound(code)) {
           delete response.body;
         }
@@ -221,7 +215,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
             let message: string = 'Unsuccessfull request';
 
             if (response.body && response.body.Error) {
-              message += `: ${response.body.Error}`;
+                message += `: ${response.body.Error}`;
             }
 
             return BluebirdPromise.reject(new UnsuccessfulRequestException(message));
@@ -309,7 +303,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
       this.executeCommand(new topologyCommandClass(), node)
         .then((response?: IRavenResponse) => {
           if (this._nodeSelector) {
-            let eventData: ITopologyUpdateEvent = {
+              let eventData: ITopologyUpdateEvent = {
               topologyJson: response,
               serverNodeUrl: node.url,
               requestedDatabase: node.database,

@@ -12,9 +12,9 @@ import {TypeUtil} from "../../Utility/TypeUtil";
 export class PatchCommand extends RavenCommand {
   protected id?: string;
   protected patch: PatchRequest;
-  protected etag?: number = null;
+  protected changeVector?: string = null;
   protected patchIfMissing?: PatchRequest = null;
-  protected skipPatchIfEtagMismatch: boolean = false;
+  protected skipPatchIfChangeVectorMismatch: boolean = false;
   protected returnDebugInformation: boolean;
   protected path: string;
 
@@ -25,9 +25,9 @@ export class PatchCommand extends RavenCommand {
 
     this.id = id;
     this.patch = patch;
-    this.etag = opts.etag;
+    this.changeVector = opts.changeVector;
     this.patchIfMissing = opts.patchIfMissing;
-    this.skipPatchIfEtagMismatch = opts.skipPatchIfEtagMismatch || false;
+    this.skipPatchIfChangeVectorMismatch = opts.skipPatchIfChangeVectorMismatch || false;
     this.returnDebugInformation = opts.returnDebugInformation || false;
   }
 
@@ -46,9 +46,9 @@ export class PatchCommand extends RavenCommand {
 
     this.params = {id: this.id};
     this.endPoint = StringUtil.format('{url}/databases/{database}/docs', serverNode);
-    this.skipPatchIfEtagMismatch && this.addParams('skipPatchIfEtagMismatch', 'true');
+    this.skipPatchIfChangeVectorMismatch && this.addParams('skipPatchIfChangeVectorMismatch', 'true');
     this.returnDebugInformation && this.addParams('debug', 'true');
-    TypeUtil.isNone(this.etag) || (this.headers = {"If-Match": StringUtil.format('"{etag}"', this)});
+    TypeUtil.isNone(this.changeVector) || (this.headers = {"If-Match": StringUtil.format('"{change-vector}"', this)});
 
     this.payload = {
       "Patch": this.patch.toJson(),

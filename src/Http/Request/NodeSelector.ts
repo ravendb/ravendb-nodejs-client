@@ -2,9 +2,7 @@ import * as BluebirdPromise from 'bluebird';
 import {RequestExecutor, ITopologyUpdateEvent} from "./RequestExecutor";
 import {ServerNode} from "../ServerNode";
 import {Topology} from "../Topology";
-import {IRavenObject} from "../../Database/IRavenObject";
 import {InvalidOperationException} from "../../Database/DatabaseExceptions";
-import {IRavenResponse} from "../../Database/RavenCommandResponse";
 import {Lock} from "../../Lock/Lock";
 
 export class NodeSelector {

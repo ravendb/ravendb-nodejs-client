@@ -4,7 +4,6 @@ import {IDocumentStore} from '../../Documents/IDocumentStore';
 import {DocumentConventions} from '../../Documents/Conventions/DocumentConventions';
 import {QueryOperationOptions} from "../Operations/QueryOperationOptions";
 import {IndexQuery} from "../Indexes/IndexQuery";
-import {DatabaseDocument} from "../DatabaseDocument";
 import {PatchByIndexCommand} from '../Commands/PatchByIndexCommand';
 import {PatchRequest} from "../../Http/Request/PatchRequest";
 
