@@ -7,29 +7,39 @@ import {RequestExecutor} from "../../Http/Request/RequestExecutor";
 import {IDocumentQueryConditions} from './IDocumentQueryConditions';
 import {QueryResultsCallback, EntityCallback, EntitiesCountCallback} from '../../Utility/Callbacks';
 import {PromiseResolver} from '../../Utility/PromiseResolver';
-import {EscapeQueryOption, EscapeQueryOptions} from "./EscapeQueryOptions";
-import {LuceneValue, LuceneConditionValue, LuceneRangeValue} from "../Lucene/LuceneValue";
+import {RQLValue, RQLConditionValue, RQLRangeValue} from "../RQL/RQLValue";
 import {IRavenResponse} from "../../Database/RavenCommandResponse";
-import {LuceneOperator, LuceneOperators} from "../Lucene/LuceneOperator";
-import {LuceneBuilder} from "../Lucene/LuceneBuilder";
+import {RQLOperator, RQLOperators} from "../RQL/RQLOperator";
+import {RQLBuilder} from "../RQL/RQLBuilder";
 import {QueryString} from "../../Http/QueryString";
 import {ArrayUtil} from "../../Utility/ArrayUtil";
 import {QueryOperators, QueryOperator} from "./QueryOperator";
-import {DocumentConventions, DocumentConstructor, IDocumentConversionResult, DocumentType} from "../Conventions/DocumentConventions";
+import {
+  DocumentConventions,
+  DocumentConstructor,
+  IDocumentConversionResult,
+  DocumentType
+} from "../Conventions/DocumentConventions";
 import {IndexQuery} from "../../Database/Indexes/IndexQuery";
 import {IRavenObject} from "../../Database/IRavenObject";
 import {IOptionsSet} from "../../Utility/IOptionsSet";
 import {QueryCommand} from "../../Database/Commands/QueryCommand";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {Observable} from "../../Utility/Observable";
-import {ArgumentOutOfRangeException, InvalidOperationException, ErrorResponseException, RavenException} from "../../Database/DatabaseExceptions";
+import {
+  ArgumentOutOfRangeException,
+  InvalidOperationException,
+  ErrorResponseException,
+  RavenException
+} from "../../Database/DatabaseExceptions";
+import {StringUtil} from "../../Utility/StringUtil";
 
-export type QueryResultsWithStatistics<T> = {results: T[], response: IRavenResponse};
+export type QueryResultsWithStatistics<T> = { results: T[], response: IRavenResponse };
 
 export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
-  public static readonly EVENT_DOCUMENTS_QUERIED : string = 'queried:documents';
-  public static readonly EVENT_DOCUMENT_FETCHED  : string = 'fetched:document';
-  public static readonly EVENT_INCLUDES_FETCHED  : string = 'fetched:includes';
+  public static readonly EVENT_DOCUMENTS_QUERIED: string = 'queried:documents';
+  public static readonly EVENT_DOCUMENT_FETCHED: string = 'fetched:document';
+  public static readonly EVENT_INCLUDES_FETCHED: string = 'fetched:includes';
 
   protected indexName: string;
   protected session: IDocumentSession;
@@ -47,10 +57,9 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   protected nestedObjectTypes: IRavenObject<DocumentConstructor> = {};
   private _take?: number = null;
   private _skip?: number = null;
-  
+
   constructor(session: IDocumentSession, requestExecutor: RequestExecutor, documentType?: DocumentType<T>, indexName?: string, usingDefaultOperator
-    ?: QueryOperator, waitForNonStaleResults: boolean = false, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, withStatistics: boolean = false
-  ) {
+    ?: QueryOperator, waitForNonStaleResults: boolean = false, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, withStatistics: boolean = false) {
     super();
     this.session = session;
     this.includes = includes;
@@ -60,40 +69,20 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     this.waitForNonStaleResults = waitForNonStaleResults;
     this.nestedObjectTypes = nestedObjectTypes || {} as IRavenObject<DocumentConstructor>;
     this.documentType = documentType;
-    this.indexName = indexName ||  "dynamic";
-    
+    this.indexName = indexName || "dynamic";
+
     if (!indexName && documentType) {
       this.indexName += "/" + session.conventions.getCollectionName(documentType);
     }
   }
 
-  public get not(): IDocumentQuery<T> {
-    this.negateNext();
-
-    return this;
+  public selectFields<V extends RQLValue>(fieldName: string, value: V): IDocumentQuery<T> {
+    return this.assertFieldName(fieldName)
+      .addRQLCondition<V>(fieldName, value, RQLOperators.Select) as IDocumentQuery<T>;
   }
 
-  public get and(): IDocumentQuery<T> {
-    this.andAlso();
+  public search(fieldName: string, searchTerms: string | string[], boost: number = 1): IDocumentQuery<T> {
 
-    return this;
-  }
-
-  public get or(): IDocumentQuery<T> {
-    this.orElse();
-
-    return this;
-  }
-
-  public selectFields(...args: string[]): IDocumentQuery<T> {
-    if (args && args.length) {
-      this.fetch = args;
-    }
-
-    return this;
-  }
-
-  public search(fieldName: string, searchTerms: string | string[], escapeQueryOptions?: EscapeQueryOption, boost: number = 1): IDocumentQuery<T> {
     if (boost < 0) {
       throw new ArgumentOutOfRangeException('Boost factor must be a positive number');
     }
@@ -103,123 +92,115 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
       : (searchTerms as string);
 
     quotedTerms = QueryString.encode(quotedTerms);
-    this.addLuceneCondition<string>(fieldName, quotedTerms, LuceneOperators.Search, escapeQueryOptions || EscapeQueryOptions.RawQuery, boost);
 
+    this.addRQLCondition<string>(fieldName, quotedTerms, RQLOperators.Search, boost);
     return this;
   }
 
-  public where(conditions: IDocumentQueryConditions): IDocumentQuery<T> {
+  public where<T>(conditions: IDocumentQueryConditions) {
     ArrayUtil.mapObject(conditions, (value: any, fieldName: string): any => {
       if (TypeUtil.isArray(value)) {
-        this.whereIn<LuceneValue>(fieldName, value as LuceneValue[]);
+        this.whereIn<string>(fieldName, value);
       } else {
-        this.whereEquals<LuceneValue>(fieldName, value as LuceneValue);
+        this.whereEquals<string>(fieldName, value);
       }
     });
 
     return this;
   }
 
-  public whereEquals<V extends LuceneValue>(fieldName: string, value: V, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll): IDocumentQuery<T> {
+  public whereEquals<V extends RQLValue>(fieldName: string, value: V): IDocumentQuery<T> {
     return this.assertFieldName(fieldName)
-      .addLuceneCondition<V>(fieldName, value, LuceneOperators.Equals, escapeQueryOptions) as IDocumentQuery<T>;
+      .addRQLCondition<V>(fieldName, value, RQLOperators.Equals) as IDocumentQuery<T>;
   }
 
   public whereEndsWith(fieldName: string, value: string): IDocumentQuery<T> {
     return this.assertFieldName(fieldName)
-      .addLuceneCondition<string>(fieldName, value, LuceneOperators.EndsWith) as IDocumentQuery<T>;
+      .addRQLCondition<string>(fieldName, value, RQLOperators.EndsWith) as IDocumentQuery<T>;
   }
 
   public whereStartsWith(fieldName: string, value: string): IDocumentQuery<T> {
     return this.assertFieldName(fieldName)
-      .addLuceneCondition<string>(fieldName, value, LuceneOperators.StartsWith) as IDocumentQuery<T>;
+      .addRQLCondition<string>(fieldName, value, RQLOperators.StartsWith) as IDocumentQuery<T>;
   }
 
-  public whereIn<V extends LuceneValue>(fieldName: string, values: V[]): IDocumentQuery<T> {
+  public whereIn<V extends RQLValue>(fieldName: string, value: V): IDocumentQuery<T> {
     return this.assertFieldName(fieldName)
-      .addLuceneCondition<V[]>(fieldName, values, LuceneOperators.In) as IDocumentQuery<T>;
+      .addRQLCondition<V>(fieldName, value, RQLOperators.In) as IDocumentQuery<T>;
   }
 
-  public whereBetween<V extends LuceneValue>(fieldName: string, start?: V, end?: V): IDocumentQuery<T> {
+  public whereBetween<V extends RQLValue>(fieldName: string, start?: V, end?: V): IDocumentQuery<T> {
     return this.assertFieldName(fieldName)
-      .addLuceneCondition<LuceneRangeValue<V>>(
-        fieldName, {min: start, max: end}, LuceneOperators.Between
-      ) as IDocumentQuery<T>;
+      .addRQLCondition<RQLRangeValue<V>>(
+        fieldName, {min: start, max: end}, RQLOperators.Between) as IDocumentQuery<T>;
   }
 
-  public whereBetweenOrEqual<V extends LuceneValue>(fieldName: string, start?: V, end?: V): IDocumentQuery<T> {
-    return this.assertFieldName(fieldName).addLuceneCondition<LuceneRangeValue<V>>(
-      fieldName, {min: start, max: end}, LuceneOperators.EqualBetween
-    ) as IDocumentQuery<T>;
+  public whereBetweenOrEqual<V extends RQLValue>(fieldName: string, orName:string, orValue:string, start?: V, end?: V): IDocumentQuery<T> {
+    return this.assertFieldName(fieldName)
+      .whereBetween<V>(fieldName, start, end)
+      .orElse<string>(orName, orValue)
   }
 
-  public whereGreaterThan<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery<T> {
-    return this.whereBetween<V>(fieldName, value);
+  public whereGreaterThan<V extends RQLValue>(fieldName: string, value: V): IDocumentQuery<T> {
+    return this.assertFieldName(fieldName)
+      .addRQLCondition<V>(fieldName, value, RQLOperators.greaterThan) as IDocumentQuery<T>;
   }
 
-  public whereGreaterThanOrEqual<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery<T> {
-    return this.whereBetweenOrEqual<V>(fieldName, value);
+  public whereGreaterThanOrEqual<V extends RQLValue>(fieldName: string, value: V, orName:string, orValue:string): IDocumentQuery<T> {
+    return this.assertFieldName(fieldName)
+      .whereGreaterThan<V>(fieldName, value)
+      .orElse<string>(orName, orValue)
   }
 
-  public whereLessThan<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery<T> {
-    return this.whereBetween<V>(fieldName, null, value);
+  public whereLessThan<V extends RQLValue>(fieldName: string, value: V): IDocumentQuery<T> {
+    return this.assertFieldName(fieldName)
+      .addRQLCondition<V>(fieldName, value, RQLOperators.lessThan) as IDocumentQuery<T>;
   }
 
-  public whereLessThanOrEqual<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery<T> {
-    return this.whereBetweenOrEqual<V>(fieldName, null, value);
+  public whereLessThanOrEqual<V extends RQLValue>(fieldName: string, value: V, orName:string, orValue:string): IDocumentQuery<T> {
+    return this.assertFieldName(fieldName)
+      .whereLessThan<V>(fieldName, value)
+      .orElse<string>(orName, orValue)
+  }
+
+  public orElse<V extends RQLValue>(fieldName, value: V): IDocumentQuery<T> {
+    return this.addSpace()
+      .addStatement(
+        StringUtil.format(`OR '{0}'='{1}'`,
+          fieldName, value
+        )
+      );
   }
 
   public whereIsNull(fieldName: string): IDocumentQuery<T> {
     return this.whereEquals<null>(fieldName, null);
   }
 
-  public whereNotNull(fieldName: string): IDocumentQuery<T> {
-    return (this.addSpace()
-      .addStatement('(')
-        .whereEquals<string>(fieldName, '*')
-        .and.not.whereEquals<null>(fieldName, null) as DocumentQuery<T>)
-    .addStatement(')');
+  public whereNotNull<V extends RQLValue>(fieldName: string, andNotFiledValue: V): IDocumentQuery<T> {
+    return this.assertFieldName(fieldName)
+      .whereEquals<null>(fieldName, null)
+      .andAlso<string>(andNotFiledValue, 'null')
   }
 
-  public orderBy(fieldsNames: string|string[]): IDocumentQuery<T> {
-    const fields: string[] = TypeUtil.isArray(fieldsNames)
-      ? (fieldsNames as string[])
-      : [fieldsNames as string];
-
-    this.sortFields = this.sortFields || [];
-
-    fields.forEach((field) => {
-      const fieldName: string = (field.charAt(0) == '-') ? field.substr(1) : field;
-      let index: number = this.sortFields.indexOf(fieldName);
-
-      if (-1 == index) {
-        index = this.sortFields.indexOf(`-${fieldName}`);
-      }
-
-      if (-1 == index) {
-        this.sortFields.push(field)
-      } else {
-        this.sortFields[index] = field;
-      }
-    });
-
-    return this;
+  public andAlso<V extends RQLValue>(fieldName, value: V): IDocumentQuery<T> {
+    return this.assertFieldName(fieldName)
+      .addSpace()
+      .addStatement(
+        StringUtil.format(`{0} {1}='{2}'`,
+          QueryOperators.andAlso, fieldName, value
+        )
+      );
   }
 
-  public orderByDescending(fieldsNames: string|string[]): IDocumentQuery<T> {
-    const fields: string[] = TypeUtil.isArray(fieldsNames)
-      ? (fieldsNames as string[])
-      : [fieldsNames as string];
-
-    return this.orderBy(fields.map((field) => `-${field}`));
+  public orderBy<V extends RQLValue>(fieldName: string, value: V): IDocumentQuery<T> {
+    return this.assertFieldName(fieldName)
+      .addRQLCondition<V>(fieldName, value, RQLOperators.orderBy) as IDocumentQuery<T>;
   }
 
-  public andAlso(): IDocumentQuery<T> {
-    return this.addSpace().addStatement(QueryOperators.AND);
-  }
-
-  public orElse(): IDocumentQuery<T> {
-    return this.addSpace().addStatement(QueryOperators.OR);
+  public orderByDescending<V extends RQLValue>(fieldName: string, value: V): IDocumentQuery<T> {
+    return this.assertFieldName(fieldName)
+      .orderBy(fieldName, value)
+      .addStatement(' DESC')
   }
 
   public negateNext(): IDocumentQuery<T> {
@@ -230,7 +211,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   public take(docsCount: number): IDocumentQuery<T> {
     this._take = docsCount;
-    
+
     return this;
   }
 
@@ -242,10 +223,9 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   public async get(callback?: QueryResultsCallback<T[]>): Promise<T[]>;
   public async get(callback?: QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<QueryResultsWithStatistics<T>>;
-  public async get(callback?: QueryResultsCallback<T[]> | QueryResultsCallback<QueryResultsWithStatistics<T>>)
-    : Promise<T[] | QueryResultsWithStatistics<T>> {
+  public async get(callback?: QueryResultsCallback<T[]> | QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<T[] | QueryResultsWithStatistics<T>> {
     return this.executeQuery()
-      .then((response: IRavenResponse): T[] | QueryResultsWithStatistics<T> => {        
+      .then((response: IRavenResponse): T[] | QueryResultsWithStatistics<T> => {
         const result: T[] | QueryResultsWithStatistics<T> = this.convertResponseToDocuments(response);
 
         PromiseResolver.resolve<T[] | QueryResultsWithStatistics<T>>(result, null, callback);
@@ -263,8 +243,8 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     this._skip = 0;
     this.withStatistics = false;
 
-    return this.executeQuery()      
-      .then((response: IRavenResponse): T => {                
+    return this.executeQuery()
+      .then((response: IRavenResponse): T => {
         const results: T[] = <T[]>this.convertResponseToDocuments(response);
         const result: T = results.length ? _.first(results) : null;
 
@@ -286,8 +266,8 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     this._take = 0;
     this._skip = 0;
 
-    return this.executeQuery()      
-      .then((response: IRavenResponse): number => {                
+    return this.executeQuery()
+      .then((response: IRavenResponse): number => {
         const result: number = <number>response.TotalResults || 0;
 
         PromiseResolver.resolve<number>(result, null, callback);
@@ -300,7 +280,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
       });
   }
 
-  protected addSpace(): DocumentQuery<T> {
+  public addSpace() {
     if ((this.queryBuilder.length > 0) && !this.queryBuilder.endsWith(' ')) {
       this.addStatement(' ');
     }
@@ -308,18 +288,18 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     return this;
   }
 
-  protected addStatement(statement: string): DocumentQuery<T> {
+  public addStatement(statement: string): DocumentQuery<T> {
     this.queryBuilder += statement;
 
     return this;
   }
 
-  protected addLuceneCondition<C extends LuceneConditionValue>(fieldName: string, condition: C,
-    operator?: LuceneOperator, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll,
-    boost: number = 1
-  ): DocumentQuery<T> {
-    const luceneCondition: string = LuceneBuilder.buildCondition<C>(this.session.conventions, fieldName,
-      condition, operator, escapeQueryOptions, boost);
+  protected addRQLCondition<C extends RQLConditionValue>(fieldName: string, condition: C,
+                                                         operator?: RQLOperator,
+                                                         boost: number = 1): DocumentQuery<T> {
+
+    const RQLCondition: string = RQLBuilder.buildCondition<C>(this.session.conventions, fieldName,
+      condition, operator,  boost);
 
     this.addSpace();
 
@@ -328,7 +308,10 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
       this.addStatement('-');
     }
 
-    this.queryBuilder += luceneCondition;
+    this.queryBuilder += RQLCondition;
+
+    console.log(this.queryBuilder);
+
     return this;
   }
 
@@ -356,7 +339,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     const endTime: number = moment().unix() + Math.max(conventions.requestTimeout, query.waitForNonStaleResultsTimeout);
 
     const request = () => this.requestExecutor
-      .execute(queryCommand)          
+      .execute(queryCommand)
       .then((response: IRavenResponse | null): IRavenResponse | BluebirdPromise.Thenable<IRavenResponse> => {
         if (TypeUtil.isNone(response)) {
           return {
@@ -378,43 +361,43 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   }
 
   protected convertResponseToDocuments(response: IRavenResponse): T[] | QueryResultsWithStatistics<T> {
-    let result: T[] | QueryResultsWithStatistics<T>  = [] as T[];
-      const commandResponse: IRavenResponse = response as IRavenResponse;
+    let result: T[] | QueryResultsWithStatistics<T> = [] as T[];
+    const commandResponse: IRavenResponse = response as IRavenResponse;
 
-      if (commandResponse.Results.length > 0) {
-        let results: T[] = [] as T[];
-        const fetchingFullDocs: boolean = !this.fetch 
-          || (TypeUtil.isArray(this.fetch) && !this.fetch.length);
+    if (commandResponse.Results.length > 0) {
+      let results: T[] = [] as T[];
+      const fetchingFullDocs: boolean = !this.fetch
+        || (TypeUtil.isArray(this.fetch) && !this.fetch.length);
 
-        commandResponse.Results.forEach((result: object) => {
-          const conversionResult: IDocumentConversionResult<T> = this.session.conventions
-              .convertToDocument<T>(result, this.documentType, this.nestedObjectTypes || {});
+      commandResponse.Results.forEach((result: object) => {
+        const conversionResult: IDocumentConversionResult<T> = this.session.conventions
+          .convertToDocument<T>(result, this.documentType, this.nestedObjectTypes || {});
 
-          results.push(conversionResult.document);
+        results.push(conversionResult.document);
 
-          this.emit<IDocumentConversionResult<T>>(
-            DocumentQuery.EVENT_DOCUMENT_FETCHED, 
-            conversionResult
-          );
-        });
+        this.emit<IDocumentConversionResult<T>>(
+          DocumentQuery.EVENT_DOCUMENT_FETCHED,
+          conversionResult
+        );
+      });
 
-        if (Array.isArray(commandResponse.Includes) && commandResponse.Includes.length) {
-          this.emit<object[]>(
-            DocumentQuery.EVENT_INCLUDES_FETCHED, 
-            commandResponse.Includes as object[]
-          );
-        }
-
-        if (this.withStatistics) {
-          result = {
-            results: results,
-            response: response
-          } as QueryResultsWithStatistics<T>;
-        } else {
-          result = results as T[];
-        }
+      if (Array.isArray(commandResponse.Includes) && commandResponse.Includes.length) {
+        this.emit<object[]>(
+          DocumentQuery.EVENT_INCLUDES_FETCHED,
+          commandResponse.Includes as object[]
+        );
       }
-      
-      return result as T[] | QueryResultsWithStatistics<T>;
+
+      if (this.withStatistics) {
+        result = {
+          results: results,
+          response: response
+        } as QueryResultsWithStatistics<T>;
+      } else {
+        result = results as T[];
+      }
+    }
+
+    return result as T[] | QueryResultsWithStatistics<T>;
   }
 }

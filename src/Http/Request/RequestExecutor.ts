@@ -233,8 +233,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
         } catch (exception) {
           return BluebirdPromise.reject(exception);
         }
-
-        return commandResponse;
+          return commandResponse;
       });
   }
 

@@ -27,8 +27,8 @@ export {FieldTermVectorOption, FieldTermVectorOptions} from './Database/Indexes/
 export {ConcurrencyCheckMode, ConcurrencyCheckModes} from './Database/ConcurrencyCheckMode';
 export {IndexPriority, IndexPriorities} from './Database/Indexes/IndexPriority';
 export {StatusCode, StatusCodes} from './Http/Response/StatusCode';
-export {LuceneOperator, LuceneOperators} from './Documents/Lucene/LuceneOperator';
-export {LuceneValue, LuceneRangeValue, LuceneConditionValue} from './Documents/Lucene/LuceneValue';
+export {RQLOperator, RQLOperators} from './Documents/RQL/RQLOperator';
+export {RQLValue, RQLRangeValue, RQLConditionValue} from './Documents/RQL/RQLValue';
 export {ILockDoneCallback, ILockCallback} from './Lock/LockCallbacks';
 export {IRavenObject} from './Database/IRavenObject';
 export {IOptionsSet} from './Utility/IOptionsSet';
@@ -160,7 +160,7 @@ export {DocumentConventions, IDocumentConversionResult, DocumentConstructor, ISt
 export {IndexDefinition} from './Database/Indexes/IndexDefinition';
 export {IndexFieldOptions} from './Database/Indexes/IndexFieldOptions';
 export {IndexQuery} from './Database/Indexes/IndexQuery';
-export {LuceneBuilder} from './Documents/Lucene/LuceneBuilder';
+export {RQLBuilder} from './Documents/RQL/RQLBuilder';
 export {ServerNode} from './Http/ServerNode';
 export {NodeSelector} from './Http/Request/NodeSelector';
 export {NodeStatus} from './Http/NodeStatus';

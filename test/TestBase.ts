@@ -52,7 +52,7 @@ beforeEach(async function() {
   ].join('');
 
   index = new IndexDefinition("Testing", indexMap);
- 
+
   await store.operations.send(new PutIndexesOperation(index));
   requestExecutor = store.getRequestExecutor();
 
@@ -69,11 +69,11 @@ beforeEach(async function() {
 
 });
 
-afterEach(async function() {
-  ['indexDefinition', 'indexMap',  'defaultUrl', 
+afterEach( async function() {
+  ['indexDefinition', 'indexMap',  'defaultUrl',
     'store', 'requestExecutor', 'currentDatabase']
    .forEach((key: string) => delete this.currentTest[key]);
 
-    await store.admin.server.send(new DeleteDatabaseOperation(currentDatabase, true));
+   await store.admin.server.send(new DeleteDatabaseOperation(currentDatabase, true));
 
 });
