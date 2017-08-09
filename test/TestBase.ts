@@ -54,6 +54,7 @@ beforeEach(async function() {
   index = new IndexDefinition("Testing", indexMap);
 
   await store.operations.send(new PutIndexesOperation(index));
+
   requestExecutor = store.getRequestExecutor();
 
   _.assign(this.currentTest, {
@@ -64,8 +65,6 @@ beforeEach(async function() {
     defaultUrl,
     currentDatabase
   });
-
-
 
 });
 

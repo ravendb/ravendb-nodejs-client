@@ -18,22 +18,22 @@ export interface IDocumentQueryOptions<T> {
 
 export interface IDocumentQuery<T> {
   selectFields(...args: string[]): IDocumentQuery<T>;
-  search(fieldName: string, searchTerms: string | string[], boost?: number): IDocumentQuery<T>;
-  where(conditions: IDocumentQueryConditions);
-  whereEquals<V extends RQLValue>(fieldName: string, value: V): IDocumentQuery<T>;
-  whereEndsWith<V extends RQLValue>(fieldName: string, value: V): IDocumentQuery<T>;
-  whereStartsWith<V extends RQLValue>(fieldName: string, value: V): IDocumentQuery<T>;
-  whereIn<V extends RQLValue>(fieldName: string, value: V): IDocumentQuery<T>;
-  whereBetween<V extends RQLValue>(fieldName: string, start?: V, end?: V, orName?, orValue?): IDocumentQuery<T>;
-  whereBetweenOrEqual<V extends RQLValue>(fieldName: string, start?: V, end?: V, orName?, orValue?): IDocumentQuery<T>;
-  whereGreaterThan<V extends RQLValue>(fieldName: string, value: V): IDocumentQuery<T>;
-  whereGreaterThanOrEqual<V extends RQLValue>(fieldName: string, value: V, orName?, orValue?): IDocumentQuery<T>;
-  whereLessThan<V extends RQLValue>(fieldName: string, value: V): IDocumentQuery<T>;
-  whereLessThanOrEqual<V extends RQLValue>(fieldName: string, value: V, orName?, orValue?): IDocumentQuery<T>;
-  whereIsNull(fieldName: string): IDocumentQuery<T>;
-  whereNotNull<V extends RQLValue>(fieldName: string, andNotFiledValue: V): IDocumentQuery<T>;
-  orderBy<V extends RQLValue>(fieldsNames: string, value: V): IDocumentQuery<T>;//+
-  orderByDescending<V extends RQLValue>(fieldsNames: string, value: V): IDocumentQuery<T>;//+
+  search(from: string, fieldName: string, searchTerms: string | string[], boost?: number): IDocumentQuery<T>;
+  where(from: string, conditions: IDocumentQueryConditions);
+  whereEquals<V extends RQLValue>(from: string, fieldName: string, value: V): IDocumentQuery<T>;
+  whereEndsWith<V extends RQLValue>(from: string, fieldName: string, value: V): IDocumentQuery<T>;
+  whereStartsWith<V extends RQLValue>(from: string, fieldName: string, value: V): IDocumentQuery<T>;
+  whereIn<V extends RQLValue>(from: string, fieldName: string, value: V): IDocumentQuery<T>;
+  whereBetween<V extends RQLValue>(from: string, fieldName: string, start?: V, end?: V, orName?, orValue?): IDocumentQuery<T>;
+  whereBetweenOrEqual<V extends RQLValue>(from: string, fieldName: string, start?: V, end?: V, orName?, orValue?): IDocumentQuery<T>;
+  whereGreaterThan<V extends RQLValue>(from: string, fieldName: string, value: V): IDocumentQuery<T>;
+  whereGreaterThanOrEqual<V extends RQLValue>(from: string, fieldName: string, value: V, orName?, orValue?): IDocumentQuery<T>;
+  whereLessThan<V extends RQLValue>(from: string, fieldName: string, value: V): IDocumentQuery<T>;
+  whereLessThanOrEqual<V extends RQLValue>(from: string, fieldName: string, value: V, orName?, orValue?): IDocumentQuery<T>;
+  whereIsNull(from: string, fieldName: string): IDocumentQuery<T>;
+  whereNotNull<V extends RQLValue>(from: string, fieldName: string, andNotFiledValue: V): IDocumentQuery<T>;
+  orderBy<V extends RQLValue>(fieldsNames: string, value: V): IDocumentQuery<T>;
+  orderByDescending<V extends RQLValue>(fieldsNames: string, value: V): IDocumentQuery<T>;
   andAlso<V extends RQLValue>(fieldName, value: V): IDocumentQuery<T>;
   orElse<V extends RQLValue>(fieldName, value: V): IDocumentQuery<T>;
   negateNext(): IDocumentQuery<T>;
@@ -43,7 +43,6 @@ export interface IDocumentQuery<T> {
   get(callback?: QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<QueryResultsWithStatistics<T>>;
   first(callback?: EntityCallback<T>): Promise<T>;
   count(callback?: EntitiesCountCallback): Promise<number>;
-
   addStatement(statement: string): IDocumentQuery<T>;
   addSpace();
 

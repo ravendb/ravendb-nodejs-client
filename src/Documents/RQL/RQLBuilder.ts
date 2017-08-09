@@ -11,9 +11,7 @@ export class RQLBuilder {
 
   public static buildCondition<T extends RQLConditionValue>(conventions: DocumentConventions,
                                                             fieldName: string, value: T, operator?: RQLOperator,
-                                                            escapeQueryOptions = 0,
                                                             boost: number = 1): string {
-
     let RQLField: string = fieldName;
     let RQLText: string | null = this.toRQL(value, operator);
 
@@ -34,37 +32,39 @@ export class RQLBuilder {
 
     switch (operator) {
       case RQLOperators.lessThan:
-        RQLText = StringUtil.format(`FROM Company WHERE '{0}'<'{1}'`, RQLField, RQLText);
+        RQLText = StringUtil.format(`WHERE {0}<{1}`, RQLField, RQLText);
         break;
       case RQLOperators.greaterThan:
-        RQLText = StringUtil.format(`FROM Company WHERE '{0}'>'{1}'`, RQLField, RQLText);
+        RQLText = StringUtil.format(`WHERE {0}>{1}`, RQLField, RQLText);
         break;
       case RQLOperators.Search:
-        RQLText = StringUtil.format(`FROM Company WHERE search({0},'{1}') OR boost(NameIn = 'soo', {2})`, RQLField, RQLText, boost);
+        RQLText = StringUtil.format(`WHERE search({0},'{1}') OR boost({0} = '{1}', {2})`, RQLField, RQLText, boost);
         break;
       case RQLOperators.Select:
         RQLText = StringUtil.format(`SELECT {0} FROM {1}`, RQLField, RQLText);
         break;
       case RQLOperators.Equals:
-        RQLText = StringUtil.format(`FROM Company WHERE '{0}'='{1}'`, RQLField, RQLText);
+        (RQLText === null || RQLText === 'null') ?
+          RQLText = StringUtil.format(`WHERE {0}={1}`, RQLField, RQLText) :
+          RQLText = StringUtil.format(`WHERE {0}='{1}'`, RQLField, RQLText);
         break;
       case RQLOperators.Between:
-        RQLText = StringUtil.format('FROM Company WHERE {0} BETWEEN {1}', RQLField, RQLText);
+        RQLText = StringUtil.format(`WHERE {0} BETWEEN {1}`, RQLField, RQLText);
         break;
       case RQLOperators.EqualBetween:
-        RQLText = StringUtil.format('FROM Company {0}', RQLField, RQLText);
+        RQLText = StringUtil.format(`{0}`, RQLField, RQLText);
         break;
       case RQLOperators.StartsWith:
-        RQLText = StringUtil.format(`FROM Company WHERE StartsWith({0}, '{1}')`, RQLField, RQLText);
+        RQLText = StringUtil.format(`WHERE StartsWith({0}, '{1}')`, RQLField, RQLText);
         break;
       case RQLOperators.EndsWith:
-        RQLText = StringUtil.format(`FROM Company WHERE EndsWith({0}, '{1}')`, RQLField, RQLText);
+        RQLText = StringUtil.format(`WHERE EndsWith({0}, '{1}')`, RQLField, RQLText);
         break;
       case RQLOperators.In:
-        RQLText = StringUtil.format(`FROM Company WHERE {0} IN ("{1}")`, RQLField, RQLText);
+        RQLText = StringUtil.format(`WHERE {0} IN ('{1}')`, RQLField, RQLText);
         break;
       case RQLOperators.orderBy:
-        RQLText = StringUtil.format('FROM "{0}" ORDER BY "{1}"', RQLField, RQLText);
+        RQLText = StringUtil.format(`FROM @all_docs ORDER BY '{0}'`, RQLText);
         break;
     }
     return RQLText as string;

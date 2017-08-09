@@ -81,7 +81,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
       .addRQLCondition<V>(fieldName, value, RQLOperators.Select) as IDocumentQuery<T>;
   }
 
-  public search(fieldName: string, searchTerms: string | string[], boost: number = 1): IDocumentQuery<T> {
+  public search(from, fieldName: string, searchTerms: string | string[], boost: number = 1): IDocumentQuery<T> {
 
     if (boost < 0) {
       throw new ArgumentOutOfRangeException('Boost factor must be a positive number');
@@ -93,77 +93,101 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
     quotedTerms = QueryString.encode(quotedTerms);
 
-    this.addRQLCondition<string>(fieldName, quotedTerms, RQLOperators.Search, boost);
+    this.addStatement(StringUtil.format(`FROM {0}`, from))
+      .addSpace()
+      .addRQLCondition<string>(fieldName, quotedTerms, RQLOperators.Search, boost);
     return this;
   }
 
-  public where<T>(conditions: IDocumentQueryConditions) {
+  public where<T>(from: string, conditions: IDocumentQueryConditions) {
+
     ArrayUtil.mapObject(conditions, (value: any, fieldName: string): any => {
       if (TypeUtil.isArray(value)) {
-        this.whereIn<string>(fieldName, value);
+      this.whereIn<string>(from, fieldName, value[0]);
+
+        //TODO refactor and set to another function
+        let conditionNames = Object.values(conditions);
+        let conditionKey = Object.keys( conditions );
+        let conditionKeyString = conditionKey.toString();
+
+        Array.from(conditionNames[0]).forEach((value) => {
+          this.orElse(conditionKeyString, value)
+        });
+
       } else {
-        this.whereEquals<string>(fieldName, value);
+        this.whereEquals<string>(from, fieldName, value);
       }
     });
 
     return this;
   }
 
-  public whereEquals<V extends RQLValue>(fieldName: string, value: V): IDocumentQuery<T> {
+  public whereEquals<V extends RQLValue>(from: string, fieldName: string, value: V): IDocumentQuery<T> {
     return this.assertFieldName(fieldName)
+      .addStatement(StringUtil.format(`FROM {0}`, from))
+      .addSpace()
       .addRQLCondition<V>(fieldName, value, RQLOperators.Equals) as IDocumentQuery<T>;
   }
 
-  public whereEndsWith(fieldName: string, value: string): IDocumentQuery<T> {
+  public whereEndsWith(from: string, fieldName: string, value: string): IDocumentQuery<T> {
     return this.assertFieldName(fieldName)
+      .addStatement(StringUtil.format(`FROM {0}`, from))
+      .addSpace()
       .addRQLCondition<string>(fieldName, value, RQLOperators.EndsWith) as IDocumentQuery<T>;
   }
 
-  public whereStartsWith(fieldName: string, value: string): IDocumentQuery<T> {
+  public whereStartsWith(from: string, fieldName: string, value: string): IDocumentQuery<T> {
     return this.assertFieldName(fieldName)
+      .addStatement(StringUtil.format(`FROM {0}`, from))
+      .addSpace()
       .addRQLCondition<string>(fieldName, value, RQLOperators.StartsWith) as IDocumentQuery<T>;
   }
 
-  public whereIn<V extends RQLValue>(fieldName: string, value: V): IDocumentQuery<T> {
+  public whereIn<V extends RQLValue>(from: string, fieldName: string, value: V): IDocumentQuery<T> {
     return this.assertFieldName(fieldName)
+      .addStatement(StringUtil.format(`FROM {0}`, from))
+      .addSpace()
       .addRQLCondition<V>(fieldName, value, RQLOperators.In) as IDocumentQuery<T>;
   }
 
-  public whereBetween<V extends RQLValue>(fieldName: string, start?: V, end?: V): IDocumentQuery<T> {
+  public whereBetween<V extends RQLValue>(from: string, fieldName: string, start?: V, end?: V): IDocumentQuery<T> {
     return this.assertFieldName(fieldName)
+      .addStatement(StringUtil.format(`FROM {0}`, from))
+      .addSpace()
       .addRQLCondition<RQLRangeValue<V>>(
         fieldName, {min: start, max: end}, RQLOperators.Between) as IDocumentQuery<T>;
   }
 
-  public whereBetweenOrEqual<V extends RQLValue>(fieldName: string, orName:string, orValue:string, start?: V, end?: V): IDocumentQuery<T> {
-    return this.assertFieldName(fieldName)
-      .whereBetween<V>(fieldName, start, end)
+  public whereBetweenOrEqual<V extends RQLValue>(from: string, fieldName: string, start: V, end: V, orName:string, orValue:string): IDocumentQuery<T> {
+    return this.whereBetween<V>(from, fieldName, start, end)
       .orElse<string>(orName, orValue)
   }
 
-  public whereGreaterThan<V extends RQLValue>(fieldName: string, value: V): IDocumentQuery<T> {
+  public whereGreaterThan<V extends RQLValue>(from: string, fieldName: string, value: V): IDocumentQuery<T> {
     return this.assertFieldName(fieldName)
+      .addStatement(StringUtil.format(`FROM {0}`, from))
+      .addSpace()
       .addRQLCondition<V>(fieldName, value, RQLOperators.greaterThan) as IDocumentQuery<T>;
   }
 
-  public whereGreaterThanOrEqual<V extends RQLValue>(fieldName: string, value: V, orName:string, orValue:string): IDocumentQuery<T> {
-    return this.assertFieldName(fieldName)
-      .whereGreaterThan<V>(fieldName, value)
+  public whereGreaterThanOrEqual<V extends RQLValue>(from: string, fieldName: string, value: V, orName:string, orValue:string): IDocumentQuery<T> {
+    return this.whereGreaterThan<V>(from, fieldName, value)
       .orElse<string>(orName, orValue)
   }
 
-  public whereLessThan<V extends RQLValue>(fieldName: string, value: V): IDocumentQuery<T> {
+  public whereLessThan<V extends RQLValue>(from: string, fieldName: string, value: V): IDocumentQuery<T> {
     return this.assertFieldName(fieldName)
+      .addStatement(StringUtil.format(`FROM {0}`, from))
+      .addSpace()
       .addRQLCondition<V>(fieldName, value, RQLOperators.lessThan) as IDocumentQuery<T>;
   }
 
-  public whereLessThanOrEqual<V extends RQLValue>(fieldName: string, value: V, orName:string, orValue:string): IDocumentQuery<T> {
-    return this.assertFieldName(fieldName)
-      .whereLessThan<V>(fieldName, value)
+  public whereLessThanOrEqual<V extends RQLValue>(from: string, fieldName: string, value: V, orName:string, orValue:string): IDocumentQuery<T> {
+    return this.whereLessThan<V>(from, fieldName, value)
       .orElse<string>(orName, orValue)
   }
 
-  public orElse<V extends RQLValue>(fieldName, value: V): IDocumentQuery<T> {
+  public orElse<V>(fieldName, value: V): IDocumentQuery<T> {
     return this.addSpace()
       .addStatement(
         StringUtil.format(`OR '{0}'='{1}'`,
@@ -172,19 +196,17 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
       );
   }
 
-  public whereIsNull(fieldName: string): IDocumentQuery<T> {
-    return this.whereEquals<null>(fieldName, null);
+  public whereIsNull(from, fieldName: string): IDocumentQuery<T> {
+    return this.whereEquals<null>(from, fieldName, null);
   }
 
-  public whereNotNull<V extends RQLValue>(fieldName: string, andNotFiledValue: V): IDocumentQuery<T> {
-    return this.assertFieldName(fieldName)
-      .whereEquals<null>(fieldName, null)
+  public whereNotNull<V extends RQLValue>(from, fieldName: string, andNotFiledValue: V): IDocumentQuery<T> {
+    return this.whereEquals<null>(from, fieldName, null)
       .andAlso<string>(andNotFiledValue, 'null')
   }
 
   public andAlso<V extends RQLValue>(fieldName, value: V): IDocumentQuery<T> {
-    return this.assertFieldName(fieldName)
-      .addSpace()
+    return this.addSpace()
       .addStatement(
         StringUtil.format(`{0} {1}='{2}'`,
           QueryOperators.andAlso, fieldName, value
@@ -198,8 +220,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   }
 
   public orderByDescending<V extends RQLValue>(fieldName: string, value: V): IDocumentQuery<T> {
-    return this.assertFieldName(fieldName)
-      .orderBy(fieldName, value)
+    return this.orderBy(fieldName, value)
       .addStatement(' DESC')
   }
 
@@ -299,7 +320,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
                                                          boost: number = 1): DocumentQuery<T> {
 
     const RQLCondition: string = RQLBuilder.buildCondition<C>(this.session.conventions, fieldName,
-      condition, operator,  boost);
+      condition, operator, boost);
 
     this.addSpace();
 
@@ -309,8 +330,6 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     }
 
     this.queryBuilder += RQLCondition;
-
-    console.log(this.queryBuilder);
 
     return this;
   }

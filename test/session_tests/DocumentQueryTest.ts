@@ -8,9 +8,7 @@ import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {IRavenObject} from "../../src/Database/IRavenObject";
-import {Product, Order, Company, ProductsTestingSort} from "../TestClasses";
-import {QueryOperators} from "../../src/Documents/Session/QueryOperator";
-import {TypeUtil} from "../../src/Utility/TypeUtil";
+import {Product, Order, Company, ProductsTestingSort, Universal} from "../TestClasses";
 
 describe('Document query test', () => {
   let store: IDocumentStore;
@@ -36,158 +34,129 @@ describe('Document query test', () => {
     await session.store<Product>(new Product('Product/108', 'new_testing', 90, 'd'));
     await session.store<Product>(new Product('Product/110', 'paginate_testing', 95));
     await session.store<Order>(new Order('Order/105', 'testing_order', 92, 'Product/108'));
-    await session.store<Company>(new Company('Company', 'withNesting', new Product(null, 'testing_order', 4)));
+    await session.store<Universal>(new Universal('Universals_NEW', 'withNesting', 2, null, new Product(null, 'testing_order', 4)));
+    await session.store<Universal>(new Universal('Universals', 'withNesting', 4, null, new Product(null, 'testing_order', 4)));
     await session.saveChanges();
   });
 
   describe('Index checking', () => {
 
-    it('should query with where', async() => {
-      const results: Product[] = await store.openSession().query<Product>().where({
-        name: 'withNesting'
+    it('should query with where', async () => {
+      const results: Universal[] = await store.openSession().query<Universal>().where('Universals',{
+        'name': 'withNesting'
       }).get();
-      console.log(results);
-      expect(results[0]).to.equals(undefined);
+      expect(results[0]).to.include({'name': 'withNesting'});
     });
 
-    it('should query by search', async () => {
-      const results: Product[] = await store.openSession().query<Product>({
-        documentType: Product
-      }).search('_id', '59885dbd8597dea0204c0bd0', 1).get();
-      expect(results[0]).to.equals(undefined);
+    it('should query with whereSeveral', async () => {
+      const results: Universal[] = await store.openSession().query<Universal>().where('Universals',{
+        'name': ['withNesting', 'new_name']
+      }).get();
+      expect(results[0]).to.include({'name': 'withNesting'});
     });
 
-    it('should query with whereGreaterThan', async () => {
-      const results: Product[] = await store.openSession().query<Product>({
-        documentType: Product,
-        indexName: 'Testing_Sort',
-        waitForNonStaleResults: true
-      }).whereGreaterThan<string>('greaterThan', '4').get();
-      expect(results[0]).to.equals(undefined);
-    });
-
-    it('should query by whereBetween', async () => {
-      const results: Product[] = await store.openSession().query<Product>({
-        documentType: Product,
-        indexName: 'Testing_Sort',
-        waitForNonStaleResults: true
-      }).whereBetween<number>('Name', 2, 4).get();
-      expect(results[0]).to.equals(undefined);
-    });
-
-    it('should query by between or equal', async() => {
-      const results: Product[] = await store.openSession().query<Product>({
-        documentType: Product,
-        indexName: 'Testing_Sort',
-        waitForNonStaleResults: true
-      }).whereBetweenOrEqual('uid', 2, 4, 'name', 'val').get();
-      expect(results[0]).to.equals(undefined);
-    });
-
-    it('should query with whereGreaterThanOrEqual', async () => {
-      const results: Product[] = await  store.openSession().query<Product>({
-        documentType: Product,
-        indexName: 'Testing_Sort',
-        waitForNonStaleResults: true
-      }).whereGreaterThanOrEqual<string>('greaterThan', '4', '10', '101').get();
-      expect(results[0]).to.equals(undefined);
-    });
-
-    it('should query with whereLessThan', async () => {
-      const results: Product[] = await  store.openSession().query<Product>({
-        documentType: Product,
-        indexName: 'Testing_Sort',
-        waitForNonStaleResults: true
-      }).whereLessThan<number>('lessThan', 5).get();
-      expect(results[0]).to.equals(undefined);
-    });
-
-    it('should query with whereLessThanOrEqual', async () => {
-      const results: Product[] = await  store.openSession().query<Product>({
-        documentType: Product,
-        indexName: 'Testing_Sort',
-        waitForNonStaleResults: true
-      }).whereLessThanOrEqual<number>('lessThan', 4, '10', '101').get();
+    it('should fail query with non-existing name', async () => {
+    const results: Universal[] = await store.openSession().query<Universal>({
+        indexName: 'ss'
+      }).where('Universals', {'name_none': 'withNesting'}).get();
       expect(results[0]).to.equals(undefined);
     });
 
     it('should query by whereIn', async () => {
-      const results: Product[] = await store.openSession().query<Product>({
-        documentType: Product
-      }).whereIn<string>('name', 'withNesting').get();
-
-      expect(results).to.have.lengthOf(0);
+      const results: Universal[] = await store.openSession().query<Universal>()
+        .whereIn<string>('Universals','name', 'withNesting').get();
+      expect(results[0]).to.include({'name': 'withNesting'});
     });
 
-    it('should query with orderBy', async() => {
-      const results: Product[] = await store.openSession().query<Product>({
-          documentType: Product
-        }).orderBy<string>('id', 'Name').get();
-      expect(results[0]).to.equals(undefined);
-    });
-
-    it('should query with orderByDescending', async() => {
-      const results: IRavenObject[] = await store.openSession().query({
-        waitForNonStaleResults: true
-      }).orderByDescending('id', 'Name').get();
-      expect(results[0]).to.equals(undefined);
-    });
-
-    it('should query with whereNotNull', async () => {
-      const results: Product[] = await store.openSession().query<Product>({
-        documentType: Product,
-        indexName: 'Testing_Sort',
-        waitForNonStaleResults: true
-      }).whereNotNull<string>('greaterThan', 'fieldName').get()
-      expect(results[0]).to.equals(undefined);
+    it('should query by whereBetween', async () => {
+      const results: Universal[] = await store.openSession().query<Universal>()
+        .whereBetween<number>('Universals','order', 2, 4).get();
+      expect(results[0]).to.be.a('object');
     });
 
     it('should query by whereEquals', async () => {
-      const results: Product[] = await store.openSession().query<Product>({
-        documentType: Product,
-        indexName: 'Testing_Sort',
-        waitForNonStaleResults: true
-      }).whereEquals<string>('Name', 'document_name').get();
-
-      expect(results).to.have.lengthOf(0);
-    });
-
-    it('should query with whereEndsWith', async () => {
-      const results: Product[] = await store.openSession().query<Product>({
-        documentType: Product,
-        indexName: 'Testing_Sort',
-        waitForNonStaleResults: true
-      }).whereEndsWith<string>('search_value', 'ue').get();
-      expect(results[0]).to.equals(undefined);
-    });
-
-    it('should query with startsWith', async () => {
-      const results: Product[] = await store.openSession().query<Product>({
-        documentType: Product,
-        indexName: 'Testing_Sort',
-        waitForNonStaleResults: true
-      }).whereStartsWith<string>('search_value', 'ue').get();
-      expect(results[0]).to.equals(undefined);
+      const results: Universal[] = await store.openSession().query<Universal>()
+        .whereEquals<string>('Universals','name', 'withNesting').get();
+      expect(results[0]).to.include({'name': 'withNesting'});
     });
 
     it('should query with whereIsNull', async () => {
-      const results: Product[] = await store.openSession().query<Product>({
-        documentType: Product,
-        indexName: 'Testing_Sort',
-        waitForNonStaleResults: true
-      }).whereIsNull('null').get();
-      expect(results[0]).to.equals(undefined);
+      const results: Universal[] = await store.openSession().query<Universal>()
+        .whereIsNull('Universals','nullField').get();
+      expect(results[0]).to.be.a('object');
+    });
+
+    it('should query with whereNotNull', async () => {
+      const results: Universal[] = await store.openSession().query<Universal>()
+        .whereNotNull<string>('Universals','nullField', 'name').get();
+      expect(results[0]).to.be.a('object');
+    });
+
+    it('should query with whereEndsWith', async () => {
+      const results: Universal[] = await store.openSession().query<Universal>()
+        .whereEndsWith<string>('Universals','name', 'ing').get();
+      expect(results[0]).to.include({'name': 'withNesting'});
+    });
+
+    it('should query with whereGreaterThan', async () => {
+      const results: Universal[] = await store.openSession().query<Universal>()
+        .whereGreaterThan<number>('Universals','order', 2).get();
+      expect(results[0]).to.be.a('object');
+    });
+
+    it('should query with whereGreaterThanOrEqual', async () => {
+      const results: Universal[] = await  store.openSession().query<Universal>()
+        .whereGreaterThanOrEqual<string>('Universals','order', '2', 'name', 'withNesting').get();
+      expect(results[0]).to.be.a('object');
+    });
+
+    it('should query with whereLessThan', async () => {
+      const results: Universal[] = await  store.openSession().query<Universal>()
+        .whereLessThan<number>('Universals','order', 5).get();
+      expect(results[0]).to.be.a('object');
+    });
+
+    it('should query with whereLessThanOrEqual', async () => {
+      const results: Universal[] = await  store.openSession().query<Universal>()
+        .whereLessThanOrEqual<number>('Universals','order', 5, 'name', 'withNesting').get();
+       expect(results[0]).to.be.a('object');
+    });
+
+    it('should query by search', async () => {
+      const results: Universal[] = await store.openSession().query<Universal>()
+        .search('Universals','name', 'withNesting', 3).get();
+      expect(results[0]).to.include({'name': 'withNesting'});
+    });
+
+    it('should query by between or equal', async () => {
+      const results: Universal[] = await store.openSession().query<Universal>()
+        .whereBetweenOrEqual('Universals','order', 1, 4, 'name', 'withNesting').get();
+      expect(results[0]).to.be.a('object');
+    });
+
+    it('should query with orderBy', async () => {
+      const results: Universal[] = await store.openSession().query<Universal>()
+        .orderBy<string>('id', 'name').get();
+      expect(results[0]).to.be.a('object');
+    });
+
+    it('should query with orderByDescending', async () => {
+      const results: Universal[] = await store.openSession().query<Universal>()
+        .orderByDescending('id', 'name').get();
+      expect(results[0]).to.be.a('object');
+    });
+
+    it('should query with startsWith', async () => {
+      const results: Universal[] = await store.openSession().query<Universal>()
+        .whereStartsWith<string>('Universals','name', 'with').get();
+      expect(results[0]).to.include({'name': 'withNesting'});
     });
 
     it('should query with selectFields', async () => {
-      const results: Product[] = await store.openSession()
-        .query<Product>({
-        documentType: Product,
-        indexName: 'Testing_Sort',
-        waitForNonStaleResults: true
-      })
-        .selectFields('id', 'id').get();
-      expect(results[0]).to.equals(undefined);
+      const results: Universal[] = await store.openSession()
+        .query<Universal>()
+        .selectFields('id', 'Universals').get();
+      expect(results[0]).to.be.a('object');
     });
 
   });
