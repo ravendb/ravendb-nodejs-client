@@ -10,7 +10,7 @@ import {PromiseResolver} from '../../Utility/PromiseResolver';
 import {RQLValue, RQLConditionValue, RQLRangeValue} from "../RQL/RQLValue";
 import {IRavenResponse} from "../../Database/RavenCommandResponse";
 import {RQLOperator, RQLOperators} from "../RQL/RQLOperator";
-import {RQLBuilder} from "../RQL/RQLBuilder";
+//import {RQLBuilder} from "../RQL/RQLBuilder";
 import {QueryString} from "../../Http/QueryString";
 import {ArrayUtil} from "../../Utility/ArrayUtil";
 import {QueryOperators, QueryOperator} from "./QueryOperator";
@@ -33,6 +33,8 @@ import {
   RavenException
 } from "../../Database/DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
+
+import {QueryBuilder} from "../RQL/QueryBuilder";
 
 export type QueryResultsWithStatistics<T> = { results: T[], response: IRavenResponse };
 
@@ -57,6 +59,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   protected nestedObjectTypes: IRavenObject<DocumentConstructor> = {};
   private _take?: number = null;
   private _skip?: number = null;
+  public builder = null;
 
   constructor(session: IDocumentSession, requestExecutor: RequestExecutor, documentType?: DocumentType<T>, indexName?: string, usingDefaultOperator
     ?: QueryOperator, waitForNonStaleResults: boolean = false, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, withStatistics: boolean = false) {
@@ -69,177 +72,181 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     this.waitForNonStaleResults = waitForNonStaleResults;
     this.nestedObjectTypes = nestedObjectTypes || {} as IRavenObject<DocumentConstructor>;
     this.documentType = documentType;
-    this.indexName = indexName || "dynamic";
+    this.indexName = indexName || "Universals" || "dynamic";
+    this.builder = new QueryBuilder();
 
     if (!indexName && documentType) {
       this.indexName += "/" + session.conventions.getCollectionName(documentType);
     }
   }
 
-  public selectFields<V extends RQLValue>(fieldName: string, value: V): IDocumentQuery<T> {
-    return this.assertFieldName(fieldName)
-      .addRQLCondition<V>(fieldName, value, RQLOperators.Select) as IDocumentQuery<T>;
-  }
+  public whereEquals(field, value) {
 
-  public search(from, fieldName: string, searchTerms: string | string[], boost: number = 1): IDocumentQuery<T> {
-
-    if (boost < 0) {
-      throw new ArgumentOutOfRangeException('Boost factor must be a positive number');
-    }
-
-    let quotedTerms = TypeUtil.isArray(searchTerms)
-      ? (searchTerms as string[]).join(' ')
-      : (searchTerms as string);
-
-    quotedTerms = QueryString.encode(quotedTerms);
-
-    this.addStatement(StringUtil.format(`FROM {0}`, from))
-      .addSpace()
-      .addRQLCondition<string>(fieldName, quotedTerms, RQLOperators.Search, boost);
-    return this;
-  }
-
-  public where<T>(from: string, conditions: IDocumentQueryConditions) {
-
-    ArrayUtil.mapObject(conditions, (value: any, fieldName: string): any => {
-      if (TypeUtil.isArray(value)) {
-      this.whereIn<string>(from, fieldName, value[0]);
-
-        //TODO refactor and set to another function
-        let conditionNames = Object.values(conditions);
-        let conditionKey = Object.keys( conditions );
-        let conditionKeyString = conditionKey.toString();
-
-        Array.from(conditionNames[0]).forEach((value) => {
-          this.orElse(conditionKeyString, value)
-        });
-
-      } else {
-        this.whereEquals<string>(from, fieldName, value);
-      }
-    });
+    this.queryBuilder += this.builder
+      .from(this.indexName)
+      .where('equals', field, value).getRql();
 
     return this;
+
   }
 
-  public whereEquals<V extends RQLValue>(from: string, fieldName: string, value: V): IDocumentQuery<T> {
-    return this.assertFieldName(fieldName)
-      .addStatement(StringUtil.format(`FROM {0}`, from))
-      .addSpace()
-      .addRQLCondition<V>(fieldName, value, RQLOperators.Equals) as IDocumentQuery<T>;
-  }
+  public whereIn(field, value) {
 
-  public whereEndsWith(from: string, fieldName: string, value: string): IDocumentQuery<T> {
-    return this.assertFieldName(fieldName)
-      .addStatement(StringUtil.format(`FROM {0}`, from))
-      .addSpace()
-      .addRQLCondition<string>(fieldName, value, RQLOperators.EndsWith) as IDocumentQuery<T>;
-  }
-
-  public whereStartsWith(from: string, fieldName: string, value: string): IDocumentQuery<T> {
-    return this.assertFieldName(fieldName)
-      .addStatement(StringUtil.format(`FROM {0}`, from))
-      .addSpace()
-      .addRQLCondition<string>(fieldName, value, RQLOperators.StartsWith) as IDocumentQuery<T>;
-  }
-
-  public whereIn<V extends RQLValue>(from: string, fieldName: string, value: V): IDocumentQuery<T> {
-    return this.assertFieldName(fieldName)
-      .addStatement(StringUtil.format(`FROM {0}`, from))
-      .addSpace()
-      .addRQLCondition<V>(fieldName, value, RQLOperators.In) as IDocumentQuery<T>;
-  }
-
-  public whereBetween<V extends RQLValue>(from: string, fieldName: string, start?: V, end?: V): IDocumentQuery<T> {
-    return this.assertFieldName(fieldName)
-      .addStatement(StringUtil.format(`FROM {0}`, from))
-      .addSpace()
-      .addRQLCondition<RQLRangeValue<V>>(
-        fieldName, {min: start, max: end}, RQLOperators.Between) as IDocumentQuery<T>;
-  }
-
-  public whereBetweenOrEqual<V extends RQLValue>(from: string, fieldName: string, start: V, end: V, orName:string, orValue:string): IDocumentQuery<T> {
-    return this.whereBetween<V>(from, fieldName, start, end)
-      .orElse<string>(orName, orValue)
-  }
-
-  public whereGreaterThan<V extends RQLValue>(from: string, fieldName: string, value: V): IDocumentQuery<T> {
-    return this.assertFieldName(fieldName)
-      .addStatement(StringUtil.format(`FROM {0}`, from))
-      .addSpace()
-      .addRQLCondition<V>(fieldName, value, RQLOperators.greaterThan) as IDocumentQuery<T>;
-  }
-
-  public whereGreaterThanOrEqual<V extends RQLValue>(from: string, fieldName: string, value: V, orName:string, orValue:string): IDocumentQuery<T> {
-    return this.whereGreaterThan<V>(from, fieldName, value)
-      .orElse<string>(orName, orValue)
-  }
-
-  public whereLessThan<V extends RQLValue>(from: string, fieldName: string, value: V): IDocumentQuery<T> {
-    return this.assertFieldName(fieldName)
-      .addStatement(StringUtil.format(`FROM {0}`, from))
-      .addSpace()
-      .addRQLCondition<V>(fieldName, value, RQLOperators.lessThan) as IDocumentQuery<T>;
-  }
-
-  public whereLessThanOrEqual<V extends RQLValue>(from: string, fieldName: string, value: V, orName:string, orValue:string): IDocumentQuery<T> {
-    return this.whereLessThan<V>(from, fieldName, value)
-      .orElse<string>(orName, orValue)
-  }
-
-  public orElse<V>(fieldName, value: V): IDocumentQuery<T> {
-    return this.addSpace()
-      .addStatement(
-        StringUtil.format(`OR '{0}'='{1}'`,
-          fieldName, value
-        )
-      );
-  }
-
-  public whereIsNull(from, fieldName: string): IDocumentQuery<T> {
-    return this.whereEquals<null>(from, fieldName, null);
-  }
-
-  public whereNotNull<V extends RQLValue>(from, fieldName: string, andNotFiledValue: V): IDocumentQuery<T> {
-    return this.whereEquals<null>(from, fieldName, null)
-      .andAlso<string>(andNotFiledValue, 'null')
-  }
-
-  public andAlso<V extends RQLValue>(fieldName, value: V): IDocumentQuery<T> {
-    return this.addSpace()
-      .addStatement(
-        StringUtil.format(`{0} {1}='{2}'`,
-          QueryOperators.andAlso, fieldName, value
-        )
-      );
-  }
-
-  public orderBy<V extends RQLValue>(fieldName: string, value: V): IDocumentQuery<T> {
-    return this.assertFieldName(fieldName)
-      .addRQLCondition<V>(fieldName, value, RQLOperators.orderBy) as IDocumentQuery<T>;
-  }
-
-  public orderByDescending<V extends RQLValue>(fieldName: string, value: V): IDocumentQuery<T> {
-    return this.orderBy(fieldName, value)
-      .addStatement(' DESC')
-  }
-
-  public negateNext(): IDocumentQuery<T> {
-    this.negate = true;
+    this.queryBuilder += this.builder
+      .from(this.indexName)
+      .where('in', field, value).getRql();
 
     return this;
+
   }
 
-  public take(docsCount: number): IDocumentQuery<T> {
-    this._take = docsCount;
+  public whereGreaterThan(field, value) {
+
+    this.queryBuilder += this.builder
+      .from(this.indexName)
+      .where('greaterThan', field, value).getRql();
 
     return this;
+
   }
 
-  public skip(skipCount: number): IDocumentQuery<T> {
-    this._skip = skipCount;
+  public whereGreaterThanOrEqual(field, value, orName, orValue) {
+
+    this.queryBuilder += this.builder
+      .from(this.indexName)
+      .where('greaterThan', field, value).getRql();
+
+    this.builder.or;
+
+    this.queryBuilder += this.builder
+      .where('clear', orName, orValue, false).getRql();
 
     return this;
+
+  }
+
+  public whereLessThanOrEqual<V extends RQLValue>(field, value, orName, orValue)  {
+
+    this.queryBuilder += this.builder
+      .from(this.indexName)
+      .where('lessThan', field, value).getRql();
+
+    this.builder.or;
+
+    this.queryBuilder += this.builder
+      .where('clear', orName, orValue, false).getRql();
+
+    return this;
+
+  }
+
+  public whereLessThan<V>(field, value: V) {
+
+    this.queryBuilder += this.builder
+      .from(this.indexName)
+      .where('lessThan', field, value).getRql();
+
+    return this;
+
+  }
+
+  public startsWith(field, value) {
+
+    this.queryBuilder += this.builder
+      .from(this.indexName)
+      .where('startsWith', field, value).getRql();
+
+    return this;
+
+  }
+
+  public endsWith(field, value) {
+
+    this.queryBuilder += this.builder
+      .from(this.indexName)
+      .where('endsWith', field, value).getRql();
+
+    return this;
+
+  }
+
+  public search(field, value) {
+
+    this.queryBuilder += this.builder
+      .from(this.indexName)
+      .where('search', field, value).getRql();
+
+    return this;
+
+  }
+
+  public whereNotNull(field, value) {
+
+    this.queryBuilder += this.builder
+      .from(this.indexName)
+      .where('equals', field, value).getRql();
+
+    this.builder.andNot;
+
+    this.queryBuilder += this.builder
+      .where('clear', field, value).getRql();
+
+    return this;
+
+  }
+
+  public whereIsNull(field, value) {
+
+    this.queryBuilder += this.builder
+      .from(this.indexName)
+      .where('equals', field, value).getRql();
+
+    return this;
+
+  }
+
+  public whereBetween(field, start, end) {
+
+    this.queryBuilder += this.builder
+      .from(this.indexName)
+      .where('whereFiled', field).between(start, end).getRql();
+
+    return this;
+
+  }
+
+  public whereBetweenOrEqual(field, start, end, orName, orValue) {
+
+    this.queryBuilder += this.builder
+      .from(this.indexName)
+      .where('whereFiled', field).between(start, end).getRql();
+
+    this.builder.or;
+
+    this.queryBuilder += this.builder.where('clear', orName, orValue).getRql();
+
+    return this;
+
+  }
+
+  public orderBy(field, direction) {
+
+    this.queryBuilder += this.builder
+      .from(this.indexName)
+      .order(field, direction).getRql();
+
+    return this;
+
+  }
+
+  public selectFields(field) {
+
+    this.queryBuilder += this.builder
+      .from(this.indexName)
+      .select(field).getRql();
+
+    return this;
+
   }
 
   public async get(callback?: QueryResultsCallback<T[]>): Promise<T[]>;
@@ -250,96 +257,10 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
         const result: T[] | QueryResultsWithStatistics<T> = this.convertResponseToDocuments(response);
 
         PromiseResolver.resolve<T[] | QueryResultsWithStatistics<T>>(result, null, callback);
+
         return result;
       })
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
-  }
-
-  public async first(callback?: EntityCallback<T>): Promise<T> {
-    const take: number = this._take;
-    const skip: number = this._skip;
-    const withStatistics: boolean = this.withStatistics;
-
-    this._take = 1;
-    this._skip = 0;
-    this.withStatistics = false;
-
-    return this.executeQuery()
-      .then((response: IRavenResponse): T => {
-        const results: T[] = <T[]>this.convertResponseToDocuments(response);
-        const result: T = results.length ? _.first(results) : null;
-
-        PromiseResolver.resolve<T>(result, null, callback);
-        return result;
-      })
-      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback))
-      .finally(() => {
-        this._take = take;
-        this._skip = skip;
-        this.withStatistics = withStatistics;
-      });
-  }
-
-  public async count(callback?: EntitiesCountCallback): Promise<number> {
-    const take: number = this._take;
-    const skip: number = this._skip;
-
-    this._take = 0;
-    this._skip = 0;
-
-    return this.executeQuery()
-      .then((response: IRavenResponse): number => {
-        const result: number = <number>response.TotalResults || 0;
-
-        PromiseResolver.resolve<number>(result, null, callback);
-        return result;
-      })
-      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback))
-      .finally(() => {
-        this._take = take;
-        this._skip = skip;
-      });
-  }
-
-  public addSpace() {
-    if ((this.queryBuilder.length > 0) && !this.queryBuilder.endsWith(' ')) {
-      this.addStatement(' ');
-    }
-
-    return this;
-  }
-
-  public addStatement(statement: string): DocumentQuery<T> {
-    this.queryBuilder += statement;
-
-    return this;
-  }
-
-  protected addRQLCondition<C extends RQLConditionValue>(fieldName: string, condition: C,
-                                                         operator?: RQLOperator,
-                                                         boost: number = 1): DocumentQuery<T> {
-
-    const RQLCondition: string = RQLBuilder.buildCondition<C>(this.session.conventions, fieldName,
-      condition, operator, boost);
-
-    this.addSpace();
-
-    if (this.negate) {
-      this.negate = false;
-      this.addStatement('-');
-    }
-
-    this.queryBuilder += RQLCondition;
-
-    return this;
-  }
-
-  protected assertFieldName(fieldName?: string): DocumentQuery<T> {
-    if (!fieldName) {
-      throw new InvalidOperationException('Empty field name is invalid');
-    }
-
-    return this;
   }
 
   protected executeQuery(): BluebirdPromise<IRavenResponse> {
@@ -354,6 +275,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     const session: IDocumentSession = this.session;
     const conventions: DocumentConventions = session.conventions;
     const query: IndexQuery = new IndexQuery(this.queryBuilder, this._take, this._skip, this.usingDefaultOperator, queryOptions);
+
     const queryCommand: QueryCommand = new QueryCommand(this.indexName, query, conventions, this.includes);
     const endTime: number = moment().unix() + Math.max(conventions.requestTimeout, query.waitForNonStaleResultsTimeout);
 
@@ -419,4 +341,5 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
     return result as T[] | QueryResultsWithStatistics<T>;
   }
+
 }

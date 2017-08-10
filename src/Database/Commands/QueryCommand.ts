@@ -22,8 +22,8 @@ export class QueryCommand extends RavenCommand {
   constructor(indexName: string, indexQuery: IndexQuery, conventions: DocumentConventions,
     includes?: string[], metadataOnly: boolean = false, indexEntriesOnly: boolean = false
   ) {
-    // change to Post
-    super('', RequestMethods.Get, null, null, {});
+
+    super('', RequestMethods.Post, null, null, {});
 
     if (!indexName) {
       throw new InvalidOperationException('Index name cannot be empty');
@@ -49,15 +49,17 @@ export class QueryCommand extends RavenCommand {
     const query = this.indexQuery;
 
     this.params = {
-      waitForNonStaleResultsAsOfNow: 'true',
+      WaitForNonStaleResultsAsOfNow: true,
       PageSize: query.pageSize,
-      Start: query.start
+      Start: query.start,
+      Query: query.query
     };
 
     this.payload = {
-      waitForNonStaleResultsAsOfNow: 'true',
+      WaitForNonStaleResultsAsOfNow: true,
       PageSize: query.pageSize,
-      Start: query.start
+      Start: query.start,
+      Query: query.query
     };
 
 
@@ -66,7 +68,6 @@ export class QueryCommand extends RavenCommand {
       '{0}/databases/{1}/queries?',
       serverNode.url,serverNode.database
     );
-
 
     query.query && this.addParams('Query', query.query);
     query.fetch && this.addParams('fetch', query.fetch);
@@ -79,14 +80,15 @@ export class QueryCommand extends RavenCommand {
 
     if (query.waitForNonStaleResults) {
       this.addParams({
-        waitForNonStaleResultsAsOfNow: 'true',
-        waitForNonStaleResultsTimeout: query.waitForNonStaleResultsTimeout
+        WaitForNonStaleResultsAsOfNow: 'true',
+        WaitForNonStaleResultsTimeout: query.waitForNonStaleResultsTimeout
       });
     }
     
     if ((this.endPoint + '?' + QueryString.stringify(this.params)).length > this.conventions.maxLengthOfQueryUsingGetUrl) {
       this.method = RequestMethods.Post;
     }
+
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
