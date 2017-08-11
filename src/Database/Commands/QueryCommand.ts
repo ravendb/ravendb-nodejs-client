@@ -63,19 +63,18 @@ export class QueryCommand extends RavenCommand {
     };
 
 
-    // remove indexName
     this.endPoint = StringUtil.format(
       '{0}/databases/{1}/queries?',
       serverNode.url,serverNode.database
     );
 
     query.query && this.addParams('Query', query.query);
-    query.fetch && this.addParams('fetch', query.fetch);
+    //query.fetch && this.addParams('fetch', query.fetch);
     this.includes && this.addParams('include', this.includes);
     this.metadataOnly && this.addParams('metadata-only', 'true');
     this.indexEntriesOnly && this.addParams('debug', 'entries');
-    query.sortFields && this.addParams('sort', query.sortFields);
-    query.sortHints && query.sortHints.forEach((hint: string) => this.addParams(hint, null));
+    //query.sortFields && this.addParams('sort', query.sortFields);
+    //query.sortHints && query.sortHints.forEach((hint: string) => this.addParams(hint, null));
     QueryOperators.isAnd(query.defaultOperator) && this.addParams('operator', query.defaultOperator);
 
     if (query.waitForNonStaleResults) {

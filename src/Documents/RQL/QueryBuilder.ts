@@ -7,7 +7,7 @@ export class QueryBuilder {
   private _from: string;
   private _where: string;
   private _order: string;
-  private _clear: boolean;
+  private _or: boolean;
   public defaultOperator: string;
   public operator: string;
   public negate: boolean;
@@ -18,7 +18,7 @@ export class QueryBuilder {
     this._from = '';
     this._where = '';
     this._order = '';
-    this._clear = true;
+    this._or = true;
     this.defaultOperator = '';
     this.operator = this.defaultOperator;
     this.negate = false;
@@ -45,7 +45,7 @@ export class QueryBuilder {
     return this;
   }
 
-  public select(fields = '') {
+  public select(fields) {
 
     if (TypeUtil.isArray(fields)) {
       this._select = fields.join(', ');
@@ -79,7 +79,7 @@ export class QueryBuilder {
 
   public where(conditionType, conditionField, conditionValue = null) {
     this._where = '';
-    this._clear = true;
+    this._or = true;
 
     switch (conditionType) {
       case 'greaterThan':
@@ -89,7 +89,6 @@ export class QueryBuilder {
         this.rqlText = StringUtil.format(`{0}<{1}`, conditionField, conditionValue);
         break;
       case 'search':
-        //OR boost({0} = '{1}', {2}
         this.rqlText = StringUtil.format(`search({0},'{1}')`, conditionField, conditionValue);
         break;
       case 'equals':
@@ -97,11 +96,11 @@ export class QueryBuilder {
           this.rqlText = StringUtil.format(`{0}={1}`, conditionField, conditionValue) :
           this.rqlText = StringUtil.format(`{0}='{1}'`, conditionField, conditionValue);
         break;
-      case 'clear':
+      case 'or':
         (conditionValue === null || conditionValue === 'null') ?
           this.rqlText = StringUtil.format(`{0}={1}`, conditionField, conditionValue) :
           this.rqlText = StringUtil.format(`{0}='{1}'`, conditionField, conditionValue);
-        this._clear = false;
+        this._or = false;
         break;
       case 'between':
         this.rqlText = StringUtil.format(`BETWEEN {1}`, conditionValue);
@@ -136,12 +135,23 @@ export class QueryBuilder {
 
   }
 
+  public boost(boostField, boostValue, count) {
+    this._where = '';
+    this._or = false;
+
+    this.rqlText = StringUtil.format(`boost({0} = '{1}', {2})`, boostField, boostValue, count);
+
+    this.whereRaw(this.rqlText);
+
+    return this;
+
+  }
 
   public whereRaw(rqlCondition) {
 
     let addNot: string = this.negate ? 'NOT ' : '';
 
-    this._where += `${this.operator} ${rqlCondition} ${addNot}`;
+    this._where += StringUtil.format(`{0} {1} {2}`, this.operator, rqlCondition, addNot);
 
     this.operator = this.defaultOperator;
     this.negate = false;
@@ -153,29 +163,30 @@ export class QueryBuilder {
     let rql: string = ``;
 
     if (this._select) {
-      rql += `SELECT ${this._select} `;
+      rql += StringUtil.format(`SELECT {0} `, this._select);
     }
 
     if (this._from) {
-      rql += `FROM ${this._from}`;
+      rql += StringUtil.format(`FROM {0} `,this._from);
       this._from = '';
     }
 
     if (this._where) {
-      if(this._clear) {
-        rql += ` WHERE ${this._where}`;
+      if(this._or) {
+        rql += StringUtil.format(` WHERE {0}`, this._where);
       }
       else {
-        rql += ` ${this._where}`;
+        rql += StringUtil.format(`{0}`, this._where);
       }
     }
 
     if (this._order) {
-      rql += ` ORDER BY ${this._order}`;
+      rql += StringUtil.format(` ORDER BY {0}`, this._order);
     }
+
+    console.log(rql);
 
     return rql as string;
   }
-
 
 }

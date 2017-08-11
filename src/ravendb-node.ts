@@ -16,18 +16,15 @@ export {IDocumentStore} from './Documents/IDocumentStore';
 export {IDocumentSession, ISessionOptions} from './Documents/Session/IDocumentSession';
 export {IDocumentQueryConditions} from './Documents/Session/IDocumentQueryConditions';
 export {IDocumentQuery, IDocumentQueryOptions} from './Documents/Session/IDocumentQuery';
-export {EscapeQueryOption, EscapeQueryOptions} from './Documents/Session/EscapeQueryOptions';
 export {IHiloIdGenerator} from './Hilo/IHiloIdGenerator';
 export {RequestMethods, RequestMethod} from './Http/Request/RequestMethod';
-export {QueryOperators, QueryOperator} from './Documents/Session/QueryOperator';
 export {FieldIndexingOption, FieldIndexingOptions} from './Database/Indexes/FieldIndexingOption';
-export {IndexLockMode, IndexLockModes} from './Database/Indexes/IndexLockMode';
+export {IndexLockMode} from './Database/Indexes/IndexLockMode';
 export {SortOption, SortOptions} from './Database/Indexes/SortOption';
-export {FieldTermVectorOption, FieldTermVectorOptions} from './Database/Indexes/FieldTermVectorOption';
+export {FieldTermVectorOption} from './Database/Indexes/FieldTermVectorOption';
 export {ConcurrencyCheckMode, ConcurrencyCheckModes} from './Database/ConcurrencyCheckMode';
-export {IndexPriority, IndexPriorities} from './Database/Indexes/IndexPriority';
+export {IndexPriority} from './Database/Indexes/IndexPriority';
 export {StatusCode, StatusCodes} from './Http/Response/StatusCode';
-export {RQLOperator, RQLOperators} from './Documents/RQL/RQLOperator';
 export {RQLValue, RQLRangeValue, RQLConditionValue} from './Documents/RQL/RQLValue';
 export {ILockDoneCallback, ILockCallback} from './Lock/LockCallbacks';
 export {IRavenObject} from './Database/IRavenObject';
@@ -41,67 +38,17 @@ export {IResponse, IResponseBody} from './Http/Response/IResponse';
 export {
   RavenException, 
   InvalidOperationException, 
-  ErrorResponseException, 
-  DocumentDoesNotExistsException, 
+  ErrorResponseException,
   NonUniqueObjectException, 
   ConcurrencyException, 
   ArgumentNullException,
-  ArgumentOutOfRangeException, 
-  DatabaseDoesNotExistException, 
-  AuthorizationException, 
+  ArgumentOutOfRangeException,
   IndexDoesNotExistException, 
   DatabaseLoadTimeoutException, 
-  AuthenticationException, 
-  BadRequestException,
-  BulkInsertAbortedException,
-  BulkInsertProtocolViolationException,
-  IndexCompilationException,
-  TransformerCompilationException,
-  DocumentConflictException,
-  DocumentDoesNotExistException,
-  DocumentParseException,
-  IndexInvalidException,
-  IndexOrTransformerAlreadyExistException,
-  JavaScriptException,
-  JavaScriptParseException,
-  SubscriptionClosedException,
-  SubscriptionDoesNotBelongToNodeException,
-  SubscriptionDoesNotExistException,
-  SubscriptionException,
-  SubscriptionInUseException,
-  TransformerDoesNotExistException,
-  VersioningDisabledException,
+  AuthenticationException,
   AllTopologyNodesDownException,
-  BadResponseException,
-  ChangeProcessingException,
-  CommandExecutionException,
-  NoLeaderException,
-  CompilationException,
-  ConflictException,
-  DatabaseConcurrentLoadTimeoutException,
-  DatabaseDisabledException,
   DatabaseLoadFailureException,
-  DatabaseNotFoundException,
-  NotSupportedOsException,
-  SecurityException,
-  ServerLoadFailureException,
   UnsuccessfulRequestException,
-  CriticalIndexingException,
-  IndexAnalyzerException,
-  IndexCorruptionException,
-  IndexOpenException,
-  IndexWriteException,
-  IndexWriterCreationException,
-  StorageException,
-  StreamDisposedException,
-  LowMemoryException,
-  IncorrectDllException,
-  DiskFullException,
-  InvalidJournalFlushRequestException,
-  QuotaException,
-  VoronUnrecoverableErrorException,
-  NonDurableFileSystemException,
-  AggregateException
 } from './Database/DatabaseExceptions';
 
 // classes
@@ -135,21 +82,17 @@ export {PatchCommandData} from './Database/Commands/Data/PatchCommandData';
 export {SaveChangesData} from './Database/Commands/Data/SaveChangesData';
 export {CreateDatabaseOperation} from './Database/Operations/CreateDatabaseOperation';
 export {DeleteDatabaseOperation} from './Database/Operations/DeleteDatabaseOperation';
-export {GetApiKeyOperation} from './Database/Operations/GetApiKeyOperation';
-export {PutApiKeyOperation} from './Database/Operations/PutApiKeyOperation';
 export {IndexQueryBasedOperation} from './Database/Operations/IndexQueryBasedOperation';
 export {PatchByIndexOperation} from './Database/Operations/PatchByIndexOperation';
 export {DeleteByIndexOperation} from './Database/Operations/DeleteByIndexOperation';
 export {GetIndexOperation} from './Database/Operations/GetIndexOperation';
-export {GetIndexesOperation} from './Database/Operations/GetIndexesOperation';
 export {PutIndexesOperation} from './Database/Operations/PutIndexesOperation';
 export {DeleteIndexOperation} from './Database/Operations/DeleteIndexOperation';
-export {GetStatisticsOperation} from './Database/Operations/GetStatisticsOperation';
 export {PatchOperation} from './Database/Operations/PatchOperation';
 export {IOperationStatusResult, OperationStatus, OperationStatuses, OperationAwaiter} from './Database/Operations/OperationAwaiter';
 export {AbstractOperation, Operation, AdminOperation, ServerOperation, PatchResultOperation, AwaitableOperation, IOperation} from './Database/Operations/Operation';
 export {AbstractOperationExecutor, AbstractDatabaseOperationExecutor, OperationExecutor, AdminOperationExecutor, ServerOperationExecutor, IOperationExecutor} from './Database/Operations/OperationExecutor';
-export {AccessMode, AccessModes, ResourcesAccessModes} from './Database/Auth/AccessMode';
+export {AccessMode, ResourcesAccessModes} from './Database/Auth/AccessMode';
 export {ApiKeyDefinition} from './Database/Auth/ApiKeyDefinition';
 export {Serializer} from './Json/Serializer';
 export {DatabaseDocument} from './Database/DatabaseDocument';
@@ -160,7 +103,7 @@ export {DocumentConventions, IDocumentConversionResult, DocumentConstructor, ISt
 export {IndexDefinition} from './Database/Indexes/IndexDefinition';
 export {IndexFieldOptions} from './Database/Indexes/IndexFieldOptions';
 export {IndexQuery} from './Database/Indexes/IndexQuery';
-export {RQLBuilder} from './Documents/RQL/RQLBuilder';
+export {QueryBuilder} from './Documents/RQL/QueryBuilder';
 export {ServerNode} from './Http/ServerNode';
 export {NodeSelector} from './Http/Request/NodeSelector';
 export {NodeStatus} from './Http/NodeStatus';
