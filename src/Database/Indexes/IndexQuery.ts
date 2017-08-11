@@ -22,8 +22,8 @@ export class IndexQuery {
     this._sortHints = options.sort_hints || [];
     this._sortFields = options.sort_fields || [];
     this._defaultOperator = defaultOperator || QueryOperators.OR;
-    this._waitForNonStaleResults = options.wait_for_non_stale_results || false;
-    this._waitForNonStaleResultsTimeout = options.wait_for_non_stale_results_timeout || null;
+    this._waitForNonStaleResults = options.waitForNonStaleResults || false;
+    this._waitForNonStaleResultsTimeout = options.waitForNonStaleResultsTimeout || null;
 
     if (this._waitForNonStaleResults && !this._waitForNonStaleResultsTimeout) {
       this._waitForNonStaleResultsTimeout = 15 * 60;

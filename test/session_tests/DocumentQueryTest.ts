@@ -8,9 +8,7 @@ import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {IRavenObject} from "../../src/Database/IRavenObject";
-import {Product, Order, Company, ProductsTestingSort, Universal} from "../TestClasses";
-
-import {Query} from "../../src/Documents/RQL/Query"
+import {Product, ProductsTestingSort, Universal} from "../TestClasses";
 
 describe('Document query test', () => {
   let store: IDocumentStore;
@@ -51,7 +49,6 @@ describe('Document query test', () => {
       }).whereEquals<string>('name', 'withNesting').get();
 
       expect(results[0].product).to.be.instanceOf(Product);
-      //expect(results[0]).to.be.instanceOf(Universal) ???
     });
 
     it('should make query with fetch terms', async() => {
@@ -87,9 +84,7 @@ describe('Document query test', () => {
     it('should query with where', async() => expect(
       store.openSession().query<Universal>({
         indexName: 'Universals'
-      }).where({
-        name: 4
-      }).get()
+      }).where({name: 4}).get()
       ).to.be.fulfilled
     );
 
@@ -101,12 +96,12 @@ describe('Document query test', () => {
     expect(results).to.have.lengthOf(0);
   });
 
-  it('should query by dynamic index', async () => {
+  it('should query by @all_docs index', async () => {
     const results: Universal[] = await store.openSession().query<Universal>({
       // documentType: Product //dynamic/Product
     }).whereIn('name', 'withNesting').get();
 
-    expect(results).to.have.lengthOf(0);
+    expect(results[0]).to.be.a('object');
   });
 
   it('should paginate', async() => {
@@ -132,7 +127,7 @@ describe('Document query test', () => {
     expect(results[0]).to.be.a('object');
   });
     it('should query with andAlso', async () => {
-      const results: Universal[] = await store.openSession()
+      const results = await store.openSession()
         .query<Universal>({
           indexName: 'Universals',
           WaitForNonStaleResults: true
@@ -142,7 +137,7 @@ describe('Document query test', () => {
     });
 
     it('should query with orElse', async () => {
-      const results: Universal[] = await store.openSession()
+      const results = await store.openSession()
         .query<Universal>({
           indexName: 'Universals',
           WaitForNonStaleResults: true

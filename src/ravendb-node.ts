@@ -42,7 +42,6 @@ export {
   NonUniqueObjectException, 
   ConcurrencyException, 
   ArgumentNullException,
-  ArgumentOutOfRangeException,
   IndexDoesNotExistException, 
   DatabaseLoadTimeoutException, 
   AuthenticationException,

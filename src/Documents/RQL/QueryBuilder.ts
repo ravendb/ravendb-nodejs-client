@@ -1,5 +1,6 @@
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {StringUtil} from "../../Utility/StringUtil";
+import {QueryOperator, QueryOperators} from "../Session/QueryOperator";
 
 export class QueryBuilder {
 
@@ -26,17 +27,12 @@ export class QueryBuilder {
   }
 
   public get and() {
-    this.operator = 'AND';
+    this.operator = QueryOperators.AND;
     return this;
   }
 
   public get or() {
-    this.operator = 'OR';
-    return this;
-  }
-
-  public get andNot() {
-    this.operator = 'AND NOT';
+    this.operator = QueryOperators.OR;
     return this;
   }
 
@@ -100,10 +96,11 @@ export class QueryBuilder {
         (conditionValue === null || conditionValue === 'null') ?
           this.rqlText = StringUtil.format(`{0}={1}`, conditionField, conditionValue) :
           this.rqlText = StringUtil.format(`{0}='{1}'`, conditionField, conditionValue);
+        this.operator = '';
         this._or = false;
         break;
       case 'between':
-        this.rqlText = StringUtil.format(`BETWEEN {1}`, conditionValue);
+        this.rqlText = StringUtil.format(`{0} BETWEEN {1} AND {2}`, conditionField, conditionValue.start, conditionValue.end);
         break;
       case 'whereFiled':
         this.rqlText = StringUtil.format(`{0}`, conditionField);
@@ -118,16 +115,6 @@ export class QueryBuilder {
         this.rqlText = StringUtil.format(`{0} IN ('{1}')`, conditionField, conditionValue);
         break;
     }
-
-    this.whereRaw(this.rqlText);
-
-    return this;
-
-  }
-
-  public between(start, end) {
-
-    this.rqlText = StringUtil.format(`BETWEEN {0} AND {1}`, start, end);
 
     this.whereRaw(this.rqlText);
 
@@ -151,7 +138,7 @@ export class QueryBuilder {
 
     let addNot: string = this.negate ? 'NOT ' : '';
 
-    this._where += StringUtil.format(`{0} {1} {2}`, this.operator, rqlCondition, addNot);
+    this._where += StringUtil.format(`{0} {1} {2}`, this.operator, addNot, rqlCondition);
 
     this.operator = this.defaultOperator;
     this.negate = false;
@@ -173,7 +160,7 @@ export class QueryBuilder {
 
     if (this._where) {
       if(this._or) {
-        rql += StringUtil.format(` WHERE {0}`, this._where);
+        rql += StringUtil.format(` WHERE {0} `, this._where);
       }
       else {
         rql += StringUtil.format(`{0}`, this._where);
@@ -183,8 +170,6 @@ export class QueryBuilder {
     if (this._order) {
       rql += StringUtil.format(` ORDER BY {0}`, this._order);
     }
-
-    console.log(rql);
 
     return rql as string;
   }

@@ -9,7 +9,7 @@ import {QueryResultsCallback, EntityCallback, EntitiesCountCallback} from '../..
 import {PromiseResolver} from '../../Utility/PromiseResolver';
 import {RQLValue} from "../RQL/RQLValue";
 import {IRavenResponse} from "../../Database/RavenCommandResponse";
-import {QueryOperators, QueryOperator} from "./QueryOperator";
+import {QueryOperator} from "./QueryOperator";
 import {
   DocumentConventions,
   DocumentConstructor,
@@ -66,7 +66,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     this.waitForNonStaleResults = waitForNonStaleResults;
     this.nestedObjectTypes = nestedObjectTypes || {} as IRavenObject<DocumentConstructor>;
     this.documentType = documentType;
-    this.indexName = indexName || "dynamic";
+    this.indexName = indexName || "@all_docs";
     this.builder = new QueryBuilder();
 
 
@@ -171,12 +171,13 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
         this.whereEquals(fieldName, value);
 
-        let conditionNames = Object.values(conditions);
+        let conditionNames = Object.keys(conditions).map(function(key){return conditions[key]});
         let conditionKey = Object.keys( conditions );
         let conditionKeyString = conditionKey.toString();
 
         Array.from(conditionNames[0]).forEach((value) => {
           this.builder.or;
+          this.queryBuilder += this.builder.operator;
 
           this.queryBuilder += this.builder
             .where('or', conditionKeyString, value, false).getRql();
@@ -227,9 +228,9 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
       .where('greaterThan', field, value).getRql();
 
     this.builder.or;
+    this.queryBuilder += this.builder.operator;
 
-    this.queryBuilder += this.builder
-      .where('or', orName, orValue, false).getRql();
+    this.queryBuilder += this.builder.where('or', orName, orValue).getRql();
 
     return this;
 
@@ -242,9 +243,9 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
       .where('lessThan', field, value).getRql();
 
     this.builder.or;
+    this.queryBuilder += this.builder.operator;
 
-    this.queryBuilder += this.builder
-      .where('or', orName, orValue, false).getRql();
+    this.queryBuilder += this.builder.where('or', orName, orValue).getRql();
 
     return this;
 
@@ -301,7 +302,8 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
       .from(this.indexName)
       .where('equals', field, value).getRql();
 
-    this.builder.andNot;
+    this.builder.and.not;
+    this.queryBuilder += this.builder.operator;
 
     this.queryBuilder += this.builder
       .where('or', field, value).getRql();
@@ -324,7 +326,8 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
     this.queryBuilder += this.builder
       .from(this.indexName)
-      .where('whereFiled', field).between(start, end).getRql();
+      .where('between', field, {start: start, end: end})
+      .getRql();
 
     return this;
 
@@ -334,9 +337,11 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
     this.queryBuilder += this.builder
       .from(this.indexName)
-      .where('whereFiled', field).between(start, end).getRql();
+      .where('whereFiled', field, {start: start, end: end})
+      .where('between', field, {start: start, end: end}).getRql();
 
     this.builder.or;
+    this.queryBuilder += this.builder.operator;
 
     this.queryBuilder += this.builder.where('or', orName, orValue).getRql();
 

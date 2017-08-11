@@ -19,7 +19,7 @@ const options = {
     src: './src',
     tests: './test',
     tmp: './.build',
-    dest: './lib',
+    dest: './lib'
 };
 
 gulp.task('clean', (next) => rmdir(options.tmp, next));

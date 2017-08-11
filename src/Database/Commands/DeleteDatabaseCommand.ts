@@ -2,8 +2,6 @@ import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {StringUtil} from "../../Utility/StringUtil";
-import {TypeUtil} from "../../Utility/TypeUtil";
-import {log} from "util";
 
 export class DeleteDatabaseCommand extends RavenCommand {
   protected databaseId?: string;

@@ -9,7 +9,6 @@ import {InvalidOperationException, IndexDoesNotExistException} from "../Database
 import {StringUtil} from "../../Utility/StringUtil";
 import {QueryOperators} from "../../Documents/Session/QueryOperator";
 import {QueryString} from "../../Http/QueryString";
-import {log} from "util";
 
 export class QueryCommand extends RavenCommand {
   protected indexName: string;
@@ -52,13 +51,9 @@ export class QueryCommand extends RavenCommand {
       WaitForNonStaleResultsAsOfNow: true,
       PageSize: query.pageSize,
       Start: query.start,
-      Query: query.query
     };
 
     this.payload = {
-      WaitForNonStaleResultsAsOfNow: true,
-      PageSize: query.pageSize,
-      Start: query.start,
       Query: query.query
     };
 
@@ -69,12 +64,9 @@ export class QueryCommand extends RavenCommand {
     );
 
     query.query && this.addParams('Query', query.query);
-    //query.fetch && this.addParams('fetch', query.fetch);
     this.includes && this.addParams('include', this.includes);
     this.metadataOnly && this.addParams('metadata-only', 'true');
     this.indexEntriesOnly && this.addParams('debug', 'entries');
-    //query.sortFields && this.addParams('sort', query.sortFields);
-    //query.sortHints && query.sortHints.forEach((hint: string) => this.addParams(hint, null));
     QueryOperators.isAnd(query.defaultOperator) && this.addParams('operator', query.defaultOperator);
 
     if (query.waitForNonStaleResults) {
@@ -82,10 +74,6 @@ export class QueryCommand extends RavenCommand {
         WaitForNonStaleResultsAsOfNow: 'true',
         WaitForNonStaleResultsTimeout: query.waitForNonStaleResultsTimeout
       });
-    }
-    
-    if ((this.endPoint + '?' + QueryString.stringify(this.params)).length > this.conventions.maxLengthOfQueryUsingGetUrl) {
-      this.method = RequestMethods.Post;
     }
 
   }

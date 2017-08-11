@@ -62,9 +62,7 @@ export abstract class RavenCommand {
         arrayFormat: 'repeat',
         strictNullHandling: true
       },
-      body: {
-        "Query": "from @all_docs"
-      }
+      body: {}
     };
 
 

@@ -17,5 +17,5 @@ export class PatchByIndexOperation extends IndexQueryBasedOperation {
 
   public getCommand(conventions: DocumentConventions, store?: IDocumentStore): RavenCommand {
     return new PatchByIndexCommand(this.indexName, this.query, this.patch, this.options);
-  } 
+  }
 }

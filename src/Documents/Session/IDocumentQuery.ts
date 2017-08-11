@@ -26,7 +26,7 @@ export interface IDocumentQuery<T> {
   negateNext();
   selectFields(...args: string[]): IDocumentQuery<T>;
   search(from: string, searchTerms: string | string[], boostField, boostValue, count): IDocumentQuery<T>;
-  where(from: string, conditions: IDocumentQueryConditions);
+  where(conditions: IDocumentQueryConditions);
   whereEquals<V extends RQLValue>(field: string, value: V): IDocumentQuery<T>;
   endsWith<V extends RQLValue>(field: string, value: V): IDocumentQuery<T>;
   startsWith<V extends RQLValue>(field: string, value: V): IDocumentQuery<T>;

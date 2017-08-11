@@ -276,7 +276,7 @@ export class DocumentSession implements IDocumentSession {
 
     if (options) {
       usingDefaultOperator = options.usingDefaultOperator || null;
-      waitForNonStaleResults = options.waitForNonStaleResults || null;
+      waitForNonStaleResults = options.WaitForNonStaleResults || null;
       includes = options.includes || null;
       withStatistics = options.withStatistics || null;
       nestedObjectTypes = options.nestedObjectTypes || {};
