@@ -38,7 +38,7 @@ export interface IDocumentQuery<T> {
   whereLessThan<V extends RQLValue>(field: string, value: V): IDocumentQuery<T>;
   whereLessThanOrEqual<V extends RQLValue>(field: string, value: V, orName?, orValue?): IDocumentQuery<T>;
   whereIsNull(field: string, value: string): IDocumentQuery<T>;
-  whereNotNull<V extends RQLValue>(field: string, andNotFiledValue: V): IDocumentQuery<T>;
+  whereNotNull(field: string): IDocumentQuery<T>;
   orderBy<V extends RQLValue>(field: string, direction: string): IDocumentQuery<T>;
   get(callback?: QueryResultsCallback<T[]>): Promise<T[]>;
   get(callback?: QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<QueryResultsWithStatistics<T>>;

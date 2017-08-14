@@ -41,8 +41,6 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   protected session: IDocumentSession;
   protected requestExecutor: RequestExecutor;
   protected includes?: string[] = null;
-  protected queryBuilder: string = '';
-  protected negate: boolean = false;
   protected fetch?: string[] = null;
   protected sortHints?: string[] = null;
   protected sortFields?: string[] = null;
@@ -53,7 +51,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   protected nestedObjectTypes: IRavenObject<DocumentConstructor> = {};
   private _take?: number = null;
   private _skip?: number = null;
-  public builder = null;
+  private _builder = null;
 
   constructor(session: IDocumentSession, requestExecutor: RequestExecutor, documentType?: DocumentType<T>, indexName?: string, usingDefaultOperator
     ?: QueryOperator, waitForNonStaleResults: boolean = false, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, withStatistics: boolean = false) {
@@ -67,7 +65,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     this.nestedObjectTypes = nestedObjectTypes || {} as IRavenObject<DocumentConstructor>;
     this.documentType = documentType;
     this.indexName = indexName || "@all_docs";
-    this.builder = new QueryBuilder();
+    this._builder = new QueryBuilder();
 
 
     if (!indexName && documentType) {
@@ -123,45 +121,51 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   }
 
   public take(docsCount: number) {
-    this._take = docsCount;
 
-    return this;
+    return this._take = docsCount;
+
   }
 
   public skip(skipCount: number) {
-    this._skip = skipCount;
 
-    return this;
+    return this._skip = skipCount;
+
   }
 
   public get not() {
-    this.negateNext();
 
-    return this;
+    return this.negateNext();
+
   }
 
   public get and() {
-    this.andAlso();
 
-    return this;
+    return this.andAlso();
+
   }
 
   public get or() {
-    this.orElse();
 
-    return this;
+    return this.orElse();
+
   }
 
   public andAlso() {
-    return this.builder.and;
+
+    return this._builder.and;
+
   }
 
   public orElse() {
-    return this.builder.or;
+
+    return this._builder.or;
+
   }
 
   public negateNext() {
-    return this.builder.not;
+
+    return this._builder.not;
+
   }
 
   public where<V extends RQLValue>(conditions: IDocumentQueryConditions) {
@@ -176,11 +180,9 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
         let conditionKeyString = conditionKey.toString();
 
         Array.from(conditionNames[0]).forEach((value) => {
-          this.builder.or;
-          this.queryBuilder += this.builder.operator;
-
-          this.queryBuilder += this.builder
-            .where('or', conditionKeyString, value, false).getRql();
+          this._builder
+            .or
+            .where('equals', conditionKeyString, value, false)
         });
 
       } else {
@@ -193,9 +195,9 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   public whereEquals<V extends RQLValue>(field, value) {
 
-    this.queryBuilder += this.builder
+    this._builder
       .from(this.indexName)
-      .where('equals', field, value).getRql();
+      .where('equals', field, value);
 
     return this;
 
@@ -203,9 +205,9 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   public whereIn<V extends RQLValue>(field, value) {
 
-    this.queryBuilder += this.builder
+    this._builder
       .from(this.indexName)
-      .where('in', field, value).getRql();
+      .where('in', field, value);
 
     return this;
 
@@ -213,9 +215,9 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   public whereGreaterThan<V extends RQLValue>(field, value) {
 
-    this.queryBuilder += this.builder
+    this._builder
       .from(this.indexName)
-      .where('greaterThan', field, value).getRql();
+      .where('greaterThan', field, value);
 
     return this;
 
@@ -223,14 +225,11 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   public whereGreaterThanOrEqual<V extends RQLValue>(field, value, orName, orValue) {
 
-    this.queryBuilder += this.builder
+    this._builder
       .from(this.indexName)
-      .where('greaterThan', field, value).getRql();
-
-    this.builder.or;
-    this.queryBuilder += this.builder.operator;
-
-    this.queryBuilder += this.builder.where('or', orName, orValue).getRql();
+      .where('greaterThan', field, value)
+      .or
+      .where('equals', orName, orValue);
 
     return this;
 
@@ -238,14 +237,11 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   public whereLessThanOrEqual<V extends RQLValue>(field, value, orName, orValue)  {
 
-    this.queryBuilder += this.builder
+    this._builder
       .from(this.indexName)
-      .where('lessThan', field, value).getRql();
-
-    this.builder.or;
-    this.queryBuilder += this.builder.operator;
-
-    this.queryBuilder += this.builder.where('or', orName, orValue).getRql();
+      .where('lessThan', field, value)
+      .or
+      .where('equals', orName, orValue);
 
     return this;
 
@@ -253,9 +249,9 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   public whereLessThan<V extends RQLValue>(field, value: V) {
 
-    this.queryBuilder += this.builder
+    this._builder
       .from(this.indexName)
-      .where('lessThan', field, value).getRql();
+      .where('lessThan', field, value);
 
     return this;
 
@@ -263,9 +259,9 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   public startsWith<V extends RQLValue>(field, value) {
 
-    this.queryBuilder += this.builder
+    this._builder
       .from(this.indexName)
-      .where('startsWith', field, value).getRql();
+      .where('startsWith', field, value);
 
     return this;
 
@@ -273,9 +269,9 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   public endsWith<V extends RQLValue>(field, value) {
 
-    this.queryBuilder += this.builder
+    this._builder
       .from(this.indexName)
-      .where('endsWith', field, value).getRql();
+      .where('endsWith', field, value);
 
     return this;
 
@@ -283,30 +279,24 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   public search<V extends RQLValue>(field, value, boostField, boostValue, count) {
 
-    this.queryBuilder += this.builder
+    this._builder
       .from(this.indexName)
-      .where('search', field, value).getRql();
-
-    this.builder.or;
-
-    this.queryBuilder += this.builder
-      .boost(boostField, boostValue, count).getRql();
+      .where('search', field, value)
+      .or
+      .where('boost', {boostField: boostField, boostValue: boostValue}, count);
 
     return this;
 
   }
 
-  public whereNotNull<V extends RQLValue>(field, value) {
+  public whereNotNull<V extends RQLValue>(field) {
 
-    this.queryBuilder += this.builder
+    this._builder
       .from(this.indexName)
-      .where('equals', field, value).getRql();
-
-    this.builder.and.not;
-    this.queryBuilder += this.builder.operator;
-
-    this.queryBuilder += this.builder
-      .where('or', field, value).getRql();
+      .where('equals', field, 'null')
+      .and
+      .not
+      .where('equals', field, 'null');
 
     return this;
 
@@ -314,9 +304,9 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   public whereIsNull<V extends RQLValue>(field, value) {
 
-    this.queryBuilder += this.builder
+    this._builder
       .from(this.indexName)
-      .where('equals', field, value).getRql();
+      .where('equals', field, value);
 
     return this;
 
@@ -324,10 +314,9 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   public whereBetween<V extends RQLValue>(field, start, end) {
 
-    this.queryBuilder += this.builder
+    this._builder
       .from(this.indexName)
-      .where('between', field, {start: start, end: end})
-      .getRql();
+      .where('between', field, {start: start, end: end});
 
     return this;
 
@@ -335,15 +324,11 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   public whereBetweenOrEqual<V extends RQLValue>(field, start, end, orName, orValue) {
 
-    this.queryBuilder += this.builder
+    this._builder
       .from(this.indexName)
-      .where('whereFiled', field, {start: start, end: end})
-      .where('between', field, {start: start, end: end}).getRql();
-
-    this.builder.or;
-    this.queryBuilder += this.builder.operator;
-
-    this.queryBuilder += this.builder.where('or', orName, orValue).getRql();
+      .where('between', field, {start: start, end: end})
+      .or
+      .where('equals', orName, orValue);
 
     return this;
 
@@ -351,9 +336,9 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   public orderBy<V extends RQLValue>(field, direction) {
 
-    this.queryBuilder += this.builder
+    this._builder
       .from(this.indexName)
-      .order(field, direction).getRql();
+      .order(field, direction);
 
     return this;
 
@@ -361,9 +346,9 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   public selectFields<V extends RQLValue>(field) {
 
-    this.queryBuilder += this.builder
+    this._builder
       .from(this.indexName)
-      .select(field).getRql();
+      .select(field);
 
     return this;
 
@@ -394,7 +379,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
     const session: IDocumentSession = this.session;
     const conventions: DocumentConventions = session.conventions;
-    const query: IndexQuery = new IndexQuery(this.queryBuilder, this._take, this._skip, this.usingDefaultOperator, queryOptions);
+    const query: IndexQuery = new IndexQuery(this._builder.getRql(), this._take, this._skip, this.usingDefaultOperator, queryOptions);
 
     const queryCommand: QueryCommand = new QueryCommand(this.indexName, query, conventions, this.includes);
     const endTime: number = moment().unix() + Math.max(conventions.requestTimeout, query.waitForNonStaleResultsTimeout);

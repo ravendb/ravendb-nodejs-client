@@ -262,7 +262,7 @@ describe('Document query test', () => {
         indexName: 'Universals',
         WaitForNonStaleResults: true
       })
-    .whereNotNull('nullField', 'null').get();
+    .whereNotNull('nullField').get();
     expect(results).to.have.lengthOf(0);
   });
 
