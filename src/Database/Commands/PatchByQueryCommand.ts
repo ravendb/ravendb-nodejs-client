@@ -1,4 +1,4 @@
-import {IndexQueryBasedCommand} from "./IndexQueryBasedCommand";
+import {QueryBasedCommand} from "./QueryBasedCommand";
 import {IndexQuery} from "../Indexes/IndexQuery";
 import {PatchRequest} from "../../Http/Request/PatchRequest";
 import {QueryOperationOptions} from "../Operations/QueryOperationOptions";
@@ -6,15 +6,15 @@ import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {IResponse} from "../../Http/Response/IResponse";
 import {IRavenResponse} from "../RavenCommandResponse";
 import {StatusCodes} from "../../Http/Response/StatusCode";
-import {ErrorResponseException, InvalidOperationException, IndexDoesNotExistException} from "../DatabaseExceptions";
+import {ErrorResponseException, InvalidOperationException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {ServerNode} from "../../Http/ServerNode";
 
-export class PatchByIndexCommand extends IndexQueryBasedCommand {
+export class PatchByQueryCommand extends QueryBasedCommand {
   protected patch?: PatchRequest = null;
 
-  constructor(indexName: string, queryToUpdate: IndexQuery, patch?: PatchRequest, options?: QueryOperationOptions) {
-    super(RequestMethods.Patch, indexName, queryToUpdate, options);
+  constructor(queryToUpdate: IndexQuery, patch?: PatchRequest, options?: QueryOperationOptions) {
+    super(RequestMethods.Patch, queryToUpdate, options);
     this.patch = patch;
   }
 
@@ -23,7 +23,11 @@ export class PatchByIndexCommand extends IndexQueryBasedCommand {
       throw new InvalidOperationException('Patch must me instanceof PatchRequest class');
     }
 
-    this.payload = this.patch.toJson();
+    this.payload = {
+      "Patch": this.patch.toJson(),
+      "Query": this.query.toJson
+    };
+
     this.endPoint = StringUtil.format('{url}/databases/{database}', serverNode);
     super.createRequest(serverNode);
   }
@@ -31,14 +35,11 @@ export class PatchByIndexCommand extends IndexQueryBasedCommand {
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
     const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
 
-    if(!response.body) {
-      throw new IndexDoesNotExistException(StringUtil.format('Could not find index {0}', this.indexName));
-    }
-
     if (![StatusCodes.Ok, StatusCodes.Accepted].includes(response.statusCode)) {
       throw new ErrorResponseException('Invalid response from server');
     }
 
     return result;
   }
+
 }

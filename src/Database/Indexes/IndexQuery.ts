@@ -1,4 +1,4 @@
-import {QueryOperator, QueryOperators} from "../../Documents/Session/QueryOperator";
+import {QueryOperator} from "../../Documents/Session/QueryOperator";
 import {IOptionsSet} from "../../Utility/IOptionsSet";
 
 export class IndexQuery {
@@ -12,16 +12,11 @@ export class IndexQuery {
   private _waitForNonStaleResults: boolean = false;
   private _waitForNonStaleResultsTimeout?: number = null;
 
-  constructor(query: string = '', pageSize: number = 128, skippedResults: number = 0,
-    defaultOperator?: QueryOperator, options: IOptionsSet = {}
-  ) {
+  constructor(query: string = '', pageSize: number = 128, skippedResults: number = 0, options: IOptionsSet = {}) {
     this._query = query;
     this._pageSize = pageSize || 128;
     this._start = skippedResults || 0;
     this._fetch = options.fetch || [];
-    this._sortHints = options.sort_hints || [];
-    this._sortFields = options.sort_fields || [];
-    this._defaultOperator = defaultOperator || QueryOperators.OR;
     this._waitForNonStaleResults = options.waitForNonStaleResults || false;
     this._waitForNonStaleResultsTimeout = options.waitForNonStaleResultsTimeout || null;
 
@@ -32,6 +27,21 @@ export class IndexQuery {
 
   public get pageSize(): number {
     return this._pageSize;
+  }
+
+  public get toJson(): object {
+
+    const json = {
+      PageSize: this._pageSize,
+      Query: this._query,
+      Start: this._start,
+      WaitForNonStaleResultsAsOfNow: this._waitForNonStaleResults,
+      WaitForNonStaleResultsTimeout: null
+    };
+
+    if(this._waitForNonStaleResultsTimeout) json.WaitForNonStaleResultsTimeout = this._waitForNonStaleResultsTimeout;
+
+    return json;
   }
 
   public set pageSize(pageSize: number) {
@@ -56,14 +66,6 @@ export class IndexQuery {
 
   public get fetch(): string[] {
     return this._fetch;
-  }
-
-  public get sortHints(): string[] {
-    return this._sortHints;
-  }
-
-  public get sortFields(): string[] {
-    return this._sortFields;
   }
 
   public get waitForNonStaleResults(): boolean {

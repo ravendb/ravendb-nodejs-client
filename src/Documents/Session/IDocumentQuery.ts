@@ -7,7 +7,7 @@ import {IRavenObject} from "../../Database/IRavenObject";
 import {DocumentConstructor, DocumentType} from "../Conventions/DocumentConventions";
 
 export interface IDocumentQueryOptions<T> {
-  documentType?: DocumentType<T>, 
+  documentType?: DocumentType<T>,
   indexName?: string;
   usingDefaultOperator?: QueryOperator;
   WaitForNonStaleResults?: boolean;

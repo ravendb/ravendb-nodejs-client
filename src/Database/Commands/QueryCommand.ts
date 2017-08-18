@@ -14,12 +14,10 @@ export class QueryCommand extends RavenCommand {
   protected indexName: string;
   protected indexQuery: IndexQuery;
   protected conventions: DocumentConventions;
-  protected includes?: string[];
   protected metadataOnly: boolean = false;
   protected indexEntriesOnly: boolean = false;
 
-  constructor(indexName: string, indexQuery: IndexQuery, conventions: DocumentConventions,
-    includes?: string[], metadataOnly: boolean = false, indexEntriesOnly: boolean = false
+  constructor(indexName: string, indexQuery: IndexQuery, conventions: DocumentConventions, metadataOnly: boolean = false, indexEntriesOnly: boolean = false
   ) {
 
     super('', RequestMethods.Post, null, null, {});
@@ -39,7 +37,6 @@ export class QueryCommand extends RavenCommand {
     this.indexName = indexName;
     this.indexQuery = indexQuery;
     this.conventions = conventions;
-    this.includes = includes;
     this.metadataOnly = metadataOnly;
     this.indexEntriesOnly = indexEntriesOnly;
   }
@@ -53,37 +50,24 @@ export class QueryCommand extends RavenCommand {
       Start: query.start,
     };
 
-    this.payload = {
-      Query: query.query
-    };
+
+    this.payload = query.toJson;
 
 
     this.endPoint = StringUtil.format(
-      '{0}/databases/{1}/queries?',
+      '{0}/databases/{1}/queries',
       serverNode.url,serverNode.database
     );
 
-    query.query && this.addParams('Query', query.query);
-    this.includes && this.addParams('include', this.includes);
     this.metadataOnly && this.addParams('metadata-only', 'true');
     this.indexEntriesOnly && this.addParams('debug', 'entries');
     QueryOperators.isAnd(query.defaultOperator) && this.addParams('operator', query.defaultOperator);
-
-    if (query.waitForNonStaleResults) {
-      this.addParams({
-        WaitForNonStaleResultsAsOfNow: 'true',
-        WaitForNonStaleResultsTimeout: query.waitForNonStaleResultsTimeout
-      });
-    }
 
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
     const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
 
-    if (!response.body) {
-      throw new IndexDoesNotExistException(StringUtil.format('Could not find index {0}', this.indexName));
-    }
-      return result;
+    return result;
   }
 }

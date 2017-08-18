@@ -285,7 +285,7 @@ export class DocumentSession implements IDocumentSession {
     }
 
     const query: DocumentQuery<T> = new DocumentQuery<T>(this, this.requestExecutor, documentType, indexName,
-      usingDefaultOperator, waitForNonStaleResults, includes, nestedObjectTypes, withStatistics
+      usingDefaultOperator, waitForNonStaleResults, nestedObjectTypes, withStatistics
     );
 
     query.on(
@@ -300,8 +300,8 @@ export class DocumentSession implements IDocumentSession {
     );
 
     query.on<object[]>(
-      DocumentQuery.EVENT_INCLUDES_FETCHED, 
-      (includes: object[]) => 
+      DocumentQuery.EVENT_INCLUDES_FETCHED,
+      (includes: object[]) =>
       this.onIncludesFetched(includes)
     );
 
@@ -331,7 +331,7 @@ more responsive application.", maxRequests
     this.incrementRequestsCount();
 
     return this.requestExecutor
-      .execute(new GetDocumentCommand(ids, includes))
+      .execute(new GetDocumentCommand(ids))
       .then((response: IRavenResponse): T[] | BluebirdPromise.Thenable<T[]> => {
         let responseResults: object[] = [];
         let responseIncludes: object[] = [];

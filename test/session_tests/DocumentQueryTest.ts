@@ -60,18 +60,6 @@ describe('Document query test', () => {
       expect(_.every(results, (result: Product) => result.hasOwnProperty('id'))).to.be.true;
     });
 
-    it('should query with includes', async() => {
-      session = store.openSession();
-
-      await session.query<Universal>({
-        indexName: 'Universals',
-        includes: ['name']
-      }).where({'name': 'withNesting'}).get();
-
-      await session.load('Universals_1');
-      expect(session.numberOfRequestsInSession).to.equals(1);
-    });
-
     it('should query with whereArray', async() => expect(
       store.openSession().query<Universal>({
             indexName: 'Universals'
@@ -98,9 +86,7 @@ describe('Document query test', () => {
 
   it('should query by @all_docs index', async () => {
     const results: Universal[] = await store.openSession().query<Universal>({
-      // documentType: Product //dynamic/Product
     }).whereIn('name', 'withNesting').get();
-
     expect(results[0]).to.be.a('object');
   });
 
@@ -113,7 +99,6 @@ describe('Document query test', () => {
     }).whereIn('name', 'withNesting').get();
 
     const totalPages: number = Math.ceil(totalCount.length / pageSize);
-
     expect(totalPages).to.equals(5);
   });
 

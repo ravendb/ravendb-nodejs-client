@@ -40,7 +40,6 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   protected indexName: string;
   protected session: IDocumentSession;
   protected requestExecutor: RequestExecutor;
-  protected includes?: string[] = null;
   protected fetch?: string[] = null;
   protected sortHints?: string[] = null;
   protected sortFields?: string[] = null;
@@ -54,10 +53,9 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   private _builder = null;
 
   constructor(session: IDocumentSession, requestExecutor: RequestExecutor, documentType?: DocumentType<T>, indexName?: string, usingDefaultOperator
-    ?: QueryOperator, waitForNonStaleResults: boolean = false, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, withStatistics: boolean = false) {
+    ?: QueryOperator, waitForNonStaleResults: boolean = false, nestedObjectTypes?: IRavenObject<DocumentConstructor>, withStatistics: boolean = false) {
     super();
     this.session = session;
-    this.includes = includes;
     this.withStatistics = withStatistics;
     this.requestExecutor = requestExecutor;
     this.usingDefaultOperator = usingDefaultOperator;
@@ -379,9 +377,9 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
     const session: IDocumentSession = this.session;
     const conventions: DocumentConventions = session.conventions;
-    const query: IndexQuery = new IndexQuery(this._builder.getRql(), this._take, this._skip, this.usingDefaultOperator, queryOptions);
+    const query: IndexQuery = new IndexQuery(this._builder.getRql(), this._take, this._skip, queryOptions);
 
-    const queryCommand: QueryCommand = new QueryCommand(this.indexName, query, conventions, this.includes);
+    const queryCommand: QueryCommand = new QueryCommand(this.indexName, query, conventions);
     const endTime: number = moment().unix() + Math.max(conventions.requestTimeout, query.waitForNonStaleResultsTimeout);
 
     const request = () => this.requestExecutor
@@ -389,8 +387,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
       .then((response: IRavenResponse | null): IRavenResponse | BluebirdPromise.Thenable<IRavenResponse> => {
         if (TypeUtil.isNone(response)) {
           return {
-            Results: [] as object[],
-            Includes: [] as string[]
+            Results: [] as object[]
           } as IRavenResponse;
         } else if (response.IsStale && this.waitForNonStaleResults) {
           if (moment().unix() > endTime) {
@@ -426,13 +423,6 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
           conversionResult
         );
       });
-
-      if (Array.isArray(commandResponse.Includes) && commandResponse.Includes.length) {
-        this.emit<object[]>(
-          DocumentQuery.EVENT_INCLUDES_FETCHED,
-          commandResponse.Includes as object[]
-        );
-      }
 
       if (this.withStatistics) {
         result = {

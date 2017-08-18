@@ -19,8 +19,8 @@ export class Product implements IRavenObject {
   constructor(
     public id?: string,
     public name: string = "",
-    public uid?:number,
-    public order?: string 
+    public uid?: number,
+    public order?: number
   ) {}
 }
 

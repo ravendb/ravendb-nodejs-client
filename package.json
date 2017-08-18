@@ -16,11 +16,11 @@
     "type": "git",
     "url": "https://github.com/ravendb/ravendb-nodejs-client"
   },
-  "bugs":{
+  "bugs": {
     "email": "support@ravendb.net",
     "url": "http://issues.hibernatingrhinos.com"
   },
-  "contributors":[
+  "contributors": [
     "Hibernating Rhinos"
   ],
   "engines": {
@@ -59,6 +59,7 @@
     "gulp-uglify-harmony": "git+https://github.com/jiborobot/gulp-uglify-harmony.git#master",
     "mocha": "^3.2.0",
     "rimraf": "^2.6.1",
+    "ts-node": "^3.3.0",
     "typescript": "~2.3.4",
     "uglify-js-harmony": "^2.7.5"
   },

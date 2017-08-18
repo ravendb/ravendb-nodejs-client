@@ -17,7 +17,7 @@ import {IndexQuery} from "../../src/Database/Indexes/IndexQuery";
 import {DocumentConventions} from "../../src/Documents/Conventions/DocumentConventions";
 import {QueryOperationOptions} from "../../src/Database/Operations/QueryOperationOptions";
 import {IRavenObject} from "../../src/Database/IRavenObject";
-import {PatchByIndexOperation} from "../../src/Database/Operations/PatchByIndexOperation";
+import {PatchByQueryOperation} from "../../src/Database/Operations/PatchByQueryOperation";
 import {DeleteByIndexOperation} from "../../src/Database/Operations/DeleteByIndexOperation";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 
@@ -25,8 +25,9 @@ describe('IndexBasedCommand tests', () => {
   let requestExecutor: RequestExecutor;
   let patch: PatchRequest;
   let store: IDocumentStore;
+  let query;
 
- /* beforeEach(function(): void {
+  beforeEach(function(): void {
     ({requestExecutor, store} = this.currentTest as IRavenObject);
   });
 
@@ -45,61 +46,63 @@ describe('IndexBasedCommand tests', () => {
     });
 
     patch = new PatchRequest("Name = 'Patched';");
+    query = `from index 'Testing_Sort' where exists(Name)`;
 
     return store.operations.send(new PutIndexesOperation(indexSort))
-      .then(() => BluebirdPromise.all(_.range(0, 100).map((i) => requestExecutor
-        .execute(new PutDocumentCommand(`testing/${i}`, {
-          Name: `test${i}`, DocNumber: i,
+      .then(() => BluebirdPromise.all(_.range(0, 1).map((i) => requestExecutor
+        .execute(new PutDocumentCommand('test', {
+          Name: 'test', DocNumber: i,
           '@metadata': {"@collection": "Testings"}
         }))
       )));
   });
 
   describe('Actions by Index', () => {
+
     it('update by index success', async () => {
-      const indexQuery: IndexQuery = new IndexQuery('FROM @all_docs WHERE Name = "test65"', 0, 0, null, {WaitForNonStaleResults: true});
+      const indexQuery: IndexQuery = new IndexQuery(query, 0, 0, {WaitForNonStaleResults: true});
       const queryCommand: QueryCommand = new QueryCommand('Testing_Sort', indexQuery, new DocumentConventions());
-      const patchByIndexOperation: PatchByIndexOperation = new PatchByIndexOperation('Testing_Sort', new IndexQuery('FROM @all_docs'), patch, new QueryOperationOptions(false));
-      console.log(patchByIndexOperation);
+      const PatchByQueryOperations: PatchByQueryOperation = new PatchByQueryOperation(new IndexQuery(query), patch, new QueryOperationOptions(false));
 
       return requestExecutor
         .execute(queryCommand)
         .then(() => store.operations
-        .send(patchByIndexOperation)
-        .then((response: IRavenResponse) => {
-          expect(response).not.to.be.null;
-          expect((response as IRavenResponse).Result.Total).not.to.be.lessThan(50);
-        }, err => {
+          .send(PatchByQueryOperations)
+          .then((response: IRavenResponse) => {
+            expect(response).not.to.be.null;
+            expect((response as IRavenResponse).Result.Total).not.to.be.lessThan(1);
+          }, err => {
             console.log(err);
           })
-      );
+        );
     });
 
     it('update by index fail', async () => expect(
       store.operations
-        .send(new PatchByIndexOperation('', new IndexQuery('Name:test'), patch))
+        .send(new PatchByQueryOperation(new IndexQuery(`from index 'unexisting_index_1' where Name = 'test1'`), patch))
       ).to.be.rejected
     );
 
     it('delete by index fail', async () => expect(
       store.operations
-        .send(new DeleteByIndexOperation('region2', new IndexQuery('Name:Western')))
+        .send(new DeleteByIndexOperation(new IndexQuery(`from index 'unexisting_index_1' where Name = 'test1'`)))
       ).to.be.rejected
     );
 
     it('delete by index success', async () => {
-      const query: string = 'DocNumber_D_Range:[0 TO 49]';
-      const indexQuery: IndexQuery = new IndexQuery(query, 0, 0, null, {wait_for_non_stale_results: true});
+      const query:string = "from index 'Testing_Sort' where DocNumber between 0 AND 47";
+      const indexQuery: IndexQuery = new IndexQuery(query, 0, 0, {wait_for_non_stale_results: true});
       const queryCommand: QueryCommand = new QueryCommand('Testing_Sort', indexQuery, new DocumentConventions());
-      const deleteByIndexOperation: DeleteByIndexOperation = new DeleteByIndexOperation('Testing_Sort', new IndexQuery(query), new QueryOperationOptions(false));
+      const deleteByIndexOperations: DeleteByIndexOperation = new DeleteByIndexOperation(new IndexQuery(query), new QueryOperationOptions(false));
 
       return requestExecutor
         .execute(queryCommand)
         .then(() => store.operations
-        .send(deleteByIndexOperation))
+        .send(deleteByIndexOperations))
         .then((response: IRavenResponse) => expect(response.Status).to.equals('Completed'));
     });
+
   });
 
-  */
+
 });
