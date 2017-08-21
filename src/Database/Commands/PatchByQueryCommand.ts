@@ -25,10 +25,11 @@ export class PatchByQueryCommand extends QueryBasedCommand {
 
     this.payload = {
       "Patch": this.patch.toJson(),
-      "Query": this.query.toJson
+      "Query": this.query.toJson()
     };
 
     this.endPoint = StringUtil.format('{url}/databases/{database}', serverNode);
+
     super.createRequest(serverNode);
   }
 

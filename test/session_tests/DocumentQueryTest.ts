@@ -85,8 +85,9 @@ describe('Document query test', () => {
   });
 
   it('should query by @all_docs index', async () => {
-    const results: Universal[] = await store.openSession().query<Universal>({
-    }).whereIn('name', 'withNesting').get();
+    const results: Universal[] = await store.openSession().query<Universal>(
+      {indexName: 'Universals'
+      }).whereIn('name', 'withNesting').get();
     expect(results[0]).to.be.a('object');
   });
 

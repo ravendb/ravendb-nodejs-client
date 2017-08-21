@@ -11,13 +11,16 @@ import {StatusCodes} from "../../Http/Response/StatusCode";
 export class GetDocumentCommand extends RavenCommand {
   protected idOrIds?: string | string[];
   protected metadataOnly: boolean = false;
+  protected includes?: string[];
 
   constructor(idOrIds: string | string[],
-    metadataOnly: boolean = false
+    metadataOnly: boolean = false,
+              includes?: string[]
   ) {
     super('', RequestMethods.Get, null, null, {});
 
     this.idOrIds = idOrIds;
+    this.includes = includes;
     this.metadataOnly = metadataOnly;
   }
 
@@ -32,6 +35,7 @@ export class GetDocumentCommand extends RavenCommand {
     const [firstId] = ids, multiLoad: boolean = (ids.length > 1);  
 
     this.params = {};
+    this.includes && this.addParams('include', this.includes);
     this.endPoint = StringUtil.format('{url}/databases/{database}/docs', serverNode);
     
     if (multiLoad) {

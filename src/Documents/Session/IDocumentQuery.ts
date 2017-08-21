@@ -14,6 +14,7 @@ export interface IDocumentQueryOptions<T> {
   includes?: string[];
   nestedObjectTypes?: IRavenObject<DocumentConstructor>;
   withStatistics?: boolean;
+  fromCollection?: boolean;
 }
 
 export interface IDocumentQuery<T> {

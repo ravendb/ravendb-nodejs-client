@@ -48,12 +48,13 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   protected waitForNonStaleResults: boolean = false;
   protected documentType?: DocumentType<T> = null;
   protected nestedObjectTypes: IRavenObject<DocumentConstructor> = {};
+  protected fromCollection: boolean;
   private _take?: number = null;
   private _skip?: number = null;
   private _builder = null;
 
   constructor(session: IDocumentSession, requestExecutor: RequestExecutor, documentType?: DocumentType<T>, indexName?: string, usingDefaultOperator
-    ?: QueryOperator, waitForNonStaleResults: boolean = false, nestedObjectTypes?: IRavenObject<DocumentConstructor>, withStatistics: boolean = false) {
+    ?: QueryOperator, waitForNonStaleResults: boolean = false, nestedObjectTypes?: IRavenObject<DocumentConstructor>, withStatistics: boolean = false, fromCollection: boolean = false) {
     super();
     this.session = session;
     this.withStatistics = withStatistics;
@@ -64,11 +65,18 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     this.documentType = documentType;
     this.indexName = indexName || "@all_docs";
     this._builder = new QueryBuilder();
-
+    this.fromCollection = fromCollection;
 
     if (!indexName && documentType) {
       this.indexName += "/" + session.conventions.getCollectionName(documentType);
     }
+
+    if(indexName) {
+      //change to false when from index should work
+      this.fromCollection = true;
+      this.documentType = null;
+    }
+
   }
 
 
@@ -194,7 +202,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   public whereEquals<V extends RQLValue>(field, value) {
 
     this._builder
-      .from(this.indexName)
+      .from(this.indexName, this.fromCollection)
       .where('equals', field, value);
 
     return this;
@@ -204,7 +212,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   public whereIn<V extends RQLValue>(field, value) {
 
     this._builder
-      .from(this.indexName)
+      .from(this.indexName, this.fromCollection)
       .where('in', field, value);
 
     return this;
@@ -214,7 +222,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   public whereGreaterThan<V extends RQLValue>(field, value) {
 
     this._builder
-      .from(this.indexName)
+      .from(this.indexName, this.fromCollection)
       .where('greaterThan', field, value);
 
     return this;
@@ -224,7 +232,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   public whereGreaterThanOrEqual<V extends RQLValue>(field, value, orName, orValue) {
 
     this._builder
-      .from(this.indexName)
+      .from(this.indexName, this.fromCollection)
       .where('greaterThan', field, value)
       .or
       .where('equals', orName, orValue);
@@ -236,7 +244,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   public whereLessThanOrEqual<V extends RQLValue>(field, value, orName, orValue)  {
 
     this._builder
-      .from(this.indexName)
+      .from(this.indexName, this.fromCollection)
       .where('lessThan', field, value)
       .or
       .where('equals', orName, orValue);
@@ -248,7 +256,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   public whereLessThan<V extends RQLValue>(field, value: V) {
 
     this._builder
-      .from(this.indexName)
+      .from(this.indexName, this.fromCollection)
       .where('lessThan', field, value);
 
     return this;
@@ -258,7 +266,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   public startsWith<V extends RQLValue>(field, value) {
 
     this._builder
-      .from(this.indexName)
+      .from(this.indexName, this.fromCollection)
       .where('startsWith', field, value);
 
     return this;
@@ -268,7 +276,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   public endsWith<V extends RQLValue>(field, value) {
 
     this._builder
-      .from(this.indexName)
+      .from(this.indexName, this.fromCollection)
       .where('endsWith', field, value);
 
     return this;
@@ -278,7 +286,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   public search<V extends RQLValue>(field, value, boostField, boostValue, count) {
 
     this._builder
-      .from(this.indexName)
+      .from(this.indexName, this.fromCollection)
       .where('search', field, value)
       .or
       .where('boost', {boostField: boostField, boostValue: boostValue}, count);
@@ -290,7 +298,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   public whereNotNull<V extends RQLValue>(field) {
 
     this._builder
-      .from(this.indexName)
+      .from(this.indexName, this.fromCollection)
       .where('equals', field, 'null')
       .and
       .not
@@ -303,7 +311,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   public whereIsNull<V extends RQLValue>(field, value) {
 
     this._builder
-      .from(this.indexName)
+      .from(this.indexName, this.fromCollection)
       .where('equals', field, value);
 
     return this;
@@ -313,7 +321,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   public whereBetween<V extends RQLValue>(field, start, end) {
 
     this._builder
-      .from(this.indexName)
+      .from(this.indexName, this.fromCollection)
       .where('between', field, {start: start, end: end});
 
     return this;
@@ -323,7 +331,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   public whereBetweenOrEqual<V extends RQLValue>(field, start, end, orName, orValue) {
 
     this._builder
-      .from(this.indexName)
+      .from(this.indexName, this.fromCollection)
       .where('between', field, {start: start, end: end})
       .or
       .where('equals', orName, orValue);
@@ -335,7 +343,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   public orderBy<V extends RQLValue>(field, direction) {
 
     this._builder
-      .from(this.indexName)
+      .from(this.indexName, this.fromCollection)
       .order(field, direction);
 
     return this;
@@ -345,7 +353,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   public selectFields<V extends RQLValue>(field) {
 
     this._builder
-      .from(this.indexName)
+      .from(this.indexName, this.fromCollection)
       .select(field);
 
     return this;

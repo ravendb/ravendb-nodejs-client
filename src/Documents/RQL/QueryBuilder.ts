@@ -10,6 +10,7 @@ export class QueryBuilder {
   private _where: string;
   private _order: string;
   private _or: boolean;
+  private _fromCollection: boolean;
   public defaultOperator: string;
   public operator: string;
   public negate: boolean;
@@ -21,6 +22,7 @@ export class QueryBuilder {
     this._where = '';
     this._order = '';
     this._or = true;
+    this._fromCollection = false;
     this.defaultOperator = '';
     this.operator = this.defaultOperator;
     this.negate = false;
@@ -58,9 +60,14 @@ export class QueryBuilder {
 
   }
 
-  public from(collectionOrIndex) {
+  public from(collectionOrIndex, fromCollection) {
 
-    this._from = collectionOrIndex;
+    if(fromCollection) {
+      this._fromCollection = collectionOrIndex;
+    }
+    else {
+      this._from = collectionOrIndex;
+    }
 
     return this;
 
@@ -136,7 +143,11 @@ export class QueryBuilder {
     }
 
     if (this._from) {
-      rql += StringUtil.format(`FROM {0} `,this._from);
+      rql += StringUtil.format(`FROM INDEX {0} `,this._from);
+    }
+
+    if (this._fromCollection) {
+      rql += StringUtil.format(`FROM {0} `,this._fromCollection);
     }
 
     if (this._where) {

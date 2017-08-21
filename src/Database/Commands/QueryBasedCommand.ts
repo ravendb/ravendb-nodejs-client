@@ -4,6 +4,7 @@ import {QueryOperationOptions} from "../Operations/QueryOperationOptions";
 import {RavenCommand} from "../RavenCommand";
 import {ServerNode} from "../../Http/ServerNode";
 import {InvalidOperationException} from "../DatabaseExceptions";
+import {StringUtil} from "../../Utility/StringUtil";
 
 export abstract class QueryBasedCommand extends RavenCommand {
   protected query?: IndexQuery;
@@ -27,13 +28,14 @@ export abstract class QueryBasedCommand extends RavenCommand {
       throw new InvalidOperationException('Options must be instance of QueryOperationOptions class');
     }
 
+    // this.endPoint += StringUtil.format(`/databases/{0}/queries`,serverNode.database);
+    this.endPoint += '/queries';
+
     this.params = {
       allowStale: options.allowStale,
       details: options.retrieveDetails,
       maxOpsPerSec: options.maxOpsPerSec
     };
-
-    this.endPoint += '/queries';
 
     options.staleTimeout && this.addParams('staleTimeout', options.staleTimeout);
 

@@ -51,7 +51,7 @@ export class QueryCommand extends RavenCommand {
     };
 
 
-    this.payload = query.toJson;
+    this.payload = query.toJson();
 
 
     this.endPoint = StringUtil.format(
