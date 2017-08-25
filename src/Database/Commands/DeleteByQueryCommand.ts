@@ -8,6 +8,7 @@ import {IRavenResponse} from "../RavenCommandResponse";
 import {QueryBasedCommand} from "./QueryBasedCommand";
 import {IndexDoesNotExistException} from "../DatabaseExceptions";
 import {IJSonSerializable} from "./IJSonSerializable";
+import {StatusCodes} from "../../Http/Response/StatusCode";
 
 export class DeleteByQueryCommand extends QueryBasedCommand  implements IJSonSerializable {
   constructor(query: IndexQuery, options?: QueryOperationOptions) {
@@ -26,7 +27,7 @@ export class DeleteByQueryCommand extends QueryBasedCommand  implements IJSonSer
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
     const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
 
-    if (!response.body) {
+    if (!response.body && StatusCodes.isError(response.statusCode)) {
       throw new IndexDoesNotExistException('Could not find index');
     }
 

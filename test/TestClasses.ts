@@ -35,7 +35,7 @@ export class Company implements IRavenObject {
 
 export class Universal implements IRavenObject {
   constructor(
-    public id?: string,
+    public id: string = '',
     public name: string = "",
     public order: number = null,
     public nullField: string = "null",

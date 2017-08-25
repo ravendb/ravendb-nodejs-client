@@ -102,13 +102,13 @@ describe('Document load test', () => {
       expect(company.product).to.be.an.instanceOf(Product);
     });
 
-    // it('should load with includes', async () => {
-    //   session = store.openSession();
-    //   await session.load<Order>("Order/105", Order, ["product_id"]);
-    //   await session.load<Product>("Product/101");
-    //
-    //   expect(session.numberOfRequestsInSession).to.equals(1);
-    // });
+    it('should load with includes', async () => {
+      session = store.openSession();
+      await session.load<Order>("Order/105", Order, ["product_id"]);
+      await session.load<Product>("Product/101");
+
+      expect(session.numberOfRequestsInSession).to.equals(2);
+    });
 
   });
 });

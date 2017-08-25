@@ -10,7 +10,7 @@ import {ErrorResponseException, InvalidOperationException} from "../DatabaseExce
 import {StringUtil} from "../../Utility/StringUtil";
 import {ServerNode} from "../../Http/ServerNode";
 
-export class PatchByQueryCommand extends QueryBasedCommand {
+export class  PatchByQueryCommand extends QueryBasedCommand {
   protected patch?: PatchRequest = null;
 
   constructor(queryToUpdate: IndexQuery, patch?: PatchRequest, options?: QueryOperationOptions) {
@@ -37,7 +37,7 @@ export class PatchByQueryCommand extends QueryBasedCommand {
     const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
 
     if (![StatusCodes.Ok, StatusCodes.Accepted].includes(response.statusCode)) {
-      throw new ErrorResponseException('Invalid response from server');
+      throw new ErrorResponseException(`Invalid response from server: statusCode ${response.statusCode}`);
     }
 
     return result;

@@ -15,6 +15,7 @@ export interface IDocumentQueryOptions<T> {
   nestedObjectTypes?: IRavenObject<DocumentConstructor>;
   withStatistics?: boolean;
   fromCollection?: boolean;
+  queryParameters?: object;
 }
 
 export interface IDocumentQuery<T> {
@@ -26,14 +27,13 @@ export interface IDocumentQuery<T> {
   orElse();
   negateNext();
   selectFields(...args: string[]): IDocumentQuery<T>;
-  search(from: string, searchTerms: string | string[], boostField, boostValue, count): IDocumentQuery<T>;
+  search(from: string, searchTerms: string | string[], boostField, boostValue, boostExpression, count): IDocumentQuery<T>;
   where(conditions: IDocumentQueryConditions);
   whereEquals<V extends RQLValue>(field: string, value: V): IDocumentQuery<T>;
   endsWith<V extends RQLValue>(field: string, value: V): IDocumentQuery<T>;
   startsWith<V extends RQLValue>(field: string, value: V): IDocumentQuery<T>;
   whereIn<V extends RQLValue>(field: string, value: V): IDocumentQuery<T>;
   whereBetween<V extends RQLValue>(field: string, start?: V, end?: V, orName?, orValue?): IDocumentQuery<T>;
-  whereBetweenOrEqual<V extends RQLValue>(field: string, start?: V, end?: V, orName?, orValue?): IDocumentQuery<T>;
   whereGreaterThan<V extends RQLValue>(field: string, value: V): IDocumentQuery<T>;
   whereGreaterThanOrEqual<V extends RQLValue>(field: string, value: V, orName?, orValue?): IDocumentQuery<T>;
   whereLessThan<V extends RQLValue>(field: string, value: V): IDocumentQuery<T>;

@@ -1,6 +1,6 @@
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {StringUtil} from "../../Utility/StringUtil";
-import {rqlOperators} from "../RQL/RQLOperator";
+import {RqlOperators} from "../RQL/RQLOperator";
 import {QueryOperators} from "../Session/QueryOperator";
 
 export class QueryBuilder {
@@ -29,6 +29,16 @@ export class QueryBuilder {
     this.rqlText = null;
   }
 
+  public get openSubClause() {
+    this.operator = QueryOperators.OPENSUBCLAUSE;
+    return this;
+  }
+
+  public get closeSubClause() {
+    this.operator = QueryOperators.CLOSESUBCLAUSE;
+    return this;
+  }
+
   public get and() {
     this.operator = QueryOperators.AND;
     return this;
@@ -44,7 +54,7 @@ export class QueryBuilder {
     return this;
   }
 
-  public select(fields) {
+  public select(fields?) {
 
     if (TypeUtil.isArray(fields)) {
       this._select = fields.join(', ');
@@ -53,7 +63,7 @@ export class QueryBuilder {
       this._select = fields;
     }
     else {
-      this._select = '*';
+      this._select = '@all_docs';
     }
 
     return this;
@@ -84,34 +94,34 @@ export class QueryBuilder {
   public where(conditionType, conditionField, conditionValue = null) {
 
     switch (conditionType) {
-      case rqlOperators.greaterThan:
-        this.rqlText = StringUtil.format(`{0}>{1}`, conditionField, conditionValue);
+      case RqlOperators.GREATER_THAN:
+        this.rqlText = StringUtil.format(`{0}>{1} `, conditionField, conditionValue);
         break;
-      case rqlOperators.lessThan:
-        this.rqlText = StringUtil.format(`{0}<{1}`, conditionField, conditionValue);
+      case RqlOperators.LESS_THAN:
+        this.rqlText = StringUtil.format(`{0}<{1} `, conditionField, conditionValue);
         break;
-      case rqlOperators.equals:
+      case RqlOperators.EQUALS:
         (conditionValue === null || conditionValue === 'null') ?
           this.rqlText = StringUtil.format(`{0}={1} `, conditionField, conditionValue) :
           this.rqlText = StringUtil.format(`{0}='{1}' `, conditionField, conditionValue);
         break;
-      case rqlOperators.between:
+      case RqlOperators.BETWEEN:
         this.rqlText = StringUtil.format(`{0} BETWEEN {1} AND {2}`, conditionField, conditionValue.start, conditionValue.end);
         break;
-      case rqlOperators.startsWith:
-        this.rqlText = StringUtil.format(`StartsWith({0}, '{1}')`, conditionField, conditionValue);
+      case RqlOperators.STARTS_WITH:
+        this.rqlText = StringUtil.format(`startsWith({0}, '{1}')`, conditionField, conditionValue);
         break;
-      case rqlOperators.endsWith:
-        this.rqlText = StringUtil.format(`EndsWith({0}, '{1}')`, conditionField, conditionValue);
+      case RqlOperators.ENDS_WITH:
+        this.rqlText = StringUtil.format(`endsWith({0}, '{1}')`, conditionField, conditionValue);
         break;
-      case rqlOperators.in:
+      case RqlOperators.IN:
         this.rqlText = StringUtil.format(`{0} IN ('{1}')`, conditionField, conditionValue);
         break;
-      case rqlOperators.search:
+      case RqlOperators.SEARCH:
         this.rqlText = StringUtil.format(`search({0},'{1}') `, conditionField, conditionValue);
         break;
-      case rqlOperators.boost:
-        this.rqlText = StringUtil.format(`boost({0} = '{1}', {2})`, conditionField.boostField, conditionField.boostValue, conditionValue);
+      case RqlOperators.BOOST:
+        this.rqlText = StringUtil.format(`boost({0} {1} '{2}', {3})`, conditionField.boostField, conditionField.boostExpression, conditionField.boostValue, conditionValue);
         break;
     }
 
@@ -126,7 +136,7 @@ export class QueryBuilder {
 
     let addNot: string = this.negate ? 'NOT ' : '';
 
-    this._where += StringUtil.format(`{0} {1} {2}`, this.operator, addNot, rqlCondition);
+    this._where += StringUtil.format(`1{0} {1} {2}`, this.operator, addNot, rqlCondition);
 
     this.operator = this.defaultOperator;
 

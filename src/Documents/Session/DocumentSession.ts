@@ -274,6 +274,7 @@ export class DocumentSession implements IDocumentSession {
     let documentType: DocumentType<T> = null;
     let nestedObjectTypes: IRavenObject<DocumentConstructor> = {} as IRavenObject<DocumentConstructor>;
     let fromCollection: boolean = false;
+    let queryParameters: object;
 
     if (options) {
       usingDefaultOperator = options.usingDefaultOperator || null;
@@ -284,10 +285,11 @@ export class DocumentSession implements IDocumentSession {
       indexName = options.indexName || null;
       documentType = options.documentType || null;
       fromCollection = options.fromCollection || false;
+      queryParameters = options.queryParameters;
     }
 
     const query: DocumentQuery<T> = new DocumentQuery<T>(this, this.requestExecutor, documentType, indexName,
-      usingDefaultOperator, waitForNonStaleResults, nestedObjectTypes, withStatistics, fromCollection
+      usingDefaultOperator, waitForNonStaleResults, nestedObjectTypes, withStatistics, fromCollection, queryParameters
     );
 
     query.on(

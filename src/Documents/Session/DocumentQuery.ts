@@ -39,6 +39,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   protected indexName: string;
   protected session: IDocumentSession;
+  protected queryParameters: IDocumentSession;
   protected requestExecutor: RequestExecutor;
   protected fetch?: string[] = null;
   protected sortHints?: string[] = null;
@@ -54,9 +55,11 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   private _builder = null;
 
   constructor(session: IDocumentSession, requestExecutor: RequestExecutor, documentType?: DocumentType<T>, indexName?: string, usingDefaultOperator
-    ?: QueryOperator, waitForNonStaleResults: boolean = false, nestedObjectTypes?: IRavenObject<DocumentConstructor>, withStatistics: boolean = false, fromCollection: boolean = false) {
+    ?: QueryOperator, waitForNonStaleResults: boolean = false, nestedObjectTypes?: IRavenObject<DocumentConstructor>,
+              withStatistics: boolean = false, fromCollection: boolean = false, queryParameters?) {
     super();
     this.session = session;
+    this.queryParameters = queryParameters;
     this.withStatistics = withStatistics;
     this.requestExecutor = requestExecutor;
     this.usingDefaultOperator = usingDefaultOperator;
@@ -156,6 +159,18 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   }
 
+  public OpenSubclause() {
+
+    return this._builder.openSubClause;
+
+  }
+
+  public CloseSubclause() {
+
+    return this._builder.closeSubClause;
+
+  }
+
   public andAlso() {
 
     return this._builder.and;
@@ -208,6 +223,22 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     return this;
 
   }
+
+//   public whereEqualsAndOr<V extends RQLValue>(fieldFirst,valueFirst,fieldSecond,valueSecond,fieldThird,valueThird) {
+// // TODO openSub rewrite and fix
+//     this._builder
+//       .from(this.indexName, this.fromCollection)
+//       .where('equals', fieldFirst, valueFirst)
+//       .and
+//       .openSubClause
+//       .where('equals', fieldSecond, valueSecond)
+//       .or
+//       .where('equals', fieldThird, valueThird)
+//       .closeSubClause;
+//
+//     return this;
+//
+//   }
 
   public whereIn<V extends RQLValue>(field, value) {
 
@@ -283,13 +314,13 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   }
 
-  public search<V extends RQLValue>(field, value, boostField, boostValue, count) {
+  public search<V extends RQLValue>(field, value, boostField, boostValue, boostExpression, count) {
 
     this._builder
       .from(this.indexName, this.fromCollection)
       .where('search', field, value)
       .or
-      .where('boost', {boostField: boostField, boostValue: boostValue}, count);
+      .where('boost', {boostField: boostField, boostValue: boostValue, boostExpression: boostExpression}, count);
 
     return this;
 
@@ -328,18 +359,6 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   }
 
-  public whereBetweenOrEqual<V extends RQLValue>(field, start, end, orName, orValue) {
-
-    this._builder
-      .from(this.indexName, this.fromCollection)
-      .where('between', field, {start: start, end: end})
-      .or
-      .where('equals', orName, orValue);
-
-    return this;
-
-  }
-
   public orderBy<V extends RQLValue>(field, direction) {
 
     this._builder
@@ -350,7 +369,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   }
 
-  public selectFields<V extends RQLValue>(field) {
+  public selectFields<V extends RQLValue>(field?) {
 
     this._builder
       .from(this.indexName, this.fromCollection)
@@ -385,7 +404,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
     const session: IDocumentSession = this.session;
     const conventions: DocumentConventions = session.conventions;
-    const query: IndexQuery = new IndexQuery(this._builder.getRql(), this._take, this._skip, queryOptions);
+    const query: IndexQuery = new IndexQuery(this._builder.getRql(), this._take, this._skip, queryOptions, this.queryParameters);
 
     const queryCommand: QueryCommand = new QueryCommand(this.indexName, query, conventions);
     const endTime: number = moment().unix() + Math.max(conventions.requestTimeout, query.waitForNonStaleResultsTimeout);

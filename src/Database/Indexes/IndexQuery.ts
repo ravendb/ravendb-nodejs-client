@@ -8,6 +8,7 @@ export class IndexQuery {
   private _sortHints: string[] = [];
   private _sortFields: string[] = [];
   private _query: string = '';
+  private _queryParameters: object;
   private _start: number;
   private _pageSize: number;
   private _defaultOperator?: QueryOperator = null;
@@ -15,8 +16,9 @@ export class IndexQuery {
   private _waitForNonStaleResultsTimeout?: number = null;
   private _buffer:string = null;
 
-  constructor(query: string = '', pageSize: number = 128, skippedResults: number = 0, options: IOptionsSet = {}) {
+  constructor(query: string = '', pageSize: number = 128, skippedResults: number = 0, options: IOptionsSet = {}, queryParameters?: object) {
     this._query = query;
+    this._queryParameters = queryParameters;
     this._pageSize = pageSize || 128;
     this._start = skippedResults || 0;
     this._fetch = options.fetch || [];
@@ -38,6 +40,7 @@ export class IndexQuery {
     let json = {
       PageSize: this._pageSize,
       Query: this._query,
+      QueryParameters: this._queryParameters,
       Start: this._start,
       WaitForNonStaleResultsAsOfNow: this._waitForNonStaleResults,
       WaitForNonStaleResultsTimeout: null
