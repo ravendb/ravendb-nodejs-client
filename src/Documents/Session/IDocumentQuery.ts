@@ -36,6 +36,7 @@ export interface IDocumentQuery<T> {
   whereBetween<V extends RQLValue>(field: string, start?: V, end?: V, orName?, orValue?): IDocumentQuery<T>;
   whereGreaterThan<V extends RQLValue>(field: string, value: V): IDocumentQuery<T>;
   whereGreaterThanOrEqual<V extends RQLValue>(field: string, value: V, orName?, orValue?): IDocumentQuery<T>;
+  whereEqualsAndOr<V extends RQLValue>(fieldFirst: string, valueFirst: string, fieldSecond: string, valueSecond: number, fieldThird: string, valueThird: number): IDocumentQuery<T>;
   whereLessThan<V extends RQLValue>(field: string, value: V): IDocumentQuery<T>;
   whereLessThanOrEqual<V extends RQLValue>(field: string, value: V, orName?, orValue?): IDocumentQuery<T>;
   whereIsNull(field: string, value: string): IDocumentQuery<T>;

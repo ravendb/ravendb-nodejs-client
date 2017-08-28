@@ -1,7 +1,7 @@
 import {QueryOperator} from "../../Documents/Session/QueryOperator";
 import {IOptionsSet} from "../../Utility/IOptionsSet";
 import {StringUtil} from "../../Utility/StringUtil";
-const crypto = require('crypto');
+import * as crypto from "crypto";
 
 export class IndexQuery {
   private _fetch: string[] = [];
@@ -14,8 +14,7 @@ export class IndexQuery {
   private _defaultOperator?: QueryOperator = null;
   private _waitForNonStaleResults: boolean = false;
   private _waitForNonStaleResultsTimeout?: number = null;
-  private _buffer:string = null;
-
+  // Number.MAX_VALUE
   constructor(query: string = '', pageSize: number = 128, skippedResults: number = 0, options: IOptionsSet = {}, queryParameters?: object) {
     this._query = query;
     this._queryParameters = queryParameters;
@@ -24,7 +23,6 @@ export class IndexQuery {
     this._fetch = options.fetch || [];
     this._waitForNonStaleResults = options.waitForNonStaleResults || false;
     this._waitForNonStaleResultsTimeout = options.waitForNonStaleResultsTimeout || null;
-    this._buffer = null;
 
     if (this._waitForNonStaleResults && !this._waitForNonStaleResultsTimeout) {
       this._waitForNonStaleResultsTimeout = 15 * 60;
@@ -33,6 +31,12 @@ export class IndexQuery {
 
   public get pageSize(): number {
     return this._pageSize;
+  }
+
+  protected getResultsTimeoutAsString() {
+
+    return this._waitForNonStaleResultsTimeout.toString();
+
   }
 
   public toJson(): object {
@@ -46,26 +50,30 @@ export class IndexQuery {
       WaitForNonStaleResultsTimeout: null
     };
 
+
     if(this._waitForNonStaleResultsTimeout) {
-
-      json.WaitForNonStaleResultsTimeout = this._waitForNonStaleResultsTimeout.toString();
-
+      json.WaitForNonStaleResultsTimeout = this.getResultsTimeoutAsString();
     }
 
     return json;
   }
 
   public queryHash() {
-    this._buffer = StringUtil.format('{0}{1}{2}', this._query, this._pageSize,this._start);
-    this._buffer = this._buffer + this._waitForNonStaleResults ? "1" : "0";
+
+    let buffer = StringUtil.format('{0}{1}{2}', this._query, this._pageSize,this._start);
+
+    buffer += this._waitForNonStaleResults ? "1" : "0";
+
     if(this._waitForNonStaleResults) {
-      this._buffer = this._buffer + this._waitForNonStaleResultsTimeout.toString();
+      buffer += this._waitForNonStaleResultsTimeout.toString();
+
     }
+
     const secret = 'buffer';
-    this._buffer = crypto.createHmac('sha256', secret)
+    buffer = crypto.createHmac('sha256', secret)
       .digest('hex');
 
-    return this._buffer;
+    return buffer;
   }
 
   public set pageSize(pageSize: number) {

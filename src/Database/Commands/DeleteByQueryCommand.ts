@@ -7,10 +7,11 @@ import {IResponse} from "../../Http/Response/IResponse";
 import {IRavenResponse} from "../RavenCommandResponse";
 import {QueryBasedCommand} from "./QueryBasedCommand";
 import {IndexDoesNotExistException} from "../DatabaseExceptions";
-import {IJSonSerializable} from "./IJSonSerializable";
 import {StatusCodes} from "../../Http/Response/StatusCode";
+import {IJsonable} from "../../Json/Contracts";
 
-export class DeleteByQueryCommand extends QueryBasedCommand  implements IJSonSerializable {
+export class DeleteByQueryCommand extends QueryBasedCommand  implements IJsonable {
+  public toJson;
   constructor(query: IndexQuery, options?: QueryOperationOptions) {
     super(RequestMethods.Delete, query, options);
   }

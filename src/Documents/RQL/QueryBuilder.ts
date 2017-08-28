@@ -1,7 +1,8 @@
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {StringUtil} from "../../Utility/StringUtil";
-import {RqlOperators} from "../RQL/RQLOperator";
+import {RqlOperators} from "./RQLOperator";
 import {QueryOperators} from "../Session/QueryOperator";
+import {RQLQuerySource, RQLQuerySources} from "./RQLQuerySource";
 
 export class QueryBuilder {
 
@@ -10,11 +11,12 @@ export class QueryBuilder {
   private _where: string;
   private _order: string;
   private _or: boolean;
-  private _fromCollection: boolean;
+  private _fromCollection: string;
   public defaultOperator: string;
   public operator: string;
+  public openClause: string;
+  public closeClause: string;
   public negate: boolean;
-  public rqlText: string = '';
 
   constructor() {
     this._select = '';
@@ -22,20 +24,21 @@ export class QueryBuilder {
     this._where = '';
     this._order = '';
     this._or = true;
-    this._fromCollection = false;
+    this._fromCollection = '';
     this.defaultOperator = '';
     this.operator = this.defaultOperator;
+    this.openClause = '';
+    this.closeClause = '';
     this.negate = false;
-    this.rqlText = null;
   }
 
   public get openSubClause() {
-    this.operator = QueryOperators.OPENSUBCLAUSE;
+    this.openClause = QueryOperators.OPENSUBCLAUSE;
     return this;
   }
 
   public get closeSubClause() {
-    this.operator = QueryOperators.CLOSESUBCLAUSE;
+    this.closeClause = QueryOperators.CLOSESUBCLAUSE;
     return this;
   }
 
@@ -70,17 +73,29 @@ export class QueryBuilder {
 
   }
 
-  public from(collectionOrIndex, fromCollection) {
+  public from(source: string, sourceType: RQLQuerySource = RQLQuerySources.Collection) {
 
-    if(fromCollection) {
-      this._fromCollection = collectionOrIndex;
-    }
-    else {
-      this._from = collectionOrIndex;
+    switch(sourceType) {
+
+      case RQLQuerySources.Collection:
+        this._fromCollection = source;
+        break;
+
+      case RQLQuerySources.Index:
+        this._from = source;
+        break;
     }
 
+  }
+
+  public fromCollection(collection) {
+    this.from(collection, RQLQuerySources.Collection);
     return this;
+  }
 
+  public fromIndex(index) {
+    this.from(index, RQLQuerySources.Index);
+    return this;
   }
 
   public order(field, direction = 'ASC') {
@@ -93,52 +108,56 @@ export class QueryBuilder {
 
   public where(conditionType, conditionField, conditionValue = null) {
 
+    let rqlText: string;
+
     switch (conditionType) {
       case RqlOperators.GREATER_THAN:
-        this.rqlText = StringUtil.format(`{0}>{1} `, conditionField, conditionValue);
+        rqlText = StringUtil.format(`{0}>{1} `, conditionField, conditionValue);
         break;
       case RqlOperators.LESS_THAN:
-        this.rqlText = StringUtil.format(`{0}<{1} `, conditionField, conditionValue);
+        rqlText = StringUtil.format(`{0}<{1} `, conditionField, conditionValue);
         break;
       case RqlOperators.EQUALS:
         (conditionValue === null || conditionValue === 'null') ?
-          this.rqlText = StringUtil.format(`{0}={1} `, conditionField, conditionValue) :
-          this.rqlText = StringUtil.format(`{0}='{1}' `, conditionField, conditionValue);
+          rqlText = StringUtil.format(`{0}={1} `, conditionField, conditionValue) :
+          rqlText = StringUtil.format(`{0}='{1}' `, conditionField, conditionValue);
         break;
       case RqlOperators.BETWEEN:
-        this.rqlText = StringUtil.format(`{0} BETWEEN {1} AND {2}`, conditionField, conditionValue.start, conditionValue.end);
+        rqlText = StringUtil.format(`{0} BETWEEN {1} AND {2}`, conditionField, conditionValue.start, conditionValue.end);
         break;
       case RqlOperators.STARTS_WITH:
-        this.rqlText = StringUtil.format(`startsWith({0}, '{1}')`, conditionField, conditionValue);
+        rqlText = StringUtil.format(`startsWith({0}, '{1}')`, conditionField, conditionValue);
         break;
       case RqlOperators.ENDS_WITH:
-        this.rqlText = StringUtil.format(`endsWith({0}, '{1}')`, conditionField, conditionValue);
+        rqlText = StringUtil.format(`endsWith({0}, '{1}')`, conditionField, conditionValue);
         break;
       case RqlOperators.IN:
-        this.rqlText = StringUtil.format(`{0} IN ('{1}')`, conditionField, conditionValue);
+        rqlText = StringUtil.format(`{0} IN ('{1}')`, conditionField, conditionValue);
         break;
       case RqlOperators.SEARCH:
-        this.rqlText = StringUtil.format(`search({0},'{1}') `, conditionField, conditionValue);
+        rqlText = StringUtil.format(`search({0},'{1}') `, conditionField, conditionValue);
         break;
       case RqlOperators.BOOST:
-        this.rqlText = StringUtil.format(`boost({0} {1} '{2}', {3})`, conditionField.boostField, conditionField.boostExpression, conditionField.boostValue, conditionValue);
+        rqlText = StringUtil.format(`boost({0} {1} '{2}', {3})`, conditionField.boostField, conditionField.boostExpression, conditionField.boostValue, conditionValue);
         break;
     }
 
-    this.whereRaw(this.rqlText);
+    this.whereRaw(rqlText);
 
     return this;
 
   }
 
-
   public whereRaw(rqlCondition) {
 
     let addNot: string = this.negate ? 'NOT ' : '';
 
-    this._where += StringUtil.format(`1{0} {1} {2}`, this.operator, addNot, rqlCondition);
+    this._where += StringUtil.format(`{0} {3}{1} {2}{4}`, this.operator, addNot, rqlCondition, this.openClause, this.closeClause);
 
     this.operator = this.defaultOperator;
+
+    this.openClause = this.defaultOperator;
+    this.closeClause = this.defaultOperator;
 
     this.negate = false;
 
@@ -161,7 +180,7 @@ export class QueryBuilder {
     }
 
     if (this._where) {
-        rql += StringUtil.format(` WHERE {0}`, this._where);
+      rql += StringUtil.format(` WHERE {0}`, this._where);
     }
 
     if (this._order) {

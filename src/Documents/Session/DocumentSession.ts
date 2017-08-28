@@ -289,7 +289,7 @@ export class DocumentSession implements IDocumentSession {
     }
 
     const query: DocumentQuery<T> = new DocumentQuery<T>(this, this.requestExecutor, documentType, indexName,
-      usingDefaultOperator, waitForNonStaleResults, nestedObjectTypes, withStatistics, fromCollection, queryParameters
+      usingDefaultOperator, waitForNonStaleResults, nestedObjectTypes, withStatistics, queryParameters
     );
 
     query.on(
