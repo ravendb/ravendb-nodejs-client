@@ -43,11 +43,26 @@ describe('Document query test', () => {
 
   describe('Index checking', () => {
 
+    it('should query by exact', async () => {
+      const results: Universal[] = await store.openSession()
+        .query<Universal>({
+          indexName: 'Universals',
+          WaitForNonStaleResults: true
+        })
+        .exact<string>('name', 'withnesting').get();
+
+      expect(results).to.have.lengthOf(10);
+
+      results.map(function (obj) {
+        expect(obj).to.include({'name': 'withNesting'});
+      });
+
+    });
+
     it('should query with whereEqualsAndOr', async () => {
       const results: Universal[] = await  store.openSession()
         .query<Universal>({
-          // indexName: 'Universals',
-          documentType: 'Universals',
+          indexName: 'Universals',
           WaitForNonStaleResults: true
         })
         .whereEqualsAndOr<number>('name','withNesting','order',3,'order',4).get();

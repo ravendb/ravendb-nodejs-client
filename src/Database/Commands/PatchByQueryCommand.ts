@@ -6,9 +6,10 @@ import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {IResponse} from "../../Http/Response/IResponse";
 import {IRavenResponse} from "../RavenCommandResponse";
 import {StatusCodes} from "../../Http/Response/StatusCode";
-import {ErrorResponseException, InvalidOperationException} from "../DatabaseExceptions";
+import {InvalidOperationException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {ServerNode} from "../../Http/ServerNode";
+import {ExceptionThrower} from "../../Utility/ExceptionThrower";
 
 export class  PatchByQueryCommand extends QueryBasedCommand {
   protected patch?: PatchRequest = null;
@@ -37,7 +38,7 @@ export class  PatchByQueryCommand extends QueryBasedCommand {
     const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
 
     if (![StatusCodes.Ok, StatusCodes.Accepted].includes(response.statusCode)) {
-      throw new ErrorResponseException(`Invalid response from server: statusCode ${response.statusCode}`);
+      throw new ExceptionThrower();
     }
 
     return result;

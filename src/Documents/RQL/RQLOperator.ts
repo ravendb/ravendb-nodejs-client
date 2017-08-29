@@ -1,4 +1,4 @@
-export type rqlOperator = 'greaterThan' | 'lessThan' | 'search' | 'equals' | 'between' | 'endsWith' | 'startsWith' | 'in' | 'boost';
+export type rqlOperator = 'greaterThan' | 'lessThan' | 'search' | 'equals' | 'between' | 'endsWith' | 'startsWith' | 'in' | 'boost' | 'exact';
 
 export class RqlOperators {
   public static readonly GREATER_THAN: rqlOperator = 'greaterThan';
@@ -10,4 +10,5 @@ export class RqlOperators {
   public static readonly STARTS_WITH: rqlOperator = 'startsWith';
   public static readonly IN: rqlOperator = 'in';
   public static readonly BOOST: rqlOperator = 'boost';
+  public static readonly EXACT: rqlOperator = 'exact';
 }

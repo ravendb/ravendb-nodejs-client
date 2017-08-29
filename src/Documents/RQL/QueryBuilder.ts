@@ -2,7 +2,7 @@ import {TypeUtil} from "../../Utility/TypeUtil";
 import {StringUtil} from "../../Utility/StringUtil";
 import {RqlOperators} from "./RQLOperator";
 import {QueryOperators} from "../Session/QueryOperator";
-import {RQLQuerySource, RQLQuerySources} from "./RQLQuerySource";
+import {RQLQuerySource, RQLQuerySources} from "./RQLQuerySources";
 
 export class QueryBuilder {
 
@@ -136,6 +136,9 @@ export class QueryBuilder {
         break;
       case RqlOperators.SEARCH:
         rqlText = StringUtil.format(`search({0},'{1}') `, conditionField, conditionValue);
+        break;
+      case RqlOperators.EXACT:
+        rqlText = StringUtil.format(`exact({0}='{1}') `, conditionField, conditionValue);
         break;
       case RqlOperators.BOOST:
         rqlText = StringUtil.format(`boost({0} {1} '{2}', {3})`, conditionField.boostField, conditionField.boostExpression, conditionField.boostValue, conditionValue);

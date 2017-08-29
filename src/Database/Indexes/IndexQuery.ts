@@ -14,11 +14,12 @@ export class IndexQuery {
   private _defaultOperator?: QueryOperator = null;
   private _waitForNonStaleResults: boolean = false;
   private _waitForNonStaleResultsTimeout?: number = null;
-  // Number.MAX_VALUE
-  constructor(query: string = '', pageSize: number = 128, skippedResults: number = 0, options: IOptionsSet = {}, queryParameters?: object) {
+  private static MAX_VALUE = 2147483647;
+
+  constructor(query: string = '', pageSize: number = IndexQuery.MAX_VALUE, skippedResults: number = 0, options: IOptionsSet = {}, queryParameters?: object) {
     this._query = query;
     this._queryParameters = queryParameters;
-    this._pageSize = pageSize || 128;
+    this._pageSize = pageSize || IndexQuery.MAX_VALUE;
     this._start = skippedResults || 0;
     this._fetch = options.fetch || [];
     this._waitForNonStaleResults = options.waitForNonStaleResults || false;
