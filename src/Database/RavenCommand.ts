@@ -52,6 +52,13 @@ export abstract class RavenCommand {
   }
 
   public toRequestOptions(): RavenCommandRequestOptions {
+    const params = this.params;
+    const payload = this.payload;
+
+    const check: (target?: object) => boolean = (target: object) => {
+      return !TypeUtil.isNone(target) && !_.isEmpty(target);
+    };
+
     let options: RavenCommandRequestOptions = {
       json: true,
       uri: this.endPoint,
@@ -61,16 +68,7 @@ export abstract class RavenCommand {
       qsStringifyOptions: {
         arrayFormat: 'repeat',
         strictNullHandling: true
-      },
-      body: {}
-    };
-
-
-    const params = this.params;
-    const payload = this.payload;
-
-      const check: (target?: object) => boolean = (target: object) => {
-      return !TypeUtil.isNone(target) && !_.isEmpty(target);
+      }
     };
 
     check(params) && (options.qs = params);

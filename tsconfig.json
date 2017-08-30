@@ -7,9 +7,6 @@
     "outDir": "lib/",
     "sourceMap": false
   },
-  "compilerOptions": {
-    "lib": [ "es2015" ]
-  },
   "files": [
     "./src/ravendb-node.ts"
   ],

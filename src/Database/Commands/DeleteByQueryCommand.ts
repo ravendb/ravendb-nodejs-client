@@ -10,29 +10,13 @@ import {IndexDoesNotExistException} from "../DatabaseExceptions";
 import {StatusCodes} from "../../Http/Response/StatusCode";
 import {IJsonable} from "../../Json/Contracts";
 
-export class DeleteByQueryCommand extends QueryBasedCommand  implements IJsonable {
-  public toJson;
+export class DeleteByQueryCommand extends QueryBasedCommand {  
   constructor(query: IndexQuery, options?: QueryOperationOptions) {
     super(RequestMethods.Delete, query, options);
   }
 
   public createRequest(serverNode: ServerNode): void {
-    this.endPoint = StringUtil.format('{url}/databases/{database}', serverNode, this.params);
-
     super.createRequest(serverNode);
-
     this.payload = this.query.toJson();
-
   }
-
-  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
-
-    if (!response.body && StatusCodes.isError(response.statusCode)) {
-      throw new IndexDoesNotExistException('Could not find index');
-    }
-
-    return result;
-  }
-
 }

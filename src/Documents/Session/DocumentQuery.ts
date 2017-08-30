@@ -21,7 +21,7 @@ import {ErrorResponseException, RavenException} from "../../Database/DatabaseExc
 
 import {QueryBuilder} from "../RQL/QueryBuilder";
 import {ArrayUtil} from "../../Utility/ArrayUtil";
-import {RQLQuerySources} from "../RQL/RQLQuerySources";
+import {RQLQuerySources} from "../RQL/RQLQuerySource";
 
 export type QueryResultsWithStatistics<T> = { results: T[], response: IRavenResponse };
 

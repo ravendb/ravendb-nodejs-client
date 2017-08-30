@@ -28,8 +28,7 @@ export abstract class QueryBasedCommand extends RavenCommand {
       throw new InvalidOperationException('Options must be instance of QueryOperationOptions class');
     }
 
-    // this.endPoint += StringUtil.format(`/databases/{0}/queries`,serverNode.database);
-    this.endPoint += '/queries';
+    this.endPoint = StringUtil.format('{url}/databases/{database}/queries', serverNode);
 
     this.params = {
       allowStale: options.allowStale,
@@ -37,8 +36,9 @@ export abstract class QueryBasedCommand extends RavenCommand {
       maxOpsPerSec: options.maxOpsPerSec
     };
 
-    options.staleTimeout && this.addParams('staleTimeout', options.staleTimeout);
-
+    if (options.allowStale && options.staleTimeout) {
+      this.addParams('staleTimeout', options.staleTimeout);
+    } 
   }
 }
 

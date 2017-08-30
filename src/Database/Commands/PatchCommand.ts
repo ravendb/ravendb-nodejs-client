@@ -54,7 +54,6 @@ export class PatchCommand extends RavenCommand {
       "Patch": this.patch.toJson(),
       "PatchIfMissing": this.patchIfMissing ? this.patchIfMissing.toJson() : null
     };
-
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {

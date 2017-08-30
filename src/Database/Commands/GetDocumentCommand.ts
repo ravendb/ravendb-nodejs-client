@@ -13,9 +13,8 @@ export class GetDocumentCommand extends RavenCommand {
   protected metadataOnly: boolean = false;
   protected includes?: string[];
 
-  constructor(idOrIds: string | string[],
-    metadataOnly: boolean = false,
-              includes?: string[]
+  constructor(idOrIds: string | string[], metadataOnly: boolean = false,
+    includes?: string[]
   ) {
     super('', RequestMethods.Get, null, null, {});
 

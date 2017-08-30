@@ -20,6 +20,8 @@ export class  PatchByQueryCommand extends QueryBasedCommand {
   }
 
   public createRequest(serverNode: ServerNode): void {
+    super.createRequest(serverNode);
+
     if (!(this.patch instanceof PatchRequest)) {
       throw new InvalidOperationException('Patch must me instanceof PatchRequest class');
     }
@@ -28,20 +30,5 @@ export class  PatchByQueryCommand extends QueryBasedCommand {
       "Patch": this.patch.toJson(),
       "Query": this.query.toJson()
     };
-
-    this.endPoint = StringUtil.format('{url}/databases/{database}', serverNode);
-
-    super.createRequest(serverNode);
   }
-
-  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
-
-    if (![StatusCodes.Ok, StatusCodes.Accepted].includes(response.statusCode)) {
-      throw new ExceptionThrower();
-    }
-
-    return result;
-  }
-
 }

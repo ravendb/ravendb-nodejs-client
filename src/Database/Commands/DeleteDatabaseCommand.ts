@@ -8,7 +8,7 @@ export class DeleteDatabaseCommand extends RavenCommand {
   protected hardDelete: boolean = false;
   protected fromNode: ServerNode = null;
 
-  constructor(databaseId: string, hardDelete: boolean = false, fromNode?: ServerNode ) {
+  constructor(databaseId: string, hardDelete: boolean = false, fromNode?: ServerNode) {
     super('', RequestMethods.Delete);
     this.fromNode = fromNode;
     this.databaseId = databaseId;
@@ -17,6 +17,7 @@ export class DeleteDatabaseCommand extends RavenCommand {
 
   public createRequest(serverNode: ServerNode): void {
     let dbName: string = this.databaseId.replace('Raven/Databases/', '');
+
     this.params = {name: dbName};
     this.hardDelete && this.addParams({'hard-delete': 'true'});
     this.fromNode && this.addParams({'from-node': this.fromNode.clusterTag});

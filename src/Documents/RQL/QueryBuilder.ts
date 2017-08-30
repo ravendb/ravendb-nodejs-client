@@ -2,7 +2,7 @@ import {TypeUtil} from "../../Utility/TypeUtil";
 import {StringUtil} from "../../Utility/StringUtil";
 import {RqlOperators} from "./RQLOperator";
 import {QueryOperators} from "../Session/QueryOperator";
-import {RQLQuerySource, RQLQuerySources} from "./RQLQuerySources";
+import {RQLQuerySource, RQLQuerySources} from "./RQLQuerySource";
 
 export class QueryBuilder {
 

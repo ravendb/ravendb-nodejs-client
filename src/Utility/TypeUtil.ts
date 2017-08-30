@@ -1,6 +1,8 @@
 import * as _ from 'lodash';
 
 export class TypeUtil {
+  public static readonly MAX_INT32 = 2147483647;
+
   public static isNone(value: any): boolean {
     return ('undefined' === (typeof value)) || _.isNull(value);
   }

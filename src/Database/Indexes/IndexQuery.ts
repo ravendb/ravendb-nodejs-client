@@ -1,27 +1,29 @@
-import {QueryOperator} from "../../Documents/Session/QueryOperator";
+import * as _ from "lodash";
+import * as crypto from "crypto";
+import {TypeUtil} from "../../Utility/TypeUtil";
 import {IOptionsSet} from "../../Utility/IOptionsSet";
 import {StringUtil} from "../../Utility/StringUtil";
-import * as crypto from "crypto";
+import {IRavenObject} from "../../Database/IRavenObject";
+import {QueryOperator} from "../../Documents/Session/QueryOperator";
+import {IJsonable} from "../../Json/Contracts";
 
-export class IndexQuery {
+export class IndexQuery implements IJsonable {
   private _fetch: string[] = [];
   private _sortHints: string[] = [];
   private _sortFields: string[] = [];
   private _query: string = '';
-  private _queryParameters: object;
+  private _params: IRavenObject = {};
   private _start: number;
-  private _pageSize: number;
+  private _pageSize: number = TypeUtil.MAX_INT32;
   private _defaultOperator?: QueryOperator = null;
   private _waitForNonStaleResults: boolean = false;
   private _waitForNonStaleResultsTimeout?: number = null;
-  private static MAX_VALUE = 2147483647;
 
-  constructor(query: string = '', pageSize: number = IndexQuery.MAX_VALUE, skippedResults: number = 0, options: IOptionsSet = {}, queryParameters?: object) {
+  constructor(query: string = '', params: IRavenObject = {}, pageSize: number = TypeUtil.MAX_INT32, skippedResults: number = 0, options: IOptionsSet = {}) {
     this._query = query;
-    this._queryParameters = queryParameters;
-    this._pageSize = pageSize || IndexQuery.MAX_VALUE;
+    this._params = params;
+    this._pageSize = pageSize || TypeUtil.MAX_INT32;
     this._start = skippedResults || 0;
-    this._fetch = options.fetch || [];
     this._waitForNonStaleResults = options.waitForNonStaleResults || false;
     this._waitForNonStaleResultsTimeout = options.waitForNonStaleResultsTimeout || null;
 
@@ -32,49 +34,6 @@ export class IndexQuery {
 
   public get pageSize(): number {
     return this._pageSize;
-  }
-
-  protected getResultsTimeoutAsString() {
-
-    return this._waitForNonStaleResultsTimeout.toString();
-
-  }
-
-  public toJson(): object {
-
-    let json = {
-      PageSize: this._pageSize,
-      Query: this._query,
-      QueryParameters: this._queryParameters,
-      Start: this._start,
-      WaitForNonStaleResultsAsOfNow: this._waitForNonStaleResults,
-      WaitForNonStaleResultsTimeout: null
-    };
-
-
-    if(this._waitForNonStaleResultsTimeout) {
-      json.WaitForNonStaleResultsTimeout = this.getResultsTimeoutAsString();
-    }
-
-    return json;
-  }
-
-  public queryHash() {
-
-    let buffer = StringUtil.format('{0}{1}{2}', this._query, this._pageSize,this._start);
-
-    buffer += this._waitForNonStaleResults ? "1" : "0";
-
-    if(this._waitForNonStaleResults) {
-      buffer += this._waitForNonStaleResultsTimeout.toString();
-
-    }
-
-    const secret = 'buffer';
-    buffer = crypto.createHmac('sha256', secret)
-      .digest('hex');
-
-    return buffer;
   }
 
   public set pageSize(pageSize: number) {
@@ -108,5 +67,39 @@ export class IndexQuery {
   public get waitForNonStaleResultsTimeout(): number {
     return this._waitForNonStaleResultsTimeout;
   }
-}
 
+  public get queryHash(): string {    
+    let buffer: string = StringUtil.format('{query}{pageSize}{start}', this);
+
+    buffer += this._waitForNonStaleResults ? "1" : "0";
+
+    if (this._waitForNonStaleResults) {
+      buffer += this.formattedTimeout;
+    }
+
+    return crypto.createHash('sha256').update(buffer).digest('hex');
+  }
+
+  protected get formattedTimeout(): string {    
+    return this.waitForNonStaleResultsTimeout.toString();    
+  }
+
+  public toJson(): object {
+    let json: object = {
+      Start: this._start,
+      PageSize: this._pageSize,
+      Query: this._query,
+      QueryParameters: this._params,
+      WaitForNonStaleResultsTimeout: null,
+      WaitForNonStaleResultsAsOfNow: this._waitForNonStaleResults
+    };
+
+    if (this._waitForNonStaleResults) {    
+      _.assign(json, {
+        WaitForNonStaleResultsTimeout: this.formattedTimeout
+      });      
+    }
+
+    return json;
+  }  
+}
