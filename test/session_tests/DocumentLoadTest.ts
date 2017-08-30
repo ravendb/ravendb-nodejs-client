@@ -18,7 +18,7 @@ describe('Document load test', () => {
   let requestExecutor: RequestExecutor;
   let currentDatabase: string, defaultUrl: string;
 
-  beforeEach(function(): void {
+  beforeEach(function (): void {
     ({currentDatabase, defaultUrl, requestExecutor, store} = (this.currentTest as IRavenObject));
   });
 
@@ -49,13 +49,13 @@ describe('Document load test', () => {
       session = store.openSession();
       product = await session.load<Product>("Product/0");
 
-      expect(product).to.be.null;      
+      expect(product).to.be.null;
     });
 
     it('should load few documents', async () => {
       session = store.openSession();
       products = await session.load<Product>(["Product/101", "Product/10"]);
-      
+
       expect(products).to.have.lengthOf(2);
     });
 
@@ -75,7 +75,7 @@ describe('Document load test', () => {
       product = await session.load<Product>("Product/101");
 
       expect(product).to.be.an('object');
-      expect(product['@metadata']['Raven-Node-Type']).to.equals('Product');      
+      expect(product['@metadata']['Raven-Node-Type']).to.equals('Product');
     });
 
     it('should load track entity with nested object', async () => {
@@ -83,7 +83,7 @@ describe('Document load test', () => {
       company = await session.load<Company>("Company/1");
 
       expect(company).to.be.an('object');
-      expect(company.product).to.be.an('object');      
+      expect(company.product).to.be.an('object');
       expect(company.product).to.have.property('name', 'testing_nested');
     });
 
@@ -104,11 +104,11 @@ describe('Document load test', () => {
 
     it('should load with includes', async () => {
       session = store.openSession();
-      
       await session.load<Order>("Order/105", Order, ["product_id"]);
       await session.load<Product>("Product/101");
 
-      expect(session.numberOfRequestsInSession).to.equals(1);
+      expect(session.numberOfRequestsInSession).to.equals(2);
     });
+
   });
 });

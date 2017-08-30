@@ -1,11 +1,11 @@
-import {IndexQueryBasedOperation} from './IndexQueryBasedOperation';
+import {QueryBasedOperation} from './QueryBasedOperation';
 import {RavenCommand} from '../RavenCommand';
 import {IDocumentStore} from '../../Documents/IDocumentStore';
 import {DocumentConventions} from '../../Documents/Conventions/DocumentConventions';
-import {DeleteByIndexCommand} from '../Commands/DeleteByIndexCommand';
+import {DeleteByQueryCommand} from '../Commands/DeleteByQueryCommand';
 
-export class DeleteByIndexOperation extends IndexQueryBasedOperation {
+export class DeleteByIndexOperation extends QueryBasedOperation {
   public getCommand(conventions: DocumentConventions, store?: IDocumentStore): RavenCommand {
-    return new DeleteByIndexCommand(this.indexName, this.query, this.options);
+    return new DeleteByQueryCommand(this.query, this.options);
   } 
 }

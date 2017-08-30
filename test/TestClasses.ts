@@ -19,8 +19,8 @@ export class Product implements IRavenObject {
   constructor(
     public id?: string,
     public name: string = "",
-    public uid?:number,
-    public order?: string 
+    public uid?: number,
+    public order?: number
   ) {}
 }
 
@@ -28,6 +28,17 @@ export class Company implements IRavenObject {
   constructor(
     public id?: string,
     public name: string = "",
+    public product?: Product,
+    public uid?:number
+  ) {}
+}
+
+export class Universal implements IRavenObject {
+  constructor(
+    public id: string = '',
+    public name: string = "",
+    public order: number = null,
+    public nullField: string = "null",
     public product?: Product,
     public uid?:number
   ) {}

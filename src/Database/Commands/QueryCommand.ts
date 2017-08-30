@@ -9,25 +9,17 @@ import {InvalidOperationException, IndexDoesNotExistException} from "../Database
 import {StringUtil} from "../../Utility/StringUtil";
 import {QueryOperators} from "../../Documents/Session/QueryOperator";
 import {QueryString} from "../../Http/QueryString";
-import {log} from "util";
 
 export class QueryCommand extends RavenCommand {
-  protected indexName: string;
   protected indexQuery: IndexQuery;
   protected conventions: DocumentConventions;
-  protected includes?: string[];
   protected metadataOnly: boolean = false;
   protected indexEntriesOnly: boolean = false;
 
-  constructor(indexName: string, indexQuery: IndexQuery, conventions: DocumentConventions,
-    includes?: string[], metadataOnly: boolean = false, indexEntriesOnly: boolean = false
+  constructor(indexQuery: IndexQuery, conventions: DocumentConventions, 
+    metadataOnly: boolean = false, indexEntriesOnly: boolean = false
   ) {
-    // change to Post
-    super('', RequestMethods.Get, null, null, {});
-
-    if (!indexName) {
-      throw new InvalidOperationException('Index name cannot be empty');
-    }
+    super('', RequestMethods.Post);
 
     if (!(indexQuery instanceof IndexQuery)) {
       throw new InvalidOperationException('Query must be an instance of IndexQuery class');
@@ -37,64 +29,19 @@ export class QueryCommand extends RavenCommand {
       throw new InvalidOperationException('Document conventions cannot be empty');
     }
 
-    this.indexName = indexName;
     this.indexQuery = indexQuery;
     this.conventions = conventions;
-    this.includes = includes;
     this.metadataOnly = metadataOnly;
     this.indexEntriesOnly = indexEntriesOnly;
   }
 
   public createRequest(serverNode: ServerNode): void {
     const query = this.indexQuery;
-
-    this.params = {
-      waitForNonStaleResultsAsOfNow: 'true',
-      PageSize: query.pageSize,
-      Start: query.start
-    };
-
-    this.payload = {
-      waitForNonStaleResultsAsOfNow: 'true',
-      PageSize: query.pageSize,
-      Start: query.start
-    };
-
-
-    // remove indexName
-    this.endPoint = StringUtil.format(
-      '{0}/databases/{1}/queries?',
-      serverNode.url,serverNode.database
-    );
-
-
-    query.query && this.addParams('Query', query.query);
-    query.fetch && this.addParams('fetch', query.fetch);
-    this.includes && this.addParams('include', this.includes);
+    
+    this.payload = query.toJson();
+    this.params = {"query-hash": query.queryHash};
     this.metadataOnly && this.addParams('metadata-only', 'true');
     this.indexEntriesOnly && this.addParams('debug', 'entries');
-    query.sortFields && this.addParams('sort', query.sortFields);
-    query.sortHints && query.sortHints.forEach((hint: string) => this.addParams(hint, null));
-    QueryOperators.isAnd(query.defaultOperator) && this.addParams('operator', query.defaultOperator);
-
-    if (query.waitForNonStaleResults) {
-      this.addParams({
-        waitForNonStaleResultsAsOfNow: 'true',
-        waitForNonStaleResultsTimeout: query.waitForNonStaleResultsTimeout
-      });
-    }
-    
-    if ((this.endPoint + '?' + QueryString.stringify(this.params)).length > this.conventions.maxLengthOfQueryUsingGetUrl) {
-      this.method = RequestMethods.Post;
-    }
-  }
-
-  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
-
-    if (!response.body) {
-      throw new IndexDoesNotExistException(StringUtil.format('Could not find index {0}', this.indexName));
-    }
-      return result;
+    this.endPoint = StringUtil.format('{url}/databases/{database}/queries', serverNode);    
   }
 }

@@ -52,8 +52,9 @@ beforeEach(async function() {
   ].join('');
 
   index = new IndexDefinition("Testing", indexMap);
- 
+
   await store.operations.send(new PutIndexesOperation(index));
+
   requestExecutor = store.getRequestExecutor();
 
   _.assign(this.currentTest, {
@@ -65,12 +66,10 @@ beforeEach(async function() {
     currentDatabase
   });
 
-
-
 });
 
-afterEach(async function() {
-  ['indexDefinition', 'indexMap',  'defaultUrl', 
+afterEach( async function() {
+  ['indexDefinition', 'indexMap',  'defaultUrl',
     'store', 'requestExecutor', 'currentDatabase']
    .forEach((key: string) => delete this.currentTest[key]);
 

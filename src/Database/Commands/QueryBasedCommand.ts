@@ -3,18 +3,15 @@ import {IndexQuery} from "../Indexes/IndexQuery";
 import {QueryOperationOptions} from "../Operations/QueryOperationOptions";
 import {RavenCommand} from "../RavenCommand";
 import {ServerNode} from "../../Http/ServerNode";
-import {TypeUtil} from "../../Utility/TypeUtil";
 import {InvalidOperationException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 
-export abstract class IndexQueryBasedCommand extends RavenCommand {
-  protected indexName?: string;
+export abstract class QueryBasedCommand extends RavenCommand {
   protected query?: IndexQuery;
   protected options?: QueryOperationOptions;
 
-  constructor(method: RequestMethod, indexName: string, query: IndexQuery, options?: QueryOperationOptions) {
+  constructor(method: RequestMethod, query: IndexQuery, options?: QueryOperationOptions) {
     super('', method);
-    this.indexName = indexName;
     this.query = query;
     this.options = options || new QueryOperationOptions();
   }
@@ -22,10 +19,6 @@ export abstract class IndexQueryBasedCommand extends RavenCommand {
   public createRequest(serverNode: ServerNode): void {
     const query: IndexQuery = this.query;
     const options: QueryOperationOptions = this.options;
-
-    if (TypeUtil.isNone(this.indexName)) {
-      throw new InvalidOperationException('Empty index_name is not valid');
-    }
 
     if (!(query instanceof IndexQuery)) {
       throw new InvalidOperationException('Query must be instance of IndexQuery class');
@@ -35,16 +28,17 @@ export abstract class IndexQueryBasedCommand extends RavenCommand {
       throw new InvalidOperationException('Options must be instance of QueryOperationOptions class');
     }
 
+    this.endPoint = StringUtil.format('{url}/databases/{database}/queries', serverNode);
+
     this.params = {
-      pageSize: query.pageSize,
       allowStale: options.allowStale,
-      details: options.retrieveDetails
+      details: options.retrieveDetails,
+      maxOpsPerSec: options.maxOpsPerSec
     };
 
-    this.endPoint += StringUtil.format('/queries/{0}', this.indexName);
-    query.query && this.addParams('Query', query.query);
-    options.maxOpsPerSec && this.addParams('maxOpsPerSec', options.maxOpsPerSec);
-    options.staleTimeout && this.addParams('staleTimeout', options.staleTimeout);
+    if (options.allowStale && options.staleTimeout) {
+      this.addParams('staleTimeout', options.staleTimeout);
+    } 
   }
 }
 

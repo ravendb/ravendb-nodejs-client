@@ -273,19 +273,23 @@ export class DocumentSession implements IDocumentSession {
     let indexName: string = null;
     let documentType: DocumentType<T> = null;
     let nestedObjectTypes: IRavenObject<DocumentConstructor> = {} as IRavenObject<DocumentConstructor>;
+    let fromCollection: boolean = false;
+    let queryParameters: object;
 
     if (options) {
       usingDefaultOperator = options.usingDefaultOperator || null;
-      waitForNonStaleResults = options.waitForNonStaleResults || null;
+      waitForNonStaleResults = options.WaitForNonStaleResults || null;
       includes = options.includes || null;
       withStatistics = options.withStatistics || null;
       nestedObjectTypes = options.nestedObjectTypes || {};
       indexName = options.indexName || null;
       documentType = options.documentType || null;
+      fromCollection = options.fromCollection || false;
+      queryParameters = options.queryParameters;
     }
 
     const query: DocumentQuery<T> = new DocumentQuery<T>(this, this.requestExecutor, documentType, indexName,
-      usingDefaultOperator, waitForNonStaleResults, includes, nestedObjectTypes, withStatistics
+      usingDefaultOperator, waitForNonStaleResults, nestedObjectTypes, withStatistics, queryParameters
     );
 
     query.on(
@@ -300,8 +304,8 @@ export class DocumentSession implements IDocumentSession {
     );
 
     query.on<object[]>(
-      DocumentQuery.EVENT_INCLUDES_FETCHED, 
-      (includes: object[]) => 
+      DocumentQuery.EVENT_INCLUDES_FETCHED,
+      (includes: object[]) =>
       this.onIncludesFetched(includes)
     );
 
@@ -331,7 +335,7 @@ more responsive application.", maxRequests
     this.incrementRequestsCount();
 
     return this.requestExecutor
-      .execute(new GetDocumentCommand(ids, includes))
+      .execute(new GetDocumentCommand(ids))
       .then((response: IRavenResponse): T[] | BluebirdPromise.Thenable<T[]> => {
         let responseResults: object[] = [];
         let responseIncludes: object[] = [];

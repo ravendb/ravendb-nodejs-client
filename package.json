@@ -16,11 +16,11 @@
     "type": "git",
     "url": "https://github.com/ravendb/ravendb-nodejs-client"
   },
-  "bugs":{
+  "bugs": {
     "email": "support@ravendb.net",
     "url": "http://issues.hibernatingrhinos.com"
   },
-  "contributors":[
+  "contributors": [
     "Hibernating Rhinos"
   ],
   "engines": {

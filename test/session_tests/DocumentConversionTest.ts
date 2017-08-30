@@ -105,7 +105,7 @@ describe('Document conversion test', () => {
 
       /*await session.query<TestConversion>({
         documentType: 'TestConversion',
-        waitForNonStaleResults: true
+          WaitForNonStaleResults: true
       }).get()
         .then((result: TestConversion[]) => 
           docs = docs.concat(result)
@@ -141,7 +141,7 @@ describe('Document conversion test', () => {
       docs = await session.query<TestConversion>({
         documentType: TestConversion,
         nestedObjectTypes: nestedObjectTypes,
-        waitForNonStaleResults: true
+        WaitForNonStaleResults: true
       })
       .whereGreaterThan<Date>('date', now)
       .get();
