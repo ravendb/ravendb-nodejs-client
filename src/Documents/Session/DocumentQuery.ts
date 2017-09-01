@@ -32,13 +32,12 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   protected indexName: string;
   protected session: IDocumentSession;
-  protected queryParameters: IDocumentSession;
+  protected indexQueryOptions: IOptionsSet;
   protected requestExecutor: RequestExecutor;
   protected fetch?: string[] = null;
   protected sortHints?: string[] = null;
   protected sortFields?: string[] = null;
   protected withStatistics: boolean = false;
-  protected usingDefaultOperator?: QueryOperator = null;
   protected waitForNonStaleResults: boolean = false;
   protected documentType?: DocumentType<T> = null;
   protected nestedObjectTypes: IRavenObject<DocumentConstructor> = {};
@@ -47,15 +46,15 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   private _skip?: number = null;
   private _builder = null;
 
-  constructor(session: IDocumentSession, requestExecutor: RequestExecutor, documentType?: DocumentType<T>, indexName?: string, usingDefaultOperator
-    ?: QueryOperator, waitForNonStaleResults: boolean = false, nestedObjectTypes?: IRavenObject<DocumentConstructor>,
-              withStatistics: boolean = false, queryParameters?) {
+  constructor(session: IDocumentSession, requestExecutor: RequestExecutor, documentType?: DocumentType<T>, 
+    indexName?: string, waitForNonStaleResults: boolean = false, nestedObjectTypes?: IRavenObject<DocumentConstructor>, 
+    withStatistics: boolean = false, indexQueryOptions: IOptionsSet = {}
+  ) {
     super();
     this.session = session;
-    this.queryParameters = queryParameters;
+    this.indexQueryOptions = indexQueryOptions;
     this.withStatistics = withStatistics;
     this.requestExecutor = requestExecutor;
-    this.usingDefaultOperator = usingDefaultOperator;
     this.waitForNonStaleResults = waitForNonStaleResults;
     this.nestedObjectTypes = nestedObjectTypes || {} as IRavenObject<DocumentConstructor>;
     this.documentType = documentType;
@@ -232,21 +231,6 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   }
 
-  public whereEqualsAndOr<V extends RQLValue>(fieldFirst,valueFirst,fieldSecond,valueSecond,fieldThird,valueThird): IDocumentQuery<T> {
-
-    this._builder
-      .where('equals', fieldFirst, valueFirst)
-      .and
-      .openSubClause
-      .where('equals', fieldSecond, valueSecond)
-      .or
-      .closeSubClause
-      .where('equals', fieldThird, valueThird);
-
-    return this;
-
-  }
-
   public whereIn<V extends RQLValue>(field, value): IDocumentQuery<T> {
 
 
@@ -397,19 +381,13 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   }
 
   protected executeQuery(): BluebirdPromise<IRavenResponse> {
-    const queryOptions: IOptionsSet = {
-      sort_hints: this.sortHints,
-      sort_fields: this.sortFields,
-      fetch: this.fetch
-    };
-
     this.emit(DocumentQuery.EVENT_DOCUMENTS_QUERIED);
 
     const session: IDocumentSession = this.session;
     const conventions: DocumentConventions = session.conventions;
-    const query: IndexQuery = new IndexQuery(this._builder.getRql(), this._take, this._skip, queryOptions, this.queryParameters);
+    const query: IndexQuery = new IndexQuery(this._builder.getRql(), {}, this._take, this._skip, this.indexQueryOptions);
 
-    const queryCommand: QueryCommand = new QueryCommand(this.indexName, query, conventions);
+    const queryCommand: QueryCommand = new QueryCommand(query, conventions);
     const endTime: number = moment().unix() + Math.max(conventions.requestTimeout, query.waitForNonStaleResultsTimeout);
 
     const request = () => this.requestExecutor

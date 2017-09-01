@@ -9,8 +9,7 @@ import {DocumentConstructor, DocumentType} from "../Conventions/DocumentConventi
 export interface IDocumentQueryOptions<T> {
   documentType?: DocumentType<T>,
   indexName?: string;
-  usingDefaultOperator?: QueryOperator;
-  WaitForNonStaleResults?: boolean;
+  waitForNonStaleResults?: boolean;
   includes?: string[];
   nestedObjectTypes?: IRavenObject<DocumentConstructor>;
   withStatistics?: boolean;

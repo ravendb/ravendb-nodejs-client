@@ -15,7 +15,6 @@ export class IndexQuery implements IJsonable {
   private _params: IRavenObject = {};
   private _start: number;
   private _pageSize: number = TypeUtil.MAX_INT32;
-  private _defaultOperator?: QueryOperator = null;
   private _waitForNonStaleResults: boolean = false;
   private _waitForNonStaleResultsTimeout?: number = null;
 
@@ -48,16 +47,8 @@ export class IndexQuery implements IJsonable {
     this._start = start;
   }
 
-  public get defaultOperator(): QueryOperator {
-    return this._defaultOperator;
-  }
-
   public get query(): string {
     return this._query;
-  }
-
-  public get fetch(): string[] {
-    return this._fetch;
   }
 
   public get waitForNonStaleResults(): boolean {

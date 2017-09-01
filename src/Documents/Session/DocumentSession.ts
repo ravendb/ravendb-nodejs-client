@@ -266,7 +266,6 @@ export class DocumentSession implements IDocumentSession {
   }
 
   public query<T extends Object = IRavenObject>(options?: IDocumentQueryOptions<T>): IDocumentQuery<T> {
-    let usingDefaultOperator: QueryOperator = null;
     let waitForNonStaleResults: boolean = null;
     let includes: string[] = null;
     let withStatistics: boolean = null;
@@ -277,7 +276,6 @@ export class DocumentSession implements IDocumentSession {
     let queryParameters: object;
 
     if (options) {
-      usingDefaultOperator = options.usingDefaultOperator || null;
       waitForNonStaleResults = options.WaitForNonStaleResults || null;
       includes = options.includes || null;
       withStatistics = options.withStatistics || null;
@@ -289,7 +287,7 @@ export class DocumentSession implements IDocumentSession {
     }
 
     const query: DocumentQuery<T> = new DocumentQuery<T>(this, this.requestExecutor, documentType, indexName,
-      usingDefaultOperator, waitForNonStaleResults, nestedObjectTypes, withStatistics, queryParameters
+      waitForNonStaleResults, nestedObjectTypes, withStatistics, queryParameters
     );
 
     query.on(
