@@ -19,7 +19,7 @@ describe('QueryCommand Tests', () => {
 
   const waitForNonStaleResults = (): BluebirdPromise.Thenable<any> | void => 
     requestExecutor
-      .execute(new QueryCommand(indexName, new IndexQuery(tag), conventions))
+      .execute(new QueryCommand(new IndexQuery(tag), conventions))
       .then((result: IRavenResponse) => !result.IsStale ? (void 0)
       : BluebirdPromise.delay(120).then(() => waitForNonStaleResults())
   );

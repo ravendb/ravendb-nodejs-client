@@ -223,10 +223,10 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     return this;
   }
 
-  public whereEquals<V extends RQLValue>(field, value): IDocumentQuery<T> {
+  public whereEquals<V extends RQLValue>(field, value, exact?): IDocumentQuery<T> {
 
     this._builder
-      .where('equals', field, value);
+      .where('equals', field, value, exact);
 
     return this;
 
@@ -265,12 +265,10 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   }
 
-  public whereGreaterThanOrEqual<V extends RQLValue>(field, value, orName, orValue): IDocumentQuery<T> {
+  public whereGreaterThanOrEqual<V extends RQLValue>(field, value): IDocumentQuery<T> {
 
     this._builder
-      .where('greaterThan', field, value)
-      .or
-      .where('equals', orName, orValue);
+      .where('greaterThanOrEqual', field, value)
 
     return this;
 
@@ -279,9 +277,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   public whereLessThanOrEqual<V extends RQLValue>(field, value, orName, orValue): IDocumentQuery<T>  {
 
     this._builder
-      .where('lessThan', field, value)
-      .or
-      .where('equals', orName, orValue);
+      .where('lessThanOrEqual', field, value)
 
     return this;
 
@@ -314,15 +310,6 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   }
 
-  public exact<V extends RQLValue>(field, value): IDocumentQuery<T> {
-
-    this._builder
-      .where('exact', field, value);
-
-    return this;
-
-  }
-
   public search<V extends RQLValue>(field, value, boostField, boostValue, boostExpression, count): IDocumentQuery<T> {
 
     this._builder
@@ -340,7 +327,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
       .where('equals', field, 'null')
       .and
       .not
-      .where('equals', field, 'null');
+      .where('equals', field, ''); //test with null
 
     return this;
 
@@ -407,9 +394,11 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
     const session: IDocumentSession = this.session;
     const conventions: DocumentConventions = session.conventions;
-    const query: IndexQuery = new IndexQuery(this._builder.getRql(), this._take, this._skip, queryOptions, this.queryParameters);
+    //move this.queryParametrs for compatibility
+    const query: IndexQuery = new IndexQuery(this._builder.getRql(), this._take, this._skip, this.queryParameters, queryOptions);
 
-    const queryCommand: QueryCommand = new QueryCommand(this.indexName, query, conventions);
+    //new remove this.indexName from query command
+    const queryCommand: QueryCommand = new QueryCommand(query, conventions);
     const endTime: number = moment().unix() + Math.max(conventions.requestTimeout, query.waitForNonStaleResultsTimeout);
 
     const request = () => this.requestExecutor

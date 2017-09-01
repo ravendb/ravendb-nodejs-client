@@ -64,7 +64,7 @@ describe('IndexBasedCommand tests', () => {
 
     it('update by index success', async () => {
       const indexQuery: IndexQuery = new IndexQuery(query, 0, 0, {WaitForNonStaleResults: true});
-      const queryCommand: QueryCommand = new QueryCommand('Order', indexQuery, new DocumentConventions());
+      const queryCommand: QueryCommand = new QueryCommand(indexQuery, new DocumentConventions());
       const PatchByQueryOperations: PatchByQueryOperation = new PatchByQueryOperation(new IndexQuery(query), patch, new QueryOperationOptions(false));
 
       return requestExecutor
@@ -93,7 +93,7 @@ describe('IndexBasedCommand tests', () => {
       it('delete by index success', async () => {
         const query: string = "from index 'Order' where DocNumber between 0 AND 47";
         const indexQuery: IndexQuery = new IndexQuery(query, 0, 0, {wait_for_non_stale_results: true});
-        const queryCommand: QueryCommand = new QueryCommand('Order', indexQuery, new DocumentConventions());
+        const queryCommand: QueryCommand = new QueryCommand(indexQuery, new DocumentConventions());
         const deleteByIndexOperations: DeleteByIndexOperation = new DeleteByIndexOperation(new IndexQuery(query), new QueryOperationOptions(false));
 
         return requestExecutor

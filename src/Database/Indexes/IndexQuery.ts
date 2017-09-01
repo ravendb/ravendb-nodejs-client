@@ -19,7 +19,8 @@ export class IndexQuery implements IJsonable {
   private _waitForNonStaleResults: boolean = false;
   private _waitForNonStaleResultsTimeout?: number = null;
 
-  constructor(query: string = '', params: IRavenObject = {}, pageSize: number = TypeUtil.MAX_INT32, skippedResults: number = 0, options: IOptionsSet = {}) {
+  //new params move after skippedResult for test compatibility
+  constructor(query: string = '', pageSize: number = TypeUtil.MAX_INT32, skippedResults: number = 0, params: IRavenObject = {}, options: IOptionsSet = {}) {
     this._query = query;
     this._params = params;
     this._pageSize = pageSize || TypeUtil.MAX_INT32;

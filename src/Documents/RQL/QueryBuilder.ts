@@ -106,7 +106,7 @@ export class QueryBuilder {
 
   }
 
-  public where(conditionType, conditionField, conditionValue = null) {
+  public where(conditionType, conditionField, conditionValue = null, exact?) {
 
     let rqlText: string;
 
@@ -118,9 +118,12 @@ export class QueryBuilder {
         rqlText = StringUtil.format(`{0}<{1} `, conditionField, conditionValue);
         break;
       case RqlOperators.EQUALS:
-        (conditionValue === null || conditionValue === 'null') ?
-          rqlText = StringUtil.format(`{0}={1} `, conditionField, conditionValue) :
+        if(exact) {
+          rqlText = StringUtil.format(`exact({0}='{1}') `, conditionField, conditionValue);
+        }
+        else {
           rqlText = StringUtil.format(`{0}='{1}' `, conditionField, conditionValue);
+        }
         break;
       case RqlOperators.BETWEEN:
         rqlText = StringUtil.format(`{0} BETWEEN {1} AND {2}`, conditionField, conditionValue.start, conditionValue.end);
@@ -134,11 +137,14 @@ export class QueryBuilder {
       case RqlOperators.IN:
         rqlText = StringUtil.format(`{0} IN ('{1}')`, conditionField, conditionValue);
         break;
+      case RqlOperators.GREATER_THAN_OR_EQUAL:
+        rqlText = StringUtil.format(`{0}>={1} `, conditionField, conditionValue);
+        break;
+      case RqlOperators.LESS_THAN_OR_EQUAL:
+        rqlText = StringUtil.format(`{0}<={1} `, conditionField, conditionValue);
+        break;
       case RqlOperators.SEARCH:
         rqlText = StringUtil.format(`search({0},'{1}') `, conditionField, conditionValue);
-        break;
-      case RqlOperators.EXACT:
-        rqlText = StringUtil.format(`exact({0}='{1}') `, conditionField, conditionValue);
         break;
       case RqlOperators.BOOST:
         rqlText = StringUtil.format(`boost({0} {1} '{2}', {3})`, conditionField.boostField, conditionField.boostExpression, conditionField.boostValue, conditionValue);

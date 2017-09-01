@@ -29,9 +29,8 @@ export interface IDocumentQuery<T> {
   selectFields(...args: string[]): IDocumentQuery<T>;
   search(from: string, searchTerms: string | string[], boostField, boostValue, boostExpression, count): IDocumentQuery<T>;
   where(conditions: IDocumentQueryConditions);
-  whereEquals<V extends RQLValue>(field: string, value: V): IDocumentQuery<T>;
+  whereEquals<V extends RQLValue>(field: string, value: V, exact?: boolean): IDocumentQuery<T>;
   endsWith<V extends RQLValue>(field: string, value: V): IDocumentQuery<T>;
-  exact<V extends RQLValue>(field: string, value: V): IDocumentQuery<T>;
   startsWith<V extends RQLValue>(field: string, value: V): IDocumentQuery<T>;
   whereIn<V extends RQLValue>(field: string, value: V): IDocumentQuery<T>;
   whereBetween<V extends RQLValue>(field: string, start?: V, end?: V, orName?, orValue?): IDocumentQuery<T>;
