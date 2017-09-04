@@ -1,192 +1,159 @@
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {StringUtil} from "../../Utility/StringUtil";
-import {RqlOperators} from "./RQLOperator";
-import {QueryOperators} from "../Session/QueryOperator";
+import {IRQLOperatorOptions, IRQLEqualsOperatorOptions, RQLOperator, RQLOperators, RQLJoinOperators, RQLOrderDirections, RQLOrderDirection} from "./RQLOperator";
 import {RQLQuerySource, RQLQuerySources} from "./RQLQuerySource";
+import {RQLValue, RQLRangeValue, RQLConditionValue} from "./RQLValue";
 
 export class QueryBuilder {
+  private _select: string = '*';
+  private _from: string = '@all_docs';
+  private _where: string = '';
+  private _order: string = '';
+  private _fromSource: RQLQuerySource = RQLQuerySources.Collection;
 
-  private _select: string;
-  private _from: string;
-  private _where: string;
-  private _order: string;
-  private _or: boolean;
-  private _fromCollection: string;
-  public defaultOperator: string;
-  public operator: string;
-  public openClause: string;
-  public closeClause: string;
-  public negate: boolean;
+  private _nextOperator: string = RQLJoinOperators.AND;
+  private _negateNext: boolean = false;
+  private _boostNext: number = null;
 
-  constructor() {
-    this._select = '';
-    this._from = '';
-    this._where = '';
-    this._order = '';
-    this._or = true;
-    this._fromCollection = '';
-    this.defaultOperator = '';
-    this.operator = this.defaultOperator;
-    this.openClause = '';
-    this.closeClause = '';
-    this.negate = false;
-  }
+  public openSubClause(): QueryBuilder {
+    this.whereRaw(RQLJoinOperators.OPEN_SUBCLAUSE);
 
-  public get openSubClause() {
-    this.openClause = QueryOperators.OPENSUBCLAUSE;
     return this;
   }
 
-  public get closeSubClause() {
-    this.closeClause = QueryOperators.CLOSESUBCLAUSE;
+  public closeSubClause(): QueryBuilder {
+    this.whereRaw(RQLJoinOperators.CLOSE_SUBCLAUSE);
+
     return this;
   }
 
-  public get and() {
-    this.operator = QueryOperators.AND;
+  public and(): QueryBuilder {
+    this._nextOperator = RQLJoinOperators.AND;
+
     return this;
   }
 
-  public get or() {
-    this.operator = QueryOperators.OR;
+  public or(): QueryBuilder {
+    this._nextOperator = RQLJoinOperators.OR;
+
     return this;
   }
 
-  public get not() {
-    this.negate = true;
+  public not(): QueryBuilder {
+    this._negateNext = true;
+
     return this;
   }
 
-  public select(fields?) {
+  public boost(boostFactor: number): QueryBuilder {
+    this._boostNext = boostFactor;
+
+    return this;
+  }
+
+  public select(fields?: string | string[]): QueryBuilder {
+    let joinedFields: string = fields as string;
 
     if (TypeUtil.isArray(fields)) {
-      this._select = fields.join(', ');
+      joinedFields = (fields as string[]).join(', ');
     }
-    else if (fields) {
-      this._select = fields;
-    }
-    else {
-      this._select = '@all_docs';
+
+    this._select = joinedFields || '*';
+    return this;
+  }
+
+  public from(source?: string, sourceType: RQLQuerySource = RQLQuerySources.Collection): QueryBuilder {
+    this._from = source || '@all_docs';
+
+    if (source && (RQLQuerySources.Index === sourceType)) {
+      this._from = `INDEX ${this._from}`;      
     }
 
     return this;
-
   }
 
-  public from(source: string, sourceType: RQLQuerySource = RQLQuerySources.Collection) {
-
-    switch(sourceType) {
-
-      case RQLQuerySources.Collection:
-        this._fromCollection = source;
-        break;
-
-      case RQLQuerySources.Index:
-        this._from = source;
-        break;
-    }
-
-  }
-
-  public fromCollection(collection) {
+  public fromCollection(collection: string): QueryBuilder {
     this.from(collection, RQLQuerySources.Collection);
+
     return this;
   }
 
-  public fromIndex(index) {
+  public fromIndex(index: string): QueryBuilder {
     this.from(index, RQLQuerySources.Index);
+
     return this;
   }
 
-  public order(field, direction = 'ASC') {
-
+  public order(field: string, direction: RQLOrderDirection = RQLOrderDirections.Ascending): QueryBuilder {
     this._order = StringUtil.format(`{0} {1}`, field, direction);
 
     return this;
-
   }
 
-  public where(conditionType, conditionField, conditionValue = null, exact?) {
-
+  public where(operator: RQLOperator, field: string, value?: RQLConditionValue, options: IRQLOperatorOptions = {}): QueryBuilder {
     let rqlText: string;
+    const range: RQLRangeValue<RQLValue> = <RQLRangeValue<RQLValue>>value; 
+    const values: RQLValue[] = <RQLValue[]>value;
 
-    switch (conditionType) {
-      case RqlOperators.GREATER_THAN:
-        rqlText = StringUtil.format(`{0}>{1} `, conditionField, conditionValue);
+    switch (operator) {
+      case RQLOperators.GREATER_THAN:
+        rqlText = StringUtil.format(`{0} > {1}`, field, value);
         break;
-      case RqlOperators.LESS_THAN:
-        rqlText = StringUtil.format(`{0}<{1} `, conditionField, conditionValue);
+      case RQLOperators.LESS_THAN:
+        rqlText = StringUtil.format(`{0} < {1}`, field, value);
         break;
-      case RqlOperators.EQUALS:
-        if(exact) {
-          rqlText = StringUtil.format(`exact({0}='{1}') `, conditionField, conditionValue);
-        }
-        else {
-          rqlText = StringUtil.format(`{0}='{1}' `, conditionField, conditionValue);
-        }
+      case RQLOperators.EQUALS:
+        const formattedValue = (TypeUtil.isNone(value) || (value === 'null')) ? 'null' : `'${value}'`;
+        
+        rqlText = StringUtil.format(`{0}={1}`, field, value);
         break;
-      case RqlOperators.BETWEEN:
-        rqlText = StringUtil.format(`{0} BETWEEN {1} AND {2}`, conditionField, conditionValue.start, conditionValue.end);
+      case RQLOperators.BETWEEN:
+        rqlText = StringUtil.format(`{0} BETWEEN {1} AND {2}`, field, range.min, range.max);
         break;
-      case RqlOperators.STARTS_WITH:
-        rqlText = StringUtil.format(`startsWith({0}, '{1}')`, conditionField, conditionValue);
+      case RQLOperators.STARTS_WITH:
+        rqlText = StringUtil.format(`startsWith({0}, '{1}')`, field, value);
         break;
-      case RqlOperators.ENDS_WITH:
-        rqlText = StringUtil.format(`endsWith({0}, '{1}')`, conditionField, conditionValue);
+      case RQLOperators.ENDS_WITH:
+        rqlText = StringUtil.format(`endsWith({0}, '{1}')`, field, value);
         break;
-      case RqlOperators.IN:
-        rqlText = StringUtil.format(`{0} IN ('{1}')`, conditionField, conditionValue);
+      case RQLOperators.IN:
+        rqlText = StringUtil.format(`{0} IN ('{1}')`, field, value);
         break;
-      case RqlOperators.GREATER_THAN_OR_EQUAL:
-        rqlText = StringUtil.format(`{0}>={1} `, conditionField, conditionValue);
+      case RQLOperators.SEARCH:
+        rqlText = StringUtil.format(`search({0},'{1}') `, field, value);
         break;
-      case RqlOperators.LESS_THAN_OR_EQUAL:
-        rqlText = StringUtil.format(`{0}<={1} `, conditionField, conditionValue);
-        break;
-      case RqlOperators.SEARCH:
-        rqlText = StringUtil.format(`search({0},'{1}') `, conditionField, conditionValue);
-        break;
-      case RqlOperators.BOOST:
-        rqlText = StringUtil.format(`boost({0} {1} '{2}', {3})`, conditionField.boostField, conditionField.boostExpression, conditionField.boostValue, conditionValue);
-        break;
+      case RQLOperators.EXACT:
+        rqlText = StringUtil.format(`exact({0}='{1}') `, field, value);
+        break;      
     }
 
     this.whereRaw(rqlText);
+    return this;
+  }
+
+  public whereRaw(rqlCondition: string): QueryBuilder {
+    let where: string = (this._negateNext ? 'NOT ' : '') + rqlCondition;
+
+    if (!TypeUtil.isNone(this._boostNext)) {
+      where = `BOOST(${where}, ${this._boostNext})`;
+    }
+
+    this._where += [this._nextOperator, where].join(' ');
+    this._nextOperator = RQLJoinOperators.AND;
+    this._negateNext = false;
+    this._boostNext = null;
 
     return this;
-
   }
 
-  public whereRaw(rqlCondition) {
-
-    let addNot: string = this.negate ? 'NOT ' : '';
-
-    this._where += StringUtil.format(`{0} {3}{1} {2}{4}`, this.operator, addNot, rqlCondition, this.openClause, this.closeClause);
-
-    this.operator = this.defaultOperator;
-
-    this.openClause = this.defaultOperator;
-    this.closeClause = this.defaultOperator;
-
-    this.negate = false;
-
-  }
-
-  public getRql() {
-
-    let rql: string = ``;
+  public getRql(): string {
+    let rql: string = '';
 
     if (this._select) {
       rql += StringUtil.format(`SELECT {0} `, this._select);
     }
 
-    if (this._from) {
-      rql += StringUtil.format(`FROM INDEX {0} `,this._from);
-    }
-
-    if (this._fromCollection) {
-      rql += StringUtil.format(`FROM {0} `,this._fromCollection);
-    }
+    rql += StringUtil.format(`FROM {0} `, this._from);
 
     if (this._where) {
       rql += StringUtil.format(` WHERE {0}`, this._where);
@@ -196,7 +163,6 @@ export class QueryBuilder {
       rql += StringUtil.format(` ORDER BY {0}`, this._order);
     }
 
-    return rql as string;
+    return rql;
   }
-
 }

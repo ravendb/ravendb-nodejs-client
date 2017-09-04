@@ -32,13 +32,12 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   protected indexName: string;
   protected session: IDocumentSession;
-  protected queryParameters: IDocumentSession;
+  protected indexQueryOptions: IOptionsSet;
   protected requestExecutor: RequestExecutor;
   protected fetch?: string[] = null;
   protected sortHints?: string[] = null;
   protected sortFields?: string[] = null;
   protected withStatistics: boolean = false;
-  protected usingDefaultOperator?: QueryOperator = null;
   protected waitForNonStaleResults: boolean = false;
   protected documentType?: DocumentType<T> = null;
   protected nestedObjectTypes: IRavenObject<DocumentConstructor> = {};
@@ -47,15 +46,15 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   private _skip?: number = null;
   private _builder = null;
 
-  constructor(session: IDocumentSession, requestExecutor: RequestExecutor, documentType?: DocumentType<T>, indexName?: string, usingDefaultOperator
-    ?: QueryOperator, waitForNonStaleResults: boolean = false, nestedObjectTypes?: IRavenObject<DocumentConstructor>,
-              withStatistics: boolean = false, queryParameters?) {
+  constructor(session: IDocumentSession, requestExecutor: RequestExecutor, documentType?: DocumentType<T>,
+    indexName?: string, waitForNonStaleResults: boolean = false, nestedObjectTypes?: IRavenObject<DocumentConstructor>,
+    withStatistics: boolean = false, indexQueryOptions: IOptionsSet = {}
+  ) {
     super();
     this.session = session;
-    this.queryParameters = queryParameters;
+    this.indexQueryOptions = indexQueryOptions;
     this.withStatistics = withStatistics;
     this.requestExecutor = requestExecutor;
-    this.usingDefaultOperator = usingDefaultOperator;
     this.waitForNonStaleResults = waitForNonStaleResults;
     this.nestedObjectTypes = nestedObjectTypes || {} as IRavenObject<DocumentConstructor>;
     this.documentType = documentType;
@@ -223,10 +222,10 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     return this;
   }
 
-  public whereEquals<V extends RQLValue>(field, value, exact?): IDocumentQuery<T> {
+  public whereEquals<V extends RQLValue>(field, value): IDocumentQuery<T> {
 
     this._builder
-      .where('equals', field, value, exact);
+      .where('equals', field, value);
 
     return this;
 
@@ -265,10 +264,12 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   }
 
-  public whereGreaterThanOrEqual<V extends RQLValue>(field, value): IDocumentQuery<T> {
+  public whereGreaterThanOrEqual<V extends RQLValue>(field, value, orName, orValue): IDocumentQuery<T> {
 
     this._builder
-      .where('greaterThanOrEqual', field, value)
+      .where('greaterThan', field, value)
+      .or
+      .where('equals', orName, orValue);
 
     return this;
 
@@ -277,7 +278,9 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   public whereLessThanOrEqual<V extends RQLValue>(field, value, orName, orValue): IDocumentQuery<T>  {
 
     this._builder
-      .where('lessThanOrEqual', field, value)
+      .where('lessThan', field, value)
+      .or
+      .where('equals', orName, orValue);
 
     return this;
 
@@ -310,6 +313,15 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
   }
 
+  public exact<V extends RQLValue>(field, value): IDocumentQuery<T> {
+
+    this._builder
+      .where('exact', field, value);
+
+    return this;
+
+  }
+
   public search<V extends RQLValue>(field, value, boostField, boostValue, boostExpression, count): IDocumentQuery<T> {
 
     this._builder
@@ -327,7 +339,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
       .where('equals', field, 'null')
       .and
       .not
-      .where('equals', field, ''); //test with null
+      .where('equals', field, 'null');
 
     return this;
 
@@ -394,10 +406,8 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
     const session: IDocumentSession = this.session;
     const conventions: DocumentConventions = session.conventions;
-    //move this.queryParametrs for compatibility
-    const query: IndexQuery = new IndexQuery(this._builder.getRql(), this._take, this._skip, this.queryParameters, queryOptions);
+    const query: IndexQuery = new IndexQuery(this._builder.getRql(), {}, this._take, this._skip, this.indexQueryOptions);
 
-    //new remove this.indexName from query command
     const queryCommand: QueryCommand = new QueryCommand(query, conventions);
     const endTime: number = moment().unix() + Math.max(conventions.requestTimeout, query.waitForNonStaleResultsTimeout);
 
