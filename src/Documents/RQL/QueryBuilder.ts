@@ -117,7 +117,9 @@ export class QueryBuilder {
         rqlText = StringUtil.format(`endsWith({0}, '{1}')`, field, value);
         break;
       case RQLOperators.IN:
-        rqlText = StringUtil.format(`{0} IN ('{1}')`, field, value);
+        const values
+
+        rqlText = StringUtil.format(`{0} IN ('{1}')`, field, values.join());
         break;
       case RQLOperators.SEARCH:
         rqlText = StringUtil.format(`search({0},'{1}') `, field, value);
