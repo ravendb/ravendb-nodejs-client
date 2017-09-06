@@ -136,3 +136,32 @@ export class ProductsTestingSort {
      return this.store.operations.send(new PutIndexesOperation(this.indexDefinition)); 
   }
 }
+
+export class UniversalsTestingSort {
+  protected indexDefinition: IndexDefinition;
+
+  constructor(
+    protected store: IDocumentStore
+  ) {
+    const indexMap: string = [
+      'from doc in docs ',
+      'select new {',
+      'name = doc.name,',
+      'order = doc.order,',
+      'nullField=doc.nullField,',
+      'uid = doc.uid,',
+      'doc_id = doc.uid+"_"+doc.name}'
+    ].join('');
+
+    this.indexDefinition = new IndexDefinition('UniversalsTestingSort', indexMap, null, {
+      fields: {
+        "uid": new IndexFieldOptions(SortOptions.Numeric),
+        "doc_id": new IndexFieldOptions(null, null, true)
+      }
+    });
+  }
+
+  public async execute(): Promise<IRavenResponse | IRavenResponse[] | void> {
+    return this.store.operations.send(new PutIndexesOperation(this.indexDefinition));
+  }
+}

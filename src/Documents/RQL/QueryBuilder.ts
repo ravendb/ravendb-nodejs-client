@@ -1,6 +1,6 @@
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {StringUtil} from "../../Utility/StringUtil";
-import {IRQLOperatorOptions, IRQLEqualsOperatorOptions, RQLOperator, RQLOperators, RQLJoinOperators, RQLOrderDirections, RQLOrderDirection} from "./RQLOperator";
+import {IRQLEqualsOperatorOptions, RQLOperator, RQLOperators, RQLJoinOperators, RQLOrderDirections, RQLOrderDirection} from "./RQLOperator";
 import {RQLQuerySource, RQLQuerySources} from "./RQLQuerySource";
 import {RQLValue, RQLRangeValue, RQLConditionValue} from "./RQLValue";
 
@@ -9,7 +9,6 @@ export class QueryBuilder {
   private _from: string = '@all_docs';
   private _where: string = '';
   private _order: string = '';
-  private _fromSource: RQLQuerySource = RQLQuerySources.Collection;
 
   private _nextOperator: string = '';
   private _negateNext: boolean = false;
@@ -120,7 +119,7 @@ export class QueryBuilder {
         rqlText = StringUtil.format(`endsWith({0}, '{1}')`, field, value);
         break;
       case RQLOperators.IN:
-        rqlText = StringUtil.format(`{0} IN ('{1}')`, field, values); //ask about array SELECT * FROM Universals WHERE order IN ('withNesting','1')
+        rqlText = StringUtil.format(`{0} IN ('{1}')`, field, value);
         break;
       case RQLOperators.SEARCH:
         rqlText = StringUtil.format(`search({0}, '{1}')`, field, value);

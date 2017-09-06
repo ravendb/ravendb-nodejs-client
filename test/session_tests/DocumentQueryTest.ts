@@ -8,7 +8,7 @@ import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {IRavenObject} from "../../src/Database/IRavenObject";
-import {Product, ProductsTestingSort, Universal} from "../TestClasses";
+import {Product, Universal, UniversalsTestingSort} from "../TestClasses";
 import {QueryBuilder} from "../../src/Documents/RQL/QueryBuilder";
 import {IDocumentQuery} from "../../src/Documents/Session/IDocumentQuery";
 
@@ -23,11 +23,12 @@ describe('Document query test', () => {
   });
 
   beforeEach(async () => {
-    const productsTestingSort: ProductsTestingSort = new ProductsTestingSort(store);
+
+    const UniversalsTestingSorts: UniversalsTestingSort = new UniversalsTestingSort(store);
 
     session = store.openSession();
 
-    await productsTestingSort.execute();
+    await UniversalsTestingSorts.execute();
     await session.store<Universal>(new Universal('Universals_1', 'withNesting', 1, null, new Product(null, 'testing_order', 4)));
     await session.store<Universal>(new Universal('Universals_2', 'withNesting', 2, null, new Product(null, 'testing_order', 4)));
     await session.store<Universal>(new Universal('Universals_3', 'withNesting', 3, null, new Product(null, 'testing_order', 4)));
@@ -47,13 +48,13 @@ describe('Document query test', () => {
    it('should query with whereEqualsAndOr', async () => {
       const query: IDocumentQuery<Universal> = store
         .openSession()
-        .query<Universal>({indexName: 'Universals', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
         .whereEqualsAndOr<number>('name', 'withNesting', 'order', 3, 'order', 4);
 
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals WHERE name='withNesting' AND ( order='3' ) OR order='4'`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE name='withNesting' AND ( order='3' ) OR order='4'`);
 
       expect(results).to.have.lengthOf(2);
 
@@ -69,13 +70,13 @@ describe('Document query test', () => {
 
       const query: IDocumentQuery<Universal> = store
         .openSession()
-        .query<Universal>({indexName: 'Universals', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
         .orderBy('order as long', 'ASC');
 
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals ORDER BY order as long ASC`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort ORDER BY order as long ASC`);
 
       expect(results).to.have.lengthOf(10);
 
@@ -90,7 +91,7 @@ describe('Document query test', () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
         .query<Universal>({
-          indexName: 'Universals',
+          indexName: 'UniversalsTestingSort',
           WaitForNonStaleResults: true
         })
         .orderBy('order', 'ASC');
@@ -98,7 +99,7 @@ describe('Document query test', () => {
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals ORDER BY order ASC`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort ORDER BY order ASC`);
 
       expect(results[1].order).to.be.equal(10);
 
@@ -113,13 +114,13 @@ describe('Document query test', () => {
     it('should query with orderByDESC as long', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'Universals', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
         .orderBy('order as long', 'DESC');
 
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals ORDER BY order as long DESC`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort ORDER BY order as long DESC`);
 
       expect(results).to.have.lengthOf(10);
 
@@ -133,13 +134,13 @@ describe('Document query test', () => {
     it('should query with whereGreaterThanOrEqual', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'Universals', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
         .whereGreaterThanOrEqual<number>('order', 6);
 
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals WHERE order>=6`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE order>=6`);
 
       expect(results).to.have.lengthOf(5);
 
@@ -155,13 +156,13 @@ describe('Document query test', () => {
     it('should query with whereLessThanOrEqual', async () => {
       const query: IDocumentQuery<Universal> = await  store
         .openSession()
-        .query<Universal>({indexName: 'Universals', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
         .whereLessThanOrEqual<number>('order', 6);
 
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals WHERE order<=6`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE order<=6`);
 
       expect(results).to.have.lengthOf(6);
 
@@ -177,13 +178,13 @@ describe('Document query test', () => {
     it('should query with nested objects exact', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'Universals', nestedObjectTypes: {product: Product}})
+        .query<Universal>({indexName: 'UniversalsTestingSort', nestedObjectTypes: {product: Product}, WaitForNonStaleResults: true})
         .whereEquals<string>('name', 'withnesting', true);
 
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals WHERE exact(name='withnesting')`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE exact(name='withnesting')`);
 
       expect(results).to.have.lengthOf(10);
 
@@ -197,13 +198,13 @@ describe('Document query test', () => {
     it('should query with nested objects', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'Universals', nestedObjectTypes: {product: Product}})
+        .query<Universal>({indexName: 'UniversalsTestingSort', nestedObjectTypes: {product: Product}, WaitForNonStaleResults: true})
         .whereEquals<string>('name', 'withNesting');
 
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals WHERE name='withNesting'`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE name='withNesting'`);
 
       expect(results).to.have.lengthOf(10);
 
@@ -217,13 +218,13 @@ describe('Document query test', () => {
     it('should make query with fetch terms', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({WaitForNonStaleResults: true, indexName: 'Universals'})
+        .query<Universal>({WaitForNonStaleResults: true, indexName: 'UniversalsTestingSort'})
         .selectFields<string>('id');
 
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT id FROM Universals`);
+      expect(queryString).equals(`SELECT id FROM INDEX UniversalsTestingSort`);
 
       expect(results).to.have.lengthOf(10);
       expect(_.every(results, (result: Product) => result.hasOwnProperty('id'))).to.be.true;
@@ -233,14 +234,14 @@ describe('Document query test', () => {
     it('should query with whereArray and orElse', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'Universals'})
+        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
         .where({name: ['withNesting', 'anotherIndex']});
 
       const results: Universal[] = await query.get();
       const getOR: IDocumentQuery<Universal> = await query.orElse();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals WHERE name='withNesting,anotherIndex' OR name='withNesting' OR name='anotherIndex'`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE name='withNesting,anotherIndex' OR name='withNesting' OR name='anotherIndex'`);
 
       expect(getOR['_builder']).to.be.instanceOf(QueryBuilder);
       expect(getOR['_builder']._nextOperator).to.equal('OR');
@@ -255,13 +256,13 @@ describe('Document query test', () => {
     it('should query with where', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'Universals'})
+        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
         .where({name: 'withNesting'});
 
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals WHERE name IN ('withNesting')`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE name IN ('withNesting')`);
 
       expect(results).to.have.lengthOf(10);
 
@@ -280,7 +281,7 @@ describe('Document query test', () => {
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM none WHERE Tag IN ('Products')`);
+      expect(queryString).equals(`SELECT * FROM INDEX none WHERE Tag IN ('Products')`);
 
       expect(results).to.have.lengthOf(0);
 
@@ -289,7 +290,7 @@ describe('Document query test', () => {
     it('should query by @all_docs', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: '@all_docs'})
+        .query<Universal>({WaitForNonStaleResults: true})
         .whereIn<string>('name', 'withNesting');
 
       const results: Universal[] = await query.get();
@@ -310,13 +311,13 @@ describe('Document query test', () => {
 
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'Universals', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
         .whereIn<string>('name', 'withNesting');
 
       const totalCount: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals WHERE name IN ('withNesting')`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE name IN ('withNesting')`);
 
       const totalPages: number = Math.ceil(totalCount.length / pageSize);
 
@@ -332,13 +333,13 @@ describe('Document query test', () => {
     it('should query with whereEquals', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'Universals', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
         .whereEquals<string>('name', 'withNesting');
 
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals WHERE name='withNesting'`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE name='withNesting'`);
 
       expect(results).to.have.lengthOf(10);
 
@@ -351,13 +352,13 @@ describe('Document query test', () => {
     it('should query with whereIn', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'Universals', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
         .whereIn<string>('name', 'withNesting');
 
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals WHERE name IN ('withNesting')`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE name IN ('withNesting')`);
 
       expect(results).to.have.lengthOf(10);
 
@@ -370,13 +371,13 @@ describe('Document query test', () => {
     it('should query with whereGreaterThan', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'Universals', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
         .whereGreaterThan<number>('order', 2);
 
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals WHERE order > 2`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE order > 2`);
 
       expect(results).to.have.lengthOf(8);
 
@@ -390,13 +391,13 @@ describe('Document query test', () => {
     it('should query with whereLessThan', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'Universals', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
         .whereLessThan<number>('order', 6);
 
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals WHERE order < 6`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE order < 6`);
 
       expect(results).to.have.lengthOf(5);
 
@@ -411,7 +412,7 @@ describe('Document query test', () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
         .query<Universal>({
-          indexName: 'Universals',
+          indexName: 'UniversalsTestingSort',
           WaitForNonStaleResults: true,
           queryParameters: {
             "p0": 6
@@ -422,7 +423,7 @@ describe('Document query test', () => {
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals WHERE order < :p0`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE order < :p0`);
 
       expect(results).to.have.lengthOf(5);
 
@@ -437,7 +438,7 @@ describe('Document query test', () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
         .query<Universal>({
-          indexName: 'Universals',
+          indexName: 'UniversalsTestingSort',
           WaitForNonStaleResults: true
         })
         .startsWith<string>('name', 'wi');
@@ -445,7 +446,7 @@ describe('Document query test', () => {
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals WHERE startsWith(name, 'wi')`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE startsWith(name, 'wi')`);
 
       expect(results).to.have.lengthOf(10);
 
@@ -460,7 +461,7 @@ describe('Document query test', () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
         .query<Universal>({
-          indexName: 'Universals',
+          indexName: 'UniversalsTestingSort',
           WaitForNonStaleResults: true
         })
         .endsWith<string>('name', 'ing');
@@ -468,7 +469,7 @@ describe('Document query test', () => {
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals WHERE endsWith(name, 'ing')`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE endsWith(name, 'ing')`);
 
       expect(results).to.have.lengthOf(10);
 
@@ -483,7 +484,7 @@ describe('Document query test', () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
         .query<Universal>({
-          indexName: 'Universals',
+          indexName: 'UniversalsTestingSort',
           WaitForNonStaleResults: true
         })
         .search('name', 'withNesting');
@@ -491,7 +492,7 @@ describe('Document query test', () => {
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals WHERE search(name, 'withNesting')`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE search(name, 'withNesting')`);
 
       expect(results).to.have.lengthOf(10);
 
@@ -504,7 +505,7 @@ describe('Document query test', () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
         .query<Universal>({
-          indexName: 'Universals',
+          indexName: 'UniversalsTestingSort',
           WaitForNonStaleResults: true
         })
         .whereIn<string>('name', 'withNesting');
@@ -512,7 +513,7 @@ describe('Document query test', () => {
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals WHERE name IN ('withNesting')`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE name IN ('withNesting')`);
 
       expect(results).to.have.lengthOf(10);
 
@@ -525,7 +526,7 @@ describe('Document query test', () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
         .query<Universal>({
-          indexName: 'Universals',
+          indexName: 'UniversalsTestingSort',
           WaitForNonStaleResults: true
         })
         .selectFields<string>('id');
@@ -533,7 +534,7 @@ describe('Document query test', () => {
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT id FROM Universals`);
+      expect(queryString).equals(`SELECT id FROM INDEX UniversalsTestingSort`);
 
       expect(results).to.have.lengthOf(10);
 
@@ -548,7 +549,7 @@ describe('Document query test', () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
         .query<Universal>({
-          indexName: 'Universals',
+          indexName: 'UniversalsTestingSort',
           WaitForNonStaleResults: true
         })
         .selectFields<string>();
@@ -556,7 +557,7 @@ describe('Document query test', () => {
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort`);
 
       expect(results).to.have.lengthOf(10);
 
@@ -571,7 +572,7 @@ describe('Document query test', () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
         .query<Universal>({
-          indexName: 'Universals',
+          indexName: 'UniversalsTestingSort',
           WaitForNonStaleResults: true
         })
         .whereIsNull<null>('nullField', null);
@@ -579,7 +580,7 @@ describe('Document query test', () => {
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals WHERE nullField=null`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE nullField=null`);
 
       expect(results).to.have.lengthOf(10);
 
@@ -592,14 +593,14 @@ describe('Document query test', () => {
     it('should query with whereNotNull and NOT', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'Universals', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
         .whereNotNull('nullField');
 
       const results: Universal[] = await query.get();
       const getNOT: IDocumentQuery<Universal> = await query.negateNext();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals WHERE nullField=null AND NOT nullField=null`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE nullField=null AND NOT nullField=null`);
 
       expect(getNOT['_builder']).to.be.instanceOf(QueryBuilder);
       expect(getNOT['_builder']._negateNext).to.equal(true);
@@ -611,14 +612,14 @@ describe('Document query test', () => {
     it('should query by between and andAlso', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'Universals', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
         .whereBetween<number>('order', 1, 5);
 
       const results: Universal[] = await query.get();
       const getAND: IDocumentQuery<Universal> = await query.andAlso();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals WHERE order BETWEEN 1 AND 5`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE order BETWEEN 1 AND 5`);
 
       expect(getAND['_builder']).to.be.instanceOf(QueryBuilder);
       expect(getAND['_builder']._nextOperator).to.equal('AND');
@@ -637,13 +638,13 @@ describe('Document query test', () => {
     it('should query with where', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'Universals'})
+        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
         .where({name: 'withNesting'});
 
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
 
-      expect(queryString).equals(`SELECT * FROM Universals WHERE name IN ('withNesting')`);
+      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE name IN ('withNesting')`);
 
       expect(results).to.have.lengthOf(10);
 

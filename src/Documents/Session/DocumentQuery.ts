@@ -9,7 +9,6 @@ import {QueryResultsCallback, EntityCallback, EntitiesCountCallback} from '../..
 import {PromiseResolver} from '../../Utility/PromiseResolver';
 import {RQLValue} from "../RQL/RQLValue";
 import {IRavenResponse} from "../../Database/RavenCommandResponse";
-import {QueryOperator} from "./QueryOperator";
 import {DocumentConventions, DocumentConstructor, IDocumentConversionResult, DocumentType} from "../Conventions/DocumentConventions";
 import {IndexQuery} from "../../Database/Indexes/IndexQuery";
 import {IRavenObject} from "../../Database/IRavenObject";
@@ -21,7 +20,6 @@ import {ErrorResponseException, RavenException} from "../../Database/DatabaseExc
 
 import {QueryBuilder} from "../RQL/QueryBuilder";
 import {ArrayUtil} from "../../Utility/ArrayUtil";
-import {RQLQuerySources} from "../RQL/RQLQuerySource";
 
 export type QueryResultsWithStatistics<T> = { results: T[], response: IRavenResponse };
 
@@ -63,10 +61,10 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
 
     if (indexName) {
-      this._builder = this._builder.fromCollection(this.indexName);
+      this._builder = this._builder.fromIndex(this.indexName);
     }
     else {
-      this._builder = this._builder.fromIndex(this.indexName);
+      this._builder = this._builder.fromCollection(this.indexName);
     }
 
   }
@@ -296,15 +294,6 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
     this._builder
       .where('endsWith', field, value);
-
-    return this;
-
-  }
-
-  public exact<V extends RQLValue>(field: string, value: V): IDocumentQuery<T> {
-
-    this._builder
-      .where('exact', field, value);
 
     return this;
 
