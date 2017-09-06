@@ -11,7 +11,7 @@ export class QueryBuilder {
   private _order: string = '';
   private _fromSource: RQLQuerySource = RQLQuerySources.Collection;
 
-  private _nextOperator: string = RQLJoinOperators.AND;
+  private _nextOperator: string = '';
   private _negateNext: boolean = false;
   private _boostNext: number = null;
 
@@ -68,7 +68,6 @@ export class QueryBuilder {
     if (source && (RQLQuerySources.Index === sourceType)) {
       this._from = `INDEX ${this._from}`;      
     }
-
     return this;
   }
 
@@ -90,7 +89,7 @@ export class QueryBuilder {
     return this;
   }
 
-  public where(operator: RQLOperator, field: string, value?: RQLConditionValue, options: IRQLOperatorOptions = {}): QueryBuilder {
+  public where(operator: RQLOperator, field: string, value?: RQLConditionValue, options: IRQLEqualsOperatorOptions = {}): QueryBuilder {
     let rqlText: string;
     const range: RQLRangeValue<RQLValue> = <RQLRangeValue<RQLValue>>value; 
     const values: RQLValue[] = <RQLValue[]>value;
@@ -104,8 +103,12 @@ export class QueryBuilder {
         break;
       case RQLOperators.EQUALS:
         const formattedValue = (TypeUtil.isNone(value) || (value === 'null')) ? 'null' : `'${value}'`;
-        
-        rqlText = StringUtil.format(`{0}={1}`, field, value);
+        if(options.exact) {
+          rqlText = StringUtil.format(`exact({0}={1})`, field, formattedValue);
+        }
+        else {
+          rqlText = StringUtil.format(`{0}={1}`, field, formattedValue);
+        }
         break;
       case RQLOperators.BETWEEN:
         rqlText = StringUtil.format(`{0} BETWEEN {1} AND {2}`, field, range.min, range.max);
@@ -117,16 +120,17 @@ export class QueryBuilder {
         rqlText = StringUtil.format(`endsWith({0}, '{1}')`, field, value);
         break;
       case RQLOperators.IN:
-        const values
-
-        rqlText = StringUtil.format(`{0} IN ('{1}')`, field, values.join());
+        rqlText = StringUtil.format(`{0} IN ('{1}')`, field, values); //ask about array SELECT * FROM Universals WHERE order IN ('withNesting','1')
         break;
       case RQLOperators.SEARCH:
-        rqlText = StringUtil.format(`search({0},'{1}') `, field, value);
+        rqlText = StringUtil.format(`search({0}, '{1}')`, field, value);
         break;
-      case RQLOperators.EXACT:
-        rqlText = StringUtil.format(`exact({0}='{1}') `, field, value);
-        break;      
+      case RQLOperators.GREATER_THAN_OR_EQUAL:
+        rqlText = StringUtil.format(`{0}>={1}`, field, value);
+        break;
+      case RQLOperators.LESS_THAN_OR_EQUAL:
+        rqlText = StringUtil.format(`{0}<={1}`, field, value);
+        break;
     }
 
     this.whereRaw(rqlText);
@@ -140,8 +144,12 @@ export class QueryBuilder {
       where = `BOOST(${where}, ${this._boostNext})`;
     }
 
+    if(this._nextOperator != '') {
+      this._nextOperator= ' ' + this._nextOperator;
+    }
+
     this._where += [this._nextOperator, where].join(' ');
-    this._nextOperator = RQLJoinOperators.AND;
+    this._nextOperator = '';
     this._negateNext = false;
     this._boostNext = null;
 
@@ -152,13 +160,13 @@ export class QueryBuilder {
     let rql: string = '';
 
     if (this._select) {
-      rql += StringUtil.format(`SELECT {0} `, this._select);
+      rql += StringUtil.format(`SELECT {0}`, this._select);
     }
 
-    rql += StringUtil.format(`FROM {0} `, this._from);
+    rql += StringUtil.format(` FROM {0}`, this._from);
 
     if (this._where) {
-      rql += StringUtil.format(` WHERE {0}`, this._where);
+      rql += StringUtil.format(` WHERE{0}`, this._where);
     }
 
     if (this._order) {

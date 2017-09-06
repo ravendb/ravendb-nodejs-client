@@ -16,7 +16,6 @@ export class QueryCommand extends RavenCommand {
   protected metadataOnly: boolean = false;
   protected indexEntriesOnly: boolean = false;
 
-  //new removed indexName
   constructor(indexQuery: IndexQuery, conventions: DocumentConventions,
     metadataOnly: boolean = false, indexEntriesOnly: boolean = false
   ) {

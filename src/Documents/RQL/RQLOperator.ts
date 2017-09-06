@@ -1,4 +1,4 @@
-export type RQLOperator = 'greaterThan' | 'lessThan' | 'search' | 'equals' | 'between' | 'endsWith' | 'startsWith' | 'in' | 'boost' | 'exact';
+export type RQLOperator = 'greaterThan' | 'lessThan' | 'greaterThanOrEqual' | 'lessThanOrEqual' | 'search' | 'equals' | 'between' | 'endsWith' | 'startsWith' | 'in' | 'boost';
 
 export type RQLJoinOperator = 'OR' | 'AND' | 'NOT' | '(' | ')';
 
@@ -15,6 +15,8 @@ export class RQLJoinOperators {
 export class RQLOperators {
   public static readonly GREATER_THAN: RQLOperator = 'greaterThan';
   public static readonly LESS_THAN: RQLOperator = 'lessThan';
+  public static readonly GREATER_THAN_OR_EQUAL: RQLOperator = 'greaterThanOrEqual';
+  public static readonly LESS_THAN_OR_EQUAL: RQLOperator = 'lessThanOrEqual';
   public static readonly SEARCH: RQLOperator = 'search';
   public static readonly EQUALS: RQLOperator = 'equals';
   public static readonly BETWEEN: RQLOperator = 'between';
@@ -22,7 +24,6 @@ export class RQLOperators {
   public static readonly STARTS_WITH: RQLOperator = 'startsWith';
   public static readonly IN: RQLOperator = 'in';
   public static readonly BOOST: RQLOperator = 'boost';
-  public static readonly EXACT: RQLOperator = 'exact';
 }
 
 export class RQLOrderDirections {
@@ -30,7 +31,9 @@ export class RQLOrderDirections {
   public static readonly Descending: RQLOrderDirection = 'DESC';
 }
 
-export interface IRQLOperatorOptions {}
+export interface IRQLOperatorOptions {
+
+}
 
 export interface IRQLEqualsOperatorOptions extends IRQLOperatorOptions {
   exact?: boolean;
