@@ -23,8 +23,6 @@ import {ArrayUtil} from "../../Utility/ArrayUtil";
 
 export type QueryResultsWithStatistics<T> = { results: T[], response: IRavenResponse };
 
-export type ConditionValue = string | number | boolean | Date | null;
-
 export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   public static readonly EVENT_DOCUMENTS_QUERIED: string = 'queried:documents';
   public static readonly EVENT_DOCUMENT_FETCHED: string = 'fetched:document';

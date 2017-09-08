@@ -7,7 +7,7 @@ import {DocumentConventions} from "../../Documents/Conventions/DocumentConventio
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {InvalidOperationException, IndexDoesNotExistException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
-import {QueryOperators} from "../../Documents/Session/QueryOperator";
+import {QueryOperators} from "../../Documents/Session/Query/QueryOperator";
 import {QueryString} from "../../Http/QueryString";
 
 export class QueryCommand extends RavenCommand {

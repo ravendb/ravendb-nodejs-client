@@ -1,6 +1,6 @@
-import {SimpleRQLToken} from './RQLToken';
+import {SimpleQueryToken} from './QueryToken';
 
-export class CloseSubclauseToken extends SimpleRQLToken {
+export class CloseSubclauseToken extends SimpleQueryToken {
   protected tokenText(): string {
     return ")";
   }

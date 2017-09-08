@@ -1,8 +1,8 @@
-import {RQLToken} from "./RQLToken";
+import {QueryToken} from "./QueryToken";
 import {StringBuilder} from "../../../../Utility/StringBuilder";
 import {ArgumentNullException} from "../../../../Database/DatabaseExceptions";
 
-export class FieldsToFetchToken extends RQLToken {
+export class FieldsToFetchToken extends QueryToken {
   private _fieldsToFetch: string[] = [];
   private _projections: string[] = [];
 
@@ -32,7 +32,7 @@ same as length of fields to fetch."
     }
 
     this._fieldsToFetch = fieldsToFetch;
-    this._projections= projections;
+    this._projections = projections;
   }
 
   public writeTo(writer: StringBuilder): void {

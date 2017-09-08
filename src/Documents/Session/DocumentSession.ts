@@ -17,7 +17,7 @@ import {RavenCommandData} from "../../Database/RavenCommandData";
 import {PutCommandData} from "../../Database/Commands/Data/PutCommandData";
 import {DeleteCommandData} from "../../Database/Commands/Data/DeleteCommandData";
 import {SaveChangesData} from "../../Database/Commands/Data/SaveChangesData";
-import {QueryOperator} from "./QueryOperator";
+import {QueryOperator} from "./Query/QueryOperator";
 import {IRavenObject} from "../../Typedef/IRavenObject";
 import {Serializer} from "../../Json/Serializer";
 import {RequestMethods} from "../../Http/Request/RequestMethod";

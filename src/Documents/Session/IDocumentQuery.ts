@@ -2,7 +2,7 @@ import {IDocumentQueryConditions} from './IDocumentQueryConditions';
 import {RQLValue} from "../RQL/RQLValue";
 import {QueryResultsWithStatistics} from "./DocumentQuery";
 import {QueryResultsCallback, EntityCallback, EntitiesCountCallback} from "../../Typedef/Callbacks";
-import {QueryOperator} from "./QueryOperator";
+import {QueryOperator} from "./Query/QueryOperator";
 import {IRavenObject} from "../../Typedef/IRavenObject";
 import {DocumentConstructor, DocumentType} from "../Conventions/DocumentConventions";
 
