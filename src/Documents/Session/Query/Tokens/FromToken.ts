@@ -2,6 +2,7 @@ import {QueryToken} from "./QueryToken";
 import {TypeUtil} from "../../../../Utility/TypeUtil";
 import {NotSupportedException} from "../../../../Database/DatabaseExceptions";
 import {QueryKeywords} from "../QueryLanguage";
+import {StringBuilder} from "../../../../Utility/StringBuilder";
 
 export class FromToken extends QueryToken {
   private _collectionName?: string;
