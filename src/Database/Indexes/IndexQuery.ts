@@ -1,11 +1,11 @@
 import * as _ from "lodash";
 import * as crypto from "crypto";
 import {TypeUtil} from "../../Utility/TypeUtil";
-import {IOptionsSet} from "../../Utility/IOptionsSet";
+import {IOptionsSet} from "../../Typedef/IOptionsSet";
 import {StringUtil} from "../../Utility/StringUtil";
-import {IRavenObject} from "../../Database/IRavenObject";
+import {IRavenObject} from "../../Typedef/IRavenObject";
 import {QueryOperator} from "../../Documents/Session/QueryOperator";
-import {IJsonable} from "../../Json/Contracts";
+import {IJsonable} from "../../Typedef/Contracts";
 
 export class IndexQuery implements IJsonable {
   private _fetch: string[] = [];

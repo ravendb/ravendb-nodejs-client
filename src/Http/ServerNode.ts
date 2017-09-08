@@ -1,6 +1,6 @@
 import {TypeUtil} from "../Utility/TypeUtil";
-import {IJsonConvertible} from "../Json/Contracts";
-import {IRavenObject} from "../Database/IRavenObject";
+import {IJsonConvertible} from "../Typedef/Contracts";
+import {IRavenObject} from "../Typedef/IRavenObject";
 
 export class ServerNode implements IJsonConvertible {
   private _database: string;

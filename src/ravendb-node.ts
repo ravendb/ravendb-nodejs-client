@@ -8,9 +8,10 @@ import * as AsyncLock from 'async-lock';
 import * as EventEmitter from 'events';
 import * as Request from 'request';
 import * as RequestPromise from 'request-promise';
+import * as NodeStringBuilder from 'node-stringbuilder';
 
 // typings
-export {AbstractCallback, EmptyCallback, EntityIdCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback, QueryResultsCallback} from './Utility/Callbacks';
+export {AbstractCallback, EmptyCallback, EntityIdCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback, QueryResultsCallback} from './Typedef/Callbacks';
 export {PromiseResolver, PromiseResolve, PromiseReject} from './Utility/PromiseResolver';
 export {IDocumentStore} from './Documents/IDocumentStore';
 export {IDocumentSession, ISessionOptions} from './Documents/Session/IDocumentSession';
@@ -26,10 +27,10 @@ export {ConcurrencyCheckMode, ConcurrencyCheckModes} from './Database/Concurrenc
 export {IndexPriority} from './Database/Indexes/IndexPriority';
 export {StatusCode, StatusCodes} from './Http/Response/StatusCode';
 export {RQLValue, RQLRangeValue, RQLConditionValue} from './Documents/RQL/RQLValue';
-export {ILockDoneCallback, ILockCallback} from './Lock/LockCallbacks';
-export {IRavenObject} from './Database/IRavenObject';
-export {IOptionsSet} from './Utility/IOptionsSet';
-export {IJsonable, IJsonConvertible} from './Json/Contracts';
+export {ILockDoneCallback, ILockCallback} from './Typedef/LockCallbacks';
+export {IRavenObject} from './Typedef/IRavenObject';
+export {IOptionsSet} from './Typedef/IOptionsSet';
+export {IJsonable, IJsonConvertible} from './Typedef/Contracts';
 export {IRavenResponse} from './Database/RavenCommandResponse';
 export {IHeaders} from './Http/IHeaders';
 export {IResponse, IResponseBody} from './Http/Response/IResponse';
@@ -44,7 +45,6 @@ export {
   ArgumentNullException,
   IndexDoesNotExistException, 
   DatabaseLoadTimeoutException, 
-  AuthenticationException,
   AllTopologyNodesDownException,
   DatabaseLoadFailureException,
   UnsuccessfulRequestException,
@@ -102,7 +102,7 @@ export {DocumentConventions, IDocumentConversionResult, DocumentConstructor, ISt
 export {IndexDefinition} from './Database/Indexes/IndexDefinition';
 export {IndexFieldOptions} from './Database/Indexes/IndexFieldOptions';
 export {IndexQuery} from './Database/Indexes/IndexQuery';
-export {QueryBuilder} from './Documents/RQL/QueryBuilder';
+export {QueryBuilder} from './Documents/Session/Query/QueryBuilder';
 export {ServerNode} from './Http/ServerNode';
 export {NodeSelector} from './Http/Request/NodeSelector';
 export {NodeStatus} from './Http/NodeStatus';

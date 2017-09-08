@@ -1,8 +1,8 @@
 import {IDocumentSession} from "./IDocumentSession";
 import {IDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
 import {DocumentConventions, DocumentConstructor, DocumentType} from '../Conventions/DocumentConventions';
-import {EntityCallback, EntitiesArrayCallback} from '../../Utility/Callbacks';
-import {IRavenObject} from "../../Database/IRavenObject";
+import {EntityCallback, EntitiesArrayCallback} from '../../Typedef/Callbacks';
+import {IRavenObject} from "../../Typedef/IRavenObject";
 import {RequestExecutor} from '../../Http/Request/RequestExecutor';
 
 export interface ISessionOptions {

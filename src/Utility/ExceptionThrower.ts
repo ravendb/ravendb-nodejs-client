@@ -1,4 +1,4 @@
-import {IRavenObject} from "../Database/IRavenObject";
+import {IRavenObject} from "../Typedef/IRavenObject";
 import {IResponse} from "../Http/Response/IResponse";
 import {StatusCodes} from "../Http/Response/StatusCode";
 import {RavenException} from "../Database/DatabaseExceptions";
@@ -26,9 +26,9 @@ import * as exceptions from "../Database/DatabaseExceptions";
     throw new exceptionCtor(message);
   }
 
-  public static throwFrom(json: object): void | never;
-  public static throwFrom(response: IResponse): void | never;
-  public static throwFrom(jsonOrResponse: object | IResponse): void | never {
+  public static throwFrom(json: object): void;
+  public static throwFrom(response: IResponse): void;
+  public static throwFrom(jsonOrResponse: object | IResponse): void {
     if (('headers' in jsonOrResponse) && ('statusCode' in jsonOrResponse)) {
       const response: IResponse = <IResponse>jsonOrResponse;
 

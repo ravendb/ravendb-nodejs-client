@@ -1,10 +1,10 @@
-import {IOptionsSet} from '../../Utility/IOptionsSet';
+import {IOptionsSet} from '../../Typedef/IOptionsSet';
 import {IndexLockMode} from './IndexLockMode';
 import {IndexPriority} from './IndexPriority';
-import {IRavenObject} from '../IRavenObject';
+import {IRavenObject} from '../../Typedef/IRavenObject';
 import {IndexFieldOptions} from './IndexFieldOptions';
 import {ArrayUtil} from '../../Utility/ArrayUtil';
-import {IJsonable} from '../../Json/Contracts';
+import {IJsonable} from '../../Typedef/Contracts';
 import {TypeUtil} from "../../Utility/TypeUtil";
 
 export class IndexDefinition implements IJsonable {

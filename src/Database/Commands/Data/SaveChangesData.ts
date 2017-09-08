@@ -1,4 +1,4 @@
-import {IRavenObject} from "../../IRavenObject";
+import {IRavenObject} from "../../../Typedef/IRavenObject";
 import {RavenCommandData} from "../../RavenCommandData";
 import {BatchCommand} from "../BatchCommand";
 

@@ -5,7 +5,7 @@ import {StringUtil} from "../../Utility/StringUtil";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import * as _ from 'lodash';
 import {Serializer} from "../../Json/Serializer";
-import {IRavenObject} from "../../Database/IRavenObject";
+import {IRavenObject} from "../../Typedef/IRavenObject";
 import {ConcurrencyCheckMode} from "../../Database/ConcurrencyCheckMode";
 
 export type DocumentConstructor<T extends Object = IRavenObject> = { new(...args: any[]): T; };

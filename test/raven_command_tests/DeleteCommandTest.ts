@@ -7,7 +7,7 @@ import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand
 import {GetDocumentCommand} from "../../src/Database/Commands/GetDocumentCommand";
 import {DeleteDocumentCommand} from "../../src/Database/Commands/DeleteDocumentCommand";
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
-import {IRavenObject} from "../../src/Database/IRavenObject";
+import {IRavenObject} from "../../src/Typedef/IRavenObject";
 
 describe('Delete command test', () => {
   let requestExecutor: RequestExecutor;

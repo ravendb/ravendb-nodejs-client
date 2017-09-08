@@ -8,7 +8,7 @@ import {IRavenResponse} from "../RavenCommandResponse";
 import {QueryBasedCommand} from "./QueryBasedCommand";
 import {IndexDoesNotExistException} from "../DatabaseExceptions";
 import {StatusCodes} from "../../Http/Response/StatusCode";
-import {IJsonable} from "../../Json/Contracts";
+import {IJsonable} from "../../Typedef/Contracts";
 
 export class DeleteByQueryCommand extends QueryBasedCommand {  
   constructor(query: IndexQuery, options?: QueryOperationOptions) {

@@ -6,7 +6,7 @@ import {IRequestExecutor} from '../../Http/Request/RequestExecutor';
 import {PatchStatuses, IPatchResult} from '../../Http/Request/PatchRequest';
 import {StatusCodes} from '../../Http/Response/StatusCode';
 import {IRavenResponse} from '../RavenCommandResponse';
-import {IRavenObject} from '../IRavenObject';
+import {IRavenObject} from '../../Typedef/IRavenObject';
 import {DocumentConventions} from '../../Documents/Conventions/DocumentConventions';
 import {RavenCommand} from '../RavenCommand';
 import {InvalidOperationException} from '../DatabaseExceptions';

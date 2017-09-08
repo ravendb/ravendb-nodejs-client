@@ -4,7 +4,7 @@ import {IDocumentStore} from './IDocumentStore';
 import {IDocumentSession, ISessionOptions} from "./Session/IDocumentSession";
 import {DocumentSession} from "./Session/DocumentSession";
 import {RequestExecutor, IRequestExecutor} from '../Http/Request/RequestExecutor';
-import {EntityIdCallback} from '../Utility/Callbacks';
+import {EntityIdCallback} from '../Typedef/Callbacks';
 import {DocumentConventions, DocumentConstructor, DocumentType} from './Conventions/DocumentConventions';
 import {InvalidOperationException, RavenException} from '../Database/DatabaseExceptions';
 import {IHiloIdGenerator} from '../Hilo/IHiloIdGenerator';

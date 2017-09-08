@@ -6,7 +6,7 @@ import {IndexDefinition} from "../../src/Database/Indexes/IndexDefinition";
 import {PutIndexesOperation} from "../../src/Database/Operations/PutIndexesOperation";
 import {GetIndexOperation} from "../../src/Database/Operations/GetIndexOperation";
 import {DeleteIndexOperation} from "../../src/Database/Operations/DeleteIndexOperation";
-import {IRavenObject} from "../../src/Database/IRavenObject";
+import {IRavenObject} from "../../src/Typedef/IRavenObject";
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 

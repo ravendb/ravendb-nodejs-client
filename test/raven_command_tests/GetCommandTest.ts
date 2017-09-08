@@ -7,7 +7,7 @@ import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand";
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 import {GetDocumentCommand} from "../../src/Database/Commands/GetDocumentCommand";
-import {IRavenObject} from "../../src/Database/IRavenObject";
+import {IRavenObject} from "../../src/Typedef/IRavenObject";
 
 describe('DocumentSession', () => {
   let requestExecutor: RequestExecutor;

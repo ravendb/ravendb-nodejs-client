@@ -1,7 +1,7 @@
 import * as _ from "lodash";
 import {ServerNode} from './ServerNode';
-import {IJsonConvertible} from "../Json/Contracts";
-import {IRavenObject} from "../Database/IRavenObject";
+import {IJsonConvertible} from "../Typedef/Contracts";
+import {IRavenObject} from "../Typedef/IRavenObject";
 
 export class Topology implements IJsonConvertible {
   private _etag: number = 0;

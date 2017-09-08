@@ -5,3 +5,7 @@ export interface IJsonable {
 export interface IJsonConvertible {
   fromJson(json: object): void;
 }
+
+export interface IStringable {
+  toString(): string;
+}

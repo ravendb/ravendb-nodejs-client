@@ -5,7 +5,7 @@ import {expect} from 'chai';
 import {DocumentType, IStoredRawEntityInfo} from "../../src/Documents/Conventions/DocumentConventions";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
-import {IRavenObject} from "../../src/Database/IRavenObject";
+import {IRavenObject} from "../../src/Typedef/IRavenObject";
 import {Foo, Product} from "../TestClasses";
 import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 

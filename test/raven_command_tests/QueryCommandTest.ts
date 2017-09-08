@@ -8,7 +8,7 @@ import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand
 import {QueryCommand} from "../../src/Database/Commands/QueryCommand";
 import {DocumentConventions} from "../../src/Documents/Conventions/DocumentConventions";
 import {IndexQuery} from "../../src/Database/Indexes/IndexQuery";
-import {IRavenObject} from "../../src/Database/IRavenObject";
+import {IRavenObject} from "../../src/Typedef/IRavenObject";
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 
 describe('QueryCommand Tests', () => {

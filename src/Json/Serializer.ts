@@ -3,7 +3,7 @@ import {TypeUtil} from "../Utility/TypeUtil";
 import {DateUtil} from "../Utility/DateUtil";
 import {ArrayUtil} from "../Utility/ArrayUtil";
 import {DocumentConventions, DocumentConstructor} from "../Documents/Conventions/DocumentConventions";
-import {IRavenObject} from "../Database/IRavenObject";
+import {IRavenObject} from "../Typedef/IRavenObject";
 
 export class Serializer {
   public static fromJSON<T extends Object = IRavenObject>(target: T, source: object | string, metadata: object | null = {}, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}, conventions?: DocumentConventions): T {

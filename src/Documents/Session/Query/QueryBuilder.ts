@@ -1,8 +1,8 @@
-import {TypeUtil} from "../../Utility/TypeUtil";
-import {StringUtil} from "../../Utility/StringUtil";
-import {IRQLEqualsOperatorOptions, RQLOperator, RQLOperators, RQLJoinOperators, RQLOrderDirections, RQLOrderDirection} from "./RQLOperator";
-import {RQLQuerySource, RQLQuerySources} from "./RQLQuerySource";
-import {RQLValue, RQLRangeValue, RQLConditionValue} from "./RQLValue";
+import {TypeUtil} from "../../../Utility/TypeUtil";
+import {StringUtil} from "../../../Utility/StringUtil";
+import {IRQLEqualsOperatorOptions, RQLOperator, RQLOperators, RQLJoinOperators, RQLOrderDirections, RQLOrderDirection} from "../../RQL/RQLOperator";
+import {RQLQuerySource, RQLQuerySources} from "../../RQL/RQLQuerySource";
+import {RQLValue, RQLRangeValue, RQLConditionValue} from "../../RQL/RQLValue";
 
 export class QueryBuilder {
   private _select: string = '*';

@@ -1,5 +1,5 @@
-import {IJsonable} from '../../Json/Contracts';
-import {IRavenObject} from '../../Database/IRavenObject';
+import {IJsonable} from '../../Typedef/Contracts';
+import {IRavenObject} from '../../Typedef/IRavenObject';
 
 export type PatchStatus = 'DocumentDoesNotExist' | 'Created' | 'Patched' | 'Skipped' | 'NotModified';
 

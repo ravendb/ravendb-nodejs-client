@@ -1,4 +1,4 @@
-import {IJsonable} from '../Json/Contracts';
+import {IJsonable} from '../Typedef/Contracts';
 import {RequestMethod} from "../Http/Request/RequestMethod";
 
 export abstract class RavenCommandData implements IJsonable {

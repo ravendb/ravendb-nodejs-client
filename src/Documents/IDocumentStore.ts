@@ -1,7 +1,7 @@
 import {IDocumentSession} from "./Session/IDocumentSession";
 import {RequestExecutor} from '../Http/Request/RequestExecutor';
 import {DocumentConventions, DocumentType} from './Conventions/DocumentConventions';
-import {EntityIdCallback} from '../Utility/Callbacks';
+import {EntityIdCallback} from '../Typedef/Callbacks';
 import {ISessionOptions} from './Session/IDocumentSession';
 import {OperationExecutor, AdminOperationExecutor} from '../Database/Operations/OperationExecutor';
 

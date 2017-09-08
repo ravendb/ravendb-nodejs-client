@@ -1,9 +1,9 @@
 import * as _ from 'lodash';
 import {RavenCommandData} from '../../RavenCommandData';
 import {RequestMethods} from "../../../Http/Request/RequestMethod";
-import {IJsonable} from "../../../Json/Contracts";
+import {IJsonable} from "../../../Typedef/Contracts";
 import {PatchRequest} from "../../../Http/Request/PatchRequest";
-import {IRavenObject} from "../../IRavenObject";
+import {IRavenObject} from "../../../Typedef/IRavenObject";
 import {TypeUtil} from "../../../Utility/TypeUtil";
 
 export class PatchCommandData extends RavenCommandData implements IJsonable {

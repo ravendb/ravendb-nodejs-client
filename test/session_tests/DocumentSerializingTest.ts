@@ -5,7 +5,7 @@ import * as _ from "lodash";
 import {expect} from 'chai';
 import {Serializer} from "../../src/Json/Serializer";
 import {DateUtil} from "../../src/Utility/DateUtil";
-import {IRavenObject} from "../../src/Database/IRavenObject";
+import {IRavenObject} from "../../src/Typedef/IRavenObject";
 import {DocumentConstructor} from "../../src/Documents/Conventions/DocumentConventions";
 import {Foo} from "../TestClasses";
 

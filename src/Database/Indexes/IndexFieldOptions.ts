@@ -1,7 +1,7 @@
 import {SortOption} from "./SortOption";
 import {FieldIndexingOptions} from "./FieldIndexingOption";
 import {FieldTermVectorOption} from "./FieldTermVectorOption";
-import {IJsonable} from '../../Json/Contracts';
+import {IJsonable} from '../../Typedef/Contracts';
 
 export class IndexFieldOptions implements IJsonable {
   protected sortOptions?: SortOption = null;

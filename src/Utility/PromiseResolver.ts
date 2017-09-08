@@ -1,4 +1,4 @@
-import {AbstractCallback, EmptyCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback} from './Callbacks';
+import {AbstractCallback, EmptyCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback} from '../Typedef/Callbacks';
 import {TypeUtil} from "./TypeUtil";
 import * as BluebirdPromise from "bluebird";
 

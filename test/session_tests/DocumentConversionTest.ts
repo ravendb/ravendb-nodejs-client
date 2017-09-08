@@ -4,7 +4,7 @@
 import {expect} from 'chai';
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
-import {IRavenObject} from "../../src/Database/IRavenObject";
+import {IRavenObject} from "../../src/Typedef/IRavenObject";
 import {DocumentConstructor} from "../../src/Documents/Conventions/DocumentConventions";
 import {Foo, TestConversion, TestCustomIdProperty} from "../TestClasses";
 import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";

@@ -2,7 +2,7 @@ import {IndexDefinition} from "../src/Database/Indexes/IndexDefinition";
 import {FieldIndexingOptions} from "../src/Database/Indexes/FieldIndexingOption";
 import {IRavenResponse} from "../src/Database/RavenCommandResponse";
 import {IndexFieldOptions} from "../src/Database/Indexes/IndexFieldOptions";
-import {IRavenObject} from "../src/Database/IRavenObject";
+import {IRavenObject} from "../src/Typedef/IRavenObject";
 import {PutIndexesOperation} from "../src/Database/Operations/PutIndexesOperation";
 import {SortOptions} from "../src/Database/Indexes/SortOption";
 import {IDocumentStore} from "../src/Documents/IDocumentStore";

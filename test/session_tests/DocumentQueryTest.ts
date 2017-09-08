@@ -7,9 +7,9 @@ import * as _ from 'lodash';
 import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
-import {IRavenObject} from "../../src/Database/IRavenObject";
+import {IRavenObject} from "../../src/Typedef/IRavenObject";
 import {Product, Universal, UniversalsTestingSort} from "../TestClasses";
-import {QueryBuilder} from "../../src/Documents/RQL/QueryBuilder";
+import {QueryBuilder} from "../../src/Documents/Session/Query/QueryBuilder";
 import {IDocumentQuery} from "../../src/Documents/Session/IDocumentQuery";
 
 describe('Document query test', () => {

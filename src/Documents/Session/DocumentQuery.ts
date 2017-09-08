@@ -5,23 +5,25 @@ import {IDocumentQuery} from "./IDocumentQuery";
 import {IDocumentSession} from "./IDocumentSession";
 import {RequestExecutor} from "../../Http/Request/RequestExecutor";
 import {IDocumentQueryConditions} from './IDocumentQueryConditions';
-import {QueryResultsCallback, EntityCallback, EntitiesCountCallback} from '../../Utility/Callbacks';
+import {QueryResultsCallback, EntityCallback, EntitiesCountCallback} from '../../Typedef/Callbacks';
 import {PromiseResolver} from '../../Utility/PromiseResolver';
 import {RQLValue} from "../RQL/RQLValue";
 import {IRavenResponse} from "../../Database/RavenCommandResponse";
 import {DocumentConventions, DocumentConstructor, IDocumentConversionResult, DocumentType} from "../Conventions/DocumentConventions";
 import {IndexQuery} from "../../Database/Indexes/IndexQuery";
-import {IRavenObject} from "../../Database/IRavenObject";
-import {IOptionsSet} from "../../Utility/IOptionsSet";
+import {IRavenObject} from "../../Typedef/IRavenObject";
+import {IOptionsSet} from "../../Typedef/IOptionsSet";
 import {QueryCommand} from "../../Database/Commands/QueryCommand";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {Observable} from "../../Utility/Observable";
 import {ErrorResponseException, RavenException} from "../../Database/DatabaseExceptions";
 
-import {QueryBuilder} from "../RQL/QueryBuilder";
+import {QueryBuilder} from "./Query/QueryBuilder";
 import {ArrayUtil} from "../../Utility/ArrayUtil";
 
 export type QueryResultsWithStatistics<T> = { results: T[], response: IRavenResponse };
+
+export type ConditionValue = string | number | boolean | Date | null;
 
 export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
   public static readonly EVENT_DOCUMENTS_QUERIED: string = 'queried:documents';
@@ -440,5 +442,4 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
 
     return result as T[] | QueryResultsWithStatistics<T>;
   }
-
 }

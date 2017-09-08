@@ -16,7 +16,7 @@ import {QueryCommand} from "../../src/Database/Commands/QueryCommand";
 import {IndexQuery} from "../../src/Database/Indexes/IndexQuery";
 import {DocumentConventions} from "../../src/Documents/Conventions/DocumentConventions";
 import {QueryOperationOptions} from "../../src/Database/Operations/QueryOperationOptions";
-import {IRavenObject} from "../../src/Database/IRavenObject";
+import {IRavenObject} from "../../src/Typedef/IRavenObject";
 import {PatchByQueryOperation} from "../../src/Database/Operations/PatchByQueryOperation";
 import {DeleteByIndexOperation} from "../../src/Database/Operations/DeleteByIndexOperation";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
