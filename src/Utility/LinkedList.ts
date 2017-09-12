@@ -1,12 +1,12 @@
 export class LinkedList<T> {
   private _items: T[];
 
-  public get length(): number {
+  public get count(): number {
     return this._items.length;
   }
 
   public get first(): T | null {
-    if (!this.length) {
+    if (!this.count) {
       return null;
     }
 
@@ -14,14 +14,14 @@ export class LinkedList<T> {
   }
 
   public get last(): T | null {
-    if (!this.length) {
+    if (!this.count) {
       return null;
     }
 
-    return this._items[this.length - 1];
+    return this._items[this.count - 1];
   }
 
-  constructor(items: T[]) {
+  constructor(items: T[] = []) {
     this._items = items;
   }
 

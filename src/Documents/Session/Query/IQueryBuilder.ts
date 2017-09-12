@@ -1,11 +1,14 @@
 import {SpartialCriteria} from "./Spartial/SpartialCriteria";
-import {OrderingType, SearchOperator} from "./QueryLanguage";
+import {OrderingType, QueryOperator, SearchOperator} from "./QueryLanguage";
 
 export interface IQueryBuilder {
+  rawQuery(query: string): IQueryBuilder;
+  from(indexName?: string, collectionName?: string): IQueryBuilder;
   getProjectionFields(): string[];
   randomOrdering(seed?: string): IQueryBuilder;
   customSortUsing(typeName: string, descending?: boolean): IQueryBuilder;
   include(path: string): IQueryBuilder;
+  usingDefaultOperator(operator: QueryOperator): IQueryBuilder;
   whereEquals(fieldName: string, parameterName: string, exact?: boolean): IQueryBuilder;
   whereNotEquals(fieldName: string, parameterName: string, exact?: boolean): IQueryBuilder;
   openSubclause(): IQueryBuilder;

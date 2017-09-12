@@ -18,6 +18,9 @@ export interface IDocumentQueryOptions<T> {
 }
 
 export interface IDocumentQuery<T> {
+  and: IDocumentQuery<T>;
+  or: IDocumentQuery<T>;
+  not: IDocumentQuery<T>;
   indexName: string;
   collectionName: string;
   conventions: DocumentConventions;

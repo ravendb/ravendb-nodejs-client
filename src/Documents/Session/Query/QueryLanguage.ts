@@ -68,3 +68,17 @@ export class WhereOperators extends SpartialRelations {
   public static readonly Exists: WhereOperator = 'exists';
 }
 
+export class FieldConstants {
+  public static readonly CustomSortFieldName: string = "__customSort";
+  public static readonly DocumentIdFieldName: string = "id()";
+  public static readonly ReduceKeyHashFieldName: string = "hash(key())";
+  public static readonly ReduceKeyValueFieldName: string = "key()";
+  public static readonly AllFields: string = "__all_fields";
+  public static readonly AllStoredFields: string = "__all_stored_fields";
+  public static readonly SpatialShapeFieldName: string = "spatial(shape)";
+  public static readonly RangeFieldSuffix: string = "_Range";
+  public static readonly RangeFieldSuffixLong: string = "_L" + FieldConstants.RangeFieldSuffix;
+  public static readonly RangeFieldSuffixDouble: string = "_D" + FieldConstants.RangeFieldSuffix;
+  public static readonly NullValue: string = "NULL_VALUE";
+  public static readonly EmptyString: string = "EMPTY_STRING";
+}

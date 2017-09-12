@@ -1,170 +1,250 @@
 import {IQueryBuilder} from "./IQueryBuilder";
-import {OrderingType} from "./QueryLanguage";
+import {FieldConstants, OrderingType, QueryOperator} from "./QueryLanguage";
 import {SearchOperator} from "./QueryLanguage";
 import {SpartialCriteria} from "./Spartial/SpartialCriteria";
+import {LinkedList} from "../../../Utility/LinkedList";
+import {QueryToken} from "./Tokens/QueryToken";
+import {FromToken} from "./Tokens/FromToken";
+import {FieldsToFetchToken} from "./Tokens/FieldsToFetchToken";
+import {InvalidOperationException} from "../../../Database/DatabaseExceptions";
+import {TypeUtil} from "../../../Utility/TypeUtil";
+import {OrderByToken} from "./Tokens/OrderByToken";
 
 export class QueryBuilder implements IQueryBuilder {
-  getProjectionFields(): string[] {
+  protected selectTokens: LinkedList<QueryToken>;
+  protected fromToken: FromToken;
+  protected fieldsToFetchToken: FieldsToFetchToken;
+  protected whereTokens: LinkedList<QueryToken>;
+  protected groupByTokens: LinkedList<QueryToken>;
+  protected orderByTokens: LinkedList<QueryToken>;
+  protected defaultOperator: QueryOperator = null;
+  protected queryRaw?: string = null;
+
+  constructor(indexName?: string, collectionName?: string) {
+    if (indexName || collectionName) {
+      this.from(indexName, collectionName);
+    }
+
+    this.selectTokens = new LinkedList<QueryToken>();
+    this.whereTokens = new LinkedList<QueryToken>();
+    this.groupByTokens = new LinkedList<QueryToken>();
+    this.orderByTokens = new LinkedList<QueryToken>();
+  }
+
+  public usingDefaultOperator(operator: QueryOperator): IQueryBuilder {
+    if (this.whereTokens.count) {
+      throw new InvalidOperationException("Default operator can only be set \
+before any where clause is added.");
+    }
+
+    this.defaultOperator = operator;
+    return this;
+  }
+
+  public rawQuery(query: string): IQueryBuilder {
+     if ([this.selectTokens, this.whereTokens,
+         this.orderByTokens, this.groupByTokens]
+         .some((list: LinkedList<QueryToken>)
+         : boolean => !!list.count)
+     ) {
+       throw new InvalidOperationException("You can only use RawQuery on a new query, \
+without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)");
+     }
+
+    this.queryRaw = query;
+    return this;
+  }
+
+  public from(indexName?: string, collectionName?: string): IQueryBuilder {
+    this.fromToken = FromToken.create(indexName, collectionName);
+
+    return this;
+  }
+
+  public getProjectionFields(): string[] {
+    if (this.fieldsToFetchToken) {
+      return this.fieldsToFetchToken.projections || [];
+    }
+
     return [];
   }
 
-  randomOrdering(seed?: string): IQueryBuilder {
+  public randomOrdering(seed?: string): IQueryBuilder {
+    this.assertNoRawQuery();
+    this.orderByTokens.addLast(seed
+      ? OrderByToken.createRandom(seed)
+      : OrderByToken.random
+    );
+
     return this;
   }
 
-  customSortUsing(typeName: string, descending?: boolean): IQueryBuilder {
+  public customSortUsing(typeName: string, descending: boolean = false): IQueryBuilder {
+    const fieldName: string = `${FieldConstants.CustomSortFieldName};${typeName}`;
+
+    return descending
+      ? this.orderByDescending(fieldName)
+      : this.orderBy(fieldName);
+  }
+
+  public include(path: string): IQueryBuilder {
     return this;
   }
 
-  include(path: string): IQueryBuilder {
+  public whereEquals(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
     return this;
   }
 
-  whereEquals(fieldName: string, parameterName: string, exact?: boolean): IQueryBuilder {
+  public whereNotEquals(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
     return this;
   }
 
-  whereNotEquals(fieldName: string, parameterName: string, exact?: boolean): IQueryBuilder {
+  public openSubclause(): IQueryBuilder {
     return this;
   }
 
-  openSubclause(): IQueryBuilder {
+  public closeSubclause(): IQueryBuilder {
     return this;
   }
 
-  closeSubclause(): IQueryBuilder {
+  public negateNext(): IQueryBuilder {
     return this;
   }
 
-  negateNext(): IQueryBuilder {
+  public whereIn(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
     return this;
   }
 
-  whereIn(fieldName: string, parameterName: string, exact?: boolean): IQueryBuilder {
+  public whereStartsWith(fieldName: string, parameterName: string): IQueryBuilder {
     return this;
   }
 
-  whereStartsWith(fieldName: string, parameterName: string): IQueryBuilder {
+  public whereEndsWith(fieldName: string, parameterName: string): IQueryBuilder {
     return this;
   }
 
-  whereEndsWith(fieldName: string, parameterName: string): IQueryBuilder {
+  public whereBetween(fieldName: string, fromParameterName: string, toParameterName: string, exact: boolean = false): IQueryBuilder {
     return this;
   }
 
-  whereBetween(fieldName: string, fromParameterName: string, toParameterName: string, exact?: boolean): IQueryBuilder {
+  public whereGreaterThan(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
     return this;
   }
 
-  whereGreaterThan(fieldName: string, parameterName: string, exact?: boolean): IQueryBuilder {
+  public whereGreaterThanOrEqual(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
     return this;
   }
 
-  whereGreaterThanOrEqual(fieldName: string, parameterName: string, exact?: boolean): IQueryBuilder {
+  public whereLessThan(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
     return this;
   }
 
-  whereLessThan(fieldName: string, parameterName: string, exact?: boolean): IQueryBuilder {
+  public whereLessThanOrEqual(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
     return this;
   }
 
-  whereLessThanOrEqual(fieldName: string, parameterName: string, exact?: boolean): IQueryBuilder {
+  public whereExists(fieldName: string): IQueryBuilder {
     return this;
   }
 
-  whereExists(fieldName: string): IQueryBuilder {
+  public andAlso(): IQueryBuilder {
     return this;
   }
 
-  andAlso(): IQueryBuilder {
+  public orElse(): IQueryBuilder {
     return this;
   }
 
-  orElse(): IQueryBuilder {
+  public boost(boost: number): IQueryBuilder {
     return this;
   }
 
-  boost(boost: number): IQueryBuilder {
+  public fuzzy(fuzzy: number): IQueryBuilder {
     return this;
   }
 
-  fuzzy(fuzzy: number): IQueryBuilder {
+  public proximity(proximity: number): IQueryBuilder {
     return this;
   }
 
-  proximity(proximity: number): IQueryBuilder {
+  public orderBy(field: string, ordering?: OrderingType): IQueryBuilder {
     return this;
   }
 
-  orderBy(field: string, ordering?: OrderingType): IQueryBuilder {
+  public orderByDescending(field: string, ordering?: OrderingType): IQueryBuilder {
     return this;
   }
 
-  orderByDescending(field: string, ordering?: OrderingType): IQueryBuilder {
+  public orderByScore(): IQueryBuilder {
     return this;
   }
 
-  orderByScore(): IQueryBuilder {
+  public orderByScoreDescending(): IQueryBuilder {
     return this;
   }
 
-  orderByScoreDescending(): IQueryBuilder {
+  public search(fieldName: string, searchTerms: string, operator: SearchOperator): IQueryBuilder {
     return this;
   }
 
-  search(fieldName: string, searchTerms: string, operator: SearchOperator): IQueryBuilder {
+  public intersect(): IQueryBuilder {
     return this;
   }
 
-  intersect(): IQueryBuilder {
+  public distinct(): IQueryBuilder {
     return this;
   }
 
-  distinct(): IQueryBuilder {
+  public containsAny(fieldName: string, parameterName: string): IQueryBuilder {
     return this;
   }
 
-  containsAny(fieldName: string, parameterName: string): IQueryBuilder {
+  public containsAll(fieldName: string, parameterName: string): IQueryBuilder {
     return this;
   }
 
-  containsAll(fieldName: string, parameterName: string): IQueryBuilder {
+  public groupBy(fieldName: string, ...fieldNames): IQueryBuilder {
     return this;
   }
 
-  groupBy(fieldName: string, ...fieldNames): IQueryBuilder {
+  public groupByKey(fieldName: string, projectedName?: string): IQueryBuilder {
     return this;
   }
 
-  groupByKey(fieldName: string, projectedName?: string): IQueryBuilder {
+  public groupBySum(fieldName: string, projectedName?: string): IQueryBuilder {
     return this;
   }
 
-  groupBySum(fieldName: string, projectedName?: string): IQueryBuilder {
+  public groupByCount(projectedName?: string): IQueryBuilder {
     return this;
   }
 
-  groupByCount(projectedName?: string): IQueryBuilder {
+  public whereTrue(): IQueryBuilder {
     return this;
   }
 
-  whereTrue(): IQueryBuilder {
+  public spatial(fieldName: string, criteria: SpartialCriteria): IQueryBuilder {
     return this;
   }
 
-  spatial(fieldName: string, criteria: SpartialCriteria): IQueryBuilder {
+  public orderByDistance(fieldName: string, shapeWkt: string): IQueryBuilder;
+  public orderByDistance(fieldName: string, latitude: number, longitude: number): IQueryBuilder;
+  public orderByDistance(fieldName: string, latitudeOrShapeWkt: number | string, longitude?: number): IQueryBuilder {
     return this;
   }
 
-  orderByDistance(fieldName: string, shapeWkt: string): IQueryBuilder;
-  orderByDistance(fieldName: string, latitude: number, longitude: number): IQueryBuilder;
-  orderByDistance(fieldName: string, latitudeOrShapeWkt: number | string, longitude?: number): IQueryBuilder {
+  public orderByDistanceDescending(fieldName: string, shapeWkt: string): IQueryBuilder;
+  public orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): IQueryBuilder;
+  public orderByDistanceDescending(fieldName: string, latitudeOrShapeWkt: number | string, longitude?: number): IQueryBuilder {
     return this;
   }
 
-  orderByDistanceDescending(fieldName: string, shapeWkt: string): IQueryBuilder;
-  orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): IQueryBuilder;
-  orderByDistanceDescending(fieldName: string, latitudeOrShapeWkt: number | string, longitude?: number): IQueryBuilder {
-    return this;
+  protected assertNoRawQuery(): void {
+    if (!TypeUtil.isNone(this.queryRaw)) {
+      throw new InvalidOperationException(
+        "RawQuery was called, cannot modify this query by calling on operations that \
+would modify the query (such as Where, Select, OrderBy, GroupBy, etc)"
+      );
+    }
   }
 }
