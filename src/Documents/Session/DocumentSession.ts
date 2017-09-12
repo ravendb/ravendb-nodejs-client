@@ -276,7 +276,7 @@ export class DocumentSession implements IDocumentSession {
     let queryParameters: object;
 
     if (options) {
-      waitForNonStaleResults = options.WaitForNonStaleResults || null;
+      waitForNonStaleResults = options.waitForNonStaleResults || null;
       includes = options.includes || null;
       withStatistics = options.withStatistics || null;
       nestedObjectTypes = options.nestedObjectTypes || {};

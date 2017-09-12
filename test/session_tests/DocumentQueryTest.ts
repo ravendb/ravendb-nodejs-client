@@ -48,7 +48,7 @@ describe('Document query test', () => {
    it('should query with whereEqualsAndOr', async () => {
       const query: IDocumentQuery<Universal> = store
         .openSession()
-        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', waitForNonStaleResults: true})
         .whereEqualsAndOr<number>('name', 'withNesting', 'order', 3, 'order', 4);
 
       const results: Universal[] = await query.get();
@@ -70,7 +70,7 @@ describe('Document query test', () => {
 
       const query: IDocumentQuery<Universal> = store
         .openSession()
-        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', waitForNonStaleResults: true})
         .orderBy('order as long', 'ASC');
 
       const results: Universal[] = await query.get();
@@ -92,7 +92,7 @@ describe('Document query test', () => {
         .openSession()
         .query<Universal>({
           indexName: 'UniversalsTestingSort',
-          WaitForNonStaleResults: true
+          waitForNonStaleResults: true
         })
         .orderBy('order', 'ASC');
 
@@ -114,7 +114,7 @@ describe('Document query test', () => {
     it('should query with orderByDESC as long', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', waitForNonStaleResults: true})
         .orderBy('order as long', 'DESC');
 
       const results: Universal[] = await query.get();
@@ -134,7 +134,7 @@ describe('Document query test', () => {
     it('should query with whereGreaterThanOrEqual', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', waitForNonStaleResults: true})
         .whereGreaterThanOrEqual<number>('order', 6);
 
       const results: Universal[] = await query.get();
@@ -156,7 +156,7 @@ describe('Document query test', () => {
     it('should query with whereLessThanOrEqual', async () => {
       const query: IDocumentQuery<Universal> = await  store
         .openSession()
-        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', waitForNonStaleResults: true})
         .whereLessThanOrEqual<number>('order', 6);
 
       const results: Universal[] = await query.get();
@@ -178,7 +178,7 @@ describe('Document query test', () => {
     it('should query with nested objects exact', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'UniversalsTestingSort', nestedObjectTypes: {product: Product}, WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', nestedObjectTypes: {product: Product}, waitForNonStaleResults: true})
         .whereEquals<string>('name', 'withnesting', true);
 
       const results: Universal[] = await query.get();
@@ -198,7 +198,7 @@ describe('Document query test', () => {
     it('should query with nested objects', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'UniversalsTestingSort', nestedObjectTypes: {product: Product}, WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', nestedObjectTypes: {product: Product}, waitForNonStaleResults: true})
         .whereEquals<string>('name', 'withNesting');
 
       const results: Universal[] = await query.get();
@@ -218,7 +218,7 @@ describe('Document query test', () => {
     it('should make query with fetch terms', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({WaitForNonStaleResults: true, indexName: 'UniversalsTestingSort'})
+        .query<Universal>({waitForNonStaleResults: true, indexName: 'UniversalsTestingSort'})
         .selectFields<string>('id');
 
       const results: Universal[] = await query.get();
@@ -234,7 +234,7 @@ describe('Document query test', () => {
     it('should query with whereArray and orElse', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', waitForNonStaleResults: true})
         .where({name: ['withNesting', 'anotherIndex']});
 
       const results: Universal[] = await query.get();
@@ -256,7 +256,7 @@ describe('Document query test', () => {
     it('should query with where', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', waitForNonStaleResults: true})
         .where({name: 'withNesting'});
 
       const results: Universal[] = await query.get();
@@ -290,7 +290,7 @@ describe('Document query test', () => {
     it('should query by @all_docs', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({WaitForNonStaleResults: true})
+        .query<Universal>({waitForNonStaleResults: true})
         .whereIn<string>('name', 'withNesting');
 
       const results: Universal[] = await query.get();
@@ -311,7 +311,7 @@ describe('Document query test', () => {
 
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', waitForNonStaleResults: true})
         .whereIn<string>('name', 'withNesting');
 
       const totalCount: Universal[] = await query.get();
@@ -333,7 +333,7 @@ describe('Document query test', () => {
     it('should query with whereEquals', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', waitForNonStaleResults: true})
         .whereEquals<string>('name', 'withNesting');
 
       const results: Universal[] = await query.get();
@@ -352,7 +352,7 @@ describe('Document query test', () => {
     it('should query with whereIn', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', waitForNonStaleResults: true})
         .whereIn<string>('name', 'withNesting');
 
       const results: Universal[] = await query.get();
@@ -371,7 +371,7 @@ describe('Document query test', () => {
     it('should query with whereGreaterThan', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', waitForNonStaleResults: true})
         .whereGreaterThan<number>('order', 2);
 
       const results: Universal[] = await query.get();
@@ -391,7 +391,7 @@ describe('Document query test', () => {
     it('should query with whereLessThan', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', waitForNonStaleResults: true})
         .whereLessThan<number>('order', 6);
 
       const results: Universal[] = await query.get();
@@ -413,7 +413,7 @@ describe('Document query test', () => {
         .openSession()
         .query<Universal>({
           indexName: 'UniversalsTestingSort',
-          WaitForNonStaleResults: true,
+          waitForNonStaleResults: true,
           queryParameters: {
             "p0": 6
           }
@@ -439,7 +439,7 @@ describe('Document query test', () => {
         .openSession()
         .query<Universal>({
           indexName: 'UniversalsTestingSort',
-          WaitForNonStaleResults: true
+          waitForNonStaleResults: true
         })
         .startsWith<string>('name', 'wi');
 
@@ -462,7 +462,7 @@ describe('Document query test', () => {
         .openSession()
         .query<Universal>({
           indexName: 'UniversalsTestingSort',
-          WaitForNonStaleResults: true
+          waitForNonStaleResults: true
         })
         .endsWith<string>('name', 'ing');
 
@@ -485,7 +485,7 @@ describe('Document query test', () => {
         .openSession()
         .query<Universal>({
           indexName: 'UniversalsTestingSort',
-          WaitForNonStaleResults: true
+          waitForNonStaleResults: true
         })
         .search('name', 'withNesting');
 
@@ -506,7 +506,7 @@ describe('Document query test', () => {
         .openSession()
         .query<Universal>({
           indexName: 'UniversalsTestingSort',
-          WaitForNonStaleResults: true
+          waitForNonStaleResults: true
         })
         .whereIn<string>('name', 'withNesting');
 
@@ -527,7 +527,7 @@ describe('Document query test', () => {
         .openSession()
         .query<Universal>({
           indexName: 'UniversalsTestingSort',
-          WaitForNonStaleResults: true
+          waitForNonStaleResults: true
         })
         .selectFields<string>('id');
 
@@ -550,7 +550,7 @@ describe('Document query test', () => {
         .openSession()
         .query<Universal>({
           indexName: 'UniversalsTestingSort',
-          WaitForNonStaleResults: true
+          waitForNonStaleResults: true
         })
         .selectFields<string>();
 
@@ -573,7 +573,7 @@ describe('Document query test', () => {
         .openSession()
         .query<Universal>({
           indexName: 'UniversalsTestingSort',
-          WaitForNonStaleResults: true
+          waitForNonStaleResults: true
         })
         .whereIsNull<null>('nullField', null);
 
@@ -593,7 +593,7 @@ describe('Document query test', () => {
     it('should query with whereNotNull and NOT', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', waitForNonStaleResults: true})
         .whereNotNull('nullField');
 
       const results: Universal[] = await query.get();
@@ -612,7 +612,7 @@ describe('Document query test', () => {
     it('should query by between and andAlso', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', waitForNonStaleResults: true})
         .whereBetween<number>('order', 1, 5);
 
       const results: Universal[] = await query.get();
@@ -638,7 +638,7 @@ describe('Document query test', () => {
     it('should query with where', async () => {
       const query: IDocumentQuery<Universal> = await store
         .openSession()
-        .query<Universal>({indexName: 'UniversalsTestingSort', WaitForNonStaleResults: true})
+        .query<Universal>({indexName: 'UniversalsTestingSort', waitForNonStaleResults: true})
         .where({name: 'withNesting'});
 
       const results: Universal[] = await query.get();

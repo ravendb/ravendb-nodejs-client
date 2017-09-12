@@ -6,7 +6,7 @@ import {TypeUtil} from "../../../../Utility/TypeUtil";
 import {ArgumentOutOfRangeException} from "../../../../Database/DatabaseExceptions";
 import {SpartialConstants} from "../Spartial/SpartialConstants";
 
-export interface IWhereOptions {
+export interface IWhereTokenOptions {
   fieldName?: string;
   whereOperator?: WhereOperator;
   searchOperator?: SearchOperator;
@@ -190,7 +190,7 @@ export class WhereToken extends QueryToken
     });
   }
 
-  constructor(whereOptions: IWhereOptions) {
+  constructor(whereOptions: IWhereTokenOptions) {
     super();
     this._fieldName = whereOptions.fieldName;
     this._whereOperator = whereOptions.whereOperator;

@@ -1,177 +1,170 @@
-import {TypeUtil} from "../../../Utility/TypeUtil";
-import {StringUtil} from "../../../Utility/StringUtil";
-import {IRQLEqualsOperatorOptions, RQLOperator, RQLOperators, RQLJoinOperators, RQLOrderDirections, RQLOrderDirection} from "../../RQL/RQLOperator";
-import {RQLQuerySource, RQLQuerySources} from "../../RQL/RQLQuerySource";
-import {RQLValue, RQLRangeValue, RQLConditionValue} from "../../RQL/RQLValue";
+import {IQueryBuilder} from "./IQueryBuilder";
+import {OrderingType} from "./QueryLanguage";
+import {SearchOperator} from "./QueryLanguage";
+import {SpartialCriteria} from "./Spartial/SpartialCriteria";
 
-export class QueryBuilder {
-  private _select: string = '*';
-  private _from: string = '@all_docs';
-  private _where: string = '';
-  private _order: string = '';
+export class QueryBuilder implements IQueryBuilder {
+  getProjectionFields(): string[] {
+    return [];
+  }
 
-  private _nextOperator: string = '';
-  private _negateNext: boolean = false;
-  private _boostNext: number = null;
-
-  public openSubClause(): QueryBuilder {
-    this.whereRaw(RQLJoinOperators.OPEN_SUBCLAUSE);
-
+  randomOrdering(seed?: string): IQueryBuilder {
     return this;
   }
 
-  public closeSubClause(): QueryBuilder {
-    this.whereRaw(RQLJoinOperators.CLOSE_SUBCLAUSE);
-
+  customSortUsing(typeName: string, descending?: boolean): IQueryBuilder {
     return this;
   }
 
-  public and(): QueryBuilder {
-    this._nextOperator = RQLJoinOperators.AND;
-
+  include(path: string): IQueryBuilder {
     return this;
   }
 
-  public or(): QueryBuilder {
-    this._nextOperator = RQLJoinOperators.OR;
-
+  whereEquals(fieldName: string, parameterName: string, exact?: boolean): IQueryBuilder {
     return this;
   }
 
-  public not(): QueryBuilder {
-    this._negateNext = true;
-
+  whereNotEquals(fieldName: string, parameterName: string, exact?: boolean): IQueryBuilder {
     return this;
   }
 
-  public boost(boostFactor: number): QueryBuilder {
-    this._boostNext = boostFactor;
-
+  openSubclause(): IQueryBuilder {
     return this;
   }
 
-  public select(fields?: string | string[]): QueryBuilder {
-    let joinedFields: string = fields as string;
-
-    if (TypeUtil.isArray(fields)) {
-      joinedFields = (fields as string[]).join(', ');
-    }
-
-    this._select = joinedFields || '*';
+  closeSubclause(): IQueryBuilder {
     return this;
   }
 
-  public from(source?: string, sourceType: RQLQuerySource = RQLQuerySources.Collection): QueryBuilder {
-    this._from = source || '@all_docs';
-
-    if (source && (RQLQuerySources.Index === sourceType)) {
-      this._from = `INDEX ${this._from}`;      
-    }
+  negateNext(): IQueryBuilder {
     return this;
   }
 
-  public fromCollection(collection: string): QueryBuilder {
-    this.from(collection, RQLQuerySources.Collection);
-
+  whereIn(fieldName: string, parameterName: string, exact?: boolean): IQueryBuilder {
     return this;
   }
 
-  public fromIndex(index: string): QueryBuilder {
-    this.from(index, RQLQuerySources.Index);
-
+  whereStartsWith(fieldName: string, parameterName: string): IQueryBuilder {
     return this;
   }
 
-  public order(field: string, direction: RQLOrderDirection = RQLOrderDirections.Ascending): QueryBuilder {
-    this._order = StringUtil.format(`{0} {1}`, field, direction);
-
+  whereEndsWith(fieldName: string, parameterName: string): IQueryBuilder {
     return this;
   }
 
-  public where(operator: RQLOperator, field: string, value?: RQLConditionValue, options: IRQLEqualsOperatorOptions = {}): QueryBuilder {
-    let rqlText: string;
-    const range: RQLRangeValue<RQLValue> = <RQLRangeValue<RQLValue>>value; 
-    const values: RQLValue[] = <RQLValue[]>value;
-
-    switch (operator) {
-      case RQLOperators.GREATER_THAN:
-        rqlText = StringUtil.format(`{0} > {1}`, field, value);
-        break;
-      case RQLOperators.LESS_THAN:
-        rqlText = StringUtil.format(`{0} < {1}`, field, value);
-        break;
-      case RQLOperators.EQUALS:
-        const formattedValue = (TypeUtil.isNone(value) || (value === 'null')) ? 'null' : `'${value}'`;
-        if(options.exact) {
-          rqlText = StringUtil.format(`exact({0}={1})`, field, formattedValue);
-        }
-        else {
-          rqlText = StringUtil.format(`{0}={1}`, field, formattedValue);
-        }
-        break;
-      case RQLOperators.BETWEEN:
-        rqlText = StringUtil.format(`{0} BETWEEN {1} AND {2}`, field, range.min, range.max);
-        break;
-      case RQLOperators.STARTS_WITH:
-        rqlText = StringUtil.format(`startsWith({0}, '{1}')`, field, value);
-        break;
-      case RQLOperators.ENDS_WITH:
-        rqlText = StringUtil.format(`endsWith({0}, '{1}')`, field, value);
-        break;
-      case RQLOperators.IN:
-        rqlText = StringUtil.format(`{0} IN ('{1}')`, field, value);
-        break;
-      case RQLOperators.SEARCH:
-        rqlText = StringUtil.format(`search({0}, '{1}')`, field, value);
-        break;
-      case RQLOperators.GREATER_THAN_OR_EQUAL:
-        rqlText = StringUtil.format(`{0}>={1}`, field, value);
-        break;
-      case RQLOperators.LESS_THAN_OR_EQUAL:
-        rqlText = StringUtil.format(`{0}<={1}`, field, value);
-        break;
-    }
-
-    this.whereRaw(rqlText);
+  whereBetween(fieldName: string, fromParameterName: string, toParameterName: string, exact?: boolean): IQueryBuilder {
     return this;
   }
 
-  public whereRaw(rqlCondition: string): QueryBuilder {
-    let where: string = (this._negateNext ? 'NOT ' : '') + rqlCondition;
-
-    if (!TypeUtil.isNone(this._boostNext)) {
-      where = `BOOST(${where}, ${this._boostNext})`;
-    }
-
-    if(this._nextOperator != '') {
-      this._nextOperator= ' ' + this._nextOperator;
-    }
-
-    this._where += [this._nextOperator, where].join(' ');
-    this._nextOperator = '';
-    this._negateNext = false;
-    this._boostNext = null;
-
+  whereGreaterThan(fieldName: string, parameterName: string, exact?: boolean): IQueryBuilder {
     return this;
   }
 
-  public getRql(): string {
-    let rql: string = '';
+  whereGreaterThanOrEqual(fieldName: string, parameterName: string, exact?: boolean): IQueryBuilder {
+    return this;
+  }
 
-    if (this._select) {
-      rql += StringUtil.format(`SELECT {0}`, this._select);
-    }
+  whereLessThan(fieldName: string, parameterName: string, exact?: boolean): IQueryBuilder {
+    return this;
+  }
 
-    rql += StringUtil.format(` FROM {0}`, this._from);
+  whereLessThanOrEqual(fieldName: string, parameterName: string, exact?: boolean): IQueryBuilder {
+    return this;
+  }
 
-    if (this._where) {
-      rql += StringUtil.format(` WHERE{0}`, this._where);
-    }
+  whereExists(fieldName: string): IQueryBuilder {
+    return this;
+  }
 
-    if (this._order) {
-      rql += StringUtil.format(` ORDER BY {0}`, this._order);
-    }
+  andAlso(): IQueryBuilder {
+    return this;
+  }
 
-    return rql;
+  orElse(): IQueryBuilder {
+    return this;
+  }
+
+  boost(boost: number): IQueryBuilder {
+    return this;
+  }
+
+  fuzzy(fuzzy: number): IQueryBuilder {
+    return this;
+  }
+
+  proximity(proximity: number): IQueryBuilder {
+    return this;
+  }
+
+  orderBy(field: string, ordering?: OrderingType): IQueryBuilder {
+    return this;
+  }
+
+  orderByDescending(field: string, ordering?: OrderingType): IQueryBuilder {
+    return this;
+  }
+
+  orderByScore(): IQueryBuilder {
+    return this;
+  }
+
+  orderByScoreDescending(): IQueryBuilder {
+    return this;
+  }
+
+  search(fieldName: string, searchTerms: string, operator: SearchOperator): IQueryBuilder {
+    return this;
+  }
+
+  intersect(): IQueryBuilder {
+    return this;
+  }
+
+  distinct(): IQueryBuilder {
+    return this;
+  }
+
+  containsAny(fieldName: string, parameterName: string): IQueryBuilder {
+    return this;
+  }
+
+  containsAll(fieldName: string, parameterName: string): IQueryBuilder {
+    return this;
+  }
+
+  groupBy(fieldName: string, ...fieldNames): IQueryBuilder {
+    return this;
+  }
+
+  groupByKey(fieldName: string, projectedName?: string): IQueryBuilder {
+    return this;
+  }
+
+  groupBySum(fieldName: string, projectedName?: string): IQueryBuilder {
+    return this;
+  }
+
+  groupByCount(projectedName?: string): IQueryBuilder {
+    return this;
+  }
+
+  whereTrue(): IQueryBuilder {
+    return this;
+  }
+
+  spatial(fieldName: string, criteria: SpartialCriteria): IQueryBuilder {
+    return this;
+  }
+
+  orderByDistance(fieldName: string, shapeWkt: string): IQueryBuilder;
+  orderByDistance(fieldName: string, latitude: number, longitude: number): IQueryBuilder;
+  orderByDistance(fieldName: string, latitudeOrShapeWkt: number | string, longitude?: number): IQueryBuilder {
+    return this;
+  }
+
+  orderByDistanceDescending(fieldName: string, shapeWkt: string): IQueryBuilder;
+  orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): IQueryBuilder;
+  orderByDistanceDescending(fieldName: string, latitudeOrShapeWkt: number | string, longitude?: number): IQueryBuilder {
+    return this;
   }
 }
