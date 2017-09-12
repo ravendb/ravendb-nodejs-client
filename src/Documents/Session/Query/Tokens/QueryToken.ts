@@ -1,5 +1,5 @@
 import {StringBuilder} from "../../../../Utility/StringBuilder";
-import {QueryKeywords, QueryKeyword} from "../QueryOperator";
+import {QueryKeywords, QueryKeyword} from "../QueryLanguage";
 
 export interface IQueryToken {
   writeTo(writer: StringBuilder): void;
@@ -32,7 +32,7 @@ export abstract class QueryToken implements IQueryToken
 
 export abstract class SimpleQueryToken extends QueryToken {
   public static get instance(): IQueryToken {
-    return new (this as (typeof SimpleQueryToken));
+    return new (<any>this as { new(): IQueryToken; });
   }
 
   public writeTo(writer: StringBuilder): void {

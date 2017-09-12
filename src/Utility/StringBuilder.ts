@@ -34,6 +34,12 @@ export interface IAbstractStringBuilder extends IStringable {
   toBuffer(start?: number, length?: number): Buffer;
 }
 
+export interface INodeStringBuilder extends IAbstractStringBuilder {
+    count(): number;
+    length(): number;
+    capacity(): number;
+}
+
 export interface IStringBuilder extends IAbstractStringBuilder {
   length: number;
   capacity: number;
@@ -41,11 +47,7 @@ export interface IStringBuilder extends IAbstractStringBuilder {
 }
 
 export class StringBuilder implements IStringBuilder {
-  private _builder: IAbstractStringBuilder & {
-    count(): number;
-    length(): number;
-    capacity(): number;
-  };
+  private _builder: INodeStringBuilder;
 
   public get length(): number {
     return this._builder.length();
@@ -67,18 +69,10 @@ export class StringBuilder implements IStringBuilder {
   constructor(source?: string, initialCapacity?: number);
   constructor(source: string | IAbstractStringBuilder = '', initialCapacity: number = 128) {
     if (source instanceof NodeStringBuilder) {
-      this._builder = source as IAbstractStringBuilder & {
-        count(): number;
-        length(): number;
-        capacity(): number;
-      }
+      this._builder = source as INodeStringBuilder;
     } else {
       this._builder = new (NodeStringBuilder as {
-        new(content: string, initialCapacity: number): IAbstractStringBuilder & {
-          count(): number;
-          length(): number;
-          capacity(): number;
-        }
+        new(content: string, initialCapacity: number): INodeStringBuilder
       })(source as string, initialCapacity);
     }
   }

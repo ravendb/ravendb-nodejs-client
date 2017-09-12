@@ -1,10 +1,15 @@
 export type ConditionValue = string | number | boolean | Date | null;
 
-export type QueryOperator = 'OR' | 'AND' | 'NOT';
+export type SearchOperator = 'OR' | 'AND';
 
-export class QueryOperators {
-  public static readonly OR: QueryOperator = 'OR';
-  public static readonly AND: QueryOperator = 'AND';
+export class SearchOperators {
+  public static readonly OR: SearchOperator = 'OR';
+  public static readonly AND: SearchOperator = 'AND';
+}
+
+export type QueryOperator = SearchOperator | 'NOT';
+
+export class QueryOperators extends SearchOperators {
   public static readonly NOT: QueryOperator = 'NOT';
 }
 
@@ -26,6 +31,9 @@ export class QueryKeywords {
   public static readonly By: QueryKeyword = 'BY';
   public static readonly Asc: QueryKeyword = 'ASC';
   public static readonly Desc: QueryKeyword = 'DESC';
+  public static readonly In: QueryKeyword = 'IN';
+  public static readonly Between: QueryKeyword = 'BETWEEN';
+  public static readonly All: QueryKeyword = 'ALL';
 }
 
 export type OrderingType = 'string' | 'long' | 'double' | 'alphaNumeric';
@@ -42,29 +50,33 @@ export type WhereOperator = 'equals' | 'notEquals' | 'greaterThan' | 'greaterTha
   | 'startsWith' | 'endsWith' | 'exists' | 'within' | 'contains' | 'disjoint' | 'intersects';
 
 export class WhereOperators {
-  public static readonly Equals: OrderingType = 'equals';
-  public static readonly NotEquals: OrderingType = 'notEquals';
-  public static readonly GreaterThan: OrderingType = 'greaterThan';
-  public static readonly GreaterThanOrEqual: OrderingType = 'greaterThanOrEqual';
-  public static readonly LessThan: OrderingType = 'lessThan';
-  public static readonly LessThanOrEqual: OrderingType = 'lessThanOrEqual';
-  public static readonly In: OrderingType = 'in';
-  public static readonly AllIn: OrderingType = 'allIn';
-  public static readonly Between: OrderingType = 'between';
-  public static readonly Search: OrderingType = 'search';
-  public static readonly Lucene: OrderingType = 'lucene';
-  public static readonly StartsWith: OrderingType = 'startsWith';
-  public static readonly EndsWith: OrderingType = 'endsWith';
-  public static readonly Exists: OrderingType = 'exists';
-  public static readonly Within: OrderingType = 'within';
-  public static readonly Contains: OrderingType = 'contains';
-  public static readonly Disjoint: OrderingType = 'disjoint';
-  public static readonly Intersects: OrderingType = 'intersects';
+  public static readonly Equals: WhereOperator = 'equals';
+  public static readonly NotEquals: WhereOperator = 'notEquals';
+  public static readonly GreaterThan: WhereOperator = 'greaterThan';
+  public static readonly GreaterThanOrEqual: WhereOperator = 'greaterThanOrEqual';
+  public static readonly LessThan: WhereOperator = 'lessThan';
+  public static readonly LessThanOrEqual: WhereOperator = 'lessThanOrEqual';
+  public static readonly In: WhereOperator = 'in';
+  public static readonly AllIn: WhereOperator = 'allIn';
+  public static readonly Between: WhereOperator = 'between';
+  public static readonly Search: WhereOperator = 'search';
+  public static readonly Lucene: WhereOperator = 'lucene';
+  public static readonly StartsWith: WhereOperator = 'startsWith';
+  public static readonly EndsWith: WhereOperator = 'endsWith';
+  public static readonly Exists: WhereOperator = 'exists';
+  public static readonly Within: WhereOperator = 'within';
+  public static readonly Contains: WhereOperator = 'contains';
+  public static readonly Disjoint: WhereOperator = 'disjoint';
+  public static readonly Intersects: WhereOperator = 'intersects';
 }
 
 export type ConditionValueUnit = 'Kilometers' | 'Miles';
 
 export class ConditionValueUnits {
+  public static readonly DefaultDistanceErrorPct: number = 0.025;
+  public static readonly EarthMeanRadiusKm: number = 6371.0087714;
+  public static readonly MilesToKm: number = 1.60934;
+
   public static readonly Kilometers: ConditionValueUnit = 'Kilometers';
   public static readonly Miles: ConditionValueUnit = 'Miles';
 }
