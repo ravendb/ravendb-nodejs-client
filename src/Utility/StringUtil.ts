@@ -32,6 +32,40 @@ export class StringUtil {
     }
   }
 
+  public static escapeIfNecessary(field: string): string {
+    if (!field) {
+      return field;
+    }
+
+    let escape: boolean = false;
+
+    for (let i = 0; i < field.length; i++) {
+      const c: string = field[i];
+
+      if (i == 0) {
+        if (!/[a-zA-Z]/.test(c) && !['_', '@'].includes(c))
+        {
+          escape = true;
+          break;
+        }
+
+        continue;
+      }
+
+      if (!/[a-zA-Z0-9]/.test(c) && !['_', '@', '.', '[', ']'].includes(c)) {
+        escape = true;
+        break;
+      }
+    }
+
+    if (escape) {
+      return `'${field}'`;
+    }
+
+
+    return field;
+  }
+
   public static capitalize(string: string): string {
     return string.charAt(0).toUpperCase() + string.substring(1);
   }

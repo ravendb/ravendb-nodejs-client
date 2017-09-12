@@ -9,8 +9,18 @@ import {FieldsToFetchToken} from "./Tokens/FieldsToFetchToken";
 import {InvalidOperationException} from "../../../Database/DatabaseExceptions";
 import {TypeUtil} from "../../../Utility/TypeUtil";
 import {OrderByToken} from "./Tokens/OrderByToken";
+import {Observable} from "../../../Utility/Observable";
+import {StringUtil} from "../../../Utility/StringUtil";
+import {GroupByToken} from "./Tokens/GroupByToken";
 
-export class QueryBuilder implements IQueryBuilder {
+export interface IFieldValidationResult {
+  originalFieldName: string;
+  escapedFieldName: string;
+}
+
+export class QueryBuilder extends Observable implements IQueryBuilder {
+  public static readonly VALIDATE_FIELD = 'VALIDATE_FIELD';
+
   protected selectTokens: LinkedList<QueryToken>;
   protected fromToken: FromToken;
   protected fieldsToFetchToken: FieldsToFetchToken;
@@ -19,8 +29,11 @@ export class QueryBuilder implements IQueryBuilder {
   protected orderByTokens: LinkedList<QueryToken>;
   protected defaultOperator: QueryOperator = null;
   protected queryRaw?: string = null;
+  protected isGroupBy: boolean = false;
 
   constructor(indexName?: string, collectionName?: string) {
+    super();
+
     if (indexName || collectionName) {
       this.from(indexName, collectionName);
     }
@@ -203,7 +216,20 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
     return this;
   }
 
-  public groupBy(fieldName: string, ...fieldNames): IQueryBuilder {
+  public groupBy(fieldName: string, ...fieldNames: string[]): IQueryBuilder {
+    if (!this.fromToken.isDynamic) {
+      throw new InvalidOperationException("GroupBy only works with dynamic queries.");
+    }
+
+    this.assertNoRawQuery();
+    this.isGroupBy = true;
+
+    [fieldName].concat(fieldNames).forEach((field: string): void => {
+      field = this.ensureValidFieldName(field);
+      this.groupByTokens.addLast(GroupByToken.create(field));
+    });
+
+
     return this;
   }
 
@@ -246,5 +272,20 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
 would modify the query (such as Where, Select, OrderBy, GroupBy, etc)"
       );
     }
+  }
+
+  protected ensureValidFieldName(fieldName: string, isNestedPath: boolean = false): string {
+    const {VALIDATE_FIELD} = <typeof QueryBuilder>this.constructor;
+
+    let result: IFieldValidationResult = {
+      originalFieldName: fieldName,
+      escapedFieldName: StringUtil.escapeIfNecessary(fieldName)
+    };
+
+    if (!this.isGroupBy && !isNestedPath) {
+      this.emit<IFieldValidationResult>(VALIDATE_FIELD, result);
+    }
+
+    return result.escapedFieldName;
   }
 }
