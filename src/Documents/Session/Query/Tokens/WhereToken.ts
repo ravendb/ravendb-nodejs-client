@@ -1,13 +1,10 @@
 import {QueryToken} from "./QueryToken";
 import {StringBuilder} from "../../../../Utility/StringBuilder";
-import {
-  ConditionValueUnits,
-  QueryKeywords, QueryOperators, SearchOperator, SearchOperators, WhereOperator,
-  WhereOperators
-} from "../QueryLanguage";
+import {QueryKeywords, QueryOperators, SearchOperator, SearchOperators, WhereOperator, WhereOperators} from "../QueryLanguage";
 import {ShapeToken} from "./ShapeToken";
 import {TypeUtil} from "../../../../Utility/TypeUtil";
 import {ArgumentOutOfRangeException} from "../../../../Database/DatabaseExceptions";
+import {SpartialConstants} from "../Spartial/SpartialConstants";
 
 export interface IWhereOptions {
   fieldName?: string;
@@ -397,7 +394,7 @@ export class WhereToken extends QueryToken
 
         this._whereShape.writeTo(writer);
 
-        if (Math.abs(this._distanceErrorPct - ConditionValueUnits.DefaultDistanceErrorPct) > Number.EPSILON) {
+        if (Math.abs(this._distanceErrorPct - SpartialConstants.DefaultDistanceErrorPct) > Number.EPSILON) {
           writer.append(", ");
           writer.append(this._distanceErrorPct.toString());
         }

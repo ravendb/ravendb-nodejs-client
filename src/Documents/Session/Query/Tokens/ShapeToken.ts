@@ -1,6 +1,6 @@
 import {QueryToken} from "./QueryToken";
 import {StringBuilder} from "../../../../Utility/StringBuilder";
-import {ConditionValueUnit} from "../QueryLanguage";
+import {SpartialUnit} from "../Spartial/SpartialUnit";
 
 export class ShapeToken extends QueryToken
 {
@@ -12,7 +12,7 @@ export class ShapeToken extends QueryToken
     this._shape = shape;
   }
 
-  public static circle(radiusParameterName: string, latituteParameterName: string, longitudeParameterName: string, radiusUnits?: ConditionValueUnit)
+  public static circle(radiusParameterName: string, latituteParameterName: string, longitudeParameterName: string, radiusUnits?: SpartialUnit)
   {
     const tokenCtor: typeof ShapeToken = this as (typeof ShapeToken);
 

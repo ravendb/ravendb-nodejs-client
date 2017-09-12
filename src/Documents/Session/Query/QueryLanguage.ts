@@ -1,3 +1,5 @@
+import {SpartialRelation, SpartialRelations} from "./Spartial/SpartialRelation";
+
 export type ConditionValue = string | number | boolean | Date | null;
 
 export type SearchOperator = 'OR' | 'AND';
@@ -47,9 +49,9 @@ export class OrderingTypes {
 
 export type WhereOperator = 'equals' | 'notEquals' | 'greaterThan' | 'greaterThanOrEqual'
   | 'lessThan' | 'lessThanOrEqual' | 'in' | 'allIn' | 'between' | 'search' | 'lucene'
-  | 'startsWith' | 'endsWith' | 'exists' | 'within' | 'contains' | 'disjoint' | 'intersects';
+  | 'startsWith' | 'endsWith' | 'exists' | SpartialRelation;
 
-export class WhereOperators {
+export class WhereOperators extends SpartialRelations {
   public static readonly Equals: WhereOperator = 'equals';
   public static readonly NotEquals: WhereOperator = 'notEquals';
   public static readonly GreaterThan: WhereOperator = 'greaterThan';
@@ -64,19 +66,5 @@ export class WhereOperators {
   public static readonly StartsWith: WhereOperator = 'startsWith';
   public static readonly EndsWith: WhereOperator = 'endsWith';
   public static readonly Exists: WhereOperator = 'exists';
-  public static readonly Within: WhereOperator = 'within';
-  public static readonly Contains: WhereOperator = 'contains';
-  public static readonly Disjoint: WhereOperator = 'disjoint';
-  public static readonly Intersects: WhereOperator = 'intersects';
 }
 
-export type ConditionValueUnit = 'Kilometers' | 'Miles';
-
-export class ConditionValueUnits {
-  public static readonly DefaultDistanceErrorPct: number = 0.025;
-  public static readonly EarthMeanRadiusKm: number = 6371.0087714;
-  public static readonly MilesToKm: number = 1.60934;
-
-  public static readonly Kilometers: ConditionValueUnit = 'Kilometers';
-  public static readonly Miles: ConditionValueUnit = 'Miles';
-}
