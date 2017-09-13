@@ -43,8 +43,7 @@ export class StringUtil {
       const c: string = field[i];
 
       if (i == 0) {
-        if (!/[a-zA-Z]/.test(c) && !['_', '@'].includes(c))
-        {
+        if (!/[a-zA-Z]/.test(c) && !['_', '@'].includes(c)) {
           escape = true;
           break;
         }
@@ -61,7 +60,6 @@ export class StringUtil {
     if (escape) {
       return `'${field}'`;
     }
-
 
     return field;
   }

@@ -12,6 +12,13 @@ import {OrderByToken} from "./Tokens/OrderByToken";
 import {Observable} from "../../../Utility/Observable";
 import {StringUtil} from "../../../Utility/StringUtil";
 import {GroupByToken} from "./Tokens/GroupByToken";
+import {IParametrizedWhereParams} from "./IWhereParams";
+import {WhereToken} from "./Tokens/WhereToken";
+import {CloseSubclauseToken} from "./Tokens/CloseSubclauseToken";
+import {QueryOperatorToken} from "./Tokens/QueryOperatorToken";
+import {OpenSubclauseToken} from "./Tokens/OpenSubclauseToken";
+import {NegateToken} from "./Tokens/NegateToken";
+import {TrueToken} from "./Tokens/TrueToken";
 
 export interface IFieldValidationResult {
   originalFieldName: string;
@@ -28,10 +35,14 @@ export class QueryBuilder extends Observable implements IQueryBuilder {
   protected groupByTokens: LinkedList<QueryToken>;
   protected orderByTokens: LinkedList<QueryToken>;
   protected defaultOperator: QueryOperator = null;
+  protected idPropertyName?: string = null;
+  protected includes: Set<string>;
   protected queryRaw?: string = null;
   protected isGroupBy: boolean = false;
+  protected negate: boolean = false;
+  protected currentClauseDepth: number = 0;
 
-  constructor(indexName?: string, collectionName?: string) {
+  constructor(indexName?: string, collectionName?: string, idPropertyName?: string) {
     super();
 
     if (indexName || collectionName) {
@@ -42,6 +53,8 @@ export class QueryBuilder extends Observable implements IQueryBuilder {
     this.whereTokens = new LinkedList<QueryToken>();
     this.groupByTokens = new LinkedList<QueryToken>();
     this.orderByTokens = new LinkedList<QueryToken>();
+    this.includes = new Set<string>();
+    this.idPropertyName = idPropertyName;
   }
 
   public usingDefaultOperator(operator: QueryOperator): IQueryBuilder {
@@ -101,26 +114,82 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public include(path: string): IQueryBuilder {
+    this.includes.add(path);
+
     return this;
   }
 
-  public whereEquals(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
+  public whereEquals(params: IParametrizedWhereParams): IQueryBuilder;
+  public whereEquals(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder;
+  public whereEquals(fieldNameOrParams: string | IParametrizedWhereParams, parameterName?: string, exact: boolean = false): IQueryBuilder {
+    const fieldName: string = <string>fieldNameOrParams;
+    const params: IParametrizedWhereParams = <IParametrizedWhereParams>fieldNameOrParams;
+
+    if (TypeUtil.isString(fieldNameOrParams)) {
+      return this.whereEquals({
+        parameterName,
+        fieldName, exact
+      });
+    }
+
+    if (this.negate) {
+      this.negate = false;
+      return this.whereNotEquals(params);
+    }
+
+    params.fieldName = this.ensureValidFieldName(params.fieldName, params.isNestedPath);
+
+    this.appendOperatorIfNeeded();
+    this.whereTokens.addLast(WhereToken.equals(params.fieldName, params.parameterName, params.exact));
+
     return this;
   }
 
-  public whereNotEquals(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
+  public whereNotEquals(params: IParametrizedWhereParams): IQueryBuilder;
+  public whereNotEquals(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder;
+  public whereNotEquals(fieldNameOrParams: string | IParametrizedWhereParams, parameterName: string, exact: boolean = false): IQueryBuilder {
+    const fieldName: string = <string>fieldNameOrParams;
+    const params: IParametrizedWhereParams = <IParametrizedWhereParams>fieldNameOrParams;
+
+    if (TypeUtil.isString(fieldNameOrParams)) {
+      return this.whereNotEquals({
+        parameterName,
+        fieldName, exact
+      });
+    }
+
+    if (this.negate) {
+      this.negate = false;
+      return this.whereEquals(params);
+    }
+
+    params.fieldName = this.ensureValidFieldName(params.fieldName, params.isNestedPath);
+
+    this.appendOperatorIfNeeded();
+    this.whereTokens.addLast(WhereToken.notEquals(params.fieldName, params.parameterName, params.exact));
+
     return this;
   }
 
   public openSubclause(): IQueryBuilder {
+    this.currentClauseDepth++;
+    this.appendOperatorIfNeeded(this.whereTokens);
+    this.negateIfNeeded();
+    this.whereTokens.addLast(OpenSubclauseToken.instance);
+
     return this;
   }
 
   public closeSubclause(): IQueryBuilder {
+    this.currentClauseDepth--;
+    this.whereTokens.addLast(CloseSubclauseToken.instance);
+
     return this;
   }
 
   public negateNext(): IQueryBuilder {
+    this.negate = !this.negate;
+
     return this;
   }
 
@@ -157,6 +226,12 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public whereExists(fieldName: string): IQueryBuilder {
+    fieldName = this.ensureValidFieldName(fieldName);
+
+    this.appendOperatorIfNeeded(this.whereTokens);
+    this.negateIfNeeded(fieldName);
+    this.whereTokens.addLast(WhereToken.exists(fieldName));
+
     return this;
   }
 
@@ -246,6 +321,10 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public whereTrue(): IQueryBuilder {
+    this.appendOperatorIfNeeded(this.whereTokens);
+    this.negateIfNeeded();
+    this.whereTokens.addLast(TrueToken.instance);
+
     return this;
   }
 
@@ -283,9 +362,66 @@ would modify the query (such as Where, Select, OrderBy, GroupBy, etc)"
     };
 
     if (!this.isGroupBy && !isNestedPath) {
+      if (!TypeUtil.isNone(this.idPropertyName) && (fieldName === this.idPropertyName)) {
+        result.escapedFieldName = FieldConstants.DocumentIdFieldName;
+      }
+
       this.emit<IFieldValidationResult>(VALIDATE_FIELD, result);
     }
 
     return result.escapedFieldName;
+  }
+
+  protected appendOperatorIfNeeded(tokens: LinkedList<QueryToken>): void {
+    this.assertNoRawQuery();
+
+    if (!tokens.count) {
+      return;
+    }
+
+    const lastToken: QueryToken = tokens.last.value;
+
+    if (!(lastToken instanceof WhereToken) && !(lastToken instanceof CloseSubclauseToken)) {
+      return;
+    }
+
+    let current = tokens.last;
+    let lastWhere: WhereToken = null;
+
+    while (!TypeUtil.isNone(current)) {
+      if (current.value instanceof WhereToken) {
+        lastWhere = current.value;
+        break;
+      }
+
+      current = current.previous;
+    }
+
+    let token: QueryOperatorToken = (QueryOperator.AND === this.defaultOperator)
+        ? QueryOperatorToken.And : QueryOperatorToken.Or;
+
+    if (lastWhere && !TypeUtil.isNone(lastWhere.searchOperator)) {
+      token = QueryOperatorToken.Or;
+    }
+
+    tokens.addLast(token);
+  }
+
+  protected negateIfNeeded(fieldName?: string): void {
+    if (!this.negate) {
+      return;
+    }
+
+    this.negate = false;
+
+    if (!this.whereTokens.count || (this.whereTokens.last.value instanceof OpenSubclauseToken)) {
+      TypeUtil.isNone(fieldName)
+        ? this.whereTrue()
+        : this.whereExists(fieldName);
+
+      this.andAlso();
+    }
+
+    this.whereTokens.addLast(NegateToken.instance);
   }
 }

@@ -130,7 +130,7 @@ export class WhereToken extends QueryToken
     });
   }
 
-  public static search(fieldName: string, parameterName: string, op: SearchOperator = SearchOperators.AND): WhereToken {
+  public static search(fieldName: string, parameterName: string, op: SearchOperator = SearchOperators.And): WhereToken {
     return new (this as (typeof WhereToken))({
       fieldName,
       parameterName,
@@ -325,7 +325,7 @@ export class WhereToken extends QueryToken
           .append(" $")
           .append(this._fromParameterName)
           .append(" ")
-          .append(QueryOperators.AND)
+          .append(QueryOperators.And)
           .append(" $")
           .append(this._toParameterName);
         break;
@@ -364,7 +364,7 @@ export class WhereToken extends QueryToken
           .append(", $")
           .append(this._parameterName);
 
-        if (this._searchOperator === SearchOperators.AND) {
+        if (this._searchOperator === SearchOperators.And) {
           writer
             .append(", ")
             .append(this._searchOperator);

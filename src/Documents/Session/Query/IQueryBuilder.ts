@@ -1,5 +1,6 @@
 import {SpartialCriteria} from "./Spartial/SpartialCriteria";
 import {OrderingType, QueryOperator, SearchOperator} from "./QueryLanguage";
+import {IParametrizedWhereParams} from "./WhereParams";
 
 export interface IQueryBuilder {
   rawQuery(query: string): IQueryBuilder;
@@ -9,7 +10,9 @@ export interface IQueryBuilder {
   customSortUsing(typeName: string, descending?: boolean): IQueryBuilder;
   include(path: string): IQueryBuilder;
   usingDefaultOperator(operator: QueryOperator): IQueryBuilder;
+  whereEquals(params: IParametrizedWhereParams<string>): IQueryBuilder;
   whereEquals(fieldName: string, parameterName: string, exact?: boolean): IQueryBuilder;
+  whereNotEquals(params: IParametrizedWhereParams<string>): IQueryBuilder;
   whereNotEquals(fieldName: string, parameterName: string, exact?: boolean): IQueryBuilder;
   openSubclause(): IQueryBuilder;
   closeSubclause(): IQueryBuilder;

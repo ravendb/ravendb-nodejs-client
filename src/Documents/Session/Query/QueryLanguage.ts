@@ -5,14 +5,14 @@ export type ConditionValue = string | number | boolean | Date | null;
 export type SearchOperator = 'OR' | 'AND';
 
 export class SearchOperators {
-  public static readonly OR: SearchOperator = 'OR';
-  public static readonly AND: SearchOperator = 'AND';
+  public static readonly Or: SearchOperator = 'OR';
+  public static readonly And: SearchOperator = 'AND';
 }
 
 export type QueryOperator = SearchOperator | 'NOT';
 
 export class QueryOperators extends SearchOperators {
-  public static readonly NOT: QueryOperator = 'NOT';
+  public static readonly Not: QueryOperator = 'NOT';
 }
 
 export type QueryKeyword = 'SELECT' | 'DISTINCT' | 'AS' | 'FROM'
