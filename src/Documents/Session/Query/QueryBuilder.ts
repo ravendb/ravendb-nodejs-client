@@ -194,6 +194,12 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public whereIn(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
+    fieldName = this.ensureValidFieldName(fieldName);
+
+    this.appendOperatorIfNeeded(WhereTokens);
+    this.negateIfNeeded(fieldName);
+    this.whereTokens.addLast(WhereToken.in(fieldName, parameterName, exact));
+
     return this;
   }
 
