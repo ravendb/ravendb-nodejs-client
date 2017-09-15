@@ -1,12 +1,12 @@
 import {IQueryBuilder} from "./IQueryBuilder";
-import {FieldConstants, OrderingType, QueryOperator} from "./QueryLanguage";
+import {FieldConstants, OrderingType, QueryKeywords, QueryOperator} from "./QueryLanguage";
 import {SearchOperator} from "./QueryLanguage";
 import {SpartialCriteria} from "./Spartial/SpartialCriteria";
 import {LinkedList} from "../../../Utility/LinkedList";
 import {QueryToken} from "./Tokens/QueryToken";
 import {FromToken} from "./Tokens/FromToken";
 import {FieldsToFetchToken} from "./Tokens/FieldsToFetchToken";
-import {InvalidOperationException} from "../../../Database/DatabaseExceptions";
+import {ArgumentOutOfRangeException, InvalidOperationException} from "../../../Database/DatabaseExceptions";
 import {TypeUtil} from "../../../Utility/TypeUtil";
 import {OrderByToken} from "./Tokens/OrderByToken";
 import {Observable} from "../../../Utility/Observable";
@@ -19,6 +19,8 @@ import {QueryOperatorToken} from "./Tokens/QueryOperatorToken";
 import {OpenSubclauseToken} from "./Tokens/OpenSubclauseToken";
 import {NegateToken} from "./Tokens/NegateToken";
 import {TrueToken} from "./Tokens/TrueToken";
+import {IntersectMarkerToken} from "./Tokens/IntersectMarkerToken";
+import {SpartialRelations} from "./Spartial/SpartialRelation";
 
 export interface IFieldValidationResult {
   originalFieldName: string;
@@ -64,6 +66,7 @@ before any where clause is added.");
     }
 
     this.defaultOperator = operator;
+
     return this;
   }
 
@@ -139,7 +142,7 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
 
     params.fieldName = this.ensureValidFieldName(params.fieldName, params.isNestedPath);
 
-    this.appendOperatorIfNeeded();
+    this.appendOperatorIfNeeded(this.whereTokens);
     this.whereTokens.addLast(WhereToken.equals(params.fieldName, params.parameterName, params.exact));
 
     return this;
@@ -165,7 +168,7 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
 
     params.fieldName = this.ensureValidFieldName(params.fieldName, params.isNestedPath);
 
-    this.appendOperatorIfNeeded();
+    this.appendOperatorIfNeeded(this.whereTokens);
     this.whereTokens.addLast(WhereToken.notEquals(params.fieldName, params.parameterName, params.exact));
 
     return this;
@@ -194,106 +197,341 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public whereIn(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
+
     fieldName = this.ensureValidFieldName(fieldName);
 
-    this.appendOperatorIfNeeded(WhereTokens);
+    this.appendOperatorIfNeeded(this.whereTokens);
     this.negateIfNeeded(fieldName);
+
     this.whereTokens.addLast(WhereToken.in(fieldName, parameterName, exact));
 
     return this;
   }
 
   public whereStartsWith(fieldName: string, parameterName: string): IQueryBuilder {
-    return this;
-  }
 
-  public whereEndsWith(fieldName: string, parameterName: string): IQueryBuilder {
-    return this;
-  }
-
-  public whereBetween(fieldName: string, fromParameterName: string, toParameterName: string, exact: boolean = false): IQueryBuilder {
-    return this;
-  }
-
-  public whereGreaterThan(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
-    return this;
-  }
-
-  public whereGreaterThanOrEqual(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
-    return this;
-  }
-
-  public whereLessThan(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
-    return this;
-  }
-
-  public whereLessThanOrEqual(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
-    return this;
-  }
-
-  public whereExists(fieldName: string): IQueryBuilder {
     fieldName = this.ensureValidFieldName(fieldName);
 
     this.appendOperatorIfNeeded(this.whereTokens);
     this.negateIfNeeded(fieldName);
+
+    this.whereTokens.addLast(WhereToken.startsWith(fieldName, parameterName));
+
+    return this;
+  }
+
+  public whereEndsWith(fieldName: string, parameterName: string): IQueryBuilder {
+
+    fieldName = this.ensureValidFieldName(fieldName);
+
+    this.appendOperatorIfNeeded(this.whereTokens);
+    this.negateIfNeeded(fieldName);
+
+    this.whereTokens.addLast(WhereToken.endsWith(fieldName, parameterName));
+
+    return this;
+  }
+
+  public whereBetween(fieldName: string, fromParameterName: string, toParameterName: string, exact: boolean = false): IQueryBuilder {
+
+    fieldName = this.ensureValidFieldName(fieldName);
+
+    this.appendOperatorIfNeeded(this.whereTokens);
+    this.negateIfNeeded(fieldName);
+
+    this.whereTokens.addLast(WhereToken.between(fieldName, fromParameterName, toParameterName, exact));
+
+    return this;
+  }
+
+  public whereGreaterThan(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
+
+    fieldName = this.ensureValidFieldName(fieldName);
+
+    this.appendOperatorIfNeeded(this.whereTokens);
+    this.negateIfNeeded(fieldName);
+
+    this.whereTokens.addLast(WhereToken.greaterThan(fieldName, parameterName, exact));
+
+    return this;
+  }
+
+  public whereGreaterThanOrEqual(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
+
+    fieldName = this.ensureValidFieldName(fieldName);
+
+    this.appendOperatorIfNeeded(this.whereTokens);
+    this.negateIfNeeded(fieldName);
+
+    this.whereTokens.addLast(WhereToken.greaterThanOrEqual(fieldName, parameterName, exact));
+
+    return this;
+  }
+
+  public whereLessThanOrEqual(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
+
+    fieldName = this.ensureValidFieldName(fieldName);
+
+    this.appendOperatorIfNeeded(this.whereTokens);
+    this.negateIfNeeded(fieldName);
+
+    this.whereTokens.addLast(WhereToken.lessThanOrEqual(fieldName, parameterName, exact));
+
+    return this;
+  }
+
+  public whereLessThan(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
+
+    fieldName = this.ensureValidFieldName(fieldName);
+
+    this.appendOperatorIfNeeded(this.whereTokens);
+    this.negateIfNeeded(fieldName);
+
+    this.whereTokens.addLast(WhereToken.lessThan(fieldName, parameterName, exact));
+
+    return this;
+  }
+
+  public whereExists(fieldName: string): IQueryBuilder {
+
+    fieldName = this.ensureValidFieldName(fieldName);
+
+    this.appendOperatorIfNeeded(this.whereTokens);
+    this.negateIfNeeded(fieldName);
+
     this.whereTokens.addLast(WhereToken.exists(fieldName));
 
     return this;
   }
 
   public andAlso(): IQueryBuilder {
+
+    if (this.whereTokens.last === null) {
+
+      return this;
+
+    }
+
+    if (this.whereTokens.last.value instanceof QueryOperatorToken) {
+      throw new InvalidOperationException("Cannot add AND, previous token was already an operator token.");
+    }
+
+    this.whereTokens.addLast(QueryOperatorToken.And);
+
     return this;
   }
 
   public orElse(): IQueryBuilder {
+
+    if (this.whereTokens.last === null) {
+
+      return this;
+
+    }
+
+    if (this.whereTokens.last.value instanceof QueryOperatorToken) {
+      throw new InvalidOperationException("Cannot add OR, previous token was already an operator token.");
+    }
+
+    this.whereTokens.addLast(QueryOperatorToken.Or);
+
     return this;
   }
 
+  //+
   public boost(boost: number): IQueryBuilder {
+
+    if (boost == 1) {
+      return this;
+    }
+
+    let whereToken = this.whereTokens.last.value;
+
+    if (!(whereToken instanceof WhereToken)) {
+      whereToken = null;
+    }
+
+    if (whereToken == null) {
+      throw new InvalidOperationException("Missing where clause");
+    }
+
+    if (boost <= 0) {
+      throw new ArgumentOutOfRangeException("Boost factor must be a positive number");
+    }
+
+    WhereToken.boost = boost;
+
     return this;
   }
 
   public fuzzy(fuzzy: number): IQueryBuilder {
+
+    let whereToken = this.whereTokens.last.value;
+
+    if (!(whereToken instanceof WhereToken)) {
+      whereToken = null;
+    }
+
+    if (whereToken == null) {
+      throw new InvalidOperationException("Missing where clause");
+    }
+
+    if (fuzzy < 0 || fuzzy > 1) {
+      throw new ArgumentOutOfRangeException("Fuzzy distance must be between 0.0 and 1.0");
+    }
+
+    WhereToken.fuzzy = fuzzy;
+
     return this;
   }
 
   public proximity(proximity: number): IQueryBuilder {
+
+    let whereToken = this.whereTokens.last.value;
+
+    if (!(whereToken instanceof WhereToken)) {
+      whereToken = null;
+    }
+
+    if (whereToken == null) {
+      throw new InvalidOperationException("Missing where clause");
+    }
+
+    if (proximity < 1) {
+      throw new ArgumentOutOfRangeException("Proximity distance must be a positive number");
+    }
+
+    WhereToken.proximity = proximity;
+
     return this;
   }
 
   public orderBy(field: string, ordering?: OrderingType): IQueryBuilder {
+
+    this.assertNoRawQuery();
+    field = this.ensureValidFieldName(field);
+    this.orderByTokens.addLast(OrderByToken.createAscending(field, ordering));
+
     return this;
   }
 
   public orderByDescending(field: string, ordering?: OrderingType): IQueryBuilder {
+
+    this.assertNoRawQuery();
+    field = this.ensureValidFieldName(field);
+    this.orderByTokens.addLast(OrderByToken.createDescending(field, ordering));
+
     return this;
   }
 
   public orderByScore(): IQueryBuilder {
+
+    this.assertNoRawQuery();
+    this.orderByTokens.addLast(OrderByToken.scoreAscending);
+
     return this;
   }
 
   public orderByScoreDescending(): IQueryBuilder {
+
+    this.assertNoRawQuery();
+    this.orderByTokens.addLast(OrderByToken.scoreDescending);
+
     return this;
   }
 
   public search(fieldName: string, searchTerms: string, operator: SearchOperator): IQueryBuilder {
+
+    fieldName = this.ensureValidFieldName(fieldName);
+
+    this.appendOperatorIfNeeded(this.whereTokens);
+    this.negateIfNeeded(fieldName);
+
+    // let hasWhiteSpace = searchTerms.Any(char.IsWhiteSpace);
+    //
+    // LastEquality = new KeyValuePair<string, object>(fieldName,
+    //   hasWhiteSpace ? "(" + searchTerms + ")" : searchTerms
+    // );
+
+    this.whereTokens.addLast(WhereToken.search(fieldName, searchTerms, operator));
+
     return this;
   }
 
+  //+??? IsIntersect = true;
   public intersect(): IQueryBuilder {
-    return this;
-  }
 
+    let last = this.whereTokens.last.value;
+
+    if (!(last instanceof WhereToken)) {
+      last = null;
+    }
+
+    if (last instanceof WhereToken || last instanceof CloseSubclauseToken) {
+
+      SpartialRelations.Intersects; //??? IsIntersect = true;
+
+      this.whereTokens.addLast(IntersectMarkerToken.Instance);
+    }
+    else {
+      throw new InvalidOperationException("Cannot add INTERSECT at this point.");
+    }
+      return this;
+    }
+
+  //??? addFirst
   public distinct(): IQueryBuilder {
+
+    if (QueryKeywords.Distinct) {
+      throw new InvalidOperationException("This is already a distinct query.");
+    }
+
+    this.selectTokens.addFirst(DistinctToken.Instance);
+
     return this;
   }
 
+  //+?
   public containsAny(fieldName: string, parameterName: string): IQueryBuilder {
+
+    fieldName = this.ensureValidFieldName(fieldName);
+
+    this.appendOperatorIfNeeded(this.whereTokens);
+    this.negateIfNeeded(fieldName);
+
+    // var array = TransformEnumerable(fieldName, UnpackEnumerable(values))
+    //   .ToArray();
+
+    if (fieldName.length == 0)
+    {
+      this.whereTokens.addLast(TrueToken.instance);
+      return this;
+    }
+
+    this.whereTokens.addLast(WhereToken.in(fieldName, parameterName, false));
+
     return this;
   }
 
+  //+?
   public containsAll(fieldName: string, parameterName: string): IQueryBuilder {
+
+    fieldName = this.ensureValidFieldName(fieldName);
+
+    this.appendOperatorIfNeeded(this.whereTokens);
+    this.negateIfNeeded(fieldName);
+
+    // var array = TransformEnumerable(fieldName, UnpackEnumerable(values))
+    //   .ToArray();
+
+    if (fieldName.length == 0)
+    {
+      this.whereTokens.addLast(TrueToken.instance);
+      return this;
+    }
+
+    this.whereTokens.addLast(WhereToken.allIn(fieldName, parameterName));
+
     return this;
   }
 
@@ -314,21 +552,51 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
     return this;
   }
 
+  //?
   public groupByKey(fieldName: string, projectedName?: string): IQueryBuilder {
+
+    this.assertNoRawQuery();
+    this.isGroupBy = true;
+
+    // if (projectedName != null && _aliasToGroupByFieldName.TryGetValue(projectedName, out var aliasedFieldName))
+    // {
+    //   if (fieldName == null || fieldName.Equals(projectedName, StringComparison.Ordinal))
+    //     fieldName = aliasedFieldName;
+    // }
+
+    this.selectTokens.addLast(GroupByToken.create(fieldName, projectedName));
+
     return this;
   }
 
   public groupBySum(fieldName: string, projectedName?: string): IQueryBuilder {
+
+    this.assertNoRawQuery();
+    this.isGroupBy = true;
+
+    fieldName = this.ensureValidFieldName(fieldName);
+
+    this.selectTokens.addLast(GroupByToken.create(fieldName));
+
     return this;
   }
 
   public groupByCount(projectedName?: string): IQueryBuilder {
+
+    this.assertNoRawQuery();
+
+    this.isGroupBy = true;
+
+    this.selectTokens.addLast(GroupByToken.create(projectedName));
+
     return this;
   }
 
   public whereTrue(): IQueryBuilder {
+
     this.appendOperatorIfNeeded(this.whereTokens);
     this.negateIfNeeded();
+
     this.whereTokens.addLast(TrueToken.instance);
 
     return this;
@@ -430,4 +698,5 @@ would modify the query (such as Where, Select, OrderBy, GroupBy, etc)"
 
     this.whereTokens.addLast(NegateToken.instance);
   }
+
 }

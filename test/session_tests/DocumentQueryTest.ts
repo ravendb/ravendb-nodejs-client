@@ -11,6 +11,7 @@ import {IRavenObject} from "../../src/Typedef/IRavenObject";
 import {Product, Universal, UniversalsTestingSort} from "../TestClasses";
 import {QueryBuilder} from "../../src/Documents/Session/Query/QueryBuilder";
 import {IDocumentQuery} from "../../src/Documents/Session/IDocumentQuery";
+import {FromToken} from "../../src/Documents/Session/Query/Tokens/FromToken";
 
 describe('Document query test', () => {
   let store: IDocumentStore;
@@ -45,11 +46,13 @@ describe('Document query test', () => {
 
   describe('Index checking', () => {
 
-   it('should query with whereEqualsAndOr', async () => {
+    it('should query with whereEqualsAndOr', async () => {
       const query: IDocumentQuery<Universal> = store
         .openSession()
         .query<Universal>({indexName: 'UniversalsTestingSort', waitForNonStaleResults: true})
         .whereEqualsAndOr<number>('name', 'withNesting', 'order', 3, 'order', 4);
+
+      console.log(FromToken.collectionName);
 
       const results: Universal[] = await query.get();
       const queryString: string = await query['_builder'].getRql();
@@ -65,6 +68,28 @@ describe('Document query test', () => {
       });
 
     });
+
+   //
+   // it('should query with whereEqualsAndOr', async () => {
+   //    const query: IDocumentQuery<Universal> = store
+   //      .openSession()
+   //      .query<Universal>({indexName: 'UniversalsTestingSort', waitForNonStaleResults: true})
+   //      .whereEqualsAndOr<number>('name', 'withNesting', 'order', 3, 'order', 4);
+   //
+   //    const results: Universal[] = await query.get();
+   //    const queryString: string = await query['_builder'].getRql();
+   //
+   //    expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE name='withNesting' AND ( order='3' ) OR order='4'`);
+   //
+   //    expect(results).to.have.lengthOf(2);
+   //
+   //    results.map(function (obj) {
+   //
+   //      expect(obj).to.include({'name': 'withNesting'});
+   //
+   //    });
+   //
+   //  });
 
     it('should query with orderBy as long', async () => {
 
