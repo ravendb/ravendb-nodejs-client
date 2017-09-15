@@ -4,7 +4,7 @@ import {IRavenObject} from "../../Typedef/IRavenObject";
 import {DocumentConstructor, DocumentConventions, DocumentType} from "../Conventions/DocumentConventions";
 import {ConditionValue, OrderingType, SearchOperator} from "./Query/QueryLanguage";
 import {SpartialCriteria} from "./Query/Spartial/SpartialCriteria";
-import {WhereParams} from "./Query/WhereParams";
+// import {WhereParams} from "./Query/WhereParams";
 
 export interface IDocumentQueryOptions<T> {
   documentType?: DocumentType<T>,
@@ -31,9 +31,9 @@ export interface IDocumentQuery<T> {
   include(path: string): IDocumentQuery<T>;
   take(count: number): IDocumentQuery<T>;
   skip(count: number): IDocumentQuery<T>;
-  whereEquals<V extends ConditionValue>(whereParams: WhereParams<V>): IDocumentQuery<T>;
+  // whereEquals<V extends ConditionValue>(whereParams: WhereParams<V>): IDocumentQuery<T>;
   whereEquals<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;
-  whereNotEquals<V extends ConditionValue>(whereParams: WhereParams<V>): IDocumentQuery<T>;
+  // whereNotEquals<V extends ConditionValue>(whereParams: WhereParams<V>): IDocumentQuery<T>;
   whereNotEquals<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;
   openSubclause(): IDocumentQuery<T>;
   closeSubclause(): IDocumentQuery<T>;

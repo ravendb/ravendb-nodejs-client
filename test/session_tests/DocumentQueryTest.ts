@@ -11,7 +11,8 @@ import {IRavenObject} from "../../src/Typedef/IRavenObject";
 import {Product, Universal, UniversalsTestingSort} from "../TestClasses";
 import {QueryBuilder} from "../../src/Documents/Session/Query/QueryBuilder";
 import {IDocumentQuery} from "../../src/Documents/Session/IDocumentQuery";
-import {FromToken} from "../../src/Documents/Session/Query/Tokens/FromToken";
+import {LinkedListItem} from "../../src/Utility/LinkedList";
+import {DocumentQuery} from "../../src/Documents/Session/DocumentQuery";
 
 describe('Document query test', () => {
   let store: IDocumentStore;
@@ -20,6 +21,7 @@ describe('Document query test', () => {
   let currentDatabase: string, defaultUrl: string;
 
   beforeEach(function (): void {
+
     ({currentDatabase, defaultUrl, requestExecutor, store} = (this.currentTest as IRavenObject));
   });
 
@@ -46,26 +48,51 @@ describe('Document query test', () => {
 
   describe('Index checking', () => {
 
-    it('should query with whereEqualsAndOr', async () => {
-      const query: IDocumentQuery<Universal> = store
-        .openSession()
-        .query<Universal>({indexName: 'UniversalsTestingSort', waitForNonStaleResults: true})
-        .whereEqualsAndOr<number>('name', 'withNesting', 'order', 3, 'order', 4);
+let a = new QueryBuilder('index');
+    console.log(
+      a.whereIn('fileld', 'param').whereTokens._items
+    );
+    it('FromToken.collectionName', async () => {
 
-      console.log(FromToken.collectionName);
+      /*
+      * 1. я не смсог найти аналог ToString
+      * они используют несколько разных функций
+      *  public override string ToString()
+        {
+            return $"Map - attempts: {MapAttempts}, successes: {MapSuccesses}, errors: {MapErrors} / " +
+                   $"Reduce - attempts: {ReduceAttempts}, successes: {ReduceSuccesses}, errors: {ReduceErrors}";
+        }
 
-      const results: Universal[] = await query.get();
-      const queryString: string = await query['_builder'].getRql();
+        поэтому я так понял мне нужно сделать аналог      var query = RavenTestHelper.GetIndexQuery(ravenQueryable);
 
-      expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE name='withNesting' AND ( order='3' ) OR order='4'`);
+        или
 
-      expect(results).to.have.lengthOf(2);
+           writer
+        .append(", ")
+        .append(this._boost.toString())
+        .append(")");
 
-      results.map(function (obj) {
+        ??
+      * */
 
-        expect(obj).to.include({'name': 'withNesting'});
 
-      });
+      // const query: IDocumentQuery<Universal> = store
+      //   .openSession()
+      //   .query<Universal>({indexName: 'UniversalsTestingSort', waitForNonStaleResults: true})
+      //   .whereEqualsAndOr<number>('name', 'withNesting', 'order', 3, 'order', 4);
+
+      // const results: Universal[] = await query.get();
+      // const queryString: string = await query['_builder'].getRql();
+      //
+      // expect(queryString).equals(`SELECT * FROM INDEX UniversalsTestingSort WHERE name='withNesting' AND ( order='3' ) OR order='4'`);
+      //
+      // expect(results).to.have.lengthOf(2);
+      //
+      // results.map(function (obj) {
+      //
+      //   expect(obj).to.include({'name': 'withNesting'});
+      //
+      // });
 
     });
 

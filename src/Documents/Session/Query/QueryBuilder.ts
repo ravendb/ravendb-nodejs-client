@@ -338,7 +338,6 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
     return this;
   }
 
-  //+
   public boost(boost: number): IQueryBuilder {
 
     if (boost == 1) {
