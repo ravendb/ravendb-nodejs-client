@@ -18,7 +18,7 @@ export class PutIndexesCommand extends RavenCommand {
     if (TypeUtil.isArray(moreIndexesToAdd) && moreIndexesToAdd.length) {
       indexes = indexes.concat(moreIndexesToAdd);
     }
-    
+
     super('', RequestMethods.Put);
 
     if (!indexes.length) {
@@ -39,7 +39,6 @@ export class PutIndexesCommand extends RavenCommand {
       if (!this.indexes) {
         this.indexes = [];
       }
-
       this.indexes.push(indexToAdd);
     });
   }
@@ -50,13 +49,14 @@ export class PutIndexesCommand extends RavenCommand {
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
+
     const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
 
     if (!response.body) {
       throw new ErrorResponseException('Failed to put indexes to the database \
 please check the connection to the server');
     }
-    
+
     return result;
   }
 }

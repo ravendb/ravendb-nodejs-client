@@ -1,11 +1,11 @@
-import {SpartialCriteria} from "./SpartialCriteria";
-import {SpartialRelation} from "./SpartialRelation";
+import {SpatialCriteria} from "./SpatialCriteria";
+import {SpatialRelation} from "./SpatialRelation";
 import {ShapeToken} from "../Tokens/ShapeToken";
 
-export class WktCriteria extends SpartialCriteria {
+export class WktCriteria extends SpatialCriteria {
   protected shapeWkt: string;
 
-  constructor(shapeWkt: string, relation: SpartialRelation, distanceErrorPct: number) {
+  constructor(shapeWkt: string, relation: SpatialRelation, distanceErrorPct: number) {
     super(relation, distanceErrorPct);
     this.shapeWkt = shapeWkt;
   }

@@ -21,7 +21,7 @@ export class OrderByToken extends QueryToken
     return new (this as (typeof OrderByToken))("random()", true);
   }
 
-  protected constructor(fieldName: string, descending: boolean = false, ordering: OrderingType = OrderingTypes.String)
+  public constructor(fieldName: string, descending: boolean = false, ordering: OrderingType = OrderingTypes.String) //TODO change to protected
   {
     super();
     this._fieldName = fieldName;

@@ -4,7 +4,7 @@ import {QueryKeywords, QueryOperators, SearchOperator, SearchOperators, WhereOpe
 import {ShapeToken} from "./ShapeToken";
 import {TypeUtil} from "../../../../Utility/TypeUtil";
 import {ArgumentOutOfRangeException} from "../../../../Database/DatabaseExceptions";
-import {SpartialConstants} from "../Spartial/SpartialConstants";
+import {SpatialConstants} from "../Spatial/SpatialConstants";
 
 export interface IWhereTokenOptions {
   fieldName?: string;
@@ -202,7 +202,7 @@ export class WhereToken extends QueryToken
     this._distanceErrorPct = whereOptions.distanceErrorPct || null;
     this._whereShape = whereOptions.whereShape || null;
   }
-  
+
   public get fieldName(): string {
     return this._fieldName;
   }
@@ -394,7 +394,7 @@ export class WhereToken extends QueryToken
 
         this._whereShape.writeTo(writer);
 
-        if (Math.abs(this._distanceErrorPct - SpartialConstants.DefaultDistanceErrorPct) > Number.EPSILON) {
+        if (Math.abs(this._distanceErrorPct - SpatialConstants.DefaultDistanceErrorPct) > Number.EPSILON) {
           writer.append(", ");
           writer.append(this._distanceErrorPct.toString());
         }

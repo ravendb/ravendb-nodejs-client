@@ -4,7 +4,6 @@ import {TypeUtil} from "../../Utility/TypeUtil";
 import {IOptionsSet} from "../../Typedef/IOptionsSet";
 import {StringUtil} from "../../Utility/StringUtil";
 import {IRavenObject} from "../../Typedef/IRavenObject";
-import {QueryOperator} from "../../Documents/Session/Query/QueryOperator";
 import {IJsonable} from "../../Typedef/Contracts";
 
 export class IndexQuery implements IJsonable {
@@ -59,7 +58,7 @@ export class IndexQuery implements IJsonable {
     return this._waitForNonStaleResultsTimeout;
   }
 
-  public get queryHash(): string {    
+  public get queryHash(): string {
     let buffer: string = StringUtil.format('{query}{pageSize}{start}', this);
 
     buffer += this._waitForNonStaleResults ? "1" : "0";
@@ -71,8 +70,8 @@ export class IndexQuery implements IJsonable {
     return crypto.createHash('sha256').update(buffer).digest('hex');
   }
 
-  protected get formattedTimeout(): string {    
-    return this.waitForNonStaleResultsTimeout.toString();    
+  protected get formattedTimeout(): string {
+    return this.waitForNonStaleResultsTimeout.toString();
   }
 
   public toJson(): object {
@@ -85,12 +84,12 @@ export class IndexQuery implements IJsonable {
       WaitForNonStaleResultsAsOfNow: this._waitForNonStaleResults
     };
 
-    if (this._waitForNonStaleResults) {    
+    if (this._waitForNonStaleResults) {
       _.assign(json, {
         WaitForNonStaleResultsTimeout: this.formattedTimeout
-      });      
+      });
     }
 
     return json;
-  }  
+  }
 }

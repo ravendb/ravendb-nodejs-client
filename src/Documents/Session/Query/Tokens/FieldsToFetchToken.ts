@@ -14,11 +14,11 @@ export class FieldsToFetchToken extends QueryToken {
     return this._projections;
   }
 
-  public static create(fieldsToFetch: string[], projections: string = []): FieldsToFetchToken {
+  public static create(fieldsToFetch: string[], projections: string[] = []): FieldsToFetchToken {
     return new (this as typeof FieldsToFetchToken)(fieldsToFetch, projections);
   }
 
-  protected constructor(fieldsToFetch: string[], projections: string = []) {
+  protected constructor(fieldsToFetch: string[], projections: string[] = []) {
     super();
 
     if (!fieldsToFetch.length) {
