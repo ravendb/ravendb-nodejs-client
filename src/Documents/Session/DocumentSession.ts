@@ -17,6 +17,7 @@ import {RavenCommandData} from "../../Database/RavenCommandData";
 import {PutCommandData} from "../../Database/Commands/Data/PutCommandData";
 import {DeleteCommandData} from "../../Database/Commands/Data/DeleteCommandData";
 import {SaveChangesData} from "../../Database/Commands/Data/SaveChangesData";
+import {QueryOperator} from "./Query/QueryOperator";
 import {IRavenObject} from "../../Typedef/IRavenObject";
 import {Serializer} from "../../Json/Serializer";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
@@ -42,10 +43,10 @@ export class DocumentSession implements IDocumentSession {
 
   public get conventions(): DocumentConventions {
     return this.documentStore.conventions;
-  }
+  }       
 
   constructor (database: string, documentStore: IDocumentStore, requestExecutor: RequestExecutor,
-               sessionId: string
+     sessionId: string
   ) {
     this.database = database;
     this.documentStore = documentStore;
@@ -68,7 +69,7 @@ export class DocumentSession implements IDocumentSession {
       return BluebirdPromise.reject(new InvalidOperationException('Document ID isn\'t set or ids list is empty'));
     }
 
-    const loadingOneDoc: boolean = !TypeUtil.isArray(idOrIds);
+    const loadingOneDoc: boolean = !TypeUtil.isArray(idOrIds); 
     const ids: string[] = loadingOneDoc ? [<string>idOrIds] : <string[]>idOrIds;
     let idsOfNonExistingDocuments: Set<string> = new Set<string>(ids);
 
@@ -80,40 +81,40 @@ export class DocumentSession implements IDocumentSession {
       const conventions: DocumentConventions = this.documentStore.conventions;
 
       Array.from<string>(idsOfNonExistingDocuments)
-        .filter((id: string): boolean => id
+        .filter((id: string): boolean => id 
           in this.includedRawEntitiesById
         )
         .forEach((id: string) => {
           this.makeDocument(
-            this.includedRawEntitiesById[id],
+            this.includedRawEntitiesById[id], 
             documentType, nestedObjectTypes
           );
 
           delete this.includedRawEntitiesById[id];
-        });
+      });
 
       idsOfNonExistingDocuments = new Set<string>(
         Array.from<string>(idsOfNonExistingDocuments)
           .filter((id: string): boolean => !(id in this.documentsById)
-          ));
+      ));  
     }
 
     idsOfNonExistingDocuments = new Set<string>(
       Array.from<string>(idsOfNonExistingDocuments)
         .filter((id: string): boolean => !this.knownMissingIds.has(id)
-        ));
-
-    return BluebirdPromise.resolve()
+    ));
+   
+    return BluebirdPromise.resolve()   
       .then((): BluebirdPromise.Thenable<void | T[]> => {
         if (idsOfNonExistingDocuments.size) {
           return this.fetchDocuments<T>(
-            Array.from<string>(idsOfNonExistingDocuments),
+            Array.from<string>(idsOfNonExistingDocuments), 
             documentType, includes, nestedObjectTypes
           );
         }
       })
-      .then((): T[] => ids.map((id: string): T => (!this.knownMissingIds.has(id)
-        && (id in this.documentsById)) ? this.documentsById[id] as T : null
+      .then((): T[] => ids.map((id: string): T => (!this.knownMissingIds.has(id) 
+        && (id in this.documentsById)) ? this.documentsById[id] as T : null 
       ))
       .then((results: T[]): T | T[] =>  {
         let result : T | T[] = results;
@@ -121,7 +122,7 @@ export class DocumentSession implements IDocumentSession {
         if (loadingOneDoc) {
           result = _.first(results) as T;
         }
-
+        
         PromiseResolver.resolve<T | T[]>(result, null, callback);
         return result;
       })
@@ -139,7 +140,7 @@ export class DocumentSession implements IDocumentSession {
         let originalMetadata: object;
 
         if (TypeUtil.isString(idOrDocument)) {
-          id = idOrDocument as string;
+            id = idOrDocument as string;
 
           if (idOrDocument in this.documentsById) {
             document = this.documentsById[id] as T;
@@ -155,7 +156,7 @@ export class DocumentSession implements IDocumentSession {
 
         if (!document) {
 
-          this.deferCommands.add(new DeleteCommandData(id, expectedChangeVector));
+            this.deferCommands.add(new DeleteCommandData(id, expectedChangeVector));
         } else {
           if (!this.rawEntitiesAndMetadata.has(document)) {
             return BluebirdPromise.reject(new InvalidOperationException('Document is not associated with the session, cannot delete unknown document instance'));
@@ -171,7 +172,7 @@ export class DocumentSession implements IDocumentSession {
             info.expectedChangeVector = expectedChangeVector;
             this.rawEntitiesAndMetadata.set(document, info);
           }
-          this.deletedDocuments.add(document);
+            this.deletedDocuments.add(document);
         }
 
         this.knownMissingIds.add(id);
@@ -194,11 +195,11 @@ export class DocumentSession implements IDocumentSession {
         if (isNewDocument = isNew) {
           originalMetadata = _.cloneDeep(document['@metadata'] || {});
           return this.prepareDocumentIdBeforeStore<T>(document, id, changeVector);
-        }
+        }  
 
         return document;
       })
-      .then((document: T): T | BluebirdPromise.Thenable<T> => {
+      .then((document: T): T | BluebirdPromise.Thenable<T> => {   
         if (isNewDocument) {
           const id: string = conventions.getIdFromDocument(document);
           const docType: DocumentType<T> = conventions.getTypeFromDocument(document, id, documentType);
@@ -206,7 +207,7 @@ export class DocumentSession implements IDocumentSession {
           for (let command of this.deferCommands.values()) {
             if (command.documentId === id) {
               return BluebirdPromise.reject(new InvalidOperationException(StringUtil.format(
-                "Can't store document, there is a deferred command registered " +
+                "Can't store document, there is a deferred command registered " + 
                 "for this document in the session. Document id: {0}", id
               )));
             }
@@ -214,13 +215,13 @@ export class DocumentSession implements IDocumentSession {
 
           if (this.deletedDocuments.has(document)) {
             return BluebirdPromise.reject(new InvalidOperationException(StringUtil.format(
-              "Can't store object, it was already deleted in this " +
-              "session. Document id: {0}", id
-            )));
+                "Can't store object, it was already deleted in this " + 
+                "session. Document id: {0}", id
+              )));
           }
 
           this.deletedDocuments.delete(document);
-          document['@metadata'] = conventions.buildDefaultMetadata(document, docType);
+          document['@metadata'] = conventions.buildDefaultMetadata(document, docType);          
           this.onDocumentFetched<T>(<IDocumentConversionResult<T>>{
             document: document,
             metadata: document['@metadata'],
@@ -290,20 +291,20 @@ export class DocumentSession implements IDocumentSession {
     );
 
     query.on(
-      DocumentQuery.EVENT_DOCUMENTS_QUERIED,
-      () => this.incrementRequestsCount()
+      DocumentQuery.EVENT_DOCUMENTS_QUERIED, 
+      () => this.incrementRequestsCount()      
     );
 
     query.on<IDocumentConversionResult<T>>(
-      DocumentQuery.EVENT_DOCUMENT_FETCHED,
-      (conversionResult?: IDocumentConversionResult<T>) =>
-        this.onDocumentFetched<T>(conversionResult)
+      DocumentQuery.EVENT_DOCUMENT_FETCHED, 
+      (conversionResult?: IDocumentConversionResult<T>) => 
+      this.onDocumentFetched<T>(conversionResult)
     );
 
     query.on<object[]>(
       DocumentQuery.EVENT_INCLUDES_FETCHED,
       (includes: object[]) =>
-        this.onIncludesFetched(includes)
+      this.onIncludesFetched(includes)
     );
 
     return query;
@@ -339,7 +340,7 @@ more responsive application.", maxRequests
         const commandResponse: IRavenResponse = response;
         const conventions: DocumentConventions = this.documentStore.conventions;
 
-        if (commandResponse) {
+        if (commandResponse) { 
           if (('Results' in commandResponse) && Array.isArray(commandResponse.Results)) {
             responseResults = <object[]>commandResponse.Results || [];
           }
@@ -355,7 +356,7 @@ more responsive application.", maxRequests
             return null;
           }
 
-          return this.makeDocument<T>(result, documentType, nestedObjectTypes);
+          return this.makeDocument<T>(result, documentType, nestedObjectTypes);  
         });
 
         if (responseIncludes.length) {
@@ -388,13 +389,13 @@ more responsive application.", maxRequests
             __proto__: docCtor.prototype
           });
         }
-
+        
         Serializer.fromJSON<T>(<T>document, source || {}, {}, {}, conventions);
       }
 
       document['@metadata'] = conventions.buildDefaultMetadata(document, docType);
     }
-
+    
     return BluebirdPromise.resolve<T>(<T>document);
   }
 
@@ -413,7 +414,7 @@ more responsive application.", maxRequests
 
           if (TypeUtil.isNone(documentId)) {
             documentId = conventions.getIdFromDocument<T>(document, <DocumentType<T>>info.documentType);
-          }
+          } 
 
           if (TypeUtil.isNone(changeVector)) {
             checkMode = ConcurrencyCheckModes.Disabled;
@@ -443,8 +444,8 @@ more responsive application.", maxRequests
 
         if (TypeUtil.isNone(documentId)) {
           documentId = conventions.getIdFromDocument<T>(document);
-        }
-
+        } 
+        
         if (!TypeUtil.isNone(documentId)) {
           conventions.setIdOnDocument(document, documentId);
 
@@ -452,11 +453,11 @@ more responsive application.", maxRequests
         }
 
         if (!TypeUtil.isNone(documentId) && !documentId.endsWith('/') && (documentId in this.documentsById)) {
-          if (!(new Set<IRavenObject>([this.documentsById[documentId]]).has(document))) {
-            return BluebirdPromise.reject(new NonUniqueObjectException(StringUtil.format(
-              "Attempted to associate a different object with id '{0}'.", documentId
-            )));
-          }
+            if (!(new Set<IRavenObject>([this.documentsById[documentId]]).has(document))) {
+                return BluebirdPromise.reject(new NonUniqueObjectException(StringUtil.format(
+                  "Attempted to associate a different object with id '{0}'.", documentId
+                )));
+            } 
         }
 
         if (TypeUtil.isNone(documentId) || documentId.endsWith('/')) {
@@ -486,8 +487,8 @@ more responsive application.", maxRequests
       const id: string = info.id;
       const rawEntity: object = conventions.convertToRawEntity(document, info.documentType);
 
-      if ((this.conventions.defaultUseOptimisticConcurrency && (ConcurrencyCheckModes.Disabled
-          !== info.concurrencyCheckMode)) || (ConcurrencyCheckModes.Forced === info.concurrencyCheckMode)
+      if ((this.conventions.defaultUseOptimisticConcurrency && (ConcurrencyCheckModes.Disabled 
+        !== info.concurrencyCheckMode)) || (ConcurrencyCheckModes.Forced === info.concurrencyCheckMode)
       ) {
         changeVector = info.changeVector || info.metadata['@change-vector'] || conventions.emptyChangeVector;
       }
@@ -506,7 +507,7 @@ more responsive application.", maxRequests
       let changeVector: string = null;
 
       if (id in this.documentsById) {
-        existingDocument = this.documentsById[id];
+        existingDocument = this.documentsById[id];        
 
         if (this.rawEntitiesAndMetadata.has(existingDocument)) {
           info = this.rawEntitiesAndMetadata.get(existingDocument);
@@ -551,14 +552,14 @@ more responsive application.", maxRequests
           this.documentsById[commandResult['@id']] = document;
           this.rawEntitiesAndMetadata.set(document, info);
         }
-      }
+      } 
     }
   }
 
   protected isDocumentChanged<T extends Object = IRavenObject>(document: T): boolean {
     if (this.rawEntitiesAndMetadata.has(document)) {
       const info: IStoredRawEntityInfo = this.rawEntitiesAndMetadata.get(document);
-
+      
       return !_.isEqual(info.originalValue, this.conventions.convertToRawEntity(document, info.documentType))
         || !_.isEqual(info.originalMetadata, info.metadata);
     }
@@ -567,11 +568,11 @@ more responsive application.", maxRequests
   }
 
   protected makeDocument<T extends Object = IRavenObject>(commandResult: object, documentType?: DocumentType<T>, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T {
-    const conversionResult: IDocumentConversionResult<T> =  this.conventions
+     const conversionResult: IDocumentConversionResult<T> =  this.conventions
       .convertToDocument<T>(commandResult, documentType, nestedObjectTypes);
 
-    this.onDocumentFetched<T>(conversionResult);
-    return conversionResult.document as T;
+     this.onDocumentFetched<T>(conversionResult);  
+     return conversionResult.document as T; 
   }
 
   protected onIncludesFetched(includes: object[]): void {
@@ -589,7 +590,7 @@ more responsive application.", maxRequests
   protected onDocumentFetched<T extends Object = IRavenObject>(conversionResult?: IDocumentConversionResult<T>): void {
     if (conversionResult) {
       const documentId: string = this.conventions
-          .getIdFromDocument(conversionResult.document, conversionResult.documentType)
+        .getIdFromDocument(conversionResult.document, conversionResult.documentType)
         || conversionResult.originalMetadata['@id'] || conversionResult.metadata['@id'];
 
       if (documentId) {

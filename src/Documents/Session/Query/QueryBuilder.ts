@@ -1,7 +1,7 @@
 import {IQueryBuilder} from "./IQueryBuilder";
-import {FieldConstants, OrderingType, QueryKeywords, QueryOperator, SearchOperators} from "./QueryLanguage";
+import {FieldConstants, OrderingType, QueryKeywords, QueryOperator} from "./QueryLanguage";
 import {SearchOperator} from "./QueryLanguage";
-import {SpatialCriteria} from "./Spatial/SpatialCriteria";
+import {SpartialCriteria} from "./Spartial/SpartialCriteria";
 import {LinkedList} from "../../../Utility/LinkedList";
 import {QueryToken} from "./Tokens/QueryToken";
 import {FromToken} from "./Tokens/FromToken";
@@ -20,9 +20,7 @@ import {OpenSubclauseToken} from "./Tokens/OpenSubclauseToken";
 import {NegateToken} from "./Tokens/NegateToken";
 import {TrueToken} from "./Tokens/TrueToken";
 import {IntersectMarkerToken} from "./Tokens/IntersectMarkerToken";
-import {SpatialRelations} from "./Spatial/SpatialRelation";
-import {DistinctToken} from "./Tokens/DistinctToken";
-import {StringBuilder} from "../../../Utility/StringBuilder";
+import {SpartialRelations} from "./Spartial/SpartialRelation";
 
 export interface IFieldValidationResult {
   originalFieldName: string;
@@ -34,15 +32,10 @@ export class QueryBuilder extends Observable implements IQueryBuilder {
 
   protected selectTokens: LinkedList<QueryToken>;
   protected fromToken: FromToken;
-
-  protected groupByTokens: LinkedList<QueryToken>;
-  protected groupByToken: GroupByToken;
-
-  protected orderByTokens: LinkedList<QueryToken>;
-  protected orderByToken: OrderByToken;
-
   protected fieldsToFetchToken: FieldsToFetchToken;
   protected whereTokens: LinkedList<QueryToken>;
+  protected groupByTokens: LinkedList<QueryToken>;
+  protected orderByTokens: LinkedList<QueryToken>;
   protected defaultOperator: QueryOperator = null;
   protected idPropertyName?: string = null;
   protected includes: Set<string>;
@@ -58,17 +51,10 @@ export class QueryBuilder extends Observable implements IQueryBuilder {
       this.from(indexName, collectionName);
     }
 
-    this.fromToken = new FromToken('testIndex'); //TODO check this Type 'LinkedList<QueryToken>' is not assignable to type 'FromToken'
-
-    this.groupByTokens = new LinkedList<QueryToken>();
-    this.groupByToken = new GroupByToken('testIndex');
-
-    this.orderByTokens = new LinkedList<QueryToken>();
-    this.orderByToken = new OrderByToken('testIndex');
-
     this.selectTokens = new LinkedList<QueryToken>();
     this.whereTokens = new LinkedList<QueryToken>();
-
+    this.groupByTokens = new LinkedList<QueryToken>();
+    this.orderByTokens = new LinkedList<QueryToken>();
     this.includes = new Set<string>();
     this.idPropertyName = idPropertyName;
   }
@@ -85,13 +71,14 @@ before any where clause is added.");
   }
 
   public rawQuery(query: string): IQueryBuilder {
-    if ([this.selectTokens, this.whereTokens,
-        this.orderByTokens, this.groupByTokens]
-        .some((list: LinkedList<QueryToken>): boolean => !!list.count)
-    ) {
-      throw new InvalidOperationException("You can only use RawQuery on a new query, \
+     if ([this.selectTokens, this.whereTokens,
+         this.orderByTokens, this.groupByTokens]
+         .some((list: LinkedList<QueryToken>)
+         : boolean => !!list.count)
+     ) {
+       throw new InvalidOperationException("You can only use RawQuery on a new query, \
 without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)");
-    }
+     }
 
     this.queryRaw = query;
     return this;
@@ -136,7 +123,7 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public whereEquals(params: IParametrizedWhereParams): IQueryBuilder;
-  public whereEquals(fieldName: string, parameterName: string, exact: boolean): IQueryBuilder;
+  public whereEquals(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder;
   public whereEquals(fieldNameOrParams: string | IParametrizedWhereParams, parameterName?: string, exact: boolean = false): IQueryBuilder {
     const fieldName: string = <string>fieldNameOrParams;
     const params: IParametrizedWhereParams = <IParametrizedWhereParams>fieldNameOrParams;
@@ -162,17 +149,17 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public whereNotEquals(params: IParametrizedWhereParams): IQueryBuilder;
-  // public whereNotEquals(fieldName: string, parameterName: string, exact: boolean): IQueryBuilder;
-  public whereNotEquals(params: IParametrizedWhereParams): IQueryBuilder {
-    // const fieldName: string = <string>fieldNameOrParams;
-    // const params: IParametrizedWhereParams = <IParametrizedWhereParams>fieldNameOrParams;
-    //
-    // if (TypeUtil.isString(fieldNameOrParams)) {
-    //   return this.whereNotEquals({
-    //     parameterName,
-    //     fieldName, exact
-    //   });
-    // }
+  public whereNotEquals(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder;
+  public whereNotEquals(fieldNameOrParams: string | IParametrizedWhereParams, parameterName: string, exact: boolean = false): IQueryBuilder {
+    const fieldName: string = <string>fieldNameOrParams;
+    const params: IParametrizedWhereParams = <IParametrizedWhereParams>fieldNameOrParams;
+
+    if (TypeUtil.isString(fieldNameOrParams)) {
+      return this.whereNotEquals({
+        parameterName,
+        fieldName, exact
+      });
+    }
 
     if (this.negate) {
       this.negate = false;
@@ -191,14 +178,14 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
     this.currentClauseDepth++;
     this.appendOperatorIfNeeded(this.whereTokens);
     this.negateIfNeeded();
-    this.whereTokens.addLast(<QueryToken>OpenSubclauseToken.instance);
+    this.whereTokens.addLast(OpenSubclauseToken.instance);
 
     return this;
   }
 
   public closeSubclause(): IQueryBuilder {
     this.currentClauseDepth--;
-    this.whereTokens.addLast(<QueryToken>CloseSubclauseToken.instance);
+    this.whereTokens.addLast(CloseSubclauseToken.instance);
 
     return this;
   }
@@ -371,8 +358,7 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
       throw new ArgumentOutOfRangeException("Boost factor must be a positive number");
     }
 
-    //TODO LinkedList does`t have boost getter
-    //whereToken.boost = boost;
+    WhereToken.boost = boost;
 
     return this;
   }
@@ -393,7 +379,7 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
       throw new ArgumentOutOfRangeException("Fuzzy distance must be between 0.0 and 1.0");
     }
 
-    //WhereToken.fuzzy = fuzzy;
+    WhereToken.fuzzy = fuzzy;
 
     return this;
   }
@@ -414,7 +400,7 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
       throw new ArgumentOutOfRangeException("Proximity distance must be a positive number");
     }
 
-    //WhereToken.proximity = proximity;
+    WhereToken.proximity = proximity;
 
     return this;
   }
@@ -471,6 +457,7 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
     return this;
   }
 
+  //+??? IsIntersect = true;
   public intersect(): IQueryBuilder {
 
     let last = this.whereTokens.last.value;
@@ -481,26 +468,24 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
 
     if (last instanceof WhereToken || last instanceof CloseSubclauseToken) {
 
-      SpatialRelations.Intersects;
+      SpartialRelations.Intersects; //??? IsIntersect = true;
 
-      //TODO check <QueryToken>
-      this.whereTokens.addLast(<QueryToken>IntersectMarkerToken.instance);
+      this.whereTokens.addLast(IntersectMarkerToken.Instance);
     }
     else {
       throw new InvalidOperationException("Cannot add INTERSECT at this point.");
     }
-    return this;
-  }
+      return this;
+    }
 
-  //?
+  //??? addFirst
   public distinct(): IQueryBuilder {
 
     if (QueryKeywords.Distinct) {
       throw new InvalidOperationException("This is already a distinct query.");
     }
 
-    //TODO Add addFirst method
-    //this.selectTokens.addFirst(DistinctToken.instance);
+    this.selectTokens.addFirst(DistinctToken.Instance);
 
     return this;
   }
@@ -513,11 +498,12 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
     this.appendOperatorIfNeeded(this.whereTokens);
     this.negateIfNeeded(fieldName);
 
-    // let array = TransformEnumerable(fieldName, UnpackEnumerable(values))
+    // var array = TransformEnumerable(fieldName, UnpackEnumerable(values))
     //   .ToArray();
 
-    if (fieldName.length == 0) {
-      this.whereTokens.addLast(<QueryToken>TrueToken.instance);
+    if (fieldName.length == 0)
+    {
+      this.whereTokens.addLast(TrueToken.instance);
       return this;
     }
 
@@ -534,11 +520,12 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
     this.appendOperatorIfNeeded(this.whereTokens);
     this.negateIfNeeded(fieldName);
 
-    // let array = TransformEnumerable(fieldName, UnpackEnumerable(values))
+    // var array = TransformEnumerable(fieldName, UnpackEnumerable(values))
     //   .ToArray();
 
-    if (fieldName.length == 0) {
-      this.whereTokens.addLast(<QueryToken>TrueToken.instance);
+    if (fieldName.length == 0)
+    {
+      this.whereTokens.addLast(TrueToken.instance);
       return this;
     }
 
@@ -564,6 +551,7 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
     return this;
   }
 
+  //?
   public groupByKey(fieldName: string, projectedName?: string): IQueryBuilder {
 
     this.assertNoRawQuery();
@@ -575,7 +563,7 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
     //     fieldName = aliasedFieldName;
     // }
 
-    this.selectTokens.addLast(GroupByToken.create(fieldName));
+    this.selectTokens.addLast(GroupByToken.create(fieldName, projectedName));
 
     return this;
   }
@@ -608,12 +596,12 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
     this.appendOperatorIfNeeded(this.whereTokens);
     this.negateIfNeeded();
 
-    this.whereTokens.addLast(<QueryToken>TrueToken.instance);
+    this.whereTokens.addLast(TrueToken.instance);
 
     return this;
   }
 
-  public spatial(fieldName: string, criteria: SpatialCriteria): IQueryBuilder {
+  public spatial(fieldName: string, criteria: SpartialCriteria): IQueryBuilder {
     return this;
   }
 
@@ -657,21 +645,6 @@ would modify the query (such as Where, Select, OrderBy, GroupBy, etc)"
     return result.escapedFieldName;
   }
 
-  protected addSpaceIfNeeded(previousToken: QueryToken, currentToken: QueryToken, writer): void {
-
-    if (previousToken == null) {
-      return;
-    }
-
-    if (previousToken instanceof OpenSubclauseToken ||
-      currentToken instanceof CloseSubclauseToken ||
-      currentToken instanceof IntersectMarkerToken) {
-      return;
-    }
-
-    writer.append(" ");
-  }
-
   protected appendOperatorIfNeeded(tokens: LinkedList<QueryToken>): void {
     this.assertNoRawQuery();
 
@@ -697,8 +670,8 @@ would modify the query (such as Where, Select, OrderBy, GroupBy, etc)"
       current = current.previous;
     }
 
-    let token: QueryToken = (SearchOperators.And === this.defaultOperator)
-      ? QueryOperatorToken.And : QueryOperatorToken.Or;
+    let token: QueryOperatorToken = (QueryOperator.AND === this.defaultOperator)
+        ? QueryOperatorToken.And : QueryOperatorToken.Or;
 
     if (lastWhere && !TypeUtil.isNone(lastWhere.searchOperator)) {
       token = QueryOperatorToken.Or;
@@ -722,160 +695,7 @@ would modify the query (such as Where, Select, OrderBy, GroupBy, etc)"
       this.andAlso();
     }
 
-    this.whereTokens.addLast(<QueryToken>NegateToken.instance);
-  }
-
-  public buildFrom(writer): void {
-
-    this.fromToken.writeTo(writer);
-
-  }
-
-  public buildOrderBy(writer): void {
-
-    this.orderByToken.writeTo(writer);
-
-  }
-
-  public buildGroupBy(writer): void {
-
-    this.groupByToken.writeTo(writer);
-
-  }
-
-  public buildSelect(writer): void {
-
-    if (this.selectTokens.count === 0) {
-      return;
-    }
-
-    writer
-      .Append(" SELECT ");
-
-    let token = this.selectTokens.first;
-
-    if (this.selectTokens.count === 1
-      && token.value instanceof DistinctToken) {
-
-      token.value.writeTo(writer);
-      writer.Append(" *");
-
-      return;
-    }
-
-    while (token != null) {
-
-      if (token.previous !== null
-        && token.previous.value instanceof DistinctToken === false) {
-        writer.Append(",");
-      }
-
-      this.addSpaceIfNeeded(token.previous.value, token.value, writer);
-
-      token.value.writeTo(writer);
-
-      token = token.next;
-
-    }
-
-  }
-
-  public buildInclude(writer): void {
-
-    if (this.includes === null
-      || (<any>this.includes).length === 0) {
-
-      return;
-
-    } //TODO fix (<any>this.includes) type
-
-    writer.append(" INCLUDE ");
-
-    let first: boolean = true;
-
-    this.includes.forEach((include) => {
-
-      if (first === false) {
-        writer.append(",");
-      }
-
-      first = false;
-      let requiredQuotes = false;
-
-      for (let i = 0; i < include.length; i++) {
-        let ch = include[i];
-        if (TypeUtil.isLetterOrDigit(ch) && ch != '_' && ch != '.') {
-          requiredQuotes = true;
-          break;
-        }
-      }
-
-      if (requiredQuotes) {
-        writer
-          .append("'")
-          .append(include.replace("'", "\\'"))
-          .append("'");
-      }
-      else {
-        writer.append(include);
-      }
-    });
-  }
-
-  public buildWhere(writer): void {
-
-    if (this.whereTokens) {
-      return;
-    }
-
-    writer
-      .append(" WHERE ");
-
-    if (SpatialRelations.Intersects) {
-      writer.append("intersect(");
-    }
-
-    let token = this.whereTokens.first;
-
-    while (token !== null) {
-
-      this.addSpaceIfNeeded(token.previous.value, token.value, writer);
-
-      token.value.writeTo(writer);
-
-      token = token.next;
-    }
-
-    if (SpatialRelations.Intersects) {
-      writer
-        .append(") ");
-    }
-
-  }
-
-  public toString(): string {
-
-    if (this.queryRaw != null) {
-      return this.queryRaw;
-    }
-
-    if (this.currentClauseDepth !== 0) {
-
-      throw new InvalidOperationException(
-        StringUtil.format("A clause was not closed correctly within this query, current clause depth = {0}", this.currentClauseDepth));
-    }
-
-    let queryText = new StringBuilder();
-
-    this.buildFrom(queryText);
-    this.buildGroupBy(queryText);
-    this.buildOrderBy(queryText);
-    this.buildWhere(queryText);
-    this.buildSelect(queryText);
-    this.buildInclude(queryText);
-
-    return queryText.toString();
-
+    this.whereTokens.addLast(NegateToken.instance);
   }
 
 }

@@ -78,7 +78,7 @@ export abstract class RavenCommand {
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    ExceptionThrower.throwFrom(this._lastResponse = response);
+    ExceptionThrower.throwFrom(this._lastResponse = response);    
 
     if (response.body) {
       return <IRavenResponse>response.body;

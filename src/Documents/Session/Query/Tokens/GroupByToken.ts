@@ -8,7 +8,7 @@ export class GroupByToken extends QueryToken {
     return new (this as (typeof GroupByToken))(fieldName);
   }
 
-  public constructor(fieldName: string) { //TODO change to protected
+  protected constructor(fieldName: string) {
     super();
     this._fieldName = fieldName;
   }

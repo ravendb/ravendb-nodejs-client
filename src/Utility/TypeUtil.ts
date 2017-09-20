@@ -36,10 +36,6 @@ export class TypeUtil {
     return _.isDate(value);
   }
 
-  public static isLetterOrDigit(value: any): boolean {
-    return _.isNumber(value) || _.isString(value);
-  }
-
   public static isBool(value: any): boolean {
     return _.isBoolean(value);
   }
