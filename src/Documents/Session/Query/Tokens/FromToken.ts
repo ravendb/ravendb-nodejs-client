@@ -29,7 +29,7 @@ export class FromToken extends QueryToken {
     return new (this as typeof FromToken)(indexName, collectionName);
   }
 
-  protected constructor(indexName?: string, collectionName?: string) {
+  public constructor(indexName?: string, collectionName?: string) { //TODO change to protected
     super();
     this._collectionName = collectionName;
     this._indexName = indexName;
@@ -50,10 +50,12 @@ export class FromToken extends QueryToken {
         .append(' ');
 
       if (wsChars.any((char: string): boolean => this._collectionName.includes(char))) {
+
         if (this._collectionName.includes('"')) {
           throw new NotSupportedException(
             `Collection name cannot contain a quote, but was: ${this._collectionName}`
           );
+
         }
 
         writer.append('"').append(this._collectionName).append('"');
@@ -62,10 +64,10 @@ export class FromToken extends QueryToken {
 
     writer
       .append(QueryKeywords.From)
-        .append(' ')
+      .append(' ')
       .append(QueryKeywords.Index)
       .append("'")
-        .append(this._indexName)
+      .append(this._indexName)
       .append("'");
   }
 }

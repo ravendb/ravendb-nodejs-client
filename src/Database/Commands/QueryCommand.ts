@@ -7,7 +7,6 @@ import {DocumentConventions} from "../../Documents/Conventions/DocumentConventio
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {InvalidOperationException, IndexDoesNotExistException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
-import {QueryOperators} from "../../Documents/Session/Query/QueryOperator";
 import {QueryString} from "../../Http/QueryString";
 
 export class QueryCommand extends RavenCommand {
@@ -17,7 +16,7 @@ export class QueryCommand extends RavenCommand {
   protected indexEntriesOnly: boolean = false;
 
   constructor(indexQuery: IndexQuery, conventions: DocumentConventions,
-    metadataOnly: boolean = false, indexEntriesOnly: boolean = false
+              metadataOnly: boolean = false, indexEntriesOnly: boolean = false
   ) {
     super('', RequestMethods.Post);
 
@@ -37,11 +36,11 @@ export class QueryCommand extends RavenCommand {
 
   public createRequest(serverNode: ServerNode): void {
     const query = this.indexQuery;
-    
+
     this.payload = query.toJson();
     this.params = {"query-hash": query.queryHash};
     this.metadataOnly && this.addParams('metadata-only', 'true');
     this.indexEntriesOnly && this.addParams('debug', 'entries');
-    this.endPoint = StringUtil.format('{url}/databases/{database}/queries', serverNode);    
+    this.endPoint = StringUtil.format('{url}/databases/{database}/queries', serverNode);
   }
 }

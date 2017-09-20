@@ -4,7 +4,6 @@ import {TypeUtil} from "../../Utility/TypeUtil";
 import {IOptionsSet} from "../../Typedef/IOptionsSet";
 import {StringUtil} from "../../Utility/StringUtil";
 import {IRavenObject} from "../../Typedef/IRavenObject";
-import {QueryOperator} from "../../Documents/Session/Query/QueryOperator";
 import {IJsonable} from "../../Typedef/Contracts";
 
 export class IndexQuery implements IJsonable {

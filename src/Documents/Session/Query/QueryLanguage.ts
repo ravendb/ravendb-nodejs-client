@@ -1,4 +1,4 @@
-import {SpartialRelation, SpartialRelations} from "./Spartial/SpartialRelation";
+import {SpatialRelation, SpatialRelations} from "./Spatial/SpatialRelation";
 
 export type ConditionValue = string | number | boolean | Date | null;
 
@@ -49,9 +49,9 @@ export class OrderingTypes {
 
 export type WhereOperator = 'equals' | 'notEquals' | 'greaterThan' | 'greaterThanOrEqual'
   | 'lessThan' | 'lessThanOrEqual' | 'in' | 'allIn' | 'between' | 'search' | 'lucene'
-  | 'startsWith' | 'endsWith' | 'exists' | SpartialRelation;
+  | 'startsWith' | 'endsWith' | 'exists' | SpatialRelation;
 
-export class WhereOperators extends SpartialRelations {
+export class WhereOperators extends SpatialRelations {
   public static readonly Equals: WhereOperator = 'equals';
   public static readonly NotEquals: WhereOperator = 'notEquals';
   public static readonly GreaterThan: WhereOperator = 'greaterThan';

@@ -29,11 +29,15 @@ export class TypeUtil {
 
   public static isDocumentConstructor(value: any): boolean {
     return _.isFunction(value) && ('name' in value)
-       && ('Object' !== value.name);
+      && ('Object' !== value.name);
   }
 
   public static isDate(value: any): boolean {
     return _.isDate(value);
+  }
+
+  public static isLetterOrDigit(value: any): boolean {
+    return _.isNumber(value) || _.isString(value);
   }
 
   public static isBool(value: any): boolean {

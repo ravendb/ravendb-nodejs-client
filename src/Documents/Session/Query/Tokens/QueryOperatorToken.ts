@@ -6,11 +6,11 @@ export class QueryOperatorToken extends QueryToken {
   private _queryOperator: QueryOperator;
 
   public static get And(): QueryToken {
-    return new (this as (typeof QueryToken))(QueryOperators.And);
+    return new (this as (typeof QueryOperatorToken))(QueryOperators.And);
   }
 
   public static get Or(): QueryToken {
-    return new (this as (typeof QueryToken))(QueryOperators.Or);
+    return new (this as (typeof QueryOperatorToken))(QueryOperators.Or);
   }
 
   protected constructor(queryOperator: QueryOperator) {
