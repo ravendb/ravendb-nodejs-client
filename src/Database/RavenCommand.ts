@@ -56,7 +56,7 @@ export abstract class RavenCommand {
     const payload = this.payload;
 
     const check: (target?: object) => boolean = (target: object) => {
-      return !TypeUtil.isNone(target) && !_.isEmpty(target);
+      return !TypeUtil.isNull(target) && !_.isEmpty(target);
     };
 
     let options: RavenCommandRequestOptions = {

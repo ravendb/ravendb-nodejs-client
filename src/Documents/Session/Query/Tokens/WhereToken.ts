@@ -264,15 +264,15 @@ export class WhereToken extends QueryToken
   }
 
   public writeTo(writer: StringBuilder): void {
-    if (!TypeUtil.isNone(this._boost)) {
+    if (!TypeUtil.isNull(this._boost)) {
       writer.append("boost(");
     }
 
-    if (!TypeUtil.isNone(this._fuzzy)) {
+    if (!TypeUtil.isNull(this._fuzzy)) {
       writer.append("fuzzy(");
     }
 
-    if (!TypeUtil.isNone(this._proximity)) {
+    if (!TypeUtil.isNull(this._proximity)) {
       writer.append("proximity(");
     }
 
@@ -410,21 +410,21 @@ export class WhereToken extends QueryToken
       writer.append(")");
     }
 
-    if (!TypeUtil.isNone(this._proximity)) {
+    if (!TypeUtil.isNull(this._proximity)) {
       writer
         .append(", ")
         .append(this._proximity.toString())
         .append(")");
     }
 
-    if (!TypeUtil.isNone(this._fuzzy)) {
+    if (!TypeUtil.isNull(this._fuzzy)) {
       writer
         .append(", ")
         .append(this._fuzzy.toString())
         .append(")");
     }
 
-    if (!TypeUtil.isNone(this._boost)) {
+    if (!TypeUtil.isNull(this._boost)) {
       writer
         .append(", ")
         .append(this._boost.toString())

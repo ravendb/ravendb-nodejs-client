@@ -82,7 +82,7 @@ export class Serializer {
       }
     });
 
-    if (!TypeUtil.isNone(metadata)) {
+    if (!TypeUtil.isNull(metadata)) {
       target['@metadata'] = metadata || {};
     }
     

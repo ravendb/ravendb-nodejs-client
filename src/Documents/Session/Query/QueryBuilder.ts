@@ -1,9 +1,9 @@
 import {IQueryBuilder} from "./IQueryBuilder";
 import {FieldConstants, OrderingType, QueryKeywords, QueryOperator, SearchOperators} from "./QueryLanguage";
 import {SearchOperator} from "./QueryLanguage";
-import {SpatialCriteria} from "./Spatial/SpatialCriteria";
-import {LinkedList} from "../../../Utility/LinkedList";
-import {QueryToken} from "./Tokens/QueryToken";
+import {SpatialCriteria, SpatialParameterNameGenerator} from "./Spatial/SpatialCriteria";
+import {LinkedList, LinkedListItem} from "../../../Utility/LinkedList";
+import {QueryToken, IQueryToken} from "./Tokens/QueryToken";
 import {FromToken} from "./Tokens/FromToken";
 import {FieldsToFetchToken} from "./Tokens/FieldsToFetchToken";
 import {ArgumentOutOfRangeException, InvalidOperationException} from "../../../Database/DatabaseExceptions";
@@ -12,7 +12,7 @@ import {OrderByToken} from "./Tokens/OrderByToken";
 import {Observable} from "../../../Utility/Observable";
 import {StringUtil} from "../../../Utility/StringUtil";
 import {GroupByToken} from "./Tokens/GroupByToken";
-import {IParametrizedWhereParams} from "./IWhereParams";
+import {IParametrizedWhereParams} from "./WhereParams";
 import {WhereToken} from "./Tokens/WhereToken";
 import {CloseSubclauseToken} from "./Tokens/CloseSubclauseToken";
 import {QueryOperatorToken} from "./Tokens/QueryOperatorToken";
@@ -20,9 +20,16 @@ import {OpenSubclauseToken} from "./Tokens/OpenSubclauseToken";
 import {NegateToken} from "./Tokens/NegateToken";
 import {TrueToken} from "./Tokens/TrueToken";
 import {IntersectMarkerToken} from "./Tokens/IntersectMarkerToken";
-import {SpatialRelations} from "./Spatial/SpatialRelation";
+import {SpatialRelation, SpatialRelations} from "./Spatial/SpatialRelation";
 import {DistinctToken} from "./Tokens/DistinctToken";
 import {StringBuilder} from "../../../Utility/StringBuilder";
+import {GroupBySumToken} from "./Tokens/GroupBySumToken";
+import {GroupByCountToken} from "./Tokens/GroupByCountToken";
+import {GroupByKeyToken} from "./Tokens/GroupByKeyToken";
+import {SpatialUnit, SpatialUnits} from "./Spatial/SpatialUnit";
+import {SpatialConstants} from "./Spatial/SpatialConstants";
+import {ShapeToken} from "./Tokens/ShapeToken";
+import {WktCriteria} from "./Spatial/WktCriteria";
 
 export interface IFieldValidationResult {
   originalFieldName: string;
@@ -32,22 +39,20 @@ export interface IFieldValidationResult {
 export class QueryBuilder extends Observable implements IQueryBuilder {
   public static readonly VALIDATE_FIELD = 'VALIDATE_FIELD';
 
-  protected selectTokens: LinkedList<QueryToken>;
+  protected selectTokens: LinkedList<IQueryToken>;
   protected fromToken: FromToken;
-
-  protected groupByTokens: LinkedList<QueryToken>;
-  protected groupByToken: GroupByToken;
-
-  protected orderByTokens: LinkedList<QueryToken>;
-  protected orderByToken: OrderByToken;
-
+  protected groupByTokens: LinkedList<IQueryToken>;
+  protected orderByTokens: LinkedList<IQueryToken>;
   protected fieldsToFetchToken: FieldsToFetchToken;
-  protected whereTokens: LinkedList<QueryToken>;
+  protected whereTokens: LinkedList<IQueryToken>;
+  protected aliasToGroupByFieldName: Map<string, string>;
   protected defaultOperator: QueryOperator = null;
   protected idPropertyName?: string = null;
   protected includes: Set<string>;
   protected queryRaw?: string = null;
   protected isGroupBy: boolean = false;
+  protected isIntersect: boolean = false;
+  protected isDistinct: boolean = false;
   protected negate: boolean = false;
   protected currentClauseDepth: number = 0;
 
@@ -58,17 +63,11 @@ export class QueryBuilder extends Observable implements IQueryBuilder {
       this.from(indexName, collectionName);
     }
 
-    this.fromToken = new FromToken('testIndex'); //TODO check this Type 'LinkedList<QueryToken>' is not assignable to type 'FromToken'
-
-    this.groupByTokens = new LinkedList<QueryToken>();
-    this.groupByToken = new GroupByToken('testIndex');
-
-    this.orderByTokens = new LinkedList<QueryToken>();
-    this.orderByToken = new OrderByToken('testIndex');
-
-    this.selectTokens = new LinkedList<QueryToken>();
-    this.whereTokens = new LinkedList<QueryToken>();
-
+    this.groupByTokens = new LinkedList<IQueryToken>();
+    this.orderByTokens = new LinkedList<IQueryToken>();
+    this.selectTokens = new LinkedList<IQueryToken>();
+    this.whereTokens = new LinkedList<IQueryToken>();
+    this.aliasToGroupByFieldName = new Map<string, string>();
     this.includes = new Set<string>();
     this.idPropertyName = idPropertyName;
   }
@@ -87,7 +86,7 @@ before any where clause is added.");
   public rawQuery(query: string): IQueryBuilder {
     if ([this.selectTokens, this.whereTokens,
         this.orderByTokens, this.groupByTokens]
-        .some((list: LinkedList<QueryToken>): boolean => !!list.count)
+        .some((list: LinkedList<IQueryToken>): boolean => !!list.count)
     ) {
       throw new InvalidOperationException("You can only use RawQuery on a new query, \
 without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)");
@@ -109,6 +108,10 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
     }
 
     return [];
+  }
+
+  public addGroupByAlias(fieldName: string, projectedName: string ): void {
+    this.aliasToGroupByFieldName.set(projectedName, fieldName);
   }
 
   public randomOrdering(seed?: string): IQueryBuilder {
@@ -136,7 +139,7 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public whereEquals(params: IParametrizedWhereParams): IQueryBuilder;
-  public whereEquals(fieldName: string, parameterName: string, exact: boolean): IQueryBuilder;
+  public whereEquals(fieldName: string, parameterName: string, exact?: boolean): IQueryBuilder;
   public whereEquals(fieldNameOrParams: string | IParametrizedWhereParams, parameterName?: string, exact: boolean = false): IQueryBuilder {
     const fieldName: string = <string>fieldNameOrParams;
     const params: IParametrizedWhereParams = <IParametrizedWhereParams>fieldNameOrParams;
@@ -162,17 +165,17 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public whereNotEquals(params: IParametrizedWhereParams): IQueryBuilder;
-  // public whereNotEquals(fieldName: string, parameterName: string, exact: boolean): IQueryBuilder;
-  public whereNotEquals(params: IParametrizedWhereParams): IQueryBuilder {
-    // const fieldName: string = <string>fieldNameOrParams;
-    // const params: IParametrizedWhereParams = <IParametrizedWhereParams>fieldNameOrParams;
-    //
-    // if (TypeUtil.isString(fieldNameOrParams)) {
-    //   return this.whereNotEquals({
-    //     parameterName,
-    //     fieldName, exact
-    //   });
-    // }
+  public whereNotEquals(fieldName: string, parameterName: string, exact?: boolean): IQueryBuilder;
+  public whereNotEquals(fieldNameOrParams: string | IParametrizedWhereParams, parameterName?: string, exact: boolean = false): IQueryBuilder {
+    const fieldName: string = <string>fieldNameOrParams;
+    const params: IParametrizedWhereParams = <IParametrizedWhereParams>fieldNameOrParams;
+    
+    if (TypeUtil.isString(fieldNameOrParams)) {
+      return this.whereNotEquals({
+        parameterName,
+        fieldName, exact
+      });
+    }
 
     if (this.negate) {
       this.negate = false;
@@ -210,7 +213,6 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public whereIn(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
-
     fieldName = this.ensureValidFieldName(fieldName);
 
     this.appendOperatorIfNeeded(this.whereTokens);
@@ -221,8 +223,18 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
     return this;
   }
 
-  public whereStartsWith(fieldName: string, parameterName: string): IQueryBuilder {
+  public whereAllIn(fieldName: string, parameterName: string): IQueryBuilder {
+    fieldName = this.ensureValidFieldName(fieldName);
 
+    this.appendOperatorIfNeeded(this.whereTokens);
+    this.negateIfNeeded(fieldName);
+
+    this.whereTokens.addLast(WhereToken.allIn(fieldName, parameterName));
+
+    return this;
+  }
+
+  public whereStartsWith(fieldName: string, parameterName: string): IQueryBuilder {
     fieldName = this.ensureValidFieldName(fieldName);
 
     this.appendOperatorIfNeeded(this.whereTokens);
@@ -234,7 +246,6 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public whereEndsWith(fieldName: string, parameterName: string): IQueryBuilder {
-
     fieldName = this.ensureValidFieldName(fieldName);
 
     this.appendOperatorIfNeeded(this.whereTokens);
@@ -246,7 +257,6 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public whereBetween(fieldName: string, fromParameterName: string, toParameterName: string, exact: boolean = false): IQueryBuilder {
-
     fieldName = this.ensureValidFieldName(fieldName);
 
     this.appendOperatorIfNeeded(this.whereTokens);
@@ -258,7 +268,6 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public whereGreaterThan(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
-
     fieldName = this.ensureValidFieldName(fieldName);
 
     this.appendOperatorIfNeeded(this.whereTokens);
@@ -270,7 +279,6 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public whereGreaterThanOrEqual(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
-
     fieldName = this.ensureValidFieldName(fieldName);
 
     this.appendOperatorIfNeeded(this.whereTokens);
@@ -282,7 +290,6 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public whereLessThanOrEqual(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
-
     fieldName = this.ensureValidFieldName(fieldName);
 
     this.appendOperatorIfNeeded(this.whereTokens);
@@ -294,7 +301,6 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public whereLessThan(fieldName: string, parameterName: string, exact: boolean = false): IQueryBuilder {
-
     fieldName = this.ensureValidFieldName(fieldName);
 
     this.appendOperatorIfNeeded(this.whereTokens);
@@ -306,7 +312,6 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public whereExists(fieldName: string): IQueryBuilder {
-
     fieldName = this.ensureValidFieldName(fieldName);
 
     this.appendOperatorIfNeeded(this.whereTokens);
@@ -318,11 +323,8 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public andAlso(): IQueryBuilder {
-
-    if (this.whereTokens.last === null) {
-
+    if (TypeUtil.isNull(this.whereTokens.last)) {
       return this;
-
     }
 
     if (this.whereTokens.last.value instanceof QueryOperatorToken) {
@@ -335,11 +337,8 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public orElse(): IQueryBuilder {
-
-    if (this.whereTokens.last === null) {
-
+    if (TypeUtil.isNull(this.whereTokens.last)) {
       return this;
-
     }
 
     if (this.whereTokens.last.value instanceof QueryOperatorToken) {
@@ -352,18 +351,16 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public boost(boost: number): IQueryBuilder {
+    let lastToken: LinkedListItem<IQueryToken>;
+    let whereToken: WhereToken;
 
-    if (boost == 1) {
+    if (1 === boost) {
       return this;
     }
 
-    let whereToken = this.whereTokens.last.value;
-
-    if (!(whereToken instanceof WhereToken)) {
-      whereToken = null;
-    }
-
-    if (whereToken == null) {
+    if (!(lastToken = this.whereTokens.last) 
+      && !((whereToken = <WhereToken>lastToken.value) instanceof WhereToken)
+    ) {
       throw new InvalidOperationException("Missing where clause");
     }
 
@@ -371,42 +368,37 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
       throw new ArgumentOutOfRangeException("Boost factor must be a positive number");
     }
 
-    //TODO LinkedList does`t have boost getter
-    //whereToken.boost = boost;
+    whereToken.boost = boost;
 
     return this;
   }
 
   public fuzzy(fuzzy: number): IQueryBuilder {
+    let lastToken: LinkedListItem<IQueryToken>;
+    let whereToken: WhereToken;
 
-    let whereToken = this.whereTokens.last.value;
-
-    if (!(whereToken instanceof WhereToken)) {
-      whereToken = null;
-    }
-
-    if (whereToken == null) {
+    if (!(lastToken = this.whereTokens.last) 
+      && !((whereToken = <WhereToken>lastToken.value) instanceof WhereToken)
+    ) {
       throw new InvalidOperationException("Missing where clause");
     }
 
-    if (fuzzy < 0 || fuzzy > 1) {
+    if ((fuzzy < 0) || (fuzzy > 1)) {
       throw new ArgumentOutOfRangeException("Fuzzy distance must be between 0.0 and 1.0");
     }
 
-    //WhereToken.fuzzy = fuzzy;
+    whereToken.fuzzy = fuzzy;
 
     return this;
   }
 
   public proximity(proximity: number): IQueryBuilder {
+    let lastToken: LinkedListItem<IQueryToken>;
+    let whereToken: WhereToken;
 
-    let whereToken = this.whereTokens.last.value;
-
-    if (!(whereToken instanceof WhereToken)) {
-      whereToken = null;
-    }
-
-    if (whereToken == null) {
+    if (!(lastToken = this.whereTokens.last) 
+      && !((whereToken = <WhereToken>lastToken.value) instanceof WhereToken)
+    ) {
       throw new InvalidOperationException("Missing where clause");
     }
 
@@ -414,13 +406,12 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
       throw new ArgumentOutOfRangeException("Proximity distance must be a positive number");
     }
 
-    //WhereToken.proximity = proximity;
+    whereToken.proximity = proximity;
 
     return this;
   }
 
   public orderBy(field: string, ordering?: OrderingType): IQueryBuilder {
-
     this.assertNoRawQuery();
     field = this.ensureValidFieldName(field);
     this.orderByTokens.addLast(OrderByToken.createAscending(field, ordering));
@@ -429,7 +420,6 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public orderByDescending(field: string, ordering?: OrderingType): IQueryBuilder {
-
     this.assertNoRawQuery();
     field = this.ensureValidFieldName(field);
     this.orderByTokens.addLast(OrderByToken.createDescending(field, ordering));
@@ -438,7 +428,6 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public orderByScore(): IQueryBuilder {
-
     this.assertNoRawQuery();
     this.orderByTokens.addLast(OrderByToken.scoreAscending);
 
@@ -446,103 +435,46 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public orderByScoreDescending(): IQueryBuilder {
-
     this.assertNoRawQuery();
     this.orderByTokens.addLast(OrderByToken.scoreDescending);
 
     return this;
   }
 
-  public search(fieldName: string, searchTerms: string, operator: SearchOperator): IQueryBuilder {
-
+  public search(fieldName: string, searchTermsParameterName: string, operator: SearchOperator = SearchOperators.Or): IQueryBuilder {
     fieldName = this.ensureValidFieldName(fieldName);
 
     this.appendOperatorIfNeeded(this.whereTokens);
     this.negateIfNeeded(fieldName);
 
-    // let hasWhiteSpace = searchTerms.Any(char.IsWhiteSpace);
-    //
-    // LastEquality = new KeyValuePair<string, object>(fieldName,
-    //   hasWhiteSpace ? "(" + searchTerms + ")" : searchTerms
-    // );
-
-    this.whereTokens.addLast(WhereToken.search(fieldName, searchTerms, operator));
+    this.whereTokens.addLast(WhereToken.search(fieldName, searchTermsParameterName, operator));
 
     return this;
   }
 
   public intersect(): IQueryBuilder {
+    let lastToken: LinkedListItem<IQueryToken> 
+      = this.whereTokens.last;
 
-    let last = this.whereTokens.last.value;
-
-    if (!(last instanceof WhereToken)) {
-      last = null;
-    }
-
-    if (last instanceof WhereToken || last instanceof CloseSubclauseToken) {
-
-      SpatialRelations.Intersects;
-
-      //TODO check <QueryToken>
+    if ((lastToken.value instanceof WhereToken) 
+      || (lastToken.value instanceof CloseSubclauseToken)
+    ) {
+      this.isIntersect = false;
       this.whereTokens.addLast(<QueryToken>IntersectMarkerToken.instance);
-    }
-    else {
+    } else {
       throw new InvalidOperationException("Cannot add INTERSECT at this point.");
     }
+
     return this;
   }
 
-  //?
   public distinct(): IQueryBuilder {
-
-    if (QueryKeywords.Distinct) {
+    if (this.isDistinct) {
       throw new InvalidOperationException("This is already a distinct query.");
     }
 
-    //TODO Add addFirst method
-    //this.selectTokens.addFirst(DistinctToken.instance);
-
-    return this;
-  }
-
-  //+?
-  public containsAny(fieldName: string, parameterName: string): IQueryBuilder {
-
-    fieldName = this.ensureValidFieldName(fieldName);
-
-    this.appendOperatorIfNeeded(this.whereTokens);
-    this.negateIfNeeded(fieldName);
-
-    // let array = TransformEnumerable(fieldName, UnpackEnumerable(values))
-    //   .ToArray();
-
-    if (fieldName.length == 0) {
-      this.whereTokens.addLast(<QueryToken>TrueToken.instance);
-      return this;
-    }
-
-    this.whereTokens.addLast(WhereToken.in(fieldName, parameterName, false));
-
-    return this;
-  }
-
-  //+?
-  public containsAll(fieldName: string, parameterName: string): IQueryBuilder {
-
-    fieldName = this.ensureValidFieldName(fieldName);
-
-    this.appendOperatorIfNeeded(this.whereTokens);
-    this.negateIfNeeded(fieldName);
-
-    // let array = TransformEnumerable(fieldName, UnpackEnumerable(values))
-    //   .ToArray();
-
-    if (fieldName.length == 0) {
-      this.whereTokens.addLast(<QueryToken>TrueToken.instance);
-      return this;
-    }
-
-    this.whereTokens.addLast(WhereToken.allIn(fieldName, parameterName));
+    this.isDistinct = true;
+    this.selectTokens.addFirst(DistinctToken.instance);
 
     return this;
   }
@@ -560,83 +492,142 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
       this.groupByTokens.addLast(GroupByToken.create(field));
     });
 
-
     return this;
   }
 
   public groupByKey(fieldName: string, projectedName?: string): IQueryBuilder {
-
     this.assertNoRawQuery();
     this.isGroupBy = true;
 
-    // if (projectedName != null && _aliasToGroupByFieldName.TryGetValue(projectedName, out var aliasedFieldName))
-    // {
-    //   if (fieldName == null || fieldName.Equals(projectedName, StringComparison.Ordinal))
-    //     fieldName = aliasedFieldName;
-    // }
+    if (!TypeUtil.isNull(projectedName) && this.aliasToGroupByFieldName.has(projectedName)) {
+      const fieldAlreadyProjected: string = this.aliasToGroupByFieldName.get(projectedName);
 
-    this.selectTokens.addLast(GroupByToken.create(fieldName));
+      if (!fieldName || (fieldName === fieldAlreadyProjected)) {
+        fieldName = fieldAlreadyProjected;
+      }
+    }
+
+    this.selectTokens.addLast(GroupByKeyToken.create(fieldName));
 
     return this;
   }
 
   public groupBySum(fieldName: string, projectedName?: string): IQueryBuilder {
-
     this.assertNoRawQuery();
     this.isGroupBy = true;
 
     fieldName = this.ensureValidFieldName(fieldName);
 
-    this.selectTokens.addLast(GroupByToken.create(fieldName));
+    this.selectTokens.addLast(GroupBySumToken.create(fieldName));
 
     return this;
   }
 
   public groupByCount(projectedName?: string): IQueryBuilder {
-
     this.assertNoRawQuery();
-
     this.isGroupBy = true;
 
-    this.selectTokens.addLast(GroupByToken.create(projectedName));
+    this.selectTokens.addLast(GroupByCountToken.create(projectedName));
 
     return this;
   }
 
   public whereTrue(): IQueryBuilder {
-
     this.appendOperatorIfNeeded(this.whereTokens);
     this.negateIfNeeded();
 
-    this.whereTokens.addLast(<QueryToken>TrueToken.instance);
+    this.whereTokens.addLast(TrueToken.instance);
 
     return this;
   }
 
-  public spatial(fieldName: string, criteria: SpatialCriteria): IQueryBuilder {
+  public withinRadiusOf(fieldName: string, radiusParameterName: string, latitudeParameterName: string,
+    longitudeParameterName: string, radiusUnits?: SpatialUnit = SpatialUnits.Kilometers,
+    distErrorPercent: number = SpatialConstants.DefaultDistanceErrorPct
+  ) {
+    fieldName = this.ensureValidFieldName(fieldName);
+
+    this.appendOperatorIfNeeded(this.whereTokens);
+    this.negateIfNeeded(fieldName);
+
+    this.whereTokens.addLast(WhereToken.within(fieldName, ShapeToken.circle(radiusParameterName, latitudeParameterName, longitudeParameterName, radiusUnits), distErrorPercent));
+  }
+
+  public spatial(fieldName, shapeWKTParameterName: string, relation: SpatialRelation, distErrorPercent: number): IQueryBuilder;
+  public spatial(fieldName: string, criteria: SpatialCriteria, parameterNameGenerator: SpatialParameterNameGenerator): IQueryBuilder;
+  public spatial(fieldName: string, shapeWKTParameterNameOrCriteria: string | SpatialCriteria,
+    relationOrParameterNameGenerator: SpatialRelation | SpatialParameterNameGenerator, distErrorPercent: number
+  ): IQueryBuilder {
+    let criteria: SpatialCriteria = <SpatialCriteria>shapeWKTParameterNameOrCriteria;
+    let nameGenerator: SpatialParameterNameGenerator
+      = <SpatialParameterNameGenerator>relationOrParameterNameGenerator;
+
+    fieldName = this.ensureValidFieldName(fieldName);
+
+    this.appendOperatorIfNeeded(this.whereTokens);
+    this.negateIfNeeded(fieldName);
+
+    if (!(shapeWKTParameterNameOrCriteria instanceof SpatialCriteria)) {
+      const shapeWKTParameterName: string = <string>shapeWKTParameterNameOrCriteria;
+      const relation: SpatialRelation = <SpatialRelation>relationOrParameterNameGenerator;
+
+      criteria = new WktCriteria(null, relation, distErrorPercent);
+      nameGenerator = (parameterValue: string | number): string => shapeWKTParameterName;
+    }
+
+    this.whereTokens.addLast(criteria.toQueryToken(fieldName, nameGenerator));
     return this;
   }
 
-  public orderByDistance(fieldName: string, shapeWkt: string): IQueryBuilder;
-  public orderByDistance(fieldName: string, latitude: number, longitude: number): IQueryBuilder;
-  public orderByDistance(fieldName: string, latitudeOrShapeWkt: number | string, longitude?: number): IQueryBuilder {
+  public orderByDistance(fieldName: string, shapeWktParameterName: string): IQueryBuilder;
+  public orderByDistance(fieldName: string, latitudeParameterName: string, longitudeParameterName: string): IQueryBuilder;
+  public orderByDistance(fieldName: string, latitudeOrShapeWktParameterName: string, longitudeParameterName?: string): IQueryBuilder {
+    this.orderByTokens.addLast(OrderByToken.createDistanceAscending(fieldName, latitudeOrShapeWktParameterName, longitudeParameterName));
+
     return this;
   }
 
-  public orderByDistanceDescending(fieldName: string, shapeWkt: string): IQueryBuilder;
-  public orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): IQueryBuilder;
-  public orderByDistanceDescending(fieldName: string, latitudeOrShapeWkt: number | string, longitude?: number): IQueryBuilder {
+  public orderByDistanceDescending(fieldName: string, shapeWktParameterName: string): IQueryBuilder;
+  public orderByDistanceDescending(fieldName: string, latitudeParameterName: string, longitude: string): IQueryBuilder;
+  public orderByDistanceDescending(fieldName: string, latitudeOrShapeWktParameterName: string, longitudeParameterName?: string): IQueryBuilder {
+    this.orderByTokens.addLast(OrderByToken.createDistanceDescending(fieldName, latitudeOrShapeWktParameterName, longitudeParameterName));
+
     return this;
   }
 
   protected assertNoRawQuery(): void {
-    if (!TypeUtil.isNone(this.queryRaw)) {
+    if (!TypeUtil.isNull(this.queryRaw)) {
       throw new InvalidOperationException(
         "RawQuery was called, cannot modify this query by calling on operations that \
 would modify the query (such as Where, Select, OrderBy, GroupBy, etc)"
       );
     }
   }
+
+  public toString(): string {
+    
+        if (this.queryRaw != null) {
+          return this.queryRaw;
+        }
+    
+        if (this.currentClauseDepth !== 0) {
+    
+          throw new InvalidOperationException(
+            StringUtil.format("A clause was not closed correctly within this query, current clause depth = {0}", this.currentClauseDepth));
+        }
+    
+        let queryText = new StringBuilder();
+    
+        this.buildFrom(queryText);
+        this.buildGroupBy(queryText);
+        this.buildOrderBy(queryText);
+        this.buildWhere(queryText);
+        this.buildSelect(queryText);
+        this.buildInclude(queryText);
+    
+        return queryText.toString();
+    
+      }
 
   protected ensureValidFieldName(fieldName: string, isNestedPath: boolean = false): string {
     const {VALIDATE_FIELD} = <typeof QueryBuilder>this.constructor;
@@ -647,7 +638,7 @@ would modify the query (such as Where, Select, OrderBy, GroupBy, etc)"
     };
 
     if (!this.isGroupBy && !isNestedPath) {
-      if (!TypeUtil.isNone(this.idPropertyName) && (fieldName === this.idPropertyName)) {
+      if (!TypeUtil.isNull(this.idPropertyName) && (fieldName === this.idPropertyName)) {
         result.escapedFieldName = FieldConstants.DocumentIdFieldName;
       }
 
@@ -657,7 +648,7 @@ would modify the query (such as Where, Select, OrderBy, GroupBy, etc)"
     return result.escapedFieldName;
   }
 
-  protected addSpaceIfNeeded(previousToken: QueryToken, currentToken: QueryToken, writer): void {
+  protected addSpaceIfNeeded(previousToken: IQueryToken, currentToken: IQueryToken, writer: StringBuilder): void {
 
     if (previousToken == null) {
       return;
@@ -672,14 +663,14 @@ would modify the query (such as Where, Select, OrderBy, GroupBy, etc)"
     writer.append(" ");
   }
 
-  protected appendOperatorIfNeeded(tokens: LinkedList<QueryToken>): void {
+  protected appendOperatorIfNeeded(tokens: LinkedList<IQueryToken>): void {
     this.assertNoRawQuery();
 
     if (!tokens.count) {
       return;
     }
 
-    const lastToken: QueryToken = tokens.last.value;
+    const lastToken: IQueryToken = tokens.last.value;
 
     if (!(lastToken instanceof WhereToken) && !(lastToken instanceof CloseSubclauseToken)) {
       return;
@@ -688,9 +679,9 @@ would modify the query (such as Where, Select, OrderBy, GroupBy, etc)"
     let current = tokens.last;
     let lastWhere: WhereToken = null;
 
-    while (!TypeUtil.isNone(current)) {
+    while (!TypeUtil.isNull(current)) {
       if (current.value instanceof WhereToken) {
-        lastWhere = current.value;
+        lastWhere = <WhereToken>current.value;
         break;
       }
 
@@ -700,7 +691,7 @@ would modify the query (such as Where, Select, OrderBy, GroupBy, etc)"
     let token: QueryToken = (SearchOperators.And === this.defaultOperator)
       ? QueryOperatorToken.And : QueryOperatorToken.Or;
 
-    if (lastWhere && !TypeUtil.isNone(lastWhere.searchOperator)) {
+    if (lastWhere && !TypeUtil.isNull(lastWhere.searchOperator)) {
       token = QueryOperatorToken.Or;
     }
 
@@ -715,7 +706,7 @@ would modify the query (such as Where, Select, OrderBy, GroupBy, etc)"
     this.negate = false;
 
     if (!this.whereTokens.count || (this.whereTokens.last.value instanceof OpenSubclauseToken)) {
-      TypeUtil.isNone(fieldName)
+      TypeUtil.isNull(fieldName)
         ? this.whereTrue()
         : this.whereExists(fieldName);
 
@@ -802,9 +793,10 @@ would modify the query (such as Where, Select, OrderBy, GroupBy, etc)"
       first = false;
       let requiredQuotes = false;
 
-      for (let i = 0; i < include.length; i++) {
-        let ch = include[i];
-        if (TypeUtil.isLetterOrDigit(ch) && ch != '_' && ch != '.') {
+      for (let i: number = 0; i < include.length; i++) {
+        let ch: string = include[i];
+
+        if (StringUtil.isLetterOrDigit(ch) && ch != '_' && ch != '.') {
           requiredQuotes = true;
           break;
         }
@@ -850,32 +842,7 @@ would modify the query (such as Where, Select, OrderBy, GroupBy, etc)"
       writer
         .append(") ");
     }
-
   }
 
-  public toString(): string {
-
-    if (this.queryRaw != null) {
-      return this.queryRaw;
-    }
-
-    if (this.currentClauseDepth !== 0) {
-
-      throw new InvalidOperationException(
-        StringUtil.format("A clause was not closed correctly within this query, current clause depth = {0}", this.currentClauseDepth));
-    }
-
-    let queryText = new StringBuilder();
-
-    this.buildFrom(queryText);
-    this.buildGroupBy(queryText);
-    this.buildOrderBy(queryText);
-    this.buildWhere(queryText);
-    this.buildSelect(queryText);
-    this.buildInclude(queryText);
-
-    return queryText.toString();
-
-  }
 
 }

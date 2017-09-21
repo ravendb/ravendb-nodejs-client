@@ -18,7 +18,7 @@ export class PromiseResolver {
       } else if (TypeUtil.isArray(result)) {
         (callback as EntitiesArrayCallback<T>)(result as T[]);
         return result as T[];
-      } else if (TypeUtil.isNone(result)) {
+      } else if (TypeUtil.isNull(result)) {
         (callback as EmptyCallback)();
         return;
       } else {

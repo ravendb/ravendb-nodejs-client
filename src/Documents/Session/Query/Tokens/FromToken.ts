@@ -29,11 +29,11 @@ export class FromToken extends QueryToken {
     return new (this as typeof FromToken)(indexName, collectionName);
   }
 
-  public constructor(indexName?: string, collectionName?: string) { //TODO change to protected
+  protected constructor(indexName?: string, collectionName?: string) {
     super();
     this._collectionName = collectionName;
     this._indexName = indexName;
-    this._isDynamic = !TypeUtil.isNone(collectionName);
+    this._isDynamic = !TypeUtil.isNull(collectionName);
   }
 
   public writeTo(writer: StringBuilder): void {

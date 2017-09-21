@@ -3,7 +3,7 @@ import * as _ from 'lodash';
 export class TypeUtil {
   public static readonly MAX_INT32 = 2147483647;
 
-  public static isNone(value: any): boolean {
+  public static isNull(value: any): boolean {
     return ('undefined' === (typeof value)) || _.isNull(value);
   }
 
@@ -34,10 +34,6 @@ export class TypeUtil {
 
   public static isDate(value: any): boolean {
     return _.isDate(value);
-  }
-
-  public static isLetterOrDigit(value: any): boolean {
-    return _.isNumber(value) || _.isString(value);
   }
 
   public static isBool(value: any): boolean {

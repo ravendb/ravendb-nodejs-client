@@ -7,6 +7,8 @@ import {WktCriteria} from "./WktCriteria";
 import {SpatialUnit} from "./SpatialUnit";
 import {CircleCriteria} from "./CircleCriteria";
 
+export type SpatialParameterNameGenerator = (parameterValue: string | number) => string;
+
 export abstract class SpatialCriteria {
   protected relation: SpatialRelation;
   protected distanceErrorPct: number;
@@ -46,9 +48,9 @@ export abstract class SpatialCriteria {
     this.distanceErrorPct = distanceErrorPct;
   }
 
-  public abstract getShapeToken(addQueryParameter:  (parameterValue: string | number) => string): ShapeToken;
+  public abstract getShapeToken(addQueryParameter: SpatialParameterNameGenerator): ShapeToken;
 
-  public toQueryToken(fieldName: string, addQueryParameter:  (parameterValue: string | number) => string): QueryToken {
+  public toQueryToken(fieldName: string, addQueryParameter: SpatialParameterNameGenerator): QueryToken {
     let relationToken: QueryToken;
     const shapeToken: ShapeToken = this.getShapeToken(addQueryParameter);
 

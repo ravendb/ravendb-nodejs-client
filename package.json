@@ -71,6 +71,7 @@
     "pluralize": "^4.0.0",
     "request": "^2.79.0",
     "request-promise": "^4.1.1",
-    "uuid": "^3.1.0"
+    "uuid": "^3.1.0",
+    "xregexp": "^3.2.0"
   }
 }

@@ -1,4 +1,4 @@
-import {SpatialCriteria} from "./SpatialCriteria";
+import {SpatialCriteria, SpatialParameterNameGenerator} from "./SpatialCriteria";
 import {SpatialUnit, SpatialUnits} from "./SpatialUnit";
 import {SpatialRelation} from "./SpatialRelation";
 import {ShapeToken} from "../Tokens/ShapeToken";
@@ -9,8 +9,9 @@ export class CircleCriteria extends SpatialCriteria {
   protected longitude: number;
   protected radiusUnits: SpatialUnit;
 
-  constructor(radius: number, latitude: number, longitude: number, radiusUnits: SpatialUnit = SpatialUnits.Kilometers,
-              relation: SpatialRelation, distErrorPercent: number
+  constructor(radius: number, latitude: number, longitude: number,
+    radiusUnits: SpatialUnit = SpatialUnits.Kilometers,
+    relation: SpatialRelation, distErrorPercent: number
   ) {
     super(relation, distErrorPercent);
     this.radius = radius;
@@ -19,7 +20,7 @@ export class CircleCriteria extends SpatialCriteria {
     this.radiusUnits = radiusUnits || SpatialUnits.Kilometers;
   }
 
-  public getShapeToken(addQueryParameter: (parameterValue: (string | number)) => string): ShapeToken {
+  public getShapeToken(addQueryParameter: SpatialParameterNameGenerator): ShapeToken {
     return ShapeToken.circle(
       addQueryParameter(this.radius), addQueryParameter(this.latitude),
       addQueryParameter(this.longitude), this.radiusUnits

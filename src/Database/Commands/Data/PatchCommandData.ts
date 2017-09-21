@@ -28,7 +28,7 @@ export class PatchCommandData extends RavenCommandData implements IJsonable {
       "DebugMode": this.debugMode
     });
     
-    if (!TypeUtil.isNone(this.patchIfMissing)) {
+    if (!TypeUtil.isNull(this.patchIfMissing)) {
       _.assign(json, {PatchIfMissing: this.patchIfMissing.toJson()});
     }
 

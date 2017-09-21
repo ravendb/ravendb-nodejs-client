@@ -7,6 +7,7 @@ import * as pluralize from 'pluralize';
 import * as AsyncLock from 'async-lock';
 import * as EventEmitter from 'events';
 import * as Request from 'request';
+import * as XRegExp from "xregexp";
 import * as RequestPromise from 'request-promise';
 import * as NodeStringBuilder from 'node-stringbuilder';
 

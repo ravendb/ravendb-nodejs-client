@@ -73,6 +73,14 @@ export class LinkedList<T> {
     return this;
   }
 
+  public addFirst(item: T): LinkedList<T> {
+    this._items.unshift(
+      new LinkedListItem<T>(item, this._items)
+    );
+
+    return this;
+  }
+
   public clear(): LinkedList<T> {
     this._items = [];
 

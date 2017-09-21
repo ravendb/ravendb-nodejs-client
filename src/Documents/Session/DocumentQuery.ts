@@ -392,7 +392,7 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     const request = () => this.requestExecutor
       .execute(queryCommand)
       .then((response: IRavenResponse | null): IRavenResponse | BluebirdPromise.Thenable<IRavenResponse> => {
-        if (TypeUtil.isNone(response)) {
+        if (TypeUtil.isNull(response)) {
           return {
             Results: [] as object[]
           } as IRavenResponse;

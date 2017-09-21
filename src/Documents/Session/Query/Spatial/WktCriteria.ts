@@ -1,4 +1,4 @@
-import {SpatialCriteria} from "./SpatialCriteria";
+import {SpatialCriteria, SpatialParameterNameGenerator} from "./SpatialCriteria";
 import {SpatialRelation} from "./SpatialRelation";
 import {ShapeToken} from "../Tokens/ShapeToken";
 
@@ -10,7 +10,7 @@ export class WktCriteria extends SpatialCriteria {
     this.shapeWkt = shapeWkt;
   }
 
-  public getShapeToken(addQueryParameter: (parameterValue: (string | number)) => string): ShapeToken {
+  public getShapeToken(addQueryParameter: SpatialParameterNameGenerator): ShapeToken {
     return ShapeToken.wkt(addQueryParameter(this.shapeWkt));
   }
 }

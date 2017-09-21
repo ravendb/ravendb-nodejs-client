@@ -100,7 +100,7 @@ export class DocumentConventions {
           foundCtor = null;
         }
 
-        if (!TypeUtil.isNone(foundCtor)) {
+        if (!TypeUtil.isNull(foundCtor)) {
           this._ctorsCache.set(typeName, foundCtor);
           break;
         }
@@ -128,7 +128,7 @@ export class DocumentConventions {
           foundIdPropertyName = null;
         }
 
-        if (!TypeUtil.isNone(foundIdPropertyName)) {
+        if (!TypeUtil.isNull(foundIdPropertyName)) {
           this._idsNamesCache.set(typeName, foundIdPropertyName);
           break;
         }

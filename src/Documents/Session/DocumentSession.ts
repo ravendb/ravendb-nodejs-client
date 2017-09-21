@@ -167,7 +167,7 @@ export class DocumentSession implements IDocumentSession {
             return BluebirdPromise.reject(new InvalidOperationException('Document is marked as read only and cannot be deleted'));
           }
 
-          if (!TypeUtil.isNone(expectedChangeVector)) {
+          if (!TypeUtil.isNull(expectedChangeVector)) {
             info.expectedChangeVector = expectedChangeVector;
             this.rawEntitiesAndMetadata.set(document, info);
           }
@@ -252,7 +252,7 @@ export class DocumentSession implements IDocumentSession {
     return this.requestExecutor
       .execute(changes.createBatchCommand())
       .then((results?: IRavenResponse[]) => {
-        if (TypeUtil.isNone(results)) {
+        if (TypeUtil.isNull(results)) {
           return BluebirdPromise.reject(new InvalidOperationException(
             "Cannot call Save Changes after the document store was disposed."
           ));
@@ -350,7 +350,7 @@ more responsive application.", maxRequests
         }
 
         const results: T[] = responseResults.map((result: object, index: number) => {
-          if (TypeUtil.isNone(result)) {
+          if (TypeUtil.isNull(result)) {
             this.knownMissingIds.add(ids[index]);
             return null;
           }
@@ -411,16 +411,16 @@ more responsive application.", maxRequests
           let documentId: string = id;
           let checkMode: ConcurrencyCheckMode = ConcurrencyCheckModes.Forced;
 
-          if (TypeUtil.isNone(documentId)) {
+          if (TypeUtil.isNull(documentId)) {
             documentId = conventions.getIdFromDocument<T>(document, <DocumentType<T>>info.documentType);
           }
 
-          if (TypeUtil.isNone(changeVector)) {
+          if (TypeUtil.isNull(changeVector)) {
             checkMode = ConcurrencyCheckModes.Disabled;
           } else {
             info.changeVector = metadata['@change-vector'] = changeVector;
 
-            if (!TypeUtil.isNone(documentId)) {
+            if (!TypeUtil.isNull(documentId)) {
               checkMode = ConcurrencyCheckModes.Auto;
             }
           }
@@ -441,17 +441,17 @@ more responsive application.", maxRequests
 
         let documentId: string = id;
 
-        if (TypeUtil.isNone(documentId)) {
+        if (TypeUtil.isNull(documentId)) {
           documentId = conventions.getIdFromDocument<T>(document);
         }
 
-        if (!TypeUtil.isNone(documentId)) {
+        if (!TypeUtil.isNull(documentId)) {
           conventions.setIdOnDocument(document, documentId);
 
           document['@metadata']['@id'] = documentId;
         }
 
-        if (!TypeUtil.isNone(documentId) && !documentId.endsWith('/') && (documentId in this.documentsById)) {
+        if (!TypeUtil.isNull(documentId) && !documentId.endsWith('/') && (documentId in this.documentsById)) {
           if (!(new Set<IRavenObject>([this.documentsById[documentId]]).has(document))) {
             return BluebirdPromise.reject(new NonUniqueObjectException(StringUtil.format(
               "Attempted to associate a different object with id '{0}'.", documentId
@@ -459,7 +459,7 @@ more responsive application.", maxRequests
           }
         }
 
-        if (TypeUtil.isNone(documentId) || documentId.endsWith('/')) {
+        if (TypeUtil.isNull(documentId) || documentId.endsWith('/')) {
           return store
             .generateId(document, conventions.getTypeFromDocument(document))
             .then((documentId: string): T => {
@@ -511,7 +511,7 @@ more responsive application.", maxRequests
         if (this.rawEntitiesAndMetadata.has(existingDocument)) {
           info = this.rawEntitiesAndMetadata.get(existingDocument);
 
-          if (!TypeUtil.isNone(info.expectedChangeVector)) {
+          if (!TypeUtil.isNull(info.expectedChangeVector)) {
             changeVector = info.expectedChangeVector;
           } else if (this.conventions.defaultUseOptimisticConcurrency) {
             changeVector = info.changeVector || info.metadata['@change-vector'];

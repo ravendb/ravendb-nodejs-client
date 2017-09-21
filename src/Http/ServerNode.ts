@@ -53,7 +53,7 @@ export class ServerNode implements IJsonConvertible {
   public isRateSurpassed(requestTimeSlaThresholdInMilliseconds): boolean {
     let koeff: number = .75;
     
-    if (TypeUtil.isNone(this._isRateSurpassed)) {
+    if (TypeUtil.isNull(this._isRateSurpassed)) {
       koeff += .25;
     }
 
