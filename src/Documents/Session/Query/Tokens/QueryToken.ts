@@ -7,7 +7,7 @@ export interface IQueryToken {
 
 export abstract class QueryToken implements IQueryToken
 {
-  protected static readonly rqlKeywords = new Set<QueryKeyword>([
+  protected static readonly rqlKeywords: Set<QueryKeyword> = new Set<QueryKeyword>([
     QueryKeywords.As,
     QueryKeywords.Select,
     QueryKeywords.Where,
@@ -19,7 +19,7 @@ export abstract class QueryToken implements IQueryToken
 
   protected writeField(writer: StringBuilder, field: string): void {
     const isKeyword: boolean = (this.constructor as (typeof QueryToken))
-      .rqlKeywords.has(field);
+      .rqlKeywords.has(<QueryKeyword>field);
 
     isKeyword && writer.append("'");
     writer.append(field);

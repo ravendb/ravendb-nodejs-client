@@ -194,14 +194,14 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
     this.currentClauseDepth++;
     this.appendOperatorIfNeeded(this.whereTokens);
     this.negateIfNeeded();
-    this.whereTokens.addLast(<QueryToken>OpenSubclauseToken.instance);
+    this.whereTokens.addLast(OpenSubclauseToken.instance);
 
     return this;
   }
 
   public closeSubclause(): IQueryBuilder {
     this.currentClauseDepth--;
-    this.whereTokens.addLast(<QueryToken>CloseSubclauseToken.instance);
+    this.whereTokens.addLast(CloseSubclauseToken.instance);
 
     return this;
   }
@@ -460,7 +460,7 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
       || (lastToken.value instanceof CloseSubclauseToken)
     ) {
       this.isIntersect = false;
-      this.whereTokens.addLast(<QueryToken>IntersectMarkerToken.instance);
+      this.whereTokens.addLast(IntersectMarkerToken.instance);
     } else {
       throw new InvalidOperationException("Cannot add INTERSECT at this point.");
     }
@@ -542,7 +542,7 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public withinRadiusOf(fieldName: string, radiusParameterName: string, latitudeParameterName: string,
-    longitudeParameterName: string, radiusUnits?: SpatialUnit = SpatialUnits.Kilometers,
+    longitudeParameterName: string, radiusUnits: SpatialUnit = SpatialUnits.Kilometers,
     distErrorPercent: number = SpatialConstants.DefaultDistanceErrorPct
   ) {
     fieldName = this.ensureValidFieldName(fieldName);
@@ -556,7 +556,7 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   public spatial(fieldName, shapeWKTParameterName: string, relation: SpatialRelation, distErrorPercent: number): IQueryBuilder;
   public spatial(fieldName: string, criteria: SpatialCriteria, parameterNameGenerator: SpatialParameterNameGenerator): IQueryBuilder;
   public spatial(fieldName: string, shapeWKTParameterNameOrCriteria: string | SpatialCriteria,
-    relationOrParameterNameGenerator: SpatialRelation | SpatialParameterNameGenerator, distErrorPercent: number
+    relationOrParameterNameGenerator: SpatialRelation | SpatialParameterNameGenerator, distErrorPercent?: number
   ): IQueryBuilder {
     let criteria: SpatialCriteria = <SpatialCriteria>shapeWKTParameterNameOrCriteria;
     let nameGenerator: SpatialParameterNameGenerator
@@ -605,29 +605,28 @@ would modify the query (such as Where, Select, OrderBy, GroupBy, etc)"
   }
 
   public toString(): string {
-    
-        if (this.queryRaw != null) {
-          return this.queryRaw;
-        }
-    
-        if (this.currentClauseDepth !== 0) {
-    
-          throw new InvalidOperationException(
-            StringUtil.format("A clause was not closed correctly within this query, current clause depth = {0}", this.currentClauseDepth));
-        }
-    
-        let queryText = new StringBuilder();
-    
-        this.buildFrom(queryText);
-        this.buildGroupBy(queryText);
-        this.buildOrderBy(queryText);
-        this.buildWhere(queryText);
-        this.buildSelect(queryText);
-        this.buildInclude(queryText);
-    
-        return queryText.toString();
-    
-      }
+    const queryText = new StringBuilder();
+
+    if (!TypeUtil.isNull(this.queryRaw)) {
+      return this.queryRaw;
+    }
+
+    if (this.currentClauseDepth) {
+      throw new InvalidOperationException(
+        `A clause was not closed correctly within this query, current clause \
+depth = ${this.currentClauseDepth}`
+      );
+    }
+
+    this.buildFrom(queryText);
+    this.buildGroupBy(queryText);
+    this.buildWhere(queryText);
+    this.buildOrderBy(queryText);
+    this.buildSelect(queryText);
+    this.buildInclude(queryText);
+
+    return queryText.toString();
+  }
 
   protected ensureValidFieldName(fieldName: string, isNestedPath: boolean = false): string {
     const {VALIDATE_FIELD} = <typeof QueryBuilder>this.constructor;
@@ -648,15 +647,15 @@ would modify the query (such as Where, Select, OrderBy, GroupBy, etc)"
     return result.escapedFieldName;
   }
 
-  protected addSpaceIfNeeded(previousToken: IQueryToken, currentToken: IQueryToken, writer: StringBuilder): void {
-
-    if (previousToken == null) {
+  protected static addSpaceIfNeeded(previousToken: IQueryToken, currentToken: IQueryToken, writer: StringBuilder): void {
+    if (TypeUtil.isNull(previousToken)) {
       return;
     }
 
-    if (previousToken instanceof OpenSubclauseToken ||
-      currentToken instanceof CloseSubclauseToken ||
-      currentToken instanceof IntersectMarkerToken) {
+    if ((previousToken instanceof OpenSubclauseToken)
+      || (currentToken instanceof CloseSubclauseToken)
+      || (currentToken instanceof IntersectMarkerToken)
+    ) {
       return;
     }
 
@@ -713,90 +712,118 @@ would modify the query (such as Where, Select, OrderBy, GroupBy, etc)"
       this.andAlso();
     }
 
-    this.whereTokens.addLast(<QueryToken>NegateToken.instance);
+    this.whereTokens.addLast(NegateToken.instance);
   }
 
-  public buildFrom(writer): void {
-
+  protected buildFrom(writer: StringBuilder): void {
     this.fromToken.writeTo(writer);
-
   }
 
-  public buildOrderBy(writer): void {
+  protected buildOrderBy(writer: StringBuilder): void {
+    const tokens: LinkedList<IQueryToken> = this.orderByTokens;
 
-    this.orderByToken.writeTo(writer);
-
-  }
-
-  public buildGroupBy(writer): void {
-
-    this.groupByToken.writeTo(writer);
-
-  }
-
-  public buildSelect(writer): void {
-
-    if (this.selectTokens.count === 0) {
+    if (!tokens.count) {
       return;
     }
 
     writer
-      .Append(" SELECT ");
+      .append(" ")
+      .append(QueryKeywords.Order)
+      .append(" ")
+      .append(QueryKeywords.By)
+      .append(" ");
 
-    let token = this.selectTokens.first;
-
-    if (this.selectTokens.count === 1
-      && token.value instanceof DistinctToken) {
-
-      token.value.writeTo(writer);
-      writer.Append(" *");
-
-      return;
-    }
-
-    while (token != null) {
-
-      if (token.previous !== null
-        && token.previous.value instanceof DistinctToken === false) {
-        writer.Append(",");
+    tokens.each((item: LinkedListItem<IQueryToken>): void => {
+      if (!item.first) {
+        writer.append(", ");
       }
 
-      this.addSpaceIfNeeded(token.previous.value, token.value, writer);
-
-      token.value.writeTo(writer);
-
-      token = token.next;
-
-    }
-
+      item.value.writeTo(writer);
+    });
   }
 
-  public buildInclude(writer): void {
+  protected buildGroupBy(writer: StringBuilder): void {
+    const tokens: LinkedList<IQueryToken> = this.groupByTokens;
 
-    if (this.includes === null
-      || (<any>this.includes).length === 0) {
+    if (!tokens.count) {
+      return;
+    }
+
+    writer
+      .append(" ")
+      .append(QueryKeywords.Group)
+      .append(" ")
+      .append(QueryKeywords.By)
+      .append(" ");
+
+    tokens.each((item: LinkedListItem<IQueryToken>): void => {
+      if (!item.first) {
+        writer.append(", ");
+      }
+
+      item.value.writeTo(writer);
+    });
+  }
+
+  protected buildSelect(writer: StringBuilder): void {
+    const tokens: LinkedList<IQueryToken> = this.groupByTokens;
+    const {addSpaceIfNeeded} = <(typeof QueryBuilder)>this.constructor;
+
+    if (!tokens.count) {
+      return;
+    }
+
+    writer
+      .append(" ")
+      .append(QueryKeywords.Select)
+      .append(" ");
+
+    if ((1 === tokens.count) && (tokens.first.value instanceof DistinctToken)) {
+      tokens.first.value.writeTo(writer);
+      writer.append(" *");
 
       return;
+    }
 
-    } //TODO fix (<any>this.includes) type
+    tokens.each((item: LinkedListItem<IQueryToken>): void => {
+      const isFirst: boolean = item.first;
+      let previousToken: IQueryToken = isFirst ? null
+        : item.previous.value;
 
-    writer.append(" INCLUDE ");
-
-    let first: boolean = true;
-
-    this.includes.forEach((include) => {
-
-      if (first === false) {
+      if (!isFirst && !(previousToken instanceof DistinctToken)) {
         writer.append(",");
       }
 
-      first = false;
+      addSpaceIfNeeded(previousToken, item.value, writer);
+      item.value.writeTo(writer);
+    });
+  }
+
+  protected buildInclude(writer: StringBuilder): void {
+    if (!this.includes || !this.includes.size) {
+      return;
+    }
+
+    writer
+      .append(" ")
+      .append(QueryKeywords.Include)
+      .append(" ");
+
+    let first: boolean = true;
+
+    this.includes.forEach((include: string) => {
       let requiredQuotes = false;
+
+      if (first) {
+        first = false;
+      } else {
+        writer.append(",");
+      }
 
       for (let i: number = 0; i < include.length; i++) {
         let ch: string = include[i];
 
-        if (StringUtil.isLetterOrDigit(ch) && ch != '_' && ch != '.') {
+        if (!StringUtil.isLetterOrDigit(ch)  && !['_', '.'].includes(ch)) {
           requiredQuotes = true;
           break;
         }
@@ -805,44 +832,43 @@ would modify the query (such as Where, Select, OrderBy, GroupBy, etc)"
       if (requiredQuotes) {
         writer
           .append("'")
-          .append(include.replace("'", "\\'"))
+          .append(include.replace(/'/g, "\\'"))
           .append("'");
-      }
-      else {
+      } else {
         writer.append(include);
       }
     });
   }
 
-  public buildWhere(writer): void {
+  protected buildWhere(writer: StringBuilder): void {
+    const tokens: LinkedList<IQueryToken> = this.whereTokens;
+    const {addSpaceIfNeeded} = <(typeof QueryBuilder)>this.constructor;
 
-    if (this.whereTokens) {
+    if (!tokens || !tokens.count) {
       return;
     }
 
     writer
-      .append(" WHERE ");
+      .append(" ")
+      .append(QueryKeywords.Where)
+      .append(" ");
 
-    if (SpatialRelations.Intersects) {
+    if (this.isIntersect) {
       writer.append("intersect(");
     }
 
-    let token = this.whereTokens.first;
+    tokens.each((item: LinkedListItem<IQueryToken>): void => {
+      const isFirst: boolean = item.first;
+      let previousToken: IQueryToken = isFirst ? null
+        : item.previous.value;
 
-    while (token !== null) {
+      addSpaceIfNeeded(previousToken, item.value, writer);
+      item.value.writeTo(writer);
+    });
 
-      this.addSpaceIfNeeded(token.previous.value, token.value, writer);
-
-      token.value.writeTo(writer);
-
-      token = token.next;
-    }
-
-    if (SpatialRelations.Intersects) {
+    if (this.isIntersect) {
       writer
         .append(") ");
     }
   }
-
-
 }

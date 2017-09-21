@@ -49,7 +49,7 @@ export class FromToken extends QueryToken {
         .append(QueryKeywords.From)
         .append(' ');
 
-      if (wsChars.any((char: string): boolean => this._collectionName.includes(char))) {
+      if (wsChars.some((char: string): boolean => this._collectionName.includes(char))) {
 
         if (this._collectionName.includes('"')) {
           throw new NotSupportedException(

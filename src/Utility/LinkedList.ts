@@ -7,25 +7,32 @@ export class LinkedListItem<T> {
     return this._listTtems.indexOf(this);
   }
 
-  public get previous(): LinkedListItem<T> | null {
+  public get first(): boolean {
     const index: number = this.index;
 
-    if (index <= 0) {
+    return index <= 0;
+  }
+
+  public get last(): boolean {
+    const index: number = this.index;
+
+    return (index < 0) || (index >= (this._listTtems.length - 1));
+  }
+
+  public get previous(): LinkedListItem<T> | null {
+    if (this.first) {
       return null;
     }
 
-    return this._listTtems[index - 1];
+    return this._listTtems[this.index - 1];
   }
 
   public get next(): LinkedListItem<T> | null {
-    const index: number = this.index;
-    const items: Array<LinkedListItem<T>> = this._listTtems;
-
-    if ((index < 0) || (index >= (items.length - 1))) {
+    if (this.last) {
       return null;
     }
 
-    return items[index + 1];
+    return this._listTtems[this.index + 1];
   }
 
   constructor(
@@ -85,5 +92,9 @@ export class LinkedList<T> {
     this._items = [];
 
     return this;
+  }
+
+  public each(iteratee: (item: LinkedListItem<T>) => void) {
+    this._items.forEach(iteratee);
   }
 }
