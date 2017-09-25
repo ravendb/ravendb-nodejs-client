@@ -56,6 +56,10 @@ export class QueryBuilder extends Observable implements IQueryBuilder {
   protected negate: boolean = false;
   protected currentClauseDepth: number = 0;
 
+  public get isDynamicMapReduce(): boolean {
+    return this.groupByTokens && (this.groupByTokens.count > 0);
+  }
+
   constructor(indexName?: string, collectionName?: string, idPropertyName?: string) {
     super();
 
@@ -70,6 +74,27 @@ export class QueryBuilder extends Observable implements IQueryBuilder {
     this.aliasToGroupByFieldName = new Map<string, string>();
     this.includes = new Set<string>();
     this.idPropertyName = idPropertyName;
+  }
+
+  public selectFields(fields: string[]): IQueryBuilder;
+  public selectFields(fields: string[], projections: string[]): IQueryBuilder;
+  public selectFields(fields: string[], projections?: string[]): IQueryBuilder {
+    if (!projections || projections.length) {
+      projections = fields;
+    }
+
+    const hasDistinct: boolean = this.selectTokens.first
+      && (this.selectTokens.first instanceof DistinctToken);
+
+    this.selectTokens.clear();
+
+    if (hasDistinct) {
+      this.distinct();
+    }
+
+    this.selectTokens.addLast(FieldsToFetchToken.create(fields, projections));
+
+    return this;
   }
 
   public usingDefaultOperator(operator: QueryOperator): IQueryBuilder {
@@ -544,13 +569,14 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   public withinRadiusOf(fieldName: string, radiusParameterName: string, latitudeParameterName: string,
     longitudeParameterName: string, radiusUnits: SpatialUnit = SpatialUnits.Kilometers,
     distErrorPercent: number = SpatialConstants.DefaultDistanceErrorPct
-  ) {
+  ): IQueryBuilder {
     fieldName = this.ensureValidFieldName(fieldName);
 
     this.appendOperatorIfNeeded(this.whereTokens);
     this.negateIfNeeded(fieldName);
 
     this.whereTokens.addLast(WhereToken.within(fieldName, ShapeToken.circle(radiusParameterName, latitudeParameterName, longitudeParameterName, radiusUnits), distErrorPercent));
+    return this;
   }
 
   public spatial(fieldName, shapeWKTParameterName: string, relation: SpatialRelation, distErrorPercent: number): IQueryBuilder;

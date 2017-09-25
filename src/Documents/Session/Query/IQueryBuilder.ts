@@ -5,7 +5,10 @@ import {SpatialUnit} from "./Spatial/SpatialUnit";
 import {SpatialRelation} from "./Spatial/SpatialRelation";
 
 export interface IQueryBuilder {
+  isDynamicMapReduce: boolean;
   rawQuery(query: string): IQueryBuilder;
+  selectFields(fields: string[]): IQueryBuilder;
+  selectFields(fields: string[], projections: string[]): IQueryBuilder;
   from(indexName?: string, collectionName?: string): IQueryBuilder;
   getProjectionFields(): string[];
   randomOrdering(seed?: string): IQueryBuilder;
@@ -46,7 +49,7 @@ export interface IQueryBuilder {
   groupBySum(fieldName: string, projectedName?: string): IQueryBuilder;
   groupByCount(projectedName?: string): IQueryBuilder;
   whereTrue(): IQueryBuilder;
-  withinRadiusOf(fieldName: string, radiusParameterName: string, latitudeParameterName: string, longitudeParameterName: string, radiusUnits?: SpatialUnit, distErrorPercent?: number);
+  withinRadiusOf(fieldName: string, radiusParameterName: string, latitudeParameterName: string, longitudeParameterName: string, radiusUnits?: SpatialUnit, distErrorPercent?: number): IQueryBuilder;
   spatial(fieldName, shapeWKTParameterName: string, relation: SpatialRelation, distErrorPercent: number): IQueryBuilder;
   spatial(fieldName: string, criteria: SpatialCriteria, parameterNameGenerator: SpatialParameterNameGenerator): IQueryBuilder;
   orderByDistance(fieldName: string, latitudeParameterName: string, longitudeParameterName: string): IQueryBuilder;
