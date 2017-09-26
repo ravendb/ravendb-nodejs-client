@@ -1,5 +1,4 @@
 import * as BluebirdPromise from 'bluebird'
-import * as moment from "moment";
 import * as _ from "lodash";
 import {IDocumentQuery} from "./IDocumentQuery";
 import {IDocumentSession} from "./IDocumentSession";

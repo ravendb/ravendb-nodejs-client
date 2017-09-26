@@ -22,9 +22,9 @@ export class IndexDefinition implements IJsonable {
     this._name = name;
     this.configuration = configuration || {};
     this.reduce = initOptions.reduce || 0;
-    this.indexId = initOptions.index_id || null;
-    this.lockMode = initOptions.lock_mod || null;
-    this.priority = initOptions.priority || null;
+    this.indexId = <number>initOptions.index_id || null;
+    this.lockMode = <IndexLockMode>initOptions.lock_mode || null;
+    this.priority = <IndexPriority>initOptions.priority || null;
     this.isTestIndex = initOptions.is_test_index || false;
     this.fields = initOptions.fields || {};
     this.maps = TypeUtil.isArray(indexMap) ? (indexMap as string[]) : [indexMap as string];

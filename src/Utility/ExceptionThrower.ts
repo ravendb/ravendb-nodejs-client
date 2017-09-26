@@ -4,7 +4,7 @@ import {StatusCodes} from "../Http/Response/StatusCode";
 import {RavenException} from "../Database/DatabaseExceptions";
 import * as exceptions from "../Database/DatabaseExceptions";
 
-  export class ExceptionThrower {
+export class ExceptionThrower {
   public static throw(message: string): never;
   public static throw(type: string, message: string): never;
   public static throw(typeOrMessage: string, messageString?: string): never {

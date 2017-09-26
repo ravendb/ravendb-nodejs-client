@@ -1,5 +1,5 @@
-import {IRequestExecutor} from "../../Http/Request/RequestExecutor";
 import * as BluebirdPromise from "bluebird";
+import {IRequestExecutor} from "../../Http/Request/RequestExecutor";
 import {DateUtil} from "../../Utility/DateUtil";
 import {GetOperationStateCommand} from "../Commands/GetOperationStateCommand";
 import {IRavenResponse} from "../RavenCommandResponse";

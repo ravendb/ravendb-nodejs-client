@@ -20,7 +20,7 @@ import {OpenSubclauseToken} from "./Tokens/OpenSubclauseToken";
 import {NegateToken} from "./Tokens/NegateToken";
 import {TrueToken} from "./Tokens/TrueToken";
 import {IntersectMarkerToken} from "./Tokens/IntersectMarkerToken";
-import {SpatialRelation, SpatialRelations} from "./Spatial/SpatialRelation";
+import {SpatialRelation} from "./Spatial/SpatialRelation";
 import {DistinctToken} from "./Tokens/DistinctToken";
 import {StringBuilder} from "../../../Utility/StringBuilder";
 import {GroupBySumToken} from "./Tokens/GroupBySumToken";

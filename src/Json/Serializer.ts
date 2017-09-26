@@ -37,7 +37,7 @@ export class Serializer {
     }
     
     const transform: (value: any, key?: string) => any = (value, key) => {
-      let nestedObjectConstructor: DocumentConstructor = null;
+      let nestedObjectConstructor: DocumentConstructor;
       let nestedObject: IRavenObject = {};
 
       if ((key in mapping) && ('function' === (typeof (nestedObjectConstructor = mapping[key])))) {
@@ -89,10 +89,7 @@ export class Serializer {
     return target;
   }
 
-  public static toJSON<T extends Object = IRavenObject>(source: T, metadata: object = {}): object {
-    const mapping: object = metadata && metadata['@nested_object_types']
-      ? metadata['@nested_object_types'] : {};
-
+  public static toJSON<T extends Object = IRavenObject>(source: T): object {
     const transform: (value: any, key?: string) => any = (value, key) => {
       if ('@metadata' === key) {
         return value;
@@ -103,7 +100,7 @@ export class Serializer {
       }
 
       if (TypeUtil.isObject(value)) {
-        return this.toJSON<IRavenObject>(value, value['@metadata'] || {});
+        return this.toJSON<IRavenObject>(value);
       }
 
       if (TypeUtil.isArray(value)) {

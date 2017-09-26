@@ -1,6 +1,6 @@
-import {AbstractCallback, EmptyCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback} from '../Typedef/Callbacks';
-import {TypeUtil} from "./TypeUtil";
 import * as BluebirdPromise from "bluebird";
+import {TypeUtil} from "./TypeUtil";
+import {AbstractCallback, EmptyCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback} from '../Typedef/Callbacks';
 
 export type PromiseResolve<T> = (thenableOrResult?: BluebirdPromise.Thenable<T | T[] | number> | T | T[] | number) => void;
 export type PromiseReject = (error: Error) => void;

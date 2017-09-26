@@ -46,7 +46,7 @@ export class StringUtil {
     for (let i = 0; i < field.length; i++) {
       const c: string = field[i];
 
-      if (i == 0) {
+      if (i === 0) {
         if (!this.isLetter(c) && !['_', '@'].includes(c)) {
           escape = true;
           break;

@@ -1,7 +1,7 @@
+import * as BluebirdPromise from 'bluebird';
 import {IHiloIdGenerator} from './IHiloIdGenerator';
 import {IDocumentStore} from '../Documents/IDocumentStore';
 import {DocumentConventions} from '../Documents/Conventions/DocumentConventions';
-import * as BluebirdPromise from 'bluebird';
 import {IRavenObject} from "../Typedef/IRavenObject";
 
 export abstract class AbstractHiloIdGenerator implements IHiloIdGenerator {

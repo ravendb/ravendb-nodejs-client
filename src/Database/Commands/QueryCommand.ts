@@ -1,13 +1,10 @@
 import {RavenCommand} from '../RavenCommand';
 import {ServerNode} from '../../Http/ServerNode';
-import {IRavenResponse} from "../RavenCommandResponse";
-import {IResponse} from "../../Http/Response/IResponse";
 import {IndexQuery} from "../Indexes/IndexQuery";
 import {DocumentConventions} from "../../Documents/Conventions/DocumentConventions";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
-import {InvalidOperationException, IndexDoesNotExistException} from "../DatabaseExceptions";
+import {InvalidOperationException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
-import {QueryString} from "../../Http/QueryString";
 
 export class QueryCommand extends RavenCommand {
   protected indexQuery: IndexQuery;
@@ -16,7 +13,7 @@ export class QueryCommand extends RavenCommand {
   protected indexEntriesOnly: boolean = false;
 
   constructor(indexQuery: IndexQuery, conventions: DocumentConventions,
-              metadataOnly: boolean = false, indexEntriesOnly: boolean = false
+    metadataOnly: boolean = false, indexEntriesOnly: boolean = false
   ) {
     super('', RequestMethods.Post);
 

@@ -18,37 +18,91 @@ export {IDocumentStore} from './Documents/IDocumentStore';
 export {IDocumentSession, ISessionOptions} from './Documents/Session/IDocumentSession';
 export {IDocumentQueryConditions} from './Documents/Session/IDocumentQueryConditions';
 export {IDocumentQuery, IDocumentQueryOptions} from './Documents/Session/IDocumentQuery';
+export {IQueryBuilder} from './Documents/Session/Query/IQueryBuilder';
 export {IHiloIdGenerator} from './Hilo/IHiloIdGenerator';
 export {RequestMethods, RequestMethod} from './Http/Request/RequestMethod';
 export {FieldIndexingOption, FieldIndexingOptions} from './Database/Indexes/FieldIndexingOption';
 export {IndexLockMode} from './Database/Indexes/IndexLockMode';
-export {SortOption, SortOptions} from './Database/Indexes/SortOption';
 export {FieldTermVectorOption} from './Database/Indexes/FieldTermVectorOption';
 export {ConcurrencyCheckMode, ConcurrencyCheckModes} from './Database/ConcurrencyCheckMode';
 export {IndexPriority} from './Database/Indexes/IndexPriority';
 export {StatusCode, StatusCodes} from './Http/Response/StatusCode';
-export {RQLValue, RQLRangeValue, RQLConditionValue} from './Documents/RQL/RQLValue';
 export {ILockDoneCallback, ILockCallback} from './Typedef/LockCallbacks';
 export {IRavenObject} from './Typedef/IRavenObject';
 export {IOptionsSet} from './Typedef/IOptionsSet';
-export {IJsonable, IJsonConvertible} from './Typedef/Contracts';
+export {IJsonable, IJsonConvertible, IStringable} from './Typedef/Contracts';
 export {IRavenResponse} from './Database/RavenCommandResponse';
 export {IHeaders} from './Http/IHeaders';
 export {IResponse, IResponseBody} from './Http/Response/IResponse';
 
 //exceptions
 export {
-  RavenException, 
-  InvalidOperationException, 
+  RavenException,
+  NotSupportedException,
+  InvalidOperationException,
+  InvalidArgumentException,
   ErrorResponseException,
-  NonUniqueObjectException, 
-  ConcurrencyException, 
+  DocumentDoesNotExistsException,
+  NonUniqueObjectException,
+  ConcurrencyException,
   ArgumentNullException,
-  IndexDoesNotExistException, 
-  DatabaseLoadTimeoutException, 
+  ArgumentOutOfRangeException,
+  DatabaseDoesNotExistException,
+  AuthorizationException,
+  IndexDoesNotExistException,
+  DatabaseLoadTimeoutException,
+  AuthenticationException,
+  BadRequestException,
+  BulkInsertAbortedException,
+  BulkInsertProtocolViolationException,
+  IndexCompilationException,
+  TransformerCompilationException,
+  DocumentConflictException,
+  DocumentDoesNotExistException,
+  DocumentParseException,
+  IndexInvalidException,
+  IndexOrTransformerAlreadyExistException,
+  JavaScriptException,
+  JavaScriptParseException,
+  SubscriptionClosedException,
+  SubscriptionDoesNotBelongToNodeException,
+  SubscriptionDoesNotExistException,
+  SubscriptionException,
+  SubscriptionInUseException,
+  TransformerDoesNotExistException,
+  VersioningDisabledException,
+  TopologyNodeDownException,
   AllTopologyNodesDownException,
+  BadResponseException,
+  ChangeProcessingException,
+  CommandExecutionException,
+  NoLeaderException,
+  CompilationException,
+  ConflictException,
+  DatabaseConcurrentLoadTimeoutException,
+  DatabaseDisabledException,
   DatabaseLoadFailureException,
+  DatabaseNotFoundException,
+  NotSupportedOsException,
+  SecurityException,
+  ServerLoadFailureException,
   UnsuccessfulRequestException,
+  CriticalIndexingException,
+  IndexAnalyzerException,
+  IndexCorruptionException,
+  IndexOpenException,
+  IndexWriteException,
+  IndexWriterCreationException,
+  StorageException,
+  StreamDisposedException,
+  LowMemoryException,
+  IncorrectDllException,
+  DiskFullException,
+  InvalidJournalFlushRequestException,
+  QuotaException,
+  VoronUnrecoverableErrorException,
+  NonDurableFileSystemException,
+  AggregateException
 } from './Database/DatabaseExceptions';
 
 // classes
@@ -60,8 +114,6 @@ export {QueryCommand} from './Database/Commands/QueryCommand';
 export {GetTopologyCommand} from './Database/Commands/GetTopologyCommand';
 export {GetClusterTopologyCommand} from './Database/Commands/GetClusterTopologyCommand';
 export {GetOperationStateCommand} from './Database/Commands/GetOperationStateCommand';
-export {GetApiKeyCommand} from './Database/Commands/GetApiKeyCommand';
-export {PutApiKeyCommand} from './Database/Commands/PutApiKeyCommand';
 export {QueryOperationOptions} from './Database/Operations/QueryOperationOptions';
 export {PutIndexesCommand} from './Database/Commands/PutIndexesCommand';
 export {BatchCommand} from './Database/Commands/BatchCommand';
@@ -92,18 +144,41 @@ export {PatchOperation} from './Database/Operations/PatchOperation';
 export {IOperationStatusResult, OperationStatus, OperationStatuses, OperationAwaiter} from './Database/Operations/OperationAwaiter';
 export {AbstractOperation, Operation, AdminOperation, ServerOperation, PatchResultOperation, AwaitableOperation, IOperation} from './Database/Operations/Operation';
 export {AbstractOperationExecutor, AbstractDatabaseOperationExecutor, OperationExecutor, AdminOperationExecutor, ServerOperationExecutor, IOperationExecutor} from './Database/Operations/OperationExecutor';
-export {AccessMode, ResourcesAccessModes} from './Database/Auth/AccessMode';
-export {ApiKeyDefinition} from './Database/Auth/ApiKeyDefinition';
 export {Serializer} from './Json/Serializer';
 export {DatabaseDocument} from './Database/DatabaseDocument';
 export {DocumentStore} from './Documents/DocumentStore';
 export {DocumentSession} from './Documents/Session/DocumentSession';
-export {DocumentQuery, QueryResultsWithStatistics} from './Documents/Session/DocumentQuery';
+export {DocumentQueryParameters, DocumentQuery, QueryResultsWithStatistics} from './Documents/Session/DocumentQuery';
+export {IWhereParams, IParametrizedWhereParams, WhereParams} from './Documents/Session/Query/WhereParams';
+export {ConditionValue, SearchOperator, SearchOperators, QueryOperator, QueryOperators, QueryKeyword, QueryKeywords, OrderingType, OrderingTypes, WhereOperator, WhereOperators, FieldConstants} from './Documents/Session/Query/QueryLanguage';
+export {SpatialConstants} from './Documents/Session/Query/Spatial/SpatialConstants';
+export {SpatialRelation, SpatialRelations} from './Documents/Session/Query/Spatial/SpatialRelation';
+export {SpatialUnit, SpatialUnits} from './Documents/Session/Query/Spatial/SpatialUnit';
+export {SpatialParameterNameGenerator, SpatialCriteria} from './Documents/Session/Query/Spatial/SpatialCriteria';
+export {CircleCriteria} from './Documents/Session/Query/Spatial/CircleCriteria';
+export {WktCriteria} from './Documents/Session/Query/Spatial/WktCriteria';
+export {IQueryToken, QueryToken, SimpleQueryToken} from './Documents/Session/Query/Tokens/QueryToken';
+export {CloseSubclauseToken} from './Documents/Session/Query/Tokens/CloseSubclauseToken';
+export {DistinctToken} from './Documents/Session/Query/Tokens/DistinctToken';
+export {FieldsToFetchToken} from './Documents/Session/Query/Tokens/FieldsToFetchToken';
+export {FromToken} from './Documents/Session/Query/Tokens/FromToken';
+export {GroupByCountToken} from './Documents/Session/Query/Tokens/GroupByCountToken';
+export {GroupByKeyToken} from './Documents/Session/Query/Tokens/GroupByKeyToken';
+export {GroupBySumToken} from './Documents/Session/Query/Tokens/GroupBySumToken';
+export {GroupByToken} from './Documents/Session/Query/Tokens/GroupByToken';
+export {IntersectMarkerToken} from './Documents/Session/Query/Tokens/IntersectMarkerToken';
+export {NegateToken} from './Documents/Session/Query/Tokens/NegateToken';
+export {OpenSubclauseToken} from './Documents/Session/Query/Tokens/OpenSubclauseToken';
+export {OrderByToken} from './Documents/Session/Query/Tokens/OrderByToken';
+export {QueryOperatorToken} from './Documents/Session/Query/Tokens/QueryOperatorToken';
+export {ShapeToken} from './Documents/Session/Query/Tokens/ShapeToken';
+export {TrueToken} from './Documents/Session/Query/Tokens/TrueToken';
+export {IWhereTokenOptions, WhereToken} from './Documents/Session/Query/Tokens/WhereToken';
 export {DocumentConventions, IDocumentConversionResult, DocumentConstructor, IStoredRawEntityInfo, DocumentType, IDocumentInfoResolvable, IDocumentAssociationCheckResult} from './Documents/Conventions/DocumentConventions';
 export {IndexDefinition} from './Database/Indexes/IndexDefinition';
 export {IndexFieldOptions} from './Database/Indexes/IndexFieldOptions';
 export {IndexQuery} from './Database/Indexes/IndexQuery';
-export {QueryBuilder} from './Documents/Session/Query/QueryBuilder';
+export {IFieldValidationResult, QueryBuilder} from './Documents/Session/Query/QueryBuilder';
 export {ServerNode} from './Http/ServerNode';
 export {NodeSelector} from './Http/Request/NodeSelector';
 export {NodeStatus} from './Http/NodeStatus';
@@ -115,6 +190,8 @@ export {DateUtil} from './Utility/DateUtil';
 export {StringUtil} from './Utility/StringUtil';
 export {ArrayUtil} from './Utility/ArrayUtil';
 export {TypeUtil} from './Utility/TypeUtil';
+export {IAbstractStringBuilder, INodeStringBuilder, IStringBuilder, StringBuilder} from './Utility/StringBuilder';
+export {LinkedListItem, LinkedList} from './Utility/LinkedList';
 export {ExceptionThrower} from './Utility/ExceptionThrower';
 export {RequestExecutor, ITopologyUpdateEvent, IRequestExecutorOptions, IRequestExecutor} from './Http/Request/RequestExecutor';
 export {ClusterRequestExecutor} from './Http/Request/ClusterRequestExecutor';

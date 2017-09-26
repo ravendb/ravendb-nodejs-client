@@ -10,6 +10,7 @@ export class Observable extends EventEmitter {
   }
 
   on<T = void>(event: string | symbol, listener: (data?: T) => void): this {
-    return super.on(event, listener);
+    super.on(event, listener);
+    return this;
   }
 }

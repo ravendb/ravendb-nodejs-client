@@ -1,8 +1,8 @@
-import {InvalidOperationException, ArgumentNullException} from "../../Database/DatabaseExceptions";
+import * as _ from 'lodash';
 import * as pluralize from 'pluralize';
+import {InvalidOperationException, ArgumentNullException} from "../../Database/DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {TypeUtil} from "../../Utility/TypeUtil";
-import * as _ from 'lodash';
 import {Serializer} from "../../Json/Serializer";
 import {IRavenObject} from "../../Typedef/IRavenObject";
 import {ConcurrencyCheckMode} from "../../Database/ConcurrencyCheckMode";
@@ -142,8 +142,7 @@ export class DocumentConventions {
     const originalMetadata: object = _.cloneDeep(metadata);
     const docType: DocumentType<T> = documentType || metadata['Raven-Node-Type'];
     const docCtor: DocumentConstructor<T> = this.getDocumentConstructor(docType);
-    const idProperty: string = this.getIdPropertyName(docType, rawEntity);
-    
+
     const documentAttributes: object = _.omit(rawEntity, '@metadata');
     let document: T = Serializer.fromJSON<T>(
       docCtor ? new docCtor() : ({} as T),
@@ -166,7 +165,7 @@ export class DocumentConventions {
 
   public convertToRawEntity<T extends Object = IRavenObject>(document: T, documentType?: DocumentType<T>): object {
     const idProperty: string = this.getIdPropertyName(documentType, document);
-    let result: object = Serializer.toJSON<T>(document, document['@metadata'] || {});
+    let result: object = Serializer.toJSON<T>(document);
 
     if (idProperty) {
       delete result[idProperty];
@@ -295,20 +294,5 @@ export class DocumentConventions {
     }
 
     return metadata;
-  }
-
-  public usesRangeType(queryFilterValue: any): boolean {
-    return TypeUtil.isNumber(queryFilterValue);
-  }
-
-  public rangedFieldName(fieldName: string, queryFilterValue: any): string {
-    if (TypeUtil.isNumber(queryFilterValue)) {
-      return StringUtil.format(
-        '{0}_{1}_Range', fieldName,
-        _.isInteger(queryFilterValue) ? 'L': 'D'
-      );
-    }
-
-    return fieldName;
   }
 }
