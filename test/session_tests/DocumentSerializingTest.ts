@@ -218,7 +218,7 @@ describe('Document serializing test', () => {
       let document: IRavenObject = {};      
       Serializer.fromJSON(document, json, {}, nestedObjectTypes);
       
-      let serialized: object = Serializer.toJSON(document, {});
+      let serialized: object = Serializer.toJSON(document);
       let sampleToCompare: object = _.omit(_.cloneDeep(json), 'undefinedProp');
       
       expect(serialized).to.deep.equals(sampleToCompare);

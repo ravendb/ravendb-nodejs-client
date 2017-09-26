@@ -4,7 +4,6 @@ import {IRavenResponse} from "../src/Database/RavenCommandResponse";
 import {IndexFieldOptions} from "../src/Database/Indexes/IndexFieldOptions";
 import {IRavenObject} from "../src/Typedef/IRavenObject";
 import {PutIndexesOperation} from "../src/Database/Operations/PutIndexesOperation";
-import {SortOptions} from "../src/Database/Indexes/SortOption";
 import {IDocumentStore} from "../src/Documents/IDocumentStore";
 
 export class Foo implements IRavenObject {
@@ -100,7 +99,7 @@ export class LastFmAnalyzed {
     this.indexDefinition = new IndexDefinition(
       this.constructor.name, indexMap, null, {
       fields: {
-        "query": new IndexFieldOptions(null, FieldIndexingOptions.Analyzed)
+        "query": new IndexFieldOptions(FieldIndexingOptions.Analyzed)
       }
     });
   }
@@ -126,8 +125,7 @@ export class ProductsTestingSort {
 
     this.indexDefinition = new IndexDefinition('Testing_Sort', indexMap, null, {
       fields: {
-        "uid": new IndexFieldOptions(SortOptions.Numeric),
-        "doc_id": new IndexFieldOptions(null, null, true)
+        "doc_id": new IndexFieldOptions(null, true)
       }
     });
   }
@@ -155,8 +153,7 @@ export class UniversalsTestingSort {
 
     this.indexDefinition = new IndexDefinition('UniversalsTestingSort', indexMap, null, {
       fields: {
-        "uid": new IndexFieldOptions(SortOptions.Numeric),
-        "doc_id": new IndexFieldOptions(null, null, true)
+        "doc_id": new IndexFieldOptions(null, true)
       }
     });
   }

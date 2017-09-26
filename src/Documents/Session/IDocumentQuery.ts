@@ -8,6 +8,7 @@ import {WhereParams, IWhereParams} from "./Query/WhereParams";
 import {SpatialUnit} from "./Query/Spatial/SpatialUnit";
 import {SpatialRelation} from "./Query/Spatial/SpatialRelation";
 import {IOptionsSet} from "../../Typedef/IOptionsSet";
+import {IndexQuery} from "../../Database/Indexes/IndexQuery";
 
 export interface IDocumentQueryOptions<T> {
   documentType?: DocumentType<T>,
@@ -78,6 +79,7 @@ export interface IDocumentQuery<T extends Object = IRavenObject> {
   orderByDistance(fieldName: string, shapeWkt: string): IDocumentQuery<T>;
   orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): IDocumentQuery<T>;
   orderByDistanceDescending(fieldName: string, shapeWkt: string): IDocumentQuery<T>;
+  getIndexQuery(): IndexQuery;
   take(count: number): IDocumentQuery<T>;
   skip(count: number): IDocumentQuery<T>;
   first(callback?: EntityCallback<T>): Promise<T>;
