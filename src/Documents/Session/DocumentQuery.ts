@@ -473,7 +473,7 @@ export class DocumentQuery<T extends Object = IRavenObject> extends Observable i
     if (shapeWktOrCriteria instanceof SpatialCriteria) {
       this._builder.spatial(
         fieldName, criteria, (parameterValue: string | number): string => 
-        this.addQueryParameter(parameterValue)
+        this.addQueryParameter(<string>parameterValue)
       );
     } else {
       this._builder.spatial(fieldName, this.addQueryParameter(shapeWkt), relation, distErrorPercent);

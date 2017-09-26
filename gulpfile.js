@@ -32,8 +32,7 @@ gulp.task('build:tests', ['clean', 'build:tests:args'], () => gulp
     .src([
         options.tests + '/Test*.ts',
         options.tests + '/**/*Test.ts',
-        options.src + '/[A-Z]*/**/*.ts',
-        `!${options.src}/Database/Auth/ApiKeyAuthenticator.ts`
+        options.src + '/[A-Z]*/**/*.ts'
     ], {
         base: __dirname
     })
@@ -87,10 +86,7 @@ gulp.task('build:concat', ['clean'], () => {
         .map((match) => match.replace(/class\s+/, ''));  
     
     return gulp
-        .src([
-            `${options.src}/[A-Z]*/**/*.ts`,
-            `!${options.src}/Database/Auth/ApiKeyAuthenticator.ts`
-        ])
+        .src(`${options.src}/[A-Z]*/**/*.ts`)
         .pipe(tssort())
         .pipe(concat('ravendb-node.bundle.ts'))        
         .pipe(transform(contents => contents
