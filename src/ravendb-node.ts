@@ -1,5 +1,6 @@
 // global imports
 import * as _ from 'lodash';
+import * as crypto from "crypto";
 import * as uuid from 'uuid';
 import * as moment from 'moment';
 import * as BluebirdPromise from 'bluebird';
@@ -148,15 +149,12 @@ export {Serializer} from './Json/Serializer';
 export {DatabaseDocument} from './Database/DatabaseDocument';
 export {DocumentStore} from './Documents/DocumentStore';
 export {DocumentSession} from './Documents/Session/DocumentSession';
-export {DocumentQueryParameters, DocumentQuery, QueryResultsWithStatistics} from './Documents/Session/DocumentQuery';
 export {IWhereParams, IParametrizedWhereParams, WhereParams} from './Documents/Session/Query/WhereParams';
 export {ConditionValue, SearchOperator, SearchOperators, QueryOperator, QueryOperators, QueryKeyword, QueryKeywords, OrderingType, OrderingTypes, WhereOperator, WhereOperators, FieldConstants} from './Documents/Session/Query/QueryLanguage';
 export {SpatialConstants} from './Documents/Session/Query/Spatial/SpatialConstants';
 export {SpatialRelation, SpatialRelations} from './Documents/Session/Query/Spatial/SpatialRelation';
 export {SpatialUnit, SpatialUnits} from './Documents/Session/Query/Spatial/SpatialUnit';
-export {SpatialParameterNameGenerator, SpatialCriteria} from './Documents/Session/Query/Spatial/SpatialCriteria';
-export {CircleCriteria} from './Documents/Session/Query/Spatial/CircleCriteria';
-export {WktCriteria} from './Documents/Session/Query/Spatial/WktCriteria';
+export {SpatialParameterNameGenerator, SpatialCriteria, CircleCriteria, WktCriteria} from './Documents/Session/Query/Spatial/SpatialCriteria';
 export {IQueryToken, QueryToken, SimpleQueryToken} from './Documents/Session/Query/Tokens/QueryToken';
 export {CloseSubclauseToken} from './Documents/Session/Query/Tokens/CloseSubclauseToken';
 export {DistinctToken} from './Documents/Session/Query/Tokens/DistinctToken';
@@ -177,6 +175,7 @@ export {IWhereTokenOptions, WhereToken} from './Documents/Session/Query/Tokens/W
 export {DocumentConventions, IDocumentConversionResult, DocumentConstructor, IStoredRawEntityInfo, DocumentType, IDocumentInfoResolvable, IDocumentAssociationCheckResult} from './Documents/Conventions/DocumentConventions';
 export {IndexDefinition} from './Database/Indexes/IndexDefinition';
 export {IndexFieldOptions} from './Database/Indexes/IndexFieldOptions';
+export {DocumentQueryParameters, DocumentQuery, QueryResultsWithStatistics} from './Documents/Session/DocumentQuery';
 export {IndexQuery} from './Database/Indexes/IndexQuery';
 export {IFieldValidationResult, QueryBuilder} from './Documents/Session/Query/QueryBuilder';
 export {ServerNode} from './Http/ServerNode';

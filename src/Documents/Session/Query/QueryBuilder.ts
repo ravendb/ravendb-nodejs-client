@@ -1,7 +1,7 @@
 import {IQueryBuilder} from "./IQueryBuilder";
 import {FieldConstants, OrderingType, QueryKeywords, QueryOperator, SearchOperators} from "./QueryLanguage";
 import {SearchOperator} from "./QueryLanguage";
-import {SpatialCriteria, SpatialParameterNameGenerator} from "./Spatial/SpatialCriteria";
+import {SpatialCriteria, SpatialParameterNameGenerator, WktCriteria} from "./Spatial/SpatialCriteria";
 import {LinkedList, LinkedListItem} from "../../../Utility/LinkedList";
 import {QueryToken, IQueryToken} from "./Tokens/QueryToken";
 import {FromToken} from "./Tokens/FromToken";
@@ -29,7 +29,6 @@ import {GroupByKeyToken} from "./Tokens/GroupByKeyToken";
 import {SpatialUnit, SpatialUnits} from "./Spatial/SpatialUnit";
 import {SpatialConstants} from "./Spatial/SpatialConstants";
 import {ShapeToken} from "./Tokens/ShapeToken";
-import {WktCriteria} from "./Spatial/WktCriteria";
 
 export interface IFieldValidationResult {
   originalFieldName: string;
