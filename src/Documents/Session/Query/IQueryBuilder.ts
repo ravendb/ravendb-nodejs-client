@@ -50,7 +50,7 @@ export interface IQueryBuilder {
   groupByCount(projectedName?: string): IQueryBuilder;
   whereTrue(): IQueryBuilder;
   withinRadiusOf(fieldName: string, radiusParameterName: string, latitudeParameterName: string, longitudeParameterName: string, radiusUnits?: SpatialUnit, distErrorPercent?: number): IQueryBuilder;
-  spatial(fieldName, shapeWKTParameterName: string, relation: SpatialRelation, distErrorPercent: number): IQueryBuilder;
+  spatial(fieldName: string, shapeWKTParameterName: string, relation: SpatialRelation, distErrorPercent: number): IQueryBuilder;
   spatial(fieldName: string, criteria: SpatialCriteria, parameterNameGenerator: SpatialParameterNameGenerator): IQueryBuilder;
   orderByDistance(fieldName: string, latitudeParameterName: string, longitudeParameterName: string): IQueryBuilder;
   orderByDistance(fieldName: string, shapeWktParameterName: string): IQueryBuilder;

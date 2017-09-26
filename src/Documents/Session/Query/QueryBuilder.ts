@@ -83,17 +83,7 @@ export class QueryBuilder extends Observable implements IQueryBuilder {
       projections = fields;
     }
 
-    const hasDistinct: boolean = this.selectTokens.first
-      && (this.selectTokens.first instanceof DistinctToken);
-
-    this.selectTokens.clear();
-
-    if (hasDistinct) {
-      this.distinct();
-    }
-
-    this.selectTokens.addLast(FieldsToFetchToken.create(fields, projections));
-
+    this.updateFieldsToFetchToken(FieldsToFetchToken.create(fields, projections));
     return this;
   }
 
@@ -579,7 +569,7 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
     return this;
   }
 
-  public spatial(fieldName, shapeWKTParameterName: string, relation: SpatialRelation, distErrorPercent: number): IQueryBuilder;
+  public spatial(fieldName: string, shapeWKTParameterName: string, relation: SpatialRelation, distErrorPercent: number): IQueryBuilder;
   public spatial(fieldName: string, criteria: SpatialCriteria, parameterNameGenerator: SpatialParameterNameGenerator): IQueryBuilder;
   public spatial(fieldName: string, shapeWKTParameterNameOrCriteria: string | SpatialCriteria,
     relationOrParameterNameGenerator: SpatialRelation | SpatialParameterNameGenerator, distErrorPercent?: number
@@ -741,6 +731,25 @@ depth = ${this.currentClauseDepth}`
     this.whereTokens.addLast(NegateToken.instance);
   }
 
+  protected updateFieldsToFetchToken(fieldsToFetch: FieldsToFetchToken): void
+  {
+    const tokens: LinkedList<IQueryToken> = this.selectTokens;
+    let replaced: boolean = false;
+
+    this.fieldsToFetchToken = fieldsToFetch;
+
+    tokens.each((item: LinkedListItem<IQueryToken>): void => {
+      if (!replaced && (item.value instanceof FieldsToFetchToken)) {
+        replaced = true;
+        item.value = fieldsToFetch;
+      }    
+    });
+
+    if (!replaced) {
+      tokens.addLast(fieldsToFetch);  
+    }
+  }
+
   protected buildFrom(writer: StringBuilder): void {
     this.fromToken.writeTo(writer);
   }
@@ -792,7 +801,7 @@ depth = ${this.currentClauseDepth}`
   }
 
   protected buildSelect(writer: StringBuilder): void {
-    const tokens: LinkedList<IQueryToken> = this.groupByTokens;
+    const tokens: LinkedList<IQueryToken> = this.selectTokens;
     const {addSpaceIfNeeded} = <(typeof QueryBuilder)>this.constructor;
 
     if (!tokens.count) {

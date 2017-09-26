@@ -28,4 +28,14 @@ export class WhereParams<V> implements IWhereParams<V> {
       paramsObject.exact
     ) as WhereParams<V>;
   }
+
+  public parametrize(parameterName: string): IParametrizedWhereParams {
+    return {
+      fieldName: this.fieldName,
+      allowWildcards: this.allowWildcards,
+      isNestedPath: this.isNestedPath,
+      exact: this.exact,
+      parameterName
+    };
+  }
 }

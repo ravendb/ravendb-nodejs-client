@@ -1,6 +1,5 @@
 import {InvalidOperationException, ArgumentNullException} from "../../Database/DatabaseExceptions";
 import * as pluralize from 'pluralize';
-import {SortOption, SortOptions} from "../../Database/Indexes/SortOption";
 import {StringUtil} from "../../Utility/StringUtil";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import * as _ from 'lodash';
@@ -69,7 +68,7 @@ export class DocumentConventions {
   public getCollectionName(documentType: DocumentType): string {
     const typeName: string = this.getDocumentTypeName(documentType);
 
-    return !typeName ? '@empty' : pluralize(typeName);
+    return !typeName ? '@all_docs' : pluralize(typeName);
   }
 
   public getDocumentTypeName(documentType: DocumentType): string {
@@ -311,16 +310,5 @@ export class DocumentConventions {
     }
 
     return fieldName;
-  }
-
-  public getDefaultSortOption(queryFilterValue: any): SortOption | null {
-    switch (typeof queryFilterValue) {
-      case 'number':
-        return SortOptions.Numeric;
-      case 'string':
-        return SortOptions.Str;
-      default:
-        return SortOptions.None;
-    }
   }
 }

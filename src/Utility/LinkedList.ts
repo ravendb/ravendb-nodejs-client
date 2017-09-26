@@ -3,6 +3,10 @@ export class LinkedListItem<T> {
     return this._value;
   }
 
+  public set value(value: T) {
+    this._value = value;
+  }
+
   public get index(): number {
     return this._listTtems.indexOf(this);
   }

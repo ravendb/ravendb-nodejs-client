@@ -16,6 +16,7 @@ export class RavenException extends Error {
 
 export class NotSupportedException extends RavenException {}
 export class InvalidOperationException extends RavenException {}
+export class InvalidArgumentException extends RavenException {}
 export class ErrorResponseException extends RavenException {}
 export class DocumentDoesNotExistsException extends RavenException {}
 export class NonUniqueObjectException extends RavenException {}

@@ -73,7 +73,7 @@ export interface IDocumentQuery<T extends Object = IRavenObject> {
   groupByCount(projectedName?: string): IDocumentQuery<T>;
   whereTrue(): IDocumentQuery<T>;
   withinRadiusOf(fieldName: string, radius: number, latitude: number, longitude: number, radiusUnits?: SpatialUnit, distErrorPercent?: number): IDocumentQuery<T>;
-  spatial(fieldName, shapeWKT: string, relation: SpatialRelation, distErrorPercent: number): IDocumentQuery<T>;
+  spatial(fieldName: string, shapeWKT: string, relation: SpatialRelation, distErrorPercent: number): IDocumentQuery<T>;
   spatial(fieldName: string, criteria: SpatialCriteria): IDocumentQuery<T>;
   orderByDistance(fieldName: string, latitude: number, longitude: number): IDocumentQuery<T>;
   orderByDistance(fieldName: string, shapeWkt: string): IDocumentQuery<T>;
