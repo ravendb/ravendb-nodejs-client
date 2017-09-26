@@ -569,12 +569,12 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
     return this;
   }
 
-  public spatial(fieldName: string, shapeWKTParameterName: string, relation: SpatialRelation, distErrorPercent: number): IQueryBuilder;
+  public spatial(fieldName: string, shapeWktParameterName: string, relation: SpatialRelation, distErrorPercent: number): IQueryBuilder;
   public spatial(fieldName: string, criteria: SpatialCriteria, parameterNameGenerator: SpatialParameterNameGenerator): IQueryBuilder;
-  public spatial(fieldName: string, shapeWKTParameterNameOrCriteria: string | SpatialCriteria,
+  public spatial(fieldName: string, shapeWktParameterNameOrCriteria: string | SpatialCriteria,
     relationOrParameterNameGenerator: SpatialRelation | SpatialParameterNameGenerator, distErrorPercent?: number
   ): IQueryBuilder {
-    let criteria: SpatialCriteria = <SpatialCriteria>shapeWKTParameterNameOrCriteria;
+    let criteria: SpatialCriteria = <SpatialCriteria>shapeWktParameterNameOrCriteria;
     let nameGenerator: SpatialParameterNameGenerator
       = <SpatialParameterNameGenerator>relationOrParameterNameGenerator;
 
@@ -583,12 +583,12 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
     this.appendOperatorIfNeeded(this.whereTokens);
     this.negateIfNeeded(fieldName);
 
-    if (!(shapeWKTParameterNameOrCriteria instanceof SpatialCriteria)) {
-      const shapeWKTParameterName: string = <string>shapeWKTParameterNameOrCriteria;
+    if (!(shapeWktParameterNameOrCriteria instanceof SpatialCriteria)) {
+      const shapeWktParameterName: string = <string>shapeWktParameterNameOrCriteria;
       const relation: SpatialRelation = <SpatialRelation>relationOrParameterNameGenerator;
 
       criteria = new WktCriteria(null, relation, distErrorPercent);
-      nameGenerator = (parameterValue: string | number): string => shapeWKTParameterName;
+      nameGenerator = (parameterValue: string | number): string => shapeWktParameterName;
     }
 
     this.whereTokens.addLast(criteria.toQueryToken(fieldName, nameGenerator));

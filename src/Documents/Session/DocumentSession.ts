@@ -20,6 +20,7 @@ import {SaveChangesData} from "../../Database/Commands/Data/SaveChangesData";
 import {IRavenObject} from "../../Typedef/IRavenObject";
 import {Serializer} from "../../Json/Serializer";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
+import {IOptionsSet} from "../../Typedef/IOptionsSet";
 import {ConcurrencyCheckMode, ConcurrencyCheckModes} from "../../Database/ConcurrencyCheckMode";
 
 export class DocumentSession implements IDocumentSession {
@@ -44,9 +45,7 @@ export class DocumentSession implements IDocumentSession {
     return this.documentStore.conventions;
   }
 
-  constructor (database: string, documentStore: IDocumentStore, requestExecutor: RequestExecutor,
-               sessionId: string
-  ) {
+  constructor (database: string, documentStore: IDocumentStore, requestExecutor: RequestExecutor, sessionId: string) {
     this.database = database;
     this.documentStore = documentStore;
     this.requestExecutor = requestExecutor;
@@ -265,28 +264,23 @@ export class DocumentSession implements IDocumentSession {
   }
 
   public query<T extends Object = IRavenObject>(options?: IDocumentQueryOptions<T>): IDocumentQuery<T> {
-    let waitForNonStaleResults: boolean = null;
-    let includes: string[] = null;
     let withStatistics: boolean = null;
     let indexName: string = null;
     let documentType: DocumentType<T> = null;
+    let indexQueryOptions: IOptionsSet = {};
     let nestedObjectTypes: IRavenObject<DocumentConstructor> = {} as IRavenObject<DocumentConstructor>;
-    let fromCollection: boolean = false;
-    let queryParameters: object;
 
     if (options) {
-      waitForNonStaleResults = options.waitForNonStaleResults || null;
-      includes = options.includes || null;
       withStatistics = options.withStatistics || null;
       nestedObjectTypes = options.nestedObjectTypes || {};
       indexName = options.indexName || null;
       documentType = options.documentType || null;
-      fromCollection = options.fromCollection || false;
-      queryParameters = options.queryParameters;
+      indexQueryOptions = options.indexQueryOptions || {};
     }
 
-    const query: DocumentQuery<T> = new DocumentQuery<T>(this, this.requestExecutor, documentType, indexName,
-      waitForNonStaleResults, nestedObjectTypes, withStatistics, queryParameters
+    const query: DocumentQuery<T> = new DocumentQuery<T>(
+      this, this.requestExecutor, documentType, indexName,
+      nestedObjectTypes, withStatistics, indexQueryOptions
     );
 
     query.on(

@@ -7,16 +7,14 @@ import {SpatialCriteria} from "./Query/Spatial/SpatialCriteria";
 import {WhereParams, IWhereParams} from "./Query/WhereParams";
 import {SpatialUnit} from "./Query/Spatial/SpatialUnit";
 import {SpatialRelation} from "./Query/Spatial/SpatialRelation";
+import {IOptionsSet} from "../../Typedef/IOptionsSet";
 
 export interface IDocumentQueryOptions<T> {
   documentType?: DocumentType<T>,
   indexName?: string;
-  waitForNonStaleResults?: boolean;
-  includes?: string[];
   nestedObjectTypes?: IRavenObject<DocumentConstructor>;
   withStatistics?: boolean;
-  fromCollection?: boolean;
-  queryParameters?: object;
+  indexQueryOptions?: IOptionsSet;
 }
 
 export interface IDocumentQuery<T extends Object = IRavenObject> {
@@ -62,6 +60,7 @@ export interface IDocumentQuery<T extends Object = IRavenObject> {
   orderByScoreDescending(): IDocumentQuery<T>;
   waitForNonStaleResults(waitTimeout?: number): IDocumentQuery<T>;
   waitForNonStaleResultsAsOfNow(waitTimeout?: number): IDocumentQuery<T>;
+  waitForNonStaleResultsAsOf(cutOffEtag: number, waitTimeout?: number): IDocumentQuery<T>;
   search(fieldName: string, searchTerms: string, operator: SearchOperator): IDocumentQuery<T>;
   intersect(): IDocumentQuery<T>;
   distinct(): IDocumentQuery<T>;
@@ -73,7 +72,7 @@ export interface IDocumentQuery<T extends Object = IRavenObject> {
   groupByCount(projectedName?: string): IDocumentQuery<T>;
   whereTrue(): IDocumentQuery<T>;
   withinRadiusOf(fieldName: string, radius: number, latitude: number, longitude: number, radiusUnits?: SpatialUnit, distErrorPercent?: number): IDocumentQuery<T>;
-  spatial(fieldName: string, shapeWKT: string, relation: SpatialRelation, distErrorPercent: number): IDocumentQuery<T>;
+  spatial(fieldName: string, shapeWkt: string, relation: SpatialRelation, distErrorPercent: number): IDocumentQuery<T>;
   spatial(fieldName: string, criteria: SpatialCriteria): IDocumentQuery<T>;
   orderByDistance(fieldName: string, latitude: number, longitude: number): IDocumentQuery<T>;
   orderByDistance(fieldName: string, shapeWkt: string): IDocumentQuery<T>;
