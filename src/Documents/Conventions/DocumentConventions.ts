@@ -57,6 +57,10 @@ export class DocumentConventions {
     return null;
   }
 
+  public get emptyCollection(): string {
+    return null;
+  }
+
   public addDocumentInfoResolver(resolver: IDocumentInfoResolvable): void {
     if (!resolver) {
       throw new ArgumentNullException('Invalid resolver provided');
@@ -68,7 +72,7 @@ export class DocumentConventions {
   public getCollectionName(documentType: DocumentType): string {
     const typeName: string = this.getDocumentTypeName(documentType);
 
-    return !typeName ? '@all_docs' : pluralize(typeName);
+    return !typeName ? this.emptyCollection : pluralize(typeName);
   }
 
   public getDocumentTypeName(documentType: DocumentType): string {

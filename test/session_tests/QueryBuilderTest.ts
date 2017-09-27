@@ -3,6 +3,7 @@
 /// <reference path='../../node_modules/@types/chai-as-promised/index.d.ts' />
 
 import {expect} from 'chai';
+import * as moment from 'moment';
 import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
@@ -44,7 +45,7 @@ describe('Document query test', () => {
     });
 
     it('CanUnderstandEqualOnDate', () => {
-      const dateTime: Date = new Date(2010, 5, 15, 0, 0, 0, 0);
+      const dateTime: Date = new Date("2010-05-15T00:00:00");
 
       const query: IDocumentQuery = store
         .openSession()
@@ -54,7 +55,7 @@ describe('Document query test', () => {
       const indexQuery: IndexQuery = query.getIndexQuery();
 
       expect(indexQuery.query).equals("FROM INDEX 'IndexName' WHERE Birthday = $p0");
-      expect(indexQuery.queryParameters['p0']).equals('20100515T00:00:00.0000000');
+      expect(indexQuery.queryParameters['p0']).equals('2010-05-15T00:00:00.0000000');
     });
 
     it('CanUnderstandEqualOnBool', () => {
@@ -90,7 +91,7 @@ describe('Document query test', () => {
       const indexQuery: IndexQuery = query.getIndexQuery();
 
       expect(indexQuery.query).equals("FROM INDEX 'IndexName' WHERE Name IN ($p0)");
-      expect(indexQuery.queryParameters['p0']).equals(['ryan', 'heath']);
+      expect(indexQuery.queryParameters['p0']).deep.equals(['ryan', 'heath']);
     });
 
     it('NoConditionsShouldProduceEmptyWhere', () => {
@@ -286,9 +287,9 @@ describe('Document query test', () => {
       const indexQuery: IndexQuery = query.getIndexQuery();
 
       expect(indexQuery.query).equals("FROM Users WHERE Age >= $p0 AND (Name = $p1 OR Name = $p2)");
-      expect(indexQuery.queryParameters["p0"]).equals('ayende');
+      expect(indexQuery.queryParameters["p0"]).equals(16);
       expect(indexQuery.queryParameters["p1"]).equals('rob');
-      expect(indexQuery.queryParameters["p1"]).equals('dave');
+      expect(indexQuery.queryParameters["p2"]).equals('dave');
     });
   });
 });

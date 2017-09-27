@@ -208,6 +208,10 @@ export class StringBuilder implements IStringBuilder {
     return new (this.constructor as (typeof StringBuilder))(this._builder.clone());
   }
 
+  public toString(start: number = 0, length?: number): string {
+    return this._builder.toString(start, length);
+  }
+
   public toBuffer(start: number = 0, length?: number): Buffer {
     return this._builder.toBuffer(start, length);
   }

@@ -1,4 +1,5 @@
 import {QueryToken} from "./QueryToken";
+import {QueryKeywords} from "../QueryLanguage";
 import {StringBuilder} from "../../../../Utility/StringBuilder";
 import {ArgumentNullException} from "../../../../Database/DatabaseExceptions";
 
@@ -47,9 +48,13 @@ same as length of fields to fetch."
       this.writeField(writer, field);
 
       if (!projection || (projection === field)) {
-        writer.append(" as ");
-        writer.append(projection);
+        continue;
       }
+
+      writer.append(" ");
+      writer.append(QueryKeywords.As);
+      writer.append(" ");
+      writer.append(projection);
     }
   }
 }

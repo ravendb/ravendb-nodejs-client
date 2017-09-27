@@ -103,6 +103,10 @@ export class DocumentQuery<T extends Object = IRavenObject> extends Observable i
     this._indexName = indexName;
     this._collectionName = conventions.getCollectionName(documentType);
 
+    if (conventions.emptyCollection == this._collectionName) {
+      this._collectionName = null;
+    } 
+
     this._builder = new QueryBuilder(
       this._indexName, this._collectionName,
       conventions.getIdPropertyName(documentType)

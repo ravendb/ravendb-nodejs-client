@@ -50,23 +50,25 @@ export class FromToken extends QueryToken {
         .append(' ');
 
       if (wsChars.some((char: string): boolean => this._collectionName.includes(char))) {
-
         if (this._collectionName.includes('"')) {
           throw new NotSupportedException(
             `Collection name cannot contain a quote, but was: ${this._collectionName}`
           );
-
         }
 
         writer.append('"').append(this._collectionName).append('"');
+      } else {
+        writer.append(this._collectionName);
       }
+
+      return;
     }
 
     writer
       .append(QueryKeywords.From)
       .append(' ')
       .append(QueryKeywords.Index)
-      .append("'")
+      .append(" '")
       .append(this._indexName)
       .append("'");
   }
