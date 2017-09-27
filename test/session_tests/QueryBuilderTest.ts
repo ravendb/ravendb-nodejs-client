@@ -235,7 +235,7 @@ describe('Document query test', () => {
   
       const indexQuery: IndexQuery = query.getIndexQuery();
 
-      expect(indexQuery.query).equals("FROM IndexedUsers WHERE startsWith(Name, $p0)");
+      expect(indexQuery.query).equals("FROM Users WHERE startsWith(Name, $p0)");
       expect(indexQuery.queryParameters["p0"]).equals('foo');
     });
   
