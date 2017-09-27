@@ -109,6 +109,5 @@ describe('Document load test', () => {
 
       expect(session.numberOfRequestsInSession).to.equals(2);
     });
-
   });
 });

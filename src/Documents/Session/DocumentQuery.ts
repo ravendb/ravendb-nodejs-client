@@ -15,7 +15,7 @@ import {TypeUtil} from "../../Utility/TypeUtil";
 import {Observable} from "../../Utility/Observable";
 import {ErrorResponseException, InvalidArgumentException, InvalidOperationException, RavenException} from "../../Database/DatabaseExceptions";
 import {QueryBuilder} from "./Query/QueryBuilder";
-import {ConditionValue, OrderingType, QueryOperator, SearchOperator} from "./Query/QueryLanguage";
+import {ConditionValue, OrderingType, QueryOperator, SearchOperator, SearchOperators} from "./Query/QueryLanguage";
 import {IQueryBuilder} from "./Query/IQueryBuilder";
 import {SpatialUnit} from "./Query/Spatial/SpatialUnit";
 import {SpatialRelation} from "./Query/Spatial/SpatialRelation";
@@ -393,7 +393,7 @@ export class DocumentQuery<T extends Object = IRavenObject> extends Observable i
     return this;
   }
 
-  public search(fieldName: string, searchTerms: string, operator: SearchOperator): IDocumentQuery<T> {
+  public search(fieldName: string, searchTerms: string, operator: SearchOperator = SearchOperators.Or): IDocumentQuery<T> {
     this._builder.search(fieldName, this.addQueryParameter(searchTerms), operator);
     return this;
   }

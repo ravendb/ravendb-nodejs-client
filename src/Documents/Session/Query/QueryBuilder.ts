@@ -1,5 +1,5 @@
 import {IQueryBuilder} from "./IQueryBuilder";
-import {FieldConstants, OrderingType, QueryKeywords, QueryOperator, SearchOperators} from "./QueryLanguage";
+import {FieldConstants, OrderingType, QueryKeywords, QueryOperator, QueryOperators, SearchOperators} from "./QueryLanguage";
 import {SearchOperator} from "./QueryLanguage";
 import {SpatialCriteria, SpatialParameterNameGenerator, WktCriteria} from "./Spatial/SpatialCriteria";
 import {LinkedList, LinkedListItem} from "../../../Utility/LinkedList";
@@ -706,7 +706,7 @@ depth = ${this.currentClauseDepth}`
       current = current.previous;
     }
 
-    let token: QueryToken = (SearchOperators.And === this.defaultOperator)
+    let token: QueryToken = (QueryOperators.And === this.defaultOperator)
       ? QueryOperatorToken.And : QueryOperatorToken.Or;
 
     if (lastWhere && !TypeUtil.isNull(lastWhere.searchOperator)) {
