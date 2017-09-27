@@ -369,61 +369,37 @@ without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)")
   }
 
   public boost(boost: number): IQueryBuilder {
-    let lastToken: LinkedListItem<IQueryToken>;
-    let whereToken: WhereToken;
-
     if (1 === boost) {
       return this;
-    }
-
-    if (!(lastToken = this.whereTokens.last) 
-      && !((whereToken = <WhereToken>lastToken.value) instanceof WhereToken)
-    ) {
-      throw new InvalidOperationException("Missing where clause");
     }
 
     if (boost <= 0) {
       throw new ArgumentOutOfRangeException("Boost factor must be a positive number");
     }
 
+    let whereToken: WhereToken = this.findLastWhereToken();
     whereToken.boost = boost;
 
     return this;
   }
 
   public fuzzy(fuzzy: number): IQueryBuilder {
-    let lastToken: LinkedListItem<IQueryToken>;
-    let whereToken: WhereToken;
-
-    if (!(lastToken = this.whereTokens.last) 
-      && !((whereToken = <WhereToken>lastToken.value) instanceof WhereToken)
-    ) {
-      throw new InvalidOperationException("Missing where clause");
-    }
-
     if ((fuzzy < 0) || (fuzzy > 1)) {
       throw new ArgumentOutOfRangeException("Fuzzy distance must be between 0.0 and 1.0");
     }
 
+    let whereToken: WhereToken = this.findLastWhereToken();
     whereToken.fuzzy = fuzzy;
 
     return this;
   }
 
   public proximity(proximity: number): IQueryBuilder {
-    let lastToken: LinkedListItem<IQueryToken>;
-    let whereToken: WhereToken;
-
-    if (!(lastToken = this.whereTokens.last) 
-      && !((whereToken = <WhereToken>lastToken.value) instanceof WhereToken)
-    ) {
-      throw new InvalidOperationException("Missing where clause");
-    }
-
     if (proximity < 1) {
       throw new ArgumentOutOfRangeException("Proximity distance must be a positive number");
     }
-
+    
+    let whereToken: WhereToken = this.findLastWhereToken();
     whereToken.proximity = proximity;
 
     return this;
@@ -747,6 +723,21 @@ depth = ${this.currentClauseDepth}`
     });
 
     return result;
+  }
+
+  protected findLastWhereToken(): WhereToken | never {
+    const lastToken: LinkedListItem<IQueryToken> = this.whereTokens.last;
+    let whereToken: WhereToken = null;
+
+    if (lastToken) {
+      whereToken = lastToken.value as WhereToken;
+    }
+
+    if (!(whereToken instanceof WhereToken)) {
+      throw new InvalidOperationException("Missing where clause");
+    }
+
+    return whereToken;
   }
 
   protected updateFieldsToFetchToken(fieldsToFetch: FieldsToFetchToken): void

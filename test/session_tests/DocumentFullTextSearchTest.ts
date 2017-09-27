@@ -65,9 +65,9 @@ describe('Document full text search', () => {
           indexName: LastFmAnalyzed.name
         })
         .waitForNonStaleResultsAsOfNow()
-        .search('Query', 'Me')
+        .search('query', 'Me')
         .boost(10)
-        .search('Query', 'Bobo')
+        .search('query', 'Bobo')
         .boost(2)
         .all();
 

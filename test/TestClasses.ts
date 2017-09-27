@@ -88,7 +88,7 @@ export class LastFmAnalyzed {
     this.indexDefinition = new IndexDefinition(
       this.constructor.name, indexMap, null, {
       fields: {
-        "query": new IndexFieldOptions(FieldIndexingOptions.Analyzed)
+        "query": new IndexFieldOptions(FieldIndexingOptions.Search)
       }
     });
   }
