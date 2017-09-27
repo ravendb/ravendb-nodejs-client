@@ -19,7 +19,7 @@ describe('Document query test', () => {
   });
 
   describe('Query Builder Test', () => {
-    it('CanUnderstandEquality', async () => {
+    it('CanUnderstandEquality', () => {
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'})
@@ -31,13 +31,13 @@ describe('Document query test', () => {
       expect(indexQuery.queryParameters['p0']).equals('ayende');
     });
 
-    it('CanUnderstandEqualOnDate', async () => {
+    it('CanUnderstandEqualOnDate', () => {
       const dateTime: Date = new Date(2010, 5, 15, 0, 0, 0, 0);
 
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'})
-        .whereEquals('Birthday', dateTime);
+        .whereEquals<Date>('Birthday', dateTime);
 
       const indexQuery: IndexQuery = query.getIndexQuery();
 
@@ -45,7 +45,7 @@ describe('Document query test', () => {
       expect(indexQuery.queryParameters['p0']).equals('20100515T00:00:00.0000000');
     });
 
-    it('CanUnderstandContains', async () => {
+    it('CanUnderstandContains', () => {
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'})
@@ -57,7 +57,7 @@ describe('Document query test', () => {
       expect(indexQuery.queryParameters['p0']).equals(['ryan', 'heath']);
     });
 
-    it('NoOpShouldProduceEmptyString', async () => {
+    it('NoOpShouldProduceEmptyString', () => {
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'});
@@ -67,13 +67,13 @@ describe('Document query test', () => {
       expect(indexQuery.query).equals("FROM INDEX 'IndexName'");
     });
 
-    it('CanUnderstandAnd', async () => {
+    it('CanUnderstandAnd', () => {
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'})
-        .whereEquals('Name', 'ayende')
+        .whereEquals<string>('Name', 'ayende')
         .andAlso()
-        .whereEquals('Email', 'ayende@ayende.com');
+        .whereEquals<string>('Email', 'ayende@ayende.com');
 
       const indexQuery: IndexQuery = query.getIndexQuery();
 
@@ -82,13 +82,13 @@ describe('Document query test', () => {
       expect(indexQuery.queryParameters['p1']).equals('ayende@ayende.com');
     });
 
-    it('CanUnderstandOr', async () => {
+    it('CanUnderstandOr', () => {
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'})
-        .whereEquals('Name', 'ayende')
+        .whereEquals<string>('Name', 'ayende')
         .orElse()
-        .whereEquals('Email', 'ayende@ayende.com');
+        .whereEquals<string>('Email', 'ayende@ayende.com');
 
       const indexQuery: IndexQuery = query.getIndexQuery();
 
@@ -97,11 +97,11 @@ describe('Document query test', () => {
       expect(indexQuery.queryParameters['p1']).equals('ayende@ayende.com');
     });
 
-    it('CanUnderstandLessThan', async () => {
+    it('CanUnderstandLessThan', () => {
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'})
-        .whereLessThan('Age', 16);
+        .whereLessThan<number>('Age', 16);
 
       const indexQuery: IndexQuery = query.getIndexQuery();
 
@@ -109,11 +109,11 @@ describe('Document query test', () => {
       expect(indexQuery.queryParameters['p0']).equals(16);
     });
 
-    it('CanUnderstandLessThanOrEqual', async () => {
+    it('CanUnderstandLessThanOrEqual', () => {
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'})
-        .whereLessThanOrEqual('Age', 16);
+        .whereLessThanOrEqual<number>('Age', 16);
 
       const indexQuery: IndexQuery = query.getIndexQuery();
 
@@ -121,11 +121,11 @@ describe('Document query test', () => {
       expect(indexQuery.queryParameters['p0']).equals(16);
     });
 
-    it('CanUnderstandGreaterThan', async () => {
+    it('CanUnderstandGreaterThan', () => {
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'})
-        .whereGreaterThan('Age', 16);
+        .whereGreaterThan<number>('Age', 16);
 
       const indexQuery: IndexQuery = query.getIndexQuery();
 
@@ -133,11 +133,11 @@ describe('Document query test', () => {
       expect(indexQuery.queryParameters['p0']).equals(16);
     });
 
-    it('CanUnderstandGreaterThanOrEqual', async () => {
+    it('CanUnderstandGreaterThanOrEqual', () => {
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'})
-        .whereGreaterThanOrEqual('Age', 16);
+        .whereGreaterThanOrEqual<number>('Age', 16);
 
       const indexQuery: IndexQuery = query.getIndexQuery();
 
@@ -145,11 +145,11 @@ describe('Document query test', () => {
       expect(indexQuery.queryParameters['p0']).equals(16);
     });
 
-    it('CanUnderstandProjectionOfSingleField', async () =>  {
+    it('CanUnderstandProjectionOfSingleField', () =>  {
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'})
-        .whereGreaterThanOrEqual('Age', 16)
+        .whereGreaterThanOrEqual<number>('Age', 16)
         .selectFields(['Name']);
 
       const indexQuery: IndexQuery = query.getIndexQuery();
@@ -158,11 +158,11 @@ describe('Document query test', () => {
       expect(indexQuery.queryParameters['p0']).equals(16);
     });
 
-    it('CanUnderstandProjectionOfMultipleFields', async () =>  {
+    it('CanUnderstandProjectionOfMultipleFields', () =>  {
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'})
-        .whereGreaterThanOrEqual('Age', 16)
+        .whereGreaterThanOrEqual<number>('Age', 16)
         .selectFields(['Name', 'Age']);
 
       const indexQuery: IndexQuery = query.getIndexQuery();
