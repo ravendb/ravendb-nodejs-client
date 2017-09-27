@@ -22,6 +22,18 @@ describe('Document query test', () => {
     it('CanUnderstandEquality', () => {
       const query: IDocumentQuery = store
         .openSession()
+        .query({documentType: 'User'})
+        .whereEquals<string>('Name', 'red');
+
+      const indexQuery: IndexQuery = query.getIndexQuery();
+
+      expect(indexQuery.query).equals("FROM Users WHERE Name = $p0");
+      expect(indexQuery.queryParameters['p0']).equals('red');
+    });
+
+    it('CanUnderstandExactEquality', () => {
+      const query: IDocumentQuery = store
+        .openSession()
         .query({indexName: 'IndexName'})
         .whereEquals<string>('Name', 'ayende', true);
 
@@ -45,7 +57,31 @@ describe('Document query test', () => {
       expect(indexQuery.queryParameters['p0']).equals('20100515T00:00:00.0000000');
     });
 
-    it('CanUnderstandContains', () => {
+    it('CanUnderstandEqualOnBool', () => {
+      const query: IDocumentQuery = store
+        .openSession()
+        .query({documentType: 'User'})
+        .whereEquals<boolean>('Active', false);
+
+      const indexQuery: IndexQuery = query.getIndexQuery();
+
+      expect(indexQuery.query).equals("FROM Users WHERE Active = $p0");
+      expect(indexQuery.queryParameters['p0']).equals(false);
+    });
+
+    it('CanUnderstandNotEqual', () => {
+      const query: IDocumentQuery = store
+        .openSession()
+        .query({documentType: 'User'})
+        .whereNotEquals<boolean>('Active', false);
+
+      const indexQuery: IndexQuery = query.getIndexQuery();
+
+      expect(indexQuery.query).equals("FROM Users WHERE Active != $p0");
+      expect(indexQuery.queryParameters['p0']).equals(false);
+    });
+
+    it('CanUnderstandIn', () => {
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'})
@@ -57,7 +93,7 @@ describe('Document query test', () => {
       expect(indexQuery.queryParameters['p0']).equals(['ryan', 'heath']);
     });
 
-    it('NoOpShouldProduceEmptyString', () => {
+    it('NoConditionsShouldProduceEmptyWhere', () => {
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'});
@@ -170,5 +206,84 @@ describe('Document query test', () => {
       expect(indexQuery.query).equals("FROM INDEX 'IndexName' WHERE Age >= $p0 SELECT Name, Age");
       expect(indexQuery.queryParameters['p0']).equals(16);
     });
-  })
+
+    it('CanUnderstandBetween', () => {
+      const min: number = 1224;
+      const max: number = 1226;
+  
+      const query: IDocumentQuery = store
+        .openSession()
+        .query({
+          documentType: 'IndexedUser'
+        })
+        .whereBetween<number>("Rate", min, max);
+  
+      const indexQuery = query.getIndexQuery();
+      expect(indexQuery.query).equals("FROM IndexedUsers WHERE Rate BETWEEN $p0 AND $p1");
+      expect(indexQuery.queryParameters["p0"]).equals(min);
+      expect(indexQuery.queryParameters["p1"]).equals(max);
+    });
+
+    it('CanUnderstandStartsWith', async () => {
+      const query: IDocumentQuery = store
+        .openSession()
+        .query({
+          documentType: 'User'
+        })
+        .whereStartsWith<string>("Name", 'foo');
+  
+      const indexQuery = query.getIndexQuery();
+      expect(indexQuery.query).equals("FROM IndexedUsers WHERE startsWith(Name, $p0)");
+      expect(indexQuery.queryParameters["p0"]).equals('foo');
+    });
+  
+    it('CanUnderstandEndsWith', async () => {
+      const query: IDocumentQuery = store
+        .openSession()
+        .query({
+          documentType: 'User'
+        })
+        .whereStartsWith<string>("Name", 'foo');
+  
+      const indexQuery = query.getIndexQuery();
+      expect(indexQuery.query).equals("FROM IndexedUsers WHERE startsWith(Name, $p0)");
+      expect(indexQuery.queryParameters["p0"]).equals('foo');
+    });
+
+    it('ShouldWrapFirstNotWithTrueToken', async () => {
+      const query: IDocumentQuery = store
+        .openSession()
+        .query({
+          documentType: 'User'
+        })
+        .whereTrue()
+        .andAlso()
+        .not.whereStartsWith<string>('Name', 'foo');
+  
+      const indexQuery = query.getIndexQuery();
+      expect(indexQuery.query).equals("FROM IndexedUsers WHERE true AND NOT startsWith(Name, $p0)");
+      expect(indexQuery.queryParameters["p0"]).equals('foo');
+    });
+
+    it('CanUnderstandSubclauses', async () => {
+      const query: IDocumentQuery = store
+        .openSession()
+        .query({
+          documentType: 'User'
+        })
+        .whereGreaterThanOrEqual<number>('Age', 16)
+        .andAlso()
+        .openSubclause()
+        .whereEquals<string>('Name', 'rob')
+        .orElse()
+        .whereEquals<string>('Name', 'dave')
+        .closeSubclause();
+  
+      const indexQuery = query.getIndexQuery();
+      expect(indexQuery.query).equals("FROM IndexedUsers WHERE Age >= $p0 AND (Name = $p1 OR Name = $p2)");
+      expect(indexQuery.queryParameters["p0"]).equals('ayende');
+      expect(indexQuery.queryParameters["p1"]).equals('rob');
+      expect(indexQuery.queryParameters["p1"]).equals('dave');
+    });
+  });
 });
