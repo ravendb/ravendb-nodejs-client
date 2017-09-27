@@ -53,11 +53,11 @@ export class DocumentQuery<T extends Object = IRavenObject> extends Observable i
   protected queryParameters: DocumentQueryParameters;
   protected nestedObjectTypes: IRavenObject<DocumentConstructor> = {};
 
-  private _indexName: string = null;
-  private _collectionName: string = null;
+  private _indexName: string;
+  private _collectionName: string;
   private _take?: number = null;
   private _skip?: number = null;
-  private _builder: IQueryBuilder = null;
+  private _builder: IQueryBuilder;
 
   public get not(): IDocumentQuery<T> {
     this.negateNext();
@@ -92,17 +92,18 @@ export class DocumentQuery<T extends Object = IRavenObject> extends Observable i
 
     const conventions: DocumentConventions = session.conventions;
 
-    if (TypeUtil.isNull(indexName)) {
+    if (indexName) {
+      this._collectionName = null;
+      this._indexName = indexName;
+    } else {
       let collection: string = conventions.getCollectionName(documentType);  
 
-      if (conventions.emptyCollection !== collection) {
-        this._collectionName = collection;
+      if (!documentType || (conventions.emptyCollection === collection)) {
+        collection = '@all_docs';
       }
       
       this._indexName = null;      
-    } else {
-      this._collectionName = null;
-      this._indexName = indexName;
+      this._collectionName = collection;
     }
 
     this.session = session;
