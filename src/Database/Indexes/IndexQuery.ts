@@ -25,12 +25,16 @@ export class IndexQuery implements IJsonable {
 
     this._query = query;
     this._queryParameters = queryParameters;
-    this._pageSize = pageSize || TypeUtil.MAX_INT32;
+    this._pageSize = pageSize;
     this._start = skippedResults || 0;
     this._cutOffEtag = options.cutOffEtag || null;
     this._waitForNonStaleResults = options.waitForNonStaleResults || false;
     this._waitForNonStaleResultsAsOfNow = options.waitForNonStaleResultsAsOfNow || false;
     this._waitForNonStaleResultsTimeout = options.waitForNonStaleResultsTimeout || null;
+
+    if (!TypeUtil.isNumber(pageSize)) {
+      this._pageSize = TypeUtil.MAX_INT32;
+    }
 
     if ((this._waitForNonStaleResults || this._waitForNonStaleResultsAsOfNow)
       && !this._waitForNonStaleResultsTimeout

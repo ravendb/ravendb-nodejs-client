@@ -23,6 +23,7 @@ export interface IDocumentQuery<T extends Object = IRavenObject> {
   indexName: string;
   collectionName: string;
   conventions: DocumentConventions;
+  isFetchingAllFields: boolean;
   isDynamicMapReduce: boolean;
   rawQuery(query: string): IDocumentQuery<T>;
   selectFields(fields: string[]): IDocumentQuery<T>;
@@ -62,7 +63,7 @@ export interface IDocumentQuery<T extends Object = IRavenObject> {
   waitForNonStaleResults(waitTimeout?: number): IDocumentQuery<T>;
   waitForNonStaleResultsAsOfNow(waitTimeout?: number): IDocumentQuery<T>;
   waitForNonStaleResultsAsOf(cutOffEtag: number, waitTimeout?: number): IDocumentQuery<T>;
-  search(fieldName: string, searchTerms: string, operator: SearchOperator): IDocumentQuery<T>;
+  search(fieldName: string, searchTerms: string, operator?: SearchOperator): IDocumentQuery<T>;
   intersect(): IDocumentQuery<T>;
   distinct(): IDocumentQuery<T>;
   containsAny<V extends ConditionValue>(fieldName: string, values: V[]): IDocumentQuery<T>;

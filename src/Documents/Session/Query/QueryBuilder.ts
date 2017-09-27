@@ -1,5 +1,5 @@
 import {IQueryBuilder} from "./IQueryBuilder";
-import {FieldConstants, OrderingType, QueryKeywords, QueryOperator, SearchOperators} from "./QueryLanguage";
+import {FieldConstants, OrderingType, QueryKeywords, QueryOperator, QueryOperators, SearchOperators} from "./QueryLanguage";
 import {SearchOperator} from "./QueryLanguage";
 import {SpatialCriteria, SpatialParameterNameGenerator, WktCriteria} from "./Spatial/SpatialCriteria";
 import {LinkedList, LinkedListItem} from "../../../Utility/LinkedList";
@@ -57,6 +57,10 @@ export class QueryBuilder extends Observable implements IQueryBuilder {
 
   public get isDynamicMapReduce(): boolean {
     return this.groupByTokens && (this.groupByTokens.count > 0);
+  }
+
+  public get isFetchingAllFields(): boolean {
+    return TypeUtil.isNull(this.findFieldsToFetchToken());
   }
 
   constructor(indexName?: string, collectionName?: string, idPropertyName?: string) {
@@ -702,7 +706,7 @@ depth = ${this.currentClauseDepth}`
       current = current.previous;
     }
 
-    let token: QueryToken = (SearchOperators.And === this.defaultOperator)
+    let token: QueryToken = (QueryOperators.And === this.defaultOperator)
       ? QueryOperatorToken.And : QueryOperatorToken.Or;
 
     if (lastWhere && !TypeUtil.isNull(lastWhere.searchOperator)) {
@@ -730,23 +734,31 @@ depth = ${this.currentClauseDepth}`
     this.whereTokens.addLast(NegateToken.instance);
   }
 
-  protected updateFieldsToFetchToken(fieldsToFetch: FieldsToFetchToken): void
-  {
+  protected findFieldsToFetchToken(): LinkedListItem<FieldsToFetchToken> {
     const tokens: LinkedList<IQueryToken> = this.selectTokens;
-    let replaced: boolean = false;
-
-    this.fieldsToFetchToken = fieldsToFetch;
+    let result: LinkedListItem<FieldsToFetchToken> = null;
+    let found: boolean = false;
 
     tokens.each((item: LinkedListItem<IQueryToken>): void => {
-      if (!replaced && (item.value instanceof FieldsToFetchToken)) {
-        replaced = true;
-        item.value = fieldsToFetch;
+      if (!found && (item.value instanceof FieldsToFetchToken)) {
+        found = true;
+        result = <LinkedListItem<FieldsToFetchToken>>item;
       }    
     });
 
-    if (!replaced) {
-      tokens.addLast(fieldsToFetch);  
-    }
+    return result;
+  }
+
+  protected updateFieldsToFetchToken(fieldsToFetch: FieldsToFetchToken): void
+  {
+    const tokens: LinkedList<IQueryToken> = this.selectTokens;
+    let foundToken: LinkedListItem<FieldsToFetchToken> = this.findFieldsToFetchToken();
+
+    this.fieldsToFetchToken = fieldsToFetch;
+
+    foundToken
+      ? (foundToken.value = fieldsToFetch)
+      : tokens.addLast(fieldsToFetch);      
   }
 
   protected buildFrom(writer: StringBuilder): void {

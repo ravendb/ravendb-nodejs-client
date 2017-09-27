@@ -17,14 +17,13 @@ import {DocumentConventions} from "../../src/Documents/Conventions/DocumentConve
 import {QueryOperationOptions} from "../../src/Database/Operations/QueryOperationOptions";
 import {IRavenObject} from "../../src/Typedef/IRavenObject";
 import {PatchByQueryOperation} from "../../src/Database/Operations/PatchByQueryOperation";
-import {DeleteByIndexOperation} from "../../src/Database/Operations/DeleteByIndexOperation";
+import {DeleteByQueryOperation} from "../../src/Database/Operations/DeleteByQueryOperation";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 
 describe('IndexBasedCommand tests', () => {
+  const patch: PatchRequest = new PatchRequest("Name = 'Patched';");
   let requestExecutor: RequestExecutor;
-  let patch: PatchRequest;
   let store: IDocumentStore;
-  let query;
 
   beforeEach(function (): void {
     ({requestExecutor, store} = this.currentTest as IRavenObject);
@@ -38,35 +37,31 @@ describe('IndexBasedCommand tests', () => {
       "DocNumber = doc.DocNumber} "
     ].join('');
 
-    const indexSort: IndexDefinition = new IndexDefinition('Order', indexMap);
-
-    patch = new PatchRequest("Name = 'Patched';");
-    query = `from index 'Order' where exists(Name)`;
+    const indexSort: IndexDefinition = new IndexDefinition('Testing_Sort', indexMap);
 
     return store.operations.send(new PutIndexesOperation(indexSort))
-      .then(() => BluebirdPromise.all(_.range(0, 1).map((i) => requestExecutor
-        .execute(new PutDocumentCommand(`testing`, {
-          Name: `test`, DocNumber: i,
+      .then(() => BluebirdPromise.all(_.range(0, 100)
+      .map((i: number): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> => requestExecutor
+      .execute(new PutDocumentCommand(`testing/${i}`, {
+          Name: `test${i}`, DocNumber: i,
           '@metadata': {"@collection": "Testings"}
-        }))
-      )));
-
-
+      })))));
   });
 
   describe('Actions by Index', () => {
     it('update by index success', async () => {
-      const indexQuery: IndexQuery = new IndexQuery(query, 0, 0, {WaitForNonStaleResults: true});
+      const query: string = "from index 'Testing_Sort' where exists(Name)";
+      const indexQuery: IndexQuery = new IndexQuery(query, null, 0, {}, {waitForNonStaleResults: true, waitForNonStaleResultsAsOfNow: true});
       const queryCommand: QueryCommand = new QueryCommand(indexQuery, new DocumentConventions());
-      const PatchByQueryOperations: PatchByQueryOperation = new PatchByQueryOperation(new IndexQuery(query), patch, new QueryOperationOptions(false));
+      const patchByQueryOperation: PatchByQueryOperation = new PatchByQueryOperation(new IndexQuery(query), patch, new QueryOperationOptions(false));
 
       return requestExecutor
         .execute(queryCommand)
         .then(() => store.operations
-          .send(PatchByQueryOperations)
+          .send(patchByQueryOperation)
           .then((response: IRavenResponse) => {
             expect(response).not.to.be.null;
-            expect((response as IRavenResponse).Result.Total).not.to.be.lessThan(1);
+            expect((response as IRavenResponse).Result.Total).not.to.be.lessThan(100);
           })
         );
     });
@@ -79,20 +74,20 @@ describe('IndexBasedCommand tests', () => {
 
     it('delete by index fail', async () => expect(
       store.operations
-        .send(new DeleteByIndexOperation(new IndexQuery(`from index 'unexisting_index_1' where Name = 'test1'`)))
+        .send(new DeleteByQueryOperation(new IndexQuery(`from index 'unexisting_index_1' where Name = 'test1'`)))
       ).to.be.rejected
     );
 
     it('delete by index success', async () => {
-      const query: string = "from index 'Order' where DocNumber between 0 AND 47";
-      const indexQuery: IndexQuery = new IndexQuery(query, 0, 0, {wait_for_non_stale_results: true});
+      const query: string = "from index 'Testing_Sort' where DocNumber between 0 AND 49";
+      const indexQuery: IndexQuery = new IndexQuery(query, null, 0, {}, {waitForNonStaleResults: true, waitForNonStaleResultsAsOfNow: true});
       const queryCommand: QueryCommand = new QueryCommand(indexQuery, new DocumentConventions());
-      const deleteByIndexOperations: DeleteByIndexOperation = new DeleteByIndexOperation(new IndexQuery(query), new QueryOperationOptions(false));
+      const deleteByIndexOperations: DeleteByQueryOperation = new DeleteByQueryOperation(new IndexQuery(query), new QueryOperationOptions(false));
 
       return requestExecutor
         .execute(queryCommand)
         .then(() => store.operations
-          .send(deleteByIndexOperations))
+        .send(deleteByIndexOperations))
         .then((response: IRavenResponse) => expect(response.Status).to.equals('Completed'));
     });
   });

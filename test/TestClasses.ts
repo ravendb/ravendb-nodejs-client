@@ -19,7 +19,7 @@ export class Product implements IRavenObject {
     public id?: string,
     public name: string = "",
     public uid?: number,
-    public order?: number
+    public order?: string
   ) {}
 }
 
@@ -27,17 +27,6 @@ export class Company implements IRavenObject {
   constructor(
     public id?: string,
     public name: string = "",
-    public product?: Product,
-    public uid?:number
-  ) {}
-}
-
-export class Universal implements IRavenObject {
-  constructor(
-    public id: string = '',
-    public name: string = "",
-    public order: number = null,
-    public nullField: string = "null",
     public product?: Product,
     public uid?:number
   ) {}
@@ -132,33 +121,5 @@ export class ProductsTestingSort {
 
   public async execute(): Promise<IRavenResponse | IRavenResponse[] | void> {
      return this.store.operations.send(new PutIndexesOperation(this.indexDefinition)); 
-  }
-}
-
-export class UniversalsTestingSort {
-  protected indexDefinition: IndexDefinition;
-
-  constructor(
-    protected store: IDocumentStore
-  ) {
-    const indexMap: string = [
-      'from doc in docs ',
-      'select new {',
-      'name = doc.name,',
-      'order = doc.order,',
-      'nullField=doc.nullField,',
-      'uid = doc.uid,',
-      'doc_id = doc.uid+"_"+doc.name}'
-    ].join('');
-
-    this.indexDefinition = new IndexDefinition('UniversalsTestingSort', indexMap, null, {
-      fields: {
-        "doc_id": new IndexFieldOptions(null, true)
-      }
-    });
-  }
-
-  public async execute(): Promise<IRavenResponse | IRavenResponse[] | void> {
-    return this.store.operations.send(new PutIndexesOperation(this.indexDefinition));
   }
 }
