@@ -218,7 +218,8 @@ describe('Document query test', () => {
         })
         .whereBetween<number>("Rate", min, max);
   
-      const indexQuery = query.getIndexQuery();
+      const indexQuery: IndexQuery = query.getIndexQuery();
+
       expect(indexQuery.query).equals("FROM IndexedUsers WHERE Rate BETWEEN $p0 AND $p1");
       expect(indexQuery.queryParameters["p0"]).equals(min);
       expect(indexQuery.queryParameters["p1"]).equals(max);
@@ -232,7 +233,8 @@ describe('Document query test', () => {
         })
         .whereStartsWith<string>("Name", 'foo');
   
-      const indexQuery = query.getIndexQuery();
+      const indexQuery: IndexQuery = query.getIndexQuery();
+
       expect(indexQuery.query).equals("FROM IndexedUsers WHERE startsWith(Name, $p0)");
       expect(indexQuery.queryParameters["p0"]).equals('foo');
     });
@@ -245,8 +247,9 @@ describe('Document query test', () => {
         })
         .whereStartsWith<string>("Name", 'foo');
   
-      const indexQuery = query.getIndexQuery();
-      expect(indexQuery.query).equals("FROM IndexedUsers WHERE startsWith(Name, $p0)");
+      const indexQuery: IndexQuery = query.getIndexQuery();
+
+      expect(indexQuery.query).equals("FROM Users WHERE startsWith(Name, $p0)");
       expect(indexQuery.queryParameters["p0"]).equals('foo');
     });
 
@@ -260,8 +263,9 @@ describe('Document query test', () => {
         .andAlso()
         .not.whereStartsWith<string>('Name', 'foo');
   
-      const indexQuery = query.getIndexQuery();
-      expect(indexQuery.query).equals("FROM IndexedUsers WHERE true AND NOT startsWith(Name, $p0)");
+      const indexQuery: IndexQuery = query.getIndexQuery();
+
+      expect(indexQuery.query).equals("FROM Users WHERE true AND NOT startsWith(Name, $p0)");
       expect(indexQuery.queryParameters["p0"]).equals('foo');
     });
 
@@ -279,8 +283,9 @@ describe('Document query test', () => {
         .whereEquals<string>('Name', 'dave')
         .closeSubclause();
   
-      const indexQuery = query.getIndexQuery();
-      expect(indexQuery.query).equals("FROM IndexedUsers WHERE Age >= $p0 AND (Name = $p1 OR Name = $p2)");
+      const indexQuery: IndexQuery = query.getIndexQuery();
+
+      expect(indexQuery.query).equals("FROM Users WHERE Age >= $p0 AND (Name = $p1 OR Name = $p2)");
       expect(indexQuery.queryParameters["p0"]).equals('ayende');
       expect(indexQuery.queryParameters["p1"]).equals('rob');
       expect(indexQuery.queryParameters["p1"]).equals('dave');
