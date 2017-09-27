@@ -13,156 +13,48 @@ import {IndexQuery} from "../../src/Database/Indexes/IndexQuery";
 
 describe('Document query test', () => {
   let store: IDocumentStore;
-  let session: IDocumentSession;
-  let requestExecutor: RequestExecutor;
-  let currentDatabase: string, defaultUrl: string;
 
   beforeEach(function (): void {
-    ({currentDatabase, defaultUrl, requestExecutor, store} = (this.currentTest as IRavenObject));
+    ({store} = (this.currentTest as IRavenObject));
   });
 
   describe('Query Builder Test', () => {
-    it('CanUnderstandSimpleEquality', async () => {
+    it('CanUnderstandEquality', async () => {
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'})
-        .whereEquals('Name', 'ayende', true);
+        .whereEquals<string>('Name', 'ayende', true);
 
       const indexQuery: IndexQuery = query.getIndexQuery();
 
-      expect(indexQuery.toString()).equals(`FROM INDEX 'IndexName' WHERE exact(Name = $p0)`);
+      expect(indexQuery.query).equals("FROM INDEX 'IndexName' WHERE exact(Name = $p0)");
       expect(indexQuery.queryParameters['p0']).equals('ayende');
-
     });
 
-    it('CanUnderstandSimpleEqualityWithVariable', async () => {
-      const ayende: string = 'ayende' + 1;
+    it('CanUnderstandEqualOnDate', async () => {
+      const dateTime: Date = new Date(2010, 5, 15, 0, 0, 0, 0);
 
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'})
-        .whereEquals('Name', ayende, true);
+        .whereEquals('Birthday', dateTime);
 
       const indexQuery: IndexQuery = query.getIndexQuery();
 
-      expect(indexQuery.toString()).equals(`FROM INDEX 'IndexName' WHERE exact(Name = $p0)`);
-      expect(indexQuery.queryParameters['p0']).equals(ayende);
-
+      expect(indexQuery.query).equals("FROM INDEX 'IndexName' WHERE Birthday = $p0");
+      expect(indexQuery.queryParameters['p0']).equals('20100515T00:00:00.0000000');
     });
 
-    it('CanUnderstandSimpleContains', async () => {
+    it('CanUnderstandContains', async () => {
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'})
-        .whereIn('Name', ['ayende']);
+        .whereIn<string>('Name', ['ryan', 'heath']);
 
       const indexQuery: IndexQuery = query.getIndexQuery();
 
-      expect(indexQuery.toString()).equals(`FROM INDEX 'IndexName' WHERE Name IN ($p0)`);
-      expect(indexQuery.queryParameters['p0']).equals(['ayende']);
-
-    });
-
-    it('CanUnderstandParamArrayContains', async () => {
-      const query: IDocumentQuery = store
-        .openSession()
-        .query({indexName: 'IndexName'})
-        .whereIn('Name', ['ryan', 'heath']);
-
-      const indexQuery: IndexQuery = query.getIndexQuery();
-
-      expect(indexQuery.toString()).equals(`FROM INDEX 'IndexName' WHERE Name IN ($p0)`);
+      expect(indexQuery.query).equals("FROM INDEX 'IndexName' WHERE Name IN ($p0)");
       expect(indexQuery.queryParameters['p0']).equals(['ryan', 'heath']);
-
-    });
-
-    it('CanUnderstandArrayContains', async () => {
-      const array: string[] = ['ryan', 'heath'];
-
-      const query: IDocumentQuery = store
-        .openSession()
-        .query({indexName: 'IndexName'})
-        .whereIn('Name', array);
-
-      const indexQuery: IndexQuery = query.getIndexQuery();
-
-      expect(indexQuery.toString()).equals(`FROM INDEX 'IndexName' WHERE Name IN ($p0)`);
-      expect(indexQuery.queryParameters['p0']).equals(['ryan', 'heath']);
-
-    });
-
-    it('CanUnderstandArrayContainsWithPhrase', async () => {
-      const array: string[] = ['ryan', 'heath here'];
-
-      const query: IDocumentQuery = store
-        .openSession()
-        .query({indexName: 'IndexName'})
-        .whereIn('Name', array);
-
-      const indexQuery: IndexQuery = query.getIndexQuery();
-
-      expect(indexQuery.toString()).equals(`FROM INDEX 'IndexName' WHERE Name IN ($p0)`);
-      expect(indexQuery.queryParameters['p0']).equals(['ryan', 'heath here']);
-
-    });
-
-    it('CanUnderstandArrayContainsWithOneElement', async () => {
-      const array: string[] = ['ryan'];
-
-      const query: IDocumentQuery = store
-        .openSession()
-        .query({indexName: 'IndexName'})
-        .whereIn('Name', array);
-
-      const indexQuery: IndexQuery = query.getIndexQuery();
-
-      expect(indexQuery.toString()).equals(`FROM INDEX 'IndexName' WHERE Name IN ($p0)`);
-      expect(indexQuery.queryParameters['p0']).equals(['ryan']);
-
-    });
-
-    it('CanUnderstandArrayContainsWithZeroElements', async () => {
-      const array: string[] = [];
-
-      const query: IDocumentQuery = store
-        .openSession()
-        .query({indexName: 'IndexName'})
-        .whereIn('Name', array);
-
-      const indexQuery: IndexQuery = query.getIndexQuery();
-
-      expect(indexQuery.toString()).equals(`FROM INDEX 'IndexName' WHERE Name IN ($p0)`);
-      expect(indexQuery.queryParameters['p0']).equals([]);
-
-    });
-
-    it('CanUnderstandEnumerableContains', async () => {
-      const list: string[] = ['ryan', 'heath'];
-
-      const query: IDocumentQuery = store
-        .openSession()
-        .query({indexName: 'IndexName'})
-        .whereIn('Name', list);
-
-      const indexQuery: IndexQuery = query.getIndexQuery();
-
-      expect(indexQuery.toString()).equals(`FROM INDEX 'IndexName' WHERE Name IN ($p0)`);
-      expect(indexQuery.queryParameters['p0']).equals({ryan: 'ryan', heath: 'heath'});
-
-    });
-
-    it('CanUnderstandSimpleContainsWithVariable', async () => {
-      const ayende = ['ayende' + 1];
-
-      const query: IDocumentQuery = store
-        .openSession()
-        .query({indexName: 'IndexName'})
-        .whereIn('Name', ayende);
-
-      const indexQuery: IndexQuery = query.getIndexQuery();
-
-      expect(indexQuery.toString()).equals(`FROM INDEX 'IndexName' WHERE Name IN ($p0)`);
-      expect(indexQuery.queryParameters['p0']).equals({ayende: 'ayende1'});
     });
 
     it('NoOpShouldProduceEmptyString', async () => {
@@ -172,8 +64,7 @@ describe('Document query test', () => {
 
       const indexQuery: IndexQuery = query.getIndexQuery();
 
-      expect(indexQuery.toString()).equals(`FROM INDEX 'IndexName'`);
-
+      expect(indexQuery.query).equals("FROM INDEX 'IndexName'");
     });
 
     it('CanUnderstandAnd', async () => {
@@ -186,10 +77,9 @@ describe('Document query test', () => {
 
       const indexQuery: IndexQuery = query.getIndexQuery();
 
-      expect(indexQuery.toString()).equals(`FROM INDEX 'IndexName' WHERE Name = $p0 AND Email = $p1`);
+      expect(indexQuery.query).equals("FROM INDEX 'IndexName' WHERE Name = $p0 AND Email = $p1");
       expect(indexQuery.queryParameters['p0']).equals('ayende');
       expect(indexQuery.queryParameters['p1']).equals('ayende@ayende.com');
-
     });
 
     it('CanUnderstandOr', async () => {
@@ -202,143 +92,83 @@ describe('Document query test', () => {
 
       const indexQuery: IndexQuery = query.getIndexQuery();
 
-      expect(indexQuery.toString()).equals(`FROM INDEX 'IndexName' WHERE Name = $p0 OR Email = $p1`);
+      expect(indexQuery.query).equals("FROM INDEX 'IndexName' WHERE Name = $p0 OR Email = $p1");
       expect(indexQuery.queryParameters['p0']).equals('ayende');
       expect(indexQuery.queryParameters['p1']).equals('ayende@ayende.com');
-
     });
 
     it('CanUnderstandLessThan', async () => {
-      const dateTime: Date = new Date(2010, 5, 15);
-
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'})
-        .whereLessThan('Birthday', dateTime);
+        .whereLessThan('Age', 16);
 
       const indexQuery: IndexQuery = query.getIndexQuery();
 
-      expect(indexQuery.toString()).equals(`FROM INDEX 'IndexName' WHERE Birthday < $p0`);
-      expect(indexQuery.queryParameters['p0']).equals(dateTime);
-
-    });
-
-    it('CanUnderstandEqualOnDate', async () => {
-      const dateTime: Date = new Date(2010, 5, 15);
-
-      const query: IDocumentQuery = store
-        .openSession()
-        .query({indexName: 'IndexName'})
-        .whereEquals('Birthday', dateTime);
-
-      const indexQuery: IndexQuery = query.getIndexQuery();
-
-      expect(indexQuery.toString()).equals(`FROM INDEX 'IndexName' WHERE Birthday = $p0`);
-      expect(indexQuery.queryParameters['p0']).equals(dateTime);
-
+      expect(indexQuery.query).equals("FROM INDEX 'IndexName' WHERE Age < $p0");
+      expect(indexQuery.queryParameters['p0']).equals(16);
     });
 
     it('CanUnderstandLessThanOrEqual', async () => {
-      const dateTime: Date = new Date(2010, 5, 15);
-
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'})
-        .whereLessThanOrEqual('Birthday', dateTime);
+        .whereLessThanOrEqual('Age', 16);
 
       const indexQuery: IndexQuery = query.getIndexQuery();
 
-      expect(indexQuery.toString()).equals(`FROM INDEX 'IndexName' WHERE Birthday <= $p0`);
-      expect(indexQuery.queryParameters['p0']).equals(dateTime);
-
+      expect(indexQuery.query).equals("FROM INDEX 'IndexName' WHERE Age <= $p0");
+      expect(indexQuery.queryParameters['p0']).equals(16);
     });
 
     it('CanUnderstandGreaterThan', async () => {
-      const dateTime: Date = new Date(2010, 5, 15);
-
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'})
-        .whereGreaterThan('Birthday', dateTime);
+        .whereGreaterThan('Age', 16);
 
       const indexQuery: IndexQuery = query.getIndexQuery();
 
-      expect(indexQuery.toString()).equals(`FROM INDEX 'IndexName' WHERE Birthday > $p0`);
-      expect(indexQuery.queryParameters['p0']).equals(dateTime);
-
+      expect(indexQuery.query).equals("FROM INDEX 'IndexName' WHERE Age > $p0");
+      expect(indexQuery.queryParameters['p0']).equals(16);
     });
 
     it('CanUnderstandGreaterThanOrEqual', async () => {
-      const dateTime: Date = new Date(2010, 5, 15);
-
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'})
-        .whereGreaterThanOrEqual('Birthday', dateTime);
+        .whereGreaterThanOrEqual('Age', 16);
 
       const indexQuery: IndexQuery = query.getIndexQuery();
 
-      expect(indexQuery.toString()).equals(`FROM INDEX 'IndexName' WHERE Birthday >= $p0`);
-      expect(indexQuery.queryParameters['p0']).equals(dateTime);
-
+      expect(indexQuery.query).equals("FROM INDEX 'IndexName' WHERE Age >= $p0");
+      expect(indexQuery.queryParameters['p0']).equals(16);
     });
 
     it('CanUnderstandProjectionOfSingleField', async () =>  {
-      const dateTime: Date = new Date(2010, 5, 15);
-
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'})
-        .whereGreaterThanOrEqual('Birthday', dateTime)
+        .whereGreaterThanOrEqual('Age', 16)
         .selectFields(['Name']);
 
       const indexQuery: IndexQuery = query.getIndexQuery();
 
-      expect(indexQuery.toString()).equals(`FROM INDEX 'IndexName' WHERE Birthday >= $p0 SELECT Name`);
-      expect(indexQuery.queryParameters['p0']).equals(dateTime);
-
+      expect(indexQuery.query).equals("FROM INDEX 'IndexName' WHERE Age >= $p0 SELECT Name");
+      expect(indexQuery.queryParameters['p0']).equals(16);
     });
 
     it('CanUnderstandProjectionOfMultipleFields', async () =>  {
-      const dateTime: Date = new Date(2010, 5, 15);
-
       const query: IDocumentQuery = store
         .openSession()
         .query({indexName: 'IndexName'})
-        .whereGreaterThanOrEqual('Birthday', dateTime)
+        .whereGreaterThanOrEqual('Age', 16)
         .selectFields(['Name', 'Age']);
 
       const indexQuery: IndexQuery = query.getIndexQuery();
 
-      expect(indexQuery.toString()).equals(`FROM INDEX 'IndexName' WHERE Birthday >= $p0 SELECT Name, Age`);
-      expect(indexQuery.queryParameters['p0']).equals(dateTime);
-
-    });
-
-    it('CanUnderstandSimpleEqualityOnInt', async () =>  {
-      const query: IDocumentQuery = store
-        .openSession()
-        .query({indexName: 'IndexName'})
-        .whereEquals('Age', 3);
-
-      const indexQuery: IndexQuery = query.getIndexQuery();
-
-      expect(indexQuery.toString()).equals(`FROM INDEX 'IndexName' WHERE Birthday >= $p0 SELECT Name, Age`);
-      expect(indexQuery.queryParameters['p0']).equals(3);
-
-    });
-
-    it('CanUnderstandGreaterThanOnInt', async () =>  {
-      const query: IDocumentQuery = store
-        .openSession()
-        .query({indexName: 'IndexName'})
-        .whereGreaterThan('Age', 3);
-
-      const indexQuery: IndexQuery = query.getIndexQuery();
-
-      expect(indexQuery.toString()).equals(`FROM INDEX 'IndexName' WHERE Age > $p0`);
-      expect(indexQuery.queryParameters['p0']).equals(3);
-
-    });
+      expect(indexQuery.query).equals("FROM INDEX 'IndexName' WHERE Age >= $p0 SELECT Name, Age");
+      expect(indexQuery.queryParameters['p0']).equals(16);
+    });    
   })
 });

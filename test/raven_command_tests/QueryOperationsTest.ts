@@ -17,7 +17,7 @@ import {DocumentConventions} from "../../src/Documents/Conventions/DocumentConve
 import {QueryOperationOptions} from "../../src/Database/Operations/QueryOperationOptions";
 import {IRavenObject} from "../../src/Typedef/IRavenObject";
 import {PatchByQueryOperation} from "../../src/Database/Operations/PatchByQueryOperation";
-import {DeleteByQueryOperation} from "../../src/Database/Operations/DeleteByIndexOperation";
+import {DeleteByQueryOperation} from "../../src/Database/Operations/DeleteByQueryOperation";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 
 describe('IndexBasedCommand tests', () => {
