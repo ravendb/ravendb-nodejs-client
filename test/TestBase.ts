@@ -68,5 +68,5 @@ afterEach( async function() {
     'store', 'requestExecutor', 'currentDatabase']
    .forEach((key: string) => delete this.currentTest[key]);
 
-    await store.admin.server.send(new DeleteDatabaseOperation(currentDatabase, true));
+  await store.admin.server.send(new DeleteDatabaseOperation(currentDatabase, true));
 });
