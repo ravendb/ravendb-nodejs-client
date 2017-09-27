@@ -169,6 +169,6 @@ describe('Document query test', () => {
 
       expect(indexQuery.query).equals("FROM INDEX 'IndexName' WHERE Age >= $p0 SELECT Name, Age");
       expect(indexQuery.queryParameters['p0']).equals(16);
-    });    
+    });
   })
 });
