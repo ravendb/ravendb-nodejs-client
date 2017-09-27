@@ -80,6 +80,10 @@ export class DocumentQuery<T extends Object = IRavenObject> extends Observable i
     return this._builder.isDynamicMapReduce;
   }
 
+  public get isFetchingAllFields(): boolean {
+    return this._builder.isFetchingAllFields;
+  }  
+
   constructor(session: IDocumentSession, requestExecutor: RequestExecutor, 
     documentType?: DocumentType<T>, indexName?: string, nestedObjectTypes?: IRavenObject<DocumentConstructor>, 
     withStatistics: boolean = false, indexQueryOptions: IOptionsSet = {}
@@ -708,7 +712,8 @@ Only integer / number / string and null values are supported"
       .then((response: IRavenResponse | null): IRavenResponse | BluebirdPromise.Thenable<IRavenResponse> => {
         if (TypeUtil.isNull(response)) {
           return {
-            Results: [] as object[]
+            Results: [] as object[],
+            Includes: [] as string[]
           } as IRavenResponse;
         } else if (response.IsStale) {
           return BluebirdPromise.reject(new ErrorResponseException('The index is still stale after reached the timeout'));
@@ -724,6 +729,7 @@ Only integer / number / string and null values are supported"
 
     if (commandResponse.Results.length > 0) {
       let results: T[] = [] as T[];
+      const fetchingFullDocs: boolean = this.isFetchingAllFields;
 
       commandResponse.Results.forEach((result: object) => {
         const conversionResult: IDocumentConversionResult<T> = this.session.conventions
@@ -731,11 +737,20 @@ Only integer / number / string and null values are supported"
 
         results.push(conversionResult.document);
 
-        this.emit<IDocumentConversionResult<T>>(
-          DocumentQuery.EVENT_DOCUMENT_FETCHED,
-          conversionResult
-        );
+        if (fetchingFullDocs) {
+          this.emit<IDocumentConversionResult<T>>(
+            DocumentQuery.EVENT_DOCUMENT_FETCHED,
+            conversionResult
+          );
+        }        
       });
+
+      if (Array.isArray(commandResponse.Includes) && commandResponse.Includes.length) {
+        this.emit<object[]>(
+          DocumentQuery.EVENT_INCLUDES_FETCHED, 
+          commandResponse.Includes as object[]
+        );
+      }
 
       if (this.withStatistics) {
         result = {

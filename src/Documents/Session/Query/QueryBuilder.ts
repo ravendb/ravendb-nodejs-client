@@ -59,6 +59,10 @@ export class QueryBuilder extends Observable implements IQueryBuilder {
     return this.groupByTokens && (this.groupByTokens.count > 0);
   }
 
+  public get isFetchingAllFields(): boolean {
+    return TypeUtil.isNull(this.findFieldsToFetchToken());
+  }
+
   constructor(indexName?: string, collectionName?: string, idPropertyName?: string) {
     super();
 
@@ -730,23 +734,31 @@ depth = ${this.currentClauseDepth}`
     this.whereTokens.addLast(NegateToken.instance);
   }
 
-  protected updateFieldsToFetchToken(fieldsToFetch: FieldsToFetchToken): void
-  {
+  protected findFieldsToFetchToken(): LinkedListItem<FieldsToFetchToken> {
     const tokens: LinkedList<IQueryToken> = this.selectTokens;
-    let replaced: boolean = false;
-
-    this.fieldsToFetchToken = fieldsToFetch;
+    let result: LinkedListItem<FieldsToFetchToken> = null;
+    let found: boolean = false;
 
     tokens.each((item: LinkedListItem<IQueryToken>): void => {
-      if (!replaced && (item.value instanceof FieldsToFetchToken)) {
-        replaced = true;
-        item.value = fieldsToFetch;
+      if (!found && (item.value instanceof FieldsToFetchToken)) {
+        found = true;
+        result = <LinkedListItem<FieldsToFetchToken>>item;
       }    
     });
 
-    if (!replaced) {
-      tokens.addLast(fieldsToFetch);  
-    }
+    return result;
+  }
+
+  protected updateFieldsToFetchToken(fieldsToFetch: FieldsToFetchToken): void
+  {
+    const tokens: LinkedList<IQueryToken> = this.selectTokens;
+    let foundToken: LinkedListItem<FieldsToFetchToken> = this.findFieldsToFetchToken();
+
+    this.fieldsToFetchToken = fieldsToFetch;
+
+    foundToken
+      ? (foundToken.value = fieldsToFetch)
+      : tokens.addLast(fieldsToFetch);      
   }
 
   protected buildFrom(writer: StringBuilder): void {
