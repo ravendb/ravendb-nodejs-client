@@ -16,7 +16,6 @@ import {StringUtil} from "../src/Utility/StringUtil";
 import {IDocumentStore} from "../src/Documents/IDocumentStore";
 import {DocumentStore} from "../src/Documents/DocumentStore";
 
-
 const defaultUrl: string = StringUtil.format("http://{ravendb-host}:{ravendb-port}", args);
 const defaultDatabase: string = "NorthWindTest";
 
@@ -26,13 +25,11 @@ let requestExecutor: RequestExecutor;
 let store: IDocumentStore;
 let currentDatabase: string;
 
-
 before(() => {
   chai.use(chaiAsPromised);
 });
 
 beforeEach(async function() {
-
   currentDatabase = `${defaultDatabase}__${uuid()}`;
 
   const dbDoc: DatabaseDocument = new DatabaseDocument
@@ -52,7 +49,6 @@ beforeEach(async function() {
   ].join('');
 
   index = new IndexDefinition("Testing", indexMap);
-
   await store.operations.send(new PutIndexesOperation(index));
 
   requestExecutor = store.getRequestExecutor();
@@ -65,7 +61,6 @@ beforeEach(async function() {
     defaultUrl,
     currentDatabase
   });
-
 });
 
 afterEach( async function() {
@@ -74,5 +69,4 @@ afterEach( async function() {
    .forEach((key: string) => delete this.currentTest[key]);
 
     await store.admin.server.send(new DeleteDatabaseOperation(currentDatabase, true));
-
 });

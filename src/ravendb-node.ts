@@ -137,7 +137,7 @@ export {CreateDatabaseOperation} from './Database/Operations/CreateDatabaseOpera
 export {DeleteDatabaseOperation} from './Database/Operations/DeleteDatabaseOperation';
 export {QueryBasedOperation} from './Database/Operations/QueryBasedOperation';
 export {PatchByQueryOperation} from './Database/Operations/PatchByQueryOperation';
-export {DeleteByIndexOperation} from './Database/Operations/DeleteByIndexOperation';
+export {DeleteByQueryOperation} from './Database/Operations/DeleteByIndexOperation';
 export {GetIndexOperation} from './Database/Operations/GetIndexOperation';
 export {PutIndexesOperation} from './Database/Operations/PutIndexesOperation';
 export {DeleteIndexOperation} from './Database/Operations/DeleteIndexOperation';
