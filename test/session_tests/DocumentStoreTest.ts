@@ -141,7 +141,7 @@ describe('Document store test', () => {
     });
 
     it('should set id and collection on plain object converted via document type resolver', async () => {
-      let product: Product = <Product>{name: "New Product", uid: null, order: null};    
+      let product: Product = <Product>{name: "New Product", uid: null, ordering: null};    
 
       store.conventions.addDocumentInfoResolver({ resolveDocumentType });
       session = store.openSession();      

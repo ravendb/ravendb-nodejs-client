@@ -59,7 +59,7 @@ export class DocumentConventions {
   }
 
   public get emptyCollection(): string {
-    return null;
+    return '@empty';
   }
 
   public addDocumentInfoResolver(resolver: IDocumentInfoResolvable): void {
