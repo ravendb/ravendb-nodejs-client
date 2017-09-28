@@ -24,7 +24,7 @@ export class DeleteDatabaseCommand extends RavenCommand {
     this.payload = {
       DatabaseNames: [dbName],
       HardDelete: this.hardDelete,
-      RimeToWaitForConfirmation: this.timeToWaitForConfirmation
+      TimeToWaitForConfirmation: this.timeToWaitForConfirmation
     };
     
     if (this.fromNode) {
