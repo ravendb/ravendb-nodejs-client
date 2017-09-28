@@ -8,7 +8,6 @@ import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {IRavenObject} from "../../src/Typedef/IRavenObject";
-import {Product} from "../TestClasses";
 import {IDocumentQuery} from "../../src/Documents/Session/IDocumentQuery";
 import {IndexQuery} from "../../src/Database/Indexes/IndexQuery";
 

@@ -736,14 +736,17 @@ Only integer / number / string and null values are supported"
 
   protected convertResponseToDocuments(response: IRavenResponse): T[] | QueryResultsWithStatistics<T> {
     let result: T[] | QueryResultsWithStatistics<T> = [] as T[];
+    const conventions: DocumentConventions = this.session.conventions;
     const commandResponse: IRavenResponse = response as IRavenResponse;
+    const responseResults: object[] = conventions.tryFetchResults(commandResponse);
 
-    if (commandResponse.Results.length > 0) {
+    if (responseResults.length > 0) {
       let results: T[] = [] as T[];
       const fetchingFullDocs: boolean = this.isFetchingAllFields;
+      const responseIncludes: object[] = conventions.tryFetchIncludes(commandResponse);
 
-      commandResponse.Results.forEach((result: object) => {
-        const conversionResult: IDocumentConversionResult<T> = this.session.conventions
+      responseResults.forEach((result: object) => {
+        const conversionResult: IDocumentConversionResult<T> = conventions
           .convertToDocument<T>(result, this.documentType, this.nestedObjectTypes || {});
 
         results.push(conversionResult.document);
@@ -756,10 +759,10 @@ Only integer / number / string and null values are supported"
         }        
       });
 
-      if (Array.isArray(commandResponse.Includes) && commandResponse.Includes.length) {
+      if (responseIncludes.length) {
         this.emit<object[]>(
           DocumentQuery.EVENT_INCLUDES_FETCHED, 
-          commandResponse.Includes as object[]
+          responseIncludes as object[]
         );
       }
 

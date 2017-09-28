@@ -17,7 +17,7 @@ describe('Document store test', () => {
 
   const resolveDocumentType = (plainDocument: object, key?: string, specifiedType?: DocumentType): string => {
     const propsMap = {
-      "Product": ['name', 'uid', 'order']
+      "Product": ['name', 'uid', 'ordering']
     };
 
     if (!specifiedType && !key) {

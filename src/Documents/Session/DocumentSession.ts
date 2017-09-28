@@ -334,13 +334,8 @@ more responsive application.", maxRequests
         const conventions: DocumentConventions = this.documentStore.conventions;
 
         if (commandResponse) {
-          if (('Results' in commandResponse) && Array.isArray(commandResponse.Results)) {
-            responseResults = <object[]>commandResponse.Results || [];
-          }
-
-          if (('Includes' in commandResponse) && Array.isArray(commandResponse.Includes)) {
-            responseIncludes = commandResponse.Includes;
-          }
+          responseResults = conventions.tryFetchResults(commandResponse);
+          responseIncludes = conventions.tryFetchIncludes(commandResponse);
         }
 
         const results: T[] = responseResults.map((result: object, index: number) => {

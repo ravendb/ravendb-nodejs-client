@@ -5,6 +5,9 @@ import {DocumentConventions} from "../../Documents/Conventions/DocumentConventio
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {InvalidOperationException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
+import {IRavenResponse} from "../RavenCommandResponse";
+import {IResponse} from "../../Http/Response/IResponse";
+import {StatusCodes} from "../../Http/Response/StatusCode";
 
 export class QueryCommand extends RavenCommand {
   protected indexQuery: IndexQuery;
@@ -39,5 +42,15 @@ export class QueryCommand extends RavenCommand {
     this.metadataOnly && this.addParams('metadata-only', 'true');
     this.indexEntriesOnly && this.addParams('debug', 'entries');
     this.endPoint = StringUtil.format('{url}/databases/{database}/queries', serverNode);
+  }
+
+  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
+    const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
+
+    if (StatusCodes.isNotFound(response.statusCode)) {
+      throw new InvalidOperationException(`Error querying index or collection: ${this.indexQuery.query}`);
+    }
+
+    return result;
   }
 }

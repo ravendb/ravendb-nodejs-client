@@ -38,7 +38,7 @@ describe('Document query test', () => {
     await session.store<Product>(new Product('Product/110', 'paginate_testing', 95));
     await session.store<Order>(new Order('Order/105', 'testing_order', 92, 'Product/108'));
     await session.store<Company>(new Company('Company/1', 'withNesting', new Product(null, 'testing_order', 4)));
-    await session.saveChanges();    
+    await session.saveChanges();   
   });
 
   describe('Index checking', () => {
@@ -151,19 +151,6 @@ describe('Document query test', () => {
         .whereBetween<number>('uid', 2, 4)
         .all();
       
-      expect(results).to.have.lengthOf(1);
-    });
-
-    it('should query by between with exact', async() => {
-      const results: Product[] = await store.openSession()
-      .query<Product>({
-        documentType: Product,
-        indexName: 'Testing_Sort'
-      })
-      .waitForNonStaleResultsAsOfNow()
-      .whereBetween<number>('uid', 2, 4, true)
-      .all();
-      
       expect(results).to.have.lengthOf(3);
     });
 
@@ -171,32 +158,32 @@ describe('Document query test', () => {
       const results: IRavenObject[] = await store.openSession()
         .query()
         .waitForNonStaleResultsAsOfNow()
-        .whereExists('order')
+        .whereExists('ordering')
         .all();
        
-      expect(_.some(results, (result: IRavenObject) => TypeUtil.isNull(result.order))).to.be.false; 
+      expect(_.some(results, (result: IRavenObject) => TypeUtil.isNull(result.ordering))).to.be.false; 
     });
 
     it('should query with ordering', async() => {
       const results: IRavenObject[] = await store.openSession()
         .query()
         .waitForNonStaleResultsAsOfNow()
-        .whereExists('order')
-        .orderBy('order')
+        .whereExists('ordering')
+        .orderBy('ordering')
         .all();
 
-      expect(results[0].order).to.equals('a');
+      expect(results[0].ordering).to.equals('a');
     });
 
     it('should query with descending ordering', async() => {
       const results: IRavenObject[] = await store.openSession()
         .query()
         .waitForNonStaleResultsAsOfNow()
-        .whereExists('order')
-        .orderByDescending('order')
+        .whereExists('ordering')
+        .orderByDescending('ordering')
         .all();
 
-      expect(results[0].order).to.equals('d');
+      expect(results[0].ordering).to.equals('d');
     });
 
     it('should paginate', async() => {

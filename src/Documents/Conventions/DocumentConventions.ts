@@ -6,6 +6,7 @@ import {TypeUtil} from "../../Utility/TypeUtil";
 import {Serializer} from "../../Json/Serializer";
 import {IRavenObject} from "../../Typedef/IRavenObject";
 import {ConcurrencyCheckMode} from "../../Database/ConcurrencyCheckMode";
+import {IRavenResponse} from "../../Database/RavenCommandResponse";
 
 export type DocumentConstructor<T extends Object = IRavenObject> = { new(...args: any[]): T; };
 export type DocumentType<T extends Object = IRavenObject> = DocumentConstructor<T> | string;
@@ -176,6 +177,30 @@ export class DocumentConventions {
     }
 
     return result;
+  }
+
+  public tryFetchResults(commandResponse: IRavenResponse): object[] {
+    let responseResults: object[] = [];
+
+    if (('Results' in commandResponse) && Array.isArray(commandResponse.Results)) {
+      responseResults = <object[]>commandResponse.Results || [];
+    }
+
+    return responseResults;
+  }
+
+  public tryFetchIncludes(commandResponse: IRavenResponse): object[] {
+    let responseIncludes: object[] = [];
+
+    if ('Includes' in commandResponse) {
+      if (Array.isArray(commandResponse.Includes)) {
+        responseIncludes = <object[]>commandResponse.Includes || [];
+      } else if (TypeUtil.isObject(commandResponse.Includes)) {
+        responseIncludes = <object[]>(_.values(commandResponse.Includes)) || [];
+      }     
+    }
+
+    return responseIncludes;
   }
 
   public setIdOnDocument<T extends Object = IRavenObject>(document: T, id: string, documentType?: DocumentType<T>): T {

@@ -19,7 +19,7 @@ export abstract class QueryToken implements IQueryToken
 
   protected writeField(writer: StringBuilder, field: string): void {
     const isKeyword: boolean = (this.constructor as (typeof QueryToken))
-      .rqlKeywords.has(<QueryKeyword>field);
+      .rqlKeywords.has(<QueryKeyword>(field.toUpperCase()));
 
     isKeyword && writer.append("'");
     writer.append(field);

@@ -19,7 +19,7 @@ export class Product implements IRavenObject {
     public id?: string,
     public name: string = "",
     public uid?: number,
-    public order?: string
+    public ordering?: string
   ) {}
 }
 
