@@ -1,4 +1,4 @@
-import {IJsonable} from '../../Typedef/Contracts';
+import {IJsonable, IStringable} from '../../Typedef/Contracts';
 import {IRavenObject} from '../../Typedef/IRavenObject';
 
 export type PatchStatus = 'DocumentDoesNotExist' | 'Created' | 'Patched' | 'Skipped' | 'NotModified';
@@ -23,7 +23,7 @@ export interface IPatchResult {
   Document?: IRavenObject;
 }
 
-export class PatchRequest implements IJsonable {
+export class PatchRequest implements IJsonable, IStringable {
   private _script: string;
   protected values: object = {};
 
@@ -45,5 +45,21 @@ export class PatchRequest implements IJsonable {
       "Values": this.values
     };
   }
+
+  public toString(): string {
+    let key: string;
+    let script: string = this._script;
+
+    for (key in this.values) {
+      let value: any = this.values[key];
+
+      script = script.replace(
+        new RegExp(key, 'g'),
+        (): string => JSON.stringify(value)
+      );
+    }
+    
+    return script;
+  } 
 }
 

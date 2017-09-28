@@ -17,7 +17,7 @@ export class QueryOperators extends SearchOperators {
 
 export type QueryKeyword = 'SELECT' | 'DISTINCT' | 'AS' | 'FROM'
   | 'INDEX' | 'INCLUDE' | 'WHERE' | 'GROUP' | 'ORDER' | 'LOAD'
-  | 'BY' | 'ASC' | 'DESC' | 'ALL' | 'IN' | 'BETWEEN';
+  | 'BY' | 'ASC' | 'DESC' | 'ALL' | 'IN' | 'BETWEEN' | 'UPDATE';
 
 export class QueryKeywords {
   public static readonly Select: QueryKeyword = 'SELECT';
@@ -36,6 +36,7 @@ export class QueryKeywords {
   public static readonly In: QueryKeyword = 'IN';
   public static readonly Between: QueryKeyword = 'BETWEEN';
   public static readonly All: QueryKeyword = 'ALL';
+  public static readonly Update: QueryKeyword = 'UPDATE';
 }
 
 export type OrderingType = 'string' | 'long' | 'double' | 'alphaNumeric';
