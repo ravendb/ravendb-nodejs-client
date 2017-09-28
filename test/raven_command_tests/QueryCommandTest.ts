@@ -38,12 +38,14 @@ describe('QueryCommand Tests', () => {
     );
 
     it('should query only metadata', async () => requestExecutor
-      .execute(new QueryCommand(indexQuery, conventions, true))
+      .execute(new QueryCommand(indexQuery, conventions))
+      .then(() => requestExecutor.execute(new QueryCommand(indexQuery, conventions, true)))
       .then((result: IRavenResponse) => expect(result.Results[0]).not.to.have.property('Name'))
     );
 
     it('should query only documents', async () => requestExecutor
-      .execute(new QueryCommand(indexQuery, conventions, false, true))
+      .execute(new QueryCommand(indexQuery, conventions))
+      .then(() => requestExecutor.execute(new QueryCommand(indexQuery, conventions, false, true)))
       .then((result: IRavenResponse) => expect(result.Results[0]).not.to.have.property('@metadata'))
     );
 
