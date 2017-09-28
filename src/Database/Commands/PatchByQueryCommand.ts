@@ -5,7 +5,6 @@ import {QueryOperationOptions} from "../Operations/QueryOperationOptions";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {InvalidOperationException} from "../DatabaseExceptions";
 import {ServerNode} from "../../Http/ServerNode";
-import {QueryKeywords} from "../../Documents/Session/Query/QueryLanguage";
 
 export class PatchByQueryCommand extends QueryBasedCommand {
   protected patch?: PatchRequest = null;
@@ -16,20 +15,21 @@ export class PatchByQueryCommand extends QueryBasedCommand {
   }
 
   public createRequest(serverNode: ServerNode): void {
+    const queryToUpdate: IndexQuery = this.query;
+    const patch: PatchRequest = this.patch;
+
     super.createRequest(serverNode);
 
-    if (this.patch && !(this.patch instanceof PatchRequest)) {
-      throw new InvalidOperationException('Patch must me instanceof PatchRequest class');
-    }
+    if (patch) {
+      if (!(patch instanceof PatchRequest)) {
+        throw new InvalidOperationException('Patch must me instanceof PatchRequest class');
+      }
 
-    let query: string = this.query.query;
-
-    if (this.patch && !query.toUpperCase().includes(QueryKeywords.Update)) {
-      query = `${query} ${QueryKeywords.Update} { ${this.patch.toString()} }`;
+      patch.applyToQuery(queryToUpdate);
     }
 
     this.payload = {
-      "Query": {"Query": query}
+      "Query": queryToUpdate.toJson()
     };
   }
 }

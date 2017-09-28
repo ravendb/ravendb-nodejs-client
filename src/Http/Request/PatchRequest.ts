@@ -1,5 +1,8 @@
+import * as _ from 'lodash';
 import {IJsonable, IStringable} from '../../Typedef/Contracts';
 import {IRavenObject} from '../../Typedef/IRavenObject';
+import {IndexQuery} from '../../Database/Indexes/IndexQuery';
+import {QueryKeywords} from "../../Documents/Session/Query/QueryLanguage";
 
 export type PatchStatus = 'DocumentDoesNotExist' | 'Created' | 'Patched' | 'Skipped' | 'NotModified';
 
@@ -46,20 +49,13 @@ export class PatchRequest implements IJsonable, IStringable {
     };
   }
 
-  public toString(): string {
-    let key: string;
-    let script: string = this._script;
-
-    for (key in this.values) {
-      let value: any = this.values[key];
-
-      script = script.replace(
-        new RegExp(key, 'g'),
-        (): string => JSON.stringify(value)
-      );
-    }
+  public applyToQuery(indexQuery: IndexQuery): void {
+    let query: string = indexQuery.query;
     
-    return script;
-  } 
+    if (!query.toUpperCase().includes(QueryKeywords.Update)) {
+      indexQuery.query = `${query} ${QueryKeywords.Update} { ${this._script} }`;
+      _.assign(indexQuery.queryParameters, this.values || {});
+    }
+  }
 }
 
