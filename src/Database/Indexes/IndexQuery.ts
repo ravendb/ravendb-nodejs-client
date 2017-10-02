@@ -58,10 +58,6 @@ export class IndexQuery implements IJsonable {
     this._start = start;
   }
 
-  public set query(query: string) {
-    this._query = query;
-  }
-
   public get query(): string {
     return this._query;
   }

@@ -203,6 +203,18 @@ export class DocumentConventions {
     return responseIncludes;
   }
 
+  public checkIsProjection(responseItem: object): boolean {
+    if ('@metadata' in responseItem) {
+      const metadata: object = responseItem['@metadata'];
+
+      if (TypeUtil.isObject(metadata)) {
+        return true === metadata['@projection'];
+      }
+    }
+
+    return false;
+  }
+
   public setIdOnDocument<T extends Object = IRavenObject>(document: T, id: string, documentType?: DocumentType<T>): T {
     if ('object' !== (typeof document)) {
       throw new InvalidOperationException("Invalid entity provided. It should implement object interface");

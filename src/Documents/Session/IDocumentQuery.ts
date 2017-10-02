@@ -23,7 +23,6 @@ export interface IDocumentQuery<T extends Object = IRavenObject> {
   indexName: string;
   collectionName: string;
   conventions: DocumentConventions;
-  isFetchingAllFields: boolean;
   isDynamicMapReduce: boolean;
   rawQuery(query: string): IDocumentQuery<T>;
   selectFields(fields: string[]): IDocumentQuery<T>;

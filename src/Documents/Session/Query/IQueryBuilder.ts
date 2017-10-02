@@ -5,7 +5,6 @@ import {SpatialUnit} from "./Spatial/SpatialUnit";
 import {SpatialRelation} from "./Spatial/SpatialRelation";
 
 export interface IQueryBuilder {
-  isFetchingAllFields: boolean;
   isDynamicMapReduce: boolean;
   rawQuery(query: string): IQueryBuilder;
   selectFields(fields: string[]): IQueryBuilder;

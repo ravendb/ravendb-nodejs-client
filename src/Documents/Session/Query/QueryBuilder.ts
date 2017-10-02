@@ -59,10 +59,6 @@ export class QueryBuilder extends Observable implements IQueryBuilder {
     return this.groupByTokens && (this.groupByTokens.count > 0);
   }
 
-  public get isFetchingAllFields(): boolean {
-    return TypeUtil.isNull(this.findFieldsToFetchToken());
-  }
-
   constructor(indexName?: string, collectionName?: string, idPropertyName?: string) {
     super();
 

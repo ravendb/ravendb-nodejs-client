@@ -80,10 +80,6 @@ export class DocumentQuery<T extends Object = IRavenObject> extends Observable i
     return this._builder.isDynamicMapReduce;
   }
 
-  public get isFetchingAllFields(): boolean {
-    return this._builder.isFetchingAllFields;
-  }  
-
   constructor(session: IDocumentSession, requestExecutor: RequestExecutor, 
     documentType?: DocumentType<T>, indexName?: string, nestedObjectTypes?: IRavenObject<DocumentConstructor>, 
     withStatistics: boolean = false, indexQueryOptions: IOptionsSet = {}
@@ -732,7 +728,6 @@ Only integer / number / string and null values are supported"
 
     if (responseResults.length > 0) {
       let results: T[] = [] as T[];
-      const fetchingFullDocs: boolean = this.isFetchingAllFields;
       const responseIncludes: object[] = conventions.tryFetchIncludes(commandResponse);
 
       responseResults.forEach((result: object) => {
@@ -741,7 +736,7 @@ Only integer / number / string and null values are supported"
 
         results.push(conversionResult.document);
 
-        if (fetchingFullDocs) {
+        if (!conventions.checkIsProjection(result)) {
           this.emit<IDocumentConversionResult<T>>(
             DocumentQuery.EVENT_DOCUMENT_FETCHED,
             conversionResult
