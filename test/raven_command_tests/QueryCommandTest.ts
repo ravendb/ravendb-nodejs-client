@@ -15,7 +15,7 @@ describe('QueryCommand Tests', () => {
   let requestExecutor: RequestExecutor;
   const query: string = "from index 'Testing' where Tag = 'Products'";
   const conventions: DocumentConventions = new DocumentConventions();
-  const indexQuery: IndexQuery = new IndexQuery(query, null, 0, {}, {waitForNonStaleResults: true, waitForNonStaleResultsAsOfNow: true});
+  const indexQuery: IndexQuery = new IndexQuery(query, {}, null, 0,{waitForNonStaleResults: true});
 
   beforeEach(function(): void {
     ({requestExecutor} = this.currentTest as IRavenObject);
@@ -33,24 +33,24 @@ describe('QueryCommand Tests', () => {
 
   describe('Query Command', () => {
     it('should do query', async () => requestExecutor
-      .execute(new QueryCommand(indexQuery, conventions))
+      .execute(new QueryCommand(conventions, indexQuery))
       .then((result: IRavenResponse) => expect(result.Results[0]).to.have.property('Name', 'test'))
     );
 
     it('should query only metadata', async () => requestExecutor
-      .execute(new QueryCommand(indexQuery, conventions))
-      .then(() => requestExecutor.execute(new QueryCommand(indexQuery, conventions, true)))
+      .execute(new QueryCommand(conventions, indexQuery))
+      .then(() => requestExecutor.execute(new QueryCommand(conventions, indexQuery, true)))
       .then((result: IRavenResponse) => expect(result.Results[0]).not.to.have.property('Name'))
     );
 
     it('should query only documents', async () => requestExecutor
-      .execute(new QueryCommand(indexQuery, conventions))
-      .then(() => requestExecutor.execute(new QueryCommand(indexQuery, conventions, false, true)))
+      .execute(new QueryCommand(conventions, indexQuery))
+      .then(() => requestExecutor.execute(new QueryCommand(conventions, indexQuery, false, true)))
       .then((result: IRavenResponse) => expect(result.Results[0]).not.to.have.property('@metadata'))
     );
 
     it('should fail with non-existing index', async () => expect(
-        requestExecutor.execute(new QueryCommand(new IndexQuery("from index 'IndexIsNotExists'"), conventions))
+        requestExecutor.execute(new QueryCommand(conventions, new IndexQuery("from index 'IndexIsNotExists'")))
       ).to.be.rejected
     );
   });

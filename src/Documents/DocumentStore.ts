@@ -132,7 +132,7 @@ export class DocumentStore implements IDocumentStore {
       executor = this.getRequestExecutor(dbName);
     }
     
-    return new DocumentSession(dbName, this, executor, uuid());
+    return new DocumentSession(dbName, this, uuid(),  executor);
   }
 
   public async generateId(document: object, documentType?: DocumentType, database?: string, callback?: EntityIdCallback): Promise<string> {

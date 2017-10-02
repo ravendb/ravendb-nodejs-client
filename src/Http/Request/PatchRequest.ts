@@ -48,14 +48,5 @@ export class PatchRequest implements IJsonable, IStringable {
       "Values": this.values
     };
   }
-
-  public applyToQuery(indexQuery: IndexQuery): void {
-    let query: string = indexQuery.query;
-    
-    if (!query.toUpperCase().includes(QueryKeywords.Update)) {
-      indexQuery.query = `${query} ${QueryKeywords.Update} { ${this._script} }`;
-      _.assign(indexQuery.queryParameters, this.values || {});
-    }
-  }
 }
 

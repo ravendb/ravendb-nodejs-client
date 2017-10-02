@@ -77,7 +77,7 @@ export class StringUtil {
   }
 
   public static isCharacter(character: string) {
-    return character && (1 == character.length);
+    return character && (1 === character.length);
   }
 
   public static isDigit(character: string) {

@@ -374,21 +374,11 @@ export class DocumentQuery<T extends Object = IRavenObject> extends Observable i
     return this;
   }
 
-  public waitForNonStaleResults(waitTimeout?: number): IDocumentQuery<T> {
+  public waitForNonStaleResults(): IDocumentQuery<T> {
     _.assign(this.indexQueryOptions, {
       cutOffEtag: null,
       waitForNonStaleResults: true,      
-      waitForNonStaleResultsTimeout: waitTimeout || IndexQuery.DefaultTimeout
-    });
-
-    return this;
-  }
-
-  public waitForNonStaleResultsAsOfNow(waitTimeout?: number): IDocumentQuery<T> {
-    _.assign(this.indexQueryOptions, {
-      waitForNonStaleResults: true,      
-      waitForNonStaleResultsAsOfNow: true,      
-      waitForNonStaleResultsTimeout: waitTimeout || IndexQuery.DefaultTimeout
+      waitForNonStaleResultsTimeout: IndexQuery.DefaultTimeout
     });
 
     return this;
@@ -551,7 +541,7 @@ export class DocumentQuery<T extends Object = IRavenObject> extends Observable i
       take = this._take;
     }
     
-    return new IndexQuery(query, take, skip, queryParams, this.indexQueryOptions);
+    return new IndexQuery(query, queryParams, take, skip, this.indexQueryOptions);
   }
 
   public async single(callback?: EntityCallback<T>): Promise<T> {
@@ -568,12 +558,12 @@ export class DocumentQuery<T extends Object = IRavenObject> extends Observable i
         const results: T[] = <T[]>this.convertResponseToDocuments(response);
         const result: T = results.length ? _.first(results) : null;
 
-        if (results.length != 1) {
-          return BluebirdPromise.reject<T>(
-            new InvalidOperationException(
-              "There are more then single or no documents corresponding to query criteria"
-            )
-          );
+        if (results.length !== 1) {
+          const errorMessage: string = (results.length > 1)
+            ? "There's more than one result corresponding to given query criteria." 
+            : "There's no results corresponding to given query criteria."
+
+          return BluebirdPromise.reject<T>(new InvalidOperationException(errorMessage));
         }
 
         PromiseResolver.resolve<T>(result, null, callback);
@@ -716,7 +706,7 @@ Only integer / number / string and null values are supported"
     const session: IDocumentSession = this.session;
     const conventions: DocumentConventions = session.conventions;
     const query: IndexQuery = this.getIndexQuery();
-    const queryCommand: QueryCommand = new QueryCommand(query, conventions);
+    const queryCommand: QueryCommand = new QueryCommand(conventions, query);
 
     return this.requestExecutor
       .execute(queryCommand)

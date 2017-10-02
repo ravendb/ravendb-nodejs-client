@@ -47,7 +47,7 @@ describe('Document query test', () => {
         .query<Product>({
           documentType: Product
         })
-        .waitForNonStaleResultsAsOfNow()        
+        .waitForNonStaleResults()        
         .whereEquals<string>('name', 'test101')
         .all();
         
@@ -59,7 +59,7 @@ describe('Document query test', () => {
         .query<Product>({
           documentType: Product
         })
-        .waitForNonStaleResultsAsOfNow()        
+        .waitForNonStaleResults()        
         .whereEquals<string>('name', 'test101')
         .whereEquals<number>('uid', 4)
         .all();
@@ -72,7 +72,7 @@ describe('Document query test', () => {
         .query<Product>({
           documentType: Product
         })
-        .waitForNonStaleResultsAsOfNow()        
+        .waitForNonStaleResults()        
         .usingDefaultOperator(QueryOperators.And)
         .whereEquals<string>('name', 'test107')
         .whereEquals<number>('uid', 5)
@@ -86,7 +86,7 @@ describe('Document query test', () => {
         .query<Product>({
           documentType: Product
         })
-        .waitForNonStaleResultsAsOfNow() 
+        .waitForNonStaleResults() 
         .whereIn<string>('name', ['test101', 'test107', 'test106'])
         .all();
         
@@ -98,7 +98,7 @@ describe('Document query test', () => {
         .query<Product>({
           documentType: Product
         })
-        .waitForNonStaleResultsAsOfNow()
+        .waitForNonStaleResults()
         .whereStartsWith<string>('name', 'n')
         .all();
       
@@ -110,7 +110,7 @@ describe('Document query test', () => {
         .query<Product>({
           documentType: Product
         })
-        .waitForNonStaleResultsAsOfNow()
+        .waitForNonStaleResults()
         .whereEndsWith<string>('name', '7')
         .all();
       
@@ -122,7 +122,7 @@ describe('Document query test', () => {
         .query({
           indexName: 's'
         })
-        .waitForNonStaleResultsAsOfNow()
+        .waitForNonStaleResults()
         .whereEquals<string>('Tag', 'Products')
         .all()
       ).to.be.rejected
@@ -134,7 +134,7 @@ describe('Document query test', () => {
           documentType: Product,
           indexName: 'Testing_Sort'
         })
-        .waitForNonStaleResultsAsOfNow()
+        .waitForNonStaleResults()
         .whereIn<number>('uid', [4, 6, 90])
         .all();
 
@@ -147,7 +147,7 @@ describe('Document query test', () => {
           documentType: Product,
           indexName: 'Testing_Sort'
         })
-        .waitForNonStaleResultsAsOfNow()
+        .waitForNonStaleResults()
         .whereBetween<number>('uid', 2, 4)
         .all();
       
@@ -157,7 +157,7 @@ describe('Document query test', () => {
     it('should query by exists', async () => {
       const results: IRavenObject[] = await store.openSession()
         .query()
-        .waitForNonStaleResultsAsOfNow()
+        .waitForNonStaleResults()
         .whereExists('ordering')
         .all();
        
@@ -167,7 +167,7 @@ describe('Document query test', () => {
     it('should query with ordering', async() => {
       const results: IRavenObject[] = await store.openSession()
         .query()
-        .waitForNonStaleResultsAsOfNow()
+        .waitForNonStaleResults()
         .whereExists('ordering')
         .orderBy('ordering')
         .all();
@@ -178,7 +178,7 @@ describe('Document query test', () => {
     it('should query with descending ordering', async() => {
       const results: IRavenObject[] = await store.openSession()
         .query()
-        .waitForNonStaleResultsAsOfNow()
+        .waitForNonStaleResults()
         .whereExists('ordering')
         .orderByDescending('ordering')
         .all();
@@ -194,7 +194,7 @@ describe('Document query test', () => {
         .query<Product>({
           documentType: Product,
         })
-        .waitForNonStaleResultsAsOfNow()
+        .waitForNonStaleResults()
         .whereExists('uid')
         .count();
 
@@ -208,7 +208,7 @@ describe('Document query test', () => {
           .query<Product>({
             documentType: Product
           })
-          .waitForNonStaleResultsAsOfNow()
+          .waitForNonStaleResults()
           .whereExists('uid')
           .orderBy('uid')
           .skip((page - 1) * pageSize)
@@ -226,7 +226,7 @@ describe('Document query test', () => {
       await session.query<Order>({
         documentType: Order
       })
-      .waitForNonStaleResultsAsOfNow()
+      .waitForNonStaleResults()
       .whereEquals('uid', 92)
       .include('product_id')
       .all();
@@ -241,7 +241,7 @@ describe('Document query test', () => {
           documentType: Company,
           nestedObjectTypes: {product: Product}
         })
-        .waitForNonStaleResultsAsOfNow()
+        .waitForNonStaleResults()
         .whereEquals<string>('name', 'withNesting')
         .all();
 
@@ -255,7 +255,7 @@ describe('Document query test', () => {
           documentType: Product,
           indexName: 'Testing_Sort'
         })
-        .waitForNonStaleResultsAsOfNow()
+        .waitForNonStaleResults()
         .selectFields(['doc_id'])
         .whereBetween<number>('uid', 2, 4, true)
         .all();

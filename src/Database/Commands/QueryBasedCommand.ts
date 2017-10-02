@@ -38,7 +38,7 @@ export abstract class QueryBasedCommand extends RavenCommand {
 
     if (options.allowStale && options.staleTimeout) {
       this.addParams('staleTimeout', options.staleTimeout);
-    } 
+    }     
   }
 }
 

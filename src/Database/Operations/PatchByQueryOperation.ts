@@ -8,21 +8,16 @@ import {PatchByQueryCommand} from '../Commands/PatchByQueryCommand';
 import {PatchRequest} from "../../Http/Request/PatchRequest";
 
 export class PatchByQueryOperation extends QueryBasedOperation {
-
-  protected patch?: PatchRequest = null;
   protected query: IndexQuery = null;
   protected options: QueryOperationOptions = null;
 
-
-  constructor(queryToUpdate: IndexQuery, patch?: PatchRequest, options?: QueryOperationOptions) {
+  constructor(queryToUpdate: IndexQuery, options?: QueryOperationOptions) {
     super(queryToUpdate, options);
     this.query = queryToUpdate;
-    this.patch = patch;
     this.options = options;
   }
 
   public getCommand(conventions: DocumentConventions, store?: IDocumentStore): RavenCommand {
-    return new PatchByQueryCommand(this.query, this.patch, this.options);
+    return new PatchByQueryCommand(this.query, this.options);
   }
-
 }

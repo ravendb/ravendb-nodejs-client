@@ -7,7 +7,7 @@ import {IRavenObject} from "../../Typedef/IRavenObject";
 import {IJsonable} from "../../Typedef/Contracts";
 
 export class IndexQuery implements IJsonable {
-  public static readonly DefaultTimeout: number = 15;
+  public static readonly DefaultTimeout: number = 15 * 1000;
 
   private _query: string = '';
   private _queryParameters: IRavenObject = {};
@@ -15,11 +15,11 @@ export class IndexQuery implements IJsonable {
   private _pageSize: number = TypeUtil.MAX_INT32;
   private _cutOffEtag: number = null;
   private _waitForNonStaleResults: boolean = false;
-  private _waitForNonStaleResultsAsOfNow: boolean = false;
   private _waitForNonStaleResultsTimeout?: number = null;
 
-  constructor(query: string = '', pageSize: number = TypeUtil.MAX_INT32, skippedResults: number = 0, 
-    queryParameters: IRavenObject = {}, options: IOptionsSet = {}
+  constructor(query: string = '', queryParameters: IRavenObject = {}, 
+    pageSize: number = TypeUtil.MAX_INT32, skippedResults: number = 0, 
+    options: IOptionsSet = {}
   ) {
     const {DefaultTimeout} = <(typeof IndexQuery)>this.constructor;
 
@@ -29,14 +29,13 @@ export class IndexQuery implements IJsonable {
     this._start = skippedResults || 0;
     this._cutOffEtag = options.cutOffEtag || null;
     this._waitForNonStaleResults = options.waitForNonStaleResults || false;
-    this._waitForNonStaleResultsAsOfNow = options.waitForNonStaleResultsAsOfNow || false;
     this._waitForNonStaleResultsTimeout = options.waitForNonStaleResultsTimeout || null;
 
     if (!TypeUtil.isNumber(pageSize)) {
       this._pageSize = TypeUtil.MAX_INT32;
     }
 
-    if ((this._waitForNonStaleResults || this._waitForNonStaleResultsAsOfNow)
+    if ((this._waitForNonStaleResults)
       && !this._waitForNonStaleResultsTimeout
     ) {
       this._waitForNonStaleResultsTimeout = DefaultTimeout;
@@ -79,10 +78,6 @@ export class IndexQuery implements IJsonable {
     return this._waitForNonStaleResults;
   }
 
-  public get waitForNonStaleResultsAsOfNow(): boolean {
-    return this._waitForNonStaleResultsAsOfNow;
-  }
-
   public get waitForNonStaleResultsTimeout(): number {
     return this._waitForNonStaleResultsTimeout;
   }
@@ -91,9 +86,8 @@ export class IndexQuery implements IJsonable {
     let buffer: string = StringUtil.format('{query}{pageSize}{start}', this);
 
     buffer += this._waitForNonStaleResults ? "1" : "0";
-    buffer += this._waitForNonStaleResultsAsOfNow ? "1" : "0";
 
-    if ((this._waitForNonStaleResults || this._waitForNonStaleResultsAsOfNow)
+    if (this._waitForNonStaleResults
       && !TypeUtil.isNull(this._waitForNonStaleResultsTimeout)
     ) {
       buffer += this.formattedTimeout;
@@ -136,13 +130,7 @@ export class IndexQuery implements IJsonable {
       }); 
     }
 
-    if (this._waitForNonStaleResultsAsOfNow) {
-      _.assign(json, {
-        WaitForNonStaleResultsAsOfNow: true,
-      }); 
-    }
-
-    if ((this._waitForNonStaleResults || this._waitForNonStaleResultsAsOfNow)
+    if (this._waitForNonStaleResults
       && !TypeUtil.isNull(this._waitForNonStaleResultsTimeout)
     ) {    
       _.assign(json, {

@@ -45,11 +45,11 @@ export class DocumentSession implements IDocumentSession {
     return this.documentStore.conventions;
   }
 
-  constructor (database: string, documentStore: IDocumentStore, requestExecutor: RequestExecutor, sessionId: string) {
-    this.database = database;
+  constructor (dbName: string, documentStore: IDocumentStore, id: string, requestExecutor: RequestExecutor) {
+    this.database = dbName;
     this.documentStore = documentStore;
     this.requestExecutor = requestExecutor;
-    this.sessionId = sessionId;
+    this.sessionId = id;
     this.documentsById = {};
     this.includedRawEntitiesById = {};
     this.deletedDocuments = new Set<IRavenObject>();

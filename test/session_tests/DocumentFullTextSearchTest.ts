@@ -37,7 +37,7 @@ describe('Document full text search', () => {
           documentType: LastFm, 
           indexName: LastFmAnalyzed.name
         })
-        .waitForNonStaleResultsAsOfNow()
+        .waitForNonStaleResults()
         .search('query', 'Me')
         .all();
 
@@ -51,7 +51,7 @@ describe('Document full text search', () => {
           documentType: LastFm, 
           indexName: LastFmAnalyzed.name
         })
-        .waitForNonStaleResultsAsOfNow()
+        .waitForNonStaleResults()
         .search('query', 'Me Bobo')
         .all();
 
@@ -64,7 +64,7 @@ describe('Document full text search', () => {
           documentType: LastFm, 
           indexName: LastFmAnalyzed.name
         })
-        .waitForNonStaleResultsAsOfNow()
+        .waitForNonStaleResults()
         .search('query', 'Me')
         .boost(10)
         .search('query', 'Bobo')

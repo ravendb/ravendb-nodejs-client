@@ -60,8 +60,7 @@ export interface IDocumentQuery<T extends Object = IRavenObject> {
   orderByDescending(field: string, ordering?: OrderingType): IDocumentQuery<T>;
   orderByScore(): IDocumentQuery<T>;
   orderByScoreDescending(): IDocumentQuery<T>;
-  waitForNonStaleResults(waitTimeout?: number): IDocumentQuery<T>;
-  waitForNonStaleResultsAsOfNow(waitTimeout?: number): IDocumentQuery<T>;
+  waitForNonStaleResults(): IDocumentQuery<T>;
   waitForNonStaleResultsAsOf(cutOffEtag: number, waitTimeout?: number): IDocumentQuery<T>;
   search(fieldName: string, searchTerms: string, operator?: SearchOperator): IDocumentQuery<T>;
   intersect(): IDocumentQuery<T>;

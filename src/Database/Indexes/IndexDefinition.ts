@@ -9,7 +9,6 @@ import {TypeUtil} from "../../Utility/TypeUtil";
 
 export class IndexDefinition implements IJsonable {
   protected maps: string[];
-  protected indexId: number = 0;
   protected isTestIndex: boolean = false;
   protected reduce?: boolean = null;
   protected lockMode?: IndexLockMode = null;
@@ -22,10 +21,9 @@ export class IndexDefinition implements IJsonable {
     this._name = name;
     this.configuration = configuration || {};
     this.reduce = initOptions.reduce || 0;
-    this.indexId = <number>initOptions.index_id || null;
-    this.lockMode = <IndexLockMode>initOptions.lock_mode || null;
+    this.lockMode = <IndexLockMode>initOptions.lockMode || null;
     this.priority = <IndexPriority>initOptions.priority || null;
-    this.isTestIndex = initOptions.is_test_index || false;
+    this.isTestIndex = initOptions.isTestIndex || false;
     this.fields = initOptions.fields || {};
     this.maps = TypeUtil.isArray(indexMap) ? (indexMap as string[]) : [indexMap as string];
   }
@@ -76,7 +74,6 @@ export class IndexDefinition implements IJsonable {
     return {
       "Configuration": this.configuration,
       "Fields": fieldsJson,
-      "IndexId": this.indexId,
       "IsTestIndex": this.isTestIndex,
       "LockMode": lockModeJson,
       "Maps": this.maps,

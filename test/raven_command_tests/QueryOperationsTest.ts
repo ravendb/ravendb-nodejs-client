@@ -21,7 +21,6 @@ import {DeleteByQueryOperation} from "../../src/Database/Operations/DeleteByQuer
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 
 describe('IndexBasedCommand tests', () => {
-  const patch: PatchRequest = new PatchRequest("Name = 'Patched';");
   let requestExecutor: RequestExecutor;
   let store: IDocumentStore;
 
@@ -50,25 +49,21 @@ describe('IndexBasedCommand tests', () => {
 
   describe('Actions by Index', () => {
     it('update by index success', async () => {
-      const query: string = "from index 'Testing_Sort' where exists(Name)";
-      const indexQuery: IndexQuery = new IndexQuery(query, null, 0, {}, {waitForNonStaleResults: true, waitForNonStaleResultsAsOfNow: true});
-      const queryCommand: QueryCommand = new QueryCommand(indexQuery, new DocumentConventions());
-      const patchByQueryOperation: PatchByQueryOperation = new PatchByQueryOperation(new IndexQuery(query), patch, new QueryOperationOptions(false));
+      const query: string = "from index 'Testing_Sort' where exists(Name) update { this.Name = args.name; }";
+      const indexQuery: IndexQuery = new IndexQuery(query, {name: 'Patched'}, null, 0, {waitForNonStaleResults: true});
+      const patchByQueryOperation: PatchByQueryOperation = new PatchByQueryOperation(indexQuery, new QueryOperationOptions(false));
 
-      return requestExecutor
-        .execute(queryCommand)
-        .then(() => store.operations
-          .send(patchByQueryOperation)
-          .then((response: IRavenResponse) => {
-            expect(response).not.to.be.null;
-            expect((response as IRavenResponse).Result.Total).not.to.be.lessThan(100);
-          })
-        );
+      return store.operations
+        .send(patchByQueryOperation)
+        .then((response: IRavenResponse) => {
+          expect(response).not.to.be.null;
+          expect((response as IRavenResponse).Result.Total).not.to.be.lessThan(100);
+        });
     });
 
     it('update by index fail', async () => expect(
       store.operations
-        .send(new PatchByQueryOperation(new IndexQuery(`from index 'unexisting_index_1' where Name = 'test1'`), patch))
+        .send(new PatchByQueryOperation(new IndexQuery(`from index 'unexisting_index_1' where Name = 'test1' update { this.Name = args.name; }`, {name: 'Patched'})))
       ).to.be.rejected
     );
 
@@ -80,14 +75,11 @@ describe('IndexBasedCommand tests', () => {
 
     it('delete by index success', async () => {
       const query: string = "from index 'Testing_Sort' where DocNumber between 0 AND 49";
-      const indexQuery: IndexQuery = new IndexQuery(query, null, 0, {}, {waitForNonStaleResults: true, waitForNonStaleResultsAsOfNow: true});
-      const queryCommand: QueryCommand = new QueryCommand(indexQuery, new DocumentConventions());
-      const deleteByIndexOperations: DeleteByQueryOperation = new DeleteByQueryOperation(new IndexQuery(query), new QueryOperationOptions(false));
+      const indexQuery: IndexQuery = new IndexQuery(query, {}, null, 0, {waitForNonStaleResults: true});
+      const deleteByIndexOperations: DeleteByQueryOperation = new DeleteByQueryOperation(indexQuery, new QueryOperationOptions(false));
 
-      return requestExecutor
-        .execute(queryCommand)
-        .then(() => store.operations
-        .send(deleteByIndexOperations))
+      return store.operations
+        .send(deleteByIndexOperations)
         .then((response: IRavenResponse) => expect(response.Status).to.equals('Completed'));
     });
   });
