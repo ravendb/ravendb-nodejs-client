@@ -1,6 +1,6 @@
 import * as BluebirdPromise from 'bluebird'
 import * as _ from "lodash";
-import {IDocumentQuery} from "./IDocumentQuery";
+import {IDocumentQuery, IDocumentQueryBase, IRawDocumentQuery} from "./IDocumentQuery";
 import {IDocumentSession} from "./IDocumentSession";
 import {RequestExecutor} from "../../Http/Request/RequestExecutor";
 import {QueryResultsCallback, EntityCallback, EntitiesCountCallback} from '../../Typedef/Callbacks';
@@ -40,7 +40,7 @@ export class DocumentQueryParameters extends Map<string, ConditionValue | Condit
   }
 }
 
-export class DocumentQuery<T extends Object = IRavenObject> extends Observable implements IDocumentQuery<T> {
+export abstract class DocumentQueryBase<T extends Object = IRavenObject> extends Observable implements IDocumentQueryBase<T> {
   public static readonly EVENT_DOCUMENTS_QUERIED: string = 'queried:documents';
   public static readonly EVENT_DOCUMENT_FETCHED: string = 'fetched:document';
   public static readonly EVENT_INCLUDES_FETCHED: string = 'fetched:includes';
@@ -53,16 +53,11 @@ export class DocumentQuery<T extends Object = IRavenObject> extends Observable i
   protected queryParameters: DocumentQueryParameters;
   protected nestedObjectTypes: IRavenObject<DocumentConstructor> = {};
 
-  private _indexName: string;
-  private _collectionName: string;
-  private _take?: number = null;
-  private _skip?: number = null;
-  private _builder: IQueryBuilder;
-
-  public get not(): IDocumentQuery<T> {
-    this.negateNext();
-    return this;
-  }
+  protected _indexName: string;
+  protected _collectionName: string;
+  protected _take?: number = null;
+  protected _skip?: number = null;
+  protected _builder: IQueryBuilder;
 
   public get indexName(): string {
     return this._indexName;
@@ -74,10 +69,6 @@ export class DocumentQuery<T extends Object = IRavenObject> extends Observable i
 
   public get conventions(): DocumentConventions {
     return this.session.conventions;
-  }
-
-  public get isDynamicMapReduce(): boolean {
-    return this._builder.isDynamicMapReduce;
   }
 
   constructor(session: IDocumentSession, requestExecutor: RequestExecutor, 
@@ -116,9 +107,235 @@ export class DocumentQuery<T extends Object = IRavenObject> extends Observable i
     );
   }
 
-  public rawQuery(query: string): IDocumentQuery<T> {
+  public waitForNonStaleResults(): this {
+    _.assign(this.indexQueryOptions, {
+      cutOffEtag: null,
+      waitForNonStaleResults: true,      
+      waitForNonStaleResultsTimeout: IndexQuery.DefaultTimeout
+    });
+
+    return this;
+  }
+
+  public waitForNonStaleResultsAsOf(cutOffEtag: number, waitTimeout?: number): this {
+    _.assign(this.indexQueryOptions, {
+      cutOffEtag,
+      waitForNonStaleResults: true,      
+      waitForNonStaleResultsTimeout: waitTimeout || IndexQuery.DefaultTimeout
+    });
+
+    return this;
+  }
+
+  public take(docsCount: number): this {
+    this._take = docsCount;
+    return this;
+  }
+
+  public skip(skipCount: number): this {
+    this._skip = skipCount;
+    return this;
+  }
+
+  public getIndexQuery(): IndexQuery {
+    let skip: number = 0;
+    let take: number = TypeUtil.MAX_INT32;
+    const query: string = this._builder.toString();
+    const queryParams: IRavenObject = <IRavenObject>this.queryParameters.toJson();
+
+    if (!TypeUtil.isNull(this._skip)) {
+      skip = this._skip;
+    }
+
+    if (!TypeUtil.isNull(this._take)) {
+      take = this._take;
+    }
+    
+    return new IndexQuery(query, queryParams, take, skip, this.indexQueryOptions);
+  }
+
+  public async single(callback?: EntityCallback<T>): Promise<T> {
+    const take: number = this._take;
+    const skip: number = this._skip;
+    const withStatistics: boolean = this.withStatistics;
+
+    this._take = 2;
+    this._skip = 0;
+    this.withStatistics = false;
+
+    return this.executeQuery()
+      .then((response: IRavenResponse): T | PromiseLike<T> => {
+        const results: T[] = <T[]>this.convertResponseToDocuments(response);
+        const result: T = results.length ? _.first(results) : null;
+
+        if (results.length !== 1) {
+          const errorMessage: string = (results.length > 1)
+            ? "There's more than one result corresponding to given query criteria." 
+            : "There's no results corresponding to given query criteria."
+
+          return BluebirdPromise.reject<T>(new InvalidOperationException(errorMessage));
+        }
+
+        PromiseResolver.resolve<T>(result, null, callback);
+        return result;
+      })
+      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback))
+      .finally(() => {
+        this._take = take;
+        this._skip = skip;
+        this.withStatistics = withStatistics;
+      });
+  }
+
+  public async first(callback?: EntityCallback<T>): Promise<T> {
+    const take: number = this._take;
+    const skip: number = this._skip;
+    const withStatistics: boolean = this.withStatistics;
+
+    this._take = 1;
+    this._skip = 0;
+    this.withStatistics = false;
+
+    return this.executeQuery()
+      .then((response: IRavenResponse): T => {
+        const results: T[] = <T[]>this.convertResponseToDocuments(response);
+        const result: T = results.length ? _.first(results) : null;
+
+        PromiseResolver.resolve<T>(result, null, callback);
+        return result;
+      })
+      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback))
+      .finally(() => {
+        this._take = take;
+        this._skip = skip;
+        this.withStatistics = withStatistics;
+      });
+  }
+
+  public async count(callback?: EntitiesCountCallback): Promise<number> {
+    const take: number = this._take;
+    const skip: number = this._skip;
+
+    this._take = 0;
+    this._skip = 0;
+
+    return this.executeQuery()
+      .then((response: IRavenResponse): number => {
+        const result: number = <number>response.TotalResults || 0;
+
+        PromiseResolver.resolve<number>(result, null, callback);
+        return result;
+      })
+      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback))
+      .finally(() => {
+        this._take = take;
+        this._skip = skip;
+      });
+  }
+
+  public async all(callback?: QueryResultsCallback<T[]>): Promise<T[]>;
+  public async all(callback?: QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<QueryResultsWithStatistics<T>>;
+  public async all(callback?: QueryResultsCallback<T[]> | QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<T[] | QueryResultsWithStatistics<T>> {
+    return this.executeQuery()
+      .then((response: IRavenResponse): T[] | QueryResultsWithStatistics<T> => {
+        const result: T[] | QueryResultsWithStatistics<T> = this.convertResponseToDocuments(response);
+
+        PromiseResolver.resolve<T[] | QueryResultsWithStatistics<T>>(result, null, callback);
+
+        return result;
+      })
+      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
+  }
+
+  protected executeQuery(): BluebirdPromise<IRavenResponse> {
+    this.emit(DocumentQueryBase.EVENT_DOCUMENTS_QUERIED);
+
+    const session: IDocumentSession = this.session;
+    const conventions: DocumentConventions = session.conventions;
+    const query: IndexQuery = this.getIndexQuery();
+    const queryCommand: QueryCommand = new QueryCommand(conventions, query);
+
+    return this.requestExecutor
+      .execute(queryCommand)
+      .then((response: IRavenResponse | null): IRavenResponse | BluebirdPromise.Thenable<IRavenResponse> => {
+        if (TypeUtil.isNull(response)) {
+          return {
+            Results: [] as object[],
+            Includes: [] as string[]
+          } as IRavenResponse;
+        } else if (response.IsStale) {
+          return BluebirdPromise.reject(new ErrorResponseException('The index is still stale after reached the timeout'));
+        } else {
+          return response as IRavenResponse;
+        }
+      });
+  }
+
+  protected convertResponseToDocuments(response: IRavenResponse): T[] | QueryResultsWithStatistics<T> {
+    let result: T[] | QueryResultsWithStatistics<T> = [] as T[];
+    const conventions: DocumentConventions = this.session.conventions;
+    const commandResponse: IRavenResponse = response as IRavenResponse;
+    const responseResults: object[] = conventions.tryFetchResults(commandResponse);
+
+    if (responseResults.length > 0) {
+      let results: T[] = [] as T[];
+      const responseIncludes: object[] = conventions.tryFetchIncludes(commandResponse);
+
+      responseResults.forEach((result: object) => {
+        const conversionResult: IDocumentConversionResult<T> = conventions
+          .convertToDocument<T>(result, this.documentType, this.nestedObjectTypes || {});
+
+        results.push(conversionResult.document);
+
+        if (!conventions.checkIsProjection(result)) {
+          this.emit<IDocumentConversionResult<T>>(
+            DocumentQueryBase.EVENT_DOCUMENT_FETCHED,
+            conversionResult
+          );
+        }        
+      });
+
+      if (responseIncludes.length) {
+        this.emit<object[]>(
+          DocumentQueryBase.EVENT_INCLUDES_FETCHED, 
+          responseIncludes as object[]
+        );
+      }
+
+      if (this.withStatistics) {
+        result = {
+          results: results,
+          response: response
+        } as QueryResultsWithStatistics<T>;
+      } else {
+        result = results as T[];
+      }
+    }
+
+    return result as T[] | QueryResultsWithStatistics<T>;
+  }
+}
+
+export class RawDocumentQuery<T extends Object = IRavenObject> extends DocumentQueryBase<T> implements IRawDocumentQuery<T> {
+  public rawQuery(query: string): IRawDocumentQuery<T> {
     this._builder.rawQuery(query);
     return this;
+  }
+
+  public addParameter<V extends ConditionValue>(name: string, value: V): IRawDocumentQuery<T> {
+    this.queryParameters.set(name, value);
+    return this;
+  }
+}
+
+export class DocumentQuery<T extends Object = IRavenObject> extends DocumentQueryBase<T> implements IDocumentQuery<T> {
+  public get not(): IDocumentQuery<T> {
+    this.negateNext();
+    return this;
+  }
+
+  public get isDynamicMapReduce(): boolean {
+    return this._builder.isDynamicMapReduce;
   }
 
   public selectFields(fields: string[]): IDocumentQuery<T>;
@@ -370,26 +587,6 @@ export class DocumentQuery<T extends Object = IRavenObject> extends Observable i
     return this;
   }
 
-  public waitForNonStaleResults(): IDocumentQuery<T> {
-    _.assign(this.indexQueryOptions, {
-      cutOffEtag: null,
-      waitForNonStaleResults: true,      
-      waitForNonStaleResultsTimeout: IndexQuery.DefaultTimeout
-    });
-
-    return this;
-  }
-
-  public waitForNonStaleResultsAsOf(cutOffEtag: number, waitTimeout?: number): IDocumentQuery<T> {
-    _.assign(this.indexQueryOptions, {
-      cutOffEtag,
-      waitForNonStaleResults: true,      
-      waitForNonStaleResultsTimeout: waitTimeout || IndexQuery.DefaultTimeout
-    });
-
-    return this;
-  }
-
   public search(fieldName: string, searchTerms: string, operator: SearchOperator = SearchOperators.Or): IDocumentQuery<T> {
     this._builder.search(fieldName, this.addQueryParameter(searchTerms), operator);
     return this;
@@ -513,126 +710,6 @@ export class DocumentQuery<T extends Object = IRavenObject> extends Observable i
     return this;
   }
 
-  public take(docsCount: number): IDocumentQuery<T> {
-    this._take = docsCount;
-    return this;
-  }
-
-  public skip(skipCount: number): IDocumentQuery<T> {
-    this._skip = skipCount;
-    return this;
-  }
-
-  public getIndexQuery(): IndexQuery {
-    let skip: number = 0;
-    let take: number = TypeUtil.MAX_INT32;
-    const query: string = this._builder.toString();
-    const queryParams: IRavenObject = <IRavenObject>this.queryParameters.toJson();
-
-    if (!TypeUtil.isNull(this._skip)) {
-      skip = this._skip;
-    }
-
-    if (!TypeUtil.isNull(this._take)) {
-      take = this._take;
-    }
-    
-    return new IndexQuery(query, queryParams, take, skip, this.indexQueryOptions);
-  }
-
-  public async single(callback?: EntityCallback<T>): Promise<T> {
-    const take: number = this._take;
-    const skip: number = this._skip;
-    const withStatistics: boolean = this.withStatistics;
-
-    this._take = 2;
-    this._skip = 0;
-    this.withStatistics = false;
-
-    return this.executeQuery()
-      .then((response: IRavenResponse): T | PromiseLike<T> => {
-        const results: T[] = <T[]>this.convertResponseToDocuments(response);
-        const result: T = results.length ? _.first(results) : null;
-
-        if (results.length !== 1) {
-          const errorMessage: string = (results.length > 1)
-            ? "There's more than one result corresponding to given query criteria." 
-            : "There's no results corresponding to given query criteria."
-
-          return BluebirdPromise.reject<T>(new InvalidOperationException(errorMessage));
-        }
-
-        PromiseResolver.resolve<T>(result, null, callback);
-        return result;
-      })
-      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback))
-      .finally(() => {
-        this._take = take;
-        this._skip = skip;
-        this.withStatistics = withStatistics;
-      });
-  }
-
-  public async first(callback?: EntityCallback<T>): Promise<T> {
-    const take: number = this._take;
-    const skip: number = this._skip;
-    const withStatistics: boolean = this.withStatistics;
-
-    this._take = 1;
-    this._skip = 0;
-    this.withStatistics = false;
-
-    return this.executeQuery()
-      .then((response: IRavenResponse): T => {
-        const results: T[] = <T[]>this.convertResponseToDocuments(response);
-        const result: T = results.length ? _.first(results) : null;
-
-        PromiseResolver.resolve<T>(result, null, callback);
-        return result;
-      })
-      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback))
-      .finally(() => {
-        this._take = take;
-        this._skip = skip;
-        this.withStatistics = withStatistics;
-      });
-  }
-
-  public async count(callback?: EntitiesCountCallback): Promise<number> {
-    const take: number = this._take;
-    const skip: number = this._skip;
-
-    this._take = 0;
-    this._skip = 0;
-
-    return this.executeQuery()
-      .then((response: IRavenResponse): number => {
-        const result: number = <number>response.TotalResults || 0;
-
-        PromiseResolver.resolve<number>(result, null, callback);
-        return result;
-      })
-      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback))
-      .finally(() => {
-        this._take = take;
-        this._skip = skip;
-      });
-  }
-
-  public async all(callback?: QueryResultsCallback<T[]>): Promise<T[]>;
-  public async all(callback?: QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<QueryResultsWithStatistics<T>>;
-  public async all(callback?: QueryResultsCallback<T[]> | QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<T[] | QueryResultsWithStatistics<T>> {
-    return this.executeQuery()
-      .then((response: IRavenResponse): T[] | QueryResultsWithStatistics<T> => {
-        const result: T[] | QueryResultsWithStatistics<T> = this.convertResponseToDocuments(response);
-
-        PromiseResolver.resolve<T[] | QueryResultsWithStatistics<T>>(result, null, callback);
-
-        return result;
-      })
-      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
-  }
-
   protected addQueryParameter<V extends ConditionValue>(valueOrValues: V | V[]) {
     const parameterName = `p${this.queryParameters.size}`;
 
@@ -694,73 +771,5 @@ Only integer / number / string and null values are supported"
     }
 
     return result;
-  }
-
-  protected executeQuery(): BluebirdPromise<IRavenResponse> {
-    this.emit(DocumentQuery.EVENT_DOCUMENTS_QUERIED);
-
-    const session: IDocumentSession = this.session;
-    const conventions: DocumentConventions = session.conventions;
-    const query: IndexQuery = this.getIndexQuery();
-    const queryCommand: QueryCommand = new QueryCommand(conventions, query);
-
-    return this.requestExecutor
-      .execute(queryCommand)
-      .then((response: IRavenResponse | null): IRavenResponse | BluebirdPromise.Thenable<IRavenResponse> => {
-        if (TypeUtil.isNull(response)) {
-          return {
-            Results: [] as object[],
-            Includes: [] as string[]
-          } as IRavenResponse;
-        } else if (response.IsStale) {
-          return BluebirdPromise.reject(new ErrorResponseException('The index is still stale after reached the timeout'));
-        } else {
-          return response as IRavenResponse;
-        }
-      });
-  }
-
-  protected convertResponseToDocuments(response: IRavenResponse): T[] | QueryResultsWithStatistics<T> {
-    let result: T[] | QueryResultsWithStatistics<T> = [] as T[];
-    const conventions: DocumentConventions = this.session.conventions;
-    const commandResponse: IRavenResponse = response as IRavenResponse;
-    const responseResults: object[] = conventions.tryFetchResults(commandResponse);
-
-    if (responseResults.length > 0) {
-      let results: T[] = [] as T[];
-      const responseIncludes: object[] = conventions.tryFetchIncludes(commandResponse);
-
-      responseResults.forEach((result: object) => {
-        const conversionResult: IDocumentConversionResult<T> = conventions
-          .convertToDocument<T>(result, this.documentType, this.nestedObjectTypes || {});
-
-        results.push(conversionResult.document);
-
-        if (!conventions.checkIsProjection(result)) {
-          this.emit<IDocumentConversionResult<T>>(
-            DocumentQuery.EVENT_DOCUMENT_FETCHED,
-            conversionResult
-          );
-        }        
-      });
-
-      if (responseIncludes.length) {
-        this.emit<object[]>(
-          DocumentQuery.EVENT_INCLUDES_FETCHED, 
-          responseIncludes as object[]
-        );
-      }
-
-      if (this.withStatistics) {
-        result = {
-          results: results,
-          response: response
-        } as QueryResultsWithStatistics<T>;
-      } else {
-        result = results as T[];
-      }
-    }
-
-    return result as T[] | QueryResultsWithStatistics<T>;
   }
 }

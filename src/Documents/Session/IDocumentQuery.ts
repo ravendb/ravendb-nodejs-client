@@ -18,13 +18,30 @@ export interface IDocumentQueryOptions<T> {
   indexQueryOptions?: IOptionsSet;
 }
 
-export interface IDocumentQuery<T extends Object = IRavenObject> {
-  not: IDocumentQuery<T>;
+export interface IDocumentQueryBase<T extends Object = IRavenObject> {
   indexName: string;
   collectionName: string;
-  conventions: DocumentConventions;
-  isDynamicMapReduce: boolean;
-  rawQuery(query: string): IDocumentQuery<T>;
+  conventions: DocumentConventions;  
+  getIndexQuery(): IndexQuery;
+  waitForNonStaleResults(): this;
+  waitForNonStaleResultsAsOf(cutOffEtag: number, waitTimeout?: number): this;
+  take(count: number): this;
+  skip(count: number): this;
+  first(callback?: EntityCallback<T>): Promise<T>;
+  single(callback?: EntityCallback<T>): Promise<T>;
+  all(callback?: QueryResultsCallback<T[]>): Promise<T[]>;
+  all(callback?: QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<QueryResultsWithStatistics<T>>;
+  count(callback?: EntitiesCountCallback): Promise<number>;
+}
+
+export interface IRawDocumentQuery<T extends Object = IRavenObject> extends IDocumentQueryBase<T> {
+  rawQuery(query: string): IRawDocumentQuery<T>;
+  addParameter<V extends ConditionValue>(name: string, value: V): IRawDocumentQuery<T>;
+}
+
+export interface IDocumentQuery<T extends Object = IRavenObject> extends IDocumentQueryBase<T> {
+  not: IDocumentQuery<T>;
+  isDynamicMapReduce: boolean;  
   selectFields(fields: string[]): IDocumentQuery<T>;
   selectFields(fields: string[], projections: string[]): IDocumentQuery<T>;
   getProjectionFields(): string[];
@@ -59,8 +76,6 @@ export interface IDocumentQuery<T extends Object = IRavenObject> {
   orderByDescending(field: string, ordering?: OrderingType): IDocumentQuery<T>;
   orderByScore(): IDocumentQuery<T>;
   orderByScoreDescending(): IDocumentQuery<T>;
-  waitForNonStaleResults(): IDocumentQuery<T>;
-  waitForNonStaleResultsAsOf(cutOffEtag: number, waitTimeout?: number): IDocumentQuery<T>;
   search(fieldName: string, searchTerms: string, operator?: SearchOperator): IDocumentQuery<T>;
   intersect(): IDocumentQuery<T>;
   distinct(): IDocumentQuery<T>;
@@ -78,12 +93,4 @@ export interface IDocumentQuery<T extends Object = IRavenObject> {
   orderByDistance(fieldName: string, shapeWkt: string): IDocumentQuery<T>;
   orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): IDocumentQuery<T>;
   orderByDistanceDescending(fieldName: string, shapeWkt: string): IDocumentQuery<T>;
-  getIndexQuery(): IndexQuery;
-  take(count: number): IDocumentQuery<T>;
-  skip(count: number): IDocumentQuery<T>;
-  first(callback?: EntityCallback<T>): Promise<T>;
-  single(callback?: EntityCallback<T>): Promise<T>;
-  all(callback?: QueryResultsCallback<T[]>): Promise<T[]>;
-  all(callback?: QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<QueryResultsWithStatistics<T>>;
-  count(callback?: EntitiesCountCallback): Promise<number>;
 }

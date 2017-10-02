@@ -2,8 +2,9 @@ import * as _ from 'lodash';
 import * as BluebirdPromise from 'bluebird'
 import {IDocumentSession} from "./IDocumentSession";
 import {IDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
-import {DocumentQuery} from "./DocumentQuery";
+import {DocumentQueryBase, DocumentQuery} from "./DocumentQuery";
 import {IDocumentStore} from '../IDocumentStore';
+import {Advanced} from './Advanced';
 import {RequestExecutor} from '../../Http/Request/RequestExecutor';
 import {DocumentConventions, DocumentConstructor, IDocumentConversionResult, IStoredRawEntityInfo, DocumentType, IDocumentAssociationCheckResult} from '../Conventions/DocumentConventions';
 import {EmptyCallback, EntityCallback, EntitiesArrayCallback} from '../../Typedef/Callbacks';
@@ -36,6 +37,7 @@ export class DocumentSession implements IDocumentSession {
   protected rawEntitiesAndMetadata: Map<IRavenObject, IStoredRawEntityInfo>;
 
   private _numberOfRequestsInSession: number = 0;
+  private _advanced: Advanced = null;
 
   public get numberOfRequestsInSession(): number {
     return this._numberOfRequestsInSession;
@@ -43,6 +45,14 @@ export class DocumentSession implements IDocumentSession {
 
   public get conventions(): DocumentConventions {
     return this.documentStore.conventions;
+  }
+
+  public get advanced(): Advanced {
+    if (!this._advanced) {
+      this._advanced = new Advanced(this); 
+    }
+
+    return this._advanced;
   }
 
   constructor (dbName: string, documentStore: IDocumentStore, id: string, requestExecutor: RequestExecutor) {
@@ -284,18 +294,18 @@ export class DocumentSession implements IDocumentSession {
     );
 
     query.on(
-      DocumentQuery.EVENT_DOCUMENTS_QUERIED,
+      DocumentQueryBase.EVENT_DOCUMENTS_QUERIED,
       () => this.incrementRequestsCount()
     );
 
     query.on<IDocumentConversionResult<T>>(
-      DocumentQuery.EVENT_DOCUMENT_FETCHED,
+      DocumentQueryBase.EVENT_DOCUMENT_FETCHED,
       (conversionResult?: IDocumentConversionResult<T>) =>
         this.onDocumentFetched<T>(conversionResult)
     );
 
     query.on<object[]>(
-      DocumentQuery.EVENT_INCLUDES_FETCHED,
+      DocumentQueryBase.EVENT_INCLUDES_FETCHED,
       (includes: object[]) =>
         this.onIncludesFetched(includes)
     );

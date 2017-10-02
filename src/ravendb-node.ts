@@ -17,7 +17,7 @@ export {PromiseResolver, PromiseResolve, PromiseReject} from './Utility/PromiseR
 export {IDocumentStore} from './Documents/IDocumentStore';
 export {IDocumentSession, ISessionOptions} from './Documents/Session/IDocumentSession';
 export {IDocumentQueryConditions} from './Documents/Session/IDocumentQueryConditions';
-export {IDocumentQuery, IDocumentQueryOptions} from './Documents/Session/IDocumentQuery';
+export {IDocumentQueryBase, IRawDocumentQuery, IDocumentQuery, IDocumentQueryOptions} from './Documents/Session/IDocumentQuery';
 export {IQueryBuilder} from './Documents/Session/Query/IQueryBuilder';
 export {IHiloIdGenerator} from './Hilo/IHiloIdGenerator';
 export {RequestMethods, RequestMethod} from './Http/Request/RequestMethod';
@@ -148,6 +148,7 @@ export {Serializer} from './Json/Serializer';
 export {DatabaseDocument} from './Database/DatabaseDocument';
 export {DocumentStore} from './Documents/DocumentStore';
 export {DocumentSession} from './Documents/Session/DocumentSession';
+export {Advanced} from './Documents/Session/Advanced';
 export {IWhereParams, IParametrizedWhereParams, WhereParams} from './Documents/Session/Query/WhereParams';
 export {ConditionValue, SearchOperator, SearchOperators, QueryOperator, QueryOperators, QueryKeyword, QueryKeywords, OrderingType, OrderingTypes, WhereOperator, WhereOperators, FieldConstants} from './Documents/Session/Query/QueryLanguage';
 export {SpatialConstants} from './Documents/Session/Query/Spatial/SpatialConstants';
@@ -174,7 +175,7 @@ export {IWhereTokenOptions, WhereToken} from './Documents/Session/Query/Tokens/W
 export {DocumentConventions, IDocumentConversionResult, DocumentConstructor, IStoredRawEntityInfo, DocumentType, IDocumentInfoResolvable, IDocumentAssociationCheckResult} from './Documents/Conventions/DocumentConventions';
 export {IndexDefinition} from './Database/Indexes/IndexDefinition';
 export {IndexFieldOptions} from './Database/Indexes/IndexFieldOptions';
-export {DocumentQueryParameters, DocumentQuery, QueryResultsWithStatistics} from './Documents/Session/DocumentQuery';
+export {DocumentQueryParameters, DocumentQueryBase, RawDocumentQuery, DocumentQuery, QueryResultsWithStatistics} from './Documents/Session/DocumentQuery';
 export {IndexQuery} from './Database/Indexes/IndexQuery';
 export {IFieldValidationResult, QueryBuilder} from './Documents/Session/Query/QueryBuilder';
 export {ServerNode} from './Http/ServerNode';
