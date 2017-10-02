@@ -10,7 +10,6 @@ import * as EventEmitter from 'events';
 import * as Request from 'request';
 import * as XRegExp from "xregexp";
 import * as RequestPromise from 'request-promise';
-import * as NodeStringBuilder from 'node-stringbuilder';
 
 // typings
 export {AbstractCallback, EmptyCallback, EntityIdCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback, QueryResultsCallback} from './Typedef/Callbacks';
@@ -137,7 +136,7 @@ export {CreateDatabaseOperation} from './Database/Operations/CreateDatabaseOpera
 export {DeleteDatabaseOperation} from './Database/Operations/DeleteDatabaseOperation';
 export {QueryBasedOperation} from './Database/Operations/QueryBasedOperation';
 export {PatchByQueryOperation} from './Database/Operations/PatchByQueryOperation';
-export {DeleteByQueryOperation} from './Database/Operations/DeleteByIndexOperation';
+export {DeleteByQueryOperation} from './Database/Operations/DeleteByQueryOperation';
 export {GetIndexOperation} from './Database/Operations/GetIndexOperation';
 export {PutIndexesOperation} from './Database/Operations/PutIndexesOperation';
 export {DeleteIndexOperation} from './Database/Operations/DeleteIndexOperation';
@@ -189,7 +188,7 @@ export {DateUtil} from './Utility/DateUtil';
 export {StringUtil} from './Utility/StringUtil';
 export {ArrayUtil} from './Utility/ArrayUtil';
 export {TypeUtil} from './Utility/TypeUtil';
-export {IAbstractStringBuilder, INodeStringBuilder, IStringBuilder, StringBuilder} from './Utility/StringBuilder';
+export {IStringBuilder, StringBuilder} from './Utility/StringBuilder';
 export {LinkedListItem, LinkedList} from './Utility/LinkedList';
 export {ExceptionThrower} from './Utility/ExceptionThrower';
 export {RequestExecutor, ITopologyUpdateEvent, IRequestExecutorOptions, IRequestExecutor} from './Http/Request/RequestExecutor';
