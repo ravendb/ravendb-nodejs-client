@@ -86,8 +86,10 @@ export abstract class RavenCommand {
   }
 
   protected addParams(params: object | string, value?: any): void {
-    Object.assign(this.params, TypeUtil.isObject(params)
-      ? params : {[params as string]: value});
+    if (!TypeUtil.isNull(params)) {
+      Object.assign(this.params, TypeUtil.isString(params)
+        ? {[params as string]: value} : <object>params || {});
+    }    
   }
 
   protected removeParams(params: string[] | string, ...otherParams: string[]) {
