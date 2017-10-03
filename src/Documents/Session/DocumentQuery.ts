@@ -1,6 +1,6 @@
 import * as BluebirdPromise from 'bluebird'
 import * as _ from "lodash";
-import {IDocumentQuery, IDocumentQueryBase, IRawDocumentQuery} from "./IDocumentQuery";
+import {IDocumentQuery, IDocumentQueryBase, IRawDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
 import {IDocumentSession} from "./IDocumentSession";
 import {RequestExecutor} from "../../Http/Request/RequestExecutor";
 import {QueryResultsCallback, EntityCallback, EntitiesCountCallback} from '../../Typedef/Callbacks';
@@ -40,7 +40,7 @@ export class DocumentQueryParameters extends Map<string, ConditionValue | Condit
   }
 }
 
-export abstract class DocumentQueryBase<T extends Object = IRavenObject> extends Observable implements IDocumentQueryBase<T> {
+export class DocumentQueryBase<T extends Object = IRavenObject> extends Observable implements IDocumentQueryBase<T> {
   public static readonly EVENT_DOCUMENTS_QUERIED: string = 'queried:documents';
   public static readonly EVENT_DOCUMENT_FETCHED: string = 'fetched:document';
   public static readonly EVENT_INCLUDES_FETCHED: string = 'fetched:includes';
@@ -58,6 +58,32 @@ export abstract class DocumentQueryBase<T extends Object = IRavenObject> extends
   protected _take?: number = null;
   protected _skip?: number = null;
   protected _builder: IQueryBuilder;
+
+  public static create<T extends Object = IRavenObject>(session: IDocumentSession, 
+    requestExecutor: RequestExecutor, options?: IDocumentQueryOptions<T>
+  ): DocumentQueryBase<T> {
+    let withStatistics: boolean = null;
+    let indexName: string = null;
+    let documentType: DocumentType<T> = null;
+    let indexQueryOptions: IOptionsSet = {};
+    let nestedObjectTypes: IRavenObject<DocumentConstructor> = {} as IRavenObject<DocumentConstructor>;
+
+    if (options) {
+      withStatistics = options.withStatistics || null;
+      nestedObjectTypes = options.nestedObjectTypes || {};
+      indexName = options.indexName || null;
+      documentType = options.documentType || null;
+      indexQueryOptions = options.indexQueryOptions || {};
+    }
+
+    const query: DocumentQueryBase<T> = new this(
+      session, requestExecutor, documentType, indexName,
+      nestedObjectTypes, withStatistics, indexQueryOptions
+    );
+
+    session.attachQuery<T>(query);
+    return query;
+  }
 
   public get indexName(): string {
     return this._indexName;
@@ -317,6 +343,12 @@ export abstract class DocumentQueryBase<T extends Object = IRavenObject> extends
 }
 
 export class RawDocumentQuery<T extends Object = IRavenObject> extends DocumentQueryBase<T> implements IRawDocumentQuery<T> {
+  public static create<T extends Object = IRavenObject>(session: IDocumentSession, 
+    requestExecutor: RequestExecutor, options?: IDocumentQueryOptions<T>
+  ): RawDocumentQuery<T> {
+    return <RawDocumentQuery<T>>super.create(session, requestExecutor, options);
+  }
+
   public rawQuery(query: string): IRawDocumentQuery<T> {
     this._builder.rawQuery(query);
     return this;
@@ -329,6 +361,12 @@ export class RawDocumentQuery<T extends Object = IRavenObject> extends DocumentQ
 }
 
 export class DocumentQuery<T extends Object = IRavenObject> extends DocumentQueryBase<T> implements IDocumentQuery<T> {
+  public static create<T extends Object = IRavenObject>(session: IDocumentSession, 
+    requestExecutor: RequestExecutor, options?: IDocumentQueryOptions<T>
+  ): DocumentQuery<T> {
+    return <DocumentQuery<T>>super.create(session, requestExecutor, options);
+  }
+
   public get not(): IDocumentQuery<T> {
     this.negateNext();
     return this;

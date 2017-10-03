@@ -42,6 +42,25 @@ describe('Document query test', () => {
   });
 
   describe('Index checking', () => {
+    it('should do raw query', async() => {
+      const results: Product[] = await store.openSession()
+        .advanced
+        .rawQuery<Product>(
+          'FROM Products WHERE name = $name AND uid = $uid', {
+            name: 'test107',
+            uid: 5
+          },{
+          documentType: Product
+        })
+        .waitForNonStaleResults()        
+        .all();
+
+      expect(results).to.have.lengthOf(1);
+      expect(results[0]).to.be.instanceof(Product);
+      expect(results[0]).to.have.property('name', 'test107')
+      expect(results[0]).to.have.property('uid', 5);
+    });
+
     it('should query by dynamic index', async () => {
       const results: Product[] = await store.openSession()
         .query<Product>({

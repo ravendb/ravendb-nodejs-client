@@ -27,7 +27,6 @@ import {ConcurrencyCheckMode, ConcurrencyCheckModes} from "../../Database/Concur
 export class DocumentSession implements IDocumentSession {
   protected database: string;
   protected documentStore: IDocumentStore;
-  protected requestExecutor: RequestExecutor;
   protected sessionId: string;
   protected documentsById: IRavenObject<IRavenObject>;
   protected includedRawEntitiesById: IRavenObject<object>
@@ -35,6 +34,7 @@ export class DocumentSession implements IDocumentSession {
   protected knownMissingIds: Set<string>;
   protected deferCommands: Set<RavenCommandData>;
   protected rawEntitiesAndMetadata: Map<IRavenObject, IStoredRawEntityInfo>;
+  protected requestExecutor: RequestExecutor;
 
   private _numberOfRequestsInSession: number = 0;
   private _advanced: Advanced = null;
@@ -49,7 +49,7 @@ export class DocumentSession implements IDocumentSession {
 
   public get advanced(): Advanced {
     if (!this._advanced) {
-      this._advanced = new Advanced(this); 
+      this._advanced = new Advanced(this, this.requestExecutor); 
     }
 
     return this._advanced;
@@ -57,8 +57,7 @@ export class DocumentSession implements IDocumentSession {
 
   constructor (dbName: string, documentStore: IDocumentStore, id: string, requestExecutor: RequestExecutor) {
     this.database = dbName;
-    this.documentStore = documentStore;
-    this.requestExecutor = requestExecutor;
+    this.documentStore = documentStore;  
     this.sessionId = id;
     this.documentsById = {};
     this.includedRawEntitiesById = {};
@@ -66,6 +65,7 @@ export class DocumentSession implements IDocumentSession {
     this.rawEntitiesAndMetadata = new Map<IRavenObject, IStoredRawEntityInfo>();
     this.knownMissingIds = new Set<string>();
     this.deferCommands = new Set<RavenCommandData>();
+    this.requestExecutor = requestExecutor;
   }
 
   public async load<T extends Object = IRavenObject>(idOrIds: string, documentType?: DocumentType<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntityCallback<T>): Promise<T>;
@@ -274,25 +274,10 @@ export class DocumentSession implements IDocumentSession {
   }
 
   public query<T extends Object = IRavenObject>(options?: IDocumentQueryOptions<T>): IDocumentQuery<T> {
-    let withStatistics: boolean = null;
-    let indexName: string = null;
-    let documentType: DocumentType<T> = null;
-    let indexQueryOptions: IOptionsSet = {};
-    let nestedObjectTypes: IRavenObject<DocumentConstructor> = {} as IRavenObject<DocumentConstructor>;
+    return DocumentQuery.create<T>(this, this.requestExecutor, options);
+  }
 
-    if (options) {
-      withStatistics = options.withStatistics || null;
-      nestedObjectTypes = options.nestedObjectTypes || {};
-      indexName = options.indexName || null;
-      documentType = options.documentType || null;
-      indexQueryOptions = options.indexQueryOptions || {};
-    }
-
-    const query: DocumentQuery<T> = new DocumentQuery<T>(
-      this, this.requestExecutor, documentType, indexName,
-      nestedObjectTypes, withStatistics, indexQueryOptions
-    );
-
+  public attachQuery<T extends Object = IRavenObject>(query: DocumentQueryBase<T>): void {
     query.on(
       DocumentQueryBase.EVENT_DOCUMENTS_QUERIED,
       () => this.incrementRequestsCount()
@@ -309,8 +294,6 @@ export class DocumentSession implements IDocumentSession {
       (includes: object[]) =>
         this.onIncludesFetched(includes)
     );
-
-    return query;
   }
 
   protected incrementRequestsCount(): void {
