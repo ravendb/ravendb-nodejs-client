@@ -44,7 +44,7 @@ describe('Document query test', () => {
     });
 
     it('CanUnderstandEqualOnDate', () => {
-      const dateTime: Date = new Date("2010-05-15T00:00:00");
+      const dateTime: Date = moment("2010-05-15T00:00:00", "YYYY-MM-DDTHH:mm:ss").toDate();
 
       const query: IDocumentQuery = store
         .openSession()
