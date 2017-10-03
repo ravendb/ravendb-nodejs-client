@@ -29,7 +29,7 @@ export abstract class RavenCommand {
   constructor(endPoint: string, method: RequestMethod = RequestMethods.Get, params?: object, payload?: object, headers: IHeaders = {}) {
     this.endPoint = endPoint;
     this.method = method;
-    this.params = params;
+    this.params = params || {};
     this.payload = payload;
     this.headers = headers;
     this.failedNodes = new Set<ServerNode>();
