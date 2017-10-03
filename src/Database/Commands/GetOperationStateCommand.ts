@@ -19,7 +19,6 @@ export class GetOperationStateCommand extends RavenCommand {
     this.endPoint = StringUtil.format('{url}/databases/{database}/operations/state', serverNode);
   }
 
-
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
     const result: IRavenResponse = <IRavenResponse>super.setResponse(response);
 

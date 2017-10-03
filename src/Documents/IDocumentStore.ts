@@ -4,8 +4,9 @@ import {DocumentConventions, DocumentType} from './Conventions/DocumentConventio
 import {EntityIdCallback} from '../Typedef/Callbacks';
 import {ISessionOptions} from './Session/IDocumentSession';
 import {OperationExecutor, AdminOperationExecutor} from '../Database/Operations/OperationExecutor';
+import {IDisposable} from '../Typedef/Contracts';
 
-export interface IDocumentStore {
+export interface IDocumentStore extends IDisposable<Promise<IDocumentStore>> {
   database: string;
   urls: string[];
   singleNodeUrl: string;
@@ -13,7 +14,6 @@ export interface IDocumentStore {
   operations: OperationExecutor;
   admin: AdminOperationExecutor;
   initialize(): IDocumentStore;
-  finalize(): Promise<IDocumentStore>;
   openSession(database?: string) : IDocumentSession;
   openSession(options?: ISessionOptions) : IDocumentSession;
   openSession(database?: string, options?: ISessionOptions) : IDocumentSession;

@@ -63,10 +63,11 @@ beforeEach(async function() {
   });
 });
 
-afterEach( async function() {
-  ['indexDefinition', 'indexMap',  'defaultUrl',
-    'store', 'requestExecutor', 'currentDatabase']
-   .forEach((key: string) => delete this.currentTest[key]);
+afterEach(async function() {
+   await store.admin.server.send(new DeleteDatabaseOperation(currentDatabase, true, null, 10000));
+   await store.dispose();
 
-  await store.admin.server.send(new DeleteDatabaseOperation(currentDatabase, true));
+   ['indexDefinition', 'indexMap',  'defaultUrl',
+   'store', 'requestExecutor', 'currentDatabase']
+      .forEach((key: string) => delete this.currentTest[key]);
 });

@@ -9,3 +9,7 @@ export interface IJsonConvertible {
 export interface IStringable {
   toString(): string;
 }
+
+export interface IDisposable<T = void> {
+  dispose(): T;
+}

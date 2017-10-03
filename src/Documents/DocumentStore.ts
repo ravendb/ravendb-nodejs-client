@@ -107,9 +107,19 @@ export class DocumentStore implements IDocumentStore {
     return this;
   }
 
-  public async finalize(): Promise<IDocumentStore> {
+  public async dispose(): Promise<IDocumentStore> {
     return this._generator.returnUnusedRange()
-      .then((): IDocumentStore => this);
+      .then((): IDocumentStore => {
+        this.admin.server.dispose();
+
+        for (let executorsByDB of this._requestExecutors.values()) {
+          for (let executor of executorsByDB.values()) {
+            executor.dispose();
+          }
+        }
+
+        return this;
+      });
   }
 
   public openSession(database?: string) : IDocumentSession;

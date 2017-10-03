@@ -1,6 +1,8 @@
 import * as BluebirdPromise from "bluebird";
 import {IRequestExecutor} from "../../Http/Request/RequestExecutor";
 import {DateUtil} from "../../Utility/DateUtil";
+import {TypeUtil} from "../../Utility/TypeUtil";
+import {ExceptionsFactory} from "../../Utility/ExceptionsFactory";
 import {GetOperationStateCommand} from "../Commands/GetOperationStateCommand";
 import {IRavenResponse} from "../RavenCommandResponse";
 import {DatabaseLoadTimeoutException, InvalidOperationException, RavenException} from "../DatabaseExceptions";
@@ -55,9 +57,15 @@ export class OperationAwaiter {
               response: response
             };    
           case OperationStatuses.Faulted:
+            let exception: RavenException = ExceptionsFactory.createFrom(response.Result);
+
+            if (TypeUtil.isNull(exception)) {
+              exception = new InvalidOperationException(response.Result.Error);
+            }
+
             return {
               status: response.Status,
-              exception: new InvalidOperationException(response.Result.Error)
+              exception: exception
             };    
           default:
             return {

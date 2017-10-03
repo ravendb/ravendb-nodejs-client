@@ -4,7 +4,7 @@ import {IRavenResponse} from "./RavenCommandResponse";
 import {IResponse} from "../Http/Response/IResponse";
 import {IHeaders} from "../Http/IHeaders";
 import {TypeUtil} from "../Utility/TypeUtil";
-import {ExceptionThrower} from "../Utility/ExceptionThrower";
+import {ExceptionsFactory} from "../Utility/ExceptionsFactory";
 import * as _ from 'lodash';
 import * as Request from 'request';
 import * as RequestPromise from 'request-promise';
@@ -78,7 +78,7 @@ export abstract class RavenCommand {
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    ExceptionThrower.throwFrom(this._lastResponse = response);    
+    ExceptionsFactory.throwFrom(this._lastResponse = response);    
 
     if (response.body) {
       return <IRavenResponse>response.body;

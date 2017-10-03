@@ -57,6 +57,7 @@ gulp.task('run:tests', ['clean', 'build:tests'], (next) => {
 
     return gulp.src(tests)
         .pipe(mocha({
+            "timeout": 10000,
             "ravendb-host": args["ravendb-host"], 
             "ravendb-port": args["ravendb-port"]
         }))
