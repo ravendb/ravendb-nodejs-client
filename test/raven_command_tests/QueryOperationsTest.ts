@@ -45,7 +45,8 @@ describe('IndexBasedCommand tests', () => {
       .execute(new PutDocumentCommand(`testing/${i}`, {
           Name: `test${i}`, DocNumber: i,
           '@metadata': {"@collection": "Testings"}
-      })))));
+      })))))
+      .then(() => requestExecutor.execute(new QueryCommand(store.conventions, new IndexQuery("from index 'Testing_Sort'", {}, null, 0, {waitForNonStaleResults: true}))));
   });
 
   describe('Actions by Index', () => {

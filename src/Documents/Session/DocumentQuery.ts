@@ -153,6 +153,17 @@ export class DocumentQueryBase<T extends Object = IRavenObject> extends Observab
     return this;
   }
 
+  public waitForNonStaleResultsAsOfNow(waitTimeout?: number): this {
+    _.assign(this.indexQueryOptions, {
+      cutOffEtag: null,
+      waitForNonStaleResults: true,      
+      waitForNonStaleResultsAsOfNow: true,      
+      waitForNonStaleResultsTimeout: waitTimeout || IndexQuery.DefaultTimeout
+    });
+
+    return this;
+  }
+
   public take(docsCount: number): this {
     this._take = docsCount;
     return this;

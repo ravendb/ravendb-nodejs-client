@@ -38,8 +38,8 @@ export class ExceptionThrower {
       }
     } else {
       const json: IRavenObject = <IRavenObject><object>jsonOrResponse;
-
-      if (json && ('Type' in json) && ('Error' in json)) {
+      
+      if (json && ('Type' in json) && ('Error' in json)) {        
         if (json.Type && json.Error) {
           this.throw(_.last<string>((json.Type || '').split('.')), json.Error);
         }
