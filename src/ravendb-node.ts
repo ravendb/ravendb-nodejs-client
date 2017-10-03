@@ -148,7 +148,7 @@ export {Serializer} from './Json/Serializer';
 export {DatabaseDocument} from './Database/DatabaseDocument';
 export {DocumentStore} from './Documents/DocumentStore';
 export {DocumentSession} from './Documents/Session/DocumentSession';
-export {Advanced} from './Documents/Session/Advanced';
+export {AdvancedSessionOperations} from './Documents/Session/AdvancedSessionOperations';
 export {IWhereParams, IParametrizedWhereParams, WhereParams} from './Documents/Session/Query/WhereParams';
 export {ConditionValue, SearchOperator, SearchOperators, QueryOperator, QueryOperators, QueryKeyword, QueryKeywords, OrderingType, OrderingTypes, WhereOperator, WhereOperators, FieldConstants} from './Documents/Session/Query/QueryLanguage';
 export {SpatialConstants} from './Documents/Session/Query/Spatial/SpatialConstants';

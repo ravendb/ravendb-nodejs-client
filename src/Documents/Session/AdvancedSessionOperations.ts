@@ -6,7 +6,7 @@ import {TypeUtil} from '../../Utility/TypeUtil';
 import {IRavenObject} from '../../Typedef/IRavenObject';
 import {ConditionValue} from "./Query/QueryLanguage";
 
-export class Advanced {
+export class AdvancedSessionOperations {
   protected session: DocumentSession;
   protected requestExecutor: RequestExecutor;
 

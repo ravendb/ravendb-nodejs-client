@@ -13,6 +13,7 @@ import {PutIndexesOperation} from "../../src/Database/Operations/PutIndexesOpera
 import {PatchRequest} from "../../src/Http/Request/PatchRequest";
 import {QueryCommand} from "../../src/Database/Commands/QueryCommand";
 import {IndexQuery} from "../../src/Database/Indexes/IndexQuery";
+import {IndexDoesNotExistException} from "../../src/Database/DatabaseExceptions";
 import {DocumentConventions} from "../../src/Documents/Conventions/DocumentConventions";
 import {QueryOperationOptions} from "../../src/Database/Operations/QueryOperationOptions";
 import {IRavenObject} from "../../src/Typedef/IRavenObject";
@@ -56,31 +57,48 @@ describe('IndexBasedCommand tests', () => {
       return store.operations
         .send(patchByQueryOperation)
         .then((response: IRavenResponse) => {
+          const query: string = "from index 'Testing_Sort' where Name = $name";
+          const indexQuery: IndexQuery = new IndexQuery(query, {name: 'Patched'}, null, 0, {waitForNonStaleResults: true});
+
           expect(response).not.to.be.null;
           expect((response as IRavenResponse).Result.Total).not.to.be.lessThan(100);
+
+          return requestExecutor.execute(new QueryCommand(store.conventions, indexQuery));
+        })
+        .then((response: IRavenResponse) => {
+          expect(response.Results).to.be.an('array');
+          expect((response.Results as IRavenObject[]).length).not.to.be.lessThan(100);
         });
     });
 
     it('update by index fail', async () => expect(
       store.operations
-        .send(new PatchByQueryOperation(new IndexQuery(`from index 'unexisting_index_1' where Name = 'test1' update { this.Name = args.name; }`, {name: 'Patched'})))
-      ).to.be.rejected
+        .send(new PatchByQueryOperation(new IndexQuery(`from index 'unexisting_index_1' where Name = $name update { this.Name = args.newName; }`, {name: 'test1', newName: 'Patched'})))
+      ).to.be.rejectedWith(IndexDoesNotExistException)
     );
 
     it('delete by index fail', async () => expect(
       store.operations
-        .send(new DeleteByQueryOperation(new IndexQuery(`from index 'unexisting_index_1' where Name = 'test1'`)))
-      ).to.be.rejected
+        .send(new DeleteByQueryOperation(new IndexQuery(`from index 'unexisting_index_1' where Name = $name`, {name: 'test1'})))
+      ).to.be.rejectedWith(IndexDoesNotExistException)
     );
 
     it('delete by index success', async () => {
-      const query: string = "from index 'Testing_Sort' where DocNumber between 0 AND 49";
-      const indexQuery: IndexQuery = new IndexQuery(query, {}, null, 0, {waitForNonStaleResults: true});
+      const query: string = "from index 'Testing_Sort' where DocNumber between $min AND $max";
+      const indexQuery: IndexQuery = new IndexQuery(query, {min: 0, max: 49}, null, 0, {waitForNonStaleResults: true});
       const deleteByIndexOperations: DeleteByQueryOperation = new DeleteByQueryOperation(indexQuery, new QueryOperationOptions(false));
 
       return store.operations
         .send(deleteByIndexOperations)
-        .then((response: IRavenResponse) => expect(response.Status).to.equals('Completed'));
+        .then((response: IRavenResponse) => {
+          expect(response.Status).to.equals('Completed');
+
+          return requestExecutor.execute(new QueryCommand(store.conventions, indexQuery));
+        })
+        .then((response: IRavenResponse) => {
+          expect(response.Results).to.be.an('array');
+          expect((response.Results as IRavenObject[]).length).to.equals(0);
+        });
     });
   });
 });

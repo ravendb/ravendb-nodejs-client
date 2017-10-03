@@ -5,6 +5,8 @@ import {RavenCommand} from "../RavenCommand";
 import {ServerNode} from "../../Http/ServerNode";
 import {InvalidOperationException} from "../DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
+import {IRavenResponse} from "../RavenCommandResponse";
+import {IResponse} from "../../Http/Response/IResponse";
 
 export abstract class QueryBasedCommand extends RavenCommand {
   protected query?: IndexQuery;

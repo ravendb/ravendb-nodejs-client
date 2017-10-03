@@ -4,7 +4,7 @@ import {IDocumentSession} from "./IDocumentSession";
 import {IDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
 import {DocumentQueryBase, DocumentQuery} from "./DocumentQuery";
 import {IDocumentStore} from '../IDocumentStore';
-import {Advanced} from './Advanced';
+import {AdvancedSessionOperations} from './AdvancedSessionOperations';
 import {RequestExecutor} from '../../Http/Request/RequestExecutor';
 import {DocumentConventions, DocumentConstructor, IDocumentConversionResult, IStoredRawEntityInfo, DocumentType, IDocumentAssociationCheckResult} from '../Conventions/DocumentConventions';
 import {EmptyCallback, EntityCallback, EntitiesArrayCallback} from '../../Typedef/Callbacks';
@@ -38,7 +38,7 @@ export class DocumentSession implements IDocumentSession {
   protected attachedQueries: WeakMap<DocumentQueryBase, boolean>;
 
   private _numberOfRequestsInSession: number = 0;
-  private _advanced: Advanced = null;
+  private _advanced: AdvancedSessionOperations = null;
 
   public get numberOfRequestsInSession(): number {
     return this._numberOfRequestsInSession;
@@ -48,9 +48,9 @@ export class DocumentSession implements IDocumentSession {
     return this.documentStore.conventions;
   }
 
-  public get advanced(): Advanced {
+  public get advanced(): AdvancedSessionOperations {
     if (!this._advanced) {
-      this._advanced = new Advanced(this, this.requestExecutor); 
+      this._advanced = new AdvancedSessionOperations(this, this.requestExecutor); 
     }
 
     return this._advanced;

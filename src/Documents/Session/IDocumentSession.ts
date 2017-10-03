@@ -1,5 +1,5 @@
 import {IDocumentSession} from "./IDocumentSession";
-import {Advanced} from "./Advanced";
+import {AdvancedSessionOperations} from "./AdvancedSessionOperations";
 import {IDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
 import {DocumentQueryBase} from "./DocumentQuery";
 import {DocumentConventions, DocumentConstructor, DocumentType} from '../Conventions/DocumentConventions';
@@ -15,7 +15,7 @@ export interface ISessionOptions {
 export interface IDocumentSession {
   numberOfRequestsInSession: number;
   conventions: DocumentConventions;
-  advanced: Advanced;
+  advanced: AdvancedSessionOperations;
 
   load<T extends Object = IRavenObject>(idOrIds: string, documentType?: DocumentType<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntityCallback<T>): Promise<T>;
   load<T extends Object = IRavenObject>(idOrIds: string[], documentType?: DocumentType<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntitiesArrayCallback<T>): Promise<T[]>;

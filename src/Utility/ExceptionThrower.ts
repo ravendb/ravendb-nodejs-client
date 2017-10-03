@@ -1,3 +1,4 @@
+import * as _ from 'lodash';
 import {IRavenObject} from "../Typedef/IRavenObject";
 import {IResponse} from "../Http/Response/IResponse";
 import {StatusCodes} from "../Http/Response/StatusCode";
@@ -34,14 +35,13 @@ export class ExceptionThrower {
 
       if (StatusCodes.isError(response.statusCode) && response.body) {
         this.throwFrom(response.body);
-
       }
     } else {
       const json: IRavenObject = <IRavenObject><object>jsonOrResponse;
 
       if (json && ('Type' in json) && ('Error' in json)) {
         if (json.Type && json.Error) {
-          this.throw(json.Type, json.Error);
+          this.throw(_.last<string>((json.Type || '').split('.')), json.Error);
         }
       }
     }
