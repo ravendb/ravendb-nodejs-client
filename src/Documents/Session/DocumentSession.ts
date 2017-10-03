@@ -35,6 +35,7 @@ export class DocumentSession implements IDocumentSession {
   protected deferCommands: Set<RavenCommandData>;
   protected rawEntitiesAndMetadata: Map<IRavenObject, IStoredRawEntityInfo>;
   protected requestExecutor: RequestExecutor;
+  protected attachedQueries: WeakMap<DocumentQueryBase, boolean>;
 
   private _numberOfRequestsInSession: number = 0;
   private _advanced: Advanced = null;
@@ -66,6 +67,7 @@ export class DocumentSession implements IDocumentSession {
     this.knownMissingIds = new Set<string>();
     this.deferCommands = new Set<RavenCommandData>();
     this.requestExecutor = requestExecutor;
+    this.attachedQueries = new WeakMap<DocumentQueryBase, boolean>();
   }
 
   public async load<T extends Object = IRavenObject>(idOrIds: string, documentType?: DocumentType<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntityCallback<T>): Promise<T>;
@@ -278,6 +280,10 @@ export class DocumentSession implements IDocumentSession {
   }
 
   public attachQuery<T extends Object = IRavenObject>(query: DocumentQueryBase<T>): void {
+    if (this.attachedQueries.has(query)) {
+      throw new InvalidOperationException('Query is already attached to session');
+    }
+
     query.on(
       DocumentQueryBase.EVENT_DOCUMENTS_QUERIED,
       () => this.incrementRequestsCount()
@@ -294,6 +300,8 @@ export class DocumentSession implements IDocumentSession {
       (includes: object[]) =>
         this.onIncludesFetched(includes)
     );
+
+    this.attachedQueries.set(query, true);
   }
 
   protected incrementRequestsCount(): void {
