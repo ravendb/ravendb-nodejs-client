@@ -208,7 +208,7 @@ let documents = await query.all();
 |`orderBy(field: string, ordering?: OrderingType): IDocumentQuery<T>;`|`ORDER BY field [DESC]`|
 |`randomOrdering(seed?: string): IDocumentQuery<T>;`|`ORDER BY RAND()`|
 
-Condition value can be a string, number, boolean or null value or instance of Date class:
+Condition value can be a string, number, boolean or null value or instance of `Date` class:
 
 ```
 type ConditionValue = string | number | boolean | Date | null;
