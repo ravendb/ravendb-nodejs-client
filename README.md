@@ -205,7 +205,7 @@ let documents = await query.all();
 |`andAlso(): IDocumentQuery<T>;`|Adds `AND` before next condition|
 |`orElse(): IDocumentQuery<T>;`|Adds `OR` before next condition|
 |`usingDefaultOperator(operator: QueryOperator): IDocumentQuery<T>;`|Sets default operator (which will be used if no `andAlso()` / `orElse` was called. Just after query instatiation, `OR` is used as default operator. Default operator can be changed only adding any conditions|
-|`orderBy(field: string, ordering?: OrderingType): IDocumentQuery<T>;`|`ORDER BY field [ASC | DESC]`|
+|`orderBy(field: string, ordering?: OrderingType): IDocumentQuery<T>;`|`ORDER BY field [DESC]`|
 |`randomOrdering(seed?: string): IDocumentQuery<T>;`|`ORDER BY RAND()`|
 Condition value can be a string, number, boolean or null value or instance of Date class:
 
