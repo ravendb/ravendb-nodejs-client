@@ -8,7 +8,7 @@ npm install --save ravendb
 
 ## Getting started
 
-1. Require DocumentStore class from package
+1. Require `DocumentStore` class from package
 ```
 const {DocumentStore} = require('ravendb');
 ```
