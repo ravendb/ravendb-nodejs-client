@@ -200,7 +200,7 @@ let documents = await query.all();
 |`containsAll<V extends ConditionValue>(fieldName: string, values: V[]): IDocumentQuery<T>;`|`fieldName LIKE '%<value1>%' AND fieldName LIKE '%<value2>%' AND ...`|
 |`search(fieldName: string, searchTerms: string, operator?: SearchOperator): IDocumentQuery<T>;`|Performs full-text search|
 |`openSubclause(): IDocumentQuery<T>;`|Opens subclause `(`|
-|`closeSubclause(): IDocumentQuery<T>;`|Closes subclause `(`|
+|`closeSubclause(): IDocumentQuery<T>;`|Closes subclause `)`|
 |`negateNext(): IDocumentQuery<T>;`|Adds `NOT` before next condition|
 |`andAlso(): IDocumentQuery<T>;`|Adds `AND` before next condition|
 |`orElse(): IDocumentQuery<T>;`|Adds `OR` before next condition|
