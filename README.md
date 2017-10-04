@@ -55,7 +55,7 @@ store
 1. You can use callbacks
 ```
 session
- .load('Users/1', (user) => {
+ .load('Users/1', null, [], {}, (user) => {
    user.password = md5('new password');
 
    session.store(user, () => {
@@ -170,8 +170,12 @@ query = session.query({
 ```
 2. Apply conditions, ordering etc. Query support chaining calls:
 ```
+const {DocumentStore, QueryOperators} = require('ravendb');
+
+// ...
+
 query
-  .usingDefaultOperator('AND')
+  .usingDefaultOperator(QueryOperators.And)
   .whereEquals('manufacturer', 'Apple')
   .whereEquals('in_stock', true)
   .whereBetween('last_update', new Date('2017-10-01T00:00:00'), new Date())
@@ -310,6 +314,8 @@ export class Product {
     public last_update: Date = null
   ) {}
 }
+
+export default Product;
 
 // file app.ts
 import {DocumentStore, IDocumentStore, IDocumentSession, IDocumentQuery, DocumentConstructor, QueryOperators} from 'ravendb';
