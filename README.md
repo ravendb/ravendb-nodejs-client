@@ -236,7 +236,7 @@ class Product {
   }
 }
 ```
-2. For store model just pass it's instance without speciying colleciton prefix (e.g. Products/). Collection name will be detected automatically by model's class name
+2. For store model just pass it's instance without speciying colleciton prefix (e.g. `Products/`). Collection name will be detected automatically by model's class name
 ```
 let product = new Product(
   'iPhone X', 999.99, 'USD', 64, 'Apple', true,
@@ -254,7 +254,7 @@ let product = await session.load('Products/1', Product);
 console.log(product instanceof Product); // true
 console.log(product.id); // Products/1
 ```
-4. When querying documents, pass class constructor `documentType` option of `session.query({  ... })`:
+4. When querying documents, pass class constructor to `documentType` option of `session.query({  ... })`:
 ```
 let products = await session.query({ documentType: Product }).all();
 
