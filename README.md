@@ -208,6 +208,12 @@ let documents = await query.all();
 |`usingDefaultOperator(operator: QueryOperator): IDocumentQuery<T>;`|Sets default operator (which will be used if no `andAlso()` / `orElse` was called. Just after query instatiation, `OR` is used as default operator. Default operator can be changed only adding any conditions|
 |`orderBy(field: string, ordering?: OrderingType): IDocumentQuery<T>;`|`ORDER BY field [DESC]`|
 |`randomOrdering(seed?: string): IDocumentQuery<T>;`|`ORDER BY RAND()`|
+|`take(count: number): this;`|`LIMIT <count>`|
+|`skip(count: number): this;`|`OFFSET <count>`|
+|`first(callback?: EntityCallback<T>): Promise<T>;`|Returns first document from resultset|
+|`single(callback?: EntityCallback<T>): Promise<T>;`|Returns single document matching query criterias. If there are no such document or more then one - throws an Exception|
+|`all(callback?: QueryResultsCallback<T[]>): Promise<T[]>;`|Returns all documents from resultset (considering `take()` / `skip()` options)|
+|`count(callback?: EntitiesCountCallback): Promise<number>;`|Returns count of all documents matching query criterias (non-considering `take()` / `skip()` options)|
 
 Condition value can be a string, number, boolean or null value or instance of `Date` class:
 
