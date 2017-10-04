@@ -1,5 +1,6 @@
 import * as uuid from 'uuid';
 import * as _ from 'lodash';
+import * as BluebirdPromise from 'bluebird';
 import {IDocumentStore} from './IDocumentStore';
 import {IDocumentSession, ISessionOptions} from "./Session/IDocumentSession";
 import {DocumentSession} from "./Session/DocumentSession";
@@ -109,6 +110,7 @@ export class DocumentStore implements IDocumentStore {
 
   public async dispose(): Promise<IDocumentStore> {
     return this._generator.returnUnusedRange()
+      .catch((): BluebirdPromise<void> => BluebirdPromise.resolve())
       .then((): IDocumentStore => {
         this.admin.server.dispose();
 

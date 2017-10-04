@@ -24,7 +24,14 @@ export abstract class AbstractHiloIdGenerator implements IHiloIdGenerator {
     return BluebirdPromise
       .all(Object.keys(this.generators)
         .map((key: string): IHiloIdGenerator => this.generators[key])
-        .map((generator: IHiloIdGenerator): BluebirdPromise<void> => generator.returnUnusedRange()))
+        .map((generator: IHiloIdGenerator): BluebirdPromise<void> => generator.returnUnusedRange())
+        .map((operation: BluebirdPromise<void>): BluebirdPromise.Inspection<void> => operation.reflect()))
+      .each(
+        (inspection: BluebirdPromise.Inspection<void>): BluebirdPromise<void> => 
+          inspection.isFulfilled()
+            ? BluebirdPromise.resolve(inspection.value())
+            : BluebirdPromise.reject(inspection.reason())
+      )  
       .then((): void => {});
   };
 }

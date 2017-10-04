@@ -19,6 +19,17 @@ const options = {
     dest: './lib'
 };
 
+const allExceptions = () => fs
+    .readFileSync(`${options.src}/Database/DatabaseExceptions.ts`)
+    .toString().match(/class\s+([\w\d]+)\s*/g)
+    .map((match) => match.replace(/class\s+/, ''));  
+
+const getVersion = () => JSON
+    .parse(fs
+    .readFileSync('./package.json')
+    .toString())
+    .version;
+
 gulp.task('clean', (next) => rmdir(options.tmp, next));
 
 gulp.task('build:tests:args', ['clean'], () => gulp
@@ -36,6 +47,15 @@ gulp.task('build:tests', ['clean', 'build:tests:args'], () => gulp
     ], {
         base: __dirname
     })
+    .pipe(transform(contents => contents
+        .toString()
+        .split('\n')        
+        .map(line => line.replace(
+            /"Raven\-Client\-Version": "[\w\d\-\.]+"/, 
+            `"Raven-Client-Version": "${getVersion()}"`)
+        )
+        .join('\n')
+    ))
     .pipe(ts({
         allowJs: true,
         target: 'ES6',
@@ -80,30 +100,28 @@ gulp.task('build:exports', ['clean'], () => gulp
     .pipe(gulp.dest(options.tmp))
 );
 
-gulp.task('build:concat', ['clean'], () => {
-    const allExceptions = fs
-        .readFileSync(`${options.src}/Database/DatabaseExceptions.ts`)
-        .toString().match(/class\s+([\w\d]+)\s*/g)
-        .map((match) => match.replace(/class\s+/, ''));  
-    
-    return gulp
-        .src(`${options.src}/[A-Z]*/**/*.ts`)
-        .pipe(tssort())
-        .pipe(concat('ravendb-node.bundle.ts'))        
-        .pipe(transform(contents => contents
-            .toString()
-            .split('\n')
-            .filter(line => !line.startsWith('import'))
-            .map(line => line.replace(/export /, ''))
-            .map(line => line.replace(
-                '<IRavenObject<typeof RavenException>><any>exceptions',
-                `{ ${allExceptions.join(', ')} }`
-            ))
-            .join('\n')
-            + "\n\n" + exportDefault + "\n"
+gulp.task('build:concat', ['clean'], () => gulp
+    .src(`${options.src}/[A-Z]*/**/*.ts`)
+    .pipe(tssort())
+    .pipe(concat('ravendb-node.bundle.ts'))        
+    .pipe(transform(contents => contents
+        .toString()
+        .split('\n')
+        .filter(line => !line.startsWith('import'))
+        .map(line => line.replace(/export /, ''))
+        .map(line => line.replace(
+            '<IRavenObject<typeof RavenException>><any>exceptions',
+            `{ ${allExceptions().join(', ')} }`
         ))
-        .pipe(gulp.dest(options.tmp));
-});
+        .map(line => line.replace(
+            /"Raven\-Client\-Version": "[\w\d\-\.]+"/, 
+            `"Raven-Client-Version": "${getVersion()}"`)
+        )
+        .join('\n')
+        + "\n\n" + exportDefault + "\n"
+    ))
+    .pipe(gulp.dest(options.tmp))
+);
 
 gulp.task('build:bundle', ['clean', 'build:exports', 'build:concat'], () => gulp
     .src([

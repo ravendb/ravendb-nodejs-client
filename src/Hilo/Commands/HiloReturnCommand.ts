@@ -23,16 +23,4 @@ export class HiloReturnCommand extends RavenCommand {
     this.params = {tag: this.tag, last: this.last, end: this.end};
     this.endPoint = StringUtil.format('{url}/databases/{database}/hilo/return', serverNode);
   }
-
-  public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    try {
-      super.setResponse(response);
-    } catch (exception) {
-      if (exception instanceof DatabaseDoesNotExistException) {
-        return;
-      }
-
-      throw exception;
-    }
-  }
 }
