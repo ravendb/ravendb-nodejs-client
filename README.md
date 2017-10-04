@@ -335,7 +335,7 @@ store.conventions.addDocumentInfoResolver({
     .query<Product>({ documentType: 'Product' })
     .usingDefaultOperator(QueryOperators.And)
     .whereEquals<string>('manufacturer', 'Apple')
-    .whereEquals<string>('in_stock', true)
+    .whereEquals<boolean>('in_stock', true)
     .whereBetween<Date>('last_update', new Date('2017-10-01T00:00:00'), new Date())
     .whereGreaterThanOrEqual<number>('storage', 64)
     .all();
