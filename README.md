@@ -171,6 +171,7 @@ query = session.query({
 2. Apply conditions, ordering etc. Query support chaining calls:
 ```
 query
+  .usingDefaultOperator('AND')
   .whereEquals('manufacturer', 'Apple')
   .whereEquals('in_stock', true)
   .whereBetween('last_update', new Date('2017-10-01T00:00:00'), new Date())
@@ -305,7 +306,7 @@ export class Product {
 }
 
 // file app.ts
-import {DocumentStore, IDocumentStore, IDocumentSession, IDocumentQuery, DocumentConstructor} from 'ravendb';
+import {DocumentStore, IDocumentStore, IDocumentSession, IDocumentQuery, DocumentConstructor, QueryOperators} from 'ravendb';
 
 const store: IDocumentStore = DocumentStore.create('database url', 'database name');
 let session: IDocumentSession;
@@ -321,16 +322,23 @@ store.conventions.addDocumentInfoResolver({
    new Date('2017-10-01T00:00:00')
   };
 
-  product = await session.store(product);
+  product = await session.store<Product>(product);
   console.log(product instanceof Product); // true
   console.log(product.id.includes('Products/')); // true
   await session.saveChanges();
 
-  product = await session.load('Products/1');
+  product = await session.load<Product>('Products/1');
   console.log(product instanceof Product); // true
   console.log(product.id); // Products/1
 
-  let products: Product[] = await session.query({ documentType: 'Product' }).all();
+  let products: Product[] = await session
+    .query<Product>({ documentType: 'Product' })
+    .usingDefaultOperator(QueryOperators.And)
+    .whereEquals<string>('manufacturer', 'Apple')
+    .whereEquals<string>('in_stock', true)
+    .whereBetween<Date>('last_update', new Date('2017-10-01T00:00:00'), new Date())
+    .whereGreaterThanOrEqual<number>('storage', 64)
+    .all();
 
   products.forEach((product: Product): void => {
     console.log(product instanceof Product); // true
