@@ -58,7 +58,7 @@ session
  .load('Users/1', null, [], {}, (user) => {
    user.password = md5('new password');
 
-   session.store(user, () => {
+   session.store(user, null, null, null, () => {
      session.saveChanges(() => {
        // here session is complete
      });
@@ -160,7 +160,7 @@ product = await session.load('Products/1');
 console.log(product); // undefined
 ```
 ## Querying documents
-1. Create DocumentQuery instance using `query()` method of session:
+1. Create `DocumentQuery` instance using `query()` method of session:
 ```
 query = session.query({
   documentType: 'Product', // specify which collection you querying
@@ -168,7 +168,7 @@ query = session.query({
   // indexName: 'PopularProductsWithViewsCount'
 });
 ```
-2. Apply conditions, ordering etc. Query support chaining calls:
+2. Apply conditions, ordering etc. Query supports chaining calls:
 ```
 const {DocumentStore, QueryOperators} = require('ravendb');
 
