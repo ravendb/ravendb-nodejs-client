@@ -231,6 +231,7 @@ type ConditionValue = string | number | boolean | Date | null;
 ```
 class Product {
   constructor(
+    id = null,
     title = '',
     price = 0,
     currency = 'USD',
@@ -250,7 +251,7 @@ class Product {
 2. For store model just pass it's instance without speciying colleciton prefix (e.g. `Products/`). Collection name will be detected automatically by model's class name
 ```
 let product = new Product(
-  'iPhone X', 999.99, 'USD', 64, 'Apple', true,
+  null, 'iPhone X', 999.99, 'USD', 64, 'Apple', true,
    new Date('2017-10-01T00:00:00')
 };
 
@@ -305,6 +306,7 @@ All datatype definitions you can find in `lib/ravendb-node.d.ts`. An example of 
 // models/Product.ts
 export class Product {
   constructor(
+    public id: string = null,
     public title: string = '',
     public price: number = 0,
     public currency: string = 'USD',
@@ -330,8 +332,8 @@ store.conventions.addDocumentInfoResolver({
 
 (async (): Promise<void> => {
   let product: Product = new Product(
-  'iPhone X', 999.99, 'USD', 64, 'Apple', true,
-   new Date('2017-10-01T00:00:00')
+    null, 'iPhone X', 999.99, 'USD', 64, 'Apple', true,
+    new Date('2017-10-01T00:00:00')
   };
 
   product = await session.store<Product>(product);
