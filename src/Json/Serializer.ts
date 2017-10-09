@@ -47,6 +47,10 @@ export class Serializer {
       }
 
       if (TypeUtil.isObject(value)) {
+        if (value instanceof Date) {
+          return value;
+        }
+
         if (nestedObjectConstructor) {
           nestedObject = new nestedObjectConstructor();
         }

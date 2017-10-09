@@ -146,7 +146,7 @@ describe('Document store test', () => {
       store.conventions.addDocumentInfoResolver({ resolveDocumentType });
       session = store.openSession();      
       await session.store<Product>(product);
-      expect(product.id).to.match(/^Product\/\d+(\-\w)?$/);
+      expect(product.id).to.match(/^Product\/\d+(\-\w+)?$/);
       await session.saveChanges();
 
       product = await store.openSession().load<Product>(product.id);
