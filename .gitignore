@@ -3,6 +3,7 @@
 node_modules/
 lib/
 dist/
+src/**/*.js
 .build/
 tryouts/
 .DS_Store

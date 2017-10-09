@@ -1,6 +1,6 @@
 {
   "name": "ravendb",
-  "version": "4.0.0-beta",
+  "version": "4.0.0-rc1",
   "description": "RavenDB client for Node.js",
   "files": [
     "lib/"
@@ -16,11 +16,11 @@
     "type": "git",
     "url": "https://github.com/ravendb/ravendb-nodejs-client"
   },
-  "bugs":{
+  "bugs": {
     "email": "support@ravendb.net",
     "url": "http://issues.hibernatingrhinos.com"
   },
-  "contributors":[
+  "contributors": [
     "Hibernating Rhinos"
   ],
   "engines": {
@@ -37,27 +37,28 @@
   "license": "MIT",
   "devDependencies": {
     "@types/async-lock": "0.0.19",
-    "@types/bluebird": "^3.5.6",
+    "@types/bluebird": "^3.5.9",
     "@types/chai": "^3.4.35",
     "@types/chai-as-promised": "0.0.30",
-    "@types/lodash": "^4.14.58",
-    "@types/mocha": "^2.2.39",
+    "@types/lodash": "^4.14.74",
+    "@types/mocha": "^2.2.42",
     "@types/pluralize": "0.0.27",
-    "@types/request": "0.0.40",
-    "@types/request-promise": "^4.1.35",
+    "@types/request": "^2.0.3",
+    "@types/request-promise": "^4.1.37",
     "@types/uuid": "^2.0.29",
-    "chai": "^3.5.0",
-    "chai-as-promised": "^6.0.0",
-    "command-line-args": "^4.0.6",
+    "chai": "^4.1.2",
+    "chai-as-promised": "^7.1.1",
+    "command-line-args": "^4.0.7",
+    "event-stream": "^3.3.4",
     "gulp": "^3.9.1",
     "gulp-append": "^0.3.4",
     "gulp-concat": "^2.6.1",
     "gulp-mocha": "^4.1.0",
     "gulp-transform": "^1.1.0",
-    "gulp-typescript": "^3.1.5",
+    "gulp-typescript": "^3.2.2",
     "gulp-typescript-easysort": "0.0.7",
     "gulp-uglify-harmony": "git+https://github.com/jiborobot/gulp-uglify-harmony.git#master",
-    "mocha": "^3.2.0",
+    "mocha": "^3.5.0",
     "rimraf": "^2.6.1",
     "typescript": "~2.3.4",
     "uglify-js-harmony": "^2.7.5"
@@ -70,6 +71,7 @@
     "pluralize": "^4.0.0",
     "request": "^2.79.0",
     "request-promise": "^4.1.1",
-    "uuid": "^3.1.0"
+    "uuid": "^3.1.0",
+    "xregexp": "^3.2.0"
   }
 }

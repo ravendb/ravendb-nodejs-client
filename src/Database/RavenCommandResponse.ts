@@ -1,3 +1,3 @@
-import {IRavenObject} from './IRavenObject';
+import {IRavenObject} from '../Typedef/IRavenObject';
 
 export interface IRavenResponse extends IRavenObject {}

@@ -1,10 +1,11 @@
 import * as uuid from 'uuid';
 import * as _ from 'lodash';
+import * as BluebirdPromise from 'bluebird';
 import {IDocumentStore} from './IDocumentStore';
 import {IDocumentSession, ISessionOptions} from "./Session/IDocumentSession";
 import {DocumentSession} from "./Session/DocumentSession";
 import {RequestExecutor, IRequestExecutor} from '../Http/Request/RequestExecutor';
-import {EntityIdCallback} from '../Utility/Callbacks';
+import {EntityIdCallback} from '../Typedef/Callbacks';
 import {DocumentConventions, DocumentConstructor, DocumentType} from './Conventions/DocumentConventions';
 import {InvalidOperationException, RavenException} from '../Database/DatabaseExceptions';
 import {IHiloIdGenerator} from '../Hilo/IHiloIdGenerator';
@@ -107,9 +108,20 @@ export class DocumentStore implements IDocumentStore {
     return this;
   }
 
-  public async finalize(): Promise<IDocumentStore> {
+  public async dispose(): Promise<IDocumentStore> {
     return this._generator.returnUnusedRange()
-      .then((): IDocumentStore => this);
+      .catch((): BluebirdPromise<void> => BluebirdPromise.resolve())
+      .then((): IDocumentStore => {
+        this.admin.server.dispose();
+
+        for (let executorsByDB of this._requestExecutors.values()) {
+          for (let executor of executorsByDB.values()) {
+            executor.dispose();
+          }
+        }
+
+        return this;
+      });
   }
 
   public openSession(database?: string) : IDocumentSession;
@@ -132,7 +144,7 @@ export class DocumentStore implements IDocumentStore {
       executor = this.getRequestExecutor(dbName);
     }
     
-    return new DocumentSession(dbName, this, executor, uuid());
+    return new DocumentSession(dbName, this, uuid(),  executor);
   }
 
   public async generateId(document: object, documentType?: DocumentType, database?: string, callback?: EntityIdCallback): Promise<string> {

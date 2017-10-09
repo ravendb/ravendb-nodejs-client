@@ -4,7 +4,7 @@ import {IRavenResponse} from "./RavenCommandResponse";
 import {IResponse} from "../Http/Response/IResponse";
 import {IHeaders} from "../Http/IHeaders";
 import {TypeUtil} from "../Utility/TypeUtil";
-import {ExceptionThrower} from "../Utility/ExceptionThrower";
+import {ExceptionsFactory} from "../Utility/ExceptionsFactory";
 import * as _ from 'lodash';
 import * as Request from 'request';
 import * as RequestPromise from 'request-promise';
@@ -29,7 +29,7 @@ export abstract class RavenCommand {
   constructor(endPoint: string, method: RequestMethod = RequestMethods.Get, params?: object, payload?: object, headers: IHeaders = {}) {
     this.endPoint = endPoint;
     this.method = method;
-    this.params = params;
+    this.params = params || {};
     this.payload = payload;
     this.headers = headers;
     this.failedNodes = new Set<ServerNode>();
@@ -52,6 +52,13 @@ export abstract class RavenCommand {
   }
 
   public toRequestOptions(): RavenCommandRequestOptions {
+    const params = this.params;
+    const payload = this.payload;
+
+    const check: (target?: object) => boolean = (target: object) => {
+      return !TypeUtil.isNull(target) && !_.isEmpty(target);
+    };
+
     let options: RavenCommandRequestOptions = {
       json: true,
       uri: this.endPoint,
@@ -61,18 +68,7 @@ export abstract class RavenCommand {
       qsStringifyOptions: {
         arrayFormat: 'repeat',
         strictNullHandling: true
-      },
-      body: {
-        "Query": "from @all_docs"
       }
-    };
-
-
-    const params = this.params;
-    const payload = this.payload;
-
-      const check: (target?: object) => boolean = (target: object) => {
-      return !TypeUtil.isNone(target) && !_.isEmpty(target);
     };
 
     check(params) && (options.qs = params);
@@ -82,7 +78,7 @@ export abstract class RavenCommand {
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
-    ExceptionThrower.throwFrom(this._lastResponse = response);    
+    ExceptionsFactory.throwFrom(this._lastResponse = response);    
 
     if (response.body) {
       return <IRavenResponse>response.body;
@@ -90,8 +86,10 @@ export abstract class RavenCommand {
   }
 
   protected addParams(params: object | string, value?: any): void {
-    Object.assign(this.params, TypeUtil.isObject(params)
-      ? params : {[params as string]: value});
+    if (!TypeUtil.isNull(params)) {
+      Object.assign(this.params, TypeUtil.isString(params)
+        ? {[params as string]: value} : <object>params || {});
+    }    
   }
 
   protected removeParams(params: string[] | string, ...otherParams: string[]) {

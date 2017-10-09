@@ -1,7 +1,11 @@
+import * as XRegExp from "xregexp";
 import {TypeUtil} from "./TypeUtil";
 import {InvalidOperationException} from "../Database/DatabaseExceptions";
 
 export class StringUtil {
+  private static readonly letterRe: RegExp = <RegExp>XRegExp("^\\p{L}$");
+  private static readonly digitRe: RegExp = /\d/;
+
   public static format(string: string, vars?: object | any, ...varsArray: any[]): string {
     if (TypeUtil.isObject(vars)) {
       return string.replace(
@@ -18,60 +22,12 @@ export class StringUtil {
       (match: string, placeholder: string): string => {
         let value: any = inputVars[parseInt(placeholder)];
         
-        return (TypeUtil.isNone(value) ? '' : value).toString()
+        return (TypeUtil.isNull(value) ? '' : value).toString()
     });
   }
 
-  public static escape(string?: string, allowWildCards: boolean = false, makePhrase: boolean = false): string {
-    const reservedChars: string[] = ['-', '&', '|', '!', '(', ')', '{', '}', '[', ']', '^', '"', '~', ':', '\\'];
-    const wildCards: string[] = ['*', '?'];
-    const spaces: string[] = [' ', '\t'];
-    let buffer: string = '""';
-
-    if (string) {
-      let index: number, start: number = 0;
-      let length: number = string.length;
-      buffer = '';
-
-      if ((length >= 2) && string.startsWith('//')) {
-        buffer += '//';
-        start = 2;
-      }
-
-      index = start;
-
-      while (index < length) {
-        const term: string = string[index];
-
-        if (wildCards.includes(term) && allowWildCards) {
-          index++;
-          continue;
-        }
-
-        if (reservedChars.includes(term)) {
-          if (index > start) {
-            buffer += string.substring(start, index - start);
-          }
-
-          buffer += StringUtil.format('\\\\{0}', term);
-          start = index + 1;
-        } else if (spaces.includes(term) && makePhrase) {
-          return StringUtil.format('"{0}"', this.escape(string, allowWildCards, false));
-        }
-
-        index++;
-      }
-
-      if (length > start) {
-        buffer += string.substring(start, length - start);
-      }
-    }
-
-    return buffer;
-  }
-
   public static validateDBName(dbName?: string): void {
-    if (TypeUtil.isNone(dbName) || !dbName) {
+    if (TypeUtil.isNull(dbName) || !dbName) {
       throw new InvalidOperationException('Empty name is not valid');
     }
 
@@ -80,11 +36,62 @@ export class StringUtil {
     }
   }
 
+  public static escapeIfNecessary(field: string): string {
+    if (!field) {
+      return field;
+    }
+
+    let escape: boolean = false;
+
+    for (let i = 0; i < field.length; i++) {
+      const c: string = field[i];
+
+      if (i === 0) {
+        if (!this.isLetter(c) && !['_', '@'].includes(c)) {
+          escape = true;
+          break;
+        }
+
+        continue;
+      }
+
+      if (!this.isLetterOrDigit(c) && !['_', '@', '.', '[', ']'].includes(c)) {
+        escape = true;
+        break;
+      }
+    }
+
+    if (escape) {
+      return `'${field}'`;
+    }
+
+    return field;
+  }
+
   public static capitalize(string: string): string {
     return string.charAt(0).toUpperCase() + string.substring(1);
   }
 
   public static uncapitalize(string: string): string {
     return string.charAt(0).toLowerCase() + string.substring(1);
+  }
+
+  public static isCharacter(character: string) {
+    return character && (1 === character.length);
+  }
+
+  public static isDigit(character: string) {
+    return this.isCharacter(character)
+      && this.digitRe.test(character);
+  }
+
+  public static isLetter(character: string) {
+    return this.isCharacter(character)
+      && this.letterRe.test(character);
+  }
+
+  public static isLetterOrDigit(character: string) {
+    return this.isLetter(character)
+      || this.isDigit(character);
   }
 }

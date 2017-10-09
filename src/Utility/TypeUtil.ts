@@ -1,7 +1,9 @@
 import * as _ from 'lodash';
 
 export class TypeUtil {
-  public static isNone(value: any): boolean {
+  public static readonly MAX_INT32 = 2147483647;
+
+  public static isNull(value: any): boolean {
     return ('undefined' === (typeof value)) || _.isNull(value);
   }
 
@@ -27,7 +29,7 @@ export class TypeUtil {
 
   public static isDocumentConstructor(value: any): boolean {
     return _.isFunction(value) && ('name' in value)
-       && ('Object' !== value.name);
+      && ('Object' !== value.name);
   }
 
   public static isDate(value: any): boolean {

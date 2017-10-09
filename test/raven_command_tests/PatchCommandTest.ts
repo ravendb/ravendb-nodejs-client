@@ -5,7 +5,7 @@ import {expect} from 'chai';
 import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 import {PatchOperation} from "../../src/Database/Operations/PatchOperation";
 import {PatchRequest} from "../../src/Http/Request/PatchRequest";
-import {IRavenObject} from "../../src/Database/IRavenObject";
+import {IRavenObject} from "../../src/Typedef/IRavenObject";
 import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand";
 import {GetDocumentCommand} from "../../src/Database/Commands/GetDocumentCommand";
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";

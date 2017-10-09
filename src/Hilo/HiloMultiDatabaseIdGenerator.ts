@@ -1,8 +1,8 @@
+import * as BluebirdPromise from 'bluebird';
 import {IHiloIdGenerator} from './IHiloIdGenerator';
 import {HiloMultiTypeIdGenerator} from './HiloMultiTypeIdGenerator';
 import {IDocumentStore} from '../Documents/IDocumentStore';
 import {AbstractHiloIdGenerator} from './AbstractHiloIdGenerator';
-import * as BluebirdPromise from 'bluebird';
 
 export class HiloMultiDatabaseIdGenerator extends AbstractHiloIdGenerator implements IHiloIdGenerator {
   constructor(store: IDocumentStore) {

@@ -1,8 +1,8 @@
+import * as BluebirdPromise from 'bluebird';
 import {IHiloIdGenerator} from './IHiloIdGenerator';
 import {IDocumentStore} from '../Documents/IDocumentStore';
 import {DocumentConventions} from '../Documents/Conventions/DocumentConventions';
-import * as BluebirdPromise from 'bluebird';
-import {IRavenObject} from "../Database/IRavenObject";
+import {IRavenObject} from "../Typedef/IRavenObject";
 
 export abstract class AbstractHiloIdGenerator implements IHiloIdGenerator {
   protected generators: IRavenObject<IHiloIdGenerator> = {};
@@ -24,7 +24,14 @@ export abstract class AbstractHiloIdGenerator implements IHiloIdGenerator {
     return BluebirdPromise
       .all(Object.keys(this.generators)
         .map((key: string): IHiloIdGenerator => this.generators[key])
-        .map((generator: IHiloIdGenerator): BluebirdPromise<void> => generator.returnUnusedRange()))
+        .map((generator: IHiloIdGenerator): BluebirdPromise<void> => generator.returnUnusedRange())
+        .map((operation: BluebirdPromise<void>): BluebirdPromise.Inspection<void> => operation.reflect()))
+      .each(
+        (inspection: BluebirdPromise.Inspection<void>): BluebirdPromise<void> => 
+          inspection.isFulfilled()
+            ? BluebirdPromise.resolve(inspection.value())
+            : BluebirdPromise.reject(inspection.reason())
+      )  
       .then((): void => {});
   };
 }

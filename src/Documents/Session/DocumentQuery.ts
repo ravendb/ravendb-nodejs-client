@@ -1,257 +1,227 @@
 import * as BluebirdPromise from 'bluebird'
-import * as moment from "moment";
 import * as _ from "lodash";
-import {IDocumentQuery} from "./IDocumentQuery";
+import {IDocumentQuery, IDocumentQueryBase, IRawDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
 import {IDocumentSession} from "./IDocumentSession";
 import {RequestExecutor} from "../../Http/Request/RequestExecutor";
-import {IDocumentQueryConditions} from './IDocumentQueryConditions';
-import {QueryResultsCallback, EntityCallback, EntitiesCountCallback} from '../../Utility/Callbacks';
+import {QueryResultsCallback, EntityCallback, EntitiesCountCallback} from '../../Typedef/Callbacks';
 import {PromiseResolver} from '../../Utility/PromiseResolver';
-import {EscapeQueryOption, EscapeQueryOptions} from "./EscapeQueryOptions";
-import {LuceneValue, LuceneConditionValue, LuceneRangeValue} from "../Lucene/LuceneValue";
 import {IRavenResponse} from "../../Database/RavenCommandResponse";
-import {LuceneOperator, LuceneOperators} from "../Lucene/LuceneOperator";
-import {LuceneBuilder} from "../Lucene/LuceneBuilder";
-import {QueryString} from "../../Http/QueryString";
-import {ArrayUtil} from "../../Utility/ArrayUtil";
-import {QueryOperators, QueryOperator} from "./QueryOperator";
 import {DocumentConventions, DocumentConstructor, IDocumentConversionResult, DocumentType} from "../Conventions/DocumentConventions";
 import {IndexQuery} from "../../Database/Indexes/IndexQuery";
-import {IRavenObject} from "../../Database/IRavenObject";
-import {IOptionsSet} from "../../Utility/IOptionsSet";
+import {IRavenObject} from "../../Typedef/IRavenObject";
+import {IOptionsSet} from "../../Typedef/IOptionsSet";
 import {QueryCommand} from "../../Database/Commands/QueryCommand";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {Observable} from "../../Utility/Observable";
-import {ArgumentOutOfRangeException, InvalidOperationException, ErrorResponseException, RavenException} from "../../Database/DatabaseExceptions";
+import {ErrorResponseException, InvalidArgumentException, InvalidOperationException, RavenException} from "../../Database/DatabaseExceptions";
+import {QueryBuilder} from "./Query/QueryBuilder";
+import {ConditionValue, OrderingType, QueryOperator, SearchOperator, SearchOperators} from "./Query/QueryLanguage";
+import {IQueryBuilder} from "./Query/IQueryBuilder";
+import {SpatialUnit} from "./Query/Spatial/SpatialUnit";
+import {SpatialRelation} from "./Query/Spatial/SpatialRelation";
+import {SpatialCriteria} from "./Query/Spatial/SpatialCriteria";
+import {IWhereParams, WhereParams} from "./Query/WhereParams";
+import {IJsonable} from "../../Typedef/Contracts";
+import {DateUtil} from "../../Utility/DateUtil";
 
-export type QueryResultsWithStatistics<T> = {results: T[], response: IRavenResponse};
+export type QueryResultsWithStatistics<T> = { results: T[], response: IRavenResponse };
 
-export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
-  public static readonly EVENT_DOCUMENTS_QUERIED : string = 'queried:documents';
-  public static readonly EVENT_DOCUMENT_FETCHED  : string = 'fetched:document';
-  public static readonly EVENT_INCLUDES_FETCHED  : string = 'fetched:includes';
+export class DocumentQueryParameters extends Map<string, ConditionValue | ConditionValue[]> implements IJsonable {
+  public toJson(): object {
+    let result: object = {};
+    let key: string = null;
+    let value: ConditionValue | ConditionValue[] = null;
 
-  protected indexName: string;
+    for ([key, value] of this) {
+      result[key] = value;
+    }
+
+    return result;
+  }
+}
+
+export class DocumentQueryBase<T extends Object = IRavenObject> extends Observable implements IDocumentQueryBase<T> {
+  public static readonly EVENT_DOCUMENTS_QUERIED: string = 'queried:documents';
+  public static readonly EVENT_DOCUMENT_FETCHED: string = 'fetched:document';
+  public static readonly EVENT_INCLUDES_FETCHED: string = 'fetched:includes';
+
   protected session: IDocumentSession;
+  protected indexQueryOptions: IOptionsSet;
   protected requestExecutor: RequestExecutor;
-  protected includes?: string[] = null;
-  protected queryBuilder: string = '';
-  protected negate: boolean = false;
-  protected fetch?: string[] = null;
-  protected sortHints?: string[] = null;
-  protected sortFields?: string[] = null;
   protected withStatistics: boolean = false;
-  protected usingDefaultOperator?: QueryOperator = null;
-  protected waitForNonStaleResults: boolean = false;
   protected documentType?: DocumentType<T> = null;
+  protected queryParameters: DocumentQueryParameters;
   protected nestedObjectTypes: IRavenObject<DocumentConstructor> = {};
-  private _take?: number = null;
-  private _skip?: number = null;
-  
-  constructor(session: IDocumentSession, requestExecutor: RequestExecutor, documentType?: DocumentType<T>, indexName?: string, usingDefaultOperator
-    ?: QueryOperator, waitForNonStaleResults: boolean = false, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, withStatistics: boolean = false
+
+  protected _indexName: string;
+  protected _collectionName: string;
+  protected _take?: number = null;
+  protected _skip?: number = null;
+  protected _builder: IQueryBuilder;
+
+  public static create<T extends Object = IRavenObject>(session: IDocumentSession, 
+    requestExecutor: RequestExecutor, options?: IDocumentQueryOptions<T>
+  ): DocumentQueryBase<T> {
+    let withStatistics: boolean = null;
+    let indexName: string = null;
+    let documentType: DocumentType<T> = null;
+    let indexQueryOptions: IOptionsSet = {};
+    let nestedObjectTypes: IRavenObject<DocumentConstructor> = {} as IRavenObject<DocumentConstructor>;
+
+    if (options) {
+      withStatistics = options.withStatistics || null;
+      nestedObjectTypes = options.nestedObjectTypes || {};
+      indexName = options.indexName || null;
+      documentType = options.documentType || null;
+      indexQueryOptions = options.indexQueryOptions || {};
+    }
+
+    const query: DocumentQueryBase<T> = new this(
+      session, requestExecutor, documentType, indexName,
+      nestedObjectTypes, withStatistics, indexQueryOptions
+    );
+
+    session.attachQuery<T>(query);
+    return query;
+  }
+
+  public get indexName(): string {
+    return this._indexName;
+  }
+
+  public get collectionName(): string {
+    return this._collectionName;
+  }
+
+  public get conventions(): DocumentConventions {
+    return this.session.conventions;
+  }
+
+  constructor(session: IDocumentSession, requestExecutor: RequestExecutor, 
+    documentType?: DocumentType<T>, indexName?: string, nestedObjectTypes?: IRavenObject<DocumentConstructor>, 
+    withStatistics: boolean = false, indexQueryOptions: IOptionsSet = {}
   ) {
     super();
+
+    const conventions: DocumentConventions = session.conventions;
+
+    if (indexName) {
+      this._collectionName = null;
+      this._indexName = indexName;
+    } else {
+      let collection: string = conventions.getCollectionName(documentType);  
+
+      if (!documentType || (conventions.emptyCollection === collection)) {
+        collection = '@all_docs';
+      }
+      
+      this._indexName = null;      
+      this._collectionName = collection;
+    }
+
     this.session = session;
-    this.includes = includes;
+    this.indexQueryOptions = indexQueryOptions;
     this.withStatistics = withStatistics;
     this.requestExecutor = requestExecutor;
-    this.usingDefaultOperator = usingDefaultOperator;
-    this.waitForNonStaleResults = waitForNonStaleResults;
-    this.nestedObjectTypes = nestedObjectTypes || {} as IRavenObject<DocumentConstructor>;
     this.documentType = documentType;
-    this.indexName = indexName ||  "dynamic";
-    
-    if (!indexName && documentType) {
-      this.indexName += "/" + session.conventions.getCollectionName(documentType);
-    }
+    this.queryParameters = new DocumentQueryParameters();
+    this.nestedObjectTypes = nestedObjectTypes || {} as IRavenObject<DocumentConstructor>;
+
+    this._builder = new QueryBuilder(
+      this._indexName, this._collectionName,
+      conventions.getIdPropertyName(documentType)
+    );
   }
 
-  public get not(): IDocumentQuery<T> {
-    this.negateNext();
-
-    return this;
-  }
-
-  public get and(): IDocumentQuery<T> {
-    this.andAlso();
-
-    return this;
-  }
-
-  public get or(): IDocumentQuery<T> {
-    this.orElse();
-
-    return this;
-  }
-
-  public selectFields(...args: string[]): IDocumentQuery<T> {
-    if (args && args.length) {
-      this.fetch = args;
-    }
-
-    return this;
-  }
-
-  public search(fieldName: string, searchTerms: string | string[], escapeQueryOptions?: EscapeQueryOption, boost: number = 1): IDocumentQuery<T> {
-    if (boost < 0) {
-      throw new ArgumentOutOfRangeException('Boost factor must be a positive number');
-    }
-
-    let quotedTerms = TypeUtil.isArray(searchTerms)
-      ? (searchTerms as string[]).join(' ')
-      : (searchTerms as string);
-
-    quotedTerms = QueryString.encode(quotedTerms);
-    this.addLuceneCondition<string>(fieldName, quotedTerms, LuceneOperators.Search, escapeQueryOptions || EscapeQueryOptions.RawQuery, boost);
-
-    return this;
-  }
-
-  public where(conditions: IDocumentQueryConditions): IDocumentQuery<T> {
-    ArrayUtil.mapObject(conditions, (value: any, fieldName: string): any => {
-      if (TypeUtil.isArray(value)) {
-        this.whereIn<LuceneValue>(fieldName, value as LuceneValue[]);
-      } else {
-        this.whereEquals<LuceneValue>(fieldName, value as LuceneValue);
-      }
+  public waitForNonStaleResults(): this {
+    _.assign(this.indexQueryOptions, {
+      cutOffEtag: null,
+      waitForNonStaleResults: true,      
+      waitForNonStaleResultsTimeout: IndexQuery.DefaultTimeout
     });
 
     return this;
   }
 
-  public whereEquals<V extends LuceneValue>(fieldName: string, value: V, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll): IDocumentQuery<T> {
-    return this.assertFieldName(fieldName)
-      .addLuceneCondition<V>(fieldName, value, LuceneOperators.Equals, escapeQueryOptions) as IDocumentQuery<T>;
-  }
-
-  public whereEndsWith(fieldName: string, value: string): IDocumentQuery<T> {
-    return this.assertFieldName(fieldName)
-      .addLuceneCondition<string>(fieldName, value, LuceneOperators.EndsWith) as IDocumentQuery<T>;
-  }
-
-  public whereStartsWith(fieldName: string, value: string): IDocumentQuery<T> {
-    return this.assertFieldName(fieldName)
-      .addLuceneCondition<string>(fieldName, value, LuceneOperators.StartsWith) as IDocumentQuery<T>;
-  }
-
-  public whereIn<V extends LuceneValue>(fieldName: string, values: V[]): IDocumentQuery<T> {
-    return this.assertFieldName(fieldName)
-      .addLuceneCondition<V[]>(fieldName, values, LuceneOperators.In) as IDocumentQuery<T>;
-  }
-
-  public whereBetween<V extends LuceneValue>(fieldName: string, start?: V, end?: V): IDocumentQuery<T> {
-    return this.assertFieldName(fieldName)
-      .addLuceneCondition<LuceneRangeValue<V>>(
-        fieldName, {min: start, max: end}, LuceneOperators.Between
-      ) as IDocumentQuery<T>;
-  }
-
-  public whereBetweenOrEqual<V extends LuceneValue>(fieldName: string, start?: V, end?: V): IDocumentQuery<T> {
-    return this.assertFieldName(fieldName).addLuceneCondition<LuceneRangeValue<V>>(
-      fieldName, {min: start, max: end}, LuceneOperators.EqualBetween
-    ) as IDocumentQuery<T>;
-  }
-
-  public whereGreaterThan<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery<T> {
-    return this.whereBetween<V>(fieldName, value);
-  }
-
-  public whereGreaterThanOrEqual<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery<T> {
-    return this.whereBetweenOrEqual<V>(fieldName, value);
-  }
-
-  public whereLessThan<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery<T> {
-    return this.whereBetween<V>(fieldName, null, value);
-  }
-
-  public whereLessThanOrEqual<V extends LuceneValue>(fieldName: string, value: V): IDocumentQuery<T> {
-    return this.whereBetweenOrEqual<V>(fieldName, null, value);
-  }
-
-  public whereIsNull(fieldName: string): IDocumentQuery<T> {
-    return this.whereEquals<null>(fieldName, null);
-  }
-
-  public whereNotNull(fieldName: string): IDocumentQuery<T> {
-    return (this.addSpace()
-      .addStatement('(')
-        .whereEquals<string>(fieldName, '*')
-        .and.not.whereEquals<null>(fieldName, null) as DocumentQuery<T>)
-    .addStatement(')');
-  }
-
-  public orderBy(fieldsNames: string|string[]): IDocumentQuery<T> {
-    const fields: string[] = TypeUtil.isArray(fieldsNames)
-      ? (fieldsNames as string[])
-      : [fieldsNames as string];
-
-    this.sortFields = this.sortFields || [];
-
-    fields.forEach((field) => {
-      const fieldName: string = (field.charAt(0) == '-') ? field.substr(1) : field;
-      let index: number = this.sortFields.indexOf(fieldName);
-
-      if (-1 == index) {
-        index = this.sortFields.indexOf(`-${fieldName}`);
-      }
-
-      if (-1 == index) {
-        this.sortFields.push(field)
-      } else {
-        this.sortFields[index] = field;
-      }
+  public waitForNonStaleResultsAsOf(cutOffEtag: number, waitTimeout?: number): this {
+    _.assign(this.indexQueryOptions, {
+      cutOffEtag,
+      waitForNonStaleResults: true,      
+      waitForNonStaleResultsTimeout: waitTimeout || IndexQuery.DefaultTimeout
     });
 
     return this;
   }
 
-  public orderByDescending(fieldsNames: string|string[]): IDocumentQuery<T> {
-    const fields: string[] = TypeUtil.isArray(fieldsNames)
-      ? (fieldsNames as string[])
-      : [fieldsNames as string];
-
-    return this.orderBy(fields.map((field) => `-${field}`));
-  }
-
-  public andAlso(): IDocumentQuery<T> {
-    return this.addSpace().addStatement(QueryOperators.AND);
-  }
-
-  public orElse(): IDocumentQuery<T> {
-    return this.addSpace().addStatement(QueryOperators.OR);
-  }
-
-  public negateNext(): IDocumentQuery<T> {
-    this.negate = true;
+  public waitForNonStaleResultsAsOfNow(waitTimeout?: number): this {
+    _.assign(this.indexQueryOptions, {
+      cutOffEtag: null,
+      waitForNonStaleResults: true,      
+      waitForNonStaleResultsAsOfNow: true,      
+      waitForNonStaleResultsTimeout: waitTimeout || IndexQuery.DefaultTimeout
+    });
 
     return this;
   }
 
-  public take(docsCount: number): IDocumentQuery<T> {
+  public take(docsCount: number): this {
     this._take = docsCount;
-    
     return this;
   }
 
-  public skip(skipCount: number): IDocumentQuery<T> {
+  public skip(skipCount: number): this {
     this._skip = skipCount;
-
     return this;
   }
 
-  public async get(callback?: QueryResultsCallback<T[]>): Promise<T[]>;
-  public async get(callback?: QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<QueryResultsWithStatistics<T>>;
-  public async get(callback?: QueryResultsCallback<T[]> | QueryResultsCallback<QueryResultsWithStatistics<T>>)
-    : Promise<T[] | QueryResultsWithStatistics<T>> {
-    return this.executeQuery()
-      .then((response: IRavenResponse): T[] | QueryResultsWithStatistics<T> => {        
-        const result: T[] | QueryResultsWithStatistics<T> = this.convertResponseToDocuments(response);
+  public getIndexQuery(): IndexQuery {
+    let skip: number = 0;
+    let take: number = TypeUtil.MAX_INT32;
+    const query: string = this._builder.toString();
+    const queryParams: IRavenObject = <IRavenObject>this.queryParameters.toJson();
 
-        PromiseResolver.resolve<T[] | QueryResultsWithStatistics<T>>(result, null, callback);
+    if (!TypeUtil.isNull(this._skip)) {
+      skip = this._skip;
+    }
+
+    if (!TypeUtil.isNull(this._take)) {
+      take = this._take;
+    }
+    
+    return new IndexQuery(query, queryParams, take, skip, this.indexQueryOptions);
+  }
+
+  public async single(callback?: EntityCallback<T>): Promise<T> {
+    const take: number = this._take;
+    const skip: number = this._skip;
+    const withStatistics: boolean = this.withStatistics;
+
+    this._take = 2;
+    this._skip = 0;
+    this.withStatistics = false;
+
+    return this.executeQuery()
+      .then((response: IRavenResponse): T | PromiseLike<T> => {
+        const results: T[] = <T[]>this.convertResponseToDocuments(response);
+        const result: T = results.length ? _.first(results) : null;
+
+        if (results.length !== 1) {
+          const errorMessage: string = (results.length > 1)
+            ? "There's more than one result corresponding to given query criteria." 
+            : "There's no results corresponding to given query criteria."
+
+          return BluebirdPromise.reject<T>(new InvalidOperationException(errorMessage));
+        }
+
+        PromiseResolver.resolve<T>(result, null, callback);
         return result;
       })
-      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
+      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback))
+      .finally(() => {
+        this._take = take;
+        this._skip = skip;
+        this.withStatistics = withStatistics;
+      });
   }
 
   public async first(callback?: EntityCallback<T>): Promise<T> {
@@ -263,8 +233,8 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     this._skip = 0;
     this.withStatistics = false;
 
-    return this.executeQuery()      
-      .then((response: IRavenResponse): T => {                
+    return this.executeQuery()
+      .then((response: IRavenResponse): T => {
         const results: T[] = <T[]>this.convertResponseToDocuments(response);
         const result: T = results.length ? _.first(results) : null;
 
@@ -286,8 +256,8 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
     this._take = 0;
     this._skip = 0;
 
-    return this.executeQuery()      
-      .then((response: IRavenResponse): number => {                
+    return this.executeQuery()
+      .then((response: IRavenResponse): number => {
         const result: number = <number>response.TotalResults || 0;
 
         PromiseResolver.resolve<number>(result, null, callback);
@@ -300,121 +270,555 @@ export class DocumentQuery<T> extends Observable implements IDocumentQuery<T> {
       });
   }
 
-  protected addSpace(): DocumentQuery<T> {
-    if ((this.queryBuilder.length > 0) && !this.queryBuilder.endsWith(' ')) {
-      this.addStatement(' ');
-    }
+  public async all(callback?: QueryResultsCallback<T[]>): Promise<T[]>;
+  public async all(callback?: QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<QueryResultsWithStatistics<T>>;
+  public async all(callback?: QueryResultsCallback<T[]> | QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<T[] | QueryResultsWithStatistics<T>> {
+    return this.executeQuery()
+      .then((response: IRavenResponse): T[] | QueryResultsWithStatistics<T> => {
+        const result: T[] | QueryResultsWithStatistics<T> = this.convertResponseToDocuments(response);
 
-    return this;
-  }
+        PromiseResolver.resolve<T[] | QueryResultsWithStatistics<T>>(result, null, callback);
 
-  protected addStatement(statement: string): DocumentQuery<T> {
-    this.queryBuilder += statement;
-
-    return this;
-  }
-
-  protected addLuceneCondition<C extends LuceneConditionValue>(fieldName: string, condition: C,
-    operator?: LuceneOperator, escapeQueryOptions: EscapeQueryOption = EscapeQueryOptions.EscapeAll,
-    boost: number = 1
-  ): DocumentQuery<T> {
-    const luceneCondition: string = LuceneBuilder.buildCondition<C>(this.session.conventions, fieldName,
-      condition, operator, escapeQueryOptions, boost);
-
-    this.addSpace();
-
-    if (this.negate) {
-      this.negate = false;
-      this.addStatement('-');
-    }
-
-    this.queryBuilder += luceneCondition;
-    return this;
-  }
-
-  protected assertFieldName(fieldName?: string): DocumentQuery<T> {
-    if (!fieldName) {
-      throw new InvalidOperationException('Empty field name is invalid');
-    }
-
-    return this;
+        return result;
+      })
+      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
 
   protected executeQuery(): BluebirdPromise<IRavenResponse> {
-    const queryOptions: IOptionsSet = {
-      sort_hints: this.sortHints,
-      sort_fields: this.sortFields,
-      fetch: this.fetch
-    };
-
-    this.emit(DocumentQuery.EVENT_DOCUMENTS_QUERIED);
+    this.emit(DocumentQueryBase.EVENT_DOCUMENTS_QUERIED);
 
     const session: IDocumentSession = this.session;
     const conventions: DocumentConventions = session.conventions;
-    const query: IndexQuery = new IndexQuery(this.queryBuilder, this._take, this._skip, this.usingDefaultOperator, queryOptions);
-    const queryCommand: QueryCommand = new QueryCommand(this.indexName, query, conventions, this.includes);
-    const endTime: number = moment().unix() + Math.max(conventions.requestTimeout, query.waitForNonStaleResultsTimeout);
+    const query: IndexQuery = this.getIndexQuery();
+    const queryCommand: QueryCommand = new QueryCommand(conventions, query);
 
-    const request = () => this.requestExecutor
-      .execute(queryCommand)          
+    return this.requestExecutor
+      .execute(queryCommand)
       .then((response: IRavenResponse | null): IRavenResponse | BluebirdPromise.Thenable<IRavenResponse> => {
-        if (TypeUtil.isNone(response)) {
+        if (TypeUtil.isNull(response)) {
           return {
             Results: [] as object[],
             Includes: [] as string[]
           } as IRavenResponse;
-        } else if (response.IsStale && this.waitForNonStaleResults) {
-          if (moment().unix() > endTime) {
-            return BluebirdPromise.reject(new ErrorResponseException('The index is still stale after reached the timeout'));
-          } else {
-            return BluebirdPromise.delay(100).then(() => request());
-          }
+        } else if (response.IsStale) {
+          return BluebirdPromise.reject(new ErrorResponseException('The index is still stale after reached the timeout'));
         } else {
           return response as IRavenResponse;
         }
       });
-
-    return request();
   }
 
   protected convertResponseToDocuments(response: IRavenResponse): T[] | QueryResultsWithStatistics<T> {
-    let result: T[] | QueryResultsWithStatistics<T>  = [] as T[];
-      const commandResponse: IRavenResponse = response as IRavenResponse;
+    let result: T[] | QueryResultsWithStatistics<T> = [] as T[];
+    const conventions: DocumentConventions = this.session.conventions;
+    const commandResponse: IRavenResponse = response as IRavenResponse;
+    const responseResults: object[] = conventions.tryFetchResults(commandResponse);
 
-      if (commandResponse.Results.length > 0) {
-        let results: T[] = [] as T[];
-        const fetchingFullDocs: boolean = !this.fetch 
-          || (TypeUtil.isArray(this.fetch) && !this.fetch.length);
+    if (responseResults.length > 0) {
+      let results: T[] = [] as T[];
+      const responseIncludes: object[] = conventions.tryFetchIncludes(commandResponse);
 
-        commandResponse.Results.forEach((result: object) => {
-          const conversionResult: IDocumentConversionResult<T> = this.session.conventions
-              .convertToDocument<T>(result, this.documentType, this.nestedObjectTypes || {});
+      responseResults.forEach((result: object) => {
+        const conversionResult: IDocumentConversionResult<T> = conventions
+          .convertToDocument<T>(result, this.documentType, this.nestedObjectTypes || {});
 
-          results.push(conversionResult.document);
+        results.push(conversionResult.document);
 
+        if (!conventions.checkIsProjection(result)) {
           this.emit<IDocumentConversionResult<T>>(
-            DocumentQuery.EVENT_DOCUMENT_FETCHED, 
+            DocumentQueryBase.EVENT_DOCUMENT_FETCHED,
             conversionResult
           );
-        });
+        }        
+      });
 
-        if (Array.isArray(commandResponse.Includes) && commandResponse.Includes.length) {
-          this.emit<object[]>(
-            DocumentQuery.EVENT_INCLUDES_FETCHED, 
-            commandResponse.Includes as object[]
-          );
-        }
-
-        if (this.withStatistics) {
-          result = {
-            results: results,
-            response: response
-          } as QueryResultsWithStatistics<T>;
-        } else {
-          result = results as T[];
-        }
+      if (responseIncludes.length) {
+        this.emit<object[]>(
+          DocumentQueryBase.EVENT_INCLUDES_FETCHED, 
+          responseIncludes as object[]
+        );
       }
-      
-      return result as T[] | QueryResultsWithStatistics<T>;
+
+      if (this.withStatistics) {
+        result = {
+          results: results,
+          response: response
+        } as QueryResultsWithStatistics<T>;
+      } else {
+        result = results as T[];
+      }
+    }
+
+    return result as T[] | QueryResultsWithStatistics<T>;
+  }
+}
+
+export class RawDocumentQuery<T extends Object = IRavenObject> extends DocumentQueryBase<T> implements IRawDocumentQuery<T> {
+  public static create<T extends Object = IRavenObject>(session: IDocumentSession, 
+    requestExecutor: RequestExecutor, options?: IDocumentQueryOptions<T>
+  ): RawDocumentQuery<T> {
+    return <RawDocumentQuery<T>>super.create(session, requestExecutor, options);
+  }
+
+  public rawQuery(query: string): IRawDocumentQuery<T> {
+    this._builder.rawQuery(query);
+    return this;
+  }
+
+  public addParameter<V extends ConditionValue>(name: string, value: V): IRawDocumentQuery<T> {
+    this.queryParameters.set(name, value);
+    return this;
+  }
+}
+
+export class DocumentQuery<T extends Object = IRavenObject> extends DocumentQueryBase<T> implements IDocumentQuery<T> {
+  public static create<T extends Object = IRavenObject>(session: IDocumentSession, 
+    requestExecutor: RequestExecutor, options?: IDocumentQueryOptions<T>
+  ): DocumentQuery<T> {
+    return <DocumentQuery<T>>super.create(session, requestExecutor, options);
+  }
+
+  public get not(): IDocumentQuery<T> {
+    this.negateNext();
+    return this;
+  }
+
+  public get isDynamicMapReduce(): boolean {
+    return this._builder.isDynamicMapReduce;
+  }
+
+  public selectFields(fields: string[]): IDocumentQuery<T>;
+  public selectFields(fields: string[], projections: string[]): IDocumentQuery<T>;
+  public selectFields(fields: string[], projections?: string[]): IDocumentQuery<T> {
+    this._builder.selectFields(fields);
+    return this;
+  }
+
+  public getProjectionFields(): string[] {
+    return this._builder.getProjectionFields();
+  }
+
+  public randomOrdering(seed?: string): IDocumentQuery<T> {
+    this._builder.randomOrdering(seed);
+    return this;
+  }
+
+  public customSortUsing(typeName: string, descending?: boolean): IDocumentQuery<T> {
+    this._builder.customSortUsing(typeName, descending);
+    return this;
+  }
+
+  public include(path: string): IDocumentQuery<T> {
+    this._builder.include(path);
+    return this;
+  }
+
+  public usingDefaultOperator(operator: QueryOperator): IDocumentQuery<T> {
+    this._builder.usingDefaultOperator(operator);
+    return this;
+  }
+
+  public whereEquals<V extends ConditionValue>(whereParams: IWhereParams<V>): IDocumentQuery<T>;
+  public whereEquals<V extends ConditionValue>(whereParams: WhereParams<V>): IDocumentQuery<T>;
+  public whereEquals<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;
+  public whereEquals<V extends ConditionValue>(whereParamsOrFieldName: IWhereParams<V> | WhereParams<V> | string,
+    value?: V, exact: boolean = false
+  ): IDocumentQuery<T> {
+    let whereParams: WhereParams<V> = <WhereParams<V>>whereParamsOrFieldName;
+    const fieldName: string = <string>whereParamsOrFieldName;
+    
+    if (TypeUtil.isString(fieldName)) {
+      return this.whereEquals(WhereParams.from({
+        fieldName, value, exact
+      }));
+    }
+
+    if (!(whereParamsOrFieldName instanceof WhereParams)) {
+      whereParams = WhereParams.from(<IWhereParams<V>>whereParams);
+    }
+
+    const transformedValue: V = this.transformValue(whereParams);
+
+    this._builder.whereEquals(whereParams.parametrize(this.addQueryParameter<V>(transformedValue)));
+    return this;
+  }
+
+  public whereNotEquals<V extends ConditionValue>(whereParams: IWhereParams<V>): IDocumentQuery<T>;
+  public whereNotEquals<V extends ConditionValue>(whereParams: WhereParams<V>): IDocumentQuery<T>;
+  public whereNotEquals<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;
+  public whereNotEquals<V extends ConditionValue>(whereParamsOrFieldName: IWhereParams<V> | WhereParams<V> | string,
+    value?: V, exact: boolean = false
+  ): IDocumentQuery<T> {
+    let whereParams: WhereParams<V> = <WhereParams<V>>whereParamsOrFieldName;
+    const fieldName: string = <string>whereParamsOrFieldName;
+
+    if (TypeUtil.isString(fieldName)) {
+      return this.whereNotEquals(WhereParams.from({
+        fieldName, value, exact
+      }));
+    }
+
+    if (!(whereParamsOrFieldName instanceof WhereParams)) {
+      whereParams = WhereParams.from(<IWhereParams<V>>whereParams);
+    }
+
+    const transformedValue: V = this.transformValue(whereParams);
+
+    this._builder.whereNotEquals(whereParams.parametrize(this.addQueryParameter<V>(transformedValue)));
+    return this;
+  }
+
+  public openSubclause(): IDocumentQuery<T> {
+    this._builder.openSubclause();
+    return this;
+  }
+
+  public closeSubclause(): IDocumentQuery<T> {
+    this._builder.closeSubclause();
+    return this;
+  }
+
+  public negateNext(): IDocumentQuery<T> {
+    this._builder.negateNext();
+    return this;
+  }
+
+  public whereIn<V extends ConditionValue>(fieldName: string, values: V[], exact?: boolean): IDocumentQuery<T> {
+    const transformedValues: V[] = this.transformValuesArray<V>(fieldName, values);
+
+    this._builder.whereIn(fieldName, this.addQueryParameter(values), exact);
+    return this;
+  }
+
+  public whereStartsWith<V extends ConditionValue>(fieldName: string, value: V): IDocumentQuery<T> {
+    const transformedValue: V = this.transformValue<V>(WhereParams.from<V>({
+      fieldName, value, 
+      allowWildcards: true
+    }));
+
+    this._builder.whereStartsWith(fieldName, this.addQueryParameter(transformedValue));
+    return this;
+  }
+
+  public whereEndsWith<V extends ConditionValue>(fieldName: string, value: V): IDocumentQuery<T> {
+    const transformedValue: V = this.transformValue<V>(WhereParams.from<V>({
+      fieldName, value, 
+      allowWildcards: true
+    }));
+
+    this._builder.whereEndsWith(fieldName, this.addQueryParameter(transformedValue));
+    return this;
+  }
+
+  public whereBetween<V extends ConditionValue>(fieldName: string, start: V, end: V, exact?: boolean): IDocumentQuery<T> {
+    let transformedFrom: V = '*' as V;
+    let transformedTo: V = 'NULL' as V;
+
+    if (!TypeUtil.isNull(start)) {
+      transformedFrom = this.transformValue(WhereParams.from<V>({
+        fieldName, value: start, exact
+      }));
+    }
+
+    if (!TypeUtil.isNull(end)) {
+      transformedTo = this.transformValue(WhereParams.from<V>({
+        fieldName, value: end, exact
+      }));
+    }
+
+    this._builder.whereBetween(
+      fieldName, this.addQueryParameter(transformedFrom), 
+      this.addQueryParameter(transformedTo), exact
+    );
+
+    return this;
+  }
+
+  public whereGreaterThan<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T> {
+    let transformedValue: V = '*' as V;
+
+    if (!TypeUtil.isNull(value)) {
+      transformedValue = this.transformValue(WhereParams.from<V>({
+        fieldName, value, exact
+      }));
+    }
+
+    this._builder.whereGreaterThan(fieldName, this.addQueryParameter(transformedValue), exact);
+    return this;
+  }
+
+  public whereGreaterThanOrEqual<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T> {
+    let transformedValue: V = '*' as V;
+    
+    if (!TypeUtil.isNull(value)) {
+      transformedValue = this.transformValue(WhereParams.from<V>({
+        fieldName, value, exact
+      }));
+    }
+
+    this._builder.whereGreaterThanOrEqual(fieldName, this.addQueryParameter(transformedValue), exact);
+    return this;
+  }
+
+  public whereLessThan<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T> {
+    let transformedValue: V = 'NULL' as V;
+    
+    if (!TypeUtil.isNull(value)) {
+      transformedValue = this.transformValue(WhereParams.from<V>({
+        fieldName, value, exact
+      }));
+    }
+
+    this._builder.whereLessThan(fieldName, this.addQueryParameter(transformedValue), exact);
+    return this;
+  }
+
+  public whereLessThanOrEqual<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T> {
+    let transformedValue: V = 'NULL' as V;
+    
+    if (!TypeUtil.isNull(value)) {
+      transformedValue = this.transformValue(WhereParams.from<V>({
+        fieldName, value, exact
+      }));
+    }
+
+    this._builder.whereLessThanOrEqual(fieldName, this.addQueryParameter(transformedValue), exact);
+    return this;
+  }
+
+  public whereExists(fieldName: string): IDocumentQuery<T> {
+    this._builder.whereExists(fieldName);
+    return this;
+  }
+
+  public andAlso(): IDocumentQuery<T> {
+    this._builder.andAlso();
+    return this;
+  }
+
+  public orElse(): IDocumentQuery<T> {
+    this._builder.orElse();
+    return this;
+  }
+
+  public boost(boost: number): IDocumentQuery<T> {
+    this._builder.boost(boost);
+    return this;
+  }
+
+  public fuzzy(fuzzy: number): IDocumentQuery<T> {
+    this._builder.fuzzy(fuzzy);
+    return this;
+  }
+
+  public proximity(proximity: number): IDocumentQuery<T> {
+    this._builder.proximity(proximity);
+    return this;
+  }
+
+  public orderBy(field: string, ordering?: OrderingType): IDocumentQuery<T> {
+    this._builder.orderBy(field, ordering);
+    return this;
+  }
+
+  public orderByDescending(field: string, ordering?: OrderingType): IDocumentQuery<T> {
+    this._builder.orderByDescending(field, ordering);
+    return this;
+  }
+
+  public orderByScore(): IDocumentQuery<T> {
+    this._builder.orderByScore();
+    return this;
+  }
+
+  public orderByScoreDescending(): IDocumentQuery<T> {
+    this._builder.orderByScoreDescending();
+    return this;
+  }
+
+  public search(fieldName: string, searchTerms: string, operator: SearchOperator = SearchOperators.Or): IDocumentQuery<T> {
+    this._builder.search(fieldName, this.addQueryParameter(searchTerms), operator);
+    return this;
+  }
+
+  public intersect(): IDocumentQuery<T> {
+    this._builder.intersect();
+    return this;
+  }
+
+  public distinct(): IDocumentQuery<T> {
+    this._builder.distinct();
+    return this;
+  }
+
+  public containsAny<V extends ConditionValue>(fieldName: string, values: V[]): IDocumentQuery<T> {
+    const transformedValues: V[] = this.transformValuesArray<V>(fieldName, values);
+
+    if (transformedValues.length) {
+      this._builder.whereIn(fieldName, this.addQueryParameter(transformedValues));
+    }
+
+    return this;
+  }
+
+  public containsAll<V extends ConditionValue>(fieldName: string, values: V[]): IDocumentQuery<T> {
+    const transformedValues: V[] = this.transformValuesArray<V>(fieldName, values);
+    
+    if (transformedValues.length) {
+      this._builder.whereAllIn(fieldName, this.addQueryParameter(transformedValues));
+    }
+
+    return this;
+  }
+
+  public groupBy(fieldName: string, ...fieldNames: string[]): IDocumentQuery<T> {
+    const builder: IQueryBuilder = this._builder;
+
+    builder.groupBy.apply(builder, [fieldName].concat(fieldNames));
+    return this;
+  }
+
+  public groupByKey(fieldName: string, projectedName?: string): IDocumentQuery<T> {
+    this._builder.groupByKey(fieldName, projectedName);
+
+    return this;
+  }
+
+  public groupBySum(fieldName: string, projectedName?: string): IDocumentQuery<T> {
+    this._builder.groupBySum(fieldName, projectedName);
+
+    return this;
+  }
+
+  public groupByCount(projectedName?: string): IDocumentQuery<T> {
+    this._builder.groupByCount(projectedName);
+
+    return this;
+  }
+
+  public whereTrue(): IDocumentQuery<T> {
+    this._builder.whereTrue();
+
+    return this;
+  }
+
+  public withinRadiusOf(fieldName: string, radius: number, latitude: number, longitude: number, radiusUnits?: SpatialUnit, distErrorPercent?: number): IDocumentQuery<T> {
+    this._builder.withinRadiusOf(
+      fieldName, this.addQueryParameter(radius), this.addQueryParameter(latitude), 
+      this.addQueryParameter(longitude), radiusUnits, distErrorPercent
+    );
+
+    return this;
+  }
+
+  public spatial(fieldName: string, shapeWkt: string, relation: SpatialRelation, distErrorPercent: number): IDocumentQuery<T>;
+  public spatial(fieldName: string, criteria: SpatialCriteria): IDocumentQuery<T>;
+  public spatial(fieldName: string, shapeWktOrCriteria: string | SpatialCriteria, relation?: SpatialRelation, distErrorPercent?: number): IDocumentQuery<T> {
+    const criteria: SpatialCriteria = <SpatialCriteria>shapeWktOrCriteria;
+    const shapeWkt: string = <string>shapeWktOrCriteria;
+
+    if (shapeWktOrCriteria instanceof SpatialCriteria) {
+      this._builder.spatial(
+        fieldName, criteria, (parameterValue: string | number): string => 
+        this.addQueryParameter(<string>parameterValue)
+      );
+    } else {
+      this._builder.spatial(fieldName, this.addQueryParameter(shapeWkt), relation, distErrorPercent);
+    }
+
+    return this;
+  }
+
+  public orderByDistance(fieldName: string, latitude: number, longitude: number): IDocumentQuery<T>;
+  public orderByDistance(fieldName: string, shapeWkt: string): IDocumentQuery<T>;
+  public orderByDistance(fieldName: string, latitudeOrShapeWkt: number | string, longitude?: number): IDocumentQuery<T> {
+    const shapeWkt: string = <string>latitudeOrShapeWkt;
+    const latitude: number = <number>latitudeOrShapeWkt;
+
+    if (TypeUtil.isNull(longitude)) {
+      this._builder.orderByDistance(fieldName, this.addQueryParameter(shapeWkt));
+    } else {
+      this._builder.orderByDistance(fieldName, this.addQueryParameter(latitude), this.addQueryParameter(longitude));
+    }
+
+    return this;
+  }
+
+  public orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): IDocumentQuery<T>;
+  public orderByDistanceDescending(fieldName: string, shapeWkt: string): IDocumentQuery<T>;
+  public orderByDistanceDescending(fieldName: string, latitudeOrShapeWkt: number | string, longitude?: number): IDocumentQuery<T> {
+    const shapeWkt: string = <string>latitudeOrShapeWkt;
+    const latitude: number = <number>latitudeOrShapeWkt;
+
+    if (TypeUtil.isNull(longitude)) {
+      this._builder.orderByDistanceDescending(fieldName, this.addQueryParameter(shapeWkt));
+    } else {
+      this._builder.orderByDistanceDescending(fieldName, this.addQueryParameter(latitude), this.addQueryParameter(longitude));
+    }
+
+    return this;
+  }
+
+  protected addQueryParameter<V extends ConditionValue>(valueOrValues: V | V[]) {
+    const parameterName = `p${this.queryParameters.size}`;
+
+    this.queryParameters.set(parameterName, valueOrValues);
+    return parameterName;
+  }
+
+  protected transformValue<V extends ConditionValue>(whereParams: WhereParams<V>): V {
+    const value: V = whereParams.value;
+
+    if (TypeUtil.isNull(value)) {
+      return null;
+    }
+
+    if ("" === <string>value) {
+      return "" as V;
+    }
+
+    if (value instanceof Date) {
+      return DateUtil.stringify(<Date>value) as V;
+    }
+
+    if (!["boolean", "number", "string"].includes(typeof value)) {
+      throw new InvalidArgumentException(
+        "Invalid value passed to query condition. \
+Only integer / number / string and null values are supported"
+      );
+    }
+
+    return value;
+  }
+
+  protected transformValuesArray<V extends ConditionValue>(fieldName: string, values: Array<V | V[]>): V[] {
+    let result: V[] = [];
+    let nestedWhereParams: WhereParams<V>;
+    const unpacked: V[] = this.unpackValuesArray<V>(values);
+
+    for (let value of unpacked) {
+      nestedWhereParams = WhereParams.from<V>({
+        fieldName, value,
+        allowWildcards: true
+      });
+
+      result.push(this.transformValue<V>(nestedWhereParams));
+    }
+
+    return result;
+  }
+
+  protected unpackValuesArray<V extends ConditionValue>(values: Array<V | V[]>): V[] {
+    let result: V[] = [];
+
+    for (let value of values) {
+      if (TypeUtil.isArray(value)) {
+        result = result.concat(this.unpackValuesArray<V>(<V[]>value));
+      } else {
+        result.push(<V>value);
+      }
+    }
+
+    return result;
   }
 }

@@ -6,7 +6,7 @@ import {PutDocumentCommand} from "../../src/Database/Commands/PutDocumentCommand
 import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 import {GetDocumentCommand} from "../../src/Database/Commands/GetDocumentCommand";
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
-import {IRavenObject} from "../../src/Database/IRavenObject";
+import {IRavenObject} from "../../src/Typedef/IRavenObject";
 
 describe('Put command tests', () => {
   let requestExecutor: RequestExecutor;

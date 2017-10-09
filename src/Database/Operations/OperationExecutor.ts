@@ -6,7 +6,8 @@ import {IRequestExecutor} from '../../Http/Request/RequestExecutor';
 import {PatchStatuses, IPatchResult} from '../../Http/Request/PatchRequest';
 import {StatusCodes} from '../../Http/Response/StatusCode';
 import {IRavenResponse} from '../RavenCommandResponse';
-import {IRavenObject} from '../IRavenObject';
+import {IRavenObject} from '../../Typedef/IRavenObject';
+import {IDisposable} from '../../Typedef/Contracts';
 import {DocumentConventions} from '../../Documents/Conventions/DocumentConventions';
 import {RavenCommand} from '../RavenCommand';
 import {InvalidOperationException} from '../DatabaseExceptions';
@@ -138,7 +139,7 @@ export class OperationExecutor extends AbstractDatabaseOperationExecutor {
   }
 }
 
-export class ServerOperationExecutor extends AbstractOperationExecutor {
+export class ServerOperationExecutor extends AbstractOperationExecutor implements IDisposable {
   protected requestExecutorFactory(): IRequestExecutor {
     const store: IDocumentStore = this.store;
     const conventions: DocumentConventions = store.conventions;    
@@ -154,6 +155,10 @@ export class ServerOperationExecutor extends AbstractOperationExecutor {
     }
 
     return super.send(operation);
+  }
+
+  public dispose(): void {
+    this.requestExecutor.dispose();
   }
 }
 

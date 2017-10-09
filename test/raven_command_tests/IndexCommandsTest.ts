@@ -6,7 +6,7 @@ import {IndexDefinition} from "../../src/Database/Indexes/IndexDefinition";
 import {PutIndexesOperation} from "../../src/Database/Operations/PutIndexesOperation";
 import {GetIndexOperation} from "../../src/Database/Operations/GetIndexOperation";
 import {DeleteIndexOperation} from "../../src/Database/Operations/DeleteIndexOperation";
-import {IRavenObject} from "../../src/Database/IRavenObject";
+import {IRavenObject} from "../../src/Typedef/IRavenObject";
 import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 
@@ -28,8 +28,8 @@ describe('Index commands test', () => {
     it('should get index with success', async () => {
       const index: IndexDefinition = new IndexDefinition('get_index', indexMap);
 
-      return expect(store.operations.send(new PutIndexesOperation(index)))
-        .to.be.fulfilled.then(() => store.operations
+      return store.operations.send(new PutIndexesOperation(index))
+        .then(() => store.operations
         .send(new GetIndexOperation('get_index'))
         .then((result: IRavenResponse) => expect(result).not.to.be.null));
     });

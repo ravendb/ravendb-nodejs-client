@@ -10,11 +10,13 @@ import {Lock} from "../../Lock/Lock";
 import {GetTopologyCommand} from "../../Database/Commands/GetTopologyCommand";
 import {GetStatisticsCommand} from "../../Database/Commands/GetStatisticsCommand";
 import {DateUtil} from "../../Utility/DateUtil";
+import {TypeUtil} from "../../Utility/TypeUtil";
 import {IResponse, IErrorResponse} from "../Response/IResponse";
 import {StatusCodes, StatusCode} from "../Response/StatusCode";
 import {Observable} from "../../Utility/Observable";
 import {NodeSelector} from "./NodeSelector";
 import {NodeStatus} from "../NodeStatus";
+import {IDisposable} from '../../Typedef/Contracts';
 import {RavenException, InvalidOperationException, TopologyNodeDownException, AllTopologyNodesDownException, DatabaseLoadFailureException, UnsuccessfulRequestException} from "../../Database/DatabaseExceptions";
 
 export interface ITopologyUpdateEvent {
@@ -32,7 +34,7 @@ export interface IRequestExecutorOptions {
   firstTopologyUpdateUrls?: string[];
 }
 
-export interface IRequestExecutor {
+export interface IRequestExecutor extends IDisposable {
   execute(command: RavenCommand): BluebirdPromise<IRavenResponse | IRavenResponse[] | void>;
 }
 
@@ -54,6 +56,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
   private _initialDatabase: string;
   private _topologyEtag: number;
   private _faildedNodesStatuses: Map<ServerNode, NodeStatus>;
+  private _disposed: boolean = false;
 
   public get initialDatabase(): string {
     return this._initialDatabase;
@@ -69,6 +72,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
       "Raven-Client-Version": "4.0.0-beta",
     };
 
+    this._disposed = false;
     this._lastKnownUrls = null;
     this._initialDatabase = database;
     this._withoutTopology = options.withoutTopology || false;
@@ -83,6 +87,11 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     } else if (this._withoutTopology && options.singleNodeTopology) {
       this._nodeSelector = new NodeSelector(this, options.singleNodeTopology);
     }
+  }
+
+  public dispose(): void {
+    this._disposed = true;
+    this.cancelFailingNodesTimers();
   }
 
   public static create(urls: string[], database?: string): IRequestExecutor {
@@ -175,6 +184,10 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
   protected executeCommand(command: RavenCommand, node: ServerNode): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> {
     let requestOptions: RavenCommandRequestOptions;
     const startTime: number = DateUtil.timestampMs();
+
+    if (this._disposed) {
+      return BluebirdPromise.resolve();
+    }
 
     if (!(command instanceof RavenCommand)) {
       return BluebirdPromise.reject(new InvalidOperationException('Not a valid command'));
@@ -344,9 +357,18 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     const startTime: number = DateUtil.timestampMs();
     let isStillFailed: boolean = true, status: NodeStatus;
 
+    if (this._disposed) {
+      return;
+    }
+
     RequestPromise(this.prepareCommand(command, node))
-      .then((response: IResponse) => {
-        if (StatusCodes.isOk(response.statusCode)) {
+      .catch((errorResponse: IErrorResponse) => {
+        if (errorResponse.response) {
+          return BluebirdPromise.resolve(errorResponse.response);
+        }
+      })
+      .then((response?: IResponse) => {
+        if (!TypeUtil.isNull(response) && StatusCodes.isOk(response.statusCode)) {
           isStillFailed = false;
           this.emit<ServerNode>(NODE_STATUS_UPDATED, node);
 
@@ -355,7 +377,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
             this._faildedNodesStatuses.delete(node);
           }
         }
-      })
+      })      
       .finally(() => {
         node.responseTime = DateUtil.timestampMs() - startTime;
 

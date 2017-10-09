@@ -45,7 +45,7 @@ export class PutIndexesCommand extends RavenCommand {
   }
 
   public createRequest(serverNode: ServerNode): void {
-    this.endPoint = StringUtil.format('{url}/databases/{database}/indexes', serverNode);
+    this.endPoint = StringUtil.format('{url}/databases/{database}/admin/indexes', serverNode);
     this.payload = {"Indexes": this.indexes.map((index: IndexDefinition) => index.toJson())};
   }
 

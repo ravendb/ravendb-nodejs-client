@@ -1,5 +1,5 @@
-import {IJsonable} from "../Json/Contracts";
-import {IRavenObject} from "./IRavenObject";
+import {IJsonable} from "../Typedef/Contracts";
+import {IRavenObject} from "../Typedef/IRavenObject";
 
 export class DatabaseDocument implements IJsonable {
   protected secureSettings: {};

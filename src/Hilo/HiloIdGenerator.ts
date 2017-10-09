@@ -1,3 +1,4 @@
+import * as BluebirdPromise from 'bluebird';
 import {IHiloIdGenerator} from './IHiloIdGenerator';
 import {AbstractHiloIdGenerator} from './AbstractHiloIdGenerator';
 import {HiloRangeValue} from './HiloRangeValue';
@@ -8,7 +9,6 @@ import {HiloNextCommand} from './Commands/HiloNextCommand';
 import {HiloReturnCommand} from './Commands/HiloReturnCommand';
 import {DateUtil} from '../Utility/DateUtil';
 import {Lock} from '../Lock/Lock';
-import * as BluebirdPromise from 'bluebird';
 import {IRavenResponse} from "../Database/RavenCommandResponse";
 
 export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdGenerator {

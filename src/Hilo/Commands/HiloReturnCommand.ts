@@ -1,7 +1,11 @@
 import {ServerNode} from '../../Http/ServerNode';
 import {RequestMethods} from '../../Http/Request/RequestMethod';
 import {RavenCommand} from '../../Database/RavenCommand';
+import {DatabaseDoesNotExistException} from '../../Database/DatabaseExceptions';
 import {StringUtil} from "../../Utility/StringUtil";
+import {IRavenResponse} from "../../Database/RavenCommandResponse";
+import {IResponse} from "../../Http/Response/IResponse";
+
 
 export class HiloReturnCommand extends RavenCommand {
   protected tag: string;

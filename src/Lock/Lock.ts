@@ -1,4 +1,4 @@
-import {ILockCallback, ILockDoneCallback} from './LockCallbacks';
+import {ILockCallback, ILockDoneCallback} from '../Typedef/LockCallbacks';
 import * as BluebirdPromise from 'bluebird';
 import * as AsyncLock from 'async-lock';
 import * as uuid from 'uuid';

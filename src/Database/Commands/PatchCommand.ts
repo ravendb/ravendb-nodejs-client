@@ -32,11 +32,11 @@ export class PatchCommand extends RavenCommand {
   }
 
   public createRequest(serverNode: ServerNode): void {
-    if (TypeUtil.isNone(this.id)) {
+    if (TypeUtil.isNull(this.id)) {
       throw new InvalidOperationException('Empty ID is invalid');
     }
 
-    if (TypeUtil.isNone(this.patch)) {
+    if (TypeUtil.isNull(this.patch)) {
       throw new InvalidOperationException('Empty patch is invalid');
     }
 
@@ -48,7 +48,7 @@ export class PatchCommand extends RavenCommand {
     this.endPoint = StringUtil.format('{url}/databases/{database}/docs', serverNode);
     this.skipPatchIfChangeVectorMismatch && this.addParams('skipPatchIfChangeVectorMismatch', 'true');
     this.returnDebugInformation && this.addParams('debug', 'true');
-    TypeUtil.isNone(this.changeVector) || (this.headers = {"If-Match": StringUtil.format('"{change-vector}"', this)});
+    TypeUtil.isNull(this.changeVector) || (this.headers = {"If-Match": StringUtil.format('"{change-vector}"', this)});
 
     this.payload = {
       "Patch": this.patch.toJson(),

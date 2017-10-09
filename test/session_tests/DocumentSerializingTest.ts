@@ -5,7 +5,7 @@ import * as _ from "lodash";
 import {expect} from 'chai';
 import {Serializer} from "../../src/Json/Serializer";
 import {DateUtil} from "../../src/Utility/DateUtil";
-import {IRavenObject} from "../../src/Database/IRavenObject";
+import {IRavenObject} from "../../src/Typedef/IRavenObject";
 import {DocumentConstructor} from "../../src/Documents/Conventions/DocumentConventions";
 import {Foo} from "../TestClasses";
 
@@ -218,7 +218,7 @@ describe('Document serializing test', () => {
       let document: IRavenObject = {};      
       Serializer.fromJSON(document, json, {}, nestedObjectTypes);
       
-      let serialized: object = Serializer.toJSON(document, {});
+      let serialized: object = Serializer.toJSON(document);
       let sampleToCompare: object = _.omit(_.cloneDeep(json), 'undefinedProp');
       
       expect(serialized).to.deep.equals(sampleToCompare);

@@ -5,21 +5,22 @@
 import {expect} from 'chai';
 import * as _ from 'lodash';
 import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
+import {DocumentStore} from '../../src/Documents/DocumentStore';
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
-import {IRavenObject} from "../../src/Database/IRavenObject";
+import {IRavenObject} from "../../src/Typedef/IRavenObject";
 import {Product, Order, Company, ProductsTestingSort} from "../TestClasses";
-import {QueryOperators} from "../../src/Documents/Session/QueryOperator";
+import {QueryOperators} from "../../src/Documents/Session/Query/QueryLanguage";
 import {TypeUtil} from "../../src/Utility/TypeUtil";
 
 describe('Document query test', () => {
   let store: IDocumentStore;
   let session: IDocumentSession;
   let requestExecutor: RequestExecutor;
-  let currentDatabase: string, defaultUrl: string;
+  let defaultDatabase: string, defaultUrl: string;
 
-  /*beforeEach(function (): void {
-    ({currentDatabase, defaultUrl, requestExecutor, store} = (this.currentTest as IRavenObject));
+  beforeEach(function (): void {
+    ({defaultDatabase, defaultUrl, requestExecutor, store} = (this.currentTest as IRavenObject));
   });
 
   beforeEach(async () => {
@@ -37,143 +38,184 @@ describe('Document query test', () => {
     await session.store<Product>(new Product('Product/110', 'paginate_testing', 95));
     await session.store<Order>(new Order('Order/105', 'testing_order', 92, 'Product/108'));
     await session.store<Company>(new Company('Company/1', 'withNesting', new Product(null, 'testing_order', 4)));
-    await session.saveChanges();    
+    await session.saveChanges();   
   });
 
   describe('Index checking', () => {
+    it('should do raw query', async() => {
+      const results: Product[] = await store.openSession()
+        .advanced
+        .rawQuery<Product>(
+          'FROM Products WHERE name = $name AND uid = $uid', {
+            name: 'test107',
+            uid: 5
+          },{
+          documentType: Product
+        })
+        .waitForNonStaleResults()        
+        .all();
+
+      expect(results).to.have.lengthOf(1);
+      expect(results[0]).to.be.instanceof(Product);
+      expect(results[0]).to.have.property('name', 'test107')
+      expect(results[0]).to.have.property('uid', 5);
+    });
+
     it('should query by dynamic index', async () => {
-      const results: Product[] = await store.openSession().query<Product>({
-        documentType: Product
-      }).whereEquals<string>('name', 'test101').get();
+      const results: Product[] = await store.openSession()
+        .query<Product>({
+          documentType: Product
+        })
+        .waitForNonStaleResults()        
+        .whereEquals<string>('name', 'test101')
+        .all();
         
       expect(results[0].name).to.equals('test101');
     });
 
     it('should query by double index joined by "OR" operator', async () => {
-      const results: Product[] = await store.openSession().query<Product>({
-        documentType: Product
-      })
-      .whereEquals<string>('name', 'test101')
-      .whereEquals<number>('uid', 4).get();
+      const results: Product[] = await store.openSession()
+        .query<Product>({
+          documentType: Product
+        })
+        .waitForNonStaleResults()        
+        .whereEquals<string>('name', 'test101')
+        .whereEquals<number>('uid', 4)
+        .all();
         
       expect(results).to.have.lengthOf(2);
     });
 
     it('should query by double index joined by "AND" operator', async() => {
-      const results: Product[] = await store.openSession().query<Product>({
-        documentType: Product,
-        waitForNonStaleResults: true,
-        usingDefaultOperator: QueryOperators.AND
-      })
-      .whereEquals<string>('name', 'test107')
-      .whereEquals<number>('uid', 5).get();
+      const results: Product[] = await store.openSession()
+        .query<Product>({
+          documentType: Product
+        })
+        .waitForNonStaleResults()        
+        .usingDefaultOperator(QueryOperators.And)
+        .whereEquals<string>('name', 'test107')
+        .whereEquals<number>('uid', 5)
+        .all();
 
       expect(results).to.have.lengthOf(1);
     });
 
     it('should query by whereIn', async() => {
-      const results: Product[] = await store.openSession().query<Product>({
-        documentType: Product
-      }).whereIn<string>('name', ['test101', 'test107', 'test106']).get();
-      
+      const results: Product[] = await store.openSession()
+        .query<Product>({
+          documentType: Product
+        })
+        .waitForNonStaleResults() 
+        .whereIn<string>('name', ['test101', 'test107', 'test106'])
+        .all();
+        
       expect(results).to.have.lengthOf(4);      
     });
 
     it('should query by startsWith', async() => {
-      const results: Product[] = await store.openSession().query<Product>({
-        documentType: Product
-      }).whereStartsWith('name', 'n').get();
+      const results: Product[] = await store.openSession()
+        .query<Product>({
+          documentType: Product
+        })
+        .waitForNonStaleResults()
+        .whereStartsWith<string>('name', 'n')
+        .all();
       
       expect(results[0].name).to.equals('new_testing');
     });
 
     it('should query by endsWith', async() => {
-      const results: Product[] = await store.openSession().query<Product>({
-        documentType: Product
-      }).whereEndsWith('name', '7').get();
+      const results: Product[] = await store.openSession()
+        .query<Product>({
+          documentType: Product
+        })
+        .waitForNonStaleResults()
+        .whereEndsWith<string>('name', '7')
+        .all();
       
       expect(results[0].name).to.equals('test107');
     });
 
     it('should fail query with non-existing index', async () => expect(
-        store.openSession().query({
+      store.openSession()
+        .query({
           indexName: 's'
-        }).where({'Tag': 'Products'}).get()
+        })
+        .waitForNonStaleResults()
+        .whereEquals<string>('Tag', 'Products')
+        .all()
       ).to.be.rejected
     );
 
-    it('should query with where', async() => expect(
-        store.openSession().query().where({
-          name: 'test101', 
-          uid: [4, 6, 90]
-        }).get()
-      ).to.be.fulfilled
-    );
-
     it('should query with index', async() => {
-      const results: Product[] = await store.openSession().query<Product>({
-        documentType: Product,
-        indexName: 'Testing_Sort',
-        waitForNonStaleResults: true
-      }).where({
-        uid: [4, 6, 90]
-      }).get();
+      const results: Product[] = await store.openSession()
+        .query<Product>({
+          documentType: Product,
+          indexName: 'Testing_Sort'
+        })
+        .waitForNonStaleResults()
+        .whereIn<number>('uid', [4, 6, 90])
+        .all();
 
       expect(results).to.have.lengthOf(3);
     });
 
     it('should query by between', async() => {
-      const results: Product[] = await store.openSession().query<Product>({
-        documentType: Product,
-        indexName: 'Testing_Sort',
-        waitForNonStaleResults: true
-      }).whereBetween<number>('uid', 2, 4).get();
-      
-      expect(results).to.have.lengthOf(1);
-    });
-
-    it('should query by between or equal', async() => {
-      const results: Product[] = await store.openSession().query<Product>({
-        documentType: Product,
-        indexName: 'Testing_Sort',
-        waitForNonStaleResults: true
-      }).whereBetweenOrEqual<number>('uid', 2, 4).get();
+      const results: Product[] = await store.openSession()
+        .query<Product>({
+          documentType: Product,
+          indexName: 'Testing_Sort'
+        })
+        .waitForNonStaleResults()
+        .whereBetween<number>('uid', 2, 4)
+        .all();
       
       expect(results).to.have.lengthOf(3);
     });
 
-    it('should query by notNull', async () => {
-      const results: IRavenObject[] = await store.openSession().query({
-        waitForNonStaleResults: true
-      }).whereNotNull('order').get();
+    it('should query by exists', async () => {
+      const results: IRavenObject[] = await store.openSession()
+        .query()
+        .waitForNonStaleResults()
+        .whereExists('ordering')
+        .all();
        
-      expect(_.some(results, (result: IRavenObject) => TypeUtil.isNone(result.order))).to.be.false; 
+      expect(_.some(results, (result: IRavenObject) => TypeUtil.isNull(result.ordering))).to.be.false; 
     });
 
     it('should query with ordering', async() => {
-      const results: IRavenObject[] = await store.openSession().query({
-        waitForNonStaleResults: true
-      }).whereNotNull('order').orderBy('order').get();
+      const results: IRavenObject[] = await store.openSession()
+        .query()
+        .waitForNonStaleResults()
+        .whereExists('ordering')
+        .orderBy('ordering')
+        .all();
 
-      expect(results[0].order).to.equals('a');
+      expect(results[0].ordering).to.equals('a');
     });
 
     it('should query with descending ordering', async() => {
-      const results: IRavenObject[] = await store.openSession().query({
-        waitForNonStaleResults: true
-      }).whereNotNull('order').orderByDescending('order').get();
+      const results: IRavenObject[] = await store.openSession()
+        .query()
+        .waitForNonStaleResults()
+        .whereExists('ordering')
+        .orderByDescending('ordering')
+        .all();
 
-      expect(results[0].order).to.equals('d');
+      expect(results[0].ordering).to.equals('d');
     });
 
     it('should paginate', async() => {
       const expectedUids: number[][] = [[2,3],[4,5],[6,90],[95]];
       const pageSize: number = 2;
       
-      const totalCount: number = await store.openSession().query<Product>({
-        documentType: Product,
-        waitForNonStaleResults: true
-      }).whereNotNull('uid').count();
+      const totalCount: number = await store.openSession()
+        .query<Product>({
+          documentType: Product,
+        })
+        .waitForNonStaleResults()
+        .whereExists('uid')
+        .count();
 
       const totalPages: number = Math.ceil(totalCount / pageSize);
 
@@ -181,10 +223,16 @@ describe('Document query test', () => {
       expect(totalPages).to.equals(4);
 
       for (let page: number = 1; page <= totalPages; page++) {
-        const products: Product[] = await store.openSession().query<Product>({
-          documentType: Product,
-          waitForNonStaleResults: true
-        }).whereNotNull('uid').orderBy('uid').skip((page - 1) * pageSize).take(pageSize).get();
+        const products: Product[] = await store.openSession()
+          .query<Product>({
+            documentType: Product
+          })
+          .waitForNonStaleResults()
+          .whereExists('uid')
+          .orderBy('uid')
+          .skip((page - 1) * pageSize)
+          .take(pageSize)
+          .all();
 
         expect(products).to.have.length.lte(pageSize);
         products.forEach((product: Product, index: number) => expect(product.uid).to.equals(expectedUids[page - 1][index]));
@@ -194,34 +242,44 @@ describe('Document query test', () => {
     it('should query with includes', async() => {
       session = store.openSession();
 
-      await session.query({
-        waitForNonStaleResults: true, 
-        includes: ['product_id']
-      }).where({uid: 92}).get();
+      await session.query<Order>({
+        documentType: Order
+      })
+      .waitForNonStaleResults()
+      .whereEquals('uid', 92)
+      .include('product_id')
+      .all();
 
-      await session.load('Product/108');
+      await session.load<Product>('Product/108', Product);
       expect(session.numberOfRequestsInSession).to.equals(1);            
     });
 
     it('should query with nested objects', async() => {
-      const results: Company[] = await store.openSession().query<Company>({
-        documentType: Company,
-        nestedObjectTypes: {product: Product}
-      }).whereEquals<string>('name', 'withNesting').get();
+      const results: Company[] = await store.openSession()
+        .query<Company>({
+          documentType: Company,
+          nestedObjectTypes: {product: Product}
+        })
+        .waitForNonStaleResults()
+        .whereEquals<string>('name', 'withNesting')
+        .all();
 
       expect(results[0].product).to.be.instanceOf(Product);
       expect(results[0]).to.be.instanceOf(Company)
     });
 
     it('should make query with fetch terms', async() => {
-      const results: Product[] = await store.openSession().query<Product>({
-        documentType: Product,
-        waitForNonStaleResults: true,
-        indexName: 'Testing_Sort'
-      })
-      .whereBetweenOrEqual<number>('uid', 2, 4).selectFields('doc_id').get();
+      const results: Product[] = await store.openSession()
+        .query<Product>({
+          documentType: Product,
+          indexName: 'Testing_Sort'
+        })
+        .waitForNonStaleResults()
+        .selectFields(['doc_id'])
+        .whereBetween<number>('uid', 2, 4, true)
+        .all();
       
       expect(_.every(results, (result: Product) => result.hasOwnProperty('doc_id'))).to.be.true;
     });
-  });  */
+  });  
 });

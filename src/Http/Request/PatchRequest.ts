@@ -1,5 +1,8 @@
-import {IJsonable} from '../../Json/Contracts';
-import {IRavenObject} from '../../Database/IRavenObject';
+import * as _ from 'lodash';
+import {IJsonable, IStringable} from '../../Typedef/Contracts';
+import {IRavenObject} from '../../Typedef/IRavenObject';
+import {IndexQuery} from '../../Database/Indexes/IndexQuery';
+import {QueryKeywords} from "../../Documents/Session/Query/QueryLanguage";
 
 export type PatchStatus = 'DocumentDoesNotExist' | 'Created' | 'Patched' | 'Skipped' | 'NotModified';
 
@@ -23,7 +26,7 @@ export interface IPatchResult {
   Document?: IRavenObject;
 }
 
-export class PatchRequest implements IJsonable {
+export class PatchRequest implements IJsonable, IStringable {
   private _script: string;
   protected values: object = {};
 

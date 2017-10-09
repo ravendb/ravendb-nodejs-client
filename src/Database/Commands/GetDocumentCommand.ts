@@ -10,11 +10,11 @@ import {StatusCodes} from "../../Http/Response/StatusCode";
 
 export class GetDocumentCommand extends RavenCommand {
   protected idOrIds?: string | string[];
-  protected includes?: string[];
   protected metadataOnly: boolean = false;
+  protected includes?: string[];
 
-  constructor(idOrIds: string | string[], includes?: string[],
-    metadataOnly: boolean = false
+  constructor(idOrIds: string | string[], metadataOnly: boolean = false,
+    includes?: string[]
   ) {
     super('', RequestMethods.Get, null, null, {});
 

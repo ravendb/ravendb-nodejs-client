@@ -1,12 +1,12 @@
-import {InvalidOperationException, ArgumentNullException} from "../../Database/DatabaseExceptions";
+import * as _ from 'lodash';
 import * as pluralize from 'pluralize';
-import {SortOption, SortOptions} from "../../Database/Indexes/SortOption";
+import {InvalidOperationException, ArgumentNullException} from "../../Database/DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {TypeUtil} from "../../Utility/TypeUtil";
-import * as _ from 'lodash';
 import {Serializer} from "../../Json/Serializer";
-import {IRavenObject} from "../../Database/IRavenObject";
+import {IRavenObject} from "../../Typedef/IRavenObject";
 import {ConcurrencyCheckMode} from "../../Database/ConcurrencyCheckMode";
+import {IRavenResponse} from "../../Database/RavenCommandResponse";
 
 export type DocumentConstructor<T extends Object = IRavenObject> = { new(...args: any[]): T; };
 export type DocumentType<T extends Object = IRavenObject> = DocumentConstructor<T> | string;
@@ -58,6 +58,10 @@ export class DocumentConventions {
     return null;
   }
 
+  public get emptyCollection(): string {
+    return '@empty';
+  }
+
   public addDocumentInfoResolver(resolver: IDocumentInfoResolvable): void {
     if (!resolver) {
       throw new ArgumentNullException('Invalid resolver provided');
@@ -69,7 +73,7 @@ export class DocumentConventions {
   public getCollectionName(documentType: DocumentType): string {
     const typeName: string = this.getDocumentTypeName(documentType);
 
-    return !typeName ? '@empty' : pluralize(typeName);
+    return !typeName ? this.emptyCollection : pluralize(typeName);
   }
 
   public getDocumentTypeName(documentType: DocumentType): string {
@@ -100,7 +104,7 @@ export class DocumentConventions {
           foundCtor = null;
         }
 
-        if (!TypeUtil.isNone(foundCtor)) {
+        if (!TypeUtil.isNull(foundCtor)) {
           this._ctorsCache.set(typeName, foundCtor);
           break;
         }
@@ -128,7 +132,7 @@ export class DocumentConventions {
           foundIdPropertyName = null;
         }
 
-        if (!TypeUtil.isNone(foundIdPropertyName)) {
+        if (!TypeUtil.isNull(foundIdPropertyName)) {
           this._idsNamesCache.set(typeName, foundIdPropertyName);
           break;
         }
@@ -143,8 +147,7 @@ export class DocumentConventions {
     const originalMetadata: object = _.cloneDeep(metadata);
     const docType: DocumentType<T> = documentType || metadata['Raven-Node-Type'];
     const docCtor: DocumentConstructor<T> = this.getDocumentConstructor(docType);
-    const idProperty: string = this.getIdPropertyName(docType, rawEntity);
-    
+
     const documentAttributes: object = _.omit(rawEntity, '@metadata');
     let document: T = Serializer.fromJSON<T>(
       docCtor ? new docCtor() : ({} as T),
@@ -167,13 +170,49 @@ export class DocumentConventions {
 
   public convertToRawEntity<T extends Object = IRavenObject>(document: T, documentType?: DocumentType<T>): object {
     const idProperty: string = this.getIdPropertyName(documentType, document);
-    let result: object = Serializer.toJSON<T>(document, document['@metadata'] || {});
+    let result: object = Serializer.toJSON<T>(document);
 
     if (idProperty) {
       delete result[idProperty];
     }
 
     return result;
+  }
+
+  public tryFetchResults(commandResponse: IRavenResponse): object[] {
+    let responseResults: object[] = [];
+
+    if (('Results' in commandResponse) && Array.isArray(commandResponse.Results)) {
+      responseResults = <object[]>commandResponse.Results || [];
+    }
+
+    return responseResults;
+  }
+
+  public tryFetchIncludes(commandResponse: IRavenResponse): object[] {
+    let responseIncludes: object[] = [];
+
+    if ('Includes' in commandResponse) {
+      if (Array.isArray(commandResponse.Includes)) {
+        responseIncludes = <object[]>commandResponse.Includes || [];
+      } else if (TypeUtil.isObject(commandResponse.Includes)) {
+        responseIncludes = <object[]>(_.values(commandResponse.Includes)) || [];
+      }     
+    }
+
+    return responseIncludes;
+  }
+
+  public checkIsProjection(responseItem: object): boolean {
+    if ('@metadata' in responseItem) {
+      const metadata: object = responseItem['@metadata'];
+
+      if (TypeUtil.isObject(metadata)) {
+        return true === metadata['@projection'];
+      }
+    }
+
+    return false;
   }
 
   public setIdOnDocument<T extends Object = IRavenObject>(document: T, id: string, documentType?: DocumentType<T>): T {
@@ -296,31 +335,5 @@ export class DocumentConventions {
     }
 
     return metadata;
-  }
-
-  public usesRangeType(queryFilterValue: any): boolean {
-    return TypeUtil.isNumber(queryFilterValue);
-  }
-
-  public rangedFieldName(fieldName: string, queryFilterValue: any): string {
-    if (TypeUtil.isNumber(queryFilterValue)) {
-      return StringUtil.format(
-        '{0}_{1}_Range', fieldName,
-        _.isInteger(queryFilterValue) ? 'L': 'D'
-      );
-    }
-
-    return fieldName;
-  }
-
-  public getDefaultSortOption(queryFilterValue: any): SortOption | null {
-    switch (typeof queryFilterValue) {
-      case 'number':
-        return SortOptions.Numeric;
-      case 'string':
-        return SortOptions.Str;
-      default:
-        return SortOptions.None;
-    }
   }
 }

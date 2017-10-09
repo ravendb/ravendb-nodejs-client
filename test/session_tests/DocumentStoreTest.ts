@@ -5,7 +5,7 @@ import {expect} from 'chai';
 import {DocumentType, IStoredRawEntityInfo} from "../../src/Documents/Conventions/DocumentConventions";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
-import {IRavenObject} from "../../src/Database/IRavenObject";
+import {IRavenObject} from "../../src/Typedef/IRavenObject";
 import {Foo, Product} from "../TestClasses";
 import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 
@@ -17,7 +17,7 @@ describe('Document store test', () => {
 
   const resolveDocumentType = (plainDocument: object, key?: string, specifiedType?: DocumentType): string => {
     const propsMap = {
-      "Product": ['name', 'uid', 'order']
+      "Product": ['name', 'uid', 'ordering']
     };
 
     if (!specifiedType && !key) {
@@ -141,7 +141,7 @@ describe('Document store test', () => {
     });
 
     it('should set id and collection on plain object converted via document type resolver', async () => {
-      let product: Product = <Product>{name: "New Product", uid: null, order: null};    
+      let product: Product = <Product>{name: "New Product", uid: null, ordering: null};    
 
       store.conventions.addDocumentInfoResolver({ resolveDocumentType });
       session = store.openSession();      

@@ -1,7 +1,7 @@
 import * as _ from 'lodash';
 import {RavenCommandData} from '../../RavenCommandData';
 import {RequestMethods} from "../../../Http/Request/RequestMethod";
-import {IJsonable} from "../../../Json/Contracts";
+import {IJsonable} from "../../../Typedef/Contracts";
 
 export class PutCommandData extends RavenCommandData implements IJsonable  {
   protected document: object;

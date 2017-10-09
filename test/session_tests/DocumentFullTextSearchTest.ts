@@ -4,7 +4,7 @@
 import {expect} from 'chai';
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
-import {IRavenObject} from "../../src/Database/IRavenObject";
+import {IRavenObject} from "../../src/Typedef/IRavenObject";
 import {LastFm, LastFmAnalyzed} from "../TestClasses";
 import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
 
@@ -14,7 +14,7 @@ describe('Document full text search', () => {
   let requestExecutor: RequestExecutor;
   let currentDatabase: string, defaultUrl: string;
 
-  /*beforeEach(function(): void {
+  beforeEach(function(): void {
     ({currentDatabase, defaultUrl, requestExecutor, store} = (this.currentTest as IRavenObject));
   });
 
@@ -35,11 +35,11 @@ describe('Document full text search', () => {
       const results: LastFm[] = await store.openSession()
         .query<LastFm>({
           documentType: LastFm, 
-          indexName: LastFmAnalyzed.name,
-          waitForNonStaleResults: true
+          indexName: LastFmAnalyzed.name
         })
-        .search('Query', 'Me')
-        .get();
+        .waitForNonStaleResults()
+        .search('query', 'Me')
+        .all();
 
       expect(results[0].title).to.have.string('Me');
       expect(results[1].title).to.have.string('Me');
@@ -49,12 +49,11 @@ describe('Document full text search', () => {
       const results: LastFm[] = await store.openSession()
         .query<LastFm>({
           documentType: LastFm, 
-          indexName: LastFmAnalyzed.name,
-          waitForNonStaleResults: true
+          indexName: LastFmAnalyzed.name
         })
-        .search('Query', 'Me')
-        .search('Query', 'Bobo')
-        .get();
+        .waitForNonStaleResults()
+        .search('query', 'Me Bobo')
+        .all();
 
       expect(results).to.be.lengthOf(3);
     });
@@ -63,16 +62,18 @@ describe('Document full text search', () => {
       const results: LastFm[] = await store.openSession()
         .query<LastFm>({
           documentType: LastFm, 
-          indexName: LastFmAnalyzed.name,
-          waitForNonStaleResults: true
+          indexName: LastFmAnalyzed.name
         })
-        .search('Query', 'Me', null, 10)
-        .search('Query', 'Bobo', null, 2)
-        .get();
+        .waitForNonStaleResults()
+        .search('query', 'Me')
+        .boost(10)
+        .search('query', 'Bobo')
+        .boost(2)
+        .all();
 
       expect(results[0].title).to.have.string('Me');
       expect(results[1].title).to.have.string('Me');
       expect(results[2].title).to.equals('Spanish Grease');
     });
-  });*/
+  });
 });
