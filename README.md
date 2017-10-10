@@ -339,8 +339,8 @@ store.conventions.addDocumentInfoResolver({
 });
 
 (async (): Promise<void> => {
-  let product: Product = new Product(null, 'iPhone X', 999.99, 'USD', 64, 'Apple', true, new Date('2017-10-01T00:00:00'));
-};
+  let product: Product = new Product(
+    null, 'iPhone X', 999.99, 'USD', 64, 'Apple', true, new Date('2017-10-01T00:00:00'));
 
   product = await session.store<Product>(product);
   console.log(product instanceof Product); // true
