@@ -51,7 +51,7 @@ store
     // here you can finish request
   })
 ```
-## Supported asyncronous calls types
+## Supported asynchronous calls types
 1. You can use callbacks
 ```javascript
 session
@@ -79,7 +79,7 @@ session
     // here session is complete
   });
 ```
-3. With `co` libary or frameworks using it (such as `AdonisJS`) you can `yield` calls
+3. With `co` library or frameworks using it (such as `AdonisJS`) you can `yield` calls
 ```javascript
 const co = require('co');
 
@@ -197,7 +197,7 @@ let documents = await query.all();
 |`whereIn<V extends ConditionValue>(fieldName: string, values: V[], exact?: boolean): IDocumentQuery<T>;`|`WHERE fieldName IN (<value1>, <value2>, ...)`|
 |`whereStartsWith<V extends ConditionValue>(fieldName: string, value: V): IDocumentQuery<T>;`|`WHERE startsWith(fieldName, '<value>')`|
 |`whereEndsWith<V extends ConditionValue>(fieldName: string, value: V): IDocumentQuery<T>;`|`WHERE endsWith(fieldName, '<value>')`|
-|`whereBetween<V extends ConditionValue>(fieldName: string, start: V, end: V, exact?: boolean): IDocumentQuery<T>;`|`WHERE fieldName BETWEEEN <start> AND <end>`|
+|`whereBetween<V extends ConditionValue>(fieldName: string, start: V, end: V, exact?: boolean): IDocumentQuery<T>;`|`WHERE fieldName BETWEEN <start> AND <end>`|
 |`whereGreaterThan<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;`|`WHERE fieldName > <value>`|
 |`whereGreaterThanOrEqual<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;`|`WHERE fieldName >= <value>`|
 |`whereLessThan<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;`|`WHERE fieldName < <value>`|
@@ -211,15 +211,15 @@ let documents = await query.all();
 |`negateNext(): IDocumentQuery<T>;`|Adds `NOT` before next condition|
 |`andAlso(): IDocumentQuery<T>;`|Adds `AND` before next condition|
 |`orElse(): IDocumentQuery<T>;`|Adds `OR` before next condition|
-|`usingDefaultOperator(operator: QueryOperator): IDocumentQuery<T>;`|Sets default operator (which will be used if no `andAlso()` / `orElse` was called. Just after query instatiation, `OR` is used as default operator. Default operator can be changed only adding any conditions|
+|`usingDefaultOperator(operator: QueryOperator): IDocumentQuery<T>;`|Sets default operator (which will be used if no `andAlso()` / `orElse` was called. Just after query instantiation, `OR` is used as default operator. Default operator can be changed only adding any conditions|
 |`orderBy(field: string, ordering?: OrderingType): IDocumentQuery<T>;`|`ORDER BY field [DESC]`|
 |`randomOrdering(seed?: string): IDocumentQuery<T>;`|`ORDER BY random()`|
 |`take(count: number): this;`|`Limits the number of result entries to *count* `|
 |`skip(count: number): this;`|`Skips first *count* results `|
-|`first(callback?: EntityCallback<T>): Promise<T>;`|Returns first document from resultset|
-|`single(callback?: EntityCallback<T>): Promise<T>;`|Returns single document matching query criterias. If there are no such document or more then one - throws an Exception|
-|`all(callback?: QueryResultsCallback<T[]>): Promise<T[]>;`|Returns all documents from resultset (considering `take()` / `skip()` options)|
-|`count(callback?: EntitiesCountCallback): Promise<number>;`|Returns count of all documents matching query criterias (non-considering `take()` / `skip()` options)|
+|`first(callback?: EntityCallback<T>): Promise<T>;`|Returns first document from result set|
+|`single(callback?: EntityCallback<T>): Promise<T>;`|Returns single document matching query criteria. If there are no such document or more then one - throws an Exception|
+|`all(callback?: QueryResultsCallback<T[]>): Promise<T[]>;`|Returns all documents from result set (considering `take()` / `skip()` options)|
+|`count(callback?: EntitiesCountCallback): Promise<number>;`|Returns count of all documents matching query criteria (non-considering `take()` / `skip()` options)|
 
 Condition value can be a string, number, boolean or null value or instance of `Date` class:
 
@@ -254,7 +254,7 @@ class Product {
   }
 }
 ```
-2. For store model just pass it's instance without speciying collection prefix (e.g. `Products/`). Collection name will be detected automatically by model's class name
+2. For store model just pass it's instance without specifying collection prefix (e.g. `Products/`). Collection name will be detected automatically by model's class name
 ```javascript
 let product = new Product(
   null, 'iPhone X', 999.99, 'USD', 64, 'Apple', true,
@@ -282,7 +282,7 @@ products.forEach((product) => {
 });
 ```
 
-Also you can set global models class resolver (something like class autoloader in PHP). It should be an callback function receives and model class name which should return it's constructor:
+Also you can set global models class resolver (something like class autoloader in PHP). It should be a callback function accepting a name of the model class and returning its constructor:
 
 ```javascript
 store.conventions.addDocumentInfoResolver({
