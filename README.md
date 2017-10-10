@@ -2,35 +2,35 @@
 
 ## Installation
 
-```
+```bash
 npm install --save ravendb
 ```
 
 ## Getting started
 
 1. Require `DocumentStore` class from package
-```
+```javascript
 const {DocumentStore} = require('ravendb');
 ```
 or
-```
+```javascript
 const DocumentStore = require('ravendb').default;
 ```
-or (using TypeScript)
-```
+or (using ES6 / Typescript imports)
+```javascript
 import DocumentStore from 'ravendb';
 ```
 2. Initialize store
-```
+```javascript
 const store = DocumentStore.create('database url', 'default database name');
 store.initialize();
 ```
 3. Open a session
-```
+```javascript
 const session = store.openSession();
 ```
 4. Call `saveChanges()` when you'll finish working with a session
-```
+```javascript
 session
  .load('Users/1')
  .then((user) => {
@@ -44,7 +44,7 @@ session
   });
 ```
 5. Optionally, dispose a store (if you didn't using an global store but create it in each request)
-```
+```javascript
 store
   .dispose()
   .then(() => {
@@ -53,7 +53,7 @@ store
 ```
 ## Supported asyncronous calls types
 1. You can use callbacks
-```
+```javascript
 session
  .load('Users/1', null, [], {}, (user) => {
    user.password = md5('new password');
@@ -65,8 +65,8 @@ session
    });
  })
 ```
-2. You can use promises aswell
-```
+2. You can use promises as well
+```javascript
 session
  .load('Users/1')
  .then((user) => {
@@ -80,7 +80,7 @@ session
   });
 ```
 3. With `co` libary or frameworks using it (such as `AdonisJS`) you can `yield` calls
-```
+```javascript
 const co = require('co');
 
 // ...
@@ -99,7 +99,7 @@ co(function * () {
 });
 ```
 4. Also client is supporting `async` / `await` stuff 
-```
+```javascript
 async () => {
   session = store.openSession();
 
@@ -114,8 +114,9 @@ async () => {
 })
 ```
 ## CRUD example
-Creating documents
-```
+
+### Creating documents
+```javascript
 let product = {
   title: 'iPhone X',
   price: 999.99,
@@ -130,14 +131,15 @@ product = await session.store(product, 'Products/');
 console.log(product.id); // will output Products/<some number> e.g. Products/1
 await session.saveChanges();
 ```
-Loading documents
-```
+
+### Loading documents
+```javascript
 product = await session.load('Products/1');
 console.log(product.title); // iPhone X
 console.log(product.id); // Products/1
 ```
-Updating documents
-```
+### Updating documents
+```javascript
 product = await session.load('Products/1');
 product.in_stock = false;
 product.last_update = new Date();
@@ -148,8 +150,8 @@ product = await session.load('Products/1');
 console.log(product.in_stock); // false
 console.log(product.last_update); // outputs current date
 ```
-Deleting documents
-```
+### Deleting documents
+```javascript
 product = await session.load('Products/1');
 await session.delete(product);
 // or you can just do
@@ -161,7 +163,7 @@ console.log(product); // undefined
 ```
 ## Querying documents
 1. Create `DocumentQuery` instance using `query()` method of session:
-```
+```javascript
 query = session.query({
   documentType: 'Product', // specify which collection you querying
   // optionally you may specify custom index for query from it
@@ -169,7 +171,7 @@ query = session.query({
 });
 ```
 2. Apply conditions, ordering etc. Query supports chaining calls:
-```
+```javascript
 const {DocumentStore, QueryOperators} = require('ravendb');
 
 // ...
@@ -186,23 +188,23 @@ query
 let documents = await query.all();
 ```
 #### DocumentQuery methods overview
-| Methods | SQL analogue or description |
+| Methods | RQL / description |
 | ------------- | ------------- |
-|`selectFields(fields: string[], projections?: string[]): IDocumentQuery<T>;`|`SELECT field1 [AS projection1], ...`|
+|```selectFields(fields: string[], projections?: string[]): IDocumentQuery<T>;```|`SELECT field1 [AS projection1], ...`|
 |`distinct(): IDocumentQuery<T>;`|`SELECT DISTINCT`|
-|`whereEquals<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;`|`fieldName = <value>`|
-|`whereNotEquals<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;`|`fieldName <> <value>`|
-|`whereIn<V extends ConditionValue>(fieldName: string, values: V[], exact?: boolean): IDocumentQuery<T>;`|`fieldName IN (<value1>, <value2>, ...)`|
-|`whereStartsWith<V extends ConditionValue>(fieldName: string, value: V): IDocumentQuery<T>;`|`fieldName LIKE '<value>%'`|
-|`whereEndsWith<V extends ConditionValue>(fieldName: string, value: V): IDocumentQuery<T>;`|`fieldName LIKE '%<value>'`|
-|`whereBetween<V extends ConditionValue>(fieldName: string, start: V, end: V, exact?: boolean): IDocumentQuery<T>;`|`fieldName BETWEEEN <start> AND <end>`|
-|`whereGreaterThan<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;`|`fieldName > <value>`|
-|`whereGreaterThanOrEqual<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;`|`fieldName >= <value>`|
-|`whereLessThan<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;`|`fieldName < <value>`|
-|`whereLessThanOrEqual<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;`|`fieldName <= <value>`|
-|`whereExists(fieldName: string): IDocumentQuery<T>;`|`fieldName IS NOT NULL`|
-|`containsAny<V extends ConditionValue>(fieldName: string, values: V[]): IDocumentQuery<T>;`|`fieldName LIKE '%<value1>%' OR fieldName LIKE '%<value2>%' OR ...`|
-|`containsAll<V extends ConditionValue>(fieldName: string, values: V[]): IDocumentQuery<T>;`|`fieldName LIKE '%<value1>%' AND fieldName LIKE '%<value2>%' AND ...`|
+|`whereEquals<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;`|`WHERE fieldName = <value>`|
+|`whereNotEquals<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;`|`WHERE fieldName != <value>`|
+|`whereIn<V extends ConditionValue>(fieldName: string, values: V[], exact?: boolean): IDocumentQuery<T>;`|`WHERE fieldName IN (<value1>, <value2>, ...)`|
+|`whereStartsWith<V extends ConditionValue>(fieldName: string, value: V): IDocumentQuery<T>;`|`WHERE startsWith(fieldName, '<value>')`|
+|`whereEndsWith<V extends ConditionValue>(fieldName: string, value: V): IDocumentQuery<T>;`|`WHERE endsWith(fieldName, '<value>')`|
+|`whereBetween<V extends ConditionValue>(fieldName: string, start: V, end: V, exact?: boolean): IDocumentQuery<T>;`|`WHERE fieldName BETWEEEN <start> AND <end>`|
+|`whereGreaterThan<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;`|`WHERE fieldName > <value>`|
+|`whereGreaterThanOrEqual<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;`|`WHERE fieldName >= <value>`|
+|`whereLessThan<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;`|`WHERE fieldName < <value>`|
+|`whereLessThanOrEqual<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;`|`WHERE fieldName <= <value>`|
+|`whereExists(fieldName: string): IDocumentQuery<T>;`|`WHERE exists(fieldName)`|
+|`containsAny<V extends ConditionValue>(fieldName: string, values: V[]): IDocumentQuery<T>;`|`WHERE fieldName IN (<value1>, <value2>, ...)`|
+|`containsAll<V extends ConditionValue>(fieldName: string, values: V[]): IDocumentQuery<T>;`|`WHERE fieldName ALL IN (<value1>, <value2>, ...)`|
 |`search(fieldName: string, searchTerms: string, operator?: SearchOperator): IDocumentQuery<T>;`|Performs full-text search|
 |`openSubclause(): IDocumentQuery<T>;`|Opens subclause `(`|
 |`closeSubclause(): IDocumentQuery<T>;`|Closes subclause `)`|
@@ -211,9 +213,9 @@ let documents = await query.all();
 |`orElse(): IDocumentQuery<T>;`|Adds `OR` before next condition|
 |`usingDefaultOperator(operator: QueryOperator): IDocumentQuery<T>;`|Sets default operator (which will be used if no `andAlso()` / `orElse` was called. Just after query instatiation, `OR` is used as default operator. Default operator can be changed only adding any conditions|
 |`orderBy(field: string, ordering?: OrderingType): IDocumentQuery<T>;`|`ORDER BY field [DESC]`|
-|`randomOrdering(seed?: string): IDocumentQuery<T>;`|`ORDER BY RAND()`|
-|`take(count: number): this;`|`LIMIT <count>`|
-|`skip(count: number): this;`|`OFFSET <count>`|
+|`randomOrdering(seed?: string): IDocumentQuery<T>;`|`ORDER BY random()`|
+|`take(count: number): this;`|`Limits the number of result entries to *count* `|
+|`skip(count: number): this;`|`Skips first *count* results `|
 |`first(callback?: EntityCallback<T>): Promise<T>;`|Returns first document from resultset|
 |`single(callback?: EntityCallback<T>): Promise<T>;`|Returns single document matching query criterias. If there are no such document or more then one - throws an Exception|
 |`all(callback?: QueryResultsCallback<T[]>): Promise<T[]>;`|Returns all documents from resultset (considering `take()` / `skip()` options)|
@@ -228,7 +230,7 @@ type ConditionValue = string | number | boolean | Date | null;
 ## Using ECMAScript 2015 classes as models instead of object literals
 
 1. Define your model as class. Attributes should be just public properties:
-```
+```javascript
 class Product {
   constructor(
     id = null,
@@ -241,15 +243,19 @@ class Product {
     last_update = null
   ) {
     Object.assign(this, {
-      title, price, currency,
-      storage, manufacturer, in_stock, 
+      title, 
+      price, 
+      currency,
+      storage, 
+      manufacturer, 
+      in_stock, 
       last_update: last_update || new Date()
     });  
   }
 }
 ```
-2. For store model just pass it's instance without speciying colleciton prefix (e.g. `Products/`). Collection name will be detected automatically by model's class name
-```
+2. For store model just pass it's instance without speciying collection prefix (e.g. `Products/`). Collection name will be detected automatically by model's class name
+```javascript
 let product = new Product(
   null, 'iPhone X', 999.99, 'USD', 64, 'Apple', true,
    new Date('2017-10-01T00:00:00')
@@ -261,13 +267,13 @@ console.log(product.id.includes('Products/')); // true
 await session.saveChanges();
 ```
 3. When loading document, pass class constructor as second parameter of `session.load()`:
-```
+```javascript
 let product = await session.load('Products/1', Product);
 console.log(product instanceof Product); // true
 console.log(product.id); // Products/1
 ```
 4. When querying documents, pass class constructor to `documentType` option of `session.query({  ... })`:
-```
+```javascript
 let products = await session.query({ documentType: Product }).all();
 
 products.forEach((product) => {
@@ -278,7 +284,7 @@ products.forEach((product) => {
 
 Also you can set global models class resolver (something like class autoloader in PHP). It should be an callback function receives and model class name which should return it's constructor:
 
-```
+```javascript
 store.conventions.addDocumentInfoResolver({
   resolveConstructor: (className) =>
     require(`./relative/path/to/models/${className}`)
@@ -302,8 +308,10 @@ products.forEach((product) => {
 
 All datatype definitions you can find in `lib/ravendb-node.d.ts`. An example of CRUD operations and querying documents you may find below:
 
-```
+```typescript
+
 // models/Product.ts
+
 export class Product {
   constructor(
     public id: string = null,
@@ -331,10 +339,8 @@ store.conventions.addDocumentInfoResolver({
 });
 
 (async (): Promise<void> => {
-  let product: Product = new Product(
-    null, 'iPhone X', 999.99, 'USD', 64, 'Apple', true,
-    new Date('2017-10-01T00:00:00')
-  };
+  let product: Product = new Product(null, 'iPhone X', 999.99, 'USD', 64, 'Apple', true, new Date('2017-10-01T00:00:00'));
+};
 
   product = await session.store<Product>(product);
   console.log(product instanceof Product); // true
@@ -364,29 +370,18 @@ store.conventions.addDocumentInfoResolver({
 
 ## Building
 
-With global gulp installation:
-```
-gulp bundle
-```
-
-Without global gulp installation:
-```
-./node_modules/.bin/gulp bundle
-```
-
-or just
-```
-npm run _prepublish
+```bash
+npm run build
 ```
 
 ## Running tests
-```
+```bash
 npm test -- -h 192.168.5.44 [-p 8080] [-t DocumentSerializing [-f]]
 ```
 
 | Option | Description |
 | ------------- | ------------- |
-| -h or --ravendb-host= | Database host |
-| -p or --ravendb-port= | Database port. 8080 by default |
-| -t or --test= | Test name. For run multiple test, specify each test in separate --test= option. By default runs all tests |
-| -f or --no-fixtures | Skip executing database fixtures (create test database, put test indexes etc). Can be usable for tests which doesn't executes raven commands (e.g. DocumentSerializing) |
+| `-h` or `--ravendb-host=` | Database host |
+| `-p` or `--ravendb-port=` | Database port. 8080 by default |
+| `-t` or `--test=` | Test name. For run multiple test, specify each test in separate --test= option. By default runs all tests |
+| `-f` or `--no-fixtures` | Skip executing database fixtures (create test database, put test indexes etc). Can be usable for tests which doesn't executes raven commands (e.g. DocumentSerializing) |
