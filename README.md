@@ -186,36 +186,36 @@ let documents = await query.all();
 #### DocumentQuery methods overview
 | Method | RQL / description |
 | ------------- | ------------- |
-|selectFields(fields: string[], projections?: string[]): this;|SELECT field1 [AS projection1], ...|
-|distinct(): this;|SELECT DISTINCT|
-|whereEquals<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;|WHERE fieldName = <value>|
-|whereNotEquals<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;|WHERE fieldName != <value>|
-|whereIn<V extends ConditionValue>(fieldName: string, values: V[], exact?: boolean): this;|WHERE fieldName IN (<value1>, <value2>, ...)|
-|whereStartsWith<V extends ConditionValue>(fieldName: string, value: V): this;|WHERE startsWith(fieldName, '<value>')|
-|whereEndsWith<V extends ConditionValue>(fieldName: string, value: V): this;|WHERE endsWith(fieldName, '<value>')|
-|whereBetween<V extends ConditionValue>(fieldName: string, start: V, end: V, exact?: boolean): this;|WHERE fieldName BETWEEN <start> AND <end>|
-|whereGreaterThan<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;|WHERE fieldName > <value>|
-|whereGreaterThanOrEqual<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;|WHERE fieldName >= <value>|
-|whereLessThan<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;|WHERE fieldName < <value>|
-|whereLessThanOrEqual<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;|WHERE fieldName <= <value>|
-|whereExists(fieldName: string): this;|WHERE exists(fieldName)|
-|containsAny<V extends ConditionValue>(fieldName: string, values: V[]): this;|WHERE fieldName IN (<value1>, <value2>, ...)|
-|containsAll<V extends ConditionValue>(fieldName: string, values: V[]): this;|WHERE fieldName ALL IN (<value1>, <value2>, ...)|
-|search(fieldName: string, searchTerms: string, operator?: SearchOperator): this;|Performs full-text search|
-|openSubclause(): this;|Opens subclause (|
-|closeSubclause(): this;|Closes subclause )|
-|negateNext(): this;|Adds NOT before next condition|
-|andAlso(): this;|Adds AND before next condition|
-|orElse(): this;|Adds OR before next condition|
-|usingDefaultOperator(operator: QueryOperator): this;|Sets default operator (which will be used if no andAlso() / orElse was called. Just after query instantiation, OR is used as default operator. Default operator can be changed only adding any conditions|
-|orderBy(field: string, ordering?: OrderingType): this;|ORDER BY field [DESC]|
-|randomOrdering(seed?: string): this;|ORDER BY random()|
-|take(count: number): this;|Limits the number of result entries to *count* |
-|skip(count: number): this;|Skips first *count* results |
-|first(callback?: EntityCallback<T>): Promise<T>;|Returns first document from result set|
-|single(callback?: EntityCallback<T>): Promise<T>;|Returns single document matching query criteria. If there are no such document or more then one - throws an Exception|
-|all(callback?: QueryResultsCallback<T[]>): Promise<T[]>;|Returns all documents from result set (considering take() / skip() options)|
-|count(callback?: EntitiesCountCallback): Promise<number>;|Returns count of all documents matching query criteria (non-considering take() / skip() options)|
+|`selectFields(fields: string[], projections?: string[]): this;`|`SELECT field1 [AS projection1], ...`|
+|`distinct(): this;`|`SELECT DISTINCT`|
+|`whereEquals<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName = <value>`|
+|`whereNotEquals<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName != <value>`|
+|`whereIn<V extends ConditionValue>(fieldName: string, values: V[], exact?: boolean): this;`|`WHERE fieldName IN (<value1>, <value2>, ...)`|
+|`whereStartsWith<V extends ConditionValue>(fieldName: string, value: V): this;`|`WHERE startsWith(fieldName, '<value>')`|
+|`whereEndsWith<V extends ConditionValue>(fieldName: string, value: V): this;`|`WHERE endsWith(fieldName, '<value>')`|
+|`whereBetween<V extends ConditionValue>(fieldName: string, start: V, end: V, exact?: boolean): this;`|`WHERE fieldName BETWEEN <start> AND <end>`|
+|`whereGreaterThan<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName > <value>`|
+|`whereGreaterThanOrEqual<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName >= <value>`|
+|`whereLessThan<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName < <value>`|
+|`whereLessThanOrEqual<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName <= <value>`|
+|`whereExists(fieldName: string): this;`|`WHERE exists(fieldName)`|
+|`containsAny<V extends ConditionValue>(fieldName: string, values: V[]): this;`|`WHERE fieldName IN (<value1>, <value2>, ...)`|
+|`containsAll<V extends ConditionValue>(fieldName: string, values: V[]): this;`|`WHERE fieldName ALL IN (<value1>, <value2>, ...)`|
+|`search(fieldName: string, searchTerms: string, operator?: SearchOperator): this;`|Performs full-text search|
+|`openSubclause(): this;`|Opens subclause `(`|
+|`closeSubclause(): this;`|Closes subclause `)`|
+|`negateNext(): this;`|Adds `NOT` before next condition|
+|`andAlso(): this;`|Adds `AND` before next condition|
+|`orElse(): this;`|Adds `OR` before next condition|
+|`usingDefaultOperator(operator: QueryOperator): this;`|Sets default operator (which will be used if no `andAlso()` / `orElse` was called. Just after query instantiation, `OR` is used as default operator. Default operator can be changed only adding any conditions|
+|`orderBy(field: string, ordering?: OrderingType): this;`|`ORDER BY field [DESC]`|
+|`randomOrdering(seed?: string): this;`|`ORDER BY random()`|
+|`take(count: number): this;`|`Limits the number of result entries to *count* `|
+|`skip(count: number): this;`|`Skips first *count* results `|
+|`first(callback?: EntityCallback<T>): Promise<T>;`|Returns first document from result set|
+|`single(callback?: EntityCallback<T>): Promise<T>;`|Returns single document matching query criteria. If there are no such document or more then one - throws an Exception|
+|`all(callback?: QueryResultsCallback<T[]>): Promise<T[]>;`|Returns all documents from result set (considering `take()` / `skip()` options)|
+|`count(callback?: EntitiesCountCallback): Promise<number>;`|Returns count of all documents matching query criteria (non-considering `take()` / `skip()` options)|
 
 Condition value can be a string, number, boolean, null value or `Date` object:
 
