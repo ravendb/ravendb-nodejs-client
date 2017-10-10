@@ -80,10 +80,26 @@ describe('Document conversion test', () => {
 
     await session.store<TestConversion>(makeDocument('TestConversion/1')); 
     await session.store<TestConversion>(makeDocument('TestConversion/2', new Date(now.getTime() + 1000 * 60 * 60 * 24))); 
+    await session.store({
+      name: "G",
+      dateOfBirth: new Date("1987-10-12")
+    }, "Person/1");
     await session.saveChanges();   
   });
 
   describe('Conversion', () => {
+
+    it('should convert on load for stored literal with automatic date conversion', async () => {
+        session = store.openSession();
+        const doc = await session.load("Person/1");
+        expect(doc).to.exist;
+        expect(doc.dateOfBirth).to.be.instanceOf(Date);
+        expect(doc.dateOfBirth.getFullYear()).to.equal(1987);
+        expect(doc.dateOfBirth.getMonth()).to.equal(9);
+        expect(doc.dateOfBirth.getDate()).to.equal(12);
+        expect(doc.name).to.equal('G');
+    });
+
     it('should convert on load', async () => {
       let doc: TestConversion;
       const key: string = 'TestConversion/1';
