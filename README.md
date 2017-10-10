@@ -310,7 +310,7 @@ All datatype definitions you can find in `lib/ravendb-node.d.ts`. An example of 
 
 ```typescript
 
-// models/Product.ts
+// file models/Product.ts
 
 export class Product {
   constructor(
@@ -333,6 +333,7 @@ import {DocumentStore, IDocumentStore, IDocumentSession, IDocumentQuery, Documen
 const store: IDocumentStore = DocumentStore.create('database url', 'database name');
 let session: IDocumentSession;
 
+store.initialize();
 store.conventions.addDocumentInfoResolver({
   resolveConstructor: (typeName: string): DocumentConstructor =>
     <DocumentConstructor>require(`./models/${typeName}`)
