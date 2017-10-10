@@ -1,4 +1,4 @@
-# RavenDB node.js client
+# RavenDB client for Node.js
 
 ## Installation
 
