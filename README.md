@@ -1,4 +1,4 @@
-# RavenDB node.js client
+# RavenDB client for Node.js
 
 ## Installation
 
@@ -20,7 +20,7 @@ or (using ES6 / Typescript imports)
 ```javascript
 import DocumentStore from 'ravendb';
 ```
-2. Initialize store
+2. Initialize document store (this can be kept as a global object)
 ```javascript
 const store = DocumentStore.create('database url', 'default database name');
 store.initialize();
@@ -43,15 +43,8 @@ session
     // here you can finish request
   });
 ```
-5. Optionally, dispose a store (if you didn't using an global store but create it in each request)
-```javascript
-store
-  .dispose()
-  .then(() => {
-    // here you can finish request
-  })
-```
-## Supported asynchronous calls types
+
+## Supported asynchronous call types
 1. You can use callbacks
 ```javascript
 session
@@ -65,6 +58,7 @@ session
    });
  })
 ```
+
 2. You can use promises as well
 ```javascript
 session
@@ -79,6 +73,7 @@ session
     // here session is complete
   });
 ```
+
 3. With `co` library or frameworks using it (such as `AdonisJS`) you can `yield` calls
 ```javascript
 const co = require('co');
@@ -89,7 +84,7 @@ co(function * () {
   session = store.openSession();
 
   let user = yield store.load('Users/1');
-  
+
   user.password = md5('new password');
   yield session.store(user);
 
@@ -98,13 +93,13 @@ co(function * () {
   // here session is complete
 });
 ```
-4. Also client is supporting `async` / `await` stuff 
+4. Also client is supporting `async` / `await` stuff
 ```javascript
 async () => {
   session = store.openSession();
 
   let user = await store.load('Users/1');
-  
+
   user.password = md5('new password');
   await session.store(user);
 
@@ -165,8 +160,8 @@ console.log(product); // undefined
 1. Create `DocumentQuery` instance using `query()` method of session:
 ```javascript
 query = session.query({
-  documentType: 'Product', // specify which collection you querying
-  // optionally you may specify custom index for query from it
+  collection: 'Products', // specify which collection you'd like to query
+  // optionally you may specify an index name for querying
   // indexName: 'PopularProductsWithViewsCount'
 });
 ```
@@ -187,33 +182,34 @@ query
 ```
 let documents = await query.all();
 ```
+
 #### DocumentQuery methods overview
-| Methods | RQL / description |
+| Method | RQL / description |
 | ------------- | ------------- |
-|```selectFields(fields: string[], projections?: string[]): IDocumentQuery<T>;```|`SELECT field1 [AS projection1], ...`|
-|`distinct(): IDocumentQuery<T>;`|`SELECT DISTINCT`|
-|`whereEquals<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;`|`WHERE fieldName = <value>`|
-|`whereNotEquals<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;`|`WHERE fieldName != <value>`|
-|`whereIn<V extends ConditionValue>(fieldName: string, values: V[], exact?: boolean): IDocumentQuery<T>;`|`WHERE fieldName IN (<value1>, <value2>, ...)`|
-|`whereStartsWith<V extends ConditionValue>(fieldName: string, value: V): IDocumentQuery<T>;`|`WHERE startsWith(fieldName, '<value>')`|
-|`whereEndsWith<V extends ConditionValue>(fieldName: string, value: V): IDocumentQuery<T>;`|`WHERE endsWith(fieldName, '<value>')`|
-|`whereBetween<V extends ConditionValue>(fieldName: string, start: V, end: V, exact?: boolean): IDocumentQuery<T>;`|`WHERE fieldName BETWEEN <start> AND <end>`|
-|`whereGreaterThan<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;`|`WHERE fieldName > <value>`|
-|`whereGreaterThanOrEqual<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;`|`WHERE fieldName >= <value>`|
-|`whereLessThan<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;`|`WHERE fieldName < <value>`|
-|`whereLessThanOrEqual<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;`|`WHERE fieldName <= <value>`|
-|`whereExists(fieldName: string): IDocumentQuery<T>;`|`WHERE exists(fieldName)`|
-|`containsAny<V extends ConditionValue>(fieldName: string, values: V[]): IDocumentQuery<T>;`|`WHERE fieldName IN (<value1>, <value2>, ...)`|
-|`containsAll<V extends ConditionValue>(fieldName: string, values: V[]): IDocumentQuery<T>;`|`WHERE fieldName ALL IN (<value1>, <value2>, ...)`|
-|`search(fieldName: string, searchTerms: string, operator?: SearchOperator): IDocumentQuery<T>;`|Performs full-text search|
-|`openSubclause(): IDocumentQuery<T>;`|Opens subclause `(`|
-|`closeSubclause(): IDocumentQuery<T>;`|Closes subclause `)`|
-|`negateNext(): IDocumentQuery<T>;`|Adds `NOT` before next condition|
-|`andAlso(): IDocumentQuery<T>;`|Adds `AND` before next condition|
-|`orElse(): IDocumentQuery<T>;`|Adds `OR` before next condition|
-|`usingDefaultOperator(operator: QueryOperator): IDocumentQuery<T>;`|Sets default operator (which will be used if no `andAlso()` / `orElse` was called. Just after query instantiation, `OR` is used as default operator. Default operator can be changed only adding any conditions|
-|`orderBy(field: string, ordering?: OrderingType): IDocumentQuery<T>;`|`ORDER BY field [DESC]`|
-|`randomOrdering(seed?: string): IDocumentQuery<T>;`|`ORDER BY random()`|
+|`selectFields(fields: string[], projections?: string[]): this;`|`SELECT field1 [AS projection1], ...`|
+|`distinct(): this;`|`SELECT DISTINCT`|
+|`whereEquals<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName = <value>`|
+|`whereNotEquals<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName != <value>`|
+|`whereIn<V extends ConditionValue>(fieldName: string, values: V[], exact?: boolean): this;`|`WHERE fieldName IN (<value1>, <value2>, ...)`|
+|`whereStartsWith<V extends ConditionValue>(fieldName: string, value: V): this;`|`WHERE startsWith(fieldName, '<value>')`|
+|`whereEndsWith<V extends ConditionValue>(fieldName: string, value: V): this;`|`WHERE endsWith(fieldName, '<value>')`|
+|`whereBetween<V extends ConditionValue>(fieldName: string, start: V, end: V, exact?: boolean): this;`|`WHERE fieldName BETWEEN <start> AND <end>`|
+|`whereGreaterThan<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName > <value>`|
+|`whereGreaterThanOrEqual<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName >= <value>`|
+|`whereLessThan<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName < <value>`|
+|`whereLessThanOrEqual<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName <= <value>`|
+|`whereExists(fieldName: string): this;`|`WHERE exists(fieldName)`|
+|`containsAny<V extends ConditionValue>(fieldName: string, values: V[]): this;`|`WHERE fieldName IN (<value1>, <value2>, ...)`|
+|`containsAll<V extends ConditionValue>(fieldName: string, values: V[]): this;`|`WHERE fieldName ALL IN (<value1>, <value2>, ...)`|
+|`search(fieldName: string, searchTerms: string, operator?: SearchOperator): this;`|Performs full-text search|
+|`openSubclause(): this;`|Opens subclause `(`|
+|`closeSubclause(): this;`|Closes subclause `)`|
+|`negateNext(): this;`|Adds `NOT` before next condition|
+|`andAlso(): this;`|Adds `AND` before next condition|
+|`orElse(): this;`|Adds `OR` before next condition|
+|`usingDefaultOperator(operator: QueryOperator): this;`|Sets default operator (which will be used if no `andAlso()` / `orElse` was called. Just after query instantiation, `OR` is used as default operator. Default operator can be changed only adding any conditions|
+|`orderBy(field: string, ordering?: OrderingType): this;`|`ORDER BY field [DESC]`|
+|`randomOrdering(seed?: string): this;`|`ORDER BY random()`|
 |`take(count: number): this;`|`Limits the number of result entries to *count* `|
 |`skip(count: number): this;`|`Skips first *count* results `|
 |`first(callback?: EntityCallback<T>): Promise<T>;`|Returns first document from result set|
@@ -221,7 +217,7 @@ let documents = await query.all();
 |`all(callback?: QueryResultsCallback<T[]>): Promise<T[]>;`|Returns all documents from result set (considering `take()` / `skip()` options)|
 |`count(callback?: EntitiesCountCallback): Promise<number>;`|Returns count of all documents matching query criteria (non-considering `take()` / `skip()` options)|
 
-Condition value can be a string, number, boolean or null value or instance of `Date` class:
+Condition value can be a string, number, boolean, null value or `Date` object:
 
 ```
 type ConditionValue = string | number | boolean | Date | null;
@@ -243,14 +239,14 @@ class Product {
     last_update = null
   ) {
     Object.assign(this, {
-      title, 
-      price, 
+      title,
+      price,
       currency,
-      storage, 
-      manufacturer, 
-      in_stock, 
+      storage,
+      manufacturer,
+      in_stock,
       last_update: last_update || new Date()
-    });  
+    });
   }
 }
 ```
@@ -274,7 +270,10 @@ console.log(product.id); // Products/1
 ```
 4. When querying documents, pass class constructor to `documentType` option of `session.query({  ... })`:
 ```javascript
-let products = await session.query({ documentType: Product }).all();
+let products = await session.query({
+  collection: 'Products',
+  documentType: Product
+}).all();
 
 products.forEach((product) => {
   console.log(product instanceof Product); // true
@@ -296,13 +295,13 @@ let product = await session.load('Products/1');
 console.log(product instanceof Product); // true
 console.log(product.id); // Products/1
 
-let products = await session.query({ documentType: 'Product' }).all();
+let products = await session.query({ collection: 'Products' }).all();
 
 products.forEach((product) => {
   console.log(product instanceof Product); // true
   console.log(product.id.includes('Products/')); // true
 });
-``` 
+```
 
 ## Usage with TypeScript
 
@@ -310,7 +309,7 @@ All datatype definitions you can find in `lib/ravendb-node.d.ts`. An example of 
 
 ```typescript
 
-// models/Product.ts
+// file models/Product.ts
 
 export class Product {
   constructor(
@@ -333,6 +332,7 @@ import {DocumentStore, IDocumentStore, IDocumentSession, IDocumentQuery, Documen
 const store: IDocumentStore = DocumentStore.create('database url', 'database name');
 let session: IDocumentSession;
 
+store.initialize();
 store.conventions.addDocumentInfoResolver({
   resolveConstructor: (typeName: string): DocumentConstructor =>
     <DocumentConstructor>require(`./models/${typeName}`)
@@ -352,7 +352,7 @@ store.conventions.addDocumentInfoResolver({
   console.log(product.id); // Products/1
 
   let products: Product[] = await session
-    .query<Product>({ documentType: 'Product' })
+    .query<Product>({ collection: 'Products' })
     .usingDefaultOperator(QueryOperators.And)
     .whereEquals<string>('manufacturer', 'Apple')
     .whereEquals<boolean>('in_stock', true)
