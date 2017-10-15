@@ -13,7 +13,6 @@ describe('Document conversion test', () => {
   const now: Date = new Date();
   let store: IDocumentStore;
   let session: IDocumentSession;
-  let requestExecutor: RequestExecutor;
   let defaultDatabase: string, defaultUrl: string;
 
   const nestedObjectTypes: IRavenObject<DocumentConstructor> = {
@@ -120,7 +119,7 @@ describe('Document conversion test', () => {
         .then((result: TestConversion) => docs.push(result));
 
       await session.query<TestConversion>({
-        documentType: TestConversion.name
+        collection: 'TestConversions'
       })
       .waitForNonStaleResults()
       .all()
@@ -156,6 +155,7 @@ describe('Document conversion test', () => {
       session = store.openSession();
 
       docs = await session.query<TestConversion>({
+        collection: 'TestConversions',
         documentType: TestConversion,
         nestedObjectTypes: nestedObjectTypes
       })

@@ -64,7 +64,8 @@ describe('Document query test', () => {
     it('should query by dynamic index', async () => {
       const results: Product[] = await store.openSession()
         .query<Product>({
-          documentType: Product
+          documentType: Product,
+          collection: 'Products'
         })
         .waitForNonStaleResults()        
         .whereEquals<string>('name', 'test101')
@@ -76,7 +77,8 @@ describe('Document query test', () => {
     it('should query by double index joined by "OR" operator', async () => {
       const results: Product[] = await store.openSession()
         .query<Product>({
-          documentType: Product
+          documentType: Product,
+          collection: 'Products'
         })
         .waitForNonStaleResults()        
         .whereEquals<string>('name', 'test101')
@@ -89,7 +91,8 @@ describe('Document query test', () => {
     it('should query by double index joined by "AND" operator', async() => {
       const results: Product[] = await store.openSession()
         .query<Product>({
-          documentType: Product
+          documentType: Product,
+          collection: 'Products'
         })
         .waitForNonStaleResults()        
         .usingDefaultOperator(QueryOperators.And)
@@ -103,7 +106,8 @@ describe('Document query test', () => {
     it('should query by whereIn', async() => {
       const results: Product[] = await store.openSession()
         .query<Product>({
-          documentType: Product
+          documentType: Product,
+          collection: 'Products'
         })
         .waitForNonStaleResults() 
         .whereIn<string>('name', ['test101', 'test107', 'test106'])
@@ -115,7 +119,8 @@ describe('Document query test', () => {
     it('should query by startsWith', async() => {
       const results: Product[] = await store.openSession()
         .query<Product>({
-          documentType: Product
+          documentType: Product,
+          collection: 'Products'
         })
         .waitForNonStaleResults()
         .whereStartsWith<string>('name', 'n')
@@ -127,7 +132,8 @@ describe('Document query test', () => {
     it('should query by endsWith', async() => {
       const results: Product[] = await store.openSession()
         .query<Product>({
-          documentType: Product
+          documentType: Product,
+          collection: 'Products'
         })
         .waitForNonStaleResults()
         .whereEndsWith<string>('name', '7')
@@ -212,6 +218,7 @@ describe('Document query test', () => {
       const totalCount: number = await store.openSession()
         .query<Product>({
           documentType: Product,
+          collection: 'Products'
         })
         .waitForNonStaleResults()
         .whereExists('uid')
@@ -225,7 +232,8 @@ describe('Document query test', () => {
       for (let page: number = 1; page <= totalPages; page++) {
         const products: Product[] = await store.openSession()
           .query<Product>({
-            documentType: Product
+            documentType: Product,
+            collection: 'Products'
           })
           .waitForNonStaleResults()
           .whereExists('uid')
@@ -243,7 +251,8 @@ describe('Document query test', () => {
       session = store.openSession();
 
       await session.query<Order>({
-        documentType: Order
+        documentType: Order,
+        collection: 'Orders'
       })
       .waitForNonStaleResults()
       .whereEquals('uid', 92)
@@ -258,6 +267,7 @@ describe('Document query test', () => {
       const results: Company[] = await store.openSession()
         .query<Company>({
           documentType: Company,
+          collection: 'Companies',
           nestedObjectTypes: {product: Product}
         })
         .waitForNonStaleResults()

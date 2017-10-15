@@ -22,7 +22,7 @@ describe('Document query test', () => {
     it('CanUnderstandEquality', () => {
       const query: IDocumentQuery = store
         .openSession()
-        .query({documentType: 'User'})
+        .query({collection: 'Users'})
         .whereEquals<string>('Name', 'red');
 
       const indexQuery: IndexQuery = query.getIndexQuery();
@@ -60,7 +60,7 @@ describe('Document query test', () => {
     it('CanUnderstandEqualOnBool', () => {
       const query: IDocumentQuery = store
         .openSession()
-        .query({documentType: 'User'})
+        .query({collection: 'Users'})
         .whereEquals<boolean>('Active', false);
 
       const indexQuery: IndexQuery = query.getIndexQuery();
@@ -72,7 +72,7 @@ describe('Document query test', () => {
     it('CanUnderstandNotEqual', () => {
       const query: IDocumentQuery = store
         .openSession()
-        .query({documentType: 'User'})
+        .query({collection: 'Users'})
         .whereNotEquals<boolean>('Active', false);
 
       const indexQuery: IndexQuery = query.getIndexQuery();
@@ -214,7 +214,7 @@ describe('Document query test', () => {
       const query: IDocumentQuery = store
         .openSession()
         .query({
-          documentType: 'IndexedUser'
+          collection: 'IndexedUsers'
         })
         .whereBetween<number>("Rate", min, max);
   
@@ -229,7 +229,7 @@ describe('Document query test', () => {
       const query: IDocumentQuery = store
         .openSession()
         .query({
-          documentType: 'User'
+          collection: 'Users'
         })
         .whereStartsWith<string>("Name", 'foo');
   
@@ -243,7 +243,7 @@ describe('Document query test', () => {
       const query: IDocumentQuery = store
         .openSession()
         .query({
-          documentType: 'User'
+          collection: 'Users'
         })
         .whereStartsWith<string>("Name", 'foo');
   
@@ -257,7 +257,7 @@ describe('Document query test', () => {
       const query: IDocumentQuery = store
         .openSession()
         .query({
-          documentType: 'User'
+          collection: 'Users'
         })
         .whereTrue()
         .andAlso()
@@ -273,7 +273,7 @@ describe('Document query test', () => {
       const query: IDocumentQuery = store
         .openSession()
         .query({
-          documentType: 'User'
+          collection: 'Users'
         })
         .whereGreaterThanOrEqual<number>('Age', 16)
         .andAlso()

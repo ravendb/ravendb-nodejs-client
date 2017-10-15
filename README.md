@@ -84,7 +84,7 @@ co(function * () {
   session = store.openSession();
 
   let user = yield store.load('Users/1');
-  
+
   user.password = md5('new password');
   yield session.store(user);
 
@@ -93,13 +93,13 @@ co(function * () {
   // here session is complete
 });
 ```
-4. Also client is supporting `async` / `await` stuff 
+4. Also client is supporting `async` / `await` stuff
 ```javascript
 async () => {
   session = store.openSession();
 
   let user = await store.load('Users/1');
-  
+
   user.password = md5('new password');
   await session.store(user);
 
@@ -160,7 +160,7 @@ console.log(product); // undefined
 1. Create `DocumentQuery` instance using `query()` method of session:
 ```javascript
 query = session.query({
-  documentType: 'Product', // specify which collection you'd like to query
+  collection: 'Products', // specify which collection you'd like to query
   // optionally you may specify an index name for querying
   // indexName: 'PopularProductsWithViewsCount'
 });
@@ -239,14 +239,14 @@ class Product {
     last_update = null
   ) {
     Object.assign(this, {
-      title, 
-      price, 
+      title,
+      price,
       currency,
-      storage, 
-      manufacturer, 
-      in_stock, 
+      storage,
+      manufacturer,
+      in_stock,
       last_update: last_update || new Date()
-    });  
+    });
   }
 }
 ```
@@ -270,7 +270,10 @@ console.log(product.id); // Products/1
 ```
 4. When querying documents, pass class constructor to `documentType` option of `session.query({  ... })`:
 ```javascript
-let products = await session.query({ documentType: Product }).all();
+let products = await session.query({
+  collection: 'Products',
+  documentType: Product
+}).all();
 
 products.forEach((product) => {
   console.log(product instanceof Product); // true
@@ -292,13 +295,13 @@ let product = await session.load('Products/1');
 console.log(product instanceof Product); // true
 console.log(product.id); // Products/1
 
-let products = await session.query({ documentType: 'Product' }).all();
+let products = await session.query({ collection: 'Products' }).all();
 
 products.forEach((product) => {
   console.log(product instanceof Product); // true
   console.log(product.id.includes('Products/')); // true
 });
-``` 
+```
 
 ## Usage with TypeScript
 
@@ -349,7 +352,7 @@ store.conventions.addDocumentInfoResolver({
   console.log(product.id); // Products/1
 
   let products: Product[] = await session
-    .query<Product>({ documentType: 'Product' })
+    .query<Product>({ collection: 'Products' })
     .usingDefaultOperator(QueryOperators.And)
     .whereEquals<string>('manufacturer', 'Apple')
     .whereEquals<boolean>('in_stock', true)

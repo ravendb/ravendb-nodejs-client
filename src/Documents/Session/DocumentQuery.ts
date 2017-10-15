@@ -1,5 +1,6 @@
 import * as BluebirdPromise from 'bluebird'
 import * as _ from "lodash";
+import * as pluralize from 'pluralize';
 import {IDocumentQuery, IDocumentQueryBase, IRawDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
 import {IDocumentSession} from "./IDocumentSession";
 import {RequestExecutor} from "../../Http/Request/RequestExecutor";
@@ -23,6 +24,7 @@ import {SpatialCriteria} from "./Query/Spatial/SpatialCriteria";
 import {IWhereParams, WhereParams} from "./Query/WhereParams";
 import {IJsonable} from "../../Typedef/Contracts";
 import {DateUtil} from "../../Utility/DateUtil";
+import {StringUtil} from "../../Utility/StringUtil";
 
 export type QueryResultsWithStatistics<T> = { results: T[], response: IRavenResponse };
 
@@ -64,6 +66,7 @@ export class DocumentQueryBase<T extends Object = IRavenObject> extends Observab
   ): DocumentQueryBase<T> {
     let withStatistics: boolean = null;
     let indexName: string = null;
+    let collection: string = null;
     let documentType: DocumentType<T> = null;
     let indexQueryOptions: IOptionsSet = {};
     let nestedObjectTypes: IRavenObject<DocumentConstructor> = {} as IRavenObject<DocumentConstructor>;
@@ -71,13 +74,14 @@ export class DocumentQueryBase<T extends Object = IRavenObject> extends Observab
     if (options) {
       withStatistics = options.withStatistics || null;
       nestedObjectTypes = options.nestedObjectTypes || {};
+      collection = options.collection || '@all_docs';
       indexName = options.indexName || null;
       documentType = options.documentType || null;
       indexQueryOptions = options.indexQueryOptions || {};
     }
 
     const query: DocumentQueryBase<T> = new this(
-      session, requestExecutor, documentType, indexName,
+      session, requestExecutor, collection, indexName, documentType,
       nestedObjectTypes, withStatistics, indexQueryOptions
     );
 
@@ -98,25 +102,29 @@ export class DocumentQueryBase<T extends Object = IRavenObject> extends Observab
   }
 
   constructor(session: IDocumentSession, requestExecutor: RequestExecutor, 
-    documentType?: DocumentType<T>, indexName?: string, nestedObjectTypes?: IRavenObject<DocumentConstructor>, 
-    withStatistics: boolean = false, indexQueryOptions: IOptionsSet = {}
+    collection?: string, indexName?: string, documentType?: DocumentType<T>,
+    nestedObjectTypes?: IRavenObject<DocumentConstructor>, withStatistics: boolean = false,
+    indexQueryOptions: IOptionsSet = {}
   ) {
     super();
 
     const conventions: DocumentConventions = session.conventions;
+    let idPropertyName: string = 'id';
 
     if (indexName) {
       this._collectionName = null;
       this._indexName = indexName;
     } else {
-      let collection: string = conventions.getCollectionName(documentType);  
+      this._indexName = null;
+      this._collectionName = collection || '@all_docs';
+    }
 
-      if (!documentType || (conventions.emptyCollection === collection)) {
-        collection = '@all_docs';
-      }
-      
-      this._indexName = null;      
-      this._collectionName = collection;
+    if (documentType) {
+      idPropertyName = conventions.getIdPropertyName(documentType);
+    } else if (collection && ('@all_docs' !== collection)
+      && (conventions.emptyCollection !== collection)
+    ) {
+      idPropertyName = StringUtil.capitalize(pluralize.singular(collection));
     }
 
     this.session = session;
@@ -127,10 +135,7 @@ export class DocumentQueryBase<T extends Object = IRavenObject> extends Observab
     this.queryParameters = new DocumentQueryParameters();
     this.nestedObjectTypes = nestedObjectTypes || {} as IRavenObject<DocumentConstructor>;
 
-    this._builder = new QueryBuilder(
-      this._indexName, this._collectionName,
-      conventions.getIdPropertyName(documentType)
-    );
+    this._builder = new QueryBuilder(this._indexName, this._collectionName, idPropertyName);
   }
 
   public waitForNonStaleResults(): this {

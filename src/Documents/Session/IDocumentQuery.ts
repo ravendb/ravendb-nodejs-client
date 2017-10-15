@@ -11,6 +11,7 @@ import {IOptionsSet} from "../../Typedef/IOptionsSet";
 import {IndexQuery} from "../../Database/Indexes/IndexQuery";
 
 export interface IDocumentQueryOptions<T> {
+  collection?: string;
   documentType?: DocumentType<T>,
   indexName?: string;
   nestedObjectTypes?: IRavenObject<DocumentConstructor>;
