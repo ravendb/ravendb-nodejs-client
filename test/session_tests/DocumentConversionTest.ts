@@ -17,8 +17,7 @@ describe('Document conversion test', () => {
 
   const nestedObjectTypes: IRavenObject<DocumentConstructor> = {
     foo: Foo,
-    foos: Foo,
-    date: Date
+    foos: Foo
   };
 
   const resolveIdProperty = (typeName: string): string => {
@@ -33,9 +32,7 @@ describe('Document conversion test', () => {
 
     let foundCtor: DocumentConstructor;  
 
-    if (Date.name === typeName) {
-      return Date;
-    } else if ((typeName in classesMap) && ('function' === 
+    if ((typeName in classesMap) && ('function' === 
       (typeof (foundCtor = classesMap[typeName])))
     ) {
       return foundCtor;
