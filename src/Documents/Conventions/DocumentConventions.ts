@@ -299,7 +299,7 @@ export class DocumentConventions {
 
     const findNestedType = (property, value: any): void => {
       if (value instanceof Date) {
-        nestedTypes[property] = Date.name;
+        nestedTypes[property] = 'date';
       } else if (TypeUtil.isObject(value)) {
         let documentType: string = value.constructor.name;
 

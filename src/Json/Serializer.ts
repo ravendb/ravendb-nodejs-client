@@ -29,7 +29,7 @@ export class Serializer {
 
     const prepareMaps: () => void = (): void => {
       Object.keys(mapping).forEach((key: string) => {
-        if ('Date' === mapping[key]) {
+        if ('date' === mapping[key]) {
           mapping[key] = Date;
         } else if ('function' !== (typeof mapping[key])) {
           mapping[key] = conventions.getDocumentConstructor(mapping[key]);
