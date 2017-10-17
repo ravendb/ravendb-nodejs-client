@@ -29,15 +29,15 @@ describe('Document query test', () => {
     session = store.openSession();
 
     await productsTestingSort.execute();
-    await session.store<Product>(new Product('Product/101', 'test101', 2, 'a'));
-    await session.store<Product>(new Product('Product/10', 'test10', 3, 'b'));
-    await session.store<Product>(new Product('Product/106', 'test106', 4, 'c'));
-    await session.store<Product>(new Product('Product/107', 'test107', 5));
-    await session.store<Product>(new Product('Product/103', 'test107', 6));
-    await session.store<Product>(new Product('Product/108', 'new_testing', 90, 'd'));
-    await session.store<Product>(new Product('Product/110', 'paginate_testing', 95));
-    await session.store<Order>(new Order('Order/105', 'testing_order', 92, 'Product/108'));
-    await session.store<Company>(new Company('Company/1', 'withNesting', new Product(null, 'testing_order', 4)));
+    await session.store<Product>(new Product('Products/101', 'test101', 2, 'a'));
+    await session.store<Product>(new Product('Products/10', 'test10', 3, 'b'));
+    await session.store<Product>(new Product('Products/106', 'test106', 4, 'c'));
+    await session.store<Product>(new Product('Products/107', 'test107', 5));
+    await session.store<Product>(new Product('Products/103', 'test107', 6));
+    await session.store<Product>(new Product('Products/108', 'new_testing', 90, 'd'));
+    await session.store<Product>(new Product('Products/110', 'paginate_testing', 95));
+    await session.store<Order>(new Order('Orders/105', 'testing_order', 92, 'Products/108'));
+    await session.store<Company>(new Company('Companies/1', 'withNesting', new Product(null, 'testing_order', 4)));
     await session.saveChanges();   
   });
 
@@ -259,7 +259,7 @@ describe('Document query test', () => {
       .include('product_id')
       .all();
 
-      await session.load<Product>('Product/108', Product);
+      await session.load<Product>('Products/108', Product);
       expect(session.numberOfRequestsInSession).to.equals(1);            
     });
 

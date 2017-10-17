@@ -24,9 +24,9 @@ describe('Document full text search', () => {
     const lastFmAnalyzed: LastFmAnalyzed = new LastFmAnalyzed(store);
         
     await lastFmAnalyzed.execute();    
-    await session.store<LastFm>(new LastFm("LastFm/1", "Tania Maria", "TRALPJJ128F9311763", "Come With Me"));
-    await session.store<LastFm>(new LastFm("LastFm/2", "Meghan Trainor", "TRBCNGI128F42597B4", "Me Too"));
-    await session.store<LastFm>(new LastFm("LastFm/3", "Willie Bobo", "TRAACNS128F14A2DF5", "Spanish Grease"));
+    await session.store<LastFm>(new LastFm("LastFms/1", "Tania Maria", "TRALPJJ128F9311763", "Come With Me"));
+    await session.store<LastFm>(new LastFm("LastFms/2", "Meghan Trainor", "TRBCNGI128F42597B4", "Me Too"));
+    await session.store<LastFm>(new LastFm("LastFms/3", "Willie Bobo", "TRAACNS128F14A2DF5", "Spanish Grease"));
     await session.saveChanges();
   });
 

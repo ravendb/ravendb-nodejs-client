@@ -42,7 +42,7 @@ describe('IndexBasedCommand tests', () => {
     return store.operations.send(new PutIndexesOperation(indexSort))
       .then(() => BluebirdPromise.all(_.range(0, 100)
       .map((i: number): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> => requestExecutor
-      .execute(new PutDocumentCommand(`testing/${i}`, {
+      .execute(new PutDocumentCommand(`Testings/${i}`, {
           Name: `test${i}`, DocNumber: i,
           '@metadata': {"@collection": "Testings"}
       })))))

@@ -16,13 +16,13 @@ describe('Put command tests', () => {
   });
 
   it('should put successfully', async() => requestExecutor
-    .execute(new PutDocumentCommand('testing/1', {'name': 'test', '@metadata': {'@id': 'testing/1','@collection': 'testings'}}))
-    .then(() => requestExecutor.execute(new GetDocumentCommand('testing/1')))
-    .then((result: IRavenResponse) => expect(result.Results[0]['@metadata']['@id']).to.equals('testing/1'))
+    .execute(new PutDocumentCommand('Testings/1', {'name': 'test', '@metadata': {'@id': 'Testings/1','@collection': 'Testings'}}))
+    .then(() => requestExecutor.execute(new GetDocumentCommand('Testings/1')))
+    .then((result: IRavenResponse) => expect(result.Results[0]['@metadata']['@id']).to.equals('Testings/1'))
   );
 
   it('should fail with invalid json', async() => expect(
-      requestExecutor.execute(new PutDocumentCommand('testing/2', <any>'document'))
+      requestExecutor.execute(new PutDocumentCommand('Testings/2', <any>'document'))
     ).to.be.rejected
   );
 });

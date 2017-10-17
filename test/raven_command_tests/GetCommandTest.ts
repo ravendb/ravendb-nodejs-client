@@ -19,18 +19,18 @@ describe('DocumentSession', () => {
   });
 
   beforeEach(async() => {
-    putCommand = new PutDocumentCommand('products/101', {'Name': 'test', '@metadata': {}});
-    otherPutCommand = new PutDocumentCommand('products/10', {'Name': 'test', '@metadata': {}});
+    putCommand = new PutDocumentCommand('Products/101', {'Name': 'test', '@metadata': {}});
+    otherPutCommand = new PutDocumentCommand('Products/10', {'Name': 'test', '@metadata': {}});
 
     return BluebirdPromise.all([
       requestExecutor.execute(putCommand)
         .then(() => requestExecutor
-          .execute(new GetDocumentCommand('products/101'))
+          .execute(new GetDocumentCommand('Products/101'))
         )
         .then((result: IRavenResponse) => response = result),
       requestExecutor.execute(otherPutCommand)
         .then(() => requestExecutor
-          .execute(new GetDocumentCommand('products/10'))
+          .execute(new GetDocumentCommand('Products/10'))
         )
         .then((result: IRavenResponse) => otherResponse = result)
     ])
@@ -38,7 +38,7 @@ describe('DocumentSession', () => {
 
   describe('Get()', () => {
     it('document id should be equal after load', () => {
-      expect(response.Results[0]['@metadata']['@id']).to.equals('products/101')
+      expect(response.Results[0]['@metadata']['@id']).to.equals('Products/101')
     });
 
     it('different document ids shouln\'t be equals after load', () => {
