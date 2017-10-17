@@ -41,16 +41,16 @@ describe('Document conversion test', () => {
           
   const makeDocument = (id: string = null, date: Date = now): TestConversion => new TestConversion(
     id, date,
-    new Foo('Foo/1', 'Foo #1', 1), [
-      new Foo('Foo/2', 'Foo #2', 2),
-      new Foo('Foo/3', 'Foo #3', 3)
+    new Foo('Foos/1', 'Foo #1', 1), [
+      new Foo('Foos/2', 'Foo #2', 2),
+      new Foo('Foos/3', 'Foo #3', 3)
     ]
   );
 
   const checkFoo = (foo: Foo, idOfFoo: number = 1): void => {
     expect(foo).to.be.a('object');
     expect(foo).to.be.a.instanceOf(Foo);
-    expect(foo.id).to.equal(`Foo/${idOfFoo}`);
+    expect(foo.id).to.equal(`Foos/${idOfFoo}`);
     expect(foo.name).to.equal(`Foo #${idOfFoo}`);
     expect(foo.order).to.equal(idOfFoo);
   };
@@ -74,8 +74,8 @@ describe('Document conversion test', () => {
   beforeEach(async () => {
     session = store.openSession();
 
-    await session.store<TestConversion>(makeDocument('TestConversion/1')); 
-    await session.store<TestConversion>(makeDocument('TestConversion/2', new Date(now.getTime() + 1000 * 60 * 60 * 24))); 
+    await session.store<TestConversion>(makeDocument('TestConversions/1')); 
+    await session.store<TestConversion>(makeDocument('TestConversions/2', new Date(now.getTime() + 1000 * 60 * 60 * 24))); 
     await session.store({
       name: "G",
       dateOfBirth: new Date("1987-10-12")
@@ -98,7 +98,7 @@ describe('Document conversion test', () => {
 
     it('should convert on load', async () => {
       let doc: TestConversion;
-      const key: string = 'TestConversion/1';
+      const key: string = 'TestConversions/1';
 
       session = store.openSession();
       doc = await session.load<TestConversion>(key, TestConversion, [], nestedObjectTypes);
@@ -112,7 +112,7 @@ describe('Document conversion test', () => {
       session = store.openSession();
       store.conventions.addDocumentInfoResolver({ resolveConstructor });
 
-      await session.load<TestConversion>('TestConversion/1')
+      await session.load<TestConversion>('TestConversions/1')
         .then((result: TestConversion) => docs.push(result));
 
       await session.query<TestConversion>({
@@ -127,13 +127,13 @@ describe('Document conversion test', () => {
       expect(docs).to.have.lengthOf(3);
       
       [1, 1, 2].forEach((id: number, index: number) =>
-        checkDoc(`TestConversion/${id}`, docs[index])
+        checkDoc(`TestConversions/${id}`, docs[index])
       );
     });
 
     it('should convert on store then on re-load', async () => {
       let doc: TestConversion;
-      const key: string = 'TestingConversion/New';
+      const key: string = 'TestingConversions/New';
 
       session = store.openSession();
 
@@ -163,11 +163,11 @@ describe('Document conversion test', () => {
       expect(docs).to.have.lengthOf(1);
       
       [doc] = docs;            
-      checkDoc('TestConversion/2', doc);      
+      checkDoc('TestConversions/2', doc);      
     });
 
     it('should resolve custom id property name', async () => {
-      const key: string = 'TestingCustomIdProperty/New';
+      const key: string = 'TestingCustomIdProperties/New';
       const title: string = 'Testing custom id property';
       let doc: TestCustomIdProperty = new TestCustomIdProperty(key, title);
 

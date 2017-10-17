@@ -24,12 +24,12 @@ describe('Batch command test', () => {
   });
 
   beforeEach(() => {
-    const metadata: object = {'Raven-Node-Type': 'Product', '@collection': 'products'};
+    const metadata: object = {'Raven-Node-Type': 'Product', '@collection': 'Products'};
 
-    putCommand1 = new PutCommandData('products/999', {'Name': 'tests', 'Category': 'testing', '@metadata': metadata});
-    putCommand2 = new PutCommandData('products/1000', {'Name': 'tests', 'Category': 'testing', '@metadata': metadata});
-    deleteCommand = new DeleteCommandData('products/1000');
-    scriptedPatchCommand = new PatchCommandData('products/999', new PatchRequest("this.Name = 'testing';"));
+    putCommand1 = new PutCommandData('Products/999', {'Name': 'tests', 'Category': 'testing', '@metadata': metadata});
+    putCommand2 = new PutCommandData('Products/1000', {'Name': 'tests', 'Category': 'testing', '@metadata': metadata});
+    deleteCommand = new DeleteCommandData('Products/1000');
+    scriptedPatchCommand = new PatchCommandData('Products/999', new PatchRequest("this.Name = 'testing';"));
   });
 
   describe('Batch request', () => {
@@ -46,7 +46,7 @@ describe('Batch command test', () => {
     it('should be success with a scripted patch', async () => requestExecutor
         .execute(new BatchCommand([putCommand1, scriptedPatchCommand]))
         .then(() => requestExecutor
-        .execute(new GetDocumentCommand('products/999')))
+        .execute(new GetDocumentCommand('Products/999')))
         .then((result: IRavenResponse) => expect((result).Results[0].Name).to.equals('testing'))
     );
 

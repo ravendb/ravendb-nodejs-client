@@ -26,14 +26,14 @@ describe('Document delete test', () => {
     session = store.openSession();
 
     for (let id of ids) {
-      let product: Product = new Product(`Product/${id}`, 'test');
+      let product: Product = new Product(`Products/${id}`, 'test');
       await session.store<Product>(product);
     }
 
     await session.saveChanges();
 
     let products: Product[] = await store.openSession()
-      .load<Product>(ids.map((id: number): string => `Product/${id}`), Product);
+      .load<Product>(ids.map((id: number): string => `Products/${id}`), Product);
 
     changeVector = products.map((product: Product) => product['@metadata']['@change-vector']);
   });
@@ -41,7 +41,7 @@ describe('Document delete test', () => {
   describe('Document delete', () => {
     it('should delete with key with save session', async() => {
       let product: Product;
-      const key: string = "Product/101";
+      const key: string = "Products/101";
       session = store.openSession();
 
       await session.delete<Product>(key);
@@ -53,7 +53,7 @@ describe('Document delete test', () => {
 
     it('should delete with key without save session', async() => {
       let product: Product;
-      const key: string = "Product/10";
+      const key: string = "Products/10";
       session = store.openSession();
 
       await session.delete<Product>(key);
@@ -64,7 +64,7 @@ describe('Document delete test', () => {
 
     it('should fail trying delete document by key after it has been changed', async() => {
       let product: Product;
-      const key: string = "Product/106";
+      const key: string = "Products/106";
       session = store.openSession();
 
       product = await session.load<Product>(key, Product);
@@ -75,7 +75,7 @@ describe('Document delete test', () => {
 
     it('should delete document after it has been changed and save session', async() => {
       let product: Product;
-      const key: string = "Product/107";
+      const key: string = "Products/107";
       session = store.openSession();
 
       product = await session.load<Product>(key, Product);
@@ -92,7 +92,7 @@ describe('Document delete test', () => {
       session = store.openSession();
 
       for (let i: number = 0; i < ids.length; i++) {
-        await session.delete<Product>(`Product/${ids[i]}`, changeVector[i]);
+        await session.delete<Product>(`Products/${ids[i]}`, changeVector[i]);
       }
 
       await expect(session.saveChanges()).to.be.fulfilled;
@@ -103,7 +103,7 @@ describe('Document delete test', () => {
 
       for (let i: number = 0; i < ids.length; i++) {
 
-          await session.delete<Product>(`Product/${ids[i]}`, `${changeVector[i]}:BROKEN:VECTOR`);
+          await session.delete<Product>(`Products/${ids[i]}`, `${changeVector[i]}:BROKEN:VECTOR`);
       }
 
       await expect(session.saveChanges()).to.be.rejected;

@@ -76,7 +76,7 @@ describe('Document store test', () => {
       session = store.openSession();
       
       product = await session.store<Product>(product);
-      expect(product.id).to.match(/^Product\/\d+(\-\w)?$/);
+      expect(product.id).to.match(/^Products\/\d+(\-\w)?$/);
       await session.saveChanges();
 
       product = await store.openSession().load<Product>(product.id, Product);
@@ -88,8 +88,8 @@ describe('Document store test', () => {
       let product: Product = <Product>{name: "New Product"};    
       session = store.openSession();
       
-      await session.store<Product>(product, 'Product/1');
-      expect(product.id).to.equals('Product/1');
+      await session.store<Product>(product, 'Products/1');
+      expect(product.id).to.equals('Products/1');
       await session.saveChanges();
 
       product = await store.openSession().load<Product>(product.id);      
@@ -99,7 +99,7 @@ describe('Document store test', () => {
       product = <Product>{name: "New Product"};    
       session = store.openSession();
       await session.store<Product>(product, 'Products/');
-      expect(product.id).to.match(/^Product\/\d+(\-\w)?$/);
+      expect(product.id).to.match(/^Products\/\d+(\-\w)?$/);
       await session.saveChanges();
 
       product = await store.openSession().load<Product>(product.id);
@@ -112,7 +112,7 @@ describe('Document store test', () => {
       session = store.openSession();
       
       await session.store<Product>(product, null, "Product");
-      expect(product.id).to.match(/^Product\/\d+(\-\w)?$/);
+      expect(product.id).to.match(/^Products\/\d+(\-\w)?$/);
       await session.saveChanges();
 
       product = await store.openSession().load<Product>(product.id);
@@ -122,7 +122,7 @@ describe('Document store test', () => {
       product = <Product>{name: "New Product", "@metadata": {"Raven-Node-Type": "Product"}};    
       session = store.openSession();      
       await session.store<Product>(product);
-      expect(product.id).to.match(/^Product\/\d+(\-\w)?$/);
+      expect(product.id).to.match(/^Products\/\d+(\-\w)?$/);
       await session.saveChanges();
 
       product = await store.openSession().load<Product>(product.id);
@@ -132,7 +132,7 @@ describe('Document store test', () => {
       product = <Product>{name: "New Product", "@metadata": {"@collection": "Products"}};    
       session = store.openSession();      
       await session.store<Product>(product);
-      expect(product.id).to.match(/^Product\/\d+(\-\w)?$/);
+      expect(product.id).to.match(/^Products\/\d+(\-\w)?$/);
       await session.saveChanges();
 
       product = await store.openSession().load<Product>(product.id);
@@ -146,7 +146,7 @@ describe('Document store test', () => {
       store.conventions.addDocumentInfoResolver({ resolveDocumentType });
       session = store.openSession();      
       await session.store<Product>(product);
-      expect(product.id).to.match(/^Product\/\d+(\-\w+)?$/);
+      expect(product.id).to.match(/^Products\/\d+(\-\w+)?$/);
       await session.saveChanges();
 
       product = await store.openSession().load<Product>(product.id);

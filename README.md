@@ -32,7 +32,7 @@ const session = store.openSession();
 4. Call `saveChanges()` when you'll finish working with a session
 ```javascript
 session
- .load('Users/1')
+ .load('Users/1-A')
  .then((user) => {
    user.password = md5('new password');
 
@@ -48,7 +48,7 @@ session
 1. You can use callbacks
 ```javascript
 session
- .load('Users/1', null, [], {}, (user) => {
+ .load('Users/1-A', null, [], {}, (user) => {
    user.password = md5('new password');
 
    session.store(user, null, null, null, () => {
@@ -62,7 +62,7 @@ session
 2. You can use promises as well
 ```javascript
 session
- .load('Users/1')
+ .load('Users/1-A')
  .then((user) => {
    user.password = md5('new password');
 
@@ -83,7 +83,7 @@ const co = require('co');
 co(function * () {
   session = store.openSession();
 
-  let user = yield store.load('Users/1');
+  let user = yield store.load('Users/1-A');
 
   user.password = md5('new password');
   yield session.store(user);
@@ -98,7 +98,7 @@ co(function * () {
 async () => {
   session = store.openSession();
 
-  let user = await store.load('Users/1');
+  let user = await store.load('Users/1-A');
 
   user.password = md5('new password');
   await session.store(user);
@@ -123,37 +123,37 @@ let product = {
 };
 
 product = await session.store(product, 'Products/');
-console.log(product.id); // will output Products/<some number> e.g. Products/1
+console.log(product.id); // will output Products/<some number>-<some letter (server node tag)> e.g. Products/1-A
 await session.saveChanges();
 ```
 
 ### Loading documents
 ```javascript
-product = await session.load('Products/1');
+product = await session.load('Products/1-A');
 console.log(product.title); // iPhone X
-console.log(product.id); // Products/1
+console.log(product.id); // Products/1-A
 ```
 ### Updating documents
 ```javascript
-product = await session.load('Products/1');
+product = await session.load('Products/1-A');
 product.in_stock = false;
 product.last_update = new Date();
 await session.store(product);
 await session.saveChanges();
 
-product = await session.load('Products/1');
+product = await session.load('Products/1-A');
 console.log(product.in_stock); // false
 console.log(product.last_update); // outputs current date
 ```
 ### Deleting documents
 ```javascript
-product = await session.load('Products/1');
+product = await session.load('Products/1-A');
 await session.delete(product);
 // or you can just do
-// await session.delete('Products/1');
+// await session.delete('Products/1-A');
 await session.saveChanges();
 
-product = await session.load('Products/1');
+product = await session.load('Products/1-A');
 console.log(product); // undefined
 ```
 ## Querying documents
@@ -172,7 +172,8 @@ const {DocumentStore, QueryOperators} = require('ravendb');
 // ...
 
 query
-  .usingDefaultOperator(QueryOperators.And)
+  .waitForNonStaleResults()
+  .usingDefaultOperator(QueryOperators.And)  
   .whereEquals('manufacturer', 'Apple')
   .whereEquals('in_stock', true)
   .whereBetween('last_update', new Date('2017-10-01T00:00:00'), new Date())
@@ -264,9 +265,9 @@ await session.saveChanges();
 ```
 3. When loading document, pass class constructor as second parameter of `session.load()`:
 ```javascript
-let product = await session.load('Products/1', Product);
+let product = await session.load('Products/1-A', Product);
 console.log(product instanceof Product); // true
-console.log(product.id); // Products/1
+console.log(product.id); // Products/1-A
 ```
 4. When querying documents, pass class constructor to `documentType` option of `session.query({  ... })`:
 ```javascript
@@ -291,9 +292,9 @@ store.conventions.addDocumentInfoResolver({
 
 session = store.openSession();
 
-let product = await session.load('Products/1');
+let product = await session.load('Products/1-A');
 console.log(product instanceof Product); // true
-console.log(product.id); // Products/1
+console.log(product.id); // Products/1-A
 
 let products = await session.query({ collection: 'Products' }).all();
 
@@ -340,18 +341,20 @@ store.conventions.addDocumentInfoResolver({
 
 (async (): Promise<void> => {
   let product: Product = new Product(
-    null, 'iPhone X', 999.99, 'USD', 64, 'Apple', true, new Date('2017-10-01T00:00:00'));
+    null, 'iPhone X', 999.99, 'USD', 64, 'Apple', true, new Date('2017-10-01T00:00:00')
+  );
 
   product = await session.store<Product>(product);
   console.log(product instanceof Product); // true
   console.log(product.id.includes('Products/')); // true
   await session.saveChanges();
 
-  product = await session.load<Product>('Products/1');
+  product = await session.load<Product>('Products/1-A');
   console.log(product instanceof Product); // true
-  console.log(product.id); // Products/1
+  console.log(product.id); // Products/1-A
 
   let products: Product[] = await session
+    .waitForNonStaleResults()
     .query<Product>({ collection: 'Products' })
     .usingDefaultOperator(QueryOperators.And)
     .whereEquals<string>('manufacturer', 'Apple')

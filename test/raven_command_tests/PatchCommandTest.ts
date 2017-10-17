@@ -12,7 +12,7 @@ import {IRavenResponse} from "../../src/Database/RavenCommandResponse";
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 
 describe('Patch command test', () => {
-  const id: string = "products/10";
+  const id: string = "Products/10";
   let requestExecutor: RequestExecutor;
   let changeVector: string;
   let store: IDocumentStore;
