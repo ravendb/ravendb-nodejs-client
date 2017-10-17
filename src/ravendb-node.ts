@@ -15,7 +15,7 @@ import * as RequestPromise from 'request-promise';
 export {AbstractCallback, EmptyCallback, EntityIdCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback, QueryResultsCallback} from './Typedef/Callbacks';
 export {PromiseResolver, PromiseResolve, PromiseReject} from './Utility/PromiseResolver';
 export {IDocumentStore} from './Documents/IDocumentStore';
-export {IDocumentSession, ISessionOptions} from './Documents/Session/IDocumentSession';
+export {IDocumentSession, ISessionOptions, ISessionOperationOptions} from './Documents/Session/IDocumentSession';
 export {IDocumentQueryConditions} from './Documents/Session/IDocumentQueryConditions';
 export {IDocumentQueryBase, IRawDocumentQuery, IDocumentQuery, IDocumentQueryOptions} from './Documents/Session/IDocumentQuery';
 export {IQueryBuilder} from './Documents/Session/Query/IQueryBuilder';

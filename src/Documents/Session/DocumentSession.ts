@@ -1,13 +1,13 @@
 import * as _ from 'lodash';
 import * as BluebirdPromise from 'bluebird'
-import {IDocumentSession} from "./IDocumentSession";
+import {IDocumentSession, ISessionOperationOptions} from "./IDocumentSession";
 import {IDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
 import {DocumentQueryBase, DocumentQuery} from "./DocumentQuery";
 import {IDocumentStore} from '../IDocumentStore';
 import {AdvancedSessionOperations} from './AdvancedSessionOperations';
 import {RequestExecutor} from '../../Http/Request/RequestExecutor';
 import {DocumentConventions, DocumentConstructor, IDocumentConversionResult, IStoredRawEntityInfo, DocumentType, IDocumentAssociationCheckResult} from '../Conventions/DocumentConventions';
-import {EmptyCallback, EntityCallback, EntitiesArrayCallback} from '../../Typedef/Callbacks';
+import {AbstractCallback, EmptyCallback, EntityCallback, EntitiesArrayCallback} from '../../Typedef/Callbacks';
 import {PromiseResolver} from '../../Utility/PromiseResolver';
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {InvalidOperationException, RavenException, NonUniqueObjectException} from "../../Database/DatabaseExceptions";
@@ -70,13 +70,34 @@ export class DocumentSession implements IDocumentSession {
     this.attachedQueries = new WeakMap<DocumentQueryBase, boolean>();
   }
 
-  public async load<T extends Object = IRavenObject>(idOrIds: string, documentType?: DocumentType<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntityCallback<T>): Promise<T>;
-  public async load<T extends Object = IRavenObject>(idOrIds: string[], documentType?: DocumentType<T>, includes?: string[], nestedObjectTypes?: IRavenObject<DocumentConstructor>, callback?: EntitiesArrayCallback<T>): Promise<T[]>;
-  public async load<T extends Object = IRavenObject>(idOrIds: string | string[], documentType?: DocumentType<T>, includes?: string[], nestedObjectTypes: IRavenObject<DocumentConstructor> = {}, callback?: EntityCallback<T>
-    | EntitiesArrayCallback<T>
-  ): Promise<T | T[]> {
+  public async load<T extends Object = IRavenObject>(id: string, callback?: EntityCallback<T>): Promise<T>;
+  public async load<T extends Object = IRavenObject>(id: string, options?: ISessionOperationOptions<T>, callback?: EntityCallback<T>): Promise<T>;
+  public async load<T extends Object = IRavenObject>(ids: string[], callback?: EntityCallback<T>): Promise<T[]>;
+  public async load<T extends Object = IRavenObject>(ids: string[], options?: ISessionOperationOptions<T>, callback?: EntitiesArrayCallback<T>): Promise<T[]>;
+  public async load<T extends Object = IRavenObject>(idOrIds: string | string[], optionsOrCallback?: ISessionOperationOptions<T> | EntityCallback<T> | EntitiesArrayCallback<T>, callback?: EntityCallback<T> | EntitiesArrayCallback<T>): Promise<T | T[]> {
+    let includes: string[] = null;
+    let documentType: DocumentType<T> = null;
+    let options: ISessionOperationOptions<T> = null;
+    let nestedObjectTypes: IRavenObject<DocumentConstructor> = null;
+    let loadCallback: EntityCallback<T> | EntitiesArrayCallback<T> = null;
+
     if (_.isEmpty(idOrIds)) {
       return BluebirdPromise.reject(new InvalidOperationException('Document ID isn\'t set or ids list is empty'));
+    }
+
+    if (TypeUtil.isObject(optionsOrCallback)) {
+      options = <ISessionOperationOptions<T>>optionsOrCallback;
+      
+      includes = options.includes;
+      documentType = options.documentType;
+      nestedObjectTypes = options.nestedObjectTypes;
+      loadCallback = options.callback;
+    } else if (TypeUtil.isFunction(optionsOrCallback)) {
+      loadCallback = <EntityCallback<T> | EntitiesArrayCallback<T>>optionsOrCallback;
+    }
+
+    if (!loadCallback && TypeUtil.isFunction(callback)) {
+      loadCallback = callback;
     }
 
     const loadingOneDoc: boolean = !TypeUtil.isArray(idOrIds);
@@ -133,15 +154,33 @@ export class DocumentSession implements IDocumentSession {
           result = _.first(results) as T;
         }
 
-        PromiseResolver.resolve<T | T[]>(result, null, callback);
+        PromiseResolver.resolve<T | T[]>(result, null, loadCallback);
         return result;
       })
-      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
+      .catch((error: RavenException) => PromiseResolver.reject(error, null, loadCallback));
   }
 
-  public async delete<T extends Object = IRavenObject>(idOrDocument: string, expectedChangeVector?: string, callback?: EmptyCallback): Promise<void>;
-  public async delete<T extends Object = IRavenObject>(idOrDocument: T, expectedChangeVector?: string, callback?: EmptyCallback): Promise<void>;
-  public async delete<T extends Object = IRavenObject>(idOrDocument: string | T, expectedChangeVector?: string, callback?: EmptyCallback): Promise<void> {
+  public async delete<T extends Object = IRavenObject>(id: string, callback?: EntityCallback<T>): Promise<T>;
+  public async delete<T extends Object = IRavenObject>(id: string, options?: ISessionOperationOptions<T>, callback?: EntityCallback<T>): Promise<T>;
+  public async delete<T extends Object = IRavenObject>(document: T, callback?: EntityCallback<T>): Promise<T>;
+  public async delete<T extends Object = IRavenObject>(document: T, options?: ISessionOperationOptions<T>, callback?: EntityCallback<T>): Promise<T>;
+  public async delete<T extends Object = IRavenObject>(idOrDocument: string | T, optionsOrCallback?: ISessionOperationOptions<T> | EntityCallback<T>, callback?: EntityCallback<T>): Promise<void> {
+    let deleteCallback: EntityCallback<T> = null;
+    let expectedChangeVector: string = null;
+
+    if (TypeUtil.isFunction(optionsOrCallback)) {
+      deleteCallback = <EntityCallback<T>>optionsOrCallback;
+    } else if (TypeUtil.isObject(optionsOrCallback)) {
+      let options: ISessionOperationOptions<T> = <ISessionOperationOptions<T>>optionsOrCallback;
+
+      expectedChangeVector = options.expectedChangeVector;
+      deleteCallback = <EntityCallback<T>>options.callback;
+    }
+
+    if (!deleteCallback && TypeUtil.isFunction(callback)) {
+      deleteCallback = callback;
+    }
+
     return BluebirdPromise.resolve()
       .then(() => {
         const conventions = this.conventions;
@@ -165,7 +204,6 @@ export class DocumentSession implements IDocumentSession {
         }
 
         if (!document) {
-
           this.deferCommands.add(new DeleteCommandData(id, expectedChangeVector));
         } else {
           if (!this.rawEntitiesAndMetadata.has(document)) {
@@ -182,20 +220,40 @@ export class DocumentSession implements IDocumentSession {
             info.expectedChangeVector = expectedChangeVector;
             this.rawEntitiesAndMetadata.set(document, info);
           }
+
           this.deletedDocuments.add(document);
         }
 
         this.knownMissingIds.add(id);
         delete this.includedRawEntitiesById[id];
-        PromiseResolver.resolve<void>(null, null, callback);
+        PromiseResolver.resolve<T>(document || null, null, deleteCallback);
       })
-      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
+      .catch((error: RavenException) => PromiseResolver.reject(error, null, deleteCallback));
   }
 
-  public async store<T extends Object = IRavenObject>(document: T, id?: string, documentType?: DocumentType<T>, changeVector?: string, callback?: EntityCallback<T>): Promise<T> {
+  public async store<T extends Object = IRavenObject>(document: T, id?: string, callback?: EntityCallback<T>): Promise<T>;
+  public async store<T extends Object = IRavenObject>(document: T, id?: string, options?: ISessionOperationOptions<T>, callback?: EntityCallback<T>): Promise<T>;
+  public async store<T extends Object = IRavenObject>(document: T, id?: string, optionsOrCallback?: ISessionOperationOptions<T> | EntityCallback<T>, callback?: EntityCallback<T>): Promise<T> {
     let originalMetadata: object;
+    let changeVector: string = null;
     let isNewDocument: boolean = false;
+    let documentType: DocumentType<T> = null;
+    let storeCallback: EntityCallback<T> = null;
     const conventions: DocumentConventions = this.conventions;
+
+    if (TypeUtil.isObject(optionsOrCallback)) {
+      let options: ISessionOperationOptions<T> = <ISessionOperationOptions<T>>optionsOrCallback;
+
+      changeVector = options.expectedChangeVector;
+      documentType = options.documentType;
+      storeCallback = <EntityCallback<T>>options.callback;
+    } else if (TypeUtil.isFunction(optionsOrCallback)) {
+      storeCallback = <EntityCallback<T>>optionsOrCallback;
+    }
+
+    if (!storeCallback && TypeUtil.isFunction(callback)) {
+      storeCallback = callback;
+    }
 
     return this.checkDocumentAndMetadataBeforeStore<T>(document, id, documentType)
       .then((document: T) => this.checkAssociationAndChangeVectorBeforeStore<T>(document, id, changeVector))
@@ -240,10 +298,10 @@ export class DocumentSession implements IDocumentSession {
           });
         }
 
-        PromiseResolver.resolve<T>(document, null, callback);
+        PromiseResolver.resolve<T>(document, null, storeCallback);
         return document;
       })
-      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
+      .catch((error: RavenException) => PromiseResolver.reject(error, null, storeCallback));
   }
 
   public async saveChanges(callback?: EmptyCallback): Promise<void> {
@@ -327,7 +385,7 @@ more responsive application.", maxRequests
     this.incrementRequestsCount();
 
     return this.requestExecutor
-      .execute(new GetDocumentCommand(ids))
+      .execute(new GetDocumentCommand(ids, false, includes))
       .then((response: IRavenResponse): T[] | BluebirdPromise.Thenable<T[]> => {
         let responseResults: object[] = [];
         let responseIncludes: object[] = [];

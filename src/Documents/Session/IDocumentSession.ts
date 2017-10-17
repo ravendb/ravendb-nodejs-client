@@ -12,12 +12,12 @@ export interface ISessionOptions {
   requestExecutor?: RequestExecutor;
 }
 
-export interface ISessionOperationOptions<T, C extends AbstractCallback<T>> {
+export interface ISessionOperationOptions<T> {
   documentType?: DocumentType<T>,
   includes?: string[],
   nestedObjectTypes?: IRavenObject<DocumentConstructor>,
   expectedChangeVector?: string,
-  callback?: C
+  callback?: EntityCallback<T> | EntitiesArrayCallback<T>
 }
 
 export interface IDocumentSession {
@@ -26,13 +26,15 @@ export interface IDocumentSession {
   advanced: AdvancedSessionOperations;
 
   load<T extends Object = IRavenObject>(id: string, callback?: EntityCallback<T>): Promise<T>;
-  load<T extends Object = IRavenObject>(id: string, options?: ISessionOperationOptions<T, EntityCallback<T>>, callback?: EntityCallback<T>): Promise<T>;
+  load<T extends Object = IRavenObject>(id: string, options?: ISessionOperationOptions<T>, callback?: EntityCallback<T>): Promise<T>;
   load<T extends Object = IRavenObject>(ids: string[], callback?: EntityCallback<T>): Promise<T[]>;
-  load<T extends Object = IRavenObject>(ids: string[], options?: ISessionOperationOptions<T, EntitiesArrayCallback<T>>, callback?: EntitiesArrayCallback<T>): Promise<T[]>;
+  load<T extends Object = IRavenObject>(ids: string[], options?: ISessionOperationOptions<T>, callback?: EntitiesArrayCallback<T>): Promise<T[]>;
   delete<T extends Object = IRavenObject>(id: string, callback?: EntityCallback<T>): Promise<T>;
-  delete<T extends Object = IRavenObject>(document: T, options?: ISessionOperationOptions<T, EntityCallback<T>>, callback?: EntityCallback<T>): Promise<T>;
+  delete<T extends Object = IRavenObject>(id: string, options?: ISessionOperationOptions<T>, callback?: EntityCallback<T>): Promise<T>;
+  delete<T extends Object = IRavenObject>(document: T, callback?: EntityCallback<T>): Promise<T>;
+  delete<T extends Object = IRavenObject>(document: T, options?: ISessionOperationOptions<T>, callback?: EntityCallback<T>): Promise<T>;
   store<T extends Object = IRavenObject>(document: T, id?: string, callback?: EntityCallback<T>): Promise<T>;
-  store<T extends Object = IRavenObject>(document: T, id?: string, options?: ISessionOperationOptions<T, EntityCallback<T>>, callback?: EntityCallback<T>): Promise<T>;
+  store<T extends Object = IRavenObject>(document: T, id?: string, options?: ISessionOperationOptions<T>, callback?: EntityCallback<T>): Promise<T>;
   query<T extends Object = IRavenObject>(options?: IDocumentQueryOptions<T>): IDocumentQuery<T>;
   attachQuery<T extends Object = IRavenObject>(query: DocumentQueryBase<T>): void;
   saveChanges(): Promise<void>;

@@ -40,7 +40,7 @@ describe('Document store test', () => {
       await session.store<Foo>(foo);
       await session.saveChanges();
 
-      foo = await store.openSession().load<Foo>(foo.id, Foo);
+      foo = await store.openSession().load<Foo>(foo.id, {documentType: Foo});
       expect(foo.name).to.equals('test');
     });
 
@@ -53,7 +53,7 @@ describe('Document store test', () => {
       await session.store<Foo>(foo);
       await session.saveChanges();
 
-      foo = await store.openSession().load<Foo>(key, Foo);
+      foo = await store.openSession().load<Foo>(key, {documentType: Foo});
       expect(foo.order).to.equals(20);      
     });
 
@@ -79,7 +79,7 @@ describe('Document store test', () => {
       expect(product.id).to.match(/^Products\/\d+(\-\w)?$/);
       await session.saveChanges();
 
-      product = await store.openSession().load<Product>(product.id, Product);
+      product = await store.openSession().load<Product>(product.id, {documentType: Product});
       expect(product['@metadata']['Raven-Node-Type']).to.equals('Product');  
       expect(product['@metadata']['@collection']).to.equals('Products');      
     });
@@ -111,7 +111,7 @@ describe('Document store test', () => {
       let product: Product = <Product>{name: "New Product"};    
       session = store.openSession();
       
-      await session.store<Product>(product, null, "Product");
+      await session.store<Product>(product, null, {documentType: "Product"});
       expect(product.id).to.match(/^Products\/\d+(\-\w)?$/);
       await session.saveChanges();
 

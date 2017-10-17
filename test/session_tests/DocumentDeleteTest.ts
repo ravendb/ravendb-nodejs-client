@@ -33,7 +33,7 @@ describe('Document delete test', () => {
     await session.saveChanges();
 
     let products: Product[] = await store.openSession()
-      .load<Product>(ids.map((id: number): string => `Products/${id}`), Product);
+      .load<Product>(ids.map((id: number): string => `Products/${id}`), {documentType: Product});
 
     changeVector = products.map((product: Product) => product['@metadata']['@change-vector']);
   });
@@ -46,7 +46,7 @@ describe('Document delete test', () => {
 
       await session.delete<Product>(key);
       await session.saveChanges();
-      product = await session.load<Product>(key, Product);
+      product = await session.load<Product>(key, {documentType: Product});
 
       expect(product).to.be.null;
     });
@@ -57,7 +57,7 @@ describe('Document delete test', () => {
       session = store.openSession();
 
       await session.delete<Product>(key);
-      product = await session.load<Product>(key, Product);
+      product = await session.load<Product>(key, {documentType: Product});
 
       expect(product).to.be.null;
     });
@@ -67,7 +67,7 @@ describe('Document delete test', () => {
       const key: string = "Products/106";
       session = store.openSession();
 
-      product = await session.load<Product>(key, Product);
+      product = await session.load<Product>(key, {documentType: Product});
       product.name = "testing";
 
       await expect(session.delete<Product>(key)).to.be.rejected;
@@ -78,12 +78,12 @@ describe('Document delete test', () => {
       const key: string = "Products/107";
       session = store.openSession();
 
-      product = await session.load<Product>(key, Product);
+      product = await session.load<Product>(key, {documentType: Product});
       product.name = "testing";
 
       await session.delete<Product>(product);
       await session.saveChanges();
-      product = await session.load<Product>(key, Product);
+      product = await session.load<Product>(key, {documentType: Product});
 
       expect(product).to.be.null;
     });
@@ -92,7 +92,7 @@ describe('Document delete test', () => {
       session = store.openSession();
 
       for (let i: number = 0; i < ids.length; i++) {
-        await session.delete<Product>(`Products/${ids[i]}`, changeVector[i]);
+        await session.delete<Product>(`Products/${ids[i]}`, {expectedChangeVector: changeVector[i]});
       }
 
       await expect(session.saveChanges()).to.be.fulfilled;
@@ -103,7 +103,7 @@ describe('Document delete test', () => {
 
       for (let i: number = 0; i < ids.length; i++) {
 
-          await session.delete<Product>(`Products/${ids[i]}`, `${changeVector[i]}:BROKEN:VECTOR`);
+          await session.delete<Product>(`Products/${ids[i]}`, {expectedChangeVector: `${changeVector[i]}:BROKEN:VECTOR`});
       }
 
       await expect(session.saveChanges()).to.be.rejected;

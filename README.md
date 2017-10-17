@@ -48,10 +48,10 @@ session
 1. You can use callbacks
 ```javascript
 session
- .load('Users/0-A', null, [], {}, (user) => {
+ .load('Users/0-A', (user) => {
    user.password = md5('new password');
 
-   session.store(user, null, null, null, () => {
+   session.store(user, null, () => {
      session.saveChanges(() => {
        // here session is complete
      });
@@ -263,9 +263,9 @@ console.log(product instanceof Product); // true
 console.log(product.id.includes('Products/')); // true
 await session.saveChanges();
 ```
-3. When loading document, pass class constructor as second parameter of `session.load()`:
+3. When loading document, you need to use `session.load()` second `options` param. Pass class constructor as `documentType` option:
 ```javascript
-let product = await session.load('Products/0-A', Product);
+let product = await session.load('Products/0-A', {documentType: Product});
 console.log(product instanceof Product); // true
 console.log(product.id); // Products/0-A
 ```
