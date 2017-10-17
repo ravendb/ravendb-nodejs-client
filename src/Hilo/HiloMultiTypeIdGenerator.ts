@@ -14,7 +14,11 @@ export class HiloMultiTypeIdGenerator extends AbstractHiloIdGenerator implements
   }
 
   public generateDocumentId(entity: object, documentType?: string): BluebirdPromise<string> {
-    let tag: string = this.conventions.getDocumentTypeName(documentType);
+    let tag: string = this.conventions.getCollectionName(documentType);
+
+    if (this.conventions.emptyCollection === tag) {
+      tag = null;
+    }
 
     return this.createGeneratorForTag(tag)
       .then((generator: IHiloIdGenerator) =>
