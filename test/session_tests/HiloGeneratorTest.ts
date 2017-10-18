@@ -27,12 +27,10 @@ describe('HiLo generator test', () => {
   };
 
   const idIndex = (id: string, documentType: DocumentType): number => {
-    if (TypeUtil.isFunction(documentType)) {
-      documentType = (<DocumentConstructor>documentType).name;
-    }
+    const tag: string = store.conventions.getCollectionName(documentType);
 
-    return parseInt(id.replace('-A', '').replace(<string>documentType + '/', ''));
-  }
+    return parseInt(id.replace('-A', '').replace(`${tag}/`, ''));
+  };
 
   beforeEach(function (): void {
     ({currentDatabase, store} = (this.currentTest as IRavenObject));
