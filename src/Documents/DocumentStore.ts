@@ -148,8 +148,6 @@ export class DocumentStore implements IDocumentStore {
   }
 
   public async generateId(document: object, documentType?: DocumentType, database?: string, callback?: EntityIdCallback): Promise<string> {
-    let documentTypeName: string = <string>documentType;
-
     if (TypeUtil.isFunction(documentType)) {
       documentType = (<DocumentConstructor>documentType).name;
     }
@@ -162,9 +160,9 @@ export class DocumentStore implements IDocumentStore {
     }
 
     return this._generator.generateDocumentId(document, documentType, database)
-      .then((string: string) => {
-        PromiseResolver.resolve<string>(string, null, callback);
-        return string;
+      .then((id: string) => {
+        PromiseResolver.resolve<string>(id, null, callback);
+        return id;
       })
       .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
   }
