@@ -259,7 +259,7 @@ describe('Document query test', () => {
       .include('product_id')
       .all();
 
-      await session.load<Product>('Products/108', Product);
+      await session.load<Product>('Products/108', {documentType: Product});
       expect(session.numberOfRequestsInSession).to.equals(1);            
     });
 

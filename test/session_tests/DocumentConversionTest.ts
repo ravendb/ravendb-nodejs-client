@@ -101,7 +101,9 @@ describe('Document conversion test', () => {
       const key: string = 'TestConversions/1';
 
       session = store.openSession();
-      doc = await session.load<TestConversion>(key, TestConversion, [], nestedObjectTypes);
+      doc = await session.load<TestConversion>(key, {
+        documentType: TestConversion, nestedObjectTypes
+      });
       
       checkDoc(key, doc);
     });
@@ -141,7 +143,9 @@ describe('Document conversion test', () => {
       await session.saveChanges();
 
       session = store.openSession();
-      doc = await session.load<TestConversion>(key, TestConversion, [], nestedObjectTypes);
+      doc = await session.load<TestConversion>(key, {
+        documentType: TestConversion, nestedObjectTypes
+      });
 
       checkDoc(key, doc);
     });

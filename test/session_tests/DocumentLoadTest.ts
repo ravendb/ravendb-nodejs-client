@@ -89,14 +89,17 @@ describe('Document load test', () => {
 
     it('should load track entity with object type', async () => {
       session = store.openSession();
-      product = await session.load<Product>("Products/101", Product);
+      product = await session.load<Product>("Products/101", {documentType: Product});
 
       expect(product).to.be.an.instanceOf(Product);
     });
 
     it('should load track entity with object type and nested object types', async () => {
       session = store.openSession();
-      company = await session.load<Company>("Companies/1", Company, null, {product: Product});
+      company = await session.load<Company>("Companies/1", {
+        documentType: Company,
+        nestedObjectTypes: {product: Product}
+      });
 
       expect(company).to.be.an.instanceOf(Company);
       expect(company.product).to.be.an.instanceOf(Product);
@@ -104,10 +107,13 @@ describe('Document load test', () => {
 
     it('should load with includes', async () => {
       session = store.openSession();
-      await session.load<Order>("Orders/105", Order, ["product_id"]);
+      await session.load<Order>("Orders/105", {
+        documentType: Order, 
+        includes: ["product_id"]
+      });
+      
       await session.load<Product>("Products/101");
-
-      expect(session.numberOfRequestsInSession).to.equals(2);
+      expect(session.numberOfRequestsInSession).to.equals(1);
     });
   });
 });

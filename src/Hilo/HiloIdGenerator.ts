@@ -62,30 +62,30 @@ export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdG
   }
 
   protected tryRequestNextRange(): BluebirdPromise<HiloRangeValue> {
-    const range: HiloRangeValue =this._range;
+    const range: HiloRangeValue = this._range;
     
     return (this._lock
-    .acquire((): any => {
-        if (!range.needsNewRange) {
-          range.increment();
+      .acquire((): any => {
+          if (!range.needsNewRange) {
+            range.increment();
 
-          return BluebirdPromise.resolve<HiloRangeValue>(range);
+            return BluebirdPromise.resolve<HiloRangeValue>(range);
+          }
+        
+        return this.getNextRange()
+          .then((newRange: HiloRangeValue): HiloRangeValue => {
+            this._range = newRange;
+
+            return newRange;
+          });
+      }) as BluebirdPromise<HiloRangeValue>)
+      .catch((error: Error): BluebirdPromise<HiloRangeValue> => {
+        if (!(error instanceof ConcurrencyException)) {
+          return BluebirdPromise.reject<HiloRangeValue>(error);
+        } else {
+          return this.tryRequestNextRange();
         }
-      
-      return this.getNextRange()
-        .then((newRange: HiloRangeValue): HiloRangeValue => {
-          this._range = newRange;
-
-          return newRange;
-        });
-    }) as BluebirdPromise<HiloRangeValue>)
-    .catch((error: Error): BluebirdPromise<HiloRangeValue> => {
-      if (!(error instanceof ConcurrencyException)) {
-        return BluebirdPromise.reject<HiloRangeValue>(error);
-      } else {
-        return this.tryRequestNextRange();
-      }
-    });
+      });
   }
 
   protected assembleDocumentId(currentRangeValue: number): string {
