@@ -7,7 +7,7 @@ import {DocumentSession} from "./Session/DocumentSession";
 import {RequestExecutor, IRequestExecutor} from '../Http/Request/RequestExecutor';
 import {EntityIdCallback} from '../Typedef/Callbacks';
 import {DocumentConventions, DocumentConstructor, DocumentType} from './Conventions/DocumentConventions';
-import {InvalidOperationException, RavenException} from '../Database/DatabaseExceptions';
+import {InvalidOperationException, RavenException, NotSupportedException} from '../Database/DatabaseExceptions';
 import {IHiloIdGenerator} from '../Hilo/IHiloIdGenerator';
 import {HiloMultiDatabaseIdGenerator} from '../Hilo/HiloMultiDatabaseIdGenerator';
 import {PromiseResolver} from "../Utility/PromiseResolver";
@@ -97,6 +97,12 @@ export class DocumentStore implements IDocumentStore {
 
   public initialize(): IDocumentStore {
     if (!this._initialized) {
+      if (this._urls.some((url: string): boolean => 
+        0 === url.toLowerCase().indexOf('https'))
+      ) {
+        throw new NotSupportedException("Access to secured servers is not yet supported in Node.js client");
+      }
+
       if (!this._database) {
         throw new InvalidOperationException("Default database isn't set.");
       }
