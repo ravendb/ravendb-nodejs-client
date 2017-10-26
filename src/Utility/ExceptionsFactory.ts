@@ -52,8 +52,12 @@ export class ExceptionsFactory {
 
   public static throw(message: string): never;
   public static throw(type: string, message: string): never;
-  public static throw(typeOrMessage: string, messageString?: string): never {
-    throw this.create(typeOrMessage, messageString);
+  public static throw(typeOrMessage: string, messageString?: string): void | never {
+    const exception: RavenException = this.create(typeOrMessage, messageString);
+
+    if (!TypeUtil.isNull(exception)) {
+      throw exception;
+    }    
   }
 
   public static throwFrom(json: object): void | never;
