@@ -62,6 +62,10 @@ export class DocumentConventions {
     return '@empty';
   }
 
+  public get systemMetaKeys(): string[] {
+    return ['@collection', 'Raven-Node-Type', '@nested_object_types'];
+  }
+
   public addDocumentInfoResolver(resolver: IDocumentInfoResolvable): void {
     if (!resolver) {
       throw new ArgumentNullException('Invalid resolver provided');
