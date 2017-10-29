@@ -437,7 +437,8 @@ more responsive application.", maxRequests
           });
         }
 
-        Serializer.fromJSON<T>(<T>document, source || {}, document['@metadata'] || {}, {}, conventions);
+        Serializer.fromJSON<T>(<T>document, source || {}, _.omit(document['@metadata'] || {},
+            ['@collection', 'Raven-Node-Type', '@nested_object_types']), {}, conventions);
       }
 
       document['@metadata'] = conventions.buildDefaultMetadata(document, docType);
