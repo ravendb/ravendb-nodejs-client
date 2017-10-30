@@ -438,7 +438,7 @@ more responsive application.", maxRequests
         }
 
         Serializer.fromJSON<T>(<T>document, source || {}, _.omit(document['@metadata'] || {},
-            ['@collection', 'Raven-Node-Type', '@nested_object_types']), {}, conventions);
+          conventions.systemMetaKeys), {}, conventions);
       }
 
       document['@metadata'] = conventions.buildDefaultMetadata(document, docType);

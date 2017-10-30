@@ -181,7 +181,32 @@ describe('Document store test', () => {
       expect(product.id).to.exist.and.not.equals('');
       expect(info.originalValue).to.not.have.property('id');
       expect(info.originalMetadata).to.have.property('@id', product.id);
-    });   
+    });
+
+    it('should store custom fields in metadata', async () => {
+      const expiresAt: Date = new Date(new Date().getTime() + (1 * 60000));
+      const testDocumentId: string = 'TestExpirationDocument';
+
+      session = store.openSession();
+
+      await session.store({
+        firstName: 'Delete',
+        lastName: 'Me',
+        email: 'delete.me@test.com',
+        password: 'TestPassword',
+        seeIsoFormatTemp: expiresAt.toISOString(),
+        '@metadata': {
+          '@expires': expiresAt.toISOString(),
+        },
+      }, testDocumentId);
+
+      await session.saveChanges();
+      const document = await session.load(testDocumentId);
+      const documentMetaData = document['@metadata'];
+
+      expect(documentMetaData['@expires']).to.not.be.undefined;
+      expect(documentMetaData['@expires']).to.equal(expiresAt.toISOString());
+    });
   });
 });
 
