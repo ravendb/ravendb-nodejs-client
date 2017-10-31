@@ -292,7 +292,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
         return update(url);
       }
 
-      return BluebirdPromise.reject<void>(error);
+      return BluebirdPromise.reject(error);
     }
 
     this._lastKnownUrls = updateTopologyUrls;

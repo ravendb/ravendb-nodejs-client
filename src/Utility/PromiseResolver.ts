@@ -28,7 +28,7 @@ export class PromiseResolver {
     }
   }
 
-  public static reject(error: Error, reject?: PromiseReject, callback?: AbstractCallback<null>): BluebirdPromise.Thenable<void> {
+  public static reject<T = void>(error: Error, reject?: PromiseReject, callback?: AbstractCallback<null>): BluebirdPromise.Thenable<T> {
     if (reject) {
       reject(error);
     }

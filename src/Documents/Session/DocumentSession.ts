@@ -157,14 +157,14 @@ export class DocumentSession implements IDocumentSession {
         PromiseResolver.resolve<T | T[]>(result, null, loadCallback);
         return result;
       })
-      .catch((error: RavenException) => PromiseResolver.reject(error, null, loadCallback));
+      .catch((error: RavenException) => PromiseResolver.reject<T | T[]>(error, null, loadCallback));
   }
 
-  public async delete<T extends Object = IRavenObject>(id: string, callback?: EntityCallback<T>): Promise<T>;
-  public async delete<T extends Object = IRavenObject>(id: string, options?: ISessionOperationOptions<T>, callback?: EntityCallback<T>): Promise<T>;
-  public async delete<T extends Object = IRavenObject>(document: T, callback?: EntityCallback<T>): Promise<T>;
-  public async delete<T extends Object = IRavenObject>(document: T, options?: ISessionOperationOptions<T>, callback?: EntityCallback<T>): Promise<T>;
-  public async delete<T extends Object = IRavenObject>(idOrDocument: string | T, optionsOrCallback?: ISessionOperationOptions<T> | EntityCallback<T>, callback?: EntityCallback<T>): Promise<void> {
+  public async delete<T extends Object = IRavenObject>(id: string, callback?: EntityCallback<T | null | void>): Promise<T | null | void>;
+  public async delete<T extends Object = IRavenObject>(id: string, options?: ISessionOperationOptions<T>, callback?: EntityCallback<T | null | void>): Promise<T | null | void>;
+  public async delete<T extends Object = IRavenObject>(document: T, callback?: EntityCallback<T | null | void>): Promise<T | null | void>;
+  public async delete<T extends Object = IRavenObject>(document: T, options?: ISessionOperationOptions<T>, callback?: EntityCallback<T | null | void>): Promise<T | null | void>;
+  public async delete<T extends Object = IRavenObject>(idOrDocument: string | T, optionsOrCallback?: ISessionOperationOptions<T> | EntityCallback<T | null | void>, callback?: EntityCallback<T | null | void>): Promise<T | null | void> {
     let deleteCallback: EntityCallback<T> = null;
     let expectedChangeVector: string = null;
 
@@ -228,7 +228,7 @@ export class DocumentSession implements IDocumentSession {
         delete this.includedRawEntitiesById[id];
         PromiseResolver.resolve<T>(document || null, null, deleteCallback);
       })
-      .catch((error: RavenException) => PromiseResolver.reject(error, null, deleteCallback));
+      .catch((error: RavenException) => PromiseResolver.reject<T>(error, null, deleteCallback));
   }
 
   public async store<T extends Object = IRavenObject>(document: T, id?: string, callback?: EntityCallback<T>): Promise<T>;
@@ -301,7 +301,7 @@ export class DocumentSession implements IDocumentSession {
         PromiseResolver.resolve<T>(document, null, storeCallback);
         return document;
       })
-      .catch((error: RavenException) => PromiseResolver.reject(error, null, storeCallback));
+      .catch((error: RavenException) => PromiseResolver.reject<T>(error, null, storeCallback));
   }
 
   public async saveChanges(callback?: EmptyCallback): Promise<void> {
