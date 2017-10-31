@@ -81,7 +81,7 @@ export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdG
       }) as BluebirdPromise<HiloRangeValue>)
       .catch((error: Error): BluebirdPromise<HiloRangeValue> => {
         if (!(error instanceof ConcurrencyException)) {
-          return BluebirdPromise.reject<HiloRangeValue>(error);
+          return BluebirdPromise.reject(error);
         } else {
           return this.tryRequestNextRange();
         }

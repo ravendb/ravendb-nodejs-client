@@ -205,7 +205,7 @@ export class DocumentQueryBase<T extends Object = IRavenObject> extends Observab
     this._skip = 0;
     this.withStatistics = false;
 
-    return this.executeQuery()
+    return (this.executeQuery()
       .then((response: IRavenResponse): T | PromiseLike<T> => {
         const results: T[] = <T[]>this.convertResponseToDocuments(response);
         const result: T = results.length ? _.first(results) : null;
@@ -213,20 +213,20 @@ export class DocumentQueryBase<T extends Object = IRavenObject> extends Observab
         if (results.length !== 1) {
           const errorMessage: string = (results.length > 1)
             ? "There's more than one result corresponding to given query criteria." 
-            : "There's no results corresponding to given query criteria."
+            : "There's no results corresponding to given query criteria.";
 
-          return BluebirdPromise.reject<T>(new InvalidOperationException(errorMessage));
+          return BluebirdPromise.reject(new InvalidOperationException(errorMessage));
         }
 
         PromiseResolver.resolve<T>(result, null, callback);
         return result;
       })
-      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback))
+      .catch((error: RavenException): PromiseLike<T> => PromiseResolver.reject<T>(error, null, callback) as PromiseLike<T>)
       .finally(() => {
         this._take = take;
         this._skip = skip;
         this.withStatistics = withStatistics;
-      });
+      }));
   }
 
   public async first(callback?: EntityCallback<T>): Promise<T> {
@@ -246,7 +246,7 @@ export class DocumentQueryBase<T extends Object = IRavenObject> extends Observab
         PromiseResolver.resolve<T>(result, null, callback);
         return result;
       })
-      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback))
+      .catch((error: RavenException) => PromiseResolver.reject<T>(error, null, callback))
       .finally(() => {
         this._take = take;
         this._skip = skip;
@@ -268,7 +268,7 @@ export class DocumentQueryBase<T extends Object = IRavenObject> extends Observab
         PromiseResolver.resolve<number>(result, null, callback);
         return result;
       })
-      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback))
+      .catch((error: RavenException) => PromiseResolver.reject<number>(error, null, callback))
       .finally(() => {
         this._take = take;
         this._skip = skip;
@@ -286,7 +286,7 @@ export class DocumentQueryBase<T extends Object = IRavenObject> extends Observab
 
         return result;
       })
-      .catch((error: RavenException) => PromiseResolver.reject(error, null, callback));
+      .catch((error: RavenException) => PromiseResolver.reject<T[]>(error, null, callback));
   }
 
   protected executeQuery(): BluebirdPromise<IRavenResponse> {

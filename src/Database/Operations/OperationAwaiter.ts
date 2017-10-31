@@ -84,7 +84,7 @@ export class OperationAwaiter {
         case OperationStatuses.Completed:
           return BluebirdPromise.resolve<IRavenResponse>(result.response);    
         case OperationStatuses.Faulted:
-          return BluebirdPromise.reject<IRavenResponse>(result.exception);        
+          return BluebirdPromise.reject(result.exception);
         default:
           return BluebirdPromise.delay(500)
             .then(() => this.fetchOperationStatus())

@@ -28,8 +28,8 @@ export class Lock {
   }
 
   public acquire(wrapped: ILockCallback): BluebirdPromise<any>;
-  public acquire(wrapped: ILockCallback, callback: (done?: ILockDoneCallback) => any): void;
-  public acquire(wrapped: ILockCallback, callback?: (done?: ILockDoneCallback) => any): void | BluebirdPromise<any> {
+  public acquire(wrapped: ILockCallback, callback: ILockDoneCallback): void;
+  public acquire(wrapped: ILockCallback, callback?: ILockDoneCallback): void | BluebirdPromise<any> {
     if ('function' !== (typeof callback)) {
       return <BluebirdPromise<any>>this.lock.acquire(this._key, wrapped);
     }

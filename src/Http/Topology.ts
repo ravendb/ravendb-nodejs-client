@@ -34,9 +34,9 @@ export class Topology implements IJsonConvertible {
     this._etag = from.Etag || 0;
 
     if (from.Topology && from.Topology.AllNodes) {
-      _.forIn<string>(from.Topology.AllNodes, (url: string, tag: string) => 
+      _.forIn(from.Topology.AllNodes, (url: string, tag: string) => {
         nodes.push({Url: url, ClusterTag: tag})
-      );
+      });
     } else if (from.Nodes) {
       nodes = from.Nodes;
     }
