@@ -354,8 +354,8 @@ store.conventions.addDocumentInfoResolver({
   console.log(product.id); // Products/1-A
 
   let products: Product[] = await session
-    .waitForNonStaleResults()
     .query<Product>({ collection: 'Products' })
+    .waitForNonStaleResults()
     .usingDefaultOperator(QueryOperators.And)
     .whereEquals<string>('manufacturer', 'Apple')
     .whereEquals<boolean>('in_stock', true)
