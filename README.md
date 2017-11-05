@@ -287,7 +287,7 @@ Also you can set global models class resolver (something like class autoloader i
 ```javascript
 store.conventions.addDocumentInfoResolver({
   resolveConstructor: (className) =>
-    require(`./relative/path/to/models/${className}`)
+    require(`./relative/path/to/models/${className}`)[className]
 });
 
 session = store.openSession();
@@ -336,7 +336,7 @@ let session: IDocumentSession;
 store.initialize();
 store.conventions.addDocumentInfoResolver({
   resolveConstructor: (typeName: string): DocumentConstructor =>
-    <DocumentConstructor>require(`./models/${typeName}`)
+    <DocumentConstructor>require(`./models/${typeName}`)[typeName]
 });
 
 (async (): Promise<void> => {

@@ -5,7 +5,8 @@
     "module": "commonjs",
     "declaration": true,
     "outDir": "lib/",
-    "sourceMap": false
+    "sourceMap": false,
+    "lib": [ "dom", "es7" ]
   },
   "files": [
     "./src/ravendb-node.ts"
@@ -13,9 +14,6 @@
   "exclude": [
     "node_modules",
     "lib"
-  ],
-  "lib": [
-    "dom",
-    "es7"
   ]
+  
 }
