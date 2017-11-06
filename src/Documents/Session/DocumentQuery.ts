@@ -85,7 +85,6 @@ export class DocumentQueryBase<T extends Object = IRavenObject> extends Observab
       nestedObjectTypes, withStatistics, indexQueryOptions
     );
 
-    session.attachQuery<T>(query);
     return query;
   }
 

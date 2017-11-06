@@ -1,16 +1,18 @@
 import {DocumentSession} from './DocumentSession';
 import {RequestExecutor} from '../../Http/Request/RequestExecutor';
 import {DocumentQueryParameters, RawDocumentQuery} from './DocumentQuery';
-import {IRawDocumentQuery, IDocumentQueryOptions} from './IDocumentQuery';
+import {IDocumentQueryBase, IRawDocumentQuery, IDocumentQueryOptions} from './IDocumentQuery';
 import {TypeUtil} from '../../Utility/TypeUtil';
 import {IRavenObject} from '../../Typedef/IRavenObject';
 import {ConditionValue} from "./Query/QueryLanguage";
+import {Observable} from "../../Utility/Observable";
 
-export class AdvancedSessionOperations {
+export class AdvancedSessionOperations extends Observable {
   protected session: DocumentSession;
   protected requestExecutor: RequestExecutor;
 
   constructor(session: DocumentSession, requestExecutor: RequestExecutor) {
+    super();
     this.session = session;
     this.requestExecutor = requestExecutor;
   }
@@ -33,6 +35,8 @@ export class AdvancedSessionOperations {
         rawQuery.addParameter(param, params[param]);
       }
     }
+
+    this.emit<IDocumentQueryBase<T>>(DocumentSession.QUERY_INITIALIZED, <IDocumentQueryBase<T>>rawQuery);
 
     return rawQuery;
   }
