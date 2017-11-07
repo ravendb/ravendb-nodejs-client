@@ -123,7 +123,7 @@ export class DocumentQueryBase<T extends Object = IRavenObject> extends Observab
     } else if (collection && ('@all_docs' !== collection)
       && (conventions.emptyCollection !== collection)
     ) {
-      idPropertyName = StringUtil.capitalize(pluralize.singular(collection));
+      documentType = StringUtil.capitalize(pluralize.singular(collection));
     }
 
     this.session = session;
