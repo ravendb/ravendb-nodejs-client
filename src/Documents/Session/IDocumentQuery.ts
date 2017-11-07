@@ -9,6 +9,7 @@ import {SpatialUnit} from "./Query/Spatial/SpatialUnit";
 import {SpatialRelation} from "./Query/Spatial/SpatialRelation";
 import {IOptionsSet} from "../../Typedef/IOptionsSet";
 import {IndexQuery} from "../../Database/Indexes/IndexQuery";
+import {IObservable} from "../../Utility/Observable";
 
 export interface IDocumentQueryOptions<T> {
   collection?: string;
@@ -19,7 +20,7 @@ export interface IDocumentQueryOptions<T> {
   indexQueryOptions?: IOptionsSet;
 }
 
-export interface IDocumentQueryBase<T extends Object = IRavenObject> {
+export interface IDocumentQueryBase<T extends Object = IRavenObject> extends IObservable {
   indexName: string;
   collectionName: string;
   conventions: DocumentConventions;  

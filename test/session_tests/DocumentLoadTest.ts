@@ -61,7 +61,7 @@ describe('Document load test', () => {
 
     it('should load few documents with duplicate id', async () => {
       session = store.openSession();
-      products = await session.load<Product>(["Products/101", "Products/101", "Products/101"]);
+      products = await session.load<Product>(["Products/101", "Products/10", "Products/101"]);
 
       expect(products).to.have.lengthOf(3);
 

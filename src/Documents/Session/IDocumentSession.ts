@@ -36,6 +36,5 @@ export interface IDocumentSession {
   store<T extends Object = IRavenObject>(document: T, id?: string, callback?: EntityCallback<T>): Promise<T>;
   store<T extends Object = IRavenObject>(document: T, id?: string, options?: ISessionOperationOptions<T>, callback?: EntityCallback<T>): Promise<T>;
   query<T extends Object = IRavenObject>(options?: IDocumentQueryOptions<T>): IDocumentQuery<T>;
-  attachQuery<T extends Object = IRavenObject>(query: DocumentQueryBase<T>): void;
   saveChanges(): Promise<void>;
 }

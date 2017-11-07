@@ -1,13 +1,13 @@
 import * as _ from 'lodash';
 import * as BluebirdPromise from 'bluebird'
 import {IDocumentSession, ISessionOperationOptions} from "./IDocumentSession";
-import {IDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
+import {IDocumentQueryBase, IRawDocumentQuery, IDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
 import {DocumentQueryBase, DocumentQuery} from "./DocumentQuery";
 import {IDocumentStore} from '../IDocumentStore';
 import {AdvancedSessionOperations} from './AdvancedSessionOperations';
 import {RequestExecutor} from '../../Http/Request/RequestExecutor';
 import {DocumentConventions, DocumentConstructor, IDocumentConversionResult, IStoredRawEntityInfo, DocumentType, IDocumentAssociationCheckResult} from '../Conventions/DocumentConventions';
-import {AbstractCallback, EmptyCallback, EntityCallback, EntitiesArrayCallback} from '../../Typedef/Callbacks';
+import {EmptyCallback, EntityCallback, EntitiesArrayCallback} from '../../Typedef/Callbacks';
 import {PromiseResolver} from '../../Utility/PromiseResolver';
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {InvalidOperationException, RavenException, NonUniqueObjectException} from "../../Database/DatabaseExceptions";
@@ -20,11 +20,13 @@ import {DeleteCommandData} from "../../Database/Commands/Data/DeleteCommandData"
 import {SaveChangesData} from "../../Database/Commands/Data/SaveChangesData";
 import {IRavenObject} from "../../Typedef/IRavenObject";
 import {Serializer} from "../../Json/Serializer";
+import {Observable} from "../../Utility/Observable";
 import {RequestMethods} from "../../Http/Request/RequestMethod";
-import {IOptionsSet} from "../../Typedef/IOptionsSet";
 import {ConcurrencyCheckMode, ConcurrencyCheckModes} from "../../Database/ConcurrencyCheckMode";
 
-export class DocumentSession implements IDocumentSession {
+export class DocumentSession extends Observable implements IDocumentSession {
+  public static readonly QUERY_INITIALIZED = 'query:initialized';
+
   protected database: string;
   protected documentStore: IDocumentStore;
   protected sessionId: string;
@@ -35,7 +37,7 @@ export class DocumentSession implements IDocumentSession {
   protected deferCommands: Set<RavenCommandData>;
   protected rawEntitiesAndMetadata: Map<IRavenObject, IStoredRawEntityInfo>;
   protected requestExecutor: RequestExecutor;
-  protected attachedQueries: WeakMap<DocumentQueryBase, boolean>;
+  protected attachedQueries: WeakMap<IDocumentQueryBase, boolean>;
 
   private _numberOfRequestsInSession: number = 0;
   private _advanced: AdvancedSessionOperations = null;
@@ -50,13 +52,22 @@ export class DocumentSession implements IDocumentSession {
 
   public get advanced(): AdvancedSessionOperations {
     if (!this._advanced) {
+      const {QUERY_INITIALIZED} = this.constructor as (typeof DocumentSession);
+
       this._advanced = new AdvancedSessionOperations(this, this.requestExecutor); 
+      this._advanced.on<IDocumentQueryBase>(QUERY_INITIALIZED, (query: IDocumentQueryBase) => {
+        this.attachQuery(query);
+      });
     }
 
     return this._advanced;
   }
 
-  constructor (dbName: string, documentStore: IDocumentStore, id: string, requestExecutor: RequestExecutor) {
+  constructor(dbName: string, documentStore: IDocumentStore, id: string, requestExecutor: RequestExecutor) {
+    super()
+
+    const {QUERY_INITIALIZED} = this.constructor as (typeof DocumentSession);
+
     this.database = dbName;
     this.documentStore = documentStore;  
     this.sessionId = id;
@@ -68,6 +79,10 @@ export class DocumentSession implements IDocumentSession {
     this.deferCommands = new Set<RavenCommandData>();
     this.requestExecutor = requestExecutor;
     this.attachedQueries = new WeakMap<DocumentQueryBase, boolean>();
+
+    this.on<IDocumentQueryBase>(QUERY_INITIALIZED, (query: IDocumentQueryBase) => {
+      this.attachQuery(query);
+    });
   }
 
   public async load<T extends Object = IRavenObject>(id: string, callback?: EntityCallback<T>): Promise<T>;
@@ -334,10 +349,13 @@ export class DocumentSession implements IDocumentSession {
   }
 
   public query<T extends Object = IRavenObject>(options?: IDocumentQueryOptions<T>): IDocumentQuery<T> {
-    return DocumentQuery.create<T>(this, this.requestExecutor, options);
+    const query: IDocumentQuery<T> = DocumentQuery.create<T>(this, this.requestExecutor, options);
+
+    this.emit<IDocumentQueryBase<T>>(DocumentSession.QUERY_INITIALIZED, <IDocumentQueryBase<T>>query);
+    return query;
   }
 
-  public attachQuery<T extends Object = IRavenObject>(query: DocumentQueryBase<T>): void {
+  protected attachQuery<T extends Object = IRavenObject>(query: IDocumentQueryBase<T>): void {
     if (this.attachedQueries.has(query)) {
       throw new InvalidOperationException('Query is already attached to session');
     }
