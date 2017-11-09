@@ -10,7 +10,7 @@ export class FromToken extends QueryToken {
   private _isDynamic: boolean = false;
 
   private static readonly whiteSpaceChars: string[] = [
-    ' ', '\t', '\r', '\n', '\v'
+    " ", "\t", "\r", "\n", "\v"
   ];
 
   public get collectionName(): string {
