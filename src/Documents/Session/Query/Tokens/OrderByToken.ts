@@ -14,11 +14,11 @@ export class OrderByToken extends QueryToken
   }
 
   public static get scoreAscending(): OrderByToken {
-    return new (this as (typeof OrderByToken))("random()");
+    return new (this as (typeof OrderByToken))("score()");
   }
 
   public static get scoreDescending(): OrderByToken {
-    return new (this as (typeof OrderByToken))("random()", true);
+    return new (this as (typeof OrderByToken))("score()", true);
   }
 
   protected constructor(fieldName: string, descending: boolean = false, ordering: OrderingType = OrderingTypes.String)
