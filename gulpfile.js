@@ -12,6 +12,8 @@ const args = require('./args');
 const preamble = '/** RavenDB Client - (c) Hibernating Rhinos 2017 */';
 const exportDefault = 'export default DocumentStore;';
 
+const tsProject = ts.createProject('tsconfig.json') 
+
 const options = {
     src: './src',
     tests: './test',
@@ -56,13 +58,7 @@ gulp.task('build:tests', ['clean', 'build:tests:args'], () => gulp
         )
         .join('\n')
     ))
-    .pipe(ts({
-        allowJs: true,
-        target: 'ES6',
-        module: 'commonjs',
-        removeComments: true,
-        lib: ["dom", "es7"]
-    }))
+    .pipe(tsProject())
     .pipe(gulp.dest(options.tmp))
 );
 
