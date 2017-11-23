@@ -34,7 +34,7 @@ const session = store.openSession();
 session
  .load('Users/1-A')
  .then((user) => {
-   user.password = md5('new password');
+   user.password = sha256('new password');
 
    return session.store(user);
  })
@@ -49,7 +49,7 @@ session
 ```javascript
 session
  .load('Users/1-A', (user) => {
-   user.password = md5('new password');
+   user.password = sha256('new password');
 
    session.store(user, null, () => {
      session.saveChanges(() => {
@@ -64,7 +64,7 @@ session
 session
  .load('Users/1-A')
  .then((user) => {
-   user.password = md5('new password');
+   user.password = sha256('new password');
 
    return session.store(user);
  })
@@ -85,7 +85,7 @@ co(function * () {
 
   let user = yield store.load('Users/1-A');
 
-  user.password = md5('new password');
+  user.password = sha256('new password');
   yield session.store(user);
 
   yield session.saveChanges();
@@ -100,7 +100,7 @@ async () => {
 
   let user = await store.load('Users/1-A');
 
-  user.password = md5('new password');
+  user.password = sha256('new password');
   await session.store(user);
 
   await session.saveChanges();
