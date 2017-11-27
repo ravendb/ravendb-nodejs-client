@@ -10,3 +10,4 @@ tryouts/
 .tscache
 .settings
 npm-debug.log
+package-lock.json
