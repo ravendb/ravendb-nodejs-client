@@ -149,12 +149,16 @@ export class ServerOperationExecutor extends AbstractOperationExecutor implement
       : ClusterRequestExecutor.create(store.urls);
   }
 
+  private sendOperation(operation: IOperation){
+        return super.send(operation);
+  }
+
   public async send(operation: IOperation): Promise<IRavenResponse | IRavenResponse[] | void> {
     if (!(operation instanceof ServerOperation)) {
       return BluebirdPromise.reject(new InvalidOperationException('Invalid operation passed. It should be derived from ServerOperation'));
     }
 
-    return super.send(operation);
+    return this.sendOperation(operation);
   }
 
   public dispose(): void {
@@ -173,11 +177,15 @@ export class AdminOperationExecutor extends AbstractDatabaseOperationExecutor {
     return this._server;
   }
 
+  private sendOperation(operation: IOperation){
+        return super.send(operation);
+  }
+
   public async send(operation: IOperation): Promise<IRavenResponse | IRavenResponse[] | void> {
     if (!(operation instanceof AdminOperation)) {
       return BluebirdPromise.reject(new InvalidOperationException('Invalid operation passed. It should be derived from ServerOperation'));
     }
-    
-    return super.send(operation);
+
+      return this.sendOperation(operation);
   }
 }
