@@ -66,7 +66,7 @@ export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdG
     
     return (this._lock
       .acquire((): any => {
-          if (!range.needsNewRange) {
+          if (!range.needsNewRange()) {
             range.increment();
 
             return BluebirdPromise.resolve<HiloRangeValue>(range);
