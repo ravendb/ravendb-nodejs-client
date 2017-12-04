@@ -56,7 +56,7 @@ describe('HiLo generator test', () => {
         }
 
         prevId = id;
-      } while (!range(Product).needsNewRange);
+      } while (!range(Product).needsNewRange());
     });
 
     it('should requests new range', async () => {
@@ -69,7 +69,7 @@ describe('HiLo generator test', () => {
           maxId = range(Product).maxId;
         }
 
-      } while (!range(Product).needsNewRange);
+      } while (!range(Product).needsNewRange());
 
       await store.generateId({}, Product);
 
