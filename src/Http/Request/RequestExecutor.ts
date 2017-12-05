@@ -18,6 +18,7 @@ import {NodeSelector} from "./NodeSelector";
 import {NodeStatus} from "../NodeStatus";
 import {IDisposable} from '../../Typedef/Contracts';
 import {RavenException, InvalidOperationException, TopologyNodeDownException, AllTopologyNodesDownException, DatabaseLoadFailureException, UnsuccessfulRequestException} from "../../Database/DatabaseExceptions";
+import { IServerRequestOptions } from '../../Typedef/IServerRequestOptions';
 
 export interface ITopologyUpdateEvent {
   topologyJson: object;
@@ -57,12 +58,13 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
   private _topologyEtag: number;
   private _faildedNodesStatuses: Map<ServerNode, NodeStatus>;
   private _disposed: boolean = false;
+  private _serverRequestOptions: IServerRequestOptions;
 
   public get initialDatabase(): string {
     return this._initialDatabase;
   }
 
-  constructor(database: string, options: IRequestExecutorOptions = {}) {
+  constructor(database: string, options: IRequestExecutorOptions = {}, serverRequestOptions: IServerRequestOptions) {
     super();
 
     const urls = options.firstTopologyUpdateUrls || [];
@@ -81,6 +83,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     this._updateTopologyLock = Lock.make();
     this._updateFailedNodeTimerLock = Lock.make();
     this._faildedNodesStatuses = new Map<ServerNode, NodeStatus>();
+    this._serverRequestOptions = serverRequestOptions;
 
     if (!this._withoutTopology && urls.length) {
       this.startFirstTopologyUpdate(urls);
@@ -94,16 +97,16 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     this.cancelFailingNodesTimers();
   }
 
-  public static create(urls: string[], database?: string): IRequestExecutor {
+  public static create(urls: string[], database?: string, serverRequestOptions?: IServerRequestOptions): IRequestExecutor {
     const self = <typeof RequestExecutor>this;
 
     return new self(database, {
       withoutTopology: false,
       firstTopologyUpdateUrls: _.clone(urls)
-    });
+    }, serverRequestOptions);
   }
 
-  public static createForSingleNode(url: string, database?: string): IRequestExecutor {
+  public static createForSingleNode(url: string, database?: string, serverRequestOptions?: IServerRequestOptions): IRequestExecutor {
     const self = <typeof RequestExecutor>this;
     const topology = new Topology(-1, [new ServerNode(url, database)]);
 
@@ -111,7 +114,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
       withoutTopology: true,
       singleNodeTopology: topology,
       topologyEtag: -2
-    });
+    }, serverRequestOptions);
   }
 
   public execute(command: RavenCommand): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> {
@@ -171,7 +174,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     let options: RavenCommandRequestOptions;
 
     command.createRequest(node);
-    options = command.toRequestOptions();
+    options = command.toRequestOptions(this._serverRequestOptions); 
     Object.assign(options.headers, this.headers);
 
     if (!this._withoutTopology) {

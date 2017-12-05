@@ -14,6 +14,7 @@ import {PromiseResolver} from "../Utility/PromiseResolver";
 import {TypeUtil} from "../Utility/TypeUtil";
 import {QueryString} from "../Http/QueryString";
 import {OperationExecutor, AdminOperationExecutor} from '../Database/Operations/OperationExecutor';
+import {IServerRequestOptions} from "../Typedef/IServerRequestOptions";
 
 export class DocumentStore implements IDocumentStore {
   private _initialized: boolean;
@@ -25,6 +26,7 @@ export class DocumentStore implements IDocumentStore {
   private _requestExecutors: Map<boolean, Map<string, RequestExecutor>>;
   private _operations: OperationExecutor;
   private _admin: AdminOperationExecutor;
+  private _serverRequestOptions: IServerRequestOptions;
 
   public get database(): string {
     return this._database;
@@ -83,24 +85,32 @@ export class DocumentStore implements IDocumentStore {
     return this._conventions;
   }
 
-  constructor(urlOrUrls: string | string[], defaultDatabase: string, apiKey?: string) {
+  constructor(urlOrUrls: string | string[], defaultDatabase: string, apiKey?: string, serverRequestOptions?: IServerRequestOptions) {
     this._apiKey = apiKey;
     this._database = defaultDatabase;
     this._initialized = false;
     this._urls = QueryString.parseUrls(urlOrUrls);
     this._requestExecutors = new Map<boolean, Map<string, RequestExecutor>>();
+    this._serverRequestOptions = serverRequestOptions;
   }
+ 
+  static create(urlOrUrls: string | string[], defaultDatabase: string, apiKeyOrServerRequestOptions: string | IServerRequestOptions, serverRequestOptions?: IServerRequestOptions): IDocumentStore{
+    let apiKey: string = <string>apiKeyOrServerRequestOptions;
+    let serverReqOptions: IServerRequestOptions = <IServerRequestOptions>(serverRequestOptions || {});
 
-  static create(urlOrUrls: string | string[], defaultDatabase: string, apiKey?: string): IDocumentStore {
-    return new DocumentStore(urlOrUrls, defaultDatabase, apiKey);
+    if (TypeUtil.isObject(apiKeyOrServerRequestOptions)) {
+      serverReqOptions = <IServerRequestOptions>apiKeyOrServerRequestOptions;
+    }
+
+    return new DocumentStore(urlOrUrls, defaultDatabase, apiKey, serverReqOptions);
   }
 
   public initialize(): IDocumentStore {
     if (!this._initialized) {
       if (this._urls.some((url: string): boolean => 
-        0 === url.toLowerCase().indexOf('https'))
+        0 === url.toLowerCase().indexOf('https') && this._serverRequestOptions === undefined)
       ) {
-        throw new NotSupportedException("Access to secured servers is not yet supported in Node.js client");
+        throw new NotSupportedException("Access to secured servers require `serverRequestOptions` to be specified");
       }
 
       if (!this._database) {
@@ -184,8 +194,8 @@ export class DocumentStore implements IDocumentStore {
   protected createRequestExecutor(database?: string, forSingleNode?: boolean): RequestExecutor {    
     const dbName: string = database || this._database;
     const executor: IRequestExecutor = (true === forSingleNode)
-      ? RequestExecutor.createForSingleNode(this.singleNodeUrl, dbName)
-      : RequestExecutor.create(this.urls, dbName);
+      ? RequestExecutor.createForSingleNode(this.singleNodeUrl, dbName, this._serverRequestOptions)
+      : RequestExecutor.create(this.urls, dbName, this._serverRequestOptions);
     
     return <RequestExecutor>executor;
   }
