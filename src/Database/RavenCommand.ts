@@ -8,7 +8,7 @@ import {ExceptionsFactory} from "../Utility/ExceptionsFactory";
 import * as _ from 'lodash';
 import * as Request from 'request';
 import * as RequestPromise from 'request-promise';
-import {IServerRequestOptions} from "../Typedef/IServerRequestOptions";
+import {IRavenRequestOptions} from "../Typedef/IRavenRequestOptions";
 
 export type RavenCommandRequestOptions = RequestPromise.RequestPromiseOptions & Request.RequiredUriUrl;
 
@@ -52,7 +52,7 @@ export abstract class RavenCommand {
     return this.wasFailed && nodes.has(node);
   }
 
-  public toRequestOptions(serverRequestOptions?: IServerRequestOptions): RavenCommandRequestOptions {
+  public toRequestOptions(ravenRequestOptions?: IRavenRequestOptions): RavenCommandRequestOptions {
     const params = this.params;
     const payload = this.payload;
 
@@ -72,7 +72,11 @@ export abstract class RavenCommand {
       }
     };
 
-    Object.assign(options,serverRequestOptions);
+    Object.assign(options, {
+      rejectUnauthorized: ravenRequestOptions.certificateValidate,
+      passphrase: ravenRequestOptions.certificatePassword,
+      agentOptions: {pfx: ravenRequestOptions.certificateKey} 
+    });
 
     check(params) && (options.qs = params);
     check(payload) && (options.body = payload);

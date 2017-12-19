@@ -18,7 +18,7 @@ import {NodeSelector} from "./NodeSelector";
 import {NodeStatus} from "../NodeStatus";
 import {IDisposable} from '../../Typedef/Contracts';
 import {RavenException, InvalidOperationException, TopologyNodeDownException, AllTopologyNodesDownException, DatabaseLoadFailureException, UnsuccessfulRequestException} from "../../Database/DatabaseExceptions";
-import { IServerRequestOptions } from '../../Typedef/IServerRequestOptions';
+import {IRavenRequestOptions} from '../../Typedef/IRavenRequestOptions';
 
 export interface ITopologyUpdateEvent {
   topologyJson: object;
@@ -28,7 +28,7 @@ export interface ITopologyUpdateEvent {
   wasUpdated?: boolean;
 }
 
-export interface IRequestExecutorOptions {
+export interface IRequestExecutorOptions extends IRavenRequestOptions {
   withoutTopology?: boolean;
   topologyEtag?: number;
   singleNodeTopology?: Topology;
@@ -58,13 +58,13 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
   private _topologyEtag: number;
   private _faildedNodesStatuses: Map<ServerNode, NodeStatus>;
   private _disposed: boolean = false;
-  private _serverRequestOptions: IServerRequestOptions;
+  private _ravenRequestOptions: IRavenRequestOptions;
 
   public get initialDatabase(): string {
     return this._initialDatabase;
   }
 
-  constructor(database: string, options: IRequestExecutorOptions = {}, serverRequestOptions: IServerRequestOptions) {
+  constructor(database: string, options: IRequestExecutorOptions = {}) {
     super();
 
     const urls = options.firstTopologyUpdateUrls || [];
@@ -83,7 +83,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     this._updateTopologyLock = Lock.make();
     this._updateFailedNodeTimerLock = Lock.make();
     this._faildedNodesStatuses = new Map<ServerNode, NodeStatus>();
-    this._serverRequestOptions = serverRequestOptions;
+    this._ravenRequestOptions = <IRavenRequestOptions>options;
 
     if (!this._withoutTopology && urls.length) {
       this.startFirstTopologyUpdate(urls);
@@ -97,24 +97,26 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     this.cancelFailingNodesTimers();
   }
 
-  public static create(urls: string[], database?: string, serverRequestOptions?: IServerRequestOptions): IRequestExecutor {
+  public static create(urls: string[], database?: string, ravenRequestOptions?: IRavenRequestOptions): IRequestExecutor {
     const self = <typeof RequestExecutor>this;
 
-    return new self(database, {
-      withoutTopology: false,
-      firstTopologyUpdateUrls: _.clone(urls)
-    }, serverRequestOptions);
+    let requestExecutorOptions: IRequestExecutorOptions = <IRequestExecutorOptions>(ravenRequestOptions || {})
+        requestExecutorOptions.withoutTopology = false;
+        requestExecutorOptions.firstTopologyUpdateUrls = _.clone(urls);
+
+    return new self(database, requestExecutorOptions);
   }
 
-  public static createForSingleNode(url: string, database?: string, serverRequestOptions?: IServerRequestOptions): IRequestExecutor {
+  public static createForSingleNode(url: string, database?: string, ravenRequestOptions?: IRavenRequestOptions): IRequestExecutor {
     const self = <typeof RequestExecutor>this;
     const topology = new Topology(-1, [new ServerNode(url, database)]);
 
-    return new self(database, {
-      withoutTopology: true,
-      singleNodeTopology: topology,
-      topologyEtag: -2
-    }, serverRequestOptions);
+    let requestExecutorOptions: IRequestExecutorOptions = <IRequestExecutorOptions>(ravenRequestOptions || {})
+    requestExecutorOptions.withoutTopology = true;
+    requestExecutorOptions.singleNodeTopology = topology;
+    requestExecutorOptions.topologyEtag = -2;
+
+    return new self(database, requestExecutorOptions);
   }
 
   public execute(command: RavenCommand): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> {
@@ -174,7 +176,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     let options: RavenCommandRequestOptions;
 
     command.createRequest(node);
-    options = command.toRequestOptions(this._serverRequestOptions); 
+    options = command.toRequestOptions(this._ravenRequestOptions); 
     Object.assign(options.headers, this.headers);
 
     if (!this._withoutTopology) {
