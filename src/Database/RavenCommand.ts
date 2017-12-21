@@ -72,11 +72,13 @@ export abstract class RavenCommand {
       }
     };
 
+    const agentOptions = ravenRequestOptions.sslPfxKey ? {pfx:ravenRequestOptions.sslPfxKey} : {key: ravenRequestOptions.sslKey,
+      cert: ravenRequestOptions.sslCert || ravenRequestOptions.sslKey};
+
     Object.assign(options, {
-      rejectUnauthorized: ravenRequestOptions.certificateValidate,
-      passphrase: ravenRequestOptions.certificatePassword,
-      agentOptions: {pfx: ravenRequestOptions.certificateKey} 
-    });
+      rejectUnauthorized: ravenRequestOptions.sslValidate,
+      passphrase: ravenRequestOptions.sslPassword,
+      agentOptions: agentOptions});
 
     check(params) && (options.qs = params);
     check(payload) && (options.body = payload);
