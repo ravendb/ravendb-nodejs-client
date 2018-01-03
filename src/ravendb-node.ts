@@ -202,4 +202,5 @@ export {HiloMultiDatabaseIdGenerator} from './Hilo/HiloMultiDatabaseIdGenerator'
 export {HiloMultiTypeIdGenerator} from './Hilo/HiloMultiTypeIdGenerator';
 export {HiloNextCommand} from './Hilo/Commands/HiloNextCommand';
 export {HiloReturnCommand} from './Hilo/Commands/HiloReturnCommand';
+export {CertificateLoader} from './Utility/CertificateLoader';
 

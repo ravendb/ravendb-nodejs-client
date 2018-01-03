@@ -8,7 +8,7 @@ import {ExceptionsFactory} from "../Utility/ExceptionsFactory";
 import * as _ from 'lodash';
 import * as Request from 'request';
 import * as RequestPromise from 'request-promise';
-import {IRavenRequestOptions} from "../Typedef/IRavenRequestOptions";
+import {IAuthOptions} from "../Typedef/IAuthOptions";
 
 export type RavenCommandRequestOptions = RequestPromise.RequestPromiseOptions & Request.RequiredUriUrl;
 
@@ -52,7 +52,7 @@ export abstract class RavenCommand {
     return this.wasFailed && nodes.has(node);
   }
 
-  public toRequestOptions(ravenRequestOptions?: IRavenRequestOptions): RavenCommandRequestOptions {
+  public toRequestOptions(authOptions?: IAuthOptions): RavenCommandRequestOptions {
     const params = this.params;
     const payload = this.payload;
 
@@ -72,12 +72,15 @@ export abstract class RavenCommand {
       }
     };
 
-    const agentOptions = ravenRequestOptions.sslPfxKey ? {pfx:ravenRequestOptions.sslPfxKey} : {key: ravenRequestOptions.sslKey,
-      cert: ravenRequestOptions.sslCert || ravenRequestOptions.sslKey};
+    let agentOptions =  authOptions.type==='pfx' ? {pfx:authOptions.key}:{
+      key: authOptions.key,
+      cert: authOptions.certificate || authOptions.key};
+
+    authOptions.root ? Object.assign(agentOptions,{ca:authOptions.root}) : null;
 
     Object.assign(options, {
-      rejectUnauthorized: ravenRequestOptions.sslValidate,
-      passphrase: ravenRequestOptions.sslPassword,
+      rejectUnauthorized: authOptions.validate,
+      passphrase: authOptions.password,
       agentOptions: agentOptions});
 
     check(params) && (options.qs = params);

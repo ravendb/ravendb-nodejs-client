@@ -18,7 +18,7 @@ import {NodeSelector} from "./NodeSelector";
 import {NodeStatus} from "../NodeStatus";
 import {IDisposable} from '../../Typedef/Contracts';
 import {RavenException, InvalidOperationException, TopologyNodeDownException, AllTopologyNodesDownException, DatabaseLoadFailureException, UnsuccessfulRequestException} from "../../Database/DatabaseExceptions";
-import {IRavenRequestOptions} from '../../Typedef/IRavenRequestOptions';
+import {IAuthOptions} from '../../Typedef/IAuthOptions';
 
 export interface ITopologyUpdateEvent {
   topologyJson: object;
@@ -28,7 +28,7 @@ export interface ITopologyUpdateEvent {
   wasUpdated?: boolean;
 }
 
-export interface IRequestExecutorOptions extends IRavenRequestOptions {
+export interface IRequestExecutorOptions extends IAuthOptions {
   withoutTopology?: boolean;
   topologyEtag?: number;
   singleNodeTopology?: Topology;
@@ -58,7 +58,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
   private _topologyEtag: number;
   private _faildedNodesStatuses: Map<ServerNode, NodeStatus>;
   private _disposed: boolean = false;
-  private _ravenRequestOptions: IRavenRequestOptions;
+  private _ravenRequestOptions: IAuthOptions;
 
   public get initialDatabase(): string {
     return this._initialDatabase;
@@ -83,7 +83,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     this._updateTopologyLock = Lock.make();
     this._updateFailedNodeTimerLock = Lock.make();
     this._faildedNodesStatuses = new Map<ServerNode, NodeStatus>();
-    this._ravenRequestOptions = <IRavenRequestOptions>options;
+    this._ravenRequestOptions = <IAuthOptions>options;
 
     if (!this._withoutTopology && urls.length) {
       this.startFirstTopologyUpdate(urls);
@@ -97,7 +97,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     this.cancelFailingNodesTimers();
   }
 
-  public static create(urls: string[], database?: string, ravenRequestOptions?: IRavenRequestOptions): IRequestExecutor {
+  public static create(urls: string[], database?: string, ravenRequestOptions?: IAuthOptions): IRequestExecutor {
     const self = <typeof RequestExecutor>this;
 
     let requestExecutorOptions: IRequestExecutorOptions = <IRequestExecutorOptions>(ravenRequestOptions || {})
@@ -107,7 +107,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     return new self(database, requestExecutorOptions);
   }
 
-  public static createForSingleNode(url: string, database?: string, ravenRequestOptions?: IRavenRequestOptions): IRequestExecutor {
+  public static createForSingleNode(url: string, database?: string, ravenRequestOptions?: IAuthOptions): IRequestExecutor {
     const self = <typeof RequestExecutor>this;
     const topology = new Topology(-1, [new ServerNode(url, database)]);
 

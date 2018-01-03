@@ -14,20 +14,20 @@ import {PromiseResolver} from "../Utility/PromiseResolver";
 import {TypeUtil} from "../Utility/TypeUtil";
 import {QueryString} from "../Http/QueryString";
 import {OperationExecutor, AdminOperationExecutor} from '../Database/Operations/OperationExecutor';
-import {IDocumentStoreOptions} from '../Typedef/IDocumentStoreOptions';
-import {IRavenRequestOptions} from '../Typedef/IRavenRequestOptions';
+import {IDocumentStoreAuthOptions} from '../Typedef/IDocumentStoreAuthOptions';
+import {IAuthOptions} from '../Typedef/IAuthOptions';
 
 export class DocumentStore implements IDocumentStore {
   private _initialized: boolean;
   private _urls: string[];  
   private _database: string;
-  private _options: IDocumentStoreOptions;
+  private _options: IDocumentStoreAuthOptions;
   private _generator: IHiloIdGenerator;
   private _conventions: DocumentConventions;
   private _requestExecutors: Map<boolean, Map<string, RequestExecutor>>;
   private _operations: OperationExecutor;
   private _admin: AdminOperationExecutor;
-  private _documentStoreOptions: IDocumentStoreOptions;
+  private _documentStoreOptions: IDocumentStoreAuthOptions;
 
   public get database(): string {
     return this._database;
@@ -83,7 +83,7 @@ export class DocumentStore implements IDocumentStore {
     return this._conventions;
   }
 
-  constructor(urlOrUrls: string | string[], defaultDatabase: string, documentStoreOptions?: IDocumentStoreOptions) {
+  constructor(urlOrUrls: string | string[], defaultDatabase: string, documentStoreOptions?: IDocumentStoreAuthOptions) {
     this._database = defaultDatabase;
     this._initialized = false;
     this._urls = QueryString.parseUrls(urlOrUrls);
@@ -91,9 +91,9 @@ export class DocumentStore implements IDocumentStore {
     this._documentStoreOptions = documentStoreOptions;
   }
  
-  static create(urlOrUrls: string | string[], defaultDatabase: string, opts?: IDocumentStoreOptions): IDocumentStore{
+  static create(urlOrUrls: string | string[], defaultDatabase: string, opts?: IDocumentStoreAuthOptions): IDocumentStore{
   
-    let documentStoreOptions: IDocumentStoreOptions = <IDocumentStoreOptions>(opts || {});
+    let documentStoreOptions: IDocumentStoreAuthOptions = <IDocumentStoreAuthOptions>(opts || {});
 
     return new DocumentStore(urlOrUrls, defaultDatabase, documentStoreOptions);
   }
@@ -187,7 +187,7 @@ export class DocumentStore implements IDocumentStore {
   protected createRequestExecutor(database?: string, forSingleNode?: boolean): RequestExecutor {    
     const dbName: string = database || this._database;
 
-    let  ravenRequestOptions: IRavenRequestOptions = <IRavenRequestOptions>(this._documentStoreOptions || {});
+    let  ravenRequestOptions: IAuthOptions = <IAuthOptions>(this._documentStoreOptions || {});
 
     const executor: IRequestExecutor = (true === forSingleNode)
       ? RequestExecutor.createForSingleNode(this.singleNodeUrl, dbName, ravenRequestOptions)
