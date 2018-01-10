@@ -235,8 +235,8 @@ fieldName: string, value: V): IDocumentQuery&lt;T&gt;;</pre></td>
     <tr>
         <td><pre lang="typescript">whereBetween
 &lt;V extends ConditionValue&gt;(
-fieldName: string, start: V, end: V, exact?: boolean)
-: IDocumentQuery&lt;T&gt;;</pre></td>
+fieldName: string, start: V, end: V, 
+exact?: boolean) : IDocumentQuery&lt;T&gt;;</pre></td>
         <td><pre lang="sql">WHERE fieldName BETWEEN <start> AND <end></pre></td>
     </tr>
     <tr>
@@ -335,15 +335,18 @@ ordering?: OrderingType): IDocumentQuery&lt;T&gt;;</pre></td>
         <td>Returns first document from result set</td>
     </tr>
     <tr>
-        <td><pre lang="typescript">async single(callback?: EntityCallback<T>): Promise<T>;</pre></td>
-        <td>Returns single document matching query criteria. If there are no such document or more then one - throws an Exception</td>
+        <td><pre lang="typescript">async single(callback?
+: EntityCallback<T>): Promise<T>;</pre></td>
+        <td>Returns single document matching query criteria. If there are no such document or more then one - throws an `InvalidOperationException`</td>
     </tr>
     <tr>
-        <td><pre lang="typescript">async all(callback?: QueryResultsCallback<T[]>): Promise<T[]>;</pre></td>
+        <td><pre lang="typescript">async all(callback?
+: QueryResultsCallback<T[]>): Promise<T[]>;</pre></td>
         <td>Returns all documents from result set (considering `take()` / `skip()` options)</td>
     </tr>
     <tr>
-        <td><pre lang="typescript">async count(callback?: EntitiesCountCallback): Promise<number>;</pre></td>
+        <td><pre lang="typescript">async count(callback?
+: EntitiesCountCallback): Promise<number>;</pre></td>
         <td>Returns count of all documents matching query criteria (non-considering `take()` / `skip()` options)</td>
     </tr>
 </table>
