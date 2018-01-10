@@ -304,29 +304,29 @@ operator?: SearchOperator)
     </tr>
     <tr>
         <td><pre lang="typescript">openSubclause(): IDocumentQuery&lt;T&gt;;</pre></td>
-        <td>Opens subclause `(`</td>
+        <td>Opens subclause <code lang="sql">(</code></td>
     </tr>
     <tr>
         <td><pre lang="typescript">closeSubclause(): IDocumentQuery&lt;T&gt;;</pre></td>
-        <td>Closes subclause `)`</td>
+        <td>Closes subclause <code lang="sql">)</code></td>
     </tr>
     <tr>
         <td><pre lang="typescript">negateNext(): IDocumentQuery&lt;T&gt;;</pre></td>
-        <td>Adds `NOT` before next condition</td>
+        <td>Adds <code lang="sql">NOT</code> before next condition</td>
     </tr>
     <tr>
         <td><pre lang="typescript">andAlso(): IDocumentQuery&lt;T&gt;;</pre></td>
-        <td>Adds `AND` before next condition</td>
+        <td>Adds <code lang="sql">AND</code> before next condition</td>
     </tr>
     <tr>
         <td><pre lang="typescript">orElse(): IDocumentQuery&lt;T&gt;;</pre></td>
-        <td>Adds `OR` before next condition</td>
+        <td>Adds <code lang="sql">OR</code> before next condition</td>
     </tr>
     <tr>
         <td><pre lang="typescript">usingDefaultOperator
 (operator: QueryOperator)
 : IDocumentQuery&lt;T&gt;;</pre></td>
-        <td>Sets default operator (which will be used if no `andAlso()` / `orElse` was called. Just after query instantiation, `OR` is used as default operator. Default operator can be changed only adding any conditions</td>
+        <td>Sets default operator (which will be used if no <code lang="typescript">andAlso()</code> / <code lang="typescript">orElse()</code> was called. Just after query instantiation, <code lang="sql">OR</code> is used as default operator. Default operator can be changed only adding any conditions</td>
     </tr>
     <tr>
         <td><pre lang="typescript">orderBy(field: string, 
@@ -342,12 +342,12 @@ ordering?: OrderingType)
     <tr>
         <td><pre lang="typescript">take(count: number)
 : IDocumentQuery&lt;T&gt;;</pre></td>
-        <td>Limits the number of result entries to `count`</td>
+        <td>Limits the number of result entries to <code>count</code></td>
     </tr>
     <tr>
         <td><pre lang="typescript">skip(count: number)
 : IDocumentQuery&lt;T&gt;;</pre></td>
-        <td>Skips first `count` results</td>
+        <td>Skips first <code>count</code> results</td>
     </tr>
     <tr>
         <td><pre lang="typescript">async first(callback?
@@ -357,17 +357,17 @@ ordering?: OrderingType)
     <tr>
         <td><pre lang="typescript">async single(callback?
 : EntityCallback<T>): Promise<T>;</pre></td>
-        <td>Returns single document matching query criteria. If there are no such document or more then one - throws an `InvalidOperationException`</td>
+        <td>Returns single document matching query criteria. If there are no such document or more then one - throws an <code>InvalidOperationException</code></td>
     </tr>
     <tr>
         <td><pre lang="typescript">async all(callback?
 : QueryResultsCallback<T[]>): Promise<T[]>;</pre></td>
-        <td>Returns all documents from result set (considering `take()` / `skip()` options)</td>
+        <td>Returns all documents from result set (considering <code lang="typescript">take()</code> / <code lang="typescript">skip()</code> options)</td>
     </tr>
     <tr>
         <td><pre lang="typescript">async count(callback?
 : EntitiesCountCallback): Promise<number>;</pre></td>
-        <td>Returns count of all documents matching query criteria (non-considering `take()` / `skip()` options)</td>
+        <td>Returns count of all documents matching query criteria (non-considering <code lang="typescript">take()</code> / <code lang="typescript">skip()</code> options)</td>
     </tr>
 </table>
 
