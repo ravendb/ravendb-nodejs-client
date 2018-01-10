@@ -38,8 +38,8 @@ export class QueryCommand extends RavenCommand {
     const query = this.indexQuery;
 
     this.payload = query.toJson();
-    this.params = {"query-hash": query.queryHash};
-    this.metadataOnly && this.addParams('metadata-only', 'true');
+    this.params = {"queryHash": query.queryHash};
+    this.metadataOnly && this.addParams('metadataOnly', 'true');
     this.indexEntriesOnly && this.addParams('debug', 'entries');
     this.endPoint = StringUtil.format('{url}/databases/{database}/queries', serverNode);
   }
