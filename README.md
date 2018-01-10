@@ -202,34 +202,39 @@ projections?: string[]): IDocumentQuery&lt;T&gt;;</pre></td>
     <tr>
         <td><pre lang="typescript">whereEquals
 &lt;V extends ConditionValue&gt;(
-fieldName: string, value: V, exact?: boolean)
+fieldName: string, value: V, 
+exact?: boolean)
 : IDocumentQuery&lt;T&gt;;</pre></td>
         <td><pre lang="sql">WHERE fieldName = &lt;value&gt;</pre></td>
     </tr>
     <tr>
         <td><pre lang="typescript">whereNotEquals
 &lt;V extends ConditionValue&gt;(
-fieldName: string, value: V, exact?: boolean)
+fieldName: string, value: V, 
+exact?: boolean)
 : IDocumentQuery&lt;T&gt;;</pre></td>
         <td><pre lang="sql">WHERE fieldName != &lt;value&gt;</pre></td>
     </tr>
     <tr>
         <td><pre lang="typescript">whereIn
 &lt;V extends ConditionValue&gt;(
-fieldName: string, values: V[], exact?: boolean)
+fieldName: string, values: V[], 
+exact?: boolean)
 : IDocumentQuery&lt;T&gt;;</pre></td>
         <td><pre lang="sql">WHERE fieldName IN (&lt;value1&gt;, &lt;value2&gt;, ...)</pre></td>
     </tr>
     <tr>
         <td><pre lang="typescript">whereStartsWith
 &lt;V extends ConditionValue&gt;(
-fieldName: string, value: V): IDocumentQuery&lt;T&gt;;</pre></td>
+fieldName: string, value: V)
+: IDocumentQuery&lt;T&gt;;</pre></td>
         <td><pre lang="sql">WHERE startsWith(fieldName, '&lt;value&gt;')</pre></td>
     </tr>
     <tr>
         <td><pre lang="typescript">whereEndsWith
 &lt;V extends ConditionValue&gt;(
-fieldName: string, value: V): IDocumentQuery&lt;T&gt;;</pre></td>
+fieldName: string, value: V)
+: IDocumentQuery&lt;T&gt;;</pre></td>
         <td><pre lang="sql">WHERE endsWith(fieldName, '&lt;value&gt;')</pre></td>
     </tr>
     <tr>
@@ -242,28 +247,32 @@ exact?: boolean) : IDocumentQuery&lt;T&gt;;</pre></td>
     <tr>
         <td><pre lang="typescript">whereGreaterThan
 &lt;V extends ConditionValue&gt;(
-fieldName: string, value: V, exact?: boolean)
+fieldName: string, value: V, 
+exact?: boolean)
 : IDocumentQuery&lt;T&gt;;</pre></td>
         <td><pre lang="sql">WHERE fieldName > &lt;value&gt;</pre></td>
     </tr>
     <tr>
         <td><pre lang="typescript">whereGreaterThanOrEqual
 &lt;V extends ConditionValue&gt;(
-fieldName: string, value: V, exact?: boolean)
+fieldName: string, value: V, 
+exact?: boolean)
 : IDocumentQuery&lt;T&gt;;</pre></td>
         <td><pre lang="sql">WHERE fieldName >= &lt;value&gt;</pre></td>
     </tr>
     <tr>
         <td><pre lang="typescript">whereLessThan
 &lt;V extends ConditionValue&gt;(
-fieldName: string, value: V, exact?: boolean)
+fieldName: string, value: V, 
+exact?: boolean)
 : IDocumentQuery&lt;T&gt;;</pre></td>
         <td><pre lang="sql">WHERE fieldName < &lt;value&gt;</pre></td>
     </tr>
     <tr>
         <td><pre lang="typescript">whereLessThanOrEqual
 &lt;V extends ConditionValue&gt;(
-fieldName: string, value: V, exact?: boolean)
+fieldName: string, value: V, 
+exact?: boolean)
 : IDocumentQuery&lt;T&gt;;</pre></td>
         <td><pre lang="sql">WHERE fieldName <= &lt;value&gt;</pre></td>
     </tr>
@@ -287,8 +296,10 @@ fieldName: string, values: V[])
         <td><pre lang="sql">WHERE fieldName ALL IN (&lt;value1&gt;, &lt;value2&gt;, ...)</pre></td>
     </tr>
     <tr>
-        <td><pre lang="typescript">search(fieldName: string, searchTerms: string, 
-operator?: SearchOperator): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="typescript">search(fieldName: string, 
+searchTerms: string, 
+operator?: SearchOperator)
+: IDocumentQuery&lt;T&gt;;</pre></td>
         <td>Performs full-text search</td>
     </tr>
     <tr>
@@ -319,7 +330,8 @@ operator?: SearchOperator): IDocumentQuery&lt;T&gt;;</pre></td>
     </tr>
     <tr>
         <td><pre lang="typescript">orderBy(field: string, 
-ordering?: OrderingType): IDocumentQuery&lt;T&gt;;</pre></td>
+ordering?: OrderingType)
+: IDocumentQuery&lt;T&gt;;</pre></td>
         <td><pre lang="sql">ORDER BY field [DESC]</pre></td>
     </tr>
     <tr>
