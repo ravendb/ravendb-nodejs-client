@@ -180,47 +180,178 @@ query
   .orderBy('price');
 ```
 3. Finally, you may get query results:
-```
+```javascript
 let documents = await query.all();
 ```
 
 #### DocumentQuery methods overview
-| Method | RQL / description |
-| ------------- | ------------- |
-|`selectFields(fields: string[], projections?: string[]): this;`|`SELECT field1 [AS projection1], ...`|
-|`distinct(): this;`|`SELECT DISTINCT`|
-|`whereEquals<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName = <value>`|
-|`whereNotEquals<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName != <value>`|
-|`whereIn<V extends ConditionValue>(fieldName: string, values: V[], exact?: boolean): this;`|`WHERE fieldName IN (<value1>, <value2>, ...)`|
-|`whereStartsWith<V extends ConditionValue>(fieldName: string, value: V): this;`|`WHERE startsWith(fieldName, '<value>')`|
-|`whereEndsWith<V extends ConditionValue>(fieldName: string, value: V): this;`|`WHERE endsWith(fieldName, '<value>')`|
-|`whereBetween<V extends ConditionValue>(fieldName: string, start: V, end: V, exact?: boolean): this;`|`WHERE fieldName BETWEEN <start> AND <end>`|
-|`whereGreaterThan<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName > <value>`|
-|`whereGreaterThanOrEqual<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName >= <value>`|
-|`whereLessThan<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName < <value>`|
-|`whereLessThanOrEqual<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName <= <value>`|
-|`whereExists(fieldName: string): this;`|`WHERE exists(fieldName)`|
-|`containsAny<V extends ConditionValue>(fieldName: string, values: V[]): this;`|`WHERE fieldName IN (<value1>, <value2>, ...)`|
-|`containsAll<V extends ConditionValue>(fieldName: string, values: V[]): this;`|`WHERE fieldName ALL IN (<value1>, <value2>, ...)`|
-|`search(fieldName: string, searchTerms: string, operator?: SearchOperator): this;`|Performs full-text search|
-|`openSubclause(): this;`|Opens subclause `(`|
-|`closeSubclause(): this;`|Closes subclause `)`|
-|`negateNext(): this;`|Adds `NOT` before next condition|
-|`andAlso(): this;`|Adds `AND` before next condition|
-|`orElse(): this;`|Adds `OR` before next condition|
-|`usingDefaultOperator(operator: QueryOperator): this;`|Sets default operator (which will be used if no `andAlso()` / `orElse` was called. Just after query instantiation, `OR` is used as default operator. Default operator can be changed only adding any conditions|
-|`orderBy(field: string, ordering?: OrderingType): this;`|`ORDER BY field [DESC]`|
-|`randomOrdering(seed?: string): this;`|`ORDER BY random()`|
-|`take(count: number): this;`|`Limits the number of result entries to *count* `|
-|`skip(count: number): this;`|`Skips first *count* results `|
-|`first(callback?: EntityCallback<T>): Promise<T>;`|Returns first document from result set|
-|`single(callback?: EntityCallback<T>): Promise<T>;`|Returns single document matching query criteria. If there are no such document or more then one - throws an Exception|
-|`all(callback?: QueryResultsCallback<T[]>): Promise<T[]>;`|Returns all documents from result set (considering `take()` / `skip()` options)|
-|`count(callback?: EntitiesCountCallback): Promise<number>;`|Returns count of all documents matching query criteria (non-considering `take()` / `skip()` options)|
+<table>
+    <tr>
+        <th>Method</th>
+        <th>RQL / description</th>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">selectFields(fields: string[], 
+projections?: string[]): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">SELECT field1 [AS projection1], ...</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">distinct(): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">SELECT DISTINCT</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">whereEquals
+&lt;V extends ConditionValue&gt;(
+fieldName: string, value: V, exact?: boolean)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE fieldName = &lt;value&gt;</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">whereNotEquals
+&lt;V extends ConditionValue&gt;(
+fieldName: string, value: V, exact?: boolean)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE fieldName != &lt;value&gt;</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">whereIn
+&lt;V extends ConditionValue&gt;(
+fieldName: string, values: V[], exact?: boolean)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE fieldName IN (&lt;value1&gt;, &lt;value2&gt;, ...)</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">whereStartsWith
+&lt;V extends ConditionValue&gt;(
+fieldName: string, value: V): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE startsWith(fieldName, '&lt;value&gt;')</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">whereEndsWith
+&lt;V extends ConditionValue&gt;(
+fieldName: string, value: V): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE endsWith(fieldName, '&lt;value&gt;')</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">whereBetween
+&lt;V extends ConditionValue&gt;(
+fieldName: string, start: V, end: V, exact?: boolean)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE fieldName BETWEEN <start> AND <end></pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">whereGreaterThan
+&lt;V extends ConditionValue&gt;(
+fieldName: string, value: V, exact?: boolean)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE fieldName > &lt;value&gt;</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">whereGreaterThanOrEqual
+&lt;V extends ConditionValue&gt;(
+fieldName: string, value: V, exact?: boolean)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE fieldName >= &lt;value&gt;</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">whereLessThan&lt;V extends ConditionValue&gt;(
+fieldName: string, value: V, exact?: boolean)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE fieldName < &lt;value&gt;</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">whereLessThanOrEqual&lt;V extends ConditionValue&gt;(
+fieldName: string, value: V, exact?: boolean)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE fieldName <= &lt;value&gt;</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">whereExists(fieldName: string): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE exists(fieldName)</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">containsAny&lt;V extends ConditionValue&gt;(
+fieldName: string, values: V[])
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE fieldName IN (&lt;value1&gt;, &lt;value2&gt;, ...)</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">containsAll&lt;V extends ConditionValue&gt;(
+fieldName: string, values: V[])
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE fieldName ALL IN (&lt;value1&gt;, &lt;value2&gt;, ...)</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">search(fieldName: string, searchTerms: string, 
+operator?: SearchOperator): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td>Performs full-text search</td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">openSubclause(): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td>Opens subclause `(`</td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">closeSubclause(): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td>Closes subclause `)`</td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">negateNext(): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td>Adds `NOT` before next condition</td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">andAlso(): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td>Adds `AND` before next condition</td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">orElse(): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td>Adds `OR` before next condition</td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">usingDefaultOperator
+(operator: QueryOperator)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td>Sets default operator (which will be used if no `andAlso()` / `orElse` was called. Just after query instantiation, `OR` is used as default operator. Default operator can be changed only adding any conditions</td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">orderBy(field: string, 
+ordering?: OrderingType): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">ORDER BY field [DESC]</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">randomOrdering(seed?: string)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">ORDER BY random()</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">take(count: number): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td>Limits the number of result entries to `count`</td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">skip(count: number): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td>Skips first `count` results</td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">async first(callback?: EntityCallback<T>): Promise<T>;</pre></td>
+        <td>Returns first document from result set</td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">async single(callback?: EntityCallback<T>): Promise<T>;</pre></td>
+        <td>Returns single document matching query criteria. If there are no such document or more then one - throws an Exception</td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">async all(callback?: QueryResultsCallback<T[]>): Promise<T[]>;</pre></td>
+        <td>Returns all documents from result set (considering `take()` / `skip()` options)</td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">async count(callback?: EntitiesCountCallback): Promise<number>;</pre></td>
+        <td>Returns count of all documents matching query criteria (non-considering `take()` / `skip()` options)</td>
+    </tr>
+</table>
+
 
 Condition value can be a string, number, boolean, null value or `Date` object:
 
-```
+```typescript
 type ConditionValue = string | number | boolean | Date | null;
 ```
 
@@ -369,7 +500,6 @@ store.conventions.addDocumentInfoResolver({
   });
 })();
 ```
-
 
 ## Building
 
