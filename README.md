@@ -242,7 +242,7 @@ fieldName: string, value: V)
 &lt;V extends ConditionValue&gt;(
 fieldName: string, start: V, end: V, 
 exact?: boolean) : IDocumentQuery&lt;T&gt;;</pre></td>
-        <td><pre lang="sql">WHERE fieldName BETWEEN <start> AND <end></pre></td>
+        <td><pre lang="sql">WHERE fieldName BETWEEN &lt;start&gt; AND &lt;end&gt;</pre></td>
     </tr>
     <tr>
         <td><pre lang="typescript">whereGreaterThan
