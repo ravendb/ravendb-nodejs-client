@@ -12,7 +12,7 @@ export interface IDocumentStore extends IDisposable<Promise<IDocumentStore>> {
   singleNodeUrl: string;
   conventions: DocumentConventions;
   operations: OperationExecutor;
-  admin: AdminOperationExecutor;
+  maintenance: AdminOperationExecutor;
   initialize(): IDocumentStore;
   openSession(database?: string) : IDocumentSession;
   openSession(options?: ISessionOptions) : IDocumentSession;

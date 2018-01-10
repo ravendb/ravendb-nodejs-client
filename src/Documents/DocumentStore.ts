@@ -26,13 +26,12 @@ export class DocumentStore implements IDocumentStore {
   private _conventions: DocumentConventions;
   private _requestExecutors: Map<boolean, Map<string, RequestExecutor>>;
   private _operations: OperationExecutor;
-  private _admin: AdminOperationExecutor;
+  private _maintenance: AdminOperationExecutor;
   private _documentStoreOptions: IDocumentStoreAuthOptions;
 
   public get database(): string {
     return this._database;
   }
-
 
   public get urls(): string[] {
     return this._urls;
@@ -50,12 +49,12 @@ export class DocumentStore implements IDocumentStore {
     return this._operations;
   }
 
-  public get admin(): AdminOperationExecutor {
-    if (!this._admin) {
-      this._admin = new AdminOperationExecutor(this, this._database);      
+  public get maintenance(): AdminOperationExecutor {
+    if (!this._maintenance) {
+      this._maintenance = new AdminOperationExecutor(this, this._database);      
     }
 
-    return this._admin;
+    return this._maintenance;
   }
 
   public getRequestExecutor(database?: string): RequestExecutor {
@@ -121,7 +120,7 @@ export class DocumentStore implements IDocumentStore {
     return this._generator.returnUnusedRange()
       .catch((): BluebirdPromise<void> => BluebirdPromise.resolve())
       .then((): IDocumentStore => {
-        this.admin.server.dispose();
+        this.maintenance.server.dispose();
 
         for (let executorsByDB of this._requestExecutors.values()) {
           for (let executor of executorsByDB.values()) {

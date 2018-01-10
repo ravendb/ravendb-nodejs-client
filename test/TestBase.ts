@@ -38,7 +38,7 @@ beforeEach(async function() {
   store = DocumentStore.create(defaultUrl,  currentDatabase);
   store.initialize();
 
-  await store.admin.server.send(new CreateDatabaseOperation(dbDoc));
+  await store.maintenance.server.send(new CreateDatabaseOperation(dbDoc));
 
   indexMap = [
     'from doc in docs ',
@@ -64,7 +64,7 @@ beforeEach(async function() {
 });
 
 afterEach(async function() {
-   await store.admin.server.send(new DeleteDatabaseOperation(currentDatabase, true, null, 10000));
+   await store.maintenance.server.send(new DeleteDatabaseOperation(currentDatabase, true, null, 10000));
    await store.dispose();
 
    ['indexDefinition', 'indexMap',  'defaultUrl',
