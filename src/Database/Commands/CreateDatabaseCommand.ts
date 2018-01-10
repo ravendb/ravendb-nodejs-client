@@ -26,7 +26,7 @@ export class CreateDatabaseCommand extends RavenCommand {
       throw new InvalidOperationException("The Raven/DataDir setting is mandatory");
     }
 
-    this.params = {name: dbName, 'replication-factor': this.replicationFactor};
+    this.params = {name: dbName, 'replicationFactor': this.replicationFactor};
     this.endPoint = StringUtil.format('{url}/admin/databases', serverNode);
     this.payload = this.databaseDocument.toJson();
   }
