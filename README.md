@@ -254,29 +254,34 @@ fieldName: string, value: V, exact?: boolean)
         <td><pre lang="sql">WHERE fieldName >= &lt;value&gt;</pre></td>
     </tr>
     <tr>
-        <td><pre lang="typescript">whereLessThan&lt;V extends ConditionValue&gt;(
+        <td><pre lang="typescript">whereLessThan
+&lt;V extends ConditionValue&gt;(
 fieldName: string, value: V, exact?: boolean)
 : IDocumentQuery&lt;T&gt;;</pre></td>
         <td><pre lang="sql">WHERE fieldName < &lt;value&gt;</pre></td>
     </tr>
     <tr>
-        <td><pre lang="typescript">whereLessThanOrEqual&lt;V extends ConditionValue&gt;(
+        <td><pre lang="typescript">whereLessThanOrEqual
+&lt;V extends ConditionValue&gt;(
 fieldName: string, value: V, exact?: boolean)
 : IDocumentQuery&lt;T&gt;;</pre></td>
         <td><pre lang="sql">WHERE fieldName <= &lt;value&gt;</pre></td>
     </tr>
     <tr>
-        <td><pre lang="typescript">whereExists(fieldName: string): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="typescript">whereExists(fieldName: string)
+: IDocumentQuery&lt;T&gt;;</pre></td>
         <td><pre lang="sql">WHERE exists(fieldName)</pre></td>
     </tr>
     <tr>
-        <td><pre lang="typescript">containsAny&lt;V extends ConditionValue&gt;(
+        <td><pre lang="typescript">containsAny
+&lt;V extends ConditionValue&gt;(
 fieldName: string, values: V[])
 : IDocumentQuery&lt;T&gt;;</pre></td>
         <td><pre lang="sql">WHERE fieldName IN (&lt;value1&gt;, &lt;value2&gt;, ...)</pre></td>
     </tr>
     <tr>
-        <td><pre lang="typescript">containsAll&lt;V extends ConditionValue&gt;(
+        <td><pre lang="typescript">containsAll
+&lt;V extends ConditionValue&gt;(
 fieldName: string, values: V[])
 : IDocumentQuery&lt;T&gt;;</pre></td>
         <td><pre lang="sql">WHERE fieldName ALL IN (&lt;value1&gt;, &lt;value2&gt;, ...)</pre></td>
@@ -323,15 +328,18 @@ ordering?: OrderingType): IDocumentQuery&lt;T&gt;;</pre></td>
         <td><pre lang="sql">ORDER BY random()</pre></td>
     </tr>
     <tr>
-        <td><pre lang="typescript">take(count: number): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="typescript">take(count: number)
+: IDocumentQuery&lt;T&gt;;</pre></td>
         <td>Limits the number of result entries to `count`</td>
     </tr>
     <tr>
-        <td><pre lang="typescript">skip(count: number): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="typescript">skip(count: number)
+: IDocumentQuery&lt;T&gt;;</pre></td>
         <td>Skips first `count` results</td>
     </tr>
     <tr>
-        <td><pre lang="typescript">async first(callback?: EntityCallback<T>): Promise<T>;</pre></td>
+        <td><pre lang="typescript">async first(callback?
+: EntityCallback<T>): Promise<T>;</pre></td>
         <td>Returns first document from result set</td>
     </tr>
     <tr>
