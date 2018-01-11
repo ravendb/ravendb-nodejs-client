@@ -12,6 +12,7 @@ import {DocumentConventions} from '../../Documents/Conventions/DocumentConventio
 import {RavenCommand} from '../RavenCommand';
 import {InvalidOperationException} from '../DatabaseExceptions';
 import {OperationAwaiter} from './OperationAwaiter';
+import {IRequestAuthOptions} from '../../Auth/AuthOptions';
 
 export interface IOperationExecutor {
   send(operation: IOperation): Promise<IRavenResponse | IRavenResponse[] | void>;
@@ -142,15 +143,12 @@ export class OperationExecutor extends AbstractDatabaseOperationExecutor {
 export class ServerOperationExecutor extends AbstractOperationExecutor implements IDisposable {
   protected requestExecutorFactory(): IRequestExecutor {
     const store: IDocumentStore = this.store;
-    const conventions: DocumentConventions = store.conventions;    
+    const conventions: DocumentConventions = store.conventions; 
+    const authOptions = <IRequestAuthOptions>store.authOptions;   
 
     return conventions.disableTopologyUpdates
-      ? ClusterRequestExecutor.createForSingleNode(store.singleNodeUrl)
-      : ClusterRequestExecutor.create(store.urls);
-  }
-
-  private sendOperation(operation: IOperation){
-        return super.send(operation);
+      ? ClusterRequestExecutor.createForSingleNode(store.singleNodeUrl, authOptions)
+      : ClusterRequestExecutor.create(store.urls, authOptions);
   }
 
   public async send(operation: IOperation): Promise<IRavenResponse | IRavenResponse[] | void> {
@@ -158,7 +156,7 @@ export class ServerOperationExecutor extends AbstractOperationExecutor implement
       return BluebirdPromise.reject(new InvalidOperationException('Invalid operation passed. It should be derived from ServerOperation'));
     }
 
-    return this.sendOperation(operation);
+    return super.send(operation);
   }
 
   public dispose(): void {
@@ -177,15 +175,11 @@ export class AdminOperationExecutor extends AbstractDatabaseOperationExecutor {
     return this._server;
   }
 
-  private sendOperation(operation: IOperation){
-        return super.send(operation);
-  }
-
   public async send(operation: IOperation): Promise<IRavenResponse | IRavenResponse[] | void> {
     if (!(operation instanceof AdminOperation)) {
       return BluebirdPromise.reject(new InvalidOperationException('Invalid operation passed. It should be derived from ServerOperation'));
     }
 
-      return this.sendOperation(operation);
+    return super.send(operation);
   }
 }

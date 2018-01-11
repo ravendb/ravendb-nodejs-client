@@ -12,22 +12,20 @@ import {IHiloIdGenerator} from '../Hilo/IHiloIdGenerator';
 import {HiloMultiDatabaseIdGenerator} from '../Hilo/HiloMultiDatabaseIdGenerator';
 import {PromiseResolver} from "../Utility/PromiseResolver";
 import {TypeUtil} from "../Utility/TypeUtil";
-import {QueryString} from "../Http/QueryString";
+import {UriUtility} from "../Http/UriUtility";
 import {OperationExecutor, AdminOperationExecutor} from '../Database/Operations/OperationExecutor';
-import {IDocumentStoreAuthOptions} from '../Typedef/IDocumentStoreAuthOptions';
-import {IAuthOptions} from '../Typedef/IAuthOptions';
+import {IStoreAuthOptions, IRequestAuthOptions} from '../Auth/AuthOptions';
 
 export class DocumentStore implements IDocumentStore {
   private _initialized: boolean;
   private _urls: string[];  
   private _database: string;
-  private _options: IDocumentStoreAuthOptions;
   private _generator: IHiloIdGenerator;
   private _conventions: DocumentConventions;
   private _requestExecutors: Map<boolean, Map<string, RequestExecutor>>;
   private _operations: OperationExecutor;
   private _maintenance: AdminOperationExecutor;
-  private _documentStoreOptions: IDocumentStoreAuthOptions;
+  private _authOptions: IStoreAuthOptions;
 
   public get database(): string {
     return this._database;
@@ -39,6 +37,10 @@ export class DocumentStore implements IDocumentStore {
 
   public get singleNodeUrl(): string {
     return _.first(this._urls);
+  }
+
+  public get authOptions(): IStoreAuthOptions {
+    return this._authOptions;
   }
 
   public get operations(): OperationExecutor {
@@ -82,26 +84,23 @@ export class DocumentStore implements IDocumentStore {
     return this._conventions;
   }
 
-  constructor(urlOrUrls: string | string[], defaultDatabase: string, documentStoreOptions?: IDocumentStoreAuthOptions) {
+  constructor(urlOrUrls: string | string[], defaultDatabase: string, authOptions?: IStoreAuthOptions) {
     this._database = defaultDatabase;
     this._initialized = false;
-    this._urls = QueryString.parseUrls(urlOrUrls);
+    this._urls = UriUtility.parseUrls(urlOrUrls);
     this._requestExecutors = new Map<boolean, Map<string, RequestExecutor>>();
-    this._documentStoreOptions = documentStoreOptions;
+    this._authOptions = authOptions || null;
   }
  
-  static create(urlOrUrls: string | string[], defaultDatabase: string, opts?: IDocumentStoreAuthOptions): IDocumentStore {
-    let documentStoreOptions: IDocumentStoreAuthOptions = <IDocumentStoreAuthOptions>(opts || {});
-
-    return new DocumentStore(urlOrUrls, defaultDatabase, documentStoreOptions);
+  static create(urlOrUrls: string | string[], defaultDatabase: string, authOptions?: IStoreAuthOptions): IDocumentStore {
+    return new DocumentStore(urlOrUrls, defaultDatabase, authOptions);
   }
 
   public initialize(): IDocumentStore {
     if (!this._initialized) {
-      if (this._urls.some((url: string): boolean => 
-        0 === url.toLowerCase().indexOf('https') && this._documentStoreOptions === undefined)
-      ) {
-        throw new NotSupportedException("Access to secured servers require `documentStoreOptions` to be specified");
+      if ((this._urls.some((url: string): boolean => 
+      UriUtility.isSecure(url))) && !this._authOptions) {
+        throw new NotSupportedException("Access to secured servers require `authOptions` to be specified");
       }
 
       if (!this._database) {
@@ -177,19 +176,18 @@ export class DocumentStore implements IDocumentStore {
   protected assertInitialize(): void {
     if (!this._initialized) {
       throw new InvalidOperationException("You cannot open a session or access the _database commands\
- before initializing the document store. Did you forget calling initialize()?"
+ before initializing the document store. Did you forget calling initialize() ?"
       );
     }
   }
 
   protected createRequestExecutor(database?: string, forSingleNode?: boolean): RequestExecutor {    
     const dbName: string = database || this._database;
-
-    let  ravenRequestOptions: IAuthOptions = <IAuthOptions>(this._documentStoreOptions || {});
+    const authOptions = <IRequestAuthOptions>this._authOptions;
 
     const executor: IRequestExecutor = (true === forSingleNode)
-      ? RequestExecutor.createForSingleNode(this.singleNodeUrl, dbName, ravenRequestOptions)
-      : RequestExecutor.create(this.urls, dbName, ravenRequestOptions);
+      ? RequestExecutor.createForSingleNode(this.singleNodeUrl, dbName, authOptions)
+      : RequestExecutor.create(this.urls, dbName, authOptions);
     
     return <RequestExecutor>executor;
   }

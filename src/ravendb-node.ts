@@ -34,6 +34,7 @@ export {IJsonable, IJsonConvertible, IStringable, IDisposable} from './Typedef/C
 export {IRavenResponse} from './Database/RavenCommandResponse';
 export {IHeaders} from './Http/IHeaders';
 export {IResponse, IResponseBody} from './Http/Response/IResponse';
+export {IAuthOptions, IStoreAuthOptions, IRequestAuthOptions} from './Auth/AuthOptions';
 
 //exceptions
 export {
@@ -144,8 +145,9 @@ export {PatchOperation} from './Database/Operations/PatchOperation';
 export {IOperationStatusResult, OperationStatus, OperationStatuses, OperationAwaiter} from './Database/Operations/OperationAwaiter';
 export {AbstractOperation, Operation, AdminOperation, ServerOperation, PatchResultOperation, AwaitableOperation, IOperation} from './Database/Operations/Operation';
 export {AbstractOperationExecutor, AbstractDatabaseOperationExecutor, OperationExecutor, AdminOperationExecutor, ServerOperationExecutor, IOperationExecutor} from './Database/Operations/OperationExecutor';
-export {Serializer} from './Json/Serializer';
+export {Serializer, ISerialized, IAttributeSerializer} from './Json/Serializer';
 export {DatabaseDocument} from './Database/DatabaseDocument';
+export {Certificate} from './Auth/Certificate';
 export {DocumentStore} from './Documents/DocumentStore';
 export {DocumentSession} from './Documents/Session/DocumentSession';
 export {AdvancedSessionOperations} from './Documents/Session/AdvancedSessionOperations';
@@ -182,7 +184,7 @@ export {ServerNode} from './Http/ServerNode';
 export {NodeSelector} from './Http/Request/NodeSelector';
 export {NodeStatus} from './Http/NodeStatus';
 export {Topology} from './Http/Topology';
-export {QueryString} from './Http/QueryString';
+export {UriUtility} from './Http/UriUtility';
 export {Lock} from './Lock/Lock';
 export {Observable, IObservable} from './Utility/Observable';
 export {DateUtil} from './Utility/DateUtil';
@@ -202,5 +204,3 @@ export {HiloMultiDatabaseIdGenerator} from './Hilo/HiloMultiDatabaseIdGenerator'
 export {HiloMultiTypeIdGenerator} from './Hilo/HiloMultiTypeIdGenerator';
 export {HiloNextCommand} from './Hilo/Commands/HiloNextCommand';
 export {HiloReturnCommand} from './Hilo/Commands/HiloReturnCommand';
-export {CertificateLoader} from './Utility/CertificateLoader';
-

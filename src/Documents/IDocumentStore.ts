@@ -5,8 +5,10 @@ import {EntityIdCallback} from '../Typedef/Callbacks';
 import {ISessionOptions} from './Session/IDocumentSession';
 import {OperationExecutor, AdminOperationExecutor} from '../Database/Operations/OperationExecutor';
 import {IDisposable} from '../Typedef/Contracts';
+import {IStoreAuthOptions} from '../Auth/AuthOptions';
 
 export interface IDocumentStore extends IDisposable<Promise<IDocumentStore>> {
+  authOptions: IStoreAuthOptions;
   database: string;
   urls: string[];
   singleNodeUrl: string;

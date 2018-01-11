@@ -18,7 +18,9 @@ import {NodeSelector} from "./NodeSelector";
 import {NodeStatus} from "../NodeStatus";
 import {IDisposable} from '../../Typedef/Contracts';
 import {RavenException, InvalidOperationException, TopologyNodeDownException, AllTopologyNodesDownException, DatabaseLoadFailureException, UnsuccessfulRequestException} from "../../Database/DatabaseExceptions";
-import {IAuthOptions} from '../../Typedef/IAuthOptions';
+import {IRequestAuthOptions} from '../../Auth/AuthOptions';
+import {IOptionsSet} from '../../Typedef/IOptionsSet';
+import {Certificate, ICertificate} from '../../Auth/Certificate';
 
 export interface ITopologyUpdateEvent {
   topologyJson: object;
@@ -28,11 +30,12 @@ export interface ITopologyUpdateEvent {
   wasUpdated?: boolean;
 }
 
-export interface IRequestExecutorOptions extends IAuthOptions {
+export interface IRequestExecutorOptions {
   withoutTopology?: boolean;
   topologyEtag?: number;
   singleNodeTopology?: Topology;
   firstTopologyUpdateUrls?: string[];
+  authOptions?: IRequestAuthOptions
 }
 
 export interface IRequestExecutor extends IDisposable {
@@ -45,20 +48,21 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
   public static readonly NODE_STATUS_UPDATED = 'node:status:updated';
 
   protected headers: IHeaders;
-  private readonly _maxFirstTopologyUpdatesTries: number = 5;
-  private _firstTopologyUpdatesTries: number = 0;
-  private _awaitFirstTopologyLock: Lock;
-  private _updateTopologyLock: Lock;
-  private _updateFailedNodeTimerLock: Lock;
-  private _firstTopologyUpdate: BluebirdPromise<void> = null;
-  private _withoutTopology: boolean;
-  private _nodeSelector: NodeSelector;
-  private _lastKnownUrls: string[];
-  private _initialDatabase: string;
-  private _topologyEtag: number;
-  private _faildedNodesStatuses: Map<ServerNode, NodeStatus>;
-  private _disposed: boolean = false;
-  private _ravenRequestOptions: IAuthOptions;
+  protected readonly _maxFirstTopologyUpdatesTries: number = 5;
+  protected _firstTopologyUpdatesTries: number = 0;
+  protected _awaitFirstTopologyLock: Lock;
+  protected _updateTopologyLock: Lock;
+  protected _updateFailedNodeTimerLock: Lock;
+  protected _firstTopologyUpdate: BluebirdPromise<void> = null;
+  protected _withoutTopology: boolean;
+  protected _nodeSelector: NodeSelector;
+  protected _lastKnownUrls: string[];
+  protected _initialDatabase: string;
+  protected _topologyEtag: number;
+  protected _faildedNodesStatuses: Map<ServerNode, NodeStatus>;
+  protected _disposed: boolean = false;
+  protected _authOptions: IRequestAuthOptions;
+  protected _certificate: ICertificate = null;
 
   public get initialDatabase(): string {
     return this._initialDatabase;
@@ -83,7 +87,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     this._updateTopologyLock = Lock.make();
     this._updateFailedNodeTimerLock = Lock.make();
     this._faildedNodesStatuses = new Map<ServerNode, NodeStatus>();
-    this._ravenRequestOptions = <IAuthOptions>options;
+    this._authOptions = (<IRequestAuthOptions>options.authOptions) || null;
 
     if (!this._withoutTopology && urls.length) {
       this.startFirstTopologyUpdate(urls);
@@ -97,26 +101,34 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     this.cancelFailingNodesTimers();
   }
 
-  public static create(urls: string[], database?: string, ravenRequestOptions?: IAuthOptions): IRequestExecutor {
+  public static create(urls: string[], database?: string | IRequestAuthOptions, authOptions?: IRequestAuthOptions): IRequestExecutor {
     const self = <typeof RequestExecutor>this;
+    let options: IRequestExecutorOptions = {
+      withoutTopology: false,
+      firstTopologyUpdateUrls: _.clone(urls)
+    };
 
-    let requestExecutorOptions: IRequestExecutorOptions = <IRequestExecutorOptions>(ravenRequestOptions || {})
-        requestExecutorOptions.withoutTopology = false;
-        requestExecutorOptions.firstTopologyUpdateUrls = _.clone(urls);
+    if (authOptions) {
+      options.authOptions = authOptions;
+    }    
 
-    return new self(database, requestExecutorOptions);
+    return new self(<string>database, options);
   }
 
-  public static createForSingleNode(url: string, database?: string, ravenRequestOptions?: IAuthOptions): IRequestExecutor {
+  public static createForSingleNode(url: string, database?: string | IRequestAuthOptions, authOptions?: IRequestAuthOptions): IRequestExecutor {
     const self = <typeof RequestExecutor>this;
-    const topology = new Topology(-1, [new ServerNode(url, database)]);
+    const topology = new Topology(-1, [new ServerNode(url, <string>database)]);
+    let options: IRequestExecutorOptions = {
+      withoutTopology: true,
+      singleNodeTopology: topology,
+      topologyEtag: -2
+    };
 
-    let requestExecutorOptions: IRequestExecutorOptions = <IRequestExecutorOptions>(ravenRequestOptions || {})
-    requestExecutorOptions.withoutTopology = true;
-    requestExecutorOptions.singleNodeTopology = topology;
-    requestExecutorOptions.topologyEtag = -2;
+    if (authOptions) {
+      options.authOptions = authOptions;
+    }
 
-    return new self(database, requestExecutorOptions);
+    return new self(<string>database, options);
   }
 
   public execute(command: RavenCommand): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> {
@@ -176,11 +188,22 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     let options: RavenCommandRequestOptions;
 
     command.createRequest(node);
-    options = command.toRequestOptions(this._ravenRequestOptions); 
+    options = command.toRequestOptions(); 
     Object.assign(options.headers, this.headers);
 
     if (!this._withoutTopology) {
       options.headers["Topology-Etag"] = this._topologyEtag;
+    }
+
+    if (this._authOptions && node.isSecure) {
+      let agentOptions: IOptionsSet = {};
+
+      if (!this._certificate) {
+        this._certificate = Certificate.createFromOptions(this._authOptions);
+      }
+
+      this._certificate.toAgentOptions(agentOptions);
+      options.agentOptions = agentOptions;
     }
 
     return options;
