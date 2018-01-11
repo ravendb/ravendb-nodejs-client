@@ -90,8 +90,7 @@ export class DocumentStore implements IDocumentStore {
     this._documentStoreOptions = documentStoreOptions;
   }
  
-  static create(urlOrUrls: string | string[], defaultDatabase: string, opts?: IDocumentStoreAuthOptions): IDocumentStore{
-  
+  static create(urlOrUrls: string | string[], defaultDatabase: string, opts?: IDocumentStoreAuthOptions): IDocumentStore {
     let documentStoreOptions: IDocumentStoreAuthOptions = <IDocumentStoreAuthOptions>(opts || {});
 
     return new DocumentStore(urlOrUrls, defaultDatabase, documentStoreOptions);
