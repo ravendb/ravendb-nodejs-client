@@ -9,10 +9,9 @@ const concat = require('gulp-concat');
 const uglify = require('gulp-uglify-harmony');
 const args = require('./args');
 
+const tsProject = ts.createProject('./tsconfig.json') 
 const preamble = '/** RavenDB Client - (c) Hibernating Rhinos 2017 */';
 const exportDefault = 'export default DocumentStore;';
-
-const tsProject = ts.createProject('tsconfig.json') 
 
 const options = {
     src: './src',
@@ -58,11 +57,17 @@ gulp.task('build:tests', ['clean', 'build:tests:args'], () => gulp
         )
         .join('\n')
     ))
-    .pipe(tsProject())
+    .pipe(ts({
+        allowJs: true,
+        target: 'ES6',
+        module: 'commonjs',
+        removeComments: true,
+        lib: ["dom", "es7"]
+    }))
     .pipe(gulp.dest(options.tmp))
 );
 
-gulp.task('run:tests', ['clean', 'build:tests'], (next) => {
+gulp.task('run:tests', ['clean', 'build:tests:args', 'build:tests'], () => {
     let tests = args.test.map(
         (test) => `${options.tmp}/test/**/${test}Test.js`
     );
@@ -130,13 +135,7 @@ gulp.task('build:bundle', ['clean', 'build:exports', 'build:concat'], () => gulp
 
 gulp.task('build:compile', ['clean', 'build:exports', 'build:concat', 'build:bundle'], () => gulp
     .src(options.tmp + '/ravendb-node.ts')
-    .pipe(ts({
-        target: 'ES6',
-        module: 'commonjs',
-        removeComments: true,
-        declaration: true,
-        lib: ["dom", "es7"]
-    }))
+    .pipe(tsProject())
     .pipe(gulp.dest(options.dest))
 );
 
@@ -153,6 +152,6 @@ gulp.task('build:uglify', ['clean', 'build:exports', 'build:concat', 'build:bund
     .pipe(gulp.dest(options.dest))
 );
 
-gulp.task('test', ['clean', 'build:tests', 'run:tests']);
+gulp.task('test', ['clean', 'build:tests:args', 'build:tests', 'run:tests']);
 
 gulp.task('bundle', ['clean', 'build:exports', 'build:concat', 'build:bundle', 'build:compile', 'build:uglify']);

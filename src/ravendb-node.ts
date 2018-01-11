@@ -147,7 +147,7 @@ export {AbstractOperation, Operation, AdminOperation, ServerOperation, PatchResu
 export {AbstractOperationExecutor, AbstractDatabaseOperationExecutor, OperationExecutor, AdminOperationExecutor, ServerOperationExecutor, IOperationExecutor} from './Database/Operations/OperationExecutor';
 export {Serializer, ISerialized, IAttributeSerializer} from './Json/Serializer';
 export {DatabaseDocument} from './Database/DatabaseDocument';
-export {Certificate} from './Auth/Certificate';
+export {Certificate, PemCertificate, PfxCertificate, CertificateType, ICertificate} from './Auth/Certificate';
 export {DocumentStore} from './Documents/DocumentStore';
 export {DocumentSession} from './Documents/Session/DocumentSession';
 export {AdvancedSessionOperations} from './Documents/Session/AdvancedSessionOperations';
