@@ -5,7 +5,9 @@ import {ArrayUtil} from "../Utility/ArrayUtil";
 import {DocumentConventions, DocumentConstructor} from "../Documents/Conventions/DocumentConventions";
 import {IRavenObject} from "../Typedef/IRavenObject";
 
-export interface ISerialized {
+export interface ISerialized<T extends Object = IRavenObject> {
+  source: object | T;
+  target?: object | T;
   originalAttribute: string;
   serializedAttribute: string;
   originalValue: any;
@@ -103,12 +105,13 @@ export class Serializer {
       let source: any = sourceObject[key];
 
       if ('undefined' !== (typeof source)) {
-        let serialized: ISerialized = {
+        let serialized: ISerialized<T> = {
           originalAttribute: key,
           serializedAttribute: key,
           originalValue: source,
           serializedValue: transform(source, key),
-          attributePath: this.buildPath(key, parentPath)
+          attributePath: this.buildPath(key, parentPath),
+          source, target, metadata, nestedObjectTypes
         };
 
         if (conventions) {
@@ -161,7 +164,8 @@ export class Serializer {
         serializedAttribute: key,
         originalValue: sourceValue,
         serializedValue: transform(sourceValue, key),
-        attributePath: this.buildPath(key, parentPath)
+        attributePath: this.buildPath(key, parentPath),
+        source, metadata: source['@metadata'] || {}
       };
 
       if (('@metadata' !== key) && conventions) {
