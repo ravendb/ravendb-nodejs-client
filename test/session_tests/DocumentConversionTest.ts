@@ -5,9 +5,11 @@ import {expect} from 'chai';
 import {IDocumentStore} from "../../src/Documents/IDocumentStore";
 import {IDocumentSession} from "../../src/Documents/Session/IDocumentSession";
 import {IRavenObject} from "../../src/Typedef/IRavenObject";
-import {DocumentConstructor} from "../../src/Documents/Conventions/DocumentConventions";
-import {Foo, TestConversion, TestCustomIdProperty} from "../TestClasses";
+import {DocumentType, IStoredRawEntityInfo, DocumentConstructor} from "../../src/Documents/Conventions/DocumentConventions";
+import {Foo, TestConversion, TestCustomIdProperty, TestCustomSerializer} from "../TestClasses";
 import {RequestExecutor} from "../../src/Http/Request/RequestExecutor";
+import {ISerialized, IAttributeSerializer} from "../../src/Json/Serializer";
+import { StringUtil } from '../../src/Utility/StringUtil';
 
 describe('Document conversion test', () => {
   const now: Date = new Date();
@@ -20,8 +22,36 @@ describe('Document conversion test', () => {
     foos: Foo
   };
 
+  const serializer: IAttributeSerializer = {
+    onSerialized: (serialized: ISerialized): void => {
+      if (TestCustomSerializer.name !== serialized.metadata['Raven-Node-Type']) {
+        return;
+      }
+
+      serialized.serializedAttribute = StringUtil.uncapitalize(serialized.originalAttribute);
+
+      if ('Items' === serialized.originalAttribute) {
+        serialized.serializedValue = (<number[]>serialized.originalValue).join(",");
+      }  
+    },
+    onUnserialized: (serialized: ISerialized): void => {
+      if (TestCustomSerializer.name !== serialized.metadata['Raven-Node-Type']) {
+        return;
+      }
+
+      serialized.serializedAttribute = StringUtil.capitalize(serialized.originalAttribute);
+
+      if ('items' === serialized.originalAttribute) {
+        serialized.serializedValue = (<string>serialized.originalValue)
+          .split(",").map((item: string): number => parseInt(item));
+      }  
+    }
+  };
+
   const resolveIdProperty = (typeName: string): string => {
-    if (TestCustomIdProperty.name === typeName) {
+    if ([TestCustomSerializer, TestCustomIdProperty]
+      .map((ctor) => ctor.name).includes(typeName)
+    ) {
       return 'Id';
     }
   };
@@ -188,6 +218,37 @@ describe('Document conversion test', () => {
       expect(doc).to.be.a.instanceOf(TestCustomIdProperty);
       expect(doc).to.have.property('Id', key);
       expect(doc).to.have.property('Title', title);
+    });
+
+    it('should support custom serializer', async () => {
+      let id: string, info: IStoredRawEntityInfo;
+      const title: string = 'Testing custom serializer';
+      const items: number[] = [1, 2, 3];
+      let doc: TestCustomSerializer = new TestCustomSerializer(null, title, items);
+
+      session = store.openSession();
+      store.conventions.addAttributeSerializer(serializer);
+      store.conventions.addDocumentInfoResolver({ resolveIdProperty, resolveConstructor });
+
+      await session.store<TestCustomSerializer>(doc);  
+      await session.saveChanges();
+      id = doc.Id;
+
+      session = store.openSession();
+      doc = await session.load<TestCustomSerializer>(id);
+
+      expect(doc).to.be.an('object');
+      expect(doc).to.be.a.instanceOf(TestCustomSerializer);
+      expect(doc).to.have.property('Id', id);
+      expect(doc).to.have.property('Title', title);
+      expect(doc).to.have.property('Items')
+      expect(doc.Items).to.deep.equal(items);
+
+      info = (<Map<IRavenObject, IStoredRawEntityInfo>>session['rawEntitiesAndMetadata']).get(doc);
+
+      expect(info.originalValue).to.an('object');
+      expect(info.originalValue).to.have.property('title', title);
+      expect(info.originalValue).to.have.property('items', items.join(','));
     });
   });
 });

@@ -68,6 +68,14 @@ export class TestCustomIdProperty implements IRavenObject {
   ) {}
 }
 
+export class TestCustomSerializer implements IRavenObject {
+  constructor(
+    public Id: string,
+    public Title: string,
+    public Items: number[]
+  ) {}
+}
+
 export class LastFmAnalyzed {
   protected indexDefinition: IndexDefinition;
 
