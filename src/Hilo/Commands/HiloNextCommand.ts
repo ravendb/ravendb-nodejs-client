@@ -40,7 +40,7 @@ export class HiloNextCommand extends RavenCommand {
     super.setResponse(response);
 
     let code: StatusCode = response.statusCode;
-    let responseBody: IResponseBody = response.body;
+    let responseBody: IResponseBody = <IResponseBody>response.body;
 
     if (StatusCodes.isCreated(code)) {
       return {

@@ -11,7 +11,7 @@ import {GetTopologyCommand} from "../../Database/Commands/GetTopologyCommand";
 import {GetStatisticsCommand} from "../../Database/Commands/GetStatisticsCommand";
 import {DateUtil} from "../../Utility/DateUtil";
 import {TypeUtil} from "../../Utility/TypeUtil";
-import {IResponse, IErrorResponse} from "../Response/IResponse";
+import {IResponse, IErrorResponse, IResponseBody} from "../Response/IResponse";
 import {StatusCodes, StatusCode} from "../Response/StatusCode";
 import {Observable} from "../../Utility/Observable";
 import {NodeSelector} from "./NodeSelector";
@@ -255,8 +255,8 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
           if (command.wasFailed) {
             let message: string = 'Unsuccessfull request';
 
-            if (response.body && response.body.Error) {
-                message += `: ${response.body.Error}`;
+            if (response.body && (<IResponseBody>response.body).Error) {
+                message += `: ${(<IResponseBody>response.body).Error}`;
             }
 
             return BluebirdPromise.reject(new UnsuccessfulRequestException(message));
