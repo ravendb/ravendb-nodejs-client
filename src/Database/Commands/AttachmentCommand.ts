@@ -33,4 +33,11 @@ export abstract class AttachmentCommand extends RavenCommand {
 
     this.endPoint = StringUtil.format('{url}/databases/{database}/attachments', serverNode);
   }
+
+  public toRequestOptions(): RavenCommandRequestOptions {
+    let options = super.toRequestOptions();
+
+    options.json = false;
+    return options;
+  }
 }

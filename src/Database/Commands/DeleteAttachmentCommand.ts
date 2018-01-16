@@ -21,4 +21,11 @@ export class DeleteAttachmentCommand extends AttachmentCommand {
       this.headers["If-Match"] = StringUtil.format('"{changeVector}"', this);
     }
   }
+
+  public toRequestOptions(): RavenCommandRequestOptions {
+    let options = super.toRequestOptions();
+
+    options.json = true;
+    return options;
+  }
 }

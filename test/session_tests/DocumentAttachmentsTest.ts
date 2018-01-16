@@ -14,6 +14,7 @@ import {DeleteAttachmentOperation} from "../../src/Database/Operations/DeleteAtt
 import {AttachmentTypes} from "../../src/Database/Operations/Attachments/AttachmentType";
 import {IAttachmentResult} from "../../src/Database/Operations/Attachments/AttachmentResult";
 import {IAttachmentDetails} from "../../src/Database/Operations/Attachments/AttachmentDetails";
+import {DocumentDoesNotExistException} from '../../src/Database/DatabaseExceptions';
 
 describe('Document attachments test', () => {
   let store: IDocumentStore;
@@ -76,7 +77,7 @@ describe('Document attachments test', () => {
         AttachmentTypes.Document)
       ); 
 
-      expect(attachmentResult.stream).to.equals(attachmentBuffer);
+      expect(attachmentResult.stream).to.deep.equals(attachmentBuffer);
       expect(attachmentResult.attachmentDetails.documentId).to.equals(product.id);
       expect(attachmentResult.attachmentDetails.contentType).to.equals('image/gif');
       expect(attachmentResult.attachmentDetails.name).to.equals('1x1.gif');
@@ -103,7 +104,7 @@ describe('Document attachments test', () => {
       await expect(store.operations.send(
         new GetAttachmentOperation(product.id, '1x1.gif', 
         AttachmentTypes.Document)
-      )).to.be.rejected;
+      )).to.be.rejectedWith(DocumentDoesNotExistException);
     }); 
   });
 });

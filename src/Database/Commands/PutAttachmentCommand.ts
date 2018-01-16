@@ -34,22 +34,31 @@ export class PutAttachmentCommand extends AttachmentCommand {
       this.headers["If-Match"] = StringUtil.format('"{changeVector}"', this);
     }
 
+    if (!StringUtil.isNullOrWhiteSpace(this._contentType)) {
+      this.params['contentType'] = this._contentType;
+    }
+
     this.method = RequestMethods.Put;
   }
 
   public toRequestOptions(): RavenCommandRequestOptions {
     let options = super.toRequestOptions();
 
-    if (!StringUtil.isNullOrWhiteSpace(this._contentType)) {
-      this.params['contentType'] = this._contentType;
-    }
-
-    options.formData = {[this._name]: this._stream};
-    options.json = false;
+    options.body = this._stream;
     return options;
   }
 
   public setResponse(response: IResponse): IRavenResponse | IRavenResponse[] | void {
+    try {
+      response.body = JSON.parse(<string>response.body);
+    } catch (exception) {
+      response.body = null;
+    }
+
+    if (!response.body) {
+      throw new ErrorResponseException('Invalid JSON');
+    }
+
     return <IRavenResponse><IAttachmentDetails>super.setResponse(response);    
   }
 }
