@@ -80,7 +80,8 @@ gulp.task('run:tests', ['clean', 'build:tests:args', 'build:tests'], () => {
         .pipe(mocha({
             "timeout": 10000,
             "ravendb-host": args["ravendb-host"], 
-            "ravendb-port": args["ravendb-port"]
+            "ravendb-port": args["ravendb-port"], 
+            "ravendb-certificate": args["ravendb-certificate"]
         }))
         .on('error', () => process.exit(-1));
 });
