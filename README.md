@@ -532,12 +532,13 @@ npm run build
 
 ## Running tests
 ```bash
-npm test -- -h 192.168.5.44 [-p 8080] [-t DocumentSerializing [-f]]
+npm test -- -h 192.168.5.44 [-p 8080] [-c path/to/certificate.pem(pfx)] [-t DocumentSerializing [-f]]
 ```
 
 | Option | Description |
 | ------------- | ------------- |
 | `-h` or `--ravendb-host=` | Database host |
 | `-p` or `--ravendb-port=` | Database port. 8080 by default |
+| `-c` or `--ravendb-certificate=` | Path to .pem or .pfx certificate. If specified, test runner will use https protocol |
 | `-t` or `--test=` | Test name. For run multiple test, specify each test in separate --test= option. By default runs all tests |
 | `-f` or `--no-fixtures` | Skip executing database fixtures (create test database, put test indexes etc). Can be usable for tests which doesn't executes raven commands (e.g. DocumentSerializing) |
