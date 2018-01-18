@@ -3,6 +3,7 @@ import {RavenCommand} from '../RavenCommand';
 import {DocumentConventions} from '../../Documents/Conventions/DocumentConventions';
 import {AttachmentType} from './Attachments/AttachmentType';
 import {GetAttachmentCommand} from '../Commands/GetAttachmentCommand';
+import {IDocumentStore} from '../../Documents/IDocumentStore';
 
 export class GetAttachmentOperation extends AttachmentOperation {  
   protected type: AttachmentType;
@@ -12,7 +13,7 @@ export class GetAttachmentOperation extends AttachmentOperation {
     this.type = type;
   }
 
-  public getCommand(conventions: DocumentConventions): RavenCommand {
+  public getCommand(conventions: DocumentConventions, store?: IDocumentStore): RavenCommand {
     return new GetAttachmentCommand(this.documentId, this.name, this.type, this.changeVector);
   } 
 }

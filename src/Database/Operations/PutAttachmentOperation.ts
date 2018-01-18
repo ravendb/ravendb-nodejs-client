@@ -3,6 +3,7 @@ import {RavenCommand} from '../RavenCommand';
 import {DocumentConventions} from '../../Documents/Conventions/DocumentConventions';
 import {AttachmentType} from './Attachments/AttachmentType';
 import {PutAttachmentCommand} from '../Commands/PutAttachmentCommand';
+import {IDocumentStore} from '../../Documents/IDocumentStore';
 
 export class PutAttachmentOperation extends AttachmentOperation {  
   protected stream: Buffer;
@@ -14,7 +15,7 @@ export class PutAttachmentOperation extends AttachmentOperation {
     this.contentType = contentType;
   }
 
-  public getCommand(conventions: DocumentConventions): RavenCommand {
+  public getCommand(conventions: DocumentConventions, store?: IDocumentStore): RavenCommand {
     return new PutAttachmentCommand(this.documentId, this.name, this.stream, this.contentType, this.changeVector);
   } 
 }
