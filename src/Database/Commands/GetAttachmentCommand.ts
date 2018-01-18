@@ -57,12 +57,12 @@ export class GetAttachmentCommand extends AttachmentCommand {
     super.setResponse(response);
 
     const attachment: Buffer = <Buffer>response.body;
-    const contentType: string = this.tryReadHeader(response, 'Content-Type');
-    const hash: string = this.tryReadHeader(response, 'Attachment-Hash');
-    let changeVector: string = this.tryReadHeader(response, 'Etag');
+    const contentType: string = this.tryReadHeader('Content-Type');
+    const hash: string = this.tryReadHeader('Attachment-Hash');
+    let changeVector: string = this.tryReadHeader('Etag');
     let size: number = 0, sizeString: string = null;
 
-    if (sizeString = this.tryReadHeader(response, 'Attachment-Size')) {
+    if (sizeString = this.tryReadHeader('Attachment-Size')) {
       size = parseInt(sizeString);
 
       if (isNaN(size) || (size < 0)) {
@@ -88,8 +88,8 @@ export class GetAttachmentCommand extends AttachmentCommand {
     return <IRavenResponse>result;
   }
 
-  protected tryReadHeader(response: IResponse, header: string): string | null {
-    const headers: IHeaders = response.headers;
+  protected tryReadHeader(header: string): string | null {
+    const headers: IHeaders = this._lastResponse.headers;
 
     return ((headers[header] || headers[header.toLowerCase()]) as string) || null;
   }

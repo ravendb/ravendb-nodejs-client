@@ -18,7 +18,7 @@ export abstract class RavenCommand {
   protected payload?: object;
   protected headers: object = {};
   protected failedNodes: Set<ServerNode>;
-  private _lastResponse: IResponse;
+  protected _lastResponse: IResponse;
 
   public abstract createRequest(serverNode: ServerNode): void;
 
