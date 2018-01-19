@@ -524,6 +524,45 @@ store.conventions.addDocumentInfoResolver({
 })();
 ```
 
+## Working with secured server
+
+1. Fill auth options object. Pass contents of the pem/pfx certificate, specift its type and (optionally) passphrase:
+```javascript
+import {DocumentStore, Certificate} from 'ravendb';
+
+certificate = ```
+-----BEGIN CERTIFICATE-----
+...
+-----END CERTIFICATE-----
+-----BEGIN RSA PRIVATE KEY-----
+...
+-----END RSA PRIVATE KEY-----
+```;
+
+let authOptions = {
+  certificate: certificate,
+  type: Certificate.Pem,
+  password: 'my passphrase' // optional  
+};
+``` 
+
+2. Pass auth options as third argument of `DocumentStore.create`:
+
+```javascript
+let store = DocumentStore.create(
+  'database url',
+  'default database name',
+  authOptions
+);
+
+store.initialize();
+```
+
+#### Auth exceptions
+
+- if no auth options was provided and you're trying to work with secured server, an `NotSupportedException` will be thrown during store initialization
+- if certificate is invalid or doesn't have permissions for specific operations, an `AuthorizationException` will be thrown during working with sessions/querying/sending operations
+
 ## Building
 
 ```bash
@@ -531,6 +570,7 @@ npm run build
 ```
 
 ## Running tests
+
 ```bash
 npm test -- -h 192.168.5.44 [-p 8080] [-c path/to/certificate.pem(pfx)] [-t DocumentSerializing [-f]]
 ```
