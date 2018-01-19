@@ -530,7 +530,7 @@ store.conventions.addDocumentInfoResolver({
 ```javascript
 import {DocumentStore, Certificate} from 'ravendb';
 
-certificate = ```
+const certificate = ```
 -----BEGIN CERTIFICATE-----
 ...
 -----END CERTIFICATE-----
