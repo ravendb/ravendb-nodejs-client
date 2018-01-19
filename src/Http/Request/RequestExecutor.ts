@@ -169,7 +169,9 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
         if (!isFulfilled) {
           isFulfilled = firstTopologyUpdate.isFulfilled();
 
-          if (firstTopologyUpdate.isRejected()) {
+          if (firstTopologyUpdate.isRejected() 
+            && !(firstTopologyUpdate.reason() instanceof AuthorizationException)
+          ) {
             this.startFirstTopologyUpdate(this._lastKnownUrls);
           }
         }        
@@ -177,11 +179,21 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
 
       return isFulfilled;
     })
-    .then((isFulfilled: boolean): BluebirdPromise.Thenable<void> => (isFulfilled 
-      ? BluebirdPromise.resolve() : (this.isFirstTopologyUpdateTriesExpired() 
-      ? BluebirdPromise.reject(new DatabaseLoadFailureException('Max topology update tries reached')) 
-      : BluebirdPromise.delay(100).then((): BluebirdPromise.Thenable<void> => this.awaitFirstTopologyUpdate())))
-    );
+    .then((isFulfilled: boolean): BluebirdPromise.Thenable<void> => {      
+      if (!isFulfilled) {
+        let topologyResult: BluebirdPromise<void> = this._firstTopologyUpdate;
+
+        if (topologyResult.isRejected() && (topologyResult.reason() instanceof AuthorizationException)) {
+          return BluebirdPromise.reject(topologyResult.reason()); 
+        } else if (this.isFirstTopologyUpdateTriesExpired()) {
+          return BluebirdPromise.reject(new DatabaseLoadFailureException('Max topology update tries reached'));
+        } else {
+          return BluebirdPromise.delay(100).then((): BluebirdPromise.Thenable<void> => this.awaitFirstTopologyUpdate());
+        }        
+      }
+
+      return BluebirdPromise.resolve();  
+    });
   }
 
   protected prepareCommand(command: RavenCommand, node: ServerNode): RavenCommandRequestOptions {
@@ -318,7 +330,13 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
 
     const update = (url: string): BluebirdPromise<void> => 
       this.updateTopology(new ServerNode(url, this._initialDatabase))
-      .catch((error: Error): BluebirdPromise.Thenable<void> => tryNextUrl(error));
+      .catch((error: Error): BluebirdPromise.Thenable<void> => {
+        if (error instanceof AuthorizationException) {
+          return BluebirdPromise.reject(error);
+        }
+
+        return tryNextUrl(error);
+      });
 
     const tryNextUrl = (error: Error): BluebirdPromise.Thenable<void> => {
       if (url = urls.pop()) {
