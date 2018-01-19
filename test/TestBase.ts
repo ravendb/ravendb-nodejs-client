@@ -34,7 +34,7 @@ let index: IndexDefinition;
 let requestExecutor: RequestExecutor;
 let store: IDocumentStore;
 let currentDatabase: string;
-let certificate: string = null;
+let certificate: string | Buffer = null;
 let certificateType: CertificateType = null;
 
 if (certificateFile) {
@@ -50,7 +50,7 @@ if (certificateFile) {
   }  
 
   if (certificateType) {
-    certificate = fs.readFileSync(certificateFile).toString();
+    certificate = fs.readFileSync(certificateFile);
   }
 }
 

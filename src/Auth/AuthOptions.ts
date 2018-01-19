@@ -2,7 +2,7 @@ import {CertificateType} from "./Certificate";
 
 export interface IAuthOptions {
   type?: CertificateType;
-  certificate?: string;
+  certificate?: string | Buffer;
   password?: string;
 }   
 

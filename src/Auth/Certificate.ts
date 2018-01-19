@@ -1,7 +1,7 @@
 import {IOptionsSet} from '../Typedef/IOptionsSet';
 import {InvalidArgumentException} from '../Database/DatabaseExceptions';
 import {IAuthOptions} from './AuthOptions';
-import { StringUtil } from '../Utility/StringUtil';
+import {StringUtil} from '../Utility/StringUtil';
 
 export type CertificateType = 'pem' | 'pfx';
 
@@ -13,7 +13,7 @@ export abstract class Certificate implements ICertificate {
   public static readonly Pem: CertificateType = 'pem';
   public static readonly Pfx: CertificateType = 'pfx';
 
-  protected _certificate: string;
+  protected _certificate: string | Buffer;
   protected _passphrase?: string;
 
   public static createFromOptions(options: IAuthOptions): ICertificate {
@@ -31,15 +31,15 @@ export abstract class Certificate implements ICertificate {
     return certificate;
   }
 
-  public static createPem(certificate: string, passphrase?: string) {
+  public static createPem(certificate: string | Buffer, passphrase?: string) {
     return new PemCertificate(certificate, passphrase);
   }
 
-  public static createPfx(certificate: string, passphrase?: string) {
+  public static createPfx(certificate: string | Buffer, passphrase?: string) {
     return new PfxCertificate(certificate, passphrase);
   }
 
-  constructor(certificate: string, passprase?: string) {
+  constructor(certificate: string | Buffer, passprase?: string) {
     this._certificate = certificate;
     this._passphrase = passprase;
   }
@@ -56,9 +56,13 @@ export class PemCertificate extends Certificate {
   private readonly keyToken: string  = 'RSA PRIVATE KEY';
   protected _key: string;
 
-  constructor(certificate: string, passprase?: string) {    
+  constructor(certificate: string | Buffer, passprase?: string) {    
     super(certificate, passprase);
     let matches: RegExpExecArray;
+
+    if (certificate instanceof Buffer) {
+      this._certificate = certificate.toString();
+    }
 
     this._key = this.fetchPart(this.keyToken);
     this._certificate = this.fetchPart(this.certToken);    
@@ -75,7 +79,7 @@ export class PemCertificate extends Certificate {
   }
 
   protected fetchPart(token: string): string {
-    const cert: string = this._certificate;
+    const cert: string = <string>this._certificate;
     const prefixSuffix: string = '-----';
     const beginMarker: string = `${prefixSuffix}BEGIN ${token}${prefixSuffix}`;
     const endMarker: string = `${prefixSuffix}END ${token}${prefixSuffix}`;
@@ -96,8 +100,16 @@ export class PemCertificate extends Certificate {
 }
 
 export class PfxCertificate extends Certificate {
+  constructor(certificate: string | Buffer, passprase?: string) {
+    if (!(certificate instanceof Buffer)) {
+      throw new InvalidArgumentException('Pfx certificate should be a Buffer');
+    }
+
+    super(certificate, passprase);
+  }
+
   public toAgentOptions(agentOptions: IOptionsSet): void {
     super.toAgentOptions(agentOptions);
-    agentOptions.pfx = this._certificate;
+    agentOptions.pfx = <Buffer>this._certificate;
   }
 }
