@@ -30,7 +30,7 @@ export class GetAttachmentCommand extends AttachmentCommand {
     super.createRequest(serverNode);
 
     if (!AttachmentTypes.isDocument(this._type)) {
-      this.method = RequestMethods.Post;
+      this._method = RequestMethods.Post;
       this.headers['Content-Type'] = 'application/json';
     }
   }

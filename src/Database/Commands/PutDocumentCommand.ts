@@ -12,7 +12,7 @@ export class PutDocumentCommand extends DeleteDocumentCommand {
     super(id, changeVector);
 
     this.document = document;
-    this.method = RequestMethods.Put;
+    this._method = RequestMethods.Put;
   }
 
   public createRequest(serverNode: ServerNode): void {

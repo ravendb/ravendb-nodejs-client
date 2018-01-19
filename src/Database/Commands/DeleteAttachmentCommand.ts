@@ -15,7 +15,7 @@ import {IAttachmentResult} from '../Operations/Attachments/AttachmentResult';
 export class DeleteAttachmentCommand extends AttachmentCommand {
   public createRequest(serverNode: ServerNode): void {
     super.createRequest(serverNode);
-    this.method = RequestMethods.Delete;
+    this._method = RequestMethods.Delete;
 
     if (this._changeVector) {
       this.headers["If-Match"] = StringUtil.format('"{changeVector}"', this);

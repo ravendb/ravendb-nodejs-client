@@ -44,7 +44,7 @@ export class GetDocumentCommand extends RavenCommand {
           .reduce((sum: number, len: number) => sum + len, 0) > 1024
       ) {
         this.payload = {"Ids": ids};
-        this.method = RequestMethods.Post;
+        this._method = RequestMethods.Post;
 
         return;
       }

@@ -38,7 +38,7 @@ export class PutAttachmentCommand extends AttachmentCommand {
       this.params['contentType'] = this._contentType;
     }
 
-    this.method = RequestMethods.Put;
+    this._method = RequestMethods.Put;
   }
 
   public toRequestOptions(): RavenCommandRequestOptions {

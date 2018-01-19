@@ -17,7 +17,7 @@ import {Observable} from "../../Utility/Observable";
 import {NodeSelector} from "./NodeSelector";
 import {NodeStatus} from "../NodeStatus";
 import {IDisposable} from '../../Typedef/Contracts';
-import {RavenException, InvalidOperationException, TopologyNodeDownException, AllTopologyNodesDownException, DatabaseLoadFailureException, UnsuccessfulRequestException} from "../../Database/DatabaseExceptions";
+import {RavenException, InvalidOperationException, TopologyNodeDownException, AllTopologyNodesDownException, DatabaseLoadFailureException, UnsuccessfulRequestException, AuthorizationException} from "../../Database/DatabaseExceptions";
 import {IRequestAuthOptions} from '../../Auth/AuthOptions';
 import {IOptionsSet} from '../../Typedef/IOptionsSet';
 import {Certificate, ICertificate} from '../../Auth/Certificate';
@@ -247,6 +247,11 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
           StatusCodes.GatewayTimeout,
           StatusCodes.ServiceUnavailable
         ].includes(code);
+
+        if (StatusCodes.Forbidden === code) {
+          return BluebirdPromise.reject(this.unauthorizedError(node, command));
+        }
+
         if (StatusCodes.isNotFound(code)) {
           delete response.body;
         }
@@ -421,5 +426,25 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     }
 
     this._faildedNodesStatuses.clear();
+  }
+
+  protected unauthorizedError(serverNode: ServerNode, command: RavenCommand): AuthorizationException {
+    let message: string = null;
+
+    if (!!serverNode.database) {
+      message = `database ${serverNode.database} on `;
+    }
+
+    message = `Forbidden access to ${message}${serverNode.url} node, `;
+
+    if (this._authOptions.certificate) {
+      message = `${message}certificate does not have permission to access it or is unknown.`;
+    } else {
+      message = `${message}a certificate is required.`;
+    }
+
+    message = `${message} ${command.method} ${command.pathWithNode(serverNode)}`;
+
+    return new AuthorizationException(message);
   }
 }

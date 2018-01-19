@@ -12,7 +12,7 @@ import * as RequestPromise from 'request-promise';
 export type RavenCommandRequestOptions = RequestPromise.RequestPromiseOptions & Request.RequiredUriUrl;
 
 export abstract class RavenCommand {
-  protected method: RequestMethod = RequestMethods.Get;
+  protected _method: RequestMethod = RequestMethods.Get;
   protected endPoint?: string;
   protected params?: object;
   protected payload?: object;
@@ -26,9 +26,13 @@ export abstract class RavenCommand {
     return this._lastResponse;
   }
 
+  public get method(): RequestMethod {
+    return this._method;
+  }
+
   constructor(endPoint: string, method: RequestMethod = RequestMethods.Get, params?: object, payload?: object, headers: IHeaders = {}) {
     this.endPoint = endPoint;
-    this.method = method;
+    this._method = method;
     this.params = params || {};
     this.payload = payload;
     this.headers = headers;
@@ -51,6 +55,10 @@ export abstract class RavenCommand {
     return this.wasFailed && nodes.has(node);
   }
 
+  public pathWithNode(node: ServerNode): string {
+    return this.endPoint.replace(node.url, '');
+  }
+
   public toRequestOptions(): RavenCommandRequestOptions {
     const params = this.params;
     const payload = this.payload;
@@ -62,7 +70,7 @@ export abstract class RavenCommand {
     let options: RavenCommandRequestOptions = {
       json: true,
       uri: this.endPoint,
-      method: this.method,
+      method: this._method,
       headers: this.headers,
       resolveWithFullResponse: true,
       qsStringifyOptions: {
