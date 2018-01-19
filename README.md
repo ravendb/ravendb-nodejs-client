@@ -530,14 +530,14 @@ store.conventions.addDocumentInfoResolver({
 ```javascript
 const {DocumentStore, Certificate} = require('ravendb');
 
-const certificate = ```
+const certificate = `
 -----BEGIN CERTIFICATE-----
 ...
 -----END CERTIFICATE-----
 -----BEGIN RSA PRIVATE KEY-----
 ...
 -----END RSA PRIVATE KEY-----
-```;
+`;
 
 let authOptions = {
   certificate: certificate,
