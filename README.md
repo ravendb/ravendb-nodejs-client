@@ -546,6 +546,8 @@ let authOptions = {
 };
 ``` 
 
+_Note_. Pfx certificates content should be passed as `Buffer` object.
+
 2. Pass auth options as third argument of `DocumentStore.create`:
 
 ```javascript
