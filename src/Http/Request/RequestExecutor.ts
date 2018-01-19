@@ -54,6 +54,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
   protected _updateTopologyLock: Lock;
   protected _updateFailedNodeTimerLock: Lock;
   protected _firstTopologyUpdate: BluebirdPromise<void> = null;
+  protected _firstTopologyUpdateRejectionReason: Error = null;
   protected _withoutTopology: boolean;
   protected _nodeSelector: NodeSelector;
   protected _lastKnownUrls: string[];
@@ -162,16 +163,15 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
 
     return this._awaitFirstTopologyLock.acquire((): boolean => {
       let isFulfilled: boolean = false;
+      let reason: Error = this._firstTopologyUpdateRejectionReason;
 
       if (firstTopologyUpdate === this._firstTopologyUpdate) {
         isFulfilled = null === firstTopologyUpdate;
 
         if (!isFulfilled) {
-          isFulfilled = firstTopologyUpdate.isFulfilled();
+          isFulfilled = firstTopologyUpdate.isFulfilled() && !reason;
 
-          if (firstTopologyUpdate.isRejected() 
-            && !(firstTopologyUpdate.reason() instanceof AuthorizationException)
-          ) {
+          if (reason && !(reason instanceof AuthorizationException)) {
             this.startFirstTopologyUpdate(this._lastKnownUrls);
           }
         }        
@@ -183,8 +183,8 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
       if (!isFulfilled) {
         let topologyResult: BluebirdPromise<void> = this._firstTopologyUpdate;
 
-        if (topologyResult.isRejected() && (topologyResult.reason() instanceof AuthorizationException)) {
-          return BluebirdPromise.reject(topologyResult.reason()); 
+        if (this._firstTopologyUpdateRejectionReason instanceof AuthorizationException) {
+          return BluebirdPromise.reject(this._firstTopologyUpdateRejectionReason); 
         } else if (this.isFirstTopologyUpdateTriesExpired()) {
           return BluebirdPromise.reject(new DatabaseLoadFailureException('Max topology update tries reached'));
         } else {
@@ -347,11 +347,15 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     }
 
     this._lastKnownUrls = updateTopologyUrls;
+    this._firstTopologyUpdateRejectionReason = null;
 
     if (!this.isFirstTopologyUpdateTriesExpired()) {
       this._firstTopologyUpdatesTries++;
       this._firstTopologyUpdate = update(urls.pop())
-        .then(() => this._firstTopologyUpdate = null);
+        .then(() => this._firstTopologyUpdate = null)
+        .catch((error: Error) => {
+          this._firstTopologyUpdateRejectionReason = error;
+        });
     }    
   }
 
