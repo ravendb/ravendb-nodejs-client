@@ -526,7 +526,7 @@ store.conventions.addDocumentInfoResolver({
 
 ## Working with secured server
 
-1. Fill auth options object. Pass contents of the pem/pfx certificate, specift its type and (optionally) passphrase:
+1. Fill auth options object. Pass contents of the pem/pfx certificate, specify its type and (optionally) passphrase:
 ```javascript
 const {DocumentStore, Certificate} = require('ravendb');
 
