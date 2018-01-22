@@ -565,6 +565,222 @@ store.initialize();
 - if no auth options was provided and you're trying to work with secured server, an `NotSupportedException` will be thrown during store initialization
 - if certificate is invalid or doesn't have permissions for specific operations, an `AuthorizationException` will be thrown during working with sessions/querying/sending operations
 
+## Advanced features
+
+#### Attachments support
+
+You can attach binary files to documents. 
+
+1. For attach a file, use `PutAttachmentOperation`. Pass document id, attachment name (it can be just a file name), content type and file contents as an `Buffer` object:
+
+```javascript
+const {DocumentStore, PutAttachmentOperation} = require('ravendb');
+const path = require('path');
+const fs = require('fs');
+
+// ...
+const fileName = './iphone-x.png';
+
+await store.operations.send(
+  new PutAttachmentOperation(
+    'Products/1-A', 
+    path.basename(fileName), 
+    fs.readFileSync(fileName), 
+    'image/png' 
+  )
+);    
+```
+
+2. For read an attachment, use `GetAttachmentOperation`. Pass document id and attachment name. File contents will be stored as an `Buffer` obbject on `stream` property of response:
+
+```javascript
+const {DocumentStore, PutAttachmentOperation, AttachmentTypes} = require('ravendb');
+const fs = require('fs');
+
+// ...
+const fileName = 'iphone-x.png';
+
+let attachmentResult = await store.operations.send(
+  new GetAttachmentOperation(
+    'Products/1-A', 
+    fileName, 
+    AttachmentTypes.Document
+  )
+);  
+
+fs.writeFileSync(`./${fileName}`, attachmentResult.stream);
+```
+
+3. For delete an attachment, use `GetAttachmentOperation`. Pass document id and attachment name.
+
+```javascript
+const {DocumentStore, DeletAttachmentOperation} = require('ravendb');
+
+// ...
+const fileName = 'iphone-x.png';
+
+await store.operations.send(
+  new DeletetAttachmentOperation(
+    'Products/1-A', 
+    fileName
+  )
+);  
+```
+
+#### Custom document id property
+
+By default document id is stored onto `id` property of document. But you can define which name of id property should be for specific document types. 
+
+1. Define custom document id property name resolver as callback function. It accepts document type and should return id property name:
+
+```javascript
+// models.item.js
+class Item {
+  constructor(Id = null, Title = "", Options = []) {
+    this.Id = Id;
+    this.Title = Title;    
+    this.Options = Options;    
+  }  
+}
+
+exports.Item = Item; 
+
+// index.js
+const {DocumentStore} = require('ravendb');
+const {Item} = require('./models/item');
+
+const resolveIdProperty = (typeName) => {
+  switch (typeName) {
+    case Item.name:
+      return 'Id';     
+    // ...    
+  }  
+};
+```
+
+2. Pass this callback to `resolveIdProperty` option of `conventions.addDocumentInfoResolver`:
+
+```javascript
+store.conventions.addDocumentInfoResolver({ resolveIdProperty });
+```
+
+3. Now client will read/fill `Id` property with document id while doing CRUD operations:
+
+```javascript
+let session = store.openSesson();
+
+await session.store(new Item(null, 'First Item', [1, 2, 3]));
+await session.saveChanges();
+
+console.log(Item.Id); // Items/1-A
+
+session = store.openSesson();
+let item = await session.load('Items/1-A');
+
+console.log(item.Id); // Items/1-A
+console.log(item.Title); // First Item
+console.log(item.Options); // [1, 2, 3]
+```
+
+#### Custom attributes serializer
+
+You can define custom serializers if you need to implement your own logic for convert attributes names/values for specific document types.
+
+1. Define your serializer as object with onSerialized / onUnserialized methods:
+
+```javascript
+const serializer = {
+  onSerialized: (serialized) => {
+  },
+  onUnserialized: (serialized) => {
+  }
+};
+```
+
+Where `serialized` attribute has the following structure:
+
+```typescript
+interface ISerialized<T extends Object = IRavenObject> {
+  source: object | T;
+  target?: object | T;
+  originalAttribute: string;
+  serializedAttribute: string;
+  originalValue: any;
+  serializedValue: any;  
+  attributePath: string;
+  metadata?: object;
+  nestedObjectTypes?: IRavenObject<DocumentConstructor>;
+}
+```
+
+2. Store target attribute name/value into the `serializedAttribute`/`serializedValue` properties of `serialized` parameter:
+
+```javascript
+function capitalize(string) {
+  return string.charAt(0).toUpperCase() + string.substring(1);
+}
+
+function uncapitalize(string) {
+  return string.charAt(0).toLowerCase() + string.substring(1);
+}
+
+const serializer = {
+  onSerialized: (serialized) => {
+    switch (serialized.metadata['Raven-Node-Type']) {
+      case Item.name:
+        serialized.serializedAttribute = uncapitalize(serialized.originalAttribute);
+
+        if ('Items' === serialized.originalAttribute) {
+          serialized.serializedValue = serialized.originalValue.join(",");
+        }  
+
+        break;
+        // ...  
+    }  
+  },
+  onSerialized: (serialized) => {
+    switch (serialized.metadata['Raven-Node-Type']) {
+      case Item.name:
+        serialized.serializedAttribute = capitalize(serialized.originalAttribute);
+
+        if ('items' === serialized.originalAttribute) {
+          serialized.serializedValue = serialized.originalValue.split(",").map(parseInt);
+        }  
+
+        break;
+        // ...  
+    }  
+  }    
+};
+```
+
+3. Pass your serializer object to `conventions.addAttributeSerializer`:
+
+```javascript
+const {DocumentStore, GetDocumentCommand} = require('ravendb');
+
+store.conventions.addAttributeSerializer(serializer);
+
+let sesssion = store.openSession();
+
+await session.store(new Item(null, 'First Item', [1, 2, 3]));
+await session.saveChanges();
+
+session = store.openSesson();
+let item = await session.load('Items/1-A');
+
+console.log(item.Id); // Items/1-A
+console.log(item.Title); // First Item
+console.log(item.Options); // [1, 2, 3]
+
+let response = await store.getRequestExecutor().execute(new GetDocumentCommand('Items/1-A'));
+let rawDocument = response.Results[0];
+
+console.log(rawDocument['@metadata']['@id']); // Items/1-A
+console.log(rawDocument.title); // First Item
+console.log(rawDocument.options); // "1,2,3"
+```
+
 ## Building
 
 ```bash
