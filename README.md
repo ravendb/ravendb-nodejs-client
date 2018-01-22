@@ -700,7 +700,7 @@ console.log(item.Options); // [1, 2, 3]
 
 You can define custom serializers if you need to implement your own logic for convert attributes names/values for specific document types.
 
-1. Define your serializer as object with onSerialized / onUnserialized methods:
+1. Define your serializer as object with `onSerialized` / `onUnserialized` methods:
 
 ```javascript
 const serializer = {
