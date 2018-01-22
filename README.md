@@ -752,7 +752,7 @@ const serializer = {
         // ...  
     }  
   },
-  onSerialized: (serialized) => {
+  onUnserialized: (serialized) => {
     switch (serialized.metadata['Raven-Node-Type']) {
       case Item.name:
         serialized.serializedAttribute = capitalize(serialized.originalAttribute);
