@@ -686,7 +686,7 @@ let session = store.openSesson();
 await session.store(new Item(null, 'First Item', [1, 2, 3]));
 await session.saveChanges();
 
-console.log(Item.Id); // Items/1-A
+console.log(item.Id); // Items/1-A
 
 session = store.openSesson();
 let item = await session.load('Items/1-A');
