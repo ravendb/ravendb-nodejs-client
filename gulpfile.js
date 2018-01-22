@@ -72,17 +72,22 @@ gulp.task('run:tests', ['clean', 'build:tests:args', 'build:tests'], () => {
         (test) => `${options.tmp}/test/**/${test}Test.js`
     );
 
+    let mochaOpts = {
+        "timeout": 10000,
+        "ravendb-host": args["ravendb-host"], 
+        "ravendb-port": args["ravendb-port"]
+    };
+
     if (args.test.includes('*') || (true !== args['no-fixtures'])) {
         tests.unshift(options.tmp + '/test/TestBase.js');
     }
 
+    if (args["ravendb-certificate"]) {
+        mochaOpts["ravendb-certificate"] = args["ravendb-certificate"];
+    }
+
     return gulp.src(tests)
-        .pipe(mocha({
-            "timeout": 10000,
-            "ravendb-host": args["ravendb-host"], 
-            "ravendb-port": args["ravendb-port"], 
-            "ravendb-certificate": args["ravendb-certificate"]
-        }))
+        .pipe(mocha(mochaOpts))
         .on('error', () => process.exit(-1));
 });
 
