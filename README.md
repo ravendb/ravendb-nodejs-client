@@ -605,7 +605,7 @@ await store.operations.send(
 );    
 ```
 
-2. For read an attachment, use `GetAttachmentOperation`. Pass document id and attachment name. File contents will be stored as an `Buffer` obbject on `stream` property of response:
+2. For read an attachment, use `DeleteAttachmentOperation`. Pass document id and attachment name. File contents will be stored as an `Buffer` object inside `stream` property of response:
 
 ```javascript
 const {DocumentStore, PutAttachmentOperation, AttachmentTypes} = require('ravendb');
