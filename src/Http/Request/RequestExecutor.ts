@@ -244,7 +244,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
         node.responseTime = DateUtil.timestampMs() - startTime;
       })
       .catch((errorResponse: IErrorResponse) => {
-          if (errorResponse.response) {
+        if (errorResponse.response) {
             return BluebirdPromise.resolve(errorResponse.response);
         }
 
@@ -261,7 +261,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
         ].includes(code);
 
         if (StatusCodes.Forbidden === code) {
-          return BluebirdPromise.reject(this.unauthorizedError(node, command));
+          return BluebirdPromise.reject(this.unauthorizedError(node, command, response));
         }
 
         if (StatusCodes.isNotFound(code)) {
@@ -450,8 +450,9 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     this._faildedNodesStatuses.clear();
   }
 
-  protected unauthorizedError(serverNode: ServerNode, command: RavenCommand): AuthorizationException {
+  protected unauthorizedError(serverNode: ServerNode, command: RavenCommand, response?: IResponse): AuthorizationException {
     let message: string = null;
+    let body: IResponseBody = null;
 
     if (!!serverNode.database) {
       message = `database ${serverNode.database} on `;
@@ -463,6 +464,12 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
       message = `${message}certificate does not have permission to access it or is unknown.`;
     } else {
       message = `${message}a certificate is required.`;
+    }
+
+    if (response && (body = <IResponseBody>response.body)) {
+      if (body.Message) {
+        message = `${message} SSL Exception: ${body.Message}`;
+      }     
     }
 
     message = `${message} ${command.method} ${command.pathWithNode(serverNode)}`;

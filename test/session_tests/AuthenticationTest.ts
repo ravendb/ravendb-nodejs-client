@@ -84,7 +84,7 @@ j32qw8tKsUBMO5zmCC6+IapqdBUr0F+BxJazO+mlQu2o9Ipas88=
       if (0 === defaultUrl.toLowerCase().indexOf('https')) {
         store = DocumentStore.create(defaultUrl, currentDatabase, {
           type: Certificate.Pem,
-          certificate
+          certificate: Buffer.from(certificate)
         });
 
         store.initialize();
