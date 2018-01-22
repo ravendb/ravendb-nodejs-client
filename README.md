@@ -681,14 +681,14 @@ store.conventions.addDocumentInfoResolver({ resolveIdProperty });
 3. Now client will read/fill `Id` property with document id while doing CRUD operations:
 
 ```javascript
-let session = store.openSesson();
+let session = store.openSession();
 
 await session.store(new Item(null, 'First Item', [1, 2, 3]));
 await session.saveChanges();
 
 console.log(item.Id); // Items/1-A
 
-session = store.openSesson();
+session = store.openSession();
 let item = await session.load('Items/1-A');
 
 console.log(item.Id); // Items/1-A
@@ -780,7 +780,7 @@ let sesssion = store.openSession();
 await session.store(new Item(null, 'First Item', [1, 2, 3]));
 await session.saveChanges();
 
-session = store.openSesson();
+session = store.openSession();
 let item = await session.load('Items/1-A');
 
 console.log(item.Id); // Items/1-A
