@@ -634,7 +634,7 @@ const {DocumentStore, DeletAttachmentOperation} = require('ravendb');
 const fileName = 'iphone-x.png';
 
 await store.operations.send(
-  new DeletetAttachmentOperation(
+  new DeleteAttachmentOperation(
     'Products/1-A', 
     fileName
   )
