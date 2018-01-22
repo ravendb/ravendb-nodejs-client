@@ -546,7 +546,21 @@ let authOptions = {
 };
 ``` 
 
-_Note_. Pfx certificates content should be passed as `Buffer` object.
+Pfx certificates content should be passed as `Buffer` object:
+
+```javascript
+const {DocumentStore, Certificate} = require('ravendb');
+const fs = require('fs');
+
+const certificate = './cert.pfx';
+
+let authOptions = {
+  certificate: fs.readFileSync(certificate),
+  type: Certificate.Pfx,
+  password: 'my passphrase' // optional  
+};
+``` 
+
 
 2. Pass auth options as third argument of `DocumentStore.create`:
 
