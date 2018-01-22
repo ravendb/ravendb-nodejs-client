@@ -605,7 +605,7 @@ await store.operations.send(
 );    
 ```
 
-2. For read an attachment, use `DeleteAttachmentOperation`. Pass document id and attachment name. File contents will be stored as an `Buffer` object inside `stream` property of response:
+2. For read an attachment, use `GetAttachmentOperation`. Pass document id and attachment name. File contents will be stored as an `Buffer` object inside `stream` property of response:
 
 ```javascript
 const {DocumentStore, PutAttachmentOperation, AttachmentTypes} = require('ravendb');
@@ -625,7 +625,7 @@ let attachmentResult = await store.operations.send(
 fs.writeFileSync(`./${fileName}`, attachmentResult.stream);
 ```
 
-3. For delete an attachment, use `GetAttachmentOperation`. Pass document id and attachment name.
+3. For delete an attachment, use `DeleteAttachmentOperation`. Pass document id and attachment name.
 
 ```javascript
 const {DocumentStore, DeletAttachmentOperation} = require('ravendb');
