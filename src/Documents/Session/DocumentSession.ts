@@ -283,18 +283,19 @@ export class DocumentSession extends Observable implements IDocumentSession {
         return document;
       })
       .then((document: T): T | BluebirdPromise.Thenable<T> => {
-        if (isNewDocument) {
-          const id: string = conventions.getIdFromDocument(document);
-          const docType: DocumentType<T> = conventions.getTypeFromDocument(document, id, documentType);
-
-          for (let command of this.deferCommands.values()) {
-            if (command.documentId === id) {
-              return BluebirdPromise.reject(new InvalidOperationException(StringUtil.format(
-                "Can't store document, there is a deferred command registered " +
-                "for this document in the session. Document id: {0}", id
-              )));
-            }
+        
+        const id: string = conventions.getIdFromDocument(document);
+        for (let command of this.deferCommands.values()) {
+          if (command.documentId === id) {
+            return BluebirdPromise.reject(new InvalidOperationException(StringUtil.format(
+              "Can't store document, there is a deferred command registered " +
+              "for this document in the session. Document id: {0}", id
+            )));
           }
+        }
+
+        if (isNewDocument) {
+          const docType: DocumentType<T> = conventions.getTypeFromDocument(document, id, documentType);
 
           if (this.deletedDocuments.has(document)) {
             return BluebirdPromise.reject(new InvalidOperationException(StringUtil.format(
@@ -470,12 +471,24 @@ more responsive application.", maxRequests
       .then((): IDocumentAssociationCheckResult<T> => {
         const conventions: DocumentConventions = this.conventions;
         const store: IDocumentStore = this.documentStore;
-        const isNew: boolean = !this.rawEntitiesAndMetadata.has(document);
+        let existingId = conventions.getIdFromDocument(document, null);        
+        const isNew = !this.rawEntitiesAndMetadata.has(document) && !existingId;
 
-        if (!isNew) {
+        if (this.rawEntitiesAndMetadata.has(document) || existingId) {
           let info: IStoredRawEntityInfo = this.rawEntitiesAndMetadata.get(document);
           let metadata: object = document['@metadata'];
-          let documentId: string = id;
+          if(existingId && !info){
+            info ={
+                originalValue: null,
+                originalMetadata: null,
+                metadata: metadata,
+                changeVector: metadata['change-vector'] || null,
+                id: existingId,
+                concurrencyCheckMode: ConcurrencyCheckModes.Auto,
+                documentType: conventions.getTypeFromDocument(document)
+            }
+        }
+          let documentId: string = id || existingId;;
           let checkMode: ConcurrencyCheckMode = ConcurrencyCheckModes.Forced;
 
           if (TypeUtil.isNull(documentId)) {

@@ -207,6 +207,28 @@ describe('Document store test', () => {
       expect(documentMetaData['@expires']).to.not.be.undefined;
       expect(documentMetaData['@expires']).to.equal(expiresAt.toISOString());
     });
+
+    it('save should work on different session', async () => {
+      let foo: Foo;
+      const key: string = 'testingStore';
+      session = store.openSession();
+
+      foo = new Foo(key, 'test', 20);
+      await session.store<Foo>(foo);
+      await session.saveChanges();   
+      
+      let session1 = store.openSession();
+      foo = await session1.load<Foo>(key);   
+      
+      let session2 = store.openSession();
+      foo.name = 'bar';
+      await session2.store<Foo>(foo);
+      await session2.saveChanges();   
+
+      let session3 = store.openSession();
+      let updatedFoo = await session3.load<Foo>(key);
+      expect(updatedFoo.name).to.equal('bar');
+    });
   });
 });
 
