@@ -76,22 +76,26 @@ export class StringUtil {
     return string.charAt(0).toLowerCase() + string.substring(1);
   }
 
-  public static isCharacter(character: string) {
+  public static isCharacter(character: string): boolean {
     return character && (1 === character.length);
   }
 
-  public static isDigit(character: string) {
+  public static isDigit(character: string): boolean {
     return this.isCharacter(character)
       && this.digitRe.test(character);
   }
 
-  public static isLetter(character: string) {
+  public static isLetter(character: string): boolean {
     return this.isCharacter(character)
       && this.letterRe.test(character);
   }
 
-  public static isLetterOrDigit(character: string) {
+  public static isLetterOrDigit(character: string): boolean {
     return this.isLetter(character)
       || this.isDigit(character);
+  }
+
+  public static isNullOrWhiteSpace(string?: string): boolean {
+    return !(string || "").trim().length;
   }
 }

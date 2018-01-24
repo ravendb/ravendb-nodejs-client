@@ -5,6 +5,7 @@ lib/
 dist/
 src/**/*.js
 .build/
+test/certs
 tryouts/
 .DS_Store
 .tscache

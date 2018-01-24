@@ -38,13 +38,13 @@ export class GetDocumentCommand extends RavenCommand {
     this.endPoint = StringUtil.format('{url}/databases/{database}/docs', serverNode);
     
     if (multiLoad) {
-      this.metadataOnly && this.addParams('metadata-only', 'True');
+      this.metadataOnly && this.addParams('metadataOnly', 'True');
 
       if (ids.map((id: string) => id.length)
           .reduce((sum: number, len: number) => sum + len, 0) > 1024
       ) {
         this.payload = {"Ids": ids};
-        this.method = RequestMethods.Post;
+        this._method = RequestMethods.Post;
 
         return;
       }

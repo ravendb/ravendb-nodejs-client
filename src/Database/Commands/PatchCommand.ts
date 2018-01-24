@@ -48,7 +48,7 @@ export class PatchCommand extends RavenCommand {
     this.endPoint = StringUtil.format('{url}/databases/{database}/docs', serverNode);
     this.skipPatchIfChangeVectorMismatch && this.addParams('skipPatchIfChangeVectorMismatch', 'true');
     this.returnDebugInformation && this.addParams('debug', 'true');
-    TypeUtil.isNull(this.changeVector) || (this.headers = {"If-Match": StringUtil.format('"{change-vector}"', this)});
+    TypeUtil.isNull(this.changeVector) || (this.headers = {"If-Match": StringUtil.format('"{changeVector}"', this)});
 
     this.payload = {
       "Patch": this.patch.toJson(),

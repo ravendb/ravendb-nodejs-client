@@ -5,8 +5,25 @@ import {ArrayUtil} from "../Utility/ArrayUtil";
 import {DocumentConventions, DocumentConstructor} from "../Documents/Conventions/DocumentConventions";
 import {IRavenObject} from "../Typedef/IRavenObject";
 
+export interface ISerialized<T extends Object = IRavenObject> {
+  source: object | T;
+  target?: object | T;
+  originalAttribute: string;
+  serializedAttribute: string;
+  originalValue: any;
+  serializedValue: any;  
+  attributePath: string;
+  metadata?: object;
+  nestedObjectTypes?: IRavenObject<DocumentConstructor>;
+}
+
+export interface IAttributeSerializer {
+  onUnserialized?: (serialized: ISerialized) => void;
+  onSerialized?: (serialized: ISerialized) => void;  
+}
+
 export class Serializer {
-  public static fromJSON<T extends Object = IRavenObject>(target: T, source: object | string, metadata: object | null = {}, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}, conventions?: DocumentConventions): T {
+  public static fromJSON<T extends Object = IRavenObject>(target: T, source: object | string, metadata: object | null = {}, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}, conventions?: DocumentConventions, parentPath?: string): T {
     let mapping: object = {};
 
     let sourceObject: object = TypeUtil.isString(source)
@@ -31,7 +48,7 @@ export class Serializer {
       Object.keys(mapping).forEach((key: string) => {
         if ('date' === mapping[key]) {
           mapping[key] = Date;
-        } else if ('function' !== (typeof mapping[key])) {
+        } else if (conventions && ('function' !== (typeof mapping[key]))) {
           mapping[key] = conventions.getDocumentConstructor(mapping[key]);
         }
 
@@ -62,7 +79,8 @@ export class Serializer {
 
         return this.fromJSON<typeof nestedObject>(
           nestedObject, value, (key in mapping)  
-          ? value['@metadata'] || {} : null
+          ? value['@metadata'] || {} : null, null,
+          conventions, this.buildPath(key, parentPath)
         );
       }
 
@@ -87,7 +105,24 @@ export class Serializer {
       let source: any = sourceObject[key];
 
       if ('undefined' !== (typeof source)) {
-        target[key] = transform(source, key);
+        let serialized: ISerialized<T> = {
+          originalAttribute: key,
+          serializedAttribute: key,
+          originalValue: source,
+          serializedValue: transform(source, key),
+          attributePath: this.buildPath(key, parentPath),
+          source, target, metadata, nestedObjectTypes
+        };
+
+        if (conventions) {
+          conventions.serializers.forEach((serializer: IAttributeSerializer): void => {
+            if (serializer.onUnserialized) {
+              serializer.onUnserialized(serialized);
+            }            
+          });
+        }
+        
+        target[serialized.serializedAttribute] = serialized.serializedValue;
       }
     });
 
@@ -98,7 +133,9 @@ export class Serializer {
     return target;
   }
 
-  public static toJSON<T extends Object = IRavenObject>(source: T): object {
+  public static toJSON<T extends Object = IRavenObject>(source: T, conventions?: DocumentConventions, parentPath?: string): object {
+    let json: object = {};
+
     const transform: (value: any, key?: string) => any = (value, key) => {
       if ('@metadata' === key) {
         return value;
@@ -109,7 +146,7 @@ export class Serializer {
       }
 
       if (TypeUtil.isObject(value)) {
-        return this.toJSON<IRavenObject>(value);
+        return this.toJSON<IRavenObject>(value, conventions, parentPath);
       }
 
       if (TypeUtil.isArray(value)) {
@@ -119,6 +156,37 @@ export class Serializer {
       return value;
     };
 
-    return ArrayUtil.mapObject(source, (item: any, key: string): any => transform(item, key));
+    Object.keys(source).forEach((key: string) => {
+      let sourceValue: any = source[key];
+
+      let serialized: ISerialized = {
+        originalAttribute: key,
+        serializedAttribute: key,
+        originalValue: sourceValue,
+        serializedValue: transform(sourceValue, key),
+        attributePath: this.buildPath(key, parentPath),
+        source, metadata: source['@metadata'] || {}
+      };
+
+      if (('@metadata' !== key) && conventions) {
+        conventions.serializers.forEach((serializer: IAttributeSerializer): void => {
+          if (serializer.onSerialized) {
+            serializer.onSerialized(serialized);
+          }          
+        });
+      }
+      
+      json[serialized.serializedAttribute] = serialized.serializedValue;
+    });
+
+    return json;
+  }
+
+  private static buildPath(attribute: string, parentPath?: string): string {
+    if (parentPath) {
+      return `${parentPath}.${attribute}`;
+    }
+
+    return attribute;
   }
 }

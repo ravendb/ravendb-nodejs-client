@@ -11,13 +11,16 @@ import {GetTopologyCommand} from "../../Database/Commands/GetTopologyCommand";
 import {GetStatisticsCommand} from "../../Database/Commands/GetStatisticsCommand";
 import {DateUtil} from "../../Utility/DateUtil";
 import {TypeUtil} from "../../Utility/TypeUtil";
-import {IResponse, IErrorResponse} from "../Response/IResponse";
+import {IResponse, IErrorResponse, IResponseBody} from "../Response/IResponse";
 import {StatusCodes, StatusCode} from "../Response/StatusCode";
 import {Observable} from "../../Utility/Observable";
 import {NodeSelector} from "./NodeSelector";
 import {NodeStatus} from "../NodeStatus";
 import {IDisposable} from '../../Typedef/Contracts';
-import {RavenException, InvalidOperationException, TopologyNodeDownException, AllTopologyNodesDownException, DatabaseLoadFailureException, UnsuccessfulRequestException} from "../../Database/DatabaseExceptions";
+import {RavenException, InvalidOperationException, TopologyNodeDownException, AllTopologyNodesDownException, DatabaseLoadFailureException, UnsuccessfulRequestException, AuthorizationException} from "../../Database/DatabaseExceptions";
+import {IRequestAuthOptions} from '../../Auth/AuthOptions';
+import {IOptionsSet} from '../../Typedef/IOptionsSet';
+import {Certificate, ICertificate} from '../../Auth/Certificate';
 
 export interface ITopologyUpdateEvent {
   topologyJson: object;
@@ -32,6 +35,7 @@ export interface IRequestExecutorOptions {
   topologyEtag?: number;
   singleNodeTopology?: Topology;
   firstTopologyUpdateUrls?: string[];
+  authOptions?: IRequestAuthOptions
 }
 
 export interface IRequestExecutor extends IDisposable {
@@ -44,19 +48,22 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
   public static readonly NODE_STATUS_UPDATED = 'node:status:updated';
 
   protected headers: IHeaders;
-  private readonly _maxFirstTopologyUpdatesTries: number = 5;
-  private _firstTopologyUpdatesTries: number = 0;
-  private _awaitFirstTopologyLock: Lock;
-  private _updateTopologyLock: Lock;
-  private _updateFailedNodeTimerLock: Lock;
-  private _firstTopologyUpdate: BluebirdPromise<void> = null;
-  private _withoutTopology: boolean;
-  private _nodeSelector: NodeSelector;
-  private _lastKnownUrls: string[];
-  private _initialDatabase: string;
-  private _topologyEtag: number;
-  private _faildedNodesStatuses: Map<ServerNode, NodeStatus>;
-  private _disposed: boolean = false;
+  protected readonly _maxFirstTopologyUpdatesTries: number = 5;
+  protected _firstTopologyUpdatesTries: number = 0;
+  protected _awaitFirstTopologyLock: Lock;
+  protected _updateTopologyLock: Lock;
+  protected _updateFailedNodeTimerLock: Lock;
+  protected _firstTopologyUpdate: BluebirdPromise<void> = null;
+  protected _firstTopologyUpdateRejectionReason: Error = null;
+  protected _withoutTopology: boolean;
+  protected _nodeSelector: NodeSelector;
+  protected _lastKnownUrls: string[];
+  protected _initialDatabase: string;
+  protected _topologyEtag: number;
+  protected _faildedNodesStatuses: Map<ServerNode, NodeStatus>;
+  protected _disposed: boolean = false;
+  protected _authOptions: IRequestAuthOptions;
+  protected _certificate: ICertificate = null;
 
   public get initialDatabase(): string {
     return this._initialDatabase;
@@ -81,6 +88,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     this._updateTopologyLock = Lock.make();
     this._updateFailedNodeTimerLock = Lock.make();
     this._faildedNodesStatuses = new Map<ServerNode, NodeStatus>();
+    this._authOptions = (<IRequestAuthOptions>options.authOptions) || null;
 
     if (!this._withoutTopology && urls.length) {
       this.startFirstTopologyUpdate(urls);
@@ -94,24 +102,34 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     this.cancelFailingNodesTimers();
   }
 
-  public static create(urls: string[], database?: string): IRequestExecutor {
+  public static create(urls: string[], database?: string | IRequestAuthOptions, authOptions?: IRequestAuthOptions): IRequestExecutor {
     const self = <typeof RequestExecutor>this;
-
-    return new self(database, {
+    let options: IRequestExecutorOptions = {
       withoutTopology: false,
       firstTopologyUpdateUrls: _.clone(urls)
-    });
+    };
+
+    if (authOptions) {
+      options.authOptions = authOptions;
+    }    
+
+    return new self(<string>database, options);
   }
 
-  public static createForSingleNode(url: string, database?: string): IRequestExecutor {
+  public static createForSingleNode(url: string, database?: string | IRequestAuthOptions, authOptions?: IRequestAuthOptions): IRequestExecutor {
     const self = <typeof RequestExecutor>this;
-    const topology = new Topology(-1, [new ServerNode(url, database)]);
-
-    return new self(database, {
+    const topology = new Topology(-1, [new ServerNode(url, <string>database)]);
+    let options: IRequestExecutorOptions = {
       withoutTopology: true,
       singleNodeTopology: topology,
       topologyEtag: -2
-    });
+    };
+
+    if (authOptions) {
+      options.authOptions = authOptions;
+    }
+
+    return new self(<string>database, options);
   }
 
   public execute(command: RavenCommand): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> {
@@ -145,14 +163,15 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
 
     return this._awaitFirstTopologyLock.acquire((): boolean => {
       let isFulfilled: boolean = false;
+      let reason: Error = this._firstTopologyUpdateRejectionReason;
 
       if (firstTopologyUpdate === this._firstTopologyUpdate) {
         isFulfilled = null === firstTopologyUpdate;
 
         if (!isFulfilled) {
-          isFulfilled = firstTopologyUpdate.isFulfilled();
+          isFulfilled = firstTopologyUpdate.isFulfilled() && !reason;
 
-          if (firstTopologyUpdate.isRejected()) {
+          if (reason && !(reason instanceof AuthorizationException)) {
             this.startFirstTopologyUpdate(this._lastKnownUrls);
           }
         }        
@@ -160,22 +179,43 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
 
       return isFulfilled;
     })
-    .then((isFulfilled: boolean): BluebirdPromise.Thenable<void> => (isFulfilled 
-      ? BluebirdPromise.resolve() : (this.isFirstTopologyUpdateTriesExpired() 
-      ? BluebirdPromise.reject(new DatabaseLoadFailureException('Max topology update tries reached')) 
-      : BluebirdPromise.delay(100).then((): BluebirdPromise.Thenable<void> => this.awaitFirstTopologyUpdate())))
-    );
+    .then((isFulfilled: boolean): BluebirdPromise.Thenable<void> => {      
+      if (!isFulfilled) {
+        let topologyResult: BluebirdPromise<void> = this._firstTopologyUpdate;
+
+        if (this._firstTopologyUpdateRejectionReason instanceof AuthorizationException) {
+          return BluebirdPromise.reject(this._firstTopologyUpdateRejectionReason); 
+        } else if (this.isFirstTopologyUpdateTriesExpired()) {
+          return BluebirdPromise.reject(new DatabaseLoadFailureException('Max topology update tries reached'));
+        } else {
+          return BluebirdPromise.delay(100).then((): BluebirdPromise.Thenable<void> => this.awaitFirstTopologyUpdate());
+        }        
+      }
+
+      return BluebirdPromise.resolve();  
+    });
   }
 
   protected prepareCommand(command: RavenCommand, node: ServerNode): RavenCommandRequestOptions {
     let options: RavenCommandRequestOptions;
 
     command.createRequest(node);
-    options = command.toRequestOptions();
+    options = command.toRequestOptions(); 
     Object.assign(options.headers, this.headers);
 
     if (!this._withoutTopology) {
       options.headers["Topology-Etag"] = this._topologyEtag;
+    }
+
+    if (this._authOptions && node.isSecure) {
+      let agentOptions: IOptionsSet = {};
+
+      if (!this._certificate) {
+        this._certificate = Certificate.createFromOptions(this._authOptions);
+      }
+
+      this._certificate.toAgentOptions(agentOptions);
+      options.agentOptions = agentOptions;
     }
 
     return options;
@@ -204,7 +244,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
         node.responseTime = DateUtil.timestampMs() - startTime;
       })
       .catch((errorResponse: IErrorResponse) => {
-          if (errorResponse.response) {
+        if (errorResponse.response) {
             return BluebirdPromise.resolve(errorResponse.response);
         }
 
@@ -219,6 +259,11 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
           StatusCodes.GatewayTimeout,
           StatusCodes.ServiceUnavailable
         ].includes(code);
+
+        if (StatusCodes.Forbidden === code) {
+          return BluebirdPromise.reject(this.unauthorizedError(node, command, response));
+        }
+
         if (StatusCodes.isNotFound(code)) {
           delete response.body;
         }
@@ -227,8 +272,8 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
           if (command.wasFailed) {
             let message: string = 'Unsuccessfull request';
 
-            if (response.body && response.body.Error) {
-                message += `: ${response.body.Error}`;
+            if (response.body && (<IResponseBody>response.body).Error) {
+                message += `: ${(<IResponseBody>response.body).Error}`;
             }
 
             return BluebirdPromise.reject(new UnsuccessfulRequestException(message));
@@ -285,7 +330,13 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
 
     const update = (url: string): BluebirdPromise<void> => 
       this.updateTopology(new ServerNode(url, this._initialDatabase))
-      .catch((error: Error): BluebirdPromise.Thenable<void> => tryNextUrl(error));
+      .catch((error: Error): BluebirdPromise.Thenable<void> => {
+        if (error instanceof AuthorizationException) {
+          return BluebirdPromise.reject(error);
+        }
+
+        return tryNextUrl(error);
+      });
 
     const tryNextUrl = (error: Error): BluebirdPromise.Thenable<void> => {
       if (url = urls.pop()) {
@@ -296,11 +347,15 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     }
 
     this._lastKnownUrls = updateTopologyUrls;
+    this._firstTopologyUpdateRejectionReason = null;
 
     if (!this.isFirstTopologyUpdateTriesExpired()) {
       this._firstTopologyUpdatesTries++;
       this._firstTopologyUpdate = update(urls.pop())
-        .then(() => this._firstTopologyUpdate = null);
+        .then(() => this._firstTopologyUpdate = null)
+        .catch((error: Error) => {
+          this._firstTopologyUpdateRejectionReason = error;
+        });
     }    
   }
 
@@ -393,5 +448,32 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     }
 
     this._faildedNodesStatuses.clear();
+  }
+
+  protected unauthorizedError(serverNode: ServerNode, command: RavenCommand, response?: IResponse): AuthorizationException {
+    let message: string = null;
+    let body: IResponseBody = null;
+
+    if (!!serverNode.database) {
+      message = `database ${serverNode.database} on `;
+    }
+
+    message = `Forbidden access to ${message}${serverNode.url} node, `;
+
+    if (this._authOptions.certificate) {
+      message = `${message}certificate does not have permission to access it or is unknown.`;
+    } else {
+      message = `${message}a certificate is required.`;
+    }
+
+    if (response && (body = <IResponseBody>response.body)) {
+      if (body.Message) {
+        message = `${message} SSL Exception: ${body.Message}`;
+      }     
+    }
+
+    message = `${message} ${command.method} ${command.pathWithNode(serverNode)}`;
+
+    return new AuthorizationException(message);
   }
 }

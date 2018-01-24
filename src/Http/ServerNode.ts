@@ -1,6 +1,7 @@
 import {TypeUtil} from "../Utility/TypeUtil";
 import {IJsonConvertible} from "../Typedef/Contracts";
 import {IRavenObject} from "../Typedef/IRavenObject";
+import {UriUtility} from "../Http/UriUtility";
 
 export class ServerNode implements IJsonConvertible {
   private _database: string;
@@ -44,6 +45,10 @@ export class ServerNode implements IJsonConvertible {
 
     ewma = this._responseTime.reduce((total: number, time: number) => (total + time), 0);
     return (0 === ewma) ? 0 : ewma / divide;
+  }
+
+  public get isSecure(): boolean {
+    return UriUtility.isSecure(this.url);
   }
 
   public set responseTime(value: number) {

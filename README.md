@@ -180,47 +180,201 @@ query
   .orderBy('price');
 ```
 3. Finally, you may get query results:
-```
+```javascript
 let documents = await query.all();
 ```
 
 #### DocumentQuery methods overview
-| Method | RQL / description |
-| ------------- | ------------- |
-|`selectFields(fields: string[], projections?: string[]): this;`|`SELECT field1 [AS projection1], ...`|
-|`distinct(): this;`|`SELECT DISTINCT`|
-|`whereEquals<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName = <value>`|
-|`whereNotEquals<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName != <value>`|
-|`whereIn<V extends ConditionValue>(fieldName: string, values: V[], exact?: boolean): this;`|`WHERE fieldName IN (<value1>, <value2>, ...)`|
-|`whereStartsWith<V extends ConditionValue>(fieldName: string, value: V): this;`|`WHERE startsWith(fieldName, '<value>')`|
-|`whereEndsWith<V extends ConditionValue>(fieldName: string, value: V): this;`|`WHERE endsWith(fieldName, '<value>')`|
-|`whereBetween<V extends ConditionValue>(fieldName: string, start: V, end: V, exact?: boolean): this;`|`WHERE fieldName BETWEEN <start> AND <end>`|
-|`whereGreaterThan<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName > <value>`|
-|`whereGreaterThanOrEqual<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName >= <value>`|
-|`whereLessThan<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName < <value>`|
-|`whereLessThanOrEqual<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): this;`|`WHERE fieldName <= <value>`|
-|`whereExists(fieldName: string): this;`|`WHERE exists(fieldName)`|
-|`containsAny<V extends ConditionValue>(fieldName: string, values: V[]): this;`|`WHERE fieldName IN (<value1>, <value2>, ...)`|
-|`containsAll<V extends ConditionValue>(fieldName: string, values: V[]): this;`|`WHERE fieldName ALL IN (<value1>, <value2>, ...)`|
-|`search(fieldName: string, searchTerms: string, operator?: SearchOperator): this;`|Performs full-text search|
-|`openSubclause(): this;`|Opens subclause `(`|
-|`closeSubclause(): this;`|Closes subclause `)`|
-|`negateNext(): this;`|Adds `NOT` before next condition|
-|`andAlso(): this;`|Adds `AND` before next condition|
-|`orElse(): this;`|Adds `OR` before next condition|
-|`usingDefaultOperator(operator: QueryOperator): this;`|Sets default operator (which will be used if no `andAlso()` / `orElse` was called. Just after query instantiation, `OR` is used as default operator. Default operator can be changed only adding any conditions|
-|`orderBy(field: string, ordering?: OrderingType): this;`|`ORDER BY field [DESC]`|
-|`randomOrdering(seed?: string): this;`|`ORDER BY random()`|
-|`take(count: number): this;`|`Limits the number of result entries to *count* `|
-|`skip(count: number): this;`|`Skips first *count* results `|
-|`first(callback?: EntityCallback<T>): Promise<T>;`|Returns first document from result set|
-|`single(callback?: EntityCallback<T>): Promise<T>;`|Returns single document matching query criteria. If there are no such document or more then one - throws an Exception|
-|`all(callback?: QueryResultsCallback<T[]>): Promise<T[]>;`|Returns all documents from result set (considering `take()` / `skip()` options)|
-|`count(callback?: EntitiesCountCallback): Promise<number>;`|Returns count of all documents matching query criteria (non-considering `take()` / `skip()` options)|
+<table>
+    <tr>
+        <th>Method</th>
+        <th>RQL / description</th>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">selectFields(fields: string[], 
+projections?: string[]): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">SELECT field1 [AS projection1], ...</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">distinct(): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">SELECT DISTINCT</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">whereEquals
+&lt;V extends ConditionValue&gt;(
+fieldName: string, value: V, 
+exact?: boolean)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE fieldName = &lt;value&gt;</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">whereNotEquals
+&lt;V extends ConditionValue&gt;(
+fieldName: string, value: V, 
+exact?: boolean)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE fieldName != &lt;value&gt;</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">whereIn
+&lt;V extends ConditionValue&gt;(
+fieldName: string, values: V[], 
+exact?: boolean)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE fieldName IN (&lt;value1&gt;, &lt;value2&gt;, ...)</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">whereStartsWith
+&lt;V extends ConditionValue&gt;(
+fieldName: string, value: V)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE startsWith(fieldName, '&lt;value&gt;')</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">whereEndsWith
+&lt;V extends ConditionValue&gt;(
+fieldName: string, value: V)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE endsWith(fieldName, '&lt;value&gt;')</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">whereBetween
+&lt;V extends ConditionValue&gt;(
+fieldName: string, start: V, end: V, 
+exact?: boolean) : IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE fieldName BETWEEN &lt;start&gt; AND &lt;end&gt;</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">whereGreaterThan
+&lt;V extends ConditionValue&gt;(
+fieldName: string, value: V, 
+exact?: boolean)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE fieldName > &lt;value&gt;</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">whereGreaterThanOrEqual
+&lt;V extends ConditionValue&gt;(
+fieldName: string, value: V, 
+exact?: boolean)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE fieldName >= &lt;value&gt;</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">whereLessThan
+&lt;V extends ConditionValue&gt;(
+fieldName: string, value: V, 
+exact?: boolean)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE fieldName < &lt;value&gt;</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">whereLessThanOrEqual
+&lt;V extends ConditionValue&gt;(
+fieldName: string, value: V, 
+exact?: boolean)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE fieldName <= &lt;value&gt;</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">whereExists(fieldName: string)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE exists(fieldName)</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">containsAny
+&lt;V extends ConditionValue&gt;(
+fieldName: string, values: V[])
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE fieldName IN (&lt;value1&gt;, &lt;value2&gt;, ...)</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">containsAll
+&lt;V extends ConditionValue&gt;(
+fieldName: string, values: V[])
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">WHERE fieldName ALL IN (&lt;value1&gt;, &lt;value2&gt;, ...)</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">search(fieldName: string, 
+searchTerms: string, 
+operator?: SearchOperator)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td>Performs full-text search</td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">openSubclause(): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td>Opens subclause <code lang="sql">(</code></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">closeSubclause(): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td>Closes subclause <code lang="sql">)</code></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">negateNext(): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td>Adds <code lang="sql">NOT</code> before next condition</td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">andAlso(): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td>Adds <code lang="sql">AND</code> before next condition</td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">orElse(): IDocumentQuery&lt;T&gt;;</pre></td>
+        <td>Adds <code lang="sql">OR</code> before next condition</td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">usingDefaultOperator
+(operator: QueryOperator)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td>Sets default operator (which will be used if no <code lang="typescript">andAlso()</code> / <code lang="typescript">orElse()</code> was called. Just after query instantiation, <code lang="sql">OR</code> is used as default operator. Default operator can be changed only adding any conditions</td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">orderBy(field: string, 
+ordering?: OrderingType)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">ORDER BY field [DESC]</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">randomOrdering(seed?: string)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td><pre lang="sql">ORDER BY random()</pre></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">take(count: number)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td>Limits the number of result entries to <code>count</code></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">skip(count: number)
+: IDocumentQuery&lt;T&gt;;</pre></td>
+        <td>Skips first <code>count</code> results</td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">async first(callback?
+: EntityCallback<T>): Promise<T>;</pre></td>
+        <td>Returns first document from result set</td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">async single(callback?
+: EntityCallback<T>): Promise<T>;</pre></td>
+        <td>Returns single document matching query criteria. If there are no such document or more then one - throws an <code>InvalidOperationException</code></td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">async all(callback?
+: QueryResultsCallback<T[]>): Promise<T[]>;</pre></td>
+        <td>Returns all documents from result set (considering <code lang="typescript">take()</code> / <code lang="typescript">skip()</code> options)</td>
+    </tr>
+    <tr>
+        <td><pre lang="typescript">async count(callback?
+: EntitiesCountCallback): Promise<number>;</pre></td>
+        <td>Returns count of all documents matching query criteria (non-considering <code lang="typescript">take()</code> / <code lang="typescript">skip()</code> options)</td>
+    </tr>
+</table>
+
 
 Condition value can be a string, number, boolean, null value or `Date` object:
 
-```
+```typescript
 type ConditionValue = string | number | boolean | Date | null;
 ```
 
@@ -370,6 +524,276 @@ store.conventions.addDocumentInfoResolver({
 })();
 ```
 
+## Working with secured server
+
+1. Fill auth options object. Pass contents of the pem/pfx certificate, specify its type and (optionally) passphrase:
+```javascript
+const {DocumentStore, Certificate} = require('ravendb');
+
+const certificate = `
+-----BEGIN CERTIFICATE-----
+...
+-----END CERTIFICATE-----
+-----BEGIN RSA PRIVATE KEY-----
+...
+-----END RSA PRIVATE KEY-----
+`;
+
+let authOptions = {
+  certificate: certificate,
+  type: Certificate.Pem,
+  password: 'my passphrase' // optional  
+};
+``` 
+
+Pfx certificates content should be passed as `Buffer` object:
+
+```javascript
+const {DocumentStore, Certificate} = require('ravendb');
+const fs = require('fs');
+
+const certificate = './cert.pfx';
+
+let authOptions = {
+  certificate: fs.readFileSync(certificate),
+  type: Certificate.Pfx,
+  password: 'my passphrase' // optional  
+};
+``` 
+
+
+2. Pass auth options as third argument of `DocumentStore.create`:
+
+```javascript
+let store = DocumentStore.create(
+  'database url',
+  'default database name',
+  authOptions
+);
+
+store.initialize();
+```
+
+#### Auth exceptions
+
+- if no auth options was provided and you're trying to work with secured server, an `NotSupportedException` will be thrown during store initialization
+- if certificate is invalid or doesn't have permissions for specific operations, an `AuthorizationException` will be thrown during working with sessions/querying/sending operations
+
+## Advanced features
+
+#### Attachments support
+
+You can attach binary files to documents. 
+
+1. For attach a file, use `PutAttachmentOperation`. Pass document id, attachment name (it can be just a file name), content type and file contents as an `Buffer` object:
+
+```javascript
+const {DocumentStore, PutAttachmentOperation} = require('ravendb');
+const path = require('path');
+const fs = require('fs');
+
+// ...
+const fileName = './iphone-x.png';
+
+await store.operations.send(
+  new PutAttachmentOperation(
+    'Products/1-A', 
+    path.basename(fileName), 
+    fs.readFileSync(fileName), 
+    'image/png' 
+  )
+);    
+```
+
+2. For read an attachment, use `GetAttachmentOperation`. Pass document id and attachment name. File contents will be stored as an `Buffer` object inside `stream` property of response:
+
+```javascript
+const {DocumentStore, PutAttachmentOperation, AttachmentTypes} = require('ravendb');
+const fs = require('fs');
+
+// ...
+const fileName = 'iphone-x.png';
+
+let attachmentResult = await store.operations.send(
+  new GetAttachmentOperation(
+    'Products/1-A', 
+    fileName, 
+    AttachmentTypes.Document
+  )
+);  
+
+fs.writeFileSync(`./${fileName}`, attachmentResult.stream);
+```
+
+3. For delete an attachment, use `DeleteAttachmentOperation`. Pass document id and attachment name.
+
+```javascript
+const {DocumentStore, DeletAttachmentOperation} = require('ravendb');
+
+// ...
+const fileName = 'iphone-x.png';
+
+await store.operations.send(
+  new DeleteAttachmentOperation(
+    'Products/1-A', 
+    fileName
+  )
+);  
+```
+
+#### Custom document id property
+
+By default document id is stored onto `id` property of document. But you can define which name of id property should be for specific document types. 
+
+1. Define custom document id property name resolver as callback function. It accepts document type and should return id property name:
+
+```javascript
+// models.item.js
+class Item {
+  constructor(Id = null, Title = "", Options = []) {
+    this.Id = Id;
+    this.Title = Title;    
+    this.Options = Options;    
+  }  
+}
+
+exports.Item = Item; 
+
+// index.js
+const {DocumentStore} = require('ravendb');
+const {Item} = require('./models/item');
+
+const resolveIdProperty = (typeName) => {
+  switch (typeName) {
+    case Item.name:
+      return 'Id';     
+    // ...    
+  }  
+};
+```
+
+2. Pass this callback to `resolveIdProperty` option of `conventions.addDocumentInfoResolver`:
+
+```javascript
+store.conventions.addDocumentInfoResolver({ resolveIdProperty });
+```
+
+3. Now client will read/fill `Id` property with document id while doing CRUD operations:
+
+```javascript
+let session = store.openSession();
+
+await session.store(new Item(null, 'First Item', [1, 2, 3]));
+await session.saveChanges();
+
+console.log(item.Id); // Items/1-A
+
+session = store.openSession();
+let item = await session.load('Items/1-A');
+
+console.log(item.Id); // Items/1-A
+console.log(item.Title); // First Item
+console.log(item.Options); // [1, 2, 3]
+```
+
+#### Custom attributes serializer
+
+You can define custom serializers if you need to implement your own logic for convert attributes names/values for specific document types.
+
+1. Define your serializer as object with `onSerialized` / `onUnserialized` methods:
+
+```javascript
+const serializer = {
+  onSerialized: (serialized) => {
+  },
+  onUnserialized: (serialized) => {
+  }
+};
+```
+
+Where `serialized` attribute has the following structure:
+
+```typescript
+interface ISerialized<T extends Object = IRavenObject> {
+  source: object | T;
+  target?: object | T;
+  originalAttribute: string;
+  serializedAttribute: string;
+  originalValue: any;
+  serializedValue: any;  
+  attributePath: string;
+  metadata?: object;
+  nestedObjectTypes?: IRavenObject<DocumentConstructor>;
+}
+```
+
+2. Store target attribute name/value into the `serializedAttribute`/`serializedValue` properties of `serialized` parameter:
+
+```javascript
+function capitalize(string) {
+  return string.charAt(0).toUpperCase() + string.substring(1);
+}
+
+function uncapitalize(string) {
+  return string.charAt(0).toLowerCase() + string.substring(1);
+}
+
+const serializer = {
+  onSerialized: (serialized) => {
+    switch (serialized.metadata['Raven-Node-Type']) {
+      case Item.name:
+        serialized.serializedAttribute = uncapitalize(serialized.originalAttribute);
+
+        if ('Items' === serialized.originalAttribute) {
+          serialized.serializedValue = serialized.originalValue.join(",");
+        }  
+
+        break;
+        // ...  
+    }  
+  },
+  onUnserialized: (serialized) => {
+    switch (serialized.metadata['Raven-Node-Type']) {
+      case Item.name:
+        serialized.serializedAttribute = capitalize(serialized.originalAttribute);
+
+        if ('items' === serialized.originalAttribute) {
+          serialized.serializedValue = serialized.originalValue.split(",").map(parseInt);
+        }  
+
+        break;
+        // ...  
+    }  
+  }    
+};
+```
+
+3. Pass your serializer object to `conventions.addAttributeSerializer`:
+
+```javascript
+const {DocumentStore, GetDocumentCommand} = require('ravendb');
+
+store.conventions.addAttributeSerializer(serializer);
+
+let sesssion = store.openSession();
+
+await session.store(new Item(null, 'First Item', [1, 2, 3]));
+await session.saveChanges();
+
+session = store.openSession();
+let item = await session.load('Items/1-A');
+
+console.log(item.Id); // Items/1-A
+console.log(item.Title); // First Item
+console.log(item.Options); // [1, 2, 3]
+
+let response = await store.getRequestExecutor().execute(new GetDocumentCommand('Items/1-A'));
+let rawDocument = response.Results[0];
+
+console.log(rawDocument['@metadata']['@id']); // Items/1-A
+console.log(rawDocument.title); // First Item
+console.log(rawDocument.options); // "1,2,3"
+```
 
 ## Building
 
@@ -378,13 +802,15 @@ npm run build
 ```
 
 ## Running tests
+
 ```bash
-npm test -- -h 192.168.5.44 [-p 8080] [-t DocumentSerializing [-f]]
+npm test -- -h 192.168.5.44 [-p 8080] [-c path/to/certificate.pem(pfx)] [-t DocumentSerializing [-f]]
 ```
 
 | Option | Description |
 | ------------- | ------------- |
 | `-h` or `--ravendb-host=` | Database host |
 | `-p` or `--ravendb-port=` | Database port. 8080 by default |
+| `-c` or `--ravendb-certificate=` | Path to .pem or .pfx certificate. If specified, test runner will use https protocol |
 | `-t` or `--test=` | Test name. For run multiple test, specify each test in separate --test= option. By default runs all tests |
 | `-f` or `--no-fixtures` | Skip executing database fixtures (create test database, put test indexes etc). Can be usable for tests which doesn't executes raven commands (e.g. DocumentSerializing) |

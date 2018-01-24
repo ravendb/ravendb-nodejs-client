@@ -13,7 +13,7 @@ export interface IErrorResponse {
 export interface IResponse extends IRavenObject {
   statusCode: StatusCode;
   headers: IHeaders;
-  body?: IResponseBody;
+  body?: IResponseBody | string;
 }
 
 export interface IResponseBody extends IRavenObject {

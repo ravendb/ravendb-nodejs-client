@@ -34,6 +34,7 @@ export {IJsonable, IJsonConvertible, IStringable, IDisposable} from './Typedef/C
 export {IRavenResponse} from './Database/RavenCommandResponse';
 export {IHeaders} from './Http/IHeaders';
 export {IResponse, IResponseBody} from './Http/Response/IResponse';
+export {IAuthOptions, IStoreAuthOptions, IRequestAuthOptions} from './Auth/AuthOptions';
 
 //exceptions
 export {
@@ -132,6 +133,10 @@ export {DeleteCommandData} from './Database/Commands/Data/DeleteCommandData';
 export {PutCommandData} from './Database/Commands/Data/PutCommandData';
 export {PatchCommandData} from './Database/Commands/Data/PatchCommandData';
 export {SaveChangesData} from './Database/Commands/Data/SaveChangesData';
+export {AttachmentCommand} from './Database/Commands/AttachmentCommand';
+export {GetAttachmentCommand} from './Database/Commands/GetAttachmentCommand';
+export {DeleteAttachmentCommand} from './Database/Commands/DeleteAttachmentCommand';
+export {PutAttachmentCommand} from './Database/Commands/PutAttachmentCommand';
 export {CreateDatabaseOperation} from './Database/Operations/CreateDatabaseOperation';
 export {DeleteDatabaseOperation} from './Database/Operations/DeleteDatabaseOperation';
 export {QueryBasedOperation} from './Database/Operations/QueryBasedOperation';
@@ -141,11 +146,19 @@ export {GetIndexOperation} from './Database/Operations/GetIndexOperation';
 export {PutIndexesOperation} from './Database/Operations/PutIndexesOperation';
 export {DeleteIndexOperation} from './Database/Operations/DeleteIndexOperation';
 export {PatchOperation} from './Database/Operations/PatchOperation';
+export {AttachmentOperation} from './Database/Operations/AttachmentOperation';
+export {GetAttachmentOperation} from './Database/Operations/GetAttachmentOperation';
+export {DeleteAttachmentOperation} from './Database/Operations/DeleteAttachmentOperation';
+export {PutAttachmentOperation} from './Database/Operations/PutAttachmentOperation';
+export {IAttachmentName, IAttachmentDetails} from './Database/Operations/Attachments/AttachmentDetails';
+export {IAttachmentResult} from './Database/Operations/Attachments/AttachmentResult';
+export {AttachmentType, AttachmentTypes} from './Database/Operations/Attachments/AttachmentType';
 export {IOperationStatusResult, OperationStatus, OperationStatuses, OperationAwaiter} from './Database/Operations/OperationAwaiter';
 export {AbstractOperation, Operation, AdminOperation, ServerOperation, PatchResultOperation, AwaitableOperation, IOperation} from './Database/Operations/Operation';
 export {AbstractOperationExecutor, AbstractDatabaseOperationExecutor, OperationExecutor, AdminOperationExecutor, ServerOperationExecutor, IOperationExecutor} from './Database/Operations/OperationExecutor';
-export {Serializer} from './Json/Serializer';
+export {Serializer, ISerialized, IAttributeSerializer} from './Json/Serializer';
 export {DatabaseDocument} from './Database/DatabaseDocument';
+export {Certificate, PemCertificate, PfxCertificate, CertificateType, ICertificate} from './Auth/Certificate';
 export {DocumentStore} from './Documents/DocumentStore';
 export {DocumentSession} from './Documents/Session/DocumentSession';
 export {AdvancedSessionOperations} from './Documents/Session/AdvancedSessionOperations';
@@ -182,7 +195,7 @@ export {ServerNode} from './Http/ServerNode';
 export {NodeSelector} from './Http/Request/NodeSelector';
 export {NodeStatus} from './Http/NodeStatus';
 export {Topology} from './Http/Topology';
-export {QueryString} from './Http/QueryString';
+export {UriUtility} from './Http/UriUtility';
 export {Lock} from './Lock/Lock';
 export {Observable, IObservable} from './Utility/Observable';
 export {DateUtil} from './Utility/DateUtil';
@@ -202,4 +215,3 @@ export {HiloMultiDatabaseIdGenerator} from './Hilo/HiloMultiDatabaseIdGenerator'
 export {HiloMultiTypeIdGenerator} from './Hilo/HiloMultiTypeIdGenerator';
 export {HiloNextCommand} from './Hilo/Commands/HiloNextCommand';
 export {HiloReturnCommand} from './Hilo/Commands/HiloReturnCommand';
-

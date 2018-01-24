@@ -1,7 +1,7 @@
 import * as _ from 'lodash';
 import {IRavenObject} from "../Typedef/IRavenObject";
 import {TypeUtil} from "../Utility/TypeUtil";
-import {IResponse} from "../Http/Response/IResponse";
+import {IResponse, IResponseBody} from "../Http/Response/IResponse";
 import {StatusCodes} from "../Http/Response/StatusCode";
 import {RavenException} from "../Database/DatabaseExceptions";
 import * as exceptions from "../Database/DatabaseExceptions";
@@ -35,7 +35,7 @@ export class ExceptionsFactory {
       const response: IResponse = <IResponse>jsonOrResponse;
 
       if (StatusCodes.isError(response.statusCode) && response.body) {
-        return this.createFrom(response.body);
+        return this.createFrom(<IResponseBody>response.body);
       }
     } else {
       const json: IRavenObject = <IRavenObject><object>jsonOrResponse;

@@ -3,7 +3,7 @@ import * as pluralize from 'pluralize';
 import {InvalidOperationException, ArgumentNullException} from "../../Database/DatabaseExceptions";
 import {StringUtil} from "../../Utility/StringUtil";
 import {TypeUtil} from "../../Utility/TypeUtil";
-import {Serializer} from "../../Json/Serializer";
+import {Serializer, IAttributeSerializer} from "../../Json/Serializer";
 import {IRavenObject} from "../../Typedef/IRavenObject";
 import {ConcurrencyCheckMode} from "../../Database/ConcurrencyCheckMode";
 import {IRavenResponse} from "../../Database/RavenCommandResponse";
@@ -48,6 +48,7 @@ export class DocumentConventions {
   readonly maxLengthOfQueryUsingGetUrl = 1024 + 512;
   readonly identityPartsSeparator = "/";
   private _resolvers: IDocumentInfoResolvable[] = [];
+  private _serializers: IAttributeSerializer[] = [];
   private _idsNamesCache: Map<string, string> = new Map<string, string>();
   private _ctorsCache: Map<string, DocumentConstructor> = new Map<string, DocumentConstructor>();
   
@@ -64,6 +65,18 @@ export class DocumentConventions {
 
   public get systemMetaKeys(): string[] {
     return ['@collection', 'Raven-Node-Type', '@nested_object_types'];
+  }
+
+  public get serializers(): IAttributeSerializer[] {
+    return this._serializers;
+  }
+
+  public addAttributeSerializer(serializer: IAttributeSerializer): void {
+    if (!serializer) {
+      throw new ArgumentNullException('Invalid serializer provided');
+    }
+
+    this._serializers.push(serializer);
   }
 
   public addDocumentInfoResolver(resolver: IDocumentInfoResolvable): void {
@@ -174,7 +187,7 @@ export class DocumentConventions {
 
   public convertToRawEntity<T extends Object = IRavenObject>(document: T, documentType?: DocumentType<T>): object {
     const idProperty: string = this.getIdPropertyName(documentType, document);
-    let result: object = Serializer.toJSON<T>(document);
+    let result: object = Serializer.toJSON<T>(document, this);
 
     if (idProperty) {
       delete result[idProperty];
