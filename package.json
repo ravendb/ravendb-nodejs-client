@@ -1,6 +1,6 @@
 {
   "name": "ravendb",
-  "version": "4.0.0-rc2",
+  "version": "4.0.0-rc3",
   "description": "RavenDB client for Node.js",
   "files": [
     "lib/"
@@ -11,7 +11,9 @@
   "scripts": {
     "_prepublish": "gulp bundle",
     "test": "gulp test",
-    "build": "gulp bundle"
+    "build": "gulp bundle",
+    "test-unsecured": "powershell ./test/assets/test-unsecured.ps1",
+    "test-secured": "powershell ./test/assets/test-secured.ps1"
   },
   "repository": {
     "type": "git",
