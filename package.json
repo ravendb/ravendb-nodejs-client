@@ -9,6 +9,7 @@
   "main": "lib/ravendb-node.js",
   "typings": "lib/ravendb-node.d.ts",
   "scripts": {
+    "gulp": "gulp",
     "_prepublish": "gulp bundle",
     "test": "gulp test",
     "build": "gulp bundle",
