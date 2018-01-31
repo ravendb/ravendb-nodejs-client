@@ -53,6 +53,7 @@
     "gulp-typescript-easysort": "0.0.7",
     "gulp-uglify-harmony": "git+https://github.com/jiborobot/gulp-uglify-harmony.git#master",
     "mocha": "^4.1.0",
+    "mocha-junit-reporter": "^1.17.0",
     "rimraf": "^2.6.1",
     "sinon": "^4.0.1",
     "typescript": "~2.5.3",
