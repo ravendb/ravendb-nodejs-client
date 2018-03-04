@@ -34,8 +34,8 @@ export class OrderByToken extends QueryToken
   public static createDistanceAscending(fieldName: string, latitudeOrShapeWktParameterName: string, longitudeParameterName?: string): OrderByToken
   {
     const expression: string = longitudeParameterName
-      ? `distance(${fieldName}, point($${latitudeOrShapeWktParameterName}, $${longitudeParameterName}))`
-      : `distance(${fieldName}, wkt($${latitudeOrShapeWktParameterName}))`;
+      ? `spatial.distance(${fieldName}, spatial.point($${latitudeOrShapeWktParameterName}, $${longitudeParameterName}))`
+      : `spatial.distance(${fieldName}, spatial.wkt($${latitudeOrShapeWktParameterName}))`;
 
     return new (this as (typeof OrderByToken))(expression);
   }
@@ -45,8 +45,8 @@ export class OrderByToken extends QueryToken
   public static createDistanceDescending(fieldName: string, latitudeOrShapeWktParameterName: string, longitudeParameterName?: string): OrderByToken
   {
     const expression: string = longitudeParameterName
-      ? `distance(${fieldName}, point($${latitudeOrShapeWktParameterName}, $${longitudeParameterName}))`
-      : `distance(${fieldName}, wkt($${latitudeOrShapeWktParameterName}))`;
+      ? `spatial.distance(${fieldName}, spatial.point($${latitudeOrShapeWktParameterName}, $${longitudeParameterName}))`
+      : `spatial.distance(${fieldName}, spatial.wkt($${latitudeOrShapeWktParameterName}))`;
 
     return new (this as (typeof OrderByToken))(expression, true);
   }
