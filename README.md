@@ -1,5 +1,6 @@
 # RavenDB client for Node.js
 
+[![build status](https://travis-ci.org/ravendb/ravendb-nodejs-client.svg?branch=v4.0)](https://travis-ci.org/ravendb/ravendb-nodejs-client)
 ## Installation
 
 ```bash
