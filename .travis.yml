@@ -1,0 +1,16 @@
+language: node_js
+node_js:
+  - "6"
+  - "7"
+  - "8"
+  - "9"
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libunwind8 wget libicu52 libssl-dev curl unzip gettext libcurl4-openssl-dev zlib1g uuid-dev bzip2
+  - wget -O RavenDB.tar.bz2 https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest; tar xvjf RavenDB.tar.bz2
+  - sed -i 's/:0/:8080/' ./RavenDB/Server/settings.json
+  - ./RavenDB/Server/Raven.Server --non-interactive &
+  - sleep 1
+install:
+  - npm install
+script: npm test -- -h 127.0.0.1 
