@@ -86,6 +86,10 @@ gulp.task('run:tests', ['clean', 'build:tests:args', 'build:tests'], () => {
         mochaOpts["ravendb-certificate"] = args["ravendb-certificate"];
     }
 
+    if (args["ca"]) {
+        mochaOpts["ca"] = args["ca"];
+    }
+
     if (args["report-xml"]) {
         mochaOpts["reporter"] = 'mocha-junit-reporter';
     }

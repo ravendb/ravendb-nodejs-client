@@ -215,6 +215,11 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
       }
 
       this._certificate.toAgentOptions(agentOptions);
+
+      if (this._authOptions.ca) {
+        agentOptions.ca = [ this._authOptions.ca ];
+      }
+
       options.agentOptions = agentOptions;
     }
 
