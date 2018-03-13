@@ -10,6 +10,8 @@ import {IRavenObject} from '../../src/Typedef/IRavenObject';
 import {Certificate} from '../../src/Auth/Certificate';
 import { IDocumentSession } from '../../src/Documents/Session/IDocumentSession';
 
+const IS_TESTING_SECURE_SERVER = (global as any).IS_TESTING_SECURE_SERVER;
+
 describe('Authentication test', () => {
   let currentDatabase: string;
   let defaultUrl: string;
@@ -77,22 +79,27 @@ j32qw8tKsUBMO5zmCC6+IapqdBUr0F+BxJazO+mlQu2o9Ipas88=
       }).to.throw(NotSupportedException);
     });  
 
-    it('should raise AuthorizationException when trying to connect to secured server with invalid certificate', async () => {
+    (IS_TESTING_SECURE_SERVER ? it : it.skip)('should raise AuthorizationException when trying to connect to secured server with invalid certificate', async () => {
       let store: IDocumentStore;
       let session: IDocumentSession;
 
-      if (0 === defaultUrl.toLowerCase().indexOf('https')) {
-        store = DocumentStore.create(defaultUrl, currentDatabase, {
-          type: Certificate.Pem,
-          certificate: Buffer.from(certificate)
-        });
+      store = DocumentStore.create(defaultUrl, currentDatabase, {
+        type: Certificate.Pem,
+        certificate: Buffer.from(certificate),
+        ca: (global as any).EXTRA_CA 
+      });
 
-        store.initialize();
-        session = store.openSession();
+      store.initialize();
+      session = store.openSession();
 
-        await expect(session.load('DocumentWillNotLoad/1')).to.be.rejectedWith(AuthorizationException);
-      }
+      await expect(session.load('DocumentWillNotLoad/1')).to.be.rejectedWith(AuthorizationException);
     });
+
+    it.skip('should raise AuthorizationException in case certificate is not trusted', () => {
+      // test like one above, yet without 'ca' auth option specified
+      throw new Error("TODO");
+    });
+
   });  
 });
 

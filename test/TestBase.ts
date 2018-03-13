@@ -29,6 +29,10 @@ const defaultUrl: string = StringUtil.format(
   }
 );
 
+const authOptCa = args.ca ? fs.readFileSync(args.ca, { encoding: 'ascii' }) : null;
+(global as any).IS_TESTING_SECURE_SERVER = !!certificateFile;
+(global as any).EXTRA_CA = authOptCa;
+
 let indexMap: string;
 let index: IndexDefinition;
 let requestExecutor: RequestExecutor;
@@ -68,7 +72,8 @@ beforeEach(async function() {
   if (certificate) {
     authOptions = {
       type: certificateType,
-      certificate
+      certificate,
+      ca: authOptCa 
     };
   }  
 
