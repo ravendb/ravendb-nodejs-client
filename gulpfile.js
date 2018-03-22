@@ -153,19 +153,6 @@ gulp.task('build:compile', ['clean', 'build:exports', 'build:concat', 'build:bun
     .pipe(gulp.dest(options.dest))
 );
 
-gulp.task('build:uglify', ['clean', 'build:exports', 'build:concat', 'build:bundle', 'build:compile'], () => gulp
-    .src(options.dest + '/ravendb-node.js')
-    .pipe(uglify({
-        mangle: {
-            toplevel: true
-        },
-        output: {
-            preamble: preamble
-        }
-    }))
-    .pipe(gulp.dest(options.dest))
-);
-
 gulp.task('test', ['clean', 'build:tests:args', 'build:tests', 'run:tests']);
 
-gulp.task('bundle', ['clean', 'build:exports', 'build:concat', 'build:bundle', 'build:compile', 'build:uglify']);
+gulp.task('bundle', ['clean', 'build:exports', 'build:concat', 'build:bundle', 'build:compile']);
