@@ -1,26 +1,38 @@
-import * as _ from 'lodash';
-import * as BluebirdPromise from 'bluebird';
-import * as RequestPromise from 'request-promise';
-import {ServerNode} from '../ServerNode';
-import {RavenCommand, RavenCommandRequestOptions} from '../../Database/RavenCommand';
-import {IRavenResponse} from "../../Database/RavenCommandResponse";
-import {Topology} from "../Topology";
-import {IHeaders} from "../IHeaders";
-import {Lock} from "../../Lock/Lock";
-import {GetTopologyCommand} from "../../Database/Commands/GetTopologyCommand";
-import {GetStatisticsCommand} from "../../Database/Commands/GetStatisticsCommand";
-import {DateUtil} from "../../Utility/DateUtil";
-import {TypeUtil} from "../../Utility/TypeUtil";
-import {IResponse, IErrorResponse, IResponseBody} from "../Response/IResponse";
-import {StatusCodes, StatusCode} from "../Response/StatusCode";
-import {Observable} from "../../Utility/Observable";
-import {NodeSelector} from "./NodeSelector";
-import {NodeStatus} from "../NodeStatus";
-import {IDisposable} from '../../Typedef/Contracts';
-import {RavenException, InvalidOperationException, TopologyNodeDownException, AllTopologyNodesDownException, DatabaseLoadFailureException, UnsuccessfulRequestException, AuthorizationException} from "../../Database/DatabaseExceptions";
-import {IRequestAuthOptions} from '../../Auth/AuthOptions';
-import {IOptionsSet} from '../../Typedef/IOptionsSet';
-import {Certificate, ICertificate} from '../../Auth/Certificate';
+import * as _ from "lodash";
+import * as BluebirdPromise from "bluebird";
+import * as semaphore from "semaphore";
+import * as bunyan from "bunyan";
+import * as RequestPromise from "request-promise";
+import { ServerNode } from "../ServerNode";
+import { RavenCommand, RavenCommandRequestOptions } from "../../Database/RavenCommand";
+import { IRavenResponse } from "../../Database/RavenCommandResponse";
+import { Topology } from "../Topology";
+import { IHeaders } from "../IHeaders";
+import { Lock } from "../../Lock/Lock";
+import { GetTopologyCommand } from "../../Database/Commands/GetTopologyCommand";
+import { GetStatisticsCommand } from "../../Database/Commands/GetStatisticsCommand";
+import { DateUtil } from "../../Utility/DateUtil";
+import { TypeUtil } from "../../Utility/TypeUtil";
+import { IResponse, IErrorResponse, IResponseBody } from "../Response/IResponse";
+import { StatusCodes, StatusCode } from "../Response/StatusCode";
+import { Observable } from "../../Utility/Observable";
+import { NodeSelector } from "./NodeSelector";
+import { NodeStatus } from "../NodeStatus";
+import { IDisposable } from "../../Typedef/Contracts";
+import { 
+  RavenException, 
+  InvalidOperationException, 
+  TopologyNodeDownException, 
+  AllTopologyNodesDownException, 
+  DatabaseLoadFailureException, 
+  UnsuccessfulRequestException, 
+  AuthorizationException } from "../../Database/DatabaseExceptions";
+import { IRequestAuthOptions } from "../../Auth/AuthOptions";
+import { IOptionsSet } from "../../Typedef/IOptionsSet";
+import { Certificate, ICertificate } from "../../Auth/Certificate";
+import ReadBalanceBehavior from "../ReadBalanceBehavior";
+import HttpCache from "../HttpCache";
+import AggressiveCacheOptions from "../AggressiveCacheOptions";
 
 export interface ITopologyUpdateEvent {
   topologyJson: object;
@@ -35,7 +47,7 @@ export interface IRequestExecutorOptions {
   topologyEtag?: number;
   singleNodeTopology?: Topology;
   firstTopologyUpdateUrls?: string[];
-  authOptions?: IRequestAuthOptions
+  authOptions?: IRequestAuthOptions;
 }
 
 export interface IRequestExecutor extends IDisposable {
@@ -43,10 +55,41 @@ export interface IRequestExecutor extends IDisposable {
 }
 
 export class RequestExecutor extends Observable implements IRequestExecutor {
-  public static readonly REQUEST_FAILED      = 'request:failed';
-  public static readonly TOPOLOGY_UPDATED    = 'topology:updated';
-  public static readonly NODE_STATUS_UPDATED = 'node:status:updated';
+  public static readonly REQUEST_FAILED      = "request:failed";
+  public static readonly TOPOLOGY_UPDATED    = "topology:updated";
+  public static readonly NODE_STATUS_UPDATED = "node:status:updated";
 
+  public static readonly CLIENT_VERSION = "4.0.0";
+
+  private _updateDatabaseTopologySemaphore = semaphore(1);
+  private _updateClientConfigurationSemaphore = semaphore(1);
+
+  private _failedNodesTimers: Map<ServerNode, NodeStatus> = new Map();
+  protected _databaseName: string;
+  protected _certificate: ICertificate = null;
+
+  private static logger = bunyan.createLogger({
+    name: "RequestExecutor"
+  });
+
+  private _lastReturnedResponse: Date;
+  private _readBalanceBehavior: ReadBalanceBehavior;
+  private _cache: HttpCache; 
+  private _topologyTakenFromNode: ServerNode;
+
+  public get cache() {
+    return this._cache;
+  }
+
+  private agressiveCaching: AggressiveCacheOptions = new AggressiveCacheOptions();
+
+  public getTopology(): Topology {
+    return this._nodeSelector 
+      ? this._nodeSelector.getTopology()
+      : null;
+  }
+
+  // ====
   protected headers: IHeaders;
   protected readonly _maxFirstTopologyUpdatesTries: number = 5;
   protected _firstTopologyUpdatesTries: number = 0;
@@ -58,15 +101,13 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
   protected _withoutTopology: boolean;
   protected _nodeSelector: NodeSelector;
   protected _lastKnownUrls: string[];
-  protected _initialDatabase: string;
   protected _topologyEtag: number;
   protected _faildedNodesStatuses: Map<ServerNode, NodeStatus>;
   protected _disposed: boolean = false;
   protected _authOptions: IRequestAuthOptions;
-  protected _certificate: ICertificate = null;
 
   public get initialDatabase(): string {
-    return this._initialDatabase;
+    return this._databaseName;
   }
 
   constructor(database: string, options: IRequestExecutorOptions = {}) {
@@ -81,7 +122,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
 
     this._disposed = false;
     this._lastKnownUrls = null;
-    this._initialDatabase = database;
+    this._databaseName = database;
     this._withoutTopology = options.withoutTopology || false;
     this._topologyEtag = options.topologyEtag || 0;
     this._awaitFirstTopologyLock = Lock.make();
@@ -186,7 +227,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
         if (this._firstTopologyUpdateRejectionReason instanceof AuthorizationException) {
           return BluebirdPromise.reject(this._firstTopologyUpdateRejectionReason); 
         } else if (this.isFirstTopologyUpdateTriesExpired()) {
-          return BluebirdPromise.reject(new DatabaseLoadFailureException('Max topology update tries reached'));
+          return BluebirdPromise.reject(new DatabaseLoadFailureException("Max topology update tries reached"));
         } else {
           return BluebirdPromise.delay(100).then((): BluebirdPromise.Thenable<void> => this.awaitFirstTopologyUpdate());
         }        
@@ -235,7 +276,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     }
 
     if (!(command instanceof RavenCommand)) {
-      return BluebirdPromise.reject(new InvalidOperationException('Not a valid command'));
+      return BluebirdPromise.reject(new InvalidOperationException("Not a valid command"));
     }
 
     try {
@@ -275,7 +316,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
         
         if (isServerError) {
           if (command.wasFailed) {
-            let message: string = 'Unsuccessfull request';
+            let message: string = "Unsuccessfull request";
 
             if (response.body && (<IResponseBody>response.body).Error) {
                 message += `: ${(<IResponseBody>response.body).Error}`;
@@ -301,7 +342,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
       });
   }
 
-  protected handleServerDown(command: RavenCommand, failedNode: ServerNode, nodeIndex: number): BluebirdPromise<IRavenResponse | IRavenResponse[] | void> {
+  protected handleServerDown(command: RavenCommand, failedNode: ServerNode, nodeIndex: number);: BluebirdPromise<IRavenResponse | IRavenResponse[] | void> {
     let nextNode: ServerNode;
     const nodeSelector: NodeSelector = this._nodeSelector;
     const {REQUEST_FAILED} = <typeof RequestExecutor>this.constructor;
@@ -321,7 +362,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     
       if (!(nextNode = nodeSelector.currentNode) || command.wasFailedWithNode(nextNode)) {
         return BluebirdPromise.reject(new AllTopologyNodesDownException(
-          'Tried all nodes in the cluster but failed getting a response'
+          "Tried all nodes in the cluster but failed getting a response"
         ));
       }
 
@@ -334,7 +375,7 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
     let urls: string[] = _.clone(updateTopologyUrls.reverse());
 
     const update = (url: string): BluebirdPromise<void> => 
-      this.updateTopology(new ServerNode(url, this._initialDatabase))
+      this.updateTopology(new ServerNode(url, this._databaseName))
       .catch((error: Error): BluebirdPromise.Thenable<void> => {
         if (error instanceof AuthorizationException) {
           return BluebirdPromise.reject(error);
@@ -383,9 +424,9 @@ export class RequestExecutor extends Observable implements IRequestExecutor {
               forceUpdate: false
             };
 
-            this.emit<ITopologyUpdateEvent>(TOPOLOGY_UPDATED, eventData);
+              this.emit<ITopologyUpdateEvent>(TOPOLOGY_UPDATED, eventData);
 
-            if (eventData.wasUpdated) {
+              if (eventData.wasUpdated) {
               this.cancelFailingNodesTimers();
             }
           } else {

@@ -3,12 +3,18 @@ import {IJsonConvertible} from "../Typedef/Contracts";
 import {IRavenObject} from "../Typedef/IRavenObject";
 import {UriUtility} from "../Http/UriUtility";
 
+export class ServerNodeRole {
+  public static NONE = 'NONE';
+  public static PROMOTABLE = 'PROMOTABLE';
+  public static MEMBER = 'MEMBER';
+  public static REHAB = 'REHAB';
+}
+
 export class ServerNode implements IJsonConvertible {
   private _database: string;
   private _url: string;
   private _clusterTag?: string = null;
-  private _responseTime: number[] = [];
-  private _isRateSurpassed?: boolean = null;
+  private _serverRole: string;
 
   public static fromJson(json: object): ServerNode {
     const node: ServerNode = new (<typeof ServerNode>this)('', '');
@@ -27,43 +33,36 @@ export class ServerNode implements IJsonConvertible {
     return this._database;
   }
 
+  public set database(value) {
+    this._database = value;
+  }
+
   public get clusterTag(): string {
     return this._clusterTag;
+  }
+
+  public set clusterTag(value) {
+    this.clusterTag = value;
   }
 
   public get url(): string {
     return this._url;
   }
 
-  public get ewma(): number {
-    let ewma: number = 0;
-    let divide: number = this._responseTime.length;
+  public set url(value) {
+    this._url = value;
+  }
 
-    if (0 === divide) {
-      return ewma;
-    }
+  public get serverRole(): string {
+    return this._serverRole;
+  }
 
-    ewma = this._responseTime.reduce((total: number, time: number) => (total + time), 0);
-    return (0 === ewma) ? 0 : ewma / divide;
+  public set serverRole(value) {
+    this._serverRole = value;
   }
 
   public get isSecure(): boolean {
     return UriUtility.isSecure(this.url);
-  }
-
-  public set responseTime(value: number) {
-    this._responseTime[this._responseTime.length % 5] = value;
-  }
-
-  public isRateSurpassed(requestTimeSlaThresholdInMilliseconds): boolean {
-    let koeff: number = .75;
-    
-    if (TypeUtil.isNull(this._isRateSurpassed)) {
-      koeff += .25;
-    }
-
-    this._isRateSurpassed = this.ewma >= (koeff * requestTimeSlaThresholdInMilliseconds);
-    return this._isRateSurpassed;
   }
 
   public fromJson(json: object): void {
@@ -73,4 +72,7 @@ export class ServerNode implements IJsonConvertible {
     this._database = from.Database || null;
     this._clusterTag = from.ClusterTag || null;
   }
+
+
+  // TODO what to do with equals() and hashCode() overrides
 }

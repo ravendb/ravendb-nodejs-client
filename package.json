@@ -56,12 +56,15 @@
     "mocha-junit-reporter": "^1.17.0",
     "rimraf": "^2.6.1",
     "sinon": "^4.0.1",
+    "tslint": "^5.9.1",
+    "tslint-microsoft-contrib": "^5.0.3",
     "typescript": "~2.5.3",
     "uglify-js-harmony": "^2.7.5"
   },
   "dependencies": {
     "@types/async-lock": "0.0.20",
     "@types/bluebird": "^3.5.9",
+    "@types/bunyan": "^1.8.4",
     "@types/chai": "^3.4.35",
     "@types/chai-as-promised": "0.0.30",
     "@types/lodash": "^4.14.74",
@@ -73,11 +76,13 @@
     "@types/uuid": "^2.0.29",
     "async-lock": "^0.3.9",
     "bluebird": "^3.4.7",
+    "bunyan": "^1.8.12",
     "lodash": "^4.17.4",
-    "moment": "^2.17.1",
+    "moment": "^2.21.0",
     "pluralize": "^4.0.0",
     "request": "^2.79.0",
     "request-promise": "^4.1.1",
+    "semaphore": "^1.1.0",
     "uuid": "^3.1.0",
     "xregexp": "^3.2.0"
   }

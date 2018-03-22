@@ -1,0 +1,26 @@
+{
+    "defaultSeverity": "warn",
+    "extends": [
+        "tslint:recommended"
+    ],
+    "jsRules": {},
+    "rules": {
+        "function-name": [
+            true,
+            {
+                "private-method-regex": "^_"
+            }
+        ],
+        "quotemark": [true, "double"],
+        "triple-equals": true,
+        "ordered-imports": false,
+        "member-ordering": false,
+        "trailing-comma": false,
+        "max-classes-per-file": false,
+        "variable-name": [true, "ban-keywords", "check-format", "allow-leading-underscore"],
+        "no-trailing-whitespace": false
+    },
+    "rulesDirectory": [
+        "node_modules/tslint-microsoft-contrib"
+    ]
+}
