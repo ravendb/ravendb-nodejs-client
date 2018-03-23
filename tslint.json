@@ -8,7 +8,8 @@
         "function-name": [
             true,
             {
-                "private-method-regex": "^_"
+                "private-method-regex": "^_",
+                "static-method-regex": "^[a-z][A-Za-z0-9]*$"
             }
         ],
         "quotemark": [true, "double"],
@@ -18,7 +19,14 @@
         "trailing-comma": false,
         "max-classes-per-file": false,
         "variable-name": [true, "ban-keywords", "check-format", "allow-leading-underscore"],
-        "no-trailing-whitespace": false
+        "no-trailing-whitespace": false,
+        "object-literal-sort-keys": false,
+        "interface-name": false,
+        "arrow-parens": false,
+        "only-arrow-functions": false,
+        "unified-signatures": false,
+        "indent": [true, "spaces", 4],
+        "adjacent-overload-signatures": false
     },
     "rulesDirectory": [
         "node_modules/tslint-microsoft-contrib"

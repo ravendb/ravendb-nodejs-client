@@ -2,15 +2,14 @@ import * as BluebirdPromise from "bluebird";
 import * as _ from "lodash";
 import * as moment from "moment";
 import { RequestExecutor, ITopologyUpdateEvent } from "./RequestExecutor";
-import { ServerNode, ServerNodeRole } from "../ServerNode";
-import CurrentIndexAndNode from "../CurrentIndexAndNode";
-import { Topology } from "../Topology";
+import { ServerNode, ServerNodeRole } from "../Http/ServerNode";
+import CurrentIndexAndNode from "../Http/CurrentIndexAndNode";
+import { Topology } from "./Topology";
 import {
   InvalidOperationException,
   AllTopologyNodesDownException
-} from "../../Database/DatabaseExceptions";
-import { Lock } from "../../Lock/Lock";
-import Timer from "../../Primitives/Timer";
+} from "../Database/DatabaseExceptions";
+import { Timer } from "../Primitives/Timer";
 
 class NodeSelectorState {
   public topology: Topology;

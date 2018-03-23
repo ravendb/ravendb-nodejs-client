@@ -1,4 +1,4 @@
-export type StatusCode = 200 | 201 | 202 | 204 | 301 | 302 | 304 | 400 | 401 | 412 | 403 | 404 | 408 | 409 | 417 | 500 | 502 | 503 | 504;
+export type StatusCode = 200 | 201 | 202 | 204 | 301 | 302 | 304 | 400 | 401 | 412 | 403 | 404 | 408 | 409 | 410 | 417 | 500 | 502 | 503 | 504;
 
 export class StatusCodes {
   public static readonly Ok: StatusCode = 200;
@@ -20,6 +20,7 @@ export class StatusCodes {
   public static readonly BadGateway: StatusCode = 502;
   public static readonly ServiceUnavailable: StatusCode = 503;
   public static readonly GatewayTimeout: StatusCode = 504;
+  public static readonly Gone: StatusCode = 410;
 
   public static isSuccess(statusCode: StatusCode): boolean {
     return (statusCode >= 200) && (statusCode < 400);

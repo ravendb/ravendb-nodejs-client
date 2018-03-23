@@ -1,9 +1,10 @@
-import * as _ from 'lodash';
+import * as _ from "lodash";
 import {IRavenObject} from "../Typedef/IRavenObject";
 import {TypeUtil} from "../Utility/TypeUtil";
 import {IResponse, IResponseBody} from "../Http/Response/IResponse";
-import {StatusCodes} from "../Http/Response/StatusCode";
+import {StatusCodes} from "../Http/StatusCode";
 import {RavenException} from "../Database/DatabaseExceptions";
+import { HttpResponse } from "../Primitives/Http";
 import * as exceptions from "../Database/DatabaseExceptions";
 
 export class ExceptionsFactory {
@@ -30,7 +31,8 @@ export class ExceptionsFactory {
 
   public static createFrom(json: object): RavenException | null;
   public static createFrom(response: IResponse): RavenException | null;
-  public static createFrom(jsonOrResponse: object | IResponse): RavenException | null {
+  public static createFrom(httpResponse: HttpResponse): RavenException | null;
+  public static createFrom(jsonOrResponse: object | IResponse | HttpResponse): RavenException | null {
     if (('headers' in jsonOrResponse) && ('statusCode' in jsonOrResponse)) {
       const response: IResponse = <IResponse>jsonOrResponse;
 
@@ -62,7 +64,8 @@ export class ExceptionsFactory {
 
   public static throwFrom(json: object): void | never;
   public static throwFrom(response: IResponse): void | never;
-  public static throwFrom(jsonOrResponse: object | IResponse): void | never {
+  public static throwFrom(httpResponse: HttpResponse): void | never;
+  public static throwFrom(jsonOrResponse: object | IResponse | HttpResponse): void | never {
     const exception: RavenException = this.createFrom(jsonOrResponse);
     
     if (!TypeUtil.isNull(exception)) {

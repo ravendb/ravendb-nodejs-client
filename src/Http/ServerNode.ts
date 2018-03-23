@@ -4,10 +4,10 @@ import {IRavenObject} from "../Typedef/IRavenObject";
 import {UriUtility} from "../Http/UriUtility";
 
 export class ServerNodeRole {
-  public static NONE = 'NONE';
-  public static PROMOTABLE = 'PROMOTABLE';
-  public static MEMBER = 'MEMBER';
-  public static REHAB = 'REHAB';
+  public static NONE = "NONE";
+  public static PROMOTABLE = "PROMOTABLE";
+  public static MEMBER = "MEMBER";
+  public static REHAB = "REHAB";
 }
 
 export class ServerNode implements IJsonConvertible {
@@ -16,17 +16,11 @@ export class ServerNode implements IJsonConvertible {
   private _clusterTag?: string = null;
   private _serverRole: string;
 
-  public static fromJson(json: object): ServerNode {
-    const node: ServerNode = new (<typeof ServerNode>this)('', '');
-
-    node.fromJson(json);
-    return node;
-  }
-
-  constructor(url: string, database: string, clusterTag?: string) {
-    this._url = url;
-    this._database = database;
-    this._clusterTag = clusterTag;
+  public constructor(opts?: { database: string, url: string }) {
+    if (opts) {
+      this._database = this.database;
+      this._url = this.url;
+    }
   }
 
   public get database(): string {
@@ -66,13 +60,22 @@ export class ServerNode implements IJsonConvertible {
   }
 
   public fromJson(json: object): void {
-    const from: IRavenObject = <IRavenObject>json;
+    const from: IRavenObject = json as IRavenObject;
 
     this._url = from.Url;
     this._database = from.Database || null;
     this._clusterTag = from.ClusterTag || null;
   }
 
+  public static fromJson(json: object): ServerNode {
+    const node = new ServerNode({
+      database: "",
+      url: ""
+    });
+
+    node.fromJson(json);
+    return node;
+  }
 
   // TODO what to do with equals() and hashCode() overrides
 }

@@ -1,0 +1,5 @@
+root = true
+
+[lib/**.ts]
+indent_style = space
+indent_size = 4

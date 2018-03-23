@@ -4,11 +4,11 @@ export default class AggressiveCacheOptions {
     /** duration in milliseconds */
     private _duration: number;
 
-    public duration() {
+    public get duration() {
         return this._duration;
     }
 
-    public AggressiveCacheOptions(duration: number) {
+    public constructor(duration: number) {
         this._duration = duration;
     }
 }

@@ -1,11 +1,11 @@
 import * as BluebirdPromise from "bluebird";
 import {IDisposable} from "../Typedef/Contracts";
 
-export default class Timer implements IDisposable {
+export class Timer implements IDisposable {
 
-    private _action: () => BluebirdPromise.Thenable<any>;
+    private _action: () => PromiseLike<any>;
     
-    private _scheduledActionPromise: BluebirdPromise.Thenable<any>;
+    private _scheduledActionPromise: PromiseLike<any>;
 
     private _timerId: NodeJS.Timer;
 
@@ -14,7 +14,7 @@ export default class Timer implements IDisposable {
     /** period in milliseconds */
     private _periodInMs: number;
 
-    constructor(action: () => BluebirdPromise.Thenable<any>, dueTimeInMs: number, periodInMs?: number) {
+    constructor(action: () => PromiseLike<any>, dueTimeInMs: number, periodInMs?: number) {
         this._action = action;
         this._periodInMs = periodInMs;
         this._schedule(dueTimeInMs);
