@@ -26,7 +26,8 @@
         "only-arrow-functions": false,
         "unified-signatures": false,
         "indent": [true, "spaces", 4],
-        "adjacent-overload-signatures": false
+        "adjacent-overload-signatures": false,
+        "ban-types": false
     },
     "rulesDirectory": [
         "node_modules/tslint-microsoft-contrib"

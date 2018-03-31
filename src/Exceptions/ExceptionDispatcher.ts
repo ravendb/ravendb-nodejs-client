@@ -1,123 +1,77 @@
-//TODO
-public class ExceptionDispatcher {
+import * as VError from "verror";
+import { ExceptionSchema } from "./ExceptionSchema";
+import { StatusCodes } from "../Http/StatusCode";
+import { RavenErrorType, getError } from "./ClientErrors";
+import { HttpResponse } from "../Primitives/Http";
 
-    public static RavenException get(ExceptionSchema schema, int code) {
-        return get(schema.getMessage(), schema.getError(), schema.getType(), code);
-    }
+export interface ExceptionDispatcherArgs {
+    message: string;
+    error?: string;
+    type?: string;
+}
+export class ExceptionDispatcher {
 
-    public static RavenException get(String message, String error, String typeAsString, int code) {
-        if (code == HttpStatus.SC_CONFLICT) {
-            if (typeAsString.contains("DocumentConflictException")) {
-                return DocumentConflictException.fromMessage(message);
+    public static get(opts: ExceptionDispatcherArgs, code: number): VError {
+        const { message, error, type } = opts;
+        if (code === StatusCodes.Conflict) {
+            if (type.indexOf("DocumentConflictException") !== -1) {
+                return getError(message, "DocumentConflictException");
             }
-            return new ConcurrencyException(message);
+
+            return getError(message, "ConcurrencyException");
         }
 
-        Class<?> type = getType(typeAsString);
-        if (type == null) {
-            return new RavenException(error);
-        }
-
-        RavenException exception;
-        try {
-            exception = (RavenException) type.getConstructor(String.class).newInstance(error);
-        } catch (Exception e) {
-            return new RavenException(error);
-        }
-
-        if (!RavenException.class.isAssignableFrom(type)) {
-            return new RavenException(error, exception);
-        }
-
-        return exception;
+        const determinedType = this._getType(type) as RavenErrorType;
+        return getError(error, determinedType || "RavenException");
     }
 
-    public static void throwException(CloseableHttpResponse response) {
-        if (response == null) {
-            throw new IllegalArgumentException("Response cannot be null");
+    public static throwException(response: HttpResponse): void {
+        if (response === null) {
+            throw getError("Response cannot be null", "InvalidArgumentException");
         }
 
         try {
-            InputStream stream = RequestExecutor.readAsStream(response);
-            String json = IOUtils.toString(stream, "UTF-8");
-            ExceptionSchema schema = JsonExtensions.getDefaultMapper().readValue(json, ExceptionSchema.class);
+            const json: string = response.body;
+            const schema: ExceptionSchema = JSON.parse(json);
 
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_CONFLICT) {
-                throwConflict(schema, json);
+            if (response.statusCode === StatusCodes.Conflict) {
+                this._throwConflict(schema, json);
             }
 
-            Class<?> type = getType(schema.getType());
-            if (type == null) {
-                throw RavenException.generic(schema.getError(), json);
-            }
-
-            RavenException exception;
-
-            try {
-                exception = (RavenException) type.getConstructor(String.class).newInstance(schema.getError());
-            } catch (Exception e) {
-                throw RavenException.generic(schema.getError(), json);
-            }
-
-            if (!RavenException.class.isAssignableFrom(type)) {
-                throw new RavenException(schema.getError(), exception);
-            }
-
-            if (IndexCompilationException.class.equals(type)) {
-                IndexCompilationException indexCompilationException = (IndexCompilationException) exception;
-                JsonNode jsonNode = JsonExtensions.getDefaultMapper().readTree(json);
-                JsonNode indexDefinitionProperty = jsonNode.get("TransformerDefinitionProperty");
-                if (indexDefinitionProperty != null) {
-                    indexCompilationException.setIndexDefinitionProperty(indexDefinitionProperty.asText());
-                }
-
-                JsonNode problematicText = jsonNode.get("ProblematicText");
-                if (problematicText != null) {
-                    indexCompilationException.setProblematicText(problematicText.asText());
-                }
-
-                throw indexCompilationException;
-            }
-
-            throw exception;
-
-        } catch (IOException e) {
-            throw new RavenException(e.getMessage(), e);
+            const determinedType = this._getType(schema.type) as RavenErrorType;
+            throw getError(schema.error, determinedType || "RavenException");
+        } catch (errThrowing) {
+            throw getError(errThrowing.message, "RavenException", errThrowing);
         } finally {
-            IOUtils.closeQuietly(response);
+            response.destroy();
         }
     }
 
 
-    private static void throwConflict(ExceptionSchema schema, String json) {
-        if (schema.getType().contains("DocumentConflictException")) {
-            throw DocumentConflictException.fromJson(json);
+    private static _throwConflict(schema: ExceptionSchema, json: string) {
+        if (schema.type.includes("DocumentConflictException")) {
+            throw getError(schema.message, "DocumentConflictException", null { json });
         }
-        throw new ConcurrencyException(schema.getMessage());
+
+        throw getError(schema.message, "ConcurrencyException");
     }
 
 
-    private static Class<?> getType(String typeAsString) {
-        if ("System.TimeoutException".equals(typeAsString)) {
-            return TimeoutException.class;
+    private static _getType(typeAsString: string): string {
+        if ("System.TimeoutException" === typeAsString) {
+            return "TimeoutException";
         }
-        String prefix = "Raven.Client.Exceptions.";
+        const prefix = "Raven.Client.Exceptions.";
         if (typeAsString.startsWith(prefix)) {
-            String exceptionName = typeAsString.substring(prefix.length());
-            if (exceptionName.contains(".")) {
-                String[] tokens = exceptionName.split("\\.");
-                for (int i = 0; i < tokens.length - 1; i++) {
-                    tokens[i] = tokens[i].toLowerCase();
-                }
-                exceptionName = String.join(".", tokens);
+            const exceptionName = typeAsString.substring(prefix.length);
+            if (exceptionName.indexOf(".") !== -1) {
+                const tokens = exceptionName.split(".");
+                return tokens[tokens.length - 1] as RavenErrorType;
             }
 
-            try {
-                return Class.forName(RavenException.class.getPackage().getName() + "." + exceptionName);
-            } catch (Exception e) {
-                return null;
-            }
+            return exceptionName;
         } else {
             return null;
         }
     }
+}

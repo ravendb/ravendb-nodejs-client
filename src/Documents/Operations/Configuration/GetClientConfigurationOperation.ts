@@ -1,7 +1,7 @@
 import { ServerNode } from "../../../Http/ServerNode";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { HttpRequestBase } from "../../../Primitives/Http";
-import { IClientConfiguration } from "../Configuration/ClientConfiguration";
+import { ClientConfiguration } from "../Configuration/ClientConfiguration";
 import { IMaintenanceOperation } from "../IMaintenanceOperation";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
@@ -38,5 +38,5 @@ export class GetClientConfigurationCommand extends RavenCommand<IGetClientConfig
 
 export interface IGetClientConfigurationOperationResult {
     etag: number;
-    configuration: IClientConfiguration;
+    configuration: ClientConfiguration;
 }

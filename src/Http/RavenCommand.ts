@@ -4,16 +4,12 @@ import { StatusCodes } from "../Http/StatusCode";
 import { RequestPromise, RequestPromiseOptions } from "request-promise";
 import { Promise as BluebirdPromise } from "bluebird";
 import { UriOptions } from "request";
-import {
-    InvalidOperationException,
-    NotSupportedException,
-    InvalidArgumentException
-} from "../Database/DatabaseExceptions";
 import * as HttpExtensions from "../Extensions/HttpExtensions";
 import * as request from "request-promise";
 import { HttpRequestBase, HttpResponse } from "../Primitives/Http";
 import { getLogger } from "../Utility/LogUtil";
-import { Mapper } from "../Utility/Mapping";
+import { ObjectMapper } from "../Utility/Mapping";
+import { throwError, RavenErrorType } from "../Exceptions/ClientErrors";
 
 const log = getLogger({ filename: __filename });
 
@@ -30,7 +26,7 @@ export abstract class RavenCommand<TResult> {
     protected _canCache: boolean;
     protected _canCacheAggressively: boolean;
 
-    protected mapper: Mapper<TResult> = (raw: string) => JSON.parse(raw);
+    protected mapper: ObjectMapper;
 
     public abstract get isReadRequest(): boolean;
 
@@ -86,10 +82,9 @@ export abstract class RavenCommand<TResult> {
             this.throwInvalidResponse();
         }
 
-        throw new NotSupportedException(
-            this.constructor.name +
+        throwError(this.constructor.name +
             " command must override the setResponse method which expects response with the following type: " +
-            this._responseType);
+            this._responseType, "NotSupportedException");
     }
 
     public send(requestOptions: HttpRequestBase): RequestPromise {
@@ -97,12 +92,13 @@ export abstract class RavenCommand<TResult> {
     }
 
     public setResponseRaw(response: HttpResponse, body: string): void {
-        throw new NotSupportedException(
-            "When " + this._responseType + " is set to RAW then please override this method to handle the response.");
+        throwError(
+            "When " + this._responseType + " is set to RAW then please override this method to handle the response.",
+            "NotSupportedException");
     }
 
     protected throwInvalidResponse(): void {
-        throw new InvalidOperationException("Response is invalid");
+        throwError("Response is invalid", "InvalidOperationException");
     }
 
     protected urlEncode(value): string {
@@ -111,7 +107,7 @@ export abstract class RavenCommand<TResult> {
 
     public static ensureIsNotNullOrEmpty(value: string, name: string): void {
         if (!value) {
-            throw new InvalidArgumentException(name + " cannot be null or empty");
+            throwError(name + " cannot be null or empty", "InvalidArgumentException");
         }
     }
 

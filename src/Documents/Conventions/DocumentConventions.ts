@@ -1,356 +1,437 @@
-import * as _ from 'lodash';
-import * as pluralize from 'pluralize';
-import {InvalidOperationException, ArgumentNullException} from "../../Database/DatabaseExceptions";
-import {StringUtil} from "../../Utility/StringUtil";
-import {TypeUtil} from "../../Utility/TypeUtil";
-import {Serializer, IAttributeSerializer} from "../../Json/Serializer";
-import {IRavenObject} from "../../Typedef/IRavenObject";
-import {ConcurrencyCheckMode} from "../../Database/ConcurrencyCheckMode";
-import {IRavenResponse} from "../../Database/RavenCommandResponse";
+import {ClientConfiguration} from "../Operations/Configuration/ClientConfiguration";
+import { ReadBalanceBehavior } from "../../Http/ReadBalanceBehavior";
+import { throwError } from "../../Exceptions/ClientErrors";
+import { ObjectMapper } from "../../Utility/Mapping";
+import { CONSTANTS } from "../../Constants";
+import * as JsonExtensions from "../../Extensions/JsonExtensions";
+import * as pluralize from "pluralize";
+import { ObjectTypeDescriptor, ObjectConstructor, ObjectLiteralTypeChecker, TypeUtil } from "../../Utility/TypeUtil";
 
-export type DocumentConstructor<T extends Object = IRavenObject> = { new(...args: any[]): T; };
-export type DocumentType<T extends Object = IRavenObject> = DocumentConstructor<T> | string;
-
-export interface IDocumentInfoResolvable {
-  resolveConstructor?: (typeName: string) => DocumentConstructor;
-  resolveIdProperty?: (typeName: string, document?: object | IRavenObject) => string;
-  resolveDocumentType?: (plainDocument: object, id?: string, specifiedType?: DocumentType) => string;
-}
-
-export interface IDocumentConversionResult<T extends Object = IRavenObject> {
-  rawEntity?: object,
-  document: T;
-  metadata: object;
-  originalMetadata: object;
-  documentType: DocumentType<T>;
-}
-
-export interface IDocumentAssociationCheckResult<T extends Object = IRavenObject> {
-  document: T;
-  isNew: boolean;
-}
-
-export interface IStoredRawEntityInfo {
-  originalValue: object;
-  metadata: object;
-  originalMetadata: object;
-  id: string;
-  changeVector?: string | null;
-  expectedChangeVector?: string | null;
-  concurrencyCheckMode: ConcurrencyCheckMode;
-  documentType: DocumentType;
-}
-
+export type IdConvention = (databaseName: string, entity: object) => string;
 export class DocumentConventions {
-  readonly maxNumberOfRequestPerSession: number = 30;
-  readonly requestTimeout: number = 30;
-  readonly defaultUseOptimisticConcurrency:boolean = true;
-  readonly maxLengthOfQueryUsingGetUrl = 1024 + 512;
-  readonly identityPartsSeparator = "/";
-  private _resolvers: IDocumentInfoResolvable[] = [];
-  private _serializers: IAttributeSerializer[] = [];
-  private _idsNamesCache: Map<string, string> = new Map<string, string>();
-  private _ctorsCache: Map<string, DocumentConstructor> = new Map<string, DocumentConstructor>();
-  
-  public setIdOnlyIfPropertyIsDefined: boolean = false;
-  public disableTopologyUpdates: boolean = false;
 
-  public get emptyChangeVector(): string {
-    return null;
-  }
+    private static _defaults: DocumentConventions = new DocumentConventions();
 
-  public get emptyCollection(): string {
-    return '@empty';
-  }
-
-  public get systemMetaKeys(): string[] {
-    return ['@collection', 'Raven-Node-Type', '@nested_object_types'];
-  }
-
-  public get serializers(): IAttributeSerializer[] {
-    return this._serializers;
-  }
-
-  public addAttributeSerializer(serializer: IAttributeSerializer): void {
-    if (!serializer) {
-      throw new ArgumentNullException('Invalid serializer provided');
+    public static get defaultConventions() {
+        return this._defaults;
     }
 
-    this._serializers.push(serializer);
-  }
+    private static _cachedDefaultTypeCollectionNames: Map<ObjectTypeDescriptor, string> = new Map();
 
-  public addDocumentInfoResolver(resolver: IDocumentInfoResolvable): void {
-    if (!resolver) {
-      throw new ArgumentNullException('Invalid resolver provided');
+    // TBD: private readonly List<(Type Type, TryConvertValueForQueryDelegate<object> Convert)> 
+    // _listOfQueryValueConverters = new List<(Type, TryConvertValueForQueryDelegate<object>)>();
+
+    private _registeredIdConventions: 
+        Map<ObjectTypeDescriptor, IdConvention> = new Map();
+
+    private _registeredIdPropertyNames:
+        Map<ObjectTypeDescriptor, string> = new Map();
+
+    private _frozen: boolean;
+    private _originalConfiguration: ClientConfiguration;
+    private _idPropertyCache: Map<ObjectTypeDescriptor, string>  = new Map();
+    // private _saveEnumsAsIntegers: number;
+    private _identityPartsSeparator: string;
+    private _disableTopologyUpdates: boolean;
+
+    private _transformClassCollectionNameToDocumentIdPrefix: (maybeClassCollectionName: string) => string;
+    private _documentIdGenerator: IdConvention;
+    private _findIdentityPropertyNameFromCollectionName: (collectionName: string) => string;
+
+    private _findCollectionName: (constructorOrTypeChecker: ObjectTypeDescriptor) => string;
+
+    private _findJsTypeName: (ctorOrTypeChecker: ObjectTypeDescriptor) => string;
+    private _findJsType: (id: string, doc: Object) => ObjectTypeDescriptor;
+
+    private _useOptimisticConcurrency: boolean;
+    private _throwIfQueryPageSizeIsNotSet: boolean;
+    private _maxNumberOfRequestsPerSession: number;
+
+    private _readBalanceBehavior: ReadBalanceBehavior;
+    private _maxHttpCacheSize: number;
+    private _entityMapper: ObjectMapper;
+
+    private _registeredTypeCheckers: ObjectLiteralTypeChecker[] = [];
+
+    public constructor() {
+        this._readBalanceBehavior = "NONE";
+        this._identityPartsSeparator = "/";
+        this._findIdentityPropertyNameFromCollectionName = entityName => "id";
+        this._findJsType = (id: string, doc: Object) => {
+            const metadata = doc[CONSTANTS.Documents.Metadata.KEY];
+            if (metadata !== null) {
+                const jsType = metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE];
+                return jsType || null;
+            }
+
+            return null;
+        };
+
+        this._findJsTypeName = (ctorOrTypeChecker: ObjectTypeDescriptor) => {
+            if ("isType" in ctorOrTypeChecker) {
+                    return ctorOrTypeChecker.name;
+                }
+            
+            return ctorOrTypeChecker.name;
+        };
+
+        this._transformClassCollectionNameToDocumentIdPrefix = 
+            collectionName => DocumentConventions.defaultTransformCollectionNameToDocumentIdPrefix(collectionName);
+
+        this._findCollectionName = type => DocumentConventions.defaultGetCollectionName(type);
+
+        this._maxNumberOfRequestsPerSession = 30;
+        this._maxHttpCacheSize = 128 * 1024 * 1024;
+
+        this._entityMapper = null // TODO;
     }
 
-    this._resolvers.push(resolver);
-  }
-  
-  public getCollectionName(documentType: DocumentType): string {
-    const typeName: string = this.getDocumentTypeName(documentType);
-
-    return !typeName ? this.emptyCollection : pluralize(typeName);
-  }
-
-  public getDocumentTypeName(documentType: DocumentType): string {
-    return TypeUtil.isFunction(documentType)
-      ? (<DocumentConstructor>documentType).name 
-      : <string>documentType || null;
-  }
-
-  public getDocumentConstructor<T extends Object = IRavenObject>(documentType?: DocumentType<T>): DocumentConstructor<T> | null {
-    const typeName: string = <string>documentType;
-    let foundCtor: DocumentConstructor<T>;
-
-    if (!documentType) {
-      return null;
-    }  
-
-    if (TypeUtil.isFunction(documentType)) {
-      return documentType as DocumentConstructor<T>;      
+    public get entityMapper(): ObjectMapper {
+        return this._entityMapper;
     }
 
-    if (this._ctorsCache.has(typeName)) {
-      foundCtor = <DocumentConstructor<T>>this._ctorsCache.get(typeName);
-    } else {
-      for (let resolver of this._resolvers) {
+    public set entityMapper(value: ObjectMapper) {
+        this._entityMapper = value;
+    }
+
+    public get readBalanceBehavior(): ReadBalanceBehavior {
+        return this._readBalanceBehavior;
+    }
+
+    public set readBalanceBehavior(value: ReadBalanceBehavior) {
+        this._readBalanceBehavior = value;
+    }
+
+    public deserializeEntityFromJson(documentType: ObjectTypeDescriptor, document: Object): Object {
         try {
-          foundCtor = <DocumentConstructor<T>>resolver.resolveConstructor(typeName);
-        } catch (exception) {
-          foundCtor = null;
+            return JsonExtensions.getDefaultMapper().deserialize(document.toString());
+        } catch (err) {
+            throwError("Cannot deserialize entity", "RavenException", err);
+        }
+    }
+
+    public get maxNumberOfRequestsPerSession(): number {
+        return this._maxNumberOfRequestsPerSession;
+    }
+
+    public set maxNumberOfRequestsPerSession(value: number) {
+        this._maxNumberOfRequestsPerSession = value;
+    }
+
+    public get maxHttpCacheSize(): number {
+        return this._maxHttpCacheSize;
+    }
+
+    public set maxHttpCacheSize(value: number) {
+        this._maxHttpCacheSize = value;
+    }
+
+    /**
+     * If set to 'true' then it will throw an exception when any query is performed (in session)
+     * without explicit page size set.
+     * This can be useful for development purposes to pinpoint all the possible performance bottlenecks
+     * since from 4.0 there is no limitation for number of results returned from server.
+     * @return true if should we throw if page size is not set
+     */
+    public isThrowIfQueryPageSizeIsNotSet(): boolean {
+        return this._throwIfQueryPageSizeIsNotSet;
+    }
+
+    /**
+     * If set to 'true' then it will throw an exception when any query is performed (in session)
+     * without explicit page size set.
+     * This can be useful for development purposes to pinpoint all the possible performance bottlenecks
+     * since from 4.0 there is no limitation for number of results returned from server.
+     * @param throwIfQueryPageSizeIsNotSet value to set
+     */
+    public setThrowIfQueryPageSizeIsNotSet(throwIfQueryPageSizeIsNotSet: boolean): void {
+        this._assertNotFrozen();
+        this._throwIfQueryPageSizeIsNotSet = throwIfQueryPageSizeIsNotSet;
+    }
+
+    /**
+     * Whether UseOptimisticConcurrency is set to true by default for all opened sessions
+     * @return true if optimistic concurrency is enabled
+     */
+    public isUseOptimisticConcurrency(): boolean {
+        return this._useOptimisticConcurrency;
+    }
+
+    /**
+     * Whether UseOptimisticConcurrency is set to true by default for all opened sessions
+     * @param useOptimisticConcurrency value to set
+     */
+    public setUseOptimisticConcurrency(useOptimisticConcurrency: boolean): void {
+        this._useOptimisticConcurrency = useOptimisticConcurrency;
+    }
+
+    public get findJsType() {
+        return this._findJsType;
+    }
+
+    public set findJsType(value) {
+        this._assertNotFrozen();
+        this._findJsType = value;
+    }
+
+    public get findJsTypeName() {
+        return this._findJsTypeName;
+    }
+
+    public set findJsTypeName(value) {
+        this._assertNotFrozen();
+        this._findJsTypeName = value;
+    }
+
+    public get findCollectionName() {
+        return this._findCollectionName;
+    }
+
+    public set findCollectionName(value) {
+        this._assertNotFrozen();
+        this._findCollectionName = value;
+    }
+
+    public get findIdentityPropertyNameFromCollectionName() {
+        return this._findIdentityPropertyNameFromCollectionName;
+    }
+
+    public set findIdentityPropertyNameFromCollectionName(value) {
+        this._findIdentityPropertyNameFromCollectionName = value;
+    }
+
+    public get documentIdGenerator() {
+        return this._documentIdGenerator;
+    }
+
+    public set documentIdGenerator(value) {
+        this._assertNotFrozen();
+        this._documentIdGenerator = value;
+    }
+
+    public get identityPartsSeparator(): string {
+        return this._identityPartsSeparator;
+    }
+
+    public set identityPartsSeparator(value: string) {
+        this._identityPartsSeparator = value;
+    }
+
+    public get isDisableTopologyUpdates(): boolean {
+        return this._disableTopologyUpdates;
+    }
+
+    public set disableTopologyUpdates(value: boolean) {
+        this._disableTopologyUpdates = value;
+    }
+
+
+    public get throwIfQueryPageSizeIsNotSet(): boolean {
+        return this._throwIfQueryPageSizeIsNotSet;
+    }
+
+    public set throwIfQueryPageSizeIsNotSet(value: boolean) {
+        this._assertNotFrozen();
+        this._throwIfQueryPageSizeIsNotSet = value;
+    }
+
+    public get transformClassCollectionNameToDocumentIdPrefix() {
+        return this._transformClassCollectionNameToDocumentIdPrefix;
+    }
+
+    public set transformClassCollectionNameToDocumentIdPrefix(value) {
+        this._transformClassCollectionNameToDocumentIdPrefix = value;
+    } 
+
+    /**
+     *  Default method used when finding a collection name for a type
+     *  @param clazz Class
+     *  @return default collection name for class
+     */
+    public static defaultGetCollectionName(ctorOrTypeChecker: ObjectTypeDescriptor): string {
+        let result = this._cachedDefaultTypeCollectionNames.get(ctorOrTypeChecker);
+        if (result) {
+            return result;
         }
 
-        if (!TypeUtil.isNull(foundCtor)) {
-          this._ctorsCache.set(typeName, foundCtor);
-          break;
+        result = pluralize.plural(ctorOrTypeChecker.name);
+
+        this._cachedDefaultTypeCollectionNames.set(ctorOrTypeChecker, result);
+
+        return result;
+    }
+
+    /**
+     * Gets the collection name for a given type.
+     * @param clazz Class
+     * @return collection name
+     */
+    public getCollectionNameForType(ctorOrTypeChecker: ObjectTypeDescriptor): string {
+        const collectionName: string = this._findCollectionName(ctorOrTypeChecker);
+        return collectionName || DocumentConventions.defaultGetCollectionName(ctorOrTypeChecker);
+    }
+
+    /**
+     * Gets the collection name for a given type.
+     * @param entity entity to get collection name
+     * @return collection name
+     */
+    public getCollectionNameForEntity(entity: Object): string {
+        if (!entity) {
+            return null;
         }
-      }
+
+        return this.getCollectionNameForType(this._getEntityTypeDescriptor(entity));
     }
 
-    return foundCtor;
-  }
-
-  public getIdPropertyName<T extends Object = IRavenObject>(documentType?: DocumentType<T>, document?: T | object): string {
-    let typeName: string = <string>documentType;
-    let foundIdPropertyName: string;
-
-    if (TypeUtil.isFunction(documentType)) {
-      typeName = (<DocumentConstructor<T>>documentType).name;
-    }
-
-    if (this._idsNamesCache.has(typeName)) {
-      foundIdPropertyName = this._idsNamesCache.get(typeName);
-    } else {
-      for (let resolver of this._resolvers) {
-        try {
-          foundIdPropertyName = resolver.resolveIdProperty(typeName, document);
-        } catch (exception) {
-          foundIdPropertyName = null;
+    private _getEntityTypeDescriptor(entity: Object): ObjectTypeDescriptor {
+        if (entity.constructor.name !== "Object") {
+            return entity.constructor as ObjectConstructor;
         }
 
-        if (!TypeUtil.isNull(foundIdPropertyName)) {
-          this._idsNamesCache.set(typeName, foundIdPropertyName);
-          break;
+        for (const checker of this._registeredTypeCheckers) {
+            if (checker.isType(entity)) {
+                return checker;
+            }
         }
-      }
-    }
-    
-    return foundIdPropertyName || 'id';
-  }
 
-  public convertToDocument<T extends Object = IRavenObject>(rawEntity: object, documentType?: DocumentType<T>, nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): IDocumentConversionResult<T> {
-    const metadata: object = _.get(rawEntity, '@metadata') || {};
-    const originalMetadata: object = _.cloneDeep(metadata);
-    const docType: DocumentType<T> = documentType || metadata['Raven-Node-Type'];
-    const docCtor: DocumentConstructor<T> = this.getDocumentConstructor(docType);
-
-    const documentAttributes: object = _.omit(rawEntity, '@metadata');
-    let document: T = Serializer.fromJSON<T>(
-      docCtor ? new docCtor() : ({} as T),
-      documentAttributes, metadata, nestedObjectTypes, this
-    );
-
-    this.setIdOnDocument(
-      document, metadata
-      ['@id'] || null, docType
-    );
-
-    return {
-      rawEntity: rawEntity,
-      document: document as T,
-      metadata: metadata,
-      originalMetadata: originalMetadata,
-      documentType: documentType
-    } as IDocumentConversionResult<T>;
-  }
-
-  public convertToRawEntity<T extends Object = IRavenObject>(document: T, documentType?: DocumentType<T>): object {
-    const idProperty: string = this.getIdPropertyName(documentType, document);
-    let result: object = Serializer.toJSON<T>(document, this);
-
-    if (idProperty) {
-      delete result[idProperty];
+        return null;
     }
 
-    return result;
-  }
+    /**
+     * Generates the document id.
+     * @param database Database name
+     * @param entity Entity
+     * @return document id
+     */
+    public generateDocumentId(database: string, entity: Object): string {
+        const entityTypeDescriptor: ObjectTypeDescriptor = this._getEntityTypeDescriptor(entity);
 
-  public tryFetchResults(commandResponse: IRavenResponse): object[] {
-    let responseResults: object[] = [];
-
-    if (('Results' in commandResponse) && Array.isArray(commandResponse.Results)) {
-      responseResults = <object[]>commandResponse.Results || [];
-    }
-
-    return responseResults;
-  }
-
-  public tryFetchIncludes(commandResponse: IRavenResponse): object[] {
-    let responseIncludes: object[] = [];
-
-    if ('Includes' in commandResponse) {
-      if (Array.isArray(commandResponse.Includes)) {
-        responseIncludes = <object[]>commandResponse.Includes || [];
-      } else if (TypeUtil.isObject(commandResponse.Includes)) {
-        responseIncludes = <object[]>(_.values(commandResponse.Includes)) || [];
-      }     
-    }
-
-    return responseIncludes;
-  }
-
-  public checkIsProjection(responseItem: object): boolean {
-    if ('@metadata' in responseItem) {
-      const metadata: object = responseItem['@metadata'];
-
-      if (TypeUtil.isObject(metadata)) {
-        return true === metadata['@projection'];
-      }
-    }
-
-    return false;
-  }
-
-  public setIdOnDocument<T extends Object = IRavenObject>(document: T, id: string, documentType?: DocumentType<T>): T {
-    if ('object' !== (typeof document)) {
-      throw new InvalidOperationException("Invalid entity provided. It should implement object interface");
-    }
-
-    let docType: DocumentType<T> = documentType || this.getTypeFromDocument(document);
-    const idProperty = this.getIdPropertyName(docType, document);
-
-    if (!this.setIdOnlyIfPropertyIsDefined || (idProperty in document)) {
-      document[idProperty] = id;    
-    }
-
-    return document;
-  }
-
-  public getIdFromDocument<T extends Object = IRavenObject>(document?: T, documentType?: DocumentType<T>): string {
-    const docType: DocumentType<T> = documentType || this.getTypeFromDocument(document);
-    const idProperty = this.getIdPropertyName(docType, document);
-
-    if (!document) {
-      throw new InvalidOperationException("Empty entity provided.");
-    }
-
-    if (('Object' !== document.constructor.name) && !document.hasOwnProperty(idProperty)) {
-      throw new InvalidOperationException("Invalid entity provided. It should implement object interface");
-    }
-
-    return document[idProperty] || (document['@metadata'] || {})['@id'] || null;
-  }
-
-  public getTypeFromDocument<T extends Object = IRavenObject>(document?: T, id?: string, documentType?: DocumentType<T>): DocumentType<T> {
-    const metadata: object = document['@metadata'];
-    
-    if ('Object' !== document.constructor.name) {
-      return <DocumentConstructor<T>>document.constructor;
-    }
-
-    if (documentType) {
-      return documentType;
-    }
-
-    if (metadata) {
-      if (metadata['Raven-Node-Type']) {
-        return metadata['Raven-Node-Type'];
-      }
-
-      if (metadata['@collection'] && ('@empty' !== metadata['@collection'])) {
-        return StringUtil.capitalize(pluralize.singular(metadata['@collection']));
-      }
-    }
-
-    let foundDocType: DocumentType<T>;
-    let matches: string[];
-    
-    for (let resolver of this._resolvers) {
-      try {
-        foundDocType = <DocumentType<T>>resolver.resolveDocumentType(<object>document, id, documentType);
-      } catch (exception) {
-        foundDocType = null;
-      }
-
-      if (foundDocType) {
-        break;
-      }
-    }
-
-    if (foundDocType) {
-      return foundDocType;
-    }
-
-    if (id && (matches = /^(\w{1}[\w\d]+)\/\d*$/i.exec(id))) {
-      return StringUtil.capitalize(pluralize.singular(matches[1]));
-    }
-
-    return null;
-  }
-
-  public buildDefaultMetadata<T extends Object = IRavenObject>(document: T, documentType: DocumentType<T>): object {
-    let metadata: object = {};
-    let nestedTypes: object = {};
-    let property: string, value : any;
-
-    const findNestedType = (property, value: any): void => {
-      if (value instanceof Date) {
-        nestedTypes[property] = 'date';
-      } else if (TypeUtil.isObject(value)) {
-        let documentType: string = value.constructor.name;
-
-        if ('Object' !== documentType) {
-          nestedTypes[property] = documentType;
+        for (const [ typeDescriptor, idConvention ] of this._registeredIdConventions) {
+            if (TypeUtil.hasType(entity, typeDescriptor)) {
+                return idConvention(database, entity);
+            }
         }
-      }
-    };
-    
-    if (document) {
-      _.assign(metadata, document['@metadata'] || {}, {
-        '@collection': this.getCollectionName(documentType),
-        'Raven-Node-Type': TypeUtil.isFunction(documentType)
-          ? (documentType as DocumentConstructor<T>).name
-          : <string>documentType ? StringUtil.capitalize(<string>documentType) : null
-      });
 
-      for (property in document) {        
-        if (document.hasOwnProperty(property)) {
-          value = document[property];
-
-          if (Array.isArray(value)) {
-            value.length && findNestedType(property, _.first(value));
-          } else {
-            findNestedType(property, value);
-          }
-        }
-      }
-
-      if (!_.isEmpty(nestedTypes)) {
-        metadata['@nested_object_types'] = nestedTypes;
-      }
+        return this._documentIdGenerator(database, entity);
     }
 
-    return metadata;
-  }
+    /**
+     * Register an id convention for a single type.
+     * Note that you can still fall back to the DocumentIdGenerator if you want.
+     * @return document conventions
+     */
+    public registerIdConvention<TEntity>(
+        ctorOrTypeChecker: ObjectTypeDescriptor, 
+        idConvention: IdConvention): DocumentConventions {
+        this._assertNotFrozen();
+
+        this._registeredIdConventions.set(ctorOrTypeChecker, idConvention);
+
+        return this;
+    }
+
+    public registerEntityTypeChecker(typeChecker: ObjectLiteralTypeChecker) {
+        this._registeredTypeCheckers.push(typeChecker);
+    }
+
+    public registerEntityPropertyName(ctorOrTypeChecker: ObjectTypeDescriptor, idProperty: string) {
+        this._registeredIdPropertyNames.set(ctorOrTypeChecker, idProperty);
+    }
+
+    /**
+     * Get the java class (if exists) from the document
+     * @param id document id
+     * @param document document to get java class from
+     * @return java class
+     */
+    public getJsType(id: string, document: Object): ObjectTypeDescriptor {
+        return this._findJsType(id, document);
+    }
+
+    /**
+     * Get the Java class name to be stored in the entity metadata
+     * @param entityType Entity type
+     * @return java class name
+     */
+    public getJsTypeName(entityType: ObjectTypeDescriptor): string {
+        return this._findJsTypeName(entityType);
+    }
+
+    public clone(): DocumentConventions {
+        const cloned = new DocumentConventions();
+        return Object.assign(cloned, this);
+    }
+
+    /**
+     *  Gets the identity property.
+     *  @param ctorOrTypeChecker Class of entity
+     *  @return Identity property (field)
+     */
+    public getIdentityProperty(ctorOrTypeChecker: ObjectLiteralTypeChecker): string {
+        return this._registeredIdPropertyNames.get(ctorOrTypeChecker)
+            || CONSTANTS.Documents.Metadata.ID_PROPERTY;
+    }
+
+    public updateFrom(configuration: ClientConfiguration): void {
+        if (!configuration) {
+            return;
+        }
+
+        const orig = this._originalConfiguration;
+        if (configuration.disabled && !orig) { // nothing to do
+            return;
+        }
+
+        if (configuration.disabled && orig) { // need to revert to original values
+            this._maxNumberOfRequestsPerSession = orig.maxNumberOfRequestsPerSession;
+            this._readBalanceBehavior = orig.readBalanceBehavior;
+
+            this._originalConfiguration = null;
+            return;
+        }
+
+        if (!this._originalConfiguration) {
+            this._originalConfiguration = {
+                etag: -1,
+                maxNumberOfRequestsPerSession: this._maxNumberOfRequestsPerSession,
+                readBalanceBehavior: this._readBalanceBehavior,
+                disabled: false
+            };
+        }
+
+        this._maxNumberOfRequestsPerSession = 
+            configuration.maxNumberOfRequestsPerSession || this._originalConfiguration.maxNumberOfRequestsPerSession;
+        this._readBalanceBehavior =
+            configuration.readBalanceBehavior || this._originalConfiguration.readBalanceBehavior; 
+    }
+
+    public static defaultTransformCollectionNameToDocumentIdPrefix(collectionName: string): string {
+        const upperCaseRegex = /[A-Z]/g;
+        const upperCount = collectionName.match(upperCaseRegex).length;
+
+        if (upperCount <= 1) {
+            return collectionName.toLowerCase();
+        }
+
+        // multiple capital letters, so probably something that we want to preserve caps on.
+        return collectionName;
+    }
+
+    //TBD public void RegisterQueryValueConverter<T>(TryConvertValueForQueryDelegate<T> converter)
+    //TBD public bool TryConvertValueForQuery(string fieldName, object value, bool forRange, out string strValue)
+
+    public freeze() {
+        this._frozen = true;
+    }
+
+    private _assertNotFrozen(): void {
+        if (this._frozen) {
+            throwError(
+                "Conventions has been frozen after documentStore.initialize() and no changes can be applied to them", 
+                "RavenException");
+        }
+    }
 }
+
+DocumentConventions.defaultConventions.freeze();

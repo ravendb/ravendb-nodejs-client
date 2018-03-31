@@ -1,15 +1,28 @@
 import {TypeUtil} from "../Utility/TypeUtil";
 import { VError } from "verror";
 
-export function throwError(message: string, errName?: ErrorType, errCause?: Error, info?: { [key: string]: any }) {
-  throw new VError({
+export function throwError(message: string, errName: RavenErrorType);
+export function throwError(message: string, errName: RavenErrorType, errCause?: Error);
+export function throwError(message: string, errName: string, errCause?: Error);
+export function throwError(
+  message: string, errName?: RavenErrorType | string, errCause?: Error, info?: { [key: string]: any }) {
+  throw getError(message, errName, errCause, info); 
+}
+
+export function getError(
+  message: string, 
+  errName?: RavenErrorType | string, 
+  errCause?: Error, 
+  info?: { [key: string]: any }): Error {
+  return new VError({
     name: errName,
     cause: errCause,
     info
   }, message);
 }
 
-export type ErrorType = "NotSupportedException"
+export type RavenErrorType = "RavenException"
+| "NotSupportedException"
 | "InvalidOperationException"
 | "InvalidArgumentException"
 | "ErrorResponseException"
@@ -73,4 +86,5 @@ export type ErrorType = "NotSupportedException"
 | "QuotaException"
 | "VoronUnrecoverableErrorException"
 | "NonDurableFileSystemException"
+| "TimeoutException"
 | "AggregateException";

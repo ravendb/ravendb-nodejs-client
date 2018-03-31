@@ -17,21 +17,20 @@ import { Certificate, ICertificate } from "../Auth/Certificate";
 import { ReadBalanceBehavior } from "./ReadBalanceBehavior";
 import { HttpCache, CachedItemMetadata, ReleaseCacheItem } from "./HttpCache";
 import AggressiveCacheOptions from "./AggressiveCacheOptions";
-import { throwError } from "../Exceptions/ClientErrors";
-
-import {
+import { throwError, RavenErrorType } from "../Exceptions/ClientErrors";
+import { 
     GetClientConfigurationCommand, IGetClientConfigurationOperationResult
 } from "../Documents/Operations/Configuration/GetClientConfigurationOperation";
 import CurrentIndexAndNode from "./CurrentIndexAndNode";
-import { IClientConfiguration } from "../Documents/Operations/Configuration/ClientConfiguration";
+import { ClientConfiguration } from "../Documents/Operations/Configuration/ClientConfiguration";
 import { SessionInfo } from "../Documents/Session/SessionInfo";
 import { HttpRequestBase, HttpResponse } from "../Primitives/Http";
 import { HEADERS } from "../Constants";
 import { Stopwatch } from "../Utility/Stopwatch";
-import { request, Server } from "http";
 import * as PromiseUtil from "../Utility/PromiseUtil";
-import { ExceptionsFactory } from "../Utility/ExceptionsFactory";
+import { ExceptionDispatcher } from "../Exceptions/ExceptionDispatcher";
 import { GetStatisticsOperation } from "../Documents/Operations/GetStatisticsOperation";
+import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
 
 const log = getLogger({ filename: __filename });
 
@@ -768,7 +767,8 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
                                     if (command.failedNodes.size === 1) {
                                         const values = [...command.failedNodes.values()];
                                         if (values && values.some(x => !!x)) {
-                                            ExceptionsFactory.throwFrom(values.filter(x => !!x).map(x => x.stack));
+                                            const err = values.filter(x => !!x).map(x => x)[0];
+                                            throwError(err.message, err.name as RavenErrorType, err);
                                         }
                                     }
 
@@ -909,7 +909,7 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
                 RequestExecutor._handleConflict(response);
             default:
                 command.onResponseFailure(response);
-                ExceptionsFactory.throwFrom(response);
+                ExceptionDispatcher.throwException(response);
         }
 
         return BluebirdPromise.resolve(false);
@@ -989,7 +989,7 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
             command.failedNodes = new Map();
         }
 
-        this._addFailedResponseToCommand(chosenNode, command, req, response, error);
+        RequestExecutor._addFailedResponseToCommand(chosenNode, command, req, response, error);
 
         if (nodeIndex === null) {
             return BluebirdPromise.resolve(false);
@@ -1029,30 +1029,33 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
         if (response && response.body) {
             const responseJson: string = response.body;
             try {
-                Exception readException = ExceptionDispatcher.get(JsonExtensions.getDefaultMapper().readValue(responseJson, ExceptionDispatcher.ExceptionSchema.class), response.getStatusLine().getStatusCode());
-                command.getFailedNodes().put(chosenNode, readException);
-            } catch (Exception __) {
-                ExceptionDispatcher.ExceptionSchema exceptionSchema = new ExceptionDispatcher.ExceptionSchema();
-                exceptionSchema.setUrl(request.getURI().toString());
-                exceptionSchema.setMessage("Get unrecognized response from the server");
-                exceptionSchema.setError(responseJson);
-                exceptionSchema.setType("Unparsable Server Response");
+                const resExceptionSchema = JSON.parse(responseJson);
+                const readException = ExceptionDispatcher.get(resExceptionSchema, response.statusCode);
+                command.failedNodes.set(chosenNode, readException);
+            } catch (_) {
+                log.warn(_, "Error parsing server error.");
+                const unrecongnizedErrSchema = {
+                    url: req.uri,
+                    message: "Unrecognized response from the server",
+                    error: responseJson,
+                    type: "Unparsable Server Response"
+                };
 
-                Exception exceptionToUse = ExceptionDispatcher.get(exceptionSchema, response.getStatusLine().getStatusCode());
-
-                command.getFailedNodes().put(chosenNode, exceptionToUse);
+                const exceptionToUse = ExceptionDispatcher.get(unrecongnizedErrSchema, response.statusCode);
+                command.failedNodes.set(chosenNode, exceptionToUse);
             }
 
             return;
         }
 
-        // this would be connections that didn't have response, such as "couldn't connect to remote server"
-        ExceptionDispatcher.ExceptionSchema exceptionSchema = new ExceptionDispatcher.ExceptionSchema();
-        exceptionSchema.setUrl(request.getURI().toString());
-        exceptionSchema.setMessage(e.getMessage());
-        exceptionSchema.setError(e.toString());
-        exceptionSchema.setType(e.getClass().getCanonicalName());
-        command.getFailedNodes().put(chosenNode, ExceptionDispatcher.get(exceptionSchema, HttpStatus.SC_INTERNAL_SERVER_ERROR));
+        const exceptionSchema = {
+            url: req.uri.toString(),
+            message: e.message,
+            error: e.stack,
+            type: e.name
+        };
+
+        command.failedNodes.set(chosenNode, ExceptionDispatcher.get(exceptionSchema, StatusCodes.InternalServerError));
     }
 
     private _createRequest<TResult>(node: ServerNode, command: RavenCommand<TResult>): HttpRequestBase {
@@ -1071,7 +1074,7 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
     }
 
     private static _handleConflict(response: HttpResponse): void {
-        ExceptionsFactory.throwFrom(response);
+        ExceptionDispatcher.throwException(response);
     }
     
     private _spawnHealthChecks(chosenNode: ServerNode, nodeIndex: number): void   {
