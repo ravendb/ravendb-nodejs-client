@@ -11,7 +11,7 @@ export interface ExceptionDispatcherArgs {
 }
 export class ExceptionDispatcher {
 
-    public static get(opts: ExceptionDispatcherArgs, code: number): VError {
+    public static get(opts: ExceptionDispatcherArgs, code: number): Error {
         const { message, error, type } = opts;
         if (code === StatusCodes.Conflict) {
             if (type.indexOf("DocumentConflictException") !== -1) {
@@ -47,10 +47,9 @@ export class ExceptionDispatcher {
         }
     }
 
-
     private static _throwConflict(schema: ExceptionSchema, json: string) {
         if (schema.type.includes("DocumentConflictException")) {
-            throw getError(schema.message, "DocumentConflictException", null { json });
+            throw getError(schema.message, "DocumentConflictException", null, { json });
         }
 
         throw getError(schema.message, "ConcurrencyException");

@@ -5,13 +5,13 @@ import { ClientConfiguration } from "../Configuration/ClientConfiguration";
 import { IMaintenanceOperation } from "../IMaintenanceOperation";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
-export class GetClientConfigurationOperation implements IMaintenanceOperation<IGetClientConfigurationOperationResult> {
-    public getCommand(conventions: DocumentConventions): RavenCommand<IGetClientConfigurationOperationResult> {
+export class GetClientConfigurationOperation implements IMaintenanceOperation<GetClientConfigurationOperationResult> {
+    public getCommand(conventions: DocumentConventions): RavenCommand<GetClientConfigurationOperationResult> {
         return new GetClientConfigurationCommand();
     }
 }
 
-export class GetClientConfigurationCommand extends RavenCommand<IGetClientConfigurationOperationResult> {
+export class GetClientConfigurationCommand extends RavenCommand<GetClientConfigurationOperationResult> {
 
     constructor() {
         super();
@@ -36,7 +36,7 @@ export class GetClientConfigurationCommand extends RavenCommand<IGetClientConfig
     }
 }
 
-export interface IGetClientConfigurationOperationResult {
+export interface GetClientConfigurationOperationResult {
     etag: number;
     configuration: ClientConfiguration;
 }

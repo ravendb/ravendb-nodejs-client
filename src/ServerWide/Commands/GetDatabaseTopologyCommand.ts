@@ -1,7 +1,5 @@
 import {RavenCommand} from "../../Http/RavenCommand";
 import {ServerNode} from "../../Http/ServerNode";
-import {IResponse} from "../../Http/Response/IResponse";
-import {RequestMethods} from "../../Http/Request/RequestMethod";
 import {StatusCodes} from "../../Http/StatusCode";
 import {StringUtil} from "../../Utility/StringUtil";
 import {Topology} from "../../Http/Topology";

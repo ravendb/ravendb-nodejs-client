@@ -27,7 +27,8 @@
         "unified-signatures": false,
         "indent": [true, "spaces", 4],
         "adjacent-overload-signatures": false,
-        "ban-types": false
+        "ban-types": false,
+        "no-unused-variable": true
     },
     "rulesDirectory": [
         "node_modules/tslint-microsoft-contrib"

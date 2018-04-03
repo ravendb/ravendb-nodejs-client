@@ -2,13 +2,13 @@ import { RequestPromise, RequestPromiseOptions } from "request-promise";
 import { Promise as BluebirdPromise } from "bluebird";
 import { UriOptions, Response as HttpResponse } from "request";
 import { HEADERS, CONSTANTS } from "../Constants";
-import { InvalidOperationException } from "../Database/DatabaseExceptions";
 import { IncomingHttpHeaders } from "http";
+import { throwError } from "../Exceptions/ClientErrors";
 
 export function getRequiredEtagHeader(response: HttpResponse) {
     const headers = response.headers[HEADERS.ETAG];
     if (!headers || !headers.length || !headers[0]) {
-        throw new InvalidOperationException("Response did't had an ETag header");
+        throwError("Response did't had an ETag header", "InvalidOperationException");
     }
 
     return etagHeaderToChangeVector(headers[0]);
@@ -28,7 +28,7 @@ export function getEtagHeader(responseOrHeaders: HttpResponse | IncomingHttpHead
 
 export function etagHeaderToChangeVector(responseHeader: string) {
     if (!responseHeader) {
-        throw new InvalidOperationException("Response did't had an ETag header");
+        throwError("Response did't had an ETag header", "InvalidOperationException");
     }
 
     if (responseHeader.startsWith("\"")) {

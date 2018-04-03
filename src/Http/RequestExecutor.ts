@@ -19,7 +19,7 @@ import { HttpCache, CachedItemMetadata, ReleaseCacheItem } from "./HttpCache";
 import AggressiveCacheOptions from "./AggressiveCacheOptions";
 import { throwError, RavenErrorType } from "../Exceptions/ClientErrors";
 import { 
-    GetClientConfigurationCommand, IGetClientConfigurationOperationResult
+    GetClientConfigurationCommand, GetClientConfigurationOperationResult
 } from "../Documents/Operations/Configuration/GetClientConfigurationOperation";
 import CurrentIndexAndNode from "./CurrentIndexAndNode";
 import { ClientConfiguration } from "../Documents/Operations/Configuration/ClientConfiguration";
@@ -222,8 +222,8 @@ export class RequestExecutor implements IRequestExecutor {
     public static create(
         intialUrls: string[],
         database: string,
-        authOptions: IRequestAuthOptions,
-        conventions: DocumentConventions): RequestExecutor {
+        authOptions?: IRequestAuthOptions,
+        conventions?: DocumentConventions): RequestExecutor {
         const executor = new RequestExecutor(database, authOptions, conventions);
         executor._firstTopologyUpdate = BluebirdPromise.resolve(executor.firstTopologyUpdate(intialUrls));
         return executor;
@@ -290,7 +290,7 @@ export class RequestExecutor implements IRequestExecutor {
                     })
                     .then(() => command.result);
                 })
-                .then((result: IGetClientConfigurationOperationResult) => {
+                .then((result: GetClientConfigurationOperationResult) => {
                     if (!result) {
                         return;
                     }

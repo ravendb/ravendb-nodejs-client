@@ -1,4 +1,23 @@
-export type StatusCode = 200 | 201 | 202 | 204 | 301 | 302 | 304 | 400 | 401 | 412 | 403 | 404 | 408 | 409 | 410 | 417 | 500 | 502 | 503 | 504;
+export type StatusCode = 200 
+  | 201 
+  | 202 
+  | 204 
+  | 301 
+  | 302 
+  | 304 
+  | 400 
+  | 401 
+  | 412 
+  | 403 
+  | 404 
+  | 408 
+  | 409 
+  | 410 
+  | 417 
+  | 500 
+  | 502 
+  | 503 
+  | 504;
 
 export class StatusCodes {
   public static readonly Ok: StatusCode = 200;

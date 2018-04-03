@@ -1,6 +1,6 @@
 import { ServerNode } from "../../Http/ServerNode";
 import { RavenCommand } from "../../Http/RavenCommand";
-import { HttpRequestBase, HttpRequestBase } from "../../Primitives/Http";
+import { HttpRequestBase } from "../../Primitives/Http";
 import { IMaintenanceOperation } from "../Operations/IMaintenanceOperation";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { DatabaseStatistics } from "./DatabaseStatistics";
@@ -37,7 +37,7 @@ export class GetStatisticsCommand extends RavenCommand<DatabaseStatistics> {
         }
 
         public setResponse(response: string, fromCache: boolean): void {
-            this.result = this.mapper(response);
+            this.result = this.mapper.deserialize(response);
         }
 
         public get isReadRequest() {

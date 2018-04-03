@@ -75,7 +75,7 @@ export class TypeUtil {
   }
 
   public static hasType(obj: Object, typeDescriptor: ObjectTypeDescriptor) {
-    return ("isType" in typeDescriptor && typeDescriptor.isType(obj)) 
+    return ("isType" in typeDescriptor && (typeDescriptor as ObjectLiteralTypeChecker).isType(obj)) 
       || obj.constructor.name === typeDescriptor.name;
   }
 }

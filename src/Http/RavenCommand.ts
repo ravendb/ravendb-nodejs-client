@@ -11,7 +11,7 @@ import { getLogger } from "../Utility/LogUtil";
 import { ObjectMapper } from "../Utility/Mapping";
 import { throwError, RavenErrorType } from "../Exceptions/ClientErrors";
 
-const log = getLogger({ filename: __filename });
+const log = getLogger({ name: "RavenCommand" });
 
 export type RavenCommandResponseType = "EMPTY" | "OBJECT" | "RAW";
 
