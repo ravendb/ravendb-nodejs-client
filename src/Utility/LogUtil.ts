@@ -9,7 +9,6 @@ export interface ILogger {
 }
 
 export function getLogger({ name = "ravendb", module = "" }): ILogger {
-    debugger;
     const logName = module ? `${name}-${module}` : name;
     if (!isDebug) {
         // tslint:disable-next-line:no-empty

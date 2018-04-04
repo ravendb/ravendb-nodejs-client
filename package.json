@@ -15,7 +15,8 @@
     "watch": "tsc --watch",
     "watch-test": "tsc && tsc --watch -p .\\tsconfig.test.json",
     "test-debug": "tsc && tsc -p .\\tsconfig.test.json && mocha --inspect-brk",
-    "mocha": "mocha"
+    "mocha": "mocha",
+    "lint": "tslint"
   },
   "repository": {
     "type": "git",

@@ -578,7 +578,6 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
         command: RavenCommand<TResult>,
         sessionInfo?: SessionInfo,
         options?: ExecuteOptions<TResult>) {
-        
         if (options) {
             return this._executeOnSpecificNode(command, sessionInfo, options);
         }
@@ -862,6 +861,7 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
         }
 
         const innerErr = timeoutException || e;
+        debugger; 
         throwError(message, "AllTopologyNodesDownException", innerErr); 
     }
 

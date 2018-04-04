@@ -40,16 +40,17 @@ describe("Request executor", function() {
     });
 
     it.only("fails when server is offline", function() {
-        this.timeout(0);
+        this.timeout(5000);
         const documentConventions = new DocumentConventions();
         const executor = RequestExecutor.create(["http://no_such_host:8081"], "db1", null, documentConventions);
         const getTopology = new GetDatabaseTopologyCommand();
         return executor.execute(getTopology)
-            .catch(x => {
-                assert.ok(x);
-                assert.equal(x.name, "AllTopologyNodesDownException" as RavenErrorType, x.stack);
+            .then(() => assert.fail("Should have failed with 'AllTopologyNodesDownException'."),
+            err => {
+                assert.ok(err);
+                assert.equal(err.name, "AllTopologyNodesDownException" as RavenErrorType, err.stack);
             })
-            .then(() => assert.fail("Should have failed with 'AllTopologyNodesDownException'."))
+            .then()
             .finally(() => {
                 try {
                     executor.dispose();
