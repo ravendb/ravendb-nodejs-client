@@ -11,48 +11,16 @@ export class ServerNodeRole {
 }
 
 export class ServerNode implements IJsonConvertible {
-  private _database: string;
-  private _url: string;
-  private _clusterTag?: string = null;
-  private _serverRole: string;
+  public database: string;
+  public url: string;
+  public clusterTag?: string = null;
+  public serverRole: string;
 
   public constructor(opts?: { database: string, url: string }) {
     if (opts) {
-      this._database = this.database;
-      this._url = this.url;
+      this.database = opts.database;
+      this.url = opts.url;
     }
-  }
-
-  public get database(): string {
-    return this._database;
-  }
-
-  public set database(value) {
-    this._database = value;
-  }
-
-  public get clusterTag(): string {
-    return this._clusterTag;
-  }
-
-  public set clusterTag(value) {
-    this.clusterTag = value;
-  }
-
-  public get url(): string {
-    return this._url;
-  }
-
-  public set url(value) {
-    this._url = value;
-  }
-
-  public get serverRole(): string {
-    return this._serverRole;
-  }
-
-  public set serverRole(value) {
-    this._serverRole = value;
   }
 
   public get isSecure(): boolean {
@@ -62,9 +30,9 @@ export class ServerNode implements IJsonConvertible {
   public fromJson(json: object): void {
     const from: IRavenObject = json as IRavenObject;
 
-    this._url = from.Url;
-    this._database = from.Database || null;
-    this._clusterTag = from.ClusterTag || null;
+    this.url = from.Url;
+    this.database = from.Database || null;
+    this.clusterTag = from.ClusterTag || null;
   }
 
   public static fromJson(json: object): ServerNode {

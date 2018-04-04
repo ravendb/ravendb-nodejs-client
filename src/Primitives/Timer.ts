@@ -1,5 +1,8 @@
 import * as BluebirdPromise from "bluebird";
 import {IDisposable} from "../Typedef/Contracts";
+import { getLogger } from "../Utility/LogUtil";
+
+const log = getLogger({ module: "Timer" });
 
 export class Timer implements IDisposable {
 
@@ -7,7 +10,8 @@ export class Timer implements IDisposable {
     
     private _scheduledActionPromise: PromiseLike<any>;
 
-    private _timerId: NodeJS.Timer;
+    private _firstTimeDelayId: NodeJS.Timer;
+    private _intervalId: NodeJS.Timer;
 
     private _intervalTimerId: NodeJS.Timer;
 
@@ -22,24 +26,37 @@ export class Timer implements IDisposable {
 
     public change(dueTimeInMs: number, period?: number) {
         this._periodInMs = period;
-        clearTimeout(this._timerId);
+        this._clearTimers();
         this._schedule(dueTimeInMs);
     }
 
     private _schedule(dueTimeInMs: number) {
-        this._timerId = setTimeout(() => {
+        this._firstTimeDelayId = setTimeout(() => {
 
             if (this._periodInMs) {
-                this._schedule(this._periodInMs);
+                this._intervalId = setInterval(
+                    () => this._timerAction(), this._periodInMs);
             } 
 
-            this._scheduledActionPromise = this._action();            
+            this._timerAction();
+
         }, dueTimeInMs);
     }
 
+    private _timerAction() {
+        log.info(`Start timer action ${this._action.name}`);
+        this._scheduledActionPromise = BluebirdPromise.resolve(this._action())
+            .tapCatch(reason => log.warn(`Error executing timer action ${this._action.name}.`, reason))
+            .finally(() => log.info(`Finish timer action ${this._action.name}.`));
+    }
+
+    private _clearTimers() {
+        clearTimeout(this._firstTimeDelayId);
+        clearInterval(this._intervalId);
+    }
+
     public dispose(): void {
-        if (this._scheduledActionPromise) {
-            clearTimeout(this._timerId);
-        }
+        log.info(`Dispose ${this._action.name}.`);
+        this._clearTimers();
     }
 }

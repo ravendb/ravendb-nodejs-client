@@ -1,6 +1,5 @@
 import * as path from "path";
 import { debuglog } from "util";
-
 const isDebug = !!process.env.NODE_DEBUG;
 
 export interface ILogger {
@@ -9,10 +8,9 @@ export interface ILogger {
     warn(errOrMsg: string | Error, additionalMsg?: string);
 }
 
-export function getLogger({ name = "ravendb", filename = "" }): ILogger {
-    const logName = filename
-        ? path.basename(filename, ".js") 
-        : name;
+export function getLogger({ name = "ravendb", module = "" }): ILogger {
+    debugger;
+    const logName = module ? `${name}-${module}` : name;
     if (!isDebug) {
         // tslint:disable-next-line:no-empty
         const noop = (msg: string) => {};
@@ -31,7 +29,7 @@ class Logger {
     private _logdebug: (msg: string) => void;
 
     constructor(name: string) {
-        this._log = debuglog(name);
+        this._logdebug = debuglog(name);
     }
 
     public error(errOrMsg: string | Error, additionalMsg?: string) {
@@ -59,6 +57,9 @@ class Logger {
     }
 
     private _log(msg, level = "INFO") {
-        this._logdebug(`${new Date()} ${level}: ${msg}`);
+        const now = new Date();
+        const dateString = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}` 
+            + ` ${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
+        this._logdebug(`${dateString} ${level}: ${msg}`);
     }
 }

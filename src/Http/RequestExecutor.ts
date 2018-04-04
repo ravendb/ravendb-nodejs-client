@@ -19,7 +19,8 @@ import { HttpCache, CachedItemMetadata, ReleaseCacheItem } from "./HttpCache";
 import AggressiveCacheOptions from "./AggressiveCacheOptions";
 import { throwError, RavenErrorType } from "../Exceptions/ClientErrors";
 import { 
-    GetClientConfigurationCommand, GetClientConfigurationOperationResult
+    GetClientConfigurationCommand, 
+    GetClientConfigurationOperationResult
 } from "../Documents/Operations/Configuration/GetClientConfigurationOperation";
 import CurrentIndexAndNode from "./CurrentIndexAndNode";
 import { ClientConfiguration } from "../Documents/Operations/Configuration/ClientConfiguration";
@@ -31,8 +32,9 @@ import * as PromiseUtil from "../Utility/PromiseUtil";
 import { ExceptionDispatcher } from "../Exceptions/ExceptionDispatcher";
 import { GetStatisticsOperation } from "../Documents/Operations/GetStatisticsOperation";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
+import { TypeUtil } from "../Utility/TypeUtil";
 
-const log = getLogger({ filename: __filename });
+const log = getLogger({ module: "RequestExecutor" });
 
 export interface ExecuteOptions<TResult> {
     chosenNode: ServerNode;
@@ -95,8 +97,10 @@ export class NodeStatus implements IDisposable {
         }
 
         public startTimer(): void {
-            this._timer = new Timer(
-                () => this._nodeStatusCallback(this), this._timerPeriodInMs);
+            const that = this;
+            this._timer = new Timer(function timerActionNodeStatusCallback() { 
+                return that._nodeStatusCallback(that);
+            }, this._timerPeriodInMs);
         }
 
         public updateTimer(): void {
@@ -212,11 +216,11 @@ export class RequestExecutor implements IRequestExecutor {
         conventions: DocumentConventions) {
 
         this._cache = new HttpCache(conventions.maxHttpCacheSize);
-
+        this._readBalanceBehavior = conventions.readBalanceBehavior;
+        this._databaseName = database;
         this._lastReturnedResponse = new Date();
         this._conventions = conventions.clone();
         this._authOptions = authOptions;
-
     }
 
     public static create(
@@ -343,7 +347,8 @@ export class RequestExecutor implements IRequestExecutor {
                     return false;
                 }
 
-                // TODO
+                log.info(`Update topology from ${node.url}.`);
+
                 const getTopology = new GetDatabaseTopologyCommand();
                 const getTopologyPromise = this.execute(getTopology, null, {
                     chosenNode: node,
@@ -425,8 +430,11 @@ export class RequestExecutor implements IRequestExecutor {
         }
 
         const minInMs = 60 * 1000;
+        const that = this;
         this._updateTopologyTimer = 
-            new Timer(() => this._updateTopologyCallback(), minInMs, minInMs);
+            new Timer(function timerActionUpdateTopology() { 
+                return that._updateTopologyCallback();
+            }, minInMs, minInMs);
     }
 
     private _updateTopologyCallback(): PromiseLike<void> {
@@ -462,7 +470,7 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
         const tryUpdateTopology = (url: string, database: string): PromiseLike<boolean> => {
             const serverNode = new ServerNode({ url, database });
             return BluebirdPromise.resolve()
-                .then(() => this.updateTopology(serverNode, Number.MAX_VALUE))
+                .then(() => this.updateTopology(serverNode, TypeUtil.MAX_INT32))
                 .then(() => {
                     this._initializeUpdateTopologyTimer();
                     this._topologyTakenFromNode = serverNode;
@@ -475,7 +483,6 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
 
                     if (initialUrls.length === 0) {
                         this._lastKnownUrls = initialUrls;
-                        // TODO use verror
                         throwError(`Cannot get topology from server: ${url}.`, "InvalidOperationException", error);
                     }
 
@@ -571,6 +578,12 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
         command: RavenCommand<TResult>,
         sessionInfo?: SessionInfo,
         options?: ExecuteOptions<TResult>) {
+        
+        if (options) {
+            return this._executeOnSpecificNode(command, sessionInfo, options);
+        }
+
+        log.info(`Execute command ${command.constructor.name}`);
         const topologyUpdate = this._firstTopologyUpdate;
         if ((topologyUpdate && topologyUpdate.isFulfilled()) || this._disableTopologyUpdates) {
             const currentIndexAndNode: CurrentIndexAndNode = this.chooseNodeForRequest(command, sessionInfo);
@@ -611,7 +624,7 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
 
                 log.warn(reason, "Error doing topology update.");
 
-                return BluebirdPromise.reject(reason);
+                throw reason;
             })
             .then(() => {
                 const currentIndexAndNode: CurrentIndexAndNode = this.chooseNodeForRequest(command, sessionInfo);
@@ -647,6 +660,10 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
         options: ExecuteOptions<TResult> = null): PromiseLike<void> {
 
         const { chosenNode, nodeIndex, shouldRetry } = options;
+
+        log.info(`Actual execute ${command.constructor.name} on ${chosenNode.url}`
+            + ` ${ shouldRetry ? "with" : "without" } retry.`);
+
         const req: HttpRequestBase = this._createRequest(chosenNode, command);
 
         let cachedChangeVector;
@@ -1143,12 +1160,21 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
     }
 
     public dispose(): void {
+        log.info("Dispose.");
         if (this._disposed) {
             return;
         }
 
         this._updateClientConfigurationSemaphore.take(() => {
+            const sem = this._updateClientConfigurationSemaphore;
             this._updateClientConfigurationSemaphore = null;
+            sem.leave(); 
+        });
+
+        this._updateDatabaseTopologySemaphore.take(() => {
+            const sem = this._updateDatabaseTopologySemaphore;
+            this._updateDatabaseTopologySemaphore = null;
+            sem.leave();    
         });
 
         this._disposed = true;

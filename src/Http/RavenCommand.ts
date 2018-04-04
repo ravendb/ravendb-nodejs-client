@@ -11,7 +11,7 @@ import { getLogger } from "../Utility/LogUtil";
 import { ObjectMapper } from "../Utility/Mapping";
 import { throwError, RavenErrorType } from "../Exceptions/ClientErrors";
 
-const log = getLogger({ name: "RavenCommand" });
+const log = getLogger({ module: "RavenCommand" });
 
 export type RavenCommandResponseType = "EMPTY" | "OBJECT" | "RAW";
 
@@ -20,8 +20,9 @@ export type ResponseDisposeHandling = "AUTOMATIC" | "MANUALLY";
 export abstract class RavenCommand<TResult> {
 
     // protected final Class<TResult> resultClass;
-    protected _result: TResult;
-    protected _statusCode: number;
+    public result: TResult;
+    public statusCode: number;
+    public failedNodes: Map<ServerNode, Error>;
     protected _responseType: RavenCommandResponseType;
     protected _canCache: boolean;
     protected _canCacheAggressively: boolean;
@@ -31,23 +32,7 @@ export abstract class RavenCommand<TResult> {
     public abstract get isReadRequest(): boolean;
 
     public get responseType() {
-        return this.responseType;
-    }
-
-    public get statusCode(): number {
-        return this._statusCode;
-    }
-
-    public set statusCode(value) {
-        this._statusCode = value;
-    }
-
-    public get result(): TResult {
-        return this.result;
-    }
-
-    public set result(value) {
-        this._result = value;
+        return this._responseType;
     }
 
     public get canCache(): boolean {
@@ -56,16 +41,6 @@ export abstract class RavenCommand<TResult> {
 
     public get canCacheAggressively(): boolean {
         return this._canCacheAggressively;
-    }
-
-    private _failedNodes: Map<ServerNode, Error>;
-
-    public get failedNodes() {
-        return this._failedNodes;
-    }
-
-    public set failedNodes(value) {
-        this.failedNodes = value;
     }
 
     constructor() {
@@ -88,6 +63,7 @@ export abstract class RavenCommand<TResult> {
     }
 
     public send(requestOptions: HttpRequestBase): RequestPromise {
+        log.info(`Send command ${this.constructor.name} to ${requestOptions.uri}.`);
         return request(requestOptions);
     }
 
@@ -112,8 +88,8 @@ export abstract class RavenCommand<TResult> {
     }
 
     public isFailedWithNode(node: ServerNode): boolean {
-        return this._failedNodes
-            && !!this._failedNodes.get(node);
+        return this.failedNodes
+            && !!this.failedNodes.get(node);
     }
 
     public processResponse(

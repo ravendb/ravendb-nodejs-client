@@ -1,5 +1,6 @@
 import * as mocha from "mocha";
 import * as assert from "assert";
+import "./Utils/BeforeSuite";
 
 import { 
     RequestExecutor, 
@@ -46,8 +47,16 @@ describe("Request executor", function() {
         return executor.execute(getTopology)
             .catch(x => {
                 assert.ok(x);
-                assert.equal(x.name, "AllTopologyNodesDownException" as RavenErrorType);
+                assert.equal(x.name, "AllTopologyNodesDownException" as RavenErrorType, x.stack);
             })
-            .then(() => assert.fail("Should have failed with 'AllTopologyNodesDownException'."));
+            .then(() => assert.fail("Should have failed with 'AllTopologyNodesDownException'."))
+            .finally(() => {
+                try {
+                    executor.dispose();
+                } catch (err) {
+                    // tslint:disable-next-line:no-console
+                    console.log(err.stack);
+                }
+            });
     });
 });
