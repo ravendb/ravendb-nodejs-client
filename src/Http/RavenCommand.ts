@@ -10,6 +10,7 @@ import { HttpRequestBase, HttpResponse } from "../Primitives/Http";
 import { getLogger } from "../Utility/LogUtil";
 import { ObjectMapper } from "../Utility/Mapping";
 import { throwError, RavenErrorType } from "../Exceptions/ClientErrors";
+import { IRavenObject } from "../Typedef/IRavenObject";
 
 const log = getLogger({ module: "RavenCommand" });
 

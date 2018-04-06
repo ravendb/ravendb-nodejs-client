@@ -64,7 +64,7 @@ export class DocumentSession extends Observable implements IDocumentSession {
   }
 
   constructor(dbName: string, documentStore: IDocumentStore, id: string, requestExecutor: RequestExecutor) {
-    super()
+    super();
 
     const {QUERY_INITIALIZED} = this.constructor as (typeof DocumentSession);
 

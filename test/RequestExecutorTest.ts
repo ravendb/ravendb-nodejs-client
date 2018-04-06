@@ -11,7 +11,7 @@ import {
 
 describe("Request executor", function() {
 
-    xit ("", function() {
+    it ("", function() {
         const conventions = new DocumentConventions();
 
         // try (IDocumentStore store = getDocumentStore()) {
@@ -39,7 +39,7 @@ describe("Request executor", function() {
         
     });
 
-    it.only("fails when server is offline", function() {
+    it("fails when server is offline", function() {
         this.timeout(5000);
         const documentConventions = new DocumentConventions();
         const executor = RequestExecutor.create(["http://no_such_host:8081"], "db1", null, documentConventions);

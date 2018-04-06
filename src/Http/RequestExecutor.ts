@@ -10,9 +10,8 @@ import { Topology } from "./Topology";
 import { GetDatabaseTopologyCommand } from "../ServerWide/Commands/GetDatabaseTopologyCommand";
 import { StatusCodes, StatusCode } from "./StatusCode";
 import { NodeSelector } from "./NodeSelector";
-import { IDisposable } from "../Typedef/Contracts";
+import { IDisposable } from "../Types/Contracts";
 import { IRequestAuthOptions, IAuthOptions } from "../Auth/AuthOptions";
-import { IOptionsSet } from "../Typedef/IOptionsSet";
 import { Certificate, ICertificate } from "../Auth/Certificate";
 import { ReadBalanceBehavior } from "./ReadBalanceBehavior";
 import { HttpCache, CachedItemMetadata, ReleaseCacheItem } from "./HttpCache";
@@ -24,7 +23,7 @@ import {
 } from "../Documents/Operations/Configuration/GetClientConfigurationOperation";
 import CurrentIndexAndNode from "./CurrentIndexAndNode";
 import { ClientConfiguration } from "../Documents/Operations/Configuration/ClientConfiguration";
-import { SessionInfo } from "../Documents/Session/SessionInfo";
+import { SessionInfo } from "../Documents/Session";
 import { HttpRequestBase, HttpResponse } from "../Primitives/Http";
 import { HEADERS } from "../Constants";
 import { Stopwatch } from "../Utility/Stopwatch";
@@ -210,7 +209,7 @@ export class RequestExecutor implements IRequestExecutor {
             : null;
     }
 
-    constructor(
+    protected constructor(
         database: string,
         authOptions: IRequestAuthOptions,
         conventions: DocumentConventions) {
@@ -438,7 +437,6 @@ export class RequestExecutor implements IRequestExecutor {
     }
 
     private _updateTopologyCallback(): PromiseLike<void> {
-        // TODO
         const time = new Date();
         const minInMs = 60 * 1000;
         if (time.valueOf() - this._lastReturnedResponse.valueOf() <= minInMs) {
@@ -616,7 +614,6 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
                 return topologyUpdate;
             })
             .catch(reason => {
-                // TODO catch specific
                 if (this._firstTopologyUpdate === topologyUpdate) {
                     this._firstTopologyUpdate = null; // next request will raise it
                 }

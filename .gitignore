@@ -6,6 +6,7 @@ lib/**/*
 dist/
 *.map
 src/**/*.js
+src/**/*.js.map
 src/**/*.d.ts
 !src/Types/**/*
 test/**/*.js
