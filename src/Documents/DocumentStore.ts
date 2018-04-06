@@ -208,7 +208,7 @@ export class DocumentStore extends DocumentStoreBase {
      */
     protected assertValidConfiguration(): void {
         if (!this._urls || !this._urls.length) {
-            throwError("Document store URLs cannot be empty", "InvalidArgumentException");
+            throwError("InvalidArgumentException", "Document store URLs cannot be empty");
         }
     }
 

@@ -4,21 +4,22 @@ import { StatusCodes } from "../Http/StatusCode";
 import { HttpResponse } from "../Primitives/Http";
 
 export function throwError(errName: RavenErrorType);
-export function throwError(message: string, errName: RavenErrorType);
-export function throwError(message: string, errName: RavenErrorType);
-export function throwError(message: string, errName: RavenErrorType, errCause?: Error);
-export function throwError(message: string, errName: string, errCause?: Error);
+export function throwError(errName: RavenErrorType, message: string);
+export function throwError(errName: RavenErrorType, message: string, errCause?: Error);
+export function throwError(errName: RavenErrorType, message: string, errCause?: Error, info?: { [key: string]: any });
+export function throwError(errName: string, message: string, errCause?: Error);
+export function throwError(errName: string, message: string, errCause?: Error, info?: { [key: string]: any });
 export function throwError(
-  message: string = "", 
   errName: RavenErrorType | string = "RavenException", 
+  message?: string, 
   errCause?: Error, 
   info?: { [key: string]: any }) {
   throw getError(message, errName, errCause, info); 
 }
 
 export function getError(
-  message: string, 
-  errName?: RavenErrorType | string, 
+  errName: RavenErrorType | string = "RavenException", 
+  message: string = "", 
   errCause?: Error, 
   info?: { [key: string]: any }): Error {
   return new VError({

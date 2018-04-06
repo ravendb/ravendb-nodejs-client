@@ -9,7 +9,8 @@
             true,
             {
                 "private-method-regex": "^_",
-                "static-method-regex": "^[a-z][A-Za-z0-9]*$"
+                "static-method-regex": "^[a-z][A-Za-z0-9]*$",
+                "protected-method-regex": "^_"
             }
         ],
         "quotemark": [true, "double"],

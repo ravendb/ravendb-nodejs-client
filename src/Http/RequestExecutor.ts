@@ -2,6 +2,7 @@ import * as _ from "lodash";
 import * as os from "os";
 import * as BluebirdPromise from "bluebird";
 import * as semaphore from "semaphore";
+import { acquireSemaphore } from "../Utility/SemaphoreUtil";
 import { getLogger } from "../Utility/LogUtil";
 import { Timer } from "../Primitives/Timer";
 import { ServerNode } from "./ServerNode";
@@ -16,7 +17,7 @@ import { Certificate, ICertificate } from "../Auth/Certificate";
 import { ReadBalanceBehavior } from "./ReadBalanceBehavior";
 import { HttpCache, CachedItemMetadata, ReleaseCacheItem } from "./HttpCache";
 import AggressiveCacheOptions from "./AggressiveCacheOptions";
-import { throwError, RavenErrorType } from "../Exceptions/ClientErrors";
+import { throwError, RavenErrorType } from "../Exceptions";
 import { 
     GetClientConfigurationCommand, 
     GetClientConfigurationOperationResult
@@ -50,11 +51,8 @@ export interface ITopologyUpdateEvent {
 }
 
 export interface IRequestExecutorOptions {
-    withoutTopology?: boolean;
-    topologyEtag?: number;
-    singleNodeTopology?: Topology;
-    firstTopologyUpdateUrls?: string[];
     authOptions?: IRequestAuthOptions;
+    documentConventions?: DocumentConventions;
 }
 
 class IndexAndResponse {
@@ -69,7 +67,7 @@ class IndexAndResponse {
 
 export class NodeStatus implements IDisposable {
 
-        private _nodeStatusCallback: (nodeStatus: NodeStatus) => PromiseLike<void>;
+        private _nodeStatusCallback: (nodeStatus: NodeStatus) => Promise<void>;
         private _timerPeriodInMs: number;
         public readonly nodeIndex: number;
         public readonly node: ServerNode;
@@ -78,7 +76,7 @@ export class NodeStatus implements IDisposable {
         public constructor(
             nodeIndex: number, 
             node: ServerNode, 
-            nodeStatusCallback: (nodeStatus: NodeStatus) => PromiseLike<void>) {
+            nodeStatusCallback: (nodeStatus: NodeStatus) => Promise<void>) {
             this.nodeIndex = nodeIndex;
             this.node = node;
             this._timerPeriodInMs = 100;
@@ -111,14 +109,7 @@ export class NodeStatus implements IDisposable {
         }
     }
 
-export interface IRequestExecutor extends IDisposable {
-    execute<TResult>(command: RavenCommand<TResult>): PromiseLike<TResult>;
-}
-
-export class RequestExecutor implements IRequestExecutor {
-    public static readonly REQUEST_FAILED = "request:failed";
-    public static readonly TOPOLOGY_UPDATED = "topology:updated";
-    public static readonly NODE_STATUS_UPDATED = "node:status:updated";
+export class RequestExecutor implements IDisposable {
 
     public static readonly CLIENT_VERSION = "4.0.0";
 
@@ -132,7 +123,8 @@ export class RequestExecutor implements IRequestExecutor {
     protected _certificate: ICertificate = null;
 
     private _lastReturnedResponse: Date;
-    private _readBalanceBehavior: ReadBalanceBehavior;
+    protected _readBalanceBehavior: ReadBalanceBehavior;
+
     private _cache: HttpCache;
     private _topologyTakenFromNode: ServerNode;
 
@@ -146,13 +138,13 @@ export class RequestExecutor implements IRequestExecutor {
 
     protected _disposed: boolean;
 
-    protected _firstTopologyUpdate: BluebirdPromise<void>;
+    protected _firstTopologyUpdatePromise: Promise<void>;
 
     protected _lastKnownUrls: string[];
 
-    protected clientConfigurationEtag: number;
+    protected _clientConfigurationEtag: number;
 
-    protected topologyEtag: number;
+    protected _topologyEtag: number;
 
     private _conventions: DocumentConventions;
 
@@ -165,7 +157,7 @@ export class RequestExecutor implements IRequestExecutor {
     public static requestPostProcessor: (req: HttpRequestBase) => void = null;
 
     public getTopologyEtag() {
-        return this.topologyEtag;
+        return this._topologyEtag;
     }
 
     public get conventions() {
@@ -173,7 +165,7 @@ export class RequestExecutor implements IRequestExecutor {
     }
 
     public getClientConfigurationEtag() {
-        return this.clientConfigurationEtag;
+        return this._clientConfigurationEtag;
     }
 
     public get cache() {
@@ -224,11 +216,14 @@ export class RequestExecutor implements IRequestExecutor {
 
     public static create(
         intialUrls: string[],
+        database: string): RequestExecutor; 
+    public static create(
+        intialUrls: string[],
         database: string,
-        authOptions?: IRequestAuthOptions,
-        conventions?: DocumentConventions): RequestExecutor {
-        const executor = new RequestExecutor(database, authOptions, conventions);
-        executor._firstTopologyUpdate = BluebirdPromise.resolve(executor.firstTopologyUpdate(intialUrls));
+        opts?: IRequestExecutorOptions): RequestExecutor {
+        const { authOptions, documentConventions } = opts || {} as IRequestExecutorOptions;
+        const executor = new RequestExecutor(database, authOptions, documentConventions);
+        executor._firstTopologyUpdatePromise = executor._firstTopologyUpdate(intialUrls);
         return executor;
     }
 
@@ -247,7 +242,7 @@ export class RequestExecutor implements IRequestExecutor {
     public static createForSingleNodeWithoutConfigurationUpdates(
         url: string, database: string, authOptions: IRequestAuthOptions, conventions: DocumentConventions) {
 
-        const initialUrls: string[] = RequestExecutor.validateUrls([url], authOptions);
+        const initialUrls: string[] = RequestExecutor._validateUrls([url], authOptions);
 
         const executor = new RequestExecutor(database, authOptions, conventions);
         const topology: Topology = new Topology();
@@ -261,14 +256,14 @@ export class RequestExecutor implements IRequestExecutor {
         topology.nodes = [serverNode];
 
         executor._nodeSelector = new NodeSelector(topology);
-        executor.topologyEtag = -2;
+        executor._topologyEtag = -2;
         executor._disableTopologyUpdates = true;
         executor._disableClientConfigurationUpdates = true;
 
         return executor;
     }
 
-    protected updateClientConfiguration(): PromiseLike<void> {
+    protected _updateClientConfiguration(): PromiseLike<void> {
         if (this._disposed) {
             return BluebirdPromise.resolve(null);
         }
@@ -277,7 +272,7 @@ export class RequestExecutor implements IRequestExecutor {
             const oldDisableClientConfigurationUpdates = this._disableClientConfigurationUpdates;
             this._disableClientConfigurationUpdates = true;
 
-            return BluebirdPromise.resolve()
+            const result = Promise.resolve()
                 .then(() => {
 
                     if (this._disposed) {
@@ -293,15 +288,17 @@ export class RequestExecutor implements IRequestExecutor {
                     })
                     .then(() => command.result);
                 })
-                .then((result: GetClientConfigurationOperationResult) => {
-                    if (!result) {
+                .then((clientConfigOpResult: GetClientConfigurationOperationResult) => {
+                    if (!clientConfigOpResult) {
                         return;
                     }
 
-                    this._conventions.updateFrom(result.configuration);
-                    this.clientConfigurationEtag = result.etag;
+                    this._conventions.updateFrom(clientConfigOpResult.configuration);
+                    this._clientConfigurationEtag = clientConfigOpResult.etag;
 
-                })
+                });
+
+            return BluebirdPromise.resolve(result)
                 .tapCatch(err => log.error(err, "Error getting client configuration."))
                 .finally(() => {
                     this._disableClientConfigurationUpdates = oldDisableClientConfigurationUpdates;
@@ -310,7 +307,7 @@ export class RequestExecutor implements IRequestExecutor {
         };
 
         const sem = this._updateClientConfigurationSemaphore;
-        return new BluebirdPromise.Promise((resolve) =>
+        return new Promise((resolve) =>
             sem.take(() => 
                 updateClientConfigurationInternal()
                 .finally(() => { 
@@ -319,28 +316,13 @@ export class RequestExecutor implements IRequestExecutor {
                 })));
     }
 
-    public updateTopology(node: ServerNode, timeout: number, forceUpdate: boolean = false): PromiseLike<boolean> {
+    public updateTopology(node: ServerNode, timeout: number, forceUpdate: boolean = false): Promise<boolean> {
         if (this._disposed) {
-            return BluebirdPromise.resolve(false);
+            return Promise.resolve(false);
         }
 
-        let updateDatabaseTopologySemaphoreTaken = false;
-        const acquireSemaphore = () => new BluebirdPromise((resolve) => {
-            this._updateDatabaseTopologySemaphore.take(() => {
-                updateDatabaseTopologySemaphoreTaken = true;
-                resolve();
-            });
-        });
-
-        return acquireSemaphore()
-            .timeout(timeout)
-            .catch((reason) => {
-                if (reason instanceof BluebirdPromise.TimeoutError) {
-                    return false;
-                }
-
-                return BluebirdPromise.reject(reason);
-            })
+        const acquiredSemContext = acquireSemaphore(this._updateDatabaseTopologySemaphore, { timeout });
+        const result = BluebirdPromise.resolve(acquiredSemContext.promise)
             .then(() => {
                 if (this._disposed) {
                     return false;
@@ -354,37 +336,44 @@ export class RequestExecutor implements IRequestExecutor {
                     nodeIndex: null,
                     shouldRetry: false,
                 });
-                return getTopologyPromise.then(() => {
-                    const topology = getTopology.result;
-                    if (!this._nodeSelector) {
-                        this._nodeSelector = new NodeSelector(topology);
+                return getTopologyPromise
+                    .then(() => {
+                        const topology = getTopology.result;
+                        if (!this._nodeSelector) {
+                            this._nodeSelector = new NodeSelector(topology);
 
-                        if (this._readBalanceBehavior === "FASTEST_NODE") {
-                            this._nodeSelector.scheduleSpeedTest();
+                            if (this._readBalanceBehavior === "FASTEST_NODE") {
+                                this._nodeSelector.scheduleSpeedTest();
+                            }
+
+                        } else if (this._nodeSelector.onUpdateTopology(topology, forceUpdate)) {
+                            this._disposeAllFailedNodesTimers();
+
+                            if (this._readBalanceBehavior === "FASTEST_NODE") {
+                                this._nodeSelector.scheduleSpeedTest();
+                            }
                         }
 
-                    } else if (this._nodeSelector.onUpdateTopology(topology, forceUpdate)) {
-                        this.disposeAllFailedNodesTimers();
+                        this._topologyEtag = this._nodeSelector.getTopology().etag;
 
-                        if (this._readBalanceBehavior === "FASTEST_NODE") {
-                            this._nodeSelector.scheduleSpeedTest();
-                        }
-                    }
+                        return true;
+                    });
+            },
+            (reason: Error) => {
+                if (reason.name === "TimeoutError") {
+                    return false;
+                }
 
-                    this.topologyEtag = this._nodeSelector.getTopology().etag;
-
-                    return true;
-                });
-
+                throw reason;
             })
             .finally(() => {
-                if (updateDatabaseTopologySemaphoreTaken) {
-                    this._updateDatabaseTopologySemaphore.leave();
-                }
+                acquiredSemContext.dispose();
             });
+
+        return Promise.resolve(result);
     }
 
-    protected static validateUrls(initialUrls: string[], authOptions: IAuthOptions) {
+    protected static _validateUrls(initialUrls: string[], authOptions: IAuthOptions) {
         return initialUrls;
         // TODO
         // const cleanUrls = _.range(initialUrls.length)
@@ -436,7 +425,7 @@ export class RequestExecutor implements IRequestExecutor {
             }, minInMs, minInMs);
     }
 
-    private _updateTopologyCallback(): PromiseLike<void> {
+    private _updateTopologyCallback(): Promise<void> {
         const time = new Date();
         const minInMs = 60 * 1000;
         if (time.valueOf() - this._lastReturnedResponse.valueOf() <= minInMs) {
@@ -453,15 +442,15 @@ export class RequestExecutor implements IRequestExecutor {
             return;
         }
 
-        return BluebirdPromise.resolve(this.updateTopology(serverNode, 0))
+        return this.updateTopology(serverNode, 0)
             .catch(err => {
                 log.error(err, "Couldn't update topology from _updateTopologyTimer");
                 return null;
             });
     }
 
-protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
-        const initialUrls: string[] = RequestExecutor.validateUrls(inputUrls, this._authOptions);
+protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
+        const initialUrls: string[] = RequestExecutor._validateUrls(inputUrls, this._authOptions);
 
         const topologyUpdateErrors: Array<{ url: string, error: Error | string }> = [];
 
@@ -490,8 +479,8 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
         };
 
         const tryUpdateTopologyOnAllNodes = () => {
-            return initialUrls.reduce((result, nextUrl) => {
-                return result
+            return initialUrls.reduce((reduceResult, nextUrl) => {
+                return reduceResult
                     .then(breakLoop => {
                         if (!breakLoop) {
                             return tryUpdateTopology(nextUrl, this._databaseName);
@@ -502,11 +491,11 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
             }, BluebirdPromise.resolve(false) as PromiseLike<boolean>);
         };
 
-        return BluebirdPromise.resolve()
+        const result = BluebirdPromise.resolve()
             .then(() => tryUpdateTopologyOnAllNodes())
             .then(() => {
                 const topology = new Topology();
-                topology.etag = this.topologyEtag;
+                topology.etag = this._topologyEtag;
 
                 let topologyNodes = this.getTopologyNodes();
                 if (!topologyNodes) {
@@ -532,18 +521,20 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
                     .map(x => `${x.url} -> ${x.error && (x.error as Error).stack ? (x.error as Error).stack : x.error}`)
                     .join(", ");
 
-                this.throwExceptions(details);
+                this._throwExceptions(details);
             });
+
+        return Promise.resolve(result);
     }
     
-    protected throwExceptions(details: string): void {
+    protected _throwExceptions(details: string): void {
         throwError(
             "Failed to retrieve database topology from all known nodes" 
                 + os.EOL + details, 
             "InvalidOperationException");
     }
 
-    protected disposeAllFailedNodesTimers(): void {
+    protected _disposeAllFailedNodesTimers(): void {
         for (const item of this._failedNodesTimers) {
             item[1].dispose();
         }
@@ -568,21 +559,24 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
         }
     }
 
-    public execute<TResult>(command: RavenCommand<TResult>);
-    public execute<TResult>(command: RavenCommand<TResult>, sessionInfo?: SessionInfo);
+    public execute<TResult>(command: RavenCommand<TResult>): Promise<void>;
+    public execute<TResult>(command: RavenCommand<TResult>, sessionInfo?: SessionInfo): Promise<void>;
     public execute<TResult>(
-        command: RavenCommand<TResult>, sessionInfo?: SessionInfo, options?: ExecuteOptions<TResult>);
+        command: RavenCommand<TResult>, sessionInfo?: SessionInfo, options?: ExecuteOptions<TResult>): Promise<void>;
     public execute<TResult>(
         command: RavenCommand<TResult>,
         sessionInfo?: SessionInfo,
-        options?: ExecuteOptions<TResult>) {
+        options?: ExecuteOptions<TResult>): Promise<void> {
         if (options) {
             return this._executeOnSpecificNode(command, sessionInfo, options);
         }
 
         log.info(`Execute command ${command.constructor.name}`);
-        const topologyUpdate = this._firstTopologyUpdate;
-        if ((topologyUpdate && topologyUpdate.isFulfilled()) || this._disableTopologyUpdates) {
+
+        const topologyUpdate = this._firstTopologyUpdatePromise;
+        const isTopologyUpdateFinished = BluebirdPromise.resolve(topologyUpdate).isFulfilled();
+
+        if ((topologyUpdate && isTopologyUpdateFinished) || this._disableTopologyUpdates) {
             const currentIndexAndNode: CurrentIndexAndNode = this.chooseNodeForRequest(command, sessionInfo);
             return this._executeOnSpecificNode(command, sessionInfo, {
                 chosenNode: currentIndexAndNode.currentNode,
@@ -596,26 +590,26 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
 
     private _unlikelyExecute<TResult>(
         command: RavenCommand<TResult>,
-        topologyUpdate: BluebirdPromise<void>,
-        sessionInfo: SessionInfo) {
+        topologyUpdate: Promise<void>,
+        sessionInfo: SessionInfo): Promise<void> {
 
-        return BluebirdPromise.resolve()
-            .then((result) => {
-                if (!this._firstTopologyUpdate) {
+        const result = BluebirdPromise.resolve()
+            .then(() => {
+                if (!this._firstTopologyUpdatePromise) {
                     if (!this._lastKnownUrls) {
                             throwError(
                                 "No known topology and no previously known one, cannot proceed, likely a bug",
                                 "InvalidOperationException");
                     }
 
-                    topologyUpdate = BluebirdPromise.resolve(this.firstTopologyUpdate(this._lastKnownUrls));
+                    topologyUpdate = this._firstTopologyUpdate(this._lastKnownUrls);
                 }
 
                 return topologyUpdate;
             })
             .catch(reason => {
-                if (this._firstTopologyUpdate === topologyUpdate) {
-                    this._firstTopologyUpdate = null; // next request will raise it
+                if (this._firstTopologyUpdatePromise === topologyUpdate) {
+                    this._firstTopologyUpdatePromise = null; // next request will raise it
                 }
 
                 log.warn(reason, "Error doing topology update.");
@@ -630,6 +624,8 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
                     shouldRetry: true
                 });
             });
+
+        return Promise.resolve(result);
     }
 
     private _getFromCache<TResult>(
@@ -653,7 +649,7 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
     private _executeOnSpecificNode<TResult>(
         command: RavenCommand<TResult>,
         sessionInfo: SessionInfo = null,
-        options: ExecuteOptions<TResult> = null): PromiseLike<void> {
+        options: ExecuteOptions<TResult> = null): Promise<void> {
 
         const { chosenNode, nodeIndex, shouldRetry } = options;
 
@@ -683,18 +679,18 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
         }
 
         if (!this._disableClientConfigurationUpdates) {
-            req.headers[HEADERS.CLIENT_CONFIGURATION_ETAG] = `"${this.clientConfigurationEtag}"`;
+            req.headers[HEADERS.CLIENT_CONFIGURATION_ETAG] = `"${this._clientConfigurationEtag}"`;
         }
 
         if (!this._disableTopologyUpdates) {
-            req.headers[HEADERS.TOPOLOGY_ETAG] = `"${this.topologyEtag}"`;
+            req.headers[HEADERS.TOPOLOGY_ETAG] = `"${this._topologyEtag}"`;
         }
 
         const sp = Stopwatch.createStarted();
         let response: HttpResponse = null;
         let responseDispose: ResponseDisposeHandling = "AUTOMATIC";
 
-        return BluebirdPromise.resolve()
+        const result = BluebirdPromise.resolve()
             .then(() => {
 
                 this.numberOfServerRequests++;
@@ -757,13 +753,13 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
                         if (response.statusCode >= StatusCodes.BadRequest) {
                             return BluebirdPromise.resolve()
                                 .then(() => this._handleUnsuccessfulResponse(
-                                    chosenNode, 
-                                    nodeIndex, 
-                                    command, 
-                                    req, 
-                                    response, 
-                                    req.uri as string, 
-                                    sessionInfo, 
+                                    chosenNode,
+                                    nodeIndex,
+                                    command,
+                                    req,
+                                    response,
+                                    req.uri as string,
+                                    sessionInfo,
                                     shouldRetry))
                                 .then(unsuccessfulResponseHandled => {
                                     const dbMissingHeader = response.headers[HEADERS.DATABASE_MISSING];
@@ -773,7 +769,7 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
 
                                     if (command.failedNodes.size === 0) {
                                         throwError("Received unsuccessful response and couldn't recover from it. "
-                                            + "Also, no record of exceptions per failed nodes. " 
+                                            + "Also, no record of exceptions per failed nodes. "
                                             + "This is weird and should not happen.", "InvalidOperationException");
                                     }
 
@@ -785,9 +781,9 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
                                         }
                                     }
 
-                                    throwError("Received unsuccessful response from all servers" 
+                                    throwError("Received unsuccessful response from all servers"
                                         + " and couldn't recover from it.",
-                                    "AllTopologyNodesDownException");
+                                        "AllTopologyNodesDownException");
                                 });
                         }
 
@@ -795,31 +791,33 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
                         this._lastReturnedResponse = new Date();
                     })
                     .finally(() => {
-                       if (responseDispose === "AUTOMATIC") {
-                           response.destroy();
-                       }
-                       
-                       if (refreshTopology || refreshClientConfiguration) {
-                          const serverNode = new ServerNode({
-                              url: chosenNode.url,
-                              database: this._databaseName
-                          });
+                        if (responseDispose === "AUTOMATIC") {
+                            response.destroy();
+                        }
 
-                          const topologyTask = refreshTopology 
-                              ? BluebirdPromise.resolve(this.updateTopology(serverNode, 0))
-                                .tapCatch(err => log.warn(err, "Error refreshing topology."))
-                              : BluebirdPromise.resolve(false);
-                          
-                          const clientConfigurationTask = refreshClientConfiguration
-                            ? BluebirdPromise.resolve(this.updateClientConfiguration())
-                                .tapCatch(err => log.warn(err, "Error refreshing client configuration."))
-                                .then(() => true)
-                            : BluebirdPromise.resolve(false);
+                        if (refreshTopology || refreshClientConfiguration) {
+                            const serverNode = new ServerNode({
+                                url: chosenNode.url,
+                                database: this._databaseName
+                            });
 
-                          return BluebirdPromise.all([ topologyTask, clientConfigurationTask ]);
-                       }
+                            const topologyTask = refreshTopology
+                                ? BluebirdPromise.resolve(this.updateTopology(serverNode, 0))
+                                    .tapCatch(err => log.warn(err, "Error refreshing topology."))
+                                : BluebirdPromise.resolve(false);
+
+                            const clientConfigurationTask = refreshClientConfiguration
+                                ? BluebirdPromise.resolve(this._updateClientConfiguration())
+                                    .tapCatch(err => log.warn(err, "Error refreshing client configuration."))
+                                    .then(() => true)
+                                : BluebirdPromise.resolve(false);
+
+                            return BluebirdPromise.all([topologyTask, clientConfigurationTask]);
+                        }
                     });
             });
+        
+        return Promise.resolve(result);
     }
 
     private _throwFailedToContactAllNodes<TResult>(
@@ -858,7 +856,6 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
         }
 
         const innerErr = timeoutException || e;
-        debugger; 
         throwError(message, "AllTopologyNodesDownException", innerErr); 
     }
 
@@ -875,13 +872,13 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
         response: HttpResponse,
         url: string,
         sessionInfo: SessionInfo,
-        shouldRetry: boolean): PromiseLike<boolean> {
+        shouldRetry: boolean): Promise<boolean> {
         switch (response.statusCode) {
             case StatusCodes.NotFound:
                 this._cache.setNotFound(url);
                 switch (command.responseType) {
                     case "EMPTY":
-                        return BluebirdPromise.resolve(true);
+                        return Promise.resolve(true);
                     case "OBJECT":
                         command.setResponse(null, false);
                         break;
@@ -889,7 +886,7 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
                         command.setResponseRaw(response, null);
                         break;
                 }
-                return BluebirdPromise.resolve(true);
+                return Promise.resolve(true);
 
             case StatusCodes.Forbidden: // TBD: include info about certificates
                 throwError(
@@ -898,7 +895,7 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
             case StatusCodes.Gone:
                 // request not relevant for the chosen node - the database has been moved to a different one
                 if (!shouldRetry) {
-                    return BluebirdPromise.resolve(false);
+                    return Promise.resolve(false);
                 }
 
                 return this.updateTopology(chosenNode, Number.MAX_VALUE, true)
@@ -926,12 +923,12 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
                 ExceptionDispatcher.throwException(response);
         }
 
-        return BluebirdPromise.resolve(false);
+        return Promise.resolve(false);
     }
 
     private _executeOnAllToFigureOutTheFastest<TResult>(
         chosenNode: ServerNode,
-        command: RavenCommand<TResult>): PromiseLike<HttpResponse> {
+        command: RavenCommand<TResult>): Promise<HttpResponse> {
         let preferredTask: BluebirdPromise<IndexAndResponse> = null;
 
         const nodes = this._nodeSelector.getTopology().nodes;
@@ -947,7 +944,7 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
                     const req = this._createRequest(nodes[taskNumber], command);
                     return command.send(req);
                 })
-                .then(result => new IndexAndResponse(taskNumber, result))
+                .then(commandResult => new IndexAndResponse(taskNumber, commandResult))
                 .catch(err => {
                     tasks[taskNumber] = null;
                     return BluebirdPromise.reject(err);
@@ -960,7 +957,7 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
             tasks[i] = task;
         }
 
-        return PromiseUtil.raceToResolution(tasks)
+        const result = PromiseUtil.raceToResolution(tasks)
             .then(fastest => {
                 this._nodeSelector.recordFastest(fastest.index, nodes[fastest.index]);
             })
@@ -968,7 +965,9 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
                 log.warn(err, "Error executing on all to find fastest node.");
             })
             .then(() => preferredTask)
-            .then(result => result.response);
+            .then(taskResult => taskResult.response);
+        
+        return Promise.resolve(result);
     }
 
     private _shouldExecuteOnAll<TResult>(chosenNode: ServerNode, command: RavenCommand<TResult>): boolean {
@@ -997,7 +996,7 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
         req: HttpRequestBase,
         response: HttpResponse,
         error: any,
-        sessionInfo: SessionInfo): PromiseLike<boolean> {
+        sessionInfo: SessionInfo): Promise<boolean> {
 
         if (!command.failedNodes) {
             command.failedNodes = new Map();
@@ -1006,23 +1005,24 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
         RequestExecutor._addFailedResponseToCommand(chosenNode, command, req, response, error);
 
         if (nodeIndex === null) {
-            return BluebirdPromise.resolve(false);
+            return Promise.resolve(false);
         }
 
         this._spawnHealthChecks(chosenNode, nodeIndex);
 
         if (!this._nodeSelector) {
-            return BluebirdPromise.resolve(false);
+            return Promise.resolve(false);
         }
 
         this._nodeSelector.onFailedRequest(nodeIndex);
 
         const currentIndexAndNode: CurrentIndexAndNode = this._nodeSelector.getPreferredNode();
         if (command.failedNodes.has(currentIndexAndNode.currentNode)) {
-            return BluebirdPromise.resolve(false); // we tried all the nodes...nothing left to do
+            return Promise.resolve(false) as any as Promise<boolean>; 
+            // we tried all the nodes...nothing left to do
         }
 
-        return BluebirdPromise.resolve()
+        return Promise.resolve()
             .then(() => {
                 return this._executeOnSpecificNode(command, sessionInfo, {
                     chosenNode: currentIndexAndNode.currentNode,
@@ -1104,7 +1104,7 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
         nodeStatus.startTimer();
     } 
 
-    private _checkNodeStatusCallback(nodeStatus: NodeStatus): PromiseLike<void> {
+    private _checkNodeStatusCallback(nodeStatus: NodeStatus): Promise<void> {
         const copy = this.getTopologyNodes();
 
         if (nodeStatus.nodeIndex >= copy.length) {
@@ -1116,10 +1116,10 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
             return;  // topology changed, nothing to check
         }
 
-        return BluebirdPromise.resolve()
+        const result = Promise.resolve()
             .then(() => {
                 let status: NodeStatus;
-                return BluebirdPromise.resolve(this.performHealthCheck(serverNode, nodeStatus.nodeIndex))
+                return Promise.resolve(this._performHealthCheck(serverNode, nodeStatus.nodeIndex))
                     .then(() => {
                         status = this._failedNodesTimers[nodeStatus.nodeIndex];
                         if (status) {
@@ -1142,10 +1142,12 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
             })
             .catch(err => {
                 log.error(err, "Failed to check node topology, will ignore this node until next topology update.");
-            });
+            }) ;
+
+        return result;
     }
 
-    protected performHealthCheck(serverNode: ServerNode, nodeIndex: number): PromiseLike<void> {
+    protected _performHealthCheck(serverNode: ServerNode, nodeIndex: number): Promise<void> {
         return this._executeOnSpecificNode(
             RequestExecutor._failureCheckOperation.getCommand(this._conventions), 
             null, 
@@ -1165,13 +1167,11 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
         this._updateClientConfigurationSemaphore.take(() => {
             const sem = this._updateClientConfigurationSemaphore;
             this._updateClientConfigurationSemaphore = null;
-            sem.leave(); 
         });
 
         this._updateDatabaseTopologySemaphore.take(() => {
             const sem = this._updateDatabaseTopologySemaphore;
             this._updateDatabaseTopologySemaphore = null;
-            sem.leave();    
         });
 
         this._disposed = true;
@@ -1181,6 +1181,6 @@ protected firstTopologyUpdate(inputUrls: string[]): PromiseLike<void> {
             this._updateTopologyTimer.dispose();
         }
         
-        this.disposeAllFailedNodesTimers();
+        this._disposeAllFailedNodesTimers();
     }
 }

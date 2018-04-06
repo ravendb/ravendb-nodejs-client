@@ -1,8 +1,8 @@
 import {ServerNode} from "./ServerNode";
 
 export default class CurrentIndexAndNode {
-    currentIndex: number;
-    currentNode: ServerNode;
+    public currentIndex: number;
+    public currentNode: ServerNode;
 
     constructor(currentIndex: number, currentNode: ServerNode) {
         this.currentIndex = currentIndex;

@@ -1,31 +1,15 @@
 import * as _ from "lodash";
 import { ServerNode } from "./ServerNode";
-import { IJsonConvertible } from "../Typedef/Contracts";
-import { IRavenObject } from "../Typedef/IRavenObject";
+import { IJsonConvertible } from "../Types/Contracts";
+import { IRavenObject } from "../Types/IRavenObject";
 
 export class Topology implements IJsonConvertible {
-  private _etag: number = 0;
-  private _nodes?: ServerNode[] = null;
+  public etag: number = 0;
+  public nodes?: ServerNode[] = null;
 
   constructor(etag: number = 0, nodes: ServerNode[] = null) {
-    this._etag = etag;
-    this._nodes = nodes || [];
-  }
-
-  public get nodes(): ServerNode[] {
-    return this._nodes;
-  }
-
-  public set nodes(value) {
-    this._nodes = value;
-  }
-
-  public get etag(): number {
-    return this._etag;
-  }
-
-  public set etag(value) {
-    this._etag = value;
+    this.etag = etag;
+    this.nodes = nodes || [];
   }
 
   public static fromJson(json: object): Topology {
@@ -39,7 +23,7 @@ export class Topology implements IJsonConvertible {
     const from: IRavenObject = json as IRavenObject;
     let nodes: object[] = [];
 
-    this._etag = from.Etag || 0;
+    this.etag = from.Etag || 0;
 
     if (from.Topology && from.Topology.AllNodes) {
       _.forIn(from.Topology.AllNodes, (url: string, tag: string) => {
@@ -49,7 +33,7 @@ export class Topology implements IJsonConvertible {
       nodes = from.Nodes;
     }
 
-    this._nodes = nodes
+    this.nodes = nodes
       .map((node: object): ServerNode =>
         ServerNode.fromJson(node)
       );

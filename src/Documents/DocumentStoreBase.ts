@@ -98,12 +98,12 @@ export abstract class DocumentStoreBase
 
     public set urls(value: string[]) {
         if (!value || !Array.isArray(value)) {
-            throwError(`Invalid urls array passed: ${value.toString()}.`, "InvalidArgumentException");
+            throwError("InvalidArgumentException", `Invalid urls array passed: ${value.toString()}.`);
         }
 
         for (let i = 0; i < value.length; i++) {
             if (!value[i]) {
-                throwError(`Url cannot be null or undefined - url index: ${i}`, "InvalidArgumentException");
+                throwError("InvalidArgumentException", `Url cannot be null or undefined - url index: ${i}`);
             }
 
             validateUri(value[i]);
@@ -123,7 +123,7 @@ export abstract class DocumentStoreBase
 
     protected ensureNotClosed(): void {
         if (this._disposed) {
-            throwError("The document store has already been disposed and cannot be used", "InvalidOperationException");
+            throwError("InvalidOperationException", "The document store has already been disposed and cannot be used");
         }
     }
 

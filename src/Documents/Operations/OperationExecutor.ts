@@ -35,7 +35,7 @@ export class OperationExecutor {
 
     public forDatabase(databaseName: string): OperationExecutor {
         if (!databaseName) {
-            throwError(`Argument 'databaseName' is invalid: ${databaseName}.`, "InvalidArgumentException");
+            throwError("InvalidArgumentException", `Argument 'databaseName' is invalid: ${databaseName}.`);
         }
         if (this._databaseName.toLowerCase() === databaseName.toLowerCase()) {
             return this;
@@ -44,13 +44,13 @@ export class OperationExecutor {
         return new OperationExecutor(this._store, databaseName);
     }
 
-    public send(operation: AwaitableOperation): OperationCompletionAwaiter;
-    public send(operation: AwaitableOperation, sessionInfo?: SessionInfo): OperationCompletionAwaiter;
-    public send<TResult>(operation: IOperation<TResult>): TResult;
-    public send<TResult>(operation: IOperation<TResult>, sessionInfo?: SessionInfo): TResult;
+    public send(operation: AwaitableOperation): Promise<OperationCompletionAwaiter>;
+    public send(operation: AwaitableOperation, sessionInfo?: SessionInfo): Promise<OperationCompletionAwaiter>;
+    public send<TResult>(operation: IOperation<TResult>): Promise<TResult>;
+    public send<TResult>(operation: IOperation<TResult>, sessionInfo?: SessionInfo): Promise<TResult>;
     public send<TResult>(
         operation: AwaitableOperation | IOperation<TResult>,
-        sessionInfo?: SessionInfo): Promise<OperationCompletionAwaiter> | Promise<TResult> {
+        sessionInfo?: SessionInfo): Promise<OperationCompletionAwaiter | TResult> {
 
         const command =
             operation.getCommand(this._store, this._requestExecutor.conventions, this._requestExecutor.cache);
@@ -65,12 +65,10 @@ export class OperationExecutor {
                     return awaiter;
                 }
 
-                return command.result;
+                return command.result as TResult;
             });
 
-        // https://github.com/DefinitelyTyped/DefinitelyTyped/issues/11027    
-        // tslint:disable-next-line:no-angle-bracket-type-assertion
-        return <any> result as Promise<OperationCompletionAwaiter> | Promise<TResult>;
+        return  Promise.resolve(result);
     }
 
     // public PatchStatus send(PatchOperation operation, SessionInfo sessionInfo) {
@@ -235,47 +233,47 @@ export class OperationExecutor {
 //   }
 // }
 
-export class ServerOperationExecutor extends AbstractOperationExecutor implements IDisposable {
-    protected requestExecutorFactory(): IRequestExecutor {
-        const store: IDocumentStore = this.store;
-        const conventions: DocumentConventions = store.conventions;
-        const authOptions = <IRequestAuthOptions>store.authOptions;
+// export class ServerOperationExecutor extends AbstractOperationExecutor implements IDisposable {
+//     protected requestExecutorFactory(): IRequestExecutor {
+//         const store: IDocumentStore = this.store;
+//         const conventions: DocumentConventions = store.conventions;
+//         const authOptions = <IRequestAuthOptions>store.authOptions;
 
-        return conventions.disableTopologyUpdates
-            ? ClusterRequestExecutor.createForSingleNode(store.singleNodeUrl, authOptions)
-            : ClusterRequestExecutor.create(store.urls, authOptions);
-    }
+//         return conventions.disableTopologyUpdates
+//             ? ClusterRequestExecutor.createForSingleNode(store.singleNodeUrl, authOptions)
+//             : ClusterRequestExecutor.create(store.urls, authOptions);
+//     }
 
-    public async send(operation: IOperation): Promise<IRavenResponse | IRavenResponse[] | void> {
-        if (!(operation instanceof ServerOperation)) {
-            return BluebirdPromise.reject(
-                new InvalidOperationException("Invalid operation passed. It should be derived from ServerOperation"));
-        }
+//     public async send(operation: IOperation): Promise<IRavenResponse | IRavenResponse[] | void> {
+//         if (!(operation instanceof ServerOperation)) {
+//             return BluebirdPromise.reject(
+//                 new InvalidOperationException("Invalid operation passed. It should be derived from ServerOperation"));
+//         }
 
-        return super.send(operation);
-    }
+//         return super.send(operation);
+//     }
 
-    public dispose(): void {
-        this.requestExecutor.dispose();
-    }
-}
+//     public dispose(): void {
+//         this.requestExecutor.dispose();
+//     }
+// }
 
-export class AdminOperationExecutor extends AbstractDatabaseOperationExecutor {
-    private _server: ServerOperationExecutor;
+// export class AdminOperationExecutor extends AbstractDatabaseOperationExecutor {
+//     private _server: ServerOperationExecutor;
 
-    public get server(): ServerOperationExecutor {
-        if (!this._server) {
-            this._server = new ServerOperationExecutor(this.store);
-        }
+//     public get server(): ServerOperationExecutor {
+//         if (!this._server) {
+//             this._server = new ServerOperationExecutor(this.store);
+//         }
 
-        return this._server;
-    }
+//         return this._server;
+//     }
 
-    public async send(operation: IOperation): Promise<IRavenResponse | IRavenResponse[] | void> {
-        if (!(operation instanceof AdminOperation)) {
-            return BluebirdPromise.reject(new InvalidOperationException("Invalid operation passed. It should be derived from ServerOperation"));
-        }
+//     public async send(operation: IOperation): Promise<IRavenResponse | IRavenResponse[] | void> {
+//         if (!(operation instanceof AdminOperation)) {
+//             return BluebirdPromise.reject(new InvalidOperationException("Invalid operation passed. It should be derived from ServerOperation"));
+//         }
 
-        return super.send(operation);
-    }
-}
+//         return super.send(operation);
+//     }
+// }

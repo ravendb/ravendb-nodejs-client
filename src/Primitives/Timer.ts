@@ -1,14 +1,14 @@
 import * as BluebirdPromise from "bluebird";
-import {IDisposable} from "../Typedef/Contracts";
+import {IDisposable} from "../Types/Contracts";
 import { getLogger } from "../Utility/LogUtil";
 
 const log = getLogger({ module: "Timer" });
 
 export class Timer implements IDisposable {
 
-    private _action: () => PromiseLike<any>;
+    private _action: () => Promise<any>;
     
-    private _scheduledActionPromise: PromiseLike<any>;
+    private _scheduledActionPromise: Promise<any>;
 
     private _firstTimeDelayId: NodeJS.Timer;
     private _intervalId: NodeJS.Timer;
@@ -18,7 +18,7 @@ export class Timer implements IDisposable {
     /** period in milliseconds */
     private _periodInMs: number;
 
-    constructor(action: () => PromiseLike<any>, dueTimeInMs: number, periodInMs?: number) {
+    constructor(action: () => Promise<any>, dueTimeInMs: number, periodInMs?: number) {
         this._action = action;
         this._periodInMs = periodInMs;
         this._schedule(dueTimeInMs);
@@ -45,9 +45,10 @@ export class Timer implements IDisposable {
 
     private _timerAction() {
         log.info(`Start timer action ${this._action.name}`);
-        this._scheduledActionPromise = BluebirdPromise.resolve(this._action())
+        const actionPromise = BluebirdPromise.resolve(this._action())
             .tapCatch(reason => log.warn(`Error executing timer action ${this._action.name}.`, reason))
             .finally(() => log.info(`Finish timer action ${this._action.name}.`));
+        this._scheduledActionPromise = Promise.resolve(actionPromise);
     }
 
     private _clearTimers() {

@@ -67,7 +67,7 @@ export class PemCertificate extends Certificate {
     this._certificate = this.fetchPart(this.certToken);    
     
     if (!this._key && !this._certificate) {
-      throwError("Invalid .pem certificate provided", "InvalidArgumentException");
+      throwError("InvalidArgumentException", "Invalid .pem certificate provided");
     }    
   }
 
@@ -101,7 +101,7 @@ export class PemCertificate extends Certificate {
 export class PfxCertificate extends Certificate {
   constructor(certificate: string | Buffer, passprase?: string) {
     if (!(certificate instanceof Buffer)) {
-      throwError("Pfx certificate should be a Buffer", "InvalidArgumentException");
+      throwError("InvalidArgumentException", "Pfx certificate should be a Buffer");
     }
 
     super(certificate, passprase);

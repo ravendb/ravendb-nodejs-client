@@ -1,8 +1,9 @@
 import {IAuthOptions} from "../Auth/AuthOptions";
 import { spawn, ChildProcess } from "child_process";
-import { IDisposable } from "../Typedef/Contracts";
-import { throwError } from "../Exceptions/ClientErrors";
-import { IDocumentStore, DocumentStore } from "../Documents/DocumentStore";
+import { IDisposable } from "../Types/Contracts";
+import { throwError } from "../Exceptions";
+import { DocumentStore } from "../Documents/DocumentStore";
+import { IDocumentStore } from "../Documents/IDocumentStore";
 import { getLogger } from "../Utility/LogUtil";
 import { DatabaseRecord } from "../ServerWide";
 import { CreateDatabaseOperation } from "../ServerWide/Operations/CreateDatabaseOperation";
@@ -16,11 +17,11 @@ export abstract class RavenServerLocator {
     public getServerPath(): string {
         const serverPath = process.env[RavenServerLocator.ENV_SERVER_PATH];
         if (!serverPath) {
-            throwError("Unable to find RavenDB server path. Please make sure " 
+            throwError("InvalidOperationException", 
+                "Unable to find RavenDB server path. Please make sure " 
                     + RavenServerLocator.ENV_SERVER_PATH 
                     + " environment variable is set and is valid " +
-                    "(current value = " + serverPath + ")", 
-                    "InvalidOperationException");
+                    "(current value = " + serverPath + ")");
         }
 
         return serverPath;
@@ -39,8 +40,7 @@ export abstract class RavenServerLocator {
     }
 
     public getServerCertificatePath(): string {
-        throwError("", "NotSupportedException");
-        return "";
+        return throwError("NotSupportedException");
     }
 
 }
@@ -87,6 +87,8 @@ export abstract class RavenTestDriver implements IDisposable {
 
     public getDocumentStore(): DocumentStore;
     public getDocumentStore(database: string): DocumentStore;
+    public getDocumentStore(
+        database: string, secured: boolean, waitForIndexingTimeoutInMs?: number): DocumentStore; 
     public getDocumentStore(
         database = "test_db", secured = false, waitForIndexingTimeoutInMs?: number = null): DocumentStore {
 

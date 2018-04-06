@@ -3,7 +3,7 @@ import { DatabaseRecord } from "..";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { DatabasePutResult } from ".";
 import { DocumentConventions } from "../..";
-import { throwError } from "../../Exceptions/ClientErrors";
+import { throwError } from "../../Exceptions";
 import { ServerNode } from "../../Http/ServerNode";
 import { IServerOperation } from "./IServerOperation";
 
@@ -35,7 +35,7 @@ class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> {
         this._replicationFactor = replicationFactor;
 
         if (!databaseRecord || !databaseRecord.databaseName) {
-            throwError("Database name is required", "InvalidOperationException");
+            throwError("InvalidOperationException", "Database name is required");
         }
 
         this._databaseName = databaseRecord.databaseName;
@@ -58,7 +58,7 @@ class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> {
 
     public setResponse(response: string, fromCache: boolean): void {
         if (!response) {
-            this.throwInvalidResponse();
+            this._throwInvalidResponse();
         }
 
         this.result = this.mapper.deserialize(response);

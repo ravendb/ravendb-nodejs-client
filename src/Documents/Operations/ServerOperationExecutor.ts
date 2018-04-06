@@ -1,52 +1,50 @@
 import { IDisposable } from "../../Types/Contracts";
 import { DocumentStoreBase } from "../DocumentStoreBase";
 import { Todo } from "../../Types";
-import { IServerOperation, AwaitableServerOperation } from "./OperationBase";
+import { IServerOperation, AwaitableServerOperation, OperationIdResult } from "./OperationBase";
 import { OperationCompletionAwaiter } from "./OperationCompletionAwaiter";
+import { ClusterRequestExecutor } from "../../Http/ClusterRequestExecutor";
+import { RavenCommand } from "../../Http/RavenCommand";
+import { ServerWideOperationCompletionAwaiter } from "../../ServerWide/Operations/ServerWideOperationCompletionAwaiter";
 
 export class ServerOperationExecutor implements IDisposable {
 
     private _store: DocumentStoreBase;
-    private _requestExecutor: Todo; // ClusterRequestExecutor;
+    private _requestExecutor: ClusterRequestExecutor;
 
     public constructor(store: DocumentStoreBase) {
         this._store = store;
         this._requestExecutor = store.conventions.isDisableTopologyUpdates ?
                 ClusterRequestExecutor.createForSingleNode(store.urls[0], store.authOptions) :
-                ClusterRequestExecutor.create(store.urls, store.authOptions);
+                ClusterRequestExecutor.create(store.urls, store);
 
         store.on("afterClose", 
             (sender, event) => this._requestExecutor.dispose());
     }
 
-    public send(operation: AwaitableServerOperation): OperationCompletionAwaiter;
-    public send<TResult>(operation: IServerOperation<TResult>): TResult;
+    public send(operation: AwaitableServerOperation): Promise<ServerWideOperationCompletionAwaiter>;
+    public send<TResult>(operation: IServerOperation<TResult>): Promise<TResult>;
     public send<TResult>(operation: AwaitableServerOperation | IServerOperation<TResult>)
-        : OperationCompletionAwaiter | TResult {
+        : Promise<ServerWideOperationCompletionAwaiter | TResult> {
+
         const command = operation.getCommand(this._requestExecutor.conventions);
+        const result = Promise.resolve()
+            .then(() => this._requestExecutor.execute(command as RavenCommand<TResult>))
+            .then(() => {
+                if (operation.resultType === "OPERATION_ID") {
+                    const idResult = command.result as OperationIdResult;
+                    const awaiter = new ServerWideOperationCompletionAwaiter(
+                        this._requestExecutor, this._requestExecutor.conventions, idResult.operationId);
+                    return awaiter;
+                }
+
+                return command.result as TResult;
+            });
+
+        return result;
     }
 
-    public void send(IVoidServerOperation operation) {
-        VoidRavenCommand command = operation.getCommand(requestExecutor.getConventions());
-        requestExecutor.execute(command);
-    }
-
-    public <TResult> TResult send(IServerOperation<TResult> operation) {
-        RavenCommand<TResult> command = operation.getCommand(requestExecutor.getConventions());
-        requestExecutor.execute(command);
-
-        return command.getResult();
-    }
-
-    public Operation sendAsync(IServerOperation<OperationIdResult> operation) {
-        RavenCommand<OperationIdResult> command = operation.getCommand(requestExecutor.getConventions());
-
-        requestExecutor.execute(command);
-        return new ServerWideOperation(requestExecutor, requestExecutor.getConventions(), command.getResult().getOperationId());
-    }
-
-    @Override
-    public void close() {
-        requestExecutor.close();
+    public dispose(): void {
+        this._requestExecutor.dispose();
     }
 }

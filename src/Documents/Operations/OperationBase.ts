@@ -41,6 +41,15 @@ export class AwaitableServerOperation
     }
 }
 
+export class AwaitableMaintenanceOperation 
+    extends AbstractAwaitableOperation 
+    implements IMaintenanceOperation<OperationIdResult> {
+    
+    public getCommand(conventions: DocumentConventions): RavenCommand<OperationIdResult> {
+        throw new Error("getCommand() must be implemented in extending class.");
+    }
+}
+
 export class AwaitableOperation 
     extends AbstractAwaitableOperation    
     implements IOperation<OperationIdResult> {

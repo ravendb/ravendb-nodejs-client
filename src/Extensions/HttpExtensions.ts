@@ -8,7 +8,7 @@ import { throwError } from "../Exceptions/ClientErrors";
 export function getRequiredEtagHeader(response: HttpResponse) {
     const headers = response.headers[HEADERS.ETAG];
     if (!headers || !headers.length || !headers[0]) {
-        throwError("Response did't had an ETag header", "InvalidOperationException");
+        throwError("InvalidOperationException", "Response did't had an ETag header");
     }
 
     return etagHeaderToChangeVector(headers[0]);
@@ -28,7 +28,7 @@ export function getEtagHeader(responseOrHeaders: HttpResponse | IncomingHttpHead
 
 export function etagHeaderToChangeVector(responseHeader: string) {
     if (!responseHeader) {
-        throwError("Response did't had an ETag header", "InvalidOperationException");
+        throwError("InvalidOperationException", "Response did't had an ETag header");
     }
 
     if (responseHeader.startsWith("\"")) {

@@ -7,6 +7,6 @@ export function isValidUri(uriString: string): boolean {
 
 export function validateUri(uriString: string): void {
     if (!isValidUri(uriString)) {
-        throwError(`Uri ${uriString} is invalid.`, "InvalidArgumentException");
+        throwError("InvalidArgumentException", `Uri ${uriString} is invalid.`);
     }
 }

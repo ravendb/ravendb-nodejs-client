@@ -6,7 +6,7 @@ import { ServerNode, ServerNodeRole } from "../Http/ServerNode";
 import CurrentIndexAndNode from "../Http/CurrentIndexAndNode";
 import { Topology } from "./Topology";
 import { Timer } from "../Primitives/Timer";
-import { throwError } from "../Exceptions/ClientErrors";
+import { throwError } from "../Exceptions";
 
 class NodeSelectorState {
   public topology: Topology;
@@ -105,7 +105,7 @@ export class NodeSelector {
     // if there are all marked as failed, we'll chose the first
     // one so the user will get an error (or recover :-) );
     if (state.nodes.length === 0) {
-      throwError("There are no nodes in the topology at all", "AllTopologyNodesDownException");
+      throwError("AllTopologyNodesDownException", "There are no nodes in the topology at all.");
     }
 
     return new CurrentIndexAndNode(0, state.nodes[0]);
@@ -135,7 +135,7 @@ export class NodeSelector {
     state.failures[nodeIndex] = 0;
   }
 
-  protected throwEmptyTopology(): void {
+  protected _throwEmptyTopology(): void {
     throwError("Empty database topology, this shouldn't happen.", "InvalidOperationException");
   }
 
@@ -212,7 +212,7 @@ export class NodeSelector {
     } else {
       this._updateFastestNodeTimer = new Timer(() => {
         this._switchToSpeedTestPhase();
-        return BluebirdPromise.resolve();
+        return Promise.resolve();
       }, minuteMs);
     }
   }

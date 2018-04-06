@@ -3,7 +3,7 @@ import {GetOperationStateCommand} from "./GetOperationStateOperation";
 import { RequestExecutor, DocumentConventions } from "../..";
 import { IRavenResponse } from "../../Types";
 import { RavenCommand } from "../../Http/RavenCommand";
-import { throwError, RavenErrorType } from "../../Exceptions/ClientErrors";
+import { throwError, RavenErrorType } from "../../Exceptions";
 import { OperationExceptionResult } from "./OperationBase";
 import { ExceptionDispatcher } from "../../Exceptions/ExceptionDispatcher";
 
@@ -32,14 +32,14 @@ export class OperationCompletionAwaiter {
 
     // TBD currently we simply poll for status - implement this using changes API
 
-    private _fetchOperationStatus(): PromiseLike<IRavenResponse> {
-        const command: RavenCommand<IRavenResponse> = this.getOperationStateCommand(this._conventions, this._id);
-        return BluebirdPromise.resolve() 
+    private _fetchOperationStatus(): Promise<IRavenResponse> {
+        const command: RavenCommand<IRavenResponse> = this._getOperationStateCommand(this._conventions, this._id);
+        return Promise.resolve() 
             .then(() => this._requestExecutor.execute(command))
             .then(() => command.result);
     }
 
-    protected getOperationStateCommand(conventions: DocumentConventions, id: number): RavenCommand<IRavenResponse> {
+    protected _getOperationStateCommand(conventions: DocumentConventions, id: number): RavenCommand<IRavenResponse> {
         return new GetOperationStateCommand(this._conventions, this._id);
     }
 
@@ -53,7 +53,7 @@ export class OperationCompletionAwaiter {
                     case "Completed":
                         return;
                     case "Cancelled":
-                        throwError(`Operation of ID ${this._id} has been cancelled.`, "OperationCancelledException");
+                        throwError("OperationCancelledException", `Operation of ID ${this._id} has been cancelled.`);
                     case "Faulted":
                         const faultResult: OperationExceptionResult = operationStatusResult.Result;
                         throw ExceptionDispatcher.get(faultResult, faultResult.statusCode);
@@ -64,8 +64,6 @@ export class OperationCompletionAwaiter {
             });
         };
 
-        // https://github.com/DefinitelyTyped/DefinitelyTyped/issues/11027    
-        // tslint:disable-next-line:no-angle-bracket-type-assertion
-        return <Promise<void>> operationStatusPolling();
+        return Promise.resolve(operationStatusPolling());
     }
 }

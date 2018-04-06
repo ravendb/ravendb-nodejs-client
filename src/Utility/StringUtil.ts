@@ -28,11 +28,11 @@ export class StringUtil {
 
   public static validateDBName(dbName?: string): void {
     if (TypeUtil.isNull(dbName) || !dbName) {
-      throwError("Empty name is not valid", "InvalidOperationException");
+      throwError("InvalidOperationException", "Empty name is not valid");
     }
 
     if (!/^[A-Za-z0-9_\-\.]+$/.test(dbName)) {
-      throwError(`Database name can only contain only A-Z, a-z, "_", "." or "-"`, "InvalidOperationException");
+      throwError("InvalidOperationException", `Database name can only contain only A-Z, a-z, "_", "." or "-"`);
     }
   }
 

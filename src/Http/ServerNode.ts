@@ -1,6 +1,6 @@
 import {TypeUtil} from "../Utility/TypeUtil";
-import {IJsonConvertible} from "../Typedef/Contracts";
-import {IRavenObject} from "../Typedef/IRavenObject";
+import {IJsonConvertible} from "../Types/Contracts";
+import {IRavenObject} from "../Types/IRavenObject";
 import {UriUtility} from "../Http/UriUtility";
 
 export class ServerNodeRole {
@@ -16,10 +16,11 @@ export class ServerNode implements IJsonConvertible {
   public clusterTag?: string = null;
   public serverRole: string;
 
-  public constructor(opts?: { database: string, url: string }) {
+  public constructor(opts?: { database?: string, url?: string, clusterTag?: string }) {
     if (opts) {
       this.database = opts.database;
       this.url = opts.url;
+      this.clusterTag = opts.clusterTag;
     }
   }
 

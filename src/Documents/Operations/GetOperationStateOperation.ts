@@ -3,7 +3,7 @@ import { IRavenResponse } from "../../Types";
 import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestBase } from "../../Primitives/Http";
 import { RavenCommand } from "../../Http/RavenCommand";
-import { IMaintenanceOperation } from "./IMaintenanceOperation";
+import { IMaintenanceOperation, OperationResultType } from "./OperationBase";
 
 export class GetOperationStateOperation implements IMaintenanceOperation<IRavenResponse> {
 
@@ -15,6 +15,10 @@ export class GetOperationStateOperation implements IMaintenanceOperation<IRavenR
 
     public  getCommand(conventions: DocumentConventions): RavenCommand<IRavenResponse> {
         return new GetOperationStateCommand(DocumentConventions.defaultConventions, this._id);
+    }
+
+    public get resultType(): OperationResultType {
+        return "COMMAND_RESULT";
     }
 
 }

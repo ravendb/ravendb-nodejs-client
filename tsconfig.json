@@ -10,7 +10,7 @@
     "removeComments": true,
     "sourceMap": false,
     "pretty": true,
-    "lib": [ "es7" ],
+    "lib": [ "es2015" ],
     "typeRoots": [
       "node_modules/@types",
       "node_modules/moment",

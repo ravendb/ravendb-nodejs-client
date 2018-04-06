@@ -9,8 +9,8 @@ import * as request from "request-promise";
 import { HttpRequestBase, HttpResponse } from "../Primitives/Http";
 import { getLogger } from "../Utility/LogUtil";
 import { ObjectMapper } from "../Utility/Mapping";
-import { throwError, RavenErrorType } from "../Exceptions/ClientErrors";
-import { IRavenObject } from "../Typedef/IRavenObject";
+import { throwError } from "../Exceptions";
+import { IRavenObject } from "../Types/IRavenObject";
 
 const log = getLogger({ module: "RavenCommand" });
 
@@ -55,12 +55,13 @@ export abstract class RavenCommand<TResult> {
     public setResponse(response: string, fromCache: boolean): void {
         if (this._responseType === "EMPTY"
             || this._responseType === "RAW") {
-            this.throwInvalidResponse();
+            this._throwInvalidResponse();
         }
 
-        throwError(this.constructor.name +
+        throwError("NotSupportedException", 
+            this.constructor.name +
             " command must override the setResponse method which expects response with the following type: " +
-            this._responseType, "NotSupportedException");
+            this._responseType, );
     }
 
     public send(requestOptions: HttpRequestBase): RequestPromise {
@@ -69,22 +70,21 @@ export abstract class RavenCommand<TResult> {
     }
 
     public setResponseRaw(response: HttpResponse, body: string): void {
-        throwError(
-            "When " + this._responseType + " is set to RAW then please override this method to handle the response.",
-            "NotSupportedException");
+        throwError("NotSupportedException",
+            "When " + this._responseType + " is set to RAW then please override this method to handle the response.");
     }
 
-    protected throwInvalidResponse(): void {
-        throwError("Response is invalid", "InvalidOperationException");
+    protected _throwInvalidResponse(): void {
+        throwError("InvalidOperationException", "Response is invalid");
     }
 
-    protected urlEncode(value): string {
+    protected _urlEncode(value): string {
         return encodeURIComponent(value);
     }
 
     public static ensureIsNotNullOrEmpty(value: string, name: string): void {
         if (!value) {
-            throwError(name + " cannot be null or empty", "InvalidArgumentException");
+            throwError("InvalidArgumentException", name + " cannot be null or empty");
         }
     }
 
@@ -140,7 +140,7 @@ export abstract class RavenCommand<TResult> {
         }
     }
 
-    protected cacheResponse(cache: HttpCache, url: string, response: HttpResponse, responseJson: string): void {
+    protected _cacheResponse(cache: HttpCache, url: string, response: HttpResponse, responseJson: string): void {
         if (!this.canCache) {
             return;
         }
@@ -153,7 +153,7 @@ export abstract class RavenCommand<TResult> {
         cache.set(url, changeVector, responseJson);
     }
 
-    protected addChangeVectorIfNotNull(changeVector: string, req: HttpRequestBase): void {
+    protected _addChangeVectorIfNotNull(changeVector: string, req: HttpRequestBase): void {
         if (changeVector) {
             req.headers["If-Match"] = `"${changeVector}"`;
         }

@@ -1,6 +1,9 @@
+import {OperationCompletionAwaiter} from "./OperationCompletionAwaiter";
 import { DocumentStoreBase } from "../DocumentStoreBase";
 import { RequestExecutor } from "../..";
-import { ServerOperationExecutor } from "./OperationExecutor";
+import { IMaintenanceOperation, AwaitableMaintenanceOperation, OperationIdResult } from "./OperationBase";
+import { RavenCommand } from "../../Http/RavenCommand";
+import { ServerOperationExecutor } from "./ServerOperationExecutor";
 
 export class MaintenanceOperationExecutor {
 
@@ -24,30 +27,35 @@ export class MaintenanceOperationExecutor {
         }
     }
 
-    public MaintenanceOperationExecutor forDatabase(String databaseName) {
-        if (StringUtils.equalsIgnoreCase(this.databaseName, databaseName)) {
+    public forDatabase(databaseName: string): MaintenanceOperationExecutor {
+        if (this._databaseName.toLowerCase() === databaseName.toLowerCase()) {
             return this;
         }
 
-        return new MaintenanceOperationExecutor(store, databaseName);
+        return new MaintenanceOperationExecutor(this._store, databaseName);
     }
 
-    public void send(IVoidMaintenanceOperation operation) {
-        VoidRavenCommand command = operation.getCommand(requestExecutor.getConventions());
-        requestExecutor.execute(command);
-    }
+    public send(operation: AwaitableMaintenanceOperation): Promise<OperationCompletionAwaiter>;
+    public send<TResult>(operation: IMaintenanceOperation<TResult>): Promise<TResult>;
+    public send<TResult>(
+        operation: AwaitableMaintenanceOperation | IMaintenanceOperation<TResult>)
+        : Promise<OperationCompletionAwaiter | TResult> {
 
-    public <TResult> TResult send(IMaintenanceOperation<TResult> operation) {
-        RavenCommand<TResult> command = operation.getCommand(requestExecutor.getConventions());
-        requestExecutor.execute(command);
-        return command.getResult();
-    }
+        const command = operation.getCommand(this._requestExecutor.conventions);
 
-    public Operation sendAsync(IMaintenanceOperation<OperationIdResult> operation) {
-        RavenCommand<OperationIdResult> command = operation.getCommand(requestExecutor.getConventions());
+        const result = Promise.resolve()
+            .then(() => this._requestExecutor.execute(command as RavenCommand<TResult>))
+            .then(() => {
+                if (operation.resultType === "OPERATION_ID") {
+                    const idResult = command.result as OperationIdResult;
+                    const awaiter = new OperationCompletionAwaiter(
+                        this._requestExecutor, this._requestExecutor.conventions, idResult.operationId);
+                    return awaiter;
+                }
 
-        requestExecutor.execute(command);
-        return new Operation(requestExecutor, requestExecutor.getConventions(), command.getResult().getOperationId());
-        //TBD pass changes as well
+                return command.result as TResult;
+            });
+
+        return result;
     }
 }

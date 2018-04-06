@@ -106,7 +106,7 @@ export class DocumentConventions {
         try {
             return JsonExtensions.getDefaultMapper().deserialize(document.toString());
         } catch (err) {
-            throwError("Cannot deserialize entity", "RavenException", err);
+            throwError("RavenException", "Cannot deserialize entity", err);
         }
     }
 
@@ -427,9 +427,8 @@ export class DocumentConventions {
 
     private _assertNotFrozen(): void {
         if (this._frozen) {
-            throwError(
-                "Conventions has been frozen after documentStore.initialize() and no changes can be applied to them", 
-                "RavenException");
+            throwError("RavenException",
+                "Conventions has been frozen after documentStore.initialize() and no changes can be applied to them");
         }
     }
 }
