@@ -3,6 +3,8 @@ import { DocumentConventions, RequestExecutor } from "..";
 import { SessionBeforeStoreEventArgs } from "./Session/SessionEvents";
 import { IDisposable } from "../Types/Contracts";
 import { Todo } from "../Types";
+import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor";
+import { OperationExecutor } from "./Operations/OperationExecutor";
 
 export interface SessionEventsProxy {
     addSessionListener(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
@@ -19,9 +21,23 @@ export interface SessionEventsProxy {
     removeSessionListener(
       eventName: "beforeDelete", eventHandler: (eventArgs: Todo) => void): void;
 }
+
+export type DocumentStoreEvent = "beforeClose" | "afterClose";
+
+export interface DocumentStoreEventEmitter {
+
+    on(eventName: string, eventHandler: () => void): this;
+    on(eventName: "beforeClose", eventHandler: () => void): this;
+    on(eventName: "afterClose", eventHandler: () => void): this;
+
+    removeListener(eventName: string, eventHandler: () => void): void;
+    removeListener(eventName: "beforeClose", eventHandler: () => void): void;
+    removeListener(eventName: "afterClose", eventHandler: () => void): void;
+}
 export interface IDocumentStore extends
   IDisposable,
-  SessionEventsProxy {
+  SessionEventsProxy,
+  DocumentStoreEventEmitter {
 
   // database: string;
   // urls: string[];
@@ -145,7 +161,7 @@ export interface IDocumentStore extends
 
     getRequestExecutor(databaseName?: string): RequestExecutor;
 
-    // maintenance(): MaintenanceOperationExecutor;
+    maintenance: MaintenanceOperationExecutor;
 
-    // operations(): OperationExecutor;
+    operations: OperationExecutor;
 }

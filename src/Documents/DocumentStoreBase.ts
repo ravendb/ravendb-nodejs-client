@@ -1,8 +1,9 @@
+import {MaintenanceOperationExecutor} from "./Operations/MaintenanceOperationExecutor";
 import { EventEmitter } from "events";
 import { IDocumentStore } from "./IDocumentStore";
 import { IDocumentSession } from "./Session";
 import { DocumentConventions, RequestExecutor } from "..";
-import { throwError } from "../Exceptions/ClientErrors";
+import { throwError } from "../Exceptions";
 import { isValidUri, validateUri } from "../Utility/UriUtil";
 import { IAuthOptions } from "../Auth/AuthOptions";
 import { SessionBeforeStoreEventArgs } from "./Session/SessionEvents";
@@ -10,18 +11,10 @@ import { Todo } from "../Types";
 import { InMemoryDocumentSessionOperations } from "./Session/InMemoryDocumentSessionOperations";
 import { OperationExecutor } from "./Operations/OperationExecutor";
 
-export interface DocumentStoreEventEmitter {
-
-    on(eventName: "beforeClose", eventHandler: () => void): this;
-    on(eventName: "afterClose", eventHandler: () => void): this;
-
-    removeListener(eventName: "beforeClose", eventHandler: () => void): void;
-    removeListener(eventName: "afterClose", eventHandler: () => void): void;
-}
 
 export abstract class DocumentStoreBase 
     extends EventEmitter 
-    implements IDocumentStore, DocumentStoreEventEmitter {
+    implements IDocumentStore {
 
     protected constructor() {
         super();
@@ -98,12 +91,14 @@ export abstract class DocumentStoreBase
 
     public set urls(value: string[]) {
         if (!value || !Array.isArray(value)) {
-            throwError("InvalidArgumentException", `Invalid urls array passed: ${value.toString()}.`);
+            throwError("InvalidArgumentException", 
+                `Invalid urls array passed: ${value.toString()}.`);
         }
 
         for (let i = 0; i < value.length; i++) {
             if (!value[i]) {
-                throwError("InvalidArgumentException", `Url cannot be null or undefined - url index: ${i}`);
+                throwError("InvalidArgumentException", 
+                    `Url cannot be null or undefined - url index: ${i}`);
             }
 
             validateUri(value[i]);
@@ -198,4 +193,5 @@ export abstract class DocumentStoreBase
     public abstract maintenance: MaintenanceOperationExecutor;
 
     public abstract operations: OperationExecutor;
+
 }

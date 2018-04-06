@@ -18,13 +18,12 @@ export class MaintenanceOperationExecutor {
         this._requestExecutor = store.getRequestExecutor(databaseName);
     }
 
-    public server(): ServerOperationExecutor {
+    public get server(): ServerOperationExecutor {
         if (!this._serverOperationExecutor) {
-            return this._serverOperationExecutor;
-        } else {
             this._serverOperationExecutor = new ServerOperationExecutor(this._store);
-            return this._serverOperationExecutor;
-        }
+        } 
+        
+        return this._serverOperationExecutor;
     }
 
     public forDatabase(databaseName: string): MaintenanceOperationExecutor {

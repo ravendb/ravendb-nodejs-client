@@ -5,9 +5,13 @@ import { DatabasePutResult } from ".";
 import { DocumentConventions } from "../..";
 import { throwError } from "../../Exceptions";
 import { ServerNode } from "../../Http/ServerNode";
-import { IServerOperation } from "./IServerOperation";
+import { IServerOperation, OperationResultType } from "../../Documents/Operations/OperationBase";
 
 export class CreateDatabaseOperation implements IServerOperation<DatabasePutResult> {
+
+    public get resultType(): OperationResultType {
+        return "COMMAND_RESULT";
+    }
 
     private _databaseRecord: DatabaseRecord;
     private _replicationFactor: number;

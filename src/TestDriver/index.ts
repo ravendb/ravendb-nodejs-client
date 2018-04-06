@@ -7,43 +7,11 @@ import { IDocumentStore } from "../Documents/IDocumentStore";
 import { getLogger } from "../Utility/LogUtil";
 import { DatabaseRecord } from "../ServerWide";
 import { CreateDatabaseOperation } from "../ServerWide/Operations/CreateDatabaseOperation";
+import { DeleteDatabasesOperation } from "../ServerWide/Operations/DeleteDatabasesOperation";
+import { RavenServerLocator } from "./RavenServerLocator";
+import { RavenServerRunner } from "./RavenServerRunner";
 
 const log = getLogger({ module: "TestDriver" });
-
-export abstract class RavenServerLocator {
-
-    public static ENV_SERVER_PATH = "RAVENDB_JS_TEST_SERVER_PATH";
-
-    public getServerPath(): string {
-        const serverPath = process.env[RavenServerLocator.ENV_SERVER_PATH];
-        if (!serverPath) {
-            throwError("InvalidOperationException", 
-                "Unable to find RavenDB server path. Please make sure " 
-                    + RavenServerLocator.ENV_SERVER_PATH 
-                    + " environment variable is set and is valid " +
-                    "(current value = " + serverPath + ")");
-        }
-
-        return serverPath;
-    }
-
-    public withHttps(): boolean {
-        return false;
-    }
-
-    public getCommand(): string {
-        return this.getServerPath();
-    }
-
-    public getCommandArguments() {
-        return [];
-    }
-
-    public getServerCertificatePath(): string {
-        return throwError("NotSupportedException");
-    }
-
-}
 
 export abstract class RavenTestDriver implements IDisposable {
 
@@ -77,23 +45,23 @@ export abstract class RavenTestDriver implements IDisposable {
         throw new Error("TODO");
     }
 
-    public getSecuredDocumentStore(): DocumentStore; 
-    public getSecuredDocumentStore(database?): DocumentStore { 
+    public getSecuredDocumentStore(): Promise<DocumentStore>; 
+    public getSecuredDocumentStore(database?): Promise<DocumentStore> { 
         return this.getDocumentStore(database, true, null);
     }
 
     // tslint:disable-next-line:no-empty
-    protected customizeDbRecord(dbRecord: DatabaseRecord): void {}
+    protected _customizeDbRecord(dbRecord: DatabaseRecord): void {}
 
-    public getDocumentStore(): DocumentStore;
-    public getDocumentStore(database: string): DocumentStore;
+    public getDocumentStore(): Promise<DocumentStore>;
+    public getDocumentStore(database: string): Promise<DocumentStore>;
     public getDocumentStore(
-        database: string, secured: boolean, waitForIndexingTimeoutInMs?: number): DocumentStore; 
+        database: string, secured: boolean, waitForIndexingTimeoutInMs?: number): Promise<DocumentStore>; 
     public getDocumentStore(
-        database = "test_db", secured = false, waitForIndexingTimeoutInMs?: number = null): DocumentStore {
+        database = "test_db", secured = false, waitForIndexingTimeoutInMs?: number = null): Promise<DocumentStore> {
 
         const databaseName = database + "_" + (++RavenTestDriver.index);
-        RavenTestDriver.reportInfo(`getDocumentStore for db ${ database }.`);
+        log.info(`getDocumentStore for db ${ database }.`);
 
         if (!RavenTestDriver._getGlobalServer(secured)) {
             if (RavenTestDriver._getGlobalServer(secured) === null) {
@@ -104,63 +72,71 @@ export abstract class RavenTestDriver implements IDisposable {
         const documentStore: IDocumentStore = RavenTestDriver._getGlobalServer(secured);
         const databaseRecord = Object.assign(new DatabaseRecord(), { databaseName });
 
-        this.customizeDbRecord(databaseRecord);
+        this._customizeDbRecord(databaseRecord);
 
         const createDatabaseOperation = new CreateDatabaseOperation(databaseRecord);
-        documentStore.maintenance.server.send(createDatabaseOperation);
+        return Promise.resolve()
+            .then(() => documentStore.maintenance.server.send(createDatabaseOperation))
+        .then(createDatabaseResult => {
+            const store = new DocumentStore(documentStore.urls, name);
+            if (secured) {
+                throw new Error("TODO");
+                store.authOptions = null; // TODO
+            }
 
+            store.initialize();
 
-        // DocumentStore store = new DocumentStore();
-        // store.setUrls(documentStore.getUrls());
-        // store.setDatabase(name);
+            (store as IDocumentStore).on("afterClose", () => {
+                if (!this.documentStores.has(store)) {
+                    return; 
+                }
 
-        // if (secured) {
-        //     store.setCertificate(getTestClientCertificate());
-        // }
+                return Promise.resolve()
+                    .then(() => {
+                        return store.maintenance.server.send(new DeleteDatabasesOperation({
+                            databaseNames: [ store.database ],
+                            hardDelete: true
+                        }));
+                    })
+                    .catch(err => {
+                        if (err.name === "DatabaseDoesNotExistException"
+                        || err.name === "NoLeaderException") {
+                            return;
+                        }
+                        
+                        throwError("TestDriverTearDownError", `Error deleting database ${ store.database }.`, err);
+                    });
+            });
 
-        // store.initialize();
+            return Promise.resolve()
+                .then(() => this._setupDatabase(store))
+                // /* TODO
+                //  if (waitForIndexingTimeout.HasValue)
+                //         WaitForIndexing(store, name, waitForIndexingTimeout);
+                //  */
+                .then(() => this.documentStores.add(store))
+                .then(() => store);
 
-        // store.addAfterCloseListener(((sender, event) -> {
-        //     if(!documentStores.contains(store)) {
-        //         return;
-        //     }
-
-        //     try {
-        //         store.maintenance().server().send(new DeleteDatabasesOperation(store.getDatabase(), true));
-        //     } catch (DatabaseDoesNotExistException e) {
-        //         // ignore
-        //     } catch (NoLeaderException e) {
-        //         // ignore
-        //     }
-        // }));
-
-        // setupDatabase(store);
-
-        // /* TODO
-        //  if (waitForIndexingTimeout.HasValue)
-        //         WaitForIndexing(store, name, waitForIndexingTimeout);
-        //  */
-
-        // documentStores.add(store);
-        // return store;
+        });
     }
 
-
-    @SuppressWarnings("EmptyMethod")
-    protected void setupDatabase(IDocumentStore documentStore) {
-        // empty by design
+    protected _setupDatabase(documentStore: IDocumentStore): Promise<void> {
+        return Promise.resolve();
     }
 
-    private IDocumentStore runServer(boolean secured) throws Exception {
-        Process process = RavenServerRunner.run(secured ? this.securedLocator : this.locator);
-        setGlobalServerProcess(secured, process);
+    private runServer(secured: boolean): IDocumentStore {
+        const process = RavenServerRunner.run(secured ? this.securedLocator : this.locator);
+        this._setGlobalServerProcess(secured, process);
 
-        reportInfo("Starting global server");
+        log.info("Starting global server");
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> killGlobalServerProcess(secured)));
+        process.once("exit", (code, signal) => {
+            this.killGlobalServerProcess(secured);
+        });
 
-        String url = null;
-        InputStream stdout = getGlobalProcess(secured).getInputStream();
+
+        let url: string = null;
+        InputStream stdout = this.getGlobalProcess(secured).stdout;
 
         StringBuilder sb = new StringBuilder();
 
@@ -230,12 +206,12 @@ export abstract class RavenTestDriver implements IDisposable {
 
         if (url == null) {
             String log = sb.toString();
-            reportInfo(log);
+            log.info(log);
 
             try {
                 process.destroyForcibly();
-            } catch (Exception e) {
-                reportError(e);
+            } catch (e) {
+                log.error(e);
             }
 
             throw new IllegalStateException("Unable to start server, log is: " + log);
@@ -256,52 +232,47 @@ export abstract class RavenTestDriver implements IDisposable {
         return store.initialize();
     }
 
-    private static void killGlobalServerProcess(boolean secured) {
-        Process p;
+    private static _killGlobalServerProcess(secured: boolean): void {
+        let p: ChildProcess;
         if (secured) {
             p = RavenTestDriver.globalSecuredServerProcess;
-            globalSecuredServerProcess = null;
+            RavenTestDriver.globalSecuredServerProcess = null;
         } else {
             p = RavenTestDriver.globalServerProcess;
-            globalServerProcess = null;
+            RavenTestDriver.globalServerProcess = null;
         }
 
-        if (p != null && p.isAlive()) {
-            reportInfo("Kill global server");
+        if (p && !p.killed) {
+            log.info("Kill global server");
 
             try {
-                p.destroyForcibly();
-            } catch (Exception e) {
-                reportError(e);
+                p.kill();
+            } catch (err) {
+                log.error(err);
             }
         }
     }
 
-    private IDocumentStore getGlobalServer(boolean secured) {
-        return secured ? globalSecuredServer : globalServer;
+    private _getGlobalServer(secured: boolean): IDocumentStore {
+        return secured ? RavenTestDriver.globalSecuredServer : RavenTestDriver.globalServer;
     }
 
-    private Process getGlobalProcess(boolean secured) {
-        return secured ? globalSecuredServerProcess : globalServerProcess;
+    private _getGlobalProcess(secured: boolean): ChildProcess {
+        return secured ? RavenTestDriver.globalSecuredServerProcess : RavenTestDriver.globalServerProcess;
     }
 
-    private void setGlobalServerProcess(boolean secured, Process p) {
+    private _setGlobalServerProcess(secured: boolean, p: ChildProcess): void {
         if (secured) {
-            globalSecuredServerProcess = p;
+            RavenTestDriver.globalSecuredServerProcess = p;
         } else {
-            globalServerProcess = p;
+            RavenTestDriver.globalServerProcess = p;
         }
     }
 
-    public void waitForIndexing(IDocumentStore store) {
-        waitForIndexing(store, null, null);
-    }
-
-    public void waitForIndexing(IDocumentStore store, String database) {
-        waitForIndexing(store, database, null);
-    }
-
-    public void waitForIndexing(IDocumentStore store, String database, Duration timeout) {
+    public waitForIndexing(store: IDocumentStore): Promise<void>;
+    public waitForIndexing(store: IDocumentStore, database?: string): Promise<void>
+    public waitForIndexing(store: IDocumentStore, database?: string, timeout?: number): Promise<void>;
+    public waitForIndexing(store: IDocumentStore, database?: string, timeout?: number): Promise<void> {
         MaintenanceOperationExecutor admin = store.maintenance().forDatabase(database);
 
         if (timeout == null) {
@@ -399,40 +370,7 @@ export abstract class RavenTestDriver implements IDisposable {
         }
     }
 
-    private static void reportError(Exception e) {
-        if (!debug) {
-            return;
-        }
-
-        if (e == null) {
-            throw new IllegalArgumentException("Exception can not be null");
-        }
-
-
-        /* TODO:
-        var msg = $"{DateTime.Now}: {e}\r\n";
-            File.AppendAllText("raven_testdriver.log", msg);
-            Console.WriteLine(msg);
-         */
-    }
-
-    private static reportInfo(message: string): void {
-        log.
-        /* TODO:
-         if (Debug == false)
-                return;
-
-            if (string.IsNullOrWhiteSpace(message))
-                throw new ArgumentNullException(nameof(message));
-
-            var msg = $"{DateTime.Now}: {message}\r\n";
-            File.AppendAllText("raven_testdriver.log", msg);
-            Console.WriteLine(msg);
-         */
-    }
-
-    @Override
-    public void close() {
+    public dispose(): void {
         if (disposed) {
             return;
         }
