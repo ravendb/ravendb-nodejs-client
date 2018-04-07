@@ -1,11 +1,15 @@
+import {IMaintenanceOperation, OperationResultType} from "./OperationBase";
 import { ServerNode } from "../../Http/ServerNode";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { HttpRequestBase } from "../../Primitives/Http";
-import { IMaintenanceOperation } from "../Operations/IMaintenanceOperation";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { DatabaseStatistics } from "./DatabaseStatistics";
 
 export class GetStatisticsOperation implements IMaintenanceOperation<DatabaseStatistics> {
+
+    public get resultType(): OperationResultType {
+        return "COMMAND_RESULT";
+    }
 
     private readonly _debugTag: string;
 

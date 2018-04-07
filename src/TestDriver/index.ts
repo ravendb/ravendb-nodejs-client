@@ -1,3 +1,5 @@
+import * as os from "os";
+import * as BluebirdPromise from "bluebird";
 import {IAuthOptions} from "../Auth/AuthOptions";
 import { spawn, ChildProcess } from "child_process";
 import { IDisposable } from "../Types/Contracts";
@@ -10,33 +12,39 @@ import { CreateDatabaseOperation } from "../ServerWide/Operations/CreateDatabase
 import { DeleteDatabasesOperation } from "../ServerWide/Operations/DeleteDatabasesOperation";
 import { RavenServerLocator } from "./RavenServerLocator";
 import { RavenServerRunner } from "./RavenServerRunner";
+import { callbackify } from "util";
+import { GetStatisticsOperation } from "../Documents/Operations/GetStatisticsOperation";
+import { DatabaseStatistics } from "../Documents/Operations/DatabaseStatistics";
+import { CONSTANTS } from "../Constants";
+import { Todo } from "../Types";
+import { WError, MultiError } from "verror";
 
 const log = getLogger({ module: "TestDriver" });
 
 export abstract class RavenTestDriver implements IDisposable {
 
-    private locator: RavenServerLocator;
-    private securedLocator: RavenServerLocator;
+    private _locator: RavenServerLocator;
+    private _securedLocator: RavenServerLocator;
 
-    private static globalServer: DocumentStore;
-    private static globalServerProcess: ChildProcess;
+    private static _globalServer: DocumentStore;
+    private static _globalServerProcess: ChildProcess;
 
-    private static globalSecuredServer: DocumentStore;
-    private static globalSecuredServerProcess: ChildProcess;
+    private static _globalSecuredServer: DocumentStore;
+    private static _globalSecuredServerProcess: ChildProcess;
 
-    private documentStores: Set<IDocumentStore> = new Set();
+    private _documentStores: Set<IDocumentStore> = new Set();
 
-    private static index: number = 0;
+    private static _index: number = 0;
 
-    protected disposed: boolean = false;
+    protected _disposed: boolean = false;
 
     public constructor(locator: RavenServerLocator, securedLocator: RavenServerLocator) {
-        this.locator = locator;
-        this.securedLocator = securedLocator;
+        this._locator = locator;
+        this._securedLocator = securedLocator;
     }
 
     public isDisposed(): boolean {
-        return this.disposed;
+        return this._disposed;
     }
 
     public static debug: boolean;
@@ -60,7 +68,7 @@ export abstract class RavenTestDriver implements IDisposable {
     public getDocumentStore(
         database = "test_db", secured = false, waitForIndexingTimeoutInMs?: number = null): Promise<DocumentStore> {
 
-        const databaseName = database + "_" + (++RavenTestDriver.index);
+        const databaseName = database + "_" + (++RavenTestDriver._index);
         log.info(`getDocumentStore for db ${ database }.`);
 
         if (!RavenTestDriver._getGlobalServer(secured)) {
@@ -87,7 +95,7 @@ export abstract class RavenTestDriver implements IDisposable {
             store.initialize();
 
             (store as IDocumentStore).on("afterClose", () => {
-                if (!this.documentStores.has(store)) {
+                if (!this._documentStores.has(store)) {
                     return; 
                 }
 
@@ -114,7 +122,7 @@ export abstract class RavenTestDriver implements IDisposable {
                 //  if (waitForIndexingTimeout.HasValue)
                 //         WaitForIndexing(store, name, waitForIndexingTimeout);
                 //  */
-                .then(() => this.documentStores.add(store))
+                .then(() => this._documentStores.add(store))
                 .then(() => store);
 
         });
@@ -124,122 +132,80 @@ export abstract class RavenTestDriver implements IDisposable {
         return Promise.resolve();
     }
 
-    private runServer(secured: boolean): IDocumentStore {
-        const process = RavenServerRunner.run(secured ? this.securedLocator : this.locator);
+    private runServer(secured: boolean): Promise<IDocumentStore> {
+        const process = RavenServerRunner.run(secured ? this._securedLocator : this._locator);
         this._setGlobalServerProcess(secured, process);
 
         log.info("Starting global server");
 
         process.once("exit", (code, signal) => {
-            this.killGlobalServerProcess(secured);
+            RavenTestDriver._killGlobalServerProcess(secured);
         });
 
 
-        let url: string = null;
-        InputStream stdout = this.getGlobalProcess(secured).stdout;
+        const scrapServerUrl = () => {
+            const SERVER_URL_REGEX = /Server available on:\s*(\S+)\s*$/m;
+            const serverProcess = this._getGlobalProcess(secured);
+            let serverOutput = "";
+            const result = new BluebirdPromise((resolve, reject) => {
+                serverProcess.stdout
+                    .on("data", (chunk) => {
+                        serverOutput += chunk;
+                        try {
+                            const regexMatch = serverOutput.match(SERVER_URL_REGEX);
+                            const data = regexMatch[1];
+                            if (data) {
+                                resolve(data);
+                            }
+                        } catch (err) { reject(err); }
+                    })
+                    .on("error", (err) => reject(err));
+            });
 
-        StringBuilder sb = new StringBuilder();
+            // timeout if url won't show up after 5s
+            return result
+                .timeout(5000)
+                .catch((err) => {
+                    throwError("UrlScrappingError", "Error scrapping URL from server process output.", err);
+                });
+        };
 
-        Stopwatch startupDuration = Stopwatch.createStarted();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(stdout));
+        return Promise.resolve()
+            .then(() => scrapServerUrl())
+            .catch((err) => {
 
-        List<String> readLines = new ArrayList<>();
-
-        while (true) {
-
-            //TODO: handle timeout!
-            String line = reader.readLine();
-            readLines.add(line);
-
-            if (line == null) {
-                throw new RuntimeException(readLines.stream().collect(Collectors.joining(System.lineSeparator())) +  IOUtils.toString(getGlobalProcess(secured).getInputStream(), "UTF-8"));
-            }
-
-            if (startupDuration.elapsed(TimeUnit.MINUTES) >= 1) {
-                break;
-            }
-
-            String prefix = "Server available on: ";
-            if (line.startsWith(prefix)) {
-                url = line.substring(prefix.length());
-                break;
-            }
-
-            /*TODO
-             Task<string> readLineTask = null;
-            while (true)
-            {
-                if (readLineTask == null)
-                    readLineTask = output.ReadLineAsync();
-
-                var task = Task.WhenAny(readLineTask, Task.Delay(TimeSpan.FromSeconds(5))).Result;
-
-                if (startupDuration.Elapsed > TimeSpan.FromMinutes(1))
-                    break;
-
-                if (task != readLineTask)
-                    continue;
-
-                var line = readLineTask.Result;
-
-                readLineTask = null;
-
-                sb.AppendLine(line);
-
-                if (line == null)
-                {
-                    try
-                    {
-                        process.Kill();
-                    }
-                    catch (Exception e)
-                    {
-                        ReportError(e);
-                    }
-
-                    throw new InvalidOperationException("Unable to start server, log is: " + Environment.NewLine + sb);
+                try {
+                    process.kill("SIGKILL");
+                } catch (processKillErr) {
+                    log.error(processKillErr);
                 }
 
-            }
-             */
-        }
+                throwError("InvalidOperationException", "Unable to start server.", err);
+            })
+            .then((serverUrl) => {
+                const store = new DocumentStore([ url ], "test.manager");
+                store.conventions.disableTopologyUpdates = true;
 
-        if (url == null) {
-            String log = sb.toString();
-            log.info(log);
+                if (secured) {
+                    RavenTestDriver._globalSecuredServer = store;
+                    const authOpts = this.getTestClientCertificate();
+                    store.authOptions = authOpts;
+                } else {
+                    RavenTestDriver._globalServer = store;
+                }
 
-            try {
-                process.destroyForcibly();
-            } catch (e) {
-                log.error(e);
-            }
-
-            throw new IllegalStateException("Unable to start server, log is: " + log);
-        }
-
-        DocumentStore store = new DocumentStore();
-        store.setUrls(new String[]{url});
-        store.setDatabase("test.manager");
-        store.getConventions().setDisableTopologyUpdates(true);
-
-        if (secured) {
-            globalSecuredServer = store;
-            KeyStore clientCert = getTestClientCertificate();
-            store.setCertificate(clientCert);
-        } else {
-            globalServer = store;
-        }
-        return store.initialize();
+                return store.initialize();
+            });
     }
 
     private static _killGlobalServerProcess(secured: boolean): void {
         let p: ChildProcess;
         if (secured) {
-            p = RavenTestDriver.globalSecuredServerProcess;
-            RavenTestDriver.globalSecuredServerProcess = null;
+            p = RavenTestDriver._globalSecuredServerProcess;
+            RavenTestDriver._globalSecuredServerProcess = null;
         } else {
-            p = RavenTestDriver.globalServerProcess;
-            RavenTestDriver.globalServerProcess = null;
+            p = RavenTestDriver._globalServerProcess;
+            RavenTestDriver._globalServerProcess = null;
         }
 
         if (p && !p.killed) {
@@ -254,141 +220,125 @@ export abstract class RavenTestDriver implements IDisposable {
     }
 
     private _getGlobalServer(secured: boolean): IDocumentStore {
-        return secured ? RavenTestDriver.globalSecuredServer : RavenTestDriver.globalServer;
+        return secured ? RavenTestDriver._globalSecuredServer : RavenTestDriver._globalServer;
     }
 
     private _getGlobalProcess(secured: boolean): ChildProcess {
-        return secured ? RavenTestDriver.globalSecuredServerProcess : RavenTestDriver.globalServerProcess;
+        return secured ? RavenTestDriver._globalSecuredServerProcess : RavenTestDriver._globalServerProcess;
     }
 
     private _setGlobalServerProcess(secured: boolean, p: ChildProcess): void {
         if (secured) {
-            RavenTestDriver.globalSecuredServerProcess = p;
+            RavenTestDriver._globalSecuredServerProcess = p;
         } else {
-            RavenTestDriver.globalServerProcess = p;
+            RavenTestDriver._globalServerProcess = p;
         }
     }
 
     public waitForIndexing(store: IDocumentStore): Promise<void>;
-    public waitForIndexing(store: IDocumentStore, database?: string): Promise<void>
+    public waitForIndexing(store: IDocumentStore, database?: string): Promise<void>;
     public waitForIndexing(store: IDocumentStore, database?: string, timeout?: number): Promise<void>;
     public waitForIndexing(store: IDocumentStore, database?: string, timeout?: number): Promise<void> {
-        MaintenanceOperationExecutor admin = store.maintenance().forDatabase(database);
+        const admin = store.maintenance.forDatabase(database);
 
-        if (timeout == null) {
-            timeout = Duration.ofMinutes(1);
+        if (!timeout) {
+            timeout = 60 * 1000; // minute
         }
 
-        Stopwatch sp = Stopwatch.createStarted();
+        const isIndexingDone = (): Promise<boolean> => {
+            return Promise.resolve()
+                .then(() => admin.send(new GetStatisticsOperation()))
+                .then((dbStats: DatabaseStatistics) => {
+                    const indexes = dbStats.indexes.filter(x => x.state !== "DISABLED");
 
-        while (sp.elapsed(TimeUnit.MILLISECONDS) < timeout.toMillis()) {
-            DatabaseStatistics databaseStatistics = admin.send(new GetStatisticsOperation());
+                    const errIndexes = indexes.filter(x => x.state === "ERROR");
+                    if (errIndexes.length) {
+                        throwError("IndexInvalidException", 
+                            `The following indexes are erroneous: ${errIndexes.map(x => x.name).join(", ")}`);
+                    }
 
-            List<IndexInformation> indexes = Arrays.stream(databaseStatistics.getIndexes())
-                    .filter(x -> !IndexState.DISABLED.equals(x.getState()))
-                    .collect(Collectors.toList());
+                    return indexes.every(x => 
+                        !x.isStale
+                        && x.name.indexOf(CONSTANTS.Documents.Indexing.SIDE_BY_SIDE_INDEX_NAME_PREFIX) !== 0);
+                });
+        };
 
-            if (indexes.stream().allMatch(x -> !x.isStale() &&
-                    !x.getName().startsWith(Constants.Documents.Indexing.SIDE_BY_SIDE_INDEX_NAME_PREFIX))) {
-                return;
-            }
+        const pollIndexingStatus = () => {
+            return BluebirdPromise.resolve()
+                .then(() => isIndexingDone())
+                .then(indexingDone => {
+                    if (!indexingDone) {
+                        return BluebirdPromise.resolve()
+                            .delay(100)
+                            .then(() => pollIndexingStatus());
+                    }
+                });
+        };
 
-            if (Arrays.stream(databaseStatistics.getIndexes()).anyMatch(x -> IndexState.ERROR.equals(x.getState()))) {
-                break;
-            }
-
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        throw new TimeoutException(); //TODO:
-        /* TODO
-            var errors = admin.Send(new GetIndexErrorsOperation());
-
-            string allIndexErrorsText = string.Empty;
-            if (errors != null && errors.Length > 0)
-            {
-                var allIndexErrorsListText = string.Join("\r\n",
-                    errors.Select(FormatIndexErrors));
-                allIndexErrorsText = $"Indexing errors:\r\n{ allIndexErrorsListText }";
-
-                string FormatIndexErrors(IndexErrors indexErrors)
-                {
-                    var errorsListText = string.Join("\r\n",
-                        indexErrors.Errors.Select(x => $"- {x}"));
-                    return $"Index '{indexErrors.Name}' ({indexErrors.Errors.Length} errors):\r\n{errorsListText}";
-                }
-            }
-
-            throw new TimeoutException($"The indexes stayed stale for more than {timeout.Value}.{ allIndexErrorsText }");
-        }
-         */
+        const timeoutingPromise = BluebirdPromise.resolve().timeout(timeout);
+        return Promise.race([
+            timeoutingPromise,
+            pollIndexingStatus()
+        ]);
     }
 
 
-    public void waitForUserToContinueTheTest(IDocumentStore store) {
-        String databaseNameEncoded = UrlUtils.escapeDataString(store.getDatabase());
-        String documentsPage = store.getUrls()[0] + "/studio/index.html#databases/documents?&database=" + databaseNameEncoded + "&withStop=true";
+    public waitForUserToContinueTheTest(store: Todo): void {
+        // TODO
 
-        openBrowser(documentsPage);
+        // String databaseNameEncoded = UrlUtils.escapeDataString(store.getDatabase());
+        // String documentsPage = store.getUrls()[0] + "/studio/index.html#databases/documents?&database=" + databaseNameEncoded + "&withStop=true";
 
-        do {
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException ignored) {
-            }
+        // openBrowser(documentsPage);
 
-            try (IDocumentSession session = store.openSession()) {
-                if (session.load(ObjectNode.class, "Debug/Done") != null) {
-                    break;
-                }
-            }
+        // do {
+        //     try {
+        //         Thread.sleep(500);
+        //     } catch (InterruptedException ignored) {
+        //     }
 
-        } while (true);
+        //     try (IDocumentSession session = store.openSession()) {
+        //         if (session.load(ObjectNode.class, "Debug/Done") != null) {
+        //             break;
+        //         }
+        //     }
+
+        // } while (true);
     }
 
-    protected void openBrowser(String url) {
-        System.out.println(url);
+    protected _openBrowser(url: string): void {
+        // tslint:disable-next-line:no-console
+        console.log(url);
 
-        if (Desktop.isDesktopSupported()) {
-            Desktop desktop = Desktop.getDesktop();
-            try {
-                desktop.browse(new URI(url));
-            } catch (IOException | URISyntaxException e) {
-                throw new RuntimeException(e);
-            }
+        if (os.platform() === "win32") {
+            spawn("powershell.exe", ["-c", `start-process ${url}`], {
+                detached: true
+            });
         } else {
-            Runtime runtime = Runtime.getRuntime();
-            try {
-                runtime.exec("xdg-open " + url);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            spawn("xdg-open", [ url ], {
+                detached: true
+            });
         }
     }
 
     public dispose(): void {
-        if (disposed) {
+        if (this._disposed) {
             return;
         }
 
-        ArrayList<Exception> exceptions = new ArrayList<>();
-
-        for (DocumentStore documentStore : documentStores) {
+        const errors = [];
+        this._documentStores.forEach((store) => {
             try {
-                documentStore.close();
-            } catch (Exception e) {
-                exceptions.add(e);
+                store.dispose();
+            } catch (err) {
+                errors.push(err);
             }
-        }
+        });
 
-        disposed = true;
+        this._disposed = true;
 
-        if (exceptions.size() > 0) {
-            throw new RuntimeException(exceptions.stream().map(x -> x.toString()).collect(Collectors.joining(", ")));
+        if (errors.length > 0) {
+            throw new MultiError(errors);
         }
     }
 }
