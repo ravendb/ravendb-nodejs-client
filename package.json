@@ -14,7 +14,7 @@
     "build-test": "tsc && tsc -p .\\tsconfig.test.json",
     "watch": "tsc --watch",
     "watch-test": "tsc && tsc --watch -p .\\tsconfig.test.json",
-    "test-debug": "tsc && tsc -p .\\tsconfig.test.json && mocha --inspect-brk",
+    "test-debug": "tsc && tsc -p .\\tsconfig.test.json && mocha --inspect-brk dist-test",
     "mocha": "mocha",
     "lint": "tslint"
   },

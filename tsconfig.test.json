@@ -9,6 +9,7 @@
     "removeComments": true,
     "inlineSourceMap": true,
     "pretty": true,
+    "outDir": "dist-test",
     "lib": [ "es7" ],
     "typeRoots": [
       "node_modules/@types",

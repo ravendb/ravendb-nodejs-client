@@ -220,6 +220,10 @@ export class RequestExecutor implements IDisposable {
     public static create(
         intialUrls: string[],
         database: string,
+        opts?: IRequestExecutorOptions): RequestExecutor;
+    public static create(
+        intialUrls: string[],
+        database: string,
         opts?: IRequestExecutorOptions): RequestExecutor {
         const { authOptions, documentConventions } = opts || {} as IRequestExecutorOptions;
         const executor = new RequestExecutor(database, authOptions, documentConventions);

@@ -42,9 +42,12 @@ describe("Request executor", function() {
     it("fails when server is offline", function() {
         this.timeout(5000);
         const documentConventions = new DocumentConventions();
-        const executor = RequestExecutor.create(["http://no_such_host:8081"], "db1", null, documentConventions);
+        const executor = RequestExecutor.create(["http://no_such_host:8081"], "db1", {
+            documentConventions
+        });
         const getTopology = new GetDatabaseTopologyCommand();
-        return executor.execute(getTopology)
+        return BluebirdPromise.resolve()
+            .then(() => executor.execute(getTopology))
             .then(() => assert.fail("Should have failed with 'AllTopologyNodesDownException'."),
             err => {
                 assert.ok(err);

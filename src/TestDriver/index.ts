@@ -132,7 +132,7 @@ export abstract class RavenTestDriver implements IDisposable {
         return Promise.resolve();
     }
 
-    private runServer(secured: boolean): Promise<IDocumentStore> {
+    private _runServer(secured: boolean): Promise<IDocumentStore> {
         const process = RavenServerRunner.run(secured ? this._securedLocator : this._locator);
         this._setGlobalServerProcess(secured, process);
 
