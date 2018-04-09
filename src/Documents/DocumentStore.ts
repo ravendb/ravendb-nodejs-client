@@ -32,8 +32,7 @@ export class DocumentStore extends DocumentStoreBase {
 
     private _identifier: string;
     private _aggressiveCachingUsed: boolean;
-
-
+    
     public constructor(url: string, database: string);
     public constructor(urls: string[], database: string);
     public constructor(urls: string | string[], database: string) {
@@ -67,6 +66,7 @@ export class DocumentStore extends DocumentStoreBase {
     }
 
     public dispose(): void {
+        log.info("Dispose.");
         this.emit("beforeClose");
 
         /* TBD
@@ -97,10 +97,22 @@ export class DocumentStore extends DocumentStoreBase {
 
         this._disposed = true;
 
-        this.emit("afterClose");
+        new BluebirdPromise((resolve, reject) => {
+            let listenersExecCallbacksCount = 0;
+            this.emit("afterDispose", () => {
+                if (this.listenerCount("afterDispose") === ++listenersExecCallbacksCount) {
+                    resolve();
+                }
+            });
 
-        this._requestExecutors.forEach((executor, db) => {
-          executor.dispose();
+        })
+        .timeout(5000) // give afterClose subscribers some time to finish stuff
+        .finally(() => {
+            this._requestExecutors.forEach((executor, db) => {
+                executor.dispose();
+            });
+
+            this.emit("executorsDisposed");
         });
     }
 
@@ -183,7 +195,7 @@ export class DocumentStore extends DocumentStoreBase {
                 const generator = null as Todo as any; // new MultiDatabaseHiLoIdGenerator(this, this.conventions)
                 this._multiDbHiLo = generator;
 
-                this.conventions.documentIdGenerator = generator.generateDocumentId.bind(generator);
+                //this.conventions.documentIdGenerator = generator.generateDocumentId.bind(generator);
             }
 
             this.conventions.freeze();

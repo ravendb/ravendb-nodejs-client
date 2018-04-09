@@ -6,6 +6,7 @@ import { DocumentConventions } from "../..";
 import { throwError } from "../../Exceptions";
 import { ServerNode } from "../../Http/ServerNode";
 import { IServerOperation, OperationResultType } from "../../Documents/Operations/OperationAbstractions";
+import { stringifyJson } from "../../Utility/JsonUtil";
 
 export class CreateDatabaseOperation implements IServerOperation<DatabasePutResult> {
 
@@ -50,13 +51,14 @@ class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> {
 
         uri += "&replicationFactor=" + this._replicationFactor;
 
-        const databaseDocument = JSON.stringify(this._databaseRecord);
+        const databaseDocumentJson = stringifyJson(this._databaseRecord, "CAMEL_TO_PASCALCASE");
         return {
             uri,
             method: "PUT",
             headers: {
                 "Content-Type": "application/json"
-            }
+            },
+            body: databaseDocumentJson
         };
     }
 

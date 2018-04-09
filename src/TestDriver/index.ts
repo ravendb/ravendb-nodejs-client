@@ -97,17 +97,20 @@ export abstract class RavenTestDriver implements IDisposable {
 
             store.initialize();
 
-            (store as IDocumentStore).on("afterClose", () => {
+            (store as IDocumentStore).once("afterClose", (callback) => {
                 if (!this._documentStores.has(store)) {
                     return; 
                 }
 
-                return Promise.resolve()
+                return BluebirdPromise.resolve()
                     .then(() => {
                         return store.maintenance.server.send(new DeleteDatabasesOperation({
                             databaseNames: [ store.database ],
                             hardDelete: true
                         }));
+                    })
+                    .tap((deleteResult) => {
+                        log.info(`Database ${store.database} deleted.`);
                     })
                     .catch(err => {
                         if (err.name === "DatabaseDoesNotExistException"
@@ -116,7 +119,8 @@ export abstract class RavenTestDriver implements IDisposable {
                         }
                         
                         throwError("TestDriverTearDownError", `Error deleting database ${ store.database }.`, err);
-                    });
+                    })
+                    .finally(() => callback());
             });
 
             return Promise.resolve()
@@ -136,15 +140,14 @@ export abstract class RavenTestDriver implements IDisposable {
     }
 
     private _runServer(secured: boolean): Promise<IDocumentStore> {
+        log.info("Run global server");
         const process = RavenServerRunner.run(secured ? this._securedLocator : this._locator);
         this._setGlobalServerProcess(secured, process);
 
-        log.info("Starting global server");
-
         process.once("exit", (code, signal) => {
+            log.info("Exiting. Killing global server.");
             RavenTestDriver._killGlobalServerProcess(secured);
         });
-
 
         const scrapServerUrl = () => {
             const SERVER_URL_REGEX = /Server available on:\s*(\S+)\s*$/m;
@@ -156,6 +159,10 @@ export abstract class RavenTestDriver implements IDisposable {
                         serverOutput += chunk;
                         try {
                             const regexMatch = serverOutput.match(SERVER_URL_REGEX);
+                            if (!regexMatch) {
+                                return;
+                            }
+
                             const data = regexMatch[1];
                             if (data) {
                                 resolve(data);
@@ -325,6 +332,8 @@ export abstract class RavenTestDriver implements IDisposable {
     }
 
     public dispose(): void {
+        log.info("Dispose.");
+
         if (this._disposed) {
             return;
         }
@@ -337,6 +346,9 @@ export abstract class RavenTestDriver implements IDisposable {
                 errors.push(err);
             }
         });
+
+        // RavenTestDriver._killGlobalServerProcess(true);
+        // RavenTestDriver._killGlobalServerProcess(false);
 
         this._disposed = true;
 

@@ -14,5 +14,5 @@ export class DatabaseRecord {
     public disabled: boolean;
     public dataDirectory: string;
     public settings: { [key: string]: string } = {};
-    private conflictSolverConfig: ConflictSolver;
+    public conflictSolverConfig: ConflictSolver;
 }

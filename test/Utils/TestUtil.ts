@@ -1,8 +1,12 @@
-import {IDisposable} from '../../src/Types/Contracts';
-import { RavenTestDriver } from "../../src/TestDriver";
-import { RavenServerLocator } from '../../src/TestDriver/RavenServerLocator';
+// tslint:disable-next-line:no-var-requires
+const why = require("why-is-node-running");
 
-logOnUncaughtAndUnhandled();
+import "source-map-support/register";
+import {IDisposable} from "../../src/Types/Contracts";
+import { RavenTestDriver } from "../../src/TestDriver";
+import { RavenServerLocator } from "../../src/TestDriver/RavenServerLocator";
+
+//logOnUncaughtAndUnhandled();
 
 function logOnUncaughtAndUnhandled() {
     process.on("unhandledRejection", (...args) => {
@@ -36,4 +40,20 @@ export class RemoteSecuredTestContext extends RavenTestDriver {
     public getCommandArguments() {
         return [];
     }
+}
+
+export let globalContext: RemoteTestContext;
+setupRavenDbTestContext();
+
+function setupRavenDbTestContext() {
+
+    before(() => {
+        globalContext = RemoteTestContext.setupServer();
+    });
+
+    after(() => {
+        globalContext.dispose();
+    });
+
+    return context;
 }

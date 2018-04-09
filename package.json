@@ -3,18 +3,18 @@
   "version": "4.0.0-rc4",
   "description": "RavenDB client for Node.js",
   "files": [
-    "lib/"
+    "dist/"
   ],
   "homepage": "http://ravendb.net",
-  "main": "lib/ravendb.js",
+  "main": "lib/index.js",
   "typings": "lib/ravendb.d.ts",
   "scripts": {
-    "test": "tsc && tsc -p .\\tsconfig.test.json && mocha",
+    "test": "tsc -p .\\tsconfig.test.json && copy test\\mocha.opts .test && mocha .test\\test",
     "build": "tsc",
-    "build-test": "tsc && tsc -p .\\tsconfig.test.json",
+    "build:test": "tsc -p .\\tsconfig.test.json",
     "watch": "tsc --watch",
-    "watch-test": "tsc && tsc --watch -p .\\tsconfig.test.json",
-    "test-debug": "tsc && tsc -p .\\tsconfig.test.json && mocha --inspect-brk dist-test",
+    "watch:test": "tsc && tsc --watch -p .\\tsconfig.test.json",
+    "test:debug": "tsc && tsc -p .\\tsconfig.test.json && copy test\\mocha.opts .test && mocha --inspect-brk .test\\test",
     "mocha": "mocha",
     "lint": "tslint"
   },
@@ -59,10 +59,12 @@
     "mocha-junit-reporter": "^1.17.0",
     "rimraf": "^2.6.1",
     "sinon": "^4.0.1",
+    "source-map-support": "^0.5.4",
     "tslint": "^5.9.1",
     "tslint-microsoft-contrib": "^5.0.3",
     "typescript": "~2.5.3",
-    "uglify-js-harmony": "^2.7.5"
+    "uglify-js-harmony": "^2.7.5",
+    "why-is-node-running": "^2.0.2"
   },
   "dependencies": {
     "@types/async-lock": "0.0.20",

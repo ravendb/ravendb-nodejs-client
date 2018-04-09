@@ -11,6 +11,7 @@ import { getLogger } from "../Utility/LogUtil";
 import { ObjectMapper } from "../Utility/Mapping";
 import { throwError } from "../Exceptions";
 import { IRavenObject } from "../Types/IRavenObject";
+import { getDefaultMapper } from "../Utility/Mapping";
 
 const log = getLogger({ module: "RavenCommand" });
 
@@ -28,7 +29,7 @@ export abstract class RavenCommand<TResult> {
     protected _canCache: boolean;
     protected _canCacheAggressively: boolean;
 
-    protected mapper: ObjectMapper;
+    protected mapper: ObjectMapper = getDefaultMapper();
 
     public abstract get isReadRequest(): boolean;
 
@@ -64,9 +65,10 @@ export abstract class RavenCommand<TResult> {
             this._responseType, );
     }
 
-    public send(requestOptions: HttpRequestBase): RequestPromise {
-        log.info(`Send command ${this.constructor.name} to ${requestOptions.uri}.`);
-        return request(requestOptions);
+    public send(requestOptions: HttpRequestBase): Promise<HttpResponse> {
+        // log.info(`Send command ${this.constructor.name} to ${requestOptions.uri}.`);
+        log.info(`Send command ${this.constructor.name} to ${requestOptions.uri} with body ${requestOptions.body}.`);
+        return Promise.resolve(request(requestOptions));
     }
 
     public setResponseRaw(response: HttpResponse, body: string): void {

@@ -29,10 +29,20 @@ import { HttpRequestBase, HttpResponse } from "../Primitives/Http";
 import { HEADERS } from "../Constants";
 import { Stopwatch } from "../Utility/Stopwatch";
 import * as PromiseUtil from "../Utility/PromiseUtil";
-import { ExceptionDispatcher } from "../Exceptions/ExceptionDispatcher";
+import { ExceptionDispatcher } from "../Exceptions";
 import { GetStatisticsOperation } from "../Documents/Operations/GetStatisticsOperation";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
 import { TypeUtil } from "../Utility/TypeUtil";
+import { RequestPromiseOptions } from "request-promise";
+
+const DEFAULT_REQUEST_OPTIONS = {
+    simple: false,
+    resolveWithFullResponse: true
+};
+
+export function getDefaultRequestOptions(): RequestPromiseOptions {
+    return DEFAULT_REQUEST_OPTIONS;
+}
 
 const log = getLogger({ module: "RequestExecutor" });
 
@@ -415,7 +425,7 @@ export class RequestExecutor implements IDisposable {
     }
 
     private _initializeUpdateTopologyTimer(): void {
-        if (this._updateTopologyTimer) {
+        if (this._updateTopologyTimer || this._disposed) {
             return;
         }
 
@@ -1075,7 +1085,7 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
     }
 
     private _createRequest<TResult>(node: ServerNode, command: RavenCommand<TResult>): HttpRequestBase {
-        const req = command.createRequest(node);
+        const req = Object.assign(command.createRequest(node), getDefaultRequestOptions());
         req.headers = req.headers || {};
 
         if (!req.headers["Raven-Client-Version"]) {
@@ -1094,6 +1104,10 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
     }
     
     private _spawnHealthChecks(chosenNode: ServerNode, nodeIndex: number): void   {
+        if (this._disposed) {
+            return;
+        }
+
         if (this._failedNodesTimers.has(chosenNode)) {
             return;
         }
@@ -1168,12 +1182,10 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
 
         this._updateClientConfigurationSemaphore.take(() => {
             const sem = this._updateClientConfigurationSemaphore;
-            this._updateClientConfigurationSemaphore = null;
         });
 
         this._updateDatabaseTopologySemaphore.take(() => {
             const sem = this._updateDatabaseTopologySemaphore;
-            this._updateDatabaseTopologySemaphore = null;
         });
 
         this._disposed = true;

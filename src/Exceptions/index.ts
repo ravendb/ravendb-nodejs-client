@@ -1,7 +1,10 @@
 import { VError } from "verror";
 import {TypeUtil} from "../Utility/TypeUtil";
+import { parseJson } from "../Utility/JsonUtil";
 import { StatusCodes } from "../Http/StatusCode";
 import { HttpResponse } from "../Primitives/Http";
+import { ObjectMapper } from "../Utility/Mapping";
+import { getDefaultMapper } from "../Extensions/JsonExtensions";
 
 export function throwError(errName: RavenErrorType);
 export function throwError(errName: RavenErrorType, message: string);
@@ -112,18 +115,20 @@ export interface ExceptionDispatcherArgs {
 }
 export class ExceptionDispatcher {
 
+    private static _mapper: ObjectMapper = getDefaultMapper();
+
     public static get(opts: ExceptionDispatcherArgs, code: number): Error {
         const { message, error, type } = opts;
         if (code === StatusCodes.Conflict) {
             if (type.indexOf("DocumentConflictException") !== -1) {
-                return getError(message, "DocumentConflictException");
+                return getError("DocumentConflictException", message);
             }
 
-            return getError(message, "ConcurrencyException");
+            return getError("ConcurrencyException", message);
         }
 
         const determinedType = this._getType(type) as RavenErrorType;
-        return getError(error, determinedType || "RavenException");
+        return getError(determinedType || "RavenException", error);
     }
 
     public static throwException(response: HttpResponse): void {
@@ -133,7 +138,7 @@ export class ExceptionDispatcher {
 
         try {
             const json: string = response.body;
-            const schema: ExceptionSchema = JSON.parse(json);
+            const schema: ExceptionSchema = ExceptionDispatcher._mapper.deserialize(json);
 
             if (response.statusCode === StatusCodes.Conflict) {
                 this._throwConflict(schema, json);

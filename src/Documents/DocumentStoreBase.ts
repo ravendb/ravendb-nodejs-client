@@ -106,7 +106,7 @@ export abstract class DocumentStoreBase
             value[i] = value[i].replace(/\/$/, "");
         }
 
-        this.urls = value;
+        this._urls = value;
     }
 
     protected _initialized: boolean;
@@ -116,7 +116,7 @@ export abstract class DocumentStoreBase
     //TBD: public abstract BulkInsertOperation BulkInsert(string database = null);
     //TBD: public IReliableSubscriptions Subscriptions { get; }
 
-    protected ensureNotClosed(): void {
+    protected _ensureNotDisposed(): void {
         if (this._disposed) {
             throwError("InvalidOperationException", "The document store has already been disposed and cannot be used");
         }

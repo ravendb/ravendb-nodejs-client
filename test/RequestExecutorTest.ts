@@ -1,31 +1,38 @@
 import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { RemoteTestContext } from "./Utils/TestUtil";
+import { RemoteTestContext, globalContext } from "./Utils/TestUtil";
 
-import { 
-    RequestExecutor, 
+import {
+    RequestExecutor,
     DocumentConventions,
     GetDatabaseTopologyCommand,
-    RavenErrorType
+    RavenErrorType,
 } from "../src";
 
 describe("Request executor", function() {
 
     describe("with server running", () => {
 
-        let context: RemoteTestContext;
+        it.only("works right", async function() {
+            const documentConventions = new DocumentConventions();
+            let store;
+            try {
+                store = await globalContext.getDocumentStore();
+                let executor;
 
-        beforeEach(() => {
-            context = RemoteTestContext.setupServer();
-        });
+                try {
+                    executor = RequestExecutor.create(store.urls, "no_such_db", {
+                        documentConventions
+                    });
+                } finally {
+                    executor.dispose();
+                }
+            } finally {
+                store.dispose();
+            }
 
-        afterEach(() => {
-            context.dispose();
-        });
-
-        it("works right", function() {
-            const conventions = new DocumentConventions();
+            console.log("end test");
 
             // try (IDocumentStore store = getDocumentStore()) {
             //     try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, conventions)) {
@@ -51,12 +58,9 @@ describe("Request executor", function() {
             // }
 
         });
-
     });
 
-
     it("fails when server is offline", function() {
-        this.timeout(5000);
         const documentConventions = new DocumentConventions();
         const executor = RequestExecutor.create(["http://no_such_host:8081"], "db1", {
             documentConventions
@@ -65,10 +69,10 @@ describe("Request executor", function() {
         return BluebirdPromise.resolve()
             .then(() => executor.execute(getTopology))
             .then(() => assert.fail("Should have failed with 'AllTopologyNodesDownException'."),
-            err => {
-                assert.ok(err);
-                assert.equal(err.name, "AllTopologyNodesDownException" as RavenErrorType, err.stack);
-            })
+                err => {
+                    assert.ok(err);
+                    assert.equal(err.name, "AllTopologyNodesDownException" as RavenErrorType, err.stack);
+                })
             .then()
             .finally(() => {
                 try {

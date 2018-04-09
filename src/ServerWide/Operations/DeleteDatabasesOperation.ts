@@ -4,6 +4,7 @@ import { DocumentConventions } from "../..";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestBase } from "../../Primitives/Http";
+import { stringifyJson } from "../../Utility/JsonUtil";
 
 export class DeleteDatabaseResult {
     public raftCommandIndex: number;
@@ -56,7 +57,7 @@ export class DeleteDatabaseCommand extends RavenCommand<DeleteDatabaseResult> {
             throwError("InvalidArgumentException", "Parameters cannot be null.");
         }
 
-        this._parameters = JSON.stringify(parameters);
+        this._parameters = stringifyJson(parameters, "CAMEL_TO_PASCALCASE");
     }
 
     public createRequest(node: ServerNode): HttpRequestBase {

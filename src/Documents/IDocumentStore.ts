@@ -28,11 +28,18 @@ export interface DocumentStoreEventEmitter {
 
     on(eventName: string, eventHandler: () => void): this;
     on(eventName: "beforeClose", eventHandler: () => void): this;
-    on(eventName: "afterClose", eventHandler: () => void): this;
+    on(eventName: "afterClose", eventHandler: (callback: () => void) => void): this;
+    on(eventName: "executorsDisposed", eventHandler: (callback: () => void) => void): this;
+
+    once(eventName: string, eventHandler: () => void): this;
+    once(eventName: "beforeClose", eventHandler: () => void): this;
+    once(eventName: "afterClose", eventHandler: (callback: () => void) => void): this;
+    once(eventName: "executorsDisposed", eventHandler: (callback: () => void) => void): this;
 
     removeListener(eventName: string, eventHandler: () => void): void;
     removeListener(eventName: "beforeClose", eventHandler: () => void): void;
-    removeListener(eventName: "afterClose", eventHandler: () => void): void;
+    removeListener(eventName: "afterClose", eventHandler: (callback: () => void) => void): void;
+    removeListener(eventName: "executorsDisposed", eventHandler: (callback: () => void) => void): void;
 }
 export interface IDocumentStore extends
   IDisposable,

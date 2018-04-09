@@ -2,7 +2,7 @@ import { throwError } from "../Exceptions";
 
 export abstract class RavenServerLocator {
 
-    public static ENV_SERVER_PATH = "RAVENDB_JS_TEST_SERVER_PATH";
+    public static ENV_SERVER_PATH = "RAVENDB_TEST_SERVER_PATH";
 
     public getServerPath(): string {
         const serverPath = process.env[RavenServerLocator.ENV_SERVER_PATH];
