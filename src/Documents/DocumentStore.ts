@@ -15,6 +15,9 @@ const log = getLogger({ module: "DocumentStore" });
 
 export class DocumentStore extends DocumentStoreBase {
 
+    private _log = 
+        getLogger({ module: "DocumentStore-" + Math.floor(Math.random() * 1000) });
+
     // TBD:private readonly AtomicDictionary<IDatabaseChanges> _databaseChanges = 
     // new AtomicDictionary<IDatabaseChanges>(StringComparer.OrdinalIgnoreCase);
     // TBD: private ConcurrentDictionary<string, Lazy<EvictItemsFromCacheBasedOnChanges>> _aggressiveCacheChanges = 
@@ -66,8 +69,9 @@ export class DocumentStore extends DocumentStoreBase {
     }
 
     public dispose(): void {
-        log.info("Dispose.");
-        this.emit("beforeClose");
+        this._log.info("Dispose.");
+        this.emit("beforeDispose");
+
 
         /* TBD
 
@@ -90,7 +94,7 @@ export class DocumentStore extends DocumentStoreBase {
         if (this._multiDbHiLo) {
           BluebirdPromise.resolve()
             // .then(() => this._multiDbHiLo.returnUnusedRange())
-            .catch(err => log.warn("Error returning unused ID range.", err));
+            .catch(err => this._log.warn("Error returning unused ID range.", err));
         }
 
         // TBD: Subscriptions?.Dispose();
@@ -99,14 +103,16 @@ export class DocumentStore extends DocumentStoreBase {
 
         new BluebirdPromise((resolve, reject) => {
             let listenersExecCallbacksCount = 0;
+            const listenersCount = this.listenerCount("afterDispose");
             this.emit("afterDispose", () => {
-                if (this.listenerCount("afterDispose") === ++listenersExecCallbacksCount) {
+                if (listenersCount === ++listenersExecCallbacksCount) {
                     resolve();
                 }
             });
 
         })
         .timeout(5000) // give afterClose subscribers some time to finish stuff
+        .catch((err) => this._log.warn(`Error handling 'afterDispose'`, err))
         .finally(() => {
             this._requestExecutors.forEach((executor, db) => {
                 executor.dispose();
@@ -151,7 +157,7 @@ export class DocumentStore extends DocumentStoreBase {
     //}
 
     public getRequestExecutor(database?: string): RequestExecutor {
-        this.assertInitialized();
+        this._assertInitialized();
 
         if (!database) {
             database = this.database;
@@ -227,7 +233,7 @@ export class DocumentStore extends DocumentStoreBase {
      */
     public withAggressiveCachingDisabled(
         action: () => void | PromiseLike<any>, databaseName?: string): PromiseLike<any> {
-        this.assertInitialized();
+        this._assertInitialized();
         const re: RequestExecutor = this.getRequestExecutor(databaseName || this.database);
         const old = re.agressiveCaching;
         re.agressiveCaching = null;
@@ -243,7 +249,7 @@ export class DocumentStore extends DocumentStoreBase {
     // TBD private void ListenToChangesAndUpdateTheCache(string database)
 
     public get maintenance(): MaintenanceOperationExecutor {
-        this.assertInitialized();
+        this._assertInitialized();
 
         if (!this._maintenanceOperationExecutor) {
             this._maintenanceOperationExecutor = new MaintenanceOperationExecutor(this);

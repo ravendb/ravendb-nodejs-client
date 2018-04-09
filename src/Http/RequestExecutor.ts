@@ -121,6 +121,9 @@ export class NodeStatus implements IDisposable {
 
 export class RequestExecutor implements IDisposable {
 
+    private _log = 
+        getLogger({ module: `${this.constructor.name}-${ Math.floor(Math.random() * 10000) }` });
+
     public static readonly CLIENT_VERSION = "4.0.0";
 
     private _updateDatabaseTopologySemaphore = semaphore();
@@ -311,7 +314,7 @@ export class RequestExecutor implements IDisposable {
                 });
 
             return BluebirdPromise.resolve(result)
-                .tapCatch(err => log.error(err, "Error getting client configuration."))
+                .tapCatch(err => this._log.error(err, "Error getting client configuration."))
                 .finally(() => {
                     this._disableClientConfigurationUpdates = oldDisableClientConfigurationUpdates;
                     this._updateClientConfigurationSemaphore.leave();
@@ -340,7 +343,7 @@ export class RequestExecutor implements IDisposable {
                     return false;
                 }
 
-                log.info(`Update topology from ${node.url}.`);
+                this._log.info(`Update topology from ${node.url}.`);
 
                 const getTopology = new GetDatabaseTopologyCommand();
                 const getTopologyPromise = this.execute(getTopology, null, {
@@ -429,6 +432,8 @@ export class RequestExecutor implements IDisposable {
             return;
         }
 
+        this._log.info("Initialize update topology timer.");
+
         const minInMs = 60 * 1000;
         const that = this;
         this._updateTopologyTimer = 
@@ -450,13 +455,13 @@ export class RequestExecutor implements IDisposable {
             const preferredNode: CurrentIndexAndNode = this._nodeSelector.getPreferredNode();
             serverNode = preferredNode.currentNode;
         } catch (err) {
-            log.warn(err, "Couldn't get preferred node Topology from _updateTopologyTimer");
+            this._log.warn(err, "Couldn't get preferred node Topology from _updateTopologyTimer");
             return;
         }
 
         return this.updateTopology(serverNode, 0)
             .catch(err => {
-                log.error(err, "Couldn't update topology from _updateTopologyTimer");
+                this._log.error(err, "Couldn't update topology from _updateTopologyTimer");
                 return null;
             });
     }
@@ -583,7 +588,7 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
             return this._executeOnSpecificNode(command, sessionInfo, options);
         }
 
-        log.info(`Execute command ${command.constructor.name}`);
+        this._log.info(`Execute command ${command.constructor.name}`);
 
         const topologyUpdate = this._firstTopologyUpdatePromise;
         const isTopologyUpdateFinished = BluebirdPromise.resolve(topologyUpdate).isFulfilled();
@@ -624,7 +629,7 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
                     this._firstTopologyUpdatePromise = null; // next request will raise it
                 }
 
-                log.warn(reason, "Error doing topology update.");
+                this._log.warn(reason, "Error doing topology update.");
 
                 throw reason;
             })
@@ -665,7 +670,7 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
 
         const { chosenNode, nodeIndex, shouldRetry } = options;
 
-        log.info(`Actual execute ${command.constructor.name} on ${chosenNode.url}`
+        this._log.info(`Actual execute ${command.constructor.name} on ${chosenNode.url}`
             + ` ${ shouldRetry ? "with" : "without" } retry.`);
 
         const req: HttpRequestBase = this._createRequest(chosenNode, command);
@@ -722,7 +727,7 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
                 sp.stop();
                 return;
             }, (error) => {
-                log.warn(error, "Error executing on specific node.");
+                this._log.warn(error, "Error executing on specific node.");
 
                 if (!shouldRetry) {
                     return BluebirdPromise.reject(error);
@@ -815,12 +820,12 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
 
                             const topologyTask = refreshTopology
                                 ? BluebirdPromise.resolve(this.updateTopology(serverNode, 0))
-                                    .tapCatch(err => log.warn(err, "Error refreshing topology."))
+                                    .tapCatch(err => this._log.warn(err, "Error refreshing topology."))
                                 : BluebirdPromise.resolve(false);
 
                             const clientConfigurationTask = refreshClientConfiguration
                                 ? BluebirdPromise.resolve(this._updateClientConfiguration())
-                                    .tapCatch(err => log.warn(err, "Error refreshing client configuration."))
+                                    .tapCatch(err => this._log.warn(err, "Error refreshing client configuration."))
                                     .then(() => true)
                                 : BluebirdPromise.resolve(false);
 
@@ -974,7 +979,7 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
                 this._nodeSelector.recordFastest(fastest.index, nodes[fastest.index]);
             })
             .catch((err) => {
-                log.warn(err, "Error executing on all to find fastest node.");
+                this._log.warn(err, "Error executing on all to find fastest node.");
             })
             .then(() => preferredTask)
             .then(taskResult => taskResult.response);
@@ -1112,6 +1117,8 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
             return;
         }
 
+        this._log.info(`Spawn health checks for node ${chosenNode.url}.`);
+
         const nodeStatus: NodeStatus = new NodeStatus(
             nodeIndex, 
             chosenNode, 
@@ -1148,7 +1155,7 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
                         }
                     },
                     err => {
-                        log.error(err, `${serverNode.clusterTag} is still down`);
+                        this._log.error(err, `${serverNode.clusterTag} is still down`);
 
                         status = this._failedNodesTimers.get(nodeStatus.node);
                         if (status) {
@@ -1157,7 +1164,8 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
                     });
             })
             .catch(err => {
-                log.error(err, "Failed to check node topology, will ignore this node until next topology update.");
+                this._log.error(
+                    err, "Failed to check node topology, will ignore this node until next topology update.");
             }) ;
 
         return result;
@@ -1175,10 +1183,12 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
     }
 
     public dispose(): void {
-        log.info("Dispose.");
+        this._log.info("Dispose.");
         if (this._disposed) {
             return;
         }
+        
+        this._disposed = true;
 
         this._updateClientConfigurationSemaphore.take(() => {
             const sem = this._updateClientConfigurationSemaphore;
@@ -1188,7 +1198,6 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
             const sem = this._updateDatabaseTopologySemaphore;
         });
 
-        this._disposed = true;
         this._cache.dispose();
 
         if (this._updateTopologyTimer) {

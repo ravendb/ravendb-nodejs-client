@@ -166,10 +166,7 @@ export class ClusterRequestExecutor extends RequestExecutor {
     }
 
     public dispose(): void {
-        this._clusterTopologySemaphore.take(() => {
-            this._clusterTopologySemaphore = null;
-        });
-
+        this._clusterTopologySemaphore.take(() => {});
         super.dispose();
     }
 }

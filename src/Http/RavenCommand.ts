@@ -66,8 +66,9 @@ export abstract class RavenCommand<TResult> {
     }
 
     public send(requestOptions: HttpRequestBase): Promise<HttpResponse> {
+        const { body, uri } = requestOptions;
         // log.info(`Send command ${this.constructor.name} to ${requestOptions.uri}.`);
-        log.info(`Send command ${this.constructor.name} to ${requestOptions.uri} with body ${requestOptions.body}.`);
+        log.info(`Send command ${this.constructor.name} to ${uri}${body ? " with body " + body : ""}.`);
         return Promise.resolve(request(requestOptions));
     }
 

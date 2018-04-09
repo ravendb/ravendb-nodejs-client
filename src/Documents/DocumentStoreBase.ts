@@ -122,7 +122,7 @@ export abstract class DocumentStoreBase
         }
     }
 
-    protected assertInitialized(): void {
+    protected _assertInitialized(): void {
         if (!this._initialized) {
             throwError(
                 "You cannot open a session or access the database commands before initializing the document store. "

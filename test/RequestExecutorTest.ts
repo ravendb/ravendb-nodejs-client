@@ -14,7 +14,7 @@ describe("Request executor", function() {
 
     describe("with server running", () => {
 
-        it.only("works right", async function() {
+        it("works right", async function() {
             const documentConventions = new DocumentConventions();
             let store;
             try {
@@ -32,7 +32,6 @@ describe("Request executor", function() {
                 store.dispose();
             }
 
-            console.log("end test");
 
             // try (IDocumentStore store = getDocumentStore()) {
             //     try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, conventions)) {
@@ -73,14 +72,8 @@ describe("Request executor", function() {
                     assert.ok(err);
                     assert.equal(err.name, "AllTopologyNodesDownException" as RavenErrorType, err.stack);
                 })
-            .then()
             .finally(() => {
-                try {
-                    executor.dispose();
-                } catch (err) {
-                    // tslint:disable-next-line:no-console
-                    console.log(err.stack);
-                }
+                executor.dispose();
             });
     });
 });

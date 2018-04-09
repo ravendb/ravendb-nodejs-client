@@ -9,7 +9,7 @@ import { DocumentStore } from "../Documents/DocumentStore";
 import { IDocumentStore } from "../Documents/IDocumentStore";
 import { DatabaseStatistics } from "../Documents/Operations/DatabaseStatistics";
 import { GetStatisticsOperation } from "../Documents/Operations/GetStatisticsOperation";
-import { throwError } from "../Exceptions";
+import { throwError, getError } from "../Exceptions";
 import { DatabaseRecord } from "../ServerWide";
 import { CreateDatabaseOperation } from "../ServerWide/Operations/CreateDatabaseOperation";
 import { DeleteDatabasesOperation } from "../ServerWide/Operations/DeleteDatabasesOperation";
@@ -97,8 +97,9 @@ export abstract class RavenTestDriver implements IDisposable {
 
             store.initialize();
 
-            (store as IDocumentStore).once("afterClose", (callback) => {
+            (store as IDocumentStore).once("afterDispose", (callback) => {
                 if (!this._documentStores.has(store)) {
+                    callback();
                     return; 
                 }
 
@@ -145,8 +146,7 @@ export abstract class RavenTestDriver implements IDisposable {
         this._setGlobalServerProcess(secured, process);
 
         process.once("exit", (code, signal) => {
-            log.info("Exiting. Killing global server.");
-            RavenTestDriver._killGlobalServerProcess(secured);
+            log.info("Exiting.");
         });
 
         const scrapServerUrl = () => {
@@ -338,22 +338,37 @@ export abstract class RavenTestDriver implements IDisposable {
             return;
         }
 
-        const errors = [];
-        this._documentStores.forEach((store) => {
-            try {
-                store.dispose();
-            } catch (err) {
-                errors.push(err);
-            }
-        });
-
-        // RavenTestDriver._killGlobalServerProcess(true);
-        // RavenTestDriver._killGlobalServerProcess(false);
-
         this._disposed = true;
 
-        if (errors.length > 0) {
-            throw new MultiError(errors);
-        }
+        const STORE_DISPOSAL_TIMEOUT = 5000;
+        const storeDisposalPromises = [ ...this._documentStores ].map((store) => {
+            return Promise.resolve()
+                .then(() => {
+                    const result = new BluebirdPromise((resolve) => {
+                        store.once("executorsDisposed", () => {
+                            resolve();
+                        });
+                    })
+                    .timeout(STORE_DISPOSAL_TIMEOUT)
+                    .then(() => null);
+
+                    store.dispose();
+                    return result;
+                })
+                .catch((err: Error) => 
+                    getError("TestDriverTeardownError", "Error disposing document store", err));
+        });
+
+        BluebirdPromise.all(storeDisposalPromises)
+            .then((errors) => {
+                const anyErrors = errors.filter(x => !!x);
+                if (anyErrors.length) {
+                    throw new MultiError(anyErrors);
+                }
+            })
+            .finally(() => {
+                RavenTestDriver._killGlobalServerProcess(true);
+                RavenTestDriver._killGlobalServerProcess(false);
+            });
     }
 }
