@@ -1,15 +1,14 @@
-import { OperationCompletionAwaiter } from './OperationAwaiter';
+import { OperationCompletionAwaiter } from "./OperationCompletionAwaiter";
 import * as BluebirdPromise from "bluebird";
 import {
     IOperation,
     AwaitableOperation,
     OperationIdResult,
     IAwaitableOperation
-} from "./OperationBase";
+} from "./OperationAbstractions";
 import { IDocumentStore } from "../../Documents/IDocumentStore";
-import { ClusterRequestExecutor } from "../../Http/Request/ClusterRequestExecutor";
-import { IRequestExecutor, RequestExecutor } from "../../Http/RequestExecutor";
-//import {PatchStatuses, IPatchResult} from '../../Http/Request/PatchRequest';
+import { ClusterRequestExecutor } from "../../Http/ClusterRequestExecutor";
+import { RequestExecutor } from "../../Http/RequestExecutor";
 import { StatusCodes } from "../../Http/StatusCode";
 import { IRavenObject } from "../../Types/IRavenObject";
 import { IDisposable } from "../../Types/Contracts";
@@ -20,6 +19,8 @@ import { IRequestAuthOptions } from "../../Auth/AuthOptions";
 import { IRavenResponse } from "../../Types";
 import { DocumentStoreBase } from "../DocumentStoreBase";
 import { SessionInfo } from "../Session";
+
+// TODO import {PatchStatuses, IPatchResult} from '../../Http/Request/PatchRequest';
 
 export class OperationExecutor {
 

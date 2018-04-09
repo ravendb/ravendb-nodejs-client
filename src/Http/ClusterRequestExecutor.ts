@@ -1,9 +1,9 @@
 import {GetClusterTopologyCommand} from "../ServerWide/Commands/GetClusterTopologyCommand";
 import {NodeSelector} from "./NodeSelector";
-import _ from "lodash";
+import * as _ from "lodash";
 import * as os from "os";
 import * as BluebirdPromise from "bluebird";
-import semaphore from "semaphore";
+import * as semaphore from "semaphore";
 import { getLogger } from "../Utility/LogUtil";
 import {RequestExecutor, IRequestExecutorOptions} from "./RequestExecutor";
 import { DocumentConventions } from "..";
@@ -25,28 +25,30 @@ export class ClusterRequestExecutor extends RequestExecutor {
     }
 
     public static createForSingleNodeWithConfigurationUpdates(
-        url: string, databaseName: string, authOptions: IAuthOptions, conventions: DocumentConventions)
+        url: string, databaseName: string, opts: IRequestExecutorOptions)
             : ClusterRequestExecutor  {
             return throwError("NotSupportedException");
     }
 
     public static createForSingleNodeWithoutConfigurationUpdates(
-        url: string, databaseName: string, authOptions: IAuthOptions, conventions: DocumentConventions)
+        url: string, databaseName: string, opts: IRequestExecutorOptions)
             : ClusterRequestExecutor {
             return throwError("NotSupportedException");
     }
 
     public static createForSingleNode(
-        url: string, authOptions: IAuthOptions): ClusterRequestExecutor;
+        url: string, opts: IRequestExecutorOptions): ClusterRequestExecutor;
     public static createForSingleNode(
-        url: string, authOptions: IAuthOptions, conventions?: DocumentConventions): ClusterRequestExecutor;
+        url: string, opts: IRequestExecutorOptions): ClusterRequestExecutor;
     public static createForSingleNode(
-        url: string, authOptions: IAuthOptions, conventions?: DocumentConventions): ClusterRequestExecutor {
+        url: string, opts: IRequestExecutorOptions): ClusterRequestExecutor {
         const initialUrls = [ url ];
+        
+        const { authOptions, documentConventions } = opts;
         const urls = this._validateUrls(initialUrls, authOptions);
 
         const executor = new ClusterRequestExecutor(
-            authOptions, conventions || DocumentConventions.defaultConventions);
+            authOptions, documentConventions || DocumentConventions.defaultConventions);
 
         const serverNode = new ServerNode({ url });
 

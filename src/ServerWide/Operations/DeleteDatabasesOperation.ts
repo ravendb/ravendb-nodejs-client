@@ -1,4 +1,4 @@
-import { IServerOperation, OperationResultType } from "../../Documents/Operations/OperationBase";
+import { IServerOperation, OperationResultType } from "../../Documents/Operations/OperationAbstractions";
 import { throwError } from "../../Exceptions";
 import { DocumentConventions } from "../..";
 import { RavenCommand } from "../../Http/RavenCommand";

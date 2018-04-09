@@ -1,28 +1,16 @@
-import * as uuid from "uuid";
-import * as _ from "lodash";
 import * as BluebirdPromise from "bluebird";
-import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";
-import { DocumentSession } from "./Session/DocumentSession";
-import {RequestExecutor, RequestExecutor,  IRequestExecutor} from '../Http/RequestExecutor';
-import { EntityIdCallback } from "../Typedef/Callbacks";
-import { DocumentConventions } from "./Conventions/DocumentConventions";
-import { IHiloIdGenerator } from "../Hilo/IHiloIdGenerator";
-import { HiloMultiDatabaseIdGenerator } from "../Hilo/HiloMultiDatabaseIdGenerator";
-import { PromiseResolver } from "../Utility/PromiseResolver";
-import { TypeUtil, ObjectTypeDescriptor } from "../Utility/TypeUtil";
-import { UriUtility } from "../Http/UriUtility";
-import { OperationExecutor, AdminOperationExecutor } from "../Database/Operations/OperationExecutor";
-import { IStoreAuthOptions, IRequestAuthOptions } from "../Auth/AuthOptions";
-import { IDisposable } from "../Types/Contracts";
-import { EventEmitter } from "events";
-import { IMetadataDictionary } from "./Session";
-import { SessionBeforeStoreEventArgs } from "./Session/SessionEvents";
-import { IDocumentStore } from "./IDocumentStore";
-import { DocumentStoreBase } from "./DocumentStoreBase";
+
+import { throwError } from "../Exceptions";
+import { RequestExecutor } from "../Http/RequestExecutor";
 import { Todo } from "../Types";
 import { getLogger } from "../Utility/LogUtil";
-import { throwError } from "../Exceptions";
+import { DocumentStoreBase } from "./DocumentStoreBase";
+import { IDocumentStore } from "./IDocumentStore";
+import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor";
+import { OperationExecutor } from "./Operations/OperationExecutor";
 
+// import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";
+// import { DocumentSession } from "./Session/DocumentSession";
 const log = getLogger({ module: "DocumentStore" });
 
 export class DocumentStore extends DocumentStoreBase {
@@ -39,7 +27,7 @@ export class DocumentStore extends DocumentStoreBase {
 
     private _multiDbHiLo: Todo; // MultiDatabaseHiLoIdGenerator 
 
-    private _maintenanceOperationExecutor: Todo; // MaintenanceOperationExecutor ;
+    private _maintenanceOperationExecutor: MaintenanceOperationExecutor; // MaintenanceOperationExecutor ;
     private _operationExecutor: OperationExecutor;
 
     private _identifier: string;
@@ -74,7 +62,7 @@ export class DocumentStore extends DocumentStoreBase {
         return urlsString;
     }
 
-    public set identifier(identifier: string): void {
+    public set identifier(identifier: string) {
         this.identifier = identifier;
     }
 
@@ -101,7 +89,7 @@ export class DocumentStore extends DocumentStoreBase {
 
         if (this._multiDbHiLo) {
           BluebirdPromise.resolve()
-            .then(() => this._multiDbHiLo.returnUnusedRange())
+            // .then(() => this._multiDbHiLo.returnUnusedRange())
             .catch(err => log.warn("Error returning unused ID range.", err));
         }
 
@@ -163,10 +151,16 @@ export class DocumentStore extends DocumentStoreBase {
         }
 
         if (!this.conventions.isDisableTopologyUpdates) {
-            executor = RequestExecutor.create(this.urls, this.database, this.authOptions, this.conventions);
+            executor = RequestExecutor.create(this.urls, this.database, { 
+                authOptions: this.authOptions, 
+                documentConventions: this.conventions
+            });
         } else {
             executor = RequestExecutor.createForSingleNodeWithConfigurationUpdates(
-              this.urls[0], this.database, this.authOptions, this.conventions);
+              this.urls[0], this.database, { 
+                  authOptions: this.authOptions, 
+                  documentConventions: this.conventions
+              });
         }
 
         this._requestExecutors.set(database.toLowerCase(), executor);
@@ -186,7 +180,7 @@ export class DocumentStore extends DocumentStoreBase {
 
         try {
             if (!this.conventions.documentIdGenerator) { // don't overwrite what the user is doing
-                const generator = new MultiDatabaseHiLoIdGenerator(this, this.conventions)
+                const generator = null as Todo as any; // new MultiDatabaseHiLoIdGenerator(this, this.conventions)
                 this._multiDbHiLo = generator;
 
                 this.conventions.documentIdGenerator = generator.generateDocumentId.bind(generator);

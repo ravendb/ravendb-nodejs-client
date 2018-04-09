@@ -3,7 +3,7 @@ import { Promise as BluebirdPromise } from "bluebird";
 import { UriOptions, Response as HttpResponse } from "request";
 import { HEADERS, CONSTANTS } from "../Constants";
 import { IncomingHttpHeaders } from "http";
-import { throwError } from "../Exceptions/ClientErrors";
+import { throwError } from "../Exceptions";
 
 export function getRequiredEtagHeader(response: HttpResponse) {
     const headers = response.headers[HEADERS.ETAG];

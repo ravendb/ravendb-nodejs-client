@@ -1,23 +1,23 @@
-import * as os from "os";
 import * as BluebirdPromise from "bluebird";
-import {IAuthOptions} from "../Auth/AuthOptions";
-import { spawn, ChildProcess } from "child_process";
-import { IDisposable } from "../Types/Contracts";
-import { throwError } from "../Exceptions";
+import { ChildProcess, spawn } from "child_process";
+import * as os from "os";
+import { MultiError } from "verror";
+
+import { IAuthOptions } from "../Auth/AuthOptions";
+import { CONSTANTS } from "../Constants";
 import { DocumentStore } from "../Documents/DocumentStore";
 import { IDocumentStore } from "../Documents/IDocumentStore";
-import { getLogger } from "../Utility/LogUtil";
+import { DatabaseStatistics } from "../Documents/Operations/DatabaseStatistics";
+import { GetStatisticsOperation } from "../Documents/Operations/GetStatisticsOperation";
+import { throwError } from "../Exceptions";
 import { DatabaseRecord } from "../ServerWide";
 import { CreateDatabaseOperation } from "../ServerWide/Operations/CreateDatabaseOperation";
 import { DeleteDatabasesOperation } from "../ServerWide/Operations/DeleteDatabasesOperation";
+import { Todo } from "../Types";
+import { IDisposable } from "../Types/Contracts";
+import { getLogger } from "../Utility/LogUtil";
 import { RavenServerLocator } from "./RavenServerLocator";
 import { RavenServerRunner } from "./RavenServerRunner";
-import { callbackify } from "util";
-import { GetStatisticsOperation } from "../Documents/Operations/GetStatisticsOperation";
-import { DatabaseStatistics } from "../Documents/Operations/DatabaseStatistics";
-import { CONSTANTS } from "../Constants";
-import { Todo } from "../Types";
-import { WError, MultiError } from "verror";
 
 const log = getLogger({ module: "TestDriver" });
 
@@ -63,33 +63,36 @@ export abstract class RavenTestDriver implements IDisposable {
 
     public getDocumentStore(): Promise<DocumentStore>;
     public getDocumentStore(database: string): Promise<DocumentStore>;
+    public getDocumentStore(database: string, secured: boolean): Promise<DocumentStore>;
     public getDocumentStore(
         database: string, secured: boolean, waitForIndexingTimeoutInMs?: number): Promise<DocumentStore>; 
     public getDocumentStore(
-        database = "test_db", secured = false, waitForIndexingTimeoutInMs?: number = null): Promise<DocumentStore> {
+        database = "test_db", secured = false, waitForIndexingTimeoutInMs: number = null): Promise<DocumentStore> {
 
         const databaseName = database + "_" + (++RavenTestDriver._index);
         log.info(`getDocumentStore for db ${ database }.`);
 
-        if (!RavenTestDriver._getGlobalServer(secured)) {
-            if (RavenTestDriver._getGlobalServer(secured) === null) {
-                RavenTestDriver._runServer(secured);
-            }
-        }
-
-        const documentStore: IDocumentStore = RavenTestDriver._getGlobalServer(secured);
-        const databaseRecord = Object.assign(new DatabaseRecord(), { databaseName });
-
-        this._customizeDbRecord(databaseRecord);
-
-        const createDatabaseOperation = new CreateDatabaseOperation(databaseRecord);
+        let documentStore: IDocumentStore;
         return Promise.resolve()
-            .then(() => documentStore.maintenance.server.send(createDatabaseOperation))
+        .then(() => {
+            if (!this._getGlobalServer(secured)) {
+                return this._runServer(secured);
+            }
+        })
+        .then(() => {
+            documentStore = this._getGlobalServer(secured);
+            const databaseRecord = Object.assign(new DatabaseRecord(), { databaseName });
+
+            this._customizeDbRecord(databaseRecord);
+
+            const createDatabaseOperation = new CreateDatabaseOperation(databaseRecord);
+            return documentStore.maintenance.server.send(createDatabaseOperation);
+        })
         .then(createDatabaseResult => {
-            const store = new DocumentStore(documentStore.urls, name);
+            const store = new DocumentStore(documentStore.urls, databaseName);
             if (secured) {
                 throw new Error("TODO");
-                store.authOptions = null; // TODO
+                // store.authOptions = null; // TODO
             }
 
             store.initialize();
@@ -147,7 +150,7 @@ export abstract class RavenTestDriver implements IDisposable {
             const SERVER_URL_REGEX = /Server available on:\s*(\S+)\s*$/m;
             const serverProcess = this._getGlobalProcess(secured);
             let serverOutput = "";
-            const result = new BluebirdPromise((resolve, reject) => {
+            const result = new BluebirdPromise<string>((resolve, reject) => {
                 serverProcess.stdout
                     .on("data", (chunk) => {
                         serverOutput += chunk;
@@ -171,8 +174,8 @@ export abstract class RavenTestDriver implements IDisposable {
         };
 
         return Promise.resolve()
-            .then(() => scrapServerUrl())
-            .catch((err) => {
+        .then(() => scrapServerUrl())
+        .catch((err) => {
 
                 try {
                     process.kill("SIGKILL");
@@ -182,8 +185,8 @@ export abstract class RavenTestDriver implements IDisposable {
 
                 throwError("InvalidOperationException", "Unable to start server.", err);
             })
-            .then((serverUrl) => {
-                const store = new DocumentStore([ url ], "test.manager");
+            .then((serverUrl: string) => {
+                const store = new DocumentStore([ serverUrl ], "test.manager");
                 store.conventions.disableTopologyUpdates = true;
 
                 if (secured) {

@@ -1,7 +1,7 @@
 import {MaintenanceOperationExecutor} from "./Operations/MaintenanceOperationExecutor";
 import { EventEmitter } from "events";
 import { IDocumentStore } from "./IDocumentStore";
-import { IDocumentSession } from "./Session";
+// import { IDocumentSession } from "./Session";
 import { DocumentConventions, RequestExecutor } from "..";
 import { throwError } from "../Exceptions";
 import { isValidUri, validateUri } from "../Utility/UriUtil";
@@ -184,7 +184,7 @@ export abstract class DocumentStoreBase
         }
     }
 
-    protected registerEvents(session: InMemoryDocumentSessionOperations): void {
+    protected _registerEvents(session: InMemoryDocumentSessionOperations): void {
         this._eventHandlers.forEach(([eventName, eventHandler]) => {
             session.on(eventName, eventHandler);
         });

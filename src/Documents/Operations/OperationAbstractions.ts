@@ -7,26 +7,26 @@ import { IRavenResponse } from "../../Types";
 
 export type OperationResultType = "OPERATION_ID" | "COMMAND_RESULT" | "PATCH_STATUS";
 
-interface IOperationBase {
+export interface IAbstractOperation {
     resultType: OperationResultType;
 }
 
-export interface IOperation<TResult> extends IOperationBase {
+export interface IOperation<TResult> extends IAbstractOperation {
     getCommand(store: IDocumentStore, conventions: DocumentConventions, httpCache: HttpCache): RavenCommand<TResult>;
 }
 
 export interface IAwaitableOperation extends IOperation<OperationIdResult> {
 }
 
-export interface IMaintenanceOperation<TResult> extends IOperationBase {
+export interface IMaintenanceOperation<TResult> extends IAbstractOperation {
      getCommand(conventions: DocumentConventions): RavenCommand<TResult>;
 }
 
-export interface IServerOperation<TResult> extends IOperationBase {
+export interface IServerOperation<TResult> extends IAbstractOperation {
     getCommand(conventions: DocumentConventions): RavenCommand<TResult>;
 }
 
-abstract class AbstractAwaitableOperation {
+export abstract class AbstractAwaitableOperation {
     get resultType(): OperationResultType {
         return "OPERATION_ID";
     }
@@ -72,24 +72,3 @@ export class OperationExceptionResult {
     public error: string;
     public statusCode: number;
 }
-
-// export abstract class OperationBase implements IOperation<{}> {
-//     public abstract getCommand(conventions: DocumentConventions, store?: IDocumentStore): RavenCommand<TResult>;
-// }
-
-// export abstract class AbstractOperation implements IOperation {
-//   public abstract getCommand(conventions: DocumentConventions): RavenCommand;  
-// }
-
-
-// export abstract class AdminOperation extends AbstractOperation {
-
-// }
-
-// export abstract class ServerOperation extends AbstractOperation {
-
-// }
-
-// export abstract class PatchResultOperation extends Operation {
-
-// }

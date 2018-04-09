@@ -1,6 +1,7 @@
 import * as mocha from "mocha";
+import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import "./Utils/BeforeSuite";
+import { RemoteTestContext } from "./Utils/TestUtil";
 
 import { 
     RequestExecutor, 
@@ -11,33 +12,48 @@ import {
 
 describe("Request executor", function() {
 
-    it ("", function() {
-        const conventions = new DocumentConventions();
+    describe("with server running", () => {
 
-        // try (IDocumentStore store = getDocumentStore()) {
-        //     try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, conventions)) {
-        //         int errorsCount = 0;
+        let context: RemoteTestContext;
 
-        //         for (int i = 0; i < 40; i++) {
-        //             try {
-        //                 GetNextOperationIdCommand command = new GetNextOperationIdCommand();
-        //                 executor.execute(command);
-        //             } catch (Exception e) {
-        //                 errorsCount++;
-        //             }
-        //         }
+        beforeEach(() => {
+            context = RemoteTestContext.setupServer();
+        });
 
-        //         assertThat(errorsCount).isEqualTo(40);
+        afterEach(() => {
+            context.dispose();
+        });
 
-        //         GetDatabaseNamesOperation databaseNamesOperation = new GetDatabaseNamesOperation(0, 20);
-        //         RavenCommand<String[]> command = databaseNamesOperation.getCommand(conventions);
-        //         executor.execute(command);
+        it("works right", function() {
+            const conventions = new DocumentConventions();
 
-        //         assertThat(command.getResult()).doesNotContainNull();
-        //     }
-        // }
-        
+            // try (IDocumentStore store = getDocumentStore()) {
+            //     try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, conventions)) {
+            //         int errorsCount = 0;
+
+            //         for (int i = 0; i < 40; i++) {
+            //             try {
+            //                 GetNextOperationIdCommand command = new GetNextOperationIdCommand();
+            //                 executor.execute(command);
+            //             } catch (Exception e) {
+            //                 errorsCount++;
+            //             }
+            //         }
+
+            //         assertThat(errorsCount).isEqualTo(40);
+
+            //         GetDatabaseNamesOperation databaseNamesOperation = new GetDatabaseNamesOperation(0, 20);
+            //         RavenCommand<String[]> command = databaseNamesOperation.getCommand(conventions);
+            //         executor.execute(command);
+
+            //         assertThat(command.getResult()).doesNotContainNull();
+            //     }
+            // }
+
+        });
+
     });
+
 
     it("fails when server is offline", function() {
         this.timeout(5000);

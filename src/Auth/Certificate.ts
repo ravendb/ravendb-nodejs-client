@@ -1,7 +1,7 @@
-import {IOptionsSet} from "../Typedef/IOptionsSet";
+import {IOptionsSet} from "../Types/IOptionsSet";
 import {IAuthOptions} from "./AuthOptions";
 import {StringUtil} from "../Utility/StringUtil";
-import {throwError} from "../Exceptions/ClientErrors";
+import {throwError} from "../Exceptions";
 
 export type CertificateType = "pem" | "pfx";
 
@@ -63,8 +63,8 @@ export class PemCertificate extends Certificate {
       this._certificate = certificate.toString();
     }
 
-    this._key = this.fetchPart(this.keyToken);
-    this._certificate = this.fetchPart(this.certToken);    
+    this._key = this._fetchPart(this.keyToken);
+    this._certificate = this._fetchPart(this.certToken);    
     
     if (!this._key && !this._certificate) {
       throwError("InvalidArgumentException", "Invalid .pem certificate provided");
@@ -77,7 +77,7 @@ export class PemCertificate extends Certificate {
     agentOptions.key = this._key;
   }
 
-  protected fetchPart(token: string): string {
+  protected _fetchPart(token: string): string {
     const cert: string = this._certificate as string;
     const prefixSuffix: string = "-----";
     const beginMarker: string = `${prefixSuffix}BEGIN ${token}${prefixSuffix}`;

@@ -1,6 +1,6 @@
 import * as moment from "moment";
 import * as Cache from "safe-memory-cache/map";
-import { IDisposable } from "../Typedef/Contracts";
+import { IDisposable } from "../Types/Contracts";
 
 export interface CachedItemMetadata {
     changeVector: string;

@@ -1,10 +1,11 @@
-import {ClientConfiguration} from "../Operations/Configuration/ClientConfiguration";
-import { ReadBalanceBehavior } from "../../Http/ReadBalanceBehavior";
-import { throwError } from "../../Exceptions/ClientErrors";
-import { ObjectMapper } from "../../Utility/Mapping";
-import { CONSTANTS } from "../../Constants";
+import {Todo} from '../../Types/index';
 import * as JsonExtensions from "../../Extensions/JsonExtensions";
 import * as pluralize from "pluralize";
+import { ClientConfiguration } from "../Operations/Configuration/ClientConfiguration";
+import { ReadBalanceBehavior } from "../../Http/ReadBalanceBehavior";
+import { throwError } from "../../Exceptions";
+import { ObjectMapper } from "../../Utility/Mapping";
+import { CONSTANTS } from "../../Constants";
 import { ObjectTypeDescriptor, ObjectConstructor, ObjectLiteralTypeChecker, TypeUtil } from "../../Utility/TypeUtil";
 
 export type IdConvention = (databaseName: string, entity: object) => string;
@@ -83,7 +84,7 @@ export class DocumentConventions {
         this._maxNumberOfRequestsPerSession = 30;
         this._maxHttpCacheSize = 128 * 1024 * 1024;
 
-        this._entityMapper = null // TODO;
+        this._entityMapper = null as Todo as any;  // TODO;
     }
 
     public get entityMapper(): ObjectMapper {
@@ -418,8 +419,8 @@ export class DocumentConventions {
         return collectionName;
     }
 
-    //TBD public void RegisterQueryValueConverter<T>(TryConvertValueForQueryDelegate<T> converter)
-    //TBD public bool TryConvertValueForQuery(string fieldName, object value, bool forRange, out string strValue)
+    // TBD public void RegisterQueryValueConverter<T>(TryConvertValueForQueryDelegate<T> converter)
+    // TBD public bool TryConvertValueForQuery(string fieldName, object value, bool forRange, out string strValue)
 
     public freeze() {
         this._frozen = true;

@@ -1,7 +1,7 @@
-import {OperationCompletionAwaiter} from "./OperationCompletionAwaiter";
+import { OperationCompletionAwaiter } from "./OperationCompletionAwaiter";
 import { DocumentStoreBase } from "../DocumentStoreBase";
 import { RequestExecutor } from "../..";
-import { IMaintenanceOperation, AwaitableMaintenanceOperation, OperationIdResult } from "./OperationBase";
+import { IMaintenanceOperation, AwaitableMaintenanceOperation, OperationIdResult } from "./OperationAbstractions";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerOperationExecutor } from "./ServerOperationExecutor";
 

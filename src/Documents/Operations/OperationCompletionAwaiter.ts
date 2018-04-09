@@ -4,7 +4,7 @@ import { RequestExecutor, DocumentConventions } from "../..";
 import { IRavenResponse } from "../../Types";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { throwError, RavenErrorType } from "../../Exceptions";
-import { OperationExceptionResult } from "./OperationBase";
+import { OperationExceptionResult } from "./OperationAbstractions";
 import { ExceptionDispatcher } from "../../Exceptions/ExceptionDispatcher";
 
 type OperationStatus = "Completed" | "Cancelled" | "Faulted";

@@ -1,28 +1,28 @@
 import * as XRegExp from "xregexp";
 import {TypeUtil} from "./TypeUtil";
-import {throwError} from "../Exceptions/ClientErrors";
+import {throwError} from "../Exceptions";
 
 export class StringUtil {
-  private static readonly letterRe: RegExp = <RegExp>XRegExp("^\\p{L}$");
+  private static readonly letterRe: RegExp = XRegExp("^\\p{L}$") as RegExp;
   private static readonly digitRe: RegExp = /\d/;
 
-  public static format(string: string, vars?: object | any, ...varsArray: any[]): string {
+  public static format(s: string, vars?: object | any, ...varsArray: any[]): string {
     if (TypeUtil.isObject(vars)) {
-      return string.replace(
+      return s.replace(
         /\{([\w\d\-]+)\}/g,
         (match: string, placeholder: string): string =>
           ((placeholder in vars) ? vars[placeholder] : '').toString()
       );
     }
 
-    let inputVars: any[] = [vars].concat(varsArray);
+    const inputVars: any[] = [vars].concat(varsArray);
 
-    return string.replace(
+    return s.replace(
       /\{([\d]+)\}/g,
       (match: string, placeholder: string): string => {
-        let value: any = inputVars[parseInt(placeholder)];
+        const value: any = inputVars[parseInt(placeholder, 10)];
         
-        return (TypeUtil.isNull(value) ? '' : value).toString()
+        return (TypeUtil.isNull(value) ? "" : value).toString();
     });
   }
 
@@ -47,7 +47,7 @@ export class StringUtil {
       const c: string = field[i];
 
       if (i === 0) {
-        if (!this.isLetter(c) && !['_', "@"].includes(c)) {
+        if (!this.isLetter(c) && ["_", "@"].indexOf(c) === -1) {
           escape = true;
           break;
         }
@@ -55,7 +55,7 @@ export class StringUtil {
         continue;
       }
 
-      if (!this.isLetterOrDigit(c) && !["_", "@", ".", "[", "]"].includes(c)) {
+      if (!this.isLetterOrDigit(c) && ["_", "@", ".", "[", "]"].indexOf(c) === -1) {
         escape = true;
         break;
       }
@@ -95,7 +95,7 @@ export class StringUtil {
       || this.isDigit(character);
   }
 
-  public static isNullOrWhiteSpace(string?: string): boolean {
-    return !(string || "").trim().length;
+  public static isNullOrWhiteSpace(s?: string): boolean {
+    return !(s || "").trim().length;
   }
 }

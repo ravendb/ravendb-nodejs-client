@@ -5,7 +5,7 @@ import { DatabasePutResult } from ".";
 import { DocumentConventions } from "../..";
 import { throwError } from "../../Exceptions";
 import { ServerNode } from "../../Http/ServerNode";
-import { IServerOperation, OperationResultType } from "../../Documents/Operations/OperationBase";
+import { IServerOperation, OperationResultType } from "../../Documents/Operations/OperationAbstractions";
 
 export class CreateDatabaseOperation implements IServerOperation<DatabasePutResult> {
 

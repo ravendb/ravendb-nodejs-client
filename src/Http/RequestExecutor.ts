@@ -232,23 +232,21 @@ export class RequestExecutor implements IDisposable {
     }
 
     public static createForSingleNodeWithConfigurationUpdates(
-        url: string,
-        database: string,
-        authOptions: IRequestAuthOptions,
-        conventions: DocumentConventions): RequestExecutor {
+        url: string, database: string, opts: IRequestExecutorOptions): RequestExecutor {
         const executor =
             this.createForSingleNodeWithoutConfigurationUpdates(
-                url, database, authOptions, conventions);
+                url, database, opts);
         executor._disableClientConfigurationUpdates = false;
         return executor;
     }
 
     public static createForSingleNodeWithoutConfigurationUpdates(
-        url: string, database: string, authOptions: IRequestAuthOptions, conventions: DocumentConventions) {
-
+        url: string, database: string, opts: IRequestExecutorOptions) {
+        
+        const { authOptions, documentConventions } = opts;
         const initialUrls: string[] = RequestExecutor._validateUrls([url], authOptions);
 
-        const executor = new RequestExecutor(database, authOptions, conventions);
+        const executor = new RequestExecutor(database, authOptions, documentConventions);
         const topology: Topology = new Topology();
         topology.etag = -1;
 

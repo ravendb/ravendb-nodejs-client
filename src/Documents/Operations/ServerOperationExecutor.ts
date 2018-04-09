@@ -1,7 +1,7 @@
 import { IDisposable } from "../../Types/Contracts";
 import { DocumentStoreBase } from "../DocumentStoreBase";
 import { Todo } from "../../Types";
-import { IServerOperation, AwaitableServerOperation, OperationIdResult } from "./OperationBase";
+import { IServerOperation, AwaitableServerOperation, OperationIdResult } from "./OperationAbstractions";
 import { OperationCompletionAwaiter } from "./OperationCompletionAwaiter";
 import { ClusterRequestExecutor } from "../../Http/ClusterRequestExecutor";
 import { RavenCommand } from "../../Http/RavenCommand";
@@ -15,7 +15,7 @@ export class ServerOperationExecutor implements IDisposable {
     public constructor(store: DocumentStoreBase) {
         this._store = store;
         this._requestExecutor = store.conventions.isDisableTopologyUpdates ?
-                ClusterRequestExecutor.createForSingleNode(store.urls[0], store.authOptions) :
+                ClusterRequestExecutor.createForSingleNode(store.urls[0], { authOptions: store.authOptions }) :
                 ClusterRequestExecutor.create(store.urls, store);
 
         store.on("afterClose", 

@@ -1,4 +1,4 @@
-import {IMaintenanceOperation, OperationResultType} from "./OperationBase";
+import {IMaintenanceOperation, OperationResultType} from "./OperationAbstractions";
 import { ServerNode } from "../../Http/ServerNode";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { HttpRequestBase } from "../../Primitives/Http";
