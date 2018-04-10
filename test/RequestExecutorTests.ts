@@ -9,53 +9,52 @@ import {
     GetDatabaseTopologyCommand,
     RavenErrorType,
 } from "../src";
+import { GetNextOperationIdCommand } from "../src/Documents/Commands/GetNextOperationIdCommand";
+import { GetDatabaseNamesOperation } from "../src/ServerWide/Operations/GetDatabaseNamesOperation";
 
 describe("Request executor", function() {
 
     describe("with server running", () => {
 
-        it("works right", async function() {
+        it("failures do not block connection pool", async function() {
             const documentConventions = new DocumentConventions();
             let store;
             try {
                 store = await globalContext.getDocumentStore();
-                let executor;
+                let executor: RequestExecutor;
 
                 try {
                     executor = RequestExecutor.create(store.urls, "no_such_db", {
                         documentConventions
                     });
+
+                    let errorsCount = 0;
+
+                    for (let i = 0; i < 40; i++) {
+                        try {
+                            const cmd = new GetNextOperationIdCommand();
+                            await executor.execute(cmd);
+                        } catch (err) {
+                            if (err.name === "DatabaseDoesNotExistException") {
+                                errorsCount++;
+                            } else {
+                                throw err;
+                            }
+                        }
+                    }
+
+                    assert.equal(errorsCount, 40);
+                    const databaseNamesOperation = new GetDatabaseNamesOperation(0, 20);
+                    const command = databaseNamesOperation.getCommand(documentConventions);
+                    await executor.execute(command);
+                    assert.ok(command.result);
+
                 } finally {
                     executor.dispose();
                 }
             } finally {
                 store.dispose();
             }
-
-
-            // try (IDocumentStore store = getDocumentStore()) {
-            //     try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, conventions)) {
-            //         int errorsCount = 0;
-
-            //         for (int i = 0; i < 40; i++) {
-            //             try {
-            //                 GetNextOperationIdCommand command = new GetNextOperationIdCommand();
-            //                 executor.execute(command);
-            //             } catch (Exception e) {
-            //                 errorsCount++;
-            //             }
-            //         }
-
-            //         assertThat(errorsCount).isEqualTo(40);
-
-            //         GetDatabaseNamesOperation databaseNamesOperation = new GetDatabaseNamesOperation(0, 20);
-            //         RavenCommand<String[]> command = databaseNamesOperation.getCommand(conventions);
-            //         executor.execute(command);
-
-            //         assertThat(command.getResult()).doesNotContainNull();
-            //     }
-            // }
-
         });
     });
 

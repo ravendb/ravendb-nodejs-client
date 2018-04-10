@@ -5,6 +5,7 @@ import "source-map-support/register";
 import {IDisposable} from "../../src/Types/Contracts";
 import { RavenTestDriver } from "../../src/TestDriver";
 import { RavenServerLocator } from "../../src/TestDriver/RavenServerLocator";
+import { getLogger } from "../../src/Utility/LogUtil";
 
 //logOnUncaughtAndUnhandled();
 
@@ -48,11 +49,15 @@ setupRavenDbTestContext();
 function setupRavenDbTestContext() {
 
     before(() => {
+        // tslint:disable-next-line:no-console
+        console.log("TESTS START");
         globalContext = RemoteTestContext.setupServer();
     });
 
     after(() => {
         globalContext.dispose();
+        // tslint:disable-next-line:no-console
+        console.log("TESTS DONE");
     });
 
     return context;

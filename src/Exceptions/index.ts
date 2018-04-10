@@ -166,7 +166,7 @@ export class ExceptionDispatcher {
             return "TimeoutException";
         }
         const prefix = "Raven.Client.Exceptions.";
-        if (typeAsString.startsWith(prefix)) {
+        if (typeAsString && typeAsString.startsWith(prefix)) {
             const exceptionName = typeAsString.substring(prefix.length);
             if (exceptionName.indexOf(".") !== -1) {
                 const tokens = exceptionName.split(".");

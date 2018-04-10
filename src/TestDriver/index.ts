@@ -340,7 +340,7 @@ export abstract class RavenTestDriver implements IDisposable {
 
         this._disposed = true;
 
-        const STORE_DISPOSAL_TIMEOUT = 5000;
+        const STORE_DISPOSAL_TIMEOUT = 10000;
         const storeDisposalPromises = [ ...this._documentStores ].map((store) => {
             return Promise.resolve()
                 .then(() => {

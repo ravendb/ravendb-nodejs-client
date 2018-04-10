@@ -59,6 +59,6 @@ class Logger {
         const now = new Date();
         const dateString = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}` 
             + ` ${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
-        this._logdebug(`${dateString} ${level}: ${msg}`);
+        this._logdebug(`${dateString}|${level}: ${msg}`);
     }
 }
