@@ -2,6 +2,7 @@ import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { RemoteTestContext, globalContext } from "./Utils/TestUtil";
+import * as assertExtentions from "./Utils/AssertExtensions";
 
 import {
     RequestExecutor,
@@ -13,6 +14,7 @@ import { GetNextOperationIdCommand } from "../src/Documents/Commands/GetNextOper
 import { GetDatabaseNamesOperation } from "../src/ServerWide/Operations/GetDatabaseNamesOperation";
 import { IDocumentStore } from "../src/Documents/IDocumentStore";
 import { IRavenResponse } from "../src/Types";
+import { ServerNode } from "../src/Http/ServerNode";
 
 describe("Request executor", function () {
 
@@ -86,7 +88,7 @@ describe("Request executor", function () {
             }
         });
 
-        it.only("can fetch database names", async () => {
+        it("can fetch database names", async () => {
             let executor: RequestExecutor;
             try {
                 executor = RequestExecutor.create(store.urls, store.database, {
@@ -101,6 +103,46 @@ describe("Request executor", function () {
                 executor.dispose();
             }
         });
+
+        it.only("throws when updating topology of not existing db", async () => {
+            let executor: RequestExecutor;
+            try {
+                executor = RequestExecutor.create(store.urls, store.database, {
+                    documentConventions
+                });
+                const serverNode = new ServerNode({ 
+                    url: store.urls[0], 
+                    database: "nope" });
+                
+                try {
+                    await executor.updateTopology(serverNode, 5000);
+                    assert.fail("Should have thrown");
+                } catch (err) {
+                    assert.equal(err.name, "DatabaseDoesNotExistException", err.stack);
+                }
+            } finally {
+                executor.dispose();
+            }
+
+        });
+    // @Test
+    // public void throwsWhenUpdatingTopologyOfNotExistingDb() throws Exception {
+    //     DocumentConventions conventions = new DocumentConventions();
+
+    //     try (IDocumentStore store = getDocumentStore()) {
+    //         try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, conventions)) {
+
+    //             ServerNode serverNode = new ServerNode();
+    //             serverNode.setUrl(store.getUrls()[0]);
+    //             serverNode.setDatabase("no_such");
+
+    //             assertThatThrownBy(() ->
+    //                     ExceptionsUtils.accept(() ->
+    //                             executor.updateTopologyAsync(serverNode, 5000).get()))
+    //                     .isExactlyInstanceOf(DatabaseDoesNotExistException.class);
+    //         }
+    //     }
+    // }
 
     });
     

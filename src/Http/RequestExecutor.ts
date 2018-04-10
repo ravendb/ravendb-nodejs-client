@@ -748,15 +748,14 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
 
                 const refreshTopology = response
                     && response.headers
-                    && response.headers[HEADERS.REFRESH_TOPOLOGY];
+                    && response.caseless.get(HEADERS.REFRESH_TOPOLOGY);
 
                 const refreshClientConfiguration = response
                     && response.headers
-                    && response.headers[HEADERS.REFRESH_CLIENT_CONFIGURATION];
+                    && response.caseless.get(HEADERS.REFRESH_CLIENT_CONFIGURATION);
 
                 return BluebirdPromise.resolve()
                     .then(() => {
-
                         if (response.statusCode === StatusCodes.NotModified) {
                             cachedItem.notModified();
 
@@ -767,7 +766,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
                             return;
                         }
 
-                        if (response.statusCode >= StatusCodes.BadRequest) {
+                        if (response.statusCode >= 400) {
                             return BluebirdPromise.resolve()
                                 .then(() => this._handleUnsuccessfulResponse(
                                     chosenNode,
@@ -779,7 +778,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
                                     sessionInfo,
                                     shouldRetry))
                                 .then(unsuccessfulResponseHandled => {
-                                    const dbMissingHeader = response.headers[HEADERS.DATABASE_MISSING];
+                                    const dbMissingHeader = response.caseless.get(HEADERS.DATABASE_MISSING);
                                     if (dbMissingHeader) {
                                         throwError(dbMissingHeader as string, "DatabaseDoesNotExistException");
                                     }

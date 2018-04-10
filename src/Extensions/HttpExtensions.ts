@@ -6,7 +6,7 @@ import { IncomingHttpHeaders } from "http";
 import { throwError } from "../Exceptions";
 
 export function getRequiredEtagHeader(response: HttpResponse) {
-    const headers = response.headers[HEADERS.ETAG];
+    const headers = response.caseless.get(HEADERS.ETAG);
     if (!headers || !headers.length || !headers[0]) {
         throwError("InvalidOperationException", "Response did't had an ETag header");
     }
