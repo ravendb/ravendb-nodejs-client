@@ -189,7 +189,7 @@ export class RequestExecutor implements IDisposable {
         return this._disposed;
     }
 
-    public getUrl(): string {
+    public getUrl (): string {
         if (!this._nodeSelector) {
             return null;
         }
@@ -201,20 +201,20 @@ export class RequestExecutor implements IDisposable {
             : null;
     }
 
-    public getTopology(): Topology {
+    public getTopology (): Topology {
         return this._nodeSelector
             ? this._nodeSelector.getTopology()
             : null;
     }
 
-    public getTopologyNodes(): ServerNode[] {
+    public getTopologyNodes (): ServerNode[] {
         const topology = this.getTopology();
         return topology
             ? [...topology.nodes]
             : null;
     }
 
-    protected constructor(
+    protected constructor (
         database: string,
         authOptions: IRequestAuthOptions,
         conventions: DocumentConventions) {
@@ -227,14 +227,14 @@ export class RequestExecutor implements IDisposable {
         this._authOptions = authOptions;
     }
 
-    public static create(
+    public static create (
         intialUrls: string[],
         database: string): RequestExecutor; 
-    public static create(
+    public static create (
         intialUrls: string[],
         database: string,
         opts?: IRequestExecutorOptions): RequestExecutor;
-    public static create(
+    public static create (
         intialUrls: string[],
         database: string,
         opts?: IRequestExecutorOptions): RequestExecutor {
@@ -244,7 +244,7 @@ export class RequestExecutor implements IDisposable {
         return executor;
     }
 
-    public static createForSingleNodeWithConfigurationUpdates(
+    public static createForSingleNodeWithConfigurationUpdates (
         url: string, database: string, opts: IRequestExecutorOptions): RequestExecutor {
         const executor =
             this.createForSingleNodeWithoutConfigurationUpdates(
@@ -253,7 +253,7 @@ export class RequestExecutor implements IDisposable {
         return executor;
     }
 
-    public static createForSingleNodeWithoutConfigurationUpdates(
+    public static createForSingleNodeWithoutConfigurationUpdates (
         url: string, database: string, opts: IRequestExecutorOptions) {
         
         const { authOptions, documentConventions } = opts;
@@ -278,7 +278,7 @@ export class RequestExecutor implements IDisposable {
         return executor;
     }
 
-    protected _updateClientConfiguration(): PromiseLike<void> {
+    protected _updateClientConfiguration (): PromiseLike<void> {
         if (this._disposed) {
             return BluebirdPromise.resolve(null);
         }
@@ -331,7 +331,7 @@ export class RequestExecutor implements IDisposable {
                 })));
     }
 
-    public updateTopology(node: ServerNode, timeout: number, forceUpdate: boolean = false): Promise<boolean> {
+    public updateTopology (node: ServerNode, timeout: number, forceUpdate: boolean = false): Promise<boolean> {
         if (this._disposed) {
             return Promise.resolve(false);
         }
@@ -388,7 +388,7 @@ export class RequestExecutor implements IDisposable {
         return Promise.resolve(result);
     }
 
-    protected static _validateUrls(initialUrls: string[], authOptions: IAuthOptions) {
+    protected static _validateUrls (initialUrls: string[], authOptions: IAuthOptions) {
         return initialUrls;
         // TODO
         // const cleanUrls = _.range(initialUrls.length)
@@ -427,7 +427,7 @@ export class RequestExecutor implements IDisposable {
         // return cleanUrls;
     }
 
-    private _initializeUpdateTopologyTimer(): void {
+    private _initializeUpdateTopologyTimer (): void {
         if (this._updateTopologyTimer || this._disposed) {
             return;
         }
@@ -437,12 +437,12 @@ export class RequestExecutor implements IDisposable {
         const minInMs = 60 * 1000;
         const that = this;
         this._updateTopologyTimer = 
-            new Timer(function timerActionUpdateTopology() { 
+            new Timer(function timerActionUpdateTopology () { 
                 return that._updateTopologyCallback();
             }, minInMs, minInMs);
     }
 
-    private _updateTopologyCallback(): Promise<void> {
+    private _updateTopologyCallback (): Promise<void> {
         const time = new Date();
         const minInMs = 60 * 1000;
         if (time.valueOf() - this._lastReturnedResponse.valueOf() <= minInMs) {
@@ -466,7 +466,7 @@ export class RequestExecutor implements IDisposable {
             });
     }
 
-protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
+protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
         const initialUrls: string[] = RequestExecutor._validateUrls(inputUrls, this._authOptions);
 
         const topologyUpdateErrors: Array<{ url: string, error: Error | string }> = [];
@@ -544,14 +544,14 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
         return Promise.resolve(result);
     }
     
-    protected _throwExceptions(details: string): void {
+    protected _throwExceptions (details: string): void {
         throwError(
             "Failed to retrieve database topology from all known nodes" 
                 + os.EOL + details, 
             "InvalidOperationException");
     }
 
-    protected _disposeAllFailedNodesTimers(): void {
+    protected _disposeAllFailedNodesTimers (): void {
         for (const item of this._failedNodesTimers) {
             item[1].dispose();
         }
@@ -559,7 +559,7 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
         this._failedNodesTimers.clear();
     }
 
-    public chooseNodeForRequest<TResult>(cmd: RavenCommand<TResult>, sessionInfo: SessionInfo): CurrentIndexAndNode {
+    public chooseNodeForRequest<TResult> (cmd: RavenCommand<TResult>, sessionInfo: SessionInfo): CurrentIndexAndNode {
         if (!cmd.isReadRequest) {
             return this._nodeSelector.getPreferredNode();
         }
@@ -576,11 +576,11 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
         }
     }
 
-    public execute<TResult>(command: RavenCommand<TResult>): Promise<void>;
-    public execute<TResult>(command: RavenCommand<TResult>, sessionInfo?: SessionInfo): Promise<void>;
-    public execute<TResult>(
+    public execute<TResult> (command: RavenCommand<TResult>): Promise<void>;
+    public execute<TResult> (command: RavenCommand<TResult>, sessionInfo?: SessionInfo): Promise<void>;
+    public execute<TResult> (
         command: RavenCommand<TResult>, sessionInfo?: SessionInfo, options?: ExecuteOptions<TResult>): Promise<void>;
-    public execute<TResult>(
+    public execute<TResult> (
         command: RavenCommand<TResult>,
         sessionInfo?: SessionInfo,
         options?: ExecuteOptions<TResult>): Promise<void> {
@@ -605,7 +605,7 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
         }
     }
 
-    private _unlikelyExecute<TResult>(
+    private _unlikelyExecute<TResult> (
         command: RavenCommand<TResult>,
         topologyUpdate: Promise<void>,
         sessionInfo: SessionInfo): Promise<void> {
@@ -645,7 +645,7 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
         return Promise.resolve(result);
     }
 
-    private _getFromCache<TResult>(
+    private _getFromCache<TResult> (
         command: RavenCommand<TResult>,
         url: string,
         cachedItemMetadataCallback: (data: CachedItemMetadata) => void) {
@@ -663,7 +663,7 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
         return new ReleaseCacheItem(null);
     }
 
-    private _executeOnSpecificNode<TResult>(
+    private _executeOnSpecificNode<TResult> (
         command: RavenCommand<TResult>,
         sessionInfo: SessionInfo = null,
         options: ExecuteOptions<TResult> = null): Promise<void> {
@@ -837,7 +837,7 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
         return Promise.resolve(result);
     }
 
-    private _throwFailedToContactAllNodes<TResult>(
+    private _throwFailedToContactAllNodes<TResult> (
          command: RavenCommand<TResult>, 
          req: HttpRequestBase, 
          e: Error, 
@@ -876,12 +876,12 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
         throwError(message, "AllTopologyNodesDownException", innerErr); 
     }
 
-    public inSpeedTestPhase() {
+    public inSpeedTestPhase () {
         return this._nodeSelector
             && this._nodeSelector.inSpeedTestPhase();
     }
 
-    private _handleUnsuccessfulResponse<TResult>(
+    private _handleUnsuccessfulResponse<TResult> (
         chosenNode: ServerNode,
         nodeIndex: number,
         command: RavenCommand<TResult>,
@@ -943,7 +943,7 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
         return Promise.resolve(false);
     }
 
-    private _executeOnAllToFigureOutTheFastest<TResult>(
+    private _executeOnAllToFigureOutTheFastest<TResult> (
         chosenNode: ServerNode,
         command: RavenCommand<TResult>): Promise<HttpResponse> {
         let preferredTask: BluebirdPromise<IndexAndResponse> = null;
@@ -987,9 +987,9 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
         return Promise.resolve(result);
     }
 
-    private _shouldExecuteOnAll<TResult>(chosenNode: ServerNode, command: RavenCommand<TResult>): boolean {
+    private _shouldExecuteOnAll<TResult> (chosenNode: ServerNode, command: RavenCommand<TResult>): boolean {
 
-        function hasMultipleNodes(): boolean {
+        function hasMultipleNodes (): boolean {
             const sel = this._nodeSelector;
             return sel
                 ? (sel.topology && sel.topology.nodes && sel.topology.nodes.length > 1)
@@ -1005,7 +1005,7 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
             !!chosenNode;
     }
 
-    private _handleServerDown<TResult>(
+    private _handleServerDown<TResult> (
         url: string,
         chosenNode: ServerNode,
         nodeIndex: number,
@@ -1050,7 +1050,7 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
             .then(() => true);
     }
     
-    private static _addFailedResponseToCommand<TResult>(
+    private static _addFailedResponseToCommand<TResult> (
         chosenNode: ServerNode, 
         command: RavenCommand<TResult>, 
         req: HttpRequestBase, 
@@ -1089,7 +1089,7 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
         command.failedNodes.set(chosenNode, ExceptionDispatcher.get(exceptionSchema, StatusCodes.InternalServerError));
     }
 
-    private _createRequest<TResult>(node: ServerNode, command: RavenCommand<TResult>): HttpRequestBase {
+    private _createRequest<TResult> (node: ServerNode, command: RavenCommand<TResult>): HttpRequestBase {
         const req = Object.assign(command.createRequest(node), getDefaultRequestOptions());
         req.headers = req.headers || {};
 
@@ -1104,11 +1104,11 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
         return req;
     }
 
-    private static _handleConflict(response: HttpResponse): void {
+    private static _handleConflict (response: HttpResponse): void {
         ExceptionDispatcher.throwException(response);
     }
     
-    private _spawnHealthChecks(chosenNode: ServerNode, nodeIndex: number): void   {
+    private _spawnHealthChecks (chosenNode: ServerNode, nodeIndex: number): void   {
         if (this._disposed) {
             return;
         }
@@ -1127,7 +1127,7 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
         nodeStatus.startTimer();
     } 
 
-    private _checkNodeStatusCallback(nodeStatus: NodeStatus): Promise<void> {
+    private _checkNodeStatusCallback (nodeStatus: NodeStatus): Promise<void> {
         const copy = this.getTopologyNodes();
 
         if (nodeStatus.nodeIndex >= copy.length) {
@@ -1171,7 +1171,7 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
         return result;
     }
 
-    protected _performHealthCheck(serverNode: ServerNode, nodeIndex: number): Promise<void> {
+    protected _performHealthCheck (serverNode: ServerNode, nodeIndex: number): Promise<void> {
         return this._executeOnSpecificNode(
             RequestExecutor._failureCheckOperation.getCommand(this._conventions), 
             null, 
@@ -1182,7 +1182,7 @@ protected _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
             });
     }
 
-    public dispose(): void {
+    public dispose (): void {
         this._log.info("Dispose.");
         if (this._disposed) {
             return;

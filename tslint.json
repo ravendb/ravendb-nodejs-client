@@ -29,7 +29,8 @@
         "indent": [true, "spaces", 4],
         "adjacent-overload-signatures": false,
         "ban-types": false,
-        "no-unused-variable": true
+        "no-unused-variable": true,
+        "space-before-function-paren": false
     },
     "rulesDirectory": [
         "node_modules/tslint-microsoft-contrib"

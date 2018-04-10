@@ -36,13 +36,14 @@ export class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
       return;
     }
 
-    const rawTpl: TopologyDto = JSON.parse(response);
+    const rawTpl: TopologyDto = this.mapper.deserialize(response);
     const nodes = rawTpl.nodes
       ? rawTpl.nodes.map(x => Object.assign(new ServerNode(), x))
       : null;
     this.result = new Topology(
       rawTpl.etag, 
       nodes);
+      debugger;
   }
 
   public get isReadRequest(): boolean {

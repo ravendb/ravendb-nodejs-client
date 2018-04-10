@@ -1,5 +1,5 @@
 import {ServerNode} from "./ServerNode";
-import {IDisposable} from '../Typedef/Contracts';
+import {IDisposable} from '../Types/Contracts';
 
 export class NodeStatus implements IDisposable {
   private readonly maxTimerPeriod = 60 * 5 * 1000;

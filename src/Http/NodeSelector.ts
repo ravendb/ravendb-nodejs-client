@@ -136,7 +136,7 @@ export class NodeSelector {
   }
 
   protected _throwEmptyTopology(): void {
-    throwError("Empty database topology, this shouldn't happen.", "InvalidOperationException");
+    throwError("InvalidOperationException", "Empty database topology, this shouldn't happen.");
   }
 
   private _switchToSpeedTestPhase(): void {

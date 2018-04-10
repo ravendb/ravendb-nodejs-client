@@ -67,7 +67,6 @@ export abstract class RavenCommand<TResult> {
 
     public send(requestOptions: HttpRequestBase): Promise<HttpResponse> {
         const { body, uri } = requestOptions;
-        // log.info(`Send command ${this.constructor.name} to ${requestOptions.uri}.`);
         log.info(`Send command ${this.constructor.name} to ${uri}${body ? " with body " + body : ""}.`);
         return Promise.resolve(request(requestOptions));
     }
@@ -119,15 +118,13 @@ export abstract class RavenCommand<TResult> {
 
                 // we intentionally don't dispose the reader here, we'll be using it
                 // in the command, any associated memory will be released on context reset
-                // JAVA String json = IOUtils.toString(responseEntity.getContent(), "UTF-8");
-                const json = response.body;
-                // TODO what is type of body
+                const { body } = response;
 
                 if (cache) {
                     // this._cacheResponse(cache, url, response, json);
                 }
 
-                this.setResponse(json, false);
+                this.setResponse(body as string, false);
 
                 return "AUTOMATIC";
             } else {
