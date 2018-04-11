@@ -1,4 +1,4 @@
-import {Todo} from '../../Types/index';
+import {Todo} from "../../Types";
 import * as JsonExtensions from "../../Extensions/JsonExtensions";
 import * as pluralize from "pluralize";
 import { ClientConfiguration } from "../Operations/Configuration/ClientConfiguration";
@@ -225,7 +225,6 @@ export class DocumentConventions {
     public set disableTopologyUpdates(value: boolean) {
         this._disableTopologyUpdates = value;
     }
-
 
     public get throwIfQueryPageSizeIsNotSet(): boolean {
         return this._throwIfQueryPageSizeIsNotSet;

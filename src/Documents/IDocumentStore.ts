@@ -60,9 +60,9 @@ export interface IDocumentStore extends
   //   callback?: EntityIdCallback): Promise<string>;
   // getRequestExecutor(database?: string): RequestExecutor;
 
-    //TBD: IDatabaseChanges Changes(string database = null);
-    //TBD: IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
-    //TBD IDisposable AggressivelyCache(string database = null);
+    // TBD: IDatabaseChanges Changes(string database = null);
+    // TBD: IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
+    // TBD IDisposable AggressivelyCache(string database = null);
 
     // /**
     //  * Setup the context for no aggressive caching

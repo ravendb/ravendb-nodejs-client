@@ -18,7 +18,7 @@ export class ServerOperationExecutor implements IDisposable {
                 ClusterRequestExecutor.createForSingleNode(store.urls[0], { authOptions: store.authOptions }) :
                 ClusterRequestExecutor.create(store.urls, store);
 
-        store.on("afterDispose", 
+        store.once("afterDispose", 
             (sender, event) => this._requestExecutor.dispose());
     }
 

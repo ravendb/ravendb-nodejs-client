@@ -292,12 +292,13 @@ export abstract class RavenTestDriver implements IDisposable {
         ]);
     }
 
-
     public waitForUserToContinueTheTest(store: Todo): void {
         // TODO
 
         // String databaseNameEncoded = UrlUtils.escapeDataString(store.getDatabase());
-        // String documentsPage = store.getUrls()[0] + "/studio/index.html#databases/documents?&database=" + databaseNameEncoded + "&withStop=true";
+        // String documentsPage = 
+        //      store.getUrls()[0] + "/studio/index.html#databases/documents?&database=" 
+        //      + databaseNameEncoded + "&withStop=true";
 
         // openBrowser(documentsPage);
 

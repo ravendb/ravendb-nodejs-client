@@ -43,7 +43,6 @@ export class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
     this.result = new Topology(
       rawTpl.etag, 
       nodes);
-      debugger;
   }
 
   public get isReadRequest(): boolean {

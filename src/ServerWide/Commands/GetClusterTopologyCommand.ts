@@ -2,6 +2,7 @@ import { RavenCommand } from "../../Http/RavenCommand";
 import { ClusterTopology } from "../../Http/ClusterTopology";
 import { HttpRequestBase } from "../../Primitives/Http";
 import { ServerNode } from "../../Http/ServerNode";
+import { IRavenResponse } from "../../Types";
 
 export class ClusterTopologyResponse {
     public leader: string;
@@ -17,11 +18,7 @@ export class GetClusterTopologyCommand extends RavenCommand<ClusterTopologyRespo
 
     public createRequest(node: ServerNode): HttpRequestBase {
         const uri = node.url + "/cluster/topology";
-
-        return {
-            uri,
-            method: "GET"
-        };
+        return { uri };
     }
 
     public setResponse(response: string, fromCache: boolean): void {
@@ -29,7 +26,9 @@ export class GetClusterTopologyCommand extends RavenCommand<ClusterTopologyRespo
             this._throwInvalidResponse();
         }
 
-        this.result = this.mapper.deserialize(response);
+        const resObj = this.mapper.deserialize<IRavenResponse>(response);
+        const clusterTpl = Object.assign(new ClusterTopology(), resObj.topology);
+        this.result = Object.assign(resObj as ClusterTopologyResponse, { topology: clusterTpl });
     }
 
     public get isReadRequest() {

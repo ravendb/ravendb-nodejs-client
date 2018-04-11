@@ -18,9 +18,10 @@ import { ServerNode } from "../src/Http/ServerNode";
 
 describe("Request executor", function () {
 
-    describe("with server running", () => {
+    describe("with server online", () => {
 
         let store: IDocumentStore;
+        let executor: RequestExecutor;
         let documentConventions: DocumentConventions;
 
         beforeEach(async function () {
@@ -29,6 +30,7 @@ describe("Request executor", function () {
         });
 
         afterEach(async function () {
+            executor = null;
             if (!store) {
                 return;
             }
@@ -40,7 +42,6 @@ describe("Request executor", function () {
         });
 
         it("failures do not block connection pool", async function () {
-            let executor: RequestExecutor;
             try {
                 executor = RequestExecutor.create(store.urls, "no_such_db", {
                     documentConventions
@@ -73,7 +74,6 @@ describe("Request executor", function () {
         });
 
         it("can issue many requests", async () => {
-            let executor: RequestExecutor;
             try {
                 executor = RequestExecutor.create(store.urls, store.database, {
                     documentConventions
@@ -89,7 +89,6 @@ describe("Request executor", function () {
         });
 
         it("can fetch database names", async () => {
-            let executor: RequestExecutor;
             try {
                 executor = RequestExecutor.create(store.urls, store.database, {
                     documentConventions
@@ -104,8 +103,7 @@ describe("Request executor", function () {
             }
         });
 
-        it.only("throws when updating topology of not existing db", async () => {
-            let executor: RequestExecutor;
+        it("throws when updating topology of not existing db", async () => {
             try {
                 executor = RequestExecutor.create(store.urls, store.database, {
                     documentConventions
@@ -123,26 +121,53 @@ describe("Request executor", function () {
             } finally {
                 executor.dispose();
             }
-
         });
-    // @Test
-    // public void throwsWhenUpdatingTopologyOfNotExistingDb() throws Exception {
-    //     DocumentConventions conventions = new DocumentConventions();
 
-    //     try (IDocumentStore store = getDocumentStore()) {
-    //         try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, conventions)) {
+        it("can create single node request executor", async () => {
+            try {
+                executor = RequestExecutor.createForSingleNodeWithoutConfigurationUpdates(
+                    store.urls[0], store.database, { documentConventions });
 
-    //             ServerNode serverNode = new ServerNode();
-    //             serverNode.setUrl(store.getUrls()[0]);
-    //             serverNode.setDatabase("no_such");
+                const nodes = executor.getTopologyNodes();
+                assert.equal(nodes.length, 1);
 
-    //             assertThatThrownBy(() ->
-    //                     ExceptionsUtils.accept(() ->
-    //                             executor.updateTopologyAsync(serverNode, 5000).get()))
-    //                     .isExactlyInstanceOf(DatabaseDoesNotExistException.class);
-    //         }
-    //     }
-    // }
+                const serverNode = nodes[0];
+                assert.equal(serverNode.url, store.urls[0]);
+                assert.equal(serverNode.database, store.database);
+
+                const command = new GetNextOperationIdCommand();
+                await executor.execute(command);
+                assert.ok(command.result);
+            } finally {
+                executor.dispose();
+            }
+        });
+
+        it("can choose online node", async () => {
+            const url = store.urls[0];
+            const dbName = store.database;
+
+            try {
+                executor = RequestExecutor.create([ 
+                    "http://no_such_host:8080", 
+                    "http://another_offlilne:8080",
+                    url
+                ],
+                dbName,
+                { documentConventions });
+
+                const command = new GetNextOperationIdCommand();
+                await executor.execute(command);
+                assert.ok(command.result);
+
+                const nodes = executor.getTopologyNodes();
+                assert.equal(nodes.length, 1);
+                assert.equal(nodes[0].url, url);
+                assert.equal(executor.getUrl(), url);
+            } finally {
+                executor.dispose();
+            }
+        });
 
     });
     
