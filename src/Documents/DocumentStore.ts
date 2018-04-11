@@ -111,7 +111,7 @@ export class DocumentStore extends DocumentStoreBase {
             });
 
         })
-        .timeout(5000) // give afterClose subscribers some time to finish stuff
+        .timeout(5000) 
         .catch((err) => this._log.warn(`Error handling 'afterDispose'`, err))
         .finally(() => {
             this._requestExecutors.forEach((executor, db) => {

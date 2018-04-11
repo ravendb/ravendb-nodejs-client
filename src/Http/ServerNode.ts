@@ -3,18 +3,13 @@ import {IJsonConvertible} from "../Types/Contracts";
 import {IRavenObject} from "../Types/IRavenObject";
 import {UriUtility} from "../Http/UriUtility";
 
-export class ServerNodeRole {
-  public static NONE = "NONE";
-  public static PROMOTABLE = "PROMOTABLE";
-  public static MEMBER = "MEMBER";
-  public static REHAB = "REHAB";
-}
+export type ServerNodeRole = "None" | "Promotable" | "Member" | "Rehab";
 
 export class ServerNode implements IJsonConvertible {
   public database: string;
   public url: string;
   public clusterTag?: string = null;
-  public serverRole: string;
+  public serverRole: ServerNodeRole;
 
   public constructor(opts?: { database?: string, url?: string, clusterTag?: string }) {
     if (opts) {

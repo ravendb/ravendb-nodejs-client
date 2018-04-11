@@ -6,6 +6,7 @@ import {IDisposable} from "../../src/Types/Contracts";
 import { RavenTestDriver } from "../../src/TestDriver";
 import { RavenServerLocator } from "../../src/TestDriver/RavenServerLocator";
 import { getLogger } from "../../src/Utility/LogUtil";
+import { IDocumentStore } from "../../src/Documents/IDocumentStore";
 
 //logOnUncaughtAndUnhandled();
 
@@ -41,6 +42,17 @@ export class RemoteSecuredTestContext extends RavenTestDriver {
     public getCommandArguments() {
         return [];
     }
+}
+
+export async function disposeTestDocumentStore(store: IDocumentStore) {
+    if (!store) {
+        return;
+    }
+
+    await new Promise<void>(resolve => {
+        store.once("executorsDisposed", () => resolve());
+        store.dispose();
+    });
 }
 
 export let globalContext: RemoteTestContext;

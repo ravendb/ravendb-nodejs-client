@@ -71,14 +71,14 @@ export class NodeSelector {
 
     for (let i = index; i < state.failures.length; i++) {
       if (state.failures[i] === 0
-        && state.nodes[i].serverRole === ServerNodeRole.MEMBER) {
+        && state.nodes[i].serverRole === "Member") {
         return new CurrentIndexAndNode(i, state.nodes[i]);
       }
     }
 
     for (let i = 0; i < index; i++) {
       if (state.failures[i] === 0
-        && state.nodes[i].serverRole === ServerNodeRole.MEMBER) {
+        && state.nodes[i].serverRole === "Member") {
         return new CurrentIndexAndNode(i, state.nodes[i]);
       }
     }
@@ -114,7 +114,7 @@ export class NodeSelector {
   public getFastestNode(): CurrentIndexAndNode {
     const state = this._state;
     if (state.failures[state.fastest] === 0
-      && state.nodes[state.fastest].serverRole === ServerNodeRole.MEMBER) {
+      && state.nodes[state.fastest].serverRole === "Member") {
       return new CurrentIndexAndNode(state.fastest, state.nodes[state.fastest]);
     }
 

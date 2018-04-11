@@ -19,7 +19,10 @@ export class ServerOperationExecutor implements IDisposable {
                 ClusterRequestExecutor.create(store.urls, store);
 
         store.once("afterDispose", 
-            (sender, event) => this._requestExecutor.dispose());
+            (callback) => { 
+                this._requestExecutor.dispose();
+                callback();
+            });
     }
 
     public send(operation: AwaitableServerOperation): Promise<ServerWideOperationCompletionAwaiter>;
