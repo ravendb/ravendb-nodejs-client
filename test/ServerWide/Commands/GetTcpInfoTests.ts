@@ -8,12 +8,12 @@ import {
     DocumentConventions,
     GetDatabaseTopologyCommand,
     RavenErrorType,
+    IDocumentStore,
+    IRavenResponse, 
+    ServerNode, 
+    GetClusterTopologyCommand, 
+    GetTcpInfoCommand
 } from "../../../src";
-import { IDocumentStore } from "../../../src/Documents/IDocumentStore";
-import { IRavenResponse } from "../../../src/Types";
-import { ServerNode } from "../../../src/Http/ServerNode";
-import { GetClusterTopologyCommand } from "../../../src/ServerWide/Commands/GetClusterTopologyCommand";
-import { GetTcpInfoCommand } from "../../../src/ServerWide/Commands/GetTcpInfoCommand";
 
 describe("GetTcpInfoCommand", function () {
 

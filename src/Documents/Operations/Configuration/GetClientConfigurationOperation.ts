@@ -2,10 +2,15 @@ import { ServerNode } from "../../../Http/ServerNode";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { HttpRequestBase } from "../../../Primitives/Http";
 import { ClientConfiguration } from "../Configuration/ClientConfiguration";
-import { IMaintenanceOperation } from "../IMaintenanceOperation";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 
 export class GetClientConfigurationOperation implements IMaintenanceOperation<GetClientConfigurationOperationResult> {
+
+    public get resultType(): OperationResultType {
+        return "COMMAND_RESULT";
+    }
+
     public getCommand(conventions: DocumentConventions): RavenCommand<GetClientConfigurationOperationResult> {
         return new GetClientConfigurationCommand();
     }
@@ -31,8 +36,7 @@ export class GetClientConfigurationCommand extends RavenCommand<GetClientConfigu
             return;
         }
 
-        // this.result = this._mapper.readValue(response);
-        this.result = JSON.parse(response); // TODO
+        this.result = this.mapper.deserialize(response);
     }
 }
 

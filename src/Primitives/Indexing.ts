@@ -6,7 +6,7 @@ export type IndexState =
     | "ERROR";
 
 export type IndexType = 
-    "NONE" 
+    "None" 
     | "AUTO_MAP" 
     | "AUTO_MAP_REDUCE" 
     | "MAP"

@@ -9,12 +9,12 @@ import {
     DocumentConventions,
     GetDatabaseTopologyCommand,
     RavenErrorType,
+    GetNextOperationIdCommand ,
+    GetDatabaseNamesOperation,
+    IRavenResponse,
+    ServerNode,
+    IDocumentStore
 } from "../src";
-import { GetNextOperationIdCommand } from "../src/Documents/Commands/GetNextOperationIdCommand";
-import { GetDatabaseNamesOperation } from "../src/ServerWide/Operations/GetDatabaseNamesOperation";
-import { IDocumentStore } from "../src/Documents/IDocumentStore";
-import { IRavenResponse } from "../src/Types";
-import { ServerNode } from "../src/Http/ServerNode";
 
 describe("Request executor", function () {
 

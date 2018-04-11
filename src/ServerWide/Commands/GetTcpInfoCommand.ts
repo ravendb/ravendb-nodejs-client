@@ -3,7 +3,6 @@ import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestBase } from "../../Primitives/Http";
 
 export class TcpConnectionInfo {
-    public port: number;
     public url: string;
     public certificate: string;
 }

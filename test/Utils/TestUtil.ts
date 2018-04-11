@@ -8,7 +8,7 @@ import { RavenServerLocator } from "../../src/TestDriver/RavenServerLocator";
 import { getLogger } from "../../src/Utility/LogUtil";
 import { IDocumentStore } from "../../src/Documents/IDocumentStore";
 
-//logOnUncaughtAndUnhandled();
+// logOnUncaughtAndUnhandled();
 
 function logOnUncaughtAndUnhandled() {
     process.on("unhandledRejection", (...args) => {

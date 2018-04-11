@@ -8,11 +8,11 @@ import {
     DocumentConventions,
     GetDatabaseTopologyCommand,
     RavenErrorType,
+    IDocumentStore,
+    IRavenResponse,
+    GetClusterTopologyCommand,
+    ServerNode
 } from "../../../src";
-import { IDocumentStore } from "../../../src/Documents/IDocumentStore";
-import { IRavenResponse } from "../../../src/Types";
-import { ServerNode } from "../../../src/Http/ServerNode";
-import { GetClusterTopologyCommand } from "../../../src/ServerWide/Commands/GetClusterTopologyCommand";
 
 describe("GetClusterTopologyCommand", function () {
 

@@ -16,8 +16,8 @@ import { IRequestAuthOptions, IAuthOptions } from "../Auth/AuthOptions";
 import { Certificate, ICertificate } from "../Auth/Certificate";
 import { ReadBalanceBehavior } from "./ReadBalanceBehavior";
 import { HttpCache, CachedItemMetadata, ReleaseCacheItem } from "./HttpCache";
-import AggressiveCacheOptions from "./AggressiveCacheOptions";
-import { throwError, RavenErrorType } from "../Exceptions";
+import { AggressiveCacheOptions } from "./AggressiveCacheOptions";
+import { throwError, RavenErrorType, ExceptionDispatcher } from "../Exceptions";
 import { 
     GetClientConfigurationCommand, 
     GetClientConfigurationOperationResult
@@ -29,7 +29,6 @@ import { HttpRequestBase, HttpResponse } from "../Primitives/Http";
 import { HEADERS } from "../Constants";
 import { Stopwatch } from "../Utility/Stopwatch";
 import * as PromiseUtil from "../Utility/PromiseUtil";
-import { ExceptionDispatcher } from "../Exceptions";
 import { GetStatisticsOperation } from "../Documents/Operations/GetStatisticsOperation";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
 import { TypeUtil } from "../Utility/TypeUtil";
@@ -357,14 +356,14 @@ export class RequestExecutor implements IDisposable {
                         if (!this._nodeSelector) {
                             this._nodeSelector = new NodeSelector(topology);
 
-                            if (this._readBalanceBehavior === "FASTEST_NODE") {
+                            if (this._readBalanceBehavior === "FastestNode") {
                                 this._nodeSelector.scheduleSpeedTest();
                             }
 
                         } else if (this._nodeSelector.onUpdateTopology(topology, forceUpdate)) {
                             this._disposeAllFailedNodesTimers();
 
-                            if (this._readBalanceBehavior === "FASTEST_NODE") {
+                            if (this._readBalanceBehavior === "FastestNode") {
                                 this._nodeSelector.scheduleSpeedTest();
                             }
                         }
@@ -565,11 +564,11 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
         }
 
         switch (this._readBalanceBehavior) {
-            case "NONE":
+            case "None":
                 return this._nodeSelector.getPreferredNode();
-            case "ROUND_ROBIN":
+            case "RoundRobin":
                 return this._nodeSelector.getNodeBySessionId(sessionInfo ? sessionInfo.sessionId : 0);
-            case "FASTEST_NODE":
+            case "FastestNode":
                 return this._nodeSelector.getFastestNode();
             default:
                 throwError(`Invalid read balance behavior: ${this._readBalanceBehavior}`, "NotSupportedException");
@@ -995,7 +994,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
                 : false;
         }
 
-        return this._readBalanceBehavior === "FASTEST_NODE" &&
+        return this._readBalanceBehavior === "FastestNode" &&
             this._nodeSelector &&
             this._nodeSelector.inSpeedTestPhase() &&
             hasMultipleNodes() &&

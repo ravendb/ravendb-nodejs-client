@@ -1,5 +1,5 @@
 import {ServerNode} from "./ServerNode";
-import {IDisposable} from '../Types/Contracts';
+import {IDisposable} from "../Types/Contracts";
 
 export class NodeStatus implements IDisposable {
   private readonly maxTimerPeriod = 60 * 5 * 1000;
@@ -7,7 +7,7 @@ export class NodeStatus implements IDisposable {
   private _nodeIndex: number;
   private _node: ServerNode;
   private _timerPeriod: number = 0;
-  private _timer?: number = null;
+  private _timer?: NodeJS.Timer = null;
   private _onUpdate: (nodeStatus: NodeStatus) => void;
 
   public get nextTimerPeriod(): number {
@@ -36,7 +36,7 @@ export class NodeStatus implements IDisposable {
 
   public startUpdate(): void {
     this.dispose();
-    this._timer = <number><any>setTimeout(
+    this._timer = setTimeout(
       () => {
         this._onUpdate(this);
         this._timer = null;

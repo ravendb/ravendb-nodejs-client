@@ -130,14 +130,14 @@ export class ClusterRequestExecutor extends RequestExecutor {
                     if (!this._nodeSelector) {
                         this._nodeSelector = new NodeSelector(newTopology);
 
-                        if (this._readBalanceBehavior === "FASTEST_NODE") {
+                        if (this._readBalanceBehavior === "FastestNode") {
                             this._nodeSelector.scheduleSpeedTest();
                         }
 
                     } else if (this._nodeSelector.onUpdateTopology(newTopology, forceUpdate)) {
                         this._disposeAllFailedNodesTimers();
 
-                        if (this._readBalanceBehavior === "FASTEST_NODE") {
+                        if (this._readBalanceBehavior === "FastestNode") {
                             this._nodeSelector.scheduleSpeedTest();
                         }
                     }

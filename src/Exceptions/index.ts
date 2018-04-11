@@ -20,6 +20,16 @@ export function throwError(
   throw getError(message, errName, errCause, info); 
 }
 
+export function getError(errName: RavenErrorType, message: string): Error;
+export function getError(
+  errName: string, 
+  message: string, 
+  errCause?: Error, 
+  info?: { [key: string]: any }): Error;
+export function getError(
+  errName: string, 
+  message: string, 
+  errCause?: Error): Error;
 export function getError(
   errName: RavenErrorType | string = "RavenException", 
   message: string = "", 
@@ -133,7 +143,7 @@ export class ExceptionDispatcher {
 
     public static throwException(response: HttpResponse): void {
         if (response === null) {
-            throw getError("Response cannot be null", "InvalidArgumentException");
+            throw getError("InvalidArgumentException", "Response cannot be null");
         }
 
         try {
@@ -145,9 +155,9 @@ export class ExceptionDispatcher {
             }
 
             const determinedType = this._getType(schema.type) as RavenErrorType;
-            throw getError(schema.error, determinedType || "RavenException");
+            throw getError(determinedType || "RavenException", schema.error);
         } catch (errThrowing) {
-            throw getError(errThrowing.message, "RavenException", errThrowing);
+            throw getError("RavenException", errThrowing.message, errThrowing);
         } finally {
             response.destroy();
         }
@@ -155,10 +165,10 @@ export class ExceptionDispatcher {
 
     private static _throwConflict(schema: ExceptionSchema, json: string) {
         if (schema.type.includes("DocumentConflictException")) {
-            throw getError(schema.message, "DocumentConflictException", null, { json });
+            throw getError("DocumentConflictException", schema.message, null, { json });
         }
 
-        throw getError(schema.message, "ConcurrencyException");
+        throw getError("ConcurrencyException", schema.message);
     }
 
     private static _getType(typeAsString: string): string {

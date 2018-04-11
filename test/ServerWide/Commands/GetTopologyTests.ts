@@ -3,17 +3,17 @@ import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
-
 import {
     RequestExecutor,
     DocumentConventions,
     GetDatabaseTopologyCommand,
     RavenErrorType,
+    IDocumentStore,
+    IRavenResponse,
+    ServerNode,
+    ServerNodeRole,
+    Topology
 } from "../../../src";
-import { IDocumentStore } from "../../../src/Documents/IDocumentStore";
-import { IRavenResponse } from "../../../src/Types";
-import { ServerNode, ServerNodeRole } from "../../../src/Http/ServerNode";
-import { Topology } from "../../../src/Http/Topology";
 
 describe("GetTopologyCommand", function () {
 

@@ -55,7 +55,7 @@ export class DocumentConventions {
     private _registeredTypeCheckers: ObjectLiteralTypeChecker[] = [];
 
     public constructor() {
-        this._readBalanceBehavior = "NONE";
+        this._readBalanceBehavior = "None";
         this._identityPartsSeparator = "/";
         this._findIdentityPropertyNameFromCollectionName = entityName => "id";
         this._findJsType = (id: string, doc: Object) => {
