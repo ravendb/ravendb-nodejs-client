@@ -28,7 +28,8 @@ export class MaintenanceOperationExecutor {
     }
 
     public forDatabase(databaseName: string): MaintenanceOperationExecutor {
-        if (this._databaseName.toLowerCase() === databaseName.toLowerCase()) {
+        if (this._databaseName 
+            && this._databaseName.toLowerCase() === databaseName.toLowerCase()) {
             return this;
         }
 

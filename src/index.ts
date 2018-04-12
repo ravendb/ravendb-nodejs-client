@@ -31,6 +31,7 @@ export { ServerWideOperationCompletionAwaiter } from "./ServerWide/Operations/Se
 // DOCUMENTS
 export * from "./Documents/Operations/OperationAbstractions";
 export { GetNextOperationIdCommand } from "./Documents/Commands/GetNextOperationIdCommand";
+export { GetStatisticsOperation, GetStatisticsCommand } from "./Documents/Operations/GetStatisticsOperation";
 export { DatabaseStatistics } from "./Documents/Operations/DatabaseStatistics";
 export { GetOperationStateOperation } from "./Documents/Operations/GetOperationStateOperation";
 export { IndexInformation } from "./Documents/Operations/IndexInformation";
