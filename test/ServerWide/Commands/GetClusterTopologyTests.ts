@@ -1,7 +1,7 @@
 import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { RemoteTestContext, globalContext } from "../../Utils/TestUtil";
+import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
     RequestExecutor,
@@ -22,16 +22,8 @@ describe("GetClusterTopologyCommand", function () {
         store = await globalContext.getDocumentStore();
     });
 
-    afterEach(async function () {
-        if (!store) {
-            return;
-        }
-
-        await new Promise(resolve => {
-            store.once("executorsDisposed", () => resolve());
-            store.dispose();
-        });
-    });
+    afterEach(async () =>
+        await disposeTestDocumentStore(store));
 
     it("can get topology", async () => {
         const command = new GetClusterTopologyCommand();

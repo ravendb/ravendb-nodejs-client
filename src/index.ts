@@ -7,6 +7,8 @@ export * from "./Types";
 // HTTP
 export { RequestExecutor } from "./Http/RequestExecutor";
 export { ClusterRequestExecutor } from "./Http/ClusterRequestExecutor";
+export { IDocumentStore } from "./Documents/IDocumentStore";
+export { DocumentStore } from "./Documents/DocumentStore";
 export { ClusterTopology } from "./Http/ClusterTopology";
 export { NodeSelector } from "./Http/NodeSelector";
 export { NodeStatus } from "./Http/NodeStatus";
@@ -14,8 +16,6 @@ export { ReadBalanceBehavior } from "./Http/ReadBalanceBehavior";
 export { ServerNode, ServerNodeRole } from "./Http/ServerNode";
 export { StatusCode } from "./Http/StatusCode";
 export { Topology } from "./Http/Topology";
-export { IDocumentStore } from "./Documents/IDocumentStore";
-export { DocumentStore } from "./Documents/DocumentStore";
 export { AggressiveCacheOptions } from "./Http/AggressiveCacheOptions";
 
 // SERVERWIDE

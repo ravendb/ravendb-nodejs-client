@@ -1,7 +1,7 @@
 import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { RemoteTestContext, globalContext } from "./Utils/TestUtil";
+import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "./Utils/TestUtil";
 import * as assertExtentions from "./Utils/AssertExtensions";
 
 import {
@@ -29,17 +29,8 @@ describe("Request executor", function () {
             documentConventions = new DocumentConventions();
         });
 
-        afterEach(async function () {
-            executor = null;
-            if (!store) {
-                return;
-            }
-            
-            await new Promise(resolve => {
-                store.once("executorsDisposed", () => resolve());
-                store.dispose();
-            });
-        });
+        afterEach(async () =>
+            await disposeTestDocumentStore(store));
 
         it("failures do not block connection pool", async function () {
             try {
