@@ -40,3 +40,11 @@ export { OperationCompletionAwaiter } from "./Documents/Operations/OperationComp
 export { ClientConfiguration } from "./Documents/Operations/Configuration/ClientConfiguration";
 export { GetClientConfigurationOperation } from "./Documents/Operations/Configuration/GetClientConfigurationOperation";
 export { PutClientConfigurationOperation } from "./Documents/Operations/Configuration/PutClientConfigurationOperation";
+export { PutDocumentCommand } from "./Documents/Commands/PutDocumentCommand";
+
+export { 
+    ObjectMapper,
+    Mapping,
+    PascalCasedJsonObjectMapper,
+    RavenEntityMapper
+} from "./Utility/Mapping";

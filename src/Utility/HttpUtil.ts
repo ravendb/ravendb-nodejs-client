@@ -49,3 +49,26 @@ export function getBooleanHeader(response: HttpResponse, header: string): boolea
         ? (headerVal as string).toLowerCase() === "true"
         : null;
 }
+
+export class HeadersBuilder {
+
+    private _result: { [key: string]: string } = {};
+
+    public static create() {
+        return new HeadersBuilder();
+    }
+
+    public withContentTypeJson() {
+        this._result["content-type"] = "application/json";
+        return this;
+    }
+
+    public with(name: string, val: string) {
+        this._result[name] = val;
+        return this;
+    }
+
+    public build() {
+        return this._result;
+    }
+}

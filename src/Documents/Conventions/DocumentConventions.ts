@@ -1,10 +1,9 @@
 import {Todo} from "../../Types";
-import * as JsonExtensions from "../../Extensions/JsonExtensions";
 import * as pluralize from "pluralize";
 import { ClientConfiguration } from "../Operations/Configuration/ClientConfiguration";
 import { ReadBalanceBehavior } from "../../Http/ReadBalanceBehavior";
 import { throwError } from "../../Exceptions";
-import { ObjectMapper } from "../../Utility/Mapping";
+import { ObjectMapper, Mapping } from "../../Utility/Mapping";
 import { CONSTANTS } from "../../Constants";
 import { ObjectTypeDescriptor, ObjectConstructor, ObjectLiteralTypeChecker, TypeUtil } from "../../Utility/TypeUtil";
 
@@ -103,9 +102,10 @@ export class DocumentConventions {
         this._readBalanceBehavior = value;
     }
 
-    public deserializeEntityFromJson(documentType: ObjectTypeDescriptor, document: Object): Object {
+    public deserializeEntityFromJson(documentType: ObjectTypeDescriptor, document: object): object {
         try {
-            return JsonExtensions.getDefaultMapper().deserialize(document.toString());
+            return Mapping.getDefaultEntityMapper()
+                .deserialize(document.toString());
         } catch (err) {
             throwError("RavenException", "Cannot deserialize entity", err);
         }

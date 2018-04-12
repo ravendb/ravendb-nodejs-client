@@ -12,7 +12,7 @@ import {
     IDocumentStore,
 } from "../../../src";
 
-describe.only("GetStatisticsCommand()", function () {
+describe("GetStatisticsCommand()", function () {
 
     let store: IDocumentStore;
 

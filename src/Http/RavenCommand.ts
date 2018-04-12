@@ -4,14 +4,14 @@ import { StatusCodes } from "../Http/StatusCode";
 import { RequestPromise, RequestPromiseOptions } from "request-promise";
 import { Promise as BluebirdPromise } from "bluebird";
 import { UriOptions } from "request";
-import * as HttpExtensions from "../Extensions/HttpExtensions";
 import * as request from "request-promise";
 import { HttpRequestBase, HttpResponse } from "../Primitives/Http";
 import { getLogger } from "../Utility/LogUtil";
 import { ObjectMapper } from "../Utility/Mapping";
 import { throwError } from "../Exceptions";
 import { IRavenObject } from "../Types/IRavenObject";
-import { getDefaultMapper } from "../Utility/Mapping";
+import { Mapping } from "../Utility/Mapping";
+import { getEtagHeader } from "../Utility/HttpUtil";
 
 const log = getLogger({ module: "RavenCommand" });
 
@@ -29,7 +29,7 @@ export abstract class RavenCommand<TResult> {
     protected _canCache: boolean;
     protected _canCacheAggressively: boolean;
 
-    protected mapper: ObjectMapper = getDefaultMapper();
+    protected mapper: ObjectMapper = Mapping.getDefaultMapper();
 
     public abstract get isReadRequest(): boolean;
 
@@ -145,7 +145,7 @@ export abstract class RavenCommand<TResult> {
             return;
         }
 
-        const changeVector = HttpExtensions.getEtagHeader(response);
+        const changeVector = getEtagHeader(response);
         if (!changeVector) {
             return;
         }

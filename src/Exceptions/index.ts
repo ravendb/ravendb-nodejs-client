@@ -3,8 +3,7 @@ import {TypeUtil} from "../Utility/TypeUtil";
 import { parseJson } from "../Utility/JsonUtil";
 import { StatusCodes } from "../Http/StatusCode";
 import { HttpResponse } from "../Primitives/Http";
-import { ObjectMapper } from "../Utility/Mapping";
-import { getDefaultMapper } from "../Extensions/JsonExtensions";
+import { ObjectMapper, Mapping } from "../Utility/Mapping";
 
 export function throwError(errName: RavenErrorType);
 export function throwError(errName: RavenErrorType, message: string);
@@ -125,7 +124,7 @@ export interface ExceptionDispatcherArgs {
 }
 export class ExceptionDispatcher {
 
-    private static _mapper: ObjectMapper = getDefaultMapper();
+    private static _mapper: ObjectMapper = Mapping.getDefaultMapper();
 
     public static get(opts: ExceptionDispatcherArgs, code: number): Error {
         const { message, error, type } = opts;
