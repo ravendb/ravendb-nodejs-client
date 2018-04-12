@@ -1,8 +1,8 @@
 import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "./Utils/TestUtil";
-import * as assertExtentions from "./Utils/AssertExtensions";
+import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import * as assertExtentions from "../Utils/AssertExtensions";
 
 import {
     RequestExecutor,
@@ -14,7 +14,7 @@ import {
     IRavenResponse,
     ServerNode,
     IDocumentStore
-} from "../src";
+} from "../../src";
 
 describe("Request executor", function () {
 
@@ -37,7 +37,7 @@ describe("Request executor", function () {
                 executor = RequestExecutor.create(store.urls, "no_such_db", {
                     documentConventions
                 });
-
+ 
                 let errorsCount = 0;
 
                 for (let i = 0; i < 40; i++) {
