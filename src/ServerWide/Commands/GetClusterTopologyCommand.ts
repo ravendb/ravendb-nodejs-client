@@ -1,8 +1,7 @@
-import { RavenCommand } from "../../Http/RavenCommand";
+import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
 import { ClusterTopology } from "../../Http/ClusterTopology";
 import { HttpRequestBase } from "../../Primitives/Http";
 import { ServerNode } from "../../Http/ServerNode";
-import { IRavenResponse } from "../../Types";
 
 export class ClusterTopologyResponse {
     public leader: string;

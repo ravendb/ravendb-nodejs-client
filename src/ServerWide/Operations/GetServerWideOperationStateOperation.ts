@@ -1,7 +1,6 @@
 import {HttpRequestBase} from "../../Primitives/Http";
-import { IRavenResponse } from "../../Types";
 import { IServerOperation, OperationResultType } from "../../Documents/Operations/OperationAbstractions";
-import { RavenCommand } from "../../Http/RavenCommand";
+import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
 import { DocumentConventions } from "../..";
 import { ServerNode } from "../../Http/ServerNode";
 

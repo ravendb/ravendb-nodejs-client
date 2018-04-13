@@ -1,8 +1,7 @@
 import * as BluebirdPromise from "bluebird";
 import {GetOperationStateCommand} from "./GetOperationStateOperation";
 import { RequestExecutor, DocumentConventions } from "../..";
-import { IRavenResponse } from "../../Types";
-import { RavenCommand } from "../../Http/RavenCommand";
+import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
 import { throwError, RavenErrorType } from "../../Exceptions";
 import { OperationExceptionResult } from "./OperationAbstractions";
 import { ExceptionDispatcher } from "../../Exceptions";

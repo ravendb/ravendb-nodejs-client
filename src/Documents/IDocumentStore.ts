@@ -1,3 +1,4 @@
+import {IDocumentSession, ISessionOptions} from "./Session/IDocumentSession";
 import { IStoreAuthOptions } from "../Auth/AuthOptions";
 import { DocumentConventions, RequestExecutor } from "..";
 import { SessionBeforeStoreEventArgs } from "./Session/SessionEvents";
@@ -50,9 +51,9 @@ export interface IDocumentStore extends
   // operations: OperationExecutor;
   // maintenance: AdminOperationExecutor;
   // initialize(): IDocumentStore;
-  // openSession(database?: string): IDocumentSession;
-  // openSession(options?: ISessionOptions): IDocumentSession;
-  // openSession(database?: string, options?: ISessionOptions): IDocumentSession;
+  openSession(database?: string): IDocumentSession;
+  openSession(options?: ISessionOptions): IDocumentSession;
+  openSession(database?: string, options?: ISessionOptions): IDocumentSession;
   // generateId(
   //   document: object,
   //   documentType?: DocumentType,

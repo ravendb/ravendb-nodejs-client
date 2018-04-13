@@ -81,7 +81,7 @@ export abstract class RavenTestDriver implements IDisposable {
         })
         .then(() => {
             documentStore = this._getGlobalServer(secured);
-            const databaseRecord = Object.assign(new DatabaseRecord(), { databaseName });
+            const databaseRecord: DatabaseRecord = { databaseName };
 
             this._customizeDbRecord(databaseRecord);
 

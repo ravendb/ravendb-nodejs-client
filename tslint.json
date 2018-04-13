@@ -30,7 +30,8 @@
         "adjacent-overload-signatures": false,
         "ban-types": false,
         "no-unused-variable": true,
-        "space-before-function-paren": false
+        "space-before-function-paren": false,
+        "no-string-literal": false
     },
     "rulesDirectory": [
         "node_modules/tslint-microsoft-contrib"

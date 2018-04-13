@@ -1,37 +1,19 @@
-import { RequestExecutor } from "../../Http/RequestExecutor";
-import { DocumentConventions } from "../..";
 import { IRavenObject } from "../../Types/IRavenObject";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { IDisposable } from "../../Types/Contracts";
+import { EntityCallback, EntitiesArrayCallback } from "../../Types/Callbacks";
+import { RequestExecutor } from "../../Http/RequestExecutor";
+import { DocumentType, EntityConstructor } from "../DocumentAbstractions";
+
+export class SessionInfo {
+    public sessionId: number;
+}
 
 export interface IMetadataDictionary {
     [key: string]: Object;
 }
 
-export class SessionInfo {
-
-    private _sessionId: number;
-
-    constructor(sessionId: number) {
-        this._sessionId = sessionId;
-    }
-
-    public get sessionId() {
-        return this._sessionId;
-    }
-}
-
-export interface ISessionOptions {
-  database?: string;
-  requestExecutor?: RequestExecutor;
-}
-
-// export interface ISessionOperationOptions<T> {
-//   documentType?: DocumentType<T>,
-//   includes?: string[],
-//   nestedObjectTypes?: IRavenObject<DocumentConstructor>,
-//   expectedChangeVector?: string,
-//   callback?: EntityCallback<T> | EntitiesArrayCallback<T>
-// }
+export type ConcurrencyCheckMode = "Auto" | "Forced" | "Disabled";
 
 // export interface IDocumentSession extends IDisposable {
 
@@ -114,23 +96,7 @@ export interface ISessionOptions {
 //      *  @return Loaded entity
 //      */
 //     load<T>(id): T;
-
-//     /**
-//      *  Loads the specified entities with the specified ids.
-//      *  @param <TResult> result class
-//      *  @param clazz result class
-//      *  @param ids Document ids to load
-//      *  @return Map: id to loaded document
-//      */
 //     <TResult> Map<String, TResult> load(Class<TResult> clazz, String... ids);
-
-//     /**
-//      *  Loads the specified entities with the specified ids.
-//      *  @param <TResult> result class
-//      *  @param clazz result class
-//      *  @param ids Document ids to load
-//      *  @return Map: id -&gt; loaded document
-//      */
 //     <TResult> Map<String, TResult> load(Class<TResult> clazz, Collection<String> ids);
 
 //     <T> IDocumentQuery<T> query(Class<T> clazz);
@@ -142,21 +108,43 @@ export interface ISessionOptions {
 // }
 
 
-// export interface IDocumentSession {
-//   numberOfRequestsInSession: number;
-//   conventions: DocumentConventions;
-//   advanced: AdvancedSessionOperations;
+export interface IDocumentSession extends IDisposable {
+    numberOfRequestsInSession: number;
+    conventions: DocumentConventions;
+    //   advanced: AdvancedSessionOperations;
 
-//   load<T extends Object = IRavenObject>(id: string, callback?: EntityCallback<T>): Promise<T>;
-//   load<T extends Object = IRavenObject>(id: string, options?: ISessionOperationOptions<T>, callback?: EntityCallback<T>): Promise<T>;
-//   load<T extends Object = IRavenObject>(ids: string[], callback?: EntityCallback<T>): Promise<T[]>;
-//   load<T extends Object = IRavenObject>(ids: string[], options?: ISessionOperationOptions<T>, callback?: EntitiesArrayCallback<T>): Promise<T[]>;
-//   delete<T extends Object = IRavenObject>(id: string, callback?: EntityCallback<T | null | void>): Promise<T | null | void>;
-//   delete<T extends Object = IRavenObject>(id: string, options?: ISessionOperationOptions<T | null | void>, callback?: EntityCallback<T | null | void>): Promise<T | null | void>;
-//   delete<T extends Object = IRavenObject>(document: T, callback?: EntityCallback<T | null | void>): Promise<T | null | void>;
-//   delete<T extends Object = IRavenObject>(document: T, options?: ISessionOperationOptions<T | null | void>, callback?: EntityCallback<T | null | void>): Promise<T | null | void>;
-//   store<T extends Object = IRavenObject>(document: T, id?: string, callback?: EntityCallback<T>): Promise<T>;
-//   store<T extends Object = IRavenObject>(document: T, id?: string, options?: ISessionOperationOptions<T>, callback?: EntityCallback<T>): Promise<T>;
-//   query<T extends Object = IRavenObject>(options?: IDocumentQueryOptions<T>): IDocumentQuery<T>;
-//   saveChanges(): Promise<void>;
-// }
+    load<T extends Object = IRavenObject>(id: string, callback?: EntityCallback<T>): Promise<T>;
+    load<T extends Object = IRavenObject>(
+        id: string, options?: ISessionOperationOptions<T>, callback?: EntityCallback<T>): Promise<T>;
+    load<T extends Object = IRavenObject>(
+        ids: string[], callback?: EntityCallback<T>): Promise<T[]>;
+    load<T extends Object = IRavenObject>(
+        ids: string[], options?: ISessionOperationOptions<T>, callback?: EntitiesArrayCallback<T>): Promise<T[]>;
+
+    //   delete<T extends Object = IRavenObject>(id: string, callback?: EntityCallback<T | null | void>): Promise<T | null | void>;
+    //   delete<T extends Object = IRavenObject>(id: string, options?: ISessionOperationOptions<T | null | void>, callback?: EntityCallback<T | null | void>): Promise<T | null | void>;
+    //   delete<T extends Object = IRavenObject>(document: T, callback?: EntityCallback<T | null | void>): Promise<T | null | void>;
+    //   delete<T extends Object = IRavenObject>(document: T, options?: ISessionOperationOptions<T | null | void>, callback?: EntityCallback<T | null | void>): Promise<T | null | void>;
+
+    //   store<T extends Object = IRavenObject>(
+    //       document: T, id?: string, callback?: EntityCallback<T>): Promise<T>;
+    //   store<T extends Object = IRavenObject>(
+    //       document: T, id?: string, options?: ISessionOperationOptions<T>, callback?: EntityCallback<T>): Promise<T>;
+
+    //       query<T extends Object = IRavenObject>(options?: IDocumentQueryOptions<T>): IDocumentQuery<T>;
+
+    //   saveChanges(): Promise<void>;
+}
+
+export interface ISessionOptions {
+    database?: string;
+    requestExecutor?: RequestExecutor;
+}
+
+export interface ISessionOperationOptions<T> {
+    documentType?: DocumentType<T>;
+    includes?: string[];
+    nestedObjectTypes?: IRavenObject<EntityConstructor>;
+    expectedChangeVector?: string;
+    callback?: EntityCallback<T> | EntitiesArrayCallback<T>;
+}

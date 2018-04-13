@@ -5,6 +5,7 @@ export { RavenErrorType } from "./Exceptions";
 export * from "./Types";
 
 // HTTP
+export { RavenCommand, RavenCommandResponseType, IRavenResponse } from "./Http/RavenCommand";
 export { RequestExecutor } from "./Http/RequestExecutor";
 export { ClusterRequestExecutor } from "./Http/ClusterRequestExecutor";
 export { IDocumentStore } from "./Documents/IDocumentStore";
@@ -42,9 +43,3 @@ export { GetClientConfigurationOperation } from "./Documents/Operations/Configur
 export { PutClientConfigurationOperation } from "./Documents/Operations/Configuration/PutClientConfigurationOperation";
 export { PutDocumentCommand } from "./Documents/Commands/PutDocumentCommand";
 
-export { 
-    ObjectMapper,
-    Mapping,
-    PascalCasedJsonObjectMapper,
-    RavenEntityMapper
-} from "./Utility/Mapping";

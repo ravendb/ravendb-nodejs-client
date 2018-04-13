@@ -10,7 +10,9 @@ import { SessionBeforeStoreEventArgs } from "./Session/SessionEvents";
 import { Todo } from "../Types";
 import { InMemoryDocumentSessionOperations } from "./Session/InMemoryDocumentSessionOperations";
 import { OperationExecutor } from "./Operations/OperationExecutor";
-
+import { SessionOptions } from "http2";
+import { IDocumentSession } from "./Session/IDocumentSession";
+import { DocumentSession } from "./Session/DocumentSession";
 
 export abstract class DocumentStoreBase 
     extends EventEmitter 
@@ -39,11 +41,9 @@ export abstract class DocumentStoreBase
 
     public abstract initialize(): IDocumentStore;
 
-    //public abstract openSession(): IDocumentSession;
-
-    //public abstract IDocumentSession openSession(String database);
-
-    //public abstract IDocumentSession openSession(SessionOptions sessionOptions);
+    public abstract openSession(): IDocumentSession;
+    public abstract openSession(database: string): IDocumentSession;
+    public abstract openSession(sessionOptions: SessionOptions): IDocumentSession;
 
     // public void executeIndex(AbstractIndexCreationTask task) {
     //     executeIndex(task, null);
@@ -184,7 +184,7 @@ export abstract class DocumentStoreBase
         }
     }
 
-    protected _registerEvents(session: InMemoryDocumentSessionOperations): void {
+    protected _registerEvents(session: DocumentSession): void {
         this._eventHandlers.forEach(([eventName, eventHandler]) => {
             session.on(eventName, eventHandler);
         });

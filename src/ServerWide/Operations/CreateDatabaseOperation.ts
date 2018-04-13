@@ -2,11 +2,13 @@ import { HttpRequestBase } from "../../Primitives/Http";
 import { DatabaseRecord } from "..";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { DatabasePutResult } from ".";
-import { DocumentConventions } from "../..";
+import { DocumentConventions, Mapping } from "../..";
 import { throwError } from "../../Exceptions";
 import { ServerNode } from "../../Http/ServerNode";
 import { IServerOperation, OperationResultType } from "../../Documents/Operations/OperationAbstractions";
 import { stringifyJson } from "../../Utility/JsonUtil";
+import { TypesAwareJsonObjectMapper } from "../../Utility/Mapping";
+import { HeadersBuilder } from "../../Utility/HttpUtil";
 
 export class CreateDatabaseOperation implements IServerOperation<DatabasePutResult> {
 
@@ -51,13 +53,13 @@ class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> {
 
         uri += "&replicationFactor=" + this._replicationFactor;
 
-        const databaseDocumentJson = stringifyJson(this._databaseRecord, "CAMEL_TO_PASCALCASE");
+        const databaseDocumentJson = this.mapper.serialize(this._databaseRecord);
         return {
             uri,
             method: "PUT",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: HeadersBuilder.create()
+                .withContentTypeJson()
+                .build(),
             body: databaseDocumentJson
         };
     }

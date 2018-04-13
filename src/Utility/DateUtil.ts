@@ -1,6 +1,9 @@
-import * as moment from 'moment';
+import * as moment from "moment";
 
 export class DateUtil {
+
+  public static DEFAULT_DATE_FORMAT = "YYYY-MM-DDTHH:mm:ss.SSS0000";
+
   public static timestamp(): number {
     return moment().unix();
   }
@@ -15,9 +18,9 @@ export class DateUtil {
 
   public static parse(dateString: string): Date {
     const stripped = dateString.substring(0, dateString.length - 1);
-    const format = 'YYYY-MM-DDTHH:mm:ss.SSS0000';
+    const format = this.DEFAULT_DATE_FORMAT;
 
-    if (!dateString.endsWith('Z')) {
+    if (!dateString.endsWith("Z")) {
       const parsed = moment(dateString, format);
 
       if (parsed.isValid()) {
@@ -29,6 +32,6 @@ export class DateUtil {
   }
 
   public static stringify(date: Date): string {
-    return moment(date).format('YYYY-MM-DDTHH:mm:ss.SSS0000');
+    return moment(date).format(this.DEFAULT_DATE_FORMAT);
   }
 }

@@ -1,12 +1,23 @@
 import * as BluebirdPromise from "bluebird";
 import {TypeUtil} from "./TypeUtil";
-import {AbstractCallback, EmptyCallback, EntityCallback, EntitiesArrayCallback, EntitiesCountCallback} from '../Typedef/Callbacks';
+import {
+  AbstractCallback, 
+  EmptyCallback, 
+  EntityCallback, 
+  EntitiesArrayCallback, 
+  EntitiesCountCallback
+} from "../Types/Callbacks";
 
-export type PromiseResolve<T> = (thenableOrResult?: BluebirdPromise.Thenable<T | T[] | number> | T | T[] | number) => void;
+export type PromiseResolve<T> = (thenableOrResult?: PromiseLike<T | T[] | number> | T | T[] | number) => void;
 export type PromiseReject = (error: Error) => void;
 
 export class PromiseResolver {
-  public static resolve<T>(result?: T | T[] | number, resolve?: PromiseResolve<T>, callback?: EntityCallback<T> | EntitiesArrayCallback<T> | EntitiesCountCallback | EmptyCallback): T | T[] | number | void {
+  public static resolve<T>(
+    result?: T | T[] | number, 
+    resolve?: PromiseResolve<T>, 
+    callback?: EntityCallback<T> | EntitiesArrayCallback<T> | EntitiesCountCallback | EmptyCallback)
+      : T | T[] | number | void {
+        
     if (resolve) {
       resolve(result);
     }
@@ -28,7 +39,8 @@ export class PromiseResolver {
     }
   }
 
-  public static reject<T = void>(error: Error, reject?: PromiseReject, callback?: AbstractCallback<null>): BluebirdPromise.Thenable<T> {
+  public static reject<T = void>(
+    error: Error, reject?: PromiseReject, callback?: AbstractCallback<null>): BluebirdPromise.Thenable<T> {
     if (reject) {
       reject(error);
     }

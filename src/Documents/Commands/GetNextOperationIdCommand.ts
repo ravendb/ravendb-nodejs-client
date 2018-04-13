@@ -1,7 +1,6 @@
-import { RavenCommand } from "../../Http/RavenCommand";
+import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestBase } from "../../Primitives/Http";
-import { IRavenResponse } from "../../Types";
 
 export class GetNextOperationIdCommand extends RavenCommand<number> {
 

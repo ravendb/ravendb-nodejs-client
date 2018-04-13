@@ -40,7 +40,8 @@ describe("PutDocumentCommand", function () {
 
         assert.equal(result.id, "users/1");
         assert.ok(result.changeVector);
-        // try (IDocumentSession session = store.openSession()) {
+
+        const session = store.openSession();
         //     User loadedUser = session.load(User.class, "users/1");
 
         //     assertThat(loadedUser.getName())

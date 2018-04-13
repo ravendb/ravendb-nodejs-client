@@ -1,9 +1,9 @@
 import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { stringifyJson, parseJson } from "../src/Utility/JsonUtil";
+import { stringifyJson, JSON_SERIALIZATION_TRANSORM, parseJson } from "../src/Mapping/Json";
 
-describe("JsonUtil module", () => {
+describe.only("JsonUtil module", () => {
 
     describe("stringifyJson()", () => {
 
@@ -24,7 +24,7 @@ describe("JsonUtil module", () => {
         });
 
         it("stringifies PascalCased JSON", () => {
-            const result = stringifyJson(o, "CAMEL_TO_PASCALCASE");
+            const result = stringifyJson(o, JSON_SERIALIZATION_TRANSORM.targetJsonPascalCase .replacer);
             assert.equal(`{"A":1,"Prop":2,"Obj":{"Prop2":"test"},"Arr":[1,2,"test"]}`, result);
         });
 
@@ -52,7 +52,8 @@ describe("JsonUtil module", () => {
         });
 
         it("parses PascalCased JSON", () => {
-            const result = JSON.stringify(parseJson(JSON_PASCAL_CASED, "PASCAL_TO_CAMELCASE"));
+            const result = JSON.stringify(
+                parseJson(JSON_PASCAL_CASED, JSON_SERIALIZATION_TRANSORM.targetJsonPascalCase.reviver));
             assert.equal(JSON_CAMEL_CASED, result);
         });
 

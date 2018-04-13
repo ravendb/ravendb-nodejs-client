@@ -7,7 +7,7 @@ import { UriOptions } from "request";
 import * as request from "request-promise";
 import { HttpRequestBase, HttpResponse } from "../Primitives/Http";
 import { getLogger } from "../Utility/LogUtil";
-import { ObjectMapper } from "../Utility/Mapping";
+import { ObjectMapper, TypesAwareObjectMapper } from "../Utility/Mapping";
 import { throwError } from "../Exceptions";
 import { IRavenObject } from "../Types/IRavenObject";
 import { Mapping } from "../Utility/Mapping";
@@ -18,6 +18,9 @@ const log = getLogger({ module: "RavenCommand" });
 export type RavenCommandResponseType = "EMPTY" | "OBJECT" | "RAW";
 
 export type ResponseDisposeHandling = "AUTOMATIC" | "MANUALLY";
+
+// tslint:disable-next-line:no-empty-interface
+export interface IRavenResponse extends IRavenObject {}
 
 export abstract class RavenCommand<TResult> {
 

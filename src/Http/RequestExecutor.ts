@@ -24,7 +24,7 @@ import {
 } from "../Documents/Operations/Configuration/GetClientConfigurationOperation";
 import CurrentIndexAndNode from "./CurrentIndexAndNode";
 import { ClientConfiguration } from "../Documents/Operations/Configuration/ClientConfiguration";
-import { SessionInfo } from "../Documents/Session";
+import { SessionInfo } from "../Documents/Session/DocumentSession";
 import { HttpRequestBase, HttpResponse } from "../Primitives/Http";
 import { HEADERS } from "../Constants";
 import { Stopwatch } from "../Utility/Stopwatch";
@@ -275,6 +275,36 @@ export class RequestExecutor implements IDisposable {
         executor._disableClientConfigurationUpdates = true;
 
         return executor;
+    }
+
+    private _ensureNodeSelector(): Promise<void> {
+        let promise: Promise<void> = Promise.resolve();
+        if (this._firstTopologyUpdate 
+            && !BluebirdPromise.resolve(this._firstTopologyUpdate).isFulfilled()) {
+            promise = this._firstTopologyUpdatePromise; 
+        }
+
+        return promise.then(() => {
+            if (!this._nodeSelector) {
+                const topology = new Topology(this._topologyEtag, this.getTopologyNodes());
+                this._nodeSelector = new NodeSelector(topology);
+            }
+        });
+    }
+
+    public getPreferredNode(): Promise<CurrentIndexAndNode> {
+        return this._ensureNodeSelector()
+            .then(() => this._nodeSelector.getPreferredNode());
+    }
+
+    public getNodeBySessionId(sessionId: number): Promise<CurrentIndexAndNode> {
+        return this._ensureNodeSelector()
+            .then(() => this._nodeSelector.getNodeBySessionId(sessionId));
+    }
+
+    public getFastestNode(): Promise<CurrentIndexAndNode> {
+        return this._ensureNodeSelector()
+            .then(() => this._nodeSelector.getFastestNode());
     }
 
     protected _updateClientConfiguration (): PromiseLike<void> {

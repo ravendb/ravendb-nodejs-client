@@ -6,9 +6,9 @@ import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestBase } from "../../Primitives/Http";
 import { stringifyJson } from "../../Utility/JsonUtil";
 
-export class DeleteDatabaseResult {
-    public raftCommandIndex: number;
-    public pendingDeletes: string[];
+export interface DeleteDatabaseResult {
+    raftCommandIndex: number;
+    pendingDeletes: string[];
 }
 
 export interface DeleteDatabasesParameters {
@@ -57,7 +57,7 @@ export class DeleteDatabaseCommand extends RavenCommand<DeleteDatabaseResult> {
             throwError("InvalidArgumentException", "Parameters cannot be null.");
         }
 
-        this._parameters = stringifyJson(parameters, "CAMEL_TO_PASCALCASE");
+        this._parameters = this.mapper.serialize(parameters);
     }
 
     public createRequest(node: ServerNode): HttpRequestBase {
@@ -79,4 +79,4 @@ export class DeleteDatabaseCommand extends RavenCommand<DeleteDatabaseResult> {
     public get isReadRequest() {
         return false;
     }
-    }
+}

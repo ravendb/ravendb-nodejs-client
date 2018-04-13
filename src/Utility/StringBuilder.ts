@@ -1,4 +1,4 @@
-import {IStringable} from "../Typedef/Contracts";
+import {IStringable} from "../Types/Contracts";
 
 export interface IStringBuilder extends IStringable {
   append(content: string): IStringBuilder;
@@ -12,16 +12,16 @@ export class StringBuilder implements IStringBuilder {
   protected buffer: Buffer = null;
 
   public append(content: string): IStringBuilder {
-    var contentBuffer = this.getBufferFromOutside(content);
+    const contentBuffer = this._getBufferFromOutside(content);
 
     if (contentBuffer === undefined) {
         return this;
     }
 
-    var contentBufferLength: number = contentBuffer.length;
-    var concatLength: number = this.length + contentBufferLength;
+    const contentBufferLength: number = contentBuffer.length;
+    const concatLength: number = this.length + contentBufferLength;
 
-    this.reAlloc(concatLength);
+    this._realloc(concatLength);
     contentBuffer.copy(this.buffer, this.length);
     this.length = concatLength;
 
@@ -29,20 +29,20 @@ export class StringBuilder implements IStringBuilder {
   }
 
   public toString(): string {
-    return this.buffer.slice(0, this.length).toString('utf16le');
+    return this.buffer.slice(0, this.length).toString("utf16le");
   }
 
-  protected getBufferFromOutside(source: string | number | boolean): Buffer | null {  
+  protected _getBufferFromOutside(source: string | number | boolean): Buffer | null {  
     const type: string = typeof source;  
     let dataBuffer: Buffer;
 
     switch (type) {
-        case 'boolean':
-        case 'number':
-            dataBuffer = Buffer.from((<boolean | number>source).toString(), 'utf16le');
+        case "boolean":
+        case "number":
+            dataBuffer = Buffer.from((source as boolean | number).toString(), "utf16le");
             break;
-        case 'string':
-            dataBuffer = Buffer.from(<string>source, 'utf16le');
+        case "string":
+            dataBuffer = Buffer.from(source as string, "utf16le");
             break;
         default:
             return undefined;
@@ -51,11 +51,11 @@ export class StringBuilder implements IStringBuilder {
     return dataBuffer;
   }
 
-  protected reAlloc(newSize: number): void {
+  protected _realloc(newSize: number): void {
     if (this.capacity < newSize) {
-        let count: number = Math.ceil((newSize - this.capacity) / this.blockSize);
-        let sizeToAdd : number= count * this.blockSize;
-        let emptyBuffer: Buffer = Buffer.allocUnsafe(sizeToAdd);
+        const count: number = Math.ceil((newSize - this.capacity) / this.blockSize);
+        const sizeToAdd : number= count * this.blockSize;
+        const emptyBuffer: Buffer = Buffer.allocUnsafe(sizeToAdd);
 
         if (!this.buffer) {
           this.buffer = Buffer.allocUnsafe(this.blockSize);
