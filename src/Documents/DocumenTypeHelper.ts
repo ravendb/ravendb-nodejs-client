@@ -1,10 +1,11 @@
 import { DocumentConventions } from "./Conventions/DocumentConventions";
 import { TypeUtil } from "../Utility/TypeUtil";
 import { EntityConstructor } from "./DocumentAbstractions";
+import { ObjectTypeDescriptor } from "../Types";
 
 export class DocumentTypeHelper {
 
-    public static getType(entity: object, conventions: DocumentConventions) {
+    public static getType(entity: object, conventions: DocumentConventions): ObjectTypeDescriptor {
         return TypeUtil.isClassConstructor(entity.constructor)
             ? entity.constructor as EntityConstructor
             : conventions.registeredTypeDescriptors.find(x => TypeUtil.isType(entity, x));

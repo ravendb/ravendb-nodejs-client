@@ -1,9 +1,9 @@
 import { VError } from "verror";
 import {TypeUtil} from "../Utility/TypeUtil";
-import { parseJson } from "../Utility/JsonUtil";
 import { StatusCodes } from "../Http/StatusCode";
 import { HttpResponse } from "../Primitives/Http";
-import { ObjectMapper, Mapping } from "../Utility/Mapping";
+import { JsonSerializer } from "../Mapping/Json";
+import { Mapping } from "../Mapping";
 
 export function throwError(errName: RavenErrorType);
 export function throwError(errName: RavenErrorType, message: string);
@@ -124,7 +124,7 @@ export interface ExceptionDispatcherArgs {
 }
 export class ExceptionDispatcher {
 
-    private static _mapper: ObjectMapper = Mapping.getDefaultMapper();
+    private static _jsonSerializer: JsonSerializer = Mapping.getDefaultJsonSerializer();
 
     public static get(opts: ExceptionDispatcherArgs, code: number): Error {
         const { message, error, type } = opts;
@@ -148,7 +148,7 @@ export class ExceptionDispatcher {
         let errorToThrow: Error;
         try {
             const json: string = response.body;
-            const schema: ExceptionSchema = ExceptionDispatcher._mapper.deserialize(json);
+            const schema: ExceptionSchema = ExceptionDispatcher._jsonSerializer.deserialize(json);
 
             if (response.statusCode === StatusCodes.Conflict) {
                 errorToThrow = this._getConflictError(schema, json);

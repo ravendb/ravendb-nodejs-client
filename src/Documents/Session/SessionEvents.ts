@@ -1,6 +1,6 @@
-import { IMetadataDictionary } from ".";
 import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
 import { Todo } from "../../Types";
+import { IMetadataDictionary } from "./IDocumentSession";
 
 export interface SessionEventsEmitter {
     on(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;

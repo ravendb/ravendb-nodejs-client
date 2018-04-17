@@ -29,7 +29,7 @@ export const CONSTANTS = {
              RAVEN_JS_TYPE: "Raven-Node-Type",
              CHANGE_VECTOR: "@change-vector",
              EXPIRES: "@expires",
-             EMPTY: "@empty",
+             EMPTY_COLLECTION: "@empty",
              NESTED_OBJECT_TYPES: "@nested-object-types"
         },
     }

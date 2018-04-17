@@ -1,12 +1,11 @@
 import * as BluebirdPromise from "bluebird";
 import * as semaphore from "semaphore";
 
-import { RavenErrorType } from "..";
-import { IDocumentStore } from "../Documents/IDocumentStore";
-import { throwError } from "../Exceptions";
-import { DateUtil } from "../Utility/DateUtil";
-import { acquireSemaphore } from "../Utility/SemaphoreUtil";
-import { StringUtil } from "../Utility/StringUtil";
+import { IDocumentStore } from "../../Documents/IDocumentStore";
+import { throwError, RavenErrorType } from "../../Exceptions";
+import { DateUtil } from "../../Utility/DateUtil";
+import { acquireSemaphore } from "../../Utility/SemaphoreUtil";
+import { StringUtil } from "../../Utility/StringUtil";
 import { AbstractHiloIdGenerator } from "./AbstractHiloIdGenerator";
 import { HiloReturnCommand } from "./Commands/HiloReturnCommand";
 import { NextHiloCommand } from "./Commands/NextHiloCommand";
@@ -41,8 +40,7 @@ export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdG
     const range = this._range;
     const executor = this.store.getRequestExecutor(this.dbName);
 
-    return executor.execute(
-      new HiloReturnCommand(this.tag, range.current, range.maxId));
+    return executor.execute(new HiloReturnCommand(this.tag, range.current, range.maxId));
   }
 
   protected _getNextRange(): Promise<HiloRangeValue> {

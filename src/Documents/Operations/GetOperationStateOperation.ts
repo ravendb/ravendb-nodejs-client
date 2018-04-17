@@ -1,8 +1,7 @@
 import { DocumentConventions } from "../..";
-import { IRavenResponse } from "../../Types";
 import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestBase } from "../../Primitives/Http";
-import { RavenCommand } from "../../Http/RavenCommand";
+import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
 import { IMaintenanceOperation, OperationResultType } from "./OperationAbstractions";
 
 export class GetOperationStateOperation implements IMaintenanceOperation<IRavenResponse> {

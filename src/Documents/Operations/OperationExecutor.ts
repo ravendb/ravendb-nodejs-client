@@ -16,9 +16,8 @@ import { DocumentConventions } from "../../Documents/Conventions/DocumentConvent
 import { RavenCommand } from "../../Http/RavenCommand";
 import { throwError } from "../../Exceptions";
 import { IRequestAuthOptions } from "../../Auth/AuthOptions";
-import { IRavenResponse } from "../../Types";
 import { DocumentStoreBase } from "../DocumentStoreBase";
-import { SessionInfo } from "../Session";
+import { SessionInfo } from "../Session/IDocumentSession";
 
 // TODO import {PatchStatuses, IPatchResult} from '../../Http/Request/PatchRequest';
 

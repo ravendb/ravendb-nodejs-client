@@ -7,7 +7,10 @@ import { DateUtil } from "../Utility/DateUtil";
 // json string -> casing aware -> types aware -> entity
 
 export class Mapping {
-    private static _defaultJsonParser: JsonSerializer;
+    
+    private static _defaultJsonSerializer: JsonSerializer;
+
+    private static _defaultMapper: TypesAwareObjectMapper;
     private static _defaultEntityMapper: TypesAwareObjectMapper;
 
     public static getDefaultEntityMapper() {
@@ -20,13 +23,23 @@ export class Mapping {
         return this._defaultEntityMapper;
     }
 
+    public static getDefaultMapper() {
+        if (!this._defaultMapper) {
+            this._defaultMapper = new TypesAwareObjectMapper({
+                dateFormat: DateUtil.DEFAULT_DATE_FORMAT
+            });
+        }
+
+        return this._defaultMapper;
+    }
+
     public static getDefaultJsonSerializer() {
-        if (!this._defaultJsonParser) {
-            this._defaultJsonParser = new JsonSerializer({
+        if (!this._defaultJsonSerializer) {
+            this._defaultJsonSerializer = new JsonSerializer({
                 transform: JSON_SERIALIZATION_TRANSORM.targetJsonPascalCase
             });
         }
 
-        return this._defaultJsonParser;
+        return this._defaultJsonSerializer;
     }
 }

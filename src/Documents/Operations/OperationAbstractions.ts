@@ -3,7 +3,6 @@ import { IDocumentStore } from "../../Documents/IDocumentStore";
 import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
 import { HttpCache } from "../../Http/HttpCache";
 import { RequestExecutor } from "../..";
-import { IRavenResponse } from "../../Types";
 
 export type OperationResultType = "OPERATION_ID" | "COMMAND_RESULT" | "PATCH_STATUS";
 

@@ -1,10 +1,11 @@
+import {EntityToJson} from "./EntityToJson";
 import * as uuid from "uuid";
 import { IDisposable } from "../../Types/Contracts";
 import { IMetadataDictionary } from "./IDocumentSession";
 import { Todo } from "../../Types";
 import { SessionEventsEmitter, SessionBeforeStoreEventArgs } from "./SessionEvents";
 import { RequestExecutor } from "../../Http/RequestExecutor";
-import { ObjectMapper, Mapping } from "../../Utility/Mapping";
+import { ObjectMapper } from "../../Utility/Mapping";
 import { IDocumentStore } from "../IDocumentStore";
 import CurrentIndexAndNode from "../../Http/CurrentIndexAndNode";
 import { throwError, getError } from "../../Exceptions";
@@ -15,6 +16,8 @@ import { DocumentStoreBase } from "../DocumentStoreBase";
 import { DocumentConventions } from "../..";
 import { ICommandData, CommandType } from "../Commands/CommandData";
 import { GenerateEntityIdOnTheClient } from "../Identity/GenerateEntityIdOnTheClient";
+import { JsonSerializer } from "../../Mapping/Json";
+import { Mapping } from "../../Mapping";
 export abstract class InMemoryDocumentSessionOperations implements IDisposable, SessionEventsEmitter, Todo {
     
     public removeListener(
@@ -52,7 +55,7 @@ export abstract class InMemoryDocumentSessionOperations implements IDisposable, 
 
     private _disposed: boolean;
 
-    protected _mapper: ObjectMapper = Mapping.getDefaultMapper();
+    protected _jsonSerializer: JsonSerializer = Mapping.getDefaultJsonSerializer();
 
     private _id: string;
 

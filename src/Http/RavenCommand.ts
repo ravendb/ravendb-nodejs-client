@@ -7,11 +7,12 @@ import { UriOptions } from "request";
 import * as request from "request-promise";
 import { HttpRequestBase, HttpResponse } from "../Primitives/Http";
 import { getLogger } from "../Utility/LogUtil";
-import { ObjectMapper, TypesAwareObjectMapper } from "../Utility/Mapping";
 import { throwError } from "../Exceptions";
 import { IRavenObject } from "../Types/IRavenObject";
-import { Mapping } from "../Utility/Mapping";
 import { getEtagHeader } from "../Utility/HttpUtil";
+import { JsonSerializer } from "../Mapping/Json";
+import { Mapping } from "../Mapping";
+import { TypesAwareObjectMapper, TypeInfo } from "../Mapping/ObjectMapper";
 
 const log = getLogger({ module: "RavenCommand" });
 
@@ -32,7 +33,8 @@ export abstract class RavenCommand<TResult> {
     protected _canCache: boolean;
     protected _canCacheAggressively: boolean;
 
-    protected mapper: ObjectMapper = Mapping.getDefaultMapper();
+    protected _jsonSerializer: JsonSerializer = Mapping.getDefaultJsonSerializer();
+    protected _typedObjectMapper: TypesAwareObjectMapper = Mapping.getDefaultMapper();
 
     public abstract get isReadRequest(): boolean;
 
@@ -160,6 +162,12 @@ export abstract class RavenCommand<TResult> {
         if (changeVector) {
             req.headers["If-Match"] = `"${changeVector}"`;
         }
+    }
+
+    protected _parseResponseDefault<TResponse extends object>(response: string, typeInfo?: TypeInfo) {
+        const res = this._jsonSerializer.deserialize(response);
+        const resObj = this._typedObjectMapper.fromObjectLiteral<TResponse>(res, typeInfo);
+        return resObj;
     }
 
     // tslint:disable-next-line:no-empty

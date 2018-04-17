@@ -1,8 +1,8 @@
-import { ServerNode } from "../../Http/ServerNode";
-import { StringUtil } from "../../Utility/StringUtil";
-import { throwError } from "../../Exceptions";
-import { HttpRequestBase } from "../../Primitives/Http";
-import { RavenCommand } from "../../Http/RavenCommand";
+import { ServerNode } from "../../../Http/ServerNode";
+import { StringUtil } from "../../../Utility/StringUtil";
+import { throwError } from "../../../Exceptions";
+import { HttpRequestBase } from "../../../Primitives/Http";
+import { RavenCommand } from "../../../Http/RavenCommand";
 
 export class HiloReturnCommand extends RavenCommand<void> {
 

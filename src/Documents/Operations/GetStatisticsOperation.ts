@@ -41,7 +41,7 @@ export class GetStatisticsCommand extends RavenCommand<DatabaseStatistics> {
         }
 
         public setResponse(response: string, fromCache: boolean): void {
-            this.result = this.mapper.deserialize(response);
+            this.result = this._jsonSerializer.deserialize(response);
         }
 
         public get isReadRequest() {

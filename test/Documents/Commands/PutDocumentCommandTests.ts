@@ -9,7 +9,6 @@ import {
     RavenErrorType,
     GetNextOperationIdCommand,
     IDocumentStore,
-    Mapping,
     PutDocumentCommand,
 } from "../../../src";
 

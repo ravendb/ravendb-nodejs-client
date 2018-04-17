@@ -1,5 +1,5 @@
+import {HiloMultiDatabaseIdGenerator} from './Identity/HiloMultiDatabaseIdGenerator';
 import * as uuid from "uuid";
-import {HiloMultiDatabaseIdGenerator} from "../Hilo/HiloMultiDatabaseIdGenerator";
 import * as BluebirdPromise from "bluebird";
 
 import { throwError } from "../Exceptions";

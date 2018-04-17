@@ -4,8 +4,7 @@ import { IJsonable } from "../../Types/Contracts";
 import { IRavenObject } from "../../Types";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { throwError } from "../../Exceptions";
-import { stringifyJson } from "../../Utility/JsonUtil";
-import { Mapping } from "../../Utility/Mapping";
+import { Mapping } from "../../Mapping";
 // import { PatchRequest } from "../../../Http/Request/PatchRequest";
 
 export type CommandType = 
@@ -59,7 +58,7 @@ export class DeleteCommandData implements ICommandData {
 
         this._serializeExtraFields(toSerialize);
 
-        return Mapping.getDefaultMapper().serialize(toSerialize);
+        return Mapping.getDefaultJsonSerializer().serialize(toSerialize);
     }
 
     // tslint:disable-next-line:no-empty
@@ -98,7 +97,7 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
             Document: this.document
         };
 
-        return Mapping.getDefaultMapper().serialize(toSerialize);
+        return Mapping.getDefaultJsonSerializer().serialize(toSerialize);
     }
 
     // public toJson(): object {
@@ -121,38 +120,38 @@ export class PutCommandDataWithJson extends PutCommandDataBase<object> {
     }
 }
 
-export class SaveChangesData {
-    protected commands: CommandData[];
-    protected deferredCommandCount: number;
-    protected documents: IRavenObject[];
+// export class SaveChangesData {
+//     protected commands: ICommandData[];
+//     protected deferredCommandCount: number;
+//     protected documents: IRavenObject[];
 
-    public get deferredCommandsCount(): number {
-        return this.deferredCommandCount;
-    }
+//     public get deferredCommandsCount(): number {
+//         return this.deferredCommandCount;
+//     }
 
-    public get commandsCount(): number {
-        return this.commands.length;
-    }
+//     public get commandsCount(): number {
+//         return this.commands.length;
+//     }
 
-    constructor(commands?: CommandData[], deferredCommandCount: number = 0, documents?: IRavenObject[]) {
-        this.commands = commands || [];
-        this.documents = documents || [];
-        this.deferredCommandCount = deferredCommandCount;
-    }
+//     constructor(commands?: CommandData[], deferredCommandCount: number = 0, documents?: IRavenObject[]) {
+//         this.commands = commands || [];
+//         this.documents = documents || [];
+//         this.deferredCommandCount = deferredCommandCount;
+//     }
 
-    public addCommand(command: CommandData) {
-        this.commands.push(command);
-    }
+//     public addCommand(command: CommandData) {
+//         this.commands.push(command);
+//     }
 
-    public addDocument(document: IRavenObject) {
-        this.documents.push(document);
-    }
+//     public addDocument(document: IRavenObject) {
+//         this.documents.push(document);
+//     }
 
-    public getDocument(index: number): IRavenObject {
-        return this.documents[index];
-    }
+//     public getDocument(index: number): IRavenObject {
+//         return this.documents[index];
+//     }
 
-    // public createBatchCommand(): BatchCommand {
-    //     return new BatchCommand(this.commands);
-    // }
-}
+//     // public createBatchCommand(): BatchCommand {
+//     //     return new BatchCommand(this.commands);
+//     // }
+// }

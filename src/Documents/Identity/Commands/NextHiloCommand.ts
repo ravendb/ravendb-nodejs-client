@@ -1,11 +1,11 @@
-import { ServerNode } from "../../Http/ServerNode";
-import { RequestMethods } from "../../Http/Request/RequestMethod";
-import { StringUtil } from "../../Utility/StringUtil";
-import { DateUtil } from "../../Utility/DateUtil";
-import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
-import { throwError } from "../../Exceptions";
 import * as qs from "qs";
-import { HttpRequestBase } from "../../Primitives/Http";
+import { ServerNode } from "../../../Http/ServerNode";
+import { RequestMethods } from "../../../Http/Request/RequestMethod";
+import { StringUtil } from "../../../Utility/StringUtil";
+import { DateUtil } from "../../../Utility/DateUtil";
+import { RavenCommand, IRavenResponse } from "../../../Http/RavenCommand";
+import { throwError } from "../../../Exceptions";
+import { HttpRequestBase } from "../../../Primitives/Http";
 
 export interface HiLoResult {
     prefix: string;
@@ -64,13 +64,11 @@ export class NextHiloCommand extends RavenCommand<HiLoResult> {
     }
 
     public setResponse(response: string, fromCache: boolean) {
-        const res = this.mapper.deserialize<HiLoResult>(response, {
-            nestedTypes: [ 
-                ["lastRangeAt", "date"]
-            ]
+        this.result = this._parseResponseDefault(response, {
+            nestedTypes: { 
+                lastRangeAt: "date"
+            }
         });
-        
-        this.result = res;
     }
 
     public get isReadRequest(): boolean {

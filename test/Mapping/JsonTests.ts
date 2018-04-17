@@ -1,9 +1,9 @@
 import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { stringifyJson, JSON_SERIALIZATION_TRANSORM, parseJson } from "../src/Mapping/Json";
+import { stringifyJson, JSON_SERIALIZATION_TRANSORM, parseJson } from "../../src/Mapping/Json";
 
-describe.only("JsonUtil module", () => {
+describe("Json module", () => {
 
     describe("stringifyJson()", () => {
 

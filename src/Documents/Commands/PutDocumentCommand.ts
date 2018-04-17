@@ -33,7 +33,7 @@ export class PutDocumentCommand extends RavenCommand<PutResult> {
 
     public createRequest(node: ServerNode): HttpRequestBase {
         const uri = `${node.url}/databases/${node.database}/docs?id=${encodeURIComponent(this._id)}`;
-        const body = this.mapper.serialize(this._document);
+        const body = this._jsonSerializer.serialize(this._document);
         const req = {
             uri,
             method: "PUT",
@@ -49,7 +49,7 @@ export class PutDocumentCommand extends RavenCommand<PutResult> {
     }
 
     public setResponse(response: string, fromCache: boolean): void {
-        this.result = this.mapper.deserialize(response);
+        this.result = this._jsonSerializer.deserialize(response);
     }
 
     public get isReadRequest(): boolean {

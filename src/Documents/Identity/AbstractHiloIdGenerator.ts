@@ -1,10 +1,10 @@
-import {IHiloIdGenerator} from './IHiloIdGenerator';
-import {IDocumentStore} from '../Documents/IDocumentStore';
-import {DocumentConventions} from '../Documents/Conventions/DocumentConventions';
-import {IRavenObject} from "../Types/IRavenObject";
-import { getLogger } from '../Utility/LogUtil';
+import {IHiloIdGenerator} from "./IHiloIdGenerator";
+import {IDocumentStore} from "../../Documents/IDocumentStore";
+import {DocumentConventions} from "../../Documents/Conventions/DocumentConventions";
+import {IRavenObject} from "../../Types/IRavenObject";
+import { getLogger } from "../../Utility/LogUtil";
 
-const log = getLogger({ module: "RavenCommand" });
+const log = getLogger({ module: "HiloIdGenerator" });
 export abstract class AbstractHiloIdGenerator implements IHiloIdGenerator {
   protected generators: IRavenObject<IHiloIdGenerator> = {};
   protected store: IDocumentStore;

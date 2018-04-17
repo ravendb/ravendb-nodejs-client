@@ -1,17 +1,12 @@
 import * as _ from "lodash";
 import * as BluebirdPromise from "bluebird";
 import { IDocumentSession, ISessionOperationOptions, ConcurrencyCheckMode } from "./IDocumentSession";
-import { IDocumentQueryBase, IRawDocumentQuery, IDocumentQuery, IDocumentQueryOptions } from "./IDocumentQuery";
-import { DocumentQueryBase, DocumentQuery } from "./DocumentQuery";
+// import { IDocumentQueryBase, IRawDocumentQuery, IDocumentQuery, IDocumentQueryOptions } from "./IDocumentQuery";
+// import { DocumentQueryBase, DocumentQuery } from "./DocumentQuery";
 import { IDocumentStore } from "../IDocumentStore";
-import { AdvancedSessionOperations } from "./AdvancedSessionOperations";
+// import { AdvancedSessionOperations } from "./AdvancedSessionOperations";
 import { RequestExecutor } from "../../Http/RequestExecutor";
-import {
-    DocumentConventions, DocumentType, DocumentConstructor,
-    // IDocumentConversionResult, 
-    // IStoredRawEntityInfo, 
-    // IDocumentAssociationCheckResult
-} from "../Conventions/DocumentConventions";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { EmptyCallback, EntityCallback, EntitiesArrayCallback } from "../../Types/Callbacks";
 import { PromiseResolver } from "../../Utility/PromiseResolver";
 import { TypeUtil } from "../../Utility/TypeUtil";
@@ -22,11 +17,11 @@ import { IRavenObject } from "../../Types";
 // import {PutCommandData} from "../../Database/Commands/Data/PutCommandData";
 // import {DeleteCommandData} from "../../Database/Commands/Data/DeleteCommandData";
 // import {SaveChangesData} from "../../Database/Commands/Data/SaveChangesData";
-import { Serializer } from "../../Json/Serializer";
 import { Observable } from "../../Utility/Observable";
-import { CommandData, DeleteCommandData } from "../Commands/CommandData";
+import { DeleteCommandData, ICommandData } from "../Commands/CommandData";
 import { getError, throwError } from "../../Exceptions";
 import { IRavenResponse } from "../../Http/RavenCommand";
+import { DocumentType } from "../DocumentAbstractions";
 // import {RequestMethods} from "../../Http/Request/RequestMethod";
 
 export interface IStoredRawEntityInfo {
@@ -63,10 +58,10 @@ export class DocumentSession extends Observable implements IDocumentSession {
     protected includedRawEntitiesById: IRavenObject<object>;
     protected deletedDocuments: Set<IRavenObject>;
     protected knownMissingIds: Set<string>;
-    protected deferCommands: Set<CommandData>;
+    protected deferCommands: Set<ICommandData>;
     protected rawEntitiesAndMetadata: Map<IRavenObject, IStoredRawEntityInfo>;
     protected requestExecutor: RequestExecutor;
-    protected attachedQueries: WeakMap<IDocumentQueryBase, boolean>;
+    // protected attachedQueries: WeakMap<IDocumentQueryBase, boolean>;
 
     private _numberOfRequestsInSession: number = 0;
     // private _advanced: AdvancedSessionOperations = null;
@@ -105,13 +100,13 @@ export class DocumentSession extends Observable implements IDocumentSession {
         this.deletedDocuments = new Set<IRavenObject>();
         this.rawEntitiesAndMetadata = new Map<IRavenObject, IStoredRawEntityInfo>();
         this.knownMissingIds = new Set<string>();
-        this.deferCommands = new Set<CommandData>();
+        this.deferCommands = new Set<ICommandData>();
         this.requestExecutor = requestExecutor;
-        this.attachedQueries = new WeakMap<DocumentQueryBase, boolean>();
+        // this.attachedQueries = new WeakMap<DocumentQueryBase, boolean>();
 
-        this.on<IDocumentQueryBase>(QUERY_INITIALIZED, (query: IDocumentQueryBase) => {
-            //this.attachQuery(query);
-        });
+        // this.on<IDocumentQueryBase>(QUERY_INITIALIZED, (query: IDocumentQueryBase) => {
+        //     //this.attachQuery(query);
+        // });
     }
 
     public async load<T extends Object = IRavenObject>(
@@ -126,7 +121,7 @@ export class DocumentSession extends Observable implements IDocumentSession {
         idOrIds: string | string[],
         optionsOrCallback?: ISessionOperationOptions<T> | EntityCallback<T> | EntitiesArrayCallback<T>,
         callback?: EntityCallback<T> | EntitiesArrayCallback<T>): Promise<T | T[]> {
-
+            return null;
         // let includes: string[] = null;
         // let documentType: DocumentType<T> = null;
         // let options: ISessionOperationOptions<T> = null;
@@ -450,61 +445,61 @@ export class DocumentSession extends Observable implements IDocumentSession {
     //   this.attachedQueries.set(query, true);
     // }
 
-    protected _incrementRequestsCount(): void {
-        const maxRequests: number = this.conventions.maxNumberOfRequestsPerSession;
+//     protected _incrementRequestsCount(): void {
+//         const maxRequests: number = this.conventions.maxNumberOfRequestsPerSession;
 
-        this._numberOfRequestsInSession++;
+//         this._numberOfRequestsInSession++;
 
-        if (this._numberOfRequestsInSession > maxRequests) {
-            throwError("InvalidOperationException", StringUtil.format(
-                "The maximum number of requests ({0}) allowed for this session has been reached. \
-Raven limits the number of remote calls that a session is allowed \
-to make as an early warning system. Sessions are expected to \
-be short lived, and Raven provides facilities like batch saves (call saveChanges() only once) \
-You can increase the limit by setting DocumentConvention.\
-MaxNumberOfRequestsPerSession or MaxNumberOfRequestsPerSession, but it is advisable \
-that you'll look into reducing the number of remote calls first, \
-since that will speed up your application significantly and result in a\
-more responsive application.", maxRequests));
-        }
-    }
+//         if (this._numberOfRequestsInSession > maxRequests) {
+//             throwError("InvalidOperationException", StringUtil.format(
+//                 "The maximum number of requests ({0}) allowed for this session has been reached. \
+// Raven limits the number of remote calls that a session is allowed \
+// to make as an early warning system. Sessions are expected to \
+// be short lived, and Raven provides facilities like batch saves (call saveChanges() only once) \
+// You can increase the limit by setting DocumentConvention.\
+// MaxNumberOfRequestsPerSession or MaxNumberOfRequestsPerSession, but it is advisable \
+// that you'll look into reducing the number of remote calls first, \
+// since that will speed up your application significantly and result in a\
+// more responsive application.", maxRequests));
+//         }
+//     }
 
-    protected fetchDocuments<T extends Object = IRavenObject>(
-        ids: string[],
-        documentType?: DocumentType<T>,
-        includes?: string[],
-        nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): Promise<T[]> {
-        this._incrementRequestsCount();
+//     protected fetchDocuments<T extends Object = IRavenObject>(
+//         ids: string[],
+//         documentType?: DocumentType<T>,
+//         includes?: string[],
+//         nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): Promise<T[]> {
+//         this._incrementRequestsCount();
 
-        return this.requestExecutor
-            .execute(new GetDocumentsCommand(ids, false, includes))
-            .then((response: IRavenResponse): T[] | PromiseLike<T[]> => {
-                let responseResults: object[] = [];
-                let responseIncludes: object[] = [];
-                const commandResponse: IRavenResponse = response;
-                const conventions: DocumentConventions = this.documentStore.conventions;
+//         return this.requestExecutor
+//             .execute(new GetDocumentsCommand(ids, false, includes))
+//             .then((response: IRavenResponse): T[] | PromiseLike<T[]> => {
+//                 let responseResults: object[] = [];
+//                 let responseIncludes: object[] = [];
+//                 const commandResponse: IRavenResponse = response;
+//                 const conventions: DocumentConventions = this.documentStore.conventions;
 
-                if (commandResponse) {
-                    responseResults = conventions.tryFetchResults(commandResponse);
-                    responseIncludes = conventions.tryFetchIncludes(commandResponse);
-                }
+//                 if (commandResponse) {
+//                     responseResults = conventions.tryFetchResults(commandResponse);
+//                     responseIncludes = conventions.tryFetchIncludes(commandResponse);
+//                 }
 
-                const results: T[] = responseResults.map((result: object, index: number) => {
-                    if (TypeUtil.isNull(result)) {
-                        this.knownMissingIds.add(ids[index]);
-                        return null;
-                    }
+//                 const results: T[] = responseResults.map((result: object, index: number) => {
+//                     if (TypeUtil.isNull(result)) {
+//                         this.knownMissingIds.add(ids[index]);
+//                         return null;
+//                     }
 
-                    return this.makeDocument<T>(result, documentType, nestedObjectTypes);
-                });
+//                     return this.makeDocument<T>(result, documentType, nestedObjectTypes);
+//                 });
 
-                if (responseIncludes.length) {
-                    this.onIncludesFetched(responseIncludes);
-                }
+//                 if (responseIncludes.length) {
+//                     this.onIncludesFetched(responseIncludes);
+//                 }
 
-                return results;
-            });
-    }
+//                 return results;
+//             });
+//     }
 
     // public checkDocumentAndMetadataBeforeStore<T extends Object = IRavenObject>(
     //  document?: object | T, id?: string, documentType?: DocumentType<T>): BluebirdPromise<T> {
@@ -723,61 +718,61 @@ more responsive application.", maxRequests));
     //   return false;
     // }
 
-    protected makeDocument<T extends Object = IRavenObject>(
-        commandResult: object,
-        documentType?: DocumentType<T>,
-        nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T {
-        const conversionResult: IDocumentConversionResult<T> = this.conventions
-            .convertToDocument<T>(commandResult, documentType, nestedObjectTypes);
+    // protected makeDocument<T extends Object = IRavenObject>(
+    //     commandResult: object,
+    //     documentType?: DocumentType<T>,
+    //     nestedObjectTypes: IRavenObject<DocumentConstructor> = {}): T {
+    //     const conversionResult: IDocumentConversionResult<T> = this.conventions
+    //         .convertToDocument<T>(commandResult, documentType, nestedObjectTypes);
 
-        this.onDocumentFetched<T>(conversionResult);
-        return conversionResult.document as T;
-    }
+    //     this.onDocumentFetched<T>(conversionResult);
+    //     return conversionResult.document as T;
+    // }
 
-    protected onIncludesFetched(includes: object[]): void {
-        if (includes && includes.length) {
-            includes.forEach((include: object) => {
-                const documentId: string = include["@metadata"]["@id"];
+    // protected onIncludesFetched(includes: object[]): void {
+    //     if (includes && includes.length) {
+    //         includes.forEach((include: object) => {
+    //             const documentId: string = include["@metadata"]["@id"];
 
-                if (!(documentId in this.documentsById)) {
-                    this.includedRawEntitiesById[documentId] = include;
-                }
-            });
-        }
-    }
+    //             if (!(documentId in this.documentsById)) {
+    //                 this.includedRawEntitiesById[documentId] = include;
+    //             }
+    //         });
+    //     }
+    // }
 
-    protected onDocumentFetched<T extends Object = IRavenObject>(
-        conversionResult?: IDocumentConversionResult<T>): void {
-        if (conversionResult) {
-            const documentId: string = this.conventions
-                .getIdFromDocument(conversionResult.document, conversionResult.documentType)
-                || conversionResult.originalMetadata["@id"] || conversionResult.metadata["@id"];
+    // protected onDocumentFetched<T extends Object = IRavenObject>(
+    //     conversionResult?: IDocumentConversionResult<T>): void {
+    //     if (conversionResult) {
+    //         const documentId: string = this.conventions
+    //             .getIdFromDocument(conversionResult.document, conversionResult.documentType)
+    //             || conversionResult.originalMetadata["@id"] || conversionResult.metadata["@id"];
 
-            if (documentId) {
-                this.knownMissingIds.delete(documentId);
+    //         if (documentId) {
+    //             this.knownMissingIds.delete(documentId);
 
-                if (!(documentId in this.documentsById)) {
-                    let originalValueSource: object = conversionResult.rawEntity;
+    //             if (!(documentId in this.documentsById)) {
+    //                 let originalValueSource: object = conversionResult.rawEntity;
 
-                    if (!originalValueSource) {
-                        originalValueSource = this.conventions
-                            .convertToRawEntity<T>(conversionResult.document, conversionResult.documentType);
-                    }
+    //                 if (!originalValueSource) {
+    //                     originalValueSource = this.conventions
+    //                         .convertToRawEntity<T>(conversionResult.document, conversionResult.documentType);
+    //                 }
 
-                    this.documentsById[documentId] = conversionResult.document;
-                    this.rawEntitiesAndMetadata.set(this.documentsById[documentId], {
-                        originalValue: _.cloneDeep(originalValueSource),
-                        originalMetadata: conversionResult.originalMetadata,
-                        metadata: conversionResult.metadata,
-                        changeVector: conversionResult.metadata["change-vector"] || null,
-                        id: documentId,
-                        concurrencyCheckMode: "Auto",
-                        documentType: conversionResult.documentType
-                    });
-                }
-            }
-        }
-    }
+    //                 this.documentsById[documentId] = conversionResult.document;
+    //                 this.rawEntitiesAndMetadata.set(this.documentsById[documentId], {
+    //                     originalValue: _.cloneDeep(originalValueSource),
+    //                     originalMetadata: conversionResult.originalMetadata,
+    //                     metadata: conversionResult.metadata,
+    //                     changeVector: conversionResult.metadata["change-vector"] || null,
+    //                     id: documentId,
+    //                     concurrencyCheckMode: "Auto",
+    //                     documentType: conversionResult.documentType
+    //                 });
+    //             }
+    //         }
+    //     }
+    // }
 
     // tslint:disable-next-line:no-empty
     public dispose(): void {}

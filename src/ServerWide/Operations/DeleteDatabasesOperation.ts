@@ -4,7 +4,6 @@ import { DocumentConventions } from "../..";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestBase } from "../../Primitives/Http";
-import { stringifyJson } from "../../Utility/JsonUtil";
 
 export interface DeleteDatabaseResult {
     raftCommandIndex: number;
@@ -57,7 +56,7 @@ export class DeleteDatabaseCommand extends RavenCommand<DeleteDatabaseResult> {
             throwError("InvalidArgumentException", "Parameters cannot be null.");
         }
 
-        this._parameters = this.mapper.serialize(parameters);
+        this._parameters = this._jsonSerializer.serialize(parameters);
     }
 
     public createRequest(node: ServerNode): HttpRequestBase {
@@ -73,7 +72,7 @@ export class DeleteDatabaseCommand extends RavenCommand<DeleteDatabaseResult> {
     }
 
     public setResponse(response: string, fromCache: boolean): void {
-        this.result = this.mapper.deserialize(response);
+        this.result = this._jsonSerializer.deserialize(response);
     }
 
     public get isReadRequest() {

@@ -43,3 +43,6 @@ export { GetClientConfigurationOperation } from "./Documents/Operations/Configur
 export { PutClientConfigurationOperation } from "./Documents/Operations/Configuration/PutClientConfigurationOperation";
 export { PutDocumentCommand } from "./Documents/Commands/PutDocumentCommand";
 
+// MAPPING
+export { TypesAwareObjectMapper } from "./Mapping/ObjectMapper";
+export { Mapping } from "./Mapping";

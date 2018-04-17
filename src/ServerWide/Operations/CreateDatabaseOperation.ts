@@ -2,12 +2,10 @@ import { HttpRequestBase } from "../../Primitives/Http";
 import { DatabaseRecord } from "..";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { DatabasePutResult } from ".";
-import { DocumentConventions, Mapping } from "../..";
+import { DocumentConventions } from "../..";
 import { throwError } from "../../Exceptions";
 import { ServerNode } from "../../Http/ServerNode";
 import { IServerOperation, OperationResultType } from "../../Documents/Operations/OperationAbstractions";
-import { stringifyJson } from "../../Utility/JsonUtil";
-import { TypesAwareJsonObjectMapper } from "../../Utility/Mapping";
 import { HeadersBuilder } from "../../Utility/HttpUtil";
 
 export class CreateDatabaseOperation implements IServerOperation<DatabasePutResult> {
@@ -53,7 +51,7 @@ class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> {
 
         uri += "&replicationFactor=" + this._replicationFactor;
 
-        const databaseDocumentJson = this.mapper.serialize(this._databaseRecord);
+        const databaseDocumentJson = this._jsonSerializer.serialize(this._databaseRecord);
         return {
             uri,
             method: "PUT",
@@ -69,7 +67,7 @@ class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> {
             this._throwInvalidResponse();
         }
 
-        this.result = this.mapper.deserialize(response);
+        this.result = this._jsonSerializer.deserialize(response);
     }
 
     public get isReadRequest(): boolean {

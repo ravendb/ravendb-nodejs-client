@@ -8,7 +8,9 @@ export interface TypeInfo {
     nestedTypes?: NestedTypes;
 }
 
-export type NestedTypes = Array<[string, string]>;
+export interface NestedTypes { 
+    [propertyPath: string]: string;
+}
 
 export interface ITypesAwareObjectMapper {
     fromObjectLiteral<TResult extends object>(raw: object, typeInfo?: TypeInfo): TResult;
@@ -32,43 +34,51 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         return this;
     }
 
-    public fromObjectLiteral<TResult extends object>(rawResult: object, typeInfo?: TypeInfo): TResult {
+    public fromObjectLiteral<TResult extends object>(rawResult: object, typeInfo?: TypeInfo): TResult;
+    public fromObjectLiteral<TResult extends object>(
+        rawResult: object, typeInfo?: TypeInfo, knownTypes?: Map<string, ObjectTypeDescriptor>): TResult;
+    public fromObjectLiteral<TResult extends object>(
+        rawResult: object, typeInfo?: TypeInfo, knownTypes?: Map<string, ObjectTypeDescriptor>): TResult {
         if (!typeInfo) {
-            return;
+            return rawResult as TResult;
         }
 
         let result: TResult = rawResult as TResult; 
+        const types = (knownTypes || this._knownTypes);
         if (typeInfo.typeName) {
-            const ctorOrObjLiteralDescriptor = this._knownTypes.get(typeInfo.typeName);
+            const ctorOrObjLiteralDescriptor = types.get(typeInfo.typeName);
             if (TypeUtil.isObjectLiteralTypeDescriptor(ctorOrObjLiteralDescriptor)) {
-                return (ctorOrObjLiteralDescriptor as ObjectLiteralDescriptor<TResult>).construct(rawResult);
+                result = (ctorOrObjLiteralDescriptor as ObjectLiteralDescriptor<TResult>).construct(rawResult);
             } else {
                 result = Object.assign(
                     createEmptyObject<TResult>(ctorOrObjLiteralDescriptor as ClassConstructor), rawResult);
             }
         }
 
-        const { nestedTypes } = typeInfo; 
-        if (!nestedTypes) {
-            return result;
-        }
-
-        for (const nestedTypeInfo of nestedTypes) {
-            const [ objPath, typeName ] = nestedTypeInfo;
-            const fieldContext = getFieldContext(rawResult, objPath.split("."));
-            if (Array.isArray(fieldContext)) {
-                (fieldContext as ObjectPropertyContext[])
-                    .forEach(c => applyTypeToNestedProperty(typeName, c, this._knownTypes));
-            } else {
-                applyTypeToNestedProperty(
-                    typeName, fieldContext as ObjectPropertyContext, this._knownTypes);
-            }
-        }
+        this._applyNestedTypes(result, typeInfo, types);
 
         return result;
     }
 
-    public toObjectLiteral<TFrom extends object>(obj: TFrom, typeInfoCallback?: (typeInfo: TypeInfo) => void): object {
+    private _applyNestedTypes<TResult extends object>(
+        obj: TResult, typeInfo?: TypeInfo, knownTypes?: Map<string, ObjectTypeDescriptor>) {
+        const { nestedTypes } = typeInfo; 
+        if (!nestedTypes) {
+            return obj;
+        }
+            
+        for (const propertyPath of Object.keys(nestedTypes)) {
+            const typeName = nestedTypes[propertyPath];
+            const fieldContext = getFieldContext(obj, propertyPath.split("."));
+            const fieldContexts = Array.isArray(fieldContext) ? fieldContext : [ fieldContext ];
+            fieldContexts.forEach((c, i) => applyTypeToNestedProperty(typeName, c, knownTypes));
+        }
+
+        return obj;
+    }
+
+    public toObjectLiteral<TFrom extends object>(
+        obj: TFrom, typeInfoCallback?: (typeInfo: TypeInfo) => void): object {
         const nestedTypes = TypeUtil.isObject(obj) 
             ? getNestedTypes(obj)  
             : null;
@@ -111,12 +121,8 @@ interface ObjectPropertyContext {
 
 function getFieldContext(parent: object, objPath: string[])
     : ObjectPropertyContext | ObjectPropertyContext[] {
-
     // tslint:disable-next-line:prefer-const
-    let [field, ...fieldsTail] = objPath;
-    if (!fieldsTail && !fieldsTail.length) {
-        return { parent, field };
-    }
+    let [field, ...fieldsPathTail] = objPath;
 
     let isFieldArray = false;
     if (field.endsWith("[]")) {
@@ -125,35 +131,61 @@ function getFieldContext(parent: object, objPath: string[])
     }
 
     const fieldVal = parent[field];
-    if (!fieldVal) {
+    if (!parent.hasOwnProperty(field)) {
         return null;
     }
 
     if (isFieldArray) {
-        return fieldVal.map(x => getFieldContext(x, fieldsTail))
-            .reduce((result, next) => {
-                if (Array.isArray(next)) {
-                    return [ ...result, ...next ]
+        return (fieldVal as any[])
+            .map((x, i) => {
+                if (!fieldsPathTail.length) {
+                    return {
+                        parent: fieldVal,
+                        field: i.toString()
+                    };
                 } else {
-                    result.push(next);
-                    return result;
+                    return getFieldContext(x, fieldsPathTail);
                 }
-            });
+            })
+            .reduce((result: ObjectPropertyContext[], next) => {
+                if (Array.isArray(next)) {
+                    return [ ...result, ...next ];
+                } else {
+                    return [ ...result, next];
+                }
+            }, []);
     }
 
-    return getFieldContext(parent, fieldsTail);
+    if (fieldsPathTail.length) {
+        return getFieldContext(parent[field], fieldsPathTail);
+    }
+
+    return { parent, field };
 }
 
 function applyTypeToNestedProperty(
     fieldTypeName: string, fieldContext: ObjectPropertyContext, knownTypes: Map<string, ObjectTypeDescriptor>) {
-    const { parent, field } = fieldContext;
+    let parent;
+    let field: string;
+
+    if (fieldContext) {
+        ({ parent, field } = fieldContext);
+    }
+
     const fieldVal = parent[field];
-    if (!fieldVal) {
+    if (typeof fieldVal === "undefined") {
         return;
     }
 
     if (fieldTypeName === "date") {
         parent[field] = DateUtil.parse(fieldVal);
+    } else if (Array.isArray(fieldVal)) {
+        for (let i = 0; i < fieldVal.length; i++) {
+            applyTypeToNestedProperty(fieldTypeName, {
+                parent: fieldVal as object,
+                field: i.toString()
+            }, knownTypes);
+        }
     } else {
         const ctorOrTypeDescriptor = knownTypes.get(fieldTypeName);
         if (!ctorOrTypeDescriptor) {
@@ -184,16 +216,15 @@ function getNestedTypes(obj: object, objPathPrefix?: string): NestedTypes {
     }
 
     if (obj instanceof Date) {
-        return [[ objPathPrefix, "date" ]];
+        return { 
+            [objPathPrefix]: "date" 
+        };
     }
 
     return Object.keys(obj)
         .reduce((result, key) =>  {
             const fullPath = objPathPrefix ? `${objPathPrefix}.${key}` : key;
             const keyNestedTypes = getNestedTypes(obj, fullPath);
-            return [ 
-                ...result,
-                ...keyNestedTypes 
-            ];
-        }, []);
+            return Object.assign(result, keyNestedTypes); 
+        }, {});
 }

@@ -24,7 +24,6 @@ import {
 } from "../Documents/Operations/Configuration/GetClientConfigurationOperation";
 import CurrentIndexAndNode from "./CurrentIndexAndNode";
 import { ClientConfiguration } from "../Documents/Operations/Configuration/ClientConfiguration";
-import { SessionInfo } from "../Documents/Session/DocumentSession";
 import { HttpRequestBase, HttpResponse } from "../Primitives/Http";
 import { HEADERS } from "../Constants";
 import { Stopwatch } from "../Utility/Stopwatch";
@@ -33,6 +32,7 @@ import { GetStatisticsOperation } from "../Documents/Operations/GetStatisticsOpe
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
 import { TypeUtil } from "../Utility/TypeUtil";
 import { RequestPromiseOptions } from "request-promise";
+import { SessionInfo } from "../Documents/Session/IDocumentSession";
 
 const DEFAULT_REQUEST_OPTIONS = {
     simple: false,

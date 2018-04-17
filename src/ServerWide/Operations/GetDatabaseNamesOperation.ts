@@ -50,7 +50,7 @@ export class GetDatabaseNamesCommand extends RavenCommand<string[]> {
             }
 
             const { databases }  = 
-                this.mapper.deserialize<IRavenResponse>(response) as { databases: string[] };
+                this._jsonSerializer.deserialize<IRavenResponse>(response) as { databases: string[] };
             if (!databases || !Array.isArray(databases) || !databases.length) {
                 this._throwInvalidResponse();
             }
