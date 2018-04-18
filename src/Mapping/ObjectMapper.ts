@@ -70,8 +70,11 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         for (const propertyPath of Object.keys(nestedTypes)) {
             const typeName = nestedTypes[propertyPath];
             const fieldContext = getFieldContext(obj, propertyPath.split("."));
-            const fieldContexts = Array.isArray(fieldContext) ? fieldContext : [ fieldContext ];
-            fieldContexts.forEach((c, i) => applyTypeToNestedProperty(typeName, c, knownTypes));
+            const fieldContexts = Array.isArray(fieldContext) 
+                ? fieldContext 
+                : [ fieldContext ];
+            fieldContexts.forEach(
+                (c, i) => applyTypeToNestedProperty(typeName, c, knownTypes));
         }
 
         return obj;

@@ -46,3 +46,4 @@ export { PutDocumentCommand } from "./Documents/Commands/PutDocumentCommand";
 // MAPPING
 export { TypesAwareObjectMapper } from "./Mapping/ObjectMapper";
 export { Mapping } from "./Mapping";
+export { JsonSerializer, JsonSerializationTransform, JsonParserSettings } from "./Mapping/Json";
