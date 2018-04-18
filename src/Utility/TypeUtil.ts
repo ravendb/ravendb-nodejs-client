@@ -3,7 +3,7 @@ import {
 } from "../Documents/DocumentAbstractions";
 import * as _ from "lodash";
 import { DocumentType } from "../Documents/DocumentAbstractions";
-import { ObjectLiteralDescriptor, ObjectTypeDescriptor } from "../Types";
+import { ObjectLiteralDescriptor, ObjectTypeDescriptor, ClassConstructor } from "../Types";
 
 export class TypeUtil {
     public static readonly MAX_INT32 = 2147483647;
@@ -59,5 +59,23 @@ export class TypeUtil {
     public static isObjectLiteralTypeDescriptor(typeDescriptor: ObjectTypeDescriptor) {
         return !this.isClassConstructor(typeDescriptor)
             && (typeDescriptor as ObjectLiteralDescriptor).isType;
+    }
+
+    public static findType(obj: object, typeDescriptors: ObjectTypeDescriptor[]): ObjectTypeDescriptor {
+        if (TypeUtil.isClassConstructor(obj.constructor)) {
+            return obj.constructor as ClassConstructor;
+        }
+
+        for (const typeDescriptor of typeDescriptors) {
+            if (!TypeUtil.isObjectLiteralTypeDescriptor(typeDescriptor)) {
+                return;
+            }
+
+            if (TypeUtil.isType(obj, typeDescriptor as ObjectLiteralDescriptor)) {
+                return typeDescriptor;
+            }
+        }
+
+        return null;
     }
 }

@@ -69,7 +69,9 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
             
         for (const propertyPath of Object.keys(nestedTypes)) {
             const typeName = nestedTypes[propertyPath];
-            const fieldContext = getFieldContext(obj, propertyPath.split("."));
+            const objPathSegments = propertyPath
+                .replace(/\[/g, "![").split(/[!.]/g);
+            const fieldContext = getFieldContext(obj, objPathSegments);
             const fieldContexts = Array.isArray(fieldContext) 
                 ? fieldContext 
                 : [ fieldContext ];
@@ -80,35 +82,48 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         return obj;
     }
 
+    public toObjectLiteral<TFrom extends object>(obj: TFrom): object;
     public toObjectLiteral<TFrom extends object>(
-        obj: TFrom, typeInfoCallback?: (typeInfo: TypeInfo) => void): object {
-        const nestedTypes = TypeUtil.isObject(obj) 
-            ? getNestedTypes(obj)  
-            : null;
-        const typeInfo = {
-            typeName: TypeUtil.isClassConstructor(obj.constructor) 
-                ? obj.constructor.name
-                : this._matchTypeDescriptor(obj).name,
-            nestedTypes
-        };
+        obj: TFrom, 
+        typeInfoCallback?: (typeInfo: TypeInfo) => void): object;
+    public toObjectLiteral<TFrom extends object>(
+        obj: TFrom, 
+        typeInfoCallback?: (typeInfo: TypeInfo) => void,
+        knownTypes?: Map<string, ObjectTypeDescriptor>): object;
+    public toObjectLiteral<TFrom extends object>(
+        obj: TFrom, 
+        typeInfoCallback?: (typeInfo: TypeInfo) => void,
+        knownTypes?: Map<string, ObjectTypeDescriptor>): object {
+
+        const types = (knownTypes || this._knownTypes);
+
+        let nestedTypes: NestedTypes;
+        const result = makeObjectLiteral(obj, null, (nestedType) => { 
+            nestedTypes = Object.assign(nestedTypes || {}, nestedType);
+        }, Array.from(types.values()));
+
+        let typeName;
+        if (TypeUtil.isClassConstructor(obj.constructor)) {
+            typeName = obj.constructor.name;
+        } else {
+            const typeDescriptor = TypeUtil.findType(obj, Array.from(types.values()));
+            typeName = typeDescriptor ? typeDescriptor.name : null;
+        }
+
+        const typeInfo: TypeInfo = {};
+        if (typeName) {
+            typeInfo.typeName = typeName;
+        }
+
+        if (nestedTypes) {
+            typeInfo.nestedTypes = nestedTypes;
+        }
 
         if (typeInfoCallback) {
             typeInfoCallback(typeInfo);
         }
 
-        return Object.assign({}, obj);
-    }
-
-    private _matchTypeDescriptor(obj: object) {
-        for (const typeDescriptor of this._knownTypes.values()) {
-            if (!TypeUtil.isObjectLiteralTypeDescriptor(typeDescriptor)) {
-                return;
-            }
-
-            if (TypeUtil.isType(obj, typeDescriptor as ObjectLiteralDescriptor)) {
-                return typeDescriptor;
-            }
-        }
+        return result;
     }
 }
 
@@ -133,9 +148,14 @@ function getFieldContext(parent: object, objPath: string[])
         isFieldArray = true;
     }
 
-    const fieldVal = parent[field];
+    let fieldVal = parent[field];
     if (!parent.hasOwnProperty(field)) {
-        return null;
+        if (isFieldArray) {
+            fieldVal = parent;
+        } else {
+            return null;
+        }
+
     }
 
     if (isFieldArray) {
@@ -209,25 +229,41 @@ function createEmptyObject<TResult extends object>(ctor: ClassConstructor) {
     return new (Function.prototype.bind.apply(ctor)) as TResult;
 }
 
-function getNestedTypes(obj: object, objPathPrefix?: string): NestedTypes {
-    if (Array.isArray(obj)) {
-        if (obj.length) {
-            return getNestedTypes(obj[0], `${objPathPrefix}[]`);
-        } else {
-            return null;
-        }
-    }
+function makeObjectLiteral(
+    obj: object, 
+    objPathPrefix: string, 
+    typeInfoCallback: (types: NestedTypes) => void,
+    knownTypes: ObjectTypeDescriptor[]): any {
 
-    if (obj instanceof Date) {
-        return { 
+    if (TypeUtil.isDate(obj)) {
+        typeInfoCallback({ 
             [objPathPrefix]: "date" 
-        };
+        });
+
+        return DateUtil.stringify(obj as Date);
     }
 
-    return Object.keys(obj)
-        .reduce((result, key) =>  {
-            const fullPath = objPathPrefix ? `${objPathPrefix}.${key}` : key;
-            const keyNestedTypes = getNestedTypes(obj, fullPath);
-            return Object.assign(result, keyNestedTypes); 
-        }, {});
+    if (Array.isArray(obj)) {
+        const newObjPathPrefix = `${objPathPrefix}[]`;
+        return obj.map(x => makeObjectLiteral(x, newObjPathPrefix, typeInfoCallback, knownTypes));
+    }
+
+    if (TypeUtil.isObject(obj)) {
+        if (objPathPrefix) { // if it's non-root object
+            const matchedType = TypeUtil.findType(obj, knownTypes);
+            if (matchedType 
+                && matchedType.name !== "Function") {
+                typeInfoCallback({ [objPathPrefix]: matchedType.name });
+            }
+        }
+
+        return Object.keys(obj)
+            .reduce((result, key) => {
+                const fullPath = objPathPrefix ? `${objPathPrefix}.${key}` : key;
+                result[key] = makeObjectLiteral(obj[key], fullPath, typeInfoCallback, knownTypes);
+                return result;
+            }, {});
+    }
+
+    return obj;
 }
