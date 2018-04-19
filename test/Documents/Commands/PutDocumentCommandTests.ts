@@ -41,6 +41,7 @@ describe.only("PutDocumentCommand", function () {
         assert.ok(result.changeVector);
 
         const session = store.openSession();
+        debugger;
         const loadedUser = await session.load<User>("users/1");
         assert.equal(loadedUser.name, user.name);
         assert.equal(loadedUser.age, user.age);

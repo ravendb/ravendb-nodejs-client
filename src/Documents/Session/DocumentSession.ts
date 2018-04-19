@@ -121,7 +121,25 @@ export class DocumentSession extends Observable implements IDocumentSession {
         idOrIds: string | string[],
         optionsOrCallback?: ISessionOperationOptions<T> | EntityCallback<T> | EntitiesArrayCallback<T>,
         callback?: EntityCallback<T> | EntitiesArrayCallback<T>): Promise<T | T[]> {
-            return null;
+
+            const isLoadingSingle = Array.isArray(idOrIds);
+            const ids = !isLoadingSingle ? idOrIds as string[] : [ idOrIds ];
+
+            const loadOperation = new LoadOperation(this);
+            loadInternal(ids, loadOperation);
+
+            callback = callback 
+                || (TypeUtil.isFunction(optionsOrCallback) 
+                    ? (optionsOrCallback as EntityCallback<T> | EntitiesArrayCallback<T>)
+                    : null);
+
+            const result = BluebirdPromise.resolve(loadOperation.getDocuments())
+                .then(docs => isLoadingSingle ? docs[0] || null : docs)
+                .tap(r => callback(null, r))
+                .tapCatch(err => callback(err));
+
+            return Promise.resolve(result);
+
         // let includes: string[] = null;
         // let documentType: DocumentType<T> = null;
         // let options: ISessionOperationOptions<T> = null;

@@ -9,8 +9,6 @@ export function throwError(errName: RavenErrorType);
 export function throwError(errName: RavenErrorType, message: string);
 export function throwError(errName: RavenErrorType, message: string, errCause?: Error);
 export function throwError(errName: RavenErrorType, message: string, errCause?: Error, info?: { [key: string]: any });
-// export function throwError(errName: string, message: string, errCause?: Error);
-// export function throwError(errName: string, message: string, errCause?: Error, info?: { [key: string]: any });
 export function throwError(
   errName: RavenErrorType | string = "RavenException", 
   message?: string, 

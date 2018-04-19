@@ -50,6 +50,10 @@ export function getBooleanHeader(response: HttpResponse, header: string): boolea
         : null;
 }
 
+export function getHeaders() {
+    return HeadersBuilder.create();
+}
+
 export class HeadersBuilder {
 
     private _result: { [key: string]: string } = {};

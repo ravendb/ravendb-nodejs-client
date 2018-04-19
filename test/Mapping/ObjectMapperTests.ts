@@ -59,7 +59,6 @@ describe("ObjectMapper", function () {
         }
     }
 
-
     describe("fromObjectLiteral()", function () {
 
         it("can handle Date type", () => {

@@ -1,4 +1,4 @@
-export type AbstractCallback<T> = (entity?: T, error?: Error) => void;
+export type AbstractCallback<T> = (error?: Error, entity?: T) => void;
 
 export type EntityIdCallback = AbstractCallback<string>;
 export type QueryResultsCallback<T> = AbstractCallback<T>;
