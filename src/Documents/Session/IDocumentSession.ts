@@ -7,6 +7,10 @@ import { DocumentType, EntityConstructor } from "../DocumentAbstractions";
 
 export class SessionInfo {
     public sessionId: number;
+
+    public constructor(sessionId?: number) {
+        this.sessionId = sessionId;
+    }
 }
 
 export interface IMetadataDictionary {
@@ -27,21 +31,24 @@ export type ConcurrencyCheckMode = "Auto" | "Forced" | "Disabled";
 //     advanced(): IAdvancedSessionOperations;
 
 //     /**
-//      * Marks the specified entity for deletion. The entity will be deleted when IDocumentSession.saveChanges is called.
+//      * Marks the specified entity for deletion.
+//      * The entity will be deleted when IDocumentSession.saveChanges is called.
 //      * @param <T> entity class
 //      * @param entity instance of entity to delete
 //      */
 //     delete<T>(entity: T): void;
 
 //     /**
-//      * Marks the specified entity for deletion. The entity will be deleted when DocumentSession.saveChanges is called.
+//      * Marks the specified entity for deletion. 
+//      * The entity will be deleted when DocumentSession.saveChanges is called.
 //      * WARNING: This method will not call beforeDelete listener!
 //      * @param id entity id
 //      */
 //     delete(id: string): void;
 
 //     /**
-//      * Marks the specified entity for deletion. The entity will be deleted when DocumentSession.saveChanges is called.
+//      * Marks the specified entity for deletion. 
+//      * The entity will be deleted when DocumentSession.saveChanges is called.
 //      * WARNING: This method will not call beforeDelete listener!
 //      * @param id entity Id
 //      * @param expectedChangeVector Expected change vector of a document to delete.

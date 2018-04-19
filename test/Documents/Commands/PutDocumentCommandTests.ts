@@ -12,7 +12,7 @@ import {
     PutDocumentCommand,
 } from "../../../src";
 
-describe("PutDocumentCommand", function () {
+describe.only("PutDocumentCommand", function () {
 
     let store: IDocumentStore;
 
@@ -41,8 +41,10 @@ describe("PutDocumentCommand", function () {
         assert.ok(result.changeVector);
 
         const session = store.openSession();
-        //     User loadedUser = session.load(User.class, "users/1");
-
+        const loadedUser = await session.load<User>("users/1");
+        assert.equal(loadedUser.name, user.name);
+        assert.equal(loadedUser.age, user.age);
+        assert.equal(loadedUser.constructor, User);
         //     assertThat(loadedUser.getName())
         //             .isEqualTo("Marcin");
         // }

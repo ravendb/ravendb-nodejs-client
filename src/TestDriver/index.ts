@@ -267,13 +267,13 @@ export abstract class RavenTestDriver implements IDisposable {
                             `The following indexes are erroneous: ${errIndexes.map(x => x.name).join(", ")}`);
                     }
 
-                    return indexes.every(x => 
-                        !x.isStale
-                        && x.name.indexOf(CONSTANTS.Documents.Indexing.SIDE_BY_SIDE_INDEX_NAME_PREFIX) !== 0);
+                    return indexes.every(x => !x.isStale
+                        && !x.name.startsWith(CONSTANTS.Documents.Indexing.SIDE_BY_SIDE_INDEX_NAME_PREFIX));
                 });
         };
 
         const pollIndexingStatus = () => {
+            log.info("Waiting for indexing...");
             return BluebirdPromise.resolve()
                 .then(() => isIndexingDone())
                 .then(indexingDone => {
@@ -281,15 +281,19 @@ export abstract class RavenTestDriver implements IDisposable {
                         return BluebirdPromise.resolve()
                             .delay(100)
                             .then(() => pollIndexingStatus());
+                    } else {
+                        log.info("Done waiting for indexing."); 
                     }
                 });
         };
 
-        const timeoutingPromise = BluebirdPromise.resolve().timeout(timeout);
-        return Promise.race([
-            timeoutingPromise,
-            pollIndexingStatus()
-        ]);
+        const result = BluebirdPromise.resolve(pollIndexingStatus())
+            .timeout(timeout)
+            .tapCatch((err) => {
+                log.warn(err, "Wait for indexing timeout.");  
+            });
+
+        return Promise.resolve(result);
     }
 
     public waitForUserToContinueTheTest(store: Todo): void {
@@ -365,6 +369,15 @@ export abstract class RavenTestDriver implements IDisposable {
                 const anyErrors = errors.filter(x => !!x);
                 if (anyErrors.length) {
                     throw new MultiError(anyErrors);
+                }
+            })
+            .then(() => {
+                if (RavenTestDriver._globalSecuredServer) {
+                    RavenTestDriver._globalSecuredServer.dispose();
+                }
+
+                if (RavenTestDriver._globalServer) {
+                    RavenTestDriver._globalServer.dispose();
                 }
             })
             .finally(() => {

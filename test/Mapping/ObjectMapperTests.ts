@@ -14,7 +14,7 @@ import {
 import { DateUtil } from "../../src/Utility/DateUtil";
 import { TypeInfo } from "../../src/Mapping/ObjectMapper";
 
-describe.only("ObjectMapper", function () {
+describe("ObjectMapper", function () {
 
     let mapper: TypesAwareObjectMapper;
 
@@ -57,7 +57,7 @@ describe.only("ObjectMapper", function () {
                 }
             });
         }
-        }
+    }
 
 
     describe("fromObjectLiteral()", function () {
@@ -184,9 +184,11 @@ describe.only("ObjectMapper", function () {
                 }
             };
             const types = new Map<string, ObjectTypeDescriptor>([
-                [ "Person", Person ]
+                [ Person.name, Person ]
             ]);
-            const result: any = mapper.fromObjectLiteral(testObject, typeInfo, types);
+
+            const result: any = mapper.fromObjectLiteral(
+                testObject, typeInfo, types);
 
             assert.ok(result);
             assert.ok(result.me);
@@ -318,10 +320,53 @@ describe.only("ObjectMapper", function () {
             assert.deepEqual(result.characters[1], data.characters[1]);
         });
 
+        it("should not fail if type's not found", () => {
+            const typeInfo = {
+                nestedTypes: {
+                    "me": "MissingType",
+                    "characters[]": "MissingType",
+                    "characters[].lastActedAt": "date",
+                }
+            };
+            
+            const testObj = { 
+                me: { name: "Ash" },
+                characters: [
+                    { name: "Test", lastActedAt: null }
+                ] 
+            };
+            const result: any = mapper.fromObjectLiteral(testObj, typeInfo);
+            assert.notEqual(testObj, result);
+            assert.equal(result.me.name, "Ash");
+            assert.equal(result.characters.length, 1);
+            assert.deepEqual(result.characters, testObj.characters);
+        });
+
+        it("should not fail if field from nested types not found", () => {
+            const typeInfo = {
+                nestedTypes: {
+                    "missingField": "Person",
+                    "missingArray[]": "Person",
+                    "characters[].missingFieldOnObjectInArray": "date",
+                }
+            };
+            
+            const testObj = { 
+                me: { name: "Ash" },
+                characters: [
+                    { name: "Test", lastActedAt: null }
+                ] 
+            };
+            const result: any = mapper.fromObjectLiteral(testObj, typeInfo, new Map([[Person.name, Person]]));
+            assert.notEqual(testObj, result);
+            assert.equal(result.me.name, "Ash");
+            assert.equal(result.characters.length, 1);
+            assert.deepEqual(result.characters, testObj.characters);
+        });
+
         xit("can handle complex objects with nested class instances, arrays and dates", () => {
             throw new Error("Not implemented yet");
         });
-
     });
 
     describe("toObjectLiteral()", function () {
@@ -509,5 +554,6 @@ describe.only("ObjectMapper", function () {
 
             assert.deepEqual(typeInfo, expectedTypeInfo);
         });
+
     });
 });

@@ -18,6 +18,7 @@ import { throwError } from "../../Exceptions";
 import { CONSTANTS } from "../../Constants";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { StringUtil } from "../../Utility/StringUtil";
+import { DateUtil } from "../../Utility/DateUtil";
 
 export type IdConvention = (databaseName: string, entity: object) => string;
 export class DocumentConventions {
@@ -69,6 +70,19 @@ export class DocumentConventions {
     private _registeredTypeDescriptors: ObjectLiteralDescriptor[] = [];
 
     private _knownTypes: Map<string, ObjectTypeDescriptor> = new Map();
+
+    private _entityMapper: TypesAwareObjectMapper;
+
+    public get entityMapper() {
+        if (!this._entityMapper) {
+            this._entityMapper = new TypesAwareObjectMapper({
+                dateFormat: DateUtil.DEFAULT_DATE_FORMAT,
+                knownTypes: this._knownTypes
+            });
+        }
+
+        return this._entityMapper;
+    }
 
     public constructor() {
         this._readBalanceBehavior = "None";
@@ -467,8 +481,8 @@ export class DocumentConventions {
         return this._registeredTypeDescriptors;
     }
 
-    public get knownEntityTypes(): ObjectTypeDescriptor[] {
-        return Array.from(this._knownTypes.values());
+    public get knownEntityTypes() {
+        return this._knownTypes;
     }
 
     public findKnownType(documentType: DocumentType): ObjectTypeDescriptor;
@@ -493,7 +507,6 @@ export class DocumentConventions {
     // public get systemMetaKeys(): string[] {
     //     return ["@collection", "Raven-Node-Type", "@nested_object_types"];
     // }
-
 
     // public getIdFromDocument<T extends Object = IRavenObject>(document?: T, documentType?: DocumentType<T>): string {
     //     // let docTypeDescriptor: DocumentTypeDescriptor;

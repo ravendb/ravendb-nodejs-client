@@ -1,4 +1,3 @@
-import {HiloMultiDatabaseIdGenerator} from './Identity/HiloMultiDatabaseIdGenerator';
 import * as uuid from "uuid";
 import * as BluebirdPromise from "bluebird";
 
@@ -12,6 +11,7 @@ import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationE
 import { OperationExecutor } from "./Operations/OperationExecutor";
 import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";
 import { DocumentSession } from "./Session/DocumentSession";
+import {HiloMultiDatabaseIdGenerator} from "./Identity/HiloMultiDatabaseIdGenerator";
 
 // import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";
 // import { DocumentSession } from "./Session/DocumentSession";
@@ -76,9 +76,7 @@ export class DocumentStore extends DocumentStoreBase {
         this._log.info("Dispose.");
         this.emit("beforeDispose");
 
-
         /* TBD
-
             foreach (var observeChangesAndEvictItemsFromCacheForDatabase 
               in _observeChangesAndEvictItemsFromCacheForDatabases)
                 observeChangesAndEvictItemsFromCacheForDatabase.Value.Dispose();
@@ -118,6 +116,7 @@ export class DocumentStore extends DocumentStoreBase {
         .timeout(5000) 
         .catch((err) => this._log.warn(`Error handling 'afterDispose'`, err))
         .finally(() => {
+            this._log.info(`Disposing request executors ${this._requestExecutors.size}`);
             this._requestExecutors.forEach((executor, db) => {
                 executor.dispose();
             });
@@ -152,18 +151,19 @@ export class DocumentStore extends DocumentStoreBase {
         this._assertInitialized();
         this._ensureNotDisposed();
 
+        if (typeof(databaseOrSessionOptions) === "string") {
+            return this.openSession({ 
+                database: (databaseOrSessionOptions as string) 
+            });
+        }
+
         let database: string;
         let sessionOpts: ISessionOptions;
         let requestExecutor: RequestExecutor;
-        if (typeof(databaseOrSessionOptions) === "string") {
-            database = databaseOrSessionOptions as string;
-            sessionOpts = null;
-            requestExecutor = this.getRequestExecutor(database);
-        } else {
-            database = sessionOpts.database;
-            sessionOpts = databaseOrSessionOptions as ISessionOptions;
-            requestExecutor = sessionOpts.requestExecutor;
-        }
+        databaseOrSessionOptions = databaseOrSessionOptions || {};
+        database = databaseOrSessionOptions.database || this._database;
+        sessionOpts = databaseOrSessionOptions as ISessionOptions;
+        requestExecutor = sessionOpts.requestExecutor || this.getRequestExecutor(database);
 
         const sessionId = uuid();
         const session = new DocumentSession(database, this, sessionId, requestExecutor);
@@ -179,7 +179,9 @@ export class DocumentStore extends DocumentStoreBase {
             database = this.database;
         }
 
-        let executor = this._requestExecutors.get(database.toLowerCase());
+        const databaseLower = database.toLowerCase();
+
+        let executor = this._requestExecutors.get(databaseLower);
         if (executor) {
             return executor;
         }
@@ -197,7 +199,8 @@ export class DocumentStore extends DocumentStoreBase {
               });
         }
 
-        this._requestExecutors.set(database.toLowerCase(), executor);
+        this._log.info(`New request executor for datebase ${database}`);
+        this._requestExecutors.set(databaseLower, executor);
 
         return executor;
     }

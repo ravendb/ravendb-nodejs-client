@@ -94,7 +94,6 @@ export interface IDocumentStore extends
     //  */
     // initialize(): IDocumentStore;
 
-
     // /**
     //  * Opens the session
     //  * @return Document session
@@ -159,8 +158,8 @@ export interface IDocumentStore extends
      */
     urls: string[];
 
-    //TBD: BulkInsertOperation BulkInsert(string database = null);
-    //TBD: IReliableSubscriptions Subscriptions { get; }
+    // TBD: BulkInsertOperation BulkInsert(string database = null);
+    // TBD: IReliableSubscriptions Subscriptions { get; }
 
     database: string;
 

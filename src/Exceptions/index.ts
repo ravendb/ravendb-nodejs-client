@@ -9,14 +9,14 @@ export function throwError(errName: RavenErrorType);
 export function throwError(errName: RavenErrorType, message: string);
 export function throwError(errName: RavenErrorType, message: string, errCause?: Error);
 export function throwError(errName: RavenErrorType, message: string, errCause?: Error, info?: { [key: string]: any });
-export function throwError(errName: string, message: string, errCause?: Error);
-export function throwError(errName: string, message: string, errCause?: Error, info?: { [key: string]: any });
+// export function throwError(errName: string, message: string, errCause?: Error);
+// export function throwError(errName: string, message: string, errCause?: Error, info?: { [key: string]: any });
 export function throwError(
   errName: RavenErrorType | string = "RavenException", 
   message?: string, 
   errCause?: Error, 
   info?: { [key: string]: any }) {
-  throw getError(message, errName, errCause, info); 
+  throw getError(errName, message, errCause, info); 
 }
 
 export function getError(errName: RavenErrorType, message: string): Error;
@@ -108,13 +108,17 @@ export type RavenErrorType = "RavenException"
 | "NonDurableFileSystemException"
 | "TimeoutException"
 | "AggregateException"
-| "OperationCancelledException";
+| "OperationCancelledException"
+| "MappingError"
+| "UrlScrappingError"
+| "TestDriverTearDownError"
+| "FileNotFoundException";
 
-export class ExceptionSchema {
-    public url: string;
-    public type: string;
-    public message: string;
-    public error: string;
+export interface ExceptionSchema {
+    url: string;
+    type: string;
+    message: string;
+    error: string;
 }
 
 export interface ExceptionDispatcherArgs {

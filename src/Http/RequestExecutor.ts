@@ -3,7 +3,7 @@ import * as os from "os";
 import * as BluebirdPromise from "bluebird";
 import * as semaphore from "semaphore";
 import { acquireSemaphore } from "../Utility/SemaphoreUtil";
-import { getLogger } from "../Utility/LogUtil";
+import { getLogger, ILogger } from "../Utility/LogUtil";
 import { Timer } from "../Primitives/Timer";
 import { ServerNode } from "./ServerNode";
 import { RavenCommand, ResponseDisposeHandling } from "./RavenCommand";
@@ -17,7 +17,7 @@ import { Certificate, ICertificate } from "../Auth/Certificate";
 import { ReadBalanceBehavior } from "./ReadBalanceBehavior";
 import { HttpCache, CachedItemMetadata, ReleaseCacheItem } from "./HttpCache";
 import { AggressiveCacheOptions } from "./AggressiveCacheOptions";
-import { throwError, RavenErrorType, ExceptionDispatcher } from "../Exceptions";
+import { throwError, RavenErrorType, ExceptionDispatcher, ExceptionSchema } from "../Exceptions";
 import { 
     GetClientConfigurationCommand, 
     GetClientConfigurationOperationResult
@@ -33,6 +33,7 @@ import { DocumentConventions } from "../Documents/Conventions/DocumentConvention
 import { TypeUtil } from "../Utility/TypeUtil";
 import { RequestPromiseOptions } from "request-promise";
 import { SessionInfo } from "../Documents/Session/IDocumentSession";
+import { Mapping } from "../Mapping";
 
 const DEFAULT_REQUEST_OPTIONS = {
     simple: false,
@@ -120,8 +121,7 @@ export class NodeStatus implements IDisposable {
 
 export class RequestExecutor implements IDisposable {
 
-    private _log = 
-        getLogger({ module: `${this.constructor.name}-${ Math.floor(Math.random() * 10000) }` });
+    private _log: ILogger;
 
     public static readonly CLIENT_VERSION = "4.0.0";
 
@@ -217,6 +217,10 @@ export class RequestExecutor implements IDisposable {
         database: string,
         authOptions: IRequestAuthOptions,
         conventions: DocumentConventions) {
+
+        this._log = getLogger({ 
+            module: `${this.constructor.name}-${ Math.floor(Math.random() * 10000) }` 
+        });
 
         this._cache = new HttpCache(conventions.maxHttpCacheSize);
         this._readBalanceBehavior = conventions.readBalanceBehavior;
@@ -516,7 +520,8 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
 
                     if (initialUrls.length === 0) {
                         this._lastKnownUrls = initialUrls;
-                        throwError(`Cannot get topology from server: ${url}.`, "InvalidOperationException", error);
+                        throwError("InvalidOperationException", 
+                            `Cannot get topology from server: ${url}.`, error);
                     }
 
                     topologyUpdateErrors.push({ url, error });
@@ -574,10 +579,9 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
     }
     
     protected _throwExceptions (details: string): void {
-        throwError(
+        throwError("InvalidOperationException",
             "Failed to retrieve database topology from all known nodes" 
-                + os.EOL + details, 
-            "InvalidOperationException");
+                + os.EOL + details);
     }
 
     protected _disposeAllFailedNodesTimers (): void {
@@ -601,7 +605,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
             case "FastestNode":
                 return this._nodeSelector.getFastestNode();
             default:
-                throwError(`Invalid read balance behavior: ${this._readBalanceBehavior}`, "NotSupportedException");
+                throwError("NotSupportedException", `Invalid read balance behavior: ${this._readBalanceBehavior}`);
         }
     }
 
@@ -643,9 +647,8 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
             .then(() => {
                 if (!this._firstTopologyUpdatePromise) {
                     if (!this._lastKnownUrls) {
-                            throwError(
-                                "No known topology and no previously known one, cannot proceed, likely a bug",
-                                "InvalidOperationException");
+                            throwError("InvalidOperationException",
+                                "No known topology and no previously known one, cannot proceed, likely a bug");
                     }
 
                     topologyUpdate = this._firstTopologyUpdate(this._lastKnownUrls);
@@ -809,26 +812,28 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
                                 .then(unsuccessfulResponseHandled => {
                                     const dbMissingHeader = response.caseless.get(HEADERS.DATABASE_MISSING);
                                     if (dbMissingHeader) {
-                                        throwError(dbMissingHeader as string, "DatabaseDoesNotExistException");
+                                        throwError("DatabaseDoesNotExistException", dbMissingHeader as string);
                                     }
 
                                     if (command.failedNodes.size === 0) {
-                                        throwError("Received unsuccessful response and couldn't recover from it. "
+                                        throwError("InvalidOperationException", 
+                                        "Received unsuccessful response and couldn't recover from it. "
                                             + "Also, no record of exceptions per failed nodes. "
-                                            + "This is weird and should not happen.", "InvalidOperationException");
+                                            + "This is weird and should not happen.");
                                     }
 
                                     if (command.failedNodes.size === 1) {
                                         const values = [...command.failedNodes.values()];
                                         if (values && values.some(x => !!x)) {
                                             const err = values.filter(x => !!x).map(x => x)[0];
-                                            throwError(err.message, err.name as RavenErrorType, err);
+                                            throwError(err.name as RavenErrorType, err.message, err);
                                         }
                                     }
 
-                                    throwError("Received unsuccessful response from all servers"
-                                        + " and couldn't recover from it.",
-                                        "AllTopologyNodesDownException");
+                                    throwError(
+                                        "AllTopologyNodesDownException", 
+                                        "Received unsuccessful response from all servers"
+                                        + " and couldn't recover from it.");
                                 });
                         }
 
@@ -901,7 +906,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
         }
 
         const innerErr = timeoutException || e;
-        throwError(message, "AllTopologyNodesDownException", innerErr); 
+        throwError("AllTopologyNodesDownException", message, innerErr); 
     }
 
     public inSpeedTestPhase () {
@@ -934,9 +939,9 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
                 return Promise.resolve(true);
 
             case StatusCodes.Forbidden: // TBD: include info about certificates
-                throwError(
+                throwError("AuthorizationException",
                     `Forbidden access to ${chosenNode.database}@${chosenNode.url}`
-                    + `, ${req.method || "GET"} ${req.uri}`, "AuthorizationException");
+                    + `, ${req.method || "GET"} ${req.uri}`);
             case StatusCodes.Gone:
                 // request not relevant for the chosen node - the database has been moved to a different one
                 if (!shouldRetry) {
@@ -1088,7 +1093,8 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
         if (response && response.body) {
             const responseJson: string = response.body;
             try {
-                const resExceptionSchema = JSON.parse(responseJson);
+                const resExceptionSchema = Mapping.getDefaultJsonSerializer()
+                    .deserialize<ExceptionSchema>(responseJson);
                 const readException = ExceptionDispatcher.get(resExceptionSchema, response.statusCode);
                 command.failedNodes.set(chosenNode, readException);
             } catch (_) {
@@ -1212,6 +1218,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
 
     public dispose (): void {
         this._log.info("Dispose.");
+
         if (this._disposed) {
             return;
         }

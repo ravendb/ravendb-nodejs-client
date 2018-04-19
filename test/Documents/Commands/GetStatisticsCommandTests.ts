@@ -24,14 +24,13 @@ describe("GetStatisticsCommand()", function () {
         await disposeTestDocumentStore(store));
 
     it("can get stats", async () => {
+        const getStatsCmd = new GetStatisticsCommand();
         const executor = store.getRequestExecutor();
 
         const sampleDataOp = new CreateSampleDataOperation();
         await store.maintenance.send(sampleDataOp);
 
         await globalContext.waitForIndexing(store, store.database, null);
-
-        const getStatsCmd = new GetStatisticsCommand();
         await executor.execute(getStatsCmd);
 
         const stats = getStatsCmd.result;
@@ -56,7 +55,7 @@ describe("GetStatisticsCommand()", function () {
 
         for (const idx of stats.indexes) {
             assert.ok(idx.name);
-            assert.ok(idx.isStale);
+            assert.ok(idx.isStale === false, `Index ${idx.name} is stale`);
             assert.ok(idx.state);
             assert.ok(idx.lockMode);
             assert.ok(idx.priority);

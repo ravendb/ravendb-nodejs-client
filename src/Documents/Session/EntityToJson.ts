@@ -1,15 +1,15 @@
-import { InMemoryDocumentSessionOperations } from './InMemoryDocumentSessionOperations';
-import { DocumentInfo } from './DocumentInfo';
-import { TypeUtil } from '../../Utility/TypeUtil';
-import { DocumentTypeHelper } from '../DocumenTypeHelper';
-import { DocumentConventions } from '../Conventions/DocumentConventions';
-import { CONSTANTS } from '../../Constants';
+import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
+import { DocumentInfo } from "./DocumentInfo";
+import { TypeUtil } from "../../Utility/TypeUtil";
+import { DocumentTypeHelper } from "../DocumenTypeHelper";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { CONSTANTS } from "../../Constants";
 import { DocumentType } from "../DocumentAbstractions";
-import { JsonSerializer } from '../../Mapping/Json';
-import { TypesAwareObjectMapper, TypeInfo } from '../../Mapping/ObjectMapper';
-import { Mapping } from '../../Mapping';
-import { ObjectTypeDescriptor } from '../..';
-import { throwError } from '../../Exceptions';
+import { JsonSerializer } from "../../Mapping/Json";
+import { TypesAwareObjectMapper, TypeInfo } from "../../Mapping/ObjectMapper";
+import { Mapping } from "../../Mapping";
+import { ObjectTypeDescriptor } from "../..";
+import { throwError } from "../../Exceptions";
 
 export class EntityToJson {
 
@@ -36,7 +36,7 @@ export class EntityToJson {
         let typeInfo: TypeInfo;
         const jsonNode = entityMapper.toObjectLiteral(entity, (_typeInfo) => {
             typeInfo = _typeInfo;
-        });
+        }, conventions.knownEntityTypes);
 
         EntityToJson._writeMetadata(jsonNode, typeInfo, documentInfo);
 
@@ -117,7 +117,10 @@ export class EntityToJson {
 
             if (documentTypeFromConventions) {
                 if (entityType === documentTypeFromConventions) {
-                    entity = this._session.conventions.entityObjectMapper.fromObjectLiteral(document);
+                    const mapper = this._session.conventions.entityObjectMapper;
+                    // TODO need to pass metadata here
+                    entity = mapper.fromObjectLiteral(
+                        document, {}, this._session.conventions.knownEntityTypes);
                 }
             }
 
@@ -132,7 +135,8 @@ export class EntityToJson {
         }
     }
 
-    //TBD public static object ConvertToEntity(Type entityType, string id, BlittableJsonReaderObject document, DocumentConventions conventions)
+    // TBD public static object ConvertToEntity(
+    //    Type entityType, string id, BlittableJsonReaderObject document, DocumentConventions conventions)
 
     private static _tryRemoveIdentityProperty(
         document: object, entityType: DocumentType, conventions: DocumentConventions): boolean {

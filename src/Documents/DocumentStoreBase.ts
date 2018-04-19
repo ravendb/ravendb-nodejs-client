@@ -113,8 +113,8 @@ export abstract class DocumentStoreBase
 
     private _authOptions: IAuthOptions;
 
-    //TBD: public abstract BulkInsertOperation BulkInsert(string database = null);
-    //TBD: public IReliableSubscriptions Subscriptions { get; }
+    // TBD: public abstract BulkInsertOperation BulkInsert(string database = null);
+    // TBD: public IReliableSubscriptions Subscriptions { get; }
 
     protected _ensureNotDisposed(): void {
         if (this._disposed) {
@@ -124,10 +124,9 @@ export abstract class DocumentStoreBase
 
     protected _assertInitialized(): void {
         if (!this._initialized) {
-            throwError(
+            throwError("InvalidOperationException",
                 "You cannot open a session or access the database commands before initializing the document store. "
-                + "Did you forget calling initialize()?",
-            "InvalidOperationException");
+                + "Did you forget calling initialize()?");
         }
     }
 

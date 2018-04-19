@@ -6,7 +6,9 @@ import { OperationCompletionAwaiter } from "./OperationCompletionAwaiter";
 import { ClusterRequestExecutor } from "../../Http/ClusterRequestExecutor";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerWideOperationCompletionAwaiter } from "../../ServerWide/Operations/ServerWideOperationCompletionAwaiter";
+import { getLogger } from "../../Utility/LogUtil";
 
+const log = getLogger({ module: "ServerOperationExecutor" });
 export class ServerOperationExecutor implements IDisposable {
 
     private _store: DocumentStoreBase;
@@ -20,6 +22,7 @@ export class ServerOperationExecutor implements IDisposable {
 
         store.once("afterDispose", 
             (callback) => { 
+                log.info("Dispose request executor.");
                 this._requestExecutor.dispose();
                 callback();
             });
