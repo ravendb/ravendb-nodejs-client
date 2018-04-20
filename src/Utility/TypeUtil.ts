@@ -53,7 +53,18 @@ export class TypeUtil {
             && ("Object" !== value.name);
     }
 
+    public static isObjectTypeDescriptor(value: any): boolean {
+        return !!value 
+            && typeof value !== "string"
+            && (this.isClassConstructor(value) || this.isObjectLiteralTypeDescriptor(value));
+
+    }
+
     public static isType(obj: object, typeDescriptor: DocumentType) {
+        if (!typeDescriptor) {
+            return false;
+        }
+
         return ((typeDescriptor as ObjectLiteralDescriptor).isType
             && (typeDescriptor as ObjectLiteralDescriptor).isType(obj))
             || obj.constructor.name === (typeDescriptor as EntityConstructor).name;
@@ -61,7 +72,7 @@ export class TypeUtil {
 
     public static isObjectLiteralTypeDescriptor(typeDescriptor: ObjectTypeDescriptor) {
         return !this.isClassConstructor(typeDescriptor)
-            && (typeDescriptor as ObjectLiteralDescriptor).isType;
+            && (typeDescriptor as ObjectLiteralDescriptor).hasOwnProperty("isType");
     }
 
     public static findType(obj: object, typeDescriptors: ObjectTypeDescriptor[]): ObjectTypeDescriptor {

@@ -12,7 +12,7 @@ import { PromiseResolver } from "../../Utility/PromiseResolver";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { StringUtil } from "../../Utility/StringUtil";
 // import {GetDocumentCommand} from "../../Database/Commands/GetDocumentCommand";
-import { IRavenObject, EntitiesCollectionObject } from "../../Types";
+import { IRavenObject, EntitiesCollectionObject, ObjectTypeDescriptor } from "../../Types";
 // import {RavenCommandData} from "../../Database/RavenCommandData";
 // import {PutCommandData} from "../../Database/Commands/Data/PutCommandData";
 // import {DeleteCommandData} from "../../Database/Commands/Data/DeleteCommandData";
@@ -105,6 +105,10 @@ export class DocumentSession extends InMemoryDocumentSessionOperations implement
         }
 
         const docType: DocumentType<TEntity> = options.documentType;
+        if (TypeUtil.isObjectTypeDescriptor(docType)) {
+            this.conventions.registerEntityType(docType as ObjectTypeDescriptor);
+        }
+        
         const objType = this.conventions.findEntityType(docType);
 
         const loadOperation = new LoadOperation(this);

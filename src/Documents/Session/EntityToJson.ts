@@ -20,7 +20,7 @@ export class EntityToJson {
      * @param _session Session to use
      */
     public constructor(session: InMemoryDocumentSessionOperations) {
-        this._session = this._session;
+        this._session = session;
     }
 
     private _missingDictionary: Map<object, Map<string, object>> = new Map();
@@ -36,11 +36,11 @@ export class EntityToJson {
         let typeInfo: TypeInfo;
         const jsonNode = entityMapper.toObjectLiteral(entity, (_typeInfo) => {
             typeInfo = _typeInfo;
-        }, conventions.knownEntityTypes);
+        }, conventions.knownEntityTypesByName);
 
         EntityToJson._writeMetadata(jsonNode, typeInfo, documentInfo);
 
-        const type = DocumentTypeHelper.getType(entity, conventions);
+        const type: DocumentType = TypeUtil.findType(entity, conventions.knownEntityTypes);
 
         EntityToJson._tryRemoveIdentityProperty(jsonNode, type, conventions);
 
@@ -115,13 +115,21 @@ export class EntityToJson {
             let entity;
             const documentTypeFromConventions = conventions.getJsType(id, document);
 
+            const entityTypeInfoFromMetadata = EntityToJson._getEntityTypeInfoFromMetadata(document);
             if (documentTypeFromConventions) {
-                if (entityType === documentTypeFromConventions) {
+                if (entityType 
+                    && entityType.name === documentTypeFromConventions.name) {
                     const mapper = this._session.conventions.entityObjectMapper;
-                    // TODO need to pass metadata here
                     entity = mapper.fromObjectLiteral(
-                        document, {}, this._session.conventions.knownEntityTypes);
+                        document, entityTypeInfoFromMetadata, this._session.conventions.knownEntityTypesByName);
                 }
+            }
+
+            if (!entity) {
+                const mapper = this._session.conventions.entityObjectMapper;
+                const passedTypeInfo = Object.assign(entityTypeInfoFromMetadata, { typeName: entityType.name });
+                entity = mapper.fromObjectLiteral(
+                    document, passedTypeInfo, this._session.conventions.knownEntityTypesByName);
             }
 
             if (!id) {
@@ -131,8 +139,21 @@ export class EntityToJson {
             return entity;
         } catch (err) {
             throwError("InvalidOperationException", 
-                `Could not convert document ${id} to entity of type ${entityType.name}.`);
+                `Could not convert document ${id} to entity of type ${entityType ? entityType.name : entityType}.`, 
+                err);
         }
+    }
+
+    private static _getEntityTypeInfoFromMetadata(document: object): TypeInfo {
+        const metadata = document[CONSTANTS.Documents.Metadata.KEY];
+        if (!metadata) {
+            return {};
+        }
+
+        return {
+            typeName: metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE],
+            nestedTypes:  metadata[CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES]
+        };
     }
 
     // TBD public static object ConvertToEntity(

@@ -29,7 +29,7 @@ export class GenerateEntityIdOnTheClient {
         }
 
         try {
-            const docType: DocumentType = DocumentTypeHelper.getType(entity, this._conventions);
+            const docType: DocumentType = TypeUtil.findType(entity, this._conventions.knownEntityTypes);
             const identityProperty = this._getIdentityProperty(docType);
             if (identityProperty) {
                 const value = entity[identityProperty];
@@ -74,7 +74,7 @@ export class GenerateEntityIdOnTheClient {
      * @param id Id to set
      */
     public trySetIdentity(entity: object, id: string): void {
-        const docType = DocumentTypeHelper.getType(entity, this._conventions);
+        const docType: DocumentType = TypeUtil.findType(entity, this._conventions.knownEntityTypes);
         const identityProperty = this._conventions.getIdentityProperty(docType);
 
         if (identityProperty) {

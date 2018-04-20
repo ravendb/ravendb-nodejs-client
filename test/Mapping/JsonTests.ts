@@ -1,9 +1,16 @@
 import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { stringifyJson, parseJson, pascalCaseReplacer, camelCaseReplacer, pascalCaseReviver, camelCaseReviver } from "../../src/Mapping/Json";
+import { 
+    stringifyJson, 
+    parseJson, 
+    pascalCaseReplacer, 
+    camelCaseReplacer, 
+    pascalCaseReviver, 
+    camelCaseReviver 
+} from "../../src/Mapping/Json";
 
-describe.only("Json module", () => {
+describe("Json module", () => {
 
     describe("stringifyJson()", () => {
 

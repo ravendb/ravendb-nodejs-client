@@ -63,26 +63,14 @@ export class DocumentConventions {
     private _readBalanceBehavior: ReadBalanceBehavior;
     private _maxHttpCacheSize: number;
     
-    private _entityObjectMapper: TypesAwareObjectMapper;
+    private _knownEntityTypes: Map<string, ObjectTypeDescriptor> = new Map();
+
+    private _entityObjectMapper: TypesAwareObjectMapper = new TypesAwareObjectMapper({
+       knownTypes: this._knownEntityTypes,
+       dateFormat: DateUtil.DEFAULT_DATE_FORMAT 
+    });
 
     private _entityJsonSerializer: JsonSerializer;
-
-    private _registeredTypeDescriptors: ObjectLiteralDescriptor[] = [];
-
-    private _knownTypes: Map<string, ObjectTypeDescriptor> = new Map();
-
-    private _entityMapper: TypesAwareObjectMapper;
-
-    public get entityMapper() {
-        if (!this._entityMapper) {
-            this._entityMapper = new TypesAwareObjectMapper({
-                dateFormat: DateUtil.DEFAULT_DATE_FORMAT,
-                knownTypes: this._knownTypes
-            });
-        }
-
-        return this._entityMapper;
-    }
 
     public constructor() {
         this._readBalanceBehavior = "None";
@@ -92,8 +80,7 @@ export class DocumentConventions {
             const metadata = doc[CONSTANTS.Documents.Metadata.KEY];
             if (metadata !== null) {
                 const jsType = metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] as string;
-                return this._knownTypes.get(jsType);
-
+                return this._knownEntityTypes.get(jsType) || null;
             }
 
             return null;
@@ -115,7 +102,10 @@ export class DocumentConventions {
         this._maxNumberOfRequestsPerSession = 30;
         this._maxHttpCacheSize = 128 * 1024 * 1024;
 
-        this._entityObjectMapper = null as Todo as any;  // TODO;
+        this._entityObjectMapper = new TypesAwareObjectMapper({
+            dateFormat: DateUtil.DEFAULT_DATE_FORMAT,
+            knownTypes: this._knownEntityTypes
+        });
     }
 
     public get entityObjectMapper(): TypesAwareObjectMapper {
@@ -332,9 +322,13 @@ export class DocumentConventions {
             return entity.constructor as ClassConstructor;
         }
 
-        for (const checker of this._registeredTypeDescriptors) {
-            if (checker.isType(entity)) {
-                return checker;
+        for (const entityType of this._knownEntityTypes.values()) {
+            if (!TypeUtil.isObjectLiteralTypeDescriptor(entityType)) {
+                continue;
+            }
+
+            if ((entityType as ObjectLiteralDescriptor).isType(entity)) {
+                return entityType;
             }
         }
 
@@ -374,11 +368,11 @@ export class DocumentConventions {
         return this;
     }
 
-    public registerEntityTypeChecker(typeChecker: ObjectLiteralDescriptor) {
-        this._registeredTypeDescriptors.push(typeChecker);
-    }
+    // public registerEntityTypeChecker(typeChecker: ObjectLiteralDescriptor) {
+    //     this._registeredTypeDescriptors.push(typeChecker);
+    // }
 
-    public registerEntityPropertyName(ctorOrTypeChecker: ObjectTypeDescriptor, idProperty: string) {
+    public registerEntityIdPropertyName(ctorOrTypeChecker: ObjectTypeDescriptor, idProperty: string) {
         this._registeredIdPropertyNames.set(ctorOrTypeChecker, idProperty);
     }
 
@@ -477,12 +471,25 @@ export class DocumentConventions {
     }
 
     //
-    public get registeredTypeDescriptors() {
-        return this._registeredTypeDescriptors;
+    // public get registeredTypeDescriptors() {
+    //     return this._registeredTypeDescriptors;
+    // }
+    public get knownEntityTypesByName() {
+        return this._knownEntityTypes;
     }
 
     public get knownEntityTypes() {
-        return this._knownTypes;
+        return Array.from(this._knownEntityTypes.values());
+    }
+
+    public registerEntityType(entityType: ObjectTypeDescriptor): this {
+        if (!TypeUtil.isObjectTypeDescriptor(entityType)) {
+            throwError("InvalidArgumentException", 
+                "Entity type must be a constructor or an object literal descriptor.");
+        }
+
+        this._knownEntityTypes.set(entityType.name, entityType);
+        return this;
     }
 
     public findEntityType(documentType: DocumentType): ObjectTypeDescriptor;
@@ -496,7 +503,7 @@ export class DocumentConventions {
             return docTypeOrtypeName as ObjectTypeDescriptor;
         }
         
-        return this._knownTypes.get(docTypeOrtypeName);
+        return this._knownEntityTypes.get(docTypeOrtypeName);
     }
 
     ////////////////////////
