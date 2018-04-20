@@ -89,11 +89,8 @@ export class DocumentSession extends InMemoryDocumentSessionOperations implement
         callback?: AbstractCallback<TEntity | EntitiesCollectionObject<TEntity>>)
             : Promise<TEntity | EntitiesCollectionObject<TEntity>> {
 
-        const isLoadingSingle = Array.isArray(idOrIds);
+        const isLoadingSingle = !Array.isArray(idOrIds);
         const ids = !isLoadingSingle ? idOrIds as string[] : [ idOrIds as string ];
-
-        const loadOperation = new LoadOperation(this);
-        this._loadInternal(ids, loadOperation);
 
         let options: ISessionOperationOptions<TEntity>;
         if (TypeUtil.isFunction(optionsOrCallback)) {
@@ -102,39 +99,47 @@ export class DocumentSession extends InMemoryDocumentSessionOperations implement
         } else if (TypeUtil.isObject(optionsOrCallback)) {
             options = optionsOrCallback as ISessionOperationOptions<TEntity>;
             callback = callback || options.callback || TypeUtil.NOOP;
+        } else {
+            options = {};
+            callback = TypeUtil.NOOP;
         }
 
         const docType: DocumentType<TEntity> = options.documentType;
         const objType = this.conventions.findEntityType(docType);
 
-        const result = BluebirdPromise.resolve(loadOperation.getDocuments<TEntity>(objType))
-            .then(docs => { 
-                if (isLoadingSingle) {
-                    return docs[Object.keys(docs)[0]];
-                } 
+        const loadOperation = new LoadOperation(this);
+        return this._loadInternal(ids, loadOperation)
+        .then(() => {
+            const result = BluebirdPromise.resolve(loadOperation.getDocuments<TEntity>(objType))
+                .then(docs => {
+                    if (isLoadingSingle) {
+                        return docs[Object.keys(docs)[0]];
+                    }
 
-                return docs;
-            })
-            .tap((entities: TEntity | EntitiesCollectionObject<TEntity>) => callback(null, entities))
-            .tapCatch(err => callback(err));
+                    return docs;
+                })
+                .tap((entities: TEntity | EntitiesCollectionObject<TEntity>) => callback(null, entities))
+                .tapCatch(err => callback(err));
 
-        return Promise.resolve(result);
+            return Promise.resolve(result);
+        });
     }
 
-    private _loadInternal<T>(ids: string[], operation: LoadOperation): void { //TBD optional stream parameter
+    private _loadInternal<T>(ids: string[], operation: LoadOperation): Promise<void> { //TBD optional stream parameter
         operation.byIds(ids);
 
         const command = operation.createRequest();
         if (command) {
-            this._requestExecutor.execute(command, this._sessionInfo);
-            /* TBD
-             if(stream!=null)
-                    Context.Write(stream, command.Result.Results.Parent);
-                else
-                    operation.SetResult(command.Result);
-             */
-
-            operation.setResult(command.result); //TBD: delete me after impl stream
+            return this._requestExecutor.execute(command, this._sessionInfo)
+                .then(() => {
+                    /* TBD
+                     if(stream!=null)
+                            Context.Write(stream, command.Result.Results.Parent);
+                        else
+                            operation.SetResult(command.Result);
+                     */
+                    operation.setResult(command.result); //TBD: delete me after impl stream
+                });
         }
     }
 

@@ -3,15 +3,20 @@ import { throwError } from "../Exceptions";
 import { DateUtil } from "../Utility/DateUtil";
 import { CONSTANTS } from "../Constants";
 
-function camelCaseReviver(key, value) {
+export function camelCaseReviver(key, value) {
     if (key && !Array.isArray(this)) {
-        this[key.charAt(0).toLowerCase() + key.slice(1)] = value;
+        const newKey = key.charAt(0).toLowerCase() + key.slice(1);
+        if (key !== newKey) {
+            this[newKey] = value;
+        } else {
+            return value;
+        }
     } else {
         return value;
     }
 }
 
-function pascalCaseReplacer(key, value) {
+export function pascalCaseReplacer(key, value) {
     if (value && typeof value === "object" && !Array.isArray(value)) {
         const replacement = {};
         for (const k in value) {
@@ -25,15 +30,20 @@ function pascalCaseReplacer(key, value) {
     return value;
 }
 
-function pascalCaseReviver(key, value) {
+export function pascalCaseReviver(key, value) {
     if (key && !Array.isArray(this)) {
-        this[key.charAt(0).toUpperCase() + key.slice(1)] = value;
+        const newKey = key.charAt(0).toUpperCase() + key.slice(1);
+        if (key !== newKey) {
+            this[newKey] = value;
+        } else {
+            return value;
+        }
     } else {
         return value;
     }
 }
 
-function camelCaseReplacer(key, value) {
+export function camelCaseReplacer(key, value) {
     if (value && typeof value === "object" && !Array.isArray(value)) {
         const replacement = {};
         for (const k in value) {
@@ -47,25 +57,7 @@ function camelCaseReplacer(key, value) {
     return value;
 }
 
-export interface JsonSerializationTransform {
-    reviver?: (key, value) => any;
-    replacer?: (key, value) => any;
-}
-
-export const targetJsonPascalCase: JsonSerializationTransform = {
-    reviver: camelCaseReviver,
-    replacer: pascalCaseReplacer 
-};
-
-export const targetJsonCamelCase: JsonSerializationTransform = {
-    reviver: camelCaseReviver,
-    replacer: pascalCaseReplacer 
-};
-
-export const JSON_SERIALIZATION_TRANSORM = {
-    targetJsonCamelCase,
-    targetJsonPascalCase
-};
+export type JsonTransformFunction = (key, value) => any; 
 
 export function parseJson(jsonString: string, reviver?: (key, val) => any) {
     return JSON.parse(jsonString, reviver);
@@ -75,8 +67,9 @@ export function stringifyJson(o: Object, replacer?: (key, val) => any) {
     return JSON.stringify(o, replacer);
 }
 
-export interface JsonParserSettings {
-    transform?: JsonSerializationTransform;
+export interface JsonSerializerSettings {
+    reviver?: JsonTransformFunction;
+    replacer?: JsonTransformFunction;
 }
 
 export class JsonSerializer {
@@ -84,11 +77,10 @@ export class JsonSerializer {
     private _reviver: (key, val) => any;
     private _replacer: (key, val) => any;
 
-    constructor(opts: JsonParserSettings) {
+    constructor(opts: JsonSerializerSettings) {
         opts = opts || {};
-        const transform = opts.transform || {};
-        this._reviver = transform.reviver;
-        this._replacer = transform.replacer;
+        this._reviver = opts.reviver;
+        this._replacer = opts.replacer;
     }
 
     public deserialize<TResult = object>(jsonString: string) {

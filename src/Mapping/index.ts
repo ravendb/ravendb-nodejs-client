@@ -1,4 +1,4 @@
-import { JsonSerializer, JSON_SERIALIZATION_TRANSORM } from "./Json";
+import { JsonSerializer, camelCaseReviver, pascalCaseReplacer } from "./Json";
 import { TypesAwareObjectMapper } from "./ObjectMapper";
 import { DateUtil } from "../Utility/DateUtil";
 
@@ -36,7 +36,8 @@ export class Mapping {
     public static getDefaultJsonSerializer() {
         if (!this._defaultJsonSerializer) {
             this._defaultJsonSerializer = new JsonSerializer({
-                transform: JSON_SERIALIZATION_TRANSORM.targetJsonPascalCase
+                reviver: camelCaseReviver,
+                replacer: pascalCaseReplacer
             });
         }
 

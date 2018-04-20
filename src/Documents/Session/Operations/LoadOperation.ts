@@ -3,6 +3,7 @@ import { getLogger } from "../../../Utility/LogUtil";
 import { ObjectTypeDescriptor, EntitiesCollectionObject } from "../../..";
 import { DocumentInfo } from "../DocumentInfo";
 import { GetDocumentsCommand, GetDocumentsResult } from "../../Commands/GetDocumentsCommand";
+import { TypeUtil } from "../../../Utility/TypeUtil";
 
 const log = getLogger({ module: "LoadOperation" });
 
@@ -110,7 +111,7 @@ export class LoadOperation {
         this._session.registerIncludes(result.includes);
 
         for (const document of result.results) {
-            if (!document || document.isNull()) {
+            if (!document || TypeUtil.isNullOrUndefined(document)) {
                 continue;
             }
 
