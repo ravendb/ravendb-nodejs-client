@@ -412,7 +412,7 @@ export class DocumentConventions {
      *  @return Identity property (field)
      */
     public getIdentityProperty(documentType: DocumentType): string {
-        const typeDescriptor = this.findKnownType(documentType);
+        const typeDescriptor = this.findEntityType(documentType);
         return this._registeredIdPropertyNames.get(typeDescriptor)
             || CONSTANTS.Documents.Metadata.ID_PROPERTY;
     }
@@ -485,9 +485,13 @@ export class DocumentConventions {
         return this._knownTypes;
     }
 
-    public findKnownType(documentType: DocumentType): ObjectTypeDescriptor;
-    public findKnownType(typeName: string): ObjectTypeDescriptor;
-    public findKnownType(docTypeOrtypeName: string): ObjectTypeDescriptor {
+    public findEntityType(documentType: DocumentType): ObjectTypeDescriptor;
+    public findEntityType(typeName: string): ObjectTypeDescriptor;
+    public findEntityType(docTypeOrtypeName: string): ObjectTypeDescriptor {
+        if (!docTypeOrtypeName) {
+            return null;
+        }
+
         if (typeof(docTypeOrtypeName) !== "string") {
             return docTypeOrtypeName as ObjectTypeDescriptor;
         }

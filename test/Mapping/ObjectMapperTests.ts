@@ -81,6 +81,15 @@ describe("ObjectMapper", function () {
             assert.equal(bornAt.getMonth(), 4);
         });
 
+        it ("can handle boolean", () => {
+            const data = {
+                success: false
+            };
+
+            const result: any = mapper.fromObjectLiteral(data, {});
+            assert.equal(result.success, false);
+        });
+
         it("can handle array", () => {
             const typeInfo = {
                 nestedTypes: {

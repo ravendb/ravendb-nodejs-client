@@ -1,6 +1,7 @@
 import { ClassConstructor } from "../Types";
 import { throwError } from "../Exceptions";
 import { DateUtil } from "../Utility/DateUtil";
+import { CONSTANTS } from "../Constants";
 
 function camelCaseReviver(key, value) {
     if (key && !Array.isArray(this)) {
@@ -98,4 +99,8 @@ export class JsonSerializer {
         return stringifyJson(obj, this._replacer);
     }
 
+}
+
+export function tryGetConflict(metadata: object): boolean {
+    return metadata[CONSTANTS.Documents.Metadata.CONFLICT] || false;
 }

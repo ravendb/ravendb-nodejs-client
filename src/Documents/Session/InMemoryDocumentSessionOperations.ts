@@ -2,7 +2,7 @@ import {EntityToJson} from "./EntityToJson";
 import * as uuid from "uuid";
 import { IDisposable } from "../../Types/Contracts";
 import { IMetadataDictionary, SessionInfo } from "./IDocumentSession";
-import { Todo } from "../../Types";
+import { Todo, ObjectTypeDescriptor } from "../../Types";
 import { SessionEventsEmitter, SessionBeforeStoreEventArgs } from "./SessionEvents";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { ObjectMapper } from "../../Utility/Mapping";
@@ -16,10 +16,13 @@ import { DocumentStoreBase } from "../DocumentStoreBase";
 import { DocumentConventions, DocumentStore } from "../..";
 import { ICommandData, CommandType } from "../Commands/CommandData";
 import { GenerateEntityIdOnTheClient } from "../Identity/GenerateEntityIdOnTheClient";
-import { JsonSerializer } from "../../Mapping/Json";
+import { JsonSerializer, tryGetConflict } from "../../Mapping/Json";
 import { Mapping } from "../../Mapping";
 import { CONSTANTS } from "../../Constants";
 import { DateUtil } from "../../Utility/DateUtil";
+import { IncludesUtil } from "./IncludesUtil";
+import { TypeUtil } from "../../Utility/TypeUtil";
+
 export abstract class InMemoryDocumentSessionOperations implements IDisposable, SessionEventsEmitter, Todo {
     
     public removeListener(
@@ -327,6 +330,217 @@ export abstract class InMemoryDocumentSessionOperations implements IDisposable, 
                 // tslint:enable:max-line-length
                 "more responsive application.");
         }
+    }
+
+    public checkIfIdAlreadyIncluded(ids: string[], includes: Map<string, ObjectTypeDescriptor>): boolean;
+    public checkIfIdAlreadyIncluded(ids: string[], includes: string[]): boolean;
+    public checkIfIdAlreadyIncluded(ids: string[], includes: string[] | Map<string, ObjectTypeDescriptor>): boolean {
+        let includesList: string[];
+        if (includes instanceof Map) {
+            includesList = Array.from((includes as Map<string, ObjectTypeDescriptor>).keys());
+        }
+
+        for (const id of ids) {
+            if (this._knownMissingIds.has(id)) {
+                continue;
+            }
+
+            // Check if document was already loaded, the check if we've received it through include
+            let documentInfo: DocumentInfo = this.documentsById.getValue(id);
+            if (!documentInfo) {
+                documentInfo = this.includedDocumentsById.get(id);
+                if (!documentInfo) {
+                    return false;
+                }
+            }
+
+            if (!documentInfo.entity) {
+                return false;
+            }
+
+            if (!includes) {
+                continue;
+            }
+
+            for (const include of includesList) {
+                let hasAll: boolean = true;
+
+                IncludesUtil.include(documentInfo.document, include, (id: string) => {
+                    hasAll = hasAll && this.isLoaded(id);
+                });
+
+                if (!hasAll[0]) {
+                    return false;
+                }
+
+            }
+
+        }
+
+        return true;
+    }
+
+    /**
+     * Tracks the entity inside the unit of work
+     * @param <T> entity class
+     * @param clazz entity class
+     * @param documentFound Document info
+     * @param entityType Entity class
+     * @param id Id of document
+     * @param document raw entity
+     * @param metadata raw document metadata
+     * @param noTracking no tracking
+     * @return tracked entity
+     */
+    //    return (T) this.trackEntity(clazz, documentFound.id, documentFound.document, documentFound.metadata, false);
+    public trackEntity<T extends object>(
+        entityType: ObjectTypeDescriptor<T>, documentFound: DocumentInfo): T;
+    public trackEntity<T extends object>(
+        entityType: ObjectTypeDescriptor<T>, 
+        id: string, 
+        document: object, 
+        metadata: object, 
+        noTracking: boolean): object; 
+    public trackEntity<T extends object>(
+        entityType: ObjectTypeDescriptor<T>, 
+        idOrDocumentInfo: string | DocumentInfo, 
+        document?: object, 
+        metadata?: object, 
+        noTracking?: boolean): T { 
+
+        let id: string;
+        if (typeof (idOrDocumentInfo) !== "string") {
+            const info = idOrDocumentInfo as DocumentInfo;
+            return this.trackEntity(entityType, info.id, info.document, info.metadata, false) as T;
+        } else {
+            id = idOrDocumentInfo as string;
+        }
+
+        if (!id) {
+            return this._deserializeFromTransformer(entityType, null, document) as T;
+        }
+
+        let docInfo: DocumentInfo = this.documentsById.getValue(id);
+        if (docInfo) {
+            // the local instance may have been changed, we adhere to the current Unit of Work
+            // instance, and return that, ignoring anything new.
+
+            if (!docInfo.entity) {
+                docInfo.entity = this.entityToJson.convertToEntity(entityType, id, document);
+            }
+
+            if (!noTracking) {
+                this.includedDocumentsById.delete(id);
+                this.documentsByEntity.set(docInfo.entity, docInfo);
+            }
+
+            return docInfo.entity as T;
+        }
+
+        docInfo = this.includedDocumentsById.get(id);
+        if (docInfo) {
+            if (!docInfo.entity) {
+                docInfo.entity = this.entityToJson.convertToEntity(entityType, id, document);
+            }
+
+            if (!noTracking) {
+                this.includedDocumentsById.delete(id);
+                this.documentsById.add(docInfo);
+                this.documentsByEntity.set(docInfo.entity, docInfo);
+            }
+
+            return docInfo.entity as T;
+        }
+
+        const entity = this.entityToJson.convertToEntity(entityType, id, document);
+
+        const changeVector = metadata[CONSTANTS.Documents.Metadata.CHANGE_VECTOR];
+        if (!changeVector) {
+            throwError("InvalidOperationException", "Document " + id + " must have Change Vector.");
+        }
+
+        if (!noTracking) {
+            const newDocumentInfo: DocumentInfo = new DocumentInfo();
+            newDocumentInfo.id = id;
+            newDocumentInfo.document = document;
+            newDocumentInfo.metadata = metadata;
+            newDocumentInfo.entity = entity;
+            newDocumentInfo.changeVector = changeVector;
+
+            this.documentsById.add(newDocumentInfo);
+            this.documentsByEntity.set(entity, newDocumentInfo);
+        }
+
+        return entity as T;
+    }
+
+    private _deserializeFromTransformer(clazz: ObjectTypeDescriptor, id: string, document: object): object {
+        // TBD handleInternalMetadata(document);
+        return this.entityToJson.convertToEntity(clazz, id, document);
+    }
+
+    public registerIncludes(includes: object): void {
+        if (!includes) {
+            return;
+        }
+
+        for (const fieldName of Object.keys(includes)) {
+            const fieldValue = includes[fieldName];
+
+            if (TypeUtil.isNullOrUndefined(fieldValue)) {
+                continue;
+            }
+
+            const newDocumentInfo = DocumentInfo.getNewDocumentInfo(fieldValue);
+            if (tryGetConflict(newDocumentInfo.metadata)) {
+                continue;
+            }
+
+            this.includedDocumentsById.set(newDocumentInfo.id, newDocumentInfo);
+        }
+    }
+
+    public registerMissingIncludes(results: object[], includes: object, includePaths: string[]): void {
+        if (!includePaths || !includePaths.length) {
+            return;
+        }
+
+        for (const result of results) {
+            for (const include of includePaths) {
+                if (include === CONSTANTS.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME) {
+                    continue;
+                }
+
+                IncludesUtil.include(result, include, id => {
+                    if (!id) {
+                        return;
+                    }
+
+                    if (this.isLoaded(id)) {
+                        return;
+                    }
+
+                    const document = includes[id];
+                    if (document) {
+                        const metadata = document.get(CONSTANTS.Documents.Metadata.KEY);
+
+                        if (tryGetConflict(metadata)) {
+                            return;
+                        }
+                    }
+
+                    this.registerMissing(id);
+                });
+            }
+        }
+    }
+
+    public registerMissing(id: string): void {
+        this._knownMissingIds.add(id.toLowerCase());
+    }
+
+    public unregisterMissing(id: string) {
+        this._knownMissingIds.delete(id.toLowerCase());
     }
 
     public dispose(): void {

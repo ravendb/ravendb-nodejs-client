@@ -1,9 +1,10 @@
 import { IRavenObject } from "../../Types/IRavenObject";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { IDisposable } from "../../Types/Contracts";
-import { EntityCallback, EntitiesArrayCallback } from "../../Types/Callbacks";
+import { AbstractCallback } from "../../Types/Callbacks";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { DocumentType, EntityConstructor } from "../DocumentAbstractions";
+import { EntitiesCollectionObject } from "../../Types";
 
 export class SessionInfo {
     public sessionId: number;
@@ -114,19 +115,26 @@ export type ConcurrencyCheckMode = "Auto" | "Forced" | "Disabled";
 
 // }
 
-
 export interface IDocumentSession extends IDisposable {
     numberOfRequestsInSession: number;
     conventions: DocumentConventions;
     //   advanced: AdvancedSessionOperations;
 
-    load<T extends Object = IRavenObject>(id: string, callback?: EntityCallback<T>): Promise<T>;
-    load<T extends Object = IRavenObject>(
-        id: string, options?: ISessionOperationOptions<T>, callback?: EntityCallback<T>): Promise<T>;
-    load<T extends Object = IRavenObject>(
-        ids: string[], callback?: EntityCallback<T>): Promise<T[]>;
-    load<T extends Object = IRavenObject>(
-        ids: string[], options?: ISessionOperationOptions<T>, callback?: EntitiesArrayCallback<T>): Promise<T[]>;
+    load<TEntity extends Object = IRavenObject>(
+        id: string, 
+        callback?: AbstractCallback<TEntity>): Promise<TEntity>;
+    load<TEntity extends Object = IRavenObject>(
+        id: string, 
+        options?: ISessionOperationOptions<TEntity>, 
+        callback?: AbstractCallback<TEntity>): Promise<TEntity>;
+    load<TEntity extends Object = IRavenObject>(
+        ids: string[], 
+        callback?: AbstractCallback<EntitiesCollectionObject<TEntity>>): Promise<EntitiesCollectionObject<TEntity>>;
+    load<TEntity extends Object = IRavenObject>(
+        ids: string[], 
+        options?: ISessionOperationOptions<TEntity>, 
+        callback?: AbstractCallback<TEntity>): 
+        Promise<EntitiesCollectionObject<TEntity>>;
 
     //   delete<T extends Object = IRavenObject>(id: string, callback?: EntityCallback<T | null | void>): Promise<T | null | void>;
     //   delete<T extends Object = IRavenObject>(id: string, options?: ISessionOperationOptions<T | null | void>, callback?: EntityCallback<T | null | void>): Promise<T | null | void>;
@@ -151,7 +159,7 @@ export interface ISessionOptions {
 export interface ISessionOperationOptions<T> {
     documentType?: DocumentType<T>;
     includes?: string[];
-    nestedObjectTypes?: IRavenObject<EntityConstructor>;
+    // nestedObjectTypes?: IRavenObject<EntityConstructor>;
     expectedChangeVector?: string;
-    callback?: EntityCallback<T> | EntitiesArrayCallback<T>;
+    callback?: AbstractCallback<T | EntitiesCollectionObject<T>>;
 }

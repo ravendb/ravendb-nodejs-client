@@ -8,8 +8,11 @@ import { ObjectLiteralDescriptor, ObjectTypeDescriptor, ClassConstructor } from 
 export class TypeUtil {
     public static readonly MAX_INT32 = 2147483647;
 
-    public static isNull(value: any): boolean {
-        return ("undefined" === (typeof value)) || _.isNull(value);
+    // tslint:disable-next-line:no-empty
+    public static NOOP: (...args: any[]) => any = () => {};
+
+    public static isNullOrUndefined(value: any): boolean {
+        return ("undefined" === (typeof value)) || value === null;
     }
 
     public static isString(value: any): boolean {

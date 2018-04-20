@@ -1,3 +1,9 @@
+export interface Todo {}
+
+export interface EntitiesCollectionObject<TEntity> extends IRavenObject<TEntity> {
+    [id: string]: TEntity;
+}
+
 export interface IRavenObject<T = any> {
     [property: string]: T;
 }
@@ -7,13 +13,12 @@ export interface ClassConstructor {
     new(...args: any[]): any; 
 }
 
-export interface EntityConstructor<T extends object> extends ClassConstructor { 
+export interface EntityConstructor<T extends object = object> extends ClassConstructor { 
      new(...args: any[]): T; 
 }
 
-export interface Todo {}
+export type ObjectTypeDescriptor<T extends object = object> = EntityConstructor<T> | ObjectLiteralDescriptor<T>;
 
-export type ObjectTypeDescriptor = ClassConstructor | ObjectLiteralDescriptor;
 export abstract class EntityObjectLiteralDescriptor<T extends object> implements ObjectLiteralDescriptor {
     public abstract name: string;
     public abstract isType(obj: object);
@@ -22,7 +27,7 @@ export abstract class EntityObjectLiteralDescriptor<T extends object> implements
 
 export interface ObjectLiteralDescriptor<TResult extends object = object> {
     name: string;
-    isType(obj: object);
+    isType(obj: object): boolean;
     construct(dto: object): TResult;
 }
 

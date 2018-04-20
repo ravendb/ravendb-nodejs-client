@@ -1,8 +1,8 @@
 import { InMemoryDocumentSessionOperations } from "../InMemoryDocumentSessionOperations";
 import { getLogger } from "../../../Utility/LogUtil";
-import { ObjectTypeDescriptor } from "../../..";
+import { ObjectTypeDescriptor, EntitiesCollectionObject } from "../../..";
 import { DocumentInfo } from "../DocumentInfo";
-import { GetDocumentsCommand } from "../../Commands/GetDocumentsCommand";
+import { GetDocumentsCommand, GetDocumentsResult } from "../../Commands/GetDocumentsCommand";
 
 const log = getLogger({ module: "LoadOperation" });
 
@@ -73,7 +73,7 @@ export class LoadOperation {
         return this;
     }
 
-    private _getDocument<T>(clazz: ObjectTypeDescriptor, id: string): T {
+    private _getDocument<T extends object>(clazz: ObjectTypeDescriptor<T>, id: string): T {
         if (!id) {
             return null;
         }
@@ -95,7 +95,7 @@ export class LoadOperation {
         return null;
     }
 
-    public getDocuments<T>(clazz: ObjectTypeDescriptor): { [id: string]: T } {
+    public getDocuments<T>(clazz: ObjectTypeDescriptor): EntitiesCollectionObject<T> {
         return this._ids.filter(x => !!x)
             .reduce((result, id) => {
                 result[id] = this._getDocument(clazz, id);
@@ -107,9 +107,9 @@ export class LoadOperation {
             return;
         }
 
-        this._session.registerIncludes(result.getIncludes());
+        this._session.registerIncludes(result.includes);
 
-        for (const document of result.getResults()) {
+        for (const document of result.results) {
             if (!document || document.isNull()) {
                 continue;
             }
@@ -118,6 +118,6 @@ export class LoadOperation {
             this._session.documentsById.add(newDocumentInfo);
         }
 
-        this._session.registerMissingIncludes(result.getResults(), result.getIncludes(), this._includes);
+        this._session.registerMissingIncludes(result.results, result.includes, this._includes);
     }
 }

@@ -22,12 +22,12 @@ export class StringUtil {
       (match: string, placeholder: string): string => {
         const value: any = inputVars[parseInt(placeholder, 10)];
         
-        return (TypeUtil.isNull(value) ? "" : value).toString();
+        return (TypeUtil.isNullOrUndefined(value) ? "" : value).toString();
     });
   }
 
   public static validateDBName(dbName?: string): void {
-    if (TypeUtil.isNull(dbName) || !dbName) {
+    if (TypeUtil.isNullOrUndefined(dbName) || !dbName) {
       throwError("InvalidOperationException", "Empty name is not valid");
     }
 

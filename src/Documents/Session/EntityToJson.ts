@@ -106,7 +106,7 @@ export class EntityToJson {
     public convertToEntity(targetEntityType: DocumentType, id: string, document: object): object {
         const { conventions } = this._session;
 
-        const entityType: ObjectTypeDescriptor = conventions.findKnownType(targetEntityType);
+        const entityType: ObjectTypeDescriptor = conventions.findEntityType(targetEntityType);
         try {
             if (TypeUtil.isType(document, targetEntityType)) {
                 return document;
