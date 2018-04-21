@@ -14,7 +14,7 @@ export class GetNextOperationIdCommand extends RavenCommand<number> {
     }
 
     public setResponse(response: string, fromCache: boolean): void {
-        const resObj = this._jsonSerializer.deserialize<IRavenResponse>(response);
+        const resObj = this._commandPayloadSerializer.deserialize<IRavenResponse>(response);
 
         if ("id" in resObj) {
             this.result = resObj.id;

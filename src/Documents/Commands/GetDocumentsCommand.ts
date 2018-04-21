@@ -1,7 +1,7 @@
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestBase } from "../../Primitives/Http";
-import { Mapping } from "../../Mapping";
+import { Mapping, JsonSerializer } from "../../Mapping";
 import { HeadersBuilder, getHeaders } from "../../Utility/HttpUtil";
 import { IRavenObject } from "../..";
 
@@ -146,7 +146,8 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
 
             return { method: "GET", uri: newUri };
         } else {
-            const body = Mapping.getDefaultJsonSerializer()
+            const body = JsonSerializer
+                .getDefaultForCommandPayload()
                 .serialize({ ids: [...uniqueIds] });
             return {
                 uri: newUri,
@@ -165,7 +166,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             return;
         }
 
-        this.result = this._jsonSerializer.deserialize(response);
+        this.result = this._commandPayloadSerializer.deserialize(response);
     }
 
     public get isReadRequest(): boolean {

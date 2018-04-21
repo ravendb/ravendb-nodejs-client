@@ -33,7 +33,7 @@ export abstract class RavenCommand<TResult> {
     protected _canCache: boolean;
     protected _canCacheAggressively: boolean;
 
-    protected _jsonSerializer: JsonSerializer = Mapping.getDefaultJsonSerializer();
+    protected _commandPayloadSerializer: JsonSerializer = JsonSerializer.getDefaultForCommandPayload();
     protected _typedObjectMapper: TypesAwareObjectMapper = Mapping.getDefaultMapper();
 
     public abstract get isReadRequest(): boolean;
@@ -165,7 +165,7 @@ export abstract class RavenCommand<TResult> {
     }
 
     protected _parseResponseDefault<TResponse extends object>(response: string, typeInfo?: TypeInfo) {
-        const res = this._jsonSerializer.deserialize(response);
+        const res = this._commandPayloadSerializer.deserialize(response);
         const resObj = this._typedObjectMapper.fromObjectLiteral<TResponse>(res, typeInfo);
         return resObj;
     }

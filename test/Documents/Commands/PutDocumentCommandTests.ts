@@ -12,7 +12,7 @@ import {
     PutDocumentCommand,
 } from "../../../src";
 
-describe.only("PutDocumentCommand", function () {
+describe("PutDocumentCommand", function () {
 
     let store: IDocumentStore;
 
@@ -48,8 +48,5 @@ describe.only("PutDocumentCommand", function () {
         assert.equal(loadedUser.name, user.name);
         assert.equal(loadedUser.age, user.age);
         assert.equal(loadedUser.constructor, User);
-        //     assertThat(loadedUser.getName())
-        //             .isEqualTo("Marcin");
-        // }
     });
 });

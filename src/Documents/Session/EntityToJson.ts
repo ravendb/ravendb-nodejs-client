@@ -8,7 +8,7 @@ import { DocumentType } from "../DocumentAbstractions";
 import { JsonSerializer } from "../../Mapping/Json";
 import { TypesAwareObjectMapper, TypeInfo } from "../../Mapping/ObjectMapper";
 import { Mapping } from "../../Mapping";
-import { ObjectTypeDescriptor } from "../..";
+import { ObjectTypeDescriptor, ClassConstructor } from "../..";
 import { throwError } from "../../Exceptions";
 
 export class EntityToJson {
@@ -55,7 +55,7 @@ export class EntityToJson {
         entity: object, conventions: DocumentConventions, documentInfo?: DocumentInfo): object {
 
         let typeInfo: TypeInfo;
-        const jsonNode = Mapping.getDefaultEntityMapper().toObjectLiteral(entity, (_typeInfo) => {
+        const jsonNode = Mapping.getDefaultMapper().toObjectLiteral(entity, (_typeInfo) => {
             typeInfo = _typeInfo;
         });
 
@@ -117,8 +117,11 @@ export class EntityToJson {
 
             const entityTypeInfoFromMetadata = EntityToJson._getEntityTypeInfoFromMetadata(document);
             if (documentTypeFromConventions) {
-                if (entityType 
-                    && entityType.name === documentTypeFromConventions.name) {
+                const passedEntityTypeIsAssignableFromConventionsDocType = 
+                    entityType
+                    && ((entityType.name === documentTypeFromConventions.name)
+                        || TypeUtil.isInstanceOf(entityType, documentTypeFromConventions));
+                if (passedEntityTypeIsAssignableFromConventionsDocType) {
                     const mapper = this._session.conventions.entityObjectMapper;
                     entity = mapper.fromObjectLiteral(
                         document, entityTypeInfoFromMetadata, this._session.conventions.knownEntityTypesByName);

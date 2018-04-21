@@ -3,6 +3,8 @@ import { throwError } from "../../Exceptions";
 import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestBase } from "../../Primitives/Http";
 import { HeadersBuilder } from "../../Utility/HttpUtil";
+import { Mapping } from "../..";
+import { JsonSerializer } from "../../Mapping";
 
 export interface PutResult {
     id: string;
@@ -33,7 +35,8 @@ export class PutDocumentCommand extends RavenCommand<PutResult> {
 
     public createRequest(node: ServerNode): HttpRequestBase {
         const uri = `${node.url}/databases/${node.database}/docs?id=${encodeURIComponent(this._id)}`;
-        const body = this._jsonSerializer.serialize(this._document);
+
+        const body = JsonSerializer.getDefaultForEntities().serialize(this._document);
         const req = {
             uri,
             method: "PUT",
@@ -49,7 +52,7 @@ export class PutDocumentCommand extends RavenCommand<PutResult> {
     }
 
     public setResponse(response: string, fromCache: boolean): void {
-        this.result = this._jsonSerializer.deserialize(response);
+        this.result = this._commandPayloadSerializer.deserialize(response);
     }
 
     public get isReadRequest(): boolean {

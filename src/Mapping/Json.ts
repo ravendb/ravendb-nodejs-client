@@ -59,14 +59,6 @@ export function camelCaseReplacer(key, value) {
 
 export type JsonTransformFunction = (key, value) => any; 
 
-export function parseJson(jsonString: string, reviver?: (key, val) => any) {
-    return JSON.parse(jsonString, reviver);
-}
-
-export function stringifyJson(o: Object, replacer?: (key, val) => any) {
-    return JSON.stringify(o, replacer);
-}
-
 export interface JsonSerializerSettings {
     reviver?: JsonTransformFunction;
     replacer?: JsonTransformFunction;
@@ -77,20 +69,34 @@ export class JsonSerializer {
     private _reviver: (key, val) => any;
     private _replacer: (key, val) => any;
 
-    constructor(opts: JsonSerializerSettings) {
+    constructor(opts?: JsonSerializerSettings) {
         opts = opts || {};
         this._reviver = opts.reviver;
         this._replacer = opts.replacer;
     }
 
     public deserialize<TResult = object>(jsonString: string) {
-        return parseJson(jsonString, this._reviver) as TResult;
+        return JSON.parse(jsonString, this._reviver) as TResult;
     }
 
-    public serialize(obj: object) {
-        return stringifyJson(obj, this._replacer);
+    public serialize(obj: object): string {
+        return JSON.stringify(obj, this._replacer);
     }
 
+    public static getDefault(): JsonSerializer {
+        return new JsonSerializer();
+    }
+
+    public static getDefaultForCommandPayload(): JsonSerializer {
+        return new JsonSerializer({
+            reviver: camelCaseReviver,
+            replacer: pascalCaseReplacer
+        });
+    }
+
+    public static getDefaultForEntities() {
+        return new JsonSerializer();
+    }
 }
 
 export function tryGetConflict(metadata: object): boolean {

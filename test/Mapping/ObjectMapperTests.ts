@@ -510,25 +510,28 @@ describe("ObjectMapper", function () {
         });
 
         it("can handle object literal descriptor", () => {
-            const typeDescriptorInstance = new AnimalTypeDescriptor();
+            const animalType = new AnimalTypeDescriptor();
             const data = {
                 animals: [
-                    typeDescriptorInstance.construct({
+                    animalType.construct({
                         name: "Giraffe",
                         legsCount: 4
                     })
                 ]
             };
 
-            const types = new Map([[typeDescriptorInstance.name, typeDescriptorInstance]]);
+            const types = new Map([[animalType.name, animalType]]);
             const result: any = mapper.toObjectLiteral(data, typeInfoCallback, types);
 
             const expectedTypeInfo = {
                 nestedTypes: {
-                    "animals[]": typeDescriptorInstance.name
+                    "animals[]": animalType.name
                 }
             };
 
+
+            assert.ok(result);
+            assert.equal(result.animals.length, 1);
             assert.deepEqual(typeInfo, expectedTypeInfo);
         });
 

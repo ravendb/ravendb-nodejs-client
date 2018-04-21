@@ -126,7 +126,7 @@ export interface ExceptionDispatcherArgs {
 }
 export class ExceptionDispatcher {
 
-    private static _jsonSerializer: JsonSerializer = Mapping.getDefaultJsonSerializer();
+    private static _jsonSerializer: JsonSerializer = JsonSerializer.getDefaultForCommandPayload();
 
     public static get(opts: ExceptionDispatcherArgs, code: number): Error {
         const { message, error, type } = opts;

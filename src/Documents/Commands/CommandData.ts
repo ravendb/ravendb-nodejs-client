@@ -4,7 +4,7 @@ import { IJsonable } from "../../Types/Contracts";
 import { IRavenObject } from "../../Types";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { throwError } from "../../Exceptions";
-import { Mapping } from "../../Mapping";
+import { Mapping, JsonSerializer } from "../../Mapping";
 // import { PatchRequest } from "../../../Http/Request/PatchRequest";
 
 export type CommandType = 
@@ -58,7 +58,7 @@ export class DeleteCommandData implements ICommandData {
 
         this._serializeExtraFields(toSerialize);
 
-        return Mapping.getDefaultJsonSerializer().serialize(toSerialize);
+        return JsonSerializer.getDefaultForCommandPayload().serialize(toSerialize);
     }
 
     // tslint:disable-next-line:no-empty
@@ -97,7 +97,7 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
             Document: this.document
         };
 
-        return Mapping.getDefaultJsonSerializer().serialize(toSerialize);
+        return JsonSerializer.getDefault().serialize(toSerialize);
     }
 
     // public toJson(): object {

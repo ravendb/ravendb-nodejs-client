@@ -33,7 +33,7 @@ import { DocumentConventions } from "../Documents/Conventions/DocumentConvention
 import { TypeUtil } from "../Utility/TypeUtil";
 import { RequestPromiseOptions } from "request-promise";
 import { SessionInfo } from "../Documents/Session/IDocumentSession";
-import { Mapping } from "../Mapping";
+import { Mapping, JsonSerializer } from "../Mapping";
 
 const DEFAULT_REQUEST_OPTIONS = {
     simple: false,
@@ -1093,7 +1093,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
         if (response && response.body) {
             const responseJson: string = response.body;
             try {
-                const resExceptionSchema = Mapping.getDefaultJsonSerializer()
+                const resExceptionSchema = JsonSerializer.getDefaultForCommandPayload()
                     .deserialize<ExceptionSchema>(responseJson);
                 const readException = ExceptionDispatcher.get(resExceptionSchema, response.statusCode);
                 command.failedNodes.set(chosenNode, readException);

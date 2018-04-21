@@ -72,7 +72,7 @@ export class TypeUtil {
 
     public static isObjectLiteralTypeDescriptor(typeDescriptor: ObjectTypeDescriptor) {
         return !this.isClassConstructor(typeDescriptor)
-            && (typeDescriptor as ObjectLiteralDescriptor).hasOwnProperty("isType");
+            && typeof (typeDescriptor as ObjectLiteralDescriptor).isType === "function";
     }
 
     public static findType(obj: object, typeDescriptors: ObjectTypeDescriptor[]): ObjectTypeDescriptor {
@@ -91,5 +91,11 @@ export class TypeUtil {
         }
 
         return null;
+    }
+
+    public static isInstanceOf(type: ObjectTypeDescriptor, typeToCheck: ObjectTypeDescriptor) {
+        return TypeUtil.isClassConstructor(type)
+            && TypeUtil.isClassConstructor(typeToCheck)
+            && type instanceof (typeToCheck as ClassConstructor);
     }
 }

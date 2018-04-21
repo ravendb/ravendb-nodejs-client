@@ -60,7 +60,7 @@ export abstract class InMemoryDocumentSessionOperations implements IDisposable, 
 
     private _disposed: boolean;
 
-    protected _jsonSerializer: JsonSerializer = Mapping.getDefaultJsonSerializer();
+    protected _jsonSerializer: JsonSerializer = JsonSerializer.getDefaultForCommandPayload();
 
     private _id: string;
 
