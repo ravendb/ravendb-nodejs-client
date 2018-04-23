@@ -970,10 +970,8 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
                 RequestExecutor._handleConflict(response);
             default:
                 command.onResponseFailure(response);
-                ExceptionDispatcher.throwException(response);
+                return Promise.reject(ExceptionDispatcher.throwException(response));
         }
-
-        return Promise.resolve(false);
     }
 
     private _executeOnAllToFigureOutTheFastest<TResult> (

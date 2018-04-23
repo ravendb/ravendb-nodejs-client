@@ -42,6 +42,9 @@ export { ClientConfiguration } from "./Documents/Operations/Configuration/Client
 export { GetClientConfigurationOperation } from "./Documents/Operations/Configuration/GetClientConfigurationOperation";
 export { PutClientConfigurationOperation } from "./Documents/Operations/Configuration/PutClientConfigurationOperation";
 export { PutDocumentCommand } from "./Documents/Commands/PutDocumentCommand";
+export { GetIndexNamesOperation } from "./Documents/Operations/Indexes/GetIndexNamesOperation";
+
+export * from "./Documents/Indexes";
 
 // MAPPING
 export { TypesAwareObjectMapper } from "./Mapping/ObjectMapper";

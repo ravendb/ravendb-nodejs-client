@@ -2,7 +2,6 @@ import {MaintenanceOperationExecutor} from "./Operations/MaintenanceOperationExe
 import { EventEmitter } from "events";
 import { IDocumentStore } from "./IDocumentStore";
 // import { IDocumentSession } from "./Session";
-import { DocumentConventions, RequestExecutor } from "..";
 import { throwError } from "../Exceptions";
 import { isValidUri, validateUri } from "../Utility/UriUtil";
 import { IAuthOptions } from "../Auth/AuthOptions";
@@ -13,6 +12,9 @@ import { OperationExecutor } from "./Operations/OperationExecutor";
 import { SessionOptions } from "http2";
 import { IDocumentSession } from "./Session/IDocumentSession";
 import { DocumentSession } from "./Session/DocumentSession";
+import { AbstractIndexCreationTask } from "./Indexes";
+import { DocumentConventions } from "./Conventions/DocumentConventions";
+import { RequestExecutor } from "../Http/RequestExecutor";
 
 export abstract class DocumentStoreBase 
     extends EventEmitter 
@@ -45,6 +47,12 @@ export abstract class DocumentStoreBase
     public abstract openSession(database: string): IDocumentSession;
     public abstract openSession(sessionOptions: SessionOptions): IDocumentSession;
 
+    public executeIndex(task: AbstractIndexCreationTask): Promise<void>;
+    public executeIndex(task: AbstractIndexCreationTask, database?: string): Promise<void>;
+    public executeIndex(task: AbstractIndexCreationTask, database?: string): Promise<void> {
+        this._assertInitialized();
+        return task.execute(this, this.conventions, database);
+    }
     // public void executeIndex(AbstractIndexCreationTask task) {
     //     executeIndex(task, null);
     // }

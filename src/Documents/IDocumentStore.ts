@@ -1,11 +1,13 @@
 import {IDocumentSession, ISessionOptions} from "./Session/IDocumentSession";
 import { IStoreAuthOptions } from "../Auth/AuthOptions";
-import { DocumentConventions, RequestExecutor } from "..";
 import { SessionBeforeStoreEventArgs } from "./Session/SessionEvents";
 import { IDisposable } from "../Types/Contracts";
 import { Todo } from "../Types";
 import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor";
 import { OperationExecutor } from "./Operations/OperationExecutor";
+import { AbstractIndexCreationTask } from "./Indexes";
+import { RequestExecutor } from "../Http/RequestExecutor";
+import { DocumentConventions } from "./Conventions/DocumentConventions";
 
 export interface SessionEventsProxy {
     addSessionListener(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
@@ -114,18 +116,13 @@ export interface IDocumentStore extends
     //  */
     // IDocumentSession openSession(SessionOptions sessionOptions);
 
-    // /**
-    //  * Executes the index creation
-    //  * @param task Index Creation task to use
-    //  */
-    // void executeIndex(AbstractIndexCreationTask task);
-
-    // /**
-    //  * Executes the index creation
-    //  * @param task Index Creation task to use
-    //  * @param database Target database
-    //  */
-    // void executeIndex(AbstractIndexCreationTask task, String database);
+    /**
+     * Executes the index creation
+     * @param task Index Creation task to use
+     * @param database Target database
+     */
+    executeIndex(task: AbstractIndexCreationTask): Promise<void>;
+    executeIndex(task: AbstractIndexCreationTask, database?: string): Promise<void>;
 
     // /**
     //  * Executes the index creation

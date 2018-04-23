@@ -98,4 +98,16 @@ export class TypeUtil {
             && TypeUtil.isClassConstructor(typeToCheck)
             && type instanceof (typeToCheck as ClassConstructor);
     }
+    
+    public static isSet(obj: any) {
+        return obj
+            && obj.constructor
+            && obj.constructor.name === "Set";
+    }
+
+    public static isMap(obj: any) {
+        return obj
+            && obj.constructor
+            && obj.constructor.name === "Map";
+    }
 }

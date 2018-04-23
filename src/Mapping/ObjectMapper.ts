@@ -141,6 +141,8 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         // tslint:disable-next-line:prefer-const
         let [field, ...fieldsPathTail] = objPath;
 
+            // HANDLE Set and Map here
+
         let isFieldArray = false;
         if (field.endsWith("[]")) {
             field = field.replace(/\[\]$/g, "");
@@ -205,6 +207,14 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
 
         if (fieldTypeName === "date") {
             parent[field] = DateUtil.parse(fieldVal);
+        } else if (fieldTypeName === "Set") { 
+            parent[field] = new Set(fieldVal);
+        } else if (fieldTypeName === "Map") {
+            const parentMap = parent[field] = new Map(Object.keys(fieldVal)
+                .reduce((result, next) => {
+                    const nextVal = fieldVal[next];
+                    return [ ...result, [ next, nextVal ]]
+                }, []));
         } else if (Array.isArray(fieldVal)) {
             for (let i = 0; i < fieldVal.length; i++) {
                 this._applyTypeToNestedProperty(fieldTypeName, {
@@ -249,6 +259,28 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
             });
 
             return DateUtil.stringify(obj as Date);
+        }
+
+        if (TypeUtil.isSet(obj)) {
+            typeInfoCallback({
+                [objPathPrefix]: "Set"
+            });
+            const newObjPathPrefix = `${objPathPrefix}$Set`;
+            return Array.from((obj as Set<any>))
+                .map(x => this._makeObjectLiteral(x, newObjPathPrefix, typeInfoCallback, knownTypes));
+        }
+
+        if (TypeUtil.isMap(obj)) {
+            typeInfoCallback({
+                [objPathPrefix]: "Map"
+            });
+            const newObjPathPrefix = `${objPathPrefix}$Map`;
+            const map = obj as Map<string, any>;
+            return Array.from(map.keys()).reduce((result, next) => {
+                return Object.assign(result, { 
+                    [next]: this._makeObjectLiteral(map.get(next), newObjPathPrefix, typeInfoCallback, knownTypes) 
+                });
+            }, {});
         }
 
         if (Array.isArray(obj)) {
