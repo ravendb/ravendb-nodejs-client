@@ -13,6 +13,7 @@ import { getEtagHeader } from "../Utility/HttpUtil";
 import { JsonSerializer } from "../Mapping/Json";
 import { Mapping } from "../Mapping";
 import { TypesAwareObjectMapper, TypeInfo } from "../Mapping/ObjectMapper";
+import { ObjectTypeDescriptor } from "..";
 
 const log = getLogger({ module: "RavenCommand" });
 
@@ -164,9 +165,10 @@ export abstract class RavenCommand<TResult> {
         }
     }
 
-    protected _parseResponseDefault<TResponse extends object>(response: string, typeInfo?: TypeInfo) {
+    protected _parseResponseDefault<TResponse extends object>(
+        response: string, typeInfo?: TypeInfo, knownTypes?: Map<string, ObjectTypeDescriptor>) {
         const res = this._commandPayloadSerializer.deserialize(response);
-        const resObj = this._typedObjectMapper.fromObjectLiteral<TResponse>(res, typeInfo);
+        const resObj = this._typedObjectMapper.fromObjectLiteral<TResponse>(res, typeInfo, knownTypes);
         return resObj;
     }
 

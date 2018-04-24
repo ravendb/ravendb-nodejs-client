@@ -77,7 +77,9 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
             return obj;
         }
 
-        for (const propertyPath of Object.keys(nestedTypes)) {
+        const nestedTypesKeys = Object.keys(nestedTypes);
+        nestedTypesKeys.sort();
+        for (const propertyPath of nestedTypesKeys) {
             const typeName = nestedTypes[propertyPath];
             const objPathSegments = propertyPath
                 .replace(/\[/g, "![")

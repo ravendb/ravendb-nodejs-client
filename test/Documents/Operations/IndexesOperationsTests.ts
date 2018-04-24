@@ -16,8 +16,13 @@ import {
     IndexStatus,
     EnableIndexOperation,
     AbstractIndexCreationTask,
+    IndexDefinition,
+    GetIndexesOperation,
+    GetIndexesStatisticsOperation,
+    IndexStats,
 } from "../../../src";
 import { UsersIndex } from "../../Assets/Indexes";
+import { TypeUtil } from "../../../src/Utility/TypeUtil";
 
 describe("Index operations", function () {
 
@@ -56,61 +61,38 @@ describe("Index operations", function () {
         assert.equal(indexingStatus.status, "Running");
     });
 
-});
+    it("can get indexes", async () => {
+        await usersIndex.execute(store);
+        const indexDefinitions: IndexDefinition[] = await store.maintenance.send(new GetIndexesOperation(0, 10));
+        assert.equal(indexDefinitions.length, 1);
+        assert.equal(indexDefinitions[0].constructor, IndexDefinition);
+        assert.ok(TypeUtil.isSet(indexDefinitions[0].maps));
+    });
 
+    it("can get indexes stats", async () => {
+        await usersIndex.execute(store);
 
-//     @Test
-//     public void canDisableAndEnableIndex() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             new IndexesFromClientTest.UsersIndex().execute(store);
+        const indexStats: IndexStats[] = await store.maintenance.send(new GetIndexesStatisticsOperation());
+        assert.equal(indexStats.length, 1);
+        assert.ok(TypeUtil.isMap(indexStats[0].collections));
+        assert.equal(indexStats[0].collections.size, 1);
+    });
 
-//             store.maintenance().send(new DisableIndexOperation("UsersIndex"));
+    class User {
+        constructor(public name: string) {}
+    }
 
-//             IndexingStatus indexingStatus = store.maintenance().send(new GetIndexingStatusOperation());
+    // it("can get terms", async () => {
+    //     await usersIndex.execute(store);
 
-//             IndexingStatus.IndexStatus indexStatus = indexingStatus.getIndexes()[0];
-//             assertThat(indexStatus.getStatus())
-//                     .isEqualTo(IndexRunningStatus.DISABLED);
+    //     const session = store.openSession();
+    //     const user = new User("Marcin");
+    //     await session.store(user);
+    //     await session.saveChanges();
 
-//             store.maintenance().send(new EnableIndexOperation("UsersIndex"));
-
-//             indexingStatus = store.maintenance().send(new GetIndexingStatusOperation());
-
-//             assertThat(indexingStatus.getStatus())
-//                     .isEqualTo(IndexRunningStatus.RUNNING);
-//         }
-//     }
-
-//     @Test
-//     public void getCanIndexes() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             new IndexesFromClientTest.UsersIndex().execute(store);
-
-
-//             IndexDefinition[] indexDefinitions = store.maintenance().send(new GetIndexesOperation(0, 10));
-//             assertThat(indexDefinitions)
-//                     .hasSize(1);
-
-//         }
-//     }
-
-//     @Test
-//     public void getCanIndexesStats() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             new IndexesFromClientTest.UsersIndex().execute(store);
-
-
-//             IndexStats[] indexStats = store.maintenance().send(new GetIndexesStatisticsOperation());
-
-//             assertThat(indexStats)
-//                     .hasSize(1);
-//         }
-//     }
-
-//     @Test
-//     public void getTerms() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             new IndexesFromClientTest.UsersIndex().execute(store);
+    //     globalContext.waitForIndexing(store, store.database);
+        
+    // });
 
 //             try (IDocumentSession session = store.openSession()) {
 //                 User user = new User();
@@ -129,6 +111,9 @@ describe("Index operations", function () {
 //         }
 
 //     }
+
+
+});
 
 //     @Test
 //     public void hasIndexChanged() throws Exception {
