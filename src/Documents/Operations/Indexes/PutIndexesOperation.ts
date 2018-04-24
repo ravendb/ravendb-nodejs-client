@@ -63,7 +63,6 @@ export class PutIndexesCommand extends RavenCommand<PutIndexResult[]> {
         const uri = node.url + "/databases/" + node.database + "/admin/indexes";
         const body = JsonSerializer.getDefaultForCommandPayload()
             .serialize({ Indexes: this._indexToAdd });
-            console.log(body);
         const headers = HeadersBuilder
             .create()
             .withContentTypeJson()

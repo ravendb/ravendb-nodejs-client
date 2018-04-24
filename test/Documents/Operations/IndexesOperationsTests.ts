@@ -28,7 +28,7 @@ describe("Index operations", function () {
         const index = new UsersIndex();
         await index.execute(store);
         const indexNames = await store.maintenance.send(new GetIndexNamesOperation(0, 10));
-        assert.ok(indexNames.indexOf("UsersIndex") !== -1);
+        assert.ok(indexNames.find(x => x === "UsersIndex"));
     });
 });
 

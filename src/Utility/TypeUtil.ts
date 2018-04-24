@@ -65,9 +65,10 @@ export class TypeUtil {
             return false;
         }
 
-        return ((typeDescriptor as ObjectLiteralDescriptor).isType
+        return obj
+            && ((typeDescriptor as ObjectLiteralDescriptor).isType
             && (typeDescriptor as ObjectLiteralDescriptor).isType(obj))
-            || obj.constructor.name === (typeDescriptor as EntityConstructor).name;
+                || (obj && obj.constructor.name === (typeDescriptor as EntityConstructor).name);
     }
 
     public static isObjectLiteralTypeDescriptor(typeDescriptor: ObjectTypeDescriptor) {

@@ -15,7 +15,7 @@ import { DateUtil } from "../../src/Utility/DateUtil";
 import { TypeInfo } from "../../src/Mapping/ObjectMapper";
 import { TypeUtil } from "../../src/Utility/TypeUtil";
 
-describe.only("ObjectMapper", function () {
+describe("ObjectMapper", function () {
 
     let mapper: TypesAwareObjectMapper;
 
@@ -38,6 +38,15 @@ describe.only("ObjectMapper", function () {
             public name: string,
             public releasedAt: Date
         ) { }
+    }
+
+    class Tree {
+        constructor(public name: string) {
+        }
+    }
+
+    class Order {
+        constructor(public orderId: number, public isSent: false) {}
     }
 
     interface IAnimal {
@@ -374,37 +383,63 @@ describe.only("ObjectMapper", function () {
         });
 
         it("can handle Set", () => {
+
             const typeInfo = {
                 nestedTypes: {
-                    treeSpecies: "Set"
+                    treeSpecies: "Set",
+                    treeSpecies$SET: "Tree"
                 }
             };
 
             const testObj = {
-                treeSpecies: [ "Oak", "Birch" ]
+                treeSpecies: [ 
+                    { name: "Oak" }, 
+                    { name: "Birch" } 
+                ]
             };
 
-            const result: any = mapper.fromObjectLiteral(testObj, typeInfo);
-            assert.ok(TypeUtil.isSet(result));
-            assert.equal(result.length, 2);
+            const result: any = mapper.fromObjectLiteral(testObj, typeInfo, new Map([[Tree.name, Tree]]));
+            assert.ok(result);
+            assert.ok(TypeUtil.isSet(result.treeSpecies));
+
+            const resultSet = result.treeSpecies as Set<Tree>;
+            for (const item of resultSet) {
+                assert.equal(item.constructor, Tree);
+                assert.ok(testObj.treeSpecies
+                    .map(x => x.name).some(x => x === item.name));
+            }
+
+            assert.equal(resultSet.size, 2);
         });
 
-        it ("can handle Map", () => {
+        it("can handle Map", () => {
             const typeInfo = {
                 nestedTypes: {
-                    orders: "Map"
+                    orders: "Map",
+                    orders$MAP: "Order"
                 }
             };
 
             const testObj = {
                 orders: { 
-                    John: { orderId: 1 }
+                    John: { orderId: 1, isSent: false }
                 }
             };
 
-            const result: any = mapper.fromObjectLiteral(testObj, typeInfo);
-            assert.ok(TypeUtil.isMap(result));
-            assert.equal(result.length, 2);
+            const result: any = mapper.fromObjectLiteral(testObj, typeInfo, new Map([[Order.name, Order]]));
+            assert.ok(TypeUtil.isMap(result.orders));
+            const ordersMap = result.orders as Map<string, any>;
+            assert.equal(ordersMap.size, 1);
+
+            for (const entry of ordersMap) {
+                const [ name, order ] = entry;
+                const src = testObj.orders[name];
+                assert.ok(src);
+                assert.equal(order.constructor, Order);
+                assert.equal(order.isSent, false);
+                assert.equal(order.orderId, 1);
+            }
+
         });
     });
 
@@ -560,38 +595,49 @@ describe.only("ObjectMapper", function () {
                 }
             };
 
-
             assert.ok(result);
             assert.equal(result.animals.length, 1);
             assert.deepEqual(typeInfo, expectedTypeInfo);
         });
 
         it("can handle Set", () => {
-            const expectedArray = ["Birch", "Oak"];
+            const expectedArray = [
+                { name: "Birch" }, 
+                { name: "Oak" }
+            ];
+            
             const data = {
-                trees: new Set(expectedArray)
+                trees: new Set([
+                    new Tree("Birch"),
+                    new Tree("Oak")
+                ])
             };
+
             const result: any = mapper.toObjectLiteral(data, typeInfoCallback);
             assert.ok(Array.isArray(result.trees));
-            assert.deepEqual(result.trees, expectedArray);
             assert.equal(typeInfo.nestedTypes.trees, "Set");
+            assert.equal(typeInfo.nestedTypes.trees$SET, "Tree");
+            assert.deepEqual(result.trees, expectedArray);
         });
 
         it ("can handle Map", () => {
             const expectedObj = {
-                Birch: "yes",
-                Oak: "no"
+                Birch: { name: "Birch" },
+                Oak: { name: "Oak" }
             };
+
             const data = {
                 trees: new Map([
-                    ["Birch", "yes"],
-                    ["Oak", "no"]
+                    ["Birch", new Tree("Birch") ],
+                    ["Oak", new Tree("Oak") ]
                 ])
             };
+
             const result: any = mapper.toObjectLiteral(data, typeInfoCallback);
             assert.ok(TypeUtil.isObject(result.trees));
             assert.deepEqual(result.trees, expectedObj);
             assert.equal(typeInfo.nestedTypes.trees, "Map");
+            assert.equal(typeInfo.nestedTypes.trees$MAP, "Tree");
         });
 
         it("can handle array of arrays", () => {

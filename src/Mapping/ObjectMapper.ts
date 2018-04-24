@@ -80,11 +80,12 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         for (const propertyPath of Object.keys(nestedTypes)) {
             const typeName = nestedTypes[propertyPath];
             const objPathSegments = propertyPath
-                .replace(/\[/g, "![").split(/[!.]/g);
+                .replace(/\[/g, "![")
+                .replace(/\$MAP/g, "!$MAP")
+                .replace(/\$SET/g, "!$SET")
+                .split(/[!.]/g);
             const fieldContext = this._getFieldContext(obj, objPathSegments);
-            const fieldContexts = Array.isArray(fieldContext)
-                ? fieldContext
-                : [fieldContext];
+            const fieldContexts = Array.isArray(fieldContext) ? fieldContext : [fieldContext];
             fieldContexts.forEach(
                 (c, i) => this._applyTypeToNestedProperty(typeName, c, knownTypes));
         }
@@ -141,50 +142,120 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         // tslint:disable-next-line:prefer-const
         let [field, ...fieldsPathTail] = objPath;
 
-            // HANDLE Set and Map here
+        const isFieldArray = field.endsWith("[]");
+        if (isFieldArray) {
+            field = field .replace(/\[\]$/g, "");
+        }
 
-        let isFieldArray = false;
-        if (field.endsWith("[]")) {
-            field = field.replace(/\[\]$/g, "");
-            isFieldArray = true;
+        const isFieldSet = field.endsWith("$SET");
+        if (isFieldSet) {
+            field = field.replace(/\$SET$/g, "");
+        }
+
+        const isFieldMap = field.endsWith("$MAP");
+        if (isFieldMap) {
+            field = field.replace(/\$MAP$/g, "");
         }
 
         let fieldVal = parent[field];
         if (!parent.hasOwnProperty(field)) {
-            if (isFieldArray) {
+            if (isFieldArray || isFieldSet || isFieldMap) {
                 fieldVal = parent;
             } else {
                 return null;
             }
-
         }
 
         if (isFieldArray) {
-            return (fieldVal as any[])
-                .map((x, i) => {
-                    if (!fieldsPathTail.length) {
-                        return {
-                            parent: fieldVal,
-                            field: i.toString()
-                        };
-                    } else {
-                        return this._getFieldContext(x, fieldsPathTail);
-                    }
-                })
-                .reduce((result: ObjectPropertyContext[], next) => {
-                    if (Array.isArray(next)) {
-                        return [...result, ...next];
-                    } else {
-                        return [...result, next];
-                    }
-                }, []);
+            return this._getFieldContextsForArrayElements(fieldVal, fieldsPathTail);
+        }
+
+        if (isFieldSet) {
+            return this._getFieldContextsForSetElements(fieldVal as Set<any>, fieldsPathTail);
+        }
+
+        if (isFieldMap) {
+            return this._getFieldContextsForMapEntries(fieldVal as Map<string, any>, fieldsPathTail);
         }
 
         if (fieldsPathTail.length) {
             return this._getFieldContext(parent[field], fieldsPathTail);
         }
 
-        return { parent, field };
+        return { 
+            parent, 
+            field,
+            getValue() { return parent[field]; },
+            setValue(val) { parent[field] = val; }
+        };
+    }
+
+    private _getFieldContextsForMapEntries(mapFieldVal: Map<string, any>, fieldsPathTail: string[]) {
+        const result = Array.from(mapFieldVal.entries()).map(([ key, val ]) => {
+            if (!fieldsPathTail.length) {
+                return {
+                    parent: mapFieldVal,
+                    field: key,
+                    getValue: () => val,
+                    setValue: (newVal) => {
+                        mapFieldVal.set(key, newVal);
+                    }
+                };
+            } else {
+                return this._getFieldContext(val, fieldsPathTail);
+            }
+        });
+        
+        return this._flattenFieldContexts(result);
+    }
+
+    private _getFieldContextsForSetElements(setFieldVal: Set<any>, fieldsPathTail: string[]) {
+        const result = Array.from(setFieldVal).map(x => {
+            if (!fieldsPathTail.length) {
+                return {
+                    parent: setFieldVal,
+                    field: x,
+                    getValue: () => x,
+                    setValue: (val) => {
+                        setFieldVal.delete(x);
+                        setFieldVal.add(val);
+                    }
+                };
+            } else {
+                return this._getFieldContext(x, fieldsPathTail);
+            }
+        });
+        
+        return this._flattenFieldContexts(result);
+    }
+
+    private _getFieldContextsForArrayElements(fieldVal, fieldsPathTail) {
+        const result = (fieldVal as any[]).map((x, i) => {
+            if (!fieldsPathTail.length) {
+                return {
+                    parent: fieldVal,
+                    field: i.toString(),
+                    getValue() { return fieldVal[i]; },
+                    setValue(val) { fieldVal[i] = val; }
+                };
+            } else {
+                return this._getFieldContext(x, fieldsPathTail);
+            }
+        });
+
+        return this._flattenFieldContexts(result);
+    }
+
+    private _flattenFieldContexts(
+        arr: Array<ObjectPropertyContext[] | ObjectPropertyContext>): ObjectPropertyContext[] {
+            return arr.reduce((result: any, next) => {
+                if (Array.isArray(next)) {
+                    return result.concat(next as ObjectPropertyContext[]);
+                }
+
+                result.push(next as ObjectPropertyContext);
+                return result;
+            }, [] as ObjectPropertyContext[]);
     }
 
     private _applyTypeToNestedProperty(
@@ -200,45 +271,60 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
             return;
         }
 
-        const fieldVal = parent[field];
+        const fieldVal = fieldContext.getValue();
         if (typeof fieldVal === "undefined") {
             return;
         }
 
         if (fieldTypeName === "date") {
-            parent[field] = DateUtil.parse(fieldVal);
-        } else if (fieldTypeName === "Set") { 
-            parent[field] = new Set(fieldVal);
-        } else if (fieldTypeName === "Map") {
-            const parentMap = parent[field] = new Map(Object.keys(fieldVal)
-                .reduce((result, next) => {
-                    const nextVal = fieldVal[next];
-                    return [ ...result, [ next, nextVal ]]
-                }, []));
-        } else if (Array.isArray(fieldVal)) {
-            for (let i = 0; i < fieldVal.length; i++) {
-                this._applyTypeToNestedProperty(fieldTypeName, {
-                    parent: fieldVal as object,
-                    field: i.toString()
-                }, knownTypes);
-            }
-        } else {
-            const ctorOrTypeDescriptor = knownTypes.get(fieldTypeName);
-            if (!ctorOrTypeDescriptor) {
-                if (this._throwMappingErrors) {
-                    throwError("MappingError", `Type '${fieldTypeName}' is unknown for field '${fieldContext.field}'`);
-                } else {
-                    parent[field] = Object.assign({}, fieldVal);
-                    return;
-                }
-            }
+            fieldContext.setValue(DateUtil.parse(fieldVal));
+            return;
+        } 
 
-            if (TypeUtil.isClassConstructor(ctorOrTypeDescriptor)) {
-                const emptyObj = this._createEmptyObject(ctorOrTypeDescriptor as ClassConstructor);
-                parent[field] = Object.assign(emptyObj, fieldVal);
+        if (fieldTypeName === "Set") {
+            fieldContext.setValue(new Set(fieldVal));
+            return;
+        }
+
+        if (fieldTypeName === "Map") {
+            const mapEntries = Object.keys(fieldVal)
+                .reduce((result, next) => {
+                    return [ ...result, [ next, fieldVal[next] ]];
+                }, []);
+            fieldContext.setValue(new Map(mapEntries));
+            return;
+        }
+        
+        if (Array.isArray(fieldVal)) {
+            fieldVal.forEach((item, i) => {
+                this._applyTypeToNestedProperty(fieldTypeName, {
+                    field: i.toString(),
+                    parent: fieldVal,
+                    getValue: () => fieldVal[i],
+                    setValue: (val) => fieldVal[i] = val
+                }, knownTypes);
+            });
+
+
+            return;
+        }
+
+        const ctorOrTypeDescriptor = knownTypes.get(fieldTypeName);
+        if (!ctorOrTypeDescriptor) {
+            if (this._throwMappingErrors) {
+                throwError("MappingError", `Type '${fieldTypeName}' is unknown for field '${fieldContext.field}'`);
             } else {
-                parent[field] = (ctorOrTypeDescriptor as ObjectLiteralDescriptor).construct(fieldVal);
+                fieldContext.setValue(Object.assign({}, fieldVal));
+                return;
             }
+        }
+
+        if (TypeUtil.isClassConstructor(ctorOrTypeDescriptor)) {
+            const emptyObj = this._createEmptyObject(ctorOrTypeDescriptor as ClassConstructor);
+            fieldContext.setValue(Object.assign(emptyObj, fieldVal));
+        } else {
+            const instance = (ctorOrTypeDescriptor as ObjectLiteralDescriptor).construct(fieldVal);
+            fieldContext.setValue(instance);
         }
     }
 
@@ -265,7 +351,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
             typeInfoCallback({
                 [objPathPrefix]: "Set"
             });
-            const newObjPathPrefix = `${objPathPrefix}$Set`;
+            const newObjPathPrefix = `${objPathPrefix}$SET`;
             return Array.from((obj as Set<any>))
                 .map(x => this._makeObjectLiteral(x, newObjPathPrefix, typeInfoCallback, knownTypes));
         }
@@ -274,7 +360,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
             typeInfoCallback({
                 [objPathPrefix]: "Map"
             });
-            const newObjPathPrefix = `${objPathPrefix}$Map`;
+            const newObjPathPrefix = `${objPathPrefix}$MAP`;
             const map = obj as Map<string, any>;
             return Array.from(map.keys()).reduce((result, next) => {
                 return Object.assign(result, { 
@@ -317,4 +403,6 @@ export interface TypesAwareJsonObjectMapperOptions {
 interface ObjectPropertyContext {
     parent: any;
     field: string;
+    getValue();
+    setValue(val: any);
 }
