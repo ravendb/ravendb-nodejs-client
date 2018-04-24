@@ -1,7 +1,6 @@
 
 import { IndexState, IndexType } from "../../Primitives/Indexing";
-import { IndexLockMode } from "../../Documents/Indexes/IndexLockMode";
-import { IndexPriority } from "../../Documents/Indexes/IndexPriority";
+import { IndexLockMode, IndexPriority } from "../Indexes/Enums";
 
 export interface IndexInformation {
    name: string;

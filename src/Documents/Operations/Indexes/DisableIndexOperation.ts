@@ -1,0 +1,54 @@
+import { HttpRequestBase } from "../../../Primitives/Http";
+import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
+import { throwError } from "../../../Exceptions";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { RavenCommand } from "../../../Http/RavenCommand";
+import { ServerNode } from "../../../Http/ServerNode";
+
+export class DisableIndexOperation implements IMaintenanceOperation<void> {
+
+    private _indexName: string;
+
+    public constructor(indexName: string) {
+        if (!indexName) {
+            throwError("InvalidArgumentException", "IndexName cannot be null");
+        }
+
+        this._indexName = indexName;
+    }
+
+    public getCommand(conventions: DocumentConventions) {
+        return new DisableIndexCommand(this._indexName);
+    }
+
+    public get resultType(): OperationResultType {
+        return "COMMAND_RESULT";
+    }
+
+}
+
+export class DisableIndexCommand extends RavenCommand<void> {
+
+    public get isReadRequest() {
+        return false;
+    }
+
+    private _indexName: string;
+
+    public constructor(indexName: string) {
+        super();
+
+        if (!indexName) {
+            throwError("InvalidArgumentException", "IndexName cannot be null");
+        }
+
+        this._indexName = indexName;
+    }
+
+    public createRequest(node: ServerNode): HttpRequestBase {
+        const uri = node.url + "/databases/"
+            + node.database + "/admin/indexes/disable?name=" + encodeURIComponent(this._indexName);
+
+        return { method: "POST", uri };
+    }
+}

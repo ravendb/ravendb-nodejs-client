@@ -10,6 +10,12 @@ import {
     GetNextOperationIdCommand,
     IDocumentStore,
     GetIndexNamesOperation,
+    DisableIndexOperation,
+    IndexingStatus,
+    GetIndexingStatusOperation,
+    IndexStatus,
+    EnableIndexOperation,
+    AbstractIndexCreationTask,
 } from "../../../src";
 import { UsersIndex } from "../../Assets/Indexes";
 
@@ -24,34 +30,34 @@ describe("Index operations", function () {
     afterEach(async () => 
         await disposeTestDocumentStore(store));
 
+    let usersIndex: AbstractIndexCreationTask;
+
+    beforeEach(() => {
+        usersIndex = new UsersIndex();
+    });
+
     it("can delete index", async () => {
-        const index = new UsersIndex();
-        await index.execute(store);
+        await usersIndex.execute(store);
+
         const indexNames = await store.maintenance.send(new GetIndexNamesOperation(0, 10));
         assert.ok(indexNames.find(x => x === "UsersIndex"));
     });
+
+    it("can disable and enable index", async () => {
+        await usersIndex.execute(store);
+
+        await store.maintenance.send(new DisableIndexOperation(usersIndex.getIndexName()));
+        let indexingStatus = await store.maintenance.send(new GetIndexingStatusOperation());
+        const indexStatus: IndexStatus = indexingStatus.indexes[0];
+        assert.equal(indexStatus.status, "Disabled");
+        
+        await store.maintenance.send(new EnableIndexOperation(usersIndex.getIndexName()));
+        indexingStatus = await store.maintenance.send(new GetIndexingStatusOperation());
+        assert.equal(indexingStatus.status, "Running");
+    });
+
 });
 
-// public class IndexOperationsTest extends RemoteTestBase {
-
-//     @Test
-//     public void canDeleteIndex() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             new IndexesFromClientTest.UsersIndex().execute(store);
-
-//             String[] indexNames = store.maintenance().send(new GetIndexNamesOperation(0, 10));
-
-//             assertThat(indexNames)
-//                     .contains("UsersIndex");
-
-//             store.maintenance().send(new DeleteIndexOperation("UsersIndex"));
-
-//             indexNames = store.maintenance().send(new GetIndexNamesOperation(0, 10));
-
-//             assertThat(indexNames)
-//                     .isEmpty();
-//         }
-//     }
 
 //     @Test
 //     public void canDisableAndEnableIndex() throws Exception {

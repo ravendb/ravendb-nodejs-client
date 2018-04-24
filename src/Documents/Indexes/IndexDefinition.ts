@@ -1,6 +1,5 @@
 import {throwError} from "../../Exceptions/index";
-import { IndexPriority, FieldStorage, FieldIndexing, FieldTermVector } from "./Enums";
-import { IndexLockMode } from "./IndexLockMode";
+import { IndexPriority, FieldStorage, FieldIndexing, FieldTermVector, IndexLockMode } from "./Enums";
 import { IndexType } from "../../Primitives/Indexing";
 import { IndexFieldOptions } from "./IndexFieldOptions";
 import { SpatialOptions } from "./Spatial";
@@ -31,71 +30,13 @@ export class IndexDefinition {
     // TBD private boolean testIndex;
     public outputReduceToCollection: string;
 
-    public toJSON() {
-        return Object.assign({}, this, { maps: Array.from(this.maps) });
-    }
-
-    // /**
-    //  * All the map functions for this index
-    //  * @return index maps
-    //  */
-    // public get maps(): Set<string> {
-    //     if (!this.maps) {
-    //         this.maps = new Set();
-    //     }
-
-    //     return this.maps;
-    // }
-
-    // /**
-    //  * All the map functions for this index
-    //  * @param maps Sets the value
-    //  */
-    // public set maps(maps) {
-    //     this.maps = maps;
-    // }
-
-    // /**
-    //  * Index reduce function
-    //  * @return reduce function
-    //  */
-    // public get reduce() {
-    //     return this.reduce;
-    // }
-
-    // /**
-    //  * Index reduce function
-    //  * @param reduce Sets the reduce function
-    //  */
-    // public set reduce(reduce) {
-    //     this.reduce = reduce;
+    // public toJSON() {
+    //     return Object.assign({}, this, { maps: Array.from(this.maps) });
     // }
 
     public toString(): string {
         return this.name;
     }
-
-    // public  get fields() {
-    //     if (!this.fields) {
-    //         this.fields = {};
-    //     }
-    //     return this.fields;
-    // }
-
-    // public set fields(fields) {
-    //     this.fields = fields;
-    // }
-
-    // public get configuration(): IndexConfiguration {
-    //     if (this.configuration) {
-    //         this.configuration = {};
-    //     }
-    //     return this.configuration;
-    // }
-
-    // public set configuration(configuration) {
-    //     this.configuration = configuration;
-    // }
 
     public get type(): IndexType {
         if (!this.indexType || this.indexType === "NONE") {
@@ -115,59 +56,10 @@ export class IndexDefinition {
         }
         return "MAP_REDUCE";
     }
-
-    // public get lockMode(): IndexLockMode {
-    //     return this.lockMode;
-    // }
-
-    // public set lockMode(value: IndexLockMode) {
-    //     this.lockMode = value;
-    // }
-
     // TBD public boolean isTestIndex()
 
     // TBD public void setTestIndex(boolean testIndex)
 
-    /**
-     * If not null than each reduce result will be created as a document in the specified collection name.
-     * @return true if index outputs should be saved to collection
-     */
-    // public get outputReduceToCollection(): string {
-    //     return this.outputReduceToCollection;
-    // }
-
-    // /**
-    //  * If not null than each reduce result will be created as a document in the specified collection name.
-    //  * @param outputReduceToCollection Sets the value
-    //  */
-    // public set outputReduceToCollection(outputReduceToCollection) {
-    //     this.outputReduceToCollection = outputReduceToCollection;
-    // }
-
-    // public get name(): string {
-    //     return this.name;
-    // }
-
-    // public set name(value: string) {
-    //     this.name = value;
-    // }
-
-    // public get priority(): IndexPriority {
-    //     return this.priority;
-    // }
-
-    // public set priority(value: IndexPriority) {
-    //     this.priority = value;
-    // }
-
-    // public get additionalSources() {
-    //     return this.additionalSources;
-    // }
-
-    // public set additionalSources(val) {
-    //     this.additionalSources = val;
-    // }
-    
 }
 
 export class IndexDefinitionBuilder {
@@ -253,101 +145,5 @@ export class IndexDefinitionBuilder {
             action(field, fieldVal);
         }
     }
-
-    // public get map(): string {
-    //     return this._map;
-    // }
-
-    // public set map(value: string) {
-    //     this._map = value;
-    // }
-
-    // public get reduce(): string {
-    //     return this._reduce;
-    // }
-
-    // public set reduce(value: string) {
-    //     this._reduce = value;
-    // }
-
-    // public get priority(): IndexPriority {
-    //     return this._priority;
-    // }
-
-    // public set priority(value: IndexPriority) {
-    //     this._priority = value;
-    // }
-
-    // public get lockMode(): IndexLockMode {
-    //     return this._lockMode;
-    // }
-
-    // public set lockMode(value: IndexLockMode) {
-    //     this._lockMode = value;
-    // }
-
-    // public get suggestionsOptions(): Set<string> {
-    //     return this._suggestionsOptions;
-    // }
-
-    // public set suggestionsOptions(value: Set<string>) {
-    //     this._suggestionsOptions = value;
-    // }
-
-    // public get outputReduceToCollection(): string {
-    //     return this._outputReduceToCollection;
-    // }
-
-    // public set outputReduceToCollection(value: string) {
-    //     this._outputReduceToCollection = value;
-    // }
-
-    // public get storesStrings() {
-    //     return this._storesStrings;
-    // }
-
-    // public set storesStrings(storesStrings) {
-    //     this._storesStrings = storesStrings;
-    // }
-
-    // public get indexesStrings() {
-    //     return this._indexesStrings;
-    // }
-
-    // public set indexesStrings(indexesStrings) {
-    //     this._indexesStrings = indexesStrings;
-    // }
-
-    // public getAnalyzersStrings() {
-    //     return this._analyzersStrings;
-    // }
-
-    // public set analyzersStrings(analyzersStrings) {
-    //     this._analyzersStrings = analyzersStrings;
-    // }
-
-    // public get termVectorsStrings() {
-    //     return this._termVectorsStrings;
-    // }
-
-    // public set termVectorsStrings(termVectorsStrings) {
-    //     this._termVectorsStrings = termVectorsStrings;
-    // }
-
-    // public get spatialIndexesStrings() {
-    //     return this._spatialIndexesStrings;
-    // }
-
-    // public set spatialIndexesStrings(spatialIndexesStrings) {
-    //     this._spatialIndexesStrings = spatialIndexesStrings;
-    // }
-
-    // public get additionalSources() {
-    //     return this._additionalSources;
-    // }
-
-    // public set additionalSources(additionalSources) {
-    //     this._additionalSources = additionalSources;
-    // }
 
 }

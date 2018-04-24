@@ -43,7 +43,14 @@ export { GetClientConfigurationOperation } from "./Documents/Operations/Configur
 export { PutClientConfigurationOperation } from "./Documents/Operations/Configuration/PutClientConfigurationOperation";
 export { PutDocumentCommand } from "./Documents/Commands/PutDocumentCommand";
 export { GetIndexNamesOperation } from "./Documents/Operations/Indexes/GetIndexNamesOperation";
-
+export { DisableIndexOperation } from "./Documents/Operations/Indexes/DisableIndexOperation";
+export { EnableIndexOperation } from "./Documents/Operations/Indexes/EnableIndexOperation";
+export { GetIndexingStatusOperation } from "./Documents/Operations/Indexes/GetIndexingStatusOperation";
+export * from "./Documents/Indexes/Enums";
+export * from "./Documents/Indexes/IndexDefinition";
+export * from "./Documents/Indexes/IndexFieldOptions";
+export * from "./Documents/Indexes/Spatial";
+export * from "./Documents/Indexes/IndexingStatus";
 export * from "./Documents/Indexes";
 
 // MAPPING
