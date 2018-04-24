@@ -5,6 +5,7 @@ import { IRavenObject } from "../../Types";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { throwError } from "../../Exceptions";
 import { Mapping, JsonSerializer } from "../../Mapping";
+import { BatchOptions } from "./Batches/BatchOptions";
 // import { PatchRequest } from "../../../Http/Request/PatchRequest";
 
 export type CommandType = 
@@ -18,16 +19,13 @@ export type CommandType =
     | "CLIENT_NOT_ATTACHMENT_PUT"
 ;
 
-export class CommandIdTypeAndName {
-    public keyFor(id: string, type: CommandType, name: string) {
-        return `${id}.${type}.${name}`;
-    }
-}
 export interface ICommandData {
     id: string;
     name: string;
     changeVector: string;
     type: CommandType;
+
+    serialize(): object;
 }
 
 export class DeleteCommandData implements ICommandData {
@@ -49,16 +47,16 @@ export class DeleteCommandData implements ICommandData {
         this.changeVector = changeVector;
     }
 
-    public serialize(): string {
-        const toSerialize = {
+    public serialize(): object {
+        const result = {
             Id: this.id,
             ChangeVector: this.changeVector,
             Type: this.type
         };
 
-        this._serializeExtraFields(toSerialize);
+        this._serializeExtraFields(result);
 
-        return JsonSerializer.getDefaultForCommandPayload().serialize(toSerialize);
+        return result;
     }
 
     // tslint:disable-next-line:no-empty
@@ -89,7 +87,7 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
         this.document = document;
     }
 
-    public serialize(): string {
+    public serialize(): object {
         const toSerialize = {
             Id: this.id,
             ChangeVector: this.changeVector,
@@ -97,7 +95,7 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
             Document: this.document
         };
 
-        return JsonSerializer.getDefault().serialize(toSerialize);
+        return toSerialize;
     }
 
     // public toJson(): object {
@@ -117,6 +115,24 @@ export class PutCommandDataWithJson extends PutCommandDataBase<object> {
 
     public constructor(id: string, changeVector: string, document: object) {
         super(id, changeVector, document);
+    }
+}
+
+export class SaveChangesData {
+    public deferredCommands: ICommandData[];
+    public deferredCommandsMap: Map<string, ICommandData>;
+    public sessionCommands: ICommandData[] = [];
+    public entities: object[] = [];
+    public options: BatchOptions;
+
+    public constructor(args: {
+        deferredCommands: ICommandData[],
+        deferredCommandsMap: Map<string, ICommandData>,
+        options: BatchOptions
+    }) {
+        this.deferredCommands = args.deferredCommands;
+        this.deferredCommandsMap = args.deferredCommandsMap;
+        this.options = args.options;
     }
 }
 

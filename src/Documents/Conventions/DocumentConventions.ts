@@ -314,10 +314,10 @@ export class DocumentConventions {
             return null;
         }
 
-        return this.getCollectionNameForType(this._getEntityTypeDescriptor(entity));
+        return this.getCollectionNameForType(this.getEntityTypeDescriptor(entity));
     }
 
-    private _getEntityTypeDescriptor(entity: Object): ObjectTypeDescriptor {
+    public getEntityTypeDescriptor(entity: Object): ObjectTypeDescriptor {
         if (TypeUtil.isClassConstructor(entity.constructor)) {
             return entity.constructor as ClassConstructor;
         }
@@ -342,7 +342,7 @@ export class DocumentConventions {
      * @return document id
      */
     public generateDocumentId(database: string, entity: Object): string {
-        const entityTypeDescriptor: ObjectTypeDescriptor = this._getEntityTypeDescriptor(entity);
+        const entityTypeDescriptor: ObjectTypeDescriptor = this.getEntityTypeDescriptor(entity);
 
         for (const [typeDescriptor, idConvention] of this._registeredIdConventions) {
             if (TypeUtil.isType(entity, typeDescriptor)) {

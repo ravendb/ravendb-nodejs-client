@@ -15,6 +15,10 @@ export class TypeUtil {
         return ("undefined" === (typeof value)) || value === null;
     }
 
+    public static isUndefined(value: any): boolean {
+        return typeof value === "undefined";
+    }
+
     public static isString(value: any): boolean {
         return _.isString(value);
     }

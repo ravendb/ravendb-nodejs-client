@@ -110,7 +110,8 @@ export type RavenErrorType = "RavenException"
 | "MappingError"
 | "UrlScrappingError"
 | "TestDriverTearDownError"
-| "FileNotFoundException";
+| "FileNotFoundException"
+| "NotImplementedException";
 
 export interface ExceptionSchema {
     url: string;

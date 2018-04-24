@@ -141,19 +141,27 @@ export interface IDocumentSession extends IDisposable {
     //   delete<T extends Object = IRavenObject>(document: T, callback?: EntityCallback<T | null | void>): Promise<T | null | void>;
     //   delete<T extends Object = IRavenObject>(document: T, options?: ISessionOperationOptions<T | null | void>, callback?: EntityCallback<T | null | void>): Promise<T | null | void>;
 
-    //   store<T extends Object = IRavenObject>(
-    //       document: T, id?: string, callback?: EntityCallback<T>): Promise<T>;
-    //   store<T extends Object = IRavenObject>(
-    //       document: T, id?: string, options?: ISessionOperationOptions<T>, callback?: EntityCallback<T>): Promise<T>;
+      store<TEntity extends Object = IRavenObject>(
+          document: TEntity, id?: string, callback?: AbstractCallback<TEntity>): void;
+      store<TEntity extends Object = IRavenObject>(
+          document: TEntity, 
+          id?: string, 
+          options?: ISessionOperationOptions<TEntity>, 
+          callback?: AbstractCallback<TEntity>): void;
 
     //       query<T extends Object = IRavenObject>(options?: IDocumentQueryOptions<T>): IDocumentQuery<T>;
 
-    //   saveChanges(): Promise<void>;
+    saveChanges(): Promise<void>;
 }
 
 export interface ISessionOptions {
     database?: string;
     requestExecutor?: RequestExecutor;
+}
+
+export interface SessionStoreOptions<T> {
+    documentType?: DocumentType<T>;
+    changeVector?: string;
 }
 
 export interface ISessionOperationOptions<T> {

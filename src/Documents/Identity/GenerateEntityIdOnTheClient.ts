@@ -23,22 +23,28 @@ export class GenerateEntityIdOnTheClient {
      * @param idHolder output parameter which holds document id
      * @return true if id was read from entity
      */
-    public tryGetIdFromInstance(entity: object, idCallback: (id: string) => void): boolean {
+    public tryGetIdFromInstance(entity: object, idCallback?: (id: string) => void): boolean {
         if (!entity) {
             throwError("InvalidArgumentException", "Entity cannot be null or undefined.");
         }
 
+        const resultCallback = (result: string) => {
+            if (idCallback) {
+                idCallback(result);
+            }
+        };
+
         try {
-            const docType: DocumentType = TypeUtil.findType(entity, this._conventions.knownEntityTypes);
+            const docType = TypeUtil.findType(entity, this._conventions.knownEntityTypes);
             const identityProperty = this._getIdentityProperty(docType);
             if (identityProperty) {
                 const value = entity[identityProperty];
                 if (typeof(value) === "string") {
-                    idCallback(value);
+                    resultCallback(value);
                     return true;
                 }
             }
-            idCallback(null);
+            resultCallback(null);
             return false;
         } catch (e) {
             throwError("InvalidOperationException", "Error trying to get ID from instance.");

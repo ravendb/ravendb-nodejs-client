@@ -29,7 +29,7 @@ export class EntityToJson {
         return this._missingDictionary;
     }
 
-    public convertEntityToJson(entity: object, documentInfo: DocumentInfo): string {
+    public convertEntityToJson(entity: object, documentInfo: DocumentInfo): object {
         const { conventions } = this._session;
         const entityMapper = conventions.entityObjectMapper;
         
@@ -46,7 +46,7 @@ export class EntityToJson {
 
         // TBD: TrySimplifyJson(reader);
 
-        return conventions.entitySerializer.serialize(entity);
+        return jsonNode;
     }
 
     public static convertEntityToJson(

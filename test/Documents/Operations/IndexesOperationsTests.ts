@@ -82,17 +82,17 @@ describe("Index operations", function () {
         constructor(public name: string) {}
     }
 
-    // it("can get terms", async () => {
-    //     await usersIndex.execute(store);
+    it.only("can get terms", async () => {
+        await usersIndex.execute(store);
 
-    //     const session = store.openSession();
-    //     const user = new User("Marcin");
-    //     await session.store(user);
-    //     await session.saveChanges();
+        const session = store.openSession();
+        const user = new User("Marcin");
+        session.store(user);
+        await session.saveChanges();
 
-    //     globalContext.waitForIndexing(store, store.database);
+        globalContext.waitForIndexing(store, store.database);
         
-    // });
+    });
 
 //             try (IDocumentSession session = store.openSession()) {
 //                 User user = new User();

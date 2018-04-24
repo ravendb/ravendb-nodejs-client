@@ -8,6 +8,10 @@ export interface IRavenObject<T = any> {
     [property: string]: T;
 }
 
+export interface IRavenArrayResult {
+    results: any[];
+}
+
 export interface ClassConstructor { 
     name: string;
     new(...args: any[]): any; 

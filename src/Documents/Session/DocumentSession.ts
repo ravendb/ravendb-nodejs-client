@@ -1,3 +1,4 @@
+import {BatchOperation} from "./Operations/BatchOperation";
 import * as _ from "lodash";
 import * as BluebirdPromise from "bluebird";
 import { IDocumentSession, ISessionOperationOptions, ConcurrencyCheckMode } from "./IDocumentSession";
@@ -142,9 +143,28 @@ export class DocumentSession extends InMemoryDocumentSessionOperations implement
                         else
                             operation.SetResult(command.Result);
                      */
-                    operation.setResult(command.result); //TBD: delete me after impl stream
+                    operation.setResult(command.result); // TBD: delete me after impl stream
                 });
         }
+    }
+
+    public saveChanges(): Promise<void> {
+        const saveChangeOperation = new BatchOperation(this);
+        const command = saveChangeOperation.createRequest();
+        const result = BluebirdPromise.resolve()
+            .then(() => {
+                if (!command) {
+                    return;
+                }
+
+                return this._requestExecutor.execute(command, this._sessionInfo);
+            })
+            .then(() => {
+                saveChangeOperation.setResult(command.result);
+            })
+            .finally(() => command.dispose());
+
+        return Promise.resolve(result);
     }
 
     dispose(): void {

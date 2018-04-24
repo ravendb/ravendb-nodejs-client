@@ -1,9 +1,9 @@
-import {EntityToJson} from "./EntityToJson";
+import { EntityToJson } from "./EntityToJson";
 import * as uuid from "uuid";
 import { IDisposable } from "../../Types/Contracts";
-import { IMetadataDictionary, SessionInfo } from "./IDocumentSession";
+import { IMetadataDictionary, SessionInfo, SessionStoreOptions, ConcurrencyCheckMode } from "./IDocumentSession";
 import { Todo, ObjectTypeDescriptor } from "../../Types";
-import { SessionEventsEmitter, SessionBeforeStoreEventArgs } from "./SessionEvents";
+import { SessionEventsEmitter, SessionBeforeStoreEventArgs, SessionBeforeDeleteEventArgs } from "./SessionEvents";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { ObjectMapper } from "../../Utility/Mapping";
 import { IDocumentStore } from "../IDocumentStore";
@@ -13,8 +13,14 @@ import { ServerNode } from "../../Http/ServerNode";
 import { DocumentsById } from "./DocumentsById";
 import { DocumentInfo } from "./DocumentInfo";
 import { DocumentStoreBase } from "../DocumentStoreBase";
-import { DocumentConventions, DocumentStore } from "../..";
-import { ICommandData, CommandType } from "../Commands/CommandData";
+import { DocumentConventions, DocumentStore, AggressiveCacheOptions } from "../..";
+import { 
+    ICommandData, 
+    CommandType, 
+    DeleteCommandData, 
+    SaveChangesData, 
+    PutCommandDataWithJson 
+} from "../Commands/CommandData";
 import { GenerateEntityIdOnTheClient } from "../Identity/GenerateEntityIdOnTheClient";
 import { JsonSerializer, tryGetConflict } from "../../Mapping/Json";
 import { Mapping } from "../../Mapping";
@@ -22,29 +28,17 @@ import { CONSTANTS } from "../../Constants";
 import { DateUtil } from "../../Utility/DateUtil";
 import { IncludesUtil } from "./IncludesUtil";
 import { TypeUtil } from "../../Utility/TypeUtil";
+import { AbstractCallback } from "../../Types/Callbacks";
+import { DocumentType } from "../DocumentAbstractions";
+import { IdTypeAndName } from "../IdTypeAndName";
+import { BatchOptions } from "../Commands/Batches/BatchOptions";
+import { DocumentsChanges } from "./DocumentsChanges";
+import { EventEmitter } from "events";
+import { JsonOperation } from "../../Mapping/JsonOperation";
 
-export abstract class InMemoryDocumentSessionOperations implements IDisposable, SessionEventsEmitter, Todo {
-    
-    public removeListener(
-        eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): void;
-    public removeListener(
-        eventName: "afterSaveChanges", eventHandler: (eventArgs: Todo) => void): void;
-    public removeListener(
-        eventName: "beforeQuery", eventHandler: (eventArgs: Todo) => void): void;
-    public removeListener(
-        eventName: "beforeDelete", eventHandler: (eventArgs: Todo) => void): void;
-    public removeListener(
-        eventName: string, eventHandler: (eventArgs: any) => void): this {
-        throw new Error("Method not implemented.");
-    }
-    public on(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
-    public on(eventName: "afterSaveChanges", eventHandler: (eventArgs: Todo) => void): this;
-    public on(eventName: "beforeQuery", eventHandler: (eventArgs: Todo) => void): this;
-    public on(eventName: "beforeDelete", eventHandler: (eventArgs: Todo) => void): this;
-    public on(eventName: string, eventHandler: (eventArgs: any) => void): this;
-    public on(eventName: string, eventHandler: (eventArgs: any) => void): this {
-        throw new Error("Method not implemented.");
-    }
+export abstract class InMemoryDocumentSessionOperations 
+    extends EventEmitter
+    implements IDisposable, SessionEventsEmitter, Todo {
 
     private static _clientSessionIdCounter: number = 0;
 
@@ -112,6 +106,8 @@ export abstract class InMemoryDocumentSessionOperations implements IDisposable, 
 
     private _databaseName: string;
 
+    private _saveChangesOptions: BatchOptions;
+
     public get databaseName(): string {
         return this._databaseName;
     }
@@ -149,7 +145,7 @@ export abstract class InMemoryDocumentSessionOperations implements IDisposable, 
     protected _deferredCommands: ICommandData[] = [];
 
     // keys are produced with CommandIdTypeAndName.keyFor() method
-    protected deferredCommandsMap: Map<string, ICommandData> = new Map();
+    protected _deferredCommandsMap: Map<string, ICommandData> = new Map();
 
     public get deferredCommandsCount() {
         return this._deferredCommands.length;
@@ -170,10 +166,12 @@ export abstract class InMemoryDocumentSessionOperations implements IDisposable, 
     protected _sessionInfo: SessionInfo;
 
     protected constructor(
-        databaseName: string, 
-        documentStore: DocumentStoreBase, 
-        requestExecutor: RequestExecutor, 
+        databaseName: string,
+        documentStore: DocumentStoreBase,
+        requestExecutor: RequestExecutor,
         id: string) {
+        super();
+
         this._id = id;
         this._databaseName = databaseName;
         this._documentStore = documentStore;
@@ -221,18 +219,18 @@ export abstract class InMemoryDocumentSessionOperations implements IDisposable, 
 
         let idRef;
         if (!this._generateEntityIdOnTheClient.tryGetIdFromInstance(
-                instance, (_idRef) => idRef = _idRef)) {
+            instance, (_idRef) => idRef = _idRef)) {
             throwError("InvalidOperationException", "Could not find the document id for " + instance);
         }
 
         this._assertNoNonUniqueInstance(instance, idRef);
 
         throwError("InvalidArgumentException", "Document " + idRef + " doesn't exist in the session");
-    } 
+    }
 
     protected _assertNoNonUniqueInstance(entity: object, id: string): void {
-        if (!id 
-            || id[id.length - 1] === "|" 
+        if (!id
+            || id[id.length - 1] === "|"
             || id[id.length - 1] === "/") {
             return;
         }
@@ -286,11 +284,11 @@ export abstract class InMemoryDocumentSessionOperations implements IDisposable, 
     public isLoaded(id: string): boolean {
         return this.isLoadedOrDeleted(id);
     }
-    
+
     public isLoadedOrDeleted(id: string): boolean {
         const documentInfo = this.documentsById.getValue(id);
-        return !!(documentInfo && documentInfo.document) 
-            || this.isDeleted(id) 
+        return !!(documentInfo && documentInfo.document)
+            || this.isDeleted(id)
             || this.includedDocumentsById.has(id);
     }
 
@@ -396,17 +394,17 @@ export abstract class InMemoryDocumentSessionOperations implements IDisposable, 
     public trackEntity<T extends object>(
         entityType: ObjectTypeDescriptor<T>, documentFound: DocumentInfo): T;
     public trackEntity<T extends object>(
-        entityType: ObjectTypeDescriptor<T>, 
-        id: string, 
-        document: object, 
-        metadata: object, 
-        noTracking: boolean): object; 
+        entityType: ObjectTypeDescriptor<T>,
+        id: string,
+        document: object,
+        metadata: object,
+        noTracking: boolean): object;
     public trackEntity<T extends object>(
-        entityType: ObjectTypeDescriptor<T>, 
-        idOrDocumentInfo: string | DocumentInfo, 
-        document?: object, 
-        metadata?: object, 
-        noTracking?: boolean): T { 
+        entityType: ObjectTypeDescriptor<T>,
+        idOrDocumentInfo: string | DocumentInfo,
+        document?: object,
+        metadata?: object,
+        noTracking?: boolean): T {
 
         let id: string;
         if (typeof (idOrDocumentInfo) !== "string") {
@@ -541,6 +539,333 @@ export abstract class InMemoryDocumentSessionOperations implements IDisposable, 
 
     public unregisterMissing(id: string) {
         this._knownMissingIds.delete(id.toLowerCase());
+    }
+
+    // public void store(Object entity) {
+    //     Reference<String> stringReference = new Reference<>();
+    //     boolean hasId = generateEntityIdOnTheClient.tryGetIdFromInstance(entity, stringReference);
+    //     storeInternal(entity, null, null, !hasId ? ConcurrencyCheckMode.FORCED : ConcurrencyCheckMode.AUTO);
+    // }
+
+    // public void store(Object entity, String id) {
+    //     storeInternal(entity, null, id, ConcurrencyCheckMode.AUTO);
+    // }
+
+    // public void store(Object entity, String changeVector, String id) {
+    //     storeInternal(entity, changeVector, id, changeVector == null ? ConcurrencyCheckMode.DISABLED : ConcurrencyCheckMode.FORCED);
+    // }
+
+    public store<TEntity extends object>(
+        entity: TEntity,
+        id?: string,
+        callback?: AbstractCallback<TEntity>): void;
+    public store<TEntity extends object>(
+        entity: TEntity,
+        id?: string,
+        options?: SessionStoreOptions<TEntity>,
+        callback?: AbstractCallback<TEntity>): void;
+    public store<TEntity extends object>(
+        entity: TEntity,
+        id?: string,
+        optionsOrCallback?: SessionStoreOptions<TEntity> | AbstractCallback<TEntity>,
+        callback?: AbstractCallback<TEntity>): void {
+
+        let options: SessionStoreOptions<TEntity>;
+        if (TypeUtil.isFunction(optionsOrCallback)) {
+            callback = optionsOrCallback as AbstractCallback<TEntity>;
+            options = {};
+        } else if (TypeUtil.isObject(optionsOrCallback)) {
+            options = optionsOrCallback as SessionStoreOptions<TEntity> || {};
+            callback = callback || TypeUtil.NOOP;
+        }
+
+        const changeVector = options.changeVector;
+        const documentType = options.documentType;
+        let forceConcurrencyCheck: ConcurrencyCheckMode;
+        if (!TypeUtil.isUndefined(changeVector)) {
+            forceConcurrencyCheck = changeVector === null ? "Disabled" : "Forced";
+        } else if (!TypeUtil.isUndefined(id)) {
+            forceConcurrencyCheck = "Auto";
+        } else {
+            const hasId = this._generateEntityIdOnTheClient.tryGetIdFromInstance(entity);
+            forceConcurrencyCheck = !hasId ? "Forced" : "Auto";
+        }
+
+        this._storeInternal(entity, changeVector, id, forceConcurrencyCheck, documentType);
+    }
+
+    protected _generateDocumentKeysOnStore: boolean = true;
+
+    private _storeInternal(
+        entity: object,
+        changeVector: string,
+        id: string,
+        forceConcurrencyCheck: ConcurrencyCheckMode,
+        documentType: DocumentType): Promise<void> {
+        if (!entity) {
+            throwError("InvalidArgumentException", "Entity cannot be null or undefined.");
+        }
+
+        const value = this.documentsByEntity.get(entity);
+        if (value) {
+            value.changeVector = changeVector || value.changeVector;
+            value.concurrencyCheckMode = forceConcurrencyCheck;
+            return;
+        }
+
+        if (!id) {
+            if (this._generateDocumentKeysOnStore) {
+                id = this._generateEntityIdOnTheClient.generateDocumentKeyForStorage(entity);
+            } else {
+                this._rememberEntityForDocumentIdGeneration(entity);
+            }
+        } else {
+            this.generateEntityIdOnTheClient.trySetIdentity(entity, id);
+        }
+
+        const cmdKey = IdTypeAndName.keyFor(id, "CLIENT_ANY_COMMAND", null);
+        if (this._deferredCommandsMap.has(cmdKey)) {
+            throwError("InvalidOperationException",
+                "Can't store document, there is a deferred command registered "
+                + "for this document in the session. Document id: " + id);
+        }
+
+        if (this.deletedEntities.has(entity)) {
+            throwError("InvalidOperationException",
+                "Can't store object, it was already deleted in this session.  Document id: " + id);
+        }
+
+        // we make the check here even if we just generated the ID
+        // users can override the ID generation behavior, and we need
+        // to detect if they generate duplicates.
+        this._assertNoNonUniqueInstance(entity, id);
+
+        const conventions = this._requestExecutor.conventions;
+        const collectionName: string = conventions.getCollectionNameForEntity(entity);
+        const metadata = {};
+        if (collectionName) {
+            metadata[CONSTANTS.Documents.Metadata.COLLECTION] = collectionName;
+        }
+
+        const entityType = documentType
+            ? conventions.findEntityType(documentType)
+            : conventions.getEntityTypeDescriptor(entity);
+        const jsType = conventions.getJsTypeName(entityType);
+        if (jsType) {
+            metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] = jsType;
+        }
+
+        if (id) {
+            this._knownMissingIds.delete(id);
+        }
+
+        this._storeEntityInUnitOfWork(id, entity, changeVector, metadata, forceConcurrencyCheck, documentType);
+    }
+
+    protected _storeEntityInUnitOfWork(
+        id: string,
+        entity: object,
+        changeVector: string,
+        metadata: object,
+        forceConcurrencyCheck: ConcurrencyCheckMode,
+        documentType: DocumentType): void {
+        this.deletedEntities.delete(entity);
+
+        if (!id) {
+            this._knownMissingIds.delete(id);
+        }
+
+        const documentInfo = new DocumentInfo();
+        documentInfo.id = id;
+        documentInfo.metadata = metadata;
+        documentInfo.changeVector = changeVector;
+        documentInfo.concurrencyCheckMode = forceConcurrencyCheck;
+        documentInfo.entity = entity;
+        documentInfo.newDocument = true;
+        documentInfo.document = null;
+
+        this.documentsByEntity.set(entity, documentInfo);
+
+        if (id) {
+            this.documentsById.add(documentInfo);
+        }
+    }
+
+    protected _rememberEntityForDocumentIdGeneration(entity: object): void {
+        throwError("NotImplementedException",
+            "You cannot set GenerateDocumentIdsOnStore to false"
+            + " without implementing RememberEntityForDocumentIdGeneration");
+    }
+
+    public prepareForSaveChanges(): SaveChangesData {
+        const result = this._newSaveChangesData();
+
+        this._deferredCommands.length = 0;
+        this._deferredCommandsMap.clear();
+
+        this._prepareForEntitiesDeletion(result, null);
+        this._prepareForEntitiesPuts(result);
+
+        if (this._deferredCommands.length) {
+            // this allow OnBeforeStore to call Defer during the call to include
+            // additional values during the same SaveChanges call
+            result.deferredCommands.push(...this._deferredCommands);
+            for (const item of this._deferredCommandsMap.entries()) {
+                const [key, value] = item;
+                result.deferredCommandsMap.set(key, value);
+            }
+
+            this._deferredCommands.length = 0;
+            this._deferredCommandsMap.clear();
+        }
+
+        return result;
+    }
+
+    private _newSaveChangesData(): SaveChangesData {
+        return new SaveChangesData({
+            deferredCommands: [...this._deferredCommands],
+            deferredCommandsMap: new Map(this._deferredCommandsMap),
+            options: this._saveChangesOptions
+        });
+    }
+    
+    private _prepareForEntitiesDeletion(result: SaveChangesData, changes: Map<String, DocumentsChanges[]>): void {
+        for (const deletedEntity of this.deletedEntities) {
+            let documentInfo = this.documentsByEntity.get(deletedEntity);
+            if (!documentInfo) {
+                continue;
+            }
+
+            if (changes) {
+                const docChanges = [];
+                const change = new DocumentsChanges();
+                change.fieldNewValue = "";
+                change.fieldOldValue = "";
+                change.change = "DOCUMENT_DELETED";
+
+                docChanges.push(change);
+                changes.set(documentInfo.id, docChanges);
+            } else {
+                const command: ICommandData = 
+                    result.deferredCommandsMap.get(IdTypeAndName.keyFor(documentInfo.id, "CLIENT_ANY_COMMAND", null));
+                if (command) {
+                    InMemoryDocumentSessionOperations._throwInvalidDeletedDocumentWithDeferredCommand(command);
+                }
+
+                let changeVector = null;
+                documentInfo = this.documentsById.getValue(documentInfo.id);
+
+                if (documentInfo) {
+                    changeVector = documentInfo.changeVector;
+
+                    if (documentInfo.entity) {
+                        this.documentsByEntity.delete(documentInfo.entity);
+                        result.entities.push(documentInfo.entity);
+                    }
+
+                    this.documentsById.remove(documentInfo.id);
+                }
+
+                changeVector = this.useOptimisticConcurrency ? changeVector : null;
+                const beforeDeleteEventArgs = 
+                    new SessionBeforeDeleteEventArgs(this, documentInfo.id, documentInfo.entity);
+                this.emit("beforeDelete", beforeDeleteEventArgs);
+                result.sessionCommands.push(new DeleteCommandData(documentInfo.id, changeVector));
+            }
+
+            if (!changes) {
+                this.deletedEntities.clear();
+            }
+        }
+
+    }
+
+    private _prepareForEntitiesPuts(result: SaveChangesData): void {
+        for (const entry of this.documentsByEntity.entries()) {
+            const entity = {
+                key: entry[0],
+                value: entry[1]
+            };
+
+            InMemoryDocumentSessionOperations._updateMetadataModifications(entity.value);
+
+            let document = this.entityToJson.convertEntityToJson(entity.key, entity.value);
+
+            if (entity.value.ignoreChanges || !this._entityChanged(document, entity.value, null)) {
+                continue;
+            }
+
+            const command = result.deferredCommandsMap.get(
+                IdTypeAndName.keyFor(entity.value.id, "CLIENT_ANY_COMMAND", null));
+            if (command) {
+                InMemoryDocumentSessionOperations._throwInvalidModifiedDocumentWithDeferredCommand(command);
+            }
+
+            const beforeStoreEventArgs = new SessionBeforeStoreEventArgs(this, entity.value.id, entity.key);
+            if (this.emit("beforeStore", beforeStoreEventArgs)) {
+                if (beforeStoreEventArgs.isMetadataAccessed()) {
+                    InMemoryDocumentSessionOperations._updateMetadataModifications(entity.value);
+                }
+
+                if (beforeStoreEventArgs.isMetadataAccessed() || this._entityChanged(document, entity.value, null)) {
+                    document = this.entityToJson.convertEntityToJson(entity.key, entity.value);
+                }
+            }
+
+            entity.value.newDocument = false;
+            result.entities.push(entity.key);
+
+            if (entity.value.id) {
+                this.documentsById.remove(entity.value.id);
+            }
+
+            entity.value.document = document;
+
+            let changeVector: string;
+            if (this.useOptimisticConcurrency) {
+                if (entity.value.concurrencyCheckMode !== "Disabled") {
+                    // if the user didn't provide a change vector, we'll test for an empty one
+                    changeVector = entity.value.changeVector || "";
+                } else {
+                    changeVector = null;
+                }
+            } else if (entity.value.concurrencyCheckMode === "Forced") {
+                changeVector = entity.value.changeVector;
+            } else {
+                changeVector = null;
+            }
+
+            result.sessionCommands.push(
+                new PutCommandDataWithJson(entity.value.id, changeVector, document));
+        }
+    }
+
+    protected _entityChanged(
+        newObj: object, 
+        documentInfo: DocumentInfo, 
+        changes: Map<string, DocumentsChanges[]>): boolean {
+        return JsonOperation.entityChanged(newObj, documentInfo, changes);
+    }
+
+    private static _throwInvalidModifiedDocumentWithDeferredCommand(resultCommand: ICommandData): void {
+        throwError("InvalidOperationException", "Cannot perform save because document " + resultCommand.id
+            + " has been deleted by the session and is also taking part in deferred " 
+            + resultCommand.type + " command");
+    }
+
+    private static _throwInvalidDeletedDocumentWithDeferredCommand(resultCommand: ICommandData): void {
+        throwError("InvalidOperationException", "Cannot perform save because document " + resultCommand.id
+            + " has been deleted by the session and is also taking part in deferred " 
+            + resultCommand.type + " command");
+    }
+    
+    private static _updateMetadataModifications(documentInfo: DocumentInfo) {
+        if (documentInfo.metadataInstance) {
+            for (const prop of Object.keys(documentInfo.metadataInstance)) {
+                documentInfo.metadata[prop] = documentInfo.metadataInstance[prop]; 
+            }
+        }
     }
 
     public dispose(): void {
