@@ -2,7 +2,7 @@ import { EntityToJson } from "./EntityToJson";
 import * as uuid from "uuid";
 import { IDisposable } from "../../Types/Contracts";
 import { IMetadataDictionary, SessionInfo, SessionStoreOptions, ConcurrencyCheckMode } from "./IDocumentSession";
-import { Todo, ObjectTypeDescriptor } from "../../Types";
+import { Todo, ObjectTypeDescriptor, PropsBasedObjectLiteralDescriptor } from "../../Types";
 import { SessionEventsEmitter, SessionBeforeStoreEventArgs, SessionBeforeDeleteEventArgs } from "./SessionEvents";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { ObjectMapper } from "../../Utility/Mapping";
@@ -35,6 +35,7 @@ import { BatchOptions } from "../Commands/Batches/BatchOptions";
 import { DocumentsChanges } from "./DocumentsChanges";
 import { EventEmitter } from "events";
 import { JsonOperation } from "../../Mapping/JsonOperation";
+import { IRavenObject } from "../../Types/IRavenObject";
 
 export abstract class InMemoryDocumentSessionOperations 
     extends EventEmitter
@@ -877,7 +878,102 @@ export abstract class InMemoryDocumentSessionOperations
         }
     }
 
-    public dispose(): void {
-        throw new Error("Method not implemented.");
+    public delete(id: string): void;
+    public delete(id: string, expectedChangeVector: string): void;
+    public delete<TEntity extends IRavenObject>(entity: TEntity): void;
+    public delete<TEntity extends IRavenObject>(
+        idOrEntity: string | TEntity, expectedChangeVector: string = null): void {
+        if (TypeUtil.isString(idOrEntity)) {
+            return this._deleteById(idOrEntity as string, expectedChangeVector);
+        } 
+
+        this._deleteByEntity(idOrEntity as TEntity);
+    }
+    
+    /**
+     * Marks the specified entity for deletion. The entity will be deleted when SaveChanges is called.
+     * @param <T> entity class
+     * @param entity Entity to delete
+     */
+    private _deleteByEntity<TEntity extends IRavenObject>(entity: TEntity) {
+        if (!entity) {
+            throwError("InvalidArgumentException", "Entity cannot be null.");
+        }
+
+        const value = this.documentsByEntity.get(entity);
+        if (!value) {
+            throwError("InvalidOperationException", 
+                entity + " is not associated with the session, cannot delete unknown entity instance");
+        }
+
+        this.deletedEntities.add(entity);
+        this.includedDocumentsById.delete(value.id);
+        this._knownMissingIds.add(value.id);
+    }
+
+    /**
+     * Marks the specified entity for deletion. The entity will be deleted when IDocumentSession.SaveChanges is called.
+     * WARNING: This method will not call beforeDelete listener!
+     * @param id Id of document
+     */
+
+    private _deleteById(id: string): void;
+    private _deleteById(id: string, expectedChangeVector: string): void;
+    private _deleteById(id: string, expectedChangeVector: string = null): void {
+        if (!id) {
+            throwError("InvalidArgumentException", "Id cannot be null.");
+        }
+
+        let changeVector = null;
+        const documentInfo = this.documentsById.getValue(id);
+        if (documentInfo) {
+            const newObj = this.entityToJson.convertEntityToJson(documentInfo.entity, documentInfo);
+            if (documentInfo.entity && this._entityChanged(newObj, documentInfo, null)) {
+                throwError("InvalidOperationException", 
+                    "Can't delete changed entity using identifier. Use delete(T entity) instead.");
+            }
+
+            if (documentInfo.entity) {
+                this.documentsByEntity.delete(documentInfo.entity);
+            }
+
+            this.documentsById.remove(id);
+            changeVector = documentInfo.changeVector;
+        }
+
+        this._knownMissingIds.add(id);
+        changeVector = this.useOptimisticConcurrency ? changeVector : null;
+        this.defer(new DeleteCommandData(id, expectedChangeVector || changeVector));
+    }
+
+    /**
+     * Defer commands to be executed on saveChanges()
+     * @param commands Commands to defer
+     */
+    public defer(...commands: ICommandData[]) {
+        this._deferredCommands.push(...commands);
+        for (const command of commands) {
+            this._deferInternal(command);
+        }
+    }
+
+    private _deferInternal(command: ICommandData): void {
+        this._deferredCommandsMap.set(
+            IdTypeAndName.keyFor(command.id, command.type, command.name), command);
+        this._deferredCommandsMap.set(
+            IdTypeAndName.keyFor(command.id, "CLIENT_ANY_COMMAND", null), command);
+
+        if (command.type !== "ATTACHMENT_PUT") {
+            this._deferredCommandsMap.set(
+                IdTypeAndName.keyFor(command.id, "CLIENT_NOT_ATTACHMENT_PUT", null), command);
+        }
+    }
+
+    public dispose(isDisposing?: boolean): void {
+        if (this._disposed) {
+            return;
+        }
+
+        this._disposed = true;
     }
 }

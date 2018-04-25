@@ -810,6 +810,10 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
                                     sessionInfo,
                                     shouldRetry))
                                 .then(unsuccessfulResponseHandled => {
+                                    if (unsuccessfulResponseHandled) {
+                                        return;
+                                    }
+                                    
                                     const dbMissingHeader = response.caseless.get(HEADERS.DATABASE_MISSING);
                                     if (dbMissingHeader) {
                                         throwError("DatabaseDoesNotExistException", dbMissingHeader as string);
