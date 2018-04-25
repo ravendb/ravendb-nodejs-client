@@ -9,7 +9,7 @@ export class HiloMultiDatabaseIdGenerator extends AbstractHiloIdGenerator implem
     super(store);
   }
 
-  public generateDocumentId(entity: object, documentType?: string, dbName?: string): Promise<string> {
+  public generateDocumentId(dbName: string, entity: object, documentType?: string): Promise<string> {
     return this
       ._getGeneratorForDatabase(dbName || this.store.database)
       .generateDocumentId(entity, documentType);

@@ -142,12 +142,12 @@ export interface IDocumentSession extends IDisposable {
     //   delete<T extends Object = IRavenObject>(document: T, options?: ISessionOperationOptions<T | null | void>, callback?: EntityCallback<T | null | void>): Promise<T | null | void>;
 
       store<TEntity extends Object = IRavenObject>(
-          document: TEntity, id?: string, callback?: AbstractCallback<TEntity>): void;
+          document: TEntity, id?: string, callback?: AbstractCallback<TEntity>): Promise<void>;
       store<TEntity extends Object = IRavenObject>(
           document: TEntity, 
           id?: string, 
           options?: ISessionOperationOptions<TEntity>, 
-          callback?: AbstractCallback<TEntity>): void;
+          callback?: AbstractCallback<TEntity>): Promise<void>;
 
     //       query<T extends Object = IRavenObject>(options?: IDocumentQueryOptions<T>): IDocumentQuery<T>;
 

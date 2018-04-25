@@ -74,7 +74,7 @@ export class BatchOperation {
                     "PUT response is invalid. @id is missing on " + documentInfo.id);
             }
 
-            batchResult.fieldNames.forEach(propertyName => {
+            Object.keys(batchResult).forEach(propertyName => {
                 if ("Type" === propertyName) {
                     return;
                 }

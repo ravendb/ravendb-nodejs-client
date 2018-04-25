@@ -9,7 +9,7 @@ import { HttpRequestBase, HttpResponse } from "../Primitives/Http";
 import { getLogger } from "../Utility/LogUtil";
 import { throwError } from "../Exceptions";
 import { IRavenObject } from "../Types/IRavenObject";
-import { getEtagHeader } from "../Utility/HttpUtil";
+import { getEtagHeader, HeadersBuilder } from "../Utility/HttpUtil";
 import { JsonSerializer } from "../Mapping/Json";
 import { Mapping } from "../Mapping";
 import { TypesAwareObjectMapper, TypeInfo } from "../Mapping/ObjectMapper";
@@ -170,6 +170,10 @@ export abstract class RavenCommand<TResult> {
         const res = this._commandPayloadSerializer.deserialize(response);
         const resObj = this._typedObjectMapper.fromObjectLiteral<TResponse>(res, typeInfo, knownTypes);
         return resObj;
+    }
+
+    protected _getHeaders() {
+        return HeadersBuilder.create();
     }
 
     // tslint:disable-next-line:no-empty

@@ -6,9 +6,9 @@ import { DocumentTypeHelper } from "../DocumenTypeHelper";
 export class GenerateEntityIdOnTheClient {
 
     private _conventions: DocumentConventions;
-    private _generateId: (obj: object) => string;
+    private _generateId: (obj: object) => Promise<string>;
 
-    public constructor(conventions: DocumentConventions, generateId: (obj: object) => string) {
+    public constructor(conventions: DocumentConventions, generateId: (obj: object) => Promise<string>) {
         this._conventions = conventions;
         this._generateId = generateId;
     }
@@ -51,27 +51,33 @@ export class GenerateEntityIdOnTheClient {
         }
     }
 
-    public getOrGenerateDocumentId(entity: object): string {
+    public getOrGenerateDocumentId(entity: object): Promise<string> {
         let id;
         this.tryGetIdFromInstance(entity, (idVal) => id = idVal);
-        if (!id) {
+        return Promise.resolve()
+        .then(() => {
             // Generate the key up front
-            id = this._generateId(entity);
-        }
+            return id || this._generateId(entity);
+        })
+        // tslint:disable-next-line:no-shadowed-variable
+        .then(id => {
+            if (id && id.startsWith("/")) {
+                throwError(
+                    "InvalidOperationException",
+                    "Cannot use value '" + id + "' as a document id because it begins with a '/'");
+            }
 
-        if (id && id.startsWith("/")) {
-            throwError(
-                "InvalidOperationException", 
-                "Cannot use value '" + id + "' as a document id because it begins with a '/'");
-        }
-
-        return id;
+            return id;
+        });
     }
 
-    public generateDocumentKeyForStorage(entity: object) {
-        const id = this.getOrGenerateDocumentId(entity);
-        this.trySetIdentity(entity, id);
-        return id;
+    public generateDocumentKeyForStorage(entity: object): Promise<string> {
+        return Promise.resolve()
+            .then(() => this.getOrGenerateDocumentId(entity))
+            .then(id => {
+                this.trySetIdentity(entity, id);
+                return id;
+            });
     }
 
     /**

@@ -20,7 +20,7 @@ import { TypeUtil } from "../../Utility/TypeUtil";
 import { StringUtil } from "../../Utility/StringUtil";
 import { DateUtil } from "../../Utility/DateUtil";
 
-export type IdConvention = (databaseName: string, entity: object) => string;
+export type IdConvention = (databaseName: string, entity: object) => Promise<string>;
 export class DocumentConventions {
 
     private static _defaults: DocumentConventions = new DocumentConventions();
@@ -278,6 +278,18 @@ export class DocumentConventions {
      *  @return default collection name for class
      */
     public static defaultGetCollectionName(ctorOrTypeChecker: ObjectTypeDescriptor): string {
+        if (!ctorOrTypeChecker) {
+            throwError("InvalidArgumentException", "Class cannot be null or undefined.");
+        }
+
+        if (!TypeUtil.isObjectTypeDescriptor(ctorOrTypeChecker)) {
+            throwError("InvalidArgumentException", "Invalid class argument.");
+        }
+
+        if (!ctorOrTypeChecker.name) {
+            throwError("InvalidArgumentException", "Type name cannot be null or undefined.");
+        }
+
         let result = this._cachedDefaultTypeCollectionNames.get(ctorOrTypeChecker);
         if (result) {
             return result;
@@ -341,12 +353,12 @@ export class DocumentConventions {
      * @param entity Entity
      * @return document id
      */
-    public generateDocumentId(database: string, entity: Object): string {
+    public generateDocumentId(database: string, entity: Object): Promise<string> {
         const entityTypeDescriptor: ObjectTypeDescriptor = this.getEntityTypeDescriptor(entity);
 
         for (const [typeDescriptor, idConvention] of this._registeredIdConventions) {
             if (TypeUtil.isType(entity, typeDescriptor)) {
-                return idConvention(database, entity);
+                return Promise.resolve(idConvention(database, entity));
             }
         }
 

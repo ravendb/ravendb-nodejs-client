@@ -248,7 +248,13 @@ export abstract class RavenTestDriver implements IDisposable {
     public waitForIndexing(store: IDocumentStore): Promise<void>;
     public waitForIndexing(store: IDocumentStore, database?: string): Promise<void>;
     public waitForIndexing(store: IDocumentStore, database?: string, timeout?: number): Promise<void>;
-    public waitForIndexing(store: IDocumentStore, database?: string, timeout?: number): Promise<void> {
+    public waitForIndexing(
+        store: IDocumentStore, database?: string, timeout?: number, throwOnIndexErrors?: boolean): Promise<void>;
+    public waitForIndexing(
+        store: IDocumentStore, 
+        database?: string, 
+        timeout?: number, 
+        throwOnIndexErrors: boolean = true): Promise<void> {
         const admin = store.maintenance.forDatabase(database);
 
         if (!timeout) {
@@ -259,10 +265,10 @@ export abstract class RavenTestDriver implements IDisposable {
             return Promise.resolve()
                 .then(() => admin.send(new GetStatisticsOperation()))
                 .then((dbStats: DatabaseStatistics) => {
-                    const indexes = dbStats.indexes.filter(x => x.state !== "DISABLED");
+                    const indexes = dbStats.indexes.filter(x => x.state !== "Disabled");
 
-                    const errIndexes = indexes.filter(x => x.state === "ERROR");
-                    if (errIndexes.length) {
+                    const errIndexes = indexes.filter(x => x.state === "Error");
+                    if (errIndexes.length && throwOnIndexErrors) {
                         throwError("IndexInvalidException", 
                             `The following indexes are erroneous: ${errIndexes.map(x => x.name).join(", ")}`);
                     }

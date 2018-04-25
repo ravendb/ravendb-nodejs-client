@@ -3,7 +3,7 @@ export type IndexRunningStatus = "Running" | "Paused" | "Disabled";
 
 export interface IndexingStatus {
     status: IndexRunningStatus;
-    indexes: IndexStatus;
+    indexes: IndexStatus[];
 }
 
 export interface IndexStatus {

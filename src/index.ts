@@ -47,9 +47,28 @@ export { DisableIndexOperation } from "./Documents/Operations/Indexes/DisableInd
 export { EnableIndexOperation } from "./Documents/Operations/Indexes/EnableIndexOperation";
 export { GetIndexingStatusOperation } from "./Documents/Operations/Indexes/GetIndexingStatusOperation";
 export { GetIndexesStatisticsOperation } from "./Documents/Operations/Indexes/GetIndexesStatisticsOperation";
+export { GetIndexStatisticsOperation } from "./Documents/Operations/Indexes/GetIndexStatisticsOperation";
 export { GetIndexesOperation } from "./Documents/Operations/Indexes/GetIndexesOperation";
+export { GetTermsOperation } from "./Documents/Operations/Indexes/GetTermsOperation";
+export { IndexHasChangedOperation } from "./Documents/Operations/Indexes/IndexHasChangedOperation";
+export { PutIndexesOperation } from "./Documents/Operations/Indexes/PutIndexesOperation";
+export { StopIndexingOperation } from "./Documents/Operations/Indexes/StopIndexingOperation";
+export { StartIndexingOperation } from "./Documents/Operations/Indexes/StartIndexingOperation";
+export { StopIndexOperation } from "./Documents/Operations/Indexes/StopIndexOperation";
+export { StartIndexOperation } from "./Documents/Operations/Indexes/StartIndexOperation";
+export { 
+    SetIndexesLockOperation, 
+    SetIndexesLockOperationParameters 
+} from "./Documents/Operations/Indexes/SetIndexesLockOperation";
+export {
+    SetIndexesPriorityOperation, 
+    SetIndexesPriorityOperationParameters 
+} from "./Documents/Operations/Indexes/SetIndexesPriorityOperation";
+export { GetIndexOperation } from "./Documents/Operations/Indexes/GetIndexOperation";
+export { GetIndexErrorsOperation } from "./Documents/Operations/Indexes/GetIndexErrorsOperation";
 export * from "./Documents/Indexes/Enums";
 export * from "./Documents/Indexes/IndexDefinition";
+export * from "./Documents/Indexes/Errors";
 export * from "./Documents/Indexes/IndexFieldOptions";
 export * from "./Documents/Indexes/Spatial";
 export * from "./Documents/Indexes/IndexingStatus";

@@ -61,9 +61,10 @@ export class DocumentSession extends InMemoryDocumentSessionOperations implement
         //TBD Revisions = new DocumentSessionRevisions(this);
     }
 
-    protected _generateId(entity: object): string {
-        throw new Error("Method not implemented.");
+    protected _generateId(entity: object): Promise<string> {
+        return this.conventions.generateDocumentId(this.databaseName, entity);
     }
+
     public numberOfRequestsInSession: number;
 
     public conventions: DocumentConventions;

@@ -33,7 +33,7 @@ export class DocumentStore extends DocumentStoreBase {
 
     private _requestExecutors: Map<string, RequestExecutor> = new Map(); 
 
-    private _multiDbHiLo: Todo; // MultiDatabaseHiLoIdGenerator 
+    private _multiDbHiLo: HiloMultiDatabaseIdGenerator; // MultiDatabaseHiLoIdGenerator 
 
     private _maintenanceOperationExecutor: MaintenanceOperationExecutor; // MaintenanceOperationExecutor ;
     private _operationExecutor: OperationExecutor;
@@ -221,7 +221,8 @@ export class DocumentStore extends DocumentStoreBase {
                 const generator = new HiloMultiDatabaseIdGenerator(this);
                 this._multiDbHiLo = generator;
 
-                this.conventions.documentIdGenerator = generator.generateDocumentId.bind(generator);
+                this.conventions.documentIdGenerator = 
+                    (dbName: string, entity: object) => generator.generateDocumentId(dbName, entity);
             }
 
             this.conventions.freeze();

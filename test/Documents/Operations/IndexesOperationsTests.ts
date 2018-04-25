@@ -20,25 +20,43 @@ import {
     GetIndexesOperation,
     GetIndexesStatisticsOperation,
     IndexStats,
+    GetTermsOperation,
+    PutIndexesOperation,
+    IndexHasChangedOperation,
+    StopIndexingOperation,
+    StartIndexingOperation,
+    StopIndexOperation,
+    StartIndexOperation,
+    SetIndexesLockOperation,
+    GetIndexOperation,
+    SetIndexesPriorityOperation,
+    GetIndexErrorsOperation,
+    GetIndexStatisticsOperation,
 } from "../../../src";
-import { UsersIndex } from "../../Assets/Indexes";
+import { UsersIndex, UsersInvalidIndex } from "../../Assets/Indexes";
 import { TypeUtil } from "../../../src/Utility/TypeUtil";
 
 describe("Index operations", function () {
 
     let store: IDocumentStore;
 
+    class User {
+        constructor(public name: string, public age?: number) { }
+    }
+
     beforeEach(async function () {
         store = await globalContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     let usersIndex: AbstractIndexCreationTask;
+    let invalidUsersIndex: AbstractIndexCreationTask;
 
     beforeEach(() => {
         usersIndex = new UsersIndex();
+        invalidUsersIndex = new UsersInvalidIndex();
     });
 
     it("can delete index", async () => {
@@ -55,7 +73,7 @@ describe("Index operations", function () {
         let indexingStatus = await store.maintenance.send(new GetIndexingStatusOperation());
         const indexStatus: IndexStatus = indexingStatus.indexes[0];
         assert.equal(indexStatus.status, "Disabled");
-        
+
         await store.maintenance.send(new EnableIndexOperation(usersIndex.getIndexName()));
         indexingStatus = await store.maintenance.send(new GetIndexingStatusOperation());
         assert.equal(indexingStatus.status, "Running");
@@ -78,209 +96,110 @@ describe("Index operations", function () {
         assert.equal(indexStats[0].collections.size, 1);
     });
 
-    class User {
-        constructor(public name: string) {}
-    }
-
-    it.only("can get terms", async () => {
+    it("can get terms", async () => {
         await usersIndex.execute(store);
 
         const session = store.openSession();
         const user = new User("Marcin");
-        session.store(user);
+        await session.store(user);
         await session.saveChanges();
 
-        globalContext.waitForIndexing(store, store.database);
-        
+        await globalContext.waitForIndexing(store, store.database);
+        const terms: string[] = await store.maintenance.send(new GetTermsOperation("UsersIndex", "name", null));
+
+        assert.equal(terms.length, 1);
+        assert.equal(terms[0], "marcin");
     });
 
-//             try (IDocumentSession session = store.openSession()) {
-//                 User user = new User();
-//                 user.setName("Marcin");
-//                 session.store(user);
-//                 session.saveChanges();
-//             }
+    it("can tell if index changed", async () => {
+        const indexDef = usersIndex.createIndexDefinition();
+        await store.maintenance.send(new PutIndexesOperation(indexDef));
 
-//             waitForIndexing(store, store.getDatabase());
+        let hasIndexChanged = await store.maintenance.send(new IndexHasChangedOperation(indexDef));
+        assert.ok(!hasIndexChanged);
 
-//             String[] terms = store.maintenance().send(new GetTermsOperation("UsersIndex", "name", null));
+        indexDef.maps = new Set(["from users"]);
+        hasIndexChanged = await store.maintenance.send(new IndexHasChangedOperation(indexDef));
+        assert.ok(hasIndexChanged);
+    });
 
-//             assertThat(terms)
-//                     .hasSize(1)
-//                     .contains("marcin");
-//         }
+    it("can stop/start indexing", async () => {
+        const indexDef = usersIndex.createIndexDefinition();
+        await store.maintenance.send(new PutIndexesOperation(indexDef));
+        await store.maintenance.send(new StopIndexingOperation());
 
-//     }
+        let indexingStatus = await store.maintenance.send(new GetIndexingStatusOperation());
+        assert.equal(indexingStatus.status, "Paused");
+        await store.maintenance.send(new StartIndexingOperation());
+        indexingStatus = await store.maintenance.send(new GetIndexingStatusOperation());
+        assert.equal(indexingStatus.status, "Running");
+    });
 
+    it("can stop/start index", async () => {
+        const indexDef = usersIndex.createIndexDefinition();
+        await store.maintenance.send(new PutIndexesOperation(indexDef));
+        await store.maintenance.send(new StopIndexOperation(indexDef.name));
+
+        let indexingStatus = await store.maintenance.send(new GetIndexingStatusOperation());
+        assert.equal(indexingStatus.status, "Running");
+        assert.equal(indexingStatus.indexes[0].status, "Paused");
+
+        await store.maintenance.send(new StartIndexOperation(indexDef.name));
+        indexingStatus = await store.maintenance.send(new GetIndexingStatusOperation());
+        assert.equal(indexingStatus.status, "Running");
+        assert.equal(indexingStatus.indexes[0].status, "Running");
+
+    });
+
+    it("can set index lock mode", async () => {
+        const indexDef = usersIndex.createIndexDefinition();
+        await store.maintenance.send(new PutIndexesOperation(indexDef));
+        await store.maintenance.send(new SetIndexesLockOperation(indexDef.name, "LockedError"));
+
+        const newIndexDef = await store.maintenance.send(new GetIndexOperation(indexDef.name));
+        assert.equal(newIndexDef.lockMode, "LockedError");
+    });
+
+    it("can set index priority", async () => {
+        const indexDef = usersIndex.createIndexDefinition();
+        await store.maintenance.send(new PutIndexesOperation(indexDef));
+        await store.maintenance.send(new SetIndexesPriorityOperation(indexDef.name, "High"));
+
+        const newIndexDef = await store.maintenance.send(new GetIndexOperation(indexDef.name));
+        assert.equal(newIndexDef.priority, "High");
+    });
+
+    it("can list errors", async () => {
+        const indexDef = invalidUsersIndex.createIndexDefinition();
+
+        await store.maintenance.send(new PutIndexesOperation(indexDef));
+
+        const session = store.openSession();
+        const user = new User(null, 0);
+        await session.store(user);
+        await session.saveChanges();
+
+        await globalContext.waitForIndexing(store, store.database, null, false);
+
+        const indexErrors = await store.maintenance.send(new GetIndexErrorsOperation());
+        const perIndexErrors = await store.maintenance.send(new GetIndexErrorsOperation([indexDef.name]));
+
+        assert.equal(indexErrors.length, 1);
+        assert.equal(perIndexErrors.length, 1);
+    });
+
+    it("can get index statistics", async () => {
+        const indexDef = usersIndex.createIndexDefinition();
+        await store.maintenance.send(new PutIndexesOperation(indexDef));
+
+        const session = store.openSession();
+        const user = new User(null, 0);
+        await session.store(user);
+        await session.saveChanges();
+
+        await globalContext.waitForIndexing(store, store.database);
+        const stats = await store.maintenance.send(new GetIndexStatisticsOperation(indexDef.name));
+        assert.equal(stats.entriesCount, 1);
+    });
 
 });
-
-//     @Test
-//     public void hasIndexChanged() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             IndexesFromClientTest.UsersIndex index = new IndexesFromClientTest.UsersIndex();
-//             IndexDefinition indexDef = index.createIndexDefinition();
-
-//             store.maintenance().send(new PutIndexesOperation(indexDef));
-
-//             assertThat(store.maintenance().send(new IndexHasChangedOperation(indexDef)))
-//                     .isFalse();
-
-//             indexDef.setMaps(Sets.newHashSet("from users"));
-
-//             assertThat(store.maintenance().send(new IndexHasChangedOperation(indexDef)))
-//                     .isTrue();
-//         }
-//     }
-
-//     @Test
-//     public void canStopStartIndexing() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             IndexesFromClientTest.UsersIndex index = new IndexesFromClientTest.UsersIndex();
-//             IndexDefinition indexDef = index.createIndexDefinition();
-
-//             store.maintenance().send(new PutIndexesOperation(indexDef));
-
-//             store.maintenance().send(new StopIndexingOperation());
-
-//             IndexingStatus indexingStatus = store.maintenance().send(new GetIndexingStatusOperation());
-
-//             assertThat(indexingStatus.getStatus())
-//                     .isEqualTo(IndexRunningStatus.PAUSED);
-
-//             store.maintenance().send(new StartIndexingOperation());
-
-//             indexingStatus = store.maintenance().send(new GetIndexingStatusOperation());
-
-//             assertThat(indexingStatus.getStatus())
-//                     .isEqualTo(IndexRunningStatus.RUNNING);
-
-//         }
-//     }
-
-//     @Test
-//     public void canStopStartIndex() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             IndexesFromClientTest.UsersIndex index = new IndexesFromClientTest.UsersIndex();
-//             IndexDefinition indexDef = index.createIndexDefinition();
-
-//             store.maintenance().send(new PutIndexesOperation(indexDef));
-
-//             store.maintenance().send(new StopIndexOperation(indexDef.getName()));
-
-//             IndexingStatus indexingStatus = store.maintenance().send(new GetIndexingStatusOperation());
-
-//             assertThat(indexingStatus.getStatus())
-//                     .isEqualTo(IndexRunningStatus.RUNNING);
-//             assertThat(indexingStatus.getIndexes()[0].getStatus())
-//                     .isEqualTo(IndexRunningStatus.PAUSED);
-
-//             store.maintenance().send(new StartIndexOperation(indexDef.getName()));
-
-//             indexingStatus = store.maintenance().send(new GetIndexingStatusOperation());
-
-//             assertThat(indexingStatus.getStatus())
-//                     .isEqualTo(IndexRunningStatus.RUNNING);
-//             assertThat(indexingStatus.getIndexes()[0].getStatus())
-//                     .isEqualTo(IndexRunningStatus.RUNNING);
-
-//         }
-//     }
-
-//     @Test
-//     public void canSetIndexLockMode() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             IndexesFromClientTest.UsersIndex index = new IndexesFromClientTest.UsersIndex();
-//             IndexDefinition indexDef = index.createIndexDefinition();
-
-//             store.maintenance().send(new PutIndexesOperation(indexDef));
-
-//             store.maintenance().send(new SetIndexesLockOperation(indexDef.getName(), IndexLockMode.LOCKED_ERROR));
-//             IndexDefinition newIndexDef = store.maintenance().send(new GetIndexOperation(indexDef.getName()));
-
-//             assertThat(newIndexDef.getLockMode())
-//                     .isEqualTo(IndexLockMode.LOCKED_ERROR);
-//         }
-//     }
-
-//     @Test
-//     public void canSetIndexPriority() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             IndexesFromClientTest.UsersIndex index = new IndexesFromClientTest.UsersIndex();
-//             IndexDefinition indexDef = index.createIndexDefinition();
-
-//             store.maintenance().send(new PutIndexesOperation(indexDef));
-
-//             store.maintenance().send(new SetIndexesPriorityOperation(indexDef.getName(), IndexPriority.HIGH));
-//             IndexDefinition newIndexDef = store.maintenance().send(new GetIndexOperation(indexDef.getName()));
-
-//             assertThat(newIndexDef.getPriority())
-//                     .isEqualTo(IndexPriority.HIGH);
-//         }
-//     }
-
-//     @Test
-//     public void canListErrors() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             UsersInvalidIndex index = new UsersInvalidIndex();
-//             IndexDefinition indexDef = index.createIndexDefinition();
-
-//             store.maintenance().send(new PutIndexesOperation(indexDef));
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 User user = new User();
-//                 user.setName(null);
-//                 user.setAge(0);
-//                 session.store(user);
-//                 session.saveChanges();
-//             }
-
-//             waitForIndexing(store, store.getDatabase());
-
-//             IndexErrors[] indexErrors = store.maintenance().send(new GetIndexErrorsOperation());
-//             IndexErrors[] perIndexErrors = store.maintenance().send(new GetIndexErrorsOperation(new String[] { indexDef.getName() }));
-
-//             assertThat(indexErrors)
-//                     .hasSize(1);
-
-//             assertThat(perIndexErrors)
-//                     .hasSize(1);
-//         }
-//     }
-
-//     @Test
-//     public void canGetIndexStatistics() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             Users_Index index = new Users_Index();
-//             IndexDefinition indexDef = index.createIndexDefinition();
-
-//             store.maintenance().send(new PutIndexesOperation(indexDef));
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 User user = new User();
-//                 user.setName(null);
-//                 user.setAge(0);
-//                 session.store(user);
-//                 session.saveChanges();
-//             }
-
-//             waitForIndexing(store, store.getDatabase());
-
-//             IndexStats stats = store.maintenance().send(new GetIndexStatisticsOperation(indexDef.getName()));
-//             assertThat(stats.getEntriesCount())
-//                     .isEqualTo(1);
-//         }
-//     }
-
-//     public static class Users_Index extends AbstractIndexCreationTask {
-//         public Users_Index() {
-//             map = "from u in docs.Users select new { u.name }";
-//         }
-//     }
-
-//     public static class UsersInvalidIndex extends AbstractIndexCreationTask {
-//         public UsersInvalidIndex() {
-//             map = "from u in docs.Users select new { a = 5 / u.Age }";
-//         }
-//     }
-// }

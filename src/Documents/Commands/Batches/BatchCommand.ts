@@ -101,7 +101,7 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
 
     private _appendOptions(): string {
         if (!this._options) {
-            return;
+            return "";
         }
 
         let result = "?";

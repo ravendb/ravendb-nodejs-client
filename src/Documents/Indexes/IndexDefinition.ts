@@ -1,6 +1,5 @@
 import {throwError} from "../../Exceptions/index";
-import { IndexPriority, FieldStorage, FieldIndexing, FieldTermVector, IndexLockMode } from "./Enums";
-import { IndexType } from "../../Primitives/Indexing";
+import { IndexPriority, FieldStorage, FieldIndexing, FieldTermVector, IndexLockMode, IndexType } from "./Enums";
 import { IndexFieldOptions } from "./IndexFieldOptions";
 import { SpatialOptions } from "./Spatial";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
@@ -39,7 +38,7 @@ export class IndexDefinition {
     }
 
     public get type(): IndexType {
-        if (!this.indexType || this.indexType === "NONE") {
+        if (!this.indexType || this.indexType === "None") {
             this.indexType = this._detectStaticIndexType();
         }
 
@@ -52,9 +51,9 @@ export class IndexDefinition {
 
     private _detectStaticIndexType(): IndexType  {
         if (!this.reduce) {
-            return "MAP";
+            return "Map";
         }
-        return "MAP_REDUCE";
+        return "MapReduce";
     }
     // TBD public boolean isTestIndex()
 

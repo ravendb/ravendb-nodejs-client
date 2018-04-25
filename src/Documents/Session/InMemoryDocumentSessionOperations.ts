@@ -180,13 +180,14 @@ export abstract class InMemoryDocumentSessionOperations
         this.useOptimisticConcurrency = this._requestExecutor.conventions.isUseOptimisticConcurrency();
         this.maxNumberOfRequestsPerSession = this._requestExecutor.conventions.maxNumberOfRequestsPerSession;
         this._generateEntityIdOnTheClient =
-            new GenerateEntityIdOnTheClient(this._requestExecutor.conventions, (obj) => this._generateId(obj));
+            new GenerateEntityIdOnTheClient(this._requestExecutor.conventions, 
+                (obj) => this._generateId(obj));
         this._entityToJson = new EntityToJson(this);
 
         this._sessionInfo = new SessionInfo(this._clientSessionId);
     }
 
-    protected abstract _generateId(entity: object): string;
+    protected abstract _generateId(entity: object): Promise<string>;
 
     /**
      * Gets the metadata for the specified entity.
@@ -558,22 +559,21 @@ export abstract class InMemoryDocumentSessionOperations
     public store<TEntity extends object>(
         entity: TEntity,
         id?: string,
-        callback?: AbstractCallback<TEntity>): void;
+        callback?: AbstractCallback<TEntity>): Promise<void>;
     public store<TEntity extends object>(
         entity: TEntity,
         id?: string,
         options?: SessionStoreOptions<TEntity>,
-        callback?: AbstractCallback<TEntity>): void;
+        callback?: AbstractCallback<TEntity>): Promise<void>;
     public store<TEntity extends object>(
         entity: TEntity,
         id?: string,
         optionsOrCallback?: SessionStoreOptions<TEntity> | AbstractCallback<TEntity>,
-        callback?: AbstractCallback<TEntity>): void {
+        callback?: AbstractCallback<TEntity>): Promise<void> {
 
-        let options: SessionStoreOptions<TEntity>;
+        let options: SessionStoreOptions<TEntity> = {};
         if (TypeUtil.isFunction(optionsOrCallback)) {
             callback = optionsOrCallback as AbstractCallback<TEntity>;
-            options = {};
         } else if (TypeUtil.isObject(optionsOrCallback)) {
             options = optionsOrCallback as SessionStoreOptions<TEntity> || {};
             callback = callback || TypeUtil.NOOP;
@@ -591,7 +591,8 @@ export abstract class InMemoryDocumentSessionOperations
             forceConcurrencyCheck = !hasId ? "Forced" : "Auto";
         }
 
-        this._storeInternal(entity, changeVector, id, forceConcurrencyCheck, documentType);
+        return Promise.resolve()
+            .then(() => this._storeInternal(entity, changeVector, id, forceConcurrencyCheck, documentType));
     }
 
     protected _generateDocumentKeysOnStore: boolean = true;
@@ -613,53 +614,61 @@ export abstract class InMemoryDocumentSessionOperations
             return;
         }
 
-        if (!id) {
-            if (this._generateDocumentKeysOnStore) {
-                id = this._generateEntityIdOnTheClient.generateDocumentKeyForStorage(entity);
-            } else {
-                this._rememberEntityForDocumentIdGeneration(entity);
-            }
-        } else {
-            this.generateEntityIdOnTheClient.trySetIdentity(entity, id);
-        }
+        return Promise.resolve()
+            .then(() => {
+                if (!id) {
+                    if (this._generateDocumentKeysOnStore) {
+                        return this._generateEntityIdOnTheClient.generateDocumentKeyForStorage(entity);
+                    } else {
+                        this._rememberEntityForDocumentIdGeneration(entity);
+                    }
+                } else {
+                    this.generateEntityIdOnTheClient.trySetIdentity(entity, id);
+                }
 
-        const cmdKey = IdTypeAndName.keyFor(id, "CLIENT_ANY_COMMAND", null);
-        if (this._deferredCommandsMap.has(cmdKey)) {
-            throwError("InvalidOperationException",
-                "Can't store document, there is a deferred command registered "
-                + "for this document in the session. Document id: " + id);
-        }
+                return id;
+            })
+            // tslint:disable-next-line:no-shadowed-variable
+            .then(id => {
 
-        if (this.deletedEntities.has(entity)) {
-            throwError("InvalidOperationException",
-                "Can't store object, it was already deleted in this session.  Document id: " + id);
-        }
+                const cmdKey = IdTypeAndName.keyFor(id, "CLIENT_ANY_COMMAND", null);
+                if (this._deferredCommandsMap.has(cmdKey)) {
+                    throwError("InvalidOperationException",
+                        "Can't store document, there is a deferred command registered "
+                        + "for this document in the session. Document id: " + id);
+                }
 
-        // we make the check here even if we just generated the ID
-        // users can override the ID generation behavior, and we need
-        // to detect if they generate duplicates.
-        this._assertNoNonUniqueInstance(entity, id);
+                if (this.deletedEntities.has(entity)) {
+                    throwError("InvalidOperationException",
+                        "Can't store object, it was already deleted in this session.  Document id: " + id);
+                }
 
-        const conventions = this._requestExecutor.conventions;
-        const collectionName: string = conventions.getCollectionNameForEntity(entity);
-        const metadata = {};
-        if (collectionName) {
-            metadata[CONSTANTS.Documents.Metadata.COLLECTION] = collectionName;
-        }
+                // we make the check here even if we just generated the ID
+                // users can override the ID generation behavior, and we need
+                // to detect if they generate duplicates.
+                this._assertNoNonUniqueInstance(entity, id);
 
-        const entityType = documentType
-            ? conventions.findEntityType(documentType)
-            : conventions.getEntityTypeDescriptor(entity);
-        const jsType = conventions.getJsTypeName(entityType);
-        if (jsType) {
-            metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] = jsType;
-        }
+                const conventions = this._requestExecutor.conventions;
+                const collectionName: string = conventions.getCollectionNameForEntity(entity);
+                const metadata = {};
+                if (collectionName) {
+                    metadata[CONSTANTS.Documents.Metadata.COLLECTION] = collectionName;
+                }
 
-        if (id) {
-            this._knownMissingIds.delete(id);
-        }
+                const entityType = documentType
+                    ? conventions.findEntityType(documentType)
+                    : conventions.getEntityTypeDescriptor(entity);
+                const jsType = conventions.getJsTypeName(entityType);
+                if (jsType) {
+                    metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] = jsType;
+                }
 
-        this._storeEntityInUnitOfWork(id, entity, changeVector, metadata, forceConcurrencyCheck, documentType);
+                if (id) {
+                    this._knownMissingIds.delete(id);
+                }
+
+                this._storeEntityInUnitOfWork(id, entity, changeVector, metadata, forceConcurrencyCheck, documentType);
+            });
     }
 
     protected _storeEntityInUnitOfWork(
