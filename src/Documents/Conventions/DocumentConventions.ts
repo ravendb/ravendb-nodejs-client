@@ -504,18 +504,26 @@ export class DocumentConventions {
         return this;
     }
 
-    public findEntityType(documentType: DocumentType): ObjectTypeDescriptor;
-    public findEntityType(typeName: string): ObjectTypeDescriptor;
-    public findEntityType(docTypeOrtypeName: string): ObjectTypeDescriptor {
+    public tryRegisterEntityType(docType: DocumentType): this {
+        if (TypeUtil.isObjectTypeDescriptor(docType)) {
+            this.registerEntityType(docType as ObjectTypeDescriptor);
+        }
+
+        return this;
+    }
+
+    public findEntityType<T>(documentType: DocumentType<T>): ObjectTypeDescriptor<T>;
+    public findEntityType<T>(typeName: string): ObjectTypeDescriptor<T>;
+    public findEntityType<T>(docTypeOrtypeName: string): ObjectTypeDescriptor<T> {
         if (!docTypeOrtypeName) {
             return null;
         }
 
         if (typeof(docTypeOrtypeName) !== "string") {
-            return docTypeOrtypeName as ObjectTypeDescriptor;
+            return docTypeOrtypeName as ObjectTypeDescriptor<T>;
         }
         
-        return this._knownEntityTypes.get(docTypeOrtypeName);
+        return this._knownEntityTypes.get(docTypeOrtypeName) as ObjectLiteralDescriptor<T>;
     }
 
     ////////////////////////

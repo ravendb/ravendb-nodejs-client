@@ -11,6 +11,8 @@ import {
     IDocumentStore,
 } from "../../src";
 import { User, Person } from "../Assets/Entities";
+import { GetDocumentsCommand } from "../../src/Documents/Commands/GetDocumentsCommand";
+import { DocumentSession } from "../../src/Documents/Session/DocumentSession";
 
 describe.only("Basic documents test", function () {
 
@@ -43,102 +45,77 @@ describe.only("Basic documents test", function () {
         await session4.store(person);
         await session4.saveChanges();
     });
+
+    it("get", async () => {
+        const dummy = new User();
+        delete dummy.id;
+
+        {
+            const session = store.openSession();
+            const user1 = Object.assign(new User(), { name: "Fitzchack" });
+            const user2 = Object.assign(new User(), { name: "Arek" });
+
+            await session.store(user1);
+            await session.store(user2);
+            await session.saveChanges();
+        }
+
+        const requestExecutor = store.getRequestExecutor();
+        let getDocumentsCommand = new GetDocumentsCommand({
+            ids: ["users/1", "users/2"], 
+            includes: null, 
+            metadataOnly: false
+        });
+
+        await requestExecutor.execute(getDocumentsCommand);
+
+        let docs = getDocumentsCommand.result;
+        assert.equal(docs.results.length, 2);
+
+        let doc1 = docs.results[0];
+        let doc2 = docs.results[1];
+        assert.ok(doc1);
+
+        let doc1Properties = Object.keys(doc1);
+        assert.ok(doc1Properties.includes("@metadata"));
+        assert.equal(doc1Properties.length, 2); // name, @metadata
+
+        assert.ok(doc2);
+        let doc2Properties = Object.keys(doc2);
+        assert.ok(doc2Properties.includes("@metadata"));
+        assert.equal(doc2Properties.length, 2); // name, @metadata
+
+        {
+            const session = store.openSession() as DocumentSession;
+            const user1 = session.entityToJson.convertToEntity(User, "users/1", doc1) as User;
+            const user2 = session.entityToJson.convertToEntity(User, "users/2", doc2) as User;
+
+            assert.ok(user1 instanceof User);
+            assert.ok(user2 instanceof User);
+
+            assert.equal(user1.name, "Fitzchack");
+            assert.equal(user2.name, "Arek");
+
+            getDocumentsCommand = new GetDocumentsCommand({
+                ids: [ "users/1", "users/2" ], 
+                metadataOnly: true 
+            });
+
+            await requestExecutor.execute(getDocumentsCommand);
+
+            docs = getDocumentsCommand.result;
+            assert.equal(docs.results.length, 2);
+
+            [ doc1, doc2 ] = docs.results;
+            assert.ok(doc1);
+            doc1Properties = Object.keys(doc1);
+            assert.ok(doc1Properties.includes("@metadata"));
+            assert.equal(doc1Properties.length, 1);
+
+            assert.ok(doc2);
+            doc2Properties = Object.keys(doc2);
+            assert.ok(doc2Properties.includes("@metadata"));
+            assert.equal(doc2Properties.length, 1);
+        }
+    });
 });
-
-    // @Test
-    // public void get() throws Exception {
-    //     try (IDocumentStore store = getDocumentStore()) {
-    //         ObjectNode dummy = JsonExtensions.getDefaultEntityMapper().valueToTree(new User());
-    //         dummy.remove("id");
-
-    //         try (IDocumentSession session = store.openSession()) {
-    //             User user1 = new User();
-    //             user1.setName("Fitzchak");
-
-    //             User user2 = new User();
-    //             user2.setName("Arek");
-
-    //             session.store(user1, "users/1");
-    //             session.store(user2, "users/2");
-
-    //             session.saveChanges();
-    //         }
-
-    //         RequestExecutor requestExecutor = store.getRequestExecutor();
-
-    //         GetDocumentsCommand getDocumentsCommand = new GetDocumentsCommand(new String[]{"users/1", "users/2"}, null, false);
-
-    //         requestExecutor.execute(getDocumentsCommand);
-
-    //         GetDocumentsResult docs = getDocumentsCommand.getResult();
-    //         assertThat(docs.getResults().size())
-    //                 .isEqualTo(2);
-
-    //         ObjectNode doc1 = (ObjectNode) docs.getResults().get(0);
-    //         ObjectNode doc2 = (ObjectNode) docs.getResults().get(1);
-
-    //         assertThat(doc1)
-    //                 .isNotNull();
-
-    //         ArrayList<String> doc1Properties = Lists.newArrayList(doc1.fieldNames());
-    //         assertThat(doc1Properties)
-    //                 .contains("@metadata");
-
-    //         assertThat(doc1Properties.size())
-    //                 .isEqualTo(dummy.size() + 1); // +1 for @metadata
-
-    //         assertThat(doc2)
-    //                 .isNotNull();
-
-    //         ArrayList<String> doc2Properties = Lists.newArrayList(doc2.fieldNames());
-    //         assertThat(doc2Properties)
-    //                 .contains("@metadata");
-
-    //         assertThat(doc2Properties.size())
-    //                 .isEqualTo(dummy.size() + 1); // +1 for @metadata
-
-    //         try (DocumentSession session = (DocumentSession) store.openSession()) {
-    //             User user1 = (User) session.getEntityToJson().convertToEntity(User.class, "users/1", doc1);
-    //             User user2 = (User) session.getEntityToJson().convertToEntity(User.class, "users/2", doc2);
-
-    //             assertThat(user1.getName())
-    //                     .isEqualTo("Fitzchak");
-
-    //             assertThat(user2.getName())
-    //                     .isEqualTo("Arek");
-    //         }
-
-    //         getDocumentsCommand = new GetDocumentsCommand(new String[] { "users/1", "users/2"}, null, true);
-
-    //         requestExecutor.execute(getDocumentsCommand);
-
-    //         docs = getDocumentsCommand.getResult();
-
-    //         assertThat(docs.getResults())
-    //                 .hasSize(2);
-
-    //         doc1 = (ObjectNode) docs.getResults().get(0);
-    //         doc2 = (ObjectNode) docs.getResults().get(1);
-
-    //         assertThat(doc1)
-    //                 .isNotNull();
-
-    //         doc1Properties = Lists.newArrayList(doc1.fieldNames());
-    //         assertThat(doc1Properties)
-    //                 .contains("@metadata");
-
-    //         assertThat(doc1Properties.size())
-    //                 .isEqualTo(1);
-
-    //         assertThat(doc2)
-    //                 .isNotNull();
-
-    //         doc2Properties = Lists.newArrayList(doc2.fieldNames());
-    //         assertThat(doc2Properties)
-    //                 .contains("@metadata");
-
-    //         assertThat(doc2Properties.size())
-    //                 .isEqualTo(1);
-
-    //     }
-    // }

@@ -32,7 +32,7 @@ export class LoadOperation {
         this._session.incrementRequestCount();
 
         log.info("Requesting the following ids " 
-            + this._idsToCheckOnServer.join(",") + " from " + this._session.storeIdentifier());
+            + this._idsToCheckOnServer.join(",") + " from " + this._session.storeIdentifier);
 
         return new GetDocumentsCommand({ 
             ids: this._idsToCheckOnServer, 
@@ -74,7 +74,7 @@ export class LoadOperation {
         return this;
     }
 
-    private _getDocument<T extends object>(clazz: ObjectTypeDescriptor<T>, id: string): T {
+    private _getDocument<T extends Object>(clazz: ObjectTypeDescriptor<T>, id: string): T {
         if (!id) {
             return null;
         }

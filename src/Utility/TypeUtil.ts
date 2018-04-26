@@ -76,7 +76,8 @@ export class TypeUtil {
     }
 
     public static isObjectLiteralTypeDescriptor(typeDescriptor: ObjectTypeDescriptor) {
-        return !this.isClassConstructor(typeDescriptor)
+        return typeDescriptor
+            && !this.isClassConstructor(typeDescriptor)
             && typeof (typeDescriptor as ObjectLiteralDescriptor).isType === "function";
     }
 

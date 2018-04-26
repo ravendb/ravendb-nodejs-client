@@ -2,6 +2,11 @@ import { ObjectTypeDescriptor, ClassConstructor, ObjectLiteralDescriptor } from 
 import { DateUtil } from "../Utility/DateUtil";
 import { throwError } from "../Exceptions";
 import { TypeUtil } from "../Utility/TypeUtil";
+import * as changeCase from "change-object-case";
+import { getLogger } from "../Utility/LogUtil";
+import { EntityConstructor } from "../Documents/DocumentAbstractions";
+
+const log = getLogger({ module: "ObjectMapper" });
 
 export interface TypeInfo {
     typeName?: string;
@@ -13,8 +18,14 @@ export interface NestedTypes {
 }
 
 export interface ITypesAwareObjectMapper {
-    fromObjectLiteral<TResult extends object>(raw: object, typeInfo?: TypeInfo): TResult;
-    toObjectLiteral<TFrom extends object>(obj: TFrom, typeInfo?: (typeInfo: TypeInfo) => void): object;
+    fromObjectLiteral<TResult extends Object>(raw: object, typeInfo?: TypeInfo): TResult;
+    toObjectLiteral<TFrom extends Object>(obj: TFrom, typeInfo?: (typeInfo: TypeInfo) => void): object;
+}
+
+export class ObjectKeysTransform {
+    public static camelCase(obj: object, recursive: boolean = false) {
+        return changeCase.camelKeys(obj, { recursive });
+    }
 }
 
 export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
@@ -43,36 +54,25 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         return this;
     }
 
-    public fromObjectLiteral<TResult extends object>(rawResult: object, typeInfo?: TypeInfo): TResult;
-    public fromObjectLiteral<TResult extends object>(
+    public fromObjectLiteral<TResult extends Object>(rawResult: object, typeInfo?: TypeInfo): TResult;
+    public fromObjectLiteral<TResult extends Object>(
         rawResult: object, typeInfo?: TypeInfo, knownTypes?: Map<string, ObjectTypeDescriptor>): TResult;
-    public fromObjectLiteral<TResult extends object>(
+    public fromObjectLiteral<TResult extends Object>(
         rawResult: object, typeInfo?: TypeInfo, knownTypes?: Map<string, ObjectTypeDescriptor>): TResult {
         
-        let result: TResult = Object.assign({}, rawResult as TResult);
-        if (!typeInfo) {
-            return rawResult as TResult;
-        }
-
+        const typeName = typeInfo ? typeInfo.typeName : null;
+        const nestedTypes = typeInfo ? typeInfo.nestedTypes : null;
         const types = (knownTypes || this._knownTypes);
-        if (typeInfo.typeName) {
-            const ctorOrObjLiteralDescriptor = types.get(typeInfo.typeName);
-            if (TypeUtil.isObjectLiteralTypeDescriptor(ctorOrObjLiteralDescriptor)) {
-                result = (ctorOrObjLiteralDescriptor as ObjectLiteralDescriptor<TResult>).construct(rawResult);
-            } else {
-                result = Object.assign(
-                    this._createEmptyObject<TResult>(ctorOrObjLiteralDescriptor as ClassConstructor), rawResult);
-            }
-        }
+        const ctorOrTypeDescriptor = this._getKnownType(typeName, knownTypes);
+        const result = this._instantiateObject<TResult>(typeName, rawResult, ctorOrTypeDescriptor);
 
-        this._applyNestedTypes(result, typeInfo, types);
+        this._applyNestedTypes(result, nestedTypes, types);
 
         return result;
     }
 
-    private _applyNestedTypes<TResult extends object>(
-        obj: TResult, typeInfo?: TypeInfo, knownTypes?: Map<string, ObjectTypeDescriptor>) {
-        const { nestedTypes } = typeInfo;
+    private _applyNestedTypes<TResult extends Object>(
+        obj: TResult, nestedTypes?: NestedTypes, knownTypes?: Map<string, ObjectTypeDescriptor>) {
         if (!nestedTypes) {
             return obj;
         }
@@ -95,15 +95,15 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         return obj;
     }
 
-    public toObjectLiteral<TFrom extends object>(obj: TFrom): object;
-    public toObjectLiteral<TFrom extends object>(
+    public toObjectLiteral<TFrom extends Object>(obj: TFrom): object;
+    public toObjectLiteral<TFrom extends Object>(
         obj: TFrom,
         typeInfoCallback?: (typeInfo: TypeInfo) => void): object;
-    public toObjectLiteral<TFrom extends object>(
+    public toObjectLiteral<TFrom extends Object>(
         obj: TFrom,
         typeInfoCallback?: (typeInfo: TypeInfo) => void,
         knownTypes?: Map<string, ObjectTypeDescriptor>): object;
-    public toObjectLiteral<TFrom extends object>(
+    public toObjectLiteral<TFrom extends Object>(
         obj: TFrom,
         typeInfoCallback?: (typeInfo: TypeInfo) => void,
         knownTypes?: Map<string, ObjectTypeDescriptor>): object {
@@ -307,30 +307,54 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
                 }, knownTypes);
             });
 
-
             return;
         }
 
-        const ctorOrTypeDescriptor = knownTypes.get(fieldTypeName);
+        const ctorOrTypeDescriptor = this._getKnownType(fieldTypeName, knownTypes);
+        const instance = this._instantiateObject(fieldTypeName, fieldVal, ctorOrTypeDescriptor);
+        fieldContext.setValue(instance);
+    }
+
+    private _instantiateObject<TResult>(
+        typeName: string, rawValue: object, ctorOrTypeDescriptor: ObjectTypeDescriptor): TResult {
+        let instance = null;
+        if (!ctorOrTypeDescriptor) {
+            instance = Object.assign({}, rawValue);
+        } else if (TypeUtil.isClassConstructor(ctorOrTypeDescriptor)) {
+            instance = this._createEmptyObject(ctorOrTypeDescriptor as ClassConstructor);
+            instance = Object.assign(instance, rawValue);
+        } else if (TypeUtil.isObjectLiteralTypeDescriptor(ctorOrTypeDescriptor)) {
+            instance = (ctorOrTypeDescriptor as ObjectLiteralDescriptor).construct(rawValue);
+        } else {
+            throwError("InvalidArgumentException", 
+                `Invalid type descriptor for type ${typeName}: ${ctorOrTypeDescriptor}`);
+        }
+
+        return instance as TResult;
+    }
+
+    private _getKnownType(typeName: string, knownTypes: Map<string, ObjectTypeDescriptor>): ObjectTypeDescriptor {
+        if (!typeName) {
+            return null;
+        }
+
+        const ctorOrTypeDescriptor = knownTypes.get(typeName);
         if (!ctorOrTypeDescriptor) {
             if (this._throwMappingErrors) {
-                throwError("MappingError", `Type '${fieldTypeName}' is unknown for field '${fieldContext.field}'`);
+                throwError("MappingError", `Could not find type descriptor '${typeName}'.`);
             } else {
-                fieldContext.setValue(Object.assign({}, fieldVal));
-                return;
+                log.warn(`Could not find type descriptor '${typeName}'.`);
             }
         }
 
-        if (TypeUtil.isClassConstructor(ctorOrTypeDescriptor)) {
-            const emptyObj = this._createEmptyObject(ctorOrTypeDescriptor as ClassConstructor);
-            fieldContext.setValue(Object.assign(emptyObj, fieldVal));
-        } else {
-            const instance = (ctorOrTypeDescriptor as ObjectLiteralDescriptor).construct(fieldVal);
-            fieldContext.setValue(instance);
-        }
+        return ctorOrTypeDescriptor;
     }
 
-    private _createEmptyObject<TResult extends object>(ctor: ClassConstructor) {
+    private _createEmptyObject<TResult extends Object>(ctor: EntityConstructor<TResult>) {
+        if (!ctor) {
+            throwError("InvalidArgumentException", "ctor argument must not be null or undefined.");
+        }
+
         // tslint:disable-next-line:new-parens
         return new (Function.prototype.bind.apply(ctor)) as TResult;
     }

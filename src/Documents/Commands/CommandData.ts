@@ -64,7 +64,7 @@ export class DeleteCommandData implements ICommandData {
     }
 }
 
-export class PutCommandDataBase<T extends object> implements ICommandData {
+export class PutCommandDataBase<T extends Object> implements ICommandData {
     
     public get type(): CommandType {
         return "PUT";
@@ -74,7 +74,7 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
     public name: string = null;
     public changeVector: string;
 
-    private document: T;
+    private _document: T;
 
     constructor(id: string, changeVector: string, document: T) {
 
@@ -84,7 +84,7 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
 
         this.id = id;
         this.changeVector = changeVector;
-        this.document = document;
+        this._document = document;
     }
 
     public serialize(): object {
@@ -92,7 +92,7 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
             Id: this.id,
             ChangeVector: this.changeVector,
             Type: this.type,
-            Document: this.document
+            Document: this._document
         };
 
         return toSerialize;

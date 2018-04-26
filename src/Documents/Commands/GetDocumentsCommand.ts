@@ -4,17 +4,18 @@ import { HttpRequestBase } from "../../Primitives/Http";
 import { Mapping, JsonSerializer } from "../../Mapping";
 import { HeadersBuilder, getHeaders } from "../../Utility/HttpUtil";
 import { IRavenObject } from "../..";
+import { ObjectKeysTransform } from "../../Mapping/ObjectMapper";
 
 export interface GetDocumentsByIdCommandOptions {
     id: string;
-    includes: string[],
-    metadataOnly: boolean;
+    includes?: string[];
+    metadataOnly?: boolean;
 }
 
 export interface GetDocumentsByIdsCommandOptions {
     ids: string[];
-    includes: string[],
-    metadataOnly: boolean;
+    includes?: string[];
+    metadataOnly?: boolean;
 }
 
 export interface GetDocumentsStartingWithOptions {
@@ -166,7 +167,9 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             return;
         }
 
-        this.result = this._commandPayloadSerializer.deserialize(response);
+        // we want entities property casing untouched, so we're not using PascalCase reviver here
+        const raw = JsonSerializer.getDefault().deserialize(response);
+        this.result = ObjectKeysTransform.camelCase(raw);
     }
 
     public get isReadRequest(): boolean {

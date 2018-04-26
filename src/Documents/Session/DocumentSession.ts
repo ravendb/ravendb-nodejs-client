@@ -1,23 +1,22 @@
 import {BatchOperation} from "./Operations/BatchOperation";
 import * as _ from "lodash";
 import * as BluebirdPromise from "bluebird";
-import { IDocumentSession, ISessionOperationOptions, ConcurrencyCheckMode } from "./IDocumentSession";
+import { 
+    IDocumentSession, 
+    SessionLoadOptions, 
+    ConcurrencyCheckMode, 
+    SessionLoadStartingWithOptions 
+} from "./IDocumentSession";
 // import { IDocumentQueryBase, IRawDocumentQuery, IDocumentQuery, IDocumentQueryOptions } from "./IDocumentQuery";
 // import { DocumentQueryBase, DocumentQuery } from "./DocumentQuery";
 import { IDocumentStore } from "../IDocumentStore";
-// import { AdvancedSessionOperations } from "./AdvancedSessionOperations";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { EmptyCallback, AbstractCallback } from "../../Types/Callbacks";
 import { PromiseResolver } from "../../Utility/PromiseResolver";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { StringUtil } from "../../Utility/StringUtil";
-// import {GetDocumentCommand} from "../../Database/Commands/GetDocumentCommand";
 import { IRavenObject, EntitiesCollectionObject, ObjectTypeDescriptor } from "../../Types";
-// import {RavenCommandData} from "../../Database/RavenCommandData";
-// import {PutCommandData} from "../../Database/Commands/Data/PutCommandData";
-// import {DeleteCommandData} from "../../Database/Commands/Data/DeleteCommandData";
-// import {SaveChangesData} from "../../Database/Commands/Data/SaveChangesData";
 import { Observable } from "../../Utility/Observable";
 import { DeleteCommandData, ICommandData } from "../Commands/CommandData";
 import { getError, throwError } from "../../Exceptions";
@@ -26,7 +25,9 @@ import { DocumentType } from "../DocumentAbstractions";
 import { LoadOperation } from "./Operations/LoadOperation";
 import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
 import { DocumentStore } from "../DocumentStore";
-// import {RequestMethods} from "../../Http/Request/RequestMethod";
+import { GetDocumentsCommand } from "../Commands/GetDocumentsCommand";
+import { HeadDocumentCommand } from "../Commands/HeadDocumentCommand";
+import { LoadStartingWithOperation } from "./Operations/LoadStartingWithOperation";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;
@@ -56,9 +57,12 @@ export class DocumentSession extends InMemoryDocumentSessionOperations implement
 
     public constructor(dbName: string, documentStore: DocumentStore, id: string, requestExecutor: RequestExecutor) {
         super(dbName, documentStore, requestExecutor, id);
+        // TBD Attachments = new DocumentSessionAttachments(this);
+        // TBD Revisions = new DocumentSessionRevisions(this);
+    }
 
-        //TBD Attachments = new DocumentSessionAttachments(this);
-        //TBD Revisions = new DocumentSessionRevisions(this);
+    public get advanced() {
+        return this;
     }
 
     protected _generateId(entity: object): Promise<string> {
@@ -74,44 +78,40 @@ export class DocumentSession extends InMemoryDocumentSessionOperations implement
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
     public async load<TEntity extends Object = IRavenObject>(
         id: string, 
-        options?: ISessionOperationOptions<TEntity>, 
+        options?: SessionLoadOptions<TEntity>, 
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
     public async load<TEntity extends Object = IRavenObject>(
         ids: string[], 
         callback?: AbstractCallback<EntitiesCollectionObject<TEntity>>): Promise<EntitiesCollectionObject<TEntity>>;
     public async load<TEntity extends Object = IRavenObject>(
         ids: string[], 
-        options?: ISessionOperationOptions<TEntity>, 
+        options?: SessionLoadOptions<TEntity>, 
         callback?: AbstractCallback<TEntity>): 
         Promise<EntitiesCollectionObject<TEntity>>;
     public async load<TEntity extends Object = IRavenObject>(
         idOrIds: string | string[],
         optionsOrCallback?: 
-            ISessionOperationOptions<TEntity> | AbstractCallback<TEntity | EntitiesCollectionObject<TEntity>>,
+            SessionLoadOptions<TEntity> | AbstractCallback<TEntity | EntitiesCollectionObject<TEntity>>,
         callback?: AbstractCallback<TEntity | EntitiesCollectionObject<TEntity>>)
             : Promise<TEntity | EntitiesCollectionObject<TEntity>> {
 
         const isLoadingSingle = !Array.isArray(idOrIds);
         const ids = !isLoadingSingle ? idOrIds as string[] : [ idOrIds as string ];
 
-        let options: ISessionOperationOptions<TEntity>;
+        let options: SessionLoadOptions<TEntity>;
         if (TypeUtil.isFunction(optionsOrCallback)) {
             callback = optionsOrCallback as AbstractCallback<TEntity> || TypeUtil.NOOP;
             options = {};
         } else if (TypeUtil.isObject(optionsOrCallback)) {
-            options = optionsOrCallback as ISessionOperationOptions<TEntity>;
+            options = optionsOrCallback as SessionLoadOptions<TEntity>;
             callback = callback || options.callback || TypeUtil.NOOP;
         } else {
             options = {};
             callback = TypeUtil.NOOP;
         }
 
-        const docType: DocumentType<TEntity> = options.documentType;
-        if (TypeUtil.isObjectTypeDescriptor(docType)) {
-            this.conventions.registerEntityType(docType as ObjectTypeDescriptor);
-        }
-        
-        const objType = this.conventions.findEntityType(docType);
+        this.conventions.tryRegisterEntityType(options.documentType); 
+        const objType = this.conventions.findEntityType(options.documentType);
 
         const loadOperation = new LoadOperation(this);
         return this._loadInternal(ids, loadOperation)
@@ -168,8 +168,76 @@ export class DocumentSession extends InMemoryDocumentSessionOperations implement
         return Promise.resolve(result);
     }
 
-    dispose(): void {
-        throw new Error("Method not implemented.");
+    /**
+     * Refreshes the specified entity from Raven server.
+     */
+    public refresh<TEntity extends Object>(entity: TEntity): Promise<void> {
+        const documentInfo = this.documentsByEntity.get(entity);
+        if (!documentInfo) {
+            throwError("InvalidOperationException", "Cannot refresh a transient instance");
+        }
+
+        this.incrementRequestCount();
+
+        const command = new GetDocumentsCommand({ id: documentInfo.id });
+        return Promise.resolve()
+            .then(() => this._requestExecutor.execute(command, this._sessionInfo))
+            .then(() => this._refreshInternal(entity, command, documentInfo));
+    }
+
+    /**
+     * Check if document exists without loading it
+     */
+    public exists(id: string): boolean {
+        if (!id) {
+            throwError("InvalidArgumentException", "id cannot be null");
+        }
+
+        if (this.documentsById.getValue(id)) {
+            return true;
+        }
+
+        const command = new HeadDocumentCommand(id, null);
+
+        this._requestExecutor.execute(command, this._sessionInfo);
+
+        return !!command.result;
+    }
+
+    public loadStartingWith<TEntity>(
+        idPrefix: string, opts: SessionLoadStartingWithOptions<TEntity>): Promise<TEntity[]> {
+        const loadStartingWithOperation = new LoadStartingWithOperation(this);
+        return Promise.resolve()
+            .then(() => this._loadStartingWithInternal(idPrefix, loadStartingWithOperation, opts))
+            .then(() => loadStartingWithOperation.getDocuments<TEntity>(opts.documentType));
+    }
+
+    // TBD public void LoadStartingWithIntoStream(
+    //    string idPrefix, Stream output, string matches = null, 
+    // int start = 0, int pageSize = 25, string exclude = null, string startAfter = null)
+
+    private _loadStartingWithInternal<TEntity>(
+        idPrefix: string, 
+        operation: LoadStartingWithOperation, 
+        opts: SessionLoadStartingWithOptions<TEntity>): Promise<GetDocumentsCommand> {
+        const { matches, start, pageSize, exclude, startAfter } = 
+            opts || {} as SessionLoadStartingWithOptions<TEntity>;
+        operation.withStartWith(idPrefix, {
+            matches, start, pageSize, exclude, startAfter
+        });
+
+        const command = operation.createRequest();
+        return Promise.resolve()
+            .then(() => {
+                if (command) {
+                    return this._requestExecutor.execute(command, this._sessionInfo);
+                    // TBD handle stream
+                }
+            })
+            .then(() => {
+                    operation.setResult(command.result);
+                    return command;
+            });
     }
 }
 

@@ -141,6 +141,7 @@ export class EntityToJson {
 
             return entity;
         } catch (err) {
+            console.log(err);
             throwError("InvalidOperationException", 
                 `Could not convert document ${id} to entity of type ${entityType ? entityType.name : entityType}.`, 
                 err);

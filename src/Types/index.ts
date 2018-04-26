@@ -17,25 +17,25 @@ export interface ClassConstructor {
     new(...args: any[]): any; 
 }
 
-export interface EntityConstructor<T extends object = object> extends ClassConstructor { 
+export interface EntityConstructor<T extends Object> extends ClassConstructor { 
      new(...args: any[]): T; 
 }
 
-export type ObjectTypeDescriptor<T extends object = object> = EntityConstructor<T> | ObjectLiteralDescriptor<T>;
+export type ObjectTypeDescriptor<T extends Object = Object> = EntityConstructor<T> | ObjectLiteralDescriptor<T>;
 
-export abstract class EntityObjectLiteralDescriptor<T extends object> implements ObjectLiteralDescriptor {
+export abstract class EntityObjectLiteralDescriptor<T extends Object> implements ObjectLiteralDescriptor {
     public abstract name: string;
     public abstract isType(obj: object);
     public abstract construct(dto: object): T;
 }
 
-export interface ObjectLiteralDescriptor<TResult extends object = object> {
+export interface ObjectLiteralDescriptor<TResult extends Object = Object> {
     name: string;
     isType(obj: object): boolean;
     construct(dto: object): TResult;
 }
 
-export abstract class PropsBasedObjectLiteralDescriptor<T extends object> 
+export abstract class PropsBasedObjectLiteralDescriptor<T extends Object> 
     implements EntityObjectLiteralDescriptor<T> {
     // if it quacks like a duck...
 

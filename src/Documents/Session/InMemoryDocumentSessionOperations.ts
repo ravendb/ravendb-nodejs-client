@@ -2,7 +2,7 @@ import { EntityToJson } from "./EntityToJson";
 import * as uuid from "uuid";
 import { IDisposable } from "../../Types/Contracts";
 import { IMetadataDictionary, SessionInfo, SessionStoreOptions, ConcurrencyCheckMode } from "./IDocumentSession";
-import { Todo, ObjectTypeDescriptor, PropsBasedObjectLiteralDescriptor } from "../../Types";
+import { Todo, ObjectTypeDescriptor, PropsBasedObjectLiteralDescriptor, ClassConstructor } from "../../Types";
 import { SessionEventsEmitter, SessionBeforeStoreEventArgs, SessionBeforeDeleteEventArgs } from "./SessionEvents";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { ObjectMapper } from "../../Utility/Mapping";
@@ -13,7 +13,6 @@ import { ServerNode } from "../../Http/ServerNode";
 import { DocumentsById } from "./DocumentsById";
 import { DocumentInfo } from "./DocumentInfo";
 import { DocumentStoreBase } from "../DocumentStoreBase";
-import { DocumentConventions, DocumentStore, AggressiveCacheOptions } from "../..";
 import { 
     ICommandData, 
     CommandType, 
@@ -36,6 +35,9 @@ import { DocumentsChanges } from "./DocumentsChanges";
 import { EventEmitter } from "events";
 import { JsonOperation } from "../../Mapping/JsonOperation";
 import { IRavenObject } from "../../Types/IRavenObject";
+import { GetDocumentsResult } from "../Commands/GetDocumentsCommand";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { RavenCommand } from "../../Http/RavenCommand";
 
 export abstract class InMemoryDocumentSessionOperations 
     extends EventEmitter
@@ -131,7 +133,7 @@ export abstract class InMemoryDocumentSessionOperations
         return this.documentsByEntity.size;
     }
 
-    public storeIdentifier(): string {
+    public get storeIdentifier(): string {
         return `${this._documentStore.identifier};${this._databaseName}`;
     }
 
@@ -196,7 +198,7 @@ export abstract class InMemoryDocumentSessionOperations
      * @param instance Instance to get metadata from
      * @return document metadata
      */
-    public getMetadataFor<T extends object>(instance: T): IMetadataDictionary {
+    public getMetadataFor<T extends Object>(instance: T): IMetadataDictionary {
         if (!instance) {
             throwError("InvalidOperationException", "Instance cannot be null or undefined.");
         }
@@ -212,7 +214,7 @@ export abstract class InMemoryDocumentSessionOperations
         return metadata;
     }
 
-    private _getDocumentInfo<T extends object>(instance: T): DocumentInfo {
+    private _getDocumentInfo<T extends Object>(instance: T): DocumentInfo {
         const documentInfo: DocumentInfo = this.documentsByEntity.get(instance);
 
         if (documentInfo) {
@@ -253,7 +255,7 @@ export abstract class InMemoryDocumentSessionOperations
      * @param instance Instance to get change vector from
      * @return change vector
      */
-    public getChangeVectorFor<T extends object>(instance: T): string {
+    public getChangeVectorFor<T extends Object>(instance: T): string {
         if (!instance) {
             throwError("InvalidArgumentException", "Instance cannot be null or undefined.");
         }
@@ -267,7 +269,7 @@ export abstract class InMemoryDocumentSessionOperations
         return null;
     }
 
-    public getLastModifiedFor<T extends object>(instance: T): Date {
+    public getLastModifiedFor<T extends Object>(instance: T): Date {
         if (!instance) {
             throwError("InvalidArgumentException", "Instance cannot be null or undefined.");
         }
@@ -393,15 +395,15 @@ export abstract class InMemoryDocumentSessionOperations
      * @return tracked entity
      */
     //    return (T) this.trackEntity(clazz, documentFound.id, documentFound.document, documentFound.metadata, false);
-    public trackEntity<T extends object>(
+    public trackEntity<T extends Object>(
         entityType: ObjectTypeDescriptor<T>, documentFound: DocumentInfo): T;
-    public trackEntity<T extends object>(
+    public trackEntity<T extends Object>(
         entityType: ObjectTypeDescriptor<T>,
         id: string,
         document: object,
         metadata: object,
         noTracking: boolean): object;
-    public trackEntity<T extends object>(
+    public trackEntity<T extends Object>(
         entityType: ObjectTypeDescriptor<T>,
         idOrDocumentInfo: string | DocumentInfo,
         document?: object,
@@ -543,30 +545,16 @@ export abstract class InMemoryDocumentSessionOperations
         this._knownMissingIds.delete(id.toLowerCase());
     }
 
-    // public void store(Object entity) {
-    //     Reference<String> stringReference = new Reference<>();
-    //     boolean hasId = generateEntityIdOnTheClient.tryGetIdFromInstance(entity, stringReference);
-    //     storeInternal(entity, null, null, !hasId ? ConcurrencyCheckMode.FORCED : ConcurrencyCheckMode.AUTO);
-    // }
-
-    // public void store(Object entity, String id) {
-    //     storeInternal(entity, null, id, ConcurrencyCheckMode.AUTO);
-    // }
-
-    // public void store(Object entity, String changeVector, String id) {
-    //     storeInternal(entity, changeVector, id, changeVector == null ? ConcurrencyCheckMode.DISABLED : ConcurrencyCheckMode.FORCED);
-    // }
-
-    public store<TEntity extends object>(
+    public store<TEntity extends Object>(
         entity: TEntity,
         id?: string,
         callback?: AbstractCallback<TEntity>): Promise<void>;
-    public store<TEntity extends object>(
+    public store<TEntity extends Object>(
         entity: TEntity,
         id?: string,
         options?: SessionStoreOptions<TEntity>,
         callback?: AbstractCallback<TEntity>): Promise<void>;
-    public store<TEntity extends object>(
+    public store<TEntity extends Object>(
         entity: TEntity,
         id?: string,
         optionsOrCallback?: SessionStoreOptions<TEntity> | AbstractCallback<TEntity>,
@@ -582,6 +570,9 @@ export abstract class InMemoryDocumentSessionOperations
 
         const changeVector = options.changeVector;
         const documentType = options.documentType;
+        this.conventions.tryRegisterEntityType(documentType); 
+        this.conventions.tryRegisterEntityType(entity.constructor as ClassConstructor); 
+
         let forceConcurrencyCheck: ConcurrencyCheckMode;
         if (!TypeUtil.isUndefined(changeVector)) {
             forceConcurrencyCheck = changeVector === null ? "Disabled" : "Forced";
@@ -966,6 +957,113 @@ export abstract class InMemoryDocumentSessionOperations
         if (command.type !== "ATTACHMENT_PUT") {
             this._deferredCommandsMap.set(
                 IdTypeAndName.keyFor(command.id, "CLIENT_NOT_ATTACHMENT_PUT", null), command);
+        }
+    }
+
+    protected _refreshInternal<T>(entity: T, cmd: RavenCommand<GetDocumentsResult>, documentInfo: DocumentInfo): void  {
+        const document = cmd.result.results[0];
+        if (!document) {
+            throwError("InvalidOperationException", 
+                "Document '" + documentInfo.id + "' no longer exists and was probably deleted");
+        }
+
+        const value = document[CONSTANTS.Documents.Metadata.KEY];
+        documentInfo.metadata = value;
+
+        if (documentInfo.metadata) {
+            const changeVector = value[CONSTANTS.Documents.Metadata.CHANGE_VECTOR];
+            documentInfo.changeVector = changeVector;
+        }
+
+        documentInfo.document = document;
+        const entityType = this.conventions.getEntityTypeDescriptor(entity);
+        documentInfo.entity = this.entityToJson.convertToEntity(entityType, documentInfo.id, document);
+
+        Object.assign(entity, documentInfo.entity);
+    }
+
+    /**
+     * Gets a value indicating whether any of the entities tracked by the session has changes.
+     * @return true if session has changes
+     */
+    public hasChanges(): boolean {
+        for (const entity of this.documentsByEntity.entries()) {
+            const document = this.entityToJson.convertEntityToJson(entity[0], entity[1]);
+            if (this._entityChanged(document, entity[1], null)) {
+                return true;
+            }
+        }
+
+        return !this.deletedEntities.size;
+    }
+
+    /**
+     * Evicts the specified entity from the session.
+     * Remove the entity from the delete queue and stops tracking changes for this entity.
+     * @param <T> entity class
+     * @param entity Entity to evict
+     */
+    public evict<T extends Object>(entity: T): void {
+        const documentInfo = this.documentsByEntity.get(entity);
+        if (documentInfo) {
+            this.documentsByEntity.delete(entity);
+            this.documentsById.remove(documentInfo.id);
+        }
+
+        this.deletedEntities.delete(entity);
+    }
+
+    /**
+     * Clears this instance.
+     * Remove all entities from the delete queue and stops tracking changes for all entities.
+     */
+    public clear(): void {
+        this.documentsByEntity.clear();
+        this.deletedEntities.clear();
+        this.documentsById.clear();
+        this._knownMissingIds.clear();
+        this.includedDocumentsById.clear();
+    }
+
+    /**
+     * Determines whether the specified entity has changed.
+     * @param entity Entity to check
+     * @return true if entity has changed
+     */
+    public hasChanged(entity: object): boolean {
+        const documentInfo = this.documentsByEntity.get(entity);
+
+        if (!documentInfo) {
+            return false;
+        }
+
+        const document = this.entityToJson.convertEntityToJson(entity, documentInfo);
+        return this._entityChanged(document, documentInfo, null);
+    }
+
+    /**
+     * Mark the entity as one that should be ignore for change tracking purposes,
+     * it still takes part in the session, but is ignored for SaveChanges.
+     * @param entity entity
+     */
+    public ignoreChangesFor(entity: object): void {
+        this._getDocumentInfo(entity).ignoreChanges = true;
+    }
+
+    public whatChanged(): Map<string, DocumentsChanges[]> {
+        const changes: Map<string, DocumentsChanges[]> = new Map();
+
+        this._prepareForEntitiesDeletion(null, changes);
+        this._getAllEntitiesChanges(changes);
+
+        return changes;
+    }
+
+    private _getAllEntitiesChanges(changes: Map<string, DocumentsChanges[]>): void {
+        for (const pair of this.documentsById.entries()) {
+            InMemoryDocumentSessionOperations._updateMetadataModifications(pair[1]);
+            const newObj = this.entityToJson.convertEntityToJson(pair[1].entity, pair[1]);
+            this._entityChanged(newObj, pair[1], changes);
         }
     }
 
