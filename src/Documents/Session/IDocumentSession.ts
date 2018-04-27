@@ -4,8 +4,9 @@ import { IDisposable } from "../../Types/Contracts";
 import { AbstractCallback } from "../../Types/Callbacks";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { DocumentType, EntityConstructor } from "../DocumentAbstractions";
-import { EntitiesCollectionObject } from "../../Types";
+import { EntitiesCollectionObject, ObjectTypeDescriptor } from "../../Types";
 import { IAdvancedSessionOperations} from "./IAdvancedSessionOperations";
+import { ILoaderWithInclude } from "./Loaders/ILoaderWithInclude";
 
 export class SessionInfo {
     public sessionId: number;
@@ -65,6 +66,15 @@ export interface IDocumentSession extends IDisposable {
         options?: SessionLoadOptions<TEntity>,
         callback?: AbstractCallback<TEntity>): Promise<void>;
 
+    
+    /**
+     * Begin a load while including the specified path
+     * Path in documents in which server should look for a 'referenced' documents.
+     * @param path Path to include
+     * @return Loader with includes
+     */
+    include(path: string): ILoaderWithInclude;
+
     //       query<T extends Object = IRavenObject>(options?: IDocumentQueryOptions<T>): IDocumentQuery<T>;
 
     saveChanges(): Promise<void>;
@@ -103,4 +113,15 @@ export interface StartingWithOptions {
     pageSize?: number;
     exclude?: string;
     startAfter?: string;
+}
+
+export interface IDocumentSessionImpl extends IDocumentSession {
+
+    conventions: DocumentConventions;
+
+    loadInternal<TResult>(
+        ids: string[], includes: string[], clazz: ObjectTypeDescriptor<TResult>): 
+        Promise<EntitiesCollectionObject<TResult>>;
+
+    //TBD: Lazy<Dictionary<string, T>> LazyLoadInternal<T>(string[] ids, string[] includes, Action<Dictionary<string, T>> onEval);
 }

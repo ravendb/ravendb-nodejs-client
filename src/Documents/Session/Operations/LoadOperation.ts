@@ -59,11 +59,15 @@ export class LoadOperation {
     }
 
     public withIncludes(includes: string[]): LoadOperation {
-        this._includes = includes;
+        this._includes = includes || [];
         return this;
     }
 
     public byIds(ids: string[]): LoadOperation {
+        if (!ids || !ids.length) {
+            return this;
+        }
+        
         this._ids = ids;
 
         const distinct = new Set(ids.filter(x => !!x));
@@ -96,7 +100,7 @@ export class LoadOperation {
         return null;
     }
 
-    public getDocuments<T>(clazz: ObjectTypeDescriptor): EntitiesCollectionObject<T> {
+    public getDocuments<T>(clazz: ObjectTypeDescriptor<T>): EntitiesCollectionObject<T> {
         return this._ids.filter(x => !!x)
             .reduce((result, id) => {
                 result[id] = this._getDocument(clazz, id);

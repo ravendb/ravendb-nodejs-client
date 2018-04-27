@@ -1,3 +1,4 @@
+import {MultiLoaderWithInclude} from "./Loaders/MultiLoaderWithInclude";
 import {BatchOperation} from "./Operations/BatchOperation";
 import * as _ from "lodash";
 import * as BluebirdPromise from "bluebird";
@@ -5,7 +6,8 @@ import {
     IDocumentSession, 
     SessionLoadOptions, 
     ConcurrencyCheckMode, 
-    SessionLoadStartingWithOptions 
+    SessionLoadStartingWithOptions, 
+    IDocumentSessionImpl
 } from "./IDocumentSession";
 // import { IDocumentQueryBase, IRawDocumentQuery, IDocumentQuery, IDocumentQueryOptions } from "./IDocumentQuery";
 // import { DocumentQueryBase, DocumentQuery } from "./DocumentQuery";
@@ -28,6 +30,7 @@ import { DocumentStore } from "../DocumentStore";
 import { GetDocumentsCommand } from "../Commands/GetDocumentsCommand";
 import { HeadDocumentCommand } from "../Commands/HeadDocumentCommand";
 import { LoadStartingWithOperation } from "./Operations/LoadStartingWithOperation";
+import { ILoaderWithInclude } from "./Loaders/ILoaderWithInclude";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;
@@ -53,7 +56,8 @@ export interface IDocumentConversionResult<T extends Object = IRavenObject> {
     documentType: DocumentType<T>;
 }
 
-export class DocumentSession extends InMemoryDocumentSessionOperations implements IDocumentSession {
+export class DocumentSession extends InMemoryDocumentSessionOperations 
+    implements IDocumentSession, IDocumentSessionImpl {
 
     public constructor(dbName: string, documentStore: DocumentStore, id: string, requestExecutor: RequestExecutor) {
         super(dbName, documentStore, requestExecutor, id);
@@ -135,18 +139,19 @@ export class DocumentSession extends InMemoryDocumentSessionOperations implement
         operation.byIds(ids);
 
         const command = operation.createRequest();
-        if (command) {
-            return this._requestExecutor.execute(command, this._sessionInfo)
-                .then(() => {
+        return Promise.resolve()
+            .then(() => {
+                if (command) {
+                    return this._requestExecutor.execute(command, this._sessionInfo)
+                        .then(() => operation.setResult(command.result)) // TBD: delete me after impl stream
                     /* TBD
                      if(stream!=null)
                             Context.Write(stream, command.Result.Results.Parent);
                         else
                             operation.SetResult(command.Result);
                      */
-                    operation.setResult(command.result); // TBD: delete me after impl stream
-                });
-        }
+                }
+            });
     }
 
     public saveChanges(): Promise<void> {
@@ -235,9 +240,39 @@ export class DocumentSession extends InMemoryDocumentSessionOperations implement
                 }
             })
             .then(() => {
-                    operation.setResult(command.result);
-                    return command;
+                operation.setResult(command.result);
+                return command;
             });
+    }
+
+    public loadInternal<TResult extends Object>(
+        ids: string[], includes: string[], documentType: DocumentType<TResult>): 
+        Promise<EntitiesCollectionObject<TResult>>  {
+        const loadOperation = new LoadOperation(this);
+        loadOperation.byIds(ids);
+        loadOperation.withIncludes(includes);
+
+        const command = loadOperation.createRequest();
+        return Promise.resolve()
+            .then(() => {
+                if (command) {
+                    return this._requestExecutor.execute(command, this._sessionInfo)
+                        .then(() => loadOperation.setResult(command.result));
+                }
+
+                return;
+            })
+            .then(() => {
+                const clazz = this.conventions.findEntityType(documentType);
+                return loadOperation.getDocuments(clazz);
+            });
+    }
+
+    /**
+     * Begin a load while including the specified path
+     */
+    public include(path: string): ILoaderWithInclude {
+        return new MultiLoaderWithInclude(this).include(path);
     }
 }
 

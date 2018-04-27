@@ -123,7 +123,7 @@ export abstract class InMemoryDocumentSessionOperations
         return this._requestExecutor;
     }
 
-    private _numberOfRequests: number;
+    private _numberOfRequests: number = 0;
 
     public get numberOfRequests() {
         return this._numberOfRequests;
@@ -960,7 +960,8 @@ export abstract class InMemoryDocumentSessionOperations
         }
     }
 
-    protected _refreshInternal<T>(entity: T, cmd: RavenCommand<GetDocumentsResult>, documentInfo: DocumentInfo): void  {
+    protected _refreshInternal<T extends Object>(
+        entity: T, cmd: RavenCommand<GetDocumentsResult>, documentInfo: DocumentInfo): void  {
         const document = cmd.result.results[0];
         if (!document) {
             throwError("InvalidOperationException", 

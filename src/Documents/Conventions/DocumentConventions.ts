@@ -329,7 +329,7 @@ export class DocumentConventions {
         return this.getCollectionNameForType(this.getEntityTypeDescriptor(entity));
     }
 
-    public getEntityTypeDescriptor(entity: Object): ObjectTypeDescriptor {
+    public getEntityTypeDescriptor<T extends Object>(entity: T): ObjectTypeDescriptor<T> {
         if (TypeUtil.isClassConstructor(entity.constructor)) {
             return entity.constructor as ClassConstructor;
         }
@@ -339,8 +339,8 @@ export class DocumentConventions {
                 continue;
             }
 
-            if ((entityType as ObjectLiteralDescriptor).isType(entity)) {
-                return entityType;
+            if ((entityType as ObjectLiteralDescriptor<T>).isType(entity)) {
+                return entityType as ObjectLiteralDescriptor<T>;
             }
         }
 

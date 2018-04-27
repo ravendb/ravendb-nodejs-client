@@ -1,7 +1,7 @@
 import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
+import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import {
     RequestExecutor,
@@ -11,7 +11,7 @@ import {
     IDocumentStore,
 } from "../../src";
 
-describe("Load test", function () {
+describe.only("Load test", function () {
 
     let store: IDocumentStore;
 
@@ -25,74 +25,44 @@ describe("Load test", function () {
         public name: string;
     }
 
-
     beforeEach(async function () {
         store = await globalContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("can load with includes", async () => {
         let barId: string;
-
-        let session = store.openSession();
+        const session = store.openSession();
         let foo = Object.assign(new Foo(), { name: "Beginning" });
         await session.store(foo);
 
-        let fooId = session.advanced.getDocumentId(foo);
+        const fooId = session.advanced.getDocumentId(foo);
+        const bar = Object.assign(new Bar(), { name: "End", fooId });
+        await session.store(bar);
 
+        barId = session.advanced.getDocumentId(bar);
+        await session.saveChanges();
 
+        const newSession = store.openSession();
+        const bars = await (newSession
+            .include("fooId")
+            .load<Bar>([barId], Bar));
+
+        assert.ok(bars);
+        assert.equal(Object.keys(bars).length, 1);
+        assert.ok(bars[barId]);
+
+        const numOfRequests = newSession.advanced.numberOfRequests;
+
+        foo = await newSession.load<Foo>(bars[barId].fooId, { documentType: Foo });
+
+        assert.ok(foo);
+        assert.equal(foo.name, "Beginning");
+        assert.equal(newSession.advanced.numberOfRequests, numOfRequests);
     });
 });
-
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 Foo foo = new Foo();
-//                 foo.setName("Beginning");
-//                 session.store(foo);
-
-//                 String fooId = session.advanced().getDocumentId(foo);
-//                 Bar bar = new Bar();
-//                 bar.setName("End");
-//                 bar.setFooId(fooId);
-
-//                 session.store(bar);
-
-//                 barId = session.advanced().getDocumentId(bar);
-//                 session.saveChanges();
-//             }
-
-//             try (IDocumentSession newSession = store.openSession()) {
-//                 Map<String, Bar> bar = newSession
-//                         .include("fooId")
-//                         .load(Bar.class, new String[]{barId});
-
-//                 assertThat(bar)
-//                         .isNotNull();
-
-//                 assertThat(bar)
-//                         .hasSize(1);
-
-//                 assertThat(bar.get(barId))
-//                         .isNotNull();
-
-//                 int numOfRequests = newSession.advanced().getNumberOfRequests();
-
-//                 Foo foo = newSession.load(Foo.class, bar.get(barId).getFooId());
-
-//                 assertThat(foo)
-//                         .isNotNull();
-
-//                 assertThat(foo.getName())
-//                         .isEqualTo("Beginning");
-
-//                 assertThat(newSession.advanced().getNumberOfRequests())
-//                         .isEqualTo(numOfRequests);
-//             }
-//         }
-//     }
-
 
 //     @Test
 //     @Disabled("waiting for IncludesUtils")

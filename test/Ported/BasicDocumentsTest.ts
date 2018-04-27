@@ -14,7 +14,7 @@ import { User, Person } from "../Assets/Entities";
 import { GetDocumentsCommand } from "../../src/Documents/Commands/GetDocumentsCommand";
 import { DocumentSession } from "../../src/Documents/Session/DocumentSession";
 
-describe.only("Basic documents test", function () {
+describe("Basic documents test", function () {
 
     let store: IDocumentStore;
 
