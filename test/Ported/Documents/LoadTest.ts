@@ -1,7 +1,7 @@
 import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
     RequestExecutor,
@@ -9,9 +9,9 @@ import {
     RavenErrorType,
     GetNextOperationIdCommand,
     IDocumentStore,
-} from "../../src";
+} from "../../../src";
 
-describe.only("Load test", function () {
+describe("Load test", function () {
 
     let store: IDocumentStore;
 

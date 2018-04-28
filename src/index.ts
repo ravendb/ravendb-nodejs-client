@@ -56,6 +56,7 @@ export { StopIndexingOperation } from "./Documents/Operations/Indexes/StopIndexi
 export { StartIndexingOperation } from "./Documents/Operations/Indexes/StartIndexingOperation";
 export { StopIndexOperation } from "./Documents/Operations/Indexes/StopIndexOperation";
 export { StartIndexOperation } from "./Documents/Operations/Indexes/StartIndexOperation";
+export { ResetIndexOperation } from "./Documents/Operations/Indexes/ResetIndexOperation";
 export { 
     SetIndexesLockOperation, 
     SetIndexesLockOperationParameters 

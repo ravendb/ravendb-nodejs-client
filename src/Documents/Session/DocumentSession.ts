@@ -135,7 +135,9 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         });
     }
 
-    private _loadInternal<T>(ids: string[], operation: LoadOperation): Promise<void> { //TBD optional stream parameter
+    private _loadInternal<T>(ids: string[], operation: LoadOperation): Promise<void> { 
+        // TBD optional stream parameter
+        
         operation.byIds(ids);
 
         const command = operation.createRequest();

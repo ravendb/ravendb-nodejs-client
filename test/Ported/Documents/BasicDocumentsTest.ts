@@ -1,7 +1,7 @@
 import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
     RequestExecutor,
@@ -9,10 +9,10 @@ import {
     RavenErrorType,
     GetNextOperationIdCommand,
     IDocumentStore,
-} from "../../src";
-import { User, Person } from "../Assets/Entities";
-import { GetDocumentsCommand } from "../../src/Documents/Commands/GetDocumentsCommand";
-import { DocumentSession } from "../../src/Documents/Session/DocumentSession";
+} from "../../../src";
+import { User, Person } from "../../Assets/Entities";
+import { GetDocumentsCommand } from "../../../src/Documents/Commands/GetDocumentsCommand";
+import { DocumentSession } from "../../../src/Documents/Session/DocumentSession";
 
 describe("Basic documents test", function () {
 
