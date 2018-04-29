@@ -15,6 +15,8 @@ import { DocumentSession } from "./Session/DocumentSession";
 import { AbstractIndexCreationTask } from "./Indexes";
 import { DocumentConventions } from "./Conventions/DocumentConventions";
 import { RequestExecutor } from "../Http/RequestExecutor";
+import { IndexCreation } from "../Documents/Indexes/IndexCreation";
+import { PutIndexesOperation } from "./Operations/Indexes/PutIndexesOperation";
 
 export abstract class DocumentStoreBase 
     extends EventEmitter 
@@ -200,5 +202,23 @@ export abstract class DocumentStoreBase
     public abstract maintenance: MaintenanceOperationExecutor;
 
     public abstract operations: OperationExecutor;
+
+    public executeIndexes(tasks: AbstractIndexCreationTask[]): Promise<void>;
+    public executeIndexes(tasks: AbstractIndexCreationTask[], database: string): Promise<void>; 
+    public executeIndexes(tasks: AbstractIndexCreationTask[], database?: string): Promise<void> {
+        
+        this._assertInitialized();
+
+        return Promise.resolve()
+        .then(() => {
+            const indexesToAdd = IndexCreation.createIndexesToAdd(tasks, this.conventions);
+
+            return this.maintenance
+                .forDatabase(database || this.database)
+                .send(new PutIndexesOperation(...indexesToAdd));
+        })
+        // tslint:disable-next-line:no-empty
+        .then(() => {});
+    }
 
 }

@@ -17,7 +17,10 @@ import {
     GetStatisticsCommand,
     DatabaseStatistics,
     ResetIndexOperation,
+    GetIndexNamesOperation,
+    GetStatisticsOperation,
 } from "../../../src";
+import { DeleteIndexOperation } from "../../../src/Documents/Operations/Indexes/DeleteIndexOperation";
 
 describe("Indexes from client", function () {
 
@@ -64,26 +67,29 @@ describe("Indexes from client", function () {
 
         assert.ok(firstIndexingTime.valueOf() < secondIndexingTime.valueOf());
     });
-});
 
-//     @Test
-//     public void canExecuteManyIndexes() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             store.executeIndexes(Collections.singletonList(new UsersIndex()));
+    it("can execute many indexes", async () => {
+            await store.executeIndexes([new UsersIndex()]);
 
-//             GetIndexNamesOperation indexNamesOperation = new GetIndexNamesOperation(0, 10);
-//             String[] indexNames = store.maintenance().send(indexNamesOperation);
+            const indexNamesOperation = new GetIndexNamesOperation(0, 10);
+            const indexNames = await store.maintenance.send(indexNamesOperation);
 
-//             assertThat(indexNames)
-//                     .hasSize(1);
-//         }
-//     }
+            assert.equal(indexNames.length, 1);
+    });
 
-//     public static class UsersIndex extends AbstractIndexCreationTask {
-//         public UsersIndex() {
-//             map = "from user in docs.users select new { user.name }";
-//         }
-//     }
+    it.only("can delete index", async () => {
+        const index = new UsersIndex();
+        await store.executeIndex(index);
+
+        await store.maintenance.send(new DeleteIndexOperation(index.getIndexName()));
+
+        const command = new GetStatisticsCommand();
+        await (store.getRequestExecutor().execute(command));
+
+        const statistics = command.result;
+
+        assert.equal(statistics.indexes.length, 0);
+    });
 
 //     @Test
 //     public void canDelete() throws Exception {
@@ -101,6 +107,10 @@ describe("Indexes from client", function () {
 //                     .hasSize(0);
 //         }
 //     }
+
+});
+
+
 
 //     //TBD public async Task CanStopAndStart()
 //     //TBD public async Task SetLockModeAndSetPriority()

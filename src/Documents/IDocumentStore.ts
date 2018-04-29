@@ -122,8 +122,10 @@ export interface IDocumentStore extends
      * @param database Target database
      */
     executeIndex(task: AbstractIndexCreationTask): Promise<void>;
-    executeIndex(task: AbstractIndexCreationTask, database?: string): Promise<void>;
+    executeIndex(task: AbstractIndexCreationTask, database: string): Promise<void>;
 
+    executeIndexes(tasks: AbstractIndexCreationTask[]): Promise<void>;
+    executeIndexes(tasks: AbstractIndexCreationTask[], database: string): Promise<void>;
     // /**
     //  * Executes the index creation
     //  * @param tasks Index Creation tasks to use

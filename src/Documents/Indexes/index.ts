@@ -12,7 +12,7 @@ export abstract class AbstractIndexCreationTask {
     protected map: string;
     protected reduce: string;
 
-    private conventions: DocumentConventions;
+    public conventions: DocumentConventions;
     protected additionalSources: { [key: string]: string };
     public priority: IndexPriority;
     public lockMode: IndexLockMode;
