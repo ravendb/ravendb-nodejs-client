@@ -1,7 +1,7 @@
 import { EntityToJson } from "./EntityToJson";
 import * as uuid from "uuid";
 import { IDisposable } from "../../Types/Contracts";
-import { IMetadataDictionary, SessionInfo, SessionStoreOptions, ConcurrencyCheckMode } from "./IDocumentSession";
+import { IMetadataDictionary, SessionInfo, SessionStoreOptions, ConcurrencyCheckMode, StoreOptions } from "./IDocumentSession";
 import { Todo, ObjectTypeDescriptor, PropsBasedObjectLiteralDescriptor, ClassConstructor } from "../../Types";
 import { SessionEventsEmitter, SessionBeforeStoreEventArgs, SessionBeforeDeleteEventArgs } from "./SessionEvents";
 import { RequestExecutor } from "../../Http/RequestExecutor";
@@ -552,20 +552,26 @@ export abstract class InMemoryDocumentSessionOperations
     public store<TEntity extends Object>(
         entity: TEntity,
         id?: string,
-        options?: SessionStoreOptions<TEntity>,
+        options?: DocumentType<TEntity> | SessionStoreOptions<TEntity>,
         callback?: AbstractCallback<TEntity>): Promise<void>;
     public store<TEntity extends Object>(
         entity: TEntity,
         id?: string,
-        optionsOrCallback?: SessionStoreOptions<TEntity> | AbstractCallback<TEntity>,
+        optionsOrCallback?: DocumentType<TEntity> | SessionStoreOptions<TEntity> | AbstractCallback<TEntity>,
         callback?: AbstractCallback<TEntity>): Promise<void> {
 
-        let options: SessionStoreOptions<TEntity> = {};
+        let options: StoreOptions<TEntity> = {};
         if (TypeUtil.isFunction(optionsOrCallback)) {
             callback = optionsOrCallback as AbstractCallback<TEntity>;
-        } else if (TypeUtil.isObject(optionsOrCallback)) {
-            options = optionsOrCallback as SessionStoreOptions<TEntity> || {};
+        } else if (TypeUtil.isDocumentType<TEntity>(optionsOrCallback)) {
+            options = { documentType: optionsOrCallback as DocumentType<TEntity> };
             callback = callback || TypeUtil.NOOP;
+        } else if (TypeUtil.isObject(optionsOrCallback)) {
+            options = optionsOrCallback as StoreOptions<TEntity> || {};
+            callback = callback || TypeUtil.NOOP;
+        } else {
+            options = {};
+            callback = TypeUtil.NOOP;
         }
 
         const changeVector = options.changeVector;

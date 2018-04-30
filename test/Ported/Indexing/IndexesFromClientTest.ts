@@ -77,7 +77,7 @@ describe("Indexes from client", function () {
             assert.equal(indexNames.length, 1);
     });
 
-    it.only("can delete index", async () => {
+    it("can delete index", async () => {
         const index = new UsersIndex();
         await store.executeIndex(index);
 
@@ -91,38 +91,8 @@ describe("Indexes from client", function () {
         assert.equal(statistics.indexes.length, 0);
     });
 
-//     @Test
-//     public void canDelete() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             store.executeIndex(new UsersIndex());
+    it("can explain query", async () => {
 
-//             store.maintenance().send(new DeleteIndexOperation(new UsersIndex().getIndexName()));
-
-//             GetStatisticsOperation.GetStatisticsCommand command = new GetStatisticsOperation.GetStatisticsCommand();
-//             store.getRequestExecutor().execute(command);
-
-//             DatabaseStatistics statistics = command.getResult();
-
-//             assertThat(statistics.getIndexes())
-//                     .hasSize(0);
-//         }
-//     }
-
-});
-
-
-
-//     //TBD public async Task CanStopAndStart()
-//     //TBD public async Task SetLockModeAndSetPriority()
-//     //TBD public async Task GetErrors()
-//     //TBD public async Task GetDefinition()
-//     //TBD public async Task GetTerms()
-//     //TBD public async Task Performance()
-//     //TBD public async Task GetIndexNames()
-
-//     @Test
-//     public void canExplain() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
 //             User user1 = new User();
 //             user1.setName("Fitzchak");
 
@@ -160,8 +130,7 @@ describe("Indexes from client", function () {
 //                     .isNotNull();
 //             assertThat(explanations[0].getReason())
 //                     .isNotNull();
-//         }
-//     }
+        throw new Error("Implement after query is done.");
+    });
 
-//     //TBD public async Task MoreLikeThis()
-// }
+});

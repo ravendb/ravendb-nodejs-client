@@ -7,7 +7,8 @@ import {
     SessionLoadOptions, 
     ConcurrencyCheckMode, 
     SessionLoadStartingWithOptions, 
-    IDocumentSessionImpl
+    IDocumentSessionImpl,
+    LoadOptions
 } from "./IDocumentSession";
 // import { IDocumentQueryBase, IRawDocumentQuery, IDocumentQuery, IDocumentQueryOptions } from "./IDocumentQuery";
 // import { DocumentQueryBase, DocumentQuery } from "./DocumentQuery";
@@ -102,13 +103,16 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         const isLoadingSingle = !Array.isArray(idOrIds);
         const ids = !isLoadingSingle ? idOrIds as string[] : [ idOrIds as string ];
 
-        let options: SessionLoadOptions<TEntity>;
+        let options: LoadOptions<TEntity>;
         if (TypeUtil.isFunction(optionsOrCallback)) {
             callback = optionsOrCallback as AbstractCallback<TEntity> || TypeUtil.NOOP;
             options = {};
+        } else if (TypeUtil.isDocumentType(optionsOrCallback)) { 
+            options = { documentType: optionsOrCallback as DocumentType<TEntity> };
+            callback = callback || TypeUtil.NOOP;
         } else if (TypeUtil.isObject(optionsOrCallback)) {
-            options = optionsOrCallback as SessionLoadOptions<TEntity>;
-            callback = callback || options.callback || TypeUtil.NOOP;
+            options = optionsOrCallback as LoadOptions<TEntity>;
+            callback = callback || TypeUtil.NOOP;
         } else {
             options = {};
             callback = TypeUtil.NOOP;

@@ -63,7 +63,7 @@ export interface IDocumentSession extends IDisposable {
     store<TEntity extends Object = IRavenObject>(
         document: TEntity,
         id?: string,
-        options?: SessionLoadOptions<TEntity>,
+        options?: DocumentType<TEntity> | SessionStoreOptions<TEntity>,
         callback?: AbstractCallback<TEntity>): Promise<void>;
 
     
@@ -85,17 +85,19 @@ export interface ISessionOptions {
     requestExecutor?: RequestExecutor;
 }
 
-export interface SessionStoreOptions<T> {
+export type SessionStoreOptions<T> = DocumentType<T> | StoreOptions<T>;
+export interface StoreOptions<T> {
     documentType?: DocumentType<T>;
     changeVector?: string;
 }
 
-export interface SessionLoadOptions<T> {
+export type SessionLoadOptions<T> = DocumentType<T> | LoadOptions<T>;
+
+export interface LoadOptions<T> {
     documentType?: DocumentType<T>;
     includes?: string[];
     // nestedObjectTypes?: IRavenObject<EntityConstructor>;
     expectedChangeVector?: string;
-    callback?: AbstractCallback<T | EntitiesCollectionObject<T>>;
 }
 
 export interface SessionLoadStartingWithOptions<T> extends StartingWithOptions {

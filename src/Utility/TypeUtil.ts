@@ -116,4 +116,9 @@ export class TypeUtil {
             && obj.constructor
             && obj.constructor.name === "Map";
     }
+
+    public static isDocumentType<TEntity>(obj: any) {
+        return obj && (this.isString(obj) ||
+            this.isObjectTypeDescriptor(obj));
+    }
 }
