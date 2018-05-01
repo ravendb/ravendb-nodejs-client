@@ -34,7 +34,7 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      */
     //rawQuery<T>(query: string, documentType: DocumentType): IRawDocumentQuery<T>;
 
-    exists(id: string): boolean;
+    exists(id: string): Promise<boolean>;
 
     loadStartingWith<T extends Object>(idPrefix: string, opts: SessionLoadStartingWithOptions<T>): Promise<T[]>;
 

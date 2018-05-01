@@ -330,7 +330,7 @@ export class DocumentConventions {
     }
 
     public getEntityTypeDescriptor<T extends Object>(entity: T): ObjectTypeDescriptor<T> {
-        if (TypeUtil.isClassConstructor(entity.constructor)) {
+        if (TypeUtil.isClass(entity.constructor)) {
             return entity.constructor as ClassConstructor;
         }
 

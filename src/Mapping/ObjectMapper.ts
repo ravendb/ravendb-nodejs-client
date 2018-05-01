@@ -116,7 +116,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         }, Array.from(types.values()));
 
         let typeName;
-        if (TypeUtil.isClassConstructor(obj.constructor)) {
+        if (TypeUtil.isClass(obj)) {
             typeName = obj.constructor.name;
         } else {
             const typeDescriptor = TypeUtil.findType(obj, Array.from(types.values()));
@@ -320,7 +320,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         let instance = null;
         if (!ctorOrTypeDescriptor) {
             instance = Object.assign({}, rawValue);
-        } else if (TypeUtil.isClassConstructor(ctorOrTypeDescriptor)) {
+        } else if (TypeUtil.isClass(ctorOrTypeDescriptor)) {
             instance = this._createEmptyObject(ctorOrTypeDescriptor as ClassConstructor);
             instance = Object.assign(instance, rawValue);
         } else if (TypeUtil.isObjectLiteralTypeDescriptor(ctorOrTypeDescriptor)) {

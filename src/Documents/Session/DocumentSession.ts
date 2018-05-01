@@ -104,12 +104,12 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         const ids = !isLoadingSingle ? idOrIds as string[] : [ idOrIds as string ];
 
         let options: LoadOptions<TEntity>;
-        if (TypeUtil.isFunction(optionsOrCallback)) {
-            callback = optionsOrCallback as AbstractCallback<TEntity> || TypeUtil.NOOP;
-            options = {};
-        } else if (TypeUtil.isDocumentType(optionsOrCallback)) { 
+        if (TypeUtil.isDocumentType(optionsOrCallback)) { 
             options = { documentType: optionsOrCallback as DocumentType<TEntity> };
             callback = callback || TypeUtil.NOOP;
+        } else if (TypeUtil.isFunction(optionsOrCallback)) {
+            callback = optionsOrCallback as AbstractCallback<TEntity> || TypeUtil.NOOP;
+            options = {};
         } else if (TypeUtil.isObject(optionsOrCallback)) {
             options = optionsOrCallback as LoadOptions<TEntity>;
             callback = callback || TypeUtil.NOOP;
@@ -199,20 +199,20 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     /**
      * Check if document exists without loading it
      */
-    public exists(id: string): boolean {
+    public exists(id: string): Promise<boolean> {
         if (!id) {
-            throwError("InvalidArgumentException", "id cannot be null");
+            return Promise.reject(getError("InvalidArgumentException", "id cannot be null"));
         }
 
         if (this.documentsById.getValue(id)) {
-            return true;
+            return Promise.resolve(true);
         }
 
         const command = new HeadDocumentCommand(id, null);
 
-        this._requestExecutor.execute(command, this._sessionInfo);
-
-        return !!command.result;
+        return Promise.resolve()
+            .then(() => this._requestExecutor.execute(command, this._sessionInfo))
+            .then(() => !TypeUtil.isNullOrUndefined(command.result));
     }
 
     public loadStartingWith<TEntity>(

@@ -12,7 +12,7 @@ import {
 } from "../../src";
 import { User } from "../Assets/Entities";
 
-describe.only("session.delete()", function () {
+describe("session.delete()", function () {
 
     let store: IDocumentStore;
 

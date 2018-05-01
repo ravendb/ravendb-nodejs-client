@@ -130,7 +130,12 @@ export class EntityToJson {
 
             if (!entity) {
                 const mapper = this._session.conventions.entityObjectMapper;
-                const passedTypeInfo = Object.assign(entityTypeInfoFromMetadata, { typeName: entityType.name });
+                let passedTypeInfo = entityTypeInfoFromMetadata;
+                if (entityType) {
+                    passedTypeInfo = 
+                        Object.assign(passedTypeInfo, { typeName: entityType.name });
+                }
+                
                 entity = mapper.fromObjectLiteral(
                     document, passedTypeInfo, this._session.conventions.knownEntityTypesByName);
             }
@@ -141,9 +146,9 @@ export class EntityToJson {
 
             return entity;
         } catch (err) {
-            console.log(err);
             throwError("InvalidOperationException", 
-                `Could not convert document ${id} to entity of type ${entityType ? entityType.name : entityType}.`, 
+                `Could not convert document ${id} to entity of type `
+                + `${entityType ? entityType.name : entityType}: ${err.stack}`, 
                 err);
         }
     }

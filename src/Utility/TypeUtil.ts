@@ -52,15 +52,16 @@ export class TypeUtil {
         return _.isBoolean(value);
     }
 
-    public static isClassConstructor(value: any): boolean {
+    public static isClass(value: any): boolean {
         return _.isFunction(value) && ("name" in value)
-            && ("Object" !== value.name);
+            && ("Object" !== value.name)
+            && (!!value.prototype && !!value.prototype.constructor.name);
     }
 
     public static isObjectTypeDescriptor(value: any): boolean {
         return !!value 
             && typeof value !== "string"
-            && (this.isClassConstructor(value) || this.isObjectLiteralTypeDescriptor(value));
+            && (this.isClass(value) || this.isObjectLiteralTypeDescriptor(value));
 
     }
 
@@ -77,12 +78,12 @@ export class TypeUtil {
 
     public static isObjectLiteralTypeDescriptor(typeDescriptor: ObjectTypeDescriptor) {
         return typeDescriptor
-            && !this.isClassConstructor(typeDescriptor)
+            && !this.isClass(typeDescriptor)
             && typeof (typeDescriptor as ObjectLiteralDescriptor).isType === "function";
     }
 
     public static findType(obj: object, typeDescriptors: ObjectTypeDescriptor[]): ObjectTypeDescriptor {
-        if (TypeUtil.isClassConstructor(obj.constructor)) {
+        if (TypeUtil.isClass(obj.constructor)) {
             return obj.constructor as ClassConstructor;
         }
 
@@ -100,8 +101,8 @@ export class TypeUtil {
     }
 
     public static isInstanceOf(type: ObjectTypeDescriptor, typeToCheck: ObjectTypeDescriptor) {
-        return TypeUtil.isClassConstructor(type)
-            && TypeUtil.isClassConstructor(typeToCheck)
+        return TypeUtil.isClass(type)
+            && TypeUtil.isClass(typeToCheck)
             && type instanceof (typeToCheck as ClassConstructor);
     }
     
