@@ -22,7 +22,7 @@ describe("Issue RavenDB-903", function () {
     afterEach(async () => 
         await disposeTestDocumentStore(store));
 
-    it("can ", async () => {
+    xit("can ", async () => {
         throw new Error("Query not impl.");
     });
 });

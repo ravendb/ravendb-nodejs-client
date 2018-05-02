@@ -11,7 +11,7 @@ import {
     IDocumentStore,
 } from "../../../src";
 
-describe("Queries with custom functions", function () {
+xdescribe("Queries with custom functions", function () {
 
     let store: IDocumentStore;
 

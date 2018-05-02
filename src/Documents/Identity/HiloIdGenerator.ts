@@ -29,7 +29,7 @@ export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdG
         this._identityPartsSeparator = this.conventions.identityPartsSeparator;
     }
 
-    public generateDocumentId(): Promise<string> {
+    public nextId(): Promise<string> {
         return this._tryRequestNextRange()
             .then((nextRange: HiloRangeValue): string =>
                 this._assembleDocumentId(nextRange.current)

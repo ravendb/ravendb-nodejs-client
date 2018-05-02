@@ -19,7 +19,7 @@ export abstract class AbstractHiloIdGenerator implements IHiloIdGenerator {
     this.dbName = dbName || store.database;
   }
 
-  public abstract generateDocumentId(...args: Array<object | string>): Promise<string>;
+  public abstract nextId(...args: Array<object | string>): Promise<string>;
 
   public returnUnusedRange(): Promise<void> {
 

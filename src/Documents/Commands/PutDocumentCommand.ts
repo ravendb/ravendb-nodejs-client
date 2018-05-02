@@ -36,6 +36,7 @@ export class PutDocumentCommand extends RavenCommand<PutResult> {
     public createRequest(node: ServerNode): HttpRequestBase {
         const uri = `${node.url}/databases/${node.database}/docs?id=${encodeURIComponent(this._id)}`;
 
+        debugger;
         const body = JsonSerializer.getDefaultForEntities().serialize(this._document);
         const req = {
             uri,

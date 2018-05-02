@@ -4,11 +4,10 @@ import * as _ from "lodash";
 import * as BluebirdPromise from "bluebird";
 import { 
     IDocumentSession, 
-    SessionLoadOptions, 
+    LoadOptions, 
     ConcurrencyCheckMode, 
     SessionLoadStartingWithOptions, 
     IDocumentSessionImpl,
-    LoadOptions
 } from "./IDocumentSession";
 // import { IDocumentQueryBase, IRawDocumentQuery, IDocumentQuery, IDocumentQueryOptions } from "./IDocumentQuery";
 // import { DocumentQueryBase, DocumentQuery } from "./DocumentQuery";
@@ -83,20 +82,30 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
     public async load<TEntity extends Object = IRavenObject>(
         id: string, 
-        options?: SessionLoadOptions<TEntity>, 
+        options?: LoadOptions<TEntity>, 
+        callback?: AbstractCallback<TEntity>): Promise<TEntity>;
+    public async load<TEntity extends Object = IRavenObject>(
+        id: string, 
+        documentType?: DocumentType<TEntity>, 
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
     public async load<TEntity extends Object = IRavenObject>(
         ids: string[], 
         callback?: AbstractCallback<EntitiesCollectionObject<TEntity>>): Promise<EntitiesCollectionObject<TEntity>>;
     public async load<TEntity extends Object = IRavenObject>(
         ids: string[], 
-        options?: SessionLoadOptions<TEntity>, 
+        options?: LoadOptions<TEntity>, 
+        callback?: AbstractCallback<TEntity>): 
+        Promise<EntitiesCollectionObject<TEntity>>;
+    public async load<TEntity extends Object = IRavenObject>(
+        ids: string[], 
+        documentType?: DocumentType<TEntity>, 
         callback?: AbstractCallback<TEntity>): 
         Promise<EntitiesCollectionObject<TEntity>>;
     public async load<TEntity extends Object = IRavenObject>(
         idOrIds: string | string[],
         optionsOrCallback?: 
-            SessionLoadOptions<TEntity> | AbstractCallback<TEntity | EntitiesCollectionObject<TEntity>>,
+            DocumentType<TEntity> | LoadOptions<TEntity> | 
+            AbstractCallback<TEntity | EntitiesCollectionObject<TEntity>>,
         callback?: AbstractCallback<TEntity | EntitiesCollectionObject<TEntity>>)
             : Promise<TEntity | EntitiesCollectionObject<TEntity>> {
 

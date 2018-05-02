@@ -15,7 +15,7 @@ export class HiloMultiTypeIdGenerator extends AbstractHiloIdGenerator implements
         this._sem = semaphore();
     }
 
-    public generateDocumentId(entity: object, documentType?: string): Promise<string> {
+    public nextId(entity: object, documentType?: string): Promise<string> {
         const entityType = this.conventions.findEntityType(documentType) || 
             this.conventions.getEntityTypeDescriptor(entity);
         let tag: string = this.conventions.getCollectionNameForType(entityType);
@@ -25,7 +25,7 @@ export class HiloMultiTypeIdGenerator extends AbstractHiloIdGenerator implements
         }
 
         return this._createGeneratorForTag(tag)
-            .then((generator: IHiloIdGenerator) => generator.generateDocumentId());
+            .then((generator: IHiloIdGenerator) => generator.nextId());
     }
 
     protected _createGeneratorForTag(tag: string): Promise<IHiloIdGenerator> {

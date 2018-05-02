@@ -1,7 +1,8 @@
+import * as BluebirdPromise from "bluebird";
 import { EntityToJson } from "./EntityToJson";
 import * as uuid from "uuid";
 import { IDisposable } from "../../Types/Contracts";
-import { IMetadataDictionary, SessionInfo, SessionStoreOptions, ConcurrencyCheckMode, StoreOptions } from "./IDocumentSession";
+import { IMetadataDictionary, SessionInfo, ConcurrencyCheckMode, StoreOptions } from "./IDocumentSession";
 import { Todo, ObjectTypeDescriptor, PropsBasedObjectLiteralDescriptor, ClassConstructor } from "../../Types";
 import { SessionEventsEmitter, SessionBeforeStoreEventArgs, SessionBeforeDeleteEventArgs } from "./SessionEvents";
 import { RequestExecutor } from "../../Http/RequestExecutor";
@@ -552,17 +553,22 @@ export abstract class InMemoryDocumentSessionOperations
     public store<TEntity extends Object>(
         entity: TEntity,
         id?: string,
-        options?: DocumentType<TEntity> | SessionStoreOptions<TEntity>,
-        callback?: AbstractCallback<TEntity>): Promise<void>;
+        documentType?: DocumentType<TEntity>,
+        callback?: AbstractCallback<void>): Promise<void>;
     public store<TEntity extends Object>(
         entity: TEntity,
         id?: string,
-        optionsOrCallback?: DocumentType<TEntity> | SessionStoreOptions<TEntity> | AbstractCallback<TEntity>,
-        callback?: AbstractCallback<TEntity>): Promise<void> {
+        options?: StoreOptions<TEntity>,
+        callback?: AbstractCallback<void>): Promise<void>;
+    public store<TEntity extends Object>(
+        entity: TEntity,
+        id?: string,
+        optionsOrCallback?: DocumentType<TEntity> | StoreOptions<TEntity> | AbstractCallback<void>,
+        callback?: AbstractCallback<void>): Promise<void> {
 
         let options: StoreOptions<TEntity> = {};
         if (TypeUtil.isFunction(optionsOrCallback)) {
-            callback = optionsOrCallback as AbstractCallback<TEntity>;
+            callback = optionsOrCallback as AbstractCallback<void>;
         } else if (TypeUtil.isDocumentType<TEntity>(optionsOrCallback)) {
             options = { documentType: optionsOrCallback as DocumentType<TEntity> };
             callback = callback || TypeUtil.NOOP;
@@ -589,8 +595,12 @@ export abstract class InMemoryDocumentSessionOperations
             forceConcurrencyCheck = !hasId ? "Forced" : "Auto";
         }
 
-        return Promise.resolve()
-            .then(() => this._storeInternal(entity, changeVector, id, forceConcurrencyCheck, documentType));
+        const result = BluebirdPromise.resolve()
+            .then(() => this._storeInternal(entity, changeVector, id, forceConcurrencyCheck, documentType))
+            .tap(() => callback())
+            .tapCatch(err => callback(err));
+
+        return Promise.resolve(result);
     }
 
     protected _generateDocumentKeysOnStore: boolean = true;

@@ -222,7 +222,7 @@ export class DocumentStore extends DocumentStoreBase {
                 this._multiDbHiLo = generator;
 
                 this.conventions.documentIdGenerator = 
-                    (dbName: string, entity: object) => generator.generateDocumentId(dbName, entity);
+                    (dbName: string, entity: object) => generator.nextId(dbName, entity);
             }
 
             this.conventions.freeze();

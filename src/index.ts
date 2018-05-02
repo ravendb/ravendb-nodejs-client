@@ -76,6 +76,14 @@ export * from "./Documents/Indexes/IndexingStatus";
 export * from "./Documents/Indexes/IndexStats";
 export * from "./Documents/Indexes";
 
+// HiLo
+export * from "./Documents/Identity/HiloIdGenerator";
+export * from "./Documents/Identity/HiloMultiDatabaseIdGenerator";
+export * from "./Documents/Identity/HiloMultiTypeIdGenerator";
+export * from "./Documents/Identity/HiloRangeValue";
+export * from "./Documents/Identity/IHiloIdGenerator";
+export * from "./Documents/Identity/HiloMultiDatabaseIdGenerator";
+
 // MAPPING
 export { TypesAwareObjectMapper } from "./Mapping/ObjectMapper";
 export { Mapping } from "./Mapping";

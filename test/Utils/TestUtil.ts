@@ -74,3 +74,18 @@ function setupRavenDbTestContext() {
 
     return context;
 }
+
+// // TODO
+//     public CleanCloseable withFiddler() {
+//         RequestExecutor.requestPostProcessor = request -> {
+//             HttpHost proxy = new HttpHost("127.0.0.1", 8888, "http");
+//             RequestConfig requestConfig = request.getConfig();
+//             if (requestConfig == null) {
+//                 requestConfig = RequestConfig.DEFAULT;
+//             }
+//             requestConfig = RequestConfig.copy(requestConfig).setProxy(proxy).build();
+//             request.setConfig(requestConfig);
+//         };
+
+//         return () -> RequestExecutor.requestPostProcessor = null;
+//     }

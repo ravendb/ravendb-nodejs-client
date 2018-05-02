@@ -1,7 +1,7 @@
 import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
+import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import {
     RequestExecutor,
@@ -9,9 +9,9 @@ import {
     RavenErrorType,
     GetNextOperationIdCommand,
     IDocumentStore,
-} from "../../../src";
+} from "../../src";
 
-xdescribe("Regex query", function () {
+describe("ClassName", function () {
 
     let store: IDocumentStore;
 
@@ -22,7 +22,6 @@ xdescribe("Regex query", function () {
     afterEach(async () => 
         await disposeTestDocumentStore(store));
 
-    it("can ", async () => {
-        throw new Error("Query");
+    xit("can ", async () => {
     });
 });

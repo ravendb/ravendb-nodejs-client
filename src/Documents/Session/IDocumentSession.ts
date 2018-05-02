@@ -40,14 +40,23 @@ export interface IDocumentSession extends IDisposable {
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
     load<TEntity extends Object = IRavenObject>(
         id: string, 
-        options?: SessionLoadOptions<TEntity>, 
+        documentType?: DocumentType<TEntity>, 
+        callback?: AbstractCallback<TEntity>): Promise<TEntity>;
+    load<TEntity extends Object = IRavenObject>(
+        id: string, 
+        options?: LoadOptions<TEntity>, 
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
     load<TEntity extends Object = IRavenObject>(
         ids: string[], 
         callback?: AbstractCallback<EntitiesCollectionObject<TEntity>>): Promise<EntitiesCollectionObject<TEntity>>;
     load<TEntity extends Object = IRavenObject>(
         ids: string[], 
-        options?: SessionLoadOptions<TEntity>, 
+        documentType?: DocumentType<TEntity>, 
+        callback?: AbstractCallback<TEntity>): 
+        Promise<EntitiesCollectionObject<TEntity>>;
+    load<TEntity extends Object = IRavenObject>(
+        ids: string[], 
+        options?: LoadOptions<TEntity>, 
         callback?: AbstractCallback<TEntity>): 
         Promise<EntitiesCollectionObject<TEntity>>;
 
@@ -63,7 +72,12 @@ export interface IDocumentSession extends IDisposable {
     store<TEntity extends Object = IRavenObject>(
         document: TEntity,
         id?: string,
-        options?: DocumentType<TEntity> | SessionStoreOptions<TEntity>,
+        documentType?: DocumentType<TEntity>,
+        callback?: AbstractCallback<TEntity>): Promise<void>;
+    store<TEntity extends Object = IRavenObject>(
+        document: TEntity,
+        id?: string,
+        options?: StoreOptions<TEntity>,
         callback?: AbstractCallback<TEntity>): Promise<void>;
 
     
@@ -85,13 +99,11 @@ export interface ISessionOptions {
     requestExecutor?: RequestExecutor;
 }
 
-export type SessionStoreOptions<T> = DocumentType<T> | StoreOptions<T>;
 export interface StoreOptions<T> {
     documentType?: DocumentType<T>;
     changeVector?: string;
 }
 
-export type SessionLoadOptions<T> = DocumentType<T> | LoadOptions<T>;
 
 export interface LoadOptions<T> {
     documentType?: DocumentType<T>;
