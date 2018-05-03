@@ -5,7 +5,7 @@
   "files": [
     "dist/"
   ],
-  "homepage": "http://ravendb.net",
+  "homepage": "https://ravendb.net",
   "main": "lib/index.js",
   "typings": "lib/ravendb.d.ts",
   "scripts": {

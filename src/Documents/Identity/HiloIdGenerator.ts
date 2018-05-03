@@ -8,7 +8,7 @@ import { acquireSemaphore } from "../../Utility/SemaphoreUtil";
 import { StringUtil } from "../../Utility/StringUtil";
 import { AbstractHiloIdGenerator } from "./AbstractHiloIdGenerator";
 import { HiloReturnCommand } from "./Commands/HiloReturnCommand";
-import { NextHiloCommand } from "./Commands/NextHiloCommand";
+import { NextHiloCommand, HiLoResult } from "./Commands/NextHiloCommand";
 import { HiloRangeValue } from "./HiloRangeValue";
 import { IHiloIdGenerator } from "./IHiloIdGenerator";
 
@@ -48,13 +48,13 @@ export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdG
             this.tag, this._lastBatchSize, this._lastRangeAt, this._identityPartsSeparator, this._range.maxId);
         return this.store.getRequestExecutor(this.dbName).execute(hiloCmd)
             .then(() => {
-                const { result } = hiloCmd;
-                this._prefix = result["prefix"];
-                this._lastBatchSize = result["last_size"];
-                this._serverTag = result["server_tag"] || null;
-                this._lastRangeAt = DateUtil.parse(result["last_range_at"]);
+                const result: HiLoResult = hiloCmd.result;
+                this._prefix = result.prefix;
+                this._lastBatchSize = result.lastSize;
+                this._serverTag = result.serverTag || null;
+                this._lastRangeAt = result.lastRangeAt;
 
-                return new HiloRangeValue(result["low"], result["high"]);
+                return new HiloRangeValue(result.low, result.high);
             });
     }
 

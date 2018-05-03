@@ -1,3 +1,4 @@
+import {User} from '../Assets/Entities';
 import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
@@ -10,7 +11,9 @@ import {
     GetNextOperationIdCommand,
     IDocumentStore,
     HiloIdGenerator,
+    HiloMultiDatabaseIdGenerator,
 } from "../../src";
+import { userInfo } from "os";
 
 describe.only("HiLo", function () {
 
@@ -59,38 +62,25 @@ describe.only("HiLo", function () {
 
     });
 
-    it ("can operate with multiple DBs", async () => {
-        throw new Error("TODO");
-    })
+    it("can operate with multiple DBs", async () => {
+        const session = store.openSession();
+        const hiloDoc: HiLoDoc = Object.assign(new HiLoDoc(), { Max: 64 });
+
+        await session.store(hiloDoc, "Raven/Hilo/users");
+
+        const productsHilo = Object.assign(new HiLoDoc(), { Max: 128 });
+        await session.store(productsHilo, "Raven/Hilo/products");
+
+        await session.saveChanges();
+
+        const multiDbHilo = new HiloMultiDatabaseIdGenerator(store);
+        let generatedDocumentKey = await multiDbHilo.nextId(null, new User());
+        assert.equal(generatedDocumentKey, "Users/65-A");
+
+        generatedDocumentKey = await multiDbHilo.nextId(null, new Product());
+        assert.equal(generatedDocumentKey, "Products/129-A");
+    });
 });
-
-//     @Test
-//     public void hiLoMultiDb() throws Exception {
-//         try (DocumentStore store = getDocumentStore()) {
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 HiloDoc hiloDoc = new HiloDoc();
-//                 hiloDoc.setMax(64);
-//                 session.store(hiloDoc, "Raven/Hilo/users");
-
-//                 HiloDoc productsHilo = new HiloDoc();
-//                 productsHilo.setMax(128);
-//                 session.store(productsHilo, "Raven/Hilo/products");
-
-//                 session.saveChanges();
-
-//                 MultiDatabaseHiLoIdGenerator multiDbHilo = new MultiDatabaseHiLoIdGenerator(store, store.getConventions());
-//                 String generateDocumentKey = multiDbHilo.generateDocumentId(null, new User());
-//                 assertThat(generateDocumentKey)
-//                         .isEqualTo("users/65-A");
-
-//                 generateDocumentKey = multiDbHilo.generateDocumentId(null, new Product());
-//                 assertThat(generateDocumentKey)
-//                         .isEqualTo("products/129-A");
-
-//             }
-//         }
-//     }
 
 //     @Test
 //     public void capacityShouldDouble() throws Exception {
