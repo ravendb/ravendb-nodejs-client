@@ -29,11 +29,30 @@ export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdG
         this._identityPartsSeparator = this.conventions.identityPartsSeparator;
     }
 
-    public nextId(): Promise<string> {
-        return this._tryRequestNextRange()
-            .then((nextRange: HiloRangeValue): string =>
-                this._assembleDocumentId(nextRange.current)
-            );
+    public generateDocumentId(entity: object): Promise<string> {
+        return Promise.resolve()
+            .then(() => this.nextId())
+            .then((nextId) => this._getDocumentIdFromId(nextId));
+    }
+
+    protected _getDocumentIdFromId(nextId: number) {
+        return this._prefix + nextId + "-" + this._serverTag;
+    }
+
+    public nextId(): Promise<number> {
+
+        const getNextIdWithinRange = (range: HiloRangeValue): Promise<number> => {
+            range.increment();
+            const id = range.current;
+            if (id <= range.maxId) {
+                return Promise.resolve(id);
+            }
+
+            return this._tryRequestNextRange()
+                .then((newRange) => getNextIdWithinRange(newRange) as Promise<number>);
+        };
+
+        return getNextIdWithinRange(this._range);
     }
 
     public returnUnusedRange(): Promise<void> {
@@ -100,4 +119,14 @@ export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdG
 
         return StringUtil.format("{0}{1}", prefix, currentRangeValue);
     }
+
+
+    public get range(): HiloRangeValue {
+        return this._range;
+    }
+
+    public set range(value: HiloRangeValue) {
+        this._range = value;
+    }
+    
 }

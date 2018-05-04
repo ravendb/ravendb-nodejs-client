@@ -68,17 +68,17 @@ export interface IDocumentSession extends IDisposable {
         id: string, expectedChangeVector: string): void;
 
     store<TEntity extends Object = IRavenObject>(
-        document: TEntity, id?: string, callback?: AbstractCallback<TEntity>): Promise<void>;
+        document: TEntity, id?: string, callback?: AbstractCallback<void>): Promise<void>;
     store<TEntity extends Object = IRavenObject>(
         document: TEntity,
         id?: string,
         documentType?: DocumentType<TEntity>,
-        callback?: AbstractCallback<TEntity>): Promise<void>;
+        callback?: AbstractCallback<void>): Promise<void>;
     store<TEntity extends Object = IRavenObject>(
         document: TEntity,
         id?: string,
         options?: StoreOptions<TEntity>,
-        callback?: AbstractCallback<TEntity>): Promise<void>;
+        callback?: AbstractCallback<void>): Promise<void>;
 
     
     /**

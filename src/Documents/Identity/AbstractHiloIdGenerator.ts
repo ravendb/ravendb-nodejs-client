@@ -5,7 +5,7 @@ import {IRavenObject} from "../../Types/IRavenObject";
 import { getLogger } from "../../Utility/LogUtil";
 
 const log = getLogger({ module: "HiloIdGenerator" });
-export abstract class AbstractHiloIdGenerator implements IHiloIdGenerator {
+export abstract class AbstractHiloIdGenerator  {
   protected generators: IRavenObject<IHiloIdGenerator> = {};
   protected store: IDocumentStore;
   protected conventions: DocumentConventions;
@@ -18,8 +18,6 @@ export abstract class AbstractHiloIdGenerator implements IHiloIdGenerator {
     this.conventions = store.conventions;
     this.dbName = dbName || store.database;
   }
-
-  public abstract nextId(...args: Array<object | string>): Promise<string>;
 
   public returnUnusedRange(): Promise<void> {
 

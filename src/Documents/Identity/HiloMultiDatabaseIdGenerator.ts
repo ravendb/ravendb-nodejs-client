@@ -5,14 +5,16 @@ import {AbstractHiloIdGenerator} from "./AbstractHiloIdGenerator";
 import { IDocumentStore } from "../IDocumentStore";
 
 export class HiloMultiDatabaseIdGenerator extends AbstractHiloIdGenerator implements IHiloIdGenerator {
+
+  private _store: IDocumentStore;
+
   constructor(store: IDocumentStore) {
     super(store);
   }
 
-  public nextId(dbName: string, entity: object, documentType?: string): Promise<string> {
-    return this
-      ._getGeneratorForDatabase(dbName || this.store.database)
-      .nextId(entity, documentType);
+  public generateDocumentId(dbName: string, entity: object): Promise<string> {
+    return this._getGeneratorForDatabase(this._store.database)
+      .generateDocumentId(entity);
   }
 
   protected _getGeneratorForDatabase(dbName: string): IHiloIdGenerator {

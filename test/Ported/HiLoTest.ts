@@ -17,7 +17,7 @@ import { userInfo } from "os";
 
 describe.only("HiLo", function () {
 
-    class HiLoDoc {
+    class HiloDoc {
         // tslint:disable-next-line:variable-name
         public Max: number;
     }
@@ -37,7 +37,7 @@ describe.only("HiLo", function () {
 
     it("cannot go down", async () => {
         const session = store.openSession();
-        const hiloDoc: HiLoDoc = Object.assign(new HiLoDoc(), { Max: 32 });
+        const hiloDoc: HiloDoc = Object.assign(new HiloDoc(), { Max: 32 });
 
         await session.store(hiloDoc, "Raven/Hilo/users");
         await session.saveChanges();
@@ -64,11 +64,11 @@ describe.only("HiLo", function () {
 
     it("can operate with multiple DBs", async () => {
         const session = store.openSession();
-        const hiloDoc: HiLoDoc = Object.assign(new HiLoDoc(), { Max: 64 });
+        const hiloDoc: HiloDoc = Object.assign(new HiloDoc(), { Max: 64 });
 
         await session.store(hiloDoc, "Raven/Hilo/users");
 
-        const productsHilo = Object.assign(new HiLoDoc(), { Max: 128 });
+        const productsHilo = Object.assign(new HiloDoc(), { Max: 128 });
         await session.store(productsHilo, "Raven/Hilo/products");
 
         await session.saveChanges();
@@ -79,6 +79,41 @@ describe.only("HiLo", function () {
 
         generatedDocumentKey = await multiDbHilo.nextId(null, new Product());
         assert.equal(generatedDocumentKey, "Products/129-A");
+    });
+
+    it("capacity should double", async () => {
+            const hiLoIdGenerator = new HiloIdGenerator(store, store.database, "users");
+
+            {
+                const session = store.openSession();
+                const hiloDoc: HiloDoc = Object.assign(new HiloDoc(), { Max: 64 });
+                await session.store(hiloDoc, "Raven/Hilo/users");
+                await session.saveChanges();
+
+                for (let i = 0; i < 32; i++) {
+                    await hiLoIdGenerator.generateDocumentId(new User());
+                }
+            }
+
+//             }
+
+//             try (IDocumentSession session = store.openSession()) {
+//                 HiloDoc hiloDoc = session.load(HiloDoc.class, "Raven/Hilo/users");
+//                 long max = hiloDoc.getMax();
+//                 assertThat(max)
+//                         .isEqualTo(96);
+
+//                 //we should be receiving a range of 64 now
+//                 hiLoIdGenerator.generateDocumentId(new User());
+//             }
+
+//             try (IDocumentSession session = store.openSession()) {
+//                 HiloDoc hiloDoc = session.load(HiloDoc.class, "Raven/Hilo/users");
+//                 long max = hiloDoc.getMax();
+//                 assertThat(max)
+//                         .isEqualTo(160);
+//             }
+
     });
 });
 

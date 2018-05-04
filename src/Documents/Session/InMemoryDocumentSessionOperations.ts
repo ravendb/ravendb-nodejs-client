@@ -549,7 +549,7 @@ export abstract class InMemoryDocumentSessionOperations
     public store<TEntity extends Object>(
         entity: TEntity,
         id?: string,
-        callback?: AbstractCallback<TEntity>): Promise<void>;
+        callback?: AbstractCallback<void>): Promise<void>;
     public store<TEntity extends Object>(
         entity: TEntity,
         id?: string,
