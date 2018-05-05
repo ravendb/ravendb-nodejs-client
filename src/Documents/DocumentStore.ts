@@ -94,56 +94,46 @@ export class DocumentStore extends DocumentStoreBase {
             // if this is still going, we continue with disposal, it is for graceful shutdown only, anyway
         */
 
-        if (this._multiDbHiLo) {
-          BluebirdPromise.resolve()
-            // .then(() => this._multiDbHiLo.returnUnusedRange())
-            .catch(err => this._log.warn("Error returning unused ID range.", err));
-        }
+        const disposeChain = BluebirdPromise.resolve();
 
-        // TBD: Subscriptions?.Dispose();
-
-        this._disposed = true;
-
-        new BluebirdPromise((resolve, reject) => {
-            let listenersExecCallbacksCount = 0;
-            const listenersCount = this.listenerCount("afterDispose");
-            this.emit("afterDispose", () => {
-                if (listenersCount === ++listenersExecCallbacksCount) {
-                    resolve();
+        disposeChain
+            .then(() => {
+                if (this._multiDbHiLo) {
+                    return BluebirdPromise.resolve()
+                        .then(() => this._multiDbHiLo.returnUnusedRange())
+                        .catch(err => this._log.warn("Error returning unused ID range.", err));
                 }
-            });
+            })
+            .then(() => {
+                this._disposed = true;
+                // TBD: Subscriptions?.Dispose();
 
-        })
-        .timeout(5000) 
-        .catch((err) => this._log.warn(`Error handling 'afterDispose'`, err))
-        .finally(() => {
-            this._log.info(`Disposing request executors ${this._requestExecutors.size}`);
-            this._requestExecutors.forEach((executor, db) => {
-                executor.dispose();
-            });
+                return new BluebirdPromise((resolve, reject) => {
+                    let listenersExecCallbacksCount = 0;
+                    const listenersCount = this.listenerCount("afterDispose");
+                    this.emit("afterDispose", () => {
+                        if (listenersCount === ++listenersExecCallbacksCount) {
+                            resolve();
+                        }
+                    });
 
-            this.emit("executorsDisposed");
-        });
+                })
+                .timeout(5000) 
+                .catch((err) => this._log.warn(`Error handling 'afterDispose'`, err));
+            })
+            .then(() => {
+                this._log.info(`Disposing request executors ${this._requestExecutors.size}`);
+                this._requestExecutors.forEach((executor, db) => {
+                    try {
+                        executor.dispose();
+                    } catch (err) {
+                        this._log.warn(err, `Error disposing request executor.`);
+                    }
+                });
+
+            })
+            .finally(() => this.emit("executorsDisposed"));
     }
-
-    // /**
-    //  * Opens the session.
-    //  */
-    // @Override
-    // public IDocumentSession openSession() {
-    //     return openSession(new SessionOptions());
-    // }
-
-    // /**
-    //  * Opens the session for a particular database
-    //  */
-    // @Override
-    // public IDocumentSession openSession(String database) {
-    //     SessionOptions sessionOptions = new SessionOptions();
-    //     sessionOptions.setDatabase(database);
-
-    //     return openSession(sessionOptions);
-    // }
 
     public openSession(): IDocumentSession;
     public openSession(database: string): IDocumentSession;

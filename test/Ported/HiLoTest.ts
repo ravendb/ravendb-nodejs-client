@@ -1,4 +1,4 @@
-import {User} from '../Assets/Entities';
+import {User} from "../Assets/Entities";
 import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
@@ -12,10 +12,11 @@ import {
     IDocumentStore,
     HiloIdGenerator,
     HiloMultiDatabaseIdGenerator,
+    DocumentStore,
 } from "../../src";
 import { userInfo } from "os";
 
-describe.only("HiLo", function () {
+describe("HiLo", function () {
 
     class HiloDoc {
         // tslint:disable-next-line:variable-name
@@ -95,104 +96,51 @@ describe.only("HiLo", function () {
                 }
             }
 
-//             }
+            {
+                const session = store.openSession();
+                const hiloDoc = await session.load("Raven/Hilo/users");
+                assert.equal(hiloDoc.Max, 96);
+                assert.equal(hiloDoc.constructor, HiloDoc); // should take type from @metadata
 
-//             try (IDocumentSession session = store.openSession()) {
-//                 HiloDoc hiloDoc = session.load(HiloDoc.class, "Raven/Hilo/users");
-//                 long max = hiloDoc.getMax();
-//                 assertThat(max)
-//                         .isEqualTo(96);
+                await hiLoIdGenerator.generateDocumentId(new User());
+            }
 
-//                 //we should be receiving a range of 64 now
-//                 hiLoIdGenerator.generateDocumentId(new User());
-//             }
+            {
+                const session = store.openSession();
+                const hiloDoc = await session.load("Raven/Hilo/users");
+                assert.equal(hiloDoc.Max, 160);
+                assert.equal(hiloDoc.constructor, HiloDoc);
+            }
+    });
 
-//             try (IDocumentSession session = store.openSession()) {
-//                 HiloDoc hiloDoc = session.load(HiloDoc.class, "Raven/Hilo/users");
-//                 long max = hiloDoc.getMax();
-//                 assertThat(max)
-//                         .isEqualTo(160);
-//             }
+    it("returns unused range on dispose", async () => {
 
+        let newStore = new DocumentStore(store.urls, store.database);
+        newStore.initialize();
+
+        {
+            const session = newStore.openSession();
+            const hiloDoc: HiloDoc = Object.assign(new HiloDoc(), { Max: 32 });
+            await session.store(hiloDoc, "Raven/Hilo/users");
+            await session.saveChanges();
+
+            await session.store(new User());
+            await session.store(new User());
+            await session.saveChanges();
+        }
+
+        newStore.dispose(); // on document store dispose(), hilo-return should be called
+
+        newStore = new DocumentStore(store.urls, store.database);
+        newStore.initialize();
+
+        {
+            const session = newStore.openSession();
+            const hiloDoc = await session.load("Raven/Hilo/users", HiloDoc);
+            assert.equal(hiloDoc.Max, 34);
+            assert.equal(hiloDoc.constructor, HiloDoc); // should take type from @metadata
+        }
+
+        newStore.dispose();
     });
 });
-
-//     @Test
-//     public void capacityShouldDouble() throws Exception {
-//         try (DocumentStore store = getDocumentStore()) {
-
-//             HiLoIdGenerator hiLoIdGenerator = new HiLoIdGenerator("users", store, store.getDatabase(), store.getConventions().getIdentityPartsSeparator());
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 HiloDoc hiloDoc = new HiloDoc();
-//                 hiloDoc.setMax(64);
-//                 session.store(hiloDoc, "Raven/Hilo/users");
-//                 session.saveChanges();
-
-//                 for (int i = 0; i < 32; i++) {
-//                     hiLoIdGenerator.generateDocumentId(new User());
-//                 }
-//             }
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 HiloDoc hiloDoc = session.load(HiloDoc.class, "Raven/Hilo/users");
-//                 long max = hiloDoc.getMax();
-//                 assertThat(max)
-//                         .isEqualTo(96);
-
-//                 //we should be receiving a range of 64 now
-//                 hiLoIdGenerator.generateDocumentId(new User());
-//             }
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 HiloDoc hiloDoc = session.load(HiloDoc.class, "Raven/Hilo/users");
-//                 long max = hiloDoc.getMax();
-//                 assertThat(max)
-//                         .isEqualTo(160);
-//             }
-//         }
-//     }
-
-//     @Test
-//     public void returnUnusedRangeOnClose() throws Exception {
-//         try (DocumentStore store = getDocumentStore()) {
-
-//             DocumentStore newStore = new DocumentStore();
-//             newStore.setUrls(store.getUrls());
-//             newStore.setDatabase(store.getDatabase());
-
-//             newStore.initialize();
-
-//             try (IDocumentSession session = newStore.openSession()) {
-//                 HiloDoc hiloDoc = new HiloDoc();
-//                 hiloDoc.setMax(32);
-//                 session.store(hiloDoc, "Raven/Hilo/users");
-
-//                 session.saveChanges();
-
-//                 session.store(new User());
-//                 session.store(new User());
-
-//                 session.saveChanges();
-//             }
-
-//             newStore.close(); //on document store close, hilo-return should be called
-
-
-//             newStore = new DocumentStore();
-//             newStore.setUrls(store.getUrls());
-//             newStore.setDatabase(store.getDatabase());
-
-//             newStore.initialize();
-
-//             try (IDocumentSession session = newStore.openSession()) {
-//                 HiloDoc hiloDoc = session.load(HiloDoc.class, "Raven/Hilo/users");
-//                 long max = hiloDoc.getMax();
-//                 assertThat(max)
-//                         .isEqualTo(34);
-//             }
-
-//             newStore.close(); //on document store close, hilo-return should be called
-//         }
-//     }
-// }
