@@ -26,7 +26,7 @@ export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdG
 
         this._lastRangeAt = DateUtil.zeroDate();
         this._range = new HiloRangeValue();
-        this._identityPartsSeparator = this.conventions.identityPartsSeparator;
+        this._identityPartsSeparator = this._conventions.identityPartsSeparator;
     }
 
     public generateDocumentId(entity: object): Promise<string> {
@@ -42,8 +42,8 @@ export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdG
     public nextId(): Promise<number> {
 
         const getNextIdWithinRange = (range: HiloRangeValue): Promise<number> => {
-            range.increment();
-            const id = range.current;
+            debugger;
+            const id = range.increment();
             if (id <= range.maxId) {
                 return Promise.resolve(id);
             }
@@ -57,15 +57,15 @@ export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdG
 
     public returnUnusedRange(): Promise<void> {
         const range = this._range;
-        const executor = this.store.getRequestExecutor(this.dbName);
+        const executor = this._store.getRequestExecutor(this._dbName);
 
-        return executor.execute(new HiloReturnCommand(this.tag, range.current, range.maxId));
+        return executor.execute(new HiloReturnCommand(this._tag, range.current, range.maxId));
     }
 
     protected _getNextRange(): Promise<HiloRangeValue> {
         const hiloCmd = new NextHiloCommand(
-            this.tag, this._lastBatchSize, this._lastRangeAt, this._identityPartsSeparator, this._range.maxId);
-        return this.store.getRequestExecutor(this.dbName).execute(hiloCmd)
+            this._tag, this._lastBatchSize, this._lastRangeAt, this._identityPartsSeparator, this._range.maxId);
+        return this._store.getRequestExecutor(this._dbName).execute(hiloCmd)
             .then(() => {
                 const result: HiLoResult = hiloCmd.result;
                 this._prefix = result.prefix;

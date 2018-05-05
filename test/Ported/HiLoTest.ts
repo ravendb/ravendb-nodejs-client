@@ -74,10 +74,10 @@ describe.only("HiLo", function () {
         await session.saveChanges();
 
         const multiDbHilo = new HiloMultiDatabaseIdGenerator(store);
-        let generatedDocumentKey = await multiDbHilo.nextId(null, new User());
+        let generatedDocumentKey = await multiDbHilo.generateDocumentId(null, new User());
         assert.equal(generatedDocumentKey, "Users/65-A");
 
-        generatedDocumentKey = await multiDbHilo.nextId(null, new Product());
+        generatedDocumentKey = await multiDbHilo.generateDocumentId(null, new Product());
         assert.equal(generatedDocumentKey, "Products/129-A");
     });
 

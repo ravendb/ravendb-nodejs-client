@@ -7,7 +7,7 @@ export class HiloRangeValue {
   {
     this._minId = minId;
     this._maxId = maxId;
-    this._current = minId;
+    this._current = minId - 1;
   }
 
   public get minId(): number {

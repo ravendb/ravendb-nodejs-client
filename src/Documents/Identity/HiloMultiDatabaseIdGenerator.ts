@@ -6,8 +6,6 @@ import { IDocumentStore } from "../IDocumentStore";
 
 export class HiloMultiDatabaseIdGenerator extends AbstractHiloIdGenerator implements IHiloIdGenerator {
 
-  private _store: IDocumentStore;
-
   constructor(store: IDocumentStore) {
     super(store);
   }
@@ -18,10 +16,10 @@ export class HiloMultiDatabaseIdGenerator extends AbstractHiloIdGenerator implem
   }
 
   protected _getGeneratorForDatabase(dbName: string): IHiloIdGenerator {
-    if (!(dbName in this.generators)) {
-      this.generators[dbName] = new HiloMultiTypeIdGenerator(this.store, dbName);
+    if (!(dbName in this._generators)) {
+      this._generators[dbName] = new HiloMultiTypeIdGenerator(this._store, dbName);
     }
 
-    return this.generators[dbName];
+    return this._generators[dbName];
   }
 }

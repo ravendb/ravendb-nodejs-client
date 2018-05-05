@@ -16,9 +16,9 @@ export class HiloMultiTypeIdGenerator extends AbstractHiloIdGenerator implements
     }
 
     public generateDocumentId(entity: object, documentType?: string): Promise<string> {
-        const entityType = this.conventions.findEntityType(documentType) || 
-            this.conventions.getEntityTypeDescriptor(entity);
-        let tag: string = this.conventions.getCollectionNameForType(entityType);
+        const entityType = this._conventions.findEntityType(documentType) || 
+            this._conventions.getEntityTypeDescriptor(entity);
+        let tag: string = this._conventions.getCollectionNameForType(entityType);
 
         if (CONSTANTS.Documents.Metadata.EMPTY_COLLECTION === tag) {
             tag = null;
@@ -33,11 +33,11 @@ export class HiloMultiTypeIdGenerator extends AbstractHiloIdGenerator implements
 
         const result = BluebirdPromise.resolve(acquiredSem.promise)
             .then(() => {
-                let generator: IHiloIdGenerator = this.generators[tag];
+                let generator: IHiloIdGenerator = this._generators[tag];
 
                 if (!generator) {
-                    generator = this.generators[tag] = new HiloIdGenerator
-                        (this.store, this.dbName, tag);
+                    generator = this._generators[tag] = 
+                        new HiloIdGenerator(this._store, this._dbName, tag);
                 }
 
                 return generator;
