@@ -11,7 +11,7 @@ import {
     IDocumentStore,
 } from "../src";
 
-describe("ClassName", function () {
+describe("Session API tests", function () {
 
     let store: IDocumentStore;
 

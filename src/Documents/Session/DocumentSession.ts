@@ -1,6 +1,5 @@
 import {MultiLoaderWithInclude} from "./Loaders/MultiLoaderWithInclude";
 import {BatchOperation} from "./Operations/BatchOperation";
-import * as _ from "lodash";
 import * as BluebirdPromise from "bluebird";
 import { 
     IDocumentSession, 
@@ -13,7 +12,6 @@ import { IDocumentStore } from "../IDocumentStore";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { EmptyCallback, AbstractCallback } from "../../Types/Callbacks";
-import { PromiseResolver } from "../../Utility/PromiseResolver";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { StringUtil } from "../../Utility/StringUtil";
 import { IRavenObject, EntitiesCollectionObject, ObjectTypeDescriptor } from "../../Types";
