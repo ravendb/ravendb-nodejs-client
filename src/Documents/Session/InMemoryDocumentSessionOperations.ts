@@ -6,7 +6,6 @@ import { IMetadataDictionary, SessionInfo, ConcurrencyCheckMode, StoreOptions } 
 import { Todo, ObjectTypeDescriptor, PropsBasedObjectLiteralDescriptor, ClassConstructor } from "../../Types";
 import { SessionEventsEmitter, SessionBeforeStoreEventArgs, SessionBeforeDeleteEventArgs } from "./SessionEvents";
 import { RequestExecutor } from "../../Http/RequestExecutor";
-import { ObjectMapper } from "../../Utility/Mapping";
 import { IDocumentStore } from "../IDocumentStore";
 import CurrentIndexAndNode from "../../Http/CurrentIndexAndNode";
 import { throwError, getError } from "../../Exceptions";
