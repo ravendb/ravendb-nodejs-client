@@ -91,7 +91,7 @@ describe("Indexes from client", function () {
         assert.equal(statistics.indexes.length, 0);
     });
 
-    it("can explain query", async () => {
+    it.skip("can explain query", async () => {
 
 //             User user1 = new User();
 //             user1.setName("Fitzchak");

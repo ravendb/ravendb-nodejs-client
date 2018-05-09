@@ -51,7 +51,6 @@ export class IndexHasChangedCommand extends RavenCommand<boolean> {
 
             const headers = HeadersBuilder.create()
                 .withContentTypeJson().build();
-                debugger;
             return {
                 method: "POST",
                 uri,
@@ -65,7 +64,6 @@ export class IndexHasChangedCommand extends RavenCommand<boolean> {
                 this._throwInvalidResponse();
             }
 
-            debugger;
             const resObj = JsonSerializer.getDefaultForCommandPayload().deserialize(response);
             this.result = resObj["changed"];
         }

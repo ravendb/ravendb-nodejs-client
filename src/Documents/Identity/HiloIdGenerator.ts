@@ -42,7 +42,6 @@ export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdG
     public nextId(): Promise<number> {
 
         const getNextIdWithinRange = (range: HiloRangeValue): Promise<number> => {
-            debugger;
             const id = range.increment();
             if (id <= range.maxId) {
                 return Promise.resolve(id);

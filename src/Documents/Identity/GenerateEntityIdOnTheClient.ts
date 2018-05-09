@@ -89,7 +89,7 @@ export class GenerateEntityIdOnTheClient {
         const docType: DocumentType = TypeUtil.findType(entity, this._conventions.knownEntityTypes);
         const identityProperty = this._conventions.getIdentityProperty(docType);
 
-        if (identityProperty) {
+        if (!identityProperty) {
             return;
         }
 

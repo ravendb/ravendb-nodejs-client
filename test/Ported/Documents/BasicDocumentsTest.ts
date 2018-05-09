@@ -55,8 +55,8 @@ describe("Basic documents test", function () {
             const user1 = Object.assign(new User(), { name: "Fitzchack" });
             const user2 = Object.assign(new User(), { name: "Arek" });
 
-            await session.store(user1);
-            await session.store(user2);
+            await session.store(user1, "users/1");
+            await session.store(user2, "users/2");
             await session.saveChanges();
         }
 
@@ -67,8 +67,8 @@ describe("Basic documents test", function () {
             metadataOnly: false
         });
 
+        debugger;
         await requestExecutor.execute(getDocumentsCommand);
-
         let docs = getDocumentsCommand.result;
         assert.equal(docs.results.length, 2);
 
