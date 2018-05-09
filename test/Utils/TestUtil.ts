@@ -1,5 +1,5 @@
 // tslint:disable-next-line:no-var-requires
-const why = require("why-is-node-running");
+// const why = require("why-is-node-running");
 
 import "source-map-support/register";
 import {IDisposable} from "../../src/Types/Contracts";
@@ -61,15 +61,11 @@ setupRavenDbTestContext();
 function setupRavenDbTestContext() {
 
     before(() => {
-        // tslint:disable-next-line:no-console
-        console.log("TESTS START");
         globalContext = RemoteTestContext.setupServer();
     });
 
     after(() => {
         globalContext.dispose();
-        // tslint:disable-next-line:no-console
-        console.log("TESTS DONE");
     });
 
     return context;
