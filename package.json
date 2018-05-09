@@ -12,7 +12,7 @@
     "test": "cross-os _test ",
     "_test": {
       "win32": "tsc -p tsconfig.test.json && copy test\\mocha.opts .test && mocha .test\\test",
-      "linux": "tsc -p tsconfig.test.json && copy test/mocha.opts .test && mocha .test/test"
+      "linux": "tsc -p tsconfig.test.json && cp test/mocha.opts .test && mocha .test/test"
     },
     "build": "tsc",
     "build:test": "tsc -p tsconfig.test.json",
@@ -21,7 +21,7 @@
     "test:debug": "cross-os _test:debug",
     "_test:debug": {
       "win32": "tsc && tsc -p tsconfig.test.json && copy test\\mocha.opts .test && mocha --inspect-brk .test\\test",
-      "linux": "tsc && tsc -p tsconfig.test.json && copy test/mocha.opts .test && mocha --inspect-brk .test/test"
+      "linux": "tsc && tsc -p tsconfig.test.json && cp test/mocha.opts .test && mocha --inspect-brk .test/test"
     },
     "lint": "tslint"
   },
