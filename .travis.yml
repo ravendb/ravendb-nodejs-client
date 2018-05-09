@@ -28,4 +28,4 @@ before_install:
 #   - export RAVEN_PFX=$PWD/certs/server.pfx
 #   - sed -i 's@PFX@'"$RAVEN_PFX"'@' ./RavenDB/Server/settings.json
 #   - sed -i s/PASS/$PASSPHRASE/ ./RavenDB/Server/settings.json
-# script: npm test 
+script: npm test 
