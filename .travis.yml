@@ -7,33 +7,25 @@ node_js:
 env:
   global:
     - PASSPHRASE=client11
-  matrix:
-    - RAVEN_PROTOCOL=http 
-      PORT=8080
-    - RAVEN_PROTOCOL=https 
-      PORT=8433
-      CERTIFICATE=./certs/nodejs.pem
-      CA=./certs/ca.crt
+      RAVENDB_TEST_SERVER_PATH=./RavenDB/Server/Raven.Server
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y libunwind8 wget libicu52 libssl-dev curl unzip gettext libcurl4-openssl-dev zlib1g uuid-dev bzip2 openssl
-  - mkdir ./certs; pushd certs
-  - openssl genrsa -out ca.key 2048
-  - openssl req -new -x509 -key ca.key -out ca.crt -subj "/C=US/ST=Arizona/L=Nevada/O=RavenDB Test CA/OU=RavenDB test CA/CN=localhost/emailAddress=ravendbca@example.com"
-  - openssl genrsa -out localhost.key 2048
-  - openssl req -new  -key localhost.key -out localhost.csr -subj "/C=US/ST=Arizona/L=Nevada/O=RavenDB Test/OU=RavenDB test/CN=localhost/emailAddress=ravendb@example.com"
-  - openssl x509 -req -extensions ext -extfile ../test/cert/test_cert.conf -in localhost.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out localhost.crt
-  - cat localhost.key localhost.crt > nodejs.pem
-  - openssl pkcs12 -passout pass:$PASSPHRASE -export -out server.pfx -inkey localhost.key -in localhost.crt
-  - sudo cp ca.crt /usr/local/share/ca-certificates/ca.crt
-  - sudo update-ca-certificates
-  - popd  
   - wget -O RavenDB.tar.bz2 https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest
   - tar xvjf RavenDB.tar.bz2
-  - cp ./test/cert/test_settings_$RAVEN_PROTOCOL.json ./RavenDB/Server/settings.json
-  - export RAVEN_PFX=$PWD/certs/server.pfx
-  - sed -i 's@PFX@'"$RAVEN_PFX"'@' ./RavenDB/Server/settings.json
-  - sed -i s/PASS/$PASSPHRASE/ ./RavenDB/Server/settings.json
-  - ./RavenDB/Server/Raven.Server --non-interactive &
-  - sleep 2
-script: npm test -- -h localhost -p $PORT -c $CERTIFICATE -r $CA
+#   - mkdir ./certs; pushd certs
+#   - openssl genrsa -out ca.key 2048
+#   - openssl req -new -x509 -key ca.key -out ca.crt -subj "/C=US/ST=Arizona/L=Nevada/O=RavenDB Test CA/OU=RavenDB test CA/CN=localhost/emailAddress=ravendbca@example.com"
+#   - openssl genrsa -out localhost.key 2048
+#   - openssl req -new  -key localhost.key -out localhost.csr -subj "/C=US/ST=Arizona/L=Nevada/O=RavenDB Test/OU=RavenDB test/CN=localhost/emailAddress=ravendb@example.com"
+#   - openssl x509 -req -extensions ext -extfile ../test/cert/test_cert.conf -in localhost.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out localhost.crt
+#   - cat localhost.key localhost.crt > nodejs.pem
+#   - openssl pkcs12 -passout pass:$PASSPHRASE -export -out server.pfx -inkey localhost.key -in localhost.crt
+#   - sudo cp ca.crt /usr/local/share/ca-certificates/ca.crt
+#   - sudo update-ca-certificates
+#   - popd  
+#   - cp ./test/cert/test_settings_$RAVEN_PROTOCOL.json ./RavenDB/Server/settings.json
+#   - export RAVEN_PFX=$PWD/certs/server.pfx
+#   - sed -i 's@PFX@'"$RAVEN_PFX"'@' ./RavenDB/Server/settings.json
+#   - sed -i s/PASS/$PASSPHRASE/ ./RavenDB/Server/settings.json
+# script: npm test 
