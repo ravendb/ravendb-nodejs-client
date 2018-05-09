@@ -26,4 +26,5 @@ before_install:
   - openssl pkcs12 -passout pass:$PASSPHRASE -export -out server.pfx -inkey localhost.key -in localhost.crt
   - sudo cp ca.crt /usr/local/share/ca-certificates/ca.crt
   - sudo update-ca-certificates
-  - popd  
+  - popd
+  - pwd && ls  
