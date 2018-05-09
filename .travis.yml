@@ -11,11 +11,10 @@ env:
       XRAVEN_Security_Certificate_Password=client11
       XNODEJS_CLIENT_CERTIFICATE_PATH=./certs/nodejs.pem
 before_install:
-  - echo "Start build"
-  - sudo apt-get update
+  - sudo apt-get -qq update
   - sudo apt-get install -y libunwind8 wget libicu52 libssl-dev curl unzip gettext libcurl4-openssl-dev zlib1g uuid-dev bzip2 openssl
   - wget -O RavenDB.tar.bz2 https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest
-  - tar xvjf RavenDB.tar.bz2
+  - tar xjf RavenDB.tar.bz2
   - mkdir ./certs; pushd certs
   - openssl genrsa -out ca.key 2048
   - openssl req -new -x509 -key ca.key -out ca.crt -subj "/C=US/ST=Arizona/L=Nevada/O=RavenDB Test CA/OU=RavenDB test CA/CN=localhost/emailAddress=ravendbca@example.com"

@@ -3,7 +3,7 @@ import { EntityToJson } from "./EntityToJson";
 import * as uuid from "uuid";
 import { IDisposable } from "../../Types/Contracts";
 import { IMetadataDictionary, SessionInfo, ConcurrencyCheckMode, StoreOptions } from "./IDocumentSession";
-import { Todo, ObjectTypeDescriptor, PropsBasedObjectLiteralDescriptor, ClassConstructor } from "../../Types";
+import { ObjectTypeDescriptor, PropsBasedObjectLiteralDescriptor, ClassConstructor } from "../../Types";
 import { SessionEventsEmitter, SessionBeforeStoreEventArgs, SessionBeforeDeleteEventArgs } from "./SessionEvents";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { IDocumentStore } from "../IDocumentStore";
@@ -41,7 +41,7 @@ import { RavenCommand } from "../../Http/RavenCommand";
 
 export abstract class InMemoryDocumentSessionOperations 
     extends EventEmitter
-    implements IDisposable, SessionEventsEmitter, Todo {
+    implements IDisposable, SessionEventsEmitter {
 
     private static _clientSessionIdCounter: number = 0;
 
