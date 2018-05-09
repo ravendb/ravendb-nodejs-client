@@ -32,7 +32,7 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * @param query Query
      * @return Raw document query
      */
-    //rawQuery<T>(query: string, documentType: DocumentType): IRawDocumentQuery<T>;
+    // rawQuery<T>(query: string, documentType?: DocumentType): IRawDocumentQuery<T>;
 
     exists(id: string): Promise<boolean>;
 

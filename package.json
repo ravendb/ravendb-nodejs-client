@@ -84,6 +84,7 @@
     "bluebird": "^3.4.7",
     "change-object-case": "^0.1.1",
     "lodash": "^4.17.4",
+    "md5-hex": "^2.0.0",
     "moment": "^2.22.0",
     "pluralize": "^4.0.0",
     "qs": "^6.5.1",
@@ -91,6 +92,7 @@
     "request-promise": "^4.1.1",
     "safe-memory-cache": "^1.5.1",
     "semaphore": "^1.1.0",
+    "string-builder": "^0.1.4",
     "verror": "^1.10.0",
     "xregexp": "^3.2.0"
   }
