@@ -1,38 +1,38 @@
 import * as XRegExp from "xregexp";
 import {TypeUtil} from "./TypeUtil";
-import {InvalidOperationException} from "../Database/DatabaseExceptions";
+import {throwError} from "../Exceptions";
 
 export class StringUtil {
-  private static readonly letterRe: RegExp = <RegExp>XRegExp("^\\p{L}$");
+  private static readonly letterRe: RegExp = XRegExp("^\\p{L}$") as RegExp;
   private static readonly digitRe: RegExp = /\d/;
 
-  public static format(string: string, vars?: object | any, ...varsArray: any[]): string {
+  public static format(s: string, vars?: object | any, ...varsArray: any[]): string {
     if (TypeUtil.isObject(vars)) {
-      return string.replace(
+      return s.replace(
         /\{([\w\d\-]+)\}/g,
         (match: string, placeholder: string): string =>
           ((placeholder in vars) ? vars[placeholder] : '').toString()
       );
     }
 
-    let inputVars: any[] = [vars].concat(varsArray);
+    const inputVars: any[] = [vars].concat(varsArray);
 
-    return string.replace(
+    return s.replace(
       /\{([\d]+)\}/g,
       (match: string, placeholder: string): string => {
-        let value: any = inputVars[parseInt(placeholder)];
+        const value: any = inputVars[parseInt(placeholder, 10)];
         
-        return (TypeUtil.isNull(value) ? '' : value).toString()
+        return (TypeUtil.isNullOrUndefined(value) ? "" : value).toString();
     });
   }
 
   public static validateDBName(dbName?: string): void {
-    if (TypeUtil.isNull(dbName) || !dbName) {
-      throw new InvalidOperationException('Empty name is not valid');
+    if (TypeUtil.isNullOrUndefined(dbName) || !dbName) {
+      throwError("InvalidOperationException", "Empty name is not valid");
     }
 
     if (!/^[A-Za-z0-9_\-\.]+$/.test(dbName)) {
-      throw new InvalidOperationException('Database name can only contain only A-Z, a-z, \"_\", \".\" or \"-\"');
+      throwError("InvalidOperationException", `Database name can only contain only A-Z, a-z, "_", "." or "-"`);
     }
   }
 
@@ -47,7 +47,7 @@ export class StringUtil {
       const c: string = field[i];
 
       if (i === 0) {
-        if (!this.isLetter(c) && !['_', '@'].includes(c)) {
+        if (!this.isLetter(c) && ["_", "@"].indexOf(c) === -1) {
           escape = true;
           break;
         }
@@ -55,7 +55,7 @@ export class StringUtil {
         continue;
       }
 
-      if (!this.isLetterOrDigit(c) && !['_', '@', '.', '[', ']'].includes(c)) {
+      if (!this.isLetterOrDigit(c) && ["_", "@", ".", "[", "]"].indexOf(c) === -1) {
         escape = true;
         break;
       }
@@ -68,12 +68,12 @@ export class StringUtil {
     return field;
   }
 
-  public static capitalize(string: string): string {
-    return string.charAt(0).toUpperCase() + string.substring(1);
+  public static capitalize(s: string): string {
+    return s.charAt(0).toUpperCase() + s.substring(1);
   }
 
-  public static uncapitalize(string: string): string {
-    return string.charAt(0).toLowerCase() + string.substring(1);
+  public static uncapitalize(s: string): string {
+    return s.charAt(0).toLowerCase() + s.substring(1);
   }
 
   public static isCharacter(character: string): boolean {
@@ -95,7 +95,7 @@ export class StringUtil {
       || this.isDigit(character);
   }
 
-  public static isNullOrWhiteSpace(string?: string): boolean {
-    return !(string || "").trim().length;
+  public static isNullOrWhiteSpace(s?: string): boolean {
+    return !(s || "").trim().length;
   }
 }

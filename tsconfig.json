@@ -3,13 +3,24 @@
   "compilerOptions": {
     "target": "es6",
     "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "dist",
     "declaration": true,
-    "outDir": "lib/",
+    "downlevelIteration": true,
+    "removeComments": true,
     "sourceMap": false,
-    "lib": [ "dom", "es7" ]
+    "pretty": true,
+    "lib": [ "es2015" ],
+    "typeRoots": [
+      "node_modules/@types",
+      "node_modules/moment",
+      "src/Types"
+    ],
+    "types": [
+    ]
   },
   "files": [
-    "./src/ravendb-node.ts"
+    "./src/index.ts"
   ],
   "exclude": [
     "node_modules",
