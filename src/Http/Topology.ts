@@ -1,9 +1,8 @@
 import * as _ from "lodash";
 import { ServerNode } from "./ServerNode";
-import { IJsonConvertible } from "../Types/Contracts";
 import { IRavenObject } from "../Types/IRavenObject";
 
-export class Topology implements IJsonConvertible {
+export class Topology {
   public etag: number = 0;
   public nodes?: ServerNode[] = null;
 

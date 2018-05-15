@@ -35,7 +35,7 @@ export class FieldsToFetchToken extends QueryToken {
                 writer.append(", ");
             }
 
-            this.writeField(writer, fieldToFetch);
+            this._writeField(writer, fieldToFetch);
 
             if (this.customFunction) {
                 continue;

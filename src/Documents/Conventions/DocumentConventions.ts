@@ -106,6 +106,8 @@ export class DocumentConventions {
             dateFormat: DateUtil.DEFAULT_DATE_FORMAT,
             knownTypes: this._knownEntityTypes
         });
+
+        this._entityJsonSerializer = JsonSerializer.getDefaultForEntities();
     }
 
     public get entityObjectMapper(): TypesAwareObjectMapper {

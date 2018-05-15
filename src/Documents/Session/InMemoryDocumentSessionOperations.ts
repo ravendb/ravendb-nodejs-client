@@ -168,6 +168,10 @@ export abstract class InMemoryDocumentSessionOperations
 
     protected _sessionInfo: SessionInfo;
 
+    public get sessionInfo() {
+        return this._sessionInfo;
+    }
+
     protected constructor(
         databaseName: string,
         documentStore: DocumentStoreBase,

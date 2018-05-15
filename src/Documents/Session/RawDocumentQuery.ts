@@ -1,89 +1,58 @@
+import {AbstractDocumentQuery} from "./AbstractDocumentQuery";
 import { IRawDocumentQuery } from "../Session/IRawDocumentQuery";
+import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
+import { DocumentType } from "../DocumentAbstractions";
+import { QueryOperator } from "../Queries/QueryOperator";
+import { QueryStatistics } from "./QueryStatistics";
 
 export class RawDocumentQuery<T> extends AbstractDocumentQuery<T, RawDocumentQuery<T>> implements IRawDocumentQuery<T> {
 
-    public RawDocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String rawQuery) {
+    public constructor(clazz: DocumentType<T>, session: InMemoryDocumentSessionOperations, rawQuery: string) {
         super(clazz, session, null, null, false, null, null, null);
-        this.queryRaw = rawQuery;
+        this._queryRaw = rawQuery;
     }
 
-    public IRawDocumentQuery<T> skip(int count) {
-        _skip(count);
+    public skip(count: number): IRawDocumentQuery<T> {
+        this._skip(count);
         return this;
     }
 
-    @Override
-    public IRawDocumentQuery<T> take(int count) {
-        _take(count);
+    public take(count: number): IRawDocumentQuery<T> {
+        this._take(count);
         return this;
     }
 
-    @Override
-    public IRawDocumentQuery<T> waitForNonStaleResults() {
-        _waitForNonStaleResults(null);
+    public waitForNonStaleResults(): IRawDocumentQuery<T>;
+    public waitForNonStaleResults(waitTimeout?: number): IRawDocumentQuery<T>;
+    public waitForNonStaleResults(waitTimeout?: number): IRawDocumentQuery<T>  {
+        this._waitForNonStaleResults(waitTimeout || null);
         return this;
     }
 
-    @Override
-    public IRawDocumentQuery<T> waitForNonStaleResults(Duration waitTimeout) {
-        _waitForNonStaleResults(waitTimeout);
+    // TBD public IRawDocumentQuery<T> showTimings() {
+
+    public noTracking(): IRawDocumentQuery<T> {
+        this._noTracking();
         return this;
     }
 
-    //TBD public IRawDocumentQuery<T> showTimings() {
-
-    @Override
-    public IRawDocumentQuery<T> noTracking() {
-        _noTracking();
+    public noCaching(): IRawDocumentQuery<T> {
+        this._noCaching();
         return this;
     }
 
-    @Override
-    public IRawDocumentQuery<T> noCaching() {
-        _noCaching();
+    public usingDefaultOperator(queryOperator: QueryOperator): IRawDocumentQuery<T> {
+        this._usingDefaultOperator(queryOperator);
         return this;
     }
 
-    @Override
-    public IRawDocumentQuery<T> usingDefaultOperator(QueryOperator queryOperator) {
-        _usingDefaultOperator(defaultOperator);
+    public statistics(statsCallback: (stats: QueryStatistics) => void): IRawDocumentQuery<T> {
+        this._statistics(statsCallback);
         return this;
     }
 
-    @Override
-    public IRawDocumentQuery<T> statistics(Reference<QueryStatistics> stats) {
-        _statistics(stats);
+    public addParameter(name: string, value: object): IRawDocumentQuery<T> {
+        this.addParameter(name, value);
         return this;
     }
-
-    @Override
-    public IRawDocumentQuery<T> removeAfterQueryExecutedListener(Consumer<QueryResult> action) {
-        _removeAfterQueryExecutedListener(action);
-        return this;
-    }
-
-    @Override
-    public IRawDocumentQuery<T> addAfterQueryExecutedListener(Consumer<QueryResult> action) {
-        _addAfterQueryExecutedListener(action);
-        return this;
-    }
-
-    @Override
-    public IRawDocumentQuery<T> addBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
-        _addBeforeQueryExecutedListener(action);
-        return this;
-    }
-
-    @Override
-    public IRawDocumentQuery<T> removeBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
-        _removeBeforeQueryExecutedListener(action);
-        return this;
-    }
-
-    @Override
-    public IRawDocumentQuery<T> addParameter(String name, Object value) {
-        _addParameter(name, value);
-        return this;
-    }
-
 }

@@ -56,7 +56,7 @@ export class FromToken extends QueryToken {
 
                 writer.append("\"").append(this._collectionName).append("\"");
             } else {
-                this.writeField(writer, this._collectionName);
+                this._writeField(writer, this._collectionName);
             }
 
         } else {

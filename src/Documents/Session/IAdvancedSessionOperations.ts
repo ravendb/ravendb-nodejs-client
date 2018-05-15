@@ -1,3 +1,4 @@
+import {IRawDocumentQuery} from './IRawDocumentQuery';
 import { IDocumentStore } from "../IDocumentStore";
 import { ServerNode } from "../../Http/ServerNode";
 import { SessionEventsEmitter } from "./SessionEvents";
@@ -32,7 +33,8 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * @param query Query
      * @return Raw document query
      */
-    // rawQuery<T>(query: string, documentType?: DocumentType): IRawDocumentQuery<T>;
+    
+    rawQuery<TEntity>(query: string, documentType?: DocumentType<TEntity>): IRawDocumentQuery<TEntity>;
 
     exists(id: string): Promise<boolean>;
 

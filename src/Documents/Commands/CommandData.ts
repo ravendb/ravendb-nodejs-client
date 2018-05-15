@@ -1,6 +1,5 @@
 
 import * as _ from "lodash";
-import { IJsonable } from "../../Types/Contracts";
 import { IRavenObject } from "../../Types";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { throwError } from "../../Exceptions";

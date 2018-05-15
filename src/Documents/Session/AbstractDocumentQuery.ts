@@ -1,15 +1,67 @@
+import {QueryOperation} from "./Operations/QueryOperation";
+import * as BluebirdPromise from "bluebird";
+import {GroupByCountToken} from "./Tokens/GroupByCountToken";
+import {GroupByToken} from "./Tokens/GroupByToken";
+import {FieldsToFetchToken} from "./Tokens/FieldsToFetchToken";
+import {DeclareToken} from "./Tokens/DeclareToken";
+import {LoadToken} from "./Tokens/LoadToken";
+import {FromToken} from "./Tokens/FromToken";
+import {DistinctToken} from "./Tokens/DistinctToken";
 import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
+import { QueryStatistics } from "./QueryStatistics";
+import { IDocumentSession } from "./IDocumentSession";
+import { throwError, getError } from "../../Exceptions";
+import { QueryOperator } from "../Queries/QueryOperator";
+import { IndexQuery } from "../Queries/IndexQuery";
+import {IAbstractDocumentQuery} from "./IAbstractDocumentQuery";
+import { GroupBy } from "../Queries/GroupBy";
+import { GroupByKeyToken } from "../Session/Tokens/GroupByKeyToken";
+import { GroupBySumToken } from "../Session/Tokens/GroupBySumToken";
+import { TrueToken } from "../Session/Tokens/TrueToken";
+import { WhereToken, WhereOptions } from "../Session/Tokens/WhereToken";
+import {QueryFieldUtil} from "../Queries/QueryFieldUtil";
+import { QueryToken } from "./Tokens/QueryToken";
+import {CloseSubclauseToken} from "./Tokens/CloseSubclauseToken";
+import {OpenSubclauseToken} from "./Tokens/OpenSubclauseToken";
+import {NegateToken} from "./Tokens/NegateToken";
+import { WhereParams } from "./WhereParams";
+import { TypeUtil } from "../../Utility/TypeUtil";
+import { DateUtil } from "../../Utility/DateUtil";
+import { MethodCall } from "./MethodCall";
+import {QueryOperatorToken} from "./Tokens/QueryOperatorToken";
+import {OrderByToken} from "./Tokens/OrderByToken";
+import { QueryResult } from "../Queries/QueryResult";
+import {DocumentType} from "../DocumentAbstractions";
+import {QueryEventsEmitter} from "./QueryEvents";
+import { EventEmitter } from "events";
+import * as StringBuilder from "string-builder";
+import { StringUtil } from "../../Utility/StringUtil";
+import { IntersectMarkerToken } from "./Tokens/IntersectMarkerToken";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { CONSTANTS } from "../../Constants";
+import { WhereOperator } from "./Tokens/WhereOperator";
+import { OrderingType } from "./OrderingType";
+import { SearchOperator } from "../Queries/SearchOperator";
+import { DocumentQueryHelper } from "./DocumentQueryHelper";
+import { SpatialUnits, SpatialRelation } from "../Indexes/Spatial";
+import { ShapeToken } from "./Tokens/ShapeToken";
+import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField";
+import { SpatialCriteria } from "../Queries/Spatial/SpatialCriteria";
+import { SessionBeforeQueryEventArgs } from "./SessionEvents";
+import { CmpXchg } from "./CmpXchng";
 
 /**
  * A query against a Raven index
  */
-export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSelf>> implements IAbstractDocumentQuery<T> {
+export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSelf>> 
+    extends EventEmitter
+    implements QueryEventsEmitter, IAbstractDocumentQuery<T> {
 
     protected _clazz: DocumentType<T>;
 
     private _aliasToGroupByFieldName: { [key: string]: string } = {};
 
-    protected _defaultOperator: QueryOperator = QueryOperator.AND;
+    protected _defaultOperator: QueryOperator = "AND";
 
     // TBD: private readonly LinqPathProvider _linqPathProvider;
 
@@ -34,7 +86,7 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return this._collectionName;
     }
 
-    protected queryParameters: { [key: string]: object } = {};
+    protected _queryParameters: { [key: string]: object } = {};
 
     protected _isIntersect: boolean;
 
@@ -46,102 +98,244 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     protected _selectTokens: QueryToken[] = [];
 
-    protected fromToken: FromToken;
-    protected final DeclareToken declareToken;
-    protected final List<LoadToken> loadTokens;
-    protected FieldsToFetchToken fieldsToFetchToken;
+    protected _fromToken: FromToken;
+    protected _declareToken: DeclareToken;
+    protected _loadTokens: LoadToken[];
+    protected _fieldsToFetchToken: FieldsToFetchToken;
 
-    protected List<QueryToken> whereTokens = new LinkedList<>();
+    protected _whereTokens: QueryToken[] = [];
 
-    protected List<QueryToken> groupByTokens = new LinkedList<>();
+    protected _groupByTokens: QueryToken[] = [];
 
-    protected List<QueryToken> orderByTokens = new LinkedList<>();
+    protected _orderByTokens: QueryToken[] = [];
 
-    protected int start;
+    protected _start: number;
 
-    private final DocumentConventions _conventions;
+    private _conventions: DocumentConventions;
 
-    protected Duration timeout;
+    protected _timeout: number;
 
-    protected boolean theWaitForNonStaleResults;
+    protected _theWaitForNonStaleResults: boolean;
 
-    protected Set<String> includes = new HashSet<>();
+    protected _includes: Set<string> = new Set();
 
     /**
      * Holds the query stats
      */
-    protected QueryStatistics queryStats = new QueryStatistics();
+    protected _queryStats: QueryStatistics = new QueryStatistics();
 
-    protected boolean disableEntitiesTracking;
+    protected _disableEntitiesTracking: boolean;
 
-    protected boolean disableCaching;
+    protected _disableCaching: boolean;
 
-    //TBD protected boolean showQueryTimings;
+    // TBD protected boolean showQueryTimings;
 
-    //TBD protected boolean shouldExplainScores;
+    // TBD protected boolean shouldExplainScores;
 
-    public boolean isDistinct() {
-        return !selectTokens.isEmpty() && selectTokens.get(0) instanceof DistinctToken;
+    public get isDistinct(): boolean {
+        return this._selectTokens 
+            && this._selectTokens.length 
+            && this._selectTokens[0] instanceof DistinctToken;
     }
 
     /**
      * Gets the document convention from the query session
      */
-    @Override
-    public DocumentConventions getConventions() {
-        return _conventions;
+    public get conventions(): DocumentConventions {
+        return this._conventions;
     }
 
     /**
      * Gets the session associated with this document query
      * @return session
      */
-    public IDocumentSession getSession() {
-        return (IDocumentSession) theSession;
+    public get session() {
+        return this._theSession as any as IDocumentSession;
     }
 
     //TBD public IAsyncDocumentSession AsyncSession => (IAsyncDocumentSession)TheSession;
 
-    @Override
-    public boolean isDynamicMapReduce() {
-        return !groupByTokens.isEmpty();
+    public isDynamicMapReduce(): boolean {
+        return this._groupByTokens && !!this._groupByTokens.length;
     }
 
-    private boolean _isInMoreLikeThis;
+    private _isInMoreLikeThis: boolean;
 
-    private static Duration getDefaultTimeout() {
-        return Duration.ofSeconds(15);
+    private static _getDefaultTimeout(): number {
+        return 25 * 1000;
     }
 
-    protected AbstractDocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName,
-                                    String collectionName, boolean isGroupBy, DeclareToken declareToken,
-                                    List<LoadToken> loadTokens) {
-        this(clazz, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, null);
+    // protected AbstractDocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName,
+    //                                 String collectionName, boolean isGroupBy, DeclareToken declareToken,
+    //                                 List<LoadToken> loadTokens) {
+    //     this(clazz, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, null);
+    // }
+
+    protected constructor(
+        clazz: DocumentType<T>, 
+        session: InMemoryDocumentSessionOperations,
+        indexName: string,
+        collectionName: string, 
+        isGroupBy: boolean,
+        declareToken: DeclareToken,
+        loadTokens: LoadToken[]);
+    protected constructor(
+        clazz: DocumentType<T>, 
+        session: InMemoryDocumentSessionOperations,
+        indexName: string,
+        collectionName: string, 
+        isGroupBy: boolean,
+        declareToken: DeclareToken,
+        loadTokens: LoadToken[], 
+        fromAlias: string);
+    protected constructor(
+        clazz: DocumentType<T>, 
+        session: InMemoryDocumentSessionOperations,
+        indexName: string,
+        collectionName: string, 
+        isGroupBy: boolean,
+        declareToken: DeclareToken,
+        loadTokens: LoadToken[], 
+        fromAlias: string = null) {
+        super();
+
+        this._clazz = clazz;
+        this._rootTypes.add(clazz);
+        this._isGroupBy = isGroupBy;
+        this._indexName = indexName;
+        this._collectionName = collectionName;
+        this._fromToken = FromToken.create(indexName, collectionName, fromAlias);
+        this._declareToken = declareToken;
+        this._loadTokens = loadTokens;
+
+        this._theSession = session;
+        // TODO
+        // this.on("after")
+        // _addAfterQueryExecutedListener(() => this._updateStatsAndHighlightings());
+        this._conventions = session == null ?
+            new DocumentConventions() : session.conventions;
+        // TBD _linqPathProvider = new LinqPathProvider(_conventions);
     }
 
-    protected AbstractDocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName,
-                                    String collectionName, boolean isGroupBy, DeclareToken declareToken,
-                                    List<LoadToken> loadTokens, String fromAlias) {
-        this.clazz = clazz;
-        rootTypes.add(clazz);
-        this.isGroupBy = isGroupBy;
-        this.indexName = indexName;
-        this.collectionName = collectionName;
-        this.fromToken = FromToken.create(indexName, collectionName, fromAlias);
-        this.declareToken = declareToken;
-        this.loadTokens = loadTokens;
-        theSession = session;
-        _addAfterQueryExecutedListener(this::updateStatsAndHighlightings);
-        _conventions = session == null ? new DocumentConventions() : session.getConventions();
-        //TBD _linqPathProvider = new LinqPathProvider(_conventions);
-    }
+    // tslint:disable:function-name
 
-    public void _usingDefaultOperator(QueryOperator operator) {
-        if (!whereTokens.isEmpty()) {
-            throw new IllegalStateException("Default operator can only be set before any where clause is added.");
+    private _getCurrentWhereTokens(): QueryToken[] {
+        if (!this._isInMoreLikeThis) {
+            return this._whereTokens;
         }
 
-        defaultOperator = operator;
+        if (!this._whereTokens || !this._whereTokens.length) {
+            throwError("InvalidOperationException", 
+                "Cannot get MoreLikeThisToken because there are no where token specified.");
+        }
+
+        /* TBD
+          var moreLikeThisToken = WhereTokens.Last.Value as MoreLikeThisToken;
+
+            if (moreLikeThisToken == null)
+                throw new InvalidOperationException($"Last token is not '{nameof(MoreLikeThisToken)}'.");
+
+            return moreLikeThisToken.WhereTokens;
+         */
+        throwError("NotImplementedException", "More like this");
+    }
+
+    private _ensureValidFieldName(fieldName: string, isNestedPath: boolean): string {
+        if (!this._theSession 
+            || !this._theSession.conventions 
+            || isNestedPath 
+            || this._isGroupBy) {
+            return QueryFieldUtil.escapeIfNecessary(fieldName);
+        }
+
+        for (const rootType of this._rootTypes) {
+            const identityProperty = this._theSession.conventions.getIdentityProperty(rootType);
+            if (identityProperty && identityProperty === fieldName) {
+                return CONSTANTS.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME;
+            }
+        }
+
+        return QueryFieldUtil.escapeIfNecessary(fieldName);
+    }
+
+    private _appendOperatorIfNeeded(tokens: QueryToken[]): void {
+        this._assertNoRawQuery();
+
+        if (!tokens || !tokens.length) {
+            return;
+        }
+
+        const lastToken = tokens[tokens.length - 1];
+        if (!(lastToken instanceof WhereToken) && !(lastToken instanceof CloseSubclauseToken)) {
+            return;
+        }
+
+        let lastWhere: WhereToken = null;
+
+        for (let i = tokens.length - 1; i >= 0; i--) {
+            if (tokens[i] instanceof WhereToken) {
+                lastWhere = tokens[i] as WhereToken;
+                break;
+            }
+        }
+
+        let token: QueryOperatorToken = this._defaultOperator === "AND"
+            ? QueryOperatorToken.AND
+            : QueryOperatorToken.OR;
+
+        if (lastWhere 
+            && lastWhere.options.searchOperator) {
+            token = QueryOperatorToken.OR; // default to OR operator after search if AND was not specified explicitly
+        }
+
+        tokens.push(token);
+    }
+
+    private _transformCollection(fieldName: string, values: object[]): object[] {
+        const result: object[] = [];
+        for (const value of values) {
+            if (Array.isArray(value)) {
+                result.push(...this._transformCollection(fieldName, value));
+            } else {
+                const nestedWhereParams = new WhereParams();
+                nestedWhereParams.allowWildcards = true;
+                nestedWhereParams.fieldName = fieldName;
+                nestedWhereParams.value = value;
+
+                result.push(this._transformValue(nestedWhereParams));
+            }
+        }
+
+        return result;
+    }
+
+    private _negateIfNeeded(tokens: QueryToken[], fieldName: string): void {
+        if (!this._negate) {
+            return;
+        }
+
+        this._negate = false;
+
+        if (!tokens || !tokens.length || tokens[tokens.length - 1] instanceof OpenSubclauseToken) {
+            if (fieldName) {
+                this._whereExists(fieldName);
+            } else {
+                this._whereTrue();
+            }
+
+            this._andAlso();
+        }
+
+        tokens.push(NegateToken.INSTANCE);
+    }
+
+    public _usingDefaultOperator(operator): void {
+        if (!this._whereTokens || !this._whereTokens.length) {
+            throwError("InvalidOperationException", 
+                "Default operator can only be set before any where clause is added.");
+        }
+
+        this._defaultOperator = operator;
     }
 
     /**
@@ -149,22 +343,90 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * This shouldn't be used outside of unit tests unless you are well aware of the implications
      * @param waitTimeout Wait timeout
      */
-    @Override
-    public void _waitForNonStaleResults(Duration waitTimeout) {
-        theWaitForNonStaleResults = true;
-        timeout = ObjectUtils.firstNonNull(waitTimeout, getDefaultTimeout());
+    public _waitForNonStaleResults(waitTimeout: number): void {
+        this._theWaitForNonStaleResults = true;
+        this._timeout = waitTimeout || AbstractDocumentQuery._getDefaultTimeout();
     }
 
-    protected QueryOperation initializeQueryOperation() {
-        IndexQuery indexQuery = getIndexQuery();
-
-        return new QueryOperation(theSession, indexName, indexQuery, fieldsToFetchToken, disableEntitiesTracking, false, false);
+    protected _initializeQueryOperation(): QueryOperation {
+        const indexQuery = this.getIndexQuery();
+        return new QueryOperation(
+            this._theSession, 
+            this._indexName, 
+            indexQuery, 
+            this._fieldsToFetchToken, 
+            this._disableEntitiesTracking, 
+            false, 
+            false);
     }
 
-    public IndexQuery getIndexQuery() {
-        String query = toString();
-        IndexQuery indexQuery = generateIndexQuery(query);
-        invokeBeforeQueryExecuted(indexQuery);
+    private _transformValue(whereParams: WhereParams): any;
+    private _transformValue(whereParams: WhereParams, forRange: boolean): any;
+    private _transformValue(whereParams: WhereParams, forRange: boolean = false): any {
+        if (TypeUtil.isNullOrUndefined(whereParams.value)) {
+            return null;
+        }
+
+        if ("" === (whereParams.value as any)) {
+            return "";
+        }
+
+        /* TBD
+            if (_conventions.TryConvertValueForQuery(whereParams.FieldName, whereParams.Value, forRange, out var strVal))
+                return strVal;
+         */
+
+        const value = whereParams.value;
+        if (TypeUtil.isDate(value)) {
+            return value;
+        }
+
+        if (TypeUtil.isString(value)) {
+            return value;
+        }
+
+        if (TypeUtil.isNumber(value)) {
+            return value;
+        }
+
+        //TBD timespan - duration ?
+
+        if ((value as any) === false || (value as any) === true) {
+            return value;
+        }
+
+        return value;
+
+    }
+
+    private _addQueryParameter(value: any): string {
+        const parameterName = "p" + Object.keys(this._queryParameters);
+        this._queryParameters[parameterName] = value;
+        return parameterName;
+    }
+
+    protected _updateFieldsToFetchToken(fieldsToFetch: FieldsToFetchToken): void {
+        this._fieldsToFetchToken = fieldsToFetch;
+
+        if (!this._selectTokens && !this._selectTokens.length) {
+            this._selectTokens.push(fieldsToFetch);
+        } else {
+            const fetchToken = [...this._selectTokens]
+                    .filter(x => x instanceof FieldsToFetchToken)[0];
+
+            if (fetchToken) {
+                const idx = this._selectTokens.indexOf(fetchToken);
+                this._selectTokens[idx] = fieldsToFetch;
+            } else {
+                this._selectTokens.push(fieldsToFetch);
+            }
+        }
+    }
+
+    public getIndexQuery(): IndexQuery {
+        const query = this.toString();
+        const indexQuery = this._generateIndexQuery(query);
+        this.emit("beforeQueryExecuted", indexQuery);
         return indexQuery;
     }
 
@@ -172,18 +434,11 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * Gets the fields for projection
      * @return list of projected fields
      */
-    @Override
-    public List<String> getProjectionFields() {
-        return fieldsToFetchToken != null && fieldsToFetchToken.projections != null ? Arrays.asList(fieldsToFetchToken.projections) : Collections.emptyList();
-    }
-
-    /**
-     * Order the search results randomly
-     */
-    @Override
-    public void _randomOrdering() {
-        assertNoRawQuery();
-        orderByTokens.add(OrderByToken.random);
+    public getProjectionFields(): string[] {
+        return this._fieldsToFetchToken && 
+            this._fieldsToFetchToken.projections 
+                ? [...this._fieldsToFetchToken.projections] 
+                : [] as string[];
     }
 
     /**
@@ -191,129 +446,122 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * this is useful if you want to have repeatable random queries
      * @param seed Seed to use
      */
-    @Override
-    public void _randomOrdering(String seed) {
-        assertNoRawQuery();
+    public _randomOrdering(): void;
+    public _randomOrdering(seed?: string): void;
+    public _randomOrdering(seed?: string): void {
+        this._assertNoRawQuery();
 
-        if (StringUtils.isBlank(seed)) {
-            _randomOrdering();
+        if (!seed) {
+            this._orderByTokens.push(OrderByToken.random);
             return;
         }
 
-        orderByTokens.add(OrderByToken.createRandom(seed));
+        this._orderByTokens.push(OrderByToken.createRandom(seed));
     }
 
-    //TBD public void _customSortUsing(String typeName)
-    //TBD public void _customSortUsing(String typeName, boolean descending)
+    // TBD public void _customSortUsing(String typeName)
+    // TBD public void _customSortUsing(String typeName, boolean descending)
 
-    protected void addGroupByAlias(String fieldName, String projectedName) {
-        _aliasToGroupByFieldName.put(projectedName, fieldName);
+    protected addGroupByAlias(fieldName: string, projectedName: string): void {
+        this._aliasToGroupByFieldName[projectedName] = fieldName;
     }
 
-    private void assertNoRawQuery() {
-        if (queryRaw != null) {
-            throw new IllegalStateException("RawQuery was called, cannot modify this query by calling on operations that would modify the query (such as Where, Select, OrderBy, GroupBy, etc)");
+    private _assertNoRawQuery(): void {
+        if (this._queryRaw) {
+            throwError("InvalidOperationException",
+                "RawQuery was called, cannot modify this query by calling on "
+                + "operations that would modify the query (such as Where, Select, OrderBy, GroupBy, etc)");
         }
     }
 
-    public void _addParameter(String name, Object value) {
-        name = StringUtils.stripStart(name, "$");
-        if (queryParameters.containsKey(name)) {
-            throw new IllegalStateException("The parameter " + name + " was already added");
+    public addParameter(name: string, value: object): void {
+        name = name.replace(/^\$/, "");
+        if (Object.keys(this._queryParameters).indexOf(name) !== -1) {
+            throwError("InvalidOperationException", 
+                "The parameter " + name + " was already added");
         }
 
-        queryParameters.put(name, value);
+        this._queryParameters[name] = value;
     }
 
-    @Override
-    public void _groupBy(String fieldName, String... fieldNames) {
-        GroupBy[] mapping = Arrays.stream(fieldNames)
-                .map(x -> GroupBy.field(x))
-                .toArray(GroupBy[]::new);
+    public _groupBy(fieldName: string, ...fieldNames: string[]): void;
+    public _groupBy(field: GroupBy, ...fields: GroupBy[]): void;
+    public _groupBy(fieldOrFieldName: GroupBy | string, ...fieldsOrFieldNames: any[]): void {
 
-        _groupBy(GroupBy.field(fieldName), mapping);
-    }
-
-    @Override
-    public void _groupBy(GroupBy field, GroupBy... fields) {
-        if (!fromToken.isDynamic()) {
-            throw new IllegalStateException("groupBy only works with dynamic queries");
-        }
-
-        assertNoRawQuery();
-        isGroupBy = true;
-
-        String fieldName = ensureValidFieldName(field.getField(), false);
-
-        groupByTokens.add(GroupByToken.create(fieldName, field.getMethod()));
-
-        if (fields == null || fields.length <= 0) {
+        if (typeof(fieldOrFieldName) === "string") {
+            const mapping = fieldsOrFieldNames.map(x => GroupBy.field(x));
+            this._groupBy(GroupBy.field(fieldOrFieldName), ...mapping);
             return;
         }
 
-        for (GroupBy item : fields) {
-            fieldName = ensureValidFieldName(item.getField(), false);
-            groupByTokens.add(GroupByToken.create(fieldName, item.getMethod()));
+        if (!this._fromToken.isDynamic) {
+            throwError("InvalidOperationException", 
+                "groupBy only works with dynamic queries");
+        }
+
+        this._assertNoRawQuery();
+        this._isGroupBy = true;
+
+        const fieldName = this._ensureValidFieldName((fieldOrFieldName as GroupBy).field, false);
+
+        this._groupByTokens.push(GroupByToken.create(fieldName, (fieldOrFieldName as GroupBy).method));
+
+        if (!fieldsOrFieldNames || !fieldsOrFieldNames.length) {
+            return;
+        }
+
+        for (const item of fieldsOrFieldNames) {
+            fieldOrFieldName = this._ensureValidFieldName((item as GroupBy).field, false);
+            this._groupByTokens.push(GroupByToken.create(fieldOrFieldName, (item as GroupBy).method));
         }
     }
 
-    @Override
-    public void _groupByKey(String fieldName) {
-        _groupByKey(fieldName, null);
-    }
+    public _groupByKey(fieldName: string): void;
+    public _groupByKey(fieldName: string, projectedName: string): void;
+    public _groupByKey(fieldName: string, projectedName: string = null): void {
+        this._assertNoRawQuery();
+        this._isGroupBy = true;
 
-    @Override
-    public void _groupByKey(String fieldName, String projectedName) {
-        assertNoRawQuery();
-        isGroupBy = true;
-
-        if (projectedName != null && _aliasToGroupByFieldName.containsKey(projectedName)) {
-            String aliasedFieldName = _aliasToGroupByFieldName.get(projectedName);
-            if (fieldName == null || fieldName.equalsIgnoreCase(projectedName)) {
+        if (projectedName && this._aliasToGroupByFieldName[projectedName]) {
+            const aliasedFieldName = this._aliasToGroupByFieldName[projectedName];
+            if (!fieldName || fieldName.toLocaleLowerCase() === (projectedName || "").toLocaleLowerCase()) {
                 fieldName = aliasedFieldName;
             }
-        } else if (fieldName != null && _aliasToGroupByFieldName.containsValue(fieldName)) {
-            String aliasedFieldName = _aliasToGroupByFieldName.get(fieldName);
+        } else if (fieldName 
+            && Object.keys(this._aliasToGroupByFieldName)
+                .reduce((result, next) => result || next === fieldName, false)) {
+            const aliasedFieldName = this._aliasToGroupByFieldName[fieldName];
             fieldName = aliasedFieldName;
         }
 
-        selectTokens.add(GroupByKeyToken.create(fieldName, projectedName));
+        this._selectTokens.push(GroupByKeyToken.create(fieldName, projectedName));
     }
 
-    @Override
-    public void _groupBySum(String fieldName) {
-        _groupBySum(fieldName, null);
+    public _groupBySum(fieldName: string): void;
+    public _groupBySum(fieldName: string, projectedName: string): void;
+    public _groupBySum(fieldName: string, projectedName: string = null): void {
+        this._assertNoRawQuery();
+        this._isGroupBy = true;
+
+        fieldName = this._ensureValidFieldName(fieldName, false);
+        this._selectTokens.push(GroupBySumToken.create(fieldName, projectedName));
     }
 
-    @Override
-    public void _groupBySum(String fieldName, String projectedName) {
-        assertNoRawQuery();
-        isGroupBy = true;
+    public _groupByCount(): void;
+    public _groupByCount(projectedName: string): void;
+    public _groupByCount(projectedName: string = null): void {
+        this._assertNoRawQuery();
+        this._isGroupBy = true;
 
-        fieldName = ensureValidFieldName(fieldName, false);
-        selectTokens.add(GroupBySumToken.create(fieldName, projectedName));
+        this._selectTokens.push(GroupByCountToken.create(projectedName));
     }
 
-    @Override
-    public void _groupByCount() {
-        _groupByCount(null);
-    }
+    public _whereTrue(): void {
+        const tokens = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
+        this._negateIfNeeded(tokens, null);
 
-    @Override
-    public void _groupByCount(String projectedName) {
-        assertNoRawQuery();
-        isGroupBy = true;
-
-        selectTokens.add(GroupByCountToken.create(projectedName));
-    }
-
-    @Override
-    public void _whereTrue() {
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, null);
-
-        tokens.add(TrueToken.INSTANCE);
+        tokens.push(TrueToken.INSTANCE);
     }
 
     /* TBD
@@ -333,21 +581,18 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * Includes the specified path in the query, loading the document specified in that path
      * @param path Path to include
      */
-    @Override
-    public void _include(String path) {
-        includes.add(path);
+    public _include(path: string): void {
+        this._includes.add(path);
     }
 
-    //TBD: public void Include(Expression<Func<T, object>> path)
+    // TBD: public void Include(Expression<Func<T, object>> path)
 
-    @Override
-    public void _take(int count) {
-        pageSize = count;
+    public _take(count: number): void {
+        this._pageSize = count;
     }
 
-    @Override
-    public void _skip(int count) {
-        start = count;
+    public _skip(count: number): void {
+        this._start = count;
     }
 
     /**
@@ -355,171 +600,158 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param fieldName Field name
      * @param whereClause Where clause
      */
-    public void _whereLucene(String fieldName, String whereClause) {
-        fieldName = ensureValidFieldName(fieldName, false);
+    public _whereLucene(fieldName: string, whereClause: string): void {
+        fieldName = this._ensureValidFieldName(fieldName, false);
 
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, fieldName);
+        const tokens = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
+        this._negateIfNeeded(tokens, fieldName);
 
-        WhereToken whereToken = WhereToken.create(WhereOperator.LUCENE, fieldName, addQueryParameter(whereClause));
-        tokens.add(whereToken);
+        const whereToken = WhereToken.create("LUCENE", fieldName, this._addQueryParameter(whereClause));
+        tokens.push(whereToken);
     }
 
     /**
      * Simplified method for opening a new clause within the query
      */
-    @Override
-    public void _openSubclause() {
-        _currentClauseDepth++;
+    public _openSubclause(): void {
+        this._currentClauseDepth++;
 
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, null);
+        const tokens = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
+        this._negateIfNeeded(tokens, null);
 
-        tokens.add(OpenSubclauseToken.INSTANCE);
+        tokens.push(OpenSubclauseToken.INSTANCE);
     }
 
     /**
      * Simplified method for closing a clause within the query
      */
-    @Override
-    public void _closeSubclause() {
-        _currentClauseDepth--;
+    public _closeSubclause(): void {
+        this._currentClauseDepth--;
 
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        tokens.add(CloseSubclauseToken.INSTANCE);
+        const tokens: QueryToken[] = this._getCurrentWhereTokens();
+        tokens.push(CloseSubclauseToken.INSTANCE);
     }
 
-    @Override
-    public void _whereEquals(String fieldName, Object value) {
-        _whereEquals(fieldName, value, false);
-    }
-
-    @Override
-    public void _whereEquals(String fieldName, Object value, boolean exact) {
-        WhereParams params = new WhereParams();
-        params.setFieldName(fieldName);
-        params.setValue(value);
-        params.setExact(exact);
-        _whereEquals(params);
-    }
-
-    @Override
-    public void _whereEquals(String fieldName, MethodCall method) {
-        _whereEquals(fieldName, method, false);
-    }
-
-    @Override
-    public void _whereEquals(String fieldName, MethodCall method, boolean exact) {
-        _whereEquals(fieldName, (Object) method, exact);
-    }
-
-    @SuppressWarnings("unchecked")
-    public void _whereEquals(WhereParams whereParams) {
-        if (negate) {
-            negate = false;
-            _whereNotEquals(whereParams);
+    public _whereEquals(fieldName: string, method: MethodCall): void;
+    public _whereEquals(fieldName: string, method: MethodCall, exact: boolean): void;
+    public _whereEquals(fieldName: string, value: object): void;
+    public _whereEquals(fieldName: string, value: object, exact: boolean): void;
+    public _whereEquals(whereParams: WhereParams): void;
+    public _whereEquals(fieldNameOrWhereParams: string | WhereParams, value?: object, exact: boolean = false): void {
+        if (!TypeUtil.isObject(fieldNameOrWhereParams)) {
+            const params = new WhereParams();
+            params.fieldName = fieldNameOrWhereParams as string;
+            params.value = value;
+            params.exact = exact;
+            this._whereEquals(params);
             return;
         }
 
-        whereParams.setFieldName(ensureValidFieldName(whereParams.getFieldName(), whereParams.isNestedPath()));
-
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
-
-        if (ifValueIsMethod(WhereOperator.EQUALS, whereParams, tokens)) {
+        const whereParams = fieldNameOrWhereParams as WhereParams;
+        if (this._negate) {
+            this._negate = false;
+            this._whereNotEquals(whereParams);
             return;
         }
 
-        Object transformToEqualValue = transformValue(whereParams);
-        String addQueryParameter = addQueryParameter(transformToEqualValue);
-        WhereToken whereToken = WhereToken.create(WhereOperator.EQUALS, whereParams.getFieldName(), addQueryParameter, new WhereToken.WhereOptions(whereParams.isExact()));
-        tokens.add(whereToken);
+        whereParams.fieldName = this._ensureValidFieldName(whereParams.fieldName, whereParams.nestedPath);
+
+        const tokens: QueryToken[] = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
+
+        if (this._ifValueIsMethod("EQUALS", whereParams, tokens)) {
+            return;
+        }
+
+        const transformToEqualValue = this._transformValue(whereParams);
+        const addQueryParameter: string = this._addQueryParameter(transformToEqualValue);
+        const whereToken = WhereToken.create(
+            "EQUALS", 
+            whereParams.fieldName, 
+            addQueryParameter, 
+            new WhereOptions(whereParams.exact));
+        tokens.push(whereToken);
     }
 
-    private boolean ifValueIsMethod(WhereOperator op, WhereParams whereParams, List<QueryToken> tokens) {
-        if (whereParams.getValue() instanceof MethodCall) {
-            MethodCall mc = (MethodCall) whereParams.getValue();
+    private _ifValueIsMethod(op: WhereOperator, whereParams: WhereParams, tokens: QueryToken[]): boolean {
+        if (whereParams.value instanceof MethodCall) {
+            const mc = whereParams.value as MethodCall;
 
-            String[] args = new String[mc.args.length];
-            for (int i = 0; i < mc.args.length; i++) {
-                args[i] = addQueryParameter(mc.args[i]);
+            const args = mc.args.map(x => null);
+            for (let i = 0; i < mc.args.length; i++) {
+                args[i] = this._addQueryParameter(mc.args[i]);
             }
 
-            WhereToken token;
-            Class<? extends MethodCall> type = mc.getClass();
-            if (CmpXchg.class.equals(type)) {
-                token = WhereToken.create(op, whereParams.getFieldName(), null, new WhereToken.WhereOptions(WhereToken.MethodsType.CMP_X_CHG, args, mc.accessPath, whereParams.isExact()));
+            let token: WhereToken;
+            const type = mc.constructor.name;
+            if (CmpXchg.name === type) {
+                token = WhereToken.create(
+                    op, 
+                    whereParams.fieldName, 
+                    null, 
+                    new WhereOptions({
+                        methodType: "CMP_X_CHG", 
+                        parameters: args, 
+                        property: mc.accessPath, 
+                        exact: whereParams.exact
+                    }));
             } else {
-                throw new IllegalArgumentException("Unknown method " + type);
+                throwError("InvalidArgumentException", `Unknown method ${type}.`);
             }
 
-            tokens.add(token);
+            tokens.push(token);
             return true;
         }
 
         return false;
     }
 
-    public void _whereNotEquals(String fieldName, Object value) {
-        _whereNotEquals(fieldName, value, false);
-    }
+    public _whereNotEquals(fieldName: string, value: object): void;
+    public _whereNotEquals(fieldName: string, value: object, exact: boolean): void ;
+    public _whereNotEquals(fieldName: string, method: MethodCall): void;
+    public _whereNotEquals(fieldName: string, method: MethodCall, exact: boolean): void;
+    public _whereNotEquals(whereParams: WhereParams): void;
+    public _whereNotEquals(fieldNameOrWhereParams: string | WhereParams, value?: object, exact: boolean = false): void {
+        let whereParams: WhereParams;
+        if (TypeUtil.isString(fieldNameOrWhereParams)) {
+            whereParams = new WhereParams();
+            whereParams.fieldName = fieldNameOrWhereParams as string;
+            whereParams.value = value;
+            whereParams.exact = exact;
 
-    public void _whereNotEquals(String fieldName, Object value, boolean exact) {
-        WhereParams params = new WhereParams();
-        params.setFieldName(fieldName);
-        params.setValue(value);
-        params.setExact(exact);
+            return this._whereNotEquals(whereParams);
+        }
 
-        _whereNotEquals(params);
-    }
-
-    @Override
-    public void _whereNotEquals(String fieldName, MethodCall method) {
-        _whereNotEquals(fieldName, (Object) method);
-    }
-
-    @Override
-    public void _whereNotEquals(String fieldName, MethodCall method, boolean exact) {
-        _whereNotEquals(fieldName, (Object) method, exact);
-    }
-
-    @SuppressWarnings("unchecked")
-    public void _whereNotEquals(WhereParams whereParams) {
-        if (negate) {
-            negate = false;
-            _whereEquals(whereParams);
+        whereParams = fieldNameOrWhereParams as WhereParams;
+        if (this._negate) {
+            this._negate = false;
+            this._whereEquals(whereParams);
             return;
         }
 
-        Object transformToEqualValue = transformValue(whereParams);
+        const transformToEqualValue = this._transformValue(whereParams);
 
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
+        const tokens: QueryToken[] = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
 
-        whereParams.setFieldName(ensureValidFieldName(whereParams.getFieldName(), whereParams.isNestedPath()));
+        whereParams.fieldName = this._ensureValidFieldName(whereParams.fieldName, whereParams.nestedPath);
 
-        if (ifValueIsMethod(WhereOperator.NOT_EQUALS, whereParams, tokens)) {
+        if (this._ifValueIsMethod("NOT_EQUALS", whereParams, tokens)) {
             return;
         }
 
-        WhereToken whereToken = WhereToken.create(WhereOperator.NOT_EQUALS, whereParams.getFieldName(), addQueryParameter(transformToEqualValue), new WhereToken.WhereOptions(whereParams.isExact()));
-        tokens.add(whereToken);
+        const whereToken = WhereToken.create(
+            "NOT_EQUALS", 
+            whereParams.fieldName, 
+            this._addQueryParameter(transformToEqualValue), 
+            new WhereOptions(whereParams.exact));
+        tokens.push(whereToken);
     }
 
-    public void negateNext() {
-        negate = !negate;
-    }
-
-    /**
-     * Check that the field has one of the specified value
-     * @param fieldName Field name to use
-     * @param values Values to find
-     */
-    @Override
-    public void _whereIn(String fieldName, Collection<Object> values) {
-        _whereIn(fieldName, values, false);
+    public negateNext(): void {
+        this._negate = !this._negate;
     }
 
     /**
@@ -528,35 +760,40 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param values Values to find
      * @param exact Use exact matcher
      */
-    @Override
-    public void _whereIn(String fieldName, Collection<Object> values, boolean exact) {
-        fieldName = ensureValidFieldName(fieldName, false);
+    public _whereIn(fieldName: string, values: object[]): void;
+    public _whereIn(fieldName: string, values: object[], exact: boolean): void;
+    public _whereIn(fieldName: string, values: object[], exact: boolean = false): void {
+        fieldName = this._ensureValidFieldName(fieldName, false);
 
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, fieldName);
+        const tokens = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
+        this._negateIfNeeded(tokens, fieldName);
 
-        WhereToken whereToken = WhereToken.create(WhereOperator.IN, fieldName, addQueryParameter(transformCollection(fieldName, unpackCollection(values))));
-        tokens.add(whereToken);
+        const whereToken = WhereToken.create(
+            "IN", 
+            fieldName, 
+            this._addQueryParameter(
+                this._transformCollection(fieldName, AbstractDocumentQuery._unpackCollection(values))));
+        tokens.push(whereToken);
     }
 
-    @SuppressWarnings("unchecked")
-    public void _whereStartsWith(String fieldName, Object value) {
-        WhereParams whereParams = new WhereParams();
-        whereParams.setFieldName(fieldName);
-        whereParams.setValue(value);
-        whereParams.setAllowWildcards(true);
+    public _whereStartsWith(fieldName: string, value: object): void {
+        const whereParams = new WhereParams();
+        whereParams.fieldName = fieldName;
+        whereParams.value = value;
+        whereParams.allowWildcards = true;
 
-        Object transformToEqualValue = transformValue(whereParams);
+        const transformToEqualValue = this._transformValue(whereParams);
 
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
+        const tokens = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
 
-        whereParams.setFieldName(ensureValidFieldName(whereParams.getFieldName(), whereParams.isNestedPath()));
-        negateIfNeeded(tokens, whereParams.getFieldName());
+        whereParams.fieldName = this._ensureValidFieldName(whereParams.fieldName, whereParams.nestedPath);
+        this._negateIfNeeded(tokens, whereParams.fieldName);
 
-        WhereToken whereToken = WhereToken.create(WhereOperator.STARTS_WITH, whereParams.getFieldName(), addQueryParameter(transformToEqualValue));
-        tokens.add(whereToken);
+        const whereToken = WhereToken.create(
+            "STARTS_WITH", whereParams.fieldName, this._addQueryParameter(transformToEqualValue));
+        tokens.push(whereToken);
     }
 
     /**
@@ -564,28 +801,23 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param fieldName Field name to use
      * @param value Values to find
      */
-    @SuppressWarnings("unchecked")
-    public void _whereEndsWith(String fieldName, Object value) {
-        WhereParams whereParams = new WhereParams();
-        whereParams.setFieldName(fieldName);
-        whereParams.setValue(value);
-        whereParams.setAllowWildcards(true);
+    public _whereEndsWith(fieldName: string, value: object): void {
+        const whereParams = new WhereParams();
+        whereParams.fieldName = fieldName;
+        whereParams.value = value;
+        whereParams.allowWildcards = true;
 
-        Object transformToEqualValue = transformValue(whereParams);
+        const transformToEqualValue = this._transformValue(whereParams);
 
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
+        const tokens = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
 
-        whereParams.setFieldName(ensureValidFieldName(whereParams.getFieldName(), whereParams.isNestedPath()));
-        negateIfNeeded(tokens, whereParams.getFieldName());
+        whereParams.fieldName = this._ensureValidFieldName(whereParams.fieldName, whereParams.nestedPath);
+        this._negateIfNeeded(tokens, whereParams.fieldName);
 
-        WhereToken whereToken = WhereToken.create(WhereOperator.ENDS_WITH, whereParams.getFieldName(), addQueryParameter(transformToEqualValue));
-        tokens.add(whereToken);
-    }
-
-    @Override
-    public void _whereBetween(String fieldName, Object start, Object end) {
-        _whereBetween(fieldName, start, end, false);
+        const whereToken = WhereToken.create(
+            "ENDS_WITH", whereParams.fieldName, this._addQueryParameter(transformToEqualValue));
+        tokens.push(whereToken);
     }
 
     /**
@@ -595,31 +827,35 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param end Range end
      * @param exact Use exact matcher
      */
-    @Override
-    public void _whereBetween(String fieldName, Object start, Object end, boolean exact) {
-        fieldName = ensureValidFieldName(fieldName, false);
+    public _whereBetween(fieldName: string, start: object, end: object): void;
+    public _whereBetween(fieldName: string, start: object, end: object, exact: boolean): void;
+    public _whereBetween(fieldName: string, start: object, end: object, exact: boolean = false): void {
+        fieldName = this._ensureValidFieldName(fieldName, false);
 
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, fieldName);
+        const tokens = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
+        this._negateIfNeeded(tokens, fieldName);
 
-        WhereParams startParams = new WhereParams();
-        startParams.setValue(start);
-        startParams.setFieldName(fieldName);
+        const startParams = new WhereParams();
+        startParams.value = start;
+        startParams.fieldName = fieldName;
 
-        WhereParams endParams = new WhereParams();
-        endParams.setValue(end);
-        endParams.setFieldName(fieldName);
+        const endParams = new WhereParams();
+        endParams.value = end;
+        endParams.fieldName = fieldName;
 
-        String fromParameterName = addQueryParameter(start == null ? "*" : transformValue(startParams, true));
-        String toParameterName = addQueryParameter(start == null ? "NULL" : transformValue(endParams, true));
+        const fromParameterName = this._addQueryParameter(
+            !start ? "*" : this._transformValue(startParams, true));
+        const toParameterName = this._addQueryParameter(
+            !start ? "NULL" : this._transformValue(endParams, true));
 
-        WhereToken whereToken = WhereToken.create(WhereOperator.BETWEEN, fieldName, null, new WhereToken.WhereOptions(exact, fromParameterName, toParameterName));
-        tokens.add(whereToken);
-    }
-
-    public void _whereGreaterThan(String fieldName, Object value) {
-        _whereGreaterThan(fieldName, value, false);
+        const whereToken = WhereToken.create(
+            "BETWEEN", fieldName, null, new WhereOptions({
+                exact, 
+                from: fromParameterName, 
+                to: toParameterName
+            }));
+        tokens.push(whereToken);
     }
 
     /**
@@ -628,23 +864,24 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param value Value to compare
      * @param exact Use exact matcher
      */
-    public void _whereGreaterThan(String fieldName, Object value, boolean exact) {
-        fieldName = ensureValidFieldName(fieldName, false);
+    public _whereGreaterThan(fieldName: string, value: object): void;
+    public _whereGreaterThan(fieldName: string, value: object, exact: boolean): void;
+    public _whereGreaterThan(fieldName: string, value: object, exact: boolean = false): void {
+        fieldName = this._ensureValidFieldName(fieldName, false);
 
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, fieldName);
-        WhereParams whereParams = new WhereParams();
-        whereParams.setValue(value);
-        whereParams.setFieldName(fieldName);
+        const tokens = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
+        this._negateIfNeeded(tokens, fieldName);
+        const whereParams = new WhereParams();
+        whereParams.value = value;
+        whereParams.fieldName = fieldName;
 
-        String parameter = addQueryParameter(value == null ? "*" : transformValue(whereParams, true));
-        WhereToken whereToken = WhereToken.create(WhereOperator.GREATER_THAN, fieldName, parameter, new WhereToken.WhereOptions(exact));
-        tokens.add(whereToken);
-    }
+        const parameter = this._addQueryParameter(
+            !value ? "*" : this._transformValue(whereParams, true));
 
-    public void _whereGreaterThanOrEqual(String fieldName, Object value) {
-        _whereGreaterThanOrEqual(fieldName, value, false);
+        const whereToken = WhereToken.create(
+            "GREATER_THAN", fieldName, parameter, new WhereOptions({ exact }));
+        tokens.push(whereToken);
     }
 
     /**
@@ -653,57 +890,61 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param value Value to compare
      * @param exact Use exact matcher
      */
-    public void _whereGreaterThanOrEqual(String fieldName, Object value, boolean exact) {
-        fieldName = ensureValidFieldName(fieldName, false);
+    public _whereGreaterThanOrEqual(fieldName: string, value: object): void; 
+    public _whereGreaterThanOrEqual(fieldName: string, value: object, exact: boolean): void; 
+    public _whereGreaterThanOrEqual(fieldName: string, value: object, exact: boolean = false): void {
+        fieldName = this._ensureValidFieldName(fieldName, false);
 
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, fieldName);
-        WhereParams whereParams = new WhereParams();
-        whereParams.setValue(value);
-        whereParams.setFieldName(fieldName);
+        const tokens = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
+        this._negateIfNeeded(tokens, fieldName);
+        const whereParams = new WhereParams();
+        whereParams.value = value;
+        whereParams.fieldName = fieldName;
 
-        String parameter = addQueryParameter(value == null ? "*" : transformValue(whereParams, true));
-        WhereToken whereToken = WhereToken.create(WhereOperator.GREATER_THAN_OR_EQUAL, fieldName, parameter, new WhereToken.WhereOptions(exact));
-        tokens.add(whereToken);
+        const parameter = this._addQueryParameter(
+            !value ? "*" : this._transformValue(whereParams, true));
+        const whereToken = WhereToken.create(
+            "GREATER_THAN_OR_EQUAL", fieldName, parameter, new WhereOptions({ exact }));
+        tokens.push(whereToken);
     }
 
-    public void _whereLessThan(String fieldName, Object value) {
-        _whereLessThan(fieldName, value, false);
+    public _whereLessThan(fieldName: string, value: object): void;
+    public _whereLessThan(fieldName: string, value: object, exact: boolean): void;
+    public _whereLessThan(fieldName: string, value: object, exact: boolean = false): void {
+        fieldName = this._ensureValidFieldName(fieldName, false);
+
+        const tokens = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
+        this._negateIfNeeded(tokens, fieldName);
+
+        const whereParams = new WhereParams();
+        whereParams.value = value;
+        whereParams.fieldName = fieldName;
+
+        const parameter = this._addQueryParameter(
+            !value ? "NULL" : this._transformValue(whereParams, true));
+        const whereToken = WhereToken.create(
+            "LESS_THAN", fieldName, parameter, new WhereOptions({ exact }));
+        tokens.push(whereToken);
     }
 
-    public void _whereLessThan(String fieldName, Object value, boolean exact) {
-        fieldName = ensureValidFieldName(fieldName, false);
+    public _whereLessThanOrEqual(fieldName: string, value: object): void;
+    public _whereLessThanOrEqual(fieldName: string, value: object, exact: boolean): void;
+    public _whereLessThanOrEqual(fieldName: string, value: object, exact : boolean = false): void {
+        const tokens = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
+        this._negateIfNeeded(tokens, fieldName);
 
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, fieldName);
+        const whereParams = new WhereParams();
+        whereParams.value = value;
+        whereParams.fieldName = fieldName;
 
-        WhereParams whereParams = new WhereParams();
-        whereParams.setValue(value);
-        whereParams.setFieldName(fieldName);
-
-        String parameter = addQueryParameter(value == null ? "NULL" : transformValue(whereParams, true));
-        WhereToken whereToken = WhereToken.create(WhereOperator.LESS_THAN, fieldName, parameter, new WhereToken.WhereOptions(exact));
-        tokens.add(whereToken);
-    }
-
-    public void _whereLessThanOrEqual(String fieldName, Object value) {
-        _whereLessThanOrEqual(fieldName, value, false);
-    }
-
-    public void _whereLessThanOrEqual(String fieldName, Object value, boolean exact) {
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, fieldName);
-
-        WhereParams whereParams = new WhereParams();
-        whereParams.setValue(value);
-        whereParams.setFieldName(fieldName);
-
-        String parameter = addQueryParameter(value == null ? "NULL" : transformValue(whereParams, true));
-        WhereToken whereToken = WhereToken.create(WhereOperator.LESS_THAN_OR_EQUAL, fieldName, parameter, new WhereToken.WhereOptions(exact));
-        tokens.add(whereToken);
+        const parameter = this._addQueryParameter(
+            !value ? "NULL" : this._transformValue(whereParams, true));
+        const whereToken = WhereToken.create(
+            "LESS_THAN_OR_EQUAL", fieldName, parameter, new WhereOptions({ exact }));
+        tokens.push(whereToken);
     }
 
     /**
@@ -711,49 +952,51 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param fieldName Field name to use
      * @param pattern Regexp pattern
      */
-    @Override
-    public void _whereRegex(String fieldName, String pattern) {
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, fieldName);
+    public _whereRegex(fieldName: string, pattern: string): void {
+        const tokens = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
+        this._negateIfNeeded(tokens, fieldName);
 
-        WhereParams whereParams = new WhereParams();
-        whereParams.setValue(pattern);
-        whereParams.setFieldName(fieldName);
+        const whereParams = new WhereParams();
+        whereParams.value = pattern;
+        whereParams.fieldName = fieldName;
 
-        String parameter = addQueryParameter(transformValue(whereParams));
+        const parameter = this._addQueryParameter(this._transformValue(whereParams));
 
-        WhereToken whereToken = WhereToken.create(WhereOperator.REGEX, fieldName, parameter);
-        tokens.add(whereToken);
+        const whereToken = WhereToken.create(
+            "REGEX", fieldName, parameter);
+        tokens.push(whereToken);
     }
 
-    public void _andAlso() {
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        if (tokens.isEmpty()) {
+    public _andAlso(): void {
+        const tokens = this._getCurrentWhereTokens();
+        if (!tokens && !tokens.length) {
             return;
         }
 
-        if (tokens.get(tokens.size() - 1) instanceof QueryOperatorToken) {
-            throw new IllegalStateException("Cannot add AND, previous token was already an operator token.");
+        if (tokens[tokens.length - 1] instanceof QueryOperatorToken) {
+            throwError("InvalidOperationException", 
+                "Cannot add AND, previous token was already an operator token.");
         }
 
-        tokens.add(QueryOperatorToken.AND);
+        tokens.push(QueryOperatorToken.AND);
     }
 
     /**
      * Add an OR to the query
      */
-    public void _orElse() {
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        if (tokens.isEmpty()) {
+    public _orElse(): void {
+        const tokens = this._getCurrentWhereTokens();
+        if (!tokens && !tokens.length) {
             return;
         }
 
-        if (tokens.get(tokens.size() - 1) instanceof QueryOperatorToken) {
-            throw new IllegalStateException("Cannot add OR, previous token was already an operator token.");
+        if (tokens[tokens.length - 1] instanceof QueryOperatorToken) {
+            throwError("InvalidOperationException", 
+                "Cannot add OR, previous token was already an operator token.");
         }
 
-        tokens.add(QueryOperatorToken.OR);
+        tokens.push(QueryOperatorToken.OR);
     }
 
     /**
@@ -766,27 +1009,26 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      *
      * @param boost Boost value
      */
-    @Override
-    public void _boost(double boost) {
-        if (boost == 1.0) {
+    public _boost(boost: number): void  {
+        if (boost === 1.0) {
             return;
         }
 
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        if (tokens.isEmpty()) {
-            throw new IllegalStateException("Missing where clause");
+        const tokens = this._getCurrentWhereTokens();
+        if (!tokens && !tokens.length) {
+            throwError("InvalidOperationException", "Missing where clause.");
         }
 
-        QueryToken whereToken = tokens.get(tokens.size() - 1);
+        const whereToken = tokens[tokens.length - 1];
         if (!(whereToken instanceof WhereToken)) {
-            throw new IllegalStateException("Missing where clause");
+            throwError("InvalidOperationException", "Missing where clause.");
         }
 
         if (boost <= 0.0) {
-            throw new IllegalArgumentException("Boost factor must be a positive number");
+            throwError("InvalidArgumentException", "Boost factor must be a positive number.");
         }
 
-        ((WhereToken) whereToken).getOptions().setBoost(boost);
+        (whereToken as WhereToken).options.boost = boost;
     }
 
     /**
@@ -797,23 +1039,22 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Fuzzy%20Searches
      * @param fuzzy Fuzzy value
      */
-    @Override
-    public void _fuzzy(double fuzzy) {
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        if (tokens.isEmpty()) {
-            throw new IllegalStateException("Missing where clause");
+    public _fuzzy(fuzzy: number): void {
+        const tokens = this._getCurrentWhereTokens();
+        if (!tokens && !tokens.length) {
+            throwError("InvalidOperationException", "Missing where clause.");
         }
 
-        QueryToken whereToken = tokens.get(tokens.size() - 1);
+        const whereToken = tokens[tokens.length - 1];
         if (!(whereToken instanceof WhereToken)) {
-            throw new IllegalStateException("Missing where clause");
+            throwError("InvalidOperationException", "Missing where clause.");
         }
 
         if (fuzzy < 0.0 || fuzzy > 1.0) {
-            throw new IllegalArgumentException("Fuzzy distance must be between 0.0 and 1.0");
+            throwError("InvalidArgumentException", "Fuzzy distance must be between 0.0 and 1.0.");
         }
 
-        ((WhereToken) whereToken).getOptions().setFuzzy(fuzzy);
+        (whereToken as WhereToken).options.fuzzy = fuzzy;
     }
 
     /**
@@ -822,33 +1063,22 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Proximity%20Searches
      * @param proximity Proximity value
      */
-    @Override
-    public void _proximity(int proximity) {
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        if (tokens.isEmpty()) {
-            throw new IllegalStateException("Missing where clause");
+    public _proximity(proximity: number): void {
+        const tokens = this._getCurrentWhereTokens();
+        if (!tokens && !tokens.length) {
+            throwError("InvalidOperationException", "Missing where clause.");
         }
 
-        QueryToken whereToken = tokens.get(tokens.size() - 1);
+        const whereToken = tokens[tokens.length - 1];
         if (!(whereToken instanceof WhereToken)) {
-            throw new IllegalStateException("Missing where clause");
+            throwError("InvalidOperationException", "Missing where clause.");
         }
 
         if (proximity < 1) {
-            throw new IllegalArgumentException("Proximity distance must be a positive number");
+            throwError("InvalidArgumentException", "Proximity distance must be a positive number.");
         }
 
-        ((WhereToken) whereToken).getOptions().setProximity(proximity);
-    }
-
-    /**
-     * Order the results by the specified fields
-     * The fields are the names of the fields to sort, defaulting to sorting by ascending.
-     * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
-     * @param field field to use in order
-     */
-    public void _orderBy(String field) {
-        _orderBy(field, OrderingType.STRING);
+        (whereToken as WhereToken).options.proximity = proximity;
     }
 
     /**
@@ -858,20 +1088,12 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param field field to use in order
      * @param ordering Ordering type
      */
-    public void _orderBy(String field, OrderingType ordering) {
-        assertNoRawQuery();
-        String f = ensureValidFieldName(field, false);
-        orderByTokens.add(OrderByToken.createAscending(f, ordering));
-    }
-
-    /**
-     * Order the results by the specified fields
-     * The fields are the names of the fields to sort, defaulting to sorting by descending.
-     * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
-     * @param field Field to use
-     */
-    public void _orderByDescending(String field) {
-        _orderByDescending(field, OrderingType.STRING);
+    public _orderBy(field: string): void;
+    public _orderBy(field: string, ordering: OrderingType): void;
+    public _orderBy(field: string, ordering: OrderingType = "STRING"): void {
+        this._assertNoRawQuery();
+        const f = this._ensureValidFieldName(field, false);
+        this._orderByTokens.push(OrderByToken.createAscending(f, ordering));
     }
 
     /**
@@ -881,80 +1103,56 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param field Field to use
      * @param ordering Ordering type
      */
-    public void _orderByDescending(String field, OrderingType ordering) {
-        assertNoRawQuery();
-        String f = ensureValidFieldName(field, false);
-        orderByTokens.add(OrderByToken.createDescending(f, ordering));
+    public _orderByDescending(field: string): void;
+    public _orderByDescending(field: string, ordering: OrderingType): void;
+    public _orderByDescending(field: string, ordering: OrderingType = "STRING"): void {
+        this._assertNoRawQuery();
+        const f = this._ensureValidFieldName(field, false);
+        this._orderByTokens.push(OrderByToken.createDescending(f, ordering));
     }
 
-    public void _orderByScore() {
-        assertNoRawQuery();
+    public _orderByScore(): void {
+        this._assertNoRawQuery();
 
-        orderByTokens.add(OrderByToken.scoreAscending);
+        this._orderByTokens.push(OrderByToken.scoreAscending);
     }
 
-    public void _orderByScoreDescending() {
-        assertNoRawQuery();
-        orderByTokens.add(OrderByToken.scoreDescending);
+    public _orderByScoreDescending(): void {
+        this._assertNoRawQuery();
+        this._orderByTokens.push(OrderByToken.scoreDescending);
     }
 
     /**
      * Provide statistics about the query, such as total count of matching records
      * @param stats Output parameter for query statistics
      */
-    public void _statistics(Reference<QueryStatistics> stats) {
-        stats.value = queryStats;
+    public _statistics(statsCallback: (stats: QueryStatistics) => void): void {
+        statsCallback(this._queryStats);
     }
 
-    /**
-     * Called externally to raise the after query executed callback
-     * @param result Query result
-     */
-    public void invokeAfterQueryExecuted(QueryResult result) {
-        for (Consumer<QueryResult> consumer : afterQueryExecutedCallback) {
-            consumer.accept(result);
-        }
-    }
-
-    public void invokeBeforeQueryExecuted(IndexQuery query) {
-        for (Consumer<IndexQuery> consumer : beforeQueryExecutedCallback) {
-            consumer.accept(query);
-        }
-    }
-
-    //TBD public void InvokeAfterStreamExecuted(BlittableJsonReaderObject result)
+    // TBD public void InvokeAfterStreamExecuted(BlittableJsonReaderObject result)
 
     /**
      * Generates the index query.
      * @param query Query
      * @return Index query
      */
-    protected IndexQuery generateIndexQuery(String query) {
-        IndexQuery indexQuery = new IndexQuery();
-        indexQuery.setQuery(query);
-        indexQuery.setStart(start);
-        indexQuery.setWaitForNonStaleResults(theWaitForNonStaleResults);
-        indexQuery.setWaitForNonStaleResultsTimeout(timeout);
-        indexQuery.setQueryParameters(queryParameters);
-        indexQuery.setDisableCaching(disableCaching);
-        //TBD indexQuery.setShowTimings(showQueryTimings);
-        //TBD indexQuery.setExplainScores(shouldExplainScores);
+    protected _generateIndexQuery(query: string): IndexQuery {
+        const indexQuery = new IndexQuery();
+        indexQuery.query = query;
+        indexQuery.start = this._start;
+        indexQuery.waitForNonStaleResults = this._theWaitForNonStaleResults;
+        indexQuery.waitForNonStaleResultsTimeout = this._timeout;
+        indexQuery.queryParameters = this._queryParameters;
+        indexQuery.disableCaching = this._disableCaching;
+        // TBD indexQuery.setShowTimings(showQueryTimings);
+        // TBD indexQuery.setExplainScores(shouldExplainScores);
 
-        if (pageSize != null) {
-            indexQuery.setPageSize(pageSize);
+        if (this._pageSize) {
+            indexQuery.pageSize = this._pageSize;
         }
-        return indexQuery;
-    }
 
-    /**
-     * Perform a search for documents which fields that match the searchTerms.
-     * If there is more than a single term, each of them will be checked independently.
-     * @param fieldName Field name
-     * @param searchTerms Search terms
-     */
-    @Override
-    public void _search(String fieldName, String searchTerms) {
-        _search(fieldName, searchTerms, SearchOperator.OR);
+        return indexQuery;
     }
 
     /**
@@ -964,243 +1162,247 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param searchTerms Search terms
      * @param operator Search operator
      */
-    @Override
-    public void _search(String fieldName, String searchTerms, SearchOperator operator) {
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
+    public _search(fieldName: string, searchTerms: string): void;
+    public _search(fieldName: string, searchTerms: string, operator: SearchOperator): void;
+    public _search(fieldName: string, searchTerms: string, operator: SearchOperator = "OR"): void {
+        const tokens = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
 
-        fieldName = ensureValidFieldName(fieldName, false);
-        negateIfNeeded(tokens, fieldName);
+        fieldName = this._ensureValidFieldName(fieldName, false);
+        this._negateIfNeeded(tokens, fieldName);
 
-        WhereToken whereToken = WhereToken.create(WhereOperator.SEARCH, fieldName, addQueryParameter(searchTerms), new WhereToken.WhereOptions(operator));
-        tokens.add(whereToken);
+        const whereToken = WhereToken.create(
+            "SEARCH", fieldName, this._addQueryParameter(searchTerms), new WhereOptions({ search: operator }));
+        tokens.push(whereToken);
     }
 
-    @Override
-    public String toString() {
-        if (queryRaw != null) {
-            return queryRaw;
+    public toString(): string {
+        if (this._queryRaw) {
+            return this._queryRaw;
         }
 
-        if (_currentClauseDepth != 0) {
-            throw new IllegalStateException("A clause was not closed correctly within this query, current clause depth = " + _currentClauseDepth);
+        if (this._currentClauseDepth) {
+            throwError("InvalidOperationException",
+                "A clause was not closed correctly within this query, current clause depth = " 
+                    + this._currentClauseDepth);
         }
 
-        StringBuilder queryText = new StringBuilder();
-        buildDeclare(queryText);
-        buildFrom(queryText);
-        buildGroupBy(queryText);
-        buildWhere(queryText);
-        buildOrderBy(queryText);
+        const queryText = new StringBuilder();
+        this._buildDeclare(queryText);
+        this._buildFrom(queryText);
+        this._buildGroupBy(queryText);
+        this._buildWhere(queryText);
+        this._buildOrderBy(queryText);
 
-        buildLoad(queryText);
-        buildSelect(queryText);
-        buildInclude(queryText);
+        this._buildLoad(queryText);
+        this._buildSelect(queryText);
+        this._buildInclude(queryText);
 
         return queryText.toString();
     }
 
-    private void buildInclude(StringBuilder queryText) {
-        if (includes == null || includes.isEmpty()) {
+    private _buildInclude(queryText: StringBuilder): void {
+        if (!this._includes || !this._includes.size) {
             return;
         }
 
         queryText.append(" include ");
-        boolean first = true;
-        for (String include : includes) {
+        let first = true;
+        for (const include of this._includes) {
             if (!first) {
                 queryText.append(",");
             }
             first = false;
 
-            boolean requiredQuotes = false;
+            let requiredQuotes: boolean = false;
 
-            for (int i = 0; i < include.length(); i++) {
-                char ch = include.charAt(i);
-                if (!Character.isLetterOrDigit(ch) && ch != '_' && ch != '.') {
+            // tslint:disable-next-line:prefer-for-of
+            for (let i = 0; i < include.length; i++) {
+                const ch = include[i];
+                if (!StringUtil.isLetterOrDigit(ch) && ch !== "_" && ch !== ".") {
                     requiredQuotes = true;
                     break;
                 }
             }
 
             if (requiredQuotes) {
-                queryText.append("'").append(include.replaceAll("'", "\\'")).append("'");
+                queryText.append("'").append(include.replace(/'/g, "\'")).append("'");
             } else {
                 queryText.append(include);
             }
         }
     }
 
-    @Override
-    public void _intersect() {
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        if (tokens.size() > 0) {
-            QueryToken last = tokens.get(tokens.size() - 1);
+    public _intersect(): void {
+        const tokens = this._getCurrentWhereTokens();
+        if (tokens.length > 0) {
+            const last = tokens[tokens.length - 1];
             if (last instanceof WhereToken || last instanceof CloseSubclauseToken) {
-                isIntersect = true;
+                this._isIntersect = true;
 
-                tokens.add(IntersectMarkerToken.INSTANCE);
+                tokens.push(IntersectMarkerToken.INSTANCE);
                 return;
             }
         }
 
-        throw new IllegalStateException("Cannot add INTERSECT at this point.");
+        throwError("InvalidOperationException", "Cannot add INTERSECT at this point.");
     }
 
-    public void _whereExists(String fieldName) {
-        fieldName = ensureValidFieldName(fieldName, false);
+    public _whereExists(fieldName: string): void {
+        fieldName = this._ensureValidFieldName(fieldName, false);
 
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, fieldName);
+        const tokens = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
+        this._negateIfNeeded(tokens, fieldName);
 
-        tokens.add(WhereToken.create(WhereOperator.EXISTS, fieldName, null));
+        tokens.push(WhereToken.create("EXISTS", fieldName, null));
     }
 
-    @Override
-    public void _containsAny(String fieldName, Collection<Object> values) {
-        fieldName = ensureValidFieldName(fieldName, false);
+    public _containsAny(fieldName: string, values: object[]): void {
+        fieldName = this._ensureValidFieldName(fieldName, false);
 
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, fieldName);
+        const tokens = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
+        this._negateIfNeeded(tokens, fieldName);
 
-        Collection<Object> array = transformCollection(fieldName, unpackCollection(values));
-        WhereToken whereToken = WhereToken.create(WhereOperator.IN, fieldName, addQueryParameter(array), new WhereToken.WhereOptions(false));
-        tokens.add(whereToken);
+        const array = this._transformCollection(fieldName, AbstractDocumentQuery._unpackCollection(values));
+        const whereToken = WhereToken.create(
+            "IN", fieldName, this._addQueryParameter(array), new WhereOptions({ exact: false }));
+        tokens.push(whereToken);
     }
 
-    @Override
-    public void _containsAll(String fieldName, Collection<Object> values) {
-        fieldName = ensureValidFieldName(fieldName, false);
+    public _containsAll(fieldName: string, values: object[]): void {
+        fieldName = this._ensureValidFieldName(fieldName, false);
 
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, fieldName);
+        const tokens = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
+        this._negateIfNeeded(tokens, fieldName);
 
-        Collection<Object> array = transformCollection(fieldName, unpackCollection(values));
+        const array = this._transformCollection(fieldName, AbstractDocumentQuery._unpackCollection(values));
 
-        if (array.isEmpty()) {
-            tokens.add(TrueToken.INSTANCE);
+        if (!array.length) {
+            tokens.push(TrueToken.INSTANCE);
             return;
         }
 
-        WhereToken whereToken = WhereToken.create(WhereOperator.ALL_IN, fieldName, addQueryParameter(array));
-        tokens.add(whereToken);
+        const whereToken = WhereToken.create(
+            "ALL_IN", fieldName, this._addQueryParameter(array));
+        tokens.push(whereToken);
     }
 
-    @Override
-    public void _addRootType(Class clazz) {
-        rootTypes.add(clazz);
+    public addRootType(clazz: DocumentType): void  {
+        this._rootTypes.add(clazz);
     }
 
-    //TBD public string GetMemberQueryPathForOrderBy(Expression expression)
-    //TBD public string GetMemberQueryPath(Expression expression)
+    // TBD public string GetMemberQueryPathForOrderBy(Expression expression)
+    // TBD public string GetMemberQueryPath(Expression expression)
 
-
-    @Override
-    public void _distinct() {
-        if (isDistinct()) {
-            throw new IllegalStateException("The is already a distinct query");
+    public _distinct(): void {
+        if (this.isDistinct) {
+            throwError("InvalidOperationException", "This is already a distinct query.");
         }
 
-        if (selectTokens.isEmpty()) {
-            selectTokens.add(DistinctToken.INSTANCE);
+        if (!this._selectTokens.length) {
+            this._selectTokens.push(DistinctToken.INSTANCE);
         } else {
-            selectTokens.add(0, DistinctToken.INSTANCE);
+            this._selectTokens.unshift(DistinctToken.INSTANCE);
         }
     }
 
-    private void updateStatsAndHighlightings(QueryResult queryResult) {
-        queryStats.updateQueryStats(queryResult);
-        //TBD: Highlightings.Update(queryResult);
+    private updateStatsAndHighlightings(queryResult: QueryResult): void {
+        this._queryStats.updateQueryStats(queryResult);
+        // TBD: Highlightings.Update(queryResult);
     }
 
-    private void buildSelect(StringBuilder writer) {
-        if (selectTokens.isEmpty()) {
+    private _buildSelect(writer: StringBuilder): void {
+        if (!this._selectTokens || !this._selectTokens.length) {
             return;
         }
 
         writer.append(" select ");
-        if (selectTokens.size() == 1 && selectTokens.get(0) instanceof DistinctToken) {
-            selectTokens.get(0).writeTo(writer);
+        if (this._selectTokens.length === 1 && this._selectTokens[0] instanceof DistinctToken) {
+            this._selectTokens[0].writeTo(writer);
             writer.append(" *");
 
             return;
         }
 
-        for (int i = 0; i < selectTokens.size(); i++) {
-            QueryToken token = selectTokens.get(i);
-            if (i > 0 && !(selectTokens.get(i - 1) instanceof DistinctToken)) {
+        for (let i = 0; i < this._selectTokens.length; i++) {
+            const token = this._selectTokens[i];
+            if (i > 0 && !(this._selectTokens[i - 1] instanceof DistinctToken)) {
                 writer.append(",");
             }
 
-            DocumentQueryHelper.addSpaceIfNeeded(i > 0 ? selectTokens.get(i - 1) : null, token, writer);
+            DocumentQueryHelper.addSpaceIfNeeded(
+                i > 0 ? this._selectTokens[i - 1] : null, token, writer);
 
             token.writeTo(writer);
         }
     }
 
-    private void buildFrom(StringBuilder writer) {
-        fromToken.writeTo(writer);
+    private _buildFrom(writer: StringBuilder) {
+        this._fromToken.writeTo(writer);
     }
 
-    private void buildDeclare(StringBuilder writer) {
-        if (declareToken != null) {
-            declareToken.writeTo(writer);
+    private _buildDeclare(writer: StringBuilder): void {
+        if (this._declareToken) {
+            this._declareToken.writeTo(writer);
         }
     }
 
-    private void buildLoad(StringBuilder writer) {
-        if (loadTokens == null || loadTokens.isEmpty()) {
+    private _buildLoad(writer: StringBuilder): void {
+        if (!this._loadTokens || !this._loadTokens.length) {
             return;
         }
 
         writer.append(" load ");
 
-        for (int i = 0; i < loadTokens.size(); i++) {
-            if (i != 0) {
+        for (let i = 0; i < this._loadTokens.length; i++) {
+            if (i !== 0) {
                 writer.append(", ");
             }
 
-            loadTokens.get(i).writeTo(writer);
+            this._loadTokens[i].writeTo(writer);
         }
     }
 
-    private void buildWhere(StringBuilder writer) {
-        if (whereTokens.isEmpty()) {
+    private _buildWhere(writer: StringBuilder) {
+        if (!this._whereTokens || !this._whereTokens.length) {
             return;
         }
 
         writer
                 .append(" where ");
 
-        if (isIntersect) {
+        if (this._isIntersect) {
             writer
                     .append("intersect(");
         }
 
-        for (int i = 0; i < whereTokens.size(); i++) {
-            DocumentQueryHelper.addSpaceIfNeeded(i > 0 ? whereTokens.get(i - 1) : null, whereTokens.get(i), writer);
-            whereTokens.get(i).writeTo(writer);
+        for (let i = 0; i < this._whereTokens.length; i++) {
+            DocumentQueryHelper.addSpaceIfNeeded(
+                i > 0 ? this._whereTokens[i - 1] : null, 
+                this._whereTokens[i], 
+                writer);
+            this._whereTokens[i].writeTo(writer);
         }
 
-        if (isIntersect) {
+        if (this._isIntersect) {
             writer.append(") ");
         }
     }
 
-    private void buildGroupBy(StringBuilder writer) {
-        if (groupByTokens.isEmpty()) {
+    private _buildGroupBy(writer: StringBuilder): void {
+        if (!this._groupByTokens || !this._groupByTokens.length) {
             return;
         }
 
         writer
                 .append(" group by ");
 
-        boolean isFirst = true;
+        let isFirst = true;
 
-        for (QueryToken token : groupByTokens) {
+        for (const token of this._groupByTokens) {
             if (!isFirst) {
                 writer.append(", ");
             }
@@ -1210,17 +1412,17 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
     }
 
-    private void buildOrderBy(StringBuilder writer) {
-        if (orderByTokens.isEmpty()) {
+    private _buildOrderBy(writer: StringBuilder): void {
+        if (!this._orderByTokens || !this._orderByTokens.length) {
             return;
         }
 
         writer
                 .append(" order by ");
 
-        boolean isFirst = true;
+        let isFirst = true;
 
-        for (QueryToken token : orderByTokens) {
+        for (const token of this._orderByTokens) {
             if (!isFirst) {
                 writer.append(", ");
             }
@@ -1230,451 +1432,329 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
     }
 
-    private void appendOperatorIfNeeded(List<QueryToken> tokens) {
-        assertNoRawQuery();
+    private static _unpackCollection(items: object[]): object[] {
+        const results = [];
 
-        if (tokens.isEmpty()) {
-            return;
-        }
-
-        QueryToken lastToken = tokens.get(tokens.size() - 1);
-        if (!(lastToken instanceof WhereToken) && !(lastToken instanceof CloseSubclauseToken)) {
-            return;
-        }
-
-        WhereToken lastWhere = null;
-
-        for (int i = tokens.size() - 1; i >= 0; i--) {
-            if (tokens.get(i) instanceof WhereToken) {
-                lastWhere = (WhereToken) tokens.get(i);
-                break;
-            }
-        }
-
-        QueryOperatorToken token = defaultOperator == QueryOperator.AND ? QueryOperatorToken.AND : QueryOperatorToken.OR;
-
-        if (lastWhere != null && lastWhere.getOptions().getSearchOperator() != null) {
-            token = QueryOperatorToken.OR; // default to OR operator after search if AND was not specified explicitly
-        }
-
-        tokens.add(token);
-    }
-
-    @SuppressWarnings("unchecked")
-    private Collection<Object> transformCollection(String fieldName, Collection<Object> values) {
-        List<Object> result = new ArrayList<>();
-        for (Object value : values) {
-            if (value instanceof Collection) {
-                result.addAll(transformCollection(fieldName, (Collection) value));
+        for (const item of items) {
+            if (Array.isArray(item)) {
+                results.push(...AbstractDocumentQuery._unpackCollection(item as any[]));
             } else {
-                WhereParams nestedWhereParams = new WhereParams();
-                nestedWhereParams.setAllowWildcards(true);
-                nestedWhereParams.setFieldName(fieldName);
-                nestedWhereParams.setValue(value);
-
-                result.add(transformValue(nestedWhereParams));
-            }
-        }
-        return result;
-    }
-
-    private void negateIfNeeded(List<QueryToken> tokens, String fieldName) {
-        if (!negate) {
-            return;
-        }
-
-        negate = false;
-
-        if (tokens.isEmpty() || tokens.get(tokens.size() - 1) instanceof OpenSubclauseToken) {
-            if (fieldName != null) {
-                _whereExists(fieldName);
-            } else {
-                _whereTrue();
-            }
-            _andAlso();
-        }
-
-        tokens.add(NegateToken.INSTANCE);
-    }
-
-    private static Collection<Object> unpackCollection(Collection items) {
-        List<Object> results = new ArrayList<>();
-
-        for (Object item : items) {
-            if (item instanceof Collection) {
-                results.addAll(unpackCollection((Collection) item));
-            } else {
-                results.add(item);
+                results.push(item);
             }
         }
 
         return results;
     }
 
-    private String ensureValidFieldName(String fieldName, boolean isNestedPath) {
-        if (theSession == null || theSession.getConventions() == null || isNestedPath || isGroupBy) {
-            return QueryFieldUtil.escapeIfNecessary(fieldName);
-        }
+    // TBD protected Action<BlittableJsonReaderObject> AfterStreamExecutedCallback;
 
-        for (Class rootType : rootTypes) {
-            Field identityProperty = theSession.getConventions().getIdentityProperty(rootType);
-            if (identityProperty != null && identityProperty.getName().equals(fieldName)) {
-                return Constants.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME;
-            }
-        }
+    protected _queryOperation: QueryOperation;
 
-        return QueryFieldUtil.escapeIfNecessary(fieldName);
+    public queryOperation(): QueryOperation {
+        return this._queryOperation;
     }
 
-    private Object transformValue(WhereParams whereParams) {
-        return transformValue(whereParams, false);
+    // TODO
+    // public void _addBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
+    //     beforeQueryExecutedCallback.add(action);
+    // }
+
+    // public void _removeBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
+    //     beforeQueryExecutedCallback.remove(action);
+    // }
+
+    // public void _addAfterQueryExecutedListener(Consumer<QueryResult> action) {
+    //     afterQueryExecutedCallback.add(action);
+    // }
+
+    // public void _removeAfterQueryExecutedListener(Consumer<QueryResult> action) {
+    //     afterQueryExecutedCallback.remove(action);
+    // }
+
+    // TBD public IDocumentQueryCustomization AfterStreamExecuted(Action<BlittableJsonReaderObject> action)
+
+    public _noTracking(): void {
+        this._disableEntitiesTracking = true;
     }
 
-    private Object transformValue(WhereParams whereParams, boolean forRange) {
-        if (whereParams.getValue() == null) {
-            return null;
-        }
-
-        if ("".equals(whereParams.getValue())) {
-            return "";
-        }
-
-        /* TBD
-            if (_conventions.TryConvertValueForQuery(whereParams.FieldName, whereParams.Value, forRange, out var strVal))
-                return strVal;
-         */
-
-        Class<?> clazz = whereParams.getValue().getClass();
-        if (Date.class.equals(clazz)) {
-            return whereParams.getValue();
-        }
-
-        if (String.class.equals(clazz)) {
-            return whereParams.getValue();
-        }
-
-        if (Integer.class.equals(clazz)) {
-            return whereParams.getValue();
-        }
-
-        if (Long.class.equals(clazz)) {
-            return whereParams.getValue();
-        }
-
-        if (Float.class.equals(clazz)) {
-            return whereParams.getValue();
-        }
-
-        if (Double.class.equals(clazz)) {
-            return whereParams.getValue();
-        }
-
-        //TBD timespan - duration ?
-
-        if (String.class.equals(clazz)) {
-            return whereParams.getValue();
-        }
-
-        if (Boolean.class.equals(clazz)) {
-            return whereParams.getValue();
-        }
-
-        if (clazz.isEnum()) {
-            return whereParams.getValue();
-        }
-
-        return whereParams.getValue();
-
+    public _noCaching(): void {
+        this._disableCaching = true;
     }
 
-    private String addQueryParameter(Object value) {
-        String parameterName = "p" + queryParameters.size();
-        queryParameters.put(parameterName, value);
-        return parameterName;
+    // TBD public void _showTimings()
+    // TBD protected List<HighlightedField> HighlightedFields = new List<HighlightedField>();
+    // TBD protected string[] HighlighterPreTags = new string[0];
+    // TBD protected string[] HighlighterPostTags = new string[0];
+    // TBD protected string HighlighterKeyName;
+    // TBD protected QueryHighlightings Highlightings = new QueryHighlightings();
+    // TBD public void SetHighlighterTags(string preTag, string postTag)
+    // TBD public void Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField)
+    // TBD public void Highlight(
+    //    string fieldName, 
+    //    int fragmentLength, 
+    //    int fragmentCount, 
+    //    out FieldHighlightings fieldHighlightings)
+    // TBD public void Highlight(
+    //    string fieldName, 
+    //    string fieldKeyName, 
+    //    int fragmentLength, 
+    //    int fragmentCount, 
+    //    out FieldHighlightings fieldHighlightings)
+    // TBD public void SetHighlighterTags(string[] preTags, string[] postTags)
+
+    protected _withinRadiusOf(
+        fieldName: string, 
+        radius: number, 
+        latitude: number, 
+        longitude: number, 
+        radiusUnits: SpatialUnits, 
+        distErrorPercent: number): void {
+        fieldName = this._ensureValidFieldName(fieldName, false);
+
+        const tokens = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
+        this._negateIfNeeded(tokens, fieldName);
+
+        const whereToken = WhereToken.create(
+            "SPATIAL_WITHIN", 
+            fieldName, 
+            null, 
+            new WhereOptions({
+                shape: ShapeToken.circle(
+                    this._addQueryParameter(radius), 
+                    this._addQueryParameter(latitude), 
+                    this._addQueryParameter(longitude), radiusUnits),
+                distance: distErrorPercent
+            }));
+        tokens.push(whereToken);
     }
 
-    private List<QueryToken> getCurrentWhereTokens() {
-        if (!_isInMoreLikeThis) {
-            return whereTokens;
-        }
+    protected _spatialByShapeWkt(
+        fieldName: string, shapeWkt: string, relation: SpatialRelation, distErrorPercent: number): void {
+        fieldName = this._ensureValidFieldName(fieldName, false);
 
-        if (whereTokens.isEmpty()) {
-            throw new IllegalStateException("Cannot get MoreLikeThisToken because there are no where token specified.");
-        }
+        const tokens = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
+        this._negateIfNeeded(tokens, fieldName);
 
-        /* TBD
-          var moreLikeThisToken = WhereTokens.Last.Value as MoreLikeThisToken;
+        const wktToken = ShapeToken.wkt(this._addQueryParameter(shapeWkt));
 
-            if (moreLikeThisToken == null)
-                throw new InvalidOperationException($"Last token is not '{nameof(MoreLikeThisToken)}'.");
-
-            return moreLikeThisToken.WhereTokens;
-         */
-        throw new NotImplementedException("More like this");
-    }
-
-    protected void updateFieldsToFetchToken(FieldsToFetchToken fieldsToFetch) {
-        this.fieldsToFetchToken = fieldsToFetch;
-
-        if (selectTokens.isEmpty()) {
-            selectTokens.add(fieldsToFetch);
-        } else {
-            Optional<QueryToken> fetchToken = selectTokens.stream()
-                    .filter(x -> x instanceof FieldsToFetchToken)
-                    .findFirst();
-
-            if (fetchToken.isPresent()) {
-                int idx = selectTokens.indexOf(fetchToken.get());
-                selectTokens.set(idx, fieldsToFetch);
-            } else {
-                selectTokens.add(fieldsToFetch);
-            }
-        }
-    }
-
-    protected List<Consumer<IndexQuery>> beforeQueryExecutedCallback = new ArrayList<>();
-
-    protected List<Consumer<QueryResult>> afterQueryExecutedCallback = new ArrayList<>();
-
-    //TBD protected Action<BlittableJsonReaderObject> AfterStreamExecutedCallback;
-
-    protected QueryOperation queryOperation;
-
-    public QueryOperation getQueryOperation() {
-        return queryOperation;
-    }
-
-    public void _addBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
-        beforeQueryExecutedCallback.add(action);
-    }
-
-    public void _removeBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
-        beforeQueryExecutedCallback.remove(action);
-    }
-
-    public void _addAfterQueryExecutedListener(Consumer<QueryResult> action) {
-        afterQueryExecutedCallback.add(action);
-    }
-
-    public void _removeAfterQueryExecutedListener(Consumer<QueryResult> action) {
-        afterQueryExecutedCallback.remove(action);
-    }
-
-    //TBD public IDocumentQueryCustomization AfterStreamExecuted(Action<BlittableJsonReaderObject> action)
-
-    public void _noTracking() {
-        disableEntitiesTracking = true;
-    }
-
-    public void _noCaching() {
-        disableCaching = true;
-    }
-
-    //TBD public void _showTimings()
-    //TBD protected List<HighlightedField> HighlightedFields = new List<HighlightedField>();
-    //TBD protected string[] HighlighterPreTags = new string[0];
-    //TBD protected string[] HighlighterPostTags = new string[0];
-    //TBD protected string HighlighterKeyName;
-    //TBD protected QueryHighlightings Highlightings = new QueryHighlightings();
-    //TBD public void SetHighlighterTags(string preTag, string postTag)
-    //TBD public void Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField)
-    //TBD public void Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings fieldHighlightings)
-    //TBD public void Highlight(string fieldName, string fieldKeyName, int fragmentLength, int fragmentCount, out FieldHighlightings fieldHighlightings)
-    //TBD public void SetHighlighterTags(string[] preTags, string[] postTags)
-
-    protected void _withinRadiusOf(String fieldName, double radius, double latitude, double longitude, SpatialUnits radiusUnits, double distErrorPercent) {
-        fieldName = ensureValidFieldName(fieldName, false);
-
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, fieldName);
-
-        WhereToken whereToken = WhereToken.create(WhereOperator.SPATIAL_WITHIN, fieldName, null, new WhereToken.WhereOptions(ShapeToken.circle(addQueryParameter(radius), addQueryParameter(latitude), addQueryParameter(longitude), radiusUnits), distErrorPercent));
-        tokens.add(whereToken);
-    }
-
-    protected void _spatial(String fieldName, String shapeWkt, SpatialRelation relation, double distErrorPercent) {
-        fieldName = ensureValidFieldName(fieldName, false);
-
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, fieldName);
-
-        ShapeToken wktToken = ShapeToken.wkt(addQueryParameter(shapeWkt));
-
-        WhereOperator whereOperator;
+        let whereOperator: WhereOperator;
         switch (relation) {
-            case WITHIN:
-                whereOperator = WhereOperator.SPATIAL_WITHIN;
+            case "WITHIN":
+                whereOperator = "SPATIAL_WITHIN";
                 break;
-            case CONTAINS:
-                whereOperator = WhereOperator.SPATIAL_CONTAINS;
+            case "CONTAINS":
+                whereOperator = "SPATIAL_CONTAINS";
                 break;
-            case DISJOINT:
-                whereOperator = WhereOperator.SPATIAL_DISJOINT;
+            case "DISJOINT":
+                whereOperator = "SPATIAL_DISJOINT";
                 break;
-            case INTERSECTS:
-                whereOperator = WhereOperator.SPATIAL_INTERSECTS;
+            case "INTERSECTS":
+                whereOperator = "SPATIAL_INTERSECTS";
                 break;
             default:
-                throw new IllegalArgumentException();
+                throwError("InvalidArgumentException", `relation: ${relation}.`);
         }
 
-        tokens.add(WhereToken.create(whereOperator, fieldName, null, new WhereToken.WhereOptions(wktToken, distErrorPercent)));
+        tokens.push(WhereToken.create(
+            whereOperator, fieldName, null, new WhereOptions({ 
+                shape: wktToken, 
+                distance: distErrorPercent 
+            })));
     }
 
-    @Override
-    public void _spatial(DynamicSpatialField dynamicField, SpatialCriteria criteria) {
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, null);
+    public _spatial(dynamicField: DynamicSpatialField, criteria: SpatialCriteria): void; 
+    public _spatial(fieldName: string, criteria: SpatialCriteria): void; 
+    public _spatial(fieldNameOrDynamicSpatialField: string | DynamicSpatialField, criteria: SpatialCriteria): void {
 
-        tokens.add(criteria.toQueryToken(dynamicField.toField(this::ensureValidFieldName), this::addQueryParameter));
-    }
+        let tokens: QueryToken[];
+        if (typeof(fieldNameOrDynamicSpatialField) === "string") {
+            const fieldName = this._ensureValidFieldName(fieldNameOrDynamicSpatialField, false);
 
-    @Override
-    public void _spatial(String fieldName, SpatialCriteria criteria) {
-        fieldName = ensureValidFieldName(fieldName, false);
+            tokens = this._getCurrentWhereTokens();
+            this._appendOperatorIfNeeded(tokens);
+            this._negateIfNeeded(tokens, fieldName);
 
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, fieldName);
-
-        tokens.add(criteria.toQueryToken(fieldName, this::addQueryParameter));
-    }
-
-    @Override
-    public void _orderByDistance(DynamicSpatialField field, double latitude, double longitude) {
-        if (field == null) {
-            throw new IllegalArgumentException("Field cannot be null");
-        }
-        _orderByDistance("'" + field.toField(this::ensureValidFieldName) + "'", latitude, longitude);
-    }
-
-    @Override
-    public void _orderByDistance(String fieldName, double latitude, double longitude) {
-        orderByTokens.add(OrderByToken.createDistanceAscending(fieldName, addQueryParameter(latitude), addQueryParameter(longitude)));
-    }
-
-    @Override
-    public void _orderByDistance(DynamicSpatialField field, String shapeWkt) {
-        if (field == null) {
-            throw new IllegalArgumentException("Field cannot be null");
-        }
-        _orderByDistance("'" + field.toField(this::ensureValidFieldName) + "'", shapeWkt);
-    }
-
-    @Override
-    public void _orderByDistance(String fieldName, String shapeWkt) {
-        orderByTokens.add(OrderByToken.createDistanceAscending(fieldName, addQueryParameter(shapeWkt)));
-    }
-
-    @Override
-    public void _orderByDistanceDescending(DynamicSpatialField field, double latitude, double longitude) {
-        if (field == null) {
-            throw new IllegalArgumentException("Field cannot be null");
-        }
-        _orderByDistanceDescending("'" + field.toField(this::ensureValidFieldName) + "'", latitude, longitude);
-    }
-
-    @Override
-    public void _orderByDistanceDescending(String fieldName, double latitude, double longitude) {
-        orderByTokens.add(OrderByToken.createDistanceDescending(fieldName, addQueryParameter(latitude), addQueryParameter(longitude)));
-    }
-
-    @Override
-    public void _orderByDistanceDescending(DynamicSpatialField field, String shapeWkt) {
-        if (field == null) {
-            throw new IllegalArgumentException("Field cannot be null");
-        }
-        _orderByDistanceDescending("'" + field.toField(this::ensureValidFieldName) + "'", shapeWkt);
-    }
-
-    @Override
-    public void _orderByDistanceDescending(String fieldName, String shapeWkt) {
-        orderByTokens.add(OrderByToken.createDistanceDescending(fieldName, addQueryParameter(shapeWkt)));
-    }
-
-    protected void initSync() {
-        if (queryOperation != null) {
+            tokens.push(criteria.toQueryToken(fieldName, (o) => this._addQueryParameter(o)));
             return;
         }
 
-        BeforeQueryEventArgs beforeQueryEventArgs = new BeforeQueryEventArgs(theSession);
-        theSession.onBeforeQueryInvoke(beforeQueryEventArgs);
+        const dynamicField = fieldNameOrDynamicSpatialField as DynamicSpatialField;
+        tokens = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
+        this._negateIfNeeded(tokens, null);
 
-        queryOperation = initializeQueryOperation();
-        executeActualQuery();
+        tokens.push(criteria.toQueryToken(
+            dynamicField.toField(
+                (fName, isNestedPath) => this._ensureValidFieldName(fName, isNestedPath)),
+                (o) => this._addQueryParameter(o)));
     }
 
-    private void executeActualQuery() {
-        try (CleanCloseable context = queryOperation.enterQueryContext()) {
-            QueryCommand command = queryOperation.createRequest();
-            theSession.getRequestExecutor().execute(command, theSession.sessionInfo);
-            queryOperation.setResult(command.getResult());
-        }
-        invokeAfterQueryExecuted(queryOperation.getCurrentQueryResults());
-    }
+    public _orderByDistance(field: DynamicSpatialField, latitude: number, longitude: number): void;
+    public _orderByDistance(field: DynamicSpatialField, shapeWkt: string): void;
+    public _orderByDistance(fieldName: string, latitude: number, longitude: number): void;
+    public _orderByDistance(fieldName: string, shapeWkt: string): void;
+    public _orderByDistance(
+        fieldNameOrField: string | DynamicSpatialField, shapeWktOrLatitude: string | number, longitude?: number): void {
 
-    @Override
-    public Iterator<T> iterator() {
-        initSync();
+        if (TypeUtil.isString(fieldNameOrField)) {
+            if (TypeUtil.isString(shapeWktOrLatitude)) {
+                this._orderByTokens.push(
+                    OrderByToken.createDistanceAscending(
+                        fieldNameOrField as string, this._addQueryParameter(shapeWktOrLatitude)));
 
-        return queryOperation.complete(clazz).iterator();
-    }
+            } else {
+                this._orderByTokens.push(
+                    OrderByToken.createDistanceAscending(
+                        fieldNameOrField as string, 
+                        this._addQueryParameter(shapeWktOrLatitude), this._addQueryParameter(longitude)));
+            }
 
-    public List<T> toList() {
-        return EnumerableUtils.toList(iterator());
-    }
-
-    public QueryResult getQueryResult() {
-        initSync();
-
-        return queryOperation.getCurrentQueryResults().createSnapshot();
-    }
-
-    public T first() {
-        Collection<T> result = executeQueryOperation(1);
-        return result.isEmpty() ? null : result.stream().findFirst().get();
-    }
-
-    public T firstOrDefault() {
-        Collection<T> result = executeQueryOperation(1);
-        return result.stream().findFirst().orElseGet(() -> Defaults.defaultValue(clazz));
-    }
-
-    public T single() {
-        Collection<T> result = executeQueryOperation(2);
-        if (result.size() > 1) {
-            throw new IllegalStateException("Expected single result, got: " + result.size());
-        }
-        return result.stream().findFirst().orElse(null);
-    }
-
-    public T singleOrDefault() {
-        Collection<T> result = executeQueryOperation(2);
-        if (result.size() > 1) {
-            throw new IllegalStateException("Expected single result, got: " + result.size());
-        }
-        if (result.isEmpty()) {
-            return Defaults.defaultValue(clazz);
-        }
-        return result.stream().findFirst().get();
-    }
-
-    public int count() {
-        _take(0);
-        QueryResult queryResult = getQueryResult();
-        return queryResult.getTotalResults();
-    }
-
-    private Collection<T> executeQueryOperation(int take) {
-        if (pageSize == null || pageSize > take) {
-            _take(take);
+            return;
         }
 
-        initSync();
+        const field = fieldNameOrField as DynamicSpatialField;
+        if (!fieldNameOrField) {
+            throwError("InvalidArgumentException", "Field cannot be null.");
+        }
 
-        return queryOperation.complete(clazz);
+        if (TypeUtil.isString(shapeWktOrLatitude)) {
+            this._orderByDistance(
+                "'" + field.toField((f, isNestedPath) =>
+                    this._ensureValidFieldName(f, isNestedPath)) + "'", shapeWktOrLatitude as string);
+        } else {
+            this._orderByDistance(
+                "'" + field.toField((f, isNestedPath) =>
+                    this._ensureValidFieldName(f, isNestedPath)) + "'", shapeWktOrLatitude as number, longitude);
+        }
     }
+    
+    public _orderByDistanceDescending(field: DynamicSpatialField, latitude: number, longitude: number): void;
+    public _orderByDistanceDescending(field: DynamicSpatialField, shapeWkt: string): void;
+    public _orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): void;
+    public _orderByDistanceDescending(fieldName: string, shapeWkt: string): void;
+    public _orderByDistanceDescending(
+        fieldNameOrField: string | DynamicSpatialField, shapeWktOrLatitude: string | number, longitude?: number): void {
+
+        if (TypeUtil.isString(fieldNameOrField)) {
+            if (TypeUtil.isString(shapeWktOrLatitude)) {
+                this._orderByTokens.push(
+                    OrderByToken.createDistanceDescending(
+                        fieldNameOrField as string, this._addQueryParameter(shapeWktOrLatitude)));
+
+            } else {
+                this._orderByTokens.push(
+                    OrderByToken.createDistanceDescending(
+                        fieldNameOrField as string, 
+                        this._addQueryParameter(shapeWktOrLatitude), this._addQueryParameter(longitude)));
+            }
+
+            return;
+        }
+
+        const field = fieldNameOrField as DynamicSpatialField;
+        if (!fieldNameOrField) {
+            throwError("InvalidArgumentException", "Field cannot be null.");
+        }
+
+        if (TypeUtil.isString(shapeWktOrLatitude)) {
+            this._orderByDistanceDescending(
+                "'" + field.toField((f, isNestedPath) =>
+                    this._ensureValidFieldName(f, isNestedPath)) + "'", shapeWktOrLatitude as string);
+        } else {
+            this._orderByDistanceDescending(
+                "'" + field.toField((f, isNestedPath) =>
+                    this._ensureValidFieldName(f, isNestedPath)) + "'", shapeWktOrLatitude as number, longitude);
+        }
+    }
+
+    protected _initSync(): Promise<void> {
+        if (this._queryOperation) {
+            return Promise.resolve();
+        }
+
+        const beforeQueryEventArgs = new SessionBeforeQueryEventArgs(this._theSession);
+        this._theSession.emit("beforeQuery", beforeQueryEventArgs);
+
+        this._queryOperation = this._initializeQueryOperation();
+        return this._executeActualQuery();
+    }
+
+    private _executeActualQuery(): Promise<void> {
+        let context;
+        let command;
+        const result = BluebirdPromise.resolve()
+            .then(() => {
+                context = this._queryOperation.enterQueryContext();
+                command = this._queryOperation.createRequest();
+                return this._theSession.requestExecutor.execute(command, this._theSession.sessionInfo);
+            })
+            .then(() => {
+                this._queryOperation.setResult(command.result);
+                this.emit("afterQueryExecuted", this._queryOperation.getCurrentQueryResults());
+            })
+            .finally(() => {
+                if (context) {
+                    context.dispose();
+                }
+            });
+
+        return Promise.resolve(result);
+    }
+
+    public iterator(): Promise<T[]> {
+        return Promise.resolve()
+            .then(() => this._initSync())
+            .then(() => {
+                return this._queryOperation.complete<T>(this._clazz);
+            });
+    }
+
+    public toList(): Promise<T[]> {
+        return this.iterator();
+    }
+
+    public getQueryResult(): Promise<QueryResult> {
+        return Promise.resolve()
+            .then(() => this._initSync())
+            .then(() => this._queryOperation.getCurrentQueryResults().createSnapshot());
+    }
+
+    public first(): Promise<T> {
+        return Promise.resolve()
+            .then(() => this._executeQueryOperation(2))
+            .then(result => result[0] || null);
+    }
+
+    public single(): Promise<T> {
+        return Promise.resolve()
+            .then(() => this._executeQueryOperation(2))
+            .then(result => {
+                if (result.length > 1) {
+                    throw getError("InvalidOperationException", "Expected single result, got: " + result.length);
+                }
+
+                return result[0] || null;
+            });
+    }
+
+    public count(): Promise<number> {
+        this._take(0);
+        return this.getQueryResult()
+            .then(queryResult => queryResult.totalResults);
+    }
+
+    private _executeQueryOperation(take: number): Promise<T[]> {
+        if (!this._pageSize || this._pageSize > take) {
+            this._take(take);
+        }
+
+        return Promise.resolve()
+            .then(() => this._initSync())
+            .then(() => {
+                return this._queryOperation.complete<T>(this._clazz);
+            });
+    }
+    // tslint:enable:function-name
 }

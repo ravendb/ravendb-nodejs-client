@@ -22,7 +22,7 @@ export class GroupByToken extends QueryToken {
         if (this._method !== "NONE") {
             writer.append("Array(");
         }
-        this.writeField(writer, this._fieldName);
+        this._writeField(writer, this._fieldName);
         if (this._method !== "NONE") {
             writer.append(")");
         }

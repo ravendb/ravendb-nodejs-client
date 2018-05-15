@@ -26,6 +26,8 @@ import { GetDocumentsCommand } from "../Commands/GetDocumentsCommand";
 import { HeadDocumentCommand } from "../Commands/HeadDocumentCommand";
 import { LoadStartingWithOperation } from "./Operations/LoadStartingWithOperation";
 import { ILoaderWithInclude } from "./Loaders/ILoaderWithInclude";
+import { IRawDocumentQuery } from "./IRawDocumentQuery";
+import { RawDocumentQuery } from "./RawDocumentQuery";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;
@@ -285,7 +287,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         return new MultiLoaderWithInclude(this).include(path);
     }    
     
-    // public rawQuery<TEntity>(query: string, documentType?: DocumentType<TEntity>): IRawDocumentQuery<TEntity> {
-    //     return new RawDocumentQuery( this, query);
-    // }
+    public rawQuery<TEntity>(query: string, documentType?: DocumentType<TEntity>): IRawDocumentQuery<TEntity> {
+        return new RawDocumentQuery(documentType, this, query);
+    }
 }

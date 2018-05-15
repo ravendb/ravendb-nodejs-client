@@ -13,6 +13,7 @@ import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";
 import { DocumentSession } from "./Session/DocumentSession";
 import {HiloMultiDatabaseIdGenerator} from "./Identity/HiloMultiDatabaseIdGenerator";
 import { AbstractIndexCreationTask } from "./Indexes";
+import { IDisposable } from "../Types/Contracts";
 
 // import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";
 // import { DocumentSession } from "./Session/DocumentSession";
@@ -241,16 +242,16 @@ export class DocumentStore extends DocumentStoreBase {
      * queries that have been marked with WaitForNonStaleResults, we temporarily disable
      * aggressive caching.
      */
-    public withAggressiveCachingDisabled(
-        action: () => void | PromiseLike<any>, databaseName?: string): PromiseLike<any> {
+    public disableAggressiveCaching(): IDisposable;
+    public disableAggressiveCaching(database: string): IDisposable;
+    public disableAggressiveCaching(database?: string): IDisposable {
         this._assertInitialized();
-        const re: RequestExecutor = this.getRequestExecutor(databaseName || this.database);
+        const re: RequestExecutor = this.getRequestExecutor(database || this.database);
         const old = re.agressiveCaching;
         re.agressiveCaching = null;
+        const dispose = () => re.agressiveCaching = old;
 
-        return BluebirdPromise.resolve()
-            .then(() => action())
-            .finally(() => re.agressiveCaching = old);
+        return { dispose };
     }
 
     // TBD public override IDatabaseChanges Changes(string database = null)

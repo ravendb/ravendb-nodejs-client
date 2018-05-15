@@ -17,11 +17,15 @@ import { DocumentConventions } from "./Conventions/DocumentConventions";
 import { RequestExecutor } from "../Http/RequestExecutor";
 import { IndexCreation } from "../Documents/Indexes/IndexCreation";
 import { PutIndexesOperation } from "./Operations/Indexes/PutIndexesOperation";
+import { IDisposable } from "../Types/Contracts";
 
 export abstract class DocumentStoreBase 
     extends EventEmitter 
     implements IDocumentStore {
 
+    abstract disableAggressiveCaching(): IDisposable;
+    abstract disableAggressiveCaching(database: string): IDisposable;
+    
     protected constructor() {
         super();
         // TBD: Subscriptions = new DocumentSubscriptions(this);

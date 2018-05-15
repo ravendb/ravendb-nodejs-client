@@ -75,6 +75,8 @@ export * from "./Documents/Indexes/Spatial";
 export * from "./Documents/Indexes/IndexingStatus";
 export * from "./Documents/Indexes/IndexStats";
 export * from "./Documents/Indexes";
+export * from "./Documents/Session/DocumentSession";
+export { IDocumentSession } from "./Documents/Session/IDocumentSession";
 
 // HiLo
 export * from "./Documents/Identity/HiloIdGenerator";

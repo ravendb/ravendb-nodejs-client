@@ -58,6 +58,10 @@ export class SessionBeforeStoreEventArgs {
     }
 }
 
+export class SessionBeforeQueryEventArgs {
+    constructor(public session: InMemoryDocumentSessionOperations) {}
+}
+
 export class SessionBeforeDeleteEventArgs {
 
     private _documentMetadata: IMetadataDictionary;
@@ -72,7 +76,7 @@ export class SessionBeforeDeleteEventArgs {
         this._entity = entity;
     }
 
-    public getSession(): InMemoryDocumentSessionOperations {
+    public get session(): InMemoryDocumentSessionOperations {
         return this._session;
     }
 
@@ -84,7 +88,7 @@ export class SessionBeforeDeleteEventArgs {
         return this._entity;
     }
 
-    public getDocumentMetadata(): IMetadataDictionary {
+    public get documentMetadata(): IMetadataDictionary {
         if (!this._documentMetadata) {
             this._documentMetadata = this._session.getMetadataFor(this._entity);
         }
@@ -107,7 +111,7 @@ export class AfterSaveChangesEventArgs {
         this.entity = entity;
     }
 
-    public documentMetadata(): IMetadataDictionary  {
+    public get documentMetadata(): IMetadataDictionary  {
         if (!this._documentMetadata) {
             this._documentMetadata = this.session.getMetadataFor(this.entity);
         }

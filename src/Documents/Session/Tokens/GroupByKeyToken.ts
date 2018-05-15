@@ -16,7 +16,7 @@ export class GroupByKeyToken extends QueryToken {
     }
 
     public writeTo(writer): void {
-        this.writeField(writer, this._fieldName || "key()");
+        this._writeField(writer, this._fieldName || "key()");
 
         if (this._projectedName || this._projectedName === this._fieldName) {
             return;

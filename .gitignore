@@ -24,3 +24,4 @@ npm-debug.log
 package-lock.json
 old
 .test
+!src/global.d.ts

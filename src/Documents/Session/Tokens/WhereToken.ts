@@ -39,7 +39,8 @@ export interface WhereOptionsMethodTypeRelatedParameters {
 export type WhereOptionsParameters =
     WhereOptionsShapeRelatedParameters
     | WhereOptionsExactFromToRelatedParameters
-    | WhereOptionsMethodTypeRelatedParameters;
+    | WhereOptionsMethodTypeRelatedParameters
+    | WhereOptionsSearchRelatedParameters;
 
 export class WhereOptions {
     public searchOperator: SearchOperator;
