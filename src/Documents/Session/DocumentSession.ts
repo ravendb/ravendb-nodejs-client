@@ -28,6 +28,7 @@ import { LoadStartingWithOperation } from "./Operations/LoadStartingWithOperatio
 import { ILoaderWithInclude } from "./Loaders/ILoaderWithInclude";
 import { IRawDocumentQuery } from "./IRawDocumentQuery";
 import { RawDocumentQuery } from "./RawDocumentQuery";
+import { BatchCommand } from "../Commands/Batches/BatchCommand";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;
@@ -168,19 +169,22 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
     public saveChanges(): Promise<void> {
         const saveChangeOperation = new BatchOperation(this);
-        const command = saveChangeOperation.createRequest();
+        let command: BatchCommand; 
         const result = BluebirdPromise.resolve()
+            .then(() => command = saveChangeOperation.createRequest())
             .then(() => {
                 if (!command) {
                     return;
                 }
 
-                return this._requestExecutor.execute(command, this._sessionInfo);
+                return this._requestExecutor.execute(command, this._sessionInfo)
+                    .then(() => saveChangeOperation.setResult(command.result));
             })
-            .then(() => {
-                saveChangeOperation.setResult(command.result);
-            })
-            .finally(() => command.dispose());
+            .finally(() => {
+                if (command) {
+                    command.dispose();
+                }
+            });
 
         return Promise.resolve(result);
     }

@@ -55,13 +55,12 @@ export class JsonOperation {
                 continue;
             }
 
-            if (newFields.indexOf(prop) !== -1) {
-                if (changes) {
+            if (newFields.find(x => x === prop)) {
+                if (!changes) {
                     return true;
                 }
 
-                JsonOperation._newChange(
-                    prop, newJson[prop], null, docChanges, "NEW_FIELD");
+                JsonOperation._newChange(prop, newJson[prop], null, docChanges, "NEW_FIELD");
                 continue;
             }
 
@@ -75,7 +74,7 @@ export class JsonOperation {
                 || typeOfNewProp === "string") {
 
                 if (newProp === oldProp || JsonOperation._compareValues(oldProp, newProp)) {
-                    break;
+                    continue;
                 }
                 if (!changes) {
                     return true;
