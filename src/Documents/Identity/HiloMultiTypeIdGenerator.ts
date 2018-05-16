@@ -18,13 +18,15 @@ export class HiloMultiTypeIdGenerator extends AbstractHiloIdGenerator implements
     public generateDocumentId(entity: object, documentType?: string): Promise<string> {
         const entityType = this._conventions.findEntityType(documentType) || 
             this._conventions.getEntityTypeDescriptor(entity);
-        let tag: string = this._conventions.getCollectionNameForType(entityType);
+        const typeTagName: string = this._conventions.getCollectionNameForType(entityType);
 
-        if (CONSTANTS.Documents.Metadata.EMPTY_COLLECTION === tag) {
-            tag = null;
+        if (!typeTagName) {
+            return Promise.resolve(null);
         }
 
-        return this._createGeneratorForTag(tag)
+        return Promise.resolve()
+            .then(() => this._conventions.transformClassCollectionNameToDocumentIdPrefix(typeTagName))
+            .then(tag => this._createGeneratorForTag(tag))
             .then((generator: IHiloIdGenerator) => generator.generateDocumentId());
     }
 

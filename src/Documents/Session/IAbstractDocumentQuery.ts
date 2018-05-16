@@ -419,13 +419,13 @@ export interface IAbstractDocumentQuery<T> {
 
     _orderByDistanceDescending(fieldName: string, shapeWkt: string): void;
 
-    //TBD: MoreLikeThisScope MoreLikeThis();
-    //TBD void AggregateBy(FacetBase facet);
-    //TBD IAggregationDocumentQuery<T> AggregateBy(Action<IFacetBuilder<T>> builder);
-    //TBD void AggregateUsing(string facetSetupDocumentId);
-    //TBD void AddFromAliasToWhereTokens(string fromAlias);
-    //TBD string ProjectionParameter(object id);
-    //TBD void SuggestUsing(SuggestionBase suggestion);
+    // TBD: MoreLikeThisScope MoreLikeThis();
+    // TBD void AggregateBy(FacetBase facet);
+    // TBD IAggregationDocumentQuery<T> AggregateBy(Action<IFacetBuilder<T>> builder);
+    // TBD void AggregateUsing(string facetSetupDocumentId);
+    // TBD void AddFromAliasToWhereTokens(string fromAlias);
+    // TBD string ProjectionParameter(object id);
+    // TBD void SuggestUsing(SuggestionBase suggestion);
 
     iterator(): Promise<T[]>;
 }

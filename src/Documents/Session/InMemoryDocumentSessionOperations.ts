@@ -586,7 +586,9 @@ export abstract class InMemoryDocumentSessionOperations
         const changeVector = options.changeVector;
         const documentType = options.documentType;
         this.conventions.tryRegisterEntityType(documentType); 
-        this.conventions.tryRegisterEntityType(entity.constructor as ClassConstructor); 
+        if (entity.constructor !== Object) {
+            this.conventions.tryRegisterEntityType(entity.constructor as ClassConstructor); 
+        }
 
         let forceConcurrencyCheck: ConcurrencyCheckMode;
         if (!TypeUtil.isUndefined(changeVector)) {
@@ -691,7 +693,7 @@ export abstract class InMemoryDocumentSessionOperations
         documentType: DocumentType): void {
         this.deletedEntities.delete(entity);
 
-        if (!id) {
+        if (id) {
             this._knownMissingIds.delete(id);
         }
 

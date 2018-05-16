@@ -288,6 +288,6 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }    
     
     public rawQuery<TEntity>(query: string, documentType?: DocumentType<TEntity>): IRawDocumentQuery<TEntity> {
-        return new RawDocumentQuery(documentType, this, query);
+        return new RawDocumentQuery(this, query, documentType);
     }
 }

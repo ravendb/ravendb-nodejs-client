@@ -7,7 +7,7 @@ import { QueryStatistics } from "./QueryStatistics";
 
 export class RawDocumentQuery<T> extends AbstractDocumentQuery<T, RawDocumentQuery<T>> implements IRawDocumentQuery<T> {
 
-    public constructor(clazz: DocumentType<T>, session: InMemoryDocumentSessionOperations, rawQuery: string) {
+    public constructor(session: InMemoryDocumentSessionOperations, rawQuery: string, clazz?: DocumentType<T>) {
         super(clazz, session, null, null, false, null, null, null);
         this._queryRaw = rawQuery;
     }

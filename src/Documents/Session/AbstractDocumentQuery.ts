@@ -1703,7 +1703,7 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return Promise.resolve(result);
     }
 
-    public iterator(): Promise<T[]> {
+    public async iterator(): Promise<T[]> {
         return Promise.resolve()
             .then(() => this._initSync())
             .then(() => {
@@ -1711,7 +1711,7 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             });
     }
 
-    public toList(): Promise<T[]> {
+    public async all(): Promise<T[]> {
         return this.iterator();
     }
 
@@ -1721,13 +1721,13 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             .then(() => this._queryOperation.getCurrentQueryResults().createSnapshot());
     }
 
-    public first(): Promise<T> {
+    public async first(): Promise<T> {
         return Promise.resolve()
             .then(() => this._executeQueryOperation(2))
             .then(result => result[0] || null);
     }
 
-    public single(): Promise<T> {
+    public async single(): Promise<T> {
         return Promise.resolve()
             .then(() => this._executeQueryOperation(2))
             .then(result => {
@@ -1739,7 +1739,7 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             });
     }
 
-    public count(): Promise<number> {
+    public async count(): Promise<number> {
         this._take(0);
         return this.getQueryResult()
             .then(queryResult => queryResult.totalResults);

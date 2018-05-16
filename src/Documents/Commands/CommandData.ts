@@ -77,8 +77,8 @@ export class PutCommandDataBase<T extends Object> implements ICommandData {
 
     constructor(id: string, changeVector: string, document: T) {
 
-        if (!id) {
-            throwError("InvalidArgumentException", "Id cannot be null or undefined.");
+        if (!document) {
+            throwError("InvalidArgumentException", "Document cannot be null or undefined.");
         }
 
         this.id = id;

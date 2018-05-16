@@ -87,7 +87,11 @@ export class DocumentConventions {
         };
 
         this._findJsTypeName = (ctorOrTypeChecker: ObjectTypeDescriptor) => {
-            if ("isType" in (ctorOrTypeChecker as object)) {
+            if (!ctorOrTypeChecker) {
+                return null;
+            }
+            
+            if (TypeUtil.isFunction(ctorOrTypeChecker["isType"])) {
                 return (ctorOrTypeChecker as ObjectLiteralDescriptor).name;
             }
 
@@ -281,7 +285,7 @@ export class DocumentConventions {
      */
     public static defaultGetCollectionName(ctorOrTypeChecker: ObjectTypeDescriptor): string {
         if (!ctorOrTypeChecker) {
-            throwError("InvalidArgumentException", "Class cannot be null or undefined.");
+            return null;
         }
 
         if (!TypeUtil.isObjectTypeDescriptor(ctorOrTypeChecker)) {

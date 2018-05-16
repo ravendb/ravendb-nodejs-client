@@ -34,11 +34,11 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * @return Raw document query
      */
     
-    rawQuery<TEntity>(query: string, documentType?: DocumentType<TEntity>): IRawDocumentQuery<TEntity>;
+    rawQuery<TEntity extends object>(query: string, documentType?: DocumentType<TEntity>): IRawDocumentQuery<TEntity>;
 
     exists(id: string): Promise<boolean>;
 
-    loadStartingWith<T extends Object>(idPrefix: string, opts: SessionLoadStartingWithOptions<T>): Promise<T[]>;
+    loadStartingWith<T extends object>(idPrefix: string, opts: SessionLoadStartingWithOptions<T>): Promise<T[]>;
 
     // tslint:disable:max-line-length
     // TBD void LoadStartingWithIntoStream(string idPrefix, Stream output, string matches = null, int start = 0, int pageSize = 25, string exclude = null, string startAfter = null);

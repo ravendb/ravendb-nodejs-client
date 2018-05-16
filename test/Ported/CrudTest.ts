@@ -47,7 +47,7 @@ describe("CRUD tests", function () {
             const newSession = store.openSession();
             const users = await newSession.advanced
                 .rawQuery<User>("from Users where lastName = 'user1'", User)
-                .toList();
+                .all();
             assert.equal(users.length, 1);
         }
     });
