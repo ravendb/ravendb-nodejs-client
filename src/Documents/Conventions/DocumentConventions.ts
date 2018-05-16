@@ -463,7 +463,6 @@ export class DocumentConventions {
     }
 
     public static defaultTransformCollectionNameToDocumentIdPrefix(collectionName: string): string {
-        debugger;
         const upperCaseRegex = /[A-Z]/g;
         const upperCount = collectionName.match(upperCaseRegex).length;
 

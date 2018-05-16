@@ -32,6 +32,7 @@ export { ServerWideOperationCompletionAwaiter } from "./ServerWide/Operations/Se
 // DOCUMENTS
 export * from "./Documents/Operations/OperationAbstractions";
 export { GetNextOperationIdCommand } from "./Documents/Commands/GetNextOperationIdCommand";
+export { DeleteDocumentCommand } from "./Documents/Commands/DeleteDocumentCommand";
 export { NextIdentityForCommand } from "./Documents/Commands/NextIdentityForCommand";
 export { SeedIdentityForCommand } from "./Documents/Commands/SeedIdentityForCommand";
 export { GetIdentitiesOperation } from "./Documents/Operations/Identities/GetIdentitiesOperation";

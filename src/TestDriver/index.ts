@@ -391,4 +391,7 @@ export abstract class RavenTestDriver implements IDisposable {
                 RavenTestDriver._killGlobalServerProcess(false);
             });
     }
+
+    // TODO fiddler support
+    // https://github.com/request/request#proxies
 }

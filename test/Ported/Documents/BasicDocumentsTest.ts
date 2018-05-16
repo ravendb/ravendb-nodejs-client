@@ -67,7 +67,6 @@ describe("Basic documents test", function () {
             metadataOnly: false
         });
 
-        debugger;
         await requestExecutor.execute(getDocumentsCommand);
         let docs = getDocumentsCommand.result;
         assert.equal(docs.results.length, 2);
