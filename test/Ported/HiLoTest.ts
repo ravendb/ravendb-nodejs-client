@@ -129,8 +129,15 @@ describe("HiLo", function () {
             await session.saveChanges();
         }
 
+        async function waitForStoreDisposeFinish() {
+            return new Promise((resolve) => 
+                newStore.once("afterDispose", () => resolve()));
+        }
+
         newStore.dispose(); // on document store dispose(), hilo-return should be called
 
+        await waitForStoreDisposeFinish();
+        
         newStore = new DocumentStore(store.urls, store.database);
         newStore.initialize();
 
