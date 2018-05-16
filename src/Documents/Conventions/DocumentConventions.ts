@@ -90,7 +90,7 @@ export class DocumentConventions {
             if (!ctorOrTypeChecker) {
                 return null;
             }
-            
+
             if (TypeUtil.isFunction(ctorOrTypeChecker["isType"])) {
                 return (ctorOrTypeChecker as ObjectLiteralDescriptor).name;
             }
@@ -463,6 +463,7 @@ export class DocumentConventions {
     }
 
     public static defaultTransformCollectionNameToDocumentIdPrefix(collectionName: string): string {
+        debugger;
         const upperCaseRegex = /[A-Z]/g;
         const upperCount = collectionName.match(upperCaseRegex).length;
 

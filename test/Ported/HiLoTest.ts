@@ -76,10 +76,10 @@ describe("HiLo", function () {
 
         const multiDbHilo = new HiloMultiDatabaseIdGenerator(store);
         let generatedDocumentKey = await multiDbHilo.generateDocumentId(null, new User());
-        assert.equal(generatedDocumentKey, "Users/65-A");
+        assert.equal(generatedDocumentKey, "users/65-A");
 
         generatedDocumentKey = await multiDbHilo.generateDocumentId(null, new Product());
-        assert.equal(generatedDocumentKey, "Products/129-A");
+        assert.equal(generatedDocumentKey, "products/129-A");
     });
 
     it("capacity should double", async () => {
