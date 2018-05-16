@@ -26,6 +26,12 @@ export class TypeUtil {
     public static isNumber(value: any): boolean {
         return _.isNumber(value);
     }
+    
+    public static isPrimitive(value: any): boolean {
+        return TypeUtil.isNumber(value)
+            || TypeUtil.isString(value)
+            || TypeUtil.isBool(value);
+    }
 
     public static isArray(value: any): boolean {
         return _.isArray(value);

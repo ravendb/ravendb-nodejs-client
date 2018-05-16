@@ -1,11 +1,10 @@
 import {TypeUtil} from "../Utility/TypeUtil";
-import {IJsonConvertible} from "../Types/Contracts";
 import {IRavenObject} from "../Types/IRavenObject";
 import {UriUtility} from "../Http/UriUtility";
 
 export type ServerNodeRole = "None" | "Promotable" | "Member" | "Rehab";
 
-export class ServerNode implements IJsonConvertible {
+export class ServerNode {
   public database: string;
   public url: string;
   public clusterTag?: string = null;

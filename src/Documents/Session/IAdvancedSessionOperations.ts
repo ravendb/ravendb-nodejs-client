@@ -1,3 +1,4 @@
+import {IRawDocumentQuery} from './IRawDocumentQuery';
 import { IDocumentStore } from "../IDocumentStore";
 import { ServerNode } from "../../Http/ServerNode";
 import { SessionEventsEmitter } from "./SessionEvents";
@@ -32,11 +33,12 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * @param query Query
      * @return Raw document query
      */
-    // rawQuery<T>(query: string, documentType?: DocumentType): IRawDocumentQuery<T>;
+    
+    rawQuery<TEntity extends object>(query: string, documentType?: DocumentType<TEntity>): IRawDocumentQuery<TEntity>;
 
     exists(id: string): Promise<boolean>;
 
-    loadStartingWith<T extends Object>(idPrefix: string, opts: SessionLoadStartingWithOptions<T>): Promise<T[]>;
+    loadStartingWith<T extends object>(idPrefix: string, opts: SessionLoadStartingWithOptions<T>): Promise<T[]>;
 
     // tslint:disable:max-line-length
     // TBD void LoadStartingWithIntoStream(string idPrefix, Stream output, string matches = null, int start = 0, int pageSize = 25, string exclude = null, string startAfter = null);

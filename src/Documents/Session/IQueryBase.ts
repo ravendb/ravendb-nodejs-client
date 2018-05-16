@@ -1,20 +1,22 @@
+import {QueryOperator} from "../Queries/QueryOperator";
+import {IndexQuery} from "../Queries/IndexQuery";
+import {QueryStatistics} from "./QueryStatistics";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { QueryResult } from "../Queries/QueryResult";
 
-export interface QueryEventsEmitter {
+export interface QueryEventsEmitter<TSelf> {
  
-    on(eventName: "beforeQueryExecuted", eventHandler: (eventArgs: IndexQuery) => void): this;
-    on(eventName: "afterQueryExecuted", eventHandler: (eventArgs: QueryResult) => void): this;
+    on(eventName: "beforeQueryExecuted", eventHandler: (eventArgs: IndexQuery) => void): TSelf;
+    on(eventName: "afterQueryExecuted", eventHandler: (eventArgs: QueryResult) => void): TSelf;
 
-    removeListener(eventName: "beforeQueryExecuted", eventHandler: (eventArgs: IndexQuery) => void): this;
-    removeListener(eventName: "afterQueryExecuted", eventHandler: (eventArgs: QueryResult) => void): this;
+    removeListener(eventName: "beforeQueryExecuted", eventHandler: (eventArgs: IndexQuery) => void): TSelf;
+    removeListener(eventName: "afterQueryExecuted", eventHandler: (eventArgs: QueryResult) => void): TSelf;
 
     emit(eventName: "beforeQueryExecuted", eventArgs: IndexQuery);
     emit(eventName: "afterQueryExecuted", eventArgs: QueryResult);
 }
-}
 
-export interface IQueryBase {
+export interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> {
 
     /**
      * Gets the document convention from the query session
@@ -28,14 +30,14 @@ export interface IQueryBase {
      * Disables caching for query results.
      * @return Query instance
      */
-    noCaching(): this;
+    noCaching(): TSelf;
 
     /**
      * Disables tracking for queried entities by Raven's Unit of Work.
-     * Usage of this option will prevent holding query results in memory.
+     * Usage of TSelf option will prevent holding query results in memory.
      * @return Query instance
      */
-    noTracking(): this;
+    noTracking(): TSelf;
 
     //TBD TSelf showTimings();
 
@@ -44,49 +46,49 @@ export interface IQueryBase {
      * @param count Items to skip
      * @return Query instance
      */
-    skip(count: number): this;
+    skip(count: number): TSelf;
 
     /**
      * Provide statistics about the query, such as total count of matching records
      * @param stats Output parameter for query stats
      * @return Query instance
      */
-    statistics(statsCallback: (stats: QueryStatistics) => void): this;
+    statistics(statsCallback: (stats: QueryStatistics) => void): TSelf;
 
     /**
      * Takes the specified count.
      * @param count Amount of items to take
      * @return Query instance
      */
-    take(count: number): this;
+    take(count: number): TSelf;
 
     /**
-     * Select the default operator to use for this query
+     * Select the default operator to use for TSelf query
      * @param queryOperator Query operator to use
      * @return Query instance
      */
-    usingDefaultOperator(queryOperator: QueryOperator): this;
+    usingDefaultOperator(queryOperator: QueryOperator): TSelf;
 
     /**
      * EXPERT ONLY: Instructs the query to wait for non stale results for the specified wait timeout.
-     * This shouldn't be used outside of unit tests unless you are well aware of the implications
+     * TSelf shouldn't be used outside of unit tests unless you are well aware of the implications
      * @return Query instance
      */
-    waitForNonStaleResults(): this;
+    waitForNonStaleResults(): TSelf;
 
     /**
      * EXPERT ONLY: Instructs the query to wait for non stale results for the specified wait timeout.
-     * This shouldn't be used outside of unit tests unless you are well aware of the implications
+     * TSelf shouldn't be used outside of unit tests unless you are well aware of the implications
      * @param waitTimeout Max wait timeout in ms
      * @return Query instance
      */
-    waitForNonStaleResults(waitTimeout: number): this;
+    waitForNonStaleResults(waitTimeout: number): TSelf;
 
     /**
-     * Create the index query object for this query
+     * Create the index query object for TSelf query
      * @return index query
      */
-    indexQuery: IndexQuery;
+    getIndexQuery(): IndexQuery;
 
     /**
      * Add a named parameter to the query
@@ -94,5 +96,5 @@ export interface IQueryBase {
      * @param value Parameter value
      * @return Query instance
      */
-    addParameter(name: string, value: object): this;
+    addParameter(name: string, value: object): TSelf;
 }

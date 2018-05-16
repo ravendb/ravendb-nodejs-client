@@ -87,7 +87,11 @@ export class DocumentConventions {
         };
 
         this._findJsTypeName = (ctorOrTypeChecker: ObjectTypeDescriptor) => {
-            if ("isType" in (ctorOrTypeChecker as object)) {
+            if (!ctorOrTypeChecker) {
+                return null;
+            }
+
+            if (TypeUtil.isFunction(ctorOrTypeChecker["isType"])) {
                 return (ctorOrTypeChecker as ObjectLiteralDescriptor).name;
             }
 
@@ -106,6 +110,8 @@ export class DocumentConventions {
             dateFormat: DateUtil.DEFAULT_DATE_FORMAT,
             knownTypes: this._knownEntityTypes
         });
+
+        this._entityJsonSerializer = JsonSerializer.getDefaultForEntities();
     }
 
     public get entityObjectMapper(): TypesAwareObjectMapper {
@@ -279,7 +285,7 @@ export class DocumentConventions {
      */
     public static defaultGetCollectionName(ctorOrTypeChecker: ObjectTypeDescriptor): string {
         if (!ctorOrTypeChecker) {
-            throwError("InvalidArgumentException", "Class cannot be null or undefined.");
+            return null;
         }
 
         if (!TypeUtil.isObjectTypeDescriptor(ctorOrTypeChecker)) {
@@ -457,6 +463,7 @@ export class DocumentConventions {
     }
 
     public static defaultTransformCollectionNameToDocumentIdPrefix(collectionName: string): string {
+        debugger;
         const upperCaseRegex = /[A-Z]/g;
         const upperCount = collectionName.match(upperCaseRegex).length;
 

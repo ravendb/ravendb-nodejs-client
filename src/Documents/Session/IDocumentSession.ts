@@ -22,10 +22,10 @@ export interface IMetadataDictionary {
 
 export type ConcurrencyCheckMode = "Auto" | "Forced" | "Disabled";
 
-export interface IDocumentSession extends IDisposable {
-    numberOfRequestsInSession: number;
+export interface IDocumentSessionImpl {
     conventions: DocumentConventions;
-
+}
+export interface IDocumentSession extends IDisposable {
     /**
      * Get the accessor for advanced operations
      *

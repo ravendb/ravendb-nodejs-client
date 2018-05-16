@@ -67,26 +67,26 @@ export interface IDocumentStore extends
     // TBD: IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
     // TBD IDisposable AggressivelyCache(string database = null);
 
-    // /**
-    //  * Setup the context for no aggressive caching
-    //  *
-    //  * This is mainly useful for internal use inside RavenDB, when we are executing
-    //  * queries that have been marked with WaitForNonStaleResults, we temporarily disable
-    //  * aggressive caching.
-    //  * @return Self closing context
-    //  */
-    // disableAggressiveCaching(): IDisposable;
+    /**
+     * Setup the context for no aggressive caching
+     *
+     * This is mainly useful for internal use inside RavenDB, when we are executing
+     * queries that have been marked with WaitForNonStaleResults, we temporarily disable
+     * aggressive caching.
+     * @return Self closing context
+     */
+    disableAggressiveCaching(): IDisposable;
 
-    // /**
-    //  * Setup the context for no aggressive caching
-    //  *
-    //  * This is mainly useful for internal use inside RavenDB, when we are executing
-    //  * queries that have been marked with WaitForNonStaleResults, we temporarily disable
-    //  * aggressive caching.
-    //  * @param database Database name
-    //  * @return Self closing context
-    //  */
-    // disableAggressiveCaching(database: string): IDisposable;
+    /**
+     * Setup the context for no aggressive caching
+     *
+     * This is mainly useful for internal use inside RavenDB, when we are executing
+     * queries that have been marked with WaitForNonStaleResults, we temporarily disable
+     * aggressive caching.
+     * @param database Database name
+     * @return Self closing context
+     */
+    disableAggressiveCaching(database: string): IDisposable;
 
     // identifier: string;
 

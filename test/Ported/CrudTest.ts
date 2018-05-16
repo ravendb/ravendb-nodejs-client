@@ -45,18 +45,10 @@ describe("CRUD tests", function () {
 
         {
             const newSession = store.openSession();
-            // TODO @gregolsky
-            // const users = await newSession.advanced.rawQuery("from Users where lastName = 'user1'");
-            // assert.equal(users.length, 1);
+            const users = await newSession.advanced
+                .rawQuery<User>("from Users where lastName = 'user1'", User)
+                .all();
+            assert.equal(users.length, 1);
         }
-
-    //         try (IDocumentSession newSession = store.openSession()) {
-    //             List<User> users = newSession.advanced().rawQuery(User.class, "from Users where lastName = 'user1'").toList();
-
-    //             assertThat(users)
-    //                     .hasSize(1);
-    //         }
-    //     }
-    // }
     });
 });

@@ -32,11 +32,11 @@ export class NextHiloCommand extends RavenCommand<HiLoResult> {
         super();
 
         if (!tag) {
-            throwError("InvalidArgumentException", "tag cannot be null");
+            throwError("InvalidArgumentException", "tag cannot be null.");
         }
 
         if (!identityPartsSeparator) {
-            throwError("InvalidArgumentException", "identityPartsSeparator cannot be null");
+            throwError("InvalidArgumentException", "identityPartsSeparator cannot be null.");
         }
 
         this._tag = tag;

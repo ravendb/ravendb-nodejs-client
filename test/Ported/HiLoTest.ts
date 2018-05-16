@@ -76,10 +76,10 @@ describe("HiLo", function () {
 
         const multiDbHilo = new HiloMultiDatabaseIdGenerator(store);
         let generatedDocumentKey = await multiDbHilo.generateDocumentId(null, new User());
-        assert.equal(generatedDocumentKey, "Users/65-A");
+        assert.equal(generatedDocumentKey, "users/65-A");
 
         generatedDocumentKey = await multiDbHilo.generateDocumentId(null, new Product());
-        assert.equal(generatedDocumentKey, "Products/129-A");
+        assert.equal(generatedDocumentKey, "products/129-A");
     });
 
     it("capacity should double", async () => {
@@ -129,8 +129,15 @@ describe("HiLo", function () {
             await session.saveChanges();
         }
 
+        async function waitForStoreDisposeFinish() {
+            return new Promise((resolve) => 
+                newStore.once("afterDispose", () => resolve()));
+        }
+
         newStore.dispose(); // on document store dispose(), hilo-return should be called
 
+        await waitForStoreDisposeFinish();
+        
         newStore = new DocumentStore(store.urls, store.database);
         newStore.initialize();
 
