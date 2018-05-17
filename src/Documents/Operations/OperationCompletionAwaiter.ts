@@ -47,15 +47,16 @@ export class OperationCompletionAwaiter {
             return BluebirdPromise.resolve()
             .then(() => this._fetchOperationStatus())
             .then((operationStatusResult) => {
-                const operationStatus = operationStatusResult.Status;
+                const operationStatus = operationStatusResult.status;
                 switch (operationStatus) {
                     case "Completed":
                         return;
                     case "Cancelled":
                         throwError("OperationCancelledException", `Operation of ID ${this._id} has been cancelled.`);
                     case "Faulted":
-                        const faultResult: OperationExceptionResult = operationStatusResult.Result;
-                        throw ExceptionDispatcher.get(faultResult, faultResult.statusCode);
+                        const faultResult: OperationExceptionResult = operationStatusResult.result;
+                        const err = ExceptionDispatcher.get(faultResult, faultResult.statusCode);
+                        throw err;
                 }
 
                 return BluebirdPromise.delay(500)

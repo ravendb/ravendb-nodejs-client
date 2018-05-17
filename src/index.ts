@@ -20,6 +20,7 @@ export { Topology } from "./Http/Topology";
 export { AggressiveCacheOptions } from "./Http/AggressiveCacheOptions";
 
 // SERVERWIDE
+export { CompactSettings } from "./ServerWide/CompactSettings";
 export { GetDatabaseTopologyCommand } from "./ServerWide/Commands/GetDatabaseTopologyCommand";
 export { GetClusterTopologyCommand } from "./ServerWide/Commands/GetClusterTopologyCommand";
 export { GetTcpInfoCommand } from "./ServerWide/Commands/GetTcpInfoCommand";
@@ -31,6 +32,7 @@ export { ServerWideOperationCompletionAwaiter } from "./ServerWide/Operations/Se
 
 // DOCUMENTS
 export * from "./Documents/Operations/OperationAbstractions";
+export { CompactDatabaseOperation } from "./Documents/Operations/CompactDatabaseOperation";
 export { GetNextOperationIdCommand } from "./Documents/Commands/GetNextOperationIdCommand";
 export { DeleteDocumentCommand } from "./Documents/Commands/DeleteDocumentCommand";
 export { NextIdentityForCommand } from "./Documents/Commands/NextIdentityForCommand";
