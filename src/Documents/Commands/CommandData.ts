@@ -1,5 +1,4 @@
 
-import * as _ from "lodash";
 import { IRavenObject } from "../../Types";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { throwError } from "../../Exceptions";
@@ -96,18 +95,6 @@ export class PutCommandDataBase<T extends Object> implements ICommandData {
 
         return toSerialize;
     }
-
-    // public toJson(): object {
-    //     let document: object = this.document;
-
-    //     if (this.metadata) {
-    //         document['@metadata'] = this.metadata;
-    //     }
-
-    //     return _.assign(super.toJson(), {
-    //         Document: document
-    //     });
-    // }
 }
 
 export class PutCommandDataWithJson extends PutCommandDataBase<object> {
@@ -134,39 +121,3 @@ export class SaveChangesData {
         this.options = args.options;
     }
 }
-
-// export class SaveChangesData {
-//     protected commands: ICommandData[];
-//     protected deferredCommandCount: number;
-//     protected documents: IRavenObject[];
-
-//     public get deferredCommandsCount(): number {
-//         return this.deferredCommandCount;
-//     }
-
-//     public get commandsCount(): number {
-//         return this.commands.length;
-//     }
-
-//     constructor(commands?: CommandData[], deferredCommandCount: number = 0, documents?: IRavenObject[]) {
-//         this.commands = commands || [];
-//         this.documents = documents || [];
-//         this.deferredCommandCount = deferredCommandCount;
-//     }
-
-//     public addCommand(command: CommandData) {
-//         this.commands.push(command);
-//     }
-
-//     public addDocument(document: IRavenObject) {
-//         this.documents.push(document);
-//     }
-
-//     public getDocument(index: number): IRavenObject {
-//         return this.documents[index];
-//     }
-
-//     // public createBatchCommand(): BatchCommand {
-//     //     return new BatchCommand(this.commands);
-//     // }
-// }
