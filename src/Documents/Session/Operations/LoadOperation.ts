@@ -78,7 +78,7 @@ export class LoadOperation {
         return this;
     }
 
-    private _getDocument<T extends Object>(clazz: ObjectTypeDescriptor<T>, id: string): T {
+    private _getDocument<T extends object>(clazz: ObjectTypeDescriptor<T>, id: string): T {
         if (!id) {
             return null;
         }
@@ -100,7 +100,7 @@ export class LoadOperation {
         return null;
     }
 
-    public getDocuments<T>(clazz: ObjectTypeDescriptor<T>): EntitiesCollectionObject<T> {
+    public getDocuments<T extends object>(clazz: ObjectTypeDescriptor<T>): EntitiesCollectionObject<T> {
         return this._ids.filter(x => !!x)
             .reduce((result, id) => {
                 result[id] = this._getDocument(clazz, id);

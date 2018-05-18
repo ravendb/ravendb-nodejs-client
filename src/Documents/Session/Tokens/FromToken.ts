@@ -31,7 +31,7 @@ export class FromToken extends QueryToken {
 
         this._collectionName = collectionName;
         this._indexName = indexName;
-        this._dynamic = collectionName !== null;
+        this._dynamic = !!collectionName;
         this._alias = alias;
     }
 
@@ -66,7 +66,7 @@ export class FromToken extends QueryToken {
                     .append("'");
         }
 
-        if (this._alias !== null) {
+        if (this._alias) {
             writer.append(" as ").append(this._alias);
         }
     }

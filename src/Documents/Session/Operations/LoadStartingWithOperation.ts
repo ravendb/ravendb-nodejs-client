@@ -62,7 +62,7 @@ export class LoadStartingWithOperation {
         }
     }
 
-    public getDocuments<T extends Object>(docType: DocumentType<T>): T[] {
+    public getDocuments<T extends object>(docType: DocumentType<T>): T[] {
         const entityType = this._session.conventions.findEntityType<T>(docType);
         return this._returnedIds.reduce((result, id) => {
             const doc = this._getDocument(entityType, id);
@@ -70,7 +70,7 @@ export class LoadStartingWithOperation {
         }, []);
     }
 
-    private _getDocument<T extends Object>(entityType: ObjectTypeDescriptor<T>, id: string): T {
+    private _getDocument<T extends object>(entityType: ObjectTypeDescriptor<T>, id: string): T {
         if (!id) {
             return null;
         }

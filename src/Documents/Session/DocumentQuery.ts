@@ -1,844 +1,614 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-////// old
-
-// import * as BluebirdPromise from 'bluebird'
-// import * as _ from "lodash";
-// import * as pluralize from 'pluralize';
-// import {IDocumentQuery, IDocumentQueryBase, IRawDocumentQuery, IDocumentQueryOptions} from "./IDocumentQuery";
-// import {IDocumentSession} from "./IDocumentSession";
-// import {RequestExecutor} from "../../Http/Request/RequestExecutor";
-// import {QueryResultsCallback, EntityCallback, EntitiesCountCallback} from '../../Typedef/Callbacks';
-// import {PromiseResolver} from '../../Utility/PromiseResolver';
-// import {IRavenResponse} from "../../Database/RavenCommandResponse";
-// import {DocumentConventions, DocumentConstructor, IDocumentConversionResult, DocumentType} from "../Conventions/DocumentConventions";
-// import {IndexQuery} from "../../Database/Indexes/IndexQuery";
-// import {IRavenObject} from "../../Typedef/IRavenObject";
-// import {IOptionsSet} from "../../Typedef/IOptionsSet";
-// import {QueryCommand} from "../../Database/Commands/QueryCommand";
-// import {TypeUtil} from "../../Utility/TypeUtil";
-// import {Observable} from "../../Utility/Observable";
-// import {ErrorResponseException, InvalidArgumentException, InvalidOperationException, RavenException} from "../../Database/DatabaseExceptions";
-// import {QueryBuilder} from "./Query/QueryBuilder";
-// import {ConditionValue, OrderingType, QueryOperator, SearchOperator, SearchOperators} from "./Query/QueryLanguage";
-// import {IQueryBuilder} from "./Query/IQueryBuilder";
-// import {SpatialUnit} from "./Query/Spatial/SpatialUnit";
-// import {SpatialRelation} from "./Query/Spatial/SpatialRelation";
-// import {SpatialCriteria} from "./Query/Spatial/SpatialCriteria";
-// import {IWhereParams, WhereParams} from "./Query/WhereParams";
-// import {IJsonable} from "../../Typedef/Contracts";
-// import {DateUtil} from "../../Utility/DateUtil";
-// import {StringUtil} from "../../Utility/StringUtil";
-
-// export type QueryResultsWithStatistics<T> = { results: T[], response: IRavenResponse };
-
-// export class DocumentQueryParameters extends Map<string, ConditionValue | ConditionValue[]> implements IJsonable {
-//   public toJson(): object {
-//     let result: object = {};
-//     let key: string = null;
-//     let value: ConditionValue | ConditionValue[] = null;
-
-//     for ([key, value] of this) {
-//       result[key] = value;
-//     }
-
-//     return result;
-//   }
-// }
-
-// export class DocumentQueryBaseOld<T extends Object = IRavenObject> extends Observable implements IDocumentQueryBase<T> {
-//   public static readonly EVENT_DOCUMENTS_QUERIED: string = 'queried:documents';
-//   public static readonly EVENT_DOCUMENT_FETCHED: string = 'fetched:document';
-//   public static readonly EVENT_INCLUDES_FETCHED: string = 'fetched:includes';
-
-//   protected session: IDocumentSession;
-//   protected indexQueryOptions: IOptionsSet;
-//   protected requestExecutor: RequestExecutor;
-//   protected withStatistics: boolean = false;
-//   protected documentType?: DocumentType<T> = null;
-//   protected queryParameters: DocumentQueryParameters;
-//   protected nestedObjectTypes: IRavenObject<DocumentConstructor> = {};
-
-//   protected _indexName: string;
-//   protected _collectionName: string;
-//   protected _take?: number = null;
-//   protected _skip?: number = null;
-//   protected _builder: IQueryBuilder;
-
-//   public static create<T extends Object = IRavenObject>(session: IDocumentSession, 
-//     requestExecutor: RequestExecutor, options?: IDocumentQueryOptions<T>
-//   ): DocumentQueryBase<T> {
-//     let withStatistics: boolean = null;
-//     let indexName: string = null;
-//     let collection: string = null;
-//     let documentType: DocumentType<T> = null;
-//     let indexQueryOptions: IOptionsSet = {};
-//     let nestedObjectTypes: IRavenObject<DocumentConstructor> = {} as IRavenObject<DocumentConstructor>;
-
-//     if (options) {
-//       withStatistics = options.withStatistics || null;
-//       nestedObjectTypes = options.nestedObjectTypes || {};
-//       collection = options.collection || '@all_docs';
-//       indexName = options.indexName || null;
-//       documentType = options.documentType || null;
-//       indexQueryOptions = options.indexQueryOptions || {};
-//     }
-
-//     const query: DocumentQueryBase<T> = new this(
-//       session, requestExecutor, collection, indexName, documentType,
-//       nestedObjectTypes, withStatistics, indexQueryOptions
-//     );
-
-//     return query;
-//   }
-
-//   public get indexName(): string {
-//     return this._indexName;
-//   }
-
-//   public get collectionName(): string {
-//     return this._collectionName;
-//   }
-
-//   public get conventions(): DocumentConventions {
-//     return this.session.conventions;
-//   }
-
-//   constructor(session: IDocumentSession, requestExecutor: RequestExecutor, 
-//     collection?: string, indexName?: string, documentType?: DocumentType<T>,
-//     nestedObjectTypes?: IRavenObject<DocumentConstructor>, withStatistics: boolean = false,
-//     indexQueryOptions: IOptionsSet = {}
-//   ) {
-//     super();
-
-//     const conventions: DocumentConventions = session.conventions;
-//     let idPropertyName: string = 'id';
-
-//     if (indexName) {
-//       this._collectionName = null;
-//       this._indexName = indexName;
-//     } else {
-//       this._indexName = null;
-//       this._collectionName = collection || '@all_docs';
-//     }
-
-//     if (documentType) {
-//       idPropertyName = conventions.getIdPropertyName(documentType);
-//     } else if (collection && ('@all_docs' !== collection)
-//       && (conventions.emptyCollection !== collection)
-//     ) {
-//       documentType = StringUtil.capitalize(pluralize.singular(collection));
-//     }
-
-//     this.session = session;
-//     this.indexQueryOptions = indexQueryOptions;
-//     this.withStatistics = withStatistics;
-//     this.requestExecutor = requestExecutor;
-//     this.documentType = documentType;
-//     this.queryParameters = new DocumentQueryParameters();
-//     this.nestedObjectTypes = nestedObjectTypes || {} as IRavenObject<DocumentConstructor>;
-
-//     this._builder = new QueryBuilder(this._indexName, this._collectionName, idPropertyName);
-//   }
-
-//   public waitForNonStaleResults(): this {
-//     _.assign(this.indexQueryOptions, {
-//       cutOffEtag: null,
-//       waitForNonStaleResults: true,      
-//       waitForNonStaleResultsTimeout: IndexQuery.DefaultTimeout
-//     });
-
-//     return this;
-//   }
-
-//   public waitForNonStaleResultsAsOf(cutOffEtag: number, waitTimeout?: number): this {
-//     _.assign(this.indexQueryOptions, {
-//       cutOffEtag,
-//       waitForNonStaleResults: true,      
-//       waitForNonStaleResultsTimeout: waitTimeout || IndexQuery.DefaultTimeout
-//     });
-
-//     return this;
-//   }
-
-//   public waitForNonStaleResultsAsOfNow(waitTimeout?: number): this {
-//     _.assign(this.indexQueryOptions, {
-//       cutOffEtag: null,
-//       waitForNonStaleResults: true,      
-//       waitForNonStaleResultsAsOfNow: true,      
-//       waitForNonStaleResultsTimeout: waitTimeout || IndexQuery.DefaultTimeout
-//     });
-
-//     return this;
-//   }
-
-//   public take(docsCount: number): this {
-//     this._take = docsCount;
-//     return this;
-//   }
-
-//   public skip(skipCount: number): this {
-//     this._skip = skipCount;
-//     return this;
-//   }
-
-//   public getIndexQuery(): IndexQuery {
-//     let skip: number = 0;
-//     let take: number = TypeUtil.MAX_INT32;
-//     const query: string = this._builder.toString();
-//     const queryParams: IRavenObject = <IRavenObject>this.queryParameters.toJson();
-
-//     if (!TypeUtil.isNull(this._skip)) {
-//       skip = this._skip;
-//     }
-
-//     if (!TypeUtil.isNull(this._take)) {
-//       take = this._take;
-//     }
-    
-//     return new IndexQuery(query, queryParams, take, skip, this.indexQueryOptions);
-//   }
-
-//   public async single(callback?: EntityCallback<T>): Promise<T> {
-//     const take: number = this._take;
-//     const skip: number = this._skip;
-//     const withStatistics: boolean = this.withStatistics;
-
-//     this._take = 2;
-//     this._skip = 0;
-//     this.withStatistics = false;
-
-//     return (this.executeQuery()
-//       .then((response: IRavenResponse): T | PromiseLike<T> => {
-//         const results: T[] = <T[]>this.convertResponseToDocuments(response);
-//         const result: T = results.length ? _.first(results) : null;
-
-//         if (results.length !== 1) {
-//           const errorMessage: string = (results.length > 1)
-//             ? "There's more than one result corresponding to given query criteria." 
-//             : "There's no results corresponding to given query criteria.";
-
-//           return BluebirdPromise.reject(new InvalidOperationException(errorMessage));
-//         }
-
-//         PromiseResolver.resolve<T>(result, null, callback);
-//         return result;
-//       })
-//       .catch((error: RavenException): PromiseLike<T> => PromiseResolver.reject<T>(error, null, callback) as PromiseLike<T>)
-//       .finally(() => {
-//         this._take = take;
-//         this._skip = skip;
-//         this.withStatistics = withStatistics;
-//       }));
-//   }
-
-//   public async first(callback?: EntityCallback<T>): Promise<T> {
-//     const take: number = this._take;
-//     const skip: number = this._skip;
-//     const withStatistics: boolean = this.withStatistics;
-
-//     this._take = 1;
-//     this._skip = 0;
-//     this.withStatistics = false;
-
-//     return this.executeQuery()
-//       .then((response: IRavenResponse): T => {
-//         const results: T[] = <T[]>this.convertResponseToDocuments(response);
-//         const result: T = results.length ? _.first(results) : null;
-
-//         PromiseResolver.resolve<T>(result, null, callback);
-//         return result;
-//       })
-//       .catch((error: RavenException) => PromiseResolver.reject<T>(error, null, callback))
-//       .finally(() => {
-//         this._take = take;
-//         this._skip = skip;
-//         this.withStatistics = withStatistics;
-//       });
-//   }
-
-//   public async count(callback?: EntitiesCountCallback): Promise<number> {
-//     const take: number = this._take;
-//     const skip: number = this._skip;
-
-//     this._take = 0;
-//     this._skip = 0;
-
-//     return this.executeQuery()
-//       .then((response: IRavenResponse): number => {
-//         const result: number = <number>response.TotalResults || 0;
-
-//         PromiseResolver.resolve<number>(result, null, callback);
-//         return result;
-//       })
-//       .catch((error: RavenException) => PromiseResolver.reject<number>(error, null, callback))
-//       .finally(() => {
-//         this._take = take;
-//         this._skip = skip;
-//       });
-//   }
-
-//   public async all(callback?: QueryResultsCallback<T[]>): Promise<T[]>;
-//   public async all(callback?: QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<QueryResultsWithStatistics<T>>;
-//   public async all(callback?: QueryResultsCallback<T[]> | QueryResultsCallback<QueryResultsWithStatistics<T>>): Promise<T[] | QueryResultsWithStatistics<T>> {
-//     return this.executeQuery()
-//       .then((response: IRavenResponse): T[] | QueryResultsWithStatistics<T> => {
-//         const result: T[] | QueryResultsWithStatistics<T> = this.convertResponseToDocuments(response);
-
-//         PromiseResolver.resolve<T[] | QueryResultsWithStatistics<T>>(result, null, callback);
-
-//         return result;
-//       })
-//       .catch((error: RavenException) => PromiseResolver.reject<T[]>(error, null, callback));
-//   }
-
-//   protected executeQuery(): BluebirdPromise<IRavenResponse> {
-//     this.emit(DocumentQueryBase.EVENT_DOCUMENTS_QUERIED);
-
-//     const session: IDocumentSession = this.session;
-//     const conventions: DocumentConventions = session.conventions;
-//     const query: IndexQuery = this.getIndexQuery();
-//     const queryCommand: QueryCommand = new QueryCommand(conventions, query);
-
-//     return this.requestExecutor
-//       .execute(queryCommand)
-//       .then((response: IRavenResponse | null): IRavenResponse | BluebirdPromise.Thenable<IRavenResponse> => {
-//         if (TypeUtil.isNull(response)) {
-//           return {
-//             Results: [] as object[],
-//             Includes: [] as string[]
-//           } as IRavenResponse;
-//         } else if (response.IsStale) {
-//           return BluebirdPromise.reject(new ErrorResponseException('The index is still stale after reached the timeout'));
-//         } else {
-//           return response as IRavenResponse;
-//         }
-//       });
-//   }
-
-//   protected convertResponseToDocuments(response: IRavenResponse): T[] | QueryResultsWithStatistics<T> {
-//     let result: T[] | QueryResultsWithStatistics<T> = [] as T[];
-//     const conventions: DocumentConventions = this.session.conventions;
-//     const commandResponse: IRavenResponse = response as IRavenResponse;
-//     const responseResults: object[] = conventions.tryFetchResults(commandResponse);
-
-//     if (responseResults.length > 0) {
-//       let results: T[] = [] as T[];
-//       const responseIncludes: object[] = conventions.tryFetchIncludes(commandResponse);
-
-//       responseResults.forEach((result: object) => {
-//         const conversionResult: IDocumentConversionResult<T> = conventions
-//           .convertToDocument<T>(result, this.documentType, this.nestedObjectTypes || {});
-
-//         results.push(conversionResult.document);
-
-//         if (!conventions.checkIsProjection(result)) {
-//           this.emit<IDocumentConversionResult<T>>(
-//             DocumentQueryBase.EVENT_DOCUMENT_FETCHED,
-//             conversionResult
-//           );
-//         }        
-//       });
-
-//       if (responseIncludes.length) {
-//         this.emit<object[]>(
-//           DocumentQueryBase.EVENT_INCLUDES_FETCHED, 
-//           responseIncludes as object[]
-//         );
-//       }
-
-//       if (this.withStatistics) {
-//         result = {
-//           results: results,
-//           response: response
-//         } as QueryResultsWithStatistics<T>;
-//       } else {
-//         result = results as T[];
-//       }
-//     }
-
-//     return result as T[] | QueryResultsWithStatistics<T>;
-//   }
-// }
-
-// export class RawDocumentQuery<T extends Object = IRavenObject> extends DocumentQueryBase<T> implements IRawDocumentQuery<T> {
-//   public static create<T extends Object = IRavenObject>(session: IDocumentSession, 
-//     requestExecutor: RequestExecutor, options?: IDocumentQueryOptions<T>
-//   ): RawDocumentQuery<T> {
-//     return <RawDocumentQuery<T>>super.create(session, requestExecutor, options);
-//   }
-
-//   public rawQuery(query: string): IRawDocumentQuery<T> {
-//     this._builder.rawQuery(query);
-//     return this;
-//   }
-
-//   public addParameter<V extends ConditionValue>(name: string, value: V): IRawDocumentQuery<T> {
-//     this.queryParameters.set(name, value);
-//     return this;
-//   }
-// }
-
-// export class DocumentQuery<T extends Object = IRavenObject> extends DocumentQueryBase<T> implements IDocumentQuery<T> {
-//   public static create<T extends Object = IRavenObject>(session: IDocumentSession, 
-//     requestExecutor: RequestExecutor, options?: IDocumentQueryOptions<T>
-//   ): DocumentQuery<T> {
-//     return <DocumentQuery<T>>super.create(session, requestExecutor, options);
-//   }
-
-//   public get not(): IDocumentQuery<T> {
-//     this.negateNext();
-//     return this;
-//   }
-
-//   public get isDynamicMapReduce(): boolean {
-//     return this._builder.isDynamicMapReduce;
-//   }
-
-//   public selectFields(fields: string[]): IDocumentQuery<T>;
-//   public selectFields(fields: string[], projections: string[]): IDocumentQuery<T>;
-//   public selectFields(fields: string[], projections?: string[]): IDocumentQuery<T> {
-//     this._builder.selectFields(fields);
-//     return this;
-//   }
-
-//   public getProjectionFields(): string[] {
-//     return this._builder.getProjectionFields();
-//   }
-
-//   public randomOrdering(seed?: string): IDocumentQuery<T> {
-//     this._builder.randomOrdering(seed);
-//     return this;
-//   }
-
-//   public customSortUsing(typeName: string, descending?: boolean): IDocumentQuery<T> {
-//     this._builder.customSortUsing(typeName, descending);
-//     return this;
-//   }
-
-//   public include(path: string): IDocumentQuery<T> {
-//     this._builder.include(path);
-//     return this;
-//   }
-
-//   public usingDefaultOperator(operator: QueryOperator): IDocumentQuery<T> {
-//     this._builder.usingDefaultOperator(operator);
-//     return this;
-//   }
-
-//   public whereEquals<V extends ConditionValue>(whereParams: IWhereParams<V>): IDocumentQuery<T>;
-//   public whereEquals<V extends ConditionValue>(whereParams: WhereParams<V>): IDocumentQuery<T>;
-//   public whereEquals<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;
-//   public whereEquals<V extends ConditionValue>(whereParamsOrFieldName: IWhereParams<V> | WhereParams<V> | string,
-//     value?: V, exact: boolean = false
-//   ): IDocumentQuery<T> {
-//     let whereParams: WhereParams<V> = <WhereParams<V>>whereParamsOrFieldName;
-//     const fieldName: string = <string>whereParamsOrFieldName;
-    
-//     if (TypeUtil.isString(fieldName)) {
-//       return this.whereEquals(WhereParams.from({
-//         fieldName, value, exact
-//       }));
-//     }
-
-//     if (!(whereParamsOrFieldName instanceof WhereParams)) {
-//       whereParams = WhereParams.from(<IWhereParams<V>>whereParams);
-//     }
-
-//     const transformedValue: V = this.transformValue(whereParams);
-
-//     this._builder.whereEquals(whereParams.parametrize(this.addQueryParameter<V>(transformedValue)));
-//     return this;
-//   }
-
-//   public whereNotEquals<V extends ConditionValue>(whereParams: IWhereParams<V>): IDocumentQuery<T>;
-//   public whereNotEquals<V extends ConditionValue>(whereParams: WhereParams<V>): IDocumentQuery<T>;
-//   public whereNotEquals<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T>;
-//   public whereNotEquals<V extends ConditionValue>(whereParamsOrFieldName: IWhereParams<V> | WhereParams<V> | string,
-//     value?: V, exact: boolean = false
-//   ): IDocumentQuery<T> {
-//     let whereParams: WhereParams<V> = <WhereParams<V>>whereParamsOrFieldName;
-//     const fieldName: string = <string>whereParamsOrFieldName;
-
-//     if (TypeUtil.isString(fieldName)) {
-//       return this.whereNotEquals(WhereParams.from({
-//         fieldName, value, exact
-//       }));
-//     }
-
-//     if (!(whereParamsOrFieldName instanceof WhereParams)) {
-//       whereParams = WhereParams.from(<IWhereParams<V>>whereParams);
-//     }
-
-//     const transformedValue: V = this.transformValue(whereParams);
-
-//     this._builder.whereNotEquals(whereParams.parametrize(this.addQueryParameter<V>(transformedValue)));
-//     return this;
-//   }
-
-//   public openSubclause(): IDocumentQuery<T> {
-//     this._builder.openSubclause();
-//     return this;
-//   }
-
-//   public closeSubclause(): IDocumentQuery<T> {
-//     this._builder.closeSubclause();
-//     return this;
-//   }
-
-//   public negateNext(): IDocumentQuery<T> {
-//     this._builder.negateNext();
-//     return this;
-//   }
-
-//   public whereIn<V extends ConditionValue>(fieldName: string, values: V[], exact?: boolean): IDocumentQuery<T> {
-//     const transformedValues: V[] = this.transformValuesArray<V>(fieldName, values);
-
-//     this._builder.whereIn(fieldName, this.addQueryParameter(values), exact);
-//     return this;
-//   }
-
-//   public whereStartsWith<V extends ConditionValue>(fieldName: string, value: V): IDocumentQuery<T> {
-//     const transformedValue: V = this.transformValue<V>(WhereParams.from<V>({
-//       fieldName, value, 
-//       allowWildcards: true
-//     }));
-
-//     this._builder.whereStartsWith(fieldName, this.addQueryParameter(transformedValue));
-//     return this;
-//   }
-
-//   public whereEndsWith<V extends ConditionValue>(fieldName: string, value: V): IDocumentQuery<T> {
-//     const transformedValue: V = this.transformValue<V>(WhereParams.from<V>({
-//       fieldName, value, 
-//       allowWildcards: true
-//     }));
-
-//     this._builder.whereEndsWith(fieldName, this.addQueryParameter(transformedValue));
-//     return this;
-//   }
-
-//   public whereBetween<V extends ConditionValue>(fieldName: string, start: V, end: V, exact?: boolean): IDocumentQuery<T> {
-//     let transformedFrom: V = '*' as V;
-//     let transformedTo: V = 'NULL' as V;
-
-//     if (!TypeUtil.isNull(start)) {
-//       transformedFrom = this.transformValue(WhereParams.from<V>({
-//         fieldName, value: start, exact
-//       }));
-//     }
-
-//     if (!TypeUtil.isNull(end)) {
-//       transformedTo = this.transformValue(WhereParams.from<V>({
-//         fieldName, value: end, exact
-//       }));
-//     }
-
-//     this._builder.whereBetween(
-//       fieldName, this.addQueryParameter(transformedFrom), 
-//       this.addQueryParameter(transformedTo), exact
-//     );
-
-//     return this;
-//   }
-
-//   public whereGreaterThan<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T> {
-//     let transformedValue: V = '*' as V;
-
-//     if (!TypeUtil.isNull(value)) {
-//       transformedValue = this.transformValue(WhereParams.from<V>({
-//         fieldName, value, exact
-//       }));
-//     }
-
-//     this._builder.whereGreaterThan(fieldName, this.addQueryParameter(transformedValue), exact);
-//     return this;
-//   }
-
-//   public whereGreaterThanOrEqual<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T> {
-//     let transformedValue: V = '*' as V;
-    
-//     if (!TypeUtil.isNull(value)) {
-//       transformedValue = this.transformValue(WhereParams.from<V>({
-//         fieldName, value, exact
-//       }));
-//     }
-
-//     this._builder.whereGreaterThanOrEqual(fieldName, this.addQueryParameter(transformedValue), exact);
-//     return this;
-//   }
-
-//   public whereLessThan<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T> {
-//     let transformedValue: V = 'NULL' as V;
-    
-//     if (!TypeUtil.isNull(value)) {
-//       transformedValue = this.transformValue(WhereParams.from<V>({
-//         fieldName, value, exact
-//       }));
-//     }
-
-//     this._builder.whereLessThan(fieldName, this.addQueryParameter(transformedValue), exact);
-//     return this;
-//   }
-
-//   public whereLessThanOrEqual<V extends ConditionValue>(fieldName: string, value: V, exact?: boolean): IDocumentQuery<T> {
-//     let transformedValue: V = 'NULL' as V;
-    
-//     if (!TypeUtil.isNull(value)) {
-//       transformedValue = this.transformValue(WhereParams.from<V>({
-//         fieldName, value, exact
-//       }));
-//     }
-
-//     this._builder.whereLessThanOrEqual(fieldName, this.addQueryParameter(transformedValue), exact);
-//     return this;
-//   }
-
-//   public whereExists(fieldName: string): IDocumentQuery<T> {
-//     this._builder.whereExists(fieldName);
-//     return this;
-//   }
-
-//   public andAlso(): IDocumentQuery<T> {
-//     this._builder.andAlso();
-//     return this;
-//   }
-
-//   public orElse(): IDocumentQuery<T> {
-//     this._builder.orElse();
-//     return this;
-//   }
-
-//   public boost(boost: number): IDocumentQuery<T> {
-//     this._builder.boost(boost);
-//     return this;
-//   }
-
-//   public fuzzy(fuzzy: number): IDocumentQuery<T> {
-//     this._builder.fuzzy(fuzzy);
-//     return this;
-//   }
-
-//   public proximity(proximity: number): IDocumentQuery<T> {
-//     this._builder.proximity(proximity);
-//     return this;
-//   }
-
-//   public orderBy(field: string, ordering?: OrderingType): IDocumentQuery<T> {
-//     this._builder.orderBy(field, ordering);
-//     return this;
-//   }
-
-//   public orderByDescending(field: string, ordering?: OrderingType): IDocumentQuery<T> {
-//     this._builder.orderByDescending(field, ordering);
-//     return this;
-//   }
-
-//   public orderByScore(): IDocumentQuery<T> {
-//     this._builder.orderByScore();
-//     return this;
-//   }
-
-//   public orderByScoreDescending(): IDocumentQuery<T> {
-//     this._builder.orderByScoreDescending();
-//     return this;
-//   }
-
-//   public search(fieldName: string, searchTerms: string, operator: SearchOperator = SearchOperators.Or): IDocumentQuery<T> {
-//     this._builder.search(fieldName, this.addQueryParameter(searchTerms), operator);
-//     return this;
-//   }
-
-//   public intersect(): IDocumentQuery<T> {
-//     this._builder.intersect();
-//     return this;
-//   }
-
-//   public distinct(): IDocumentQuery<T> {
-//     this._builder.distinct();
-//     return this;
-//   }
-
-//   public containsAny<V extends ConditionValue>(fieldName: string, values: V[]): IDocumentQuery<T> {
-//     const transformedValues: V[] = this.transformValuesArray<V>(fieldName, values);
-
-//     if (transformedValues.length) {
-//       this._builder.whereIn(fieldName, this.addQueryParameter(transformedValues));
-//     }
-
-//     return this;
-//   }
-
-//   public containsAll<V extends ConditionValue>(fieldName: string, values: V[]): IDocumentQuery<T> {
-//     const transformedValues: V[] = this.transformValuesArray<V>(fieldName, values);
-    
-//     if (transformedValues.length) {
-//       this._builder.whereAllIn(fieldName, this.addQueryParameter(transformedValues));
-//     }
-
-//     return this;
-//   }
-
-//   public groupBy(fieldName: string, ...fieldNames: string[]): IDocumentQuery<T> {
-//     const builder: IQueryBuilder = this._builder;
-
-//     builder.groupBy.apply(builder, [fieldName].concat(fieldNames));
-//     return this;
-//   }
-
-//   public groupByKey(fieldName: string, projectedName?: string): IDocumentQuery<T> {
-//     this._builder.groupByKey(fieldName, projectedName);
-
-//     return this;
-//   }
-
-//   public groupBySum(fieldName: string, projectedName?: string): IDocumentQuery<T> {
-//     this._builder.groupBySum(fieldName, projectedName);
-
-//     return this;
-//   }
-
-//   public groupByCount(projectedName?: string): IDocumentQuery<T> {
-//     this._builder.groupByCount(projectedName);
-
-//     return this;
-//   }
-
-//   public whereTrue(): IDocumentQuery<T> {
-//     this._builder.whereTrue();
-
-//     return this;
-//   }
-
-//   public withinRadiusOf(fieldName: string, radius: number, latitude: number, longitude: number, radiusUnits?: SpatialUnit, distErrorPercent?: number): IDocumentQuery<T> {
-//     this._builder.withinRadiusOf(
-//       fieldName, this.addQueryParameter(radius), this.addQueryParameter(latitude), 
-//       this.addQueryParameter(longitude), radiusUnits, distErrorPercent
-//     );
-
-//     return this;
-//   }
-
-//   public spatial(fieldName: string, shapeWkt: string, relation: SpatialRelation, distErrorPercent: number): IDocumentQuery<T>;
-//   public spatial(fieldName: string, criteria: SpatialCriteria): IDocumentQuery<T>;
-//   public spatial(fieldName: string, shapeWktOrCriteria: string | SpatialCriteria, relation?: SpatialRelation, distErrorPercent?: number): IDocumentQuery<T> {
-//     const criteria: SpatialCriteria = <SpatialCriteria>shapeWktOrCriteria;
-//     const shapeWkt: string = <string>shapeWktOrCriteria;
-
-//     if (shapeWktOrCriteria instanceof SpatialCriteria) {
-//       this._builder.spatial(
-//         fieldName, criteria, (parameterValue: string | number): string => 
-//         this.addQueryParameter(<string>parameterValue)
-//       );
-//     } else {
-//       this._builder.spatial(fieldName, this.addQueryParameter(shapeWkt), relation, distErrorPercent);
-//     }
-
-//     return this;
-//   }
-
-//   public orderByDistance(fieldName: string, latitude: number, longitude: number): IDocumentQuery<T>;
-//   public orderByDistance(fieldName: string, shapeWkt: string): IDocumentQuery<T>;
-//   public orderByDistance(fieldName: string, latitudeOrShapeWkt: number | string, longitude?: number): IDocumentQuery<T> {
-//     const shapeWkt: string = <string>latitudeOrShapeWkt;
-//     const latitude: number = <number>latitudeOrShapeWkt;
-
-//     if (TypeUtil.isNull(longitude)) {
-//       this._builder.orderByDistance(fieldName, this.addQueryParameter(shapeWkt));
-//     } else {
-//       this._builder.orderByDistance(fieldName, this.addQueryParameter(latitude), this.addQueryParameter(longitude));
-//     }
-
-//     return this;
-//   }
-
-//   public orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): IDocumentQuery<T>;
-//   public orderByDistanceDescending(fieldName: string, shapeWkt: string): IDocumentQuery<T>;
-//   public orderByDistanceDescending(fieldName: string, latitudeOrShapeWkt: number | string, longitude?: number): IDocumentQuery<T> {
-//     const shapeWkt: string = <string>latitudeOrShapeWkt;
-//     const latitude: number = <number>latitudeOrShapeWkt;
-
-//     if (TypeUtil.isNull(longitude)) {
-//       this._builder.orderByDistanceDescending(fieldName, this.addQueryParameter(shapeWkt));
-//     } else {
-//       this._builder.orderByDistanceDescending(fieldName, this.addQueryParameter(latitude), this.addQueryParameter(longitude));
-//     }
-
-//     return this;
-//   }
-
-//   protected addQueryParameter<V extends ConditionValue>(valueOrValues: V | V[]) {
-//     const parameterName = `p${this.queryParameters.size}`;
-
-//     this.queryParameters.set(parameterName, valueOrValues);
-//     return parameterName;
-//   }
-
-//   protected transformValue<V extends ConditionValue>(whereParams: WhereParams<V>): V {
-//     const value: V = whereParams.value;
-
-//     if (TypeUtil.isNull(value)) {
-//       return null;
-//     }
-
-//     if ("" === <string>value) {
-//       return "" as V;
-//     }
-
-//     if (value instanceof Date) {
-//       return DateUtil.stringify(<Date>value) as V;
-//     }
-
-//     if (!["boolean", "number", "string"].includes(typeof value)) {
-//       throw new InvalidArgumentException(
-//         "Invalid value passed to query condition. \
-// Only integer / number / string and null values are supported"
-//       );
-//     }
-
-//     return value;
-//   }
-
-//   protected transformValuesArray<V extends ConditionValue>(fieldName: string, values: Array<V | V[]>): V[] {
-//     let result: V[] = [];
-//     let nestedWhereParams: WhereParams<V>;
-//     const unpacked: V[] = this.unpackValuesArray<V>(values);
-
-//     for (let value of unpacked) {
-//       nestedWhereParams = WhereParams.from<V>({
-//         fieldName, value,
-//         allowWildcards: true
-//       });
-
-//       result.push(this.transformValue<V>(nestedWhereParams));
-//     }
-
-//     return result;
-//   }
-
-//   protected unpackValuesArray<V extends ConditionValue>(values: Array<V | V[]>): V[] {
-//     let result: V[] = [];
-
-//     for (let value of values) {
-//       if (TypeUtil.isArray(value)) {
-//         result = result.concat(this.unpackValuesArray<V>(<V[]>value));
-//       } else {
-//         result.push(<V>value);
-//       }
-//     }
-
-//     return result;
-//   }
-// }
+import { AbstractDocumentQuery } from "./AbstractDocumentQuery";
+import { IDocumentQuery } from "./IDocumentQuery";
+import { DocumentType } from "../DocumentAbstractions";
+import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
+import { DeclareToken } from "./Tokens/DeclareToken";
+import { LoadToken } from "./Tokens/LoadToken";
+import { throwError } from "../../Exceptions";
+import { CONSTANTS } from "../../Constants";
+import { QueryData } from "../Queries/QueryData";
+import { OrderingType } from "./OrderingType";
+import { SearchOperator } from "../Queries/SearchOperator";
+import { QueryStatistics } from "./QueryStatistics";
+import { QueryOperator } from "../Queries/QueryOperator";
+import { MethodCall } from "./MethodCall";
+import { WhereParams } from "./WhereParams";
+import { IGroupByDocumentQuery } from "./IGroupByDocumentQuery";
+import { GroupBy } from "../Queries/GroupBy";
+import { GroupByDocumentQuery } from "./GroupByDocumentQuery";
+import { FieldsToFetchToken } from "./Tokens/FieldsToFetchToken";
+import { SpatialCriteriaFactory } from "../Queries/Spatial/SpatialCriteriaFactory";
+import { SpatialCriteria } from "../Queries/Spatial/SpatialCriteria";
+import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField";
+import { SpatialUnits, SpatialRelation } from "../Indexes/Spatial";
+import { TypeUtil } from "../../Utility/TypeUtil";
+import { ObjectTypeDescriptor } from "../..";
+
+export class DocumentQuery<T extends object> 
+    extends AbstractDocumentQuery<T, DocumentQuery<T>> implements IDocumentQuery<T> {
+
+    public constructor(
+        documentType: DocumentType<T>, 
+        session: InMemoryDocumentSessionOperations, 
+        indexName: string, 
+        collectionName: string, 
+        isGroupBy: boolean);
+    public constructor(
+        documentType: DocumentType<T>, 
+        session: InMemoryDocumentSessionOperations, 
+        indexName: string, 
+        collectionName: string, 
+        isGroupBy: boolean,
+        declareToken: DeclareToken, 
+        loadTokens: LoadToken[], 
+        fromAlias: string);
+    public constructor(
+        documentType: DocumentType<T>, 
+        session: InMemoryDocumentSessionOperations, 
+        indexName: string, 
+        collectionName: string, 
+        isGroupBy: boolean,
+        declareToken?: DeclareToken, 
+        loadTokens?: LoadToken[], 
+        fromAlias?: string) {
+        super(documentType, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, fromAlias);
+    }
+
+    // public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, String... fields) {
+    //     QueryData queryData = new QueryData(fields, fields);
+    //     return selectFields(projectionClass, queryData);
+    // }
+
+    public selectFields<TProjection extends object>(
+        properties: string[] | string): IDocumentQuery<TProjection>;
+    public selectFields<TProjection extends object>(
+        queryData: QueryData,
+        projectionType: DocumentType<TProjection>): IDocumentQuery<TProjection>;
+    public selectFields<TProjection extends object>(
+        properties: string[] | string, 
+        projectionType: DocumentType<TProjection>): IDocumentQuery<TProjection>;
+    public selectFields<TProjection extends object>(
+        propertiesOrQueryData: string | string[] | QueryData, 
+        projectionType?: DocumentType<TProjection>): IDocumentQuery<TProjection> {
+            if (TypeUtil.isString(propertiesOrQueryData)) {
+                propertiesOrQueryData = [ propertiesOrQueryData as string ];
+            }
+
+            if (Array.isArray(propertiesOrQueryData)) {
+                if (projectionType) {
+                    return this._selectFieldsByProjectionType(propertiesOrQueryData, projectionType);
+                }
+
+                const queryData = new QueryData(propertiesOrQueryData, propertiesOrQueryData);
+                return this.selectFields(queryData, projectionType);
+            } else {
+                return this._createDocumentQueryInternal(projectionType, propertiesOrQueryData as QueryData);
+            }
+    }
+
+    private _selectFieldsByProjectionType<TProjection extends object>(
+        properties: string[], projectionType: DocumentType<TProjection>): IDocumentQuery<TProjection> {
+        if (!properties || !properties.length) {
+            throwError("InvalidArgumentException", "Fields cannot be null or empty.");
+        }
+
+        try {
+            const identityProperty = this.conventions.getIdentityProperty(projectionType);
+
+            const projections = properties;
+            const fields = properties.map(x => x === identityProperty
+                ? CONSTANTS.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME
+                : x);
+
+            return this.selectFields(new QueryData(fields, projections), projectionType);
+        } catch (err) {
+            throwError("RavenException", 
+                "Unable to project to type: " + projectionType, err);
+        }
+    }
+
+    public distinct(): IDocumentQuery<T> {
+        this._distinct();
+        return this;
+    }
+
+    public orderByScore(): IDocumentQuery<T> {
+        this._orderByScore();
+        return this;
+    }
+
+    public orderByScoreDescending(): IDocumentQuery<T> {
+        this._orderByScoreDescending();
+        return this;
+    }
+
+    // TBD public IDocumentQuery<T> explainScores() {
+
+    public waitForNonStaleResults(): IDocumentQuery<T>;
+    public waitForNonStaleResults(waitTimeout: number): IDocumentQuery<T>;
+    public waitForNonStaleResults(waitTimeout: number = null): IDocumentQuery<T> {
+        this._waitForNonStaleResults(waitTimeout);
+        return this;
+    }
+
+    public addParameter(name: string, value: any): IDocumentQuery<T> {
+        super.addParameter(name, value);
+        return this;
+    }
+
+    public addOrder(fieldName: string, descending: boolean): IDocumentQuery<T>;
+    public addOrder(fieldName: string, descending: boolean, ordering: OrderingType): IDocumentQuery<T>;
+    public addOrder(fieldName: string, descending: boolean, ordering: OrderingType = "STRING"): IDocumentQuery<T>  {
+        if (descending) {
+            this.orderByDescending(fieldName, ordering);
+        } else {
+            this.orderBy(fieldName, ordering);
+        }
+
+        return this;
+    }
+
+    // tslint:disable-next-line:max-line-length
+    // TBD public IDocumentQuery<T> AddOrder<TValue>(Expression<Func<T, TValue>> propertySelector, bool descending, OrderingType ordering)
+
+    // TBD void IQueryBase<T, IDocumentQuery<T>>.AfterStreamExecuted(Action<BlittableJsonReaderObject> action)
+    // TBD void IQueryBase<T, IRawDocumentQuery<T>>.AfterStreamExecuted(Action<BlittableJsonReaderObject> action)
+
+    public openSubclause(): IDocumentQuery<T> {
+        this._openSubclause();
+        return this;
+    }
+
+    public closeSubclause(): IDocumentQuery<T> {
+        this._closeSubclause();
+        return this;
+    }
+
+    public search(fieldName: string, searchTerms: string): IDocumentQuery<T>;
+    public search(fieldName: string, searchTerms: string, operator: SearchOperator): IDocumentQuery<T>;
+    public search(fieldName: string, searchTerms: string, operator?: SearchOperator): IDocumentQuery<T> {
+        this._search(fieldName, searchTerms, operator);
+        return this;
+    }
+
+    // tslint:disable-next-line:max-line-length
+    // TBD public IDocumentQuery<T> Search<TValue>(Expression<Func<T, TValue>> propertySelector, string searchTerms, SearchOperator @operator)
+
+    public intersect(): IDocumentQuery<T> {
+        this._intersect();
+        return this;
+    }
+
+    public containsAny(fieldName: string, values: object[]): IDocumentQuery<T> {
+        this._containsAny(fieldName, values);
+        return this;
+    }
+
+    // tslint:disable-next-line:max-line-length
+    // TBD public IDocumentQuery<T> ContainsAny<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values)
+
+    public containsAll(fieldName: string, values): IDocumentQuery<T> {
+        this._containsAll(fieldName, values);
+        return this;
+    }
+
+    // tslint:disable-next-line:max-line-length
+    // TBD public IDocumentQuery<T> ContainsAll<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values)
+
+    public statistics(stats: (stats: QueryStatistics) => void): IDocumentQuery<T> {
+        this._statistics(stats);
+        return this;
+    }
+
+    public usingDefaultOperator(queryOperator: QueryOperator): IDocumentQuery<T> {
+        this._usingDefaultOperator(queryOperator);
+        return this;
+    }
+
+    public noTracking(): IDocumentQuery<T> {
+        this._noTracking();
+        return this;
+    }
+
+    public noCaching(): IDocumentQuery<T> {
+        this._noCaching();
+        return this;
+    }
+
+    // TBD  public IDocumentQuery<T> showTimings()
+
+    public include(path: string): IDocumentQuery<T> {
+        this._include(path);
+        return this;
+    }
+
+    // TBD: IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Include(Expression<Func<T, object>> path)
+
+    public not(): IDocumentQuery<T> {
+        this.negateNext();
+        return this;
+    }
+
+    public take(count: number): IDocumentQuery<T> {
+        this._take(count);
+        return this;
+    }
+
+    public skip(count: number): IDocumentQuery<T> {
+        this._skip(count);
+        return this;
+    }
+
+    public whereLucene(fieldName: string, whereClause: string): IDocumentQuery<T> {
+        this._whereLucene(fieldName, whereClause);
+        return this;
+    }
+
+    public whereEquals(fieldName: string, method: MethodCall): IDocumentQuery<T>;
+    public whereEquals(fieldName: string, method: MethodCall, exact: boolean): IDocumentQuery<T>;
+    public whereEquals(fieldName: string, value: any): void;
+    public whereEquals(fieldName: string, value: any, exact: boolean): IDocumentQuery<T>;
+    public whereEquals(whereParams: WhereParams): IDocumentQuery<T>;
+    public whereEquals(...args: any[]): IDocumentQuery<T> {
+        (this._whereEquals as any)(...args as any[]);
+        return this;
+    }
+
+    public whereNotEquals(fieldName: string, method: MethodCall): IDocumentQuery<T>;
+    public whereNotEquals(fieldName: string, method: MethodCall, exact: boolean): IDocumentQuery<T>;
+    public whereNotEquals(fieldName: string, value: any): void;
+    public whereNotEquals(fieldName: string, value: any, exact: boolean): IDocumentQuery<T>;
+    public whereNotEquals(whereParams: WhereParams): IDocumentQuery<T>;
+    public whereNotEquals(...args: any[]): IDocumentQuery<T> {
+        (this._whereNotEquals as any)(...args);
+        return this;
+    }
+
+    // tslint:disable-next-line:max-line-length
+    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereEquals<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact)
+    // tslint:disable-next-line:max-line-length
+    // TBD IDocumentQuery<T> IFilterDocumentQueryBase<T, IDocumentQuery<T>>.WhereEquals<TValue>(Expression<Func<T, TValue>> propertySelector, MethodCall value, bool exact)
+
+    // tslint:disable-next-line:max-line-length
+    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereNotEquals<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact)
+    // tslint:disable-next-line:max-line-length
+    // TBD IDocumentQuery<T> IFilterDocumentQueryBase<T, IDocumentQuery<T>>.WhereNotEquals<TValue>(Expression<Func<T, TValue>> propertySelector, MethodCall value, bool exact)
+
+    public whereIn(fieldName: string, values: object[]): IDocumentQuery<T>;
+    public whereIn(fieldName: string, values: object[], exact: boolean): IDocumentQuery<T>;
+    public whereIn(...args: any[]): IDocumentQuery<T> {
+        (this._whereIn as any)(...args);
+        return this;
+    }
+
+    // TBD public IDocumentQuery<T> WhereIn<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values, bool exact = false)
+
+    public whereStartsWith(fieldName: string, value: any): IDocumentQuery<T> {
+        this._whereStartsWith(fieldName, value);
+        return this;
+    }
+
+    public whereEndsWith(fieldName: string, value: any): IDocumentQuery<T> {
+        this._whereEndsWith(fieldName, value);
+        return this;
+    }
+
+    // TBD: public IDocumentQuery<T> WhereEndsWith<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value)
+
+    public whereBetween(fieldName: string, start: object, end: object): IDocumentQuery<T>;
+    public whereBetween(fieldName: string, start: object, end: object, exact: boolean): IDocumentQuery<T>;
+    public whereBetween(...args: any[]): IDocumentQuery<T> {
+        (this._whereBetween as any)(...args);
+        return this;
+    }
+
+    public whereGreaterThan(fieldName: string, value: any): IDocumentQuery<T>;
+    public whereGreaterThan(fieldName: string, value: any, exact: boolean): IDocumentQuery<T>;
+    public whereGreaterThan(...args: any[]): IDocumentQuery<T> {
+        (this._whereGreaterThan as any)(...args);
+        return this;
+    }
+
+    // tslint:disable-next-line:max-line-length
+    // TBD public IDocumentQuery<T> WhereBetween<TValue>(Expression<Func<T, TValue>> propertySelector, TValue start, TValue end, bool exact = false)
+
+    public whereGreaterThanOrEqual(fieldName: string, value: any): IDocumentQuery<T>; 
+    public whereGreaterThanOrEqual(fieldName: string, value: any, exact: boolean): IDocumentQuery<T>; 
+    public whereGreaterThanOrEqual(...args: any[]): IDocumentQuery<T> {
+        (this._whereGreaterThanOrEqual as any)(...args);
+        return this;
+    }
+
+    public whereLessThan(fieldName: string, value: any): IDocumentQuery<T> ;
+    public whereLessThan(fieldName: string, value: any, exact: boolean): IDocumentQuery<T>;
+    public whereLessThan(...args: any[]): IDocumentQuery<T> {
+        (this._whereLessThan as any)(...args);
+        return this;
+    }
+
+    public whereLessThanOrEqual(fieldName: string, value: any): IDocumentQuery<T> ;
+    public whereLessThanOrEqual(fieldName: string, value: any, exact: boolean): IDocumentQuery<T>;
+    public whereLessThanOrEqual(...args: any[]): IDocumentQuery<T> {
+        (this._whereLessThanOrEqual as any)(...args);
+        return this;
+    }
+
+    // tslint:disable-next-line:max-line-length
+    // TBD public IDocumentQuery<T> WhereGreaterThan<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
+    // tslint:disable-next-line:max-line-length
+    // TBD public IDocumentQuery<T> WhereGreaterThanOrEqual<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
+
+    // tslint:disable-next-line:max-line-length
+    // TBD public IDocumentQuery<T> WhereLessThanOrEqual<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
+
+    // TBD public IDocumentQuery<T> WhereLessThanOrEqual<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
+    // TBD public IDocumentQuery<T> WhereExists<TValue>(Expression<Func<T, TValue>> propertySelector)
+
+    public whereExists(fieldName: string): IDocumentQuery<T> {
+        this._whereExists(fieldName);
+        return this;
+    }
+
+    // tslint:disable-next-line:max-line-length
+    // TBD IDocumentQuery<T> IFilterDocumentQueryBase<T, IDocumentQuery<T>>.WhereRegex<TValue>(Expression<Func<T, TValue>> propertySelector, string pattern)
+
+    public whereRegex(fieldName: string, pattern: string): IDocumentQuery<T> {
+        this._whereRegex(fieldName, pattern);
+        return this;
+    }
+
+    public andAlso(): IDocumentQuery<T> {
+        this._andAlso();
+        return this;
+    }
+
+    public orElse(): IDocumentQuery<T> {
+        this._orElse();
+        return this;
+    }
+
+    public boost(boost: number): IDocumentQuery<T> {
+        this._boost(boost);
+        return this;
+    }
+
+    public fuzzy(fuzzy: number): IDocumentQuery<T> {
+        this._fuzzy(fuzzy);
+        return this;
+    }
+
+    public proximity(proximity: number): IDocumentQuery<T> {
+        this._proximity(proximity);
+        return this;
+    }
+
+    public randomOrdering(): IDocumentQuery<T>;
+    public randomOrdering(seed: string): IDocumentQuery<T>;
+    public randomOrdering(seed?: string): IDocumentQuery<T> {
+        this._randomOrdering(seed);
+        return this;
+    }
+
+    // TBD public IDocumentQuery<T> customSortUsing(String typeName, boolean descending)
+
+    public groupBy(fieldName: string, ...fieldNames: string[]): IGroupByDocumentQuery<T>;
+    public groupBy(field: GroupBy, ...fields: GroupBy[]): IGroupByDocumentQuery<T>;
+    public groupBy(...args: any[]): IGroupByDocumentQuery<T> {
+        (this._groupBy as any)(...args);
+
+        return new GroupByDocumentQuery(this);
+    }
+
+    public ofType<TResult extends object>(tResultClass: DocumentType<TResult>): IDocumentQuery<TResult> {
+        if (tResultClass && TypeUtil.isObjectTypeDescriptor(tResultClass)) {
+            this._theSession.conventions.registerEntityType(tResultClass as ObjectTypeDescriptor<TResult>);
+        }
+        
+        return this._createDocumentQueryInternal(tResultClass);
+    }
+
+    public orderBy(field: string): IDocumentQuery<T>;
+    public orderBy(field: string, ordering: OrderingType): IDocumentQuery<T>;
+    public orderBy(...args: any[]): IDocumentQuery<T> {
+        (this._orderBy as any)(...args);
+        return this;
+    }
+
+    public orderByDescending(field: string): IDocumentQuery<T>;
+    public orderByDescending(field: string, ordering: OrderingType): IDocumentQuery<T>;
+    public orderByDescending(...args: any[]): IDocumentQuery<T> {
+        (this._orderByDescending as any)(...args);
+        return this;
+    }
+
+    // TBD public IDocumentQuery<T> OrderBy<TValue>(params Expression<Func<T, TValue>>[] propertySelectors)
+
+    // TBD public IDocumentQuery<T> OrderByDescending<TValue>(params Expression<Func<T, TValue>>[] propertySelectors)
+
+    // TBD public Lazy<IEnumerable<T>> Lazily()
+
+    // TBD public Lazy<int> CountLazily()
+
+    // TBD public Lazy<IEnumerable<T>> Lazily(Action<IEnumerable<T>> onEval)
+
+    private  _createDocumentQueryInternal<TResult extends object>(
+        resultClass: DocumentType<TResult>): DocumentQuery<TResult>;
+    private  _createDocumentQueryInternal<TResult extends object>(
+        resultClass: DocumentType<TResult>, queryData: QueryData): DocumentQuery<TResult>;
+    private  _createDocumentQueryInternal<TResult extends object>(
+        resultClass: DocumentType<TResult>, queryData?: QueryData): DocumentQuery<TResult> {
+        const newFieldsToFetch = queryData && queryData.fields.length > 0
+                ? FieldsToFetchToken.create(queryData.fields, queryData.projections, queryData.isCustomFunction)
+                : null;
+
+        if (newFieldsToFetch) {
+            this._updateFieldsToFetchToken(newFieldsToFetch);
+        }
+
+        const query = new DocumentQuery(
+            resultClass,
+            this._theSession,
+            this.indexName,
+            this.collectionName,
+            this._isGroupBy,
+            queryData ? queryData.declareToken : null,
+            queryData ? queryData.loadTokens : null,
+            queryData ? queryData.fromAlias : null);
+
+        query._queryRaw = this._queryRaw;
+        query._pageSize = this._pageSize;
+        query._selectTokens = this._selectTokens;
+        query._fieldsToFetchToken = this._fieldsToFetchToken;
+        query._whereTokens = this._whereTokens;
+        query._orderByTokens = this._orderByTokens;
+        query._groupByTokens = this._groupByTokens;
+        query._queryParameters = this._queryParameters;
+        query._start = this._start;
+        query._timeout = this._timeout;
+        query._queryStats = this._queryStats;
+        query._theWaitForNonStaleResults = this._theWaitForNonStaleResults;
+        query._negate = this._negate;
+        //noinspection unchecked
+        query._includes = new Set(this._includes);
+        query._rootTypes = new Set([ this._clazz ]);
+
+        for (const listener of query.listeners("beforeQuery")) {
+            query.on("beforeQuery", listener as any);
+        }
+
+        for (const listener of query.listeners("afterQuery")) {
+            query.on("afterQuery", listener as any);
+        }
+
+        /* TBD AfterStreamExecutedCallback = AfterStreamExecutedCallback,
+        query.HighlightedFields = new List<HighlightedField>(HighlightedFields),
+        query.HighlighterPreTags = HighlighterPreTags,
+        query.HighlighterPostTags = HighlighterPostTags,
+        */
+        query._disableEntitiesTracking = this._disableEntitiesTracking;
+        query._disableCaching = this._disableCaching;
+        // TBD ShowQueryTimings = ShowQueryTimings,
+        // TBD query.shouldExplainScores = shouldExplainScores;
+        query._isIntersect = this._isIntersect;
+        query._defaultOperator = this._defaultOperator;
+
+        return query;
+    }
+
+    // tslint:disable:max-line-length
+    // TBD public FacetedQueryResult GetFacets(string facetSetupDoc, int facetStart, int? facetPageSize)
+    // TBD public FacetedQueryResult GetFacets(List<Facet> facets, int facetStart, int? facetPageSize)
+    // TBD public Lazy<FacetedQueryResult> GetFacetsLazy(string facetSetupDoc, int facetStart, int? facetPageSize)
+    // TBD public Lazy<FacetedQueryResult> GetFacetsLazy(List<Facet> facets, int facetStart, int? facetPageSize)
+    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField)
+    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings)
+    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(string fieldName,string fieldKeyName, int fragmentLength,int fragmentCount,out FieldHighlightings highlightings)
+    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, int fragmentLength, int fragmentCount, Expression<Func<T, IEnumerable>> fragmentsPropertySelector)
+    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, int fragmentLength, int fragmentCount, out FieldHighlightings fieldHighlightings)
+    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, Expression<Func<T, TValue>> keyPropertySelector, int fragmentLength, int fragmentCount, out FieldHighlightings fieldHighlightings)
+    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.SetHighlighterTags(string preTag, string postTag)
+    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.SetHighlighterTags(string[] preTags, string[] postTags)
+    // TBD public IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
+    // tslint:enable:max-line-length
+
+    public spatial(
+        fieldName: string, 
+        clause: (factory: SpatialCriteriaFactory) => SpatialCriteria): IDocumentQuery<T>;
+    public spatial(
+        field: DynamicSpatialField, 
+        clause: (factory: SpatialCriteriaFactory) => SpatialCriteria): IDocumentQuery<T>;
+    public spatial(
+        fieldNameOrField: string | DynamicSpatialField, 
+        clause: (factory: SpatialCriteriaFactory) => SpatialCriteria): IDocumentQuery<T> {
+        const criteria = clause(SpatialCriteriaFactory.INSTANCE);
+        this._spatial(fieldNameOrField as any, criteria);
+        return this;
+    }
+
+    // tslint:disable-next-line:max-line-length
+    // TBD public IDocumentQuery<T> Spatial(Func<SpatialDynamicFieldFactory<T>, DynamicSpatialField> field, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
+    // tslint:disable-next-line:max-line-length
+    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WithinRadiusOf<TValue>(Expression<Func<T, TValue>> propertySelector, double radius, double latitude, double longitude, SpatialUnits? radiusUnits, double distanceErrorPct)
+
+    /**
+     * Filter matches to be inside the specified radius
+     * @param fieldName Spatial field name.
+     * @param radius Radius (measured in units passed to radiusUnits parameter) in which matches should be found.
+     * @param latitude Latitude pointing to a circle center.
+     * @param longitude Longitude pointing to a circle center.
+     * @param radiusUnits Units that will be used to measure distances (Kilometers, Miles).
+     * @param distanceErrorPct Distance error percent
+     * @return Query instance
+     */
+    public withinRadiusOf(
+        fieldName: string, radius: number, latitude: number, longitude: number): IDocumentQuery<T>;
+    public withinRadiusOf(
+        fieldName: string, 
+        radius: number, 
+        latitude: number, 
+        longitude: number, 
+        radiusUnits: SpatialUnits): IDocumentQuery<T>;
+    public withinRadiusOf(
+        fieldName: string, 
+        radius: number, 
+        latitude: number, 
+        longitude: number, 
+        radiusUnits: SpatialUnits, 
+        distanceErrorPct: number): IDocumentQuery<T>;
+    public withinRadiusOf(
+        fieldName: string, 
+        radius: number, 
+        latitude: number, 
+        longitude: number, 
+        radiusUnits: SpatialUnits = null, 
+        distanceErrorPct: number = CONSTANTS.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT): IDocumentQuery<T> {
+            this._withinRadiusOf(fieldName, radius, latitude, longitude, radiusUnits, distanceErrorPct);
+            return this;
+        }
+
+    // tslint:disable-next-line:max-line-length
+    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.RelatesToShape<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt, SpatialRelation relation, double distanceErrorPct)
+
+    public relatesToShape(
+        fieldName: string, shapeWkt: string, relation: SpatialRelation): IDocumentQuery<T>;
+    public relatesToShape(
+        fieldName: string, shapeWkt: string, relation: SpatialRelation, distanceErrorPct: number): IDocumentQuery<T>;
+    public relatesToShape(
+        fieldName: string, 
+        shapeWkt: string, 
+        relation: SpatialRelation, 
+        distanceErrorPct: number = CONSTANTS.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT): IDocumentQuery<T> {
+        this._spatialByShapeWkt(fieldName, shapeWkt, relation, distanceErrorPct);
+        return this;
+    }
+
+    public orderByDistance(field: DynamicSpatialField, latitude: number, longitude: number): IDocumentQuery<T>;
+    public orderByDistance(field: DynamicSpatialField, shapeWkt: string): IDocumentQuery<T>;
+    public orderByDistance(fieldName: string, latitude: number, longitude: number): IDocumentQuery<T>;
+    public orderByDistance(fieldName: string, shapeWkt: string): IDocumentQuery<T>;
+    public orderByDistance(...args: any[]): IDocumentQuery<T> {
+        (this._orderByDistance as any)(...args);
+        return this;
+    }
+
+    public orderByDistanceDescending(
+        field: DynamicSpatialField, latitude: number, longitude: number): IDocumentQuery<T>;
+    public orderByDistanceDescending(field: DynamicSpatialField, shapeWkt: string): IDocumentQuery<T>;
+    public orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): IDocumentQuery<T>;
+    public orderByDistanceDescending(fieldName: string, shapeWkt: string): IDocumentQuery<T>;
+    public orderByDistanceDescending(...args: any[]): IDocumentQuery<T> {
+        (this._orderByDistanceDescending as any)(...args);
+        return this;
+    }
+
+    // tslint:disable:max-line-length
+    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude)
+    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt)
+    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude)
+    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt)
+    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude)
+    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt)
+    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude)
+    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt)
+    // tslint:enable:max-line-length
+}

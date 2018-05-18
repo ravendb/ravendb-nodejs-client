@@ -5,7 +5,8 @@ import { DocumentType } from "../DocumentAbstractions";
 import { QueryOperator } from "../Queries/QueryOperator";
 import { QueryStatistics } from "./QueryStatistics";
 
-export class RawDocumentQuery<T> extends AbstractDocumentQuery<T, RawDocumentQuery<T>> implements IRawDocumentQuery<T> {
+export class RawDocumentQuery<T extends object> 
+    extends AbstractDocumentQuery<T, RawDocumentQuery<T>> implements IRawDocumentQuery<T> {
 
     public constructor(session: InMemoryDocumentSessionOperations, rawQuery: string, clazz?: DocumentType<T>) {
         super(clazz, session, null, null, false, null, null, null);

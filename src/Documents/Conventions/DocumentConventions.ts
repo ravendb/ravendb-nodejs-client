@@ -63,7 +63,7 @@ export class DocumentConventions {
     private _readBalanceBehavior: ReadBalanceBehavior;
     private _maxHttpCacheSize: number;
     
-    private _knownEntityTypes: Map<string, ObjectTypeDescriptor> = new Map();
+    private _knownEntityTypes: Map<string, ObjectTypeDescriptor>;
 
     private _entityObjectMapper: TypesAwareObjectMapper = new TypesAwareObjectMapper({
        knownTypes: this._knownEntityTypes,
@@ -78,7 +78,7 @@ export class DocumentConventions {
         this._findIdentityPropertyNameFromCollectionName = entityName => "id";
         this._findJsType = (id: string, doc: object) => {
             const metadata = doc[CONSTANTS.Documents.Metadata.KEY];
-            if (metadata !== null) {
+            if (metadata) {
                 const jsType = metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] as string;
                 return this._knownEntityTypes.get(jsType) || null;
             }
@@ -106,6 +106,7 @@ export class DocumentConventions {
         this._maxNumberOfRequestsPerSession = 30;
         this._maxHttpCacheSize = 128 * 1024 * 1024;
 
+        this._knownEntityTypes = new Map();
         this._entityObjectMapper = new TypesAwareObjectMapper({
             dateFormat: DateUtil.DEFAULT_DATE_FORMAT,
             knownTypes: this._knownEntityTypes
@@ -327,7 +328,7 @@ export class DocumentConventions {
      * @param entity entity to get collection name
      * @return collection name
      */
-    public getCollectionNameForEntity(entity: Object): string {
+    public getCollectionNameForEntity(entity: object): string {
         if (!entity) {
             return null;
         }
@@ -335,7 +336,7 @@ export class DocumentConventions {
         return this.getCollectionNameForType(this.getEntityTypeDescriptor(entity));
     }
 
-    public getEntityTypeDescriptor<T extends Object>(entity: T): ObjectTypeDescriptor<T> {
+    public getEntityTypeDescriptor<T extends object>(entity: T): ObjectTypeDescriptor<T> {
         if (TypeUtil.isClass(entity.constructor)) {
             return entity.constructor as ClassConstructor;
         }
@@ -359,7 +360,7 @@ export class DocumentConventions {
      * @param entity Entity
      * @return document id
      */
-    public generateDocumentId(database: string, entity: Object): Promise<string> {
+    public generateDocumentId(database: string, entity: object): Promise<string> {
         const entityTypeDescriptor: ObjectTypeDescriptor = this.getEntityTypeDescriptor(entity);
 
         for (const [typeDescriptor, idConvention] of this._registeredIdConventions) {
@@ -518,9 +519,9 @@ export class DocumentConventions {
         return this;
     }
 
-    public findEntityType<T>(documentType: DocumentType<T>): ObjectTypeDescriptor<T>;
-    public findEntityType<T>(typeName: string): ObjectTypeDescriptor<T>;
-    public findEntityType<T>(docTypeOrtypeName: string): ObjectTypeDescriptor<T> {
+    public findEntityType<T extends object>(documentType: DocumentType<T>): ObjectTypeDescriptor<T>;
+    public findEntityType<T extends object>(typeName: string): ObjectTypeDescriptor<T>;
+    public findEntityType<T extends object>(docTypeOrtypeName: string): ObjectTypeDescriptor<T> {
         if (!docTypeOrtypeName) {
             return null;
         }

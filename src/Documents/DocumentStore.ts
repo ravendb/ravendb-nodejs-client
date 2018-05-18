@@ -54,7 +54,7 @@ export class DocumentStore extends DocumentStoreBase {
     }
 
     public get identifier(): string {
-        if (!this._identifier) {
+        if (this._identifier) {
             return this._identifier;
         }
 

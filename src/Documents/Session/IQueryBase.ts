@@ -96,5 +96,5 @@ export interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> {
      * @param value Parameter value
      * @return Query instance
      */
-    addParameter(name: string, value: object): TSelf;
+    addParameter(name: string, value: any): TSelf;
 }

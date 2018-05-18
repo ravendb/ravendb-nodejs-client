@@ -202,7 +202,7 @@ export abstract class InMemoryDocumentSessionOperations
      * @param instance Instance to get metadata from
      * @return document metadata
      */
-    public getMetadataFor<T extends Object>(instance: T): IMetadataDictionary {
+    public getMetadataFor<T extends object>(instance: T): IMetadataDictionary {
         if (!instance) {
             throwError("InvalidOperationException", "Instance cannot be null or undefined.");
         }
@@ -218,7 +218,7 @@ export abstract class InMemoryDocumentSessionOperations
         return metadata;
     }
 
-    private _getDocumentInfo<T extends Object>(instance: T): DocumentInfo {
+    private _getDocumentInfo<T extends object>(instance: T): DocumentInfo {
         const documentInfo: DocumentInfo = this.documentsByEntity.get(instance);
 
         if (documentInfo) {
@@ -259,7 +259,7 @@ export abstract class InMemoryDocumentSessionOperations
      * @param instance Instance to get change vector from
      * @return change vector
      */
-    public getChangeVectorFor<T extends Object>(instance: T): string {
+    public getChangeVectorFor<T extends object>(instance: T): string {
         if (!instance) {
             throwError("InvalidArgumentException", "Instance cannot be null or undefined.");
         }
@@ -273,7 +273,7 @@ export abstract class InMemoryDocumentSessionOperations
         return null;
     }
 
-    public getLastModifiedFor<T extends Object>(instance: T): Date {
+    public getLastModifiedFor<T extends object>(instance: T): Date {
         if (!instance) {
             throwError("InvalidArgumentException", "Instance cannot be null or undefined.");
         }
@@ -399,15 +399,15 @@ export abstract class InMemoryDocumentSessionOperations
      * @return tracked entity
      */
     //    return (T) this.trackEntity(clazz, documentFound.id, documentFound.document, documentFound.metadata, false);
-    public trackEntity<T extends Object>(
+    public trackEntity<T extends object>(
         entityType: ObjectTypeDescriptor<T>, documentFound: DocumentInfo): T;
-    public trackEntity<T extends Object>(
+    public trackEntity<T extends object>(
         entityType: ObjectTypeDescriptor<T>,
         id: string,
         document: object,
         metadata: object,
         noTracking: boolean): object;
-    public trackEntity<T extends Object>(
+    public trackEntity<T extends object>(
         entityType: ObjectTypeDescriptor<T>,
         idOrDocumentInfo: string | DocumentInfo,
         document?: object,
@@ -415,7 +415,7 @@ export abstract class InMemoryDocumentSessionOperations
         noTracking?: boolean): T {
 
         let id: string;
-        if (typeof (idOrDocumentInfo) !== "string") {
+        if (TypeUtil.isObject(idOrDocumentInfo)) {
             const info = idOrDocumentInfo as DocumentInfo;
             return this.trackEntity(entityType, info.id, info.document, info.metadata, false) as T;
         } else {
@@ -549,21 +549,21 @@ export abstract class InMemoryDocumentSessionOperations
         this._knownMissingIds.delete(id.toLowerCase());
     }
 
-    public store<TEntity extends Object>(
+    public store<TEntity extends object>(
         entity: TEntity,
         id?: string,
         callback?: AbstractCallback<void>): Promise<void>;
-    public store<TEntity extends Object>(
+    public store<TEntity extends object>(
         entity: TEntity,
         id?: string,
         documentType?: DocumentType<TEntity>,
         callback?: AbstractCallback<void>): Promise<void>;
-    public store<TEntity extends Object>(
+    public store<TEntity extends object>(
         entity: TEntity,
         id?: string,
         options?: StoreOptions<TEntity>,
         callback?: AbstractCallback<void>): Promise<void>;
-    public store<TEntity extends Object>(
+    public store<TEntity extends object>(
         entity: TEntity,
         id?: string,
         optionsOrCallback?: DocumentType<TEntity> | StoreOptions<TEntity> | AbstractCallback<void>,
@@ -981,7 +981,7 @@ export abstract class InMemoryDocumentSessionOperations
         }
     }
 
-    protected _refreshInternal<T extends Object>(
+    protected _refreshInternal<T extends object>(
         entity: T, cmd: RavenCommand<GetDocumentsResult>, documentInfo: DocumentInfo): void  {
         const document = cmd.result.results[0];
         if (!document) {
@@ -1025,7 +1025,7 @@ export abstract class InMemoryDocumentSessionOperations
      * @param <T> entity class
      * @param entity Entity to evict
      */
-    public evict<T extends Object>(entity: T): void {
+    public evict<T extends object>(entity: T): void {
         const documentInfo = this.documentsByEntity.get(entity);
         if (documentInfo) {
             this.documentsByEntity.delete(entity);

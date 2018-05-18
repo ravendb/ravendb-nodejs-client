@@ -84,10 +84,8 @@ export class QueryOperation {
 
     public logQuery(): void {
         log.info(
-            "Executing query " 
-            + this._indexQuery.query 
-            + " on index " 
-            + this._indexName 
+            "Executing query '" + this._indexQuery.query + "'"
+            + (this._indexName ? "' on index '" + this._indexName + "'" : "")
             + " in " + this._session.storeIdentifier);
     }
 
@@ -101,7 +99,7 @@ export class QueryOperation {
         return this._session.documentStore.disableAggressiveCaching(this._session.databaseName);
     }
 
-    public complete<T>(documentType?: DocumentType<T>): T[] {
+    public complete<T extends object>(documentType?: DocumentType<T>): T[] {
         const queryResult = this._currentQueryResults.createSnapshot();
 
         if (!this._disableEntitiesTracking) {
@@ -131,6 +129,7 @@ export class QueryOperation {
                         documentType));
             }
         } catch (err) {
+            log.warn(err, "Unable to read query result JSON.");
             throwError("RavenException", "Unable to read json.", err);
         }
 
@@ -239,7 +238,7 @@ export class QueryOperation {
 
                 parameters.append(parameterKey)
                     .append(" = ")
-                    .append(parameterValue)
+                    .append(parameterValue);
 
                 first = false;
             }
@@ -247,8 +246,8 @@ export class QueryOperation {
             parameters.append(") ");
         }
 
-        log.info("Query " 
-            + this._indexQuery.query + " " 
+        log.info("Query '" 
+            + this._indexQuery.query + "' " 
             + parameters.toString() 
             + "returned " 
             + result.results.length + isStale + "results (total index results: " + result.totalResults + ")");

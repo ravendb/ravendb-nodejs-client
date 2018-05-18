@@ -1,3 +1,4 @@
+import {DocumentQuery} from './DocumentQuery';
 import {MultiLoaderWithInclude} from "./Loaders/MultiLoaderWithInclude";
 import {BatchOperation} from "./Operations/BatchOperation";
 import * as BluebirdPromise from "bluebird";
@@ -29,6 +30,9 @@ import { ILoaderWithInclude } from "./Loaders/ILoaderWithInclude";
 import { IRawDocumentQuery } from "./IRawDocumentQuery";
 import { RawDocumentQuery } from "./RawDocumentQuery";
 import { BatchCommand } from "../Commands/Batches/BatchCommand";
+import { AdvancedDocumentQueryOptions, DocumentQueryOptions } from "./QueryOptions";
+import { IDocumentQuery } from "./IDocumentQuery";
+import { DocumentQueryHelper } from "./DocumentQueryHelper";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;
@@ -39,19 +43,6 @@ export interface IStoredRawEntityInfo {
     expectedChangeVector?: string | null;
     concurrencyCheckMode: ConcurrencyCheckMode;
     documentType: DocumentType;
-}
-
-export interface IDocumentAssociationCheckResult<T extends Object = IRavenObject> {
-    doc: T;
-    isNew: boolean;
-}
-
-export interface IDocumentConversionResult<T extends Object = IRavenObject> {
-    rawEntity?: object;
-    document: T;
-    metadata: object;
-    originalMetadata: object;
-    documentType: DocumentType<T>;
 }
 
 export class DocumentSession extends InMemoryDocumentSessionOperations 
@@ -75,31 +66,31 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
     public conventions: DocumentConventions;
 
-    public async load<TEntity extends Object = IRavenObject>(
+    public async load<TEntity extends object = IRavenObject>(
         id: string, 
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
-    public async load<TEntity extends Object = IRavenObject>(
+    public async load<TEntity extends object = IRavenObject>(
         id: string, 
         options?: LoadOptions<TEntity>, 
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
-    public async load<TEntity extends Object = IRavenObject>(
+    public async load<TEntity extends object = IRavenObject>(
         id: string, 
         documentType?: DocumentType<TEntity>, 
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
-    public async load<TEntity extends Object = IRavenObject>(
+    public async load<TEntity extends object = IRavenObject>(
         ids: string[], 
         callback?: AbstractCallback<EntitiesCollectionObject<TEntity>>): Promise<EntitiesCollectionObject<TEntity>>;
-    public async load<TEntity extends Object = IRavenObject>(
+    public async load<TEntity extends object = IRavenObject>(
         ids: string[], 
         options?: LoadOptions<TEntity>, 
         callback?: AbstractCallback<TEntity>): 
         Promise<EntitiesCollectionObject<TEntity>>;
-    public async load<TEntity extends Object = IRavenObject>(
+    public async load<TEntity extends object = IRavenObject>(
         ids: string[], 
         documentType?: DocumentType<TEntity>, 
         callback?: AbstractCallback<TEntity>): 
         Promise<EntitiesCollectionObject<TEntity>>;
-    public async load<TEntity extends Object = IRavenObject>(
+    public async load<TEntity extends object = IRavenObject>(
         idOrIds: string | string[],
         optionsOrCallback?: 
             DocumentType<TEntity> | LoadOptions<TEntity> | 
@@ -192,7 +183,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     /**
      * Refreshes the specified entity from Raven server.
      */
-    public refresh<TEntity extends Object>(entity: TEntity): Promise<void> {
+    public refresh<TEntity extends object>(entity: TEntity): Promise<void> {
         const documentInfo = this.documentsByEntity.get(entity);
         if (!documentInfo) {
             throwError("InvalidOperationException", "Cannot refresh a transient instance");
@@ -225,7 +216,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             .then(() => !TypeUtil.isNullOrUndefined(command.result));
     }
 
-    public loadStartingWith<TEntity>(
+    public loadStartingWith<TEntity extends object>(
         idPrefix: string, opts: SessionLoadStartingWithOptions<TEntity>): Promise<TEntity[]> {
         const loadStartingWithOperation = new LoadStartingWithOperation(this);
         return Promise.resolve()
@@ -237,7 +228,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     //    string idPrefix, Stream output, string matches = null, 
     // int start = 0, int pageSize = 25, string exclude = null, string startAfter = null)
 
-    private _loadStartingWithInternal<TEntity>(
+    private _loadStartingWithInternal<TEntity extends object>(
         idPrefix: string, 
         operation: LoadStartingWithOperation, 
         opts: SessionLoadStartingWithOptions<TEntity>): Promise<GetDocumentsCommand> {
@@ -261,7 +252,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             });
     }
 
-    public loadInternal<TResult extends Object>(
+    public loadInternal<TResult extends object>(
         ids: string[], includes: string[], documentType: DocumentType<TResult>): 
         Promise<EntitiesCollectionObject<TResult>>  {
         const loadOperation = new LoadOperation(this);
@@ -291,7 +282,63 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         return new MultiLoaderWithInclude(this).include(path);
     }    
     
-    public rawQuery<TEntity>(query: string, documentType?: DocumentType<TEntity>): IRawDocumentQuery<TEntity> {
+    public rawQuery<TEntity extends object>(
+        query: string, documentType?: DocumentType<TEntity>): IRawDocumentQuery<TEntity> {
+        if (documentType && TypeUtil.isObjectTypeDescriptor(documentType)) {
+            this.conventions.registerEntityType(documentType as ObjectTypeDescriptor<TEntity>);
+        }
         return new RawDocumentQuery(this, query, documentType);
+    }
+
+    public query<TEntity extends object>(documentType: DocumentType<TEntity>): IDocumentQuery<TEntity>;
+    public query<TEntity extends object>(opts: DocumentQueryOptions<TEntity>): IDocumentQuery<TEntity>;
+    public query<TEntity extends object>(
+        docTypeOrOpts: DocumentType<TEntity> | DocumentQueryOptions<TEntity>): IDocumentQuery<TEntity> {
+        if (TypeUtil.isDocumentType(docTypeOrOpts)) {
+            return this.documentQuery({
+                documentType: docTypeOrOpts as DocumentType<TEntity>
+            });
+        }
+
+        return this.documentQuery(docTypeOrOpts as DocumentQueryOptions<TEntity>);
+    }
+
+    public documentQuery<T extends object>(opts: AdvancedDocumentQueryOptions<T>): IDocumentQuery<T>;
+    public documentQuery<T extends object>(documentType: DocumentType<T>): IDocumentQuery<T>; 
+    public documentQuery<T extends object>(
+        documentTypeOrOpts: DocumentType<T> | AdvancedDocumentQueryOptions<T>): IDocumentQuery<T> {
+        let opts: AdvancedDocumentQueryOptions<T>;
+        if (TypeUtil.isDocumentType(documentTypeOrOpts)) {
+            opts = { documentType: documentTypeOrOpts as DocumentType<T> };
+        } else {
+            opts = documentTypeOrOpts as AdvancedDocumentQueryOptions<T>;
+        }
+
+        if (opts.documentType && TypeUtil.isObjectTypeDescriptor(opts.documentType)) {
+            this.conventions.registerEntityType(opts.documentType as ObjectTypeDescriptor<T>);
+        }
+
+        const { indexName, collection } = this._processQueryParameters(opts, this.conventions);
+        return new DocumentQuery(opts.documentType, this, indexName, collection, !!opts.isMapReduce);
+    }
+
+    protected _processQueryParameters<T extends object>(
+        opts: AdvancedDocumentQueryOptions<T>, conventions: DocumentConventions) {
+        // tslint:disable-next-line:prefer-const
+        let { indexName, collection } = opts;
+        const isIndex = !!indexName;
+        const isCollection = !!collection;
+
+        if (isIndex && isCollection) {
+            throwError("InvalidOperationException", 
+                "Parameters indexName and collectionName are mutually exclusive. Please specify only one of them.");
+        }
+
+        if (!isIndex && !isCollection) {
+            const entityType = this.conventions.findEntityType(opts.documentType);
+            collection = this.conventions.getCollectionNameForType(entityType);
+        }
+
+        return { indexName, collection };
     }
 }

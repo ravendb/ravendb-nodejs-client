@@ -1,4 +1,4 @@
-export interface IDocumentQueryBaseSingle<T> {
+export interface IDocumentQueryBaseSingle<T extends object> {
     //TBD  Lazy<int> CountLazily();
 
     /**

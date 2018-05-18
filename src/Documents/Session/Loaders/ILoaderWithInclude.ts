@@ -19,7 +19,7 @@ export interface ILoaderWithInclude {
      * @param ids Ids to load
      * @return Map: id to entity
      */
-    load<TResult>(id: string, documentType: DocumentType<TResult>): Promise<TResult>;
+    load<TResult extends object>(id: string, documentType: DocumentType<TResult>): Promise<TResult>;
 
     /**
      * Loads the specified ids.
@@ -28,5 +28,6 @@ export interface ILoaderWithInclude {
      * @param ids Ids to load
      * @return Map: id to entity
      */
-    load<TResult>(ids: string[], documentType: DocumentType<TResult>): Promise<EntitiesCollectionObject<TResult>>;
+    load<TResult extends object>(
+        ids: string[], documentType: DocumentType<TResult>): Promise<EntitiesCollectionObject<TResult>>;
 }

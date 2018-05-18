@@ -62,7 +62,7 @@ export class DeleteCommandData implements ICommandData {
     }
 }
 
-export class PutCommandDataBase<T extends Object> implements ICommandData {
+export class PutCommandDataBase<T extends object> implements ICommandData {
     
     public get type(): CommandType {
         return "PUT";

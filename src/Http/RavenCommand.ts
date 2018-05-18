@@ -68,7 +68,7 @@ export abstract class RavenCommand<TResult> {
         throwError("NotSupportedException", 
             this.constructor.name +
             " command must override the setResponse method which expects response with the following type: " +
-            this._responseType, );
+            this._responseType);
     }
 
     public send(requestOptions: HttpRequestBase): Promise<HttpResponse> {
@@ -139,11 +139,13 @@ export abstract class RavenCommand<TResult> {
 
             return "AUTOMATIC";
         } catch (err) {
-            log.warn(err, "Error processing command response.");
-            return "AUTOMATIC";
+            log.error(err, `Error processing command ${this.constructor.name} response.`);
+            throwError("RavenException", `Error processing command ${this.constructor.name} response.`, err);
         } finally {
             response.destroy();
         }
+
+        return "AUTOMATIC";
     }
 
     protected _cacheResponse(cache: HttpCache, url: string, response: HttpResponse, responseJson: string): void {
@@ -165,7 +167,7 @@ export abstract class RavenCommand<TResult> {
         }
     }
 
-    protected _parseResponseDefault<TResponse extends Object>(
+    protected _parseResponseDefault<TResponse extends object>(
         response: string, typeInfo?: TypeInfo, knownTypes?: Map<string, ObjectTypeDescriptor>) {
         const res = this._commandPayloadSerializer.deserialize(response);
         const resObj = this._typedObjectMapper.fromObjectLiteral<TResponse>(res, typeInfo, knownTypes);
