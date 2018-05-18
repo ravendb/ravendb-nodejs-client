@@ -68,7 +68,7 @@ export abstract class RavenCommand<TResult> {
         throwError("NotSupportedException", 
             this.constructor.name +
             " command must override the setResponse method which expects response with the following type: " +
-            this._responseType, );
+            this._responseType);
     }
 
     public send(requestOptions: HttpRequestBase): Promise<HttpResponse> {

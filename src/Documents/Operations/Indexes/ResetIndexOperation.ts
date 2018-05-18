@@ -36,6 +36,7 @@ export class ResetIndexCommand extends RavenCommand<void> {
         }
 
         this._indexName = indexName;
+        this._responseType = "EMPTY";
     }
 
     public createRequest(node: ServerNode): HttpRequestBase {
@@ -44,7 +45,7 @@ export class ResetIndexCommand extends RavenCommand<void> {
 
     }
 
-    public get isReadRequest() {
+    public get isReadRequest(): boolean {
         return false;
     }
 }
