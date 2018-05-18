@@ -21,6 +21,8 @@ import { SpatialCriteriaFactory } from "../Queries/Spatial/SpatialCriteriaFactor
 import { SpatialCriteria } from "../Queries/Spatial/SpatialCriteria";
 import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField";
 import { SpatialUnits, SpatialRelation } from "../Indexes/Spatial";
+import { TypeUtil } from "../../Utility/TypeUtil";
+import { ObjectTypeDescriptor } from "../..";
 
 export class DocumentQuery<T extends object> 
     extends AbstractDocumentQuery<T, DocumentQuery<T>> implements IDocumentQuery<T> {
@@ -394,6 +396,10 @@ export class DocumentQuery<T extends object>
     }
 
     public ofType<TResult extends object>(tResultClass: DocumentType<TResult>): IDocumentQuery<TResult> {
+        if (tResultClass && TypeUtil.isObjectTypeDescriptor(tResultClass)) {
+            this._theSession.conventions.registerEntityType(tResultClass as ObjectTypeDescriptor<TResult>);
+        }
+        
         return this._createDocumentQueryInternal(tResultClass);
     }
 

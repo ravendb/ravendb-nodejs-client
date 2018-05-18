@@ -284,23 +284,27 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     
     public rawQuery<TEntity extends object>(
         query: string, documentType?: DocumentType<TEntity>): IRawDocumentQuery<TEntity> {
+        if (documentType && TypeUtil.isObjectTypeDescriptor(documentType)) {
+            this.conventions.registerEntityType(documentType as ObjectTypeDescriptor<TEntity>);
+        }
         return new RawDocumentQuery(this, query, documentType);
     }
 
-    public query<T extends object>(documentType: DocumentType<T>): IDocumentQuery<T>;
-    public query<T extends object>(opts: DocumentQueryOptions<T>): IDocumentQuery<T>;
-    public query<T extends object>(docTypeOrOpts: DocumentType<T> | DocumentQueryOptions<T>): IDocumentQuery<T> {
+    public query<TEntity extends object>(documentType: DocumentType<TEntity>): IDocumentQuery<TEntity>;
+    public query<TEntity extends object>(opts: DocumentQueryOptions<TEntity>): IDocumentQuery<TEntity>;
+    public query<TEntity extends object>(
+        docTypeOrOpts: DocumentType<TEntity> | DocumentQueryOptions<TEntity>): IDocumentQuery<TEntity> {
         if (TypeUtil.isDocumentType(docTypeOrOpts)) {
             return this.documentQuery({
-                documentType: docTypeOrOpts as DocumentType<T>
+                documentType: docTypeOrOpts as DocumentType<TEntity>
             });
         }
 
-        return this.documentQuery(docTypeOrOpts as DocumentQueryOptions<T>);
+        return this.documentQuery(docTypeOrOpts as DocumentQueryOptions<TEntity>);
     }
 
-    public documentQuery<T extends object>(documentType: DocumentType<T>): IDocumentQuery<T>; 
     public documentQuery<T extends object>(opts: AdvancedDocumentQueryOptions<T>): IDocumentQuery<T>;
+    public documentQuery<T extends object>(documentType: DocumentType<T>): IDocumentQuery<T>; 
     public documentQuery<T extends object>(
         documentTypeOrOpts: DocumentType<T> | AdvancedDocumentQueryOptions<T>): IDocumentQuery<T> {
         let opts: AdvancedDocumentQueryOptions<T>;
@@ -308,6 +312,10 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             opts = { documentType: documentTypeOrOpts as DocumentType<T> };
         } else {
             opts = documentTypeOrOpts as AdvancedDocumentQueryOptions<T>;
+        }
+
+        if (opts.documentType && TypeUtil.isObjectTypeDescriptor(opts.documentType)) {
+            this.conventions.registerEntityType(opts.documentType as ObjectTypeDescriptor<T>);
         }
 
         const { indexName, collection } = this._processQueryParameters(opts, this.conventions);
@@ -318,8 +326,8 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         opts: AdvancedDocumentQueryOptions<T>, conventions: DocumentConventions) {
         // tslint:disable-next-line:prefer-const
         let { indexName, collection } = opts;
-        const isIndex = !indexName;
-        const isCollection = !collection;
+        const isIndex = !!indexName;
+        const isCollection = !!collection;
 
         if (isIndex && isCollection) {
             throwError("InvalidOperationException", 

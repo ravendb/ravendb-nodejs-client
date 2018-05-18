@@ -415,7 +415,7 @@ export abstract class InMemoryDocumentSessionOperations
         noTracking?: boolean): T {
 
         let id: string;
-        if (typeof (idOrDocumentInfo) !== "string") {
+        if (TypeUtil.isObject(idOrDocumentInfo)) {
             const info = idOrDocumentInfo as DocumentInfo;
             return this.trackEntity(entityType, info.id, info.document, info.metadata, false) as T;
         } else {

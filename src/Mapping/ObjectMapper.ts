@@ -62,8 +62,8 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         
         const typeName = typeInfo ? typeInfo.typeName : null;
         const nestedTypes = typeInfo ? typeInfo.nestedTypes : null;
-        const types = (knownTypes || this._knownTypes);
-        const ctorOrTypeDescriptor = this._getKnownType(typeName, knownTypes);
+        const types = knownTypes || this._knownTypes;
+        const ctorOrTypeDescriptor = this._getKnownType(typeName, types);
         const result = this._instantiateObject<TResult>(typeName, rawResult, ctorOrTypeDescriptor);
 
         this._applyNestedTypes(result, nestedTypes, types);

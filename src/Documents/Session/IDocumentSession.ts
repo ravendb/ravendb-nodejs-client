@@ -95,8 +95,8 @@ export interface IDocumentSession extends IDisposable {
 
     saveChanges(): Promise<void>;
 
-    query<T extends object>(documentType: DocumentType<T>): IDocumentQuery<T>;
     query<T extends object>(opts: DocumentQueryOptions<T>): IDocumentQuery<T>;
+    query<T extends object>(documentType: DocumentType<T>): IDocumentQuery<T>;
 }
 
 export interface ISessionOptions {

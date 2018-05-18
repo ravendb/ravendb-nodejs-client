@@ -1,5 +1,6 @@
 import * as path from "path";
 import { debuglog } from "util";
+import { printError } from "../Exceptions";
 const isDebug = !!process.env.NODE_DEBUG;
 
 export interface ILogger {
@@ -45,7 +46,7 @@ class Logger {
 
     private _logWithError(err: string | Error, additionalMsg: string, level) {
         let msg: string = err && (err as Error).stack
-            ? (err as Error).stack as string
+            ? printError(err as Error)
             : err as string;
         if (additionalMsg) {
             msg = `${additionalMsg} ${msg}`;

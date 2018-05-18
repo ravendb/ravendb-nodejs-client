@@ -141,7 +141,7 @@ export class WhereToken extends QueryToken {
             }
             writer.append(")");
 
-            if (this.options.method.property !== null) {
+            if (this.options.method.property) {
                 writer.append(".")
                     .append(this.options.method.property);
             }

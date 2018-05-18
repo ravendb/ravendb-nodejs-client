@@ -9,7 +9,7 @@ export class GroupBySumToken extends QueryToken {
     private constructor(fieldName: string, projectedName: string) {
         super();
 
-        if (fieldName) {
+        if (!fieldName) {
             throwError("InvalidArgumentException", "fieldName cannot be null");
         }
 

@@ -63,7 +63,7 @@ export class DocumentConventions {
     private _readBalanceBehavior: ReadBalanceBehavior;
     private _maxHttpCacheSize: number;
     
-    private _knownEntityTypes: Map<string, ObjectTypeDescriptor> = new Map();
+    private _knownEntityTypes: Map<string, ObjectTypeDescriptor>;
 
     private _entityObjectMapper: TypesAwareObjectMapper = new TypesAwareObjectMapper({
        knownTypes: this._knownEntityTypes,
@@ -78,7 +78,7 @@ export class DocumentConventions {
         this._findIdentityPropertyNameFromCollectionName = entityName => "id";
         this._findJsType = (id: string, doc: object) => {
             const metadata = doc[CONSTANTS.Documents.Metadata.KEY];
-            if (metadata !== null) {
+            if (metadata) {
                 const jsType = metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] as string;
                 return this._knownEntityTypes.get(jsType) || null;
             }
@@ -106,6 +106,7 @@ export class DocumentConventions {
         this._maxNumberOfRequestsPerSession = 30;
         this._maxHttpCacheSize = 128 * 1024 * 1024;
 
+        this._knownEntityTypes = new Map();
         this._entityObjectMapper = new TypesAwareObjectMapper({
             dateFormat: DateUtil.DEFAULT_DATE_FORMAT,
             knownTypes: this._knownEntityTypes

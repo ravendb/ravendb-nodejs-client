@@ -9,4 +9,4 @@ export interface EntityConstructor<T extends object = object>
 }
 
 export type DocumentType<T extends object = object> = 
-    EntityConstructor<T> | ObjectLiteralDescriptor | string;
+    EntityConstructor<T> | ObjectLiteralDescriptor<T> | string;

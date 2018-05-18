@@ -5,6 +5,10 @@ import { HttpResponse } from "../Primitives/Http";
 import { JsonSerializer } from "../Mapping/Json";
 import { Mapping } from "../Mapping";
 
+export function printError(err: Error): string {
+    return VError.fullStack(err);
+}
+
 export function throwError(errName: RavenErrorType);
 export function throwError(errName: RavenErrorType, message: string);
 export function throwError(errName: RavenErrorType, message: string, errCause?: Error);
@@ -32,11 +36,12 @@ export function getError(
   message: string = "", 
   errCause?: Error, 
   info?: { [key: string]: any }): Error {
-  return new VError({
+  const error = new VError({
     name: errName,
     cause: errCause,
     info
   }, message);
+  return error;
 }
 
 export type RavenErrorType = "RavenException"
