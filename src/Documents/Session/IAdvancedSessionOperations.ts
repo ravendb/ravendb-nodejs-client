@@ -23,7 +23,7 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * @param <T> entity class
      * @param entity Entity to refresh
      */
-    refresh<TEntity>(entity: TEntity): Promise<void>;
+    refresh<TEntity extends object>(entity: TEntity): Promise<void>;
 
     /**
      * Query the specified index using provided raw query
@@ -33,7 +33,7 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * @return Raw document query
      */
     
-    rawQuery<TEntity extends object>(query: string, documentType?: DocumentType<TEntity>): IRawDocumentQuery<TEntity>;
+    rawQuery<TResult extends object>(query: string, documentType?: DocumentType<TResult>): IRawDocumentQuery<TResult>;
 
     exists(id: string): Promise<boolean>;
 
@@ -132,7 +132,7 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
      * @param <T> entity class
      * @param entity Entity to evict
      */
-    evict<TEntity extends Object>(entity: TEntity): void;
+    evict<TEntity extends object>(entity: TEntity): void;
 
     /**
      * Gets the document id for the specified entity.
@@ -152,7 +152,7 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
      * @param instance instance to get metadata from
      * @return Entity metadata
      */
-    getMetadataFor<T>(instance: T): IMetadataDictionary;
+    getMetadataFor<T extends object>(instance: T): IMetadataDictionary;
 
     /**
      * Gets change vector for the specified entity.
@@ -162,7 +162,7 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
      * @param instance Instance to get metadata from
      * @return Change vector
      */
-    getChangeVectorFor<T>(instance: T): string;
+    getChangeVectorFor<T extends object>(instance: T): string;
 
     /**
      * Gets last modified date for the specified entity.
@@ -172,7 +172,7 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
      * @param <T> Class of instance
      * @return Last modified date
      */
-    getLastModifiedFor<T>(instance: T): Date;
+    getLastModifiedFor<T extends object>(instance: T): Date;
 
     /**
      * Determines whether the specified entity has changed.

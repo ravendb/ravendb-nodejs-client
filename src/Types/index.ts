@@ -23,7 +23,7 @@ export interface EntityConstructor<T extends object> extends ClassConstructor {
 
 export type ObjectTypeDescriptor<T extends object = object> = EntityConstructor<T> | ObjectLiteralDescriptor<T>;
 
-export abstract class EntityObjectLiteralDescriptor<T extends Object> implements ObjectLiteralDescriptor {
+export abstract class EntityObjectLiteralDescriptor<T extends object> implements ObjectLiteralDescriptor {
     public abstract name: string;
     public abstract isType(obj: object);
     public abstract construct(dto: object): T;

@@ -66,31 +66,31 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
     public conventions: DocumentConventions;
 
-    public async load<TEntity extends Object = IRavenObject>(
+    public async load<TEntity extends object = IRavenObject>(
         id: string, 
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
-    public async load<TEntity extends Object = IRavenObject>(
+    public async load<TEntity extends object = IRavenObject>(
         id: string, 
         options?: LoadOptions<TEntity>, 
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
-    public async load<TEntity extends Object = IRavenObject>(
+    public async load<TEntity extends object = IRavenObject>(
         id: string, 
         documentType?: DocumentType<TEntity>, 
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
-    public async load<TEntity extends Object = IRavenObject>(
+    public async load<TEntity extends object = IRavenObject>(
         ids: string[], 
         callback?: AbstractCallback<EntitiesCollectionObject<TEntity>>): Promise<EntitiesCollectionObject<TEntity>>;
-    public async load<TEntity extends Object = IRavenObject>(
+    public async load<TEntity extends object = IRavenObject>(
         ids: string[], 
         options?: LoadOptions<TEntity>, 
         callback?: AbstractCallback<TEntity>): 
         Promise<EntitiesCollectionObject<TEntity>>;
-    public async load<TEntity extends Object = IRavenObject>(
+    public async load<TEntity extends object = IRavenObject>(
         ids: string[], 
         documentType?: DocumentType<TEntity>, 
         callback?: AbstractCallback<TEntity>): 
         Promise<EntitiesCollectionObject<TEntity>>;
-    public async load<TEntity extends Object = IRavenObject>(
+    public async load<TEntity extends object = IRavenObject>(
         idOrIds: string | string[],
         optionsOrCallback?: 
             DocumentType<TEntity> | LoadOptions<TEntity> | 
@@ -183,7 +183,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     /**
      * Refreshes the specified entity from Raven server.
      */
-    public refresh<TEntity extends Object>(entity: TEntity): Promise<void> {
+    public refresh<TEntity extends object>(entity: TEntity): Promise<void> {
         const documentInfo = this.documentsByEntity.get(entity);
         if (!documentInfo) {
             throwError("InvalidOperationException", "Cannot refresh a transient instance");

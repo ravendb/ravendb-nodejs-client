@@ -167,7 +167,7 @@ export abstract class RavenCommand<TResult> {
         }
     }
 
-    protected _parseResponseDefault<TResponse extends Object>(
+    protected _parseResponseDefault<TResponse extends object>(
         response: string, typeInfo?: TypeInfo, knownTypes?: Map<string, ObjectTypeDescriptor>) {
         const res = this._commandPayloadSerializer.deserialize(response);
         const resObj = this._typedObjectMapper.fromObjectLiteral<TResponse>(res, typeInfo, knownTypes);

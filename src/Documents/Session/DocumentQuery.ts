@@ -60,16 +60,20 @@ export class DocumentQuery<T extends object>
     // }
 
     public selectFields<TProjection extends object>(
-        properties: string[]): IDocumentQuery<TProjection>;
+        properties: string[] | string): IDocumentQuery<TProjection>;
     public selectFields<TProjection extends object>(
         queryData: QueryData,
         projectionType: DocumentType<TProjection>): IDocumentQuery<TProjection>;
     public selectFields<TProjection extends object>(
-        properties: string[], 
+        properties: string[] | string, 
         projectionType: DocumentType<TProjection>): IDocumentQuery<TProjection>;
     public selectFields<TProjection extends object>(
-        propertiesOrQueryData: string[] | QueryData, 
+        propertiesOrQueryData: string | string[] | QueryData, 
         projectionType?: DocumentType<TProjection>): IDocumentQuery<TProjection> {
+            if (TypeUtil.isString(propertiesOrQueryData)) {
+                propertiesOrQueryData = [ propertiesOrQueryData as string ];
+            }
+
             if (Array.isArray(propertiesOrQueryData)) {
                 if (projectionType) {
                     return this._selectFieldsByProjectionType(propertiesOrQueryData, projectionType);
@@ -78,7 +82,7 @@ export class DocumentQuery<T extends object>
                 const queryData = new QueryData(propertiesOrQueryData, propertiesOrQueryData);
                 return this.selectFields(queryData, projectionType);
             } else {
-                return this._createDocumentQueryInternal(projectionType, propertiesOrQueryData);
+                return this._createDocumentQueryInternal(projectionType, propertiesOrQueryData as QueryData);
             }
     }
 

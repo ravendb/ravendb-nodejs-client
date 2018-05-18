@@ -153,7 +153,20 @@ describe("QueryTest", function () {
         assert.equal(results[1].name, "Tarzan");
     });
 
-    it.skip("query single property", async () => { });
+    it("query single property", async () => {
+        await addUsers(store);
+
+        const session = store.openSession();
+        const results = await session.query(User)
+            .addOrder("age", true, "LONG")
+            .selectFields<number>("age")
+            .all();
+
+        assert.equal(results.length, 3);
+        assert.deepEqual(results, [ 5, 3, 2 ]);
+
+     });
+
     it.skip("query with select", async () => { });
     it.skip("query with where in", async () => { });
     it.skip("query with where between", async () => { });

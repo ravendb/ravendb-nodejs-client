@@ -18,8 +18,8 @@ export interface NestedTypes {
 }
 
 export interface ITypesAwareObjectMapper {
-    fromObjectLiteral<TResult extends Object>(raw: object, typeInfo?: TypeInfo): TResult;
-    toObjectLiteral<TFrom extends Object>(obj: TFrom, typeInfo?: (typeInfo: TypeInfo) => void): object;
+    fromObjectLiteral<TResult extends object>(raw: object, typeInfo?: TypeInfo): TResult;
+    toObjectLiteral<TFrom extends object>(obj: TFrom, typeInfo?: (typeInfo: TypeInfo) => void): object;
 }
 
 export class ObjectKeysTransform {
@@ -54,10 +54,10 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         return this;
     }
 
-    public fromObjectLiteral<TResult extends Object>(rawResult: object, typeInfo?: TypeInfo): TResult;
-    public fromObjectLiteral<TResult extends Object>(
+    public fromObjectLiteral<TResult extends object>(rawResult: object, typeInfo?: TypeInfo): TResult;
+    public fromObjectLiteral<TResult extends object>(
         rawResult: object, typeInfo?: TypeInfo, knownTypes?: Map<string, ObjectTypeDescriptor>): TResult;
-    public fromObjectLiteral<TResult extends Object>(
+    public fromObjectLiteral<TResult extends object>(
         rawResult: object, typeInfo?: TypeInfo, knownTypes?: Map<string, ObjectTypeDescriptor>): TResult {
         
         const typeName = typeInfo ? typeInfo.typeName : null;
@@ -71,7 +71,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         return result;
     }
 
-    private _applyNestedTypes<TResult extends Object>(
+    private _applyNestedTypes<TResult extends object>(
         obj: TResult, nestedTypes?: NestedTypes, knownTypes?: Map<string, ObjectTypeDescriptor>) {
         if (!nestedTypes) {
             return obj;
@@ -95,15 +95,15 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         return obj;
     }
 
-    public toObjectLiteral<TFrom extends Object>(obj: TFrom): object;
-    public toObjectLiteral<TFrom extends Object>(
+    public toObjectLiteral<TFrom extends object>(obj: TFrom): object;
+    public toObjectLiteral<TFrom extends object>(
         obj: TFrom,
         typeInfoCallback?: (typeInfo: TypeInfo) => void): object;
-    public toObjectLiteral<TFrom extends Object>(
+    public toObjectLiteral<TFrom extends object>(
         obj: TFrom,
         typeInfoCallback?: (typeInfo: TypeInfo) => void,
         knownTypes?: Map<string, ObjectTypeDescriptor>): object;
-    public toObjectLiteral<TFrom extends Object>(
+    public toObjectLiteral<TFrom extends object>(
         obj: TFrom,
         typeInfoCallback?: (typeInfo: TypeInfo) => void,
         knownTypes?: Map<string, ObjectTypeDescriptor>): object {
@@ -350,7 +350,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         return ctorOrTypeDescriptor;
     }
 
-    private _createEmptyObject<TResult extends Object>(ctor: EntityConstructor<TResult>) {
+    private _createEmptyObject<TResult extends object>(ctor: EntityConstructor<TResult>) {
         if (!ctor) {
             throwError("InvalidArgumentException", "ctor argument must not be null or undefined.");
         }
