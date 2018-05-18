@@ -1,3 +1,4 @@
+import {User} from '../Assets/Entities';
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../Utils/TestUtil";
@@ -22,7 +23,31 @@ describe("QueryTest", function () {
         await disposeTestDocumentStore(store));
 
     // tslint:disable-next-line:no-empty
-    it.skip("query simple", async () => {});
+    it("query simple", async () => {
+        const session = store.openSession();
+        const user1 = Object.assign(new User(), { name: "John" });
+        const user2 = Object.assign(new User(), { name: "Jane" });
+        const user3 = Object.assign(new User(), { name: "Tarzan" });
+        const users = [ user1, user2, user3 ];
+        await session.store(user1, "users/1");
+        await session.store(user2, "users/2");
+        await session.store(user3, "users/3");
+        await session.saveChanges();
+
+        const queryResult = await session.advanced.documentQuery<User>({
+            collection: "users",
+            isMapReduce: false,
+            documentType: User
+        }).all();
+        assert.equal(queryResult.length, 3);
+
+        const names = new Set(queryResult.map(x => x.name));
+        const expectedNames = new Set(users.map(x => x.name));
+        for (const name of names) {
+            assert.ok(names.has(name));
+        }
+    });
+
     it.skip("collection stats", async () => {});
     it.skip("query with where clause", async () => {});
     it.skip("query map reduce with count", async () => {});

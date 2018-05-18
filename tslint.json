@@ -31,7 +31,8 @@
         "ban-types": false,
         "no-unused-variable": true,
         "space-before-function-paren": false,
-        "no-string-literal": false
+        "no-string-literal": false,
+        "comment-format": false
     },
     "rulesDirectory": [
         "node_modules/tslint-microsoft-contrib"

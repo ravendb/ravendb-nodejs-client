@@ -53,7 +53,7 @@ import { CmpXchg } from "./CmpXchng";
 /**
  * A query against a Raven index
  */
-export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSelf>> 
+export abstract class AbstractDocumentQuery<T extends object, TSelf extends AbstractDocumentQuery<T, TSelf>> 
     extends EventEmitter
     implements QueryEventsEmitter, IAbstractDocumentQuery<T> {
 
@@ -153,7 +153,7 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return this._theSession as any as IDocumentSession;
     }
 
-    //TBD public IAsyncDocumentSession AsyncSession => (IAsyncDocumentSession)TheSession;
+    // TBD public IAsyncDocumentSession AsyncSession => (IAsyncDocumentSession)TheSession;
 
     public isDynamicMapReduce(): boolean {
         return this._groupByTokens && !!this._groupByTokens.length;
@@ -372,9 +372,10 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
 
         /* TBD
-            if (_conventions.TryConvertValueForQuery(whereParams.FieldName, whereParams.Value, forRange, out var strVal))
+            if (_conventions.TryConvertValueForQuery(
+                whereParams.FieldName, whereParams.Value, forRange, out var strVal))
                 return strVal;
-         */
+        */
 
         const value = whereParams.value;
         if (TypeUtil.isDate(value)) {
@@ -474,7 +475,7 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
     }
 
-    public addParameter(name: string, value: object): void {
+    public addParameter(name: string, value: any): void {
         name = name.replace(/^\$/, "");
         if (Object.keys(this._queryParameters).indexOf(name) !== -1) {
             throwError("InvalidOperationException", 
@@ -636,8 +637,8 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     public _whereEquals(fieldName: string, method: MethodCall): void;
     public _whereEquals(fieldName: string, method: MethodCall, exact: boolean): void;
-    public _whereEquals(fieldName: string, value: object): void;
-    public _whereEquals(fieldName: string, value: object, exact: boolean): void;
+    public _whereEquals(fieldName: string, value: any): void;
+    public _whereEquals(fieldName: string, value: any, exact: boolean): void;
     public _whereEquals(whereParams: WhereParams): void;
     public _whereEquals(fieldNameOrWhereParams: string | WhereParams, value?: object, exact: boolean = false): void {
         if (!TypeUtil.isObject(fieldNameOrWhereParams)) {
@@ -708,8 +709,8 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return false;
     }
 
-    public _whereNotEquals(fieldName: string, value: object): void;
-    public _whereNotEquals(fieldName: string, value: object, exact: boolean): void ;
+    public _whereNotEquals(fieldName: string, value: any): void;
+    public _whereNotEquals(fieldName: string, value: any, exact: boolean): void ;
     public _whereNotEquals(fieldName: string, method: MethodCall): void;
     public _whereNotEquals(fieldName: string, method: MethodCall, exact: boolean): void;
     public _whereNotEquals(whereParams: WhereParams): void;
@@ -777,7 +778,7 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         tokens.push(whereToken);
     }
 
-    public _whereStartsWith(fieldName: string, value: object): void {
+    public _whereStartsWith(fieldName: string, value: any): void {
         const whereParams = new WhereParams();
         whereParams.fieldName = fieldName;
         whereParams.value = value;
@@ -801,7 +802,7 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param fieldName Field name to use
      * @param value Values to find
      */
-    public _whereEndsWith(fieldName: string, value: object): void {
+    public _whereEndsWith(fieldName: string, value: any): void {
         const whereParams = new WhereParams();
         whereParams.fieldName = fieldName;
         whereParams.value = value;
@@ -864,9 +865,9 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param value Value to compare
      * @param exact Use exact matcher
      */
-    public _whereGreaterThan(fieldName: string, value: object): void;
-    public _whereGreaterThan(fieldName: string, value: object, exact: boolean): void;
-    public _whereGreaterThan(fieldName: string, value: object, exact: boolean = false): void {
+    public _whereGreaterThan(fieldName: string, value: any): void;
+    public _whereGreaterThan(fieldName: string, value: any, exact: boolean): void;
+    public _whereGreaterThan(fieldName: string, value: any, exact: boolean = false): void {
         fieldName = this._ensureValidFieldName(fieldName, false);
 
         const tokens = this._getCurrentWhereTokens();
@@ -890,9 +891,9 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param value Value to compare
      * @param exact Use exact matcher
      */
-    public _whereGreaterThanOrEqual(fieldName: string, value: object): void; 
-    public _whereGreaterThanOrEqual(fieldName: string, value: object, exact: boolean): void; 
-    public _whereGreaterThanOrEqual(fieldName: string, value: object, exact: boolean = false): void {
+    public _whereGreaterThanOrEqual(fieldName: string, value: any): void; 
+    public _whereGreaterThanOrEqual(fieldName: string, value: any, exact: boolean): void; 
+    public _whereGreaterThanOrEqual(fieldName: string, value: any, exact: boolean = false): void {
         fieldName = this._ensureValidFieldName(fieldName, false);
 
         const tokens = this._getCurrentWhereTokens();
@@ -909,9 +910,9 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         tokens.push(whereToken);
     }
 
-    public _whereLessThan(fieldName: string, value: object): void;
-    public _whereLessThan(fieldName: string, value: object, exact: boolean): void;
-    public _whereLessThan(fieldName: string, value: object, exact: boolean = false): void {
+    public _whereLessThan(fieldName: string, value: any): void;
+    public _whereLessThan(fieldName: string, value: any, exact: boolean): void;
+    public _whereLessThan(fieldName: string, value: any, exact: boolean = false): void {
         fieldName = this._ensureValidFieldName(fieldName, false);
 
         const tokens = this._getCurrentWhereTokens();
@@ -929,9 +930,9 @@ export abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         tokens.push(whereToken);
     }
 
-    public _whereLessThanOrEqual(fieldName: string, value: object): void;
-    public _whereLessThanOrEqual(fieldName: string, value: object, exact: boolean): void;
-    public _whereLessThanOrEqual(fieldName: string, value: object, exact : boolean = false): void {
+    public _whereLessThanOrEqual(fieldName: string, value: any): void;
+    public _whereLessThanOrEqual(fieldName: string, value: any, exact: boolean): void;
+    public _whereLessThanOrEqual(fieldName: string, value: any, exact: boolean = false): void {
         const tokens = this._getCurrentWhereTokens();
         this._appendOperatorIfNeeded(tokens);
         this._negateIfNeeded(tokens, fieldName);

@@ -79,7 +79,7 @@ export interface IAbstractDocumentQuery<T> {
      * @param fieldName Field name
      * @param value Value to match
      */
-    _whereEquals(fieldName: string, value: object): void;
+    _whereEquals(fieldName: string, value: any): void;
 
     /**
      * Matches value
@@ -87,7 +87,7 @@ export interface IAbstractDocumentQuery<T> {
      * @param value Value to match
      * @param exact Use exact matcher
      */
-    _whereEquals(fieldName: string, value: object, exact: boolean): void;
+    _whereEquals(fieldName: string, value: any, exact: boolean): void;
 
     /**
      * Matches value
@@ -115,7 +115,7 @@ export interface IAbstractDocumentQuery<T> {
      * @param fieldName Field name
      * @param value Value to match
      */
-    _whereNotEquals(fieldName: string, value: object): void;
+    _whereNotEquals(fieldName: string, value: any): void;
 
     /**
      * Not matches value
@@ -123,7 +123,7 @@ export interface IAbstractDocumentQuery<T> {
      * @param value Value to match
      * @param exact Use exact matcher
      */
-    _whereNotEquals(fieldName: string, value: object, exact: boolean): void;
+    _whereNotEquals(fieldName: string, value: any, exact: boolean): void;
 
     /**
      * Not matches value
@@ -181,14 +181,14 @@ export interface IAbstractDocumentQuery<T> {
      * @param fieldName Field name
      * @param value to match
      */
-    _whereStartsWith(fieldName: string, value: object): void;
+    _whereStartsWith(fieldName: string, value: any): void;
 
     /**
      * Matches fields which ends with the specified value.
      * @param fieldName Field name
      * @param value Value to match
      */
-    _whereEndsWith(fieldName: string, value: object): void;
+    _whereEndsWith(fieldName: string, value: any): void;
 
     /**
      * Matches fields where the value is between the specified start and end, exclusive
@@ -212,7 +212,7 @@ export interface IAbstractDocumentQuery<T> {
      * @param fieldName Field name
      * @param value Value to match
      */
-    _whereGreaterThan(fieldName: string, value: object): void;
+    _whereGreaterThan(fieldName: string, value: any): void;
 
     /**
      * Matches fields where the value is greater than the specified value
@@ -220,14 +220,14 @@ export interface IAbstractDocumentQuery<T> {
      * @param value Value to match
      * @param exact Use exact matcher
      */
-    _whereGreaterThan(fieldName: string, value: object, exact: boolean): void;
+    _whereGreaterThan(fieldName: string, value: any, exact: boolean): void;
 
     /**
      * Matches fields where the value is greater than or equal to the specified value
      * @param fieldName Field name
      * @param value Value to match
      */
-    _whereGreaterThanOrEqual(fieldName: string, value: object): void;
+    _whereGreaterThanOrEqual(fieldName: string, value: any): void;
 
     /**
      * Matches fields where the value is greater than or equal to the specified value
@@ -235,14 +235,14 @@ export interface IAbstractDocumentQuery<T> {
      * @param value Value to match
      * @param exact Use exact matcher
      */
-    _whereGreaterThanOrEqual(fieldName: string, value: object, exact: boolean): void;
+    _whereGreaterThanOrEqual(fieldName: string, value: any, exact: boolean): void;
 
     /**
      * Matches fields where the value is less than the specified value
      * @param fieldName Field name
      * @param value Value to match
      */
-    _whereLessThan(fieldName: string, value: object): void;
+    _whereLessThan(fieldName: string, value: any): void;
 
     /**
      * Matches fields where the value is less than the specified value
@@ -250,14 +250,14 @@ export interface IAbstractDocumentQuery<T> {
      * @param value Value to match
      * @param exact Use exact matcher
      */
-    _whereLessThan(fieldName: string, value: object, exact: boolean): void;
+    _whereLessThan(fieldName: string, value: any, exact: boolean): void;
 
     /**
      * Matches fields where the value is less than or equal to the specified value
      * @param fieldName Field name
      * @param value Value to match
      */
-    _whereLessThanOrEqual(fieldName: string, value: object): void;
+    _whereLessThanOrEqual(fieldName: string, value: any): void;
 
     /**
      * Matches fields where the value is less than or equal to the specified value
@@ -265,7 +265,7 @@ export interface IAbstractDocumentQuery<T> {
      * @param value Value to match
      * @param exact Use exact matcher
      */
-    _whereLessThanOrEqual(fieldName: string, value: object, exact: boolean): void;
+    _whereLessThanOrEqual(fieldName: string, value: any, exact: boolean): void;
 
     _whereExists(fieldName: string): void;
 

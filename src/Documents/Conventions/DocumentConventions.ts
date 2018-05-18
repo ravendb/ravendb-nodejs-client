@@ -327,7 +327,7 @@ export class DocumentConventions {
      * @param entity entity to get collection name
      * @return collection name
      */
-    public getCollectionNameForEntity(entity: Object): string {
+    public getCollectionNameForEntity(entity: object): string {
         if (!entity) {
             return null;
         }
@@ -335,7 +335,7 @@ export class DocumentConventions {
         return this.getCollectionNameForType(this.getEntityTypeDescriptor(entity));
     }
 
-    public getEntityTypeDescriptor<T extends Object>(entity: T): ObjectTypeDescriptor<T> {
+    public getEntityTypeDescriptor<T extends object>(entity: T): ObjectTypeDescriptor<T> {
         if (TypeUtil.isClass(entity.constructor)) {
             return entity.constructor as ClassConstructor;
         }
@@ -359,7 +359,7 @@ export class DocumentConventions {
      * @param entity Entity
      * @return document id
      */
-    public generateDocumentId(database: string, entity: Object): Promise<string> {
+    public generateDocumentId(database: string, entity: object): Promise<string> {
         const entityTypeDescriptor: ObjectTypeDescriptor = this.getEntityTypeDescriptor(entity);
 
         for (const [typeDescriptor, idConvention] of this._registeredIdConventions) {
@@ -518,9 +518,9 @@ export class DocumentConventions {
         return this;
     }
 
-    public findEntityType<T>(documentType: DocumentType<T>): ObjectTypeDescriptor<T>;
-    public findEntityType<T>(typeName: string): ObjectTypeDescriptor<T>;
-    public findEntityType<T>(docTypeOrtypeName: string): ObjectTypeDescriptor<T> {
+    public findEntityType<T extends object>(documentType: DocumentType<T>): ObjectTypeDescriptor<T>;
+    public findEntityType<T extends object>(typeName: string): ObjectTypeDescriptor<T>;
+    public findEntityType<T extends object>(docTypeOrtypeName: string): ObjectTypeDescriptor<T> {
         if (!docTypeOrtypeName) {
             return null;
         }

@@ -7,6 +7,8 @@ import { DocumentType, EntityConstructor } from "../DocumentAbstractions";
 import { EntitiesCollectionObject, ObjectTypeDescriptor } from "../../Types";
 import { IAdvancedSessionOperations} from "./IAdvancedSessionOperations";
 import { ILoaderWithInclude } from "./Loaders/ILoaderWithInclude";
+import { DocumentQueryOptions } from "./QueryOptions";
+import { IDocumentQuery } from "./IDocumentQuery";
 
 export class SessionInfo {
     public sessionId: number;
@@ -35,46 +37,46 @@ export interface IDocumentSession extends IDisposable {
      */
     advanced: IAdvancedSessionOperations;
 
-    load<TEntity extends Object = IRavenObject>(
+    load<TEntity extends object = IRavenObject>(
         id: string, 
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
-    load<TEntity extends Object = IRavenObject>(
+    load<TEntity extends object = IRavenObject>(
         id: string, 
         documentType?: DocumentType<TEntity>, 
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
-    load<TEntity extends Object = IRavenObject>(
+    load<TEntity extends object = IRavenObject>(
         id: string, 
         options?: LoadOptions<TEntity>, 
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
-    load<TEntity extends Object = IRavenObject>(
+    load<TEntity extends object = IRavenObject>(
         ids: string[], 
         callback?: AbstractCallback<EntitiesCollectionObject<TEntity>>): Promise<EntitiesCollectionObject<TEntity>>;
-    load<TEntity extends Object = IRavenObject>(
+    load<TEntity extends object = IRavenObject>(
         ids: string[], 
         documentType?: DocumentType<TEntity>, 
         callback?: AbstractCallback<TEntity>): 
         Promise<EntitiesCollectionObject<TEntity>>;
-    load<TEntity extends Object = IRavenObject>(
+    load<TEntity extends object = IRavenObject>(
         ids: string[], 
         options?: LoadOptions<TEntity>, 
         callback?: AbstractCallback<TEntity>): 
         Promise<EntitiesCollectionObject<TEntity>>;
 
-    delete<TEntity extends Object = IRavenObject>(
+    delete<TEntity extends object = IRavenObject>(
         id: string): void;
-    delete<TEntity extends Object = IRavenObject>(
+    delete<TEntity extends object = IRavenObject>(
         entity: TEntity): void;
-    delete<TEntity extends Object = IRavenObject>(
+    delete<TEntity extends object = IRavenObject>(
         id: string, expectedChangeVector: string): void;
 
-    store<TEntity extends Object = IRavenObject>(
+    store<TEntity extends object = IRavenObject>(
         document: TEntity, id?: string, callback?: AbstractCallback<void>): Promise<void>;
-    store<TEntity extends Object = IRavenObject>(
+    store<TEntity extends object = IRavenObject>(
         document: TEntity,
         id?: string,
         documentType?: DocumentType<TEntity>,
         callback?: AbstractCallback<void>): Promise<void>;
-    store<TEntity extends Object = IRavenObject>(
+    store<TEntity extends object = IRavenObject>(
         document: TEntity,
         id?: string,
         options?: StoreOptions<TEntity>,
@@ -92,6 +94,9 @@ export interface IDocumentSession extends IDisposable {
     //       query<T extends Object = IRavenObject>(options?: IDocumentQueryOptions<T>): IDocumentQuery<T>;
 
     saveChanges(): Promise<void>;
+
+    query<T extends object>(documentType: DocumentType<T>): IDocumentQuery<T>;
+    query<T extends object>(opts: DocumentQueryOptions<T>): IDocumentQuery<T>;
 }
 
 export interface ISessionOptions {
@@ -99,20 +104,18 @@ export interface ISessionOptions {
     requestExecutor?: RequestExecutor;
 }
 
-export interface StoreOptions<T> {
+export interface StoreOptions<T extends object> {
     documentType?: DocumentType<T>;
     changeVector?: string;
 }
 
-
-export interface LoadOptions<T> {
+export interface LoadOptions<T extends object> {
     documentType?: DocumentType<T>;
     includes?: string[];
-    // nestedObjectTypes?: IRavenObject<EntityConstructor>;
     expectedChangeVector?: string;
 }
 
-export interface SessionLoadStartingWithOptions<T> extends StartingWithOptions {
+export interface SessionLoadStartingWithOptions<T extends object> extends StartingWithOptions {
     documentType?: DocumentType<T>;
     matches?: string;
     start?: number;
@@ -133,9 +136,10 @@ export interface IDocumentSessionImpl extends IDocumentSession {
 
     conventions: DocumentConventions;
 
-    loadInternal<TResult>(
+    loadInternal<TResult extends object>(
         ids: string[], includes: string[], clazz: ObjectTypeDescriptor<TResult>): 
         Promise<EntitiesCollectionObject<TResult>>;
 
-    //TBD: Lazy<Dictionary<string, T>> LazyLoadInternal<T>(string[] ids, string[] includes, Action<Dictionary<string, T>> onEval);
+    // tslint:disable-next-line:max-line-length
+    // TBD: Lazy<Dictionary<string, T>> LazyLoadInternal<T>(string[] ids, string[] includes, Action<Dictionary<string, T>> onEval);
 }

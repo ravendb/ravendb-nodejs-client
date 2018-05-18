@@ -1,4 +1,4 @@
-export interface IEnumerableQuery<T> {
+export interface IEnumerableQuery<T extends object> {
 
     // counterpart of JVM's toList() method
     /**

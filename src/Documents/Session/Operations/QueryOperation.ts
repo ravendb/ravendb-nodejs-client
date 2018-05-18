@@ -101,7 +101,7 @@ export class QueryOperation {
         return this._session.documentStore.disableAggressiveCaching(this._session.databaseName);
     }
 
-    public complete<T>(documentType?: DocumentType<T>): T[] {
+    public complete<T extends object>(documentType?: DocumentType<T>): T[] {
         const queryResult = this._currentQueryResults.createSnapshot();
 
         if (!this._disableEntitiesTracking) {

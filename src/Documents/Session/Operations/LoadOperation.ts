@@ -100,7 +100,7 @@ export class LoadOperation {
         return null;
     }
 
-    public getDocuments<T>(clazz: ObjectTypeDescriptor<T>): EntitiesCollectionObject<T> {
+    public getDocuments<T extends object>(clazz: ObjectTypeDescriptor<T>): EntitiesCollectionObject<T> {
         return this._ids.filter(x => !!x)
             .reduce((result, id) => {
                 result[id] = this._getDocument(clazz, id);

@@ -1,23 +1,22 @@
-import {IRawDocumentQuery} from './IRawDocumentQuery';
-import { IDocumentStore } from "../IDocumentStore";
+import { RequestExecutor } from "../../Http/RequestExecutor";
 import { ServerNode } from "../../Http/ServerNode";
-import { SessionEventsEmitter } from "./SessionEvents";
 import { ICommandData } from "../Commands/CommandData";
-import { IMetadataDictionary, SessionLoadStartingWithOptions } from "./IDocumentSession";
+import { DocumentType } from "../DocumentAbstractions";
+import { IDocumentStore } from "../IDocumentStore";
 import { DocumentsChanges } from "./DocumentsChanges";
 import { EntityToJson } from "./EntityToJson";
-import { RequestExecutor } from "../../Http/RequestExecutor";
-import { DocumentType } from "../DocumentAbstractions";
-import { ObjectTypeDescriptor } from "../..";
+import { IMetadataDictionary, SessionLoadStartingWithOptions } from "./IDocumentSession";
+import { IRawDocumentQuery } from "./IRawDocumentQuery";
+import { SessionEventsEmitter } from "./SessionEvents";
+import { IDocumentQuery } from "./IDocumentQuery";
+import { AdvancedDocumentQueryOptions } from "./QueryOptions";
 
 export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOperations {
 
-    //TBD IEagerSessionOperations eagerly();
-
-    //TBD ILazySessionOperations lazily();
-
-    //TBD IAttachmentsSessionOperations Attachments { get; }
-    //TBD IRevisionsSessionOperations Revisions { get; }
+    // TBD IEagerSessionOperations eagerly();
+    // TBD ILazySessionOperations lazily();
+    // TBD IAttachmentsSessionOperations Attachments { get; }
+    // TBD IRevisionsSessionOperations Revisions { get; }
 
     /**
      * Updates entity with latest changes from server
@@ -40,6 +39,9 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
 
     loadStartingWith<T extends object>(idPrefix: string, opts: SessionLoadStartingWithOptions<T>): Promise<T[]>;
 
+    documentQuery<TEntity extends object>(documentType: DocumentType<TEntity>): IDocumentQuery<TEntity>;
+    documentQuery<TEntity extends object>(opts: AdvancedDocumentQueryOptions<TEntity>): IDocumentQuery<TEntity>;
+
     // tslint:disable:max-line-length
     // TBD void LoadStartingWithIntoStream(string idPrefix, Stream output, string matches = null, int start = 0, int pageSize = 25, string exclude = null, string startAfter = null);
     // TBD void LoadIntoStream(IEnumerable<string> ids, Stream output);
@@ -53,28 +55,6 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     // TBD patch API void Patch<T, U>(T entity, Expression<Func<T, U>> path, U value);
     // TBD patch API void Patch<T, U>(T entity, Expression<Func<T, IEnumerable<U>>> path, Expression<Func<JavaScriptArray<U>, object>> arrayAdder);
     // TBD patch API void Patch<T, U>(string id, Expression<Func<T, IEnumerable<U>>> path, Expression<Func<JavaScriptArray<U>, object>> arrayAdder);
-
-    // <T, TIndex extends AbstractIndexCreationTask> IDocumentQuery<T> documentQuery(Class<T> clazz, Class<TIndex> indexClazz);
-
-    // /**
-    //  * Query the specified index
-    //  * @param <T> Class of query result
-    //  * @param clazz The result of the query
-    //  * @param indexName Name of the index (mutually exclusive with collectionName)
-    //  * @param collectionName Name of the collection (mutually exclusive with indexName)
-    //  * @param isMapReduce Whether we are querying a map/reduce index (modify how we treat identifier properties)
-    //  * @return Document query
-    //  */
-    // <T> IDocumentQuery<T> documentQuery(Class<T> clazz, String indexName, String collectionName, boolean isMapReduce);
-
-    /**
-     * Query the specified index
-     * @param <T> Class of query result
-     * @param clazz The result of the query
-     * @return Document query
-     */
-    // <T> IDocumentQuery<T> documentQuery(Class<T> clazz);
-
 
     // TBD stream IEnumerator<StreamResult<T>> Stream<T>(IQueryable<T> query);
     // TBD stream IEnumerator<StreamResult<T>> Stream<T>(IQueryable<T> query, out StreamQueryStatistics streamQueryStats);
