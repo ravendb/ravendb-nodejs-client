@@ -9,6 +9,7 @@ import {
     RavenErrorType,
     GetNextOperationIdCommand,
     IDocumentStore,
+    GetCollectionStatisticsOperation,
 } from "../../src";
 
 describe("QueryTest", function () {
@@ -48,7 +49,21 @@ describe("QueryTest", function () {
         }
     });
 
-    it.skip("collection stats", async () => {});
+    it("collection stats", async () => {
+        const session = store.openSession();
+        const user1 = Object.assign(new User(), { name: "John" });
+        const user2 = Object.assign(new User(), { name: "Jane" });
+
+        await session.store(user1, "users/1");
+        await session.store(user2, "users/2");
+        await session.saveChanges();
+
+        const stats = await store.maintenance.send(new GetCollectionStatisticsOperation());
+
+        assert.equal(stats.countOfDocuments, 2);
+        assert.equal(stats.collections["Users"], 2);
+    });
+
     it.skip("query with where clause", async () => {});
     it.skip("query map reduce with count", async () => {});
     it.skip("query map reduce with sum", async () => {});

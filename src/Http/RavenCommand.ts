@@ -139,11 +139,13 @@ export abstract class RavenCommand<TResult> {
 
             return "AUTOMATIC";
         } catch (err) {
-            log.warn(err, "Error processing command response.");
-            return "AUTOMATIC";
+            log.error(err, `Error processing command ${this.constructor.name} response.`);
+            throwError("RavenException", `Error processing command ${this.constructor.name} response.`, err);
         } finally {
             response.destroy();
         }
+
+        return "AUTOMATIC";
     }
 
     protected _cacheResponse(cache: HttpCache, url: string, response: HttpResponse, responseJson: string): void {

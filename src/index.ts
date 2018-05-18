@@ -33,6 +33,8 @@ export { ServerWideOperationCompletionAwaiter } from "./ServerWide/Operations/Se
 // DOCUMENTS
 export * from "./Documents/Operations/OperationAbstractions";
 export { CompactDatabaseOperation } from "./Documents/Operations/CompactDatabaseOperation";
+export { GetCollectionStatisticsOperation } from "./Documents/Operations/GetCollectionStatisticsOperation";
+export { CollectionStatistics } from "./Documents/Operations/CollectionStatistics";
 export { GetNextOperationIdCommand } from "./Documents/Commands/GetNextOperationIdCommand";
 export { DeleteDocumentCommand } from "./Documents/Commands/DeleteDocumentCommand";
 export { NextIdentityForCommand } from "./Documents/Commands/NextIdentityForCommand";
