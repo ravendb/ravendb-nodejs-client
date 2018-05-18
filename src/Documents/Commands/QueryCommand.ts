@@ -67,7 +67,6 @@ export class QueryCommand extends RavenCommand<QueryResult> {
     }
 
     public setResponse(response: string, fromCache: boolean): void {
-        debugger;
         if (!response) {
             this.result = null;
             return;

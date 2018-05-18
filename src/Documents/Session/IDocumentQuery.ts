@@ -38,17 +38,20 @@ export interface IDocumentQuery<T extends object>
      * @return Document query
      */
      selectFields<TProjection extends object>(
-         properties: string[] | string, projectionClass: DocumentType<TProjection>): IDocumentQuery<TProjection>;
+         property: string, projectionClass: DocumentType<TProjection>): IDocumentQuery<TProjection>;
+     selectFields<TProjection extends object>(
+         properties: string[], projectionClass: DocumentType<TProjection>): IDocumentQuery<TProjection>;
 
     /**
      * Selects the specified fields directly from the index if the are stored. 
      * If the field is not stored in index, value will come from document directly.
      * @param <TProjection> projection class
-     * @param projectionClass projection class
      * @param properties Fields to fetch
      * @return Document query
      */
-     selectFields<TProjection extends Object>(properties: string[] | string): IDocumentQuery<TProjection>;
+     selectFields<TProjection extends object>(properties: string[]): IDocumentQuery<TProjection>;
+
+     selectFields<TProjection extends Object>(property: string): IDocumentQuery<TProjection>;
 
     /**
      * Selects the specified fields directly from the index if the are stored. 

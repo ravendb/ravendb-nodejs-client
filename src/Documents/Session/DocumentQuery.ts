@@ -59,17 +59,26 @@ export class DocumentQuery<T extends object>
     //     return selectFields(projectionClass, queryData);
     // }
 
+    public selectFields<TProjection extends Object>(
+        property: string): IDocumentQuery<TProjection>;
     public selectFields<TProjection extends object>(
-        properties: string[] | string): IDocumentQuery<TProjection>;
+        properties: string[]): IDocumentQuery<TProjection>;
     public selectFields<TProjection extends object>(
         queryData: QueryData,
         projectionType: DocumentType<TProjection>): IDocumentQuery<TProjection>;
     public selectFields<TProjection extends object>(
-        properties: string[] | string, 
+        property: string, 
+        projectionType: DocumentType<TProjection>): IDocumentQuery<TProjection>;
+    public selectFields<TProjection extends object>(
+        properties: string[], 
         projectionType: DocumentType<TProjection>): IDocumentQuery<TProjection>;
     public selectFields<TProjection extends object>(
         propertiesOrQueryData: string | string[] | QueryData, 
         projectionType?: DocumentType<TProjection>): IDocumentQuery<TProjection> {
+            if (projectionType) {
+                this._theSession.conventions.tryRegisterEntityType(projectionType);
+            }
+
             if (TypeUtil.isString(propertiesOrQueryData)) {
                 propertiesOrQueryData = [ propertiesOrQueryData as string ];
             }
@@ -179,7 +188,7 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    public containsAny(fieldName: string, values: object[]): IDocumentQuery<T> {
+    public containsAny(fieldName: string, values: any[]): IDocumentQuery<T> {
         this._containsAny(fieldName, values);
         return this;
     }
@@ -274,8 +283,8 @@ export class DocumentQuery<T extends object>
     // tslint:disable-next-line:max-line-length
     // TBD IDocumentQuery<T> IFilterDocumentQueryBase<T, IDocumentQuery<T>>.WhereNotEquals<TValue>(Expression<Func<T, TValue>> propertySelector, MethodCall value, bool exact)
 
-    public whereIn(fieldName: string, values: object[]): IDocumentQuery<T>;
-    public whereIn(fieldName: string, values: object[], exact: boolean): IDocumentQuery<T>;
+    public whereIn(fieldName: string, values: any[]): IDocumentQuery<T>;
+    public whereIn(fieldName: string, values: any[], exact: boolean): IDocumentQuery<T>;
     public whereIn(...args: any[]): IDocumentQuery<T> {
         (this._whereIn as any)(...args);
         return this;
@@ -295,8 +304,8 @@ export class DocumentQuery<T extends object>
 
     // TBD: public IDocumentQuery<T> WhereEndsWith<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value)
 
-    public whereBetween(fieldName: string, start: object, end: object): IDocumentQuery<T>;
-    public whereBetween(fieldName: string, start: object, end: object, exact: boolean): IDocumentQuery<T>;
+    public whereBetween(fieldName: string, start: any, end: any): IDocumentQuery<T>;
+    public whereBetween(fieldName: string, start: any, end: any, exact: boolean): IDocumentQuery<T>;
     public whereBetween(...args: any[]): IDocumentQuery<T> {
         (this._whereBetween as any)(...args);
         return this;
@@ -400,8 +409,8 @@ export class DocumentQuery<T extends object>
     }
 
     public ofType<TResult extends object>(tResultClass: DocumentType<TResult>): IDocumentQuery<TResult> {
-        if (tResultClass && TypeUtil.isObjectTypeDescriptor(tResultClass)) {
-            this._theSession.conventions.registerEntityType(tResultClass as ObjectTypeDescriptor<TResult>);
+        if (tResultClass) {
+            this._theSession.conventions.tryRegisterEntityType(tResultClass);
         }
         
         return this._createDocumentQueryInternal(tResultClass);

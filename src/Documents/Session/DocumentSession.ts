@@ -284,9 +284,10 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     
     public rawQuery<TEntity extends object>(
         query: string, documentType?: DocumentType<TEntity>): IRawDocumentQuery<TEntity> {
-        if (documentType && TypeUtil.isObjectTypeDescriptor(documentType)) {
-            this.conventions.registerEntityType(documentType as ObjectTypeDescriptor<TEntity>);
+        if (documentType) {
+            this.conventions.tryRegisterEntityType(documentType);
         }
+
         return new RawDocumentQuery(this, query, documentType);
     }
 
@@ -314,8 +315,8 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             opts = documentTypeOrOpts as AdvancedDocumentQueryOptions<T>;
         }
 
-        if (opts.documentType && TypeUtil.isObjectTypeDescriptor(opts.documentType)) {
-            this.conventions.registerEntityType(opts.documentType as ObjectTypeDescriptor<T>);
+        if (opts.documentType) {
+            this.conventions.tryRegisterEntityType(opts.documentType);
         }
 
         const { indexName, collection } = this._processQueryParameters(opts, this.conventions);

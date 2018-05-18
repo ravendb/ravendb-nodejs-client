@@ -166,7 +166,7 @@ export interface IAbstractDocumentQuery<T> {
      * @param fieldName Field name
      * @param values Values to match
      */
-    _whereIn(fieldName: string, values: object[]): void;
+    _whereIn(fieldName: string, values: any[]): void;
 
     /**
      * Check that the field has one of the specified value
@@ -174,7 +174,7 @@ export interface IAbstractDocumentQuery<T> {
      * @param values Values to match
      * @param exact Use exact matcher
      */
-    _whereIn(fieldName: string, values: object[], exact: boolean): void;
+    _whereIn(fieldName: string, values: any[], exact: boolean): void;
 
     /**
      * Matches fields which starts with the specified value.
@@ -196,7 +196,7 @@ export interface IAbstractDocumentQuery<T> {
      * @param start Range start
      * @param end Range end
      */
-    _whereBetween(fieldName: string, start: object, end: object): void;
+    _whereBetween(fieldName: string, start: any, end: any): void;
 
     /**
      * Matches fields where the value is between the specified start and end, exclusive
@@ -205,7 +205,7 @@ export interface IAbstractDocumentQuery<T> {
      * @param end Range end
      * @param exact Use exact matcher
      */
-    _whereBetween(fieldName: string, start: object, end: object, exact: boolean): void;
+    _whereBetween(fieldName: string, start: any, end: any, exact: boolean): void;
 
     /**
      * Matches fields where the value is greater than the specified value
@@ -372,14 +372,14 @@ export interface IAbstractDocumentQuery<T> {
      * @param fieldName Field name
      * @param values Values to match
      */
-    _containsAny(fieldName: string, values: object[]): void;
+    _containsAny(fieldName: string, values: any[]): void;
 
     /**
      * Performs a query matching ALL of the provided values against the given field (AND)
      * @param fieldName Field name
      * @param values Values to match
      */
-    _containsAll(fieldName: string, values: object[]): void;
+    _containsAll(fieldName: string, values: any[]): void;
 
     _groupBy(fieldName: string, ...fieldNames: string[]): void;
 
