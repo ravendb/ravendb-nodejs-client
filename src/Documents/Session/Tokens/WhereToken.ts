@@ -76,14 +76,15 @@ export class WhereOptions {
             const p = parameters as WhereOptionsShapeRelatedParameters;
             this.whereShape = p.shape;
             this.distanceErrorPct = p.distance;
-        } else if (parameters["exact"] && !parameters["methodType"]) {
+        } else if (!TypeUtil.isNullOrUndefined(parameters["exact"]) 
+                && !parameters["methodType"]) {
             const p = parameters as WhereOptionsExactFromToRelatedParameters;
             this.exact = p.exact;
             this.fromParameterName = p.from;
             this.toParameterName = p.to;
         } else if (parameters["search"]) {
             this.searchOperator = parameters["search"] as SearchOperator;
-        }
+        } 
     }
 }
 
@@ -221,7 +222,7 @@ export class WhereToken extends QueryToken {
                 .append(")");
         }
 
-        if (this.options.boost != null) {
+        if (this.options.boost) {
             writer
                 .append(", ")
                 .append(this.options.boost)

@@ -1,6 +1,10 @@
 import { DocumentInfo } from "./DocumentInfo";
 
 function normalizeId(id: string) {
+    if (!id) {
+        return null;
+    }
+    
     return id.toLowerCase();
 }
 

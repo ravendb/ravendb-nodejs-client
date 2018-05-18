@@ -52,8 +52,8 @@ export class RawDocumentQuery<T extends object>
         return this;
     }
 
-    public addParameter(name: string, value: object): IRawDocumentQuery<T> {
-        this.addParameter(name, value);
+    public addParameter(name: string, value: any): IRawDocumentQuery<T> {
+        super.addParameter(name, value);
         return this;
     }
 }

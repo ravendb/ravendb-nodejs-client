@@ -36,7 +36,7 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
      * @param values values to match
      * @return Query instance
      */
-    containsAll(fieldName: string, values: object[]): TSelf;
+    containsAll(fieldName: string, values: any[]): TSelf;
 
     //TBD TSelf ContainsAll<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values);
 
@@ -46,7 +46,7 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
      * @param values values to match
      * @return Query instance
      */
-    containsAny(fieldName: string, values: object[]): TSelf;
+    containsAny(fieldName: string, values: any[]): TSelf;
 
     //TBD TSelf ContainsAny<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values);
 
@@ -109,7 +109,7 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
      * @param end Range end
      * @return Query instance
      */
-    whereBetween(fieldName: string, start: object, end: object): TSelf;
+    whereBetween(fieldName: string, start: any, end: any): TSelf;
 
     /**
      * Matches fields where the value is between the specified start and end, exclusive
@@ -119,7 +119,7 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
      * @param exact Use exact matcher
      * @return Query instance
      */
-    whereBetween(fieldName: string, start: object, end: object, exact: boolean): TSelf;
+    whereBetween(fieldName: string, start: any, end: any, exact: boolean): TSelf;
 
     //TBD TSelf WhereBetween<TValue>(Expression<Func<T, TValue>> propertySelector, TValue start, TValue end, bool exact = false);
 
@@ -265,7 +265,7 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
      * @param values Values to use
      * @return Query instance
      */
-    whereIn(fieldName: string, values: object[]): TSelf;
+    whereIn(fieldName: string, values: any[]): TSelf;
 
     /**
      * Check that the field has one of the specified values
@@ -274,7 +274,7 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
      * @param exact Use exact matcher
      * @return Query instance
      */
-    whereIn(fieldName: string, values: object[], exact: boolean): TSelf;
+    whereIn(fieldName: string, values: any[], exact: boolean): TSelf;
 
     //TBD TSelf WhereIn<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values, bool exact = false);
 

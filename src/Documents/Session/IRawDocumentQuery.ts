@@ -8,5 +8,5 @@ export interface IRawDocumentQuery<T extends object>
     /**
      * Add a named parameter to the query
      */
-    addParameter(name: string, value: object): IRawDocumentQuery<T>;
+    addParameter(name: string, value: any): IRawDocumentQuery<T>;
 }

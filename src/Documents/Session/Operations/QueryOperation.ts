@@ -150,14 +150,16 @@ export class QueryOperation {
         session: InMemoryDocumentSessionOperations,
         clazz?: DocumentType<T> 
     ) {
-
         const projection = metadata["@projection"];
         if (TypeUtil.isNullOrUndefined(projection) || projection === false) {
             const entityType = session.conventions.findEntityType(clazz);
             return session.trackEntity(entityType, id, document, metadata, disableEntitiesTracking);
         }
 
-        if (fieldsToFetch 
+        // return primitives only if type was not passed at all AND fields count is 1
+        // if type was passed then use that even if it's only 1 field
+        if (!clazz 
+            && fieldsToFetch 
             && fieldsToFetch.projections 
             && fieldsToFetch.projections.length === 1) { // we only select a single field
 

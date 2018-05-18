@@ -140,7 +140,7 @@ export class EntityToJson {
                     document, passedTypeInfo, this._session.conventions.knownEntityTypesByName);
             }
 
-            if (!id) {
+            if (id) {
                 this._session.generateEntityIdOnTheClient.trySetIdentity(entity, id);
             }
 

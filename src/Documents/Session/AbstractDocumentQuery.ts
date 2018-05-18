@@ -291,7 +291,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         tokens.push(token);
     }
 
-    private _transformCollection(fieldName: string, values: object[]): object[] {
+    private _transformCollection(fieldName: string, values: any[]): object[] {
         const result: object[] = [];
         for (const value of values) {
             if (Array.isArray(value)) {
@@ -401,7 +401,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     private _addQueryParameter(value: any): string {
-        const parameterName = "p" + Object.keys(this._queryParameters);
+        const parameterName = "p" + Object.keys(this._queryParameters).length;
         this._queryParameters[parameterName] = value;
         return parameterName;
     }
@@ -672,7 +672,9 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             "EQUALS", 
             whereParams.fieldName, 
             addQueryParameter, 
-            new WhereOptions(whereParams.exact));
+            new WhereOptions({
+                exact: whereParams.exact
+            }));
         tokens.push(whereToken);
     }
 
@@ -761,9 +763,9 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * @param values Values to find
      * @param exact Use exact matcher
      */
-    public _whereIn(fieldName: string, values: object[]): void;
-    public _whereIn(fieldName: string, values: object[], exact: boolean): void;
-    public _whereIn(fieldName: string, values: object[], exact: boolean = false): void {
+    public _whereIn(fieldName: string, values: any[]): void;
+    public _whereIn(fieldName: string, values: any[], exact: boolean): void;
+    public _whereIn(fieldName: string, values: any[], exact: boolean = false): void {
         fieldName = this._ensureValidFieldName(fieldName, false);
 
         const tokens = this._getCurrentWhereTokens();
@@ -828,9 +830,9 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * @param end Range end
      * @param exact Use exact matcher
      */
-    public _whereBetween(fieldName: string, start: object, end: object): void;
-    public _whereBetween(fieldName: string, start: object, end: object, exact: boolean): void;
-    public _whereBetween(fieldName: string, start: object, end: object, exact: boolean = false): void {
+    public _whereBetween(fieldName: string, start: any, end: any): void;
+    public _whereBetween(fieldName: string, start: any, end: any, exact: boolean): void;
+    public _whereBetween(fieldName: string, start: any, end: any, exact: boolean = false): void {
         fieldName = this._ensureValidFieldName(fieldName, false);
 
         const tokens = this._getCurrentWhereTokens();
@@ -1259,7 +1261,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         tokens.push(WhereToken.create("EXISTS", fieldName, null));
     }
 
-    public _containsAny(fieldName: string, values: object[]): void {
+    public _containsAny(fieldName: string, values: any[]): void {
         fieldName = this._ensureValidFieldName(fieldName, false);
 
         const tokens = this._getCurrentWhereTokens();
@@ -1272,7 +1274,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         tokens.push(whereToken);
     }
 
-    public _containsAll(fieldName: string, values: object[]): void {
+    public _containsAll(fieldName: string, values: any[]): void {
         fieldName = this._ensureValidFieldName(fieldName, false);
 
         const tokens = this._getCurrentWhereTokens();
