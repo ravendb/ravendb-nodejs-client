@@ -1,7 +1,6 @@
 import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
 import { DocumentInfo } from "./DocumentInfo";
 import { TypeUtil } from "../../Utility/TypeUtil";
-import { DocumentTypeHelper } from "../DocumenTypeHelper";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { CONSTANTS } from "../../Constants";
 import { DocumentType } from "../DocumentAbstractions";

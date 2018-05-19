@@ -3,7 +3,7 @@ import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { IDisposable } from "../../Types/Contracts";
 import { AbstractCallback } from "../../Types/Callbacks";
 import { RequestExecutor } from "../../Http/RequestExecutor";
-import { DocumentType, EntityConstructor } from "../DocumentAbstractions";
+import { DocumentType } from "../DocumentAbstractions";
 import { EntitiesCollectionObject, ObjectTypeDescriptor } from "../../Types";
 import { IAdvancedSessionOperations} from "./IAdvancedSessionOperations";
 import { ILoaderWithInclude } from "./Loaders/ILoaderWithInclude";

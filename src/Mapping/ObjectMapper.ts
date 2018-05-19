@@ -1,10 +1,9 @@
-import { ObjectTypeDescriptor, ClassConstructor, ObjectLiteralDescriptor } from "../Types";
+import { ObjectTypeDescriptor, ClassConstructor, ObjectLiteralDescriptor, EntityConstructor } from "../Types";
 import { DateUtil } from "../Utility/DateUtil";
 import { throwError } from "../Exceptions";
 import { TypeUtil } from "../Utility/TypeUtil";
 import * as changeCase from "change-object-case";
 import { getLogger } from "../Utility/LogUtil";
-import { EntityConstructor } from "../Documents/DocumentAbstractions";
 
 const log = getLogger({ module: "ObjectMapper" });
 

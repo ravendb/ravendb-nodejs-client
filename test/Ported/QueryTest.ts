@@ -1,4 +1,4 @@
-import { User } from '../Assets/Entities';
+import { User } from "../Assets/Entities";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../Utils/TestUtil";
@@ -11,8 +11,10 @@ import {
     IDocumentStore,
     GetCollectionStatisticsOperation,
     AbstractIndexCreationTask,
+    GroupByField,
+    DocumentType,
+    IDocumentSession
 } from "../../src";
-import { GroupByField } from '../../src/Documents/Session/GroupByField';
 
 describe("QueryTest", function () {
 
@@ -413,7 +415,7 @@ describe("QueryTest", function () {
                 .count(), 1);
          });
 
-        it.skip("query random order", async () => {
+        it("query random order", async () => {
             const session = store.openSession();
             assert.equal((await session.query(User)
                 .randomOrdering()
@@ -425,28 +427,243 @@ describe("QueryTest", function () {
 
          });
 
-        it.skip("query where exists", async () => { 
+        it("query where exists", async () => { 
             const session = store.openSession();
+            assert.equal(
+                (await session.query(User).whereExists("name").all()).length, 
+                3);
 
+            assert.equal((await session.query(User)
+                .whereExists("name")
+                .andAlso()
+                .not()
+                .whereExists("no_such_field")
+                .all()).length, 3);
         });
 
-        it.skip("query with boost", async () => {
+        it("query with boost", async () => {
             const session = store.openSession();
+            let users = await session.query<User>(User)
+                .whereEquals("name", "Tarzan")
+                .boost(5)
+                .orElse()
+                .whereEquals("name", "John")
+                .boost(2)
+                .orderByScore()
+                .all();
+
+            assert.equal(users.length, 3);
+
+            let names = users.map(x => x.name);
+            assert.deepEqual(names, ["Tarzan", "John", "John"]);
+
+            users = await session.query<User>(User)
+                .whereEquals("name", "Tarzan")
+                .boost(2)
+                .orElse()
+                .whereEquals("name", "John")
+                .boost(5)
+                .orderByScore()
+                .all();
+
+            assert.equal(users.length, 3);
+
+            names = users.map(x => x.name);
+            assert.deepEqual(names, ["John", "John", "Tarzan"]);
+         });
+
+        it("query with customize", async () => {
+            await new DogsIndex().execute(store);
+            
+            {
+                const session = store.openSession();
+                await createDogs(session);
+                await session.saveChanges();
+            }
+
+            await globalContext.waitForIndexing(store);
+
+            {
+                const session = store.openSession();
+
+                const queryResult = await session.advanced
+                        .documentQuery<DogsIndexResult>({
+                            indexName: new DogsIndex().getIndexName(), 
+                            isMapReduce: false,
+                            documentType: DogsIndexResult
+                        })
+                        .waitForNonStaleResults(null)
+                        .orderBy("name", "ALPHA_NUMERIC")
+                        .whereGreaterThan("age", 2)
+                        .all();
+
+                assert.equal(queryResult.length, 4);
+                assert.deepEqual(
+                    queryResult.map(x => x.name),
+                    ["Brian", "Django", "Lassie", "Snoopy"]
+                );
+            }
 
          });
 
-        it.skip("query with customize", async () => {
+    });
+
+    async function createDogs(newSession: IDocumentSession) {
+        const dogs = [
+            {
+                name: "Snoopy",
+                breed: "Beagle",
+                color: "White",
+                age: 6,
+                vaccinated: true,
+            },
+            {
+
+                name: "Brian",
+                breed: "Labrador",
+                color: "White",
+                age: 12,
+                vaccinated: false,
+            },
+            {
+
+                name: "Django",
+                breed: "Jack Russel",
+                color: "Black",
+                age: 3,
+                vaccinated: true,
+            },
+            {
+                name: "Beethoven",
+                breed: "St. Bernard",
+                color: "Brown",
+                age: 1,
+                vaccinated: false,
+            },
+            {
+                name: "Scooby Doo",
+                breed: "Great Dane",
+                color: "Brown",
+                age: 0,
+                vaccinated: false,
+            },
+            {
+                name: "Old Yeller",
+                breed: "Black Mouth Cur",
+                color: "White",
+                age: 2,
+                vaccinated: true,
+            },
+            {
+                name: "Benji",
+                breed: "Mixed",
+                color: "White",
+                age: 0,
+                vaccinated: false,
+
+            },
+            {
+                name: "Lassie",
+                breed: "Collie",
+                color: "Brown",
+                age: 6,
+                vaccinated: true,
+            }
+        ];
+
+        for (let i = 0; i < dogs.length; i++) {
+            const dogInstance = Object.assign(new Dog(), dogs[i]);
+            await newSession.store(dogInstance, `docs/${i + 1}`);
+        }
+    }
+
+    it("query by index", async () => {
+        await new DogsIndex().execute(store);
+        {
             const session = store.openSession();
+            await createDogs(session);
+            await session.saveChanges();
+        }
 
-         });
+        await globalContext.waitForIndexing(store);
 
-        it.skip("query by index", async () => {
+        {
             const session = store.openSession();
+            const queryResult = await session.advanced
+                .documentQuery<DogsIndexResult>({
+                    documentType: DogsIndexResult,
+                    indexName: new DogsIndex().getIndexName(),
+                    isMapReduce: false
+                })
+                .whereGreaterThan("age", 2)
+                .andAlso()
+                .whereEquals("vaccinated", false)
+                .all();
 
-         });
+            assert.equal(queryResult.length, 1);
+            assert.equal(queryResult[0].name, "Brian");
+
+            const queryResult2 = await session.advanced
+                .documentQuery<DogsIndexResult>({
+                    documentType: DogsIndexResult,
+                    indexName: new DogsIndex().getIndexName(),
+                    isMapReduce: false
+                })
+                .whereLessThanOrEqual("age", 2)
+                .andAlso()
+                .whereEquals("vaccinated", false)
+                .all();
+            assert.equal(queryResult2.length, 3);
+
+            const list = queryResult2.map(x => x.name);
+            list.sort();
+
+            assert.deepEqual(list, ["Beethoven", "Benji", "Scooby Doo"]);
+        }
+    });
+
+    it("query long request", async () => {
+        const session = store.openSession();
+        const longName = "x".repeat(2048);
+        const user = new User();
+        user.name = longName;
+        await session.store(user, "users/1");
+        session.saveChanges();
+
+        const queryResult = await session
+            .advanced
+            .documentQuery({
+                documentType: User,
+                collection: "Users",
+                isMapReduce: false
+            })
+            .whereEquals("name", longName)
+            .all();
+
+        assert.equal(queryResult.length, 1);
     });
 });
 
+export class Dog {
+    public id: string;
+    public name: string;
+    public breed: string;
+    public color: string;
+    public age: number;
+    public vaccinated: boolean;
+}
+export class DogsIndexResult {
+    public name: string;
+    public age: number;
+    public vaccinated: boolean;
+}
+
+export class DogsIndex extends AbstractIndexCreationTask {
+    public constructor() {
+        super();
+        this.map = "from dog in docs.dogs select new { dog.name, dog.age, dog.vaccinated }";
+    }
+}
 export class UsersByName extends AbstractIndexCreationTask {
     public constructor() {
         super();

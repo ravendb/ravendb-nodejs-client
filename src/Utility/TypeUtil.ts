@@ -1,9 +1,6 @@
-import { 
-    EntityConstructor 
-} from "../Documents/DocumentAbstractions";
 import * as _ from "lodash";
 import { DocumentType } from "../Documents/DocumentAbstractions";
-import { ObjectLiteralDescriptor, ObjectTypeDescriptor, ClassConstructor } from "../Types";
+import { ObjectLiteralDescriptor, ObjectTypeDescriptor, ClassConstructor, EntityConstructor } from "../Types";
 
 export class TypeUtil {
     public static readonly MAX_INT32 = 2147483647;

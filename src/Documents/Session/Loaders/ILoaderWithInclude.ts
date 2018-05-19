@@ -1,4 +1,4 @@
-import { DocumentType, EntityConstructor } from "../../DocumentAbstractions";
+import { DocumentType } from "../../DocumentAbstractions";
 import { EntitiesCollectionObject } from "../../..";
 
 export interface ILoaderWithInclude {
