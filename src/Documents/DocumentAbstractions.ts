@@ -1,12 +1,6 @@
 import { IRavenObject } from "../Types/IRavenObject";
 import { ConcurrencyCheckMode } from "./Session/IDocumentSession";
-import { ClassConstructor, ObjectLiteralDescriptor } from "../Types";
-
-export interface EntityConstructor<T extends object = object> 
-    extends ClassConstructor {
-    new(...args: any[]): T;
-    name: string;
-}
+import { ClassConstructor, ObjectLiteralDescriptor, EntityConstructor } from "../Types";
 
 export type DocumentType<T extends object = object> = 
     EntityConstructor<T> | ObjectLiteralDescriptor<T> | string;

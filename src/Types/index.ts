@@ -17,8 +17,10 @@ export interface ClassConstructor {
     new(...args: any[]): any; 
 }
 
-export interface EntityConstructor<T extends object> extends ClassConstructor { 
-     new(...args: any[]): T; 
+export interface EntityConstructor<T extends object = object> 
+    extends ClassConstructor {
+    new(...args: any[]): T;
+    name: string;
 }
 
 export type ObjectTypeDescriptor<T extends object = object> = EntityConstructor<T> | ObjectLiteralDescriptor<T>;

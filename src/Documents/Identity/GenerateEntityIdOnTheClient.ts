@@ -1,8 +1,7 @@
 import {DocumentConventions} from "../Conventions/DocumentConventions";
-import { DocumentType, EntityConstructor } from "../DocumentAbstractions";
+import { DocumentType } from "../DocumentAbstractions";
 import { throwError } from "../../Exceptions";
 import { TypeUtil } from "../../Utility/TypeUtil";
-import { DocumentTypeHelper } from "../DocumenTypeHelper";
 export class GenerateEntityIdOnTheClient {
 
     private _conventions: DocumentConventions;

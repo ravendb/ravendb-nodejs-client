@@ -83,7 +83,20 @@ export * from "./Documents/Indexes/Spatial";
 export * from "./Documents/Indexes/IndexingStatus";
 export * from "./Documents/Indexes/IndexStats";
 export * from "./Documents/Indexes";
+export * from "./Documents/DocumentAbstractions";
+export * from "./Documents/Session/IDocumentSession";
 export * from "./Documents/Session/DocumentSession";
+export * from "./Documents/Session/GroupByField";
+export * from "./Documents/Session/RawDocumentQuery";
+export * from "./Documents/Session/IRawDocumentQuery";
+export * from "./Documents/Session/DocumentInfo";
+export * from "./Documents/Session/DocumentQuery";
+export * from "./Documents/Session/DocumentsChanges";
+export * from "./Documents/Session/IQueryBase";
+export * from "./Documents/Session/IDocumentQuery";
+export * from "./Documents/Session/DocumentQuery";
+export * from "./Documents/Session/IAdvancedSessionOperations";
+export * from "./Documents/Session/OrderingType";
 export { IDocumentSession } from "./Documents/Session/IDocumentSession";
 
 // HiLo
