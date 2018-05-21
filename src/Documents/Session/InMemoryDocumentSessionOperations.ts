@@ -550,6 +550,11 @@ export abstract class InMemoryDocumentSessionOperations
     }
 
     public store<TEntity extends object>(
+        entity: TEntity): Promise<void>;
+    public store<TEntity extends object>(
+        entity: TEntity,
+        callback?: AbstractCallback<void>): Promise<void>;
+    public store<TEntity extends object>(
         entity: TEntity,
         id?: string,
         callback?: AbstractCallback<void>): Promise<void>;
@@ -565,26 +570,39 @@ export abstract class InMemoryDocumentSessionOperations
         callback?: AbstractCallback<void>): Promise<void>;
     public store<TEntity extends object>(
         entity: TEntity,
-        id?: string,
-        optionsOrCallback?: DocumentType<TEntity> | StoreOptions<TEntity> | AbstractCallback<void>,
+        idOrCallback?: 
+            string | AbstractCallback<void>,
+        docTypeOrOptionsOrCallback?: 
+            DocumentType<TEntity> | StoreOptions<TEntity> | AbstractCallback<void>,
         callback?: AbstractCallback<void>): Promise<void> {
 
+        let id: string = null;
+        let documentType: DocumentType<TEntity> = null;
         let options: StoreOptions<TEntity> = {};
-        if (TypeUtil.isFunction(optionsOrCallback)) {
-            callback = optionsOrCallback as AbstractCallback<void>;
-        } else if (TypeUtil.isDocumentType<TEntity>(optionsOrCallback)) {
-            options = { documentType: optionsOrCallback as DocumentType<TEntity> };
-            callback = callback || TypeUtil.NOOP;
-        } else if (TypeUtil.isObject(optionsOrCallback)) {
-            options = optionsOrCallback as StoreOptions<TEntity> || {};
-            callback = callback || TypeUtil.NOOP;
+
+        // figure out second arg
+        if (TypeUtil.isString(idOrCallback) || !idOrCallback) {
+            // if it's a string and registered type
+            id = idOrCallback as string;
+        } else if (TypeUtil.isFunction(idOrCallback)) {
+            callback = idOrCallback as AbstractCallback<void>;
         } else {
-            options = {};
-            callback = TypeUtil.NOOP;
+            throwError("InvalidArgumentException", "Invalid 2nd parameter: must be id string or callback.");
         }
+        
+        // figure out third arg
+        if (TypeUtil.isDocumentType<TEntity>(docTypeOrOptionsOrCallback)) {
+           documentType = docTypeOrOptionsOrCallback as DocumentType<TEntity>;
+        } else if (TypeUtil.isFunction(docTypeOrOptionsOrCallback)) {
+            callback = docTypeOrOptionsOrCallback as AbstractCallback<void>;
+        } else if (TypeUtil.isObject(docTypeOrOptionsOrCallback)) {
+            options = docTypeOrOptionsOrCallback as StoreOptions<TEntity>;
+        } 
+
+        callback = callback || TypeUtil.NOOP;
 
         const changeVector = options.changeVector;
-        const documentType = options.documentType;
+        documentType = documentType || options.documentType;
         this.conventions.tryRegisterEntityType(documentType); 
         if (entity.constructor !== Object) {
             this.conventions.tryRegisterEntityType(entity.constructor as ClassConstructor); 
@@ -593,7 +611,7 @@ export abstract class InMemoryDocumentSessionOperations
         let forceConcurrencyCheck: ConcurrencyCheckMode;
         if (!TypeUtil.isUndefined(changeVector)) {
             forceConcurrencyCheck = changeVector === null ? "Disabled" : "Forced";
-        } else if (!TypeUtil.isUndefined(id)) {
+        } else if (!TypeUtil.isNullOrUndefined(id)) {
             forceConcurrencyCheck = "Auto";
         } else {
             const hasId = this._generateEntityIdOnTheClient.tryGetIdFromInstance(entity);

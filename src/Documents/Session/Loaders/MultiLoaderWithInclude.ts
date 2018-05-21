@@ -1,8 +1,10 @@
+import * as BluebirdPromise from "bluebird";
 import { ILoaderWithInclude } from "./ILoaderWithInclude";
 import { IDocumentSessionImpl } from "../IDocumentSession";
 import { DocumentType } from "../../DocumentAbstractions";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { EntitiesCollectionObject } from "../../..";
+import { AbstractCallback } from "../../../Types/Callbacks";
 
 /**
  * Fluent implementation for specifying include paths
@@ -30,7 +32,12 @@ export class MultiLoaderWithInclude implements ILoaderWithInclude {
      * @param ids Ids to load
      * @return Map: id to entity
      */
-    public load<TResult extends object>(id: string, documentType: DocumentType<TResult>): Promise<TResult>;
+    public async load<TResult extends object>(id: string, documentType?: DocumentType<TResult>): Promise<TResult>;
+    public async load<TResult extends object>(
+        id: string, 
+        documentType?: DocumentType<TResult>,
+        callback?: AbstractCallback<TResult>): Promise<TResult>;
+
     /**
      * Loads the specified ids.
      * @param <TResult> Result class
@@ -38,12 +45,16 @@ export class MultiLoaderWithInclude implements ILoaderWithInclude {
      * @param ids Ids to load
      * @return Map: id to entity
      */
-    public load<TResult extends object>(
+    public async load<TResult extends object>(
         ids: string[], 
-        documentType: DocumentType<TResult>): Promise<EntitiesCollectionObject<TResult>>;
-    public load<TResult extends object>(
+        documentType?: DocumentType<TResult>): Promise<EntitiesCollectionObject<TResult>>;
+    public async load<TResult extends object>(
         ids: string | string[], 
-        documentType: DocumentType<TResult>): Promise<TResult | EntitiesCollectionObject<TResult>> {
+        documentType?: DocumentType<TResult>,
+        callback?: AbstractCallback<TResult | EntitiesCollectionObject<TResult>>)
+            : Promise<TResult | EntitiesCollectionObject<TResult>> {
+        callback = callback || TypeUtil.NOOP;
+        
         let singleResult = false;
         if (TypeUtil.isString(ids)) {
             ids = [ ids ] as string[];
@@ -52,13 +63,17 @@ export class MultiLoaderWithInclude implements ILoaderWithInclude {
 
         const entityType = this._session.conventions.findEntityType(documentType);
 
-        return Promise.resolve()
+        const result = BluebirdPromise.resolve()
             .then(() => this._session.loadInternal(ids as string[], this._includes, entityType))
             .then(results => {
                 return singleResult ?
                     Object.keys(results).map(x => results[x])[0] as TResult :
                     results;
-            });
+            })
+            .tap((results) => callback(null, results))
+            .tapCatch(err => callback(err));
+        
+        return Promise.resolve(result);
     }
 
     /**

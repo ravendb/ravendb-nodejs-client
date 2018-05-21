@@ -37,52 +37,55 @@ export interface IDocumentSession extends IDisposable {
      */
     advanced: IAdvancedSessionOperations;
 
-    load<TEntity extends object = IRavenObject>(
+    load<TEntity extends object>(
         id: string, 
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
-    load<TEntity extends object = IRavenObject>(
+    load<TEntity extends object>(
         id: string, 
         documentType?: DocumentType<TEntity>, 
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
-    load<TEntity extends object = IRavenObject>(
+    load<TEntity extends object>(
         id: string, 
         options?: LoadOptions<TEntity>, 
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
-    load<TEntity extends object = IRavenObject>(
+    load<TEntity extends object>(
         ids: string[], 
         callback?: AbstractCallback<EntitiesCollectionObject<TEntity>>): Promise<EntitiesCollectionObject<TEntity>>;
-    load<TEntity extends object = IRavenObject>(
+    load<TEntity extends object>(
         ids: string[], 
         documentType?: DocumentType<TEntity>, 
         callback?: AbstractCallback<TEntity>): 
         Promise<EntitiesCollectionObject<TEntity>>;
-    load<TEntity extends object = IRavenObject>(
+    load<TEntity extends object>(
         ids: string[], 
         options?: LoadOptions<TEntity>, 
         callback?: AbstractCallback<TEntity>): 
         Promise<EntitiesCollectionObject<TEntity>>;
 
-    delete<TEntity extends object = IRavenObject>(
+    delete<TEntity extends object>(
         id: string): void;
-    delete<TEntity extends object = IRavenObject>(
+    delete<TEntity extends object>(
         entity: TEntity): void;
-    delete<TEntity extends object = IRavenObject>(
+    delete<TEntity extends object>(
         id: string, expectedChangeVector: string): void;
 
-    store<TEntity extends object = IRavenObject>(
-        document: TEntity, id?: string, callback?: AbstractCallback<void>): Promise<void>;
-    store<TEntity extends object = IRavenObject>(
+    store<TEntity extends object>(
+        document: TEntity, callback?: AbstractCallback<void>): Promise<void>;
+    store<TEntity extends object>(
+        document: TEntity, 
+        id?: string, 
+        callback?: AbstractCallback<void>): Promise<void>;
+    store<TEntity extends object>(
         document: TEntity,
         id?: string,
         documentType?: DocumentType<TEntity>,
         callback?: AbstractCallback<void>): Promise<void>;
-    store<TEntity extends object = IRavenObject>(
+    store<TEntity extends object>(
         document: TEntity,
         id?: string,
         options?: StoreOptions<TEntity>,
         callback?: AbstractCallback<void>): Promise<void>;
 
-    
     /**
      * Begin a load while including the specified path
      * Path in documents in which server should look for a 'referenced' documents.
@@ -94,6 +97,7 @@ export interface IDocumentSession extends IDisposable {
     //       query<T extends Object = IRavenObject>(options?: IDocumentQueryOptions<T>): IDocumentQuery<T>;
 
     saveChanges(): Promise<void>;
+    saveChanges(callback: AbstractCallback<void>): Promise<void>;
 
     query<T extends object>(opts: DocumentQueryOptions<T>): IDocumentQuery<T>;
     query<T extends object>(documentType: DocumentType<T>): IDocumentQuery<T>;

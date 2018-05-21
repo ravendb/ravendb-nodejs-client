@@ -16,9 +16,10 @@ export class HiloMultiTypeIdGenerator extends AbstractHiloIdGenerator implements
     }
 
     public generateDocumentId(entity: object, documentType?: string): Promise<string> {
-        const entityType = this._conventions.findEntityType(documentType) || 
-            this._conventions.getEntityTypeDescriptor(entity);
-        const typeTagName: string = this._conventions.getCollectionNameForType(entityType);
+        const entityType = this._conventions.findEntityType(documentType);
+        const typeTagName: string = entityType 
+            ? this._conventions.getCollectionNameForType(entityType)
+            : this._conventions.getCollectionNameForEntity(entity);
 
         if (!typeTagName) {
             return Promise.resolve(null);
