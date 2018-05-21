@@ -10,6 +10,7 @@ import { IRawDocumentQuery } from "./IRawDocumentQuery";
 import { SessionEventsEmitter } from "./SessionEvents";
 import { IDocumentQuery } from "./IDocumentQuery";
 import { AdvancedDocumentQueryOptions } from "./QueryOptions";
+import { AbstractCallback } from "../../Types/Callbacks";
 
 export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOperations {
 
@@ -37,7 +38,10 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
 
     exists(id: string): Promise<boolean>;
 
-    loadStartingWith<T extends object>(idPrefix: string, opts: SessionLoadStartingWithOptions<T>): Promise<T[]>;
+    loadStartingWith<T extends object>(
+        idPrefix: string, opts: SessionLoadStartingWithOptions<T>, callback?: AbstractCallback<T[]>): Promise<T[]>;
+    loadStartingWith<T extends object>(
+        idPrefix: string, callback?: AbstractCallback<T[]>): Promise<T[]>;
 
     documentQuery<TEntity extends object>(documentType: DocumentType<TEntity>): IDocumentQuery<TEntity>;
     documentQuery<TEntity extends object>(opts: AdvancedDocumentQueryOptions<TEntity>): IDocumentQuery<TEntity>;

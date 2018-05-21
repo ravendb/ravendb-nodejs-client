@@ -138,6 +138,7 @@ export class RequestExecutor implements IDisposable {
     protected _readBalanceBehavior: ReadBalanceBehavior;
 
     private _cache: HttpCache;
+
     private _topologyTakenFromNode: ServerNode;
 
     public agressiveCaching: AggressiveCacheOptions = null;
@@ -146,7 +147,7 @@ export class RequestExecutor implements IDisposable {
 
     protected _nodeSelector: NodeSelector;
 
-    public numberOfServerRequests = 0;
+    public numberOfServerRequests: number = 0;
 
     protected _disposed: boolean;
 
@@ -154,9 +155,9 @@ export class RequestExecutor implements IDisposable {
 
     protected _lastKnownUrls: string[];
 
-    protected _clientConfigurationEtag: number;
+    protected _clientConfigurationEtag: number = 0;
 
-    protected _topologyEtag: number;
+    protected _topologyEtag: number = 0;
 
     private _conventions: DocumentConventions;
 
@@ -320,7 +321,7 @@ export class RequestExecutor implements IDisposable {
             const oldDisableClientConfigurationUpdates = this._disableClientConfigurationUpdates;
             this._disableClientConfigurationUpdates = true;
 
-            const result = Promise.resolve()
+            return BluebirdPromise.resolve()
                 .then(() => {
 
                     if (this._disposed) {
@@ -344,27 +345,24 @@ export class RequestExecutor implements IDisposable {
                     this._conventions.updateFrom(clientConfigOpResult.configuration);
                     this._clientConfigurationEtag = clientConfigOpResult.etag;
 
-                });
-
-            return BluebirdPromise.resolve(result)
+                })
                 .tapCatch(err => this._log.error(err, "Error getting client configuration."))
                 .finally(() => {
                     this._disableClientConfigurationUpdates = oldDisableClientConfigurationUpdates;
-                    this._updateClientConfigurationSemaphore.leave();
                 });
         };
 
-        const sem = this._updateClientConfigurationSemaphore;
-        return new Promise((resolve) =>
-            sem.take(() => 
-                updateClientConfigurationInternal()
-                .finally(() => { 
-                    sem.leave(); 
-                    resolve(); 
-                })));
+        const semAcquiredContext = acquireSemaphore(this._updateClientConfigurationSemaphore);
+        const result = BluebirdPromise.resolve(semAcquiredContext.promise)
+            .then(() => updateClientConfigurationInternal())
+            .finally(() => {
+                semAcquiredContext.dispose();
+            });
+
+        return Promise.resolve(result);
     }
 
-    public updateTopology (node: ServerNode, timeout: number, forceUpdate: boolean = false): Promise<boolean> {
+    public updateTopology(node: ServerNode, timeout: number, forceUpdate: boolean = false): Promise<boolean> {
         if (this._disposed) {
             return Promise.resolve(false);
         }

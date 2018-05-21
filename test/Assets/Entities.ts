@@ -13,3 +13,9 @@ export class Person {
     public name: string;
     public addressId: string;
 }
+
+export class GeekPerson {
+    public name: string;
+    public favoritePrimes: number;
+    public favoriteVeryLargePrimes: number;
+}
