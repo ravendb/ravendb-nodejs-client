@@ -1,3 +1,4 @@
+import {RequestExecutor} from '../../src/Http/RequestExecutor';
 // tslint:disable-next-line:no-var-requires
 // const why = require("why-is-node-running");
 
@@ -29,6 +30,18 @@ export class RemoteTestContext extends RavenTestDriver implements IDisposable {
     public static setupServer(): RemoteTestContext {
         return new RemoteTestContext(new TestServiceLocator(), null);
     }
+
+    public withFiddler(): IDisposable {
+        RequestExecutor.requestPostProcessor = (req) => {
+            req.proxy = "http://127.0.0.1:8888"
+        };
+
+        return {
+            dispose() {
+                RequestExecutor.requestPostProcessor = null;
+            }
+        };
+    }
 }
 
 export class RemoteSecuredTestContext extends RavenTestDriver {
@@ -42,6 +55,7 @@ export class RemoteSecuredTestContext extends RavenTestDriver {
     public getCommandArguments() {
         return [];
     }
+
 }
 
 export async function disposeTestDocumentStore(store: IDocumentStore) {

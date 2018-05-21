@@ -4,6 +4,7 @@ import { SessionLoadStartingWithOptions, StartingWithOptions } from "../IDocumen
 import { DocumentInfo } from "../DocumentInfo";
 import { DocumentType } from "../../DocumentAbstractions";
 import { ObjectTypeDescriptor } from "../../..";
+import { TypeUtil } from "../../../Utility/TypeUtil";
 
 export class LoadStartingWithOperation {
 
@@ -45,13 +46,20 @@ export class LoadStartingWithOperation {
     }
 
     public withStartWith(idPrefix: string, opts: StartingWithOptions): void {
-        const optsToUse = Object.assign({}, LoadStartingWithOperation.DEFAULT, opts);
+        const optsToUse: StartingWithOptions = Object.keys(LoadStartingWithOperation.DEFAULT)
+            .reduce((result, next) => {
+                result[next] = TypeUtil.isNullOrUndefined(opts[next]) 
+                    ? LoadStartingWithOperation.DEFAULT[next]
+                    : opts[next];
+                return result;
+            }, {});
+
         this._startWith = idPrefix;
-        this._matches = opts.matches;
-        this._start = opts.start;
-        this._pageSize = opts.pageSize;
-        this._exclude = opts.exclude;
-        this._startAfter = opts.startAfter;
+        this._matches = optsToUse.matches;
+        this._start = optsToUse.start;
+        this._pageSize = optsToUse.pageSize;
+        this._exclude = optsToUse.exclude;
+        this._startAfter = optsToUse.startAfter;
     }
 
     public setResult(result: GetDocumentsResult): void {

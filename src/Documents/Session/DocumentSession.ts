@@ -219,11 +219,35 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     public loadStartingWith<TEntity extends object>(
-        idPrefix: string, opts: SessionLoadStartingWithOptions<TEntity>): Promise<TEntity[]> {
+        idPrefix: string, 
+        callback?: AbstractCallback<TEntity[]>): Promise<TEntity[]>;
+    public loadStartingWith<TEntity extends object>(
+        idPrefix: string, 
+        opts: SessionLoadStartingWithOptions<TEntity>, 
+        callback?: AbstractCallback<TEntity[]>): Promise<TEntity[]>;
+    public loadStartingWith<TEntity extends object>(
+        idPrefix: string, 
+        optsOrCallback?: SessionLoadStartingWithOptions<TEntity> | AbstractCallback<TEntity[]>, 
+        callback?: AbstractCallback<TEntity[]>): Promise<TEntity[]> {
+
         const loadStartingWithOperation = new LoadStartingWithOperation(this);
-        return Promise.resolve()
+        let opts: SessionLoadStartingWithOptions<TEntity>;
+        if (TypeUtil.isFunction(optsOrCallback)) {
+            callback = optsOrCallback as AbstractCallback<TEntity[]>;
+        } else {
+            opts = optsOrCallback as SessionLoadStartingWithOptions<TEntity>;
+        }
+
+        opts = opts || {};
+        callback = callback || TypeUtil.NOOP;
+
+        const result = BluebirdPromise.resolve()
             .then(() => this._loadStartingWithInternal(idPrefix, loadStartingWithOperation, opts))
-            .then(() => loadStartingWithOperation.getDocuments<TEntity>(opts.documentType));
+            .then(() => loadStartingWithOperation.getDocuments<TEntity>(opts.documentType))
+            .tap(results => callback(null, results))
+            .tapCatch(err => callback(err));
+
+        return Promise.resolve(result);
     }
 
     // TBD public void LoadStartingWithIntoStream(

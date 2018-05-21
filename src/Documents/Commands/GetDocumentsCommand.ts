@@ -5,6 +5,7 @@ import { Mapping, JsonSerializer } from "../../Mapping";
 import { HeadersBuilder, getHeaders } from "../../Utility/HttpUtil";
 import { IRavenObject } from "../..";
 import { ObjectKeysTransform } from "../../Mapping/ObjectMapper";
+import { TypeUtil } from "../../Utility/TypeUtil";
 
 export interface GetDocumentsByIdCommandOptions {
     id: string;
@@ -69,7 +70,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             this._start = opts.start;
             this._pageSize = opts.pageSize;
 
-            if (opts.hasOwnProperty("startWith")) {
+            if (opts.hasOwnProperty("startsWith")) {
                 this._startsWith = opts.startsWith;
                 this._startAfter = opts.startsAfter;
                 this._matches = opts.matches;
@@ -83,7 +84,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         const uriPath = `${node.url}/databases/${node.database}/docs?`;
 
         let query = "";
-        if (this._start) {
+        if (!TypeUtil.isNullOrUndefined(this._start)) {
             query += `&start=${this._start}`;
         }
 
