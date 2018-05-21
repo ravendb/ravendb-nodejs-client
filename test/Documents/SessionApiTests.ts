@@ -1,3 +1,4 @@
+import {User} from "../Assets/Entities";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../Utils/TestUtil";
@@ -8,9 +9,10 @@ import {
     RavenErrorType,
     GetNextOperationIdCommand,
     IDocumentStore,
+    IDocumentSession,
 } from "../../src";
 
-describe("Session API usability tests", function () {
+describe("Session API dev experience tests", function () {
 
     let store: IDocumentStore;
 
@@ -22,20 +24,283 @@ describe("Session API usability tests", function () {
         await disposeTestDocumentStore(store));
 
     describe("store()", () => {
-        it.skip("can use callbacks", async () => { });
-        it.skip("can use async/promises", async () => { });
+
+        describe("using callbacks", () => {
+
+            let session: IDocumentSession;
+            let user: User;
+
+            beforeEach(() => {
+                session = store.openSession();
+                user = Object.assign(new User(), { name: "Jon" });
+            });
+
+            it("passing only callback", (done) => {
+                session.store(user, (err) => {
+                    if (err) {
+                        done(err);
+                    }
+
+                    assert.equal(user.id, "users/1-A");
+                    done();
+                });
+            });
+
+            it("passing id and callback", (done) => {
+                session.store(user, "users/1", (err) => {
+                    if (err) {
+                        done(err);
+                    }
+
+                    assert.equal(user.id, "users/1");
+                    done();
+                });
+            });
+
+            it("passing id, type, callback", (done) => {
+                session.store(user, "users/1", User, (err) => {
+                    if (err) {
+                        done(err);
+                    }
+
+                    assert.equal(user.id, "users/1");
+                    done();
+                });
+            });
+
+            it("passing id, options, callback", (done) => {
+                session.store(user, null, { changeVector: "ccc" } , (err) => {
+                    if (err) {
+                        done(err);
+                    }
+
+                    assert.equal(user.id, "users/1-A");
+                    done();
+                });
+            });
+
+            it("passing store id, opts, callback", (done) => {
+                session.store(user, "users/1", { changeVector: "aaa" }, (err) => {
+                    if (err) {
+                        done(err);
+                    }
+
+                    assert.equal(user.id, "users/1");
+                    done();
+                });
+            });
+        });
+
+        describe("using async/promises", () => {
+
+            let session: IDocumentSession;
+            let user: User;
+
+            beforeEach(() => {
+                session = store.openSession();
+                user = Object.assign(new User(), { name: "Jon" });
+            });
+
+            it ("id and opts", async () => {
+                await session.store(user, "users/1", { changeVector: "aaa" });
+                assert.equal(user.id, "users/1");
+            });
+
+            it ("id and type", async () => {
+                await session.store(user, "users/1", User);
+                assert.equal(user.id, "users/1");
+            });
+
+            it ("only id", async () => {
+                await session.store(user, "users/1");
+                assert.equal(user.id, "users/1");
+            });
+        });
+
+    });
+
+    describe("saveChanges()", () => {
+
+            let session: IDocumentSession;
+            let user: User;
+
+            beforeEach(async () => {
+                session = store.openSession();
+                user = Object.assign(new User(), { name: "Jon" });
+                await session.store(user);
+            });
+
+            it("using promise", async () => {
+                await session.saveChanges();
+            });
+
+            it("using callback", (done) => {
+                session.saveChanges((err) => err ? done(err) : done());
+            });
     });
 
     describe("load()", () => {
-        it.skip("can use callbacks", async () => { });
-        it.skip("can use async/promises", async () => { });
+
+        let session: IDocumentSession;
+        let user: User;
+
+        beforeEach(async () => {
+            session = store.openSession();
+            user = Object.assign(new User(), { name: "Jon" });
+            await session.store(user);
+            await session.saveChanges();
+
+            session = store.openSession(); // open another session
+        });
+
+        function assertLoadResult(result) {
+            assert.ok(result);
+            assert.equal(result.name, user.name);
+        }
+        
+        describe("can use callbacks", () => {
+
+            it("pass only id and callback", (done) => {
+                session.load(user.id, (err, result) => {
+                    if (err) {
+                        done(err);
+                        return;
+                    }
+
+                    assertLoadResult(result);
+                    done();
+                });
+            });
+
+            it("pass id, type, callback", (done) => {
+                session.load(user.id, User, (err, result) => {
+                    if (err) {
+                        done(err);
+                        return;
+                    }
+
+                    assertLoadResult(result);
+                    done();
+                });
+            });
+
+            it("pass id, opts, callback", (done) => {
+                session.load(user.id, { documentType: User }, (err, result) => {
+                    if (err) {
+                        done(err);
+                        return;
+                    }
+
+                    assertLoadResult(result);
+                    done();
+                });
+            });
+
+        });
+
+        describe("can use async/promises", () => {
+
+            it("pass id", async () => {
+                const result = await session.load(user.id);
+                assertLoadResult(result);
+            });
+
+            it("pass id and type", async () => {
+                const result = await session.load(user.id, User);
+                assertLoadResult(result);
+            });
+
+            it("pass id and opts", async () => {
+                const result = await session.load(user.id, { documentType: User });
+                assertLoadResult(result);
+            });
+
+        });
+
     });
 
     describe("delete()", () => {
-        it.skip("TODO", async () => {});
+        // delete is synchronous
     });
 
-    describe("rest of stuff", () => {
-        it.skip("TODO", async () => {});
+    describe("using object literals", async () => {
+
+        let session: IDocumentSession;
+
+        it("CRUD + query", async () => {
+
+            store.conventions.findCollectionNameForObjectLiteral =
+                (e: any) => e.collection;
+
+            const user: any = { 
+                collection: "Users",
+                name: "John" 
+            };
+
+            {
+                session = store.openSession();
+                await session.store(user);
+                await session.saveChanges();
+                assert.ok(user.id);
+                assert.equal(user.id, "users/1-A");
+            }
+
+            {
+                session = store.openSession();
+                const loaded: any = await session.load(user.id);
+                assert.ok(loaded);
+                assert.equal(loaded.name, "John");
+            }
+
+            {
+                session = store.openSession();
+                const results = await session.query({ collection: "users" }).all();
+                assert.equal(results.length, 1);
+                assert.equal((results[0] as any).name, "John");
+
+                const loaded: any = await session.load(user.id);
+                session.delete(loaded);
+                await session.saveChanges();
+            }
+        });
     });
+
+    describe("using classes", async () => {
+
+        let session: IDocumentSession;
+
+        it("CRUD + query", async () => {
+
+            const user: User = Object.assign(new User(), { name: "John" });
+
+            {
+                session = store.openSession();
+                await session.store(user);
+                await session.saveChanges();
+                assert.ok(user.id);
+                assert.equal(user.id, "users/1-A");
+            }
+
+            {
+                session = store.openSession();
+                const loaded: any = await session.load(user.id);
+                assert.ok(loaded);
+                assert.equal(loaded.name, "John");
+                assert.equal(loaded.constructor, User);
+            }
+
+            {
+                session = store.openSession();
+                const results = await session.query({ collection: "users" }).all();
+                assert.equal(results.length, 1);
+                assert.equal((results[0] as any).name, "John");
+
+                const loaded: any = await session.load(user.id);
+                session.delete(loaded);
+                await session.saveChanges();
+            }
+        });
+
+    });
+
 });

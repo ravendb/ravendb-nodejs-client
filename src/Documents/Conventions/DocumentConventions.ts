@@ -333,7 +333,26 @@ export class DocumentConventions {
             return null;
         }
 
-        return this.getCollectionNameForType(this.getEntityTypeDescriptor(entity));
+        const typeDescriptor = this.getEntityTypeDescriptor(entity);
+        if (typeDescriptor) {
+            return this.getCollectionNameForType(typeDescriptor);
+        }
+
+        if (this._findCollectionNameForObjectLiteral && entity.constructor === Object) {
+            return this._findCollectionNameForObjectLiteral(entity);
+        }
+
+        return null;
+    }
+
+    private _findCollectionNameForObjectLiteral: (entity: object) => string;
+    
+    public get findCollectionNameForObjectLiteral() {
+        return this._findCollectionNameForObjectLiteral;
+    }
+
+    public set findCollectionNameForObjectLiteral(value: (entity: object) => string) {
+        this._findCollectionNameForObjectLiteral = value;
     }
 
     public getEntityTypeDescriptor<T extends object>(entity: T): ObjectTypeDescriptor<T> {

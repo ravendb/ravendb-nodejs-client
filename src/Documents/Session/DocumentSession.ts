@@ -104,17 +104,14 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         let options: LoadOptions<TEntity>;
         if (TypeUtil.isDocumentType(optionsOrCallback)) { 
             options = { documentType: optionsOrCallback as DocumentType<TEntity> };
-            callback = callback || TypeUtil.NOOP;
         } else if (TypeUtil.isFunction(optionsOrCallback)) {
             callback = optionsOrCallback as AbstractCallback<TEntity> || TypeUtil.NOOP;
-            options = {};
         } else if (TypeUtil.isObject(optionsOrCallback)) {
             options = optionsOrCallback as LoadOptions<TEntity>;
-            callback = callback || TypeUtil.NOOP;
-        } else {
-            options = {};
-            callback = TypeUtil.NOOP;
-        }
+        } 
+
+        callback = callback || TypeUtil.NOOP;
+        options = options || {};
 
         this.conventions.tryRegisterEntityType(options.documentType); 
         const objType = this.conventions.findEntityType(options.documentType);
@@ -158,7 +155,10 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             });
     }
 
-    public saveChanges(): Promise<void> {
+    public saveChanges(): Promise<void>;
+    public saveChanges(callback?: AbstractCallback<void>): Promise<void>;
+    public saveChanges(callback?: AbstractCallback<void>): Promise<void> {
+        callback = callback || TypeUtil.NOOP;
         const saveChangeOperation = new BatchOperation(this);
         let command: BatchCommand; 
         const result = BluebirdPromise.resolve()
@@ -175,7 +175,9 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
                 if (command) {
                     command.dispose();
                 }
-            });
+            })
+            .tap(() => callback())
+            .tapCatch(err => callback(err));
 
         return Promise.resolve(result);
     }

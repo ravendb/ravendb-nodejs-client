@@ -98,7 +98,7 @@ describe("HiLo", function () {
 
             {
                 const session = store.openSession();
-                const hiloDoc = await session.load("Raven/Hilo/users");
+                const hiloDoc = await session.load<HiloDoc>("Raven/Hilo/users");
                 assert.equal(hiloDoc.Max, 96);
                 assert.equal(hiloDoc.constructor, HiloDoc); // should take type from @metadata
 
@@ -107,7 +107,7 @@ describe("HiLo", function () {
 
             {
                 const session = store.openSession();
-                const hiloDoc = await session.load("Raven/Hilo/users");
+                const hiloDoc = await session.load<HiloDoc>("Raven/Hilo/users");
                 assert.equal(hiloDoc.Max, 160);
                 assert.equal(hiloDoc.constructor, HiloDoc);
             }
@@ -143,7 +143,7 @@ describe("HiLo", function () {
 
         {
             const session = newStore.openSession();
-            const hiloDoc = await session.load("Raven/Hilo/users", HiloDoc);
+            const hiloDoc = await session.load<HiloDoc>("Raven/Hilo/users", HiloDoc);
             assert.equal(hiloDoc.Max, 34);
             assert.equal(hiloDoc.constructor, HiloDoc); // should take type from @metadata
         }
