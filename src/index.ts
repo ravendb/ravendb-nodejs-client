@@ -33,6 +33,7 @@ export { ServerWideOperationCompletionAwaiter } from "./ServerWide/Operations/Se
 // DOCUMENTS
 export * from "./Documents/Operations/OperationAbstractions";
 export { CompactDatabaseOperation } from "./Documents/Operations/CompactDatabaseOperation";
+export { DeleteByQueryOperation } from "./Documents/Operations/DeleteByQueryOperation";
 export { GetCollectionStatisticsOperation } from "./Documents/Operations/GetCollectionStatisticsOperation";
 export { CollectionStatistics } from "./Documents/Operations/CollectionStatistics";
 export { GetNextOperationIdCommand } from "./Documents/Commands/GetNextOperationIdCommand";
@@ -83,6 +84,7 @@ export * from "./Documents/Indexes/Spatial";
 export * from "./Documents/Indexes/IndexingStatus";
 export * from "./Documents/Indexes/IndexStats";
 export * from "./Documents/Indexes";
+export * from "./Documents/Queries/IndexQuery";
 export * from "./Documents/DocumentAbstractions";
 export * from "./Documents/Session/IDocumentSession";
 export * from "./Documents/Session/DocumentSession";
