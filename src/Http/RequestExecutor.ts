@@ -2,6 +2,7 @@ import * as _ from "lodash";
 import * as os from "os";
 import * as BluebirdPromise from "bluebird";
 import * as semaphore from "semaphore";
+import * as validUrl from "valid-url";
 import { acquireSemaphore } from "../Utility/SemaphoreUtil";
 import { getLogger, ILogger } from "../Utility/LogUtil";
 import { Timer } from "../Primitives/Timer";
@@ -229,6 +230,7 @@ export class RequestExecutor implements IDisposable {
         this._lastReturnedResponse = new Date();
         this._conventions = conventions.clone();
         this._authOptions = authOptions;
+        this._certificate = Certificate.createFromOptions(this._authOptions);
     }
 
     public static create (
@@ -419,43 +421,39 @@ export class RequestExecutor implements IDisposable {
         return Promise.resolve(result);
     }
 
-    protected static _validateUrls (initialUrls: string[], authOptions: IAuthOptions) {
-        return initialUrls;
-        // TODO
-        // const cleanUrls = _.range(initialUrls.length)
-        //     .map(x => null);
-        // const requireHttps = !!authOptions;
-        // for (let index = 0; index < initialUrls.length; index++) {
-        //     const url = initialUrls[index];
-        //     try {
-        //         new URL(url);
-        //     } catch (MalformedURLException e) {
-        //         throw new IllegalArgumentException("The url '" + url + "' is not valid");
-        //     }
+    protected static _validateUrls(initialUrls: string[], authOptions: IAuthOptions) {
+        const cleanUrls = [...Array(initialUrls.length)];
+        let requireHttps = !!authOptions;
+        for (let index = 0; index < initialUrls.length; index++) {
+            const url = initialUrls[index];
+            if (!url || !validUrl.isWebUri(url)) {
+                throwError("InvalidArgumentException", `The url '${url}' is not valid.`);
+            }
 
-        //     cleanUrls[index] = StringUtils.stripEnd(url, "/");
-        //     requireHttps |= url.startsWith("https://");
-        // }
+            cleanUrls[index] = url.replace(/\/$/, "");
+            requireHttps = requireHttps || url.startsWith("https://");
+        }
 
-        // if (!requireHttps) {
-        //     return cleanUrls;
-        // }
+        if (!requireHttps) {
+            return cleanUrls;
+        }
 
-        // for (String url : initialUrls) {
-        //     if (!url.startsWith("http://")) {
-        //         continue;
-        //     }
+        for (const url of initialUrls) {
+            if (!url.startsWith("http://")) {
+                continue;
+            }
 
-        //     if (certificate != null) {
-        //         throw new IllegalStateException(
-        //    "The url " + url + " is using HTTP, but a certificate is specified, which require us to use HTTPS");
-        //     }
-        //     throw new IllegalStateException(
-        //    "The url " + url
-        //    + " is using HTTP, but other urls are using HTTPS, and mixing of HTTP and HTTPS is not allowed.");
-        // }
+            if (authOptions && authOptions.certificate) {
+                throwError("InvalidOperationException", 
+                    "The url " + url + " is using HTTP, but a certificate is specified, which require us to use HTTPS");
+            }
 
-        // return cleanUrls;
+            throwError("InvalidOperationException",
+                "The url " + url
+                + " is using HTTP, but other urls are using HTTPS, and mixing of HTTP and HTTPS is not allowed.");
+        }
+
+        return cleanUrls;
     }
 
     private _initializeUpdateTopologyTimer (): void {
@@ -1126,6 +1124,11 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
     private _createRequest<TResult> (node: ServerNode, command: RavenCommand<TResult>): HttpRequestBase {
         const req = Object.assign(command.createRequest(node), getDefaultRequestOptions());
         req.headers = req.headers || {};
+
+        if (this._authOptions) {
+            const agentOptions = this._certificate.toAgentOptions();
+            req.agentOptions = Object.assign(req.agentOptions || {}, agentOptions);
+        }
 
         if (!req.headers["Raven-Client-Version"]) {
             req.headers["Raven-Client-Version"] = RequestExecutor.CLIENT_VERSION;

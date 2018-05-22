@@ -1,3 +1,4 @@
+import * as fs from "fs";
 import * as BluebirdPromise from "bluebird";
 import { ChildProcess, spawn } from "child_process";
 import * as os from "os";
@@ -18,6 +19,8 @@ import { IDisposable } from "../Types/Contracts";
 import { getLogger } from "../Utility/LogUtil";
 import { RavenServerLocator } from "./RavenServerLocator";
 import { RavenServerRunner } from "./RavenServerRunner";
+import { TypeUtil } from "../Utility/TypeUtil";
+import { Certificate, ICertificate } from "../Auth/Certificate";
 
 const log = getLogger({ module: "TestDriver" });
 
@@ -48,10 +51,6 @@ export abstract class RavenTestDriver implements IDisposable {
     }
 
     public static debug: boolean;
-
-    public getTestClientCertificate(): IAuthOptions {
-        throw new Error("TODO");
-    }
 
     public getSecuredDocumentStore(): Promise<DocumentStore>; 
     public getSecuredDocumentStore(database?): Promise<DocumentStore> { 
@@ -91,8 +90,7 @@ export abstract class RavenTestDriver implements IDisposable {
         .then(createDatabaseResult => {
             const store = new DocumentStore(documentStore.urls, databaseName);
             if (secured) {
-                throw new Error("TODO");
-                // store.authOptions = null; // TODO
+                store.authOptions = this._securedLocator.getClientAuthOptions();
             }
 
             store.initialize();
@@ -126,10 +124,11 @@ export abstract class RavenTestDriver implements IDisposable {
 
             return Promise.resolve()
                 .then(() => this._setupDatabase(store))
-                // /* TODO
-                //  if (waitForIndexingTimeout.HasValue)
-                //         WaitForIndexing(store, name, waitForIndexingTimeout);
-                //  */
+                .then(() => {
+                    if (!TypeUtil.isNullOrUndefined(waitForIndexingTimeoutInMs)) {
+                        return this.waitForIndexing(store);
+                    }
+                })
                 .then(() => this._documentStores.add(store))
                 .then(() => store);
 
@@ -174,9 +173,10 @@ export abstract class RavenTestDriver implements IDisposable {
 
             // timeout if url won't show up after 5s
             return result
-                .timeout(5000)
+                .timeout(10000)
                 .catch((err) => {
-                    throwError("UrlScrappingError", "Error scrapping URL from server process output.", err);
+                    throwError("UrlScrappingError", "Error scrapping URL from server process output: " 
+                        + os.EOL + serverOutput, err);
                 });
         };
 
@@ -198,8 +198,7 @@ export abstract class RavenTestDriver implements IDisposable {
 
                 if (secured) {
                     RavenTestDriver._globalSecuredServer = store;
-                    const authOpts = this.getTestClientCertificate();
-                    store.authOptions = authOpts;
+                    store.authOptions = this._securedLocator.getClientAuthOptions();
                 } else {
                     RavenTestDriver._globalServer = store;
                 }
@@ -391,7 +390,4 @@ export abstract class RavenTestDriver implements IDisposable {
                 RavenTestDriver._killGlobalServerProcess(false);
             });
     }
-
-    // TODO fiddler support
-    // https://github.com/request/request#proxies
 }
