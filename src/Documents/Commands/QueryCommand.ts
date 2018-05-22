@@ -2,7 +2,7 @@ import {HttpRequestBase} from "../../Primitives/Http";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { QueryResult } from "../Queries/QueryResult";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { IndexQuery } from "../Queries/IndexQuery";
+import { IndexQuery, writeIndexQuery } from "../Queries/IndexQuery";
 import { throwError } from "../../Exceptions";
 import { ServerNode } from "../../Http/ServerNode";
 import * as StringBuilder from "string-builder";
@@ -85,52 +85,4 @@ export class QueryCommand extends RavenCommand<QueryResult> {
     public get isReadRequest(): boolean {
         return true;
     }
-}
-
-export function writeIndexQuery(conventions: DocumentConventions, indexQuery: IndexQuery): string {
-    const result = {
-        Query: indexQuery.query
-    };
-
-    if (indexQuery.pageSizeSet && indexQuery.pageSize >= 0) {
-        result["PageSize"] = indexQuery.pageSize;
-    }
-
-    if (indexQuery.waitForNonStaleResults) {
-        result["WaitForNonStaleResults"] = indexQuery.waitForNonStaleResults;
-    }
-
-    if (indexQuery.start > 0) {
-        result["Start"] = indexQuery.start;
-    }
-
-    if (!TypeUtil.isNullOrUndefined(indexQuery.waitForNonStaleResultsTimeout)) {
-        result["WaitForNonStaleResultsTimeout"] = indexQuery.waitForNonStaleResultsTimeout;
-    }
-
-    if (indexQuery.disableCaching) {
-        result["DisableCaching"] = indexQuery.disableCaching;
-    }
-
-    /* TBD
-    if (query.isExplainScores()) {
-        generator.writeBooleanField("ExplainScores", query.isExplainScores());
-    }*/
-
-    /* TBD
-    if (query.isShowTimings()) {
-        generator.writeBooleanField("ShowTimings", query.isShowTimings());
-    }*/
-
-    if (indexQuery.skipDuplicateChecking) {
-        result["SkipDuplicateChecking"] = indexQuery.skipDuplicateChecking;
-    }
-
-    if (!indexQuery.queryParameters) {
-        result["QueryParameters"] = null;
-    } else {
-        result["QueryParameters"] = indexQuery.queryParameters;
-    }
-
-    return JsonSerializer.getDefault().serialize(result);
 }

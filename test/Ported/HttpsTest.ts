@@ -15,12 +15,15 @@ describe("HttpsTest", function () {
     let store: IDocumentStore;
 
     beforeEach(async function () {
-        store = await globalContext.getDocumentStore();
+        store = await globalContext.getSecuredDocumentStore();
     });
 
     afterEach(async () => 
         await disposeTestDocumentStore(store));
 
-    // tslint:disable-next-line:no-empty
-    it.skip("TODO", async () => {});
+    it("can connect with certificate", async () => {
+        const session = store.openSession();
+        session.store({ lastName: "Snow" }, "users/1");
+        session.saveChanges();
+    });
 });

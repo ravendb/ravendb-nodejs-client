@@ -9,7 +9,10 @@ import {
     RavenErrorType,
     GetNextOperationIdCommand,
     IDocumentStore,
+    IndexQuery,
+    DeleteByQueryOperation,
 } from "../../../src";
+import { User } from "../../Assets/Entities";
 
 describe("DeleteByQueryTest", function () {
 
@@ -22,6 +25,28 @@ describe("DeleteByQueryTest", function () {
     afterEach(async () => 
         await disposeTestDocumentStore(store));
 
-    // tslint:disable-next-line:no-empty
-    it.skip("TODO", async () => {});
+    it("can delete by query", async () => {
+        {
+            const session = store.openSession();
+            const user1 = Object.assign(new User(), { age: 5 });
+            await session.store(user1);
+
+            const user2 = Object.assign(new User(), { age: 10 });
+            await session.store(user2);
+
+            await session.saveChanges();
+        }
+
+        const indexQuery = new IndexQuery();
+        indexQuery.query = "from users where age == 5";
+        const operation = new DeleteByQueryOperation(indexQuery);
+        const asyncOp = await store.operations.send(operation);
+
+        await asyncOp.waitForCompletion();
+
+        {
+            const session = store.openSession();
+            assert.equal(await session.query(User).count(), 1);
+        }
+    });
 });

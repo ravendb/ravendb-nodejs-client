@@ -1,6 +1,9 @@
 import { throwError } from "../../Exceptions";
 import { IndexQueryWithParameters } from "./IndexQueryWithParameters";
 import { QueryHashCalculator } from "./QueryHashCalculator";
+import { JsonSerializer } from "../../Mapping/Json";
+import { TypeUtil } from "../../Utility/TypeUtil";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
 
 export interface IndexQueryParameters {
     [key: string]: object;
@@ -25,7 +28,7 @@ export class IndexQuery extends IndexQueryWithParameters<IndexQueryParameters> {
     public getQueryHash(): string {
         const hasher = new QueryHashCalculator();
         try {
-            hasher.write(this.query)
+            hasher.write(this.query);
             hasher.write(this.waitForNonStaleResults);
             hasher.write(this.skipDuplicateChecking);
             //TBD hasher.write(isShowTimings());
@@ -39,4 +42,52 @@ export class IndexQuery extends IndexQueryWithParameters<IndexQueryParameters> {
             throwError("RavenException", "Unable to calculate hash", err);
         }
     }
+}
+
+export function writeIndexQuery(conventions: DocumentConventions, indexQuery: IndexQuery): string {
+    const result = {
+        Query: indexQuery.query
+    };
+
+    if (indexQuery.pageSizeSet && indexQuery.pageSize >= 0) {
+        result["PageSize"] = indexQuery.pageSize;
+    }
+
+    if (indexQuery.waitForNonStaleResults) {
+        result["WaitForNonStaleResults"] = indexQuery.waitForNonStaleResults;
+    }
+
+    if (indexQuery.start > 0) {
+        result["Start"] = indexQuery.start;
+    }
+
+    if (!TypeUtil.isNullOrUndefined(indexQuery.waitForNonStaleResultsTimeout)) {
+        result["WaitForNonStaleResultsTimeout"] = indexQuery.waitForNonStaleResultsTimeout;
+    }
+
+    if (indexQuery.disableCaching) {
+        result["DisableCaching"] = indexQuery.disableCaching;
+    }
+
+    /* TBD
+    if (query.isExplainScores()) {
+        generator.writeBooleanField("ExplainScores", query.isExplainScores());
+    }*/
+
+    /* TBD
+    if (query.isShowTimings()) {
+        generator.writeBooleanField("ShowTimings", query.isShowTimings());
+    }*/
+
+    if (indexQuery.skipDuplicateChecking) {
+        result["SkipDuplicateChecking"] = indexQuery.skipDuplicateChecking;
+    }
+
+    if (!indexQuery.queryParameters) {
+        result["QueryParameters"] = null;
+    } else {
+        result["QueryParameters"] = indexQuery.queryParameters;
+    }
+
+    return JsonSerializer.getDefault().serialize(result);
 }

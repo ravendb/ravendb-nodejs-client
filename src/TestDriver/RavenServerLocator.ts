@@ -1,4 +1,5 @@
 import { throwError } from "../Exceptions";
+import { IAuthOptions } from "../Auth/AuthOptions";
 
 export abstract class RavenServerLocator {
 
@@ -21,6 +22,10 @@ export abstract class RavenServerLocator {
         return false;
     }
 
+    public getServerHost(): string {
+        return "127.0.0.1";
+    }
+
     public getCommand(): string {
         return this.getServerPath();
     }
@@ -33,4 +38,7 @@ export abstract class RavenServerLocator {
         return throwError("NotSupportedException");
     }
 
+    public getClientAuthOptions(): IAuthOptions {
+        return throwError("NotSupportedException");
+    }
 }

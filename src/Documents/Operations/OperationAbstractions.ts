@@ -61,8 +61,8 @@ export class AwaitableOperation
     }
 }
 
-export class OperationIdResult {
-    public operationId: number;
+export interface OperationIdResult {
+    operationId: number;
 }
 
 export class OperationExceptionResult {
