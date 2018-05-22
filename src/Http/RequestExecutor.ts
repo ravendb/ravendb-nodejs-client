@@ -2,7 +2,7 @@ import * as _ from "lodash";
 import * as os from "os";
 import * as BluebirdPromise from "bluebird";
 import * as semaphore from "semaphore";
-import * as validUrl from "valid-url";
+import { parse as parseUrl } from "url";
 import { acquireSemaphore } from "../Utility/SemaphoreUtil";
 import { getLogger, ILogger } from "../Utility/LogUtil";
 import { Timer } from "../Primitives/Timer";
@@ -426,8 +426,11 @@ export class RequestExecutor implements IDisposable {
         let requireHttps = !!authOptions;
         for (let index = 0; index < initialUrls.length; index++) {
             const url = initialUrls[index];
-            if (!url || !validUrl.isWebUri(url)) {
-                throwError("InvalidArgumentException", `The url '${url}' is not valid.`);
+
+            try {
+                parseUrl(url);
+            } catch (err) {
+                throwError("InvalidArgumentException", `The url '${url}' is not valid.`, err);
             }
 
             cleanUrls[index] = url.replace(/\/$/, "");
