@@ -40,6 +40,7 @@ export { GetNextOperationIdCommand } from "./Documents/Commands/GetNextOperation
 export { DeleteDocumentCommand } from "./Documents/Commands/DeleteDocumentCommand";
 export { NextIdentityForCommand } from "./Documents/Commands/NextIdentityForCommand";
 export { SeedIdentityForCommand } from "./Documents/Commands/SeedIdentityForCommand";
+export { ExplainQueryCommand } from "./Documents/Commands/ExplainQueryCommand";
 export { GetIdentitiesOperation } from "./Documents/Operations/Identities/GetIdentitiesOperation";
 export { GetStatisticsOperation, GetStatisticsCommand } from "./Documents/Operations/GetStatisticsOperation";
 export { DatabaseStatistics } from "./Documents/Operations/DatabaseStatistics";

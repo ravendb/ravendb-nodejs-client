@@ -127,7 +127,8 @@ export abstract class RavenCommand<TResult> {
                 const { body } = response;
 
                 if (cache) {
-                    // this._cacheResponse(cache, url, response, json);
+                    // TODO 
+                    //this._cacheResponse(cache, url, response, json);
                 }
 
                 this.setResponse(body as string, false);

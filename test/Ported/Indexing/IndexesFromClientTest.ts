@@ -19,8 +19,11 @@ import {
     ResetIndexOperation,
     GetIndexNamesOperation,
     GetStatisticsOperation,
+    IndexQuery,
+    ExplainQueryCommand,
 } from "../../../src";
 import { DeleteIndexOperation } from "../../../src/Documents/Operations/Indexes/DeleteIndexOperation";
+import { QueryStatistics } from "../../../src/Documents/Session/QueryStatistics";
 
 describe("Indexes from client", function () {
 
@@ -91,46 +94,41 @@ describe("Indexes from client", function () {
         assert.equal(statistics.indexes.length, 0);
     });
 
-    it.skip("can explain query", async () => {
+    it("can explain query", async () => {
 
-//             User user1 = new User();
-//             user1.setName("Fitzchak");
+        const user1 = Object.assign(new User(), { name: "Fitzchack" });
+        const user2 = Object.assign(new User(), { name: "Arek" });
 
-//             User user2 = new User();
-//             user2.setName("Arek");
+        {
+            const session = store.openSession();
+            await session.store(user1);
+            await session.store(user2);
+            await session.saveChanges();
+        }
 
-//             try (IDocumentSession session = store.openSession()) {
-//                 session.store(user1);
-//                 session.store(user2);
-//                 session.saveChanges();
-//             }
+        {
+            // make queries to create auto indexes 
+            const session = store.openSession();
+            let stats: QueryStatistics;
+            let users = await session.query<User>(User)
+                .statistics(_stats => stats = _stats)
+                .whereEquals("name", "Arek")
+                .all();
+            
+            users = await session.query<User>(User)
+                .statistics(_stats => stats = _stats)
+                .whereGreaterThan("age", 10)
+                .all();
+        }
 
-//             try (IDocumentSession session = store.openSession()) {
-//                 Reference<QueryStatistics> statsRef = new Reference<>();
-//                 List<User> users = session.query(User.class)
-//                         .statistics(statsRef)
-//                         .whereEquals("name", "Arek")
-//                         .toList();
+        const indexQuery = new IndexQuery("from users");
+        const command = new ExplainQueryCommand(store.conventions, indexQuery);
 
-//                 users = session.query(User.class)
-//                         .statistics(statsRef)
-//                         .whereGreaterThan("age", 10)
-//                         .toList();
-//             }
+        await store.getRequestExecutor().execute(command);
 
-//             IndexQuery indexQuery = new IndexQuery("from users");
-//             ExplainQueryCommand command = new ExplainQueryCommand(store.getConventions(), indexQuery);
-
-//             store.getRequestExecutor().execute(command);
-
-//             ExplainQueryCommand.ExplainQueryResult[] explanations = command.getResult();
-//             assertThat(explanations)
-//                     .hasSize(1);
-//             assertThat(explanations[0].getIndex())
-//                     .isNotNull();
-//             assertThat(explanations[0].getReason())
-//                     .isNotNull();
-        throw new Error("Implement after query is done.");
+        const explanations = command.result;
+        assert.equal(explanations.length, 1);
+        assert.ok(explanations[0].index);
+        assert.ok(explanations[0].reason);
     });
-
 });

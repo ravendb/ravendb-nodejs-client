@@ -1,6 +1,6 @@
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../../../../Utils/TestUtil";
 
 import {
     RequestExecutor,
@@ -8,9 +8,9 @@ import {
     RavenErrorType,
     GetNextOperationIdCommand,
     IDocumentStore,
-} from "../../src";
+} from "../../../../../src";
 
-describe("RavenDB_6292", function () {
+describe("RavenDB-8761", function () {
 
     let store: IDocumentStore;
 
