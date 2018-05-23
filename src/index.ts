@@ -33,6 +33,10 @@ export { ServerWideOperationCompletionAwaiter } from "./ServerWide/Operations/Se
 // DOCUMENTS
 export * from "./Documents/Operations/OperationAbstractions";
 export { CompactDatabaseOperation } from "./Documents/Operations/CompactDatabaseOperation";
+export { PatchOperation } from "./Documents/Operations/PatchOperation";
+export { PatchByQueryOperation } from "./Documents/Operations/PatchByQueryOperation";
+export { PutCompareExchangeValueOperation } 
+    from "./Documents/Operations/CompareExchange/PutCompareExchangeValueOperation";
 export { DeleteByQueryOperation } from "./Documents/Operations/DeleteByQueryOperation";
 export { GetCollectionStatisticsOperation } from "./Documents/Operations/GetCollectionStatisticsOperation";
 export { CollectionStatistics } from "./Documents/Operations/CollectionStatistics";
@@ -40,6 +44,7 @@ export { GetNextOperationIdCommand } from "./Documents/Commands/GetNextOperation
 export { DeleteDocumentCommand } from "./Documents/Commands/DeleteDocumentCommand";
 export { NextIdentityForCommand } from "./Documents/Commands/NextIdentityForCommand";
 export { SeedIdentityForCommand } from "./Documents/Commands/SeedIdentityForCommand";
+export { ExplainQueryCommand } from "./Documents/Commands/ExplainQueryCommand";
 export { GetIdentitiesOperation } from "./Documents/Operations/Identities/GetIdentitiesOperation";
 export { GetStatisticsOperation, GetStatisticsCommand } from "./Documents/Operations/GetStatisticsOperation";
 export { DatabaseStatistics } from "./Documents/Operations/DatabaseStatistics";

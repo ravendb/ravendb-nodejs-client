@@ -2,7 +2,7 @@
 import { IRavenObject } from "../../Types";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { throwError } from "../../Exceptions";
-import { Mapping, JsonSerializer } from "../../Mapping";
+import { Mapping } from "../../Mapping";
 import { BatchOptions } from "./Batches/BatchOptions";
 // import { PatchRequest } from "../../../Http/Request/PatchRequest";
 

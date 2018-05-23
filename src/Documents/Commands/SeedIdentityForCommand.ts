@@ -39,7 +39,7 @@ export class SeedIdentityForCommand extends RavenCommand<number> {
             this._throwInvalidResponse();
         }
 
-        const jsonNode = this._commandPayloadSerializer.deserialize(response);
+        const jsonNode = this._serializer.deserialize(response);
         if (!jsonNode["newSeedValue"]) {
             this._throwInvalidResponse();
         }

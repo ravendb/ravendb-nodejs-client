@@ -8,8 +8,7 @@ import { throwError } from "../../../Exceptions";
 import { ServerNode } from "../../../Http/ServerNode";
 import { HttpRequestBase } from "../../../Primitives/Http";
 import { HeadersBuilder } from "../../../Utility/HttpUtil";
-import { JsonSerializer } from "../../../Mapping";
-
+import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 
 export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDisposable {
 
@@ -59,8 +58,8 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
         const commandsArray = this._commands.reduce(
             (result, command) => [ ...result, command.serialize() ], []);
 
-        const body = JsonSerializer.getDefault()
-            .serialize({ Commands: commandsArray });
+        // TODO conventions-based entity casing customizations
+        const body = JsonSerializer.getDefault().serialize({ Commands: commandsArray });
 
         const queryString = this._appendOptions();
         const request: HttpRequestBase = { 

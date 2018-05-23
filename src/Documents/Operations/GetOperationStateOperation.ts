@@ -3,7 +3,6 @@ import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestBase } from "../../Primitives/Http";
 import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
 import { IMaintenanceOperation, OperationResultType } from "./OperationAbstractions";
-import { JsonSerializer } from "../../Mapping";
 
 export class GetOperationStateOperation implements IMaintenanceOperation<IRavenResponse> {
 
@@ -48,6 +47,6 @@ export class GetOperationStateCommand extends RavenCommand<IRavenResponse> {
             return;
         }
 
-        this.result = this._commandPayloadSerializer.deserialize(response);
+        this.result = this._serializer.deserialize(response);
     }
 }

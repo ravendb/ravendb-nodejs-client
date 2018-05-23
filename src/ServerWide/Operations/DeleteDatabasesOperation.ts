@@ -56,7 +56,7 @@ export class DeleteDatabaseCommand extends RavenCommand<DeleteDatabaseResult> {
             throwError("InvalidArgumentException", "Parameters cannot be null.");
         }
 
-        this._parameters = this._commandPayloadSerializer.serialize(parameters);
+        this._parameters = this._serializer.serialize(parameters);
     }
 
     public createRequest(node: ServerNode): HttpRequestBase {
@@ -72,7 +72,7 @@ export class DeleteDatabaseCommand extends RavenCommand<DeleteDatabaseResult> {
     }
 
     public setResponse(response: string, fromCache: boolean): void {
-        this.result = this._commandPayloadSerializer.deserialize(response);
+        this.result = this._serializer.deserialize(response);
     }
 
     public get isReadRequest() {

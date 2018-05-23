@@ -49,6 +49,6 @@ export class GetServerWideOperationStateCommand extends RavenCommand<IRavenRespo
             return;
         }
 
-        this.result = this._commandPayloadSerializer.deserialize(response);
+        this.result = this._serializer.deserialize(response);
     }
 }

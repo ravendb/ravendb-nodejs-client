@@ -47,7 +47,7 @@ export class CompactDatabaseCommand extends RavenCommand<OperationIdResult> {
 
     public createRequest(node: ServerNode): HttpRequestBase {
         const uri = node.url + "/admin/compact";
-        const body = this._commandPayloadSerializer.serialize(this._compactSettings);
+        const body = this._serializer.serialize(this._compactSettings);
 
         return {
             method: "POST",
@@ -62,7 +62,7 @@ export class CompactDatabaseCommand extends RavenCommand<OperationIdResult> {
             this._throwInvalidResponse();
         }
 
-        this.result = this._commandPayloadSerializer.deserialize(response);
+        this.result = this._serializer.deserialize(response);
     }
 
     public get isReadRequest(): boolean {

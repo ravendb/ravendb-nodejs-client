@@ -1,11 +1,12 @@
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestBase } from "../../Primitives/Http";
-import { Mapping, JsonSerializer } from "../../Mapping";
+import { Mapping } from "../../Mapping";
 import { HeadersBuilder, getHeaders } from "../../Utility/HttpUtil";
 import { IRavenObject } from "../..";
 import { ObjectKeysTransform } from "../../Mapping/ObjectMapper";
 import { TypeUtil } from "../../Utility/TypeUtil";
+import { JsonSerializer } from "../../Mapping/Json/Serializer";
 
 export interface GetDocumentsByIdCommandOptions {
     id: string;
@@ -123,13 +124,13 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         if (this._id) {
             request.uri += `&id=${encodeURIComponent(this._id)}`;
         } else if (this._ids) {
-            request = GetDocumentsCommand.prepareRequestWithMultipleIds(request, this._ids);
+            request = this.prepareRequestWithMultipleIds(request, this._ids);
         }
 
         return request;
     }
 
-    public static prepareRequestWithMultipleIds(request: HttpRequestBase, ids: string[]): HttpRequestBase {
+    public prepareRequestWithMultipleIds(request: HttpRequestBase, ids: string[]): HttpRequestBase {
         const uniqueIds = new Set<string>(ids); 
 
         // if it is too big, we fallback to POST (note that means that we can't use the HTTP cache any longer)
@@ -148,8 +149,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
 
             return { method: "GET", uri: newUri };
         } else {
-            const body = JsonSerializer
-                .getDefaultForCommandPayload()
+            const body = this._serializer
                 .serialize({ ids: [...uniqueIds] });
             return {
                 uri: newUri,
@@ -162,12 +162,18 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         }
     }
 
+    protected get _serializer(): JsonSerializer {
+        const serializer = super._serializer;
+        return serializer;
+    }
+
     public setResponse(response: string, fromCache: boolean): void {
         if (!response) {
             this.result = null;
             return;
         }
 
+        // TODO for now
         // we want entities property casing untouched, so we're not using PascalCase reviver here
         const raw = JsonSerializer.getDefault().deserialize(response);
         this.result = ObjectKeysTransform.camelCase(raw);

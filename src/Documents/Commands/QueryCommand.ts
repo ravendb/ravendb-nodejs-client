@@ -6,9 +6,9 @@ import { IndexQuery, writeIndexQuery } from "../Queries/IndexQuery";
 import { throwError } from "../../Exceptions";
 import { ServerNode } from "../../Http/ServerNode";
 import * as StringBuilder from "string-builder";
-import { JsonSerializer } from "../../Mapping";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { ObjectKeysTransform } from "../../Mapping/ObjectMapper";
+import {JsonSerializer } from "../../Mapping/Json/Serializer";
 
 export class QueryCommand extends RavenCommand<QueryResult> {
 
@@ -66,13 +66,19 @@ export class QueryCommand extends RavenCommand<QueryResult> {
         };
     }
 
+    protected get _serializer(): JsonSerializer {
+        const serializer = super._serializer;
+        return serializer;
+    }
+
     public setResponse(response: string, fromCache: boolean): void {
         if (!response) {
             this.result = null;
             return;
         }
 
-        const rawResult = ObjectKeysTransform.camelCase(JsonSerializer.getDefault().deserialize(response), false);
+        const rawResult = ObjectKeysTransform.camelCase(
+            JsonSerializer.getDefault().deserialize(response), false);
         this.result = this._typedObjectMapper.fromObjectLiteral(rawResult, {
             typeName: QueryResult.name
         }, new Map([[QueryResult.name, QueryResult]]));

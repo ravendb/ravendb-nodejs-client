@@ -51,7 +51,7 @@ class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> {
 
         uri += "&replicationFactor=" + this._replicationFactor;
 
-        const databaseDocumentJson = this._commandPayloadSerializer.serialize(this._databaseRecord);
+        const databaseDocumentJson = this._serializer.serialize(this._databaseRecord);
         return {
             uri,
             method: "PUT",
@@ -67,7 +67,7 @@ class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> {
             this._throwInvalidResponse();
         }
 
-        this.result = this._commandPayloadSerializer.deserialize(response);
+        this.result = this._serializer.deserialize(response);
     }
 
     public get isReadRequest(): boolean {

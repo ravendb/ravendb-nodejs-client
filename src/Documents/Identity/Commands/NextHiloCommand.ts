@@ -1,6 +1,5 @@
 import * as qs from "qs";
 import { ServerNode } from "../../../Http/ServerNode";
-import { RequestMethods } from "../../../Http/Request/RequestMethod";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { DateUtil } from "../../../Utility/DateUtil";
 import { RavenCommand, IRavenResponse } from "../../../Http/RavenCommand";

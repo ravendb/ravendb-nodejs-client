@@ -36,7 +36,7 @@ export class NextIdentityForCommand extends RavenCommand<number> {
             this._throwInvalidResponse();
         }
 
-        const jsonNode = this._commandPayloadSerializer.deserialize(response);
+        const jsonNode = this._serializer.deserialize(response);
         if (!jsonNode["newIdentityValue"]) {
             this._throwInvalidResponse();
         }

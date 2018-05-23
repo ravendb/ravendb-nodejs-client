@@ -36,7 +36,7 @@ export class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
       return;
     }
 
-    const rawTpl: TopologyDto = this._commandPayloadSerializer.deserialize(response);
+    const rawTpl: TopologyDto = this._serializer.deserialize(response);
     const nodes = rawTpl.nodes
       ? rawTpl.nodes.map(x => Object.assign(new ServerNode(), x))
       : null;

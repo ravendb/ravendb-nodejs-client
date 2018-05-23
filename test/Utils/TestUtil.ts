@@ -91,7 +91,7 @@ export class RemoteTestContext extends RavenTestDriver implements IDisposable {
         return new RemoteTestContext(new TestServiceLocator(), new TestSecuredServiceLocator());
     }
 
-    public withFiddler(): IDisposable {
+    public enableFiddler(): IDisposable {
         RequestExecutor.requestPostProcessor = (req) => {
             req.proxy = "http://127.0.0.1:8888";
         };

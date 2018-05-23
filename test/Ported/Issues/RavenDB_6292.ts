@@ -1,7 +1,7 @@
 
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../../../Utils/TestUtil";
+import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
     RequestExecutor,
@@ -9,9 +9,12 @@ import {
     RavenErrorType,
     GetNextOperationIdCommand,
     IDocumentStore,
-} from "../../../../src";
+} from "../../../src";
+import * as os from "os";
 
-describe("RavenDB-6292", function () {
+const isWindows = os.platform() === "win32";
+
+(isWindows ? describe : describe.skip)("RavenDB-6292 - does not work on linux", function () {
 
     let store: IDocumentStore;
 
@@ -19,9 +22,11 @@ describe("RavenDB-6292", function () {
         store = await globalContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     // tslint:disable-next-line:no-empty
-    it.skip("TODO", async () => {});
+    it.skip("TODO if included document is conflicted, it should not throw conflict exception", async () => {
+
+    });
 });

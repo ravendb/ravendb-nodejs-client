@@ -4,7 +4,7 @@ import { RavenCommand } from "../../../Http/RavenCommand";
 import { HttpRequestBase } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
 import { IndexingStatus } from "../../Indexes/IndexingStatus";
-import { JsonSerializer } from "../../../Mapping";
+import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 
 export class GetIndexingStatusOperation implements IMaintenanceOperation<IndexingStatus> {
 
@@ -30,7 +30,7 @@ export class GetIndexingStatusCommand extends RavenCommand<IndexingStatus> {
             this._throwInvalidResponse();
         }
 
-        this.result = JsonSerializer.getDefaultForCommandPayload().deserialize(response);
+        this.result = this._serializer.deserialize(response);
     }
 
     public get isReadRequest(): boolean {
