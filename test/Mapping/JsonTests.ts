@@ -106,7 +106,7 @@ describe("Json module", () => {
                 }
             ];
 
-            const reviver = RuleBasedReviverFactory.build(transformRules, context => console.log(context.currentPath));
+            const reviver = RuleBasedReviverFactory.build(transformRules);
             const result: any = JSON.parse(testStr, reviver);
 
             assert.ok(result.results);
