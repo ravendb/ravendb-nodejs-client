@@ -45,9 +45,7 @@ export class GetIndexNamesCommand extends RavenCommand<string[]> {
             this._throwInvalidResponse();
         }
 
-        this.result = JsonSerializer
-            .getDefaultForCommandPayload()
-            .deserialize(response)["results"];
+        this.result = this._serializer.deserialize(response)["results"];
     }
 
     public get isReadRequest(): boolean {

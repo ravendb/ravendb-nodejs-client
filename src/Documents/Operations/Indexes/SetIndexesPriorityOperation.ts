@@ -69,9 +69,7 @@ export class SetIndexPriorityCommand extends RavenCommand<void> {
 
     public createRequest(node: ServerNode): HttpRequestBase {
         const uri = node.url + "/databases/" + node.database + "/indexes/set-priority";
-        const body = JsonSerializer
-            .getDefaultForCommandPayload()
-            .serialize(this._parameters);
+        const body = this._serializer.serialize(this._parameters);
         const headers = this._getHeaders()
             .withContentTypeJson().build();
 

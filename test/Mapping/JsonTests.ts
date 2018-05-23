@@ -8,6 +8,7 @@ import {
     camelCaseReviver 
 } from "../../src/Mapping/Json";
 import { RuleBasedReplacerFactory, ReplacerTransformRule } from "../../src/Mapping/Json/ReplacerFactory";
+import { ReviverTransformRule, RuleBasedReviverFactory } from "../../src/Mapping/Json/ReviverFactory";
 
 describe("Json module", () => {
 
@@ -81,6 +82,35 @@ describe("Json module", () => {
             const result = JSON.parse(jsonString, camelCaseReviver);
             assert.ok(result.results[0]["@metadata"]);
             assert.equal("A:1-raDVjL7QqEC3EBoL2rpHYA", result.results[0]["@metadata"]["@change-vector"]);
+        });
+
+    });
+
+    describe.skip("Rule based reviver won't work", () => {
+        // TODO
+        // JsonSerializer impl must be replaced with streaming/sax-based parser
+        // e.g. https://github.com/dscape/clarinet
+        // reviver won't work here, since it starts reviving objects starting from tree leaves
+        
+        let testStr;
+
+        beforeEach(() => {
+            testStr = `{ "Results": [ { "Name": "Marcin", "age": 31 } ], "Includes": [] }`;
+        });
+
+        it("can skip objects", () => {
+            const transformRules: ReviverTransformRule[] = [
+                {
+                    contextMatcher: (context) => context.currentPath.indexOf(".") === -1,
+                    reviver: camelCaseReviver
+                }
+            ];
+
+            const reviver = RuleBasedReviverFactory.build(transformRules, context => console.log(context.currentPath));
+            const result: any = JSON.parse(testStr, reviver);
+
+            assert.ok(result.results);
+            assert.ok(result.results[0].Name);
         });
 
     });

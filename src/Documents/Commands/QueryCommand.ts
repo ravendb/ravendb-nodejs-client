@@ -68,8 +68,6 @@ export class QueryCommand extends RavenCommand<QueryResult> {
 
     protected get _serializer(): JsonSerializer {
         const serializer = super._serializer;
-        serializer.reviverRules[0].contextMatcher =
-            context => context.currentPath.indexOf(".") === -1;
         return serializer;
     }
 
@@ -79,7 +77,8 @@ export class QueryCommand extends RavenCommand<QueryResult> {
             return;
         }
 
-        const rawResult = this._serializer.deserialize(response);
+        const rawResult = ObjectKeysTransform.camelCase(
+            JsonSerializer.getDefault().deserialize(response), false);
         this.result = this._typedObjectMapper.fromObjectLiteral(rawResult, {
             typeName: QueryResult.name
         }, new Map([[QueryResult.name, QueryResult]]));

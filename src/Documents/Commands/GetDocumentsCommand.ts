@@ -124,13 +124,13 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         if (this._id) {
             request.uri += `&id=${encodeURIComponent(this._id)}`;
         } else if (this._ids) {
-            request = GetDocumentsCommand.prepareRequestWithMultipleIds(request, this._ids);
+            request = this.prepareRequestWithMultipleIds(request, this._ids);
         }
 
         return request;
     }
 
-    public static prepareRequestWithMultipleIds(request: HttpRequestBase, ids: string[]): HttpRequestBase {
+    public prepareRequestWithMultipleIds(request: HttpRequestBase, ids: string[]): HttpRequestBase {
         const uniqueIds = new Set<string>(ids); 
 
         // if it is too big, we fallback to POST (note that means that we can't use the HTTP cache any longer)
@@ -149,8 +149,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
 
             return { method: "GET", uri: newUri };
         } else {
-            const body = JsonSerializer
-                .getDefaultForCommandPayload()
+            const body = this._serializer
                 .serialize({ ids: [...uniqueIds] });
             return {
                 uri: newUri,
@@ -165,8 +164,6 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
 
     protected get _serializer(): JsonSerializer {
         const serializer = super._serializer;
-        serializer.reviverRules[0].contextMatcher =
-            context => context.currentPath.indexOf(".") === -1;
         return serializer;
     }
 

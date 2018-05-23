@@ -47,8 +47,7 @@ export class GetIndexesCommand extends RavenCommand<IndexDefinition[]> {
             this._throwInvalidResponse();
         }
 
-        const parsed = JsonSerializer
-            .getDefaultForCommandPayload().deserialize(response);
+        const parsed = this._serializer.deserialize(response);
         const indexDefTypeInfo = {
             nestedTypes: {
                 "results[]": "IndexDefinition",

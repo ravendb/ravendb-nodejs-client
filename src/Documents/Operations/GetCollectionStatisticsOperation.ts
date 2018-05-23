@@ -33,13 +33,17 @@ export class GetCollectionStatisticsCommand extends RavenCommand<CollectionStati
         const uri = node.url + "/databases/" + node.database + "/collections/stats";
         return { uri };
     }
+    
+    protected get _serializer(): JsonSerializer {
+        return JsonSerializer.getDefault();
+    }
 
     public setResponse(response: string, fromCache: boolean): void {
         if (!response) {
             this._throwInvalidResponse();
         }
 
-        const rawResult = JsonSerializer.getDefault().deserialize(response);
+        const rawResult = this._serializer.deserialize(response);
         this.result = ObjectKeysTransform.camelCase(rawResult);
     }
 }

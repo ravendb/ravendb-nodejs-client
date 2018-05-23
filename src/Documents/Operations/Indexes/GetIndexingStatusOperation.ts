@@ -30,9 +30,7 @@ export class GetIndexingStatusCommand extends RavenCommand<IndexingStatus> {
             this._throwInvalidResponse();
         }
 
-        this.result = JsonSerializer
-            .getDefaultForCommandPayload()
-            .deserialize(response);
+        this.result = this._serializer.deserialize(response);
     }
 
     public get isReadRequest(): boolean {

@@ -46,9 +46,7 @@ export class IndexHasChangedCommand extends RavenCommand<boolean> {
         public createRequest(node: ServerNode): HttpRequestBase {
             const uri = node.url + "/databases/" + node.database + "/indexes/has-changed";
 
-            const body = JsonSerializer
-                .getDefaultForCommandPayload()
-                .serialize(this._definition);
+            const body = this._serializer.serialize(this._definition);
 
             const headers = HeadersBuilder.create()
                 .withContentTypeJson().build();
@@ -65,7 +63,7 @@ export class IndexHasChangedCommand extends RavenCommand<boolean> {
                 this._throwInvalidResponse();
             }
 
-            const resObj = JsonSerializer.getDefaultForCommandPayload().deserialize(response);
+            const resObj = this._serializer.deserialize(response);
             this.result = resObj["changed"];
         }
     }
