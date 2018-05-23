@@ -10,9 +10,9 @@ import {
     GetNextOperationIdCommand,
     IDocumentStore,
     PutCompareExchangeValueOperation,
+    CmpXchg,
 } from "../../../src";
 import { User } from "../../Assets/Entities";
-import { CmpXchg } from "../../../src/Documents/Session/CmpXchng";
 
 describe("Queries with custom functions", function () {
 
@@ -26,11 +26,11 @@ describe("Queries with custom functions", function () {
         await disposeTestDocumentStore(store));
 
     it("query cmpxchg where", async () => {
-        store.operations.send(new PutCompareExchangeValueOperation("Tom", "Jerry", 0));
-        store.operations.send(new PutCompareExchangeValueOperation("Hera", "Zeus", 0));
-        store.operations.send(new PutCompareExchangeValueOperation("Gaya", "Uranus", 0));
-        store.operations.send(new PutCompareExchangeValueOperation("Jerry@gmail.com", "users/2", 0));
-        store.operations.send(new PutCompareExchangeValueOperation("Zeus@gmail.com", "users/1", 0));
+        await store.operations.send(new PutCompareExchangeValueOperation("Tom", "Jerry", 0));
+        await store.operations.send(new PutCompareExchangeValueOperation("Hera", "Zeus", 0));
+        await store.operations.send(new PutCompareExchangeValueOperation("Gaya", "Uranus", 0));
+        await store.operations.send(new PutCompareExchangeValueOperation("Jerry@gmail.com", "users/2", 0));
+        await store.operations.send(new PutCompareExchangeValueOperation("Zeus@gmail.com", "users/1", 0));
 
         {
             const session = store.openSession();

@@ -21,6 +21,6 @@ describe("RavenDB-8761", function () {
     afterEach(async () => 
         await disposeTestDocumentStore(store));
 
-    // tslint:disable-next-line:no-empty
-    it.skip("TODO", async () => {});
+    it.skip("can group by array values", async () => {});
+    it.skip("can group by array content", async () => {});
 });

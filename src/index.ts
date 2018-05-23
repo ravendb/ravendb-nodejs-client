@@ -104,7 +104,8 @@ export * from "./Documents/Session/IDocumentQuery";
 export * from "./Documents/Session/DocumentQuery";
 export * from "./Documents/Session/IAdvancedSessionOperations";
 export * from "./Documents/Session/OrderingType";
-export { IDocumentSession } from "./Documents/Session/IDocumentSession";
+export * from "./Documents/Session/IDocumentSession";
+export * from "./Documents/Session/CmpXchng";
 
 // HiLo
 export * from "./Documents/Identity/HiloIdGenerator";
