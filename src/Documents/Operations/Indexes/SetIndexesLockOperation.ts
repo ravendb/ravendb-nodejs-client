@@ -5,7 +5,6 @@ import { RavenCommand } from "../../../Http/RavenCommand";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { throwError } from "../../../Exceptions";
 import { ServerNode } from "../../../Http/ServerNode";
-import { JsonSerializer } from "../../../Mapping";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 
 export class SetIndexesLockOperation implements IMaintenanceOperation<void> {
@@ -69,8 +68,7 @@ export class SetIndexLockCommand extends RavenCommand<void> {
 
     public createRequest(node: ServerNode): HttpRequestBase {
         const uri = node.url + "/databases/" + node.database + "/indexes/set-lock";
-        const body = JsonSerializer.getDefaultForCommandPayload()
-            .serialize(this._parameters);
+        const body = this._serializer.serialize(this._parameters);
         const headers = this._getHeaders()
             .withContentTypeJson().build();
 

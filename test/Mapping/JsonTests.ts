@@ -7,6 +7,7 @@ import {
     pascalCaseReviver, 
     camelCaseReviver 
 } from "../../src/Mapping/Json";
+import { RuleBasedReplacerFactory, ReplacerTransformRule } from "../../src/Mapping/Json/ReplacerFactory";
 
 describe("Json module", () => {
 
@@ -82,6 +83,55 @@ describe("Json module", () => {
             assert.equal("A:1-raDVjL7QqEC3EBoL2rpHYA", result.results[0]["@metadata"]["@change-vector"]);
         });
 
+    });
+
+    describe("RuleBasedReplacer skips PascalCasing for particular keys", () => {
+
+        let testObj;
+
+        beforeEach(() => {
+            testObj = {
+                magic: "taste",
+                of: "skittles",
+                taste: {
+                    the: {
+                        rainbow: true,
+                        something: "else"
+                    },
+                    and: "this"
+                },
+                imAnArray: [
+                    { name: "Jason" },
+                    { name: "Steven" }
+                ]
+            };
+        });
+
+        it("skips everything down the 'taste' object", () => {
+            const transformRules: ReplacerTransformRule[] = [
+                {
+                    contextMatcher: (context) => context.currentPath.indexOf("Taste") !== 0,
+                    replacer: pascalCaseReplacer
+                }
+            ];
+
+            const replacer = RuleBasedReplacerFactory.build(transformRules);
+            const result = JSON.stringify(testObj, replacer);
+            assert.ok(JSON.parse(result)["Taste"]["the"]["rainbow"]);
+        });
+
+        it("skips just the keys of 'taste' object", () => {
+            const transformRules: ReplacerTransformRule[] = [
+                {
+                    contextMatcher: (context) => context.currentPath !== "Taste",
+                    replacer: pascalCaseReplacer
+                }
+            ];
+
+            const replacer = RuleBasedReplacerFactory.build(transformRules);
+            const result = JSON.stringify(testObj, replacer);
+            assert.ok(JSON.parse(result)["Taste"]["the"]["Rainbow"]);
+        });
     });
 
 });

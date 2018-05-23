@@ -6,7 +6,7 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { IndexPriority } from "../../Indexes/Enums";
 import { ServerNode } from "../../../Http/ServerNode";
 import { HttpRequestBase } from "../../../Primitives/Http";
-import { JsonSerializer } from "../../../Mapping/Json";
+import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 
 export class SetIndexesPriorityOperation implements IMaintenanceOperation<void> {
 
@@ -69,7 +69,8 @@ export class SetIndexPriorityCommand extends RavenCommand<void> {
 
     public createRequest(node: ServerNode): HttpRequestBase {
         const uri = node.url + "/databases/" + node.database + "/indexes/set-priority";
-        const body = JsonSerializer.getDefaultForCommandPayload()
+        const body = JsonSerializer
+            .getDefaultForCommandPayload()
             .serialize(this._parameters);
         const headers = this._getHeaders()
             .withContentTypeJson().build();

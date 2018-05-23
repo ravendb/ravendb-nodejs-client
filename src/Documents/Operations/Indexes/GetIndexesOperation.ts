@@ -2,9 +2,9 @@ import { HttpRequestBase } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { IndexDefinition } from "../../Indexes/IndexDefinition";
-import { JsonSerializer } from "../../../Mapping";
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 
 export class GetIndexesOperation implements IMaintenanceOperation<IndexDefinition[]> {
 
@@ -47,7 +47,8 @@ export class GetIndexesCommand extends RavenCommand<IndexDefinition[]> {
             this._throwInvalidResponse();
         }
 
-        const parsed = JsonSerializer.getDefaultForCommandPayload().deserialize(response);
+        const parsed = JsonSerializer
+            .getDefaultForCommandPayload().deserialize(response);
         const indexDefTypeInfo = {
             nestedTypes: {
                 "results[]": "IndexDefinition",

@@ -2,7 +2,7 @@ import { IMaintenanceOperation } from "../OperationAbstractions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { DocumentConventions, ServerNode, OperationResultType } from "../../..";
 import { HttpRequestBase } from "../../../Primitives/Http";
-import { JsonSerializer } from "../../../Mapping";
+import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 
 export class GetIndexNamesOperation implements IMaintenanceOperation<string[]> {
 
@@ -45,7 +45,9 @@ export class GetIndexNamesCommand extends RavenCommand<string[]> {
             this._throwInvalidResponse();
         }
 
-        this.result = JsonSerializer.getDefaultForCommandPayload().deserialize(response)["results"];
+        this.result = JsonSerializer
+            .getDefaultForCommandPayload()
+            .deserialize(response)["results"];
     }
 
     public get isReadRequest(): boolean {

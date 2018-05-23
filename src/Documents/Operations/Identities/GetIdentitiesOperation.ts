@@ -35,6 +35,6 @@ export class GetIdentitiesCommand extends RavenCommand<IdentitiesCollection> {
         }
 
         public setResponse(response: string, fromCache: boolean): void {
-            this.result = this._commandPayloadSerializer.deserialize(response);
+            this.result = this._serializer.deserialize(response);
         }
     }

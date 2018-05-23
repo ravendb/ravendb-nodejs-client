@@ -92,7 +92,7 @@ export class DeleteByIndexCommand extends RavenCommand<OperationIdResult> {
             this._throwInvalidResponse();
         }
 
-        this.result = this._commandPayloadSerializer.deserialize(response);
+        this.result = this._serializer.deserialize(response);
     }
 
     public get isReadRequest(): boolean {

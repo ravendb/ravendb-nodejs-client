@@ -1,13 +1,16 @@
+import {JsonSerializer} from "../../../Mapping/Json/Serializer";
 import { IMaintenanceOperation } from "../OperationAbstractions";
 import { IndexDefinition } from "../../Indexes/IndexDefinition";
 import { throwError } from "../../../Exceptions";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { EntityToJson } from "../../Session/EntityToJson";
-import { Mapping, JsonSerializer } from "../../../Mapping";
+import { Mapping } from "../../../Mapping";
 import { ServerNode, OperationResultType } from "../../..";
 import { HttpRequestBase } from "../../../Primitives/Http";
 import { HeadersBuilder } from "../../../Utility/HttpUtil";
+import { ReplacerContext } from "../../../Mapping/Json/ReplacerFactory";
+import { pascalCaseReplacer } from "../../../Mapping/Json";
 
 export interface PutIndexResult {
     indexName: string;
@@ -32,6 +35,7 @@ export class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult
         return new PutIndexesCommand(conventions, this._indexToAdd);
     }
 }
+
 
 export class PutIndexesCommand extends RavenCommand<PutIndexResult[]> {
 
@@ -59,10 +63,24 @@ export class PutIndexesCommand extends RavenCommand<PutIndexResult[]> {
         }, []);
     }
 
+    protected get _serializer(): JsonSerializer {
+        const INDEX_DEF_FIELDS_REGEX = /^Indexes\.(\d+)\.Fields$/;
+        const serializer = super._serializer;
+        serializer.replacerRules[0].contextMatcher = (context: ReplacerContext) => {
+            // fields are case-sensitive, so we need to skip PascalCasing their names
+            const m = context.currentPath.match(INDEX_DEF_FIELDS_REGEX);
+            return !m;
+        };
+
+        return serializer;
+    }
+
     public createRequest(node: ServerNode): HttpRequestBase {
         const uri = node.url + "/databases/" + node.database + "/admin/indexes";
-        const body = JsonSerializer.getDefaultForCommandPayload()
+        
+        const body = this._serializer
             .serialize({ Indexes: this._indexToAdd });
+
         const headers = HeadersBuilder
             .create()
             .withContentTypeJson()

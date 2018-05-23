@@ -1,12 +1,10 @@
-import { JsonSerializer, camelCaseReviver, pascalCaseReplacer } from "./Json";
+import { camelCaseReviver, pascalCaseReplacer } from "./Json";
 import { TypesAwareObjectMapper } from "./ObjectMapper";
 import { DateUtil } from "../Utility/DateUtil";
 
 // needed tools
 // json string -> casing aware -> object
 // json string -> casing aware -> types aware -> entity
-
-export { JsonSerializer };
 
 export class Mapping {
     

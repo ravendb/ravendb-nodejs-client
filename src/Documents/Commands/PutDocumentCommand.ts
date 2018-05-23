@@ -4,7 +4,7 @@ import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestBase } from "../../Primitives/Http";
 import { HeadersBuilder } from "../../Utility/HttpUtil";
 import { Mapping } from "../..";
-import { JsonSerializer } from "../../Mapping";
+import { JsonSerializer } from "../../Mapping/Json/Serializer";
 
 export interface PutResult {
     id: string;
@@ -33,10 +33,18 @@ export class PutDocumentCommand extends RavenCommand<PutResult> {
         this._document = document;
     }
 
+    protected get _serializer() {
+        const serializer = super._serializer;
+        serializer.replacerRules.length = 0;
+        return serializer;
+    }
+
     public createRequest(node: ServerNode): HttpRequestBase {
         const uri = `${node.url}/databases/${node.database}/docs?id=${encodeURIComponent(this._id)}`;
 
-        const body = JsonSerializer.getDefaultForEntities().serialize(this._document);
+        // we don't use conventions here on purpose
+        // doc that's got here should already have proper casing
+        const body = this._serializer.serialize(this._document);
         const req = {
             uri,
             method: "PUT",
@@ -52,7 +60,7 @@ export class PutDocumentCommand extends RavenCommand<PutResult> {
     }
 
     public setResponse(response: string, fromCache: boolean): void {
-        this.result = this._commandPayloadSerializer.deserialize(response);
+        this.result = this._serializer.deserialize(response);
     }
 
     public get isReadRequest(): boolean {

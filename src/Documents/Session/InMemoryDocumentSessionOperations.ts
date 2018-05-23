@@ -21,7 +21,7 @@ import {
     PutCommandDataWithJson 
 } from "../Commands/CommandData";
 import { GenerateEntityIdOnTheClient } from "../Identity/GenerateEntityIdOnTheClient";
-import { JsonSerializer, tryGetConflict } from "../../Mapping/Json";
+import { tryGetConflict } from "../../Mapping/Json";
 import { Mapping } from "../../Mapping";
 import { CONSTANTS } from "../../Constants";
 import { DateUtil } from "../../Utility/DateUtil";
@@ -38,6 +38,7 @@ import { IRavenObject } from "../../Types/IRavenObject";
 import { GetDocumentsResult } from "../Commands/GetDocumentsCommand";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { RavenCommand } from "../../Http/RavenCommand";
+import { JsonSerializer } from "../../Mapping/Json/Serializer";
 
 export abstract class InMemoryDocumentSessionOperations 
     extends EventEmitter

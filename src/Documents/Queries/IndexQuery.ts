@@ -1,9 +1,9 @@
 import { throwError } from "../../Exceptions";
 import { IndexQueryWithParameters } from "./IndexQueryWithParameters";
 import { QueryHashCalculator } from "./QueryHashCalculator";
-import { JsonSerializer } from "../../Mapping/Json";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { JsonSerializer } from "../../Mapping/Json/Serializer";
 
 export interface IndexQueryParameters {
     [key: string]: object;

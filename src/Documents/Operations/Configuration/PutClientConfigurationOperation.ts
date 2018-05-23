@@ -50,7 +50,7 @@ export class PutClientConfigurationCommand extends RavenCommand<void> {
             throwError("InvalidArgumentException", "Configuration cannot be null or undefined.");
         }
 
-        this._configuration = this._commandPayloadSerializer.serialize(configuration);
+        this._configuration = this._serializer.serialize(configuration);
     }
 
     public createRequest(node: ServerNode): HttpRequestBase {

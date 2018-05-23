@@ -4,8 +4,8 @@ import { CollectionStatistics } from "./CollectionStatistics";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { ServerNode } from "../../Http/ServerNode";
-import { JsonSerializer } from "../../Mapping";
 import { ObjectKeysTransform } from "../../Mapping/ObjectMapper";
+import { JsonSerializer } from "../../Mapping/Json/Serializer";
 
 export class GetCollectionStatisticsOperation implements IMaintenanceOperation<CollectionStatistics> {
 

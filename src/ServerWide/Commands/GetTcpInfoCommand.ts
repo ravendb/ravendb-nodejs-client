@@ -40,7 +40,7 @@ export class GetTcpInfoCommand extends RavenCommand<TcpConnectionInfo> {
             this._throwInvalidResponse();
         }
 
-        this.result = this._commandPayloadSerializer.deserialize(response);
+        this.result = this._serializer.deserialize(response);
     }
 
     public get isReadRequest() {

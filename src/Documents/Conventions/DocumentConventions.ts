@@ -1,5 +1,4 @@
 import { TypesAwareObjectMapper } from "../../Mapping/ObjectMapper";
-import { JsonSerializer } from "../../Mapping/Json";
 import { 
     DocumentType, 
 } from "../DocumentAbstractions";
@@ -19,6 +18,7 @@ import { CONSTANTS } from "../../Constants";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { StringUtil } from "../../Utility/StringUtil";
 import { DateUtil } from "../../Utility/DateUtil";
+import { JsonSerializer } from "../../Mapping/Json/Serializer";
 
 export type IdConvention = (databaseName: string, entity: object) => Promise<string>;
 export class DocumentConventions {

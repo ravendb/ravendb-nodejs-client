@@ -48,7 +48,7 @@ export class ExplainQueryCommand extends RavenCommand<ExplainQueryResult[]> {
             return;
         }
 
-        const data = this._commandPayloadSerializer.deserialize(response);
+        const data = this._serializer.deserialize(response);
         const results = data["results"] as ExplainQueryResult[];
         
         if (!results) {

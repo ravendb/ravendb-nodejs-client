@@ -25,7 +25,7 @@ export class GetClusterTopologyCommand extends RavenCommand<ClusterTopologyRespo
             this._throwInvalidResponse();
         }
 
-        const resObj = this._commandPayloadSerializer.deserialize<IRavenResponse>(response);
+        const resObj = this._serializer.deserialize<IRavenResponse>(response);
         const clusterTpl = Object.assign(new ClusterTopology(), resObj.topology);
         this.result = Object.assign(resObj as ClusterTopologyResponse, { topology: clusterTpl });
     }

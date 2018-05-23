@@ -5,8 +5,8 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
 import { HttpRequestBase } from "../../../Primitives/Http";
-import { JsonSerializer } from "../../../Mapping";
 import { HeadersBuilder } from "../../../Utility/HttpUtil";
+import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 
 export class IndexHasChangedOperation implements IMaintenanceOperation<Boolean> {
 
@@ -46,7 +46,8 @@ export class IndexHasChangedCommand extends RavenCommand<boolean> {
         public createRequest(node: ServerNode): HttpRequestBase {
             const uri = node.url + "/databases/" + node.database + "/indexes/has-changed";
 
-            const body = JsonSerializer.getDefaultForCommandPayload()
+            const body = JsonSerializer
+                .getDefaultForCommandPayload()
                 .serialize(this._definition);
 
             const headers = HeadersBuilder.create()

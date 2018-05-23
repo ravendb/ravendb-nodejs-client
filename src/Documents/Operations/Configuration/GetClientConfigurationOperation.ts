@@ -36,7 +36,7 @@ export class GetClientConfigurationCommand extends RavenCommand<GetClientConfigu
             return;
         }
 
-        this.result = this._commandPayloadSerializer.deserialize(response);
+        this.result = this._serializer.deserialize(response);
     }
 }
 

@@ -10,10 +10,10 @@ import { getLogger } from "../Utility/LogUtil";
 import { throwError } from "../Exceptions";
 import { IRavenObject } from "../Types/IRavenObject";
 import { getEtagHeader, HeadersBuilder } from "../Utility/HttpUtil";
-import { JsonSerializer } from "../Mapping/Json";
 import { Mapping } from "../Mapping";
 import { TypesAwareObjectMapper, TypeInfo } from "../Mapping/ObjectMapper";
 import { ObjectTypeDescriptor } from "..";
+import { JsonSerializer } from "../Mapping/Json/Serializer";
 
 const log = getLogger({ module: "RavenCommand" });
 
@@ -34,7 +34,6 @@ export abstract class RavenCommand<TResult> {
     protected _canCache: boolean;
     protected _canCacheAggressively: boolean;
 
-    protected _commandPayloadSerializer: JsonSerializer = JsonSerializer.getDefaultForCommandPayload();
     protected _typedObjectMapper: TypesAwareObjectMapper = Mapping.getDefaultMapper();
 
     public abstract get isReadRequest(): boolean;
@@ -58,6 +57,10 @@ export abstract class RavenCommand<TResult> {
     }
 
     public abstract createRequest(node: ServerNode): HttpRequestBase;
+
+    protected get _serializer(): JsonSerializer {
+        return JsonSerializer.getDefaultForCommandPayload();
+    }
 
     public setResponse(response: string, fromCache: boolean): void {
         if (this._responseType === "EMPTY"
@@ -170,7 +173,7 @@ export abstract class RavenCommand<TResult> {
 
     protected _parseResponseDefault<TResponse extends object>(
         response: string, typeInfo?: TypeInfo, knownTypes?: Map<string, ObjectTypeDescriptor>) {
-        const res = this._commandPayloadSerializer.deserialize(response);
+        const res = this._serializer.deserialize(response);
         const resObj = this._typedObjectMapper.fromObjectLiteral<TResponse>(res, typeInfo, knownTypes);
         return resObj;
     }
