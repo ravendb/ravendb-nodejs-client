@@ -16,6 +16,7 @@ export class PutCompareExchangeValueOperation<T> implements IOperation<CompareEx
     private _value: T;
     private _index: number;
 
+    
     public constructor(key: string, value: T, index: number) {
         this._key = key;
         this._value = value;

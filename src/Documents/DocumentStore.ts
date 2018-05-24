@@ -74,6 +74,11 @@ export class DocumentStore extends DocumentStoreBase {
         this.identifier = identifier;
     }
 
+    /**
+     * Disposes the document store
+     * 
+     * @memberof DocumentStore
+     */
     public dispose(): void {
         this._log.info("Dispose.");
         this.emit("beforeDispose");
@@ -136,8 +141,30 @@ export class DocumentStore extends DocumentStoreBase {
             .finally(() => this.emit("executorsDisposed"));
     }
 
+    /**
+     * Opens document session.
+     * 
+     * @returns {IDocumentSession} 
+     * @memberof DocumentStore
+     */
     public openSession(): IDocumentSession;
+
+    /**
+     * Opens document session.
+     * 
+     * @param {string} database 
+     * @returns {IDocumentSession} 
+     * @memberof DocumentStore
+     */
     public openSession(database: string): IDocumentSession;
+
+    /**
+     * Opens document session
+     * 
+     * @param {ISessionOptions} sessionOpts 
+     * @returns {IDocumentSession} 
+     * @memberof DocumentStore
+     */
     public openSession(sessionOpts: ISessionOptions): IDocumentSession;
     public openSession(databaseOrSessionOptions?: string | ISessionOptions): IDocumentSession  {
         this._assertInitialized();
@@ -164,6 +191,13 @@ export class DocumentStore extends DocumentStoreBase {
         return session;
     }
 
+    /**
+     * Gets request executor for specific database. Default is initial database.
+     * 
+     * @param {string} [database] 
+     * @returns {RequestExecutor} 
+     * @memberof DocumentStore
+     */
     public getRequestExecutor(database?: string): RequestExecutor {
         this._assertInitialized();
 
@@ -241,8 +275,23 @@ export class DocumentStore extends DocumentStoreBase {
      * This is mainly useful for internal use inside RavenDB, when we are executing
      * queries that have been marked with WaitForNonStaleResults, we temporarily disable
      * aggressive caching.
+     * 
+     * @returns {IDisposable} 
+     * @memberof DocumentStore
      */
     public disableAggressiveCaching(): IDisposable;
+
+    /**
+     * Setup the context for no aggressive caching
+     *
+     * This is mainly useful for internal use inside RavenDB, when we are executing
+     * queries that have been marked with WaitForNonStaleResults, we temporarily disable
+     * aggressive caching.
+     * 
+     * @param {string} database 
+     * @returns {IDisposable} 
+     * @memberof DocumentStore
+     */
     public disableAggressiveCaching(database: string): IDisposable;
     public disableAggressiveCaching(database?: string): IDisposable {
         this._assertInitialized();
@@ -259,6 +308,13 @@ export class DocumentStore extends DocumentStoreBase {
     // TBD public override IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null)
     // TBD private void ListenToChangesAndUpdateTheCache(string database)
 
+    /**
+     * Gets maintenance operations executor.
+     * 
+     * @readonly
+     * @type {MaintenanceOperationExecutor}
+     * @memberof DocumentStore
+     */
     public get maintenance(): MaintenanceOperationExecutor {
         this._assertInitialized();
 
@@ -269,6 +325,13 @@ export class DocumentStore extends DocumentStoreBase {
         return this._maintenanceOperationExecutor;
     }
 
+    /**
+     * Gets operations executor.
+     * 
+     * @readonly
+     * @type {OperationExecutor}
+     * @memberof DocumentStore
+     */
     public get operations(): OperationExecutor {
         if (!this._operationExecutor) {
             this._operationExecutor = new OperationExecutor(this);

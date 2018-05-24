@@ -104,7 +104,20 @@ export * from "./Documents/Session/IDocumentQuery";
 export * from "./Documents/Session/DocumentQuery";
 export * from "./Documents/Session/IAdvancedSessionOperations";
 export * from "./Documents/Session/OrderingType";
-export { IDocumentSession } from "./Documents/Session/IDocumentSession";
+export * from "./Documents/Session/IDocumentSession";
+export * from "./Documents/Session/CmpXchng";
+
+// QUERIES
+export * from "./Documents/Queries/GroupBy";
+export * from "./Documents/Queries/QueryOperator";
+export * from "./Documents/Queries/SearchOperator";
+export * from "./Documents/Queries/IIndexQuery";
+export * from "./Documents/Queries/GroupByMethod";
+export * from "./Documents/Queries/Spatial/SpatialCriteriaFactory";
+export * from "./Documents/Queries/Spatial/SpatialCriteria";
+export * from "./Documents/Queries/Spatial/CircleCriteria";
+export * from "./Documents/Queries/Spatial/DynamicSpatialField";
+export * from "./Documents/Queries/Spatial/WktCriteria";
 
 // HiLo
 export * from "./Documents/Identity/HiloIdGenerator";

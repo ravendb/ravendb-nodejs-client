@@ -4,7 +4,7 @@ import { SessionBeforeStoreEventArgs } from "./Session/SessionEvents";
 import { IDisposable } from "../Types/Contracts";
 import { Todo } from "../Types";
 import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor";
-import { OperationExecutor } from "./Operations/OperationExecutor";
+import { OperationExecutor} from "./Operations/OperationExecutor";
 import { AbstractIndexCreationTask } from "./Indexes";
 import { RequestExecutor } from "../Http/RequestExecutor";
 import { DocumentConventions } from "./Conventions/DocumentConventions";
@@ -46,22 +46,31 @@ export interface IDocumentStore extends
   SessionEventsProxy,
   DocumentStoreEventEmitter {
 
-  // database: string;
-  // urls: string[];
-  // singleNodeUrl: string;
-  // conventions: DocumentConventions;
-  // operations: OperationExecutor;
-  // maintenance: AdminOperationExecutor;
-  // initialize(): IDocumentStore;
+  /**
+   * 
+   * Opens document session 
+   * @param {string} [database] 
+   * @returns {IDocumentSession} 
+   * @memberof IDocumentStore
+   */
   openSession(database?: string): IDocumentSession;
+
+  /**
+   * Opens document session 
+   * @param {ISessionOptions} [options] 
+   * @returns {IDocumentSession} 
+   * @memberof IDocumentStore
+   */
   openSession(options?: ISessionOptions): IDocumentSession;
+
+  /**
+   * Opens document session 
+   * @param {string} [database] 
+   * @param {ISessionOptions} [options] 
+   * @returns {IDocumentSession} 
+   * @memberof IDocumentStore
+   */
   openSession(database?: string, options?: ISessionOptions): IDocumentSession;
-  // generateId(
-  //   document: object,
-  //   documentType?: DocumentType,
-  //   database?: string,
-  //   callback?: EntityIdCallback): Promise<string>;
-  // getRequestExecutor(database?: string): RequestExecutor;
 
     // TBD: IDatabaseChanges Changes(string database = null);
     // TBD: IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
@@ -73,7 +82,7 @@ export interface IDocumentStore extends
      * This is mainly useful for internal use inside RavenDB, when we are executing
      * queries that have been marked with WaitForNonStaleResults, we temporarily disable
      * aggressive caching.
-     * @return Self closing context
+     * @returns Disposable context
      */
     disableAggressiveCaching(): IDisposable;
 
@@ -84,37 +93,17 @@ export interface IDocumentStore extends
      * queries that have been marked with WaitForNonStaleResults, we temporarily disable
      * aggressive caching.
      * @param database Database name
-     * @return Self closing context
+     * @returns Disposable context
      */
     disableAggressiveCaching(database: string): IDisposable;
 
-    // identifier: string;
+    identifier: string;
 
-    // /**
-    //  * Initializes this instance.
-    //  * @return initialized store
-    //  */
-    // initialize(): IDocumentStore;
-
-    // /**
-    //  * Opens the session
-    //  * @return Document session
-    //  */
-    // openSession(): IDocumentSession;
-
-    // /**
-    //  * Opens the session for a particular database
-    //  * @param database Database to use
-    //  * @return Document session
-    //  */
-    // IDocumentSession openSession(String database);
-
-    // /**
-    //  * Opens the session with the specified options.
-    //  * @param sessionOptions Session options to use
-    //  * @return Document session
-    //  */
-    // IDocumentSession openSession(SessionOptions sessionOptions);
+    /**
+     * Initializes this instance.
+     * @returns initialized store
+     */
+    initialize(): IDocumentStore;
 
     /**
      * Executes the index creation
@@ -124,20 +113,15 @@ export interface IDocumentStore extends
     executeIndex(task: AbstractIndexCreationTask): Promise<void>;
     executeIndex(task: AbstractIndexCreationTask, database: string): Promise<void>;
 
+    /**
+     * Executes the index creation
+     * 
+     * @param {AbstractIndexCreationTask[]} tasks 
+     * @returns {Promise<void>} 
+     * @memberof IDocumentStore
+     */
     executeIndexes(tasks: AbstractIndexCreationTask[]): Promise<void>;
     executeIndexes(tasks: AbstractIndexCreationTask[], database: string): Promise<void>;
-    // /**
-    //  * Executes the index creation
-    //  * @param tasks Index Creation tasks to use
-    //  */
-    // void executeIndexes(List<AbstractIndexCreationTask> tasks);
-
-    // /**
-    //  * Executes the index creation
-    //  * @param tasks Index Creation tasks to use
-    //  * @param database Target database
-    //  */
-    // void executeIndexes(List<AbstractIndexCreationTask> tasks, String database);
 
     /**
      * Contains authentication information: client certificate data;
@@ -152,7 +136,7 @@ export interface IDocumentStore extends
     conventions: DocumentConventions;
 
     /**
-     * Gets the URL's
+     * Gets the URLs
      * @return Store urls
      */
     urls: string[];

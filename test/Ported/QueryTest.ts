@@ -642,6 +642,10 @@ describe("QueryTest", function () {
 
         assert.equal(queryResult.length, 1);
     });
+
+    it.skip("query where between with dates", async () => {
+
+    });
 });
 
 export class Dog {
