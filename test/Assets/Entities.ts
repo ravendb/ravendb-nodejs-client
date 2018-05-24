@@ -19,3 +19,31 @@ export class GeekPerson {
     public favoritePrimes: number;
     public favoriteVeryLargePrimes: number;
 }
+
+export class Address {
+    public id: string;
+    public country: string;
+    public city: string;
+    public street: string;
+    public zipCode: string;
+}
+
+export class OrderLine {
+    public product: string;
+    public productName: string;
+    public pricePerUnit: number;
+    public quantity: number;
+    public discount: number;
+}
+export class Order {
+    public id: string;
+    public company: string;
+    public employee: string;
+    public orderedAt: Date;
+    public requireAt: Date;
+    public shippedAt: Date;
+    public shipTo: Address;
+    public shipVia: string;
+    public freight: number;
+    public lines: OrderLine[];
+}
