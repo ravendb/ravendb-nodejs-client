@@ -1,4 +1,4 @@
-import {RequestExecutor} from '../../src/Http/RequestExecutor';
+import {RequestExecutor} from "../../src/Http/RequestExecutor";
 // tslint:disable-next-line:no-var-requires
 // const why = require("why-is-node-running");
 import * as fs from "fs";
@@ -10,8 +10,9 @@ import { RavenTestDriver } from "../../src/TestDriver";
 import { RavenServerLocator } from "../../src/TestDriver/RavenServerLocator";
 import { getLogger } from "../../src/Utility/LogUtil";
 import { IDocumentStore } from "../../src/Documents/IDocumentStore";
-import { throwError } from '../../src/Exceptions';
-import { IAuthOptions } from '../../src/Auth/AuthOptions';
+import { throwError } from "../../src/Exceptions";
+import { IAuthOptions } from "../../src/Auth/AuthOptions";
+import * as os from "os";
 
 // logOnUncaughtAndUnhandled();
 
@@ -26,6 +27,8 @@ function logOnUncaughtAndUnhandled() {
         console.log(...args);
     });
 }
+
+global.onWindowsIt = os.platform() === "win32" ? it : it.skip;
 
 class TestServiceLocator extends RavenServerLocator {
 }

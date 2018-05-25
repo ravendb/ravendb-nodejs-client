@@ -29,10 +29,13 @@ export { DeleteDatabasesOperation } from "./ServerWide/Operations/DeleteDatabase
 export { GetDatabaseNamesOperation } from "./ServerWide/Operations/GetDatabaseNamesOperation";
 export { GetServerWideOperationStateOperation } from "./ServerWide/Operations/GetServerWideOperationStateOperation";
 export { ServerWideOperationCompletionAwaiter } from "./ServerWide/Operations/ServerWideOperationCompletionAwaiter";
+export { DatabaseRecord, ConflictSolver, ScriptResolver } from "./ServerWide";
+export * from "./ServerWide/ConnectionString";
 
 // DOCUMENTS
 export * from "./Documents/Operations/OperationAbstractions";
 export { CompactDatabaseOperation } from "./Documents/Operations/CompactDatabaseOperation";
+export { PutConnectionStringOperation } from "./Documents/Operations/ConnectionStrings/PutConnectionStringOperation";
 export { PatchOperation } from "./Documents/Operations/PatchOperation";
 export { PatchByQueryOperation } from "./Documents/Operations/PatchByQueryOperation";
 export { PutCompareExchangeValueOperation } 
@@ -71,6 +74,9 @@ export { StartIndexingOperation } from "./Documents/Operations/Indexes/StartInde
 export { StopIndexOperation } from "./Documents/Operations/Indexes/StopIndexOperation";
 export { StartIndexOperation } from "./Documents/Operations/Indexes/StartIndexOperation";
 export { ResetIndexOperation } from "./Documents/Operations/Indexes/ResetIndexOperation";
+export { UpdateExternalReplicationOperation } 
+    from "./Documents/Operations/Replication/UpdateExternalReplicationOperation";
+export { GetConflictsCommand } from "./Documents/Commands/GetConflictsCommand";
 export { 
     SetIndexesLockOperation, 
     SetIndexesLockOperationParameters 
@@ -89,7 +95,6 @@ export * from "./Documents/Indexes/Spatial";
 export * from "./Documents/Indexes/IndexingStatus";
 export * from "./Documents/Indexes/IndexStats";
 export * from "./Documents/Indexes";
-export * from "./Documents/Queries/IndexQuery";
 export * from "./Documents/DocumentAbstractions";
 export * from "./Documents/Session/IDocumentSession";
 export * from "./Documents/Session/DocumentSession";
@@ -107,7 +112,11 @@ export * from "./Documents/Session/OrderingType";
 export * from "./Documents/Session/IDocumentSession";
 export * from "./Documents/Session/CmpXchng";
 
+export * from "./Documents/Replication/ExternalReplication";
+export * from "./Documents/Replication/ReplicationNode";
+
 // QUERIES
+export * from "./Documents/Queries/IndexQuery";
 export * from "./Documents/Queries/GroupBy";
 export * from "./Documents/Queries/QueryOperator";
 export * from "./Documents/Queries/SearchOperator";
