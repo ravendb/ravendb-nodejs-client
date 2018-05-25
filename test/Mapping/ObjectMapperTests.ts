@@ -1,7 +1,7 @@
 import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import { RavenTestContext, testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import {
     TypesAwareObjectMapper, 

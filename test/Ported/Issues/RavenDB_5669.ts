@@ -1,7 +1,7 @@
 import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
+import { RavenTestContext, testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
     RequestExecutor,
@@ -20,7 +20,7 @@ describe("Issue RavenDB-5669", function () {
 
     beforeEach(async function () {
         index = new Animal_Index();
-        store = await globalContext.getDocumentStore();
+        store = await testContext.getDocumentStore();
         await store.executeIndex(index);
         await storeAnimals(store);
     });
@@ -90,7 +90,7 @@ async function storeAnimals(store: IDocumentStore) {
         await session.saveChanges();
     }
 
-    await globalContext.waitForIndexing(store, store.database);
+    await testContext.waitForIndexing(store, store.database);
 }
 
 class Animal {

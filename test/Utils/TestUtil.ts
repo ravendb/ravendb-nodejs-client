@@ -28,10 +28,7 @@ function logOnUncaughtAndUnhandled() {
     });
 }
 
-global.onWindowsIt = os.platform() === "win32" ? it : it.skip;
-
-class TestServiceLocator extends RavenServerLocator {
-}
+class TestServiceLocator extends RavenServerLocator {}
 
 class TestSecuredServiceLocator extends RavenServerLocator {
     public static ENV_SERVER_CA_PATH = "RAVENDB_TEST_CA_PATH";
@@ -89,9 +86,14 @@ class TestSecuredServiceLocator extends RavenServerLocator {
     }
 }
 
-export class RemoteTestContext extends RavenTestDriver implements IDisposable {
-    public static setupServer(): RemoteTestContext {
-        return new RemoteTestContext(new TestServiceLocator(), new TestSecuredServiceLocator());
+export class RavenTestContext extends RavenTestDriver implements IDisposable {
+
+    public static isRunningOnWindows = os.platform() === "win32";
+
+    public static isPullRequest = !!process.env["TRAVIS_PULL_REQUEST"];
+
+    public static setupServer(): RavenTestContext {
+        return new RavenTestContext(new TestServiceLocator(), new TestSecuredServiceLocator());
     }
 
     public enableFiddler(): IDisposable {
@@ -107,19 +109,6 @@ export class RemoteTestContext extends RavenTestDriver implements IDisposable {
     }
 }
 
-export class RemoteSecuredTestContext extends RavenTestDriver {
-
-    public static ENV_CERTIFICATE_PATH = "RAVENDB_TEST_CERTIFICATE_PATH";
-
-    public withHttps() {
-        return true;
-    }
-
-    public getCommandArguments() {
-        return [];
-    }
-}
-
 export async function disposeTestDocumentStore(store: IDocumentStore) {
     if (!store) {
         return;
@@ -131,33 +120,18 @@ export async function disposeTestDocumentStore(store: IDocumentStore) {
     });
 }
 
-export let globalContext: RemoteTestContext;
+export let testContext: RavenTestContext;
 setupRavenDbTestContext();
 
 function setupRavenDbTestContext() {
 
     before(() => {
-        globalContext = RemoteTestContext.setupServer();
+        testContext = RavenTestContext.setupServer();
     });
 
     after(() => {
-        globalContext.dispose();
+        testContext.dispose();
     });
 
-    return context;
+    return testContext;
 }
-
-// // TODO
-//     public CleanCloseable withFiddler() {
-//         RequestExecutor.requestPostProcessor = request -> {
-//             HttpHost proxy = new HttpHost("127.0.0.1", 8888, "http");
-//             RequestConfig requestConfig = request.getConfig();
-//             if (requestConfig == null) {
-//                 requestConfig = RequestConfig.DEFAULT;
-//             }
-//             requestConfig = RequestConfig.copy(requestConfig).setProxy(proxy).build();
-//             request.setConfig(requestConfig);
-//         };
-
-//         return () -> RequestExecutor.requestPostProcessor = null;
-//     }

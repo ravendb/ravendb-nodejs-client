@@ -2,7 +2,7 @@ import {IDocumentQuery} from '../../../src/Documents/Session/IDocumentQuery';
 import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
+import { RavenTestContext, testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
     RequestExecutor,
@@ -19,7 +19,7 @@ describe("Issue RavenDB-903", function () {
     let store: IDocumentStore;
 
     beforeEach(async function () {
-        store = await globalContext.getDocumentStore();
+        store = await testContext.getDocumentStore();
     });
 
     afterEach(async () =>
@@ -74,7 +74,7 @@ describe("Issue RavenDB-903", function () {
             await session.saveChanges();
         }
 
-        await globalContext.waitForIndexing(docStore);
+        await testContext.waitForIndexing(docStore);
 
         {
             const session = docStore.openSession();

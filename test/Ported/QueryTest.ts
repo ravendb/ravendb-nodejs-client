@@ -1,7 +1,7 @@
 import { User } from "../Assets/Entities";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import { RavenTestContext, testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import {
     RequestExecutor,
@@ -21,7 +21,7 @@ describe("QueryTest", function () {
     let store: IDocumentStore;
 
     beforeEach(async function () {
-        store = await globalContext.getDocumentStore();
+        store = await testContext.getDocumentStore();
     });
 
     afterEach(async () =>
@@ -481,7 +481,7 @@ describe("QueryTest", function () {
                 await session.saveChanges();
             }
 
-            await globalContext.waitForIndexing(store);
+            await testContext.waitForIndexing(store);
 
             {
                 const session = store.openSession();
@@ -585,7 +585,7 @@ describe("QueryTest", function () {
             await session.saveChanges();
         }
 
-        await globalContext.waitForIndexing(store);
+        await testContext.waitForIndexing(store);
 
         {
             const session = store.openSession();
@@ -710,7 +710,7 @@ async function addUsers(store: IDocumentStore) {
     await session.saveChanges();
 
     await store.executeIndex(new UsersByName());
-    await globalContext.waitForIndexing(store);
+    await testContext.waitForIndexing(store);
 }
 
 class ReduceResult {

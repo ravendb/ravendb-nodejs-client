@@ -2,8 +2,8 @@ import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { 
-    RemoteTestContext, 
-    globalContext, 
+    RavenTestContext, 
+    testContext, 
     disposeTestDocumentStore 
 } from "../../Utils/TestUtil";
 import { UsersIndex } from "../../Assets/Indexes";
@@ -30,7 +30,7 @@ describe("Indexes from client", function () {
     let store: IDocumentStore;
 
     beforeEach(async function () {
-        store = await globalContext.getDocumentStore();
+        store = await testContext.getDocumentStore();
     });
 
     afterEach(async () => 
@@ -47,7 +47,7 @@ describe("Indexes from client", function () {
         }
 
         await store.executeIndex(new UsersIndex());
-        await globalContext.waitForIndexing(store);
+        await testContext.waitForIndexing(store);
 
         const command = new GetStatisticsCommand();
         await (store.getRequestExecutor().execute(command));
@@ -60,7 +60,7 @@ describe("Indexes from client", function () {
         await BluebirdPromise.delay(2000);
 
         await store.maintenance.send(new ResetIndexOperation(indexName));
-        await globalContext.waitForIndexing(store);
+        await testContext.waitForIndexing(store);
 
         const command2 = new GetStatisticsCommand();
         await (store.getRequestExecutor().execute(command2));

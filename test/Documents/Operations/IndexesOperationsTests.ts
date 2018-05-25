@@ -1,7 +1,7 @@
 import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
+import { RavenTestContext, testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
     RequestExecutor,
@@ -45,7 +45,7 @@ describe("Index operations", function () {
     }
 
     beforeEach(async function () {
-        store = await globalContext.getDocumentStore();
+        store = await testContext.getDocumentStore();
     });
 
     afterEach(async () =>
@@ -104,7 +104,7 @@ describe("Index operations", function () {
         await session.store(user);
         await session.saveChanges();
 
-        await globalContext.waitForIndexing(store, store.database);
+        await testContext.waitForIndexing(store, store.database);
         const terms: string[] = await store.maintenance.send(new GetTermsOperation("UsersIndex", "name", null));
 
         assert.equal(terms.length, 1);
@@ -179,7 +179,7 @@ describe("Index operations", function () {
         await session.store(user);
         await session.saveChanges();
 
-        await globalContext.waitForIndexing(store, store.database, null, false);
+        await testContext.waitForIndexing(store, store.database, null, false);
 
         const indexErrors = await store.maintenance.send(new GetIndexErrorsOperation());
         const perIndexErrors = await store.maintenance.send(new GetIndexErrorsOperation([indexDef.name]));
@@ -197,7 +197,7 @@ describe("Index operations", function () {
         await session.store(user);
         await session.saveChanges();
 
-        await globalContext.waitForIndexing(store, store.database);
+        await testContext.waitForIndexing(store, store.database);
         const stats = await store.maintenance.send(new GetIndexStatisticsOperation(indexDef.name));
         assert.equal(stats.entriesCount, 1);
     });

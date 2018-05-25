@@ -2,8 +2,8 @@ import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { 
-    RemoteTestContext, 
-    globalContext, 
+    RavenTestContext, 
+    testContext, 
     disposeTestDocumentStore 
 } from "../../Utils/TestUtil";
 import {
@@ -24,7 +24,7 @@ describe("Client configuration", function () {
     let store: IDocumentStore;
 
     beforeEach(async function () {
-        store = await globalContext.getDocumentStore();
+        store = await testContext.getDocumentStore();
     });
 
     afterEach(async () => 

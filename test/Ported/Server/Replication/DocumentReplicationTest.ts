@@ -3,7 +3,7 @@ import { User } from "../../../Assets/Entities";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import * as os from "os";
-import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../../../Utils/TestUtil";
+import { RavenTestContext, testContext, disposeTestDocumentStore } from "../../../Utils/TestUtil";
 
 import {
     RequestExecutor,
@@ -20,13 +20,17 @@ import {
 import { ReplicationTestContext } from "../../../Utils/ReplicationTestContext";
 import { TypeUtil } from "../../../../src/Utility/TypeUtil";
 
-describe("DocumentReplicationTest", function () {
+// External replication requires a proper license
+// https://docs.travis-ci.com/user/pull-requests/#Pull-Requests-and-Security-Restrictions
+(RavenTestContext.isPullRequest ? describe.skip : describe)(
+    `${RavenTestContext.isPullRequest ? "Skipped on PR" : ""}` +
+    "DocumentReplicationTest", function () {
 
     let store: IDocumentStore;
     let replication: ReplicationTestContext;
-
+    
     beforeEach(async function () {
-        store = await globalContext.getDocumentStore();
+        store = await testContext.getDocumentStore();
         replication = new ReplicationTestContext();
     });
 
@@ -41,7 +45,7 @@ describe("DocumentReplicationTest", function () {
     describe("with resolveToLatest to false", () => {
 
         beforeEach(() => {
-            globalContext.customizeDbRecord = r => {
+            testContext.customizeDbRecord = r => {
                 const conflictSolver: ConflictSolver = {
                     resolveToLatest: false,
                     resolveByCollection: {}
@@ -50,7 +54,7 @@ describe("DocumentReplicationTest", function () {
             };
         });
 
-        afterEach(() => globalContext.customizeDbRecord = null);
+        afterEach(() => testContext.customizeDbRecord = null);
 
         _it("can replicate document", async () => {
 
@@ -58,10 +62,10 @@ describe("DocumentReplicationTest", function () {
             let destination: DocumentStore;
 
             try {
-                source = await globalContext.getDocumentStore();
+                source = await testContext.getDocumentStore();
                 try {
                     let id;
-                    destination = await globalContext.getDocumentStore();
+                    destination = await testContext.getDocumentStore();
 
                     await replication.setupReplication(source, destination);
 
@@ -94,10 +98,10 @@ describe("DocumentReplicationTest", function () {
                 let destination: DocumentStore;
 
                 try {
-                    source = await globalContext.getDocumentStore();
+                    source = await testContext.getDocumentStore();
                     try {
 
-                        destination = await globalContext.getDocumentStore();
+                        destination = await testContext.getDocumentStore();
 
                         {
                             const session = source.openSession();
@@ -154,10 +158,10 @@ describe("DocumentReplicationTest", function () {
                 let destination: DocumentStore;
 
                 try {
-                    source = await globalContext.getDocumentStore();
+                    source = await testContext.getDocumentStore();
                     try {
 
-                        destination = await globalContext.getDocumentStore();
+                        destination = await testContext.getDocumentStore();
 
                         {
                             const session = source.openSession();
