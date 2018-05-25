@@ -90,7 +90,7 @@ export class RavenTestContext extends RavenTestDriver implements IDisposable {
 
     public static isRunningOnWindows = os.platform() === "win32";
 
-    public static isPullRequest = !!process.env["TRAVIS_PULL_REQUEST"];
+    public static isPullRequest = process.env["TRAVIS_PULL_REQUEST"] !== "false";
 
     public static setupServer(): RavenTestContext {
         return new RavenTestContext(new TestServiceLocator(), new TestSecuredServiceLocator());
