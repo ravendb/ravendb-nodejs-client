@@ -1,6 +1,13 @@
-import { IDocumentStore, PutConnectionStringOperation, ReplicationNode, ExternalReplication, RavenConnectionString, UpdateExternalReplicationOperation } from "../../src";
+import { 
+    IDocumentStore, 
+    PutConnectionStringOperation, 
+    ReplicationNode, 
+    ExternalReplication, 
+    RavenConnectionString, 
+    UpdateExternalReplicationOperation
+} from "../../src";
 import { Stopwatch } from "../../src/Utility/Stopwatch";
-import { DocumentType } from "../../src/Documents/DocumentAbstractions"; 
+import { DocumentType } from "../../src"; 
 
 export class ReplicationTestContext {
 
