@@ -43,8 +43,8 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     loadStartingWith<T extends object>(
         idPrefix: string, callback?: AbstractCallback<T[]>): Promise<T[]>;
 
-    documentQuery<TEntity extends object>(documentType: DocumentType<TEntity>): IDocumentQuery<TEntity>;
     documentQuery<TEntity extends object>(opts: AdvancedDocumentQueryOptions<TEntity>): IDocumentQuery<TEntity>;
+    documentQuery<TEntity extends object>(documentType: DocumentType<TEntity>): IDocumentQuery<TEntity>;
 
     // tslint:disable:max-line-length
     // TBD void LoadStartingWithIntoStream(string idPrefix, Stream output, string matches = null, int start = 0, int pageSize = 25, string exclude = null, string startAfter = null);

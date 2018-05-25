@@ -57,8 +57,15 @@ export abstract class RavenTestDriver implements IDisposable {
         return this.getDocumentStore(database, true, null);
     }
 
-    // tslint:disable-next-line:no-empty
-    protected _customizeDbRecord(dbRecord: DatabaseRecord): void {}
+    private _customizeDbRecord: (dbRecord: DatabaseRecord) => void = TypeUtil.NOOP;
+
+    public set customizeDbRecord(customizeDbRecord: (dbRecord: DatabaseRecord) => void) {
+        this._customizeDbRecord = customizeDbRecord;
+    }
+
+    public get customizeDbRecord() {
+        return this._customizeDbRecord;
+    }
 
     public getDocumentStore(): Promise<DocumentStore>;
     public getDocumentStore(database: string): Promise<DocumentStore>;
@@ -82,7 +89,9 @@ export abstract class RavenTestDriver implements IDisposable {
             documentStore = this._getGlobalServer(secured);
             const databaseRecord: DatabaseRecord = { databaseName };
 
-            this._customizeDbRecord(databaseRecord);
+            if (this._customizeDbRecord) {
+                this._customizeDbRecord(databaseRecord);
+            }
 
             const createDatabaseOperation = new CreateDatabaseOperation(databaseRecord);
             return documentStore.maintenance.server.send(createDatabaseOperation);

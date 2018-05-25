@@ -1,7 +1,7 @@
 import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import { RavenTestContext, testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 import * as assertExtentions from "../Utils/AssertExtensions";
 
 import {
@@ -25,7 +25,7 @@ describe("Request executor", function () {
         let documentConventions: DocumentConventions;
 
         beforeEach(async function () {
-            store = await globalContext.getDocumentStore();
+            store = await testContext.getDocumentStore();
             documentConventions = new DocumentConventions();
         });
 

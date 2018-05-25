@@ -1,6 +1,6 @@
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { RemoteTestContext, globalContext, disposeTestDocumentStore } from "../../../../Utils/TestUtil";
+import { RavenTestContext, testContext, disposeTestDocumentStore } from "../../../../Utils/TestUtil";
 
 import {
     RequestExecutor,
@@ -17,7 +17,7 @@ describe("RavenDB-8761", function () {
     let store: IDocumentStore;
 
     beforeEach(async function () {
-        store = await globalContext.getDocumentStore();
+        store = await testContext.getDocumentStore();
         await putDocs(store);
     });
 
