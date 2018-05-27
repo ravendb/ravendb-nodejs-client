@@ -2,6 +2,7 @@ import { ConcurrencyCheckMode, IMetadataDictionary } from "./IDocumentSession";
 import { IRavenObject } from "../../Types/IRavenObject";
 import { CONSTANTS } from "../../Constants";
 import { throwError } from "../../Exceptions";
+import { TypeUtil } from "../../Utility/TypeUtil";
 
 export class DocumentInfo {
 
@@ -29,12 +30,12 @@ export class DocumentInfo {
         }
 
         const id: string = metadata[CONSTANTS.Documents.Metadata.ID];
-        if (!id || typeof id !== "string") {
+        if (TypeUtil.isNullOrUndefined(id) || typeof id !== "string") {
             throwError("InvalidOperationException", "Document must have an id");
         }
 
         const changeVector: string = metadata[CONSTANTS.Documents.Metadata.CHANGE_VECTOR];
-        if (!changeVector || typeof changeVector !== "string") {
+        if (TypeUtil.isNullOrUndefined(changeVector) || typeof changeVector !== "string") {
             throwError("InvalidOperationException", "Document must have an changeVector");
         }
 
