@@ -1706,16 +1706,18 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         return Promise.resolve(result);
     }
 
-    public async iterator(): Promise<T[]> {
+    public async iterator(): Promise<IterableIterator<T>> {
         return Promise.resolve()
             .then(() => this._initSync())
             .then(() => {
-                return this._queryOperation.complete<T>(this._clazz);
+                const results = this._queryOperation.complete<T>(this._clazz);
+                return results[Symbol.iterator]();
             });
     }
 
     public async all(): Promise<T[]> {
-        return this.iterator();
+        return this.iterator()
+            .then((result) => [...result]);
     }
 
     public getQueryResult(): Promise<QueryResult> {
