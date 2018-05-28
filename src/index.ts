@@ -167,6 +167,8 @@ export * from "./Documents/Queries/Spatial/SpatialCriteria";
 export * from "./Documents/Queries/Spatial/CircleCriteria";
 export * from "./Documents/Queries/Spatial/DynamicSpatialField";
 export * from "./Documents/Queries/Spatial/WktCriteria";
+export * from "./Documents/Queries/Spatial/PointField";
+export * from "./Documents/Queries/Spatial/WktField";
 
 // HiLo
 export * from "./Documents/Identity/HiloIdGenerator";
