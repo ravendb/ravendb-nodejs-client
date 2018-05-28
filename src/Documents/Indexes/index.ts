@@ -117,14 +117,13 @@ export abstract class AbstractIndexCreationTask {
         return Promise.resolve(result);
     }
 
-    // AbstractGenericIndexCreationTask
-
     /**
      * Register a field to be indexed
      * @param field Field
      * @param indexing Desired field indexing type
      */
-    protected _index(field: string, indexing: FieldIndexing): void {
+    // tslint:disable-next-line:function-name
+    protected index(field: string, indexing: FieldIndexing): void {
         this.indexesStrings[field] = indexing;
     }
 
@@ -133,13 +132,15 @@ export abstract class AbstractIndexCreationTask {
      * @param field Field
      * @param indexing factory for spatial options
      */
-    protected _spatial(field: string, indexing: (spatialOptsFactory: SpatialOptionsFactory) => SpatialOptions): void {
+    // tslint:disable-next-line:function-name
+    protected spatial(field: string, indexing: (spatialOptsFactory: SpatialOptionsFactory) => SpatialOptions): void {
         this.spatialOptionsStrings[field] = indexing(new SpatialOptionsFactory());
     }
 
     // TBD protected void Store(Expression<Func<TReduceResult, object>> field, FieldStorage storage)
 
-    protected _storeAllFields(storage: FieldStorage): void {
+    // tslint:disable-next-line:function-name
+    protected storeAllFields(storage: FieldStorage): void {
         this.storesStrings[CONSTANTS.Documents.Indexing.Fields.ALL_FIELDS] = storage;
     }
 
@@ -148,7 +149,8 @@ export abstract class AbstractIndexCreationTask {
      * @param field Field name
      * @param storage Field storage value to use
      */
-    protected _store(field: string, storage: FieldStorage): void {
+    // tslint:disable-next-line:function-name
+    protected store(field: string, storage: FieldStorage): void {
         this.storesStrings[field] = storage;
     }
 
@@ -157,7 +159,8 @@ export abstract class AbstractIndexCreationTask {
      * @param field Field name
      * @param analyzer analyzer to use
      */
-    protected _analyze(field: string, analyzer: string): void {
+    // tslint:disable-next-line:function-name
+    protected analyze(field: string, analyzer: string): void {
         this.analyzersStrings[field] = analyzer;
     }
 
@@ -166,11 +169,13 @@ export abstract class AbstractIndexCreationTask {
      * @param field Field name
      * @param termVector TermVector type
      */
-    protected _termVector(field: string, termVector: FieldTermVector): void {
+    // tslint:disable-next-line:function-name
+    protected termVector(field: string, termVector: FieldTermVector): void {
         this.termVectorsStrings[field] = termVector;
     }
 
-    protected _suggestion(field: string): void {
+    // tslint:disable-next-line:function-name
+    protected suggestion(field: string): void {
         this.indexSuggestions.add(field);
     }
 }

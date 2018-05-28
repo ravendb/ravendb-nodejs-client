@@ -105,7 +105,7 @@ class Animal_Index extends AbstractIndexCreationTask {
 
         this.map = "from animal in docs.Animals select new { name = animal.name, type = animal.type }";
 
-        this._analyze("name", "StandardAnalyzer");
-        this._index("name", "Search");
+        this.analyze("name", "StandardAnalyzer");
+        this.index("name", "Search");
     }
 }

@@ -95,6 +95,6 @@ class TestIndex extends AbstractIndexCreationTask {
 
         this.map = "from product in docs.Products select new { product.name, product.description }";
 
-        this._index("description", "Search");
+        this.index("description", "Search");
     }
 }
