@@ -1,5 +1,5 @@
 export type OrderingType =
-    "STRING" |
-    "LONG" |
-    "DOUBLE" |
-    "ALPHA_NUMERIC";
+    "String" |
+    "Long" |
+    "Double" |
+    "AlphaNumeric";

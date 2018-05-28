@@ -157,7 +157,7 @@ describe("QueryTest", function () {
         it("query single property", async () => {
             const session = store.openSession();
             const results = await session.query(User)
-                .addOrder("age", true, "LONG")
+                .addOrder("age", true, "Long")
                 .selectFields<number>("age")
                 .all();
 
@@ -493,7 +493,7 @@ describe("QueryTest", function () {
                             documentType: DogsIndexResult
                         })
                         .waitForNonStaleResults(null)
-                        .orderBy("name", "ALPHA_NUMERIC")
+                        .orderBy("name", "AlphaNumeric")
                         .whereGreaterThan("age", 2)
                         .all();
 

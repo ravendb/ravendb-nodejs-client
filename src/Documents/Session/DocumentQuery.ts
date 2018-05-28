@@ -147,7 +147,7 @@ export class DocumentQuery<T extends object>
 
     public addOrder(fieldName: string, descending: boolean): IDocumentQuery<T>;
     public addOrder(fieldName: string, descending: boolean, ordering: OrderingType): IDocumentQuery<T>;
-    public addOrder(fieldName: string, descending: boolean, ordering: OrderingType = "STRING"): IDocumentQuery<T>  {
+    public addOrder(fieldName: string, descending: boolean, ordering: OrderingType = "String"): IDocumentQuery<T>  {
         if (descending) {
             this.orderByDescending(fieldName, ordering);
         } else {

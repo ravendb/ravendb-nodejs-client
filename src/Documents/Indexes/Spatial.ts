@@ -14,7 +14,7 @@ export type SpatialSearchStrategy =
     | "QUAD_PREFIX_TREE"
     | "BOUNDING_BOX";
 
-export type SpatialUnits = "KILOMETERS" | "MILES";
+export type SpatialUnits = "Kilometers" | "Miles";
 
 export class SpatialOptions {
 
@@ -37,7 +37,7 @@ export class SpatialOptions {
         this.maxX = options.maxX || 180;
         this.minY = options.minY || -90;
         this.maxY = options.maxY || 90;
-        this.units = options.units || "KILOMETERS";
+        this.units = options.units || "Kilometers";
     }
 
     // public equals(obj: object): boolean {
@@ -157,12 +157,12 @@ export class GeographySpatialOptionsFactory {
      * @return Spatial options
      */
     public defaultOptions(circleRadiusUnits?: SpatialUnits): SpatialOptions {
-        circleRadiusUnits = circleRadiusUnits || "KILOMETERS";
+        circleRadiusUnits = circleRadiusUnits || "Kilometers";
         return this.geohashPrefixTreeIndex(0, circleRadiusUnits);
     }
 
     public boundingBoxIndex(circleRadiusUnits?: SpatialUnits): SpatialOptions {
-        circleRadiusUnits = circleRadiusUnits || "KILOMETERS";
+        circleRadiusUnits = circleRadiusUnits || "Kilometers";
         const ops = new SpatialOptions();
         ops.type = "GEOGRAPHY";
         ops.strategy = "BOUNDING_BOX";
@@ -171,7 +171,7 @@ export class GeographySpatialOptionsFactory {
     }
 
     public geohashPrefixTreeIndex(maxTreeLevel: number, circleRadiusUnits?: SpatialUnits): SpatialOptions {
-        circleRadiusUnits = circleRadiusUnits || "KILOMETERS";
+        circleRadiusUnits = circleRadiusUnits || "Kilometers";
         if (maxTreeLevel === 0) {
             maxTreeLevel = DEFAULT_GEOHASH_LEVEL;
         }
@@ -185,7 +185,7 @@ export class GeographySpatialOptionsFactory {
     }
 
     public quadPrefixTreeIndex(maxTreeLevel: number, circleRadiusUnits: SpatialUnits): SpatialOptions {
-        circleRadiusUnits = circleRadiusUnits || "KILOMETERS";
+        circleRadiusUnits = circleRadiusUnits || "Kilometers";
         if (maxTreeLevel === 0) {
             maxTreeLevel = DEFAULT_QUAD_TREE_LEVEL;
         }

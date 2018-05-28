@@ -4,18 +4,6 @@ import {QueryStatistics} from "./QueryStatistics";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { QueryResult } from "../Queries/QueryResult";
 
-export interface QueryEventsEmitter<TSelf> {
- 
-    on(eventName: "beforeQueryExecuted", eventHandler: (eventArgs: IndexQuery) => void): TSelf;
-    on(eventName: "afterQueryExecuted", eventHandler: (eventArgs: QueryResult) => void): TSelf;
-
-    removeListener(eventName: "beforeQueryExecuted", eventHandler: (eventArgs: IndexQuery) => void): TSelf;
-    removeListener(eventName: "afterQueryExecuted", eventHandler: (eventArgs: QueryResult) => void): TSelf;
-
-    emit(eventName: "beforeQueryExecuted", eventArgs: IndexQuery);
-    emit(eventName: "afterQueryExecuted", eventArgs: QueryResult);
-}
-
 export interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> {
 
     /**

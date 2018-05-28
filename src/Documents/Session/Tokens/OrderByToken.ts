@@ -15,11 +15,11 @@ export class OrderByToken extends QueryToken {
         this._ordering = ordering;
     }
 
-    public static random: OrderByToken = new OrderByToken("random()", false, "STRING");
+    public static random: OrderByToken = new OrderByToken("random()", false, "String");
 
-    public static scoreAscending = new OrderByToken("score()", false, "STRING");
+    public static scoreAscending = new OrderByToken("score()", false, "String");
 
-    public static scoreDescending = new OrderByToken("score()", true, "STRING");
+    public static scoreDescending = new OrderByToken("score()", true, "String");
 
     public static createDistanceAscending(
         fieldName: string, latitudeParameterName: string, longitudeParameterName: string): OrderByToken;
@@ -39,13 +39,13 @@ export class OrderByToken extends QueryToken {
         return new OrderByToken(
             "spatial.distance(" + fieldName + 
                 ", spatial.point($" + latitudeParameterName 
-                    + ", $" + longitudeParameterName + "))", false, "STRING");
+                    + ", $" + longitudeParameterName + "))", false, "String");
     }
 
     private static _createDistanceAscendingWkt(fieldName: string, shapeWktParameterName: string): OrderByToken {
         return new OrderByToken(
             "spatial.distance(" + fieldName 
-                + ", spatial.wkt($" + shapeWktParameterName + "))", false, "STRING");
+                + ", spatial.wkt($" + shapeWktParameterName + "))", false, "String");
     }
 
     private static _createDistanceDescendingLatLng(
@@ -53,13 +53,13 @@ export class OrderByToken extends QueryToken {
         return new OrderByToken(
             "spatial.distance(" + fieldName 
                 + ", spatial.point($" + latitudeParameterName 
-                + ", $" + longitudeParameterName + "))", true, "STRING");
+                + ", $" + longitudeParameterName + "))", true, "String");
     }
 
     private static _createDistanceDescendingWkt(fieldName: string, shapeWktParameterName: string): OrderByToken {
         return new OrderByToken(
             "spatial.distance(" + fieldName 
-            + ", spatial.wkt($" + shapeWktParameterName + "))", true, "STRING");
+            + ", spatial.wkt($" + shapeWktParameterName + "))", true, "String");
     }
 
     public static createDistanceDescending(
@@ -80,7 +80,7 @@ export class OrderByToken extends QueryToken {
             throwError("InvalidArgumentException", "seed cannot be null");
         }
 
-        return new OrderByToken("random('" + seed.replace(/'/g, "''") + "')", false, "STRING");
+        return new OrderByToken("random('" + seed.replace(/'/g, "''") + "')", false, "String");
     }
 
     public static createAscending(fieldName: string, ordering: OrderingType): OrderByToken {
@@ -95,13 +95,13 @@ export class OrderByToken extends QueryToken {
         this._writeField(writer, this._fieldName);
 
         switch (this._ordering) {
-            case "LONG":
+            case "Long":
                 writer.append(" as long");
                 break;
-            case "DOUBLE":
+            case "Double":
                 writer.append(" as double");
                 break;
-            case "ALPHA_NUMERIC":
+            case "AlphaNumeric":
                 writer.append(" as alphaNumeric");
                 break;
         }

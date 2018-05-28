@@ -114,7 +114,7 @@ describe("SpatialQueriesTest", function () {
             const matchesWithinMiles = await session.query({
                 indexName: "FindByLatLng"
             })
-            .withinRadiusOf("coordinates", radius, myHouse.latitude, myHouse.longitude, "MILES")
+            .withinRadiusOf("coordinates", radius, myHouse.latitude, myHouse.longitude, "Miles")
             .waitForNonStaleResults()
             .all();
 
@@ -127,7 +127,7 @@ describe("SpatialQueriesTest", function () {
             const matchesWithinKilometers = await session.query({
                 indexName: "FindByLatLng"
             })
-            .withinRadiusOf("coordinates", radius, myHouse.latitude, myHouse.longitude, "KILOMETERS")
+            .withinRadiusOf("coordinates", radius, myHouse.latitude, myHouse.longitude, "Kilometers")
             .waitForNonStaleResults()
             .all();
 

@@ -119,6 +119,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     protected _includes: Set<string> = new Set();
 
+    private _statsCallback: (stats: QueryStatistics) => void = TypeUtil.NOOP;
+
     /**
      * Holds the query stats
      */
@@ -209,11 +211,14 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._loadTokens = loadTokens;
 
         this._theSession = session;
-        // TODO
-        // this.on("after")
-        // _addAfterQueryExecutedListener(() => this._updateStatsAndHighlightings());
-        this._conventions = session == null ?
-            new DocumentConventions() : session.conventions;
+
+        this.on("afterQueryExecuted", (result: QueryResult) => {
+            this._updateStatsAndHighlightings(result);
+        });
+        
+        this._conventions = !session ?
+            new DocumentConventions() : 
+            session.conventions;
         // TBD _linqPathProvider = new LinqPathProvider(_conventions);
     }
 
@@ -1093,7 +1098,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      */
     public _orderBy(field: string): void;
     public _orderBy(field: string, ordering: OrderingType): void;
-    public _orderBy(field: string, ordering: OrderingType = "STRING"): void {
+    public _orderBy(field: string, ordering: OrderingType = "String"): void {
         this._assertNoRawQuery();
         const f = this._ensureValidFieldName(field, false);
         this._orderByTokens.push(OrderByToken.createAscending(f, ordering));
@@ -1108,7 +1113,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      */
     public _orderByDescending(field: string): void;
     public _orderByDescending(field: string, ordering: OrderingType): void;
-    public _orderByDescending(field: string, ordering: OrderingType = "STRING"): void {
+    public _orderByDescending(field: string, ordering: OrderingType = "String"): void {
         this._assertNoRawQuery();
         const f = this._ensureValidFieldName(field, false);
         this._orderByTokens.push(OrderByToken.createDescending(f, ordering));
@@ -1312,7 +1317,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
     }
 
-    private updateStatsAndHighlightings(queryResult: QueryResult): void {
+    private _updateStatsAndHighlightings(queryResult: QueryResult): void {
         this._queryStats.updateQueryStats(queryResult);
         // TBD: Highlightings.Update(queryResult);
     }
