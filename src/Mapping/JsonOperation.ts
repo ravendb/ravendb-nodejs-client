@@ -9,7 +9,7 @@ export class JsonOperation {
     public static entityChanged(
         newObj: object, 
         documentInfo: DocumentInfo, 
-        changes: Map<string, DocumentsChanges[]>): boolean {
+        changes: { [id: string]: DocumentsChanges[] }): boolean {
 
         const docChanges: DocumentsChanges[] = changes ? [] : null;
 
@@ -21,8 +21,8 @@ export class JsonOperation {
             return true;
         }
 
-        JsonOperation._newChange(null, null, null, docChanges, "DOCUMENT_ADDED");
-        changes.set(documentInfo.id, docChanges);
+        JsonOperation._newChange(null, null, null, docChanges, "DocumentAdded");
+        changes[documentInfo.id] = docChanges;
         return true;
     }
 
@@ -30,7 +30,7 @@ export class JsonOperation {
         id: string, 
         originalJson: object, 
         newJson: object, 
-        changes: Map<string, DocumentsChanges[]>, 
+        changes: { [id: string]: DocumentsChanges[] }, 
         docChanges: DocumentsChanges[]): boolean {
         const newJsonProps: string[] = Object.keys(newJson);
         const oldJsonProps: string[] = Object.keys(originalJson);
@@ -39,11 +39,11 @@ export class JsonOperation {
         const removedFields = oldJsonProps.filter(x => !newJsonProps.find(y => y === x));
 
         for (const field of removedFields) {
-            if (changes) {
+            if (!changes) {
                 return true;
             }
 
-            JsonOperation._newChange(field, null, null, docChanges, "REMOVED_FIELD");
+            JsonOperation._newChange(field, null, null, docChanges, "RemovedField");
         }
 
         for (const prop of newJsonProps) {
@@ -60,7 +60,7 @@ export class JsonOperation {
                     return true;
                 }
 
-                JsonOperation._newChange(prop, newJson[prop], null, docChanges, "NEW_FIELD");
+                JsonOperation._newChange(prop, newJson[prop], null, docChanges, "NewField");
                 continue;
             }
 
@@ -80,14 +80,14 @@ export class JsonOperation {
                     return true;
                 }
 
-                JsonOperation._newChange(prop, newProp, oldProp, docChanges, "FIELD_CHANGED");
+                JsonOperation._newChange(prop, newProp, oldProp, docChanges, "FieldChanged");
             } else if (!newProp) {
                 if (oldProp) {
                     if (!changes) {
                         return true;
                     }
 
-                    JsonOperation._newChange(prop, null, oldProp, docChanges, "FIELD_CHANGED");
+                    JsonOperation._newChange(prop, null, oldProp, docChanges, "FieldChanged");
                 }
             } else if (Array.isArray(newProp)) {
                 if (!oldProp || !Array.isArray(oldProp)) {
@@ -95,7 +95,7 @@ export class JsonOperation {
                         return true;
                     }
 
-                    JsonOperation._newChange(prop, newProp, oldProp, docChanges, "FIELD_CHANGED");
+                    JsonOperation._newChange(prop, newProp, oldProp, docChanges, "FieldChanged");
                 }
 
                 changed = JsonOperation._compareJsonArray(
@@ -109,7 +109,7 @@ export class JsonOperation {
                             return true;
                         }
 
-                        JsonOperation._newChange(prop, newProp, null, docChanges, "FIELD_CHANGED");
+                        JsonOperation._newChange(prop, newProp, null, docChanges, "FieldChanged");
                     } else {
                         changed = JsonOperation._compareJson(
                             id, oldProp as object, newProp as object, changes, docChanges);
@@ -127,7 +127,7 @@ export class JsonOperation {
             return false;
         }
 
-        changes.set(id, docChanges);
+        changes[id] = docChanges;
         return true;
     }
 
@@ -139,7 +139,7 @@ export class JsonOperation {
         id: string, 
         oldArray: any[], 
         newArray: any[], 
-        changes: Map<string, DocumentsChanges[]>, 
+        changes: { [id: string]: DocumentsChanges[] }, 
         docChanges: DocumentsChanges[], 
         propName: string): boolean {
         // if we don't care about the changes
@@ -162,7 +162,7 @@ export class JsonOperation {
                 } else {
                     changed = true;
                     if (changes) {
-                        this._newChange(propName, newArrayItem, oldArrayItem, docChanges, "ARRAY_VALUE_ADDED");
+                        this._newChange(propName, newArrayItem, oldArrayItem, docChanges, "ArrayValueAdded");
                     }
                 }
             } else if (Array.isArray(oldArrayItem)) {
@@ -172,7 +172,7 @@ export class JsonOperation {
                 } else {
                     changed = true;
                     if (changes) {
-                        this._newChange(propName, newArrayItem, oldArrayItem, docChanges, "ARRAY_VALUE_CHANGED");
+                        this._newChange(propName, newArrayItem, oldArrayItem, docChanges, "ArrayValueChanged");
                     }
                 }
             } else if (!oldArrayItem) {
@@ -180,14 +180,14 @@ export class JsonOperation {
                     changed = true;
                     if (changes) {
                         this._newChange(
-                            propName, newArrayItem, oldArrayItem, docChanges, "ARRAY_VALUE_ADDED");
+                            propName, newArrayItem, oldArrayItem, docChanges, "ArrayValueAdded");
                     }
                 }
             } else {
                 if (oldArrayItem !== newArrayItem) {
                     if (changes) {
                         this._newChange(
-                            propName, newArrayItem, oldArrayItem, docChanges, "ARRAY_VALUE_CHANGED");
+                            propName, newArrayItem, oldArrayItem, docChanges, "ArrayValueChanged");
                     }
 
                     changed = true;
@@ -207,12 +207,12 @@ export class JsonOperation {
 
         // if one of the arrays is larger than the other
         while (position < oldArray.length) {
-            this._newChange(propName, null, oldArrayItem, docChanges, "ARRAY_VALUE_REMOVED");
+            this._newChange(propName, null, oldArrayItem, docChanges, "ArrayValueRemoved");
             position++;
         }
 
         while (position < newArray.length) {
-            this._newChange(propName, newArrayItem, null, docChanges, "ARRAY_VALUE_ADDED");
+            this._newChange(propName, newArrayItem, null, docChanges, "ArrayValueAdded");
             position++;
         }
 

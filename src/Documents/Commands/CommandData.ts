@@ -7,14 +7,14 @@ import { BatchOptions } from "./Batches/BatchOptions";
 // import { PatchRequest } from "../../../Http/Request/PatchRequest";
 
 export type CommandType = 
-    "NONE" 
+    "None" 
     | "PUT"  
     | "PATCH"
     | "DELETE"
-    | "ATTACHMENT_PUT"
-    | "ATTACHMENT_DELETE"
-    | "CLIENT_ANY_COMMAND"
-    | "CLIENT_NOT_ATTACHMENT_PUT"
+    | "AttachmentPUT"
+    | "AttachmentDELETE"
+    | "ClientAnyCommand"
+    | "ClientNotAttachmentPUT"
 ;
 
 export interface ICommandData {

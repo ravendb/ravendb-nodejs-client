@@ -1,1 +1,1 @@
-export type GroupByMethod = "NONE" | "ARRAY";
+export type GroupByMethod = "None" | "Array";

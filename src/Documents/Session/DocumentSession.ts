@@ -1,4 +1,4 @@
-import {DocumentQuery} from './DocumentQuery';
+import {DocumentQuery} from "./DocumentQuery";
 import {MultiLoaderWithInclude} from "./Loaders/MultiLoaderWithInclude";
 import {BatchOperation} from "./Operations/BatchOperation";
 import * as BluebirdPromise from "bluebird";

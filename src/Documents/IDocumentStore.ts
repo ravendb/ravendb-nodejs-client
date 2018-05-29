@@ -1,6 +1,6 @@
 import {IDocumentSession, ISessionOptions} from "./Session/IDocumentSession";
 import { IStoreAuthOptions } from "../Auth/AuthOptions";
-import { SessionBeforeStoreEventArgs } from "./Session/SessionEvents";
+import { SessionBeforeStoreEventArgs, SessionAfterSaveChangesEventArgs, SessionBeforeQueryEventArgs, SessionBeforeDeleteEventArgs } from "./Session/SessionEvents";
 import { IDisposable } from "../Types/Contracts";
 import { Todo } from "../Types";
 import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor";
@@ -151,4 +151,13 @@ export interface IDocumentStore extends
     maintenance: MaintenanceOperationExecutor;
 
     operations: OperationExecutor;
+
+    addSessionListener(
+        eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
+    addSessionListener(
+        eventName: "afterSaveChanges", eventHandler: (eventArgs: SessionAfterSaveChangesEventArgs) => void): this;
+    addSessionListener(
+        eventName: "beforeQuery", eventHandler: (eventArgs: SessionBeforeQueryEventArgs) => void): this;
+    addSessionListener(
+        eventName: "beforeDelete", eventHandler: (eventArgs: SessionBeforeDeleteEventArgs) => void): this;
 }

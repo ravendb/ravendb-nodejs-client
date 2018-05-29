@@ -12,13 +12,13 @@ export interface IRavenArrayResult {
     results: any[];
 }
 
-export interface ClassConstructor { 
+export interface ClassConstructor<T extends Object = Object> { 
     name: string;
     new(...args: any[]): any; 
 }
 
 export interface EntityConstructor<T extends object = object> 
-    extends ClassConstructor {
+    extends ClassConstructor<T> {
     new(...args: any[]): T;
     name: string;
 }

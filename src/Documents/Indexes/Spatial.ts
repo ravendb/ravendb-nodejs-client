@@ -7,12 +7,12 @@ export const DEFAULT_GEOHASH_LEVEL = 9;
 // about 4.78 meters at equator, should be good enough
 export const DEFAULT_QUAD_TREE_LEVEL = 23;
 
-export type SpatialFieldType = "GEOGRAPHY" | "CARTESIAN";
+export type SpatialFieldType = "Geography" | "Cartesian";
 
 export type SpatialSearchStrategy =
-    "GEOHASH_PREFIX_TREE"
-    | "QUAD_PREFIX_TREE"
-    | "BOUNDING_BOX";
+    "GeohashPrefixTree"
+    | "QuadPrefixTree"
+    | "BoundingBox";
 
 export type SpatialUnits = "Kilometers" | "Miles";
 
@@ -30,8 +30,9 @@ export class SpatialOptions {
     public units: SpatialUnits;
 
     public constructor(options?: SpatialOptions) {
-        this.type = options.type || "GEOGRAPHY";
-        this.strategy = options.strategy || "GEOHASH_PREFIX_TREE";
+        options = options || {} as SpatialOptions;
+        this.type = options.type || "Geography";
+        this.strategy = options.strategy || "GeohashPrefixTree";
         this.maxTreeLevel = options.maxTreeLevel || DEFAULT_GEOHASH_LEVEL;
         this.minX = options.minX || -180;
         this.maxX = options.maxX || 180;
@@ -101,8 +102,8 @@ export class CartesianSpatialOptionsFactory {
 
     public boundingBoxIndex(): SpatialOptions {
         const opts: SpatialOptions = new SpatialOptions();
-        opts.type = "CARTESIAN";
-        opts.strategy = "BOUNDING_BOX";
+        opts.type = "Cartesian";
+        opts.strategy = "BoundingBox";
         return opts;
     }
 
@@ -112,9 +113,9 @@ export class CartesianSpatialOptionsFactory {
         }
 
         const opts = new SpatialOptions();
-        opts.type = "CARTESIAN";
+        opts.type = "Cartesian";
         opts.maxTreeLevel = maxTreeLevel;
-        opts.strategy = "QUAD_PREFIX_TREE";
+        opts.strategy = "QuadPrefixTree";
         opts.minX = bounds.minX;
         opts.minY = bounds.minY;
         opts.maxX = bounds.maxX;
@@ -164,8 +165,8 @@ export class GeographySpatialOptionsFactory {
     public boundingBoxIndex(circleRadiusUnits?: SpatialUnits): SpatialOptions {
         circleRadiusUnits = circleRadiusUnits || "Kilometers";
         const ops = new SpatialOptions();
-        ops.type = "GEOGRAPHY";
-        ops.strategy = "BOUNDING_BOX";
+        ops.type = "Geography";
+        ops.strategy = "BoundingBox";
         ops.units = circleRadiusUnits;
         return ops;
     }
@@ -177,9 +178,9 @@ export class GeographySpatialOptionsFactory {
         }
 
         const opts = new SpatialOptions();
-        opts.type = "GEOGRAPHY";
+        opts.type = "Geography";
         opts.maxTreeLevel = maxTreeLevel;
-        opts.strategy = "GEOHASH_PREFIX_TREE";
+        opts.strategy = "GeohashPrefixTree";
         opts.units = circleRadiusUnits;
         return opts;
     }
@@ -191,16 +192,16 @@ export class GeographySpatialOptionsFactory {
         }
 
         const opts = new SpatialOptions();
-        opts.type = "GEOGRAPHY";
+        opts.type = "Geography";
         opts.maxTreeLevel = maxTreeLevel;
-        opts.strategy = "QUAD_PREFIX_TREE";
+        opts.strategy = "QuadPrefixTree";
         opts.units = circleRadiusUnits;
         return opts;
     }
 }
 
 export type SpatialRelation =  
-    "WITHIN"
-   | "CONTAINS"
-   | "DISJOINT"
-   | "INTERSECTS";
+    "Within"
+   | "Contains"
+   | "Disjoint"
+   | "Intersects";

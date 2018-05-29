@@ -3,7 +3,7 @@ import { IRavenObject } from "../../../Types/IRavenObject";
 import { BatchCommand } from "../../Commands/Batches/BatchCommand";
 import { throwError } from "../../../Exceptions";
 import { CONSTANTS } from "../../../Constants";
-import { AfterSaveChangesEventArgs } from "../SessionEvents";
+import { SessionAfterSaveChangesEventArgs } from "../SessionEvents";
 
 export class BatchOperation {
 
@@ -91,7 +91,7 @@ export class BatchOperation {
             this._session.generateEntityIdOnTheClient.trySetIdentity(entity, id);
 
             const afterSaveChangesEventArgs = 
-                new AfterSaveChangesEventArgs(this._session, documentInfo.id, documentInfo.entity);
+                new SessionAfterSaveChangesEventArgs(this._session, documentInfo.id, documentInfo.entity);
             this._session.emit("afterSaveChanges", afterSaveChangesEventArgs);
         }
     }

@@ -5,7 +5,7 @@ import { IDocumentStore } from "./IDocumentStore";
 import { throwError } from "../Exceptions";
 import { isValidUri, validateUri } from "../Utility/UriUtil";
 import { IAuthOptions } from "../Auth/AuthOptions";
-import { SessionBeforeStoreEventArgs } from "./Session/SessionEvents";
+import { SessionBeforeStoreEventArgs, SessionAfterSaveChangesEventArgs, SessionBeforeQueryEventArgs, SessionBeforeDeleteEventArgs } from "./Session/SessionEvents";
 import { Todo } from "../Types";
 import { InMemoryDocumentSessionOperations } from "./Session/InMemoryDocumentSessionOperations";
 import { OperationExecutor } from "./Operations/OperationExecutor";
@@ -171,11 +171,11 @@ export abstract class DocumentStoreBase
     public addSessionListener(
         eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
     public addSessionListener(
-        eventName: "afterSaveChanges", eventHandler: (eventArgs: Todo) => void): this;
+        eventName: "afterSaveChanges", eventHandler: (eventArgs: SessionAfterSaveChangesEventArgs) => void): this;
     public addSessionListener(
-        eventName: "beforeQuery", eventHandler: (eventArgs: Todo) => void): this;
+        eventName: "beforeQuery", eventHandler: (eventArgs: SessionBeforeQueryEventArgs) => void): this;
     public addSessionListener(
-        eventName: "beforeDelete", eventHandler: (eventArgs: Todo) => void): this;
+        eventName: "beforeDelete", eventHandler: (eventArgs: SessionBeforeDeleteEventArgs) => void): this;
     public addSessionListener(eventName: any, eventHandler: (eventArgs: any) => void): this {
         this._eventHandlers.push([eventName, eventHandler]);
         return this;

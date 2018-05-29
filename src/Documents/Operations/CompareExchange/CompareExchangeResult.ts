@@ -3,6 +3,7 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 import { throwError } from "../../../Exceptions";
 import { ClassConstructor } from "../../..";
+import { TypeUtil } from "../../../Utility/TypeUtil";
 
 export class CompareExchangeResult<T> {
 
@@ -10,10 +11,10 @@ export class CompareExchangeResult<T> {
     public index: number;
     public successful: boolean;
 
-    public static parseFromString<T extends Object>(
+    public static parseFromString<T>(
         responseString: string, 
         conventions: DocumentConventions, 
-        documentType?: DocumentType<T>): CompareExchangeResult<T> {
+        clazz?: ClassConstructor<T>): CompareExchangeResult<T> {
 
         const response = JsonSerializer.getDefault().deserialize(responseString);
 
@@ -40,10 +41,14 @@ export class CompareExchangeResult<T> {
             return emptyExchangeResult;
         }
 
-        conventions.tryRegisterEntityType(documentType);
+        conventions.tryRegisterEntityType(clazz);
 
-        const entityType = conventions.findEntityType(documentType);
-        result = conventions.entityObjectMapper.fromObjectLiteral(val);
+        if (TypeUtil.isPrimitive(val)) {
+            result = val;
+        } else {
+            const entityType = conventions.findEntityType(clazz);
+            result = conventions.deserializeEntityFromJson(entityType, val) as any as T;
+        }
 
         const exchangeResult = new CompareExchangeResult<T>();
         exchangeResult.index = index;

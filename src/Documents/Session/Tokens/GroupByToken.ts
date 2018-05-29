@@ -14,16 +14,16 @@ export class GroupByToken extends QueryToken {
 
     public static create(fieldName: string): GroupByToken;
     public static create(fieldName: string, method: GroupByMethod): GroupByToken;
-    public static create(fieldName: string, method: GroupByMethod = "NONE"): GroupByToken {
+    public static create(fieldName: string, method: GroupByMethod = "None"): GroupByToken {
         return new GroupByToken(fieldName, method);
     }
 
     public writeTo(writer): void {
-        if (this._method !== "NONE") {
+        if (this._method !== "None") {
             writer.append("Array(");
         }
         this._writeField(writer, this._fieldName);
-        if (this._method !== "NONE") {
+        if (this._method !== "None") {
             writer.append(")");
         }
     }

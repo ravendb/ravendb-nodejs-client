@@ -52,6 +52,18 @@ export { PatchOperation } from "./Documents/Operations/PatchOperation";
 export { PatchByQueryOperation } from "./Documents/Operations/PatchByQueryOperation";
 export { PutCompareExchangeValueOperation } 
     from "./Documents/Operations/CompareExchange/PutCompareExchangeValueOperation";
+export { GetCompareExchangeValueOperation } 
+    from "./Documents/Operations/CompareExchange/GetCompareExchangeValueOperation";
+export { CompareExchangeResult } 
+    from "./Documents/Operations/CompareExchange/CompareExchangeResult";
+export { CompareExchangeValue } 
+    from "./Documents/Operations/CompareExchange/CompareExchangeValue";
+export { CompareExchangeValueResultParser } 
+    from "./Documents/Operations/CompareExchange/CompareExchangeValueResultParser";
+export { GetCompareExchangeValuesOperation, GetCompareExchangeValuesParameters } 
+    from "./Documents/Operations/CompareExchange/GetCompareExchangeValuesOperation";
+export { DeleteCompareExchangeValueOperation } 
+    from "./Documents/Operations/CompareExchange/DeleteCompareExchangeValueOperation";
 export { DeleteByQueryOperation } from "./Documents/Operations/DeleteByQueryOperation";
 export { GetCollectionStatisticsOperation } from "./Documents/Operations/GetCollectionStatisticsOperation";
 export { CollectionStatistics } from "./Documents/Operations/CollectionStatistics";

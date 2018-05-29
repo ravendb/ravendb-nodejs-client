@@ -663,7 +663,7 @@ export abstract class InMemoryDocumentSessionOperations
             // tslint:disable-next-line:no-shadowed-variable
             .then(id => {
 
-                const cmdKey = IdTypeAndName.keyFor(id, "CLIENT_ANY_COMMAND", null);
+                const cmdKey = IdTypeAndName.keyFor(id, "ClientAnyCommand", null);
                 if (this._deferredCommandsMap.has(cmdKey)) {
                     throwError("InvalidOperationException",
                         "Can't store document, there is a deferred command registered "
@@ -771,7 +771,7 @@ export abstract class InMemoryDocumentSessionOperations
         });
     }
     
-    private _prepareForEntitiesDeletion(result: SaveChangesData, changes: Map<String, DocumentsChanges[]>): void {
+    private _prepareForEntitiesDeletion(result: SaveChangesData, changes: { [id: string]: DocumentsChanges[] }): void {
         for (const deletedEntity of this.deletedEntities) {
             let documentInfo = this.documentsByEntity.get(deletedEntity);
             if (!documentInfo) {
@@ -783,13 +783,13 @@ export abstract class InMemoryDocumentSessionOperations
                 const change = new DocumentsChanges();
                 change.fieldNewValue = "";
                 change.fieldOldValue = "";
-                change.change = "DOCUMENT_DELETED";
+                change.change = "DocumentDeleted";
 
                 docChanges.push(change);
-                changes.set(documentInfo.id, docChanges);
+                changes[documentInfo.id] = docChanges;
             } else {
                 const command: ICommandData = 
-                    result.deferredCommandsMap.get(IdTypeAndName.keyFor(documentInfo.id, "CLIENT_ANY_COMMAND", null));
+                    result.deferredCommandsMap.get(IdTypeAndName.keyFor(documentInfo.id, "ClientAnyCommand", null));
                 if (command) {
                     InMemoryDocumentSessionOperations._throwInvalidDeletedDocumentWithDeferredCommand(command);
                 }
@@ -838,7 +838,7 @@ export abstract class InMemoryDocumentSessionOperations
             }
 
             const command = result.deferredCommandsMap.get(
-                IdTypeAndName.keyFor(entity.value.id, "CLIENT_ANY_COMMAND", null));
+                IdTypeAndName.keyFor(entity.value.id, "ClientAnyCommand", null));
             if (command) {
                 InMemoryDocumentSessionOperations._throwInvalidModifiedDocumentWithDeferredCommand(command);
             }
@@ -885,7 +885,7 @@ export abstract class InMemoryDocumentSessionOperations
     protected _entityChanged(
         newObj: object, 
         documentInfo: DocumentInfo, 
-        changes: Map<string, DocumentsChanges[]>): boolean {
+        changes: { [id: string]: DocumentsChanges[] }): boolean {
         return JsonOperation.entityChanged(newObj, documentInfo, changes);
     }
 
@@ -992,11 +992,11 @@ export abstract class InMemoryDocumentSessionOperations
         this._deferredCommandsMap.set(
             IdTypeAndName.keyFor(command.id, command.type, command.name), command);
         this._deferredCommandsMap.set(
-            IdTypeAndName.keyFor(command.id, "CLIENT_ANY_COMMAND", null), command);
+            IdTypeAndName.keyFor(command.id, "ClientAnyCommand", null), command);
 
-        if (command.type !== "ATTACHMENT_PUT") {
+        if (command.type !== "AttachmentPUT") {
             this._deferredCommandsMap.set(
-                IdTypeAndName.keyFor(command.id, "CLIENT_NOT_ATTACHMENT_PUT", null), command);
+                IdTypeAndName.keyFor(command.id, "ClientNotAttachmentPUT", null), command);
         }
     }
 
@@ -1091,8 +1091,8 @@ export abstract class InMemoryDocumentSessionOperations
         this._getDocumentInfo(entity).ignoreChanges = true;
     }
 
-    public whatChanged(): Map<string, DocumentsChanges[]> {
-        const changes: Map<string, DocumentsChanges[]> = new Map();
+    public whatChanged(): { [id: string]: DocumentsChanges[] } {
+        const changes: { [id: string]: DocumentsChanges[] } = {};
 
         this._prepareForEntitiesDeletion(null, changes);
         this._getAllEntitiesChanges(changes);
@@ -1100,7 +1100,7 @@ export abstract class InMemoryDocumentSessionOperations
         return changes;
     }
 
-    private _getAllEntitiesChanges(changes: Map<string, DocumentsChanges[]>): void {
+    private _getAllEntitiesChanges(changes:  { [id: string]: DocumentsChanges[] }): void {
         for (const pair of this.documentsById.entries()) {
             InMemoryDocumentSessionOperations._updateMetadataModifications(pair[1]);
             const newObj = this.entityToJson.convertEntityToJson(pair[1].entity, pair[1]);

@@ -19,7 +19,7 @@ export class GroupBy {
     public static field(fieldName: string): GroupBy {
         const groupBy = new GroupBy();
         groupBy._field = fieldName;
-        groupBy._method = "NONE";
+        groupBy._method = "None";
 
         return groupBy;
     }
@@ -27,7 +27,7 @@ export class GroupBy {
     public static array(fieldName: string) {
         const groupBy = new GroupBy();
         groupBy._field = fieldName;
-        groupBy._method = "ARRAY";
+        groupBy._method = "Array";
         return groupBy;
 
     }
