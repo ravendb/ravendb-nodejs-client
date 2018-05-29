@@ -205,7 +205,7 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
      * Including name of the field/property that changed, its old and new value and change type.
      * @return Document changes
      */
-    whatChanged(): Map<String, DocumentsChanges[]>;
+    whatChanged(): { [id: string]: DocumentsChanges[] };
 
     // TBD void WaitForReplicationAfterSaveChanges(
     //    TimeSpan? timeout = null, bool throwOnTimeout = true, int replicas = 1, bool majority = false);

@@ -44,13 +44,13 @@ export class DocumentsChanges {
 }
 
 export type ChangeType =
-        "DOCUMENT_DELETED"
-        | "DOCUMENT_ADDED"
-        | "FIELD_CHANGED"
-        | "NEW_FIELD"
-        | "REMOVED_FIELD"
-        | "ARRAY_VALUE_CHANGED"
-        | "ARRAY_VALUE_ADDED"
-        | "ARRAY_VALUE_REMOVED"
-        | "FIELD_TYPE_CHANGED"
-        | "ENTITY_TYPE_CHANGED";
+        "DocumentDeleted"
+        | "DocumentAdded"
+        | "FieldChanged"
+        | "NewField"
+        | "RemovedField"
+        | "ArrayValueChanged"
+        | "ArrayValueAdded"
+        | "ArrayValueRemoved"
+        | "FieldTypeChanged"
+        | "EntityTypeChanged";
