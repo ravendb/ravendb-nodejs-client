@@ -384,7 +384,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
         const value = whereParams.value;
         if (TypeUtil.isDate(value)) {
-            return value;
+            return DateUtil.stringify(value);
         }
 
         if (TypeUtil.isString(value)) {

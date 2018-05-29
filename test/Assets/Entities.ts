@@ -1,4 +1,15 @@
 
+export class Event {
+    public name: string;
+    public date: Date;
+
+    public constructor(data: { name: string, date: Date }) {
+        data = data || {} as any;
+        this.name = data.name;
+        this.date = data.date;
+    }
+}
+
 export class User {
     public id: string;
     public name: string;

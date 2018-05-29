@@ -1,4 +1,5 @@
-import { User } from "../Assets/Entities";
+import * as moment from "moment";
+import { User, Event } from "../Assets/Entities";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { RavenTestContext, testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
@@ -13,8 +14,10 @@ import {
     AbstractIndexCreationTask,
     GroupByField,
     DocumentType,
-    IDocumentSession
+    IDocumentSession,
+    DEFAULT_QUAD_TREE_LEVEL
 } from "../../src";
+import { DateUtil } from "../../src/Utility/DateUtil";
 
 describe("QueryTest", function () {
 
@@ -643,9 +646,79 @@ describe("QueryTest", function () {
         assert.equal(queryResult.length, 1);
     });
 
-    it.skip("query where between with dates", async () => {
+    it("query where between is inclusive", async () => {
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new User(), { age: 1 }));
+            await session.store(Object.assign(new User(), { age: 2 }));
+            await session.store(Object.assign(new User(), { age: 3 }));
+            await session.saveChanges();
+        }
 
+        {
+            const session = store.openSession();
+            const results = await session.query({
+                collection: "users"
+            })
+            .whereBetween("age", 1, 3)
+            .all();
+
+            assert.equal(results.length, 3);
+        }
     });
+
+    it("query where between with dates", async () => {
+        const cocartFestival = new Event({ 
+            name: "CoCArt Festival", 
+            date: moment("2018-03-08").toDate() 
+        });
+        const openerFestival = new Event({ 
+            name: "Open'er Festival", 
+            date: moment("2018-07-04").toDate()
+        });
+        const offFestival = new Event({ 
+            name: "OFF Festival", 
+            date: moment("2018-08-03").toDate() 
+        });
+
+        {
+            const session = store.openSession();
+            await session.store(cocartFestival);
+            await session.store(openerFestival);
+            await session.store(offFestival);
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const q = session.query({
+                collection: "events"
+            })
+            .whereBetween("date", cocartFestival.date, offFestival.date);
+
+            const indexQuery = q.getIndexQuery();
+            assert.equal(indexQuery.query, "from events where date between $p0 and $p1");
+            assert.equal(indexQuery.queryParameters["p0"], DateUtil.stringify(cocartFestival.date));
+            assert.equal(indexQuery.queryParameters["p1"], DateUtil.stringify(offFestival.date));
+            assert.equal(indexQuery.query, "from events where date between $p0 and $p1");
+
+            const festivalsHappeningBetweenCocartAndOffInclusive = await q.all();
+
+            assert.equal(festivalsHappeningBetweenCocartAndOffInclusive.length, 3);
+
+            const festivalsHappeningBetweenCocartAndOffExclusive = await session.query({
+                collection: "events"
+            })
+            .whereBetween(
+                "date",
+                moment(cocartFestival.date).add(1, "d").toDate(),
+                moment(offFestival.date).add(-1, "d").toDate())
+            .all();
+
+            assert.equal(festivalsHappeningBetweenCocartAndOffExclusive.length, 1);
+        }
+    });
+
 });
 
 export class Dog {
