@@ -18,6 +18,7 @@ import {
     DEFAULT_QUAD_TREE_LEVEL
 } from "../../src";
 import { DateUtil } from "../../src/Utility/DateUtil";
+import { TypeUtil } from "../../src/Utility/TypeUtil";
 
 describe("QueryTest", function () {
 
@@ -702,9 +703,10 @@ describe("QueryTest", function () {
             assert.equal(indexQuery.queryParameters["p1"], DateUtil.stringify(offFestival.date));
             assert.equal(indexQuery.query, "from events where date between $p0 and $p1");
 
-            const festivalsHappeningBetweenCocartAndOffInclusive = await q.all();
+            const festivalsHappeningBetweenCocartAndOffInclusive: any[] = await q.all();
 
             assert.equal(festivalsHappeningBetweenCocartAndOffInclusive.length, 3);
+            assert.ok(TypeUtil.isDate(festivalsHappeningBetweenCocartAndOffInclusive[0].date));
 
             const festivalsHappeningBetweenCocartAndOffExclusive = await session.query({
                 collection: "events"

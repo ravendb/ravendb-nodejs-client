@@ -459,6 +459,7 @@ describe("ObjectMapper", function () {
             };
             const result: any = mapper.toObjectLiteral(testObject, typeInfoCallback); 
             const expectedTypeInfo = {
+                typeName: null,
                 nestedTypes: {
                     lastModified: "date"
                 }
@@ -478,6 +479,7 @@ describe("ObjectMapper", function () {
             };
             const result: any = mapper.toObjectLiteral(testObject, typeInfoCallback); 
             const expectedTypeInfo = {
+                typeName: null,
                 nestedTypes: {
                     "dates[]": "date"
                 }
@@ -495,7 +497,7 @@ describe("ObjectMapper", function () {
             assert.ok(testObject !== result);
             assert.ok(!result.hasOwnProperty("sayHello"));
             assert.ok(typeInfo.typeName, Person.name);
-            assert.ok(!typeInfo.hasOwnProperty("nestedTypes"));
+            assert.deepEqual(typeInfo.nestedTypes, {});
         });
 
         it("can handle properties of objects in array", () => {
@@ -511,6 +513,7 @@ describe("ObjectMapper", function () {
             const result: any = mapper.toObjectLiteral(testObject, typeInfoCallback, types);
 
             const expectedTypeInfo = {
+                typeName: null,
                 nestedTypes: {
                     "movies[]": Movie.name,
                     "movies[].releasedAt": "date"
@@ -538,6 +541,7 @@ describe("ObjectMapper", function () {
             const result: any = mapper.toObjectLiteral(testObject, typeInfoCallback, types);
 
             const expectedTypeInfo: TypeInfo = {
+                typeName: null,
                 nestedTypes: {
                     "me": "Person", 
                     "me.bornAt": "date",
@@ -566,6 +570,7 @@ describe("ObjectMapper", function () {
             const result: any = mapper.toObjectLiteral(data, typeInfoCallback);
 
             const expectedTypeInfo = {
+                typeName: null,
                 nestedTypes: {
                     "person.bornAt": "date"
                 }
@@ -590,6 +595,7 @@ describe("ObjectMapper", function () {
             const result: any = mapper.toObjectLiteral(data, typeInfoCallback, types);
 
             const expectedTypeInfo = {
+                typeName: null,
                 nestedTypes: {
                     "animals[]": animalType.name
                 }
@@ -662,6 +668,7 @@ describe("ObjectMapper", function () {
             const result: any = mapper.toObjectLiteral(data, typeInfoCallback, types);
 
             const expectedTypeInfo = {
+                typeName: null,
                 nestedTypes: {
                     "characters[][]": "Person",
                     "characters[][].lastActedAt": "date"

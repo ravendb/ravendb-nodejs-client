@@ -123,13 +123,8 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         }
 
         const typeInfo: TypeInfo = {};
-        if (typeName) {
-            typeInfo.typeName = typeName;
-        }
-
-        if (nestedTypes) {
-            typeInfo.nestedTypes = nestedTypes;
-        }
+        typeInfo.typeName = typeName || null;
+        typeInfo.nestedTypes = nestedTypes || {};
 
         if (typeInfoCallback) {
             typeInfoCallback(typeInfo);
