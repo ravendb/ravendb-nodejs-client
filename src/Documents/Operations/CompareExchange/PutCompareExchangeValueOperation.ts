@@ -9,13 +9,14 @@ import { throwError } from "../../../Exceptions";
 import { ServerNode } from "../../../Http/ServerNode";
 import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 import { DocumentType } from "../../DocumentAbstractions";
+import { EntityConstructor, ClassConstructor, ObjectTypeDescriptor } from "../../..";
+import { TypeUtil } from "../../../Utility/TypeUtil";
 
 export class PutCompareExchangeValueOperation<T> implements IOperation<CompareExchangeResult<T>> {
 
     private _key: string;
     private _value: T;
     private _index: number;
-
     
     public constructor(key: string, value: T, index: number) {
         this._key = key;
@@ -83,8 +84,14 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
     }
 
     public setResponse(response: string, fromCache: boolean): void {
-        // tslint:disable-next-line:no-angle-bracket-type-assertion
-        const type = this._conventions.getEntityTypeDescriptor(this._value as any);
-        this.result = CompareExchangeResult.parseFromString(response, this._conventions, type);
+        if (TypeUtil.isPrimitive(this._value)) {
+            this.result = CompareExchangeResult.parseFromString(response, this._conventions, null);
+        } else {
+            const type = this._conventions.getEntityTypeDescriptor(this._value as any) as ObjectTypeDescriptor;
+            this.result = CompareExchangeResult.parseFromString(
+                response, 
+                this._conventions, 
+                (TypeUtil.isClass(type) ? type : null) as any as ClassConstructor) as CompareExchangeResult<T>;
+        }
     }
 }

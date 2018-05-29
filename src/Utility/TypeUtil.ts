@@ -30,6 +30,12 @@ export class TypeUtil {
             || TypeUtil.isBool(value);
     }
 
+    public static isPrimitiveType(type: any): boolean {
+        return type === Number ||
+            type === String ||
+            type === Boolean;
+    }
+
     public static isArray(value: any): boolean {
         return _.isArray(value);
     }
