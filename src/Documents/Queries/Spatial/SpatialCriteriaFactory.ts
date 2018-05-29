@@ -26,28 +26,28 @@ export class SpatialCriteriaFactory {
         if (!distErrorPercent) {
             distErrorPercent = CONSTANTS.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT;
         }
-        return this.relatesToShape(shapeWkt, "INTERSECTS", distErrorPercent);
+        return this.relatesToShape(shapeWkt, "Intersects", distErrorPercent);
     }
 
     public contains(shapeWkt: string): SpatialCriteria;
     public contains(shapeWkt: string, distErrorPercent: number): SpatialCriteria;
     public contains(shapeWkt: string, distErrorPercent?: number): SpatialCriteria {
         distErrorPercent = distErrorPercent || CONSTANTS.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT;
-        return this.relatesToShape(shapeWkt, "CONTAINS", distErrorPercent);
+        return this.relatesToShape(shapeWkt, "Contains", distErrorPercent);
     }
 
     public disjoint(shapeWkt: string): SpatialCriteria;
     public disjoint(shapeWkt: string, distErrorPercent: number): SpatialCriteria;
     public disjoint(shapeWkt: string, distErrorPercent?: number): SpatialCriteria {
         distErrorPercent = distErrorPercent || CONSTANTS.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT;
-        return this.relatesToShape(shapeWkt, "DISJOINT", distErrorPercent);
+        return this.relatesToShape(shapeWkt, "Disjoint", distErrorPercent);
     }
 
     public within(shapeWkt: string): SpatialCriteria;
     public within(shapeWkt: string, distErrorPercent: number): SpatialCriteria;
     public within(shapeWkt: string, distErrorPercent?: number): SpatialCriteria {
         distErrorPercent = distErrorPercent || CONSTANTS.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT;
-        return this.relatesToShape(shapeWkt, "WITHIN", distErrorPercent);
+        return this.relatesToShape(shapeWkt, "Within", distErrorPercent);
     }
 
     public withinRadius(radius: number, latitude: number, longitude: number): SpatialCriteria;
@@ -66,6 +66,6 @@ export class SpatialCriteriaFactory {
         radiusUnits: SpatialUnits = null, 
         distErrorPercent?: number): SpatialCriteria {
         distErrorPercent = distErrorPercent || CONSTANTS.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT;
-        return new CircleCriteria(radius, latitude, longitude, radiusUnits, "WITHIN", distErrorPercent);
+        return new CircleCriteria(radius, latitude, longitude, radiusUnits, "Within", distErrorPercent);
     }
 }

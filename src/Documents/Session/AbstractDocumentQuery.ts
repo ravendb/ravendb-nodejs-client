@@ -613,7 +613,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._appendOperatorIfNeeded(tokens);
         this._negateIfNeeded(tokens, fieldName);
 
-        const whereToken = WhereToken.create("LUCENE", fieldName, this._addQueryParameter(whereClause));
+        const whereToken = WhereToken.create("Lucene", fieldName, this._addQueryParameter(whereClause));
         tokens.push(whereToken);
     }
 
@@ -667,14 +667,14 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         const tokens: QueryToken[] = this._getCurrentWhereTokens();
         this._appendOperatorIfNeeded(tokens);
 
-        if (this._ifValueIsMethod("EQUALS", whereParams, tokens)) {
+        if (this._ifValueIsMethod("Equals", whereParams, tokens)) {
             return;
         }
 
         const transformToEqualValue = this._transformValue(whereParams);
         const addQueryParameter: string = this._addQueryParameter(transformToEqualValue);
         const whereToken = WhereToken.create(
-            "EQUALS", 
+            "Equals", 
             whereParams.fieldName, 
             addQueryParameter, 
             new WhereOptions({
@@ -700,7 +700,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
                     whereParams.fieldName, 
                     null, 
                     new WhereOptions({
-                        methodType: "CMP_X_CHG", 
+                        methodType: "CmpXchg", 
                         parameters: args, 
                         property: mc.accessPath, 
                         exact: whereParams.exact
@@ -746,12 +746,12 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
         whereParams.fieldName = this._ensureValidFieldName(whereParams.fieldName, whereParams.nestedPath);
 
-        if (this._ifValueIsMethod("NOT_EQUALS", whereParams, tokens)) {
+        if (this._ifValueIsMethod("NotEquals", whereParams, tokens)) {
             return;
         }
 
         const whereToken = WhereToken.create(
-            "NOT_EQUALS", 
+            "NotEquals", 
             whereParams.fieldName, 
             this._addQueryParameter(transformToEqualValue), 
             new WhereOptions(whereParams.exact));
@@ -778,7 +778,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._negateIfNeeded(tokens, fieldName);
 
         const whereToken = WhereToken.create(
-            "IN", 
+            "In", 
             fieldName, 
             this._addQueryParameter(
                 this._transformCollection(fieldName, AbstractDocumentQuery._unpackCollection(values))));
@@ -800,7 +800,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._negateIfNeeded(tokens, whereParams.fieldName);
 
         const whereToken = WhereToken.create(
-            "STARTS_WITH", whereParams.fieldName, this._addQueryParameter(transformToEqualValue));
+            "StartsWith", whereParams.fieldName, this._addQueryParameter(transformToEqualValue));
         tokens.push(whereToken);
     }
 
@@ -824,7 +824,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._negateIfNeeded(tokens, whereParams.fieldName);
 
         const whereToken = WhereToken.create(
-            "ENDS_WITH", whereParams.fieldName, this._addQueryParameter(transformToEqualValue));
+            "EndsWith", whereParams.fieldName, this._addQueryParameter(transformToEqualValue));
         tokens.push(whereToken);
     }
 
@@ -858,7 +858,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             !start ? "NULL" : this._transformValue(endParams, true));
 
         const whereToken = WhereToken.create(
-            "BETWEEN", fieldName, null, new WhereOptions({
+            "Between", fieldName, null, new WhereOptions({
                 exact, 
                 from: fromParameterName, 
                 to: toParameterName
@@ -888,7 +888,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             !value ? "*" : this._transformValue(whereParams, true));
 
         const whereToken = WhereToken.create(
-            "GREATER_THAN", fieldName, parameter, new WhereOptions({ exact }));
+            "GreaterThan", fieldName, parameter, new WhereOptions({ exact }));
         tokens.push(whereToken);
     }
 
@@ -913,7 +913,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         const parameter = this._addQueryParameter(
             !value ? "*" : this._transformValue(whereParams, true));
         const whereToken = WhereToken.create(
-            "GREATER_THAN_OR_EQUAL", fieldName, parameter, new WhereOptions({ exact }));
+            "GreaterThanOrEqual", fieldName, parameter, new WhereOptions({ exact }));
         tokens.push(whereToken);
     }
 
@@ -933,7 +933,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         const parameter = this._addQueryParameter(
             !value ? "NULL" : this._transformValue(whereParams, true));
         const whereToken = WhereToken.create(
-            "LESS_THAN", fieldName, parameter, new WhereOptions({ exact }));
+            "LessThan", fieldName, parameter, new WhereOptions({ exact }));
         tokens.push(whereToken);
     }
 
@@ -951,7 +951,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         const parameter = this._addQueryParameter(
             !value ? "NULL" : this._transformValue(whereParams, true));
         const whereToken = WhereToken.create(
-            "LESS_THAN_OR_EQUAL", fieldName, parameter, new WhereOptions({ exact }));
+            "LessThanOrEqual", fieldName, parameter, new WhereOptions({ exact }));
         tokens.push(whereToken);
     }
 
@@ -972,7 +972,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         const parameter = this._addQueryParameter(this._transformValue(whereParams));
 
         const whereToken = WhereToken.create(
-            "REGEX", fieldName, parameter);
+            "Regex", fieldName, parameter);
         tokens.push(whereToken);
     }
 
@@ -1180,7 +1180,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._negateIfNeeded(tokens, fieldName);
 
         const whereToken = WhereToken.create(
-            "SEARCH", fieldName, this._addQueryParameter(searchTerms), new WhereOptions({ search: operator }));
+            "Search", fieldName, this._addQueryParameter(searchTerms), new WhereOptions({ search: operator }));
         tokens.push(whereToken);
     }
 
@@ -1263,7 +1263,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._appendOperatorIfNeeded(tokens);
         this._negateIfNeeded(tokens, fieldName);
 
-        tokens.push(WhereToken.create("EXISTS", fieldName, null));
+        tokens.push(WhereToken.create("Exists", fieldName, null));
     }
 
     public _containsAny(fieldName: string, values: any[]): void {
@@ -1275,7 +1275,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
         const array = this._transformCollection(fieldName, AbstractDocumentQuery._unpackCollection(values));
         const whereToken = WhereToken.create(
-            "IN", fieldName, this._addQueryParameter(array), new WhereOptions({ exact: false }));
+            "In", fieldName, this._addQueryParameter(array), new WhereOptions({ exact: false }));
         tokens.push(whereToken);
     }
 
@@ -1294,7 +1294,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         const whereToken = WhereToken.create(
-            "ALL_IN", fieldName, this._addQueryParameter(array));
+            "AllIn", fieldName, this._addQueryParameter(array));
         tokens.push(whereToken);
     }
 
@@ -1524,7 +1524,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._negateIfNeeded(tokens, fieldName);
 
         const whereToken = WhereToken.create(
-            "SPATIAL_WITHIN", 
+            "SpatialWithin", 
             fieldName, 
             null, 
             new WhereOptions({
@@ -1549,17 +1549,17 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
         let whereOperator: WhereOperator;
         switch (relation) {
-            case "WITHIN":
-                whereOperator = "SPATIAL_WITHIN";
+            case "Within":
+                whereOperator = "SpatialWithin";
                 break;
-            case "CONTAINS":
-                whereOperator = "SPATIAL_CONTAINS";
+            case "Contains":
+                whereOperator = "SpatialContains";
                 break;
-            case "DISJOINT":
-                whereOperator = "SPATIAL_DISJOINT";
+            case "Disjoint":
+                whereOperator = "SpatialDisjoint";
                 break;
-            case "INTERSECTS":
-                whereOperator = "SPATIAL_INTERSECTS";
+            case "Intersects":
+                whereOperator = "SpatialIntersects";
                 break;
             default:
                 throwError("InvalidArgumentException", `relation: ${relation}.`);

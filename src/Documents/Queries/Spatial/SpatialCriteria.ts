@@ -23,17 +23,17 @@ export abstract class SpatialCriteria {
         let whereOperator: WhereOperator;
 
         switch (this._relation) {
-            case "WITHIN":
-                whereOperator = "SPATIAL_WITHIN";
+            case "Within":
+                whereOperator = "SpatialWithin";
                 break;
-            case "CONTAINS":
-                whereOperator = "SPATIAL_CONTAINS";
+            case "Contains":
+                whereOperator = "SpatialContains";
                 break;
-            case "DISJOINT":
-                whereOperator = "SPATIAL_DISJOINT";
+            case "Disjoint":
+                whereOperator = "SpatialDisjoint";
                 break;
-            case "INTERSECTS":
-                whereOperator = "SPATIAL_INTERSECTS";
+            case "Intersects":
+                whereOperator = "SpatialIntersects";
                 break;
             default:
                 throwError("InvalidArgumentException");

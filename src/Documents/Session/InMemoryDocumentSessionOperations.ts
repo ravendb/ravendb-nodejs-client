@@ -663,7 +663,7 @@ export abstract class InMemoryDocumentSessionOperations
             // tslint:disable-next-line:no-shadowed-variable
             .then(id => {
 
-                const cmdKey = IdTypeAndName.keyFor(id, "CLIENT_ANY_COMMAND", null);
+                const cmdKey = IdTypeAndName.keyFor(id, "ClientAnyCommand", null);
                 if (this._deferredCommandsMap.has(cmdKey)) {
                     throwError("InvalidOperationException",
                         "Can't store document, there is a deferred command registered "
@@ -789,7 +789,7 @@ export abstract class InMemoryDocumentSessionOperations
                 changes.set(documentInfo.id, docChanges);
             } else {
                 const command: ICommandData = 
-                    result.deferredCommandsMap.get(IdTypeAndName.keyFor(documentInfo.id, "CLIENT_ANY_COMMAND", null));
+                    result.deferredCommandsMap.get(IdTypeAndName.keyFor(documentInfo.id, "ClientAnyCommand", null));
                 if (command) {
                     InMemoryDocumentSessionOperations._throwInvalidDeletedDocumentWithDeferredCommand(command);
                 }
@@ -838,7 +838,7 @@ export abstract class InMemoryDocumentSessionOperations
             }
 
             const command = result.deferredCommandsMap.get(
-                IdTypeAndName.keyFor(entity.value.id, "CLIENT_ANY_COMMAND", null));
+                IdTypeAndName.keyFor(entity.value.id, "ClientAnyCommand", null));
             if (command) {
                 InMemoryDocumentSessionOperations._throwInvalidModifiedDocumentWithDeferredCommand(command);
             }
@@ -992,11 +992,11 @@ export abstract class InMemoryDocumentSessionOperations
         this._deferredCommandsMap.set(
             IdTypeAndName.keyFor(command.id, command.type, command.name), command);
         this._deferredCommandsMap.set(
-            IdTypeAndName.keyFor(command.id, "CLIENT_ANY_COMMAND", null), command);
+            IdTypeAndName.keyFor(command.id, "ClientAnyCommand", null), command);
 
-        if (command.type !== "ATTACHMENT_PUT") {
+        if (command.type !== "AttachmentPUT") {
             this._deferredCommandsMap.set(
-                IdTypeAndName.keyFor(command.id, "CLIENT_NOT_ATTACHMENT_PUT", null), command);
+                IdTypeAndName.keyFor(command.id, "ClientNotAttachmentPUT", null), command);
         }
     }
 
