@@ -427,5 +427,5 @@ export interface IAbstractDocumentQuery<T> {
     // TBD string ProjectionParameter(object id);
     // TBD void SuggestUsing(SuggestionBase suggestion);
 
-    iterator(): Promise<T[]>;
+    iterator(): Promise<IterableIterator<T>>;
 }

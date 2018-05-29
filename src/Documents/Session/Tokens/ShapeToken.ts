@@ -23,7 +23,7 @@ export class ShapeToken extends QueryToken {
                     + ", $" + longitudeParameterName + ")");
         }
 
-        if (radiusUnits === "KILOMETERS") {
+        if (radiusUnits === "Kilometers") {
             return new ShapeToken(
                 "spatial.circle($" + radiusParameterName 
                 + ", $" + latitudeParameterName 

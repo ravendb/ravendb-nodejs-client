@@ -23,7 +23,7 @@ import { TypeUtil } from "../../../../src/Utility/TypeUtil";
 // External replication requires a proper license
 // https://docs.travis-ci.com/user/pull-requests/#Pull-Requests-and-Security-Restrictions
 (RavenTestContext.isPullRequest ? describe.skip : describe)(
-    `${RavenTestContext.isPullRequest ? "Skipped on PR - " : ""}` +
+    `${RavenTestContext.isPullRequest ? "[Skipped on PR] " : ""}` +
     "DocumentReplicationTest", function () {
 
     let store: IDocumentStore;

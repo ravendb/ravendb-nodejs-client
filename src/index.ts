@@ -5,22 +5,34 @@ export { RavenErrorType } from "./Exceptions";
 export * from "./Types";
 
 // HTTP
-export { RavenCommand, RavenCommandResponseType, IRavenResponse } from "./Http/RavenCommand";
-export { RequestExecutor } from "./Http/RequestExecutor";
-export { ClusterRequestExecutor } from "./Http/ClusterRequestExecutor";
-export { IDocumentStore } from "./Documents/IDocumentStore";
-export { DocumentStore } from "./Documents/DocumentStore";
-export { ClusterTopology } from "./Http/ClusterTopology";
-export { NodeSelector } from "./Http/NodeSelector";
-export { NodeStatus } from "./Http/NodeStatus";
-export { ReadBalanceBehavior } from "./Http/ReadBalanceBehavior";
-export { ServerNode, ServerNodeRole } from "./Http/ServerNode";
-export { StatusCode } from "./Http/StatusCode";
-export { Topology } from "./Http/Topology";
-export { AggressiveCacheOptions } from "./Http/AggressiveCacheOptions";
+export * from "./Http/AggressiveCacheOptions";
+export * from "./Http/ClusterRequestExecutor";
+export * from "./Http/ClusterTopology";
+export * from "./Http/CurrentIndexAndNode";
+// export * from "./Http/HttpCache";
+export * from "./Http/NodeSelector";
+export * from "./Http/RavenCommand";
+export * from "./Http/ReadBalanceBehavior";
+export * from "./Http/RequestExecutor";
+export * from "./Http/ServerNode";
+export * from "./Http/StatusCode";
+export * from "./Http/Topology";
+export * from "./Http/UriUtility";
 
 // SERVERWIDE
-export { CompactSettings } from "./ServerWide/CompactSettings";
+export * from "./ServerWide";
+export * from "./ServerWide/CompactSettings";
+export * from "./ServerWide/ConnectionString";
+export * from "./ServerWide/ModifyOnGoingTaskResult";
+
+// SERVERWIDE OPERATIONS
+export * from "./ServerWide/Operations";
+export * from "./ServerWide/Operations/CreateDatabaseOperation";
+export * from "./ServerWide/Operations/DeleteDatabasesOperation";
+export * from "./ServerWide/Operations/GetDatabaseNamesOperation";
+export * from "./ServerWide/Operations/GetServerWideOperationStateOperation";
+export * from "./ServerWide/Operations/ServerWideOperationCompletionAwaiter";
+
 export { GetDatabaseTopologyCommand } from "./ServerWide/Commands/GetDatabaseTopologyCommand";
 export { GetClusterTopologyCommand } from "./ServerWide/Commands/GetClusterTopologyCommand";
 export { GetTcpInfoCommand } from "./ServerWide/Commands/GetTcpInfoCommand";
@@ -32,7 +44,7 @@ export { ServerWideOperationCompletionAwaiter } from "./ServerWide/Operations/Se
 export { DatabaseRecord, ConflictSolver, ScriptResolver } from "./ServerWide";
 export * from "./ServerWide/ConnectionString";
 
-// DOCUMENTS
+// OPERATIONS AND COMMANDS 
 export * from "./Documents/Operations/OperationAbstractions";
 export { CompactDatabaseOperation } from "./Documents/Operations/CompactDatabaseOperation";
 export { PutConnectionStringOperation } from "./Documents/Operations/ConnectionStrings/PutConnectionStringOperation";
@@ -85,6 +97,8 @@ export {
     SetIndexesPriorityOperation, 
     SetIndexesPriorityOperationParameters 
 } from "./Documents/Operations/Indexes/SetIndexesPriorityOperation";
+
+// INDEXES
 export { GetIndexOperation } from "./Documents/Operations/Indexes/GetIndexOperation";
 export { GetIndexErrorsOperation } from "./Documents/Operations/Indexes/GetIndexErrorsOperation";
 export * from "./Documents/Indexes/Enums";
@@ -95,25 +109,51 @@ export * from "./Documents/Indexes/Spatial";
 export * from "./Documents/Indexes/IndexingStatus";
 export * from "./Documents/Indexes/IndexStats";
 export * from "./Documents/Indexes";
-export * from "./Documents/DocumentAbstractions";
-export * from "./Documents/Session/IDocumentSession";
-export * from "./Documents/Session/DocumentSession";
-export * from "./Documents/Session/GroupByField";
-export * from "./Documents/Session/RawDocumentQuery";
-export * from "./Documents/Session/IRawDocumentQuery";
-export * from "./Documents/Session/DocumentInfo";
-export * from "./Documents/Session/DocumentQuery";
-export * from "./Documents/Session/DocumentsChanges";
-export * from "./Documents/Session/IQueryBase";
-export * from "./Documents/Session/IDocumentQuery";
-export * from "./Documents/Session/DocumentQuery";
-export * from "./Documents/Session/IAdvancedSessionOperations";
-export * from "./Documents/Session/OrderingType";
-export * from "./Documents/Session/IDocumentSession";
-export * from "./Documents/Session/CmpXchng";
 
+// REPLICATION
 export * from "./Documents/Replication/ExternalReplication";
 export * from "./Documents/Replication/ReplicationNode";
+
+// STORE
+export * from "./Documents/DocumentAbstractions";
+export * from "./Documents/DocumentStore";
+export * from "./Documents/DocumentStoreBase";
+export * from "./Documents/IDocumentStore";
+export * from "./Documents/IdTypeAndName";
+
+// SESSION
+export * from "./Documents/Session/AbstractDocumentQuery";
+export * from "./Documents/Session/CmpXchng";
+export * from "./Documents/Session/DocumentInfo";
+export * from "./Documents/Session/DocumentQuery";
+export * from "./Documents/Session/DocumentQueryHelper";
+export * from "./Documents/Session/DocumentsById";
+export * from "./Documents/Session/DocumentsChanges";
+export * from "./Documents/Session/DocumentSession";
+export * from "./Documents/Session/EntityToJson";
+export * from "./Documents/Session/GroupByDocumentQuery";
+export * from "./Documents/Session/GroupByField";
+export * from "./Documents/Session/IAbstractDocumentQuery";
+export * from "./Documents/Session/IAdvancedSessionOperations";
+export * from "./Documents/Session/IDocumentQuery";
+export * from "./Documents/Session/IDocumentQueryBase";
+export * from "./Documents/Session/IDocumentQueryBaseSingle";
+export * from "./Documents/Session/IDocumentSession";
+export * from "./Documents/Session/IEnumerableQuery";
+export * from "./Documents/Session/IFilterDocumentQueryBase";
+export * from "./Documents/Session/IGroupByDocumentQuery";
+export * from "./Documents/Session/IncludesUtil";
+export * from "./Documents/Session/InMemoryDocumentSessionOperations";
+export * from "./Documents/Session/IQueryBase";
+export * from "./Documents/Session/IRawDocumentQuery";
+export * from "./Documents/Session/MethodCall";
+export * from "./Documents/Session/OrderingType";
+export * from "./Documents/Session/QueryEvents";
+export * from "./Documents/Session/QueryOptions";
+export * from "./Documents/Session/QueryStatistics";
+export * from "./Documents/Session/RawDocumentQuery";
+export * from "./Documents/Session/SessionEvents";
+export * from "./Documents/Session/WhereParams";
 
 // QUERIES
 export * from "./Documents/Queries/IndexQuery";
@@ -127,6 +167,8 @@ export * from "./Documents/Queries/Spatial/SpatialCriteria";
 export * from "./Documents/Queries/Spatial/CircleCriteria";
 export * from "./Documents/Queries/Spatial/DynamicSpatialField";
 export * from "./Documents/Queries/Spatial/WktCriteria";
+export * from "./Documents/Queries/Spatial/PointField";
+export * from "./Documents/Queries/Spatial/WktField";
 
 // HiLo
 export * from "./Documents/Identity/HiloIdGenerator";
