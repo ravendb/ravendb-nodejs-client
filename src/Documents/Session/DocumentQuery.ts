@@ -22,7 +22,6 @@ import { SpatialCriteria } from "../Queries/Spatial/SpatialCriteria";
 import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField";
 import { SpatialUnits, SpatialRelation } from "../Indexes/Spatial";
 import { TypeUtil } from "../../Utility/TypeUtil";
-import { ObjectTypeDescriptor } from "../..";
 
 export class DocumentQuery<T extends object> 
     extends AbstractDocumentQuery<T, DocumentQuery<T>> implements IDocumentQuery<T> {

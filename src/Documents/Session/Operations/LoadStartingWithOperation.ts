@@ -1,6 +1,6 @@
 import { InMemoryDocumentSessionOperations } from "../InMemoryDocumentSessionOperations";
 import { GetDocumentsCommand, GetDocumentsResult } from "../../Commands/GetDocumentsCommand";
-import { SessionLoadStartingWithOptions, StartingWithOptions } from "../IDocumentSession";
+import { StartingWithOptions } from "../IDocumentSession";
 import { DocumentInfo } from "../DocumentInfo";
 import { DocumentType } from "../../DocumentAbstractions";
 import { ObjectTypeDescriptor } from "../../..";

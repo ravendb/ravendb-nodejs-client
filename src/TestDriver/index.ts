@@ -1,10 +1,8 @@
-import * as fs from "fs";
 import * as BluebirdPromise from "bluebird";
 import { ChildProcess, spawn } from "child_process";
 import * as os from "os";
 import { MultiError } from "verror";
 
-import { IAuthOptions } from "../Auth/AuthOptions";
 import { CONSTANTS } from "../Constants";
 import { DocumentStore } from "../Documents/DocumentStore";
 import { IDocumentStore } from "../Documents/IDocumentStore";
@@ -20,7 +18,6 @@ import { getLogger } from "../Utility/LogUtil";
 import { RavenServerLocator } from "./RavenServerLocator";
 import { RavenServerRunner } from "./RavenServerRunner";
 import { TypeUtil } from "../Utility/TypeUtil";
-import { Certificate, ICertificate } from "../Auth/Certificate";
 
 const log = getLogger({ module: "TestDriver" });
 

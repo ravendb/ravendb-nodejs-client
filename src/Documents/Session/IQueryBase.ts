@@ -2,7 +2,6 @@ import {QueryOperator} from "../Queries/QueryOperator";
 import {IndexQuery} from "../Queries/IndexQuery";
 import {QueryStatistics} from "./QueryStatistics";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { QueryResult } from "../Queries/QueryResult";
 
 export interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> {
 

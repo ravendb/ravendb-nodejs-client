@@ -1,8 +1,6 @@
-import * as BluebirdPromise from "bluebird";
 import * as _ from "lodash";
 import * as moment from "moment";
-import { RequestExecutor, ITopologyUpdateEvent } from "./RequestExecutor";
-import { ServerNode, ServerNodeRole } from "../Http/ServerNode";
+import { ServerNode} from "../Http/ServerNode";
 import CurrentIndexAndNode from "../Http/CurrentIndexAndNode";
 import { Topology } from "./Topology";
 import { Timer } from "../Primitives/Timer";

@@ -1,24 +1,16 @@
 import { User } from "../../../Assets/Entities";
 
-import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import * as os from "os";
 import { RavenTestContext, testContext, disposeTestDocumentStore } from "../../../Utils/TestUtil";
 
 import {
-    RequestExecutor,
-    DocumentConventions,
-    RavenErrorType,
-    GetNextOperationIdCommand,
     IDocumentStore,
     DocumentStore,
-    DatabaseRecord,
     ConflictSolver,
     GetConflictsCommand,
     PutDocumentCommand,
 } from "../../../../src";
 import { ReplicationTestContext } from "../../../Utils/ReplicationTestContext";
-import { TypeUtil } from "../../../../src/Utility/TypeUtil";
 
 // External replication requires a proper license
 // https://docs.travis-ci.com/user/pull-requests/#Pull-Requests-and-Security-Restrictions

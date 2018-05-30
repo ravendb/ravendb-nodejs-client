@@ -1,4 +1,3 @@
-import {DocumentType} from "../../DocumentAbstractions";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 import { throwError } from "../../../Exceptions";

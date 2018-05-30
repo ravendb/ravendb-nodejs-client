@@ -1,6 +1,5 @@
 import {GetClusterTopologyCommand} from "../ServerWide/Commands/GetClusterTopologyCommand";
 import {NodeSelector} from "./NodeSelector";
-import * as _ from "lodash";
 import * as os from "os";
 import * as BluebirdPromise from "bluebird";
 import * as semaphore from "semaphore";

@@ -1,5 +1,4 @@
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { DocumentType } from "../../DocumentAbstractions";
 import { CompareExchangeValue } from "./CompareExchangeValue";
 import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 import { throwError } from "../../../Exceptions";

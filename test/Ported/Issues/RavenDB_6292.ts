@@ -3,9 +3,6 @@ import * as assert from "assert";
 import { RavenTestContext, testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
-    RequestExecutor,
-    RavenErrorType,
-    GetNextOperationIdCommand,
     IDocumentStore,
     ConflictSolver,
     DocumentStore,

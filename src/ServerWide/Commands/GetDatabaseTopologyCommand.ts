@@ -1,9 +1,7 @@
 import {RavenCommand} from "../../Http/RavenCommand";
 import {ServerNode} from "../../Http/ServerNode";
-import {StatusCodes} from "../../Http/StatusCode";
-import {StringUtil} from "../../Utility/StringUtil";
 import {Topology} from "../../Http/Topology";
-import { HttpRequestBase, HttpResponse } from "../../Primitives/Http";
+import { HttpRequestBase} from "../../Primitives/Http";
 
 interface ServerNodeDto {
   database: string;

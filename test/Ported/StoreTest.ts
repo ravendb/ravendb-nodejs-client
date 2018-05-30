@@ -1,15 +1,9 @@
-import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { RavenTestContext, testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import {
-    RequestExecutor,
-    DocumentConventions,
-    RavenErrorType,
-    GetNextOperationIdCommand,
     IDocumentStore,
-    DocumentStore,
-} from "../../src";
+    } from "../../src";
 import { User } from "../Assets/Entities";
 
 describe("StoreTest", function () {

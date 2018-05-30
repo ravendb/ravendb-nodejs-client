@@ -1,7 +1,5 @@
-import { RequestPromise, RequestPromiseOptions } from "request-promise";
-import { Promise as BluebirdPromise } from "bluebird";
-import { UriOptions, Response as HttpResponse } from "request";
-import { HEADERS, CONSTANTS } from "../Constants";
+import { Response as HttpResponse } from "request";
+import { HEADERS} from "../Constants";
 import { IncomingHttpHeaders } from "http";
 import { throwError } from "../Exceptions";
 

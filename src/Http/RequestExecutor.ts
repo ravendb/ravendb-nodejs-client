@@ -1,4 +1,3 @@
-import * as _ from "lodash";
 import * as os from "os";
 import * as BluebirdPromise from "bluebird";
 import * as semaphore from "semaphore";
@@ -10,7 +9,7 @@ import { ServerNode } from "./ServerNode";
 import { RavenCommand, ResponseDisposeHandling } from "./RavenCommand";
 import { Topology } from "./Topology";
 import { GetDatabaseTopologyCommand } from "../ServerWide/Commands/GetDatabaseTopologyCommand";
-import { StatusCodes, StatusCode } from "./StatusCode";
+import { StatusCodes} from "./StatusCode";
 import { NodeSelector } from "./NodeSelector";
 import { IDisposable } from "../Types/Contracts";
 import { IRequestAuthOptions, IAuthOptions } from "../Auth/AuthOptions";
@@ -24,7 +23,6 @@ import {
     GetClientConfigurationOperationResult
 } from "../Documents/Operations/Configuration/GetClientConfigurationOperation";
 import CurrentIndexAndNode from "./CurrentIndexAndNode";
-import { ClientConfiguration } from "../Documents/Operations/Configuration/ClientConfiguration";
 import { HttpRequestBase, HttpResponse } from "../Primitives/Http";
 import { HEADERS } from "../Constants";
 import { Stopwatch } from "../Utility/Stopwatch";
@@ -34,7 +32,6 @@ import { DocumentConventions } from "../Documents/Conventions/DocumentConvention
 import { TypeUtil } from "../Utility/TypeUtil";
 import { RequestPromiseOptions } from "request-promise";
 import { SessionInfo } from "../Documents/Session/IDocumentSession";
-import { Mapping } from "../Mapping";
 import { JsonSerializer } from "../Mapping/Json/Serializer";
 
 const DEFAULT_REQUEST_OPTIONS = {

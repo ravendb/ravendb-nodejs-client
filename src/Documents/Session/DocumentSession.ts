@@ -9,16 +9,12 @@ import {
     SessionLoadStartingWithOptions, 
     IDocumentSessionImpl,
 } from "./IDocumentSession";
-import { IDocumentStore } from "../IDocumentStore";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { EmptyCallback, AbstractCallback } from "../../Types/Callbacks";
+import { AbstractCallback } from "../../Types/Callbacks";
 import { TypeUtil } from "../../Utility/TypeUtil";
-import { StringUtil } from "../../Utility/StringUtil";
-import { IRavenObject, EntitiesCollectionObject, ObjectTypeDescriptor } from "../../Types";
-import { DeleteCommandData, ICommandData } from "../Commands/CommandData";
+import { IRavenObject, EntitiesCollectionObject} from "../../Types";
 import { getError, throwError } from "../../Exceptions";
-import { IRavenResponse } from "../../Http/RavenCommand";
 import { DocumentType } from "../DocumentAbstractions";
 import { LoadOperation } from "./Operations/LoadOperation";
 import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
@@ -32,7 +28,6 @@ import { RawDocumentQuery } from "./RawDocumentQuery";
 import { BatchCommand } from "../Commands/Batches/BatchCommand";
 import { AdvancedDocumentQueryOptions, DocumentQueryOptions } from "./QueryOptions";
 import { IDocumentQuery } from "./IDocumentQuery";
-import { DocumentQueryHelper } from "./DocumentQueryHelper";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;

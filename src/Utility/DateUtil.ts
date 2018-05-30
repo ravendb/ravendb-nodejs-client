@@ -1,5 +1,4 @@
 import * as moment from "moment";
-import { TypeUtil } from "./TypeUtil";
 
 export class DateUtil {
 

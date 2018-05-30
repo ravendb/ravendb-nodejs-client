@@ -17,6 +17,7 @@
       "lib"
     ],
     "types": [
+      "mocha"
     ]
   },
   "include": [

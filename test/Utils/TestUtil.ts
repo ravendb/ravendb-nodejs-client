@@ -8,7 +8,6 @@ import "source-map-support/register";
 import {IDisposable} from "../../src/Types/Contracts";
 import { RavenTestDriver } from "../../src/TestDriver";
 import { RavenServerLocator } from "../../src/TestDriver/RavenServerLocator";
-import { getLogger } from "../../src/Utility/LogUtil";
 import { IDocumentStore } from "../../src/Documents/IDocumentStore";
 import { throwError } from "../../src/Exceptions";
 import { IAuthOptions } from "../../src/Auth/AuthOptions";

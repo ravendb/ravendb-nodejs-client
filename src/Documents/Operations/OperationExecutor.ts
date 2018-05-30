@@ -3,19 +3,10 @@ import * as BluebirdPromise from "bluebird";
 import {
     IOperation,
     AwaitableOperation,
-    OperationIdResult,
-    IAwaitableOperation
-} from "./OperationAbstractions";
-import { IDocumentStore } from "../../Documents/IDocumentStore";
-import { ClusterRequestExecutor } from "../../Http/ClusterRequestExecutor";
+    OperationIdResult} from "./OperationAbstractions";
 import { RequestExecutor } from "../../Http/RequestExecutor";
-import { StatusCodes } from "../../Http/StatusCode";
-import { IRavenObject } from "../../Types/IRavenObject";
-import { IDisposable } from "../../Types/Contracts";
-import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { throwError } from "../../Exceptions";
-import { IRequestAuthOptions } from "../../Auth/AuthOptions";
 import { DocumentStoreBase } from "../DocumentStoreBase";
 import { SessionInfo } from "../Session/IDocumentSession";
 

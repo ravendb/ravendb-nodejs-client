@@ -1,6 +1,5 @@
 import * as semaphore from "semaphore";
 import * as BluebirdPromise from "bluebird";
-import { release } from "os";
 import { IDisposable } from "../Types/Contracts";
 
 export interface AcquireSemaphoreOptions { 

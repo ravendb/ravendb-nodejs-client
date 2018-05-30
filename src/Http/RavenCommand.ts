@@ -1,9 +1,6 @@
 import { ServerNode } from "./ServerNode";
 import { HttpCache } from "../Http/HttpCache";
 import { StatusCodes } from "../Http/StatusCode";
-import { RequestPromise, RequestPromiseOptions } from "request-promise";
-import { Promise as BluebirdPromise } from "bluebird";
-import { UriOptions } from "request";
 import * as request from "request-promise";
 import { HttpRequestBase, HttpResponse } from "../Primitives/Http";
 import { getLogger } from "../Utility/LogUtil";

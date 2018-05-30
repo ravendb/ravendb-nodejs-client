@@ -4,9 +4,9 @@ import { TypeUtil } from "../../Utility/TypeUtil";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { CONSTANTS } from "../../Constants";
 import { DocumentType } from "../DocumentAbstractions";
-import { TypesAwareObjectMapper, TypeInfo } from "../../Mapping/ObjectMapper";
+import { TypeInfo } from "../../Mapping/ObjectMapper";
 import { Mapping } from "../../Mapping";
-import { ObjectTypeDescriptor, ClassConstructor } from "../..";
+import { ObjectTypeDescriptor} from "../..";
 import { throwError } from "../../Exceptions";
 import { JsonSerializer } from "../../Mapping/Json/Serializer";
 

@@ -1,8 +1,6 @@
 import { VError } from "verror";
-import {TypeUtil} from "../Utility/TypeUtil";
 import { StatusCodes } from "../Http/StatusCode";
 import { HttpResponse } from "../Primitives/Http";
-import { Mapping } from "../Mapping";
 import { JsonSerializer } from "../Mapping/Json/Serializer";
 
 export function printError(err: Error): string {

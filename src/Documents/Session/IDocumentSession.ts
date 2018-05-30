@@ -1,4 +1,3 @@
-import { IRavenObject } from "../../Types/IRavenObject";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { IDisposable } from "../../Types/Contracts";
 import { AbstractCallback } from "../../Types/Callbacks";

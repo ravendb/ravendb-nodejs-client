@@ -6,7 +6,6 @@ import { IndexQuery, writeIndexQuery } from "../Queries/IndexQuery";
 import { throwError } from "../../Exceptions";
 import { ServerNode } from "../../Http/ServerNode";
 import * as StringBuilder from "string-builder";
-import { TypeUtil } from "../../Utility/TypeUtil";
 import { ObjectKeysTransform } from "../../Mapping/ObjectMapper";
 import {JsonSerializer } from "../../Mapping/Json/Serializer";
 

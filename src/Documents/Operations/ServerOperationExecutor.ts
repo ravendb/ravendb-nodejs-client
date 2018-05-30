@@ -1,8 +1,6 @@
 import { IDisposable } from "../../Types/Contracts";
 import { DocumentStoreBase } from "../DocumentStoreBase";
-import { Todo } from "../../Types";
 import { IServerOperation, AwaitableServerOperation, OperationIdResult } from "./OperationAbstractions";
-import { OperationCompletionAwaiter } from "./OperationCompletionAwaiter";
 import { ClusterRequestExecutor } from "../../Http/ClusterRequestExecutor";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerWideOperationCompletionAwaiter } from "../../ServerWide/Operations/ServerWideOperationCompletionAwaiter";

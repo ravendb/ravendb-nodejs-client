@@ -1,24 +1,17 @@
-import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { 
-    RavenTestContext, 
-    testContext, 
+    testContext,
     disposeTestDocumentStore 
 } from "../../Utils/TestUtil";
 import { UsersIndex } from "../../Assets/Indexes";
 import { User } from "../../Assets/Entities";
 import {
-    RequestExecutor,
-    DocumentConventions,
-    RavenErrorType,
-    GetNextOperationIdCommand,
     IDocumentStore,
     GetStatisticsCommand,
     DatabaseStatistics,
     ResetIndexOperation,
     GetIndexNamesOperation,
-    GetStatisticsOperation,
     IndexQuery,
     ExplainQueryCommand,
 } from "../../../src";

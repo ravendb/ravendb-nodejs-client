@@ -3,12 +3,9 @@ import {
     DocumentType, 
 } from "../DocumentAbstractions";
 import { 
-    Todo, 
-    IRavenObject, 
-    ObjectTypeDescriptor, 
+    ObjectTypeDescriptor,
     ObjectLiteralDescriptor, 
-    EntityConstructor, 
-    ClassConstructor 
+    ClassConstructor
 } from "../../Types";
 import * as pluralize from "pluralize";
 import { ClientConfiguration } from "../Operations/Configuration/ClientConfiguration";
@@ -16,7 +13,6 @@ import { ReadBalanceBehavior } from "../../Http/ReadBalanceBehavior";
 import { throwError } from "../../Exceptions";
 import { CONSTANTS } from "../../Constants";
 import { TypeUtil } from "../../Utility/TypeUtil";
-import { StringUtil } from "../../Utility/StringUtil";
 import { DateUtil } from "../../Utility/DateUtil";
 import { JsonSerializer } from "../../Mapping/Json/Serializer";
 

@@ -1,4 +1,3 @@
-import {TypeUtil} from "../Utility/TypeUtil";
 import {IRavenObject} from "../Types/IRavenObject";
 import {UriUtility} from "../Http/UriUtility";
 
