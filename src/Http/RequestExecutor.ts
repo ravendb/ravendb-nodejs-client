@@ -681,7 +681,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
 
         if (command.canCache
             && command.isReadRequest
-            && command.responseType === "OBJECT") {
+            && command.responseType === "Object") {
             return this._cache.get(url, cachedItemMetadataCallback);
         }
 
@@ -735,7 +735,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
 
         const sp = Stopwatch.createStarted();
         let response: HttpResponse = null;
-        let responseDispose: ResponseDisposeHandling = "AUTOMATIC";
+        let responseDispose: ResponseDisposeHandling = "Automatic";
 
         const result = BluebirdPromise.resolve()
             .then(() => {
@@ -789,7 +789,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
                         if (response.statusCode === StatusCodes.NotModified) {
                             cachedItem.notModified();
 
-                            if (command.responseType === "OBJECT") {
+                            if (command.responseType === "Object") {
                                 command.setResponse(cachedValue, true);
                             }
 
@@ -843,7 +843,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
                         this._lastReturnedResponse = new Date();
                     })
                     .finally(() => {
-                        if (responseDispose === "AUTOMATIC") {
+                        if (responseDispose === "Automatic") {
                             response.destroy();
                         }
 
@@ -929,9 +929,9 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
             case StatusCodes.NotFound:
                 this._cache.setNotFound(url);
                 switch (command.responseType) {
-                    case "EMPTY":
+                    case "Empty":
                         return Promise.resolve(true);
-                    case "OBJECT":
+                    case "Object":
                         command.setResponse(null, false);
                         break;
                     default:
@@ -1034,7 +1034,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
             this._nodeSelector.inSpeedTestPhase() &&
             hasMultipleNodes() &&
             command.isReadRequest &&
-            command.responseType === "OBJECT" &&
+            command.responseType === "Object" &&
             !!chosenNode;
     }
 

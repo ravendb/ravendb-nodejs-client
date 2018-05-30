@@ -36,7 +36,7 @@ export class ResetIndexCommand extends RavenCommand<void> {
         }
 
         this._indexName = indexName;
-        this._responseType = "EMPTY";
+        this._responseType = "Empty";
     }
 
     public createRequest(node: ServerNode): HttpRequestBase {

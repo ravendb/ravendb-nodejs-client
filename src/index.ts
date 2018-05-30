@@ -98,6 +98,7 @@ export { StartIndexingOperation } from "./Documents/Operations/Indexes/StartInde
 export { StopIndexOperation } from "./Documents/Operations/Indexes/StopIndexOperation";
 export { StartIndexOperation } from "./Documents/Operations/Indexes/StartIndexOperation";
 export { ResetIndexOperation } from "./Documents/Operations/Indexes/ResetIndexOperation";
+export { DeleteIndexOperation } from "./Documents/Operations/Indexes/DeleteIndexOperation";
 export { UpdateExternalReplicationOperation } 
     from "./Documents/Operations/Replication/UpdateExternalReplicationOperation";
 export { GetConflictsCommand } from "./Documents/Commands/GetConflictsCommand";

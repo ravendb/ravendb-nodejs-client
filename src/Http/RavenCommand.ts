@@ -14,9 +14,9 @@ import { JsonSerializer } from "../Mapping/Json/Serializer";
 
 const log = getLogger({ module: "RavenCommand" });
 
-export type RavenCommandResponseType = "EMPTY" | "OBJECT" | "RAW";
+export type RavenCommandResponseType = "Empty" | "Object" | "Raw";
 
-export type ResponseDisposeHandling = "AUTOMATIC" | "MANUALLY";
+export type ResponseDisposeHandling = "Automatic" | "Manually";
 
 // tslint:disable-next-line:no-empty-interface
 export interface IRavenResponse extends IRavenObject {}
@@ -48,7 +48,7 @@ export abstract class RavenCommand<TResult> {
     }
 
     constructor() {
-        this._responseType = "OBJECT";
+        this._responseType = "Object";
         this._canCache = true;
         this._canCacheAggressively = true;
     }
@@ -60,8 +60,8 @@ export abstract class RavenCommand<TResult> {
     }
 
     public setResponse(response: string, fromCache: boolean): void {
-        if (this._responseType === "EMPTY"
-            || this._responseType === "RAW") {
+        if (this._responseType === "Empty"
+            || this._responseType === "Raw") {
             this._throwInvalidResponse();
         }
 
@@ -106,20 +106,20 @@ export abstract class RavenCommand<TResult> {
         const responseEntity = response.body;
 
         if (!responseEntity) {
-            return "AUTOMATIC";
+            return "Automatic";
         }
 
-        if (this._responseType === "EMPTY" ||
+        if (this._responseType === "Empty" ||
             response.statusCode === StatusCodes.NoContent) {
-            return "AUTOMATIC";
+            return "Automatic";
         }
 
         try {
-            if (this._responseType === "OBJECT") {
+            if (this._responseType === "Object") {
                 const contentLength: number = parseInt(response.caseless.get("content-length"), 10);
                 if (contentLength === 0) {
                     response.destroy(); // not sure
-                    return "AUTOMATIC";
+                    return "Automatic";
                 }
 
                 // we intentionally don't dispose the reader here, we'll be using it
@@ -132,12 +132,12 @@ export abstract class RavenCommand<TResult> {
 
                 this.setResponse(body as string, false);
 
-                return "AUTOMATIC";
+                return "Automatic";
             } else {
                 this.setResponseRaw(response, response.body);
             }
 
-            return "AUTOMATIC";
+            return "Automatic";
         } catch (err) {
             log.error(err, `Error processing command ${this.constructor.name} response.`);
             throwError("RavenException", `Error processing command ${this.constructor.name} response.`, err);
@@ -145,7 +145,7 @@ export abstract class RavenCommand<TResult> {
             response.destroy();
         }
 
-        return "AUTOMATIC";
+        return "Automatic";
     }
 
     protected _cacheResponse(cache: HttpCache, url: string, response: HttpResponse, responseJson: string): void {

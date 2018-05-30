@@ -45,16 +45,16 @@ export class HeadDocumentCommand extends RavenCommand<string> {
     public processResponse(cache: HttpCache, response: HttpResponse, url: string): ResponseDisposeHandling  {
         if (StatusCodes.NotModified === response.statusCode) {
             this.result = this._changeVector;
-            return "AUTOMATIC";
+            return "Automatic";
         }
 
         if (response.statusCode === StatusCodes.NotFound) {
             this.result = null;
-            return "AUTOMATIC";
+            return "Automatic";
         }
 
         this.result = getRequiredEtagHeader(response);
-        return "AUTOMATIC";
+        return "Automatic";
     }
 
     public setResponse(response: string, fromCache: boolean): void {
