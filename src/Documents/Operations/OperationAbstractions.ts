@@ -3,7 +3,7 @@ import { IDocumentStore } from "../../Documents/IDocumentStore";
 import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
 import { HttpCache } from "../../Http/HttpCache";
 
-export type OperationResultType = "OPERATION_ID" | "COMMAND_RESULT" | "PATCH_STATUS";
+export type OperationResultType = "OperationId" | "CommandResult" | "PatchStatus";
 
 export interface IAbstractOperation {
     resultType: OperationResultType;
@@ -26,7 +26,7 @@ export interface IServerOperation<TResult> extends IAbstractOperation {
 
 export abstract class AbstractAwaitableOperation {
     get resultType(): OperationResultType {
-        return "OPERATION_ID";
+        return "OperationId";
     }
 }
 

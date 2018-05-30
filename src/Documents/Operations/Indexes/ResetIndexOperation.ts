@@ -22,7 +22,7 @@ export class ResetIndexOperation implements IMaintenanceOperation<void> {
     }
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 }
 export class ResetIndexCommand extends RavenCommand<void> {

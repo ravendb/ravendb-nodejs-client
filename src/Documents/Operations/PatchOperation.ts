@@ -31,7 +31,7 @@ export class PatchOperation implements IOperation<PatchResult> {
     private _skipPatchIfChangeVectorMismatch: boolean;
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 
     public constructor(

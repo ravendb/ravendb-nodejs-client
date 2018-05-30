@@ -19,7 +19,7 @@ export class GetDatabaseNamesOperation implements IServerOperation<string[]> {
     }
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 
 }

@@ -28,7 +28,7 @@ export class GetCompareExchangeValueOperation<T> implements IOperation<CompareEx
     }
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 }
 

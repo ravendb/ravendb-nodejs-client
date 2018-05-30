@@ -47,7 +47,7 @@ export class OperationExecutor {
         const result = BluebirdPromise.resolve()
             .then(() => this._requestExecutor.execute(command as RavenCommand<TResult>, sessionInfo))
             .then(() => {
-                if (operation.resultType === "OPERATION_ID") {
+                if (operation.resultType === "OperationId") {
                     const idResult = command.result as OperationIdResult;
                     const awaiter = new OperationCompletionAwaiter(
                         this._requestExecutor, this._requestExecutor.conventions, idResult.operationId);

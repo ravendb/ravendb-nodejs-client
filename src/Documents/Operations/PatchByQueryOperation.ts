@@ -39,7 +39,7 @@ export class PatchByQueryOperation implements IOperation<OperationIdResult> {
     }
 
     public get resultType(): OperationResultType {
-        return "OPERATION_ID";
+        return "OperationId";
     }
 
 }

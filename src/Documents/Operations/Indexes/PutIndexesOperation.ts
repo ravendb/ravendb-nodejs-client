@@ -17,7 +17,7 @@ export interface PutIndexResult {
 export class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult[]> {
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 
     private _indexToAdd: IndexDefinition[];

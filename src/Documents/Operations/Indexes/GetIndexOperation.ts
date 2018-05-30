@@ -23,7 +23,7 @@ export class GetIndexOperation implements IMaintenanceOperation<IndexDefinition>
     }
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 }
 

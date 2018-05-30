@@ -14,7 +14,7 @@ export class GetCollectionStatisticsOperation implements IMaintenanceOperation<C
     }
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 
 }

@@ -10,7 +10,7 @@ export class PutClientConfigurationOperation implements IMaintenanceOperation<vo
     private configuration: ClientConfiguration;
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 
     public constructor(configuration: ClientConfiguration) {

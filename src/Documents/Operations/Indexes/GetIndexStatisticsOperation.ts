@@ -22,7 +22,7 @@ export class GetIndexStatisticsOperation implements IMaintenanceOperation<IndexS
     }
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 
 }

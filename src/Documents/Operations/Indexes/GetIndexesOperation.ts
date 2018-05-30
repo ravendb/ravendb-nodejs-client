@@ -20,7 +20,7 @@ export class GetIndexesOperation implements IMaintenanceOperation<IndexDefinitio
     }
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 
 }

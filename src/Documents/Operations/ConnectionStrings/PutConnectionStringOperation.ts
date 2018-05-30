@@ -23,7 +23,7 @@ export class PutConnectionStringOperation<T extends ConnectionString>
     }
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 }
 

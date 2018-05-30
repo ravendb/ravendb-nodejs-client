@@ -22,7 +22,7 @@ export class StartIndexOperation implements IMaintenanceOperation<void> {
     }
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 
 }
