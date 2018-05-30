@@ -1,6 +1,3 @@
-
-import * as moment from "moment";
-
 export class Stopwatch {
 
     private _startDate: Date;

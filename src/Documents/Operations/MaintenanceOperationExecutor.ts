@@ -4,7 +4,6 @@ import { RequestExecutor } from "../..";
 import { IMaintenanceOperation, AwaitableMaintenanceOperation, OperationIdResult } from "./OperationAbstractions";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerOperationExecutor } from "./ServerOperationExecutor";
-import { IDisposable } from "../../Types/Contracts";
 
 export class MaintenanceOperationExecutor {
 

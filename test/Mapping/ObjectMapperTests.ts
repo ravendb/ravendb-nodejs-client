@@ -1,15 +1,10 @@
-import * as mocha from "mocha";
-import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { RavenTestContext, testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import {
     TypesAwareObjectMapper, 
     IRavenObject, 
     ObjectTypeDescriptor, 
-    ClassConstructor, 
-    ObjectLiteralDescriptor, 
-    PropsBasedObjectLiteralDescriptor    
+    PropsBasedObjectLiteralDescriptor
 } from "../../src";
 import { DateUtil } from "../../src/Utility/DateUtil";
 import { TypeInfo } from "../../src/Mapping/ObjectMapper";

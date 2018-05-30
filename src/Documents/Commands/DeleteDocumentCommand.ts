@@ -2,7 +2,6 @@ import {HttpRequestBase} from '../../Primitives/Http';
 import { RavenCommand } from "../../Http/RavenCommand";
 import { throwError } from "../../Exceptions";
 import { ServerNode } from '../../Http/ServerNode';
-import { HeadersBuilder } from '../../Utility/HttpUtil';
 
 export class DeleteDocumentCommand extends RavenCommand<void> {
     private _id: string;

@@ -1,5 +1,3 @@
-import { EntitiesCollectionObject } from ".";
-
 export type AbstractCallback<TResult> = (error?: Error, result?: TResult) => void;
 
 export type EntityIdCallback = AbstractCallback<string>;

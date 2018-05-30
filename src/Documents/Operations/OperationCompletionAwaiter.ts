@@ -2,7 +2,7 @@ import * as BluebirdPromise from "bluebird";
 import {GetOperationStateCommand} from "./GetOperationStateOperation";
 import { RequestExecutor, DocumentConventions } from "../..";
 import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
-import { throwError, RavenErrorType } from "../../Exceptions";
+import { throwError} from "../../Exceptions";
 import { OperationExceptionResult } from "./OperationAbstractions";
 import { ExceptionDispatcher } from "../../Exceptions";
 

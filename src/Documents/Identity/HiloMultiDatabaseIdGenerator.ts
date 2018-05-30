@@ -1,4 +1,3 @@
-import * as BluebirdPromise from "bluebird";
 import {IHiloIdGenerator} from "./IHiloIdGenerator";
 import {HiloMultiTypeIdGenerator} from "./HiloMultiTypeIdGenerator";
 import {AbstractHiloIdGenerator} from "./AbstractHiloIdGenerator";

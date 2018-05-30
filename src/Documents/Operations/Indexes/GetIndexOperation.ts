@@ -5,7 +5,6 @@ import { RavenCommand } from "../../../Http/RavenCommand";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { HttpRequestBase } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
-import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 
 export class GetIndexOperation implements IMaintenanceOperation<IndexDefinition> {
 

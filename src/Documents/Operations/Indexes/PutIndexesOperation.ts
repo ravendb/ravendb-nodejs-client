@@ -4,13 +4,11 @@ import { IndexDefinition } from "../../Indexes/IndexDefinition";
 import { throwError } from "../../../Exceptions";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
-import { EntityToJson } from "../../Session/EntityToJson";
 import { Mapping } from "../../../Mapping";
 import { ServerNode, OperationResultType } from "../../..";
 import { HttpRequestBase } from "../../../Primitives/Http";
 import { HeadersBuilder } from "../../../Utility/HttpUtil";
 import { ReplacerContext } from "../../../Mapping/Json/ReplacerFactory";
-import { pascalCaseReplacer } from "../../../Mapping/Json";
 
 export interface PutIndexResult {
     indexName: string;

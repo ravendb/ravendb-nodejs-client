@@ -1,8 +1,7 @@
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestBase } from "../../Primitives/Http";
-import { Mapping } from "../../Mapping";
-import { HeadersBuilder, getHeaders } from "../../Utility/HttpUtil";
+import { getHeaders } from "../../Utility/HttpUtil";
 import { IRavenObject } from "../..";
 import { ObjectKeysTransform } from "../../Mapping/ObjectMapper";
 import { TypeUtil } from "../../Utility/TypeUtil";

@@ -1,5 +1,4 @@
 import { HttpRequestBase } from "../../../Primitives/Http";
-import { DocumentType } from "../../DocumentAbstractions";
 import { IOperation, OperationResultType } from "../OperationAbstractions";
 import { CompareExchangeValue } from "./CompareExchangeValue";
 import { RavenCommand } from "../../../Http/RavenCommand";

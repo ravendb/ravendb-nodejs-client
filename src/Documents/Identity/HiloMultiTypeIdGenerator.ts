@@ -5,7 +5,6 @@ import { AbstractHiloIdGenerator } from "./AbstractHiloIdGenerator";
 import * as semaphore from "semaphore";
 import * as BluebirdPromise from "bluebird";
 import { acquireSemaphore } from "../../Utility/SemaphoreUtil";
-import { CONSTANTS } from "../../Constants";
 
 export class HiloMultiTypeIdGenerator extends AbstractHiloIdGenerator implements IHiloIdGenerator {
     private _sem: semaphore.Semaphore;

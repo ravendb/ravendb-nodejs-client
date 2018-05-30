@@ -1,4 +1,3 @@
-import * as path from "path";
 import { debuglog } from "util";
 import { printError } from "../Exceptions";
 const isDebug = !!process.env.NODE_DEBUG;

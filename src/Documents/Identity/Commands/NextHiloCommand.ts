@@ -1,8 +1,7 @@
 import * as qs from "qs";
 import { ServerNode } from "../../../Http/ServerNode";
-import { StringUtil } from "../../../Utility/StringUtil";
 import { DateUtil } from "../../../Utility/DateUtil";
-import { RavenCommand, IRavenResponse } from "../../../Http/RavenCommand";
+import { RavenCommand} from "../../../Http/RavenCommand";
 import { throwError } from "../../../Exceptions";
 import { HttpRequestBase } from "../../../Primitives/Http";
 

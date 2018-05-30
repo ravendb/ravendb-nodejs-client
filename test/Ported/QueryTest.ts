@@ -1,22 +1,14 @@
 import * as moment from "moment";
 import { User, Event } from "../Assets/Entities";
-import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { RavenTestContext, testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import {
-    RequestExecutor,
-    DocumentConventions,
-    RavenErrorType,
-    GetNextOperationIdCommand,
     IDocumentStore,
     GetCollectionStatisticsOperation,
     AbstractIndexCreationTask,
     GroupByField,
-    DocumentType,
-    IDocumentSession,
-    DEFAULT_QUAD_TREE_LEVEL
-} from "../../src";
+    IDocumentSession} from "../../src";
 import { DateUtil } from "../../src/Utility/DateUtil";
 import { TypeUtil } from "../../src/Utility/TypeUtil";
 

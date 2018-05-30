@@ -1,9 +1,8 @@
 import * as BluebirdPromise from "bluebird";
 import { EntityToJson } from "./EntityToJson";
-import * as uuid from "uuid";
 import { IDisposable } from "../../Types/Contracts";
 import { IMetadataDictionary, SessionInfo, ConcurrencyCheckMode, StoreOptions } from "./IDocumentSession";
-import { ObjectTypeDescriptor, PropsBasedObjectLiteralDescriptor, ClassConstructor } from "../../Types";
+import { ObjectTypeDescriptor, ClassConstructor } from "../../Types";
 import { SessionEventsEmitter, SessionBeforeStoreEventArgs, SessionBeforeDeleteEventArgs } from "./SessionEvents";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { IDocumentStore } from "../IDocumentStore";
@@ -15,14 +14,12 @@ import { DocumentInfo } from "./DocumentInfo";
 import { DocumentStoreBase } from "../DocumentStoreBase";
 import { 
     ICommandData, 
-    CommandType, 
-    DeleteCommandData, 
+    DeleteCommandData,
     SaveChangesData, 
     PutCommandDataWithJson 
 } from "../Commands/CommandData";
 import { GenerateEntityIdOnTheClient } from "../Identity/GenerateEntityIdOnTheClient";
 import { tryGetConflict } from "../../Mapping/Json";
-import { Mapping } from "../../Mapping";
 import { CONSTANTS } from "../../Constants";
 import { DateUtil } from "../../Utility/DateUtil";
 import { IncludesUtil } from "./IncludesUtil";

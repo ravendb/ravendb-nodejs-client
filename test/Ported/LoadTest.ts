@@ -1,14 +1,9 @@
 import * as sinon from "sinon";
 import {User, GeekPerson} from "../Assets/Entities";
-import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { RavenTestContext, testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import {
-    RequestExecutor,
-    DocumentConventions,
-    RavenErrorType,
-    GetNextOperationIdCommand,
     IDocumentStore,
 } from "../../src";
 import { ReleaseCacheItem } from "../../src/Http/HttpCache";

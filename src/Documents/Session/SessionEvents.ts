@@ -1,5 +1,4 @@
 import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
-import { Todo } from "../../Types";
 import { IMetadataDictionary } from "./IDocumentSession";
 
 export interface SessionEventsEmitter {

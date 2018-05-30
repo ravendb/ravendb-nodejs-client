@@ -4,7 +4,6 @@ import { RavenCommand } from "../../../Http/RavenCommand";
 import { HttpRequestBase } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
 import { IndexingStatus } from "../../Indexes/IndexingStatus";
-import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 
 export class GetIndexingStatusOperation implements IMaintenanceOperation<IndexingStatus> {
 

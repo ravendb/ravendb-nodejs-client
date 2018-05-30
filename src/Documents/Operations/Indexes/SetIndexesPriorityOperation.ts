@@ -6,7 +6,6 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { IndexPriority } from "../../Indexes/Enums";
 import { ServerNode } from "../../../Http/ServerNode";
 import { HttpRequestBase } from "../../../Primitives/Http";
-import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 
 export class SetIndexesPriorityOperation implements IMaintenanceOperation<void> {
 

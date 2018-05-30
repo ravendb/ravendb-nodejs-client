@@ -3,7 +3,6 @@ import * as BluebirdPromise from "bluebird";
 
 import { throwError } from "../Exceptions";
 import { RequestExecutor } from "../Http/RequestExecutor";
-import { Todo } from "../Types";
 import { getLogger } from "../Utility/LogUtil";
 import { DocumentStoreBase } from "./DocumentStoreBase";
 import { IDocumentStore } from "./IDocumentStore";
@@ -12,7 +11,6 @@ import { OperationExecutor } from "./Operations/OperationExecutor";
 import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";
 import { DocumentSession } from "./Session/DocumentSession";
 import {HiloMultiDatabaseIdGenerator} from "./Identity/HiloMultiDatabaseIdGenerator";
-import { AbstractIndexCreationTask } from "./Indexes";
 import { IDisposable } from "../Types/Contracts";
 
 // import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";

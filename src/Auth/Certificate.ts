@@ -1,8 +1,7 @@
-import { IOptionsSet } from "../Types/IOptionsSet";
 import { IAuthOptions } from "./AuthOptions";
 import { StringUtil } from "../Utility/StringUtil";
 import { throwError } from "../Exceptions";
-import { AgentOptions, Agent } from "https";
+import { AgentOptions} from "https";
 
 export type CertificateType = "pem" | "pfx";
 

@@ -1,20 +1,12 @@
-import * as mocha from "mocha";
-import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { 
-    RavenTestContext, 
-    testContext, 
+    testContext,
     disposeTestDocumentStore 
 } from "../../Utils/TestUtil";
 import {
     IDocumentStore,
     ClientConfiguration,
     IRavenResponse,
-    RequestExecutor,
-    DocumentConventions,
-    RavenErrorType,
-    ServerNode,
-    ServerNodeRole,
     GetClientConfigurationOperation,
     PutClientConfigurationOperation 
 } from "../../../src";

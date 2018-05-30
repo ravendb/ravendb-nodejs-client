@@ -8,8 +8,7 @@ import { HttpCache } from "../../../Http/HttpCache";
 import { throwError } from "../../../Exceptions";
 import { ServerNode } from "../../../Http/ServerNode";
 import { JsonSerializer } from "../../../Mapping/Json/Serializer";
-import { DocumentType } from "../../DocumentAbstractions";
-import { EntityConstructor, ClassConstructor, ObjectTypeDescriptor } from "../../..";
+import { ClassConstructor, ObjectTypeDescriptor } from "../../..";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 
 export class PutCompareExchangeValueOperation<T> implements IOperation<CompareExchangeResult<T>> {
