@@ -14,7 +14,7 @@ import { QueryOperationOptions } from "../Queries/QueryOperationOptions";
 export class DeleteByQueryOperation implements IOperation<OperationIdResult> {
 
     public get resultType(): OperationResultType {
-        return "OPERATION_ID";
+        return "OperationId";
     }
 
     protected _queryToDelete: IndexQuery;

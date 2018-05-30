@@ -150,7 +150,7 @@ export class RequestExecutor implements IDisposable {
 
     protected _disposed: boolean;
 
-    protected _firstTopologyUpdatePromise: Promise<void>;
+    protected _firstTopologyUpdatePromise: BluebirdPromise<void>;
 
     protected _lastKnownUrls: string[];
 
@@ -284,9 +284,9 @@ export class RequestExecutor implements IDisposable {
 
     private _ensureNodeSelector(): Promise<void> {
         let promise: Promise<void> = Promise.resolve();
-        if (this._firstTopologyUpdate 
-            && !BluebirdPromise.resolve(this._firstTopologyUpdate).isFulfilled()) {
-            promise = this._firstTopologyUpdatePromise; 
+        if (this._firstTopologyUpdatePromise
+            && !this._firstTopologyUpdatePromise.isFulfilled()) {
+            promise = Promise.resolve(this._firstTopologyUpdatePromise); 
         }
 
         return promise.then(() => {
@@ -496,7 +496,7 @@ export class RequestExecutor implements IDisposable {
             });
     }
 
-protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
+protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
         const initialUrls: string[] = RequestExecutor._validateUrls(inputUrls, this._authOptions);
 
         const topologyUpdateErrors: Array<{ url: string, error: Error | string }> = [];
@@ -572,7 +572,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
                 this._throwExceptions(details);
             });
 
-        return Promise.resolve(result);
+        return result;
     }
     
     protected _throwExceptions (details: string): void {
@@ -621,9 +621,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
         this._log.info(`Execute command ${command.constructor.name}`);
 
         const topologyUpdate = this._firstTopologyUpdatePromise;
-        const isTopologyUpdateFinished = BluebirdPromise.resolve(topologyUpdate).isFulfilled();
-
-        if ((topologyUpdate && isTopologyUpdateFinished) || this._disableTopologyUpdates) {
+        if ((topologyUpdate && topologyUpdate.isFulfilled()) || this._disableTopologyUpdates) {
             const currentIndexAndNode: CurrentIndexAndNode = this.chooseNodeForRequest(command, sessionInfo);
             return this._executeOnSpecificNode(command, sessionInfo, {
                 chosenNode: currentIndexAndNode.currentNode,
@@ -637,7 +635,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
 
     private _unlikelyExecute<TResult> (
         command: RavenCommand<TResult>,
-        topologyUpdate: Promise<void>,
+        topologyUpdate: BluebirdPromise<void>,
         sessionInfo: SessionInfo): Promise<void> {
 
         const result = BluebirdPromise.resolve()
@@ -678,9 +676,10 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
         command: RavenCommand<TResult>,
         url: string,
         cachedItemMetadataCallback: (data: CachedItemMetadata) => void) {
+
         if (command.canCache
             && command.isReadRequest
-            && command.responseType === "OBJECT") {
+            && command.responseType === "Object") {
             return this._cache.get(url, cachedItemMetadataCallback);
         }
 
@@ -734,7 +733,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
 
         const sp = Stopwatch.createStarted();
         let response: HttpResponse = null;
-        let responseDispose: ResponseDisposeHandling = "AUTOMATIC";
+        let responseDispose: ResponseDisposeHandling = "Automatic";
 
         const result = BluebirdPromise.resolve()
             .then(() => {
@@ -776,11 +775,11 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
                 command.statusCode = response.statusCode;
 
                 const refreshTopology = response
-                    && response.headers
+                    && response.caseless
                     && response.caseless.get(HEADERS.REFRESH_TOPOLOGY);
 
                 const refreshClientConfiguration = response
-                    && response.headers
+                    && response.caseless
                     && response.caseless.get(HEADERS.REFRESH_CLIENT_CONFIGURATION);
 
                 return BluebirdPromise.resolve()
@@ -788,7 +787,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
                         if (response.statusCode === StatusCodes.NotModified) {
                             cachedItem.notModified();
 
-                            if (command.responseType === "OBJECT") {
+                            if (command.responseType === "Object") {
                                 command.setResponse(cachedValue, true);
                             }
 
@@ -842,7 +841,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
                         this._lastReturnedResponse = new Date();
                     })
                     .finally(() => {
-                        if (responseDispose === "AUTOMATIC") {
+                        if (responseDispose === "Automatic") {
                             response.destroy();
                         }
 
@@ -928,9 +927,9 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
             case StatusCodes.NotFound:
                 this._cache.setNotFound(url);
                 switch (command.responseType) {
-                    case "EMPTY":
+                    case "Empty":
                         return Promise.resolve(true);
-                    case "OBJECT":
+                    case "Object":
                         command.setResponse(null, false);
                         break;
                     default:
@@ -1033,7 +1032,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
             this._nodeSelector.inSpeedTestPhase() &&
             hasMultipleNodes() &&
             command.isReadRequest &&
-            command.responseType === "OBJECT" &&
+            command.responseType === "Object" &&
             !!chosenNode;
     }
 

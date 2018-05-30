@@ -19,7 +19,7 @@ export class UpdateExternalReplicationOperation implements IMaintenanceOperation
     }
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 }
 

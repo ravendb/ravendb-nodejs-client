@@ -27,7 +27,7 @@ export class DeleteCompareExchangeValueOperation<T> implements IOperation<Compar
     }
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 
 }

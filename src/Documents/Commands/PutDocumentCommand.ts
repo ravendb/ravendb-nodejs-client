@@ -3,6 +3,7 @@ import { throwError } from "../../Exceptions";
 import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestBase } from "../../Primitives/Http";
 import { HeadersBuilder } from "../../Utility/HttpUtil";
+import { JsonSerializer } from "../../Mapping/Json/Serializer";
 
 export interface PutResult {
     id: string;

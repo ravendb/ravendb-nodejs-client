@@ -23,7 +23,7 @@ export class CompactDatabaseOperation implements IServerOperation<OperationIdRes
     }
 
     public get resultType(): OperationResultType {
-        return "OPERATION_ID";
+        return "OperationId";
     }
 
 }

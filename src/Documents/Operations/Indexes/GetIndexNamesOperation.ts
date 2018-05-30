@@ -6,7 +6,7 @@ import { HttpRequestBase } from "../../../Primitives/Http";
 export class GetIndexNamesOperation implements IMaintenanceOperation<string[]> {
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 
     private _start: number;

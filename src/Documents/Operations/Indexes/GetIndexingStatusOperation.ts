@@ -8,7 +8,7 @@ import { IndexingStatus } from "../../Indexes/IndexingStatus";
 export class GetIndexingStatusOperation implements IMaintenanceOperation<IndexingStatus> {
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 
     public getCommand(conventions: DocumentConventions): RavenCommand<IndexingStatus> {

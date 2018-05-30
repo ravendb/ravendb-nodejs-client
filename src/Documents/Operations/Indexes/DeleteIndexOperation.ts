@@ -21,7 +21,7 @@ export class DeleteIndexOperation implements IMaintenanceOperation<void> {
     }
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 
 }
@@ -32,7 +32,7 @@ export class DeleteIndexCommand extends RavenCommand<void> {
     public constructor(indexName: string) {
         super();
 
-        this._responseType = "EMPTY";
+        this._responseType = "Empty";
         
         if (!indexName) {
             throwError("InvalidArgumentException", "Index name cannot be null.");

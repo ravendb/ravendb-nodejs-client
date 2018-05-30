@@ -11,7 +11,7 @@ export interface IdentitiesCollection {
 export class GetIdentitiesOperation implements IMaintenanceOperation<IdentitiesCollection> {
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 
     public getCommand(conventions: DocumentConventions): RavenCommand<IdentitiesCollection> {

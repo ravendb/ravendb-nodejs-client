@@ -20,7 +20,7 @@ export class GetIndexErrorsOperation implements IMaintenanceOperation<IndexError
     }
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 
 }

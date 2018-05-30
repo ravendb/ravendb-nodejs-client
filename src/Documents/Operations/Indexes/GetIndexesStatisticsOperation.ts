@@ -8,7 +8,7 @@ import { RavenCommand } from "../../../Http/RavenCommand";
 export class GetIndexesStatisticsOperation implements IMaintenanceOperation<IndexStats[]> {
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 
     public getCommand(conventions: DocumentConventions): RavenCommand<IndexStats[]> {

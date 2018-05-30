@@ -10,7 +10,7 @@ export class PutClientConfigurationOperation implements IMaintenanceOperation<vo
     private configuration: ClientConfiguration;
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 
     public constructor(configuration: ClientConfiguration) {
@@ -36,7 +36,7 @@ export class PutClientConfigurationCommand extends RavenCommand<void> {
     }
 
     public get responseType(): RavenCommandResponseType {
-        return "EMPTY";
+        return "Empty";
     }
 
     public constructor(conventions: DocumentConventions, configuration: ClientConfiguration) {

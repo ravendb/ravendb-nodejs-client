@@ -7,7 +7,7 @@ import { ServerNode } from "../../Http/ServerNode";
 export class GetServerWideOperationStateOperation implements IServerOperation<IRavenResponse> {
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
     private _id: number;
 

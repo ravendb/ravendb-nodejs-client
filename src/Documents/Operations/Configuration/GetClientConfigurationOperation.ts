@@ -8,7 +8,7 @@ import { IMaintenanceOperation, OperationResultType } from "../OperationAbstract
 export class GetClientConfigurationOperation implements IMaintenanceOperation<GetClientConfigurationOperationResult> {
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 
     public getCommand(conventions: DocumentConventions): RavenCommand<GetClientConfigurationOperationResult> {

@@ -10,9 +10,7 @@ export class HttpCache implements IDisposable {
     
     private _items: Cache;
 
-    // TODO
-
-    constructor(maxKeysSize: number) {
+    constructor(maxKeysSize: number = 500) {
         this._items = new Cache({
             limit: maxKeysSize
         });
@@ -23,19 +21,51 @@ export class HttpCache implements IDisposable {
         this._items = null;
     }
 
-    // tslint:disable-next-line:no-empty
-    public set(...args: any[]) {} 
+    public set(url: string, changeVector: string, result: string) {
+        const httpCacheItem = new HttpCacheItem();
+        httpCacheItem.changeVector = changeVector;
+        httpCacheItem.payload = result;
+        httpCacheItem.cache = this;
+
+        this._items.set(url, httpCacheItem);
+    } 
 
     public get<TResult>(
         url: string, 
         itemInfoCallback?: ({ changeVector, response }: CachedItemMetadata) => void): ReleaseCacheItem {
-        return new ReleaseCacheItem(null); // TODO
+        const item: HttpCacheItem = this._items.get(url);
+        if (item) {
+            if (itemInfoCallback) {
+                itemInfoCallback({
+                    changeVector: item.changeVector,
+                    response: item.payload
+                });
+            }
+
+            return new ReleaseCacheItem(item);
+        }
+
+        if (itemInfoCallback) {
+            itemInfoCallback({
+                changeVector: null,
+                response: null
+            });
+        }
+
+        return new ReleaseCacheItem(null);
     }
 
-    // tslint:disable-next-line:no-empty
-    public setNotFound(...args) {
+    public setNotFound(url: string) {
+        const httpCacheItem = new HttpCacheItem();
+        httpCacheItem.changeVector = "404 response";
+        httpCacheItem.cache = this;
+
+        this._items.set(url, httpCacheItem);
     }
 
+    public getMightHaveBeenModified(): boolean {
+        return false; // TBD
+    }
 }
 
 export class ReleaseCacheItem {

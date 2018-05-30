@@ -20,7 +20,7 @@ export interface DeleteDatabasesParameters {
 export class DeleteDatabasesOperation implements IServerOperation<DeleteDatabaseResult> {
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 
     private _parameters: DeleteDatabasesParameters;

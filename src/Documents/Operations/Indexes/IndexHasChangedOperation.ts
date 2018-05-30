@@ -24,7 +24,7 @@ export class IndexHasChangedOperation implements IMaintenanceOperation<Boolean> 
     }
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 }
 

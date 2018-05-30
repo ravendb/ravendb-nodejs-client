@@ -11,7 +11,7 @@ import { HeadersBuilder } from "../../Utility/HttpUtil";
 export class CreateDatabaseOperation implements IServerOperation<DatabasePutResult> {
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 
     private _databaseRecord: DatabaseRecord;

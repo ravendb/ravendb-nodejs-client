@@ -35,7 +35,7 @@ export class ServerOperationExecutor implements IDisposable {
         const result = Promise.resolve()
             .then(() => this._requestExecutor.execute(command as RavenCommand<TResult>))
             .then(() => {
-                if (operation.resultType === "OPERATION_ID") {
+                if (operation.resultType === "OperationId") {
                     const idResult = command.result as OperationIdResult;
                     const awaiter = new ServerWideOperationCompletionAwaiter(
                         this._requestExecutor, this._requestExecutor.conventions, idResult.operationId);

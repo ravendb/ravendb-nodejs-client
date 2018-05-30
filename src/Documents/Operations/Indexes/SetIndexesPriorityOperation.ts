@@ -44,7 +44,7 @@ export class SetIndexesPriorityOperation implements IMaintenanceOperation<void> 
     }
     
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 }
 

@@ -17,7 +17,7 @@ export class GetOperationStateOperation implements IMaintenanceOperation<IRavenR
     }
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 
 }

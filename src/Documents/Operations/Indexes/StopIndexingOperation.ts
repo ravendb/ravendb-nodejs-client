@@ -5,7 +5,7 @@ import { HttpRequestBase } from "../../../Primitives/Http";
 export class StopIndexingOperation implements IMaintenanceOperation<void> {
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 
     public getCommand(conventions: DocumentConventions): RavenCommand<void> {

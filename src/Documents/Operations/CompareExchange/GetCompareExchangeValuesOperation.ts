@@ -74,7 +74,7 @@ export class GetCompareExchangeValuesOperation<T> implements IOperation<{ [key: 
     }
 
     public get resultType(): OperationResultType {
-        return "COMMAND_RESULT";
+        return "CommandResult";
     }
 }
 
