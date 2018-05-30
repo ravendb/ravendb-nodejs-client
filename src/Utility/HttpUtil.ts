@@ -2,6 +2,7 @@ import { Response as HttpResponse } from "request";
 import { HEADERS} from "../Constants";
 import { IncomingHttpHeaders } from "http";
 import { throwError } from "../Exceptions";
+import { Caseless } from "caseless";
 
 export function getRequiredEtagHeader(response: HttpResponse) {
     const headers = response.caseless.get(HEADERS.ETAG);
@@ -13,15 +14,15 @@ export function getRequiredEtagHeader(response: HttpResponse) {
 }
 
 export function getEtagHeader(responseOrHeaders: HttpResponse | IncomingHttpHeaders): string {
-    let responseHeaders: IncomingHttpHeaders;
+    let responseHeaders: Caseless;
     if ((responseOrHeaders as any).headers) {
-        responseHeaders = (responseOrHeaders as HttpResponse).headers;
+        responseHeaders = (responseOrHeaders as HttpResponse).caseless;
     }
 
-    const headers = responseHeaders[HEADERS.ETAG];
-    return headers && headers.length && headers[0]
+    const headers = responseHeaders.get(HEADERS.ETAG);
+    return Array.isArray(headers)
         ? headers[0]
-        : null;
+        : (headers || null);
 }
 
 export function etagHeaderToChangeVector(responseHeader: string) {
@@ -37,10 +38,10 @@ export function etagHeaderToChangeVector(responseHeader: string) {
 }
 
 export function getBooleanHeader(response: HttpResponse, header: string): boolean {
-    const headers = response.headers;
-    let headerVal: string | string[] = headers[header];
-    if (headerVal && (headerVal as string[]).length) {
-        headerVal = headerVal[0];
+    const headers = response.caseless;
+    let headerVal: string | string[] = headers.get(header);
+    if (headerVal && Array.isArray(headerVal)) {
+        headerVal = (headerVal[0] || null);
     }
 
     return headerVal 

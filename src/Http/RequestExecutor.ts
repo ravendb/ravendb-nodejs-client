@@ -678,6 +678,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
         command: RavenCommand<TResult>,
         url: string,
         cachedItemMetadataCallback: (data: CachedItemMetadata) => void) {
+
         if (command.canCache
             && command.isReadRequest
             && command.responseType === "OBJECT") {
@@ -776,11 +777,11 @@ protected _firstTopologyUpdate (inputUrls: string[]): Promise<void> {
                 command.statusCode = response.statusCode;
 
                 const refreshTopology = response
-                    && response.headers
+                    && response.caseless
                     && response.caseless.get(HEADERS.REFRESH_TOPOLOGY);
 
                 const refreshClientConfiguration = response
-                    && response.headers
+                    && response.caseless
                     && response.caseless.get(HEADERS.REFRESH_CLIENT_CONFIGURATION);
 
                 return BluebirdPromise.resolve()

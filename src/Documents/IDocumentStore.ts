@@ -1,6 +1,11 @@
 import {IDocumentSession, ISessionOptions} from "./Session/IDocumentSession";
 import { IStoreAuthOptions } from "../Auth/AuthOptions";
-import { SessionBeforeStoreEventArgs, SessionAfterSaveChangesEventArgs, SessionBeforeQueryEventArgs, SessionBeforeDeleteEventArgs } from "./Session/SessionEvents";
+import { 
+    SessionBeforeStoreEventArgs, 
+    SessionAfterSaveChangesEventArgs, 
+    SessionBeforeQueryEventArgs, 
+    SessionBeforeDeleteEventArgs 
+} from "./Session/SessionEvents";
 import { IDisposable } from "../Types/Contracts";
 import { Todo } from "../Types";
 import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor";

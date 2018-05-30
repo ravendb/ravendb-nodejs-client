@@ -19,10 +19,12 @@ describe("LoadTest - ported", function () {
     afterEach(async () => 
         await disposeTestDocumentStore(store));
 
-    // need to impl cache to unskip this one
-    it.skip("load() can use cache", async () => {
+    it("load() can use cache", async () => {
 
-        const spy = store.getRequestExecutor().cache.get = sinon.spy(store.getRequestExecutor().cache, "get");
+        let cacheGetSpy = 
+            store.getRequestExecutor().cache.get = sinon.spy(store.getRequestExecutor().cache, "get");
+        let cacheSetSpy = 
+            store.getRequestExecutor().cache.set = sinon.spy(store.getRequestExecutor().cache, "set");
 
         {
             const session = store.openSession();
@@ -38,17 +40,24 @@ describe("LoadTest - ported", function () {
             assert.ok(user);
         }
 
+        assert.ok(cacheSetSpy.getCalls().length);
+
         {
             const session = store.openSession();
             const user = await session.load<User>("users/1");
             assert.ok(user);
         }
 
-        const cacheReads = spy.getCalls()
-            .filter(x => 
-                x.args[0] === store.urls[0] + "/databases/test_db_1/docs?&id=users%2F1");
-        assert.equal(cacheReads.length, 2);
-        assert.ok((cacheReads[1].returnValue as ReleaseCacheItem).item);
+        const cacheReads = cacheGetSpy.getCalls();
+        const docReads = cacheReads.filter(x => 
+                x.args[0] === store.urls[0] + `/databases/${store.database}/docs?&id=users%2F1`);
+
+        assert.equal(docReads.length, 2);
+        assert.ok((docReads[1].returnValue as ReleaseCacheItem).item);
+        assert.ok((docReads[1].returnValue as ReleaseCacheItem).item.payload);
+
+        cacheGetSpy = null;
+        cacheSetSpy = null;
     });
 
     it("can load document by id", async () => {
