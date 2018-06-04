@@ -2,7 +2,6 @@ import {HttpRequestBase} from "../../Primitives/Http";
 import { PatchRequest } from "./PatchRequest";
 import { IOperation, OperationResultType } from "./OperationAbstractions";
 import { PatchStatus } from "./PatchStatus";
-import { PatchResult } from "./PatchResult";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { throwError } from "../../Exceptions";
 import { IDocumentStore } from "../IDocumentStore";
@@ -11,13 +10,14 @@ import { HttpCache } from "../../Http/HttpCache";
 import { ServerNode } from "../../Http/ServerNode";
 import { JsonSerializer } from "../../Mapping/Json/Serializer";
 import { ObjectKeysTransform } from "../../Mapping/ObjectMapper";
+import { PatchResult } from "./PatchResult";
 
 export interface Payload {
     patch: PatchRequest;
     patchIfMissing: PatchRequest;
 }
 
-export class Result<TEntity> {
+export class PatchOperationResult<TEntity> {
     public status: PatchStatus;
     public document: TEntity;
 }
@@ -31,7 +31,7 @@ export class PatchOperation implements IOperation<PatchResult> {
     private _skipPatchIfChangeVectorMismatch: boolean;
 
     public get resultType(): OperationResultType {
-        return "CommandResult";
+        return "PatchResult";
     }
 
     public constructor(

@@ -9,6 +9,13 @@ import { RavenCommand } from "../../Http/RavenCommand";
 import { throwError } from "../../Exceptions";
 import { DocumentStoreBase } from "../DocumentStoreBase";
 import { SessionInfo } from "../Session/IDocumentSession";
+import { PatchOperation, PatchOperationResult } from "./PatchOperation";
+import { PatchStatus } from "./PatchStatus";
+import { ClassConstructor } from "../../Types";
+import { DocumentType } from "../DocumentAbstractions";
+import { STATUS_CODES } from "http";
+import { StatusCodes } from "../..";
+import { PatchResult } from "./PatchResult";
 
 export class OperationExecutor {
 
@@ -35,11 +42,22 @@ export class OperationExecutor {
 
     public send(operation: AwaitableOperation): Promise<OperationCompletionAwaiter>;
     public send(operation: AwaitableOperation, sessionInfo?: SessionInfo): Promise<OperationCompletionAwaiter>;
+    public send<TResult extends object>(
+        patchOperation: PatchOperation, 
+        sessionInfo?: SessionInfo): Promise<PatchOperationResult<TResult>>;
+    public send<TResult extends object>(
+        patchOperation: PatchOperation, 
+        sessionInfo?: SessionInfo, 
+        resultType?: DocumentType<TResult>): Promise<PatchOperationResult<TResult>>;
     public send<TResult>(operation: IOperation<TResult>): Promise<TResult>;
-    public send<TResult>(operation: IOperation<TResult>, sessionInfo?: SessionInfo): Promise<TResult>;
     public send<TResult>(
+        operation: IOperation<TResult>, 
+        sessionInfo?: SessionInfo): Promise<TResult>;
+    public send<TResult extends object>(
         operation: AwaitableOperation | IOperation<TResult>,
-        sessionInfo?: SessionInfo): Promise<OperationCompletionAwaiter | TResult> {
+        sessionInfo?: SessionInfo,
+        documentType?: DocumentType<TResult>)
+    : Promise<OperationCompletionAwaiter | TResult | PatchOperationResult<TResult>> {
 
         const command =
             operation.getCommand(this._store, this._requestExecutor.conventions, this._requestExecutor.cache);
@@ -52,6 +70,27 @@ export class OperationExecutor {
                     const awaiter = new OperationCompletionAwaiter(
                         this._requestExecutor, this._requestExecutor.conventions, idResult.operationId);
                     return awaiter;
+
+                } else if (operation.resultType === "PatchResult") {
+                    const patchOperationResult = new PatchOperationResult<TResult>();
+                    if (command.statusCode === StatusCodes.NotModified) {
+                        patchOperationResult.status = "NotModified";
+                        return patchOperationResult;
+                    }
+
+                    if (command.statusCode === StatusCodes.NotFound) {
+                        patchOperationResult.status = "DocumentDoesNotExist";
+                        return patchOperationResult;
+                    }
+
+                    const patchResult = command.result as any as PatchResult;
+                    patchOperationResult.status = patchResult.status;
+                    const { conventions } = this._requestExecutor;
+                    conventions.tryRegisterEntityType(documentType);
+                    const entityType = conventions.findEntityType(documentType);
+                    patchOperationResult.document = conventions.deserializeEntityFromJson(
+                            entityType, patchResult.modifiedDocument) as TResult;
+                    return patchOperationResult;
                 }
 
                 return command.result as TResult;
@@ -59,45 +98,4 @@ export class OperationExecutor {
 
         return  Promise.resolve(result);
     }
-
-    // TODO
-    // public PatchStatus send(PatchOperation operation, SessionInfo sessionInfo) {
-    //     RavenCommand<PatchResult> command = 
-    // operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
-
-    //     requestExecutor.execute(command, sessionInfo);
-
-    //     if (command.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
-    //         return PatchStatus.NOT_MODIFIED;
-    //     }
-
-    //     if (command.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-    //         return PatchStatus.DOCUMENT_DOES_NOT_EXIST;
-    //     }
-
-    //     return command.getResult().getStatus();
-    // }
-
-    // @SuppressWarnings("unchecked")
-    // public <TEntity> PatchOperation.Result<TEntity> send(Class<TEntity> entityClass, PatchOperation operation, SessionInfo sessionInfo) {
-    //     RavenCommand<PatchResult> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
-
-    //     requestExecutor.execute(command, sessionInfo);
-
-    //     PatchOperation.Result<TEntity> result = new PatchOperation.Result<>();
-
-    //     if (command.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
-    //         result.setStatus(PatchStatus.NOT_MODIFIED);
-    //         return result;
-    //     }
-
-    //     if (command.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-    //         result.setStatus(PatchStatus.DOCUMENT_DOES_NOT_EXIST);
-    //         return result;
-    //     }
-
-    //     result.setStatus(command.getResult().getStatus());
-    //     result.setDocument((TEntity) requestExecutor.getConventions().deserializeEntityFromJson(entityClass, command.getResult().getModifiedDocument()));
-    //     return result;
-    // }
 }

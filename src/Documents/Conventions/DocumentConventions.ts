@@ -516,10 +516,16 @@ export class DocumentConventions {
         return Array.from(this._knownEntityTypes.values());
     }
 
-    public registerEntityType(entityType: ObjectTypeDescriptor): this {
+    public registerEntityType(entityType: ObjectTypeDescriptor): this;
+    public registerEntityType(entityType: ObjectTypeDescriptor, name: string): this;
+    public registerEntityType(entityType: ObjectTypeDescriptor, name?: string): this {
         if (!TypeUtil.isObjectTypeDescriptor(entityType)) {
             throwError("InvalidArgumentException", 
                 "Entity type must be a constructor or an object literal descriptor.");
+        }
+
+        if (name) {
+            this._knownEntityTypes.set(name, entityType);
         }
 
         this._knownEntityTypes.set(entityType.name, entityType);
