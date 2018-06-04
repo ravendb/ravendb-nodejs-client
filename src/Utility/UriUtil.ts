@@ -1,8 +1,9 @@
 import { throwError } from "../Exceptions";
+import * as url from "url";
 
 export function isValidUri(uriString: string): boolean {
-    // TODO
-    return true;
+    const parsed = url.parse(uriString);
+    return !!(parsed.host && parsed.protocol);
 }
 
 export function validateUri(uriString: string): void {
