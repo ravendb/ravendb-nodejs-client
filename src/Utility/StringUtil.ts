@@ -11,7 +11,7 @@ export class StringUtil {
       return s.replace(
         /\{([\w\d\-]+)\}/g,
         (match: string, placeholder: string): string =>
-          ((placeholder in vars) ? vars[placeholder] : '').toString()
+          ((placeholder in vars) ? vars[placeholder] : "").toString()
       );
     }
 

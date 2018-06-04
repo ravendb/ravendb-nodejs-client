@@ -6,8 +6,8 @@
     "dist/"
   ],
   "homepage": "https://ravendb.net",
-  "main": "lib/index.js",
-  "typings": "lib/ravendb.d.ts",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
   "scripts": {
     "test": "cross-os _test ",
     "_test": {
@@ -41,6 +41,7 @@
   },
   "keywords": [
     "ravendb",
+    "ravendb-client",
     "typescript",
     "node",
     "nodejs",
