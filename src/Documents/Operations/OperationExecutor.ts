@@ -13,7 +13,6 @@ import { PatchOperation, PatchOperationResult } from "./PatchOperation";
 import { PatchStatus } from "./PatchStatus";
 import { ClassConstructor } from "../../Types";
 import { DocumentType } from "../DocumentAbstractions";
-import { STATUS_CODES } from "http";
 import { StatusCodes } from "../..";
 import { PatchResult } from "./PatchResult";
 
