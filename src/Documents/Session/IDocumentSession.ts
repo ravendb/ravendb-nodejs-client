@@ -134,7 +134,7 @@ export interface IDocumentSession extends IDisposable {
      * @memberof IDocumentSession
      */
     delete<TEntity extends object>(
-        id: string): void;
+        id: string): Promise<void>;
 
     /**
      * Marks the specified entity for deletion. The entity will be deleted when DocumentSession.saveChanges is called.
@@ -146,7 +146,7 @@ export interface IDocumentSession extends IDisposable {
      * @memberof IDocumentSession
      */
     delete<TEntity extends object>(
-        id: string, expectedChangeVector: string): void;
+        id: string, expectedChangeVector: string): Promise<void>;
 
     /**
      * Marks the specified entity for deletion. The entity will be deleted when IDocumentSession.saveChanges is called.
@@ -156,7 +156,7 @@ export interface IDocumentSession extends IDisposable {
      * @memberof IDocumentSession
      */
     delete<TEntity extends object>(
-        entity: TEntity): void;
+        entity: TEntity): Promise<void>;
 
     /**
      * Stores entity in session, extracts Id from entity using Conventions or generates new one if it is not available.
