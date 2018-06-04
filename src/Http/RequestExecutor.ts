@@ -755,7 +755,11 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
                 sp.stop();
                 return;
             }, (error) => {
-                this._log.warn(error, "Error executing on specific node.");
+                this._log.warn(
+                    error, 
+                    `Error executing '${command.constructor.name}' `
+                        + `on specific node '${chosenNode.url}'`
+                        + `${chosenNode.database ? "db " + chosenNode.database : "" }.`);
 
                 if (!shouldRetry) {
                     return BluebirdPromise.reject(error);

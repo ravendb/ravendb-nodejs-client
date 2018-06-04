@@ -134,7 +134,6 @@ export class DocumentStore extends DocumentStoreBase {
                         this._log.warn(err, `Error disposing request executor.`);
                     }
                 });
-
             })
             .finally(() => this.emit("executorsDisposed"));
     }
