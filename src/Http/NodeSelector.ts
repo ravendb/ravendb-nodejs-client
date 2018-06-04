@@ -1,4 +1,4 @@
-import * as _ from "lodash";
+import {ArrayUtil} from "../Utility/ArrayUtil";
 import * as moment from "moment";
 import { ServerNode} from "../Http/ServerNode";
 import CurrentIndexAndNode from "../Http/CurrentIndexAndNode";
@@ -19,9 +19,8 @@ class NodeSelectorState {
     this.topology = topology;
     this.currentNodeIndex = currentNodeIndex;
     this.nodes = topology.nodes;
-    this.failures = _.times(topology.nodes.length, () => 0);
-    this.fastestRecords = _.times(topology.nodes.length);
-
+    this.failures = ArrayUtil.range(topology.nodes.length, () => 0);
+    this.fastestRecords = ArrayUtil.range(topology.nodes.length, () => 0);
   }
 }
 export class NodeSelector {

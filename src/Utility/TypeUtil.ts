@@ -1,4 +1,3 @@
-import * as _ from "lodash";
 import { DocumentType } from "../Documents/DocumentAbstractions";
 import { ObjectLiteralDescriptor, ObjectTypeDescriptor, ClassConstructor, EntityConstructor } from "../Types";
 
@@ -17,11 +16,11 @@ export class TypeUtil {
     }
 
     public static isString(value: any): boolean {
-        return _.isString(value);
+        return typeof(value) === "string";
     }
 
     public static isNumber(value: any): boolean {
-        return _.isNumber(value);
+        return typeof(value) === "number";
     }
     
     public static isPrimitive(value: any): boolean {
@@ -37,32 +36,29 @@ export class TypeUtil {
     }
 
     public static isArray(value: any): boolean {
-        return _.isArray(value);
+        return Array.isArray(value);
     }
 
     public static isObject(value: any): boolean {
-        return _.isObject(value) && !this.isArray(value);
+        return value 
+            && typeof(value) === "object" 
+            && !this.isArray(value);
     }
 
     public static isFunction(value: any): boolean {
-        return _.isFunction(value);
-    }
-
-    public static isObjectConstructor(value: any): boolean {
-        return _.isFunction(value) && ("name" in value)
-            && ("Object" !== value.name);
+        return typeof(value) === "function";
     }
 
     public static isDate(value: any): boolean {
-        return _.isDate(value);
+        return value && value.constructor.name === "Date";
     }
 
     public static isBool(value: any): boolean {
-        return _.isBoolean(value);
+        return value === true || value === false;
     }
 
     public static isClass(value: any): boolean {
-        return _.isFunction(value) && ("name" in value)
+        return this.isFunction(value) && ("name" in value)
             && ("Object" !== value.name)
             && (!!value.prototype && !!value.prototype.constructor.name);
     }
@@ -92,6 +88,10 @@ export class TypeUtil {
     }
 
     public static findType(obj: object, typeDescriptors: ObjectTypeDescriptor[]): ObjectTypeDescriptor {
+        if (!obj) {
+            return null;
+        }
+
         if (TypeUtil.isClass(obj.constructor)) {
             return obj.constructor as ClassConstructor;
         }

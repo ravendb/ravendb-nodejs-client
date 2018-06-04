@@ -196,3 +196,6 @@ export { TypesAwareObjectMapper } from "./Mapping/ObjectMapper";
 export { Mapping } from "./Mapping";
 import * as Json from "./Mapping/Json";
 export { Json };
+
+import { DocumentStore } from "./Documents/DocumentStore";
+export default DocumentStore;

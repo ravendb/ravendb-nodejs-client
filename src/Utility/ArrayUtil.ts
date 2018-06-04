@@ -1,13 +1,8 @@
 export class ArrayUtil {
-  public static mapObject(input: object, mapper: (item: any, key?: string) => any): object {
-    let result: object = {};
-    let property: string;
 
-    for (property in input) {
-      result[property] = mapper(input[property], property);
+    public static range<T>(n: number, func: (idx: number) => T) {
+        return new Array<T>(n)
+            .fill(null).map((x, i) => func(i));
     }
-
-    return result;
-  }
 
 }
