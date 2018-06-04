@@ -1,3 +1,3 @@
 export interface IRavenObject<T = any> {
-    [propery: string]: T;
+    [property: string]: T;
 }
