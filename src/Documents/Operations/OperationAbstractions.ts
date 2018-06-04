@@ -3,7 +3,7 @@ import { IDocumentStore } from "../../Documents/IDocumentStore";
 import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
 import { HttpCache } from "../../Http/HttpCache";
 
-export type OperationResultType = "OperationId" | "CommandResult" | "PatchStatus";
+export type OperationResultType = "OperationId" | "CommandResult" | "PatchResult";
 
 export interface IAbstractOperation {
     resultType: OperationResultType;

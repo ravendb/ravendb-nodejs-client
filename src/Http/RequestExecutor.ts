@@ -1,7 +1,6 @@
 import * as os from "os";
 import * as BluebirdPromise from "bluebird";
 import * as semaphore from "semaphore";
-import { parse as parseUrl } from "url";
 import { acquireSemaphore } from "../Utility/SemaphoreUtil";
 import { getLogger, ILogger } from "../Utility/LogUtil";
 import { Timer } from "../Primitives/Timer";
@@ -33,6 +32,7 @@ import { TypeUtil } from "../Utility/TypeUtil";
 import { RequestPromiseOptions } from "request-promise";
 import { SessionInfo } from "../Documents/Session/IDocumentSession";
 import { JsonSerializer } from "../Mapping/Json/Serializer";
+import { validateUri } from "../Utility/UriUtil";
 
 const DEFAULT_REQUEST_OPTIONS = {
     simple: false,
@@ -424,13 +424,7 @@ export class RequestExecutor implements IDisposable {
         let requireHttps = !!authOptions;
         for (let index = 0; index < initialUrls.length; index++) {
             const url = initialUrls[index];
-
-            try {
-                parseUrl(url);
-            } catch (err) {
-                throwError("InvalidArgumentException", `The url '${url}' is not valid.`, err);
-            }
-
+            validateUri(url);
             cleanUrls[index] = url.replace(/\/$/, "");
             requireHttps = requireHttps || url.startsWith("https://");
         }
@@ -755,7 +749,11 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
                 sp.stop();
                 return;
             }, (error) => {
-                this._log.warn(error, "Error executing on specific node.");
+                this._log.warn(
+                    error, 
+                    `Error executing '${command.constructor.name}' `
+                        + `on specific node '${chosenNode.url}'`
+                        + `${chosenNode.database ? "db " + chosenNode.database : "" }.`);
 
                 if (!shouldRetry) {
                     return BluebirdPromise.reject(error);

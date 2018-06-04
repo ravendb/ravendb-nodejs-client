@@ -32,9 +32,9 @@ export class DocumentStore extends DocumentStoreBase {
 
     private _requestExecutors: Map<string, RequestExecutor> = new Map(); 
 
-    private _multiDbHiLo: HiloMultiDatabaseIdGenerator; // MultiDatabaseHiLoIdGenerator 
+    private _multiDbHiLo: HiloMultiDatabaseIdGenerator; 
 
-    private _maintenanceOperationExecutor: MaintenanceOperationExecutor; // MaintenanceOperationExecutor ;
+    private _maintenanceOperationExecutor: MaintenanceOperationExecutor; 
     private _operationExecutor: OperationExecutor;
 
     private _identifier: string;
@@ -134,7 +134,6 @@ export class DocumentStore extends DocumentStoreBase {
                         this._log.warn(err, `Error disposing request executor.`);
                     }
                 });
-
             })
             .finally(() => this.emit("executorsDisposed"));
     }

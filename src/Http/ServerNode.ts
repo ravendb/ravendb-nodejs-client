@@ -38,6 +38,4 @@ export class ServerNode {
     node.fromJson(json);
     return node;
   }
-
-  // TODO what to do with equals() and hashCode() overrides
 }

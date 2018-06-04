@@ -1462,23 +1462,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         return this._queryOperation;
     }
 
-    // TODO
-    // public void _addBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
-    //     beforeQueryExecutedCallback.add(action);
-    // }
-
-    // public void _removeBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
-    //     beforeQueryExecutedCallback.remove(action);
-    // }
-
-    // public void _addAfterQueryExecutedListener(Consumer<QueryResult> action) {
-    //     afterQueryExecutedCallback.add(action);
-    // }
-
-    // public void _removeAfterQueryExecutedListener(Consumer<QueryResult> action) {
-    //     afterQueryExecutedCallback.remove(action);
-    // }
-
     // TBD public IDocumentQueryCustomization AfterStreamExecuted(Action<BlittableJsonReaderObject> action)
 
     public _noTracking(): void {

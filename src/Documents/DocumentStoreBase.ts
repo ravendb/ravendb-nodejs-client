@@ -1,11 +1,14 @@
 import {MaintenanceOperationExecutor} from "./Operations/MaintenanceOperationExecutor";
 import { EventEmitter } from "events";
 import { IDocumentStore } from "./IDocumentStore";
-// import { IDocumentSession } from "./Session";
 import { throwError } from "../Exceptions";
 import { validateUri } from "../Utility/UriUtil";
 import { IAuthOptions } from "../Auth/AuthOptions";
-import { SessionBeforeStoreEventArgs, SessionAfterSaveChangesEventArgs, SessionBeforeQueryEventArgs, SessionBeforeDeleteEventArgs } from "./Session/SessionEvents";
+import { 
+    SessionBeforeStoreEventArgs, 
+    SessionAfterSaveChangesEventArgs, 
+    SessionBeforeQueryEventArgs, 
+    SessionBeforeDeleteEventArgs } from "./Session/SessionEvents";
 import { Todo } from "../Types";
 import { OperationExecutor } from "./Operations/OperationExecutor";
 import { SessionOptions } from "http2";
@@ -22,8 +25,8 @@ export abstract class DocumentStoreBase
     extends EventEmitter 
     implements IDocumentStore {
 
-    abstract disableAggressiveCaching(): IDisposable;
-    abstract disableAggressiveCaching(database: string): IDisposable;
+    public abstract disableAggressiveCaching(): IDisposable;
+    public abstract disableAggressiveCaching(database: string): IDisposable;
     
     protected constructor() {
         super();
