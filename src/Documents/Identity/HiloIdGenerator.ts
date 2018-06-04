@@ -52,7 +52,6 @@ export class HiloIdGenerator {
             // local range is not exhausted yet
             const range = this._range;
 
-            debugger;
             let id = range.increment();
             if (id <= range.maxId) {
                 return Promise.resolve(id);
