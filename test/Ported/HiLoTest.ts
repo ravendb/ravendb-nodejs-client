@@ -8,6 +8,7 @@ import {
     HiloMultiDatabaseIdGenerator,
     DocumentStore,
 } from "../../src";
+import { ArrayUtil } from "../../src/Utility/ArrayUtil";
 
 describe("HiLo", function () {
 
@@ -28,6 +29,27 @@ describe("HiLo", function () {
 
     afterEach(async () => 
         await disposeTestDocumentStore(store));
+
+    it("does not get another range, when doing parallel requests", async () => {
+        const users = ArrayUtil.range(32, i => Object.assign(new User(), { name: "user" + i }));
+        const storeOps = users.map(x => { 
+            const session = store.openSession();
+            return session.store(x)
+                .then(() => session.saveChanges());
+        });
+        await Promise.all(storeOps);
+
+        const userIds = users.map(x => x.id);
+        assert.equal(new Set(userIds).size, userIds.length, `Ids are not unique: ${userIds}`);
+
+        userIds
+            .map(id => id.split("/")[1])
+            .forEach(numericPart => {
+                assert.ok(parseInt(numericPart, 10) < 33, 
+                    "Obtained ids should be less than 33, though they are:" + users.map(x => x.id).toString());
+            });
+
+    });
 
     it("cannot go down", async () => {
         const session = store.openSession();
