@@ -250,7 +250,7 @@ export class DocumentConventions {
         this._identityPartsSeparator = value;
     }
 
-    public get isDisableTopologyUpdates(): boolean {
+    public get disableTopologyUpdates(): boolean {
         return this._disableTopologyUpdates;
     }
 

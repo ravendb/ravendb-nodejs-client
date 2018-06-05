@@ -40,11 +40,11 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         }
     }
 
-    public get isThrowMappingErrors(): boolean {
+    public get throwMappingErrors(): boolean {
         return this._throwMappingErrors;
     }
 
-    public set setThrowMappingErrors(value: boolean) {
+    public set throwMappingErrors(value: boolean) {
         this._throwMappingErrors = value;
     }
 

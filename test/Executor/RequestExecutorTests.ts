@@ -51,11 +51,14 @@ describe("Request executor", function () {
                 }
 
                 assert.equal(errorsCount, 40);
-                const databaseNamesOperation = new GetDatabaseNamesOperation(0, 20);
-                const command = databaseNamesOperation.getCommand(documentConventions);
-                await executor.execute(command);
-                assert.ok(command.result);
-
+                try {
+                    const databaseNamesOperation = new GetDatabaseNamesOperation(0, 20);
+                    const command = databaseNamesOperation.getCommand(documentConventions);
+                    await executor.execute(command);
+                    assert.fail("Should have thrown.");
+                } catch (err) {
+                    assert.equal(err.name, "DatabaseDoesNotExistException");
+                }
             } finally {
                 executor.dispose();
             }

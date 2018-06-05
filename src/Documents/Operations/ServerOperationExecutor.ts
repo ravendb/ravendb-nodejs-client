@@ -14,7 +14,7 @@ export class ServerOperationExecutor implements IDisposable {
 
     public constructor(store: DocumentStoreBase) {
         this._store = store;
-        this._requestExecutor = store.conventions.isDisableTopologyUpdates ?
+        this._requestExecutor = store.conventions.disableTopologyUpdates ?
                 ClusterRequestExecutor.createForSingleNode(store.urls[0], { authOptions: store.authOptions }) :
                 ClusterRequestExecutor.create(store.urls, store);
 
