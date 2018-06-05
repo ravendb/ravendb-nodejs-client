@@ -3,8 +3,6 @@ import * as BluebirdPromise from "bluebird";
 import { IDisposable } from "../Types/Contracts";
 import { getLogger } from "../Utility/LogUtil";
 
-const log = getLogger({ module: "semaphore-util" });
-
 export interface AcquireSemaphoreOptions { 
     timeout?: number;
     contextName?: string; 
@@ -19,7 +17,6 @@ export function acquireSemaphore(
     : AcquiredSemaphoreContext {
 
     const contextName = semOpts ? semOpts.contextName : "";
-    log.info(`Attempting to acquire semaphore ${contextName}`);
 
     const acquiredObj = {
         acquired: false
@@ -27,7 +24,6 @@ export function acquireSemaphore(
     const acquiredSemaphorePromise = 
         new BluebirdPromise.Promise<void>(resolve => {
             sem.take(() => {
-                log.info(`Acquired semaphore ${contextName}`);
                 acquiredObj.acquired = true;
                 resolve();
             });
@@ -40,11 +36,8 @@ export function acquireSemaphore(
 
     const releaseFunc = () => { 
         acquiredSemaphorePromise
-            .then(() => sem.leave())
-            .finally(() => {
-                log.info(`Released semaphore ${contextName}`);
-            });
-    }
+            .then(() => sem.leave());
+    };
 
     const result = Promise.resolve<void>(p);
     return {
