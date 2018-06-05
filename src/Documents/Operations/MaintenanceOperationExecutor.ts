@@ -14,8 +14,8 @@ export class MaintenanceOperationExecutor {
 
     public constructor(store: DocumentStoreBase, databaseName?: string) {
         this._store = store;
-        this._databaseName = databaseName;
-        this._requestExecutor = store.getRequestExecutor(databaseName);
+        this._databaseName = databaseName || store.database;
+        this._requestExecutor = this._databaseName ? store.getRequestExecutor(databaseName) : null;
     }
 
     public get server(): ServerOperationExecutor {
@@ -27,8 +27,8 @@ export class MaintenanceOperationExecutor {
     }
 
     public forDatabase(databaseName: string): MaintenanceOperationExecutor {
-        if (this._databaseName 
-            && this._databaseName.toLowerCase() === databaseName.toLowerCase()) {
+        if (this._databaseName
+            && this._databaseName.toLowerCase() === (databaseName || "").toLowerCase()) {
             return this;
         }
 

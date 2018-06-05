@@ -507,6 +507,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
                 .catch(error => {
                     if (error.name === "DatabaseDoesNotExistException") {
                         this._lastKnownUrls = initialUrls;
+                        throw error;
                     }
 
                     if (initialUrls.length === 0) {
@@ -608,6 +609,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
         command: RavenCommand<TResult>,
         sessionInfo?: SessionInfo,
         options?: ExecuteOptions<TResult>): Promise<void> {
+
         if (options) {
             return this._executeOnSpecificNode(command, sessionInfo, options);
         }
