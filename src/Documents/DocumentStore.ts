@@ -210,13 +210,13 @@ export class DocumentStore extends DocumentStoreBase {
         }
 
         if (!this.conventions.disableTopologyUpdates) {
-            executor = RequestExecutor.create(this.urls, this.database, { 
+            executor = RequestExecutor.create(this.urls, database, { 
                 authOptions: this.authOptions, 
                 documentConventions: this.conventions
             });
         } else {
             executor = RequestExecutor.createForSingleNodeWithConfigurationUpdates(
-              this.urls[0], this.database, { 
+              this.urls[0], database, { 
                   authOptions: this.authOptions, 
                   documentConventions: this.conventions
               });

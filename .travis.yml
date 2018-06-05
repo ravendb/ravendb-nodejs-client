@@ -4,6 +4,7 @@ node_js:
   - "7"
   - "8"
   - "9"
+  - "10"
 env:
   matrix:
     - RAVENDB_TEST_SERVER_PATH=./RavenDB/Server/Raven.Server

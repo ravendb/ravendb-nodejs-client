@@ -25,8 +25,4 @@ export class HiloRangeValue {
   public increment(): number {
     return ++this._current;
   }
-
-  public needsNewRange(): boolean {
-    return this._current >= this._maxId;
-  }
 }

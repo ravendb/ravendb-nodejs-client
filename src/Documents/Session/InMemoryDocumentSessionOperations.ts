@@ -906,16 +906,18 @@ export abstract class InMemoryDocumentSessionOperations
         }
     }
 
-    public delete(id: string): void;
-    public delete(id: string, expectedChangeVector: string): void;
-    public delete<TEntity extends IRavenObject>(entity: TEntity): void;
+    public delete(id: string): Promise<void>;
+    public delete(id: string, expectedChangeVector: string): Promise<void>;
+    public delete<TEntity extends IRavenObject>(entity: TEntity): Promise<void>;
     public delete<TEntity extends IRavenObject>(
-        idOrEntity: string | TEntity, expectedChangeVector: string = null): void {
+        idOrEntity: string | TEntity, expectedChangeVector: string = null): Promise<void> {
         if (TypeUtil.isString(idOrEntity)) {
-            return this._deleteById(idOrEntity as string, expectedChangeVector);
+            this._deleteById(idOrEntity as string, expectedChangeVector);
+            return Promise.resolve();
         } 
 
         this._deleteByEntity(idOrEntity as TEntity);
+        return Promise.resolve();
     }
     
     /**

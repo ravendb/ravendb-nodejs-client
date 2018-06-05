@@ -11,22 +11,29 @@ import { HiloReturnCommand } from "./Commands/HiloReturnCommand";
 import { NextHiloCommand, HiLoResult } from "./Commands/NextHiloCommand";
 import { HiloRangeValue } from "./HiloRangeValue";
 import { IHiloIdGenerator } from "./IHiloIdGenerator";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
 
-export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdGenerator {
+export class HiloIdGenerator {
+    private _store: IDocumentStore;
+    private _dbName: string;
+    private _tag: string;
+    private _conventions: DocumentConventions;
     private _lastRangeAt: Date;
     private _range: HiloRangeValue;
     private _identityPartsSeparator: string;
     private _prefix?: string = null;
     private _lastBatchSize: number = 0;
     private _serverTag: string = null;
-    private _semaphore = semaphore();
+    private _generatorLock = semaphore();
 
     constructor(store: IDocumentStore, dbName?: string, tag?: string) {
-        super(store, dbName, tag);
-
         this._lastRangeAt = DateUtil.zeroDate();
         this._range = new HiloRangeValue();
+        this._conventions = store.conventions;
         this._identityPartsSeparator = this._conventions.identityPartsSeparator;
+        this._tag = tag;
+        this._store = store;
+        this._dbName = dbName || store.database;
     }
 
     public generateDocumentId(entity: object): Promise<string> {
@@ -41,17 +48,38 @@ export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdG
 
     public nextId(): Promise<number> {
 
-        const getNextIdWithinRange = (range: HiloRangeValue): Promise<number> => {
-            const id = range.increment();
+        const getNextIdWithinRange = (): Promise<number> => {
+            // local range is not exhausted yet
+            const range = this._range;
+
+            let id = range.increment();
             if (id <= range.maxId) {
                 return Promise.resolve(id);
             }
 
-            return this._tryRequestNextRange()
-                .then((newRange) => getNextIdWithinRange(newRange) as Promise<number>);
+            //local range is exhausted , need to get a new range
+            const acquiredSemContext = acquireSemaphore(this._generatorLock, {
+                contextName: `${this.constructor.name}_${this._tag}`
+            });
+            return Promise.resolve(acquiredSemContext.promise)
+                .then(() => {            
+                    
+                    const maybeNewRange = this._range;
+                    if (maybeNewRange !== range) {
+                        id = maybeNewRange.increment();
+                        if (id <= maybeNewRange.maxId) {
+                            return BluebirdPromise.resolve(id)
+                                .finally(() => acquiredSemContext.dispose());
+                        }
+                    }
+
+                    return BluebirdPromise.resolve(this._getNextRange())
+                        .finally(() => acquiredSemContext.dispose())
+                        .then(() => getNextIdWithinRange());
+                });
         };
 
-        return getNextIdWithinRange(this._range);
+        return getNextIdWithinRange();
     }
 
     public returnUnusedRange(): Promise<void> {
@@ -61,7 +89,7 @@ export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdG
         return executor.execute(new HiloReturnCommand(this._tag, range.current, range.maxId));
     }
 
-    protected _getNextRange(): Promise<HiloRangeValue> {
+    protected _getNextRange(): Promise<void> {
         const hiloCmd = new NextHiloCommand(
             this._tag, this._lastBatchSize, this._lastRangeAt, this._identityPartsSeparator, this._range.maxId);
         return this._store.getRequestExecutor(this._dbName).execute(hiloCmd)
@@ -72,40 +100,8 @@ export class HiloIdGenerator extends AbstractHiloIdGenerator implements IHiloIdG
                 this._serverTag = result.serverTag || null;
                 this._lastRangeAt = result.lastRangeAt;
 
-                return new HiloRangeValue(result.low, result.high);
+                this._range = new HiloRangeValue(result.low, result.high);
             });
-    }
-
-    protected _tryRequestNextRange(): Promise<HiloRangeValue> {
-        const range: HiloRangeValue = this._range;
-
-        const acquiredSemContext = acquireSemaphore(this._semaphore);
-
-        const result = BluebirdPromise.resolve(acquiredSemContext.promise)
-            .then(() => {
-                if (!range.needsNewRange()) {
-                    range.increment();
-
-                    return BluebirdPromise.resolve<HiloRangeValue>(range);
-                }
-
-                return this._getNextRange()
-                    .then((newRange: HiloRangeValue): HiloRangeValue => {
-                        this._range = newRange;
-
-                        return newRange;
-                    });
-            })
-            .catch((err: Error) => {
-                if (!(err.name === "ConcurrencyException" as RavenErrorType)) {
-                    throwError("ConcurrencyException", "Error getting new hilo range.", err);
-                } else {
-                    return this._tryRequestNextRange();
-                }
-            })
-            .finally(() => acquiredSemContext.dispose());
-        
-        return Promise.resolve(result);
     }
 
     protected _assembleDocumentId(currentRangeValue: number): string {
