@@ -11,6 +11,7 @@ import {
     IDocumentSession} from "../../src";
 import { DateUtil } from "../../src/Utility/DateUtil";
 import { TypeUtil } from "../../src/Utility/TypeUtil";
+import { QueryData } from "../../src/Documents/Queries/QueryData";
 
 describe("QueryTest", function () {
 
@@ -239,10 +240,10 @@ describe("QueryTest", function () {
 
         it("query with projection", async () => { 
             const session = store.openSession();
-            const results = await session.query(User)
+            const query = session.query(User)
                 .selectFields<UserProjection>(["id", "name"], UserProjection)
-                .all();
 
+            const results = await query.all();
             assert.equal(results.length, 3);
             assert.equal(results[0].constructor, UserProjection);
 
