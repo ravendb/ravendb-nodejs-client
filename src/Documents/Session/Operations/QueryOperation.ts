@@ -158,14 +158,13 @@ export class QueryOperation {
 
         // return primitives only if type was not passed at all AND fields count is 1
         // if type was passed then use that even if it's only 1 field
-        if (!clazz 
-            && fieldsToFetch 
-            && fieldsToFetch.projections 
-            && fieldsToFetch.projections.length === 1) { // we only select a single field
-
+        if (fieldsToFetch && fieldsToFetch.projections 
+            && fieldsToFetch.projections.length === 1
+            && !clazz) {
+            // we only select a single field
             const projectField = fieldsToFetch.projections[0];
             const jsonNode = document[projectField];
-            if (!TypeUtil.isNullOrUndefined(jsonNode) 
+            if (!TypeUtil.isNullOrUndefined(jsonNode)
                 && TypeUtil.isPrimitive(jsonNode)) {
                 return jsonNode || null;
             }
@@ -175,7 +174,7 @@ export class QueryOperation {
                 return null;
             }
 
-            if (!TypeUtil.isNullOrUndefined(fieldsToFetch.fieldsToFetch) 
+            if (!TypeUtil.isNullOrUndefined(fieldsToFetch.fieldsToFetch)
                 && fieldsToFetch.fieldsToFetch[0] === fieldsToFetch.projections[0]) {
                 if (TypeUtil.isObject(inner)) { // extraction from original type
                     document = inner;
@@ -183,10 +182,20 @@ export class QueryOperation {
             }
         }
 
+        const raw: T = session.conventions.entityObjectMapper
+            .fromObjectLiteral(document);
         const projType = session.conventions.findEntityType(clazz);
-        const result: T = session.conventions.entityObjectMapper.fromObjectLiteral(document, {
-            typeName: projType.name 
-        });
+        const projectionResult = projType
+            // tslint:disable-next-line:new-parens
+            ? new (Function.prototype.bind.apply(projType))
+            : {};
+        // tslint:disable-next-line:no-shadowed-variable
+        const result = fieldsToFetch && fieldsToFetch.projections 
+            ? fieldsToFetch.projections.reduce((reduced, key, i) => {
+                    reduced[key] = raw[fieldsToFetch.projections[i]];
+                    return reduced;
+                }, projectionResult)
+            : Object.assign(projectionResult, raw);
 
         if (id) {
             // we need to make an additional check, since it is possible that a value was explicitly stated

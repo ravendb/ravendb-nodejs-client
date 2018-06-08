@@ -49,6 +49,7 @@ import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField";
 import { SpatialCriteria } from "../Queries/Spatial/SpatialCriteria";
 import { SessionBeforeQueryEventArgs } from "./SessionEvents";
 import { CmpXchg } from "./CmpXchng";
+import { AbstractCallback } from "../../Types/Callbacks";
 
 /**
  * A query against a Raven index
@@ -1703,9 +1704,13 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             });
     }
 
-    public async all(): Promise<T[]> {
-        return this.iterator()
-            .then((result) => [...result]);
+    public async all(callback?: AbstractCallback<T[]>): Promise<T[]> {
+        callback = callback || TypeUtil.NOOP;
+        const result = BluebirdPromise.resolve(this.iterator())
+            .then((entries) => [...entries])
+            .tap(x => callback(null, x))
+            .tapCatch(err => callback(err));
+        return Promise.resolve(result);
     }
 
     public getQueryResult(): Promise<QueryResult> {
@@ -1714,28 +1719,40 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             .then(() => this._queryOperation.getCurrentQueryResults().createSnapshot());
     }
 
-    public async first(): Promise<T> {
-        return Promise.resolve()
+    public async first(callback?: AbstractCallback<T>): Promise<T> {
+        callback = callback || TypeUtil.NOOP;
+        const result = BluebirdPromise.resolve()
             .then(() => this._executeQueryOperation(2))
-            .then(result => result[0] || null);
+            .then(entries => entries[0] || null)
+            .tap(x => callback(null, x))
+            .tapCatch(err => callback(err));
+        return Promise.resolve(result);
     }
 
-    public async single(): Promise<T> {
-        return Promise.resolve()
+    public async single(callback?: AbstractCallback<T>): Promise<T> {
+        callback = callback || TypeUtil.NOOP;
+        const result = BluebirdPromise.resolve()
             .then(() => this._executeQueryOperation(2))
-            .then(result => {
-                if (result.length > 1) {
-                    throw getError("InvalidOperationException", "Expected single result, got: " + result.length);
+            .then(entries => {
+                if (entries.length > 1) {
+                    throw getError("InvalidOperationException", "Expected single result, got: " + entries.length);
                 }
 
-                return result[0] || null;
-            });
+                return entries[0] || null;
+            })
+            .tap(x => callback(null, x))
+            .tapCatch(err => callback(err));
+        return Promise.resolve(result);
     }
 
-    public async count(): Promise<number> {
+    public async count(callback?: AbstractCallback<number>): Promise<number> {
+        callback = callback || TypeUtil.NOOP;
         this._take(0);
-        return this.getQueryResult()
-            .then(queryResult => queryResult.totalResults);
+        const result = BluebirdPromise.resolve(this.getQueryResult())
+            .then(queryResult => queryResult.totalResults)
+            .tap(x => callback(null, x))
+            .tapCatch(err => callback(err));
+        return Promise.resolve(result);
     }
 
     private _executeQueryOperation(take: number): Promise<T[]> {
