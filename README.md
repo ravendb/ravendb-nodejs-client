@@ -656,7 +656,7 @@ npm run build
 ```bash
 # To run the suite one needs to set the following environment variables:
 # 
-# - the location or RavenDB server binary:
+# - the location of RavenDB server binary:
 # RAVENDB_TEST_SERVER_PATH="C:\\work\\test\\Server\\Raven.Server.exe" 
 #
 # - certificate path for tests requiring secure server
