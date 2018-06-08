@@ -515,7 +515,7 @@ console.log(product instanceof Product);    // true
 console.log(product.id);                    // Products/1-A
 ```
 
-*NOTE: To limit passing class constructors around register the type in document store's conventions like so:*
+*NOTE: To limit passing class constructors around, register the type in document store's conventions like so:*
 ```javascript
 import { Product } from "./models";
 const store = new DocumentStore(url, dbName);
