@@ -14,8 +14,8 @@ import {
     IDocumentSession,
 } from "../../src";
 
- const print = console.log; //(...args) => {};
-//const print = (...args) => { return; };
+//const print = console.log; //(...args) => {};
+const print = (...args) => { return; };
 
 describe("Readme query samples", function () {
 
@@ -87,7 +87,7 @@ describe("Readme query samples", function () {
         results = await query.all();
     });
 
-    it.only("projections multiple fields", async () => {
+    it("projections multiple fields", async () => {
         query = session.query({ collection: "users" })
             .selectFields([ "name", "age" ]);
         results = await query.all();
