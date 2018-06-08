@@ -461,8 +461,11 @@ await session.query({ collection: "users" })
 
 #### all() / first() / single() / count()
 `all()` - returns all results
+
 `first()` - first result
+
 `single()` - first result, throws error if there's more entries
+
 `count()` - returns the count of the results (not affected by `take()`)
 
 ## Using ECMAScript 2015 classes as models 
