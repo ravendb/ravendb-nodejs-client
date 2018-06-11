@@ -32,7 +32,6 @@ session
  .load('users/1-A')
  .then((user) => {
    user.password = PBKDF2('new password');
-   return session.store(user);
  })
  .then(() => session.saveChanges())
  .then(() => {
@@ -47,7 +46,6 @@ session
 const session = store.openSession();
 let user = await store.load('users/1-A');
 user.password = PBKDF2('new password');
-await session.store(user);
 await session.saveChanges();
 ```
 2. Promises
@@ -55,7 +53,6 @@ await session.saveChanges();
 session.load('Users/1-A')
     .then((user) => {
         user.password = PBKDF2('new password');
-        return session.store(user);
     })
     .then(() => session.saveChanges())
     .then(() => {
@@ -66,10 +63,8 @@ session.load('Users/1-A')
 ```javascript
 session.load('users/1-A', (user) => {
     user.password = PBKDF2('new password');
-    session.store(user, () => {
-        session.saveChanges(() => {
-            // data is persisted
-        });
+    session.saveChanges(() => {
+        // data is persisted
     });
 });
 ```
@@ -104,7 +99,6 @@ console.log(product.id);       // Products/1-A
 let product = await session.load('products/1-A');
 product.in_stock = false;
 product.last_update = new Date();
-await session.store(product);
 await session.saveChanges();
 // ...
 product = await session.load('products/1-A');
