@@ -229,7 +229,7 @@ describe("RavenDB-8761", function () {
             const productCounts1 = await session.advanced
                 .rawQuery(`from Orders
                          group by array(lines[].product), array(lines[].quantity)
-                         order by lines[].quantity
+                         order by count() 
                          select 
                             lines[].product as products, 
                             lines[].quantity as quantities, 
