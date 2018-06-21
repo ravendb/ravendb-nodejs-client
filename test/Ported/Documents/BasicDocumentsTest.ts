@@ -40,6 +40,33 @@ describe("Basic documents test", function () {
         await session4.saveChanges();
     });
 
+    class Animal {
+        public id: string;
+        public name: string;
+    }
+
+    class Dog extends Animal {
+        public dogRace: string;
+    }
+
+    class Cat extends Animal {
+        public hasFur: boolean;
+    }
+
+    it.skip("sets proper type when loading using another class", async () => {
+        const session = store.openSession();
+        const dog = Object.assign(new Dog(), {
+            name: "Chase",
+            dogRace: "Alsatian"
+        }) ;
+        await session.store(dog);
+
+        await session.saveChanges();
+
+        const cat = await session.load(dog.id, Cat);
+        assert.equal(cat.constructor, Cat);
+    });
+
     it("get", async () => {
         const dummy = new User();
         delete dummy.id;
