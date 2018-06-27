@@ -4,7 +4,7 @@ import { RavenTestContext, testContext, disposeTestDocumentStore } from "../Util
 
 import { DocumentStore, IDocumentStore, GetDatabaseNamesOperation } from "../../src";
 
-describe("RDBC-202", function () {
+describe("RDBC-203", function () {
 
     let store: IDocumentStore;
 
