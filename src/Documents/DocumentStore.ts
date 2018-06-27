@@ -12,6 +12,7 @@ import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";
 import { DocumentSession } from "./Session/DocumentSession";
 import {HiloMultiDatabaseIdGenerator} from "./Identity/HiloMultiDatabaseIdGenerator";
 import { IDisposable } from "../Types/Contracts";
+import { IAuthOptions } from "../Auth/AuthOptions";
 
 // import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";
 // import { DocumentSession } from "./Session/DocumentSession";
@@ -42,10 +43,13 @@ export class DocumentStore extends DocumentStoreBase {
     
     public constructor(url: string, database: string);
     public constructor(urls: string[], database: string);
-    public constructor(urls: string | string[], database: string) {
+    public constructor(url: string, database: string, authOptions: IAuthOptions);
+    public constructor(urls: string[], database: string, authOptions: IAuthOptions);
+    public constructor(urls: string | string[], database: string, authOptions?: IAuthOptions) {
         super();
 
         this._database = database;
+        this.authOptions = authOptions;
         this.urls = Array.isArray(urls) 
           ? urls as string[] 
           : [ urls ];
