@@ -51,7 +51,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/sinon": "^2.3.6",
-    "@types/bluebird": "^3.5.20",
+    "@types/bluebird": "3.5.21",
     "@types/mocha": "^5.0.0",
     "cross-os": "^1.3.0",
     "mocha": "^4.1.0",
@@ -65,7 +65,7 @@
     "@types/pluralize": "0.0.27",
     "@types/qs": "^6.5.1",
     "@types/request": "^2.0.3",
-    "@types/request-promise": "^4.1.41",
+    "@types/request-promise": "4.1.41",
     "@types/semaphore": "^1.1.0",
     "@types/uuid": "^2.0.29",
     "@types/verror": "^1.10.3",

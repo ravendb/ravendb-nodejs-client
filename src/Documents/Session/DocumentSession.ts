@@ -112,21 +112,19 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         const objType = this.conventions.findEntityType(options.documentType);
 
         const loadOperation = new LoadOperation(this);
-        return this._loadInternal(ids, loadOperation)
-        .then(() => {
-            const result = BluebirdPromise.resolve(loadOperation.getDocuments<TEntity>(objType))
-                .then(docs => {
-                    if (isLoadingSingle) {
-                        return docs[Object.keys(docs)[0]];
-                    }
+        const result = BluebirdPromise.resolve(this._loadInternal<TEntity>(ids, loadOperation))
+            .then(() => loadOperation.getDocuments<TEntity>(objType))
+            .then((docs: EntitiesCollectionObject<TEntity> | TEntity) => {
+                if (isLoadingSingle) {
+                    return docs[Object.keys(docs)[0]];
+                }
 
-                    return docs;
-                })
-                .tap((entities: TEntity | EntitiesCollectionObject<TEntity>) => callback(null, entities))
-                .tapCatch(err => callback(err));
+                return docs;
+            })
+            .tap((entities: TEntity | EntitiesCollectionObject<TEntity>) => callback(null, entities))
+            .tapCatch(err => callback(err));
 
-            return Promise.resolve(result);
-        });
+        return Promise.resolve(result);
     }
 
     private _loadInternal<T>(ids: string[], operation: LoadOperation): Promise<void> { 
