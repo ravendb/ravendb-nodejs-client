@@ -1,4 +1,4 @@
-import { HttpRequestBase } from "../../../Primitives/Http";
+import { HttpRequestParameters } from "../../../Primitives/Http";
 import { IOperation, OperationResultType } from "../OperationAbstractions";
 import { CompareExchangeResult } from "./CompareExchangeResult";
 import { RavenCommand } from "../../../Http/RavenCommand";
@@ -10,6 +10,9 @@ import { ServerNode } from "../../../Http/ServerNode";
 import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 import { ClassConstructor, ObjectTypeDescriptor } from "../../..";
 import { TypeUtil } from "../../../Utility/TypeUtil";
+import * as stream from "readable-stream";
+import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
+import { CollectResultStream } from '../../../Mapping/Json/Streams/CollectResultStream';
 
 export class PutCompareExchangeValueOperation<T> implements IOperation<CompareExchangeResult<T>> {
 
@@ -66,13 +69,11 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
         return false;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/cmpxchg?key=" + this._key + "&index=" + this._index;
 
         const tuple = {};
         tuple["Object"] = this._value;
-
-        const json = tuple;
 
         return {
             method: "PUT",
@@ -82,15 +83,26 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
         };
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        if (TypeUtil.isPrimitive(this._value)) {
-            this.result = CompareExchangeResult.parseFromString(response, this._conventions, null);
-        } else {
-            const type = this._conventions.getEntityTypeDescriptor(this._value as any) as ObjectTypeDescriptor;
-            this.result = CompareExchangeResult.parseFromString(
-                response, 
-                this._conventions, 
-                (TypeUtil.isClass(type) ? type : null) as any as ClassConstructor) as CompareExchangeResult<T>;
-        }
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        return RavenCommandResponsePipeline.create()
+            .collectBody()
+            .parseJsonAsync([ "Value", { emitPath: true }])
+            .streamKeyCaseTransform({ targetKeyCaseConvention: this._conventions.entityKeyCaseConvention })
+            .restKeyCaseTransform({
+                targetKeyCaseConvention: "camel"
+            })
+            .process(bodyStream)
+            .then(pipelineResult => {
+                const resObj = Object.assign(
+                    pipelineResult.rest as { successful: boolean, index: number }, 
+                    { value: { object: pipelineResult.result["value"] } });
+                const type = !TypeUtil.isPrimitive(this._value)
+                    ? this._conventions.getEntityTypeDescriptor(this._value as any) as ObjectTypeDescriptor
+                    : null;
+                const clazz: ClassConstructor<T> = TypeUtil.isClass(type) ? type as any : null;
+                this.result = CompareExchangeResult.parseFromObject(resObj, this._conventions, clazz);
+
+                return pipelineResult.body;
+            });
     }
 }

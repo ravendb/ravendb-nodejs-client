@@ -1,9 +1,9 @@
 import { DocumentConventions } from "../..";
 import { ServerNode } from "../../Http/ServerNode";
-import { HttpRequestBase } from "../../Primitives/Http";
+import { HttpRequestParameters } from "../../Primitives/Http";
 import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
 import { IMaintenanceOperation, OperationResultType } from "./OperationAbstractions";
-
+import * as stream from "readable-stream";
 export class GetOperationStateOperation implements IMaintenanceOperation<IRavenResponse> {
 
     private _id: number;
@@ -12,7 +12,7 @@ export class GetOperationStateOperation implements IMaintenanceOperation<IRavenR
         this._id = id;
     }
 
-    public  getCommand(conventions: DocumentConventions): RavenCommand<IRavenResponse> {
+    public getCommand(conventions: DocumentConventions): RavenCommand<IRavenResponse> {
         return new GetOperationStateCommand(DocumentConventions.defaultConventions, this._id);
     }
 
@@ -37,16 +37,16 @@ export class GetOperationStateCommand extends RavenCommand<IRavenResponse> {
         this._id = id;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = `${node.url}/databases/${node.database}/operations/state?id=${this._id}`;
         return { uri };
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        if (!response) {
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
             return;
         }
 
-        this.result = this._serializer.deserialize(response);
+        return this._parseResponseDefaultAsync(bodyStream);
     }
 }

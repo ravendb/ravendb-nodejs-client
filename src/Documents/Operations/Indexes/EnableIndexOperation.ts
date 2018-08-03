@@ -2,7 +2,7 @@ import { IMaintenanceOperation, OperationResultType } from "../OperationAbstract
 import { throwError } from "../../../Exceptions";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand, ServerNode } from "../../..";
-import { HttpRequestBase } from "../../../Primitives/Http";
+import { HttpRequestParameters } from "../../../Primitives/Http";
 
 export class EnableIndexOperation implements IMaintenanceOperation<void> {
 
@@ -36,9 +36,10 @@ export class EnableIndexCommand extends RavenCommand<void> {
         }
 
         this._indexName = indexName;
+        this._responseType = "Empty";
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database
             + "/admin/indexes/enable?name=" + encodeURIComponent(this._indexName);
         return {

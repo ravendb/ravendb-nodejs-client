@@ -1,10 +1,11 @@
 import {StatusCodes} from "../../Http/StatusCode";
-import {HttpRequestBase, HttpResponse} from "../../Primitives/Http";
+import {HttpRequestParameters, HttpResponse} from "../../Primitives/Http";
 import {ResponseDisposeHandling, RavenCommand } from "../../Http/RavenCommand";
 import { throwError } from "../../Exceptions";
 import { HttpCache } from "../../Http/HttpCache";
 import { getRequiredEtagHeader } from "../../Utility/HttpUtil";
 import { ServerNode } from "../../Http/ServerNode";
+import * as stream from "readable-stream";
 
 export class HeadDocumentCommand extends RavenCommand<string> {
 
@@ -20,13 +21,14 @@ export class HeadDocumentCommand extends RavenCommand<string> {
 
         this._id = id;
         this._changeVector = changeVector;
+        this._responseType = "Empty";
     }
 
     public get isReadRequest(): boolean {
         return false;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/docs?id=" + encodeURIComponent(this._id);
 
         const headers = this._getHeaders()
@@ -42,8 +44,12 @@ export class HeadDocumentCommand extends RavenCommand<string> {
         };
     }
 
-    public processResponse(cache: HttpCache, response: HttpResponse, url: string): ResponseDisposeHandling  {
-        if (StatusCodes.NotModified === response.statusCode) {
+    public async processResponse(
+        cache: HttpCache, 
+        response: HttpResponse,
+        bodyStream: stream.Readable, 
+        url: string): Promise<ResponseDisposeHandling>  {
+        if (response.statusCode === StatusCodes.NotModified) {
             this.result = this._changeVector;
             return "Automatic";
         }
@@ -55,13 +61,5 @@ export class HeadDocumentCommand extends RavenCommand<string> {
 
         this.result = getRequiredEtagHeader(response);
         return "Automatic";
-    }
-
-    public setResponse(response: string, fromCache: boolean): void {
-        if (response) {
-            this._throwInvalidResponse();
-        }
-
-        this.result = null;
     }
 }

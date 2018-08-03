@@ -2,7 +2,8 @@ import { IServerOperation, OperationResultType } from "../../Documents/Operation
 import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
 import { DocumentConventions } from "../..";
 import { ServerNode } from "../../Http/ServerNode";
-import { HttpRequestBase } from "../../Primitives/Http";
+import { HttpRequestParameters } from "../../Primitives/Http";
+import * as stream from "readable-stream";
 
 export class GetDatabaseNamesOperation implements IServerOperation<string[]> {
 
@@ -38,7 +39,7 @@ export class GetDatabaseNamesCommand extends RavenCommand<string[]> {
             return true;
         }
 
-        public createRequest(node: ServerNode): HttpRequestBase {
+        public createRequest(node: ServerNode): HttpRequestParameters {
             const uri = `${node.url}/databases?start=${this._start}&pageSize=${this._pageSize}&namesOnly=true`;
             return { uri };
         }
@@ -57,4 +58,21 @@ export class GetDatabaseNamesCommand extends RavenCommand<string[]> {
 
             this.result = databases;
         }
+
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
+            this._throwInvalidResponse();
+            return;
+        }
+
+        const results = await this._getDefaultResponsePipeline().process(bodyStream);
+        const { databases } = results.result as any;
+        if (!databases || !Array.isArray(databases) || !databases.length) {
+            this._throwInvalidResponse();
+        }
+
+        this.result = databases;
+
+        return results.body;
+    }
     }

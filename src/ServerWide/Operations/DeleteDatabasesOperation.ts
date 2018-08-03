@@ -1,9 +1,10 @@
+import * as stream from "readable-stream";
 import { IServerOperation, OperationResultType } from "../../Documents/Operations/OperationAbstractions";
 import { throwError } from "../../Exceptions";
 import { DocumentConventions } from "../..";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
-import { HttpRequestBase } from "../../Primitives/Http";
+import { HttpRequestParameters } from "../../Primitives/Http";
 
 export interface DeleteDatabaseResult {
     raftCommandIndex: number;
@@ -59,7 +60,7 @@ export class DeleteDatabaseCommand extends RavenCommand<DeleteDatabaseResult> {
         this._parameters = this._serializer.serialize(parameters);
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/admin/databases";
         return {
             uri,
@@ -71,8 +72,13 @@ export class DeleteDatabaseCommand extends RavenCommand<DeleteDatabaseResult> {
         };
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        this.result = this._serializer.deserialize(response);
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
+            this._throwInvalidResponse();
+        }
+
+        return this._getDefaultResponsePipeline()
+            .process(bodyStream).then(results => results.body);
     }
 
     public get isReadRequest() {

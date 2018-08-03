@@ -2,7 +2,7 @@ import { IMaintenanceOperation, OperationResultType } from "../OperationAbstract
 import { throwError } from "../../../Exceptions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { HttpRequestBase } from "../../../Primitives/Http";
+import { HttpRequestParameters } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
 
 export class StopIndexOperation implements IMaintenanceOperation<void> {
@@ -38,10 +38,11 @@ export class StopIndexCommand extends RavenCommand<void> {
             throwError("InvalidArgumentException", "Index name cannot be null");
         }
 
+        this._responseType = "Empty";
         this._indexName = indexName;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/admin/indexes/stop?name="
             + encodeURIComponent(this._indexName);
         return { method: "POST", uri };
@@ -51,5 +52,3 @@ export class StopIndexCommand extends RavenCommand<void> {
         return false;
     }
 }
-
-

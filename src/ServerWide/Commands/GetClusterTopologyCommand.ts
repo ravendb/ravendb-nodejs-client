@@ -1,7 +1,8 @@
 import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
 import { ClusterTopology } from "../../Http/ClusterTopology";
-import { HttpRequestBase } from "../../Primitives/Http";
+import { HttpRequestParameters } from "../../Primitives/Http";
 import { ServerNode } from "../../Http/ServerNode";
+import * as stream from "readable-stream";
 
 export class ClusterTopologyResponse {
     public leader: string;
@@ -15,7 +16,7 @@ export class GetClusterTopologyCommand extends RavenCommand<ClusterTopologyRespo
         super();
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/cluster/topology";
         return { uri };
     }
@@ -28,6 +29,19 @@ export class GetClusterTopologyCommand extends RavenCommand<ClusterTopologyRespo
         const resObj = this._serializer.deserialize<IRavenResponse>(response);
         const clusterTpl = Object.assign(new ClusterTopology(), resObj.topology);
         this.result = Object.assign(resObj as ClusterTopologyResponse, { topology: clusterTpl });
+    }
+    
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
+            this._throwInvalidResponse();
+        }
+
+        return this._getDefaultResponsePipeline().process(bodyStream)
+            .then(({ body, result }) => {
+                const clusterTpl = Object.assign(new ClusterTopology(), result.topology);
+                this.result = Object.assign(result as ClusterTopologyResponse, { topology: clusterTpl });
+                return body;
+            });
     }
 
     public get isReadRequest() {

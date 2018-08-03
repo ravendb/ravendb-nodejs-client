@@ -37,7 +37,8 @@ export class LoadOperation {
         return new GetDocumentsCommand({ 
             ids: this._idsToCheckOnServer, 
             includes: this._includes, 
-            metadataOnly: false
+            metadataOnly: false,
+            conventions: this._session.conventions
         });
     }
 

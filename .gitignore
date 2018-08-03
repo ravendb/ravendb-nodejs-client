@@ -7,13 +7,8 @@ dist/
 *.map
 src/**/*.js
 src/**/*.js.map
-src/**/*.d.ts
-!src/Types/**/*
 test/**/*.js
 test/**/*.d.ts
-test.old/**/*.js
-test.old/**/*.map
-test.old/**/*.d.ts
 .build/
 test/certs
 tryouts/

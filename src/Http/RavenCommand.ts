@@ -1,8 +1,9 @@
 import { ServerNode } from "./ServerNode";
 import { HttpCache } from "../Http/HttpCache";
 import { StatusCodes } from "../Http/StatusCode";
-import * as request from "request-promise";
-import { HttpRequestBase, HttpResponse } from "../Primitives/Http";
+import * as request from "request";
+import * as stream from "readable-stream";
+import { HttpRequestParameters, HttpResponse, HttpRequest } from "../Primitives/Http";
 import { getLogger } from "../Utility/LogUtil";
 import { throwError } from "../Exceptions";
 import { IRavenObject } from "../Types/IRavenObject";
@@ -11,8 +12,16 @@ import { Mapping } from "../Mapping";
 import { TypesAwareObjectMapper, TypeInfo } from "../Mapping/ObjectMapper";
 import { ObjectTypeDescriptor } from "..";
 import { JsonSerializer } from "../Mapping/Json/Serializer";
+import { RavenCommandResponsePipeline } from "./RavenCommandResponsePipeline";
+import * as StreamUtil from "../Utility/StreamUtil";
+import { 
+    ObjectKeyCaseTransformStreamOptions, 
+    ObjectKeyCaseTransformStream 
+} from "../Mapping/Json/Streams/ObjectKeyCaseTransformStream";
 
 const log = getLogger({ module: "RavenCommand" });
+
+export type RavenCommandResponse = string | request.Response;
 
 export type RavenCommandResponseType = "Empty" | "Object" | "Raw";
 
@@ -53,28 +62,64 @@ export abstract class RavenCommand<TResult> {
         this._canCacheAggressively = true;
     }
 
-    public abstract createRequest(node: ServerNode): HttpRequestBase;
+    public abstract createRequest(node: ServerNode): HttpRequestParameters;
 
     protected get _serializer(): JsonSerializer {
         return JsonSerializer.getDefaultForCommandPayload();
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        if (this._responseType === "Empty"
-            || this._responseType === "Raw") {
+    public setResponseFromCache(cachedValue: string): Promise<void> {
+        const readable = new stream.Readable();
+        readable.push(cachedValue);
+        readable.push(null);
+        return this.setResponseAsync(readable, true)
+            // tslint:disable-next-line:no-empty
+            .then(() => {});
+    }
+
+    protected _getDefaultResponsePipeline(): RavenCommandResponsePipeline<TResult> {
+        return RavenCommandResponsePipeline.create<TResult>()
+            .parseJsonSync()
+            .collectBody()
+            .streamKeyCaseTransform({
+                targetKeyCaseConvention: "camel"
+            });
+    }
+
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (this._responseType === "Empty" || this._responseType === "Raw") {
             this._throwInvalidResponse();
         }
 
-        throwError("NotSupportedException", 
+        return throwError("NotSupportedException",
             this.constructor.name +
-            " command must override the setResponse method which expects response with the following type: " +
+            " command must override the setResponseAsync()" +
+            " method which expects response with the following type: " +
             this._responseType);
     }
 
-    public send(requestOptions: HttpRequestBase): Promise<HttpResponse> {
+    public send(
+        requestOptions: HttpRequestParameters): Promise<{ response: HttpResponse, bodyStream: stream.Readable }> {
         const { body, uri } = requestOptions;
         log.info(`Send command ${this.constructor.name} to ${uri}${body ? " with body " + body : ""}.`);
-        return Promise.resolve(request(requestOptions));
+        
+        return new Promise((resolve, reject) => {
+            const passthrough = new stream.PassThrough();
+            try {
+                request(requestOptions)
+                    .on("error", reject)
+                    .on("response", (res) => {
+                        passthrough.pause();
+                        resolve({ 
+                            response: res, 
+                            bodyStream: passthrough 
+                        });
+                    })
+                    .pipe(passthrough);
+            } catch (err) {
+                reject(err);
+            }
+        });
     }
 
     public setResponseRaw(response: HttpResponse, body: string): void {
@@ -101,11 +146,12 @@ export abstract class RavenCommand<TResult> {
             && !!this.failedNodes.get(node);
     }
 
-    public processResponse(
-        cache: HttpCache, response: HttpResponse, url: string): ResponseDisposeHandling {
-        const responseEntity = response.body;
-
-        if (!responseEntity) {
+    public async processResponse(
+        cache: HttpCache, 
+        response: HttpResponse, 
+        bodyStream: stream.Readable, 
+        url: string): Promise<ResponseDisposeHandling> {
+        if (!response) {
             return "Automatic";
         }
 
@@ -122,19 +168,19 @@ export abstract class RavenCommand<TResult> {
                     return "Automatic";
                 }
 
-                // we intentionally don't dispose the reader here, we'll be using it
-                // in the command, any associated memory will be released on context reset
-                const { body } = response;
+                const bodyPromise = this.setResponseAsync(bodyStream, false);
+                bodyStream.resume();
+                const body = await bodyPromise;
 
                 if (cache) {
                     this._cacheResponse(cache, url, response, body);
                 }
 
-                this.setResponse(body as string, false);
-
                 return "Automatic";
             } else {
-                this.setResponseRaw(response, response.body);
+                bodyStream.resume();
+                const rawBody = await StreamUtil.readToEnd(bodyStream);
+                this.setResponseRaw(response, rawBody);
             }
 
             return "Automatic";
@@ -161,17 +207,30 @@ export abstract class RavenCommand<TResult> {
         cache.set(url, changeVector, responseJson);
     }
 
-    protected _addChangeVectorIfNotNull(changeVector: string, req: HttpRequestBase): void {
+    protected _addChangeVectorIfNotNull(changeVector: string, req: HttpRequestParameters): void {
         if (changeVector) {
             req.headers["If-Match"] = `"${changeVector}"`;
         }
     }
-
+    
     protected _parseResponseDefault<TResponse extends object>(
         response: string, typeInfo?: TypeInfo, knownTypes?: Map<string, ObjectTypeDescriptor>) {
         const res = this._serializer.deserialize(response);
-        const resObj = this._typedObjectMapper.fromObjectLiteral<TResponse>(res, typeInfo, knownTypes);
-        return resObj;
+        return this._typedObjectMapper.fromObjectLiteral<TResponse>(res, typeInfo, knownTypes);
+    }
+
+    protected _reviveResultTypes<TResponse extends object>(
+        raw: object, typeInfo?: TypeInfo, knownTypes?: Map<string, ObjectTypeDescriptor>) {
+        return this._typedObjectMapper.fromObjectLiteral<TResponse>(raw, typeInfo, knownTypes);
+    }
+
+    protected _parseResponseDefaultAsync(bodyStream: stream.Stream) {
+        return this._getDefaultResponsePipeline()
+            .process(bodyStream)
+            .then(results => {
+                this.result = results.result;
+                return results.body;
+            });
     }
 
     protected _getHeaders() {

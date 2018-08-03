@@ -1,6 +1,7 @@
 import * as os from "os";
 import * as BluebirdPromise from "bluebird";
 import * as semaphore from "semaphore";
+import * as stream from "readable-stream";
 import { acquireSemaphore } from "../Utility/SemaphoreUtil";
 import { getLogger, ILogger } from "../Utility/LogUtil";
 import { Timer } from "../Primitives/Timer";
@@ -22,22 +23,19 @@ import {
     GetClientConfigurationOperationResult
 } from "../Documents/Operations/Configuration/GetClientConfigurationOperation";
 import CurrentIndexAndNode from "./CurrentIndexAndNode";
-import { HttpRequestBase, HttpResponse } from "../Primitives/Http";
+import { HttpRequestParameters, HttpResponse, HttpRequestParametersWithoutUri } from '../Primitives/Http';
 import { HEADERS } from "../Constants";
 import { Stopwatch } from "../Utility/Stopwatch";
 import * as PromiseUtil from "../Utility/PromiseUtil";
 import { GetStatisticsOperation } from "../Documents/Operations/GetStatisticsOperation";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
 import { TypeUtil } from "../Utility/TypeUtil";
-import { RequestPromiseOptions, RequestPromise } from "request-promise";
 import { SessionInfo } from "../Documents/Session/IDocumentSession";
 import { JsonSerializer } from "../Mapping/Json/Serializer";
 import { validateUri } from "../Utility/UriUtil";
+import * as StreamUtil from "../Utility/StreamUtil";
 
-const DEFAULT_REQUEST_OPTIONS = {
-    simple: false,
-    resolveWithFullResponse: true
-};
+const DEFAULT_REQUEST_OPTIONS = {};
 
 const log = getLogger({ module: "RequestExecutor" });
 
@@ -162,17 +160,17 @@ export class RequestExecutor implements IDisposable {
 
     protected _disableClientConfigurationUpdates: boolean;
 
-    protected _customHttpRequestOptions: HttpRequestBase;
+    protected _customHttpRequestOptions: HttpRequestParametersWithoutUri;
 
-    protected _defaultRequestOptions: HttpRequestBase;
+    protected _defaultRequestOptions: HttpRequestParametersWithoutUri;
 
-    public static requestPostProcessor: (req: HttpRequestBase) => void = null;
+    public static requestPostProcessor: (req: HttpRequestParameters) => void = null;
 
-    public get customHttpRequestOptions(): HttpRequestBase {
+    public get customHttpRequestOptions(): HttpRequestParametersWithoutUri {
         return this._customHttpRequestOptions;
     }
 
-    public set customHttpRequestOptions(value: HttpRequestBase) {
+    public set customHttpRequestOptions(value: HttpRequestParametersWithoutUri) {
         this._customHttpRequestOptions = value;
         this._setDefaultRequestOptions();
     }
@@ -707,10 +705,10 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
         this._log.info(`Actual execute ${command.constructor.name} on ${chosenNode.url}`
             + ` ${ shouldRetry ? "with" : "without" } retry.`);
 
-        const req: HttpRequestBase = this._createRequest(chosenNode, command);
+        const req: HttpRequestParameters = this._createRequest(chosenNode, command);
 
-        let cachedChangeVector;
-        let cachedValue;
+        let cachedChangeVector: string;
+        let cachedValue: string;
         const cachedItem = this._getFromCache(command, req.uri.toString(), (cachedItemMetadata) => {
             cachedChangeVector = cachedItemMetadata.changeVector;
             cachedValue = cachedItemMetadata.response;
@@ -722,8 +720,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
                 && cachedItem.age < aggressiveCacheOptions.duration
                 && !cachedItem.mightHaveBeenModified
                 && command.canCacheAggressively) {
-                command.setResponse(cachedValue, true);
-                return;
+                return command.setResponseFromCache(cachedValue);
             }
 
             req.headers["If-None-Match"] = `"${cachedChangeVector}"`;
@@ -741,6 +738,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
         let response: HttpResponse = null;
         let responseDispose: ResponseDisposeHandling = "Automatic";
 
+        let bodyStream: stream.Readable;
         const result = BluebirdPromise.resolve()
             .then(() => {
 
@@ -752,7 +750,12 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
                         if (shouldExecuteOnAll) {
                             return this._executeOnAllToFigureOutTheFastest(chosenNode, command);
                         } else {
-                            return command.send(req);
+                            return command.send(req)
+                                .then(responseAndBody => {
+                                    bodyStream = responseAndBody.bodyStream;
+                                    return responseAndBody.response;
+                                });
+
                         }
                     });
             })
@@ -774,7 +777,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
                 sp.stop();
 
                 return this._handleServerDown(
-                    req.uri as string, chosenNode, nodeIndex, command, req, response, error, sessionInfo)
+                    req.uri as string, chosenNode, nodeIndex, command, req, response, null, error, sessionInfo)
                     .then(serverDownHandledSuccessfully => {
                         if (!serverDownHandledSuccessfully) {
                             this._throwFailedToContactAllNodes(command, req, error, null);
@@ -798,7 +801,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
                             cachedItem.notModified();
 
                             if (command.responseType === "Object") {
-                                command.setResponse(cachedValue, true);
+                                command.setResponseFromCache(cachedValue);
                             }
 
                             return;
@@ -812,6 +815,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
                                     command,
                                     req,
                                     response,
+                                    bodyStream,
                                     req.uri as string,
                                     sessionInfo,
                                     shouldRetry))
@@ -847,8 +851,11 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
                                 });
                         }
 
-                        responseDispose = command.processResponse(this._cache, response, req.uri as string);
-                        this._lastReturnedResponse = new Date();
+                        return command.processResponse(this._cache, response, bodyStream, req.uri as string)
+                            .then(_responseDispose => {
+                                responseDispose = _responseDispose;
+                                this._lastReturnedResponse = new Date();
+                            });
                     })
                     .finally(() => {
                         if (responseDispose === "Automatic") {
@@ -882,7 +889,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
 
     private _throwFailedToContactAllNodes<TResult> (
          command: RavenCommand<TResult>, 
-         req: HttpRequestBase, 
+         req: HttpRequestParameters, 
          e: Error, 
          timeoutException: Error) {
 
@@ -924,15 +931,18 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
             && this._nodeSelector.inSpeedTestPhase();
     }
 
-    private _handleUnsuccessfulResponse<TResult> (
+    private async _handleUnsuccessfulResponse<TResult> (
         chosenNode: ServerNode,
         nodeIndex: number,
         command: RavenCommand<TResult>,
-        req: HttpRequestBase,
+        req: HttpRequestParameters,
         response: HttpResponse,
+        responseBodyStream: stream.Readable,
         url: string,
         sessionInfo: SessionInfo,
         shouldRetry: boolean): Promise<boolean> {
+        responseBodyStream.resume();
+        const body = await StreamUtil.readToEnd(responseBodyStream);
         switch (response.statusCode) {
             case StatusCodes.NotFound:
                 this._cache.setNotFound(url);
@@ -940,22 +950,23 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
                     case "Empty":
                         return Promise.resolve(true);
                     case "Object":
-                        command.setResponse(null, false);
-                        break;
+                        return command.setResponseAsync(null, false)
+                            .then(() => true);
                     default:
                         command.setResponseRaw(response, null);
                         break;
                 }
-                return Promise.resolve(true);
+                return true;
 
             case StatusCodes.Forbidden: // TBD: include info about certificates
                 throwError("AuthorizationException",
                     `Forbidden access to ${chosenNode.database}@${chosenNode.url}`
                     + `, ${req.method || "GET"} ${req.uri}`);
+                break;
             case StatusCodes.Gone:
                 // request not relevant for the chosen node - the database has been moved to a different one
                 if (!shouldRetry) {
-                    return Promise.resolve(false);
+                    return false;
                 }
 
                 return this.updateTopology(chosenNode, Number.MAX_VALUE, true)
@@ -974,12 +985,13 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
             case StatusCodes.BadGateway:
             case StatusCodes.ServiceUnavailable:
                 return this._handleServerDown(
-                    url, chosenNode, nodeIndex, command, req, response, null, sessionInfo)
+                    url, chosenNode, nodeIndex, command, req, response, body, null, sessionInfo);
             case StatusCodes.Conflict:
-                RequestExecutor._handleConflict(response);
+                RequestExecutor._handleConflict(response, body);
+                break;
             default:
                 command.onResponseFailure(response);
-                return Promise.reject(ExceptionDispatcher.throwException(response));
+                ExceptionDispatcher.throwException(response, body);
         }
     }
 
@@ -999,7 +1011,10 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
             task = BluebirdPromise.resolve()
                 .then(() => {
                     const req = this._createRequest(nodes[taskNumber], command);
-                    return command.send(req);
+                    return command.send(req)
+                        .then(responseAndBodyStream => {
+                            return responseAndBodyStream.response;  
+                        });
                 })
                 .then(commandResult => new IndexAndResponse(taskNumber, commandResult))
                 .catch(err => {
@@ -1050,8 +1065,9 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
         chosenNode: ServerNode,
         nodeIndex: number,
         command: RavenCommand<TResult>,
-        req: HttpRequestBase,
+        req: HttpRequestParameters,
         response: HttpResponse,
+        body: string,
         error: any,
         sessionInfo: SessionInfo): Promise<boolean> {
 
@@ -1059,7 +1075,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
             command.failedNodes = new Map();
         }
 
-        RequestExecutor._addFailedResponseToCommand(chosenNode, command, req, response, error);
+        RequestExecutor._addFailedResponseToCommand(chosenNode, command, req, response, body, error);
 
         if (nodeIndex === null) {
             return Promise.resolve(false);
@@ -1093,12 +1109,13 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
     private static _addFailedResponseToCommand<TResult> (
         chosenNode: ServerNode, 
         command: RavenCommand<TResult>, 
-        req: HttpRequestBase, 
+        req: HttpRequestParameters, 
         response: HttpResponse, 
+        body: string,
         e: Error) {
 
-        if (response && response.body) {
-            const responseJson: string = response.body;
+        if (response && body) {
+            const responseJson: string = body;
             try {
                 const resExceptionSchema = JsonSerializer
                     .getDefaultForCommandPayload()
@@ -1131,7 +1148,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
         command.failedNodes.set(chosenNode, ExceptionDispatcher.get(exceptionSchema, StatusCodes.InternalServerError));
     }
 
-    private _createRequest<TResult> (node: ServerNode, command: RavenCommand<TResult>): HttpRequestBase {
+    private _createRequest<TResult> (node: ServerNode, command: RavenCommand<TResult>): HttpRequestParameters {
         const req = Object.assign(command.createRequest(node), this._defaultRequestOptions);
         req.headers = req.headers || {};
 
@@ -1151,8 +1168,8 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
         return req;
     }
 
-    private static _handleConflict (response: HttpResponse): void {
-        ExceptionDispatcher.throwException(response);
+    private static _handleConflict (response: HttpResponse, body: string): void {
+        ExceptionDispatcher.throwException(response, body);
     }
     
     private _spawnHealthChecks (chosenNode: ServerNode, nodeIndex: number): void   {

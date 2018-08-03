@@ -1,23 +1,25 @@
-import {RavenCommand} from "../../Http/RavenCommand";
-import {ServerNode} from "../../Http/ServerNode";
-import {Topology} from "../../Http/Topology";
-import { HttpRequestBase} from "../../Primitives/Http";
+import * as stream from "readable-stream";
+import { RavenCommand } from "../../Http/RavenCommand";
+import { ServerNode } from "../../Http/ServerNode";
+import { Topology } from "../../Http/Topology";
+import { HttpRequestParameters } from "../../Primitives/Http";
+import { RavenCommandResponsePipeline } from "../../Http/RavenCommandResponsePipeline";
 
 interface ServerNodeDto {
-  database: string;
-  url: string;
-  clusterTag?: string;
-  serverRole: string;
+    database: string;
+    url: string;
+    clusterTag?: string;
+    serverRole: string;
 }
 
 interface TopologyDto {
-  etag: number;
-  nodes?: ServerNodeDto[];
+    etag: number;
+    nodes?: ServerNodeDto[];
 }
 
 export class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
 
-  public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         let uri = `${node.url}/topology?name=${node.database}`;
 
         if (node.url.toLowerCase().indexOf(".fiddler") !== -1) {
@@ -27,23 +29,31 @@ export class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
         }
 
         return { uri };
-  }
-
-  public setResponse(response: string, fromCache: boolean): void {
-    if (!response) {
-      return;
     }
 
-    const rawTpl: TopologyDto = this._serializer.deserialize(response);
-    const nodes = rawTpl.nodes
-      ? rawTpl.nodes.map(x => Object.assign(new ServerNode(), x))
-      : null;
-    this.result = new Topology(
-      rawTpl.etag, 
-      nodes);
-  }
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
+            return;
+        }
 
-  public get isReadRequest(): boolean {
-    return true;
-  }
+        return RavenCommandResponsePipeline.create()
+            .collectBody()
+            .parseJsonSync()
+            .streamKeyCaseTransform({ targetKeyCaseConvention: "camel" })
+            .process(bodyStream)
+            .then(results => {
+                const rawTpl = results.result as TopologyDto;
+                const nodes = rawTpl.nodes
+                    ? rawTpl.nodes.map(x => Object.assign(new ServerNode(), x))
+                    : null;
+                this.result = new Topology(
+                    rawTpl.etag,
+                    nodes);
+                return results.body;
+            });
+    }
+
+    public get isReadRequest(): boolean {
+        return true;
+    }
 }

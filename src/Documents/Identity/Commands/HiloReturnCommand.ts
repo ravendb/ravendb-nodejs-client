@@ -1,6 +1,6 @@
 import { ServerNode } from "../../../Http/ServerNode";
 import { throwError } from "../../../Exceptions";
-import { HttpRequestBase } from "../../../Primitives/Http";
+import { HttpRequestParameters } from "../../../Primitives/Http";
 import { RavenCommand } from "../../../Http/RavenCommand";
 
 export class HiloReturnCommand extends RavenCommand<void> {
@@ -31,9 +31,10 @@ export class HiloReturnCommand extends RavenCommand<void> {
         this._tag = tag;
         this._last = last;
         this._end = end;
+        this._responseType = "Empty";
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = `${node.url}/databases/${node.database}/hilo/return?`
             + `tag=${this._tag}&end=${this._end}&last=${this._last}`;
         return {

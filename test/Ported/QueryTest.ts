@@ -24,7 +24,6 @@ describe("QueryTest", function () {
     afterEach(async () =>
         await disposeTestDocumentStore(store));
 
-    // tslint:disable-next-line:no-empty
     it("query simple", async () => {
         const session = store.openSession();
         const user1 = Object.assign(new User(), { name: "John" });

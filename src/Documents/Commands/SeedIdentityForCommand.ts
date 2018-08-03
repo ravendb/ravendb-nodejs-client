@@ -1,7 +1,8 @@
 import { RavenCommand } from "../../Http/RavenCommand";
 import { throwError } from "../../Exceptions";
-import { HttpRequestBase } from "../../Primitives/Http";
+import { HttpRequestParameters } from "../../Primitives/Http";
 import { ServerNode } from "../../Http/ServerNode";
+import * as stream from "readable-stream";
 
 export class SeedIdentityForCommand extends RavenCommand<number> {
 
@@ -22,7 +23,7 @@ export class SeedIdentityForCommand extends RavenCommand<number> {
         return false;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         RavenCommand.ensureIsNotNullOrEmpty(this._id, "id");
 
         const uri = node.url + "/databases/" + node.database 
@@ -34,17 +35,24 @@ export class SeedIdentityForCommand extends RavenCommand<number> {
         };
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        if (!response) {
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
             this._throwInvalidResponse();
         }
 
-        const jsonNode = this._serializer.deserialize(response);
-        if (!jsonNode["newSeedValue"]) {
-            this._throwInvalidResponse();
-        }
+        return this._getDefaultResponsePipeline()
+            .process(bodyStream)
+            .then(({ result, body }) => {
 
-        this.result = jsonNode["newSeedValue"];
+                const newSeedValue = result["newSeedValue"];
+                if (!newSeedValue) {
+                    this._throwInvalidResponse();
+                }
+
+                this.result = newSeedValue;
+                
+                return body;
+            });
     }
 
 }

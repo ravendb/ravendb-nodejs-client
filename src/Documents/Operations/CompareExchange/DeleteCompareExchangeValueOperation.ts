@@ -1,4 +1,4 @@
-import { HttpRequestBase } from '../../../Primitives/Http';
+import { HttpRequestParameters } from '../../../Primitives/Http';
 import { IOperation, OperationResultType } from "../OperationAbstractions";
 import { CompareExchangeResult } from "./CompareExchangeResult";
 import { ClassConstructor } from "../../../Types";
@@ -8,6 +8,9 @@ import { HttpCache } from "../../../Http/HttpCache";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { throwError } from "../../../Exceptions";
 import { ServerNode } from '../../../Http/ServerNode';
+import * as stream from "readable-stream";
+import { RavenCommandResponsePipeline } from '../../../Http/RavenCommandResponsePipeline';
+import { TypeUtil } from '../../../Utility/TypeUtil';
 
 export class DeleteCompareExchangeValueOperation<T> implements IOperation<CompareExchangeResult<T>> {
 
@@ -55,7 +58,7 @@ export class RemoveCompareExchangeCommand<T> extends RavenCommand<CompareExchang
         return true;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/cmpxchg?key=" + this._key + "&index=" + this._index;
         return {
             method: "DELETE",
@@ -63,7 +66,22 @@ export class RemoveCompareExchangeCommand<T> extends RavenCommand<CompareExchang
         };
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        this.result = CompareExchangeResult.parseFromString(response, this._conventions, this._clazz);
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        return RavenCommandResponsePipeline.create()
+            .collectBody()
+            .parseJsonAsync([ "Value", { emitPath: true }])
+            .streamKeyCaseTransform({ targetKeyCaseConvention: this._conventions.entityKeyCaseConvention })
+            .restKeyCaseTransform({
+                targetKeyCaseConvention: "camel"
+            })
+            .process(bodyStream)
+            .then(pipelineResult => {
+                const resObj = Object.assign(
+                    pipelineResult.rest as { successful: boolean, index: number }, 
+                    { value: { object: pipelineResult.result["value"] } });
+                this.result = CompareExchangeResult.parseFromObject(resObj, this._conventions, this._clazz);
+
+                return pipelineResult.body;
+            });
     }
 }

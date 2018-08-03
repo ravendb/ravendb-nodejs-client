@@ -1,10 +1,11 @@
-import { HttpRequestBase } from "../../../Primitives/Http";
+import { HttpRequestParameters } from "../../../Primitives/Http";
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 import { ModifyOngoingTaskResult } from "../../../ServerWide/ModifyOnGoingTaskResult";
 import { ExternalReplication } from "../../Replication/ExternalReplication";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { ServerNode } from "../../../Http/ServerNode";
+import * as stream from "readable-stream";
 
 export class UpdateExternalReplicationOperation implements IMaintenanceOperation<ModifyOngoingTaskResult> {
 
@@ -31,7 +32,7 @@ export class UpdateExternalReplicationCommand extends RavenCommand<ModifyOngoing
         this._newWatcher = newWatcher;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/admin/tasks/external-replication";
 
         const headers = this._getHeaders()
@@ -49,11 +50,11 @@ export class UpdateExternalReplicationCommand extends RavenCommand<ModifyOngoing
         return false;
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        if (!response) {
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
             this._throwInvalidResponse();
         }
 
-        this.result = this._serializer.deserialize(response);
+        return this._parseResponseDefaultAsync(bodyStream);
     }
 }

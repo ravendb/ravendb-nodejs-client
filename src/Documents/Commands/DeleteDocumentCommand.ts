@@ -1,7 +1,7 @@
-import {HttpRequestBase} from '../../Primitives/Http';
+import {HttpRequestParameters} from "../../Primitives/Http";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { throwError } from "../../Exceptions";
-import { ServerNode } from '../../Http/ServerNode';
+import { ServerNode } from "../../Http/ServerNode";
 
 export class DeleteDocumentCommand extends RavenCommand<void> {
     private _id: string;
@@ -16,11 +16,12 @@ export class DeleteDocumentCommand extends RavenCommand<void> {
             throwError("InvalidArgumentException", "Id cannot be null.");
         }
 
+        this._responseType = "Empty";
         this._id = id;
         this._changeVector = changeVector;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         RavenCommand.ensureIsNotNullOrEmpty(this._id, "id");
 
         const uri = node.url + "/databases/" + node.database + "/docs?id=" + encodeURIComponent(this._id);

@@ -1,4 +1,4 @@
-import { HttpRequestBase } from "../../../Primitives/Http";
+import { HttpRequestParameters } from "../../../Primitives/Http";
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 import { IndexLockMode } from "../../Indexes/Enums";
 import { RavenCommand } from "../../../Http/RavenCommand";
@@ -63,10 +63,11 @@ export class SetIndexLockCommand extends RavenCommand<void> {
             throwError("InvalidArgumentException", "Parameters cannot be null");
         }
 
+        this._responseType = "Empty";
         this._parameters = this._typedObjectMapper.toObjectLiteral(parameters);
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/indexes/set-lock";
         const body = this._serializer.serialize(this._parameters);
         const headers = this._getHeaders()

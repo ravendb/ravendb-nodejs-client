@@ -3,7 +3,8 @@ import { ServerNode } from "../../../Http/ServerNode";
 import { DateUtil } from "../../../Utility/DateUtil";
 import { RavenCommand} from "../../../Http/RavenCommand";
 import { throwError } from "../../../Exceptions";
-import { HttpRequestBase } from "../../../Primitives/Http";
+import { HttpRequestParameters } from "../../../Primitives/Http";
+import * as stream from "readable-stream";
 
 export interface HiLoResult {
     prefix: string;
@@ -44,7 +45,7 @@ export class NextHiloCommand extends RavenCommand<HiLoResult> {
         this._lastRangeMax = lastRangeMax;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const lastRangeAt: string = this._lastRangeAt
             ? DateUtil.stringify(this._lastRangeAt)
             : "";
@@ -61,12 +62,18 @@ export class NextHiloCommand extends RavenCommand<HiLoResult> {
         return { uri };
     }
 
-    public setResponse(response: string, fromCache: boolean) {
-        this.result = this._parseResponseDefault(response, {
-            nestedTypes: { 
-                lastRangeAt: "date"
-            }
-        });
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        return this._getDefaultResponsePipeline()
+            .process(bodyStream)
+            .then(results => {
+                this.result = this._reviveResultTypes(results.result, {
+                    nestedTypes: {
+                        lastRangeAt: "date"
+                    }
+                });
+                
+                return results.body;
+            });
     }
 
     public get isReadRequest(): boolean {

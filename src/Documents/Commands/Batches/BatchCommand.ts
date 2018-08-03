@@ -1,3 +1,4 @@
+import * as stream from "readable-stream";
 import { IRavenArrayResult } from "../../../Types";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { IDisposable } from "../../../Types/Contracts";
@@ -6,9 +7,11 @@ import { BatchOptions } from "./BatchOptions";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { throwError } from "../../../Exceptions";
 import { ServerNode } from "../../../Http/ServerNode";
-import { HttpRequestBase } from "../../../Primitives/Http";
+import { HttpRequestParameters } from "../../../Primitives/Http";
 import { HeadersBuilder } from "../../../Utility/HttpUtil";
 import { JsonSerializer } from "../../../Mapping/Json/Serializer";
+import { KEY_CASE_TRANSFORM_METADATA_IGNORE_KEYS } from "../../../Mapping/Json/Streams";
+import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
 
 export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDisposable {
 
@@ -51,7 +54,7 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
             */
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/bulk_docs";
         const headers = HeadersBuilder.create().withContentTypeJson().build();
 
@@ -62,7 +65,7 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
         const body = JsonSerializer.getDefault().serialize({ Commands: commandsArray });
 
         const queryString = this._appendOptions();
-        const request: HttpRequestBase = { 
+        const request: HttpRequestParameters = { 
             method: "POST", 
             uri: uri + queryString,
             headers,
@@ -88,14 +91,25 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
             */
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        if (!response) {
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
             throwError("InvalidOperationException", 
                 "Got null response from the server after doing a batch,"
                 + " something is very wrong. Probably a garbled response.");
         }
 
-        this.result = this._parseResponseDefault(response);
+        return RavenCommandResponsePipeline.create<IRavenArrayResult>()
+            .collectBody()
+            .parseJsonSync()
+            .streamKeyCaseTransform({
+                targetKeyCaseConvention: "camel",
+                ignoreKeys: [ /^@/ ]
+            })
+            .process(bodyStream)
+            .then(results => {
+                this.result = results.result;
+                return results.body;
+            });
     }
 
     private _appendOptions(): string {

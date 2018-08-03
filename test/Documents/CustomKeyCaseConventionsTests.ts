@@ -4,7 +4,7 @@ import {
     IDocumentStore,
 } from "../../src";
 
-describe("With custom conventions set", function () {
+describe("With custom key case conventions set", function () {
 
     let store: IDocumentStore;
 
@@ -16,5 +16,7 @@ describe("With custom conventions set", function () {
         await disposeTestDocumentStore(store));
 
     // tslint:disable-next-line:no-empty
-    it.skip("TODO handles PascalCased entities", async () => {});
+    it.skip("TODO loads PascalCased entities as camelCased", async () => {});
+    // tslint:disable-next-line:no-empty
+    it.skip("TODO stores camelCased entities as PascalCased", async () => {});
 });

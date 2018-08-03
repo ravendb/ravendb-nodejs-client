@@ -1,5 +1,5 @@
 import * as StringBuilder from "string-builder";
-import { HttpRequestBase } from "../../../Primitives/Http";
+import { HttpRequestParameters } from "../../../Primitives/Http";
 import { IOperation, OperationResultType } from "../OperationAbstractions";
 import { CompareExchangeValue } from "./CompareExchangeValue";
 import { throwError } from "../../../Exceptions";
@@ -9,7 +9,9 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { HttpCache } from "../../../Http/HttpCache";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
-import { CompareExchangeValueResultParser } from "./CompareExchangeValueResultParser";
+import { CompareExchangeValueResultParser, GetCompareExchangeValuesResponse } from "./CompareExchangeValueResultParser";
+import * as stream from "readable-stream";
+import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
 
 export interface GetCompareExchangeValuesParameters<T> {
     keys?: string[];
@@ -92,7 +94,7 @@ export class GetCompareExchangeValuesCommand<T> extends RavenCommand<{ [key: str
         return true;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const pathBuilder = new StringBuilder(node.url);
 
         pathBuilder.append("/databases/")
@@ -125,7 +127,17 @@ export class GetCompareExchangeValuesCommand<T> extends RavenCommand<{ [key: str
         return { uri };
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        this.result = CompareExchangeValueResultParser.getValues(response, this._conventions, this._operation.clazz);
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        return RavenCommandResponsePipeline.create()
+            .collectBody()
+            .parseJsonSync()
+            .streamKeyCaseTransform({ targetKeyCaseConvention: "camel" })
+            .process(bodyStream)
+            .then(results => {
+                this.result = CompareExchangeValueResultParser.getValues<T>(
+                    results.result as GetCompareExchangeValuesResponse, this._conventions, this._operation.clazz);
+
+                return results.body;
+            });
     }
 }

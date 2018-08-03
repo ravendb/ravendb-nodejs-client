@@ -1,7 +1,8 @@
 import { IMaintenanceOperation } from "../OperationAbstractions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { DocumentConventions, ServerNode, OperationResultType } from "../../..";
-import { HttpRequestBase } from "../../../Primitives/Http";
+import { HttpRequestParameters } from "../../../Primitives/Http";
+import * as stream from "readable-stream";
 
 export class GetIndexNamesOperation implements IMaintenanceOperation<string[]> {
 
@@ -33,18 +34,23 @@ export class GetIndexNamesCommand extends RavenCommand<string[]> {
         this._pageSize = pageSize;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database
             + "/indexes?start=" + this._start + "&pageSize=" + this._pageSize + "&namesOnly=true";
         return { uri };
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        if (!response) {
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
             this._throwInvalidResponse();
         }
 
-        this.result = this._serializer.deserialize(response)["results"];
+        return this._getDefaultResponsePipeline()
+            .process(bodyStream)
+            .then(results => {
+                this.result = results.result["results"];
+                return results.body;
+            });
     }
 
     public get isReadRequest(): boolean {

@@ -1,4 +1,4 @@
-import {HttpRequestBase} from "../../Primitives/Http";
+import {HttpRequestParameters} from "../../Primitives/Http";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { QueryResult } from "../Queries/QueryResult";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
@@ -8,6 +8,13 @@ import { ServerNode } from "../../Http/ServerNode";
 import * as StringBuilder from "string-builder";
 import { ObjectKeysTransform } from "../../Mapping/ObjectMapper";
 import {JsonSerializer } from "../../Mapping/Json/Serializer";
+import * as stream from "readable-stream";
+import { CollectResultStreamOptions } from "../../Mapping/Json/Streams/CollectResultStream";
+import { DocumentsResult } from "./GetDocumentsCommand";
+import { RavenCommandResponsePipeline, IRavenCommandResponsePipelineResult } from "../../Http/RavenCommandResponsePipeline";
+import { getIgnoreKeyCaseTransformKeysFromDocumentMetadata } from "../../Mapping/Json/Docs";
+
+const QUERY_DOCS_JSON_PATH = [ /^(Results|Includes)$/, { emitPath: true } ];
 
 export class QueryCommand extends RavenCommand<QueryResult> {
 
@@ -31,7 +38,7 @@ export class QueryCommand extends RavenCommand<QueryResult> {
         this._indexEntriesOnly = indexEntriesOnly;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         this._canCache = !this._indexQuery.disableCaching;
 
         // we won't allow aggressive caching of queries with WaitForNonStaleResults
@@ -82,9 +89,64 @@ export class QueryCommand extends RavenCommand<QueryResult> {
             typeName: QueryResult.name
         }, new Map([[QueryResult.name, QueryResult]]));
 
-        if (fromCache) {
-            this.result.durationInMs = -1;
+    }
+
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
+            this.result = null;
+            return;
         }
+        
+        const collectResultOpts: CollectResultStreamOptions<DocumentsResult> = {
+            reduceResults: (result: DocumentsResult, chunk: { path: string | any[], value: object }) => {
+                const doc = chunk.value;
+                const path = chunk.path;
+
+                if (!doc["@metadata"]) {
+                    throw new Error("Document must have @metadata.");
+                }
+
+                if (path[0] === "Results") {
+                    result.results.push(doc);
+                } else if (path[0] === "Includes") {
+                    if (!doc["@metadata"]["@id"]) {
+                        throw new Error("Document must have @id in @metadata.");
+                    }
+
+                    result.includes[doc["@metadata"]["@id"]] = doc;
+                }
+
+                return result;
+            },
+            initResult: { results: [], includes: {} } as DocumentsResult
+        };
+
+        return RavenCommandResponsePipeline.create()
+            .collectBody()
+            .parseJsonAsync(QUERY_DOCS_JSON_PATH)
+            .streamKeyCaseTransform({
+                targetKeyCaseConvention: this._conventions.entityKeyCaseConvention,
+                extractIgnorePaths: (e) => [ 
+                    ...getIgnoreKeyCaseTransformKeysFromDocumentMetadata(e), 
+                    /@metadata\./ 
+                ],
+                ignoreKeys: [ /^@/ ]
+            })
+            .restKeyCaseTransform({ targetKeyCaseConvention: "camel" })
+            .collectResult(collectResultOpts)
+            .process(bodyStream)
+            .then((result: IRavenCommandResponsePipelineResult<DocumentsResult>) => {
+                const rawResult = Object.assign(result.result, result.rest) as QueryResult;
+                this.result = this._reviveResultTypes(rawResult, {
+                    typeName: QueryResult.name
+                }, new Map([[QueryResult.name, QueryResult]]));
+
+                if (fromCache) {
+                    this.result.durationInMs = -1;
+                }
+                
+                return result.body;
+            });
     }
 
     public get isReadRequest(): boolean {

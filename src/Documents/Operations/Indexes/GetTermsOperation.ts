@@ -3,7 +3,8 @@ import { throwError } from "../../../Exceptions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { ServerNode } from "../../..";
-import { HttpRequestBase } from "../../../Primitives/Http";
+import { HttpRequestParameters } from "../../../Primitives/Http";
+import * as stream from "readable-stream";
 
 export class GetTermsOperation implements IMaintenanceOperation<string[]> {
 
@@ -13,7 +14,7 @@ export class GetTermsOperation implements IMaintenanceOperation<string[]> {
     private _pageSize: number;
 
     public constructor(indexName: string, field: string, fromValue: string);
-    public constructor(indexName: string, field: string, fromValue: string, pageSize: number); 
+    public constructor(indexName: string, field: string, fromValue: string, pageSize: number);
     public constructor(indexName: string, field: string, fromValue: string, pageSize: number = null) {
         if (!indexName) {
             throwError("InvalidArgumentException", "IndexName cannot be null");
@@ -47,7 +48,7 @@ export class GetTermsCommand extends RavenCommand<string[]> {
     private _pageSize: number;
 
     public constructor(indexName: string, field: string, fromValue: string);
-    public constructor(indexName: string, field: string, fromValue: string, pageSize: number); 
+    public constructor(indexName: string, field: string, fromValue: string, pageSize: number);
     public constructor(indexName: string, field: string, fromValue: string, pageSize: number = null) {
         super();
 
@@ -65,28 +66,31 @@ export class GetTermsCommand extends RavenCommand<string[]> {
         this._pageSize = pageSize;
     }
 
-        public createRequest(node: ServerNode): HttpRequestBase  {
-            const uri = node.url + "/databases/" + node.database + "/indexes/terms?name=" +
-                    encodeURIComponent(this._indexName) + "&field=" + encodeURIComponent(this._field) +
-                    "&fromValue=" + (this._fromValue || "") + "&pageSize=" + (this._pageSize || "");
+    public createRequest(node: ServerNode): HttpRequestParameters {
+        const uri = node.url + "/databases/" + node.database + "/indexes/terms?name=" +
+            encodeURIComponent(this._indexName) + "&field=" + encodeURIComponent(this._field) +
+            "&fromValue=" + (this._fromValue || "") + "&pageSize=" + (this._pageSize || "");
 
-            return { uri };
-        }
-
-
-        public setResponse(response: string, fromCache: boolean): void {
-            if (!response) {
-                this._throwInvalidResponse();
-            }
-
-            const termResult = this._parseResponseDefault(response) as TermsQueryResult;
-            this.result = termResult["terms"];
-        }
-
-        public get isReadRequest(): boolean {
-            return true;
-        }
+        return { uri };
     }
+
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
+            this._throwInvalidResponse();
+        }
+
+        return this._getDefaultResponsePipeline()
+            .process(bodyStream)
+            .then(results => {
+                this.result = results.result["terms"];
+                return results.body;
+            });
+    }
+
+    public get isReadRequest(): boolean {
+        return true;
+    }
+}
 
 export interface TermsQueryResult {
     terms: string[];

@@ -1,6 +1,7 @@
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
-import { HttpRequestBase } from "../../Primitives/Http";
+import { HttpRequestParameters } from "../../Primitives/Http";
+import * as stream from "readable-stream";
 
 export class TcpConnectionInfo {
     public url: string;
@@ -20,7 +21,7 @@ export class GetTcpInfoCommand extends RavenCommand<TcpConnectionInfo> {
         this._dbName = dbName;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         let uri;
         if (!this._dbName) {
             uri = `${node.url}/info/tcp?tcp=${this._tag}`;
@@ -35,12 +36,12 @@ export class GetTcpInfoCommand extends RavenCommand<TcpConnectionInfo> {
         };
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        if (!response) {
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
             this._throwInvalidResponse();
         }
 
-        this.result = this._serializer.deserialize(response);
+        return this._parseResponseDefaultAsync(bodyStream);
     }
 
     public get isReadRequest() {

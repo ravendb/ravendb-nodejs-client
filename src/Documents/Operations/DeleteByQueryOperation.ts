@@ -1,4 +1,4 @@
-import { HttpRequestBase } from "../../Primitives/Http";
+import { HttpRequestParameters } from "../../Primitives/Http";
 import { IOperation, OperationIdResult, OperationResultType } from "./OperationAbstractions";
 import { IndexQuery, writeIndexQuery } from "../Queries/IndexQuery";
 import { throwError } from "../../Exceptions";
@@ -10,6 +10,7 @@ import { ServerNode } from "../../Http/ServerNode";
 import * as StringBuilder from "string-builder";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { QueryOperationOptions } from "../Queries/QueryOperationOptions";
+import * as stream from "readable-stream";
 
 export class DeleteByQueryOperation implements IOperation<OperationIdResult> {
 
@@ -53,7 +54,7 @@ export class DeleteByIndexCommand extends RavenCommand<OperationIdResult> {
         this._options = options || {} as QueryOperationOptions;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const path = new StringBuilder(node.url)
             .append("/databases/")
             .append(node.database)
@@ -87,12 +88,12 @@ export class DeleteByIndexCommand extends RavenCommand<OperationIdResult> {
         };
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        if (!response) {
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
             this._throwInvalidResponse();
         }
 
-        this.result = this._serializer.deserialize(response);
+        return this._parseResponseDefaultAsync(bodyStream);
     }
 
     public get isReadRequest(): boolean {

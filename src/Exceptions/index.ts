@@ -15,7 +15,7 @@ export function throwError(
   errName: RavenErrorType | string = "RavenException", 
   message?: string, 
   errCause?: Error, 
-  info?: { [key: string]: any }) {
+  info?: { [key: string]: any }): never {
   throw getError(errName, message, errCause, info); 
 }
 
@@ -147,14 +147,14 @@ export class ExceptionDispatcher {
         return getError(determinedType || "RavenException", error);
     }
 
-    public static throwException(response: HttpResponse): void {
+    public static throwException(response: HttpResponse, body: string): void | never {
         if (!response) {
             throw getError("InvalidArgumentException", "Response cannot be null");
         }
 
         let errorToThrow: Error;
         try {
-            const json: string = response.body;
+            const json: string = body;
             const schema: ExceptionSchema = ExceptionDispatcher._jsonSerializer.deserialize(json);
 
             if (response.statusCode === StatusCodes.Conflict) {

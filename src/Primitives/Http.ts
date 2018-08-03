@@ -1,5 +1,6 @@
 import * as request from "request";
-import * as requestPromise from "request-promise";
 
-export type HttpRequestBase = request.UriOptions & requestPromise.RequestPromiseOptions;
+export type HttpRequestParameters = request.UriOptions & request.CoreOptions;
+export type HttpRequestParametersWithoutUri = request.CoreOptions;
 export type HttpResponse = request.Response;
+export type HttpRequest = request.Request;

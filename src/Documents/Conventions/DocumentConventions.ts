@@ -14,6 +14,7 @@ import { throwError } from "../../Exceptions";
 import { CONSTANTS } from "../../Constants";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { DateUtil } from "../../Utility/DateUtil";
+import { KeyCasingConvention } from "../../Utility/ObjectUtil";
 import { JsonSerializer } from "../../Mapping/Json/Serializer";
 
 export type IdConvention = (databaseName: string, entity: object) => Promise<string>;
@@ -61,6 +62,9 @@ export class DocumentConventions {
     
     private _knownEntityTypes: Map<string, ObjectTypeDescriptor>;
 
+    private _entityKeyCaseConvention: KeyCasingConvention;
+    private _serverSideEntityKeyCaseConvention: KeyCasingConvention;
+
     private _entityObjectMapper: TypesAwareObjectMapper = new TypesAwareObjectMapper({
        knownTypes: this._knownEntityTypes,
        dateFormat: DateUtil.DEFAULT_DATE_FORMAT 
@@ -72,6 +76,7 @@ export class DocumentConventions {
     public constructor() {
         this._readBalanceBehavior = "None";
         this._identityPartsSeparator = "/";
+        
         this._findIdentityPropertyNameFromCollectionName = entityName => "id";
         this._findJsType = (id: string, doc: object) => {
             const metadata = doc[CONSTANTS.Documents.Metadata.KEY];
@@ -138,9 +143,26 @@ export class DocumentConventions {
         this._readBalanceBehavior = value;
     }
 
+    public get entityKeyCaseConvention(): KeyCasingConvention {
+        return this._entityKeyCaseConvention;
+    }
+
+    public set entityKeyCaseConvention(val) {
+        this._entityKeyCaseConvention = val;
+    }
+
+    public get serverSideEntityKeyCaseConvention() {
+        return this._serverSideEntityKeyCaseConvention;
+    }
+
+    public set serverSideEntityKeyCaseConvention(val) {
+        this._serverSideEntityKeyCaseConvention = val;
+    }
+
     public deserializeEntityFromJson(documentType: ObjectTypeDescriptor, document: object): object {
         try {
-            return this.entityObjectMapper.toObjectLiteral(document);
+            const typeName = documentType ? documentType.name : null;
+            return this.entityObjectMapper.fromObjectLiteral(document, { typeName });
         } catch (err) {
             throwError("RavenException", "Cannot deserialize entity", err);
         }

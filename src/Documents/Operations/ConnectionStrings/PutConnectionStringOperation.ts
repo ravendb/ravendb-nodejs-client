@@ -1,9 +1,10 @@
-import { HttpRequestBase } from "../../../Primitives/Http";
+import { HttpRequestParameters } from "../../../Primitives/Http";
 import { ConnectionString } from "../../../ServerWide/ConnectionString";
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
+import * as stream from "readable-stream";
 
 export interface PutConnectionStringResult {
     eTag: number;
@@ -40,7 +41,7 @@ export class PutConnectionStringCommand<T extends ConnectionString> extends Rave
         return false;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/admin/connection-strings";
 
         const headers = this._getHeaders()
@@ -55,11 +56,12 @@ export class PutConnectionStringCommand<T extends ConnectionString> extends Rave
         };
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        if (!response) {
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
             this._throwInvalidResponse();
         }
 
-        this.result = this._serializer.deserialize(response);
+        return this._parseResponseDefaultAsync(bodyStream);
     }
-    }
+
+}
