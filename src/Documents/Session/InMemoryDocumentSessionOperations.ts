@@ -206,12 +206,13 @@ export abstract class InMemoryDocumentSessionOperations
         }
 
         const documentInfo = this._getDocumentInfo(instance);
+
         const metadataInstance = documentInfo.metadataInstance;
         if (metadataInstance) {
             return metadataInstance;
         }
 
-        const metadata = documentInfo.metadata;
+        const metadata = JSON.parse(JSON.stringify(documentInfo.metadata)); // deep clone
         documentInfo.metadataInstance = metadata;
         return metadata;
     }

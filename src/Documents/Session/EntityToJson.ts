@@ -71,19 +71,32 @@ export class EntityToJson {
             return;
         }
 
-        documentInfo.metadata[CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES] = 
-            typeInfo.nestedTypes;
-        documentInfo.metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] =
-            typeInfo.typeName;
-
         let setMetadata: boolean = false;
-        const metadataNode: object = {};
+        let metadataNode: object = {};
+        
+        documentInfo.metadata[CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES] = typeInfo.nestedTypes;
+        documentInfo.metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] = typeInfo.typeName;
 
-        if (documentInfo.metadata 
-            && Object.keys(documentInfo.metadata).length > 0) {
+        if (documentInfo.metadataInstance) {
             setMetadata = true;
-            Object.assign(metadataNode, documentInfo.metadata);
-        }
+            metadataNode = JSON.parse(JSON.stringify(documentInfo.metadataInstance)); 
+            
+        } else if (documentInfo.metadata && Object.keys(documentInfo.metadata).length > 0) {
+            setMetadata = true;           
+            metadataNode = JSON.parse(JSON.stringify(documentInfo.metadata)); 
+    
+            // Add the document @metadata fields (RDBC-213)
+            for (let metadataEntry in documentInfo.entity[CONSTANTS.Documents.Metadata.KEY]) {
+                if (documentInfo.entity[CONSTANTS.Documents.Metadata.KEY].hasOwnProperty(metadataEntry)) {
+                        const entry = {
+                            key: metadataEntry,
+                            value: documentInfo.entity[CONSTANTS.Documents.Metadata.KEY][metadataEntry]
+                        };
+                        setMetadata = true;
+                        metadataNode[entry.key] = entry.value;
+                }
+            }
+        } 
 
         if (documentInfo.collection) {
             setMetadata = true;
