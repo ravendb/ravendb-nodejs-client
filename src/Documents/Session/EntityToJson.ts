@@ -9,6 +9,7 @@ import { Mapping } from "../../Mapping";
 import { ObjectTypeDescriptor} from "../..";
 import { throwError } from "../../Exceptions";
 import { JsonSerializer } from "../../Mapping/Json/Serializer";
+import { ObjectUtil } from "../../Utility/ObjectUtil";
 
 export class EntityToJson {
 
@@ -79,11 +80,11 @@ export class EntityToJson {
 
         if (documentInfo.metadataInstance) {
             setMetadata = true;
-            metadataNode = JSON.parse(JSON.stringify(documentInfo.metadataInstance)); 
+            metadataNode = ObjectUtil.deepClone(documentInfo.metadataInstance);
             
         } else if (documentInfo.metadata && Object.keys(documentInfo.metadata).length > 0) {
             setMetadata = true;           
-            metadataNode = JSON.parse(JSON.stringify(documentInfo.metadata)); 
+            metadataNode = ObjectUtil.deepClone(documentInfo.metadata);
     
             // Add the document @metadata fields (RDBC-213)
             for (let metadataEntry in documentInfo.entity[CONSTANTS.Documents.Metadata.KEY]) {
