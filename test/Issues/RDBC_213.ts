@@ -13,7 +13,7 @@ describe("[RDBC-213] Metadata is not saved", function () {
     afterEach(async () => 
         await disposeTestDocumentStore(store));
 
-    it.skip("[NOT SUPPORTED YET] - session.store() saves metadata using entity '@metadata' field", async () => {
+    it("session.store() saves metadata using entity '@metadata' field", async () => {
         const session = store.openSession();
         const expiresAt = new Date(2019, 11, 12);
         const expiringDocument = {
