@@ -6,6 +6,7 @@ import { IRavenObject } from "../..";
 import { ObjectKeysTransform } from "../../Mapping/ObjectMapper";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { JsonSerializer } from "../../Mapping/Json/Serializer";
+import { throwError } from "../../Exceptions";
 
 export interface GetDocumentsByIdCommandOptions {
     id: string;
@@ -52,16 +53,22 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
     private _startAfter: string;
 
 
-    public constructor(
-        opts: GetDocumentsByIdCommandOptions | GetDocumentsByIdsCommandOptions | GetDocumentsStartingWithOptions) {
+    public constructor(opts: GetDocumentsByIdCommandOptions | GetDocumentsByIdsCommandOptions | GetDocumentsStartingWithOptions) {
         super();
+        
         if (opts.hasOwnProperty("id")) {
             opts = opts as GetDocumentsByIdCommandOptions;
+            if (!opts.id) {
+                throwError("InvalidArgumentException", "id cannot be null");
+            }
             this._id = opts.id;
             this._includes = opts.includes;
             this._metadataOnly = opts.metadataOnly;
         } else if (opts.hasOwnProperty("ids")) {
             opts = opts as GetDocumentsByIdsCommandOptions;
+            if (!opts.ids || opts.ids.length === 0) {
+                throwError("InvalidArgumentException", "Please supply at least one id");
+            }
             this._ids = opts.ids;
             this._includes = opts.includes;
             this._metadataOnly = opts.metadataOnly;
@@ -71,6 +78,9 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             this._pageSize = opts.pageSize;
 
             if (opts.hasOwnProperty("startsWith")) {
+                if (!opts.startsWith) {
+                    throwError("InvalidArgumentException", "startWith cannot be null");
+                }
                 this._startsWith = opts.startsWith;
                 this._startAfter = opts.startsAfter;
                 this._matches = opts.matches;
