@@ -36,6 +36,7 @@ import { GetDocumentsResult } from "../Commands/GetDocumentsCommand";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { JsonSerializer } from "../../Mapping/Json/Serializer";
+import { ObjectUtil } from "../../Utility/ObjectUtil";
 
 export abstract class InMemoryDocumentSessionOperations 
     extends EventEmitter
@@ -206,12 +207,13 @@ export abstract class InMemoryDocumentSessionOperations
         }
 
         const documentInfo = this._getDocumentInfo(instance);
+
         const metadataInstance = documentInfo.metadataInstance;
         if (metadataInstance) {
             return metadataInstance;
         }
 
-        const metadata = documentInfo.metadata;
+        const metadata = ObjectUtil.deepClone(documentInfo.metadata);
         documentInfo.metadataInstance = metadata;
         return metadata;
     }

@@ -36,13 +36,17 @@ export class DocumentInfo {
 
         const changeVector: string = metadata[CONSTANTS.Documents.Metadata.CHANGE_VECTOR];
         if (TypeUtil.isNullOrUndefined(changeVector) || typeof changeVector !== "string") {
-            throwError("InvalidOperationException", "Document must have an changeVector");
+            throwError("InvalidOperationException", "Document must have a changeVector");
         }
 
         const newDocumentInfo = new DocumentInfo();
         newDocumentInfo.id = id;
-        newDocumentInfo.document = document;
-        newDocumentInfo.metadata = metadata;
+      
+        newDocumentInfo.document = {};
+        newDocumentInfo.metadata = {};
+        Object.assign(newDocumentInfo.document, document);
+        Object.assign(newDocumentInfo.metadata, metadata);        
+        
         newDocumentInfo.entity = null;
         newDocumentInfo.changeVector = changeVector;
         return newDocumentInfo;
