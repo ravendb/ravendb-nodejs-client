@@ -71,18 +71,27 @@ export class EntityToJson {
             return;
         }
 
-        documentInfo.metadata[CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES] = 
-            typeInfo.nestedTypes;
-        documentInfo.metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] =
-            typeInfo.typeName;
+        documentInfo.metadata[CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES] = typeInfo.nestedTypes;
+        documentInfo.metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] = typeInfo.typeName;
 
         let setMetadata: boolean = false;
-        const metadataNode: object = {};
+        let metadataNode: object = {};
 
-        if (documentInfo.metadata 
-            && Object.keys(documentInfo.metadata).length > 0) {
+        if (documentInfo.metadata && Object.keys(documentInfo.metadata).length > 0) {
             setMetadata = true;
             Object.assign(metadataNode, documentInfo.metadata);
+
+            // Add the document @metadata fields (for RDBC-213)
+            for (let metadataItem in documentInfo.entity[CONSTANTS.Documents.Metadata.KEY]) {
+                if (documentInfo.entity[CONSTANTS.Documents.Metadata.KEY].hasOwnProperty(metadataItem)) {
+                    const entry = {
+                        key: metadataItem,
+                        value: documentInfo.entity[CONSTANTS.Documents.Metadata.KEY][metadataItem]
+                    };
+                    setMetadata = true;
+                    metadataNode[entry.key] = entry.value;
+                }
+            }
         }
 
         if (documentInfo.collection) {
