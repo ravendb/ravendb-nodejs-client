@@ -396,8 +396,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             return value;
         }
 
-        //TBD timespan - duration ?
-
         if ((value as any) === false || (value as any) === true) {
             return value;
         }
