@@ -25,3 +25,4 @@ old
 .test
 !src/global.d.ts
 !test/test.d.ts
+test_server_settings.json
