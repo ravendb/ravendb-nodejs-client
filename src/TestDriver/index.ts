@@ -122,6 +122,12 @@ export abstract class RavenTestDriver implements IDisposable {
                         || err.name === "NoLeaderException") {
                             return;
                         }
+
+                        const p1 = this._getGlobalProcess(true);
+                        const p2 = this._getGlobalProcess(false);
+                        if (!p1 && !p2) {
+                            return;
+                        }
                         
                         throwError("TestDriverTearDownError", `Error deleting database ${ store.database }.`, err);
                     })
