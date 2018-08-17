@@ -67,6 +67,7 @@ export class DocumentConventions {
     });
 
     private _entityJsonSerializer: JsonSerializer;
+    private _useCompression;
 
     public constructor() {
         this._readBalanceBehavior = "None";
@@ -109,6 +110,7 @@ export class DocumentConventions {
         });
 
         this._entityJsonSerializer = JsonSerializer.getDefaultForEntities();
+        this._useCompression = null;
     }
 
     public get entityObjectMapper(): TypesAwareObjectMapper {
@@ -157,6 +159,23 @@ export class DocumentConventions {
 
     public set maxHttpCacheSize(value: number) {
         this._maxHttpCacheSize = value;
+    }
+
+    public get hasExplicitlySetCompressionUsage() {
+        return this._useCompression !== null;
+    }
+
+    public get useCompression() {
+        if (this._useCompression === null) {
+            return true;
+        }
+
+        return this._useCompression;
+    }
+
+    public set useCompression(value) {
+        this._assertNotFrozen();
+        this._useCompression = value;
     }
 
     /**

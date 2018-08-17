@@ -39,8 +39,10 @@ const DEFAULT_REQUEST_OPTIONS = {
     resolveWithFullResponse: true
 };
 
-export function getDefaultRequestOptions(): RequestPromiseOptions {
-    return DEFAULT_REQUEST_OPTIONS;
+export function getDefaultRequestOptions(conventions: DocumentConventions): RequestPromiseOptions {
+    return Object.assign(DEFAULT_REQUEST_OPTIONS, {
+        gzip: !(conventions.hasExplicitlySetCompressionUsage && !conventions.useCompression)
+    });
 }
 
 const log = getLogger({ module: "RequestExecutor" });
@@ -1122,7 +1124,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
     }
 
     private _createRequest<TResult> (node: ServerNode, command: RavenCommand<TResult>): HttpRequestBase {
-        const req = Object.assign(command.createRequest(node), getDefaultRequestOptions());
+        const req = Object.assign(command.createRequest(node), getDefaultRequestOptions(this._conventions));
         req.headers = req.headers || {};
 
         if (this._authOptions) {
