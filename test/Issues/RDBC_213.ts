@@ -32,7 +32,7 @@ describe("[RDBC-213] Metadata is not saved", function () {
         assert.equal(expiresAt.toISOString(), loaded["@metadata"]["@expires"]);
     });
 
-    it.skip("session.store() saves metadata using entity '@metadata' field when updating existing document", async () => {
+    it("session.store() saves metadata using entity '@metadata' field when updating existing document", async () => {
         // Create document with metadata
         const session1 = store.openSession();
         const expiresAt = new Date(2019, 11, 12);

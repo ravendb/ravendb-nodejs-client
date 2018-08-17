@@ -20,8 +20,10 @@ export interface MetadataParameters {
 class MetadataInternal {
 
     constructor(obj) {
-        for (const key of Object.keys(obj)) {
-            this[key] = this._metadataConvertValue(key, obj[key]);
+        if (obj) {
+            for (const key of Object.keys(obj)) {
+                this[key] = this._metadataConvertValue(key, obj[key]);
+            }
         }
     }
 
