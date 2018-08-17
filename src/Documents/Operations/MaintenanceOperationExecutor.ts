@@ -4,6 +4,7 @@ import { RequestExecutor } from "../..";
 import { IMaintenanceOperation, AwaitableMaintenanceOperation, OperationIdResult } from "./OperationAbstractions";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerOperationExecutor } from "./ServerOperationExecutor";
+import { throwError } from "../../Exceptions";
 
 export class MaintenanceOperationExecutor {
 
@@ -40,7 +41,8 @@ export class MaintenanceOperationExecutor {
     public send<TResult>(
         operation: AwaitableMaintenanceOperation | IMaintenanceOperation<TResult>)
         : Promise<OperationCompletionAwaiter | TResult> {
-
+        
+        this._assertDatabaseNameSet();
         const command = operation.getCommand(this._requestExecutor.conventions);
 
         const result = Promise.resolve()
@@ -57,5 +59,12 @@ export class MaintenanceOperationExecutor {
             });
 
         return result;
+    }
+
+    private _assertDatabaseNameSet(): void {
+        if (!this._databaseName) {
+            throwError("InvalidOperationException",
+                "Cannot use maintenance without a database defined, did you forget to call forDatabase?");
+        }
     }
 }

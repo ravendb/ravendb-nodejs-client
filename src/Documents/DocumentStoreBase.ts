@@ -153,6 +153,10 @@ export abstract class DocumentStoreBase
     }
 
     public set database(value) {
+        if (this._initialized) {
+            throwError("InvalidOperationException",
+                 "You cannot change the default database name after the document store has been initialized.");
+        }
         this._database = value;
     }
 
@@ -161,6 +165,10 @@ export abstract class DocumentStoreBase
     }
 
     public set authOptions(value: IAuthOptions) {
+        if (this._initialized) {
+            throwError("InvalidOperationException",
+                 "You cannot change authentication options after the document store has been initialized.");
+        }
         this._authOptions = value;
     }
 

@@ -1,7 +1,8 @@
 import * as BluebirdPromise from "bluebird";
 import { EntityToJson } from "./EntityToJson";
 import { IDisposable } from "../../Types/Contracts";
-import { IMetadataDictionary, SessionInfo, ConcurrencyCheckMode, StoreOptions } from "./IDocumentSession";
+import { SessionInfo, ConcurrencyCheckMode, StoreOptions } from "./IDocumentSession";
+import { IMetadataDictionary } from "./IMetadataDictionary";
 import { ObjectTypeDescriptor, ClassConstructor } from "../../Types";
 import { SessionEventsEmitter, SessionBeforeStoreEventArgs, SessionBeforeDeleteEventArgs } from "./SessionEvents";
 import { RequestExecutor } from "../../Http/RequestExecutor";
@@ -22,6 +23,7 @@ import { GenerateEntityIdOnTheClient } from "../Identity/GenerateEntityIdOnTheCl
 import { tryGetConflict } from "../../Mapping/Json";
 import { CONSTANTS } from "../../Constants";
 import { DateUtil } from "../../Utility/DateUtil";
+import { ObjectUtil } from "../../Utility/ObjectUtil";
 import { IncludesUtil } from "./IncludesUtil";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { AbstractCallback } from "../../Types/Callbacks";
@@ -36,6 +38,8 @@ import { GetDocumentsResult } from "../Commands/GetDocumentsCommand";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { JsonSerializer } from "../../Mapping/Json/Serializer";
+import { OperationExecutor } from "../Operations/OperationExecutor";
+import { createMetadataDictionary } from "../../Mapping/MetadataAsDictionary";
 
 export abstract class InMemoryDocumentSessionOperations 
     extends EventEmitter
@@ -46,6 +50,8 @@ export abstract class InMemoryDocumentSessionOperations
     protected _clientSessionId: number = ++InMemoryDocumentSessionOperations._clientSessionIdCounter;
 
     protected _requestExecutor: RequestExecutor;
+
+    private _operationExecutor: OperationExecutor;
 
     protected _pendingLazyOperations = [];
 
@@ -119,6 +125,14 @@ export abstract class InMemoryDocumentSessionOperations
 
     public get requestExecutor(): RequestExecutor {
         return this._requestExecutor;
+    }
+
+    public get operations() {
+        if (!this._operationExecutor) {
+            this._operationExecutor = this._documentStore.operations.forDatabase(this.databaseName);
+        }
+
+        return this._operationExecutor;
     }
 
     private _numberOfRequests: number = 0;
@@ -211,7 +225,8 @@ export abstract class InMemoryDocumentSessionOperations
             return metadataInstance;
         }
 
-        const metadata = documentInfo.metadata;
+        const metadataAsJson = documentInfo.metadata;
+        const metadata = createMetadataDictionary({ raw: metadataAsJson });
         documentInfo.metadataInstance = metadata;
         return metadata;
     }
@@ -826,11 +841,11 @@ export abstract class InMemoryDocumentSessionOperations
                 value: entry[1]
             };
 
-            InMemoryDocumentSessionOperations._updateMetadataModifications(entity.value);
+            const dirtyMetadata = InMemoryDocumentSessionOperations._updateMetadataModifications(entity.value);
 
             let document = this.entityToJson.convertEntityToJson(entity.key, entity.value);
 
-            if (entity.value.ignoreChanges || !this._entityChanged(document, entity.value, null)) {
+            if (entity.value.ignoreChanges || !this._entityChanged(document, entity.value, null) && !dirtyMetadata) {
                 continue;
             }
 
@@ -899,11 +914,25 @@ export abstract class InMemoryDocumentSessionOperations
     }
     
     private static _updateMetadataModifications(documentInfo: DocumentInfo) {
+        let dirty = false;
         if (documentInfo.metadataInstance) {
+            if (documentInfo.metadataInstance.isDirty()) {
+                dirty = true;
+            }
+
             for (const prop of Object.keys(documentInfo.metadataInstance)) {
-                documentInfo.metadata[prop] = documentInfo.metadataInstance[prop]; 
+                const propValue = documentInfo.metadataInstance[prop];
+                if (!propValue || 
+                    (typeof propValue["isDirty"] === "function" 
+                        && (propValue as IMetadataDictionary).isDirty())) {
+                    dirty = true;
+                }
+
+                documentInfo.metadata[prop] = ObjectUtil.clone(documentInfo.metadataInstance[prop]); 
             }
         }
+
+        return dirty;
     }
 
     public delete(id: string): Promise<void>;
@@ -993,9 +1022,9 @@ export abstract class InMemoryDocumentSessionOperations
         this._deferredCommandsMap.set(
             IdTypeAndName.keyFor(command.id, "ClientAnyCommand", null), command);
 
-        if (command.type !== "AttachmentPUT") {
+        if (command.type !== "AttachmentPUT" && command.type !== "AttachmentDELETE") {
             this._deferredCommandsMap.set(
-                IdTypeAndName.keyFor(command.id, "ClientNotAttachmentPUT", null), command);
+                IdTypeAndName.keyFor(command.id, "ClientNotAttachment", null), command);
         }
     }
 

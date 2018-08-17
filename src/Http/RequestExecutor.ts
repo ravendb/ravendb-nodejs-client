@@ -965,7 +965,6 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
             case StatusCodes.ServiceUnavailable:
                 return this._handleServerDown(
                     url, chosenNode, nodeIndex, command, req, response, null, sessionInfo)
-                    .then(() => false);
             case StatusCodes.Conflict:
                 RequestExecutor._handleConflict(response);
             default:

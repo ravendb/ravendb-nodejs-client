@@ -1,5 +1,5 @@
 import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
-import { IMetadataDictionary } from "./IDocumentSession";
+import { IMetadataDictionary } from "./IMetadataDictionary";
 
 export interface SessionEventsEmitter {
     on(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;

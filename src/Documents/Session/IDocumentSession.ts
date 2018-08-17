@@ -17,10 +17,6 @@ export class SessionInfo {
     }
 }
 
-export interface IMetadataDictionary {
-    [key: string]: Object;
-}
-
 export type ConcurrencyCheckMode = "Auto" | "Forced" | "Disabled";
 
 export interface IDocumentSessionImpl {
