@@ -29,7 +29,7 @@ import * as PromiseUtil from "../Utility/PromiseUtil";
 import { GetStatisticsOperation } from "../Documents/Operations/GetStatisticsOperation";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
 import { TypeUtil } from "../Utility/TypeUtil";
-import { RequestPromiseOptions } from "request-promise";
+import { RequestPromiseOptions, RequestPromise } from "request-promise";
 import { SessionInfo } from "../Documents/Session/IDocumentSession";
 import { JsonSerializer } from "../Mapping/Json/Serializer";
 import { validateUri } from "../Utility/UriUtil";
@@ -38,12 +38,6 @@ const DEFAULT_REQUEST_OPTIONS = {
     simple: false,
     resolveWithFullResponse: true
 };
-
-export function getDefaultRequestOptions(conventions: DocumentConventions): RequestPromiseOptions {
-    return Object.assign(DEFAULT_REQUEST_OPTIONS, {
-        gzip: !(conventions.hasExplicitlySetCompressionUsage && !conventions.useCompression)
-    });
-}
 
 const log = getLogger({ module: "RequestExecutor" });
 
@@ -168,7 +162,20 @@ export class RequestExecutor implements IDisposable {
 
     protected _disableClientConfigurationUpdates: boolean;
 
+    protected _customHttpRequestOptions: HttpRequestBase;
+
+    protected _defaultRequestOptions: HttpRequestBase;
+
     public static requestPostProcessor: (req: HttpRequestBase) => void = null;
+
+    public get customHttpRequestOptions(): HttpRequestBase {
+        return this._customHttpRequestOptions;
+    }
+
+    public set customHttpRequestOptions(value: HttpRequestBase) {
+        this._customHttpRequestOptions = value;
+        this._setDefaultRequestOptions();
+    }
 
     public getTopologyEtag() {
         return this._topologyEtag;
@@ -231,6 +238,7 @@ export class RequestExecutor implements IDisposable {
         this._conventions = conventions.clone();
         this._authOptions = authOptions;
         this._certificate = Certificate.createFromOptions(this._authOptions);
+        this._setDefaultRequestOptions();
     }
 
     public static create (
@@ -1124,7 +1132,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
     }
 
     private _createRequest<TResult> (node: ServerNode, command: RavenCommand<TResult>): HttpRequestBase {
-        const req = Object.assign(command.createRequest(node), getDefaultRequestOptions(this._conventions));
+        const req = Object.assign(command.createRequest(node), this._defaultRequestOptions);
         req.headers = req.headers || {};
 
         if (this._authOptions) {
@@ -1219,6 +1227,15 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
                 nodeIndex, 
                 shouldRetry: false, 
             });
+    }
+
+    private _setDefaultRequestOptions(): void {
+        this._defaultRequestOptions = Object.assign(
+            DEFAULT_REQUEST_OPTIONS, 
+            {
+                gzip: !(this._conventions.hasExplicitlySetCompressionUsage && !this._conventions.useCompression)
+            }, 
+            this._customHttpRequestOptions);
     }
 
     public dispose (): void {
