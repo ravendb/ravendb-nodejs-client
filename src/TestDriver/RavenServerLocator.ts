@@ -18,14 +18,6 @@ export abstract class RavenServerLocator {
         return serverPath;
     }
 
-    public withHttps(): boolean {
-        return false;
-    }
-
-    public getServerHost(): string {
-        return "127.0.0.1";
-    }
-
     public getCommand(): string {
         return this.getServerPath();
     }

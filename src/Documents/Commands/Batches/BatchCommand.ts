@@ -122,6 +122,8 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
 
             if (this._options.throwOnTimeoutInWaitForIndexes) {
                 result += "&waitForIndexThrow=true";
+            } else {
+                result += "&waitForIndexThrow=false";
             }
 
             if (this._options.waitForSpecificIndexes 

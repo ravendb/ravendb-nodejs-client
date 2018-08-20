@@ -122,6 +122,12 @@ export abstract class RavenTestDriver implements IDisposable {
                         || err.name === "NoLeaderException") {
                             return;
                         }
+
+                        const p1 = this._getGlobalProcess(true);
+                        const p2 = this._getGlobalProcess(false);
+                        if (!p1 && !p2) {
+                            return;
+                        }
                         
                         throwError("TestDriverTearDownError", `Error deleting database ${ store.database }.`, err);
                     })
@@ -159,6 +165,8 @@ export abstract class RavenTestDriver implements IDisposable {
             const serverProcess = this._getGlobalProcess(secured);
             let serverOutput = "";
             const result = new BluebirdPromise<string>((resolve, reject) => {
+                serverProcess.stderr
+                    .on("data", (chunk) => serverOutput += chunk);
                 serverProcess.stdout
                     .on("data", (chunk) => {
                         serverOutput += chunk;
@@ -179,7 +187,7 @@ export abstract class RavenTestDriver implements IDisposable {
 
             // timeout if url won't show up after 5s
             return result
-                .timeout(10000)
+                .timeout(5000)
                 .catch((err) => {
                     throwError("UrlScrappingError", "Error scrapping URL from server process output: " 
                         + os.EOL + serverOutput, err);

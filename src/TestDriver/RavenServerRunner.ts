@@ -1,4 +1,6 @@
 import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
 import { ChildProcess, spawn } from "child_process";
 import { RavenServerLocator } from "./RavenServerLocator";
 import { throwError } from "../Exceptions";
@@ -7,6 +9,8 @@ interface ProcessStartInfo {
     command: string;
     arguments: string[];
 }
+
+const EMPTY_SETTINGS_TEMP = path.join(process.cwd(), "test_server_settings.json");
 
 export abstract class RavenServerRunner {
 
@@ -24,10 +28,11 @@ export abstract class RavenServerRunner {
             throwError("FileNotFoundException", `Server file was not found: ${locator.getServerPath()}`);
         }
 
+        fs.writeFileSync(EMPTY_SETTINGS_TEMP, "{}");
+
         const commandArguments = [
-                locator.withHttps() 
-                    ? `--ServerUrl=https://${locator.getServerHost()}:8085` 
-                    : `--ServerUrl=http://${locator.getServerHost()}:0`,
+                `--config-path`,
+                `${EMPTY_SETTINGS_TEMP}`,
                 "--RunInMemory=true",
                 "--License.Eula.Accepted=true",
                 "--Setup.Mode=None",

@@ -25,7 +25,12 @@ export class OperationExecutor {
     public constructor(store: DocumentStoreBase, databaseName?: string) {
         this._store = store;
         this._databaseName = databaseName ? databaseName : store.database;
-        this._requestExecutor = store.getRequestExecutor(databaseName);
+        if (this._databaseName) {
+            this._requestExecutor = store.getRequestExecutor(this._databaseName);
+        } else {
+            throwError("InvalidOperationException",
+                "Cannot use operations without a database defined, did you forget to call forDatabase?");
+        }
     }
 
     public forDatabase(databaseName: string): OperationExecutor {

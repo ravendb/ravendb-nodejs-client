@@ -101,12 +101,8 @@ export class DocumentQuery<T extends object>
         }
 
         try {
-            const identityProperty = this.conventions.getIdentityProperty(projectionType);
-
             const projections = properties;
-            const fields = properties.map(x => x === identityProperty
-                ? CONSTANTS.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME
-                : x);
+            const fields = properties.map(x => x);
 
             return this.selectFields(new QueryData(fields, projections), projectionType);
         } catch (err) {
@@ -445,9 +441,24 @@ export class DocumentQuery<T extends object>
         resultClass: DocumentType<TResult>, queryData: QueryData): DocumentQuery<TResult>;
     private  _createDocumentQueryInternal<TResult extends object>(
         resultClass: DocumentType<TResult>, queryData?: QueryData): DocumentQuery<TResult> {
-        const newFieldsToFetch = queryData && queryData.fields.length > 0
-                ? FieldsToFetchToken.create(queryData.fields, queryData.projections, queryData.isCustomFunction)
-                : null;
+        // const newFieldsToFetch = queryData && queryData.fields.length > 0
+        //         ? FieldsToFetchToken.create(queryData.fields, queryData.projections, queryData.isCustomFunction)
+        //         : null;
+        let newFieldsToFetch: FieldsToFetchToken;
+        
+        if (queryData && queryData.fields.length > 0) {
+            let { fields } = queryData;
+            const identityProperty = this.conventions.getIdentityProperty(resultClass);
+
+            if (identityProperty) {
+                fields = queryData.fields.map(
+                    p => p === identityProperty ? CONSTANTS.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME : p);
+            }
+
+            newFieldsToFetch = FieldsToFetchToken.create(fields, queryData.projections, queryData.isCustomFunction);
+        } else {
+            newFieldsToFetch = null;
+        }
 
         if (newFieldsToFetch) {
             this._updateFieldsToFetchToken(newFieldsToFetch);

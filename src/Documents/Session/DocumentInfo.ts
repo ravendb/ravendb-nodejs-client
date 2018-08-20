@@ -1,4 +1,5 @@
-import { ConcurrencyCheckMode, IMetadataDictionary } from "./IDocumentSession";
+import { ConcurrencyCheckMode, } from "./IDocumentSession";
+import { IMetadataDictionary } from "./IMetadataDictionary";
 import { IRavenObject } from "../../Types/IRavenObject";
 import { CONSTANTS } from "../../Constants";
 import { throwError } from "../../Exceptions";

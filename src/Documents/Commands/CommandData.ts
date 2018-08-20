@@ -10,7 +10,7 @@ export type CommandType =
     | "AttachmentPUT"
     | "AttachmentDELETE"
     | "ClientAnyCommand"
-    | "ClientNotAttachmentPUT"
+    | "ClientNotAttachment"
 ;
 
 export interface ICommandData {

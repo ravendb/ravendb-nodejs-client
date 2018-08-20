@@ -396,8 +396,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             return value;
         }
 
-        //TBD timespan - duration ?
-
         if ((value as any) === false || (value as any) === true) {
             return value;
         }
@@ -1755,8 +1753,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         return Promise.resolve(result);
     }
 
-    private _executeQueryOperation(take: number): Promise<T[]> {
-        if (!this._pageSize || this._pageSize > take) {
+    private _executeQueryOperation(take?: number): Promise<T[]> {
+        if ((take || take === 0) && (!this._pageSize || this._pageSize > take)) {
             this._take(take);
         }
 
@@ -1767,4 +1765,17 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             });
     }
     // tslint:enable:function-name
+
+    public async any(): Promise<boolean> {
+        if (this.isDistinct) {
+            // for distinct it is cheaper to do count 1
+            const result = await this._executeQueryOperation(1);
+            return !!result[0];
+
+        }
+
+        this._take(0);
+        const queryResult = await this.getQueryResult();
+        return queryResult.totalResults > 0;
+    }
 }

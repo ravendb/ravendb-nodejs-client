@@ -27,20 +27,20 @@ function logOnUncaughtAndUnhandled() {
     });
 }
 
-class TestServiceLocator extends RavenServerLocator {}
+class TestServiceLocator extends RavenServerLocator {
+    public getCommandArguments() {
+        return [ "--ServerUrl=http://127.0.0.1:0" ];
+    }
+}
 
 class TestSecuredServiceLocator extends RavenServerLocator {
     public static ENV_SERVER_CA_PATH = "RAVENDB_TEST_CA_PATH";
 
     public static ENV_SERVER_CERTIFICATE_PATH = "RAVENDB_TEST_SERVER_CERTIFICATE_PATH";
-    public static ENV_SERVER_HOSTNAME = "RAVENDB_TEST_SERVER_HOSTNAME";
+    public static ENV_HTTPS_SERVER_URL = "RAVENDB_TEST_HTTPS_SERVER_URL";
 
     public static ENV_CLIENT_CERT_PATH = "RAVENDB_TEST_CLIENT_CERT_PATH";
     public static ENV_CLIENT_CERT_PASSPHRASE = "RAVENDB_TEST_CLIENT_CERT_PASSPHRASE";
-
-    public withHttps() {
-        return true;
-    }
 
     public getCommandArguments() {
         const certPath = this.getServerCertificatePath();
@@ -51,14 +51,24 @@ class TestSecuredServiceLocator extends RavenServerLocator {
         }
 
         return [
-            "--Security.Certificate.Path=" + certPath
+            "--Security.Certificate.Path=" + certPath,
+            "--ServerUrl=" + this._getHttpsServerUrl()
         ];
     }
 
-    public getServerHost() {
-        return process.env[TestSecuredServiceLocator.ENV_SERVER_HOSTNAME] || "localhost";
+    private _getHttpsServerUrl() {
+        const httpsServerUrl = process.env[TestSecuredServiceLocator.ENV_HTTPS_SERVER_URL];
+        if (!httpsServerUrl) {
+            throwError("InvalidArgumentException", 
+                "Unable to find RavenDB https server url. " +
+                "Please make sure " + TestSecuredServiceLocator.ENV_HTTPS_SERVER_URL
+                + " environment variable is set and is valid " +
+                "(current value = " + httpsServerUrl + ")");
+        }
+        
+        return httpsServerUrl;
     }
-
+    
     public getServerCertificatePath() {
         return path.resolve(process.env[TestSecuredServiceLocator.ENV_SERVER_CERTIFICATE_PATH]);
     }

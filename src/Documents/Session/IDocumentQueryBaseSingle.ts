@@ -22,4 +22,10 @@ export interface IDocumentQueryBaseSingle<T extends object> {
     count(callback?: AbstractCallback<number>): Promise<number>;
 
     //TBD Lazy<IEnumerable<T>> Lazily(Action<IEnumerable<T>> onEval);
+
+    /**
+     * Checks if the given query matches any records
+     * @return true if the given query matches any records
+     */
+    any(): Promise<boolean>;
 }

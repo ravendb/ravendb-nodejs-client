@@ -2,7 +2,6 @@ language: node_js
 node_js:
   - "6"
   - "8"
-  - "9"
   - "10"
 env:
   matrix:
@@ -11,6 +10,7 @@ env:
       RAVENDB_TEST_CLIENT_CERT_PASSPHRASE=client11
       RAVENDB_TEST_CLIENT_CERT_PATH=./certs/nodejs.pem
       RAVENDB_TEST_CA_PATH=/usr/local/share/ca-certificates/ca.crt
+      RAVENDB_TEST_HTTPS_SERVER_URL=https://localhost:8989
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y libunwind8 wget libicu52 libssl-dev curl unzip gettext libcurl4-openssl-dev zlib1g uuid-dev bzip2 openssl

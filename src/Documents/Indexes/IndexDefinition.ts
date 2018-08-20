@@ -79,6 +79,10 @@ export class IndexDefinitionBuilder {
 
     public constructor(indexName?: string) {
         this.indexName = indexName || this.constructor.name;
+        if (this.indexName.length > 256) {
+            throwError("InvalidArgumentException",
+                "The index name is limited to 256 characters, but was: " + this.indexName);
+        }
         this.storesStrings = {};
         this.indexesStrings = {};
         this.suggestionsOptions = new Set();
