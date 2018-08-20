@@ -134,6 +134,7 @@ export class DocumentConventions {
     }
 
     public set readBalanceBehavior(value: ReadBalanceBehavior) {
+        this._assertNotFrozen();
         this._readBalanceBehavior = value;
     }
 
@@ -158,6 +159,7 @@ export class DocumentConventions {
     }
 
     public set maxHttpCacheSize(value: number) {
+        this._assertNotFrozen();
         this._maxHttpCacheSize = value;
     }
 
@@ -214,6 +216,7 @@ export class DocumentConventions {
      * @param useOptimisticConcurrency value to set
      */
     public setUseOptimisticConcurrency(useOptimisticConcurrency: boolean): void {
+        this._assertNotFrozen();
         this._useOptimisticConcurrency = useOptimisticConcurrency;
     }
 
@@ -249,6 +252,7 @@ export class DocumentConventions {
     }
 
     public set findIdentityPropertyNameFromCollectionName(value) {
+        this._assertNotFrozen();
         this._findIdentityPropertyNameFromCollectionName = value;
     }
 
@@ -266,6 +270,7 @@ export class DocumentConventions {
     }
 
     public set identityPartsSeparator(value: string) {
+        this._assertNotFrozen();
         this._identityPartsSeparator = value;
     }
 
@@ -274,6 +279,7 @@ export class DocumentConventions {
     }
 
     public set disableTopologyUpdates(value: boolean) {
+        this._assertNotFrozen();
         this._disableTopologyUpdates = value;
     }
 
@@ -291,6 +297,7 @@ export class DocumentConventions {
     }
 
     public set transformClassCollectionNameToDocumentIdPrefix(value) {
+        this._assertNotFrozen();
         this._transformClassCollectionNameToDocumentIdPrefix = value;
     }
 
