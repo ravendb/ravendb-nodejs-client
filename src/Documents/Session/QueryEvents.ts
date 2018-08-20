@@ -6,6 +6,9 @@ export interface QueryEventsEmitter {
     on(eventName: "beforeQueryExecuted", eventHandler: (eventArgs: IndexQuery) => void): this;
     on(eventName: "afterQueryExecuted", eventHandler: (eventArgs: QueryResult) => void): this;
 
+    once(eventName: "beforeQueryExecuted", eventHandler: (eventArgs: IndexQuery) => void): this;
+    once(eventName: "afterQueryExecuted", eventHandler: (eventArgs: QueryResult) => void): this;
+
     removeListener(eventName: "beforeQueryExecuted", eventHandler: (eventArgs: IndexQuery) => void): this;
     removeListener(eventName: "afterQueryExecuted", eventHandler: (eventArgs: QueryResult) => void): this;
 

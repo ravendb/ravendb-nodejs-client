@@ -101,13 +101,14 @@ export abstract class RavenTestDriver implements IDisposable {
 
             store.initialize();
 
-            (store as IDocumentStore).once("afterDispose", (callback) => {
+            (store as IDocumentStore)
+            .once("afterDispose", (callback) => {
                 if (!this._documentStores.has(store)) {
                     callback();
                     return; 
                 }
 
-                return BluebirdPromise.resolve()
+                BluebirdPromise.resolve()
                     .then(() => {
                         return store.maintenance.server.send(new DeleteDatabasesOperation({
                             databaseNames: [ store.database ],
@@ -123,7 +124,7 @@ export abstract class RavenTestDriver implements IDisposable {
                             return;
                         }
 
-                        if (!this._getGlobalProcess(secured)) {
+                        if (store.isDisposed() || !this._getGlobalProcess(secured)) {
                             return;
                         }
                         
@@ -221,23 +222,36 @@ export abstract class RavenTestDriver implements IDisposable {
 
     private static _killGlobalServerProcess(secured: boolean): void {
         let p: ChildProcess;
+        let store;
         if (secured) {
+            store = RavenTestDriver._globalSecuredServer;
+            RavenTestDriver._globalSecuredServer = null;
             p = RavenTestDriver._globalSecuredServerProcess;
             RavenTestDriver._globalSecuredServerProcess = null;
         } else {
+            store = RavenTestDriver._globalServer;
+            RavenTestDriver._globalServer = null;
             p = RavenTestDriver._globalServerProcess;
             RavenTestDriver._globalServerProcess = null;
         }
 
-        if (p && !p.killed) {
-            log.info("Kill global server");
+        new BluebirdPromise(resolve => {
+            store.on("executorsDisposed", () => resolve());
+        })
+        .timeout(2000)
+        .finally(() => {
+            if (p && !p.killed) {
+                log.info("Kill global server");
 
-            try {
-                p.kill();
-            } catch (err) {
-                log.error(err);
+                try {
+                    p.kill();
+                } catch (err) {
+                    log.error(err);
+                }
             }
-        }
+        });
+
+        store.dispose();
     }
 
     private _getGlobalServer(secured: boolean): IDocumentStore {

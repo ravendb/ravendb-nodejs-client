@@ -1,5 +1,6 @@
 import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
 import { IMetadataDictionary } from "./IMetadataDictionary";
+import { IDocumentQueryCustomization } from "./IDocumentQueryCustomization";
 
 export interface SessionEventsEmitter {
     on(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
@@ -59,7 +60,9 @@ export class SessionBeforeStoreEventArgs {
 }
 
 export class SessionBeforeQueryEventArgs {
-    constructor(public session: InMemoryDocumentSessionOperations) {}
+    constructor(
+        public session: InMemoryDocumentSessionOperations,
+        public queryCustomization: IDocumentQueryCustomization) {}
 }
 
 export class SessionBeforeDeleteEventArgs {

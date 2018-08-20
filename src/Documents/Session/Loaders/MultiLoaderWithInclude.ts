@@ -67,7 +67,7 @@ export class MultiLoaderWithInclude implements ILoaderWithInclude {
             .then(() => this._session.loadInternal(ids as string[], this._includes, entityType))
             .then(results => {
                 return singleResult ?
-                    Object.keys(results).map(x => results[x])[0] as TResult :
+                    Object.keys(results).map(x => results[x]).filter(x => x)[0] as TResult :
                     results;
             })
             .tap((results) => callback(null, results))

@@ -19,7 +19,7 @@ describe("HttpsTest", function () {
     it("can connect with certificate", async () => {
         assert.equal(store.urls[0].slice(0, 5), "https");
         const session = store.openSession();
-        session.store({ lastName: "Snow" }, "users/1");
-        session.saveChanges();
+        await session.store({ lastName: "Snow" }, "users/1");
+        await session.saveChanges();
     });
 });
