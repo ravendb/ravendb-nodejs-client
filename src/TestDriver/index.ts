@@ -123,9 +123,7 @@ export abstract class RavenTestDriver implements IDisposable {
                             return;
                         }
 
-                        const p1 = this._getGlobalProcess(true);
-                        const p2 = this._getGlobalProcess(false);
-                        if (!p1 && !p2) {
+                        if (!this._getGlobalProcess(secured)) {
                             return;
                         }
                         
