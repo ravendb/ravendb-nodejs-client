@@ -50,6 +50,7 @@ import { SpatialCriteria } from "../Queries/Spatial/SpatialCriteria";
 import { SessionBeforeQueryEventArgs } from "./SessionEvents";
 import { CmpXchg } from "./CmpXchng";
 import { AbstractCallback } from "../../Types/Callbacks";
+import { DocumentQueryCustomization } from './DocumentQueryCustomization';
 
 /**
  * A query against a Raven index
@@ -349,7 +350,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * This shouldn't be used outside of unit tests unless you are well aware of the implications
      * @param waitTimeout Wait timeout
      */
-    public _waitForNonStaleResults(waitTimeout: number): void {
+    public _waitForNonStaleResults(waitTimeout?: number): void {
         this._theWaitForNonStaleResults = true;
         this._timeout = waitTimeout || AbstractDocumentQuery._getDefaultTimeout();
     }
@@ -1664,7 +1665,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             return Promise.resolve();
         }
 
-        const beforeQueryEventArgs = new SessionBeforeQueryEventArgs(this._theSession);
+        const beforeQueryEventArgs = new SessionBeforeQueryEventArgs(
+            this._theSession, new DocumentQueryCustomization(this));
         this._theSession.emit("beforeQuery", beforeQueryEventArgs);
 
         this._queryOperation = this._initializeQueryOperation();
