@@ -507,7 +507,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
                     return true;
                 })
                 .catch(error => {
-                    if (error.name === "DatabaseDoesNotExistException") {
+                    if ((error.name as RavenErrorType) === "DatabaseDoesNotExistException") {
                         this._lastKnownUrls = initialUrls;
                         throw error;
                     }
