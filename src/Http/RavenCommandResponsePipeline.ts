@@ -64,7 +64,8 @@ export class RavenCommandResponsePipeline<TResult> {
 
     public streamKeyCaseTransform(opts: ObjectKeyCaseTransformStreamOptions) {
         if (!this._opts.jsonAsync && !this._opts.jsonSync) {
-            throwError("MappingError", "Cannot use key case transform without doing parseJson() first.");
+            throwError("InvalidOperationException", 
+                "Cannot use key case transform without doing parseJson() or parseJsonAsync() first.");
         }
 
         this._opts.streamKeyCaseTransform = opts;

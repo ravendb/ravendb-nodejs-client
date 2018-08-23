@@ -14,7 +14,7 @@ import { throwError } from "../../Exceptions";
 import { CONSTANTS } from "../../Constants";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { DateUtil } from "../../Utility/DateUtil";
-import { KeyCasingConvention } from "../../Utility/ObjectUtil";
+import { CasingConvention, ObjectUtil, ObjectChangeCaseOptions } from '../../Utility/ObjectUtil';
 import { JsonSerializer } from "../../Mapping/Json/Serializer";
 
 export type IdConvention = (databaseName: string, entity: object) => Promise<string>;
@@ -62,13 +62,10 @@ export class DocumentConventions {
     
     private _knownEntityTypes: Map<string, ObjectTypeDescriptor>;
 
-    private _entityKeyCaseConvention: KeyCasingConvention;
-    private _serverSideEntityKeyCaseConvention: KeyCasingConvention;
+    private _localEntityFieldNameConvention: CasingConvention;
+    private _remoteEntityFieldNameConvention: CasingConvention;
 
-    private _entityObjectMapper: TypesAwareObjectMapper = new TypesAwareObjectMapper({
-       knownTypes: this._knownEntityTypes,
-       dateFormat: DateUtil.DEFAULT_DATE_FORMAT 
-    });
+    private _entityObjectMapper: TypesAwareObjectMapper;
 
     private _entityJsonSerializer: JsonSerializer;
     private _useCompression;
@@ -111,7 +108,7 @@ export class DocumentConventions {
         this._knownEntityTypes = new Map();
         this._entityObjectMapper = new TypesAwareObjectMapper({
             dateFormat: DateUtil.DEFAULT_DATE_FORMAT,
-            knownTypes: this._knownEntityTypes
+            documentConventions: this
         });
 
         this._entityJsonSerializer = JsonSerializer.getDefaultForEntities();
@@ -143,20 +140,22 @@ export class DocumentConventions {
         this._readBalanceBehavior = value;
     }
 
-    public get entityKeyCaseConvention(): KeyCasingConvention {
-        return this._entityKeyCaseConvention;
+    public get entityFieldNameConvention(): CasingConvention {
+        return this._localEntityFieldNameConvention;
     }
 
-    public set entityKeyCaseConvention(val) {
-        this._entityKeyCaseConvention = val;
+    public set entityFieldNameConvention(val) {
+        this._assertNotFrozen();
+        this._localEntityFieldNameConvention = val;
     }
 
-    public get serverSideEntityKeyCaseConvention() {
-        return this._serverSideEntityKeyCaseConvention;
+    public get remoteEntityFieldNameConvention() {
+        return this._remoteEntityFieldNameConvention;
     }
 
-    public set serverSideEntityKeyCaseConvention(val) {
-        this._serverSideEntityKeyCaseConvention = val;
+    public set remoteEntityFieldNameConvention(val) {
+        this._assertNotFrozen();
+        this._remoteEntityFieldNameConvention = val;
     }
 
     public deserializeEntityFromJson(documentType: ObjectTypeDescriptor, document: object): object {
@@ -600,6 +599,49 @@ export class DocumentConventions {
         }
         
         return this._knownEntityTypes.get(docTypeOrtypeName) as ObjectLiteralDescriptor<T>;
+    }
+
+    public transformObjectKeysToRemoteFieldNameConvention(obj: object, opts?: ObjectChangeCaseOptions) {
+        if (!this._remoteEntityFieldNameConvention) {
+            return obj;
+        }
+
+        opts = opts || {
+            recursive: true,
+            arrayRecursive: true,
+            ignorePaths: [/@metadata\./]
+        };
+
+        return ObjectUtil.transformObjectKeys(
+            this._remoteEntityFieldNameConvention, obj, {
+                recursive: true,
+                arrayRecursive: true,
+                ignorePaths: [ /@metadata\./ ]
+            });
+    }
+
+    public transformObjectKeysToLocalFieldNameConvention(
+        obj: object, opts?: ObjectChangeCaseOptions) {
+        if (!this._localEntityFieldNameConvention) {
+            return obj as object;
+        }
+
+        opts = opts || {
+            recursive: true,
+            arrayRecursive: true,
+            ignorePaths: [/@metadata\./, /@projection/]
+        };
+
+        return ObjectUtil.transformObjectKeys(this._localEntityFieldNameConvention, obj, opts);
+    }
+
+    public validate() {
+        if ((this._remoteEntityFieldNameConvention && !this._localEntityFieldNameConvention)
+            || (!this._remoteEntityFieldNameConvention && this._localEntityFieldNameConvention)) {
+                throwError("ConfigurationException", 
+                "When configuring field name conventions, " 
+                + "one has to configure both local and remote field name convention.");
+            }
     }
 }
 

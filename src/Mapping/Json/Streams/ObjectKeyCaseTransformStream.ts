@@ -1,10 +1,10 @@
 import * as stream from "readable-stream";
-import { ObjectUtil, ObjectChangeCaseOptions } from "../../../Utility/ObjectUtil";
+import { ObjectUtil, ObjectChangeCaseOptions, CasingConvention } from '../../../Utility/ObjectUtil';
 import { getError, throwError } from "../../../Exceptions";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 
 export interface ObjectKeyCaseTransformStreamOptions extends ObjectChangeCaseOptions {
-    targetKeyCaseConvention: string;
+    targetKeyCaseConvention: CasingConvention;
     handlePath?: boolean;
     extractIgnorePaths?: ((entry: object) => Array<string | RegExp>);
 }
@@ -23,7 +23,7 @@ export class ObjectKeyCaseTransformStream extends stream.Transform {
     private _getIgnorePaths: (entry: object) => Array<string | RegExp> = 
         () => this._ignorePaths
 
-    private _keyCaseTransform: string;
+    private _keyCaseTransform: CasingConvention;
     private _handlePath: boolean;
 
     constructor(opts: ObjectKeyCaseTransformStreamOptions) {

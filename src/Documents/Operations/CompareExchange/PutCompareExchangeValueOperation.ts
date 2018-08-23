@@ -13,6 +13,7 @@ import { TypeUtil } from "../../../Utility/TypeUtil";
 import * as stream from "readable-stream";
 import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
 import { CollectResultStream } from '../../../Mapping/Json/Streams/CollectResultStream';
+import { ObjectUtil } from "../../../Utility/ObjectUtil";
 
 export class PutCompareExchangeValueOperation<T> implements IOperation<CompareExchangeResult<T>> {
 
@@ -72,8 +73,11 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/cmpxchg?key=" + this._key + "&index=" + this._index;
 
+
         const tuple = {};
-        tuple["Object"] = this._value;
+        tuple["Object"] = TypeUtil.isPrimitive(this._value) 
+            ? this._value 
+            : this._conventions.transformObjectKeysToRemoteFieldNameConvention(this._value as any);
 
         return {
             method: "PUT",
@@ -87,7 +91,7 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
         return RavenCommandResponsePipeline.create()
             .collectBody()
             .parseJsonAsync([ "Value", { emitPath: true }])
-            .streamKeyCaseTransform({ targetKeyCaseConvention: this._conventions.entityKeyCaseConvention })
+            .streamKeyCaseTransform({ targetKeyCaseConvention: this._conventions.entityFieldNameConvention })
             .restKeyCaseTransform({
                 targetKeyCaseConvention: "camel"
             })

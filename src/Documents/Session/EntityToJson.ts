@@ -8,12 +8,10 @@ import { TypeInfo } from "../../Mapping/ObjectMapper";
 import { Mapping } from "../../Mapping";
 import { ObjectTypeDescriptor} from "../..";
 import { throwError } from "../../Exceptions";
-import { JsonSerializer } from "../../Mapping/Json/Serializer";
 
 export class EntityToJson {
 
     private _session: InMemoryDocumentSessionOperations;
-    private _jsonParser: JsonSerializer;
     /**
      * All the listeners for this session
      * @param _session Session to use
@@ -33,9 +31,12 @@ export class EntityToJson {
         const entityMapper = conventions.entityObjectMapper;
         
         let typeInfo: TypeInfo;
-        const jsonNode = entityMapper.toObjectLiteral(entity, (_typeInfo) => {
+        let jsonNode = entityMapper.toObjectLiteral(entity, (_typeInfo) => {
             typeInfo = _typeInfo;
         }, conventions.knownEntityTypesByName);
+
+        // TODO handle Maps
+        jsonNode = conventions.transformObjectKeysToRemoteFieldNameConvention(jsonNode);
 
         EntityToJson._writeMetadata(jsonNode, typeInfo, documentInfo);
 
@@ -130,14 +131,14 @@ export class EntityToJson {
                     && ((entityType.name === documentTypeFromConventions.name)
                         || TypeUtil.isInstanceOf(entityType, documentTypeFromConventions));
                 if (passedEntityTypeIsAssignableFromConventionsDocType) {
-                    const mapper = this._session.conventions.entityObjectMapper;
+                    const mapper = conventions.entityObjectMapper;
                     entity = mapper.fromObjectLiteral(
-                        document, entityTypeInfoFromMetadata, this._session.conventions.knownEntityTypesByName);
+                        document, entityTypeInfoFromMetadata);
                 }
             }
 
             if (!entity) {
-                const mapper = this._session.conventions.entityObjectMapper;
+                const mapper = conventions.entityObjectMapper;
                 let passedTypeInfo = entityTypeInfoFromMetadata;
                 if (entityType) {
                     passedTypeInfo = 
@@ -145,7 +146,7 @@ export class EntityToJson {
                 }
                 
                 entity = mapper.fromObjectLiteral(
-                    document, passedTypeInfo, this._session.conventions.knownEntityTypesByName);
+                    document, passedTypeInfo);
             }
 
             if (id) {

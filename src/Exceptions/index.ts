@@ -115,7 +115,8 @@ export type RavenErrorType = "RavenException"
 | "TestDriverTearDownError"
 | "FileNotFoundException"
 | "NotImplementedException"
-| "NodeIsPassiveException";
+| "NodeIsPassiveException"
+| "ConfigurationException";
 
 export interface ExceptionSchema {
     url: string;

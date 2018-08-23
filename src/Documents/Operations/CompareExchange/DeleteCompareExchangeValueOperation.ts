@@ -70,7 +70,7 @@ export class RemoveCompareExchangeCommand<T> extends RavenCommand<CompareExchang
         return RavenCommandResponsePipeline.create()
             .collectBody()
             .parseJsonAsync([ "Value", { emitPath: true }])
-            .streamKeyCaseTransform({ targetKeyCaseConvention: this._conventions.entityKeyCaseConvention })
+            .streamKeyCaseTransform({ targetKeyCaseConvention: this._conventions.entityFieldNameConvention })
             .restKeyCaseTransform({
                 targetKeyCaseConvention: "camel"
             })

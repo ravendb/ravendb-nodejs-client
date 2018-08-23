@@ -235,4 +235,8 @@ export abstract class DocumentStoreBase
         .then(() => {});
     }
 
+    protected _assertValidConfiguration(): void {
+        this.conventions.validate();
+    }
+
 }

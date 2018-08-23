@@ -10,7 +10,6 @@ import { ServerNode } from "../../../Http/ServerNode";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { HeadersBuilder } from "../../../Utility/HttpUtil";
 import { JsonSerializer } from "../../../Mapping/Json/Serializer";
-import { KEY_CASE_TRANSFORM_METADATA_IGNORE_KEYS } from "../../../Mapping/Json/Streams";
 import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
 
 export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDisposable {

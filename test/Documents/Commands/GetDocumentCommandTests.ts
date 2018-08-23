@@ -1,10 +1,9 @@
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
-
 import {
     IDocumentStore,
+    DocumentStore
 } from "../../../src";
-
 import { GetDocumentsCommand } from "../../../src/Documents/Commands/GetDocumentsCommand";
 
 describe("GetDocumentCommand streaming", function () {
@@ -20,50 +19,60 @@ describe("GetDocumentCommand streaming", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("with key case transform", async () => {
-        const session = store.openSession();
+        let customStore: DocumentStore;
+        try {
+            customStore = new DocumentStore(store.urls, store.database);
+            customStore.conventions.entityFieldNameConvention = "pascal";
+            customStore.conventions.remoteEntityFieldNameConvention = "camel";
+            customStore.initialize();
 
-        store.conventions.entityKeyCaseConvention = "pascal";
+            const session = store.openSession();
 
-        const user = {
-            Name: "Marcin",
-            Age: 30
-        }; 
 
-        const user2 = {
-            Name: "Roman",
-            Age: 40,
-            Pet: "users/3"
-        };
+            const user = {
+                Name: "Marcin",
+                Age: 30
+            };
 
-        const user3 = { Name: "Gizmo" };
+            const user2 = {
+                Name: "Roman",
+                Age: 40,
+                Pet: "users/3"
+            };
 
-        await session.store(user, "users/1");
-        await session.store(user2, "users/2");
-        await session.store(user3, "users/3");
-        await session.saveChanges();
+            const user3 = { Name: "Gizmo" };
 
-        const getDocs = new GetDocumentsCommand({
-            ids: [ "users/1", "users/2"],
-            includes: [ "Pet" ],
-            conventions: store.conventions
-        });
+            await session.store(user, "users/1");
+            await session.store(user2, "users/2");
+            await session.store(user3, "users/3");
+            await session.saveChanges();
 
-        await store.getRequestExecutor().execute(getDocs);
-        const users = getDocs.result;
+            const getDocs = new GetDocumentsCommand({
+                ids: ["users/1", "users/2"],
+                includes: ["Pet"],
+                conventions: store.conventions
+            });
 
-        assert.ok(users);
-        assert.ok(users.results && users.results.length);
-        assert.ok(users.includes);
-        assert.equal(2, users.results.length);
-        assert.equal(1, Object.keys(users.includes).length);
-        assert.equal(user3.Name, users.includes["users/3"].Name);
-        assert.equal(user2.Age, users.results[1].Age);
+            await store.getRequestExecutor().execute(getDocs);
+            const users = getDocs.result;
+
+            assert.ok(users);
+            assert.ok(users.results && users.results.length);
+            assert.ok(users.includes);
+            assert.equal(2, users.results.length);
+            assert.equal(1, Object.keys(users.includes).length);
+            assert.equal(user3.Name, users.includes["users/3"].Name);
+            assert.equal(user2.Age, users.results[1].Age);
+        } finally {
+            if (customStore) {
+                customStore.dispose();
+            }
+        }
     });
 
-    it.skip("[NOT IMPL] gets docs having a Map", () => {
-    });
+    it.skip("[NOT IMPL] gets docs having a Map", () => {});
 });

@@ -21,9 +21,3 @@ export function gatherJsonNotMatchingPath(jsonStream: stream.Stream) {
         });
     });
 }
-
-export const KEY_CASE_TRANSFORM_METADATA_IGNORE_KEYS = (function () {
-    const result = Object.assign({}, CONSTANTS.Documents.Metadata);
-    delete result["ID_PROPERTY"];
-    return Object.keys(result).map(x => result[x]);
-})();

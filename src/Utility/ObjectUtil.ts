@@ -9,7 +9,8 @@ export class ObjectUtil {
         return JSON.parse(JSON.stringify(o));
     }
 
-    public static transformObjectKeys(transformName: string, obj: object, opts?: ObjectChangeCaseOptions) {
+    public static transformObjectKeys(
+        transformName: CasingConvention, obj: object, opts?: ObjectChangeCaseOptions): object {
         const transform = ObjectUtil[transformName + "Keys"];
         if (!transform) {
             throwError("MappingError", `Could not find key case transform: ${transformName}`);
@@ -24,7 +25,7 @@ export class ObjectUtil {
     This code is a modified version of https://github.com/claudetech/js-change-object-case
 */
 
-export type KeyCasingConvention =
+export type CasingConvention =
     "upper" |
     "upperCase" |
     "ucFirst" |
@@ -54,7 +55,7 @@ export type KeyCasingConvention =
     "swap" |
     "swapCase";
 
-const TRANSFORMATION_NAMES: KeyCasingConvention[] = [
+const TRANSFORMATION_NAMES: CasingConvention[] = [
     "upper",
     "upperCase",
     "ucFirst",

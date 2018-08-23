@@ -1,8 +1,7 @@
 import * as stream from "readable-stream";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { 
-    RavenCommandResponsePipeline, 
-    RavenCommandResponsePipelineOptions 
+    RavenCommandResponsePipeline 
 } from "../../Http/RavenCommandResponsePipeline";
 import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestParameters } from "../../Primitives/Http";
@@ -14,7 +13,6 @@ import { throwError } from "../../Exceptions";
 import { CollectResultStreamOptions } from "../../Mapping/Json/Streams/CollectResultStream";
 import { getIgnoreKeyCaseTransformKeysFromDocumentMetadata } from "../../Mapping/Json/Docs/index";
 import { IRavenCommandResponsePipelineResult } from "../../Http/RavenCommandResponsePipeline";
-import { KEY_CASE_TRANSFORM_METADATA_IGNORE_KEYS } from "../../Mapping/Json/Streams/index";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 
 export interface GetDocumentsCommandOptionsBase {
@@ -201,7 +199,6 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
-
         if (!bodyStream) {
             this.result = null;
             return;
@@ -212,18 +209,20 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
                 const doc = chunk.value;
                 const path = chunk.path;
 
-                if (!doc["@metadata"]) {
-                    throw new Error("Document must have @metadata.");
+                const metadata = doc["@metadata"];
+                if (!metadata) {
+                    throwError("InvalidArgumentException", "Document must have @metadata.");
                 }
 
-                if (!doc["@metadata"]["@id"]) {
-                    throw new Error("Document must have @id in @metadata.");
+                const docId = metadata["@id"];
+                if (!docId) {
+                    throwError("InvalidArgumentException", "Document must have @id in @metadata.");
                 }
 
                 if (path[0] === "Results") {
                     result.results.push(doc);
                 } else if (path[0] === "Includes") {
-                    result.includes[doc["@metadata"]["@id"]] = doc;
+                    result.includes[docId] = doc;
                 }
 
                 return result;
@@ -235,7 +234,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             .collectBody()
             .parseJsonAsync(LOAD_DOCS_JSON_PATH)
             .streamKeyCaseTransform({
-                targetKeyCaseConvention: this._conventions.entityKeyCaseConvention,
+                targetKeyCaseConvention: this._conventions.entityFieldNameConvention,
                 extractIgnorePaths: (e) => [ ...getIgnoreKeyCaseTransformKeysFromDocumentMetadata(e), /@metadata\./ ],
                 ignoreKeys: [ /^@/ ]
             })

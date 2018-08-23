@@ -125,7 +125,7 @@ export class QueryCommand extends RavenCommand<QueryResult> {
             .collectBody()
             .parseJsonAsync(QUERY_DOCS_JSON_PATH)
             .streamKeyCaseTransform({
-                targetKeyCaseConvention: this._conventions.entityKeyCaseConvention,
+                targetKeyCaseConvention: this._conventions.entityFieldNameConvention,
                 extractIgnorePaths: (e) => [ 
                     ...getIgnoreKeyCaseTransformKeysFromDocumentMetadata(e), 
                     /@metadata\./ 

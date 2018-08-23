@@ -441,9 +441,6 @@ export class DocumentQuery<T extends object>
         resultClass: DocumentType<TResult>, queryData: QueryData): DocumentQuery<TResult>;
     private  _createDocumentQueryInternal<TResult extends object>(
         resultClass: DocumentType<TResult>, queryData?: QueryData): DocumentQuery<TResult> {
-        // const newFieldsToFetch = queryData && queryData.fields.length > 0
-        //         ? FieldsToFetchToken.create(queryData.fields, queryData.projections, queryData.isCustomFunction)
-        //         : null;
         let newFieldsToFetch: FieldsToFetchToken;
         
         if (queryData && queryData.fields.length > 0) {

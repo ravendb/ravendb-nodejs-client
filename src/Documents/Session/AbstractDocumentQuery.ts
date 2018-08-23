@@ -414,7 +414,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     protected _updateFieldsToFetchToken(fieldsToFetch: FieldsToFetchToken): void {
         this._fieldsToFetchToken = fieldsToFetch;
 
-        if (!this._selectTokens && !this._selectTokens.length) {
+        if (this._selectTokens && !this._selectTokens.length) {
             this._selectTokens.push(fieldsToFetch);
         } else {
             const fetchToken = [...this._selectTokens]

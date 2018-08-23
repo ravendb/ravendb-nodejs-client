@@ -55,9 +55,9 @@ export class CompareExchangeValueResultParser {
                     results[key] = new CompareExchangeValue(key, index, null);
                 } else {
                     const entityType = conventions.findEntityType(clazz);
-                    if (conventions.entityKeyCaseConvention) {
+                    if (conventions.entityFieldNameConvention) {
                         rawValue = ObjectUtil.transformObjectKeys(
-                            conventions.entityKeyCaseConvention, rawValue, { recursive: true, arrayRecursive: true });
+                            conventions.entityFieldNameConvention, rawValue, { recursive: true, arrayRecursive: true });
                     }
                     const entity = conventions.deserializeEntityFromJson(entityType, rawValue);
                     results[key] = new CompareExchangeValue(key, index, entity);

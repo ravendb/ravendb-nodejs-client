@@ -188,7 +188,7 @@ export class PatchCommand extends RavenCommand<PatchResult> {
             .collectBody()
             .parseJsonAsync(DOCS_JSON_PATH)
             .streamKeyCaseTransform({
-                targetKeyCaseConvention: this._conventions.entityKeyCaseConvention,
+                targetKeyCaseConvention: this._conventions.entityFieldNameConvention,
                 extractIgnorePaths: (e) => [ ...getIgnoreKeyCaseTransformKeysFromDocumentMetadata(e), /@metadata\./ ],
                 ignoreKeys: [ /^@/ ]
             })
