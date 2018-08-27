@@ -123,14 +123,6 @@ export class DocumentConventions {
         this._entityObjectMapper = value;
     }
 
-    public get entitySerializer(): JsonSerializer {
-        return this._entityJsonSerializer;
-    }
-
-    public set entitySerializer(value: JsonSerializer) {
-        this._entityJsonSerializer = value;
-    }
-
     public get readBalanceBehavior(): ReadBalanceBehavior {
         return this._readBalanceBehavior;
     }
