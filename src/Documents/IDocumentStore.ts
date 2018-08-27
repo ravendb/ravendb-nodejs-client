@@ -13,6 +13,7 @@ import { OperationExecutor} from "./Operations/OperationExecutor";
 import { AbstractIndexCreationTask } from "./Indexes";
 import { RequestExecutor } from "../Http/RequestExecutor";
 import { DocumentConventions } from "./Conventions/DocumentConventions";
+import { InMemoryDocumentSessionOperations } from "./Session/InMemoryDocumentSessionOperations";
 
 export interface SessionEventsProxy {
     addSessionListener(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
@@ -32,16 +33,23 @@ export interface SessionEventsProxy {
 
 export type DocumentStoreEvent = "beforeDispose" | "afterDispose";
 
+export interface SessionCreatedEventArgs {
+    session: InMemoryDocumentSessionOperations;
+}
+
 export interface DocumentStoreEventEmitter {
 
+    on(eventName: "sessionCreated", eventHandler: (args: SessionCreatedEventArgs) => void): this;
     on(eventName: "beforeDispose", eventHandler: () => void): this;
     on(eventName: "afterDispose", eventHandler: (callback: () => void) => void): this;
     on(eventName: "executorsDisposed", eventHandler: (callback: () => void) => void): this;
 
+    once(eventName: "sessionCreated", eventHandler: (args: SessionCreatedEventArgs) => void): this;
     once(eventName: "beforeDispose", eventHandler: () => void): this;
     once(eventName: "afterDispose", eventHandler: (callback: () => void) => void): this;
     once(eventName: "executorsDisposed", eventHandler: (callback: () => void) => void): this;
 
+    removeListener(eventName: "sessionCreated", eventHandler: (args: SessionCreatedEventArgs) => void): void;
     removeListener(eventName: "beforeDispose", eventHandler: () => void): void;
     removeListener(eventName: "afterDispose", eventHandler: (callback: () => void) => void): void;
     removeListener(eventName: "executorsDisposed", eventHandler: (callback: () => void) => void): void;

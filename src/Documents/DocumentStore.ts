@@ -5,7 +5,7 @@ import { throwError } from "../Exceptions";
 import { RequestExecutor } from "../Http/RequestExecutor";
 import { getLogger } from "../Utility/LogUtil";
 import { DocumentStoreBase } from "./DocumentStoreBase";
-import { IDocumentStore } from "./IDocumentStore";
+import { IDocumentStore, SessionCreatedEventArgs } from './IDocumentStore';
 import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor";
 import { OperationExecutor } from "./Operations/OperationExecutor";
 import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";
@@ -86,9 +86,13 @@ export class DocumentStore extends DocumentStoreBase {
         this.emit("beforeDispose");
 
         /* TBD
-            foreach (var observeChangesAndEvictItemsFromCacheForDatabase 
-              in _observeChangesAndEvictItemsFromCacheForDatabases)
-                observeChangesAndEvictItemsFromCacheForDatabase.Value.Dispose();
+            foreach (var value in _aggressiveCacheChanges.Values)
+            {
+                if (value.IsValueCreated == false)
+                    continue;
+
+                value.Value.Dispose();
+            }
 
             var tasks = new List<Task>();
             foreach (var changes in _databaseChanges)
@@ -188,7 +192,7 @@ export class DocumentStore extends DocumentStoreBase {
         const sessionId = uuid();
         const session = new DocumentSession(database, this, sessionId, requestExecutor);
         this._registerEvents(session);
-        // AfterSessionCreated(session);
+        this.emit("sessionCreated", { session });
         return session;
     }
 
