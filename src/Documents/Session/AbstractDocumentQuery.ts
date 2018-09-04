@@ -1,38 +1,39 @@
-import {QueryOperation} from "./Operations/QueryOperation";
+import { QueryOperation } from "./Operations/QueryOperation";
 import * as BluebirdPromise from "bluebird";
-import {GroupByCountToken} from "./Tokens/GroupByCountToken";
-import {GroupByToken} from "./Tokens/GroupByToken";
-import {FieldsToFetchToken} from "./Tokens/FieldsToFetchToken";
-import {DeclareToken} from "./Tokens/DeclareToken";
-import {LoadToken} from "./Tokens/LoadToken";
-import {FromToken} from "./Tokens/FromToken";
-import {DistinctToken} from "./Tokens/DistinctToken";
+import { GroupByCountToken } from "./Tokens/GroupByCountToken";
+import { GroupByToken } from "./Tokens/GroupByToken";
+import { FieldsToFetchToken } from "./Tokens/FieldsToFetchToken";
+import { DeclareToken } from "./Tokens/DeclareToken";
+import { LoadToken } from "./Tokens/LoadToken";
+import { FromToken } from "./Tokens/FromToken";
+import { DistinctToken } from "./Tokens/DistinctToken";
 import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
 import { QueryStatistics } from "./QueryStatistics";
 import { IDocumentSession } from "./IDocumentSession";
 import { throwError, getError } from "../../Exceptions";
 import { QueryOperator } from "../Queries/QueryOperator";
 import { IndexQuery } from "../Queries/IndexQuery";
-import {IAbstractDocumentQuery} from "./IAbstractDocumentQuery";
+import { IAbstractDocumentQuery } from "./IAbstractDocumentQuery";
 import { GroupBy } from "../Queries/GroupBy";
 import { GroupByKeyToken } from "../Session/Tokens/GroupByKeyToken";
 import { GroupBySumToken } from "../Session/Tokens/GroupBySumToken";
 import { TrueToken } from "../Session/Tokens/TrueToken";
 import { WhereToken, WhereOptions } from "../Session/Tokens/WhereToken";
-import {QueryFieldUtil} from "../Queries/QueryFieldUtil";
+import { QueryFieldUtil } from "../Queries/QueryFieldUtil";
 import { QueryToken } from "./Tokens/QueryToken";
-import {CloseSubclauseToken} from "./Tokens/CloseSubclauseToken";
-import {OpenSubclauseToken} from "./Tokens/OpenSubclauseToken";
-import {NegateToken} from "./Tokens/NegateToken";
+import { CloseSubclauseToken } from "./Tokens/CloseSubclauseToken";
+import { OpenSubclauseToken } from "./Tokens/OpenSubclauseToken";
+import { NegateToken } from "./Tokens/NegateToken";
 import { WhereParams } from "./WhereParams";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { DateUtil } from "../../Utility/DateUtil";
 import { MethodCall } from "./MethodCall";
-import {QueryOperatorToken} from "./Tokens/QueryOperatorToken";
-import {OrderByToken} from "./Tokens/OrderByToken";
+import { QueryOperatorToken } from "./Tokens/QueryOperatorToken";
+import { OrderByToken } from "./Tokens/OrderByToken";
+import { FacetToken } from "./Tokens/FacetToken";
 import { QueryResult } from "../Queries/QueryResult";
-import {DocumentType} from "../DocumentAbstractions";
-import {QueryEventsEmitter} from "./QueryEvents";
+import { DocumentType } from "../DocumentAbstractions";
+import { QueryEventsEmitter } from "./QueryEvents";
 import { EventEmitter } from "events";
 import * as StringBuilder from "string-builder";
 import { StringUtil } from "../../Utility/StringUtil";
@@ -50,12 +51,13 @@ import { SpatialCriteria } from "../Queries/Spatial/SpatialCriteria";
 import { SessionBeforeQueryEventArgs } from "./SessionEvents";
 import { CmpXchg } from "./CmpXchng";
 import { AbstractCallback } from "../../Types/Callbacks";
-import { DocumentQueryCustomization } from './DocumentQueryCustomization';
+import { DocumentQueryCustomization } from "./DocumentQueryCustomization";
+import { FacetBase } from "../Queries/Facets/FacetBase";
 
 /**
  * A query against a Raven index
  */
-export abstract class AbstractDocumentQuery<T extends object, TSelf extends AbstractDocumentQuery<T, TSelf>> 
+export abstract class AbstractDocumentQuery<T extends object, TSelf extends AbstractDocumentQuery<T, TSelf>>
     extends EventEmitter
     implements QueryEventsEmitter, IAbstractDocumentQuery<T> {
 
@@ -137,8 +139,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     // TBD protected boolean shouldExplainScores;
 
     public get isDistinct(): boolean {
-        return this._selectTokens 
-            && this._selectTokens.length 
+        return this._selectTokens
+            && this._selectTokens.length
             && this._selectTokens[0] instanceof DistinctToken;
     }
 
@@ -176,30 +178,30 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     // }
 
     protected constructor(
-        clazz: DocumentType<T>, 
+        clazz: DocumentType<T>,
         session: InMemoryDocumentSessionOperations,
         indexName: string,
-        collectionName: string, 
+        collectionName: string,
         isGroupBy: boolean,
         declareToken: DeclareToken,
         loadTokens: LoadToken[]);
     protected constructor(
-        clazz: DocumentType<T>, 
+        clazz: DocumentType<T>,
         session: InMemoryDocumentSessionOperations,
         indexName: string,
-        collectionName: string, 
+        collectionName: string,
         isGroupBy: boolean,
         declareToken: DeclareToken,
-        loadTokens: LoadToken[], 
+        loadTokens: LoadToken[],
         fromAlias: string);
     protected constructor(
-        clazz: DocumentType<T>, 
+        clazz: DocumentType<T>,
         session: InMemoryDocumentSessionOperations,
         indexName: string,
-        collectionName: string, 
+        collectionName: string,
         isGroupBy: boolean,
         declareToken: DeclareToken,
-        loadTokens: LoadToken[], 
+        loadTokens: LoadToken[],
         fromAlias: string = null) {
         super();
 
@@ -217,9 +219,9 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this.on("afterQueryExecuted", (result: QueryResult) => {
             this._updateStatsAndHighlightings(result);
         });
-        
+
         this._conventions = !session ?
-            new DocumentConventions() : 
+            new DocumentConventions() :
             session.conventions;
         // TBD _linqPathProvider = new LinqPathProvider(_conventions);
     }
@@ -232,7 +234,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         if (!this._whereTokens || !this._whereTokens.length) {
-            throwError("InvalidOperationException", 
+            throwError("InvalidOperationException",
                 "Cannot get MoreLikeThisToken because there are no where token specified.");
         }
 
@@ -248,9 +250,9 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     private _ensureValidFieldName(fieldName: string, isNestedPath: boolean): string {
-        if (!this._theSession 
-            || !this._theSession.conventions 
-            || isNestedPath 
+        if (!this._theSession
+            || !this._theSession.conventions
+            || isNestedPath
             || this._isGroupBy) {
             return QueryFieldUtil.escapeIfNecessary(fieldName);
         }
@@ -290,7 +292,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             ? QueryOperatorToken.AND
             : QueryOperatorToken.OR;
 
-        if (lastWhere 
+        if (lastWhere
             && lastWhere.options.searchOperator) {
             token = QueryOperatorToken.OR; // default to OR operator after search if AND was not specified explicitly
         }
@@ -338,7 +340,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     public _usingDefaultOperator(operator): void {
         if (!this._whereTokens || !this._whereTokens.length) {
-            throwError("InvalidOperationException", 
+            throwError("InvalidOperationException",
                 "Default operator can only be set before any where clause is added.");
         }
 
@@ -358,12 +360,12 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     protected _initializeQueryOperation(): QueryOperation {
         const indexQuery = this.getIndexQuery();
         return new QueryOperation(
-            this._theSession, 
-            this._indexName, 
-            indexQuery, 
-            this._fieldsToFetchToken, 
-            this._disableEntitiesTracking, 
-            false, 
+            this._theSession,
+            this._indexName,
+            indexQuery,
+            this._fieldsToFetchToken,
+            this._disableEntitiesTracking,
+            false,
             false);
     }
 
@@ -418,7 +420,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             this._selectTokens.push(fieldsToFetch);
         } else {
             const fetchToken = [...this._selectTokens]
-                    .filter(x => x instanceof FieldsToFetchToken)[0];
+                .filter(x => x instanceof FieldsToFetchToken)[0];
 
             if (fetchToken) {
                 const idx = this._selectTokens.indexOf(fetchToken);
@@ -441,10 +443,10 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * @return list of projected fields
      */
     public getProjectionFields(): string[] {
-        return this._fieldsToFetchToken && 
-            this._fieldsToFetchToken.projections 
-                ? [...this._fieldsToFetchToken.projections] 
-                : [] as string[];
+        return this._fieldsToFetchToken &&
+            this._fieldsToFetchToken.projections
+            ? [...this._fieldsToFetchToken.projections]
+            : [] as string[];
     }
 
     /**
@@ -483,7 +485,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     public addParameter(name: string, value: any): void {
         name = name.replace(/^\$/, "");
         if (Object.keys(this._queryParameters).indexOf(name) !== -1) {
-            throwError("InvalidOperationException", 
+            throwError("InvalidOperationException",
                 "The parameter " + name + " was already added");
         }
 
@@ -494,14 +496,14 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     public _groupBy(field: GroupBy, ...fields: GroupBy[]): void;
     public _groupBy(fieldOrFieldName: GroupBy | string, ...fieldsOrFieldNames: any[]): void {
 
-        if (typeof(fieldOrFieldName) === "string") {
+        if (typeof (fieldOrFieldName) === "string") {
             const mapping = fieldsOrFieldNames.map(x => GroupBy.field(x));
             this._groupBy(GroupBy.field(fieldOrFieldName), ...mapping);
             return;
         }
 
         if (!this._fromToken.isDynamic) {
-            throwError("InvalidOperationException", 
+            throwError("InvalidOperationException",
                 "groupBy only works with dynamic queries");
         }
 
@@ -533,7 +535,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             if (!fieldName || fieldName.toLocaleLowerCase() === (projectedName || "").toLocaleLowerCase()) {
                 fieldName = aliasedFieldName;
             }
-        } else if (fieldName 
+        } else if (fieldName
             && Object.keys(this._aliasToGroupByFieldName)
                 .reduce((result, next) => result || next === fieldName, false)) {
             const aliasedFieldName = this._aliasToGroupByFieldName[fieldName];
@@ -674,9 +676,9 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         const transformToEqualValue = this._transformValue(whereParams);
         const addQueryParameter: string = this._addQueryParameter(transformToEqualValue);
         const whereToken = WhereToken.create(
-            "Equals", 
-            whereParams.fieldName, 
-            addQueryParameter, 
+            "Equals",
+            whereParams.fieldName,
+            addQueryParameter,
             new WhereOptions({
                 exact: whereParams.exact
             }));
@@ -696,13 +698,13 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             const type = mc.constructor.name;
             if (CmpXchg.name === type) {
                 token = WhereToken.create(
-                    op, 
-                    whereParams.fieldName, 
-                    null, 
+                    op,
+                    whereParams.fieldName,
+                    null,
                     new WhereOptions({
-                        methodType: "CmpXchg", 
-                        parameters: args, 
-                        property: mc.accessPath, 
+                        methodType: "CmpXchg",
+                        parameters: args,
+                        property: mc.accessPath,
                         exact: whereParams.exact
                     }));
             } else {
@@ -717,7 +719,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     public _whereNotEquals(fieldName: string, value: any): void;
-    public _whereNotEquals(fieldName: string, value: any, exact: boolean): void ;
+    public _whereNotEquals(fieldName: string, value: any, exact: boolean): void;
     public _whereNotEquals(fieldName: string, method: MethodCall): void;
     public _whereNotEquals(fieldName: string, method: MethodCall, exact: boolean): void;
     public _whereNotEquals(whereParams: WhereParams): void;
@@ -751,9 +753,9 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         const whereToken = WhereToken.create(
-            "NotEquals", 
-            whereParams.fieldName, 
-            this._addQueryParameter(transformToEqualValue), 
+            "NotEquals",
+            whereParams.fieldName,
+            this._addQueryParameter(transformToEqualValue),
             new WhereOptions(whereParams.exact));
         tokens.push(whereToken);
     }
@@ -778,8 +780,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._negateIfNeeded(tokens, fieldName);
 
         const whereToken = WhereToken.create(
-            "In", 
-            fieldName, 
+            "In",
+            fieldName,
             this._addQueryParameter(
                 this._transformCollection(fieldName, AbstractDocumentQuery._unpackCollection(values))));
         tokens.push(whereToken);
@@ -859,8 +861,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
         const whereToken = WhereToken.create(
             "Between", fieldName, null, new WhereOptions({
-                exact, 
-                from: fromParameterName, 
+                exact,
+                from: fromParameterName,
                 to: toParameterName
             }));
         tokens.push(whereToken);
@@ -898,8 +900,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * @param value Value to compare
      * @param exact Use exact matcher
      */
-    public _whereGreaterThanOrEqual(fieldName: string, value: any): void; 
-    public _whereGreaterThanOrEqual(fieldName: string, value: any, exact: boolean): void; 
+    public _whereGreaterThanOrEqual(fieldName: string, value: any): void;
+    public _whereGreaterThanOrEqual(fieldName: string, value: any, exact: boolean): void;
     public _whereGreaterThanOrEqual(fieldName: string, value: any, exact: boolean = false): void {
         fieldName = this._ensureValidFieldName(fieldName, false);
 
@@ -983,7 +985,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         if (tokens[tokens.length - 1] instanceof QueryOperatorToken) {
-            throwError("InvalidOperationException", 
+            throwError("InvalidOperationException",
                 "Cannot add AND, previous token was already an operator token.");
         }
 
@@ -1000,7 +1002,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         if (tokens[tokens.length - 1] instanceof QueryOperatorToken) {
-            throwError("InvalidOperationException", 
+            throwError("InvalidOperationException",
                 "Cannot add OR, previous token was already an operator token.");
         }
 
@@ -1017,7 +1019,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      *
      * @param boost Boost value
      */
-    public _boost(boost: number): void  {
+    public _boost(boost: number): void {
         if (boost === 1.0) {
             return;
         }
@@ -1191,8 +1193,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
         if (this._currentClauseDepth) {
             throwError("InvalidOperationException",
-                "A clause was not closed correctly within this query, current clause depth = " 
-                    + this._currentClauseDepth);
+                "A clause was not closed correctly within this query, current clause depth = "
+                + this._currentClauseDepth);
         }
 
         const queryText = new StringBuilder();
@@ -1298,7 +1300,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         tokens.push(whereToken);
     }
 
-    public addRootType(clazz: DocumentType): void  {
+    public addRootType(clazz: DocumentType): void {
         this._rootTypes.add(clazz);
     }
 
@@ -1380,17 +1382,17 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         writer
-                .append(" where ");
+            .append(" where ");
 
         if (this._isIntersect) {
             writer
-                    .append("intersect(");
+                .append("intersect(");
         }
 
         for (let i = 0; i < this._whereTokens.length; i++) {
             DocumentQueryHelper.addSpaceIfNeeded(
-                i > 0 ? this._whereTokens[i - 1] : null, 
-                this._whereTokens[i], 
+                i > 0 ? this._whereTokens[i - 1] : null,
+                this._whereTokens[i],
                 writer);
             this._whereTokens[i].writeTo(writer);
         }
@@ -1406,7 +1408,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         writer
-                .append(" group by ");
+            .append(" group by ");
 
         let isFirst = true;
 
@@ -1426,7 +1428,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         writer
-                .append(" order by ");
+            .append(" order by ");
 
         let isFirst = true;
 
@@ -1494,11 +1496,11 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     // TBD public void SetHighlighterTags(string[] preTags, string[] postTags)
 
     protected _withinRadiusOf(
-        fieldName: string, 
-        radius: number, 
-        latitude: number, 
-        longitude: number, 
-        radiusUnits: SpatialUnits, 
+        fieldName: string,
+        radius: number,
+        latitude: number,
+        longitude: number,
+        radiusUnits: SpatialUnits,
         distErrorPercent: number): void {
         fieldName = this._ensureValidFieldName(fieldName, false);
 
@@ -1507,13 +1509,13 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._negateIfNeeded(tokens, fieldName);
 
         const whereToken = WhereToken.create(
-            "SpatialWithin", 
-            fieldName, 
-            null, 
+            "SpatialWithin",
+            fieldName,
+            null,
             new WhereOptions({
                 shape: ShapeToken.circle(
-                    this._addQueryParameter(radius), 
-                    this._addQueryParameter(latitude), 
+                    this._addQueryParameter(radius),
+                    this._addQueryParameter(latitude),
                     this._addQueryParameter(longitude), radiusUnits),
                 distance: distErrorPercent
             }));
@@ -1549,18 +1551,18 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         tokens.push(WhereToken.create(
-            whereOperator, fieldName, null, new WhereOptions({ 
-                shape: wktToken, 
-                distance: distErrorPercent 
+            whereOperator, fieldName, null, new WhereOptions({
+                shape: wktToken,
+                distance: distErrorPercent
             })));
     }
 
-    public _spatial(dynamicField: DynamicSpatialField, criteria: SpatialCriteria): void; 
-    public _spatial(fieldName: string, criteria: SpatialCriteria): void; 
+    public _spatial(dynamicField: DynamicSpatialField, criteria: SpatialCriteria): void;
+    public _spatial(fieldName: string, criteria: SpatialCriteria): void;
     public _spatial(fieldNameOrDynamicSpatialField: string | DynamicSpatialField, criteria: SpatialCriteria): void {
 
         let tokens: QueryToken[];
-        if (typeof(fieldNameOrDynamicSpatialField) === "string") {
+        if (typeof (fieldNameOrDynamicSpatialField) === "string") {
             const fieldName = this._ensureValidFieldName(fieldNameOrDynamicSpatialField, false);
 
             tokens = this._getCurrentWhereTokens();
@@ -1579,7 +1581,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         tokens.push(criteria.toQueryToken(
             dynamicField.toField(
                 (fName, isNestedPath) => this._ensureValidFieldName(fName, isNestedPath)),
-                (o) => this._addQueryParameter(o)));
+            (o) => this._addQueryParameter(o)));
     }
 
     public _orderByDistance(field: DynamicSpatialField, latitude: number, longitude: number): void;
@@ -1598,7 +1600,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             } else {
                 this._orderByTokens.push(
                     OrderByToken.createDistanceAscending(
-                        fieldNameOrField as string, 
+                        fieldNameOrField as string,
                         this._addQueryParameter(shapeWktOrLatitude), this._addQueryParameter(longitude)));
             }
 
@@ -1620,7 +1622,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
                     this._ensureValidFieldName(f, isNestedPath)) + "'", shapeWktOrLatitude as number, longitude);
         }
     }
-    
+
     public _orderByDistanceDescending(field: DynamicSpatialField, latitude: number, longitude: number): void;
     public _orderByDistanceDescending(field: DynamicSpatialField, shapeWkt: string): void;
     public _orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): void;
@@ -1637,7 +1639,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             } else {
                 this._orderByTokens.push(
                     OrderByToken.createDistanceDescending(
-                        fieldNameOrField as string, 
+                        fieldNameOrField as string,
                         this._addQueryParameter(shapeWktOrLatitude), this._addQueryParameter(longitude)));
             }
 
@@ -1780,4 +1782,22 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         const queryResult = await this.getQueryResult();
         return queryResult.totalResults > 0;
     }
+
+    // tslint:disable:function-name
+    public _aggregateBy(facet: FacetBase): void {
+        for (const token of this._selectTokens) {
+            if (token instanceof FacetToken) {
+                continue;
+            }
+            throwError("InvalidOperationException",
+                "Aggregation query can select only facets while it got " + token.constructor.name + " token");
+        }
+        const facetToken = FacetToken.create(facet, (val) => this._addQueryParameter(val));
+        this._selectTokens.push(facetToken);
+    }
+
+    public _aggregateUsing(facetSetupDocumentId: string): void {
+        this._selectTokens.push(FacetToken.create(facetSetupDocumentId));
+    }
+    // tslint:enable:function-name
 }

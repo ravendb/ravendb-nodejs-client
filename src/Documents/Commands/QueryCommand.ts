@@ -11,20 +11,28 @@ import {JsonSerializer } from "../../Mapping/Json/Serializer";
 import * as stream from "readable-stream";
 import { CollectResultStreamOptions } from "../../Mapping/Json/Streams/CollectResultStream";
 import { DocumentsResult } from "./GetDocumentsCommand";
-import { RavenCommandResponsePipeline, IRavenCommandResponsePipelineResult } from "../../Http/RavenCommandResponsePipeline";
+import { 
+    RavenCommandResponsePipeline, 
+    IRavenCommandResponsePipelineResult 
+} from "../../Http/RavenCommandResponsePipeline";
 import { getIgnoreKeyCaseTransformKeysFromDocumentMetadata } from "../../Mapping/Json/Docs";
 
 const QUERY_DOCS_JSON_PATH = [ /^(Results|Includes)$/, { emitPath: true } ];
 
+export interface QueryCommandOptions {
+    metadataOnly?: boolean;
+    indexEntriesOnly?: boolean;
+}
+
 export class QueryCommand extends RavenCommand<QueryResult> {
 
-    private _conventions: DocumentConventions;
+    protected _conventions: DocumentConventions;
     private _indexQuery: IndexQuery;
     private _metadataOnly: boolean;
     private _indexEntriesOnly: boolean;
 
     public constructor(
-        conventions: DocumentConventions, indexQuery: IndexQuery, metadataOnly: boolean, indexEntriesOnly: boolean) {
+        conventions: DocumentConventions, indexQuery: IndexQuery, opts: QueryCommandOptions) {
         super();
 
         this._conventions = conventions;
@@ -34,8 +42,10 @@ export class QueryCommand extends RavenCommand<QueryResult> {
         }
 
         this._indexQuery = indexQuery;
-        this._metadataOnly = metadataOnly;
-        this._indexEntriesOnly = indexEntriesOnly;
+
+        opts = opts || {};
+        this._metadataOnly = opts.metadataOnly;
+        this._indexEntriesOnly = opts.indexEntriesOnly;
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
@@ -77,20 +87,6 @@ export class QueryCommand extends RavenCommand<QueryResult> {
         return serializer;
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        if (!response) {
-            this.result = null;
-            return;
-        }
-
-        const rawResult = ObjectKeysTransform.camelCase(
-            JsonSerializer.getDefault().deserialize(response), false);
-        this.result = this._typedObjectMapper.fromObjectLiteral(rawResult, {
-            typeName: QueryResult.name
-        }, new Map([[QueryResult.name, QueryResult]]));
-
-    }
-
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         if (!bodyStream) {
             this.result = null;
@@ -101,10 +97,6 @@ export class QueryCommand extends RavenCommand<QueryResult> {
             reduceResults: (result: DocumentsResult, chunk: { path: string | any[], value: object }) => {
                 const doc = chunk.value;
                 const path = chunk.path;
-
-                if (!doc["@metadata"]) {
-                    throw new Error("Document must have @metadata.");
-                }
 
                 if (path[0] === "Results") {
                     result.results.push(doc);
@@ -151,5 +143,55 @@ export class QueryCommand extends RavenCommand<QueryResult> {
 
     public get isReadRequest(): boolean {
         return true;
+    }
+}
+
+export class FacetQueryCommand extends QueryCommand {
+
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
+            this.result = null;
+            return;
+        }
+        
+        const collectResultOpts: CollectResultStreamOptions<DocumentsResult> = {
+            reduceResults: (result: DocumentsResult, chunk: { path: string | any[], value: object }) => {
+                const doc = chunk.value;
+                const path = chunk.path;
+
+                if (path[0] === "Results") {
+                    result.results.push(doc);
+                } else if (path[0] === "Includes") {
+                    if (!doc["@metadata"]["@id"]) {
+                        throw new Error("Document must have @id in @metadata.");
+                    }
+
+                    result.includes[doc["@metadata"]["@id"]] = doc;
+                }
+
+                return result;
+            },
+            initResult: { results: [], includes: {} } as DocumentsResult
+        };
+
+        return RavenCommandResponsePipeline.create()
+            .collectBody()
+            .parseJsonAsync(QUERY_DOCS_JSON_PATH)
+            .streamKeyCaseTransform({ targetKeyCaseConvention: "camel" })
+            .restKeyCaseTransform({ targetKeyCaseConvention: "camel" })
+            .collectResult(collectResultOpts)
+            .process(bodyStream)
+            .then((result: IRavenCommandResponsePipelineResult<DocumentsResult>) => {
+                const rawResult = Object.assign(result.result, result.rest) as QueryResult;
+                this.result = this._reviveResultTypes(rawResult, {
+                    typeName: QueryResult.name
+                }, new Map([[QueryResult.name, QueryResult]]));
+
+                if (fromCache) {
+                    this.result.durationInMs = -1;
+                }
+                
+                return result.body;
+            });
     }
 }

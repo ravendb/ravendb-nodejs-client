@@ -13,7 +13,7 @@ import {
 } from "../../DocumentAbstractions";
 import { CONSTANTS } from "../../../Constants";
 import { TypeUtil } from "../../../Utility/TypeUtil";
-import { StringUtil } from '../../../Utility/StringUtil';
+import { StringUtil } from "../../../Utility/StringUtil";
 
 const log = getLogger({ module: "QueryOperation" });
 
@@ -52,8 +52,10 @@ export class QueryOperation {
 
         this.logQuery();
 
-        return new QueryCommand(
-            this._session.conventions, this._indexQuery, this._metadataOnly, this._indexEntriesOnly);
+        return new QueryCommand(this._session.conventions, this._indexQuery, {
+            metadataOnly: this._metadataOnly,
+            indexEntriesOnly: this._indexEntriesOnly
+        });
     }
 
     public getCurrentQueryResults(): QueryResult {

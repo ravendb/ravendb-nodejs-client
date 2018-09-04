@@ -73,22 +73,23 @@ export abstract class AbstractIndexCreationTask {
      * @return index name
      */
     public getIndexName(): string {
-        return this.constructor.name.replace(/_/g, "/");
+        return AbstractIndexCreationTask.getIndexNameForCtor(this.constructor.name);
+    }
+
+    public static getIndexNameForCtor(indexCtorName: string) {
+        return indexCtorName.replace(/_/g, "/");
     }
 
     /**
      * Executes the index creation against the specified document store.
      * @param store target document store
      */
-    public execute(store: IDocumentStore, conventions?: DocumentConventions, database?: string): Promise<void> {
-        return Promise.resolve()
-            .then(() => {
-                if (!conventions && !database) {
-                    return store.executeIndex(this);
-                } else {
-                    return this._putIndex(store, conventions, database);
-                }
-            });
+    public async execute(store: IDocumentStore, conventions?: DocumentConventions, database?: string): Promise<void> {
+        if (!conventions && !database) {
+            return store.executeIndex(this);
+        } else {
+            return this._putIndex(store, conventions, database);
+        }
     }
 
     private _putIndex(store: IDocumentStore, conventions: DocumentConventions, database: string): Promise<void> {

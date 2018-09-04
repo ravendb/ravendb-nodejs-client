@@ -100,7 +100,7 @@ export class PemCertificate extends Certificate {
                 cert.indexOf(endMarker) + endMarker.length
             );
 
-            if (!StringUtil.isNullOrWhiteSpace(part)) {
+            if (!StringUtil.isNullOrWhitespace(part)) {
                 return part;
             }
         }
