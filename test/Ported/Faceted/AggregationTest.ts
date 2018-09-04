@@ -47,7 +47,7 @@ class Order {
     public region: number;
 }
 
-describe("AggregationTest", function () {
+describe.skip("AggregationTest", function () {
 
     let store: IDocumentStore;
 
