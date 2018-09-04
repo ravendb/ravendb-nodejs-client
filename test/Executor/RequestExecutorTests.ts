@@ -42,14 +42,9 @@ describe("Request executor", function () {
                         const cmd = new GetNextOperationIdCommand();
                         await executor.execute(cmd);
                     } catch (err) {
-                        if (err.name === "DatabaseDoesNotExistException") {
-                            errorsCount++;
-                        } else {
-                            throw err;
-                        }
+                        errorsCount++;
                     }
                 }
-
                 assert.equal(errorsCount, 40);
 
                 try {

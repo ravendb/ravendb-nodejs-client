@@ -21,6 +21,7 @@ describe("GetNextOperationIdCommand", function () {
             const command = new GetNextOperationIdCommand();
             await store.getRequestExecutor().execute(command);
             assert.ok(command.result);
+            assert.ok(typeof command.result === "number");
             assert.ok(!isNaN(command.result));
     });
 });

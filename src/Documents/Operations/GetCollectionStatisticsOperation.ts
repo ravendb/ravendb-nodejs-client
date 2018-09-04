@@ -1,4 +1,4 @@
-import { HttpRequestBase } from "../../Primitives/Http";
+import { HttpRequestParameters } from "../../Primitives/Http";
 import { IMaintenanceOperation, OperationResultType } from "./OperationAbstractions";
 import { CollectionStatistics } from "./CollectionStatistics";
 import { RavenCommand } from "../../Http/RavenCommand";
@@ -6,6 +6,7 @@ import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { ServerNode } from "../../Http/ServerNode";
 import { ObjectKeysTransform } from "../../Mapping/ObjectMapper";
 import { JsonSerializer } from "../../Mapping/Json/Serializer";
+import * as stream from "readable-stream";
 
 export class GetCollectionStatisticsOperation implements IMaintenanceOperation<CollectionStatistics> {
 
@@ -29,7 +30,7 @@ export class GetCollectionStatisticsCommand extends RavenCommand<CollectionStati
         return true;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/collections/stats";
         return { uri };
     }
@@ -38,12 +39,20 @@ export class GetCollectionStatisticsCommand extends RavenCommand<CollectionStati
         return JsonSerializer.getDefault();
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        if (!response) {
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
             this._throwInvalidResponse();
         }
 
-        const rawResult = this._serializer.deserialize(response);
-        this.result = ObjectKeysTransform.camelCase(rawResult);
+        return this._getDefaultResponsePipeline()
+            .streamKeyCaseTransform({
+                targetKeyCaseConvention: "camel",
+                ignorePaths: [ /^collections\./i ]
+            })
+            .process(bodyStream)
+            .then(({ result, body }) => {
+                this.result = result;
+                return body;
+            });
     }
 }

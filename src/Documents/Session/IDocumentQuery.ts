@@ -1,4 +1,5 @@
 import { IDocumentQueryBaseSingle } from "./IDocumentQueryBaseSingle";
+import { IAggregationDocumentQuery } from "./../Queries/Facets/IAggregationDocumentQuery";
 import { IEnumerableQuery } from "./IEnumerableQuery";
 import { QueryResult } from "../Queries/QueryResult";
 import { DocumentType } from "../DocumentAbstractions";
@@ -6,6 +7,8 @@ import { QueryData } from "../Queries/QueryData";
 import { GroupBy } from "../Queries/GroupBy";
 import { IDocumentQueryBase } from "./IDocumentQueryBase";
 import { IGroupByDocumentQuery } from "./IGroupByDocumentQuery";
+import { IFacetBuilder } from "../Queries/Facets/IFacetBuilder";
+import { FacetBase } from "./../Queries/Facets/FacetBase";
 
 /**
  * A query against a Raven index
@@ -76,7 +79,10 @@ export interface IDocumentQuery<T extends object>
     groupBy(field: GroupBy, ...fields: GroupBy[]): IGroupByDocumentQuery<T>;
 
     //TBD MoreLikeThis
-    //TBD AggregateBy
     //TBD SuggestUsing
 
+    aggregateBy(action: (builder: IFacetBuilder<T>) => void): IAggregationDocumentQuery<T>;
+    aggregateBy(facet: FacetBase): IAggregationDocumentQuery<T>;
+    aggregateBy(...facet: FacetBase[]): IAggregationDocumentQuery<T>;
+    aggregateUsing(facetSetupDocumentId: string): IAggregationDocumentQuery<T>;
 }

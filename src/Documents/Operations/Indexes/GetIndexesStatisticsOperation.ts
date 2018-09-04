@@ -1,9 +1,10 @@
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 import { IndexStats, CollectionStats } from "../../Indexes/IndexStats";
-import { HttpRequestBase } from "../../../Primitives/Http";
+import { HttpRequestParameters } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
 import { RavenCommand } from "../../../Http/RavenCommand";
+import * as stream from "readable-stream";
 
 export class GetIndexesStatisticsOperation implements IMaintenanceOperation<IndexStats[]> {
 
@@ -22,23 +23,30 @@ export class GetIndexesStatisticsCommand extends RavenCommand<IndexStats[]> {
         super();
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/indexes/stats";
         return { uri };
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        if (!response) {
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
             this._throwInvalidResponse();
         }
 
-        const responseObj = this._parseResponseDefault(response, {
-            nestedTypes: {
-                "results[].collections": "Map",
-                "results[].collections$MAP": "CollectionStats"
-            }
-        }, new Map([[CollectionStats.name, CollectionStats]]));
-        this.result = responseObj["results"];
+        return this._getDefaultResponsePipeline()
+            .process(bodyStream)
+            .then(results => {
+                const obj = this._reviveResultTypes(results.result, {
+                    nestedTypes: {
+                        "results[].collections": "Map",
+                        "results[].collections$MAP": "CollectionStats"
+                    }
+                }, new Map([[CollectionStats.name, CollectionStats]]));
+
+                this.result = obj["results"]; 
+
+                return results.body;
+            });
     }
 
     public get isReadRequest(): boolean {

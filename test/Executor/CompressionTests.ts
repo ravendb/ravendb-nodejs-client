@@ -46,7 +46,6 @@ describe("Compression", function () {
 
             await exec.execute(cmd);
             const reqParams = createReqSpy.lastCall.returnValue;
-            debugger;
             assert.ok(!reqParams.gzip);
         } finally {
             if (store2) {

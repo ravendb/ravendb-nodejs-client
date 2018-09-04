@@ -1,4 +1,3 @@
-
 export { DocumentConventions } from "./Documents/Conventions/DocumentConventions";
 export { RavenTestDriver } from "./TestDriver";
 export { RavenErrorType } from "./Exceptions";
@@ -182,6 +181,8 @@ export * from "./Documents/Queries/Spatial/DynamicSpatialField";
 export * from "./Documents/Queries/Spatial/WktCriteria";
 export * from "./Documents/Queries/Spatial/PointField";
 export * from "./Documents/Queries/Spatial/WktField";
+export * from "./Documents/Queries/Facets/RangeBuilder";
+export * from "./Documents/Queries/Facets/FacetBuilder";
 
 // HiLo
 export * from "./Documents/Identity/HiloIdGenerator";

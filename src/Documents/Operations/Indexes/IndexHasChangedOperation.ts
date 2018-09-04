@@ -4,8 +4,9 @@ import { throwError } from "../../../Exceptions";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
-import { HttpRequestBase } from "../../../Primitives/Http";
+import { HttpRequestParameters } from "../../../Primitives/Http";
 import { HeadersBuilder } from "../../../Utility/HttpUtil";
+import * as stream from "readable-stream";
 
 export class IndexHasChangedOperation implements IMaintenanceOperation<Boolean> {
 
@@ -19,7 +20,7 @@ export class IndexHasChangedOperation implements IMaintenanceOperation<Boolean> 
         this._definition = definition;
     }
 
-    public getCommand(conventions: DocumentConventions): RavenCommand<boolean>  {
+    public getCommand(conventions: DocumentConventions): RavenCommand<boolean> {
         return new IndexHasChangedCommand(conventions, this._definition);
     }
 
@@ -30,39 +31,43 @@ export class IndexHasChangedOperation implements IMaintenanceOperation<Boolean> 
 
 export class IndexHasChangedCommand extends RavenCommand<boolean> {
 
-        private _definition: object;
+    private _definition: object;
 
-        public constructor(conventions: DocumentConventions, definition: IndexDefinition) {
-            super();
+    public constructor(conventions: DocumentConventions, definition: IndexDefinition) {
+        super();
 
-            this._definition = this._typedObjectMapper.toObjectLiteral(definition);
-        }
-
-        public get isReadRequest(): boolean {
-            return false;
-        }
-
-        public createRequest(node: ServerNode): HttpRequestBase {
-            const uri = node.url + "/databases/" + node.database + "/indexes/has-changed";
-
-            const body = this._serializer.serialize(this._definition);
-
-            const headers = HeadersBuilder.create()
-                .withContentTypeJson().build();
-            return {
-                method: "POST",
-                uri,
-                body,
-                headers
-            };
-        }
-
-        public setResponse(response: string, fromCache: boolean): void {
-            if (!response) {
-                this._throwInvalidResponse();
-            }
-
-            const resObj = this._serializer.deserialize(response);
-            this.result = resObj["changed"];
-        }
+        this._definition = this._typedObjectMapper.toObjectLiteral(definition);
     }
+
+    public get isReadRequest(): boolean {
+        return false;
+    }
+
+    public createRequest(node: ServerNode): HttpRequestParameters {
+        const uri = node.url + "/databases/" + node.database + "/indexes/has-changed";
+
+        const body = this._serializer.serialize(this._definition);
+
+        const headers = HeadersBuilder.create()
+            .withContentTypeJson().build();
+        return {
+            method: "POST",
+            uri,
+            body,
+            headers
+        };
+    }
+
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
+            this._throwInvalidResponse();
+        }
+
+        return this._getDefaultResponsePipeline()
+            .process(bodyStream)
+            .then(results => {
+                this.result = results.result["changed"];
+                return results.body;
+            });
+    }
+}

@@ -85,7 +85,8 @@ describe("Basic documents test", function () {
         let getDocumentsCommand = new GetDocumentsCommand({
             ids: ["users/1", "users/2"], 
             includes: null, 
-            metadataOnly: false
+            metadataOnly: false,
+            conventions: store.conventions
         });
 
         await requestExecutor.execute(getDocumentsCommand);
@@ -118,7 +119,8 @@ describe("Basic documents test", function () {
 
             getDocumentsCommand = new GetDocumentsCommand({
                 ids: [ "users/1", "users/2" ], 
-                metadataOnly: true 
+                metadataOnly: true,
+                conventions: store.conventions
             });
 
             await requestExecutor.execute(getDocumentsCommand);

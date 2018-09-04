@@ -186,7 +186,10 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
         this.incrementRequestCount();
 
-        const command = new GetDocumentsCommand({ id: documentInfo.id });
+        const command = new GetDocumentsCommand({ 
+            id: documentInfo.id,
+            conventions: this.conventions
+        });
         return Promise.resolve()
             .then(() => this._requestExecutor.execute(command, this._sessionInfo))
             .then(() => this._refreshInternal(entity, command, documentInfo));

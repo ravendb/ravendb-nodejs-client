@@ -308,9 +308,9 @@ export abstract class InMemoryDocumentSessionOperations
 
     public isLoadedOrDeleted(id: string): boolean {
         const documentInfo = this.documentsById.getValue(id);
-        return !!(documentInfo && documentInfo.document)
-            || this.isDeleted(id)
-            || this.includedDocumentsById.has(id);
+        return !!(documentInfo && (documentInfo.document || documentInfo.entity)) 
+                || this.isDeleted(id) 
+                || this.includedDocumentsById.has(id);
     }
 
     /**
@@ -836,61 +836,62 @@ export abstract class InMemoryDocumentSessionOperations
 
     private _prepareForEntitiesPuts(result: SaveChangesData): void {
         for (const entry of this.documentsByEntity.entries()) {
-            const entity = {
-                key: entry[0],
-                value: entry[1]
-            };
+            const [ entityKey, entityValue ] = entry;
 
-            const dirtyMetadata = InMemoryDocumentSessionOperations._updateMetadataModifications(entity.value);
+            if (entityValue.ignoreChanges) {
+                continue;
+            }
 
-            let document = this.entityToJson.convertEntityToJson(entity.key, entity.value);
+            const dirtyMetadata = InMemoryDocumentSessionOperations._updateMetadataModifications(entityValue);
 
-            if (entity.value.ignoreChanges || !this._entityChanged(document, entity.value, null) && !dirtyMetadata) {
+            let document = this.entityToJson.convertEntityToJson(entityKey, entityValue);
+
+            if (!this._entityChanged(document, entityValue, null) && !dirtyMetadata) {
                 continue;
             }
 
             const command = result.deferredCommandsMap.get(
-                IdTypeAndName.keyFor(entity.value.id, "ClientAnyCommand", null));
+                IdTypeAndName.keyFor(entityValue.id, "ClientAnyCommand", null));
             if (command) {
                 InMemoryDocumentSessionOperations._throwInvalidModifiedDocumentWithDeferredCommand(command);
             }
 
-            const beforeStoreEventArgs = new SessionBeforeStoreEventArgs(this, entity.value.id, entity.key);
+            const beforeStoreEventArgs = new SessionBeforeStoreEventArgs(this, entityValue.id, entityKey);
             if (this.emit("beforeStore", beforeStoreEventArgs)) {
                 if (beforeStoreEventArgs.isMetadataAccessed()) {
-                    InMemoryDocumentSessionOperations._updateMetadataModifications(entity.value);
+                    InMemoryDocumentSessionOperations._updateMetadataModifications(entityValue);
                 }
 
-                if (beforeStoreEventArgs.isMetadataAccessed() || this._entityChanged(document, entity.value, null)) {
-                    document = this.entityToJson.convertEntityToJson(entity.key, entity.value);
+                if (beforeStoreEventArgs.isMetadataAccessed() || this._entityChanged(document, entityValue, null)) {
+                    document = this.entityToJson.convertEntityToJson(entityKey, entityValue);
                 }
             }
 
-            entity.value.newDocument = false;
-            result.entities.push(entity.key);
+            entityValue.newDocument = false;
+            result.entities.push(entityKey);
 
-            if (entity.value.id) {
-                this.documentsById.remove(entity.value.id);
+            if (entityValue.id) {
+                this.documentsById.remove(entityValue.id);
             }
 
-            entity.value.document = document;
+            entityValue.document = document;
 
             let changeVector: string;
             if (this.useOptimisticConcurrency) {
-                if (entity.value.concurrencyCheckMode !== "Disabled") {
+                if (entityValue.concurrencyCheckMode !== "Disabled") {
                     // if the user didn't provide a change vector, we'll test for an empty one
-                    changeVector = entity.value.changeVector || "";
+                    changeVector = entityValue.changeVector || "";
                 } else {
                     changeVector = null;
                 }
-            } else if (entity.value.concurrencyCheckMode === "Forced") {
-                changeVector = entity.value.changeVector;
+            } else if (entityValue.concurrencyCheckMode === "Forced") {
+                changeVector = entityValue.changeVector;
             } else {
                 changeVector = null;
             }
 
             result.sessionCommands.push(
-                new PutCommandDataWithJson(entity.value.id, changeVector, document));
+                new PutCommandDataWithJson(entityValue.id, changeVector, document));
         }
     }
 

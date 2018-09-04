@@ -1,4 +1,4 @@
-import { HttpRequestBase } from "../../Primitives/Http";
+import { HttpRequestParameters } from "../../Primitives/Http";
 import { IOperation, OperationIdResult, OperationResultType } from "./OperationAbstractions";
 import { IndexQuery, writeIndexQuery } from "../Queries/IndexQuery";
 import { QueryOperationOptions } from "../Queries/QueryOperationOptions";
@@ -9,6 +9,7 @@ import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { HttpCache } from "../../Http/HttpCache";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
+import * as stream from "readable-stream";
 
 export class PatchByQueryOperation implements IOperation<OperationIdResult> {
 
@@ -61,7 +62,7 @@ export class PatchByIndexCommand extends RavenCommand<OperationIdResult> {
         this._options = options || {} as QueryOperationOptions;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         let path = node.url + "/databases/" + node.database + "/queries?allowStale="
             + !!this._options.allowStale;
         if (!TypeUtil.isNullOrUndefined(this._options.maxOpsPerSecond)) {
@@ -84,12 +85,12 @@ export class PatchByIndexCommand extends RavenCommand<OperationIdResult> {
         };
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        if (!response) {
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
             this._throwInvalidResponse();
         }
 
-        this.result = this._serializer.deserialize(response);
+        return this._parseResponseDefaultAsync(bodyStream);
     }
 
 }

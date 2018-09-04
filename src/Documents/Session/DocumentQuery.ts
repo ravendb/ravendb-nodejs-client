@@ -22,6 +22,12 @@ import { SpatialCriteria } from "../Queries/Spatial/SpatialCriteria";
 import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField";
 import { SpatialUnits, SpatialRelation } from "../Indexes/Spatial";
 import { TypeUtil } from "../../Utility/TypeUtil";
+import { IFacetBuilder } from "../Queries/Facets/IFacetBuilder";
+import { IAggregationDocumentQuery } from "../Queries/Facets/IAggregationDocumentQuery";
+import { Facet } from "../Queries/Facets/Facet";
+import { FacetBase } from "../Queries/Facets/FacetBase";
+import { FacetBuilder } from "../Queries/Facets/FacetBuilder";
+import { AggregationDocumentQuery } from "../Queries/Facets/AggregationDocumentQuery";
 
 export class DocumentQuery<T extends object> 
     extends AbstractDocumentQuery<T, DocumentQuery<T>> implements IDocumentQuery<T> {
@@ -441,9 +447,6 @@ export class DocumentQuery<T extends object>
         resultClass: DocumentType<TResult>, queryData: QueryData): DocumentQuery<TResult>;
     private  _createDocumentQueryInternal<TResult extends object>(
         resultClass: DocumentType<TResult>, queryData?: QueryData): DocumentQuery<TResult> {
-        // const newFieldsToFetch = queryData && queryData.fields.length > 0
-        //         ? FieldsToFetchToken.create(queryData.fields, queryData.projections, queryData.isCustomFunction)
-        //         : null;
         let newFieldsToFetch: FieldsToFetchToken;
         
         if (queryData && queryData.fields.length > 0) {
@@ -514,11 +517,37 @@ export class DocumentQuery<T extends object>
         return query;
     }
 
+    public aggregateBy(builder: (facetBuilder: IFacetBuilder<T>) => void): IAggregationDocumentQuery<T>;
+    public aggregateBy(facet: FacetBase): IAggregationDocumentQuery<T>;
+    public aggregateBy(...facets: Facet[]): IAggregationDocumentQuery<T>;
+    public aggregateBy(
+        facetOrFacetBuilder: Facet | FacetBase | ((facetBuilder: IFacetBuilder<T>) => void), 
+        ...facets: Facet[]): IAggregationDocumentQuery<T> {
+        
+        if (TypeUtil.isNullOrUndefined(facetOrFacetBuilder)) {
+            throwError("InvalidArgumentException", "Aggr")
+        }
+
+        const argType = typeof facetOrFacetBuilder;
+        if (argType === "function") {
+            const ff = new FacetBuilder<T>();
+            (facetOrFacetBuilder as ((facetBuilder: IFacetBuilder<T>) => void))(ff);
+            return this.aggregateBy(ff.getFacet());
+        }
+
+        for (const facet of [ facetOrFacetBuilder as FacetBase, ...facets ]) {
+            this._aggregateBy(facet);
+        }
+
+        return new AggregationDocumentQuery<T>(this);
+    }
+
+    public aggregateUsing(facetSetupDocumentId: string): IAggregationDocumentQuery<T> {
+        this._aggregateUsing(facetSetupDocumentId);
+        return new AggregationDocumentQuery<T>(this);
+    }
+
     // tslint:disable:max-line-length
-    // TBD public FacetedQueryResult GetFacets(string facetSetupDoc, int facetStart, int? facetPageSize)
-    // TBD public FacetedQueryResult GetFacets(List<Facet> facets, int facetStart, int? facetPageSize)
-    // TBD public Lazy<FacetedQueryResult> GetFacetsLazy(string facetSetupDoc, int facetStart, int? facetPageSize)
-    // TBD public Lazy<FacetedQueryResult> GetFacetsLazy(List<Facet> facets, int facetStart, int? facetPageSize)
     // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField)
     // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings)
     // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(string fieldName,string fieldKeyName, int fragmentLength,int fragmentCount,out FieldHighlightings highlightings)

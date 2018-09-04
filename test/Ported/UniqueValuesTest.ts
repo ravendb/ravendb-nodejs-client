@@ -9,6 +9,7 @@ import {
     DeleteCompareExchangeValueOperation,
 } from "../../src";
 import { User } from "../Assets/Entities";
+import { CompareExchangeResult } from '../../src/Documents/Operations/CompareExchange/CompareExchangeResult';
 
 describe("UniqueValuesTest", function () {
 
@@ -93,6 +94,7 @@ describe("UniqueValuesTest", function () {
             clazz: User
         }));
         assert.equal(Object.keys(values).length, 2);
+        assert.equal(values["test"].value.constructor, User);
         assert.equal(values["test"].value.name, "Karmel");
         assert.equal(values["test2"].value.name, "Karmel");
     });
@@ -113,6 +115,9 @@ describe("UniqueValuesTest", function () {
         assert.ok(res.successful);
 
         res = await store.operations.send(new DeleteCompareExchangeValueOperation<string>("test", 0));
+        assert.equal(res.constructor, CompareExchangeResult);
+        assert.ok(res.index);
+        assert.equal(res.value, "Karmel");
         assert.ok(!res.successful);
 
         const readValue = await store.operations.send(new GetCompareExchangeValueOperation<string>("test"));
@@ -131,6 +136,8 @@ describe("UniqueValuesTest", function () {
 
         assert.ok(res.successful);
         assert.ok(!res2.successful);
+        assert.equal(res.value.constructor, User);
+        assert.equal(res2.value.constructor, User);
         assert.equal(res.value.name, "Karmel");
         assert.equal(res2.value.name, "Karmel");
 

@@ -1,4 +1,4 @@
-import {HttpRequestBase} from "../../Primitives/Http";
+import {HttpRequestParameters} from "../../Primitives/Http";
 import { PatchRequest } from "./PatchRequest";
 import { IOperation, OperationResultType } from "./OperationAbstractions";
 import { PatchStatus } from "./PatchStatus";
@@ -11,6 +11,10 @@ import { ServerNode } from "../../Http/ServerNode";
 import { JsonSerializer } from "../../Mapping/Json/Serializer";
 import { ObjectKeysTransform } from "../../Mapping/ObjectMapper";
 import { PatchResult } from "./PatchResult";
+import * as stream from "readable-stream";
+import { RavenCommandResponsePipeline, IRavenCommandResponsePipelineResult } from "../../Http/RavenCommandResponsePipeline";
+import { getIgnoreKeyCaseTransformKeysFromDocumentMetadata } from "../../Mapping/Json/Docs";
+import { CollectResultStreamOptions } from "../../Mapping/Json/Streams/CollectResultStream";
 
 export interface Payload {
     patch: PatchRequest;
@@ -84,6 +88,7 @@ export class PatchOperation implements IOperation<PatchResult> {
 
 }
 
+const DOCS_JSON_PATH = [ /^(ModifiedDocument|OriginalDocument)$/i, { emitPath: true } ];
 export class PatchCommand extends RavenCommand<PatchResult> {
     private _id: string;
     private _changeVector: string;
@@ -91,6 +96,7 @@ export class PatchCommand extends RavenCommand<PatchResult> {
     private _skipPatchIfChangeVectorMismatch: boolean;
     private _returnDebugInformation: boolean;
     private _test: boolean;
+    private _conventions: DocumentConventions;
 
     public constructor(
         conventions: DocumentConventions, id: string, changeVector: string,
@@ -124,13 +130,14 @@ export class PatchCommand extends RavenCommand<PatchResult> {
         this._skipPatchIfChangeVectorMismatch = skipPatchIfChangeVectorMismatch;
         this._returnDebugInformation = returnDebugInformation;
         this._test = test;
+        this._conventions = conventions;
     }
 
     public get isReadRequest(): boolean {
         return false;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         let uri = node.url + "/databases/" + node.database + "/docs?id=" + encodeURIComponent(this._id);
 
         if (this._skipPatchIfChangeVectorMismatch) {
@@ -157,12 +164,40 @@ export class PatchCommand extends RavenCommand<PatchResult> {
         return req;
     }
 
-    public setResponse(response: string, fromCache: boolean) {
-        if (!response) {
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
             return;
         }
 
-        const rawResult = JsonSerializer.getDefault().deserialize(response);
-        this.result = ObjectKeysTransform.camelCase(rawResult);
+        const collectResultOpts: CollectResultStreamOptions<PatchResult> = {
+            initResult: {} as PatchResult ,
+            reduceResults: (result, { path, value }: { path: string[], value: any }) => {
+                if (path[0] === "ModifiedDocument") {
+                    result.modifiedDocument = value;
+                }
+
+                if (path[0] === "OriginalDocument") {
+                    result.originalDocument = value;                    
+                }
+
+                return result;
+            }
+        }
+
+        return RavenCommandResponsePipeline.create()
+            .collectBody()
+            .parseJsonAsync(DOCS_JSON_PATH)
+            .streamKeyCaseTransform({
+                targetKeyCaseConvention: this._conventions.entityFieldNameConvention,
+                extractIgnorePaths: (e) => [ ...getIgnoreKeyCaseTransformKeysFromDocumentMetadata(e), /@metadata\./ ],
+                ignoreKeys: [ /^@/ ]
+            })
+            .restKeyCaseTransform({ targetKeyCaseConvention: "camel" })
+            .collectResult(collectResultOpts)
+            .process(bodyStream)
+            .then(({ result, rest, body }: IRavenCommandResponsePipelineResult<PatchResult>) => {
+                this.result = Object.assign(result, rest) as PatchResult;
+                return body;
+            });
     }
 }

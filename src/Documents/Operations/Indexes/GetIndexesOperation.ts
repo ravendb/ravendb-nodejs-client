@@ -1,9 +1,13 @@
-import { HttpRequestBase } from "../../../Primitives/Http";
+import { HttpRequestParameters } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { IndexDefinition } from "../../Indexes/IndexDefinition";
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { 
+    RavenCommandResponsePipeline, 
+    IRavenCommandResponsePipelineResult } from "../../../Http/RavenCommandResponsePipeline";
+import * as stream from "readable-stream";
 
 export class GetIndexesOperation implements IMaintenanceOperation<IndexDefinition[]> {
 
@@ -35,29 +39,37 @@ export class GetIndexesCommand extends RavenCommand<IndexDefinition[]> {
         this._pageSize = pageSize;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database
             + "/indexes?start=" + this._start + "&pageSize=" + this._pageSize;
         return { uri };
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        if (!response) {
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
             this._throwInvalidResponse();
         }
 
-        const parsed = this._serializer.deserialize(response);
-        const indexDefTypeInfo = {
-            nestedTypes: {
-                "results[]": "IndexDefinition",
-                "results[].maps": "Set"
-            },
-        };
-        
-        const result = this._typedObjectMapper.fromObjectLiteral(
-            parsed, indexDefTypeInfo, new Map([[IndexDefinition.name, IndexDefinition]]));
-
-        this.result = result["results"];
+        return RavenCommandResponsePipeline.create()
+            .collectBody()
+            .parseJsonSync()
+            .streamKeyCaseTransform({
+                targetKeyCaseConvention: "camel",
+                ignorePaths:  [ /fields\.[^.]+$/i ]
+            })
+            .process(bodyStream)
+            .then((result: IRavenCommandResponsePipelineResult<object>) => {
+                const indexDefTypeInfo = {
+                    nestedTypes: {
+                        "results[]": "IndexDefinition",
+                        "results[].maps": "Set"
+                    },
+                };
+                const knownTypes = new Map([[IndexDefinition.name, IndexDefinition]]);
+                const allResults = this._reviveResultTypes(result.result, indexDefTypeInfo, knownTypes);
+                this.result = allResults["results"];
+                return result.body;
+            });
     }
 
     public get isReadRequest(): boolean {

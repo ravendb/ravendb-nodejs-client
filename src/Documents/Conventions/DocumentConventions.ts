@@ -14,6 +14,7 @@ import { throwError } from "../../Exceptions";
 import { CONSTANTS } from "../../Constants";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { DateUtil } from "../../Utility/DateUtil";
+import { CasingConvention, ObjectUtil, ObjectChangeCaseOptions } from '../../Utility/ObjectUtil';
 import { JsonSerializer } from "../../Mapping/Json/Serializer";
 
 export type IdConvention = (databaseName: string, entity: object) => Promise<string>;
@@ -61,10 +62,10 @@ export class DocumentConventions {
     
     private _knownEntityTypes: Map<string, ObjectTypeDescriptor>;
 
-    private _entityObjectMapper: TypesAwareObjectMapper = new TypesAwareObjectMapper({
-       knownTypes: this._knownEntityTypes,
-       dateFormat: DateUtil.DEFAULT_DATE_FORMAT 
-    });
+    private _localEntityFieldNameConvention: CasingConvention;
+    private _remoteEntityFieldNameConvention: CasingConvention;
+
+    private _entityObjectMapper: TypesAwareObjectMapper;
 
     private _entityJsonSerializer: JsonSerializer;
     private _useCompression;
@@ -72,6 +73,7 @@ export class DocumentConventions {
     public constructor() {
         this._readBalanceBehavior = "None";
         this._identityPartsSeparator = "/";
+        
         this._findIdentityPropertyNameFromCollectionName = entityName => "id";
         this._findJsType = (id: string, doc: object) => {
             const metadata = doc[CONSTANTS.Documents.Metadata.KEY];
@@ -106,7 +108,7 @@ export class DocumentConventions {
         this._knownEntityTypes = new Map();
         this._entityObjectMapper = new TypesAwareObjectMapper({
             dateFormat: DateUtil.DEFAULT_DATE_FORMAT,
-            knownTypes: this._knownEntityTypes
+            documentConventions: this
         });
 
         this._entityJsonSerializer = JsonSerializer.getDefaultForEntities();
@@ -121,14 +123,6 @@ export class DocumentConventions {
         this._entityObjectMapper = value;
     }
 
-    public get entitySerializer(): JsonSerializer {
-        return this._entityJsonSerializer;
-    }
-
-    public set entitySerializer(value: JsonSerializer) {
-        this._entityJsonSerializer = value;
-    }
-
     public get readBalanceBehavior(): ReadBalanceBehavior {
         return this._readBalanceBehavior;
     }
@@ -138,9 +132,28 @@ export class DocumentConventions {
         this._readBalanceBehavior = value;
     }
 
+    public get entityFieldNameConvention(): CasingConvention {
+        return this._localEntityFieldNameConvention;
+    }
+
+    public set entityFieldNameConvention(val) {
+        this._assertNotFrozen();
+        this._localEntityFieldNameConvention = val;
+    }
+
+    public get remoteEntityFieldNameConvention() {
+        return this._remoteEntityFieldNameConvention;
+    }
+
+    public set remoteEntityFieldNameConvention(val) {
+        this._assertNotFrozen();
+        this._remoteEntityFieldNameConvention = val;
+    }
+
     public deserializeEntityFromJson(documentType: ObjectTypeDescriptor, document: object): object {
         try {
-            return this.entityObjectMapper.toObjectLiteral(document);
+            const typeName = documentType ? documentType.name : null;
+            return this.entityObjectMapper.fromObjectLiteral(document, { typeName });
         } catch (err) {
             throwError("RavenException", "Cannot deserialize entity", err);
         }
@@ -578,6 +591,49 @@ export class DocumentConventions {
         }
         
         return this._knownEntityTypes.get(docTypeOrtypeName) as ObjectLiteralDescriptor<T>;
+    }
+
+    public transformObjectKeysToRemoteFieldNameConvention(obj: object, opts?: ObjectChangeCaseOptions) {
+        if (!this._remoteEntityFieldNameConvention) {
+            return obj;
+        }
+
+        opts = opts || {
+            recursive: true,
+            arrayRecursive: true,
+            ignorePaths: [/@metadata\./]
+        };
+
+        return ObjectUtil.transformObjectKeys(
+            this._remoteEntityFieldNameConvention, obj, {
+                recursive: true,
+                arrayRecursive: true,
+                ignorePaths: [ /@metadata\./ ]
+            });
+    }
+
+    public transformObjectKeysToLocalFieldNameConvention(
+        obj: object, opts?: ObjectChangeCaseOptions) {
+        if (!this._localEntityFieldNameConvention) {
+            return obj as object;
+        }
+
+        opts = opts || {
+            recursive: true,
+            arrayRecursive: true,
+            ignorePaths: [/@metadata\./, /@projection/]
+        };
+
+        return ObjectUtil.transformObjectKeys(this._localEntityFieldNameConvention, obj, opts);
+    }
+
+    public validate() {
+        if ((this._remoteEntityFieldNameConvention && !this._localEntityFieldNameConvention)
+            || (!this._remoteEntityFieldNameConvention && this._localEntityFieldNameConvention)) {
+                throwError("ConfigurationException", 
+                "When configuring field name conventions, " 
+                + "one has to configure both local and remote field name convention.");
+            }
     }
 }
 

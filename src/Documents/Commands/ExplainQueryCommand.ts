@@ -1,9 +1,10 @@
-import {HttpRequestBase} from "../../Primitives/Http";
+import {HttpRequestParameters} from "../../Primitives/Http";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { IndexQuery, writeIndexQuery } from "../Queries/IndexQuery";
 import { throwError } from "../../Exceptions";
 import { ServerNode } from "../../Http/ServerNode";
+import * as stream from "readable-stream";
 
 export interface ExplainQueryResult {
     index: string;
@@ -30,7 +31,7 @@ export class ExplainQueryCommand extends RavenCommand<ExplainQueryResult[]> {
         this._indexQuery = indexQuery;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/queries?debug=explain";
 
         const headers = this._getHeaders().withContentTypeJson().build();
@@ -57,6 +58,28 @@ export class ExplainQueryCommand extends RavenCommand<ExplainQueryResult[]> {
         }
 
         this.result = results;
+    }
+
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
+            this.result = null;
+            return;
+        }
+
+        return this._getDefaultResponsePipeline()
+            .process(bodyStream)
+            .then(results => {
+                const data = results.result;
+                const explainResults = data["results"] as ExplainQueryResult[];
+                if (!explainResults) {
+                    this._throwInvalidResponse();
+                    return;
+                }
+
+                this.result = explainResults;
+
+                return results.body;
+            });
     }
 
     public get isReadRequest(): boolean {

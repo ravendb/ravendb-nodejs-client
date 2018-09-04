@@ -1,7 +1,8 @@
-import {HttpRequestBase} from '../../Primitives/Http';
+import {HttpRequestParameters} from "../../Primitives/Http";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { GetConflictsResult } from "./GetConflictsResult";
-import { ServerNode } from '../../Http/ServerNode';
+import { ServerNode } from "../../Http/ServerNode";
+import * as stream from "readable-stream";
 
 export class GetConflictsCommand extends RavenCommand<GetConflictsResult> {
 
@@ -16,7 +17,7 @@ export class GetConflictsCommand extends RavenCommand<GetConflictsResult> {
         return true;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database 
             + "/replication/conflicts?docId=" + encodeURIComponent(this._id);
         return {
@@ -25,17 +26,22 @@ export class GetConflictsCommand extends RavenCommand<GetConflictsResult> {
         };
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        if (!response) {
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
             this._throwInvalidResponse();
         }
 
-        const rawResult = this._serializer.deserialize(response);
-        this.result = this._typedObjectMapper.fromObjectLiteral(rawResult, {
-            nestedTypes: {
-                "results[].lastModified": "Date"
-            }
-        });
+        return this._getDefaultResponsePipeline()
+            .process(bodyStream)
+            .then(results => {
+                this.result = this._typedObjectMapper.fromObjectLiteral(results.result, {
+                    nestedTypes: {
+                        "results[].lastModified": "Date"
+                    }
+                });
+
+                return results.body;
+            });
     }
 
 }

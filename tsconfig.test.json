@@ -14,10 +14,11 @@
     "typeRoots": [
       "node_modules/@types",
       "node_modules/moment",
-      "lib"
+      "src/Types",
     ],
     "types": [
-      "mocha"
+      "mocha",
+      "node"
     ]
   },
   "include": [

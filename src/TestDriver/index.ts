@@ -236,7 +236,11 @@ export abstract class RavenTestDriver implements IDisposable {
         }
 
         new BluebirdPromise(resolve => {
-            store.on("executorsDisposed", () => resolve());
+            if (store) {
+                store.on("executorsDisposed", () => resolve());
+            } else {
+                resolve();
+            }
         })
         .timeout(2000)
         .finally(() => {
@@ -251,7 +255,9 @@ export abstract class RavenTestDriver implements IDisposable {
             }
         });
 
-        store.dispose();
+        if (store) {
+            store.dispose();
+        }
     }
 
     private _getGlobalServer(secured: boolean): IDocumentStore {

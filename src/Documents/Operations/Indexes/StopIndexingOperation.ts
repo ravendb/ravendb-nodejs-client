@@ -1,6 +1,6 @@
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 import { RavenCommand, DocumentConventions, ServerNode } from "../../..";
-import { HttpRequestBase } from "../../../Primitives/Http";
+import { HttpRequestParameters } from "../../../Primitives/Http";
 
 export class StopIndexingOperation implements IMaintenanceOperation<void> {
 
@@ -19,7 +19,7 @@ export class StopIndexingCommand extends RavenCommand<void> {
         return false;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/admin/indexes/stop";
 
         return {

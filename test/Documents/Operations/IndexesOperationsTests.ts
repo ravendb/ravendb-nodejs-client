@@ -26,7 +26,7 @@ import {
     GetIndexErrorsOperation,
     GetIndexStatisticsOperation,
 } from "../../../src";
-import { UsersIndex, UsersInvalidIndex } from "../../Assets/Indexes";
+import { UsersIndex, UsersInvalidIndex, UsersIndexWithPascalCasedFields } from '../../Assets/Indexes';
 import { TypeUtil } from "../../../src/Utility/TypeUtil";
 
 describe("Index operations", function () {
@@ -46,10 +46,12 @@ describe("Index operations", function () {
 
     let usersIndex: AbstractIndexCreationTask;
     let invalidUsersIndex: AbstractIndexCreationTask;
+    let usersIndexWithPascalCasedFields: AbstractIndexCreationTask;
 
     beforeEach(() => {
         usersIndex = new UsersIndex();
         invalidUsersIndex = new UsersInvalidIndex();
+        usersIndexWithPascalCasedFields = new UsersIndexWithPascalCasedFields();
     });
 
     it("can delete index", async () => {
@@ -194,5 +196,14 @@ describe("Index operations", function () {
         const stats = await store.maintenance.send(new GetIndexStatisticsOperation(indexDef.name));
         assert.equal(stats.entriesCount, 1);
     });
+
+    it("can get index with Pascal-cased fields", async () => {
+        const indexDef = usersIndexWithPascalCasedFields.createIndexDefinition();
+        await store.maintenance.send(new PutIndexesOperation(indexDef));
+
+        const newIndexDef = await store.maintenance.send(new GetIndexOperation(indexDef.name));
+        assert.ok(newIndexDef.fields["Name"]);
+        assert.ok(!newIndexDef.fields["name"]);
+    })
 
 });

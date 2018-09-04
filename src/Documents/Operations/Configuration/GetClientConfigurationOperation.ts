@@ -1,6 +1,7 @@
+import * as stream from "readable-stream";
 import { ServerNode } from "../../../Http/ServerNode";
 import { RavenCommand } from "../../../Http/RavenCommand";
-import { HttpRequestBase } from "../../../Primitives/Http";
+import { HttpRequestParameters } from "../../../Primitives/Http";
 import { ClientConfiguration } from "../Configuration/ClientConfiguration";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
@@ -26,17 +27,17 @@ export class GetClientConfigurationCommand extends RavenCommand<GetClientConfigu
         return false;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = `${ node.url }/databases/${ node.database }/configuration/client`;
         return { uri };
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        if (!response) {
-            return;
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
+            this._throwInvalidResponse();
         }
 
-        this.result = this._serializer.deserialize(response);
+        return this._parseResponseDefaultAsync(bodyStream);
     }
 }
 

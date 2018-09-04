@@ -1,4 +1,5 @@
-import { HttpRequestBase } from "../../Primitives/Http";
+import * as stream from "readable-stream";
+import { HttpRequestParameters, HttpResponse } from "../../Primitives/Http";
 import { DatabaseRecord } from "..";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { DatabasePutResult } from ".";
@@ -46,7 +47,7 @@ class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> {
         this._databaseName = databaseRecord.databaseName;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         let uri = node.url + "/admin/databases?name=" + this._databaseName;
 
         uri += "&replicationFactor=" + this._replicationFactor;
@@ -62,12 +63,12 @@ class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> {
         };
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        if (!response) {
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
             this._throwInvalidResponse();
         }
 
-        this.result = this._serializer.deserialize(response);
+        return this._parseResponseDefaultAsync(bodyStream);
     }
 
     public get isReadRequest(): boolean {

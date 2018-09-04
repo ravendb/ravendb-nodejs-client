@@ -102,7 +102,10 @@ import { throwError } from "../../../src/Exceptions";
                             }
 
                             const queryCommand = new QueryCommand(
-                                DocumentConventions.defaultConventions, iq, false, false);
+                                DocumentConventions.defaultConventions, iq, {
+                                    indexEntriesOnly: false, 
+                                    metadataOnly: false
+                                });
 
                             await destination.getRequestExecutor().execute(queryCommand);
 
@@ -111,7 +114,7 @@ import { throwError } from "../../../src/Exceptions";
                             const metadata = address["@metadata"];
                             assert.equal(metadata["@id"], "addresses/1");
 
-                            assert.ok(tryGetConflict(metadata))
+                            assert.ok(tryGetConflict(metadata));
                         }
                     } finally {
                         destination.dispose();
@@ -120,11 +123,11 @@ import { throwError } from "../../../src/Exceptions";
                     source.dispose();
                 }
 
-                async function waitForConflict(store: IDocumentStore, id: string) {
+                async function waitForConflict(docStore: IDocumentStore, id: string) {
                     const sw = Stopwatch.createStarted();
                     while (sw.elapsed < 10000) {
                         try {
-                            const session = store.openSession();
+                            const session = docStore.openSession();
                             await session.load(id);
 
                             await BluebirdPromise.delay(10);

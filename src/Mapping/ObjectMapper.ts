@@ -4,6 +4,9 @@ import { throwError } from "../Exceptions";
 import { TypeUtil } from "../Utility/TypeUtil";
 import * as changeCase from "change-object-case";
 import { getLogger } from "../Utility/LogUtil";
+import { CasingConvention, ObjectUtil } from "../Utility/ObjectUtil";
+import { StringUtil } from '../Utility/StringUtil';
+import { DocumentConventions } from '../Documents/Conventions/DocumentConventions';
 
 const log = getLogger({ module: "ObjectMapper" });
 
@@ -29,14 +32,14 @@ export class ObjectKeysTransform {
 
 export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
 
-    private _knownTypes: Map<string, ObjectTypeDescriptor>;
     private _dateFormat: string;
     private _throwMappingErrors: boolean = false;
+    private _conventions: DocumentConventions;
 
     public constructor(opts?: TypesAwareJsonObjectMapperOptions) {
         if (opts) {
             this._dateFormat = opts.dateFormat;
-            this._knownTypes = opts.knownTypes || new Map();
+            this._conventions = opts.documentConventions || DocumentConventions.defaultConventions;
         }
     }
 
@@ -49,7 +52,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
     }
 
     public registerType(classCtorOrTypeDescriptor: ObjectTypeDescriptor): this {
-        this._knownTypes.set(classCtorOrTypeDescriptor.name, classCtorOrTypeDescriptor);
+        this._conventions.knownEntityTypesByName.set(classCtorOrTypeDescriptor.name, classCtorOrTypeDescriptor);
         return this;
     }
 
@@ -61,7 +64,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         
         const typeName = typeInfo ? typeInfo.typeName : null;
         const nestedTypes = typeInfo ? typeInfo.nestedTypes : null;
-        const types = knownTypes || this._knownTypes;
+        const types = knownTypes || this._conventions.knownEntityTypesByName;
         const ctorOrTypeDescriptor = this._getKnownType(typeName, types);
         const result = this._instantiateObject<TResult>(typeName, rawResult, ctorOrTypeDescriptor);
 
@@ -107,7 +110,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         typeInfoCallback?: (typeInfo: TypeInfo) => void,
         knownTypes?: Map<string, ObjectTypeDescriptor>): object {
 
-        const types = (knownTypes || this._knownTypes);
+        const types = (knownTypes || this._conventions.knownEntityTypesByName);
 
         let nestedTypes: NestedTypes;
         const result = this._makeObjectLiteral(obj, null, (nestedType) => {
@@ -140,7 +143,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
 
         const isFieldArray = field.endsWith("[]");
         if (isFieldArray) {
-            field = field .replace(/\[\]$/g, "");
+            field = field.replace(/\[\]$/g, "");
         }
 
         const isFieldSet = field.endsWith("$SET");
@@ -151,6 +154,11 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         const isFieldMap = field.endsWith("$MAP");
         if (isFieldMap) {
             field = field.replace(/\$MAP$/g, "");
+        }
+
+        const fieldNameConvention = this._conventions.entityFieldNameConvention;
+        if (fieldNameConvention) {
+            field = StringUtil.changeCase(fieldNameConvention, field);
         }
 
         let fieldVal = parent[field];
@@ -405,7 +413,12 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
 
             return Object.keys(obj)
                 .reduce((result, key) => {
-                    const fullPath = objPathPrefix ? `${objPathPrefix}.${key}` : key;
+                    let nestedTypeInfoKey = key;
+                    if (this._conventions.remoteEntityFieldNameConvention) {
+                        nestedTypeInfoKey = changeCase[this._conventions.remoteEntityFieldNameConvention](key);
+                    }
+
+                    const fullPath = objPathPrefix ? `${objPathPrefix}.${nestedTypeInfoKey}` : nestedTypeInfoKey;
                     result[key] = this._makeObjectLiteral(obj[key], fullPath, typeInfoCallback, knownTypes);
                     return result;
                 }, {});
@@ -417,7 +430,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
 
 export interface TypesAwareJsonObjectMapperOptions {
     dateFormat?: string;
-    knownTypes?: Map<string, ObjectTypeDescriptor>;
+    documentConventions?: DocumentConventions;
 }
 
 interface ObjectPropertyContext {

@@ -1,26 +1,40 @@
+import * as stream from "readable-stream";
 import { RavenCommand } from "../../Http/RavenCommand";
+import { 
+    RavenCommandResponsePipeline 
+} from "../../Http/RavenCommandResponsePipeline";
 import { ServerNode } from "../../Http/ServerNode";
-import { HttpRequestBase } from "../../Primitives/Http";
+import { HttpRequestParameters } from "../../Primitives/Http";
 import { getHeaders } from "../../Utility/HttpUtil";
 import { IRavenObject } from "../..";
-import { ObjectKeysTransform } from "../../Mapping/ObjectMapper";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { JsonSerializer } from "../../Mapping/Json/Serializer";
 import { throwError } from "../../Exceptions";
+import { CollectResultStreamOptions } from "../../Mapping/Json/Streams/CollectResultStream";
+import { getIgnoreKeyCaseTransformKeysFromDocumentMetadata } from "../../Mapping/Json/Docs/index";
+import { IRavenCommandResponsePipelineResult } from "../../Http/RavenCommandResponsePipeline";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
 
-export interface GetDocumentsByIdCommandOptions {
+export interface GetDocumentsCommandOptionsBase {
+    conventions: DocumentConventions;
+}
+
+export interface GetDocumentsByIdCommandOptions
+    extends GetDocumentsCommandOptionsBase {
     id: string;
     includes?: string[];
     metadataOnly?: boolean;
 }
 
-export interface GetDocumentsByIdsCommandOptions {
+export interface GetDocumentsByIdsCommandOptions 
+    extends GetDocumentsCommandOptionsBase {
     ids: string[];
     includes?: string[];
     metadataOnly?: boolean;
 }
 
-export interface GetDocumentsStartingWithOptions {
+export interface GetDocumentsStartingWithOptions 
+    extends GetDocumentsCommandOptionsBase {
     start: number;
     pageSize: number;
     startsWith?: string;
@@ -30,11 +44,15 @@ export interface GetDocumentsStartingWithOptions {
     metadataOnly?: boolean;
 }
 
-export interface GetDocumentsResult {
+export interface DocumentsResult {
     includes: IRavenObject;
     results: any[];
+}
+export interface GetDocumentsResult extends DocumentsResult {
     nextPageStart: number;
 }
+
+const LOAD_DOCS_JSON_PATH = [ /^(Results|Includes)$/, { emitPath: true } ];
 
 export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
 
@@ -52,10 +70,14 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
     private _exclude: string;
     private _startAfter: string;
 
+    private _conventions: DocumentConventions;
 
-    public constructor(opts: GetDocumentsByIdCommandOptions | GetDocumentsByIdsCommandOptions | GetDocumentsStartingWithOptions) {
+    public constructor(
+        opts: GetDocumentsByIdCommandOptions | GetDocumentsByIdsCommandOptions | GetDocumentsStartingWithOptions) {
         super();
-        
+
+        this._conventions = opts.conventions;
+
         if (opts.hasOwnProperty("id")) {
             opts = opts as GetDocumentsByIdCommandOptions;
             if (!opts.id) {
@@ -90,7 +112,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         }
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uriPath = `${node.url}/databases/${node.database}/docs?`;
 
         let query = "";
@@ -128,7 +150,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             }
         }
 
-        let request: HttpRequestBase = { method: "GET", uri: uriPath + query };
+        let request: HttpRequestParameters = { method: "GET", uri: uriPath + query };
 
         if (this._id) {
             request.uri += `&id=${encodeURIComponent(this._id)}`;
@@ -139,7 +161,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         return request;
     }
 
-    public prepareRequestWithMultipleIds(request: HttpRequestBase, ids: string[]): HttpRequestBase {
+    public prepareRequestWithMultipleIds(request: HttpRequestParameters, ids: string[]): HttpRequestParameters {
         const uniqueIds = new Set<string>(ids); 
 
         // if it is too big, we fallback to POST (note that means that we can't use the HTTP cache any longer)
@@ -176,16 +198,53 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         return serializer;
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        if (!response) {
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
             this.result = null;
             return;
         }
+        
+        const collectResultOpts: CollectResultStreamOptions<DocumentsResult> = {
+            reduceResults: (result: DocumentsResult, chunk: { path: string | any[], value: object }) => {
+                const doc = chunk.value;
+                const path = chunk.path;
 
-        // TODO for now
-        // we want entities property casing untouched, so we're not using PascalCase reviver here
-        const raw = JsonSerializer.getDefault().deserialize(response);
-        this.result = ObjectKeysTransform.camelCase(raw);
+                const metadata = doc["@metadata"];
+                if (!metadata) {
+                    throwError("InvalidArgumentException", "Document must have @metadata.");
+                }
+
+                const docId = metadata["@id"];
+                if (!docId) {
+                    throwError("InvalidArgumentException", "Document must have @id in @metadata.");
+                }
+
+                if (path[0] === "Results") {
+                    result.results.push(doc);
+                } else if (path[0] === "Includes") {
+                    result.includes[docId] = doc;
+                }
+
+                return result;
+            },
+            initResult: { results: [], includes: {} } as DocumentsResult
+        };
+
+        return RavenCommandResponsePipeline.create()
+            .collectBody()
+            .parseJsonAsync(LOAD_DOCS_JSON_PATH)
+            .streamKeyCaseTransform({
+                targetKeyCaseConvention: this._conventions.entityFieldNameConvention,
+                extractIgnorePaths: (e) => [ ...getIgnoreKeyCaseTransformKeysFromDocumentMetadata(e), /@metadata\./ ],
+                ignoreKeys: [ /^@/ ]
+            })
+            .restKeyCaseTransform({ targetKeyCaseConvention: "camel" })
+            .collectResult(collectResultOpts)
+            .process(bodyStream)
+            .then((result: IRavenCommandResponsePipelineResult<DocumentsResult>) => {
+                this.result = Object.assign(result.result, result.rest) as GetDocumentsResult;
+                return result.body;
+            });
     }
 
     public get isReadRequest(): boolean {

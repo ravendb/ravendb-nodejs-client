@@ -6,17 +6,17 @@
     "moduleResolution": "node",
     "outDir": "dist",
     "declaration": true,
-    "downlevelIteration": true,
     "removeComments": true,
     "sourceMap": false,
     "pretty": true,
-    "lib": [ "es2015" ],
+    "lib": [ "es7" ],
     "typeRoots": [
       "node_modules/@types",
       "node_modules/moment",
       "src/Types"
     ],
     "types": [
+      "node"
     ]
   },
   "files": [

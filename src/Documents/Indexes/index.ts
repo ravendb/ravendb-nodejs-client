@@ -6,6 +6,7 @@ import { IndexDefinition, IndexDefinitionBuilder } from "./IndexDefinition";
 import { IDocumentStore } from "../IDocumentStore";
 import { CONSTANTS } from "../../Constants";
 import { PutIndexesOperation } from "../Operations/Indexes/PutIndexesOperation";
+import { throwError } from "../../Exceptions";
 
 export abstract class AbstractIndexCreationTask {
 
@@ -72,22 +73,23 @@ export abstract class AbstractIndexCreationTask {
      * @return index name
      */
     public getIndexName(): string {
-        return this.constructor.name.replace(/_/g, "/");
+        return AbstractIndexCreationTask.getIndexNameForCtor(this.constructor.name);
+    }
+
+    public static getIndexNameForCtor(indexCtorName: string) {
+        return indexCtorName.replace(/_/g, "/");
     }
 
     /**
      * Executes the index creation against the specified document store.
      * @param store target document store
      */
-    public execute(store: IDocumentStore, conventions?: DocumentConventions, database?: string): Promise<void> {
-        return Promise.resolve()
-            .then(() => {
-                if (!conventions && !database) {
-                    return store.executeIndex(this);
-                } else {
-                    return this._putIndex(store, conventions, database);
-                }
-            });
+    public async execute(store: IDocumentStore, conventions?: DocumentConventions, database?: string): Promise<void> {
+        if (!conventions && !database) {
+            return store.executeIndex(this);
+        } else {
+            return this._putIndex(store, conventions, database);
+        }
     }
 
     private _putIndex(store: IDocumentStore, conventions: DocumentConventions, database: string): Promise<void> {
@@ -177,5 +179,41 @@ export abstract class AbstractIndexCreationTask {
     // tslint:disable-next-line:function-name
     protected suggestion(field: string): void {
         this.indexSuggestions.add(field);
+    }
+}
+
+export class AbstractMultiMapIndexCreationTask extends AbstractIndexCreationTask {
+
+    private maps: string[] = [];
+
+    // since this class is meant to be extended by the user, we don't follow protected name convention here
+    // tslint:disable-next-line:function-name
+    protected addMap(map: string) {
+        if (!map) {
+            throwError("InvalidArgumentException", "Map cannot be null.");
+        }
+        this.maps.push(map);
+    }
+
+    public createIndexDefinition(): IndexDefinition  {
+        if (!this.conventions) {
+            this.conventions = new DocumentConventions();
+        }
+
+        const indexDefinitionBuilder = new IndexDefinitionBuilder(this.getIndexName());
+        indexDefinitionBuilder.indexesStrings = this.indexesStrings;
+        indexDefinitionBuilder.analyzersStrings = this.analyzersStrings;
+        indexDefinitionBuilder.reduce = this.reduce;
+        indexDefinitionBuilder.storesStrings = this.storesStrings;
+        indexDefinitionBuilder.suggestionsOptions = this.indexSuggestions;
+        indexDefinitionBuilder.termVectorsStrings = this.termVectorsStrings;
+        indexDefinitionBuilder.spatialIndexesStrings = this.spatialOptionsStrings;
+        indexDefinitionBuilder.outputReduceToCollection = this.outputReduceToCollection;
+        indexDefinitionBuilder.additionalSources = this.additionalSources;
+
+        const indexDefinition = indexDefinitionBuilder.toIndexDefinition(this.conventions);
+        indexDefinition.maps = new Set(this.maps);
+
+        return indexDefinition;
     }
 }

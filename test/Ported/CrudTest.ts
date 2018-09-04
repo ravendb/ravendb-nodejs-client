@@ -27,7 +27,8 @@ describe("CRUD tests", function () {
         const documentsCommand = new GetDocumentsCommand({
             id: "users/1", 
             includes: null, 
-            metadataOnly: false 
+            metadataOnly: false,
+            conventions: store.conventions
         });
 
         await store.getRequestExecutor().execute(documentsCommand);

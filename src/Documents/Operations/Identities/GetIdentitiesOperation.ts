@@ -1,8 +1,10 @@
-import {HttpRequestBase} from "../../../Primitives/Http";
+import {HttpRequestParameters} from "../../../Primitives/Http";
 import {OperationResultType, IMaintenanceOperation } from "../OperationAbstractions";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
+import * as stream from "readable-stream";
+import { RavenCommandResponsePipeline } from '../../../Http/RavenCommandResponsePipeline';
 
 export interface IdentitiesCollection {
     [key: string]: number;
@@ -29,12 +31,18 @@ export class GetIdentitiesCommand extends RavenCommand<IdentitiesCollection> {
             return true;
         }
 
-        public createRequest(node: ServerNode): HttpRequestBase {
+        public createRequest(node: ServerNode): HttpRequestParameters {
             const uri = node.url + "/databases/" + node.database + "/debug/identities";
             return { uri };
         }
 
-        public setResponse(response: string, fromCache: boolean): void {
-            this.result = this._serializer.deserialize(response);
+        public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+            return RavenCommandResponsePipeline.create()
+                .parseJsonSync()
+                .process(bodyStream)
+                .then(({ result, body }) => {
+                    this.result = result as IdentitiesCollection;
+                    return body;
+                });
         }
-    }
+}

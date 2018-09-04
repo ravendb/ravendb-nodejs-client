@@ -6,9 +6,10 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { Mapping } from "../../../Mapping";
 import { ServerNode, OperationResultType } from "../../..";
-import { HttpRequestBase } from "../../../Primitives/Http";
+import { HttpRequestParameters } from "../../../Primitives/Http";
 import { HeadersBuilder } from "../../../Utility/HttpUtil";
 import { ReplacerContext } from "../../../Mapping/Json/ReplacerFactory";
+import * as stream from "readable-stream";
 
 export interface PutIndexResult {
     indexName: string;
@@ -33,7 +34,6 @@ export class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult
         return new PutIndexesCommand(conventions, this._indexToAdd);
     }
 }
-
 
 export class PutIndexesCommand extends RavenCommand<PutIndexResult[]> {
 
@@ -73,7 +73,7 @@ export class PutIndexesCommand extends RavenCommand<PutIndexResult[]> {
         return serializer;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/admin/indexes";
         
         const body = this._serializer
@@ -91,8 +91,13 @@ export class PutIndexesCommand extends RavenCommand<PutIndexResult[]> {
         };
     }
 
-    public setResponse(response: string, fromCache: boolean) {
-        this.result = this._serializer.deserialize(response)["results"];
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        return this._getDefaultResponsePipeline()
+            .process(bodyStream)
+            .then(results => {
+                this.result = results.result["results"];
+                return results.body;
+            });
     }
 
     public get isReadRequest(): boolean {

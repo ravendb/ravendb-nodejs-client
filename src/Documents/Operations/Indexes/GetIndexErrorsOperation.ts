@@ -3,7 +3,8 @@ import { IndexErrors } from "../../Indexes/Errors";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { ServerNode } from "../../../Http/ServerNode";
-import { HttpRequestBase } from "../../../Primitives/Http";
+import { HttpRequestParameters } from "../../../Primitives/Http";
+import * as stream from "readable-stream";
 
 export class GetIndexErrorsOperation implements IMaintenanceOperation<IndexErrors[]> {
 
@@ -33,7 +34,7 @@ export class GetIndexErrorsCommand extends RavenCommand<IndexErrors[]> {
         this._indexNames = indexNames;
     }
 
-    public createRequest(node: ServerNode): HttpRequestBase {
+    public createRequest(node: ServerNode): HttpRequestParameters {
         let uri = node.url + "/databases/" + node.database + "/indexes/errors";
 
         if (this._indexNames && this._indexNames.length) {
@@ -47,10 +48,9 @@ export class GetIndexErrorsCommand extends RavenCommand<IndexErrors[]> {
         return { uri };
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        if (!response) {
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
             this._throwInvalidResponse();
-            return;
         }
 
         const typeInfo = {
@@ -59,7 +59,12 @@ export class GetIndexErrorsCommand extends RavenCommand<IndexErrors[]> {
             }
         };
 
-        this.result = this._parseResponseDefault(response, typeInfo)["results"];
+        return this._getDefaultResponsePipeline()
+            .process(bodyStream)
+            .then(results => {
+                this.result = this._reviveResultTypes(results.result, typeInfo)["results"];
+                return results.body;
+            });
     }
 
     public get isReadRequest(): boolean {

@@ -3,6 +3,15 @@ import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 import { throwError } from "../../../Exceptions";
 import { ClassConstructor } from "../../..";
 import { TypeUtil } from "../../../Utility/TypeUtil";
+import { ObjectUtil } from "../../../Utility/ObjectUtil";
+
+export interface CompareExchangeResultResponse {
+    index: number; 
+    successful: boolean;
+    value: {
+        object: object
+    }
+}
 
 export class CompareExchangeResult<T> {
 
@@ -10,12 +19,24 @@ export class CompareExchangeResult<T> {
     public index: number;
     public successful: boolean;
 
+    public static parseFromObject<T>(
+        { index, value, successful }: CompareExchangeResultResponse,
+        conventions: DocumentConventions, 
+        clazz?: ClassConstructor<T>): CompareExchangeResult<T> {
+            if (!index) {
+                throwError("InvalidOperationException", "Response is invalid. Index is missing");
+            }
+
+            const val = value.object || null;
+            return CompareExchangeResult._create(val, index, successful, conventions, clazz);
+        }
+
     public static parseFromString<T>(
         responseString: string, 
         conventions: DocumentConventions, 
         clazz?: ClassConstructor<T>): CompareExchangeResult<T> {
 
-        const response = JsonSerializer.getDefault().deserialize(responseString);
+        const response = JSON.parse(responseString);
 
         const index = response["Index"];
         if (!index) {
@@ -32,6 +53,19 @@ export class CompareExchangeResult<T> {
             val = raw["Object"];
         }
 
+        return CompareExchangeResult._create(val, index, successful, conventions, clazz);
+
+    }
+
+    private static _create<T>(
+        val: any, 
+        index: number, 
+        successful: boolean, 
+        conventions: DocumentConventions, 
+        clazz?: ClassConstructor<T>): CompareExchangeResult<T> {
+
+        conventions.tryRegisterEntityType(clazz);
+
         if (!val) {
             const emptyExchangeResult = new CompareExchangeResult<T>();
             emptyExchangeResult.index = index;
@@ -40,11 +74,11 @@ export class CompareExchangeResult<T> {
             return emptyExchangeResult;
         }
 
-        conventions.tryRegisterEntityType(clazz);
-
+        let result: T;
         if (TypeUtil.isPrimitive(val)) {
             result = val;
         } else {
+            // val comes here with proper key case already
             const entityType = conventions.findEntityType(clazz);
             result = conventions.deserializeEntityFromJson(entityType, val) as any as T;
         }

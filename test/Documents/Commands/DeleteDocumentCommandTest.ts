@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
+import { testContext, disposeTestDocumentStore } from '../../Utils/TestUtil';
 
 import {
     IDocumentStore,
@@ -47,6 +47,7 @@ describe("DeleteDocumentCommand", function () {
             await session.saveChanges();
 
             changeVector = session.advanced.getChangeVectorFor(user);
+            assert.ok(changeVector);
         }
 
         {

@@ -4,56 +4,62 @@ import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 import { throwError } from "../../../Exceptions";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { ClassConstructor } from "../../..";
+import { ObjectUtil } from "../../../Utility/ObjectUtil";
+
+export interface CompareExchangeResultItem {
+    index: number;
+    key: string;
+    value: { object: object };
+}
+
+export interface GetCompareExchangeValuesResponse {
+    results: CompareExchangeResultItem[];
+}
 
 export class CompareExchangeValueResultParser {
 
     public static getValues<T>(
-        response: string, 
+        responseObj: GetCompareExchangeValuesResponse, 
         conventions: DocumentConventions, 
         clazz?: ClassConstructor<T>)
         : { [key: string]: CompareExchangeValue<T> } {
 
-        const jsonResponse = JsonSerializer.getDefault().deserialize(response);
-        const results = {};
-
-        const items = jsonResponse["Results"];
+        const items = responseObj.results;
         if (!items) {
             throwError("InvalidOperationException", "Response is invalid. Results is missing.");
         }
 
+        const results = {};
         for (const item of items) {
             if (!item) {
                 throwError("InvalidOperationException", "Response is invalid. Item is null");
             }
 
-            const key = item["Key"];
-
-            if (!key) {
-                throwError("InvalidOperationException", "Response is invalid. Key is missing.");
+            const key = item.key || throwError("InvalidOperationException", "Response is invalid. Key is missing.");
+            
+            const index = item.index;
+            if (TypeUtil.isNullOrUndefined(index)) {
+                throwError("InvalidOperationException", `Response is invalid. Index is ${item.index}.`);
             }
 
-            const index = item["Index"];
-            if (!index) {
-                throwError("InvalidOperationException", "Response is invalid. Index is missing.");
-            }
-
-            const raw = item["Value"];
-            if (!raw) {
+            const raw = item.value;
+            if (TypeUtil.isNullOrUndefined(raw)) {
                 throwError("InvalidOperationException", "Response is invalid. Value is missing.");
             }
 
-
+            let rawValue = raw.object;
             if (TypeUtil.isPrimitiveType(clazz) || !clazz) {
-                // simple
-                const rawValue = raw["Object"];
                 results[key] = new CompareExchangeValue(key, index, rawValue);
             } else {
-                const obj = raw["Object"];
-                if (!obj) {
+                if (!rawValue) {
                     results[key] = new CompareExchangeValue(key, index, null);
                 } else {
                     const entityType = conventions.findEntityType(clazz);
-                    const entity = conventions.deserializeEntityFromJson(entityType, obj);
+                    if (conventions.entityFieldNameConvention) {
+                        rawValue = ObjectUtil.transformObjectKeys(
+                            conventions.entityFieldNameConvention, rawValue, { recursive: true, arrayRecursive: true });
+                    }
+                    const entity = conventions.deserializeEntityFromJson(entityType, rawValue);
                     results[key] = new CompareExchangeValue(key, index, entity);
                 }
             }
@@ -63,7 +69,9 @@ export class CompareExchangeValueResultParser {
     }
 
     public static getValue<T>(
-        response: string, conventions: DocumentConventions, clazz: ClassConstructor<T>): CompareExchangeValue<T> {
+        response: GetCompareExchangeValuesResponse, 
+        conventions: DocumentConventions, 
+        clazz: ClassConstructor<T>): CompareExchangeValue<T> {
         if (!response) {
             return null;
         }

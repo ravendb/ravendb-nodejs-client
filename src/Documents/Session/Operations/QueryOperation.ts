@@ -13,6 +13,7 @@ import {
 } from "../../DocumentAbstractions";
 import { CONSTANTS } from "../../../Constants";
 import { TypeUtil } from "../../../Utility/TypeUtil";
+import { StringUtil } from "../../../Utility/StringUtil";
 
 const log = getLogger({ module: "QueryOperation" });
 
@@ -51,8 +52,10 @@ export class QueryOperation {
 
         this.logQuery();
 
-        return new QueryCommand(
-            this._session.conventions, this._indexQuery, this._metadataOnly, this._indexEntriesOnly);
+        return new QueryCommand(this._session.conventions, this._indexQuery, {
+            metadataOnly: this._metadataOnly,
+            indexEntriesOnly: this._indexEntriesOnly
+        });
     }
 
     public getCurrentQueryResults(): QueryResult {
@@ -150,63 +153,65 @@ export class QueryOperation {
         session: InMemoryDocumentSessionOperations,
         clazz?: DocumentType<T> 
     ) {
+        const { conventions } = session;
+        const { entityFieldNameConvention } = conventions;
         const projection = metadata["@projection"];
         if (TypeUtil.isNullOrUndefined(projection) || projection === false) {
-            const entityType = session.conventions.findEntityType(clazz);
+            const entityType = conventions.findEntityType(clazz);
             return session.trackEntity(entityType, id, document, metadata, disableEntitiesTracking);
         }
 
         // return primitives only if type was not passed at all AND fields count is 1
         // if type was passed then use that even if it's only 1 field
-        if (fieldsToFetch && fieldsToFetch.projections 
+        if (fieldsToFetch 
+            && fieldsToFetch.projections 
             && fieldsToFetch.projections.length === 1
             && !clazz) {
             // we only select a single field
-            const projectField = fieldsToFetch.projections[0];
-            const jsonNode = document[projectField];
-            if (!TypeUtil.isNullOrUndefined(jsonNode)
-                && TypeUtil.isPrimitive(jsonNode)) {
-                return jsonNode || null;
+            let projectField = fieldsToFetch.projections[0];
+            if (entityFieldNameConvention) {
+                projectField = StringUtil.changeCase(entityFieldNameConvention, projectField);
             }
 
-            const inner = document[projectField];
-            if (TypeUtil.isNullOrUndefined(inner)) {
+            const jsonNode = document[projectField];
+            if (TypeUtil.isNullOrUndefined(jsonNode)) {
                 return null;
             }
 
-            if (!TypeUtil.isNullOrUndefined(fieldsToFetch.fieldsToFetch)
-                && fieldsToFetch.fieldsToFetch[0] === fieldsToFetch.projections[0]) {
-                if (TypeUtil.isObject(inner)) { // extraction from original type
-                    document = inner;
+            if (TypeUtil.isPrimitive(jsonNode)) {
+                return jsonNode || null;
+            }
+
+            if (fieldsToFetch.fieldsToFetch[0] === fieldsToFetch.projections[0]) {
+                if (TypeUtil.isObject(jsonNode)) { // extraction from original type
+                    document = jsonNode;
                 }
             }
         }
 
-        const raw: T = session.conventions.entityObjectMapper
-            .fromObjectLiteral(document);
-        const projType = session.conventions.findEntityType(clazz);
-        const projectionResult = projType
-            // tslint:disable-next-line:new-parens
-            ? new (Function.prototype.bind.apply(projType))
-            : {};
-        // tslint:disable-next-line:no-shadowed-variable
-        const result = fieldsToFetch && fieldsToFetch.projections 
-            ? fieldsToFetch.projections.reduce((reduced, key, i) => {
-                    reduced[key] = raw[fieldsToFetch.projections[i]];
-                    return reduced;
-                }, projectionResult)
-            : Object.assign(projectionResult, raw);
+        const raw: T = conventions.entityObjectMapper.fromObjectLiteral(document);
+        const projType = conventions.findEntityType(clazz);
+        // tslint:disable-next-line:new-parens
+        const result = projType ? new (Function.prototype.bind.apply(projType)) : {};
+
+        if (fieldsToFetch && fieldsToFetch.projections) {
+            const keys = conventions.entityFieldNameConvention
+                ? fieldsToFetch.projections.map(x => StringUtil.changeCase(conventions.entityFieldNameConvention, x))
+                : fieldsToFetch.projections;
+            for (const key of keys) {
+                result[key] = raw[key];
+            }
+        } else {
+            Object.assign(result, !entityFieldNameConvention 
+                ? raw : conventions.transformObjectKeysToLocalFieldNameConvention(raw));
+        }
 
         if (id) {
             // we need to make an additional check, since it is possible that a value was explicitly stated
             // for the identity property, in which case we don't want to override it.
-            const identityProperty = session.conventions.getIdentityProperty(clazz);
-            if (identityProperty) {
-                const value = document[identityProperty];
-
-                if (!value) {
-                    session.generateEntityIdOnTheClient.trySetIdentity(result, id);
-                }
+            const identityProperty = conventions.getIdentityProperty(clazz);
+            if (identityProperty && !document[identityProperty]) {
+                session.generateEntityIdOnTheClient.trySetIdentity(result, id);
             }
         }
 

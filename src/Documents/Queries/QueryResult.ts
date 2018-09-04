@@ -1,6 +1,6 @@
 import { GenericQueryResult } from "./GenericQueryResult";
 
-export class QueryResult extends GenericQueryResult<Object[], Object> {
+export class QueryResult extends GenericQueryResult<object[], object> {
 
     /**
      * Creates a snapshot of the query results
