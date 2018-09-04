@@ -31,5 +31,5 @@ export abstract class FacetBase {
         this._aggregations = aggregations;
     }
 
-    public abstract toFacetToken(addQueryParameter: (o: object) => string): FacetToken;
+    public abstract toFacetToken(addQueryParameter: (o: any) => string): FacetToken;
 }

@@ -1,3 +1,4 @@
+import * as moment from "moment";
 import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
@@ -47,7 +48,12 @@ class Order {
     public region: number;
 }
 
-describe.skip("AggregationTest", function () {
+class ItemsOrder {
+    public items: string[];
+    public at: Date;
+}
+
+describe("AggregationTest", function () {
 
     let store: IDocumentStore;
 
@@ -136,7 +142,7 @@ describe.skip("AggregationTest", function () {
                     .aggregateBy(x => x.byField("product").sumOn("total"))
                     .andAggregateBy(x => x.byField("currency").sumOn("total"))
                     .execute();
-                
+
                 let facetResult = r["product"];
                 assert.equal(facetResult.values.length, 2);
                 assert.equal(facetResult.values.filter(x => x.range === "milk")[0].sum, 12);
@@ -144,8 +150,8 @@ describe.skip("AggregationTest", function () {
 
                 facetResult = r["currency"];
                 assert.equal(facetResult.values.length, 2);
-                assert.equal(facetResult.values.filter(x => x.range === "EUR")[0].sum, 3336);
-                assert.equal(facetResult.values.filter(x => x.range === "NIS")[0].sum, 9);
+                assert.equal(facetResult.values.filter(x => x.range === "eur")[0].sum, 3336);
+                assert.equal(facetResult.values.filter(x => x.range === "nis")[0].sum, 9);
             }
         });
 
@@ -180,7 +186,7 @@ describe.skip("AggregationTest", function () {
                 const r = await session.query({ indexName: ordersAllIndex.getIndexName() })
                     .aggregateBy(x => x.byField("product").maxOn("total").minOn("total"))
                     .execute();
-                
+
                 const facetResult = r["product"];
                 assert.equal(facetResult.values.length, 2);
                 assert.equal(facetResult.values.filter(x => x.range === "milk")[0].max, 9);
@@ -189,7 +195,7 @@ describe.skip("AggregationTest", function () {
                 assert.equal(facetResult.values.filter(x => x.range === "iphone")[0].min, 3333);
             }
         });
-        
+
         it("can correctly aggregate - display name", async () => {
             {
                 const session = store.openSession();
@@ -223,7 +229,7 @@ describe.skip("AggregationTest", function () {
                         .withDisplayName("productMax").maxOn("total"))
                     .andAggregateBy(x => x.byField("product").withDisplayName("productMin"))
                     .execute();
-                
+
                 assert.equal(Object.keys(r).length, 2);
                 assert.ok(r["productMax"]);
                 assert.ok(r["productMin"]);
@@ -270,21 +276,88 @@ describe.skip("AggregationTest", function () {
                         range.isLessThan(100),
                         range.isGreaterThanOrEqualTo(100).isLessThan(500),
                         range.isGreaterThanOrEqualTo(500).isLessThan(1500),
-                        range.isGreaterThan(1500)).sumOn("total"))
+                        range.isGreaterThanOrEqualTo(1500))
+                        .sumOn("total"))
                     .execute();
-                
+
                 let facetResult = r["product"];
                 assert.equal(Object.keys(r).length, 2);
                 assert.equal(facetResult.values.filter(x => x.range === "milk")[0].sum, 12);
                 assert.equal(facetResult.values.filter(x => x.range === "iphone")[0].sum, 3333);
 
                 facetResult = r["total"];
+                assert.strictEqual(facetResult.values.length, 4);
+
+                assert.strictEqual(
+                    facetResult.values.filter(x => x.range === "total < 100")[0].sum, 12);
+                assert.strictEqual(
+                    facetResult.values.filter(x => x.range === "total >= 1500")[0].sum, 3333);
             }
 
         });
 
     });
 
+    it("can correctly aggregate - with range counts", async () => {
+
+        const idx = new ItemsOrders_All();
+        await idx.execute(store);
+
+        const now = moment();
+        {
+            const session = store.openSession();
+            const item1 = new ItemsOrder();
+            item1.items = ["first", "second"];
+            item1.at = moment(now).toDate();
+
+            const item2 = new ItemsOrder();
+            item2.items = ["first", "second"];
+            item2.at = moment(now).add(-1, "d").toDate();
+
+            const item3 = new ItemsOrder();
+            item3.items = ["first"];
+            item3.at = moment(now).toDate();
+
+            const item4 = new ItemsOrder();
+            item4.items = ["first"];
+            item4.at = moment(now).toDate();
+
+            await session.store(item1);
+            await session.store(item2);
+            await session.store(item3);
+            await session.store(item4);
+            await session.saveChanges();
+        }
+
+        const oldDate = moment(now).toDate();
+        oldDate.setFullYear(1980);
+
+        const minValue = oldDate;
+        const end0 = moment(now).add(-2, "d").toDate();
+        const end1 = moment(now).add(-1, "d").toDate();
+        const end2 = moment(now).toDate();
+
+        await testContext.waitForIndexing(store);
+
+        {
+            const session = store.openSession();
+            const builder = RangeBuilder.forPath("at");
+            const r = await session.query({ indexName: idx.getIndexName() })
+                .whereGreaterThanOrEqual("at", end0)
+                .aggregateBy(f => f.byRanges(
+                    builder.isGreaterThanOrEqualTo(minValue),
+                    builder.isGreaterThanOrEqualTo(end0).isLessThan(end1),
+                    builder.isGreaterThanOrEqualTo(end1).isLessThan(end2)
+                ))
+                .execute();
+            
+            const [ facet1, facet2, facet3 ] = r["at"].values;
+            assert.strictEqual(facet1.count, 4);
+            assert.strictEqual(facet2.count, 0);
+            assert.strictEqual(facet3.count, 1);
+        }
+
+    });
 });
 
     //     public void canCorrectlyAggregate_MultipleItems() throws Exception {

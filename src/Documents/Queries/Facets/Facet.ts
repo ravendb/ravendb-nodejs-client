@@ -13,7 +13,7 @@ export class Facet extends FacetBase {
         this._fieldName = fieldName;
     }
 
-    public toFacetToken(addQueryParameter: (o: object) => string): FacetToken {
+    public toFacetToken(addQueryParameter: (o: any) => string): FacetToken {
         return FacetToken.create(this, addQueryParameter);
     }
 }
