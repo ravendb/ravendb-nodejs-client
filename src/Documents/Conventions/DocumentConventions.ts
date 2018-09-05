@@ -598,18 +598,14 @@ export class DocumentConventions {
             return obj;
         }
 
-        opts = opts || {
+        const options: any = opts || {
             recursive: true,
             arrayRecursive: true,
             ignorePaths: [/@metadata\./]
         };
+        options.defaultTransform = this._remoteEntityFieldNameConvention;
 
-        return ObjectUtil.transformObjectKeys(
-            this._remoteEntityFieldNameConvention, obj, {
-                recursive: true,
-                arrayRecursive: true,
-                ignorePaths: [ /@metadata\./ ]
-            });
+        return ObjectUtil.transformObjectKeys(obj, options);
     }
 
     public transformObjectKeysToLocalFieldNameConvention(
@@ -618,13 +614,15 @@ export class DocumentConventions {
             return obj as object;
         }
 
-        opts = opts || {
+        const options = opts || {
             recursive: true,
             arrayRecursive: true,
             ignorePaths: [/@metadata\./, /@projection/]
-        };
+        } as any;
 
-        return ObjectUtil.transformObjectKeys(this._localEntityFieldNameConvention, obj, opts);
+        options.defaultTransform = this._localEntityFieldNameConvention;
+
+        return ObjectUtil.transformObjectKeys(obj, options as ObjectChangeCaseOptions);
     }
 
     public validate() {

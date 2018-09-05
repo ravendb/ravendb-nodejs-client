@@ -1,4 +1,5 @@
 import { VError } from "verror";
+import { closeHttpResponse } from "./../Utility/HttpUtil";
 import { StatusCodes } from "../Http/StatusCode";
 import { HttpResponse } from "../Primitives/Http";
 import { JsonSerializer } from "../Mapping/Json/Serializer";
@@ -7,10 +8,11 @@ export function printError(err: Error): string {
     return VError.fullStack(err);
 }
 
-export function throwError(errName: RavenErrorType);
-export function throwError(errName: RavenErrorType, message: string);
-export function throwError(errName: RavenErrorType, message: string, errCause?: Error);
-export function throwError(errName: RavenErrorType, message: string, errCause?: Error, info?: { [key: string]: any });
+export function throwError(errName: RavenErrorType): never;
+export function throwError(errName: RavenErrorType, message: string): never;
+export function throwError(errName: RavenErrorType, message: string, errCause?: Error): never;
+export function throwError(
+    errName: RavenErrorType, message: string, errCause?: Error, info?: { [key: string]: any }): never;
 export function throwError(
   errName: RavenErrorType | string = "RavenException", 
   message?: string, 
@@ -167,7 +169,8 @@ export class ExceptionDispatcher {
         } catch (errThrowing) {
             errorToThrow = getError("RavenException", errThrowing.message, errThrowing);
         } finally {
-            response.destroy();
+            closeHttpResponse(response);
+            response.request.abort();
         }
 
         throw errorToThrow;

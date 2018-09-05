@@ -168,6 +168,7 @@ export * from "./Documents/Session/QueryStatistics";
 export * from "./Documents/Session/RawDocumentQuery";
 export * from "./Documents/Session/SessionEvents";
 export * from "./Documents/Session/WhereParams";
+export *  from "./Documents/Session/IMetadataDictionary";
 
 // QUERIES
 export * from "./Documents/Queries/IndexQuery";
@@ -185,6 +186,10 @@ export * from "./Documents/Queries/Spatial/PointField";
 export * from "./Documents/Queries/Spatial/WktField";
 export * from "./Documents/Queries/Facets/RangeBuilder";
 export * from "./Documents/Queries/Facets/FacetBuilder";
+
+// ATTACHMENTS
+export * from "./Documents/Attachments";
+export * from "./Documents/Operations/Attachments/GetAttachmentOperation";
 
 // HiLo
 export * from "./Documents/Identity/HiloIdGenerator";

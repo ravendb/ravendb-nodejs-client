@@ -28,6 +28,8 @@ import { RawDocumentQuery } from "./RawDocumentQuery";
 import { BatchCommand } from "../Commands/Batches/BatchCommand";
 import { AdvancedDocumentQueryOptions, DocumentQueryOptions } from "./QueryOptions";
 import { IDocumentQuery } from "./IDocumentQuery";
+import { IAttachmentsSessionOperations } from "./IAttachmentsSessionOperations";
+import { DocumentSessionAttachments } from "./DocumentSessionAttachments";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;
@@ -45,7 +47,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
     public constructor(dbName: string, documentStore: DocumentStore, id: string, requestExecutor: RequestExecutor) {
         super(dbName, documentStore, requestExecutor, id);
-        // TBD Attachments = new DocumentSessionAttachments(this);
+        this._attachments = new DocumentSessionAttachments(this);
         // TBD Revisions = new DocumentSessionRevisions(this);
     }
 
@@ -363,5 +365,11 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         }
 
         return { indexName, collection };
+    }
+
+    private _attachments: IAttachmentsSessionOperations;
+
+    public get attachments(): IAttachmentsSessionOperations {
+        return this._attachments;
     }
 }

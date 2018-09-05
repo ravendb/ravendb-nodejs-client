@@ -114,8 +114,7 @@ export class RavenCommandResponsePipeline<TResult> {
 
                 if (opts.restKeyCaseTransform && opts.restKeyCaseTransform) {
                     restPromise = restPromise.then(data =>
-                        ObjectUtil.transformObjectKeys(
-                            opts.restKeyCaseTransform.targetKeyCaseConvention, data, opts.restKeyCaseTransform));
+                        ObjectUtil.transformObjectKeys(data, opts.restKeyCaseTransform));
                 }
             }
 
@@ -127,7 +126,7 @@ export class RavenCommandResponsePipeline<TResult> {
                 function (callback) { this.push(JSON.parse(json)); callback(); }));
         }
 
-        if (opts.streamKeyCaseTransform && opts.streamKeyCaseTransform.targetKeyCaseConvention) {
+        if (opts.streamKeyCaseTransform) {
             let handlePath = false;
             if (opts.jsonAsync && Array.isArray(opts.jsonAsync.resultsPath)) {
                 const path = opts.jsonAsync.resultsPath;

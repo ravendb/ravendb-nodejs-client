@@ -39,7 +39,7 @@ export class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
         return RavenCommandResponsePipeline.create()
             .collectBody()
             .parseJsonSync()
-            .streamKeyCaseTransform({ targetKeyCaseConvention: "camel" })
+            .streamKeyCaseTransform({ defaultTransform: "camel" })
             .process(bodyStream)
             .then(results => {
                 const rawTpl = results.result as TopologyDto;

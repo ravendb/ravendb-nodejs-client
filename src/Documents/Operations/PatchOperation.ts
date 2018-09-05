@@ -188,11 +188,11 @@ export class PatchCommand extends RavenCommand<PatchResult> {
             .collectBody()
             .parseJsonAsync(DOCS_JSON_PATH)
             .streamKeyCaseTransform({
-                targetKeyCaseConvention: this._conventions.entityFieldNameConvention,
+                defaultTransform: this._conventions.entityFieldNameConvention,
                 extractIgnorePaths: (e) => [ ...getIgnoreKeyCaseTransformKeysFromDocumentMetadata(e), /@metadata\./ ],
                 ignoreKeys: [ /^@/ ]
             })
-            .restKeyCaseTransform({ targetKeyCaseConvention: "camel" })
+            .restKeyCaseTransform({ defaultTransform: "camel" })
             .collectResult(collectResultOpts)
             .process(bodyStream)
             .then(({ result, rest, body }: IRavenCommandResponsePipelineResult<PatchResult>) => {

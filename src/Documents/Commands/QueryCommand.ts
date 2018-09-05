@@ -16,6 +16,7 @@ import {
     IRavenCommandResponsePipelineResult 
 } from "../../Http/RavenCommandResponsePipeline";
 import { getIgnoreKeyCaseTransformKeysFromDocumentMetadata } from "../../Mapping/Json/Docs";
+import { CONSTANTS } from "../../Constants";
 
 const QUERY_DOCS_JSON_PATH = [ /^(Results|Includes)$/, { emitPath: true } ];
 
@@ -117,14 +118,14 @@ export class QueryCommand extends RavenCommand<QueryResult> {
             .collectBody()
             .parseJsonAsync(QUERY_DOCS_JSON_PATH)
             .streamKeyCaseTransform({
-                targetKeyCaseConvention: this._conventions.entityFieldNameConvention,
+                defaultTransform: this._conventions.entityFieldNameConvention,
                 extractIgnorePaths: (e) => [ 
                     ...getIgnoreKeyCaseTransformKeysFromDocumentMetadata(e), 
-                    /@metadata\./ 
+                    CONSTANTS.Documents.Metadata.IGNORE_CASE_TRANSFORM_REGEX
                 ],
                 ignoreKeys: [ /^@/ ]
             })
-            .restKeyCaseTransform({ targetKeyCaseConvention: "camel" })
+            .restKeyCaseTransform({ defaultTransform: "camel" })
             .collectResult(collectResultOpts)
             .process(bodyStream)
             .then((result: IRavenCommandResponsePipelineResult<DocumentsResult>) => {
@@ -177,8 +178,8 @@ export class FacetQueryCommand extends QueryCommand {
         return RavenCommandResponsePipeline.create()
             .collectBody()
             .parseJsonAsync(QUERY_DOCS_JSON_PATH)
-            .streamKeyCaseTransform({ targetKeyCaseConvention: "camel" })
-            .restKeyCaseTransform({ targetKeyCaseConvention: "camel" })
+            .streamKeyCaseTransform({ defaultTransform: "camel" })
+            .restKeyCaseTransform({ defaultTransform: "camel" })
             .collectResult(collectResultOpts)
             .process(bodyStream)
             .then((result: IRavenCommandResponsePipelineResult<DocumentsResult>) => {
