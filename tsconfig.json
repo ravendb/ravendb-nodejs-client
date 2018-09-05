@@ -16,7 +16,8 @@
       "src/Types"
     ],
     "types": [
-      "node"
+      "node",
+      "mocha"
     ]
   },
   "files": [

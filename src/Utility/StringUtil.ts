@@ -97,6 +97,10 @@ export class StringUtil {
             || this.isDigit(character);
     }
 
+    public static isNullOrEmpty(s?: string): boolean {
+        return !(s || "").length;
+    }
+
     public static isNullOrWhitespace(s?: string): boolean {
         return !(s || "").trim().length;
     }

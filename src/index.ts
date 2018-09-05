@@ -43,7 +43,8 @@ export { ServerWideOperationCompletionAwaiter } from "./ServerWide/Operations/Se
 export { DatabaseRecord, ConflictSolver, ScriptResolver } from "./ServerWide";
 export * from "./ServerWide/ConnectionString";
 
-// OPERATIONS AND COMMANDS 
+// OPERATIONS AND COMMANDS
+export { BulkInsertOperation } from "./Documents/BulkInsertOperation";
 export * from "./Documents/Operations/OperationAbstractions";
 export { CompactDatabaseOperation } from "./Documents/Operations/CompactDatabaseOperation";
 export { PutConnectionStringOperation } from "./Documents/Operations/ConnectionStrings/PutConnectionStringOperation";
@@ -67,6 +68,7 @@ export { DeleteByQueryOperation } from "./Documents/Operations/DeleteByQueryOper
 export { GetCollectionStatisticsOperation } from "./Documents/Operations/GetCollectionStatisticsOperation";
 export { CollectionStatistics } from "./Documents/Operations/CollectionStatistics";
 export { GetNextOperationIdCommand } from "./Documents/Commands/GetNextOperationIdCommand";
+export { KillOperationCommand } from "./Documents/Commands/KillOperationCommand";
 export { DeleteDocumentCommand } from "./Documents/Commands/DeleteDocumentCommand";
 export { NextIdentityForCommand } from "./Documents/Commands/NextIdentityForCommand";
 export { SeedIdentityForCommand } from "./Documents/Commands/SeedIdentityForCommand";
