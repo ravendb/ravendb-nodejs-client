@@ -52,6 +52,8 @@ export class EntityToJson {
     public static convertEntityToJson(
         entity: object, conventions: DocumentConventions): object;
     public static convertEntityToJson(
+        entity: object, conventions: DocumentConventions, documentInfo: DocumentInfo): object;
+    public static convertEntityToJson(
         entity: object, conventions: DocumentConventions, documentInfo?: DocumentInfo): object {
 
         let typeInfo: TypeInfo;
@@ -72,8 +74,10 @@ export class EntityToJson {
             return;
         }
 
-        documentInfo.metadata[CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES] = typeInfo.nestedTypes;
-        documentInfo.metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] = typeInfo.typeName;
+        if (documentInfo.metadata) { //TODO check me!
+            documentInfo.metadata[CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES] = typeInfo.nestedTypes;
+            documentInfo.metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] = typeInfo.typeName;
+        }
 
         let setMetadata: boolean = false;
         let metadataNode: object = {};
@@ -93,6 +97,9 @@ export class EntityToJson {
                     metadataNode[entry.key] = entry.value;
                 }
             }
+        } else if (documentInfo.metadataInstance) {
+            setMetadata = true;
+            Object.assign(metadataNode, documentInfo.metadataInstance);
         }
 
         if (documentInfo.collection) {

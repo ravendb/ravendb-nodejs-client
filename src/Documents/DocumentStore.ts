@@ -13,6 +13,7 @@ import { DocumentSession } from "./Session/DocumentSession";
 import {HiloMultiDatabaseIdGenerator} from "./Identity/HiloMultiDatabaseIdGenerator";
 import { IDisposable } from "../Types/Contracts";
 import { IAuthOptions } from "../Auth/AuthOptions";
+import {BulkInsertOperation} from "./BulkInsertOperation";
 
 // import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";
 // import { DocumentSession } from "./Session/DocumentSession";
@@ -299,6 +300,7 @@ export class DocumentStore extends DocumentStoreBase {
      * @returns {IDisposable} 
      * @memberof DocumentStore
      */
+    public disableAggressiveCaching(): IDisposable;
     public disableAggressiveCaching(database: string): IDisposable;
     public disableAggressiveCaching(database?: string): IDisposable {
         this._assertInitialized();
@@ -347,5 +349,11 @@ export class DocumentStore extends DocumentStoreBase {
         return this._operationExecutor;
     }
 
-    // TBD public override BulkInsertOperation BulkInsert(string database = null)
+    public bulkInsert(): BulkInsertOperation;
+    public bulkInsert(database: string): BulkInsertOperation;
+    public bulkInsert(database?: string): BulkInsertOperation {
+        this._assertInitialized();
+
+        return new BulkInsertOperation(database || this.database, this);
+    }
 }

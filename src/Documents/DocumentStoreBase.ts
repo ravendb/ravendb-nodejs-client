@@ -20,6 +20,7 @@ import { RequestExecutor } from "../Http/RequestExecutor";
 import { IndexCreation } from "../Documents/Indexes/IndexCreation";
 import { PutIndexesOperation } from "./Operations/Indexes/PutIndexesOperation";
 import { IDisposable } from "../Types/Contracts";
+import {BulkInsertOperation} from "./BulkInsertOperation";
 
 export abstract class DocumentStoreBase 
     extends EventEmitter 
@@ -129,7 +130,8 @@ export abstract class DocumentStoreBase
 
     private _authOptions: IAuthOptions;
 
-    // TBD: public abstract BulkInsertOperation BulkInsert(string database = null);
+    public abstract bulkInsert(database?: string): BulkInsertOperation;
+
     // TBD: public IReliableSubscriptions Subscriptions { get; }
 
     protected _ensureNotDisposed(): void {

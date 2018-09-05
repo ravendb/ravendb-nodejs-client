@@ -14,6 +14,7 @@ import { AbstractIndexCreationTask } from "./Indexes";
 import { RequestExecutor } from "../Http/RequestExecutor";
 import { DocumentConventions } from "./Conventions/DocumentConventions";
 import { InMemoryDocumentSessionOperations } from "./Session/InMemoryDocumentSessionOperations";
+import {BulkInsertOperation} from "./BulkInsertOperation";
 
 export interface SessionEventsProxy {
     addSessionListener(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
@@ -154,7 +155,8 @@ export interface IDocumentStore extends
      */
     urls: string[];
 
-    // TBD: BulkInsertOperation BulkInsert(string database = null);
+    bulkInsert(database?: string): BulkInsertOperation;
+
     // TBD: IReliableSubscriptions Subscriptions { get; }
 
     database: string;
