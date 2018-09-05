@@ -13,7 +13,7 @@ export class GenericRangeFacet extends FacetBase {
         this._parent = parent;
     }
 
-    public static parse(rangeBuilder: RangeBuilder<any>, addQueryParameter: (o: object) => string): string {
+    public static parse(rangeBuilder: RangeBuilder<any>, addQueryParameter: (o: any) => string): string {
         return rangeBuilder.getStringRepresentation(addQueryParameter);
     }
 
@@ -25,7 +25,7 @@ export class GenericRangeFacet extends FacetBase {
         this._ranges = ranges;
     }
 
-    public toFacetToken(addQueryParameter: (o: object) => string) {
+    public toFacetToken(addQueryParameter: (o: any) => string) {
         if (this._parent) {
             return this._parent.toFacetToken(addQueryParameter);
         }

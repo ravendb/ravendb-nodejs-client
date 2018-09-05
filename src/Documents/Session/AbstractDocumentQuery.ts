@@ -387,6 +387,10 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         */
 
         const value = whereParams.value;
+        return this._stringifyParameter(value);
+    }
+
+    private _stringifyParameter(value: any) {
         if (TypeUtil.isDate(value)) {
             return DateUtil.stringify(value);
         }
@@ -403,13 +407,12 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             return value;
         }
 
-        return value;
-
+        return value || null;
     }
 
     private _addQueryParameter(value: any): string {
         const parameterName = "p" + Object.keys(this._queryParameters).length;
-        this._queryParameters[parameterName] = value;
+        this._queryParameters[parameterName] = this._stringifyParameter(value);
         return parameterName;
     }
 

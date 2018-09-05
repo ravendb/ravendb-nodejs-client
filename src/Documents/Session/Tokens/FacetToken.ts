@@ -59,13 +59,13 @@ export class FacetToken extends QueryToken {
     }
 
     public static create(facetSetupDocumentId: string): FacetToken; 
-    public static create(facet: GenericRangeFacet, addQueryParameter: (o: object) => string): FacetToken;
-    public static create(facet: RangeFacet, addQueryParameter: (o: object) => string): FacetToken;
-    public static create(facet: Facet, addQueryParameter: (o: object) => string): FacetToken;
-    public static create(facet: FacetBase, addQueryParameter: (o: object) => string): FacetToken;
+    public static create(facet: GenericRangeFacet, addQueryParameter: (o: any) => string): FacetToken;
+    public static create(facet: RangeFacet, addQueryParameter: (o: any) => string): FacetToken;
+    public static create(facet: Facet, addQueryParameter: (o: any) => string): FacetToken;
+    public static create(facet: FacetBase, addQueryParameter: (o: any) => string): FacetToken;
     public static create(
         facetSetupDocumentIdOrFacet: string | FacetBase, 
-        addQueryParameter?: (o: object) => string): FacetToken {
+        addQueryParameter?: (o: any) => string): FacetToken {
         if (!facetSetupDocumentIdOrFacet) {
             throwError("InvalidArgumentException", "Need to supply either facetSetupDocumentId or a Facet instance.");
         }
@@ -190,7 +190,7 @@ export class FacetToken extends QueryToken {
 
     private static _getOptionsParameterName(
         facet: FacetBase,
-        addQueryParameter: (o: object) => string): string {
+        addQueryParameter: (o: any) => string): string {
         return facet.options && facet.options !== FacetOptions.getDefaultOptions()
             ? addQueryParameter(facet.options)
             : null;

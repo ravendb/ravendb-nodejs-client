@@ -76,7 +76,7 @@ export class RangeBuilder<T = any> {
         return clone;
     }
 
-    public getStringRepresentation(addQueryParameter: (o: object) => string): string {
+    public getStringRepresentation(addQueryParameter: (o: any) => string): string {
         let less: string = null;
         let greater: string = null;
         if (!this._lessSet && !this._greaterSet) {
@@ -84,12 +84,12 @@ export class RangeBuilder<T = any> {
         }
 
         if (this._lessSet) {
-            const lessParamName = addQueryParameter.apply(this._lessBound);
+            const lessParamName = addQueryParameter(this._lessBound);
             less = this._path + (this._lessInclusive ? " <= " : " < ") + "$" + lessParamName;
         }
 
         if (this._greaterSet) {
-            const greaterParamName = addQueryParameter.apply(this._greaterBound);
+            const greaterParamName = addQueryParameter(this._greaterBound);
             greater = this._path + (this._greaterInclusive ? " >= " : " > ") + "$" + greaterParamName;
         }
 

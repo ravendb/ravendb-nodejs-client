@@ -22,7 +22,7 @@ export class RangeFacet extends FacetBase {
         this._ranges = ranges;
     }
 
-    public toFacetToken(addQueryParameter: (o: object) => string): FacetToken {
+    public toFacetToken(addQueryParameter: (o: any) => string): FacetToken {
         if (this._parent) {
             return this._parent.toFacetToken(addQueryParameter);
         }
