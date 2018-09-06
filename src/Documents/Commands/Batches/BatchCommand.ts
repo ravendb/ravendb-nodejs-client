@@ -11,6 +11,7 @@ import { HttpRequestParameters } from "../../../Primitives/Http";
 import { HeadersBuilder } from "../../../Utility/HttpUtil";
 import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
+import {TimeUtil} from "../../../Utility/TimeUtil";
 
 export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDisposable {
 
@@ -118,34 +119,37 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
 
         let result = "?";
 
-        if (this._options.waitForReplicas) {
-            result += `&waitForReplicasTimeout=${this._options.waitForReplicasTimeout}`;
+        const replicationOptions = this._options.replicationOptions;
+        if (replicationOptions) {
+            result += `&waitForReplicasTimeout=${TimeUtil.millisToTimeSpan(replicationOptions.timeout)}`;
 
-            if (this._options.throwOnTimeoutInWaitForReplicas) {
+            if (replicationOptions.throwOnTimeout) {
                 result += "&throwOnTimeoutInWaitForReplicas=true";
             }
 
             result += "&numberOfReplicasToWaitFor=";
-            result += this._options.majority ? "majority" : this._options.numberOfReplicasToWaitFor;
+            result += replicationOptions.majority ? "majority" : replicationOptions.replicas;
         }
 
-        if (this._options.waitForIndexes) {
+        const indexOptions = this._options.indexOptions;
+        if (indexOptions) {
             result += "&waitForIndexesTimeout=";
-            result += this._options.waitForIndexesTimeout;
+            result += TimeUtil.millisToTimeSpan(indexOptions.timeout);
 
-            if (this._options.throwOnTimeoutInWaitForIndexes) {
+            if (indexOptions.throwOnTimeout) {
                 result += "&waitForIndexThrow=true";
             } else {
                 result += "&waitForIndexThrow=false";
             }
 
-            if (this._options.waitForSpecificIndexes 
-                && this._options.waitForSpecificIndexes.length) {
-                for (const specificIndex of this._options.waitForSpecificIndexes) {
-                    result += "&waitForSpecificIndex=" + specificIndex;
+            if (indexOptions.indexes && indexOptions.indexes.length) {
+                for (const specificIndex of indexOptions.indexes) {
+                    result += "&waitForSpecificIndex=" + encodeURIComponent(specificIndex);
                 }
             }
         }
+
+        return result;
     }
 
     public get isReadRequest(): boolean {

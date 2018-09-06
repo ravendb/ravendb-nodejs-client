@@ -44,6 +44,30 @@ describe("PatchTest", function () {
         }
     });
 
+    // TODO: waiting for session.advanced.patch
+    it.skip("can wait for index after patch", async () => {
+        //TODO: new IndexesFromClientTest.Users_ByName().execute(store);
+        {
+            const session = store.openSession();
+            const user = new User();
+            user.name = "RavenDB";
+
+            await session.store(user, "users/1");
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            session.advanced.waitForIndexesAfterSaveChanges({
+                indexes: [ "Users/ByName"]
+            });
+
+            const user = await session.load<User>("users/1");
+            //TODO: session.advanced.patch(user, "name", "New Name");
+            await session.saveChanges();
+        }
+    });
+
     it("can patch multiple documents", async () => {
         {
             const session = store.openSession();
