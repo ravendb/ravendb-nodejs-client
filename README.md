@@ -94,6 +94,25 @@ const product = await session.load('products/1-A');
 console.log(product.title);    // iPhone X
 console.log(product.id);       // Products/1-A
 ```
+### Loading documents with includes
+```javascript
+const session = store.openSession();
+// users/1
+// {
+//      "name": "John",
+//      "kids": ["users/2", "users/3"]
+// }
+const user1 = await session
+    .include("kids")
+    .load("users/1");
+// Document users/1 is going to be pulled along 
+// with docs referenced in "kids" field within a single request
+
+const user2 = await session.load("users/2"); // this won't call server again
+assert.ok(user1);
+assert.ok(user2);
+assert.equal(session.advanced.numberOfRequests, 1);
+```
 ### Updating documents
 ```javascript
 let product = await session.load('products/1-A');
