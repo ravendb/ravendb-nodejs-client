@@ -73,6 +73,19 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     // tslint:enable:max-line-length
 }
 
+export interface ReplicationBatchOptions {
+    timeout?: number;
+    throwOnTimeout?: boolean;
+    replicas?: number;
+    majority?: boolean;
+}
+
+export interface IndexBatchOptions {
+    timeout?: number;
+    throwOnTimeout?: boolean;
+    indexes?: string[];
+}
+
 export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter {
 
     /**
@@ -208,10 +221,17 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
      */
     whatChanged(): { [id: string]: DocumentsChanges[] };
 
-    // TBD void WaitForReplicationAfterSaveChanges(
-    //    TimeSpan? timeout = null, bool throwOnTimeout = true, int replicas = 1, bool majority = false);
-    // TBD void WaitForIndexesAfterSaveChanges(
-    //    TimeSpan? timeout = null, bool throwOnTimeout = true, string[] indexes = null);
+    /**
+     * SaveChanges will wait for the changes made to be replicates to `replicas` nodes
+     */
+    waitForReplicationAfterSaveChanges();
+    waitForReplicationAfterSaveChanges(opts: ReplicationBatchOptions);
+
+    /**
+     * SaveChanges will wait for the indexes to catch up with the saved changes
+     */
+    waitForIndexesAfterSaveChanges();
+    waitForIndexesAfterSaveChanges(opts: IndexBatchOptions);
 
     entityToJson: EntityToJson;
 }

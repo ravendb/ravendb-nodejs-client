@@ -1,13 +1,6 @@
- 
-export interface BatchOptions {
-     waitForReplicas: boolean;
-     numberOfReplicasToWaitFor: number;
-     waitForReplicasTimeout: number;
-     majority: boolean;
-     throwOnTimeoutInWaitForReplicas: boolean;
+import {IndexBatchOptions, ReplicationBatchOptions} from "../../..";
 
-     waitForIndexes: boolean;
-     waitForIndexesTimeout: number;
-     throwOnTimeoutInWaitForIndexes: boolean;
-     waitForSpecificIndexes: string[];
+export interface BatchOptions {
+    replicationOptions: ReplicationBatchOptions;
+    indexOptions: IndexBatchOptions;
 }

@@ -8,6 +8,15 @@ export class StringUtil {
     private static readonly letterRe: RegExp = XRegExp("^\\p{L}$") as RegExp;
     private static readonly digitRe: RegExp = /\d/;
 
+    public static leftPad(s: string, length: number, char: string) {
+        const inputLength = s ? s.length : 0;
+        if (inputLength === length) {
+            // no need for padding
+            return s;
+        }
+        return char.repeat(length - inputLength) + s;
+    }
+
     public static format(s: string, vars?: object | any, ...varsArray: any[]): string {
         if (TypeUtil.isObject(vars)) {
             return s.replace(

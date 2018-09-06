@@ -13,11 +13,11 @@ import { ServerNode } from "../../Http/ServerNode";
 import { DocumentsById } from "./DocumentsById";
 import { DocumentInfo } from "./DocumentInfo";
 import { DocumentStoreBase } from "../DocumentStoreBase";
-import { 
-    ICommandData, 
+import {
+    ICommandData,
     DeleteCommandData,
-    SaveChangesData, 
-    PutCommandDataWithJson 
+    SaveChangesData,
+    PutCommandDataWithJson
 } from "../Commands/CommandData";
 import { GenerateEntityIdOnTheClient } from "../Identity/GenerateEntityIdOnTheClient";
 import { tryGetConflict } from "../../Mapping/Json";
@@ -40,6 +40,7 @@ import { RavenCommand } from "../../Http/RavenCommand";
 import { JsonSerializer } from "../../Mapping/Json/Serializer";
 import { OperationExecutor } from "../Operations/OperationExecutor";
 import { createMetadataDictionary } from "../../Mapping/MetadataAsDictionary";
+import {IndexBatchOptions, ReplicationBatchOptions} from "./IAdvancedSessionOperations";
 
 export abstract class InMemoryDocumentSessionOperations 
     extends EventEmitter
@@ -1112,6 +1113,51 @@ export abstract class InMemoryDocumentSessionOperations
     }
 
     /**
+     * SaveChanges will wait for the changes made to be replicates to `replicas` nodes
+     */
+    public waitForReplicationAfterSaveChanges();
+    public waitForReplicationAfterSaveChanges(opts: ReplicationBatchOptions);
+    public waitForReplicationAfterSaveChanges(opts?: ReplicationBatchOptions) {
+        if (!this._saveChangesOptions) {
+            this._saveChangesOptions = {
+                indexOptions: null,
+                replicationOptions: null
+            };
+        }
+
+        opts = opts || {};
+
+        this._saveChangesOptions.replicationOptions = {
+            replicas: opts.replicas || 1,
+            throwOnTimeout: TypeUtil.isUndefined(opts.throwOnTimeout) ? true : opts.throwOnTimeout,
+            majority: TypeUtil.isNullOrUndefined(opts.majority) ? false : opts.majority,
+            timeout: opts.timeout || 15000
+        } as ReplicationBatchOptions;
+    }
+
+    /**
+     * SaveChanges will wait for the indexes to catch up with the saved changes
+     */
+    public waitForIndexesAfterSaveChanges();
+    public waitForIndexesAfterSaveChanges(opts: IndexBatchOptions);
+    public waitForIndexesAfterSaveChanges(opts?: IndexBatchOptions) {
+        if (!this._saveChangesOptions) {
+            this._saveChangesOptions = {
+                indexOptions: null,
+                replicationOptions: null
+            };
+        }
+
+        opts = opts || {};
+
+        this._saveChangesOptions.indexOptions = {
+            indexes: opts.indexes || [],
+            throwOnTimeout: TypeUtil.isNullOrUndefined(opts.throwOnTimeout) ? true : opts.throwOnTimeout,
+            timeout: opts.timeout || 15000
+        };
+    }
+
+    /**
      * Mark the entity as one that should be ignore for change tracking purposes,
      * it still takes part in the session, but is ignored for SaveChanges.
      * @param entity entity
@@ -1129,7 +1175,7 @@ export abstract class InMemoryDocumentSessionOperations
         return changes;
     }
 
-    private _getAllEntitiesChanges(changes:  { [id: string]: DocumentsChanges[] }): void {
+    private _getAllEntitiesChanges(changes: { [id: string]: DocumentsChanges[] }): void {
         for (const pair of this.documentsById.entries()) {
             InMemoryDocumentSessionOperations._updateMetadataModifications(pair[1]);
             const newObj = this.entityToJson.convertEntityToJson(pair[1].entity, pair[1]);
