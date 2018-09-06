@@ -43,153 +43,209 @@ describe("Readme query samples", function () {
         results = null;
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
-    beforeEach(async function prepareUserDataSet() {
-        data = [
-            new User({
-                name: "John",
-                age: 30,
-                registeredAt: new Date(2017, 10, 11),
-                kids: ["Dmitri", "Mara"]
-            }),
-            new User({
-                name: "Stefanie",
-                age: 25,
-                registeredAt: new Date(2015, 6, 30)
-            }),
-            new User({
-                name: "Thomas",
-                age: 25,
-                registeredAt: new Date(2016, 3, 25)
-            })
-        ];
-        const newSession = store.openSession();
-        for (const u of data) {
-            await newSession.store(u);
-        }
+    describe("with data set with includes", function () {
 
-        await newSession.saveChanges();
+        beforeEach(async function () {
+            data = [
+                new User({
+                    name: "John",
+                    age: 30,
+                    registeredAt: new Date(2017, 10, 11),
+                    kids: ["users/2", "users/3"]
+                }),
+                new User({
+                    name: "Stefanie",
+                    age: 25,
+                    registeredAt: new Date(2015, 6, 30)
+                }),
+                new User({
+                    name: "Thomas",
+                    age: 25,
+                    registeredAt: new Date(2016, 3, 25)
+                })
+            ];
+
+            const newSession = store.openSession();
+            for (let i = 0; i < data.length; i++) {
+                await newSession.store(data[i], `users/${i + 1}`);
+            }
+
+            await newSession.saveChanges();
+        });
+
+        it("loading data with include()", async () => {
+            // tslint:disable-next-line:no-shadowed-variable
+            const session = store.openSession();
+            // users/1
+            // {
+            //      "name": "John",
+            //      "kids": ["users/2", "users/3"]
+            // }
+            const user1 = await session
+                .include("kids")
+                .load("users/1");
+            // Document users/1 is going to be pulled along 
+            // with docs referenced in "kids" field within a single request
+
+            const user2 = await session.load("users/2"); // this won't call server again
+            assert.ok(user1);
+            assert.ok(user2);
+            assert.equal(session.advanced.numberOfRequests, 1);
+        });
+
     });
 
-    afterEach(async () => {
-        print("// RQL");
-        print("// " + query.getIndexQuery().query);
-        print("// ", query.getIndexQuery().queryParameters);
-        results.forEach(x => delete x["@metadata"]);
-        print("// " + util.inspect(results));
-    });
+    describe("with user data set", function () {
 
-    it("projections single field", async () => {
-        query = session.query({ collection: "users" })
-            .selectFields("name");
-        results = await query.all();
-    });
+        beforeEach(async function prepareUserDataSet() {
+            data = [
+                new User({
+                    name: "John",
+                    age: 30,
+                    registeredAt: new Date(2017, 10, 11),
+                    kids: ["Dmitri", "Mara"]
+                }),
+                new User({
+                    name: "Stefanie",
+                    age: 25,
+                    registeredAt: new Date(2015, 6, 30)
+                }),
+                new User({
+                    name: "Thomas",
+                    age: 25,
+                    registeredAt: new Date(2016, 3, 25)
+                })
+            ];
+            const newSession = store.openSession();
+            for (const u of data) {
+                await newSession.store(u);
+            }
 
-    it("projections multiple fields", async () => {
-        query = session.query({ collection: "users" })
-            .selectFields([ "name", "age" ]);
-        results = await query.all();
-    });
+            await newSession.saveChanges();
+        });
 
-    it ("distinct", async () => {
-        query = session.query({ collection: "users" })
-        .selectFields("age")
-        .distinct();
-        results = await query.all();
-    });
+        afterEach(async () => {
+            print("// RQL");
+            print("// " + query.getIndexQuery().query);
+            print("// ", query.getIndexQuery().queryParameters);
+            results.forEach(x => delete x["@metadata"]);
+            print("// " + util.inspect(results));
+        });
 
-    it("where equals", async () => {
-        query = session.query({ collection: "users" })
-            .whereEquals("age", 30);
-        results = await query.all();
-    });
+        it("projections single field", async () => {
+            query = session.query({ collection: "users" })
+                .selectFields("name");
+            results = await query.all();
+        });
 
-    it("where in", async () => {
-        query = session.query({ collection: "users" })
-            .whereIn("name", [ "John", "Thomas" ]);
-        results = await query.all();
-    });
+        it("projections multiple fields", async () => {
+            query = session.query({ collection: "users" })
+                .selectFields(["name", "age"]);
+            results = await query.all();
+        });
 
-    it("where between", async () => {
-        query = session.query({ collection: "users" })
-            .whereBetween("registeredAt", new Date(2016, 0, 1), new Date(2017, 0, 1));
-        results = await query.all();
-    });
+        it("distinct", async () => {
+            query = session.query({ collection: "users" })
+                .selectFields("age")
+                .distinct();
+            results = await query.all();
+        });
 
-    it("where greater than", async () => {
-        query = session.query({ collection: "users" })
-            .whereGreaterThan("age", 29);
-        results = await query.all();
-    });
+        it("where equals", async () => {
+            query = session.query({ collection: "users" })
+                .whereEquals("age", 30);
+            results = await query.all();
+        });
 
-    it("where exists", async () => {
-        query = session.query({ collection: "users" })
-            .whereExists("kids");
-        results = await query.all();
-    });
+        it("where in", async () => {
+            query = session.query({ collection: "users" })
+                .whereIn("name", ["John", "Thomas"]);
+            results = await query.all();
+        });
 
-    it("where contains any", async () => {
-        query = session.query({ collection: "users" })
-            .containsAny("kids", ["Mara"]);
-        results = await query.all();
-    });
-    
-    it("search()", async () => {
-        query = session.query({ collection: "users" })
-            .search("kids", "Mara John");
-        results = await query.all();
-    });
+        it("where between", async () => {
+            query = session.query({ collection: "users" })
+                .whereBetween("registeredAt", new Date(2016, 0, 1), new Date(2017, 0, 1));
+            results = await query.all();
+        });
 
-    it("subclause", async () => {
-        query = session.query({ collection: "users" })
-            .whereExists("kids")
-            .orElse()
-            .openSubclause()
+        it("where greater than", async () => {
+            query = session.query({ collection: "users" })
+                .whereGreaterThan("age", 29);
+            results = await query.all();
+        });
+
+        it("where exists", async () => {
+            query = session.query({ collection: "users" })
+                .whereExists("kids");
+            results = await query.all();
+        });
+
+        it("where contains any", async () => {
+            query = session.query({ collection: "users" })
+                .containsAny("kids", ["Mara"]);
+            results = await query.all();
+        });
+
+        it("search()", async () => {
+            query = session.query({ collection: "users" })
+                .search("kids", "Mara John");
+            results = await query.all();
+        });
+
+        it("subclause", async () => {
+            query = session.query({ collection: "users" })
+                .whereExists("kids")
+                .orElse()
+                .openSubclause()
                 .whereEquals("age", 25)
                 .whereNotEquals("name", "Thomas")
-            .closeSubclause();
-        results = await query.all();
-    });
+                .closeSubclause();
+            results = await query.all();
+        });
 
-    it("not()", async () => {
-        query = await session.query({ collection: "users" })
-            .not()
-            .whereEquals("age", 25);
-        results = await query.all();
-    });
+        it("not()", async () => {
+            query = await session.query({ collection: "users" })
+                .not()
+                .whereEquals("age", 25);
+            results = await query.all();
+        });
 
-    it("orElse", async () => {
-        query = await session.query({ collection: "users" })
-            .whereExists("kids")
-            .orElse()
-            .whereLessThan("age", 30);
-        results = await query.all();
-    });
+        it("orElse", async () => {
+            query = await session.query({ collection: "users" })
+                .whereExists("kids")
+                .orElse()
+                .whereLessThan("age", 30);
+            results = await query.all();
+        });
 
-    it("orderBy()", async () => {
-        query = await session.query({ collection: "users" })
-            .orderBy("age");
-            
-        results = await query.all();
-    });
+        it("orderBy()", async () => {
+            query = await session.query({ collection: "users" })
+                .orderBy("age");
 
-    it("take()", async () => {
-        query = await session.query({ collection: "users" })
-            .orderBy("age") 
-            .take(2);
-            
-        results = await query.all();
-    });
+            results = await query.all();
+        });
 
-    it("skip()", async () => {
-        query = await session.query({ collection: "users" })
-            .orderBy("age") 
-            .take(1)
-            .skip(1);
-            
-        results = await query.all();
+        it("take()", async () => {
+            query = await session.query({ collection: "users" })
+                .orderBy("age")
+                .take(2);
+
+            results = await query.all();
+        });
+
+        it("skip()", async () => {
+            query = await session.query({ collection: "users" })
+                .orderBy("age")
+                .take(1)
+                .skip(1);
+
+            results = await query.all();
+        });
+
     });
 
 });
