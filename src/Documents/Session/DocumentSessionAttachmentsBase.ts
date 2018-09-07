@@ -22,7 +22,7 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
 
         const document = this._documentsByEntity.get(entity);
         if (!document) {
-            return [];
+            this._throwEntityNotInSession(entity);
         }
 
         const results = document.metadata[CONSTANTS.Documents.Metadata.ATTACHMENTS] as AttachmentName[];
@@ -94,8 +94,8 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
 
     protected _throwEntityNotInSession(entity: object): never {
         return throwError("InvalidArgumentException",
-            entity + " is not associated with the session, cannot add attachment to it. "
-            + "Use documentId instead or track the entity in session.");
+            entity 
+            + " is not associated with the session. Use documentId instead or track the entity in the session.");
     }
 
     private _deleteAttachmentByEntity(entity: object, name: string): void {
