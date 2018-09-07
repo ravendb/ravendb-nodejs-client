@@ -173,11 +173,7 @@ export class BulkInsertOperation {
     private async _ensureStream() {
         try {
 
-            this._currentWriter = new stream.Readable({
-                read: () => {
-                    // empty
-                }
-            });
+            this._currentWriter = new stream.PassThrough(); 
 
             let buffer = Buffer.from([]);
 
@@ -213,7 +209,7 @@ export class BulkInsertOperation {
 
             this._currentWriter.push("[");
         } catch (e) {
-            throwError("RavenException", "Unable to open bulk insert stream", e);
+            throwError("RavenException", "Unable to open bulk insert stream.", e);
         }
     }
 
@@ -296,8 +292,7 @@ export class BulkInsertCommand extends RavenCommand<void> {
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
-        throwError("NotImplementedException", "Not implemented");
-        return null;
+        return throwError("NotImplementedException", "Not implemented");
     }
 
 }

@@ -601,7 +601,9 @@ export class DocumentConventions {
         const options: any = opts || {
             recursive: true,
             arrayRecursive: true,
-            ignorePaths: [/@metadata\./]
+            ignorePaths: [
+                CONSTANTS.Documents.Metadata.IGNORE_CASE_TRANSFORM_REGEX,
+            ]
         };
         options.defaultTransform = this._remoteEntityFieldNameConvention;
 
@@ -617,7 +619,10 @@ export class DocumentConventions {
         const options = opts || {
             recursive: true,
             arrayRecursive: true,
-            ignorePaths: [/@metadata\./, /@projection/]
+            ignorePaths: [
+                CONSTANTS.Documents.Metadata.IGNORE_CASE_TRANSFORM_REGEX,
+                /@projection/
+            ]
         } as any;
 
         options.defaultTransform = this._localEntityFieldNameConvention;
