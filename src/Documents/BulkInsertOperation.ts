@@ -225,7 +225,6 @@ export class BulkInsertOperation {
         await this._waitForId();
 
         try {
-            console.log("About to kill: " + this._operationId);
             await this._requestExecutor.execute(new KillOperationCommand(this._operationId));
         } catch (err) {
             throwError("BulkInsertAbortedException",
