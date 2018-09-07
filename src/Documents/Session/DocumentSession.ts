@@ -139,7 +139,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             .then(() => {
                 if (command) {
                     return this._requestExecutor.execute(command, this._sessionInfo)
-                        .then(() => operation.setResult(command.result)) // TBD: delete me after impl stream
+                        .then(() => operation.setResult(command.result)); // TBD: delete me after impl stream
                     /* TBD
                      if(stream!=null)
                             Context.Write(stream, command.Result.Results.Parent);

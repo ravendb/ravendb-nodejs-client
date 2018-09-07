@@ -74,13 +74,13 @@ export class BatchOperation {
                     "PUT response is invalid. @id is missing on " + documentInfo.id);
             }
 
-            Object.keys(batchResult).forEach(propertyName => {
-                if ("Type" === propertyName) {
-                    return;
+            for (const propertyName of Object.keys(batchResult)) {
+                if ("type" === propertyName) {
+                    continue;
                 }
 
                 documentInfo.metadata[propertyName] = batchResult[propertyName];
-            });
+            }
 
             documentInfo.id = id;
             documentInfo.changeVector = changeVector;

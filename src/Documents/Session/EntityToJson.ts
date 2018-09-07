@@ -79,6 +79,11 @@ export class EntityToJson {
             documentInfo.metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] = typeInfo.typeName;
         }
 
+        if (documentInfo.metadataInstance) {
+            documentInfo.metadataInstance[CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES] = typeInfo.nestedTypes;
+            documentInfo.metadataInstance[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] = typeInfo.typeName;
+        }
+
         let setMetadata: boolean = false;
         let metadataNode: object = {};
 

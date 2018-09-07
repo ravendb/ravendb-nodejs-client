@@ -118,7 +118,8 @@ export type RavenErrorType = "RavenException"
 | "FileNotFoundException"
 | "NotImplementedException"
 | "NodeIsPassiveException"
-| "ConfigurationException";
+| "ConfigurationException"
+| "BulkInsertStreamError";
 
 export interface ExceptionSchema {
     url: string;

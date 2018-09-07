@@ -1,4 +1,5 @@
 import * as BluebirdPromise from "bluebird";
+import { AbstractCallback } from "./../Types/Callbacks";
 
 export function raceToResolution<TResult>(
     promises: Array<BluebirdPromise<TResult>>,
@@ -21,4 +22,12 @@ export function raceToResolution<TResult>(
         });
         return raceToResolution(promises);
     });
+}
+
+export function passResultToCallback<T>(p: Promise<T>, callback: AbstractCallback<T>): void {
+    if (!callback) {
+        return;
+    }
+    
+    p.then(result => callback(null, result), err => callback(err));
 }

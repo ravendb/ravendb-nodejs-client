@@ -1,12 +1,12 @@
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
-import {
-    IDocumentStore,
+import DocumentStore, {
+    IDocumentStore, BulkInsertOperation, IMetadataDictionary,
 } from "../../../src";
-import {createMetadataDictionary} from "../../../src/Mapping/MetadataAsDictionary";
-import {CONSTANTS} from "../../../src/Constants";
-import {DateUtil} from "../../../src/Utility/DateUtil";
+import { createMetadataDictionary } from "../../../src/Mapping/MetadataAsDictionary";
+import { CONSTANTS } from "../../../src/Constants";
+import { DateUtil } from "../../../src/Utility/DateUtil";
 
 describe("bulk insert", function () {
 
@@ -115,9 +115,194 @@ describe("bulk insert", function () {
         }
     });
 
-    it.skip("can handle nested types properly", () => {
-        //TODO:
+    it("can handle nested types properly", async () => {
+        class BulkTestItem {
+            public name: string;
+            public created: Date;
+            public constructor(name: string) {
+                this.name = name;
+                this.created = new Date();
+            }
+        }
+
+        class BulkTestItemCollection {
+            public id: string;
+            public items: BulkTestItem[];
+
+            public constructor(...names: string[]) {
+                this.items = names.map(name => {
+                    return new BulkTestItem(name);
+                });
+            }
+        }
+
+        store.conventions.registerEntityType(BulkTestItem);
+        store.conventions.registerEntityType(BulkTestItemCollection);
+
+        const entity = new BulkTestItemCollection("jon", "dany", "imp");
+        {
+            const bulk = store.bulkInsert();
+            await bulk.store(entity);
+            await bulk.finish();
+        }
+
+        {
+            const session = store.openSession();
+            const loaded = await session.load(entity["id"]);
+
+            assert.ok(loaded);
+            const metadata = loaded["@metadata"];
+            assert.ok(metadata["@id"], entity["id"]);
+            const nestedObjectTypes = metadata[CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES];
+            assert.ok(nestedObjectTypes);
+            assert.equal(Object.keys(nestedObjectTypes).length, 2);
+            assert.equal(nestedObjectTypes["items[]"], BulkTestItem.name);
+            assert.equal(nestedObjectTypes["items[].created"], "date");
+        }
     });
+
+    it.skip("[RDBC-226] can insert object literals with default conventions", async () => {
+        const bulk = store.bulkInsert();
+        const obj = { id: null, name: "blabli" };
+        await bulk.store(obj);
+        await bulk.finish();
+
+        assert.ok(obj["id"]);
+    });
+
+    // tslint:disable-next-line:max-line-length
+    it("can handle custom entity naming conventions + object literals when findCollectionNameForObjectLiteral is specified", async () => {
+        const store2 = new DocumentStore(store.urls, store.database);
+        store2.conventions.entityFieldNameConvention = "camel";
+        store2.conventions.remoteEntityFieldNameConvention = "pascal";
+        store2.conventions.findCollectionNameForObjectLiteral = () => "test";
+
+        store2.initialize();
+
+        const registeredAt = new Date();
+        const camelCasedObj = {
+            id: null,
+            name: "Jon",
+            job: "white walker killer",
+            fathersName: "Rhaegar",
+            canUseSword: true,
+            equipment: ["sword", "bow", "direwolf"],
+            registeredAt
+        };
+
+        try {
+            const bulk = store2.bulkInsert();
+            await bulk.store(camelCasedObj);
+            await bulk.finish();
+        } finally {
+            store2.dispose();
+        }
+
+        {
+            // use case transformless store to verify doc
+            const session = store.openSession();
+            const loaded = await session.load(camelCasedObj["id"]);
+            assert.ok(loaded);
+            assert.ok("Name" in loaded);
+            assert.equal(loaded["Name"], camelCasedObj.name);
+            assert.ok("Job" in loaded);
+            assert.ok("CanUseSword" in loaded);
+            assert.ok("Equipment" in loaded);
+            assert.ok("RegisteredAt" in loaded);
+            assert.ok("FathersName" in loaded);
+            assert.equal(loaded["Equipment"].length, 3);
+            assert.ok("Raven-Node-Type" in loaded["@metadata"]);
+            assert.ok("@nested-object-types" in loaded["@metadata"]);
+            assert.ok("@collection" in loaded["@metadata"]);
+        }
+    });
+});
+
+describe("BulkInsertOperation._typeCheckStoreArgs() properly parses arguments", () => {
+
+    const typeCheckStoreArgs = BulkInsertOperation["_typeCheckStoreArgs"];
+    // tslint:disable-next-line:no-empty
+    const expectedCallback = () => { };
+    const expectedId = "id";
+    const expectedMetadata = {} as IMetadataDictionary;
+    const expectedNullId = null;
+
+    it("accepts callback", () => {
+        const { cb } = typeCheckStoreArgs(expectedCallback);
+        assert.strictEqual(cb, expectedCallback);
+    });
+
+    it("accepts id", () => {
+        const { id, getId } = typeCheckStoreArgs(expectedId);
+        assert.strictEqual(id, expectedId);
+        assert.ok(!getId);
+    });
+
+    it("accepts metadata", () => {
+        const { id, getId, metadata, cb } = typeCheckStoreArgs(expectedMetadata);
+        assert.strictEqual(metadata, expectedMetadata);
+        assert.ok(!id);
+        assert.ok(getId);
+        assert.ok(!cb);
+    });
+
+    it("accepts id, metadata", () => {
+        const { id, getId, metadata, cb } = typeCheckStoreArgs(expectedId, expectedMetadata);
+        assert.strictEqual(metadata, expectedMetadata);
+        assert.strictEqual(id, expectedId);
+        assert.ok(!getId);
+        assert.ok(!cb);
+    });
+
+    it("accepts id, callback", () => {
+        const { id, getId, metadata, cb } = typeCheckStoreArgs(expectedId, expectedCallback);
+        assert.strictEqual(id, expectedId);
+        assert.strictEqual(cb, expectedCallback);
+        assert.ok(!getId);
+        assert.ok(!metadata);
+    });
+
+    it("accepts metadata, callback", () => {
+        const { id, getId, metadata, cb } = typeCheckStoreArgs(expectedMetadata, expectedCallback);
+        assert.strictEqual(metadata, expectedMetadata);
+        assert.strictEqual(cb, expectedCallback);
+        assert.ok(getId);
+        assert.ok(!id);
+    });
+
+    it("accepts null metadata, callback", () => {
+        const { id, getId, metadata, cb } = typeCheckStoreArgs(null, expectedCallback);
+        assert.strictEqual(metadata, null);
+        assert.strictEqual(cb, expectedCallback);
+        assert.ok(getId);
+        assert.ok(!id);
+    });
+
+    it("accepts metadata with id, callback", () => {
+        const meta = { "@id": "aaa" } as any as IMetadataDictionary;
+        const { id, getId, metadata, cb } = typeCheckStoreArgs(meta);
+        assert.strictEqual(metadata, meta);
+        assert.strictEqual(id, meta["@id"]);
+        assert.ok(!getId);
+        assert.ok(id);
+    });
+
+    it("accepts id, metadata, callback", () => {
+        const { id, getId, metadata, cb } = typeCheckStoreArgs(expectedId, expectedMetadata, expectedCallback);
+        assert.strictEqual(metadata, expectedMetadata);
+        assert.strictEqual(cb, expectedCallback);
+        assert.strictEqual(id, expectedId);
+        assert.ok(!getId);
+    });
+
+    it("accepts null id, metadata, callback returns getId true", () => {
+        const { id, getId, metadata, cb } = typeCheckStoreArgs(expectedNullId, expectedMetadata, expectedCallback);
+        assert.strictEqual(metadata, expectedMetadata);
+        assert.strictEqual(cb, expectedCallback);
+        assert.ok(!id);
+        assert.ok(getId);
+    });
+
 });
 
 export class FooBar {
