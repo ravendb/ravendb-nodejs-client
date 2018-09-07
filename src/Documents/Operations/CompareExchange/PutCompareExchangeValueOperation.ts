@@ -91,9 +91,9 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
         return RavenCommandResponsePipeline.create()
             .collectBody()
             .parseJsonAsync([ "Value", { emitPath: true }])
-            .streamKeyCaseTransform({ targetKeyCaseConvention: this._conventions.entityFieldNameConvention })
+            .streamKeyCaseTransform({ defaultTransform: this._conventions.entityFieldNameConvention })
             .restKeyCaseTransform({
-                targetKeyCaseConvention: "camel"
+                defaultTransform: "camel"
             })
             .process(bodyStream)
             .then(pipelineResult => {

@@ -68,7 +68,7 @@ export class GetCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
         return RavenCommandResponsePipeline.create()
             .collectBody()
             .parseJsonSync()
-            .streamKeyCaseTransform({ targetKeyCaseConvention: "camel" })
+            .streamKeyCaseTransform({ defaultTransform: "camel" })
             .process(bodyStream)
             .then(results => {
                 this.result = CompareExchangeValueResultParser.getValue(

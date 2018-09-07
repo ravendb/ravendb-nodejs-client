@@ -46,7 +46,7 @@ export class GetCollectionStatisticsCommand extends RavenCommand<CollectionStati
 
         return this._getDefaultResponsePipeline()
             .streamKeyCaseTransform({
-                targetKeyCaseConvention: "camel",
+                defaultTransform: "camel",
                 ignorePaths: [ /^collections\./i ]
             })
             .process(bodyStream)

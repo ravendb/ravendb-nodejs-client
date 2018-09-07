@@ -30,7 +30,10 @@ export const CONSTANTS = {
              CHANGE_VECTOR: "@change-vector",
              EXPIRES: "@expires",
              EMPTY_COLLECTION: "@empty",
-             NESTED_OBJECT_TYPES: "@nested-object-types"
+             NESTED_OBJECT_TYPES: "@nested-object-types",
+             IGNORE_CASE_TRANSFORM_REGEX: 
+                    // tslint:disable-next-line:max-line-length
+                    /@metadata\.(@collection|@projection|@id|@conflict|@flags|Raven-Node-Type|@index-score|@last-modified|@change-vector|@expires|@nested-object-types)/ 
         },
     }
 };

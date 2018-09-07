@@ -5,17 +5,21 @@ import { throwError } from "../Exceptions";
 import { Caseless } from "caseless";
 
 export function getRequiredEtagHeader(response: HttpResponse) {
-    const headers = response.caseless.get(HEADERS.ETAG);
-    if (!headers || !headers.length || !headers[0]) {
+    let etagHeader = response.caseless.get(HEADERS.ETAG);
+    if (!etagHeader) {
         throwError("InvalidOperationException", "Response did't had an ETag header");
     }
 
-    return etagHeaderToChangeVector(headers[0]);
+    if (Array.isArray(etagHeader)) {
+        etagHeader = etagHeader[0];
+    }
+
+    return etagHeaderToChangeVector(etagHeader);
 }
 
 export function getEtagHeader(responseOrHeaders: HttpResponse | IncomingHttpHeaders): string {
     let responseHeaders: Caseless;
-    if ((responseOrHeaders as any).headers) {
+    if ("headers" in (responseOrHeaders as any)) {
         responseHeaders = (responseOrHeaders as HttpResponse).caseless;
     }
 
@@ -30,8 +34,8 @@ export function etagHeaderToChangeVector(responseHeader: string) {
         throwError("InvalidOperationException", "Response did't had an ETag header");
     }
 
-    if (responseHeader.startsWith("\"")) {
-        return responseHeader.substring(1);
+    if (responseHeader.startsWith(`"`)) {
+        return responseHeader.substring(1, responseHeader.length - 1);
     }
 
     return responseHeader;
@@ -51,6 +55,10 @@ export function getBooleanHeader(response: HttpResponse, header: string): boolea
 
 export function getHeaders() {
     return HeadersBuilder.create();
+}
+
+export function closeHttpResponse(response: HttpResponse) {
+    response.emit("end");
 }
 
 export class HeadersBuilder {

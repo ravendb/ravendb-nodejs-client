@@ -7,7 +7,7 @@ import { HttpRequestParameters, HttpResponse, HttpRequest } from "../Primitives/
 import { getLogger } from "../Utility/LogUtil";
 import { throwError } from "../Exceptions";
 import { IRavenObject } from "../Types/IRavenObject";
-import { getEtagHeader, HeadersBuilder } from "../Utility/HttpUtil";
+import { getEtagHeader, HeadersBuilder, closeHttpResponse } from "../Utility/HttpUtil";
 import { Mapping } from "../Mapping";
 import { TypesAwareObjectMapper, TypeInfo } from "../Mapping/ObjectMapper";
 import { ObjectTypeDescriptor } from "..";
@@ -82,7 +82,7 @@ export abstract class RavenCommand<TResult> {
             .parseJsonSync()
             .collectBody()
             .streamKeyCaseTransform({
-                targetKeyCaseConvention: "camel"
+                defaultTransform: "camel"
             });
     }
 
@@ -164,7 +164,7 @@ export abstract class RavenCommand<TResult> {
             if (this._responseType === "Object") {
                 const contentLength: number = parseInt(response.caseless.get("content-length"), 10);
                 if (contentLength === 0) {
-                    response.destroy(); // not sure
+                    closeHttpResponse(response);
                     return "Automatic";
                 }
 
@@ -188,7 +188,10 @@ export abstract class RavenCommand<TResult> {
             log.error(err, `Error processing command ${this.constructor.name} response.`);
             throwError("RavenException", `Error processing command ${this.constructor.name} response.`, err);
         } finally {
-            response.destroy();
+            closeHttpResponse(response);
+            // response.destroy(); 
+            // since we're calling same hosts and port a lot, we might not want to destroy sockets explicitly
+            // they're going to get back to Agent's pool and reused 
         }
 
         return "Automatic";

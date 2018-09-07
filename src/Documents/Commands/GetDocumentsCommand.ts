@@ -14,6 +14,7 @@ import { CollectResultStreamOptions } from "../../Mapping/Json/Streams/CollectRe
 import { getIgnoreKeyCaseTransformKeysFromDocumentMetadata } from "../../Mapping/Json/Docs/index";
 import { IRavenCommandResponsePipelineResult } from "../../Http/RavenCommandResponsePipeline";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { CONSTANTS } from "../../Constants";
 
 export interface GetDocumentsCommandOptionsBase {
     conventions: DocumentConventions;
@@ -234,11 +235,20 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             .collectBody()
             .parseJsonAsync(LOAD_DOCS_JSON_PATH)
             .streamKeyCaseTransform({
-                targetKeyCaseConvention: this._conventions.entityFieldNameConvention,
-                extractIgnorePaths: (e) => [ ...getIgnoreKeyCaseTransformKeysFromDocumentMetadata(e), /@metadata\./ ],
-                ignoreKeys: [ /^@/ ]
+                defaultTransform: this._conventions.entityFieldNameConvention,
+                extractIgnorePaths: (e) => [ 
+                    ...getIgnoreKeyCaseTransformKeysFromDocumentMetadata(e), 
+                    CONSTANTS.Documents.Metadata.IGNORE_CASE_TRANSFORM_REGEX
+                ],
+                ignoreKeys: [ /^@/ ],
+                paths: [
+                    {
+                        transform: "camel",
+                        path: /@metadata\.@attachments/
+                    }
+                ]
             })
-            .restKeyCaseTransform({ targetKeyCaseConvention: "camel" })
+            .restKeyCaseTransform({ defaultTransform: "camel" })
             .collectResult(collectResultOpts)
             .process(bodyStream)
             .then((result: IRavenCommandResponsePipelineResult<DocumentsResult>) => {

@@ -12,12 +12,12 @@ import { SessionEventsEmitter } from "./SessionEvents";
 import { IDocumentQuery } from "./IDocumentQuery";
 import { AdvancedDocumentQueryOptions } from "./QueryOptions";
 import { AbstractCallback } from "../../Types/Callbacks";
+import { IAttachmentsSessionOperations } from "../Session/IAttachmentsSessionOperations";
 
 export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOperations {
 
     // TBD IEagerSessionOperations eagerly();
     // TBD ILazySessionOperations lazily();
-    // TBD IAttachmentsSessionOperations Attachments { get; }
     // TBD IRevisionsSessionOperations Revisions { get; }
 
     /**
@@ -234,4 +234,9 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
     waitForIndexesAfterSaveChanges(opts: IndexBatchOptions);
 
     entityToJson: EntityToJson;
+
+    /**
+     * @return Access the attachments operations
+     */
+    attachments: IAttachmentsSessionOperations;
 }

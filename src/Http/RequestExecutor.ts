@@ -34,6 +34,7 @@ import { SessionInfo } from "../Documents/Session/IDocumentSession";
 import { JsonSerializer } from "../Mapping/Json/Serializer";
 import { validateUri } from "../Utility/UriUtil";
 import * as StreamUtil from "../Utility/StreamUtil";
+import { closeHttpResponse } from "../Utility/HttpUtil";
 
 const DEFAULT_REQUEST_OPTIONS = {};
 
@@ -859,7 +860,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
                     })
                     .finally(() => {
                         if (responseDispose === "Automatic") {
-                            response.destroy();
+                            closeHttpResponse(response);
                         }
 
                         if (refreshTopology || refreshClientConfiguration) {

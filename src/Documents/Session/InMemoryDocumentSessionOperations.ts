@@ -70,7 +70,7 @@ export abstract class InMemoryDocumentSessionOperations
         return this._id;
     }
 
-    protected deletedEntities: Set<object> = new Set();
+    public deletedEntities: Set<object> = new Set();
 
     protected _knownMissingIds: Set<string> = new Set();
 
@@ -161,7 +161,7 @@ export abstract class InMemoryDocumentSessionOperations
     protected _deferredCommands: ICommandData[] = [];
 
     // keys are produced with CommandIdTypeAndName.keyFor() method
-    protected _deferredCommandsMap: Map<string, ICommandData> = new Map();
+    public deferredCommandsMap: Map<string, ICommandData> = new Map();
 
     public get deferredCommandsCount() {
         return this._deferredCommands.length;
@@ -495,7 +495,6 @@ export abstract class InMemoryDocumentSessionOperations
     }
 
     private _deserializeFromTransformer(clazz: ObjectTypeDescriptor, id: string, document: object): object {
-        // TBD handleInternalMetadata(document);
         return this.entityToJson.convertToEntity(clazz, id, document);
     }
 
@@ -677,7 +676,7 @@ export abstract class InMemoryDocumentSessionOperations
             .then(id => {
 
                 const cmdKey = IdTypeAndName.keyFor(id, "ClientAnyCommand", null);
-                if (this._deferredCommandsMap.has(cmdKey)) {
+                if (this.deferredCommandsMap.has(cmdKey)) {
                     throwError("InvalidOperationException",
                         "Can't store document, there is a deferred command registered "
                         + "for this document in the session. Document id: " + id);
@@ -755,7 +754,7 @@ export abstract class InMemoryDocumentSessionOperations
         const result = this._newSaveChangesData();
 
         this._deferredCommands.length = 0;
-        this._deferredCommandsMap.clear();
+        this.deferredCommandsMap.clear();
 
         this._prepareForEntitiesDeletion(result, null);
         this._prepareForEntitiesPuts(result);
@@ -764,13 +763,12 @@ export abstract class InMemoryDocumentSessionOperations
             // this allow OnBeforeStore to call Defer during the call to include
             // additional values during the same SaveChanges call
             result.deferredCommands.push(...this._deferredCommands);
-            for (const item of this._deferredCommandsMap.entries()) {
-                const [key, value] = item;
-                result.deferredCommandsMap.set(key, value);
+            for (const item of this.deferredCommandsMap.entries()) {
+                result.deferredCommandsMap.set(item[0], item[1]);
             }
 
             this._deferredCommands.length = 0;
-            this._deferredCommandsMap.clear();
+            this.deferredCommandsMap.clear();
         }
 
         return result;
@@ -779,7 +777,7 @@ export abstract class InMemoryDocumentSessionOperations
     private _newSaveChangesData(): SaveChangesData {
         return new SaveChangesData({
             deferredCommands: [...this._deferredCommands],
-            deferredCommandsMap: new Map(this._deferredCommandsMap),
+            deferredCommandsMap: new Map(this.deferredCommandsMap),
             options: this._saveChangesOptions
         });
     }
@@ -846,13 +844,12 @@ export abstract class InMemoryDocumentSessionOperations
             const dirtyMetadata = InMemoryDocumentSessionOperations._updateMetadataModifications(entityValue);
 
             let document = this.entityToJson.convertEntityToJson(entityKey, entityValue);
-
             if (!this._entityChanged(document, entityValue, null) && !dirtyMetadata) {
                 continue;
             }
 
             const command = result.deferredCommandsMap.get(
-                IdTypeAndName.keyFor(entityValue.id, "ClientAnyCommand", null));
+                IdTypeAndName.keyFor(entityValue.id, "ClientNotAttachment", null));
             if (command) {
                 InMemoryDocumentSessionOperations._throwInvalidModifiedDocumentWithDeferredCommand(command);
             }
@@ -905,7 +902,7 @@ export abstract class InMemoryDocumentSessionOperations
 
     private static _throwInvalidModifiedDocumentWithDeferredCommand(resultCommand: ICommandData): void {
         throwError("InvalidOperationException", "Cannot perform save because document " + resultCommand.id
-            + " has been deleted by the session and is also taking part in deferred " 
+            + " has been modified by the session and is also taking part in deferred " 
             + resultCommand.type + " command");
     }
 
@@ -1019,13 +1016,13 @@ export abstract class InMemoryDocumentSessionOperations
     }
 
     private _deferInternal(command: ICommandData): void {
-        this._deferredCommandsMap.set(
+        this.deferredCommandsMap.set(
             IdTypeAndName.keyFor(command.id, command.type, command.name), command);
-        this._deferredCommandsMap.set(
+        this.deferredCommandsMap.set(
             IdTypeAndName.keyFor(command.id, "ClientAnyCommand", null), command);
 
         if (command.type !== "AttachmentPUT" && command.type !== "AttachmentDELETE") {
-            this._deferredCommandsMap.set(
+            this.deferredCommandsMap.set(
                 IdTypeAndName.keyFor(command.id, "ClientNotAttachment", null), command);
         }
     }

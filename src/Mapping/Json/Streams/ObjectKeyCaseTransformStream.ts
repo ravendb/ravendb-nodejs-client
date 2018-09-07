@@ -1,10 +1,9 @@
 import * as stream from "readable-stream";
-import { ObjectUtil, ObjectChangeCaseOptions, CasingConvention } from '../../../Utility/ObjectUtil';
+import { ObjectUtil, ObjectChangeCaseOptions, CasingConvention } from "../../../Utility/ObjectUtil";
 import { getError, throwError } from "../../../Exceptions";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 
 export interface ObjectKeyCaseTransformStreamOptions extends ObjectChangeCaseOptions {
-    targetKeyCaseConvention: CasingConvention;
     handlePath?: boolean;
     extractIgnorePaths?: ((entry: object) => Array<string | RegExp>);
 }
@@ -16,33 +15,23 @@ const DEFAULT_OBJECT_KEY_CASE_TRANSFORM_OPTS = {
 
 export class ObjectKeyCaseTransformStream extends stream.Transform {
 
-    private _recursive: boolean;
-    private _arrayRecursive: boolean;
-    private _ignoreKeys: Array<string | RegExp>;
     private _ignorePaths: Array<string | RegExp>;
     private _getIgnorePaths: (entry: object) => Array<string | RegExp> = 
         () => this._ignorePaths
 
-    private _keyCaseTransform: CasingConvention;
     private _handlePath: boolean;
 
-    constructor(opts: ObjectKeyCaseTransformStreamOptions) {
+    constructor(private _opts: ObjectKeyCaseTransformStreamOptions) {
         super({ objectMode: true });
 
-        opts = Object.assign({}, DEFAULT_OBJECT_KEY_CASE_TRANSFORM_OPTS, opts);
-        ObjectKeyCaseTransformStream._validateOpts(opts);
+        _opts = Object.assign({}, DEFAULT_OBJECT_KEY_CASE_TRANSFORM_OPTS, _opts);
+        ObjectKeyCaseTransformStream._validateOpts(_opts);
         
-        if (typeof opts.extractIgnorePaths === "function") {
-            this._getIgnorePaths = opts.extractIgnorePaths;
-        } else {
-            this._ignorePaths = opts.ignorePaths || [];
-        }
+        if (typeof _opts.extractIgnorePaths === "function") {
+            this._getIgnorePaths = _opts.extractIgnorePaths;
+        } 
 
-        this._keyCaseTransform = opts.targetKeyCaseConvention;
-        this._handlePath = opts.handlePath;
-        this._ignoreKeys = opts.ignoreKeys || [];
-        this._recursive = opts.recursive;
-        this._arrayRecursive = opts.arrayRecursive;
+        this._handlePath = _opts.handlePath;
     }
 
     // tslint:disable-next-line:function-name
@@ -55,14 +44,12 @@ export class ObjectKeyCaseTransformStream extends stream.Transform {
 
         const entryPath = this._handlePath ? chunk.path : null;
         const ignorePaths = this._getIgnorePaths(entry);
+        const opts = Object.assign({}, this._opts);
+        opts.ignorePaths = [...new Set((opts.ignorePaths || [])
+            .concat(ignorePaths || []))]; 
 
         process.nextTick(() => {
-            entry = ObjectUtil.transformObjectKeys(this._keyCaseTransform, entry, {
-                recursive: this._recursive,
-                arrayRecursive: this._arrayRecursive,
-                ignoreKeys: this._ignoreKeys,
-                ignorePaths
-            });
+            entry = ObjectUtil.transformObjectKeys(entry, opts);
             
             const data = this._handlePath
                 ? { path: entryPath, value: entry }
@@ -72,12 +59,8 @@ export class ObjectKeyCaseTransformStream extends stream.Transform {
     }
 
     private static _validateOpts(opts: ObjectKeyCaseTransformStreamOptions) {
-        if (!opts.targetKeyCaseConvention) {
-            throwError("MappingError", "Key case convention cannot be null.");
-        }
-
-        if (opts.targetKeyCaseConvention && !ObjectUtil[opts.targetKeyCaseConvention + "Keys"]) {
-            throw new Error(`Unknown key casing convention: ${opts.targetKeyCaseConvention}`);
+        if (opts.defaultTransform && !ObjectUtil[opts.defaultTransform]) {
+            throw new Error(`Unknown key casing convention: ${opts.defaultTransform}`);
         }
     }
 }

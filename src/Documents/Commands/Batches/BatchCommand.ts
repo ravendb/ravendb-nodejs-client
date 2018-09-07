@@ -1,4 +1,6 @@
 import * as stream from "readable-stream";
+import { PutAttachmentCommandData } from "./PutAttachmentCommandData";
+import { PutAttachmentCommandHelper } from "./PutAttachmentCommandHelper";
 import { IRavenArrayResult } from "../../../Types";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { IDisposable } from "../../../Types/Contracts";
@@ -12,12 +14,13 @@ import { HeadersBuilder } from "../../../Utility/HttpUtil";
 import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
 import {TimeUtil} from "../../../Utility/TimeUtil";
+import { AttachmentData } from "../../Attachments";
 
 export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDisposable {
 
     private _commands: ICommandData[];
+    private _attachmentStreams: Set<AttachmentData>;
     private _options: BatchOptions;
-    // TBD: attachments private readonly HashSet<Stream> _attachmentStreams;
 
     public constructor(conventions: DocumentConventions, commands: ICommandData[]);
     public constructor(conventions: DocumentConventions, commands: ICommandData[], options: BatchOptions);
@@ -34,24 +37,21 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
             throwError("InvalidArgumentException", "commands cannot be null");
         }
 
-        /* TBD: attachments
-            for (var i = 0; i < commands.Count; i++)
-            {
-                var command = commands[i];
-                _commands[i] = context.ReadObject(command.ToJson(conventions, context), "command");
+        for (const command of this._commands) {
+            if (command instanceof PutAttachmentCommandData) {
+                const putAttachmentCommandData = command as PutAttachmentCommandData;
+                if (!this._attachmentStreams) {
+                    this._attachmentStreams = new Set();
+                }
 
-                if (command is PutAttachmentCommandData putAttachmentCommandData)
-                {
-                    if (_attachmentStreams == null)
-                        _attachmentStreams = new HashSet<Stream>();
-
-                    var stream = putAttachmentCommandData.Stream;
-                    PutAttachmentCommandHelper.ValidateStream(stream);
-                    if (_attachmentStreams.Add(stream) == false)
-                        PutAttachmentCommandHelper.ThrowStreamAlready();
+                const { attStream } = putAttachmentCommandData;
+                if (this._attachmentStreams.has(attStream)) {
+                    PutAttachmentCommandHelper.throwStreamAlready();
+                } else {
+                    this._attachmentStreams.add(attStream);
                 }
             }
-            */
+        }
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
@@ -68,12 +68,27 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
         const request: HttpRequestParameters = { 
             method: "POST", 
             uri: uri + queryString,
-            headers,
-            body
         };
 
-        return request;
+        if (this._attachmentStreams && this._attachmentStreams.size > 0) {
+            // TODO verify
+            const attachments = [...this._attachmentStreams]
+                .map(attStream => {
+                    return { 
+                        body: attStream,
+                        headers: {
+                            "Command-Type": "AttachmentStream"
+                        }
+                    };
+                });
+            request.headers = Object.assign(request.headers || {},  { "Content-Type": "multipart/mixed" });
+            request.multipart = [ { headers, body }, ...attachments ];
+        } else {
+            request.body = body;
+            request.headers = headers;
+        }
 
+        return request;
         /* TBD: attachments
 
         if (_attachmentStreams != null && _attachmentStreams.Count > 0)
@@ -102,8 +117,8 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
             .collectBody()
             .parseJsonSync()
             .streamKeyCaseTransform({
-                targetKeyCaseConvention: "camel",
-                ignoreKeys: [ /^@/ ]
+                defaultTransform: "camel",
+                ignoreKeys: [ /^@/ ],
             })
             .process(bodyStream)
             .then(results => {
