@@ -228,7 +228,7 @@ export class BulkInsertOperation {
             await this._requestExecutor.execute(new KillOperationCommand(this._operationId));
         } catch (err) {
             throwError("BulkInsertAbortedException",
-                "Unable to kill ths bulk insert operation, because it was not found on the server.");
+                "Unable to kill ths bulk insert operation, because it was not found on the server.", err);
         }
     }
 
