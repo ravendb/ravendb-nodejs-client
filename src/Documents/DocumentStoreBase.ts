@@ -21,6 +21,7 @@ import { IndexCreation } from "../Documents/Indexes/IndexCreation";
 import { PutIndexesOperation } from "./Operations/Indexes/PutIndexesOperation";
 import { IDisposable } from "../Types/Contracts";
 import {BulkInsertOperation} from "./BulkInsertOperation";
+import {IDatabaseChanges} from "./Changes/IDatabaseChanges";
 
 export abstract class DocumentStoreBase 
     extends EventEmitter 
@@ -44,7 +45,8 @@ export abstract class DocumentStoreBase
 
     // TBD: public abstract IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
 
-    // TBD: public abstract IDatabaseChanges Changes(string database = null);
+    public abstract changes(): IDatabaseChanges;
+    public abstract changes(database: string): IDatabaseChanges;
 
     // TBD: public abstract IDisposable DisableAggressiveCaching(string database = null);
 

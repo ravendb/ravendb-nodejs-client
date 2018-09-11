@@ -14,6 +14,8 @@ import {HiloMultiDatabaseIdGenerator} from "./Identity/HiloMultiDatabaseIdGenera
 import { IDisposable } from "../Types/Contracts";
 import { IAuthOptions } from "../Auth/AuthOptions";
 import {BulkInsertOperation} from "./BulkInsertOperation";
+import {IDatabaseChanges} from "./Changes/IDatabaseChanges";
+import {DatabaseChanges} from "./Changes/DatabaseChanges";
 
 // import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";
 // import { DocumentSession } from "./Session/DocumentSession";
@@ -24,9 +26,8 @@ export class DocumentStore extends DocumentStoreBase {
     private _log = 
         getLogger({ module: "DocumentStore-" + Math.floor(Math.random() * 1000) });
 
-    // TBD:private readonly AtomicDictionary<IDatabaseChanges> _databaseChanges = 
-    // new AtomicDictionary<IDatabaseChanges>(StringComparer.OrdinalIgnoreCase);
-    // TBD: private ConcurrentDictionary<string, Lazy<EvictItemsFromCacheBasedOnChanges>> _aggressiveCacheChanges = 
+    private readonly _databaseChanges: Map<string, IDatabaseChanges> = new Map();
+    // TBD: private ConcurrentDictionary<string, Lazy<EvictItemsFromCacheBasedOnChanges>> _aggressiveCacheChanges =
     // new ConcurrentDictionary<string, Lazy<EvictItemsFromCacheBasedOnChanges>>();
     // TBD: private readonly ConcurrentDictionary<string, EvictItemsFromCacheBasedOnChanges> 
     // _observeChangesAndEvictItemsFromCacheForDatabases = 
@@ -93,15 +94,10 @@ export class DocumentStore extends DocumentStoreBase {
                     continue;
 
                 value.Value.Dispose();
-            }
+            }*/
+        this._databaseChanges.forEach(change => change.dispose());
 
-            var tasks = new List<Task>();
-            foreach (var changes in _databaseChanges)
-            {
-                using (changes.Value)
-                { }
-            }
-
+        /* TODO
             // try to wait until all the async disposables are completed
             Task.WaitAll(tasks.ToArray(), TimeSpan.FromSeconds(3));
             // if this is still going, we continue with disposal, it is for graceful shutdown only, anyway
@@ -310,6 +306,37 @@ export class DocumentStore extends DocumentStoreBase {
         const dispose = () => re.agressiveCaching = old;
 
         return { dispose };
+    }
+
+    public changes(): IDatabaseChanges;
+    public changes(database: string): IDatabaseChanges;
+    public changes(database?: string): IDatabaseChanges {
+        this._assertInitialized();
+
+        const targetDatabase = (database || this.database).toLocaleLowerCase();
+        if (this._databaseChanges.has(targetDatabase)) {
+            return this._databaseChanges.get(targetDatabase);
+        }
+
+        const newChanges = this._createDatabaseChanges(targetDatabase);
+        this._databaseChanges.set(targetDatabase, newChanges);
+        return newChanges;
+    }
+
+    protected _createDatabaseChanges(database: string) {
+        return new DatabaseChanges(this.getRequestExecutor(database), database,
+            () => this._databaseChanges.delete(database));
+    }
+
+    public getLastDatabaseChangesStateException(): Error;
+    public getLastDatabaseChangesStateException(database: string): Error;
+    public getLastDatabaseChangesStateException(database?: string): Error {
+        const databaseChanges = this._databaseChanges.get(database || this.database) as DatabaseChanges;
+        if (databaseChanges) {
+            return databaseChanges.lastConnectionStateException;
+        }
+
+        return null;
     }
 
     // TBD public override IDatabaseChanges Changes(string database = null)

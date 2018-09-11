@@ -191,6 +191,15 @@ export * from "./Documents/Queries/Facets/FacetBuilder";
 export * from "./Documents/Attachments";
 export * from "./Documents/Operations/Attachments/GetAttachmentOperation";
 
+
+// CHANGES
+export * from "./Documents/Changes/IndexChange";
+export * from "./Documents/Changes/DocumentChange";
+export * from "./Documents/Changes/DatabaseChange";
+export * from "./Documents/Changes/OperationStatusChange";
+export * from "./Documents/Changes/IDatabaseChanges";
+export * from "./Documents/Changes/IConnectableChanges";
+
 // HiLo
 export * from "./Documents/Identity/HiloIdGenerator";
 export * from "./Documents/Identity/HiloMultiDatabaseIdGenerator";

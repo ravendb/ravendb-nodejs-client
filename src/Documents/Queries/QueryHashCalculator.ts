@@ -11,6 +11,7 @@ export class QueryHashCalculator {
 
     public write(o: any) {
         if (TypeUtil.isNullOrUndefined(o)) {
+            this._buffers.push(Buffer.from("null"));
             return;
         }
 

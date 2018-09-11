@@ -36,7 +36,7 @@ export class PatchByQueryOperation implements IOperation<OperationIdResult> {
 
     public getCommand(
         store: IDocumentStore, conventions: DocumentConventions, cache: HttpCache): RavenCommand<OperationIdResult> {
-        return new PatchByIndexCommand(conventions, this._queryToUpdate, this._options);
+        return new PatchByQueryCommand(conventions, this._queryToUpdate, this._options);
     }
 
     public get resultType(): OperationResultType {
@@ -45,7 +45,7 @@ export class PatchByQueryOperation implements IOperation<OperationIdResult> {
 
 }
 
-export class PatchByIndexCommand extends RavenCommand<OperationIdResult> {
+export class PatchByQueryCommand extends RavenCommand<OperationIdResult> {
     private _conventions: DocumentConventions;
     private _queryToUpdate: IndexQuery;
     private _options: QueryOperationOptions;

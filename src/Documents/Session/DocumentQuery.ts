@@ -249,8 +249,10 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    public whereLucene(fieldName: string, whereClause: string): IDocumentQuery<T> {
-        this._whereLucene(fieldName, whereClause);
+    public whereLucene(fieldName: string, whereClause: string): IDocumentQuery<T>
+    public whereLucene(fieldName: string, whereClause: string, exact: boolean): IDocumentQuery<T>
+    public whereLucene(fieldName: string, whereClause: string, exact?: boolean): IDocumentQuery<T> {
+        this._whereLucene(fieldName, whereClause, exact);
         return this;
     }
 

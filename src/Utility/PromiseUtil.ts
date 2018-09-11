@@ -1,6 +1,12 @@
 import * as BluebirdPromise from "bluebird";
 import { AbstractCallback } from "./../Types/Callbacks";
 
+export interface IDefer<TResult> {
+    resolve: (value: TResult) => void;
+    reject: (error: any) => void;
+    promise: BluebirdPromise<TResult>;
+}
+
 export function raceToResolution<TResult>(
     promises: Array<BluebirdPromise<TResult>>,
     onErrorCallback?: (err) => void): BluebirdPromise<TResult> {
@@ -28,6 +34,20 @@ export function passResultToCallback<T>(p: Promise<T>, callback: AbstractCallbac
     if (!callback) {
         return;
     }
-    
+
     p.then(result => callback(null, result), err => callback(err));
+}
+
+export function defer<T>(): IDefer<T> {
+    let resolve: (value: T) => void;
+    let reject: (error: any) => void;
+    const promise = new BluebirdPromise<T>(function() {
+        resolve = arguments[0];
+        reject = arguments[1];
+    });
+    return {
+        resolve,
+        reject,
+        promise
+    };
 }

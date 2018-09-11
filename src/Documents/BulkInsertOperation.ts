@@ -7,7 +7,6 @@ import {IMetadataDictionary} from "./Session/IMetadataDictionary";
 import { createMetadataDictionary } from "../Mapping/MetadataAsDictionary";
 import {CONSTANTS} from "../Constants";
 import {getError, throwError} from "../Exceptions";
-import through2 = require("through2");
 import {GetOperationStateCommand} from "./Operations/GetOperationStateOperation";
 import {StringUtil} from "../Utility/StringUtil";
 import * as StreamUtil from "../Utility/StreamUtil";
@@ -22,6 +21,7 @@ import { DocumentConventions } from "./Conventions/DocumentConventions";
 import { ServerNode } from "../Http/ServerNode";
 import { AbstractCallback } from "../Types/Callbacks";
 import { passResultToCallback } from "../Utility/PromiseUtil";
+import * as through2 from "through2";
 
 export class BulkInsertOperation {
     private readonly _generateEntityIdOnTheClient: GenerateEntityIdOnTheClient;
