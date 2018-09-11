@@ -17,7 +17,7 @@ export class QueryResult extends GenericQueryResult<object[], object> {
         queryResult.skippedResults = this.skippedResults;
         queryResult.totalResults = this.totalResults;
 
-        /* TBD
+        /* TBD 4.1
         Map<String, Map<String, List<String>>> highlightings = getHighlightings();
 
         if (highlightings != null) {

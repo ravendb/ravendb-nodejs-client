@@ -67,8 +67,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     protected _defaultOperator: QueryOperator = "AND";
 
-    // TBD: private readonly LinqPathProvider _linqPathProvider;
-
     protected _rootTypes: Set<DocumentType> = new Set<DocumentType>();
 
     /**
@@ -158,8 +156,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     public get session() {
         return this._theSession as any as IDocumentSession;
     }
-
-    // TBD public IAsyncDocumentSession AsyncSession => (IAsyncDocumentSession)TheSession;
 
     public isDynamicMapReduce(): boolean {
         return this._groupByTokens && !!this._groupByTokens.length;
@@ -1324,7 +1320,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     private _updateStatsAndHighlightings(queryResult: QueryResult): void {
         this._queryStats.updateQueryStats(queryResult);
-        // TBD: Highlightings.Update(queryResult);
+        // TBD 4.1 Highlightings.Update(queryResult);
     }
 
     private _buildSelect(writer: StringBuilder): void {
@@ -1478,25 +1474,25 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     // TBD public void _showTimings()
-    // TBD protected List<HighlightedField> HighlightedFields = new List<HighlightedField>();
-    // TBD protected string[] HighlighterPreTags = new string[0];
-    // TBD protected string[] HighlighterPostTags = new string[0];
-    // TBD protected string HighlighterKeyName;
-    // TBD protected QueryHighlightings Highlightings = new QueryHighlightings();
-    // TBD public void SetHighlighterTags(string preTag, string postTag)
-    // TBD public void Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField)
-    // TBD public void Highlight(
+    // TBD 4.1 protected List<HighlightedField> HighlightedFields = new List<HighlightedField>();
+    // TBD 4.1 protected string[] HighlighterPreTags = new string[0];
+    // TBD 4.1 protected string[] HighlighterPostTags = new string[0];
+    // TBD 4.1 protected string HighlighterKeyName;
+    // TBD 4.1 protected QueryHighlightings Highlightings = new QueryHighlightings();
+    // TBD 4.1 public void SetHighlighterTags(string preTag, string postTag)
+    // TBD 4.1 public void Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField)
+    // TBD 4.1 public void Highlight(
     //    string fieldName, 
     //    int fragmentLength, 
     //    int fragmentCount, 
     //    out FieldHighlightings fieldHighlightings)
-    // TBD public void Highlight(
+    // TBD 4.1 public void Highlight(
     //    string fieldName, 
     //    string fieldKeyName, 
     //    int fragmentLength, 
     //    int fragmentCount, 
     //    out FieldHighlightings fieldHighlightings)
-    // TBD public void SetHighlighterTags(string[] preTags, string[] postTags)
+    // TBD 4.1 public void SetHighlighterTags(string[] preTags, string[] postTags)
 
     protected _withinRadiusOf(
         fieldName: string,

@@ -4,7 +4,7 @@ export class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TRes
 
     public totalResults: number;
     public skippedResults: number;
-    // TBD private Map<String, Map<String, List<String>>> highlightings;
+    // TBD 4.1 private Map<String, Map<String, List<String>>> highlightings;
     public durationInMs: number;
     public scoreExplanations: { [key: string]: string };
     public timingsInMs: { [key: string]: number };
