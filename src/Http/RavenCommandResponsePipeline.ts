@@ -123,7 +123,18 @@ export class RavenCommandResponsePipeline<TResult> {
             let json = "";
             streams.push(through2.obj(
                 function (chunk, enc, callback) { json += chunk.toString("utf8"); callback(); }, 
-                function (callback) { this.push(JSON.parse(json)); callback(); }));
+                function (callback) { 
+                    let result;
+
+                    try {
+                        result = JSON.parse(json);
+                    } catch (err) {
+                        throwError("InvalidOperationException", `Error parsing response: '${json}'.`, err);
+                    }
+
+                    this.push(result); 
+                    callback(); 
+                }));
         }
 
         if (opts.streamKeyCaseTransform) {

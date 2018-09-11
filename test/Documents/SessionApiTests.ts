@@ -298,4 +298,13 @@ describe("Session API dev experience tests", function () {
 
     });
 
+    // tslint:disable-next-line:max-line-length
+    it("saveChanges() (instead of store()) sets id on entity for object literals with default collection name conventions", async () => {
+        const session = store.openSession();
+        const entity = { name: "test" };
+        await session.store(entity);
+        await session.saveChanges();
+        assert.ok(entity["id"]);
+    });
+
 });

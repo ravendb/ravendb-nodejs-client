@@ -1,12 +1,6 @@
 import {GenerateEntityIdOnTheClient} from "./Identity/GenerateEntityIdOnTheClient";
-import {
-    DocumentConventions, DocumentInfo, EntityToJson,
-    GetNextOperationIdCommand,
-    IDocumentStore, KillOperationCommand,
-    RequestExecutor,
-    ServerNode
-} from "..";
 import * as stream from "readable-stream";
+import * as BluebirdPromise from "bluebird";
 import { RavenCommand } from "../Http/RavenCommand";
 import {HttpRequestParameters} from "../Primitives/Http";
 import {IMetadataDictionary} from "./Session/IMetadataDictionary";
@@ -16,13 +10,27 @@ import {getError, throwError} from "../Exceptions";
 import through2 = require("through2");
 import {GetOperationStateCommand} from "./Operations/GetOperationStateOperation";
 import {StringUtil} from "../Utility/StringUtil";
+import * as StreamUtil from "../Utility/StreamUtil";
+import { JsonSerializer } from "../Mapping/Json/Serializer";
+import { RequestExecutor } from "../Http/RequestExecutor";
+import { IDocumentStore } from "./IDocumentStore";
+import { GetNextOperationIdCommand } from "./Commands/GetNextOperationIdCommand";
+import { DocumentInfo } from "./Session/DocumentInfo";
+import { EntityToJson } from "./Session/EntityToJson";
+import { KillOperationCommand } from "./Commands/KillOperationCommand";
+import { DocumentConventions } from "./Conventions/DocumentConventions";
+import { ServerNode } from "../Http/ServerNode";
+import { AbstractCallback } from "../Types/Callbacks";
+import { passResultToCallback } from "../Utility/PromiseUtil";
 
 export class BulkInsertOperation {
     private readonly _generateEntityIdOnTheClient: GenerateEntityIdOnTheClient;
 
     private readonly _requestExecutor: RequestExecutor;
     private _bulkInsertExecuteTask: Promise<void>;
+    private _pipelinePromise: Promise<void>;
     private _completedWithError = false;
+    private _completedWithPipelineError = false;
 
     private _first: boolean = true;
     private _operationId = -1;
@@ -60,30 +68,73 @@ export class BulkInsertOperation {
         this._operationId = bulkInsertGetIdRequest.result;
     }
 
-    //TODO: introduce override with callbacks
-    public async store(entity: object);
-    public async store(entity: object, id: string);
-    public async store(entity: object, id: string, metadata: IMetadataDictionary);
-    public async store(entity: object, metadata: IMetadataDictionary);
-    public async store(entity: object, idOrMetadata?: string | IMetadataDictionary, metadata?: IMetadataDictionary) {
-        let docId: string;
+    private static _typeCheckStoreArgs(
+        idOrMetadataOrCallback?: string | IMetadataDictionary | AbstractCallback<void>, 
+        metadataOrCallback?: IMetadataDictionary | AbstractCallback<void>,
+        callback?: AbstractCallback<void>): 
+            { id: string, getId: boolean, metadata: IMetadataDictionary, cb: () => void } {
 
-        if (idOrMetadata) {
-            if (typeof idOrMetadata === "string") {
-                docId = idOrMetadata;
+        let id: string;
+        let metadata;
+        let getId = false;
+
+        if (typeof idOrMetadataOrCallback === "function") {
+            callback = idOrMetadataOrCallback;
+        } else if (typeof idOrMetadataOrCallback === "string" || callback) {
+            id = idOrMetadataOrCallback as string;
+            if (typeof metadataOrCallback === "function") {
+                callback = metadataOrCallback;
             } else {
-                metadata = idOrMetadata;
-                if (CONSTANTS.Documents.Metadata.ID in metadata) {
-                    docId = metadata[CONSTANTS.Documents.Metadata.ID];
-                } else {
-                    docId = await this._getId(entity);
-                }
+                metadata = metadataOrCallback;
             }
         } else {
-            docId = await this._getId(entity);
+            metadata = idOrMetadataOrCallback;
+            callback = metadataOrCallback as AbstractCallback<void>;
+            if (metadata && (CONSTANTS.Documents.Metadata.ID in metadata)) {
+                id = metadata[CONSTANTS.Documents.Metadata.ID];
+            }
+        }
+        
+        if (!id) {
+            getId = true;
         }
 
-        BulkInsertOperation._verifyValidId(docId);
+        return { id, metadata, getId, cb: callback };
+    }
+
+    public async store(entity: object);
+    public async store(entity: object, callback: AbstractCallback<void>);
+    public async store(entity: object, id: string);
+    public async store(entity: object, metadata: IMetadataDictionary);
+    public async store(entity: object, id: string, metadata: IMetadataDictionary);
+    public async store(entity: object, id: string, callback: AbstractCallback<void>);
+    public async store(entity: object, metadata: IMetadataDictionary, callback: AbstractCallback<void>);
+    public async store(entity: object, id: string, metadata: IMetadataDictionary, callback: AbstractCallback<void>);
+    public async store(
+        entity: object,
+        idOrMetadataOrCallback?: string | IMetadataDictionary | AbstractCallback<void>, 
+        metadataOrCallback?: IMetadataDictionary | AbstractCallback<void>,
+        callback?: AbstractCallback<void>) {
+        let opts: { id: string, getId: boolean, metadata: IMetadataDictionary, cb: () => void };
+        try {
+            // tslint:disable-next-line:prefer-const
+            opts = BulkInsertOperation._typeCheckStoreArgs(
+                idOrMetadataOrCallback, metadataOrCallback, callback);
+        } catch (err) {
+            callback(err);
+        }
+
+        const result = this._store(entity, opts);
+        passResultToCallback(result, opts.cb);
+        return result;
+    }
+
+    private async _store(
+        entity: object,
+        { id, getId, metadata }: { id: string, getId: boolean, metadata: IMetadataDictionary }) {
+
+        id = getId ? await this._getId(entity) : id;
+        BulkInsertOperation._verifyValidId(id);
 
         if (!this._currentWriter) {
             await this._waitForId();
@@ -92,6 +143,14 @@ export class BulkInsertOperation {
 
         if (this._completedWithError) {
            await this._checkIfBulkInsertWasAborted();
+        }
+
+        if (this._completedWithPipelineError) {
+            try {
+                await this._pipelinePromise;
+            } catch (error) {
+                throwError("BulkInsertStreamError", "Failed to execute bulk insert", error);
+            }
         }
 
         if (!metadata) {
@@ -122,15 +181,21 @@ export class BulkInsertOperation {
         this._first = false;
 
         this._currentWriter.push("{'Id':'");
-        this._currentWriter.push(docId);
+        this._currentWriter.push(id);
         this._currentWriter.push("','Type':'PUT','Document':");
 
         const documentInfo = new DocumentInfo();
         documentInfo.metadataInstance = metadata;
-        const json = EntityToJson.convertEntityToJson(entity, this._conventions, documentInfo);
+        let json = EntityToJson.convertEntityToJson(entity, this._conventions, documentInfo);
+        
+        if (this._conventions.remoteEntityFieldNameConvention) {
+            json = this._conventions.transformObjectKeysToRemoteFieldNameConvention(json);
+        }
 
-        this._currentWriter.push(JSON.stringify(json));
+        const jsonString = JsonSerializer.getDefault().serialize(json);
+        this._currentWriter.push(jsonString);
         this._currentWriter.push("}");
+
     }
 
     private async _checkIfBulkInsertWasAborted() {
@@ -139,6 +204,14 @@ export class BulkInsertOperation {
                 await this._bulkInsertExecuteTask;
             } catch (error) {
                 await this._throwBulkInsertAborted(error);
+            }
+        }
+
+        if (this._completedWithPipelineError) {
+            try {
+                await this._pipelinePromise;
+            } catch (error) {
+                throwError("BulkInsertStreamError", "Failed to execute bulk insert.", error);
             }
         }
     }
@@ -173,34 +246,12 @@ export class BulkInsertOperation {
     private async _ensureStream() {
         try {
 
-            this._currentWriter = new stream.Readable({
-                read: () => {
-                    // empty
-                }
-            });
+            this._currentWriter = new stream.PassThrough(); 
 
-            let buffer = Buffer.from([]);
+            const streams = [ this._currentWriter ];
 
-            this._requestBodyStream = through2(function (chunk, enc, callback) {
-                buffer = Buffer.concat([buffer, chunk]);
-
-                if (buffer.length > BulkInsertOperation._maxSizeInBuffer) {
-                    this.push(buffer, enc);
-                    buffer = Buffer.from([]);
-                }
-
-                callback();
-            }, function(callback) {
-                if (buffer.length) {
-                    // push remaining part
-                    this.push(buffer);
-                }
-                this.push(null);
-
-                callback();
-            });
-
-            this._currentWriter.pipe(this._requestBodyStream);
+            this._requestBodyStream = this._getBufferingWriteable(); 
+            streams.push(this._requestBodyStream);
 
             const bulkCommand =
                 new BulkInsertCommand(this._operationId, this._requestBodyStream, this._useCompression);
@@ -212,12 +263,48 @@ export class BulkInsertOperation {
             });
 
             this._currentWriter.push("[");
+            
+            this._pipelinePromise = StreamUtil.pipelineAsync(...streams);
+
+            this._pipelinePromise.catch(err => {
+                this._completedWithPipelineError = true;
+            });
         } catch (e) {
-            throwError("RavenException", "Unable to open bulk insert stream", e);
+            throwError("RavenException", "Unable to open bulk insert stream.", e);
         }
     }
 
-    public async abort(): Promise<void> {
+    private _getBufferingWriteable(): stream.Writable {
+        let buffer = Buffer.from([]);
+        return through2(function (chunk, enc, callback) {
+            buffer = Buffer.concat([buffer, chunk]);
+
+            if (buffer.length > BulkInsertOperation._maxSizeInBuffer) {
+                this.push(buffer, enc);
+                buffer = Buffer.from([]);
+            }
+
+            callback();
+        }, function (callback) {
+            if (buffer.length) {
+                // push remaining part
+                this.push(buffer);
+            }
+            this.push(null);
+
+            callback();
+        });
+    }
+
+    public async abort(): Promise<void>; 
+    public async abort(callback: AbstractCallback<void>): Promise<void>;
+    public async abort(callback?: AbstractCallback<void>): Promise<void> {
+        const abortPromise = this._abortAsync();
+        passResultToCallback(abortPromise, callback);
+        return abortPromise;
+    }
+
+    private async _abortAsync(): Promise<void> { 
         if (this._operationId === -1) {
             return; // nothing was done, nothing to kill
         }
@@ -232,7 +319,15 @@ export class BulkInsertOperation {
         }
     }
 
-    public async finish() {
+    public async finish(): Promise<void>;
+    public async finish(callback: AbstractCallback<void>): Promise<void>;
+    public async finish(callback?: AbstractCallback<void>): Promise<void> {
+        const finishPromise = this._finishAsync();
+        passResultToCallback(finishPromise, callback);
+        return finishPromise;
+    }
+
+    private async _finishAsync() {
         if (this._currentWriter) {
             this._currentWriter.push("]");
             this._currentWriter.push(null);
@@ -247,7 +342,9 @@ export class BulkInsertOperation {
             await this._checkIfBulkInsertWasAborted();
         }
 
-        return this._bulkInsertExecuteTask;
+        return Promise.all([ this._bulkInsertExecuteTask, this._pipelinePromise ])
+            // tslint:disable-next-line:no-empty
+            .then(() => {});
     }
 
     private readonly _conventions: DocumentConventions;
@@ -296,8 +393,7 @@ export class BulkInsertCommand extends RavenCommand<void> {
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
-        throwError("NotImplementedException", "Not implemented");
-        return null;
+        return throwError("NotImplementedException", "Not implemented");
     }
 
 }

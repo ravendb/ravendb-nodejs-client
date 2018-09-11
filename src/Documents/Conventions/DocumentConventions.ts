@@ -519,7 +519,8 @@ export class DocumentConventions {
 
     public static defaultTransformCollectionNameToDocumentIdPrefix(collectionName: string): string {
         const upperCaseRegex = /[A-Z]/g;
-        const upperCount = collectionName.match(upperCaseRegex).length;
+        const m = collectionName.match(upperCaseRegex);
+        const upperCount = m ? m.length : 0;
 
         if (upperCount <= 1) {
             return collectionName.toLowerCase();
@@ -601,7 +602,10 @@ export class DocumentConventions {
         const options: any = opts || {
             recursive: true,
             arrayRecursive: true,
-            ignorePaths: [/@metadata\./]
+
+            ignorePaths: [
+                CONSTANTS.Documents.Metadata.IGNORE_CASE_TRANSFORM_REGEX,
+            ]
         };
         options.defaultTransform = this._remoteEntityFieldNameConvention;
 
@@ -617,7 +621,10 @@ export class DocumentConventions {
         const options = opts || {
             recursive: true,
             arrayRecursive: true,
-            ignorePaths: [/@metadata\./, /@projection/]
+            ignorePaths: [
+                CONSTANTS.Documents.Metadata.IGNORE_CASE_TRANSFORM_REGEX,
+                /@projection/
+            ]
         } as any;
 
         options.defaultTransform = this._localEntityFieldNameConvention;
