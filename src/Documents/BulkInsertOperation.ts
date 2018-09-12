@@ -240,7 +240,7 @@ export class BulkInsertOperation {
     }
 
     private _currentWriter: stream.Readable;
-    private _requestBodyStream: stream.Transform;
+    private _requestBodyStream: stream.Readable;
     private static readonly _maxSizeInBuffer = 1024 * 1024;
 
     private async _ensureStream() {
@@ -248,7 +248,7 @@ export class BulkInsertOperation {
 
             this._currentWriter = new stream.PassThrough(); 
 
-            const streams = [ this._currentWriter ];
+            const streams: stream.Stream[] = [ this._currentWriter ];
 
             this._requestBodyStream = this._getBufferingWriteable(); 
             streams.push(this._requestBodyStream);
@@ -274,7 +274,7 @@ export class BulkInsertOperation {
         }
     }
 
-    private _getBufferingWriteable(): stream.Writable {
+    private _getBufferingWriteable(): stream.Transform {
         let buffer = Buffer.from([]);
         return through2(function (chunk, enc, callback) {
             buffer = Buffer.concat([buffer, chunk]);
