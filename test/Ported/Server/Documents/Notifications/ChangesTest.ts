@@ -4,7 +4,7 @@ import { testContext, disposeTestDocumentStore } from "../../../../Utils/TestUti
 import {
     IDocumentStore,
     GroupBy, AbstractIndexCreationTask, SetIndexesPriorityOperation, GetStatisticsOperation,
-    DocumentChange, IndexChange
+    DocumentChange, IndexChange, DocumentStore
 } from "../../../../../src";
 import {Order, User} from "../../../../Assets/Entities";
 import {AsyncQueue} from "../../../../Utils/AsyncQueue";
@@ -294,14 +294,19 @@ describe("ChangesTest", function () {
         }
     });
 
-    it.skip("doesn't crush the server if listening on non existing database", async () => {
+    it("doesn't crush the server if listening on non existing database", async () => {
         const changesList = new AsyncQueue<DocumentChange>();
 
         const changes = store.changes("no_such_db");
-
-        await new Promise(resolve => {
-            changes.on("error", () => resolve());
+        changes.on("error", () => {
+            // we ignore that since it will throw 2 lines below
         });
+        try {
+            await changes.ensureConnectedNow();
+            assert.fail("Should have thrown.");
+        } catch (err) {
+            assert.equal(err.name, "DatabaseDoesNotExistException");
+        }
 
         await store.maintenance.send(new GetStatisticsOperation());
     });

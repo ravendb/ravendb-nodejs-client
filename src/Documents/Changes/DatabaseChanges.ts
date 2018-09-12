@@ -20,8 +20,6 @@ import {ObjectUtil} from "../../Utility/ObjectUtil";
 
 export class DatabaseChanges implements IDatabaseChanges {
 
-    private static readonly ON_CONNECTION_STATUS_CHANGED = "connectionStatus";
-
     private _emitter = new EventEmitter();
     private _commandId: number = 0;
     private _onConnectionStatusChangedWrapped: () => void;
@@ -51,7 +49,7 @@ export class DatabaseChanges implements IDatabaseChanges {
         this._tcs = PromiseUtil.defer<IDatabaseChanges>();
         this._onDispose = onDispose;
         this._onConnectionStatusChangedWrapped = () => this._onConnectionStatusChanged();
-        this._emitter.on(DatabaseChanges.ON_CONNECTION_STATUS_CHANGED, this._onConnectionStatusChangedWrapped);
+        this._emitter.on("connectionStatus", this._onConnectionStatusChangedWrapped);
         this._task = this._doWork();
     }
 
@@ -102,8 +100,8 @@ export class DatabaseChanges implements IDatabaseChanges {
         this._emitter.removeListener(eventName, handler);
     }
 
-    public async ensureConnectedNow(): Promise<void> {
-        await this._tcs;
+    public ensureConnectedNow(): Promise<IDatabaseChanges> {
+        return Promise.resolve(this._tcs.promise);
     }
 
     public forIndex(indexName: string): IChangesObservable<IndexChange> {
@@ -111,8 +109,8 @@ export class DatabaseChanges implements IDatabaseChanges {
             "watch-index", "unwatch-index", indexName);
 
         return new ChangesObservable<IndexChange, DatabaseConnectionState>("Index", counter,
-            notification => notification.name && notification.name.toLocaleLowerCase()
-                === indexName.toLocaleLowerCase());
+            notification => notification.name
+                && notification.name.toLocaleLowerCase() === indexName.toLocaleLowerCase());
     }
 
     public get lastConnectionStateException(): Error {
@@ -169,8 +167,8 @@ export class DatabaseChanges implements IDatabaseChanges {
                 && notification.id.toLocaleLowerCase().startsWith(docIdPrefix.toLocaleLowerCase()));
     }
 
-    public forDocumentsInCollection<T extends object>(type: ObjectTypeDescriptor<T>);
     public forDocumentsInCollection(collectionName: string): IChangesObservable<DocumentChange>;
+    public forDocumentsInCollection<T extends object>(type: ObjectTypeDescriptor<T>);
     public forDocumentsInCollection<T extends object = object>(
         collectionNameOrDescriptor: string | ObjectTypeDescriptor<T>): IChangesObservable<DocumentChange> {
         const collectionName: string = typeof collectionNameOrDescriptor !== "string"
@@ -185,21 +183,22 @@ export class DatabaseChanges implements IDatabaseChanges {
             "watch-collection", "unwatch-collection", collectionName);
 
         return new ChangesObservable<DocumentChange, DatabaseConnectionState>("Document", counter,
-            notification => notification.collectionName && collectionName.toLocaleLowerCase()
-                    === notification.collectionName.toLocaleLowerCase());
+            notification => notification.collectionName
+                && collectionName.toLocaleLowerCase() === notification.collectionName.toLocaleLowerCase());
     }
 
     public dispose(): void {
         Array.from(this._confirmations.values()).forEach(confirmation => confirmation.reject());
 
         this._isCancelled = true;
-        this._client.close();
+        if (this._client) {
+            this._client.close();
+        }
 
         this._counters.clear();
 
-        this._emitter.emit(DatabaseChanges.ON_CONNECTION_STATUS_CHANGED);
-        this._emitter.removeListener(DatabaseChanges.ON_CONNECTION_STATUS_CHANGED,
-            this._onConnectionStatusChangedWrapped);
+        this._emitter.emit("connectionStatus");
+        this._emitter.removeListener("connectionStatus", this._onConnectionStatusChangedWrapped);
 
         if (this._onDispose) {
            this._onDispose();
@@ -278,7 +277,8 @@ export class DatabaseChanges implements IDatabaseChanges {
         try {
             await this._requestExecuter.getPreferredNode();
         } catch (e) {
-            this._emitter.emit(DatabaseChanges.ON_CONNECTION_STATUS_CHANGED);
+
+            this._emitter.emit("connectionStatus");
             this._notifyAboutError(e);
             this._tcs.reject(e);
             return;
@@ -301,11 +301,15 @@ export class DatabaseChanges implements IDatabaseChanges {
             this._client.on("open", async () => {
                 this._immediateConnection = 1;
 
-                for (const counter of Array.from(this._counters.values())) {
+                for (const counter of this._counters.values()) {
                     counter.set(counter.onConnect());
                 }
 
                 this._emitter.emit("connectionStatus");
+            });
+
+            this._client.on("error", e =>  {
+                this._notifyAboutError(e);
             });
 
             this._client.on("close", () => {
@@ -366,7 +370,7 @@ export class DatabaseChanges implements IDatabaseChanges {
             }
         } catch (err) {
             this._notifyAboutError(err);
-            throwError("ChangeProcessingException", err);
+            throwError("ChangeProcessingException", "There was an error during notification processing.",  err);
         }
     }
 

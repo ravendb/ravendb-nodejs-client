@@ -5,7 +5,7 @@ export interface IConnectableChanges<T extends IDatabaseChanges> extends IDispos
 
     connected: boolean;
 
-    ensureConnectedNow(): Promise<void>;
+    ensureConnectedNow(): Promise<IDatabaseChanges>;
 
     on(type: "connectionStatus", handler: () => void);
     off(type: "connectionStatus", handler: () => void);
