@@ -22,7 +22,8 @@
     ]
   },
   "include": [
-    "test"
+    "test",
+    "./src/Types/global.d.ts"
   ],
   "exclude": [
     "node_modules",

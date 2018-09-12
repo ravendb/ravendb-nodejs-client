@@ -7,7 +7,7 @@ export const pipelineAsync: (...src: stream.Stream[]) => Promise<any> =
     promisify(stream.pipeline);
 
 export function reduceStreamToPromise<T>(
-    readable: stream.Stream,
+    readable: stream.Readable,
     dataCallback?: (result: T, chunk: any) => T,
     seed?: T): Promise<T> {
         if (dataCallback) {
