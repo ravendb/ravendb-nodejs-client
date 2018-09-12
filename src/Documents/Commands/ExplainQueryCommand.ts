@@ -66,10 +66,10 @@ export class ExplainQueryCommand extends RavenCommand<ExplainQueryResult[]> {
             return;
         }
 
-        return this._getDefaultResponsePipeline()
+        let body;
+        await this._defaultPipeline(_ => body = _)
             .process(bodyStream)
-            .then(results => {
-                const data = results.result;
+            .then(data => {
                 const explainResults = data["results"] as ExplainQueryResult[];
                 if (!explainResults) {
                     this._throwInvalidResponse();
@@ -77,9 +77,9 @@ export class ExplainQueryCommand extends RavenCommand<ExplainQueryResult[]> {
                 }
 
                 this.result = explainResults;
-
-                return results.body;
             });
+            
+        return body;
     }
 
     public get isReadRequest(): boolean {

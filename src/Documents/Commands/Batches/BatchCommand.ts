@@ -61,7 +61,6 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
         const commandsArray = this._commands.reduce(
             (result, command) => [ ...result, command.serialize() ], []);
 
-        // TODO conventions-based entity casing customizations
         const body = JsonSerializer.getDefault().serialize({ Commands: commandsArray });
 
         const queryString = this._appendOptions();
@@ -71,7 +70,6 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
         };
 
         if (this._attachmentStreams && this._attachmentStreams.size > 0) {
-            // TODO verify
             const attachments = [...this._attachmentStreams]
                 .map(attStream => {
                     return { 
@@ -113,18 +111,16 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
                 + " something is very wrong. Probably a garbled response.");
         }
 
-        return RavenCommandResponsePipeline.create<IRavenArrayResult>()
-            .collectBody()
+        let body;
+        this.result = await RavenCommandResponsePipeline.create<IRavenArrayResult>()
+            .collectBody(_ => body = _)
             .parseJsonSync()
             .streamKeyCaseTransform({
                 defaultTransform: "camel",
                 ignoreKeys: [ /^@/ ],
             })
-            .process(bodyStream)
-            .then(results => {
-                this.result = results.result;
-                return results.body;
-            });
+            .process(bodyStream);
+        return body;
     }
 
     private _appendOptions(): string {

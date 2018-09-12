@@ -17,10 +17,14 @@ export function getRequiredEtagHeader(response: HttpResponse) {
     return etagHeaderToChangeVector(etagHeader);
 }
 
-export function getEtagHeader(responseOrHeaders: HttpResponse | IncomingHttpHeaders): string {
+export function getEtagHeader(responseOrHeaders: HttpResponse | IncomingHttpHeaders | object): string {
     let responseHeaders: Caseless;
     if ("headers" in (responseOrHeaders as any)) {
         responseHeaders = (responseOrHeaders as HttpResponse).caseless;
+    }
+
+    if (HEADERS.ETAG in responseOrHeaders) {
+        return responseOrHeaders[HEADERS.ETAG];
     }
 
     const headers = responseHeaders.get(HEADERS.ETAG);

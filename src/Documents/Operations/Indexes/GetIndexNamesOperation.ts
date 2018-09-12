@@ -45,12 +45,12 @@ export class GetIndexNamesCommand extends RavenCommand<string[]> {
             this._throwInvalidResponse();
         }
 
-        return this._getDefaultResponsePipeline()
-            .process(bodyStream)
+        let body;
+        await this._defaultPipeline(_ => body = _).process(bodyStream)
             .then(results => {
-                this.result = results.result["results"];
-                return results.body;
+                this.result = results["results"];
             });
+        return body;
     }
 
     public get isReadRequest(): boolean {

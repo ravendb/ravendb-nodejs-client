@@ -47,30 +47,16 @@ export class GetIndexStatisticsCommand extends RavenCommand<IndexStats> {
         return { uri };
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
-        if (!response) {
-            this._throwInvalidResponse();
-        }
-
-        const responseObj = this._parseResponseDefault(response, );
-
-        const results = responseObj["results"];
-        if (!results.length) {
-            this._throwInvalidResponse();
-        }
-
-        this.result = results[0];
-    }
-
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         if (!bodyStream) {
             this._throwInvalidResponse();
         }
 
-        return this._getDefaultResponsePipeline()
+        let body;
+        await this._defaultPipeline(_ => body = _)
             .process(bodyStream)
             .then(results => {
-                const responseObj = this._reviveResultTypes(results.result, {
+                const responseObj = this._reviveResultTypes(results, {
                     nestedTypes: {
                         "results[].collections": "Map",
                         "results[].collections$MAP": "CollectionStats"
@@ -83,9 +69,8 @@ export class GetIndexStatisticsCommand extends RavenCommand<IndexStats> {
                 }
 
                 this.result = indexStatsResults[0];
-
-                return results.body;
             });
+        return body;
     }
 
     public get isReadRequest(): boolean {

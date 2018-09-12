@@ -31,17 +31,17 @@ export class GetConflictsCommand extends RavenCommand<GetConflictsResult> {
             this._throwInvalidResponse();
         }
 
-        return this._getDefaultResponsePipeline()
-            .process(bodyStream)
+        let body;
+        await this._defaultPipeline(_ => body = _).process(bodyStream)
             .then(results => {
-                this.result = this._typedObjectMapper.fromObjectLiteral(results.result, {
+                this.result = this._typedObjectMapper.fromObjectLiteral(results, {
                     nestedTypes: {
                         "results[].lastModified": "Date"
                     }
                 });
-
-                return results.body;
             });
+        
+        return body;
     }
 
 }

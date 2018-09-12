@@ -44,15 +44,14 @@ export class GetCollectionStatisticsCommand extends RavenCommand<CollectionStati
             this._throwInvalidResponse();
         }
 
-        return this._getDefaultResponsePipeline()
+        let body;
+        this.result = await this._defaultPipeline(_ => body = _)
+            .collectBody()
             .streamKeyCaseTransform({
                 defaultTransform: "camel",
                 ignorePaths: [ /^collections\./i ]
             })
-            .process(bodyStream)
-            .then(({ result, body }) => {
-                this.result = result;
-                return body;
-            });
+            .process(bodyStream);
+        return body;
     }
 }

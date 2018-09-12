@@ -8,12 +8,12 @@ import { TypeUtil } from "../../../Utility/TypeUtil";
 
 export class LoadStartingWithOperation {
 
-    private static DEFAULT: StartingWithOptions = {
+    public static DEFAULT: StartingWithOptions = {
         start: 0,
         pageSize: 25,
-        exclude: null,
-        startAfter: null,
-        matches: null
+        exclude: "",
+        startAfter: "",
+        matches: ""
     };
 
     private _session: InMemoryDocumentSessionOperations;

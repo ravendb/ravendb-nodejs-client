@@ -5,7 +5,7 @@ import { throwError } from "../Exceptions";
 import { RequestExecutor } from "../Http/RequestExecutor";
 import { getLogger } from "../Utility/LogUtil";
 import { DocumentStoreBase } from "./DocumentStoreBase";
-import { IDocumentStore, SessionCreatedEventArgs } from './IDocumentStore';
+import { IDocumentStore, SessionCreatedEventArgs } from "./IDocumentStore";
 import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor";
 import { OperationExecutor } from "./Operations/OperationExecutor";
 import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";
@@ -17,8 +17,6 @@ import {BulkInsertOperation} from "./BulkInsertOperation";
 import {IDatabaseChanges} from "./Changes/IDatabaseChanges";
 import {DatabaseChanges} from "./Changes/DatabaseChanges";
 
-// import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";
-// import { DocumentSession } from "./Session/DocumentSession";
 const log = getLogger({ module: "DocumentStore" });
 
 export class DocumentStore extends DocumentStoreBase {

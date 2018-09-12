@@ -1,7 +1,4 @@
 import * as stream from "readable-stream";
-import { CONSTANTS } from "../../../Constants";
-
-export { CollectResultStream } from "./CollectResultStream";
 
 export function gatherJsonNotMatchingPath(jsonStream: stream.Stream) {
     return new Promise((resolve, reject) => {

@@ -36,20 +36,18 @@ export class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
             return;
         }
 
-        return RavenCommandResponsePipeline.create()
-            .collectBody()
+        let body;
+        return this._pipeline<TopologyDto>()
+            .collectBody(_ => body = _)
             .parseJsonSync()
-            .streamKeyCaseTransform({ defaultTransform: "camel" })
+            .streamKeyCaseTransform("camel")
             .process(bodyStream)
-            .then(results => {
-                const rawTpl = results.result as TopologyDto;
+            .then(rawTpl => {
                 const nodes = rawTpl.nodes
                     ? rawTpl.nodes.map(x => Object.assign(new ServerNode(), x))
                     : null;
-                this.result = new Topology(
-                    rawTpl.etag,
-                    nodes);
-                return results.body;
+                this.result = new Topology(rawTpl.etag, nodes);
+                return body;
             });
     }
 

@@ -20,5 +20,5 @@ describe("Query with includes", function () {
     afterEach(async () => 
         await disposeTestDocumentStore(store));
 
-    it.skip("TODO", async () => {});
+    it.skip("TODO");
 });

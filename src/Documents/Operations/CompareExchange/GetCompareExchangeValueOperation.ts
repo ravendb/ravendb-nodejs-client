@@ -10,7 +10,6 @@ import { ServerNode } from "../../../Http/ServerNode";
 import { ClassConstructor } from "../../../Types";
 import { CompareExchangeValueResultParser, GetCompareExchangeValuesResponse } from "./CompareExchangeValueResultParser";
 import * as stream from "readable-stream";
-import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
 
 export class GetCompareExchangeValueOperation<T> implements IOperation<CompareExchangeValue<T>> {
 
@@ -65,16 +64,16 @@ export class GetCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
             return null;
         }
 
-        return RavenCommandResponsePipeline.create()
-            .collectBody()
+        let body;
+        await this._pipeline<object>()
+            .collectBody(x => body = x)
             .parseJsonSync()
-            .streamKeyCaseTransform({ defaultTransform: "camel" })
+            .streamKeyCaseTransform("camel")
             .process(bodyStream)
             .then(results => {
                 this.result = CompareExchangeValueResultParser.getValue(
-                    results.result as GetCompareExchangeValuesResponse, this._conventions, this._clazz);
-
-                return results.body;
+                    results as GetCompareExchangeValuesResponse, this._conventions, this._clazz);
             });
+        return body;
     }
 }

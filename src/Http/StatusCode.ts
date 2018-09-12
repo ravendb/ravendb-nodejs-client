@@ -1,6 +1,7 @@
 export type StatusCode = 200 
   | 201 
   | 202 
+  | 203
   | 204 
   | 301 
   | 302 
@@ -23,6 +24,7 @@ export class StatusCodes {
   public static readonly Ok: StatusCode = 200;
   public static readonly Created: StatusCode = 201;
   public static readonly Accepted: StatusCode = 202;
+  public static readonly NonAuthoritativeInformation: StatusCode = 203;
   public static readonly NoContent: StatusCode = 204;
   public static readonly MovedPermanently: StatusCode = 301;
   public static readonly Found: StatusCode = 302;

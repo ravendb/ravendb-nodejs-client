@@ -442,12 +442,6 @@ export class DocumentQuery<T extends object>
 
     // TBD public IDocumentQuery<T> OrderByDescending<TValue>(params Expression<Func<T, TValue>>[] propertySelectors)
 
-    // TBD public Lazy<IEnumerable<T>> Lazily()
-
-    // TBD public Lazy<int> CountLazily()
-
-    // TBD public Lazy<IEnumerable<T>> Lazily(Action<IEnumerable<T>> onEval)
-
     private  _createDocumentQueryInternal<TResult extends object>(
         resultClass: DocumentType<TResult>): DocumentQuery<TResult>;
     private  _createDocumentQueryInternal<TResult extends object>(

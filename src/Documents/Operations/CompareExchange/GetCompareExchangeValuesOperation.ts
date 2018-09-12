@@ -128,16 +128,16 @@ export class GetCompareExchangeValuesCommand<T> extends RavenCommand<{ [key: str
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
-        return RavenCommandResponsePipeline.create()
-            .collectBody()
+        let body;
+        await this._pipeline()
+            .collectBody(b => body = b)
             .parseJsonSync()
-            .streamKeyCaseTransform({ defaultTransform: "camel" })
+            .streamKeyCaseTransform("camel")
             .process(bodyStream)
             .then(results => {
                 this.result = CompareExchangeValueResultParser.getValues<T>(
-                    results.result as GetCompareExchangeValuesResponse, this._conventions, this._operation.clazz);
-
-                return results.body;
+                    results as GetCompareExchangeValuesResponse, this._conventions, this._operation.clazz);
             });
+        return body;
     }
 }

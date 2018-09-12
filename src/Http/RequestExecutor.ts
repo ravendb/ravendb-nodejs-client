@@ -949,7 +949,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
         sessionInfo: SessionInfo,
         shouldRetry: boolean): Promise<boolean> {
         responseBodyStream.resume();
-        const body = await StreamUtil.readToEnd(responseBodyStream);
+        const readBody = () => StreamUtil.readToEnd(responseBodyStream);
         switch (response.statusCode) {
             case StatusCodes.NotFound:
                 this._cache.setNotFound(url);
@@ -992,13 +992,13 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
             case StatusCodes.BadGateway:
             case StatusCodes.ServiceUnavailable:
                 return this._handleServerDown(
-                    url, chosenNode, nodeIndex, command, req, response, body, null, sessionInfo);
+                    url, chosenNode, nodeIndex, command, req, response, await readBody(), null, sessionInfo);
             case StatusCodes.Conflict:
-                RequestExecutor._handleConflict(response, body);
+                RequestExecutor._handleConflict(response, await readBody());
                 break;
             default:
                 command.onResponseFailure(response);
-                ExceptionDispatcher.throwException(response, body);
+                ExceptionDispatcher.throwException(response, await readBody());
         }
     }
 

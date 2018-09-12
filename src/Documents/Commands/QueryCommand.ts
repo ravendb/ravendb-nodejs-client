@@ -6,19 +6,15 @@ import { IndexQuery, writeIndexQuery } from "../Queries/IndexQuery";
 import { throwError } from "../../Exceptions";
 import { ServerNode } from "../../Http/ServerNode";
 import * as StringBuilder from "string-builder";
-import { ObjectKeysTransform } from "../../Mapping/ObjectMapper";
 import {JsonSerializer } from "../../Mapping/Json/Serializer";
 import * as stream from "readable-stream";
-import { CollectResultStreamOptions } from "../../Mapping/Json/Streams/CollectResultStream";
-import { DocumentsResult } from "./GetDocumentsCommand";
-import { 
-    RavenCommandResponsePipeline, 
-    IRavenCommandResponsePipelineResult 
-} from "../../Http/RavenCommandResponsePipeline";
-import { getIgnoreKeyCaseTransformKeysFromDocumentMetadata } from "../../Mapping/Json/Docs";
-import { CONSTANTS } from "../../Constants";
-
-const QUERY_DOCS_JSON_PATH = [ /^(Results|Includes)$/, { emitPath: true } ];
+import { streamValues } from "stream-json/streamers/StreamValues";
+import { streamArray } from "stream-json/streamers/StreamArray";
+import { streamObject } from "stream-json/streamers/StreamObject";
+import { pick } from "stream-json/filters/Pick";
+import { ignore } from "stream-json/filters/Ignore";
+import { parseDocumentResults, parseRestOfOutput, parseDocumentIncludes } from "../../Mapping/Json/Streams/Pipelines";
+import { TypesAwareObjectMapper } from "../../Mapping/ObjectMapper";
 
 export interface QueryCommandOptions {
     metadataOnly?: boolean;
@@ -93,57 +89,44 @@ export class QueryCommand extends RavenCommand<QueryResult> {
             this.result = null;
             return;
         }
-        
-        const collectResultOpts: CollectResultStreamOptions<DocumentsResult> = {
-            reduceResults: (result: DocumentsResult, chunk: { path: string | any[], value: object }) => {
-                const doc = chunk.value;
-                const path = chunk.path;
 
-                if (path[0] === "Results") {
-                    result.results.push(doc);
-                } else if (path[0] === "Includes") {
-                    if (!doc["@metadata"]["@id"]) {
-                        throw new Error("Document must have @id in @metadata.");
-                    }
+        let body;
+        this.result = await QueryCommand.parseQueryResultResponseAsync(
+            bodyStream, this._conventions, fromCache, this._typedObjectMapper, b => body = b);
 
-                    result.includes[doc["@metadata"]["@id"]] = doc;
-                }
-
-                return result;
-            },
-            initResult: { results: [], includes: {} } as DocumentsResult
-        };
-
-        return RavenCommandResponsePipeline.create()
-            .collectBody()
-            .parseJsonAsync(QUERY_DOCS_JSON_PATH)
-            .streamKeyCaseTransform({
-                defaultTransform: this._conventions.entityFieldNameConvention,
-                extractIgnorePaths: (e) => [ 
-                    ...getIgnoreKeyCaseTransformKeysFromDocumentMetadata(e), 
-                    CONSTANTS.Documents.Metadata.IGNORE_CASE_TRANSFORM_REGEX
-                ],
-                ignoreKeys: [ /^@/ ]
-            })
-            .restKeyCaseTransform({ defaultTransform: "camel" })
-            .collectResult(collectResultOpts)
-            .process(bodyStream)
-            .then((result: IRavenCommandResponsePipelineResult<DocumentsResult>) => {
-                const rawResult = Object.assign(result.result, result.rest) as QueryResult;
-                this.result = this._reviveResultTypes(rawResult, {
-                    typeName: QueryResult.name
-                }, new Map([[QueryResult.name, QueryResult]]));
-
-                if (fromCache) {
-                    this.result.durationInMs = -1;
-                }
-                
-                return result.body;
-            });
+        return body;
     }
 
     public get isReadRequest(): boolean {
         return true;
+    }
+
+    public static async parseQueryResultResponseAsync(
+        bodyStream: stream.Stream,
+        conventions: DocumentConventions,
+        fromCache: boolean,
+        mapper: TypesAwareObjectMapper,
+        bodyCallback?: (body: string) => void): Promise<QueryResult> {
+
+        const resultsPromise = parseDocumentResults(bodyStream, conventions, bodyCallback);
+        const includesPromise = parseDocumentIncludes(bodyStream, conventions);
+        const restPromise = parseRestOfOutput(bodyStream, /^Results|Includes$/);
+
+        const [ results, includes, rest ] = await Promise.all([resultsPromise, includesPromise, restPromise]);
+        const rawResult = Object.assign({}, rest, { results, includes }) as QueryResult;
+        const queryResult = mapper.fromObjectLiteral<QueryResult>(rawResult, {
+            typeName: QueryResult.name,
+            nestedTypes: {
+                indexTimestamp: "date",
+                lastQueryTime: "date"
+            }
+        }, new Map([[QueryResult.name, QueryResult]]));
+
+        if (fromCache) {
+            queryResult.durationInMs = -1;
+        }
+
+        return queryResult;
     }
 }
 
@@ -154,45 +137,33 @@ export class FacetQueryCommand extends QueryCommand {
             this.result = null;
             return;
         }
-        
-        const collectResultOpts: CollectResultStreamOptions<DocumentsResult> = {
-            reduceResults: (result: DocumentsResult, chunk: { path: string | any[], value: object }) => {
-                const doc = chunk.value;
-                const path = chunk.path;
 
-                if (path[0] === "Results") {
-                    result.results.push(doc);
-                } else if (path[0] === "Includes") {
-                    if (!doc["@metadata"]["@id"]) {
-                        throw new Error("Document must have @id in @metadata.");
-                    }
+        let body;
+        const resultsPromise = this._pipeline<object[]>()
+            .collectBody((_body) => body = _body)
+            .parseJsonAsync([
+                pick({ filter: "Results" }),
+                streamArray()
+            ])
+            .streamKeyCaseTransform("camel", "DOCUMENT_LOAD") // we don't care about the case in facets
+            .collectResult((result, next) => [...result, next["value"]], [])
+            .process(bodyStream);
 
-                    result.includes[doc["@metadata"]["@id"]] = doc;
-                }
+        const includesPromise = parseDocumentIncludes(bodyStream, this._conventions);
+        const restPromise = parseRestOfOutput(bodyStream, /^Results|Includes$/);
 
-                return result;
-            },
-            initResult: { results: [], includes: {} } as DocumentsResult
-        };
+        await Promise.all([ resultsPromise, includesPromise, restPromise ])
+        .then(([ results, includes, rest ]) => {
+            const rawResult = Object.assign({}, rest, { results, includes }) as QueryResult;
+            this.result = this._reviveResultTypes(rawResult, {
+                typeName: QueryResult.name
+            }, new Map([[QueryResult.name, QueryResult]]));
 
-        return RavenCommandResponsePipeline.create()
-            .collectBody()
-            .parseJsonAsync(QUERY_DOCS_JSON_PATH)
-            .streamKeyCaseTransform({ defaultTransform: "camel" })
-            .restKeyCaseTransform({ defaultTransform: "camel" })
-            .collectResult(collectResultOpts)
-            .process(bodyStream)
-            .then((result: IRavenCommandResponsePipelineResult<DocumentsResult>) => {
-                const rawResult = Object.assign(result.result, result.rest) as QueryResult;
-                this.result = this._reviveResultTypes(rawResult, {
-                    typeName: QueryResult.name
-                }, new Map([[QueryResult.name, QueryResult]]));
+            if (fromCache) {
+                this.result.durationInMs = -1;
+            }
+        });
 
-                if (fromCache) {
-                    this.result.durationInMs = -1;
-                }
-                
-                return result.body;
-            });
+        return body;
     }
 }

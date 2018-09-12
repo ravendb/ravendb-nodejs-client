@@ -1,5 +1,4 @@
 import * as changeCase from "change-case";
-import { throwError } from "../Exceptions";
 
 function iden(x, locale) { return x; }
 export class ObjectUtil {
@@ -52,13 +51,16 @@ export type CasingConvention =
     "swap" |
     "swapCase";
 
-export interface ObjectChangeCaseOptions {
+export interface ObjectChangeCaseOptionsBase {
     recursive?: boolean;
     arrayRecursive?: boolean;
     ignoreKeys?: Array<string | RegExp>;
     ignorePaths?: Array<string | RegExp>;
-    defaultTransform: CasingConvention;
     paths?: Array<{ transform: CasingConvention, path?: RegExp }>;
+}
+
+export interface ObjectChangeCaseOptions extends ObjectChangeCaseOptionsBase {
+    defaultTransform: CasingConvention;
 }
 
 interface InternalObjectChangeCaseOptions extends ObjectChangeCaseOptions {
@@ -151,7 +153,7 @@ function getTransformFunc(key, currentPath, opts: InternalObjectChangeCaseOption
             if (!p.path) {
                 return changeCase[p.transform];
             } else if (p.path.test(currentPath)) {
-                return changeCase[p.transform];
+                return p.transform ? changeCase[p.transform] : iden;
             }
         }
     }

@@ -18,6 +18,8 @@ import {
     ObjectKeyCaseTransformStreamOptions, 
     ObjectKeyCaseTransformStream 
 } from "../Mapping/Json/Streams/ObjectKeyCaseTransformStream";
+import { pick } from "stream-json/filters/Pick";
+import { ignore } from "stream-json/filters/Ignore";
 
 const log = getLogger({ module: "RavenCommand" });
 
@@ -77,13 +79,12 @@ export abstract class RavenCommand<TResult> {
             .then(() => {});
     }
 
-    protected _getDefaultResponsePipeline(): RavenCommandResponsePipeline<TResult> {
-        return RavenCommandResponsePipeline.create<TResult>()
+    protected _defaultPipeline(
+        bodyCallback?: (body: string) => void): RavenCommandResponsePipeline<TResult> {
+        return this._pipeline<TResult>()
             .parseJsonSync()
-            .collectBody()
-            .streamKeyCaseTransform({
-                defaultTransform: "camel"
-            });
+            .collectBody(bodyCallback)
+            .streamKeyCaseTransform("camel");
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
@@ -124,11 +125,7 @@ export abstract class RavenCommand<TResult> {
 
     public setResponseRaw(response: HttpResponse, body: string): void {
         throwError("NotSupportedException",
-            "When " + this._responseType + " is set to RAW then please override this method to handle the response.");
-    }
-
-    protected _throwInvalidResponse(): void {
-        throwError("InvalidOperationException", "Response is invalid");
+            "When _responseType is set to RAW then please override this method to handle the response.");
     }
 
     protected _urlEncode(value): string {
@@ -178,15 +175,16 @@ export abstract class RavenCommand<TResult> {
 
                 return "Automatic";
             } else {
+                const bodyPromise = this.setResponseAsync(bodyStream, false);
                 bodyStream.resume();
-                const rawBody = await StreamUtil.readToEnd(bodyStream);
-                this.setResponseRaw(response, rawBody);
+                await bodyPromise;
             }
 
             return "Automatic";
         } catch (err) {
             log.error(err, `Error processing command ${this.constructor.name} response.`);
-            throwError("RavenException", `Error processing command ${this.constructor.name} response.`, err);
+            throwError("RavenException", 
+                `Error processing command ${this.constructor.name} response: ${err.stack}`, err);
         } finally {
             closeHttpResponse(response);
             // response.destroy(); 
@@ -227,19 +225,28 @@ export abstract class RavenCommand<TResult> {
         return this._typedObjectMapper.fromObjectLiteral<TResponse>(raw, typeInfo, knownTypes);
     }
 
-    protected _parseResponseDefaultAsync(bodyStream: stream.Stream) {
-        return this._getDefaultResponsePipeline()
-            .process(bodyStream)
-            .then(results => {
-                this.result = results.result;
-                return results.body;
-            });
+    protected async _parseResponseDefaultAsync(bodyStream: stream.Stream): Promise<string> {
+        let body;
+        this.result = await this._defaultPipeline(_ => body = _).process(bodyStream);
+        return body;
     }
 
     protected _getHeaders() {
         return HeadersBuilder.create();
     }
 
+    protected _throwInvalidResponse(): void {
+        throwError("InvalidOperationException", "Response is invalid");
+    }
+
+    protected static _throwInvalidResponse(cause: Error): void {
+        throwError("InvalidOperationException", "Response is invalid: " + cause.message, cause);
+    }
+
     // tslint:disable-next-line:no-empty
     public onResponseFailure(response: HttpResponse): void { }
+
+    protected _pipeline<TPipelineResult>() {
+        return RavenCommandResponsePipeline.create<TPipelineResult>();
+    }
 }

@@ -21,3 +21,10 @@ export function reduceStreamToPromise<T>(
 export function readToEnd(readable: stream.Readable): Promise<string> {
     return reduceStreamToPromise(readable, (result, chunk) => result + chunk, "");
 }
+
+export function stringToReadable(s: string) {
+    const result = new stream.Readable();
+    result.push(s);
+    result.push(null);
+    return result;
+}

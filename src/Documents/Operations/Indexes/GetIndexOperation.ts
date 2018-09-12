@@ -7,9 +7,7 @@ import { HttpRequestParameters } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
 import * as stream from "readable-stream";
 import { 
-    RavenCommandResponsePipeline, 
-    IRavenCommandResponsePipelineResult } from "../../../Http/RavenCommandResponsePipeline";
-import { getIgnoreKeyCaseTransformKeysFromDocumentMetadata } from "../../../Mapping/Json/Docs";
+    RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
 export class GetIndexOperation implements IMaintenanceOperation<IndexDefinition> {
 
     private _indexName: string;
@@ -56,15 +54,16 @@ export class GetIndexCommand extends RavenCommand<IndexDefinition> {
             return;
         }
 
-        return RavenCommandResponsePipeline.create()
-            .collectBody()
+        let body;
+        await this._pipeline()
+            .collectBody(b => body = b)
             .parseJsonSync()
             .streamKeyCaseTransform({
                 defaultTransform: "camel",
                 ignorePaths:  [ /fields\.[^.]+$/i ]
             })
             .process(bodyStream)
-            .then((result: IRavenCommandResponsePipelineResult<object>) => {
+            .then((result: object) => {
                 const indexDefTypeInfo = {
                     nestedTypes: {
                         "results[]": "IndexDefinition",
@@ -72,10 +71,11 @@ export class GetIndexCommand extends RavenCommand<IndexDefinition> {
                     },
                 };
                 const knownTypes = new Map([[IndexDefinition.name, IndexDefinition]]);
-                const allResults = this._reviveResultTypes(result.result, indexDefTypeInfo, knownTypes);
+                const allResults = this._reviveResultTypes(result, indexDefTypeInfo, knownTypes);
                 this.result = allResults["results"][0] || null;
-                return result.body;
             });
+            
+        return body;
     }
 
     public get isReadRequest(): boolean {

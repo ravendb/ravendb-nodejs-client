@@ -63,11 +63,12 @@ export class IndexHasChangedCommand extends RavenCommand<boolean> {
             this._throwInvalidResponse();
         }
 
-        return this._getDefaultResponsePipeline()
+        let body;
+        await this._defaultPipeline(_ => body = _)
             .process(bodyStream)
             .then(results => {
-                this.result = results.result["changed"];
-                return results.body;
+                this.result = results["changed"];
             });
+        return body;
     }
 }

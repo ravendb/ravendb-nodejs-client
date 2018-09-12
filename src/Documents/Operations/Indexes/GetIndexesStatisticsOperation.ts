@@ -33,10 +33,10 @@ export class GetIndexesStatisticsCommand extends RavenCommand<IndexStats[]> {
             this._throwInvalidResponse();
         }
 
-        return this._getDefaultResponsePipeline()
-            .process(bodyStream)
+        let body;
+        await this._defaultPipeline(_ => body = _).process(bodyStream)
             .then(results => {
-                const obj = this._reviveResultTypes(results.result, {
+                const obj = this._reviveResultTypes(results, {
                     nestedTypes: {
                         "results[].collections": "Map",
                         "results[].collections$MAP": "CollectionStats"
@@ -44,9 +44,8 @@ export class GetIndexesStatisticsCommand extends RavenCommand<IndexStats[]> {
                 }, new Map([[CollectionStats.name, CollectionStats]]));
 
                 this.result = obj["results"]; 
-
-                return results.body;
             });
+        return body;
     }
 
     public get isReadRequest(): boolean {

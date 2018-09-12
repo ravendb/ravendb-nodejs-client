@@ -17,15 +17,14 @@ export class GetNextOperationIdCommand extends RavenCommand<number> {
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
-        return this._getDefaultResponsePipeline() 
-            .process(bodyStream)
+        let body;
+        await this._defaultPipeline(_ => body = _).process(bodyStream)
             .then(results => {
-                const id = results.result["id"];
+                const id = results["id"];
                 if (typeof id !== "undefined") {
                     this.result = id;
                 }
-
-                return results.body;
             });
+        return body;
     }
 }

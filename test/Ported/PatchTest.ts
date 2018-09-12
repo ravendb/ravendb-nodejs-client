@@ -35,6 +35,8 @@ describe("PatchTest", function () {
             null,
             PatchRequest.forScript("this.name = \"Patched\""));
         const patchResult = await store.operations.send(patchOperation);
+        assert.ok(patchResult.document);
+        assert.equal(patchResult.document["name"], "Patched");
         assert.equal(patchResult.status, "Patched");
 
         { 
