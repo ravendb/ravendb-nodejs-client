@@ -17,6 +17,12 @@ export class StringUtil {
         return char.repeat(length - inputLength) + s;
     }
 
+    public static toWebSocketPath(url: string) {
+        return url
+            .replace("https://", "wss://")
+            .replace("http://", "ws://");
+    }
+
     public static format(s: string, vars?: object | any, ...varsArray: any[]): string {
         if (TypeUtil.isObject(vars)) {
             return s.replace(

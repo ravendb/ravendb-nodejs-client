@@ -176,6 +176,10 @@ export class RequestExecutor implements IDisposable {
         this._setDefaultRequestOptions();
     }
 
+    public getAuthOptions(): IAuthOptions {
+        return this._authOptions;
+    }
+
     public getTopologyEtag() {
         return this._topologyEtag;
     }

@@ -607,14 +607,15 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * @param fieldName Field name
      * @param whereClause Where clause
      */
-    public _whereLucene(fieldName: string, whereClause: string): void {
+    public _whereLucene(fieldName: string, whereClause: string, exact: boolean): void {
         fieldName = this._ensureValidFieldName(fieldName, false);
 
         const tokens = this._getCurrentWhereTokens();
         this._appendOperatorIfNeeded(tokens);
         this._negateIfNeeded(tokens, fieldName);
 
-        const whereToken = WhereToken.create("Lucene", fieldName, this._addQueryParameter(whereClause));
+        const options = exact ? new WhereOptions({ exact }) : null;
+        const whereToken = WhereToken.create("Lucene", fieldName, this._addQueryParameter(whereClause), options);
         tokens.push(whereToken);
     }
 

@@ -6,10 +6,11 @@ import * as stream from "readable-stream";
 
 export class SeedIdentityForCommand extends RavenCommand<number> {
 
-    private _id: string;
-    private _value: number;
+    private readonly _id: string;
+    private readonly _value: number;
+    private readonly _forced: boolean;
 
-    public constructor(id: string, value: number) {
+    public constructor(id: string, value: number, forced?: boolean) {
         super();
         if (!id) {
             throwError("InvalidArgumentException", "Id cannot be null");
@@ -17,6 +18,7 @@ export class SeedIdentityForCommand extends RavenCommand<number> {
 
         this._id = id;
         this._value = value;
+        this._forced = forced;
     }
 
     public get isReadRequest(): boolean {
@@ -26,9 +28,12 @@ export class SeedIdentityForCommand extends RavenCommand<number> {
     public createRequest(node: ServerNode): HttpRequestParameters {
         RavenCommand.ensureIsNotNullOrEmpty(this._id, "id");
 
-        const uri = node.url + "/databases/" + node.database 
+        let uri = node.url + "/databases/" + node.database
             + "/identity/seed?name=" + encodeURIComponent(this._id) + "&value=" + this._value;
 
+        if (this._forced) {
+            uri += "&force=true";
+        }
         return {
             method: "POST",
             uri    

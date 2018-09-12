@@ -103,6 +103,15 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
     whereLucene(fieldName: string, whereClause: string): TSelf;
 
     /**
+     * Filter the results from the index using the specified where clause.
+     * @param fieldName Field name
+     * @param whereClause Where clause
+     * @param exact Use exact matcher
+     * @return Query instance
+     */
+    whereLucene(fieldName: string, whereClause: string, exact: boolean): TSelf;
+
+    /**
      * Matches fields where the value is between the specified start and end, exclusive
      * @param fieldName Field name
      * @param start Range start

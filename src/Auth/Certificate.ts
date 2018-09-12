@@ -2,11 +2,13 @@ import { IAuthOptions } from "./AuthOptions";
 import { StringUtil } from "../Utility/StringUtil";
 import { throwError } from "../Exceptions";
 import { AgentOptions} from "https";
+import WebSocket = require("ws");
 
 export type CertificateType = "pem" | "pfx";
 
 export interface ICertificate {
     toAgentOptions(): AgentOptions;
+    toWebSocketOptions(): WebSocket.ClientOptions;
 }
 
 export abstract class Certificate implements ICertificate {
@@ -44,7 +46,7 @@ export abstract class Certificate implements ICertificate {
         return new PfxCertificate(certificate, passphrase, ca);
     }
 
-    constructor(certificate: string | Buffer, passprase?: string, ca?: string | Buffer) {
+    protected constructor(certificate: string | Buffer, passprase?: string, ca?: string | Buffer) {
         this._certificate = certificate;
         this._passphrase = passprase;
         this._ca = ca;
@@ -56,6 +58,12 @@ export abstract class Certificate implements ICertificate {
         }
 
         return {};
+    }
+
+    public toWebSocketOptions(): WebSocket.ClientOptions {
+        return {
+            passphrase: this._passphrase
+        };
     }
 }
 
@@ -81,6 +89,15 @@ export class PemCertificate extends Certificate {
 
     public toAgentOptions(): AgentOptions {
         const result = super.toAgentOptions();
+        return Object.assign(result, {
+            cert: this._certificate,
+            key: this._key,
+            ca: this._ca
+        });
+    }
+
+    public toWebSocketOptions(): WebSocket.ClientOptions {
+        const result = super.toWebSocketOptions();
         return Object.assign(result, {
             cert: this._certificate,
             key: this._key,
@@ -120,6 +137,14 @@ export class PfxCertificate extends Certificate {
 
     public toAgentOptions(): AgentOptions {
         return Object.assign(super.toAgentOptions(), {
+            pfx: this._certificate as Buffer,
+            ca: this._ca
+        });
+    }
+
+    public toWebSocketOptions(): WebSocket.ClientOptions {
+        const result = super.toWebSocketOptions();
+        return Object.assign(result, {
             pfx: this._certificate as Buffer,
             ca: this._ca
         });

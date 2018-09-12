@@ -15,6 +15,7 @@ import { RequestExecutor } from "../Http/RequestExecutor";
 import { DocumentConventions } from "./Conventions/DocumentConventions";
 import { InMemoryDocumentSessionOperations } from "./Session/InMemoryDocumentSessionOperations";
 import {BulkInsertOperation} from "./BulkInsertOperation";
+import {IDatabaseChanges} from "./Changes/IDatabaseChanges";
 
 export interface SessionEventsProxy {
     addSessionListener(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
@@ -86,7 +87,13 @@ export interface IDocumentStore extends
    */
   openSession(database?: string, options?: ISessionOptions): IDocumentSession;
 
-    // TBD: IDatabaseChanges Changes(string database = null);
+    /**
+     * Subscribe to change notifications from the server
+     * @return Database changes object
+     */
+  changes(): IDatabaseChanges;
+  changes(database: string): IDatabaseChanges;
+
     // TBD: IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
     // TBD IDisposable AggressivelyCache(string database = null);
 
