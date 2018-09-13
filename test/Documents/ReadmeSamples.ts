@@ -1,3 +1,7 @@
+import * as stream from "readable-stream";
+import * as StreamUtil from "../../src/Utility/StreamUtil";
+import * as path from "path";
+import * as fs from "fs";
 import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
@@ -14,7 +18,7 @@ import {
     IDocumentSession,
 } from "../../src";
 
-//const print = console.log; //(...args) => {};
+// const print = console.log; //(...args) => {};
 const print = (...args) => { return; };
 
 describe("Readme query samples", function () {
@@ -94,6 +98,69 @@ describe("Readme query samples", function () {
             assert.ok(user1);
             assert.ok(user2);
             assert.equal(session.advanced.numberOfRequests, 1);
+        });
+
+    });
+
+    it("store attachment", async () => {
+        const doc = new User({
+            name: "John"
+        });
+
+        // track entity
+        await session.store(doc);
+
+        // open and store attachment
+        const fileStream = fs.createReadStream(path.join(__dirname, "../Assets/tubes.png"));
+        session.advanced.attachments.store(doc, "tubes.png", fileStream, "image/png");
+        
+        await session.saveChanges();
+    });
+
+    describe("having attachment", () => {
+
+        let doc;
+
+        beforeEach(async () => {
+
+            doc = new User({
+                name: "John"
+            });
+
+            // track entity
+            await session.store(doc);
+
+            // open and store attachment
+            const fileStream = fs.createReadStream(path.join(__dirname, "../Assets/tubes.png"));
+            session.advanced.attachments.store(doc, "tubes.png", fileStream, "image/png");
+
+            await session.saveChanges();
+            fileStream.close();
+        });
+
+        it("get attachment", (done) => {
+            session.advanced.attachments.get(doc.id, "tubes.png")
+                .then(attachment => {
+                    print(attachment.details);
+
+                    // attachment.data is a Readable
+                    attachment.data
+                        .pipe(fs.createWriteStream(".test/tubes.png"))
+                        .on("finish", () => {
+                            attachment.dispose();
+                            done();
+                        });
+                });
+        });
+
+        it("attachment exists", async () => {
+            print(await session.advanced.attachments.exists(doc.id, "tubes.png"));
+            print(await session.advanced.attachments.exists(doc.id, "x.png"));
+        });
+
+        it("get attachments names", async () => {
+            await session.advanced.refresh(doc);
+            print(await session.advanced.attachments.getNames(doc));
         });
 
     });

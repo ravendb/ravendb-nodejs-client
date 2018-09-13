@@ -1,6 +1,5 @@
-import { AttachmentType, AttachmentName, AttachmentResult } from "../Attachments";
-import { AttachmentData } from "./../Attachments/index";
-import * as stream from "readable-stream";
+import { AttachmentName, AttachmentResult } from "../Attachments";
+import { AttachmentData } from "./../Attachments";
 
 export interface IAttachmentsSessionOperations {
     //TBD:

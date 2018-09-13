@@ -481,7 +481,80 @@ await session.query({ collection: "users" })
 
 `count()` - returns the count of the results (not affected by `take()`)
 
-## Using ECMAScript 2015 classes as models 
+### Attachments
+
+#### Store attachments
+```javascript
+const doc = new User({ name: "John" });
+
+// track entity
+await session.store(doc);
+
+// get read stream or buffer to store
+const fileStream = fs.createReadStream("../photo.png"));
+
+// store attachment using entity
+session.advanced.attachments.store(doc, "photo.png", fileStream, "image/png");
+
+// OR using document ID
+session.advanced.attachments.store(doc.id, "photo.png", fileStream, "image/png");
+
+await session.saveChanges();
+```
+
+#### Get attachments
+
+```javascript
+const attachment = await session.advanced.attachments.get(documentId, "photo.png")
+// attachment.details contains information about the attachment:
+//     { 
+//       name: 'photo.png',
+//       documentId: 'users/1-A',
+//       contentType: 'image/png',
+//       hash: 'MvUEcrFHSVDts5ZQv2bQ3r9RwtynqnyJzIbNYzu1ZXk=',
+//       changeVector: '"A:3-K5TR36dafUC98AItzIa6ow"',
+//       size: 4579 
+//     }
+
+// attachment.data is a Readable https://nodejs.org/api/stream.html#stream_class_stream_readable
+attachment.data
+    .pipe(fs.createWriteStream("photo.png"))
+    .on("finish", () => next());
+```
+
+#### Check if attachment exists
+
+```javascript
+await session.advanced.attachments.exists(doc.id, "photo.png"));
+// true
+
+await session.advanced.attachments.exists(doc.id, "not_there.avi"));
+// false
+```
+
+#### Get attachment names
+
+```javascript
+await session.advanced.attachments.getNames(doc);
+// [ { name: 'photo.png',
+//     hash: 'MvUEcrFHSVDts5ZQv2bQ3r9RwtynqnyJzIbNYzu1ZXk=',
+//     contentType: 'image/png',
+//     size: 4579 } ]
+```
+
+
+## Using object literals for entities
+
+In order to comfortably use object literals as entities please set function for distinguishing collection name based on the content of the object - `store.conventions.
+findCollectionNameForObjectLiteral`. This needs to be done *before* a `initialize()` call on `DocumentStore` instance. If you fail to do so, your entites will land up in *@empty* collection having an *UUID* for an ID. 
+
+For example here's a function using contents *collection* field to set collection name:
+
+```javascript
+store.conventions.findCollectionNameForObjectLiteral = (entity) => entity["collection"];
+```
+
+## Using classes for entities
 
 1. Define your model as class. Attributes should be just public properties:
 ```javascript
