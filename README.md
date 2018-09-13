@@ -535,6 +535,7 @@ await session.advanced.attachments.exists(doc.id, "not_there.avi"));
 #### Get attachment names
 
 ```javascript
+// use a loaded entity to determine attachments' names
 await session.advanced.attachments.getNames(doc);
 // [ { name: 'photo.png',
 //     hash: 'MvUEcrFHSVDts5ZQv2bQ3r9RwtynqnyJzIbNYzu1ZXk=',
@@ -542,6 +543,27 @@ await session.advanced.attachments.getNames(doc);
 //     size: 4579 } ]
 ```
 
+### Bulk insert
+
+```javascript
+// create bulk insert instance using DocumentStore instance
+const bulkInsert = store.bulkInsert();
+
+// insert your documents
+for (const name of ["Anna", "Maria", "Miguel", "Emanuel", "Dayanara", "Aleida"]) {
+    const user = new User({ name });
+    await bulkInsert.store(user);
+}
+// User { name: 'Anna', id: 'users/1-A' }
+// User { name: 'Maria', id: 'users/2-A' }
+// User { name: 'Miguel', id: 'users/3-A' }
+// User { name: 'Emanuel', id: 'users/4-A' }
+// User { name: 'Dayanara', id: 'users/5-A' }
+// User { name: 'Aleida', id: 'users/6-A' }
+
+// flush data and finish
+await bulkInsert.finish();
+```
 
 ## Using object literals for entities
 

@@ -102,28 +102,9 @@ describe("Readme query samples", function () {
 
     });
 
-    it("store attachment", async () => {
-        const doc = new User({
-            name: "John"
-        });
-
-        // track entity
-        await session.store(doc);
-
-        // open and store attachment
-        const fileStream = fs.createReadStream(path.join(__dirname, "../Assets/tubes.png"));
-        session.advanced.attachments.store(doc, "tubes.png", fileStream, "image/png");
-        
-        await session.saveChanges();
-    });
-
-    describe("having attachment", () => {
-
-        let doc;
-
-        beforeEach(async () => {
-
-            doc = new User({
+    describe("attachments", () => {
+        it("store attachment", async () => {
+            const doc = new User({
                 name: "John"
             });
 
@@ -135,34 +116,75 @@ describe("Readme query samples", function () {
             session.advanced.attachments.store(doc, "tubes.png", fileStream, "image/png");
 
             await session.saveChanges();
-            fileStream.close();
         });
 
-        it("get attachment", (done) => {
-            session.advanced.attachments.get(doc.id, "tubes.png")
-                .then(attachment => {
-                    print(attachment.details);
+        describe("having attachment", () => {
 
-                    // attachment.data is a Readable
-                    attachment.data
-                        .pipe(fs.createWriteStream(".test/tubes.png"))
-                        .on("finish", () => {
-                            attachment.dispose();
-                            done();
-                        });
+            let doc;
+
+            beforeEach(async () => {
+
+                doc = new User({
+                    name: "John"
                 });
-        });
 
-        it("attachment exists", async () => {
-            print(await session.advanced.attachments.exists(doc.id, "tubes.png"));
-            print(await session.advanced.attachments.exists(doc.id, "x.png"));
-        });
+                // track entity
+                await session.store(doc);
 
-        it("get attachments names", async () => {
-            await session.advanced.refresh(doc);
-            print(await session.advanced.attachments.getNames(doc));
-        });
+                // open and store attachment
+                const fileStream = fs.createReadStream(path.join(__dirname, "../Assets/tubes.png"));
+                session.advanced.attachments.store(doc, "tubes.png", fileStream, "image/png");
 
+                await session.saveChanges();
+                fileStream.close();
+            });
+
+            it("get attachment", (done) => {
+                session.advanced.attachments.get(doc.id, "tubes.png")
+                    .then(attachment => {
+                        print(attachment.details);
+
+                        // attachment.data is a Readable
+                        attachment.data
+                            .pipe(fs.createWriteStream(".test/tubes.png"))
+                            .on("finish", () => {
+                                attachment.dispose();
+                                done();
+                            });
+                    });
+            });
+
+            it("attachment exists", async () => {
+                print(await session.advanced.attachments.exists(doc.id, "tubes.png"));
+                print(await session.advanced.attachments.exists(doc.id, "x.png"));
+            });
+
+            it("get attachments names", async () => {
+                {
+                    const session2 = store.openSession();
+                    const entity = session2.load(doc.id);
+                    print(await session2.advanced.attachments.getNames(entity));
+                }
+            });
+
+        });
+    });
+
+    describe("bulk insert", async () => {
+        it("example", async () => {
+            // create bulk insert instance using DocumentStore instance
+            const bulkInsert = store.bulkInsert();
+            
+            // insert your documents
+            for (const name of ["Anna", "Maria", "Miguel", "Emanuel", "Dayanara", "Aleida"]) {
+                const user = new User({ name });
+                await bulkInsert.store(user);
+                print(user);
+            }
+
+            // flush data and finish
+            await bulkInsert.finish();
+        });
     });
 
     describe("with user data set", function () {
