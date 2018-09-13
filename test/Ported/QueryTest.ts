@@ -624,7 +624,7 @@ describe("QueryTest", function () {
         const user = new User();
         user.name = longName;
         await session.store(user, "users/1");
-        session.saveChanges();
+        await session.saveChanges();
 
         const queryResult = await session
             .advanced
@@ -633,6 +633,7 @@ describe("QueryTest", function () {
                 collection: "Users",
                 isMapReduce: false
             })
+            .waitForNonStaleResults()
             .whereEquals("name", longName)
             .all();
 
