@@ -130,15 +130,19 @@ function makeKeyPath(keyStack) {
 
 function shouldTransformKey(currentKey, currentPath, opts) {
     const currentPathPlusKey = currentPath ? currentPath + "." + currentKey : currentKey;
-    const ignoreKey = opts.ignoreKeys.length 
-        && opts.ignoreKeys.some(x => "test" in x ? x.test(currentKey) : x === currentKey);
-    if (ignoreKey) {
-        return false;
+    for (const x of opts.ignoreKeys) {
+        if ("test" in x ? x.test(currentKey) : x === currentKey) {
+            return false;
+        }
     }
 
-    const ignorePath = opts.ignorePaths.length
-        && opts.ignorePaths.some(x => "test" in x ? x.test(currentPathPlusKey) : x === currentPathPlusKey);
-    return !ignorePath;
+    for (const x of opts.ignorePaths) {
+        if ("test" in x ? x.test(currentPathPlusKey) : x === currentPathPlusKey) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 function getTransformFunc(key, currentPath, opts: InternalObjectChangeCaseOptions) {
