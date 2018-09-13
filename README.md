@@ -5,9 +5,10 @@
 ## Changelog
 
 ### 4.0.2 - 2018-09-14
-- [attachments](#attachments)
-- [bulk insert](#bulk-insert)
-- [changes API](#changes-api)
+Added support for the following features:
+- [Attachments](#attachments)
+- [Bulk Insert](#bulk-insert)
+- [Changes API](#changes-api)
 
 ## Installation
 
@@ -551,7 +552,7 @@ await session.advanced.attachments.getNames(doc);
 //     size: 4579 } ]
 ```
 
-### Bulk insert
+### Bulk Insert
 
 ```javascript
 // create bulk insert instance using DocumentStore instance
@@ -573,7 +574,7 @@ for (const name of ["Anna", "Maria", "Miguel", "Emanuel", "Dayanara", "Aleida"])
 await bulkInsert.finish();
 ```
 
-## Changes API
+### Changes API
 Listen for database changes e.g. document changes.
 
 ```javascript
@@ -605,13 +606,13 @@ changes.dispose();
 
 ## Using object literals for entities
 
-In order to comfortably use object literals as entities please set function for distinguishing collection name based on the content of the object - `store.conventions.
-findCollectionNameForObjectLiteral`. This needs to be done *before* a `initialize()` call on `DocumentStore` instance. If you fail to do so, your entites will land up in *@empty* collection having an *UUID* for an ID. 
+In order to comfortably use object literals as entities set function getting collection name based on the content of the object - `store.conventions.
+findCollectionNameForObjectLiteral()`. This needs to be done *before* a `initialize()` call on `DocumentStore` instance. If you fail to do so, your entites will land up in *@empty* collection having an *UUID* for an ID. 
 
-For example here's a function using contents *collection* field to set collection name:
+For example here's a function using *collection* field to set collection name:
 
 ```javascript
-store.conventions.findCollectionNameForObjectLiteral = (entity) => entity["collection"];
+store.conventions.findCollectionNameForObjectLiteral = entity => entity["collection"];
 ```
 
 ## Using classes for entities
