@@ -1,6 +1,14 @@
 # RavenDB client for Node.js
 
 [![build status](https://travis-ci.org/ravendb/ravendb-nodejs-client.svg?branch=v4.0)](https://travis-ci.org/ravendb/ravendb-nodejs-client)
+
+## Changelog
+
+### 4.0.2 - 2018-09-14
+- [attachments](#attachments)
+- [bulk insert](#bulk-insert)
+- [changes API](#changes-api)
+
 ## Installation
 
 ```bash
@@ -584,9 +592,9 @@ docsChanges.on("error", err => {
 })
 
 {
-    const session2 = store.openSession();
-    await session2.store(new User({ name: "Starlord" }));
-    await session2.saveChanges();
+    const session = store.openSession();
+    await session.store(new User({ name: "Starlord" }));
+    await session.saveChanges();
 }
 
 ...
