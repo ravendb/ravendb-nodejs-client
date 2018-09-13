@@ -1,25 +1,19 @@
-import * as stream from "readable-stream";
-import * as StreamUtil from "../../src/Utility/StreamUtil";
 import * as path from "path";
 import * as fs from "fs";
-import * as mocha from "mocha";
-import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 import * as util from "util";
 
 import {
-    RequestExecutor,
-    DocumentConventions,
-    RavenErrorType,
-    GetNextOperationIdCommand,
     IDocumentStore,
     IDocumentQuery,
     IDocumentSession,
 } from "../../src";
+import { TypeUtil } from "../../src/Utility/TypeUtil";
 
-// const print = console.log; //(...args) => {};
-const print = (...args) => { return; };
+// tslint:disable-next-line:prefer-const
+let print = console.log;
+print = TypeUtil.NOOP;
 
 describe("Readme query samples", function () {
 
@@ -35,7 +29,7 @@ describe("Readme query samples", function () {
         public age: number;
         public registeredAt: Date;
 
-        constructor(opts: any) {
+        constructor(opts: object) {
             opts = opts || {};
             Object.assign(this, opts);
         }
@@ -185,6 +179,29 @@ describe("Readme query samples", function () {
             // flush data and finish
             await bulkInsert.finish();
         });
+    });
+
+    describe("changes", () => {
+
+        it("example", async () => {
+            const changes = store.changes();
+            const docsChanges = changes.forDocumentsInCollection("users");
+            docsChanges.on("data", change => {
+                print(change);
+                changes.dispose();
+            });
+
+            {
+                const session2 = store.openSession();
+                await session2.store(new User({ name: "Starlord" }));
+                await session2.saveChanges();
+            }
+
+            return new Promise(resolve => setTimeout(() => {
+                resolve();
+            }, 1000));
+        });
+
     });
 
     describe("with user data set", function () {

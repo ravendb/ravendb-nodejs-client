@@ -47,6 +47,12 @@ export class ChangesObservable<T, TConnectionState extends IChangesConnectionSta
         }
     }
 
+    public removeListener(event: "data", handler: (value: T) => void);
+    public removeListener(event: "error", handler: (error: Error) => void);
+    public removeListener(event: "data" | "error", handler: ((value: T) => void) | ((error: Error) => void)) {
+        this.off(event as any, handler as any);
+    }
+
     public off(event: "data", handler: (value: T) => void);
     public off(event: "error", handler: (error: Error) => void);
     public off(event: "data" | "error", handler: ((value: T) => void) | ((error: Error) => void)) {

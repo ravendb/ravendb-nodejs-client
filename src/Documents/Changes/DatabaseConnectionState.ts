@@ -4,6 +4,7 @@ import {EventEmitter} from "events";
 import {getError} from "../../Exceptions";
 import {IDefer} from "../../Utility/PromiseUtil";
 import * as PromiseUtil from "../../Utility/PromiseUtil";
+import { TypeUtil } from "../../Utility/TypeUtil";
 
 export class DatabaseConnectionState implements IChangesConnectionState<DatabaseChange> {
 
@@ -40,7 +41,7 @@ export class DatabaseConnectionState implements IChangesConnectionState<Database
                 });
         }
 
-        this._connected = connection.catch(() => {});
+        this._connected = connection.catch(TypeUtil.NOOP);
     }
 
     public inc(): void {

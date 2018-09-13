@@ -565,6 +565,36 @@ for (const name of ["Anna", "Maria", "Miguel", "Emanuel", "Dayanara", "Aleida"])
 await bulkInsert.finish();
 ```
 
+## Changes API
+Listen for database changes e.g. document changes.
+
+```javascript
+const changes = store.changes();
+const docsChanges = changes.forAllDocuments();
+
+docsChanges.on("data", change => {
+// { type: 'Put',
+//   id: 'users/1-A',
+//   collectionName: 'Users',
+//   changeVector: 'A:2-QCawZTDbuEa4HUBORhsWYA' }
+});
+
+docsChanges.on("error", err => {
+    // handle errors
+})
+
+{
+    const session2 = store.openSession();
+    await session2.store(new User({ name: "Starlord" }));
+    await session2.saveChanges();
+}
+
+...
+// dispose changes instance once you're done
+changes.dispose();
+
+```
+
 ## Using object literals for entities
 
 In order to comfortably use object literals as entities please set function for distinguishing collection name based on the content of the object - `store.conventions.

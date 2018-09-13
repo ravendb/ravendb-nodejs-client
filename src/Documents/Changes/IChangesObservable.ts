@@ -8,4 +8,7 @@ export interface IObservable<T> {
 
     off(event: "data", handler: (value: T) => void);
     off(event: "error", handler: (error: Error) => void);
+
+    removeListener(event: "data", handler: (value: T) => void);
+    removeListener(event: "error", handler: (error: Error) => void);
 }

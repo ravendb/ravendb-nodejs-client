@@ -191,7 +191,6 @@ export * from "./Documents/Queries/Facets/FacetBuilder";
 export * from "./Documents/Attachments";
 export * from "./Documents/Operations/Attachments/GetAttachmentOperation";
 
-
 // CHANGES
 export * from "./Documents/Changes/IndexChange";
 export * from "./Documents/Changes/DocumentChange";
