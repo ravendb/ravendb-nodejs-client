@@ -162,7 +162,7 @@ describe("Readme query samples", function () {
             it("get attachments names", async () => {
                 {
                     const session2 = store.openSession();
-                    const entity = session2.load(doc.id);
+                    const entity = await session2.load(doc.id);
                     print(await session2.advanced.attachments.getNames(entity));
                 }
             });
