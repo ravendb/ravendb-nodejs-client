@@ -39,9 +39,11 @@ export class DatabaseConnectionState implements IChangesConnectionState<Database
                 .catch(error => {
                     this._firstSet.reject(error);
                 });
+        } else {
+            connection.catch(TypeUtil.NOOP);
         }
 
-        this._connected = connection.catch(TypeUtil.NOOP);
+        this._connected = connection;
     }
 
     public inc(): void {
