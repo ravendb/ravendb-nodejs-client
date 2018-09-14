@@ -258,6 +258,8 @@ export class RequestExecutor implements IDisposable {
         const { authOptions, documentConventions } = opts || {} as IRequestExecutorOptions;
         const executor = new RequestExecutor(database, authOptions, documentConventions);
         executor._firstTopologyUpdatePromise = executor._firstTopologyUpdate(intialUrls);
+        // this is just to get rid of unhandled rejection, we're handling it later on
+        executor._firstTopologyUpdatePromise.catch(TypeUtil.NOOP); 
         return executor;
     }
 
