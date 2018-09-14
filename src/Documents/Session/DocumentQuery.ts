@@ -28,6 +28,11 @@ import { Facet } from "../Queries/Facets/Facet";
 import { FacetBase } from "../Queries/Facets/FacetBase";
 import { FacetBuilder } from "../Queries/Facets/FacetBuilder";
 import { AggregationDocumentQuery } from "../Queries/Facets/AggregationDocumentQuery";
+import {MoreLikeThisBase} from "../Queries/MoreLikeThis/MoreLikeThisBase";
+import {IMoreLikeThisBuilderForDocumentQuery} from "../Queries/MoreLikeThis/IMoreLikeThisBuilderForDocumentQuery";
+import {MoreLikeThisUsingDocument} from "../Queries/MoreLikeThis/MoreLikeThisUsingDocument";
+import {MoreLikeThisBuilder} from "../Queries/MoreLikeThis/MoreLikeThisBuilder";
+import {MoreLikeThisUsingDocumentForDocumentQuery} from "../Queries/MoreLikeThis/MoreLikeThisUsingDocumentForDocumentQuery";
 
 export class DocumentQuery<T extends object> 
     extends AbstractDocumentQuery<T, DocumentQuery<T>> implements IDocumentQuery<T> {
@@ -661,4 +666,46 @@ export class DocumentQuery<T extends object>
     // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude)
     // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt)
     // tslint:enable:max-line-length
+
+    public moreLikeThis(
+        builder: (moreLikeThisBuilder: IMoreLikeThisBuilderForDocumentQuery<T>) => void): IDocumentQuery<T>;
+    public moreLikeThis(moreLikeThis: MoreLikeThisBase): IDocumentQuery<T>;
+    public moreLikeThis(
+        moreLikeThisBaseOrBuilder:
+            MoreLikeThisBase
+                | ((moreLikeThisBuilder: IMoreLikeThisBuilderForDocumentQuery<T>) => void)): IDocumentQuery<T> {
+        if (moreLikeThisBaseOrBuilder instanceof MoreLikeThisBase) {
+            const mlt = this._moreLikeThis();
+
+            try {
+                mlt.withOptions(moreLikeThisBaseOrBuilder.options);
+
+                if (moreLikeThisBaseOrBuilder instanceof MoreLikeThisUsingDocument) {
+                    mlt.withDocument(moreLikeThisBaseOrBuilder.documentJson);
+                }
+            } finally {
+                mlt.dispose();
+            }
+        } else {
+            const f = new MoreLikeThisBuilder<T>();
+            moreLikeThisBaseOrBuilder(f);
+
+            const moreLikeThis = this._moreLikeThis();
+            try {
+                moreLikeThis.withOptions(f.getMoreLikeThis().options);
+
+                const innerMoreLikeThis = f.getMoreLikeThis();
+
+                if (innerMoreLikeThis instanceof MoreLikeThisUsingDocument) {
+                    moreLikeThis.withDocument(innerMoreLikeThis.documentJson);
+                } else if (innerMoreLikeThis instanceof  MoreLikeThisUsingDocumentForDocumentQuery) {
+                    innerMoreLikeThis.forDocumentQuery(this);
+                }
+            } finally {
+                moreLikeThis.dispose();
+            }
+        }
+
+        return this;
+    }
 }

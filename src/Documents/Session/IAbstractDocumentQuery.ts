@@ -7,6 +7,7 @@ import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField";
 import { SpatialCriteria } from "../Queries/Spatial/SpatialCriteria";
 import { GroupBy } from "../Queries/GroupBy";
 import {DocumentType} from "../DocumentAbstractions";
+import {MoreLikeThisScope} from "../Queries/MoreLikeThis/MoreLikeThisScope";
 
 export interface IAbstractDocumentQuery<T> {
 
@@ -419,7 +420,8 @@ export interface IAbstractDocumentQuery<T> {
 
     _orderByDistanceDescending(fieldName: string, shapeWkt: string): void;
 
-    // TBD: MoreLikeThisScope MoreLikeThis();
+    _moreLikeThis(): MoreLikeThisScope;
+
     // TBD void AggregateBy(FacetBase facet);
     // TBD IAggregationDocumentQuery<T> AggregateBy(Action<IFacetBuilder<T>> builder);
     // TBD void AggregateUsing(string facetSetupDocumentId);

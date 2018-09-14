@@ -8,6 +8,8 @@ import { TypeInfo } from "../../Mapping/ObjectMapper";
 import { Mapping } from "../../Mapping";
 import { ObjectTypeDescriptor} from "../..";
 import { throwError } from "../../Exceptions";
+import {SetupDocumentBase} from "../SetupDocumentBase";
+import {ObjectUtil} from "../../Utility/ObjectUtil";
 
 export class EntityToJson {
 
@@ -36,7 +38,11 @@ export class EntityToJson {
         }, conventions.knownEntityTypesByName);
 
         // TODO handle Maps
-        jsonNode = conventions.transformObjectKeysToRemoteFieldNameConvention(jsonNode);
+        if (entity instanceof SetupDocumentBase) {
+            jsonNode = ObjectUtil.transformObjectKeys(jsonNode,  { defaultTransform: "pascal" });
+        } else {
+            jsonNode = conventions.transformObjectKeysToRemoteFieldNameConvention(jsonNode);
+        }
 
         EntityToJson._writeMetadata(jsonNode, typeInfo, documentInfo);
 

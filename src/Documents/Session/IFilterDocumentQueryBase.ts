@@ -8,6 +8,7 @@ import { SpatialCriteria } from "../Queries/Spatial/SpatialCriteria";
 import { SpatialCriteriaFactory } from "../Queries/Spatial/SpatialCriteriaFactory";
 import { IDocumentQuery } from "./IDocumentQuery";
 import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField";
+import {MoreLikeThisBase} from "../Queries/MoreLikeThis/MoreLikeThisBase";
 
 export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocumentQueryBase<T, TSelf>> 
     extends IQueryBase<T, TSelf> {
@@ -440,4 +441,5 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
     // tslint:disable-next-line:max-line-length
     // TBD IDocumentQuery<T> spatial(Function<SpatialDynamicFieldFactory<T>, DynamicSpatialField> field, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
 
+    moreLikeThis(moreLikeThis: MoreLikeThisBase): IDocumentQuery<T>;
 }

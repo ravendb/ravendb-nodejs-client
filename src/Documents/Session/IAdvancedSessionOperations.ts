@@ -50,10 +50,6 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     // tslint:disable:max-line-length
     // TBD void LoadStartingWithIntoStream(string idPrefix, Stream output, string matches = null, int start = 0, int pageSize = 25, string exclude = null, string startAfter = null);
     // TBD void LoadIntoStream(IEnumerable<string> ids, Stream output);
-    // TBD List<T> MoreLikeThis<T, TIndexCreator>(string documentId) where TIndexCreator : AbstractIndexCreationTask, new();
-    // TBD List<T> MoreLikeThis<T, TIndexCreator>(MoreLikeThisQuery query) where TIndexCreator : AbstractIndexCreationTask, new();
-    // TBD List<T> MoreLikeThis<T>(string index, string documentId);
-    // TBD List<T> MoreLikeThis<T>(MoreLikeThisQuery query);
     // TBD patch API void Increment<T, U>(T entity, Expression<Func<T, U>> path, U valToAdd);
     // TBD patch API void Increment<T, U>(string id, Expression<Func<T, U>> path, U valToAdd);
     // TBD patch API void Patch<T, U>(string id, Expression<Func<T, U>> path, U value);

@@ -9,6 +9,8 @@ import { IDocumentQueryBase } from "./IDocumentQueryBase";
 import { IGroupByDocumentQuery } from "./IGroupByDocumentQuery";
 import { IFacetBuilder } from "../Queries/Facets/IFacetBuilder";
 import { FacetBase } from "./../Queries/Facets/FacetBase";
+import {IMoreLikeThisBuilderForDocumentQuery} from "../Queries/MoreLikeThis/IMoreLikeThisBuilderForDocumentQuery";
+import {MoreLikeThisBase} from "../Queries/MoreLikeThis/MoreLikeThisBase";
 
 /**
  * A query against a Raven index
@@ -77,6 +79,10 @@ export interface IDocumentQuery<T extends object>
 
     groupBy(fieldName: string, ...fieldNames: string[]): IGroupByDocumentQuery<T>;
     groupBy(field: GroupBy, ...fields: GroupBy[]): IGroupByDocumentQuery<T>;
+
+    moreLikeThis(
+        builder: (moreLikeThisBuilder: IMoreLikeThisBuilderForDocumentQuery<T>) => void): IDocumentQuery<T>;
+    moreLikeThis(moreLikeThis: MoreLikeThisBase): IDocumentQuery<T>;
 
     //TBD MoreLikeThis
     //TBD SuggestUsing
