@@ -13,7 +13,6 @@ export class RangeFacet extends FacetBase {
         this._parent = parent;
     }
 
-
     public get ranges(): string[] {
         return this._ranges;
     }

@@ -90,7 +90,7 @@ export class WhereOptions {
 
 export class WhereToken extends QueryToken {
 
-    private constructor() {
+    protected constructor() {
         super();
     }
 

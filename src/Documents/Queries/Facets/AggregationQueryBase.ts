@@ -67,7 +67,7 @@ export abstract class AggregationQueryBase {
         });
     }
 
-    public toString(): String {
+    public toString(): string {
         return this._getIndexQuery().toString();
     }
 }

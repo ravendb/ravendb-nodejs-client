@@ -5,8 +5,8 @@ export interface IndexErrors {
 }
  
 export interface IndexingError {
-    error: String;
+    error: string;
     timestamp: Date;
-    document: String;
-    action: String;
+    document: string;
+    action: string;
 }

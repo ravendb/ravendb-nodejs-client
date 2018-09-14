@@ -53,6 +53,8 @@ import { CmpXchg } from "./CmpXchng";
 import { AbstractCallback } from "../../Types/Callbacks";
 import { DocumentQueryCustomization } from "./DocumentQueryCustomization";
 import { FacetBase } from "../Queries/Facets/FacetBase";
+import {MoreLikeThisScope} from "../Queries/MoreLikeThis/MoreLikeThisScope";
+import {MoreLikeThisToken} from "./Tokens/MoreLikeThisToken";
 
 /**
  * A query against a Raven index
@@ -233,16 +235,13 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             throwError("InvalidOperationException",
                 "Cannot get MoreLikeThisToken because there are no where token specified.");
         }
+        const lastToken = this._whereTokens[this._whereTokens.length - 1];
 
-        /* TBD
-          var moreLikeThisToken = WhereTokens.Last.Value as MoreLikeThisToken;
-
-            if (moreLikeThisToken == null)
-                throw new InvalidOperationException($"Last token is not '{nameof(MoreLikeThisToken)}'.");
-
-            return moreLikeThisToken.WhereTokens;
-         */
-        throwError("NotImplementedException", "More like this");
+        if (lastToken instanceof MoreLikeThisToken) {
+            return lastToken.whereTokens;
+        } else {
+            throwError("InvalidOperationException", "Last token is not MoreLikeThisToken");
+        }
     }
 
     private _ensureValidFieldName(fieldName: string, isNestedPath: boolean): string {
@@ -571,18 +570,16 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         tokens.push(TrueToken.INSTANCE);
     }
 
-    /* TBD
-     public MoreLikeThisScope _moreLikeThis()
-        {
-            AppendOperatorIfNeeded(WhereTokens);
+    public _moreLikeThis(): MoreLikeThisScope {
+        this._appendOperatorIfNeeded(this._whereTokens);
 
-            var token = new MoreLikeThisToken();
-            WhereTokens.AddLast(token);
+        const token = new MoreLikeThisToken();
+        this._whereTokens.push(token);
 
-            _isInMoreLikeThis = true;
-            return new MoreLikeThisScope(token, AddQueryParameter, () => _isInMoreLikeThis = false);
-        }
-     */
+        this._isInMoreLikeThis = true;
+
+        return new MoreLikeThisScope(token, v => this._addQueryParameter(v), () => this._isInMoreLikeThis = false);
+    }
 
     /**
      * Includes the specified path in the query, loading the document specified in that path
