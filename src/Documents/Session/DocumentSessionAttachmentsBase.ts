@@ -15,7 +15,7 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
         super(session);
     }
 
-    public getNames(entity: Object): AttachmentName[] {
+    public getNames(entity: object): AttachmentName[] {
         if (!entity) {
             return [];
         }

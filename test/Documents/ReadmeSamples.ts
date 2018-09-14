@@ -1,21 +1,19 @@
-import * as mocha from "mocha";
-import * as BluebirdPromise from "bluebird";
+import * as path from "path";
+import * as fs from "fs";
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 import * as util from "util";
 
 import {
-    RequestExecutor,
-    DocumentConventions,
-    RavenErrorType,
-    GetNextOperationIdCommand,
     IDocumentStore,
     IDocumentQuery,
     IDocumentSession,
 } from "../../src";
+import { TypeUtil } from "../../src/Utility/TypeUtil";
 
-//const print = console.log; //(...args) => {};
-const print = (...args) => { return; };
+// tslint:disable-next-line:prefer-const
+let print = console.log;
+print = TypeUtil.NOOP;
 
 describe("Readme query samples", function () {
 
@@ -31,7 +29,7 @@ describe("Readme query samples", function () {
         public age: number;
         public registeredAt: Date;
 
-        constructor(opts: any) {
+        constructor(opts: object) {
             opts = opts || {};
             Object.assign(this, opts);
         }
@@ -94,6 +92,114 @@ describe("Readme query samples", function () {
             assert.ok(user1);
             assert.ok(user2);
             assert.equal(session.advanced.numberOfRequests, 1);
+        });
+
+    });
+
+    describe("attachments", () => {
+        it("store attachment", async () => {
+            const doc = new User({
+                name: "John"
+            });
+
+            // track entity
+            await session.store(doc);
+
+            // open and store attachment
+            const fileStream = fs.createReadStream(path.join(__dirname, "../Assets/tubes.png"));
+            session.advanced.attachments.store(doc, "tubes.png", fileStream, "image/png");
+
+            await session.saveChanges();
+        });
+
+        describe("having attachment", () => {
+
+            let doc;
+
+            beforeEach(async () => {
+
+                doc = new User({
+                    name: "John"
+                });
+
+                // track entity
+                await session.store(doc);
+
+                // open and store attachment
+                const fileStream = fs.createReadStream(path.join(__dirname, "../Assets/tubes.png"));
+                session.advanced.attachments.store(doc, "tubes.png", fileStream, "image/png");
+
+                await session.saveChanges();
+                fileStream.close();
+            });
+
+            it("get attachment", (done) => {
+                session.advanced.attachments.get(doc.id, "tubes.png")
+                    .then(attachment => {
+                        print(attachment.details);
+
+                        // attachment.data is a Readable
+                        attachment.data
+                            .pipe(fs.createWriteStream(".test/tubes.png"))
+                            .on("finish", () => {
+                                attachment.dispose();
+                                done();
+                            });
+                    });
+            });
+
+            it("attachment exists", async () => {
+                print(await session.advanced.attachments.exists(doc.id, "tubes.png"));
+                print(await session.advanced.attachments.exists(doc.id, "x.png"));
+            });
+
+            it("get attachments names", async () => {
+                {
+                    const session2 = store.openSession();
+                    const entity = await session2.load(doc.id);
+                    print(await session2.advanced.attachments.getNames(entity));
+                }
+            });
+
+        });
+    });
+
+    describe("bulk insert", async () => {
+        it("example", async () => {
+            // create bulk insert instance using DocumentStore instance
+            const bulkInsert = store.bulkInsert();
+            
+            // insert your documents
+            for (const name of ["Anna", "Maria", "Miguel", "Emanuel", "Dayanara", "Aleida"]) {
+                const user = new User({ name });
+                await bulkInsert.store(user);
+                print(user);
+            }
+
+            // flush data and finish
+            await bulkInsert.finish();
+        });
+    });
+
+    describe("changes", () => {
+
+        it("example", async () => {
+            const changes = store.changes();
+            const docsChanges = changes.forDocumentsInCollection("users");
+            docsChanges.on("data", change => {
+                print(change);
+                changes.dispose();
+            });
+
+            {
+                const session2 = store.openSession();
+                await session2.store(new User({ name: "Starlord" }));
+                await session2.saveChanges();
+            }
+
+            return new Promise(resolve => setTimeout(() => {
+                resolve();
+            }, 300));
         });
 
     });

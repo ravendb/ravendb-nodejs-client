@@ -1,6 +1,15 @@
 # RavenDB client for Node.js
 
 [![build status](https://travis-ci.org/ravendb/ravendb-nodejs-client.svg?branch=v4.0)](https://travis-ci.org/ravendb/ravendb-nodejs-client)
+
+## Changelog
+
+### 4.0.2 - 2018-09-14
+Added support for the following features:
+- [Attachments](#attachments)
+- [Bulk Insert](#bulk-insert)
+- [Changes API](#changes-api)
+
 ## Installation
 
 ```bash
@@ -481,7 +490,132 @@ await session.query({ collection: "users" })
 
 `count()` - returns the count of the results (not affected by `take()`)
 
-## Using ECMAScript 2015 classes as models 
+### Attachments
+
+#### Store attachments
+```javascript
+const doc = new User({ name: "John" });
+
+// track entity
+await session.store(doc);
+
+// get read stream or buffer to store
+const fileStream = fs.createReadStream("../photo.png"));
+
+// store attachment using entity
+session.advanced.attachments.store(doc, "photo.png", fileStream, "image/png");
+
+// OR using document ID
+session.advanced.attachments.store(doc.id, "photo.png", fileStream, "image/png");
+
+await session.saveChanges();
+```
+
+#### Get attachments
+
+```javascript
+const attachment = await session.advanced.attachments.get(documentId, "photo.png")
+// attachment.details contains information about the attachment:
+//     { 
+//       name: 'photo.png',
+//       documentId: 'users/1-A',
+//       contentType: 'image/png',
+//       hash: 'MvUEcrFHSVDts5ZQv2bQ3r9RwtynqnyJzIbNYzu1ZXk=',
+//       changeVector: '"A:3-K5TR36dafUC98AItzIa6ow"',
+//       size: 4579 
+//     }
+
+// attachment.data is a Readable https://nodejs.org/api/stream.html#stream_class_stream_readable
+attachment.data
+    .pipe(fs.createWriteStream("photo.png"))
+    .on("finish", () => next());
+```
+
+#### Check if attachment exists
+
+```javascript
+await session.advanced.attachments.exists(doc.id, "photo.png"));
+// true
+
+await session.advanced.attachments.exists(doc.id, "not_there.avi"));
+// false
+```
+
+#### Get attachment names
+
+```javascript
+// use a loaded entity to determine attachments' names
+await session.advanced.attachments.getNames(doc);
+// [ { name: 'photo.png',
+//     hash: 'MvUEcrFHSVDts5ZQv2bQ3r9RwtynqnyJzIbNYzu1ZXk=',
+//     contentType: 'image/png',
+//     size: 4579 } ]
+```
+
+### Bulk Insert
+
+```javascript
+// create bulk insert instance using DocumentStore instance
+const bulkInsert = store.bulkInsert();
+
+// insert your documents
+for (const name of ["Anna", "Maria", "Miguel", "Emanuel", "Dayanara", "Aleida"]) {
+    const user = new User({ name });
+    await bulkInsert.store(user);
+}
+// User { name: 'Anna', id: 'users/1-A' }
+// User { name: 'Maria', id: 'users/2-A' }
+// User { name: 'Miguel', id: 'users/3-A' }
+// User { name: 'Emanuel', id: 'users/4-A' }
+// User { name: 'Dayanara', id: 'users/5-A' }
+// User { name: 'Aleida', id: 'users/6-A' }
+
+// flush data and finish
+await bulkInsert.finish();
+```
+
+### Changes API
+Listen for database changes e.g. document changes.
+
+```javascript
+const changes = store.changes();
+const docsChanges = changes.forAllDocuments();
+
+docsChanges.on("data", change => {
+// { type: 'Put',
+//   id: 'users/1-A',
+//   collectionName: 'Users',
+//   changeVector: 'A:2-QCawZTDbuEa4HUBORhsWYA' }
+});
+
+docsChanges.on("error", err => {
+    // handle errors
+})
+
+{
+    const session = store.openSession();
+    await session.store(new User({ name: "Starlord" }));
+    await session.saveChanges();
+}
+
+...
+// dispose changes instance once you're done
+changes.dispose();
+
+```
+
+## Using object literals for entities
+
+In order to comfortably use object literals as entities set function getting collection name based on the content of the object - `store.conventions.
+findCollectionNameForObjectLiteral()`. This needs to be done *before* a `initialize()` call on `DocumentStore` instance. If you fail to do so, your entites will land up in *@empty* collection having an *UUID* for an ID. 
+
+For example here's a function using *collection* field to set collection name:
+
+```javascript
+store.conventions.findCollectionNameForObjectLiteral = entity => entity["collection"];
+```
+
+## Using classes for entities
 
 1. Define your model as class. Attributes should be just public properties:
 ```javascript
