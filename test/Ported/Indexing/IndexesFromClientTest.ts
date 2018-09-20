@@ -5,7 +5,7 @@ import {
     disposeTestDocumentStore 
 } from "../../Utils/TestUtil";
 import { UsersIndex } from "../../Assets/Indexes";
-import { User } from "../../Assets/Entities";
+import {Post, User} from "../../Assets/Entities";
 import {
     IDocumentStore,
     GetStatisticsCommand,
@@ -14,9 +14,18 @@ import {
     GetIndexNamesOperation,
     IndexQuery,
     ExplainQueryCommand,
+    AbstractIndexCreationTask,
+    GetIndexingStatusOperation,
+    StopIndexingOperation,
+    StartIndexingOperation,
+    StopIndexOperation,
+    GetIndexesOperation,
+    GetIndexesStatisticsOperation,
+    GetIndexStatisticsOperation, SetIndexesLockOperation, SetIndexesPriorityOperation, GetTermsOperation,
 } from "../../../src";
 import { DeleteIndexOperation } from "../../../src/Documents/Operations/Indexes/DeleteIndexOperation";
 import { QueryStatistics } from "../../../src/Documents/Session/QueryStatistics";
+import {MoreLikeThisOptions} from "../../../src/Documents/Queries/MoreLikeThis/MoreLikeThisOptions";
 
 describe("Indexes from client", function () {
 
@@ -87,9 +96,158 @@ describe("Indexes from client", function () {
         assert.equal(statistics.indexes.length, 0);
     });
 
-    it("can explain query", async () => {
+    it("can stop and start", async () => {
+        await new Users_ByName().execute(store);
 
-        const user1 = Object.assign(new User(), { name: "Fitzchack" });
+        let status = await store.maintenance.send(new GetIndexingStatusOperation());
+
+        assert.strictEqual(status.status, "Running");
+        assert.strictEqual(1, status.indexes.length);
+
+        assert.strictEqual(status.indexes[0].status, "Running");
+
+        await store.maintenance.send(new StopIndexingOperation());
+
+        status = await store.maintenance.send(new GetIndexingStatusOperation());
+
+        assert.strictEqual(status.status, "Paused");
+        assert.strictEqual(1, status.indexes.length);
+
+        assert.strictEqual(status.indexes[0].status, "Paused");
+
+        await store.maintenance.send(new StartIndexingOperation());
+        status = await store.maintenance.send(new GetIndexingStatusOperation());
+
+        assert.strictEqual(status.status, "Running");
+        assert.strictEqual(1, status.indexes.length);
+
+        assert.strictEqual(status.indexes[0].status, "Running");
+
+        await store.maintenance.send(new StopIndexOperation(status.indexes[0].name));
+        status = await store.maintenance.send(new GetIndexingStatusOperation());
+
+        assert.strictEqual(status.status, "Running");
+        assert.strictEqual(1, status.indexes.length);
+
+        assert.strictEqual(status.indexes[0].status, "Paused");
+    });
+
+    it("can set lock mode and priority", async () => {
+        await new Users_ByName().execute(store);
+
+        const user1 = Object.assign(new User(), { name: "Fitzchak" });
+        const user2 = Object.assign(new User(), { name: "Arek" });
+
+        {
+            const session = store.openSession();
+            await session.store(user1);
+            await session.store(user2);
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const users = await session.query<User>({ indexName: "Users/ByName"})
+                .waitForNonStaleResults()
+                .whereEquals("name", "Arek")
+                .all();
+
+            assert.strictEqual(users.length, 1);
+        }
+
+        const indexes = await store.maintenance.send(new GetIndexesOperation(0, 128));
+        assert.strictEqual(indexes.length, 1);
+
+        const index = indexes[0];
+        let stats = await store.maintenance.send(new GetIndexStatisticsOperation(index.name));
+        assert.strictEqual(stats.lockMode, "Unlock");
+        assert.strictEqual(stats.priority, "Normal");
+
+        await store
+            .maintenance
+            .send(new SetIndexesLockOperation(index.name, "LockedIgnore"));
+        await store
+            .maintenance
+            .send(new SetIndexesPriorityOperation(index.name, "Low"));
+
+        stats = await store.maintenance.send(new GetIndexStatisticsOperation(index.name));
+        assert.strictEqual(stats.lockMode, "LockedIgnore");
+        assert.strictEqual(stats.priority, "Low");
+    });
+
+    it("can get terms", async () => {
+        const user1 = Object.assign(new User(), { name: "Fitzchak" });
+        const user2 = Object.assign(new User(), { name: "Arek" });
+
+        {
+            const session = store.openSession();
+            await session.store(user1);
+            await session.store(user2);
+            await session.saveChanges();
+        }
+
+        let indexName: string;
+
+        {
+            const session = store.openSession();
+            let statsRef: QueryStatistics;
+
+            const users = await session
+                .query<User>(User)
+                .waitForNonStaleResults()
+                .statistics(s => statsRef = s)
+                .whereEquals("name", "Arek")
+                .all();
+
+            indexName = statsRef.indexName;
+        }
+
+        const terms = await store
+            .maintenance
+            .send(new GetTermsOperation(indexName, "name", null, 128));
+
+        assert.strictEqual(terms.length, 2);
+        assert.ok(terms.find(x => x === "fitzchak"));
+        assert.ok(terms.find(x => x === "arek"));
+    });
+
+    it("can get index names", async () => {
+        const user1 = Object.assign(new User(), { name: "Fitzchak" });
+        const user2 = Object.assign(new User(), { name: "Arek" });
+
+        {
+            const session = store.openSession();
+            await session.store(user1);
+            await session.store(user2);
+            await session.saveChanges();
+        }
+
+        let indexName: string;
+
+        {
+            const session = store.openSession();
+            let statsRef: QueryStatistics;
+
+            const users = await session
+                .query<User>(User)
+                .waitForNonStaleResults()
+                .statistics(s => statsRef = s)
+                .whereEquals("name", "Arek")
+                .all();
+
+            indexName = statsRef.indexName;
+        }
+
+        const indexNames = await store
+            .maintenance
+            .send(new GetIndexNamesOperation(0, 10));
+
+        assert.strictEqual(indexNames.length, 1);
+        assert.ok(indexNames.find(x => x === indexName));
+    });
+
+    it("can explain query", async () => {
+        const user1 = Object.assign(new User(), { name: "Fitzchak" });
         const user2 = Object.assign(new User(), { name: "Arek" });
 
         {
@@ -124,4 +282,78 @@ describe("Indexes from client", function () {
         assert.ok(explanations[0].index);
         assert.ok(explanations[0].reason);
     });
+
+    it("can get more like this", async() => {
+        {
+            const session = store.openSession();
+            const post1 = Object.assign(new Post(), { id: "posts/1", title: "doduck", desc: "prototype" });
+            const post2 = Object.assign(new Post(), { id: "posts/2", title: "doduck", desc: "prototype your idea" });
+            const post3 = Object.assign(new Post(), { id: "posts/3", title: "doduck", desc: "love programming" });
+            const post4 = Object.assign(new Post(), { id: "posts/4", title: "We do", desc: "prototype" });
+            const post5 = Object.assign(new Post(), { id: "posts/5", title: "We love", desc: "challange" });
+
+            await session.store(post1);
+            await session.store(post2);
+            await session.store(post3);
+            await session.store(post4);
+            await session.store(post5);
+
+            await session.saveChanges();
+        }
+
+        await new Posts_ByTitleAndDesc().execute(store);
+        await testContext.waitForIndexing(store);
+
+        {
+            const options = {
+                minimumDocumentFrequency: 1,
+                minimumTermFrequency: 0
+            } as MoreLikeThisOptions;
+
+            const session = store.openSession();
+            const list = await session.query<Post>({ indexName: "Posts/ByTitleAndDesc"})
+                .moreLikeThis(f => f.usingDocument(x => x.whereEquals("id()", "posts/1")).withOptions(options))
+                .all();
+
+            assert.strictEqual(list.length, 3);
+
+            assert.strictEqual(list[0].title, "doduck");
+            assert.strictEqual(list[0].desc, "prototype your idea");
+
+            assert.strictEqual(list[1].title, "doduck");
+            assert.strictEqual(list[1].desc, "love programming");
+
+            assert.strictEqual(list[2].title, "We do");
+            assert.strictEqual(list[2].desc, "prototype");
+        }
+    });
 });
+
+export class Posts_ByTitleAndDesc extends AbstractIndexCreationTask {
+
+    constructor() {
+        super();
+
+        this.map = "from p in docs.Posts select new { p.title, p.desc }";
+        this.index("title", "Search");
+        this.store("title", "Yes");
+        this.analyze("title", "Lucene.Net.Analysis.SimpleAnalyzer");
+
+        this.index("desc", "Search");
+        this.store("desc", "Yes");
+        this.analyze("desc", "Lucene.Net.Analysis.SimpleAnalyzer");
+    }
+}
+
+export class Users_ByName extends AbstractIndexCreationTask {
+
+    constructor() {
+        super();
+
+        this.map = "from u in docs.Users select new { u.name }";
+
+        this.index("name", "Search");
+        this.indexSuggestions.add("name");
+        this.store("name", "Yes");
+    }
+}
