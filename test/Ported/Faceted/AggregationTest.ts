@@ -356,6 +356,5 @@ describe("AggregationTest", function () {
             assert.strictEqual(facet2.count, 0);
             assert.strictEqual(facet3.count, 1);
         }
-
     });
 });

@@ -79,12 +79,12 @@ export class GetTermsCommand extends RavenCommand<string[]> {
             this._throwInvalidResponse();
         }
 
-        return this._getDefaultResponsePipeline()
-            .process(bodyStream)
+        let body;
+        await this._defaultPipeline(_ => body = _).process(bodyStream)
             .then(results => {
-                this.result = results.result["terms"];
-                return results.body;
+                this.result = results["terms"];
             });
+        return body;
     }
 
     public get isReadRequest(): boolean {

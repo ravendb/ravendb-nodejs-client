@@ -35,7 +35,8 @@ describe("GetDocumentCommand streaming", function () {
 
             const user = {
                 Name: "Marcin",
-                Age: 30
+                Age: 30,
+                Pet: "users/4"
             };
 
             const user2 = {
@@ -45,10 +46,12 @@ describe("GetDocumentCommand streaming", function () {
             };
 
             const user3 = { Name: "Gizmo" };
+            const user4 = { Name: "Dumbo" };
 
             await session.store(user, "users/1");
             await session.store(user2, "users/2");
             await session.store(user3, "users/3");
+            await session.store(user4, "users/4");
             await session.saveChanges();
 
             const getDocs = new GetDocumentsCommand({
@@ -63,8 +66,8 @@ describe("GetDocumentCommand streaming", function () {
             assert.ok(users);
             assert.ok(users.results && users.results.length);
             assert.ok(users.includes);
-            assert.equal(2, users.results.length);
-            assert.equal(1, Object.keys(users.includes).length);
+            assert.equal(users.results.length, 2);
+            assert.equal(Object.keys(users.includes).length, 2);
             assert.equal(user3.Name, users.includes["users/3"].Name);
             assert.equal(user2.Age, users.results[1].Age);
         } finally {
@@ -74,5 +77,5 @@ describe("GetDocumentCommand streaming", function () {
         }
     });
 
-    it.skip("[NOT IMPL] gets docs having a Map", () => {});
+    it("gets docs having a Map");
 });

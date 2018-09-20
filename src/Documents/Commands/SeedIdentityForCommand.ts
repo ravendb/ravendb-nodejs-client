@@ -45,19 +45,18 @@ export class SeedIdentityForCommand extends RavenCommand<number> {
             this._throwInvalidResponse();
         }
 
-        return this._getDefaultResponsePipeline()
-            .process(bodyStream)
-            .then(({ result, body }) => {
-
+        let body;
+        await this._defaultPipeline(_ => body = _).process(bodyStream)
+            .then(result => {
                 const newSeedValue = result["newSeedValue"];
                 if (!newSeedValue) {
                     this._throwInvalidResponse();
                 }
 
                 this.result = newSeedValue;
-                
-                return body;
             });
+            
+        return body;
     }
 
 }

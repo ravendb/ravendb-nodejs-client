@@ -63,6 +63,12 @@ export class HttpCache implements IDisposable {
         this._items.set(url, httpCacheItem);
     }
 
+    public get numberOfItems(): number {
+        return this._items["_get_buckets"]().reduce((result, next: Map<string, string>) => {
+            return result + next.size;
+        }, 0);
+    }
+
     public getMightHaveBeenModified(): boolean {
         return false; // TBD
     }

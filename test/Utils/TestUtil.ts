@@ -3,6 +3,7 @@ import {RequestExecutor} from "../../src/Http/RequestExecutor";
 // const why = require("why-is-node-running");
 import * as fs from "fs";
 import * as path from "path";
+import { VError } from "verror";
 
 import "source-map-support/register";
 import {IDisposable} from "../../src/Types/Contracts";
@@ -138,6 +139,12 @@ function setupRavenDbTestContext() {
 
     before(() => {
         testContext = RavenTestContext.setupServer();
+    });
+
+    afterEach(function () {
+        if (this.currentTest.state === "failed") {
+            console.error(VError.fullStack(this.currentTest.err));
+        }
     });
 
     after(() => {

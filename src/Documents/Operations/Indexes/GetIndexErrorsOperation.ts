@@ -59,12 +59,12 @@ export class GetIndexErrorsCommand extends RavenCommand<IndexErrors[]> {
             }
         };
 
-        return this._getDefaultResponsePipeline()
-            .process(bodyStream)
+        let body;
+        await this._defaultPipeline(_ => body = _).process(bodyStream)
             .then(results => {
-                this.result = this._reviveResultTypes(results.result, typeInfo)["results"];
-                return results.body;
+                this.result = this._reviveResultTypes(results, typeInfo)["results"];
             });
+        return body;
     }
 
     public get isReadRequest(): boolean {

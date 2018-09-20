@@ -4,7 +4,6 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
 import * as stream from "readable-stream";
-import { RavenCommandResponsePipeline } from '../../../Http/RavenCommandResponsePipeline';
 
 export interface IdentitiesCollection {
     [key: string]: number;
@@ -37,12 +36,11 @@ export class GetIdentitiesCommand extends RavenCommand<IdentitiesCollection> {
         }
 
         public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
-            return RavenCommandResponsePipeline.create()
+            let body;
+            this.result = await this._pipeline<IdentitiesCollection>()
                 .parseJsonSync()
-                .process(bodyStream)
-                .then(({ result, body }) => {
-                    this.result = result as IdentitiesCollection;
-                    return body;
-                });
+                .collectBody(b => body = b)
+                .process(bodyStream);
+            return body;
         }
 }

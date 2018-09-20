@@ -7,9 +7,9 @@ import {
     PutCompareExchangeValueOperation,
     GetCompareExchangeValuesOperation,
     DeleteCompareExchangeValueOperation,
+    CompareExchangeResult,
 } from "../../src";
 import { User } from "../Assets/Entities";
-import { CompareExchangeResult } from '../../src/Documents/Operations/CompareExchange/CompareExchangeResult';
 
 describe("UniqueValuesTest", function () {
 
@@ -43,7 +43,6 @@ describe("UniqueValuesTest", function () {
     });
 
     it("canPutUniqueString", async () => {
-        const session = store.openSession();
         await store.operations.send(new PutCompareExchangeValueOperation<string>("test", "Karmel", 0));
         const res = await store.operations.send(new GetCompareExchangeValueOperation<string>("test"));
         assert.equal(res.value, "Karmel");

@@ -8,13 +8,15 @@ import { HttpRequestParameters } from "../../Primitives/Http";
 import { getHeaders } from "../../Utility/HttpUtil";
 import { IRavenObject } from "../..";
 import { TypeUtil } from "../../Utility/TypeUtil";
-import { JsonSerializer } from "../../Mapping/Json/Serializer";
 import { throwError } from "../../Exceptions";
-import { CollectResultStreamOptions } from "../../Mapping/Json/Streams/CollectResultStream";
-import { getIgnoreKeyCaseTransformKeysFromDocumentMetadata } from "../../Mapping/Json/Docs/index";
-import { IRavenCommandResponsePipelineResult } from "../../Http/RavenCommandResponsePipeline";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { CONSTANTS } from "../../Constants";
+
+import { streamArray } from "stream-json/streamers/StreamArray";
+import { streamObject } from "stream-json/streamers/StreamObject";
+import { pick } from "stream-json/filters/Pick";
+import { ignore } from "stream-json/filters/Ignore";
+
+import { parseDocumentResults, parseDocumentIncludes } from "../../Mapping/Json/Streams/Pipelines";
 
 export interface GetDocumentsCommandOptionsBase {
     conventions: DocumentConventions;
@@ -52,8 +54,6 @@ export interface DocumentsResult {
 export interface GetDocumentsResult extends DocumentsResult {
     nextPageStart: number;
 }
-
-const LOAD_DOCS_JSON_PATH = [ /^(Results|Includes)$/, { emitPath: true } ];
 
 export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
 
@@ -194,67 +194,37 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         }
     }
 
-    protected get _serializer(): JsonSerializer {
-        const serializer = super._serializer;
-        return serializer;
-    }
-
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         if (!bodyStream) {
             this.result = null;
             return;
         }
-        
-        const collectResultOpts: CollectResultStreamOptions<DocumentsResult> = {
-            reduceResults: (result: DocumentsResult, chunk: { path: string | any[], value: object }) => {
-                const doc = chunk.value;
-                const path = chunk.path;
 
-                const metadata = doc["@metadata"];
-                if (!metadata) {
-                    throwError("InvalidArgumentException", "Document must have @metadata.");
-                }
+        let body;
+        this.result = 
+            await GetDocumentsCommand.parseDocumentsResultResponseAsync(
+                bodyStream, this._conventions, b => body = b);
 
-                const docId = metadata["@id"];
-                if (!docId) {
-                    throwError("InvalidArgumentException", "Document must have @id in @metadata.");
-                }
+        return body as string;
+    }
 
-                if (path[0] === "Results") {
-                    result.results.push(doc);
-                } else if (path[0] === "Includes") {
-                    result.includes[docId] = doc;
-                }
+    public static async parseDocumentsResultResponseAsync(
+        bodyStream: stream.Stream, 
+        conventions: DocumentConventions,
+        bodyCallback?: (body: string) => void): Promise<GetDocumentsResult> {
 
-                return result;
-            },
-            initResult: { results: [], includes: {} } as DocumentsResult
-        };
+        const resultsPromise = parseDocumentResults(bodyStream, conventions, bodyCallback); 
+        const includesPromise = parseDocumentIncludes(bodyStream, conventions);
+        const restPromise = RavenCommandResponsePipeline.create()
+            .parseJsonAsync([
+                ignore({ filter: /^Results|Includes$/ }),
+                streamObject()
+            ])
+            .streamKeyCaseTransform("camel")
+            .process(bodyStream);
 
-        return RavenCommandResponsePipeline.create()
-            .collectBody()
-            .parseJsonAsync(LOAD_DOCS_JSON_PATH)
-            .streamKeyCaseTransform({
-                defaultTransform: this._conventions.entityFieldNameConvention,
-                extractIgnorePaths: (e) => [ 
-                    ...getIgnoreKeyCaseTransformKeysFromDocumentMetadata(e), 
-                    CONSTANTS.Documents.Metadata.IGNORE_CASE_TRANSFORM_REGEX
-                ],
-                ignoreKeys: [ /^@/ ],
-                paths: [
-                    {
-                        transform: "camel",
-                        path: /@metadata\.@attachments/
-                    }
-                ]
-            })
-            .restKeyCaseTransform({ defaultTransform: "camel" })
-            .collectResult(collectResultOpts)
-            .process(bodyStream)
-            .then((result: IRavenCommandResponsePipelineResult<DocumentsResult>) => {
-                this.result = Object.assign(result.result, result.rest) as GetDocumentsResult;
-                return result.body;
-            });
+        const [results, includes, rest ] = await Promise.all([ resultsPromise, includesPromise, restPromise ]);
+        return Object.assign({}, rest, { includes, results }) as GetDocumentsResult;
     }
 
     public get isReadRequest(): boolean {

@@ -8,13 +8,17 @@ import { IDocumentStore } from "../IDocumentStore";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { HttpCache } from "../../Http/HttpCache";
 import { ServerNode } from "../../Http/ServerNode";
-import { JsonSerializer } from "../../Mapping/Json/Serializer";
-import { ObjectKeysTransform } from "../../Mapping/ObjectMapper";
 import { PatchResult } from "./PatchResult";
 import * as stream from "readable-stream";
-import { RavenCommandResponsePipeline, IRavenCommandResponsePipelineResult } from "../../Http/RavenCommandResponsePipeline";
 import { getIgnoreKeyCaseTransformKeysFromDocumentMetadata } from "../../Mapping/Json/Docs";
 import { CollectResultStreamOptions } from "../../Mapping/Json/Streams/CollectResultStream";
+import { streamArray } from "stream-json/streamers/StreamArray";
+import { streamObject } from "stream-json/streamers/StreamObject";
+import { streamValues } from "stream-json/streamers/StreamValues";
+import { pick } from "stream-json/filters/Pick";
+import { filter } from "stream-json/filters/Filter";
+import { ignore } from "stream-json/filters/Ignore";
+import { parseRestOfOutput } from "../../Mapping/Json/Streams/Pipelines";
 
 export interface Payload {
     patch: PatchRequest;
@@ -88,7 +92,6 @@ export class PatchOperation implements IOperation<PatchResult> {
 
 }
 
-const DOCS_JSON_PATH = [ /^(ModifiedDocument|OriginalDocument)$/i, { emitPath: true } ];
 export class PatchCommand extends RavenCommand<PatchResult> {
     private _id: string;
     private _changeVector: string;
@@ -171,33 +174,33 @@ export class PatchCommand extends RavenCommand<PatchResult> {
 
         const collectResultOpts: CollectResultStreamOptions<PatchResult> = {
             initResult: {} as PatchResult ,
-            reduceResults: (result, { path, value }: { path: string[], value: any }) => {
-                if (path[0] === "ModifiedDocument") {
-                    result.modifiedDocument = value;
+            reduceResults: (reduceResult, { key, value }: { key: string, value: any }) => {
+                if (key === "ModifiedDocument") {
+                    reduceResult.modifiedDocument = value;
                 }
 
-                if (path[0] === "OriginalDocument") {
-                    result.originalDocument = value;                    
+                if (key === "OriginalDocument") {
+                    reduceResult.originalDocument = value;                    
                 }
 
-                return result;
+                return reduceResult;
             }
-        }
+        };
 
-        return RavenCommandResponsePipeline.create()
-            .collectBody()
-            .parseJsonAsync(DOCS_JSON_PATH)
-            .streamKeyCaseTransform({
-                defaultTransform: this._conventions.entityFieldNameConvention,
-                extractIgnorePaths: (e) => [ ...getIgnoreKeyCaseTransformKeysFromDocumentMetadata(e), /@metadata\./ ],
-                ignoreKeys: [ /^@/ ]
-            })
-            .restKeyCaseTransform({ defaultTransform: "camel" })
+        let body;
+        const resultPromise = this._pipeline()
+            .collectBody(b => body = b)
+            .parseJsonAsync([
+                filter({ filter: /^ModifiedDocument|OriginalDocument$/ }),
+                streamObject()
+            ])
+            .streamKeyCaseTransform(this._conventions.entityFieldNameConvention, "DOCUMENT_LOAD")
             .collectResult(collectResultOpts)
-            .process(bodyStream)
-            .then(({ result, rest, body }: IRavenCommandResponsePipelineResult<PatchResult>) => {
-                this.result = Object.assign(result, rest) as PatchResult;
-                return body;
-            });
+            .process(bodyStream);
+
+        const restPromise = parseRestOfOutput(bodyStream, /^ModifiedDocument|OriginalDocument$/);
+        const [ result, rest ] = await Promise.all([ resultPromise, restPromise ]);
+        this.result = Object.assign(result, rest);
+        return body;
     }
 }

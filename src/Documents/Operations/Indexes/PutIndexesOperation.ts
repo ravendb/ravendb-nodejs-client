@@ -92,12 +92,13 @@ export class PutIndexesCommand extends RavenCommand<PutIndexResult[]> {
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
-        return this._getDefaultResponsePipeline()
+        let body;
+        await this._defaultPipeline(x => body = x)
             .process(bodyStream)
             .then(results => {
-                this.result = results.result["results"];
-                return results.body;
+                this.result = results["results"];
             });
+        return body;
     }
 
     public get isReadRequest(): boolean {

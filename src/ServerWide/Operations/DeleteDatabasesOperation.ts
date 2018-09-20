@@ -77,8 +77,9 @@ export class DeleteDatabaseCommand extends RavenCommand<DeleteDatabaseResult> {
             this._throwInvalidResponse();
         }
 
-        return this._getDefaultResponsePipeline()
-            .process(bodyStream).then(results => results.body);
+        let body;
+        await this._defaultPipeline(x => body = x).process(bodyStream);
+        return body;
     }
 
     public get isReadRequest() {

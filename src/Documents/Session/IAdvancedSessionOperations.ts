@@ -13,11 +13,14 @@ import { IDocumentQuery } from "./IDocumentQuery";
 import { AdvancedDocumentQueryOptions } from "./QueryOptions";
 import { AbstractCallback } from "../../Types/Callbacks";
 import { IAttachmentsSessionOperations } from "../Session/IAttachmentsSessionOperations";
+import {ILazySessionOperations} from "./Operations/Lazy/ILazySessionOperations";
+import {IEagerSessionOperations} from "./Operations/Lazy/IEagerSessionOperations";
 
 export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOperations {
 
-    // TBD IEagerSessionOperations eagerly();
-    // TBD ILazySessionOperations lazily();
+    eagerly: IEagerSessionOperations;
+    lazily: ILazySessionOperations;
+
     // TBD IRevisionsSessionOperations Revisions { get; }
 
     /**

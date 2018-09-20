@@ -80,7 +80,7 @@ export class EntityToJson {
             return;
         }
 
-        if (documentInfo.metadata) { //TODO check me!
+        if (documentInfo.metadata) { 
             documentInfo.metadata[CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES] = typeInfo.nestedTypes;
             documentInfo.metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] = typeInfo.typeName;
         }

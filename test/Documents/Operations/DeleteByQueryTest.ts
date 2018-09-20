@@ -23,11 +23,10 @@ describe("DeleteByQueryTest", function () {
         {
             const session = store.openSession();
             const user1 = Object.assign(new User(), { age: 5 });
-            await session.store(user1);
-
             const user2 = Object.assign(new User(), { age: 10 });
-            await session.store(user2);
 
+            await session.store(user1);
+            await session.store(user2);
             await session.saveChanges();
         }
 
@@ -40,7 +39,8 @@ describe("DeleteByQueryTest", function () {
 
         {
             const session = store.openSession();
-            assert.equal(await session.query(User).count(), 1);
+            const count = await session.query(User).count();
+            assert.equal(count, 1);
         }
     });
 });

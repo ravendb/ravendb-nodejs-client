@@ -4,9 +4,8 @@ import { throwError } from "../Exceptions";
 import { TypeUtil } from "../Utility/TypeUtil";
 import * as changeCase from "change-object-case";
 import { getLogger } from "../Utility/LogUtil";
-import { CasingConvention, ObjectUtil } from "../Utility/ObjectUtil";
-import { StringUtil } from '../Utility/StringUtil';
-import { DocumentConventions } from '../Documents/Conventions/DocumentConventions';
+import { StringUtil } from "../Utility/StringUtil";
+import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
 
 const log = getLogger({ module: "ObjectMapper" });
 

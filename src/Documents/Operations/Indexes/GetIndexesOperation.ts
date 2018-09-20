@@ -4,9 +4,7 @@ import { RavenCommand } from "../../../Http/RavenCommand";
 import { IndexDefinition } from "../../Indexes/IndexDefinition";
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { 
-    RavenCommandResponsePipeline, 
-    IRavenCommandResponsePipelineResult } from "../../../Http/RavenCommandResponsePipeline";
+import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
 import * as stream from "readable-stream";
 
 export class GetIndexesOperation implements IMaintenanceOperation<IndexDefinition[]> {
@@ -50,15 +48,16 @@ export class GetIndexesCommand extends RavenCommand<IndexDefinition[]> {
             this._throwInvalidResponse();
         }
 
-        return RavenCommandResponsePipeline.create()
-            .collectBody()
+        let body;
+        await this._pipeline<object>()
+            .collectBody(b => body = b)
             .parseJsonSync()
             .streamKeyCaseTransform({
                 defaultTransform: "camel",
                 ignorePaths:  [ /fields\.[^.]+$/i ]
             })
             .process(bodyStream)
-            .then((result: IRavenCommandResponsePipelineResult<object>) => {
+            .then((result) => {
                 const indexDefTypeInfo = {
                     nestedTypes: {
                         "results[]": "IndexDefinition",
@@ -66,10 +65,10 @@ export class GetIndexesCommand extends RavenCommand<IndexDefinition[]> {
                     },
                 };
                 const knownTypes = new Map([[IndexDefinition.name, IndexDefinition]]);
-                const allResults = this._reviveResultTypes(result.result, indexDefTypeInfo, knownTypes);
+                const allResults = this._reviveResultTypes(result, indexDefTypeInfo, knownTypes);
                 this.result = allResults["results"];
-                return result.body;
             });
+        return body;
     }
 
     public get isReadRequest(): boolean {

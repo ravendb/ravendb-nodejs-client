@@ -1,3 +1,4 @@
+import { Lazy } from "../Lazy";
 import { QueryOperation } from "./Operations/QueryOperation";
 import * as BluebirdPromise from "bluebird";
 import { GroupByCountToken } from "./Tokens/GroupByCountToken";
@@ -55,6 +56,9 @@ import { DocumentQueryCustomization } from "./DocumentQueryCustomization";
 import { FacetBase } from "../Queries/Facets/FacetBase";
 import {MoreLikeThisScope} from "../Queries/MoreLikeThis/MoreLikeThisScope";
 import {MoreLikeThisToken} from "./Tokens/MoreLikeThisToken";
+import {LazyQueryOperation} from "../Session/Operations/Lazy/LazyQueryOperation";
+import { DocumentSession } from "./DocumentSession";
+import { ObjectTypeDescriptor } from "../../Types";
 
 /**
  * A query against a Raven index
@@ -1796,5 +1800,37 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     public _aggregateUsing(facetSetupDocumentId: string): void {
         this._selectTokens.push(FacetToken.create(facetSetupDocumentId));
     }
+
+    public lazily(): Lazy<T[]> {
+        if (!this._queryOperation) {
+            this._queryOperation = this._initializeQueryOperation();
+        }
+
+        const clazz = this._conventions.findEntityType(this._clazz);
+        const lazyQueryOperation = new LazyQueryOperation<T>(
+            this._theSession.conventions,
+            this._queryOperation,
+            this,
+            clazz);
+        return (this._theSession as DocumentSession)
+            .addLazyOperation(lazyQueryOperation);
+    }
+
+    public countLazily(): Lazy<number> {
+        if (!this._queryOperation) {
+            this._take(0);
+            this._queryOperation = this._initializeQueryOperation();
+        }
+
+        const clazz = this._conventions.findEntityType(this._clazz);
+        const lazyQueryOperation = 
+            new LazyQueryOperation<T>(
+                this._theSession.conventions, 
+                this._queryOperation, 
+                this,
+                clazz);
+        return (this._theSession as DocumentSession).addLazyCountOperation(lazyQueryOperation);
+    }
+
     // tslint:enable:function-name
 }

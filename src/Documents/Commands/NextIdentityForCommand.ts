@@ -37,17 +37,16 @@ export class NextIdentityForCommand extends RavenCommand<number> {
             this._throwInvalidResponse();
         }
 
-        return this._getDefaultResponsePipeline()
-            .process(bodyStream)
+        let body;
+        await this._defaultPipeline(_ => body = _).process(bodyStream)
             .then(results => {
-
-                if (!results.result["newIdentityValue"]) {
+                if (!results["newIdentityValue"]) {
                     this._throwInvalidResponse();
                 }
 
-                this.result = results.result["newIdentityValue"];
-                
-                return results.body;
+                this.result = results["newIdentityValue"];
             });
+            
+        return body;
     }
 }

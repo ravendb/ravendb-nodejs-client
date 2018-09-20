@@ -41,6 +41,7 @@ import { JsonSerializer } from "../../Mapping/Json/Serializer";
 import { OperationExecutor } from "../Operations/OperationExecutor";
 import { createMetadataDictionary } from "../../Mapping/MetadataAsDictionary";
 import {IndexBatchOptions, ReplicationBatchOptions} from "./IAdvancedSessionOperations";
+import { ILazyOperation } from "./Operations/Lazy/ILazyOperation";
 
 export abstract class InMemoryDocumentSessionOperations 
     extends EventEmitter
@@ -54,7 +55,7 @@ export abstract class InMemoryDocumentSessionOperations
 
     private _operationExecutor: OperationExecutor;
 
-    protected _pendingLazyOperations = [];
+    protected _pendingLazyOperations: ILazyOperation[] = [];
 
     protected static _instancesCounter: number = 0;
 
@@ -352,13 +353,14 @@ export abstract class InMemoryDocumentSessionOperations
         }
     }
 
-    public checkIfIdAlreadyIncluded(ids: string[], includes: Map<string, ObjectTypeDescriptor>): boolean;
+    public checkIfIdAlreadyIncluded(ids: string[], includes: { [key: string]: ObjectTypeDescriptor }): boolean;
     public checkIfIdAlreadyIncluded(ids: string[], includes: string[]): boolean;
-    public checkIfIdAlreadyIncluded(ids: string[], includes: string[] | Map<string, ObjectTypeDescriptor>): boolean {
-        let includesList: string[];
-        if (includes instanceof Map) {
-            includesList = Array.from((includes as Map<string, ObjectTypeDescriptor>).keys());
-        }
+    public checkIfIdAlreadyIncluded(
+        ids: string[], includes: string[] | { [key: string]: ObjectTypeDescriptor }): boolean {
+
+        if (!Array.isArray(includes) && typeof includes === "object") {
+            return this.checkIfIdAlreadyIncluded(ids, Object.keys(includes));
+        } 
 
         for (const id of ids) {
             if (this._knownMissingIds.has(id)) {
@@ -382,19 +384,17 @@ export abstract class InMemoryDocumentSessionOperations
                 continue;
             }
 
-            for (const include of includesList) {
+            for (const include of includes) {
                 let hasAll: boolean = true;
 
-                IncludesUtil.include(documentInfo.document, include, (id: string) => {
-                    hasAll = hasAll && this.isLoaded(id);
+                IncludesUtil.include(documentInfo.document, include, (includeId: string) => {
+                    hasAll = hasAll && this.isLoaded(includeId);
                 });
 
                 if (!hasAll[0]) {
                     return false;
                 }
-
             }
-
         }
 
         return true;

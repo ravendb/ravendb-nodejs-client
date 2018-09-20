@@ -36,12 +36,13 @@ export class GetClusterTopologyCommand extends RavenCommand<ClusterTopologyRespo
             this._throwInvalidResponse();
         }
 
-        return this._getDefaultResponsePipeline().process(bodyStream)
-            .then(({ body, result }) => {
+        let body;
+        await this._defaultPipeline(x => body = x).process(bodyStream)
+            .then(result => {
                 const clusterTpl = Object.assign(new ClusterTopology(), result.topology);
                 this.result = Object.assign(result as ClusterTopologyResponse, { topology: clusterTpl });
-                return body;
             });
+        return body;
     }
 
     public get isReadRequest() {

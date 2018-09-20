@@ -1,4 +1,4 @@
-import { HttpRequestParameters } from '../../../Primitives/Http';
+import { HttpRequestParameters } from "../../../Primitives/Http";
 import { IOperation, OperationResultType } from "../OperationAbstractions";
 import { CompareExchangeResult } from "./CompareExchangeResult";
 import { ClassConstructor } from "../../../Types";
@@ -7,10 +7,13 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { HttpCache } from "../../../Http/HttpCache";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { throwError } from "../../../Exceptions";
-import { ServerNode } from '../../../Http/ServerNode';
+import { ServerNode } from "../../../Http/ServerNode";
 import * as stream from "readable-stream";
-import { RavenCommandResponsePipeline } from '../../../Http/RavenCommandResponsePipeline';
-import { TypeUtil } from '../../../Utility/TypeUtil';
+import { streamObject } from "stream-json/streamers/StreamObject";
+import { pick } from "stream-json/filters/Pick";
+import { ignore } from "stream-json/filters/Ignore";
+import { streamValues } from "stream-json/streamers/StreamValues";
+import { streamArray } from "stream-json/streamers/StreamArray";
 
 export class DeleteCompareExchangeValueOperation<T> implements IOperation<CompareExchangeResult<T>> {
 
@@ -67,21 +70,32 @@ export class RemoveCompareExchangeCommand<T> extends RavenCommand<CompareExchang
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
-        return RavenCommandResponsePipeline.create()
-            .collectBody()
-            .parseJsonAsync([ "Value", { emitPath: true }])
+        let body;
+        const resultPromise = this._pipeline<object>()
+            .collectBody(b => body = b)
+            .parseJsonAsync([ 
+                pick({ filter: "Value.Object" }),
+                streamValues()
+            ])
             .streamKeyCaseTransform({ defaultTransform: this._conventions.entityFieldNameConvention })
-            .restKeyCaseTransform({
-                defaultTransform: "camel"
-            })
-            .process(bodyStream)
-            .then(pipelineResult => {
-                const resObj = Object.assign(
-                    pipelineResult.rest as { successful: boolean, index: number }, 
-                    { value: { object: pipelineResult.result["value"] } });
-                this.result = CompareExchangeResult.parseFromObject(resObj, this._conventions, this._clazz);
+            .process(bodyStream);
+        
+        const restPromise = this._pipeline<object>()
+            .parseJsonAsync([
+                ignore({ filter: "Value" }),
+                streamValues()
+            ])
+            .streamKeyCaseTransform("camel")
+            .process(bodyStream);
+        
+        const [ result, rest ] = await Promise.all([resultPromise, restPromise]);
 
-                return pipelineResult.body;
-            });
+        const resObj = Object.assign(
+            rest as { successful: boolean, index: number },
+            { value: { object: result } });
+            
+        this.result = CompareExchangeResult.parseFromObject(resObj, this._conventions, this._clazz);
+
+        return body;
     }
 }

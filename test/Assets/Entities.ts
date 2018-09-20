@@ -58,3 +58,32 @@ export class Order {
     public freight: number;
     public lines: OrderLine[];
 }
+
+export type CompanyType = "Public" | "Private";
+
+export class Employee {
+    public id: string;
+    public firstName: string;
+    public lastName: string;
+}
+
+export class Contact {
+    public id: string;
+    public firstName: string;
+    public surname: string;
+    public email: string;
+}
+export class Company {
+    public accountsReceivable: number;
+    public id: string;
+    public name: string;
+    public desc: string;
+    public email: string;
+    public address1: string;
+    public address2: string;
+    public address3: string;
+    public contacts: Contact[];
+    public phone: string;
+    public type: CompanyType;
+    public employeesIds: string[];
+}

@@ -11,9 +11,10 @@ import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 import { ClassConstructor, ObjectTypeDescriptor } from "../../..";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import * as stream from "readable-stream";
-import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
-import { CollectResultStream } from '../../../Mapping/Json/Streams/CollectResultStream';
-import { ObjectUtil } from "../../../Utility/ObjectUtil";
+import { streamValues } from "stream-json/streamers/StreamValues";
+import { streamArray } from "stream-json/streamers/StreamArray";
+import { pick } from "stream-json/filters/Pick";
+import { ignore } from "stream-json/filters/Ignore";
 
 export class PutCompareExchangeValueOperation<T> implements IOperation<CompareExchangeResult<T>> {
 
@@ -73,7 +74,6 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/cmpxchg?key=" + this._key + "&index=" + this._index;
 
-
         const tuple = {};
         tuple["Object"] = TypeUtil.isPrimitive(this._value) 
             ? this._value 
@@ -88,25 +88,37 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
-        return RavenCommandResponsePipeline.create()
-            .collectBody()
-            .parseJsonAsync([ "Value", { emitPath: true }])
-            .streamKeyCaseTransform({ defaultTransform: this._conventions.entityFieldNameConvention })
-            .restKeyCaseTransform({
-                defaultTransform: "camel"
-            })
-            .process(bodyStream)
-            .then(pipelineResult => {
+        let body;
+        const resultPromise = this._pipeline<object>()
+            .collectBody(b => body = b)
+            .parseJsonAsync([ 
+                pick({ filter: "Value.Object" }),
+                streamValues()
+            ])
+            .streamKeyCaseTransform(this._conventions.entityFieldNameConvention)
+            .process(bodyStream);
+        
+        const restPromise = this._pipeline<object>()
+            .parseJsonAsync([
+                ignore({ filter: "Value" }),
+                streamValues()
+            ])
+            .streamKeyCaseTransform("camel")
+            .process(bodyStream);
+        
+        await Promise.all([ resultPromise, restPromise ])
+            .then(([ result, rest ]) => {
                 const resObj = Object.assign(
-                    pipelineResult.rest as { successful: boolean, index: number }, 
-                    { value: { object: pipelineResult.result["value"] } });
+                    {},
+                    rest as { successful: boolean, index: number }, 
+                    { value: { object: result } });
                 const type = !TypeUtil.isPrimitive(this._value)
                     ? this._conventions.getEntityTypeDescriptor(this._value as any) as ObjectTypeDescriptor
                     : null;
                 const clazz: ClassConstructor<T> = TypeUtil.isClass(type) ? type as any : null;
                 this.result = CompareExchangeResult.parseFromObject(resObj, this._conventions, clazz);
-
-                return pipelineResult.body;
             });
+
+        return body;
     }
 }
