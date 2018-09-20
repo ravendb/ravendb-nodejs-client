@@ -73,7 +73,7 @@ describe("Basic documents test", function () {
 
         {
             const session = store.openSession();
-            const user1 = Object.assign(new User(), { name: "Fitzchack" });
+            const user1 = Object.assign(new User(), { name: "Fitzchak" });
             const user2 = Object.assign(new User(), { name: "Arek" });
 
             await session.store(user1, "users/1");
@@ -114,7 +114,7 @@ describe("Basic documents test", function () {
             assert.ok(user1 instanceof User);
             assert.ok(user2 instanceof User);
 
-            assert.equal(user1.name, "Fitzchack");
+            assert.equal(user1.name, "Fitzchak");
             assert.equal(user2.name, "Arek");
 
             getDocumentsCommand = new GetDocumentsCommand({

@@ -965,7 +965,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
                 }
                 return true;
 
-            case StatusCodes.Forbidden: // TBD: include info about certificates
+            case StatusCodes.Forbidden:
                 throwError("AuthorizationException",
                     `Forbidden access to ${chosenNode.database}@${chosenNode.url}`
                     + `, ${req.method || "GET"} ${req.uri}`);

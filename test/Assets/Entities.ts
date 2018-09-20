@@ -87,3 +87,12 @@ export class Company {
     public type: CompanyType;
     public employeesIds: string[];
 }
+
+export class Post {
+    public id: string;
+    public title: string;
+    public desc: string;
+    public comments: Post[];
+    public attachmentIds: string;
+    public createdAt: Date;
+}
