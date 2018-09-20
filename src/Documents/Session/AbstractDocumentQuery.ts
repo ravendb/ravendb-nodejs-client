@@ -138,9 +138,9 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     protected _disableCaching: boolean;
 
-    // TBD protected boolean showQueryTimings;
+    // TBD 4.1 protected boolean showQueryTimings;
 
-    // TBD protected boolean shouldExplainScores;
+    // TBD 4.1 protected boolean shouldExplainScores;
 
     public get isDistinct(): boolean {
         return this._selectTokens
@@ -172,12 +172,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     private static _getDefaultTimeout(): number {
         return 25 * 1000;
     }
-
-    // protected AbstractDocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName,
-    //                                 String collectionName, boolean isGroupBy, DeclareToken declareToken,
-    //                                 List<LoadToken> loadTokens) {
-    //     this(clazz, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, null);
-    // }
 
     protected constructor(
         clazz: DocumentType<T>,
@@ -1475,7 +1469,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._disableCaching = true;
     }
 
-    // TBD public void _showTimings()
+    // TBD 4.1 public void _showTimings()
     // TBD 4.1 protected List<HighlightedField> HighlightedFields = new List<HighlightedField>();
     // TBD 4.1 protected string[] HighlighterPreTags = new string[0];
     // TBD 4.1 protected string[] HighlighterPostTags = new string[0];

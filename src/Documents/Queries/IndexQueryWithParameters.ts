@@ -8,14 +8,14 @@ export abstract class IndexQueryWithParameters<T> extends IndexQueryBase<T> {
      */
     public skipDuplicateChecking: boolean;
 
-    //TBD private boolean explainScores;
+    //TBD 4.1 private boolean explainScores;
 
-    //TBD private boolean showTimings;
+    //TBD 4.1 private boolean showTimings;
 
-    //TBD public boolean isExplainScores() {
+    //TBD 4.1 public boolean isExplainScores() {
 
-    //TBD public void setExplainScores(boolean explainScores) {
+    //TBD 4.1 public void setExplainScores(boolean explainScores) {
 
-    //TBD public boolean isShowTimings()
-    //TBD public void setShowTimings(boolean showTimings) {
+    //TBD 4.1 public boolean isShowTimings()
+    //TBD 4.1 public void setShowTimings(boolean showTimings) {
 }

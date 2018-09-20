@@ -8,7 +8,7 @@ export const CONSTANTS = {
                  REDUCE_KEY_HASH_FIELD_NAME: "hash(key())",
                  REDUCE_KEY_KEY_VALUE_FIELD_NAME: "key()",
                  SPATIAL_SHAPE_FIELD_NAME: "spatial(shape)",
-                // TBD  CUSTOM_SORT_FIELD_NAME: "__customSort",
+                // TBD 4.1 CUSTOM_SORT_FIELD_NAME: "__customSort",
             },
             Spatial: {
                 DEFAULT_DISTANCE_ERROR_PCT: 0.025,

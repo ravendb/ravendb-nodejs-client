@@ -30,7 +30,7 @@ export class RawDocumentQuery<T extends object>
         return this;
     }
 
-    // TBD public IRawDocumentQuery<T> showTimings() {
+    // TBD 4.1 public IRawDocumentQuery<T> showTimings() {
 
     public noTracking(): IRawDocumentQuery<T> {
         this._noTracking();

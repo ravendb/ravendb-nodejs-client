@@ -106,7 +106,6 @@ export class HttpCacheItem {
     public payload: string;
     public lastServerUpdate: Date;
 
-    // TBD public int generation
     public cache: HttpCache;
 
     public constructor() {
