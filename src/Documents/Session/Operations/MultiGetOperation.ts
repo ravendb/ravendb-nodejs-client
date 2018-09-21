@@ -14,5 +14,6 @@ export class MultiGetOperation {
             this._session.requestExecutor.cache, this._session.conventions, requests);
     }
     
-    public setResult(result: object): void {}
+    // tslint:disable-next-line:no-empty
+    public setResult(result: object): void {} 
 }

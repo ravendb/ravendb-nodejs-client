@@ -2,16 +2,16 @@ import {QueryOperator} from "../Queries/QueryOperator";
 import {IndexQuery} from "../Queries/IndexQuery";
 import {QueryStatistics} from "./QueryStatistics";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { AbstractCallback } from "../../Types/Callbacks";
+import { QueryEventsEmitter } from "../Session/QueryEvents";
 
-export interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> {
+export interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> extends QueryEventsEmitter {
 
     /**
      * Gets the document convention from the query session
      * @return document conventions
      */
     conventions: DocumentConventions;
-
-    //TBD void InvokeAfterStreamExecuted(BlittableJsonReaderObject result);
 
     /**
      * Disables caching for query results.

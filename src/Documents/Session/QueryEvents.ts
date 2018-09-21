@@ -1,17 +1,15 @@
 import { IndexQuery } from "../Queries/IndexQuery";
 import { QueryResult } from "../Queries/QueryResult";
+import { TypedEventEmitter } from "../../Primitives/Events";
 
-export interface QueryEventsEmitter {
-
-    on(eventName: "beforeQueryExecuted", eventHandler: (eventArgs: IndexQuery) => void): this;
-    on(eventName: "afterQueryExecuted", eventHandler: (eventArgs: QueryResult) => void): this;
-
-    once(eventName: "beforeQueryExecuted", eventHandler: (eventArgs: IndexQuery) => void): this;
-    once(eventName: "afterQueryExecuted", eventHandler: (eventArgs: QueryResult) => void): this;
-
-    removeListener(eventName: "beforeQueryExecuted", eventHandler: (eventArgs: IndexQuery) => void): this;
-    removeListener(eventName: "afterQueryExecuted", eventHandler: (eventArgs: QueryResult) => void): this;
-
-    emit(eventName: "beforeQueryExecuted", eventArgs: IndexQuery);
-    emit(eventName: "afterQueryExecuted", eventArgs: QueryResult);
+export interface StreamingQueryEvents {
+    "afterStreamExecuted": object;
 }
+
+export interface QueryEvents extends StreamingQueryEvents {
+    "beforeQueryExecuted": IndexQuery;
+    "afterQueryExecuted": QueryResult;
+}
+
+export interface QueryEventsEmitter 
+    extends TypedEventEmitter<QueryEvents> {}

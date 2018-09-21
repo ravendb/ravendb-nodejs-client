@@ -4,7 +4,7 @@ import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestParameters } from "../../Primitives/Http";
 import { HeadersBuilder } from "../../Utility/HttpUtil";
 import * as stream from "readable-stream";
-import { JsonSerializer } from '../../Mapping/Json/Serializer';
+import { JsonSerializer } from "../../Mapping/Json/Serializer";
 
 export interface PutResult {
     id: string;
@@ -50,7 +50,7 @@ export class PutDocumentCommand extends RavenCommand<PutResult> {
             method: "PUT",
             body,
             headers: HeadersBuilder.create()
-                .withContentTypeJson()
+                .typeAppJson()
                 .build()
         };
 

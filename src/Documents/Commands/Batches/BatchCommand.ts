@@ -58,7 +58,7 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
 
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/bulk_docs";
-        const headers = HeadersBuilder.create().withContentTypeJson().build();
+        const headers = HeadersBuilder.create().typeAppJson().build();
 
         const commandsArray = this._commands.reduce(
             (result, command) => [ ...result, command.serialize(this._conventions) ], []);

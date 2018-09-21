@@ -1,7 +1,8 @@
+import * as merge2 from "merge2";
 import * as stream from "readable-stream";
 import * as promisify from "util.promisify";
 
-export const finishedAsync: (src: stream.Readable) => Promise<any> = 
+export const finishedAsync: (src: any) => Promise<any> = 
     promisify(stream.finished);
 export const pipelineAsync: (...src: stream.Stream[]) => Promise<any> = 
     promisify(stream.pipeline);
@@ -27,4 +28,8 @@ export function stringToReadable(s: string) {
     result.push(s);
     result.push(null);
     return result;
+}
+
+export function concatStreams(...streams: stream.Stream[]): stream.Readable {
+    return merge2(...streams);
 }

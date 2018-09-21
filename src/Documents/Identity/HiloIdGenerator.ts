@@ -115,7 +115,6 @@ export class HiloIdGenerator {
         return StringUtil.format("{0}{1}", prefix, currentRangeValue);
     }
 
-
     public get range(): HiloRangeValue {
         return this._range;
     }

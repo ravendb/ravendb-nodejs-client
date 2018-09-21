@@ -121,7 +121,8 @@ export type RavenErrorType = "RavenException"
 | "NodeIsPassiveException"
 | "ConfigurationException"
 | "CertificateNameMismatchException"
-| "BulkInsertStreamError";
+| "BulkInsertStreamError"
+| "NotSupportedException";
 
 export interface ExceptionSchema {
     url: string;

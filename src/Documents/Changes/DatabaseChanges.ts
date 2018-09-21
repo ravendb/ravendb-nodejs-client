@@ -343,7 +343,7 @@ export class DatabaseChanges implements IDatabaseChanges {
         if (this._isCancelled) {
             return;
         }
-        const payloadParsed = JSON.parse(data) as Array<any>;
+        const payloadParsed = JSON.parse(data) as any[];
 
         try {
             for (const message of (Array.isArray(payloadParsed) ? payloadParsed : [payloadParsed])) {

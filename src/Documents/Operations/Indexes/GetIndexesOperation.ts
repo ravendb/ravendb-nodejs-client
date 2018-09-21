@@ -75,4 +75,4 @@ export class GetIndexesCommand extends RavenCommand<IndexDefinition[]> {
         return true;
     }
 }
-
+

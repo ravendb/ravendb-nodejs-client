@@ -5,7 +5,8 @@ import * as fs from "fs";
 import * as path from "path";
 import * as url from "url";
 import { VError } from "verror";
-
+import * as http from "http";
+import * as https from "https";
 import "source-map-support/register";
 import {IDisposable} from "../../src/Types/Contracts";
 import { RavenTestDriver } from "../../src/TestDriver";
@@ -142,6 +143,18 @@ export async function disposeTestDocumentStore(store: IDocumentStore) {
 export let testContext: RavenTestContext;
 setupRavenDbTestContext();
 
+function checkAgent(agentName: string, agent: http.Agent) {
+    const reqKeys = Object.keys(agent.requests);
+    if (reqKeys.length) {
+        console.log(`${agentName} dangling requests: ${reqKeys}`);
+    }
+
+    const sockKeys = Object.keys(agent.sockets);
+    if (sockKeys.length) {
+        console.log(`${agentName} dangling sockets: ${sockKeys}`);
+    }
+}
+
 function setupRavenDbTestContext() {
 
     before(() => {
@@ -156,6 +169,8 @@ function setupRavenDbTestContext() {
 
     after(() => {
         testContext.dispose();
+        checkAgent("http", http.globalAgent);
+        checkAgent("https", https.globalAgent);
     });
 
     return testContext;

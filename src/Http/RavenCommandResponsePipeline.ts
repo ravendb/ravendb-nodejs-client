@@ -3,8 +3,6 @@ import { parser } from "stream-json";
 import { 
     ObjectKeyCaseTransformStreamOptions, 
     ObjectKeyCaseTransformStream } from "../Mapping/Json/Streams/ObjectKeyCaseTransformStream";
-import { 
-    gatherJsonNotMatchingPath } from "../Mapping/Json/Streams";
 import {
     ObjectKeyCaseTransformProfile,
     getObjectKeyCaseTransformProfile } from "../Mapping/Json/Conventions";
@@ -17,6 +15,7 @@ import {
     CollectResultStreamOptions, 
     lastValue, lastChunk } from "../Mapping/Json/Streams/CollectResultStream";
 import { throwError } from "../Exceptions";
+import * as StringBuilder from "string-builder";
 
 export interface RavenCommandResponsePipelineOptions<TResult> {
     collectBody?: boolean | ((body: string) => void);
@@ -32,6 +31,7 @@ export interface RavenCommandResponsePipelineOptions<TResult> {
 export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
 
     private _opts: RavenCommandResponsePipelineOptions<TStreamResult>;
+    private _body: StringBuilder = new StringBuilder();
 
     private constructor() {
         super();
@@ -99,30 +99,38 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
         return this;
     }
 
-    public customTransform(transform: stream.Stream) {
+    public customTransform(transform: stream.Transform) {
         this._opts.transform = transform;
         return this;
     }
 
-    public process(src: stream.Stream): Promise<TStreamResult> {
+    public stream(src: stream.Stream): stream.Readable {
+        const streams = this._buildUp(src);
+        return (stream.pipeline as any)(...streams) as stream.Readable;
+    }
+
+    private _appendBody(s): void {
+        this._body.append(s);
+    }
+
+    private _buildUp(src: stream.Stream) {
         if (!src) {
             throwError("MappingError", "Body stream cannot be null.");
         }
 
         const opts = this._opts;
         const streams: stream.Stream[] = [ src ];
-        let body;
+        const appendBody = (chunk) => this._appendBody(chunk);
         if (opts.collectBody) {
-            body = "";
             streams.push(through2(function (chunk, enc, callback) {
-                body = body + chunk;
+                appendBody(chunk);
                 callback(null, chunk);
             }));
         }
 
         if (opts.jsonAsync) {
             streams.push(parser());
-            streams.push(...this._opts.jsonAsync.filters);
+            streams.push(...opts.jsonAsync.filters);
         } else if (opts.jsonSync) {
             let json = "";
             streams.push(through2.obj(
@@ -151,6 +159,12 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
             streams.push(opts.transform);
         }
 
+        return streams;
+    }
+
+    public process(src: stream.Stream): Promise<TStreamResult> {
+        const streams = this._buildUp(src);
+        const opts = this._opts;
         let collectResultsOpts = opts.collectResult;
         if (!collectResultsOpts || !collectResultsOpts.reduceResults) {
             if (opts.jsonAsync) {
@@ -167,6 +181,7 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
             .then(result => {
                 
                 if (opts.collectBody) {
+                    const body = this._body.toString();
                     this.emit("body", body);
                     if (typeof opts.collectBody === "function") {
                         opts.collectBody(body);

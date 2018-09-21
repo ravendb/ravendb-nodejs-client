@@ -1,9 +1,14 @@
 import * as stream from "readable-stream";
-import { ObjectUtil, ObjectChangeCaseOptions, ObjectChangeCaseOptionsBase } from "../../../Utility/ObjectUtil";
+import { 
+    ObjectUtil, 
+    ObjectChangeCaseOptions, 
+    ObjectChangeCaseOptionsBase, 
+    CasingConvention } from "../../../Utility/ObjectUtil";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 
 export interface ObjectKeyCaseTransformStreamOptionsBase extends ObjectChangeCaseOptionsBase {
     extractIgnorePaths?: ((entry: object) => Array<string | RegExp>);
+    defaultTransform?: CasingConvention;
 }
 export interface ObjectKeyCaseTransformStreamOptions 
     extends ObjectChangeCaseOptions {

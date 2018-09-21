@@ -33,5 +33,5 @@ export abstract class AbstractHiloIdGenerator  {
     return Promise.all(returnPromises)
       // tslint:disable-next-line:no-empty
       .then(() => {});
-  };
+  }
 }

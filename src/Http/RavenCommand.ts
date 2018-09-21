@@ -231,7 +231,7 @@ export abstract class RavenCommand<TResult> {
         return body;
     }
 
-    protected _getHeaders() {
+    protected _headers() {
         return HeadersBuilder.create();
     }
 

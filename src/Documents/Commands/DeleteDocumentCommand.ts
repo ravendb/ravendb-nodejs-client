@@ -29,7 +29,7 @@ export class DeleteDocumentCommand extends RavenCommand<void> {
         const request = { 
             method: "DELETE",
             uri, 
-            headers: this._getHeaders().build() 
+            headers: this._headers().build() 
         };
         this._addChangeVectorIfNotNull(this._changeVector, request);
         

@@ -330,6 +330,7 @@ export interface SessionLoadStartingWithOptions<T extends object> extends Starti
     exclude?: string;
     startAfter?: string;
     documentType?: DocumentType<T>;
+    streamResults?: boolean;
 }
 
 export interface StartingWithOptions {

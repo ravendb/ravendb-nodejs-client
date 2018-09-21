@@ -54,7 +54,7 @@ export class CompactDatabaseCommand extends RavenCommand<OperationIdResult> {
             method: "POST",
             body,
             uri,
-            headers: this._getHeaders().withContentTypeJson().build()
+            headers: this._headers().typeAppJson().build()
         };
     }
 

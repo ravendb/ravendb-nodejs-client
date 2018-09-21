@@ -3,8 +3,7 @@ export class HiloRangeValue {
   private _maxId: number;
   private _current: number;
 
-  constructor(minId: number = 1, maxId: number = 0)
-  {
+  constructor(minId: number = 1, maxId: number = 0) {
     this._minId = minId;
     this._maxId = maxId;
     this._current = minId - 1;

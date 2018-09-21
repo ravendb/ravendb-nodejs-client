@@ -10,7 +10,7 @@ export interface CompareExchangeResultResponse {
     successful: boolean;
     value: {
         object: object
-    }
+    };
 }
 
 export class CompareExchangeResult<T> {

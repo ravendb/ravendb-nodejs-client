@@ -1,3 +1,5 @@
+import "./Utility/Polyfills";
+
 export { DocumentConventions } from "./Documents/Conventions/DocumentConventions";
 export { RavenTestDriver } from "./TestDriver";
 export { RavenErrorType } from "./Exceptions";
@@ -165,10 +167,12 @@ export * from "./Documents/Session/OrderingType";
 export * from "./Documents/Session/QueryEvents";
 export * from "./Documents/Session/QueryOptions";
 export * from "./Documents/Session/QueryStatistics";
+export * from "./Documents/Session/StreamQueryStatistics";
 export * from "./Documents/Session/RawDocumentQuery";
 export * from "./Documents/Session/SessionEvents";
 export * from "./Documents/Session/WhereParams";
 export *  from "./Documents/Session/IMetadataDictionary";
+export * from "./Documents/Commands/StreamResult";
 
 // QUERIES
 export * from "./Documents/Queries/IndexQuery";

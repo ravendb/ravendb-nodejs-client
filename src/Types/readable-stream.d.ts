@@ -1,10 +1,10 @@
-declare module 'readable-stream';
+declare module "readable-stream";
 
-declare module 'readable-stream' {
+declare module "readable-stream" {
     import * as events from "events";
 
     class pipeable extends events.EventEmitter {
-        pipe<T extends NodeJS.WritableStream>(destination: T, options?: { end?: boolean; }): T;
+        public pipe<T extends NodeJS.WritableStream>(destination: T, options?: { end?: boolean; }): T;
     }
 
     namespace pipeable {
@@ -19,22 +19,22 @@ declare module 'readable-stream' {
         }
 
         export class Readable extends Stream implements NodeJS.ReadableStream {
-            readable: boolean;
-            readonly readableHighWaterMark: number;
-            readonly readableLength: number;
+            public readable: boolean;
+            public readonly readableHighWaterMark: number;
+            public readonly readableLength: number;
             constructor(opts?: ReadableOptions);
-            _read(size: number): void;
-            read(size?: number): any;
-            setEncoding(encoding: string): this;
-            pause(): this;
-            resume(): this;
-            isPaused(): boolean;
-            unpipe<T extends NodeJS.WritableStream>(destination?: T): this;
-            unshift(chunk: any): void;
-            wrap(oldStream: NodeJS.ReadableStream): this;
-            push(chunk: any, encoding?: string): boolean;
-            _destroy(err: Error, callback: Function): void;
-            destroy(error?: Error): void;
+            public _read(size: number): void;
+            public read(size?: number): any;
+            public setEncoding(encoding: string): this;
+            public pause(): this;
+            public resume(): this;
+            public isPaused(): boolean;
+            public unpipe<T extends NodeJS.WritableStream>(destination?: T): this;
+            public unshift(chunk: any): void;
+            public wrap(oldStream: NodeJS.ReadableStream): this;
+            public push(chunk: any, encoding?: string): boolean;
+            public _destroy(err: Error, callback: Function): void;
+            public destroy(error?: Error): void;
 
             /**
              * Event emitter
@@ -45,56 +45,56 @@ declare module 'readable-stream' {
              * 4. readable
              * 5. error
              */
-            addListener(event: string, listener: (...args: any[]) => void): this;
-            addListener(event: "close", listener: () => void): this;
-            addListener(event: "data", listener: (chunk: Buffer | string) => void): this;
-            addListener(event: "end", listener: () => void): this;
-            addListener(event: "readable", listener: () => void): this;
-            addListener(event: "error", listener: (err: Error) => void): this;
+            public addListener(event: string, listener: (...args: any[]) => void): this;
+            public addListener(event: "close", listener: () => void): this;
+            public addListener(event: "data", listener: (chunk: Buffer | string) => void): this;
+            public addListener(event: "end", listener: () => void): this;
+            public addListener(event: "readable", listener: () => void): this;
+            public addListener(event: "error", listener: (err: Error) => void): this;
 
-            emit(event: string | symbol, ...args: any[]): boolean;
-            emit(event: "close"): boolean;
-            emit(event: "data", chunk: Buffer | string): boolean;
-            emit(event: "end"): boolean;
-            emit(event: "readable"): boolean;
-            emit(event: "error", err: Error): boolean;
+            public emit(event: string | symbol, ...args: any[]): boolean;
+            public emit(event: "close"): boolean;
+            public emit(event: "data", chunk: Buffer | string): boolean;
+            public emit(event: "end"): boolean;
+            public emit(event: "readable"): boolean;
+            public emit(event: "error", err: Error): boolean;
 
-            on(event: string, listener: (...args: any[]) => void): this;
-            on(event: "close", listener: () => void): this;
-            on(event: "data", listener: (chunk: Buffer | string) => void): this;
-            on(event: "end", listener: () => void): this;
-            on(event: "readable", listener: () => void): this;
-            on(event: "error", listener: (err: Error) => void): this;
+            public on(event: string, listener: (...args: any[]) => void): this;
+            public on(event: "close", listener: () => void): this;
+            public on(event: "data", listener: (chunk: Buffer | string) => void): this;
+            public on(event: "end", listener: () => void): this;
+            public on(event: "readable", listener: () => void): this;
+            public on(event: "error", listener: (err: Error) => void): this;
 
-            once(event: string, listener: (...args: any[]) => void): this;
-            once(event: "close", listener: () => void): this;
-            once(event: "data", listener: (chunk: Buffer | string) => void): this;
-            once(event: "end", listener: () => void): this;
-            once(event: "readable", listener: () => void): this;
-            once(event: "error", listener: (err: Error) => void): this;
+            public once(event: string, listener: (...args: any[]) => void): this;
+            public once(event: "close", listener: () => void): this;
+            public once(event: "data", listener: (chunk: Buffer | string) => void): this;
+            public once(event: "end", listener: () => void): this;
+            public once(event: "readable", listener: () => void): this;
+            public once(event: "error", listener: (err: Error) => void): this;
 
-            prependListener(event: string, listener: (...args: any[]) => void): this;
-            prependListener(event: "close", listener: () => void): this;
-            prependListener(event: "data", listener: (chunk: Buffer | string) => void): this;
-            prependListener(event: "end", listener: () => void): this;
-            prependListener(event: "readable", listener: () => void): this;
-            prependListener(event: "error", listener: (err: Error) => void): this;
+            public prependListener(event: string, listener: (...args: any[]) => void): this;
+            public prependListener(event: "close", listener: () => void): this;
+            public prependListener(event: "data", listener: (chunk: Buffer | string) => void): this;
+            public prependListener(event: "end", listener: () => void): this;
+            public prependListener(event: "readable", listener: () => void): this;
+            public prependListener(event: "error", listener: (err: Error) => void): this;
 
-            prependOnceListener(event: string, listener: (...args: any[]) => void): this;
-            prependOnceListener(event: "close", listener: () => void): this;
-            prependOnceListener(event: "data", listener: (chunk: Buffer | string) => void): this;
-            prependOnceListener(event: "end", listener: () => void): this;
-            prependOnceListener(event: "readable", listener: () => void): this;
-            prependOnceListener(event: "error", listener: (err: Error) => void): this;
+            public prependOnceListener(event: string, listener: (...args: any[]) => void): this;
+            public prependOnceListener(event: "close", listener: () => void): this;
+            public prependOnceListener(event: "data", listener: (chunk: Buffer | string) => void): this;
+            public prependOnceListener(event: "end", listener: () => void): this;
+            public prependOnceListener(event: "readable", listener: () => void): this;
+            public prependOnceListener(event: "error", listener: (err: Error) => void): this;
 
-            removeListener(event: string, listener: (...args: any[]) => void): this;
-            removeListener(event: "close", listener: () => void): this;
-            removeListener(event: "data", listener: (chunk: Buffer | string) => void): this;
-            removeListener(event: "end", listener: () => void): this;
-            removeListener(event: "readable", listener: () => void): this;
-            removeListener(event: "error", listener: (err: Error) => void): this;
+            public removeListener(event: string, listener: (...args: any[]) => void): this;
+            public removeListener(event: "close", listener: () => void): this;
+            public removeListener(event: "data", listener: (chunk: Buffer | string) => void): this;
+            public removeListener(event: "end", listener: () => void): this;
+            public removeListener(event: "readable", listener: () => void): this;
+            public removeListener(event: "error", listener: (err: Error) => void): this;
 
-            [Symbol.asyncIterator](): AsyncIterableIterator<Buffer | string>;
+            public [Symbol.asyncIterator](): AsyncIterableIterator<Buffer | string>;
         }
 
         export interface WritableOptions {
@@ -108,23 +108,23 @@ declare module 'readable-stream' {
         }
 
         export class Writable extends Stream implements NodeJS.WritableStream {
-            writable: boolean;
-            readonly writableHighWaterMark: number;
-            readonly writableLength: number;
+            public writable: boolean;
+            public readonly writableHighWaterMark: number;
+            public readonly writableLength: number;
             constructor(opts?: WritableOptions);
-            _write(chunk: any, encoding: string, callback: (err?: Error) => void): void;
-            _writev?(chunks: Array<{ chunk: any, encoding: string }>, callback: (err?: Error) => void): void;
-            _destroy(err: Error, callback: Function): void;
-            _final(callback: Function): void;
-            write(chunk: any, cb?: Function): boolean;
-            write(chunk: any, encoding?: string, cb?: Function): boolean;
-            setDefaultEncoding(encoding: string): this;
-            end(cb?: Function): void;
-            end(chunk: any, cb?: Function): void;
-            end(chunk: any, encoding?: string, cb?: Function): void;
-            cork(): void;
-            uncork(): void;
-            destroy(error?: Error): void;
+            public _write(chunk: any, encoding: string, callback: (err?: Error) => void): void;
+            public _writev?(chunks: Array<{ chunk: any, encoding: string }>, callback: (err?: Error) => void): void;
+            public _destroy(err: Error, callback: Function): void;
+            public _final(callback: Function): void;
+            public write(chunk: any, cb?: Function): boolean;
+            public write(chunk: any, encoding?: string, cb?: Function): boolean;
+            public setDefaultEncoding(encoding: string): this;
+            public end(cb?: Function): void;
+            public end(chunk: any, cb?: Function): void;
+            public end(chunk: any, encoding?: string, cb?: Function): void;
+            public cork(): void;
+            public uncork(): void;
+            public destroy(error?: Error): void;
 
             /**
              * Event emitter
@@ -136,61 +136,61 @@ declare module 'readable-stream' {
              * 5. pipe
              * 6. unpipe
              */
-            addListener(event: string, listener: (...args: any[]) => void): this;
-            addListener(event: "close", listener: () => void): this;
-            addListener(event: "drain", listener: () => void): this;
-            addListener(event: "error", listener: (err: Error) => void): this;
-            addListener(event: "finish", listener: () => void): this;
-            addListener(event: "pipe", listener: (src: Readable) => void): this;
-            addListener(event: "unpipe", listener: (src: Readable) => void): this;
+            public addListener(event: string, listener: (...args: any[]) => void): this;
+            public addListener(event: "close", listener: () => void): this;
+            public addListener(event: "drain", listener: () => void): this;
+            public addListener(event: "error", listener: (err: Error) => void): this;
+            public addListener(event: "finish", listener: () => void): this;
+            public addListener(event: "pipe", listener: (src: Readable) => void): this;
+            public addListener(event: "unpipe", listener: (src: Readable) => void): this;
 
-            emit(event: string | symbol, ...args: any[]): boolean;
-            emit(event: "close"): boolean;
-            emit(event: "drain", chunk: Buffer | string): boolean;
-            emit(event: "error", err: Error): boolean;
-            emit(event: "finish"): boolean;
-            emit(event: "pipe", src: Readable): boolean;
-            emit(event: "unpipe", src: Readable): boolean;
+            public emit(event: string | symbol, ...args: any[]): boolean;
+            public emit(event: "close"): boolean;
+            public emit(event: "drain", chunk: Buffer | string): boolean;
+            public emit(event: "error", err: Error): boolean;
+            public emit(event: "finish"): boolean;
+            public emit(event: "pipe", src: Readable): boolean;
+            public emit(event: "unpipe", src: Readable): boolean;
 
-            on(event: string, listener: (...args: any[]) => void): this;
-            on(event: "close", listener: () => void): this;
-            on(event: "drain", listener: () => void): this;
-            on(event: "error", listener: (err: Error) => void): this;
-            on(event: "finish", listener: () => void): this;
-            on(event: "pipe", listener: (src: Readable) => void): this;
-            on(event: "unpipe", listener: (src: Readable) => void): this;
+            public on(event: string, listener: (...args: any[]) => void): this;
+            public on(event: "close", listener: () => void): this;
+            public on(event: "drain", listener: () => void): this;
+            public on(event: "error", listener: (err: Error) => void): this;
+            public on(event: "finish", listener: () => void): this;
+            public on(event: "pipe", listener: (src: Readable) => void): this;
+            public on(event: "unpipe", listener: (src: Readable) => void): this;
 
-            once(event: string, listener: (...args: any[]) => void): this;
-            once(event: "close", listener: () => void): this;
-            once(event: "drain", listener: () => void): this;
-            once(event: "error", listener: (err: Error) => void): this;
-            once(event: "finish", listener: () => void): this;
-            once(event: "pipe", listener: (src: Readable) => void): this;
-            once(event: "unpipe", listener: (src: Readable) => void): this;
+            public once(event: string, listener: (...args: any[]) => void): this;
+            public once(event: "close", listener: () => void): this;
+            public once(event: "drain", listener: () => void): this;
+            public once(event: "error", listener: (err: Error) => void): this;
+            public once(event: "finish", listener: () => void): this;
+            public once(event: "pipe", listener: (src: Readable) => void): this;
+            public once(event: "unpipe", listener: (src: Readable) => void): this;
 
-            prependListener(event: string, listener: (...args: any[]) => void): this;
-            prependListener(event: "close", listener: () => void): this;
-            prependListener(event: "drain", listener: () => void): this;
-            prependListener(event: "error", listener: (err: Error) => void): this;
-            prependListener(event: "finish", listener: () => void): this;
-            prependListener(event: "pipe", listener: (src: Readable) => void): this;
-            prependListener(event: "unpipe", listener: (src: Readable) => void): this;
+            public prependListener(event: string, listener: (...args: any[]) => void): this;
+            public prependListener(event: "close", listener: () => void): this;
+            public prependListener(event: "drain", listener: () => void): this;
+            public prependListener(event: "error", listener: (err: Error) => void): this;
+            public prependListener(event: "finish", listener: () => void): this;
+            public prependListener(event: "pipe", listener: (src: Readable) => void): this;
+            public prependListener(event: "unpipe", listener: (src: Readable) => void): this;
 
-            prependOnceListener(event: string, listener: (...args: any[]) => void): this;
-            prependOnceListener(event: "close", listener: () => void): this;
-            prependOnceListener(event: "drain", listener: () => void): this;
-            prependOnceListener(event: "error", listener: (err: Error) => void): this;
-            prependOnceListener(event: "finish", listener: () => void): this;
-            prependOnceListener(event: "pipe", listener: (src: Readable) => void): this;
-            prependOnceListener(event: "unpipe", listener: (src: Readable) => void): this;
+            public prependOnceListener(event: string, listener: (...args: any[]) => void): this;
+            public prependOnceListener(event: "close", listener: () => void): this;
+            public prependOnceListener(event: "drain", listener: () => void): this;
+            public prependOnceListener(event: "error", listener: (err: Error) => void): this;
+            public prependOnceListener(event: "finish", listener: () => void): this;
+            public prependOnceListener(event: "pipe", listener: (src: Readable) => void): this;
+            public prependOnceListener(event: "unpipe", listener: (src: Readable) => void): this;
 
-            removeListener(event: string, listener: (...args: any[]) => void): this;
-            removeListener(event: "close", listener: () => void): this;
-            removeListener(event: "drain", listener: () => void): this;
-            removeListener(event: "error", listener: (err: Error) => void): this;
-            removeListener(event: "finish", listener: () => void): this;
-            removeListener(event: "pipe", listener: (src: Readable) => void): this;
-            removeListener(event: "unpipe", listener: (src: Readable) => void): this;
+            public removeListener(event: string, listener: (...args: any[]) => void): this;
+            public removeListener(event: "close", listener: () => void): this;
+            public removeListener(event: "drain", listener: () => void): this;
+            public removeListener(event: "error", listener: (err: Error) => void): this;
+            public removeListener(event: "finish", listener: () => void): this;
+            public removeListener(event: "pipe", listener: (src: Readable) => void): this;
+            public removeListener(event: "unpipe", listener: (src: Readable) => void): this;
         }
 
         export interface DuplexOptions extends ReadableOptions, WritableOptions {
@@ -201,22 +201,22 @@ declare module 'readable-stream' {
 
         // Note: Duplex extends both Readable and Writable.
         export class Duplex extends Readable implements Writable {
-            writable: boolean;
-            readonly writableHighWaterMark: number;
-            readonly writableLength: number;
+            public writable: boolean;
+            public readonly writableHighWaterMark: number;
+            public readonly writableLength: number;
             constructor(opts?: DuplexOptions);
-            _write(chunk: any, encoding: string, callback: (err?: Error) => void): void;
-            _writev?(chunks: Array<{ chunk: any, encoding: string }>, callback: (err?: Error) => void): void;
-            _destroy(err: Error, callback: Function): void;
-            _final(callback: Function): void;
-            write(chunk: any, cb?: Function): boolean;
-            write(chunk: any, encoding?: string, cb?: Function): boolean;
-            setDefaultEncoding(encoding: string): this;
-            end(cb?: Function): void;
-            end(chunk: any, cb?: Function): void;
-            end(chunk: any, encoding?: string, cb?: Function): void;
-            cork(): void;
-            uncork(): void;
+            public _write(chunk: any, encoding: string, callback: (err?: Error) => void): void;
+            public _writev?(chunks: Array<{ chunk: any, encoding: string }>, callback: (err?: Error) => void): void;
+            public _destroy(err: Error, callback: Function): void;
+            public _final(callback: Function): void;
+            public write(chunk: any, cb?: Function): boolean;
+            public write(chunk: any, encoding?: string, cb?: Function): boolean;
+            public setDefaultEncoding(encoding: string): this;
+            public end(cb?: Function): void;
+            public end(chunk: any, cb?: Function): void;
+            public end(chunk: any, encoding?: string, cb?: Function): void;
+            public cork(): void;
+            public uncork(): void;
         }
 
         type TransformCallback = (err?: Error, data?: any) => void;
@@ -228,8 +228,8 @@ declare module 'readable-stream' {
 
         export class Transform extends Duplex {
             constructor(opts?: TransformOptions);
-            _transform(chunk: any, encoding: string, callback: TransformCallback): void;
-            destroy(error?: Error): void;
+            public _transform(chunk: any, encoding: string, callback: TransformCallback): void;
+            public destroy(error?: Error): void;
         }
 
         export class PassThrough extends Transform { }

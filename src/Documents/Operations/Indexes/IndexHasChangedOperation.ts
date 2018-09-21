@@ -49,7 +49,7 @@ export class IndexHasChangedCommand extends RavenCommand<boolean> {
         const body = this._serializer.serialize(this._definition);
 
         const headers = HeadersBuilder.create()
-            .withContentTypeJson().build();
+            .typeAppJson().build();
         return {
             method: "POST",
             uri,

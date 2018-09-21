@@ -71,7 +71,7 @@ export class HeadersBuilder {
         return new HeadersBuilder();
     }
 
-    public withContentTypeJson() {
+    public typeAppJson() {
         this._result["content-type"] = "application/json";
         return this;
     }

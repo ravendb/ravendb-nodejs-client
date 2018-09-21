@@ -44,8 +44,8 @@ export class PutConnectionStringCommand<T extends ConnectionString> extends Rave
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/admin/connection-strings";
 
-        const headers = this._getHeaders()
-            .withContentTypeJson()
+        const headers = this._headers()
+            .typeAppJson()
             .build();
         const body = this._serializer.serialize(this._connectionString);
         return {
