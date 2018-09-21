@@ -79,7 +79,7 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> {
             this._throwInvalidResponse();
         }
 
-        const responsesPromise = this._pipeline()
+        const responsesPromise = this._pipeline<GetResponse[]>()
             .parseJsonAsync([
                 ignore({ filter: /^Results\.\d+\.Result/ }),
                 pick({ filter: "Results" }),
@@ -90,22 +90,22 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> {
                 ignorePaths: [ /\./ ],
             })
             .collectResult({
-                initResult: [] as object[],
-                reduceResults: (result: object[], next) => {
+                initResult: [] as GetResponse[],
+                reduceResults: (result: GetResponse[], next) => {
                     return [...result, next["value"]]; 
                 }
             })
             .process(bodyStream);
 
-        const responsesResultsPromise = this._pipeline()
+        const responsesResultsPromise = this._pipeline<string[]>()
             .parseJsonAsync([
                 pick({ filter: "Results" }),
                 pick({ filter: /^\d+\.Result\b/i }),
                 streamValues()
             ])
             .collectResult({
-                initResult: [] as object[],
-                reduceResults: (result: object[], next) => { 
+                initResult: [] as string[],
+                reduceResults: (result: string[], next) => { 
                     // TODO try read it another way
                     const resResult = JSON.stringify(next["value"]);
                     return [...result, resResult ];

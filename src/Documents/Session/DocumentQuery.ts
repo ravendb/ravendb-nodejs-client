@@ -137,7 +137,7 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    // TBD public IDocumentQuery<T> explainScores() {
+    // TBD 4.1 public IDocumentQuery<T> explainScores() {
 
     public waitForNonStaleResults(): IDocumentQuery<T>;
     public waitForNonStaleResults(waitTimeout: number): IDocumentQuery<T>;
@@ -230,7 +230,7 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    // TBD  public IDocumentQuery<T> showTimings()
+    // TBD 4.1 public IDocumentQuery<T> showTimings()
 
     public include(path: string): IDocumentQuery<T> {
         this._include(path);
@@ -406,7 +406,7 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    // TBD public IDocumentQuery<T> customSortUsing(String typeName, boolean descending)
+    // TBD 4.1 public IDocumentQuery<T> customSortUsing(String typeName, boolean descending)
 
     public groupBy(fieldName: string, ...fieldNames: string[]): IGroupByDocumentQuery<T>;
     public groupBy(field: GroupBy, ...fields: GroupBy[]): IGroupByDocumentQuery<T>;
@@ -440,7 +440,7 @@ export class DocumentQuery<T extends object>
 
     // TBD public IDocumentQuery<T> OrderBy<TValue>(params Expression<Func<T, TValue>>[] propertySelectors)
 
-    // TBD public IDocumentQuery<T> OrderByDescending<TValue>(params Expression<Func<T, TValue>>[] propertySelectors)
+    // TBD expr public IDocumentQuery<T> OrderByDescending<TValue>(params Expression<Func<T, TValue>>[] propertySelectors)
 
     private  _createDocumentQueryInternal<TResult extends object>(
         resultClass: DocumentType<TResult>): DocumentQuery<TResult>;
@@ -526,7 +526,7 @@ export class DocumentQuery<T extends object>
         ...facets: Facet[]): IAggregationDocumentQuery<T> {
         
         if (TypeUtil.isNullOrUndefined(facetOrFacetBuilder)) {
-            throwError("InvalidArgumentException", "Aggr")
+            throwError("InvalidArgumentException", "Aggr");
         }
 
         const argType = typeof facetOrFacetBuilder;

@@ -2,11 +2,17 @@ import { InMemoryDocumentSessionOperations } from "../../Session/InMemoryDocumen
 import { IndexQuery } from "../IndexQuery";
 import { Stopwatch } from "../../../Utility/Stopwatch";
 import { FacetResult } from ".";
-import { QueryCommand, FacetQueryCommand } from "../../Commands/QueryCommand";
+import { QueryCommand } from "../../Commands/QueryCommand";
+import { FacetQueryCommand } from "../../Commands/FacetQueryCommand";
 import { QueryResult } from "../QueryResult";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { TypesAwareObjectMapper } from "../../../Mapping/ObjectMapper";
 import { QueryOperation } from "../../Session/Operations/QueryOperation";
+import { Lazy } from "../../Lazy";
+import { DocumentSession } from "../../Session/DocumentSession";
+import { LazyAggregationQueryOperation } from "../../Session/Operations/Lazy/LazyAggregationQueryOperation";
+import { QueryEventsEmitter } from "../../Session/QueryEvents";
+import { EventEmitter } from "events";
 
 export interface FacetResultObject { 
     [key: string]: FacetResult;
@@ -35,13 +41,22 @@ export abstract class AggregationQueryBase {
         return this._processResults(command.result, this._session.conventions);
     }
     
-    // TBD public Lazy<Dictionary<string, FacetResult>> 
-    //      ExecuteLazy(Action<Dictionary<string, FacetResult>> onEval = null)
+    public executeLazy(): Lazy<FacetResultObject> {
+        this._query = this._getIndexQuery();
+        return (this._session as DocumentSession)
+            .addLazyOperation(
+                new LazyAggregationQueryOperation(
+                    this._session.conventions,
+                    this._query, 
+                    this, 
+                    (queryResult: QueryResult, conventions: DocumentConventions) => 
+                        this._processResults(queryResult, conventions)));
+    }
 
     protected abstract _getIndexQuery(): IndexQuery;
 
     // tslint:disable-next-line:function-name
-    protected abstract emit(evtName: "afterQueryExecuted", queryResult: QueryResult);
+    public abstract emit(evtName: "afterQueryExecuted", queryResult: QueryResult);
     
     private _processResults(queryResult: QueryResult, conventions: DocumentConventions): FacetResultObject {
         this.emit("afterQueryExecuted", queryResult);

@@ -82,12 +82,14 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
         return this;
     }
 
-    public collectResult(reduce: (result: TStreamResult, next: object) => TStreamResult, init: TStreamResult);
-    public collectResult(opts: CollectResultStreamOptions<TStreamResult>);
+    public collectResult(
+        reduce: (result: TStreamResult, next: object) => TStreamResult, 
+        init: TStreamResult): RavenCommandResponsePipeline<TStreamResult>;
+    public collectResult(opts: CollectResultStreamOptions<TStreamResult>): RavenCommandResponsePipeline<TStreamResult>;
     public collectResult(
         optsOrReduce: 
             CollectResultStreamOptions<TStreamResult> | ((result: TStreamResult, next: object) => TStreamResult), 
-        init?: TStreamResult): this {
+        init?: TStreamResult): RavenCommandResponsePipeline<TStreamResult> {
         if (typeof optsOrReduce === "function") {
             this._opts.collectResult = { reduceResults: optsOrReduce, initResult: init };
         } else {

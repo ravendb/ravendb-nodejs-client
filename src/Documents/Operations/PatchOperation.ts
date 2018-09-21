@@ -200,7 +200,7 @@ export class PatchCommand extends RavenCommand<PatchResult> {
 
         const restPromise = parseRestOfOutput(bodyStream, /^ModifiedDocument|OriginalDocument$/);
         const [ result, rest ] = await Promise.all([ resultPromise, restPromise ]);
-        this.result = Object.assign(result, rest);
+        this.result = Object.assign(result, rest) as PatchResult;
         return body;
     }
 }

@@ -113,7 +113,7 @@ export class QueryCommand extends RavenCommand<QueryResult> {
         const restPromise = parseRestOfOutput(bodyStream, /^Results|Includes$/);
 
         const [ results, includes, rest ] = await Promise.all([resultsPromise, includesPromise, restPromise]);
-        const rawResult = Object.assign({}, rest, { results, includes }) as QueryResult;
+        const rawResult = Object.assign({} as any, rest, { results, includes }) as QueryResult;
         const queryResult = mapper.fromObjectLiteral<QueryResult>(rawResult, {
             typeName: QueryResult.name,
             nestedTypes: {
@@ -127,43 +127,5 @@ export class QueryCommand extends RavenCommand<QueryResult> {
         }
 
         return queryResult;
-    }
-}
-
-export class FacetQueryCommand extends QueryCommand {
-
-    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
-        if (!bodyStream) {
-            this.result = null;
-            return;
-        }
-
-        let body;
-        const resultsPromise = this._pipeline<object[]>()
-            .collectBody((_body) => body = _body)
-            .parseJsonAsync([
-                pick({ filter: "Results" }),
-                streamArray()
-            ])
-            .streamKeyCaseTransform("camel", "DOCUMENT_LOAD") // we don't care about the case in facets
-            .collectResult((result, next) => [...result, next["value"]], [])
-            .process(bodyStream);
-
-        const includesPromise = parseDocumentIncludes(bodyStream, this._conventions);
-        const restPromise = parseRestOfOutput(bodyStream, /^Results|Includes$/);
-
-        await Promise.all([ resultsPromise, includesPromise, restPromise ])
-        .then(([ results, includes, rest ]) => {
-            const rawResult = Object.assign({}, rest, { results, includes }) as QueryResult;
-            this.result = this._reviveResultTypes(rawResult, {
-                typeName: QueryResult.name
-            }, new Map([[QueryResult.name, QueryResult]]));
-
-            if (fromCache) {
-                this.result.durationInMs = -1;
-            }
-        });
-
-        return body;
     }
 }

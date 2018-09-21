@@ -9,6 +9,8 @@ export class QueryHashCalculator {
         return md5hex(this._buffers);
     }
 
+    //TBD 4.1 public void Write(HighlightedField[] highlightedFields)
+
     public write(o: any) {
         if (TypeUtil.isNullOrUndefined(o)) {
             this._buffers.push(Buffer.from("null"));
