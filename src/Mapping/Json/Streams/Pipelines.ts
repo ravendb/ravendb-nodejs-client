@@ -8,10 +8,10 @@ import { streamObject } from "stream-json/streamers/StreamObject";
 import { streamValues } from "stream-json/streamers/StreamValues";
 import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
 
-export function parseDocumentResults<TResult>(
+export function parseDocumentResults(
     bodyStream: stream.Stream,
     conventions: DocumentConventions,
-    bodyCallback?: (body: string) => void): Promise<TResult> {
+    bodyCallback?: (body: string) => void): Promise<object[]> {
 
     return RavenCommandResponsePipeline.create<object[]>()
         .collectBody(bodyCallback)
