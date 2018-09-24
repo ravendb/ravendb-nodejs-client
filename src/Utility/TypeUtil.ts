@@ -15,15 +15,15 @@ export class TypeUtil {
         return typeof value === "undefined";
     }
 
-    public static isString(value: any): boolean {
+    public static isString(value: any): value is string {
         return typeof(value) === "string";
     }
 
-    public static isNumber(value: any): boolean {
+    public static isNumber(value: any): value is number {
         return typeof(value) === "number";
     }
     
-    public static isPrimitive(value: any): boolean {
+    public static isPrimitive(value: any): value is number | string | boolean {
         return TypeUtil.isNumber(value)
             || TypeUtil.isString(value)
             || TypeUtil.isBool(value);
@@ -45,15 +45,15 @@ export class TypeUtil {
             && !this.isArray(value);
     }
 
-    public static isFunction(value: any): boolean {
+    public static isFunction(value: any): value is Function {
         return typeof(value) === "function";
     }
 
-    public static isDate(value: any): boolean {
+    public static isDate(value: any): value is Date {
         return value && value.constructor.name === "Date";
     }
 
-    public static isBool(value: any): boolean {
+    public static isBool(value: any): value is boolean {
         return value === true || value === false;
     }
 

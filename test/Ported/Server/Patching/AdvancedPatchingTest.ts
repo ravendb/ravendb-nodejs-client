@@ -5,8 +5,9 @@ import {
     IDocumentStore,
     IndexDefinition,
     PutIndexesOperation,
-    PatchByQueryOperation,
+    PatchByQueryOperation, PatchOperation,
 } from "../../../../src";
+import {PatchRequest} from "../../../../src/Documents/Operations/PatchRequest";
 
 describe("AdvancedPatchingTest", function () {
 
@@ -19,7 +20,29 @@ describe("AdvancedPatchingTest", function () {
     afterEach(async () =>
         await disposeTestDocumentStore(store));
 
-    // TBD more patch tests
+    it.skip("can test with variables", async () => {
+
+        {
+            const session = store.openSession();
+            const customType = new CustomType();
+            customType.owner = "me";
+            await session.store(customType, "customTypes/1");
+            await session.saveChanges();
+        }
+
+        const patchRequest = new PatchRequest();
+        patchRequest.script = "this.owner = args.v1;";
+        patchRequest.values = { v1: "not-me" };
+
+        const patchOperation = new PatchOperation("customTypes/1", null, patchRequest);
+        await store.operations.send(patchOperation);
+
+        {
+            const session = store.openSession();
+            const loaded  = await session.load<CustomType>("customTypes/1", CustomType);
+            assert.strictEqual(loaded.owner, "not-me");
+        }
+    });
 
     it("can create documents if patching applied by index", async () => {
         {

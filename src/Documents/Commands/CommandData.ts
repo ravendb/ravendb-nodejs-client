@@ -1,5 +1,6 @@
 import { throwError } from "../../Exceptions";
 import { BatchOptions } from "./Batches/BatchOptions";
+import {DocumentConventions} from "../..";
 // import { PatchRequest } from "../../../Http/Request/PatchRequest";
 
 export type CommandType = 
@@ -19,7 +20,7 @@ export interface ICommandData {
     changeVector: string;
     type: CommandType;
 
-    serialize(): object;
+    serialize(conventions: DocumentConventions): object;
 }
 
 export class DeleteCommandData implements ICommandData {
@@ -41,7 +42,7 @@ export class DeleteCommandData implements ICommandData {
         this.changeVector = changeVector;
     }
 
-    public serialize(): object {
+    public serialize(conventions: DocumentConventions): object {
         const result = {
             Id: this.id,
             ChangeVector: this.changeVector,
@@ -81,7 +82,7 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
         this._document = document;
     }
 
-    public serialize(): object {
+    public serialize(conventions: DocumentConventions): object {
         const toSerialize = {
             Id: this.id,
             ChangeVector: this.changeVector,

@@ -15,6 +15,7 @@ import { AbstractCallback } from "../../Types/Callbacks";
 import { IAttachmentsSessionOperations } from "../Session/IAttachmentsSessionOperations";
 import {ILazySessionOperations} from "./Operations/Lazy/ILazySessionOperations";
 import {IEagerSessionOperations} from "./Operations/Lazy/IEagerSessionOperations";
+import {JavaScriptArray} from "./JavaScriptArray";
 
 export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOperations {
 
@@ -53,8 +54,16 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     // tslint:disable:max-line-length
     // TBD void LoadStartingWithIntoStream(string idPrefix, Stream output, string matches = null, int start = 0, int pageSize = 25, string exclude = null, string startAfter = null);
     // TBD void LoadIntoStream(IEnumerable<string> ids, Stream output);
-    // TBD patch API void Increment<T, U>(T entity, Expression<Func<T, U>> path, U valToAdd);
-    // TBD patch API void Increment<T, U>(string id, Expression<Func<T, U>> path, U valToAdd);
+
+    increment<TEntity extends object, UValue> (id: string, path: string, valueToAdd: UValue): void;
+    increment<TEntity extends object, UValue> (entity: TEntity, path: string, valueToAdd: UValue): void;
+
+    patch<TEntity extends object, UValue>(id: string, path: string, value: UValue): void;
+    patch<TEntity extends object, UValue>(entity: TEntity, path: string, value: UValue): void;
+
+    patch<TEntity extends object, UValue>(id: string, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
+    patch<TEntity extends object, UValue>(entity: TEntity, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
+
     // TBD patch API void Patch<T, U>(string id, Expression<Func<T, U>> path, U value);
     // TBD patch API void Patch<T, U>(T entity, Expression<Func<T, U>> path, U value);
     // TBD patch API void Patch<T, U>(T entity, Expression<Func<T, IEnumerable<U>>> path, Expression<Func<JavaScriptArray<U>, object>> arrayAdder);

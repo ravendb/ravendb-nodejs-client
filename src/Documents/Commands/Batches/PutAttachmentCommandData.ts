@@ -2,6 +2,7 @@ import { ICommandData, CommandType } from "../CommandData";
 import { AttachmentData } from "./../../Attachments/index";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { throwError } from "../../../Exceptions";
+import {DocumentConventions} from "../../..";
 
 export class PutAttachmentCommandData implements ICommandData {
     public id: string;
@@ -33,7 +34,7 @@ export class PutAttachmentCommandData implements ICommandData {
         this.changeVector = changeVector;
     }
 
-    public serialize(): object {
+    public serialize(conventions: DocumentConventions): object {
         return {
             Id: this.id,
             Name: this.name,

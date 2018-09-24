@@ -76,7 +76,7 @@ export class CompareExchangeResult<T> {
 
         let result: T;
         if (TypeUtil.isPrimitive(val)) {
-            result = val;
+            result = val as any as T;
         } else {
             // val comes here with proper key case already
             const entityType = conventions.findEntityType(clazz);
