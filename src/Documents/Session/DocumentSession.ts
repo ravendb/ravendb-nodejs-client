@@ -40,11 +40,15 @@ import { GetRequest } from "../Commands/MultiGet/GetRequest";
 import { MultiGetOperation } from "./Operations/MultiGetOperation";
 import { Stopwatch } from "../../Utility/Stopwatch";
 import { GetResponse } from "../Commands/MultiGet/GetResponse";
-import { HEADERS } from "../../Constants";
+import {CONSTANTS, HEADERS} from "../../Constants";
 import { ResponseTimeItem } from "../Session/ResponseTimeInformation";
 import { delay } from "../../Utility/PromiseUtil";
 import { ILazySessionOperations } from "./Operations/Lazy/ILazySessionOperations";
 import { LazySessionOperations } from "./Operations/Lazy/LazySessionOperations";
+import {JavaScriptArray} from "./JavaScriptArray";
+import {PatchRequest} from "../Operations/PatchRequest";
+import {PatchCommandData} from "../Commands/Batches/PatchCommandData";
+import {IdTypeAndName} from "../IdTypeAndName";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;
@@ -319,8 +323,111 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
      */
     public include(path: string): ILoaderWithInclude {
         return new MultiLoaderWithInclude(this).include(path);
-    }    
-    
+    }
+
+    public increment<T extends object, UValue> (id: string, path: string, valueToAdd: UValue): void;
+    public increment<T extends object, UValue> (entity: T, path: string, valueToAdd: UValue): void;
+    public increment<T extends object, UValue> (entityOrId: T | string, path: string, valueToAdd: UValue): void {
+        let id: string;
+        if (TypeUtil.isString(entityOrId)) {
+            id = entityOrId;
+        } else {
+            const metadata = this.getMetadataFor(entityOrId as T);
+            id = metadata[CONSTANTS.Documents.Metadata.ID];
+        }
+
+        const patchRequest = new PatchRequest();
+        patchRequest.script = "this." + path + " += args.val_" + this._valsCount + ";";
+        const valKey = "val_" + this._valsCount;
+        patchRequest.values = { [valKey]: valueToAdd };
+
+        this._valsCount++;
+
+        if (!this._tryMergePatches(id, patchRequest)) {
+            this.defer(new PatchCommandData(id, null, patchRequest, null));
+        }
+    }
+
+    private _valsCount: number = 0;
+    private _customCount: number = 0;
+
+    public patch<TEntity extends object, UValue>(
+        id: string, path: string, value: UValue): void;
+    public patch<TEntity extends object, UValue>(
+        entity: TEntity, path: string, value: UValue): void;
+    public patch<TEntity extends object, UValue>(
+        id: string, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
+    public patch<TEntity extends object, UValue>(
+        entity: TEntity, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
+    public patch<TEntity extends object, UValue>(
+        entityOrId: TEntity | string, path: string,
+        valueOrArrayAdder: UValue | ((array: JavaScriptArray<UValue>) => void)): void {
+
+        let id: string;
+        if (TypeUtil.isString(entityOrId)) {
+            id = entityOrId;
+        } else {
+            const metadata = this.getMetadataFor(entityOrId as TEntity);
+            id = metadata[CONSTANTS.Documents.Metadata.ID];
+        }
+
+        let patchRequest: PatchRequest;
+        if (TypeUtil.isFunction(valueOrArrayAdder)) {
+            const scriptArray = new JavaScriptArray(this._customCount++, path);
+            valueOrArrayAdder(scriptArray);
+
+            patchRequest = new PatchRequest();
+            patchRequest.script = scriptArray.script;
+            patchRequest.values = scriptArray.parameters;
+        } else { // value
+            patchRequest = new PatchRequest();
+            patchRequest.script = "this." + path + " = args.val_" + this._valsCount + ";";
+            const valKey = "val_" + this._valsCount;
+            patchRequest.values = { };
+            patchRequest.values[valKey] = valueOrArrayAdder;
+
+            this._valsCount++;
+        }
+
+        if (!this._tryMergePatches(id, patchRequest)) {
+            this.defer(new PatchCommandData(id, null, patchRequest, null));
+        }
+    }
+
+    private _tryMergePatches(id: string, patchRequest: PatchRequest): boolean {
+        const command = this.deferredCommandsMap.get(IdTypeAndName.keyFor(id, "PATCH", null));
+        if (!command) {
+            return false;
+        }
+
+        const commandIdx = this._deferredCommands.indexOf(command);
+        if (commandIdx > -1) {
+            this._deferredCommands.splice(commandIdx, 1);
+        }
+
+        // We'll overwrite the deferredCommandsMap when calling Defer
+        // No need to call deferredCommandsMap.remove((id, CommandType.PATCH, null));
+
+        const oldPatch = command as PatchCommandData;
+        const newScript = oldPatch.patch.script + "\n" + patchRequest.script;
+        const newVals = {};
+
+        Object.keys(oldPatch.patch.values).forEach(key => {
+            newVals[key] = oldPatch.patch.values[key];
+        });
+
+        Object.keys(patchRequest.values).forEach(key => {
+            newVals[key] = patchRequest.values[key];
+        });
+
+        const newPatchRequest = new PatchRequest();
+        newPatchRequest.script = newScript;
+        newPatchRequest.values = newVals;
+
+        this.defer(new PatchCommandData(id, null, newPatchRequest, null));
+        return true;
+    }
+
     public rawQuery<TEntity extends object>(
         query: string, documentType?: DocumentType<TEntity>): IRawDocumentQuery<TEntity> {
         if (documentType) {

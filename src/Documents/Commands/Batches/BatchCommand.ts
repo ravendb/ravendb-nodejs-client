@@ -18,15 +18,17 @@ import { AttachmentData } from "../../Attachments";
 
 export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDisposable {
 
-    private _commands: ICommandData[];
-    private _attachmentStreams: Set<AttachmentData>;
-    private _options: BatchOptions;
+    private readonly _commands: ICommandData[];
+    private readonly _attachmentStreams: Set<AttachmentData>;
+    private readonly _options: BatchOptions;
+    private readonly _conventions: DocumentConventions;
 
     public constructor(conventions: DocumentConventions, commands: ICommandData[]);
     public constructor(conventions: DocumentConventions, commands: ICommandData[], options: BatchOptions);
     public constructor(conventions: DocumentConventions, commands: ICommandData[], options: BatchOptions = null) {
         super();
         this._commands = commands;
+        this._conventions = conventions;
         this._options = options;
 
         if (!conventions) {
@@ -59,7 +61,7 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
         const headers = HeadersBuilder.create().withContentTypeJson().build();
 
         const commandsArray = this._commands.reduce(
-            (result, command) => [ ...result, command.serialize() ], []);
+            (result, command) => [ ...result, command.serialize(this._conventions) ], []);
 
         const body = JsonSerializer.getDefault().serialize({ Commands: commandsArray });
 
