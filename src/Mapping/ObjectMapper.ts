@@ -6,6 +6,7 @@ import * as changeCase from "change-object-case";
 import { getLogger } from "../Utility/LogUtil";
 import { StringUtil } from "../Utility/StringUtil";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
+import { ObjectUtil } from "../Utility/ObjectUtil";
 
 const log = getLogger({ module: "ObjectMapper" });
 
@@ -61,6 +62,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
     public fromObjectLiteral<TResult extends object>(
         rawResult: object, typeInfo?: TypeInfo, knownTypes?: Map<string, ObjectTypeDescriptor>): TResult {
         
+        rawResult = ObjectUtil.clone(rawResult);
         const typeName = typeInfo ? typeInfo.typeName : null;
         const nestedTypes = typeInfo ? typeInfo.nestedTypes : null;
         const types = knownTypes || this._conventions.knownEntityTypesByName;
@@ -234,6 +236,10 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
 
     private _getFieldContextsForArrayElements(fieldVal, fieldsPathTail) {
         const result = (fieldVal as any[]).map((x, i) => {
+            if (x === null) {
+                return null;
+            }
+
             if (!fieldsPathTail.length) {
                 return {
                     parent: fieldVal,
@@ -276,6 +282,11 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
 
         const fieldVal = fieldContext.getValue();
         if (typeof fieldVal === "undefined") {
+            return;
+        }
+
+        if (fieldVal === null) {
+            fieldContext.setValue(null);
             return;
         }
 

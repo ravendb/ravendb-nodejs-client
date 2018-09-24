@@ -91,21 +91,18 @@ export class EntityToJson {
         }
 
         let setMetadata: boolean = false;
-        let metadataNode: object = {};
+        const metadataNode: object = {};
 
         if (documentInfo.metadata && Object.keys(documentInfo.metadata).length > 0) {
             setMetadata = true;
             Object.assign(metadataNode, documentInfo.metadata);
 
             // Add the document @metadata fields (for RDBC-213)
-            for (let metadataItem in documentInfo.entity[CONSTANTS.Documents.Metadata.KEY]) {
-                if (documentInfo.entity[CONSTANTS.Documents.Metadata.KEY].hasOwnProperty(metadataItem)) {
-                    const entry = {
-                        key: metadataItem,
-                        value: documentInfo.entity[CONSTANTS.Documents.Metadata.KEY][metadataItem]
-                    };
+            const entityMeta = documentInfo.entity[CONSTANTS.Documents.Metadata.KEY];
+            for (const metadataItem in entityMeta) {
+                if (entityMeta.hasOwnProperty(metadataItem)) {
                     setMetadata = true;
-                    metadataNode[entry.key] = entry.value;
+                    metadataNode[metadataItem] = entityMeta[metadataItem];
                 }
             }
         } else if (documentInfo.metadataInstance) {

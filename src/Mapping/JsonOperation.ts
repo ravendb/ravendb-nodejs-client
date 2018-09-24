@@ -51,7 +51,8 @@ export class JsonOperation {
             if (CONSTANTS.Documents.Metadata.LAST_MODIFIED === prop ||
                     CONSTANTS.Documents.Metadata.COLLECTION === prop ||
                     CONSTANTS.Documents.Metadata.CHANGE_VECTOR === prop ||
-                    CONSTANTS.Documents.Metadata.ID === prop) {
+                    CONSTANTS.Documents.Metadata.ID === prop ||
+                    CONSTANTS.Documents.Metadata.KEY === prop) {
                 continue;
             }
 
