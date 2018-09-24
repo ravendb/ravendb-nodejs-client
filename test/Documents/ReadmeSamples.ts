@@ -8,6 +8,7 @@ import {
     IDocumentStore,
     IDocumentQuery,
     IDocumentSession,
+    QueryStatistics,
 } from "../../src";
 import { TypeUtil } from "../../src/Utility/TypeUtil";
 
@@ -350,6 +351,24 @@ describe("Readme query samples", function () {
                 .skip(1);
 
             results = await query.all();
+        });
+
+        it("can get stats", async () => {
+            let stats: QueryStatistics;
+            query = session.query({ collection: "users" })
+                .whereGreaterThan("age", 29)
+                .statistics(s => stats = s);
+            results = await query.all();
+            assert.ok(stats);
+            assert.equal(stats.totalResults, 1);
+            assert.equal(stats.skippedResults, 0);
+            assert.equal(stats.indexName, "Auto/users/Byage");
+            assert.equal(stats.isStale, false);
+            assert.ok(stats.resultEtag);
+            assert.ok(stats.durationInMs);
+            assert.ok(stats.lastQueryTime instanceof Date);
+            assert.ok(stats.timestamp instanceof Date);
+            assert.ok(stats.indexTimestamp instanceof Date);
         });
 
     });

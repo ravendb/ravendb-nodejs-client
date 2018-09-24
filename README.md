@@ -481,6 +481,26 @@ await session.query({ collection: "users" })
 //     id: 'users/3-A' } ]
 ```
 
+#### Getting query statistics
+To obtain query statistics use `statistics()` method.
+```javascript
+let stats: QueryStatistics;
+const results = await session.query({ collection: "users" })
+    .whereGreaterThan("age", 29)
+    .statistics(s => stats = s)
+    .all();
+// QueryStatistics {
+//   isStale: false,
+//   durationInMs: 744,
+//   totalResults: 1,
+//   skippedResults: 0,
+//   timestamp: 2018-09-24T05:34:15.260Z,
+//   indexName: 'Auto/users/Byage',
+//   indexTimestamp: 2018-09-24T05:34:15.260Z,
+//   lastQueryTime: 2018-09-24T05:34:15.260Z,
+//   resultEtag: 8426908718162809000 }
+```
+
 #### all() / first() / single() / count()
 `all()` - returns all results
 
