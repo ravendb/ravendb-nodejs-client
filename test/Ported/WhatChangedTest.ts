@@ -51,7 +51,8 @@ describe("WhatChangedTest", function () {
 
             await newSession.store(nameAndAge, "users/1");
 
-            assert.equal(Object.keys(newSession.advanced.whatChanged()).length, 1);
+            const whatChanged = newSession.advanced.whatChanged();
+            assert.equal(Object.keys(whatChanged).length, 1);
             await newSession.saveChanges();
         }
 
@@ -65,10 +66,10 @@ describe("WhatChangedTest", function () {
             // to actually remove a field we can use delete though 
             delete ageOnly["name"];
 
-            const changes = newSession.advanced.whatChanged();
-            assert.equal(changes["users/1"].length, 1);
+            const changes = newSession.advanced.whatChanged()["users/1"];
+            assert.equal(changes.length, 1);
 
-            assert.equal(changes["users/1"][0].change, "RemovedField");
+            assert.equal(changes[0].change, "RemovedField");
             await newSession.saveChanges();
         }
     });

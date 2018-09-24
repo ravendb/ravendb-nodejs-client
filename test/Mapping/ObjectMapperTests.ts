@@ -317,8 +317,16 @@ describe("ObjectMapper", function () {
 
             assert.ok(result.characters[0]);
             assert.equal(result.characters[0].length, 2);
-            assert.deepEqual(result.characters[0], data.characters[0]);
 
+            function assertArrayEntry(actual, expected) {
+                assert.strictEqual(actual["name"], expected["name"]);
+                assert.strictEqual(
+                    actual["lastActedAt"].valueOf(), new Date(expected["lastActedAt"]).valueOf());
+            }
+
+            for (let i = 0; i < result.characters[0].length; i++) {
+                assertArrayEntry(result.characters[0][i], data.characters[0][i]);
+            }
 
             for (let i = 0; i < result.characters[0].length; i++) {
                 const c = result.characters[0][i];
@@ -330,7 +338,10 @@ describe("ObjectMapper", function () {
 
             assert.ok(result.characters[1].length);
             assert.equal(result.characters[1].length, 3);
-            assert.deepEqual(result.characters[1], data.characters[1]);
+
+            for (let i = 0; i < result.characters.length; i++) {
+                assertArrayEntry(result.characters[1][i], data.characters[1][i]);
+            }
         });
 
         it("should not fail if type's not found", () => {
