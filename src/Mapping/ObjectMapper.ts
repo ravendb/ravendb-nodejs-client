@@ -6,6 +6,7 @@ import * as changeCase from "change-object-case";
 import { getLogger } from "../Utility/LogUtil";
 import { StringUtil } from "../Utility/StringUtil";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
+import { ObjectUtil } from "../Utility/ObjectUtil";
 
 const log = getLogger({ module: "ObjectMapper" });
 
@@ -61,6 +62,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
     public fromObjectLiteral<TResult extends object>(
         rawResult: object, typeInfo?: TypeInfo, knownTypes?: Map<string, ObjectTypeDescriptor>): TResult {
         
+        rawResult = ObjectUtil.clone(rawResult);
         const typeName = typeInfo ? typeInfo.typeName : null;
         const nestedTypes = typeInfo ? typeInfo.nestedTypes : null;
         const types = knownTypes || this._conventions.knownEntityTypesByName;

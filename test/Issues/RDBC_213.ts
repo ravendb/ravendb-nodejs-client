@@ -47,8 +47,8 @@ describe("[RDBC-213] Metadata is not saved", function () {
 
         // Load document and make changes to the metadata
         const session2 = store.openSession();
-        let loadedDocument = await session2.load(expiringDocument["id"]);
-        var metadata = session2.advanced.getMetadataFor(loadedDocument);
+        const loadedDocument = await session2.load(expiringDocument["id"]);
+        const metadata = session2.advanced.getMetadataFor(loadedDocument);
 
         const expiresAtNewTime = new Date(2020, 11, 12).toISOString();
         metadata["@expires"] = expiresAtNewTime;

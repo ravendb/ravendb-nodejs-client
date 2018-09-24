@@ -222,14 +222,19 @@ export abstract class InMemoryDocumentSessionOperations
         }
 
         const documentInfo = this._getDocumentInfo(instance);
-        const metadataInstance = documentInfo.metadataInstance;
+        return this._makeMetadataInstance(documentInfo);
+    }
+
+    private _makeMetadataInstance<T extends object>(docInfo: DocumentInfo): IMetadataDictionary {
+        const metadataInstance = docInfo.metadataInstance;
         if (metadataInstance) {
             return metadataInstance;
         }
 
-        const metadataAsJson = documentInfo.metadata;
+        const metadataAsJson = docInfo.metadata;
         const metadata = createMetadataDictionary({ raw: metadataAsJson });
-        documentInfo.metadataInstance = metadata;
+        docInfo.entity[CONSTANTS.Documents.Metadata.KEY] = docInfo.metadataInstance = metadata;
+
         return metadata;
     }
 
@@ -447,6 +452,7 @@ export abstract class InMemoryDocumentSessionOperations
 
             if (!docInfo.entity) {
                 docInfo.entity = this.entityToJson.convertToEntity(entityType, id, document);
+                this._makeMetadataInstance(docInfo);
             }
 
             if (!noTracking) {
@@ -461,6 +467,7 @@ export abstract class InMemoryDocumentSessionOperations
         if (docInfo) {
             if (!docInfo.entity) {
                 docInfo.entity = this.entityToJson.convertToEntity(entityType, id, document);
+                this._makeMetadataInstance(docInfo);
             }
 
             if (!noTracking) {
@@ -489,6 +496,7 @@ export abstract class InMemoryDocumentSessionOperations
 
             this.documentsById.add(newDocumentInfo);
             this.documentsByEntity.set(entity, newDocumentInfo);
+            this._makeMetadataInstance(newDocumentInfo);
         }
 
         return entity as T;
@@ -914,6 +922,7 @@ export abstract class InMemoryDocumentSessionOperations
     
     private static _updateMetadataModifications(documentInfo: DocumentInfo) {
         let dirty = false;
+
         if (documentInfo.metadataInstance) {
             if (documentInfo.metadataInstance.isDirty()) {
                 dirty = true;
