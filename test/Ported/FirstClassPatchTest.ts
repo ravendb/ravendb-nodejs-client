@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import {IDocumentStore} from "../../src";
+import {IDocumentStore, InMemoryDocumentSessionOperations} from "../../src";
 import {disposeTestDocumentStore, testContext} from "../Utils/TestUtil";
 import {DateUtil} from "../../src/Utility/DateUtil";
 
@@ -291,79 +291,66 @@ describe("FirstClassPatchTest", function () {
             const loaded = await session.load<User>(_docId);
             assert.strictEqual(loaded.stuff[0].key, 3);
         }
-
     });
 
-    /*
-+
-+    @Test
-+    public void shouldMergePatchCalls() throws Exception {
-+        Stuff[] stuff = new Stuff[3];
-+        stuff[0] = new Stuff();
-+        stuff[0].setKey(6);
-+
-+        User user = new User();
-+        user.setStuff(stuff);
-+        user.setNumbers(new int[] { 66 });
-+
-+        User user2 = new User();
-+        user2.setNumbers(new int[] { 1, 2,3 });
-+        user2.setStuff(stuff);
-+
-+        String docId2 = "users/2-A";
-+
-+
-+        try (IDocumentStore store = getDocumentStore()) {
-+            try (IDocumentSession session = store.openSession()) {
-+                session.store(user);
-+                session.store(user2, docId2);
-+                session.saveChanges();
-+            }
-+
-+            Date now = new Date();
-+
-+            try (IDocumentSession session = store.openSession()) {
-+                session.advanced().patch(_docId, "numbers[0]", 31);
-+                assertThat(((InMemoryDocumentSessionOperations)session).getDeferredCommandsCount())
-+                        .isEqualTo(1);
-+
-+                session.advanced().patch(_docId, "lastLogin", now);
-+                assertThat(((InMemoryDocumentSessionOperations)session).getDeferredCommandsCount())
-+                        .isEqualTo(1);
-+
-+                session.advanced().patch(docId2, "numbers[0]", 123);
-+                assertThat(((InMemoryDocumentSessionOperations)session).getDeferredCommandsCount())
-+                        .isEqualTo(2);
-+
-+                session.advanced().patch(docId2, "lastLogin", now);
-+                assertThat(((InMemoryDocumentSessionOperations)session).getDeferredCommandsCount())
-+                        .isEqualTo(2);
-+
-+
-+                session.saveChanges();
-+            }
-+
-+            try (IDocumentSession session = store.openSession()) {
-+                session.advanced().increment(_docId, "numbers[0]", 1);
-+                assertThat(((InMemoryDocumentSessionOperations)session).getDeferredCommandsCount())
-+                        .isEqualTo(1);
-+
-+                session.advanced().patch(_docId, "numbers", r -> r.add(77));
-+                assertThat(((InMemoryDocumentSessionOperations)session).getDeferredCommandsCount())
-+                        .isEqualTo(1);
-+
-+                session.advanced().patch(_docId, "numbers", r-> r.add(88));
-+                assertThat(((InMemoryDocumentSessionOperations)session).getDeferredCommandsCount())
-+                        .isEqualTo(1);
-+
-+                session.advanced().patch(_docId, "numbers", r -> r.removeAt(1));
-+                assertThat(((InMemoryDocumentSessionOperations)session).getDeferredCommandsCount())
-+                        .isEqualTo(1);
-+
-+                session.saveChanges();
-+            }
-+        }
-     */
+    it("should merge patch calls", async () => {
+        const stuff = [undefined, undefined, undefined] as Stuff[];
+        stuff[0] = new Stuff();
+        stuff[0].key = 6;
+
+        const user = new User();
+        user.stuff = stuff;
+        user.numbers = [ 66 ];
+
+        const user2 = new User();
+        user2.numbers = [ 1, 2, 3 ];
+        user2.stuff = stuff;
+
+        const docId2 = "users/2-A";
+
+        {
+            const session = store.openSession();
+            await session.store(user);
+            await session.store(user2, docId2);
+            await session.saveChanges();
+        }
+
+        const now = new Date();
+
+        {
+            const session = store.openSession();
+            session.advanced.patch(_docId, "numbers[0]", 31);
+            assert.strictEqual((session as any as InMemoryDocumentSessionOperations).deferredCommandsCount, 1);
+
+            session.advanced.patch(_docId, "lastLogin", now);
+            assert.strictEqual((session as any as InMemoryDocumentSessionOperations).deferredCommandsCount, 1);
+
+            session.advanced.patch(docId2, "numbers[0]", 123);
+            assert.strictEqual((session as any as InMemoryDocumentSessionOperations).deferredCommandsCount, 2);
+
+            session.advanced.patch(docId2, "lastLogin", now);
+            assert.strictEqual((session as any as InMemoryDocumentSessionOperations).deferredCommandsCount, 2);
+
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            session.advanced.increment(_docId, "numbers[0]", 1);
+            assert.strictEqual((session as any as InMemoryDocumentSessionOperations).deferredCommandsCount, 1);
+
+            session.advanced.patch(_docId, "numbers", r => r.push(77));
+            assert.strictEqual((session as any as InMemoryDocumentSessionOperations).deferredCommandsCount, 1);
+
+            session.advanced.patch(_docId, "numbers", r => r.push(88));
+            assert.strictEqual((session as any as InMemoryDocumentSessionOperations).deferredCommandsCount, 1);
+
+            session.advanced.patch(_docId, "numbers", r => r.removeAt(1));
+            assert.strictEqual((session as any as InMemoryDocumentSessionOperations).deferredCommandsCount, 1);
+
+            await session.saveChanges();
+        }
+    });
 });
 
 export class User {
