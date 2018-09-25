@@ -18,6 +18,12 @@ import { getLogger } from "../Utility/LogUtil";
 import { RavenServerLocator } from "./RavenServerLocator";
 import { RavenServerRunner } from "./RavenServerRunner";
 import { TypeUtil } from "../Utility/TypeUtil";
+import {RevisionsConfiguration} from "../Documents/Operations/RevisionsConfiguration";
+import {RevisionsCollectionConfiguration} from "../Documents/Operations/RevisionsCollectionConfiguration";
+import {
+    ConfigureRevisionsOperation,
+    ConfigureRevisionsOperationResult
+} from "../Documents/Operations/Revisions/ConfigureRevisionsOperation";
 
 const log = getLogger({ module: "TestDriver" });
 
@@ -62,6 +68,21 @@ export abstract class RavenTestDriver implements IDisposable {
 
     public get customizeDbRecord() {
         return this._customizeDbRecord;
+    }
+
+    public setupRevisions(
+        store: IDocumentStore,
+        purgeOnDelete: boolean,
+        minimumRevisionsToKeep: number): Promise<ConfigureRevisionsOperationResult> {
+
+        const revisionsConfiguration = new RevisionsConfiguration();
+        const defaultConfiguration = new RevisionsCollectionConfiguration();
+        defaultConfiguration.purgeOnDelete = purgeOnDelete;
+        defaultConfiguration.minimumRevisionsToKeep = minimumRevisionsToKeep;
+
+        revisionsConfiguration.defaultConfig = defaultConfiguration;
+        const operation = new ConfigureRevisionsOperation(revisionsConfiguration);
+        return store.maintenance.send(operation);
     }
 
     public getDocumentStore(): Promise<DocumentStore>;

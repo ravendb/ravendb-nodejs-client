@@ -39,7 +39,7 @@ export class EntityToJson {
 
         // TODO handle Maps
         if (entity instanceof SetupDocumentBase) {
-            jsonNode = ObjectUtil.transformObjectKeys(jsonNode,  { defaultTransform: "pascal" });
+            jsonNode = entity.toRemoteFieldNames();
         } else {
             jsonNode = conventions.transformObjectKeysToRemoteFieldNameConvention(jsonNode);
         }

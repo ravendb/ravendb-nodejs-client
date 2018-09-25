@@ -13,6 +13,7 @@ import { User } from "../../Assets/Entities";
 import {CONSTANTS} from "../../../src/Constants";
 import {DeleteCommandData} from "../../../src/Documents/Commands/CommandData";
 import * as StreamUtil from "../../../src/Utility/StreamUtil";
+import {DeleteAttachmentOperation} from "../../../src/Documents/Operations/Attachments/DeleteAttachmentOperation";
 
 describe("Attachments Session", function () {
 
@@ -155,6 +156,13 @@ describe("Attachments Session", function () {
         {
             const session = store.openSession();
             const user = await session.load<User>("users/1");
+
+            // test get attachment by its name
+            {
+                const attachmentResult = await session.advanced.attachments.get("users/1", "file2");
+                assert.strictEqual(attachmentResult.details.name, "file2");
+            }
+
             session.advanced.attachments.delete("users/1", "file2");
             session.advanced.attachments.delete(user, "file4");
             await session.saveChanges();
@@ -194,6 +202,43 @@ describe("Attachments Session", function () {
             await StreamUtil.finishedAsync(result.data);
             result.dispose();
             assert.ok(Buffer.compare(bufResult, stream1) === 0); 
+        }
+    });
+
+    it("can delete attachment using command", async () => {
+        {
+            const session = store.openSession();
+            const user = new User();
+            user.name = "Fitzchak";
+            await session.store(user, "users/1");
+
+            const stream1 = Buffer.from([1, 2, 3]);
+            const stream2 = Buffer.from([1, 2, 3, 4, 5, 6]);
+
+            session.advanced.attachments.store(user, "file1", stream1, "image/png");
+            session.advanced.attachments.store(user, "file2", stream2, "image/png");
+
+            await session.saveChanges();
+        }
+
+        await store.operations.send(new DeleteAttachmentOperation("users/1", "file2"));
+
+        {
+            const session = store.openSession();
+            const user = await session.load<User>("users/1");
+            const metadata = session.advanced.getMetadataFor(user);
+
+            assert.ok(metadata[CONSTANTS.Documents.Metadata.FLAGS].includes("HasAttachments"));
+
+            const attachments = metadata[CONSTANTS.Documents.Metadata.ATTACHMENTS];
+            assert.strictEqual(attachments.length, 1);
+
+            const result = await session.advanced.attachments.get("users/1", "file1");
+            try {
+                assert.strictEqual(result.data.readableLength, 3);
+            } finally {
+                result.dispose();
+            }
         }
     });
 

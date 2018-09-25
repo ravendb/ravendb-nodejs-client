@@ -16,13 +16,18 @@ import { IAttachmentsSessionOperations } from "../Session/IAttachmentsSessionOpe
 import {ILazySessionOperations} from "./Operations/Lazy/ILazySessionOperations";
 import {IEagerSessionOperations} from "./Operations/Lazy/IEagerSessionOperations";
 import {JavaScriptArray} from "./JavaScriptArray";
+import {IRevisionsSessionOperations} from "./IRevisionsSessionOperations";
 
 export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOperations {
 
     eagerly: IEagerSessionOperations;
     lazily: ILazySessionOperations;
+    /**
+     * @return Access the attachments operations
+     */
+    attachments: IAttachmentsSessionOperations;
 
-    // TBD IRevisionsSessionOperations Revisions { get; }
+    revisions: IRevisionsSessionOperations;
 
     /**
      * Updates entity with latest changes from server
@@ -243,8 +248,5 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
 
     entityToJson: EntityToJson;
 
-    /**
-     * @return Access the attachments operations
-     */
-    attachments: IAttachmentsSessionOperations;
+
 }

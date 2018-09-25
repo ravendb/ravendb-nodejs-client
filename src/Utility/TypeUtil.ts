@@ -35,7 +35,7 @@ export class TypeUtil {
             type === Boolean;
     }
 
-    public static isArray(value: any): boolean {
+    public static isArray(value: any): value is any[] {
         return Array.isArray(value);
     }
 

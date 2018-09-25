@@ -44,7 +44,7 @@ export class DocumentSessionAttachments
         return result;
     }
 
-    private async _get(idOrEntity: string | object, name: string): Promise<AttachmentResult> { 
+    private async _get(idOrEntity: string | object, name: string): Promise<AttachmentResult> {
         let docId;
         if (typeof idOrEntity !== "string") {
             const document = this._documentsByEntity.get(idOrEntity);
@@ -62,5 +62,8 @@ export class DocumentSessionAttachments
         return this._session.operations.send(operation, this._sessionInfo);
     }
 
-    //TBD public AttachmentResult GetRevision(string documentId, string name, string changeVector)
+    public getRevision(documentId: string, name: string, changeVector: string): Promise<AttachmentResult> {
+        const operation = new GetAttachmentOperation(documentId, name, "Revision", changeVector);
+        return this._session.operations.send(operation, this._sessionInfo);
+    }
 }

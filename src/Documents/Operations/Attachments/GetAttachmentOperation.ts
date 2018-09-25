@@ -67,27 +67,17 @@ export class GetAttachmentCommand extends RavenCommand<AttachmentResult> {
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/attachments?id="
             + encodeURIComponent(this._documentId) + "&name=" + encodeURIComponent(this._name);
-        const result = { uri };
-        if (this._type !== "Document") {
-            /* TODO
-             request.Method = HttpMethod.Post;
-                 request.Content = new BlittableJsonContent(stream =>
-                {
-                    using (var writer = new BlittableJsonTextWriter(_context, stream))
-                    {
-                        writer.WriteStartObject();
-                         writer.WritePropertyName("Type");
-                        writer.WriteString(_type.ToString());
-                        writer.WriteComma();
-                         writer.WritePropertyName("ChangeVector");
-                        writer.WriteString(_changeVector);
-                         writer.WriteEndObject();
-                    }
-                });
-             */
-        }
 
-        return result;
+        if (this._type !== "Document") {
+            const body = this._serializer.serialize({ Type: this._type, ChangeVector: this._changeVector });
+
+            return {
+                uri,
+                method: "POST",
+                body
+            };
+        }
+        return { uri };
     }
 
     public async processResponse(
