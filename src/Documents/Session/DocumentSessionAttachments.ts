@@ -62,8 +62,14 @@ export class DocumentSessionAttachments
         return this._session.operations.send(operation, this._sessionInfo);
     }
 
-    public getRevision(documentId: string, name: string, changeVector: string): Promise<AttachmentResult> {
+    public async getRevision(documentId: string, name: string, changeVector: string): Promise<AttachmentResult>;
+    public async getRevision(documentId: string, name: string, changeVector: string,
+                             callback: AbstractCallback<AttachmentResult>): Promise<AttachmentResult>;
+    public async getRevision(documentId: string, name: string, changeVector: string,
+                             callback?: AbstractCallback<AttachmentResult>): Promise<AttachmentResult> {
         const operation = new GetAttachmentOperation(documentId, name, "Revision", changeVector);
-        return this._session.operations.send(operation, this._sessionInfo);
+        const result = this._session.operations.send(operation, this._sessionInfo);
+        PromiseUtil.passResultToCallback(result, callback);
+        return result;
     }
 }

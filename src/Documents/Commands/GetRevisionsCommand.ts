@@ -1,9 +1,10 @@
-import {IRavenArrayResult, ServerNode} from "../..";
+import {DocumentConventions, IRavenArrayResult, ServerNode} from "../..";
 import { RavenCommand } from "../../../src/Http/RavenCommand";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {HttpRequestParameters} from "../../Primitives/Http";
 import {DateUtil} from "../../Utility/DateUtil";
 import * as stream from "readable-stream";
+import {GetDocumentsCommand} from "./GetDocumentsCommand";
 
 export class GetRevisionsCommand extends RavenCommand<IRavenArrayResult> {
 
@@ -14,15 +15,16 @@ export class GetRevisionsCommand extends RavenCommand<IRavenArrayResult> {
     private _before: Date;
     private _changeVector: string;
     private _changeVectors: string[];
+    private _conventions: DocumentConventions;
 
-    public constructor(changeVector: string);
-    public constructor(changeVector: string, metadataOnly: boolean);
-    public constructor(changeVectors: string[]);
-    public constructor(changeVectors: string[], metadataOnly: boolean);
-    public constructor(id: string, before: Date);
-    public constructor(id: string, start: number, pageSize: number);
-    public constructor(id: string, start: number, pageSize: number, metadataOnly: boolean);
-    public constructor(changeVectorOrVectorsOrId: string | string[], beforeOrMetadataOrStart?: boolean | Date | number,
+    public constructor(conventions: DocumentConventions, changeVector: string);
+    public constructor(conventions: DocumentConventions, changeVector: string, metadataOnly: boolean);
+    public constructor(conventions: DocumentConventions, changeVectors: string[]);
+    public constructor(conventions: DocumentConventions, changeVectors: string[], metadataOnly: boolean);
+    public constructor(conventions: DocumentConventions, id: string, before: Date);
+    public constructor(conventions: DocumentConventions, id: string, start: number, pageSize: number);
+    public constructor(conventions: DocumentConventions, id: string, start: number, pageSize: number, metadataOnly: boolean);
+    public constructor(conventions: DocumentConventions, changeVectorOrVectorsOrId: string | string[], beforeOrMetadataOrStart?: boolean | Date | number,
                        pageSize?: number, metadataOnly?: boolean) {
         super();
 
@@ -41,6 +43,8 @@ export class GetRevisionsCommand extends RavenCommand<IRavenArrayResult> {
             this._changeVector = changeVectorOrVectorsOrId;
             this._metadataOnly = beforeOrMetadataOrStart || false;
         }
+
+        this._conventions = conventions;
     }
 
     public get changeVectors() {
@@ -93,14 +97,11 @@ export class GetRevisionsCommand extends RavenCommand<IRavenArrayResult> {
         }
 
         let body;
-        this.result = await this._pipeline<IRavenArrayResult>()
-            .collectBody(_ => body = _)
-            .parseJsonSync()
-            .streamKeyCaseTransform({
-                defaultTransform: "camel",
-                ignoreKeys: [ /^@/ ],
-            })
-            .process(bodyStream);
-        return body;
+        this.result =
+            await GetDocumentsCommand.parseDocumentsResultResponseAsync(
+                bodyStream, this._conventions, b => body = b);
+
+        return body as string;
+
     }
 }

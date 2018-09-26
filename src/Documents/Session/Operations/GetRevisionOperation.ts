@@ -2,7 +2,7 @@ import {InMemoryDocumentSessionOperations} from "../InMemoryDocumentSessionOpera
 import {GetRevisionsCommand} from "../../Commands/GetRevisionsCommand";
 import {throwError} from "../../../Exceptions";
 import {TypeUtil} from "../../../Utility/TypeUtil";
-import {IRavenArrayResult, IRavenObject} from "../../../Types";
+import {IRavenArrayResult, IRavenObject, RevisionsCollectionObject} from "../../../Types";
 import {DocumentInfo} from "../DocumentInfo";
 import {MetadataAsDictionary} from "../../../Mapping/MetadataAsDictionary";
 import {CONSTANTS} from "../../../Constants";
@@ -33,14 +33,14 @@ export class GetRevisionOperation {
 
         this._session = session;
         if (startOrDate instanceof Date) {
-            this._command = new GetRevisionsCommand(changeVectorOrChangeVectorsOrId as string, startOrDate);
+            this._command = new GetRevisionsCommand(session.conventions, changeVectorOrChangeVectorsOrId as string, startOrDate);
         } else if (TypeUtil.isArray(changeVectorOrChangeVectorsOrId)) {
-            this._command = new GetRevisionsCommand(changeVectorOrChangeVectorsOrId);
+            this._command = new GetRevisionsCommand(session.conventions, changeVectorOrChangeVectorsOrId);
         } else if (TypeUtil.isNumber(startOrDate)) {
-            this._command = new GetRevisionsCommand(changeVectorOrChangeVectorsOrId, startOrDate,
+            this._command = new GetRevisionsCommand(session.conventions, changeVectorOrChangeVectorsOrId, startOrDate,
                 pageSize, metadataOnly);
         } else {
-            this._command = new GetRevisionsCommand(changeVectorOrChangeVectorsOrId);
+            this._command = new GetRevisionsCommand(session.conventions, changeVectorOrChangeVectorsOrId);
         }
     }
 
@@ -111,8 +111,9 @@ export class GetRevisionOperation {
         return this._getRevision(documentType, document);
     }
 
-    public getRevisions<TEntity extends object>(documentType: DocumentType<TEntity>): Map<string, TEntity> {
-        const results = new Map<string, TEntity>();
+    public getRevisions<TEntity extends object>(
+        documentType: DocumentType<TEntity>): RevisionsCollectionObject<TEntity> {
+        const results = {} as RevisionsCollectionObject<TEntity>;
 
         for (let i = 0; i < this._command.changeVectors.length; i++) {
             const changeVector = this._command.changeVectors[i];
@@ -120,7 +121,7 @@ export class GetRevisionOperation {
                 continue;
             }
 
-            results.set(changeVector, this._getRevision(documentType, this._result.results[i]));
+            results[changeVector] = this._getRevision(documentType, this._result.results[i]);
         }
 
         return results;

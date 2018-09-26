@@ -3,7 +3,6 @@ import { AttachmentData } from "./../Attachments";
 import { AbstractCallback } from "../../Types/Callbacks";
 
 export interface IAttachmentsSessionOperations {
-    //TBD:
     /**
      * Returns the attachments info of a document.
      * @param entity Entity to use
@@ -70,6 +69,17 @@ export interface IAttachmentsSessionOperations {
      * @return Attachment
      */
     getRevision(documentId: string, name: string, changeVector: string): Promise<AttachmentResult>;
+
+    /**
+     * Returns the revision attachment by the document id and attachment name.
+     * @param documentId Document Id
+     * @param name Name of attachment
+     * @param changeVector Change vector
+     * @param callback Callback
+     * @return Attachment
+     */
+    getRevision(documentId: string, name: string, changeVector: string,
+                callback: AbstractCallback<AttachmentResult>): Promise<AttachmentResult>;
 
     /**
      * Stores attachment to be sent in the session.

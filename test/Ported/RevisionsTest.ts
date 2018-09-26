@@ -1,10 +1,11 @@
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
-import {IDocumentStore} from "../../src";
+import {DocumentStore, IDocumentStore} from "../../src";
 import {User} from "../Assets/Entities";
 import {CONSTANTS} from "../../src/Constants";
 import {ConfigureRevisionsOperationResult} from "../../src/Documents/Operations/Revisions/ConfigureRevisionsOperation";
+import {GetDocumentsCommand} from "../../src/Documents/Commands/GetDocumentsCommand";
 
 describe("RevisionsTest", function () {
 
@@ -65,6 +66,43 @@ describe("RevisionsTest", function () {
             const user = await session.advanced.revisions
                 .get<User>(metadataSkipFirst[0][CONSTANTS.Documents.Metadata.CHANGE_VECTOR]);
             assert.strictEqual(user.name, "user3");
+        }
+    });
+
+    it("with key case transform", async () => {
+        const configurationResult = await testContext.setupRevisions(store, false, 4);
+
+        let customStore: DocumentStore;
+        try {
+            customStore = new DocumentStore(store.urls, store.database);
+            customStore.conventions.entityFieldNameConvention = "pascal";
+            customStore.conventions.remoteEntityFieldNameConvention = "camel";
+            customStore.initialize();
+
+            const session = store.openSession();
+
+            const user = {
+                Name: "Marcin",
+                Age: 30,
+                Pet: "users/4"
+            };
+
+            await session.store(user, "users/1");
+            await session.saveChanges();
+
+            user.Name = "Roman";
+            user.Age = 40;
+            await session.saveChanges();
+
+            const revisions = await session.advanced.revisions.getFor<{ Name: string, Age: 30}>("users/1");
+
+            assert.strictEqual(revisions.length, 2);
+            assert.strictEqual(revisions[0].Name, "Roman");
+            assert.strictEqual(revisions[1].Name, "Marcin");
+        } finally {
+            if (customStore) {
+                customStore.dispose();
+            }
         }
     });
 
