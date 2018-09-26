@@ -97,7 +97,6 @@ export class GetRevisionOperation {
         for (const document of this._result.results) {
             const metadata = document[CONSTANTS.Documents.Metadata.KEY];
             results.push(metadata);
-            //TODO: do we have to wrap this?   results.add(new MetadataAsDictionary(metadata)); (Greg)
         }
 
         return results;

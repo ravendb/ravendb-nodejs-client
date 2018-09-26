@@ -1,4 +1,3 @@
-import {SetupDocumentBase} from "../../SetupDocumentBase";
 import {IMaintenanceOperation, OperationResultType} from "../OperationAbstractions";
 import {RevisionsConfiguration} from "../RevisionsConfiguration";
 import {DocumentConventions, ServerNode} from "../../..";
@@ -53,23 +52,16 @@ export class ConfigureRevisionsCommand extends RavenCommand<ConfigureRevisionsOp
         }
 
         let body;
-        await this._defaultPipeline(_ => body = _).process(bodyStream)
+        await this._defaultPipeline(_ => body = _)
+            .process(bodyStream)
             .then(results => {
-                //TODO: verify if this call is needed (Greg)
-                this.result = this._typedObjectMapper.fromObjectLiteral(results);
+                this.result = Object.assign(new ConfigureRevisionsOperationResult(), results);
             });
 
         return body;
     }
 }
 
-export class ConfigureRevisionsOperationResult extends SetupDocumentBase {
-
-    public etag: number;
-
-    public toRemoteFieldNames() {
-        return {
-            ETag: this.etag
-        };
-    }
+export class ConfigureRevisionsOperationResult {
+    public raftCommandIndex: number;
 }

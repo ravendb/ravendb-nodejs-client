@@ -4,6 +4,7 @@ import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 import {IDocumentStore} from "../../src";
 import {User} from "../Assets/Entities";
 import {CONSTANTS} from "../../src/Constants";
+import {ConfigureRevisionsOperationResult} from "../../src/Documents/Operations/Revisions/ConfigureRevisionsOperation";
 
 describe("RevisionsTest", function () {
 
@@ -16,8 +17,10 @@ describe("RevisionsTest", function () {
     afterEach(async () =>
         await disposeTestDocumentStore(store));
 
-    it("can handle revisions", async () => {
-        await testContext.setupRevisions(store, false, 4);
+    it.only("can handle revisions", async () => {
+        const configurationResult = await testContext.setupRevisions(store, false, 4);
+        assert.ok(configurationResult instanceof ConfigureRevisionsOperationResult);
+        assert.ok(configurationResult.raftCommandIndex);
 
         for (let i  = 0; i < 4; i++) {
             const session = store.openSession();

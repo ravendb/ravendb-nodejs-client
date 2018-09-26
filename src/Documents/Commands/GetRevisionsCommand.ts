@@ -4,7 +4,6 @@ import {TypeUtil} from "../../Utility/TypeUtil";
 import {HttpRequestParameters} from "../../Primitives/Http";
 import {DateUtil} from "../../Utility/DateUtil";
 import * as stream from "readable-stream";
-import {RavenCommandResponsePipeline} from "../../Http/RavenCommandResponsePipeline";
 
 export class GetRevisionsCommand extends RavenCommand<IRavenArrayResult> {
 
@@ -94,8 +93,7 @@ export class GetRevisionsCommand extends RavenCommand<IRavenArrayResult> {
         }
 
         let body;
-        //TODO: view this (Greg)
-        this.result = await RavenCommandResponsePipeline.create<IRavenArrayResult>()
+        this.result = await this._pipeline<IRavenArrayResult>()
             .collectBody(_ => body = _)
             .parseJsonSync()
             .streamKeyCaseTransform({
