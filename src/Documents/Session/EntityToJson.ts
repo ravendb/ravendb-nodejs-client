@@ -50,8 +50,6 @@ export class EntityToJson {
 
         EntityToJson._tryRemoveIdentityProperty(jsonNode, type, conventions);
 
-        // TBD: TrySimplifyJson(reader);
-
         return jsonNode;
     }
 
@@ -70,7 +68,6 @@ export class EntityToJson {
         EntityToJson._writeMetadata(jsonNode, typeInfo, documentInfo);
 
         EntityToJson._tryRemoveIdentityProperty(jsonNode, typeInfo.typeName, conventions);
-        //TBD: TrySimplifyJson(reader);
 
         return jsonNode;
     }
@@ -188,9 +185,6 @@ export class EntityToJson {
             nestedTypes:  metadata[CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES]
         };
     }
-
-    // TBD public static object ConvertToEntity(
-    //    Type entityType, string id, BlittableJsonReaderObject document, DocumentConventions conventions)
 
     private static _tryRemoveIdentityProperty(
         document: object, entityType: DocumentType, conventions: DocumentConventions): boolean {

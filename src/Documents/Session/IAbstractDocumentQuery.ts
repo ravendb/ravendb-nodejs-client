@@ -425,8 +425,6 @@ export interface IAbstractDocumentQuery<T> {
     // TBD void AggregateBy(FacetBase facet);
     // TBD IAggregationDocumentQuery<T> AggregateBy(Action<IFacetBuilder<T>> builder);
     // TBD void AggregateUsing(string facetSetupDocumentId);
-    // TBD void AddFromAliasToWhereTokens(string fromAlias);
-    // TBD string ProjectionParameter(object id);
     // TBD void SuggestUsing(SuggestionBase suggestion);
 
     iterator(): Promise<IterableIterator<T>>;
