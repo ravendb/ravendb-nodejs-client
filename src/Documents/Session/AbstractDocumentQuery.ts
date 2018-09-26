@@ -373,11 +373,12 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             return "";
         }
 
-        /* TBD
-            if (_conventions.TryConvertValueForQuery(
-                whereParams.FieldName, whereParams.Value, forRange, out var strVal))
-                return strVal;
-        */
+        let stringValue: string = null;
+
+        if (this._conventions.tryConvertValueForQuery(whereParams.fieldName,
+            whereParams.value, forRange, s => stringValue = s)) {
+            return stringValue;
+        }
 
         const value = whereParams.value;
         return this._stringifyParameter(value);

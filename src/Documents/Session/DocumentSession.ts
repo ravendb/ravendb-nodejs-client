@@ -49,6 +49,8 @@ import {JavaScriptArray} from "./JavaScriptArray";
 import {PatchRequest} from "../Operations/PatchRequest";
 import {PatchCommandData} from "../Commands/Batches/PatchCommandData";
 import {IdTypeAndName} from "../IdTypeAndName";
+import {IRevisionsSessionOperations} from "./IRevisionsSessionOperations";
+import {DocumentSessionRevisions} from "./DocumentSessionRevisions";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;
@@ -67,7 +69,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     public constructor(dbName: string, documentStore: DocumentStore, id: string, requestExecutor: RequestExecutor) {
         super(dbName, documentStore, requestExecutor, id);
         this._attachments = new DocumentSessionAttachments(this);
-        // TBD Revisions = new DocumentSessionRevisions(this);
+        this._revisions = new DocumentSessionRevisions(this);
     }
 
     public get advanced() {
@@ -493,6 +495,12 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
     public get attachments(): IAttachmentsSessionOperations {
         return this._attachments;
+    }
+
+    private _revisions: IRevisionsSessionOperations;
+
+    public get revisions(): IRevisionsSessionOperations {
+        return this._revisions;
     }
     
     public get lazily(): ILazySessionOperations {

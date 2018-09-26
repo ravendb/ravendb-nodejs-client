@@ -9,6 +9,13 @@ export class ObjectUtil {
         return JSON.parse(JSON.stringify(o));
     }
 
+    public static mapToLiteral<TValue, TResult>(
+        input: Map<string, TValue>, valueTransformFunc: (value: string, key: TValue) => TResult) {
+        return Array.from(input).reduce((obj, [key, value]) => (
+            Object.assign(obj, { [key]: valueTransformFunc(key, value) })
+        ), {});
+    }
+
     public static transformObjectKeys(
         obj: object, opts?: ObjectChangeCaseOptions): object {
         const options: any = setDefaults(opts, DEFAULT_CHANGE_CASE_OPTIONS);

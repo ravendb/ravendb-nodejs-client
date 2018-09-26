@@ -2,10 +2,10 @@ import { TypesAwareObjectMapper } from "../../Mapping/ObjectMapper";
 import { 
     DocumentType, 
 } from "../DocumentAbstractions";
-import { 
+import {
     ObjectTypeDescriptor,
-    ObjectLiteralDescriptor, 
-    ClassConstructor
+    ObjectLiteralDescriptor,
+    ClassConstructor, EntityConstructor
 } from "../../Types";
 import * as pluralize from "pluralize";
 import { ClientConfiguration } from "../Operations/Configuration/ClientConfiguration";
@@ -18,6 +18,9 @@ import { CasingConvention, ObjectUtil, ObjectChangeCaseOptions } from "../../Uti
 import { JsonSerializer } from "../../Mapping/Json/Serializer";
 
 export type IdConvention = (databaseName: string, entity: object) => Promise<string>;
+export type IValueForQueryConverter<T> =
+    (fieldName: string, value: T, forRange: boolean, stringValue: (value: string) => void) => boolean;
+
 export class DocumentConventions {
 
     private static _defaults: DocumentConventions = new DocumentConventions();
@@ -28,8 +31,8 @@ export class DocumentConventions {
 
     private static _cachedDefaultTypeCollectionNames: Map<ObjectTypeDescriptor, string> = new Map();
 
-    // TBD: private readonly List<(Type Type, TryConvertValueForQueryDelegate<object> Convert)> 
-    // _listOfQueryValueConverters = new List<(Type, TryConvertValueForQueryDelegate<object>)>();
+    private readonly _listOfQueryValueConverters:
+        Array<{ Type: EntityConstructor<any>; Converter: IValueForQueryConverter<any> }> = [];
 
     private _registeredIdConventions:
         Map<ObjectTypeDescriptor, IdConvention> = new Map();
@@ -530,8 +533,43 @@ export class DocumentConventions {
         return collectionName;
     }
 
-    // TBD public void RegisterQueryValueConverter<T>(TryConvertValueForQueryDelegate<T> converter)
-    // TBD public bool TryConvertValueForQuery(string fieldName, object value, bool forRange, out string strValue)
+    public registerQueryValueConverter<T extends object>(type: EntityConstructor<T>,
+                                                         converter: IValueForQueryConverter<T>) {
+        this._assertNotFrozen();
+
+        let index;
+        for (index = 0; index < this._listOfQueryValueConverters.length; index++) {
+            const entry = this._listOfQueryValueConverters[index];
+            if (type instanceof entry.Type) {
+                break;
+            }
+        }
+
+        this._listOfQueryValueConverters.splice(index, 0, {
+            Type: type,
+            Converter: (fieldName, value, forRange, stringValue) => {
+                if (value instanceof type) {
+                    return converter(fieldName, value, forRange, stringValue);
+                }
+                stringValue(null);
+                return false;
+            }
+        });
+    }
+
+    public tryConvertValueForQuery
+        (fieldName: string, value: any, forRange: boolean, strValue: (value: string) => void) {
+        for (const queryValueConverter of this._listOfQueryValueConverters) {
+            if (!(value instanceof queryValueConverter.Type)) {
+                continue;
+            }
+
+            return queryValueConverter.Converter(fieldName, value, forRange, strValue);
+        }
+
+        strValue(null);
+        return false;
+    }
 
     public freeze() {
         this._frozen = true;

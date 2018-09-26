@@ -4,6 +4,10 @@ export interface EntitiesCollectionObject<TEntity> extends IRavenObject<TEntity>
     [id: string]: TEntity;
 }
 
+export interface RevisionsCollectionObject<TEntity> extends IRavenObject<TEntity> {
+    [changeVector: string]: TEntity;
+}
+
 export interface IRavenObject<T = any> {
     [property: string]: T;
 }

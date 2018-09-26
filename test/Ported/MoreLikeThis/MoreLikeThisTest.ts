@@ -189,6 +189,41 @@ describe("MoreLikeThisTests", function () {
         }
     });
 
+    it("can get results using term vectors lazy", async () => {
+        let id: string;
+        {
+            const session = store.openSession();
+
+            await new DataIndex(true, false).execute(store);
+
+            const list = getDataList();
+            for (const datum of list) {
+                await session.store(datum);
+            }
+            await session.saveChanges();
+
+            id = session.advanced.getDocumentId(list[0]);
+            await testContext.waitForIndexing(store);
+        }
+
+        {
+            const session = store.openSession();
+
+            const options = {
+                fields: ["body"]
+            } as MoreLikeThisOptions;
+
+            const lazyList = await session
+                .query<any>({ indexName: "DataIndex" })
+                .moreLikeThis(f => f.usingDocument(b => b.whereEquals("id()", id)).withOptions(options))
+                .lazily();
+
+            const list = await lazyList.getValue();
+
+            assert.ok(list.length > 0);
+        }
+    });
+
     it("can get results using storage", async () => {
         let id: string;
         {

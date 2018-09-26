@@ -18,6 +18,12 @@ import { getLogger } from "../Utility/LogUtil";
 import { RavenServerLocator } from "./RavenServerLocator";
 import { RavenServerRunner } from "./RavenServerRunner";
 import { TypeUtil } from "../Utility/TypeUtil";
+import {RevisionsConfiguration} from "../Documents/Operations/RevisionsConfiguration";
+import {RevisionsCollectionConfiguration} from "../Documents/Operations/RevisionsCollectionConfiguration";
+import {
+    ConfigureRevisionsOperation,
+    ConfigureRevisionsOperationResult
+} from "../Documents/Operations/Revisions/ConfigureRevisionsOperation";
 
 const log = getLogger({ module: "TestDriver" });
 
@@ -55,6 +61,7 @@ export abstract class RavenTestDriver implements IDisposable {
     }
 
     private _customizeDbRecord: (dbRecord: DatabaseRecord) => void = TypeUtil.NOOP;
+    private _customizeStore: (store: DocumentStore) => Promise<void> = TypeUtil.ASYNC_NOOP;
 
     public set customizeDbRecord(customizeDbRecord: (dbRecord: DatabaseRecord) => void) {
         this._customizeDbRecord = customizeDbRecord;
@@ -62,6 +69,29 @@ export abstract class RavenTestDriver implements IDisposable {
 
     public get customizeDbRecord() {
         return this._customizeDbRecord;
+    }
+
+    public set customizeStore(customizeStore: (store: DocumentStore) => Promise<void>) {
+        this._customizeStore = customizeStore;
+    }
+
+    public get customizeStore() {
+        return this._customizeStore;
+    }
+
+    public setupRevisions(
+        store: IDocumentStore,
+        purgeOnDelete: boolean,
+        minimumRevisionsToKeep: number): Promise<ConfigureRevisionsOperationResult> {
+
+        const revisionsConfiguration = new RevisionsConfiguration();
+        const defaultConfiguration = new RevisionsCollectionConfiguration();
+        defaultConfiguration.purgeOnDelete = purgeOnDelete;
+        defaultConfiguration.minimumRevisionsToKeep = minimumRevisionsToKeep;
+
+        revisionsConfiguration.defaultConfig = defaultConfiguration;
+        const operation = new ConfigureRevisionsOperation(revisionsConfiguration);
+        return store.maintenance.send(operation);
     }
 
     public getDocumentStore(): Promise<DocumentStore>;
@@ -93,10 +123,14 @@ export abstract class RavenTestDriver implements IDisposable {
             const createDatabaseOperation = new CreateDatabaseOperation(databaseRecord);
             return documentStore.maintenance.server.send(createDatabaseOperation);
         })
-        .then(createDatabaseResult => {
+        .then(async createDatabaseResult => {
             const store = new DocumentStore(documentStore.urls, databaseName);
             if (secured) {
                 store.authOptions = this._securedLocator.getClientAuthOptions();
+            }
+
+            if (this._customizeStore) {
+                await this._customizeStore(store);
             }
 
             store.initialize();
