@@ -61,6 +61,7 @@ export abstract class RavenTestDriver implements IDisposable {
     }
 
     private _customizeDbRecord: (dbRecord: DatabaseRecord) => void = TypeUtil.NOOP;
+    private _customizeStore: (store: DocumentStore) => Promise<void> = TypeUtil.ASYNC_NOOP;
 
     public set customizeDbRecord(customizeDbRecord: (dbRecord: DatabaseRecord) => void) {
         this._customizeDbRecord = customizeDbRecord;
@@ -68,6 +69,14 @@ export abstract class RavenTestDriver implements IDisposable {
 
     public get customizeDbRecord() {
         return this._customizeDbRecord;
+    }
+
+    public set customizeStore(customizeStore: (store: DocumentStore) => Promise<void>) {
+        this._customizeStore = customizeStore;
+    }
+
+    public get customizeStore() {
+        return this._customizeStore;
     }
 
     public setupRevisions(
@@ -114,10 +123,14 @@ export abstract class RavenTestDriver implements IDisposable {
             const createDatabaseOperation = new CreateDatabaseOperation(databaseRecord);
             return documentStore.maintenance.server.send(createDatabaseOperation);
         })
-        .then(createDatabaseResult => {
+        .then(async createDatabaseResult => {
             const store = new DocumentStore(documentStore.urls, databaseName);
             if (secured) {
                 store.authOptions = this._securedLocator.getClientAuthOptions();
+            }
+
+            if (this._customizeStore) {
+                await this._customizeStore(store);
             }
 
             store.initialize();

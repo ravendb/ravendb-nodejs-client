@@ -76,9 +76,8 @@ export class GetAttachmentCommand extends RavenCommand<AttachmentResult> {
                 method: "POST",
                 body
             };
-        } else {
-            return { uri };
         }
+        return { uri };
     }
 
     public async processResponse(

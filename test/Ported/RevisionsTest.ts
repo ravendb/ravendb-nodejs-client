@@ -17,7 +17,7 @@ describe("RevisionsTest", function () {
     afterEach(async () =>
         await disposeTestDocumentStore(store));
 
-    it.only("can handle revisions", async () => {
+    it("can handle revisions", async () => {
         const configurationResult = await testContext.setupRevisions(store, false, 4);
         assert.ok(configurationResult instanceof ConfigureRevisionsOperationResult);
         assert.ok(configurationResult.raftCommandIndex);

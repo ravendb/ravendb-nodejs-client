@@ -6,6 +6,7 @@ export class TypeUtil {
 
     // tslint:disable-next-line:no-empty
     public static NOOP: (...args: any[]) => any = () => {};
+    public static ASYNC_NOOP: (...args: any[]) => Promise<any> = () => Promise.resolve(undefined);
 
     public static isNullOrUndefined(value: any): boolean {
         return ("undefined" === (typeof value)) || value === null;
