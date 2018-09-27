@@ -1,3 +1,5 @@
+import {SuggestionResult} from "../Documents/Queries/Suggestions/SuggestionResult";
+
 export interface Todo {}
 
 export interface EntitiesCollectionObject<TEntity> extends IRavenObject<TEntity> {
@@ -6,6 +8,10 @@ export interface EntitiesCollectionObject<TEntity> extends IRavenObject<TEntity>
 
 export interface RevisionsCollectionObject<TEntity> extends IRavenObject<TEntity> {
     [changeVector: string]: TEntity;
+}
+
+export interface SuggestionsResponseObject {
+    [fieldName: string]: SuggestionResult;
 }
 
 export interface IRavenObject<T = any> {
