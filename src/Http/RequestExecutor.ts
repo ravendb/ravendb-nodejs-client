@@ -306,7 +306,7 @@ export class RequestExecutor implements IDisposable {
 
         return promise.then(() => {
             if (!this._nodeSelector) {
-                const topology = new Topology(this._topologyEtag, this.getTopologyNodes());
+                const topology = new Topology(this._topologyEtag, this.getTopologyNodes().slice());
                 this._nodeSelector = new NodeSelector(topology);
             }
         });
