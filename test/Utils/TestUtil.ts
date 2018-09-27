@@ -3,6 +3,7 @@ import {RequestExecutor} from "../../src/Http/RequestExecutor";
 // const why = require("why-is-node-running");
 import * as fs from "fs";
 import * as path from "path";
+import * as url from "url";
 import { VError } from "verror";
 
 import "source-map-support/register";
@@ -30,7 +31,7 @@ function logOnUncaughtAndUnhandled() {
 
 class TestServiceLocator extends RavenServerLocator {
     public getCommandArguments() {
-        return [ "--ServerUrl=http://127.0.0.1:0" ];
+        return [ "--ServerUrl=http://127.0.0.1:0",  "--ServerUrl.Tcp=tcp://127.0.0.1:38884" ];
     }
 }
 
@@ -53,7 +54,8 @@ class TestSecuredServiceLocator extends RavenServerLocator {
 
         return [
             "--Security.Certificate.Path=" + certPath,
-            "--ServerUrl=" + this._getHttpsServerUrl()
+            "--ServerUrl=" + this._getHttpsServerUrl(),
+            "--ServerUrl.Tcp=" + this._getHttpsServerTcpUrl()
         ];
     }
 
@@ -68,6 +70,11 @@ class TestSecuredServiceLocator extends RavenServerLocator {
         }
         
         return httpsServerUrl;
+    }
+
+    private _getHttpsServerTcpUrl() {
+        const https = this._getHttpsServerUrl();
+        return "tcp://" + url.parse(https).hostname + ":38882";
     }
     
     public getServerCertificatePath() {
