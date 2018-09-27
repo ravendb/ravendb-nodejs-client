@@ -211,7 +211,7 @@ export class AbstractMultiMapIndexCreationTask extends AbstractIndexCreationTask
         indexDefinitionBuilder.outputReduceToCollection = this.outputReduceToCollection;
         indexDefinitionBuilder.additionalSources = this.additionalSources;
 
-        const indexDefinition = indexDefinitionBuilder.toIndexDefinition(this.conventions);
+        const indexDefinition = indexDefinitionBuilder.toIndexDefinition(this.conventions, false);
         indexDefinition.maps = new Set(this.maps);
 
         return indexDefinition;
