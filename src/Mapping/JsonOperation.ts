@@ -208,12 +208,12 @@ export class JsonOperation {
 
         // if one of the arrays is larger than the other
         while (position < oldArray.length) {
-            this._newChange(propName, null, oldArrayItem, docChanges, "ArrayValueRemoved");
+            this._newChange(propName, null, oldArray[position], docChanges, "ArrayValueRemoved");
             position++;
         }
 
         while (position < newArray.length) {
-            this._newChange(propName, newArrayItem, null, docChanges, "ArrayValueAdded");
+            this._newChange(propName, newArray[position], null, docChanges, "ArrayValueAdded");
             position++;
         }
 
