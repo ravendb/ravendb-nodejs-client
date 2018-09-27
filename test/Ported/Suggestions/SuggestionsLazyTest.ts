@@ -28,8 +28,6 @@ describe("SuggestionsLazyTest", function () {
 
         await store.maintenance.send(new PutIndexesOperation(indexDefinition));
 
-        testContext.enableFiddler(); //TODO:
-
         {
             const s = store.openSession();
 
