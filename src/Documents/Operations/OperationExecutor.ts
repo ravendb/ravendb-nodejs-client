@@ -47,12 +47,14 @@ export class OperationExecutor {
     public send(operation: AwaitableOperation): Promise<OperationCompletionAwaiter>;
     public send(operation: AwaitableOperation, sessionInfo?: SessionInfo): Promise<OperationCompletionAwaiter>;
     public send<TResult extends object>(
-        patchOperation: PatchOperation, 
-        sessionInfo?: SessionInfo): Promise<PatchOperationResult<TResult>>;
+        patchOperation: PatchOperation): Promise<PatchStatus>;
     public send<TResult extends object>(
         patchOperation: PatchOperation, 
-        sessionInfo?: SessionInfo, 
-        resultType?: DocumentType<TResult>): Promise<PatchOperationResult<TResult>>;
+        sessionInfo: SessionInfo): Promise<PatchStatus>;
+    public send<TResult extends object>(
+        patchOperation: PatchOperation, 
+        sessionInfo: SessionInfo,
+        resultType: DocumentType<TResult>): Promise<PatchOperationResult<TResult>>;
     public send<TResult>(operation: IOperation<TResult>): Promise<TResult>;
     public send<TResult>(
         operation: IOperation<TResult>, 
@@ -61,7 +63,7 @@ export class OperationExecutor {
         operation: AwaitableOperation | IOperation<TResult>,
         sessionInfo?: SessionInfo,
         documentType?: DocumentType<TResult>)
-    : Promise<OperationCompletionAwaiter | TResult | PatchOperationResult<TResult>> {
+    : Promise<OperationCompletionAwaiter | TResult | PatchStatus | PatchOperationResult<TResult>> {
 
         const command =
             operation.getCommand(this._store, this._requestExecutor.conventions, this._requestExecutor.cache);
@@ -94,7 +96,7 @@ export class OperationExecutor {
                     const entityType = conventions.findEntityType(documentType);
                     patchOperationResult.document = conventions.deserializeEntityFromJson(
                             entityType, patchResult.modifiedDocument) as TResult;
-                    return patchOperationResult;
+                    return documentType ? patchOperationResult : patchOperationResult.status;
                 }
 
                 return command.result as TResult;

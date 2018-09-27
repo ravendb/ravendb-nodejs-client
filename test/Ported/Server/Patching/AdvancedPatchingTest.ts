@@ -94,6 +94,62 @@ describe("AdvancedPatchingTest", function () {
             assert.equal(doc["copiedValue"], "1");
         }
     });
+
+    const sampleScript = "this.comments.splice(2, 1);\n" +
+        "    this.owner = 'Something new';\n" +
+        "    this.value++;\n" +
+        "    this.newValue = \"err!!\";\n" +
+        "    this.comments = this.comments.map(function(comment) {\n" +
+        "        return (comment == \"one\") ? comment + \" test\" : comment;\n" +
+        "    });";
+
+    it("can apply basic script as patch", async () => {
+        {
+            const session = store.openSession();
+            const test = new CustomType();
+            test.id = "someId";
+            test.owner = "bob";
+            test.value = 12143;
+            test.comments = ["one", "two", "seven"];
+            await session.store(test);
+            await session.saveChanges();
+        }
+
+        await store.operations
+            .send(new PatchOperation("someId", null, PatchRequest.forScript(sampleScript)));
+
+        {
+            const session = store.openSession();
+            const result = await session.load<CustomType>("someId", CustomType);
+            assert.strictEqual(result.owner, "Something new");
+            assert.strictEqual(result.comments.length, 2);
+            assert.strictEqual(result.comments[0], "one test");
+            assert.strictEqual(result.comments[1], "two");
+            assert.strictEqual(result.value, 12144);
+        }
+    });
+
+    it("can deserialize modified document", async () => {
+        const customType = new CustomType();
+        customType.owner = "somebody@somewhere.com";
+
+        {
+            const session = store.openSession();
+            await session.store(customType, "doc");
+            await session.saveChanges();
+        }
+
+        const patch1 = new PatchOperation("doc", null, PatchRequest.forScript("this.owner = '123';"));
+        let result = await store.operations.send<CustomType>(patch1, null, CustomType);
+        assert.strictEqual(result.status, "Patched");
+        assert.strictEqual(result.document.owner, "123");
+
+        const patch2 = new PatchOperation("doc", null, PatchRequest.forScript("this.owner = '123';"));
+        result = await store.operations.send<CustomType>(patch2, null, CustomType);
+        assert.strictEqual(result.status, "NotModified");
+        assert.strictEqual(result.document.owner, "123");
+
+    });
 });
 export class CustomType {
     public id: string;

@@ -35,15 +35,13 @@ describe("PatchTest", function () {
             "users/1", 
             null,
             PatchRequest.forScript("this.name = \"Patched\""));
-        const patchResult = await store.operations.send(patchOperation);
-        assert.ok(patchResult.document);
-        assert.equal(patchResult.document["name"], "Patched");
-        assert.equal(patchResult.status, "Patched");
+        const status = await store.operations.send(patchOperation);
+        assert.strictEqual(status, "Patched");
 
         { 
             const session = store.openSession();
             const user = await session.load<User>("users/1");
-            assert.equal(user.name, "Patched");
+            assert.strictEqual(user.name, "Patched");
         }
     });
 
