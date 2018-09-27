@@ -245,19 +245,19 @@ export class RequestExecutor implements IDisposable {
     }
 
     public static create (
-        intialUrls: string[],
+        initialUrls: string[],
         database: string): RequestExecutor; 
     public static create (
-        intialUrls: string[],
+        initialUrls: string[],
         database: string,
         opts?: IRequestExecutorOptions): RequestExecutor;
     public static create (
-        intialUrls: string[],
+        initialUrls: string[],
         database: string,
         opts?: IRequestExecutorOptions): RequestExecutor {
         const { authOptions, documentConventions } = opts || {} as IRequestExecutorOptions;
         const executor = new RequestExecutor(database, authOptions, documentConventions);
-        executor._firstTopologyUpdatePromise = executor._firstTopologyUpdate(intialUrls);
+        executor._firstTopologyUpdatePromise = executor._firstTopologyUpdate(initialUrls);
         // this is just to get rid of unhandled rejection, we're handling it later on
         executor._firstTopologyUpdatePromise.catch(TypeUtil.NOOP); 
         return executor;
