@@ -26,6 +26,7 @@ import {
 import { DeleteIndexOperation } from "../../../src/Documents/Operations/Indexes/DeleteIndexOperation";
 import { QueryStatistics } from "../../../src/Documents/Session/QueryStatistics";
 import {MoreLikeThisOptions} from "../../../src/Documents/Queries/MoreLikeThis/MoreLikeThisOptions";
+import {IndexCreation} from "../../../src/Documents/Indexes/IndexCreation";
 
 describe("Indexes from client", function () {
 
@@ -37,6 +38,30 @@ describe("Indexes from client", function () {
 
     afterEach(async () => 
         await disposeTestDocumentStore(store));
+
+    it("can create indexes using index creation", async () => {
+        await IndexCreation.createIndexes([new Users_ByName()], store);
+
+        {
+            const session = store.openSession();
+            const user1 = new User();
+            user1.name = "Marcin";
+            await session.store(user1, "users/1");
+            await session.saveChanges();
+        }
+
+        await testContext.waitForIndexing(store);
+
+        {
+            const session = store.openSession();
+            const users = await session.query({
+                indexName: "Users/ByName",
+                documentType: User
+            }).all();
+
+            assert.strictEqual(users.length, 1);
+        }
+    });
 
     it("can reset", async () => {
         {

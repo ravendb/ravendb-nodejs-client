@@ -1071,7 +1071,7 @@ export abstract class InMemoryDocumentSessionOperations
             }
         }
 
-        return !this.deletedEntities.size;
+        return !!this.deletedEntities.size;
     }
 
     /**

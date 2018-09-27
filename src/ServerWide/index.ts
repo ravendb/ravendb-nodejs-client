@@ -16,3 +16,7 @@ export interface DatabaseRecord {
     settings?: { [key: string]: string };
     conflictSolverConfig?: ConflictSolver;
 }
+
+export interface DatabaseRecordWithEtag extends DatabaseRecord {
+    etag: number;
+}

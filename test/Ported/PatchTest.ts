@@ -8,6 +8,7 @@ import {
 } from "../../src";
 import { User } from "../Assets/Entities";
 import { PatchRequest } from "../../src/Documents/Operations/PatchRequest";
+import {Users_ByName} from "./Indexing/IndexesFromClientTest";
 
 describe("PatchTest", function () {
 
@@ -46,9 +47,8 @@ describe("PatchTest", function () {
         }
     });
 
-    // TODO: waiting for session.advanced.patch
-    it.skip("can wait for index after patch", async () => {
-        //TODO: new IndexesFromClientTest.Users_ByName().execute(store);
+    it("can wait for index after patch", async () => {
+        await new Users_ByName().execute(store);
         {
             const session = store.openSession();
             const user = new User();
@@ -65,7 +65,7 @@ describe("PatchTest", function () {
             });
 
             const user = await session.load<User>("users/1");
-            //TODO: session.advanced.patch(user, "name", "New Name");
+            session.advanced.patch(user, "name", "New Name");
             await session.saveChanges();
         }
     });
@@ -78,6 +78,10 @@ describe("PatchTest", function () {
 
             await session.store(user, "users/1");
             await session.saveChanges();
+
+            const count = await session.query<User>(User)
+                .countLazily().getValue();
+            assert.strictEqual(count, 1);
         }
 
         const patchOperation = new PatchByQueryOperation("from Users update {  this.name= \"Patched\"  }");
@@ -87,7 +91,7 @@ describe("PatchTest", function () {
         { 
             const session = store.openSession();
             const user = await session.load<User>("users/1");
-            assert.equal(user.name, "Patched");
+            assert.strictEqual(user.name, "Patched");
         }
     });
 
