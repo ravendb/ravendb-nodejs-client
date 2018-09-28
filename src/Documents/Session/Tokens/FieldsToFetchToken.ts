@@ -6,15 +6,22 @@ export class FieldsToFetchToken extends QueryToken {
     public fieldsToFetch: string[];
     public projections: string[];
     public customFunction: boolean;
+    public sourceAlias: string;
 
-    private constructor(fieldsToFetch: string[], projections: string[], customFunction: boolean) {
+    private constructor(fieldsToFetch: string[], projections: string[], customFunction: boolean, sourceAlias: string) {
         super();
         this.fieldsToFetch = fieldsToFetch;
         this.projections = projections;
         this.customFunction = customFunction;
+        this.sourceAlias = sourceAlias;
     }
 
-    public static create(fieldsToFetch: string[], projections: string[], customFunction: boolean): FieldsToFetchToken {
+    public static create(fieldsToFetch: string[],
+                         projections: string[], customFunction: boolean): FieldsToFetchToken;
+    public static create(fieldsToFetch: string[],
+                         projections: string[], customFunction: boolean, sourceAlias: string): FieldsToFetchToken;
+    public static create(fieldsToFetch: string[],
+                         projections: string[], customFunction: boolean, sourceAlias?: string): FieldsToFetchToken {
         if (!fieldsToFetch || !fieldsToFetch.length) {
             throwError("InvalidArgumentException", "fieldToFetch cannot be null");
         }
@@ -24,7 +31,7 @@ export class FieldsToFetchToken extends QueryToken {
                 "Length of projections must be the same as length of field to fetch");
         }
 
-        return new FieldsToFetchToken(fieldsToFetch, projections, customFunction);
+        return new FieldsToFetchToken(fieldsToFetch, projections, customFunction, sourceAlias);
     }
 
     public writeTo(writer): void {

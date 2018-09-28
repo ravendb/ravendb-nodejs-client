@@ -226,6 +226,10 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             return Promise.reject(getError("InvalidArgumentException", "id cannot be null"));
         }
 
+        if (this._knownMissingIds.has(id)) {
+            return Promise.resolve(false);
+        }
+
         if (this.documentsById.getValue(id)) {
             return Promise.resolve(true);
         }
@@ -300,6 +304,10 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     public loadInternal<TResult extends object>(
         ids: string[], includes: string[], documentType: DocumentType<TResult>): 
         Promise<EntitiesCollectionObject<TResult>>  {
+        if (!ids) {
+            throwError("InvalidArgumentException", "Ids cannot be null");
+        }
+
         const loadOperation = new LoadOperation(this);
         loadOperation.byIds(ids);
         loadOperation.withIncludes(includes);

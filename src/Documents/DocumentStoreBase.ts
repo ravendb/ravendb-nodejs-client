@@ -61,7 +61,7 @@ export abstract class DocumentStoreBase
     public executeIndex(task: AbstractIndexCreationTask): Promise<void>;
     public executeIndex(task: AbstractIndexCreationTask, database?: string): Promise<void>;
     public executeIndex(task: AbstractIndexCreationTask, database?: string): Promise<void> {
-        this._assertInitialized();
+        this.assertInitialized();
         return task.execute(this, this.conventions, database);
     }
     // public void executeIndex(AbstractIndexCreationTask task) {
@@ -99,6 +99,7 @@ export abstract class DocumentStoreBase
     }
 
     public set conventions(value) {
+        this._assertNotInitialized("conventions");
         this._conventions = value;
     }
 
@@ -109,6 +110,8 @@ export abstract class DocumentStoreBase
     }
 
     public set urls(value: string[]) {
+        this._assertNotInitialized("urls");
+
         if (!value || !Array.isArray(value)) {
             throwError("InvalidArgumentException", 
                 `Invalid urls array passed: ${value.toString()}.`);
@@ -142,11 +145,18 @@ export abstract class DocumentStoreBase
         }
     }
 
-    protected _assertInitialized(): void {
+    public assertInitialized(): void {
         if (!this._initialized) {
             throwError("InvalidOperationException",
                 "You cannot open a session or access the database commands before initializing the document store. "
                 + "Did you forget calling initialize()?");
+        }
+    }
+
+    private _assertNotInitialized(property: string) {
+        if (this._initialized) {
+            throwError("InvalidOperationException",
+                "You cannot set '" + property + "' after the document store has been initialized.");
         }
     }
 
@@ -157,10 +167,7 @@ export abstract class DocumentStoreBase
     }
 
     public set database(value) {
-        if (this._initialized) {
-            throwError("InvalidOperationException",
-                 "You cannot change the default database name after the document store has been initialized.");
-        }
+        this._assertNotInitialized("database");
         this._database = value;
     }
 
@@ -169,10 +176,7 @@ export abstract class DocumentStoreBase
     }
 
     public set authOptions(value: IAuthOptions) {
-        if (this._initialized) {
-            throwError("InvalidOperationException",
-                 "You cannot change authentication options after the document store has been initialized.");
-        }
+        this._assertNotInitialized("authOptions");
         this._authOptions = value;
     }
 
@@ -225,7 +229,7 @@ export abstract class DocumentStoreBase
     public executeIndexes(tasks: AbstractIndexCreationTask[], database: string): Promise<void>; 
     public executeIndexes(tasks: AbstractIndexCreationTask[], database?: string): Promise<void> {
         
-        this._assertInitialized();
+        this.assertInitialized();
 
         return Promise.resolve()
         .then(() => {

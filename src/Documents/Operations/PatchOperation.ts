@@ -78,7 +78,8 @@ export class PatchOperation implements IOperation<PatchResult> {
     }
 
     public getCommand(
-        store: IDocumentStore, conventions: DocumentConventions, cache: HttpCache): RavenCommand<PatchResult>  {
+        store: IDocumentStore, conventions: DocumentConventions, cache: HttpCache,
+        returnDebugInformation: boolean = false, test: boolean = false): RavenCommand<PatchResult>  {
         return new PatchCommand(
             conventions, 
             this._id, 
@@ -86,10 +87,9 @@ export class PatchOperation implements IOperation<PatchResult> {
             this._patch, 
             this._patchIfMissing, 
             this._skipPatchIfChangeVectorMismatch, 
-            false, 
-            false);
+            returnDebugInformation,
+            test);
     }
-
 }
 
 export class PatchCommand extends RavenCommand<PatchResult> {

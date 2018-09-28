@@ -8,16 +8,14 @@ import { throwError } from "../Exceptions";
 
 class NodeSelectorState {
   public topology: Topology;
-  public currentNodeIndex: number;
   public nodes: ServerNode[];
   public failures: number[];
   public fastestRecords: number[];
   public fastest: number;
   public speedTestMode = 1;
 
-  constructor(currentNodeIndex: number, topology: Topology) {
+  constructor(topology: Topology) {
     this.topology = topology;
-    this.currentNodeIndex = currentNodeIndex;
     this.nodes = topology.nodes;
     this.failures = ArrayUtil.range(topology.nodes.length, () => 0);
     this.fastestRecords = ArrayUtil.range(topology.nodes.length, () => 0);
@@ -29,7 +27,7 @@ export class NodeSelector {
   private _state: NodeSelectorState;
 
   constructor(topology: Topology) {
-    this._state = new NodeSelectorState(0, topology);
+    this._state = new NodeSelectorState(topology);
   }
 
   public getTopology(): Topology {
@@ -57,7 +55,7 @@ export class NodeSelector {
       return false;
     }
 
-    this._state = new NodeSelectorState(0, topology);
+    this._state = new NodeSelectorState(topology);
 
     return true;
   }
@@ -125,8 +123,8 @@ export class NodeSelector {
 
   public restoreNodeIndex(nodeIndex: number): void {
     const state = this._state;
-    if (state.currentNodeIndex < nodeIndex) {
-      return; // nothing to do
+    if (state.failures.length < nodeIndex) {
+      return; // // the state was changed and we no longer have it?
     }
 
     state.failures[nodeIndex] = 0;

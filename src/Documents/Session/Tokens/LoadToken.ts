@@ -2,13 +2,13 @@ import { QueryToken } from "./QueryToken";
 
 export class LoadToken extends QueryToken {
 
-    private _argument: string;
-    private _alias: string;
+    public argument: string;
+    public alias: string;
 
     private constructor(argument: string, alias: string) {
         super();
-        this._argument = argument;
-        this._alias = alias;
+        this.argument = argument;
+        this.alias = alias;
     }
 
     public static create(argument: string, alias: string): LoadToken  {
@@ -17,8 +17,8 @@ export class LoadToken extends QueryToken {
 
     public writeTo(writer): void {
         writer
-                .append(this._argument)
+                .append(this.argument)
                 .append(" as ")
-                .append(this._alias);
+                .append(this.alias);
     }
 }

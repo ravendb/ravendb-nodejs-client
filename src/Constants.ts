@@ -39,15 +39,16 @@ export const CONSTANTS = {
 };
 
 export const HEADERS = {
-        REQUEST_TIME: "Raven-Request-Time",
-        REFRESH_TOPOLOGY: "Refresh-Topology",
-        TOPOLOGY_ETAG: "Topology-Etag",
-        CLIENT_CONFIGURATION_ETAG: "Client-Configuration-Etag",
-        REFRESH_CLIENT_CONFIGURATION: "Refresh-Client-Configuration",
-        ETAG: "ETag",
-        IF_NONE_MATCH: "If-None-Match",
-        TRANSFER_ENCODING: "Transfer-Encoding",
-        CONTENT_ENCODING: "Content-Encoding",
-        CONTENT_LENGTH: "Content-Length",
-        DATABASE_MISSING: "Database-Missing"
+    REQUEST_TIME: "Raven-Request-Time",
+    REFRESH_TOPOLOGY: "Refresh-Topology",
+    TOPOLOGY_ETAG: "Topology-Etag",
+    CLIENT_CONFIGURATION_ETAG: "Client-Configuration-Etag",
+    REFRESH_CLIENT_CONFIGURATION: "Refresh-Client-Configuration",
+    CLIENT_VERSION: "Raven-Client-Version",
+    ETAG: "ETag",
+    IF_NONE_MATCH: "If-None-Match",
+    TRANSFER_ENCODING: "Transfer-Encoding",
+    CONTENT_ENCODING: "Content-Encoding",
+    CONTENT_LENGTH: "Content-Length",
+    DATABASE_MISSING: "Database-Missing"
 };

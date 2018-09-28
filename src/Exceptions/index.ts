@@ -55,6 +55,7 @@ export type RavenErrorType = "RavenException"
 | "ArgumentNullException"
 | "ArgumentOutOfRangeException"
 | "DatabaseDoesNotExistException"
+| "ClientVersionMismatchException"
 | "AuthorizationException"
 | "IndexDoesNotExistException"
 | "DatabaseLoadTimeoutException"
@@ -119,6 +120,7 @@ export type RavenErrorType = "RavenException"
 | "NotImplementedException"
 | "NodeIsPassiveException"
 | "ConfigurationException"
+| "CertificateNameMismatchException"
 | "BulkInsertStreamError";
 
 export interface ExceptionSchema {

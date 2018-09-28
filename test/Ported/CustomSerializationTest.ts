@@ -22,8 +22,8 @@ describe("CustomSerializationTest", function () {
                 conventions.getEntityMapper().registerModule(module);
              */
 
-            conventions.registerQueryValueConverter<Money>(Money, (fieldName, value, forRange, stringValue) => {
-                stringValue(value.toJSON());
+            conventions.registerQueryValueConverter<Money>(Money, (fieldName, value, forRange, objectValue) => {
+                objectValue(value.toJSON());
                 return true;
             });
         };

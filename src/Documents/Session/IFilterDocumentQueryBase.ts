@@ -113,7 +113,7 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
     whereLucene(fieldName: string, whereClause: string, exact: boolean): TSelf;
 
     /**
-     * Matches fields where the value is between the specified start and end, exclusive
+     * Matches fields where the value is between the specified start and end, inclusive
      * @param fieldName Field name
      * @param start Range start
      * @param end Range end
@@ -122,7 +122,7 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
     whereBetween(fieldName: string, start: any, end: any): TSelf;
 
     /**
-     * Matches fields where the value is between the specified start and end, exclusive
+     * Matches fields where the value is between the specified start and end, inclusive
      * @param fieldName Field name
      * @param start Range start
      * @param end Range end

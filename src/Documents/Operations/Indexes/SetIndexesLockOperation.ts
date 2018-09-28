@@ -37,6 +37,15 @@ export class SetIndexesLockOperation implements IMaintenanceOperation<void> {
             this._parameters = parameters;
         }
 
+        this._filterAutoIndexes();
+    }
+
+    private _filterAutoIndexes() {
+        // Check for auto-indexes - we do not set lock for auto-indexes
+        if (this._parameters.indexNames.find(x => x.toLocaleLowerCase().startsWith("auto/"))) {
+            throwError("InvalidArgumentException", "Indexes list contains Auto-Indexes. " +
+                "Lock Mode is not set for Auto-Indexes.");
+        }
     }
 
     public getCommand(conventions: DocumentConventions): RavenCommand<void> {

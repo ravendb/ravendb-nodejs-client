@@ -24,7 +24,7 @@ import {
 } from "../Documents/Operations/Configuration/GetClientConfigurationOperation";
 import CurrentIndexAndNode from "./CurrentIndexAndNode";
 import { HttpRequestParameters, HttpResponse, HttpRequestParametersWithoutUri } from '../Primitives/Http';
-import { HEADERS } from "../Constants";
+import {CONSTANTS, HEADERS} from "../Constants";
 import { Stopwatch } from "../Utility/Stopwatch";
 import * as PromiseUtil from "../Utility/PromiseUtil";
 import { GetStatisticsOperation } from "../Documents/Operations/GetStatisticsOperation";
@@ -491,7 +491,11 @@ export class RequestExecutor implements IDisposable {
         let serverNode: ServerNode;
 
         try {
-            const preferredNode: CurrentIndexAndNode = this._nodeSelector.getPreferredNode();
+            const selector = this._nodeSelector;
+            if (!selector) {
+                return;
+            }
+            const preferredNode: CurrentIndexAndNode = selector.getPreferredNode();
             serverNode = preferredNode.currentNode;
         } catch (err) {
             this._log.warn(err, "Couldn't get preferred node Topology from _updateTopologyTimer");
@@ -1164,8 +1168,8 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
             req.agentOptions = Object.assign(req.agentOptions || {}, agentOptions);
         }
 
-        if (!req.headers["Raven-Client-Version"]) {
-            req.headers["Raven-Client-Version"] = RequestExecutor.CLIENT_VERSION;
+        if (!req.headers[HEADERS.CLIENT_VERSION]) {
+            req.headers[HEADERS.CLIENT_VERSION] = RequestExecutor.CLIENT_VERSION;
         }
 
         if (RequestExecutor.requestPostProcessor) {
@@ -1262,7 +1266,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
             this._customHttpRequestOptions);
     }
 
-    public dispose (): void {
+    public dispose(): void {
         this._log.info("Dispose.");
 
         if (this._disposed) {

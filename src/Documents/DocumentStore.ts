@@ -167,7 +167,7 @@ export class DocumentStore extends DocumentStoreBase {
      */
     public openSession(sessionOpts: ISessionOptions): IDocumentSession;
     public openSession(databaseOrSessionOptions?: string | ISessionOptions): IDocumentSession  {
-        this._assertInitialized();
+        this.assertInitialized();
         this._ensureNotDisposed();
 
         if (typeof(databaseOrSessionOptions) === "string") {
@@ -199,7 +199,7 @@ export class DocumentStore extends DocumentStoreBase {
      * @memberof DocumentStore
      */
     public getRequestExecutor(database?: string): RequestExecutor {
-        this._assertInitialized();
+        this.assertInitialized();
 
         if (!database) {
             database = this.database;
@@ -297,7 +297,7 @@ export class DocumentStore extends DocumentStoreBase {
     public disableAggressiveCaching(): IDisposable;
     public disableAggressiveCaching(database: string): IDisposable;
     public disableAggressiveCaching(database?: string): IDisposable {
-        this._assertInitialized();
+        this.assertInitialized();
         const re: RequestExecutor = this.getRequestExecutor(database || this.database);
         const old = re.agressiveCaching;
         re.agressiveCaching = null;
@@ -309,7 +309,7 @@ export class DocumentStore extends DocumentStoreBase {
     public changes(): IDatabaseChanges;
     public changes(database: string): IDatabaseChanges;
     public changes(database?: string): IDatabaseChanges {
-        this._assertInitialized();
+        this.assertInitialized();
 
         const targetDatabase = (database || this.database).toLocaleLowerCase();
         if (this._databaseChanges.has(targetDatabase)) {
@@ -350,7 +350,7 @@ export class DocumentStore extends DocumentStoreBase {
      * @memberof DocumentStore
      */
     public get maintenance(): MaintenanceOperationExecutor {
-        this._assertInitialized();
+        this.assertInitialized();
 
         if (!this._maintenanceOperationExecutor) {
             this._maintenanceOperationExecutor = new MaintenanceOperationExecutor(this);
@@ -377,7 +377,7 @@ export class DocumentStore extends DocumentStoreBase {
     public bulkInsert(): BulkInsertOperation;
     public bulkInsert(database: string): BulkInsertOperation;
     public bulkInsert(database?: string): BulkInsertOperation {
-        this._assertInitialized();
+        this.assertInitialized();
 
         return new BulkInsertOperation(database || this.database, this);
     }

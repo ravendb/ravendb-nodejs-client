@@ -464,7 +464,10 @@ export class DocumentQuery<T extends object>
                     p => p === identityProperty ? CONSTANTS.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME : p);
             }
 
-            newFieldsToFetch = FieldsToFetchToken.create(fields, queryData.projections, queryData.isCustomFunction);
+            let sourceAliasReference: string;
+            DocumentQuery._getSourceAliasIfExists(resultClass, queryData, fields, s => sourceAliasReference = s);
+            newFieldsToFetch = FieldsToFetchToken.create(fields, queryData.projections,
+                queryData.isCustomFunction, sourceAliasReference);
         } else {
             newFieldsToFetch = null;
         }

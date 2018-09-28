@@ -194,7 +194,7 @@ describe("HiLo", function () {
         newStore.dispose();
     });
 
-    it.only("does not get another range when doing parallel requests", async () => {
+    it("does not get another range when doing parallel requests", async () => {
         const parallelLevel = 32;
         const users = Array.from(Array(parallelLevel).keys()).map(x => new User());
 

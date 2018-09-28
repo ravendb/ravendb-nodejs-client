@@ -20,5 +20,6 @@ export interface DatabaseStatistics {
     is64Bit: string;
     lastIndexingTime: Date;
     sizeOnDisk: Size;
+    tempBuffersSizeOnDisk: Size;
     numberOfTransactionMergerQueueOperations: number;
 }
