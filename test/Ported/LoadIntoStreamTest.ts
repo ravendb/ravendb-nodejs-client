@@ -14,7 +14,7 @@ class Employee {
     public firstName: string;
 }
 
-describe.skip("load into stream", function () {
+describe("load into stream", function () {
 
     let store: IDocumentStore;
 
@@ -33,11 +33,13 @@ describe.skip("load into stream", function () {
 
             const ids = ["employees/1-A", "employees/4-A", "employees/7-A"];
 
-            const targetStream = getStringWritable();
+            const targetStream: stream.Writable = getStringWritable();
             let result;
             targetStream.once("content", _ => result = _);
 
             await session.advanced.loadIntoStream(ids, targetStream);
+            assert.ok(result);
+            assert.ok(!targetStream.writable);
 
             const jsonNode = parseJsonVerbose(result);
             const res = jsonNode.results;
@@ -59,6 +61,8 @@ describe.skip("load into stream", function () {
             let result;
             targetStream.once("content", _ => result = _);
             await session.advanced.loadStartingWithIntoStream("employees/", targetStream);
+            assert.ok(result);
+            assert.ok(!targetStream.writable);
 
             const jsonNode = parseJsonVerbose(result);
             const res = jsonNode.results;
