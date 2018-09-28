@@ -69,8 +69,8 @@ export class SetIndexPriorityCommand extends RavenCommand<void> {
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/indexes/set-priority";
         const body = this._serializer.serialize(this._parameters);
-        const headers = this._getHeaders()
-            .withContentTypeJson().build();
+        const headers = this._headers()
+            .typeAppJson().build();
 
         return {
             uri,
@@ -84,7 +84,6 @@ export class SetIndexPriorityCommand extends RavenCommand<void> {
         return false;
     }
 }
-
 
 export interface SetIndexesPriorityOperationParameters {
     indexNames: string[];

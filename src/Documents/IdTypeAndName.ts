@@ -16,7 +16,7 @@ export class IdTypeAndName {
 
         const that = o as IdTypeAndName;
 
-        if (this.id ? this.id === that.id : !!that.id){
+        if (this.id ? this.id === that.id : !!that.id) {
              return false;
         }
 

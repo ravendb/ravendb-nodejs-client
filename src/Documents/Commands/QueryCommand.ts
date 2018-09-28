@@ -70,7 +70,7 @@ export class QueryCommand extends RavenCommand<QueryResult> {
 
         const uri = path.toString();
         const body = writeIndexQuery(this._conventions, this._indexQuery);
-        const headers = this._getHeaders().withContentTypeJson().build();
+        const headers = this._headers().typeAppJson().build();
         return {
             method: "POST",
             uri,

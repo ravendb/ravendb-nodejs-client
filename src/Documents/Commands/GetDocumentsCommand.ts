@@ -187,7 +187,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
                 uri: newUri,
                 method: "POST",
                 headers: getHeaders() 
-                    .withContentTypeJson()
+                    .typeAppJson()
                     .build(),
                 body
             };

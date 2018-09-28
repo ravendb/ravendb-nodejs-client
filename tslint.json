@@ -29,10 +29,11 @@
         "indent": [true, "spaces", 4],
         "adjacent-overload-signatures": false,
         "ban-types": false,
-        "no-unused-variable": true,
+        "no-unused-variable": false,
         "space-before-function-paren": false,
         "no-string-literal": false,
-        "comment-format": false
+        "comment-format": false,
+        "no-shadowed-variable": false
     },
     "rulesDirectory": [
         "node_modules/tslint-microsoft-contrib"

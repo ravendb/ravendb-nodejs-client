@@ -35,8 +35,8 @@ export class UpdateExternalReplicationCommand extends RavenCommand<ModifyOngoing
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/admin/tasks/external-replication";
 
-        const headers = this._getHeaders()
-            .withContentTypeJson().build();
+        const headers = this._headers()
+            .typeAppJson().build();
         const body = this._serializer.serialize({ watcher: this._newWatcher });
         return {
             method: "POST",

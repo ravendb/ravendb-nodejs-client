@@ -34,7 +34,7 @@ export class ExplainQueryCommand extends RavenCommand<ExplainQueryResult[]> {
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/queries?debug=explain";
 
-        const headers = this._getHeaders().withContentTypeJson().build();
+        const headers = this._headers().typeAppJson().build();
         return {
             method: "POST",
             uri,

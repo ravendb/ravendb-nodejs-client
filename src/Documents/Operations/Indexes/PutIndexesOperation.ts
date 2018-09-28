@@ -81,7 +81,7 @@ export class PutIndexesCommand extends RavenCommand<PutIndexResult[]> {
 
         const headers = HeadersBuilder
             .create()
-            .withContentTypeJson()
+            .typeAppJson()
             .build();
         return {
             method: "PUT",

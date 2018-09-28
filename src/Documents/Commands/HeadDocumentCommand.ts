@@ -31,8 +31,8 @@ export class HeadDocumentCommand extends RavenCommand<string> {
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/docs?id=" + encodeURIComponent(this._id);
 
-        const headers = this._getHeaders()
-            .withContentTypeJson();
+        const headers = this._headers()
+            .typeAppJson();
         if (this._changeVector) {
             headers.with("If-None-Match", this._changeVector);
         }

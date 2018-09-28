@@ -83,7 +83,7 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
             method: "PUT",
             uri,
             body: JsonSerializer.getDefault().serialize(tuple),
-            headers: this._getHeaders().withContentTypeJson().build()
+            headers: this._headers().typeAppJson().build()
         };
     }
 

@@ -382,7 +382,7 @@ export class BulkInsertCommand extends RavenCommand<void> {
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/bulk_insert?id=" + this._id;
 
-        const headers = this._getHeaders().withContentTypeJson().build();
+        const headers = this._headers().typeAppJson().build();
 
         return { //TODO: useCompression ? new GzipCompressingEntity(_stream) : _stream);
             method: "POST",

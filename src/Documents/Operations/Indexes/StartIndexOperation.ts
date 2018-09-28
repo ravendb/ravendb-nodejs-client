@@ -51,4 +51,4 @@ export class StartIndexCommand extends RavenCommand<void> {
         return false;
     }
 }
-
+

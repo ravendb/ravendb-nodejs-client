@@ -80,7 +80,7 @@ export class PatchByQueryCommand extends RavenCommand<OperationIdResult> {
         return {
             method: "PATCH",
             uri: path,
-            headers: this._getHeaders().withContentTypeJson().build(),
+            headers: this._headers().typeAppJson().build(),
             body
         };
     }

@@ -159,7 +159,7 @@ export class PatchCommand extends RavenCommand<PatchResult> {
         const req = {
             method: "PATCH",
             uri,
-            headers: this._getHeaders().withContentTypeJson().build(),
+            headers: this._headers().typeAppJson().build(),
             body
         };
 

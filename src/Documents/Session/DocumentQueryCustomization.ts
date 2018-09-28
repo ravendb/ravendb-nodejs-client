@@ -1,10 +1,11 @@
 import { IDocumentQueryCustomization } from "./IDocumentQueryCustomization";
 import { AbstractDocumentQuery } from "./AbstractDocumentQuery";
-import { QueryOperation } from './Operations/QueryOperation';
-import { QueryResult } from '../Queries/QueryResult';
-import { IndexQuery } from '../Queries/IndexQuery';
+import { QueryOperation } from "./Operations/QueryOperation";
+import { QueryResult } from "../Queries/QueryResult";
+import { IndexQuery } from "../Queries/IndexQuery";
 
-export class DocumentQueryCustomization implements IDocumentQueryCustomization {
+export class DocumentQueryCustomization 
+    implements IDocumentQueryCustomization {
 
     private _query: AbstractDocumentQuery<any, any>;
     
@@ -20,6 +21,8 @@ export class DocumentQueryCustomization implements IDocumentQueryCustomization {
         eventName: "beforeQueryExecuted", eventHandler: (eventArgs: IndexQuery) => void): IDocumentQueryCustomization;
     public on(
         eventName: "afterQueryExecuted", eventHandler: (eventArgs: QueryResult) => void): IDocumentQueryCustomization;
+    public on(
+        eventName: "afterStreamExecuted", eventHandler: (eventArgs: object) => void): IDocumentQueryCustomization;
     public on(eventName: string, eventHandler: (eventArgs: any) => void): IDocumentQueryCustomization {
         this._query.on(eventName, eventHandler);
         return this;
@@ -29,6 +32,8 @@ export class DocumentQueryCustomization implements IDocumentQueryCustomization {
         eventName: "beforeQueryExecuted", eventHandler: (eventArgs: IndexQuery) => void): IDocumentQueryCustomization;
     public once(
         eventName: "afterQueryExecuted", eventHandler: (eventArgs: QueryResult) => void): IDocumentQueryCustomization;
+    public once(
+        eventName: "afterStreamExecuted", eventHandler: (eventArgs: object) => void): IDocumentQueryCustomization;
     public once(eventName: string, eventHandler: (eventArgs: any) => void): IDocumentQueryCustomization {
         this._query.once(eventName, eventHandler);
         return this;
@@ -38,6 +43,8 @@ export class DocumentQueryCustomization implements IDocumentQueryCustomization {
         eventName: "beforeQueryExecuted", eventHandler: (eventArgs: IndexQuery) => void): IDocumentQueryCustomization;
     public removeListener(
         eventName: "afterQueryExecuted", eventHandler: (eventArgs: QueryResult) => void): IDocumentQueryCustomization;
+    public removeListener(
+        eventName: "afterStreamExecuted", eventHandler: (eventArgs: object) => void): IDocumentQueryCustomization;
     public removeListener(eventName: string, eventHandler: (eventArgs: any) => void): IDocumentQueryCustomization {
         this._query.removeListener(eventName, eventHandler);
         return this;
@@ -65,5 +72,6 @@ export class DocumentQueryCustomization implements IDocumentQueryCustomization {
    public waitForNonStaleResults(waitTimeout?: number): IDocumentQueryCustomization {
        this._query._waitForNonStaleResults(waitTimeout);
        return this;
-   }
+   }    
+   
 }

@@ -1,5 +1,5 @@
 {
-  "version": "2.3.2",
+  "version": "2.9.2",
   "compilerOptions": {
     "target": "es6",
     "module": "commonjs",
@@ -9,7 +9,7 @@
     "removeComments": true,
     "sourceMap": false,
     "pretty": true,
-    "lib": [ "es7" ],
+    "lib": [ "es2018" ],
     "typeRoots": [
       "node_modules/@types",
       "node_modules/moment",

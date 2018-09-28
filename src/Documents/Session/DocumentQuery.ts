@@ -32,7 +32,9 @@ import {MoreLikeThisBase} from "../Queries/MoreLikeThis/MoreLikeThisBase";
 import {IMoreLikeThisBuilderForDocumentQuery} from "../Queries/MoreLikeThis/IMoreLikeThisBuilderForDocumentQuery";
 import {MoreLikeThisUsingDocument} from "../Queries/MoreLikeThis/MoreLikeThisUsingDocument";
 import {MoreLikeThisBuilder} from "../Queries/MoreLikeThis/MoreLikeThisBuilder";
-import {MoreLikeThisUsingDocumentForDocumentQuery} from "../Queries/MoreLikeThis/MoreLikeThisUsingDocumentForDocumentQuery";
+import {
+    MoreLikeThisUsingDocumentForDocumentQuery
+} from "../Queries/MoreLikeThis/MoreLikeThisUsingDocumentForDocumentQuery";
 import {SuggestionBase} from "../Queries/Suggestions/SuggestionBase";
 import {ISuggestionDocumentQuery} from "../Queries/Suggestions/ISuggestionDocumentQuery";
 import {ISuggestionBuilder} from "../Queries/Suggestions/ISuggestionBuilder";
@@ -69,7 +71,8 @@ export class DocumentQuery<T extends object>
         super(documentType, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, fromAlias);
     }
 
-    // public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, String... fields) {
+    // public <TProjection> IDocumentQuery<TProjection> selectFields(
+    //    Class<TProjection> projectionClass, String... fields) {
     //     QueryData queryData = new QueryData(fields, fields);
     //     return selectFields(projectionClass, queryData);
     // }
@@ -259,8 +262,8 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    public whereLucene(fieldName: string, whereClause: string): IDocumentQuery<T>
-    public whereLucene(fieldName: string, whereClause: string, exact: boolean): IDocumentQuery<T>
+    public whereLucene(fieldName: string, whereClause: string): IDocumentQuery<T>;
+    public whereLucene(fieldName: string, whereClause: string, exact: boolean): IDocumentQuery<T>;
     public whereLucene(fieldName: string, whereClause: string, exact?: boolean): IDocumentQuery<T> {
         this._whereLucene(fieldName, whereClause, exact);
         return this;
@@ -489,7 +492,7 @@ export class DocumentQuery<T extends object>
         query._queryRaw = this._queryRaw;
         query._pageSize = this._pageSize;
         query._selectTokens = this._selectTokens;
-        query._fieldsToFetchToken = this._fieldsToFetchToken;
+        query.fieldsToFetchToken = this.fieldsToFetchToken;
         query._whereTokens = this._whereTokens;
         query._orderByTokens = this._orderByTokens;
         query._groupByTokens = this._groupByTokens;
@@ -565,7 +568,7 @@ export class DocumentQuery<T extends object>
     // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, Expression<Func<T, TValue>> keyPropertySelector, int fragmentLength, int fragmentCount, out FieldHighlightings fieldHighlightings)
     // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.SetHighlighterTags(string preTag, string postTag)
     // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.SetHighlighterTags(string[] preTags, string[] postTags)
-    // TBD public IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
+    // TBD expr public IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
     // tslint:enable:max-line-length
 
     public spatial(

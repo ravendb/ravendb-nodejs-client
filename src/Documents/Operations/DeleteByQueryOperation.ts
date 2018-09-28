@@ -78,7 +78,7 @@ export class DeleteByIndexCommand extends RavenCommand<OperationIdResult> {
 
         const body = writeIndexQuery(this._conventions, this._queryToDelete);
 
-        const headers = this._getHeaders().withContentTypeJson().build();
+        const headers = this._headers().typeAppJson().build();
         const uri = path.toString();
         return {
             uri,

@@ -15,7 +15,6 @@ import { streamValues } from "stream-json/streamers/StreamValues";
 import { pick } from "stream-json/filters/Pick";
 import { filter } from "stream-json/filters/Filter";
 import { ignore } from "stream-json/filters/Ignore";
-import { stringer } from "stream-json/Stringer";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 export class MultiGetCommand extends RavenCommand<GetResponse[]> {
@@ -45,7 +44,7 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> {
        const request: HttpRequestParameters = { 
            uri: this._baseUrl + "/multi_get",
            method: "POST", 
-           headers: this._getHeaders().withContentTypeJson().build(),
+           headers: this._headers().typeAppJson().build(),
         };
        
        for (const command of this._commands) {

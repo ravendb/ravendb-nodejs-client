@@ -57,7 +57,7 @@ class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> {
             uri,
             method: "PUT",
             headers: HeadersBuilder.create()
-                .withContentTypeJson()
+                .typeAppJson()
                 .build(),
             body: databaseDocumentJson
         };

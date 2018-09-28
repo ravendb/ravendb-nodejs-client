@@ -1,4 +1,4 @@
-import {QueryOperator} from '../../Queries/QueryOperator';
+import {QueryOperator} from "../../Queries/QueryOperator";
 import { QueryToken } from "./QueryToken";
 
 export class QueryOperatorToken extends QueryToken {

@@ -115,7 +115,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     protected _fromToken: FromToken;
     protected _declareToken: DeclareToken;
     protected _loadTokens: LoadToken[];
-    protected _fieldsToFetchToken: FieldsToFetchToken;
+    public fieldsToFetchToken: FieldsToFetchToken;
 
     protected _whereTokens: QueryToken[] = [];
 
@@ -362,7 +362,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             this._theSession,
             this._indexName,
             indexQuery,
-            this._fieldsToFetchToken,
+            this.fieldsToFetchToken,
             this._disableEntitiesTracking,
             false,
             false);
@@ -450,7 +450,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     protected _updateFieldsToFetchToken(fieldsToFetch: FieldsToFetchToken): void {
-        this._fieldsToFetchToken = fieldsToFetch;
+        this.fieldsToFetchToken = fieldsToFetch;
 
         if (this._selectTokens && !this._selectTokens.length) {
             this._selectTokens.push(fieldsToFetch);
@@ -479,9 +479,9 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * @return list of projected fields
      */
     public getProjectionFields(): string[] {
-        return this._fieldsToFetchToken &&
-            this._fieldsToFetchToken.projections
-            ? [...this._fieldsToFetchToken.projections]
+        return this.fieldsToFetchToken &&
+            this.fieldsToFetchToken.projections
+            ? [...this.fieldsToFetchToken.projections]
             : [] as string[];
     }
 
@@ -1933,5 +1933,10 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             throwError("InvalidOperationException", "Cannot add suggest when ORDER BY statements are present.");
         }
     }
+
+    public getQueryType(): DocumentType<T> {
+        return this._clazz;
+    }
+
     // tslint:enable:function-name
 }
