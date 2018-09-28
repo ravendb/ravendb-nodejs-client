@@ -3,22 +3,13 @@ import { FacetToken } from "../../Session/Tokens/FacetToken";
 
 export class RangeFacet extends FacetBase {
 
-    private _parent: FacetBase;
+    private readonly _parent: FacetBase;
 
-    private _ranges: string[];
+    public ranges: string[] = [];
 
     public constructor(parent?: FacetBase) {
         super();
-        this._ranges = [];
         this._parent = parent;
-    }
-
-    public get ranges(): string[] {
-        return this._ranges;
-    }
-
-    public set ranges(ranges: string[]) {
-        this._ranges = ranges;
     }
 
     public toFacetToken(addQueryParameter: (o: any) => string): FacetToken {

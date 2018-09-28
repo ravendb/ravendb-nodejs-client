@@ -1,4 +1,4 @@
-export type FacetTermSortMode = 
+export type FacetTermSortMode =
     "ValueAsc"
     | "ValueDesc"
     | "CountAsc"
