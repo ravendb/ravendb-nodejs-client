@@ -187,10 +187,35 @@ describe("HiLo", function () {
         {
             const session = newStore.openSession();
             const hiloDoc = await session.load<HiloDoc>("Raven/Hilo/users", HiloDoc);
-            assert.equal(hiloDoc.Max, 34);
-            assert.equal(hiloDoc.constructor, HiloDoc); // should take type from @metadata
+            assert.strictEqual(hiloDoc.Max, 34);
+            assert.strictEqual(hiloDoc.constructor, HiloDoc); // should take type from @metadata
         }
 
         newStore.dispose();
+    });
+
+    it.only("does not get another range when doing parallel requests", async () => {
+        const parallelLevel = 32;
+        const users = Array.from(Array(parallelLevel).keys()).map(x => new User());
+
+        const tasks = Array.from(Array(parallelLevel).keys()).map(async i =>  {
+            const user = users[i];
+            {
+                const session = store.openSession();
+                await session.store(user);
+                await session.saveChanges();
+            }
+        });
+
+        await Promise.all(tasks);
+
+        users
+            .map(x => x.id)
+            .map(id => id.split("/")[1])
+            .map(x => x.split("-")[0])
+            .forEach(numericPart => {
+                assert.ok(numericPart);
+                assert.ok(parseInt(numericPart) < 33);
+            });
     });
 });
