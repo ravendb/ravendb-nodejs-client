@@ -162,7 +162,7 @@ function setupRavenDbTestContext() {
     });
 
     afterEach(function () {
-        if (this.currentTest.state === "failed") {
+        if (this.currentTest && this.currentTest.state === "failed") {
             console.error(VError.fullStack(this.currentTest.err));
         }
     });

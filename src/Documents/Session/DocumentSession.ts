@@ -179,9 +179,8 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             if (!writable) {
                 operation.setResult(command.result);
             } else {
-                return StreamUtil.pipelineAsync(
-                    StreamUtil.stringToReadable(JSON.stringify(command.result)), 
-                    writable);
+                const readable = StreamUtil.stringToReadable(JSON.stringify(command.result));
+                await StreamUtil.pipelineAsync(readable, writable);
             }
         }
     }
