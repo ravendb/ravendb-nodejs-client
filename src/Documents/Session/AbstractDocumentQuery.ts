@@ -64,6 +64,7 @@ import {SuggestionOptions} from "../Queries/Suggestions/SuggestionOptions";
 import {SuggestToken} from "./Tokens/SuggestToken";
 import {SuggestionWithTerm} from "../Queries/Suggestions/SuggestionWithTerm";
 import {SuggestionWithTerms} from "../Queries/Suggestions/SuggestionWithTerms";
+import {QueryData} from "../Queries/QueryData";
 
 /**
  * A query against a Raven index
@@ -378,11 +379,11 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             return "";
         }
 
-        let stringValue: string = null;
+        let objectValue: string = null;
 
         if (this._conventions.tryConvertValueForQuery(whereParams.fieldName,
-            whereParams.value, forRange, s => stringValue = s)) {
-            return stringValue;
+            whereParams.value, forRange, s => objectValue = s)) {
+            return objectValue;
         }
 
         const value = whereParams.value;
@@ -413,6 +414,39 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         const parameterName = "p" + Object.keys(this._queryParameters).length;
         this._queryParameters[parameterName] = this._stringifyParameter(value);
         return parameterName;
+    }
+
+    protected static _getSourceAliasIfExists<TResult extends object>(documentType: DocumentType<TResult>,
+                                                                     queryData: QueryData,
+                                                                     fields: string[],
+                                                                     sourceAlias: (value: string) => void) {
+        sourceAlias(null);
+
+        if (fields.length !== 1) {
+            return;
+        }
+
+        const indexOf = fields[0].indexOf(".");
+        if (indexOf === -1) {
+            return;
+        }
+
+        const possibleAlias = fields[0].substring(0, indexOf);
+
+        if (queryData.fromAlias && queryData.fromAlias === possibleAlias) {
+            sourceAlias(possibleAlias);
+            return;
+        }
+
+        if (!queryData.loadTokens || queryData.loadTokens.length === 0) {
+            return;
+        }
+
+        if (queryData.loadTokens.find(x => x.alias !== possibleAlias)) {
+            return;
+        }
+
+        sourceAlias(possibleAlias);
     }
 
     protected _updateFieldsToFetchToken(fieldsToFetch: FieldsToFetchToken): void {
@@ -460,6 +494,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     public _randomOrdering(seed?: string): void;
     public _randomOrdering(seed?: string): void {
         this._assertNoRawQuery();
+
+        this._noCaching();
 
         if (!seed) {
             this._orderByTokens.push(OrderByToken.random);
@@ -832,7 +868,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     /**
-     * Matches fields where the value is between the specified start and end, exclusive
+     * Matches fields where the value is between the specified start and end, inclusive
      * @param fieldName Field name to use
      * @param start Range start
      * @param end Range end
@@ -1575,6 +1611,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         const dynamicField = fieldNameOrDynamicSpatialField as DynamicSpatialField;
+        this._assertIsDynamicQuery(dynamicField, "spatial");
+
         tokens = this._getCurrentWhereTokens();
         this._appendOperatorIfNeeded(tokens);
         this._negateIfNeeded(tokens, null);
@@ -1609,6 +1647,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         const field = fieldNameOrField as DynamicSpatialField;
+        this._assertIsDynamicQuery(field, "orderByDistance");
+
         if (!fieldNameOrField) {
             throwError("InvalidArgumentException", "Field cannot be null.");
         }
@@ -1648,6 +1688,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         const field = fieldNameOrField as DynamicSpatialField;
+        this._assertIsDynamicQuery(field, "orderByDistance");
+
         if (!fieldNameOrField) {
             throwError("InvalidArgumentException", "Field cannot be null.");
         }
@@ -1660,6 +1702,18 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             this._orderByDistanceDescending(
                 "'" + field.toField((f, isNestedPath) =>
                     this._ensureValidFieldName(f, isNestedPath)) + "'", shapeWktOrLatitude as number, longitude);
+        }
+    }
+
+    private _assertIsDynamicQuery(dynamicField: DynamicSpatialField, methodName: string) {
+        if (!this._fromToken.isDynamic) {
+            throwError("InvalidOperationException",
+                "Cannot execute query method '" + methodName +
+                "'. Field '" + dynamicField.toField(this._ensureValidFieldName) +
+                "' cannot be used when static index '" +
+                this._fromToken.indexName + "' is queried. " +
+                "Dynamic spatial fields can only be used with dynamic queries, " +
+                " for static index queries please use valid spatial fields defined in index definition.");
         }
     }
 

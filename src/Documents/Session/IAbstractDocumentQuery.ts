@@ -193,7 +193,7 @@ export interface IAbstractDocumentQuery<T> {
     _whereEndsWith(fieldName: string, value: any): void;
 
     /**
-     * Matches fields where the value is between the specified start and end, exclusive
+     * Matches fields where the value is between the specified start and end, inclusive
      * @param fieldName Field name
      * @param start Range start
      * @param end Range end
@@ -201,7 +201,7 @@ export interface IAbstractDocumentQuery<T> {
     _whereBetween(fieldName: string, start: any, end: any): void;
 
     /**
-     * Matches fields where the value is between the specified start and end, exclusive
+     * Matches fields where the value is between the specified start and end, inclusive
      * @param fieldName Field name
      * @param start Range start
      * @param end Range end

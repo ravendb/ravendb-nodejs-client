@@ -169,6 +169,11 @@ export class QueryOperation {
             && !clazz) {
             // we only select a single field
             let projectField = fieldsToFetch.projections[0];
+
+            if (fieldsToFetch.sourceAlias) {
+                // remove source-alias from projection name
+                projectField = projectField.substring(fieldsToFetch.sourceAlias.length + 1);
+            }
             if (entityFieldNameConvention) {
                 projectField = StringUtil.changeCase(entityFieldNameConvention, projectField);
             }

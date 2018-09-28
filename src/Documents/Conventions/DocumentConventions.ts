@@ -19,7 +19,7 @@ import { JsonSerializer } from "../../Mapping/Json/Serializer";
 
 export type IdConvention = (databaseName: string, entity: object) => Promise<string>;
 export type IValueForQueryConverter<T> =
-    (fieldName: string, value: T, forRange: boolean, stringValue: (value: string) => void) => boolean;
+    (fieldName: string, value: T, forRange: boolean, stringValue: (value: any) => void) => boolean;
 
 export class DocumentConventions {
 
@@ -31,7 +31,7 @@ export class DocumentConventions {
 
     private static _cachedDefaultTypeCollectionNames: Map<ObjectTypeDescriptor, string> = new Map();
 
-    private readonly _listOfQueryValueConverters:
+    private readonly _listOfQueryValueToObjectConverters:
         Array<{ Type: EntityConstructor<any>; Converter: IValueForQueryConverter<any> }> = [];
 
     private _registeredIdConventions:
@@ -538,14 +538,14 @@ export class DocumentConventions {
         this._assertNotFrozen();
 
         let index;
-        for (index = 0; index < this._listOfQueryValueConverters.length; index++) {
-            const entry = this._listOfQueryValueConverters[index];
+        for (index = 0; index < this._listOfQueryValueToObjectConverters.length; index++) {
+            const entry = this._listOfQueryValueToObjectConverters[index];
             if (type instanceof entry.Type) {
                 break;
             }
         }
 
-        this._listOfQueryValueConverters.splice(index, 0, {
+        this._listOfQueryValueToObjectConverters.splice(index, 0, {
             Type: type,
             Converter: (fieldName, value, forRange, stringValue) => {
                 if (value instanceof type) {
@@ -558,8 +558,8 @@ export class DocumentConventions {
     }
 
     public tryConvertValueForQuery
-        (fieldName: string, value: any, forRange: boolean, strValue: (value: string) => void) {
-        for (const queryValueConverter of this._listOfQueryValueConverters) {
+        (fieldName: string, value: any, forRange: boolean, strValue: (value: any) => void) {
+        for (const queryValueConverter of this._listOfQueryValueToObjectConverters) {
             if (!(value instanceof queryValueConverter.Type)) {
                 continue;
             }
