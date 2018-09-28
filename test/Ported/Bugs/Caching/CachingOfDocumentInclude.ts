@@ -152,7 +152,7 @@ describe("CachingOfDocumentInclude", function () {
             await storeUser("Additional");
             await storeUser("Ayende");
             await storeUser("Michael");
-            await storeUser("Fitzhak");
+            await storeUser("Fitzchak");
             await storeUser("Maxim");
 
             const withPartner = new User();

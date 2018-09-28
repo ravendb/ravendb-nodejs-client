@@ -40,60 +40,14 @@ export class SpatialOptions {
         this.maxY = options.maxY || 90;
         this.units = options.units || "Kilometers";
     }
-
-    // public equals(obj: object): boolean {
-    //     if (this == obj) {
-    //         return true;
-    //     }
-
-    //     if (obj == null)
-    //         return false;
-    //     if (getClass() != obj.getClass())
-    //         return false;
-    //     SpatialOptions other = (SpatialOptions) obj;
-
-    //     boolean result = type == other.getType() && strategy == other.strategy;
-    //     if (type == SpatialFieldType.GEOGRAPHY) {
-    //         result = result && units == other.units;
-    //     }
-    //     if (strategy != SpatialSearchStrategy.BOUNDING_BOX) {
-    //         result = result && maxTreeLevel == other.maxTreeLevel;
-    //         if (type == SpatialFieldType.CARTESIAN) {
-    //             result = result && minX == other.minX
-    //                     && maxX == other.maxX
-    //                     && minY == other.minY
-    //                     && maxY == other.maxY;
-    //         }
-    //     }
-
-    //     return result;
-    // }
-
-    // @Override
-    // public int hashCode() {
-    //     HashCodeBuilder builder = new HashCodeBuilder();
-    //     builder.append(type);
-    //     builder.append(strategy);
-    //     if (type == SpatialFieldType.GEOGRAPHY) {
-    //         builder.append(units.hashCode());
-    //     }
-    //     if (strategy != SpatialSearchStrategy.BOUNDING_BOX) {
-    //         builder.append(maxTreeLevel);
-    //         if (type == SpatialFieldType.CARTESIAN) {
-    //             builder.append(minX).append(maxX).append(minY).append(maxY);
-    //         }
-    //     }
-
-    //     return builder.hashCode();
-    // }
 }
 
 export class SpatialOptionsFactory {
-    public getGeography(): GeographySpatialOptionsFactory {
+    public geography(): GeographySpatialOptionsFactory {
         return new GeographySpatialOptionsFactory();
     }
 
-    public getCartesian(): CartesianSpatialOptionsFactory {
+    public cartesian(): CartesianSpatialOptionsFactory {
         return new CartesianSpatialOptionsFactory();
     }
 }
@@ -131,23 +85,12 @@ export class SpatialBounds {
     public minY: number;
     public maxY: number;
 
-    // @Override
-    // public int hashCode() {
-    //     return new HashCodeBuilder().append(maxX).append(maxY).append(minX).append(minY).hashCode();
-    // }
-
-    // @Override
-    // public boolean equals(Object obj) {
-    //     if (this == obj)
-    //         return true;
-    //     if (obj == null)
-    //         return false;
-    //     if (getClass() != obj.getClass())
-    //         return false;
-    //     SpatialBounds other = (SpatialBounds) obj;
-    //     return new EqualsBuilder()
-    // .append(maxX, other.maxX).append(maxY, other.maxY).append(minX, other.minX).append(minY, other.minY).isEquals();
-    // }
+    public constructor(minX: number, minY: number, maxX: number, maxY: number) {
+        this.minX = minX;
+        this.maxX = maxX;
+        this.minY = minY;
+        this.maxY = maxY;
+    }
 }
 
 export class GeographySpatialOptionsFactory {

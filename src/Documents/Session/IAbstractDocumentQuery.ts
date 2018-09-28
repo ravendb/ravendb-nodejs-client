@@ -8,6 +8,7 @@ import { SpatialCriteria } from "../Queries/Spatial/SpatialCriteria";
 import { GroupBy } from "../Queries/GroupBy";
 import {DocumentType} from "../DocumentAbstractions";
 import {MoreLikeThisScope} from "../Queries/MoreLikeThis/MoreLikeThisScope";
+import {SuggestionBase} from "../Queries/Suggestions/SuggestionBase";
 
 export interface IAbstractDocumentQuery<T> {
 
@@ -425,7 +426,8 @@ export interface IAbstractDocumentQuery<T> {
     // TBD void AggregateBy(FacetBase facet);
     // TBD IAggregationDocumentQuery<T> AggregateBy(Action<IFacetBuilder<T>> builder);
     // TBD void AggregateUsing(string facetSetupDocumentId);
-    // TBD void SuggestUsing(SuggestionBase suggestion);
+
+    _suggestUsing(suggestion: SuggestionBase);
 
     iterator(): Promise<IterableIterator<T>>;
 }

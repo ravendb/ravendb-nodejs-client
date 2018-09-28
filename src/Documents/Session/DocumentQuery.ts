@@ -33,6 +33,11 @@ import {IMoreLikeThisBuilderForDocumentQuery} from "../Queries/MoreLikeThis/IMor
 import {MoreLikeThisUsingDocument} from "../Queries/MoreLikeThis/MoreLikeThisUsingDocument";
 import {MoreLikeThisBuilder} from "../Queries/MoreLikeThis/MoreLikeThisBuilder";
 import {MoreLikeThisUsingDocumentForDocumentQuery} from "../Queries/MoreLikeThis/MoreLikeThisUsingDocumentForDocumentQuery";
+import {SuggestionBase} from "../Queries/Suggestions/SuggestionBase";
+import {ISuggestionDocumentQuery} from "../Queries/Suggestions/ISuggestionDocumentQuery";
+import {ISuggestionBuilder} from "../Queries/Suggestions/ISuggestionBuilder";
+import {SuggestionDocumentQuery} from "../Queries/Suggestions/SuggestionDocumentQuery";
+import {SuggestionBuilder} from "../Queries/Suggestions/SuggestionBuilder";
 
 export class DocumentQuery<T extends object> 
     extends AbstractDocumentQuery<T, DocumentQuery<T>> implements IDocumentQuery<T> {
@@ -701,5 +706,24 @@ export class DocumentQuery<T extends object>
         }
 
         return this;
+    }
+
+    public suggestUsing(suggestion: SuggestionBase): ISuggestionDocumentQuery<T>;
+    public suggestUsing(action: (builder: ISuggestionBuilder<T>) => void): ISuggestionDocumentQuery<T>;
+    public suggestUsing(suggestBaseOrBuilder:
+                            SuggestionBase
+                                | ((builder: ISuggestionBuilder<T>) => void)): ISuggestionDocumentQuery<T> {
+
+        if (suggestBaseOrBuilder instanceof SuggestionBase) {
+            this._suggestUsing(suggestBaseOrBuilder);
+            return new SuggestionDocumentQuery<T>(this);
+        } else {
+            const f = new SuggestionBuilder<T>();
+            suggestBaseOrBuilder(f);
+
+            this.suggestUsing(f.suggestion);
+
+            return new SuggestionDocumentQuery<T>(this);
+        }
     }
 }

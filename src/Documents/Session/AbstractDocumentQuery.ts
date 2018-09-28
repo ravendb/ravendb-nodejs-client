@@ -59,6 +59,11 @@ import {MoreLikeThisToken} from "./Tokens/MoreLikeThisToken";
 import {LazyQueryOperation} from "../Session/Operations/Lazy/LazyQueryOperation";
 import { DocumentSession } from "./DocumentSession";
 import { ObjectTypeDescriptor } from "../../Types";
+import {SuggestionBase} from "../Queries/Suggestions/SuggestionBase";
+import {SuggestionOptions} from "../Queries/Suggestions/SuggestionOptions";
+import {SuggestToken} from "./Tokens/SuggestToken";
+import {SuggestionWithTerm} from "../Queries/Suggestions/SuggestionWithTerm";
+import {SuggestionWithTerms} from "../Queries/Suggestions/SuggestionWithTerms";
 
 /**
  * A query against a Raven index
@@ -1827,5 +1832,52 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         return (this._theSession as DocumentSession).addLazyCountOperation(lazyQueryOperation);
     }
 
+    public _suggestUsing(suggestion: SuggestionBase) {
+        if (!suggestion) {
+            throwError("InvalidArgumentException", "suggestion cannot be null");
+        }
+
+        this._assertCanSuggest();
+
+        let token: SuggestToken = null;
+
+        if (suggestion instanceof SuggestionWithTerm) {
+            const term = suggestion;
+            token = SuggestToken.create(
+                term.field, this._addQueryParameter(term.term), this._getOptionsParameterName(term.options));
+        } else if (suggestion instanceof SuggestionWithTerms) {
+            const terms = suggestion;
+            token = SuggestToken.create(
+                terms.field, this._addQueryParameter(terms.terms), this._getOptionsParameterName(terms.options));
+        } else {
+            throwError("InvalidOperationException", "Unknown type of suggestion: " + suggestion);
+        }
+
+        this._selectTokens.push(token);
+    }
+
+    private _getOptionsParameterName(options: SuggestionOptions): string {
+        let optionsParameterName = null;
+
+        if (options) {
+            optionsParameterName = this._addQueryParameter(options);
+        }
+
+        return optionsParameterName;
+    }
+
+    private _assertCanSuggest(): void {
+        if (this._whereTokens.length) {
+            throwError("InvalidOperationException", "Cannot add suggest when WHERE statements are present.");
+        }
+
+        if (this._selectTokens.length) {
+            throwError("InvalidOperationException", "Cannot add suggest when SELECT statements are present.");
+        }
+
+        if (this._orderByTokens.length) {
+            throwError("InvalidOperationException", "Cannot add suggest when ORDER BY statements are present.");
+        }
+    }
     // tslint:enable:function-name
 }

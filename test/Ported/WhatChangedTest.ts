@@ -254,6 +254,38 @@ describe("WhatChangedTest", function () {
         }
     });
 
+    it("has changes", async () => {
+        {
+            const session = store.openSession();
+            const user1 = new User();
+            user1.name = "user1";
+
+            const user2 = new User();
+            user2.name = "user2";
+            user2.age = 1;
+
+            await session.store(user1, "users/1");
+            await session.store(user2, "users/2");
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            assert.ok(!session.advanced.hasChanges());
+
+            const u1 = await session.load<User>("users/1", User);
+            const u2 = await session.load<User>("users/2", User);
+
+            assert.ok(!session.advanced.hasChanged(u1));
+            assert.ok(!session.advanced.hasChanged(u2));
+
+            u1.name = "new name";
+            assert.ok(session.advanced.hasChanged(u1));
+            assert.ok(!session.advanced.hasChanged(u2));
+            assert.ok(session.advanced.hasChanges());
+
+        }
+    });
 });
 
 class BasicName {

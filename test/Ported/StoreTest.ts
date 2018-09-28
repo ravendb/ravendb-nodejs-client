@@ -85,6 +85,7 @@ describe("StoreTest", function () {
 
             assert.ok(session.advanced.isLoaded("users/1"));
             assert.ok(session.advanced.getChangeVectorFor(user1));
+            assert.ok(session.advanced.getLastModifiedFor(user1));
         }
 
         assert.ok(storeLevelCallBackData);

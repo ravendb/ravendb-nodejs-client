@@ -6,6 +6,7 @@ import {User} from "../Assets/Entities";
 import {CONSTANTS} from "../../src/Constants";
 import {ConfigureRevisionsOperationResult} from "../../src/Documents/Operations/Revisions/ConfigureRevisionsOperation";
 import {GetDocumentsCommand} from "../../src/Documents/Commands/GetDocumentsCommand";
+import {GetRevisionsBinEntryCommand} from "../../src/Documents/Commands/GetRevisionsBinEntryCommand";
 
 describe("RevisionsTest", function () {
 
@@ -106,4 +107,28 @@ describe("RevisionsTest", function () {
         }
     });
 
+    it("can list revisions bin", async () => {
+        await testContext.setupRevisions(store, false, 4);
+
+        {
+            const session = store.openSession();
+            const user = new User();
+            user.name = "user1";
+            await session.store(user, "users/1");
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            await session.delete("users/1");
+            await session.saveChanges();
+        }
+
+        const revisionsBinEntryCommand = new GetRevisionsBinEntryCommand(store.conventions, 1024, 20);
+        await store.getRequestExecutor().execute(revisionsBinEntryCommand);
+
+        const result = revisionsBinEntryCommand.result;
+        assert.strictEqual(result.results.length, 1);
+        assert.strictEqual(result.results[0]["@metadata"]["@id"], "users/1");
+    });
 });

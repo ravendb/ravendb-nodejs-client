@@ -91,7 +91,7 @@ export class JsonOperation {
                     JsonOperation._newChange(prop, null, oldProp, docChanges, "FieldChanged");
                 }
             } else if (Array.isArray(newProp)) {
-                if (!oldProp || !Array.isArray(oldProp)) {
+                if (!Array.isArray(oldProp)) {
                     if (!changes) {
                         return true;
                     }

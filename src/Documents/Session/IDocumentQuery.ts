@@ -11,6 +11,9 @@ import { IFacetBuilder } from "../Queries/Facets/IFacetBuilder";
 import { FacetBase } from "./../Queries/Facets/FacetBase";
 import {IMoreLikeThisBuilderForDocumentQuery} from "../Queries/MoreLikeThis/IMoreLikeThisBuilderForDocumentQuery";
 import {MoreLikeThisBase} from "../Queries/MoreLikeThis/MoreLikeThisBase";
+import {ISuggestionBuilder} from "../Queries/Suggestions/ISuggestionBuilder";
+import {ISuggestionDocumentQuery} from "../Queries/Suggestions/ISuggestionDocumentQuery";
+import {SuggestionBase} from "../Queries/Suggestions/SuggestionBase";
 
 /**
  * A query against a Raven index
@@ -85,7 +88,9 @@ export interface IDocumentQuery<T extends object>
     moreLikeThis(moreLikeThis: MoreLikeThisBase): IDocumentQuery<T>;
 
     //TBD MoreLikeThis
-    //TBD SuggestUsing
+
+    suggestUsing(suggestion: SuggestionBase): ISuggestionDocumentQuery<T>;
+    suggestUsing(action: (builder: ISuggestionBuilder<T>) => void): ISuggestionDocumentQuery<T>;
 
     aggregateBy(action: (builder: IFacetBuilder<T>) => void): IAggregationDocumentQuery<T>;
     aggregateBy(facet: FacetBase): IAggregationDocumentQuery<T>;

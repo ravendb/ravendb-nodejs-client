@@ -54,7 +54,7 @@ export class GetAttachmentCommand extends RavenCommand<AttachmentResult> {
             throwError("InvalidArgumentException", "Name cannot be null or empty");
         }
         if (type !== "Document" && !changeVector) {
-            throwError("InvalidArgumentException", "Change vector cannot be null for attachemnt type " + type);
+            throwError("InvalidArgumentException", "Change vector cannot be null for attachment type " + type);
         }
 
         this._documentId = documentId;
