@@ -47,10 +47,10 @@ export class OperationExecutor {
     public send(operation: AwaitableOperation): Promise<OperationCompletionAwaiter>;
     public send(operation: AwaitableOperation, sessionInfo?: SessionInfo): Promise<OperationCompletionAwaiter>;
     public send<TResult extends object>(
-        patchOperation: PatchOperation): Promise<PatchStatus>;
+        patchOperation: PatchOperation): Promise<PatchOperationResult<TResult>>;
     public send<TResult extends object>(
         patchOperation: PatchOperation, 
-        sessionInfo: SessionInfo): Promise<PatchStatus>;
+        sessionInfo: SessionInfo): Promise<PatchOperationResult<TResult>>;
     public send<TResult extends object>(
         patchOperation: PatchOperation, 
         sessionInfo: SessionInfo,
@@ -63,7 +63,7 @@ export class OperationExecutor {
         operation: AwaitableOperation | IOperation<TResult>,
         sessionInfo?: SessionInfo,
         documentType?: DocumentType<TResult>)
-    : Promise<OperationCompletionAwaiter | TResult | PatchStatus | PatchOperationResult<TResult>> {
+    : Promise<OperationCompletionAwaiter | TResult | PatchOperationResult<TResult>> {
 
         const command =
             operation.getCommand(this._store, this._requestExecutor.conventions, this._requestExecutor.cache);
@@ -96,7 +96,7 @@ export class OperationExecutor {
                     const entityType = conventions.findEntityType(documentType);
                     patchOperationResult.document = conventions.deserializeEntityFromJson(
                             entityType, patchResult.modifiedDocument) as TResult;
-                    return documentType ? patchOperationResult : patchOperationResult.status;
+                    return patchOperationResult;
                 }
 
                 return command.result as TResult;
