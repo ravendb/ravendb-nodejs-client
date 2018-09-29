@@ -3,7 +3,6 @@ import {
     IDocumentStore,
     IndexDefinition,
     PutIndexesOperation,
-    RavenTestDriver
 } from "../../src/index";
 import {FacetBase} from "../../src/Documents/Queries/Facets/FacetBase";
 import {Facet} from "../../src/Documents/Queries/Facets/Facet";
@@ -49,9 +48,9 @@ export class FacetTestContext {
         return [facet1, costRangeFacet, megaPixelsRangeFacet];
     }
 
-    private static Features = ["Image Stabilizer", "Tripod", "Low Light Compatible", "Fixed Lens", "LCD"];
-    private static Manufacturers = ["Sony", "Nikon", "Phillips", "Canon", "Jessops"];
-    private static Models = ["Model1", "Model2", "Model3", "Model4", "Model5"];
+    private static features = ["Image Stabilizer", "Tripod", "Low Light Compatible", "Fixed Lens", "LCD"];
+    private static manufacturers = ["Sony", "Nikon", "Phillips", "Canon", "Jessops"];
+    private static models = ["Model1", "Model2", "Model3", "Model4", "Model5"];
 
     public static getCameras(numCameras: number): Camera[] {
         const cameraList = [];
@@ -64,8 +63,8 @@ export class FacetTestContext {
                     1980 + Math.floor(30 * Math.random()),
                     Math.floor(12 * Math.random()),
                     Math.floor(27 * Math.random()));
-            camera.manufacturer = this.Manufacturers[Math.floor(this.Manufacturers.length * Math.random())];
-            camera.model = this.Models[Math.floor(this.Models.length * Math.random())];
+            camera.manufacturer = this.manufacturers[Math.floor(this.manufacturers.length * Math.random())];
+            camera.model = this.models[Math.floor(this.models.length * Math.random())];
             camera.cost = Math.random() * 900 + 100;
             camera.zoom = Math.random() * 10 + 1;
             camera.megapixels = Math.random() * 10 + 1;

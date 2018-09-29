@@ -2,16 +2,13 @@ import { testContext, disposeTestDocumentStore } from "../../../Utils/TestUtil";
 
 import {
     AbstractIndexCreationTask,
-    IDocumentSession,
     IDocumentStore,
     StreamQueryStatistics,
     StreamResult,
 } from "../../../../src";
 import * as assert from "assert";
 import {User} from "../../../Assets/Entities";
-import * as stream from "readable-stream";
 import * as StreamUtil from "../../../../src/Utility/StreamUtil";
-import * as os from "os";
 import { CONSTANTS } from "../../../../src/Constants";
 import { parseJsonVerbose } from "../../../Utils/Json";
 import { getStringWritable } from "../../../Utils/Streams";

@@ -1,4 +1,3 @@
-import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { User } from "../Assets/Entities";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
@@ -20,8 +19,8 @@ describe("RavenDB-10566", function () {
 
     it("should be available", async () => {
         let name;
-        store.addSessionListener("afterSaveChanges", evnt => {
-            name = evnt.documentMetadata["name"];
+        store.addSessionListener("afterSaveChanges", event => {
+            name = event.documentMetadata["name"];
         });
 
         const session = store.openSession();
@@ -34,6 +33,6 @@ describe("RavenDB-10566", function () {
 
         await session.saveChanges();
 
-        assert.equal("FooBar", name);
+        assert.strictEqual("FooBar", name);
     });
 });

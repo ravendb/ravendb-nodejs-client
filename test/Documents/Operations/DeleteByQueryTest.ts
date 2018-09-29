@@ -4,7 +4,7 @@ import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 import {
     IDocumentStore,
     IndexQuery,
-    DeleteByQueryOperation, DocumentChange, OperationStatusChange,
+    DeleteByQueryOperation, OperationStatusChange,
 } from "../../../src";
 import { User } from "../../Assets/Entities";
 import {AsyncQueue} from "../../Utils/AsyncQueue";
@@ -42,7 +42,7 @@ describe("DeleteByQueryTest", function () {
         {
             const session = store.openSession();
             const count = await session.query(User).count();
-            assert.equal(count, 1);
+            assert.strictEqual(count, 1);
         }
     });
 

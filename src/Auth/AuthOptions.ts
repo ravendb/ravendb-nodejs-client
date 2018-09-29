@@ -5,12 +5,14 @@ export interface IAuthOptions {
   certificate?: string | Buffer;
   password?: string;
   ca?: string | Buffer;
-}   
+}
 
+// tslint:disable-next-line:no-empty-interface
 export interface IStoreAuthOptions extends IAuthOptions {
 
 }
 
+// tslint:disable-next-line:no-empty-interface
 export interface IRequestAuthOptions extends IAuthOptions {
   
 }

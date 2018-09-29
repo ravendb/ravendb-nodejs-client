@@ -40,7 +40,7 @@ describe("HiLo", function () {
         await Promise.all(storeOps);
 
         const userIds = users.map(x => x.id);
-        assert.equal(new Set(userIds).size, userIds.length, `Ids are not unique: ${userIds}`);
+        assert.strictEqual(new Set(userIds).size, userIds.length, `Ids are not unique: ${userIds}`);
 
         userIds
             .map(id => id.split("/")[1])
@@ -69,7 +69,7 @@ describe("HiLo", function () {
                 const newUser = Object.assign(new User(), { name: "new" });
                 await session.store(newUser);
                 await session.saveChanges();
-                assert.equal(newUser.id, "users/11-A");
+                assert.strictEqual(newUser.id, "users/11-A");
             } finally {
                 store2.dispose();
             }
@@ -102,7 +102,7 @@ describe("HiLo", function () {
             ids.push(nextId);
         }
 
-        assert.equal(new Set(ids).size, ids.length);
+        assert.strictEqual(new Set(ids).size, ids.length);
 
     });
 
@@ -119,10 +119,10 @@ describe("HiLo", function () {
 
         const multiDbHilo = new HiloMultiDatabaseIdGenerator(store);
         let generatedDocumentKey = await multiDbHilo.generateDocumentId(null, new User());
-        assert.equal(generatedDocumentKey, "users/65-A");
+        assert.strictEqual(generatedDocumentKey, "users/65-A");
 
         generatedDocumentKey = await multiDbHilo.generateDocumentId(null, new Product());
-        assert.equal(generatedDocumentKey, "products/129-A");
+        assert.strictEqual(generatedDocumentKey, "products/129-A");
     });
 
     it("capacity should double", async () => {
@@ -142,8 +142,8 @@ describe("HiLo", function () {
             {
                 const session = store.openSession();
                 const hiloDoc = await session.load<HiloDoc>("Raven/Hilo/users");
-                assert.equal(hiloDoc.Max, 96);
-                assert.equal(hiloDoc.constructor, HiloDoc); // should take type from @metadata
+                assert.strictEqual(hiloDoc.Max, 96);
+                assert.strictEqual(hiloDoc.constructor, HiloDoc); // should take type from @metadata
 
                 await hiLoIdGenerator.generateDocumentId(new User());
             }
@@ -151,8 +151,8 @@ describe("HiLo", function () {
             {
                 const session = store.openSession();
                 const hiloDoc = await session.load<HiloDoc>("Raven/Hilo/users");
-                assert.equal(hiloDoc.Max, 160);
-                assert.equal(hiloDoc.constructor, HiloDoc);
+                assert.strictEqual(hiloDoc.Max, 160);
+                assert.strictEqual(hiloDoc.constructor, HiloDoc);
             }
     });
 
@@ -215,7 +215,7 @@ describe("HiLo", function () {
             .map(x => x.split("-")[0])
             .forEach(numericPart => {
                 assert.ok(numericPart);
-                assert.ok(parseInt(numericPart) < 33);
+                assert.ok(parseInt(numericPart, 10) < 33);
             });
     });
 });

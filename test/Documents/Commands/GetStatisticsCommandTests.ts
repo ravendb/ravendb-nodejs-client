@@ -34,11 +34,11 @@ describe("GetStatisticsCommand()", function () {
         assert.ok(stats.lastDocEtag);
         assert.ok(stats.lastDocEtag > 0);
 
-        assert.equal(stats.countOfIndexes, 3);
-        assert.equal(stats.countOfDocuments, 1059);
+        assert.strictEqual(stats.countOfIndexes, 3);
+        assert.strictEqual(stats.countOfDocuments, 1059);
         assert.ok(stats.countOfRevisionDocuments > 0);
-        assert.equal(stats.countOfDocumentsConflicts, 0);
-        assert.equal(stats.countOfUniqueAttachments, 17);
+        assert.strictEqual(stats.countOfDocumentsConflicts, 0);
+        assert.strictEqual(stats.countOfUniqueAttachments, 17);
 
         assert.ok(stats.databaseChangeVector);
         assert.ok(stats.databaseId);

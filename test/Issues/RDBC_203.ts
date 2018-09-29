@@ -1,6 +1,5 @@
-import * as mocha from "mocha";
 import * as assert from "assert";
-import { RavenTestContext, testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import { DocumentStore, IDocumentStore, GetDatabaseNamesOperation } from "../../src";
 

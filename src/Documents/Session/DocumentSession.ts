@@ -768,7 +768,6 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         const docsReadable = streamOperation.setResult(command.result);
         docsReadable.once("stats", streamQueryStatsCallback || TypeUtil.NOOP);
 
-
         const result = this._getStreamResultTransform(
             this, (query as any).getQueryType(), (query as any).fieldsToFetchToken);
 

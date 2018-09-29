@@ -46,7 +46,6 @@ export class CompareExchangeResult<T> {
         const successful = response["Successful"];
         const raw = response["Value"];
 
-        let result: T;
         let val = null;
 
         if (raw) {

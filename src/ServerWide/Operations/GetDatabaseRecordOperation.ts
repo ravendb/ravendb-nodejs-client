@@ -9,7 +9,6 @@ import {
 import {HttpRequestParameters} from "../../Primitives/Http";
 import * as stream from "readable-stream";
 
-
 export class GetDatabaseRecordOperation implements IServerOperation<DatabaseRecordWithEtag> {
     private readonly _database: string;
 

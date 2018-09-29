@@ -34,7 +34,7 @@ describe("StoreTest", function () {
 
             await session.advanced.refresh(user);
 
-            assert.equal(user.name, "RavenDB 4.0");
+            assert.strictEqual(user.name, "RavenDB 4.0");
         }
     });
 
@@ -47,7 +47,7 @@ describe("StoreTest", function () {
 
         user = await session.load<User>("users/1");
         assert.ok(user);
-        assert.equal(user.name, "RavenDB");
+        assert.strictEqual(user.name, "RavenDB");
     });
 
     it("storeDocuments", async () => {
@@ -63,7 +63,7 @@ describe("StoreTest", function () {
         await session.saveChanges();
 
         const users: { [key: string]: User } = await session.load<User>(["users/1", "users/2"]);
-        assert.equal(Object.keys(users).length, 2);
+        assert.strictEqual(Object.keys(users).length, 2);
     });
 
     it("notifyAfterStore", async () => {
@@ -89,7 +89,7 @@ describe("StoreTest", function () {
         }
 
         assert.ok(storeLevelCallBackData);
-        assert.equal(storeLevelCallBackData, sessionLevelCallbackData);
+        assert.strictEqual(storeLevelCallBackData, sessionLevelCallbackData);
 
         assert.ok(sessionLevelCallbackData);
 

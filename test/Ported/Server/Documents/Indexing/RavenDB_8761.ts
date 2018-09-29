@@ -40,13 +40,13 @@ describe("RavenDB-8761", function () {
                 .all();
 
             for (const products of [productCounts1, productCounts2]) {
-                assert.equal(products.length, 2);
+                assert.strictEqual(products.length, 2);
 
-                assert.equal(products[0].productName, "products/1");
-                assert.equal(products[0].count, 1);
+                assert.strictEqual(products[0].productName, "products/1");
+                assert.strictEqual(products[0].count, 1);
 
-                assert.equal(products[1].productName, "products/2");
-                assert.equal(products[1].count, 2);
+                assert.strictEqual(products[1].productName, "products/2");
+                assert.strictEqual(products[1].count, 2);
             }
         }
 
@@ -54,15 +54,15 @@ describe("RavenDB-8761", function () {
             const session = store.openSession();
 
             function assertQueryResults(products: any[]) {
-                assert.equal(products.length, 2);
+                assert.strictEqual(products.length, 2);
 
-                assert.equal(products[0].productName, "products/1");
-                assert.equal(products[0].count, 1);
-                assert.equal(products[0].country, "USA");
+                assert.strictEqual(products[0].productName, "products/1");
+                assert.strictEqual(products[0].count, 1);
+                assert.strictEqual(products[0].country, "USA");
 
-                assert.equal(products[1].productName, "products/2");
-                assert.equal(products[1].count, 2);
-                assert.equal(products[1].country, "USA");
+                assert.strictEqual(products[1].productName, "products/2");
+                assert.strictEqual(products[1].count, 2);
+                assert.strictEqual(products[1].country, "USA");
             }
 
             const productCounts1 = await session.advanced
@@ -91,19 +91,19 @@ describe("RavenDB-8761", function () {
             const session = store.openSession();
 
             function assertQueryResults(products: any[]) {
-                assert.equal(products.length, 3);
+                assert.strictEqual(products.length, 3);
 
-                assert.equal(products[0].productName, "products/1");
-                assert.equal(products[0].count, 1);
-                assert.equal(products[0].quantity, 1);
+                assert.strictEqual(products[0].productName, "products/1");
+                assert.strictEqual(products[0].count, 1);
+                assert.strictEqual(products[0].quantity, 1);
 
-                assert.equal(products[1].productName, "products/2");
-                assert.equal(products[1].count, 1);
-                assert.equal(products[1].quantity, 2);
+                assert.strictEqual(products[1].productName, "products/2");
+                assert.strictEqual(products[1].count, 1);
+                assert.strictEqual(products[1].quantity, 2);
 
-                assert.equal(products[2].productName, "products/2");
-                assert.equal(products[2].count, 1);
-                assert.equal(products[2].quantity, 3);
+                assert.strictEqual(products[2].productName, "products/2");
+                assert.strictEqual(products[2].count, 1);
+                assert.strictEqual(products[2].quantity, 3);
             }
 
             const productCounts1 = await session.advanced
@@ -155,13 +155,13 @@ describe("RavenDB-8761", function () {
             const session = store.openSession();
 
             function assertQueryResults(products: any[]) {
-                assert.equal(products.length, 2);
+                assert.strictEqual(products.length, 2);
 
-                assert.deepEqual(products[0].products, ["products/2"]);
-                assert.equal(products[0].count, 1);
+                assert.deepStrictEqual(products[0].products, ["products/2"]);
+                assert.strictEqual(products[0].count, 1);
 
-                assert.deepEqual(products[1].products, ["products/1", "products/2"]);
-                assert.equal(products[1].count, 2);
+                assert.deepStrictEqual(products[1].products, ["products/1", "products/2"]);
+                assert.strictEqual(products[1].count, 2);
             }
 
             const productCounts1 = await session.advanced
@@ -190,13 +190,13 @@ describe("RavenDB-8761", function () {
             const session = store.openSession();
 
             function assertQueryResults(products: any[]) {
-                assert.equal(products.length, 2);
+                assert.strictEqual(products.length, 2);
 
-                assert.deepEqual(products[0].products, ["products/2"]);
-                assert.equal(products[0].count, 1);
+                assert.deepStrictEqual(products[0].products, ["products/2"]);
+                assert.strictEqual(products[0].count, 1);
 
-                assert.deepEqual(products[1].products, ["products/1", "products/2"]);
-                assert.equal(products[1].count, 2);
+                assert.deepStrictEqual(products[1].products, ["products/1", "products/2"]);
+                assert.strictEqual(products[1].count, 2);
             }
 
             const productCounts1 = await session.advanced
@@ -254,18 +254,16 @@ describe("RavenDB-8761", function () {
 
             function assertQueryResults(products: any[]) {
 
-                    assert.equal(products.length, 2);
+                assert.strictEqual(products.length, 2);
 
-                    assert.deepEqual(products[0].products, ["products/2"])
-                    assert.equal(products[0].count, 1)
-                    assert.deepEqual(products[0].quantities, [3]);
+                assert.deepStrictEqual(products[0].products, ["products/2"]);
+                assert.strictEqual(products[0].count, 1);
+                assert.deepStrictEqual(products[0].quantities, [3]);
 
-                    assert.deepEqual(products[1].products, ["products/1", "products/2"]);
-                    assert.equal(products[1].count, 2);
-                    assert.deepEqual(products[1].quantities, [ 1, 2 ]);
+                assert.deepStrictEqual(products[1].products, ["products/1", "products/2"]);
+                assert.strictEqual(products[1].count, 2);
+                assert.deepStrictEqual(products[1].quantities, [ 1, 2 ]);
             }
-
-
         }
     });
 });

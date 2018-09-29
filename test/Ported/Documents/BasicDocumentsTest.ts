@@ -27,7 +27,7 @@ describe("Basic documents test", function () {
         await session.saveChanges();
 
         const session2 = store.openSession();
-        session2.delete(documentId);
+        await session2.delete(documentId);
         await session2.saveChanges();
 
         const session3 = store.openSession();
@@ -64,7 +64,7 @@ describe("Basic documents test", function () {
         await session.saveChanges();
 
         const cat = await session.load(dog.id, Cat);
-        assert.equal(cat.constructor, Cat);
+        assert.strictEqual(cat.constructor, Cat);
     });
 
     it("get", async () => {
@@ -91,7 +91,7 @@ describe("Basic documents test", function () {
 
         await requestExecutor.execute(getDocumentsCommand);
         let docs = getDocumentsCommand.result;
-        assert.equal(docs.results.length, 2);
+        assert.strictEqual(docs.results.length, 2);
 
         let doc1 = docs.results[0];
         let doc2 = docs.results[1];
@@ -99,12 +99,12 @@ describe("Basic documents test", function () {
 
         let doc1Properties = Object.keys(doc1);
         assert.ok(doc1Properties.includes("@metadata"));
-        assert.equal(doc1Properties.length, 2); // name, @metadata
+        assert.strictEqual(doc1Properties.length, 2); // name, @metadata
 
         assert.ok(doc2);
         let doc2Properties = Object.keys(doc2);
         assert.ok(doc2Properties.includes("@metadata"));
-        assert.equal(doc2Properties.length, 2); // name, @metadata
+        assert.strictEqual(doc2Properties.length, 2); // name, @metadata
 
         {
             const session = store.openSession() as DocumentSession;
@@ -114,8 +114,8 @@ describe("Basic documents test", function () {
             assert.ok(user1 instanceof User);
             assert.ok(user2 instanceof User);
 
-            assert.equal(user1.name, "Fitzchak");
-            assert.equal(user2.name, "Arek");
+            assert.strictEqual(user1.name, "Fitzchak");
+            assert.strictEqual(user2.name, "Arek");
 
             getDocumentsCommand = new GetDocumentsCommand({
                 ids: [ "users/1", "users/2" ], 
@@ -126,18 +126,18 @@ describe("Basic documents test", function () {
             await requestExecutor.execute(getDocumentsCommand);
 
             docs = getDocumentsCommand.result;
-            assert.equal(docs.results.length, 2);
+            assert.strictEqual(docs.results.length, 2);
 
             [ doc1, doc2 ] = docs.results;
             assert.ok(doc1);
             doc1Properties = Object.keys(doc1);
             assert.ok(doc1Properties.includes("@metadata"));
-            assert.equal(doc1Properties.length, 1);
+            assert.strictEqual(doc1Properties.length, 1);
 
             assert.ok(doc2);
             doc2Properties = Object.keys(doc2);
             assert.ok(doc2Properties.includes("@metadata"));
-            assert.equal(doc2Properties.length, 1);
+            assert.strictEqual(doc2Properties.length, 1);
         }
     });
 });

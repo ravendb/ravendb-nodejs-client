@@ -41,14 +41,14 @@ describe("SimonBartlettTest", function () {
                 .waitForNonStaleResults()
                 .count();
 
-            assert.equal(count, 1);
+            assert.strictEqual(count, 1);
 
             count = await session.query({ indexName: GeoIndex.name })
                 .relatesToShape("WKT", "LINESTRING (1 0, 1 1, 1 2)", "Intersects")
                 .waitForNonStaleResults()
                 .count();
 
-            assert.equal(count, 1);
+            assert.strictEqual(count, 1);
         }
 
     });
@@ -77,14 +77,14 @@ describe("SimonBartlettTest", function () {
             .waitForNonStaleResults()
             .count();
 
-            assert.equal(count, 0);
+            assert.strictEqual(count, 0);
 
             count = await session.query({ indexName: GeoIndex.name })
                 .relatesToShape("WKT", "CIRCLE(0.000000 3.000000 d=110)", "Intersects")
                 .waitForNonStaleResults()
                 .count();
 
-            assert.equal(count, 0);
+            assert.strictEqual(count, 0);
         }
     });
 

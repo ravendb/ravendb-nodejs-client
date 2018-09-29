@@ -71,7 +71,7 @@ describe("bulk insert", function () {
 
             assert.fail("Should have thrown.");
         } catch (error) {
-            assert.equal(error.name, "BulkInsertAbortedException");
+            assert.strictEqual(error.name, "BulkInsertAbortedException");
         }
     });
 
@@ -82,8 +82,8 @@ describe("bulk insert", function () {
 
             assert.fail("Should have thrown.");
         } catch (error) {
-            assert.equal(error.name, "NotSupportedException");
-            assert.equal(error.message, "Document ids cannot end with '|', but was called with foobars|");
+            assert.strictEqual(error.name, "NotSupportedException");
+            assert.strictEqual(error.message, "Document ids cannot end with '|', but was called with foobars|");
         }
     });
 
@@ -109,7 +109,7 @@ describe("bulk insert", function () {
             const metadataExpirationDate
                 = session.advanced.getMetadataFor(entity)[CONSTANTS.Documents.Metadata.EXPIRES];
 
-            assert.equal(date, metadataExpirationDate);
+            assert.strictEqual(date, metadataExpirationDate);
         } finally {
             session.dispose();
         }
@@ -155,9 +155,9 @@ describe("bulk insert", function () {
             assert.ok(metadata["@id"], entity["id"]);
             const nestedObjectTypes = metadata[CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES];
             assert.ok(nestedObjectTypes);
-            assert.equal(Object.keys(nestedObjectTypes).length, 2);
-            assert.equal(nestedObjectTypes["items[]"], BulkTestItem.name);
-            assert.equal(nestedObjectTypes["items[].created"], "date");
+            assert.strictEqual(Object.keys(nestedObjectTypes).length, 2);
+            assert.strictEqual(nestedObjectTypes["items[]"], BulkTestItem.name);
+            assert.strictEqual(nestedObjectTypes["items[].created"], "date");
         }
     });
 
@@ -204,13 +204,13 @@ describe("bulk insert", function () {
             const loaded = await session.load(camelCasedObj["id"]);
             assert.ok(loaded);
             assert.ok("Name" in loaded);
-            assert.equal(loaded["Name"], camelCasedObj.name);
+            assert.strictEqual(loaded["Name"], camelCasedObj.name);
             assert.ok("Job" in loaded);
             assert.ok("CanUseSword" in loaded);
             assert.ok("Equipment" in loaded);
             assert.ok("RegisteredAt" in loaded);
             assert.ok("FathersName" in loaded);
-            assert.equal(loaded["Equipment"].length, 3);
+            assert.strictEqual(loaded["Equipment"].length, 3);
             assert.ok("Raven-Node-Type" in loaded["@metadata"]);
             assert.ok("@nested-object-types" in loaded["@metadata"]);
             assert.ok("@collection" in loaded["@metadata"]);

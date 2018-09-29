@@ -46,7 +46,7 @@ describe("Client configuration", function () {
         const configuration = result.configuration;
         assert.ok(configuration.etag);
         assert.ok(configuration.disabled);
-        assert.equal(configuration.maxNumberOfRequestsPerSession, 80);
-        assert.equal(configuration.readBalanceBehavior, "FastestNode");
+        assert.strictEqual(configuration.maxNumberOfRequestsPerSession, 80);
+        assert.strictEqual(configuration.readBalanceBehavior, "FastestNode");
     });
 });

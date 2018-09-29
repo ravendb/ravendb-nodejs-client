@@ -332,5 +332,4 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
 
     entityToJson: EntityToJson;
 
-
 }

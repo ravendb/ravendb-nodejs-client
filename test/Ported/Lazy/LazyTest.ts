@@ -1,6 +1,6 @@
 import {EntitiesCollectionObject, IDocumentStore} from "../../../src";
 import {disposeTestDocumentStore, testContext} from "../../Utils/TestUtil";
-import {Company, Order, User} from "../../Assets/Entities";
+import {Company, User} from "../../Assets/Entities";
 import {Lazy} from "../../../src/Documents/Lazy";
 import * as assert from "assert";
 
@@ -101,7 +101,7 @@ describe("LazyTest", function () {
             assert.ok(company2Lazy.isValueCreated());
 
             await promise;
-            assert.equal(
+            assert.strictEqual(
                 session.advanced.numberOfRequests - beforeReqsCount, 1, "Should have performed 1 request.");
 
             assert.strictEqual(company1Ref.id, "companies/1");

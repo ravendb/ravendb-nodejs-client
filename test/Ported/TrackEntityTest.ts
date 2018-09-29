@@ -23,7 +23,7 @@ describe("TrackEntityTest", function () {
             session.delete(new User());
             assert.fail("Should have thrown.");
         } catch (err) {
-            assert.equal(err.name, "InvalidOperationException");
+            assert.strictEqual(err.name, "InvalidOperationException");
             assert.ok(err.message.includes(
                 "is not associated with the session, cannot delete unknown entity instance"));
         }
@@ -54,8 +54,8 @@ describe("TrackEntityTest", function () {
 
         {
             const session = store.openSession();
-            assert.equal(await session.load("users/1"), null);
-            assert.equal(await session.load("users/2"), null);
+            assert.ok(!await session.load("users/1"));
+            assert.ok(!await session.load("users/2"));
         }
     });
 
@@ -76,7 +76,7 @@ describe("TrackEntityTest", function () {
             await session.store(newUser);
             assert.fail("Should have thrown.");
         } catch (err) {
-            assert.equal(err.name, "NonUniqueObjectException");
+            assert.strictEqual(err.name, "NonUniqueObjectException");
             assert.ok(err.message.includes("Attempted to associate a different object with id 'users/1'"));
         }
     });

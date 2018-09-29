@@ -5,7 +5,6 @@ import {DocumentStore, IDocumentStore} from "../../src";
 import {User} from "../Assets/Entities";
 import {CONSTANTS} from "../../src/Constants";
 import {ConfigureRevisionsOperationResult} from "../../src/Documents/Operations/Revisions/ConfigureRevisionsOperation";
-import {GetDocumentsCommand} from "../../src/Documents/Commands/GetDocumentsCommand";
 import {GetRevisionsBinEntryCommand} from "../../src/Documents/Commands/GetRevisionsBinEntryCommand";
 
 describe("RevisionsTest", function () {

@@ -306,7 +306,8 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    // TBD public IDocumentQuery<T> WhereIn<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values, bool exact = false)
+    // TBD public IDocumentQuery<T> WhereIn<TValue>(Expression<Func<T, TValue>> propertySelector,
+    // IEnumerable<TValue> values, bool exact = false)
 
     public whereStartsWith(fieldName: string, value: any): IDocumentQuery<T> {
         this._whereStartsWith(fieldName, value);

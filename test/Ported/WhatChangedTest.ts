@@ -24,7 +24,7 @@ describe("WhatChangedTest", function () {
             basicName.name = "Toli";
             await newSession.store(basicName, "users/1");
 
-            assert.equal(Object.keys(newSession.advanced.whatChanged()).length, 1);
+            assert.strictEqual(Object.keys(newSession.advanced.whatChanged()).length, 1);
             await newSession.saveChanges();
         }
 

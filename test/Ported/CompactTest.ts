@@ -4,7 +4,7 @@ import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import {
     IDocumentStore,
-    CompactDatabaseOperation, AbstractIndexCreationTask,
+    CompactDatabaseOperation,
 } from "../../src";
 
 describe("CompactTest", function () {

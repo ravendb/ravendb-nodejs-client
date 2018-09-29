@@ -32,7 +32,7 @@ export class ComplexProperty {
 
 import {
     IDocumentStore,
-    IDocumentSession, AbstractIndexCreationTask,
+    AbstractIndexCreationTask,
 } from "../../../src";
 import {MoreLikeThisOptions} from "../../../src/Documents/Queries/MoreLikeThis/MoreLikeThisOptions";
 import {MoreLikeThisStopWords} from "../../../src/Documents/Queries/MoreLikeThis/MoreLikeThisStopWords";
@@ -73,6 +73,7 @@ export class ComplexDataIndex extends AbstractIndexCreationTask {
 describe("MoreLikeThisTests", function () {
 
     const getLorem = (numWords: number) => {
+        // noinspection SpellCheckingInspection
         const theLorem = "Morbi nec purus eu libero interdum laoreet Nam metus quam posuere in elementum eget" +
         " egestas eget justo Aenean orci ligula ullamcorper nec convallis non placerat nec lectus Quisque " +
         "convallis porta suscipit Aliquam sollicitudin ligula sit amet libero cursus egestas Maecenas nec mauris" +
@@ -285,7 +286,7 @@ describe("MoreLikeThisTests", function () {
     });
 
     it("do not pass field names", async () => {
-       const key = "data/1-A";
+        const key = "data/1-A";
 
         {
             const session = store.openSession();
@@ -306,7 +307,7 @@ describe("MoreLikeThisTests", function () {
         {
             const session = store.openSession();
             const list = await session
-                .query<any>({ indexName: "DataIndex" })
+                .query<any>({indexName: "DataIndex"})
                 .moreLikeThis(f => f.usingDocument(b => b.whereEquals("id()", key)))
                 .all();
 
@@ -533,7 +534,7 @@ describe("MoreLikeThisTests", function () {
 
             const list = await session
                 .query<Data>({ indexName: "DataIndex" })
-                .moreLikeThis(f => f.usingDocument('{"body": "A test"}').withOptions(options))
+                .moreLikeThis(f => f.usingDocument(`{"body": "A test"}`).withOptions(options))
                 .all();
 
             assert.strictEqual(list.length, 7);
@@ -566,7 +567,7 @@ describe("MoreLikeThisTests", function () {
 
             const list = await session
                 .query<ComplexData>({ indexName: "ComplexDataIndex" })
-                .moreLikeThis(f => f.usingDocument('{ "Property": { "Body": "test" } }').withOptions(options))
+                .moreLikeThis(f => f.usingDocument(`{ "Property": { "Body": "test" } }`).withOptions(options))
                 .all();
 
             assert.strictEqual(list.length, 1);

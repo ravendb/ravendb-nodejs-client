@@ -2,9 +2,6 @@ import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
-    DocumentStore,
-    IDocumentSession,
-    IMetadataDictionary,
     AttachmentName,
     IDocumentStore,
 } from "../../../src";
@@ -184,7 +181,7 @@ describe("Attachments Session", function () {
             assert.ok(result.details.size);
             assert.ok(result.data);
 
-            assert.equal(result.data.listenerCount("data"), 0);
+            assert.strictEqual(result.data.listenerCount("data"), 0);
             assert.ok(result.data.readableLength);
             assert.ok(result.data.isPaused());
 
@@ -257,8 +254,8 @@ describe("Attachments Session", function () {
             user.name = "Fitzchak";
             await session.store(user, "users/1");
 
-            const strm = Buffer.from([1, 2, 3]);
-            session.advanced.attachments.store(user, "file", strm, "image/png");
+            const stream = Buffer.from([1, 2, 3]);
+            session.advanced.attachments.store(user, "file", stream, "image/png");
             await session.saveChanges();
         }
 

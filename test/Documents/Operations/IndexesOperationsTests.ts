@@ -26,7 +26,7 @@ import {
     GetIndexErrorsOperation,
     GetIndexStatisticsOperation,
 } from "../../../src";
-import { UsersIndex, UsersInvalidIndex, UsersIndexWithPascalCasedFields } from '../../Assets/Indexes';
+import { UsersIndex, UsersInvalidIndex, UsersIndexWithPascalCasedFields } from "../../Assets/Indexes";
 import { TypeUtil } from "../../../src/Utility/TypeUtil";
 
 describe("Index operations", function () {
@@ -67,18 +67,18 @@ describe("Index operations", function () {
         await store.maintenance.send(new DisableIndexOperation(usersIndex.getIndexName()));
         let indexingStatus = await store.maintenance.send(new GetIndexingStatusOperation());
         const indexStatus: IndexStatus = indexingStatus.indexes[0];
-        assert.equal(indexStatus.status, "Disabled");
+        assert.strictEqual(indexStatus.status, "Disabled");
 
         await store.maintenance.send(new EnableIndexOperation(usersIndex.getIndexName()));
         indexingStatus = await store.maintenance.send(new GetIndexingStatusOperation());
-        assert.equal(indexingStatus.status, "Running");
+        assert.strictEqual(indexingStatus.status, "Running");
     });
 
     it("can get indexes", async () => {
         await usersIndex.execute(store);
         const indexDefinitions: IndexDefinition[] = await store.maintenance.send(new GetIndexesOperation(0, 10));
-        assert.equal(indexDefinitions.length, 1);
-        assert.equal(indexDefinitions[0].constructor, IndexDefinition);
+        assert.strictEqual(indexDefinitions.length, 1);
+        assert.strictEqual(indexDefinitions[0].constructor, IndexDefinition);
         assert.ok(TypeUtil.isSet(indexDefinitions[0].maps));
     });
 
@@ -86,9 +86,9 @@ describe("Index operations", function () {
         await usersIndex.execute(store);
 
         const indexStats: IndexStats[] = await store.maintenance.send(new GetIndexesStatisticsOperation());
-        assert.equal(indexStats.length, 1);
+        assert.strictEqual(indexStats.length, 1);
         assert.ok(TypeUtil.isMap(indexStats[0].collections));
-        assert.equal(indexStats[0].collections.size, 1);
+        assert.strictEqual(indexStats[0].collections.size, 1);
     });
 
     it("can get terms", async () => {
@@ -102,8 +102,8 @@ describe("Index operations", function () {
         await testContext.waitForIndexing(store, store.database);
         const terms: string[] = await store.maintenance.send(new GetTermsOperation("UsersIndex", "name", null));
 
-        assert.equal(terms.length, 1);
-        assert.equal(terms[0], "marcin");
+        assert.strictEqual(terms.length, 1);
+        assert.strictEqual(terms[0], "marcin");
     });
 
     it("can tell if index changed", async () => {
@@ -124,10 +124,10 @@ describe("Index operations", function () {
         await store.maintenance.send(new StopIndexingOperation());
 
         let indexingStatus = await store.maintenance.send(new GetIndexingStatusOperation());
-        assert.equal(indexingStatus.status, "Paused");
+        assert.strictEqual(indexingStatus.status, "Paused");
         await store.maintenance.send(new StartIndexingOperation());
         indexingStatus = await store.maintenance.send(new GetIndexingStatusOperation());
-        assert.equal(indexingStatus.status, "Running");
+        assert.strictEqual(indexingStatus.status, "Running");
     });
 
     it("can stop/start index", async () => {
@@ -136,13 +136,13 @@ describe("Index operations", function () {
         await store.maintenance.send(new StopIndexOperation(indexDef.name));
 
         let indexingStatus = await store.maintenance.send(new GetIndexingStatusOperation());
-        assert.equal(indexingStatus.status, "Running");
-        assert.equal(indexingStatus.indexes[0].status, "Paused");
+        assert.strictEqual(indexingStatus.status, "Running");
+        assert.strictEqual(indexingStatus.indexes[0].status, "Paused");
 
         await store.maintenance.send(new StartIndexOperation(indexDef.name));
         indexingStatus = await store.maintenance.send(new GetIndexingStatusOperation());
-        assert.equal(indexingStatus.status, "Running");
-        assert.equal(indexingStatus.indexes[0].status, "Running");
+        assert.strictEqual(indexingStatus.status, "Running");
+        assert.strictEqual(indexingStatus.indexes[0].status, "Running");
 
     });
 
@@ -152,7 +152,7 @@ describe("Index operations", function () {
         await store.maintenance.send(new SetIndexesLockOperation(indexDef.name, "LockedError"));
 
         const newIndexDef = await store.maintenance.send(new GetIndexOperation(indexDef.name));
-        assert.equal(newIndexDef.lockMode, "LockedError");
+        assert.strictEqual(newIndexDef.lockMode, "LockedError");
     });
 
     it("can set index priority", async () => {
@@ -161,7 +161,7 @@ describe("Index operations", function () {
         await store.maintenance.send(new SetIndexesPriorityOperation(indexDef.name, "High"));
 
         const newIndexDef = await store.maintenance.send(new GetIndexOperation(indexDef.name));
-        assert.equal(newIndexDef.priority, "High");
+        assert.strictEqual(newIndexDef.priority, "High");
     });
 
     it("can list errors", async () => {
@@ -179,8 +179,8 @@ describe("Index operations", function () {
         const indexErrors = await store.maintenance.send(new GetIndexErrorsOperation());
         const perIndexErrors = await store.maintenance.send(new GetIndexErrorsOperation([indexDef.name]));
 
-        assert.equal(indexErrors.length, 1);
-        assert.equal(perIndexErrors.length, 1);
+        assert.strictEqual(indexErrors.length, 1);
+        assert.strictEqual(perIndexErrors.length, 1);
     });
 
     it("can get index statistics", async () => {
@@ -194,7 +194,7 @@ describe("Index operations", function () {
 
         await testContext.waitForIndexing(store, store.database);
         const stats = await store.maintenance.send(new GetIndexStatisticsOperation(indexDef.name));
-        assert.equal(stats.entriesCount, 1);
+        assert.strictEqual(stats.entriesCount, 1);
     });
 
     it("can get index with Pascal-cased fields", async () => {
@@ -204,6 +204,5 @@ describe("Index operations", function () {
         const newIndexDef = await store.maintenance.send(new GetIndexOperation(indexDef.name));
         assert.ok(newIndexDef.fields["Name"]);
         assert.ok(!newIndexDef.fields["name"]);
-    })
-
+    });
 });

@@ -1,16 +1,7 @@
-import * as mocha from "mocha";
 import { CasingConvention } from "./../../src/Utility/ObjectUtil";
 import { ObjectChangeCaseOptions } from "./../../src/Utility/ObjectUtil";
-import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
-import { ObjectUtil } from '../../src/Utility/ObjectUtil';
-
-import {
-    RavenErrorType,
-    GetNextOperationIdCommand,
-    IDocumentStore,
-} from "../../src";
+import { ObjectUtil } from "../../src/Utility/ObjectUtil";
 
 describe("ObjectUtil", function () {
 
@@ -25,7 +16,7 @@ describe("ObjectUtil", function () {
             defaultTransform: "camel" as CasingConvention
         };
         const transformed = ObjectUtil.transformObjectKeys(o, opts);
-        assert.equal("users/1", transformed["results"][0]["@id"]);
+        assert.strictEqual("users/1", transformed["results"][0]["@id"]);
     });
 
     it("can ignore child nodes for selected keys", () => {
@@ -39,7 +30,7 @@ describe("ObjectUtil", function () {
                 defaultTransform: "camel" as CasingConvention
             };
         const transformed = ObjectUtil.transformObjectKeys(o, opts);
-        assert.equal("users/1", transformed["results"][0]["@id"]);
+        assert.strictEqual("users/1", transformed["results"][0]["@id"]);
     });
 
     it("can apply different casing convention to different object paths", () => {

@@ -29,7 +29,7 @@ describe("[RDBC-213] Metadata is not saved", function () {
 
         const session2 = store.openSession();
         const loaded = await session2.load(expiringDocument["id"]);
-        assert.equal(expiresAt.toISOString(), loaded["@metadata"]["@expires"]);
+        assert.strictEqual(expiresAt.toISOString(), loaded["@metadata"]["@expires"]);
     });
 
     it("session.store() saves metadata using entity '@metadata' field when updating existing document", async () => {
@@ -61,8 +61,8 @@ describe("[RDBC-213] Metadata is not saved", function () {
         const session3 = store.openSession();
         const updatedDocument = await session3.load(loadedDocument["id"]);
 
-        assert.equal(updatedDocument["@metadata"]["@expires"], expiresAtNewTime);
-        assert.equal(updatedDocument["@metadata"]["customData"], customDataValue);
+        assert.strictEqual(updatedDocument["@metadata"]["@expires"], expiresAtNewTime);
+        assert.strictEqual(updatedDocument["@metadata"]["customData"], customDataValue);
     });
 
     it("metadata is stored using session.advanced.getMetadataFor() and session.saveChanges()", async function () {
@@ -82,7 +82,6 @@ describe("[RDBC-213] Metadata is not saved", function () {
 
         const session2 = store.openSession();
         const loaded = await session2.load(expiringDocument["id"]);
-        assert.equal(expiresAt.toISOString(), loaded["@metadata"]["@expires"]);
+        assert.strictEqual(expiresAt.toISOString(), loaded["@metadata"]["@expires"]);
     });
-
 });

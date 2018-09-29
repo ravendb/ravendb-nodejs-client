@@ -3,8 +3,8 @@ import { testContext, disposeTestDocumentStore } from "../../../../Utils/TestUti
 
 import {
     IDocumentStore,
-    GroupBy, AbstractIndexCreationTask, SetIndexesPriorityOperation, GetStatisticsOperation,
-    DocumentChange, IndexChange, DocumentStore
+    AbstractIndexCreationTask, SetIndexesPriorityOperation, GetStatisticsOperation,
+    DocumentChange, IndexChange
 } from "../../../../../src";
 import {Order, User} from "../../../../Assets/Entities";
 import {AsyncQueue} from "../../../../Utils/AsyncQueue";
@@ -305,7 +305,7 @@ describe("ChangesTest", function () {
             await changes.ensureConnectedNow();
             assert.fail("Should have thrown.");
         } catch (err) {
-            assert.equal(err.name, "DatabaseDoesNotExistException");
+            assert.strictEqual(err.name, "DatabaseDoesNotExistException");
         }
 
         await store.maintenance.send(new GetStatisticsOperation());

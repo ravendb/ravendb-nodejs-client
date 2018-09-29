@@ -100,8 +100,8 @@ describe("SpatialTest", function () {
                 .take(50)
                 .all();
 
-            assert.equal(stats.totalResults, 0);
-            assert.equal(result.length, 0);
+            assert.strictEqual(stats.totalResults, 0);
+            assert.strictEqual(result.length, 0);
         }
     });
 
@@ -140,8 +140,8 @@ describe("SpatialTest", function () {
                 .take(50)
                 .all();
 
-            assert.equal(stats.totalResults, 1);
-            assert.equal(result.length, 1);
+            assert.strictEqual(stats.totalResults, 1);
+            assert.strictEqual(result.length, 1);
         }
     });
 

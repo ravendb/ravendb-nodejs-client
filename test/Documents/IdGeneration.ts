@@ -24,18 +24,18 @@ describe("ID generation - session.store()", function () {
     it("given object literal and empty string for id, returns guid", async () => {
         await session.store(user, "");
         await session.saveChanges();
-        assert.equal((user.id as string).match(/-/g).length, 4);
+        assert.strictEqual((user.id as string).match(/-/g).length, 4);
     });
 
     it("given object literal and id ending with /, returns node based id", async () => {
         await session.store(user, "users/");
         await session.saveChanges();
-        assert.equal(user.id, "users/0000000000000000001-A");
+        assert.strictEqual(user.id, "users/0000000000000000001-A");
     });
 
     it("given object literal and id ending with |, returns cluster-wide id", async () => {
         await session.store(user, "users|");
         await session.saveChanges();
-        assert.equal(user.id, "users/1");
+        assert.strictEqual(user.id, "users/1");
     });
 });

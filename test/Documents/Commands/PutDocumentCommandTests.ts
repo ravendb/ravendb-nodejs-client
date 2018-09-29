@@ -31,7 +31,7 @@ describe("PutDocumentCommand", function () {
         await store.getRequestExecutor().execute(putDocCmd);
         const result = putDocCmd.result;
 
-        assert.equal(result.id, "users/1");
+        assert.strictEqual(result.id, "users/1");
         assert.ok(result.changeVector);
 
         const session = store.openSession();
@@ -39,8 +39,8 @@ describe("PutDocumentCommand", function () {
             documentType: User
         });
         assert.ok(loadedUser);
-        assert.equal(loadedUser.name, user.name);
-        assert.equal(loadedUser.age, user.age);
-        assert.equal(loadedUser.constructor, User);
+        assert.strictEqual(loadedUser.name, user.name);
+        assert.strictEqual(loadedUser.age, user.age);
+        assert.strictEqual(loadedUser.constructor, User);
     });
 });

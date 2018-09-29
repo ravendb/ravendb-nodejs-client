@@ -1,7 +1,6 @@
 import { testContext, disposeTestDocumentStore } from "../../../Utils/TestUtil";
 
 import {
-    IDocumentSession,
     IDocumentStore,
     StreamResult,
 } from "../../../../src";

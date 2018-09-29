@@ -37,7 +37,7 @@ describe("Issue RavenDB-5669", function () {
             .closeSubclause();
 
         const results = await query.all();
-        assert.equal(results.length, 1);
+        assert.strictEqual(results.length, 1);
     });
 
     it("working with subclause", async () => {
@@ -58,7 +58,7 @@ describe("Issue RavenDB-5669", function () {
             .closeSubclause();
 
         const results = await query.all();
-        assert.equal(results.length, 1);
+        assert.strictEqual(results.length, 1);
     });
 });
 

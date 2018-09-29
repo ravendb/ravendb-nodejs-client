@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { testContext, disposeTestDocumentStore } from '../../Utils/TestUtil';
+import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
     IDocumentStore,
@@ -32,7 +32,7 @@ describe("DeleteDocumentCommand", function () {
         {
             const session = store.openSession();
             const loadedUser = await session.load<User>("users/1");
-            assert.equal(loadedUser, null);
+            assert.ok(!loadedUser);
         }
     });
 
@@ -62,7 +62,7 @@ describe("DeleteDocumentCommand", function () {
             await store.getRequestExecutor().execute(command);
             assert.fail("it should have thrown ConcurrencyException");
         } catch (err) {
-            assert.equal(err.name, "ConcurrencyException");
+            assert.strictEqual(err.name, "ConcurrencyException");
         }
     });
 });
