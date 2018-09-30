@@ -21,7 +21,6 @@ export abstract class AbstractHiloIdGenerator {
     }
 
     public returnUnusedRange(): Promise<void> {
-
         const returnPromises = Object.keys(this._generators)
             .map(key => {
                 return Promise.resolve()

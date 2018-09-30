@@ -33,6 +33,7 @@ export class HiloIdGenerator {
         this._dbName = dbName || store.database;
     }
 
+    // noinspection JSUnusedLocalSymbols
     public generateDocumentId(entity: object): Promise<string> {
         return Promise.resolve()
             .then(() => this.nextId())

@@ -27,5 +27,4 @@ export class KillOperationCommand extends RavenCommand<void> {
             method: "POST"
         };
     }
-
 }

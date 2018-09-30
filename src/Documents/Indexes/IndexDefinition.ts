@@ -29,7 +29,7 @@ export class IndexDefinition {
     // TBD 4.1 private boolean testIndex;
     public outputReduceToCollection: string;
 
-    // public toJSON() {
+    //TODO: public toJSON() {
     //     return Object.assign({}, this, { maps: Array.from(this.maps) });
     // }
 
@@ -55,9 +55,9 @@ export class IndexDefinition {
         }
         return "MapReduce";
     }
-    // TBD 4.1 public boolean isTestIndex()
+    // TODO remove? TBD 4.1 public boolean isTestIndex()
 
-    // TBD 4.1 public void setTestIndex(boolean testIndex)
+    // TODO remove? TBD 4.1 public void setTestIndex(boolean testIndex)
 
 }
 
@@ -148,5 +148,4 @@ export class IndexDefinitionBuilder {
             action(field, fieldVal);
         }
     }
-
 }

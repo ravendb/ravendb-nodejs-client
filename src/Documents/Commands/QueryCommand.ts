@@ -80,8 +80,7 @@ export class QueryCommand extends RavenCommand<QueryResult> {
     }
 
     protected get _serializer(): JsonSerializer {
-        const serializer = super._serializer;
-        return serializer;
+        return super._serializer;
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {

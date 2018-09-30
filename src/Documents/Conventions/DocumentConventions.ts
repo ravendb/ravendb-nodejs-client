@@ -21,6 +21,8 @@ export type IdConvention = (databaseName: string, entity: object) => Promise<str
 export type IValueForQueryConverter<T> =
     (fieldName: string, value: T, forRange: boolean, stringValue: (value: any) => void) => boolean;
 
+//TODO: add missing JSDoc
+
 export class DocumentConventions {
 
     private static _defaults: DocumentConventions = new DocumentConventions();
@@ -42,8 +44,8 @@ export class DocumentConventions {
 
     private _frozen: boolean;
     private _originalConfiguration: ClientConfiguration;
-    private _idPropertyCache: Map<ObjectTypeDescriptor, string> = new Map();
-    // private _saveEnumsAsIntegers: number;
+    private _idPropertyCache: Map<ObjectTypeDescriptor, string> = new Map(); //TODO: is it used?
+    // TODO: private _saveEnumsAsIntegers: number;
     private _identityPartsSeparator: string;
     private _disableTopologyUpdates: boolean;
 
@@ -77,7 +79,7 @@ export class DocumentConventions {
         this._readBalanceBehavior = "None";
         this._identityPartsSeparator = "/";
         
-        this._findIdentityPropertyNameFromCollectionName = entityName => "id";
+        this._findIdentityPropertyNameFromCollectionName = () => "id";
         this._findJsType = (id: string, doc: object) => {
             const metadata = doc[CONSTANTS.Documents.Metadata.KEY];
             if (metadata) {
@@ -319,7 +321,7 @@ export class DocumentConventions {
 
     /**
      *  Default method used when finding a collection name for a type
-     *  @param clazz Class
+     *  @param ctorOrTypeChecker Object type descriptor
      *  @return default collection name for class
      */
     public static defaultGetCollectionName(ctorOrTypeChecker: ObjectTypeDescriptor): string {
@@ -353,7 +355,7 @@ export class DocumentConventions {
 
     /**
      * Gets the collection name for a given type.
-     * @param clazz Class
+     * @param ctorOrTypeChecker Object type descriptor
      * @return collection name
      */
     public getCollectionNameForType(ctorOrTypeChecker: ObjectTypeDescriptor): string {
@@ -418,7 +420,7 @@ export class DocumentConventions {
      * @return document id
      */
     public generateDocumentId(database: string, entity: object): Promise<string> {
-        const entityTypeDescriptor: ObjectTypeDescriptor = this.getEntityTypeDescriptor(entity);
+        const entityTypeDescriptor: ObjectTypeDescriptor = this.getEntityTypeDescriptor(entity); //TODO: this variable is unused!
 
         for (const [typeDescriptor, idConvention] of this._registeredIdConventions) {
             if (TypeUtil.isType(entity, typeDescriptor)) {
@@ -444,7 +446,7 @@ export class DocumentConventions {
         return this;
     }
 
-    // public registerEntityTypeChecker(typeChecker: ObjectLiteralDescriptor) {
+    //TODO public registerEntityTypeChecker(typeChecker: ObjectLiteralDescriptor) {
     //     this._registeredTypeDescriptors.push(typeChecker);
     // }
 
@@ -582,7 +584,7 @@ export class DocumentConventions {
         }
     }
 
-    //
+    // TODO:
     // public get registeredTypeDescriptors() {
     //     return this._registeredTypeDescriptors;
     // }
@@ -620,7 +622,7 @@ export class DocumentConventions {
 
     public findEntityType<T extends object>(documentType: DocumentType<T>): ObjectTypeDescriptor<T>;
     public findEntityType<T extends object>(typeName: string): ObjectTypeDescriptor<T>;
-    public findEntityType<T extends object>(docTypeOrTypeName: string): ObjectTypeDescriptor<T> {
+    public findEntityType<T extends object>(docTypeOrTypeName: string | DocumentType<T>): ObjectTypeDescriptor<T> {
         if (!docTypeOrTypeName) {
             return null;
         }

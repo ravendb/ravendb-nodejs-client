@@ -19,7 +19,7 @@ export class GenerateEntityIdOnTheClient {
     /**
      * Attempts to get the document key from an instance
      * @param entity Entity to get id from
-     * @param idHolder output parameter which holds document id
+     * @param idCallback output parameter which holds document id
      * @return true if id was read from entity
      */
     public tryGetIdFromInstance(entity: object, idCallback?: (id: string) => void): boolean {

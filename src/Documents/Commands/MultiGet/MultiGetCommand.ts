@@ -47,7 +47,7 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> {
        
        for (const command of this._commands) {
            const cacheKey = this._getCacheKey(command);
-           let cacheItemInfo;
+           let cacheItemInfo = null;
            this._cache.get(cacheKey, (itemInfo) => cacheItemInfo = itemInfo);
            const headers = {};
            if (cacheItemInfo.cachedChangeVector) {
@@ -129,7 +129,7 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> {
        }
 
        const cacheKey = this._getCacheKey(command);
-       let cachedResponse;
+       let cachedResponse = null;
        this._cache.get(cacheKey, x => cachedResponse = x.response);
        getResponse.result = cachedResponse;
     }

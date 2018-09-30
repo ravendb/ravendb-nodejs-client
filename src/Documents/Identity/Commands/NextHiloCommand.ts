@@ -63,7 +63,7 @@ export class NextHiloCommand extends RavenCommand<HiLoResult> {
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
-        let body;
+        let body = null;
         await this._defaultPipeline(_ => body = _).process(bodyStream)
             .then(results => {
                 this.result = this._reviveResultTypes(results, {

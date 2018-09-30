@@ -105,6 +105,5 @@ export class GetRevisionsCommand extends RavenCommand<IRavenArrayResult> {
                 bodyStream, this._conventions, b => body = b);
 
         return body as string;
-
     }
 }

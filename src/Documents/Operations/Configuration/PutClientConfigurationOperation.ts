@@ -7,7 +7,7 @@ import { HttpRequestParameters } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
 
 export class PutClientConfigurationOperation implements IMaintenanceOperation<void> {
-    private readonly configuration: ClientConfiguration;
+    private readonly _configuration: ClientConfiguration;
 
     public get resultType(): OperationResultType {
         return "CommandResult";
@@ -19,11 +19,11 @@ export class PutClientConfigurationOperation implements IMaintenanceOperation<vo
             throwError("InvalidArgumentException", "Configuration cannot be null or undefined.");
         }
 
-        this.configuration = configuration;
+        this._configuration = configuration;
     }
 
     public getCommand(conventions: DocumentConventions): RavenCommand<void> {
-        return new PutClientConfigurationCommand(conventions, this.configuration);
+        return new PutClientConfigurationCommand(conventions, this._configuration);
     }
 
 }

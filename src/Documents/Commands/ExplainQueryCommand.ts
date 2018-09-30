@@ -43,7 +43,7 @@ export class ExplainQueryCommand extends RavenCommand<ExplainQueryResult[]> {
         };
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
+    public setResponse(response: string, fromCache: boolean): void { //TODO: do we need this method?
         if (!response) {
             this.result = null;
             return;
