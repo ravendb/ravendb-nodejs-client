@@ -6,7 +6,7 @@ import * as stream from "readable-stream";
 
 export class GetConflictsCommand extends RavenCommand<GetConflictsResult> {
 
-    private _id: string;
+    private readonly _id: string;
 
     public constructor(id: string) {
         super();

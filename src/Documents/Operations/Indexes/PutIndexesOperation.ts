@@ -21,7 +21,7 @@ export class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult
         return "CommandResult";
     }
 
-    private _indexToAdd: IndexDefinition[];
+    private readonly _indexToAdd: IndexDefinition[];
 
     public constructor(...indexToAdd: IndexDefinition[]) {
         if (!indexToAdd || !indexToAdd.length) {
@@ -37,7 +37,7 @@ export class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult
 
 export class PutIndexesCommand extends RavenCommand<PutIndexResult[]> {
 
-    private _indexToAdd: object[];
+    private readonly _indexToAdd: object[];
 
     public constructor(conventions: DocumentConventions, indexesToAdd: IndexDefinition[]) {
         super();

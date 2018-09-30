@@ -12,8 +12,8 @@ export class OperationCompletionAwaiter {
 
     private _requestExecutor: RequestExecutor;
     // TBD private readonly Func<IDatabaseChanges> _changes;
-    private _conventions: DocumentConventions;
-    private _id: number;
+    private readonly _conventions: DocumentConventions;
+    private readonly _id: number;
 
     // TBD public Action<IOperationProgress> OnProgressChanged;
     // TBD private IDisposable _subscription;

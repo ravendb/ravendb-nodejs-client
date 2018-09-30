@@ -58,7 +58,10 @@ export class LazySessionOperations implements ILazySessionOperations {
             return this._delegate.addLazyOperation(operation);
     }
 
-    // TBD expr ILazyLoaderWithInclude<T> ILazySessionOperations.Include<T>(Expression<Func<T, string>> path)
-    // TBD expr ILazyLoaderWithInclude<T> ILazySessionOperations.Include<T>(Expression<Func<T, IEnumerable<string>>> path)
-    // TBD Lazy<List<TResult>> ILazySessionOperations.MoreLikeThis<TResult>(MoreLikeThisQuery query)
+    // TBD expr ILazyLoaderWithInclude<T> ILazySessionOperations.Include<T>(
+    //     Expression<Func<T, string>> path)
+    // TBD expr ILazyLoaderWithInclude<T> ILazySessionOperations.Include<T>(
+    //     Expression<Func<T, IEnumerable<string>>> path)
+    // TBD Lazy<List<TResult>> ILazySessionOperations.MoreLikeThis<TResult>(
+    //     MoreLikeThisQuery query)
 }

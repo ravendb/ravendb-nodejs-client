@@ -225,7 +225,7 @@ export class DocumentStore extends DocumentStoreBase {
               });
         }
 
-        this._log.info(`New request executor for datebase ${database}`);
+        this._log.info(`New request executor for database ${database}`);
         this._requestExecutors.set(databaseLower, executor);
 
         return executor;
@@ -299,9 +299,9 @@ export class DocumentStore extends DocumentStoreBase {
     public disableAggressiveCaching(database?: string): IDisposable {
         this.assertInitialized();
         const re: RequestExecutor = this.getRequestExecutor(database || this.database);
-        const old = re.agressiveCaching;
-        re.agressiveCaching = null;
-        const dispose = () => re.agressiveCaching = old;
+        const old = re.aggressiveCaching;
+        re.aggressiveCaching = null;
+        const dispose = () => re.aggressiveCaching = old;
 
         return { dispose };
     }

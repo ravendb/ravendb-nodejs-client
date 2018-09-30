@@ -1,6 +1,6 @@
 export class HiloRangeValue {
-  private _minId: number;
-  private _maxId: number;
+  private readonly _minId: number;
+  private readonly _maxId: number;
   private _current: number;
 
   constructor(minId: number = 1, maxId: number = 0) {

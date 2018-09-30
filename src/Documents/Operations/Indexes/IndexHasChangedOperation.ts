@@ -10,7 +10,7 @@ import * as stream from "readable-stream";
 
 export class IndexHasChangedOperation implements IMaintenanceOperation<Boolean> {
 
-    private _definition: IndexDefinition;
+    private readonly _definition: IndexDefinition;
 
     public constructor(definition: IndexDefinition) {
         if (!definition) {
@@ -31,7 +31,7 @@ export class IndexHasChangedOperation implements IMaintenanceOperation<Boolean> 
 
 export class IndexHasChangedCommand extends RavenCommand<boolean> {
 
-    private _definition: object;
+    private readonly _definition: object;
 
     public constructor(conventions: DocumentConventions, definition: IndexDefinition) {
         super();

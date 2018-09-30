@@ -7,7 +7,7 @@ import { HttpRequestParameters } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
 
 export class PutClientConfigurationOperation implements IMaintenanceOperation<void> {
-    private configuration: ClientConfiguration;
+    private readonly configuration: ClientConfiguration;
 
     public get resultType(): OperationResultType {
         return "CommandResult";
@@ -29,7 +29,7 @@ export class PutClientConfigurationOperation implements IMaintenanceOperation<vo
 }
 
 export class PutClientConfigurationCommand extends RavenCommand<void> {
-    private _configuration: string;
+    private readonly _configuration: string;
 
     public get isReadRequest() {
         return false;

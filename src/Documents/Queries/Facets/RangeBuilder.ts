@@ -1,7 +1,7 @@
 import { throwError } from "../../../Exceptions";
 
 export class RangeBuilder<T = any> {
-    private _path: string;
+    private readonly _path: string;
     private _lessBound: T;
     private _greaterBound: T;
     private _lessInclusive: boolean;

@@ -69,7 +69,8 @@ export interface ILazySessionOperations {
      * Loads multiple entities that contain common prefix.
      * @param clazz Result class
      * @param opts starting with options
-     * @param matches pipe ('|') separated values for which document IDs (after 'idPrefix') should be matched ('?' any single character, '*' any characters)
+     * @param matches pipe ('|') separated values for which document IDs (after 'idPrefix')
+     *        should be matched ('?' any single character, '*' any characters)
      * @param <TResult> Result class
      */
     loadStartingWith<TEntity extends object>(

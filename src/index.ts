@@ -139,7 +139,7 @@ export * from "./Documents/IdTypeAndName";
 
 // SESSION
 export * from "./Documents/Session/AbstractDocumentQuery";
-export * from "./Documents/Session/CmpXchng";
+export * from "./Documents/Session/CmpXchg";
 export * from "./Documents/Session/DocumentInfo";
 export * from "./Documents/Session/DocumentQuery";
 export * from "./Documents/Session/DocumentQueryHelper";

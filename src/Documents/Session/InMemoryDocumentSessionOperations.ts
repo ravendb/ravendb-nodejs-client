@@ -65,7 +65,7 @@ export abstract class InMemoryDocumentSessionOperations
 
     protected _jsonSerializer: JsonSerializer = JsonSerializer.getDefaultForCommandPayload();
 
-    private _id: string;
+    private readonly _id: string;
 
     public get id() {
         return this._id;
@@ -113,7 +113,7 @@ export abstract class InMemoryDocumentSessionOperations
 
     protected _documentStore: DocumentStoreBase;
 
-    private _databaseName: string;
+    private readonly _databaseName: string;
 
     private _saveChangesOptions: BatchOptions;
 
@@ -168,13 +168,13 @@ export abstract class InMemoryDocumentSessionOperations
         return this._deferredCommands.length;
     }
 
-    private _generateEntityIdOnTheClient: GenerateEntityIdOnTheClient;
+    private readonly _generateEntityIdOnTheClient: GenerateEntityIdOnTheClient;
 
     public get generateEntityIdOnTheClient() {
         return this._generateEntityIdOnTheClient;
     }
 
-    private _entityToJson: EntityToJson;
+    private readonly _entityToJson: EntityToJson;
 
     public get entityToJson() {
         return this._entityToJson;

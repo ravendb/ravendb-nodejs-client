@@ -69,7 +69,7 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
     public name: string = null;
     public changeVector: string;
 
-    private _document: T;
+    private readonly _document: T;
 
     constructor(id: string, changeVector: string, document: T) {
 

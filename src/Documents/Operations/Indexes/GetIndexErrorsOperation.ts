@@ -8,7 +8,7 @@ import * as stream from "readable-stream";
 
 export class GetIndexErrorsOperation implements IMaintenanceOperation<IndexErrors[]> {
 
-    private _indexNames: string[];
+    private readonly _indexNames: string[];
 
     public constructor();
     public constructor(indexNames: string[]);
@@ -27,7 +27,7 @@ export class GetIndexErrorsOperation implements IMaintenanceOperation<IndexError
 }
 
 export class GetIndexErrorsCommand extends RavenCommand<IndexErrors[]> {
-    private _indexNames: string[];
+    private readonly _indexNames: string[];
 
     public constructor(indexNames: string[]) {
         super();

@@ -135,7 +135,7 @@ export class DocumentSessionRevisions extends AdvancedSessionExtensionBase imple
     }
 
     private async _get<TEntity extends object>(changeVectorOrVectors: string | string[],
-                                              documentType?: DocumentType<TEntity>)
+                                               documentType?: DocumentType<TEntity>)
         : Promise<RevisionsCollectionObject<TEntity> | TEntity> {
         const operation = new GetRevisionOperation(this._session, changeVectorOrVectors as any);
 

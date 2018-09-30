@@ -9,9 +9,9 @@ export class HiloReturnCommand extends RavenCommand<void> {
         return false;
     }
 
-    private _tag: string;
-    private _last: number;
-    private _end: number;
+    private readonly _tag: string;
+    private readonly _last: number;
+    private readonly _end: number;
 
     public constructor(tag: string, last: number, end: number) {
         super();

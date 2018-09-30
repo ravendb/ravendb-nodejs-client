@@ -12,7 +12,7 @@ import {SetupDocumentBase} from "../SetupDocumentBase";
 
 export class EntityToJson {
 
-    private _session: InMemoryDocumentSessionOperations;
+    private readonly _session: InMemoryDocumentSessionOperations;
     /**
      * All the listeners for this session
      * @param _session Session to use

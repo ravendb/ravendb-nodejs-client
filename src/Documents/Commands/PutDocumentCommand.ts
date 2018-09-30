@@ -13,9 +13,9 @@ export interface PutResult {
 
 export class PutDocumentCommand extends RavenCommand<PutResult> {
 
-    private _id: string;
-    private _changeVector: string;
-    private _document: object;
+    private readonly _id: string;
+    private readonly _changeVector: string;
+    private readonly _document: object;
 
     public constructor(id: string, changeVector: string, document: object) {
         super();

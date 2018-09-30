@@ -27,7 +27,7 @@ export class GetStatisticsOperation implements IMaintenanceOperation<DatabaseSta
 
 export class GetStatisticsCommand extends RavenCommand<DatabaseStatistics> {
 
-    private _debugTag: string;
+    private readonly _debugTag: string;
 
     public constructor(debugTag?: string) {
         super();

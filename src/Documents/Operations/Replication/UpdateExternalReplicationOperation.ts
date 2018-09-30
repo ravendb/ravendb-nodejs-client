@@ -9,7 +9,7 @@ import * as stream from "readable-stream";
 
 export class UpdateExternalReplicationOperation implements IMaintenanceOperation<ModifyOngoingTaskResult> {
 
-    private _newWatcher: ExternalReplication;
+    private readonly _newWatcher: ExternalReplication;
 
     public constructor(newWatcher: ExternalReplication) {
         this._newWatcher = newWatcher;
@@ -25,7 +25,7 @@ export class UpdateExternalReplicationOperation implements IMaintenanceOperation
 }
 
 export class UpdateExternalReplicationCommand extends RavenCommand<ModifyOngoingTaskResult> {
-    private _newWatcher: ExternalReplication;
+    private readonly _newWatcher: ExternalReplication;
 
     public constructor(newWatcher: ExternalReplication) {
         super();

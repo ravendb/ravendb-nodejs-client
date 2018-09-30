@@ -4,10 +4,10 @@ import { ShapeToken } from "../../Session/Tokens/ShapeToken";
 
 export class CircleCriteria extends SpatialCriteria {
 
-    private _radius: number;
-    private _latitude: number;
-    private _longitude: number;
-    private _radiusUnits: SpatialUnits;
+    private readonly _radius: number;
+    private readonly _latitude: number;
+    private readonly _longitude: number;
+    private readonly _radiusUnits: SpatialUnits;
 
     public constructor(
         radius: number, 

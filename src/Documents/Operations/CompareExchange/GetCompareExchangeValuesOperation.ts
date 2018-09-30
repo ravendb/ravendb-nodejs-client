@@ -24,12 +24,12 @@ export interface GetCompareExchangeValuesParameters<T> {
 
 export class GetCompareExchangeValuesOperation<T> implements IOperation<{ [key: string]: CompareExchangeValue<T> }> {
 
-    private _clazz: ClassConstructor<T>;
-    private _keys: string[];
+    private readonly _clazz: ClassConstructor<T>;
+    private readonly _keys: string[];
 
-    private _startWith: string;
-    private _start: number;
-    private _pageSize: number;
+    private readonly _startWith: string;
+    private readonly _start: number;
+    private readonly _pageSize: number;
 
     public get keys(): string[] {
         return this._keys;
@@ -81,7 +81,7 @@ export class GetCompareExchangeValuesOperation<T> implements IOperation<{ [key: 
 
 export class GetCompareExchangeValuesCommand<T> extends RavenCommand<{ [key: string]: CompareExchangeValue<T> }> {
     private _operation: GetCompareExchangeValuesOperation<T>;
-    private _conventions: DocumentConventions;
+    private readonly _conventions: DocumentConventions;
 
     public constructor(operation: GetCompareExchangeValuesOperation<T>, conventions: DocumentConventions) {
         super();

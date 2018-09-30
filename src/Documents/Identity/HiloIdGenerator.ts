@@ -15,12 +15,12 @@ import { DocumentConventions } from "../Conventions/DocumentConventions";
 
 export class HiloIdGenerator {
     private _store: IDocumentStore;
-    private _dbName: string;
-    private _tag: string;
+    private readonly _dbName: string;
+    private readonly _tag: string;
     private _conventions: DocumentConventions;
     private _lastRangeAt: Date;
     private _range: HiloRangeValue;
-    private _identityPartsSeparator: string;
+    private readonly _identityPartsSeparator: string;
     private _prefix?: string = null;
     private _lastBatchSize: number = 0;
     private _serverTag: string = null;

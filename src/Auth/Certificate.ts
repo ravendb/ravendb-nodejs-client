@@ -46,9 +46,9 @@ export abstract class Certificate implements ICertificate {
         return new PfxCertificate(certificate, passphrase, ca);
     }
 
-    protected constructor(certificate: string | Buffer, passprase?: string, ca?: string | Buffer) {
+    protected constructor(certificate: string | Buffer, passphrase?: string, ca?: string | Buffer) {
         this._certificate = certificate;
-        this._passphrase = passprase;
+        this._passphrase = passphrase;
         this._ca = ca;
     }
 
@@ -72,8 +72,8 @@ export class PemCertificate extends Certificate {
     private readonly keyToken: string = "RSA PRIVATE KEY";
     protected _key: string;
 
-    constructor(certificate: string | Buffer, passprase?: string, ca?: string | Buffer) {
-        super(certificate, passprase, ca);
+    constructor(certificate: string | Buffer, passphrase?: string, ca?: string | Buffer) {
+        super(certificate, passphrase, ca);
 
         if (certificate instanceof Buffer) {
             this._certificate = certificate.toString();

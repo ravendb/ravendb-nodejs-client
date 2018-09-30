@@ -2,8 +2,8 @@ import { QueryToken } from "./QueryToken";
 
 export class GroupByKeyToken extends QueryToken {
 
-    private _fieldName: string;
-    private _projectedName: string;
+    private readonly _fieldName: string;
+    private readonly _projectedName: string;
 
     private constructor(fieldName: string, projectedName: string) {
         super();

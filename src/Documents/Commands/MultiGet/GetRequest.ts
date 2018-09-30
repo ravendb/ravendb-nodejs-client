@@ -1,6 +1,6 @@
 export class GetRequest {
     private _url: string;
-    private _headers: { [key: string]: string | string[] }; 
+    private readonly _headers: { [key: string]: string | string[] };
     private _query: string;
     private _method: string;
 

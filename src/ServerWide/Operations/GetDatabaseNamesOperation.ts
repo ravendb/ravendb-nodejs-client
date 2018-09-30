@@ -7,8 +7,8 @@ import * as stream from "readable-stream";
 
 export class GetDatabaseNamesOperation implements IServerOperation<string[]> {
 
-    private _start: number;
-    private _pageSize: number;
+    private readonly _start: number;
+    private readonly _pageSize: number;
 
     public constructor(start: number, pageSize: number) {
         this._start = start;
@@ -26,8 +26,8 @@ export class GetDatabaseNamesOperation implements IServerOperation<string[]> {
 }
 
 export class GetDatabaseNamesCommand extends RavenCommand<string[]> {
-        private _start: number;
-        private _pageSize: number;
+        private readonly _start: number;
+        private readonly _pageSize: number;
 
         public constructor(start: number, pageSize: number) {
             super();

@@ -12,7 +12,7 @@ export abstract class AbstractHiloIdGenerator  {
   protected _dbName: string;
   protected _tag: string;
 
-  constructor(store: IDocumentStore, dbName?: string, tag?: string) {
+  protected constructor(store: IDocumentStore, dbName?: string, tag?: string) {
     this._tag = tag;
     this._store = store;
     this._conventions = store.conventions;

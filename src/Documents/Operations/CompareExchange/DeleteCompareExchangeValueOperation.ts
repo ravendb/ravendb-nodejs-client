@@ -17,9 +17,9 @@ import { streamArray } from "stream-json/streamers/StreamArray";
 
 export class DeleteCompareExchangeValueOperation<T> implements IOperation<CompareExchangeResult<T>> {
 
-    private _key: string;
-    private _index: number;
-    private _clazz: ClassConstructor<T>;
+    private readonly _key: string;
+    private readonly _index: number;
+    private readonly _clazz: ClassConstructor<T>;
 
     public constructor(key: string, index: number, clazz?: ClassConstructor<T>) {
         this._key = key;
@@ -39,10 +39,10 @@ export class DeleteCompareExchangeValueOperation<T> implements IOperation<Compar
 }
 
 export class RemoveCompareExchangeCommand<T> extends RavenCommand<CompareExchangeResult<T>> {
-    private _key: string;
-    private _index: number;
-    private _clazz: ClassConstructor<T>;
-    private _conventions: DocumentConventions;
+    private readonly _key: string;
+    private readonly _index: number;
+    private readonly _clazz: ClassConstructor<T>;
+    private readonly _conventions: DocumentConventions;
 
     public constructor(key: string, index: number, conventions: DocumentConventions, clazz?: ClassConstructor<T>) {
         super();

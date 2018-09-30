@@ -16,11 +16,11 @@ export interface HiLoResult {
 }
 export class NextHiloCommand extends RavenCommand<HiLoResult> {
 
-    private _tag: string;
-    private _lastBatchSize: number;
-    private _lastRangeAt: Date;
-    private _identityPartsSeparator: string;
-    private _lastRangeMax: number;
+    private readonly _tag: string;
+    private readonly _lastBatchSize: number;
+    private readonly _lastRangeAt: Date;
+    private readonly _identityPartsSeparator: string;
+    private readonly _lastRangeMax: number;
 
     public constructor(
         tag: string,

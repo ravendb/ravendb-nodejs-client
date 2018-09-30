@@ -21,7 +21,7 @@ const FACET_RESULT_TYPES_MAP = new Map([[FacetResult.name, FacetResult]]);
 
 export abstract class AggregationQueryBase {
 
-    private _session: InMemoryDocumentSessionOperations;
+    private readonly _session: InMemoryDocumentSessionOperations;
     private _query: IndexQuery;
     private _duration: Stopwatch;
 

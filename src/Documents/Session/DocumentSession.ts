@@ -555,13 +555,13 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         return { indexName, collection };
     }
 
-    private _attachments: IAttachmentsSessionOperations;
+    private readonly _attachments: IAttachmentsSessionOperations;
 
     public get attachments(): IAttachmentsSessionOperations {
         return this._attachments;
     }
 
-    private _revisions: IRevisionsSessionOperations;
+    private readonly _revisions: IRevisionsSessionOperations;
 
     public get revisions(): IRevisionsSessionOperations {
         return this._revisions;

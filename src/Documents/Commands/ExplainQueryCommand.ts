@@ -13,8 +13,8 @@ export interface ExplainQueryResult {
 
 export class ExplainQueryCommand extends RavenCommand<ExplainQueryResult[]> {
 
-    private _conventions: DocumentConventions;
-    private _indexQuery: IndexQuery;
+    private readonly _conventions: DocumentConventions;
+    private readonly _indexQuery: IndexQuery;
 
     public constructor(conventions: DocumentConventions, indexQuery: IndexQuery) {
         super();

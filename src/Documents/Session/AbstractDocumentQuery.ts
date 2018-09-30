@@ -50,7 +50,7 @@ import { ShapeToken } from "./Tokens/ShapeToken";
 import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField";
 import { SpatialCriteria } from "../Queries/Spatial/SpatialCriteria";
 import { SessionBeforeQueryEventArgs } from "./SessionEvents";
-import { CmpXchg } from "./CmpXchng";
+import { CmpXchg } from "./CmpXchg";
 import { AbstractCallback } from "../../Types/Callbacks";
 import { DocumentQueryCustomization } from "./DocumentQueryCustomization";
 import { FacetBase } from "../Queries/Facets/FacetBase";

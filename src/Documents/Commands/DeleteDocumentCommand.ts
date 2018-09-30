@@ -4,8 +4,8 @@ import { throwError } from "../../Exceptions";
 import { ServerNode } from "../../Http/ServerNode";
 
 export class DeleteDocumentCommand extends RavenCommand<void> {
-    private _id: string;
-    private _changeVector: string;
+    private readonly _id: string;
+    private readonly _changeVector: string;
 
     public constructor(id: string);
     public constructor(id: string, changeVector: string);

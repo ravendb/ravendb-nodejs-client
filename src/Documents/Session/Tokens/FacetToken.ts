@@ -20,12 +20,12 @@ export interface FacetTokenAggregateByFieldNameOptions {
 }
 
 export class FacetToken extends QueryToken {
-    private _facetSetupDocumentId: string;
-    private _aggregateByFieldName: string;
-    private _alias: string;
-    private _ranges: string[];
-    private _optionsParameterName: string;
-     private _aggregations: FacetAggregationToken[];
+    private readonly _facetSetupDocumentId: string;
+    private readonly _aggregateByFieldName: string;
+    private readonly _alias: string;
+    private readonly _ranges: string[];
+    private readonly _optionsParameterName: string;
+     private readonly _aggregations: FacetAggregationToken[];
 
      public getName(): string {
         return this._alias || this._aggregateByFieldName;
@@ -201,7 +201,7 @@ export class FacetToken extends QueryToken {
 export class FacetAggregationToken extends QueryToken {
 
     private _fieldName: string;
-    private _aggregation: FacetAggregation;
+    private readonly _aggregation: FacetAggregation;
 
     private constructor(fieldName: string, aggregation: FacetAggregation) {
         super();

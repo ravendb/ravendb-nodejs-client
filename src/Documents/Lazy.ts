@@ -1,6 +1,6 @@
 export class Lazy<T> {
 
-    private _valueFactory: () => Promise<T>;
+    private readonly _valueFactory: () => Promise<T>;
     private _value: Promise<T>;
 
     public constructor(valueFactory: () => Promise<T>) {

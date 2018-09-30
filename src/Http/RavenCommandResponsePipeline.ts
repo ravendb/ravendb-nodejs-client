@@ -30,7 +30,7 @@ export interface RavenCommandResponsePipelineOptions<TResult> {
 
 export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
 
-    private _opts: RavenCommandResponsePipelineOptions<TStreamResult>;
+    private readonly _opts: RavenCommandResponsePipelineOptions<TStreamResult>;
     private _body: StringBuilder = new StringBuilder();
 
     private constructor() {

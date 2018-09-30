@@ -7,7 +7,7 @@ import * as BluebirdPromise from "bluebird";
 import { acquireSemaphore } from "../../Utility/SemaphoreUtil";
 
 export class HiloMultiTypeIdGenerator extends AbstractHiloIdGenerator implements IHiloIdGenerator {
-    private _sem: semaphore.Semaphore;
+    private readonly _sem: semaphore.Semaphore;
 
     constructor(store: IDocumentStore, dbName?: string) {
         super(store, dbName);

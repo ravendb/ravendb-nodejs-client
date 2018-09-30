@@ -25,7 +25,7 @@ export function getLogger({ name = "ravendb", module = "" }): ILogger {
 
 class Logger {
 
-    private _logdebug: (msg: string) => void;
+    private readonly _logdebug: (msg: string) => void;
 
     constructor(name: string) {
         this._logdebug = debuglog(name);

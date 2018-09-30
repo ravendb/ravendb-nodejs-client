@@ -8,7 +8,7 @@ import { ServerNode } from "../../..";
 import * as stream from "readable-stream";
 
 export class GetIndexStatisticsOperation implements IMaintenanceOperation<IndexStats> {
-    private _indexName: string;
+    private readonly _indexName: string;
 
     public constructor(indexName: string) {
         if (!indexName) {
@@ -29,7 +29,7 @@ export class GetIndexStatisticsOperation implements IMaintenanceOperation<IndexS
 }
 
 export class GetIndexStatisticsCommand extends RavenCommand<IndexStats> {
-    private _indexName: string;
+    private readonly _indexName: string;
 
     public constructor(indexName: string) {
         super();

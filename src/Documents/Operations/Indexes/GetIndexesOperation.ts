@@ -9,8 +9,8 @@ import * as stream from "readable-stream";
 
 export class GetIndexesOperation implements IMaintenanceOperation<IndexDefinition[]> {
 
-    private _start: number;
-    private _pageSize: number;
+    private readonly _start: number;
+    private readonly _pageSize: number;
 
     public constructor(start: number, pageSize: number) {
         this._start = start;
@@ -28,8 +28,8 @@ export class GetIndexesOperation implements IMaintenanceOperation<IndexDefinitio
 }
 
 export class GetIndexesCommand extends RavenCommand<IndexDefinition[]> {
-    private _start: number;
-    private _pageSize: number;
+    private readonly _start: number;
+    private readonly _pageSize: number;
 
     public constructor(start: number, pageSize: number) {
         super();
@@ -75,4 +75,3 @@ export class GetIndexesCommand extends RavenCommand<IndexDefinition[]> {
         return true;
     }
 }
-

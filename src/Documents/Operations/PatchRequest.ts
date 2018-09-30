@@ -11,12 +11,12 @@ export class PatchRequest {
         );
     }
 
-    public serialize(convensions: DocumentConventions) {
+    public serialize(conventions: DocumentConventions) {
         return {
             Script: this.script,
             Values: Object.keys(this.values).reduce((result, next) => {
-                const literal = convensions.entityObjectMapper.toObjectLiteral(this.values[next]);
-                result[next] = convensions.transformObjectKeysToRemoteFieldNameConvention(literal);
+                const literal = conventions.entityObjectMapper.toObjectLiteral(this.values[next]);
+                result[next] = conventions.transformObjectKeysToRemoteFieldNameConvention(literal);
                 return result;
             }, {})
         };

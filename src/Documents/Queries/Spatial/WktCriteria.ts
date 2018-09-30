@@ -3,7 +3,7 @@ import { SpatialRelation } from "../../Indexes/Spatial";
 import { ShapeToken } from "../../Session/Tokens/ShapeToken";
 
 export class WktCriteria extends SpatialCriteria {
-    private _shapeWkt: string;
+    private readonly _shapeWkt: string;
 
     public constructor(shapeWkt: string, relation: SpatialRelation, distanceErrorPct: number) {
         super(relation, distanceErrorPct);

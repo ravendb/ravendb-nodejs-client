@@ -131,11 +131,11 @@ export class RequestExecutor implements IDisposable {
     private _lastReturnedResponse: Date;
     protected _readBalanceBehavior: ReadBalanceBehavior;
 
-    private _cache: HttpCache;
+    private readonly _cache: HttpCache;
 
     private _topologyTakenFromNode: ServerNode;
 
-    public agressiveCaching: AggressiveCacheOptions = null;
+    public aggressiveCaching: AggressiveCacheOptions = null;
 
     private _updateTopologyTimer: Timer;
 
@@ -153,9 +153,9 @@ export class RequestExecutor implements IDisposable {
 
     protected _topologyEtag: number = 0;
 
-    private _conventions: DocumentConventions;
+    private readonly _conventions: DocumentConventions;
 
-    private _authOptions: IAuthOptions;
+    private readonly _authOptions: IAuthOptions;
 
     protected _disableTopologyUpdates: boolean;
 
@@ -726,7 +726,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
         });
 
         if (cachedChangeVector) {
-            const aggressiveCacheOptions = this.agressiveCaching;
+            const aggressiveCacheOptions = this.aggressiveCaching;
             if (aggressiveCacheOptions
                 && cachedItem.age < aggressiveCacheOptions.duration
                 && !cachedItem.mightHaveBeenModified

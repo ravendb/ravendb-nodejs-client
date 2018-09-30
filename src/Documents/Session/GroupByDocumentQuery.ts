@@ -6,7 +6,7 @@ import { IDocumentQuery } from "./IDocumentQuery";
 
 export class GroupByDocumentQuery<T extends object> implements IGroupByDocumentQuery<T> {
 
-    private _query: DocumentQuery<T>;
+    private readonly _query: DocumentQuery<T>;
 
     public constructor(query: DocumentQuery<T>) {
         this._query = query;

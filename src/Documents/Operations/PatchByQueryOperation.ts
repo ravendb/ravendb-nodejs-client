@@ -15,8 +15,8 @@ export class PatchByQueryOperation implements IOperation<OperationIdResult> {
 
     protected static DUMMY_QUERY = new IndexQuery();
 
-    private _queryToUpdate: IndexQuery;
-    private _options: QueryOperationOptions;
+    private readonly _queryToUpdate: IndexQuery;
+    private readonly _options: QueryOperationOptions;
 
     public constructor(queryToUpdate: IndexQuery);
     public constructor(queryToUpdate: string);
@@ -46,8 +46,8 @@ export class PatchByQueryOperation implements IOperation<OperationIdResult> {
 }
 
 export class PatchByQueryCommand extends RavenCommand<OperationIdResult> {
-    private _conventions: DocumentConventions;
-    private _queryToUpdate: IndexQuery;
+    private readonly _conventions: DocumentConventions;
+    private readonly _queryToUpdate: IndexQuery;
     private _options: QueryOperationOptions;
 
     public get isReadRequest(): boolean {

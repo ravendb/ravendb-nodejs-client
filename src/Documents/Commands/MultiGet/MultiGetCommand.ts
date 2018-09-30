@@ -17,7 +17,7 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 export class MultiGetCommand extends RavenCommand<GetResponse[]> {
     private _cache: HttpCache;
-    private _commands: GetRequest[];
+    private readonly _commands: GetRequest[];
     private _conventions: DocumentConventions;
     private _baseUrl: string;
 

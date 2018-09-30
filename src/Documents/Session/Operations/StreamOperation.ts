@@ -116,8 +116,8 @@ export class StreamOperation {
                 });
         }
 
-        result.on("newListener", (evnt, listener) => {
-            if (evnt === "data") {
+        result.on("newListener", (event, listener) => {
+            if (event === "data") {
                 response.stream.resume();
             } 
         });

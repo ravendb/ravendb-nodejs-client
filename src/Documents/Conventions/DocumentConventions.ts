@@ -63,7 +63,7 @@ export class DocumentConventions {
     private _readBalanceBehavior: ReadBalanceBehavior;
     private _maxHttpCacheSize: number;
     
-    private _knownEntityTypes: Map<string, ObjectTypeDescriptor>;
+    private readonly _knownEntityTypes: Map<string, ObjectTypeDescriptor>;
 
     private _localEntityFieldNameConvention: CasingConvention;
     private _remoteEntityFieldNameConvention: CasingConvention;
@@ -620,16 +620,16 @@ export class DocumentConventions {
 
     public findEntityType<T extends object>(documentType: DocumentType<T>): ObjectTypeDescriptor<T>;
     public findEntityType<T extends object>(typeName: string): ObjectTypeDescriptor<T>;
-    public findEntityType<T extends object>(docTypeOrtypeName: string): ObjectTypeDescriptor<T> {
-        if (!docTypeOrtypeName) {
+    public findEntityType<T extends object>(docTypeOrTypeName: string): ObjectTypeDescriptor<T> {
+        if (!docTypeOrTypeName) {
             return null;
         }
 
-        if (typeof(docTypeOrtypeName) !== "string") {
-            return docTypeOrtypeName as ObjectTypeDescriptor<T>;
+        if (typeof(docTypeOrTypeName) !== "string") {
+            return docTypeOrTypeName as ObjectTypeDescriptor<T>;
         }
         
-        return this._knownEntityTypes.get(docTypeOrtypeName) as ObjectLiteralDescriptor<T>;
+        return this._knownEntityTypes.get(docTypeOrTypeName) as ObjectLiteralDescriptor<T>;
     }
 
     public transformObjectKeysToRemoteFieldNameConvention(obj: object, opts?: ObjectChangeCaseOptions) {

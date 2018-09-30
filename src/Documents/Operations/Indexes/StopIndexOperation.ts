@@ -7,7 +7,7 @@ import { ServerNode } from "../../../Http/ServerNode";
 
 export class StopIndexOperation implements IMaintenanceOperation<void> {
 
-    private _indexName: string;
+    private readonly _indexName: string;
 
     public constructor(indexName: string) {
         if (!indexName) {
@@ -29,7 +29,7 @@ export class StopIndexOperation implements IMaintenanceOperation<void> {
 
 export class StopIndexCommand extends RavenCommand<void> {
 
-    private _indexName: string;
+    private readonly _indexName: string;
 
     public constructor(indexName: string) {
         super();

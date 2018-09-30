@@ -8,10 +8,10 @@ import * as stream from "readable-stream";
 
 export class GetTermsOperation implements IMaintenanceOperation<string[]> {
 
-    private _indexName: string;
-    private _field: string;
-    private _fromValue: string;
-    private _pageSize: number;
+    private readonly _indexName: string;
+    private readonly _field: string;
+    private readonly _fromValue: string;
+    private readonly _pageSize: number;
 
     public constructor(indexName: string, field: string, fromValue: string);
     public constructor(indexName: string, field: string, fromValue: string, pageSize: number);
@@ -42,10 +42,10 @@ export class GetTermsOperation implements IMaintenanceOperation<string[]> {
 
 export class GetTermsCommand extends RavenCommand<string[]> {
 
-    private _indexName: string;
-    private _field: string;
-    private _fromValue: string;
-    private _pageSize: number;
+    private readonly _indexName: string;
+    private readonly _field: string;
+    private readonly _fromValue: string;
+    private readonly _pageSize: number;
 
     public constructor(indexName: string, field: string, fromValue: string);
     public constructor(indexName: string, field: string, fromValue: string, pageSize: number);

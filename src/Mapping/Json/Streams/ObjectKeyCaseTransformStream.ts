@@ -24,10 +24,9 @@ const DEFAULT_OBJECT_KEY_CASE_TRANSFORM_OPTS = {
 export class ObjectKeyCaseTransformStream extends stream.Transform {
 
     private _ignorePaths: Array<string | RegExp>;
-    private _getIgnorePaths: (entry: object) => Array<string | RegExp> = 
-        () => this._ignorePaths;
+    private readonly _getIgnorePaths: (entry: object) => Array<string | RegExp> = () => this._ignorePaths;
 
-    private _handleKeyValue: boolean;
+    private readonly _handleKeyValue: boolean;
 
     constructor(private _opts: ObjectKeyCaseTransformStreamOptions) {
         super({ objectMode: true });

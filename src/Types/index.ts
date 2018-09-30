@@ -1,6 +1,6 @@
 import {SuggestionResult} from "../Documents/Queries/Suggestions/SuggestionResult";
 
-export interface Todo {}
+export interface Todo {} //TODO ??
 
 export interface EntitiesCollectionObject<TEntity> extends IRavenObject<TEntity> {
     [id: string]: TEntity;

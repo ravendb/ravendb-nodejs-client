@@ -6,7 +6,7 @@ import { HttpRequestParameters } from "../../../Primitives/Http";
 
 export class EnableIndexOperation implements IMaintenanceOperation<void> {
 
-    private _indexName: string;
+    private readonly _indexName: string;
 
     public constructor(indexName: string) {
         if (!indexName) {
@@ -26,7 +26,7 @@ export class EnableIndexOperation implements IMaintenanceOperation<void> {
 }
 
 export class EnableIndexCommand extends RavenCommand<void> {
-    private _indexName: string;
+    private readonly _indexName: string;
 
     public constructor(indexName: string) {
         super();

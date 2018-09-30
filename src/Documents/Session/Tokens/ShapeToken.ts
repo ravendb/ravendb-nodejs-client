@@ -3,7 +3,7 @@ import { SpatialUnits } from "../../Indexes/Spatial";
 
 export class ShapeToken extends QueryToken {
 
-    private _shape: string;
+    private readonly _shape: string;
 
     private constructor(shape: string) {
         super();

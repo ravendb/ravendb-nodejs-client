@@ -1,6 +1,6 @@
 
 export class JavaScriptArray<U> {
-    private _suffix: number;
+    private readonly _suffix: number;
     private _argCounter: number = 0;
 
     private readonly _pathToArray: string;
