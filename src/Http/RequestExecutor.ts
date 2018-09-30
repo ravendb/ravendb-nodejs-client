@@ -23,7 +23,7 @@ import {
     GetClientConfigurationOperationResult
 } from "../Documents/Operations/Configuration/GetClientConfigurationOperation";
 import CurrentIndexAndNode from "./CurrentIndexAndNode";
-import {CONSTANTS, HEADERS} from "../Constants";
+import {HEADERS} from "../Constants";
 import { HttpRequestParameters, HttpResponse, HttpRequestParametersWithoutUri } from "../Primitives/Http";
 import { Stopwatch } from "../Utility/Stopwatch";
 import * as PromiseUtil from "../Utility/PromiseUtil";
@@ -1135,14 +1135,14 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
                 command.failedNodes.set(chosenNode, readException);
             } catch (_) {
                 log.warn(_, "Error parsing server error.");
-                const unrecongnizedErrSchema = {
+                const unrecognizedErrSchema = {
                     url: req.uri,
                     message: "Unrecognized response from the server",
                     error: responseJson,
                     type: "Unparsable Server Response"
                 };
 
-                const exceptionToUse = ExceptionDispatcher.get(unrecongnizedErrSchema, response.statusCode);
+                const exceptionToUse = ExceptionDispatcher.get(unrecognizedErrSchema, response.statusCode);
                 command.failedNodes.set(chosenNode, exceptionToUse);
             }
 

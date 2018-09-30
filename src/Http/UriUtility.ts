@@ -5,7 +5,7 @@ export class UriUtility {
     return (TypeUtil.isArray(urls) ? urls as string[] : [urls as string])
       .reduce((accumulator: string[], iteratee: string | string[]): string[] =>
         accumulator.concat((TypeUtil.isArray(iteratee) ? iteratee as string[] 
-        : (iteratee as string).split(/,|;/).map((url: string): string => url.trim())
+        : (iteratee as string).split(/[,;]/).map((url: string): string => url.trim())
         .filter((url: string): boolean => !!url))
       ), []);
   }

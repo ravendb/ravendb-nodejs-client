@@ -34,7 +34,7 @@ export class QueryStreamCommand extends RavenCommand<StreamResultResponse> {
             method: "POST",
             uri: `${node.url}/databases/${node.database}/streams/queries`,
             body: writeIndexQuery(this._conventions, this._indexQuery),
-            headears: this._headers().typeAppJson().build()
+            headers: this._headers().typeAppJson().build()
         };
         return req;
     }

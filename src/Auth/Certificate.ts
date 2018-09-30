@@ -127,12 +127,12 @@ export class PemCertificate extends Certificate {
 }
 
 export class PfxCertificate extends Certificate {
-    constructor(certificate: string | Buffer, passprase?: string, ca?: string | Buffer) {
+    constructor(certificate: string | Buffer, passphrase?: string, ca?: string | Buffer) {
         if (!(certificate instanceof Buffer)) {
             throwError("InvalidArgumentException", "Pfx certificate should be a Buffer");
         }
 
-        super(certificate, passprase, ca);
+        super(certificate, passphrase, ca);
     }
 
     public toAgentOptions(): AgentOptions {

@@ -3,7 +3,6 @@ import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
 import { Topology } from "../../Http/Topology";
 import { HttpRequestParameters } from "../../Primitives/Http";
-import { RavenCommandResponsePipeline } from "../../Http/RavenCommandResponsePipeline";
 
 interface ServerNodeDto {
     database: string;

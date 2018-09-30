@@ -1,4 +1,3 @@
-import * as through2 from "through2";
 import * as stream from "readable-stream";
 import * as StreamUtil from "../../../Utility/StreamUtil";
 import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";

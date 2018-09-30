@@ -2,15 +2,12 @@ import * as BluebirdPromise from "bluebird";
 import * as semaphore from "semaphore";
 
 import { IDocumentStore } from "../../Documents/IDocumentStore";
-import { throwError, RavenErrorType } from "../../Exceptions";
 import { DateUtil } from "../../Utility/DateUtil";
 import { acquireSemaphore } from "../../Utility/SemaphoreUtil";
 import { StringUtil } from "../../Utility/StringUtil";
-import { AbstractHiloIdGenerator } from "./AbstractHiloIdGenerator";
 import { HiloReturnCommand } from "./Commands/HiloReturnCommand";
 import { NextHiloCommand, HiLoResult } from "./Commands/NextHiloCommand";
 import { HiloRangeValue } from "./HiloRangeValue";
-import { IHiloIdGenerator } from "./IHiloIdGenerator";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 
 export class HiloIdGenerator {

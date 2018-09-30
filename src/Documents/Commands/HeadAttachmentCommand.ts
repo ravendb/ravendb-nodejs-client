@@ -1,5 +1,5 @@
 import { RavenCommand, ResponseDisposeHandling } from "./../../Http/RavenCommand";
-import { CachedItemMetadata, HttpCache } from "./../../Http/HttpCache";
+import { HttpCache } from "./../../Http/HttpCache";
 import { HttpRequestParameters, HttpResponse } from "./../../Primitives/Http";
 import { StringUtil } from "../../Utility/StringUtil";
 import { throwError } from "../../Exceptions";

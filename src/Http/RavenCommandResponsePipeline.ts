@@ -6,7 +6,7 @@ import {
 import {
     ObjectKeyCaseTransformProfile,
     getObjectKeyCaseTransformProfile } from "../Mapping/Json/Conventions";
-import { ObjectUtil, CasingConvention } from "../Utility/ObjectUtil";
+import { CasingConvention } from "../Utility/ObjectUtil";
 import * as through2 from "through2";
 import * as StreamUtil from "../Utility/StreamUtil";
 import * as stream from "readable-stream";

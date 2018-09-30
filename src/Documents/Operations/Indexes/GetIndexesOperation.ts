@@ -4,7 +4,6 @@ import { RavenCommand } from "../../../Http/RavenCommand";
 import { IndexDefinition } from "../../Indexes/IndexDefinition";
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
 import * as stream from "readable-stream";
 
 export class GetIndexesOperation implements IMaintenanceOperation<IndexDefinition[]> {

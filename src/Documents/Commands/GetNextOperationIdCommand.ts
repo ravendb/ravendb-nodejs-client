@@ -1,4 +1,4 @@
-import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
+import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestParameters } from "../../Primitives/Http";
 import * as stream from "readable-stream";

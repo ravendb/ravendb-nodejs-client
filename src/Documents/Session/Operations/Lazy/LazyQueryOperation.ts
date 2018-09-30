@@ -8,7 +8,6 @@ import { writeIndexQuery } from "../../../Queries/IndexQuery";
 import { GetResponse } from "../../../Commands/MultiGet/GetResponse";
 import { QueryCommand } from "../../../Commands/QueryCommand";
 import { stringToReadable } from "../../../../Utility/StreamUtil";
-import { TypesAwareObjectMapper } from "../../../../Mapping/ObjectMapper";
 import { QueryEventsEmitter } from "../../../Session/QueryEvents";
 
 export class LazyQueryOperation<T extends object> implements ILazyOperation {
