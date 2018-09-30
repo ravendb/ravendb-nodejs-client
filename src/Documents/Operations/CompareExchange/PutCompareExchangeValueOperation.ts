@@ -88,7 +88,7 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
-        let body;
+        let body: string = null;
         const resultPromise = this._pipeline<object>()
             .collectBody(b => body = b)
             .parseJsonAsync([ 

@@ -63,7 +63,7 @@ export class IndexHasChangedCommand extends RavenCommand<boolean> {
             this._throwInvalidResponse();
         }
 
-        let body;
+        let body: string = null;
         await this._defaultPipeline(_ => body = _)
             .process(bodyStream)
             .then(results => {

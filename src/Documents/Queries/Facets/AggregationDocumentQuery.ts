@@ -37,9 +37,9 @@ export class AggregationDocumentQuery<T extends object> extends AggregationQuery
         return this._source.getIndexQuery();
     }
 
-    public emit(evtName: "afterQueryExecuted", queryResult: QueryResult) {
-        if (evtName === "afterQueryExecuted") {
-            this._source.emit(evtName, queryResult);
+    public emit(eventName: "afterQueryExecuted", queryResult: QueryResult) {
+        if (eventName === "afterQueryExecuted") {
+            this._source.emit(eventName, queryResult);
         }
     }
 }

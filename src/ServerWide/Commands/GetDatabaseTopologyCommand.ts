@@ -35,7 +35,7 @@ export class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
             return;
         }
 
-        let body;
+        let body: string = null;
         return this._pipeline<TopologyDto>()
             .collectBody(_ => body = _)
             .parseJsonSync()

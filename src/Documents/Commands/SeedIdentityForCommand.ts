@@ -45,7 +45,7 @@ export class SeedIdentityForCommand extends RavenCommand<number> {
             this._throwInvalidResponse();
         }
 
-        let body;
+        let body: string = null;
         await this._defaultPipeline(_ => body = _).process(bodyStream)
             .then(result => {
                 const newSeedValue = result["newSeedValue"];

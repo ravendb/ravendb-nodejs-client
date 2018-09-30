@@ -52,7 +52,7 @@ export class GetIndexCommand extends RavenCommand<IndexDefinition> {
             return;
         }
 
-        let body;
+        let body: string = null;
         await this._pipeline()
             .collectBody(b => body = b)
             .parseJsonSync()

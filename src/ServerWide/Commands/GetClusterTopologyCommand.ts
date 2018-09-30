@@ -36,7 +36,7 @@ export class GetClusterTopologyCommand extends RavenCommand<ClusterTopologyRespo
             this._throwInvalidResponse();
         }
 
-        let body;
+        let body: string = null;
         await this._defaultPipeline(x => body = x).process(bodyStream)
             .then(result => {
                 const clusterTpl = Object.assign(new ClusterTopology(), result.topology);

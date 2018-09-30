@@ -13,5 +13,4 @@ export class FacetSetup extends SetupDocumentBase {
             defaultTransform: "pascal"
         });
     }
-
 }

@@ -64,7 +64,7 @@ export class GetCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
             return null;
         }
 
-        let body;
+        let body: string = null;
         await this._pipeline<object>()
             .collectBody(x => body = x)
             .parseJsonSync()

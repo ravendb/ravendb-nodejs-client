@@ -47,7 +47,7 @@ export class GetIndexesCommand extends RavenCommand<IndexDefinition[]> {
             this._throwInvalidResponse();
         }
 
-        let body;
+        let body: string = null;
         await this._pipeline<object>()
             .collectBody(b => body = b)
             .parseJsonSync()

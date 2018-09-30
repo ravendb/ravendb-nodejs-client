@@ -71,9 +71,8 @@ export class OperationExecutor {
             .then(() => {
                 if (operation.resultType === "OperationId") {
                     const idResult = command.result as OperationIdResult;
-                    const awaiter = new OperationCompletionAwaiter(
+                    return new OperationCompletionAwaiter(
                         this._requestExecutor, this._requestExecutor.conventions, idResult.operationId);
-                    return awaiter;
 
                 } else if (operation.resultType === "PatchResult") {
                     const patchOperationResult = new PatchOperationResult<TResult>();
@@ -100,6 +99,6 @@ export class OperationExecutor {
                 return command.result as TResult;
             });
 
-        return  Promise.resolve(result);
+        return Promise.resolve(result);
     }
 }

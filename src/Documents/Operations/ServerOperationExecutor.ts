@@ -37,20 +37,17 @@ export class ServerOperationExecutor implements IDisposable {
         : Promise<ServerWideOperationCompletionAwaiter | TResult> {
 
         const command = operation.getCommand(this._requestExecutor.conventions);
-        const result = Promise.resolve()
+        return Promise.resolve()
             .then(() => this._requestExecutor.execute(command as RavenCommand<TResult>))
             .then(() => {
                 if (operation.resultType === "OperationId") {
                     const idResult = command.result as OperationIdResult;
-                    const awaiter = new ServerWideOperationCompletionAwaiter(
+                    return new ServerWideOperationCompletionAwaiter(
                         this._requestExecutor, this._requestExecutor.conventions, idResult.operationId);
-                    return awaiter;
                 }
 
                 return command.result as TResult;
             });
-
-        return result;
     }
 
     public dispose(): void {

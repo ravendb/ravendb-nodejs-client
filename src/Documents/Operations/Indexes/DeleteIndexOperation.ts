@@ -23,7 +23,6 @@ export class DeleteIndexOperation implements IMaintenanceOperation<void> {
     public get resultType(): OperationResultType {
         return "CommandResult";
     }
-
 }
 
 export class DeleteIndexCommand extends RavenCommand<void> {
