@@ -14,115 +14,115 @@ export function throwError(errName: RavenErrorType, message: string, errCause?: 
 export function throwError(
     errName: RavenErrorType, message: string, errCause?: Error, info?: { [key: string]: any }): never;
 export function throwError(
-  errName: RavenErrorType | string = "RavenException", 
-  message?: string, 
-  errCause?: Error, 
-  info?: { [key: string]: any }): never {
-  throw getError(errName, message, errCause, info); 
+    errName: RavenErrorType | string = "RavenException",
+    message?: string,
+    errCause?: Error,
+    info?: { [key: string]: any }): never {
+    throw getError(errName, message, errCause, info);
 }
 
 export function getError(errName: RavenErrorType, message: string): Error;
 export function getError(
-  errName: string, 
-  message: string, 
-  errCause?: Error, 
-  info?: { [key: string]: any }): Error;
+    errName: string,
+    message: string,
+    errCause?: Error,
+    info?: { [key: string]: any }): Error;
 export function getError(
-  errName: string, 
-  message: string, 
-  errCause?: Error): Error;
+    errName: string,
+    message: string,
+    errCause?: Error): Error;
 export function getError(
-  errName: RavenErrorType | string = "RavenException", 
-  message: string = "", 
-  errCause?: Error, 
-  info?: { [key: string]: any }): Error {
-  const error = new VError({
-    name: errName,
-    cause: errCause,
-    info
-  }, message);
-  return error;
+    errName: RavenErrorType | string = "RavenException",
+    message: string = "",
+    errCause?: Error,
+    info?: { [key: string]: any }): Error {
+    const error = new VError({
+        name: errName,
+        cause: errCause,
+        info
+    }, message);
+    return error;
 }
 
 export type RavenErrorType = "RavenException"
-| "NotSupportedException"
-| "InvalidOperationException"
-| "InvalidArgumentException"
-| "ErrorResponseException"
-| "DocumentDoesNotExistsException"
-| "NonUniqueObjectException"
-| "ConcurrencyException"
-| "ArgumentNullException"
-| "ArgumentOutOfRangeException"
-| "DatabaseDoesNotExistException"
-| "ClientVersionMismatchException"
-| "AuthorizationException"
-| "IndexDoesNotExistException"
-| "DatabaseLoadTimeoutException"
-| "AuthenticationException"
-| "BadRequestException"
-| "BulkInsertAbortedException"
-| "BulkInsertProtocolViolationException"
-| "IndexCompilationException"
-| "TransformerCompilationException"
-| "DocumentConflictException"
-| "DocumentDoesNotExistException"
-| "DocumentParseException"
-| "IndexInvalidException"
-| "IndexOrTransformerAlreadyExistException"
-| "JavaScriptException"
-| "JavaScriptParseException"
-| "SubscriptionClosedException"
-| "SubscriptionDoesNotBelongToNodeException"
-| "SubscriptionDoesNotExistException"
-| "SubscriptionException"
-| "SubscriptionInUseException"
-| "TransformerDoesNotExistException"
-| "VersioningDisabledException"
-| "TopologyNodeDownException"
-| "AllTopologyNodesDownException"
-| "BadResponseException"
-| "ChangeProcessingException"
-| "CommandExecutionException"
-| "NoLeaderException"
-| "CompilationException"
-| "ConflictException"
-| "DatabaseConcurrentLoadTimeoutException"
-| "DatabaseDisabledException"
-| "DatabaseLoadFailureException"
-| "DatabaseNotFoundException"
-| "NotSupportedOsException"
-| "SecurityException"
-| "ServerLoadFailureException"
-| "UnsuccessfulRequestException"
-| "CriticalIndexingException"
-| "IndexAnalyzerException"
-| "IndexCorruptionException"
-| "IndexOpenException"
-| "IndexWriteException"
-| "IndexWriterCreationException"
-| "StorageException"
-| "StreamDisposedException"
-| "LowMemoryException"
-| "IncorrectDllException"
-| "DiskFullException"
-| "InvalidJournalFlushRequestException"
-| "QuotaException"
-| "VoronUnrecoverableErrorException"
-| "NonDurableFileSystemException"
-| "TimeoutException"
-| "AggregateException"
-| "OperationCancelledException"
-| "MappingError"
-| "UrlScrappingError"
-| "TestDriverTearDownError"
-| "FileNotFoundException"
-| "NotImplementedException"
-| "NodeIsPassiveException"
-| "ConfigurationException"
-| "CertificateNameMismatchException"
-| "BulkInsertStreamError"
-| "NotSupportedException";
+    | "NotSupportedException"
+    | "InvalidOperationException"
+    | "InvalidArgumentException"
+    | "ErrorResponseException"
+    | "DocumentDoesNotExistsException"
+    | "NonUniqueObjectException"
+    | "ConcurrencyException"
+    | "ArgumentNullException"
+    | "ArgumentOutOfRangeException"
+    | "DatabaseDoesNotExistException"
+    | "ClientVersionMismatchException"
+    | "AuthorizationException"
+    | "IndexDoesNotExistException"
+    | "DatabaseLoadTimeoutException"
+    | "AuthenticationException"
+    | "BadRequestException"
+    | "BulkInsertAbortedException"
+    | "BulkInsertProtocolViolationException"
+    | "IndexCompilationException"
+    | "TransformerCompilationException"
+    | "DocumentConflictException"
+    | "DocumentDoesNotExistException"
+    | "DocumentParseException"
+    | "IndexInvalidException"
+    | "IndexOrTransformerAlreadyExistException"
+    | "JavaScriptException"
+    | "JavaScriptParseException"
+    | "SubscriptionClosedException"
+    | "SubscriptionDoesNotBelongToNodeException"
+    | "SubscriptionDoesNotExistException"
+    | "SubscriptionException"
+    | "SubscriptionInUseException"
+    | "TransformerDoesNotExistException"
+    | "VersioningDisabledException"
+    | "TopologyNodeDownException"
+    | "AllTopologyNodesDownException"
+    | "BadResponseException"
+    | "ChangeProcessingException"
+    | "CommandExecutionException"
+    | "NoLeaderException"
+    | "CompilationException"
+    | "ConflictException"
+    | "DatabaseConcurrentLoadTimeoutException"
+    | "DatabaseDisabledException"
+    | "DatabaseLoadFailureException"
+    | "DatabaseNotFoundException"
+    | "NotSupportedOsException"
+    | "SecurityException"
+    | "ServerLoadFailureException"
+    | "UnsuccessfulRequestException"
+    | "CriticalIndexingException"
+    | "IndexAnalyzerException"
+    | "IndexCorruptionException"
+    | "IndexOpenException"
+    | "IndexWriteException"
+    | "IndexWriterCreationException"
+    | "StorageException"
+    | "StreamDisposedException"
+    | "LowMemoryException"
+    | "IncorrectDllException"
+    | "DiskFullException"
+    | "InvalidJournalFlushRequestException"
+    | "QuotaException"
+    | "VoronUnrecoverableErrorException"
+    | "NonDurableFileSystemException"
+    | "TimeoutException"
+    | "AggregateException"
+    | "OperationCancelledException"
+    | "MappingError"
+    | "UrlScrappingError"
+    | "TestDriverTearDownError"
+    | "FileNotFoundException"
+    | "NotImplementedException"
+    | "NodeIsPassiveException"
+    | "ConfigurationException"
+    | "CertificateNameMismatchException"
+    | "BulkInsertStreamError"
+    | "NotSupportedException";
 
 export interface ExceptionSchema {
     url: string;

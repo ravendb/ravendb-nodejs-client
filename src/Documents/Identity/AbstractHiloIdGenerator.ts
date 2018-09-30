@@ -4,34 +4,36 @@ import {DocumentConventions} from "../../Documents/Conventions/DocumentConventio
 import {IRavenObject} from "../../Types/IRavenObject";
 import { getLogger } from "../../Utility/LogUtil";
 
-const log = getLogger({ module: "HiloIdGenerator" });
-export abstract class AbstractHiloIdGenerator  {
-  protected _generators: IRavenObject<IHiloIdGenerator> = {};
-  protected _store: IDocumentStore;
-  protected _conventions: DocumentConventions;
-  protected _dbName: string;
-  protected _tag: string;
+const log = getLogger({module: "HiloIdGenerator"});
 
-  protected constructor(store: IDocumentStore, dbName?: string, tag?: string) {
-    this._tag = tag;
-    this._store = store;
-    this._conventions = store.conventions;
-    this._dbName = dbName || store.database;
-  }
+export abstract class AbstractHiloIdGenerator {
+    protected _generators: IRavenObject<IHiloIdGenerator> = {};
+    protected _store: IDocumentStore;
+    protected _conventions: DocumentConventions;
+    protected _dbName: string;
+    protected _tag: string;
 
-  public returnUnusedRange(): Promise<void> {
+    protected constructor(store: IDocumentStore, dbName?: string, tag?: string) {
+        this._tag = tag;
+        this._store = store;
+        this._conventions = store.conventions;
+        this._dbName = dbName || store.database;
+    }
 
-    const returnPromises = Object.keys(this._generators)
-      .map(key => {
-          return Promise.resolve()
-            .then(() => this._generators[key].returnUnusedRange())
-            .catch(err => {
-              log.warn(err, "Error returning unused range");
+    public returnUnusedRange(): Promise<void> {
+
+        const returnPromises = Object.keys(this._generators)
+            .map(key => {
+                return Promise.resolve()
+                    .then(() => this._generators[key].returnUnusedRange())
+                    .catch(err => {
+                        log.warn(err, "Error returning unused range");
+                    });
             });
-      });
 
-    return Promise.all(returnPromises)
-      // tslint:disable-next-line:no-empty
-      .then(() => {});
-  }
+        return Promise.all(returnPromises)
+            // tslint:disable-next-line:no-empty
+            .then(() => {
+            });
+    }
 }
