@@ -10,7 +10,6 @@ import { HttpCache } from "../../Http/HttpCache";
 import { ServerNode } from "../../Http/ServerNode";
 import { PatchResult } from "./PatchResult";
 import * as stream from "readable-stream";
-import { getIgnoreKeyCaseTransformKeysFromDocumentMetadata } from "../../Mapping/Json/Docs";
 import { CollectResultStreamOptions } from "../../Mapping/Json/Streams/CollectResultStream";
 import { streamArray } from "stream-json/streamers/StreamArray";
 import { streamObject } from "stream-json/streamers/StreamObject";

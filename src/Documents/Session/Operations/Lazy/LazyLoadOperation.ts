@@ -1,5 +1,4 @@
 import * as StringBuilder from "string-builder";
-import * as stream from "readable-stream";
 import { ILazyOperation } from "./ILazyOperation";
 import { ObjectTypeDescriptor } from "../../../../Types";
 import { InMemoryDocumentSessionOperations } from "../../InMemoryDocumentSessionOperations";

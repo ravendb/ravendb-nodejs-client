@@ -1,7 +1,6 @@
 import { ILazyLoaderWithInclude } from "../../../Session/Loaders/ILazyLoaderWithInclude";
 import { ObjectTypeDescriptor, EntitiesCollectionObject } from "../../../../Types";
 import { Lazy } from "../../../Lazy";
-import { AbstractCallback } from "../../../../Types/Callbacks";
 import { SessionLoadStartingWithOptions } from "../../IDocumentSession";
 
 /**

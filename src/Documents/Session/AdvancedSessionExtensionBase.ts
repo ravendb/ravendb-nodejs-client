@@ -1,6 +1,5 @@
 import { DocumentsById } from "./DocumentsById";
 import { DocumentInfo } from "./DocumentInfo";
-import { DocumentStoreBase } from "../DocumentStoreBase";
 import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { SessionInfo } from "./IDocumentSession";

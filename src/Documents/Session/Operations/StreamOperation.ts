@@ -1,16 +1,13 @@
 import * as stream from "readable-stream";
 import * as StringBuilder from "string-builder";
 import { InMemoryDocumentSessionOperations } from "../InMemoryDocumentSessionOperations";
-import { StreamQueryStatistics } from "../StreamQueryStatistics";
 import { QueryStreamCommand } from "../../Commands/QueryStreamCommand";
 import { IndexQuery } from "../../Queries/IndexQuery";
 import { throwError } from "../../../Exceptions";
 import { StartingWithOptions } from "../IDocumentSession";
 import { StreamCommand } from "../../Commands/StreamCommand";
 import { TypeUtil } from "../../../Utility/TypeUtil";
-import { CONSTANTS } from "../../../Constants";
 import { StreamResultResponse } from "../../Commands/StreamResultResponse";
-import { DisposableIterable } from "../../../Primitives/DisposableIterable";
 import { streamArray } from "stream-json/streamers/StreamArray";
 import { streamValues } from "stream-json/streamers/StreamValues";
 import { streamObject } from "stream-json/streamers/StreamObject";
@@ -18,9 +15,6 @@ import { pick } from "stream-json/filters/Pick";
 import { ignore } from "stream-json/filters/Ignore";
 import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
 import { getDocumentResultsPipeline } from "../../../Mapping/Json/Streams/Pipelines";
-import { StreamResult } from "../../Commands/StreamResult";
-import { closeHttpResponse } from "../../../Utility/HttpUtil";
-import { IterableObjectStream } from "../../../Primitives/IterableObjectStream";
 
 export class StreamOperation {
     private readonly _session: InMemoryDocumentSessionOperations;

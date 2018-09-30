@@ -11,7 +11,6 @@ import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
 import { CompareExchangeValueResultParser, GetCompareExchangeValuesResponse } from "./CompareExchangeValueResultParser";
 import * as stream from "readable-stream";
-import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
 
 export interface GetCompareExchangeValuesParameters<T> {
     keys?: string[];

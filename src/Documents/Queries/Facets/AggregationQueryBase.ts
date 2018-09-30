@@ -11,8 +11,6 @@ import { QueryOperation } from "../../Session/Operations/QueryOperation";
 import { Lazy } from "../../Lazy";
 import { DocumentSession } from "../../Session/DocumentSession";
 import { LazyAggregationQueryOperation } from "../../Session/Operations/Lazy/LazyAggregationQueryOperation";
-import { QueryEventsEmitter } from "../../Session/QueryEvents";
-import { EventEmitter } from "events";
 
 export interface FacetResultObject { 
     [key: string]: FacetResult;

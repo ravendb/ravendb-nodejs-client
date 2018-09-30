@@ -1,6 +1,5 @@
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { CompareExchangeValue } from "./CompareExchangeValue";
-import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 import { throwError } from "../../../Exceptions";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { ClassConstructor } from "../../..";

@@ -1,9 +1,7 @@
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 import { throwError } from "../../../Exceptions";
 import { ClassConstructor } from "../../..";
 import { TypeUtil } from "../../../Utility/TypeUtil";
-import { ObjectUtil } from "../../../Utility/ObjectUtil";
 
 export interface CompareExchangeResultResponse {
     index: number; 

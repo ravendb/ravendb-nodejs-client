@@ -10,8 +10,6 @@ import { throwError } from "../../Exceptions";
 import { DocumentStoreBase } from "../DocumentStoreBase";
 import { SessionInfo } from "../Session/IDocumentSession";
 import { PatchOperation, PatchOperationResult } from "./PatchOperation";
-import { PatchStatus } from "./PatchStatus";
-import { ClassConstructor } from "../../Types";
 import { DocumentType } from "../DocumentAbstractions";
 import { StatusCodes } from "../..";
 import { PatchResult } from "./PatchResult";

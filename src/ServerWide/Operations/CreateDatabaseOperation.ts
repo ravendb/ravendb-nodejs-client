@@ -1,5 +1,5 @@
 import * as stream from "readable-stream";
-import { HttpRequestParameters, HttpResponse } from "../../Primitives/Http";
+import { HttpRequestParameters } from "../../Primitives/Http";
 import { DatabaseRecord } from "..";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { DatabasePutResult } from ".";

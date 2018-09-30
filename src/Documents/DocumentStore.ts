@@ -5,7 +5,7 @@ import { throwError } from "../Exceptions";
 import { RequestExecutor } from "../Http/RequestExecutor";
 import { getLogger } from "../Utility/LogUtil";
 import { DocumentStoreBase } from "./DocumentStoreBase";
-import { IDocumentStore, SessionCreatedEventArgs } from "./IDocumentStore";
+import { IDocumentStore } from "./IDocumentStore";
 import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor";
 import { OperationExecutor } from "./Operations/OperationExecutor";
 import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";

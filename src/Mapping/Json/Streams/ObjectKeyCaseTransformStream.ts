@@ -25,7 +25,7 @@ export class ObjectKeyCaseTransformStream extends stream.Transform {
 
     private _ignorePaths: Array<string | RegExp>;
     private _getIgnorePaths: (entry: object) => Array<string | RegExp> = 
-        () => this._ignorePaths
+        () => this._ignorePaths;
 
     private _handleKeyValue: boolean;
 

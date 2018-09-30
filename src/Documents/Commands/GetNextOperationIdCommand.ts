@@ -1,8 +1,6 @@
 import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestParameters } from "../../Primitives/Http";
-import { RavenCommandResponsePipeline } from "../../Http/RavenCommandResponsePipeline";
-import { throwError } from "../../Exceptions";
 import * as stream from "readable-stream";
 
 export class GetNextOperationIdCommand extends RavenCommand<number> {

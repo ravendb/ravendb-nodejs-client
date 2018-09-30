@@ -1,4 +1,3 @@
-import { StreamResult } from "../Commands/StreamResult";
 import { StreamQueryStatistics } from "../Session/StreamQueryStatistics";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { ServerNode } from "../../Http/ServerNode";
@@ -7,7 +6,7 @@ import { DocumentType } from "../DocumentAbstractions";
 import { IDocumentStore } from "../IDocumentStore";
 import { DocumentsChanges } from "./DocumentsChanges";
 import { EntityToJson } from "./EntityToJson";
-import { SessionLoadStartingWithOptions, StartingWithOptions } from "./IDocumentSession";
+import { SessionLoadStartingWithOptions } from "./IDocumentSession";
 import { IMetadataDictionary } from "./IMetadataDictionary";
 import { IRawDocumentQuery } from "./IRawDocumentQuery";
 import { SessionEventsEmitter } from "./SessionEvents";
@@ -20,7 +19,6 @@ import {IEagerSessionOperations} from "./Operations/Lazy/IEagerSessionOperations
 import {JavaScriptArray} from "./JavaScriptArray";
 import {IRevisionsSessionOperations} from "./IRevisionsSessionOperations";
 import * as stream from "readable-stream";
-import { ObjectTypeDescriptor } from "../../Types";
 import { DocumentResultStream } from "../Session/DocumentStreamIterable";
 
 export type StreamQueryStatisticsCallback = (stats: StreamQueryStatistics) => void;

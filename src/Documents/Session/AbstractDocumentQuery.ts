@@ -58,7 +58,6 @@ import {MoreLikeThisScope} from "../Queries/MoreLikeThis/MoreLikeThisScope";
 import {MoreLikeThisToken} from "./Tokens/MoreLikeThisToken";
 import {LazyQueryOperation} from "../Session/Operations/Lazy/LazyQueryOperation";
 import { DocumentSession } from "./DocumentSession";
-import { ObjectTypeDescriptor } from "../../Types";
 import {SuggestionBase} from "../Queries/Suggestions/SuggestionBase";
 import {SuggestionOptions} from "../Queries/Suggestions/SuggestionOptions";
 import {SuggestToken} from "./Tokens/SuggestToken";
@@ -86,8 +85,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      */
     protected _negate: boolean;
 
-    private _indexName: string;
-    private _collectionName: string;
+    private readonly _indexName: string;
+    private readonly _collectionName: string;
     private _currentClauseDepth: number;
 
     protected _queryRaw: string;
@@ -125,7 +124,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     protected _start: number;
 
-    private _conventions: DocumentConventions;
+    private readonly _conventions: DocumentConventions;
 
     protected _timeout: number;
 
@@ -726,7 +725,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         if (whereParams.value instanceof MethodCall) {
             const mc = whereParams.value as MethodCall;
 
-            const args = mc.args.map(x => null);
+            const args = mc.args.map(() => null);
             for (let i = 0; i < mc.args.length; i++) {
                 args[i] = this._addQueryParameter(mc.args[i]);
             }

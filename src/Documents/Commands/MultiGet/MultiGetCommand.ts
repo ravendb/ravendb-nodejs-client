@@ -1,4 +1,3 @@
-import * as through2 from "through2";
 import * as stream from "readable-stream";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { GetResponse } from "./GetResponse";
@@ -6,7 +5,6 @@ import { HttpCache } from "../../../Http/HttpCache";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { GetRequest } from "./GetRequest";
 import { ServerNode } from "../../../Http/ServerNode";
-import { throwError } from "../../../Exceptions";
 import { StatusCodes } from "../../../Http/StatusCode";
 import { getEtagHeader } from "../../../Utility/HttpUtil";
 import { streamArray } from "stream-json/streamers/StreamArray";

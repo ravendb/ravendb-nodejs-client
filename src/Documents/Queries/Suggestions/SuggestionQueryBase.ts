@@ -11,7 +11,6 @@ import {QueryCommand} from "../../Commands/QueryCommand";
 import {Lazy} from "../../Lazy";
 import {LazySuggestionQueryOperation} from "../../Session/Operations/Lazy/LazySuggestionQueryOperation";
 import {QueryOperation} from "../../Session/Operations/QueryOperation";
-import {TypeUtil} from "../../../Utility/TypeUtil";
 import {ObjectUtil} from "../../../Utility/ObjectUtil";
 import {SuggestionResult} from "./SuggestionResult";
 

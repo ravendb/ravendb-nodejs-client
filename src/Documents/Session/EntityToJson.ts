@@ -9,7 +9,6 @@ import { Mapping } from "../../Mapping";
 import { ObjectTypeDescriptor} from "../..";
 import { throwError } from "../../Exceptions";
 import {SetupDocumentBase} from "../SetupDocumentBase";
-import {ObjectUtil} from "../../Utility/ObjectUtil";
 
 export class EntityToJson {
 
