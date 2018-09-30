@@ -18,13 +18,13 @@ import { StringUtil } from "../../../Utility/StringUtil";
 const log = getLogger({ module: "QueryOperation" });
 
 export class QueryOperation {
-    private _session: InMemoryDocumentSessionOperations;
-    private _indexName: string;
-    private _indexQuery: IndexQuery;
-    private _metadataOnly: boolean;
-    private _indexEntriesOnly: boolean;
+    private readonly _session: InMemoryDocumentSessionOperations;
+    private readonly _indexName: string;
+    private readonly _indexQuery: IndexQuery;
+    private readonly _metadataOnly: boolean;
+    private readonly _indexEntriesOnly: boolean;
     private _currentQueryResults: QueryResult;
-    private _fieldsToFetch: FieldsToFetchToken;
+    private readonly _fieldsToFetch: FieldsToFetchToken;
     private _sp: Stopwatch;
     private _disableEntitiesTracking: boolean;
 

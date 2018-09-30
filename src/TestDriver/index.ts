@@ -29,8 +29,8 @@ const log = getLogger({ module: "TestDriver" });
 
 export abstract class RavenTestDriver implements IDisposable {
 
-    private _locator: RavenServerLocator;
-    private _securedLocator: RavenServerLocator;
+    private readonly _locator: RavenServerLocator;
+    private readonly _securedLocator: RavenServerLocator;
 
     private static _globalServer: DocumentStore;
     private static _globalServerProcess: ChildProcess;

@@ -306,7 +306,8 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    // TBD public IDocumentQuery<T> WhereIn<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values, bool exact = false)
+    // TBD public IDocumentQuery<T> WhereIn<TValue>(Expression<Func<T, TValue>> propertySelector,
+    // IEnumerable<TValue> values, bool exact = false)
 
     public whereStartsWith(fieldName: string, value: any): IDocumentQuery<T> {
         this._whereStartsWith(fieldName, value);
@@ -366,7 +367,8 @@ export class DocumentQuery<T extends object>
     // tslint:disable-next-line:max-line-length
     // TBD public IDocumentQuery<T> WhereLessThanOrEqual<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
 
-    // TBD public IDocumentQuery<T> WhereLessThanOrEqual<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
+    // TBD public IDocumentQuery<T> WhereLessThanOrEqual<TValue>(
+    //      Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
     // TBD public IDocumentQuery<T> WhereExists<TValue>(Expression<Func<T, TValue>> propertySelector)
 
     public whereExists(fieldName: string): IDocumentQuery<T> {
@@ -448,7 +450,8 @@ export class DocumentQuery<T extends object>
 
     // TBD public IDocumentQuery<T> OrderBy<TValue>(params Expression<Func<T, TValue>>[] propertySelectors)
 
-    // TBD expr public IDocumentQuery<T> OrderByDescending<TValue>(params Expression<Func<T, TValue>>[] propertySelectors)
+    // TBD expr public IDocumentQuery<T> OrderByDescending<TValue>(
+    //      params Expression<Func<T, TValue>>[] propertySelectors)
 
     private  _createDocumentQueryInternal<TResult extends object>(
         resultClass: DocumentType<TResult>): DocumentQuery<TResult>;
@@ -537,7 +540,7 @@ export class DocumentQuery<T extends object>
         ...facets: Facet[]): IAggregationDocumentQuery<T> {
         
         if (TypeUtil.isNullOrUndefined(facetOrFacetBuilder)) {
-            throwError("InvalidArgumentException", "Aggr");
+            throwError("InvalidArgumentException", "Aggr"); //TODO: update message!
         }
 
         const argType = typeof facetOrFacetBuilder;

@@ -33,9 +33,9 @@ describe("FirstClassPatchTest", function () {
         {
             const session = store.openSession();
             const loaded = await session.load(user["id"]);
-            assert.equal(loaded["stuff"].length, 3);
-            assert.equal(loaded["stuff"][0].key, 6);
-            assert.equal(loaded["stuff"][1], null);
+            assert.strictEqual(loaded["stuff"].length, 3);
+            assert.strictEqual(loaded["stuff"][0].key, 6);
+            assert.strictEqual(loaded["stuff"][1], null);
         }
 
         const now = new Date();

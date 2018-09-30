@@ -8,23 +8,26 @@ import {GetDocumentsCommand} from "./GetDocumentsCommand";
 
 export class GetRevisionsCommand extends RavenCommand<IRavenArrayResult> {
 
-    private _id: string;
-    private _start: number;
-    private _pageSize: number;
-    private _metadataOnly: boolean;
-    private _before: Date;
-    private _changeVector: string;
-    private _changeVectors: string[];
-    private _conventions: DocumentConventions;
+    private readonly _id: string;
+    private readonly _start: number;
+    private readonly _pageSize: number;
+    private readonly _metadataOnly: boolean;
+    private readonly _before: Date;
+    private readonly _changeVector: string;
+    private readonly _changeVectors: string[];
+    private readonly _conventions: DocumentConventions;
 
     public constructor(conventions: DocumentConventions, changeVector: string);
     public constructor(conventions: DocumentConventions, changeVector: string, metadataOnly: boolean);
     public constructor(conventions: DocumentConventions, changeVectors: string[]);
     public constructor(conventions: DocumentConventions, changeVectors: string[], metadataOnly: boolean);
     public constructor(conventions: DocumentConventions, id: string, before: Date);
-    public constructor(conventions: DocumentConventions, id: string, start: number, pageSize: number);
-    public constructor(conventions: DocumentConventions, id: string, start: number, pageSize: number, metadataOnly: boolean);
-    public constructor(conventions: DocumentConventions, changeVectorOrVectorsOrId: string | string[], beforeOrMetadataOrStart?: boolean | Date | number,
+    public constructor(conventions: DocumentConventions, id: string, start: number,
+                       pageSize: number);
+    public constructor(conventions: DocumentConventions, id: string, start: number, pageSize: number,
+                       metadataOnly: boolean);
+    public constructor(conventions: DocumentConventions, changeVectorOrVectorsOrId: string | string[],
+                       beforeOrMetadataOrStart?: boolean | Date | number,
                        pageSize?: number, metadataOnly?: boolean) {
         super();
 
@@ -102,6 +105,5 @@ export class GetRevisionsCommand extends RavenCommand<IRavenArrayResult> {
                 bodyStream, this._conventions, b => body = b);
 
         return body as string;
-
     }
 }

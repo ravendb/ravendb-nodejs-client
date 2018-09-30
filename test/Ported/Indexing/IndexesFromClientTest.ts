@@ -20,7 +20,6 @@ import {
     StartIndexingOperation,
     StopIndexOperation,
     GetIndexesOperation,
-    GetIndexesStatisticsOperation,
     GetIndexStatisticsOperation, SetIndexesLockOperation, SetIndexesPriorityOperation, GetTermsOperation,
 } from "../../../src";
 import { DeleteIndexOperation } from "../../../src/Documents/Operations/Indexes/DeleteIndexOperation";
@@ -104,7 +103,7 @@ describe("Indexes from client", function () {
             const indexNamesOperation = new GetIndexNamesOperation(0, 10);
             const indexNames = await store.maintenance.send(indexNamesOperation);
 
-            assert.equal(indexNames.length, 1);
+            assert.strictEqual(indexNames.length, 1);
     });
 
     it("can delete index", async () => {
@@ -118,7 +117,7 @@ describe("Indexes from client", function () {
 
         const statistics = command.result;
 
-        assert.equal(statistics.indexes.length, 0);
+        assert.strictEqual(statistics.indexes.length, 0);
     });
 
     it("can stop and start", async () => {
@@ -303,7 +302,7 @@ describe("Indexes from client", function () {
         await store.getRequestExecutor().execute(command);
 
         const explanations = command.result;
-        assert.equal(explanations.length, 1);
+        assert.strictEqual(explanations.length, 1);
         assert.ok(explanations[0].index);
         assert.ok(explanations[0].reason);
     });
@@ -315,7 +314,7 @@ describe("Indexes from client", function () {
             const post2 = Object.assign(new Post(), { id: "posts/2", title: "doduck", desc: "prototype your idea" });
             const post3 = Object.assign(new Post(), { id: "posts/3", title: "doduck", desc: "love programming" });
             const post4 = Object.assign(new Post(), { id: "posts/4", title: "We do", desc: "prototype" });
-            const post5 = Object.assign(new Post(), { id: "posts/5", title: "We love", desc: "challange" });
+            const post5 = Object.assign(new Post(), { id: "posts/5", title: "We love", desc: "challenge" });
 
             await session.store(post1);
             await session.store(post2);

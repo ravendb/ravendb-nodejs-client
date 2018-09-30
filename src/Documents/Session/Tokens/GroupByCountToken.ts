@@ -2,7 +2,7 @@ import { QueryToken } from "./QueryToken";
 
 export class GroupByCountToken extends QueryToken {
 
-    private _fieldName: string;
+    private readonly _fieldName: string;
 
     private constructor(fieldName: string) {
         super();

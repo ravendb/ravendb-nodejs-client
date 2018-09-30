@@ -17,7 +17,7 @@ describe("HttpsTest", function () {
         await disposeTestDocumentStore(store));
 
     it("can connect with certificate", async () => {
-        assert.equal(store.urls[0].slice(0, 5), "https");
+        assert.strictEqual(store.urls[0].slice(0, 5), "https");
         const session = store.openSession();
         await session.store({ lastName: "Snow" }, "users/1");
         await session.saveChanges();

@@ -2,8 +2,8 @@
 /// <reference path="./string-builder.d.ts" />
 
 declare module "xregexp" {
-  const a: any;
-  export = a; 
+    const a: any;
+    export = a;
 }
 
 interface Console {

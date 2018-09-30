@@ -6,11 +6,9 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
 import * as stream from "readable-stream";
-import { 
-    RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
 export class GetIndexOperation implements IMaintenanceOperation<IndexDefinition> {
 
-    private _indexName: string;
+    private readonly _indexName: string;
 
     public constructor(indexName: string) {
         if (!indexName) {
@@ -31,7 +29,7 @@ export class GetIndexOperation implements IMaintenanceOperation<IndexDefinition>
 
 export class GetIndexCommand extends RavenCommand<IndexDefinition> {
 
-    private _indexName: string;
+    private readonly _indexName: string;
 
     public constructor(indexName: string) {
         super();

@@ -4,7 +4,7 @@ import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
     DeleteDocumentCommand,
-    DocumentStore, GetStatisticsOperation, IDocumentSession,
+    GetStatisticsOperation, IDocumentSession,
     IDocumentStore, IMetadataDictionary,
 } from "../../../src";
 import {User} from "../../Assets/Entities";

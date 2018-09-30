@@ -92,13 +92,13 @@ import { throwError } from "../../../src/Exceptions";
 
                             const user = await documentQuery.first();
 
-                            assert.equal(user.name, "John");
+                            assert.strictEqual(user.name, "John");
 
                             try {
                                 await session.load<Address>(user.addressId);
                                 assert.fail("Should have thrown");
                             } catch (err) {
-                                assert.equal(err.name, "DocumentConflictException");
+                                assert.strictEqual(err.name, "DocumentConflictException");
                             }
 
                             const queryCommand = new QueryCommand(
@@ -112,7 +112,7 @@ import { throwError } from "../../../src/Exceptions";
                             const result = queryCommand.result;
                             const address = result.includes["addresses/1"];
                             const metadata = address["@metadata"];
-                            assert.equal(metadata["@id"], "addresses/1");
+                            assert.strictEqual(metadata["@id"], "addresses/1");
 
                             assert.ok(tryGetConflict(metadata));
                         }

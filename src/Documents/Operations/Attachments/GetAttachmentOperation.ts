@@ -10,7 +10,6 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { throwError } from "../../../Exceptions";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { ServerNode } from "../../../Http/ServerNode";
-import { StatusCodes } from "../../../Http/StatusCode";
 import * as stream from "readable-stream";
 
 export class GetAttachmentOperation implements IOperation<AttachmentResult> {

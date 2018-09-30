@@ -20,7 +20,7 @@ export class CollectResultStream<TResult = object> extends stream.Writable {
 
     private _resultIndex = 0;
     private _result: TResult; 
-    private _reduceResults: (
+    private readonly _reduceResults: (
         result: TResult, 
         next: object, 
         index?: number) => TResult;

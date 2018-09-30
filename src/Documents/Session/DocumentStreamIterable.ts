@@ -1,6 +1,4 @@
 import { StreamResult } from "../Commands/StreamResult";
-import { IDisposable } from "../../Types/Contracts";
-import { EventEmitter } from "events";
 import * as stream from "readable-stream";
 import { TypedEventEmitter } from "../../Primitives/Events";
 import { StreamQueryStatistics } from "./StreamQueryStatistics";
@@ -10,10 +8,10 @@ export interface StreamingQueryEvents {
 }
 
 export interface DocumentStreamResultEvents<TEntity extends object> {
-    "data": StreamResult<TEntity>;
-    "error": Error;
-    "stats": StreamQueryStatistics;
-    "end": void;
+    data: StreamResult<TEntity>;
+    error: Error;
+    stats: StreamQueryStatistics;
+    end: void;
 }
 
 export interface DocumentResultStream<T extends object> 

@@ -1,12 +1,8 @@
 import * as moment from "moment";
-import * as mocha from "mocha";
-import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
-    RavenErrorType,
-    GetNextOperationIdCommand,
     IDocumentStore,
     AbstractIndexCreationTask,
     RangeBuilder,
@@ -104,9 +100,9 @@ describe("AggregationTest", function () {
                     .execute();
 
                 const facetResult = result["region"];
-                assert.equal(facetResult.values[0].count, 2);
-                assert.equal(facetResult.values[0].min, 1);
-                assert.equal(facetResult.values[0].max, 1.1);
+                assert.strictEqual(facetResult.values[0].count, 2);
+                assert.strictEqual(facetResult.values[0].min, 1);
+                assert.strictEqual(facetResult.values[0].max, 1.1);
             }
         });
 
@@ -144,14 +140,14 @@ describe("AggregationTest", function () {
                     .execute();
 
                 let facetResult = r["product"];
-                assert.equal(facetResult.values.length, 2);
-                assert.equal(facetResult.values.filter(x => x.range === "milk")[0].sum, 12);
-                assert.equal(facetResult.values.filter(x => x.range === "iphone")[0].sum, 3333);
+                assert.strictEqual(facetResult.values.length, 2);
+                assert.strictEqual(facetResult.values.filter(x => x.range === "milk")[0].sum, 12);
+                assert.strictEqual(facetResult.values.filter(x => x.range === "iphone")[0].sum, 3333);
 
                 facetResult = r["currency"];
-                assert.equal(facetResult.values.length, 2);
-                assert.equal(facetResult.values.filter(x => x.range === "eur")[0].sum, 3336);
-                assert.equal(facetResult.values.filter(x => x.range === "nis")[0].sum, 9);
+                assert.strictEqual(facetResult.values.length, 2);
+                assert.strictEqual(facetResult.values.filter(x => x.range === "eur")[0].sum, 3336);
+                assert.strictEqual(facetResult.values.filter(x => x.range === "nis")[0].sum, 9);
             }
         });
 
@@ -188,11 +184,11 @@ describe("AggregationTest", function () {
                     .execute();
 
                 const facetResult = r["product"];
-                assert.equal(facetResult.values.length, 2);
-                assert.equal(facetResult.values.filter(x => x.range === "milk")[0].max, 9);
-                assert.equal(facetResult.values.filter(x => x.range === "milk")[0].min, 3);
-                assert.equal(facetResult.values.filter(x => x.range === "iphone")[0].max, 3333);
-                assert.equal(facetResult.values.filter(x => x.range === "iphone")[0].min, 3333);
+                assert.strictEqual(facetResult.values.length, 2);
+                assert.strictEqual(facetResult.values.filter(x => x.range === "milk")[0].max, 9);
+                assert.strictEqual(facetResult.values.filter(x => x.range === "milk")[0].min, 3);
+                assert.strictEqual(facetResult.values.filter(x => x.range === "iphone")[0].max, 3333);
+                assert.strictEqual(facetResult.values.filter(x => x.range === "iphone")[0].min, 3333);
             }
         });
 
@@ -230,11 +226,11 @@ describe("AggregationTest", function () {
                     .andAggregateBy(x => x.byField("product").withDisplayName("productMin"))
                     .execute();
 
-                assert.equal(Object.keys(r).length, 2);
+                assert.strictEqual(Object.keys(r).length, 2);
                 assert.ok(r["productMax"]);
                 assert.ok(r["productMin"]);
-                assert.equal(r["productMax"].values[0].max, 3333);
-                assert.equal(r["productMin"].values[1].count, 2);
+                assert.strictEqual(r["productMax"].values[0].max, 3333);
+                assert.strictEqual(r["productMin"].values[1].count, 2);
             }
 
         });
@@ -281,9 +277,9 @@ describe("AggregationTest", function () {
                     .execute();
 
                 let facetResult = r["product"];
-                assert.equal(Object.keys(r).length, 2);
-                assert.equal(facetResult.values.filter(x => x.range === "milk")[0].sum, 12);
-                assert.equal(facetResult.values.filter(x => x.range === "iphone")[0].sum, 3333);
+                assert.strictEqual(Object.keys(r).length, 2);
+                assert.strictEqual(facetResult.values.filter(x => x.range === "milk")[0].sum, 12);
+                assert.strictEqual(facetResult.values.filter(x => x.range === "iphone")[0].sum, 3333);
 
                 facetResult = r["total"];
                 assert.strictEqual(facetResult.values.length, 4);

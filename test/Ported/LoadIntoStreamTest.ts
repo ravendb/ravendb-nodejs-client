@@ -1,14 +1,12 @@
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import {
-    IDocumentSession,
     IDocumentStore,
 } from "../../src";
 import * as assert from "assert";
-import * as stream from "readable-stream";
 import { getStringWritable } from "../Utils/Streams";
 import { parseJsonVerbose } from "../Utils/Json";
-import * as StreamUtil from "../../src/Utility/StreamUtil";
+import * as stream from "readable-stream";
 
 class Employee {
     public firstName: string;

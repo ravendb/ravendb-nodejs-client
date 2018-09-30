@@ -18,9 +18,9 @@ import { ignore } from "stream-json/filters/Ignore";
 
 export class PutCompareExchangeValueOperation<T> implements IOperation<CompareExchangeResult<T>> {
 
-    private _key: string;
-    private _value: T;
-    private _index: number;
+    private readonly _key: string;
+    private readonly _value: T;
+    private readonly _index: number;
     
     public constructor(key: string, value: T, index: number) {
         this._key = key;
@@ -41,10 +41,10 @@ export class PutCompareExchangeValueOperation<T> implements IOperation<CompareEx
 }
 
 export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExchangeResult<T>> {
-    private _key: string;
-    private _value: T;
-    private _index: number;
-    private _conventions: DocumentConventions;
+    private readonly _key: string;
+    private readonly _value: T;
+    private readonly _index: number;
+    private readonly _conventions: DocumentConventions;
 
     public constructor(
         key: string,

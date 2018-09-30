@@ -13,8 +13,8 @@ import * as stream from "readable-stream";
 
 export class GetCompareExchangeValueOperation<T> implements IOperation<CompareExchangeValue<T>> {
 
-    private _key: string;
-    private _clazz: ClassConstructor<T>;
+    private readonly _key: string;
+    private readonly _clazz: ClassConstructor<T>;
 
     public constructor(key: string, clazz?: ClassConstructor<T>) {
         this._key = key;
@@ -34,9 +34,9 @@ export class GetCompareExchangeValueOperation<T> implements IOperation<CompareEx
 }
 
 export class GetCompareExchangeValueCommand<T> extends RavenCommand<CompareExchangeValue<T>> {
-    private _key: string;
-    private _clazz: ClassConstructor<T>;
-    private _conventions: DocumentConventions;
+    private readonly _key: string;
+    private readonly _clazz: ClassConstructor<T>;
+    private readonly _conventions: DocumentConventions;
 
     public constructor(key: string, conventions: DocumentConventions, clazz?: ClassConstructor<T>) {
         super();

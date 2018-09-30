@@ -57,21 +57,21 @@ export interface GetDocumentsResult extends DocumentsResult {
 
 export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
 
-    private _id: string;
+    private readonly _id: string;
 
-    private _ids: string[];
-    private _includes: string[];
+    private readonly _ids: string[];
+    private readonly _includes: string[];
 
-    private _metadataOnly: boolean;
+    private readonly _metadataOnly: boolean;
 
-    private _startsWith: string;
-    private _matches: string;
-    private _start: number;
-    private _pageSize: number;
-    private _exclude: string;
-    private _startAfter: string;
+    private readonly _startsWith: string;
+    private readonly _matches: string;
+    private readonly _start: number;
+    private readonly _pageSize: number;
+    private readonly _exclude: string;
+    private readonly _startAfter: string;
 
-    private _conventions: DocumentConventions;
+    private readonly _conventions: DocumentConventions;
 
     public constructor(
         opts: GetDocumentsByIdCommandOptions | GetDocumentsByIdsCommandOptions | GetDocumentsStartingWithOptions) {

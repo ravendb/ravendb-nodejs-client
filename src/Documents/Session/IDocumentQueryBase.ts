@@ -23,7 +23,8 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      */
     addOrder(fieldName: string, descending: boolean, ordering: OrderingType): TSelf;
 
-    //TBD TSelf AddOrder<TValue>(Expression<Func<T, TValue>> propertySelector, bool descending = false, OrderingType ordering = OrderingType.String);
+    //TBD TSelf AddOrder<TValue>(Expression<Func<T, TValue>> propertySelector,
+    //      bool descending = false, OrderingType ordering = OrderingType.String);
 
     /**
      * Specifies a boost weight to the last where clause.
@@ -55,17 +56,24 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      */
     fuzzy(fuzzy: number): TSelf;
 
-    //TBD 4.1 TSelf Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField);
+    //TBD 4.1 TSelf Highlight(string fieldName, int fragmentLength,
+    //     int fragmentCount, string fragmentsField);
 
-    //TBD 4.1 TSelf Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
+    //TBD 4.1 TSelf Highlight(string fieldName, int fragmentLength,
+    //     int fragmentCount, out FieldHighlightings highlightings);
 
-    //TBD 4.1 TSelf Highlight(string fieldName, string fieldKeyName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
+    //TBD 4.1 TSelf Highlight(string fieldName, string fieldKeyName, int fragmentLength,
+    //     int fragmentCount, out FieldHighlightings highlightings);
 
-    //TBD 4.1 TSelf Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, int fragmentLength, int fragmentCount, Expression<Func<T, IEnumerable>> fragmentsPropertySelector);
+    //TBD 4.1 TSelf Highlight<TValue>(Expression<Func<T, TValue>> propertySelector,
+    //     int fragmentLength, int fragmentCount, Expression<Func<T, IEnumerable>> fragmentsPropertySelector);
 
-    //TBD 4.1 TSelf Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
+    //TBD 4.1 TSelf Highlight<TValue>(Expression<Func<T, TValue>> propertySelector,
+    //     int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
 
-    //TBD 4.1 TSelf Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, Expression<Func<T, TValue>> keyPropertySelector, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
+    //TBD 4.1 TSelf Highlight<TValue>(Expression<Func<T, TValue>> propertySelector,
+    //     Expression<Func<T, TValue>> keyPropertySelector, int fragmentLength, int fragmentCount,
+    //     out FieldHighlightings highlightings);
 
     /**
      * Includes the specified path in the query, loading the document specified in that path
@@ -169,13 +177,15 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      */
     orderByDistance(field: DynamicSpatialField, latitude: number, longitude: number): TSelf;
 
-    //TBD TSelf OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude);
+    //TBD TSelf OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field,
+    //     double latitude, double longitude);
 
     orderByDistance(field: DynamicSpatialField, shapeWkt: string): TSelf;
 
     //TBD TSelf OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt);
 
-    //TBD TSelf OrderByDistance<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude);
+    //TBD TSelf OrderByDistance<TValue>(Expression<Func<T, TValue>> propertySelector,
+    //     double latitude, double longitude);
 
     /**
      * Sorts the query results by distance.
@@ -205,13 +215,16 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      */
     orderByDistanceDescending(field: DynamicSpatialField, latitude: number, longitude: number): TSelf;
 
-    //TBD TSelf OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude);
+    //TBD TSelf OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>,
+    //     DynamicSpatialField> field, double latitude, double longitude);
 
     orderByDistanceDescending(field: DynamicSpatialField, shapeWkt: string): TSelf;
 
-    //TBD TSelf OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt);
+    //TBD TSelf OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>,
+    //     DynamicSpatialField> field, string shapeWkt);
 
-    //TBD TSelf OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude);
+    //TBD TSelf OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector,
+    //     double latitude, double longitude);
 
     /**
      * Sorts the query results by distance.

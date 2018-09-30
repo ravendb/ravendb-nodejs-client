@@ -27,12 +27,11 @@ describe("session.delete()", function () {
 
         assert.ok(user);
 
-        session.delete(user);
+        await session.delete(user);
         await session.saveChanges();
 
         const nullUser = await session.load("users/1");
         assert.ok(!nullUser);
-        assert.equal(nullUser, null);
 
     });
 
@@ -46,11 +45,10 @@ describe("session.delete()", function () {
 
         assert.ok(user);
 
-        session.delete("users/1");
+        await session.delete("users/1");
         await session.saveChanges();
 
         const nullUser = await session.load("users/1");
         assert.ok(!nullUser);
-        assert.equal(nullUser, null);
     });
 });

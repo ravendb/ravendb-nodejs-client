@@ -6,7 +6,7 @@ import * as stream from "readable-stream";
 
 export class NextIdentityForCommand extends RavenCommand<number> {
 
-    private _id: string;
+    private readonly _id: string;
 
     public constructor(id: string) {
         super();

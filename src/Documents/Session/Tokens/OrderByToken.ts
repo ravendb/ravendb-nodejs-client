@@ -4,9 +4,9 @@ import { throwError } from "../../../Exceptions";
 
 export class OrderByToken extends QueryToken {
 
-    private _fieldName: string;
-    private _descending: boolean;
-    private _ordering: OrderingType;
+    private readonly _fieldName: string;
+    private readonly _descending: boolean;
+    private readonly _ordering: OrderingType;
 
     private constructor(fieldName: string, descending: boolean, ordering: OrderingType) {
         super();

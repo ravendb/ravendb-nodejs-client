@@ -52,8 +52,8 @@ describe("SpatialSearchTest", function () {
                 .orderByDescending("date")
                 .all();
 
-            assert.equal(queryStats.totalResults, 2);
-            assert.deepEqual(events.map(x => x.venue), ["c/3", "b/2"]);
+            assert.strictEqual(queryStats.totalResults, 2);
+            assert.deepStrictEqual(events.map(x => x.venue), ["c/3", "b/2"]);
         }
     });
 
@@ -69,13 +69,13 @@ describe("SpatialSearchTest", function () {
                 .waitForNonStaleResults();
 
             const iq = matchingValues.getIndexQuery();
-            assert.equal(
+            assert.strictEqual(
                 iq.query,
                 "from index 'SpatialIdx' where spatial.within(coordinates, spatial.circle($p0, $p1, $p2))");
 
-            assert.equal(iq.queryParameters["p0"], 5.0);
-            assert.equal(iq.queryParameters["p1"], 38.9103);
-            assert.equal(iq.queryParameters["p2"], -77.3942);
+            assert.strictEqual(iq.queryParameters["p0"], 5.0);
+            assert.strictEqual(iq.queryParameters["p1"], 38.9103);
+            assert.strictEqual(iq.queryParameters["p2"], -77.3942);
         }
     });
 
@@ -112,8 +112,8 @@ describe("SpatialSearchTest", function () {
                 .orderByDescending("date")
                 .all();
 
-            assert.equal(queryStats.totalResults, 2);
-            assert.deepEqual(events.map(x => x.venue), ["c/3", "b/2"]);
+            assert.strictEqual(queryStats.totalResults, 2);
+            assert.deepStrictEqual(events.map(x => x.venue), ["c/3", "b/2"]);
         }
     });
 
@@ -148,7 +148,7 @@ describe("SpatialSearchTest", function () {
                 .addOrder("venue", false)
                 .all();
 
-            assert.deepEqual(events.map(x => x.venue),
+            assert.deepStrictEqual(events.map(x => x.venue),
                 ["a/2", "b/2", "c/2", "a/1", "b/1", "c/1", "a/3", "b/3", "c/3"]);
         }
 
@@ -160,7 +160,7 @@ describe("SpatialSearchTest", function () {
                 .orderByDistance("coordinates", 38.96939, -77.386398)
                 .all();
 
-            assert.deepEqual(events.map(x => x.venue),
+            assert.deepStrictEqual(events.map(x => x.venue),
                 ["a/1", "a/2", "a/3", "b/1", "b/2", "b/3", "c/1", "c/2", "c/3"]);
         }
     });

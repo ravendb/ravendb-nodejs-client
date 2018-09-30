@@ -49,9 +49,9 @@ describe("RavenDB_9676", function () {
                 .orderByDistance(new PointField("latitude", "longitude"), 10, 10)
                 .all();
 
-            assert.equal(items.length, 2);
-            assert.equal(items[0].name, "Item1");
-            assert.equal(items[1].name, "Item2");
+            assert.strictEqual(items.length, 2);
+            assert.strictEqual(items[0].name, "Item1");
+            assert.strictEqual(items[1].name, "Item2");
 
             items = await session.query<Item>(Item)
                 .waitForNonStaleResults()
@@ -59,9 +59,9 @@ describe("RavenDB_9676", function () {
                 .orderByDistanceDescending(new PointField("latitude", "longitude"), 10, 10)
                 .all();
 
-            assert.equal(items.length, 2);
-            assert.equal(items[0].name, "Item2");
-            assert.equal(items[1].name, "Item1");
+            assert.strictEqual(items.length, 2);
+            assert.strictEqual(items[0].name, "Item2");
+            assert.strictEqual(items[1].name, "Item1");
         }
     });
 });

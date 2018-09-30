@@ -30,11 +30,11 @@ describe("session.exists()", function () {
         
         {
             const session = store.openSession();
-            assert.equal(await session.advanced.exists("users/1"), true);
-            assert.equal(await session.advanced.exists("users/10"), false);
+            assert.strictEqual(await session.advanced.exists("users/1"), true);
+            assert.strictEqual(await session.advanced.exists("users/10"), false);
 
             await session.load("users/2", User);
-            assert.equal(await session.advanced.exists("users/2"),  true);
+            assert.strictEqual(await session.advanced.exists("users/2"),  true);
 
         }
     });

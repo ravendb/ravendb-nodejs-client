@@ -11,7 +11,6 @@ import {
     IDocumentSession} from "../../src";
 import { DateUtil } from "../../src/Utility/DateUtil";
 import { TypeUtil } from "../../src/Utility/TypeUtil";
-import { QueryData } from "../../src/Documents/Queries/QueryData";
 
 describe("QueryTest", function () {
 
@@ -40,7 +39,7 @@ describe("QueryTest", function () {
             isMapReduce: false,
             documentType: User
         }).all();
-        assert.equal(queryResult.length, 3);
+        assert.strictEqual(queryResult.length, 3);
 
         const names = new Set(queryResult.map(x => x.name));
         const expectedNames = new Set(users.map(x => x.name));
@@ -60,8 +59,8 @@ describe("QueryTest", function () {
 
         const stats = await store.maintenance.send(new GetCollectionStatisticsOperation());
 
-        assert.equal(stats.countOfDocuments, 2);
-        assert.equal(stats.collections["Users"], 2);
+        assert.strictEqual(stats.countOfDocuments, 2);
+        assert.strictEqual(stats.collections["Users"], 2);
     });
 
     it("query with where clause", async () => {
@@ -87,11 +86,11 @@ describe("QueryTest", function () {
             .whereEndsWith("name", "n")
             .all();
 
-        assert.equal(queryResult.length, 2);
-        assert.equal(queryResult2.length, 1);
-        assert.equal(queryResult3.length, 2);
+        assert.strictEqual(queryResult.length, 2);
+        assert.strictEqual(queryResult2.length, 1);
+        assert.strictEqual(queryResult3.length, 2);
 
-        assert.equal(queryResult[0].constructor, User);
+        assert.strictEqual(queryResult[0].constructor, User);
     });
 
     describe("with regular users set", () => {
@@ -108,12 +107,12 @@ describe("QueryTest", function () {
                 .ofType<ReduceResult>(ReduceResult)
                 .all();
 
-            assert.equal(results[0].constructor, ReduceResult);
-            assert.equal(results[0].count, 2);
-            assert.equal(results[0].name, "John");
+            assert.strictEqual(results[0].constructor, ReduceResult);
+            assert.strictEqual(results[0].count, 2);
+            assert.strictEqual(results[0].name, "John");
 
-            assert.equal(results[1].count, 1);
-            assert.equal(results[1].name, "Tarzan");
+            assert.strictEqual(results[1].count, 1);
+            assert.strictEqual(results[1].name, "Tarzan");
         });
 
         it("query map reduce with sum", async () => {
@@ -126,12 +125,12 @@ describe("QueryTest", function () {
                 .ofType<ReduceResult>(ReduceResult)
                 .all();
 
-            assert.equal(results[0].constructor, ReduceResult);
-            assert.equal(results[0].age, 8);
-            assert.equal(results[0].name, "John");
+            assert.strictEqual(results[0].constructor, ReduceResult);
+            assert.strictEqual(results[0].age, 8);
+            assert.strictEqual(results[0].name, "John");
 
-            assert.equal(results[1].age, 2);
-            assert.equal(results[1].name, "Tarzan");
+            assert.strictEqual(results[1].age, 2);
+            assert.strictEqual(results[1].name, "Tarzan");
         });
 
         it("query map reduce index", async () => {
@@ -143,11 +142,11 @@ describe("QueryTest", function () {
                 .orderByDescending("count")
                 .all();
 
-            assert.equal(results[0].count, 2);
-            assert.equal(results[0].name, "John");
+            assert.strictEqual(results[0].count, 2);
+            assert.strictEqual(results[0].name, "John");
 
-            assert.equal(results[1].count, 1);
-            assert.equal(results[1].name, "Tarzan");
+            assert.strictEqual(results[1].count, 1);
+            assert.strictEqual(results[1].name, "Tarzan");
         });
 
         it("query single property", async () => {
@@ -157,8 +156,8 @@ describe("QueryTest", function () {
                 .selectFields<number>("age")
                 .all();
 
-            assert.equal(results.length, 3);
-            assert.deepEqual(results, [5, 3, 2]);
+            assert.strictEqual(results.length, 3);
+            assert.deepStrictEqual(results, [5, 3, 2]);
 
         });
 
@@ -169,7 +168,7 @@ describe("QueryTest", function () {
                 .all();
 
             for (const entry of results) {
-                assert.equal(typeof entry, "object");
+                assert.strictEqual(typeof entry, "object");
                 assert.ok(entry.age > 0);
                 assert.ok(entry.id);
             }
@@ -181,7 +180,7 @@ describe("QueryTest", function () {
                 .whereIn("name", ["Tarzan", "no_such"])
                 .all();
 
-            assert.equal(results.length, 1);
+            assert.strictEqual(results.length, 1);
         });
 
         it("query with where between", async () => {
@@ -190,8 +189,8 @@ describe("QueryTest", function () {
                 .whereBetween("age", 4, 5)
                 .all();
 
-            assert.equal(results.length, 1);
-            assert.equal(results[0].name, "John");
+            assert.strictEqual(results.length, 1);
+            assert.strictEqual(results[0].name, "John");
         });
 
         it("query with where less than", async () => {
@@ -200,8 +199,8 @@ describe("QueryTest", function () {
                 .whereLessThan("age", 3)
                 .all();
 
-            assert.equal(results.length, 1);
-            assert.equal(results[0].name, "Tarzan");
+            assert.strictEqual(results.length, 1);
+            assert.strictEqual(results[0].name, "Tarzan");
         });
 
         it("query with where less than or equal", async () => {
@@ -210,7 +209,7 @@ describe("QueryTest", function () {
                 .whereLessThanOrEqual("age", 3)
                 .all();
 
-            assert.equal(results.length, 2);
+            assert.strictEqual(results.length, 2);
         });
 
         it("query with where greater than", async () => {
@@ -219,8 +218,8 @@ describe("QueryTest", function () {
                 .whereGreaterThan("age", 3)
                 .all();
 
-            assert.equal(results.length, 1);
-            assert.equal(results[0].name, "John");
+            assert.strictEqual(results.length, 1);
+            assert.strictEqual(results[0].name, "John");
         });
 
         it("query with where greater than or equal", async () => {
@@ -229,7 +228,7 @@ describe("QueryTest", function () {
                 .whereGreaterThanOrEqual("age", 3)
                 .all();
 
-            assert.equal(results.length, 2);
+            assert.strictEqual(results.length, 2);
         });
 
         class UserProjection {
@@ -243,8 +242,8 @@ describe("QueryTest", function () {
                 .selectFields<UserProjection>(["id", "name"], UserProjection);
 
             const results = await query.all();
-            assert.equal(results.length, 3);
-            assert.equal(results[0].constructor, UserProjection);
+            assert.strictEqual(results.length, 3);
+            assert.strictEqual(results[0].constructor, UserProjection);
 
             for (const entry of results) {
                 assert.ok(entry);
@@ -259,15 +258,14 @@ describe("QueryTest", function () {
                 .selectFields<UserProjection>(["lastName"], UserProjection)
                 .all();
 
-            assert.equal(results.length, 3);
-            assert.equal(results[0].constructor, UserProjection);
+            assert.strictEqual(results.length, 3);
+            assert.strictEqual(results[0].constructor, UserProjection);
 
             for (const entry of results) {
                 assert.ok(entry);
                 assert.ok(entry.id);
                 assert.ok(!entry.name);
             }
-
         });
 
         it("query distinct", async () => {
@@ -277,7 +275,7 @@ describe("QueryTest", function () {
                 .distinct()
                 .all();
 
-            assert.equal(uniqueNames.length, 2);
+            assert.strictEqual(uniqueNames.length, 2);
             assert.ok(uniqueNames.indexOf("Tarzan") !== -1);
             assert.ok(uniqueNames.indexOf("John") !== -1);
         });
@@ -288,7 +286,7 @@ describe("QueryTest", function () {
                 .search("name", "Tarzan John", "OR")
                 .all();
 
-            assert.equal(results.length, 3);
+            assert.strictEqual(results.length, 3);
         });
 
         it("query no tracking", async () => {
@@ -297,7 +295,7 @@ describe("QueryTest", function () {
                 .noTracking()
                 .all();
 
-            assert.equal(users.length, 3);
+            assert.strictEqual(users.length, 3);
 
             for (const user of users) {
                 assert.ok(user.id);
@@ -313,8 +311,8 @@ describe("QueryTest", function () {
                 .take(1)
                 .all();
 
-            assert.equal(users.length, 1);
-            assert.equal(users[0].name, "Tarzan");
+            assert.strictEqual(users.length, 1);
+            assert.strictEqual(users[0].name, "Tarzan");
         });
 
         it("raw query skip take", async () => {
@@ -324,8 +322,8 @@ describe("QueryTest", function () {
                 .take(1)
                 .all();
 
-            assert.equal(users.length, 1);
-            assert.equal(users[0].name, "Tarzan");
+            assert.strictEqual(users.length, 1);
+            assert.strictEqual(users[0].name, "Tarzan");
         });
 
         it("parameters in raw query", async () => {
@@ -334,8 +332,8 @@ describe("QueryTest", function () {
                 .addParameter("p0", 5)
                 .all();
 
-            assert.equal(users.length, 1);
-            assert.equal(users[0].name, "John");
+            assert.strictEqual(users.length, 1);
+            assert.strictEqual(users[0].name, "John");
         });
 
         it("query lucene", async () => {
@@ -344,10 +342,10 @@ describe("QueryTest", function () {
                 .whereLucene("name", "Tarzan")
                 .all();
 
-            assert.equal(users.length, 1);
+            assert.strictEqual(users.length, 1);
 
             for (const user of users) {
-                assert.equal(user.name, "Tarzan");
+                assert.strictEqual(user.name, "Tarzan");
             }
         });
 
@@ -357,32 +355,32 @@ describe("QueryTest", function () {
                 .whereEquals("name", "tarzan")
                 .all();
 
-            assert.equal(users.length, 1);
+            assert.strictEqual(users.length, 1);
 
             users = await session.query<User>(User)
                 .whereEquals("name", "tarzan", true)
                 .all();
 
-            assert.equal(users.length, 0);
+            assert.strictEqual(users.length, 0);
 
             users = await session.query<User>(User)
                 .whereEquals("name", "Tarzan", true)
                 .all();
-            assert.equal(users.length, 1);
+            assert.strictEqual(users.length, 1);
         });
 
         it("query where not", async () => {
             const session = store.openSession();
-            assert.equal((await session.query<User>(User)
+            assert.strictEqual((await session.query<User>(User)
                 .not()
                 .whereEquals("name", "tarzan")
                 .all()).length, 2);
 
-            assert.equal((await session.query<User>(User)
+            assert.strictEqual((await session.query<User>(User)
                 .whereNotEquals("name", "tarzan")
                 .all()).length, 2);
 
-            assert.equal((await session.query<User>(User)
+            assert.strictEqual((await session.query<User>(User)
                 .whereNotEquals("name", "Tarzan", true)
                 .all()).length, 2);
          });
@@ -400,24 +398,24 @@ describe("QueryTest", function () {
                 await session.query(User).single();
                 assert.fail("Should have thrown.");
             } catch (err) {
-                assert.equal(err.name, "InvalidOperationException");
+                assert.strictEqual(err.name, "InvalidOperationException");
             }
          });
 
         it("query parameters", async () => {
             const session = store.openSession();
-            assert.equal(await session.advanced.rawQuery("from Users where name = $name")
+            assert.strictEqual(await session.advanced.rawQuery("from Users where name = $name")
                 .addParameter("name", "Tarzan")
                 .count(), 1);
          });
 
         it("query random order", async () => {
             const session = store.openSession();
-            assert.equal((await session.query(User)
+            assert.strictEqual((await session.query(User)
                 .randomOrdering()
                 .all()).length, 3);
 
-            assert.equal((await session.query(User)
+            assert.strictEqual((await session.query(User)
                 .randomOrdering("123")
                 .all()).length, 3);
 
@@ -425,11 +423,11 @@ describe("QueryTest", function () {
 
         it("query where exists", async () => { 
             const session = store.openSession();
-            assert.equal(
+            assert.strictEqual(
                 (await session.query(User).whereExists("name").all()).length, 
                 3);
 
-            assert.equal((await session.query(User)
+            assert.strictEqual((await session.query(User)
                 .whereExists("name")
                 .andAlso()
                 .not()
@@ -448,10 +446,10 @@ describe("QueryTest", function () {
                 .orderByScore()
                 .all();
 
-            assert.equal(users.length, 3);
+            assert.strictEqual(users.length, 3);
 
             let names = users.map(x => x.name);
-            assert.deepEqual(names, ["Tarzan", "John", "John"]);
+            assert.deepStrictEqual(names, ["Tarzan", "John", "John"]);
 
             users = await session.query<User>(User)
                 .whereEquals("name", "Tarzan")
@@ -462,10 +460,10 @@ describe("QueryTest", function () {
                 .orderByScore()
                 .all();
 
-            assert.equal(users.length, 3);
+            assert.strictEqual(users.length, 3);
 
             names = users.map(x => x.name);
-            assert.deepEqual(names, ["John", "John", "Tarzan"]);
+            assert.deepStrictEqual(names, ["John", "John", "Tarzan"]);
          });
 
         it("query with customize", async () => {
@@ -493,8 +491,8 @@ describe("QueryTest", function () {
                         .whereGreaterThan("age", 2)
                         .all();
 
-                assert.equal(queryResult.length, 4);
-                assert.deepEqual(
+                assert.strictEqual(queryResult.length, 4);
+                assert.deepStrictEqual(
                     queryResult.map(x => x.name),
                     ["Brian", "Django", "Lassie", "Snoopy"]
                 );
@@ -596,8 +594,8 @@ describe("QueryTest", function () {
                 .whereEquals("vaccinated", false)
                 .all();
 
-            assert.equal(queryResult.length, 1);
-            assert.equal(queryResult[0].name, "Brian");
+            assert.strictEqual(queryResult.length, 1);
+            assert.strictEqual(queryResult[0].name, "Brian");
 
             const queryResult2 = await session.advanced
                 .documentQuery<DogsIndexResult>({
@@ -609,12 +607,12 @@ describe("QueryTest", function () {
                 .andAlso()
                 .whereEquals("vaccinated", false)
                 .all();
-            assert.equal(queryResult2.length, 3);
+            assert.strictEqual(queryResult2.length, 3);
 
             const list = queryResult2.map(x => x.name);
             list.sort();
 
-            assert.deepEqual(list, ["Beethoven", "Benji", "Scooby Doo"]);
+            assert.deepStrictEqual(list, ["Beethoven", "Benji", "Scooby Doo"]);
         }
     });
 
@@ -637,7 +635,7 @@ describe("QueryTest", function () {
             .whereEquals("name", longName)
             .all();
 
-        assert.equal(queryResult.length, 1);
+        assert.strictEqual(queryResult.length, 1);
     });
 
     it("query where between is inclusive", async () => {
@@ -657,7 +655,7 @@ describe("QueryTest", function () {
             .whereBetween("age", 1, 3)
             .all();
 
-            assert.equal(results.length, 3);
+            assert.strictEqual(results.length, 3);
         }
     });
 
@@ -691,14 +689,14 @@ describe("QueryTest", function () {
             .whereBetween("date", cocartFestival.date, offFestival.date);
 
             const indexQuery = q.getIndexQuery();
-            assert.equal(indexQuery.query, "from events where date between $p0 and $p1");
-            assert.equal(indexQuery.queryParameters["p0"], DateUtil.stringify(cocartFestival.date));
-            assert.equal(indexQuery.queryParameters["p1"], DateUtil.stringify(offFestival.date));
-            assert.equal(indexQuery.query, "from events where date between $p0 and $p1");
+            assert.strictEqual(indexQuery.query, "from events where date between $p0 and $p1");
+            assert.strictEqual(indexQuery.queryParameters["p0"], DateUtil.stringify(cocartFestival.date));
+            assert.strictEqual(indexQuery.queryParameters["p1"], DateUtil.stringify(offFestival.date));
+            assert.strictEqual(indexQuery.query, "from events where date between $p0 and $p1");
 
             const festivalsHappeningBetweenCocartAndOffInclusive: any[] = await q.all();
 
-            assert.equal(festivalsHappeningBetweenCocartAndOffInclusive.length, 3);
+            assert.strictEqual(festivalsHappeningBetweenCocartAndOffInclusive.length, 3);
             assert.ok(TypeUtil.isDate(festivalsHappeningBetweenCocartAndOffInclusive[0].date));
 
             const festivalsHappeningBetweenCocartAndOffExclusive = await session.query({
@@ -710,7 +708,7 @@ describe("QueryTest", function () {
                 moment(offFestival.date).add(-1, "d").toDate())
             .all();
 
-            assert.equal(festivalsHappeningBetweenCocartAndOffExclusive.length, 1);
+            assert.strictEqual(festivalsHappeningBetweenCocartAndOffExclusive.length, 1);
         }
     });
 

@@ -1,6 +1,8 @@
+
+//TODO: fill mising JSdocs?
 export class GetRequest {
     private _url: string;
-    private _headers: { [key: string]: string | string[] }; 
+    private _headers: { [key: string]: string | string[] };
     private _query: string;
     private _method: string;
 
@@ -50,7 +52,7 @@ export class GetRequest {
      * @param headers Request headers.
      */
     public set headers(headers: { [key: string]: string | string[] }) {
-        this.headers = headers;
+        this._headers = headers;
     }
 
     /**

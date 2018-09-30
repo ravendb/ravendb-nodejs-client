@@ -21,7 +21,7 @@ export class GetClusterTopologyCommand extends RavenCommand<ClusterTopologyRespo
         return { uri };
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
+    public setResponse(response: string, fromCache: boolean): void { //TODO: do we need this method?
         if (!response) {
             this._throwInvalidResponse();
         }

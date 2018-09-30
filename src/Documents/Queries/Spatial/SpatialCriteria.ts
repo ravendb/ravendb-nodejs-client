@@ -7,8 +7,8 @@ import {WhereToken, WhereOptions} from "../../Session/Tokens/WhereToken";
 
 export abstract class SpatialCriteria {
 
-    private _relation: SpatialRelation;
-    private _distanceErrorPct: number;
+    private readonly _relation: SpatialRelation;
+    private readonly _distanceErrorPct: number;
 
     protected constructor(relation: SpatialRelation, distanceErrorPct: number) {
         this._relation = relation;

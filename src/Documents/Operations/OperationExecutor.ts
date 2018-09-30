@@ -10,17 +10,15 @@ import { throwError } from "../../Exceptions";
 import { DocumentStoreBase } from "../DocumentStoreBase";
 import { SessionInfo } from "../Session/IDocumentSession";
 import { PatchOperation, PatchOperationResult } from "./PatchOperation";
-import { PatchStatus } from "./PatchStatus";
-import { ClassConstructor } from "../../Types";
 import { DocumentType } from "../DocumentAbstractions";
 import { StatusCodes } from "../..";
 import { PatchResult } from "./PatchResult";
 
 export class OperationExecutor {
 
-    private _store: DocumentStoreBase;
-    private _databaseName: string;
-    private _requestExecutor: RequestExecutor;
+    private readonly _store: DocumentStoreBase;
+    private readonly _databaseName: string;
+    private readonly _requestExecutor: RequestExecutor;
 
     public constructor(store: DocumentStoreBase, databaseName?: string) {
         this._store = store;

@@ -36,12 +36,12 @@ describe("Regex query", function () {
 
         const iq = query.getIndexQuery();
 
-        assert.equal(iq.query, "from RegexMes where regex(text, $p0)");
+        assert.strictEqual(iq.query, "from RegexMes where regex(text, $p0)");
 
-        assert.equal(iq.queryParameters["p0"], "^[a-z ]{2,4}love");
+        assert.strictEqual(iq.queryParameters["p0"], "^[a-z ]{2,4}love");
 
         const result = await query.all();
-        assert.equal(result.length, 4);
+        assert.strictEqual(result.length, 4);
     });
 });
 

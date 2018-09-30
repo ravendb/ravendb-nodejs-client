@@ -1,11 +1,8 @@
-import * as mocha from "mocha";
 import * as assert from "assert";
 import * as sinon from "sinon";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import DocumentStore, {
-    RavenErrorType,
-    GetNextOperationIdCommand,
     IDocumentStore,
     GetDatabaseNamesCommand,
 } from "../../src";

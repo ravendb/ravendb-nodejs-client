@@ -1,4 +1,4 @@
-import {IRavenObject, RevisionsCollectionObject} from "../../Types";
+import {RevisionsCollectionObject} from "../../Types";
 import {DocumentType} from "../DocumentAbstractions";
 import {MetadataAsDictionary} from "../../Mapping/MetadataAsDictionary";
 import {AbstractCallback} from "../../Types/Callbacks";

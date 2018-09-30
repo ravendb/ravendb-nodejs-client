@@ -103,7 +103,7 @@ describe("SpatialSortingTest", function () {
             .orderByDistance("coordinates", SORTED_LAT, SORTED_LNG)
             .all();
 
-        assert.deepEqual(shops.map(x => x.id), sortedExpectedOrder);
+        assert.deepStrictEqual(shops.map(x => x.id), sortedExpectedOrder);
     });
 
     it("canSortByDistanceWOFilteringWDocQuery", async () => {
@@ -114,7 +114,7 @@ describe("SpatialSortingTest", function () {
             .orderByDistance("coordinates", SORTED_LAT, SORTED_LNG)
             .all();
 
-        assert.deepEqual(shops.map(x => x.id), sortedExpectedOrder);
+        assert.deepStrictEqual(shops.map(x => x.id), sortedExpectedOrder);
     });
 
     it("canSortByDistanceWOFilteringWDocQueryBySpecifiedField", async () => {
@@ -128,7 +128,7 @@ describe("SpatialSortingTest", function () {
             .orderByDistance("mySpacialField", SORTED_LAT, SORTED_LNG)
             .all();
 
-            assert.deepEqual(shops.map(x => x.id), sortedExpectedOrder);
+            assert.deepStrictEqual(shops.map(x => x.id), sortedExpectedOrder);
         }
     });
 
@@ -145,7 +145,7 @@ describe("SpatialSortingTest", function () {
                 .orderByDistance("coordinates", FILTERED_LAT, FILTERED_LNG)
                 .all();
 
-            assert.deepEqual(shops.map(x => x.id), filteredExpectedOrder);
+            assert.deepStrictEqual(shops.map(x => x.id), filteredExpectedOrder);
         }
 
         {
@@ -159,7 +159,7 @@ describe("SpatialSortingTest", function () {
 
             const strings = shops.map(x => x.id);
             strings.reverse();
-            assert.deepEqual(strings, filteredExpectedOrder);
+            assert.deepStrictEqual(strings, filteredExpectedOrder);
         }
     });
 
@@ -174,7 +174,7 @@ describe("SpatialSortingTest", function () {
                 .orderByDistance("mySpacialField", FILTERED_LAT, FILTERED_LNG)
                 .all();
 
-            assert.deepEqual(shops.map(x => x.id), filteredExpectedOrder);
+            assert.deepStrictEqual(shops.map(x => x.id), filteredExpectedOrder);
         }
 
         {
@@ -188,7 +188,7 @@ describe("SpatialSortingTest", function () {
 
             const strings = shops.map(x => x.id);
             strings.reverse();
-            assert.deepEqual(strings, filteredExpectedOrder);
+            assert.deepStrictEqual(strings, filteredExpectedOrder);
         }
     });
 

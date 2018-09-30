@@ -1,4 +1,3 @@
-import { FacetResult } from ".";
 import { FacetResultObject } from "./AggregationQueryBase";
 import { FacetBase } from "./FacetBase";
 import { IFacetBuilder } from "./IFacetBuilder";

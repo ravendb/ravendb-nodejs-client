@@ -39,13 +39,13 @@ describe("UniqueValuesTest", function () {
             .send(new GetCompareExchangeValueOperation<number>("test"));
 
         assert.ok(res);
-        assert.equal(res.value, 5);
+        assert.strictEqual(res.value, 5);
     });
 
     it("canPutUniqueString", async () => {
         await store.operations.send(new PutCompareExchangeValueOperation<string>("test", "Karmel", 0));
         const res = await store.operations.send(new GetCompareExchangeValueOperation<string>("test"));
-        assert.equal(res.value, "Karmel");
+        assert.strictEqual(res.value, "Karmel");
     });
 
     it("canPutMultiDifferentValues", async () => {
@@ -61,10 +61,10 @@ describe("UniqueValuesTest", function () {
         const res2 = await store.operations
             .send(new PutCompareExchangeValueOperation<User>("test2", user2, 0));
 
-        assert.equal(res.value.name, "Karmel");
+        assert.strictEqual(res.value.name, "Karmel");
         assert.ok(res.successful);
 
-        assert.equal(res2.value.name, "Karmel");
+        assert.strictEqual(res2.value.name, "Karmel");
         assert.ok(res2.successful);
     });
 
@@ -82,26 +82,26 @@ describe("UniqueValuesTest", function () {
         const res2 = await store.operations
             .send(new PutCompareExchangeValueOperation<User>("test2", user2, 0));
 
-        assert.equal(res.value.name, "Karmel");
+        assert.strictEqual(res.value.name, "Karmel");
         assert.ok(res.successful);
 
-        assert.equal(res2.value.name, "Karmel");
+        assert.strictEqual(res2.value.name, "Karmel");
         assert.ok(res2.successful);
 
         const values = await store.operations.send(new GetCompareExchangeValuesOperation<User>({
             startWith: "test",
             clazz: User
         }));
-        assert.equal(Object.keys(values).length, 2);
-        assert.equal(values["test"].value.constructor, User);
-        assert.equal(values["test"].value.name, "Karmel");
-        assert.equal(values["test2"].value.name, "Karmel");
+        assert.strictEqual(Object.keys(values).length, 2);
+        assert.strictEqual(values["test"].value.constructor, User);
+        assert.strictEqual(values["test"].value.name, "Karmel");
+        assert.strictEqual(values["test2"].value.name, "Karmel");
     });
 
     it("canRemoveUnique", async () => {
         let res = await store.operations.send(new PutCompareExchangeValueOperation<string>("test", "Karmel", 0));
 
-        assert.equal(res.value, "Karmel");
+        assert.strictEqual(res.value, "Karmel");
         assert.ok(res.successful);
 
         res = await store.operations.send(new DeleteCompareExchangeValueOperation<string>("test", res.index));
@@ -110,17 +110,17 @@ describe("UniqueValuesTest", function () {
 
     it("removeUniqueFailed", async () => {
         let res = await store.operations.send(new PutCompareExchangeValueOperation<string>("test", "Karmel", 0));
-        assert.equal(res.value, "Karmel");
+        assert.strictEqual(res.value, "Karmel");
         assert.ok(res.successful);
 
         res = await store.operations.send(new DeleteCompareExchangeValueOperation<string>("test", 0));
-        assert.equal(res.constructor, CompareExchangeResult);
+        assert.strictEqual(res.constructor, CompareExchangeResult);
         assert.ok(res.index);
-        assert.equal(res.value, "Karmel");
+        assert.strictEqual(res.value, "Karmel");
         assert.ok(!res.successful);
 
         const readValue = await store.operations.send(new GetCompareExchangeValueOperation<string>("test"));
-        assert.equal(readValue.value, "Karmel");
+        assert.strictEqual(readValue.value, "Karmel");
     });
 
     it("returnCurrentValueWhenPuttingConcurrently", async () => {
@@ -135,10 +135,10 @@ describe("UniqueValuesTest", function () {
 
         assert.ok(res.successful);
         assert.ok(!res2.successful);
-        assert.equal(res.value.constructor, User);
-        assert.equal(res2.value.constructor, User);
-        assert.equal(res.value.name, "Karmel");
-        assert.equal(res2.value.name, "Karmel");
+        assert.strictEqual(res.value.constructor, User);
+        assert.strictEqual(res2.value.constructor, User);
+        assert.strictEqual(res.value.name, "Karmel");
+        assert.strictEqual(res2.value.name, "Karmel");
 
         const user3 = new User();
         user3.name = "Karmel2";
@@ -146,7 +146,7 @@ describe("UniqueValuesTest", function () {
         res2 = await store.operations.send(
             new PutCompareExchangeValueOperation<User>("test", user3, res2.index));
         assert.ok(res2.successful);
-        assert.equal(res2.value.name, "Karmel2");
+        assert.strictEqual(res2.value.name, "Karmel2");
     });
 
     it("canGetIndexValue", async () => {
@@ -156,7 +156,7 @@ describe("UniqueValuesTest", function () {
         await store.operations.send(new PutCompareExchangeValueOperation<User>("test", user, 0));
         const res = await store.operations.send(new GetCompareExchangeValueOperation<User>("test", User));
 
-        assert.equal(res.value.name, "Karmel");
+        assert.strictEqual(res.value.name, "Karmel");
 
         const user2 = new User();
         user2.name = "Karmel2";
@@ -164,6 +164,6 @@ describe("UniqueValuesTest", function () {
         const res2 = await store.operations.send(new PutCompareExchangeValueOperation<User>("test", user2, res.index));
         assert.ok(res2.successful);
 
-        assert.equal(res2.value.name, "Karmel2");
+        assert.strictEqual(res2.value.name, "Karmel2");
     });
 });

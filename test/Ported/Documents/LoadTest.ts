@@ -45,7 +45,7 @@ describe("Load test", function () {
             .load<Bar>([barId], Bar));
 
         assert.ok(bars);
-        assert.equal(Object.keys(bars).length, 1);
+        assert.strictEqual(Object.keys(bars).length, 1);
         assert.ok(bars[barId]);
 
         const numOfRequests = newSession.advanced.numberOfRequests;
@@ -53,8 +53,8 @@ describe("Load test", function () {
         foo = await newSession.load<Foo>(bars[barId].fooId, { documentType: Foo });
 
         assert.ok(foo);
-        assert.equal(foo.name, "Beginning");
-        assert.equal(newSession.advanced.numberOfRequests, numOfRequests);
+        assert.strictEqual(foo.name, "Beginning");
+        assert.strictEqual(newSession.advanced.numberOfRequests, numOfRequests);
     });
 });
 

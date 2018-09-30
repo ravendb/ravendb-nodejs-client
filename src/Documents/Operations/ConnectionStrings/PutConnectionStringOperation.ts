@@ -13,7 +13,7 @@ export interface PutConnectionStringResult {
 export class PutConnectionStringOperation<T extends ConnectionString>
     implements IMaintenanceOperation<PutConnectionStringResult> {
 
-    private _connectionString: T;
+    private readonly _connectionString: T;
 
     public constructor(connectionString: T) {
         this._connectionString = connectionString;
@@ -30,7 +30,7 @@ export class PutConnectionStringOperation<T extends ConnectionString>
 
 export class PutConnectionStringCommand<T extends ConnectionString> extends RavenCommand<PutConnectionStringResult> {
 
-    private _connectionString: T;
+    private readonly _connectionString: T;
 
     public constructor(connectionString: T) {
         super();

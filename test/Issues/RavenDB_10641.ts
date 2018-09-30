@@ -1,18 +1,14 @@
-import * as mocha from "mocha";
-import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import {
-    RavenErrorType,
-    GetNextOperationIdCommand,
     IDocumentStore,
 } from "../../src";
 
 describe("RavenDB-10641", function () {
 
     class Document {
-        id: string;
+        public id: string;
     }
 
     let store: IDocumentStore;
@@ -39,11 +35,11 @@ describe("RavenDB-10641", function () {
             const session = store.openSession();
             const v = await session.load("items/first");
             const meta = session.advanced.getMetadataFor(v);
-            assert.equal("en", meta["Items"]["lang"]);
+            assert.strictEqual("en", meta["Items"]["lang"]);
 
             meta["Items"]["lang"] = "sv";
 
-            assert.equal("sv", meta["Items"]["lang"]);
+            assert.strictEqual("sv", meta["Items"]["lang"]);
 
             await session.saveChanges();
         }
@@ -67,8 +63,8 @@ describe("RavenDB-10641", function () {
             const session = store.openSession();
             const v = await session.load("items/first");
             const meta = session.advanced.getMetadataFor(v);
-            assert.equal("123", meta["test"]);
-            assert.equal("sv", meta["Items"]["lang"]);
+            assert.strictEqual("123", meta["test"]);
+            assert.strictEqual("sv", meta["Items"]["lang"]);
         }
     });
 });

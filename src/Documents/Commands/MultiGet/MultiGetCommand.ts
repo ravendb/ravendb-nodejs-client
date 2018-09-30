@@ -1,4 +1,3 @@
-import * as through2 from "through2";
 import * as stream from "readable-stream";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { GetResponse } from "./GetResponse";
@@ -6,7 +5,6 @@ import { HttpCache } from "../../../Http/HttpCache";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { GetRequest } from "./GetRequest";
 import { ServerNode } from "../../../Http/ServerNode";
-import { throwError } from "../../../Exceptions";
 import { StatusCodes } from "../../../Http/StatusCode";
 import { getEtagHeader } from "../../../Utility/HttpUtil";
 import { streamArray } from "stream-json/streamers/StreamArray";
@@ -19,7 +17,7 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 export class MultiGetCommand extends RavenCommand<GetResponse[]> {
     private _cache: HttpCache;
-    private _commands: GetRequest[];
+    private readonly _commands: GetRequest[];
     private _conventions: DocumentConventions;
     private _baseUrl: string;
 
@@ -49,7 +47,7 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> {
        
        for (const command of this._commands) {
            const cacheKey = this._getCacheKey(command);
-           let cacheItemInfo;
+           let cacheItemInfo = null;
            this._cache.get(cacheKey, (itemInfo) => cacheItemInfo = itemInfo);
            const headers = {};
            if (cacheItemInfo.cachedChangeVector) {
@@ -131,7 +129,7 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> {
        }
 
        const cacheKey = this._getCacheKey(command);
-       let cachedResponse;
+       let cachedResponse = null;
        this._cache.get(cacheKey, x => cachedResponse = x.response);
        getResponse.result = cachedResponse;
     }

@@ -20,7 +20,7 @@ export class DeleteByQueryOperation implements IOperation<OperationIdResult> {
 
     protected _queryToDelete: IndexQuery;
 
-    private _options: QueryOperationOptions;
+    private readonly _options: QueryOperationOptions;
 
     public constructor(queryToDelete: IndexQuery);
     public constructor(queryToDelete: IndexQuery, options?: QueryOperationOptions) {
@@ -42,8 +42,8 @@ export class DeleteByQueryOperation implements IOperation<OperationIdResult> {
 }
 export class DeleteByIndexCommand extends RavenCommand<OperationIdResult> {
 
-    private _conventions: DocumentConventions;
-    private _queryToDelete: IndexQuery;
+    private readonly _conventions: DocumentConventions;
+    private readonly _queryToDelete: IndexQuery;
     private _options: QueryOperationOptions;
 
     public constructor(

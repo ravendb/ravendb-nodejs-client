@@ -11,8 +11,6 @@ import { QueryOperation } from "../../Session/Operations/QueryOperation";
 import { Lazy } from "../../Lazy";
 import { DocumentSession } from "../../Session/DocumentSession";
 import { LazyAggregationQueryOperation } from "../../Session/Operations/Lazy/LazyAggregationQueryOperation";
-import { QueryEventsEmitter } from "../../Session/QueryEvents";
-import { EventEmitter } from "events";
 
 export interface FacetResultObject { 
     [key: string]: FacetResult;
@@ -23,7 +21,7 @@ const FACET_RESULT_TYPES_MAP = new Map([[FacetResult.name, FacetResult]]);
 
 export abstract class AggregationQueryBase {
 
-    private _session: InMemoryDocumentSessionOperations;
+    private readonly _session: InMemoryDocumentSessionOperations;
     private _query: IndexQuery;
     private _duration: Stopwatch;
 

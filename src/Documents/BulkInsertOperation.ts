@@ -1,6 +1,5 @@
 import {GenerateEntityIdOnTheClient} from "./Identity/GenerateEntityIdOnTheClient";
 import * as stream from "readable-stream";
-import * as BluebirdPromise from "bluebird";
 import { RavenCommand } from "../Http/RavenCommand";
 import {HttpRequestParameters} from "../Primitives/Http";
 import {IMetadataDictionary} from "./Session/IMetadataDictionary";

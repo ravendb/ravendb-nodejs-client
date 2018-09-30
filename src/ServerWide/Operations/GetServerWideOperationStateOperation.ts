@@ -10,7 +10,7 @@ export class GetServerWideOperationStateOperation implements IServerOperation<IR
     public get resultType(): OperationResultType {
         return "CommandResult";
     }
-    private _id: number;
+    private readonly _id: number;
 
     public constructor(id: number) {
         this._id = id;
@@ -22,7 +22,7 @@ export class GetServerWideOperationStateOperation implements IServerOperation<IR
 }
 
 export class GetServerWideOperationStateCommand extends RavenCommand<IRavenResponse> {
-    private _id: number;
+    private readonly _id: number;
     private _conventions: DocumentConventions;
 
     public constructor(conventions: DocumentConventions, id: number) {

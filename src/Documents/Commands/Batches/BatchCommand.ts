@@ -1,20 +1,20 @@
 import * as stream from "readable-stream";
-import { PutAttachmentCommandData } from "./PutAttachmentCommandData";
-import { PutAttachmentCommandHelper } from "./PutAttachmentCommandHelper";
-import { IRavenArrayResult } from "../../../Types";
-import { RavenCommand } from "../../../Http/RavenCommand";
-import { IDisposable } from "../../../Types/Contracts";
-import { ICommandData } from "../CommandData";
-import { BatchOptions } from "./BatchOptions";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { throwError } from "../../../Exceptions";
-import { ServerNode } from "../../../Http/ServerNode";
-import { HttpRequestParameters } from "../../../Primitives/Http";
-import { HeadersBuilder } from "../../../Utility/HttpUtil";
-import { JsonSerializer } from "../../../Mapping/Json/Serializer";
-import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
+import {PutAttachmentCommandData} from "./PutAttachmentCommandData";
+import {PutAttachmentCommandHelper} from "./PutAttachmentCommandHelper";
+import {IRavenArrayResult} from "../../../Types";
+import {RavenCommand} from "../../../Http/RavenCommand";
+import {IDisposable} from "../../../Types/Contracts";
+import {ICommandData} from "../CommandData";
+import {BatchOptions} from "./BatchOptions";
+import {DocumentConventions} from "../../Conventions/DocumentConventions";
+import {throwError} from "../../../Exceptions";
+import {ServerNode} from "../../../Http/ServerNode";
+import {HttpRequestParameters} from "../../../Primitives/Http";
+import {HeadersBuilder} from "../../../Utility/HttpUtil";
+import {JsonSerializer} from "../../../Mapping/Json/Serializer";
+import {RavenCommandResponsePipeline} from "../../../Http/RavenCommandResponsePipeline";
 import {TimeUtil} from "../../../Utility/TimeUtil";
-import { AttachmentData } from "../../Attachments";
+import {AttachmentData} from "../../Attachments";
 
 export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDisposable {
 
@@ -89,7 +89,7 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
         }
 
         return request;
-        /* TBD: attachments
+        /* TBD: attachments - TODO: delete me?
 
         if (_attachmentStreams != null && _attachmentStreams.Count > 0)
         {

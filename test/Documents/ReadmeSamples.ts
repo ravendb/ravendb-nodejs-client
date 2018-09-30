@@ -92,7 +92,7 @@ describe("Readme query samples", function () {
             const user2 = await session.load("users/2"); // this won't call server again
             assert.ok(user1);
             assert.ok(user2);
-            assert.equal(session.advanced.numberOfRequests, 1);
+            assert.strictEqual(session.advanced.numberOfRequests, 1);
         });
 
     });
@@ -360,10 +360,10 @@ describe("Readme query samples", function () {
                 .statistics(s => stats = s);
             results = await query.all();
             assert.ok(stats);
-            assert.equal(stats.totalResults, 1);
-            assert.equal(stats.skippedResults, 0);
-            assert.equal(stats.indexName, "Auto/users/Byage");
-            assert.equal(stats.isStale, false);
+            assert.strictEqual(stats.totalResults, 1);
+            assert.strictEqual(stats.skippedResults, 0);
+            assert.strictEqual(stats.indexName, "Auto/users/Byage");
+            assert.strictEqual(stats.isStale, false);
             assert.ok(stats.resultEtag);
             assert.ok(stats.durationInMs);
             assert.ok(stats.lastQueryTime instanceof Date);

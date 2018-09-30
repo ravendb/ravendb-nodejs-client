@@ -23,7 +23,7 @@ import {
     GetClientConfigurationOperationResult
 } from "../Documents/Operations/Configuration/GetClientConfigurationOperation";
 import CurrentIndexAndNode from "./CurrentIndexAndNode";
-import {CONSTANTS, HEADERS} from "../Constants";
+import {HEADERS} from "../Constants";
 import { HttpRequestParameters, HttpResponse, HttpRequestParametersWithoutUri } from "../Primitives/Http";
 import { Stopwatch } from "../Utility/Stopwatch";
 import * as PromiseUtil from "../Utility/PromiseUtil";
@@ -131,11 +131,11 @@ export class RequestExecutor implements IDisposable {
     private _lastReturnedResponse: Date;
     protected _readBalanceBehavior: ReadBalanceBehavior;
 
-    private _cache: HttpCache;
+    private readonly _cache: HttpCache;
 
     private _topologyTakenFromNode: ServerNode;
 
-    public agressiveCaching: AggressiveCacheOptions = null;
+    public aggressiveCaching: AggressiveCacheOptions = null;
 
     private _updateTopologyTimer: Timer;
 
@@ -153,9 +153,9 @@ export class RequestExecutor implements IDisposable {
 
     protected _topologyEtag: number = 0;
 
-    private _conventions: DocumentConventions;
+    private readonly _conventions: DocumentConventions;
 
-    private _authOptions: IAuthOptions;
+    private readonly _authOptions: IAuthOptions;
 
     protected _disableTopologyUpdates: boolean;
 
@@ -726,7 +726,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
         });
 
         if (cachedChangeVector) {
-            const aggressiveCacheOptions = this.agressiveCaching;
+            const aggressiveCacheOptions = this.aggressiveCaching;
             if (aggressiveCacheOptions
                 && cachedItem.age < aggressiveCacheOptions.duration
                 && !cachedItem.mightHaveBeenModified
@@ -1135,14 +1135,14 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
                 command.failedNodes.set(chosenNode, readException);
             } catch (_) {
                 log.warn(_, "Error parsing server error.");
-                const unrecongnizedErrSchema = {
+                const unrecognizedErrSchema = {
                     url: req.uri,
                     message: "Unrecognized response from the server",
                     error: responseJson,
                     type: "Unparsable Server Response"
                 };
 
-                const exceptionToUse = ExceptionDispatcher.get(unrecongnizedErrSchema, response.statusCode);
+                const exceptionToUse = ExceptionDispatcher.get(unrecognizedErrSchema, response.statusCode);
                 command.failedNodes.set(chosenNode, exceptionToUse);
             }
 

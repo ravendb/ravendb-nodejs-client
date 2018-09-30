@@ -9,8 +9,8 @@ import * as stream from "readable-stream";
 
 export class HeadDocumentCommand extends RavenCommand<string> {
 
-    private _id: string;
-    private _changeVector: string;
+    private readonly _id: string;
+    private readonly _changeVector: string;
 
     public constructor(id: string, changeVector: string) {
         super();

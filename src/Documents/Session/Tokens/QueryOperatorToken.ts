@@ -3,7 +3,7 @@ import { QueryToken } from "./QueryToken";
 
 export class QueryOperatorToken extends QueryToken {
 
-    private _queryOperator: QueryOperator;
+    private readonly _queryOperator: QueryOperator;
 
     private constructor(queryOperator: QueryOperator) {
         super();

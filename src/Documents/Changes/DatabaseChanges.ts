@@ -22,7 +22,7 @@ export class DatabaseChanges implements IDatabaseChanges {
 
     private _emitter = new EventEmitter();
     private _commandId: number = 0;
-    private _onConnectionStatusChangedWrapped: () => void;
+    private readonly _onConnectionStatusChangedWrapped: () => void;
 
     private _semaphore = semaphore();
 

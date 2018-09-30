@@ -9,7 +9,7 @@ import { TypeUtil } from "../../../Utility/TypeUtil";
 
 export class SetIndexesLockOperation implements IMaintenanceOperation<void> {
 
-    private _parameters: SetIndexesLockOperationParameters;
+    private readonly _parameters: SetIndexesLockOperationParameters;
 
     public constructor(indexName: string, mode: IndexLockMode);
     public constructor(parameters: SetIndexesLockOperationParameters);
@@ -59,7 +59,7 @@ export class SetIndexesLockOperation implements IMaintenanceOperation<void> {
 
 export class SetIndexLockCommand extends RavenCommand<void> {
 
-    private _parameters: object;
+    private readonly _parameters: object;
 
     public constructor(conventions: DocumentConventions, parameters: SetIndexesLockOperationParameters) {
         super();

@@ -73,7 +73,7 @@ _describe(
                     const replicatedUser =
                         await replication.waitForDocumentToReplicate<User>(destination, id, 10000, User);
                     assert.ok(replicatedUser);
-                    assert.equal(replicatedUser.name, "Arek");
+                    assert.strictEqual(replicatedUser.name, "Arek");
                 } finally {
                     destination.dispose();
                 }
@@ -130,9 +130,9 @@ _describe(
                         await destination.getRequestExecutor().execute(command);
                         const conflicts = command.result;
 
-                        assert.equal(conflicts.results.length, 2);
+                        assert.strictEqual(conflicts.results.length, 2);
 
-                        assert.notEqual(conflicts.results[0].changeVector, conflicts.results[1].changeVector);
+                        assert.notStrictEqual(conflicts.results[0].changeVector, conflicts.results[1].changeVector);
                     } finally {
                         destination.dispose();
                     }
@@ -190,9 +190,9 @@ _describe(
                         await destination.getRequestExecutor().execute(command);
                         const conflicts = command.result;
 
-                        assert.equal(conflicts.results.length, 2);
+                        assert.strictEqual(conflicts.results.length, 2);
 
-                        assert.notEqual(conflicts.results[0].changeVector, conflicts.results[1].changeVector);
+                        assert.notStrictEqual(conflicts.results[0].changeVector, conflicts.results[1].changeVector);
 
                         {
                             const session = destination.openSession();
@@ -200,7 +200,7 @@ _describe(
                                 const user = await session.load("docs/1");
                                 assert.fail("Should have thrown");
                             } catch (err) {
-                                assert.equal(err.name, "DocumentConflictException");
+                                assert.strictEqual(err.name, "DocumentConflictException");
                             }
                         }
 
@@ -212,7 +212,7 @@ _describe(
                         {
                             const session = destination.openSession();
                             const user = await session.load<User>("docs/1");
-                            assert.equal(user.name, conflicts.results[0].doc["name"]);
+                            assert.strictEqual(user.name, conflicts.results[0].doc["name"]);
                         }
 
                     } finally {

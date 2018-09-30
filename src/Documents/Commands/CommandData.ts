@@ -1,7 +1,6 @@
 import { throwError } from "../../Exceptions";
 import { BatchOptions } from "./Batches/BatchOptions";
 import {DocumentConventions} from "../..";
-// import { PatchRequest } from "../../../Http/Request/PatchRequest";
 
 export type CommandType = 
     "None" 
@@ -69,7 +68,7 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
     public name: string = null;
     public changeVector: string;
 
-    private _document: T;
+    private readonly _document: T;
 
     constructor(id: string, changeVector: string, document: T) {
 
@@ -83,14 +82,12 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
     }
 
     public serialize(conventions: DocumentConventions): object {
-        const toSerialize = {
+        return {
             Id: this.id,
             ChangeVector: this.changeVector,
             Type: this.type,
             Document: this._document
         };
-
-        return toSerialize;
     }
 }
 

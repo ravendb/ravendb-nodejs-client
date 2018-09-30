@@ -81,9 +81,9 @@ describe("ObjectMapper", function () {
             const bornAt: Date = result.bornAt;
             assert.ok(bornAt instanceof Date);
             assert.ok(typeof bornAt.getMonth === "function");
-            assert.equal(bornAt.getFullYear(), 1998);
-            assert.equal(bornAt.getDate(), 6);
-            assert.equal(bornAt.getMonth(), 4);
+            assert.strictEqual(bornAt.getFullYear(), 1998);
+            assert.strictEqual(bornAt.getDate(), 6);
+            assert.strictEqual(bornAt.getMonth(), 4);
         });
 
         it ("can handle boolean", () => {
@@ -92,7 +92,7 @@ describe("ObjectMapper", function () {
             };
 
             const result: any = mapper.fromObjectLiteral(data, {});
-            assert.equal(result.success, false);
+            assert.ok(!result.success);
         });
 
         it("can handle array", () => {
@@ -114,14 +114,14 @@ describe("ObjectMapper", function () {
             assert.ok(result.hasOwnProperty("dates"));
 
             const dates: Date[] = result.dates;
-            assert.equal(3, dates.length);
+            assert.strictEqual(3, dates.length);
             for (const d of dates) {
                 assert.ok(typeof d !== "string");
                 assert.ok(d instanceof Date);
                 assert.ok(typeof d.getMonth === "function");
-                assert.equal(d.getFullYear(), 1998);
-                assert.equal(d.getDate(), 6);
-                assert.equal(d.getMonth(), 4);
+                assert.strictEqual(d.getFullYear(), 1998);
+                assert.strictEqual(d.getDate(), 6);
+                assert.strictEqual(d.getMonth(), 4);
             }
         });
 
@@ -135,10 +135,10 @@ describe("ObjectMapper", function () {
             }, typeInfo, new Map([[Person.name, Person]]));
 
             assert.ok(result);
-            assert.equal(result.constructor.name, Person.name);
-            assert.equal(result.constructor, Person);
-            assert.equal(result.name, "Merry");
-            assert.equal(result.sayHello(), "Hello, I'm Merry.");
+            assert.strictEqual(result.constructor.name, Person.name);
+            assert.strictEqual(result.constructor, Person);
+            assert.strictEqual(result.name, "Merry");
+            assert.strictEqual(result.sayHello(), "Hello, I'm Merry.");
         });
 
         it("can handle properties of objects in array", () => {
@@ -168,9 +168,9 @@ describe("ObjectMapper", function () {
 
             assert.ok(result);
             assert.ok(result.hasOwnProperty("movies"));
-            assert.equal(result.movies.length, 3);
-            assert.equal(result.movies[0].name, "Matrix");
-            assert.equal(result.movies[1].name, "Titanic");
+            assert.strictEqual(result.movies.length, 3);
+            assert.strictEqual(result.movies[0].name, "Matrix");
+            assert.strictEqual(result.movies[1].name, "Titanic");
             assert.strictEqual(result.movies[2], null);
 
             for (const movie of result.movies) {
@@ -181,7 +181,7 @@ describe("ObjectMapper", function () {
                 const releasedAt = movie.releasedAt;
                 assert.ok(releasedAt);
                 assert.ok(typeof releasedAt !== "string");
-                assert.equal(typeof releasedAt.getFullYear, "function");
+                assert.strictEqual(typeof releasedAt.getFullYear, "function");
                 assert.ok(releasedAt.getFullYear());
             }
         });
@@ -211,18 +211,18 @@ describe("ObjectMapper", function () {
 
             assert.ok(result);
             assert.ok(result.me);
-            assert.equal(result.me.constructor.name, Person.name);
-            assert.equal(result.me.name, "Greg");
-            assert.equal(typeof result.me.sayHello, "function");
-            assert.equal(result.me.sayHello(), "Hello, I'm Greg.");
-            assert.equal(result.me.bornAt.getFullYear(), 1987);
+            assert.strictEqual(result.me.constructor.name, Person.name);
+            assert.strictEqual(result.me.name, "Greg");
+            assert.strictEqual(typeof result.me.sayHello, "function");
+            assert.strictEqual(result.me.sayHello(), "Hello, I'm Greg.");
+            assert.strictEqual(result.me.bornAt.getFullYear(), 1987);
 
-            assert.equal(result.people[0].constructor.name, Person.name);
-            assert.equal(result.people[0].name, "John");
-            assert.equal(result.people[0].sayHello(), "Hello, I'm John.");
+            assert.strictEqual(result.people[0].constructor.name, Person.name);
+            assert.strictEqual(result.people[0].name, "John");
+            assert.strictEqual(result.people[0].sayHello(), "Hello, I'm John.");
 
-            assert.equal(result.people[1].name, "Samantha");
-            assert.equal(result.people[1].sayHello(), "Hello, I'm Samantha.");
+            assert.strictEqual(result.people[1].name, "Samantha");
+            assert.strictEqual(result.people[1].sayHello(), "Hello, I'm Samantha.");
         });
 
         it("can handle dot operator", () => {
@@ -242,9 +242,9 @@ describe("ObjectMapper", function () {
             assert.ok(result);
             assert.ok(result.person);
             assert.ok(result.person.bornAt);
-            assert.equal(typeof result.person.bornAt, "object");
+            assert.strictEqual(typeof result.person.bornAt, "object");
             assert.ok(result.person.bornAt.getFullYear);
-            assert.equal(result.person.bornAt.getFullYear(), 1987);
+            assert.strictEqual(result.person.bornAt.getFullYear(), 1987);
         });
 
         it("can handle object literal descriptor", () => {
@@ -272,9 +272,9 @@ describe("ObjectMapper", function () {
             assert.ok(result.animals.length);
 
             const animal = result.animals[0];
-            assert.equal(animal.name, "Giraffe");
-            assert.equal(animal.legsCount, 4);
-            assert.equal(animal.run(), "Running Giraffe on 4 legs.");
+            assert.strictEqual(animal.name, "Giraffe");
+            assert.strictEqual(animal.legsCount, 4);
+            assert.strictEqual(animal.run(), "Running Giraffe on 4 legs.");
         });
 
         it("can handle array of arrays", () => {
@@ -322,7 +322,7 @@ describe("ObjectMapper", function () {
             assert.ok(result.characters.length);
 
             assert.ok(result.characters[0]);
-            assert.equal(result.characters[0].length, 2);
+            assert.strictEqual(result.characters[0].length, 2);
 
             function assertArrayEntry(actual, expected) {
                 assert.strictEqual(actual["name"], expected["name"]);
@@ -336,14 +336,14 @@ describe("ObjectMapper", function () {
 
             for (let i = 0; i < result.characters[0].length; i++) {
                 const c = result.characters[0][i];
-                assert.equal(typeof c.constructor, "function");
-                assert.equal(c.constructor, Person);
-                assert.equal(c.sayHello(), `Hello, I'm ${data.characters[0][i].name}.`);
-                assert.equal(typeof c.lastActedAt.getMonth, "function");
+                assert.strictEqual(typeof c.constructor, "function");
+                assert.strictEqual(c.constructor, Person);
+                assert.strictEqual(c.sayHello(), `Hello, I'm ${data.characters[0][i].name}.`);
+                assert.strictEqual(typeof c.lastActedAt.getMonth, "function");
             }
 
             assert.ok(result.characters[1].length);
-            assert.equal(result.characters[1].length, 3);
+            assert.strictEqual(result.characters[1].length, 3);
 
             for (let i = 0; i < result.characters.length; i++) {
                 assertArrayEntry(result.characters[1][i], data.characters[1][i]);
@@ -366,10 +366,10 @@ describe("ObjectMapper", function () {
                 ] 
             };
             const result: any = mapper.fromObjectLiteral(testObj, typeInfo);
-            assert.notEqual(testObj, result);
-            assert.equal(result.me.name, "Ash");
-            assert.equal(result.characters.length, 1);
-            assert.deepEqual(result.characters, testObj.characters);
+            assert.notStrictEqual(testObj, result);
+            assert.strictEqual(result.me.name, "Ash");
+            assert.strictEqual(result.characters.length, 1);
+            assert.deepStrictEqual(result.characters, testObj.characters);
         });
 
         it("should not fail if field from nested types not found", () => {
@@ -388,10 +388,10 @@ describe("ObjectMapper", function () {
                 ] 
             };
             const result: any = mapper.fromObjectLiteral(testObj, typeInfo, new Map([[Person.name, Person]]));
-            assert.notEqual(testObj, result);
-            assert.equal(result.me.name, "Ash");
-            assert.equal(result.characters.length, 1);
-            assert.deepEqual(result.characters, testObj.characters);
+            assert.notStrictEqual(testObj, result);
+            assert.strictEqual(result.me.name, "Ash");
+            assert.strictEqual(result.characters.length, 1);
+            assert.deepStrictEqual(result.characters, testObj.characters);
         });
 
         it("can handle Set", () => {
@@ -416,12 +416,12 @@ describe("ObjectMapper", function () {
 
             const resultSet = result.treeSpecies as Set<Tree>;
             for (const item of resultSet) {
-                assert.equal(item.constructor, Tree);
+                assert.strictEqual(item.constructor, Tree);
                 assert.ok(testObj.treeSpecies
                     .map(x => x.name).some(x => x === item.name));
             }
 
-            assert.equal(resultSet.size, 2);
+            assert.strictEqual(resultSet.size, 2);
         });
 
         it("can handle Map", () => {
@@ -441,15 +441,15 @@ describe("ObjectMapper", function () {
             const result: any = mapper.fromObjectLiteral(testObj, typeInfo, new Map([[Order.name, Order]]));
             assert.ok(TypeUtil.isMap(result.orders));
             const ordersMap = result.orders as Map<string, any>;
-            assert.equal(ordersMap.size, 1);
+            assert.strictEqual(ordersMap.size, 1);
 
             for (const entry of ordersMap) {
                 const [ name, order ] = entry;
                 const src = testObj.orders[name];
                 assert.ok(src);
-                assert.equal(order.constructor, Order);
-                assert.equal(order.isSent, false);
-                assert.equal(order.orderId, 1);
+                assert.strictEqual(order.constructor, Order);
+                assert.strictEqual(order.isSent, false);
+                assert.strictEqual(order.orderId, 1);
             }
 
         });
@@ -477,9 +477,9 @@ describe("ObjectMapper", function () {
                 }
             };
 
-            assert.deepEqual(typeInfo, expectedTypeInfo);
-            assert.equal(typeof result.lastModified, "string");
-            assert.equal(result.lastModified, DateUtil.stringify(testObject.lastModified));
+            assert.deepStrictEqual(typeInfo, expectedTypeInfo);
+            assert.strictEqual(typeof result.lastModified, "string");
+            assert.strictEqual(result.lastModified, DateUtil.stringify(testObject.lastModified));
         });
 
         it("can handle array", () => {
@@ -496,10 +496,10 @@ describe("ObjectMapper", function () {
                     "dates[]": "date"
                 }
             };
-            assert.deepEqual(typeInfo, expectedTypeInfo);
-            assert.equal(typeof result.dates[0], "string");
-            assert.equal(result.dates[0], "2012-11-01T00:00:00.0000000");
-            assert.equal(result.dates.length, 2);
+            assert.deepStrictEqual(typeInfo, expectedTypeInfo);
+            assert.strictEqual(typeof result.dates[0], "string");
+            assert.strictEqual(result.dates[0], "2012-11-01T00:00:00.0000000");
+            assert.strictEqual(result.dates.length, 2);
         });
 
         it("can handle top-level ctor", () => {
@@ -509,7 +509,7 @@ describe("ObjectMapper", function () {
             assert.ok(testObject !== result);
             assert.ok(!result.hasOwnProperty("sayHello"));
             assert.ok(typeInfo.typeName, Person.name);
-            assert.deepEqual(typeInfo.nestedTypes, {});
+            assert.deepStrictEqual(typeInfo.nestedTypes, {});
         });
 
         it("can handle properties of objects in array", () => {
@@ -532,12 +532,12 @@ describe("ObjectMapper", function () {
                 }
             };
 
-            assert.deepEqual(expectedTypeInfo, typeInfo);
+            assert.deepStrictEqual(expectedTypeInfo, typeInfo);
             assert.ok(testObject !== result);
-            assert.equal(result.movies.length, 2);
-            assert.equal(result.movies[0].constructor, Object);
-            assert.equal(typeof result.movies[0].releasedAt, "string");
-            assert.equal(result.movies[0].releasedAt, "1999-06-06T00:00:00.0000000");
+            assert.strictEqual(result.movies.length, 2);
+            assert.strictEqual(result.movies[0].constructor, Object);
+            assert.strictEqual(typeof result.movies[0].releasedAt, "string");
+            assert.strictEqual(result.movies[0].releasedAt, "1999-06-06T00:00:00.0000000");
         });
 
         it("can handle ctor for property and arrays", () => {
@@ -560,16 +560,16 @@ describe("ObjectMapper", function () {
                     "people[]": "Person"    
                 }
             };
-            assert.deepEqual(typeInfo, expectedTypeInfo);
+            assert.deepStrictEqual(typeInfo, expectedTypeInfo);
             assert.ok(result !== testObject);
-            assert.equal(result.me.constructor, Object);
-            assert.equal(result.me.bornAt, "1987-10-12T00:00:00.0000000");
+            assert.strictEqual(result.me.constructor, Object);
+            assert.strictEqual(result.me.bornAt, "1987-10-12T00:00:00.0000000");
 
-            assert.equal(result.people.length, 2);
-            assert.equal(result.people[0].constructor, Object);
-            assert.equal(result.people[0].name, "John");
-            assert.equal(result.people[1].constructor, Object);
-            assert.equal(result.people[1].name, "Samantha");
+            assert.strictEqual(result.people.length, 2);
+            assert.strictEqual(result.people[0].constructor, Object);
+            assert.strictEqual(result.people[0].name, "John");
+            assert.strictEqual(result.people[1].constructor, Object);
+            assert.strictEqual(result.people[1].name, "Samantha");
         });
 
         it("can handle dot operator", () => {
@@ -588,8 +588,8 @@ describe("ObjectMapper", function () {
                 }
             };
 
-            assert.deepEqual(typeInfo, expectedTypeInfo);
-            assert.equal(result.person.bornAt, "1987-10-12T00:00:00.0000000");
+            assert.deepStrictEqual(typeInfo, expectedTypeInfo);
+            assert.strictEqual(result.person.bornAt, "1987-10-12T00:00:00.0000000");
         });
 
         it("can handle object literal descriptor", () => {
@@ -614,8 +614,8 @@ describe("ObjectMapper", function () {
             };
 
             assert.ok(result);
-            assert.equal(result.animals.length, 1);
-            assert.deepEqual(typeInfo, expectedTypeInfo);
+            assert.strictEqual(result.animals.length, 1);
+            assert.deepStrictEqual(typeInfo, expectedTypeInfo);
         });
 
         it("can handle Set", () => {
@@ -633,9 +633,9 @@ describe("ObjectMapper", function () {
 
             const result: any = mapper.toObjectLiteral(data, typeInfoCallback);
             assert.ok(Array.isArray(result.trees));
-            assert.equal(typeInfo.nestedTypes.trees, "Set");
-            assert.equal(typeInfo.nestedTypes.trees$SET, "Tree");
-            assert.deepEqual(result.trees, expectedArray);
+            assert.strictEqual(typeInfo.nestedTypes.trees, "Set");
+            assert.strictEqual(typeInfo.nestedTypes.trees$SET, "Tree");
+            assert.deepStrictEqual(result.trees, expectedArray);
         });
 
         it ("can handle Map", () => {
@@ -653,9 +653,9 @@ describe("ObjectMapper", function () {
 
             const result: any = mapper.toObjectLiteral(data, typeInfoCallback);
             assert.ok(TypeUtil.isObject(result.trees));
-            assert.deepEqual(result.trees, expectedObj);
-            assert.equal(typeInfo.nestedTypes.trees, "Map");
-            assert.equal(typeInfo.nestedTypes.trees$MAP, "Tree");
+            assert.deepStrictEqual(result.trees, expectedObj);
+            assert.strictEqual(typeInfo.nestedTypes.trees, "Map");
+            assert.strictEqual(typeInfo.nestedTypes.trees$MAP, "Tree");
         });
 
         it("can handle array of arrays", () => {
@@ -687,8 +687,7 @@ describe("ObjectMapper", function () {
                 }
             };
 
-            assert.deepEqual(typeInfo, expectedTypeInfo);
+            assert.deepStrictEqual(typeInfo, expectedTypeInfo);
         });
-
     });
 });

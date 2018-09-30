@@ -1,5 +1,5 @@
 import * as stream from "readable-stream";
-import { HttpRequestParameters, HttpResponse } from "../../Primitives/Http";
+import { HttpRequestParameters } from "../../Primitives/Http";
 import { DatabaseRecord } from "..";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { DatabasePutResult } from ".";
@@ -15,8 +15,8 @@ export class CreateDatabaseOperation implements IServerOperation<DatabasePutResu
         return "CommandResult";
     }
 
-    private _databaseRecord: DatabaseRecord;
-    private _replicationFactor: number;
+    private readonly _databaseRecord: DatabaseRecord;
+    private readonly _replicationFactor: number;
 
     public constructor(databaseRecord: DatabaseRecord, replicationFactor = 1) {
         this._databaseRecord = databaseRecord;
@@ -30,9 +30,9 @@ export class CreateDatabaseOperation implements IServerOperation<DatabasePutResu
 
 class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> {
     private _conventions: DocumentConventions;
-    private _databaseRecord: DatabaseRecord;
-    private _replicationFactor: number;
-    private _databaseName: string;
+    private readonly _databaseRecord: DatabaseRecord;
+    private readonly _replicationFactor: number;
+    private readonly _databaseName: string;
 
     public constructor(conventions: DocumentConventions, databaseRecord: DatabaseRecord, replicationFactor: number) {
         super();

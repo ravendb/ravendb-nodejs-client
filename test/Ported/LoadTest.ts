@@ -52,7 +52,7 @@ describe("LoadTest - ported", function () {
         const docReads = cacheReads.filter(x => 
                 x.args[0] === store.urls[0] + `/databases/${store.database}/docs?&id=users%2F1`);
 
-        assert.equal(docReads.length, 2);
+        assert.strictEqual(docReads.length, 2);
         assert.ok((docReads[1].returnValue as ReleaseCacheItem).item);
         assert.ok((docReads[1].returnValue as ReleaseCacheItem).item.payload);
 
@@ -73,7 +73,7 @@ describe("LoadTest - ported", function () {
             const session = store.openSession();
             const user = await session.load<User>("users/1");
             assert.ok(user);
-            assert.equal(user.name, "RavenDB");
+            assert.strictEqual(user.name, "RavenDB");
         }
     });
 
@@ -91,7 +91,7 @@ describe("LoadTest - ported", function () {
         {
             const session = store.openSession();
             const users = await session.load([ "users/1", "users/2" ]);
-            assert.equal(Object.keys(users).length, 2);
+            assert.strictEqual(Object.keys(users).length, 2);
         }
     });
 
@@ -129,7 +129,7 @@ describe("LoadTest - ported", function () {
                 "users/1", null, "users/2", null
             ]);
             assert.ok(users);
-            assert.equal(Object.keys(users).length, 2);
+            assert.strictEqual(Object.keys(users).length, 2);
 
             assert.ok(users["users/1"]);
             assert.ok(users["users/2"]);
@@ -165,11 +165,11 @@ describe("LoadTest - ported", function () {
             const geek1 = await session.load<GeekPerson>("geeks/1");
             const geek2 = await session.load<GeekPerson>("geeks/2");
 
-            assert.equal(geek1.favoritePrimes[1], 43);
-            assert.equal(geek1.favoriteVeryLargePrimes[1], 5000000039);
+            assert.strictEqual(geek1.favoritePrimes[1], 43);
+            assert.strictEqual(geek1.favoriteVeryLargePrimes[1], 5000000039);
 
-            assert.equal(geek2.favoritePrimes[3], 7);
-            assert.equal(geek2.favoriteVeryLargePrimes[0], 999999999989);
+            assert.strictEqual(geek2.favoritePrimes[3], 7);
+            assert.strictEqual(geek2.favoriteVeryLargePrimes[0], 999999999989);
         }
     });
 
@@ -196,8 +196,8 @@ describe("LoadTest - ported", function () {
             const users = await session.load<User>(ids);
             const user77 = users["users/77"];
             assert.ok(user77);
-            assert.equal(user77.id, "users/77");
-            assert.equal(user77.name, "Person 77");
+            assert.strictEqual(user77.id, "users/77");
+            assert.strictEqual(user77.name, "Person 77");
         }
     });
 
@@ -221,14 +221,14 @@ describe("LoadTest - ported", function () {
             const session = store.openSession();
             const users = await session.advanced.loadStartingWith<User>("A");
 
-            assert.deepEqual(users.map(x => x.id), ["Aaa", "Abc", "Afa", "Ala"]);
+            assert.deepStrictEqual(users.map(x => x.id), ["Aaa", "Abc", "Afa", "Ala"]);
 
             const users2 = await session.advanced.loadStartingWith<User>("A", {
                 start: 1,
                 pageSize: 2
             });
 
-            assert.deepEqual(users2.map(x => x.id), ["Abc", "Afa"]);
+            assert.deepStrictEqual(users2.map(x => x.id), ["Abc", "Afa"]);
         }
     });
 });

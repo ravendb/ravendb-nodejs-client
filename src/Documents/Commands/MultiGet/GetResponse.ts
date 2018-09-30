@@ -1,4 +1,5 @@
 import { StatusCodes } from "../../../Http/StatusCode";
+
 export class GetResponse {
     public constructor() {
         this._headers = {};

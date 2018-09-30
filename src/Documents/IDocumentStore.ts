@@ -56,43 +56,44 @@ export interface DocumentStoreEventEmitter {
     removeListener(eventName: "afterDispose", eventHandler: (callback: () => void) => void): void;
     removeListener(eventName: "executorsDisposed", eventHandler: (callback: () => void) => void): void;
 }
-export interface IDocumentStore extends
-  IDisposable,
-  SessionEventsProxy,
-  DocumentStoreEventEmitter {
 
-  /**
-   * 
-   * Opens document session 
-   * @param {string} [database] 
-   * @returns {IDocumentSession} 
-   * @memberof IDocumentStore
-   */
-  openSession(database?: string): IDocumentSession;
+export interface IDocumentStore extends IDisposable,
+    SessionEventsProxy,
+    DocumentStoreEventEmitter {
 
-  /**
-   * Opens document session 
-   * @param {ISessionOptions} [options] 
-   * @returns {IDocumentSession} 
-   * @memberof IDocumentStore
-   */
-  openSession(options?: ISessionOptions): IDocumentSession;
+    /**
+     *
+     * Opens document session
+     * @param {string} [database]
+     * @returns {IDocumentSession}
+     * @memberof IDocumentStore
+     */
+    openSession(database?: string): IDocumentSession;
 
-  /**
-   * Opens document session 
-   * @param {string} [database] 
-   * @param {ISessionOptions} [options] 
-   * @returns {IDocumentSession} 
-   * @memberof IDocumentStore
-   */
-  openSession(database?: string, options?: ISessionOptions): IDocumentSession;
+    /**
+     * Opens document session
+     * @param {ISessionOptions} [options]
+     * @returns {IDocumentSession}
+     * @memberof IDocumentStore
+     */
+    openSession(options?: ISessionOptions): IDocumentSession;
+
+    /**
+     * Opens document session
+     * @param {string} [database]
+     * @param {ISessionOptions} [options]
+     * @returns {IDocumentSession}
+     * @memberof IDocumentStore
+     */
+    openSession(database?: string, options?: ISessionOptions): IDocumentSession;
 
     /**
      * Subscribe to change notifications from the server
      * @return Database changes object
      */
-  changes(): IDatabaseChanges;
-  changes(database: string): IDatabaseChanges;
+    changes(): IDatabaseChanges;
+
+    changes(database: string): IDatabaseChanges;
 
     // TBD: IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
     // TBD IDisposable AggressivelyCache(string database = null);
@@ -132,16 +133,18 @@ export interface IDocumentStore extends
      * @param database Target database
      */
     executeIndex(task: AbstractIndexCreationTask): Promise<void>;
+
     executeIndex(task: AbstractIndexCreationTask, database: string): Promise<void>;
 
     /**
      * Executes the index creation
-     * 
-     * @param {AbstractIndexCreationTask[]} tasks 
-     * @returns {Promise<void>} 
+     *
+     * @param {AbstractIndexCreationTask[]} tasks
+     * @returns {Promise<void>}
      * @memberof IDocumentStore
      */
     executeIndexes(tasks: AbstractIndexCreationTask[]): Promise<void>;
+
     executeIndexes(tasks: AbstractIndexCreationTask[], database: string): Promise<void>;
 
     /**
@@ -176,10 +179,13 @@ export interface IDocumentStore extends
 
     addSessionListener(
         eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
+
     addSessionListener(
         eventName: "afterSaveChanges", eventHandler: (eventArgs: SessionAfterSaveChangesEventArgs) => void): this;
+
     addSessionListener(
         eventName: "beforeQuery", eventHandler: (eventArgs: SessionBeforeQueryEventArgs) => void): this;
+
     addSessionListener(
         eventName: "beforeDelete", eventHandler: (eventArgs: SessionBeforeDeleteEventArgs) => void): this;
 }

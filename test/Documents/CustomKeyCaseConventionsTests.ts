@@ -103,14 +103,14 @@ describe("With custom key case conventions set", function () {
                 const loaded: any = await session.load(pascalCasedObj["id"]);
                 assert.ok(loaded);
                 assert.ok(loaded["@metadata"]);
-                assert.equal(loaded["@metadata"]["@nested-object-types"]["RegisteredAt"], "date");
-                assert.equal(loaded.name, pascalCasedObj.Name);
-                assert.equal(loaded.age, pascalCasedObj.Age);
-                assert.equal(loaded.registeredAt.constructor, Date);
-                assert.equal(loaded.registeredAt.valueOf(), pascalCasedObj.RegisteredAt.valueOf());
-                assert.equal(loaded["@metadata"]["@collection"], pascalCasedObj.Collection);
-                assert.equal(loaded.collection, pascalCasedObj.Collection);
-                assert.equal(loaded.equipment[0].name, pascalCasedObj.Equipment[0].Name);
+                assert.strictEqual(loaded["@metadata"]["@nested-object-types"]["RegisteredAt"], "date");
+                assert.strictEqual(loaded.name, pascalCasedObj.Name);
+                assert.strictEqual(loaded.age, pascalCasedObj.Age);
+                assert.strictEqual(loaded.registeredAt.constructor, Date);
+                assert.strictEqual(loaded.registeredAt.valueOf(), pascalCasedObj.RegisteredAt.valueOf());
+                assert.strictEqual(loaded["@metadata"]["@collection"], pascalCasedObj.Collection);
+                assert.strictEqual(loaded.collection, pascalCasedObj.Collection);
+                assert.strictEqual(loaded.equipment[0].name, pascalCasedObj.Equipment[0].Name);
             }
 
         } finally {
@@ -149,19 +149,19 @@ describe("With custom key case conventions set", function () {
             const session = regularStore.openSession();
             const loaded: any = await session.load("people/1");
             assert.ok(loaded);
-            assert.equal(loaded.Name, stored.name);
-            assert.equal(loaded.Age, stored.age);
+            assert.strictEqual(loaded.Name, stored.name);
+            assert.strictEqual(loaded.Age, stored.age);
             assert.ok(loaded.RegisteredAt);
-            assert.equal(loaded.RegisteredAt.constructor, Date, `Got ${ loaded.registeredAt } - not a Date`);
+            assert.strictEqual(loaded.RegisteredAt.constructor, Date, `Got ${ loaded.registeredAt } - not a Date`);
 
-            assert.equal(loaded.RegisteredAt.valueOf(), stored.registeredAt.valueOf());
+            assert.strictEqual(loaded.RegisteredAt.valueOf(), stored.registeredAt.valueOf());
 
-            assert.equal(loaded.Collection, stored.collection);
-            assert.equal(loaded.Equipment[0].Name, stored.equipment[0].name);
+            assert.strictEqual(loaded.Collection, stored.collection);
+            assert.strictEqual(loaded.Equipment[0].Name, stored.equipment[0].name);
             
             assert.ok(loaded["@metadata"]);
-            assert.equal(loaded["@metadata"]["@collection"], stored.collection);
-            assert.equal(loaded["@metadata"]["@nested-object-types"]["RegisteredAt"], "date");
+            assert.strictEqual(loaded["@metadata"]["@collection"], stored.collection);
+            assert.strictEqual(loaded["@metadata"]["@nested-object-types"]["RegisteredAt"], "date");
         }
 
     });
@@ -203,8 +203,8 @@ describe("With custom key case conventions set", function () {
 
             assert.ok(queryResults.length);
             const result: any = queryResults[0];
-            assert.equal(result.name, pascalCasedObj.Name);
-            assert.equal(result.age, pascalCasedObj.Age);
+            assert.strictEqual(result.name, pascalCasedObj.Name);
+            assert.strictEqual(result.age, pascalCasedObj.Age);
         } finally {
             if (store) {
                 store.dispose();
@@ -242,7 +242,7 @@ describe("With custom key case conventions set", function () {
 
             assert.ok(queryResults.length);
             let result: any = queryResults[0];
-            assert.equal(result, pascalCasedObj.Name);
+            assert.strictEqual(result, pascalCasedObj.Name);
 
             // multiple fields
             queryResults = await session.query({ collection: "People" })
@@ -250,8 +250,8 @@ describe("With custom key case conventions set", function () {
                 .all();
             assert.ok(queryResults.length);
             result = queryResults[0];
-            assert.equal(result.name, "John");
-            assert.equal(result.age, 25);
+            assert.strictEqual(result.name, "John");
+            assert.strictEqual(result.age, 25);
 
         } finally {
             if (store) {

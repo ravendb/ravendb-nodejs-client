@@ -9,7 +9,7 @@ import { HttpRequestParameters } from "../../../Primitives/Http";
 
 export class SetIndexesPriorityOperation implements IMaintenanceOperation<void> {
 
-    private _parameters: SetIndexesPriorityOperationParameters;
+    private readonly _parameters: SetIndexesPriorityOperationParameters;
 
     public constructor(indexName: string, mode: IndexPriority);
     public constructor(parameters: SetIndexesPriorityOperationParameters);
@@ -50,7 +50,7 @@ export class SetIndexesPriorityOperation implements IMaintenanceOperation<void> 
 
 export class SetIndexPriorityCommand extends RavenCommand<void> {
 
-    private _parameters: object;
+    private readonly _parameters: object;
 
     public constructor(conventions: DocumentConventions, parameters: SetIndexesPriorityOperationParameters) {
         super();

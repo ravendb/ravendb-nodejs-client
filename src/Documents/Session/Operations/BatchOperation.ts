@@ -7,7 +7,7 @@ import { SessionAfterSaveChangesEventArgs } from "../SessionEvents";
 
 export class BatchOperation {
 
-    private _session: InMemoryDocumentSessionOperations;
+    private readonly _session: InMemoryDocumentSessionOperations;
 
     public constructor(session: InMemoryDocumentSessionOperations) {
         this._session = session;

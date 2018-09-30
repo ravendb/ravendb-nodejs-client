@@ -9,11 +9,10 @@ import { Mapping } from "../../Mapping";
 import { ObjectTypeDescriptor} from "../..";
 import { throwError } from "../../Exceptions";
 import {SetupDocumentBase} from "../SetupDocumentBase";
-import {ObjectUtil} from "../../Utility/ObjectUtil";
 
 export class EntityToJson {
 
-    private _session: InMemoryDocumentSessionOperations;
+    private readonly _session: InMemoryDocumentSessionOperations;
     /**
      * All the listeners for this session
      * @param _session Session to use

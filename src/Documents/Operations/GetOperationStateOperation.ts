@@ -6,7 +6,7 @@ import { IMaintenanceOperation, OperationResultType } from "./OperationAbstracti
 import * as stream from "readable-stream";
 export class GetOperationStateOperation implements IMaintenanceOperation<IRavenResponse> {
 
-    private _id: number;
+    private readonly _id: number;
 
     public constructor(id: number) {
         this._id = id;
@@ -29,7 +29,7 @@ export class GetOperationStateCommand extends RavenCommand<IRavenResponse> {
     }
 
     private _conventions: DocumentConventions;
-    private _id: number;
+    private readonly _id: number;
 
     public constructor(conventions: DocumentConventions, id: number) {
         super();

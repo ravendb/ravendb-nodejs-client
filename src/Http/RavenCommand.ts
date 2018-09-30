@@ -3,7 +3,7 @@ import { HttpCache } from "../Http/HttpCache";
 import { StatusCodes } from "../Http/StatusCode";
 import * as request from "request";
 import * as stream from "readable-stream";
-import { HttpRequestParameters, HttpResponse, HttpRequest } from "../Primitives/Http";
+import { HttpRequestParameters, HttpResponse } from "../Primitives/Http";
 import { getLogger } from "../Utility/LogUtil";
 import { throwError } from "../Exceptions";
 import { IRavenObject } from "../Types/IRavenObject";
@@ -13,11 +13,6 @@ import { TypesAwareObjectMapper, TypeInfo } from "../Mapping/ObjectMapper";
 import { ObjectTypeDescriptor } from "..";
 import { JsonSerializer } from "../Mapping/Json/Serializer";
 import { RavenCommandResponsePipeline } from "./RavenCommandResponsePipeline";
-import * as StreamUtil from "../Utility/StreamUtil";
-import { 
-    ObjectKeyCaseTransformStreamOptions, 
-    ObjectKeyCaseTransformStream 
-} from "../Mapping/Json/Streams/ObjectKeyCaseTransformStream";
 import { pick } from "stream-json/filters/Pick";
 import { ignore } from "stream-json/filters/Ignore";
 

@@ -1,6 +1,5 @@
 
 import {
-    IDocumentStore,
     DocumentStore,
 } from "../../src";
 import { IAuthOptions } from "../../src/Auth/AuthOptions";

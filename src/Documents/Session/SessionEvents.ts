@@ -23,9 +23,9 @@ export interface SessionEventsEmitter {
 export class SessionBeforeStoreEventArgs {
     private _documentMetadata: IMetadataDictionary;
 
-    private _session: InMemoryDocumentSessionOperations;
-    private _documentId: string;
-    private _entity: Object;
+    private readonly _session: InMemoryDocumentSessionOperations;
+    private readonly _documentId: string;
+    private readonly _entity: Object;
 
     public constructor(
         session: InMemoryDocumentSessionOperations, documentId: string, entity: object) {
@@ -69,9 +69,9 @@ export class SessionBeforeDeleteEventArgs {
 
     private _documentMetadata: IMetadataDictionary;
 
-    private _session: InMemoryDocumentSessionOperations;
-    private _documentId: string;
-    private _entity: object;
+    private readonly _session: InMemoryDocumentSessionOperations;
+    private readonly _documentId: string;
+    private readonly _entity: object;
 
     public constructor(session: InMemoryDocumentSessionOperations, documentId: string, entity: object) {
         this._session = session;

@@ -1,4 +1,4 @@
-import {IDocumentQuery} from '../../../src/Documents/Session/IDocumentQuery';
+import {IDocumentQuery} from "../../../src/Documents/Session/IDocumentQuery";
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
@@ -73,7 +73,7 @@ describe("Issue RavenDB-903", function () {
         {
             const session = docStore.openSession();
             const products = await queryFunction(session).all();
-            assert.equal(products.length, 1);
+            assert.strictEqual(products.length, 1);
 
         }
     }

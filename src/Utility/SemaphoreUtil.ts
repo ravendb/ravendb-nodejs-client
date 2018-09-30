@@ -1,7 +1,6 @@
 import * as semaphore from "semaphore";
 import * as BluebirdPromise from "bluebird";
 import { IDisposable } from "../Types/Contracts";
-import { getLogger } from "../Utility/LogUtil";
 
 export interface AcquireSemaphoreOptions { 
     timeout?: number;

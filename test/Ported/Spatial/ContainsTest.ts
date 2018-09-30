@@ -43,7 +43,7 @@ describe("ContainsTest", function () {
                 .selectFields<string>("name")
                 .all();
 
-            assert.deepEqual(pascalOrGoDeveloperNames, ["Jane", "Tarzan"]);
+            assert.deepStrictEqual(pascalOrGoDeveloperNames, ["Jane", "Tarzan"]);
         }
 
         {
@@ -55,7 +55,7 @@ describe("ContainsTest", function () {
                 .selectFields<string>("name")
                 .all();
 
-            assert.deepEqual(javaDevelopers, ["John", "Tarzan"]);
+            assert.deepStrictEqual(javaDevelopers, ["John", "Tarzan"]);
         }
     });
 });

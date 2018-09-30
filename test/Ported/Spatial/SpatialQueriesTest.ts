@@ -74,7 +74,7 @@ describe("SpatialQueriesTest", function () {
             .all();
 
             assert.ok(nearbyDocs);
-            assert.equal(nearbyDocs.length, 3);
+            assert.strictEqual(nearbyDocs.length, 3);
         }
     });
 
@@ -114,7 +114,7 @@ describe("SpatialQueriesTest", function () {
             .all();
 
             assert.ok(matchesWithinMiles);
-            assert.equal(matchesWithinMiles.length, 2);
+            assert.strictEqual(matchesWithinMiles.length, 2);
 
             // Find within 8 kilometers.
             // We should find only my house, since the gym is ~11 kilometers out.
@@ -126,7 +126,7 @@ describe("SpatialQueriesTest", function () {
             .waitForNonStaleResults()
             .all();
 
-            assert.equal(matchesWithinKilometers.length, 1);
+            assert.strictEqual(matchesWithinKilometers.length, 1);
         }
     });
 

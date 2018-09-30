@@ -3,7 +3,7 @@ import { throwError } from "../../../Exceptions";
 
 export class GroupBySumToken extends QueryToken {
 
-    private _projectedName: string;
+    private readonly _projectedName: string;
     private _fieldName: string;
 
     private constructor(fieldName: string, projectedName: string) {

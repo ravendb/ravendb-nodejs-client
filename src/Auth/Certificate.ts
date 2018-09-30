@@ -1,7 +1,7 @@
-import { IAuthOptions } from "./AuthOptions";
-import { StringUtil } from "../Utility/StringUtil";
-import { throwError } from "../Exceptions";
-import { AgentOptions} from "https";
+import {IAuthOptions} from "./AuthOptions";
+import {StringUtil} from "../Utility/StringUtil";
+import {throwError} from "../Exceptions";
+import {AgentOptions} from "https";
 import WebSocket = require("ws");
 
 export type CertificateType = "pem" | "pfx";
@@ -46,9 +46,9 @@ export abstract class Certificate implements ICertificate {
         return new PfxCertificate(certificate, passphrase, ca);
     }
 
-    protected constructor(certificate: string | Buffer, passprase?: string, ca?: string | Buffer) {
+    protected constructor(certificate: string | Buffer, passphrase?: string, ca?: string | Buffer) {
         this._certificate = certificate;
-        this._passphrase = passprase;
+        this._passphrase = passphrase;
         this._ca = ca;
     }
 
@@ -68,19 +68,19 @@ export abstract class Certificate implements ICertificate {
 }
 
 export class PemCertificate extends Certificate {
-    private readonly certToken: string = "CERTIFICATE";
-    private readonly keyToken: string = "RSA PRIVATE KEY";
+    private readonly _certToken: string = "CERTIFICATE";
+    private readonly _keyToken: string = "RSA PRIVATE KEY";
     protected _key: string;
 
-    constructor(certificate: string | Buffer, passprase?: string, ca?: string | Buffer) {
-        super(certificate, passprase, ca);
+    constructor(certificate: string | Buffer, passphrase?: string, ca?: string | Buffer) {
+        super(certificate, passphrase, ca);
 
         if (certificate instanceof Buffer) {
             this._certificate = certificate.toString();
         }
 
-        this._key = this._fetchPart(this.keyToken);
-        this._certificate = this._fetchPart(this.certToken);
+        this._key = this._fetchPart(this._keyToken);
+        this._certificate = this._fetchPart(this._certToken);
 
         if (!this._key && !this._certificate) {
             throwError("InvalidArgumentException", "Invalid .pem certificate provided");
@@ -127,12 +127,12 @@ export class PemCertificate extends Certificate {
 }
 
 export class PfxCertificate extends Certificate {
-    constructor(certificate: string | Buffer, passprase?: string, ca?: string | Buffer) {
+    constructor(certificate: string | Buffer, passphrase?: string, ca?: string | Buffer) {
         if (!(certificate instanceof Buffer)) {
             throwError("InvalidArgumentException", "Pfx certificate should be a Buffer");
         }
 
-        super(certificate, passprase, ca);
+        super(certificate, passphrase, ca);
     }
 
     public toAgentOptions(): AgentOptions {

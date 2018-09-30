@@ -1,5 +1,4 @@
 import * as StringBuilder from "string-builder";
-import * as stream from "readable-stream";
 import { ILazyOperation } from "./ILazyOperation";
 import { ObjectTypeDescriptor } from "../../../../Types";
 import { InMemoryDocumentSessionOperations } from "../../InMemoryDocumentSessionOperations";
@@ -11,7 +10,7 @@ import { GetDocumentsResult, GetDocumentsCommand } from "../../../Commands/GetDo
 import { stringToReadable } from "../../../../Utility/StreamUtil";
 
 export class LazyLoadOperation<T extends object> implements ILazyOperation {
-    private _clazz: ObjectTypeDescriptor<T>;
+    private readonly _clazz: ObjectTypeDescriptor<T>;
     private readonly _session: InMemoryDocumentSessionOperations;
     private readonly _loadOperation: LoadOperation;
     private _ids: string[];

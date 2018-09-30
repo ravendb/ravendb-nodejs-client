@@ -24,7 +24,7 @@ export class DeleteDatabasesOperation implements IServerOperation<DeleteDatabase
         return "CommandResult";
     }
 
-    private _parameters: DeleteDatabasesParameters;
+    private readonly _parameters: DeleteDatabasesParameters;
 
     public constructor(parameters: DeleteDatabasesParameters) {
         if (!parameters) {
@@ -44,7 +44,7 @@ export class DeleteDatabasesOperation implements IServerOperation<DeleteDatabase
 }
 
 export class DeleteDatabaseCommand extends RavenCommand<DeleteDatabaseResult> {
-    private _parameters: string;
+    private readonly _parameters: string;
 
     public constructor(conventions: DocumentConventions, parameters: DeleteDatabasesParameters) {
         super();

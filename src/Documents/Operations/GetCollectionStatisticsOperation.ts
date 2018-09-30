@@ -4,7 +4,6 @@ import { CollectionStatistics } from "./CollectionStatistics";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { ServerNode } from "../../Http/ServerNode";
-import { ObjectKeysTransform } from "../../Mapping/ObjectMapper";
 import { JsonSerializer } from "../../Mapping/Json/Serializer";
 import * as stream from "readable-stream";
 

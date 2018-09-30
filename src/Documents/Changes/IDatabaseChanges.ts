@@ -62,7 +62,8 @@ export interface IDatabaseChanges extends IConnectableChanges<IDatabaseChanges> 
 
     /**
      * Subscribe to changes for all documents that belong to specified collection (Raven-Entity-Name).
-     * @param clazz The document class
+     * @template T object type
+     * @param type The document class
      * @return Changes observable
      */
     forDocumentsInCollection<T extends object>(type: ObjectTypeDescriptor<T>): IChangesObservable<DocumentChange>;

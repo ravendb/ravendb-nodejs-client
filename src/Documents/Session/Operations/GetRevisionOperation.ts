@@ -33,7 +33,8 @@ export class GetRevisionOperation {
 
         this._session = session;
         if (startOrDate instanceof Date) {
-            this._command = new GetRevisionsCommand(session.conventions, changeVectorOrChangeVectorsOrId as string, startOrDate);
+            this._command = new GetRevisionsCommand(session.conventions,
+                changeVectorOrChangeVectorsOrId as string, startOrDate);
         } else if (TypeUtil.isArray(changeVectorOrChangeVectorsOrId)) {
             this._command = new GetRevisionsCommand(session.conventions, changeVectorOrChangeVectorsOrId);
         } else if (TypeUtil.isNumber(startOrDate)) {

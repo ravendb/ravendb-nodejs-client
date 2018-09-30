@@ -27,6 +27,7 @@ export abstract class AbstractIndexCreationTask {
 
     protected outputReduceToCollection: string;
 
+    // noinspection TypeScriptAbstractClassConstructorCanBeMadeProtected
     public constructor() {
         this.storesStrings = {};
         this.indexesStrings = {};
@@ -80,9 +81,12 @@ export abstract class AbstractIndexCreationTask {
         return indexCtorName.replace(/_/g, "/");
     }
 
+    //TODO: introduce overloads?
     /**
      * Executes the index creation against the specified document store.
      * @param store target document store
+     * @param conventions Document conventions
+     * @param database Database name
      */
     public async execute(store: IDocumentStore, conventions?: DocumentConventions, database?: string): Promise<void> {
         if (!conventions && !database) {

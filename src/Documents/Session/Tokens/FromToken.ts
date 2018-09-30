@@ -3,10 +3,10 @@ import { throwError } from "../../../Exceptions";
 
 export class FromToken extends QueryToken {
 
-    private _collectionName: string;
-    private _indexName: string;
-    private _dynamic: boolean;
-    private _alias: string;
+    private readonly _collectionName: string;
+    private readonly _indexName: string;
+    private readonly _dynamic: boolean;
+    private readonly _alias: string;
 
     public get collection(): string {
         return this._collectionName;

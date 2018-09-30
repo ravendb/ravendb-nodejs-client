@@ -27,12 +27,12 @@ describe("GetTopologyCommand", function () {
         assert.ok(result);
         assert.ok(result.constructor.name, "Topology");
         assert.ok(result.etag);
-        assert.equal(result.nodes.length, 1);
+        assert.strictEqual(result.nodes.length, 1);
 
         const node = result.nodes[0];
-        assert.equal(node.url, store.urls[0]);
-        assert.equal(node.database, store.database);
-        assert.equal(node.clusterTag, "A");
-        assert.equal(node.serverRole, "Member" as ServerNodeRole);
+        assert.strictEqual(node.url, store.urls[0]);
+        assert.strictEqual(node.database, store.database);
+        assert.strictEqual(node.clusterTag, "A");
+        assert.strictEqual(node.serverRole, "Member" as ServerNodeRole);
     });
 });

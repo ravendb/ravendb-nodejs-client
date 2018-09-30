@@ -48,11 +48,11 @@ describe("NextAndSeedIdentitiesTest", function () {
             assert.ok(entityWithId1);
             assert.ok(entityWithId3);
 
-            assert.equal(entityWithId2, null);
-            assert.equal(entityWithId4, null);
+            assert.ok(!entityWithId2);
+            assert.ok(!entityWithId4);
 
-            assert.equal(entityWithId1.lastName, "Adi");
-            assert.equal(entityWithId3.lastName, "Avivi");
+            assert.strictEqual(entityWithId1.lastName, "Adi");
+            assert.strictEqual(entityWithId3.lastName, "Avivi");
         }
     });
 
@@ -67,7 +67,7 @@ describe("NextAndSeedIdentitiesTest", function () {
         let command = new SeedIdentityForCommand("users", 1990);
         await store.getRequestExecutor().execute(command);
         let result = command.result;
-        assert.equal(result, 1990);
+        assert.strictEqual(result, 1990);
 
         {
             const session = store.openSession();
@@ -87,21 +87,21 @@ describe("NextAndSeedIdentitiesTest", function () {
             assert.ok(entityWithId1);
             assert.ok(entityWithId1991);
 
-            assert.equal(entityWithId2, null);
-            assert.equal(entityWithId1992, null);
-            assert.equal(entityWithId1990, null);
+            assert.ok(!entityWithId2);
+            assert.ok(!entityWithId1992);
+            assert.ok(!entityWithId1990);
 
-            assert.equal(entityWithId1.lastName, "Adi");
-            assert.equal(entityWithId1991.lastName, "Avivi");
+            assert.strictEqual(entityWithId1.lastName, "Adi");
+            assert.strictEqual(entityWithId1991.lastName, "Avivi");
         }
 
         command = new SeedIdentityForCommand("users", 1975);
         await store.getRequestExecutor().execute(command);
         result = command.result;
-        assert.equal(result, 1991);
+        assert.strictEqual(result, 1991);
 
         const identities = await store.maintenance.send(new GetIdentitiesOperation());
-        assert.equal(identities["users|"], 1991);
+        assert.strictEqual(identities["users|"], 1991);
     });
     
 });

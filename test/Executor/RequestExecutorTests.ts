@@ -45,7 +45,7 @@ describe("Request executor", function () {
                         errorsCount++;
                     }
                 }
-                assert.equal(errorsCount, 40);
+                assert.strictEqual(errorsCount, 40);
 
                 try {
                     const databaseNamesOperation = new GetDatabaseNamesOperation(0, 20);
@@ -53,7 +53,7 @@ describe("Request executor", function () {
                     await executor.execute(command);
                     assert.fail("Should have thrown.");
                 } catch (err) {
-                    assert.equal(err.name, "DatabaseDoesNotExistException");
+                    assert.strictEqual(err.name, "DatabaseDoesNotExistException");
                 }
 
             } finally {
@@ -104,7 +104,7 @@ describe("Request executor", function () {
                     await executor.updateTopology(serverNode, 5000);
                     assert.fail("Should have thrown");
                 } catch (err) {
-                    assert.equal(err.name, "DatabaseDoesNotExistException", err.stack);
+                    assert.strictEqual(err.name, "DatabaseDoesNotExistException", err.stack);
                 }
             } finally {
                 executor.dispose();
@@ -117,11 +117,11 @@ describe("Request executor", function () {
                     store.urls[0], store.database, { documentConventions });
 
                 const nodes = executor.getTopologyNodes();
-                assert.equal(nodes.length, 1);
+                assert.strictEqual(nodes.length, 1);
 
                 const serverNode = nodes[0];
-                assert.equal(serverNode.url, store.urls[0]);
-                assert.equal(serverNode.database, store.database);
+                assert.strictEqual(serverNode.url, store.urls[0]);
+                assert.strictEqual(serverNode.database, store.database);
 
                 const command = new GetNextOperationIdCommand();
                 await executor.execute(command);
@@ -149,9 +149,9 @@ describe("Request executor", function () {
                 assert.ok(command.result);
 
                 const nodes = executor.getTopologyNodes();
-                assert.equal(nodes.length, 1);
-                assert.equal(nodes[0].url, url);
-                assert.equal(executor.getUrl(), url);
+                assert.strictEqual(nodes.length, 1);
+                assert.strictEqual(nodes[0].url, url);
+                assert.strictEqual(executor.getUrl(), url);
             } finally {
                 executor.dispose();
             }
@@ -170,7 +170,7 @@ describe("Request executor", function () {
             .then(() => assert.fail("Should have failed with 'AllTopologyNodesDownException'."),
                 err => {
                     assert.ok(err);
-                    assert.equal(err.name, "AllTopologyNodesDownException" as RavenErrorType, err.stack);
+                    assert.strictEqual(err.name, "AllTopologyNodesDownException" as RavenErrorType, err.stack);
                 })
             .finally(() => {
                 executor.dispose();

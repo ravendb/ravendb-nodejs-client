@@ -555,13 +555,13 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         return { indexName, collection };
     }
 
-    private _attachments: IAttachmentsSessionOperations;
+    private readonly _attachments: IAttachmentsSessionOperations;
 
     public get attachments(): IAttachmentsSessionOperations {
         return this._attachments;
     }
 
-    private _revisions: IRevisionsSessionOperations;
+    private readonly _revisions: IRevisionsSessionOperations;
 
     public get revisions(): IRevisionsSessionOperations {
         return this._revisions;
@@ -767,7 +767,6 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         await this.requestExecutor.execute(command, this.sessionInfo);
         const docsReadable = streamOperation.setResult(command.result);
         docsReadable.once("stats", streamQueryStatsCallback || TypeUtil.NOOP);
-
 
         const result = this._getStreamResultTransform(
             this, (query as any).getQueryType(), (query as any).fieldsToFetchToken);

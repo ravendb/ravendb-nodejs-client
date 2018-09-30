@@ -3,6 +3,7 @@ declare module "readable-stream";
 declare module "readable-stream" {
     import * as events from "events";
 
+    // tslint:disable-next-line:class-name
     class pipeable extends events.EventEmitter {
         public pipe<T extends NodeJS.WritableStream>(destination: T, options?: { end?: boolean; }): T;
     }
@@ -23,6 +24,7 @@ declare module "readable-stream" {
             public readonly readableHighWaterMark: number;
             public readonly readableLength: number;
             constructor(opts?: ReadableOptions);
+            // tslint:disable-next-line:function-name
             public _read(size: number): void;
             public read(size?: number): any;
             public setEncoding(encoding: string): this;
@@ -33,6 +35,7 @@ declare module "readable-stream" {
             public unshift(chunk: any): void;
             public wrap(oldStream: NodeJS.ReadableStream): this;
             public push(chunk: any, encoding?: string): boolean;
+            // tslint:disable-next-line:function-name
             public _destroy(err: Error, callback: Function): void;
             public destroy(error?: Error): void;
 
@@ -112,9 +115,13 @@ declare module "readable-stream" {
             public readonly writableHighWaterMark: number;
             public readonly writableLength: number;
             constructor(opts?: WritableOptions);
+            // tslint:disable-next-line:function-name
             public _write(chunk: any, encoding: string, callback: (err?: Error) => void): void;
+            // tslint:disable-next-line:function-name
             public _writev?(chunks: Array<{ chunk: any, encoding: string }>, callback: (err?: Error) => void): void;
+            // tslint:disable-next-line:function-name
             public _destroy(err: Error, callback: Function): void;
+            // tslint:disable-next-line:function-name
             public _final(callback: Function): void;
             public write(chunk: any, cb?: Function): boolean;
             public write(chunk: any, encoding?: string, cb?: Function): boolean;
@@ -205,9 +212,13 @@ declare module "readable-stream" {
             public readonly writableHighWaterMark: number;
             public readonly writableLength: number;
             constructor(opts?: DuplexOptions);
+            // tslint:disable-next-line:function-name
             public _write(chunk: any, encoding: string, callback: (err?: Error) => void): void;
+            // tslint:disable-next-line:function-name
             public _writev?(chunks: Array<{ chunk: any, encoding: string }>, callback: (err?: Error) => void): void;
+            // tslint:disable-next-line:function-name
             public _destroy(err: Error, callback: Function): void;
+            // tslint:disable-next-line:function-name
             public _final(callback: Function): void;
             public write(chunk: any, cb?: Function): boolean;
             public write(chunk: any, encoding?: string, cb?: Function): boolean;
@@ -228,6 +239,7 @@ declare module "readable-stream" {
 
         export class Transform extends Duplex {
             constructor(opts?: TransformOptions);
+            // tslint:disable-next-line:function-name
             public _transform(chunk: any, encoding: string, callback: TransformCallback): void;
             public destroy(error?: Error): void;
         }

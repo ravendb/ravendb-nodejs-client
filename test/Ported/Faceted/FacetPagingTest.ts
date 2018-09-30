@@ -9,7 +9,6 @@ import {Camera, FacetTestContext} from "../../Utils/FacetTestContext";
 import {FacetOptions} from "../../../src/Documents/Queries/Facets";
 import {Facet} from "../../../src/Documents/Queries/Facets/Facet";
 import {FacetSetup} from "../../../src/Documents/Queries/Facets/FacetSetup";
-import {FacetResultObject} from "../../../src/Documents/Queries/Facets/AggregationQueryBase";
 import * as orderBy from "lodash.orderby";
 
 describe("FacetPagingTest", function () {

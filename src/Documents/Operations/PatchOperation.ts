@@ -10,7 +10,6 @@ import { HttpCache } from "../../Http/HttpCache";
 import { ServerNode } from "../../Http/ServerNode";
 import { PatchResult } from "./PatchResult";
 import * as stream from "readable-stream";
-import { getIgnoreKeyCaseTransformKeysFromDocumentMetadata } from "../../Mapping/Json/Docs";
 import { CollectResultStreamOptions } from "../../Mapping/Json/Streams/CollectResultStream";
 import { streamArray } from "stream-json/streamers/StreamArray";
 import { streamObject } from "stream-json/streamers/StreamObject";
@@ -32,11 +31,11 @@ export class PatchOperationResult<TEntity> {
 
 export class PatchOperation implements IOperation<PatchResult> {
 
-    private _id: string;
-    private _changeVector: string;
-    private _patch: PatchRequest;
-    private _patchIfMissing: PatchRequest;
-    private _skipPatchIfChangeVectorMismatch: boolean;
+    private readonly _id: string;
+    private readonly _changeVector: string;
+    private readonly _patch: PatchRequest;
+    private readonly _patchIfMissing: PatchRequest;
+    private readonly _skipPatchIfChangeVectorMismatch: boolean;
 
     public get resultType(): OperationResultType {
         return "PatchResult";
@@ -93,12 +92,12 @@ export class PatchOperation implements IOperation<PatchResult> {
 }
 
 export class PatchCommand extends RavenCommand<PatchResult> {
-    private _id: string;
-    private _changeVector: string;
-    private _patch: object;
-    private _skipPatchIfChangeVectorMismatch: boolean;
-    private _returnDebugInformation: boolean;
-    private _test: boolean;
+    private readonly _id: string;
+    private readonly _changeVector: string;
+    private readonly _patch: object;
+    private readonly _skipPatchIfChangeVectorMismatch: boolean;
+    private readonly _returnDebugInformation: boolean;
+    private readonly _test: boolean;
     private _conventions: DocumentConventions;
 
     public constructor(

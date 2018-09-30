@@ -6,7 +6,7 @@ import * as stream from "readable-stream";
 
 export class GetConflictsCommand extends RavenCommand<GetConflictsResult> {
 
-    private _id: string;
+    private readonly _id: string;
 
     public constructor(id: string) {
         super();
@@ -31,7 +31,7 @@ export class GetConflictsCommand extends RavenCommand<GetConflictsResult> {
             this._throwInvalidResponse();
         }
 
-        let body;
+        let body = null;
         await this._defaultPipeline(_ => body = _).process(bodyStream)
             .then(results => {
                 this.result = this._typedObjectMapper.fromObjectLiteral(results, {
@@ -43,5 +43,4 @@ export class GetConflictsCommand extends RavenCommand<GetConflictsResult> {
         
         return body;
     }
-
 }

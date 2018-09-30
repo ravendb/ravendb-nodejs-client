@@ -10,7 +10,7 @@ const log = getLogger({ module: "ServerOperationExecutor" });
 export class ServerOperationExecutor implements IDisposable {
 
     private _store: DocumentStoreBase;
-    private _requestExecutor: ClusterRequestExecutor;
+    private readonly _requestExecutor: ClusterRequestExecutor;
 
     public constructor(store: DocumentStoreBase) {
         this._store = store;

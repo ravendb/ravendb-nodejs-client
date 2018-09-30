@@ -5,7 +5,7 @@ import { throwError } from "../Exceptions";
 import { RequestExecutor } from "../Http/RequestExecutor";
 import { getLogger } from "../Utility/LogUtil";
 import { DocumentStoreBase } from "./DocumentStoreBase";
-import { IDocumentStore, SessionCreatedEventArgs } from "./IDocumentStore";
+import { IDocumentStore } from "./IDocumentStore";
 import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor";
 import { OperationExecutor } from "./Operations/OperationExecutor";
 import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";
@@ -225,7 +225,7 @@ export class DocumentStore extends DocumentStoreBase {
               });
         }
 
-        this._log.info(`New request executor for datebase ${database}`);
+        this._log.info(`New request executor for database ${database}`);
         this._requestExecutors.set(databaseLower, executor);
 
         return executor;
@@ -299,9 +299,9 @@ export class DocumentStore extends DocumentStoreBase {
     public disableAggressiveCaching(database?: string): IDisposable {
         this.assertInitialized();
         const re: RequestExecutor = this.getRequestExecutor(database || this.database);
-        const old = re.agressiveCaching;
-        re.agressiveCaching = null;
-        const dispose = () => re.agressiveCaching = old;
+        const old = re.aggressiveCaching;
+        re.aggressiveCaching = null;
+        const dispose = () => re.aggressiveCaching = old;
 
         return { dispose };
     }

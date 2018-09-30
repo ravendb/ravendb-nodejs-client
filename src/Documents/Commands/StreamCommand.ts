@@ -21,11 +21,9 @@ export class StreamCommand extends RavenCommand<StreamResultResponse> {
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
-        const request = {
+        return {
             uri: `${node.url}/databases/${node.database}/${this._url}`
         };
-
-        return request;
     }
 
     public async processResponse(

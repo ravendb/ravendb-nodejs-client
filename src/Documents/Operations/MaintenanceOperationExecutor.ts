@@ -8,9 +8,9 @@ import { throwError } from "../../Exceptions";
 
 export class MaintenanceOperationExecutor {
 
-    private _store: DocumentStoreBase;
-    private _databaseName: string;
-    private _requestExecutor: RequestExecutor;
+    private readonly _store: DocumentStoreBase;
+    private readonly _databaseName: string;
+    private readonly _requestExecutor: RequestExecutor;
     private _serverOperationExecutor: ServerOperationExecutor;
 
     public constructor(store: DocumentStoreBase, databaseName?: string) {

@@ -1,5 +1,5 @@
 import { RavenCommand, ResponseDisposeHandling } from "./../../Http/RavenCommand";
-import { CachedItemMetadata, HttpCache } from "./../../Http/HttpCache";
+import { HttpCache } from "./../../Http/HttpCache";
 import { HttpRequestParameters, HttpResponse } from "./../../Primitives/Http";
 import { StringUtil } from "../../Utility/StringUtil";
 import { throwError } from "../../Exceptions";
@@ -52,29 +52,21 @@ export class HeadAttachmentCommand extends RavenCommand<string> {
    }
 
     public async processResponse(
-        cache: HttpCache, 
-        response: HttpResponse, 
-        bodyStream: stream.Readable, 
+        cache: HttpCache,
+        response: HttpResponse,
+        bodyStream: stream.Readable,
         url: string): Promise<ResponseDisposeHandling> {
-            if (response.statusCode === StatusCodes.NotModified) {
-                this.result = this._changeVector;
-                return "Automatic";
-            }
-
-            if (response.statusCode === StatusCodes.NotFound) {
-                this.result = null;
-                return "Automatic";
-            }
-
-            this.result = getRequiredEtagHeader(response);
+        if (response.statusCode === StatusCodes.NotModified) {
+            this.result = this._changeVector;
             return "Automatic";
         }
 
-    // public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
-    //     // if (!bodyStream) {
-    //     //     this._throwInvalidResponse();
-    //     // }
+        if (response.statusCode === StatusCodes.NotFound) {
+            this.result = null;
+            return "Automatic";
+        }
 
-    //     return null;
-    // }
+        this.result = getRequiredEtagHeader(response);
+        return "Automatic";
+    }
 }

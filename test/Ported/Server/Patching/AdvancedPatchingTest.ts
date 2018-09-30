@@ -91,7 +91,7 @@ describe("AdvancedPatchingTest", function () {
         {
             const session = store.openSession();
             const doc: object = await session.load("NewItem/3");
-            assert.equal(doc["copiedValue"], "1");
+            assert.strictEqual(doc["copiedValue"], 1);
         }
     });
 

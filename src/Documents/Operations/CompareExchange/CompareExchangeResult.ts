@@ -1,9 +1,7 @@
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 import { throwError } from "../../../Exceptions";
 import { ClassConstructor } from "../../..";
 import { TypeUtil } from "../../../Utility/TypeUtil";
-import { ObjectUtil } from "../../../Utility/ObjectUtil";
 
 export interface CompareExchangeResultResponse {
     index: number; 
@@ -46,7 +44,6 @@ export class CompareExchangeResult<T> {
         const successful = response["Successful"];
         const raw = response["Value"];
 
-        let result: T;
         let val = null;
 
         if (raw) {

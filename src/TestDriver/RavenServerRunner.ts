@@ -1,6 +1,5 @@
 import * as fs from "fs";
 import * as path from "path";
-import * as os from "os";
 import { ChildProcess, spawn } from "child_process";
 import { RavenServerLocator } from "./RavenServerLocator";
 import { throwError } from "../Exceptions";

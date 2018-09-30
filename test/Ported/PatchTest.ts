@@ -108,7 +108,7 @@ describe("PatchTest", function () {
         try {
             await op.waitForCompletion();
         } catch (err) {
-            assert.equal(err.name, "JavaScriptException");
+            assert.strictEqual(err.name, "JavaScriptException");
             return;
         }
 

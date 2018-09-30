@@ -46,26 +46,25 @@ describe("Queries with custom functions", function () {
                 .whereEquals("name", CmpXchg.value("Hera"))
                 .whereEquals("lastName", CmpXchg.value("Tom"));
 
-            assert.equal(
+            assert.strictEqual(
                 q.getIndexQuery().query, "from Users where name = cmpxchg($p0) and lastName = cmpxchg($p1)");
             
             const queryResult = await q.all();
-            assert.equal(queryResult.length, 1);
-            assert.equal(queryResult[0].name, "Zeus");
-
+            assert.strictEqual(queryResult.length, 1);
+            assert.strictEqual(queryResult[0].name, "Zeus");
 
             const user = await session.advanced
                 .documentQuery<User>(User)
                 .whereNotEquals("name", CmpXchg.value("Hera"))
                 .all();
-            assert.equal(user.length, 1);
-            assert.equal(user[0].name, "Jerry");
+            assert.strictEqual(user.length, 1);
+            assert.strictEqual(user[0].name, "Jerry");
 
             const users = await session.advanced
                 .rawQuery<User>("from Users where name = cmpxchg(\"Hera\")", User)
                 .all();
-            assert.equal(users.length, 1);
-            assert.equal(users[0].name, "Zeus");
+            assert.strictEqual(users.length, 1);
+            assert.strictEqual(users[0].name, "Zeus");
         }
     });
 });

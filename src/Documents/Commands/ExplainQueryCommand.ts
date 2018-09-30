@@ -13,8 +13,8 @@ export interface ExplainQueryResult {
 
 export class ExplainQueryCommand extends RavenCommand<ExplainQueryResult[]> {
 
-    private _conventions: DocumentConventions;
-    private _indexQuery: IndexQuery;
+    private readonly _conventions: DocumentConventions;
+    private readonly _indexQuery: IndexQuery;
 
     public constructor(conventions: DocumentConventions, indexQuery: IndexQuery) {
         super();
@@ -43,7 +43,7 @@ export class ExplainQueryCommand extends RavenCommand<ExplainQueryResult[]> {
         };
     }
 
-    public setResponse(response: string, fromCache: boolean): void {
+    public setResponse(response: string, fromCache: boolean): void { //TODO: do we need this method?
         if (!response) {
             this.result = null;
             return;

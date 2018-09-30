@@ -10,8 +10,8 @@ export class TcpConnectionInfo {
 
 export class GetTcpInfoCommand extends RavenCommand<TcpConnectionInfo> {
 
-    private _tag: string;
-    private _dbName: string;
+    private readonly _tag: string;
+    private readonly _dbName: string;
     public requestedNode: ServerNode;
 
     public constructor(tag: string);

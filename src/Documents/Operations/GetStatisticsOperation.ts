@@ -4,8 +4,6 @@ import { RavenCommand } from "../../Http/RavenCommand";
 import { HttpRequestParameters } from "../../Primitives/Http";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { DatabaseStatistics } from "./DatabaseStatistics";
-import { RavenCommandResponsePipeline } from "../../Http/RavenCommandResponsePipeline";
-import { throwError } from "../../Exceptions";
 import * as stream from "readable-stream";
 
 export class GetStatisticsOperation implements IMaintenanceOperation<DatabaseStatistics> {
@@ -27,7 +25,7 @@ export class GetStatisticsOperation implements IMaintenanceOperation<DatabaseSta
 
 export class GetStatisticsCommand extends RavenCommand<DatabaseStatistics> {
 
-    private _debugTag: string;
+    private readonly _debugTag: string;
 
     public constructor(debugTag?: string) {
         super();

@@ -32,7 +32,6 @@ describe("GetDocumentCommand streaming", function () {
 
             const session = store.openSession();
 
-
             const user = {
                 Name: "Marcin",
                 Age: 30,
@@ -66,10 +65,10 @@ describe("GetDocumentCommand streaming", function () {
             assert.ok(users);
             assert.ok(users.results && users.results.length);
             assert.ok(users.includes);
-            assert.equal(users.results.length, 2);
-            assert.equal(Object.keys(users.includes).length, 2);
-            assert.equal(user3.Name, users.includes["users/3"].Name);
-            assert.equal(user2.Age, users.results[1].Age);
+            assert.strictEqual(users.results.length, 2);
+            assert.strictEqual(Object.keys(users.includes).length, 2);
+            assert.strictEqual(user3.Name, users.includes["users/3"].Name);
+            assert.strictEqual(user2.Age, users.results[1].Age);
         } finally {
             if (customStore) {
                 customStore.dispose();

@@ -58,5 +58,4 @@ export class SeedIdentityForCommand extends RavenCommand<number> {
             
         return body;
     }
-
 }

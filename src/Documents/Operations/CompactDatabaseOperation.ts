@@ -9,7 +9,7 @@ import * as stream from "readable-stream";
 
 export class CompactDatabaseOperation implements IServerOperation<OperationIdResult> {
 
-    private _compactSettings: CompactSettings;
+    private readonly _compactSettings: CompactSettings;
 
     public constructor(compactSettings: CompactSettings) {
         if (!compactSettings) {
@@ -30,7 +30,7 @@ export class CompactDatabaseOperation implements IServerOperation<OperationIdRes
 }
 
 export class CompactDatabaseCommand extends RavenCommand<OperationIdResult> {
-    private _compactSettings: CompactSettings;
+    private readonly _compactSettings: CompactSettings;
 
     public constructor(conventions: DocumentConventions, compactSettings: CompactSettings) {
         super();
