@@ -81,7 +81,7 @@
     "pluralize": "^4.0.0",
     "qs": "^6.5.2",
     "readable-stream": "^3.0.3",
-    "request": "^2.79.0",
+    "request": "^2.88.0",
     "safe-memory-cache": "^1.5.1",
     "semaphore": "^1.1.0",
     "stream-json": "^1.1.1",
