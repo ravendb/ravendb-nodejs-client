@@ -25,9 +25,9 @@ export class FacetToken extends QueryToken {
     private readonly _alias: string;
     private readonly _ranges: string[];
     private readonly _optionsParameterName: string;
-     private readonly _aggregations: FacetAggregationToken[];
+    private readonly _aggregations: FacetAggregationToken[];
 
-     public getName(): string {
+    public getName(): string {
         return this._alias || this._aggregateByFieldName;
     }
 
@@ -195,7 +195,6 @@ export class FacetToken extends QueryToken {
             ? addQueryParameter(facet.options)
             : null;
     }
-
 }
 
 export class FacetAggregationToken extends QueryToken {

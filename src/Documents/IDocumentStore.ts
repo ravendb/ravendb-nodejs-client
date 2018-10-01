@@ -81,6 +81,9 @@ export interface IDocumentStore extends IDisposable,
      */
     changes(): IDatabaseChanges;
 
+    /**
+     * Subscribe to change notifications from the server
+     */
     changes(database: string): IDatabaseChanges;
 
     // TBD 4.1 IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
@@ -119,6 +122,9 @@ export interface IDocumentStore extends IDisposable,
      */
     executeIndex(task: AbstractIndexCreationTask): Promise<void>;
 
+    /**
+     * Executes the index creation
+     */
     executeIndex(task: AbstractIndexCreationTask, database: string): Promise<void>;
 
     /**
@@ -126,6 +132,9 @@ export interface IDocumentStore extends IDisposable,
      */
     executeIndexes(tasks: AbstractIndexCreationTask[]): Promise<void>;
 
+    /**
+     * Executes the index creation
+     */
     executeIndexes(tasks: AbstractIndexCreationTask[], database: string): Promise<void>;
 
     /**

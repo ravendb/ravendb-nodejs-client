@@ -109,8 +109,7 @@ function isArray(value) {
 function computeNewValue(value, options, forceRecurse, stack) {
     const valueIsArray = isArray(value);
     if (valueIsArray && options.arrayRecursive) {
-        const result = transformArray(value, options, stack);
-        return result;
+        return transformArray(value, options, stack);
     } else if (isObject(value) && !valueIsArray && (options.recursive || forceRecurse)) {
         return transformObjectKeys(value, options, stack);
     } else {

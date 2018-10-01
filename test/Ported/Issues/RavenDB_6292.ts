@@ -103,7 +103,7 @@ import { throwError } from "../../../src/Exceptions";
 
                             const queryCommand = new QueryCommand(
                                 DocumentConventions.defaultConventions, iq, {
-                                    indexEntriesOnly: false, 
+                                    indexEntriesOnly: false,
                                     metadataOnly: false
                                 });
 
@@ -140,7 +140,7 @@ import { throwError } from "../../../src/Exceptions";
                         }
                     }
 
-                    throwError("InvalidOperationException", 
+                    throwError("InvalidOperationException",
                         "Waited for conflict on '" + id + "' but it did not happen");
                 }
             });

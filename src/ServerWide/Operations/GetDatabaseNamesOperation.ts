@@ -26,38 +26,38 @@ export class GetDatabaseNamesOperation implements IServerOperation<string[]> {
 }
 
 export class GetDatabaseNamesCommand extends RavenCommand<string[]> {
-        private readonly _start: number;
-        private readonly _pageSize: number;
+    private readonly _start: number;
+    private readonly _pageSize: number;
 
-        public constructor(start: number, pageSize: number) {
-            super();
-            this._start = start;
-            this._pageSize = pageSize;
+    public constructor(start: number, pageSize: number) {
+        super();
+        this._start = start;
+        this._pageSize = pageSize;
+    }
+
+    public get isReadRequest() {
+        return true;
+    }
+
+    public createRequest(node: ServerNode): HttpRequestParameters {
+        const uri = `${node.url}/databases?start=${this._start}&pageSize=${this._pageSize}&namesOnly=true`;
+        return {uri};
+    }
+
+    public setResponse(response: string, fromCache: boolean): void { //TODO: do we need this method?
+        if (!response) {
+            this._throwInvalidResponse();
+            return;
         }
 
-        public get isReadRequest() {
-            return true;
+        const {databases} =
+            this._serializer.deserialize<IRavenResponse>(response) as { databases: string[] };
+        if (!databases || !Array.isArray(databases) || !databases.length) {
+            this._throwInvalidResponse();
         }
 
-        public createRequest(node: ServerNode): HttpRequestParameters {
-            const uri = `${node.url}/databases?start=${this._start}&pageSize=${this._pageSize}&namesOnly=true`;
-            return { uri };
-        }
-
-        public setResponse(response: string, fromCache: boolean): void { //TODO: do we need this method?
-            if (!response) {
-                this._throwInvalidResponse();
-                return;
-            }
-
-            const { databases }  = 
-                this._serializer.deserialize<IRavenResponse>(response) as { databases: string[] };
-            if (!databases || !Array.isArray(databases) || !databases.length) {
-                this._throwInvalidResponse();
-            }
-
-            this.result = databases;
-        }
+        this.result = databases;
+    }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         if (!bodyStream) {
@@ -68,7 +68,7 @@ export class GetDatabaseNamesCommand extends RavenCommand<string[]> {
         let body: string = null;
         const results = await this._defaultPipeline(_ => body = _)
             .process(bodyStream);
-        const { databases } = results as any;
+        const {databases} = results as any;
         if (!databases || !Array.isArray(databases) || !databases.length) {
             this._throwInvalidResponse();
         }
@@ -77,4 +77,4 @@ export class GetDatabaseNamesCommand extends RavenCommand<string[]> {
 
         return body;
     }
-    }
+}

@@ -71,47 +71,47 @@ class IndexAndResponse {
 
 export class NodeStatus implements IDisposable {
 
-        private _nodeStatusCallback: (nodeStatus: NodeStatus) => Promise<void>;
-        private _timerPeriodInMs: number;
-        public readonly nodeIndex: number;
-        public readonly node: ServerNode;
-        private _timer: Timer;
+    private _nodeStatusCallback: (nodeStatus: NodeStatus) => Promise<void>;
+    private _timerPeriodInMs: number;
+    public readonly nodeIndex: number;
+    public readonly node: ServerNode;
+    private _timer: Timer;
 
-        public constructor(
-            nodeIndex: number, 
-            node: ServerNode, 
-            nodeStatusCallback: (nodeStatus: NodeStatus) => Promise<void>) {
-            this.nodeIndex = nodeIndex;
-            this.node = node;
-            this._timerPeriodInMs = 100;
-            this._nodeStatusCallback = nodeStatusCallback;
-        }
-
-        private _nextTimerPeriod(): number {
-            if (this._timerPeriodInMs <= 5000) {
-                return 5000;
-            }
-
-            this._timerPeriodInMs = this._timerPeriodInMs + 100;
-
-            return this._timerPeriodInMs;
-        }
-
-        public startTimer(): void {
-            const that = this;
-            this._timer = new Timer(function timerActionNodeStatusCallback() { 
-                return that._nodeStatusCallback(that);
-            }, this._timerPeriodInMs);
-        }
-
-        public updateTimer(): void {
-            this._timer.change(this._nextTimerPeriod());
-        }
-
-        public dispose(): void {
-            this._timer.dispose();
-        }
+    public constructor(
+        nodeIndex: number,
+        node: ServerNode,
+        nodeStatusCallback: (nodeStatus: NodeStatus) => Promise<void>) {
+        this.nodeIndex = nodeIndex;
+        this.node = node;
+        this._timerPeriodInMs = 100;
+        this._nodeStatusCallback = nodeStatusCallback;
     }
+
+    private _nextTimerPeriod(): number {
+        if (this._timerPeriodInMs <= 5000) {
+            return 5000;
+        }
+
+        this._timerPeriodInMs = this._timerPeriodInMs + 100;
+
+        return this._timerPeriodInMs;
+    }
+
+    public startTimer(): void {
+        const that = this;
+        this._timer = new Timer(function timerActionNodeStatusCallback() {
+            return that._nodeStatusCallback(that);
+        }, this._timerPeriodInMs);
+    }
+
+    public updateTimer(): void {
+        this._timer.change(this._nextTimerPeriod());
+    }
+
+    public dispose(): void {
+        this._timer.dispose();
+    }
+}
 
 export class RequestExecutor implements IDisposable {
 
@@ -509,7 +509,7 @@ export class RequestExecutor implements IDisposable {
             });
     }
 
-protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
+    protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
         const initialUrls: string[] = RequestExecutor._validateUrls(inputUrls, this._authOptions);
 
         const topologyUpdateErrors: Array<{ url: string, error: Error | string }> = [];
@@ -553,7 +553,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
             }, BluebirdPromise.resolve(false) as PromiseLike<boolean>);
         };
 
-        const result = BluebirdPromise.resolve()
+        return BluebirdPromise.resolve()
             .then(() => tryUpdateTopologyOnAllNodes())
             .then(() => {
                 const topology = new Topology();
@@ -585,10 +585,8 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
 
                 this._throwExceptions(details);
             });
-
-        return result;
     }
-    
+
     protected _throwExceptions (details: string): void {
         throwError("InvalidOperationException",
             "Failed to retrieve database topology from all known nodes" 
@@ -812,7 +810,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
                             cachedItem.notModified();
 
                             if (command.responseType === "Object") {
-                                command.setResponseFromCache(cachedValue);
+                                command.setResponseFromCache(cachedValue); //TODO:
                             }
 
                             return;
@@ -1054,21 +1052,22 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
     }
 
     private _shouldExecuteOnAll<TResult> (chosenNode: ServerNode, command: RavenCommand<TResult>): boolean {
-
-        function hasMultipleNodes (): boolean {
-            const sel = this._nodeSelector;
-            return sel
-                ? (sel.topology && sel.topology.nodes && sel.topology.nodes.length > 1)
-                : false;
-        }
-
         return this._readBalanceBehavior === "FastestNode" &&
             this._nodeSelector &&
             this._nodeSelector.inSpeedTestPhase() &&
-            hasMultipleNodes() &&
+            this._nodeSelectorHasMultipleNodes() &&
             command.isReadRequest &&
             command.responseType === "Object" &&
             !!chosenNode;
+    }
+
+    private _nodeSelectorHasMultipleNodes() {
+        const selector = this._nodeSelector;
+        if (!selector) {
+            return false;
+        }
+        const topology = selector.getTopology();
+        return topology && topology.nodes && topology.nodes.length > 1;
     }
 
     private _handleServerDown<TResult> (
@@ -1179,11 +1178,11 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
         return req;
     }
 
-    private static _handleConflict (response: HttpResponse, body: string): void {
+    private static _handleConflict(response: HttpResponse, body: string): void {
         ExceptionDispatcher.throwException(response, body);
     }
     
-    private _spawnHealthChecks (chosenNode: ServerNode, nodeIndex: number): void   {
+    private _spawnHealthChecks(chosenNode: ServerNode, nodeIndex: number): void   {
         if (this._disposed) {
             return;
         }
@@ -1200,9 +1199,9 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
             (nStatus: NodeStatus) => this._checkNodeStatusCallback(nStatus));
         this._failedNodesTimers.set(chosenNode, nodeStatus);
         nodeStatus.startTimer();
-    } 
+    }
 
-    private _checkNodeStatusCallback (nodeStatus: NodeStatus): Promise<void> {
+    private _checkNodeStatusCallback(nodeStatus: NodeStatus): Promise<void> {
         const copy = this.getTopologyNodes();
 
         if (nodeStatus.nodeIndex >= copy.length) {
@@ -1214,7 +1213,7 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
             return;  // topology changed, nothing to check
         }
 
-        const result = Promise.resolve()
+        return Promise.resolve()
             .then(() => {
                 let status: NodeStatus;
                 return Promise.resolve(this._performHealthCheck(serverNode, nodeStatus.nodeIndex))
@@ -1242,8 +1241,6 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
                 this._log.error(
                     err, "Failed to check node topology, will ignore this node until next topology update.");
             }) ;
-
-        return result;
     }
 
     protected _performHealthCheck (serverNode: ServerNode, nodeIndex: number): Promise<void> {
@@ -1275,13 +1272,9 @@ protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
         
         this._disposed = true;
 
-        this._updateClientConfigurationSemaphore.take(() => {
-            const sem = this._updateClientConfigurationSemaphore;
-        });
+        this._updateClientConfigurationSemaphore.take(TypeUtil.NOOP);
 
-        this._updateDatabaseTopologySemaphore.take(() => {
-            const sem = this._updateDatabaseTopologySemaphore;
-        });
+        this._updateDatabaseTopologySemaphore.take(TypeUtil.NOOP);
 
         this._cache.dispose();
 

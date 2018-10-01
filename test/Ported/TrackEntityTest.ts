@@ -20,7 +20,7 @@ describe("TrackEntityTest", function () {
     it("deletingEntityThatIsNotTrackedShouldThrow", async () => {
         const session = store.openSession();
         try {
-            session.delete(new User());
+            await session.delete(new User());
             assert.fail("Should have thrown.");
         } catch (err) {
             assert.strictEqual(err.name, "InvalidOperationException");

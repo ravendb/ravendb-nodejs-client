@@ -73,7 +73,7 @@ export class DocumentStore extends DocumentStoreBase {
     }
 
     public set identifier(identifier: string) {
-        this.identifier = identifier;
+        this._identifier = identifier;
     }
 
     /**
@@ -143,16 +143,17 @@ export class DocumentStore extends DocumentStoreBase {
      * Opens document session.
      */
     public openSession(): IDocumentSession;
-
     /**
      * Opens document session.
      */
     public openSession(database: string): IDocumentSession;
-
     /**
      * Opens document session
      */
     public openSession(sessionOpts: ISessionOptions): IDocumentSession;
+    /**
+     * Opens document session
+     */
     public openSession(databaseOrSessionOptions?: string | ISessionOptions): IDocumentSession  {
         this.assertInitialized();
         this._ensureNotDisposed();

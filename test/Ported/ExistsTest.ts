@@ -35,7 +35,6 @@ describe("session.exists()", function () {
 
             await session.load("users/2", User);
             assert.strictEqual(await session.advanced.exists("users/2"),  true);
-
         }
     });
 }); 

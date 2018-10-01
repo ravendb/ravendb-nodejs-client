@@ -396,7 +396,7 @@ export abstract class InMemoryDocumentSessionOperations
     /**
      * Tracks the entity inside the unit of work
      */
-    //    return (T) this.trackEntity(clazz, documentFound.id, documentFound.document, documentFound.metadata, false);
+    //TODO ??    return (T) this.trackEntity(clazz, documentFound.id, documentFound.document, documentFound.metadata, false);
     public trackEntity<T extends object>(
         entityType: ObjectTypeDescriptor<T>, documentFound: DocumentInfo): T;
     public trackEntity<T extends object>(
@@ -959,7 +959,6 @@ export abstract class InMemoryDocumentSessionOperations
      * Marks the specified entity for deletion. The entity will be deleted when IDocumentSession.SaveChanges is called.
      * WARNING: This method will not call beforeDelete listener!
      */
-
     private _deleteById(id: string): void;
     private _deleteById(id: string, expectedChangeVector: string): void;
     private _deleteById(id: string, expectedChangeVector: string = null): void {
@@ -1092,7 +1091,13 @@ export abstract class InMemoryDocumentSessionOperations
      * SaveChanges will wait for the changes made to be replicates to `replicas` nodes
      */
     public waitForReplicationAfterSaveChanges();
+    /**
+     * SaveChanges will wait for the changes made to be replicates to `replicas` nodes
+     */
     public waitForReplicationAfterSaveChanges(opts: ReplicationBatchOptions);
+    /**
+     * SaveChanges will wait for the changes made to be replicates to `replicas` nodes
+     */
     public waitForReplicationAfterSaveChanges(opts?: ReplicationBatchOptions) {
         if (!this._saveChangesOptions) {
             this._saveChangesOptions = {
@@ -1115,7 +1120,13 @@ export abstract class InMemoryDocumentSessionOperations
      * SaveChanges will wait for the indexes to catch up with the saved changes
      */
     public waitForIndexesAfterSaveChanges();
+    /**
+     * SaveChanges will wait for the indexes to catch up with the saved changes
+     */
     public waitForIndexesAfterSaveChanges(opts: IndexBatchOptions);
+    /**
+     * SaveChanges will wait for the indexes to catch up with the saved changes
+     */
     public waitForIndexesAfterSaveChanges(opts?: IndexBatchOptions) {
         if (!this._saveChangesOptions) {
             this._saveChangesOptions = {
