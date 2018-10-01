@@ -1,3 +1,4 @@
+import * as stream from "readable-stream";
 import * as path from "path";
 import * as fs from "fs";
 import * as assert from "assert";
@@ -9,6 +10,7 @@ import {
     IDocumentQuery,
     IDocumentSession,
     QueryStatistics,
+    StreamQueryStatistics,
 } from "../../src";
 import { TypeUtil } from "../../src/Utility/TypeUtil";
 
@@ -207,39 +209,16 @@ describe("Readme query samples", function () {
 
     describe("with user data set", function () {
 
-        beforeEach(async function prepareUserDataSet() {
-            data = [
-                new User({
-                    name: "John",
-                    age: 30,
-                    registeredAt: new Date(2017, 10, 11),
-                    kids: ["Dmitri", "Mara"]
-                }),
-                new User({
-                    name: "Stefanie",
-                    age: 25,
-                    registeredAt: new Date(2015, 6, 30)
-                }),
-                new User({
-                    name: "Thomas",
-                    age: 25,
-                    registeredAt: new Date(2016, 3, 25)
-                })
-            ];
-            const newSession = store.openSession();
-            for (const u of data) {
-                await newSession.store(u);
-            }
-
-            await newSession.saveChanges();
-        });
+        beforeEach(async () => prepareUserDataSet(store));
 
         afterEach(async () => {
-            print("// RQL");
-            print("// " + query.getIndexQuery().query);
-            print("// ", query.getIndexQuery().queryParameters);
-            results.forEach(x => delete x["@metadata"]);
-            print("// " + util.inspect(results));
+            if (query && results) {
+                print("// RQL");
+                print("// " + query.getIndexQuery().query);
+                print("// ", query.getIndexQuery().queryParameters);
+                results.forEach(x => delete x["@metadata"]);
+                print("// " + util.inspect(results));
+            }
         });
 
         it("projections single field", async () => {
@@ -371,6 +350,84 @@ describe("Readme query samples", function () {
             assert.ok(stats.indexTimestamp instanceof Date);
         });
 
+        it("can stream users", async () => {
+            const result: any = [];
+
+            const userStream = await session.advanced.stream<User>("users/");
+            userStream.on("data", user => {
+                result.push(user);
+                print(user);
+                // ...
+            });
+
+            await new Promise((resolve, reject) => {
+                stream.finished(userStream, err => {
+                    err ? reject(err) : resolve();
+                });
+            });
+        });
+
+        it("can stream query and get stats", async () => {
+            let stats: StreamQueryStatistics;
+            query = session.query({ collection: "users" })
+                .whereGreaterThan("age", 29);
+            const queryStream = await session.advanced.stream(query, _ => stats = _);
+
+            queryStream.on("data", user => {
+                print(user);
+                // ...
+            });
+
+            queryStream.once("stats", stats => {
+                print("STREAM STATS", stats);
+                // ...
+            });
+
+            await new Promise((resolve, reject) => {
+                queryStream.on("end", () => {
+                    try {
+                        assert.ok(stats);
+                        assert.strictEqual(stats.totalResults, 1);
+                        assert.strictEqual(stats.indexName, "Auto/users/Byage");
+                        assert.ok(stats.resultEtag);
+                        assert.ok(stats.indexTimestamp instanceof Date);
+                    } catch (err) { 
+                        reject(err); 
+                    }
+                    resolve();
+                });
+            });
+        });
+
     });
+
+    async function prepareUserDataSet(store: IDocumentStore) {
+        const users = [
+            new User({
+                name: "John",
+                age: 30,
+                registeredAt: new Date(2017, 10, 11),
+                kids: ["Dmitri", "Mara"]
+            }),
+            new User({
+                name: "Stefanie",
+                age: 25,
+                registeredAt: new Date(2015, 6, 30)
+            }),
+            new User({
+                name: "Thomas",
+                age: 25,
+                registeredAt: new Date(2016, 3, 25)
+            })
+        ];
+
+        const newSession = store.openSession();
+        for (const u of users) {
+            await newSession.store(u);
+        }
+
+        await newSession.saveChanges();
+        return users;
+    }
 
 });

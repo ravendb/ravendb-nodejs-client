@@ -15,6 +15,5 @@ export interface DocumentStreamResultEvents<TEntity extends object> {
 }
 
 export interface DocumentResultStream<T extends object> 
-        extends TypedEventEmitter<DocumentStreamResultEvents<T>>  {
-    pipe(destination: stream.Writable, options?: { end?: boolean; }): T;
+        extends TypedEventEmitter<DocumentStreamResultEvents<T>>, NodeJS.ReadableStream   {
 }

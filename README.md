@@ -624,6 +624,48 @@ changes.dispose();
 
 ```
 
+### Streaming
+
+#### Stream documents with ID prefix
+```javascript
+// stream() returns a Readable 
+const userStream = await session.advanced.stream("users/");
+userStream.on("data", user => {
+    // User { name: 'Anna', id: 'users/1-A' }
+});
+userStream.on("error", err => {
+    // handle errors
+})
+```
+
+#### Stream query results
+```javascript
+// create a query
+const query = session.query({ collection: "users" }).whereGreaterThan("age", 29);
+// can get query stats passing a stats callback to stream()
+let stats;
+// stream() returns a Readable 
+const queryStream = await session.advanced.stream(query, _ => stats = _);
+
+queryStream.on("data", user => {
+    // User { name: 'Anna', id: 'users/1-A' }
+});
+
+// or can get stats using an event listener
+queryStream.once("stats", stats => {
+// { resultEtag: 7464021133404493000,
+//   isStale: false,
+//   indexName: 'Auto/users/Byage',
+//   totalResults: 1,
+//   indexTimestamp: 2018-10-01T09:04:07.145Z }
+});
+
+queryStream.on("error", err => {
+    // handle errors
+});
+
+```
+
 ## Using object literals for entities
 
 In order to comfortably use object literals as entities set function getting collection name based on the content of the object - `store.conventions.
