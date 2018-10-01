@@ -1,11 +1,13 @@
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
-import {DocumentStore, IDocumentStore} from "../../src";
-import {User} from "../Assets/Entities";
-import {CONSTANTS} from "../../src/Constants";
-import {ConfigureRevisionsOperationResult} from "../../src/Documents/Operations/Revisions/ConfigureRevisionsOperation";
-import {GetRevisionsBinEntryCommand} from "../../src/Documents/Commands/GetRevisionsBinEntryCommand";
+import { DocumentStore, IDocumentStore } from "../../src";
+import { User } from "../Assets/Entities";
+import { CONSTANTS } from "../../src/Constants";
+// tslint:disable:max-line-length
+import { ConfigureRevisionsOperationResult } from "../../src/Documents/Operations/Revisions/ConfigureRevisionsOperation";
+// tslint:enable:max-line-length
+import { GetRevisionsBinEntryCommand } from "../../src/Documents/Commands/GetRevisionsBinEntryCommand";
 
 describe("RevisionsTest", function () {
 
@@ -23,7 +25,7 @@ describe("RevisionsTest", function () {
         assert.ok(configurationResult instanceof ConfigureRevisionsOperationResult);
         assert.ok(configurationResult.raftCommandIndex);
 
-        for (let i  = 0; i < 4; i++) {
+        for (let i = 0; i < 4; i++) {
             const session = store.openSession();
 
             const user = new User();
@@ -94,7 +96,7 @@ describe("RevisionsTest", function () {
             user.Age = 40;
             await session.saveChanges();
 
-            const revisions = await session.advanced.revisions.getFor<{ Name: string, Age: 30}>("users/1");
+            const revisions = await session.advanced.revisions.getFor<{ Name: string, Age: 30 }>("users/1");
 
             assert.strictEqual(revisions.length, 2);
             assert.strictEqual(revisions[0].Name, "Roman");

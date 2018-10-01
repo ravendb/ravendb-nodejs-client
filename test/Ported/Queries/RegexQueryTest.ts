@@ -13,7 +13,7 @@ describe("Regex query", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     beforeEach(async () => {
@@ -29,8 +29,7 @@ describe("Regex query", function () {
 
     it("can do queries with regex from documentQuery", async () => {
         const session = store.openSession();
-        const query = session.
-            advanced
+        const query = session.advanced
             .documentQuery(RegexMe)
             .whereRegex("text", "^[a-z ]{2,4}love");
 

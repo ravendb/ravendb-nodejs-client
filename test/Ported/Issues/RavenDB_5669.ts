@@ -50,11 +50,11 @@ describe("Issue RavenDB-5669", function () {
         query.openSubclause()
             .whereEquals("type", "Cat")
             .orElse()
-                .openSubclause()
-                .search("name", "Peter*")
-                .andAlso()
-                .search("name", "Pan*")
-                .closeSubclause()
+            .openSubclause()
+            .search("name", "Peter*")
+            .andAlso()
+            .search("name", "Pan*")
+            .closeSubclause()
             .closeSubclause();
 
         const results = await query.all();

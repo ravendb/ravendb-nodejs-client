@@ -17,6 +17,7 @@
         "quotemark": [true, "double"],
         "triple-equals": true,
         "ordered-imports": false,
+        "no-string-literal": false,
         "member-ordering": false,
         "trailing-comma": false,
         "max-classes-per-file": false,

@@ -7,8 +7,8 @@ import {
     DeleteByQueryOperation, OperationStatusChange,
 } from "../../../src";
 import { User } from "../../Assets/Entities";
-import {AsyncQueue} from "../../Utils/AsyncQueue";
-import {throwError} from "../../../src/Exceptions";
+import { AsyncQueue } from "../../Utils/AsyncQueue";
+import { throwError } from "../../../src/Exceptions";
 
 describe("DeleteByQueryTest", function () {
 
@@ -18,7 +18,7 @@ describe("DeleteByQueryTest", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("can delete by query", async () => {

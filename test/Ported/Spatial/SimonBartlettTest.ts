@@ -73,9 +73,9 @@ describe("SimonBartlettTest", function () {
             let count = await session.query({
                 indexName: GeoIndex.name
             })
-            .spatial("WKT", f => f.relatesToShape("CIRCLE(0.000000 3.000000 d=110)", "Intersects"))
-            .waitForNonStaleResults()
-            .count();
+                .spatial("WKT", f => f.relatesToShape("CIRCLE(0.000000 3.000000 d=110)", "Intersects"))
+                .waitForNonStaleResults()
+                .count();
 
             assert.strictEqual(count, 0);
 
@@ -89,9 +89,11 @@ describe("SimonBartlettTest", function () {
     });
 
 });
+
 class GeoDocument {
     public WKT: string;
 }
+
 class GeoIndex extends AbstractIndexCreationTask {
     public constructor() {
         super();

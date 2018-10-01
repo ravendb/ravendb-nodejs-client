@@ -14,14 +14,14 @@ describe("GetNextOperationIdCommand", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("can get next operation ID", async () => {
-            const command = new GetNextOperationIdCommand();
-            await store.getRequestExecutor().execute(command);
-            assert.ok(command.result);
-            assert.ok(typeof command.result === "number");
-            assert.ok(!isNaN(command.result));
+        const command = new GetNextOperationIdCommand();
+        await store.getRequestExecutor().execute(command);
+        assert.ok(command.result);
+        assert.ok(typeof command.result === "number");
+        assert.ok(!isNaN(command.result));
     });
 });

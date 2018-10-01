@@ -34,8 +34,8 @@ import {
     IDocumentStore,
     AbstractIndexCreationTask,
 } from "../../../src";
-import {MoreLikeThisOptions} from "../../../src/Documents/Queries/MoreLikeThis/MoreLikeThisOptions";
-import {MoreLikeThisStopWords} from "../../../src/Documents/Queries/MoreLikeThis/MoreLikeThisStopWords";
+import { MoreLikeThisOptions } from "../../../src/Documents/Queries/MoreLikeThis/MoreLikeThisOptions";
+import { MoreLikeThisStopWords } from "../../../src/Documents/Queries/MoreLikeThis/MoreLikeThisStopWords";
 
 export class DataIndex extends AbstractIndexCreationTask {
 
@@ -75,18 +75,20 @@ describe("MoreLikeThisTests", function () {
     const getLorem = (numWords: number) => {
         // noinspection SpellCheckingInspection
         const theLorem = "Morbi nec purus eu libero interdum laoreet Nam metus quam posuere in elementum eget" +
-        " egestas eget justo Aenean orci ligula ullamcorper nec convallis non placerat nec lectus Quisque " +
-        "convallis porta suscipit Aliquam sollicitudin ligula sit amet libero cursus egestas Maecenas nec mauris" +
-        " neque at faucibus justo Fusce ut orci neque Nunc sodales pulvinar lobortis Praesent dui tellus fermentum" +
-        " sed faucibus nec faucibus non nibh Vestibulum adipiscing porta purus ut varius mi pulvinar eu Nam sagittis" +
-        " sodales hendrerit Vestibulum et tincidunt urna Fusce lacinia nisl at luctus lobortis lacus quam rhoncus" +
-        " risus a posuere nulla lorem at nisi Sed non erat nisl Cras in augue velit a mattis ante Etiam lorem dui " +
-        " elementum eget facilisis vitae viverra sit amet tortor Suspendisse potenti Nunc egestas accumsan justo" +
-        "  viverra viverra Sed faucibus ullamcorper mauris ut pharetra ligula ornare eget Donec suscipit luctus" +
-        " rhoncus Pellentesque eget justo ac nunc tempus consequat Nullam fringilla egestas leo Praesent condimentum" +
-        " laoreet magna vitae luctus sem cursus sed Mauris massa purus suscipit ac malesuada a accumsan non neque" +
-        " Proin et libero vitae quam ultricies rhoncus Praesent urna neque molestie et suscipit vestibulum iaculis" +
-        " ac nulla Integer portanulla vel leo ullamcorper eu rhoncus dui semper Donec dictum dui";
+            " egestas eget justo Aenean orci ligula ullamcorper nec convallis non placerat nec lectus Quisque " +
+            "convallis porta suscipit Aliquam sollicitudin ligula sit amet libero cursus egestas Maecenas nec " +
+            " mauris neque at faucibus justo Fusce ut orci neque Nunc sodales pulvinar lobortis Praesent dui" +
+            " tellus fermentum sed faucibus nec faucibus non nibh Vestibulum adipiscing porta purus ut varius" +
+            " mi pulvinar eu Nam sagittis sodales hendrerit Vestibulum et tincidunt urna Fusce lacinia" +
+            " nisl at luctus lobortis lacus quam rhoncus risus a posuere nulla lorem at nisi Sed non erat" +
+            " nisl Cras in augue velit a mattis ante Etiam lorem dui elementum eget facilisis vitae " +
+            " viverra sit amet tortor Suspendisse potenti Nunc egestas accumsan justo" +
+            " viverra viverra Sed faucibus ullamcorper mauris ut pharetra ligula ornare eget Donec suscipit luctus" +
+            " rhoncus Pellentesque eget justo ac nunc tempus consequat Nullam fringilla egestas leo" +
+            " Praesent condimentum laoreet magna vitae luctus sem cursus sed Mauris massa purus suscipit" +
+            " ac malesuada a accumsan non neque Proin et libero vitae quam ultricies rhoncus Praesent" +
+            " urna neque molestie et suscipit vestibulum iaculis" +
+            " ac nulla Integer portanulla vel leo ullamcorper eu rhoncus dui semper Donec dictum dui";
 
         const loremArray = theLorem.split(" ");
 
@@ -307,7 +309,7 @@ describe("MoreLikeThisTests", function () {
         {
             const session = store.openSession();
             const list = await session
-                .query<any>({indexName: "DataIndex"})
+                .query<any>({ indexName: "DataIndex" })
                 .moreLikeThis(f => f.usingDocument(b => b.whereEquals("id()", key)))
                 .all();
 
@@ -374,7 +376,7 @@ describe("MoreLikeThisTests", function () {
         }
     });
 
-    it("can use min doc freq param", async() => {
+    it("can use min doc freq param", async () => {
         const key = "data/1-A";
 
         {

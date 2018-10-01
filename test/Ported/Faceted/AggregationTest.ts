@@ -346,8 +346,8 @@ describe("AggregationTest", function () {
                     builder.isGreaterThanOrEqualTo(end1).isLessThan(end2)
                 ))
                 .execute();
-            
-            const [ facet1, facet2, facet3 ] = r["at"].values;
+
+            const [facet1, facet2, facet3] = r["at"].values;
             assert.strictEqual(facet1.count, 4);
             assert.strictEqual(facet2.count, 0);
             assert.strictEqual(facet3.count, 1);

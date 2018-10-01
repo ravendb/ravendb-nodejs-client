@@ -18,7 +18,7 @@ describe("ID generation - session.store()", function () {
         user = { name: "Greg" };
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("given object literal and empty string for id, returns guid", async () => {

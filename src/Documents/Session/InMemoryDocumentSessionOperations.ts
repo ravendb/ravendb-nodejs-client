@@ -396,7 +396,9 @@ export abstract class InMemoryDocumentSessionOperations
     /**
      * Tracks the entity inside the unit of work
      */
+    // tslint:disable:max-line-length
     //TODO ??    return (T) this.trackEntity(clazz, documentFound.id, documentFound.document, documentFound.metadata, false);
+    // tslint:enable:max-line-length
     public trackEntity<T extends object>(
         entityType: ObjectTypeDescriptor<T>, documentFound: DocumentInfo): T;
     public trackEntity<T extends object>(

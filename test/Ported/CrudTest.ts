@@ -15,7 +15,7 @@ describe("CRUD tests", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("saves entities using lowercase", async () => {
@@ -25,8 +25,8 @@ describe("CRUD tests", function () {
         await session.saveChanges();
 
         const documentsCommand = new GetDocumentsCommand({
-            id: "users/1", 
-            includes: null, 
+            id: "users/1",
+            includes: null,
             metadataOnly: false,
             conventions: store.conventions
         });

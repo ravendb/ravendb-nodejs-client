@@ -1,9 +1,9 @@
 import * as assert from "assert";
-import { 
-    pascalCaseReplacer, 
-    camelCaseReplacer, 
-    pascalCaseReviver, 
-    camelCaseReviver 
+import {
+    pascalCaseReplacer,
+    camelCaseReplacer,
+    pascalCaseReviver,
+    camelCaseReviver
 } from "../../src/Mapping/Json";
 import { RuleBasedReplacerFactory, ReplacerTransformRule } from "../../src/Mapping/Json/ReplacerFactory";
 import { ReviverTransformRule, RuleBasedReviverFactory } from "../../src/Mapping/Json/ReviverFactory";
@@ -87,7 +87,7 @@ describe("Json module", () => {
         // JsonSerializer impl must be replaced with streaming/sax-based parser
         // e.g. https://github.com/dscape/clarinet
         // reviver won't work here, since it starts reviving objects starting from tree leaves
-        
+
         let testStr;
 
         beforeEach(() => {

@@ -3,7 +3,8 @@ import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import {
     IDocumentStore,
-    GetClusterTopologyCommand} from "../../src";
+    GetClusterTopologyCommand
+} from "../../src";
 
 describe("GetClusterTopologyCommand", function () {
 

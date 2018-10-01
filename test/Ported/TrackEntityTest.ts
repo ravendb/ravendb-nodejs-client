@@ -14,7 +14,7 @@ describe("TrackEntityTest", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("deletingEntityThatIsNotTrackedShouldThrow", async () => {

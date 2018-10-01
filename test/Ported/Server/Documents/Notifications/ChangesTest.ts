@@ -6,9 +6,9 @@ import {
     AbstractIndexCreationTask, SetIndexesPriorityOperation, GetStatisticsOperation,
     DocumentChange, IndexChange
 } from "../../../../../src";
-import {Order, User} from "../../../../Assets/Entities";
-import {AsyncQueue} from "../../../../Utils/AsyncQueue";
-import {throwError} from "../../../../../src/Exceptions";
+import { Order, User } from "../../../../Assets/Entities";
+import { AsyncQueue } from "../../../../Utils/AsyncQueue";
+import { throwError } from "../../../../../src/Exceptions";
 
 describe("ChangesTest", function () {
 
@@ -123,7 +123,7 @@ describe("ChangesTest", function () {
         constructor() {
             super();
 
-            this.map =  "from c in docs.Users select new " +
+            this.map = "from c in docs.Users select new " +
                 " {" +
                 "    c.name, " +
                 "    count = 1" +

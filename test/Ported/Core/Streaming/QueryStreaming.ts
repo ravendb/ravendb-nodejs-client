@@ -7,7 +7,7 @@ import {
     StreamResult,
 } from "../../../../src";
 import * as assert from "assert";
-import {User} from "../../../Assets/Entities";
+import { User } from "../../../Assets/Entities";
 import * as StreamUtil from "../../../../src/Utility/StreamUtil";
 import { CONSTANTS } from "../../../../src/Constants";
 import { parseJsonVerbose } from "../../../Utils/Json";
@@ -29,7 +29,7 @@ describe("query streaming", function () {
 
     afterEach(async () =>
         await disposeTestDocumentStore(store));
-    
+
     function argError(): never {
         throw new Error("Arg is required.");
     }
@@ -56,7 +56,7 @@ describe("query streaming", function () {
         assert.ok(entry.metadata[CONSTANTS.Documents.Metadata.ID]);
         assert.ok(entry.metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE]);
         assert.ok(entry.metadata[CONSTANTS.Documents.Metadata.LAST_MODIFIED]);
-        
+
         const doc = entry.document;
         assert.ok(doc);
         docAssert(doc);
@@ -75,7 +75,7 @@ describe("query streaming", function () {
 
         {
             const session = store.openSession();
-            const query = session.query<User>({ 
+            const query = session.query<User>({
                 indexName: usersByNameIndex.getIndexName()
             });
 
@@ -99,7 +99,7 @@ describe("query streaming", function () {
 
     it("can stream query results with query statistics", async () => {
         await Promise.all([
-            prepareData(100), 
+            prepareData(100),
             await usersByNameIndex.execute(store)
         ]);
 
@@ -141,7 +141,7 @@ describe("query streaming", function () {
 
     it("can stream raw query results", async () => {
         await Promise.all([
-            prepareData(200), 
+            prepareData(200),
             await usersByNameIndex.execute(store)
         ]);
 
@@ -161,7 +161,7 @@ describe("query streaming", function () {
                     assert.ok(doc.lastName);
                 });
             });
-            
+
             await StreamUtil.finishedAsync(queryStream);
             assert.strictEqual(items.length, 200);
         }
@@ -170,7 +170,7 @@ describe("query streaming", function () {
 
     it("can stream raw query results with query statistics", async () => {
         await Promise.all([
-            prepareData(100), 
+            prepareData(100),
             await usersByNameIndex.execute(store)
         ]);
 
@@ -191,7 +191,7 @@ describe("query streaming", function () {
                     assert.ok(doc.lastName);
                 });
             });
-            
+
             await StreamUtil.finishedAsync(queryStream);
             assert.strictEqual(items.length, 100);
 
@@ -205,7 +205,7 @@ describe("query streaming", function () {
 
     it("can stream raw query into stream", async () => {
         await Promise.all([
-            prepareData(10), 
+            prepareData(10),
             await usersByNameIndex.execute(store)
         ]);
 

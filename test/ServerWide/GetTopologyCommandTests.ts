@@ -15,7 +15,7 @@ describe("GetTopologyCommand", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("can get topology", async () => {

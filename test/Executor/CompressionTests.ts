@@ -15,7 +15,7 @@ describe("Compression", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("is active by default", async () => {

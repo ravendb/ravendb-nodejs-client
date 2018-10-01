@@ -6,7 +6,6 @@ import { Stopwatch } from "../../../Utility/Stopwatch";
 import { getLogger } from "../../../Utility/LogUtil";
 import { QueryCommand } from "../../Commands/QueryCommand";
 import { throwError } from "../../../Exceptions";
-import { IDisposable } from "../../../Types/Contracts";
 import * as StringBuilder from "string-builder";
 import {
     DocumentType,

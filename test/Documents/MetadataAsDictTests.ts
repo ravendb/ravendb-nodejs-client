@@ -11,15 +11,15 @@ describe("MetadataAsDictionary", function () {
             "SignedUpAt": "date"
         }
     };
-            
+
     function createMetadata() {
         return createMetadataDictionary({
-            raw: source 
+            raw: source
         });
     }
 
     it("can be created", () => {
-        createMetadata(); 
+        createMetadata();
     });
 
     it("when stringified it looks like the source object", () => {
@@ -47,7 +47,7 @@ describe("MetadataAsDictionary", function () {
 
             // asserting equality of values here, since we're using proxy
             assert.strictEqual(
-                JSON.stringify(metadata), 
+                JSON.stringify(metadata),
                 JSON.stringify(metadata["@nested-object-types"].getParent()));
         });
 

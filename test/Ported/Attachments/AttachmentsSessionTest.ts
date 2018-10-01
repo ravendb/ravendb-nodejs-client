@@ -7,10 +7,10 @@ import {
 } from "../../../src";
 import * as stream from "readable-stream";
 import { User } from "../../Assets/Entities";
-import {CONSTANTS} from "../../../src/Constants";
-import {DeleteCommandData} from "../../../src/Documents/Commands/CommandData";
+import { CONSTANTS } from "../../../src/Constants";
+import { DeleteCommandData } from "../../../src/Documents/Commands/CommandData";
 import * as StreamUtil from "../../../src/Utility/StreamUtil";
-import {DeleteAttachmentOperation} from "../../../src/Documents/Operations/Attachments/DeleteAttachmentOperation";
+import { DeleteAttachmentOperation } from "../../../src/Documents/Operations/Attachments/DeleteAttachmentOperation";
 
 describe("Attachments Session", function () {
 
@@ -24,16 +24,16 @@ describe("Attachments Session", function () {
         await disposeTestDocumentStore(store));
 
     it("can put attachments", async () => {
-        const attachmentsInfo = [ 
+        const attachmentsInfo = [
             { name: "profile.png", contentType: "image/png" },
-            { name: "background-photo.jpg", contentType: "ImGge/jPeg" }, 
+            { name: "background-photo.jpg", contentType: "ImGge/jPeg" },
             { name: "fileNAME_#$1^%_בעברית.txt", contentType: undefined }
         ];
 
         const profileStream = Buffer.from([1, 2, 3]);
         const backgroundStream = Buffer.from([10, 20, 30, 40, 50]);
         const fileStream = new stream.Readable();
-        [ 1, 2, 3, 4, 5 ].forEach(x => fileStream.push(Buffer.from(x.toString())));
+        [1, 2, 3, 4, 5].forEach(x => fileStream.push(Buffer.from(x.toString())));
         fileStream.push(null);
 
         {
@@ -75,7 +75,7 @@ describe("Attachments Session", function () {
         }
     });
 
-    it("throws if stream is used twice", async() => {
+    it("throws if stream is used twice", async () => {
         const session = store.openSession();
         const stream = Buffer.from([1, 2, 3]);
 
@@ -94,7 +94,7 @@ describe("Attachments Session", function () {
         }
     });
 
-    it("throws when two attachments with the same name in session", async() => {
+    it("throws when two attachments with the same name in session", async () => {
         const session = store.openSession();
         const stream = Buffer.from([1, 2, 3]);
         const stream2 = Buffer.from([1, 2, 3, 4, 5]);
@@ -167,7 +167,7 @@ describe("Attachments Session", function () {
 
         {
             const session = store.openSession();
-            const user  = await session.load<User>("users/1");
+            const user = await session.load<User>("users/1");
             const metadata = session.advanced.getMetadataFor(user);
             assert.strictEqual(metadata[CONSTANTS.Documents.Metadata.FLAGS], "HasAttachments");
 
@@ -191,14 +191,14 @@ describe("Attachments Session", function () {
             let bufResult = Buffer.from([]);
             result.data.pipe(new stream.Writable({
                 write(chunk, enc, cb) {
-                    bufResult = Buffer.concat([ bufResult, chunk ]); 
+                    bufResult = Buffer.concat([bufResult, chunk]);
                     cb();
                 }
             }));
 
             await StreamUtil.finishedAsync(result.data);
             result.dispose();
-            assert.ok(Buffer.compare(bufResult, stream1) === 0); 
+            assert.ok(Buffer.compare(bufResult, stream1) === 0);
         }
     });
 

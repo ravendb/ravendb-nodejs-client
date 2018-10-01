@@ -110,9 +110,9 @@ describe("RavenDB-8761", function () {
                 .rawQuery(`from Orders
                          group by lines[].product, lines[].quantity
                          order by lines[].quantity
-                         select lines[].product as productName, lines[].quantity as quantity, count() as count`, 
-                ProductCount)
-                        .all();
+                         select lines[].product as productName, lines[].quantity as quantity, count() as count`,
+                    ProductCount)
+                .all();
 
             assertQueryResults(productCounts1);
 
@@ -171,7 +171,7 @@ describe("RavenDB-8761", function () {
                  select key() as products, count() as count`, ProductCount)
                 .waitForNonStaleResults()
                 .all();
-            
+
             assertQueryResults(productCounts1);
 
             const productCounts2 = await session.advanced
@@ -208,7 +208,7 @@ describe("RavenDB-8761", function () {
                             shipTo.country as country, count() as count`, ProductCount)
                 .waitForNonStaleResults()
                 .all();
-            
+
             assertQueryResults(productCounts1);
 
             const productCounts2 = await session
@@ -262,7 +262,7 @@ describe("RavenDB-8761", function () {
 
                 assert.deepStrictEqual(products[1].products, ["products/1", "products/2"]);
                 assert.strictEqual(products[1].count, 2);
-                assert.deepStrictEqual(products[1].quantities, [ 1, 2 ]);
+                assert.deepStrictEqual(products[1].quantities, [1, 2]);
             }
         }
     });

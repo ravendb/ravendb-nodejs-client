@@ -24,11 +24,11 @@ describe("ObjectUtil", function () {
         const json = `{"Results":[{"Type":"PUT","@id":"users/1","@collection":"Users","@change-vector":"A:1-2ZYfAzcv8Ee+U/12oFmTJQ","@last-modified":"2018-08-22T06:10:29.8004542"}]}`;
         const o = JSON.parse(json);
         const opts = {
-                recursive: true,
-                arrayRecursive: true,
-                ignorePaths: [ /results\.\[\]\.@/i ],
-                defaultTransform: "camel" as CasingConvention
-            };
+            recursive: true,
+            arrayRecursive: true,
+            ignorePaths: [/results\.\[\]\.@/i],
+            defaultTransform: "camel" as CasingConvention
+        };
         const transformed = ObjectUtil.transformObjectKeys(o, opts);
         assert.strictEqual("users/1", transformed["results"][0]["@id"]);
     });
@@ -37,8 +37,8 @@ describe("ObjectUtil", function () {
         const opts = {
             recursive: true,
             arrayRecursive: true,
-            ignoreKeys: [ /^@/ ],
-            ignorePaths: [ /@metadata\.(@collection)/ ],
+            ignoreKeys: [/^@/],
+            ignorePaths: [/@metadata\.(@collection)/],
             defaultTransform: "pascal",
             paths: [
                 {

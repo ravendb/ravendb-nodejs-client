@@ -1,4 +1,4 @@
-import {User} from "../Assets/Entities";
+import { User } from "../Assets/Entities";
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
@@ -15,7 +15,7 @@ describe("Session API dev experience tests", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     describe("store()", () => {
@@ -64,7 +64,7 @@ describe("Session API dev experience tests", function () {
             });
 
             it("passing id, options, callback", (done) => {
-                session.store(user, null, { changeVector: "ccc" } , (err) => {
+                session.store(user, null, { changeVector: "ccc" }, (err) => {
                     if (err) {
                         done(err);
                     }
@@ -96,17 +96,17 @@ describe("Session API dev experience tests", function () {
                 user = Object.assign(new User(), { name: "Jon" });
             });
 
-            it ("id and opts", async () => {
+            it("id and opts", async () => {
                 await session.store(user, "users/1", { changeVector: "aaa" });
                 assert.strictEqual(user.id, "users/1");
             });
 
-            it ("id and type", async () => {
+            it("id and type", async () => {
                 await session.store(user, "users/1", User);
                 assert.strictEqual(user.id, "users/1");
             });
 
-            it ("only id", async () => {
+            it("only id", async () => {
                 await session.store(user, "users/1");
                 assert.strictEqual(user.id, "users/1");
             });
@@ -116,22 +116,22 @@ describe("Session API dev experience tests", function () {
 
     describe("saveChanges()", () => {
 
-            let session: IDocumentSession;
-            let user: User;
+        let session: IDocumentSession;
+        let user: User;
 
-            beforeEach(async () => {
-                session = store.openSession();
-                user = Object.assign(new User(), { name: "Jon" });
-                await session.store(user);
-            });
+        beforeEach(async () => {
+            session = store.openSession();
+            user = Object.assign(new User(), { name: "Jon" });
+            await session.store(user);
+        });
 
-            it("using promise", async () => {
-                await session.saveChanges();
-            });
+        it("using promise", async () => {
+            await session.saveChanges();
+        });
 
-            it("using callback", (done) => {
-                session.saveChanges((err) => err ? done(err) : done());
-            });
+        it("using callback", (done) => {
+            session.saveChanges((err) => err ? done(err) : done());
+        });
     });
 
     describe("load()", () => {
@@ -152,7 +152,7 @@ describe("Session API dev experience tests", function () {
             assert.ok(result);
             assert.strictEqual(result.name, user.name);
         }
-        
+
         describe("can use callbacks", () => {
 
             it("pass only id and callback", (done) => {
@@ -227,9 +227,9 @@ describe("Session API dev experience tests", function () {
             store.conventions.findCollectionNameForObjectLiteral =
                 (e: any) => e.collection;
 
-            const user: any = { 
+            const user: any = {
                 collection: "Users",
-                name: "John" 
+                name: "John"
             };
 
             {

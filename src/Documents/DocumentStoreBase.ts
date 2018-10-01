@@ -20,7 +20,6 @@ import { DocumentConventions } from "./Conventions/DocumentConventions";
 import { RequestExecutor } from "../Http/RequestExecutor";
 import { IndexCreation } from "../Documents/Indexes/IndexCreation";
 import { PutIndexesOperation } from "./Operations/Indexes/PutIndexesOperation";
-import { IDisposable } from "../Types/Contracts";
 import { BulkInsertOperation } from "./BulkInsertOperation";
 import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
 

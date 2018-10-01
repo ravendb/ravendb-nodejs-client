@@ -17,12 +17,13 @@ describe("SpatialSortingTest", function () {
     const SORTED_LAT = 44.417398;
     const SORTED_LNG = 34.042575;
     const FILTERED_RADIUS = 100;
+
     class Shop {
         public id: string;
         public latitude: number;
         public longitude: number;
 
-        public constructor(); 
+        public constructor();
         public constructor(latitude: number, longitude: number);
         public constructor(latitude?: number, longitude?: number) {
             this.latitude = latitude;
@@ -33,10 +34,10 @@ describe("SpatialSortingTest", function () {
     let expectedShops: Shop[];
 
     //shop/1:0.36KM, shop/2:0.26KM, shop/3 0.15KM from (34.042575,  44.417398)
-    const sortedExpectedOrder = [ "shops/3-A", "shops/2-A", "shops/1-A" ];
+    const sortedExpectedOrder = ["shops/3-A", "shops/2-A", "shops/1-A"];
 
     //shop/1:0.12KM, shop/2:0.03KM, shop/3 0.11KM from (34.042618,  44.419575)
-    const filteredExpectedOrder = [ "shops/2-A", "shops/3-A", "shops/1-A" ];
+    const filteredExpectedOrder = ["shops/2-A", "shops/3-A", "shops/1-A"];
 
     // tslint:disable-next-line:no-shadowed-variable
     async function createData(store: IDocumentStore) {
@@ -55,8 +56,8 @@ describe("SpatialSortingTest", function () {
 
         const indexDefinition2 = new IndexDefinition();
         indexDefinition2.name = "eventsByLatLngWSpecialField";
-        indexDefinition2.maps = new Set([ 
-            "from e in docs.Shops select new { e.venue, mySpacialField = CreateSpatialField(e.latitude, e.longitude) }" 
+        indexDefinition2.maps = new Set([
+            "from e in docs.Shops select new { e.venue, mySpacialField = CreateSpatialField(e.latitude, e.longitude) }"
         ]);
 
         const indexFieldOptions = new IndexFieldOptions();
@@ -81,14 +82,14 @@ describe("SpatialSortingTest", function () {
         expectedShops = [
             new Shop(44.420678, 34.042490),
             new Shop(44.419712, 34.042232),
-            new Shop(44.418686, 34.043219) ];
+            new Shop(44.418686, 34.043219)];
     });
 
     beforeEach(async () => {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("canFilterByLocationAndSortByDistanceFromDifferentPointWDocQuery", async () => {
@@ -96,7 +97,7 @@ describe("SpatialSortingTest", function () {
 
         const session = store.openSession();
         const shops = await session.query({
-            documentType: Shop, 
+            documentType: Shop,
             indexName: "eventsByLatLng"
         })
             .spatial("coordinates", f => f.within(getQueryShapeFromLatLon(FILTERED_LAT, FILTERED_LNG, FILTERED_RADIUS)))
@@ -122,11 +123,11 @@ describe("SpatialSortingTest", function () {
         {
             const session = store.openSession();
             const shops = await session.query<Shop>({
-                documentType: Shop, 
+                documentType: Shop,
                 indexName: "eventsByLatLngWSpecialField"
             })
-            .orderByDistance("mySpacialField", SORTED_LAT, SORTED_LNG)
-            .all();
+                .orderByDistance("mySpacialField", SORTED_LAT, SORTED_LNG)
+                .all();
 
             assert.deepStrictEqual(shops.map(x => x.id), sortedExpectedOrder);
         }

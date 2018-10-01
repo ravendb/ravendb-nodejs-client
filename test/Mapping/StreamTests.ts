@@ -1,4 +1,3 @@
-
 import * as stream from "readable-stream";
 import * as assert from "assert";
 import { parser } from "stream-json/Parser";
@@ -28,6 +27,6 @@ describe("streaming tryouts", function () {
 
             done();
         })
-        .on("data", x => assert.strictEqual(x["value"], null));
+            .on("data", x => assert.strictEqual(x["value"], null));
     });
 });

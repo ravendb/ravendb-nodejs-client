@@ -1,4 +1,4 @@
-import {User} from "../Assets/Entities";
+import { User } from "../Assets/Entities";
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
@@ -15,7 +15,7 @@ describe("CompactTest", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     // tslint:disable-next-line:no-empty
@@ -40,7 +40,7 @@ describe("CompactTest", function () {
             assert.ok(
                 err.message.indexOf(
                     "Unable to cast object of type 'PureMemoryStorageEnvironmentOptions' "
-                        + "to type 'DirectoryStorageEnvironmentOptions'") !== -1, "Actual error: " + err.stack);
+                    + "to type 'DirectoryStorageEnvironmentOptions'") !== -1, "Actual error: " + err.stack);
         }
     });
 });

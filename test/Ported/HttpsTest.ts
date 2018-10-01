@@ -13,7 +13,7 @@ describe("HttpsTest", function () {
         store = await testContext.getSecuredDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("can connect with certificate", async () => {

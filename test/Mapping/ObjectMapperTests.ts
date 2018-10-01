@@ -1,9 +1,9 @@
 import * as assert from "assert";
 
 import {
-    TypesAwareObjectMapper, 
-    IRavenObject, 
-    ObjectTypeDescriptor, 
+    TypesAwareObjectMapper,
+    IRavenObject,
+    ObjectTypeDescriptor,
     PropsBasedObjectLiteralDescriptor
 } from "../../src";
 import { DateUtil } from "../../src/Utility/DateUtil";
@@ -21,7 +21,8 @@ describe("ObjectMapper", function () {
     });
 
     class Person {
-        constructor(public name: string) { }
+        constructor(public name: string) {
+        }
 
         public sayHello() {
             return `Hello, I'm ${this.name}.`;
@@ -32,7 +33,8 @@ describe("ObjectMapper", function () {
         constructor(
             public name: string,
             public releasedAt: Date
-        ) { }
+        ) {
+        }
     }
 
     class Tree {
@@ -41,12 +43,14 @@ describe("ObjectMapper", function () {
     }
 
     class Order {
-        constructor(public orderId: number, public isSent: false) {}
+        constructor(public orderId: number, public isSent: false) {
+        }
     }
 
     interface IAnimal {
         name: string;
         legsCount: number;
+
         run();
     }
 
@@ -69,7 +73,7 @@ describe("ObjectMapper", function () {
         it("can handle Date type", () => {
             const typeInfo = {
                 nestedTypes: {
-                    bornAt: "date" 
+                    bornAt: "date"
                 }
             };
 
@@ -86,7 +90,7 @@ describe("ObjectMapper", function () {
             assert.strictEqual(bornAt.getMonth(), 4);
         });
 
-        it ("can handle boolean", () => {
+        it("can handle boolean", () => {
             const data = {
                 success: false
             };
@@ -197,13 +201,13 @@ describe("ObjectMapper", function () {
 
             const typeInfo: TypeInfo = {
                 nestedTypes: {
-                    "me": "Person", 
+                    "me": "Person",
                     "me.bornAt": "date",
-                    "people[]": "Person"    
+                    "people[]": "Person"
                 }
             };
             const types = new Map<string, ObjectTypeDescriptor>([
-                [ Person.name, Person ]
+                [Person.name, Person]
             ]);
 
             const result: any = mapper.fromObjectLiteral(
@@ -226,10 +230,10 @@ describe("ObjectMapper", function () {
         });
 
         it("can handle dot operator", () => {
-            const data = { 
+            const data = {
                 person: {
-                    bornAt: "1987-10-12T00:00:00.0000000" 
-                }                
+                    bornAt: "1987-10-12T00:00:00.0000000"
+                }
             };
 
             const typeInfo = {
@@ -287,28 +291,28 @@ describe("ObjectMapper", function () {
 
             const data = {
                 characters: [
-                    [ 
-                        { 
-                            name: "Jon", 
-                            lastActedAt: "2017-10-12T00:00:00.0000000" 
-                        }, 
-                        { 
+                    [
+                        {
+                            name: "Jon",
+                            lastActedAt: "2017-10-12T00:00:00.0000000"
+                        },
+                        {
                             name: "Bran",
-                            lastActedAt: "2017-10-12T00:00:00.0000000" 
+                            lastActedAt: "2017-10-12T00:00:00.0000000"
                         }
                     ],
                     [
-                        { 
+                        {
                             name: "Jaime",
-                            lastActedAt: "2017-10-12T00:00:00.0000000" 
-                        }, 
-                        { 
+                            lastActedAt: "2017-10-12T00:00:00.0000000"
+                        },
+                        {
                             name: "Tyrion",
-                            lastActedAt: "2017-10-12T00:00:00.0000000" 
-                        }, 
-                        { 
+                            lastActedAt: "2017-10-12T00:00:00.0000000"
+                        },
+                        {
                             name: "Cersei",
-                            lastActedAt: "2017-10-12T00:00:00.0000000" 
+                            lastActedAt: "2017-10-12T00:00:00.0000000"
                         }
                     ]
                 ]
@@ -358,12 +362,12 @@ describe("ObjectMapper", function () {
                     "characters[].lastActedAt": "date",
                 }
             };
-            
-            const testObj = { 
+
+            const testObj = {
                 me: { name: "Ash" },
                 characters: [
                     { name: "Test", lastActedAt: null }
-                ] 
+                ]
             };
             const result: any = mapper.fromObjectLiteral(testObj, typeInfo);
             assert.notStrictEqual(testObj, result);
@@ -380,12 +384,12 @@ describe("ObjectMapper", function () {
                     "characters[].missingFieldOnObjectInArray": "date",
                 }
             };
-            
-            const testObj = { 
+
+            const testObj = {
                 me: { name: "Ash" },
                 characters: [
                     { name: "Test", lastActedAt: null }
-                ] 
+                ]
             };
             const result: any = mapper.fromObjectLiteral(testObj, typeInfo, new Map([[Person.name, Person]]));
             assert.notStrictEqual(testObj, result);
@@ -404,9 +408,9 @@ describe("ObjectMapper", function () {
             };
 
             const testObj = {
-                treeSpecies: [ 
-                    { name: "Oak" }, 
-                    { name: "Birch" } 
+                treeSpecies: [
+                    { name: "Oak" },
+                    { name: "Birch" }
                 ]
             };
 
@@ -433,7 +437,7 @@ describe("ObjectMapper", function () {
             };
 
             const testObj = {
-                orders: { 
+                orders: {
                     John: { orderId: 1, isSent: false }
                 }
             };
@@ -444,7 +448,7 @@ describe("ObjectMapper", function () {
             assert.strictEqual(ordersMap.size, 1);
 
             for (const entry of ordersMap) {
-                const [ name, order ] = entry;
+                const [name, order] = entry;
                 const src = testObj.orders[name];
                 assert.ok(src);
                 assert.strictEqual(order.constructor, Order);
@@ -469,7 +473,7 @@ describe("ObjectMapper", function () {
             const testObject = {
                 lastModified: new Date(2018, 2, 14)
             };
-            const result: any = mapper.toObjectLiteral(testObject, typeInfoCallback); 
+            const result: any = mapper.toObjectLiteral(testObject, typeInfoCallback);
             const expectedTypeInfo = {
                 typeName: null,
                 nestedTypes: {
@@ -489,7 +493,7 @@ describe("ObjectMapper", function () {
                     new Date(2013, 2, 1)
                 ]
             };
-            const result: any = mapper.toObjectLiteral(testObject, typeInfoCallback); 
+            const result: any = mapper.toObjectLiteral(testObject, typeInfoCallback);
             const expectedTypeInfo = {
                 typeName: null,
                 nestedTypes: {
@@ -549,15 +553,15 @@ describe("ObjectMapper", function () {
                 ]
             };
 
-            const types = new Map([[ Person.name, Person ]]);
+            const types = new Map([[Person.name, Person]]);
             const result: any = mapper.toObjectLiteral(testObject, typeInfoCallback, types);
 
             const expectedTypeInfo: TypeInfo = {
                 typeName: null,
                 nestedTypes: {
-                    "me": "Person", 
+                    "me": "Person",
                     "me.bornAt": "date",
-                    "people[]": "Person"    
+                    "people[]": "Person"
                 }
             };
             assert.deepStrictEqual(typeInfo, expectedTypeInfo);
@@ -573,10 +577,10 @@ describe("ObjectMapper", function () {
         });
 
         it("can handle dot operator", () => {
-            const data = { 
+            const data = {
                 person: {
-                    bornAt: new Date(1987, 9, 12) 
-                }                
+                    bornAt: new Date(1987, 9, 12)
+                }
             };
 
             const result: any = mapper.toObjectLiteral(data, typeInfoCallback);
@@ -620,10 +624,10 @@ describe("ObjectMapper", function () {
 
         it("can handle Set", () => {
             const expectedArray = [
-                { name: "Birch" }, 
+                { name: "Birch" },
                 { name: "Oak" }
             ];
-            
+
             const data = {
                 trees: new Set([
                     new Tree("Birch"),
@@ -638,7 +642,7 @@ describe("ObjectMapper", function () {
             assert.deepStrictEqual(result.trees, expectedArray);
         });
 
-        it ("can handle Map", () => {
+        it("can handle Map", () => {
             const expectedObj = {
                 Birch: { name: "Birch" },
                 Oak: { name: "Oak" }
@@ -646,8 +650,8 @@ describe("ObjectMapper", function () {
 
             const data = {
                 trees: new Map([
-                    ["Birch", new Tree("Birch") ],
-                    ["Oak", new Tree("Oak") ]
+                    ["Birch", new Tree("Birch")],
+                    ["Oak", new Tree("Oak")]
                 ])
             };
 
@@ -659,9 +663,9 @@ describe("ObjectMapper", function () {
         });
 
         it("can handle array of arrays", () => {
-            const newCharacter = (name: string) => 
+            const newCharacter = (name: string) =>
                 Object.assign(new Person(name), { lastActedAt: new Date(2017, 9, 12) });
-                
+
             const data = {
                 characters: [
                     [

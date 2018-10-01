@@ -7,7 +7,7 @@ import {
     DocumentConventions,
     GetDatabaseTopologyCommand,
     RavenErrorType,
-    GetNextOperationIdCommand ,
+    GetNextOperationIdCommand,
     GetDatabaseNamesOperation,
     ServerNode,
     IDocumentStore
@@ -34,7 +34,7 @@ describe("Request executor", function () {
                 executor = RequestExecutor.create(store.urls, "no_such_db", {
                     documentConventions
                 });
- 
+
                 let errorsCount = 0;
 
                 for (let i = 0; i < 40; i++) {
@@ -96,10 +96,11 @@ describe("Request executor", function () {
                 executor = RequestExecutor.create(store.urls, store.database, {
                     documentConventions
                 });
-                const serverNode = new ServerNode({ 
-                    url: store.urls[0], 
-                    database: "nope" });
-                
+                const serverNode = new ServerNode({
+                    url: store.urls[0],
+                    database: "nope"
+                });
+
                 try {
                     await executor.updateTopology(serverNode, 5000);
                     assert.fail("Should have thrown");
@@ -136,13 +137,13 @@ describe("Request executor", function () {
             const dbName = store.database;
 
             try {
-                executor = RequestExecutor.create([ 
-                    "http://no_such_host:8080", 
-                    "http://another_offlilne:8080",
-                    url
-                ],
-                dbName,
-                { documentConventions });
+                executor = RequestExecutor.create([
+                        "http://no_such_host:8080",
+                        "http://another_offlilne:8080",
+                        url
+                    ],
+                    dbName,
+                    { documentConventions });
 
                 const command = new GetNextOperationIdCommand();
                 await executor.execute(command);
@@ -158,7 +159,7 @@ describe("Request executor", function () {
         });
 
     });
-    
+
     it("fails when server is offline", function () {
         const documentConventions = new DocumentConventions();
         const executor = RequestExecutor.create(["http://no_such_host:8081"], "db1", {

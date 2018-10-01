@@ -15,7 +15,7 @@ describe("[RDBC-230] DocumentInfo", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("does deep copy for document to entity", async () => {

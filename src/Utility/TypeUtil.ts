@@ -5,8 +5,8 @@ export class TypeUtil {
     public static readonly MAX_INT32 = 2147483647;
 
     // tslint:disable-next-line:no-empty
-    public static NOOP: (...args: any[]) => any = () => {
-    };
+    public static NOOP: (...args: any[]) => any = () => {};
+
     public static ASYNC_NOOP: (...args: any[]) => Promise<any> = () => Promise.resolve(undefined);
 
     public static isNullOrUndefined(value: any): boolean {

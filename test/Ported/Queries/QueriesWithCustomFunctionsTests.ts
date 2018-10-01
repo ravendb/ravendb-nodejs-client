@@ -16,7 +16,7 @@ describe("Queries with custom functions", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("query cmpxchg where", async () => {
@@ -48,7 +48,7 @@ describe("Queries with custom functions", function () {
 
             assert.strictEqual(
                 q.getIndexQuery().query, "from Users where name = cmpxchg($p0) and lastName = cmpxchg($p1)");
-            
+
             const queryResult = await q.all();
             assert.strictEqual(queryResult.length, 1);
             assert.strictEqual(queryResult[0].name, "Zeus");

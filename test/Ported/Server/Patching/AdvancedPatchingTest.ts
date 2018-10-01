@@ -7,7 +7,7 @@ import {
     PutIndexesOperation,
     PatchByQueryOperation, PatchOperation,
 } from "../../../../src";
-import {PatchRequest} from "../../../../src/Documents/Operations/PatchRequest";
+import { PatchRequest } from "../../../../src/Documents/Operations/PatchRequest";
 
 describe("AdvancedPatchingTest", function () {
 
@@ -39,7 +39,7 @@ describe("AdvancedPatchingTest", function () {
 
         {
             const session = store.openSession();
-            const loaded  = await session.load<CustomType>("customTypes/1", CustomType);
+            const loaded = await session.load<CustomType>("customTypes/1", CustomType);
             assert.strictEqual(loaded.owner, "not-me");
         }
     });
@@ -151,6 +151,7 @@ describe("AdvancedPatchingTest", function () {
 
     });
 });
+
 export class CustomType {
     public id: string;
     public owner: string;

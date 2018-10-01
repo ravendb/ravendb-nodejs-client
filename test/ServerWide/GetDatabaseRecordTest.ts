@@ -4,7 +4,7 @@ import {
     DatabaseRecordWithEtag,
     IDocumentStore
 } from "../../src";
-import {GetDatabaseRecordOperation} from "../../src/ServerWide/Operations/GetDatabaseRecordOperation";
+import { GetDatabaseRecordOperation } from "../../src/ServerWide/Operations/GetDatabaseRecordOperation";
 
 describe("GetDatabaseRecordTest", function () {
 
@@ -20,7 +20,7 @@ describe("GetDatabaseRecordTest", function () {
     it("can get database record", async () => {
         const databaseRecord: DatabaseRecordWithEtag
             = await store.maintenance.server.send(
-                new GetDatabaseRecordOperation(store.database));
+            new GetDatabaseRecordOperation(store.database));
 
         assert.ok(databaseRecord);
         assert.strictEqual(databaseRecord.databaseName, store.database);

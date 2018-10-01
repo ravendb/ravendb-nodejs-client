@@ -1,4 +1,3 @@
-
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
@@ -7,9 +6,9 @@ import {
     GetStatisticsOperation, IDocumentSession,
     IDocumentStore, IMetadataDictionary,
 } from "../../../src";
-import {User} from "../../Assets/Entities";
-import {PutAttachmentOperation} from "../../../src/Documents/Operations/Attachments/PutAttachmentOperation";
-import {CONSTANTS} from "../../../src/Constants";
+import { User } from "../../Assets/Entities";
+import { PutAttachmentOperation } from "../../../src/Documents/Operations/Attachments/PutAttachmentOperation";
+import { CONSTANTS } from "../../../src/Constants";
 
 describe("AttachmentsRevisions", function () {
 
@@ -226,28 +225,28 @@ describe("AttachmentsRevisions", function () {
 
     const assertRevisionAttachments =
         (names: string[], expectedCount: number, revision: User, session: IDocumentSession) => {
-        const metadata = session.advanced.getMetadataFor(revision);
+            const metadata = session.advanced.getMetadataFor(revision);
 
-        const flags = metadata[CONSTANTS.Documents.Metadata.FLAGS] as string;
-        assert.ok(flags.includes("HasRevisions"));
-        assert.ok(flags.includes("Revision"));
-        assert.ok(flags.includes("HasAttachments"));
+            const flags = metadata[CONSTANTS.Documents.Metadata.FLAGS] as string;
+            assert.ok(flags.includes("HasRevisions"));
+            assert.ok(flags.includes("Revision"));
+            assert.ok(flags.includes("HasAttachments"));
 
-        const attachments: IMetadataDictionary[] = metadata[CONSTANTS.Documents.Metadata.ATTACHMENTS];
-        assert.strictEqual(attachments.length, expectedCount);
+            const attachments: IMetadataDictionary[] = metadata[CONSTANTS.Documents.Metadata.ATTACHMENTS];
+            assert.strictEqual(attachments.length, expectedCount);
 
-        const orderedNames = names.slice(0);
-        if (orderedNames.length > expectedCount) {
-            orderedNames.length = expectedCount;
-        }
+            const orderedNames = names.slice(0);
+            if (orderedNames.length > expectedCount) {
+                orderedNames.length = expectedCount;
+            }
 
-        orderedNames.sort();
+            orderedNames.sort();
 
-        for (let i = 0; i < expectedCount; i++) {
-            const name = orderedNames[i];
-            const attachment = attachments[i];
+            for (let i = 0; i < expectedCount; i++) {
+                const name = orderedNames[i];
+                const attachment = attachments[i];
 
-            assert.strictEqual(attachment.name, name);
-        }
-    };
+                assert.strictEqual(attachment.name, name);
+            }
+        };
 });

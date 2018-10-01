@@ -17,7 +17,7 @@ describe("NextAndSeedIdentitiesTest", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("NextIdentityForCommand should use one ID from pool", async () => {
@@ -103,5 +103,5 @@ describe("NextAndSeedIdentitiesTest", function () {
         const identities = await store.maintenance.send(new GetIdentitiesOperation());
         assert.strictEqual(identities["users|"], 1991);
     });
-    
+
 });

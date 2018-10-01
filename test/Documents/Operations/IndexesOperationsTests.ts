@@ -34,7 +34,8 @@ describe("Index operations", function () {
     let store: IDocumentStore;
 
     class User {
-        constructor(public name: string, public age?: number) { }
+        constructor(public name: string, public age?: number) {
+        }
     }
 
     beforeEach(async function () {

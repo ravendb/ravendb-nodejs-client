@@ -45,7 +45,8 @@ export class OperationCompletionAwaiter {
                         case "Completed":
                             return;
                         case "Cancelled":
-                            throwError("OperationCancelledException", `Operation of ID ${this._id} has been cancelled.`);
+                            throwError("OperationCancelledException",
+                                `Operation of ID ${this._id} has been cancelled.`);
                         case "Faulted":
                             const faultResult: OperationExceptionResult = operationStatusResult.result;
                             throw ExceptionDispatcher.get(faultResult, faultResult.statusCode);

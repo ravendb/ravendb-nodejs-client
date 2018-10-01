@@ -119,6 +119,7 @@ describe("bulk insert", function () {
         class BulkTestItem {
             public name: string;
             public created: Date;
+
             public constructor(name: string) {
                 this.name = name;
                 this.created = new Date();
@@ -222,7 +223,8 @@ describe("BulkInsertOperation._typeCheckStoreArgs() properly parses arguments", 
 
     const typeCheckStoreArgs = BulkInsertOperation["_typeCheckStoreArgs"];
     // tslint:disable-next-line:no-empty
-    const expectedCallback = () => { };
+    const expectedCallback = () => {
+    };
     const expectedId = "id";
     const expectedMetadata = {} as IMetadataDictionary;
     const expectedNullId = null;
