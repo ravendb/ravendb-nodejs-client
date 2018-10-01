@@ -261,7 +261,7 @@ declare module "readable-stream" {
             export function __promisify__(stream1: NodeJS.ReadableStream, stream2: NodeJS.ReadWriteStream | NodeJS.WritableStream, ...streams: Array<NodeJS.ReadWriteStream | NodeJS.WritableStream>): Promise<void>;
         }
 
-        export function finished(stream: pipeable.Stream, callback: (err?: Error) => {});
+        export function finished(stream: pipeable.Stream, callback: (err?: Error) => void);
     }
 
     export = pipeable;

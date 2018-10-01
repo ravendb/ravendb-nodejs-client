@@ -810,7 +810,7 @@ export class RequestExecutor implements IDisposable {
                             cachedItem.notModified();
 
                             if (command.responseType === "Object") {
-                                command.setResponseFromCache(cachedValue); //TODO:
+                                return command.setResponseFromCache(cachedValue);
                             }
 
                             return;
