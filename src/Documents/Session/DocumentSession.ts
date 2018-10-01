@@ -157,7 +157,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         return loadInternalPromise;
     }
 
-    private async _loadInternal<T>(
+    private async _loadInternal<T>( //TODO: unused!
         ids: string[], 
         operation: LoadOperation): Promise<void>;
     private async _loadInternal<T>(
@@ -255,7 +255,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     public async loadStartingWith<TEntity extends object>(
-        idPrefix: string, 
+        idPrefix: string,
         callback?: AbstractCallback<TEntity[]>): Promise<TEntity[]>;
     public async loadStartingWith<TEntity extends object>(
         idPrefix: string, 
@@ -263,7 +263,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         callback?: AbstractCallback<TEntity[]>): Promise<TEntity[]>;
     public async loadStartingWith<TEntity extends object>(
         idPrefix: string, 
-        optsOrCallback?: SessionLoadStartingWithOptions<TEntity> | AbstractCallback<TEntity[]>, 
+        optsOrCallback?: SessionLoadStartingWithOptions<TEntity> | AbstractCallback<TEntity[]>,
         callback?: AbstractCallback<TEntity[]>): Promise<TEntity[]> {
 
         const loadStartingWithOperation = new LoadStartingWithOperation(this);
@@ -642,11 +642,10 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
     public addLazyOperation<TLazyResult>(operation: ILazyOperation): Lazy<TLazyResult> {
         this._pendingLazyOperations.push(operation);
-        const lazyValue = new Lazy<TLazyResult>(async () => {
+        return new Lazy<TLazyResult>(async () => {
             await this.executeAllPendingLazyOperations();
             return operation.result as TLazyResult;
         });
-        return lazyValue;
     }
 
     public addLazyCountOperation(operation: ILazyOperation): Lazy<number> {
@@ -703,7 +702,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         callback: AbstractCallback<DocumentResultStream<T>>)
         : Promise<DocumentResultStream<T>>;
     public async stream<T extends object>(
-        queryOrIdPrefix: string | IDocumentQuery<T> | IRawDocumentQuery<T>, 
+        queryOrIdPrefix: string | IDocumentQuery<T> | IRawDocumentQuery<T>,
         optsOrStatsCallback?: SessionLoadStartingWithOptions<T> | StreamQueryStatisticsCallback,
         callback?: AbstractCallback<DocumentResultStream<T>>)
         : Promise<DocumentResultStream<T>> {
@@ -818,11 +817,23 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
      *  Returns the results of a query directly into stream
      */
     public async streamInto<T extends object>(query: IDocumentQuery<T>, writable: stream.Writable): Promise<void>;
+    /**
+     *  Returns the results of a query directly into stream
+     */
     public async streamInto<T extends object>(query: IRawDocumentQuery<T>, writable: stream.Writable): Promise<void>;
+    /**
+     *  Returns the results of a query directly into stream
+     */
     public async streamInto<T extends object>(
         query: IDocumentQuery<T>, writable: stream.Writable, callback: AbstractCallback<void>): Promise<void>;
+    /**
+     *  Returns the results of a query directly into stream
+     */
     public async streamInto<T extends object>(
         query: IRawDocumentQuery<T>, writable: stream.Writable, callback: AbstractCallback<void>): Promise<void>;
+    /**
+     *  Returns the results of a query directly into stream
+     */
     public async streamInto<T extends object>(
         query: IRawDocumentQuery<T> | IDocumentQuery<T>,
         writable: stream.Writable,

@@ -20,8 +20,6 @@ export class StreamOperation {
     private readonly _session: InMemoryDocumentSessionOperations;
     private _isQueryStream: boolean;
     
-    constructor(session: InMemoryDocumentSessionOperations);
-    constructor(session: InMemoryDocumentSessionOperations);
     constructor(session: InMemoryDocumentSessionOperations) {
         this._session = session;
     }

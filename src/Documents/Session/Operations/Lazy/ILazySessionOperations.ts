@@ -45,6 +45,10 @@ export interface ILazySessionOperations {
      * Loads multiple entities that contain common prefix.
      */
     loadStartingWith<TEntity extends object>(idPrefix: string): Lazy<EntitiesCollectionObject<TEntity>>;
+
+    /**
+     * Loads multiple entities that contain common prefix.
+     */
     loadStartingWith<TEntity extends object>(
         idPrefix: string, clazz: ObjectTypeDescriptor<TEntity>): Lazy<EntitiesCollectionObject<TEntity>>;
 

@@ -1,12 +1,12 @@
-// export interface IJsonable {
+// TODO export interface IJsonable {
 //   toJson(): object;
 // }
 
-// export interface IJsonConvertible {
+// TODO export interface IJsonConvertible {
 //   fromJson(json: object): void;
 // }
 
-// export interface IStringable {
+// TODO export interface IStringable {
 //   toString(): string;
 // }
 

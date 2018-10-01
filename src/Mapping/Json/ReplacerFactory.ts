@@ -1,4 +1,3 @@
-
 export type ReplacerFunction = (key: string, value: any) => any;
 export type ContextMatcherFunction = (context: ReplacerContext) => boolean;
 export type FieldReplacerCallback = (context: ReplacerContext) => boolean;
@@ -10,7 +9,7 @@ export class ReplacerContext {
     public parent: object = null;
 
     private _parentsStack: object[] = [];
-    private _pathSegments: string[] = []; 
+    private _pathSegments: string[] = [];
 
     public update(parent: object, key: string, value: any) {
         if (!key) {
@@ -22,9 +21,9 @@ export class ReplacerContext {
         this.parent = parent;
 
         const parentIdx = this._parentsStack.indexOf(parent);
-        if (this._parentsStack.length 
+        if (this._parentsStack.length
             && parentIdx === this._parentsStack.length - 1) {
-            this._pathSegments[this._pathSegments.length - 1] = key;    
+            this._pathSegments[this._pathSegments.length - 1] = key;
         } else if (parentIdx === -1) {
             this._parentsStack.push(parent);
             this._pathSegments.push(key);
@@ -59,26 +58,26 @@ export class SkippingReplacerFactory {
 
 export class RuleBasedReplacerFactory {
 
-        public static build(
-            rules: ReplacerTransformRule[], 
-            fieldCallback?: (context: ReplacerContext) => void) {
+    public static build(
+        rules: ReplacerTransformRule[],
+        fieldCallback?: (context: ReplacerContext) => void) {
 
-            const context = new ReplacerContext();
+        const context = new ReplacerContext();
 
-            return function (key: string, value: any) {
-                context.update(this, key, value);
+        return function (key: string, value: any) {
+            context.update(this, key, value);
 
-                if (fieldCallback) { 
-                    fieldCallback(context);
+            if (fieldCallback) {
+                fieldCallback(context);
+            }
+
+            for (const entry of rules) {
+                if (entry.contextMatcher(context)) {
+                    return entry.replacer.call(this, key, value);
                 }
+            }
 
-                for (const entry of rules) {
-                    if (entry.contextMatcher(context)) {
-                        return entry.replacer.call(this, key, value);
-                    }
-                }
-
-                return value;
-            };
-        }
+            return value;
+        };
+    }
 }

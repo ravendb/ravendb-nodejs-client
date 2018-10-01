@@ -64,26 +64,26 @@ export abstract class DocumentStoreBase
         this.assertInitialized();
         return task.execute(this, this.conventions, database);
     }
-    // public void executeIndex(AbstractIndexCreationTask task) {
+    // TODO: public void executeIndex(AbstractIndexCreationTask task) {
     //     executeIndex(task, null);
     // }
 
-    // public void executeIndex(AbstractIndexCreationTask task, String database) {
+    // TODO: public void executeIndex(AbstractIndexCreationTask task, String database) {
     //     assertInitialized();
     //     task.execute(this, conventions, database);
     // }
 
-    // @Override
+    // TODO: @Override
     // public void executeIndexes(List<AbstractIndexCreationTask> tasks) {
     //     executeIndexes(tasks, null);
     // }
 
-    // @Override
+    // TODO: @Override
     // public void executeIndexes(List<AbstractIndexCreationTask> tasks, String database) {
     //     assertInitialized();
     //     IndexDefinition[] indexesToAdd = IndexCreation.createIndexesToAdd(tasks, conventions);
 
-    //     maintenance()
+    // TODO:     maintenance()
     //             .forDatabase(ObjectUtils.firstNonNull(database, getDatabase()))
     //             .send(new PutIndexesOperation(indexesToAdd));
     // }

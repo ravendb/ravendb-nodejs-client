@@ -486,7 +486,15 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * this is useful if you want to have repeatable random queries
      */
     public _randomOrdering(): void;
+    /**
+     * Order the search results randomly using the specified seed
+     * this is useful if you want to have repeatable random queries
+     */
     public _randomOrdering(seed?: string): void;
+    /**
+     * Order the search results randomly using the specified seed
+     * this is useful if you want to have repeatable random queries
+     */
     public _randomOrdering(seed?: string): void {
         this._assertNoRawQuery();
 
@@ -571,8 +579,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         } else if (fieldName
             && Object.keys(this._aliasToGroupByFieldName)
                 .reduce((result, next) => result || next === fieldName, false)) {
-            const aliasedFieldName = this._aliasToGroupByFieldName[fieldName];
-            fieldName = aliasedFieldName;
+            fieldName = this._aliasToGroupByFieldName[fieldName];
         }
 
         this._selectTokens.push(GroupByKeyToken.create(fieldName, projectedName));
@@ -797,7 +804,13 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * Check that the field has one of the specified value
      */
     public _whereIn(fieldName: string, values: any[]): void;
+    /**
+     * Check that the field has one of the specified value
+     */
     public _whereIn(fieldName: string, values: any[], exact: boolean): void;
+    /**
+     * Check that the field has one of the specified value
+     */
     public _whereIn(fieldName: string, values: any[], exact: boolean = false): void {
         fieldName = this._ensureValidFieldName(fieldName, false);
 
@@ -858,7 +871,13 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * Matches fields where the value is between the specified start and end, inclusive
      */
     public _whereBetween(fieldName: string, start: any, end: any): void;
+    /**
+     * Matches fields where the value is between the specified start and end, inclusive
+     */
     public _whereBetween(fieldName: string, start: any, end: any, exact: boolean): void;
+    /**
+     * Matches fields where the value is between the specified start and end, inclusive
+     */
     public _whereBetween(fieldName: string, start: any, end: any, exact: boolean = false): void {
         fieldName = this._ensureValidFieldName(fieldName, false);
 
@@ -892,7 +911,13 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * Matches fields where the value is greater than the specified value
      */
     public _whereGreaterThan(fieldName: string, value: any): void;
+    /**
+     * Matches fields where the value is greater than the specified value
+     */
     public _whereGreaterThan(fieldName: string, value: any, exact: boolean): void;
+    /**
+     * Matches fields where the value is greater than the specified value
+     */
     public _whereGreaterThan(fieldName: string, value: any, exact: boolean = false): void {
         fieldName = this._ensureValidFieldName(fieldName, false);
 
@@ -915,7 +940,13 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * Matches fields where the value is greater than or equal to the specified value
      */
     public _whereGreaterThanOrEqual(fieldName: string, value: any): void;
+    /**
+     * Matches fields where the value is greater than or equal to the specified value
+     */
     public _whereGreaterThanOrEqual(fieldName: string, value: any, exact: boolean): void;
+    /**
+     * Matches fields where the value is greater than or equal to the specified value
+     */
     public _whereGreaterThanOrEqual(fieldName: string, value: any, exact: boolean = false): void {
         fieldName = this._ensureValidFieldName(fieldName, false);
 
@@ -1105,7 +1136,17 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
      */
     public _orderBy(field: string): void;
+    /**
+     * Order the results by the specified fields
+     * The fields are the names of the fields to sort, defaulting to sorting by ascending.
+     * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
+     */
     public _orderBy(field: string, ordering: OrderingType): void;
+    /**
+     * Order the results by the specified fields
+     * The fields are the names of the fields to sort, defaulting to sorting by ascending.
+     * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
+     */
     public _orderBy(field: string, ordering: OrderingType = "String"): void {
         this._assertNoRawQuery();
         const f = this._ensureValidFieldName(field, false);
@@ -1118,7 +1159,17 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
      */
     public _orderByDescending(field: string): void;
+    /**
+     * Order the results by the specified fields
+     * The fields are the names of the fields to sort, defaulting to sorting by descending.
+     * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
+     */
     public _orderByDescending(field: string, ordering: OrderingType): void;
+    /**
+     * Order the results by the specified fields
+     * The fields are the names of the fields to sort, defaulting to sorting by descending.
+     * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
+     */
     public _orderByDescending(field: string, ordering: OrderingType = "String"): void {
         this._assertNoRawQuery();
         const f = this._ensureValidFieldName(field, false);
@@ -1171,7 +1222,15 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * If there is more than a single term, each of them will be checked independently.
      */
     public _search(fieldName: string, searchTerms: string): void;
+    /**
+     * Perform a search for documents which fields that match the searchTerms.
+     * If there is more than a single term, each of them will be checked independently.
+     */
     public _search(fieldName: string, searchTerms: string, operator: SearchOperator): void;
+    /**
+     * Perform a search for documents which fields that match the searchTerms.
+     * If there is more than a single term, each of them will be checked independently.
+     */
     public _search(fieldName: string, searchTerms: string, operator: SearchOperator = "OR"): void {
         const tokens = this._getCurrentWhereTokens();
         this._appendOperatorIfNeeded(tokens);

@@ -138,20 +138,56 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * Does NOT track the entities in the session, and will not include changes there when saveChanges() is called
      */
     stream<T extends object>(query: IDocumentQuery<T>): Promise<DocumentResultStream<T>>;
+
+    /**
+     * Stream the results on the query to the client.
+     *
+     * Does NOT track the entities in the session, and will not include changes there when saveChanges() is called
+     */
     stream<T extends object>(
         query: IDocumentQuery<T>, 
         streamQueryStats: StreamQueryStatisticsCallback)
         : Promise<DocumentResultStream<T>>;
+
+    /**
+     * Stream the results on the query to the client.
+     *
+     * Does NOT track the entities in the session, and will not include changes there when saveChanges() is called
+     */
     stream<T extends object>(query: IRawDocumentQuery<T>)
         : Promise<DocumentResultStream<T>>;
+
+    /**
+     * Stream the results on the query to the client.
+     *
+     * Does NOT track the entities in the session, and will not include changes there when saveChanges() is called
+     */
     stream<T extends object>(
         query: IRawDocumentQuery<T>, 
         streamQueryStats: StreamQueryStatisticsCallback)
         : Promise<DocumentResultStream<T>>;
+
+    /**
+     * Stream the results on the query to the client.
+     *
+     * Does NOT track the entities in the session, and will not include changes there when saveChanges() is called
+     */
     stream<T extends object>(idPrefix: string)
         : Promise<DocumentResultStream<T>>;
+
+    /**
+     * Stream the results on the query to the client.
+     *
+     * Does NOT track the entities in the session, and will not include changes there when saveChanges() is called
+     */
     stream<T extends object>(idPrefix: string, opts: SessionLoadStartingWithOptions<T>)
         : Promise<DocumentResultStream<T>>;
+
+    /**
+     * Stream the results on the query to the client.
+     *
+     * Does NOT track the entities in the session, and will not include changes there when saveChanges() is called
+     */
     stream<T extends object>(
         idPrefix: string, 
         opts: SessionLoadStartingWithOptions<T>,
@@ -285,12 +321,20 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
      * SaveChanges will wait for the changes made to be replicates to `replicas` nodes
      */
     waitForReplicationAfterSaveChanges();
+
+    /**
+     * SaveChanges will wait for the changes made to be replicates to `replicas` nodes
+     */
     waitForReplicationAfterSaveChanges(opts: ReplicationBatchOptions);
 
     /**
      * SaveChanges will wait for the indexes to catch up with the saved changes
      */
     waitForIndexesAfterSaveChanges();
+
+    /**
+     * SaveChanges will wait for the indexes to catch up with the saved changes
+     */
     waitForIndexesAfterSaveChanges(opts: IndexBatchOptions);
 
     entityToJson: EntityToJson;

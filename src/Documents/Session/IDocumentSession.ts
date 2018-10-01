@@ -220,11 +220,11 @@ export interface IDocumentSessionImpl extends IDocumentSession {
     conventions: DocumentConventions;
 
     loadInternal<TResult extends object>(
-        ids: string[], includes: string[], clazz: ObjectTypeDescriptor<TResult>): 
+        ids: string[], includes: string[], clazz: ObjectTypeDescriptor<TResult>):
         Promise<EntitiesCollectionObject<TResult>>;
 
-     lazyLoadInternal<TResult extends object>(
-        ids: string[], 
-        includes: string[], 
+    lazyLoadInternal<TResult extends object>(
+        ids: string[],
+        includes: string[],
         clazz: ObjectTypeDescriptor<TResult>): Lazy<EntitiesCollectionObject<TResult>>;
 }

@@ -71,7 +71,7 @@ export class DocumentQuery<T extends object>
         super(documentType, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, fromAlias);
     }
 
-    // public <TProjection> IDocumentQuery<TProjection> selectFields(
+    //TODO: public <TProjection> IDocumentQuery<TProjection> selectFields(
     //    Class<TProjection> projectionClass, String... fields) {
     //     QueryData queryData = new QueryData(fields, fields);
     //     return selectFields(projectionClass, queryData);
@@ -517,8 +517,8 @@ export class DocumentQuery<T extends object>
             query.on("afterQuery", listener as any);
         }
 
-        /* TBD AfterStreamExecutedCallback = AfterStreamExecutedCallback,
-        query.HighlightedFields = new List<HighlightedField>(HighlightedFields),
+        /* TODO AfterStreamExecutedCallback = AfterStreamExecutedCallback, should it be implemeneted?
+        for: 4.1: query.HighlightedFields = new List<HighlightedField>(HighlightedFields),
         query.HighlighterPreTags = HighlighterPreTags,
         query.HighlighterPostTags = HighlighterPostTags,
         */
@@ -598,12 +598,18 @@ export class DocumentQuery<T extends object>
      */
     public withinRadiusOf(
         fieldName: string, radius: number, latitude: number, longitude: number): IDocumentQuery<T>;
+    /**
+     * Filter matches to be inside the specified radius
+     */
     public withinRadiusOf(
         fieldName: string, 
         radius: number, 
         latitude: number, 
         longitude: number, 
         radiusUnits: SpatialUnits): IDocumentQuery<T>;
+    /**
+     * Filter matches to be inside the specified radius
+     */
     public withinRadiusOf(
         fieldName: string, 
         radius: number, 
@@ -611,6 +617,9 @@ export class DocumentQuery<T extends object>
         longitude: number, 
         radiusUnits: SpatialUnits, 
         distanceErrorPct: number): IDocumentQuery<T>;
+    /**
+     * Filter matches to be inside the specified radius
+     */
     public withinRadiusOf(
         fieldName: string, 
         radius: number, 

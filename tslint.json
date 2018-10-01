@@ -30,7 +30,7 @@
         "adjacent-overload-signatures": false,
         "ban-types": false,
         "no-unused-variable": false,
-        "space-before-function-paren": false,
+        "space-before-function-paren": ["warn", "always"],
         "no-string-literal": false,
         "comment-format": false,
         "no-shadowed-variable": false

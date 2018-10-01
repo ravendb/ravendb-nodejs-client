@@ -42,6 +42,12 @@ export interface IDocumentQuery<T extends object>
      */
      selectFields<TProjection extends object>(
          property: string, projectionClass: DocumentType<TProjection>): IDocumentQuery<TProjection>;
+
+    /**
+     * Selects the specified fields directly from the index if the are stored.
+     * If the field is not stored in index, value
+     * will come from document directly.
+     */
      selectFields<TProjection extends object>(
          properties: string[], projectionClass: DocumentType<TProjection>): IDocumentQuery<TProjection>;
 
@@ -51,6 +57,10 @@ export interface IDocumentQuery<T extends object>
      */
      selectFields<TProjection extends object>(properties: string[]): IDocumentQuery<TProjection>;
 
+    /**
+     * Selects the specified fields directly from the index if the are stored.
+     * If the field is not stored in index, value will come from document directly.
+     */
      selectFields<TProjection extends Object>(property: string): IDocumentQuery<TProjection>;
 
     /**
