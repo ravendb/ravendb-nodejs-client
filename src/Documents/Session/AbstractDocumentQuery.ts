@@ -162,7 +162,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     /**
      * Gets the session associated with this document query
-     * @return session
      */
     public get session() {
         return this._theSession as any as IDocumentSession;
@@ -348,7 +347,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     /**
      * Instruct the query to wait for non stale result for the specified wait timeout.
      * This shouldn't be used outside of unit tests unless you are well aware of the implications
-     * @param waitTimeout Wait timeout
      */
     public _waitForNonStaleResults(waitTimeout?: number): void {
         this._theWaitForNonStaleResults = true;
@@ -475,7 +473,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     /**
      * Gets the fields for projection
-     * @return list of projected fields
      */
     public getProjectionFields(): string[] {
         return this.fieldsToFetchToken &&
@@ -487,7 +484,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     /**
      * Order the search results randomly using the specified seed
      * this is useful if you want to have repeatable random queries
-     * @param seed Seed to use
      */
     public _randomOrdering(): void;
     public _randomOrdering(seed?: string): void;
@@ -622,7 +618,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     /**
      * Includes the specified path in the query, loading the document specified in that path
-     * @param path Path to include
      */
     public _include(path: string): void {
         this._includes.add(path);
@@ -640,8 +635,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     /**
      * Filter the results from the index using the specified where clause.
-     * @param fieldName Field name
-     * @param whereClause Where clause
      */
     public _whereLucene(fieldName: string, whereClause: string, exact: boolean): void {
         fieldName = this._ensureValidFieldName(fieldName, false);
@@ -802,9 +795,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     /**
      * Check that the field has one of the specified value
-     * @param fieldName Field name to use
-     * @param values Values to find
-     * @param exact Use exact matcher
      */
     public _whereIn(fieldName: string, values: any[]): void;
     public _whereIn(fieldName: string, values: any[], exact: boolean): void;
@@ -844,8 +834,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     /**
      * Matches fields which ends with the specified value.
-     * @param fieldName Field name to use
-     * @param value Values to find
      */
     public _whereEndsWith(fieldName: string, value: any): void {
         const whereParams = new WhereParams();
@@ -868,10 +856,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     /**
      * Matches fields where the value is between the specified start and end, inclusive
-     * @param fieldName Field name to use
-     * @param start Range start
-     * @param end Range end
-     * @param exact Use exact matcher
      */
     public _whereBetween(fieldName: string, start: any, end: any): void;
     public _whereBetween(fieldName: string, start: any, end: any, exact: boolean): void;
@@ -906,9 +890,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     /**
      * Matches fields where the value is greater than the specified value
-     * @param fieldName Field name to use
-     * @param value Value to compare
-     * @param exact Use exact matcher
      */
     public _whereGreaterThan(fieldName: string, value: any): void;
     public _whereGreaterThan(fieldName: string, value: any, exact: boolean): void;
@@ -932,9 +913,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     /**
      * Matches fields where the value is greater than or equal to the specified value
-     * @param fieldName Field name to use
-     * @param value Value to compare
-     * @param exact Use exact matcher
      */
     public _whereGreaterThanOrEqual(fieldName: string, value: any): void;
     public _whereGreaterThanOrEqual(fieldName: string, value: any, exact: boolean): void;
@@ -995,8 +973,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     /**
      * Matches fields where Regex.IsMatch(filedName, pattern)
-     * @param fieldName Field name to use
-     * @param pattern Regexp pattern
      */
     public _whereRegex(fieldName: string, pattern: string): void {
         const tokens = this._getCurrentWhereTokens();
@@ -1052,8 +1028,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * boosting factor where 1.0 is default, less than 1.0 is lower weight, greater than 1.0 is higher weight
      * <p>
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Boosting%20a%20Term
-     *
-     * @param boost Boost value
      */
     public _boost(boost: number): void {
         if (boost === 1.0) {
@@ -1083,7 +1057,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * 0.0 to 1.0 where 1.0 means closer match
      * <p>
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Fuzzy%20Searches
-     * @param fuzzy Fuzzy value
      */
     public _fuzzy(fuzzy: number): void {
         const tokens = this._getCurrentWhereTokens();
@@ -1107,7 +1080,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * Specifies a proximity distance for the phrase in the last where clause
      * <p>
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Proximity%20Searches
-     * @param proximity Proximity value
      */
     public _proximity(proximity: number): void {
         const tokens = this._getCurrentWhereTokens();
@@ -1131,8 +1103,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * Order the results by the specified fields
      * The fields are the names of the fields to sort, defaulting to sorting by ascending.
      * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
-     * @param field field to use in order
-     * @param ordering Ordering type
      */
     public _orderBy(field: string): void;
     public _orderBy(field: string, ordering: OrderingType): void;
@@ -1146,8 +1116,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * Order the results by the specified fields
      * The fields are the names of the fields to sort, defaulting to sorting by descending.
      * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
-     * @param field Field to use
-     * @param ordering Ordering type
      */
     public _orderByDescending(field: string): void;
     public _orderByDescending(field: string, ordering: OrderingType): void;
@@ -1170,7 +1138,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     /**
      * Provide statistics about the query, such as total count of matching records
-     * @param stats Output parameter for query statistics
      */
     public _statistics(statsCallback: (stats: QueryStatistics) => void): void {
         statsCallback(this._queryStats);
@@ -1180,8 +1147,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     /**
      * Generates the index query.
-     * @param query Query
-     * @return Index query
      */
     protected _generateIndexQuery(query: string): IndexQuery {
         const indexQuery = new IndexQuery();
@@ -1204,9 +1169,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     /**
      * Perform a search for documents which fields that match the searchTerms.
      * If there is more than a single term, each of them will be checked independently.
-     * @param fieldName Field name
-     * @param searchTerms Search terms
-     * @param operator Search operator
      */
     public _search(fieldName: string, searchTerms: string): void;
     public _search(fieldName: string, searchTerms: string, operator: SearchOperator): void;

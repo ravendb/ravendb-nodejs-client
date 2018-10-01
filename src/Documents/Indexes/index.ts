@@ -39,7 +39,6 @@ export abstract class AbstractIndexCreationTask {
 
     /**
      * Creates the index definition.
-     * @return Index definition
      */
     public createIndexDefinition(): IndexDefinition {
         if (!this.conventions) {
@@ -63,7 +62,6 @@ export abstract class AbstractIndexCreationTask {
 
     /**
      * Gets a value indicating whether this instance is map reduce index definition
-     * @return if index is of type: Map/Reduce
      */
     public get isMapReduce() {
         return !!this.reduce;
@@ -71,7 +69,6 @@ export abstract class AbstractIndexCreationTask {
 
     /**
      * Generates index name from type name replacing all _ with /
-     * @return index name
      */
     public getIndexName(): string {
         return AbstractIndexCreationTask.getIndexNameForCtor(this.constructor.name);
@@ -84,9 +81,6 @@ export abstract class AbstractIndexCreationTask {
     //TODO: introduce overloads?
     /**
      * Executes the index creation against the specified document store.
-     * @param store target document store
-     * @param conventions Document conventions
-     * @param database Database name
      */
     public async execute(store: IDocumentStore, conventions?: DocumentConventions, database?: string): Promise<void> {
         if (!conventions && !database) {
@@ -125,8 +119,6 @@ export abstract class AbstractIndexCreationTask {
 
     /**
      * Register a field to be indexed
-     * @param field Field
-     * @param indexing Desired field indexing type
      */
     // tslint:disable-next-line:function-name
     protected index(field: string, indexing: FieldIndexing): void {
@@ -135,8 +127,6 @@ export abstract class AbstractIndexCreationTask {
 
     /**
      * Register a field to be spatially indexed
-     * @param field Field
-     * @param indexing factory for spatial options
      */
     // tslint:disable-next-line:function-name
     protected spatial(field: string, indexing: (spatialOptsFactory: SpatialOptionsFactory) => SpatialOptions): void {
@@ -152,8 +142,6 @@ export abstract class AbstractIndexCreationTask {
 
     /**
      * Register a field to be stored
-     * @param field Field name
-     * @param storage Field storage value to use
      */
     // tslint:disable-next-line:function-name
     protected store(field: string, storage: FieldStorage): void {
@@ -162,8 +150,6 @@ export abstract class AbstractIndexCreationTask {
 
     /**
      * Register a field to be analyzed
-     * @param field Field name
-     * @param analyzer analyzer to use
      */
     // tslint:disable-next-line:function-name
     protected analyze(field: string, analyzer: string): void {
@@ -172,8 +158,6 @@ export abstract class AbstractIndexCreationTask {
 
     /**
      * Register a field to have term vectors
-     * @param field Field name
-     * @param termVector TermVector type
      */
     // tslint:disable-next-line:function-name
     protected termVector(field: string, termVector: FieldTermVector): void {

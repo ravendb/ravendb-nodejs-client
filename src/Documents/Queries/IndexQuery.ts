@@ -21,7 +21,6 @@ export class IndexQuery extends IndexQueryWithParameters<IndexQueryParameters> {
     /**
      * Indicates if query results should be read from cache (if cached previously) 
      * or added to cache (if there were no cached items prior)
-     * @return true if caching was disabled
      */
     public disableCaching: boolean;
 

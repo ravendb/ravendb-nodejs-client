@@ -62,34 +62,22 @@ export interface IDocumentStore extends IDisposable,
     DocumentStoreEventEmitter {
 
     /**
-     *
      * Opens document session
-     * @param {string} [database]
-     * @returns {IDocumentSession}
-     * @memberof IDocumentStore
      */
     openSession(database?: string): IDocumentSession;
 
     /**
      * Opens document session
-     * @param {ISessionOptions} [options]
-     * @returns {IDocumentSession}
-     * @memberof IDocumentStore
      */
     openSession(options?: ISessionOptions): IDocumentSession;
 
     /**
      * Opens document session
-     * @param {string} [database]
-     * @param {ISessionOptions} [options]
-     * @returns {IDocumentSession}
-     * @memberof IDocumentStore
      */
     openSession(database?: string, options?: ISessionOptions): IDocumentSession;
 
     /**
      * Subscribe to change notifications from the server
-     * @return Database changes object
      */
     changes(): IDatabaseChanges;
 
@@ -104,7 +92,6 @@ export interface IDocumentStore extends IDisposable,
      * This is mainly useful for internal use inside RavenDB, when we are executing
      * queries that have been marked with WaitForNonStaleResults, we temporarily disable
      * aggressive caching.
-     * @returns Disposable context
      */
     disableAggressiveCaching(): IDisposable;
 
@@ -114,8 +101,6 @@ export interface IDocumentStore extends IDisposable,
      * This is mainly useful for internal use inside RavenDB, when we are executing
      * queries that have been marked with WaitForNonStaleResults, we temporarily disable
      * aggressive caching.
-     * @param database Database name
-     * @returns Disposable context
      */
     disableAggressiveCaching(database: string): IDisposable;
 
@@ -123,14 +108,11 @@ export interface IDocumentStore extends IDisposable,
 
     /**
      * Initializes this instance.
-     * @returns initialized store
      */
     initialize(): IDocumentStore;
 
     /**
      * Executes the index creation
-     * @param task Index Creation task to use
-     * @param database Target database
      */
     executeIndex(task: AbstractIndexCreationTask): Promise<void>;
 
@@ -138,10 +120,6 @@ export interface IDocumentStore extends IDisposable,
 
     /**
      * Executes the index creation
-     *
-     * @param {AbstractIndexCreationTask[]} tasks
-     * @returns {Promise<void>}
-     * @memberof IDocumentStore
      */
     executeIndexes(tasks: AbstractIndexCreationTask[]): Promise<void>;
 
@@ -149,19 +127,16 @@ export interface IDocumentStore extends IDisposable,
 
     /**
      * Contains authentication information: client certificate data;
-     * @returns Authentication options
      */
     authOptions: IStoreAuthOptions;
 
     /**
      * Gets the conventions
-     * @return Document conventions
      */
     conventions: DocumentConventions;
 
     /**
      * Gets the URLs
-     * @return Store urls
      */
     urls: string[];
 

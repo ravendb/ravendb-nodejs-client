@@ -27,8 +27,9 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
 
     eagerly: IEagerSessionOperations;
     lazily: ILazySessionOperations;
+
     /**
-     * @return Access the attachments operations
+     * Access the attachments operations
      */
     attachments: IAttachmentsSessionOperations;
 
@@ -36,17 +37,11 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
 
     /**
      * Updates entity with latest changes from server
-     * @param <T> entity class
-     * @param entity Entity to refresh
      */
     refresh<TEntity extends object>(entity: TEntity): Promise<void>;
 
     /**
      * Query the specified index using provided raw query
-     * @param <T> result class
-     * @param clazz result class
-     * @param query Query
-     * @return Raw document query
      */
     
     rawQuery<TResult extends object>(query: string, documentType?: DocumentType<TResult>): IRawDocumentQuery<TResult>;
@@ -141,10 +136,6 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * Stream the results on the query to the client.
      *
      * Does NOT track the entities in the session, and will not include changes there when saveChanges() is called
-     * @param query Query to stream results for
-     * @param streamQueryStats Information about the performed query
-     * @param <T> Result class
-     * @return results iterator
      */
     stream<T extends object>(query: IDocumentQuery<T>): Promise<DocumentResultStream<T>>;
     stream<T extends object>(
@@ -185,13 +176,11 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
 
     /**
      * The document store associated with this session
-     * @return Document store
      */
     documentStore: IDocumentStore;
 
     /**
      * Allow extensions to provide additional state per session
-     * @return External state
      */
     externalState: Map<string, object>;
 
@@ -201,7 +190,6 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
 
     /**
      * Gets a value indicating whether any of the entities tracked by the session has changes.
-     * @return true if any entity associated with session has changes
      */
     hasChanges(): boolean;
 
@@ -209,13 +197,11 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
 
     /**
      * Gets the number of requests for this session
-     * @return Number of requests issued on this session
      */
     numberOfRequests: number;
     /**
      * Gets the store identifier for this session.
      * The store identifier is the identifier for the particular RavenDB instance.
-     * @return Store identifier
      */
     storeIdentifier: string;
 
@@ -223,7 +209,6 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
      * Gets value indicating whether the session should use optimistic concurrency.
      * When set to true, a check is made so that a change made behind the session back would fail
      * and raise ConcurrencyException
-     * @return true if optimistic concurrency should be used
      */
     useOptimisticConcurrency: boolean;
 
@@ -235,15 +220,12 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
 
     /**
      * Defer commands to be executed on saveChanges()
-     * @param commands Commands to defer
      */
     defer(...commands: ICommandData[]): void;
 
     /**
      * Evicts the specified entity from the session.
      * Remove the entity from the delete queue and stops tracking changes for this entity.
-     * @param <T> entity class
-     * @param entity Entity to evict
      */
     evict<TEntity extends object>(entity: TEntity): void;
 
@@ -252,8 +234,6 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
      *
      *  This function may return null if the entity isn't tracked by the session, or if the entity is
      *   a new entity with an ID that should be generated on the server.
-     * @param entity Entity to get id from
-     * @return document id
      */
     getDocumentId(entity: object): string;
 
@@ -261,9 +241,6 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
      * Gets the metadata for the specified entity.
      * If the entity is transient, it will load the metadata from the store
      * and associate the current state of the entity with the metadata from the server.
-     * @param <T> class of instance
-     * @param instance instance to get metadata from
-     * @return Entity metadata
      */
     getMetadataFor<T extends object>(instance: T): IMetadataDictionary;
 
@@ -271,9 +248,6 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
      * Gets change vector for the specified entity.
      * If the entity is transient, it will load the metadata from the store
      * and associate the current state of the entity with the metadata from the server.
-     * @param <T> Class of instance
-     * @param instance Instance to get metadata from
-     * @return Change vector
      */
     getChangeVectorFor<T extends object>(instance: T): string;
 
@@ -281,38 +255,29 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
      * Gets last modified date for the specified entity.
      * If the entity is transient, it will load the metadata from the store
      * and associate the current state of the entity with the metadata from the server.
-     * @param instance Instance to get last modified date from
-     * @param <T> Class of instance
-     * @return Last modified date
      */
     getLastModifiedFor<T extends object>(instance: T): Date;
 
     /**
      * Determines whether the specified entity has changed.
-     * @param entity Entity to check
-     * @return true if entity has changed
      */
     hasChanged(entity: object): boolean;
 
     /**
      * Returns whether a document with the specified id is loaded in the
      * current session
-     * @param id Id of document
-     * @return true is entity is loaded in session
      */
     isLoaded(id: string): boolean;
 
     /**
      * Mark the entity as one that should be ignore for change tracking purposes,
      * it still takes part in the session, but is ignored for SaveChanges.
-     * @param entity Entity for which changed should be ignored
      */
     ignoreChangesFor(entity: object): void;
 
     /**
      * Returns all changes for each entity stored within session. 
      * Including name of the field/property that changed, its old and new value and change type.
-     * @return Document changes
      */
     whatChanged(): { [id: string]: DocumentsChanges[] };
 

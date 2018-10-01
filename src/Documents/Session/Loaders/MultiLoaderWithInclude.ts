@@ -17,8 +17,6 @@ export class MultiLoaderWithInclude implements ILoaderWithInclude {
 
     /**
      * Includes the specified path.
-     * @param path Path to include
-     * @return loader with includes
      */
     public include(path: string): ILoaderWithInclude  {
         this._includes.push(path);
@@ -27,10 +25,6 @@ export class MultiLoaderWithInclude implements ILoaderWithInclude {
 
     /**
      * Loads the specified ids.
-     * @param <TResult> Result class
-     * @param clazz Result class
-     * @param ids Ids to load
-     * @return Map: id to entity
      */
     public async load<TResult extends object>(id: string, documentType?: DocumentType<TResult>): Promise<TResult>;
     public async load<TResult extends object>(
@@ -40,10 +34,6 @@ export class MultiLoaderWithInclude implements ILoaderWithInclude {
 
     /**
      * Loads the specified ids.
-     * @param <TResult> Result class
-     * @param clazz Result class
-     * @param ids Ids to load
-     * @return Map: id to entity
      */
     public async load<TResult extends object>(
         ids: string[], 
@@ -78,7 +68,6 @@ export class MultiLoaderWithInclude implements ILoaderWithInclude {
 
     /**
      * Initializes a new instance of the MultiLoaderWithInclude class
-     * @param session Session
      */
     public constructor(session: IDocumentSessionImpl) {
         this._session = session;

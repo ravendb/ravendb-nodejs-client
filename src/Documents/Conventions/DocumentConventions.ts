@@ -203,7 +203,6 @@ export class DocumentConventions {
      * without explicit page size set.
      * This can be useful for development purposes to pinpoint all the possible performance bottlenecks
      * since from 4.0 there is no limitation for number of results returned from server.
-     * @return true if should we throw if page size is not set
      */
     public isThrowIfQueryPageSizeIsNotSet(): boolean {
         return this._throwIfQueryPageSizeIsNotSet;
@@ -214,7 +213,6 @@ export class DocumentConventions {
      * without explicit page size set.
      * This can be useful for development purposes to pinpoint all the possible performance bottlenecks
      * since from 4.0 there is no limitation for number of results returned from server.
-     * @param throwIfQueryPageSizeIsNotSet value to set
      */
     public setThrowIfQueryPageSizeIsNotSet(throwIfQueryPageSizeIsNotSet: boolean): void {
         this._assertNotFrozen();
@@ -223,7 +221,6 @@ export class DocumentConventions {
 
     /**
      * Whether UseOptimisticConcurrency is set to true by default for all opened sessions
-     * @return true if optimistic concurrency is enabled
      */
     public isUseOptimisticConcurrency(): boolean {
         return this._useOptimisticConcurrency;
@@ -231,7 +228,6 @@ export class DocumentConventions {
 
     /**
      * Whether UseOptimisticConcurrency is set to true by default for all opened sessions
-     * @param useOptimisticConcurrency value to set
      */
     public setUseOptimisticConcurrency(useOptimisticConcurrency: boolean): void {
         this._assertNotFrozen();
@@ -321,8 +317,6 @@ export class DocumentConventions {
 
     /**
      *  Default method used when finding a collection name for a type
-     *  @param ctorOrTypeChecker Object type descriptor
-     *  @return default collection name for class
      */
     public static defaultGetCollectionName(ctorOrTypeChecker: ObjectTypeDescriptor): string {
         if (!ctorOrTypeChecker) {
@@ -355,8 +349,6 @@ export class DocumentConventions {
 
     /**
      * Gets the collection name for a given type.
-     * @param ctorOrTypeChecker Object type descriptor
-     * @return collection name
      */
     public getCollectionNameForType(ctorOrTypeChecker: ObjectTypeDescriptor): string {
         const collectionName: string = this._findCollectionName(ctorOrTypeChecker);
@@ -365,8 +357,6 @@ export class DocumentConventions {
 
     /**
      * Gets the collection name for a given type.
-     * @param entity entity to get collection name
-     * @return collection name
      */
     public getCollectionNameForEntity(entity: object): string {
         if (!entity) {
@@ -415,9 +405,6 @@ export class DocumentConventions {
 
     /**
      * Generates the document id.
-     * @param database Database name
-     * @param entity Entity
-     * @return document id
      */
     public generateDocumentId(database: string, entity: object): Promise<string> {
         for (const [typeDescriptor, idConvention] of this._registeredIdConventions) {
@@ -432,7 +419,6 @@ export class DocumentConventions {
     /**
      * Register an id convention for a single type.
      * Note that you can still fall back to the DocumentIdGenerator if you want.
-     * @return document conventions
      */
     public registerIdConvention<TEntity>(
         ctorOrTypeChecker: ObjectTypeDescriptor,
@@ -454,9 +440,6 @@ export class DocumentConventions {
 
     /**
      * Get the java class (if exists) from the document
-     * @param id document id
-     * @param document document to get java class from
-     * @return java class
      */
     public getJsType(id: string, document: object): ObjectTypeDescriptor {
         return this._findJsType(id, document);
@@ -464,8 +447,6 @@ export class DocumentConventions {
 
     /**
      * Get the Java class name to be stored in the entity metadata
-     * @param entityType Entity type
-     * @return java class name
      */
     public getJsTypeName(entityType: ObjectTypeDescriptor): string {
         return this._findJsTypeName(entityType);
@@ -478,8 +459,6 @@ export class DocumentConventions {
 
     /**
      *  Gets the identity property.
-     *  @param documentType Class or type descriptor of entity
-     *  @return Identity property (field)
      */
     public getIdentityProperty(documentType: DocumentType): string {
         const typeDescriptor = this.findEntityType(documentType);

@@ -4,7 +4,6 @@ export abstract class IndexQueryWithParameters<T> extends IndexQueryBase<T> {
 
     /**
      * Allow to skip duplicate checking during queries
-     * @return true if server can skip duplicate checking
      */
     public skipDuplicateChecking: boolean;
 

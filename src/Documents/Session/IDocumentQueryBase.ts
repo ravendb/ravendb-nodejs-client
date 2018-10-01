@@ -8,18 +8,11 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
 
     /**
      * Adds an ordering for a specific field to the query
-     * @param fieldName Field name
-     * @param descending use descending order
-     * @return Query instance
      */
     addOrder(fieldName: string, descending: boolean): TSelf;
 
     /**
      * Adds an ordering for a specific field to the query
-     * @param fieldName Field name
-     * @param descending use descending order
-     * @param ordering ordering type
-     * @return Query instance
      */
     addOrder(fieldName: string, descending: boolean, ordering: OrderingType): TSelf;
 
@@ -33,14 +26,11 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      * boosting factor where 1.0 is default, less than 1.0 is lower weight, greater than 1.0 is higher weight
      *
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Boosting%20a%20Term
-     * @param boost Boost value
-     * @return Query instance
      */
     boost(boost: number): TSelf;
 
     /**
      * Apply distinct operation to this query
-     * @return Query instance
      */
     distinct(): TSelf;
 
@@ -51,8 +41,6 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      * 0.0 to 1.0 where 1.0 means closer match
      *
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Fuzzy%20Searches
-     * @param fuzzy Fuzzy value
-     * @return Query instance
      */
     fuzzy(fuzzy: number): TSelf;
 
@@ -77,8 +65,6 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
 
     /**
      * Includes the specified path in the query, loading the document specified in that path
-     * @param path Path to include
-     * @return Query instance
      */
     include(path: string): TSelf;
 
@@ -87,24 +73,18 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
     /**
      * Partition the query so we can intersect different parts of the query
      *  across different index entries.
-     *  @return Query instance
      */
     intersect(): TSelf;
 
     /**
      * Order the results by the specified fields
      * The field is the name of the field to sort, defaulting to sorting by ascending.
-     * @param field Field to use in order by
-     * @return Query instance
      */
     orderBy(field: string): TSelf;
 
     /**
      * Order the results by the specified fields
      * The field is the name of the field to sort, defaulting to sorting by ascending.
-     * @param field Field to use in order by
-     * @param ordering Ordering type
-     * @return Query instance
      */
     orderBy(field: string, ordering: OrderingType): TSelf;
 
@@ -113,17 +93,12 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
     /**
      * Order the results by the specified fields
      * The field is the name of the field to sort, defaulting to sorting by descending.
-     * @param field Field to use in order by
-     * @return Query instance
      */
     orderByDescending(field: string): TSelf;
 
     /**
      * Order the results by the specified fields
      * The field is the name of the field to sort, defaulting to sorting by descending.
-     * @param field Field to use in order by
-     * @param ordering Ordering type
-     * @return Query instance
      */
     orderByDescending(field: string, ordering: OrderingType): TSelf;
 
@@ -131,35 +106,28 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
 
     /**
      * Adds an ordering by score for a specific field to the query
-     * @return Query instance
      */
     orderByScore(): TSelf;
 
     /**
      * Adds an ordering by score for a specific field to the query
-     * @return Query instance
      */
     orderByScoreDescending(): TSelf;
 
     /**
      * Specifies a proximity distance for the phrase in the last where clause
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Proximity%20Searches
-     * @param proximity Proximity value
-     * @return Query instance
      */
     proximity(proximity: number): TSelf;
 
     /**
      * Order the search results randomly
-     * @return Query instance
      */
     randomOrdering(): TSelf;
 
     /**
      * Order the search results randomly using the specified seed
      * this is useful if you want to have repeatable random queries
-     * @param seed Seed to use
-     * @return Query instance
      */
     randomOrdering(seed: string): TSelf;
 
@@ -170,10 +138,6 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
 
     /**
      * Sorts the query results by distance.
-     * @param field Field to use in order by
-     * @param latitude Latitude
-     * @param longitude Longitude
-     * @return Query instance
      */
     orderByDistance(field: DynamicSpatialField, latitude: number, longitude: number): TSelf;
 
@@ -189,10 +153,6 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
 
     /**
      * Sorts the query results by distance.
-     * @param fieldName Field name to use in order by
-     * @param latitude Latitude
-     * @param longitude Longitude
-     * @return Query instance
      */
     orderByDistance(fieldName: string, latitude: number, longitude: number): TSelf;
 
@@ -200,18 +160,11 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
 
     /**
      * Sorts the query results by distance.
-     * @param fieldName Field name to use in order by
-     * @param shapeWkt WKT shape to use
-     * @return Query instance
      */
     orderByDistance(fieldName: string, shapeWkt: string): TSelf;
 
     /**
      * Sorts the query results by distance.
-     * @param field Field to use in order by
-     * @param latitude Latitude
-     * @param longitude Longitude
-     * @return Query instance
      */
     orderByDistanceDescending(field: DynamicSpatialField, latitude: number, longitude: number): TSelf;
 
@@ -228,10 +181,6 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
 
     /**
      * Sorts the query results by distance.
-     * @param fieldName Field name to use in order by
-     * @param latitude Latitude
-     * @param longitude Longitude
-     * @return Query instance
      */
     orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): TSelf;
 
@@ -239,9 +188,6 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
 
     /**
      * Sorts the query results by distance.
-     * @param fieldName Field name to use
-     * @param shapeWkt WKT shape to use
-     * @return Query instance
      */
     orderByDistanceDescending(fieldName: string, shapeWkt: string): TSelf;
 }

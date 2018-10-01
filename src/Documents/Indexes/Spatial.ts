@@ -97,8 +97,6 @@ export class GeographySpatialOptionsFactory {
 
     /**
      * Defines a Geohash Prefix Tree index using a default Max Tree Level {@link SpatialOptions}
-     * @param circleRadiusUnits Units to set
-     * @return Spatial options
      */
     public defaultOptions(circleRadiusUnits?: SpatialUnits): SpatialOptions {
         circleRadiusUnits = circleRadiusUnits || "Kilometers";
