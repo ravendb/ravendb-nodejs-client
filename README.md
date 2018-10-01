@@ -625,7 +625,7 @@ docsChanges.on("error", err => {
     await session.saveChanges();
 }
 
-...
+// ...
 // dispose changes instance once you're done
 changes.dispose();
 
@@ -635,8 +635,9 @@ changes.dispose();
 
 #### Stream documents with ID prefix
 ```javascript
-// stream() returns a Readable 
 const userStream = await session.advanced.stream("users/");
+// stream() method returns a Readable 
+
 userStream.on("data", user => {
     // User { name: 'Anna', id: 'users/1-A' }
 });
@@ -649,16 +650,17 @@ userStream.on("error", err => {
 ```javascript
 // create a query
 const query = session.query({ collection: "users" }).whereGreaterThan("age", 29);
-// can get query stats passing a stats callback to stream()
+
 let stats;
 // stream() returns a Readable 
+// get query stats passing a stats callback to stream() method
 const queryStream = await session.advanced.stream(query, _ => stats = _);
 
 queryStream.on("data", user => {
     // User { name: 'Anna', id: 'users/1-A' }
 });
 
-// or can get stats using an event listener
+// get stats using an event listener
 queryStream.once("stats", stats => {
 // { resultEtag: 7464021133404493000,
 //   isStale: false,
@@ -687,7 +689,7 @@ const user = {
 await session.store(user, "users/1");
 await session.saveChanges();
 
-// modify doc to create a new revision
+// modify the document to create a new revision
 user.name = "Roman";
 user.age = 40;
 await session.saveChanges();
@@ -708,18 +710,13 @@ const revisions = await session.advanced.revisions.getFor("users/1");
 
 ### Suggestions
 ```javascript
-// Having data:
+// users collection
 // [ User {
 //     name: 'John',
 //     age: 30,
 //     registeredAt: 2017-11-10T23:00:00.000Z,
 //     kids: [Array],
 //     id: 'users/1-A' },
-//   User {
-//     name: 'Stefanie',
-//     age: 25,
-//     registeredAt: 2015-07-29T22:00:00.000Z,
-//     id: 'users/2-A' } ]
 
 // and a static index like:
 class UsersIndex extends AbstractIndexCreationTask {
@@ -742,11 +739,7 @@ const suggestionQueryResult = await session.query({ collection: "users" })
 
 ## Using object literals for entities
 
-In order to comfortably use object literals as entities set function getting collection name based on the content of the object - `store.conventions.
-findCollectionNameForObjectLiteral()`. This needs to be done *before* a `initialize()` call on `DocumentStore` instance. If you fail to do so, your entites will land up in *@empty* collection having an *UUID* for an ID. 
-
-For example here's a function using *collection* field to set collection name:
-
+In order to comfortably use object literals as entities set function getting collection name based on the content of the object - `store.conventions.findCollectionNameForObjectLiteral()`. This needs to be done *before* an `initialize()` call on `DocumentStore` instance. If you fail to do so, your entites will land up in *@empty* collection having an *UUID* for an ID. E.g.
 ```javascript
 store.conventions.findCollectionNameForObjectLiteral = entity => entity["collection"];
 ```
