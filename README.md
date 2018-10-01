@@ -4,6 +4,13 @@
 
 ## Changelog
 
+### 4.0.3 - 2018-10-01
+Added support for the following features:
+- [Streaming](#streaming)
+- More like this
+- [Suggestions](#suggestions)
+- [Revisions](#revisions)
+
 ### 4.0.2 - 2018-09-14
 Added support for the following features:
 - [Attachments](#attachments)
