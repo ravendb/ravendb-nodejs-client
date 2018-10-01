@@ -27,8 +27,10 @@ export abstract class DocumentStoreBase
     extends EventEmitter 
     implements IDocumentStore {
 
+    /* TBD 4.1
     public abstract disableAggressiveCaching(): IDisposable;
     public abstract disableAggressiveCaching(database: string): IDisposable;
+    */
     
     protected constructor() {
         super();

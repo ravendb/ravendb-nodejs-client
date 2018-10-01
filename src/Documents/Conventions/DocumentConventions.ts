@@ -512,6 +512,7 @@ export class DocumentConventions {
         return collectionName;
     }
 
+    /* TBD 4.1 custom serializers
     public registerQueryValueConverter<T extends object>(type: EntityConstructor<T>,
                                                          converter: IValueForQueryConverter<T>) {
         this._assertNotFrozen();
@@ -535,6 +536,7 @@ export class DocumentConventions {
             }
         });
     }
+    */
 
     public tryConvertValueForQuery
         (fieldName: string, value: any, forRange: boolean, strValue: (value: any) => void) {
