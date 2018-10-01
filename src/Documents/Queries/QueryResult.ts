@@ -4,7 +4,6 @@ export class QueryResult extends GenericQueryResult<object[], object> {
 
     /**
      * Creates a snapshot of the query results
-     * @return returns snapshot of query result
      */
     public createSnapshot(): QueryResult {
         const queryResult = new QueryResult();

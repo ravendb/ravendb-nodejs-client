@@ -18,9 +18,6 @@ export class GenerateEntityIdOnTheClient {
 
     /**
      * Attempts to get the document key from an instance
-     * @param entity Entity to get id from
-     * @param idCallback output parameter which holds document id
-     * @return true if id was read from entity
      */
     public tryGetIdFromInstance(entity: object, idCallback?: (id: string) => void): boolean {
         if (!entity) {
@@ -81,8 +78,6 @@ export class GenerateEntityIdOnTheClient {
 
     /**
      * Tries to set the identity property
-     * @param entity Entity
-     * @param id Id to set
      */
     public trySetIdentity(entity: object, id: string): void {
         const docType: DocumentType = TypeUtil.findType(entity, this._conventions.knownEntityTypes);

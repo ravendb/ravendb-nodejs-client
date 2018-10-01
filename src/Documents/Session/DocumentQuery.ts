@@ -595,13 +595,6 @@ export class DocumentQuery<T extends object>
 
     /**
      * Filter matches to be inside the specified radius
-     * @param fieldName Spatial field name.
-     * @param radius Radius (measured in units passed to radiusUnits parameter) in which matches should be found.
-     * @param latitude Latitude pointing to a circle center.
-     * @param longitude Longitude pointing to a circle center.
-     * @param radiusUnits Units that will be used to measure distances (Kilometers, Miles).
-     * @param distanceErrorPct Distance error percent
-     * @return Query instance
      */
     public withinRadiusOf(
         fieldName: string, radius: number, latitude: number, longitude: number): IDocumentQuery<T>;

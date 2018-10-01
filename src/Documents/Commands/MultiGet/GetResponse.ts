@@ -15,61 +15,61 @@ export class GetResponse {
     }
 
     /**
-     * @return Response result as JSON.
+     * Response result as JSON.
      */
     public get result(): string {
         return this._result;
     }
 
     /**
-     * @param result Response result as JSON.
+     * Response result as JSON.
      */
     public set result(result: string) {
         this._result = result;
     }
 
     /**
-     * @return Request headers.
+     * Request headers.
      */
     public get headers(): { [key: string]: string } {
         return this._headers;
     }
 
     /**
-     * @param headers Request headers.
+     * Request headers.
      */
     public set headers(headers: { [key: string]: string }) {
         this._headers = headers;
     }
 
     /**
-     * @return Response HTTP status code.
+     * Response HTTP status code.
      */
     public get statusCode(): number {
         return this._statusCode;
     }
     /**
-     * @param statusCode Response HTTP status code.
+     * Response HTTP status code.
      */
     public set statusCode(statusCode) {
         this._statusCode = statusCode;
     }
 
     /**
-     * @return Indicates if request should be retried (forced).
+     * Indicates if request should be retried (forced).
      */
     public get forceRetry(): boolean {
         return this._forceRetry;
     }
     /**
-     * @param forceRetry Indicates if request should be retried (forced).
+     * Indicates if request should be retried (forced).
      */
     public set forceRetry(forceRetry) {
         this._forceRetry = forceRetry;
     }
 
     /**
-     * @return Method used to check if request has errors.
+     * Method used to check if request has errors.
      */
     public requestHasErrors(): boolean {
         switch (this._statusCode) {

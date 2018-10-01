@@ -78,8 +78,6 @@ export class DocumentStore extends DocumentStoreBase {
 
     /**
      * Disposes the document store
-     * 
-     * @memberof DocumentStore
      */
     public dispose(): void {
         this._log.info("Dispose.");
@@ -143,27 +141,16 @@ export class DocumentStore extends DocumentStoreBase {
 
     /**
      * Opens document session.
-     * 
-     * @returns {IDocumentSession} 
-     * @memberof DocumentStore
      */
     public openSession(): IDocumentSession;
 
     /**
      * Opens document session.
-     * 
-     * @param {string} database 
-     * @returns {IDocumentSession} 
-     * @memberof DocumentStore
      */
     public openSession(database: string): IDocumentSession;
 
     /**
      * Opens document session
-     * 
-     * @param {ISessionOptions} sessionOpts 
-     * @returns {IDocumentSession} 
-     * @memberof DocumentStore
      */
     public openSession(sessionOpts: ISessionOptions): IDocumentSession;
     public openSession(databaseOrSessionOptions?: string | ISessionOptions): IDocumentSession  {
@@ -193,10 +180,6 @@ export class DocumentStore extends DocumentStoreBase {
 
     /**
      * Gets request executor for specific database. Default is initial database.
-     * 
-     * @param {string} [database] 
-     * @returns {RequestExecutor} 
-     * @memberof DocumentStore
      */
     public getRequestExecutor(database?: string): RequestExecutor {
         this.assertInitialized();
@@ -277,9 +260,6 @@ export class DocumentStore extends DocumentStoreBase {
      * This is mainly useful for internal use inside RavenDB, when we are executing
      * queries that have been marked with WaitForNonStaleResults, we temporarily disable
      * aggressive caching.
-     * 
-     * @returns {IDisposable} 
-     * @memberof DocumentStore
      */
     public disableAggressiveCaching(): IDisposable;
 
@@ -289,10 +269,6 @@ export class DocumentStore extends DocumentStoreBase {
      * This is mainly useful for internal use inside RavenDB, when we are executing
      * queries that have been marked with WaitForNonStaleResults, we temporarily disable
      * aggressive caching.
-     * 
-     * @param {string} database 
-     * @returns {IDisposable} 
-     * @memberof DocumentStore
      */
     public disableAggressiveCaching(): IDisposable;
     public disableAggressiveCaching(database: string): IDisposable;
@@ -344,10 +320,6 @@ export class DocumentStore extends DocumentStoreBase {
 
     /**
      * Gets maintenance operations executor.
-     * 
-     * @readonly
-     * @type {MaintenanceOperationExecutor}
-     * @memberof DocumentStore
      */
     public get maintenance(): MaintenanceOperationExecutor {
         this.assertInitialized();
@@ -361,10 +333,6 @@ export class DocumentStore extends DocumentStoreBase {
 
     /**
      * Gets operations executor.
-     * 
-     * @readonly
-     * @type {OperationExecutor}
-     * @memberof DocumentStore
      */
     public get operations(): OperationExecutor {
         if (!this._operationExecutor) {

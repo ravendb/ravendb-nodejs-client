@@ -212,9 +212,6 @@ export abstract class InMemoryDocumentSessionOperations
 
     /**
      * Gets the metadata for the specified entity.
-     * @param <T> instance class
-     * @param instance Instance to get metadata from
-     * @return document metadata
      */
     public getMetadataFor<T extends object>(instance: T): IMetadataDictionary {
         if (!instance) {
@@ -275,9 +272,6 @@ export abstract class InMemoryDocumentSessionOperations
      * Gets the Change Vector for the specified entity.
      * If the entity is transient, it will load the change vector from the store
      * and associate the current state of the entity with the change vector from the server.
-     * @param <T> instance class
-     * @param instance Instance to get change vector from
-     * @return change vector
      */
     public getChangeVectorFor<T extends object>(instance: T): string {
         if (!instance) {
@@ -306,8 +300,6 @@ export abstract class InMemoryDocumentSessionOperations
     /**
      * Returns whether a document with the specified id is loaded in the
      * current session
-     * @param id Document id to check
-     * @return true is document is loaded
      */
     public isLoaded(id: string): boolean {
         return this.isLoadedOrDeleted(id);
@@ -323,8 +315,6 @@ export abstract class InMemoryDocumentSessionOperations
     /**
      * Returns whether a document with the specified id is deleted
      * or known to be missing
-     * @param id Document id to check
-     * @return true is document is deleted
      */
     public isDeleted(id: string): boolean {
         return this._knownMissingIds.has(id);
@@ -332,8 +322,6 @@ export abstract class InMemoryDocumentSessionOperations
 
     /**
      * Gets the document id.
-     * @param instance instance to get document id from
-     * @return document id
      */
     public getDocumentId(instance: object): string {
         if (!instance) {
@@ -407,15 +395,6 @@ export abstract class InMemoryDocumentSessionOperations
 
     /**
      * Tracks the entity inside the unit of work
-     * @param <T> entity class
-     * @param clazz entity class
-     * @param documentFound Document info
-     * @param entityType Entity class
-     * @param id Id of document
-     * @param document raw entity
-     * @param metadata raw document metadata
-     * @param noTracking no tracking
-     * @return tracked entity
      */
     //    return (T) this.trackEntity(clazz, documentFound.id, documentFound.document, documentFound.metadata, false);
     public trackEntity<T extends object>(
@@ -959,8 +938,6 @@ export abstract class InMemoryDocumentSessionOperations
     
     /**
      * Marks the specified entity for deletion. The entity will be deleted when SaveChanges is called.
-     * @param <T> entity class
-     * @param entity Entity to delete
      */
     private _deleteByEntity<TEntity extends IRavenObject>(entity: TEntity) {
         if (!entity) {
@@ -981,7 +958,6 @@ export abstract class InMemoryDocumentSessionOperations
     /**
      * Marks the specified entity for deletion. The entity will be deleted when IDocumentSession.SaveChanges is called.
      * WARNING: This method will not call beforeDelete listener!
-     * @param id Id of document
      */
 
     private _deleteById(id: string): void;
@@ -1015,7 +991,6 @@ export abstract class InMemoryDocumentSessionOperations
 
     /**
      * Defer commands to be executed on saveChanges()
-     * @param commands Commands to defer
      */
     public defer(...commands: ICommandData[]) {
         this._deferredCommands.push(...commands);
@@ -1061,7 +1036,6 @@ export abstract class InMemoryDocumentSessionOperations
 
     /**
      * Gets a value indicating whether any of the entities tracked by the session has changes.
-     * @return true if session has changes
      */
     public hasChanges(): boolean {
         for (const entity of this.documentsByEntity.entries()) {
@@ -1077,8 +1051,6 @@ export abstract class InMemoryDocumentSessionOperations
     /**
      * Evicts the specified entity from the session.
      * Remove the entity from the delete queue and stops tracking changes for this entity.
-     * @param <T> entity class
-     * @param entity Entity to evict
      */
     public evict<T extends object>(entity: T): void {
         const documentInfo = this.documentsByEntity.get(entity);
@@ -1104,8 +1076,6 @@ export abstract class InMemoryDocumentSessionOperations
 
     /**
      * Determines whether the specified entity has changed.
-     * @param entity Entity to check
-     * @return true if entity has changed
      */
     public hasChanged(entity: object): boolean {
         const documentInfo = this.documentsByEntity.get(entity);
@@ -1166,7 +1136,6 @@ export abstract class InMemoryDocumentSessionOperations
     /**
      * Mark the entity as one that should be ignore for change tracking purposes,
      * it still takes part in the session, but is ignored for SaveChanges.
-     * @param entity entity
      */
     public ignoreChangesFor(entity: object): void {
         this._getDocumentInfo(entity).ignoreChanges = true;

@@ -15,27 +15,21 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
 
     /**
      * Negate the next operation
-     * @return Query instance
      */
     not(): TSelf;
 
     /**
      *  Add an AND to the query
-     *  @return Query instance
      */
     andAlso(): TSelf;
 
     /**
      * Simplified method for closing a clause within the query
-     * @return Query instance
      */
     closeSubclause(): TSelf;
 
     /**
      * Performs a query matching ALL of the provided values against the given field (AND)
-     * @param fieldName Field name
-     * @param values values to match
-     * @return Query instance
      */
     containsAll(fieldName: string, values: any[]): TSelf;
 
@@ -43,9 +37,6 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
 
     /**
      * Performs a query matching ANY of the provided values against the given field (OR)
-     * @param fieldName Field name
-     * @param values values to match
-     * @return Query instance
      */
     containsAny(fieldName: string, values: any[]): TSelf;
 
@@ -58,13 +49,11 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
 
     /**
      *  Simplified method for opening a new clause within the query
-     *  @return Query instance
      */
     openSubclause(): TSelf;
 
     /**
      * Add an OR to the query
-     * @return Query instance
      */
     orElse(): TSelf;
 
@@ -74,9 +63,6 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
      *
      * Space separated terms e.g. 'John Adam' means that we will look in selected field for 'John'
      * or 'Adam'.
-     * @param fieldName Field name
-     * @param searchTerms Search terms
-     * @return Query instance
      */
     search(fieldName: string, searchTerms: string): TSelf;
 
@@ -86,10 +72,6 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
      *
      * Space separated terms e.g. 'John Adam' means that we will look in selected field for 'John'
      * or 'Adam'.
-     * @param fieldName Field name
-     * @param searchTerms Search terms
-     * @param operator Search operator
-     * @return Query instance
      */
     search(fieldName: string, searchTerms: string, operator: SearchOperator): TSelf;
 
@@ -98,37 +80,21 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
 
     /**
      * Filter the results from the index using the specified where clause.
-     * @param fieldName Field name
-     * @param whereClause Where clause
-     * @return Query instance
      */
     whereLucene(fieldName: string, whereClause: string): TSelf;
 
     /**
      * Filter the results from the index using the specified where clause.
-     * @param fieldName Field name
-     * @param whereClause Where clause
-     * @param exact Use exact matcher
-     * @return Query instance
      */
     whereLucene(fieldName: string, whereClause: string, exact: boolean): TSelf;
 
     /**
      * Matches fields where the value is between the specified start and end, inclusive
-     * @param fieldName Field name
-     * @param start Range start
-     * @param end Range end
-     * @return Query instance
      */
     whereBetween(fieldName: string, start: any, end: any): TSelf;
 
     /**
      * Matches fields where the value is between the specified start and end, inclusive
-     * @param fieldName Field name
-     * @param start Range start
-     * @param end Range end
-     * @param exact Use exact matcher
-     * @return Query instance
      */
     whereBetween(fieldName: string, start: any, end: any, exact: boolean): TSelf;
 
@@ -137,9 +103,6 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
 
     /**
      * Matches fields which ends with the specified value.
-     * @param fieldName Field name
-     * @param value Value to use
-     * @return Query instance
      */
     whereEndsWith(fieldName: string, value: any): TSelf;
 
@@ -147,35 +110,21 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
 
     /**
      * Matches value
-     * @param fieldName Field name
-     * @param value Value to use
-     * @return Query instance
      */
     whereEquals(fieldName: string, value: any): TSelf;
 
     /**
      * Matches value
-     * @param fieldName Field name
-     * @param value Value to use
-     * @param exact Use exact matcher
-     * @return Query instance
      */
     whereEquals(fieldName: string, value: any, exact: boolean): TSelf;
 
     /**
      * Matches value
-     * @param fieldName Field name
-     * @param method Method call
-     * @return Query instance
      */
     whereEquals(fieldName: string, method: MethodCall): TSelf;
 
     /**
      * Matches value
-     * @param fieldName Field name
-     * @param method Method call
-     * @param exact Use exact matcher
-     * @return Query instance
      */
     whereEquals(fieldName: string, method: MethodCall, exact: boolean): TSelf;
 
@@ -184,42 +133,26 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
 
     /**
      * Matches value
-     * @param whereParams Where params
-     * @return Query instance
      */
     whereEquals(whereParams: WhereParams): TSelf;
 
     /**
      * Not matches value
-     * @param fieldName Field name
-     * @param value Value to use
-     * @return Query instance
      */
     whereNotEquals(fieldName: string, value: any): TSelf;
 
     /**
      * Not matches value
-     * @param fieldName Field name
-     * @param value Value to use
-     * @param exact Use exact matcher
-     * @return Query instance
      */
     whereNotEquals(fieldName: string, value: any, exact: boolean): TSelf;
 
     /**
      * Not matches value
-     * @param fieldName Field name
-     * @param method Method call
-     * @return Query instance
      */
     whereNotEquals(fieldName: string, method: MethodCall): TSelf;
 
     /**
      * Not matches value
-     * @param fieldName Field name
-     * @param method Method call
-     * @param exact Use exact matcher
-     * @return Query instance
      */
     whereNotEquals(fieldName: string, method: MethodCall, exact: boolean): TSelf;
 
@@ -229,25 +162,16 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
 
     /**
      * Not matches value
-     * @param whereParams Where params
-     * @return Query instance
      */
     whereNotEquals(whereParams: WhereParams): TSelf;
 
     /**
      * Matches fields where the value is greater than the specified value
-     * @param fieldName Field name
-     * @param value Value to use
-     * @return Query instance
      */
     whereGreaterThan(fieldName: string, value: any): TSelf;
 
     /**
      * Matches fields where the value is greater than the specified value
-     * @param fieldName Field name
-     * @param value Value to use
-     * @param exact Use exact matcher
-     * @return Query instance
      */
     whereGreaterThan(fieldName: string, value: any, exact: boolean): TSelf;
 
@@ -256,18 +180,11 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
 
     /**
      * Matches fields where the value is greater than or equal to the specified value
-     * @param fieldName Field name
-     * @param value Value to use
-     * @return Query instance
      */
     whereGreaterThanOrEqual(fieldName: string, value: any): TSelf;
 
     /**
      * Matches fields where the value is greater than or equal to the specified value
-     * @param fieldName Field name
-     * @param value Value to use
-     * @param exact Use exact matcher
-     * @return Query instance
      */
     whereGreaterThanOrEqual(fieldName: string, value: any, exact: boolean): TSelf;
 
@@ -276,18 +193,11 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
 
     /**
      * Check that the field has one of the specified values
-     * @param fieldName Field name
-     * @param values Values to use
-     * @return Query instance
      */
     whereIn(fieldName: string, values: any[]): TSelf;
 
     /**
      * Check that the field has one of the specified values
-     * @param fieldName Field name
-     * @param values Values to use
-     * @param exact Use exact matcher
-     * @return Query instance
      */
     whereIn(fieldName: string, values: any[], exact: boolean): TSelf;
 
@@ -296,18 +206,11 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
 
     /**
      * Matches fields where the value is less than the specified value
-     * @param fieldName Field name
-     * @param value Value to use
-     * @return Query instance
      */
     whereLessThan(fieldName: string, value: any): TSelf;
 
     /**
      * Matches fields where the value is less than the specified value
-     * @param fieldName Field name
-     * @param value Value to use
-     * @param exact Use exact matcher
-     * @return Query instance
      */
     whereLessThan(fieldName: string, value: any, exact: boolean): TSelf;
 
@@ -315,18 +218,11 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
 
     /**
      *  Matches fields where the value is less than or equal to the specified value
-     *  @param fieldName Field name
-     *  @param value Value to use
-     *  @return Query instance
      */
     whereLessThanOrEqual(fieldName: string, value: any): TSelf;
 
     /**
      *  Matches fields where the value is less than or equal to the specified value
-     *  @param fieldName Field name
-     *  @param value Value to use
-     *  @param exact Use exact matcher
-     *  @return Query instance
      */
     whereLessThanOrEqual(fieldName: string, value: any, exact: boolean): TSelf;
 
@@ -335,9 +231,6 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
 
     /**
      * Matches fields which starts with the specified value.
-     * @param fieldName Name of the field.
-     * @param value The value.
-     * @return Query instance
      */
     whereStartsWith(fieldName: string, value: any): TSelf;
 
@@ -347,8 +240,6 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
 
     /**
      * Check if the given field exists
-     * @param fieldName Field name
-     * @return Query instance
      */
     whereExists(fieldName: string): TSelf;
 
@@ -356,9 +247,6 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
 
     /**
      * Checks value of a given field against supplied regular expression pattern
-     * @param fieldName Field name
-     * @param pattern Regexp pattern
-     * @return Query instance
      */
     whereRegex(fieldName: string, pattern: string): TSelf;
 
@@ -368,35 +256,17 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
 
     /**
      * Filter matches to be inside the specified radius
-     * @param fieldName Spatial field name.
-     * @param radius Radius (measured in units passed to radiusUnits parameter) in which matches should be found.
-     * @param latitude Latitude pointing to a circle center.
-     * @param longitude Longitude pointing to a circle center.
-     * @return Query instance
      */
     withinRadiusOf(fieldName: string, radius: number, latitude: number, longitude: number): TSelf;
 
     /**
      * Filter matches to be inside the specified radius
-     * @param fieldName Spatial field name.
-     * @param radius Radius (measured in units passed to radiusUnits parameter) in which matches should be found.
-     * @param latitude Latitude pointing to a circle center.
-     * @param longitude Longitude pointing to a circle center.
-     * @param radiusUnits Units that will be used to measure distances (Kilometers, Miles).
-     * @return Query instance
      */
     withinRadiusOf(
         fieldName: string, radius: number, latitude: number, longitude: number, radiusUnits: SpatialUnits): TSelf;
 
     /**
      * Filter matches to be inside the specified radius
-     * @param fieldName Spatial field name.
-     * @param radius Radius (measured in units passed to radiusUnits parameter) in which matches should be found.
-     * @param latitude Latitude pointing to a circle center.
-     * @param longitude Longitude pointing to a circle center.
-     * @param radiusUnits Units that will be used to measure distances (Kilometers, Miles).
-     * @param distanceErrorPct Distance error percent
-     * @return Query instance
      */
     withinRadiusOf(
         fieldName: string, 
@@ -412,21 +282,12 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
     /**
      * Filter matches based on a given shape - only documents with the shape defined in fieldName that
      * have a relation rel with the given shapeWkt will be returned
-     * @param fieldName Spatial field name.
-     * @param shapeWkt WKT formatted shape
-     * @param relation Spatial relation to check (Within, Contains, Disjoint, Intersects, Nearby)
-     * @return Query instance
      */
     relatesToShape(fieldName: string, shapeWkt: string, relation: SpatialRelation): TSelf;
 
     /**
      * Filter matches based on a given shape - only documents with the shape defined in fieldName that
      * have a relation rel with the given shapeWkt will be returned
-     * @param fieldName Spatial field name.
-     * @param shapeWkt WKT formatted shape
-     * @param relation Spatial relation to check (Within, Contains, Disjoint, Intersects, Nearby)
-     * @param distanceErrorPct The allowed error percentage. By default: 0.025
-     * @return Query instance
      */
     relatesToShape(fieldName: string, shapeWkt: string, relation: SpatialRelation, distanceErrorPct: number): TSelf;
 
@@ -435,9 +296,6 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
 
     /**
      * Ability to use one factory to determine spatial shape that will be used in query.
-     * @param fieldName Field name
-     * @param clause Spatial criteria factory
-     * @return Query instance
      */
     spatial(
         fieldName: string, 

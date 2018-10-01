@@ -8,17 +8,11 @@ export interface ILoaderWithInclude {
 
     /**
      * Includes the specified path.
-     * @param path Path to include
-     * @return Loader with includes
      */
     include(path: string): ILoaderWithInclude;
 
     /**
      * Loads the specified ids.
-     * @param <TResult> Result class
-     * @param clazz Result class
-     * @param ids Ids to load
-     * @return Map: id to entity
      */
     load<TResult extends object>(id: string, documentType: DocumentType<TResult>): Promise<TResult>;
     load<TResult extends object>(
@@ -28,10 +22,6 @@ export interface ILoaderWithInclude {
 
     /**
      * Loads the specified ids.
-     * @param <TResult> Result class
-     * @param clazz Result class
-     * @param ids Ids to load
-     * @return Map: id to entity
      */
     load<TResult extends object>(
         ids: string[], 

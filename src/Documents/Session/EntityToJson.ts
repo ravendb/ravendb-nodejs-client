@@ -15,7 +15,6 @@ export class EntityToJson {
     private readonly _session: InMemoryDocumentSessionOperations;
     /**
      * All the listeners for this session
-     * @param _session Session to use
      */
     public constructor(session: InMemoryDocumentSessionOperations) {
         this._session = session;
@@ -118,10 +117,6 @@ export class EntityToJson {
 
     /**
      * Converts a json object to an entity.
-     * @param targetEntityType Class of entity
-     * @param id Id of entity
-     * @param document Raw entity
-     * @return Entity instance
      */
     public convertToEntity(targetEntityType: DocumentType, id: string, document: object): object {
         const conventions = this._session.conventions;

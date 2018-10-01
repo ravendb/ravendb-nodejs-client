@@ -59,17 +59,16 @@ export class FacetResult {
     /**
      * The facet terms and hits up to a limit of MaxResults items (as specified in the facet setup document), sorted
      * in TermSortMode order (as indicated in the facet setup document).
-     * @return values
      */
     public values: FacetValue[] = [];
 
     /**
-     * @return A list of remaining terms in term sort order for terms that are outside of the MaxResults count.
+     * A list of remaining terms in term sort order for terms that are outside of the MaxResults count.
      */
     public remainingTerms: string[] = [];
 
     /**
-     * @return The number of remaining terms outside of those covered by the Values terms.
+     * The number of remaining terms outside of those covered by the Values terms.
      */
     public remainingTermsCount: number;
 
