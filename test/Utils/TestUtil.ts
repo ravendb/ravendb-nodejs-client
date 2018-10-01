@@ -135,8 +135,10 @@ export async function disposeTestDocumentStore(store: IDocumentStore) {
     }
 
     return new Promise<void>(resolve => {
-        store.once("executorsDisposed", () => resolve());
-        store.dispose();
+        if (store) {
+            store.once("executorsDisposed", () => resolve());
+            store.dispose();
+        }
     });
 }
 

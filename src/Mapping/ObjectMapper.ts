@@ -2,7 +2,6 @@ import { ObjectTypeDescriptor, ClassConstructor, ObjectLiteralDescriptor, Entity
 import { DateUtil } from "../Utility/DateUtil";
 import { throwError } from "../Exceptions";
 import { TypeUtil } from "../Utility/TypeUtil";
-import * as changeCase from "change-object-case";
 import { getLogger } from "../Utility/LogUtil";
 import { StringUtil } from "../Utility/StringUtil";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
@@ -22,12 +21,6 @@ export interface NestedTypes {
 export interface ITypesAwareObjectMapper {
     fromObjectLiteral<TResult extends object>(raw: object, typeInfo?: TypeInfo): TResult;
     toObjectLiteral<TFrom extends object>(obj: TFrom, typeInfo?: (typeInfo: TypeInfo) => void): object;
-}
-
-export class ObjectKeysTransform {
-    public static camelCase(obj: object, recursive: boolean = false) {
-        return changeCase.camelKeys(obj, { recursive });
-    }
 }
 
 export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
@@ -425,7 +418,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
                 .reduce((result, key) => {
                     let nestedTypeInfoKey = key;
                     if (this._conventions.remoteEntityFieldNameConvention) {
-                        nestedTypeInfoKey = changeCase[this._conventions.remoteEntityFieldNameConvention](key);
+                        nestedTypeInfoKey = ObjectUtil[this._conventions.remoteEntityFieldNameConvention](key);
                     }
 
                     const fullPath = objPathPrefix ? `${objPathPrefix}.${nestedTypeInfoKey}` : nestedTypeInfoKey;
