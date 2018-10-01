@@ -1,4 +1,4 @@
-import { AbstractIndexCreationTask } from "../../src";
+import {AbstractIndexCreationTask} from "../../src";
 
 export class UsersIndex extends AbstractIndexCreationTask {
     public constructor() {
@@ -6,6 +6,7 @@ export class UsersIndex extends AbstractIndexCreationTask {
         this.map = "from user in docs.users select new { user.name }";
     }
 }
+
 export class UsersInvalidIndex extends AbstractIndexCreationTask {
     public constructor() {
         super();

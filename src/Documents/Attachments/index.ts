@@ -1,6 +1,6 @@
 import * as stream from "readable-stream";
-import { HttpResponse } from "../../Primitives/Http";
-import { closeHttpResponse } from "../../Utility/HttpUtil";
+import {HttpResponse} from "../../Primitives/Http";
+import {closeHttpResponse} from "../../Utility/HttpUtil";
 
 export type AttachmentType = "Document" | "Revision";
 
@@ -18,11 +18,12 @@ export interface AttachmentDetails extends AttachmentName {
 
 export class AttachmentResult {
 
-    constructor (
-        public data: stream.Readable, 
+    constructor(
+        public data: stream.Readable,
         public details: AttachmentDetails,
-        private _response: HttpResponse) { }
-    
+        private _response: HttpResponse) {
+    }
+
     public dispose() {
         return closeHttpResponse(this._response);
     }

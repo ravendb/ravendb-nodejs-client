@@ -1,22 +1,22 @@
-import { InMemoryDocumentSessionOperations } from "../../Session/InMemoryDocumentSessionOperations";
-import { IndexQuery } from "../IndexQuery";
-import { Stopwatch } from "../../../Utility/Stopwatch";
-import { FacetResult } from ".";
-import { QueryCommand } from "../../Commands/QueryCommand";
-import { FacetQueryCommand } from "../../Commands/FacetQueryCommand";
-import { QueryResult } from "../QueryResult";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { TypesAwareObjectMapper } from "../../../Mapping/ObjectMapper";
-import { QueryOperation } from "../../Session/Operations/QueryOperation";
-import { Lazy } from "../../Lazy";
-import { DocumentSession } from "../../Session/DocumentSession";
-import { LazyAggregationQueryOperation } from "../../Session/Operations/Lazy/LazyAggregationQueryOperation";
+import {InMemoryDocumentSessionOperations} from "../../Session/InMemoryDocumentSessionOperations";
+import {IndexQuery} from "../IndexQuery";
+import {Stopwatch} from "../../../Utility/Stopwatch";
+import {FacetResult} from ".";
+import {QueryCommand} from "../../Commands/QueryCommand";
+import {FacetQueryCommand} from "../../Commands/FacetQueryCommand";
+import {QueryResult} from "../QueryResult";
+import {DocumentConventions} from "../../Conventions/DocumentConventions";
+import {TypesAwareObjectMapper} from "../../../Mapping/ObjectMapper";
+import {QueryOperation} from "../../Session/Operations/QueryOperation";
+import {Lazy} from "../../Lazy";
+import {DocumentSession} from "../../Session/DocumentSession";
+import {LazyAggregationQueryOperation} from "../../Session/Operations/Lazy/LazyAggregationQueryOperation";
 
-export interface FacetResultObject { 
+export interface FacetResultObject {
     [key: string]: FacetResult;
 }
 
-const FACET_RESULT_TYPE_INFO = { typeName: FacetResult.name };
+const FACET_RESULT_TYPE_INFO = {typeName: FacetResult.name};
 const FACET_RESULT_TYPES_MAP = new Map([[FacetResult.name, FacetResult]]);
 
 export abstract class AggregationQueryBase {
@@ -38,16 +38,16 @@ export abstract class AggregationQueryBase {
 
         return this._processResults(command.result, this._session.conventions);
     }
-    
+
     public executeLazy(): Lazy<FacetResultObject> {
         this._query = this._getIndexQuery();
         return (this._session as DocumentSession)
             .addLazyOperation(
                 new LazyAggregationQueryOperation(
                     this._session.conventions,
-                    this._query, 
-                    this, 
-                    (queryResult: QueryResult, conventions: DocumentConventions) => 
+                    this._query,
+                    this,
+                    (queryResult: QueryResult, conventions: DocumentConventions) =>
                         this._processResults(queryResult, conventions)));
     }
 
@@ -55,7 +55,7 @@ export abstract class AggregationQueryBase {
 
     // tslint:disable-next-line:function-name
     public abstract emit(evtName: "afterQueryExecuted", queryResult: QueryResult);
-    
+
     private _processResults(queryResult: QueryResult, conventions: DocumentConventions): FacetResultObject {
         this.emit("afterQueryExecuted", queryResult);
         const results: FacetResultObject = {};
@@ -65,17 +65,17 @@ export abstract class AggregationQueryBase {
                 result, FACET_RESULT_TYPE_INFO, FACET_RESULT_TYPES_MAP);
             results[facetResult.name] = facetResult;
         }
-        
+
         QueryOperation.ensureIsAcceptable(
             queryResult, this._query.waitForNonStaleResults, this._duration, this._session);
-        
+
         return results;
     }
 
     private _getCommand(): QueryCommand {
         this._query = this._getIndexQuery();
-        return new FacetQueryCommand(this._session.conventions, this._query, { 
-            metadataOnly: false, 
+        return new FacetQueryCommand(this._session.conventions, this._query, {
+            metadataOnly: false,
             indexEntriesOnly: false
         });
     }

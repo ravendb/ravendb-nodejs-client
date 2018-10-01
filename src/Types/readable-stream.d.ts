@@ -9,7 +9,8 @@ declare module "readable-stream" {
     }
 
     namespace pipeable {
-        export class Stream extends pipeable { }
+        export class Stream extends pipeable {
+        }
 
         export interface ReadableOptions {
             highWaterMark?: number;
@@ -23,20 +24,33 @@ declare module "readable-stream" {
             public readable: boolean;
             public readonly readableHighWaterMark: number;
             public readonly readableLength: number;
+
             constructor(opts?: ReadableOptions);
+
             // tslint:disable-next-line:function-name
             public _read(size: number): void;
+
             public read(size?: number): any;
+
             public setEncoding(encoding: string): this;
+
             public pause(): this;
+
             public resume(): this;
+
             public isPaused(): boolean;
+
             public unpipe<T extends NodeJS.WritableStream>(destination?: T): this;
+
             public unshift(chunk: any): void;
+
             public wrap(oldStream: NodeJS.ReadableStream): this;
+
             public push(chunk: any, encoding?: string): boolean;
+
             // tslint:disable-next-line:function-name
             public _destroy(err: Error, callback: Function): void;
+
             public destroy(error?: Error): void;
 
             /**
@@ -114,23 +128,34 @@ declare module "readable-stream" {
             public writable: boolean;
             public readonly writableHighWaterMark: number;
             public readonly writableLength: number;
+
             constructor(opts?: WritableOptions);
+
             // tslint:disable-next-line:function-name
             public _write(chunk: any, encoding: string, callback: (err?: Error) => void): void;
+
             // tslint:disable-next-line:function-name
             public _writev?(chunks: Array<{ chunk: any, encoding: string }>, callback: (err?: Error) => void): void;
+
             // tslint:disable-next-line:function-name
             public _destroy(err: Error, callback: Function): void;
+
             // tslint:disable-next-line:function-name
             public _final(callback: Function): void;
+
             public write(chunk: any, cb?: Function): boolean;
             public write(chunk: any, encoding?: string, cb?: Function): boolean;
+
             public setDefaultEncoding(encoding: string): this;
+
             public end(cb?: Function): void;
             public end(chunk: any, cb?: Function): void;
             public end(chunk: any, encoding?: string, cb?: Function): void;
+
             public cork(): void;
+
             public uncork(): void;
+
             public destroy(error?: Error): void;
 
             /**
@@ -211,22 +236,32 @@ declare module "readable-stream" {
             public writable: boolean;
             public readonly writableHighWaterMark: number;
             public readonly writableLength: number;
+
             constructor(opts?: DuplexOptions);
+
             // tslint:disable-next-line:function-name
             public _write(chunk: any, encoding: string, callback: (err?: Error) => void): void;
+
             // tslint:disable-next-line:function-name
             public _writev?(chunks: Array<{ chunk: any, encoding: string }>, callback: (err?: Error) => void): void;
+
             // tslint:disable-next-line:function-name
             public _destroy(err: Error, callback: Function): void;
+
             // tslint:disable-next-line:function-name
             public _final(callback: Function): void;
+
             public write(chunk: any, cb?: Function): boolean;
             public write(chunk: any, encoding?: string, cb?: Function): boolean;
+
             public setDefaultEncoding(encoding: string): this;
+
             public end(cb?: Function): void;
             public end(chunk: any, cb?: Function): void;
             public end(chunk: any, encoding?: string, cb?: Function): void;
+
             public cork(): void;
+
             public uncork(): void;
         }
 
@@ -239,12 +274,15 @@ declare module "readable-stream" {
 
         export class Transform extends Duplex {
             constructor(opts?: TransformOptions);
+
             // tslint:disable-next-line:function-name
             public _transform(chunk: any, encoding: string, callback: TransformCallback): void;
+
             public destroy(error?: Error): void;
         }
 
-        export class PassThrough extends Transform { }
+        export class PassThrough extends Transform {
+        }
 
         export function pipeline<T extends NodeJS.WritableStream>(stream1: NodeJS.ReadableStream, stream2: T, callback?: (err: NodeJS.ErrnoException) => void): T;
         export function pipeline<T extends NodeJS.WritableStream>(stream1: NodeJS.ReadableStream, stream2: NodeJS.ReadWriteStream, stream3: T, callback?: (err: NodeJS.ErrnoException) => void): T;
@@ -252,6 +290,7 @@ declare module "readable-stream" {
         export function pipeline<T extends NodeJS.WritableStream>(stream1: NodeJS.ReadableStream, stream2: NodeJS.ReadWriteStream, stream3: NodeJS.ReadWriteStream, stream4: NodeJS.ReadWriteStream, stream5: T, callback?: (err: NodeJS.ErrnoException) => void): T;
         export function pipeline(streams: Array<NodeJS.ReadableStream | NodeJS.WritableStream | NodeJS.ReadWriteStream>, callback?: (err: NodeJS.ErrnoException) => void): NodeJS.WritableStream;
         export function pipeline(stream1: NodeJS.ReadableStream, stream2: NodeJS.ReadWriteStream | NodeJS.WritableStream, ...streams: Array<NodeJS.ReadWriteStream | NodeJS.WritableStream | ((err: NodeJS.ErrnoException) => void)>): NodeJS.WritableStream;
+
         export namespace pipeline {
             export function __promisify__<T extends NodeJS.WritableStream>(stream1: NodeJS.ReadableStream, stream2: T): Promise<void>;
             export function __promisify__<T extends NodeJS.WritableStream>(stream1: NodeJS.ReadableStream, stream2: NodeJS.ReadWriteStream, stream3: T): Promise<void>;

@@ -1,11 +1,10 @@
-
-import { DocumentSessionAttachmentsBase } from "./DocumentSessionAttachmentsBase";
-import { IAttachmentsSessionOperations } from "./IAttachmentsSessionOperations";
-import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
-import { HeadAttachmentCommand } from "../Commands/HeadAttachmentCommand";
-import { AttachmentResult } from "../Attachments";
-import { GetAttachmentOperation } from "../Operations/Attachments/GetAttachmentOperation";
-import { AbstractCallback } from "../../Types/Callbacks";
+import {DocumentSessionAttachmentsBase} from "./DocumentSessionAttachmentsBase";
+import {IAttachmentsSessionOperations} from "./IAttachmentsSessionOperations";
+import {InMemoryDocumentSessionOperations} from "./InMemoryDocumentSessionOperations";
+import {HeadAttachmentCommand} from "../Commands/HeadAttachmentCommand";
+import {AttachmentResult} from "../Attachments";
+import {GetAttachmentOperation} from "../Operations/Attachments/GetAttachmentOperation";
+import {AbstractCallback} from "../../Types/Callbacks";
 import * as PromiseUtil from "../../Utility/PromiseUtil";
 
 export class DocumentSessionAttachments
@@ -36,8 +35,8 @@ export class DocumentSessionAttachments
     public async get(
         documentId: string, name: string, callback: AbstractCallback<AttachmentResult>): Promise<AttachmentResult>;
     public async get(
-        idOrEntity: string | object, 
-        name: string, 
+        idOrEntity: string | object,
+        name: string,
         callback?: AbstractCallback<AttachmentResult>): Promise<AttachmentResult> {
         const result = this._get(idOrEntity as any, name);
         PromiseUtil.passResultToCallback(result, callback);

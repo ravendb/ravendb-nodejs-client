@@ -1,4 +1,4 @@
-import { GenericQueryResult } from "./GenericQueryResult";
+import {GenericQueryResult} from "./GenericQueryResult";
 
 export class QueryResult extends GenericQueryResult<object[], object> {
 

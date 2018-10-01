@@ -1,9 +1,9 @@
-import { HttpRequestParameters } from "../../../Primitives/Http";
-import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
-import { throwError } from "../../../Exceptions";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { RavenCommand } from "../../../Http/RavenCommand";
-import { ServerNode } from "../../../Http/ServerNode";
+import {HttpRequestParameters} from "../../../Primitives/Http";
+import {IMaintenanceOperation, OperationResultType} from "../OperationAbstractions";
+import {throwError} from "../../../Exceptions";
+import {DocumentConventions} from "../../Conventions/DocumentConventions";
+import {RavenCommand} from "../../../Http/RavenCommand";
+import {ServerNode} from "../../../Http/ServerNode";
 
 export class DisableIndexOperation implements IMaintenanceOperation<void> {
 
@@ -50,6 +50,6 @@ export class DisableIndexCommand extends RavenCommand<void> {
         const uri = node.url + "/databases/"
             + node.database + "/admin/indexes/disable?name=" + encodeURIComponent(this._indexName);
 
-        return { method: "POST", uri };
+        return {method: "POST", uri};
     }
 }

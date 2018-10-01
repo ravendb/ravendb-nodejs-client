@@ -30,7 +30,7 @@ export class MoreLikeThisBuilder<T extends object>
     public usingDocument(
         documentJsonOrBuilder: string
             | ((query: IFilterDocumentQueryBase<T, IDocumentQuery<T>>) => IDocumentQuery<T>)):
-                IMoreLikeThisOperations<T> {
+        IMoreLikeThisOperations<T> {
         if (TypeUtil.isString(documentJsonOrBuilder)) {
             this._moreLikeThis = new MoreLikeThisUsingDocument(documentJsonOrBuilder as string);
         } else {

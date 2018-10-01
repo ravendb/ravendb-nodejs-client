@@ -1,7 +1,7 @@
-import { RavenCommand } from "../../Http/RavenCommand";
-import { ServerNode } from "../../Http/ServerNode";
-import { HttpRequestParameters } from "../../Primitives/Http";
-import { throwError } from "../../Exceptions";
+import {RavenCommand} from "../../Http/RavenCommand";
+import {ServerNode} from "../../Http/ServerNode";
+import {HttpRequestParameters} from "../../Primitives/Http";
+import {throwError} from "../../Exceptions";
 
 export class KillOperationCommand extends RavenCommand<void> {
 

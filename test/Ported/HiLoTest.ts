@@ -1,6 +1,6 @@
 import {User} from "../Assets/Entities";
 import * as assert from "assert";
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import {testContext, disposeTestDocumentStore} from "../Utils/TestUtil";
 
 import {
     IDocumentStore,
@@ -8,7 +8,7 @@ import {
     HiloMultiDatabaseIdGenerator,
     DocumentStore,
 } from "../../src";
-import { ArrayUtil } from "../../src/Utility/ArrayUtil";
+import {ArrayUtil} from "../../src/Utility/ArrayUtil";
 
 describe("HiLo", function () {
 
@@ -27,12 +27,12 @@ describe("HiLo", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("does not get another range, when doing parallel requests", async () => {
-        const users = ArrayUtil.range(32, i => Object.assign(new User(), { name: "user" + i }));
-        const storeOps = users.map(x => { 
+        const users = ArrayUtil.range(32, i => Object.assign(new User(), {name: "user" + i}));
+        const storeOps = users.map(x => {
             const session = store.openSession();
             return session.store(x)
                 .then(() => session.saveChanges());
@@ -45,7 +45,7 @@ describe("HiLo", function () {
         userIds
             .map(id => id.split("/")[1])
             .forEach(numericPart => {
-                assert.ok(parseInt(numericPart, 10) < 33, 
+                assert.ok(parseInt(numericPart, 10) < 33,
                     "Obtained ids should be less than 33, though they are:" + users.map(x => x.id).toString());
             });
 
@@ -54,7 +54,7 @@ describe("HiLo", function () {
     it("picks up where it left off", async () => {
         const store1 = await testContext.getDocumentStore("hilo_continues");
         try {
-            const users = ArrayUtil.range(10, i => Object.assign(new User(), { name: "user" + i }));
+            const users = ArrayUtil.range(10, i => Object.assign(new User(), {name: "user" + i}));
             const storeOps = users.map(x => {
                 const session = store1.openSession();
                 return session.store(x)
@@ -66,7 +66,7 @@ describe("HiLo", function () {
             const store2 = await testContext.getDocumentStore();
             try {
                 const session = store2.openSession(store1.database);
-                const newUser = Object.assign(new User(), { name: "new" });
+                const newUser = Object.assign(new User(), {name: "new"});
                 await session.store(newUser);
                 await session.saveChanges();
                 assert.strictEqual(newUser.id, "users/11-A");
@@ -81,7 +81,7 @@ describe("HiLo", function () {
 
     it("cannot go down", async () => {
         const session = store.openSession();
-        const hiloDoc: HiloDoc = Object.assign(new HiloDoc(), { Max: 32 });
+        const hiloDoc: HiloDoc = Object.assign(new HiloDoc(), {Max: 32});
 
         await session.store(hiloDoc, "Raven/Hilo/users");
         await session.saveChanges();
@@ -108,11 +108,11 @@ describe("HiLo", function () {
 
     it("can operate with multiple DBs", async () => {
         const session = store.openSession();
-        const hiloDoc: HiloDoc = Object.assign(new HiloDoc(), { Max: 64 });
+        const hiloDoc: HiloDoc = Object.assign(new HiloDoc(), {Max: 64});
 
         await session.store(hiloDoc, "Raven/Hilo/users");
 
-        const productsHilo = Object.assign(new HiloDoc(), { Max: 128 });
+        const productsHilo = Object.assign(new HiloDoc(), {Max: 128});
         await session.store(productsHilo, "Raven/Hilo/products");
 
         await session.saveChanges();
@@ -126,34 +126,34 @@ describe("HiLo", function () {
     });
 
     it("capacity should double", async () => {
-            const hiLoIdGenerator = new HiloIdGenerator(store, store.database, "users");
+        const hiLoIdGenerator = new HiloIdGenerator(store, store.database, "users");
 
-            {
-                const session = store.openSession();
-                const hiloDoc: HiloDoc = Object.assign(new HiloDoc(), { Max: 64 });
-                await session.store(hiloDoc, "Raven/Hilo/users");
-                await session.saveChanges();
+        {
+            const session = store.openSession();
+            const hiloDoc: HiloDoc = Object.assign(new HiloDoc(), {Max: 64});
+            await session.store(hiloDoc, "Raven/Hilo/users");
+            await session.saveChanges();
 
-                for (let i = 0; i < 32; i++) {
-                    await hiLoIdGenerator.generateDocumentId(new User());
-                }
-            }
-
-            {
-                const session = store.openSession();
-                const hiloDoc = await session.load<HiloDoc>("Raven/Hilo/users");
-                assert.strictEqual(hiloDoc.Max, 96);
-                assert.strictEqual(hiloDoc.constructor, HiloDoc); // should take type from @metadata
-
+            for (let i = 0; i < 32; i++) {
                 await hiLoIdGenerator.generateDocumentId(new User());
             }
+        }
 
-            {
-                const session = store.openSession();
-                const hiloDoc = await session.load<HiloDoc>("Raven/Hilo/users");
-                assert.strictEqual(hiloDoc.Max, 160);
-                assert.strictEqual(hiloDoc.constructor, HiloDoc);
-            }
+        {
+            const session = store.openSession();
+            const hiloDoc = await session.load<HiloDoc>("Raven/Hilo/users");
+            assert.strictEqual(hiloDoc.Max, 96);
+            assert.strictEqual(hiloDoc.constructor, HiloDoc); // should take type from @metadata
+
+            await hiLoIdGenerator.generateDocumentId(new User());
+        }
+
+        {
+            const session = store.openSession();
+            const hiloDoc = await session.load<HiloDoc>("Raven/Hilo/users");
+            assert.strictEqual(hiloDoc.Max, 160);
+            assert.strictEqual(hiloDoc.constructor, HiloDoc);
+        }
     });
 
     it("returns unused range on dispose", async () => {
@@ -163,7 +163,7 @@ describe("HiLo", function () {
 
         {
             const session = newStore.openSession();
-            const hiloDoc: HiloDoc = Object.assign(new HiloDoc(), { Max: 32 });
+            const hiloDoc: HiloDoc = Object.assign(new HiloDoc(), {Max: 32});
             await session.store(hiloDoc, "Raven/Hilo/users");
             await session.saveChanges();
 
@@ -173,14 +173,14 @@ describe("HiLo", function () {
         }
 
         async function waitForStoreDisposeFinish() {
-            return new Promise((resolve) => 
+            return new Promise((resolve) =>
                 newStore.once("afterDispose", () => resolve()));
         }
 
         newStore.dispose(); // on document store dispose(), hilo-return should be called
 
         await waitForStoreDisposeFinish();
-        
+
         newStore = new DocumentStore(store.urls, store.database);
         newStore.initialize();
 
@@ -198,7 +198,7 @@ describe("HiLo", function () {
         const parallelLevel = 32;
         const users = Array.from(Array(parallelLevel).keys()).map(x => new User());
 
-        const tasks = Array.from(Array(parallelLevel).keys()).map(async i =>  {
+        const tasks = Array.from(Array(parallelLevel).keys()).map(async i => {
             const user = users[i];
             {
                 const session = store.openSession();

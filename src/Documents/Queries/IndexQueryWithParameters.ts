@@ -1,4 +1,4 @@
-import { IndexQueryBase } from "./IndexQueryBase";
+import {IndexQueryBase} from "./IndexQueryBase";
 
 export abstract class IndexQueryWithParameters<T> extends IndexQueryBase<T> {
 

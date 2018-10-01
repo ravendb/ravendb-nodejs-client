@@ -1,11 +1,11 @@
 import {throwError} from "../../Exceptions/index";
-import { IndexPriority, FieldStorage, FieldIndexing, FieldTermVector, IndexLockMode, IndexType } from "./Enums";
-import { IndexFieldOptions } from "./IndexFieldOptions";
-import { SpatialOptions } from "./Spatial";
-import { DocumentConventions } from "../Conventions/DocumentConventions";
+import {IndexPriority, FieldStorage, FieldIndexing, FieldTermVector, IndexLockMode, IndexType} from "./Enums";
+import {IndexFieldOptions} from "./IndexFieldOptions";
+import {SpatialOptions} from "./Spatial";
+import {DocumentConventions} from "../Conventions/DocumentConventions";
 
-export interface IndexConfiguration { 
-    [key: string]: string; 
+export interface IndexConfiguration {
+    [key: string]: string;
 }
 
 export class IndexDefinition {
@@ -49,12 +49,13 @@ export class IndexDefinition {
         this.indexType = indexType;
     }
 
-    private _detectStaticIndexType(): IndexType  {
+    private _detectStaticIndexType(): IndexType {
         if (!this.reduce) {
             return "Map";
         }
         return "MapReduce";
     }
+
     // TODO remove? TBD 4.1 public boolean isTestIndex()
 
     // TODO remove? TBD 4.1 public void setTestIndex(boolean testIndex)
@@ -93,9 +94,9 @@ export class IndexDefinitionBuilder {
 
     public toIndexDefinition(conventions: DocumentConventions, validateMap?: boolean): IndexDefinition {
         if (!this.map && validateMap) {
-            throwError("InvalidOperationException", 
+            throwError("InvalidOperationException",
                 "Map is required to generate an index, "
-                + " you cannot create an index without a valid Map property (in index " 
+                + " you cannot create an index without a valid Map property (in index "
                 + this.indexName + ").");
         }
 
@@ -108,20 +109,20 @@ export class IndexDefinitionBuilder {
             indexDefinition.outputReduceToCollection = this.outputReduceToCollection;
 
             const suggestions: { [suggestionOption: string]: boolean } = Array.from(this.suggestionsOptions)
-                .reduce((result, item) => 
-                    Object.assign(result, { [item]: true }), {});
+                .reduce((result, item) =>
+                    Object.assign(result, {[item]: true}), {});
 
-            this._applyValues(indexDefinition, this.indexesStrings, 
+            this._applyValues(indexDefinition, this.indexesStrings,
                 (options, value) => options.indexing = value);
-            this._applyValues(indexDefinition, this.storesStrings, 
+            this._applyValues(indexDefinition, this.storesStrings,
                 (options, value) => options.storage = value);
-            this._applyValues(indexDefinition, this.analyzersStrings, 
+            this._applyValues(indexDefinition, this.analyzersStrings,
                 (options, value) => options.analyzer = value);
-            this._applyValues(indexDefinition, this.termVectorsStrings, 
+            this._applyValues(indexDefinition, this.termVectorsStrings,
                 (options, value) => options.termVector = value);
-            this._applyValues(indexDefinition, this.spatialIndexesStrings, 
+            this._applyValues(indexDefinition, this.spatialIndexesStrings,
                 (options, value) => options.spatial = value);
-            this._applyValues(indexDefinition, suggestions, 
+            this._applyValues(indexDefinition, suggestions,
                 (options, value) => options.suggestions = value);
 
             if (this.map) {
@@ -136,15 +137,15 @@ export class IndexDefinitionBuilder {
     }
 
     private _applyValues<T>(
-        indexDefinition: IndexDefinition, 
-        values: { [fieldName: string]: T }, 
+        indexDefinition: IndexDefinition,
+        values: { [fieldName: string]: T },
         action: (options: IndexFieldOptions, val: T) => void) {
 
         for (const fieldName of Object.keys(values)) {
             const fieldVal: T = values[fieldName];
-            const field = indexDefinition.fields[fieldName] = 
+            const field = indexDefinition.fields[fieldName] =
                 indexDefinition.fields[fieldName] || new IndexFieldOptions();
-            
+
             action(field, fieldVal);
         }
     }

@@ -1,10 +1,10 @@
-import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
-import { IndexStats, CollectionStats } from "../../Indexes/IndexStats";
-import { throwError } from "../../../Exceptions";
-import { RavenCommand } from "../../../Http/RavenCommand";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { HttpRequestParameters } from "../../../Primitives/Http";
-import { ServerNode } from "../../..";
+import {IMaintenanceOperation, OperationResultType} from "../OperationAbstractions";
+import {IndexStats, CollectionStats} from "../../Indexes/IndexStats";
+import {throwError} from "../../../Exceptions";
+import {RavenCommand} from "../../../Http/RavenCommand";
+import {DocumentConventions} from "../../Conventions/DocumentConventions";
+import {HttpRequestParameters} from "../../../Primitives/Http";
+import {ServerNode} from "../../..";
 import * as stream from "readable-stream";
 
 export class GetIndexStatisticsOperation implements IMaintenanceOperation<IndexStats> {
@@ -44,7 +44,7 @@ export class GetIndexStatisticsCommand extends RavenCommand<IndexStats> {
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database
             + "/indexes/stats?name=" + encodeURIComponent(this._indexName);
-        return { uri };
+        return {uri};
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
@@ -62,7 +62,7 @@ export class GetIndexStatisticsCommand extends RavenCommand<IndexStats> {
                         "results[].collections$MAP": "CollectionStats"
                     }
                 }, new Map([[CollectionStats.name, CollectionStats]]));
-                
+
                 const indexStatsResults = responseObj["results"];
                 if (!indexStatsResults.length) {
                     this._throwInvalidResponse();

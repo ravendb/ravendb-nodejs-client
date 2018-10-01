@@ -1,9 +1,9 @@
 import * as qs from "qs";
-import { ServerNode } from "../../../Http/ServerNode";
-import { DateUtil } from "../../../Utility/DateUtil";
-import { RavenCommand} from "../../../Http/RavenCommand";
-import { throwError } from "../../../Exceptions";
-import { HttpRequestParameters } from "../../../Primitives/Http";
+import {ServerNode} from "../../../Http/ServerNode";
+import {DateUtil} from "../../../Utility/DateUtil";
+import {RavenCommand} from "../../../Http/RavenCommand";
+import {throwError} from "../../../Exceptions";
+import {HttpRequestParameters} from "../../../Primitives/Http";
 import * as stream from "readable-stream";
 
 export interface HiLoResult {
@@ -14,6 +14,7 @@ export interface HiLoResult {
     serverTag: string;
     lastRangeAt: Date;
 }
+
 export class NextHiloCommand extends RavenCommand<HiLoResult> {
 
     private readonly _tag: string;
@@ -59,7 +60,7 @@ export class NextHiloCommand extends RavenCommand<HiLoResult> {
         });
 
         const uri = `${node.url}/databases/${node.database}/hilo/next?${queryString}`;
-        return { uri };
+        return {uri};
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {

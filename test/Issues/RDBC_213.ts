@@ -1,5 +1,5 @@
-import { IDocumentStore } from "../../src";
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import {IDocumentStore} from "../../src";
+import {testContext, disposeTestDocumentStore} from "../Utils/TestUtil";
 import * as assert from "assert";
 
 describe("[RDBC-213] Metadata is not saved", function () {
@@ -10,7 +10,7 @@ describe("[RDBC-213] Metadata is not saved", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("session.store() saves metadata using entity '@metadata' field", async () => {
@@ -56,7 +56,7 @@ describe("[RDBC-213] Metadata is not saved", function () {
         metadata["customData"] = customDataValue;
 
         await session2.saveChanges();
-        
+
         // Verify
         const session3 = store.openSession();
         const updatedDocument = await session3.load(loadedDocument["id"]);
@@ -77,7 +77,7 @@ describe("[RDBC-213] Metadata is not saved", function () {
 
         const metadata = session.advanced.getMetadataFor(expiringDocument);
         metadata["@expires"] = expiresAt.toISOString();
-        
+
         await session.saveChanges();
 
         const session2 = store.openSession();

@@ -1,16 +1,17 @@
 import * as moment from "moment";
-import { User, Event } from "../Assets/Entities";
+import {User, Event} from "../Assets/Entities";
 import * as assert from "assert";
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import {testContext, disposeTestDocumentStore} from "../Utils/TestUtil";
 
 import {
     IDocumentStore,
     GetCollectionStatisticsOperation,
     AbstractIndexCreationTask,
     GroupByField,
-    IDocumentSession} from "../../src";
-import { DateUtil } from "../../src/Utility/DateUtil";
-import { TypeUtil } from "../../src/Utility/TypeUtil";
+    IDocumentSession
+} from "../../src";
+import {DateUtil} from "../../src/Utility/DateUtil";
+import {TypeUtil} from "../../src/Utility/TypeUtil";
 
 describe("QueryTest", function () {
 
@@ -25,9 +26,9 @@ describe("QueryTest", function () {
 
     it("query simple", async () => {
         const session = store.openSession();
-        const user1 = Object.assign(new User(), { name: "John" });
-        const user2 = Object.assign(new User(), { name: "Jane" });
-        const user3 = Object.assign(new User(), { name: "Tarzan" });
+        const user1 = Object.assign(new User(), {name: "John"});
+        const user2 = Object.assign(new User(), {name: "Jane"});
+        const user3 = Object.assign(new User(), {name: "Tarzan"});
         const users = [user1, user2, user3];
         await session.store(user1, "users/1");
         await session.store(user2, "users/2");
@@ -50,8 +51,8 @@ describe("QueryTest", function () {
 
     it("collection stats", async () => {
         const session = store.openSession();
-        const user1 = Object.assign(new User(), { name: "John" });
-        const user2 = Object.assign(new User(), { name: "Jane" });
+        const user1 = Object.assign(new User(), {name: "John"});
+        const user2 = Object.assign(new User(), {name: "Jane"});
 
         await session.store(user1, "users/1");
         await session.store(user2, "users/2");
@@ -65,24 +66,24 @@ describe("QueryTest", function () {
 
     it("query with where clause", async () => {
         const session = store.openSession();
-        const user1 = Object.assign(new User(), { name: "John" });
-        const user2 = Object.assign(new User(), { name: "Jane" });
-        const user3 = Object.assign(new User(), { name: "Tarzan" });
+        const user1 = Object.assign(new User(), {name: "John"});
+        const user2 = Object.assign(new User(), {name: "Jane"});
+        const user3 = Object.assign(new User(), {name: "Tarzan"});
 
         await session.store(user1, "users/1");
         await session.store(user2, "users/2");
         await session.store(user3, "users/3");
         await session.saveChanges();
 
-        const queryResult = await session.query<User>({ collection: "users" })
+        const queryResult = await session.query<User>({collection: "users"})
             .whereStartsWith("name", "J")
             .all();
 
-        const queryResult2 = await session.query<User>({ collection: "users" })
+        const queryResult2 = await session.query<User>({collection: "users"})
             .whereEquals("name", "Tarzan")
             .all();
 
-        const queryResult3 = await session.query<User>({ collection: "users" })
+        const queryResult3 = await session.query<User>({collection: "users"})
             .whereEndsWith("name", "n")
             .all();
 
@@ -236,7 +237,7 @@ describe("QueryTest", function () {
             public name: string;
         }
 
-        it("query with projection", async () => { 
+        it("query with projection", async () => {
             const session = store.openSession();
             const query = session.query(User)
                 .selectFields<UserProjection>(["id", "name"], UserProjection);
@@ -252,7 +253,7 @@ describe("QueryTest", function () {
             }
         });
 
-        it("query with projection 2", async () => { 
+        it("query with projection 2", async () => {
             const session = store.openSession();
             const results = await session.query(User)
                 .selectFields<UserProjection>(["lastName"], UserProjection)
@@ -383,7 +384,7 @@ describe("QueryTest", function () {
             assert.strictEqual((await session.query<User>(User)
                 .whereNotEquals("name", "Tarzan", true)
                 .all()).length, 2);
-         });
+        });
 
         it("query first and single", async () => {
             const session = store.openSession();
@@ -400,14 +401,14 @@ describe("QueryTest", function () {
             } catch (err) {
                 assert.strictEqual(err.name, "InvalidOperationException");
             }
-         });
+        });
 
         it("query parameters", async () => {
             const session = store.openSession();
             assert.strictEqual(await session.advanced.rawQuery("from Users where name = $name")
                 .addParameter("name", "Tarzan")
                 .count(), 1);
-         });
+        });
 
         it("query random order", async () => {
             const session = store.openSession();
@@ -419,12 +420,12 @@ describe("QueryTest", function () {
                 .randomOrdering("123")
                 .all()).length, 3);
 
-         });
+        });
 
-        it("query where exists", async () => { 
+        it("query where exists", async () => {
             const session = store.openSession();
             assert.strictEqual(
-                (await session.query(User).whereExists("name").all()).length, 
+                (await session.query(User).whereExists("name").all()).length,
                 3);
 
             assert.strictEqual((await session.query(User)
@@ -464,11 +465,11 @@ describe("QueryTest", function () {
 
             names = users.map(x => x.name);
             assert.deepStrictEqual(names, ["John", "John", "Tarzan"]);
-         });
+        });
 
         it("query with customize", async () => {
             await new DogsIndex().execute(store);
-            
+
             {
                 const session = store.openSession();
                 await createDogs(session);
@@ -481,15 +482,15 @@ describe("QueryTest", function () {
                 const session = store.openSession();
 
                 const queryResult = await session.advanced
-                        .documentQuery<DogsIndexResult>({
-                            indexName: new DogsIndex().getIndexName(), 
-                            isMapReduce: false,
-                            documentType: DogsIndexResult
-                        })
-                        .waitForNonStaleResults(null)
-                        .orderBy("name", "AlphaNumeric")
-                        .whereGreaterThan("age", 2)
-                        .all();
+                    .documentQuery<DogsIndexResult>({
+                        indexName: new DogsIndex().getIndexName(),
+                        isMapReduce: false,
+                        documentType: DogsIndexResult
+                    })
+                    .waitForNonStaleResults(null)
+                    .orderBy("name", "AlphaNumeric")
+                    .whereGreaterThan("age", 2)
+                    .all();
 
                 assert.strictEqual(queryResult.length, 4);
                 assert.deepStrictEqual(
@@ -498,7 +499,7 @@ describe("QueryTest", function () {
                 );
             }
 
-         });
+        });
 
     });
 
@@ -641,9 +642,9 @@ describe("QueryTest", function () {
     it("query where between is inclusive", async () => {
         {
             const session = store.openSession();
-            await session.store(Object.assign(new User(), { age: 1 }));
-            await session.store(Object.assign(new User(), { age: 2 }));
-            await session.store(Object.assign(new User(), { age: 3 }));
+            await session.store(Object.assign(new User(), {age: 1}));
+            await session.store(Object.assign(new User(), {age: 2}));
+            await session.store(Object.assign(new User(), {age: 3}));
             await session.saveChanges();
         }
 
@@ -652,25 +653,25 @@ describe("QueryTest", function () {
             const results = await session.query({
                 collection: "users"
             })
-            .whereBetween("age", 1, 3)
-            .all();
+                .whereBetween("age", 1, 3)
+                .all();
 
             assert.strictEqual(results.length, 3);
         }
     });
 
     it("query where between with dates", async () => {
-        const cocartFestival = new Event({ 
-            name: "CoCArt Festival", 
-            date: moment("2018-03-08").toDate() 
+        const cocartFestival = new Event({
+            name: "CoCArt Festival",
+            date: moment("2018-03-08").toDate()
         });
-        const openerFestival = new Event({ 
-            name: "Open'er Festival", 
+        const openerFestival = new Event({
+            name: "Open'er Festival",
             date: moment("2018-07-04").toDate()
         });
-        const offFestival = new Event({ 
-            name: "OFF Festival", 
-            date: moment("2018-08-03").toDate() 
+        const offFestival = new Event({
+            name: "OFF Festival",
+            date: moment("2018-08-03").toDate()
         });
 
         {
@@ -686,7 +687,7 @@ describe("QueryTest", function () {
             const q = session.query({
                 collection: "events"
             })
-            .whereBetween("date", cocartFestival.date, offFestival.date);
+                .whereBetween("date", cocartFestival.date, offFestival.date);
 
             const indexQuery = q.getIndexQuery();
             assert.strictEqual(indexQuery.query, "from events where date between $p0 and $p1");
@@ -702,11 +703,11 @@ describe("QueryTest", function () {
             const festivalsHappeningBetweenCocartAndOffExclusive = await session.query({
                 collection: "events"
             })
-            .whereBetween(
-                "date",
-                moment(cocartFestival.date).add(1, "d").toDate(),
-                moment(offFestival.date).add(-1, "d").toDate())
-            .all();
+                .whereBetween(
+                    "date",
+                    moment(cocartFestival.date).add(1, "d").toDate(),
+                    moment(offFestival.date).add(-1, "d").toDate())
+                .all();
 
             assert.strictEqual(festivalsHappeningBetweenCocartAndOffExclusive.length, 1);
         }
@@ -772,6 +773,7 @@ export class Dog {
     public age: number;
     public vaccinated: boolean;
 }
+
 export class DogsIndexResult {
     public name: string;
     public age: number;
@@ -784,6 +786,7 @@ export class DogsIndex extends AbstractIndexCreationTask {
         this.map = "from dog in docs.dogs select new { dog.name, dog.age, dog.vaccinated }";
     }
 }
+
 export class UsersByName extends AbstractIndexCreationTask {
     public constructor() {
         super();

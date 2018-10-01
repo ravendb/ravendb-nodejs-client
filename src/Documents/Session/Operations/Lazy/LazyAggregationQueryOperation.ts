@@ -1,12 +1,12 @@
-import { ILazyOperation } from "./ILazyOperation";
-import { QueryResult } from "../../../Queries/QueryResult";
-import { DocumentConventions } from "../../../Conventions/DocumentConventions";
-import { IndexQuery, writeIndexQuery } from "../../../Queries/IndexQuery";
-import { FacetResultObject, AggregationQueryBase } from "../../../Queries/Facets/AggregationQueryBase";
-import { GetRequest } from "../../../Commands/MultiGet/GetRequest";
-import { GetResponse } from "../../../Commands/MultiGet/GetResponse";
-import { FacetQueryCommand } from "../../../Commands/FacetQueryCommand";
-import { stringToReadable } from "../../../../Utility/StreamUtil";
+import {ILazyOperation} from "./ILazyOperation";
+import {QueryResult} from "../../../Queries/QueryResult";
+import {DocumentConventions} from "../../../Conventions/DocumentConventions";
+import {IndexQuery, writeIndexQuery} from "../../../Queries/IndexQuery";
+import {FacetResultObject, AggregationQueryBase} from "../../../Queries/Facets/AggregationQueryBase";
+import {GetRequest} from "../../../Commands/MultiGet/GetRequest";
+import {GetResponse} from "../../../Commands/MultiGet/GetResponse";
+import {FacetQueryCommand} from "../../../Commands/FacetQueryCommand";
+import {stringToReadable} from "../../../../Utility/StreamUtil";
 
 export class LazyAggregationQueryOperation implements ILazyOperation {
 

@@ -1,11 +1,11 @@
-import { FacetBase } from "./FacetBase";
-import { RangeBuilder } from "./RangeBuilder";
-import { FacetToken } from "../../Session/Tokens/FacetToken"; 
+import {FacetBase} from "./FacetBase";
+import {RangeBuilder} from "./RangeBuilder";
+import {FacetToken} from "../../Session/Tokens/FacetToken";
 
 export class GenericRangeFacet extends FacetBase {
 
-     private readonly _parent: FacetBase;
-     public ranges: Array<RangeBuilder<any>> = [];
+    private readonly _parent: FacetBase;
+    public ranges: Array<RangeBuilder<any>> = [];
 
     public constructor(parent?: FacetBase) {
         super();

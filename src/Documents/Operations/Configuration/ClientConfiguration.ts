@@ -1,4 +1,4 @@
-import { ReadBalanceBehavior } from "../../../Http/ReadBalanceBehavior";
+import {ReadBalanceBehavior} from "../../../Http/ReadBalanceBehavior";
 
 export interface ClientConfiguration {
     etag: number;

@@ -1,28 +1,28 @@
 import * as uuid from "uuid";
 import * as BluebirdPromise from "bluebird";
 
-import { throwError } from "../Exceptions";
-import { RequestExecutor } from "../Http/RequestExecutor";
-import { getLogger } from "../Utility/LogUtil";
-import { DocumentStoreBase } from "./DocumentStoreBase";
-import { IDocumentStore } from "./IDocumentStore";
-import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor";
-import { OperationExecutor } from "./Operations/OperationExecutor";
-import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";
-import { DocumentSession } from "./Session/DocumentSession";
+import {throwError} from "../Exceptions";
+import {RequestExecutor} from "../Http/RequestExecutor";
+import {getLogger} from "../Utility/LogUtil";
+import {DocumentStoreBase} from "./DocumentStoreBase";
+import {IDocumentStore} from "./IDocumentStore";
+import {MaintenanceOperationExecutor} from "./Operations/MaintenanceOperationExecutor";
+import {OperationExecutor} from "./Operations/OperationExecutor";
+import {IDocumentSession, ISessionOptions} from "./Session/IDocumentSession";
+import {DocumentSession} from "./Session/DocumentSession";
 import {HiloMultiDatabaseIdGenerator} from "./Identity/HiloMultiDatabaseIdGenerator";
-import { IDisposable } from "../Types/Contracts";
-import { IAuthOptions } from "../Auth/AuthOptions";
+import {IDisposable} from "../Types/Contracts";
+import {IAuthOptions} from "../Auth/AuthOptions";
 import {BulkInsertOperation} from "./BulkInsertOperation";
 import {IDatabaseChanges} from "./Changes/IDatabaseChanges";
 import {DatabaseChanges} from "./Changes/DatabaseChanges";
 
-const log = getLogger({ module: "DocumentStore" });
+const log = getLogger({module: "DocumentStore"});
 
 export class DocumentStore extends DocumentStoreBase {
 
-    private _log = 
-        getLogger({ module: "DocumentStore-" + Math.floor(Math.random() * 1000) });
+    private _log =
+        getLogger({module: "DocumentStore-" + Math.floor(Math.random() * 1000)});
 
     private readonly _databaseChanges: Map<string, IDatabaseChanges> = new Map();
     // TBD: private ConcurrentDictionary<string, Lazy<EvictItemsFromCacheBasedOnChanges>> _aggressiveCacheChanges =
@@ -31,16 +31,16 @@ export class DocumentStore extends DocumentStoreBase {
     // _observeChangesAndEvictItemsFromCacheForDatabases = 
     // new ConcurrentDictionary<string, EvictItemsFromCacheBasedOnChanges>();
 
-    private _requestExecutors: Map<string, RequestExecutor> = new Map(); 
+    private _requestExecutors: Map<string, RequestExecutor> = new Map();
 
-    private _multiDbHiLo: HiloMultiDatabaseIdGenerator; 
+    private _multiDbHiLo: HiloMultiDatabaseIdGenerator;
 
-    private _maintenanceOperationExecutor: MaintenanceOperationExecutor; 
+    private _maintenanceOperationExecutor: MaintenanceOperationExecutor;
     private _operationExecutor: OperationExecutor;
 
     private _identifier: string;
     private _aggressiveCachingUsed: boolean;
-    
+
     public constructor(url: string, database: string);
     public constructor(urls: string[], database: string);
     public constructor(url: string, database: string, authOptions: IAuthOptions);
@@ -50,9 +50,9 @@ export class DocumentStore extends DocumentStoreBase {
 
         this._database = database;
         this.authOptions = authOptions;
-        this.urls = Array.isArray(urls) 
-          ? urls as string[] 
-          : [ urls ];
+        this.urls = Array.isArray(urls)
+            ? urls as string[]
+            : [urls];
     }
 
     public get identifier(): string {
@@ -123,8 +123,8 @@ export class DocumentStore extends DocumentStoreBase {
                     });
 
                 })
-                .timeout(5000) 
-                .catch((err) => this._log.warn(`Error handling 'afterDispose'`, err));
+                    .timeout(5000)
+                    .catch((err) => this._log.warn(`Error handling 'afterDispose'`, err));
             })
             .then(() => {
                 this._log.info(`Disposing request executors ${this._requestExecutors.size}`);
@@ -154,13 +154,13 @@ export class DocumentStore extends DocumentStoreBase {
     /**
      * Opens document session
      */
-    public openSession(databaseOrSessionOptions?: string | ISessionOptions): IDocumentSession  {
+    public openSession(databaseOrSessionOptions?: string | ISessionOptions): IDocumentSession {
         this.assertInitialized();
         this._ensureNotDisposed();
 
         if (typeof(databaseOrSessionOptions) === "string") {
-            return this.openSession({ 
-                database: (databaseOrSessionOptions as string) 
+            return this.openSession({
+                database: (databaseOrSessionOptions as string)
             });
         }
 
@@ -175,7 +175,7 @@ export class DocumentStore extends DocumentStoreBase {
         const sessionId = uuid();
         const session = new DocumentSession(database, this, sessionId, requestExecutor);
         this._registerEvents(session);
-        this.emit("sessionCreated", { session });
+        this.emit("sessionCreated", {session});
         return session;
     }
 
@@ -197,16 +197,16 @@ export class DocumentStore extends DocumentStoreBase {
         }
 
         if (!this.conventions.disableTopologyUpdates) {
-            executor = RequestExecutor.create(this.urls, database, { 
-                authOptions: this.authOptions, 
+            executor = RequestExecutor.create(this.urls, database, {
+                authOptions: this.authOptions,
                 documentConventions: this.conventions
             });
         } else {
             executor = RequestExecutor.createForSingleNodeWithConfigurationUpdates(
-              this.urls[0], database, { 
-                  authOptions: this.authOptions, 
-                  documentConventions: this.conventions
-              });
+                this.urls[0], database, {
+                    authOptions: this.authOptions,
+                    documentConventions: this.conventions
+                });
         }
 
         this._log.info(`New request executor for database ${database}`);
@@ -230,7 +230,7 @@ export class DocumentStore extends DocumentStoreBase {
                 const generator = new HiloMultiDatabaseIdGenerator(this);
                 this._multiDbHiLo = generator;
 
-                this.conventions.documentIdGenerator = 
+                this.conventions.documentIdGenerator =
                     (dbName: string, entity: object) => generator.generateDocumentId(dbName, entity);
             }
 
@@ -273,6 +273,7 @@ export class DocumentStore extends DocumentStoreBase {
      * queries that have been marked with WaitForNonStaleResults, we temporarily disable
      * aggressive caching.
      */
+
     /* TBD 4.1
     public disableAggressiveCaching(): IDisposable;
     public disableAggressiveCaching(database: string): IDisposable;

@@ -1,5 +1,5 @@
-import { QueryToken } from "./QueryToken";
-import { SpatialUnits } from "../../Indexes/Spatial";
+import {QueryToken} from "./QueryToken";
+import {SpatialUnits} from "../../Indexes/Spatial";
 
 export class ShapeToken extends QueryToken {
 
@@ -11,32 +11,32 @@ export class ShapeToken extends QueryToken {
     }
 
     public static circle(
-        radiusParameterName: string, 
-        latitudeParameterName: string, 
-        longitudeParameterName: string, 
+        radiusParameterName: string,
+        latitudeParameterName: string,
+        longitudeParameterName: string,
         radiusUnits: SpatialUnits): ShapeToken {
         if (!radiusUnits) {
             return new ShapeToken(
-                "spatial.circle($" 
-                    + radiusParameterName 
-                    + ", $" + latitudeParameterName 
-                    + ", $" + longitudeParameterName + ")");
+                "spatial.circle($"
+                + radiusParameterName
+                + ", $" + latitudeParameterName
+                + ", $" + longitudeParameterName + ")");
         }
 
         if (radiusUnits === "Kilometers") {
             return new ShapeToken(
-                "spatial.circle($" + radiusParameterName 
-                + ", $" + latitudeParameterName 
-                + ", $" + longitudeParameterName 
+                "spatial.circle($" + radiusParameterName
+                + ", $" + latitudeParameterName
+                + ", $" + longitudeParameterName
                 + ", 'Kilometers')");
         }
 
         return new ShapeToken(
-            "spatial.circle($" 
-                + radiusParameterName 
-                + ", $" + latitudeParameterName 
-                + ", $" + longitudeParameterName 
-                + ", 'Miles')");
+            "spatial.circle($"
+            + radiusParameterName
+            + ", $" + latitudeParameterName
+            + ", $" + longitudeParameterName
+            + ", 'Miles')");
     }
 
     public static wkt(shapeWktParameterName: string): ShapeToken {

@@ -1,16 +1,16 @@
-import { IDocumentQueryBase } from "./IDocumentQueryBase";
-import { IQueryBase } from "./IQueryBase";
-import { SearchOperator } from "../Queries/SearchOperator";
-import { MethodCall } from "./MethodCall";
-import { WhereParams } from "./WhereParams";
-import { SpatialUnits, SpatialRelation } from "../Indexes/Spatial";
-import { SpatialCriteria } from "../Queries/Spatial/SpatialCriteria";
-import { SpatialCriteriaFactory } from "../Queries/Spatial/SpatialCriteriaFactory";
-import { IDocumentQuery } from "./IDocumentQuery";
-import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField";
+import {IDocumentQueryBase} from "./IDocumentQueryBase";
+import {IQueryBase} from "./IQueryBase";
+import {SearchOperator} from "../Queries/SearchOperator";
+import {MethodCall} from "./MethodCall";
+import {WhereParams} from "./WhereParams";
+import {SpatialUnits, SpatialRelation} from "../Indexes/Spatial";
+import {SpatialCriteria} from "../Queries/Spatial/SpatialCriteria";
+import {SpatialCriteriaFactory} from "../Queries/Spatial/SpatialCriteriaFactory";
+import {IDocumentQuery} from "./IDocumentQuery";
+import {DynamicSpatialField} from "../Queries/Spatial/DynamicSpatialField";
 import {MoreLikeThisBase} from "../Queries/MoreLikeThis/MoreLikeThisBase";
 
-export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocumentQueryBase<T, TSelf>> 
+export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocumentQueryBase<T, TSelf>>
     extends IQueryBase<T, TSelf> {
 
     /**
@@ -269,11 +269,11 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
      * Filter matches to be inside the specified radius
      */
     withinRadiusOf(
-        fieldName: string, 
-        radius: number, 
-        latitude: number, 
-        longitude: number, 
-        radiusUnits: SpatialUnits, 
+        fieldName: string,
+        radius: number,
+        latitude: number,
+        longitude: number,
+        radiusUnits: SpatialUnits,
         distanceErrorPct: number): TSelf;
 
     // tslint:disable-next-line:max-line-length
@@ -298,11 +298,11 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
      * Ability to use one factory to determine spatial shape that will be used in query.
      */
     spatial(
-        fieldName: string, 
+        fieldName: string,
         clause: (spatialCriteriaFactory: SpatialCriteriaFactory) => SpatialCriteria): IDocumentQuery<T>;
 
     spatial(
-        field: DynamicSpatialField, 
+        field: DynamicSpatialField,
         clause: (spatialCriteriaFactory: SpatialCriteriaFactory) => SpatialCriteria): IDocumentQuery<T>;
 
     // tslint:disable-next-line:max-line-length

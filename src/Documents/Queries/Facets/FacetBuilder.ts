@@ -1,11 +1,11 @@
-import { IFacetBuilder } from "./IFacetBuilder";
-import { IFacetOperations } from "./IFacetOperations";
-import { GenericRangeFacet } from "./GenericRangeFacet";
-import { Facet } from "./Facet";
-import { RangeBuilder } from "./RangeBuilder";
-import { throwError } from "../../../Exceptions";
-import { FacetOptions } from ".";
-import { FacetBase } from "./FacetBase";
+import {IFacetBuilder} from "./IFacetBuilder";
+import {IFacetOperations} from "./IFacetOperations";
+import {GenericRangeFacet} from "./GenericRangeFacet";
+import {Facet} from "./Facet";
+import {RangeBuilder} from "./RangeBuilder";
+import {throwError} from "../../../Exceptions";
+import {FacetOptions} from ".";
+import {FacetBase} from "./FacetBase";
 
 export class FacetBuilder<T> implements IFacetBuilder<T>, IFacetOperations<T> {
     private _range: GenericRangeFacet;
@@ -98,4 +98,4 @@ export class FacetBuilder<T> implements IFacetBuilder<T>, IFacetOperations<T> {
 
         return this._range;
     }
- }
+}

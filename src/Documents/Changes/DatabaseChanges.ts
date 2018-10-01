@@ -13,7 +13,7 @@ import {StringUtil} from "../../Utility/StringUtil";
 import {EventEmitter} from "events";
 import * as PromiseUtil from "../../Utility/PromiseUtil";
 import {IDefer} from "../../Utility/PromiseUtil";
-import { acquireSemaphore } from "../../Utility/SemaphoreUtil";
+import {acquireSemaphore} from "../../Utility/SemaphoreUtil";
 import * as BluebirdPromise from "bluebird";
 import {Certificate} from "../../Auth/Certificate";
 import {ObjectUtil} from "../../Utility/ObjectUtil";
@@ -127,7 +127,7 @@ export class DatabaseChanges implements IDatabaseChanges {
         const counter = this._getOrAddConnectionState("docs/" + docId, "watch-doc", "unwatch-doc", docId);
 
         return new ChangesObservable<DocumentChange, DatabaseConnectionState>("Document", counter,
-                notification => notification.id && notification.id.toLocaleLowerCase() === docId.toLocaleLowerCase());
+            notification => notification.id && notification.id.toLocaleLowerCase() === docId.toLocaleLowerCase());
     }
 
     public forAllDocuments(): IChangesObservable<DocumentChange> {
@@ -201,7 +201,7 @@ export class DatabaseChanges implements IDatabaseChanges {
         this._emitter.removeListener("connectionStatus", this._onConnectionStatusChangedWrapped);
 
         if (this._onDispose) {
-           this._onDispose();
+            this._onDispose();
         }
     }
 
@@ -258,7 +258,7 @@ export class DatabaseChanges implements IDatabaseChanges {
                         Param: value
                     };
 
-                    this._confirmations.set(currentCommandId, { resolve, reject });
+                    this._confirmations.set(currentCommandId, {resolve, reject});
                     const payloadAsString = JSON.stringify(payload, null, 0);
 
                     this._client.send(payloadAsString);
@@ -308,7 +308,7 @@ export class DatabaseChanges implements IDatabaseChanges {
                 this._emitter.emit("connectionStatus");
             });
 
-            this._client.on("error", e =>  {
+            this._client.on("error", e => {
                 this._notifyAboutError(e);
             });
 
@@ -363,14 +363,14 @@ export class DatabaseChanges implements IDatabaseChanges {
                         break;
                     default:
                         const value = message.Value;
-                        const transformedValue = ObjectUtil.transformObjectKeys(value,  { defaultTransform: "camel" });
+                        const transformedValue = ObjectUtil.transformObjectKeys(value, {defaultTransform: "camel"});
                         this._notifySubscribers(type, transformedValue, Array.from(this._counters.values()));
                         break;
                 }
             }
         } catch (err) {
             this._notifyAboutError(err);
-            throwError("ChangeProcessingException", "There was an error during notification processing.",  err);
+            throwError("ChangeProcessingException", "There was an error during notification processing.", err);
         }
     }
 

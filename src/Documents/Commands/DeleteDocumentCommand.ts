@@ -1,7 +1,7 @@
 import {HttpRequestParameters} from "../../Primitives/Http";
-import { RavenCommand } from "../../Http/RavenCommand";
-import { throwError } from "../../Exceptions";
-import { ServerNode } from "../../Http/ServerNode";
+import {RavenCommand} from "../../Http/RavenCommand";
+import {throwError} from "../../Exceptions";
+import {ServerNode} from "../../Http/ServerNode";
 
 export class DeleteDocumentCommand extends RavenCommand<void> {
     private readonly _id: string;
@@ -26,16 +26,16 @@ export class DeleteDocumentCommand extends RavenCommand<void> {
 
         const uri = node.url + "/databases/" + node.database + "/docs?id=" + encodeURIComponent(this._id);
 
-        const request = { 
+        const request = {
             method: "DELETE",
-            uri, 
-            headers: this._headers().build() 
+            uri,
+            headers: this._headers().build()
         };
         this._addChangeVectorIfNotNull(this._changeVector, request);
-        
+
         return request;
     }
-    
+
     public get isReadRequest() {
         return false;
     }

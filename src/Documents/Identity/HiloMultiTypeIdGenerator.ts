@@ -1,10 +1,10 @@
-import { IHiloIdGenerator } from "./IHiloIdGenerator";
-import { HiloIdGenerator } from "./HiloIdGenerator";
-import { IDocumentStore } from "../../Documents/IDocumentStore";
-import { AbstractHiloIdGenerator } from "./AbstractHiloIdGenerator";
+import {IHiloIdGenerator} from "./IHiloIdGenerator";
+import {HiloIdGenerator} from "./HiloIdGenerator";
+import {IDocumentStore} from "../../Documents/IDocumentStore";
+import {AbstractHiloIdGenerator} from "./AbstractHiloIdGenerator";
 import * as semaphore from "semaphore";
 import * as BluebirdPromise from "bluebird";
-import { acquireSemaphore } from "../../Utility/SemaphoreUtil";
+import {acquireSemaphore} from "../../Utility/SemaphoreUtil";
 
 export class HiloMultiTypeIdGenerator extends AbstractHiloIdGenerator implements IHiloIdGenerator {
     private readonly _sem: semaphore.Semaphore;
@@ -16,7 +16,7 @@ export class HiloMultiTypeIdGenerator extends AbstractHiloIdGenerator implements
 
     public generateDocumentId(entity: object, documentType?: string): Promise<string> {
         const entityType = this._conventions.findEntityType(documentType);
-        const typeTagName: string = entityType 
+        const typeTagName: string = entityType
             ? this._conventions.getCollectionNameForType(entityType)
             : this._conventions.getCollectionNameForEntity(entity);
 
@@ -38,14 +38,14 @@ export class HiloMultiTypeIdGenerator extends AbstractHiloIdGenerator implements
                 let generator: IHiloIdGenerator = this._generators[tag];
 
                 if (!generator) {
-                    generator = this._generators[tag] = 
+                    generator = this._generators[tag] =
                         new HiloIdGenerator(this._store, this._dbName, tag);
                 }
 
                 return generator;
             })
             .finally(() => acquiredSem.dispose());
-        
+
         return Promise.resolve(result);
     }
 }

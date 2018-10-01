@@ -1,17 +1,17 @@
-import { throwError } from "../../Exceptions";
-import { BatchOptions } from "./Batches/BatchOptions";
+import {throwError} from "../../Exceptions";
+import {BatchOptions} from "./Batches/BatchOptions";
 import {DocumentConventions} from "../..";
 
-export type CommandType = 
-    "None" 
-    | "PUT"  
+export type CommandType =
+    "None"
+    | "PUT"
     | "PATCH"
     | "DELETE"
     | "AttachmentPUT"
     | "AttachmentDELETE"
     | "ClientAnyCommand"
     | "ClientNotAttachment"
-;
+    ;
 
 export interface ICommandData {
     id: string;
@@ -23,11 +23,11 @@ export interface ICommandData {
 }
 
 export class DeleteCommandData implements ICommandData {
-    
+
     public id: string;
     public name: string;
     public changeVector: string;
-    
+
     public get type(): CommandType {
         return "DELETE";
     }
@@ -59,7 +59,7 @@ export class DeleteCommandData implements ICommandData {
 }
 
 export class PutCommandDataBase<T extends object> implements ICommandData {
-    
+
     public get type(): CommandType {
         return "PUT";
     }

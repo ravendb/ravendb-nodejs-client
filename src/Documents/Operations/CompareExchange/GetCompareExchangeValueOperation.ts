@@ -1,14 +1,14 @@
-import { HttpRequestParameters } from "../../../Primitives/Http";
-import { IOperation, OperationResultType } from "../OperationAbstractions";
-import { CompareExchangeValue } from "./CompareExchangeValue";
-import { RavenCommand } from "../../../Http/RavenCommand";
-import { HttpCache } from "../../../Http/HttpCache";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { IDocumentStore } from "../../IDocumentStore";
-import { throwError } from "../../../Exceptions";
-import { ServerNode } from "../../../Http/ServerNode";
-import { ClassConstructor } from "../../../Types";
-import { CompareExchangeValueResultParser, GetCompareExchangeValuesResponse } from "./CompareExchangeValueResultParser";
+import {HttpRequestParameters} from "../../../Primitives/Http";
+import {IOperation, OperationResultType} from "../OperationAbstractions";
+import {CompareExchangeValue} from "./CompareExchangeValue";
+import {RavenCommand} from "../../../Http/RavenCommand";
+import {HttpCache} from "../../../Http/HttpCache";
+import {DocumentConventions} from "../../Conventions/DocumentConventions";
+import {IDocumentStore} from "../../IDocumentStore";
+import {throwError} from "../../../Exceptions";
+import {ServerNode} from "../../../Http/ServerNode";
+import {ClassConstructor} from "../../../Types";
+import {CompareExchangeValueResultParser, GetCompareExchangeValuesResponse} from "./CompareExchangeValueResultParser";
 import * as stream from "readable-stream";
 
 export class GetCompareExchangeValueOperation<T> implements IOperation<CompareExchangeValue<T>> {
@@ -56,7 +56,7 @@ export class GetCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
 
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/cmpxchg?key=" + encodeURIComponent(this._key);
-        return { uri };
+        return {uri};
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {

@@ -1,5 +1,5 @@
-import { IndexInformation } from "../../Documents/Operations/IndexInformation";
-import { Size } from "../../Utility/SizeUtil";
+import {IndexInformation} from "../../Documents/Operations/IndexInformation";
+import {Size} from "../../Utility/SizeUtil";
 
 export interface DatabaseStatistics {
     lastDocEtag: number;

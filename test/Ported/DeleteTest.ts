@@ -1,10 +1,10 @@
 import * as assert from "assert";
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import {testContext, disposeTestDocumentStore} from "../Utils/TestUtil";
 
 import {
     IDocumentStore,
 } from "../../src";
-import { User } from "../Assets/Entities";
+import {User} from "../Assets/Entities";
 
 describe("session.delete()", function () {
 
@@ -19,7 +19,7 @@ describe("session.delete()", function () {
 
     it("can delete document by entity", async () => {
         const session = store.openSession();
-        let user: User = Object.assign(new User(), { name: "RavenDB" });
+        let user: User = Object.assign(new User(), {name: "RavenDB"});
         await session.store(user, "users/1");
         await session.saveChanges();
 
@@ -37,7 +37,7 @@ describe("session.delete()", function () {
 
     it("can delete document by id", async () => {
         const session = store.openSession();
-        let user: User = Object.assign(new User(), { name: "RavenDB" });
+        let user: User = Object.assign(new User(), {name: "RavenDB"});
         await session.store(user, "users/1");
         await session.saveChanges();
 

@@ -1,9 +1,9 @@
-import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
-import { throwError } from "../../../Exceptions";
-import { RavenCommand } from "../../../Http/RavenCommand";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { ServerNode } from "../../..";
-import { HttpRequestParameters } from "../../../Primitives/Http";
+import {IMaintenanceOperation, OperationResultType} from "../OperationAbstractions";
+import {throwError} from "../../../Exceptions";
+import {RavenCommand} from "../../../Http/RavenCommand";
+import {DocumentConventions} from "../../Conventions/DocumentConventions";
+import {ServerNode} from "../../..";
+import {HttpRequestParameters} from "../../../Primitives/Http";
 import * as stream from "readable-stream";
 
 export class GetTermsOperation implements IMaintenanceOperation<string[]> {
@@ -71,7 +71,7 @@ export class GetTermsCommand extends RavenCommand<string[]> {
             encodeURIComponent(this._indexName) + "&field=" + encodeURIComponent(this._field) +
             "&fromValue=" + (this._fromValue || "") + "&pageSize=" + (this._pageSize || "");
 
-        return { uri };
+        return {uri};
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {

@@ -1,6 +1,6 @@
-import { GetRequest } from "../../../Commands/MultiGet/GetRequest";
-import { GetResponse } from "../../../Commands/MultiGet/GetResponse";
-import { QueryResult } from "../../../../Documents/Queries/QueryResult";
+import {GetRequest} from "../../../Commands/MultiGet/GetRequest";
+import {GetResponse} from "../../../Commands/MultiGet/GetResponse";
+import {QueryResult} from "../../../../Documents/Queries/QueryResult";
 
 export interface ILazyOperation {
     result: any;
@@ -8,5 +8,6 @@ export interface ILazyOperation {
     requiresRetry: boolean;
 
     createRequest(): GetRequest;
+
     handleResponseAsync(response: GetResponse): Promise<void>;
 }

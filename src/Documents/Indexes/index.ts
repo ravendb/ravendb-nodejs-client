@@ -1,12 +1,12 @@
 import * as BluebirdPromise from "bluebird";
 import {FieldStorage, FieldIndexing, FieldTermVector, IndexPriority, IndexLockMode} from "./Enums";
-import { SpatialOptions, SpatialOptionsFactory } from "./Spatial";
-import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { IndexDefinition, IndexDefinitionBuilder } from "./IndexDefinition";
-import { IDocumentStore } from "../IDocumentStore";
-import { CONSTANTS } from "../../Constants";
-import { PutIndexesOperation } from "../Operations/Indexes/PutIndexesOperation";
-import { throwError } from "../../Exceptions";
+import {SpatialOptions, SpatialOptionsFactory} from "./Spatial";
+import {DocumentConventions} from "../Conventions/DocumentConventions";
+import {IndexDefinition, IndexDefinitionBuilder} from "./IndexDefinition";
+import {IDocumentStore} from "../IDocumentStore";
+import {CONSTANTS} from "../../Constants";
+import {PutIndexesOperation} from "../Operations/Indexes/PutIndexesOperation";
+import {throwError} from "../../Exceptions";
 
 export abstract class AbstractIndexCreationTask {
 
@@ -110,7 +110,9 @@ export abstract class AbstractIndexCreationTask {
 
                 return store.maintenance.forDatabase(database || store.database)
                     .send(new PutIndexesOperation(indexDefinition))
-                    .then(() => { return; });
+                    .then(() => {
+                        return;
+                    });
             })
             .finally(() => this.conventions = oldConventions);
 
@@ -183,7 +185,7 @@ export class AbstractMultiMapIndexCreationTask extends AbstractIndexCreationTask
         this.maps.push(map);
     }
 
-    public createIndexDefinition(): IndexDefinition  {
+    public createIndexDefinition(): IndexDefinition {
         if (!this.conventions) {
             this.conventions = new DocumentConventions();
         }

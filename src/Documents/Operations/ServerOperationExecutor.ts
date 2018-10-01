@@ -1,12 +1,13 @@
-import { IDisposable } from "../../Types/Contracts";
-import { DocumentStoreBase } from "../DocumentStoreBase";
-import { IServerOperation, AwaitableServerOperation, OperationIdResult } from "./OperationAbstractions";
-import { ClusterRequestExecutor } from "../../Http/ClusterRequestExecutor";
-import { RavenCommand } from "../../Http/RavenCommand";
-import { ServerWideOperationCompletionAwaiter } from "../../ServerWide/Operations/ServerWideOperationCompletionAwaiter";
-import { getLogger } from "../../Utility/LogUtil";
+import {IDisposable} from "../../Types/Contracts";
+import {DocumentStoreBase} from "../DocumentStoreBase";
+import {IServerOperation, AwaitableServerOperation, OperationIdResult} from "./OperationAbstractions";
+import {ClusterRequestExecutor} from "../../Http/ClusterRequestExecutor";
+import {RavenCommand} from "../../Http/RavenCommand";
+import {ServerWideOperationCompletionAwaiter} from "../../ServerWide/Operations/ServerWideOperationCompletionAwaiter";
+import {getLogger} from "../../Utility/LogUtil";
 
-const log = getLogger({ module: "ServerOperationExecutor" });
+const log = getLogger({module: "ServerOperationExecutor"});
+
 export class ServerOperationExecutor implements IDisposable {
 
     private _store: DocumentStoreBase;
@@ -14,17 +15,17 @@ export class ServerOperationExecutor implements IDisposable {
 
     public constructor(store: DocumentStoreBase) {
         this._store = store;
-        this._requestExecutor = store.conventions.disableTopologyUpdates 
-                ? ClusterRequestExecutor.createForSingleNode(store.urls[0], { 
-                    authOptions: store.authOptions, 
-                    documentConventions: store.conventions 
-                }) 
-                : ClusterRequestExecutor.create(store.urls, {
-                    documentConventions: store.conventions
-                });
+        this._requestExecutor = store.conventions.disableTopologyUpdates
+            ? ClusterRequestExecutor.createForSingleNode(store.urls[0], {
+                authOptions: store.authOptions,
+                documentConventions: store.conventions
+            })
+            : ClusterRequestExecutor.create(store.urls, {
+                documentConventions: store.conventions
+            });
 
-        store.once("afterDispose", 
-            (callback) => { 
+        store.once("afterDispose",
+            (callback) => {
                 log.info("Dispose request executor.");
                 this._requestExecutor.dispose();
                 callback();

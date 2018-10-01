@@ -1,8 +1,8 @@
 import * as stream from "readable-stream";
-import { RavenCommand } from "../../Http/RavenCommand";
-import { ServerNode } from "../../Http/ServerNode";
-import { Topology } from "../../Http/Topology";
-import { HttpRequestParameters } from "../../Primitives/Http";
+import {RavenCommand} from "../../Http/RavenCommand";
+import {ServerNode} from "../../Http/ServerNode";
+import {Topology} from "../../Http/Topology";
+import {HttpRequestParameters} from "../../Primitives/Http";
 
 interface ServerNodeDto {
     database: string;
@@ -27,7 +27,7 @@ export class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
             uri += "&localUrl=" + encodeURIComponent(node.url);
         }
 
-        return { uri };
+        return {uri};
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {

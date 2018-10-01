@@ -1,4 +1,4 @@
-import { CommandType } from "./Commands/CommandData";
+import {CommandType} from "./Commands/CommandData";
 
 export class IdTypeAndName {
     private id: string;
@@ -9,19 +9,19 @@ export class IdTypeAndName {
         if (this === o) {
             return true;
         }
-        
-        if (!o || this.constructor !== o.constructor) { 
-            return false; 
+
+        if (!o || this.constructor !== o.constructor) {
+            return false;
         }
 
         const that = o as IdTypeAndName;
 
         if (this.id ? this.id === that.id : !!that.id) {
-             return false;
+            return false;
         }
 
-        if (this.type !== that.type) { 
-            return false; 
+        if (this.type !== that.type) {
+            return false;
         }
 
         return this.name ? this.name === that.name : !!that.name;
@@ -29,7 +29,7 @@ export class IdTypeAndName {
 
     public static create(id: string, type: CommandType, name: string): IdTypeAndName {
         const idTypeAndName = new IdTypeAndName();
-        return Object.assign(idTypeAndName, { id, type, name });
+        return Object.assign(idTypeAndName, {id, type, name});
     }
 
     public key() {

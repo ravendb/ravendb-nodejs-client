@@ -1,10 +1,10 @@
-import { InMemoryDocumentSessionOperations } from "../InMemoryDocumentSessionOperations";
-import { GetDocumentsCommand, GetDocumentsResult } from "../../Commands/GetDocumentsCommand";
-import { StartingWithOptions } from "../IDocumentSession";
-import { DocumentInfo } from "../DocumentInfo";
-import { DocumentType } from "../../DocumentAbstractions";
-import { ObjectTypeDescriptor } from "../../..";
-import { TypeUtil } from "../../../Utility/TypeUtil";
+import {InMemoryDocumentSessionOperations} from "../InMemoryDocumentSessionOperations";
+import {GetDocumentsCommand, GetDocumentsResult} from "../../Commands/GetDocumentsCommand";
+import {StartingWithOptions} from "../IDocumentSession";
+import {DocumentInfo} from "../DocumentInfo";
+import {DocumentType} from "../../DocumentAbstractions";
+import {ObjectTypeDescriptor} from "../../..";
+import {TypeUtil} from "../../../Utility/TypeUtil";
 
 export class LoadStartingWithOperation {
 
@@ -31,16 +31,16 @@ export class LoadStartingWithOperation {
         this._session = session;
     }
 
-    public createRequest(): GetDocumentsCommand  {
+    public createRequest(): GetDocumentsCommand {
         this._session.incrementRequestCount();
 
         return new GetDocumentsCommand({
-            startsWith: this._startWith, 
-            startsAfter: this._startAfter, 
-            matches: this._matches, 
-            exclude: this._exclude, 
-            start: this._start, 
-            pageSize: this._pageSize, 
+            startsWith: this._startWith,
+            startsAfter: this._startAfter,
+            matches: this._matches,
+            exclude: this._exclude,
+            start: this._start,
+            pageSize: this._pageSize,
             metadataOnly: false,
             conventions: this._session.conventions
         });
@@ -49,7 +49,7 @@ export class LoadStartingWithOperation {
     public withStartWith(idPrefix: string, opts: StartingWithOptions): void {
         const optsToUse: StartingWithOptions = Object.keys(LoadStartingWithOperation.DEFAULT)
             .reduce((result, next) => {
-                result[next] = TypeUtil.isNullOrUndefined(opts[next]) 
+                result[next] = TypeUtil.isNullOrUndefined(opts[next])
                     ? LoadStartingWithOperation.DEFAULT[next]
                     : opts[next];
                 return result;
@@ -75,7 +75,7 @@ export class LoadStartingWithOperation {
         const entityType = this._session.conventions.findEntityType<T>(docType);
         return this._returnedIds.reduce((result, id) => {
             const doc = this._getDocument(entityType, id);
-            return [ ...result, doc ];
+            return [...result, doc];
         }, []);
     }
 

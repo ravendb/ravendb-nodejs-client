@@ -1,5 +1,5 @@
-import { IndexState, IndexPriority, IndexLockMode, IndexType } from "./Enums";
-import { IndexRunningStatus } from "./IndexingStatus";
+import {IndexState, IndexPriority, IndexLockMode, IndexType} from "./Enums";
+import {IndexRunningStatus} from "./IndexingStatus";
 
 export interface IndexStats {
     name: string;
@@ -25,7 +25,7 @@ export interface IndexStats {
     entriesCount: number;
     errorsCount: number;
     isTestIndex: boolean;
-} 
+}
 
 export class CollectionStats {
     public lastProcessedDocumentEtag: number;

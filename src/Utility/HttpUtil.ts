@@ -1,7 +1,7 @@
-import { Response as HttpResponse } from "request";
-import { HEADERS} from "../Constants";
-import { IncomingHttpHeaders } from "http";
-import { throwError } from "../Exceptions";
+import {Response as HttpResponse} from "request";
+import {HEADERS} from "../Constants";
+import {IncomingHttpHeaders} from "http";
+import {throwError} from "../Exceptions";
 
 export function getRequiredEtagHeader(response: HttpResponse) {
     let etagHeader = response.caseless.get(HEADERS.ETAG);
@@ -50,7 +50,7 @@ export function getBooleanHeader(response: HttpResponse, header: string): boolea
         headerVal = (headerVal[0] || null);
     }
 
-    return headerVal 
+    return headerVal
         ? (headerVal as string).toLowerCase() === "true"
         : null;
 }

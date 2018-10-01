@@ -1,8 +1,8 @@
-import { IServerOperation, OperationResultType } from "../../Documents/Operations/OperationAbstractions";
-import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
-import { DocumentConventions } from "../..";
-import { ServerNode } from "../../Http/ServerNode";
-import { HttpRequestParameters } from "../../Primitives/Http";
+import {IServerOperation, OperationResultType} from "../../Documents/Operations/OperationAbstractions";
+import {RavenCommand, IRavenResponse} from "../../Http/RavenCommand";
+import {DocumentConventions} from "../..";
+import {ServerNode} from "../../Http/ServerNode";
+import {HttpRequestParameters} from "../../Primitives/Http";
 import * as stream from "readable-stream";
 
 export class GetDatabaseNamesOperation implements IServerOperation<string[]> {

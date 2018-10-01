@@ -1,6 +1,6 @@
 import * as assert from "assert";
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
-import { User } from "../Assets/Entities";
+import {testContext, disposeTestDocumentStore} from "../Utils/TestUtil";
+import {User} from "../Assets/Entities";
 
 import {
     IDocumentStore,
@@ -15,13 +15,13 @@ describe("[RDBC-230] DocumentInfo", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("does deep copy for document to entity", async () => {
         const user = new User();
         user["numbers"] = [66];
-        user["stuff"] = { pet: "Sonia" };
+        user["stuff"] = {pet: "Sonia"};
 
         {
             const session = store.openSession();

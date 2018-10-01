@@ -1,11 +1,11 @@
-import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
-import { TypeUtil } from "../../../Utility/TypeUtil";
-import { throwError } from "../../../Exceptions";
-import { RavenCommand } from "../../../Http/RavenCommand";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { IndexPriority } from "../../Indexes/Enums";
-import { ServerNode } from "../../../Http/ServerNode";
-import { HttpRequestParameters } from "../../../Primitives/Http";
+import {IMaintenanceOperation, OperationResultType} from "../OperationAbstractions";
+import {TypeUtil} from "../../../Utility/TypeUtil";
+import {throwError} from "../../../Exceptions";
+import {RavenCommand} from "../../../Http/RavenCommand";
+import {DocumentConventions} from "../../Conventions/DocumentConventions";
+import {IndexPriority} from "../../Indexes/Enums";
+import {ServerNode} from "../../../Http/ServerNode";
+import {HttpRequestParameters} from "../../../Primitives/Http";
 
 export class SetIndexesPriorityOperation implements IMaintenanceOperation<void> {
 
@@ -42,7 +42,7 @@ export class SetIndexesPriorityOperation implements IMaintenanceOperation<void> 
     public getCommand(conventions: DocumentConventions): RavenCommand<void> {
         return new SetIndexPriorityCommand(conventions, this._parameters);
     }
-    
+
     public get resultType(): OperationResultType {
         return "CommandResult";
     }

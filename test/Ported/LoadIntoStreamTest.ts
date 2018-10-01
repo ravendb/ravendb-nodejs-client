@@ -1,11 +1,11 @@
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import {testContext, disposeTestDocumentStore} from "../Utils/TestUtil";
 
 import {
     IDocumentStore,
 } from "../../src";
 import * as assert from "assert";
-import { getStringWritable } from "../Utils/Streams";
-import { parseJsonVerbose } from "../Utils/Json";
+import {getStringWritable} from "../Utils/Streams";
+import {parseJsonVerbose} from "../Utils/Json";
 import * as stream from "readable-stream";
 
 class Employee {

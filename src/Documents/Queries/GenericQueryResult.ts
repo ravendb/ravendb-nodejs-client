@@ -1,4 +1,4 @@
-import { QueryResultBase } from "./QueryResultBase";
+import {QueryResultBase} from "./QueryResultBase";
 
 export class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TResult, TIncludes> {
 

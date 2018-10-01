@@ -1,8 +1,8 @@
-import { VError } from "verror";
-import { closeHttpResponse } from "./../Utility/HttpUtil";
-import { StatusCodes } from "../Http/StatusCode";
-import { HttpResponse } from "../Primitives/Http";
-import { JsonSerializer } from "../Mapping/Json/Serializer";
+import {VError} from "verror";
+import {closeHttpResponse} from "./../Utility/HttpUtil";
+import {StatusCodes} from "../Http/StatusCode";
+import {HttpResponse} from "../Primitives/Http";
+import {JsonSerializer} from "../Mapping/Json/Serializer";
 
 export function printError(err: Error): string {
     return VError.fullStack(err);
@@ -136,12 +136,13 @@ export interface ExceptionDispatcherArgs {
     error?: string;
     type?: string;
 }
+
 export class ExceptionDispatcher {
 
     private static _jsonSerializer: JsonSerializer = JsonSerializer.getDefaultForCommandPayload();
 
     public static get(opts: ExceptionDispatcherArgs, code: number): Error {
-        const { message, error, type } = opts;
+        const {message, error, type} = opts;
         if (code === StatusCodes.Conflict) {
             if (type.indexOf("DocumentConflictException") !== -1) {
                 return getError("DocumentConflictException", message);
@@ -182,7 +183,7 @@ export class ExceptionDispatcher {
 
     private static _getConflictError(schema: ExceptionSchema, json: string) {
         if (schema.type.includes("DocumentConflictException")) {
-            return getError("DocumentConflictException", schema.message, null, { json });
+            return getError("DocumentConflictException", schema.message, null, {json});
         }
 
         return getError("ConcurrencyException", schema.message);

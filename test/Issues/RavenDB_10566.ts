@@ -1,6 +1,6 @@
 import * as assert from "assert";
-import { User } from "../Assets/Entities";
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import {User} from "../Assets/Entities";
+import {testContext, disposeTestDocumentStore} from "../Utils/TestUtil";
 
 import {
     IDocumentStore,
@@ -14,7 +14,7 @@ describe("RavenDB-10566", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("should be available", async () => {

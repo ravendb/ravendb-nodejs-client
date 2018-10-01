@@ -1,9 +1,9 @@
-import { ConcurrencyCheckMode, } from "./IDocumentSession";
-import { IMetadataDictionary } from "./IMetadataDictionary";
-import { IRavenObject } from "../../Types/IRavenObject";
-import { CONSTANTS } from "../../Constants";
-import { throwError } from "../../Exceptions";
-import { TypeUtil } from "../../Utility/TypeUtil";
+import {ConcurrencyCheckMode,} from "./IDocumentSession";
+import {IMetadataDictionary} from "./IMetadataDictionary";
+import {IRavenObject} from "../../Types/IRavenObject";
+import {CONSTANTS} from "../../Constants";
+import {throwError} from "../../Exceptions";
+import {TypeUtil} from "../../Utility/TypeUtil";
 
 export class DocumentInfo {
 

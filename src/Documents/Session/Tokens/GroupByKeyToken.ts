@@ -1,4 +1,4 @@
-import { QueryToken } from "./QueryToken";
+import {QueryToken} from "./QueryToken";
 
 export class GroupByKeyToken extends QueryToken {
 
@@ -23,7 +23,7 @@ export class GroupByKeyToken extends QueryToken {
         }
 
         writer
-                .append(" as ")
-                .append(this._projectedName);
+            .append(" as ")
+            .append(this._projectedName);
     }
 }

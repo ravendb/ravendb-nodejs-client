@@ -1,11 +1,12 @@
-import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
-import { IndexDefinition } from "../../Indexes/IndexDefinition";
-import { throwError } from "../../../Exceptions";
-import { RavenCommand } from "../../../Http/RavenCommand";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { HttpRequestParameters } from "../../../Primitives/Http";
-import { ServerNode } from "../../../Http/ServerNode";
+import {IMaintenanceOperation, OperationResultType} from "../OperationAbstractions";
+import {IndexDefinition} from "../../Indexes/IndexDefinition";
+import {throwError} from "../../../Exceptions";
+import {RavenCommand} from "../../../Http/RavenCommand";
+import {DocumentConventions} from "../../Conventions/DocumentConventions";
+import {HttpRequestParameters} from "../../../Primitives/Http";
+import {ServerNode} from "../../../Http/ServerNode";
 import * as stream from "readable-stream";
+
 export class GetIndexOperation implements IMaintenanceOperation<IndexDefinition> {
 
     private readonly _indexName: string;
@@ -44,7 +45,7 @@ export class GetIndexCommand extends RavenCommand<IndexDefinition> {
         const uri = node.url + "/databases/" + node.database + "/indexes?name="
             + encodeURIComponent(this._indexName);
 
-        return { uri };
+        return {uri};
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
@@ -58,7 +59,7 @@ export class GetIndexCommand extends RavenCommand<IndexDefinition> {
             .parseJsonSync()
             .streamKeyCaseTransform({
                 defaultTransform: "camel",
-                ignorePaths:  [ /fields\.[^.]+$/i ]
+                ignorePaths: [/fields\.[^.]+$/i]
             })
             .process(bodyStream)
             .then((result: object) => {
@@ -72,7 +73,7 @@ export class GetIndexCommand extends RavenCommand<IndexDefinition> {
                 const allResults = this._reviveResultTypes(result, indexDefTypeInfo, knownTypes);
                 this.result = allResults["results"][0] || null;
             });
-            
+
         return body;
     }
 

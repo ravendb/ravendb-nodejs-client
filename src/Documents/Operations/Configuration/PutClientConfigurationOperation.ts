@@ -1,10 +1,10 @@
-import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
-import { ClientConfiguration } from "./ClientConfiguration";
-import { throwError } from "../../../Exceptions";
-import { RavenCommand, RavenCommandResponseType } from "../../../Http/RavenCommand";
-import { DocumentConventions } from "../../..";
-import { HttpRequestParameters } from "../../../Primitives/Http";
-import { ServerNode } from "../../../Http/ServerNode";
+import {IMaintenanceOperation, OperationResultType} from "../OperationAbstractions";
+import {ClientConfiguration} from "./ClientConfiguration";
+import {throwError} from "../../../Exceptions";
+import {RavenCommand, RavenCommandResponseType} from "../../../Http/RavenCommand";
+import {DocumentConventions} from "../../..";
+import {HttpRequestParameters} from "../../../Primitives/Http";
+import {ServerNode} from "../../../Http/ServerNode";
 
 export class PutClientConfigurationOperation implements IMaintenanceOperation<void> {
     private readonly _configuration: ClientConfiguration;

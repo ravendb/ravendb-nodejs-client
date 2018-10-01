@@ -1,4 +1,4 @@
-import { DynamicSpatialField } from "./DynamicSpatialField";
+import {DynamicSpatialField} from "./DynamicSpatialField";
 
 export class WktField extends DynamicSpatialField {
     public wkt: string;

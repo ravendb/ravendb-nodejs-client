@@ -1,5 +1,5 @@
 import * as stream from "readable-stream";
-import { HttpResponse } from "../../Primitives/Http";
+import {HttpResponse} from "../../Primitives/Http";
 
 export interface StreamResultResponse {
     response: HttpResponse;

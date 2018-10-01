@@ -1,36 +1,42 @@
 import {IDocumentSession, ISessionOptions} from "./Session/IDocumentSession";
-import { IStoreAuthOptions } from "../Auth/AuthOptions";
-import { 
-    SessionBeforeStoreEventArgs, 
-    SessionAfterSaveChangesEventArgs, 
-    SessionBeforeQueryEventArgs, 
-    SessionBeforeDeleteEventArgs 
+import {IStoreAuthOptions} from "../Auth/AuthOptions";
+import {
+    SessionBeforeStoreEventArgs,
+    SessionAfterSaveChangesEventArgs,
+    SessionBeforeQueryEventArgs,
+    SessionBeforeDeleteEventArgs
 } from "./Session/SessionEvents";
-import { IDisposable } from "../Types/Contracts";
-import { Todo } from "../Types";
-import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor";
-import { OperationExecutor} from "./Operations/OperationExecutor";
-import { AbstractIndexCreationTask } from "./Indexes";
-import { RequestExecutor } from "../Http/RequestExecutor";
-import { DocumentConventions } from "./Conventions/DocumentConventions";
-import { InMemoryDocumentSessionOperations } from "./Session/InMemoryDocumentSessionOperations";
+import {IDisposable} from "../Types/Contracts";
+import {Todo} from "../Types";
+import {MaintenanceOperationExecutor} from "./Operations/MaintenanceOperationExecutor";
+import {OperationExecutor} from "./Operations/OperationExecutor";
+import {AbstractIndexCreationTask} from "./Indexes";
+import {RequestExecutor} from "../Http/RequestExecutor";
+import {DocumentConventions} from "./Conventions/DocumentConventions";
+import {InMemoryDocumentSessionOperations} from "./Session/InMemoryDocumentSessionOperations";
 import {BulkInsertOperation} from "./BulkInsertOperation";
 import {IDatabaseChanges} from "./Changes/IDatabaseChanges";
 
 export interface SessionEventsProxy {
     addSessionListener(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
+
     addSessionListener(eventName: "afterSaveChanges", eventHandler: (eventArgs: Todo) => void): this;
+
     addSessionListener(eventName: "beforeQuery", eventHandler: (eventArgs: Todo) => void): this;
+
     addSessionListener(eventName: "beforeDelete", eventHandler: (eventArgs: Todo) => void): this;
 
     removeSessionListener(
-      eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): void;
+        eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): void;
+
     removeSessionListener(
-      eventName: "afterSaveChanges", eventHandler: (eventArgs: Todo) => void): void;
+        eventName: "afterSaveChanges", eventHandler: (eventArgs: Todo) => void): void;
+
     removeSessionListener(
-      eventName: "beforeQuery", eventHandler: (eventArgs: Todo) => void): void;
+        eventName: "beforeQuery", eventHandler: (eventArgs: Todo) => void): void;
+
     removeSessionListener(
-      eventName: "beforeDelete", eventHandler: (eventArgs: Todo) => void): void;
+        eventName: "beforeDelete", eventHandler: (eventArgs: Todo) => void): void;
 }
 
 export type DocumentStoreEvent = "beforeDispose" | "afterDispose";
@@ -42,18 +48,27 @@ export interface SessionCreatedEventArgs {
 export interface DocumentStoreEventEmitter {
 
     on(eventName: "sessionCreated", eventHandler: (args: SessionCreatedEventArgs) => void): this;
+
     on(eventName: "beforeDispose", eventHandler: () => void): this;
+
     on(eventName: "afterDispose", eventHandler: (callback: () => void) => void): this;
+
     on(eventName: "executorsDisposed", eventHandler: (callback: () => void) => void): this;
 
     once(eventName: "sessionCreated", eventHandler: (args: SessionCreatedEventArgs) => void): this;
+
     once(eventName: "beforeDispose", eventHandler: () => void): this;
+
     once(eventName: "afterDispose", eventHandler: (callback: () => void) => void): this;
+
     once(eventName: "executorsDisposed", eventHandler: (callback: () => void) => void): this;
 
     removeListener(eventName: "sessionCreated", eventHandler: (args: SessionCreatedEventArgs) => void): void;
+
     removeListener(eventName: "beforeDispose", eventHandler: () => void): void;
+
     removeListener(eventName: "afterDispose", eventHandler: (callback: () => void) => void): void;
+
     removeListener(eventName: "executorsDisposed", eventHandler: (callback: () => void) => void): void;
 }
 

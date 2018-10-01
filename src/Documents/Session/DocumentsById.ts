@@ -1,10 +1,10 @@
-import { DocumentInfo } from "./DocumentInfo";
+import {DocumentInfo} from "./DocumentInfo";
 
 function normalizeId(id: string) {
     if (!id) {
         return null;
     }
-    
+
     return id.toLowerCase();
 }
 
@@ -28,7 +28,7 @@ export class DocumentsById {
         this._inner.set(normalizeId(info.id), info);
     }
 
-    public remove(id: string): boolean  {
+    public remove(id: string): boolean {
         return this._inner.delete(normalizeId(id));
     }
 

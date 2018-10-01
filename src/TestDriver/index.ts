@@ -1,23 +1,23 @@
 import * as BluebirdPromise from "bluebird";
-import { ChildProcess, spawn } from "child_process";
+import {ChildProcess, spawn} from "child_process";
 import * as os from "os";
-import { MultiError } from "verror";
+import {MultiError} from "verror";
 
-import { CONSTANTS } from "../Constants";
-import { DocumentStore } from "../Documents/DocumentStore";
-import { IDocumentStore } from "../Documents/IDocumentStore";
-import { DatabaseStatistics } from "../Documents/Operations/DatabaseStatistics";
-import { GetStatisticsOperation } from "../Documents/Operations/GetStatisticsOperation";
-import { throwError, getError } from "../Exceptions";
-import { DatabaseRecord } from "../ServerWide";
-import { CreateDatabaseOperation } from "../ServerWide/Operations/CreateDatabaseOperation";
-import { DeleteDatabasesOperation } from "../ServerWide/Operations/DeleteDatabasesOperation";
-import { Todo } from "../Types";
-import { IDisposable } from "../Types/Contracts";
-import { getLogger } from "../Utility/LogUtil";
-import { RavenServerLocator } from "./RavenServerLocator";
-import { RavenServerRunner } from "./RavenServerRunner";
-import { TypeUtil } from "../Utility/TypeUtil";
+import {CONSTANTS} from "../Constants";
+import {DocumentStore} from "../Documents/DocumentStore";
+import {IDocumentStore} from "../Documents/IDocumentStore";
+import {DatabaseStatistics} from "../Documents/Operations/DatabaseStatistics";
+import {GetStatisticsOperation} from "../Documents/Operations/GetStatisticsOperation";
+import {throwError, getError} from "../Exceptions";
+import {DatabaseRecord} from "../ServerWide";
+import {CreateDatabaseOperation} from "../ServerWide/Operations/CreateDatabaseOperation";
+import {DeleteDatabasesOperation} from "../ServerWide/Operations/DeleteDatabasesOperation";
+import {Todo} from "../Types";
+import {IDisposable} from "../Types/Contracts";
+import {getLogger} from "../Utility/LogUtil";
+import {RavenServerLocator} from "./RavenServerLocator";
+import {RavenServerRunner} from "./RavenServerRunner";
+import {TypeUtil} from "../Utility/TypeUtil";
 import {RevisionsConfiguration} from "../Documents/Operations/RevisionsConfiguration";
 import {RevisionsCollectionConfiguration} from "../Documents/Operations/RevisionsCollectionConfiguration";
 import {
@@ -25,7 +25,7 @@ import {
     ConfigureRevisionsOperationResult
 } from "../Documents/Operations/Revisions/ConfigureRevisionsOperation";
 
-const log = getLogger({ module: "TestDriver" });
+const log = getLogger({module: "TestDriver"});
 
 export abstract class RavenTestDriver implements IDisposable {
 
@@ -55,8 +55,8 @@ export abstract class RavenTestDriver implements IDisposable {
 
     public static debug: boolean;
 
-    public getSecuredDocumentStore(): Promise<DocumentStore>; 
-    public getSecuredDocumentStore(database?): Promise<DocumentStore> { 
+    public getSecuredDocumentStore(): Promise<DocumentStore>;
+    public getSecuredDocumentStore(database?): Promise<DocumentStore> {
         return this.getDocumentStore(database, true, null);
     }
 
@@ -98,7 +98,7 @@ export abstract class RavenTestDriver implements IDisposable {
     public getDocumentStore(database: string): Promise<DocumentStore>;
     public getDocumentStore(database: string, secured: boolean): Promise<DocumentStore>;
     public getDocumentStore(
-        database: string, secured: boolean, waitForIndexingTimeoutInMs?: number): Promise<DocumentStore>; 
+        database: string, secured: boolean, waitForIndexingTimeoutInMs?: number): Promise<DocumentStore>;
     public getDocumentStore(
         database = "test_db", secured = false, waitForIndexingTimeoutInMs: number = null): Promise<DocumentStore> {
 
@@ -107,77 +107,77 @@ export abstract class RavenTestDriver implements IDisposable {
 
         let documentStore: IDocumentStore;
         return Promise.resolve()
-        .then(() => {
-            if (!this._getGlobalServer(secured)) {
-                return this._runServer(secured);
-            }
-        })
-        .then(() => {
-            documentStore = this._getGlobalServer(secured);
-            const databaseRecord: DatabaseRecord = { databaseName };
+            .then(() => {
+                if (!this._getGlobalServer(secured)) {
+                    return this._runServer(secured);
+                }
+            })
+            .then(() => {
+                documentStore = this._getGlobalServer(secured);
+                const databaseRecord: DatabaseRecord = {databaseName};
 
-            if (this._customizeDbRecord) {
-                this._customizeDbRecord(databaseRecord);
-            }
-
-            const createDatabaseOperation = new CreateDatabaseOperation(databaseRecord);
-            return documentStore.maintenance.server.send(createDatabaseOperation);
-        })
-        .then(async createDatabaseResult => {
-            const store = new DocumentStore(documentStore.urls, databaseName);
-            if (secured) {
-                store.authOptions = this._securedLocator.getClientAuthOptions();
-            }
-
-            if (this._customizeStore) {
-                await this._customizeStore(store);
-            }
-
-            store.initialize();
-
-            (store as IDocumentStore)
-            .once("afterDispose", (callback) => {
-                if (!this._documentStores.has(store)) {
-                    callback();
-                    return; 
+                if (this._customizeDbRecord) {
+                    this._customizeDbRecord(databaseRecord);
                 }
 
-                BluebirdPromise.resolve()
+                const createDatabaseOperation = new CreateDatabaseOperation(databaseRecord);
+                return documentStore.maintenance.server.send(createDatabaseOperation);
+            })
+            .then(async createDatabaseResult => {
+                const store = new DocumentStore(documentStore.urls, databaseName);
+                if (secured) {
+                    store.authOptions = this._securedLocator.getClientAuthOptions();
+                }
+
+                if (this._customizeStore) {
+                    await this._customizeStore(store);
+                }
+
+                store.initialize();
+
+                (store as IDocumentStore)
+                    .once("afterDispose", (callback) => {
+                        if (!this._documentStores.has(store)) {
+                            callback();
+                            return;
+                        }
+
+                        BluebirdPromise.resolve()
+                            .then(() => {
+                                return store.maintenance.server.send(new DeleteDatabasesOperation({
+                                    databaseNames: [store.database],
+                                    hardDelete: true
+                                }));
+                            })
+                            .tap((deleteResult) => {
+                                log.info(`Database ${store.database} deleted.`);
+                            })
+                            .catch(err => {
+                                if (err.name === "DatabaseDoesNotExistException"
+                                    || err.name === "NoLeaderException") {
+                                    return;
+                                }
+
+                                if (store.isDisposed() || !this._getGlobalProcess(secured)) {
+                                    return;
+                                }
+
+                                throwError("TestDriverTearDownError", `Error deleting database ${ store.database }.`, err);
+                            })
+                            .finally(() => callback());
+                    });
+
+                return Promise.resolve()
+                    .then(() => this._setupDatabase(store))
                     .then(() => {
-                        return store.maintenance.server.send(new DeleteDatabasesOperation({
-                            databaseNames: [ store.database ],
-                            hardDelete: true
-                        }));
-                    })
-                    .tap((deleteResult) => {
-                        log.info(`Database ${store.database} deleted.`);
-                    })
-                    .catch(err => {
-                        if (err.name === "DatabaseDoesNotExistException"
-                        || err.name === "NoLeaderException") {
-                            return;
+                        if (!TypeUtil.isNullOrUndefined(waitForIndexingTimeoutInMs)) {
+                            return this.waitForIndexing(store);
                         }
+                    })
+                    .then(() => this._documentStores.add(store))
+                    .then(() => store);
 
-                        if (store.isDisposed() || !this._getGlobalProcess(secured)) {
-                            return;
-                        }
-                        
-                        throwError("TestDriverTearDownError", `Error deleting database ${ store.database }.`, err);
-                    })
-                    .finally(() => callback());
             });
-
-            return Promise.resolve()
-                .then(() => this._setupDatabase(store))
-                .then(() => {
-                    if (!TypeUtil.isNullOrUndefined(waitForIndexingTimeoutInMs)) {
-                        return this.waitForIndexing(store);
-                    }
-                })
-                .then(() => this._documentStores.add(store))
-                .then(() => store);
-
-        });
     }
 
     protected _setupDatabase(documentStore: IDocumentStore): Promise<void> {
@@ -213,7 +213,9 @@ export abstract class RavenTestDriver implements IDisposable {
                             if (data) {
                                 resolve(data);
                             }
-                        } catch (err) { reject(err); }
+                        } catch (err) {
+                            reject(err);
+                        }
                     })
                     .on("error", (err) => reject(err));
             });
@@ -222,14 +224,14 @@ export abstract class RavenTestDriver implements IDisposable {
             return result
                 .timeout(5000)
                 .catch((err) => {
-                    throwError("UrlScrappingError", "Error scrapping URL from server process output: " 
+                    throwError("UrlScrappingError", "Error scrapping URL from server process output: "
                         + os.EOL + serverOutput, err);
                 });
         };
 
         return Promise.resolve()
-        .then(() => scrapServerUrl())
-        .catch((err) => {
+            .then(() => scrapServerUrl())
+            .catch((err) => {
 
                 try {
                     process.kill("SIGKILL");
@@ -240,7 +242,7 @@ export abstract class RavenTestDriver implements IDisposable {
                 throwError("InvalidOperationException", "Unable to start server.", err);
             })
             .then((serverUrl: string) => {
-                const store = new DocumentStore([ serverUrl ], "test.manager");
+                const store = new DocumentStore([serverUrl], "test.manager");
                 store.conventions.disableTopologyUpdates = true;
 
                 if (secured) {
@@ -276,18 +278,18 @@ export abstract class RavenTestDriver implements IDisposable {
                 resolve();
             }
         })
-        .timeout(2000)
-        .finally(() => {
-            if (p && !p.killed) {
-                log.info("Kill global server");
+            .timeout(2000)
+            .finally(() => {
+                if (p && !p.killed) {
+                    log.info("Kill global server");
 
-                try {
-                    p.kill();
-                } catch (err) {
-                    log.error(err);
+                    try {
+                        p.kill();
+                    } catch (err) {
+                        log.error(err);
+                    }
                 }
-            }
-        });
+            });
 
         if (store) {
             store.dispose();
@@ -316,9 +318,9 @@ export abstract class RavenTestDriver implements IDisposable {
     public waitForIndexing(
         store: IDocumentStore, database?: string, timeout?: number, throwOnIndexErrors?: boolean): Promise<void>;
     public waitForIndexing(
-        store: IDocumentStore, 
-        database?: string, 
-        timeout?: number, 
+        store: IDocumentStore,
+        database?: string,
+        timeout?: number,
         throwOnIndexErrors: boolean = true): Promise<void> {
         const admin = store.maintenance.forDatabase(database);
 
@@ -334,7 +336,7 @@ export abstract class RavenTestDriver implements IDisposable {
 
                     const errIndexes = indexes.filter(x => x.state === "Error");
                     if (errIndexes.length && throwOnIndexErrors) {
-                        throwError("IndexInvalidException", 
+                        throwError("IndexInvalidException",
                             `The following indexes are erroneous: ${errIndexes.map(x => x.name).join(", ")}`);
                     }
 
@@ -353,7 +355,7 @@ export abstract class RavenTestDriver implements IDisposable {
                             .delay(100)
                             .then(() => pollIndexingStatus());
                     } else {
-                        log.info("Done waiting for indexing."); 
+                        log.info("Done waiting for indexing.");
                     }
                 });
         };
@@ -361,7 +363,7 @@ export abstract class RavenTestDriver implements IDisposable {
         const result = BluebirdPromise.resolve(pollIndexingStatus())
             .timeout(timeout)
             .tapCatch((err) => {
-                log.warn(err, "Wait for indexing timeout.");  
+                log.warn(err, "Wait for indexing timeout.");
             });
 
         return Promise.resolve(result);
@@ -401,7 +403,7 @@ export abstract class RavenTestDriver implements IDisposable {
                 detached: true
             });
         } else {
-            spawn("xdg-open", [ url ], {
+            spawn("xdg-open", [url], {
                 detached: true
             });
         }
@@ -417,7 +419,7 @@ export abstract class RavenTestDriver implements IDisposable {
         this._disposed = true;
 
         const STORE_DISPOSAL_TIMEOUT = 10000;
-        const storeDisposalPromises = [ ...this._documentStores ].map((store) => {
+        const storeDisposalPromises = [...this._documentStores].map((store) => {
             return Promise.resolve()
                 .then(() => {
                     const result = new BluebirdPromise((resolve) => {
@@ -425,13 +427,13 @@ export abstract class RavenTestDriver implements IDisposable {
                             resolve();
                         });
                     })
-                    .timeout(STORE_DISPOSAL_TIMEOUT)
-                    .then(() => null);
+                        .timeout(STORE_DISPOSAL_TIMEOUT)
+                        .then(() => null);
 
                     store.dispose();
                     return result;
                 })
-                .catch((err: Error) => 
+                .catch((err: Error) =>
                     getError("TestDriverTeardownError", "Error disposing document store", err));
         });
 

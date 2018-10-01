@@ -1,14 +1,14 @@
 import {TypeUtil} from "../Utility/TypeUtil";
 import {DocumentInfo} from "../Documents/Session/DocumentInfo";
-import { DocumentsChanges, ChangeType } from "../Documents/Session/DocumentsChanges";
-import { CONSTANTS } from "../Constants";
-import { throwError } from "../Exceptions";
+import {DocumentsChanges, ChangeType} from "../Documents/Session/DocumentsChanges";
+import {CONSTANTS} from "../Constants";
+import {throwError} from "../Exceptions";
 
 export class JsonOperation {
 
     public static entityChanged(
-        newObj: object, 
-        documentInfo: DocumentInfo, 
+        newObj: object,
+        documentInfo: DocumentInfo,
         changes: { [id: string]: DocumentsChanges[] }): boolean {
 
         const docChanges: DocumentsChanges[] = changes ? [] : null;
@@ -27,10 +27,10 @@ export class JsonOperation {
     }
 
     private static _compareJson(
-        id: string, 
-        originalJson: object, 
-        newJson: object, 
-        changes: { [id: string]: DocumentsChanges[] }, 
+        id: string,
+        originalJson: object,
+        newJson: object,
+        changes: { [id: string]: DocumentsChanges[] },
         docChanges: DocumentsChanges[]): boolean {
         const newJsonProps: string[] = Object.keys(newJson);
         const oldJsonProps: string[] = Object.keys(originalJson);
@@ -49,10 +49,10 @@ export class JsonOperation {
         for (const prop of newJsonProps) {
 
             if (CONSTANTS.Documents.Metadata.LAST_MODIFIED === prop ||
-                    CONSTANTS.Documents.Metadata.COLLECTION === prop ||
-                    CONSTANTS.Documents.Metadata.CHANGE_VECTOR === prop ||
-                    CONSTANTS.Documents.Metadata.ID === prop ||
-                    CONSTANTS.Documents.Metadata.KEY === prop) {
+                CONSTANTS.Documents.Metadata.COLLECTION === prop ||
+                CONSTANTS.Documents.Metadata.CHANGE_VECTOR === prop ||
+                CONSTANTS.Documents.Metadata.ID === prop ||
+                CONSTANTS.Documents.Metadata.KEY === prop) {
                 continue;
             }
 
@@ -105,20 +105,20 @@ export class JsonOperation {
                     return true;
                 }
             } else if (TypeUtil.isObject(newProp)) {
-                    if (!oldProp) {
-                        if (!changes) {
-                            return true;
-                        }
-
-                        JsonOperation._newChange(prop, newProp, null, docChanges, "FieldChanged");
-                    } else {
-                        changed = JsonOperation._compareJson(
-                            id, oldProp as object, newProp as object, changes, docChanges);
-
-                        if (!changes && changed) {
-                            return true;
-                        }
+                if (!oldProp) {
+                    if (!changes) {
+                        return true;
                     }
+
+                    JsonOperation._newChange(prop, newProp, null, docChanges, "FieldChanged");
+                } else {
+                    changed = JsonOperation._compareJson(
+                        id, oldProp as object, newProp as object, changes, docChanges);
+
+                    if (!changes && changed) {
+                        return true;
+                    }
+                }
             } else {
                 throwError("InvalidArgumentException", `Unknown type of JSON property: ${typeOfNewProp}.`);
             }
@@ -137,11 +137,11 @@ export class JsonOperation {
     }
 
     private static _compareJsonArray(
-        id: string, 
-        oldArray: any[], 
-        newArray: any[], 
-        changes: { [id: string]: DocumentsChanges[] }, 
-        docChanges: DocumentsChanges[], 
+        id: string,
+        oldArray: any[],
+        newArray: any[],
+        changes: { [id: string]: DocumentsChanges[] },
+        docChanges: DocumentsChanges[],
         propName: string): boolean {
         // if we don't care about the changes
         if (oldArray.length !== newArray.length && !changes) {
@@ -168,7 +168,7 @@ export class JsonOperation {
                 }
             } else if (Array.isArray(oldArrayItem)) {
                 if (Array.isArray(newArrayItem)) {
-                    changed = changed 
+                    changed = changed
                         || this._compareJsonArray(id, oldArrayItem, newArrayItem, changes, docChanges, propName);
                 } else {
                     changed = true;

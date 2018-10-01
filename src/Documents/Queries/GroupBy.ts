@@ -1,4 +1,5 @@
 import {GroupByMethod} from "./GroupByMethod";
+
 export class GroupBy {
 
     private _field: string;

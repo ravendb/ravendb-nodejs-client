@@ -1,4 +1,4 @@
-import { PatchStatus } from "./PatchStatus";
+import {PatchStatus} from "./PatchStatus";
 
 export class PatchResult {
 

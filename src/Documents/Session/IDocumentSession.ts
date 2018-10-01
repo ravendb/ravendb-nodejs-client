@@ -1,14 +1,14 @@
-import { Lazy } from "../Lazy";
-import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { IDisposable } from "../../Types/Contracts";
-import { AbstractCallback } from "../../Types/Callbacks";
-import { RequestExecutor } from "../../Http/RequestExecutor";
-import { DocumentType } from "../DocumentAbstractions";
-import { EntitiesCollectionObject, ObjectTypeDescriptor } from "../../Types";
-import { IAdvancedSessionOperations} from "./IAdvancedSessionOperations";
-import { ILoaderWithInclude } from "./Loaders/ILoaderWithInclude";
-import { DocumentQueryOptions } from "./QueryOptions";
-import { IDocumentQuery } from "./IDocumentQuery";
+import {Lazy} from "../Lazy";
+import {DocumentConventions} from "../Conventions/DocumentConventions";
+import {IDisposable} from "../../Types/Contracts";
+import {AbstractCallback} from "../../Types/Callbacks";
+import {RequestExecutor} from "../../Http/RequestExecutor";
+import {DocumentType} from "../DocumentAbstractions";
+import {EntitiesCollectionObject, ObjectTypeDescriptor} from "../../Types";
+import {IAdvancedSessionOperations} from "./IAdvancedSessionOperations";
+import {ILoaderWithInclude} from "./Loaders/ILoaderWithInclude";
+import {DocumentQueryOptions} from "./QueryOptions";
+import {IDocumentQuery} from "./IDocumentQuery";
 
 export class SessionInfo {
     public sessionId: number;
@@ -19,6 +19,7 @@ export class SessionInfo {
 }
 
 export type ConcurrencyCheckMode = "Auto" | "Forced" | "Disabled";
+
 export interface IDocumentSession extends IDisposable {
 
     /**
@@ -33,48 +34,48 @@ export interface IDocumentSession extends IDisposable {
      * Loads entity with the specified id.
      */
     load<TEntity extends object>(
-        id: string, 
+        id: string,
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
 
     /**
      * Loads the entity with the specified id.
      */
     load<TEntity extends object>(
-        id: string, 
-        documentType?: DocumentType<TEntity>, 
+        id: string,
+        documentType?: DocumentType<TEntity>,
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
 
     /**
      * Loads the entity with the specified id.
      */
     load<TEntity extends object>(
-        id: string, 
-        options?: LoadOptions<TEntity>, 
+        id: string,
+        options?: LoadOptions<TEntity>,
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
 
     /**
      * Loads multiple entities with the specified ids.
      */
     load<TEntity extends object>(
-        ids: string[], 
+        ids: string[],
         callback?: AbstractCallback<EntitiesCollectionObject<TEntity>>): Promise<EntitiesCollectionObject<TEntity>>;
 
     /**
      * Loads multiple entities with the specified ids.
      */
     load<TEntity extends object>(
-        ids: string[], 
-        documentType?: DocumentType<TEntity>, 
-        callback?: AbstractCallback<TEntity>): 
+        ids: string[],
+        documentType?: DocumentType<TEntity>,
+        callback?: AbstractCallback<TEntity>):
         Promise<EntitiesCollectionObject<TEntity>>;
 
     /**
      * Loads multiple entities with the specified ids.
      */
     load<TEntity extends object>(
-        ids: string[], 
-        options?: LoadOptions<TEntity>, 
-        callback?: AbstractCallback<TEntity>): 
+        ids: string[],
+        options?: LoadOptions<TEntity>,
+        callback?: AbstractCallback<TEntity>):
         Promise<EntitiesCollectionObject<TEntity>>;
 
     /**
@@ -108,8 +109,8 @@ export interface IDocumentSession extends IDisposable {
      * Stores the specified dynamic entity, under the specified id.
      */
     store<TEntity extends object>(
-        document: TEntity, 
-        id?: string, 
+        document: TEntity,
+        id?: string,
         callback?: AbstractCallback<void>): Promise<void>;
 
     /**

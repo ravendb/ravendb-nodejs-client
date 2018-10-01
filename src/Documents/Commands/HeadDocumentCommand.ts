@@ -1,10 +1,10 @@
 import {StatusCodes} from "../../Http/StatusCode";
 import {HttpRequestParameters, HttpResponse} from "../../Primitives/Http";
-import {ResponseDisposeHandling, RavenCommand } from "../../Http/RavenCommand";
-import { throwError } from "../../Exceptions";
-import { HttpCache } from "../../Http/HttpCache";
-import { getRequiredEtagHeader } from "../../Utility/HttpUtil";
-import { ServerNode } from "../../Http/ServerNode";
+import {ResponseDisposeHandling, RavenCommand} from "../../Http/RavenCommand";
+import {throwError} from "../../Exceptions";
+import {HttpCache} from "../../Http/HttpCache";
+import {getRequiredEtagHeader} from "../../Utility/HttpUtil";
+import {ServerNode} from "../../Http/ServerNode";
 import * as stream from "readable-stream";
 
 export class HeadDocumentCommand extends RavenCommand<string> {
@@ -45,10 +45,10 @@ export class HeadDocumentCommand extends RavenCommand<string> {
     }
 
     public async processResponse(
-        cache: HttpCache, 
+        cache: HttpCache,
         response: HttpResponse,
-        bodyStream: stream.Readable, 
-        url: string): Promise<ResponseDisposeHandling>  {
+        bodyStream: stream.Readable,
+        url: string): Promise<ResponseDisposeHandling> {
         if (response.statusCode === StatusCodes.NotModified) {
             this.result = this._changeVector;
             return "Automatic";

@@ -1,10 +1,10 @@
 import * as stream from "readable-stream";
-import { IServerOperation, OperationResultType } from "../../Documents/Operations/OperationAbstractions";
-import { throwError } from "../../Exceptions";
-import { DocumentConventions } from "../..";
-import { RavenCommand } from "../../Http/RavenCommand";
-import { ServerNode } from "../../Http/ServerNode";
-import { HttpRequestParameters } from "../../Primitives/Http";
+import {IServerOperation, OperationResultType} from "../../Documents/Operations/OperationAbstractions";
+import {throwError} from "../../Exceptions";
+import {DocumentConventions} from "../..";
+import {RavenCommand} from "../../Http/RavenCommand";
+import {ServerNode} from "../../Http/ServerNode";
+import {HttpRequestParameters} from "../../Primitives/Http";
 
 export interface DeleteDatabaseResult {
     raftCommandIndex: number;

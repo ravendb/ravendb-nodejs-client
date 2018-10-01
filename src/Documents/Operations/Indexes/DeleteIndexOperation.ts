@@ -1,9 +1,9 @@
-import { HttpRequestParameters } from "../../../Primitives/Http";
-import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
-import { throwError } from "../../../Exceptions";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { RavenCommand } from "../../../Http/RavenCommand";
-import { ServerNode } from "../../../Http/ServerNode";
+import {HttpRequestParameters} from "../../../Primitives/Http";
+import {IMaintenanceOperation, OperationResultType} from "../OperationAbstractions";
+import {throwError} from "../../../Exceptions";
+import {DocumentConventions} from "../../Conventions/DocumentConventions";
+import {RavenCommand} from "../../../Http/RavenCommand";
+import {ServerNode} from "../../../Http/ServerNode";
 
 export class DeleteIndexOperation implements IMaintenanceOperation<void> {
     private readonly _indexName: string;
@@ -32,7 +32,7 @@ export class DeleteIndexCommand extends RavenCommand<void> {
         super();
 
         this._responseType = "Empty";
-        
+
         if (!indexName) {
             throwError("InvalidArgumentException", "Index name cannot be null.");
         }
@@ -43,7 +43,7 @@ export class DeleteIndexCommand extends RavenCommand<void> {
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database
             + "/indexes?name=" + encodeURIComponent(this._indexName);
-        return { method: "DELETE", uri };
+        return {method: "DELETE", uri};
     }
 
     public get isReadRequest() {

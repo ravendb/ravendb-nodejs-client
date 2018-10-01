@@ -1,4 +1,4 @@
-import { DocumentType } from "../DocumentAbstractions";
+import {DocumentType} from "../DocumentAbstractions";
 
 export interface DocumentQueryOptions<T extends object> {
     collection?: string;

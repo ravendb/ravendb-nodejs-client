@@ -1,10 +1,10 @@
-import { RavenCommand } from "../../Http/RavenCommand";
-import { throwError } from "../../Exceptions";
-import { ServerNode } from "../../Http/ServerNode";
-import { HttpRequestParameters } from "../../Primitives/Http";
-import { HeadersBuilder } from "../../Utility/HttpUtil";
+import {RavenCommand} from "../../Http/RavenCommand";
+import {throwError} from "../../Exceptions";
+import {ServerNode} from "../../Http/ServerNode";
+import {HttpRequestParameters} from "../../Primitives/Http";
+import {HeadersBuilder} from "../../Utility/HttpUtil";
 import * as stream from "readable-stream";
-import { JsonSerializer } from "../../Mapping/Json/Serializer";
+import {JsonSerializer} from "../../Mapping/Json/Serializer";
 
 export interface PutResult {
     id: string;

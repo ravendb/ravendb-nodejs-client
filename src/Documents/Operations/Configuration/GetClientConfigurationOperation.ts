@@ -1,10 +1,10 @@
 import * as stream from "readable-stream";
-import { ServerNode } from "../../../Http/ServerNode";
-import { RavenCommand } from "../../../Http/RavenCommand";
-import { HttpRequestParameters } from "../../../Primitives/Http";
-import { ClientConfiguration } from "../Configuration/ClientConfiguration";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
+import {ServerNode} from "../../../Http/ServerNode";
+import {RavenCommand} from "../../../Http/RavenCommand";
+import {HttpRequestParameters} from "../../../Primitives/Http";
+import {ClientConfiguration} from "../Configuration/ClientConfiguration";
+import {DocumentConventions} from "../../Conventions/DocumentConventions";
+import {IMaintenanceOperation, OperationResultType} from "../OperationAbstractions";
 
 export class GetClientConfigurationOperation implements IMaintenanceOperation<GetClientConfigurationOperationResult> {
 
@@ -29,7 +29,7 @@ export class GetClientConfigurationCommand extends RavenCommand<GetClientConfigu
 
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = `${ node.url }/databases/${ node.database }/configuration/client`;
-        return { uri };
+        return {uri};
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {

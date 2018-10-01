@@ -1,9 +1,10 @@
-import { DocumentConventions } from "../..";
-import { ServerNode } from "../../Http/ServerNode";
-import { HttpRequestParameters } from "../../Primitives/Http";
-import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
-import { IMaintenanceOperation, OperationResultType } from "./OperationAbstractions";
+import {DocumentConventions} from "../..";
+import {ServerNode} from "../../Http/ServerNode";
+import {HttpRequestParameters} from "../../Primitives/Http";
+import {RavenCommand, IRavenResponse} from "../../Http/RavenCommand";
+import {IMaintenanceOperation, OperationResultType} from "./OperationAbstractions";
 import * as stream from "readable-stream";
+
 export class GetOperationStateOperation implements IMaintenanceOperation<IRavenResponse> {
 
     private readonly _id: number;
@@ -39,7 +40,7 @@ export class GetOperationStateCommand extends RavenCommand<IRavenResponse> {
 
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = `${node.url}/databases/${node.database}/operations/state?id=${this._id}`;
-        return { uri };
+        return {uri};
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {

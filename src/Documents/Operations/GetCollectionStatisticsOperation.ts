@@ -1,10 +1,10 @@
-import { HttpRequestParameters } from "../../Primitives/Http";
-import { IMaintenanceOperation, OperationResultType } from "./OperationAbstractions";
-import { CollectionStatistics } from "./CollectionStatistics";
-import { RavenCommand } from "../../Http/RavenCommand";
-import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { ServerNode } from "../../Http/ServerNode";
-import { JsonSerializer } from "../../Mapping/Json/Serializer";
+import {HttpRequestParameters} from "../../Primitives/Http";
+import {IMaintenanceOperation, OperationResultType} from "./OperationAbstractions";
+import {CollectionStatistics} from "./CollectionStatistics";
+import {RavenCommand} from "../../Http/RavenCommand";
+import {DocumentConventions} from "../Conventions/DocumentConventions";
+import {ServerNode} from "../../Http/ServerNode";
+import {JsonSerializer} from "../../Mapping/Json/Serializer";
 import * as stream from "readable-stream";
 
 export class GetCollectionStatisticsOperation implements IMaintenanceOperation<CollectionStatistics> {
@@ -31,9 +31,9 @@ export class GetCollectionStatisticsCommand extends RavenCommand<CollectionStati
 
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/collections/stats";
-        return { uri };
+        return {uri};
     }
-    
+
     protected get _serializer(): JsonSerializer {
         return JsonSerializer.getDefault();
     }
@@ -48,7 +48,7 @@ export class GetCollectionStatisticsCommand extends RavenCommand<CollectionStati
             .collectBody()
             .streamKeyCaseTransform({
                 defaultTransform: "camel",
-                ignorePaths: [ /^collections\./i ]
+                ignorePaths: [/^collections\./i]
             })
             .process(bodyStream);
         return body;

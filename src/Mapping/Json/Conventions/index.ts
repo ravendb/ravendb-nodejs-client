@@ -1,9 +1,9 @@
-import { CONSTANTS } from "../../../Constants";
-import { getIgnoreKeyCaseTransformKeysFromDocumentMetadata } from "../Docs";
-import { CasingConvention } from "../../../Utility/ObjectUtil";
-import { 
-    ObjectKeyCaseTransformStreamOptionsBase, 
-    ObjectKeyCaseTransformStreamOptions 
+import {CONSTANTS} from "../../../Constants";
+import {getIgnoreKeyCaseTransformKeysFromDocumentMetadata} from "../Docs";
+import {CasingConvention} from "../../../Utility/ObjectUtil";
+import {
+    ObjectKeyCaseTransformStreamOptionsBase,
+    ObjectKeyCaseTransformStreamOptions
 } from "../Streams/ObjectKeyCaseTransformStream";
 
 export const DOCUMENT_LOAD_KEY_CASE_TRANSFORM_PROFILE: ObjectKeyCaseTransformStreamOptionsBase = {
@@ -21,10 +21,10 @@ export const DOCUMENT_LOAD_KEY_CASE_TRANSFORM_PROFILE: ObjectKeyCaseTransformStr
 };
 
 export const MULTI_GET_KEY_CASE_TRANSFORM_PROFILE: ObjectKeyCaseTransformStreamOptionsBase = {
-    ignorePaths: [ /^headers\./i ]
+    ignorePaths: [/^headers\./i]
 };
 
-export type ObjectKeyCaseTransformProfile = 
+export type ObjectKeyCaseTransformProfile =
     "DOCUMENT_LOAD"
     | "DOCUMENT_QUERY";
 
@@ -33,8 +33,8 @@ export function getObjectKeyCaseTransformProfile(
     switch (profile) {
         case "DOCUMENT_LOAD":
         case "DOCUMENT_QUERY":
-            return Object.assign({ defaultTransform }, DOCUMENT_LOAD_KEY_CASE_TRANSFORM_PROFILE);
+            return Object.assign({defaultTransform}, DOCUMENT_LOAD_KEY_CASE_TRANSFORM_PROFILE);
         default:
-            return { defaultTransform };
+            return {defaultTransform};
     }
 }

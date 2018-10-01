@@ -1,9 +1,9 @@
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
-import { IndexStats, CollectionStats } from "../../Indexes/IndexStats";
-import { HttpRequestParameters } from "../../../Primitives/Http";
-import { ServerNode } from "../../../Http/ServerNode";
-import { RavenCommand } from "../../../Http/RavenCommand";
+import {DocumentConventions} from "../../Conventions/DocumentConventions";
+import {IMaintenanceOperation, OperationResultType} from "../OperationAbstractions";
+import {IndexStats, CollectionStats} from "../../Indexes/IndexStats";
+import {HttpRequestParameters} from "../../../Primitives/Http";
+import {ServerNode} from "../../../Http/ServerNode";
+import {RavenCommand} from "../../../Http/RavenCommand";
 import * as stream from "readable-stream";
 
 export class GetIndexesStatisticsOperation implements IMaintenanceOperation<IndexStats[]> {
@@ -25,7 +25,7 @@ export class GetIndexesStatisticsCommand extends RavenCommand<IndexStats[]> {
 
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/indexes/stats";
-        return { uri };
+        return {uri};
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
@@ -43,7 +43,7 @@ export class GetIndexesStatisticsCommand extends RavenCommand<IndexStats[]> {
                     }
                 }, new Map([[CollectionStats.name, CollectionStats]]));
 
-                this.result = obj["results"]; 
+                this.result = obj["results"];
             });
         return body;
     }

@@ -1,4 +1,3 @@
-
 export interface MoreLikeThisOptions {
     minimumTermFrequency?: number;
     maximumQueryTerms?: number;

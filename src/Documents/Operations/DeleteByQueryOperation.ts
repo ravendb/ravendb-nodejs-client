@@ -1,15 +1,15 @@
-import { HttpRequestParameters } from "../../Primitives/Http";
-import { IOperation, OperationIdResult, OperationResultType } from "./OperationAbstractions";
-import { IndexQuery, writeIndexQuery } from "../Queries/IndexQuery";
-import { throwError } from "../../Exceptions";
-import { HttpCache } from "../../Http/HttpCache";
-import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { IDocumentStore } from "../IDocumentStore";
-import { RavenCommand } from "../../Http/RavenCommand";
-import { ServerNode } from "../../Http/ServerNode";
+import {HttpRequestParameters} from "../../Primitives/Http";
+import {IOperation, OperationIdResult, OperationResultType} from "./OperationAbstractions";
+import {IndexQuery, writeIndexQuery} from "../Queries/IndexQuery";
+import {throwError} from "../../Exceptions";
+import {HttpCache} from "../../Http/HttpCache";
+import {DocumentConventions} from "../Conventions/DocumentConventions";
+import {IDocumentStore} from "../IDocumentStore";
+import {RavenCommand} from "../../Http/RavenCommand";
+import {ServerNode} from "../../Http/ServerNode";
 import * as StringBuilder from "string-builder";
-import { TypeUtil } from "../../Utility/TypeUtil";
-import { QueryOperationOptions } from "../Queries/QueryOperationOptions";
+import {TypeUtil} from "../../Utility/TypeUtil";
+import {QueryOperationOptions} from "../Queries/QueryOperationOptions";
 import * as stream from "readable-stream";
 
 export class DeleteByQueryOperation implements IOperation<OperationIdResult> {
@@ -40,6 +40,7 @@ export class DeleteByQueryOperation implements IOperation<OperationIdResult> {
     }
 
 }
+
 export class DeleteByIndexCommand extends RavenCommand<OperationIdResult> {
 
     private readonly _conventions: DocumentConventions;

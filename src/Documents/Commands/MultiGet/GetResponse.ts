@@ -1,4 +1,4 @@
-import { StatusCodes } from "../../../Http/StatusCode";
+import {StatusCodes} from "../../../Http/StatusCode";
 
 export class GetResponse {
     public constructor() {
@@ -48,6 +48,7 @@ export class GetResponse {
     public get statusCode(): number {
         return this._statusCode;
     }
+
     /**
      * Response HTTP status code.
      */
@@ -61,6 +62,7 @@ export class GetResponse {
     public get forceRetry(): boolean {
         return this._forceRetry;
     }
+
     /**
      * Indicates if request should be retried (forced).
      */

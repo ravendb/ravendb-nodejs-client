@@ -1,16 +1,18 @@
 import * as stream from "readable-stream";
-import { 
-    ObjectUtil, 
-    ObjectChangeCaseOptions, 
-    ObjectChangeCaseOptionsBase, 
-    CasingConvention } from "../../../Utility/ObjectUtil";
-import { TypeUtil } from "../../../Utility/TypeUtil";
+import {
+    ObjectUtil,
+    ObjectChangeCaseOptions,
+    ObjectChangeCaseOptionsBase,
+    CasingConvention
+} from "../../../Utility/ObjectUtil";
+import {TypeUtil} from "../../../Utility/TypeUtil";
 
 export interface ObjectKeyCaseTransformStreamOptionsBase extends ObjectChangeCaseOptionsBase {
     extractIgnorePaths?: ((entry: object) => Array<string | RegExp>);
     defaultTransform?: CasingConvention;
 }
-export interface ObjectKeyCaseTransformStreamOptions 
+
+export interface ObjectKeyCaseTransformStreamOptions
     extends ObjectChangeCaseOptions {
     handleKeyValue?: boolean;
     extractIgnorePaths?: ((entry: object) => Array<string | RegExp>);
@@ -29,14 +31,14 @@ export class ObjectKeyCaseTransformStream extends stream.Transform {
     private readonly _handleKeyValue: boolean;
 
     constructor(private _opts: ObjectKeyCaseTransformStreamOptions) {
-        super({ objectMode: true });
+        super({objectMode: true});
 
         _opts = Object.assign({}, DEFAULT_OBJECT_KEY_CASE_TRANSFORM_OPTS, _opts); //TODO:
         ObjectKeyCaseTransformStream._validateOpts(_opts);
-        
+
         if (typeof _opts.extractIgnorePaths === "function") {
             this._getIgnorePaths = _opts.extractIgnorePaths;
-        } 
+        }
 
         this._handleKeyValue = _opts.handleKeyValue;
     }
@@ -52,12 +54,12 @@ export class ObjectKeyCaseTransformStream extends stream.Transform {
         const ignorePaths = this._getIgnorePaths(entry);
         const opts = Object.assign({}, this._opts);
         opts.ignorePaths = [...new Set((opts.ignorePaths || [])
-            .concat(ignorePaths || []))]; 
+            .concat(ignorePaths || []))];
 
         process.nextTick(() => {
             entry = ObjectUtil.transformObjectKeys(entry, opts);
             const data = this._handleKeyValue
-                ? { key, value: entry }
+                ? {key, value: entry}
                 : entry;
             callback(null, data);
         });

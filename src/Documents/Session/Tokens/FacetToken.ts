@@ -1,20 +1,20 @@
-import { QueryToken } from "./QueryToken";
-import { throwError } from "../../../Exceptions/index";
-import { StringUtil } from "../../../Utility/StringUtil";
-import { Facet } from "../../Queries/Facets/Facet";
-import { FacetAggregation, FacetOptions } from "../../Queries/Facets";
-import { FacetBase } from "../../Queries/Facets/FacetBase";
+import {QueryToken} from "./QueryToken";
+import {throwError} from "../../../Exceptions/index";
+import {StringUtil} from "../../../Utility/StringUtil";
+import {Facet} from "../../Queries/Facets/Facet";
+import {FacetAggregation, FacetOptions} from "../../Queries/Facets";
+import {FacetBase} from "../../Queries/Facets/FacetBase";
 import * as StringBuilder from "string-builder";
-import { GenericRangeFacet } from "../../Queries/Facets/GenericRangeFacet";
-import { RangeFacet } from "../../Queries/Facets/RangeFacet";
+import {GenericRangeFacet} from "../../Queries/Facets/GenericRangeFacet";
+import {RangeFacet} from "../../Queries/Facets/RangeFacet";
 
 export interface FacetTokenSetupDocumentIdOptions {
     facetSetupDocumentId: string;
 }
 
 export interface FacetTokenAggregateByFieldNameOptions {
-    aggregateByFieldName?: string; 
-    alias: string; 
+    aggregateByFieldName?: string;
+    alias: string;
     ranges?: string[];
     optionsParameterName: string;
 }
@@ -44,13 +44,13 @@ export class FacetToken extends QueryToken {
             this._facetSetupDocumentId = (opts as FacetTokenSetupDocumentIdOptions).facetSetupDocumentId;
         } else if (opts.hasOwnProperty("aggregateByFieldName" as keyof FacetTokenAggregateByFieldNameOptions)
             || opts.hasOwnProperty("alias" as keyof FacetTokenAggregateByFieldNameOptions)) {
-            this._aggregateByFieldName = 
+            this._aggregateByFieldName =
                 (opts as FacetTokenAggregateByFieldNameOptions).aggregateByFieldName;
-            this._alias = 
+            this._alias =
                 (opts as FacetTokenAggregateByFieldNameOptions).alias;
-            this._ranges = 
+            this._ranges =
                 (opts as FacetTokenAggregateByFieldNameOptions).ranges;
-            this._optionsParameterName = 
+            this._optionsParameterName =
                 (opts as FacetTokenAggregateByFieldNameOptions).optionsParameterName;
             this._aggregations = [];
         } else {
@@ -58,13 +58,13 @@ export class FacetToken extends QueryToken {
         }
     }
 
-    public static create(facetSetupDocumentId: string): FacetToken; 
+    public static create(facetSetupDocumentId: string): FacetToken;
     public static create(facet: GenericRangeFacet, addQueryParameter: (o: any) => string): FacetToken;
     public static create(facet: RangeFacet, addQueryParameter: (o: any) => string): FacetToken;
     public static create(facet: Facet, addQueryParameter: (o: any) => string): FacetToken;
     public static create(facet: FacetBase, addQueryParameter: (o: any) => string): FacetToken;
     public static create(
-        facetSetupDocumentIdOrFacet: string | FacetBase, 
+        facetSetupDocumentIdOrFacet: string | FacetBase,
         addQueryParameter?: (o: any) => string): FacetToken {
         if (!facetSetupDocumentIdOrFacet) {
             throwError("InvalidArgumentException", "Need to supply either facetSetupDocumentId or a Facet instance.");
@@ -75,15 +75,15 @@ export class FacetToken extends QueryToken {
                 throwError("InvalidArgumentException", "facetSetupDocumentId cannot be null");
             }
 
-            return new FacetToken({ facetSetupDocumentId: facetSetupDocumentIdOrFacet });
+            return new FacetToken({facetSetupDocumentId: facetSetupDocumentIdOrFacet});
         }
 
         const facet: FacetBase = facetSetupDocumentIdOrFacet;
         if (facetSetupDocumentIdOrFacet instanceof Facet) {
             const optionsParameterName = FacetToken._getOptionsParameterName(facet, addQueryParameter);
             const token = new FacetToken({
-                aggregateByFieldName: (facet as Facet).fieldName, 
-                alias: facet.displayFieldName, 
+                aggregateByFieldName: (facet as Facet).fieldName,
+                alias: facet.displayFieldName,
                 optionsParameterName
             });
             FacetToken._applyAggregations(facet, token);
@@ -93,8 +93,8 @@ export class FacetToken extends QueryToken {
         if (facet instanceof RangeFacet) {
             const optionsParameterName = FacetToken._getOptionsParameterName(facet, addQueryParameter);
             const token = new FacetToken({
-                alias: facet.displayFieldName, 
-                ranges: (facet as RangeFacet).ranges, 
+                alias: facet.displayFieldName,
+                ranges: (facet as RangeFacet).ranges,
                 optionsParameterName
             });
             FacetToken._applyAggregations(facet, token);
@@ -107,15 +107,15 @@ export class FacetToken extends QueryToken {
             for (const rangeBuilder of (facet as GenericRangeFacet).ranges) {
                 ranges.push(GenericRangeFacet.parse(rangeBuilder, addQueryParameter));
             }
-            const token: FacetToken = new FacetToken({ 
-                alias: facet.displayFieldName, 
-                ranges, 
-                optionsParameterName 
+            const token: FacetToken = new FacetToken({
+                alias: facet.displayFieldName,
+                ranges,
+                optionsParameterName
             });
             FacetToken._applyAggregations(facet, token);
             return token;
         }
-        
+
         // this is just a dispatcher
         return facet.toFacetToken(addQueryParameter);
     }
@@ -151,7 +151,7 @@ export class FacetToken extends QueryToken {
             firstArgument = false;
             aggregation.writeTo(writer);
         }
-        
+
         if (this._optionsParameterName) {
             writer.append(`, $${this._optionsParameterName}`);
         }
@@ -165,7 +165,7 @@ export class FacetToken extends QueryToken {
     }
 
     private static _applyAggregations(facet: FacetBase, token: FacetToken): void {
-        for (const [ aggregationKey, aggregationValue ] of facet.aggregations.entries()) {
+        for (const [aggregationKey, aggregationValue] of facet.aggregations.entries()) {
             let aggregationToken: FacetAggregationToken;
             switch (aggregationKey) {
                 case "Max":

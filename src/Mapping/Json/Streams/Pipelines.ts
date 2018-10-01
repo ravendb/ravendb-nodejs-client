@@ -1,19 +1,19 @@
 import * as stream from "readable-stream";
 import * as StreamUtil from "../../../Utility/StreamUtil";
-import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
-import { pick } from "stream-json/filters/Pick";
-import { ignore } from "stream-json/filters/Ignore";
-import { streamArray } from "stream-json/streamers/StreamArray";
-import { streamObject } from "stream-json/streamers/StreamObject";
-import { streamValues } from "stream-json/streamers/StreamValues";
-import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
+import {RavenCommandResponsePipeline} from "../../../Http/RavenCommandResponsePipeline";
+import {pick} from "stream-json/filters/Pick";
+import {ignore} from "stream-json/filters/Ignore";
+import {streamArray} from "stream-json/streamers/StreamArray";
+import {streamObject} from "stream-json/streamers/StreamObject";
+import {streamValues} from "stream-json/streamers/StreamValues";
+import {DocumentConventions} from "../../../Documents/Conventions/DocumentConventions";
 
 export function getDocumentResultsPipeline(
     conventions: DocumentConventions): RavenCommandResponsePipeline<object[]> {
 
     return RavenCommandResponsePipeline.create<object[]>()
         .parseJsonAsync([
-            pick({ filter: "Results" }),
+            pick({filter: "Results"}),
             streamArray(),
         ])
         .streamKeyCaseTransform(conventions.entityFieldNameConvention, "DOCUMENT_LOAD");
@@ -24,43 +24,43 @@ export function parseDocumentResults(
     conventions: DocumentConventions,
     bodyCallback?: (body: string) => void): Promise<object[]> {
 
-    return getDocumentResultsPipeline(conventions) 
+    return getDocumentResultsPipeline(conventions)
         .collectBody(bodyCallback)
         .collectResult((result, next) => [...result, next["value"]], [])
         .process(bodyStream);
 }
 
-export function getRestOfOutputPipeline( 
+export function getRestOfOutputPipeline(
     bodyStream: stream.Stream,
     ignoreFields: string | RegExp): RavenCommandResponsePipeline<object> {
     return RavenCommandResponsePipeline.create()
         .parseJsonAsync([
-            ignore({ filter: ignoreFields }),
+            ignore({filter: ignoreFields}),
             streamValues()
         ])
         .streamKeyCaseTransform("camel");
 }
-        
+
 export function parseRestOfOutput(
     bodyStream: stream.Stream,
     ignoreFields: string | RegExp): Promise<object> {
-        return getRestOfOutputPipeline(bodyStream, ignoreFields).process(bodyStream);
+    return getRestOfOutputPipeline(bodyStream, ignoreFields).process(bodyStream);
 }
 
 export function parseDocumentIncludes(
     bodyStream: stream.Stream,
     conventions: DocumentConventions) {
     return RavenCommandResponsePipeline.create<{ [key: string]: object }>()
-            .parseJsonAsync([
-                pick({ filter: "Includes" }),
-                streamObject()
-            ])
-            .streamKeyCaseTransform(conventions.entityFieldNameConvention, "DOCUMENT_LOAD")
-            .collectResult((result, next) => {
-                result[next["key"]] = next["value"];
-                return result;
-            }, {})
-            .process(bodyStream);
+        .parseJsonAsync([
+            pick({filter: "Includes"}),
+            streamObject()
+        ])
+        .streamKeyCaseTransform(conventions.entityFieldNameConvention, "DOCUMENT_LOAD")
+        .collectResult((result, next) => {
+            result[next["key"]] = next["value"];
+            return result;
+        }, {})
+        .process(bodyStream);
 }
 
 export async function streamResultsIntoStream(

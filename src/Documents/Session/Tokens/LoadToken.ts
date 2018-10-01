@@ -1,4 +1,4 @@
-import { QueryToken } from "./QueryToken";
+import {QueryToken} from "./QueryToken";
 
 export class LoadToken extends QueryToken {
 
@@ -11,14 +11,14 @@ export class LoadToken extends QueryToken {
         this.alias = alias;
     }
 
-    public static create(argument: string, alias: string): LoadToken  {
+    public static create(argument: string, alias: string): LoadToken {
         return new LoadToken(argument, alias);
     }
 
     public writeTo(writer): void {
         writer
-                .append(this.argument)
-                .append(" as ")
-                .append(this.alias);
+            .append(this.argument)
+            .append(" as ")
+            .append(this.alias);
     }
 }

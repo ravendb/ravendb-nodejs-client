@@ -1,10 +1,10 @@
 import * as assert from "assert";
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import {testContext, disposeTestDocumentStore} from "../Utils/TestUtil";
 
 import {
     IDocumentStore,
 } from "../../src";
-import { User } from "../Assets/Entities";
+import {User} from "../Assets/Entities";
 
 describe("TrackEntityTest", function () {
 
@@ -14,7 +14,7 @@ describe("TrackEntityTest", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("deletingEntityThatIsNotTrackedShouldThrow", async () => {

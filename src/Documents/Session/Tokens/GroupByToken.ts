@@ -1,5 +1,5 @@
-import { QueryToken } from "./QueryToken";
-import { GroupByMethod } from "../../Queries/GroupByMethod";
+import {QueryToken} from "./QueryToken";
+import {GroupByMethod} from "../../Queries/GroupByMethod";
 
 export class GroupByToken extends QueryToken {
 
