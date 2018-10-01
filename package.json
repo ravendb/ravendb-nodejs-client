@@ -74,7 +74,6 @@
     "@types/verror": "^1.10.3",
     "bluebird": "^3.4.7",
     "change-case": "^3.0.2",
-    "change-object-case": "^0.1.1",
     "md5-hex": "^2.0.0",
     "merge2": "^1.2.2",
     "moment": "^2.22.0",
