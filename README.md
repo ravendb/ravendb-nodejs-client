@@ -666,6 +666,41 @@ queryStream.on("error", err => {
 
 ```
 
+### Revisions
+NOTE: Please make sure revisions are enabled before trying one of the below.
+
+```javascript
+const session = store.openSession();
+const user = {
+    name: "Marcin",
+    age: 30,
+    pet: "users/4"
+};
+
+await session.store(user, "users/1");
+await session.saveChanges();
+
+// modify doc to create a new revision
+user.name = "Roman";
+user.age = 40;
+await session.saveChanges();
+
+// get revisions
+const revisions = await session.advanced.revisions.getFor("users/1");
+// [ { name: 'Roman',
+//     age: 40,
+//     pet: 'users/4',
+//     '@metadata': [Object],
+//     id: 'users/1' },
+//   { name: 'Marcin',
+//     age: 30,
+//     pet: 'users/4',
+//     '@metadata': [Object],
+//     id: 'users/1' } ]
+```
+
+
+
 ## Using object literals for entities
 
 In order to comfortably use object literals as entities set function getting collection name based on the content of the object - `store.conventions.
