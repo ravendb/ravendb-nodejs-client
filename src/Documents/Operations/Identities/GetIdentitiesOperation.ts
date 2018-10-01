@@ -36,7 +36,7 @@ export class GetIdentitiesCommand extends RavenCommand<IdentitiesCollection> {
         }
 
         public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
-            let body;
+            let body: string = null;
             this.result = await this._pipeline<IdentitiesCollection>()
                 .parseJsonSync()
                 .collectBody(b => body = b)

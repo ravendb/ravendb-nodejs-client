@@ -15,7 +15,7 @@ export class GetNextOperationIdCommand extends RavenCommand<number> {
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
-        let body;
+        let body: string = null;
         await this._defaultPipeline(_ => body = _).process(bodyStream)
             .then(results => {
                 const id = results["id"];

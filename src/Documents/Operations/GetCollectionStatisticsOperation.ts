@@ -43,7 +43,7 @@ export class GetCollectionStatisticsCommand extends RavenCommand<CollectionStati
             this._throwInvalidResponse();
         }
 
-        let body;
+        let body: string = null;
         this.result = await this._defaultPipeline(_ => body = _)
             .collectBody()
             .streamKeyCaseTransform({

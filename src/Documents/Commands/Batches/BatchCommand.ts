@@ -113,7 +113,7 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
                 + " something is very wrong. Probably a garbled response.");
         }
 
-        let body;
+        let body: string = null;
         this.result = await RavenCommandResponsePipeline.create<IRavenArrayResult>()
             .collectBody(_ => body = _)
             .parseJsonSync()

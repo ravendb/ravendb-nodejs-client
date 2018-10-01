@@ -25,6 +25,7 @@ export class ResetIndexOperation implements IMaintenanceOperation<void> {
         return "CommandResult";
     }
 }
+
 export class ResetIndexCommand extends RavenCommand<void> {
     private readonly _indexName: string;
 

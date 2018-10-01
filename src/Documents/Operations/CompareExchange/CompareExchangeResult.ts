@@ -51,7 +51,6 @@ export class CompareExchangeResult<T> {
         }
 
         return CompareExchangeResult._create(val, index, successful, conventions, clazz);
-
     }
 
     private static _create<T>(

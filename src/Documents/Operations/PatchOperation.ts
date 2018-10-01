@@ -186,7 +186,7 @@ export class PatchCommand extends RavenCommand<PatchResult> {
             }
         };
 
-        let body;
+        let body: string = null;
         const resultPromise = this._pipeline()
             .collectBody(b => body = b)
             .parseJsonAsync([

@@ -89,7 +89,7 @@ export class QueryCommand extends RavenCommand<QueryResult> {
             return;
         }
 
-        let body;
+        let body: string = null;
         this.result = await QueryCommand.parseQueryResultResponseAsync(
             bodyStream, this._conventions, fromCache, this._typedObjectMapper, b => body = b);
 

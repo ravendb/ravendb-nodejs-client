@@ -200,7 +200,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             return;
         }
 
-        let body;
+        let body: string = null;
         this.result = 
             await GetDocumentsCommand.parseDocumentsResultResponseAsync(
                 bodyStream, this._conventions, b => body = b);

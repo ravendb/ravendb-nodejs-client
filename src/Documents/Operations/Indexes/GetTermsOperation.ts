@@ -79,7 +79,7 @@ export class GetTermsCommand extends RavenCommand<string[]> {
             this._throwInvalidResponse();
         }
 
-        let body;
+        let body: string = null;
         await this._defaultPipeline(_ => body = _).process(bodyStream)
             .then(results => {
                 this.result = results["terms"];

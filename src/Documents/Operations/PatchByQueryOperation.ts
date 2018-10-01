@@ -92,5 +92,4 @@ export class PatchByQueryCommand extends RavenCommand<OperationIdResult> {
 
         return this._parseResponseDefaultAsync(bodyStream);
     }
-
 }

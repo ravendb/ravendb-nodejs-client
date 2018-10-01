@@ -221,7 +221,7 @@ export abstract class RavenCommand<TResult> {
     }
 
     protected async _parseResponseDefaultAsync(bodyStream: stream.Stream): Promise<string> {
-        let body;
+        let body: string = null;
         this.result = await this._defaultPipeline(_ => body = _).process(bodyStream);
         return body;
     }

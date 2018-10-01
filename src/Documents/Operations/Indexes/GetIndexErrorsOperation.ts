@@ -59,7 +59,7 @@ export class GetIndexErrorsCommand extends RavenCommand<IndexErrors[]> {
             }
         };
 
-        let body;
+        let body: string = null;
         await this._defaultPipeline(_ => body = _).process(bodyStream)
             .then(results => {
                 this.result = this._reviveResultTypes(results, typeInfo)["results"];

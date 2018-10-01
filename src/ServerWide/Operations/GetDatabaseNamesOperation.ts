@@ -65,7 +65,7 @@ export class GetDatabaseNamesCommand extends RavenCommand<string[]> {
             return;
         }
 
-        let body;
+        let body: string = null;
         const results = await this._defaultPipeline(_ => body = _)
             .process(bodyStream);
         const { databases } = results as any;

@@ -33,7 +33,7 @@ export class GetIndexesStatisticsCommand extends RavenCommand<IndexStats[]> {
             this._throwInvalidResponse();
         }
 
-        let body;
+        let body: string = null;
         await this._defaultPipeline(_ => body = _).process(bodyStream)
             .then(results => {
                 const obj = this._reviveResultTypes(results, {

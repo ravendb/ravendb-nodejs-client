@@ -31,7 +31,7 @@ export class GetConflictsCommand extends RavenCommand<GetConflictsResult> {
             this._throwInvalidResponse();
         }
 
-        let body = null;
+        let body: string = null;
         await this._defaultPipeline(_ => body = _).process(bodyStream)
             .then(results => {
                 this.result = this._typedObjectMapper.fromObjectLiteral(results, {

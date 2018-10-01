@@ -11,12 +11,8 @@ type OperationStatus = "Completed" | "Cancelled" | "Faulted";
 export class OperationCompletionAwaiter {
 
     private _requestExecutor: RequestExecutor;
-    // TBD private readonly Func<IDatabaseChanges> _changes;
     private readonly _conventions: DocumentConventions;
     private readonly _id: number;
-
-    // TBD public Action<IOperationProgress> OnProgressChanged;
-    // TBD private IDisposable _subscription;
 
     public get id(): number {
         return this._id;
@@ -26,10 +22,7 @@ export class OperationCompletionAwaiter {
         this._requestExecutor = requestExecutor;
         this._conventions = conventions;
         this._id = id;
-        // TBD _changes = changes;
     }
-
-    // TBD currently we simply poll for status - implement this using changes API
 
     private _fetchOperationStatus(): Promise<IRavenResponse> {
         const command: RavenCommand<IRavenResponse> = this._getOperationStateCommand(this._conventions, this._id);
@@ -47,7 +40,7 @@ export class OperationCompletionAwaiter {
             return BluebirdPromise.resolve()
             .then(() => this._fetchOperationStatus())
             .then((operationStatusResult) => {
-                const operationStatus = operationStatusResult.status;
+                const operationStatus = operationStatusResult.status as OperationStatus;
                 switch (operationStatus) {
                     case "Completed":
                         return;
@@ -55,8 +48,7 @@ export class OperationCompletionAwaiter {
                         throwError("OperationCancelledException", `Operation of ID ${this._id} has been cancelled.`);
                     case "Faulted":
                         const faultResult: OperationExceptionResult = operationStatusResult.result;
-                        const err = ExceptionDispatcher.get(faultResult, faultResult.statusCode);
-                        throw err;
+                        throw ExceptionDispatcher.get(faultResult, faultResult.statusCode);
                 }
 
                 return BluebirdPromise.delay(500)
