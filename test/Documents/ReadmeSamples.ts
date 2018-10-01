@@ -11,6 +11,7 @@ import {
     IDocumentSession,
     QueryStatistics,
     StreamQueryStatistics,
+    AbstractIndexCreationTask,
 } from "../../src";
 import { TypeUtil } from "../../src/Utility/TypeUtil";
 
@@ -360,6 +361,10 @@ describe("Readme query samples", function () {
                 // ...
             });
 
+            userStream.on("end", () => {
+                assert.ok(result.length);
+            });
+
             await new Promise((resolve, reject) => {
                 stream.finished(userStream, err => {
                     err ? reject(err) : resolve();
@@ -369,12 +374,14 @@ describe("Readme query samples", function () {
 
         it("can stream query and get stats", async () => {
             let stats: StreamQueryStatistics;
+            const items = [];
             query = session.query({ collection: "users" })
                 .whereGreaterThan("age", 29);
             const queryStream = await session.advanced.stream(query, _ => stats = _);
 
             queryStream.on("data", user => {
                 print(user);
+                items.push(user);
                 // ...
             });
 
@@ -386,6 +393,7 @@ describe("Readme query samples", function () {
             await new Promise((resolve, reject) => {
                 queryStream.on("end", () => {
                     try {
+                        assert.ok(items.length);
                         assert.ok(stats);
                         assert.strictEqual(stats.totalResults, 1);
                         assert.strictEqual(stats.indexName, "Auto/users/Byage");
@@ -397,6 +405,54 @@ describe("Readme query samples", function () {
                     resolve();
                 });
             });
+        });
+
+        it("can suggest", async () => {
+            class UsersIndex extends AbstractIndexCreationTask {
+                constructor() {
+                    super();
+                    this.map = "from doc in docs.Users select new { doc.name }";
+                    this.suggestion("name");
+                }
+            }
+
+            await store.executeIndex(new UsersIndex());
+            await testContext.waitForIndexing(store);
+
+            {
+                const session = store.openSession();
+                const suggestionQueryResult = await session.query({ indexName: "UsersIndex" })
+                    .suggestUsing(x => x.byField("name", "Jon"))
+                    .execute();
+                assert.strictEqual(suggestionQueryResult.name.suggestions.length, 1);
+            }
+        });
+
+    });
+
+    describe("with revisions set up", function() {
+
+        beforeEach(async () => testContext.setupRevisions(store, false, 5));
+
+        it("can get revisions", async () => {
+
+            const session = store.openSession();
+
+            const user = {
+                name: "Marcin",
+                age: 30,
+                pet: "users/4"
+            };
+
+            await session.store(user, "users/1");
+            await session.saveChanges();
+
+            user.name = "Roman";
+            user.age = 40;
+            await session.saveChanges();
+
+            const revisions = await session.advanced.revisions.getFor("users/1");
+            assert.strictEqual(revisions.length, 2);
         });
 
     });
