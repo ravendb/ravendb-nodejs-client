@@ -215,7 +215,7 @@ export abstract class RavenCommand<TResult> {
         typeInfo?: TypeInfo, 
         knownTypes?: Map<string, ObjectTypeDescriptor>) {
         const res = this._serializer.deserialize(response);
-        return conventions.entityObjectMapper.fromObjectLiteral<TResponse>(res, typeInfo, knownTypes);
+        return conventions.objectMapper.fromObjectLiteral<TResponse>(res, typeInfo, knownTypes);
     }
 
     protected _reviveResultTypes<TResponse extends object>(
@@ -223,7 +223,7 @@ export abstract class RavenCommand<TResult> {
         conventions: DocumentConventions, 
         typeInfo?: TypeInfo, 
         knownTypes?: Map<string, ObjectTypeDescriptor>) {
-        return conventions.entityObjectMapper.fromObjectLiteral<TResponse>(raw, typeInfo, knownTypes);
+        return conventions.objectMapper.fromObjectLiteral<TResponse>(raw, typeInfo, knownTypes);
     }
 
     protected async _parseResponseDefaultAsync(bodyStream: stream.Stream): Promise<string> {

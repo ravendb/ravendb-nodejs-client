@@ -112,7 +112,7 @@ export class QueryCommand extends RavenCommand<QueryResult> {
 
         const [results, includes, rest] = await Promise.all([resultsPromise, includesPromise, restPromise]);
         const rawResult = Object.assign({} as any, rest, { results, includes }) as QueryResult;
-        const queryResult = conventions.entityObjectMapper
+        const queryResult = conventions.objectMapper
             .fromObjectLiteral<QueryResult>(rawResult, {
                 typeName: QueryResult.name,
                 nestedTypes: {

@@ -57,7 +57,7 @@ export class PutIndexesCommand extends RavenCommand<PutIndexResult[]> {
                 throwError("InvalidArgumentException", "Index name cannot be null.");
             }
 
-            result.push(this._conventions.entityObjectMapper.toObjectLiteral(next));
+            result.push(this._conventions.objectMapper.toObjectLiteral(next));
 
             return result;
         }, []);

@@ -104,7 +104,7 @@ export class StreamOperation {
                 .on("error", err => result.emit("error", err))
                 .on("data", data => {
                     const statsResult =
-                        this._session.conventions.entityObjectMapper
+                        this._session.conventions.objectMapper
                             .fromObjectLiteral(data["value"], {
                                 nestedTypes: {
                                     indexTimestamp: "date"

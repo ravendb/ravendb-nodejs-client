@@ -15,7 +15,7 @@ export class PatchRequest {
         return {
             Script: this.script,
             Values: Object.keys(this.values).reduce((result, next) => {
-                const literal = conventions.entityObjectMapper.toObjectLiteral(this.values[next]);
+                const literal = conventions.objectMapper.toObjectLiteral(this.values[next]);
                 result[next] = conventions.transformObjectKeysToRemoteFieldNameConvention(literal);
                 return result;
             }, {})

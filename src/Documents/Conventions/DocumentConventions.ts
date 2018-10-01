@@ -70,7 +70,7 @@ export class DocumentConventions {
     private _localEntityFieldNameConvention: CasingConvention;
     private _remoteEntityFieldNameConvention: CasingConvention;
 
-    private _entityObjectMapper: TypesAwareObjectMapper;
+    private _objectMapper: TypesAwareObjectMapper;
 
     private _useCompression;
 
@@ -110,7 +110,7 @@ export class DocumentConventions {
         this._maxHttpCacheSize = 128 * 1024 * 1024;
 
         this._knownEntityTypes = new Map();
-        this._entityObjectMapper = new TypesAwareObjectMapper({
+        this._objectMapper = new TypesAwareObjectMapper({
             dateFormat: DateUtil.DEFAULT_DATE_FORMAT,
             documentConventions: this
         });
@@ -118,12 +118,12 @@ export class DocumentConventions {
         this._useCompression = null;
     }
 
-    public get entityObjectMapper(): TypesAwareObjectMapper {
-        return this._entityObjectMapper;
+    public get objectMapper(): TypesAwareObjectMapper {
+        return this._objectMapper;
     }
 
-    public set entityObjectMapper(value: TypesAwareObjectMapper) {
-        this._entityObjectMapper = value;
+    public set objectMapper(value: TypesAwareObjectMapper) {
+        this._objectMapper = value;
     }
 
     public get readBalanceBehavior(): ReadBalanceBehavior {
@@ -156,7 +156,7 @@ export class DocumentConventions {
     public deserializeEntityFromJson(documentType: ObjectTypeDescriptor, document: object): object {
         try {
             const typeName = documentType ? documentType.name : null;
-            return this.entityObjectMapper.fromObjectLiteral(document, { typeName });
+            return this.objectMapper.fromObjectLiteral(document, { typeName });
         } catch (err) {
             throwError("RavenException", "Cannot deserialize entity", err);
         }

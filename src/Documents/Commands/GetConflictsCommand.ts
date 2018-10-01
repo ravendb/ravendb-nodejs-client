@@ -37,7 +37,7 @@ export class GetConflictsCommand extends RavenCommand<GetConflictsResult> {
         let body: string = null;
         await this._defaultPipeline(_ => body = _).process(bodyStream)
             .then(results => {
-                this.result = this._conventions.entityObjectMapper.fromObjectLiteral(results, {
+                this.result = this._conventions.objectMapper.fromObjectLiteral(results, {
                     nestedTypes: {
                         "results[].lastModified": "Date"
                     }
