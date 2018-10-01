@@ -72,7 +72,7 @@ export class LazyAggregationQueryOperation implements ILazyOperation {
         }
 
         const result = await FacetQueryCommand.parseQueryResultResponseAsync(
-            stringToReadable(response.result), this._conventions, false, this._conventions.entityObjectMapper);
+            stringToReadable(response.result), this._conventions, false);
         this._handleResponse(result);
     }
 

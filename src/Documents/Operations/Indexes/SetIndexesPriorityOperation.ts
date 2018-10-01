@@ -63,7 +63,7 @@ export class SetIndexPriorityCommand extends RavenCommand<void> {
             throwError("InvalidArgumentException", "Parameters cannot be null");
         }
 
-        this._parameters = this._typedObjectMapper.toObjectLiteral(parameters);
+        this._parameters = conventions.entityObjectMapper.toObjectLiteral(parameters);
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {

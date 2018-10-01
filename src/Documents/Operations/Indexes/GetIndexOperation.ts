@@ -20,7 +20,7 @@ export class GetIndexOperation implements IMaintenanceOperation<IndexDefinition>
     }
 
     public getCommand(conventions: DocumentConventions): RavenCommand<IndexDefinition> {
-        return new GetIndexCommand(this._indexName);
+        return new GetIndexCommand(this._indexName, conventions);
     }
 
     public get resultType(): OperationResultType {
@@ -31,14 +31,16 @@ export class GetIndexOperation implements IMaintenanceOperation<IndexDefinition>
 export class GetIndexCommand extends RavenCommand<IndexDefinition> {
 
     private readonly _indexName: string;
+    private readonly _conventions: DocumentConventions;
 
-    public constructor(indexName: string) {
+    public constructor(indexName: string, conventions: DocumentConventions) {
         super();
         if (!indexName) {
             throwError("InvalidArgumentException", "IndexName cannot be null.");
         }
 
         this._indexName = indexName;
+        this._conventions = conventions;
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
@@ -70,7 +72,7 @@ export class GetIndexCommand extends RavenCommand<IndexDefinition> {
                     },
                 };
                 const knownTypes = new Map([[IndexDefinition.name, IndexDefinition]]);
-                const allResults = this._reviveResultTypes(result, indexDefTypeInfo, knownTypes);
+                const allResults = this._reviveResultTypes(result, this._conventions, indexDefTypeInfo, knownTypes);
                 this.result = allResults["results"][0] || null;
             });
 

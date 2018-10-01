@@ -73,7 +73,7 @@ export class SetIndexLockCommand extends RavenCommand<void> {
         }
 
         this._responseType = "Empty";
-        this._parameters = this._typedObjectMapper.toObjectLiteral(parameters);
+        this._parameters = conventions.entityObjectMapper.toObjectLiteral(parameters);
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {

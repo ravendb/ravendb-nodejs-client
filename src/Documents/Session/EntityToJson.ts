@@ -60,7 +60,7 @@ export class EntityToJson {
         entity: object, conventions: DocumentConventions, documentInfo?: DocumentInfo): object {
 
         let typeInfo: TypeInfo;
-        const jsonNode = Mapping.getDefaultMapper().toObjectLiteral(entity, (_typeInfo) => {
+        const jsonNode = conventions.entityObjectMapper.toObjectLiteral(entity, (_typeInfo) => {
             typeInfo = _typeInfo;
         });
 

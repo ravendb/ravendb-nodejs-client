@@ -73,7 +73,7 @@ export class LazyQueryOperation<T extends object> implements ILazyOperation {
         }
 
         const result = await QueryCommand.parseQueryResultResponseAsync(
-            stringToReadable(response.result), this._conventions, false, this._conventions.entityObjectMapper);
+            stringToReadable(response.result), this._conventions, false);
         this._handleResponse(result);
     }
 

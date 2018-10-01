@@ -13,14 +13,25 @@ export class GetIndexesStatisticsOperation implements IMaintenanceOperation<Inde
     }
 
     public getCommand(conventions: DocumentConventions): RavenCommand<IndexStats[]> {
-        return new GetIndexesStatisticsCommand();
+        return new GetIndexesStatisticsCommand(conventions);
     }
 
 }
 
+const typeInfo = {
+                        nestedTypes: {
+                            "results[].collections": "Map",
+                            "results[].collections$MAP": "CollectionStats"
+                        }
+                    };
+
+const knownTypes = new Map([[CollectionStats.name, CollectionStats]]);
+
 export class GetIndexesStatisticsCommand extends RavenCommand<IndexStats[]> {
-    public constructor() {
+    private readonly _conventions: DocumentConventions;
+    public constructor(conventions: DocumentConventions) {
         super();
+        this._conventions = conventions;
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
@@ -36,12 +47,11 @@ export class GetIndexesStatisticsCommand extends RavenCommand<IndexStats[]> {
         let body: string = null;
         await this._defaultPipeline(_ => body = _).process(bodyStream)
             .then(results => {
-                const obj = this._reviveResultTypes(results, {
-                    nestedTypes: {
-                        "results[].collections": "Map",
-                        "results[].collections$MAP": "CollectionStats"
-                    }
-                }, new Map([[CollectionStats.name, CollectionStats]]));
+                const obj = this._reviveResultTypes(
+                    results,
+                    this._conventions, 
+                    typeInfo, 
+                    knownTypes);
 
                 this.result = obj["results"];
             });

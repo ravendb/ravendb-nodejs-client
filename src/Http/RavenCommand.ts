@@ -15,6 +15,7 @@ import { JsonSerializer } from "../Mapping/Json/Serializer";
 import { RavenCommandResponsePipeline } from "./RavenCommandResponsePipeline";
 import { pick } from "stream-json/filters/Pick";
 import { ignore } from "stream-json/filters/Ignore";
+import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
 
 const log = getLogger({ module: "RavenCommand" });
 
@@ -37,8 +38,6 @@ export abstract class RavenCommand<TResult> {
     protected _responseType: RavenCommandResponseType;
     protected _canCache: boolean;
     protected _canCacheAggressively: boolean;
-
-    protected _typedObjectMapper: TypesAwareObjectMapper = Mapping.getDefaultMapper();
 
     public abstract get isReadRequest(): boolean;
 
@@ -72,8 +71,7 @@ export abstract class RavenCommand<TResult> {
         readable.push(null);
         return this.setResponseAsync(readable, true)
         // tslint:disable-next-line:no-empty
-            .then(() => {
-            });
+            .then(() => {});
     }
 
     protected _defaultPipeline(
@@ -212,14 +210,20 @@ export abstract class RavenCommand<TResult> {
     }
 
     protected _parseResponseDefault<TResponse extends object>(
-        response: string, typeInfo?: TypeInfo, knownTypes?: Map<string, ObjectTypeDescriptor>) {
+        response: string, 
+        conventions: DocumentConventions, 
+        typeInfo?: TypeInfo, 
+        knownTypes?: Map<string, ObjectTypeDescriptor>) {
         const res = this._serializer.deserialize(response);
-        return this._typedObjectMapper.fromObjectLiteral<TResponse>(res, typeInfo, knownTypes);
+        return conventions.entityObjectMapper.fromObjectLiteral<TResponse>(res, typeInfo, knownTypes);
     }
 
     protected _reviveResultTypes<TResponse extends object>(
-        raw: object, typeInfo?: TypeInfo, knownTypes?: Map<string, ObjectTypeDescriptor>) {
-        return this._typedObjectMapper.fromObjectLiteral<TResponse>(raw, typeInfo, knownTypes);
+        raw: object, 
+        conventions: DocumentConventions, 
+        typeInfo?: TypeInfo, 
+        knownTypes?: Map<string, ObjectTypeDescriptor>) {
+        return conventions.entityObjectMapper.fromObjectLiteral<TResponse>(raw, typeInfo, knownTypes);
     }
 
     protected async _parseResponseDefaultAsync(bodyStream: stream.Stream): Promise<string> {

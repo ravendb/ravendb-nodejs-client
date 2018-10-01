@@ -3,14 +3,17 @@ import { RavenCommand } from "../../Http/RavenCommand";
 import { GetConflictsResult } from "./GetConflictsResult";
 import { ServerNode } from "../../Http/ServerNode";
 import * as stream from "readable-stream";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
 
 export class GetConflictsCommand extends RavenCommand<GetConflictsResult> {
 
     private readonly _id: string;
+    private readonly _conventions: DocumentConventions;
 
-    public constructor(id: string) {
+    public constructor(id: string, conventions: DocumentConventions) {
         super();
         this._id = id;
+        this._conventions = conventions;
     }
 
     public get isReadRequest(): boolean {
@@ -34,7 +37,7 @@ export class GetConflictsCommand extends RavenCommand<GetConflictsResult> {
         let body: string = null;
         await this._defaultPipeline(_ => body = _).process(bodyStream)
             .then(results => {
-                this.result = this._typedObjectMapper.fromObjectLiteral(results, {
+                this.result = this._conventions.entityObjectMapper.fromObjectLiteral(results, {
                     nestedTypes: {
                         "results[].lastModified": "Date"
                     }

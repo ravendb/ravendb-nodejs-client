@@ -126,7 +126,7 @@ _describe(
 
                             await replication.waitForDocumentToReplicate(destination, "marker", 2000, User);
 
-                            const command = new GetConflictsCommand("docs/1");
+                            const command = new GetConflictsCommand("docs/1", destination.conventions);
                             await destination.getRequestExecutor().execute(command);
                             const conflicts = command.result;
 
@@ -186,7 +186,7 @@ _describe(
 
                             await replication.waitForDocumentToReplicate(destination, "marker", 2000, User);
 
-                            const command = new GetConflictsCommand("docs/1");
+                            const command = new GetConflictsCommand("docs/1", destination.conventions);
                             await destination.getRequestExecutor().execute(command);
                             const conflicts = command.result;
 

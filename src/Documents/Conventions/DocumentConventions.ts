@@ -72,7 +72,6 @@ export class DocumentConventions {
 
     private _entityObjectMapper: TypesAwareObjectMapper;
 
-    private _entityJsonSerializer: JsonSerializer;
     private _useCompression;
 
     public constructor() {
@@ -116,7 +115,6 @@ export class DocumentConventions {
             documentConventions: this
         });
 
-        this._entityJsonSerializer = JsonSerializer.getDefaultForEntities();
         this._useCompression = null;
     }
 

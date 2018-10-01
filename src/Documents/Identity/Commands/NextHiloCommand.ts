@@ -5,6 +5,7 @@ import { RavenCommand } from "../../../Http/RavenCommand";
 import { throwError } from "../../../Exceptions";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as stream from "readable-stream";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 export interface HiLoResult {
     prefix: string;
@@ -22,13 +23,15 @@ export class NextHiloCommand extends RavenCommand<HiLoResult> {
     private readonly _lastRangeAt: Date;
     private readonly _identityPartsSeparator: string;
     private readonly _lastRangeMax: number;
+    private readonly _conventions: DocumentConventions;
 
     public constructor(
         tag: string,
         lastBatchSize: number,
         lastRangeAt: Date,
         identityPartsSeparator: string,
-        lastRangeMax: number) {
+        lastRangeMax: number,
+        conventions: DocumentConventions) {
         super();
 
         if (!tag) {
@@ -44,6 +47,7 @@ export class NextHiloCommand extends RavenCommand<HiLoResult> {
         this._lastRangeAt = lastRangeAt;
         this._identityPartsSeparator = identityPartsSeparator;
         this._lastRangeMax = lastRangeMax;
+        this._conventions = conventions;
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
@@ -67,11 +71,14 @@ export class NextHiloCommand extends RavenCommand<HiLoResult> {
         let body: string = null;
         await this._defaultPipeline(_ => body = _).process(bodyStream)
             .then(results => {
-                this.result = this._reviveResultTypes(results, {
-                    nestedTypes: {
-                        lastRangeAt: "date"
-                    }
-                });
+                this.result = this._reviveResultTypes(
+                    results, 
+                    this._conventions, 
+                    {
+                        nestedTypes: {
+                            lastRangeAt: "date"
+                        }
+                    });
             });
         return body;
     }

@@ -103,7 +103,7 @@ export class DocumentStore extends DocumentStoreBase {
         disposeChain
             .then(() => {
                 if (this._multiDbHiLo) {
-                    return BluebirdPromise.resolve()
+                    return Promise.resolve()
                         .then(() => this._multiDbHiLo.returnUnusedRange())
                         .catch(err => this._log.warn("Error returning unused ID range.", err));
                 }
@@ -115,6 +115,7 @@ export class DocumentStore extends DocumentStoreBase {
                 return new BluebirdPromise((resolve, reject) => {
                     let listenersExecCallbacksCount = 0;
                     const listenersCount = this.listenerCount("afterDispose");
+                    
                     this.emit("afterDispose", () => {
                         if (listenersCount === ++listenersExecCallbacksCount) {
                             resolve();
