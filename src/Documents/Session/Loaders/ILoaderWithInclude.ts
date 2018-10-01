@@ -20,7 +20,7 @@ export interface ILoaderWithInclude {
      * Loads the specified id.
      */
     load<TResult extends object>(
-        id: string, 
+        id: string,
         documentType?: DocumentType<TResult>,
         callback?: AbstractCallback<TResult>): Promise<TResult>;
 
@@ -28,7 +28,7 @@ export interface ILoaderWithInclude {
      * Loads the specified ids.
      */
     load<TResult extends object>(
-        ids: string[], 
+        ids: string[],
         documentType?: DocumentType<TResult>,
         callback?: AbstractCallback<TResult>): Promise<EntitiesCollectionObject<TResult>>;
 }

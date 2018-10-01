@@ -30,13 +30,13 @@ export abstract class RavenServerRunner {
         fs.writeFileSync(EMPTY_SETTINGS_TEMP, "{}");
 
         const commandArguments = [
-                `--config-path`,
-                `${EMPTY_SETTINGS_TEMP}`,
-                "--RunInMemory=true",
-                "--License.Eula.Accepted=true",
-                "--Setup.Mode=None",
-                `--Testing.ParentProcessId=${ process.pid }`,
-                ...locator.getCommandArguments() 
+            `--config-path`,
+            `${EMPTY_SETTINGS_TEMP}`,
+            "--RunInMemory=true",
+            "--License.Eula.Accepted=true",
+            "--Setup.Mode=None",
+            `--Testing.ParentProcessId=${ process.pid }`,
+            ...locator.getCommandArguments()
         ];
 
         return {

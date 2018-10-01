@@ -20,7 +20,7 @@ export class LazyLoadOperation<T extends object> implements ILazyOperation {
     private _requiresRetry: boolean;
 
     public constructor(
-        session: InMemoryDocumentSessionOperations, loadOperation: LoadOperation,  clazz: ObjectTypeDescriptor<T>) {
+        session: InMemoryDocumentSessionOperations, loadOperation: LoadOperation, clazz: ObjectTypeDescriptor<T>) {
         this._clazz = clazz;
         this._session = session;
         this._loadOperation = loadOperation;
@@ -30,7 +30,7 @@ export class LazyLoadOperation<T extends object> implements ILazyOperation {
         const idsToCheckOnServer = this._ids
             .filter(id => !this._session.isLoadedOrDeleted(id));
         const queryBuilder = new StringBuilder("?");
-         
+
         if (this._includes) {
             for (const include of this._includes) {
                 queryBuilder.append("&include=").append(include);
@@ -39,8 +39,8 @@ export class LazyLoadOperation<T extends object> implements ILazyOperation {
 
         for (const id of idsToCheckOnServer) {
             queryBuilder.append("&id=").append(encodeURIComponent(id));
-        } 
-        
+        }
+
         const hasItems = idsToCheckOnServer.length;
         if (!hasItems) {
             // no need to hit the server
@@ -54,24 +54,24 @@ export class LazyLoadOperation<T extends object> implements ILazyOperation {
         return getRequest;
     }
 
-     public byId(id: string): LazyLoadOperation<T> {
+    public byId(id: string): LazyLoadOperation<T> {
         if (!id) {
             return this;
         }
 
         if (!this._ids) {
-            this._ids = [ id ];
+            this._ids = [id];
         }
-        
+
         return this;
     }
 
-     public byIds(ids: string[]): LazyLoadOperation<T> {
+    public byIds(ids: string[]): LazyLoadOperation<T> {
         this._ids = ids;
         return this;
     }
 
-     public withIncludes(includes: string[]): LazyLoadOperation<T> {
+    public withIncludes(includes: string[]): LazyLoadOperation<T> {
         this._includes = includes;
         return this;
     }
@@ -107,7 +107,7 @@ export class LazyLoadOperation<T extends object> implements ILazyOperation {
             return;
         }
 
-        const multiLoadResult: GetDocumentsResult = 
+        const multiLoadResult: GetDocumentsResult =
             await GetDocumentsCommand.parseDocumentsResultResponseAsync(
                 stringToReadable(response.result), this._session.conventions);
 

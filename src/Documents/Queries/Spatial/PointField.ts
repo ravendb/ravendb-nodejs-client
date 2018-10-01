@@ -12,7 +12,7 @@ export class PointField extends DynamicSpatialField {
     }
 
     public toField(ensureValidFieldName: (fieldName: string, isNestedPath: boolean) => string): string {
-        return "spatial.point(" + 
+        return "spatial.point(" +
             ensureValidFieldName(this.latitude, false) + ", " + ensureValidFieldName(this.longitude, false) + ")";
     }
 }

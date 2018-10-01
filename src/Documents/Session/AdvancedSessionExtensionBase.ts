@@ -37,6 +37,7 @@ export abstract class AdvancedSessionExtensionBase {
         this._deletedEntities = session.deletedEntities;
         this._documentsById = session.documentsById;
     }
+
     public defer(command: ICommandData, ...commands: ICommandData[]): void {
         this._session.defer(command, ...commands);
     }

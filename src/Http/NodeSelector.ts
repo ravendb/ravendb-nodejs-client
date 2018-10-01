@@ -1,6 +1,6 @@
-import {ArrayUtil} from "../Utility/ArrayUtil";
+import { ArrayUtil } from "../Utility/ArrayUtil";
 import * as moment from "moment";
-import { ServerNode} from "../Http/ServerNode";
+import { ServerNode } from "../Http/ServerNode";
 import CurrentIndexAndNode from "../Http/CurrentIndexAndNode";
 import { Topology } from "./Topology";
 import { Timer } from "../Primitives/Timer";

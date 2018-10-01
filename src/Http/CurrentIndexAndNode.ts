@@ -1,4 +1,4 @@
-import {ServerNode} from "./ServerNode";
+import { ServerNode } from "./ServerNode";
 
 export default class CurrentIndexAndNode {
     public currentIndex: number;

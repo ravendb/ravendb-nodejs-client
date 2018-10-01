@@ -42,7 +42,7 @@ export class SetIndexesPriorityOperation implements IMaintenanceOperation<void> 
     public getCommand(conventions: DocumentConventions): RavenCommand<void> {
         return new SetIndexPriorityCommand(conventions, this._parameters);
     }
-    
+
     public get resultType(): OperationResultType {
         return "CommandResult";
     }

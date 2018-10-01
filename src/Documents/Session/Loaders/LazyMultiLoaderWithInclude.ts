@@ -24,18 +24,18 @@ export class LazyMultiLoaderWithInclude implements ILazyLoaderWithInclude {
         ids: string[], clazz: ObjectTypeDescriptor<TResult>): Lazy<EntitiesCollectionObject<TResult>>;
     public load<TResult extends object>(id: string): Lazy<TResult>;
     public load<TResult extends object>(id: string, clazz?: ObjectTypeDescriptor<TResult>): Lazy<TResult>;
-    public load<TResult extends object>(ids: string | string[], clazz?: ObjectTypeDescriptor<TResult>): 
+    public load<TResult extends object>(ids: string | string[], clazz?: ObjectTypeDescriptor<TResult>):
         Lazy<TResult> | Lazy<EntitiesCollectionObject<TResult>> {
         const isMultiple = Array.isArray(ids);
         const result = this._session.lazyLoadInternal(
-            isMultiple ? ids as string[] : [ids] as string[], 
-            this._includes, 
+            isMultiple ? ids as string[] : [ids] as string[],
+            this._includes,
             clazz);
 
         if (isMultiple) {
             return result;
         }
-        
+
         return new Lazy(() => result.getValue().then(x => x[Object.keys(x)[0]]));
     }
 }

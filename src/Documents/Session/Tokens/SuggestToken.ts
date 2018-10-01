@@ -1,5 +1,5 @@
-import {QueryToken} from "./QueryToken";
-import {throwError} from "../../../Exceptions";
+import { QueryToken } from "./QueryToken";
+import { throwError } from "../../../Exceptions";
 
 export class SuggestToken extends QueryToken {
 

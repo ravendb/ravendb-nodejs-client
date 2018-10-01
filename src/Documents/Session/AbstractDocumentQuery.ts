@@ -54,16 +54,16 @@ import { CmpXchg } from "./CmpXchg";
 import { AbstractCallback } from "../../Types/Callbacks";
 import { DocumentQueryCustomization } from "./DocumentQueryCustomization";
 import { FacetBase } from "../Queries/Facets/FacetBase";
-import {MoreLikeThisScope} from "../Queries/MoreLikeThis/MoreLikeThisScope";
-import {MoreLikeThisToken} from "./Tokens/MoreLikeThisToken";
-import {LazyQueryOperation} from "../Session/Operations/Lazy/LazyQueryOperation";
+import { MoreLikeThisScope } from "../Queries/MoreLikeThis/MoreLikeThisScope";
+import { MoreLikeThisToken } from "./Tokens/MoreLikeThisToken";
+import { LazyQueryOperation } from "../Session/Operations/Lazy/LazyQueryOperation";
 import { DocumentSession } from "./DocumentSession";
-import {SuggestionBase} from "../Queries/Suggestions/SuggestionBase";
-import {SuggestionOptions} from "../Queries/Suggestions/SuggestionOptions";
-import {SuggestToken} from "./Tokens/SuggestToken";
-import {SuggestionWithTerm} from "../Queries/Suggestions/SuggestionWithTerm";
-import {SuggestionWithTerms} from "../Queries/Suggestions/SuggestionWithTerms";
-import {QueryData} from "../Queries/QueryData";
+import { SuggestionBase } from "../Queries/Suggestions/SuggestionBase";
+import { SuggestionOptions } from "../Queries/Suggestions/SuggestionOptions";
+import { SuggestToken } from "./Tokens/SuggestToken";
+import { SuggestionWithTerm } from "../Queries/Suggestions/SuggestionWithTerm";
+import { SuggestionWithTerms } from "../Queries/Suggestions/SuggestionWithTerms";
+import { QueryData } from "../Queries/QueryData";
 
 /**
  * A query against a Raven index
@@ -476,7 +476,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      */
     public getProjectionFields(): string[] {
         return this.fieldsToFetchToken &&
-            this.fieldsToFetchToken.projections
+        this.fieldsToFetchToken.projections
             ? [...this.fieldsToFetchToken.projections]
             : [] as string[];
     }
@@ -1763,13 +1763,13 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
                 this._queryOperation.setResult(command.result);
                 this.emit("afterQueryExecuted", this._queryOperation.getCurrentQueryResults());
             });
-            /* TBD 4.1
-            .finally(() => {
-                if (context) {
-                    context.dispose();
-                }
-            });
-            */
+        /* TBD 4.1
+        .finally(() => {
+            if (context) {
+                context.dispose();
+            }
+        });
+        */
 
         return Promise.resolve(result);
     }
@@ -1845,6 +1845,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
                 return this._queryOperation.complete<T>(this._clazz);
             });
     }
+
     // tslint:enable:function-name
 
     public async any(): Promise<boolean> {
@@ -1899,10 +1900,10 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         const clazz = this._conventions.findEntityType(this._clazz);
-        const lazyQueryOperation = 
+        const lazyQueryOperation =
             new LazyQueryOperation<T>(
-                this._theSession.conventions, 
-                this._queryOperation, 
+                this._theSession.conventions,
+                this._queryOperation,
                 this,
                 clazz);
         return (this._theSession as DocumentSession).addLazyCountOperation(lazyQueryOperation);

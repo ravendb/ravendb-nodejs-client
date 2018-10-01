@@ -1,4 +1,4 @@
-import {DatabaseChange} from "./DatabaseChange";
+import { DatabaseChange } from "./DatabaseChange";
 
 export interface DocumentChange extends DatabaseChange {
     type: DocumentChangeTypes;

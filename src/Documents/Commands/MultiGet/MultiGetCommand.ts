@@ -22,54 +22,54 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> {
     private _baseUrl: string;
 
     public constructor(cache: HttpCache, conventions: DocumentConventions, commands: GetRequest[]) {
-       super();
-       this._cache = cache;
-       this._commands = commands;
-       this._conventions = conventions;
-       this._responseType = "Raw";
-   }
+        super();
+        this._cache = cache;
+        this._commands = commands;
+        this._conventions = conventions;
+        this._responseType = "Raw";
+    }
 
     private _getCacheKey(command: GetRequest): string {
         const url = this._baseUrl + command.urlAndQuery;
         return (command.method || "GET") + "-" + url;
     }
 
-   public createRequest(node: ServerNode): HttpRequestParameters {
-       this._baseUrl = node.url + "/databases/" + node.database;
+    public createRequest(node: ServerNode): HttpRequestParameters {
+        this._baseUrl = node.url + "/databases/" + node.database;
 
-       const requests = [];
-       const bodyObj = { Requests: requests };
-       const request: HttpRequestParameters = { 
-           uri: this._baseUrl + "/multi_get",
-           method: "POST", 
-           headers: this._headers().typeAppJson().build(),
+        const requests = [];
+        const bodyObj = { Requests: requests };
+        const request: HttpRequestParameters = {
+            uri: this._baseUrl + "/multi_get",
+            method: "POST",
+            headers: this._headers().typeAppJson().build(),
         };
-       
-       for (const command of this._commands) {
-           const cacheKey = this._getCacheKey(command);
-           let cacheItemInfo = null;
-           this._cache.get(cacheKey, (itemInfo) => cacheItemInfo = itemInfo);
-           const headers = {};
-           if (cacheItemInfo.cachedChangeVector) {
-               headers["If-None-Match"] = `"${cacheItemInfo.cachedChangeVector}"`;
-           }
 
-           Object.assign(headers, command.headers);
-           const req = {
-               Url: "/databases/" + node.database + command.url,
-               Query: command.query,
-               Method: command.method || "GET",
-               Headers: headers,
-               Content: command.body
-           };
-           
-           requests.push(req);
-       }
+        for (const command of this._commands) {
+            const cacheKey = this._getCacheKey(command);
+            let cacheItemInfo = null;
+            this._cache.get(cacheKey, (itemInfo) => cacheItemInfo = itemInfo);
+            const headers = {};
+            if (cacheItemInfo.cachedChangeVector) {
+                headers["If-None-Match"] = `"${cacheItemInfo.cachedChangeVector}"`;
+            }
 
-       request.body = JSON.stringify(bodyObj);
+            Object.assign(headers, command.headers);
+            const req = {
+                Url: "/databases/" + node.database + command.url,
+                Query: command.query,
+                Method: command.method || "GET",
+                Headers: headers,
+                Content: command.body
+            };
 
-       return request;
-   }
+            requests.push(req);
+        }
+
+        request.body = JSON.stringify(bodyObj);
+
+        return request;
+    }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         if (!bodyStream) {
@@ -84,12 +84,12 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> {
             ])
             .streamKeyCaseTransform({
                 defaultTransform: "camel",
-                ignorePaths: [ /\./ ],
+                ignorePaths: [/\./],
             })
             .collectResult({
                 initResult: [] as GetResponse[],
                 reduceResults: (result: GetResponse[], next) => {
-                    return [...result, next["value"]]; 
+                    return [...result, next["value"]];
                 }
             })
             .process(bodyStream);
@@ -102,15 +102,15 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> {
             ])
             .collectResult({
                 initResult: [] as string[],
-                reduceResults: (result: string[], next) => { 
+                reduceResults: (result: string[], next) => {
                     // TODO try read it another way
                     const resResult = JSON.stringify(next["value"]);
-                    return [...result, resResult ];
+                    return [...result, resResult];
                 }
             })
             .process(bodyStream);
-        
-        const [ responses, responsesResults ] = await Promise.all([ responsesPromise, responsesResultsPromise ]);
+
+        const [responses, responsesResults] = await Promise.all([responsesPromise, responsesResultsPromise]);
         for (let i = 0; i < responses.length; i++) {
             const res = responses[i];
             res.result = responsesResults[i];
@@ -124,14 +124,14 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> {
     }
 
     private _maybeReadFromCache(getResponse: GetResponse, command: GetRequest): void {
-       if (getResponse.statusCode !== StatusCodes.NotModified) {
-           return;
-       }
+        if (getResponse.statusCode !== StatusCodes.NotModified) {
+            return;
+        }
 
-       const cacheKey = this._getCacheKey(command);
-       let cachedResponse = null;
-       this._cache.get(cacheKey, x => cachedResponse = x.response);
-       getResponse.result = cachedResponse;
+        const cacheKey = this._getCacheKey(command);
+        let cachedResponse = null;
+        this._cache.get(cacheKey, x => cachedResponse = x.response);
+        getResponse.result = cachedResponse;
     }
 
     private _maybeSetCache(getResponse: GetResponse, command: GetRequest): void {

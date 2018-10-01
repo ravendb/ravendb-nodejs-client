@@ -94,7 +94,7 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
 
     protected _throwEntityNotInSession(entity: object): never {
         return throwError("InvalidArgumentException",
-            entity 
+            entity
             + " is not associated with the session. Use documentId instead or track the entity in the session.");
     }
 
@@ -112,8 +112,8 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
     public delete(entityOrId: string | object, name: string): void {
         if (typeof entityOrId !== "string") {
             return this._deleteAttachmentByEntity(entityOrId, name);
-        } 
-        
+        }
+
         if (StringUtil.isWhitespace(entityOrId)) {
             throwError("InvalidArgumentException", "DocumentId cannot be null");
         }

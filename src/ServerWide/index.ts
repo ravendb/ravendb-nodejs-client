@@ -1,4 +1,3 @@
-
 export interface ScriptResolver {
     script: string;
     lastModifiedTime: Date;

@@ -98,4 +98,4 @@ export class FacetBuilder<T> implements IFacetBuilder<T>, IFacetOperations<T> {
 
         return this._range;
     }
- }
+}

@@ -1,9 +1,9 @@
-import {ShapeToken} from "../../Session/Tokens/ShapeToken";
+import { ShapeToken } from "../../Session/Tokens/ShapeToken";
 import { SpatialRelation } from "../../Indexes/Spatial";
 import { QueryToken } from "../../Session/Tokens/QueryToken";
 import { throwError } from "../../../Exceptions";
-import {WhereOperator} from "../../Session/Tokens/WhereOperator";
-import {WhereToken, WhereOptions} from "../../Session/Tokens/WhereToken";
+import { WhereOperator } from "../../Session/Tokens/WhereOperator";
+import { WhereToken, WhereOptions } from "../../Session/Tokens/WhereToken";
 
 export abstract class SpatialCriteria {
 
@@ -40,8 +40,8 @@ export abstract class SpatialCriteria {
         }
 
         return WhereToken.create(whereOperator, fieldName, null, new WhereOptions({
-            shape: shapeToken, 
-            distance: this._distanceErrorPct 
+            shape: shapeToken,
+            distance: this._distanceErrorPct
         }));
 
     }

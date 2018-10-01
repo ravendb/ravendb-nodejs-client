@@ -14,10 +14,10 @@ import { IDocumentQuery } from "./IDocumentQuery";
 import { AdvancedDocumentQueryOptions } from "./QueryOptions";
 import { AbstractCallback } from "../../Types/Callbacks";
 import { IAttachmentsSessionOperations } from "../Session/IAttachmentsSessionOperations";
-import {ILazySessionOperations} from "./Operations/Lazy/ILazySessionOperations";
-import {IEagerSessionOperations} from "./Operations/Lazy/IEagerSessionOperations";
-import {JavaScriptArray} from "./JavaScriptArray";
-import {IRevisionsSessionOperations} from "./IRevisionsSessionOperations";
+import { ILazySessionOperations } from "./Operations/Lazy/ILazySessionOperations";
+import { IEagerSessionOperations } from "./Operations/Lazy/IEagerSessionOperations";
+import { JavaScriptArray } from "./JavaScriptArray";
+import { IRevisionsSessionOperations } from "./IRevisionsSessionOperations";
 import * as stream from "readable-stream";
 import { DocumentResultStream } from "../Session/DocumentStreamIterable";
 
@@ -43,36 +43,43 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     /**
      * Query the specified index using provided raw query
      */
-    
+
     rawQuery<TResult extends object>(query: string, documentType?: DocumentType<TResult>): IRawDocumentQuery<TResult>;
 
     exists(id: string): Promise<boolean>;
 
     loadStartingWith<T extends object>(
         idPrefix: string, opts: SessionLoadStartingWithOptions<T>, callback?: AbstractCallback<T[]>): Promise<T[]>;
+
     loadStartingWith<T extends object>(
         idPrefix: string, callback?: AbstractCallback<T[]>): Promise<T[]>;
 
     documentQuery<TEntity extends object>(opts: AdvancedDocumentQueryOptions<TEntity>): IDocumentQuery<TEntity>;
+
     documentQuery<TEntity extends object>(documentType: DocumentType<TEntity>): IDocumentQuery<TEntity>;
 
     // tslint:disable:max-line-length
     // TBD void LoadStartingWithIntoStream(string idPrefix, Stream output, string matches = null, int start = 0, int pageSize = 25, string exclude = null, string startAfter = null);
     // TBD void LoadIntoStream(IEnumerable<string> ids, Stream output);
 
-    increment<TEntity extends object, UValue> (id: string, path: string, valueToAdd: UValue): void;
-    increment<TEntity extends object, UValue> (entity: TEntity, path: string, valueToAdd: UValue): void;
+    increment<TEntity extends object, UValue>(id: string, path: string, valueToAdd: UValue): void;
+
+    increment<TEntity extends object, UValue>(entity: TEntity, path: string, valueToAdd: UValue): void;
 
     patch<TEntity extends object, UValue>(id: string, path: string, value: UValue): void;
+
     patch<TEntity extends object, UValue>(entity: TEntity, path: string, value: UValue): void;
 
     patch<TEntity extends object, UValue>(id: string, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
+
     patch<TEntity extends object, UValue>(entity: TEntity, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
 
     loadStartingWith<T extends object>(
         idPrefix: string, opts: SessionLoadStartingWithOptions<T>, callback?: AbstractCallback<T[]>): Promise<T[]>;
+
     loadStartingWith<T extends object>(
         idPrefix: string, callback?: AbstractCallback<T[]>): Promise<T[]>;
+
     // TBD patch API void Patch<T, U>(string id, Expression<Func<T, U>> path, U value);
     // TBD patch API void Patch<T, U>(T entity, Expression<Func<T, U>> path, U value);
     // TBD patch API void Patch<T, U>(T entity, Expression<Func<T, IEnumerable<U>>> path, Expression<Func<JavaScriptArray<U>, object>> arrayAdder);
@@ -98,6 +105,7 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * Returns the results of a query directly into stream
      */
     streamInto<T extends object>(query: IRawDocumentQuery<T>, writable: stream.Writable): Promise<void>;
+
     /**
      *  Returns the results of a query directly into stream
      */
@@ -112,26 +120,30 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
 
     loadIntoStream(
         ids: string[], writable: stream.Writable, callback?: AbstractCallback<void>): Promise<void>;
+
     loadIntoStream(
         ids: string[], writable: stream.Writable): Promise<void>;
 
     loadStartingWithIntoStream<TEntity extends object>(
         idPrefix: string,
         writable: stream.Writable): Promise<void>;
+
     loadStartingWithIntoStream<TEntity extends object>(
         idPrefix: string,
         writable: stream.Writable,
         opts: SessionLoadStartingWithOptions<TEntity>): Promise<void>;
+
     loadStartingWithIntoStream<TEntity extends object>(
         idPrefix: string,
         writable: stream.Writable,
         callback?: AbstractCallback<void>): Promise<void>;
+
     loadStartingWithIntoStream<TEntity extends object>(
         idPrefix: string,
         writable: stream.Writable,
-        opts: SessionLoadStartingWithOptions<TEntity>, 
+        opts: SessionLoadStartingWithOptions<TEntity>,
         callback?: AbstractCallback<void>): Promise<void>;
-        
+
     /**
      * Stream the results on the query to the client.
      *
@@ -145,7 +157,7 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * Does NOT track the entities in the session, and will not include changes there when saveChanges() is called
      */
     stream<T extends object>(
-        query: IDocumentQuery<T>, 
+        query: IDocumentQuery<T>,
         streamQueryStats: StreamQueryStatisticsCallback)
         : Promise<DocumentResultStream<T>>;
 
@@ -163,7 +175,7 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * Does NOT track the entities in the session, and will not include changes there when saveChanges() is called
      */
     stream<T extends object>(
-        query: IRawDocumentQuery<T>, 
+        query: IRawDocumentQuery<T>,
         streamQueryStats: StreamQueryStatisticsCallback)
         : Promise<DocumentResultStream<T>>;
 
@@ -189,7 +201,7 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * Does NOT track the entities in the session, and will not include changes there when saveChanges() is called
      */
     stream<T extends object>(
-        idPrefix: string, 
+        idPrefix: string,
         opts: SessionLoadStartingWithOptions<T>,
         callback: AbstractCallback<DocumentResultStream<T>>)
         : Promise<DocumentResultStream<T>>;
@@ -312,7 +324,7 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
     ignoreChangesFor(entity: object): void;
 
     /**
-     * Returns all changes for each entity stored within session. 
+     * Returns all changes for each entity stored within session.
      * Including name of the field/property that changed, its old and new value and change type.
      */
     whatChanged(): { [id: string]: DocumentsChanges[] };

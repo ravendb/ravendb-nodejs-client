@@ -60,8 +60,8 @@ export class HiloIdGenerator {
                 contextName: `${this.constructor.name}_${this._tag}`
             });
             return Promise.resolve(acquiredSemContext.promise)
-                .then(() => {            
-                    
+                .then(() => {
+
                     const maybeNewRange = this._range;
                     if (maybeNewRange !== range) {
                         id = maybeNewRange.increment();
@@ -120,5 +120,5 @@ export class HiloIdGenerator {
     public set range(value: HiloRangeValue) {
         this._range = value;
     }
-    
+
 }

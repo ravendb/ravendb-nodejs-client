@@ -21,7 +21,7 @@ export interface ILazySessionOperations {
      * Loads the specified entities with the specified ids.
      */
     load<TEntity extends object>(
-        ids: string[], 
+        ids: string[],
         clazz: ObjectTypeDescriptor<TEntity>): Lazy<EntitiesCollectionObject<TEntity>>;
 
     /**
@@ -38,7 +38,7 @@ export interface ILazySessionOperations {
      * Loads the specified entity with the specified id.
      */
     load<TEntity extends object>(
-        id: string, 
+        id: string,
         clazz: ObjectTypeDescriptor<TEntity>): Lazy<TEntity>;
 
     /**

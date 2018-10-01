@@ -1,25 +1,25 @@
-export type IndexState = 
-    "Normal" 
-    | "Disabled" 
-    | "Idle" 
+export type IndexState =
+    "Normal"
+    | "Disabled"
+    | "Idle"
     | "Error";
 
-export type IndexType = 
-    "None" 
-    | "AutoMap" 
-    | "AutoMapReduce" 
+export type IndexType =
+    "None"
+    | "AutoMap"
+    | "AutoMapReduce"
     | "Map"
     | "MapReduce"
     | "Faulty";
-    
+
 export type FieldStorage = "Yes" | "No";
 
-export type FieldIndexing =     
+export type FieldIndexing =
     /**
-     * Do not index the field value. 
+     * Do not index the field value.
      * This field can thus not be searched, but one can still access its contents provided it is stored.
      */
-    "No" 
+    "No"
     /**
      * Index the tokens produced by running the field's value through an Analyzer. This is useful for common text.
      */
@@ -34,7 +34,7 @@ export type FieldIndexing =
     /**
      *  Index this field using the default internal analyzer: LowerCaseKeywordAnalyzer
      */
-    | "Default"; 
+    | "Default";
 
 export type FieldTermVector =
     /**
@@ -59,12 +59,12 @@ export type FieldTermVector =
      */
     | "WithPositionsAndOffsets";
 
-export type IndexPriority = 
+export type IndexPriority =
     "Low"
     | "Normal"
     | "High";
 
-export type IndexLockMode = 
+export type IndexLockMode =
     "Unlock"
-    | "LockedIgnore" 
+    | "LockedIgnore"
     | "LockedError";

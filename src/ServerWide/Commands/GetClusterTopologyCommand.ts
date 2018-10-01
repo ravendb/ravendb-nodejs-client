@@ -30,7 +30,7 @@ export class GetClusterTopologyCommand extends RavenCommand<ClusterTopologyRespo
         const clusterTpl = Object.assign(new ClusterTopology(), resObj.topology);
         this.result = Object.assign(resObj as ClusterTopologyResponse, { topology: clusterTpl });
     }
-    
+
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         if (!bodyStream) {
             this._throwInvalidResponse();

@@ -1,8 +1,8 @@
 import * as BluebirdPromise from "bluebird";
-import {GetOperationStateCommand} from "./GetOperationStateOperation";
+import { GetOperationStateCommand } from "./GetOperationStateOperation";
 import { RequestExecutor, DocumentConventions } from "../..";
 import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
-import { throwError} from "../../Exceptions";
+import { throwError } from "../../Exceptions";
 import { OperationExceptionResult } from "./OperationAbstractions";
 import { ExceptionDispatcher } from "../../Exceptions";
 
@@ -26,7 +26,7 @@ export class OperationCompletionAwaiter {
 
     private _fetchOperationStatus(): Promise<IRavenResponse> {
         const command: RavenCommand<IRavenResponse> = this._getOperationStateCommand(this._conventions, this._id);
-        return Promise.resolve() 
+        return Promise.resolve()
             .then(() => this._requestExecutor.execute(command))
             .then(() => command.result);
     }
@@ -38,22 +38,22 @@ export class OperationCompletionAwaiter {
     public waitForCompletion(): Promise<void> {
         const operationStatusPolling = () => {
             return BluebirdPromise.resolve()
-            .then(() => this._fetchOperationStatus())
-            .then((operationStatusResult) => {
-                const operationStatus = operationStatusResult.status as OperationStatus;
-                switch (operationStatus) {
-                    case "Completed":
-                        return;
-                    case "Cancelled":
-                        throwError("OperationCancelledException", `Operation of ID ${this._id} has been cancelled.`);
-                    case "Faulted":
-                        const faultResult: OperationExceptionResult = operationStatusResult.result;
-                        throw ExceptionDispatcher.get(faultResult, faultResult.statusCode);
-                }
+                .then(() => this._fetchOperationStatus())
+                .then((operationStatusResult) => {
+                    const operationStatus = operationStatusResult.status as OperationStatus;
+                    switch (operationStatus) {
+                        case "Completed":
+                            return;
+                        case "Cancelled":
+                            throwError("OperationCancelledException", `Operation of ID ${this._id} has been cancelled.`);
+                        case "Faulted":
+                            const faultResult: OperationExceptionResult = operationStatusResult.result;
+                            throw ExceptionDispatcher.get(faultResult, faultResult.statusCode);
+                    }
 
-                return BluebirdPromise.delay(500)
-                    .then(() => operationStatusPolling());
-            });
+                    return BluebirdPromise.delay(500)
+                        .then(() => operationStatusPolling());
+                });
         };
 
         return Promise.resolve(operationStatusPolling());

@@ -6,7 +6,7 @@ export class DistinctToken extends QueryToken {
         super();
     }
 
-    public static INSTANCE: DistinctToken  = new DistinctToken();
+    public static INSTANCE: DistinctToken = new DistinctToken();
 
     public writeTo(writer): void {
         writer.append("distinct");

@@ -1,4 +1,4 @@
-import {DatabaseChange} from "./DatabaseChange";
+import { DatabaseChange } from "./DatabaseChange";
 
 export interface IndexChange extends DatabaseChange {
     type: IndexChangeTypes;

@@ -10,6 +10,7 @@ import { stringToReadable } from "../../../../Utility/StreamUtil";
 import { DocumentInfo } from "../../DocumentInfo";
 
 const enc = encodeURIComponent;
+
 export class LazyStartsWithOperation<T extends object> implements ILazyOperation {
 
     private readonly _clazz: ObjectTypeDescriptor<T>;
@@ -22,10 +23,10 @@ export class LazyStartsWithOperation<T extends object> implements ILazyOperation
     private readonly _startAfter: string;
 
     public constructor(
-        idPrefix: string, 
+        idPrefix: string,
         opts: SessionLoadStartingWithOptions<T>,
         sessionOperations: InMemoryDocumentSessionOperations) {
-        
+
         this._idPrefix = idPrefix;
         this._matches = opts.matches;
         this._exclude = opts.exclude;
@@ -39,7 +40,7 @@ export class LazyStartsWithOperation<T extends object> implements ILazyOperation
     public createRequest(): GetRequest {
         const request = new GetRequest();
         request.url = "/docs";
-        request.query = 
+        request.query =
             // tslint:disable-next-line:max-line-length
             `?startsWith=${enc(this._idPrefix)}&matches=${enc(this._matches) || ""}&exclude=${enc(this._exclude) || ""}&start=${this._start}&pageSize=${this._pageSize}&startAfter=${enc(this._startAfter)}`;
         return request;

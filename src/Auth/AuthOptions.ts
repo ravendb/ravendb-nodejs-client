@@ -1,4 +1,4 @@
-import {CertificateType} from "./Certificate";
+import { CertificateType } from "./Certificate";
 
 export interface IAuthOptions {
     type?: CertificateType;

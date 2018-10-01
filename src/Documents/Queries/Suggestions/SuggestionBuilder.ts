@@ -1,11 +1,11 @@
-import {ISuggestionBuilder} from "./ISuggestionBuilder";
-import {ISuggestionOperations} from "./ISuggestionOperations";
-import {SuggestionWithTerm} from "./SuggestionWithTerm";
-import {SuggestionWithTerms} from "./SuggestionWithTerms";
-import {throwError} from "../../../Exceptions";
-import {TypeUtil} from "../../../Utility/TypeUtil";
-import {SuggestionOptions} from "./SuggestionOptions";
-import {SuggestionBase} from "./SuggestionBase";
+import { ISuggestionBuilder } from "./ISuggestionBuilder";
+import { ISuggestionOperations } from "./ISuggestionOperations";
+import { SuggestionWithTerm } from "./SuggestionWithTerm";
+import { SuggestionWithTerms } from "./SuggestionWithTerms";
+import { throwError } from "../../../Exceptions";
+import { TypeUtil } from "../../../Utility/TypeUtil";
+import { SuggestionOptions } from "./SuggestionOptions";
+import { SuggestionBase } from "./SuggestionBase";
 
 export class SuggestionBuilder<T> implements ISuggestionBuilder<T>, ISuggestionOperations<T> {
 

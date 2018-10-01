@@ -21,6 +21,6 @@ export class GroupByCountToken extends QueryToken {
         }
 
         writer.append(" as ")
-              .append(this._fieldName);
+            .append(this._fieldName);
     }
 }

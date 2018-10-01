@@ -4,19 +4,28 @@ import { IDocumentQueryCustomization } from "./IDocumentQueryCustomization";
 
 export interface SessionEventsEmitter {
     on(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
+
     on(eventName: "afterSaveChanges", eventHandler: (eventArgs: SessionAfterSaveChangesEventArgs) => void): this;
+
     on(eventName: "beforeQuery", eventHandler: (eventArgs: SessionBeforeQueryEventArgs) => void): this;
+
     on(eventName: "beforeDelete", eventHandler: (eventArgs: SessionBeforeDeleteEventArgs) => void): this;
 
     removeListener(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
+
     removeListener(
         eventName: "afterSaveChanges", eventHandler: (eventArgs: SessionAfterSaveChangesEventArgs) => void): this;
+
     removeListener(eventName: "beforeQuery", eventHandler: (eventArgs: SessionBeforeQueryEventArgs) => void): this;
+
     removeListener(eventName: "beforeDelete", eventHandler: (eventArgs: SessionBeforeDeleteEventArgs) => void): this;
 
     emit(eventName: "beforeStore", eventArgs: SessionBeforeStoreEventArgs);
+
     emit(eventName: "afterSaveChanges", eventArgs: SessionAfterSaveChangesEventArgs);
+
     emit(eventName: "beforeQuery", eventArgs: SessionBeforeQueryEventArgs);
+
     emit(eventName: "beforeDelete", eventArgs: SessionBeforeDeleteEventArgs);
 }
 
@@ -62,7 +71,8 @@ export class SessionBeforeStoreEventArgs {
 export class SessionBeforeQueryEventArgs {
     constructor(
         public session: InMemoryDocumentSessionOperations,
-        public queryCustomization: IDocumentQueryCustomization) {}
+        public queryCustomization: IDocumentQueryCustomization) {
+    }
 }
 
 export class SessionBeforeDeleteEventArgs {
@@ -114,7 +124,7 @@ export class SessionAfterSaveChangesEventArgs {
         this.entity = entity;
     }
 
-    public get documentMetadata(): IMetadataDictionary  {
+    public get documentMetadata(): IMetadataDictionary {
         if (!this._documentMetadata) {
             this._documentMetadata = this.session.getMetadataFor(this.entity);
         }

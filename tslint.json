@@ -1,7 +1,8 @@
 {
     "defaultSeverity": "warn",
     "extends": [
-        "tslint:recommended"
+        "tslint:recommended",
+        "tslint-eslint-rules"
     ],
     "jsRules": {},
     "rules": {
@@ -31,7 +32,7 @@
         "ban-types": false,
         "no-unused-variable": false,
         "space-before-function-paren": ["warn", "always"],
-        "no-string-literal": false,
+        "object-curly-spacing": [true, "always"],
         "comment-format": false,
         "no-shadowed-variable": false
     },

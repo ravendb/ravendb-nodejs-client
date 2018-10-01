@@ -18,7 +18,7 @@ export class MultiLoaderWithInclude implements ILoaderWithInclude {
     /**
      * Includes the specified path.
      */
-    public include(path: string): ILoaderWithInclude  {
+    public include(path: string): ILoaderWithInclude {
         this._includes.push(path);
         return this;
     }
@@ -31,7 +31,7 @@ export class MultiLoaderWithInclude implements ILoaderWithInclude {
      * Loads the specified id.
      */
     public async load<TResult extends object>(
-        id: string, 
+        id: string,
         documentType?: DocumentType<TResult>,
         callback?: AbstractCallback<TResult>): Promise<TResult>;
 
@@ -39,21 +39,21 @@ export class MultiLoaderWithInclude implements ILoaderWithInclude {
      * Loads the specified ids.
      */
     public async load<TResult extends object>(
-        ids: string[], 
+        ids: string[],
         documentType?: DocumentType<TResult>): Promise<EntitiesCollectionObject<TResult>>;
     /**
      * Loads the specified ids.
      */
     public async load<TResult extends object>(
-        ids: string | string[], 
+        ids: string | string[],
         documentType?: DocumentType<TResult>,
         callback?: AbstractCallback<TResult | EntitiesCollectionObject<TResult>>)
-            : Promise<TResult | EntitiesCollectionObject<TResult>> {
+        : Promise<TResult | EntitiesCollectionObject<TResult>> {
         callback = callback || TypeUtil.NOOP;
-        
+
         let singleResult = false;
         if (TypeUtil.isString(ids)) {
-            ids = [ ids ] as string[];
+            ids = [ids] as string[];
             singleResult = true;
         }
 
@@ -68,7 +68,7 @@ export class MultiLoaderWithInclude implements ILoaderWithInclude {
             })
             .tap((results) => callback(null, results))
             .tapCatch(err => callback(err));
-        
+
         return Promise.resolve(result);
     }
 

@@ -1,4 +1,3 @@
-
 export class JavaScriptArray<U> {
     private readonly _suffix: number;
     private _argCounter: number = 0;

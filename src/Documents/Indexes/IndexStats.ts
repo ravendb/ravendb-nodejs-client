@@ -25,7 +25,7 @@ export interface IndexStats {
     entriesCount: number;
     errorsCount: number;
     isTestIndex: boolean;
-} 
+}
 
 export class CollectionStats {
     public lastProcessedDocumentEtag: number;

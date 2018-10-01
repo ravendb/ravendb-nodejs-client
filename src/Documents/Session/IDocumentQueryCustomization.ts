@@ -1,6 +1,6 @@
-import {QueryOperation} from "./Operations/QueryOperation";
-import {IndexQuery} from "../Queries/IndexQuery";
-import {QueryResult} from "../Queries/QueryResult";
+import { QueryOperation } from "./Operations/QueryOperation";
+import { IndexQuery } from "../Queries/IndexQuery";
+import { QueryResult } from "../Queries/QueryResult";
 
 export interface IDocumentQueryCustomization {
 

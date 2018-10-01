@@ -1,13 +1,13 @@
-import {IMoreLikeThisOperations} from "./IMoreLikeThisOperations";
-import {IMoreLikeThisBuilderForDocumentQuery} from "./IMoreLikeThisBuilderForDocumentQuery";
-import {IMoreLikeThisBuilderBase} from "./IMoreLikeThisBuilderBase";
-import {MoreLikeThisBase} from "./MoreLikeThisBase";
-import {MoreLikeThisOptions} from "./MoreLikeThisOptions";
-import {MoreLikeThisUsingAnyDocument} from "./MoreLikeThisUsingAnyDocument";
-import {MoreLikeThisUsingDocument} from "./MoreLikeThisUsingDocument";
-import {IDocumentQuery, IFilterDocumentQueryBase} from "../../..";
-import {TypeUtil} from "../../../Utility/TypeUtil";
-import {MoreLikeThisUsingDocumentForDocumentQuery} from "./MoreLikeThisUsingDocumentForDocumentQuery";
+import { IMoreLikeThisOperations } from "./IMoreLikeThisOperations";
+import { IMoreLikeThisBuilderForDocumentQuery } from "./IMoreLikeThisBuilderForDocumentQuery";
+import { IMoreLikeThisBuilderBase } from "./IMoreLikeThisBuilderBase";
+import { MoreLikeThisBase } from "./MoreLikeThisBase";
+import { MoreLikeThisOptions } from "./MoreLikeThisOptions";
+import { MoreLikeThisUsingAnyDocument } from "./MoreLikeThisUsingAnyDocument";
+import { MoreLikeThisUsingDocument } from "./MoreLikeThisUsingDocument";
+import { IDocumentQuery, IFilterDocumentQueryBase } from "../../..";
+import { TypeUtil } from "../../../Utility/TypeUtil";
+import { MoreLikeThisUsingDocumentForDocumentQuery } from "./MoreLikeThisUsingDocumentForDocumentQuery";
 
 export class MoreLikeThisBuilder<T extends object>
     implements IMoreLikeThisOperations<T>, IMoreLikeThisBuilderForDocumentQuery<T>, IMoreLikeThisBuilderBase<T> {
@@ -30,7 +30,7 @@ export class MoreLikeThisBuilder<T extends object>
     public usingDocument(
         documentJsonOrBuilder: string
             | ((query: IFilterDocumentQueryBase<T, IDocumentQuery<T>>) => IDocumentQuery<T>)):
-                IMoreLikeThisOperations<T> {
+        IMoreLikeThisOperations<T> {
         if (TypeUtil.isString(documentJsonOrBuilder)) {
             this._moreLikeThis = new MoreLikeThisUsingDocument(documentJsonOrBuilder as string);
         } else {

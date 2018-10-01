@@ -1,4 +1,4 @@
-import {HttpRequestParameters} from "../../Primitives/Http";
+import { HttpRequestParameters } from "../../Primitives/Http";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { IndexQuery, writeIndexQuery } from "../Queries/IndexQuery";
@@ -61,7 +61,7 @@ export class ExplainQueryCommand extends RavenCommand<ExplainQueryResult[]> {
 
                 this.result = explainResults;
             });
-            
+
         return body;
     }
 

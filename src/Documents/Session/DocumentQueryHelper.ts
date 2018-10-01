@@ -13,7 +13,7 @@ export class DocumentQueryHelper {
 
         if ((previousToken.constructor &&
             previousToken.constructor.name === OpenSubclauseToken.name)
-            || (currentToken.constructor && 
+            || (currentToken.constructor &&
                 (currentToken.constructor.name === CloseSubclauseToken.name
                     || currentToken.constructor.name === IntersectMarkerToken.name))) {
             return;

@@ -20,7 +20,7 @@ export abstract class QueryToken {
         "as",
         "select",
         "where",
-        "load", 
+        "load",
         "group",
         "order",
         "include",

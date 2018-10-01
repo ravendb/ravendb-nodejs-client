@@ -1,4 +1,4 @@
-import {IndexBatchOptions, ReplicationBatchOptions} from "../../..";
+import { IndexBatchOptions, ReplicationBatchOptions } from "../../..";
 
 export interface BatchOptions {
     replicationOptions: ReplicationBatchOptions;

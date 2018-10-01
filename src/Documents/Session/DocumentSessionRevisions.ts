@@ -1,17 +1,17 @@
-import {AdvancedSessionExtensionBase} from "./AdvancedSessionExtensionBase";
+import { AdvancedSessionExtensionBase } from "./AdvancedSessionExtensionBase";
 import {
     IRevisionsSessionOperations,
     SessionRevisionsMetadataOptions,
     SessionRevisionsOptions
 } from "./IRevisionsSessionOperations";
-import {InMemoryDocumentSessionOperations} from "./InMemoryDocumentSessionOperations";
-import {MetadataAsDictionary} from "../../Mapping/MetadataAsDictionary";
-import {GetRevisionOperation} from "./Operations/GetRevisionOperation";
-import {TypeUtil} from "../../Utility/TypeUtil";
-import {DocumentType} from "../DocumentAbstractions";
-import {AbstractCallback} from "../../Types/Callbacks";
+import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
+import { MetadataAsDictionary } from "../../Mapping/MetadataAsDictionary";
+import { GetRevisionOperation } from "./Operations/GetRevisionOperation";
+import { TypeUtil } from "../../Utility/TypeUtil";
+import { DocumentType } from "../DocumentAbstractions";
+import { AbstractCallback } from "../../Types/Callbacks";
 import * as PromiseUtil from "../../Utility/PromiseUtil";
-import {RevisionsCollectionObject} from "../../Types";
+import { RevisionsCollectionObject } from "../../Types";
 
 export class DocumentSessionRevisions extends AdvancedSessionExtensionBase implements IRevisionsSessionOperations {
 

@@ -21,7 +21,7 @@ export class PutCompareExchangeValueOperation<T> implements IOperation<CompareEx
     private readonly _key: string;
     private readonly _value: T;
     private readonly _index: number;
-    
+
     public constructor(key: string, value: T, index: number) {
         this._key = key;
         this._value = value;
@@ -75,8 +75,8 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
         const uri = node.url + "/databases/" + node.database + "/cmpxchg?key=" + this._key + "&index=" + this._index;
 
         const tuple = {};
-        tuple["Object"] = TypeUtil.isPrimitive(this._value) 
-            ? this._value 
+        tuple["Object"] = TypeUtil.isPrimitive(this._value)
+            ? this._value
             : this._conventions.transformObjectKeysToRemoteFieldNameConvention(this._value as any);
 
         return {
@@ -91,13 +91,13 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
         let body: string = null;
         const resultPromise = this._pipeline<object>()
             .collectBody(b => body = b)
-            .parseJsonAsync([ 
+            .parseJsonAsync([
                 pick({ filter: "Value.Object" }),
                 streamValues()
             ])
             .streamKeyCaseTransform(this._conventions.entityFieldNameConvention)
             .process(bodyStream);
-        
+
         const restPromise = this._pipeline<object>()
             .parseJsonAsync([
                 ignore({ filter: "Value" }),
@@ -105,12 +105,12 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
             ])
             .streamKeyCaseTransform("camel")
             .process(bodyStream);
-        
-        await Promise.all([ resultPromise, restPromise ])
-            .then(([ result, rest ]) => {
+
+        await Promise.all([resultPromise, restPromise])
+            .then(([result, rest]) => {
                 const resObj = Object.assign(
                     {},
-                    rest as { successful: boolean, index: number }, 
+                    rest as { successful: boolean, index: number },
                     { value: { object: result } });
                 const type = !TypeUtil.isPrimitive(this._value)
                     ? this._conventions.getEntityTypeDescriptor(this._value as any) as ObjectTypeDescriptor

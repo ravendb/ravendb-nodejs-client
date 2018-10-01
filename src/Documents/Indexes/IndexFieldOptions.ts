@@ -1,4 +1,4 @@
-import {SpatialOptions} from "./Spatial";
+import { SpatialOptions } from "./Spatial";
 import { FieldStorage, FieldIndexing, FieldTermVector } from "./Enums";
 
 export class IndexFieldOptions {

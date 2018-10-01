@@ -1,5 +1,5 @@
 import * as BluebirdPromise from "bluebird";
-import {IDisposable} from "../Types/Contracts";
+import { IDisposable } from "../Types/Contracts";
 import { getLogger } from "../Utility/LogUtil";
 
 const log = getLogger({ module: "Timer" });
@@ -7,7 +7,7 @@ const log = getLogger({ module: "Timer" });
 export class Timer implements IDisposable {
 
     private _action: () => Promise<any>;
-    
+
     private _scheduledActionPromise: Promise<any>;
 
     private _firstTimeDelayId: NodeJS.Timer;
@@ -36,7 +36,7 @@ export class Timer implements IDisposable {
             if (this._periodInMs) {
                 this._intervalId = setInterval(
                     () => this._timerAction(), this._periodInMs);
-            } 
+            }
 
             this._timerAction();
 

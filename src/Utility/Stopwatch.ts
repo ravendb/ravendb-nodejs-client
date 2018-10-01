@@ -19,7 +19,7 @@ export class Stopwatch {
         if (!this._endDate) {
             return new Date().valueOf() - this._startDate.valueOf();
         }
-        
+
         return this._endDate.valueOf() - this._startDate.valueOf();
     }
 

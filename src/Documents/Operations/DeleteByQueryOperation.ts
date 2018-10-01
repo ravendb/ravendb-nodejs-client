@@ -40,6 +40,7 @@ export class DeleteByQueryOperation implements IOperation<OperationIdResult> {
     }
 
 }
+
 export class DeleteByIndexCommand extends RavenCommand<OperationIdResult> {
 
     private readonly _conventions: DocumentConventions;

@@ -1,13 +1,14 @@
-import {IAuthOptions} from "./AuthOptions";
-import {StringUtil} from "../Utility/StringUtil";
-import {throwError} from "../Exceptions";
-import {AgentOptions} from "https";
+import { IAuthOptions } from "./AuthOptions";
+import { StringUtil } from "../Utility/StringUtil";
+import { throwError } from "../Exceptions";
+import { AgentOptions } from "https";
 import WebSocket = require("ws");
 
 export type CertificateType = "pem" | "pfx";
 
 export interface ICertificate {
     toAgentOptions(): AgentOptions;
+
     toWebSocketOptions(): WebSocket.ClientOptions;
 }
 
@@ -23,7 +24,7 @@ export abstract class Certificate implements ICertificate {
         if (!options) {
             return null;
         }
-        
+
         let certificate: ICertificate = null;
 
         switch (options.type) {

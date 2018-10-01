@@ -2,7 +2,7 @@ import { ObjectTypeDescriptor, EntitiesCollectionObject } from "../../../Types";
 import { Lazy } from "../../Lazy";
 
 export interface ILazyLoaderWithInclude {
-     //TBD expr overrides with expressions + maybe we TInclude, see:
+    //TBD expr overrides with expressions + maybe we TInclude, see:
 
     /**
      * Begin a load while including the specified path

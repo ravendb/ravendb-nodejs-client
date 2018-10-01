@@ -1,9 +1,9 @@
-import {IOperation, OperationResultType} from "../OperationAbstractions";
-import {DocumentConventions, IDocumentStore, RavenCommand, ServerNode} from "../../..";
-import {HttpCache} from "../../../Http/HttpCache";
-import {StringUtil} from "../../../Utility/StringUtil";
-import {throwError} from "../../../Exceptions";
-import {HttpRequestParameters} from "../../../Primitives/Http";
+import { IOperation, OperationResultType } from "../OperationAbstractions";
+import { DocumentConventions, IDocumentStore, RavenCommand, ServerNode } from "../../..";
+import { HttpCache } from "../../../Http/HttpCache";
+import { StringUtil } from "../../../Utility/StringUtil";
+import { throwError } from "../../../Exceptions";
+import { HttpRequestParameters } from "../../../Primitives/Http";
 
 export class DeleteAttachmentOperation implements IOperation<void> {
     private readonly _documentId: string;

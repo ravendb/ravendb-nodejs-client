@@ -1,10 +1,10 @@
-import {ILazyOperation} from "./ILazyOperation";
-import {QueryResult} from "../../../Queries/QueryResult";
-import {DocumentConventions, IndexQuery, SuggestionsResponseObject, writeIndexQuery} from "../../../..";
-import {GetRequest} from "../../../Commands/MultiGet/GetRequest";
-import {GetResponse} from "../../../Commands/MultiGet/GetResponse";
-import {QueryCommand} from "../../../Commands/QueryCommand";
-import {stringToReadable} from "../../../../Utility/StreamUtil";
+import { ILazyOperation } from "./ILazyOperation";
+import { QueryResult } from "../../../Queries/QueryResult";
+import { DocumentConventions, IndexQuery, SuggestionsResponseObject, writeIndexQuery } from "../../../..";
+import { GetRequest } from "../../../Commands/MultiGet/GetRequest";
+import { GetResponse } from "../../../Commands/MultiGet/GetResponse";
+import { QueryCommand } from "../../../Commands/QueryCommand";
+import { stringToReadable } from "../../../../Utility/StreamUtil";
 
 export class LazySuggestionQueryOperation implements ILazyOperation {
 

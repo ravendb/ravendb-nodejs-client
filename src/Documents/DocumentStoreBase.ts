@@ -1,14 +1,15 @@
-import {MaintenanceOperationExecutor} from "./Operations/MaintenanceOperationExecutor";
+import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor";
 import { EventEmitter } from "events";
 import { IDocumentStore } from "./IDocumentStore";
 import { throwError } from "../Exceptions";
 import { validateUri } from "../Utility/UriUtil";
 import { IAuthOptions } from "../Auth/AuthOptions";
-import { 
-    SessionBeforeStoreEventArgs, 
-    SessionAfterSaveChangesEventArgs, 
-    SessionBeforeQueryEventArgs, 
-    SessionBeforeDeleteEventArgs } from "./Session/SessionEvents";
+import {
+    SessionBeforeStoreEventArgs,
+    SessionAfterSaveChangesEventArgs,
+    SessionBeforeQueryEventArgs,
+    SessionBeforeDeleteEventArgs
+} from "./Session/SessionEvents";
 import { Todo } from "../Types";
 import { OperationExecutor } from "./Operations/OperationExecutor";
 import { SessionOptions } from "http2";
@@ -20,18 +21,18 @@ import { RequestExecutor } from "../Http/RequestExecutor";
 import { IndexCreation } from "../Documents/Indexes/IndexCreation";
 import { PutIndexesOperation } from "./Operations/Indexes/PutIndexesOperation";
 import { IDisposable } from "../Types/Contracts";
-import {BulkInsertOperation} from "./BulkInsertOperation";
-import {IDatabaseChanges} from "./Changes/IDatabaseChanges";
+import { BulkInsertOperation } from "./BulkInsertOperation";
+import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
 
-export abstract class DocumentStoreBase 
-    extends EventEmitter 
+export abstract class DocumentStoreBase
+    extends EventEmitter
     implements IDocumentStore {
 
     /* TBD 4.1
     public abstract disableAggressiveCaching(): IDisposable;
     public abstract disableAggressiveCaching(database: string): IDisposable;
     */
-    
+
     protected constructor() {
         super();
         // TBD: Subscriptions = new DocumentSubscriptions(this);
@@ -66,6 +67,7 @@ export abstract class DocumentStoreBase
         this.assertInitialized();
         return task.execute(this, this.conventions, database);
     }
+
     // TODO: public void executeIndex(AbstractIndexCreationTask task) {
     //     executeIndex(task, null);
     // }
@@ -115,13 +117,13 @@ export abstract class DocumentStoreBase
         this._assertNotInitialized("urls");
 
         if (!value || !Array.isArray(value)) {
-            throwError("InvalidArgumentException", 
+            throwError("InvalidArgumentException",
                 `Invalid urls array passed: ${value.toString()}.`);
         }
 
         for (let i = 0; i < value.length; i++) {
             if (!value[i]) {
-                throwError("InvalidArgumentException", 
+                throwError("InvalidArgumentException",
                     `Url cannot be null or undefined - url index: ${i}`);
             }
 
@@ -200,7 +202,7 @@ export abstract class DocumentStoreBase
         this._eventHandlers.push([eventName, eventHandler]);
         return this;
     }
-    
+
     public removeSessionListener(
         eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): void;
     public removeSessionListener(
@@ -228,21 +230,22 @@ export abstract class DocumentStoreBase
     public abstract operations: OperationExecutor;
 
     public executeIndexes(tasks: AbstractIndexCreationTask[]): Promise<void>;
-    public executeIndexes(tasks: AbstractIndexCreationTask[], database: string): Promise<void>; 
+    public executeIndexes(tasks: AbstractIndexCreationTask[], database: string): Promise<void>;
     public executeIndexes(tasks: AbstractIndexCreationTask[], database?: string): Promise<void> {
-        
+
         this.assertInitialized();
 
         return Promise.resolve()
-        .then(() => {
-            const indexesToAdd = IndexCreation.createIndexesToAdd(tasks, this.conventions);
+            .then(() => {
+                const indexesToAdd = IndexCreation.createIndexesToAdd(tasks, this.conventions);
 
-            return this.maintenance
-                .forDatabase(database || this.database)
-                .send(new PutIndexesOperation(...indexesToAdd));
-        })
-        // tslint:disable-next-line:no-empty
-        .then(() => {});
+                return this.maintenance
+                    .forDatabase(database || this.database)
+                    .send(new PutIndexesOperation(...indexesToAdd));
+            })
+            // tslint:disable-next-line:no-empty
+            .then(() => {
+            });
     }
 
     protected _assertValidConfiguration(): void {

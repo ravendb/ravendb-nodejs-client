@@ -1,4 +1,4 @@
-import {StringUtil} from "./StringUtil";
+import { StringUtil } from "./StringUtil";
 
 export class TimeUtil {
 

@@ -6,6 +6,7 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
 import * as stream from "readable-stream";
+
 export class GetIndexOperation implements IMaintenanceOperation<IndexDefinition> {
 
     private readonly _indexName: string;
@@ -58,7 +59,7 @@ export class GetIndexCommand extends RavenCommand<IndexDefinition> {
             .parseJsonSync()
             .streamKeyCaseTransform({
                 defaultTransform: "camel",
-                ignorePaths:  [ /fields\.[^.]+$/i ]
+                ignorePaths: [/fields\.[^.]+$/i]
             })
             .process(bodyStream)
             .then((result: object) => {
@@ -72,7 +73,7 @@ export class GetIndexCommand extends RavenCommand<IndexDefinition> {
                 const allResults = this._reviveResultTypes(result, indexDefTypeInfo, knownTypes);
                 this.result = allResults["results"][0] || null;
             });
-            
+
         return body;
     }
 

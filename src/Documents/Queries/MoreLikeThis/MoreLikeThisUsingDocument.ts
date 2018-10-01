@@ -1,4 +1,4 @@
-import {MoreLikeThisBase} from "./MoreLikeThisBase";
+import { MoreLikeThisBase } from "./MoreLikeThisBase";
 
 export class MoreLikeThisUsingDocument extends MoreLikeThisBase {
     public documentJson: string;

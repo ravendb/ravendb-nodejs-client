@@ -1,7 +1,7 @@
-import {WhereToken} from "./WhereToken";
-import {QueryToken} from "./QueryToken";
+import { WhereToken } from "./WhereToken";
+import { QueryToken } from "./QueryToken";
 import * as StringBuilder from "string-builder";
-import {DocumentQueryHelper} from "../DocumentQueryHelper";
+import { DocumentQueryHelper } from "../DocumentQueryHelper";
 
 export class MoreLikeThisToken extends WhereToken {
 

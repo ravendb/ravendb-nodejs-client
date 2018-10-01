@@ -23,17 +23,17 @@ export class DeclareToken extends QueryToken {
 
     public writeTo(writer): void {
         writer
-                .append("declare ")
-                .append("function ")
-                .append(this._name)
-                .append("(")
-                .append(this._parameters)
-                .append(") ")
-                .append("{")
-                .append(os.EOL)
-                .append(this._body)
-                .append(os.EOL)
-                .append("}")
-                .append(os.EOL);
+            .append("declare ")
+            .append("function ")
+            .append(this._name)
+            .append("(")
+            .append(this._parameters)
+            .append(") ")
+            .append("{")
+            .append(os.EOL)
+            .append(this._body)
+            .append(os.EOL)
+            .append("}")
+            .append(os.EOL);
     }
 }

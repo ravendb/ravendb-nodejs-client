@@ -11,5 +11,6 @@ export interface QueryEvents extends StreamingQueryEvents {
     "afterQueryExecuted": QueryResult;
 }
 
-export interface QueryEventsEmitter 
-    extends TypedEventEmitter<QueryEvents> {}
+export interface QueryEventsEmitter
+    extends TypedEventEmitter<QueryEvents> {
+}

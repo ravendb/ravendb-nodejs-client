@@ -20,7 +20,7 @@ export function pascalCaseReviver(key, value) {
         } else {
             return value;
         }
-    } 
-    
+    }
+
     return value;
 }

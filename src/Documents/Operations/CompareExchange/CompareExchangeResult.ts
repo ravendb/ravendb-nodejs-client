@@ -4,7 +4,7 @@ import { ClassConstructor } from "../../..";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 
 export interface CompareExchangeResultResponse {
-    index: number; 
+    index: number;
     successful: boolean;
     value: {
         object: object
@@ -19,19 +19,19 @@ export class CompareExchangeResult<T> {
 
     public static parseFromObject<T>(
         { index, value, successful }: CompareExchangeResultResponse,
-        conventions: DocumentConventions, 
+        conventions: DocumentConventions,
         clazz?: ClassConstructor<T>): CompareExchangeResult<T> {
-            if (!index) {
-                throwError("InvalidOperationException", "Response is invalid. Index is missing");
-            }
-
-            const val = value.object || null;
-            return CompareExchangeResult._create(val, index, successful, conventions, clazz);
+        if (!index) {
+            throwError("InvalidOperationException", "Response is invalid. Index is missing");
         }
 
+        const val = value.object || null;
+        return CompareExchangeResult._create(val, index, successful, conventions, clazz);
+    }
+
     public static parseFromString<T>(
-        responseString: string, 
-        conventions: DocumentConventions, 
+        responseString: string,
+        conventions: DocumentConventions,
         clazz?: ClassConstructor<T>): CompareExchangeResult<T> {
 
         const response = JSON.parse(responseString);
@@ -54,10 +54,10 @@ export class CompareExchangeResult<T> {
     }
 
     private static _create<T>(
-        val: any, 
-        index: number, 
-        successful: boolean, 
-        conventions: DocumentConventions, 
+        val: any,
+        index: number,
+        successful: boolean,
+        conventions: DocumentConventions,
         clazz?: ClassConstructor<T>): CompareExchangeResult<T> {
 
         conventions.tryRegisterEntityType(clazz);

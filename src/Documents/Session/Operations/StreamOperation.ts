@@ -19,7 +19,7 @@ import { getDocumentResultsPipeline } from "../../../Mapping/Json/Streams/Pipeli
 export class StreamOperation {
     private readonly _session: InMemoryDocumentSessionOperations;
     private _isQueryStream: boolean;
-    
+
     constructor(session: InMemoryDocumentSessionOperations) {
         this._session = session;
     }
@@ -54,7 +54,7 @@ export class StreamOperation {
         const sb = new StringBuilder("streams/docs?");
         if (idPrefix) {
             sb.append("startsWith=")
-              .append(encodeURIComponent(idPrefix)).append("&");
+                .append(encodeURIComponent(idPrefix)).append("&");
         }
 
         if (opts) {
@@ -92,7 +92,7 @@ export class StreamOperation {
 
         const result = getDocumentResultsPipeline(this._session.conventions)
             .stream(response.stream);
-            
+
         if (this._isQueryStream) {
             RavenCommandResponsePipeline.create()
                 .parseJsonAsync([
@@ -102,7 +102,7 @@ export class StreamOperation {
                 .streamKeyCaseTransform("camel")
                 .stream(response.stream)
                 .on("error", err => result.emit("error", err))
-                .on("data", data => { 
+                .on("data", data => {
                     const statsResult =
                         this._session.conventions.entityObjectMapper
                             .fromObjectLiteral(data["value"], {
@@ -117,7 +117,7 @@ export class StreamOperation {
         result.on("newListener", (event, listener) => {
             if (event === "data") {
                 response.stream.resume();
-            } 
+            }
         });
 
         return result;

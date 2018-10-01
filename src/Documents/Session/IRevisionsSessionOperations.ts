@@ -1,7 +1,7 @@
-import {RevisionsCollectionObject} from "../../Types";
-import {DocumentType} from "../DocumentAbstractions";
-import {MetadataAsDictionary} from "../../Mapping/MetadataAsDictionary";
-import {AbstractCallback} from "../../Types/Callbacks";
+import { RevisionsCollectionObject } from "../../Types";
+import { DocumentType } from "../DocumentAbstractions";
+import { MetadataAsDictionary } from "../../Mapping/MetadataAsDictionary";
+import { AbstractCallback } from "../../Types/Callbacks";
 
 /**
  * Revisions advanced session operations

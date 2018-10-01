@@ -5,14 +5,14 @@ import {
     InMemoryDocumentSessionOperations,
     SuggestionsResponseObject
 } from "../../..";
-import {Stopwatch} from "../../../Utility/Stopwatch";
-import {QueryResult} from "../QueryResult";
-import {QueryCommand} from "../../Commands/QueryCommand";
-import {Lazy} from "../../Lazy";
-import {LazySuggestionQueryOperation} from "../../Session/Operations/Lazy/LazySuggestionQueryOperation";
-import {QueryOperation} from "../../Session/Operations/QueryOperation";
-import {ObjectUtil} from "../../../Utility/ObjectUtil";
-import {SuggestionResult} from "./SuggestionResult";
+import { Stopwatch } from "../../../Utility/Stopwatch";
+import { QueryResult } from "../QueryResult";
+import { QueryCommand } from "../../Commands/QueryCommand";
+import { Lazy } from "../../Lazy";
+import { LazySuggestionQueryOperation } from "../../Session/Operations/Lazy/LazySuggestionQueryOperation";
+import { QueryOperation } from "../../Session/Operations/QueryOperation";
+import { ObjectUtil } from "../../../Utility/ObjectUtil";
+import { SuggestionResult } from "./SuggestionResult";
 
 export abstract class SuggestionQueryBase {
 

@@ -1,10 +1,13 @@
 import { debuglog } from "util";
 import { printError } from "../Exceptions";
+
 const isDebug = !!process.env.NODE_DEBUG;
 
 export interface ILogger {
     info(msg: string);
+
     error(errOrMsg: string | Error, additionalMsg?: string);
+
     warn(errOrMsg: string | Error, additionalMsg?: string);
 }
 
@@ -12,7 +15,8 @@ export function getLogger({ name = "ravendb", module = "" }): ILogger {
     const logName = module ? `${name}-${module}` : name;
     if (!isDebug) {
         // tslint:disable-next-line:no-empty
-        const noop = (msg: string) => {};
+        const noop = (msg: string) => {
+        };
         return {
             error: noop,
             info: noop,
@@ -57,7 +61,7 @@ class Logger {
 
     private _log(msg, level = "INFO") {
         const now = new Date();
-        const dateString = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}` 
+        const dateString = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`
             + ` ${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
         this._logdebug(`${dateString}|${level}: ${msg}`);
     }

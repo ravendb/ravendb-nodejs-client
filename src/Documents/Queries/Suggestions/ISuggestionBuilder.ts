@@ -1,4 +1,4 @@
-import {ISuggestionOperations} from "./ISuggestionOperations";
+import { ISuggestionOperations } from "./ISuggestionOperations";
 
 export interface ISuggestionBuilder<T> {
 

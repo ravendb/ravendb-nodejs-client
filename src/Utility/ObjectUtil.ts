@@ -1,6 +1,9 @@
 import * as changeCase from "change-case";
 
-function iden(x, locale) { return x; }
+function iden(x, locale) {
+    return x;
+}
+
 export class ObjectUtil {
 
     // WARNING: some methods are assigned below dynamically
@@ -72,7 +75,7 @@ export interface ObjectChangeCaseOptions extends ObjectChangeCaseOptionsBase {
 
 interface InternalObjectChangeCaseOptions extends ObjectChangeCaseOptions {
     throwOnDuplicate: boolean;
-    locale: string; 
+    locale: string;
 }
 
 const DEFAULT_CHANGE_CASE_OPTIONS = {

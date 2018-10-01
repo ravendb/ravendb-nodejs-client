@@ -5,7 +5,8 @@ export class TypeUtil {
     public static readonly MAX_INT32 = 2147483647;
 
     // tslint:disable-next-line:no-empty
-    public static NOOP: (...args: any[]) => any = () => {};
+    public static NOOP: (...args: any[]) => any = () => {
+    };
     public static ASYNC_NOOP: (...args: any[]) => Promise<any> = () => Promise.resolve(undefined);
 
     public static isNullOrUndefined(value: any): boolean {
@@ -23,7 +24,7 @@ export class TypeUtil {
     public static isNumber(value: any): value is number {
         return typeof(value) === "number";
     }
-    
+
     public static isPrimitive(value: any): value is number | string | boolean {
         return TypeUtil.isNumber(value)
             || TypeUtil.isString(value)
@@ -41,8 +42,8 @@ export class TypeUtil {
     }
 
     public static isObject(value: any): boolean {
-        return value 
-            && typeof(value) === "object" 
+        return value
+            && typeof(value) === "object"
             && !this.isArray(value);
     }
 
@@ -65,7 +66,7 @@ export class TypeUtil {
     }
 
     public static isObjectTypeDescriptor(value: any): boolean {
-        return !!value 
+        return !!value
             && typeof value !== "string"
             && (this.isClass(value) || this.isObjectLiteralTypeDescriptor(value));
 
@@ -78,8 +79,8 @@ export class TypeUtil {
 
         return obj
             && ((typeDescriptor as ObjectLiteralDescriptor).isType
-            && (typeDescriptor as ObjectLiteralDescriptor).isType(obj))
-                || (obj && obj.constructor.name === (typeDescriptor as EntityConstructor).name);
+                && (typeDescriptor as ObjectLiteralDescriptor).isType(obj))
+            || (obj && obj.constructor.name === (typeDescriptor as EntityConstructor).name);
     }
 
     public static isObjectLiteralTypeDescriptor(typeDescriptor: ObjectTypeDescriptor) {
@@ -115,7 +116,7 @@ export class TypeUtil {
             && TypeUtil.isClass(typeToCheck)
             && type instanceof (typeToCheck as ClassConstructor);
     }
-    
+
     public static isSet(obj: any) {
         return obj
             && obj.constructor

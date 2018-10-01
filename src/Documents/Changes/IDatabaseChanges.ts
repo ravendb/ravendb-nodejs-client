@@ -1,9 +1,9 @@
-import {ObjectTypeDescriptor} from "../../Types";
-import {DocumentChange} from "./DocumentChange";
-import {OperationStatusChange} from "./OperationStatusChange";
-import {IndexChange} from "./IndexChange";
-import {IChangesObservable} from "./IChangesObservable";
-import {IConnectableChanges} from "./IConnectableChanges";
+import { ObjectTypeDescriptor } from "../../Types";
+import { DocumentChange } from "./DocumentChange";
+import { OperationStatusChange } from "./OperationStatusChange";
+import { IndexChange } from "./IndexChange";
+import { IChangesObservable } from "./IChangesObservable";
+import { IConnectableChanges } from "./IConnectableChanges";
 
 export interface IDatabaseChanges extends IConnectableChanges<IDatabaseChanges> {
 

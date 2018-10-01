@@ -18,38 +18,38 @@ export class HeadAttachmentCommand extends RavenCommand<string> {
         return false;
     }
 
-   public constructor(documentId: string, name: string, changeVector: string) {
-       super();
+    public constructor(documentId: string, name: string, changeVector: string) {
+        super();
 
-       if (StringUtil.isWhitespace(documentId)) {
-           throwError("InvalidArgumentException", "DocumentId cannot be null or empty");
-       }
+        if (StringUtil.isWhitespace(documentId)) {
+            throwError("InvalidArgumentException", "DocumentId cannot be null or empty");
+        }
 
-       if (StringUtil.isWhitespace(name)) {
-           throwError("InvalidArgumentException", "Name cannot be null or empty");
-       }
+        if (StringUtil.isWhitespace(name)) {
+            throwError("InvalidArgumentException", "Name cannot be null or empty");
+        }
 
-       this._documentId = documentId;
-       this._name = name;
-       this._changeVector = changeVector;
-       this._responseType = "Empty";
-   }
+        this._documentId = documentId;
+        this._name = name;
+        this._changeVector = changeVector;
+        this._responseType = "Empty";
+    }
 
-   public createRequest(node: ServerNode): HttpRequestParameters {
-       const uri = node.url
-               + "/databases/" + node.database
-               + "/attachments?id=" + encodeURIComponent(this._documentId)
-               + "&name=" + encodeURIComponent(this._name);
+    public createRequest(node: ServerNode): HttpRequestParameters {
+        const uri = node.url
+            + "/databases/" + node.database
+            + "/attachments?id=" + encodeURIComponent(this._documentId)
+            + "&name=" + encodeURIComponent(this._name);
 
-       const req = {
-           method: "HEAD",
-           uri
-       };
+        const req = {
+            method: "HEAD",
+            uri
+        };
 
-       this._addChangeVectorIfNotNull(this._changeVector, req);
+        this._addChangeVectorIfNotNull(this._changeVector, req);
 
-       return req;
-   }
+        return req;
+    }
 
     public async processResponse(
         cache: HttpCache,

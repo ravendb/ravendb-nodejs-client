@@ -62,7 +62,7 @@ export class GetIndexStatisticsCommand extends RavenCommand<IndexStats> {
                         "results[].collections$MAP": "CollectionStats"
                     }
                 }, new Map([[CollectionStats.name, CollectionStats]]));
-                
+
                 const indexStatsResults = responseObj["results"];
                 if (!indexStatsResults.length) {
                     this._throwInvalidResponse();

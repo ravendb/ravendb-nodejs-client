@@ -1,4 +1,4 @@
-import {HttpRequestParameters} from "../../Primitives/Http";
+import { HttpRequestParameters } from "../../Primitives/Http";
 import { PatchRequest } from "./PatchRequest";
 import { IOperation, OperationResultType } from "./OperationAbstractions";
 import { PatchStatus } from "./PatchStatus";
@@ -44,16 +44,16 @@ export class PatchOperation implements IOperation<PatchResult> {
     public constructor(
         id: string, changeVector: string, patch: PatchRequest);
     public constructor(
-        id: string, 
-        changeVector: string, 
+        id: string,
+        changeVector: string,
         patch: PatchRequest,
-        patchIfMissing: PatchRequest, 
+        patchIfMissing: PatchRequest,
         skipPatchIfChangeVectorMismatch: boolean);
     public constructor(
-        id: string, 
-        changeVector: string, 
-        patch: PatchRequest, 
-        patchIfMissing: PatchRequest = null, 
+        id: string,
+        changeVector: string,
+        patch: PatchRequest,
+        patchIfMissing: PatchRequest = null,
         skipPatchIfChangeVectorMismatch: boolean = false) {
 
         if (!patch) {
@@ -78,14 +78,14 @@ export class PatchOperation implements IOperation<PatchResult> {
 
     public getCommand(
         store: IDocumentStore, conventions: DocumentConventions, cache: HttpCache,
-        returnDebugInformation: boolean = false, test: boolean = false): RavenCommand<PatchResult>  {
+        returnDebugInformation: boolean = false, test: boolean = false): RavenCommand<PatchResult> {
         return new PatchCommand(
-            conventions, 
-            this._id, 
-            this._changeVector, 
-            this._patch, 
-            this._patchIfMissing, 
-            this._skipPatchIfChangeVectorMismatch, 
+            conventions,
+            this._id,
+            this._changeVector,
+            this._patch,
+            this._patchIfMissing,
+            this._skipPatchIfChangeVectorMismatch,
             returnDebugInformation,
             test);
     }
@@ -172,14 +172,14 @@ export class PatchCommand extends RavenCommand<PatchResult> {
         }
 
         const collectResultOpts: CollectResultStreamOptions<PatchResult> = {
-            initResult: {} as PatchResult ,
+            initResult: {} as PatchResult,
             reduceResults: (reduceResult, { key, value }: { key: string, value: any }) => {
                 if (key === "ModifiedDocument") {
                     reduceResult.modifiedDocument = value;
                 }
 
                 if (key === "OriginalDocument") {
-                    reduceResult.originalDocument = value;                    
+                    reduceResult.originalDocument = value;
                 }
 
                 return reduceResult;
@@ -198,7 +198,7 @@ export class PatchCommand extends RavenCommand<PatchResult> {
             .process(bodyStream);
 
         const restPromise = parseRestOfOutput(bodyStream, /^ModifiedDocument|OriginalDocument$/);
-        const [ result, rest ] = await Promise.all([ resultPromise, restPromise ]);
+        const [result, rest] = await Promise.all([resultPromise, restPromise]);
         this.result = Object.assign(result, rest) as PatchResult;
         return body;
     }

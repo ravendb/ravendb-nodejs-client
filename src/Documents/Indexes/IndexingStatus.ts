@@ -1,4 +1,3 @@
-
 export type IndexRunningStatus = "Running" | "Paused" | "Disabled";
 
 export interface IndexingStatus {

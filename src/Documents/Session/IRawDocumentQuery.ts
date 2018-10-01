@@ -1,6 +1,6 @@
-import {IQueryBase} from "./IQueryBase";
-import {IDocumentQueryBaseSingle} from "../Session/IDocumentQueryBaseSingle";
-import {IEnumerableQuery} from "../Session/IEnumerableQuery";
+import { IQueryBase } from "./IQueryBase";
+import { IDocumentQueryBaseSingle } from "../Session/IDocumentQueryBaseSingle";
+import { IEnumerableQuery } from "../Session/IEnumerableQuery";
 
 export interface IRawDocumentQuery<T extends object>
     extends IQueryBase<T, IRawDocumentQuery<T>>, IDocumentQueryBaseSingle<T>, IEnumerableQuery<T> {

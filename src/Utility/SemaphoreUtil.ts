@@ -2,9 +2,9 @@ import * as semaphore from "semaphore";
 import * as BluebirdPromise from "bluebird";
 import { IDisposable } from "../Types/Contracts";
 
-export interface AcquireSemaphoreOptions { 
+export interface AcquireSemaphoreOptions {
     timeout?: number;
-    contextName?: string; 
+    contextName?: string;
 }
 
 export interface AcquiredSemaphoreContext extends IDisposable {
@@ -20,7 +20,7 @@ export function acquireSemaphore(
     const acquiredObj = {
         acquired: false
     };
-    const acquiredSemaphorePromise = 
+    const acquiredSemaphorePromise =
         new BluebirdPromise.Promise<void>(resolve => {
             sem.take(() => {
                 acquiredObj.acquired = true;
@@ -31,9 +31,9 @@ export function acquireSemaphore(
     let p = acquiredSemaphorePromise;
     if (semOpts && semOpts.timeout) {
         p = p.timeout(semOpts.timeout) as BluebirdPromise<void>;
-    } 
+    }
 
-    const releaseFunc = () => { 
+    const releaseFunc = () => {
         acquiredSemaphorePromise
             .then(() => sem.leave());
     };

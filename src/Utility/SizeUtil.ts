@@ -1,4 +1,3 @@
-
 export class Size {
     private _sizeInBytes: number;
     private _humaneSize: string;

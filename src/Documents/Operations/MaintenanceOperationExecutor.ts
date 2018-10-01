@@ -22,8 +22,8 @@ export class MaintenanceOperationExecutor {
     public get server(): ServerOperationExecutor {
         if (!this._serverOperationExecutor) {
             this._serverOperationExecutor = new ServerOperationExecutor(this._store);
-        } 
-        
+        }
+
         return this._serverOperationExecutor;
     }
 
@@ -41,7 +41,7 @@ export class MaintenanceOperationExecutor {
     public send<TResult>(
         operation: AwaitableMaintenanceOperation | IMaintenanceOperation<TResult>)
         : Promise<OperationCompletionAwaiter | TResult> {
-        
+
         this._assertDatabaseNameSet();
         const command = operation.getCommand(this._requestExecutor.conventions);
 

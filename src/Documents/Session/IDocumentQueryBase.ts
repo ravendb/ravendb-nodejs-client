@@ -3,7 +3,7 @@ import { IFilterDocumentQueryBase } from "./IFilterDocumentQueryBase";
 import { OrderingType } from "./OrderingType";
 import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField";
 
-export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQueryBase<T, TSelf>> 
+export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQueryBase<T, TSelf>>
     extends IQueryBase<T, TSelf>, IFilterDocumentQueryBase<T, TSelf> {
 
     /**
