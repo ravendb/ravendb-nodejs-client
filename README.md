@@ -699,6 +699,38 @@ const revisions = await session.advanced.revisions.getFor("users/1");
 //     id: 'users/1' } ]
 ```
 
+### Suggestions
+```javascript
+// Having data:
+// [ User {
+//     name: 'John',
+//     age: 30,
+//     registeredAt: 2017-11-10T23:00:00.000Z,
+//     kids: [Array],
+//     id: 'users/1-A' },
+//   User {
+//     name: 'Stefanie',
+//     age: 25,
+//     registeredAt: 2015-07-29T22:00:00.000Z,
+//     id: 'users/2-A' } ]
+
+// and a static index like:
+class UsersIndex extends AbstractIndexCreationTask {
+    constructor() {
+        super();
+        this.map = "from doc in docs.Users select new { doc.name }";
+        this.suggestion("name");
+    }
+}
+
+// ...
+
+const session = store.openSession();
+const suggestionQueryResult = await session.query({ collection: "users" })
+    .suggestUsing(x => x.byField("name", "Jon"))
+    .execute();
+// { name: { name: 'name', suggestions: [ 'john' ] } }
+```
 
 
 ## Using object literals for entities

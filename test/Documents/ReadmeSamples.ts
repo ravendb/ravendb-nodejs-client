@@ -11,6 +11,7 @@ import {
     IDocumentSession,
     QueryStatistics,
     StreamQueryStatistics,
+    AbstractIndexCreationTask,
 } from "../../src";
 import { TypeUtil } from "../../src/Utility/TypeUtil";
 
@@ -404,6 +405,27 @@ describe("Readme query samples", function () {
                     resolve();
                 });
             });
+        });
+
+        it("can suggest", async () => {
+            class UsersIndex extends AbstractIndexCreationTask {
+                constructor() {
+                    super();
+                    this.map = "from doc in docs.Users select new { doc.name }";
+                    this.suggestion("name");
+                }
+            }
+
+            await store.executeIndex(new UsersIndex());
+            await testContext.waitForIndexing(store);
+
+            {
+                const session = store.openSession();
+                const suggestionQueryResult = await session.query({ indexName: "UsersIndex" })
+                    .suggestUsing(x => x.byField("name", "Jon"))
+                    .execute();
+                assert.strictEqual(suggestionQueryResult.name.suggestions.length, 1);
+            }
         });
 
     });
