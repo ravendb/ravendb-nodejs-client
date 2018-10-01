@@ -27,4 +27,7 @@ before_install:
   - sudo cp ca.crt /usr/local/share/ca-certificates/ca.crt
   - sudo update-ca-certificates
   - popd
-  - pwd && ls  
+  - pwd && ls
+script:
+  - npm run lint
+  - npm run test

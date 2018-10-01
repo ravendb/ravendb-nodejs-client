@@ -14,7 +14,7 @@
     "typeRoots": [
       "node_modules/@types",
       "node_modules/moment",
-      "src/Types",
+      "src/Types"
     ],
     "types": [
       "mocha",
