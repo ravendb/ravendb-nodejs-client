@@ -1,4 +1,3 @@
-
 export class Event {
     public name: string;
     public date: Date;
@@ -46,6 +45,7 @@ export class OrderLine {
     public quantity: number;
     public discount: number;
 }
+
 export class Order {
     public id: string;
     public company: string;
@@ -73,6 +73,7 @@ export class Contact {
     public surname: string;
     public email: string;
 }
+
 export class Company {
     public accountsReceivable: number;
     public id: string;

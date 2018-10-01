@@ -1,5 +1,5 @@
 import * as md5hex from "md5-hex";
-import { TypeUtil } from "../../Utility/TypeUtil";
+import {TypeUtil} from "../../Utility/TypeUtil";
 
 export class QueryHashCalculator {
 

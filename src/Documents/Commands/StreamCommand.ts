@@ -1,10 +1,10 @@
 import * as stream from "readable-stream";
-import { RavenCommand, ResponseDisposeHandling } from "../../Http/RavenCommand";
-import { StreamResultResponse } from "./StreamResultResponse";
-import { throwError } from "../../Exceptions";
-import { ServerNode } from "../../Http/ServerNode";
-import { HttpRequestParameters, HttpResponse } from "../../Primitives/Http";
-import { HttpCache } from "../../Http/HttpCache";
+import {RavenCommand, ResponseDisposeHandling} from "../../Http/RavenCommand";
+import {StreamResultResponse} from "./StreamResultResponse";
+import {throwError} from "../../Exceptions";
+import {ServerNode} from "../../Http/ServerNode";
+import {HttpRequestParameters, HttpResponse} from "../../Primitives/Http";
+import {HttpCache} from "../../Http/HttpCache";
 
 export class StreamCommand extends RavenCommand<StreamResultResponse> {
     private readonly _url: string;
@@ -27,9 +27,9 @@ export class StreamCommand extends RavenCommand<StreamResultResponse> {
     }
 
     public async processResponse(
-        cache: HttpCache, 
-        response: HttpResponse, 
-        bodyStream: stream.Readable, 
+        cache: HttpCache,
+        response: HttpResponse,
+        bodyStream: stream.Readable,
         url: string): Promise<ResponseDisposeHandling> {
         this.result = {
             response,

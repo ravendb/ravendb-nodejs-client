@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import {testContext, disposeTestDocumentStore} from "../Utils/TestUtil";
 
 import {
     IDocumentStore,
@@ -17,7 +17,7 @@ describe("RavenDB-10641", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("can edit objects in metadata", async () => {
@@ -27,7 +27,7 @@ describe("RavenDB-10641", function () {
             await session.store(v, "items/first");
 
             const meta = session.advanced.getMetadataFor(v);
-            meta["Items"] = { lang: "en" };
+            meta["Items"] = {lang: "en"};
             await session.saveChanges();
         }
 
@@ -50,8 +50,8 @@ describe("RavenDB-10641", function () {
             const meta = session.advanced.getMetadataFor(v);
             meta["test"] = "123";
             await session.saveChanges();
-        } 
-        
+        }
+
         {
             const session = store.openSession();
             const v = await session.load("items/first");

@@ -1,4 +1,4 @@
-import { AbstractCallback } from "../../Types/Callbacks";
+import {AbstractCallback} from "../../Types/Callbacks";
 
 export interface IEnumerableQuery<T extends object> {
 

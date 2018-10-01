@@ -1,25 +1,25 @@
 import {GenerateEntityIdOnTheClient} from "./Identity/GenerateEntityIdOnTheClient";
 import * as stream from "readable-stream";
-import { RavenCommand } from "../Http/RavenCommand";
+import {RavenCommand} from "../Http/RavenCommand";
 import {HttpRequestParameters} from "../Primitives/Http";
 import {IMetadataDictionary} from "./Session/IMetadataDictionary";
-import { createMetadataDictionary } from "../Mapping/MetadataAsDictionary";
+import {createMetadataDictionary} from "../Mapping/MetadataAsDictionary";
 import {CONSTANTS} from "../Constants";
 import {getError, throwError} from "../Exceptions";
 import {GetOperationStateCommand} from "./Operations/GetOperationStateOperation";
 import {StringUtil} from "../Utility/StringUtil";
 import * as StreamUtil from "../Utility/StreamUtil";
-import { JsonSerializer } from "../Mapping/Json/Serializer";
-import { RequestExecutor } from "../Http/RequestExecutor";
-import { IDocumentStore } from "./IDocumentStore";
-import { GetNextOperationIdCommand } from "./Commands/GetNextOperationIdCommand";
-import { DocumentInfo } from "./Session/DocumentInfo";
-import { EntityToJson } from "./Session/EntityToJson";
-import { KillOperationCommand } from "./Commands/KillOperationCommand";
-import { DocumentConventions } from "./Conventions/DocumentConventions";
-import { ServerNode } from "../Http/ServerNode";
-import { AbstractCallback } from "../Types/Callbacks";
-import { passResultToCallback } from "../Utility/PromiseUtil";
+import {JsonSerializer} from "../Mapping/Json/Serializer";
+import {RequestExecutor} from "../Http/RequestExecutor";
+import {IDocumentStore} from "./IDocumentStore";
+import {GetNextOperationIdCommand} from "./Commands/GetNextOperationIdCommand";
+import {DocumentInfo} from "./Session/DocumentInfo";
+import {EntityToJson} from "./Session/EntityToJson";
+import {KillOperationCommand} from "./Commands/KillOperationCommand";
+import {DocumentConventions} from "./Conventions/DocumentConventions";
+import {ServerNode} from "../Http/ServerNode";
+import {AbstractCallback} from "../Types/Callbacks";
+import {passResultToCallback} from "../Utility/PromiseUtil";
 import * as through2 from "through2";
 
 export class BulkInsertOperation {
@@ -41,7 +41,7 @@ export class BulkInsertOperation {
         this._requestExecutor = store.getRequestExecutor(database);
 
         this._generateEntityIdOnTheClient = new GenerateEntityIdOnTheClient(this._requestExecutor.conventions,
-                entity => this._requestExecutor.conventions.generateDocumentId(database, entity));
+            entity => this._requestExecutor.conventions.generateDocumentId(database, entity));
     }
 
     get useCompression(): boolean {
@@ -68,10 +68,10 @@ export class BulkInsertOperation {
     }
 
     private static _typeCheckStoreArgs(
-        idOrMetadataOrCallback?: string | IMetadataDictionary | AbstractCallback<void>, 
+        idOrMetadataOrCallback?: string | IMetadataDictionary | AbstractCallback<void>,
         metadataOrCallback?: IMetadataDictionary | AbstractCallback<void>,
-        callback?: AbstractCallback<void>): 
-            { id: string, getId: boolean, metadata: IMetadataDictionary, cb: () => void } {
+        callback?: AbstractCallback<void>):
+        { id: string, getId: boolean, metadata: IMetadataDictionary, cb: () => void } {
 
         let id: string;
         let metadata;
@@ -93,12 +93,12 @@ export class BulkInsertOperation {
                 id = metadata[CONSTANTS.Documents.Metadata.ID];
             }
         }
-        
+
         if (!id) {
             getId = true;
         }
 
-        return { id, metadata, getId, cb: callback };
+        return {id, metadata, getId, cb: callback};
     }
 
     public async store(entity: object);
@@ -111,7 +111,7 @@ export class BulkInsertOperation {
     public async store(entity: object, id: string, metadata: IMetadataDictionary, callback: AbstractCallback<void>);
     public async store(
         entity: object,
-        idOrMetadataOrCallback?: string | IMetadataDictionary | AbstractCallback<void>, 
+        idOrMetadataOrCallback?: string | IMetadataDictionary | AbstractCallback<void>,
         metadataOrCallback?: IMetadataDictionary | AbstractCallback<void>,
         callback?: AbstractCallback<void>) {
         let opts: { id: string, getId: boolean, metadata: IMetadataDictionary, cb: () => void };
@@ -130,7 +130,7 @@ export class BulkInsertOperation {
 
     private async _store(
         entity: object,
-        { id, getId, metadata }: { id: string, getId: boolean, metadata: IMetadataDictionary }) {
+        {id, getId, metadata}: { id: string, getId: boolean, metadata: IMetadataDictionary }) {
 
         id = getId ? await this._getId(entity) : id;
         BulkInsertOperation._verifyValidId(id);
@@ -141,7 +141,7 @@ export class BulkInsertOperation {
         }
 
         if (this._completedWithError) {
-           await this._checkIfBulkInsertWasAborted();
+            await this._checkIfBulkInsertWasAborted();
         }
 
         if (this._completedWithPipelineError) {
@@ -186,7 +186,7 @@ export class BulkInsertOperation {
         const documentInfo = new DocumentInfo();
         documentInfo.metadataInstance = metadata;
         let json = EntityToJson.convertEntityToJson(entity, this._conventions, documentInfo);
-        
+
         if (this._conventions.remoteEntityFieldNameConvention) {
             json = this._conventions.transformObjectKeysToRemoteFieldNameConvention(json);
         }
@@ -245,11 +245,11 @@ export class BulkInsertOperation {
     private async _ensureStream() {
         try {
 
-            this._currentWriter = new stream.PassThrough(); 
+            this._currentWriter = new stream.PassThrough();
 
-            const streams: stream.Stream[] = [ this._currentWriter ];
+            const streams: stream.Stream[] = [this._currentWriter];
 
-            this._requestBodyStream = this._getBufferingWriteable(); 
+            this._requestBodyStream = this._getBufferingWriteable();
             streams.push(this._requestBodyStream);
 
             const bulkCommand =
@@ -262,7 +262,7 @@ export class BulkInsertOperation {
             });
 
             this._currentWriter.push("[");
-            
+
             this._pipelinePromise = StreamUtil.pipelineAsync(...streams);
 
             this._pipelinePromise.catch(err => {
@@ -295,7 +295,7 @@ export class BulkInsertOperation {
         });
     }
 
-    public async abort(): Promise<void>; 
+    public async abort(): Promise<void>;
     public async abort(callback: AbstractCallback<void>): Promise<void>;
     public async abort(callback?: AbstractCallback<void>): Promise<void> {
         const abortPromise = this._abortAsync();
@@ -303,7 +303,7 @@ export class BulkInsertOperation {
         return abortPromise;
     }
 
-    private async _abortAsync(): Promise<void> { 
+    private async _abortAsync(): Promise<void> {
         if (this._operationId === -1) {
             return; // nothing was done, nothing to kill
         }
@@ -341,9 +341,10 @@ export class BulkInsertOperation {
             await this._checkIfBulkInsertWasAborted();
         }
 
-        return Promise.all([ this._bulkInsertExecuteTask, this._pipelinePromise ])
-            // tslint:disable-next-line:no-empty
-            .then(() => {});
+        return Promise.all([this._bulkInsertExecuteTask, this._pipelinePromise])
+        // tslint:disable-next-line:no-empty
+            .then(() => {
+            });
     }
 
     private readonly _conventions: DocumentConventions;

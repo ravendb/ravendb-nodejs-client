@@ -1,27 +1,27 @@
-import { HttpRequestParameters } from "../../../Primitives/Http";
-import { IOperation, OperationResultType } from "../OperationAbstractions";
-import { CompareExchangeResult } from "./CompareExchangeResult";
-import { RavenCommand } from "../../../Http/RavenCommand";
-import { IDocumentStore } from "../../IDocumentStore";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { HttpCache } from "../../../Http/HttpCache";
-import { throwError } from "../../../Exceptions";
-import { ServerNode } from "../../../Http/ServerNode";
-import { JsonSerializer } from "../../../Mapping/Json/Serializer";
-import { ClassConstructor, ObjectTypeDescriptor } from "../../..";
-import { TypeUtil } from "../../../Utility/TypeUtil";
+import {HttpRequestParameters} from "../../../Primitives/Http";
+import {IOperation, OperationResultType} from "../OperationAbstractions";
+import {CompareExchangeResult} from "./CompareExchangeResult";
+import {RavenCommand} from "../../../Http/RavenCommand";
+import {IDocumentStore} from "../../IDocumentStore";
+import {DocumentConventions} from "../../Conventions/DocumentConventions";
+import {HttpCache} from "../../../Http/HttpCache";
+import {throwError} from "../../../Exceptions";
+import {ServerNode} from "../../../Http/ServerNode";
+import {JsonSerializer} from "../../../Mapping/Json/Serializer";
+import {ClassConstructor, ObjectTypeDescriptor} from "../../..";
+import {TypeUtil} from "../../../Utility/TypeUtil";
 import * as stream from "readable-stream";
-import { streamValues } from "stream-json/streamers/StreamValues";
-import { streamArray } from "stream-json/streamers/StreamArray";
-import { pick } from "stream-json/filters/Pick";
-import { ignore } from "stream-json/filters/Ignore";
+import {streamValues} from "stream-json/streamers/StreamValues";
+import {streamArray} from "stream-json/streamers/StreamArray";
+import {pick} from "stream-json/filters/Pick";
+import {ignore} from "stream-json/filters/Ignore";
 
 export class PutCompareExchangeValueOperation<T> implements IOperation<CompareExchangeResult<T>> {
 
     private readonly _key: string;
     private readonly _value: T;
     private readonly _index: number;
-    
+
     public constructor(key: string, value: T, index: number) {
         this._key = key;
         this._value = value;
@@ -75,8 +75,8 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
         const uri = node.url + "/databases/" + node.database + "/cmpxchg?key=" + this._key + "&index=" + this._index;
 
         const tuple = {};
-        tuple["Object"] = TypeUtil.isPrimitive(this._value) 
-            ? this._value 
+        tuple["Object"] = TypeUtil.isPrimitive(this._value)
+            ? this._value
             : this._conventions.transformObjectKeysToRemoteFieldNameConvention(this._value as any);
 
         return {
@@ -91,27 +91,27 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
         let body: string = null;
         const resultPromise = this._pipeline<object>()
             .collectBody(b => body = b)
-            .parseJsonAsync([ 
-                pick({ filter: "Value.Object" }),
+            .parseJsonAsync([
+                pick({filter: "Value.Object"}),
                 streamValues()
             ])
             .streamKeyCaseTransform(this._conventions.entityFieldNameConvention)
             .process(bodyStream);
-        
+
         const restPromise = this._pipeline<object>()
             .parseJsonAsync([
-                ignore({ filter: "Value" }),
+                ignore({filter: "Value"}),
                 streamValues()
             ])
             .streamKeyCaseTransform("camel")
             .process(bodyStream);
-        
-        await Promise.all([ resultPromise, restPromise ])
-            .then(([ result, rest ]) => {
+
+        await Promise.all([resultPromise, restPromise])
+            .then(([result, rest]) => {
                 const resObj = Object.assign(
                     {},
-                    rest as { successful: boolean, index: number }, 
-                    { value: { object: result } });
+                    rest as { successful: boolean, index: number },
+                    {value: {object: result}});
                 const type = !TypeUtil.isPrimitive(this._value)
                     ? this._conventions.getEntityTypeDescriptor(this._value as any) as ObjectTypeDescriptor
                     : null;

@@ -1,16 +1,17 @@
-import { ILazySessionOperations } from "./ILazySessionOperations";
-import { DocumentSession } from "../../DocumentSession";
-import { ILazyLoaderWithInclude } from "../../Loaders/ILazyLoaderWithInclude";
-import { LazyMultiLoaderWithInclude } from "../../Loaders/LazyMultiLoaderWithInclude";
-import { ObjectTypeDescriptor, EntitiesCollectionObject } from "../../../../Types";
-import { Lazy } from "../../../Lazy";
-import { SessionLoadStartingWithOptions } from "../../IDocumentSession";
-import { LazyStartsWithOperation } from "./LazyStartsWithOperation";
-import { LoadStartingWithOperation } from "../LoadStartingWithOperation";
+import {ILazySessionOperations} from "./ILazySessionOperations";
+import {DocumentSession} from "../../DocumentSession";
+import {ILazyLoaderWithInclude} from "../../Loaders/ILazyLoaderWithInclude";
+import {LazyMultiLoaderWithInclude} from "../../Loaders/LazyMultiLoaderWithInclude";
+import {ObjectTypeDescriptor, EntitiesCollectionObject} from "../../../../Types";
+import {Lazy} from "../../../Lazy";
+import {SessionLoadStartingWithOptions} from "../../IDocumentSession";
+import {LazyStartsWithOperation} from "./LazyStartsWithOperation";
+import {LoadStartingWithOperation} from "../LoadStartingWithOperation";
 
 export class LazySessionOperations implements ILazySessionOperations {
-    
+
     protected _delegate: DocumentSession;
+
     public constructor(delegate: DocumentSession) {
         this._delegate = delegate;
     }
@@ -32,15 +33,15 @@ export class LazySessionOperations implements ILazySessionOperations {
         clazz?: ObjectTypeDescriptor<TEntity>): Lazy<TEntity> | Lazy<EntitiesCollectionObject<TEntity>> {
         const isMultipleIds = Array.isArray(idOrIds);
         if (!isMultipleIds && this._delegate.isLoaded(idOrIds as string)) {
-            return new Lazy(() => 
-                this._delegate.load<TEntity>(idOrIds as string, { documentType: clazz }));
+            return new Lazy(() =>
+                this._delegate.load<TEntity>(idOrIds as string, {documentType: clazz}));
 
         }
 
-        const ids: string[] = isMultipleIds ? idOrIds as string[] : [ idOrIds as string ];
+        const ids: string[] = isMultipleIds ? idOrIds as string[] : [idOrIds as string];
         const result = this._delegate.lazyLoadInternal(ids, [], clazz);
-        return isMultipleIds 
-            ? result 
+        return isMultipleIds
+            ? result
             : new Lazy(async () => (await result.getValue())[idOrIds as string]);
     }
 
@@ -49,13 +50,13 @@ export class LazySessionOperations implements ILazySessionOperations {
         opts: SessionLoadStartingWithOptions<TEntity>): Lazy<EntitiesCollectionObject<TEntity>>;
     public loadStartingWith<TEntity extends object>(idPrefix: string): Lazy<EntitiesCollectionObject<TEntity>>;
     public loadStartingWith<TEntity extends object>(
-        idPrefix: string, 
-        opts?: SessionLoadStartingWithOptions<TEntity>): 
+        idPrefix: string,
+        opts?: SessionLoadStartingWithOptions<TEntity>):
         Lazy<EntitiesCollectionObject<TEntity>> {
-            opts = opts || null;
-            opts = Object.assign({}, LoadStartingWithOperation.DEFAULT, opts);
-            const operation = new LazyStartsWithOperation(idPrefix, opts, this._delegate);
-            return this._delegate.addLazyOperation(operation);
+        opts = opts || null;
+        opts = Object.assign({}, LoadStartingWithOperation.DEFAULT, opts);
+        const operation = new LazyStartsWithOperation(idPrefix, opts, this._delegate);
+        return this._delegate.addLazyOperation(operation);
     }
 
     // TBD expr ILazyLoaderWithInclude<T> ILazySessionOperations.Include<T>(

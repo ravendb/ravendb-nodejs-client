@@ -20,7 +20,7 @@ export class DateUtil {
         if (!dateString) {
             return null;
         }
-        
+
         const stripped = dateString.substring(0, dateString.length - 1);
         const format = this.DEFAULT_DATE_FORMAT;
 

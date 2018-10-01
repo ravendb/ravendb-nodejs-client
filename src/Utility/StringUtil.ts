@@ -1,8 +1,8 @@
 import * as XRegExp from "xregexp";
-import { TypeUtil } from "./TypeUtil";
-import { throwError } from "../Exceptions";
+import {TypeUtil} from "./TypeUtil";
+import {throwError} from "../Exceptions";
 import * as changeCase from "change-case";
-import { CasingConvention } from "./ObjectUtil";
+import {CasingConvention} from "./ObjectUtil";
 
 export class StringUtil {
     private static readonly letterRe: RegExp = XRegExp("^\\p{L}$") as RegExp;

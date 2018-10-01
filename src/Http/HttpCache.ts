@@ -1,13 +1,14 @@
 import * as moment from "moment";
 import * as Cache from "safe-memory-cache/map";
-import { IDisposable } from "../Types/Contracts";
+import {IDisposable} from "../Types/Contracts";
 
 export interface CachedItemMetadata {
     changeVector: string;
     response: string;
 }
+
 export class HttpCache implements IDisposable {
-    
+
     private _items: Cache;
 
     constructor(maxKeysSize: number = 500) {
@@ -28,11 +29,11 @@ export class HttpCache implements IDisposable {
         httpCacheItem.cache = this;
 
         this._items.set(url, httpCacheItem);
-    } 
+    }
 
     public get<TResult>(
-        url: string, 
-        itemInfoCallback?: ({ changeVector, response }: CachedItemMetadata) => void): ReleaseCacheItem {
+        url: string,
+        itemInfoCallback?: ({changeVector, response}: CachedItemMetadata) => void): ReleaseCacheItem {
         const item: HttpCacheItem = this._items.get(url);
         if (item) {
             if (itemInfoCallback) {
@@ -90,7 +91,7 @@ export class ReleaseCacheItem {
     // returns millis
     public get age(): number {
         if (!this.item) {
-            return Number.MAX_VALUE; 
+            return Number.MAX_VALUE;
         }
 
         return new Date().valueOf() - this.item.lastServerUpdate.valueOf();

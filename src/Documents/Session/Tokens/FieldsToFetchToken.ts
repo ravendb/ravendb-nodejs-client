@@ -1,5 +1,5 @@
-import { QueryToken } from "./QueryToken";
-import { throwError } from "../../../Exceptions";
+import {QueryToken} from "./QueryToken";
+import {throwError} from "../../../Exceptions";
 
 export class FieldsToFetchToken extends QueryToken {
 
@@ -27,7 +27,7 @@ export class FieldsToFetchToken extends QueryToken {
         }
 
         if (!customFunction && projections && projections.length !== fieldsToFetch.length) {
-            throwError("InvalidArgumentException", 
+            throwError("InvalidArgumentException",
                 "Length of projections must be the same as length of field to fetch");
         }
 

@@ -1,7 +1,7 @@
-import { IMaintenanceOperation } from "../OperationAbstractions";
-import { RavenCommand } from "../../../Http/RavenCommand";
-import { DocumentConventions, ServerNode, OperationResultType } from "../../..";
-import { HttpRequestParameters } from "../../../Primitives/Http";
+import {IMaintenanceOperation} from "../OperationAbstractions";
+import {RavenCommand} from "../../../Http/RavenCommand";
+import {DocumentConventions, ServerNode, OperationResultType} from "../../..";
+import {HttpRequestParameters} from "../../../Primitives/Http";
 import * as stream from "readable-stream";
 
 export class GetIndexNamesOperation implements IMaintenanceOperation<string[]> {
@@ -37,7 +37,7 @@ export class GetIndexNamesCommand extends RavenCommand<string[]> {
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database
             + "/indexes?start=" + this._start + "&pageSize=" + this._pageSize + "&namesOnly=true";
-        return { uri };
+        return {uri};
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {

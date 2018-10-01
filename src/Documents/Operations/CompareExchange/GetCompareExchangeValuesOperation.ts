@@ -1,15 +1,15 @@
 import * as StringBuilder from "string-builder";
-import { HttpRequestParameters } from "../../../Primitives/Http";
-import { IOperation, OperationResultType } from "../OperationAbstractions";
-import { CompareExchangeValue } from "./CompareExchangeValue";
-import { throwError } from "../../../Exceptions";
-import { ClassConstructor } from "../../../Types";
-import { IDocumentStore } from "../../IDocumentStore";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { HttpCache } from "../../../Http/HttpCache";
-import { RavenCommand } from "../../../Http/RavenCommand";
-import { ServerNode } from "../../../Http/ServerNode";
-import { CompareExchangeValueResultParser, GetCompareExchangeValuesResponse } from "./CompareExchangeValueResultParser";
+import {HttpRequestParameters} from "../../../Primitives/Http";
+import {IOperation, OperationResultType} from "../OperationAbstractions";
+import {CompareExchangeValue} from "./CompareExchangeValue";
+import {throwError} from "../../../Exceptions";
+import {ClassConstructor} from "../../../Types";
+import {IDocumentStore} from "../../IDocumentStore";
+import {DocumentConventions} from "../../Conventions/DocumentConventions";
+import {HttpCache} from "../../../Http/HttpCache";
+import {RavenCommand} from "../../../Http/RavenCommand";
+import {ServerNode} from "../../../Http/ServerNode";
+import {CompareExchangeValueResultParser, GetCompareExchangeValuesResponse} from "./CompareExchangeValueResultParser";
 import * as stream from "readable-stream";
 
 export interface GetCompareExchangeValuesParameters<T> {
@@ -123,7 +123,7 @@ export class GetCompareExchangeValuesCommand<T> extends RavenCommand<{ [key: str
 
         const uri = pathBuilder.toString();
 
-        return { uri };
+        return {uri};
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {

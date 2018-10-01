@@ -1,20 +1,20 @@
 import {HttpRequestParameters} from "../../Primitives/Http";
-import { RavenCommand } from "../../Http/RavenCommand";
-import { QueryResult } from "../Queries/QueryResult";
-import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { IndexQuery, writeIndexQuery } from "../Queries/IndexQuery";
-import { throwError } from "../../Exceptions";
-import { ServerNode } from "../../Http/ServerNode";
+import {RavenCommand} from "../../Http/RavenCommand";
+import {QueryResult} from "../Queries/QueryResult";
+import {DocumentConventions} from "../Conventions/DocumentConventions";
+import {IndexQuery, writeIndexQuery} from "../Queries/IndexQuery";
+import {throwError} from "../../Exceptions";
+import {ServerNode} from "../../Http/ServerNode";
 import * as StringBuilder from "string-builder";
-import {JsonSerializer } from "../../Mapping/Json/Serializer";
+import {JsonSerializer} from "../../Mapping/Json/Serializer";
 import * as stream from "readable-stream";
-import { streamValues } from "stream-json/streamers/StreamValues";
-import { streamArray } from "stream-json/streamers/StreamArray";
-import { streamObject } from "stream-json/streamers/StreamObject";
-import { pick } from "stream-json/filters/Pick";
-import { ignore } from "stream-json/filters/Ignore";
-import { parseDocumentResults, parseRestOfOutput, parseDocumentIncludes } from "../../Mapping/Json/Streams/Pipelines";
-import { TypesAwareObjectMapper } from "../../Mapping/ObjectMapper";
+import {streamValues} from "stream-json/streamers/StreamValues";
+import {streamArray} from "stream-json/streamers/StreamArray";
+import {streamObject} from "stream-json/streamers/StreamObject";
+import {pick} from "stream-json/filters/Pick";
+import {ignore} from "stream-json/filters/Ignore";
+import {parseDocumentResults, parseRestOfOutput, parseDocumentIncludes} from "../../Mapping/Json/Streams/Pipelines";
+import {TypesAwareObjectMapper} from "../../Mapping/ObjectMapper";
 
 export interface QueryCommandOptions {
     metadataOnly?: boolean;
@@ -52,13 +52,13 @@ export class QueryCommand extends RavenCommand<QueryResult> {
         this._canCacheAggressively = this._canCache && !this._indexQuery.waitForNonStaleResults;
 
         const path = new StringBuilder(node.url)
-                .append("/databases/")
-                .append(node.database)
-                .append("/queries?queryHash=")
-                // we need to add a query hash because we are using POST queries
-                // so we need to unique parameter per query so the query cache will
-                // work properly
-                .append(this._indexQuery.getQueryHash());
+            .append("/databases/")
+            .append(node.database)
+            .append("/queries?queryHash=")
+            // we need to add a query hash because we are using POST queries
+            // so we need to unique parameter per query so the query cache will
+            // work properly
+            .append(this._indexQuery.getQueryHash());
 
         if (this._metadataOnly) {
             path.append("&metadataOnly=true");
@@ -111,8 +111,8 @@ export class QueryCommand extends RavenCommand<QueryResult> {
         const includesPromise = parseDocumentIncludes(bodyStream, conventions);
         const restPromise = parseRestOfOutput(bodyStream, /^Results|Includes$/);
 
-        const [ results, includes, rest ] = await Promise.all([resultsPromise, includesPromise, restPromise]);
-        const rawResult = Object.assign({} as any, rest, { results, includes }) as QueryResult;
+        const [results, includes, rest] = await Promise.all([resultsPromise, includesPromise, restPromise]);
+        const rawResult = Object.assign({} as any, rest, {results, includes}) as QueryResult;
         const queryResult = mapper.fromObjectLiteral<QueryResult>(rawResult, {
             typeName: QueryResult.name,
             nestedTypes: {

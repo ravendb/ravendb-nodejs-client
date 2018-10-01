@@ -8,6 +8,7 @@ export type CertificateType = "pem" | "pfx";
 
 export interface ICertificate {
     toAgentOptions(): AgentOptions;
+
     toWebSocketOptions(): WebSocket.ClientOptions;
 }
 
@@ -23,7 +24,7 @@ export abstract class Certificate implements ICertificate {
         if (!options) {
             return null;
         }
-        
+
         let certificate: ICertificate = null;
 
         switch (options.type) {
@@ -54,7 +55,7 @@ export abstract class Certificate implements ICertificate {
 
     public toAgentOptions(): AgentOptions {
         if (this._passphrase) {
-            return { passphrase: this._passphrase };
+            return {passphrase: this._passphrase};
         }
 
         return {};

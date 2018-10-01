@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import {testContext, disposeTestDocumentStore} from "../Utils/TestUtil";
 
 import {DocumentStore, IDocumentStore} from "../../src";
 import {User} from "../Assets/Entities";
@@ -23,7 +23,7 @@ describe("RevisionsTest", function () {
         assert.ok(configurationResult instanceof ConfigureRevisionsOperationResult);
         assert.ok(configurationResult.raftCommandIndex);
 
-        for (let i  = 0; i < 4; i++) {
+        for (let i = 0; i < 4; i++) {
             const session = store.openSession();
 
             const user = new User();
@@ -41,14 +41,14 @@ describe("RevisionsTest", function () {
             assert.strictEqual(allRevisions[2].name, "user2");
             assert.strictEqual(allRevisions[3].name, "user1");
 
-            const revisionsSkipFirst = await session.advanced.revisions.getFor<User>("users/1", { start: 1 });
+            const revisionsSkipFirst = await session.advanced.revisions.getFor<User>("users/1", {start: 1});
             assert.strictEqual(revisionsSkipFirst.length, 3);
             assert.strictEqual(revisionsSkipFirst[0].name, "user3");
             assert.strictEqual(revisionsSkipFirst[1].name, "user2");
             assert.strictEqual(revisionsSkipFirst[2].name, "user1");
 
             const revisionsSkipFirstTakeTwo = await session.advanced.revisions.getFor<User>(
-                "users/1", { start: 1, pageSize: 2 });
+                "users/1", {start: 1, pageSize: 2});
             assert.strictEqual(revisionsSkipFirstTakeTwo.length, 2);
             assert.strictEqual(revisionsSkipFirstTakeTwo[0].name, "user3");
             assert.strictEqual(revisionsSkipFirstTakeTwo[1].name, "user2");
@@ -56,11 +56,11 @@ describe("RevisionsTest", function () {
             const allMetadata = await session.advanced.revisions.getMetadataFor("users/1");
             assert.strictEqual(allMetadata.length, 4);
 
-            const metadataSkipFirst = await session.advanced.revisions.getMetadataFor("users/1", { start: 1 });
+            const metadataSkipFirst = await session.advanced.revisions.getMetadataFor("users/1", {start: 1});
             assert.strictEqual(metadataSkipFirst.length, 3);
 
             const metadataSkipFirstTakeTwo = await session.advanced.revisions
-                .getMetadataFor("users/1", { start: 1, pageSize: 2 });
+                .getMetadataFor("users/1", {start: 1, pageSize: 2});
             assert.strictEqual(metadataSkipFirstTakeTwo.length, 2);
 
             const user = await session.advanced.revisions
@@ -94,7 +94,7 @@ describe("RevisionsTest", function () {
             user.Age = 40;
             await session.saveChanges();
 
-            const revisions = await session.advanced.revisions.getFor<{ Name: string, Age: 30}>("users/1");
+            const revisions = await session.advanced.revisions.getFor<{ Name: string, Age: 30 }>("users/1");
 
             assert.strictEqual(revisions.length, 2);
             assert.strictEqual(revisions[0].Name, "Roman");

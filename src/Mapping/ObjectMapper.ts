@@ -1,25 +1,26 @@
-import { ObjectTypeDescriptor, ClassConstructor, ObjectLiteralDescriptor, EntityConstructor } from "../Types";
-import { DateUtil } from "../Utility/DateUtil";
-import { throwError } from "../Exceptions";
-import { TypeUtil } from "../Utility/TypeUtil";
-import { getLogger } from "../Utility/LogUtil";
-import { StringUtil } from "../Utility/StringUtil";
-import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
-import { ObjectUtil } from "../Utility/ObjectUtil";
+import {ObjectTypeDescriptor, ClassConstructor, ObjectLiteralDescriptor, EntityConstructor} from "../Types";
+import {DateUtil} from "../Utility/DateUtil";
+import {throwError} from "../Exceptions";
+import {TypeUtil} from "../Utility/TypeUtil";
+import {getLogger} from "../Utility/LogUtil";
+import {StringUtil} from "../Utility/StringUtil";
+import {DocumentConventions} from "../Documents/Conventions/DocumentConventions";
+import {ObjectUtil} from "../Utility/ObjectUtil";
 
-const log = getLogger({ module: "ObjectMapper" });
+const log = getLogger({module: "ObjectMapper"});
 
 export interface TypeInfo {
     typeName?: string;
     nestedTypes?: NestedTypes;
 }
 
-export interface NestedTypes { 
+export interface NestedTypes {
     [propertyPath: string]: string;
 }
 
 export interface ITypesAwareObjectMapper {
     fromObjectLiteral<TResult extends object>(raw: object, typeInfo?: TypeInfo): TResult;
+
     toObjectLiteral<TFrom extends object>(obj: TFrom, typeInfo?: (typeInfo: TypeInfo) => void): object;
 }
 
@@ -54,7 +55,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         rawResult: object, typeInfo?: TypeInfo, knownTypes?: Map<string, ObjectTypeDescriptor>): TResult;
     public fromObjectLiteral<TResult extends object>(
         rawResult: object, typeInfo?: TypeInfo, knownTypes?: Map<string, ObjectTypeDescriptor>): TResult {
-        
+
         rawResult = ObjectUtil.clone(rawResult);
         const typeName = typeInfo ? typeInfo.typeName : null;
         const nestedTypes = typeInfo ? typeInfo.nestedTypes : null;
@@ -180,16 +181,20 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
             return this._getFieldContext(parent[field], fieldsPathTail);
         }
 
-        return { 
-            parent, 
+        return {
+            parent,
             field,
-            getValue() { return parent[field]; },
-            setValue(val) { parent[field] = val; }
+            getValue() {
+                return parent[field];
+            },
+            setValue(val) {
+                parent[field] = val;
+            }
         };
     }
 
     private _getFieldContextsForMapEntries(mapFieldVal: Map<string, any>, fieldsPathTail: string[]) {
-        const result = Array.from(mapFieldVal.entries()).map(([ key, val ]) => {
+        const result = Array.from(mapFieldVal.entries()).map(([key, val]) => {
             if (!fieldsPathTail.length) {
                 return {
                     parent: mapFieldVal,
@@ -203,7 +208,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
                 return this._getFieldContext(val, fieldsPathTail);
             }
         });
-        
+
         return this._flattenFieldContexts(result);
     }
 
@@ -223,7 +228,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
                 return this._getFieldContext(x, fieldsPathTail);
             }
         });
-        
+
         return this._flattenFieldContexts(result);
     }
 
@@ -237,8 +242,12 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
                 return {
                     parent: fieldVal,
                     field: i.toString(),
-                    getValue() { return fieldVal[i]; },
-                    setValue(val) { fieldVal[i] = val; }
+                    getValue() {
+                        return fieldVal[i];
+                    },
+                    setValue(val) {
+                        fieldVal[i] = val;
+                    }
                 };
             } else {
                 return this._getFieldContext(x, fieldsPathTail);
@@ -250,14 +259,14 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
 
     private _flattenFieldContexts(
         arr: Array<ObjectPropertyContext[] | ObjectPropertyContext>): ObjectPropertyContext[] {
-            return arr.reduce((result: any, next) => {
-                if (Array.isArray(next)) {
-                    return result.concat(next as ObjectPropertyContext[]);
-                }
+        return arr.reduce((result: any, next) => {
+            if (Array.isArray(next)) {
+                return result.concat(next as ObjectPropertyContext[]);
+            }
 
-                result.push(next as ObjectPropertyContext);
-                return result;
-            }, [] as ObjectPropertyContext[]);
+            result.push(next as ObjectPropertyContext);
+            return result;
+        }, [] as ObjectPropertyContext[]);
     }
 
     private _applyTypeToNestedProperty(
@@ -266,7 +275,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         let field: string;
 
         if (fieldContext) {
-            ({ parent, field } = fieldContext);
+            ({parent, field} = fieldContext);
         }
 
         if (typeof parent === "undefined") {
@@ -286,7 +295,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         if (fieldTypeName === "date") {
             fieldContext.setValue(DateUtil.parse(fieldVal));
             return;
-        } 
+        }
 
         if (fieldTypeName === "Set") {
             fieldContext.setValue(new Set(fieldVal));
@@ -296,12 +305,12 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         if (fieldTypeName === "Map") {
             const mapEntries = Object.keys(fieldVal)
                 .reduce((result, next) => {
-                    return [ ...result, [ next, fieldVal[next] ]];
+                    return [...result, [next, fieldVal[next]]];
                 }, []);
             fieldContext.setValue(new Map(mapEntries));
             return;
         }
-        
+
         if (Array.isArray(fieldVal)) {
             fieldVal.forEach((item, i) => {
                 this._applyTypeToNestedProperty(fieldTypeName, {
@@ -331,7 +340,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         } else if (TypeUtil.isObjectLiteralTypeDescriptor(ctorOrTypeDescriptor)) {
             instance = (ctorOrTypeDescriptor as ObjectLiteralDescriptor).construct(rawValue);
         } else {
-            throwError("InvalidArgumentException", 
+            throwError("InvalidArgumentException",
                 `Invalid type descriptor for type ${typeName}: ${ctorOrTypeDescriptor}`);
         }
 
@@ -394,8 +403,8 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
             const newObjPathPrefix = `${objPathPrefix}$MAP`;
             const map = obj as Map<string, any>;
             return Array.from(map.keys()).reduce((result, next) => {
-                return Object.assign(result, { 
-                    [next]: this._makeObjectLiteral(map.get(next), newObjPathPrefix, typeInfoCallback, knownTypes) 
+                return Object.assign(result, {
+                    [next]: this._makeObjectLiteral(map.get(next), newObjPathPrefix, typeInfoCallback, knownTypes)
                 });
             }, {});
         }
@@ -410,7 +419,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
                 const matchedType = TypeUtil.findType(obj, knownTypes);
                 if (matchedType
                     && matchedType.name !== "Function") {
-                    typeInfoCallback({ [objPathPrefix]: matchedType.name });
+                    typeInfoCallback({[objPathPrefix]: matchedType.name});
                 }
             }
 
@@ -439,6 +448,8 @@ export interface TypesAwareJsonObjectMapperOptions {
 interface ObjectPropertyContext {
     parent: any;
     field: string;
+
     getValue();
+
     setValue(val: any);
 }

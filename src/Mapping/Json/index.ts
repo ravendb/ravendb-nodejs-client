@@ -1,4 +1,4 @@
-import { CONSTANTS } from "../../Constants";
+import {CONSTANTS} from "../../Constants";
 
 export * from "./Replacers";
 export * from "./Revivers";

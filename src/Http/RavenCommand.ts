@@ -1,22 +1,22 @@
-import { ServerNode } from "./ServerNode";
-import { HttpCache } from "../Http/HttpCache";
-import { StatusCodes } from "../Http/StatusCode";
+import {ServerNode} from "./ServerNode";
+import {HttpCache} from "../Http/HttpCache";
+import {StatusCodes} from "../Http/StatusCode";
 import * as request from "request";
 import * as stream from "readable-stream";
-import { HttpRequestParameters, HttpResponse } from "../Primitives/Http";
-import { getLogger } from "../Utility/LogUtil";
-import { throwError } from "../Exceptions";
-import { IRavenObject } from "../Types/IRavenObject";
-import { getEtagHeader, HeadersBuilder, closeHttpResponse } from "../Utility/HttpUtil";
-import { Mapping } from "../Mapping";
-import { TypesAwareObjectMapper, TypeInfo } from "../Mapping/ObjectMapper";
-import { ObjectTypeDescriptor } from "..";
-import { JsonSerializer } from "../Mapping/Json/Serializer";
-import { RavenCommandResponsePipeline } from "./RavenCommandResponsePipeline";
-import { pick } from "stream-json/filters/Pick";
-import { ignore } from "stream-json/filters/Ignore";
+import {HttpRequestParameters, HttpResponse} from "../Primitives/Http";
+import {getLogger} from "../Utility/LogUtil";
+import {throwError} from "../Exceptions";
+import {IRavenObject} from "../Types/IRavenObject";
+import {getEtagHeader, HeadersBuilder, closeHttpResponse} from "../Utility/HttpUtil";
+import {Mapping} from "../Mapping";
+import {TypesAwareObjectMapper, TypeInfo} from "../Mapping/ObjectMapper";
+import {ObjectTypeDescriptor} from "..";
+import {JsonSerializer} from "../Mapping/Json/Serializer";
+import {RavenCommandResponsePipeline} from "./RavenCommandResponsePipeline";
+import {pick} from "stream-json/filters/Pick";
+import {ignore} from "stream-json/filters/Ignore";
 
-const log = getLogger({ module: "RavenCommand" });
+const log = getLogger({module: "RavenCommand"});
 
 export type RavenCommandResponse = string | request.Response;
 
@@ -25,7 +25,8 @@ export type RavenCommandResponseType = "Empty" | "Object" | "Raw";
 export type ResponseDisposeHandling = "Automatic" | "Manually";
 
 // tslint:disable-next-line:no-empty-interface
-export interface IRavenResponse extends IRavenObject {}
+export interface IRavenResponse extends IRavenObject {
+}
 
 export abstract class RavenCommand<TResult> {
 
@@ -70,8 +71,9 @@ export abstract class RavenCommand<TResult> {
         readable.push(cachedValue);
         readable.push(null);
         return this.setResponseAsync(readable, true)
-            // tslint:disable-next-line:no-empty
-            .then(() => {});
+        // tslint:disable-next-line:no-empty
+            .then(() => {
+            });
     }
 
     protected _defaultPipeline(
@@ -96,9 +98,9 @@ export abstract class RavenCommand<TResult> {
 
     public send(
         requestOptions: HttpRequestParameters): Promise<{ response: HttpResponse, bodyStream: stream.Readable }> {
-        const { body, uri } = requestOptions;
+        const {body, uri} = requestOptions;
         log.info(`Send command ${this.constructor.name} to ${uri}${body ? " with body " + body : ""}.`);
-        
+
         return new Promise((resolve, reject) => {
             const passthrough = new stream.PassThrough();
             try {
@@ -106,9 +108,9 @@ export abstract class RavenCommand<TResult> {
                     .on("error", reject)
                     .on("response", (res) => {
                         passthrough.pause();
-                        resolve({ 
-                            response: res, 
-                            bodyStream: passthrough 
+                        resolve({
+                            response: res,
+                            bodyStream: passthrough
                         });
                     })
                     .pipe(passthrough);
@@ -139,9 +141,9 @@ export abstract class RavenCommand<TResult> {
     }
 
     public async processResponse(
-        cache: HttpCache, 
-        response: HttpResponse, 
-        bodyStream: stream.Readable, 
+        cache: HttpCache,
+        response: HttpResponse,
+        bodyStream: stream.Readable,
         url: string): Promise<ResponseDisposeHandling> {
         if (!response) {
             return "Automatic";
@@ -178,7 +180,7 @@ export abstract class RavenCommand<TResult> {
             return "Automatic";
         } catch (err) {
             log.error(err, `Error processing command ${this.constructor.name} response.`);
-            throwError("RavenException", 
+            throwError("RavenException",
                 `Error processing command ${this.constructor.name} response: ${err.stack}`, err);
         } finally {
             closeHttpResponse(response);
@@ -208,7 +210,7 @@ export abstract class RavenCommand<TResult> {
             req.headers["If-Match"] = `"${changeVector}"`;
         }
     }
-    
+
     protected _parseResponseDefault<TResponse extends object>(
         response: string, typeInfo?: TypeInfo, knownTypes?: Map<string, ObjectTypeDescriptor>) {
         const res = this._serializer.deserialize(response);
@@ -239,7 +241,8 @@ export abstract class RavenCommand<TResult> {
     }
 
     // tslint:disable-next-line:no-empty
-    public onResponseFailure(response: HttpResponse): void { }
+    public onResponseFailure(response: HttpResponse): void {
+    }
 
     protected _pipeline<TPipelineResult>() {
         return RavenCommandResponsePipeline.create<TPipelineResult>();

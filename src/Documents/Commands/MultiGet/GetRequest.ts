@@ -1,4 +1,3 @@
-
 //TODO: fill mising JSdocs?
 export class GetRequest {
     private _url: string;
@@ -17,12 +16,12 @@ export class GetRequest {
         if (this._query[0] === "?") {
             return this._url + this._query;
         }
-        
+
         return this._url + "?" + this._query;
     }
 
     private _content: string;
-    
+
     public constructor() {
         this._headers = {};
     }

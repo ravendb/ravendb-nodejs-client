@@ -1,10 +1,10 @@
-import { MethodCall } from "./MethodCall";
+import {MethodCall} from "./MethodCall";
 
 export class CmpXchg extends MethodCall {
-    
-    public static value(key: string): CmpXchg  {
+
+    public static value(key: string): CmpXchg {
         const cmpXchg = new CmpXchg();
-        cmpXchg.args = [ key ];
+        cmpXchg.args = [key];
 
         return cmpXchg;
     }

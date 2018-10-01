@@ -1,18 +1,19 @@
-import { OperationCompletionAwaiter } from "./OperationCompletionAwaiter";
+import {OperationCompletionAwaiter} from "./OperationCompletionAwaiter";
 import * as BluebirdPromise from "bluebird";
 import {
     IOperation,
     AwaitableOperation,
-    OperationIdResult} from "./OperationAbstractions";
-import { RequestExecutor } from "../../Http/RequestExecutor";
-import { RavenCommand } from "../../Http/RavenCommand";
-import { throwError } from "../../Exceptions";
-import { DocumentStoreBase } from "../DocumentStoreBase";
-import { SessionInfo } from "../Session/IDocumentSession";
-import { PatchOperation, PatchOperationResult } from "./PatchOperation";
-import { DocumentType } from "../DocumentAbstractions";
-import { StatusCodes } from "../..";
-import { PatchResult } from "./PatchResult";
+    OperationIdResult
+} from "./OperationAbstractions";
+import {RequestExecutor} from "../../Http/RequestExecutor";
+import {RavenCommand} from "../../Http/RavenCommand";
+import {throwError} from "../../Exceptions";
+import {DocumentStoreBase} from "../DocumentStoreBase";
+import {SessionInfo} from "../Session/IDocumentSession";
+import {PatchOperation, PatchOperationResult} from "./PatchOperation";
+import {DocumentType} from "../DocumentAbstractions";
+import {StatusCodes} from "../..";
+import {PatchResult} from "./PatchResult";
 
 export class OperationExecutor {
 
@@ -47,21 +48,21 @@ export class OperationExecutor {
     public send<TResult extends object>(
         patchOperation: PatchOperation): Promise<PatchOperationResult<TResult>>;
     public send<TResult extends object>(
-        patchOperation: PatchOperation, 
+        patchOperation: PatchOperation,
         sessionInfo: SessionInfo): Promise<PatchOperationResult<TResult>>;
     public send<TResult extends object>(
-        patchOperation: PatchOperation, 
+        patchOperation: PatchOperation,
         sessionInfo: SessionInfo,
         resultType: DocumentType<TResult>): Promise<PatchOperationResult<TResult>>;
     public send<TResult>(operation: IOperation<TResult>): Promise<TResult>;
     public send<TResult>(
-        operation: IOperation<TResult>, 
+        operation: IOperation<TResult>,
         sessionInfo?: SessionInfo): Promise<TResult>;
     public send<TResult extends object>(
         operation: AwaitableOperation | IOperation<TResult>,
         sessionInfo?: SessionInfo,
         documentType?: DocumentType<TResult>)
-    : Promise<OperationCompletionAwaiter | TResult | PatchOperationResult<TResult>> {
+        : Promise<OperationCompletionAwaiter | TResult | PatchOperationResult<TResult>> {
 
         const command =
             operation.getCommand(this._store, this._requestExecutor.conventions, this._requestExecutor.cache);
@@ -88,11 +89,11 @@ export class OperationExecutor {
 
                     const patchResult = command.result as any as PatchResult;
                     patchOperationResult.status = patchResult.status;
-                    const { conventions } = this._requestExecutor;
+                    const {conventions} = this._requestExecutor;
                     conventions.tryRegisterEntityType(documentType);
                     const entityType = conventions.findEntityType(documentType);
                     patchOperationResult.document = conventions.deserializeEntityFromJson(
-                            entityType, patchResult.modifiedDocument) as TResult;
+                        entityType, patchResult.modifiedDocument) as TResult;
                     return patchOperationResult;
                 }
 

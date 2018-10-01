@@ -1,6 +1,6 @@
 import {User} from "../Assets/Entities";
 import * as assert from "assert";
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import {testContext, disposeTestDocumentStore} from "../Utils/TestUtil";
 
 import {
     IDocumentStore,
@@ -15,13 +15,13 @@ describe("CompactTest", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     // tslint:disable-next-line:no-empty
     it("can compact database", async () => {
         const session = store.openSession();
-        const user1 = Object.assign(new User(), { lastName: "user1" });
+        const user1 = Object.assign(new User(), {lastName: "user1"});
         await session.store(user1, "users/1");
         await session.saveChanges();
 
@@ -40,7 +40,7 @@ describe("CompactTest", function () {
             assert.ok(
                 err.message.indexOf(
                     "Unable to cast object of type 'PureMemoryStorageEnvironmentOptions' "
-                        + "to type 'DirectoryStorageEnvironmentOptions'") !== -1, "Actual error: " + err.stack);
+                    + "to type 'DirectoryStorageEnvironmentOptions'") !== -1, "Actual error: " + err.stack);
         }
     });
 });

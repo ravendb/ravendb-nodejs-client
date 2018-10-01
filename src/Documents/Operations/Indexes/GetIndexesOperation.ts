@@ -1,9 +1,9 @@
-import { HttpRequestParameters } from "../../../Primitives/Http";
-import { ServerNode } from "../../../Http/ServerNode";
-import { RavenCommand } from "../../../Http/RavenCommand";
-import { IndexDefinition } from "../../Indexes/IndexDefinition";
-import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import {HttpRequestParameters} from "../../../Primitives/Http";
+import {ServerNode} from "../../../Http/ServerNode";
+import {RavenCommand} from "../../../Http/RavenCommand";
+import {IndexDefinition} from "../../Indexes/IndexDefinition";
+import {IMaintenanceOperation, OperationResultType} from "../OperationAbstractions";
+import {DocumentConventions} from "../../Conventions/DocumentConventions";
 import * as stream from "readable-stream";
 
 export class GetIndexesOperation implements IMaintenanceOperation<IndexDefinition[]> {
@@ -39,7 +39,7 @@ export class GetIndexesCommand extends RavenCommand<IndexDefinition[]> {
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database
             + "/indexes?start=" + this._start + "&pageSize=" + this._pageSize;
-        return { uri };
+        return {uri};
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
@@ -53,7 +53,7 @@ export class GetIndexesCommand extends RavenCommand<IndexDefinition[]> {
             .parseJsonSync()
             .streamKeyCaseTransform({
                 defaultTransform: "camel",
-                ignorePaths:  [ /fields\.[^.]+$/i ]
+                ignorePaths: [/fields\.[^.]+$/i]
             })
             .process(bodyStream)
             .then((result) => {

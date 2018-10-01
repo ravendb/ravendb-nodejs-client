@@ -7,7 +7,7 @@ export class PatchRequest {
     public static forScript(script: string) {
         return Object.assign(
             new PatchRequest(),
-            { script }
+            {script}
         );
     }
 

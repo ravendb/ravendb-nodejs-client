@@ -1,7 +1,8 @@
 import {DocumentConventions} from "../Conventions/DocumentConventions";
-import { DocumentType } from "../DocumentAbstractions";
-import { throwError } from "../../Exceptions";
-import { TypeUtil } from "../../Utility/TypeUtil";
+import {DocumentType} from "../DocumentAbstractions";
+import {throwError} from "../../Exceptions";
+import {TypeUtil} from "../../Utility/TypeUtil";
+
 export class GenerateEntityIdOnTheClient {
 
     private _conventions: DocumentConventions;
@@ -51,20 +52,20 @@ export class GenerateEntityIdOnTheClient {
         let id;
         this.tryGetIdFromInstance(entity, (idVal) => id = idVal);
         return Promise.resolve()
-        .then(() => {
-            // Generate the key up front
-            return id || this._generateId(entity);
-        })
-        // tslint:disable-next-line:no-shadowed-variable
-        .then(id => {
-            if (id && id.startsWith("/")) {
-                throwError(
-                    "InvalidOperationException",
-                    "Cannot use value '" + id + "' as a document id because it begins with a '/'");
-            }
+            .then(() => {
+                // Generate the key up front
+                return id || this._generateId(entity);
+            })
+            // tslint:disable-next-line:no-shadowed-variable
+            .then(id => {
+                if (id && id.startsWith("/")) {
+                    throwError(
+                        "InvalidOperationException",
+                        "Cannot use value '" + id + "' as a document id because it begins with a '/'");
+                }
 
-            return id;
-        });
+                return id;
+            });
     }
 
     public generateDocumentKeyForStorage(entity: object): Promise<string> {

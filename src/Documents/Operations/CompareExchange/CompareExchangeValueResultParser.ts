@@ -1,9 +1,9 @@
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { CompareExchangeValue } from "./CompareExchangeValue";
-import { throwError } from "../../../Exceptions";
-import { TypeUtil } from "../../../Utility/TypeUtil";
-import { ClassConstructor } from "../../..";
-import { ObjectUtil } from "../../../Utility/ObjectUtil";
+import {DocumentConventions} from "../../Conventions/DocumentConventions";
+import {CompareExchangeValue} from "./CompareExchangeValue";
+import {throwError} from "../../../Exceptions";
+import {TypeUtil} from "../../../Utility/TypeUtil";
+import {ClassConstructor} from "../../..";
+import {ObjectUtil} from "../../../Utility/ObjectUtil";
 
 export interface CompareExchangeResultItem {
     index: number;
@@ -18,8 +18,8 @@ export interface GetCompareExchangeValuesResponse {
 export class CompareExchangeValueResultParser {
 
     public static getValues<T>(
-        responseObj: GetCompareExchangeValuesResponse, 
-        conventions: DocumentConventions, 
+        responseObj: GetCompareExchangeValuesResponse,
+        conventions: DocumentConventions,
         clazz?: ClassConstructor<T>)
         : { [key: string]: CompareExchangeValue<T> } {
 
@@ -35,7 +35,7 @@ export class CompareExchangeValueResultParser {
             }
 
             const key = item.key || throwError("InvalidOperationException", "Response is invalid. Key is missing.");
-            
+
             const index = item.index;
             if (TypeUtil.isNullOrUndefined(index)) {
                 throwError("InvalidOperationException", `Response is invalid. Index is ${item.index}.`);
@@ -56,10 +56,10 @@ export class CompareExchangeValueResultParser {
                     const entityType = conventions.findEntityType(clazz);
                     if (conventions.entityFieldNameConvention) {
                         rawValue = ObjectUtil.transformObjectKeys(
-                            rawValue, { 
-                                defaultTransform: conventions.entityFieldNameConvention, 
-                                recursive: true, 
-                                arrayRecursive: true 
+                            rawValue, {
+                                defaultTransform: conventions.entityFieldNameConvention,
+                                recursive: true,
+                                arrayRecursive: true
                             });
                     }
                     const entity = conventions.deserializeEntityFromJson(entityType, rawValue);
@@ -72,8 +72,8 @@ export class CompareExchangeValueResultParser {
     }
 
     public static getValue<T>(
-        response: GetCompareExchangeValuesResponse, 
-        conventions: DocumentConventions, 
+        response: GetCompareExchangeValuesResponse,
+        conventions: DocumentConventions,
         clazz: ClassConstructor<T>): CompareExchangeValue<T> {
         if (!response) {
             return null;

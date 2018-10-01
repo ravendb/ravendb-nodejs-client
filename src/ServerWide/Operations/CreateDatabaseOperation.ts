@@ -1,13 +1,13 @@
 import * as stream from "readable-stream";
-import { HttpRequestParameters } from "../../Primitives/Http";
-import { DatabaseRecord } from "..";
-import { RavenCommand } from "../../Http/RavenCommand";
-import { DatabasePutResult } from ".";
-import { DocumentConventions } from "../..";
-import { throwError } from "../../Exceptions";
-import { ServerNode } from "../../Http/ServerNode";
-import { IServerOperation, OperationResultType } from "../../Documents/Operations/OperationAbstractions";
-import { HeadersBuilder } from "../../Utility/HttpUtil";
+import {HttpRequestParameters} from "../../Primitives/Http";
+import {DatabaseRecord} from "..";
+import {RavenCommand} from "../../Http/RavenCommand";
+import {DatabasePutResult} from ".";
+import {DocumentConventions} from "../..";
+import {throwError} from "../../Exceptions";
+import {ServerNode} from "../../Http/ServerNode";
+import {IServerOperation, OperationResultType} from "../../Documents/Operations/OperationAbstractions";
+import {HeadersBuilder} from "../../Utility/HttpUtil";
 
 export class CreateDatabaseOperation implements IServerOperation<DatabasePutResult> {
 

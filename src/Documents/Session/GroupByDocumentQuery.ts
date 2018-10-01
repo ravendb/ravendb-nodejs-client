@@ -1,8 +1,8 @@
-import { IGroupByDocumentQuery } from "./IGroupByDocumentQuery";
-import { DocumentQuery } from "./DocumentQuery";
-import { GroupByField } from "./GroupByField";
-import { throwError } from "../../Exceptions";
-import { IDocumentQuery } from "./IDocumentQuery";
+import {IGroupByDocumentQuery} from "./IGroupByDocumentQuery";
+import {DocumentQuery} from "./DocumentQuery";
+import {GroupByField} from "./GroupByField";
+import {throwError} from "../../Exceptions";
+import {IDocumentQuery} from "./IDocumentQuery";
 
 export class GroupByDocumentQuery<T extends object> implements IGroupByDocumentQuery<T> {
 

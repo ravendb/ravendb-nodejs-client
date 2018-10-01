@@ -2,43 +2,43 @@ import * as os from "os";
 import * as BluebirdPromise from "bluebird";
 import * as semaphore from "semaphore";
 import * as stream from "readable-stream";
-import { acquireSemaphore } from "../Utility/SemaphoreUtil";
-import { getLogger, ILogger } from "../Utility/LogUtil";
-import { Timer } from "../Primitives/Timer";
-import { ServerNode } from "./ServerNode";
-import { RavenCommand, ResponseDisposeHandling } from "./RavenCommand";
-import { Topology } from "./Topology";
-import { GetDatabaseTopologyCommand } from "../ServerWide/Commands/GetDatabaseTopologyCommand";
-import { StatusCodes} from "./StatusCode";
-import { NodeSelector } from "./NodeSelector";
-import { IDisposable } from "../Types/Contracts";
-import { IRequestAuthOptions, IAuthOptions } from "../Auth/AuthOptions";
-import { Certificate, ICertificate } from "../Auth/Certificate";
-import { ReadBalanceBehavior } from "./ReadBalanceBehavior";
-import { HttpCache, CachedItemMetadata, ReleaseCacheItem } from "./HttpCache";
-import { AggressiveCacheOptions } from "./AggressiveCacheOptions";
-import { throwError, RavenErrorType, ExceptionDispatcher, ExceptionSchema } from "../Exceptions";
-import { 
-    GetClientConfigurationCommand, 
+import {acquireSemaphore} from "../Utility/SemaphoreUtil";
+import {getLogger, ILogger} from "../Utility/LogUtil";
+import {Timer} from "../Primitives/Timer";
+import {ServerNode} from "./ServerNode";
+import {RavenCommand, ResponseDisposeHandling} from "./RavenCommand";
+import {Topology} from "./Topology";
+import {GetDatabaseTopologyCommand} from "../ServerWide/Commands/GetDatabaseTopologyCommand";
+import {StatusCodes} from "./StatusCode";
+import {NodeSelector} from "./NodeSelector";
+import {IDisposable} from "../Types/Contracts";
+import {IRequestAuthOptions, IAuthOptions} from "../Auth/AuthOptions";
+import {Certificate, ICertificate} from "../Auth/Certificate";
+import {ReadBalanceBehavior} from "./ReadBalanceBehavior";
+import {HttpCache, CachedItemMetadata, ReleaseCacheItem} from "./HttpCache";
+import {AggressiveCacheOptions} from "./AggressiveCacheOptions";
+import {throwError, RavenErrorType, ExceptionDispatcher, ExceptionSchema} from "../Exceptions";
+import {
+    GetClientConfigurationCommand,
     GetClientConfigurationOperationResult
 } from "../Documents/Operations/Configuration/GetClientConfigurationOperation";
 import CurrentIndexAndNode from "./CurrentIndexAndNode";
 import {HEADERS} from "../Constants";
-import { HttpRequestParameters, HttpResponse, HttpRequestParametersWithoutUri } from "../Primitives/Http";
-import { Stopwatch } from "../Utility/Stopwatch";
+import {HttpRequestParameters, HttpResponse, HttpRequestParametersWithoutUri} from "../Primitives/Http";
+import {Stopwatch} from "../Utility/Stopwatch";
 import * as PromiseUtil from "../Utility/PromiseUtil";
-import { GetStatisticsOperation } from "../Documents/Operations/GetStatisticsOperation";
-import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
-import { TypeUtil } from "../Utility/TypeUtil";
-import { SessionInfo } from "../Documents/Session/IDocumentSession";
-import { JsonSerializer } from "../Mapping/Json/Serializer";
-import { validateUri } from "../Utility/UriUtil";
+import {GetStatisticsOperation} from "../Documents/Operations/GetStatisticsOperation";
+import {DocumentConventions} from "../Documents/Conventions/DocumentConventions";
+import {TypeUtil} from "../Utility/TypeUtil";
+import {SessionInfo} from "../Documents/Session/IDocumentSession";
+import {JsonSerializer} from "../Mapping/Json/Serializer";
+import {validateUri} from "../Utility/UriUtil";
 import * as StreamUtil from "../Utility/StreamUtil";
-import { closeHttpResponse } from "../Utility/HttpUtil";
+import {closeHttpResponse} from "../Utility/HttpUtil";
 
 const DEFAULT_REQUEST_OPTIONS = {};
 
-const log = getLogger({ module: "RequestExecutor" });
+const log = getLogger({module: "RequestExecutor"});
 
 export interface ExecuteOptions<TResult> {
     chosenNode: ServerNode;
@@ -200,7 +200,7 @@ export class RequestExecutor implements IDisposable {
         return this._disposed;
     }
 
-    public getUrl (): string {
+    public getUrl(): string {
         if (!this._nodeSelector) {
             return null;
         }
@@ -212,26 +212,26 @@ export class RequestExecutor implements IDisposable {
             : null;
     }
 
-    public getTopology (): Topology {
+    public getTopology(): Topology {
         return this._nodeSelector
             ? this._nodeSelector.getTopology()
             : null;
     }
 
-    public getTopologyNodes (): ServerNode[] {
+    public getTopologyNodes(): ServerNode[] {
         const topology = this.getTopology();
         return topology
             ? [...topology.nodes]
             : null;
     }
 
-    protected constructor (
+    protected constructor(
         database: string,
         authOptions: IRequestAuthOptions,
         conventions: DocumentConventions) {
 
-        this._log = getLogger({ 
-            module: `${this.constructor.name}-${ Math.floor(Math.random() * 10000) }` 
+        this._log = getLogger({
+            module: `${this.constructor.name}-${ Math.floor(Math.random() * 10000) }`
         });
 
         this._cache = new HttpCache(conventions.maxHttpCacheSize);
@@ -244,26 +244,26 @@ export class RequestExecutor implements IDisposable {
         this._setDefaultRequestOptions();
     }
 
-    public static create (
+    public static create(
         initialUrls: string[],
-        database: string): RequestExecutor; 
-    public static create (
+        database: string): RequestExecutor;
+    public static create(
         initialUrls: string[],
         database: string,
         opts?: IRequestExecutorOptions): RequestExecutor;
-    public static create (
+    public static create(
         initialUrls: string[],
         database: string,
         opts?: IRequestExecutorOptions): RequestExecutor {
-        const { authOptions, documentConventions } = opts || {} as IRequestExecutorOptions;
+        const {authOptions, documentConventions} = opts || {} as IRequestExecutorOptions;
         const executor = new RequestExecutor(database, authOptions, documentConventions);
         executor._firstTopologyUpdatePromise = executor._firstTopologyUpdate(initialUrls);
         // this is just to get rid of unhandled rejection, we're handling it later on
-        executor._firstTopologyUpdatePromise.catch(TypeUtil.NOOP); 
+        executor._firstTopologyUpdatePromise.catch(TypeUtil.NOOP);
         return executor;
     }
 
-    public static createForSingleNodeWithConfigurationUpdates (
+    public static createForSingleNodeWithConfigurationUpdates(
         url: string, database: string, opts: IRequestExecutorOptions): RequestExecutor {
         const executor =
             this.createForSingleNodeWithoutConfigurationUpdates(
@@ -272,10 +272,10 @@ export class RequestExecutor implements IDisposable {
         return executor;
     }
 
-    public static createForSingleNodeWithoutConfigurationUpdates (
+    public static createForSingleNodeWithoutConfigurationUpdates(
         url: string, database: string, opts: IRequestExecutorOptions) {
-        
-        const { authOptions, documentConventions } = opts;
+
+        const {authOptions, documentConventions} = opts;
         const initialUrls: string[] = RequestExecutor._validateUrls([url], authOptions);
 
         const executor = new RequestExecutor(database, authOptions, documentConventions);
@@ -301,7 +301,7 @@ export class RequestExecutor implements IDisposable {
         let promise: Promise<void> = Promise.resolve();
         if (this._firstTopologyUpdatePromise
             && !this._firstTopologyUpdatePromise.isFulfilled()) {
-            promise = Promise.resolve(this._firstTopologyUpdatePromise); 
+            promise = Promise.resolve(this._firstTopologyUpdatePromise);
         }
 
         return promise.then(() => {
@@ -327,7 +327,7 @@ export class RequestExecutor implements IDisposable {
             .then(() => this._nodeSelector.getFastestNode());
     }
 
-    protected _updateClientConfiguration (): PromiseLike<void> {
+    protected _updateClientConfiguration(): PromiseLike<void> {
         if (this._disposed) {
             return BluebirdPromise.resolve(null);
         }
@@ -350,7 +350,7 @@ export class RequestExecutor implements IDisposable {
                         nodeIndex: currentIndexAndNode2.currentIndex,
                         shouldRetry: false
                     })
-                    .then(() => command.result);
+                        .then(() => command.result);
                 })
                 .then((clientConfigOpResult: GetClientConfigurationOperationResult) => {
                     if (!clientConfigOpResult) {
@@ -382,51 +382,51 @@ export class RequestExecutor implements IDisposable {
             return Promise.resolve(false);
         }
 
-        const acquiredSemContext = acquireSemaphore(this._updateDatabaseTopologySemaphore, { timeout });
+        const acquiredSemContext = acquireSemaphore(this._updateDatabaseTopologySemaphore, {timeout});
         const result = BluebirdPromise.resolve(acquiredSemContext.promise)
             .then(() => {
-                if (this._disposed) {
-                    return false;
-                }
+                    if (this._disposed) {
+                        return false;
+                    }
 
-                this._log.info(`Update topology from ${node.url}.`);
+                    this._log.info(`Update topology from ${node.url}.`);
 
-                const getTopology = new GetDatabaseTopologyCommand();
-                const getTopologyPromise = this.execute(getTopology, null, {
-                    chosenNode: node,
-                    nodeIndex: null,
-                    shouldRetry: false,
-                });
-                return getTopologyPromise
-                    .then(() => {
-                        const topology = getTopology.result;
-                        if (!this._nodeSelector) {
-                            this._nodeSelector = new NodeSelector(topology);
-
-                            if (this._readBalanceBehavior === "FastestNode") {
-                                this._nodeSelector.scheduleSpeedTest();
-                            }
-
-                        } else if (this._nodeSelector.onUpdateTopology(topology, forceUpdate)) {
-                            this._disposeAllFailedNodesTimers();
-
-                            if (this._readBalanceBehavior === "FastestNode") {
-                                this._nodeSelector.scheduleSpeedTest();
-                            }
-                        }
-
-                        this._topologyEtag = this._nodeSelector.getTopology().etag;
-
-                        return true;
+                    const getTopology = new GetDatabaseTopologyCommand();
+                    const getTopologyPromise = this.execute(getTopology, null, {
+                        chosenNode: node,
+                        nodeIndex: null,
+                        shouldRetry: false,
                     });
-            },
-            (reason: Error) => {
-                if (reason.name === "TimeoutError") {
-                    return false;
-                }
+                    return getTopologyPromise
+                        .then(() => {
+                            const topology = getTopology.result;
+                            if (!this._nodeSelector) {
+                                this._nodeSelector = new NodeSelector(topology);
 
-                throw reason;
-            })
+                                if (this._readBalanceBehavior === "FastestNode") {
+                                    this._nodeSelector.scheduleSpeedTest();
+                                }
+
+                            } else if (this._nodeSelector.onUpdateTopology(topology, forceUpdate)) {
+                                this._disposeAllFailedNodesTimers();
+
+                                if (this._readBalanceBehavior === "FastestNode") {
+                                    this._nodeSelector.scheduleSpeedTest();
+                                }
+                            }
+
+                            this._topologyEtag = this._nodeSelector.getTopology().etag;
+
+                            return true;
+                        });
+                },
+                (reason: Error) => {
+                    if (reason.name === "TimeoutError") {
+                        return false;
+                    }
+
+                    throw reason;
+                })
             .finally(() => {
                 acquiredSemContext.dispose();
             });
@@ -454,7 +454,7 @@ export class RequestExecutor implements IDisposable {
             }
 
             if (authOptions && authOptions.certificate) {
-                throwError("InvalidOperationException", 
+                throwError("InvalidOperationException",
                     "The url " + url + " is using HTTP, but a certificate is specified, which require us to use HTTPS");
             }
 
@@ -466,7 +466,7 @@ export class RequestExecutor implements IDisposable {
         return cleanUrls;
     }
 
-    private _initializeUpdateTopologyTimer (): void {
+    private _initializeUpdateTopologyTimer(): void {
         if (this._updateTopologyTimer || this._disposed) {
             return;
         }
@@ -475,13 +475,13 @@ export class RequestExecutor implements IDisposable {
 
         const minInMs = 60 * 1000;
         const that = this;
-        this._updateTopologyTimer = 
-            new Timer(function timerActionUpdateTopology () { 
+        this._updateTopologyTimer =
+            new Timer(function timerActionUpdateTopology() {
                 return that._updateTopologyCallback();
             }, minInMs, minInMs);
     }
 
-    private _updateTopologyCallback (): Promise<void> {
+    private _updateTopologyCallback(): Promise<void> {
         const time = new Date();
         const minInMs = 60 * 1000;
         if (time.valueOf() - this._lastReturnedResponse.valueOf() <= minInMs) {
@@ -509,13 +509,13 @@ export class RequestExecutor implements IDisposable {
             });
     }
 
-    protected _firstTopologyUpdate (inputUrls: string[]): BluebirdPromise<void> {
+    protected _firstTopologyUpdate(inputUrls: string[]): BluebirdPromise<void> {
         const initialUrls: string[] = RequestExecutor._validateUrls(inputUrls, this._authOptions);
 
         const topologyUpdateErrors: Array<{ url: string, error: Error | string }> = [];
 
         const tryUpdateTopology = (url: string, database: string): PromiseLike<boolean> => {
-            const serverNode = new ServerNode({ url, database });
+            const serverNode = new ServerNode({url, database});
             return BluebirdPromise.resolve()
                 .then(() => this.updateTopology(serverNode, TypeUtil.MAX_INT32))
                 .then(() => {
@@ -531,11 +531,11 @@ export class RequestExecutor implements IDisposable {
 
                     if (initialUrls.length === 0) {
                         this._lastKnownUrls = initialUrls;
-                        throwError("InvalidOperationException", 
+                        throwError("InvalidOperationException",
                             `Cannot get topology from server: ${url}.`, error);
                     }
 
-                    topologyUpdateErrors.push({ url, error });
+                    topologyUpdateErrors.push({url, error});
                     return false;
                 });
         };
@@ -562,8 +562,9 @@ export class RequestExecutor implements IDisposable {
                 let topologyNodes = this.getTopologyNodes();
                 if (!topologyNodes) {
                     topologyNodes = initialUrls.map(url => {
-                        const serverNode = new ServerNode({ 
-                            url, database: this._databaseName });
+                        const serverNode = new ServerNode({
+                            url, database: this._databaseName
+                        });
                         serverNode.clusterTag = "!";
                         return serverNode;
                     });
@@ -587,13 +588,13 @@ export class RequestExecutor implements IDisposable {
             });
     }
 
-    protected _throwExceptions (details: string): void {
+    protected _throwExceptions(details: string): void {
         throwError("InvalidOperationException",
-            "Failed to retrieve database topology from all known nodes" 
-                + os.EOL + details);
+            "Failed to retrieve database topology from all known nodes"
+            + os.EOL + details);
     }
 
-    protected _disposeAllFailedNodesTimers (): void {
+    protected _disposeAllFailedNodesTimers(): void {
         for (const item of this._failedNodesTimers) {
             item[1].dispose();
         }
@@ -601,7 +602,7 @@ export class RequestExecutor implements IDisposable {
         this._failedNodesTimers.clear();
     }
 
-    public chooseNodeForRequest<TResult> (cmd: RavenCommand<TResult>, sessionInfo: SessionInfo): CurrentIndexAndNode {
+    public chooseNodeForRequest<TResult>(cmd: RavenCommand<TResult>, sessionInfo: SessionInfo): CurrentIndexAndNode {
         if (!cmd.isReadRequest) {
             return this._nodeSelector.getPreferredNode();
         }
@@ -618,11 +619,11 @@ export class RequestExecutor implements IDisposable {
         }
     }
 
-    public execute<TResult> (command: RavenCommand<TResult>): Promise<void>;
-    public execute<TResult> (command: RavenCommand<TResult>, sessionInfo?: SessionInfo): Promise<void>;
-    public execute<TResult> (
+    public execute<TResult>(command: RavenCommand<TResult>): Promise<void>;
+    public execute<TResult>(command: RavenCommand<TResult>, sessionInfo?: SessionInfo): Promise<void>;
+    public execute<TResult>(
         command: RavenCommand<TResult>, sessionInfo?: SessionInfo, options?: ExecuteOptions<TResult>): Promise<void>;
-    public execute<TResult> (
+    public execute<TResult>(
         command: RavenCommand<TResult>,
         sessionInfo?: SessionInfo,
         options?: ExecuteOptions<TResult>): Promise<void> {
@@ -646,7 +647,7 @@ export class RequestExecutor implements IDisposable {
         }
     }
 
-    private _unlikelyExecute<TResult> (
+    private _unlikelyExecute<TResult>(
         command: RavenCommand<TResult>,
         topologyUpdate: BluebirdPromise<void>,
         sessionInfo: SessionInfo): Promise<void> {
@@ -655,8 +656,8 @@ export class RequestExecutor implements IDisposable {
             .then(() => {
                 if (!this._firstTopologyUpdatePromise) {
                     if (!this._lastKnownUrls) {
-                            throwError("InvalidOperationException",
-                                "No known topology and no previously known one, cannot proceed, likely a bug");
+                        throwError("InvalidOperationException",
+                            "No known topology and no previously known one, cannot proceed, likely a bug");
                     }
 
                     topologyUpdate = this._firstTopologyUpdate(this._lastKnownUrls);
@@ -685,7 +686,7 @@ export class RequestExecutor implements IDisposable {
         return Promise.resolve(result);
     }
 
-    private _getFromCache<TResult> (
+    private _getFromCache<TResult>(
         command: RavenCommand<TResult>,
         url: string,
         cachedItemMetadataCallback: (data: CachedItemMetadata) => void) {
@@ -704,12 +705,12 @@ export class RequestExecutor implements IDisposable {
         return new ReleaseCacheItem(null);
     }
 
-    private _executeOnSpecificNode<TResult> (
+    private _executeOnSpecificNode<TResult>(
         command: RavenCommand<TResult>,
         sessionInfo: SessionInfo = null,
         options: ExecuteOptions<TResult> = null): Promise<void> {
 
-        const { chosenNode, nodeIndex, shouldRetry } = options;
+        const {chosenNode, nodeIndex, shouldRetry} = options;
 
         this._log.info(`Actual execute ${command.constructor.name} on ${chosenNode.url}`
             + ` ${ shouldRetry ? "with" : "without" } retry.`);
@@ -774,10 +775,10 @@ export class RequestExecutor implements IDisposable {
                 return;
             }, (error) => {
                 this._log.warn(
-                    error, 
+                    error,
                     `Error executing '${command.constructor.name}' `
-                        + `on specific node '${chosenNode.url}'`
-                        + `${chosenNode.database ? "db " + chosenNode.database : "" }.`);
+                    + `on specific node '${chosenNode.url}'`
+                    + `${chosenNode.database ? "db " + chosenNode.database : "" }.`);
 
                 if (!shouldRetry) {
                     return BluebirdPromise.reject(error);
@@ -832,15 +833,15 @@ export class RequestExecutor implements IDisposable {
                                     if (unsuccessfulResponseHandled) {
                                         return;
                                     }
-                                    
+
                                     const dbMissingHeader = response.caseless.get(HEADERS.DATABASE_MISSING);
                                     if (dbMissingHeader) {
                                         throwError("DatabaseDoesNotExistException", dbMissingHeader as string);
                                     }
 
                                     if (command.failedNodes.size === 0) {
-                                        throwError("InvalidOperationException", 
-                                        "Received unsuccessful response and couldn't recover from it. "
+                                        throwError("InvalidOperationException",
+                                            "Received unsuccessful response and couldn't recover from it. "
                                             + "Also, no record of exceptions per failed nodes. "
                                             + "This is weird and should not happen.");
                                     }
@@ -854,7 +855,7 @@ export class RequestExecutor implements IDisposable {
                                     }
 
                                     throwError(
-                                        "AllTopologyNodesDownException", 
+                                        "AllTopologyNodesDownException",
                                         "Received unsuccessful response from all servers"
                                         + " and couldn't recover from it.");
                                 });
@@ -892,21 +893,21 @@ export class RequestExecutor implements IDisposable {
                         }
                     });
             });
-        
+
         return Promise.resolve(result);
     }
 
-    private _throwFailedToContactAllNodes<TResult> (
-         command: RavenCommand<TResult>, 
-         req: HttpRequestParameters, 
-         e: Error, 
-         timeoutException: Error) {
+    private _throwFailedToContactAllNodes<TResult>(
+        command: RavenCommand<TResult>,
+        req: HttpRequestParameters,
+        e: Error,
+        timeoutException: Error) {
 
-        let message: string = "Tried to send " 
-            + command.constructor.name 
-            + " request via " 
-            + (req.method || "GET") + " " 
-            + req.uri + " to all configured nodes in the topology, " 
+        let message: string = "Tried to send "
+            + command.constructor.name
+            + " request via "
+            + (req.method || "GET") + " "
+            + req.uri + " to all configured nodes in the topology, "
             + "all of them seem to be down or not responding. I've tried to access the following nodes: ";
 
         if (this._nodeSelector) {
@@ -923,7 +924,7 @@ export class RequestExecutor implements IDisposable {
                 const nodesText = topology.nodes
                     .map(x => `( url: ${x.url}, clusterTag: ${x.clusterTag}, serverRole: ${x.serverRole})`)
                     .join(", ");
-                
+
                 message += os.EOL
                     + `I was able to fetch ${tplFromNode.database} topology from ${tplFromNode.url}.`
                     + os.EOL
@@ -932,15 +933,15 @@ export class RequestExecutor implements IDisposable {
         }
 
         const innerErr = timeoutException || e;
-        throwError("AllTopologyNodesDownException", message, innerErr); 
+        throwError("AllTopologyNodesDownException", message, innerErr);
     }
 
-    public inSpeedTestPhase () {
+    public inSpeedTestPhase() {
         return this._nodeSelector
             && this._nodeSelector.inSpeedTestPhase();
     }
 
-    private async _handleUnsuccessfulResponse<TResult> (
+    private async _handleUnsuccessfulResponse<TResult>(
         chosenNode: ServerNode,
         nodeIndex: number,
         command: RavenCommand<TResult>,
@@ -980,7 +981,7 @@ export class RequestExecutor implements IDisposable {
 
                 return this.updateTopology(chosenNode, Number.MAX_VALUE, true)
                     .then(() => {
-                        const currentIndexAndNode: CurrentIndexAndNode = 
+                        const currentIndexAndNode: CurrentIndexAndNode =
                             this.chooseNodeForRequest(command, sessionInfo);
                         return this._executeOnSpecificNode(command, sessionInfo, {
                             chosenNode: currentIndexAndNode.currentNode,
@@ -1004,7 +1005,7 @@ export class RequestExecutor implements IDisposable {
         }
     }
 
-    private _executeOnAllToFigureOutTheFastest<TResult> (
+    private _executeOnAllToFigureOutTheFastest<TResult>(
         chosenNode: ServerNode,
         command: RavenCommand<TResult>): Promise<HttpResponse> {
         let preferredTask: BluebirdPromise<IndexAndResponse> = null;
@@ -1022,7 +1023,7 @@ export class RequestExecutor implements IDisposable {
                     const req = this._createRequest(nodes[taskNumber], command);
                     return command.send(req)
                         .then(responseAndBodyStream => {
-                            return responseAndBodyStream.response;  
+                            return responseAndBodyStream.response;
                         });
                 })
                 .then(commandResult => new IndexAndResponse(taskNumber, commandResult))
@@ -1047,11 +1048,11 @@ export class RequestExecutor implements IDisposable {
             })
             .then(() => preferredTask)
             .then(taskResult => taskResult.response);
-        
+
         return Promise.resolve(result);
     }
 
-    private _shouldExecuteOnAll<TResult> (chosenNode: ServerNode, command: RavenCommand<TResult>): boolean {
+    private _shouldExecuteOnAll<TResult>(chosenNode: ServerNode, command: RavenCommand<TResult>): boolean {
         return this._readBalanceBehavior === "FastestNode" &&
             this._nodeSelector &&
             this._nodeSelector.inSpeedTestPhase() &&
@@ -1070,7 +1071,7 @@ export class RequestExecutor implements IDisposable {
         return topology && topology.nodes && topology.nodes.length > 1;
     }
 
-    private _handleServerDown<TResult> (
+    private _handleServerDown<TResult>(
         url: string,
         chosenNode: ServerNode,
         nodeIndex: number,
@@ -1101,7 +1102,7 @@ export class RequestExecutor implements IDisposable {
 
         const currentIndexAndNode: CurrentIndexAndNode = this._nodeSelector.getPreferredNode();
         if (command.failedNodes.has(currentIndexAndNode.currentNode)) {
-            return Promise.resolve(false) as any as Promise<boolean>; 
+            return Promise.resolve(false) as any as Promise<boolean>;
             // we tried all the nodes...nothing left to do
         }
 
@@ -1115,12 +1116,12 @@ export class RequestExecutor implements IDisposable {
             })
             .then(() => true);
     }
-    
-    private static _addFailedResponseToCommand<TResult> (
-        chosenNode: ServerNode, 
-        command: RavenCommand<TResult>, 
-        req: HttpRequestParameters, 
-        response: HttpResponse, 
+
+    private static _addFailedResponseToCommand<TResult>(
+        chosenNode: ServerNode,
+        command: RavenCommand<TResult>,
+        req: HttpRequestParameters,
+        response: HttpResponse,
         body: string,
         e: Error) {
 
@@ -1158,7 +1159,7 @@ export class RequestExecutor implements IDisposable {
         command.failedNodes.set(chosenNode, ExceptionDispatcher.get(exceptionSchema, StatusCodes.InternalServerError));
     }
 
-    private _createRequest<TResult> (node: ServerNode, command: RavenCommand<TResult>): HttpRequestParameters {
+    private _createRequest<TResult>(node: ServerNode, command: RavenCommand<TResult>): HttpRequestParameters {
         const req = Object.assign(command.createRequest(node), this._defaultRequestOptions);
         req.headers = req.headers || {};
 
@@ -1181,8 +1182,8 @@ export class RequestExecutor implements IDisposable {
     private static _handleConflict(response: HttpResponse, body: string): void {
         ExceptionDispatcher.throwException(response, body);
     }
-    
-    private _spawnHealthChecks(chosenNode: ServerNode, nodeIndex: number): void   {
+
+    private _spawnHealthChecks(chosenNode: ServerNode, nodeIndex: number): void {
         if (this._disposed) {
             return;
         }
@@ -1194,8 +1195,8 @@ export class RequestExecutor implements IDisposable {
         this._log.info(`Spawn health checks for node ${chosenNode.url}.`);
 
         const nodeStatus: NodeStatus = new NodeStatus(
-            nodeIndex, 
-            chosenNode, 
+            nodeIndex,
+            chosenNode,
             (nStatus: NodeStatus) => this._checkNodeStatusCallback(nStatus));
         this._failedNodesTimers.set(chosenNode, nodeStatus);
         nodeStatus.startTimer();
@@ -1218,48 +1219,48 @@ export class RequestExecutor implements IDisposable {
                 let status: NodeStatus;
                 return Promise.resolve(this._performHealthCheck(serverNode, nodeStatus.nodeIndex))
                     .then(() => {
-                        status = this._failedNodesTimers[nodeStatus.nodeIndex];
-                        if (status) {
-                            this._failedNodesTimers.delete(nodeStatus.node);
-                            status.dispose();
-                        }
+                            status = this._failedNodesTimers[nodeStatus.nodeIndex];
+                            if (status) {
+                                this._failedNodesTimers.delete(nodeStatus.node);
+                                status.dispose();
+                            }
 
-                        if (this._nodeSelector) {
-                            this._nodeSelector.restoreNodeIndex(nodeStatus.nodeIndex);
-                        }
-                    },
-                    err => {
-                        this._log.error(err, `${serverNode.clusterTag} is still down`);
+                            if (this._nodeSelector) {
+                                this._nodeSelector.restoreNodeIndex(nodeStatus.nodeIndex);
+                            }
+                        },
+                        err => {
+                            this._log.error(err, `${serverNode.clusterTag} is still down`);
 
-                        status = this._failedNodesTimers.get(nodeStatus.node);
-                        if (status) {
-                            nodeStatus.updateTimer();
-                        }
-                    });
+                            status = this._failedNodesTimers.get(nodeStatus.node);
+                            if (status) {
+                                nodeStatus.updateTimer();
+                            }
+                        });
             })
             .catch(err => {
                 this._log.error(
                     err, "Failed to check node topology, will ignore this node until next topology update.");
-            }) ;
+            });
     }
 
-    protected _performHealthCheck (serverNode: ServerNode, nodeIndex: number): Promise<void> {
+    protected _performHealthCheck(serverNode: ServerNode, nodeIndex: number): Promise<void> {
         return this._executeOnSpecificNode(
-            RequestExecutor._failureCheckOperation.getCommand(this._conventions), 
-            null, 
-            { 
+            RequestExecutor._failureCheckOperation.getCommand(this._conventions),
+            null,
+            {
                 chosenNode: serverNode,
-                nodeIndex, 
-                shouldRetry: false, 
+                nodeIndex,
+                shouldRetry: false,
             });
     }
 
     private _setDefaultRequestOptions(): void {
         this._defaultRequestOptions = Object.assign(
-            DEFAULT_REQUEST_OPTIONS, 
+            DEFAULT_REQUEST_OPTIONS,
             {
                 gzip: !(this._conventions.hasExplicitlySetCompressionUsage && !this._conventions.useCompression)
-            }, 
+            },
             this._customHttpRequestOptions);
     }
 
@@ -1269,7 +1270,7 @@ export class RequestExecutor implements IDisposable {
         if (this._disposed) {
             return;
         }
-        
+
         this._disposed = true;
 
         this._updateClientConfigurationSemaphore.take(TypeUtil.NOOP);
@@ -1281,7 +1282,7 @@ export class RequestExecutor implements IDisposable {
         if (this._updateTopologyTimer) {
             this._updateTopologyTimer.dispose();
         }
-        
+
         this._disposeAllFailedNodesTimers();
     }
 }

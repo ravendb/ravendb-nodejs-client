@@ -1,8 +1,8 @@
 import {QueryOperator} from "../Queries/QueryOperator";
 import {IndexQuery} from "../Queries/IndexQuery";
 import {QueryStatistics} from "./QueryStatistics";
-import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { QueryEventsEmitter } from "../Session/QueryEvents";
+import {DocumentConventions} from "../Conventions/DocumentConventions";
+import {QueryEventsEmitter} from "../Session/QueryEvents";
 
 export interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> extends QueryEventsEmitter {
 

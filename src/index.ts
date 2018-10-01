@@ -1,8 +1,8 @@
 import "./Utility/Polyfills";
 
-export { DocumentConventions } from "./Documents/Conventions/DocumentConventions";
-export { RavenTestDriver } from "./TestDriver";
-export { RavenErrorType } from "./Exceptions";
+export {DocumentConventions} from "./Documents/Conventions/DocumentConventions";
+export {RavenTestDriver} from "./TestDriver";
+export {RavenErrorType} from "./Exceptions";
 export * from "./Types";
 
 // HTTP
@@ -34,89 +34,105 @@ export * from "./ServerWide/Operations/GetDatabaseNamesOperation";
 export * from "./ServerWide/Operations/GetServerWideOperationStateOperation";
 export * from "./ServerWide/Operations/ServerWideOperationCompletionAwaiter";
 
-export { GetDatabaseTopologyCommand } from "./ServerWide/Commands/GetDatabaseTopologyCommand";
-export { GetClusterTopologyCommand } from "./ServerWide/Commands/GetClusterTopologyCommand";
-export { GetTcpInfoCommand } from "./ServerWide/Commands/GetTcpInfoCommand";
-export { CreateDatabaseOperation } from "./ServerWide/Operations/CreateDatabaseOperation";
-export { DeleteDatabasesOperation } from "./ServerWide/Operations/DeleteDatabasesOperation";
-export { GetDatabaseNamesOperation } from "./ServerWide/Operations/GetDatabaseNamesOperation";
-export { GetServerWideOperationStateOperation } from "./ServerWide/Operations/GetServerWideOperationStateOperation";
-export { ServerWideOperationCompletionAwaiter } from "./ServerWide/Operations/ServerWideOperationCompletionAwaiter";
-export { DatabaseRecord, ConflictSolver, ScriptResolver } from "./ServerWide";
+export {GetDatabaseTopologyCommand} from "./ServerWide/Commands/GetDatabaseTopologyCommand";
+export {GetClusterTopologyCommand} from "./ServerWide/Commands/GetClusterTopologyCommand";
+export {GetTcpInfoCommand} from "./ServerWide/Commands/GetTcpInfoCommand";
+export {CreateDatabaseOperation} from "./ServerWide/Operations/CreateDatabaseOperation";
+export {DeleteDatabasesOperation} from "./ServerWide/Operations/DeleteDatabasesOperation";
+export {GetDatabaseNamesOperation} from "./ServerWide/Operations/GetDatabaseNamesOperation";
+export {GetServerWideOperationStateOperation} from "./ServerWide/Operations/GetServerWideOperationStateOperation";
+export {ServerWideOperationCompletionAwaiter} from "./ServerWide/Operations/ServerWideOperationCompletionAwaiter";
+export {DatabaseRecord, ConflictSolver, ScriptResolver} from "./ServerWide";
 export * from "./ServerWide/ConnectionString";
 
 // OPERATIONS AND COMMANDS
-export { BulkInsertOperation } from "./Documents/BulkInsertOperation";
+export {BulkInsertOperation} from "./Documents/BulkInsertOperation";
 export * from "./Documents/Operations/OperationAbstractions";
-export { CompactDatabaseOperation } from "./Documents/Operations/CompactDatabaseOperation";
-export { PutConnectionStringOperation } from "./Documents/Operations/ConnectionStrings/PutConnectionStringOperation";
-export { PatchOperation } from "./Documents/Operations/PatchOperation";
-export { PatchByQueryOperation } from "./Documents/Operations/PatchByQueryOperation";
-export { PutCompareExchangeValueOperation } 
+export {CompactDatabaseOperation} from "./Documents/Operations/CompactDatabaseOperation";
+export {PutConnectionStringOperation} from "./Documents/Operations/ConnectionStrings/PutConnectionStringOperation";
+export {PatchOperation} from "./Documents/Operations/PatchOperation";
+export {PatchByQueryOperation} from "./Documents/Operations/PatchByQueryOperation";
+export {
+    PutCompareExchangeValueOperation
+}
     from "./Documents/Operations/CompareExchange/PutCompareExchangeValueOperation";
-export { GetCompareExchangeValueOperation } 
+export {
+    GetCompareExchangeValueOperation
+}
     from "./Documents/Operations/CompareExchange/GetCompareExchangeValueOperation";
-export { CompareExchangeResult } 
+export {
+    CompareExchangeResult
+}
     from "./Documents/Operations/CompareExchange/CompareExchangeResult";
-export { CompareExchangeValue } 
+export {
+    CompareExchangeValue
+}
     from "./Documents/Operations/CompareExchange/CompareExchangeValue";
-export { CompareExchangeValueResultParser } 
+export {
+    CompareExchangeValueResultParser
+}
     from "./Documents/Operations/CompareExchange/CompareExchangeValueResultParser";
-export { GetCompareExchangeValuesOperation, GetCompareExchangeValuesParameters } 
+export {
+    GetCompareExchangeValuesOperation, GetCompareExchangeValuesParameters
+}
     from "./Documents/Operations/CompareExchange/GetCompareExchangeValuesOperation";
-export { DeleteCompareExchangeValueOperation } 
+export {
+    DeleteCompareExchangeValueOperation
+}
     from "./Documents/Operations/CompareExchange/DeleteCompareExchangeValueOperation";
-export { DeleteByQueryOperation } from "./Documents/Operations/DeleteByQueryOperation";
-export { GetCollectionStatisticsOperation } from "./Documents/Operations/GetCollectionStatisticsOperation";
-export { CollectionStatistics } from "./Documents/Operations/CollectionStatistics";
-export { GetNextOperationIdCommand } from "./Documents/Commands/GetNextOperationIdCommand";
-export { KillOperationCommand } from "./Documents/Commands/KillOperationCommand";
-export { DeleteDocumentCommand } from "./Documents/Commands/DeleteDocumentCommand";
-export { NextIdentityForCommand } from "./Documents/Commands/NextIdentityForCommand";
-export { SeedIdentityForCommand } from "./Documents/Commands/SeedIdentityForCommand";
-export { ExplainQueryCommand } from "./Documents/Commands/ExplainQueryCommand";
-export { GetIdentitiesOperation } from "./Documents/Operations/Identities/GetIdentitiesOperation";
-export { GetStatisticsOperation, GetStatisticsCommand } from "./Documents/Operations/GetStatisticsOperation";
-export { DatabaseStatistics } from "./Documents/Operations/DatabaseStatistics";
-export { GetOperationStateOperation } from "./Documents/Operations/GetOperationStateOperation";
-export { IndexInformation } from "./Documents/Operations/IndexInformation";
-export { MaintenanceOperationExecutor } from "./Documents/Operations/MaintenanceOperationExecutor";
-export { OperationCompletionAwaiter } from "./Documents/Operations/OperationCompletionAwaiter";
-export { ClientConfiguration } from "./Documents/Operations/Configuration/ClientConfiguration";
-export { GetClientConfigurationOperation } from "./Documents/Operations/Configuration/GetClientConfigurationOperation";
-export { PutClientConfigurationOperation } from "./Documents/Operations/Configuration/PutClientConfigurationOperation";
-export { PutDocumentCommand } from "./Documents/Commands/PutDocumentCommand";
-export { GetIndexNamesOperation } from "./Documents/Operations/Indexes/GetIndexNamesOperation";
-export { DisableIndexOperation } from "./Documents/Operations/Indexes/DisableIndexOperation";
-export { EnableIndexOperation } from "./Documents/Operations/Indexes/EnableIndexOperation";
-export { GetIndexingStatusOperation } from "./Documents/Operations/Indexes/GetIndexingStatusOperation";
-export { GetIndexesStatisticsOperation } from "./Documents/Operations/Indexes/GetIndexesStatisticsOperation";
-export { GetIndexStatisticsOperation } from "./Documents/Operations/Indexes/GetIndexStatisticsOperation";
-export { GetIndexesOperation } from "./Documents/Operations/Indexes/GetIndexesOperation";
-export { GetTermsOperation } from "./Documents/Operations/Indexes/GetTermsOperation";
-export { IndexHasChangedOperation } from "./Documents/Operations/Indexes/IndexHasChangedOperation";
-export { PutIndexesOperation } from "./Documents/Operations/Indexes/PutIndexesOperation";
-export { StopIndexingOperation } from "./Documents/Operations/Indexes/StopIndexingOperation";
-export { StartIndexingOperation } from "./Documents/Operations/Indexes/StartIndexingOperation";
-export { StopIndexOperation } from "./Documents/Operations/Indexes/StopIndexOperation";
-export { StartIndexOperation } from "./Documents/Operations/Indexes/StartIndexOperation";
-export { ResetIndexOperation } from "./Documents/Operations/Indexes/ResetIndexOperation";
-export { DeleteIndexOperation } from "./Documents/Operations/Indexes/DeleteIndexOperation";
-export { UpdateExternalReplicationOperation } 
+export {DeleteByQueryOperation} from "./Documents/Operations/DeleteByQueryOperation";
+export {GetCollectionStatisticsOperation} from "./Documents/Operations/GetCollectionStatisticsOperation";
+export {CollectionStatistics} from "./Documents/Operations/CollectionStatistics";
+export {GetNextOperationIdCommand} from "./Documents/Commands/GetNextOperationIdCommand";
+export {KillOperationCommand} from "./Documents/Commands/KillOperationCommand";
+export {DeleteDocumentCommand} from "./Documents/Commands/DeleteDocumentCommand";
+export {NextIdentityForCommand} from "./Documents/Commands/NextIdentityForCommand";
+export {SeedIdentityForCommand} from "./Documents/Commands/SeedIdentityForCommand";
+export {ExplainQueryCommand} from "./Documents/Commands/ExplainQueryCommand";
+export {GetIdentitiesOperation} from "./Documents/Operations/Identities/GetIdentitiesOperation";
+export {GetStatisticsOperation, GetStatisticsCommand} from "./Documents/Operations/GetStatisticsOperation";
+export {DatabaseStatistics} from "./Documents/Operations/DatabaseStatistics";
+export {GetOperationStateOperation} from "./Documents/Operations/GetOperationStateOperation";
+export {IndexInformation} from "./Documents/Operations/IndexInformation";
+export {MaintenanceOperationExecutor} from "./Documents/Operations/MaintenanceOperationExecutor";
+export {OperationCompletionAwaiter} from "./Documents/Operations/OperationCompletionAwaiter";
+export {ClientConfiguration} from "./Documents/Operations/Configuration/ClientConfiguration";
+export {GetClientConfigurationOperation} from "./Documents/Operations/Configuration/GetClientConfigurationOperation";
+export {PutClientConfigurationOperation} from "./Documents/Operations/Configuration/PutClientConfigurationOperation";
+export {PutDocumentCommand} from "./Documents/Commands/PutDocumentCommand";
+export {GetIndexNamesOperation} from "./Documents/Operations/Indexes/GetIndexNamesOperation";
+export {DisableIndexOperation} from "./Documents/Operations/Indexes/DisableIndexOperation";
+export {EnableIndexOperation} from "./Documents/Operations/Indexes/EnableIndexOperation";
+export {GetIndexingStatusOperation} from "./Documents/Operations/Indexes/GetIndexingStatusOperation";
+export {GetIndexesStatisticsOperation} from "./Documents/Operations/Indexes/GetIndexesStatisticsOperation";
+export {GetIndexStatisticsOperation} from "./Documents/Operations/Indexes/GetIndexStatisticsOperation";
+export {GetIndexesOperation} from "./Documents/Operations/Indexes/GetIndexesOperation";
+export {GetTermsOperation} from "./Documents/Operations/Indexes/GetTermsOperation";
+export {IndexHasChangedOperation} from "./Documents/Operations/Indexes/IndexHasChangedOperation";
+export {PutIndexesOperation} from "./Documents/Operations/Indexes/PutIndexesOperation";
+export {StopIndexingOperation} from "./Documents/Operations/Indexes/StopIndexingOperation";
+export {StartIndexingOperation} from "./Documents/Operations/Indexes/StartIndexingOperation";
+export {StopIndexOperation} from "./Documents/Operations/Indexes/StopIndexOperation";
+export {StartIndexOperation} from "./Documents/Operations/Indexes/StartIndexOperation";
+export {ResetIndexOperation} from "./Documents/Operations/Indexes/ResetIndexOperation";
+export {DeleteIndexOperation} from "./Documents/Operations/Indexes/DeleteIndexOperation";
+export {
+    UpdateExternalReplicationOperation
+}
     from "./Documents/Operations/Replication/UpdateExternalReplicationOperation";
-export { GetConflictsCommand } from "./Documents/Commands/GetConflictsCommand";
-export { 
-    SetIndexesLockOperation, 
-    SetIndexesLockOperationParameters 
+export {GetConflictsCommand} from "./Documents/Commands/GetConflictsCommand";
+export {
+    SetIndexesLockOperation,
+    SetIndexesLockOperationParameters
 } from "./Documents/Operations/Indexes/SetIndexesLockOperation";
 export {
-    SetIndexesPriorityOperation, 
-    SetIndexesPriorityOperationParameters 
+    SetIndexesPriorityOperation,
+    SetIndexesPriorityOperationParameters
 } from "./Documents/Operations/Indexes/SetIndexesPriorityOperation";
 
 // INDEXES
-export { GetIndexOperation } from "./Documents/Operations/Indexes/GetIndexOperation";
-export { GetIndexErrorsOperation } from "./Documents/Operations/Indexes/GetIndexErrorsOperation";
+export {GetIndexOperation} from "./Documents/Operations/Indexes/GetIndexOperation";
+export {GetIndexErrorsOperation} from "./Documents/Operations/Indexes/GetIndexErrorsOperation";
 export * from "./Documents/Indexes/Enums";
 export * from "./Documents/Indexes/IndexDefinition";
 export * from "./Documents/Indexes/Errors";
@@ -212,10 +228,12 @@ export * from "./Documents/Identity/IHiloIdGenerator";
 export * from "./Documents/Identity/HiloMultiDatabaseIdGenerator";
 
 // MAPPING
-export { TypesAwareObjectMapper } from "./Mapping/ObjectMapper";
-export { Mapping } from "./Mapping";
+export {TypesAwareObjectMapper} from "./Mapping/ObjectMapper";
+export {Mapping} from "./Mapping";
 import * as Json from "./Mapping/Json";
-export { Json };
 
-import { DocumentStore } from "./Documents/DocumentStore";
+export {Json};
+
+import {DocumentStore} from "./Documents/DocumentStore";
+
 export default DocumentStore;

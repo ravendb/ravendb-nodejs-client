@@ -1,11 +1,11 @@
-import { HttpRequestParameters } from "../../../Primitives/Http";
-import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
-import { IndexLockMode } from "../../Indexes/Enums";
-import { RavenCommand } from "../../../Http/RavenCommand";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { throwError } from "../../../Exceptions";
-import { ServerNode } from "../../../Http/ServerNode";
-import { TypeUtil } from "../../../Utility/TypeUtil";
+import {HttpRequestParameters} from "../../../Primitives/Http";
+import {IMaintenanceOperation, OperationResultType} from "../OperationAbstractions";
+import {IndexLockMode} from "../../Indexes/Enums";
+import {RavenCommand} from "../../../Http/RavenCommand";
+import {DocumentConventions} from "../../Conventions/DocumentConventions";
+import {throwError} from "../../../Exceptions";
+import {ServerNode} from "../../../Http/ServerNode";
+import {TypeUtil} from "../../../Utility/TypeUtil";
 
 export class SetIndexesLockOperation implements IMaintenanceOperation<void> {
 

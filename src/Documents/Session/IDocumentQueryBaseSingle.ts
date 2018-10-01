@@ -1,5 +1,5 @@
-import { Lazy } from "../Lazy";
-import { AbstractCallback } from "../../Types/Callbacks";
+import {Lazy} from "../Lazy";
+import {AbstractCallback} from "../../Types/Callbacks";
 
 export interface IDocumentQueryBaseSingle<T extends object> {
     //TBD  Lazy<int> CountLazily();

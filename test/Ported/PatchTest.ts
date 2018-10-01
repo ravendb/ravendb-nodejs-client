@@ -1,13 +1,13 @@
 import * as assert from "assert";
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import {testContext, disposeTestDocumentStore} from "../Utils/TestUtil";
 
 import {
     IDocumentStore,
     PatchOperation,
     PatchByQueryOperation,
 } from "../../src";
-import { User } from "../Assets/Entities";
-import { PatchRequest } from "../../src/Documents/Operations/PatchRequest";
+import {User} from "../Assets/Entities";
+import {PatchRequest} from "../../src/Documents/Operations/PatchRequest";
 import {Users_ByName} from "./Indexing/IndexesFromClientTest";
 
 describe("PatchTest", function () {
@@ -18,7 +18,7 @@ describe("PatchTest", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("can patch single document", async () => {
@@ -32,13 +32,13 @@ describe("PatchTest", function () {
         }
 
         const patchOperation = new PatchOperation(
-            "users/1", 
+            "users/1",
             null,
             PatchRequest.forScript("this.name = \"Patched\""));
         const status = await store.operations.send<User>(patchOperation);
         assert.strictEqual(status.status, "Patched");
 
-        { 
+        {
             const session = store.openSession();
             const user = await session.load<User>("users/1");
             assert.strictEqual(user.name, "Patched");
@@ -59,7 +59,7 @@ describe("PatchTest", function () {
         {
             const session = store.openSession();
             session.advanced.waitForIndexesAfterSaveChanges({
-                indexes: [ "Users/ByName"]
+                indexes: ["Users/ByName"]
             });
 
             const user = await session.load<User>("users/1");
@@ -86,7 +86,7 @@ describe("PatchTest", function () {
         const op = await store.operations.send(patchOperation);
         await op.waitForCompletion();
 
-        { 
+        {
             const session = store.openSession();
             const user = await session.load<User>("users/1");
             assert.strictEqual(user.name, "Patched");

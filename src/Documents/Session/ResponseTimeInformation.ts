@@ -10,10 +10,10 @@ export class ResponseTimeInformation {
     }
 
     constructor() {
-       this.totalServerDuration = 0;
-       this.totalClientDuration = 0;
-       this.durationBreakdown = [];
-   }
+        this.totalServerDuration = 0;
+        this.totalClientDuration = 0;
+        this.durationBreakdown = [];
+    }
 }
 
 export interface ResponseTimeItem {

@@ -1,10 +1,10 @@
 import {ShapeToken} from "./ShapeToken";
 import {QueryToken} from "./QueryToken";
 import {SearchOperator} from "../../Queries/SearchOperator";
-import { throwError } from "../../../Exceptions";
-import { TypeUtil } from "../../../Utility/TypeUtil";
-import { WhereOperator } from "./WhereOperator";
-import { CONSTANTS } from "../../../Constants";
+import {throwError} from "../../../Exceptions";
+import {TypeUtil} from "../../../Utility/TypeUtil";
+import {WhereOperator} from "./WhereOperator";
+import {CONSTANTS} from "../../../Constants";
 
 export type MethodsType = "CmpXchg";
 
@@ -16,7 +16,7 @@ export class WhereMethodCall {
 
 export interface WhereOptionsShapeRelatedParameters {
     shape: ShapeToken;
-    distance: number; 
+    distance: number;
 }
 
 export interface WhereOptionsSearchRelatedParameters {
@@ -76,15 +76,15 @@ export class WhereOptions {
             const p = parameters as WhereOptionsShapeRelatedParameters;
             this.whereShape = p.shape;
             this.distanceErrorPct = p.distance;
-        } else if (!TypeUtil.isNullOrUndefined(parameters["exact"]) 
-                && !parameters["methodType"]) {
+        } else if (!TypeUtil.isNullOrUndefined(parameters["exact"])
+            && !parameters["methodType"]) {
             const p = parameters as WhereOptionsExactFromToRelatedParameters;
             this.exact = p.exact;
             this.fromParameterName = p.from;
             this.toParameterName = p.to;
         } else if (parameters["search"]) {
             this.searchOperator = parameters["search"] as SearchOperator;
-        } 
+        }
     }
 }
 
@@ -127,7 +127,7 @@ export class WhereToken extends QueryToken {
                     writer.append("cmpxchg(");
                     break;
                 default:
-                    throwError("InvalidArgumentException", 
+                    throwError("InvalidArgumentException",
                         "Unsupported method: " + this.options.method.methodType);
             }
 

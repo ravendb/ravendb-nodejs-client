@@ -1,7 +1,7 @@
-import { RavenCommand } from "../../Http/RavenCommand";
-import { IDocumentStore } from "../../Documents/IDocumentStore";
-import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
-import { HttpCache } from "../../Http/HttpCache";
+import {RavenCommand} from "../../Http/RavenCommand";
+import {IDocumentStore} from "../../Documents/IDocumentStore";
+import {DocumentConventions} from "../../Documents/Conventions/DocumentConventions";
+import {HttpCache} from "../../Http/HttpCache";
 
 export type OperationResultType = "OperationId" | "CommandResult" | "PatchResult";
 
@@ -17,7 +17,7 @@ export interface IAwaitableOperation extends IOperation<OperationIdResult> {
 }
 
 export interface IMaintenanceOperation<TResult> extends IAbstractOperation {
-     getCommand(conventions: DocumentConventions): RavenCommand<TResult>;
+    getCommand(conventions: DocumentConventions): RavenCommand<TResult>;
 }
 
 export interface IServerOperation<TResult> extends IAbstractOperation {
@@ -30,28 +30,28 @@ export abstract class AbstractAwaitableOperation {
     }
 }
 
-export class AwaitableServerOperation 
-    extends AbstractAwaitableOperation 
+export class AwaitableServerOperation
+    extends AbstractAwaitableOperation
     implements IServerOperation<OperationIdResult> {
-    
+
     public getCommand(conventions: DocumentConventions): RavenCommand<OperationIdResult> {
         throw new Error("getCommand() must be implemented in extending class.");
     }
 }
 
-export class AwaitableMaintenanceOperation 
-    extends AbstractAwaitableOperation 
+export class AwaitableMaintenanceOperation
+    extends AbstractAwaitableOperation
     implements IMaintenanceOperation<OperationIdResult> {
-    
+
     public getCommand(conventions: DocumentConventions): RavenCommand<OperationIdResult> {
         throw new Error("getCommand() must be implemented in extending class.");
     }
 }
 
-export class AwaitableOperation 
-    extends AbstractAwaitableOperation    
+export class AwaitableOperation
+    extends AbstractAwaitableOperation
     implements IOperation<OperationIdResult> {
-    
+
     public getCommand(
         store: IDocumentStore,
         conventions: DocumentConventions,

@@ -1,5 +1,5 @@
-import { IIndexQuery } from "./IIndexQuery";
-import { TypeUtil } from "../../Utility/TypeUtil";
+import {IIndexQuery} from "./IIndexQuery";
+import {TypeUtil} from "../../Utility/TypeUtil";
 
 export class IndexQueryBase<T> implements IIndexQuery {
 

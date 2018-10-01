@@ -9,7 +9,7 @@ export class ReviverContext {
     public parent: object = null;
 
     private _parentsStack: object[] = [];
-    private _pathSegments: string[] = []; 
+    private _pathSegments: string[] = [];
 
     public update(parent: object, key: string, value: any) {
         if (!key) {
@@ -21,9 +21,9 @@ export class ReviverContext {
         this.parent = parent;
 
         const parentIdx = this._parentsStack.indexOf(parent);
-        if (this._parentsStack.length 
+        if (this._parentsStack.length
             && parentIdx === this._parentsStack.length - 1) {
-            this._pathSegments[this._pathSegments.length - 1] = key;    
+            this._pathSegments[this._pathSegments.length - 1] = key;
         } else if (parentIdx === -1) {
             this._parentsStack.push(parent);
             this._pathSegments.push(key);

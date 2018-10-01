@@ -1,6 +1,6 @@
-import { RavenCommand } from "../../Http/RavenCommand";
-import { ServerNode } from "../../Http/ServerNode";
-import { HttpRequestParameters } from "../../Primitives/Http";
+import {RavenCommand} from "../../Http/RavenCommand";
+import {ServerNode} from "../../Http/ServerNode";
+import {HttpRequestParameters} from "../../Primitives/Http";
 import * as stream from "readable-stream";
 
 export class GetNextOperationIdCommand extends RavenCommand<number> {
@@ -11,7 +11,7 @@ export class GetNextOperationIdCommand extends RavenCommand<number> {
 
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = `${node.url}/databases/${node.database}/operations/next-operation-id`;
-        return { uri };
+        return {uri};
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {

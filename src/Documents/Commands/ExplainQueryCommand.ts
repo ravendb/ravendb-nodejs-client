@@ -1,9 +1,9 @@
 import {HttpRequestParameters} from "../../Primitives/Http";
-import { RavenCommand } from "../../Http/RavenCommand";
-import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { IndexQuery, writeIndexQuery } from "../Queries/IndexQuery";
-import { throwError } from "../../Exceptions";
-import { ServerNode } from "../../Http/ServerNode";
+import {RavenCommand} from "../../Http/RavenCommand";
+import {DocumentConventions} from "../Conventions/DocumentConventions";
+import {IndexQuery, writeIndexQuery} from "../Queries/IndexQuery";
+import {throwError} from "../../Exceptions";
+import {ServerNode} from "../../Http/ServerNode";
 import * as stream from "readable-stream";
 
 export interface ExplainQueryResult {
@@ -61,7 +61,7 @@ export class ExplainQueryCommand extends RavenCommand<ExplainQueryResult[]> {
 
                 this.result = explainResults;
             });
-            
+
         return body;
     }
 

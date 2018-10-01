@@ -1,5 +1,5 @@
 import * as BluebirdPromise from "bluebird";
-import { AbstractCallback } from "./../Types/Callbacks";
+import {AbstractCallback} from "./../Types/Callbacks";
 
 export interface IDefer<TResult> {
     resolve: (value: TResult) => void;
@@ -41,7 +41,7 @@ export function passResultToCallback<T>(p: Promise<T>, callback: AbstractCallbac
 export function defer<T>(): IDefer<T> {
     let resolve: (value: T) => void;
     let reject: (error: any) => void;
-    const promise = new BluebirdPromise<T>(function() {
+    const promise = new BluebirdPromise<T>(function () {
         resolve = arguments[0];
         reject = arguments[1];
     });

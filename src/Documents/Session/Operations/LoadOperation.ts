@@ -1,11 +1,11 @@
-import { InMemoryDocumentSessionOperations } from "../InMemoryDocumentSessionOperations";
-import { getLogger } from "../../../Utility/LogUtil";
-import { ObjectTypeDescriptor, EntitiesCollectionObject } from "../../..";
-import { DocumentInfo } from "../DocumentInfo";
-import { GetDocumentsCommand, GetDocumentsResult } from "../../Commands/GetDocumentsCommand";
-import { TypeUtil } from "../../../Utility/TypeUtil";
+import {InMemoryDocumentSessionOperations} from "../InMemoryDocumentSessionOperations";
+import {getLogger} from "../../../Utility/LogUtil";
+import {ObjectTypeDescriptor, EntitiesCollectionObject} from "../../..";
+import {DocumentInfo} from "../DocumentInfo";
+import {GetDocumentsCommand, GetDocumentsResult} from "../../Commands/GetDocumentsCommand";
+import {TypeUtil} from "../../../Utility/TypeUtil";
 
-const log = getLogger({ module: "LoadOperation" });
+const log = getLogger({module: "LoadOperation"});
 
 export class LoadOperation {
 
@@ -31,12 +31,12 @@ export class LoadOperation {
 
         this._session.incrementRequestCount();
 
-        log.info("Requesting the following ids " 
+        log.info("Requesting the following ids "
             + this._idsToCheckOnServer.join(",") + " from " + this._session.storeIdentifier);
 
-        return new GetDocumentsCommand({ 
-            ids: this._idsToCheckOnServer, 
-            includes: this._includes, 
+        return new GetDocumentsCommand({
+            ids: this._idsToCheckOnServer,
+            includes: this._includes,
             metadataOnly: false,
             conventions: this._session.conventions
         });
@@ -48,7 +48,7 @@ export class LoadOperation {
         }
 
         if (!this._ids) {
-            this._ids = [ id ];
+            this._ids = [id];
         }
 
         if (this._session.isLoadedOrDeleted(id)) {
@@ -68,7 +68,7 @@ export class LoadOperation {
         if (!ids || !ids.length) {
             return this;
         }
-        
+
         this._ids = ids;
 
         const distinct = new Set(ids.filter(x => !!x));
@@ -108,6 +108,7 @@ export class LoadOperation {
                 return result;
             }, {});
     }
+
     public setResult(result: GetDocumentsResult): void {
         if (!result) {
             return;

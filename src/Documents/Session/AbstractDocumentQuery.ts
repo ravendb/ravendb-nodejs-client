@@ -1,63 +1,63 @@
-import { Lazy } from "../Lazy";
-import { QueryOperation } from "./Operations/QueryOperation";
+import {Lazy} from "../Lazy";
+import {QueryOperation} from "./Operations/QueryOperation";
 import * as BluebirdPromise from "bluebird";
-import { GroupByCountToken } from "./Tokens/GroupByCountToken";
-import { GroupByToken } from "./Tokens/GroupByToken";
-import { FieldsToFetchToken } from "./Tokens/FieldsToFetchToken";
-import { DeclareToken } from "./Tokens/DeclareToken";
-import { LoadToken } from "./Tokens/LoadToken";
-import { FromToken } from "./Tokens/FromToken";
-import { DistinctToken } from "./Tokens/DistinctToken";
-import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
-import { QueryStatistics } from "./QueryStatistics";
-import { IDocumentSession } from "./IDocumentSession";
-import { throwError, getError } from "../../Exceptions";
-import { QueryOperator } from "../Queries/QueryOperator";
-import { IndexQuery } from "../Queries/IndexQuery";
-import { IAbstractDocumentQuery } from "./IAbstractDocumentQuery";
-import { GroupBy } from "../Queries/GroupBy";
-import { GroupByKeyToken } from "../Session/Tokens/GroupByKeyToken";
-import { GroupBySumToken } from "../Session/Tokens/GroupBySumToken";
-import { TrueToken } from "../Session/Tokens/TrueToken";
-import { WhereToken, WhereOptions } from "../Session/Tokens/WhereToken";
-import { QueryFieldUtil } from "../Queries/QueryFieldUtil";
-import { QueryToken } from "./Tokens/QueryToken";
-import { CloseSubclauseToken } from "./Tokens/CloseSubclauseToken";
-import { OpenSubclauseToken } from "./Tokens/OpenSubclauseToken";
-import { NegateToken } from "./Tokens/NegateToken";
-import { WhereParams } from "./WhereParams";
-import { TypeUtil } from "../../Utility/TypeUtil";
-import { DateUtil } from "../../Utility/DateUtil";
-import { MethodCall } from "./MethodCall";
-import { QueryOperatorToken } from "./Tokens/QueryOperatorToken";
-import { OrderByToken } from "./Tokens/OrderByToken";
-import { FacetToken } from "./Tokens/FacetToken";
-import { QueryResult } from "../Queries/QueryResult";
-import { DocumentType } from "../DocumentAbstractions";
-import { QueryEventsEmitter } from "./QueryEvents";
-import { EventEmitter } from "events";
+import {GroupByCountToken} from "./Tokens/GroupByCountToken";
+import {GroupByToken} from "./Tokens/GroupByToken";
+import {FieldsToFetchToken} from "./Tokens/FieldsToFetchToken";
+import {DeclareToken} from "./Tokens/DeclareToken";
+import {LoadToken} from "./Tokens/LoadToken";
+import {FromToken} from "./Tokens/FromToken";
+import {DistinctToken} from "./Tokens/DistinctToken";
+import {InMemoryDocumentSessionOperations} from "./InMemoryDocumentSessionOperations";
+import {QueryStatistics} from "./QueryStatistics";
+import {IDocumentSession} from "./IDocumentSession";
+import {throwError, getError} from "../../Exceptions";
+import {QueryOperator} from "../Queries/QueryOperator";
+import {IndexQuery} from "../Queries/IndexQuery";
+import {IAbstractDocumentQuery} from "./IAbstractDocumentQuery";
+import {GroupBy} from "../Queries/GroupBy";
+import {GroupByKeyToken} from "../Session/Tokens/GroupByKeyToken";
+import {GroupBySumToken} from "../Session/Tokens/GroupBySumToken";
+import {TrueToken} from "../Session/Tokens/TrueToken";
+import {WhereToken, WhereOptions} from "../Session/Tokens/WhereToken";
+import {QueryFieldUtil} from "../Queries/QueryFieldUtil";
+import {QueryToken} from "./Tokens/QueryToken";
+import {CloseSubclauseToken} from "./Tokens/CloseSubclauseToken";
+import {OpenSubclauseToken} from "./Tokens/OpenSubclauseToken";
+import {NegateToken} from "./Tokens/NegateToken";
+import {WhereParams} from "./WhereParams";
+import {TypeUtil} from "../../Utility/TypeUtil";
+import {DateUtil} from "../../Utility/DateUtil";
+import {MethodCall} from "./MethodCall";
+import {QueryOperatorToken} from "./Tokens/QueryOperatorToken";
+import {OrderByToken} from "./Tokens/OrderByToken";
+import {FacetToken} from "./Tokens/FacetToken";
+import {QueryResult} from "../Queries/QueryResult";
+import {DocumentType} from "../DocumentAbstractions";
+import {QueryEventsEmitter} from "./QueryEvents";
+import {EventEmitter} from "events";
 import * as StringBuilder from "string-builder";
-import { StringUtil } from "../../Utility/StringUtil";
-import { IntersectMarkerToken } from "./Tokens/IntersectMarkerToken";
-import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { CONSTANTS } from "../../Constants";
-import { WhereOperator } from "./Tokens/WhereOperator";
-import { OrderingType } from "./OrderingType";
-import { SearchOperator } from "../Queries/SearchOperator";
-import { DocumentQueryHelper } from "./DocumentQueryHelper";
-import { SpatialUnits, SpatialRelation } from "../Indexes/Spatial";
-import { ShapeToken } from "./Tokens/ShapeToken";
-import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField";
-import { SpatialCriteria } from "../Queries/Spatial/SpatialCriteria";
-import { SessionBeforeQueryEventArgs } from "./SessionEvents";
-import { CmpXchg } from "./CmpXchg";
-import { AbstractCallback } from "../../Types/Callbacks";
-import { DocumentQueryCustomization } from "./DocumentQueryCustomization";
-import { FacetBase } from "../Queries/Facets/FacetBase";
+import {StringUtil} from "../../Utility/StringUtil";
+import {IntersectMarkerToken} from "./Tokens/IntersectMarkerToken";
+import {DocumentConventions} from "../Conventions/DocumentConventions";
+import {CONSTANTS} from "../../Constants";
+import {WhereOperator} from "./Tokens/WhereOperator";
+import {OrderingType} from "./OrderingType";
+import {SearchOperator} from "../Queries/SearchOperator";
+import {DocumentQueryHelper} from "./DocumentQueryHelper";
+import {SpatialUnits, SpatialRelation} from "../Indexes/Spatial";
+import {ShapeToken} from "./Tokens/ShapeToken";
+import {DynamicSpatialField} from "../Queries/Spatial/DynamicSpatialField";
+import {SpatialCriteria} from "../Queries/Spatial/SpatialCriteria";
+import {SessionBeforeQueryEventArgs} from "./SessionEvents";
+import {CmpXchg} from "./CmpXchg";
+import {AbstractCallback} from "../../Types/Callbacks";
+import {DocumentQueryCustomization} from "./DocumentQueryCustomization";
+import {FacetBase} from "../Queries/Facets/FacetBase";
 import {MoreLikeThisScope} from "../Queries/MoreLikeThis/MoreLikeThisScope";
 import {MoreLikeThisToken} from "./Tokens/MoreLikeThisToken";
 import {LazyQueryOperation} from "../Session/Operations/Lazy/LazyQueryOperation";
-import { DocumentSession } from "./DocumentSession";
+import {DocumentSession} from "./DocumentSession";
 import {SuggestionBase} from "../Queries/Suggestions/SuggestionBase";
 import {SuggestionOptions} from "../Queries/Suggestions/SuggestionOptions";
 import {SuggestToken} from "./Tokens/SuggestToken";
@@ -476,7 +476,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      */
     public getProjectionFields(): string[] {
         return this.fieldsToFetchToken &&
-            this.fieldsToFetchToken.projections
+        this.fieldsToFetchToken.projections
             ? [...this.fieldsToFetchToken.projections]
             : [] as string[];
     }
@@ -650,7 +650,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._appendOperatorIfNeeded(tokens);
         this._negateIfNeeded(tokens, fieldName);
 
-        const options = exact ? new WhereOptions({ exact }) : null;
+        const options = exact ? new WhereOptions({exact}) : null;
         const whereToken = WhereToken.create("Lucene", fieldName, this._addQueryParameter(whereClause), options);
         tokens.push(whereToken);
     }
@@ -932,7 +932,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             !value ? "*" : this._transformValue(whereParams, true));
 
         const whereToken = WhereToken.create(
-            "GreaterThan", fieldName, parameter, new WhereOptions({ exact }));
+            "GreaterThan", fieldName, parameter, new WhereOptions({exact}));
         tokens.push(whereToken);
     }
 
@@ -960,7 +960,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         const parameter = this._addQueryParameter(
             !value ? "*" : this._transformValue(whereParams, true));
         const whereToken = WhereToken.create(
-            "GreaterThanOrEqual", fieldName, parameter, new WhereOptions({ exact }));
+            "GreaterThanOrEqual", fieldName, parameter, new WhereOptions({exact}));
         tokens.push(whereToken);
     }
 
@@ -980,7 +980,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         const parameter = this._addQueryParameter(
             !value ? "NULL" : this._transformValue(whereParams, true));
         const whereToken = WhereToken.create(
-            "LessThan", fieldName, parameter, new WhereOptions({ exact }));
+            "LessThan", fieldName, parameter, new WhereOptions({exact}));
         tokens.push(whereToken);
     }
 
@@ -998,7 +998,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         const parameter = this._addQueryParameter(
             !value ? "NULL" : this._transformValue(whereParams, true));
         const whereToken = WhereToken.create(
-            "LessThanOrEqual", fieldName, parameter, new WhereOptions({ exact }));
+            "LessThanOrEqual", fieldName, parameter, new WhereOptions({exact}));
         tokens.push(whereToken);
     }
 
@@ -1239,7 +1239,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._negateIfNeeded(tokens, fieldName);
 
         const whereToken = WhereToken.create(
-            "Search", fieldName, this._addQueryParameter(searchTerms), new WhereOptions({ search: operator }));
+            "Search", fieldName, this._addQueryParameter(searchTerms), new WhereOptions({search: operator}));
         tokens.push(whereToken);
     }
 
@@ -1334,7 +1334,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
         const array = this._transformCollection(fieldName, AbstractDocumentQuery._unpackCollection(values));
         const whereToken = WhereToken.create(
-            "In", fieldName, this._addQueryParameter(array), new WhereOptions({ exact: false }));
+            "In", fieldName, this._addQueryParameter(array), new WhereOptions({exact: false}));
         tokens.push(whereToken);
     }
 
@@ -1763,13 +1763,13 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
                 this._queryOperation.setResult(command.result);
                 this.emit("afterQueryExecuted", this._queryOperation.getCurrentQueryResults());
             });
-            /* TBD 4.1
-            .finally(() => {
-                if (context) {
-                    context.dispose();
-                }
-            });
-            */
+        /* TBD 4.1
+        .finally(() => {
+            if (context) {
+                context.dispose();
+            }
+        });
+        */
 
         return Promise.resolve(result);
     }
@@ -1845,6 +1845,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
                 return this._queryOperation.complete<T>(this._clazz);
             });
     }
+
     // tslint:enable:function-name
 
     public async any(): Promise<boolean> {
@@ -1899,10 +1900,10 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         const clazz = this._conventions.findEntityType(this._clazz);
-        const lazyQueryOperation = 
+        const lazyQueryOperation =
             new LazyQueryOperation<T>(
-                this._theSession.conventions, 
-                this._queryOperation, 
+                this._theSession.conventions,
+                this._queryOperation,
                 this,
                 clazz);
         return (this._theSession as DocumentSession).addLazyCountOperation(lazyQueryOperation);

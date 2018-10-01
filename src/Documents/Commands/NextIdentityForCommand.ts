@@ -1,7 +1,7 @@
-import { RavenCommand } from "../../Http/RavenCommand";
-import { throwError } from "../../Exceptions";
-import { ServerNode } from "../../Http/ServerNode";
-import { HttpRequestParameters } from "../../Primitives/Http";
+import {RavenCommand} from "../../Http/RavenCommand";
+import {throwError} from "../../Exceptions";
+import {ServerNode} from "../../Http/ServerNode";
+import {HttpRequestParameters} from "../../Primitives/Http";
 import * as stream from "readable-stream";
 
 export class NextIdentityForCommand extends RavenCommand<number> {
@@ -46,7 +46,7 @@ export class NextIdentityForCommand extends RavenCommand<number> {
 
                 this.result = results["newIdentityValue"];
             });
-            
+
         return body;
     }
 }

@@ -1,10 +1,10 @@
 import * as assert from "assert";
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import {testContext, disposeTestDocumentStore} from "../Utils/TestUtil";
 
 import {
     IDocumentStore,
 } from "../../src";
-import { User } from "../Assets/Entities";
+import {User} from "../Assets/Entities";
 
 describe("WhatChangedTest", function () {
 
@@ -14,7 +14,7 @@ describe("WhatChangedTest", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("whatChangedNewField", async () => {
@@ -123,7 +123,7 @@ describe("WhatChangedTest", function () {
         {
             const newSession = store.openSession();
             const arr = await newSession.load<Arr>("users/1");
-            arr.array = [ "a", 2, "c" ];
+            arr.array = ["a", 2, "c"];
 
             const changes = newSession.advanced.whatChanged();
             assert.strictEqual(Object.keys(changes).length, 1);

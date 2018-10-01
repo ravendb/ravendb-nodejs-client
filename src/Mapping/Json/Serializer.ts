@@ -1,9 +1,9 @@
-import { pascalCaseReplacer } from "./Replacers";
-import { camelCaseReviver } from "./Revivers";
-import { ReplacerTransformRule, RuleBasedReplacerFactory } from "./ReplacerFactory";
-import { ReviverTransformRule, RuleBasedReviverFactory } from "./ReviverFactory";
+import {pascalCaseReplacer} from "./Replacers";
+import {camelCaseReviver} from "./Revivers";
+import {ReplacerTransformRule, RuleBasedReplacerFactory} from "./ReplacerFactory";
+import {ReviverTransformRule, RuleBasedReviverFactory} from "./ReviverFactory";
 
-export type JsonTransformFunction = (key, value) => any; 
+export type JsonTransformFunction = (key, value) => any;
 
 export interface JsonSerializerSettings {
     replacerRules?: ReplacerTransformRule[];

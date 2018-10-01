@@ -1,14 +1,14 @@
-import { HttpRequestParameters } from "../../Primitives/Http";
-import { IOperation, OperationIdResult, OperationResultType } from "./OperationAbstractions";
-import { IndexQuery, writeIndexQuery } from "../Queries/IndexQuery";
-import { QueryOperationOptions } from "../Queries/QueryOperationOptions";
-import { TypeUtil } from "../../Utility/TypeUtil";
-import { throwError } from "../../Exceptions";
-import { IDocumentStore } from "../IDocumentStore";
-import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { HttpCache } from "../../Http/HttpCache";
-import { RavenCommand } from "../../Http/RavenCommand";
-import { ServerNode } from "../../Http/ServerNode";
+import {HttpRequestParameters} from "../../Primitives/Http";
+import {IOperation, OperationIdResult, OperationResultType} from "./OperationAbstractions";
+import {IndexQuery, writeIndexQuery} from "../Queries/IndexQuery";
+import {QueryOperationOptions} from "../Queries/QueryOperationOptions";
+import {TypeUtil} from "../../Utility/TypeUtil";
+import {throwError} from "../../Exceptions";
+import {IDocumentStore} from "../IDocumentStore";
+import {DocumentConventions} from "../Conventions/DocumentConventions";
+import {HttpCache} from "../../Http/HttpCache";
+import {RavenCommand} from "../../Http/RavenCommand";
+import {ServerNode} from "../../Http/ServerNode";
 import * as stream from "readable-stream";
 
 export class PatchByQueryOperation implements IOperation<OperationIdResult> {

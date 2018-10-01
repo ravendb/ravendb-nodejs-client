@@ -1,12 +1,12 @@
 import * as stream from "readable-stream";
-import { RavenCommand, ResponseDisposeHandling } from "../../Http/RavenCommand";
-import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { IndexQuery, writeIndexQuery } from "../Queries/IndexQuery";
-import { StreamResultResponse } from "./StreamResultResponse";
-import { throwError } from "../../Exceptions";
-import { ServerNode } from "../../Http/ServerNode";
-import { HttpRequestParameters, HttpResponse } from "../../Primitives/Http";
-import { HttpCache } from "../../Http/HttpCache";
+import {RavenCommand, ResponseDisposeHandling} from "../../Http/RavenCommand";
+import {DocumentConventions} from "../Conventions/DocumentConventions";
+import {IndexQuery, writeIndexQuery} from "../Queries/IndexQuery";
+import {StreamResultResponse} from "./StreamResultResponse";
+import {throwError} from "../../Exceptions";
+import {ServerNode} from "../../Http/ServerNode";
+import {HttpRequestParameters, HttpResponse} from "../../Primitives/Http";
+import {HttpCache} from "../../Http/HttpCache";
 
 export class QueryStreamCommand extends RavenCommand<StreamResultResponse> {
 
@@ -39,9 +39,9 @@ export class QueryStreamCommand extends RavenCommand<StreamResultResponse> {
     }
 
     public async processResponse(
-        cache: HttpCache, 
-        response: HttpResponse, 
-        bodyStream: stream.Readable, 
+        cache: HttpCache,
+        response: HttpResponse,
+        bodyStream: stream.Readable,
         url: string): Promise<ResponseDisposeHandling> {
         this.result = {
             response,

@@ -1,4 +1,4 @@
-import { ReplicationNode } from "./ReplicationNode";
+import {ReplicationNode} from "./ReplicationNode";
 
 export interface ExternalReplication extends ReplicationNode {
     taskId?: number;

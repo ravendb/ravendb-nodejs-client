@@ -1,4 +1,4 @@
-import { QueryToken } from "./QueryToken";
+import {QueryToken} from "./QueryToken";
 
 export class GroupByCountToken extends QueryToken {
 
@@ -21,6 +21,6 @@ export class GroupByCountToken extends QueryToken {
         }
 
         writer.append(" as ")
-              .append(this._fieldName);
+            .append(this._fieldName);
     }
 }

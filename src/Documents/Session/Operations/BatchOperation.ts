@@ -1,9 +1,9 @@
-import { InMemoryDocumentSessionOperations } from "../InMemoryDocumentSessionOperations";
-import { IRavenObject } from "../../../Types/IRavenObject";
-import { BatchCommand } from "../../Commands/Batches/BatchCommand";
-import { throwError } from "../../../Exceptions";
-import { CONSTANTS } from "../../../Constants";
-import { SessionAfterSaveChangesEventArgs } from "../SessionEvents";
+import {InMemoryDocumentSessionOperations} from "../InMemoryDocumentSessionOperations";
+import {IRavenObject} from "../../../Types/IRavenObject";
+import {BatchCommand} from "../../Commands/Batches/BatchCommand";
+import {throwError} from "../../../Exceptions";
+import {CONSTANTS} from "../../../Constants";
+import {SessionAfterSaveChangesEventArgs} from "../SessionEvents";
 
 export class BatchOperation {
 
@@ -33,7 +33,7 @@ export class BatchOperation {
     }
 
     private static _throwOnNullResults() {
-        throwError("InvalidOperationException", 
+        throwError("InvalidOperationException",
             "Received empty response from the server. This is not supposed to happen and is likely a bug.");
     }
 
@@ -64,13 +64,13 @@ export class BatchOperation {
 
             const changeVector = batchResult[CONSTANTS.Documents.Metadata.CHANGE_VECTOR];
             if (!changeVector) {
-                throwError("InvalidOperationException", 
+                throwError("InvalidOperationException",
                     "PUT response is invalid. @change-vector is missing on " + documentInfo.id);
             }
 
             const id = batchResult[CONSTANTS.Documents.Metadata.ID];
             if (!id) {
-                throwError("InvalidOperationException", 
+                throwError("InvalidOperationException",
                     "PUT response is invalid. @id is missing on " + documentInfo.id);
             }
 
@@ -84,13 +84,13 @@ export class BatchOperation {
 
             documentInfo.id = id;
             documentInfo.changeVector = changeVector;
-            documentInfo.document[CONSTANTS.Documents.Metadata.KEY] =  documentInfo.metadata;
+            documentInfo.document[CONSTANTS.Documents.Metadata.KEY] = documentInfo.metadata;
             documentInfo.metadataInstance = null;
 
             this._session.documentsById.add(documentInfo);
             this._session.generateEntityIdOnTheClient.trySetIdentity(entity, id);
 
-            const afterSaveChangesEventArgs = 
+            const afterSaveChangesEventArgs =
                 new SessionAfterSaveChangesEventArgs(this._session, documentInfo.id, documentInfo.entity);
             this._session.emit("afterSaveChanges", afterSaveChangesEventArgs);
         }

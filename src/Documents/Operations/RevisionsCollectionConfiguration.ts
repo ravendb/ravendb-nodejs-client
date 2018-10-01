@@ -9,6 +9,6 @@ export class RevisionsCollectionConfiguration extends SetupDocumentBase {
     public purgeOnDelete: boolean;
 
     public toRemoteFieldNames() {
-        return ObjectUtil.transformObjectKeys(this, { defaultTransform: "pascal" });
+        return ObjectUtil.transformObjectKeys(this, {defaultTransform: "pascal"});
     }
 }

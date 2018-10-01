@@ -1,14 +1,15 @@
-import { SpatialCriteria } from "./SpatialCriteria";
-import { SpatialRelation, SpatialUnits } from "../../Indexes/Spatial";
-import { CONSTANTS } from "../../../Constants";
-import { WktCriteria } from "./WktCriteria";
-import { CircleCriteria } from "./CircleCriteria";
+import {SpatialCriteria} from "./SpatialCriteria";
+import {SpatialRelation, SpatialUnits} from "../../Indexes/Spatial";
+import {CONSTANTS} from "../../../Constants";
+import {WktCriteria} from "./WktCriteria";
+import {CircleCriteria} from "./CircleCriteria";
 
 export class SpatialCriteriaFactory {
 
     public static INSTANCE = new SpatialCriteriaFactory();
 
-    private constructor() {}
+    private constructor() {
+    }
 
     public relatesToShape(shapeWkt: string, relation: SpatialRelation): SpatialCriteria;
     public relatesToShape(shapeWkt: string, relation: SpatialRelation, distErrorPercent: number): SpatialCriteria;
@@ -54,16 +55,16 @@ export class SpatialCriteriaFactory {
     public withinRadius(
         radius: number, latitude: number, longitude: number, radiusUnits: SpatialUnits): SpatialCriteria;
     public withinRadius(
-        radius: number, 
-        latitude: number, 
-        longitude: number, 
-        radiusUnits: SpatialUnits, 
+        radius: number,
+        latitude: number,
+        longitude: number,
+        radiusUnits: SpatialUnits,
         distErrorPercent: number): SpatialCriteria;
     public withinRadius(
-        radius: number, 
-        latitude: number, 
-        longitude: number, 
-        radiusUnits: SpatialUnits = null, 
+        radius: number,
+        latitude: number,
+        longitude: number,
+        radiusUnits: SpatialUnits = null,
         distErrorPercent?: number): SpatialCriteria {
         distErrorPercent = distErrorPercent || CONSTANTS.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT;
         return new CircleCriteria(radius, latitude, longitude, radiusUnits, "Within", distErrorPercent);

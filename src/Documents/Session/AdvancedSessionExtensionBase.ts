@@ -1,10 +1,10 @@
-import { DocumentsById } from "./DocumentsById";
-import { DocumentInfo } from "./DocumentInfo";
-import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
-import { RequestExecutor } from "../../Http/RequestExecutor";
-import { SessionInfo } from "./IDocumentSession";
-import { IDocumentStore } from "../IDocumentStore";
-import { ICommandData } from "../Commands/CommandData";
+import {DocumentsById} from "./DocumentsById";
+import {DocumentInfo} from "./DocumentInfo";
+import {InMemoryDocumentSessionOperations} from "./InMemoryDocumentSessionOperations";
+import {RequestExecutor} from "../../Http/RequestExecutor";
+import {SessionInfo} from "./IDocumentSession";
+import {IDocumentStore} from "../IDocumentStore";
+import {ICommandData} from "../Commands/CommandData";
 
 export abstract class AdvancedSessionExtensionBase {
 
@@ -37,6 +37,7 @@ export abstract class AdvancedSessionExtensionBase {
         this._deletedEntities = session.deletedEntities;
         this._documentsById = session.documentsById;
     }
+
     public defer(command: ICommandData, ...commands: ICommandData[]): void {
         this._session.defer(command, ...commands);
     }

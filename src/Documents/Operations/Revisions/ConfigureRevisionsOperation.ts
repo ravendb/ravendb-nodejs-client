@@ -1,7 +1,7 @@
 import {IMaintenanceOperation, OperationResultType} from "../OperationAbstractions";
 import {RevisionsConfiguration} from "../RevisionsConfiguration";
 import {DocumentConventions, ServerNode} from "../../..";
-import { RavenCommand } from "../../../Http/RavenCommand";
+import {RavenCommand} from "../../../Http/RavenCommand";
 import {HttpRequestParameters} from "../../../Primitives/Http";
 import * as stream from "readable-stream";
 

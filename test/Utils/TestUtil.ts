@@ -4,16 +4,16 @@ import {RequestExecutor} from "../../src/Http/RequestExecutor";
 import * as fs from "fs";
 import * as path from "path";
 import * as url from "url";
-import { VError } from "verror";
+import {VError} from "verror";
 import * as http from "http";
 import * as https from "https";
 import "source-map-support/register";
 import {IDisposable} from "../../src/Types/Contracts";
-import { RavenTestDriver } from "../../src/TestDriver";
-import { RavenServerLocator } from "../../src/TestDriver/RavenServerLocator";
-import { IDocumentStore } from "../../src/Documents/IDocumentStore";
-import { throwError } from "../../src/Exceptions";
-import { IAuthOptions } from "../../src/Auth/AuthOptions";
+import {RavenTestDriver} from "../../src/TestDriver";
+import {RavenServerLocator} from "../../src/TestDriver/RavenServerLocator";
+import {IDocumentStore} from "../../src/Documents/IDocumentStore";
+import {throwError} from "../../src/Exceptions";
+import {IAuthOptions} from "../../src/Auth/AuthOptions";
 import * as os from "os";
 
 // logOnUncaughtAndUnhandled();
@@ -32,7 +32,7 @@ function logOnUncaughtAndUnhandled() {
 
 class TestServiceLocator extends RavenServerLocator {
     public getCommandArguments() {
-        return [ "--ServerUrl=http://127.0.0.1:0",  "--ServerUrl.Tcp=tcp://127.0.0.1:38884" ];
+        return ["--ServerUrl=http://127.0.0.1:0", "--ServerUrl.Tcp=tcp://127.0.0.1:38884"];
     }
 }
 
@@ -63,13 +63,13 @@ class TestSecuredServiceLocator extends RavenServerLocator {
     private _getHttpsServerUrl() {
         const httpsServerUrl = process.env[TestSecuredServiceLocator.ENV_HTTPS_SERVER_URL];
         if (!httpsServerUrl) {
-            throwError("InvalidArgumentException", 
+            throwError("InvalidArgumentException",
                 "Unable to find RavenDB https server url. " +
                 "Please make sure " + TestSecuredServiceLocator.ENV_HTTPS_SERVER_URL
                 + " environment variable is set and is valid " +
                 "(current value = " + httpsServerUrl + ")");
         }
-        
+
         return httpsServerUrl;
     }
 
@@ -77,7 +77,7 @@ class TestSecuredServiceLocator extends RavenServerLocator {
         const https = this._getHttpsServerUrl();
         return "tcp://" + url.parse(https).hostname + ":38882";
     }
-    
+
     public getServerCertificatePath() {
         return path.resolve(process.env[TestSecuredServiceLocator.ENV_SERVER_CERTIFICATE_PATH]);
     }
@@ -109,7 +109,7 @@ export class RavenTestContext extends RavenTestDriver implements IDisposable {
     public static isRunningOnWindows = os.platform() === "win32";
 
     public static isPullRequest = (
-        typeof(process.env["TRAVIS_PULL_REQUEST"]) === "undefined" || 
+        typeof(process.env["TRAVIS_PULL_REQUEST"]) === "undefined" ||
         process.env["TRAVIS_PULL_REQUEST"] === "false") === false;
 
     public static setupServer(): RavenTestContext {

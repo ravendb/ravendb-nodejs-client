@@ -1,8 +1,8 @@
-import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
-import { throwError } from "../../../Exceptions";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { RavenCommand, ServerNode } from "../../..";
-import { HttpRequestParameters } from "../../../Primitives/Http";
+import {IMaintenanceOperation, OperationResultType} from "../OperationAbstractions";
+import {throwError} from "../../../Exceptions";
+import {DocumentConventions} from "../../Conventions/DocumentConventions";
+import {RavenCommand, ServerNode} from "../../..";
+import {HttpRequestParameters} from "../../../Primitives/Http";
 
 export class EnableIndexOperation implements IMaintenanceOperation<void> {
 

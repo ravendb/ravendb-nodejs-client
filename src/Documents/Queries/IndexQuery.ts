@@ -1,9 +1,9 @@
-import { throwError } from "../../Exceptions";
-import { IndexQueryWithParameters } from "./IndexQueryWithParameters";
-import { QueryHashCalculator } from "./QueryHashCalculator";
-import { TypeUtil } from "../../Utility/TypeUtil";
-import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { JsonSerializer } from "../../Mapping/Json/Serializer";
+import {throwError} from "../../Exceptions";
+import {IndexQueryWithParameters} from "./IndexQueryWithParameters";
+import {QueryHashCalculator} from "./QueryHashCalculator";
+import {TypeUtil} from "../../Utility/TypeUtil";
+import {DocumentConventions} from "../Conventions/DocumentConventions";
+import {JsonSerializer} from "../../Mapping/Json/Serializer";
 
 export interface IndexQueryParameters {
     [key: string]: object;
@@ -19,7 +19,7 @@ export class IndexQuery extends IndexQueryWithParameters<IndexQueryParameters> {
     }
 
     /**
-     * Indicates if query results should be read from cache (if cached previously) 
+     * Indicates if query results should be read from cache (if cached previously)
      * or added to cache (if there were no cached items prior)
      */
     public disableCaching: boolean;

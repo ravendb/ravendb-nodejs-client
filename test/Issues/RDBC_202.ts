@@ -1,8 +1,7 @@
-
 import {
     DocumentStore,
 } from "../../src";
-import { IAuthOptions } from "../../src/Auth/AuthOptions";
+import {IAuthOptions} from "../../src/Auth/AuthOptions";
 import * as assert from "assert";
 
 describe("[RDBC-202] DocumentStore", function () {

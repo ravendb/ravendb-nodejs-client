@@ -1,4 +1,4 @@
-import { throwError } from "../Exceptions";
+import {throwError} from "../Exceptions";
 import * as url from "url";
 
 export function isValidUri(uriString: string): boolean {

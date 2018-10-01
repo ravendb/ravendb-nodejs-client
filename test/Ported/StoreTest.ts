@@ -1,10 +1,10 @@
 import * as assert from "assert";
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import {testContext, disposeTestDocumentStore} from "../Utils/TestUtil";
 
 import {
     IDocumentStore,
-    } from "../../src";
-import { User } from "../Assets/Entities";
+} from "../../src";
+import {User} from "../Assets/Entities";
 
 describe("StoreTest", function () {
 
@@ -14,7 +14,7 @@ describe("StoreTest", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("refreshTest", async () => {

@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import {testContext, disposeTestDocumentStore} from "../Utils/TestUtil";
 
 import {
     IDocumentStore,
@@ -9,7 +9,7 @@ import {
     DeleteCompareExchangeValueOperation,
     CompareExchangeResult,
 } from "../../src";
-import { User } from "../Assets/Entities";
+import {User} from "../Assets/Entities";
 
 describe("UniqueValuesTest", function () {
 

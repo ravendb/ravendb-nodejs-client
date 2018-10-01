@@ -1,10 +1,10 @@
-import { HttpRequestParameters } from "../../../Primitives/Http";
-import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
-import { ModifyOngoingTaskResult } from "../../../ServerWide/ModifyOnGoingTaskResult";
-import { ExternalReplication } from "../../Replication/ExternalReplication";
-import { RavenCommand } from "../../../Http/RavenCommand";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { ServerNode } from "../../../Http/ServerNode";
+import {HttpRequestParameters} from "../../../Primitives/Http";
+import {IMaintenanceOperation, OperationResultType} from "../OperationAbstractions";
+import {ModifyOngoingTaskResult} from "../../../ServerWide/ModifyOnGoingTaskResult";
+import {ExternalReplication} from "../../Replication/ExternalReplication";
+import {RavenCommand} from "../../../Http/RavenCommand";
+import {DocumentConventions} from "../../Conventions/DocumentConventions";
+import {ServerNode} from "../../../Http/ServerNode";
 import * as stream from "readable-stream";
 
 export class UpdateExternalReplicationOperation implements IMaintenanceOperation<ModifyOngoingTaskResult> {
@@ -37,7 +37,7 @@ export class UpdateExternalReplicationCommand extends RavenCommand<ModifyOngoing
 
         const headers = this._headers()
             .typeAppJson().build();
-        const body = this._serializer.serialize({ watcher: this._newWatcher });
+        const body = this._serializer.serialize({watcher: this._newWatcher});
         return {
             method: "POST",
             uri,

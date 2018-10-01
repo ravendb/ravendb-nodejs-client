@@ -1,4 +1,3 @@
-
 export interface IndexErrors {
     name: string;
     errors: IndexingError[];

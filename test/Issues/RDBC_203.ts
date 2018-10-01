@@ -1,7 +1,7 @@
 import * as assert from "assert";
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import {testContext, disposeTestDocumentStore} from "../Utils/TestUtil";
 
-import { DocumentStore, IDocumentStore, GetDatabaseNamesOperation } from "../../src";
+import {DocumentStore, IDocumentStore, GetDatabaseNamesOperation} from "../../src";
 
 describe("RDBC-203", function () {
 
@@ -11,10 +11,10 @@ describe("RDBC-203", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
-    it("can send server operations if db used in DocumentStore ctor does not exist", async function() {
+    it("can send server operations if db used in DocumentStore ctor does not exist", async function () {
         let store2;
         try {
             store2 = new DocumentStore(store.urls, "no_such_db");

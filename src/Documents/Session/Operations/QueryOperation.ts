@@ -1,21 +1,21 @@
-import { InMemoryDocumentSessionOperations } from "../InMemoryDocumentSessionOperations";
-import { IndexQuery } from "../../Queries/IndexQuery";
-import { QueryResult } from "../../Queries/QueryResult";
-import { FieldsToFetchToken } from "../Tokens/FieldsToFetchToken";
-import { Stopwatch } from "../../../Utility/Stopwatch";
-import { getLogger } from "../../../Utility/LogUtil";
-import { QueryCommand } from "../../Commands/QueryCommand";
-import { throwError } from "../../../Exceptions";
-import { IDisposable } from "../../../Types/Contracts";
+import {InMemoryDocumentSessionOperations} from "../InMemoryDocumentSessionOperations";
+import {IndexQuery} from "../../Queries/IndexQuery";
+import {QueryResult} from "../../Queries/QueryResult";
+import {FieldsToFetchToken} from "../Tokens/FieldsToFetchToken";
+import {Stopwatch} from "../../../Utility/Stopwatch";
+import {getLogger} from "../../../Utility/LogUtil";
+import {QueryCommand} from "../../Commands/QueryCommand";
+import {throwError} from "../../../Exceptions";
+import {IDisposable} from "../../../Types/Contracts";
 import * as StringBuilder from "string-builder";
-import { 
-    DocumentType, 
+import {
+    DocumentType,
 } from "../../DocumentAbstractions";
-import { CONSTANTS } from "../../../Constants";
-import { TypeUtil } from "../../../Utility/TypeUtil";
-import { StringUtil } from "../../../Utility/StringUtil";
+import {CONSTANTS} from "../../../Constants";
+import {TypeUtil} from "../../../Utility/TypeUtil";
+import {StringUtil} from "../../../Utility/StringUtil";
 
-const log = getLogger({ module: "QueryOperation" });
+const log = getLogger({module: "QueryOperation"});
 
 export class QueryOperation {
     private readonly _session: InMemoryDocumentSessionOperations;
@@ -29,12 +29,12 @@ export class QueryOperation {
     private _disableEntitiesTracking: boolean;
 
     public constructor(
-        session: InMemoryDocumentSessionOperations, 
-        indexName: string, 
+        session: InMemoryDocumentSessionOperations,
+        indexName: string,
         indexQuery: IndexQuery,
-        fieldsToFetch: FieldsToFetchToken, 
-        disableEntitiesTracking: boolean, 
-        metadataOnly: boolean, 
+        fieldsToFetch: FieldsToFetchToken,
+        disableEntitiesTracking: boolean,
+        metadataOnly: boolean,
         indexEntriesOnly: boolean) {
         this._session = session;
         this._indexName = indexName;
@@ -75,10 +75,10 @@ export class QueryOperation {
             return;
         }
 
-        throwError("InvalidOperationException", 
+        throwError("InvalidOperationException",
             "Attempt to query without explicitly specifying a page size. " +
-                "You can use .take() methods to set maximum number of results. " +
-                "By default the page size is set to Integer.MAX_VALUE and can cause severe performance degradation.");
+            "You can use .take() methods to set maximum number of results. " +
+            "By default the page size is set to Integer.MAX_VALUE and can cause severe performance degradation.");
     }
 
     private _startTiming(): void {
@@ -125,12 +125,12 @@ export class QueryOperation {
 
                 list.push(
                     QueryOperation.deserialize(
-                        id, 
-                        document, 
-                        metadata, 
-                        this._fieldsToFetch, 
-                        this._disableEntitiesTracking, 
-                        this._session, 
+                        id,
+                        document,
+                        metadata,
+                        this._fieldsToFetch,
+                        this._disableEntitiesTracking,
+                        this._session,
                         documentType));
             }
         } catch (err) {
@@ -147,16 +147,16 @@ export class QueryOperation {
     }
 
     public static deserialize<T extends object>(
-        id: string, 
-        document: object, 
-        metadata: object, 
-        fieldsToFetch: FieldsToFetchToken, 
-        disableEntitiesTracking: boolean, 
+        id: string,
+        document: object,
+        metadata: object,
+        fieldsToFetch: FieldsToFetchToken,
+        disableEntitiesTracking: boolean,
         session: InMemoryDocumentSessionOperations,
-        clazz?: DocumentType<T> 
+        clazz?: DocumentType<T>
     ) {
-        const { conventions } = session;
-        const { entityFieldNameConvention } = conventions;
+        const {conventions} = session;
+        const {entityFieldNameConvention} = conventions;
         const projection = metadata["@projection"];
         if (TypeUtil.isNullOrUndefined(projection) || projection === false) {
             const entityType = conventions.findEntityType(clazz);
@@ -165,8 +165,8 @@ export class QueryOperation {
 
         // return primitives only if type was not passed at all AND fields count is 1
         // if type was passed then use that even if it's only 1 field
-        if (fieldsToFetch 
-            && fieldsToFetch.projections 
+        if (fieldsToFetch
+            && fieldsToFetch.projections
             && fieldsToFetch.projections.length === 1
             && !clazz) {
             // we only select a single field
@@ -209,7 +209,7 @@ export class QueryOperation {
                 result[key] = raw[key];
             }
         } else {
-            Object.assign(result, !entityFieldNameConvention 
+            Object.assign(result, !entityFieldNameConvention
                 ? raw : conventions.transformObjectKeysToLocalFieldNameConvention(raw));
         }
 
@@ -246,7 +246,7 @@ export class QueryOperation {
         const isStale = result.isStale ? " stale " : " ";
 
         const parameters = new StringBuilder();
-        if (this._indexQuery.queryParameters 
+        if (this._indexQuery.queryParameters
             && this._indexQuery.queryParameters.length) {
             parameters.append("(parameters: ");
 
@@ -269,18 +269,18 @@ export class QueryOperation {
             parameters.append(") ");
         }
 
-        log.info("Query '" 
-            + this._indexQuery.query + "' " 
-            + parameters.toString() 
-            + "returned " 
+        log.info("Query '"
+            + this._indexQuery.query + "' "
+            + parameters.toString()
+            + "returned "
             + result.results.length + isStale + "results (total index results: " + result.totalResults + ")");
         // end logging
     }
 
     public static ensureIsAcceptable(
-        result: QueryResult, 
-        waitForNonStaleResults: boolean, 
-        duration: Stopwatch, 
+        result: QueryResult,
+        waitForNonStaleResults: boolean,
+        duration: Stopwatch,
         session: InMemoryDocumentSessionOperations): void {
         if (waitForNonStaleResults && result.isStale) {
             duration.stop();

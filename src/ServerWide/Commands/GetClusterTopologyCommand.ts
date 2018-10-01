@@ -1,7 +1,7 @@
-import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
-import { ClusterTopology } from "../../Http/ClusterTopology";
-import { HttpRequestParameters } from "../../Primitives/Http";
-import { ServerNode } from "../../Http/ServerNode";
+import {RavenCommand, IRavenResponse} from "../../Http/RavenCommand";
+import {ClusterTopology} from "../../Http/ClusterTopology";
+import {HttpRequestParameters} from "../../Primitives/Http";
+import {ServerNode} from "../../Http/ServerNode";
 import * as stream from "readable-stream";
 
 export class ClusterTopologyResponse {
@@ -18,7 +18,7 @@ export class GetClusterTopologyCommand extends RavenCommand<ClusterTopologyRespo
 
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/cluster/topology";
-        return { uri };
+        return {uri};
     }
 
     public setResponse(response: string, fromCache: boolean): void { //TODO: do we need this method?
@@ -28,9 +28,9 @@ export class GetClusterTopologyCommand extends RavenCommand<ClusterTopologyRespo
 
         const resObj = this._serializer.deserialize<IRavenResponse>(response);
         const clusterTpl = Object.assign(new ClusterTopology(), resObj.topology);
-        this.result = Object.assign(resObj as ClusterTopologyResponse, { topology: clusterTpl });
+        this.result = Object.assign(resObj as ClusterTopologyResponse, {topology: clusterTpl});
     }
-    
+
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         if (!bodyStream) {
             this._throwInvalidResponse();
@@ -40,7 +40,7 @@ export class GetClusterTopologyCommand extends RavenCommand<ClusterTopologyRespo
         await this._defaultPipeline(x => body = x).process(bodyStream)
             .then(result => {
                 const clusterTpl = Object.assign(new ClusterTopology(), result.topology);
-                this.result = Object.assign(result as ClusterTopologyResponse, { topology: clusterTpl });
+                this.result = Object.assign(result as ClusterTopologyResponse, {topology: clusterTpl});
             });
         return body;
     }

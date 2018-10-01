@@ -1,14 +1,14 @@
-import { AdvancedSessionExtensionBase } from "./AdvancedSessionExtensionBase";
-import { AttachmentName } from "./../Attachments";
-import { AttachmentData } from "./../Attachments";
-import { CONSTANTS } from "./../../Constants";
-import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
-import { StringUtil } from "../../Utility/StringUtil";
-import { throwError } from "../../Exceptions";
-import { IdTypeAndName } from "../IdTypeAndName";
-import { DocumentInfo } from "./DocumentInfo";
-import { PutAttachmentCommandData } from "../Commands/Batches/PutAttachmentCommandData";
-import { DeleteAttachmentCommandData } from "./../Commands/Batches/DeleteAttachmentCommandData";
+import {AdvancedSessionExtensionBase} from "./AdvancedSessionExtensionBase";
+import {AttachmentName} from "./../Attachments";
+import {AttachmentData} from "./../Attachments";
+import {CONSTANTS} from "./../../Constants";
+import {InMemoryDocumentSessionOperations} from "./InMemoryDocumentSessionOperations";
+import {StringUtil} from "../../Utility/StringUtil";
+import {throwError} from "../../Exceptions";
+import {IdTypeAndName} from "../IdTypeAndName";
+import {DocumentInfo} from "./DocumentInfo";
+import {PutAttachmentCommandData} from "../Commands/Batches/PutAttachmentCommandData";
+import {DeleteAttachmentCommandData} from "./../Commands/Batches/DeleteAttachmentCommandData";
 
 export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExtensionBase {
     protected constructor(session: InMemoryDocumentSessionOperations) {
@@ -94,7 +94,7 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
 
     protected _throwEntityNotInSession(entity: object): never {
         return throwError("InvalidArgumentException",
-            entity 
+            entity
             + " is not associated with the session. Use documentId instead or track the entity in the session.");
     }
 
@@ -112,8 +112,8 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
     public delete(entityOrId: string | object, name: string): void {
         if (typeof entityOrId !== "string") {
             return this._deleteAttachmentByEntity(entityOrId, name);
-        } 
-        
+        }
+
         if (StringUtil.isWhitespace(entityOrId)) {
             throwError("InvalidArgumentException", "DocumentId cannot be null");
         }

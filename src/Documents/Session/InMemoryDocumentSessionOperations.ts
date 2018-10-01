@@ -1,49 +1,49 @@
 import * as BluebirdPromise from "bluebird";
-import { EntityToJson } from "./EntityToJson";
-import { IDisposable } from "../../Types/Contracts";
-import { SessionInfo, ConcurrencyCheckMode, StoreOptions } from "./IDocumentSession";
-import { IMetadataDictionary } from "./IMetadataDictionary";
-import { ObjectTypeDescriptor, ClassConstructor } from "../../Types";
-import { SessionEventsEmitter, SessionBeforeStoreEventArgs, SessionBeforeDeleteEventArgs } from "./SessionEvents";
-import { RequestExecutor } from "../../Http/RequestExecutor";
-import { IDocumentStore } from "../IDocumentStore";
+import {EntityToJson} from "./EntityToJson";
+import {IDisposable} from "../../Types/Contracts";
+import {SessionInfo, ConcurrencyCheckMode, StoreOptions} from "./IDocumentSession";
+import {IMetadataDictionary} from "./IMetadataDictionary";
+import {ObjectTypeDescriptor, ClassConstructor} from "../../Types";
+import {SessionEventsEmitter, SessionBeforeStoreEventArgs, SessionBeforeDeleteEventArgs} from "./SessionEvents";
+import {RequestExecutor} from "../../Http/RequestExecutor";
+import {IDocumentStore} from "../IDocumentStore";
 import CurrentIndexAndNode from "../../Http/CurrentIndexAndNode";
-import { throwError, getError } from "../../Exceptions";
-import { ServerNode } from "../../Http/ServerNode";
-import { DocumentsById } from "./DocumentsById";
-import { DocumentInfo } from "./DocumentInfo";
-import { DocumentStoreBase } from "../DocumentStoreBase";
+import {throwError, getError} from "../../Exceptions";
+import {ServerNode} from "../../Http/ServerNode";
+import {DocumentsById} from "./DocumentsById";
+import {DocumentInfo} from "./DocumentInfo";
+import {DocumentStoreBase} from "../DocumentStoreBase";
 import {
     ICommandData,
     DeleteCommandData,
     SaveChangesData,
     PutCommandDataWithJson
 } from "../Commands/CommandData";
-import { GenerateEntityIdOnTheClient } from "../Identity/GenerateEntityIdOnTheClient";
-import { tryGetConflict } from "../../Mapping/Json";
-import { CONSTANTS } from "../../Constants";
-import { DateUtil } from "../../Utility/DateUtil";
-import { ObjectUtil } from "../../Utility/ObjectUtil";
-import { IncludesUtil } from "./IncludesUtil";
-import { TypeUtil } from "../../Utility/TypeUtil";
-import { AbstractCallback } from "../../Types/Callbacks";
-import { DocumentType } from "../DocumentAbstractions";
-import { IdTypeAndName } from "../IdTypeAndName";
-import { BatchOptions } from "../Commands/Batches/BatchOptions";
-import { DocumentsChanges } from "./DocumentsChanges";
-import { EventEmitter } from "events";
-import { JsonOperation } from "../../Mapping/JsonOperation";
-import { IRavenObject } from "../../Types/IRavenObject";
-import { GetDocumentsResult } from "../Commands/GetDocumentsCommand";
-import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { RavenCommand } from "../../Http/RavenCommand";
-import { JsonSerializer } from "../../Mapping/Json/Serializer";
-import { OperationExecutor } from "../Operations/OperationExecutor";
-import { createMetadataDictionary } from "../../Mapping/MetadataAsDictionary";
+import {GenerateEntityIdOnTheClient} from "../Identity/GenerateEntityIdOnTheClient";
+import {tryGetConflict} from "../../Mapping/Json";
+import {CONSTANTS} from "../../Constants";
+import {DateUtil} from "../../Utility/DateUtil";
+import {ObjectUtil} from "../../Utility/ObjectUtil";
+import {IncludesUtil} from "./IncludesUtil";
+import {TypeUtil} from "../../Utility/TypeUtil";
+import {AbstractCallback} from "../../Types/Callbacks";
+import {DocumentType} from "../DocumentAbstractions";
+import {IdTypeAndName} from "../IdTypeAndName";
+import {BatchOptions} from "../Commands/Batches/BatchOptions";
+import {DocumentsChanges} from "./DocumentsChanges";
+import {EventEmitter} from "events";
+import {JsonOperation} from "../../Mapping/JsonOperation";
+import {IRavenObject} from "../../Types/IRavenObject";
+import {GetDocumentsResult} from "../Commands/GetDocumentsCommand";
+import {DocumentConventions} from "../Conventions/DocumentConventions";
+import {RavenCommand} from "../../Http/RavenCommand";
+import {JsonSerializer} from "../../Mapping/Json/Serializer";
+import {OperationExecutor} from "../Operations/OperationExecutor";
+import {createMetadataDictionary} from "../../Mapping/MetadataAsDictionary";
 import {IndexBatchOptions, ReplicationBatchOptions} from "./IAdvancedSessionOperations";
-import { ILazyOperation } from "./Operations/Lazy/ILazyOperation";
+import {ILazyOperation} from "./Operations/Lazy/ILazyOperation";
 
-export abstract class InMemoryDocumentSessionOperations 
+export abstract class InMemoryDocumentSessionOperations
     extends EventEmitter
     implements IDisposable, SessionEventsEmitter {
 
@@ -201,7 +201,7 @@ export abstract class InMemoryDocumentSessionOperations
         this.useOptimisticConcurrency = this._requestExecutor.conventions.isUseOptimisticConcurrency();
         this.maxNumberOfRequestsPerSession = this._requestExecutor.conventions.maxNumberOfRequestsPerSession;
         this._generateEntityIdOnTheClient =
-            new GenerateEntityIdOnTheClient(this._requestExecutor.conventions, 
+            new GenerateEntityIdOnTheClient(this._requestExecutor.conventions,
                 (obj) => this._generateId(obj));
         this._entityToJson = new EntityToJson(this);
 
@@ -229,7 +229,7 @@ export abstract class InMemoryDocumentSessionOperations
         }
 
         const metadataAsJson = docInfo.metadata;
-        const metadata = createMetadataDictionary({ raw: metadataAsJson });
+        const metadata = createMetadataDictionary({raw: metadataAsJson});
         docInfo.entity[CONSTANTS.Documents.Metadata.KEY] = docInfo.metadataInstance = metadata;
 
         return metadata;
@@ -307,9 +307,9 @@ export abstract class InMemoryDocumentSessionOperations
 
     public isLoadedOrDeleted(id: string): boolean {
         const documentInfo = this.documentsById.getValue(id);
-        return !!(documentInfo && (documentInfo.document || documentInfo.entity)) 
-                || this.isDeleted(id) 
-                || this.includedDocumentsById.has(id);
+        return !!(documentInfo && (documentInfo.document || documentInfo.entity))
+            || this.isDeleted(id)
+            || this.includedDocumentsById.has(id);
     }
 
     /**
@@ -353,7 +353,7 @@ export abstract class InMemoryDocumentSessionOperations
 
         if (!Array.isArray(includes) && typeof includes === "object") {
             return this.checkIfIdAlreadyIncluded(ids, Object.keys(includes));
-        } 
+        }
 
         for (const id of ids) {
             if (this._knownMissingIds.has(id)) {
@@ -570,9 +570,9 @@ export abstract class InMemoryDocumentSessionOperations
         callback?: AbstractCallback<void>): Promise<void>;
     public store<TEntity extends object>(
         entity: TEntity,
-        idOrCallback?: 
+        idOrCallback?:
             string | AbstractCallback<void>,
-        docTypeOrOptionsOrCallback?: 
+        docTypeOrOptionsOrCallback?:
             DocumentType<TEntity> | StoreOptions<TEntity> | AbstractCallback<void>,
         callback?: AbstractCallback<void>): Promise<void> {
 
@@ -589,23 +589,23 @@ export abstract class InMemoryDocumentSessionOperations
         } else {
             throwError("InvalidArgumentException", "Invalid 2nd parameter: must be id string or callback.");
         }
-        
+
         // figure out third arg
         if (TypeUtil.isDocumentType<TEntity>(docTypeOrOptionsOrCallback)) {
-           documentType = docTypeOrOptionsOrCallback as DocumentType<TEntity>;
+            documentType = docTypeOrOptionsOrCallback as DocumentType<TEntity>;
         } else if (TypeUtil.isFunction(docTypeOrOptionsOrCallback)) {
             callback = docTypeOrOptionsOrCallback as AbstractCallback<void>;
         } else if (TypeUtil.isObject(docTypeOrOptionsOrCallback)) {
             options = docTypeOrOptionsOrCallback as StoreOptions<TEntity>;
-        } 
+        }
 
         callback = callback || TypeUtil.NOOP;
 
         const changeVector = options.changeVector;
         documentType = documentType || options.documentType;
-        this.conventions.tryRegisterEntityType(documentType); 
+        this.conventions.tryRegisterEntityType(documentType);
         if (entity.constructor !== Object) {
-            this.conventions.tryRegisterEntityType(entity.constructor as ClassConstructor); 
+            this.conventions.tryRegisterEntityType(entity.constructor as ClassConstructor);
         }
 
         let forceConcurrencyCheck: ConcurrencyCheckMode;
@@ -768,7 +768,7 @@ export abstract class InMemoryDocumentSessionOperations
             options: this._saveChangesOptions
         });
     }
-    
+
     private _prepareForEntitiesDeletion(result: SaveChangesData, changes: { [id: string]: DocumentsChanges[] }): void {
         for (const deletedEntity of this.deletedEntities) {
             let documentInfo = this.documentsByEntity.get(deletedEntity);
@@ -786,7 +786,7 @@ export abstract class InMemoryDocumentSessionOperations
                 docChanges.push(change);
                 changes[documentInfo.id] = docChanges;
             } else {
-                const command: ICommandData = 
+                const command: ICommandData =
                     result.deferredCommandsMap.get(IdTypeAndName.keyFor(documentInfo.id, "ClientAnyCommand", null));
                 if (command) {
                     InMemoryDocumentSessionOperations._throwInvalidDeletedDocumentWithDeferredCommand(command);
@@ -807,7 +807,7 @@ export abstract class InMemoryDocumentSessionOperations
                 }
 
                 changeVector = this.useOptimisticConcurrency ? changeVector : null;
-                const beforeDeleteEventArgs = 
+                const beforeDeleteEventArgs =
                     new SessionBeforeDeleteEventArgs(this, documentInfo.id, documentInfo.entity);
                 this.emit("beforeDelete", beforeDeleteEventArgs);
                 result.sessionCommands.push(new DeleteCommandData(documentInfo.id, changeVector));
@@ -822,7 +822,7 @@ export abstract class InMemoryDocumentSessionOperations
 
     private _prepareForEntitiesPuts(result: SaveChangesData): void {
         for (const entry of this.documentsByEntity.entries()) {
-            const [ entityKey, entityValue ] = entry;
+            const [entityKey, entityValue] = entry;
 
             if (entityValue.ignoreChanges) {
                 continue;
@@ -881,24 +881,24 @@ export abstract class InMemoryDocumentSessionOperations
     }
 
     protected _entityChanged(
-        newObj: object, 
-        documentInfo: DocumentInfo, 
+        newObj: object,
+        documentInfo: DocumentInfo,
         changes: { [id: string]: DocumentsChanges[] }): boolean {
         return JsonOperation.entityChanged(newObj, documentInfo, changes);
     }
 
     private static _throwInvalidModifiedDocumentWithDeferredCommand(resultCommand: ICommandData): void {
         throwError("InvalidOperationException", "Cannot perform save because document " + resultCommand.id
-            + " has been modified by the session and is also taking part in deferred " 
+            + " has been modified by the session and is also taking part in deferred "
             + resultCommand.type + " command");
     }
 
     private static _throwInvalidDeletedDocumentWithDeferredCommand(resultCommand: ICommandData): void {
         throwError("InvalidOperationException", "Cannot perform save because document " + resultCommand.id
-            + " has been deleted by the session and is also taking part in deferred " 
+            + " has been deleted by the session and is also taking part in deferred "
             + resultCommand.type + " command");
     }
-    
+
     private static _updateMetadataModifications(documentInfo: DocumentInfo) {
         let dirty = false;
 
@@ -909,13 +909,13 @@ export abstract class InMemoryDocumentSessionOperations
 
             for (const prop of Object.keys(documentInfo.metadataInstance)) {
                 const propValue = documentInfo.metadataInstance[prop];
-                if (!propValue || 
-                    (typeof propValue["isDirty"] === "function" 
+                if (!propValue ||
+                    (typeof propValue["isDirty"] === "function"
                         && (propValue as IMetadataDictionary).isDirty())) {
                     dirty = true;
                 }
 
-                documentInfo.metadata[prop] = ObjectUtil.clone(documentInfo.metadataInstance[prop]); 
+                documentInfo.metadata[prop] = ObjectUtil.clone(documentInfo.metadataInstance[prop]);
             }
         }
 
@@ -930,12 +930,12 @@ export abstract class InMemoryDocumentSessionOperations
         if (TypeUtil.isString(idOrEntity)) {
             this._deleteById(idOrEntity as string, expectedChangeVector);
             return Promise.resolve();
-        } 
+        }
 
         this._deleteByEntity(idOrEntity as TEntity);
         return Promise.resolve();
     }
-    
+
     /**
      * Marks the specified entity for deletion. The entity will be deleted when SaveChanges is called.
      */
@@ -946,7 +946,7 @@ export abstract class InMemoryDocumentSessionOperations
 
         const value = this.documentsByEntity.get(entity);
         if (!value) {
-            throwError("InvalidOperationException", 
+            throwError("InvalidOperationException",
                 entity + " is not associated with the session, cannot delete unknown entity instance");
         }
 
@@ -971,7 +971,7 @@ export abstract class InMemoryDocumentSessionOperations
         if (documentInfo) {
             const newObj = this.entityToJson.convertEntityToJson(documentInfo.entity, documentInfo);
             if (documentInfo.entity && this._entityChanged(newObj, documentInfo, null)) {
-                throwError("InvalidOperationException", 
+                throwError("InvalidOperationException",
                     "Can't delete changed entity using identifier. Use delete(T entity) instead.");
             }
 
@@ -1011,10 +1011,10 @@ export abstract class InMemoryDocumentSessionOperations
     }
 
     protected _refreshInternal<T extends object>(
-        entity: T, cmd: RavenCommand<GetDocumentsResult>, documentInfo: DocumentInfo): void  {
+        entity: T, cmd: RavenCommand<GetDocumentsResult>, documentInfo: DocumentInfo): void {
         const document = cmd.result.results[0];
         if (!document) {
-            throwError("InvalidOperationException", 
+            throwError("InvalidOperationException",
                 "Document '" + documentInfo.id + "' no longer exists and was probably deleted");
         }
 

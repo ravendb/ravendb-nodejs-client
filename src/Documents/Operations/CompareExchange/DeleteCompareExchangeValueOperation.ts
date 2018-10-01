@@ -1,19 +1,19 @@
-import { HttpRequestParameters } from "../../../Primitives/Http";
-import { IOperation, OperationResultType } from "../OperationAbstractions";
-import { CompareExchangeResult } from "./CompareExchangeResult";
-import { ClassConstructor } from "../../../Types";
-import { IDocumentStore } from "../../IDocumentStore";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { HttpCache } from "../../../Http/HttpCache";
-import { RavenCommand } from "../../../Http/RavenCommand";
-import { throwError } from "../../../Exceptions";
-import { ServerNode } from "../../../Http/ServerNode";
+import {HttpRequestParameters} from "../../../Primitives/Http";
+import {IOperation, OperationResultType} from "../OperationAbstractions";
+import {CompareExchangeResult} from "./CompareExchangeResult";
+import {ClassConstructor} from "../../../Types";
+import {IDocumentStore} from "../../IDocumentStore";
+import {DocumentConventions} from "../../Conventions/DocumentConventions";
+import {HttpCache} from "../../../Http/HttpCache";
+import {RavenCommand} from "../../../Http/RavenCommand";
+import {throwError} from "../../../Exceptions";
+import {ServerNode} from "../../../Http/ServerNode";
 import * as stream from "readable-stream";
-import { streamObject } from "stream-json/streamers/StreamObject";
-import { pick } from "stream-json/filters/Pick";
-import { ignore } from "stream-json/filters/Ignore";
-import { streamValues } from "stream-json/streamers/StreamValues";
-import { streamArray } from "stream-json/streamers/StreamArray";
+import {streamObject} from "stream-json/streamers/StreamObject";
+import {pick} from "stream-json/filters/Pick";
+import {ignore} from "stream-json/filters/Ignore";
+import {streamValues} from "stream-json/streamers/StreamValues";
+import {streamArray} from "stream-json/streamers/StreamArray";
 
 export class DeleteCompareExchangeValueOperation<T> implements IOperation<CompareExchangeResult<T>> {
 
@@ -73,27 +73,27 @@ export class RemoveCompareExchangeCommand<T> extends RavenCommand<CompareExchang
         let body: string = null;
         const resultPromise = this._pipeline<object>()
             .collectBody(b => body = b)
-            .parseJsonAsync([ 
-                pick({ filter: "Value.Object" }),
+            .parseJsonAsync([
+                pick({filter: "Value.Object"}),
                 streamValues()
             ])
-            .streamKeyCaseTransform({ defaultTransform: this._conventions.entityFieldNameConvention })
+            .streamKeyCaseTransform({defaultTransform: this._conventions.entityFieldNameConvention})
             .process(bodyStream);
-        
+
         const restPromise = this._pipeline<object>()
             .parseJsonAsync([
-                ignore({ filter: "Value" }),
+                ignore({filter: "Value"}),
                 streamValues()
             ])
             .streamKeyCaseTransform("camel")
             .process(bodyStream);
-        
-        const [ result, rest ] = await Promise.all([resultPromise, restPromise]);
+
+        const [result, rest] = await Promise.all([resultPromise, restPromise]);
 
         const resObj = Object.assign(
             rest as { successful: boolean, index: number },
-            { value: { object: result } });
-            
+            {value: {object: result}});
+
         this.result = CompareExchangeResult.parseFromObject(resObj, this._conventions, this._clazz);
 
         return body;

@@ -1,4 +1,3 @@
-
 export interface IIndexQuery {
 
     pageSize: number;

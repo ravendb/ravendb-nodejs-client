@@ -1,15 +1,15 @@
-import { IOperation, OperationResultType } from "../OperationAbstractions";
-import { AttachmentDetails } from "./../../Attachments/index";
-import { getEtagHeader } from "./../../../Utility/HttpUtil";
-import { HttpRequestParameters, HttpResponse } from "./../../../Primitives/Http";
-import { AttachmentResult, AttachmentType } from "../../Attachments";
-import { RavenCommand, ResponseDisposeHandling } from "../../../Http/RavenCommand";
-import { HttpCache } from "../../../Http/HttpCache";
-import { IDocumentStore } from "../../IDocumentStore";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { throwError } from "../../../Exceptions";
-import { StringUtil } from "../../../Utility/StringUtil";
-import { ServerNode } from "../../../Http/ServerNode";
+import {IOperation, OperationResultType} from "../OperationAbstractions";
+import {AttachmentDetails} from "./../../Attachments/index";
+import {getEtagHeader} from "./../../../Utility/HttpUtil";
+import {HttpRequestParameters, HttpResponse} from "./../../../Primitives/Http";
+import {AttachmentResult, AttachmentType} from "../../Attachments";
+import {RavenCommand, ResponseDisposeHandling} from "../../../Http/RavenCommand";
+import {HttpCache} from "../../../Http/HttpCache";
+import {IDocumentStore} from "../../IDocumentStore";
+import {DocumentConventions} from "../../Conventions/DocumentConventions";
+import {throwError} from "../../../Exceptions";
+import {StringUtil} from "../../../Utility/StringUtil";
+import {ServerNode} from "../../../Http/ServerNode";
 import * as stream from "readable-stream";
 
 export class GetAttachmentOperation implements IOperation<AttachmentResult> {
@@ -68,7 +68,7 @@ export class GetAttachmentCommand extends RavenCommand<AttachmentResult> {
             + encodeURIComponent(this._documentId) + "&name=" + encodeURIComponent(this._name);
 
         if (this._type !== "Document") {
-            const body = this._serializer.serialize({ Type: this._type, ChangeVector: this._changeVector });
+            const body = this._serializer.serialize({Type: this._type, ChangeVector: this._changeVector});
 
             return {
                 uri,
@@ -76,7 +76,7 @@ export class GetAttachmentCommand extends RavenCommand<AttachmentResult> {
                 body
             };
         }
-        return { uri };
+        return {uri};
     }
 
     public async processResponse(
@@ -105,7 +105,7 @@ export class GetAttachmentCommand extends RavenCommand<AttachmentResult> {
         this.result = new AttachmentResult(bodyStream, details, response);
         return "Manually";
     }
-    
+
     public get isReadRequest() {
         return true;
     }

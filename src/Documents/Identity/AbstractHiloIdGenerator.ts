@@ -2,7 +2,7 @@ import {IHiloIdGenerator} from "./IHiloIdGenerator";
 import {IDocumentStore} from "../../Documents/IDocumentStore";
 import {DocumentConventions} from "../../Documents/Conventions/DocumentConventions";
 import {IRavenObject} from "../../Types/IRavenObject";
-import { getLogger } from "../../Utility/LogUtil";
+import {getLogger} from "../../Utility/LogUtil";
 
 const log = getLogger({module: "HiloIdGenerator"});
 
@@ -31,7 +31,7 @@ export abstract class AbstractHiloIdGenerator {
             });
 
         return Promise.all(returnPromises)
-            // tslint:disable-next-line:no-empty
+        // tslint:disable-next-line:no-empty
             .then(() => {
             });
     }

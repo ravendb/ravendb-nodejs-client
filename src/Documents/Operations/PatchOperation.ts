@@ -1,23 +1,23 @@
 import {HttpRequestParameters} from "../../Primitives/Http";
-import { PatchRequest } from "./PatchRequest";
-import { IOperation, OperationResultType } from "./OperationAbstractions";
-import { PatchStatus } from "./PatchStatus";
-import { RavenCommand } from "../../Http/RavenCommand";
-import { throwError } from "../../Exceptions";
-import { IDocumentStore } from "../IDocumentStore";
-import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { HttpCache } from "../../Http/HttpCache";
-import { ServerNode } from "../../Http/ServerNode";
-import { PatchResult } from "./PatchResult";
+import {PatchRequest} from "./PatchRequest";
+import {IOperation, OperationResultType} from "./OperationAbstractions";
+import {PatchStatus} from "./PatchStatus";
+import {RavenCommand} from "../../Http/RavenCommand";
+import {throwError} from "../../Exceptions";
+import {IDocumentStore} from "../IDocumentStore";
+import {DocumentConventions} from "../Conventions/DocumentConventions";
+import {HttpCache} from "../../Http/HttpCache";
+import {ServerNode} from "../../Http/ServerNode";
+import {PatchResult} from "./PatchResult";
 import * as stream from "readable-stream";
-import { CollectResultStreamOptions } from "../../Mapping/Json/Streams/CollectResultStream";
-import { streamArray } from "stream-json/streamers/StreamArray";
-import { streamObject } from "stream-json/streamers/StreamObject";
-import { streamValues } from "stream-json/streamers/StreamValues";
-import { pick } from "stream-json/filters/Pick";
-import { filter } from "stream-json/filters/Filter";
-import { ignore } from "stream-json/filters/Ignore";
-import { parseRestOfOutput } from "../../Mapping/Json/Streams/Pipelines";
+import {CollectResultStreamOptions} from "../../Mapping/Json/Streams/CollectResultStream";
+import {streamArray} from "stream-json/streamers/StreamArray";
+import {streamObject} from "stream-json/streamers/StreamObject";
+import {streamValues} from "stream-json/streamers/StreamValues";
+import {pick} from "stream-json/filters/Pick";
+import {filter} from "stream-json/filters/Filter";
+import {ignore} from "stream-json/filters/Ignore";
+import {parseRestOfOutput} from "../../Mapping/Json/Streams/Pipelines";
 
 export interface Payload {
     patch: PatchRequest;
@@ -44,16 +44,16 @@ export class PatchOperation implements IOperation<PatchResult> {
     public constructor(
         id: string, changeVector: string, patch: PatchRequest);
     public constructor(
-        id: string, 
-        changeVector: string, 
+        id: string,
+        changeVector: string,
         patch: PatchRequest,
-        patchIfMissing: PatchRequest, 
+        patchIfMissing: PatchRequest,
         skipPatchIfChangeVectorMismatch: boolean);
     public constructor(
-        id: string, 
-        changeVector: string, 
-        patch: PatchRequest, 
-        patchIfMissing: PatchRequest = null, 
+        id: string,
+        changeVector: string,
+        patch: PatchRequest,
+        patchIfMissing: PatchRequest = null,
         skipPatchIfChangeVectorMismatch: boolean = false) {
 
         if (!patch) {
@@ -78,14 +78,14 @@ export class PatchOperation implements IOperation<PatchResult> {
 
     public getCommand(
         store: IDocumentStore, conventions: DocumentConventions, cache: HttpCache,
-        returnDebugInformation: boolean = false, test: boolean = false): RavenCommand<PatchResult>  {
+        returnDebugInformation: boolean = false, test: boolean = false): RavenCommand<PatchResult> {
         return new PatchCommand(
-            conventions, 
-            this._id, 
-            this._changeVector, 
-            this._patch, 
-            this._patchIfMissing, 
-            this._skipPatchIfChangeVectorMismatch, 
+            conventions,
+            this._id,
+            this._changeVector,
+            this._patch,
+            this._patchIfMissing,
+            this._skipPatchIfChangeVectorMismatch,
             returnDebugInformation,
             test);
     }
@@ -128,7 +128,7 @@ export class PatchCommand extends RavenCommand<PatchResult> {
 
         this._id = id;
         this._changeVector = changeVector;
-        this._patch = this._typedObjectMapper.toObjectLiteral({ patch, patchIfMissing });
+        this._patch = this._typedObjectMapper.toObjectLiteral({patch, patchIfMissing});
         this._skipPatchIfChangeVectorMismatch = skipPatchIfChangeVectorMismatch;
         this._returnDebugInformation = returnDebugInformation;
         this._test = test;
@@ -172,14 +172,14 @@ export class PatchCommand extends RavenCommand<PatchResult> {
         }
 
         const collectResultOpts: CollectResultStreamOptions<PatchResult> = {
-            initResult: {} as PatchResult ,
-            reduceResults: (reduceResult, { key, value }: { key: string, value: any }) => {
+            initResult: {} as PatchResult,
+            reduceResults: (reduceResult, {key, value}: { key: string, value: any }) => {
                 if (key === "ModifiedDocument") {
                     reduceResult.modifiedDocument = value;
                 }
 
                 if (key === "OriginalDocument") {
-                    reduceResult.originalDocument = value;                    
+                    reduceResult.originalDocument = value;
                 }
 
                 return reduceResult;
@@ -190,7 +190,7 @@ export class PatchCommand extends RavenCommand<PatchResult> {
         const resultPromise = this._pipeline()
             .collectBody(b => body = b)
             .parseJsonAsync([
-                filter({ filter: /^ModifiedDocument|OriginalDocument$/ }),
+                filter({filter: /^ModifiedDocument|OriginalDocument$/}),
                 streamObject()
             ])
             .streamKeyCaseTransform(this._conventions.entityFieldNameConvention, "DOCUMENT_LOAD")
@@ -198,7 +198,7 @@ export class PatchCommand extends RavenCommand<PatchResult> {
             .process(bodyStream);
 
         const restPromise = parseRestOfOutput(bodyStream, /^ModifiedDocument|OriginalDocument$/);
-        const [ result, rest ] = await Promise.all([ resultPromise, restPromise ]);
+        const [result, rest] = await Promise.all([resultPromise, restPromise]);
         this.result = Object.assign(result, rest) as PatchResult;
         return body;
     }

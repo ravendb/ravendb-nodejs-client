@@ -1,5 +1,5 @@
 import {DocumentConventions, IRavenArrayResult, ServerNode} from "../..";
-import { RavenCommand } from "../../../src/Http/RavenCommand";
+import {RavenCommand} from "../../../src/Http/RavenCommand";
 import {TypeUtil} from "../../Utility/TypeUtil";
 import {HttpRequestParameters} from "../../Primitives/Http";
 import {DateUtil} from "../../Utility/DateUtil";

@@ -1,7 +1,7 @@
-import { OperationCompletionAwaiter } from "../../Documents/Operations/OperationCompletionAwaiter";
-import { RequestExecutor, DocumentConventions } from "../..";
-import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
-import { GetServerWideOperationStateCommand } from "./GetServerWideOperationStateOperation";
+import {OperationCompletionAwaiter} from "../../Documents/Operations/OperationCompletionAwaiter";
+import {RequestExecutor, DocumentConventions} from "../..";
+import {RavenCommand, IRavenResponse} from "../../Http/RavenCommand";
+import {GetServerWideOperationStateCommand} from "./GetServerWideOperationStateOperation";
 
 export class ServerWideOperationCompletionAwaiter extends OperationCompletionAwaiter {
 

@@ -1,7 +1,7 @@
-import { IHiloIdGenerator } from "./IHiloIdGenerator";
-import { HiloMultiTypeIdGenerator } from "./HiloMultiTypeIdGenerator";
-import { AbstractHiloIdGenerator } from "./AbstractHiloIdGenerator";
-import { IDocumentStore } from "../IDocumentStore";
+import {IHiloIdGenerator} from "./IHiloIdGenerator";
+import {HiloMultiTypeIdGenerator} from "./HiloMultiTypeIdGenerator";
+import {AbstractHiloIdGenerator} from "./AbstractHiloIdGenerator";
+import {IDocumentStore} from "../IDocumentStore";
 
 export class HiloMultiDatabaseIdGenerator extends AbstractHiloIdGenerator implements IHiloIdGenerator {
 

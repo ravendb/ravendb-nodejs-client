@@ -1,14 +1,14 @@
-import { ILazyOperation } from "./ILazyOperation";
-import { ObjectTypeDescriptor } from "../../../../Types";
-import { QueryResult } from "../../../Queries/QueryResult";
-import { QueryOperation } from "../QueryOperation";
-import { DocumentConventions } from "../../../Conventions/DocumentConventions";
-import { GetRequest } from "../../../Commands/MultiGet/GetRequest";
-import { writeIndexQuery } from "../../../Queries/IndexQuery";
-import { GetResponse } from "../../../Commands/MultiGet/GetResponse";
-import { QueryCommand } from "../../../Commands/QueryCommand";
-import { stringToReadable } from "../../../../Utility/StreamUtil";
-import { QueryEventsEmitter } from "../../../Session/QueryEvents";
+import {ILazyOperation} from "./ILazyOperation";
+import {ObjectTypeDescriptor} from "../../../../Types";
+import {QueryResult} from "../../../Queries/QueryResult";
+import {QueryOperation} from "../QueryOperation";
+import {DocumentConventions} from "../../../Conventions/DocumentConventions";
+import {GetRequest} from "../../../Commands/MultiGet/GetRequest";
+import {writeIndexQuery} from "../../../Queries/IndexQuery";
+import {GetResponse} from "../../../Commands/MultiGet/GetResponse";
+import {QueryCommand} from "../../../Commands/QueryCommand";
+import {stringToReadable} from "../../../../Utility/StreamUtil";
+import {QueryEventsEmitter} from "../../../Session/QueryEvents";
 
 export class LazyQueryOperation<T extends object> implements ILazyOperation {
     private readonly _clazz: ObjectTypeDescriptor<T>;
@@ -19,7 +19,7 @@ export class LazyQueryOperation<T extends object> implements ILazyOperation {
     public constructor(
         conventions: DocumentConventions,
         queryOperation: QueryOperation,
-        parent: QueryEventsEmitter, 
+        parent: QueryEventsEmitter,
         clazz: ObjectTypeDescriptor<T>) {
 
         this._clazz = clazz;

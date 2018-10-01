@@ -1,4 +1,3 @@
-
 import {IDisposable} from "../../../Types/Contracts";
 import {MoreLikeThisToken} from "../../Session/Tokens/MoreLikeThisToken";
 import {MoreLikeThisOptions} from "./MoreLikeThisOptions";
@@ -27,7 +26,7 @@ export class MoreLikeThisScope implements IDisposable {
             return;
         }
 
-        const optionsAsJson = ObjectUtil.transformObjectKeys(options,  { defaultTransform: "pascal" });
+        const optionsAsJson = ObjectUtil.transformObjectKeys(options, {defaultTransform: "pascal"});
         this._token.optionsParameterName = this._addQueryParameter(optionsAsJson);
     }
 

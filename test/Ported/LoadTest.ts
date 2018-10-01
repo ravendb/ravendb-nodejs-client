@@ -1,12 +1,12 @@
 import * as sinon from "sinon";
 import {User, GeekPerson} from "../Assets/Entities";
 import * as assert from "assert";
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import {testContext, disposeTestDocumentStore} from "../Utils/TestUtil";
 
 import {
     IDocumentStore,
 } from "../../src";
-import { ReleaseCacheItem } from "../../src/Http/HttpCache";
+import {ReleaseCacheItem} from "../../src/Http/HttpCache";
 
 describe("LoadTest - ported", function () {
 
@@ -16,19 +16,19 @@ describe("LoadTest - ported", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("load() can use cache", async () => {
 
-        let cacheGetSpy = 
+        let cacheGetSpy =
             store.getRequestExecutor().cache.get = sinon.spy(store.getRequestExecutor().cache, "get");
-        let cacheSetSpy = 
+        let cacheSetSpy =
             store.getRequestExecutor().cache.set = sinon.spy(store.getRequestExecutor().cache, "set");
 
         {
             const session = store.openSession();
-            const user = Object.assign(new User(), { name: "RavenDB" });
+            const user = Object.assign(new User(), {name: "RavenDB"});
 
             await session.store(user, "users/1");
             await session.saveChanges();
@@ -49,8 +49,8 @@ describe("LoadTest - ported", function () {
         }
 
         const cacheReads = cacheGetSpy.getCalls();
-        const docReads = cacheReads.filter(x => 
-                x.args[0] === store.urls[0] + `/databases/${store.database}/docs?&id=users%2F1`);
+        const docReads = cacheReads.filter(x =>
+            x.args[0] === store.urls[0] + `/databases/${store.database}/docs?&id=users%2F1`);
 
         assert.strictEqual(docReads.length, 2);
         assert.ok((docReads[1].returnValue as ReleaseCacheItem).item);
@@ -63,12 +63,12 @@ describe("LoadTest - ported", function () {
     it("can load document by id", async () => {
         {
             const session = store.openSession();
-            const user = Object.assign(new User(), { name: "RavenDB" });
+            const user = Object.assign(new User(), {name: "RavenDB"});
 
             await session.store(user, "users/1");
             await session.saveChanges();
         }
-        
+
         {
             const session = store.openSession();
             const user = await session.load<User>("users/1");
@@ -80,8 +80,8 @@ describe("LoadTest - ported", function () {
     it("loads multiple documents by ids", async () => {
         {
             const session = store.openSession();
-            const user = Object.assign(new User(), { name: "RavenDB" });
-            const user2 = Object.assign(new User(), { name: "Hibernating Rhinos" });
+            const user = Object.assign(new User(), {name: "RavenDB"});
+            const user2 = Object.assign(new User(), {name: "Hibernating Rhinos"});
 
             await session.store(user, "users/1");
             await session.store(user2, "users/2");
@@ -90,7 +90,7 @@ describe("LoadTest - ported", function () {
 
         {
             const session = store.openSession();
-            const users = await session.load([ "users/1", "users/2" ]);
+            const users = await session.load(["users/1", "users/2"]);
             assert.strictEqual(Object.keys(users).length, 2);
         }
     });
@@ -98,8 +98,8 @@ describe("LoadTest - ported", function () {
     it("load(null) returns null", async () => {
         {
             const session = store.openSession();
-            const user = Object.assign(new User(), { name: "RavenDB" });
-            const user2 = Object.assign(new User(), { name: "Hibernating Rhinos" });
+            const user = Object.assign(new User(), {name: "RavenDB"});
+            const user2 = Object.assign(new User(), {name: "Hibernating Rhinos"});
 
             await session.store(user, "users/1");
             await session.store(user2, "users/2");
@@ -116,8 +116,8 @@ describe("LoadTest - ported", function () {
     it("for multiple ids with null returns docs only for non-nulls", async () => {
         {
             const session = store.openSession();
-            const user = Object.assign(new User(), { name: "RavenDB" });
-            const user2 = Object.assign(new User(), { name: "Hibernating Rhinos" });
+            const user = Object.assign(new User(), {name: "RavenDB"});
+            const user2 = Object.assign(new User(), {name: "Hibernating Rhinos"});
 
             await session.store(user, "users/1");
             await session.store(user2, "users/2");
