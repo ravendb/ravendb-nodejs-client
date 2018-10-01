@@ -4,7 +4,8 @@ import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 import {IDocumentStore} from "../../src";
 import {GetDocumentsCommand} from "../../src/Documents/Commands/GetDocumentsCommand";
 
-describe("CustomSerializationTest", function () {
+// TBD 4.1 RDBC-232
+describe.skip("CustomSerializationTest", function () {
 
     let store: IDocumentStore;
 
@@ -22,10 +23,12 @@ describe("CustomSerializationTest", function () {
                 conventions.getEntityMapper().registerModule(module);
              */
 
+            /* TODO 
             conventions.registerQueryValueConverter<Money>(Money, (fieldName, value, forRange, objectValue) => {
                 objectValue(value.toJSON());
                 return true;
             });
+            */
         };
     });
 

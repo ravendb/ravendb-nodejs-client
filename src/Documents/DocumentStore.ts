@@ -261,7 +261,9 @@ export class DocumentStore extends DocumentStoreBase {
      * queries that have been marked with WaitForNonStaleResults, we temporarily disable
      * aggressive caching.
      */
+    /* TBD 4.1
     public disableAggressiveCaching(): IDisposable;
+    */
 
     /**
      * Setup the context for no aggressive caching
@@ -270,6 +272,7 @@ export class DocumentStore extends DocumentStoreBase {
      * queries that have been marked with WaitForNonStaleResults, we temporarily disable
      * aggressive caching.
      */
+    /* TBD 4.1
     public disableAggressiveCaching(): IDisposable;
     public disableAggressiveCaching(database: string): IDisposable;
     public disableAggressiveCaching(database?: string): IDisposable {
@@ -281,6 +284,7 @@ export class DocumentStore extends DocumentStoreBase {
 
         return { dispose };
     }
+     */
 
     public changes(): IDatabaseChanges;
     public changes(database: string): IDatabaseChanges;

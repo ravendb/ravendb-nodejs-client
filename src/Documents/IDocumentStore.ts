@@ -83,8 +83,8 @@ export interface IDocumentStore extends IDisposable,
 
     changes(database: string): IDatabaseChanges;
 
-    // TBD: IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
-    // TBD IDisposable AggressivelyCache(string database = null);
+    // TBD 4.1 IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
+    // TBD 4.1 IDisposable AggressivelyCache(string database = null);
 
     /**
      * Setup the context for no aggressive caching
@@ -93,8 +93,9 @@ export interface IDocumentStore extends IDisposable,
      * queries that have been marked with WaitForNonStaleResults, we temporarily disable
      * aggressive caching.
      */
+    /* TBD 4.1
     disableAggressiveCaching(): IDisposable;
-
+    */
     /**
      * Setup the context for no aggressive caching
      *
@@ -102,7 +103,9 @@ export interface IDocumentStore extends IDisposable,
      * queries that have been marked with WaitForNonStaleResults, we temporarily disable
      * aggressive caching.
      */
+    /* TBD 4.1
     disableAggressiveCaching(database: string): IDisposable;
+    */
 
     identifier: string;
 

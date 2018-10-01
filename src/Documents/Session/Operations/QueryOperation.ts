@@ -92,6 +92,7 @@ export class QueryOperation {
             + " in " + this._session.storeIdentifier);
     }
 
+    /* TDB 4.1
     public enterQueryContext(): IDisposable {
         this._startTiming();
 
@@ -101,6 +102,7 @@ export class QueryOperation {
 
         return this._session.documentStore.disableAggressiveCaching(this._session.databaseName);
     }
+    */
 
     public complete<T extends object>(documentType?: DocumentType<T>): T[] {
         const queryResult = this._currentQueryResults.createSnapshot();

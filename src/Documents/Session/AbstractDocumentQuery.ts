@@ -1692,23 +1692,25 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     private _executeActualQuery(): Promise<void> {
-        let context;
+        // TBD 4.1 let context;
         let command;
         const result = BluebirdPromise.resolve()
             .then(() => {
-                context = this._queryOperation.enterQueryContext();
+                // TBD 4.1 context = this._queryOperation.enterQueryContext();
                 command = this._queryOperation.createRequest();
                 return this._theSession.requestExecutor.execute(command, this._theSession.sessionInfo);
             })
             .then(() => {
                 this._queryOperation.setResult(command.result);
                 this.emit("afterQueryExecuted", this._queryOperation.getCurrentQueryResults());
-            })
+            });
+            /* TBD 4.1
             .finally(() => {
                 if (context) {
                     context.dispose();
                 }
             });
+            */
 
         return Promise.resolve(result);
     }
