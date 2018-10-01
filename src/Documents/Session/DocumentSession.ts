@@ -333,10 +333,6 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         return result;
     }
 
-    // TBD public void LoadStartingWithIntoStream(
-    //    string idPrefix, Stream output, string matches = null, 
-    // int start = 0, int pageSize = 25, string exclude = null, string startAfter = null)
-
     private async _loadStartingWithInternal<TEntity extends object>(
         idPrefix: string, 
         operation: LoadStartingWithOperation, 
@@ -711,23 +707,32 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         optsOrStatsCallback?: SessionLoadStartingWithOptions<T> | StreamQueryStatisticsCallback,
         callback?: AbstractCallback<DocumentResultStream<T>>)
         : Promise<DocumentResultStream<T>> {
-            if (TypeUtil.isString(queryOrIdPrefix)) {
-                return this._streamStartingWith(queryOrIdPrefix, optsOrStatsCallback as object, callback);
-            } 
+        const result = (this._stream as any)(...arguments as any);
+        passResultToCallback(result, callback);
+        return result;
+    }
 
-            if (arguments.length > 1 && typeof optsOrStatsCallback !== "function") {
-                throwError("InvalidArgumentException", "Statistics callback must be a function.");
-            }
-
-            return this._streamQueryResults(
-                queryOrIdPrefix as (IDocumentQuery<T> | IRawDocumentQuery<T>), 
-                optsOrStatsCallback as StreamQueryStatisticsCallback,
-                callback);
+    private async _stream<T extends object>(
+        queryOrIdPrefix: string | IDocumentQuery<T> | IRawDocumentQuery<T>, 
+        optsOrStatsCallback?: SessionLoadStartingWithOptions<T> | StreamQueryStatisticsCallback)
+        : Promise<DocumentResultStream<T>> {
+        if (TypeUtil.isString(queryOrIdPrefix)) {
+            return this._streamStartingWith<T>(
+                queryOrIdPrefix as string, optsOrStatsCallback as object);
         }
+
+        if (arguments.length > 1 && typeof optsOrStatsCallback !== "function") {
+            throwError("InvalidArgumentException", "Statistics callback must be a function.");
+        }
+
+        return this._streamQueryResults(
+            queryOrIdPrefix as (IDocumentQuery<T> | IRawDocumentQuery<T>),
+            optsOrStatsCallback as StreamQueryStatisticsCallback);
+    }
+
     private async _streamStartingWith<T extends object>(
         idPrefix: string,
-        opts: SessionLoadStartingWithOptions<T>,
-        callback?: AbstractCallback<DocumentResultStream<T>>)
+        opts: SessionLoadStartingWithOptions<T>)
             : Promise<DocumentResultStream<T>> {
         const streamOperation = new StreamOperation(this);
         const command = streamOperation.createRequest(idPrefix, opts);
@@ -758,8 +763,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     
     private async _streamQueryResults<T extends object>(
         query: IDocumentQuery<T> | IRawDocumentQuery<T>,
-        streamQueryStatsCallback?: StreamQueryStatisticsCallback,
-        callback?: AbstractCallback<DocumentResultStream<T>>)
+        streamQueryStatsCallback?: StreamQueryStatisticsCallback)
             : Promise<DocumentResultStream<T>> {
         const streamOperation = new StreamOperation(this);
         const command = streamOperation.createRequest(query.getIndexQuery());
@@ -823,9 +827,17 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         query: IRawDocumentQuery<T> | IDocumentQuery<T>,
         writable: stream.Writable,
         callback?: AbstractCallback<void>): Promise<void> {
+        const result = this._streamInto(query, writable);
+        passResultToCallback(result, callback);
+        return result;
+    }
+
+    private async _streamInto<T extends object>(
+        query: IRawDocumentQuery<T> | IDocumentQuery<T>,
+        writable: stream.Writable): Promise<void> {
         const streamOperation = new StreamOperation(this);
         const command = streamOperation.createRequest(query.getIndexQuery());
         await this.requestExecutor.execute(command, this._sessionInfo);
-        await streamResultsIntoStream(command.result.stream, this.conventions, writable);
+        return streamResultsIntoStream(command.result.stream, this.conventions, writable);
     }
 }
