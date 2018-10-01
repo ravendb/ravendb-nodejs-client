@@ -19,7 +19,7 @@ export class GetIndexStatisticsOperation implements IMaintenanceOperation<IndexS
     }
 
     public getCommand(conventions: DocumentConventions): RavenCommand<IndexStats> {
-        return new GetIndexStatisticsCommand(this._indexName);
+        return new GetIndexStatisticsCommand(this._indexName, conventions);
     }
 
     public get resultType(): OperationResultType {
@@ -30,8 +30,9 @@ export class GetIndexStatisticsOperation implements IMaintenanceOperation<IndexS
 
 export class GetIndexStatisticsCommand extends RavenCommand<IndexStats> {
     private readonly _indexName: string;
+    private readonly _conventions: DocumentConventions;
 
-    public constructor(indexName: string) {
+    public constructor(indexName: string, conventions: DocumentConventions) {
         super();
 
         if (!indexName) {
@@ -39,6 +40,7 @@ export class GetIndexStatisticsCommand extends RavenCommand<IndexStats> {
         }
 
         this._indexName = indexName;
+        this._conventions = conventions;
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
@@ -56,12 +58,15 @@ export class GetIndexStatisticsCommand extends RavenCommand<IndexStats> {
         await this._defaultPipeline(_ => body = _)
             .process(bodyStream)
             .then(results => {
-                const responseObj = this._reviveResultTypes(results, {
-                    nestedTypes: {
-                        "results[].collections": "Map",
-                        "results[].collections$MAP": "CollectionStats"
-                    }
-                }, new Map([[CollectionStats.name, CollectionStats]]));
+                const responseObj = this._reviveResultTypes(
+                    results, 
+                    this._conventions,
+                    {
+                        nestedTypes: {
+                            "results[].collections": "Map",
+                            "results[].collections$MAP": "CollectionStats"
+                        }
+                    }, new Map([[CollectionStats.name, CollectionStats]]));
 
                 const indexStatsResults = responseObj["results"];
                 if (!indexStatsResults.length) {

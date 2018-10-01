@@ -172,14 +172,17 @@ describe("HiLo", function () {
             await session.saveChanges();
         }
 
-        async function waitForStoreDisposeFinish() {
+        async function waitForStoreDisposeFinish(store) {
             return new Promise((resolve) =>
-                newStore.once("afterDispose", () => resolve()));
+                store.once("afterDispose", (handledCallback) => {
+                    handledCallback(); 
+                    resolve();
+                }));
         }
 
         newStore.dispose(); // on document store dispose(), hilo-return should be called
 
-        await waitForStoreDisposeFinish();
+        await waitForStoreDisposeFinish(newStore);
 
         newStore = new DocumentStore(store.urls, store.database);
         newStore.initialize();
@@ -200,11 +203,9 @@ describe("HiLo", function () {
 
         const tasks = Array.from(Array(parallelLevel).keys()).map(async i => {
             const user = users[i];
-            {
-                const session = store.openSession();
-                await session.store(user);
-                await session.saveChanges();
-            }
+            const session = store.openSession();
+            await session.store(user);
+            await session.saveChanges();
         });
 
         await Promise.all(tasks);

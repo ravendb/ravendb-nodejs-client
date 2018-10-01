@@ -33,7 +33,12 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
     public constructor(opts?: TypesAwareJsonObjectMapperOptions) {
         if (opts) {
             this._dateFormat = opts.dateFormat;
-            this._conventions = opts.documentConventions || DocumentConventions.defaultConventions;
+            
+            if (!opts.documentConventions) {
+                throwError("InvalidArgumentException", "Document conventions cannot be empty.");
+            }
+
+            this._conventions = opts.documentConventions;
         }
     }
 
@@ -43,11 +48,6 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
 
     public set throwMappingErrors(value: boolean) {
         this._throwMappingErrors = value;
-    }
-
-    public registerType(classCtorOrTypeDescriptor: ObjectTypeDescriptor): this {
-        this._conventions.knownEntityTypesByName.set(classCtorOrTypeDescriptor.name, classCtorOrTypeDescriptor);
-        return this;
     }
 
     public fromObjectLiteral<TResult extends object>(rawResult: object, typeInfo?: TypeInfo): TResult;

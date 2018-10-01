@@ -17,7 +17,7 @@ export class GetIndexErrorsOperation implements IMaintenanceOperation<IndexError
     }
 
     public getCommand(conventions: DocumentConventions): RavenCommand<IndexErrors[]> {
-        return new GetIndexErrorsCommand(this._indexNames);
+        return new GetIndexErrorsCommand(this._indexNames, conventions);
     }
 
     public get resultType(): OperationResultType {
@@ -28,10 +28,12 @@ export class GetIndexErrorsOperation implements IMaintenanceOperation<IndexError
 
 export class GetIndexErrorsCommand extends RavenCommand<IndexErrors[]> {
     private readonly _indexNames: string[];
+    private readonly _conventions: DocumentConventions;
 
-    public constructor(indexNames: string[]) {
+    public constructor(indexNames: string[], conventions: DocumentConventions) {
         super();
         this._indexNames = indexNames;
+        this._conventions = conventions;
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
@@ -62,7 +64,7 @@ export class GetIndexErrorsCommand extends RavenCommand<IndexErrors[]> {
         let body: string = null;
         await this._defaultPipeline(_ => body = _).process(bodyStream)
             .then(results => {
-                this.result = this._reviveResultTypes(results, typeInfo)["results"];
+                this.result = this._reviveResultTypes(results, this._conventions, typeInfo)["results"];
             });
         return body;
     }

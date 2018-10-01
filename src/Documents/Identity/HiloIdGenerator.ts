@@ -89,7 +89,12 @@ export class HiloIdGenerator {
 
     protected _getNextRange(): Promise<void> {
         const hiloCmd = new NextHiloCommand(
-            this._tag, this._lastBatchSize, this._lastRangeAt, this._identityPartsSeparator, this._range.maxId);
+            this._tag, 
+            this._lastBatchSize, 
+            this._lastRangeAt, 
+            this._identityPartsSeparator, 
+            this._range.maxId,
+            this._store.conventions);
         return this._store.getRequestExecutor(this._dbName).execute(hiloCmd)
             .then(() => {
                 const result: HiLoResult = hiloCmd.result;

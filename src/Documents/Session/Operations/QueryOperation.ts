@@ -195,7 +195,7 @@ export class QueryOperation {
             }
         }
 
-        const raw: T = conventions.entityObjectMapper.fromObjectLiteral(document);
+        const raw: T = conventions.objectMapper.fromObjectLiteral(document);
         const projType = conventions.findEntityType(clazz);
         // tslint:disable-next-line:new-parens
         const result = projType ? new (Function.prototype.bind.apply(projType)) : {};

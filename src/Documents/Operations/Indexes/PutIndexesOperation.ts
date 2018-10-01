@@ -38,6 +38,7 @@ export class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult
 export class PutIndexesCommand extends RavenCommand<PutIndexResult[]> {
 
     private readonly _indexToAdd: object[];
+    private readonly _conventions: DocumentConventions;
 
     public constructor(conventions: DocumentConventions, indexesToAdd: IndexDefinition[]) {
         super();
@@ -50,12 +51,13 @@ export class PutIndexesCommand extends RavenCommand<PutIndexResult[]> {
             throwError("InvalidArgumentException", "indexesToAdd cannot be null or undefined.");
         }
 
+        this._conventions = conventions;
         this._indexToAdd = indexesToAdd.reduce((result, next) => {
             if (!next.name) {
                 throwError("InvalidArgumentException", "Index name cannot be null.");
             }
 
-            result.push(Mapping.getDefaultMapper().toObjectLiteral(next));
+            result.push(this._conventions.objectMapper.toObjectLiteral(next));
 
             return result;
         }, []);

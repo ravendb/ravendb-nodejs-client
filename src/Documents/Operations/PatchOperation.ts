@@ -128,7 +128,7 @@ export class PatchCommand extends RavenCommand<PatchResult> {
 
         this._id = id;
         this._changeVector = changeVector;
-        this._patch = this._typedObjectMapper.toObjectLiteral({ patch, patchIfMissing });
+        this._patch = conventions.objectMapper.toObjectLiteral({ patch, patchIfMissing });
         this._skipPatchIfChangeVectorMismatch = skipPatchIfChangeVectorMismatch;
         this._returnDebugInformation = returnDebugInformation;
         this._test = test;

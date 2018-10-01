@@ -21,7 +21,7 @@ export class FacetQueryCommand extends QueryCommand {
 
         let body: string = null;
         this.result = await FacetQueryCommand.parseQueryResultResponseAsync(
-            bodyStream, this._conventions, fromCache, this._typedObjectMapper, b => body = b);
+            bodyStream, this._conventions, fromCache, b => body = b);
 
         return body;
     }
@@ -30,7 +30,6 @@ export class FacetQueryCommand extends QueryCommand {
         bodyStream: stream.Stream,
         conventions: DocumentConventions,
         fromCache: boolean,
-        mapper: TypesAwareObjectMapper,
         bodyCallback?: (body: string) => void): Promise<QueryResult> {
 
         const resultsPromise = RavenCommandResponsePipeline.create<object[]>()
@@ -48,7 +47,7 @@ export class FacetQueryCommand extends QueryCommand {
 
         const [results, includes, rest] = await Promise.all([resultsPromise, includesPromise, restPromise]);
         const rawResult = Object.assign({} as any, rest, { results, includes }) as QueryResult;
-        const queryResult = mapper.fromObjectLiteral<QueryResult>(rawResult, {
+        const queryResult = conventions.objectMapper.fromObjectLiteral<QueryResult>(rawResult, {
             typeName: QueryResult.name,
             nestedTypes: {
                 indexTimestamp: "date",

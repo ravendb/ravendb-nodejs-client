@@ -91,7 +91,7 @@ export class QueryCommand extends RavenCommand<QueryResult> {
 
         let body: string = null;
         this.result = await QueryCommand.parseQueryResultResponseAsync(
-            bodyStream, this._conventions, fromCache, this._typedObjectMapper, b => body = b);
+            bodyStream, this._conventions, fromCache, b => body = b);
 
         return body;
     }
@@ -104,7 +104,6 @@ export class QueryCommand extends RavenCommand<QueryResult> {
         bodyStream: stream.Stream,
         conventions: DocumentConventions,
         fromCache: boolean,
-        mapper: TypesAwareObjectMapper,
         bodyCallback?: (body: string) => void): Promise<QueryResult> {
 
         const resultsPromise = parseDocumentResults(bodyStream, conventions, bodyCallback);
@@ -113,13 +112,14 @@ export class QueryCommand extends RavenCommand<QueryResult> {
 
         const [results, includes, rest] = await Promise.all([resultsPromise, includesPromise, restPromise]);
         const rawResult = Object.assign({} as any, rest, { results, includes }) as QueryResult;
-        const queryResult = mapper.fromObjectLiteral<QueryResult>(rawResult, {
-            typeName: QueryResult.name,
-            nestedTypes: {
-                indexTimestamp: "date",
-                lastQueryTime: "date"
-            }
-        }, new Map([[QueryResult.name, QueryResult]]));
+        const queryResult = conventions.objectMapper
+            .fromObjectLiteral<QueryResult>(rawResult, {
+                typeName: QueryResult.name,
+                nestedTypes: {
+                    indexTimestamp: "date",
+                    lastQueryTime: "date"
+                }
+            }, new Map([[QueryResult.name, QueryResult]]));
 
         if (fromCache) {
             queryResult.durationInMs = -1;

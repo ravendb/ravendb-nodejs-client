@@ -36,7 +36,7 @@ export class IndexHasChangedCommand extends RavenCommand<boolean> {
     public constructor(conventions: DocumentConventions, definition: IndexDefinition) {
         super();
 
-        this._definition = this._typedObjectMapper.toObjectLiteral(definition);
+        this._definition = conventions.objectMapper.toObjectLiteral(definition);
     }
 
     public get isReadRequest(): boolean {

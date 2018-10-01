@@ -29,7 +29,7 @@ export class EntityToJson {
 
     public convertEntityToJson(entity: object, documentInfo: DocumentInfo): object {
         const { conventions } = this._session;
-        const entityMapper = conventions.entityObjectMapper;
+        const entityMapper = conventions.objectMapper;
 
         let typeInfo: TypeInfo;
         let jsonNode = entityMapper.toObjectLiteral(entity, (_typeInfo) => {
@@ -60,7 +60,7 @@ export class EntityToJson {
         entity: object, conventions: DocumentConventions, documentInfo?: DocumentInfo): object {
 
         let typeInfo: TypeInfo;
-        const jsonNode = Mapping.getDefaultMapper().toObjectLiteral(entity, (_typeInfo) => {
+        const jsonNode = conventions.objectMapper.toObjectLiteral(entity, (_typeInfo) => {
             typeInfo = _typeInfo;
         });
 
@@ -138,14 +138,14 @@ export class EntityToJson {
                     && ((entityType.name === documentTypeFromConventions.name)
                     || TypeUtil.isInstanceOf(entityType, documentTypeFromConventions));
                 if (passedEntityTypeIsAssignableFromConventionsDocType) {
-                    const mapper = conventions.entityObjectMapper;
+                    const mapper = conventions.objectMapper;
                     entity = mapper.fromObjectLiteral(
                         document, entityTypeInfoFromMetadata);
                 }
             }
 
             if (!entity) {
-                const mapper = conventions.entityObjectMapper;
+                const mapper = conventions.objectMapper;
                 let passedTypeInfo = entityTypeInfoFromMetadata;
                 if (entityType) {
                     passedTypeInfo =

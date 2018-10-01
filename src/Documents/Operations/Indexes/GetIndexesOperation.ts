@@ -17,7 +17,7 @@ export class GetIndexesOperation implements IMaintenanceOperation<IndexDefinitio
     }
 
     public getCommand(conventions: DocumentConventions): RavenCommand<IndexDefinition[]> {
-        return new GetIndexesCommand(this._start, this._pageSize);
+        return new GetIndexesCommand(this._start, this._pageSize, conventions);
     }
 
     public get resultType(): OperationResultType {
@@ -26,14 +26,24 @@ export class GetIndexesOperation implements IMaintenanceOperation<IndexDefinitio
 
 }
 
+const indexDefTypeInfo = {
+    nestedTypes: {
+        "results[]": "IndexDefinition",
+        "results[].maps": "Set"
+    },
+};
+const knownTypes = new Map([[IndexDefinition.name, IndexDefinition]]);
+
 export class GetIndexesCommand extends RavenCommand<IndexDefinition[]> {
     private readonly _start: number;
     private readonly _pageSize: number;
+    private readonly _conventions: DocumentConventions;
 
-    public constructor(start: number, pageSize: number) {
+    public constructor(start: number, pageSize: number, conventions: DocumentConventions) {
         super();
         this._start = start;
         this._pageSize = pageSize;
+        this._conventions = conventions;
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
@@ -57,15 +67,8 @@ export class GetIndexesCommand extends RavenCommand<IndexDefinition[]> {
             })
             .process(bodyStream)
             .then((result) => {
-                const indexDefTypeInfo = {
-                    nestedTypes: {
-                        "results[]": "IndexDefinition",
-                        "results[].maps": "Set"
-                    },
-                };
-                const knownTypes = new Map([[IndexDefinition.name, IndexDefinition]]);
-                const allResults = this._reviveResultTypes(result, indexDefTypeInfo, knownTypes);
-                this.result = allResults["results"];
+                this.result = this._reviveResultTypes(
+                    result, this._conventions, indexDefTypeInfo, knownTypes)["results"];
             });
         return body;
     }

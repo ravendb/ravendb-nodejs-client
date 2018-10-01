@@ -707,7 +707,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         optsOrStatsCallback?: SessionLoadStartingWithOptions<T> | StreamQueryStatisticsCallback,
         callback?: AbstractCallback<DocumentResultStream<T>>)
         : Promise<DocumentResultStream<T>> {
-        const result = (this._stream as any)(...arguments as any);
+        const result = (this._stream as any)(...Array.from(arguments) as any);
         passResultToCallback(result, callback);
         return result;
     }

@@ -4,7 +4,8 @@ import {
     TypesAwareObjectMapper,
     IRavenObject,
     ObjectTypeDescriptor,
-    PropsBasedObjectLiteralDescriptor
+    PropsBasedObjectLiteralDescriptor,
+    DocumentConventions
 } from "../../src";
 import { DateUtil } from "../../src/Utility/DateUtil";
 import { TypeInfo } from "../../src/Mapping/ObjectMapper";
@@ -16,7 +17,8 @@ describe("ObjectMapper", function () {
 
     beforeEach(() => {
         mapper = new TypesAwareObjectMapper({
-            dateFormat: DateUtil.DEFAULT_DATE_FORMAT
+            dateFormat: DateUtil.DEFAULT_DATE_FORMAT,
+            documentConventions: DocumentConventions.defaultConventions
         });
     });
 
