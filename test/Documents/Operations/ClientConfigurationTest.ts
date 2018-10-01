@@ -1,14 +1,14 @@
 import * as assert from "assert";
-import { 
+import {
     testContext,
-    disposeTestDocumentStore 
+    disposeTestDocumentStore
 } from "../../Utils/TestUtil";
 import {
     IDocumentStore,
     ClientConfiguration,
     IRavenResponse,
     GetClientConfigurationOperation,
-    PutClientConfigurationOperation 
+    PutClientConfigurationOperation
 } from "../../../src";
 
 describe("Client configuration", function () {
@@ -19,7 +19,7 @@ describe("Client configuration", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("can handle no configuration", async () => {

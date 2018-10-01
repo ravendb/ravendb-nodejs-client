@@ -14,7 +14,7 @@ import {
 } from "../../src";
 import { TypeUtil } from "../../src/Utility/TypeUtil";
 
-// tslint:disable-next-line:prefer-const
+// tslint:disable-next-line:no-console
 let print = console.log;
 print = TypeUtil.NOOP;
 
@@ -171,7 +171,7 @@ describe("Readme query samples", function () {
         it("example", async () => {
             // create bulk insert instance using DocumentStore instance
             const bulkInsert = store.bulkInsert();
-            
+
             // insert your documents
             for (const name of ["Anna", "Maria", "Miguel", "Emanuel", "Dayanara", "Aleida"]) {
                 const user = new User({ name });
@@ -391,8 +391,8 @@ describe("Readme query samples", function () {
                         assert.strictEqual(stats.indexName, "Auto/users/Byage");
                         assert.ok(stats.resultEtag);
                         assert.ok(stats.indexTimestamp instanceof Date);
-                    } catch (err) { 
-                        reject(err); 
+                    } catch (err) {
+                        reject(err);
                     }
                     resolve();
                 });

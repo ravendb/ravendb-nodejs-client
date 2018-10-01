@@ -4,9 +4,10 @@ export interface EntitiesCollectionObject<TEntity> extends IRavenObject<TEntity>
     [id: string]: TEntity;
 }
 
+// tslint:disable:no-empty-interface
 export interface Todo {
-
 }
+// tslint:enable:no-empty-interface
 
 export interface RevisionsCollectionObject<TEntity> extends IRavenObject<TEntity> {
     [changeVector: string]: TEntity;

@@ -16,7 +16,7 @@ describe("Basic documents test", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("can change document collection with delete and save", async () => {
@@ -58,7 +58,7 @@ describe("Basic documents test", function () {
         const dog = Object.assign(new Dog(), {
             name: "Chase",
             dogRace: "Alsatian"
-        }) ;
+        });
         await session.store(dog);
 
         await session.saveChanges();
@@ -83,8 +83,8 @@ describe("Basic documents test", function () {
 
         const requestExecutor = store.getRequestExecutor();
         let getDocumentsCommand = new GetDocumentsCommand({
-            ids: ["users/1", "users/2"], 
-            includes: null, 
+            ids: ["users/1", "users/2"],
+            includes: null,
             metadataOnly: false,
             conventions: store.conventions
         });
@@ -118,7 +118,7 @@ describe("Basic documents test", function () {
             assert.strictEqual(user2.name, "Arek");
 
             getDocumentsCommand = new GetDocumentsCommand({
-                ids: [ "users/1", "users/2" ], 
+                ids: ["users/1", "users/2"],
                 metadataOnly: true,
                 conventions: store.conventions
             });
@@ -128,7 +128,7 @@ describe("Basic documents test", function () {
             docs = getDocumentsCommand.result;
             assert.strictEqual(docs.results.length, 2);
 
-            [ doc1, doc2 ] = docs.results;
+            [doc1, doc2] = docs.results;
             assert.ok(doc1);
             doc1Properties = Object.keys(doc1);
             assert.ok(doc1Properties.includes("@metadata"));

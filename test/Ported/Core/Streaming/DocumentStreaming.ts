@@ -6,7 +6,7 @@ import {
 } from "../../../../src";
 import * as assert from "assert";
 import * as StreamUtil from "../../../../src/Utility/StreamUtil";
-import {User} from "../../../Assets/Entities";
+import { User } from "../../../Assets/Entities";
 import { CONSTANTS } from "../../../../src/Constants";
 
 describe("document streaming", function () {
@@ -73,7 +73,7 @@ describe("document streaming", function () {
             }
         }
     });
-    
+
     function assertStreamResultEntry<T extends object>(
         entry: StreamResult<T>, docAssert: (doc: T) => void) {
         assert.ok(entry);
@@ -84,7 +84,7 @@ describe("document streaming", function () {
         assert.ok(entry.metadata[CONSTANTS.Documents.Metadata.ID]);
         assert.ok(entry.metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE]);
         assert.ok(entry.metadata[CONSTANTS.Documents.Metadata.LAST_MODIFIED]);
-        
+
         const doc = entry.document;
         assert.ok(doc);
         docAssert(doc);

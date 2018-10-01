@@ -14,7 +14,7 @@ describe("Issue #67", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("can pass a url with a trailing slash", async () => {

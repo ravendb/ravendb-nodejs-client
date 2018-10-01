@@ -1,7 +1,7 @@
-import {EntitiesCollectionObject, IDocumentStore} from "../../../src";
-import {disposeTestDocumentStore, testContext} from "../../Utils/TestUtil";
-import {Company, User} from "../../Assets/Entities";
-import {Lazy} from "../../../src/Documents/Lazy";
+import { EntitiesCollectionObject, IDocumentStore } from "../../../src";
+import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
+import { Company, User } from "../../Assets/Entities";
+import { Lazy } from "../../../src/Documents/Lazy";
 import * as assert from "assert";
 
 describe("LazyTest", function () {
@@ -90,7 +90,7 @@ describe("LazyTest", function () {
 
             const beforeReqsCount = session.advanced.numberOfRequests;
             await session.advanced.eagerly.executeAllPendingLazyOperations();
-            const promise = Promise.all([ 
+            const promise = Promise.all([
                 // we cannot do getValue() before a call to eagerly.executeAll... 
                 // since getValue() immediately calls the server in an async fashion
                 company1Lazy.getValue().then(x => company1Ref = x),

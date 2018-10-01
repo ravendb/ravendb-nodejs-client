@@ -49,12 +49,12 @@ describe("lazy aggregation embedded", function () {
         await new TaskIndex().execute(store);
         await testContext.waitForIndexing(store);
 
-        const query = session.query({ 
-                indexName: AbstractIndexCreationTask.getIndexNameForCtor(TaskIndex.name)
-            })
-            .aggregateBy(f => 
+        const query = session.query({
+            indexName: AbstractIndexCreationTask.getIndexNameForCtor(TaskIndex.name)
+        })
+            .aggregateBy(f =>
                 f.byField("assigneeId")
-                .withDisplayName("assigneeId"));
+                    .withDisplayName("assigneeId"));
 
         const lazyOp = query.executeLazy();
         const facetValue = await lazyOp.getValue();

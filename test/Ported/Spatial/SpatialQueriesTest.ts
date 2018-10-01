@@ -16,7 +16,7 @@ describe("SpatialQueriesTest", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("can run spatial queries in memory", async () => {
@@ -37,7 +37,7 @@ describe("SpatialQueriesTest", function () {
         const newYork = new DummyGeoDoc(40.7137578228, -74.0126901936);
 
         {
-            const session = store.openSession();                
+            const session = store.openSession();
             await session.store(areaOneDocOne);
             await session.store(areaOneDocTwo);
             await session.store(areaOneDocThree);
@@ -51,15 +51,15 @@ describe("SpatialQueriesTest", function () {
                 select new { 
                     coordinates = CreateSpatialField(doc.latitude, doc.longitude) 
                 }`]);
-            
+
             await store.maintenance.send(new PutIndexesOperation(indexDefinition));
 
             await session.query({
                 indexName: indexDefinition.name,
                 documentType: DummyGeoDoc
             })
-            .waitForNonStaleResults()
-            .all(); 
+                .waitForNonStaleResults()
+                .all();
 
             const lat = 55.6836422426;
             const lng = 13.5871808352; // in the middle of AreaOne
@@ -69,9 +69,9 @@ describe("SpatialQueriesTest", function () {
                 documentType: DummyGeoDoc,
                 indexName: "FindByLatLng"
             })
-            .withinRadiusOf("coordinates", radius, lat, lng)
-            .waitForNonStaleResults()
-            .all();
+                .withinRadiusOf("coordinates", radius, lat, lng)
+                .waitForNonStaleResults()
+                .all();
 
             assert.ok(nearbyDocs);
             assert.strictEqual(nearbyDocs.length, 3);
@@ -94,7 +94,7 @@ describe("SpatialQueriesTest", function () {
             indexDefinition.maps = new Set([
                 "from doc in docs select new { coordinates = CreateSpatialField(doc.latitude, doc.longitude) }"
             ]);
-            
+
             await store.maintenance.send(new PutIndexesOperation(indexDefinition));
 
             // Wait until the index is built
@@ -102,16 +102,16 @@ describe("SpatialQueriesTest", function () {
                 .waitForNonStaleResults()
                 .all();
 
-            const radius = 8; 
-            
+            const radius = 8;
+
             // Find within 8 miles.
             // We should find both my house and the gym.
             const matchesWithinMiles = await session.query({
                 indexName: "FindByLatLng"
             })
-            .withinRadiusOf("coordinates", radius, myHouse.latitude, myHouse.longitude, "Miles")
-            .waitForNonStaleResults()
-            .all();
+                .withinRadiusOf("coordinates", radius, myHouse.latitude, myHouse.longitude, "Miles")
+                .waitForNonStaleResults()
+                .all();
 
             assert.ok(matchesWithinMiles);
             assert.strictEqual(matchesWithinMiles.length, 2);
@@ -122,9 +122,9 @@ describe("SpatialQueriesTest", function () {
             const matchesWithinKilometers = await session.query({
                 indexName: "FindByLatLng"
             })
-            .withinRadiusOf("coordinates", radius, myHouse.latitude, myHouse.longitude, "Kilometers")
-            .waitForNonStaleResults()
-            .all();
+                .withinRadiusOf("coordinates", radius, myHouse.latitude, myHouse.longitude, "Kilometers")
+                .waitForNonStaleResults()
+                .all();
 
             assert.strictEqual(matchesWithinKilometers.length, 1);
         }

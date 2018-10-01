@@ -14,7 +14,7 @@ describe("session.exists()", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("can tell if doc exists ", async () => {
@@ -27,14 +27,14 @@ describe("session.exists()", function () {
             await session.store(shalom, "users/2");
             await session.saveChanges();
         }
-        
+
         {
             const session = store.openSession();
             assert.strictEqual(await session.advanced.exists("users/1"), true);
             assert.strictEqual(await session.advanced.exists("users/10"), false);
 
             await session.load("users/2", User);
-            assert.strictEqual(await session.advanced.exists("users/2"),  true);
+            assert.strictEqual(await session.advanced.exists("users/2"), true);
         }
     });
 }); 

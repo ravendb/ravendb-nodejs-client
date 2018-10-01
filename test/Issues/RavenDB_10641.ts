@@ -17,7 +17,7 @@ describe("RavenDB-10641", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("can edit objects in metadata", async () => {
@@ -50,8 +50,8 @@ describe("RavenDB-10641", function () {
             const meta = session.advanced.getMetadataFor(v);
             meta["test"] = "123";
             await session.saveChanges();
-        } 
-        
+        }
+
         {
             const session = store.openSession();
             const v = await session.load("items/first");

@@ -1,11 +1,11 @@
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { 
+import {
     testContext,
-    disposeTestDocumentStore 
+    disposeTestDocumentStore
 } from "../../Utils/TestUtil";
 import { UsersIndex } from "../../Assets/Indexes";
-import {Post, User} from "../../Assets/Entities";
+import { Post, User } from "../../Assets/Entities";
 import {
     IDocumentStore,
     GetStatisticsCommand,
@@ -24,8 +24,8 @@ import {
 } from "../../../src";
 import { DeleteIndexOperation } from "../../../src/Documents/Operations/Indexes/DeleteIndexOperation";
 import { QueryStatistics } from "../../../src/Documents/Session/QueryStatistics";
-import {MoreLikeThisOptions} from "../../../src/Documents/Queries/MoreLikeThis/MoreLikeThisOptions";
-import {IndexCreation} from "../../../src/Documents/Indexes/IndexCreation";
+import { MoreLikeThisOptions } from "../../../src/Documents/Queries/MoreLikeThis/MoreLikeThisOptions";
+import { IndexCreation } from "../../../src/Documents/Indexes/IndexCreation";
 
 describe("Indexes from client", function () {
 
@@ -35,7 +35,7 @@ describe("Indexes from client", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("can create indexes using index creation", async () => {
@@ -98,12 +98,12 @@ describe("Indexes from client", function () {
     });
 
     it("can execute many indexes", async () => {
-            await store.executeIndexes([new UsersIndex()]);
+        await store.executeIndexes([new UsersIndex()]);
 
-            const indexNamesOperation = new GetIndexNamesOperation(0, 10);
-            const indexNames = await store.maintenance.send(indexNamesOperation);
+        const indexNamesOperation = new GetIndexNamesOperation(0, 10);
+        const indexNames = await store.maintenance.send(indexNamesOperation);
 
-            assert.strictEqual(indexNames.length, 1);
+        assert.strictEqual(indexNames.length, 1);
     });
 
     it("can delete index", async () => {
@@ -171,7 +171,7 @@ describe("Indexes from client", function () {
 
         {
             const session = store.openSession();
-            const users = await session.query<User>({ indexName: "Users/ByName"})
+            const users = await session.query<User>({ indexName: "Users/ByName" })
                 .waitForNonStaleResults()
                 .whereEquals("name", "Arek")
                 .all();
@@ -289,7 +289,7 @@ describe("Indexes from client", function () {
                 .statistics(_stats => stats = _stats)
                 .whereEquals("name", "Arek")
                 .all();
-            
+
             users = await session.query<User>(User)
                 .statistics(_stats => stats = _stats)
                 .whereGreaterThan("age", 10)
@@ -307,7 +307,7 @@ describe("Indexes from client", function () {
         assert.ok(explanations[0].reason);
     });
 
-    it("can get more like this", async() => {
+    it("can get more like this", async () => {
         {
             const session = store.openSession();
             const post1 = Object.assign(new Post(), { id: "posts/1", title: "doduck", desc: "prototype" });
@@ -335,7 +335,7 @@ describe("Indexes from client", function () {
             } as MoreLikeThisOptions;
 
             const session = store.openSession();
-            const list = await session.query<Post>({ indexName: "Posts/ByTitleAndDesc"})
+            const list = await session.query<Post>({ indexName: "Posts/ByTitleAndDesc" })
                 .moreLikeThis(f => f.usingDocument(x => x.whereEquals("id()", "posts/1")).withOptions(options))
                 .all();
 
@@ -353,6 +353,7 @@ describe("Indexes from client", function () {
     });
 });
 
+// tslint:disable:class-name
 export class Posts_ByTitleAndDesc extends AbstractIndexCreationTask {
 
     constructor() {
@@ -381,3 +382,4 @@ export class Users_ByName extends AbstractIndexCreationTask {
         this.store("name", "Yes");
     }
 }
+// tslint:enable:class-name

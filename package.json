@@ -23,7 +23,7 @@
       "win32": "tsc && tsc -p tsconfig.test.json && copy test\\Assets\\* .test\\test\\Assets && copy test\\mocha.opts .test && mocha --inspect-brk .test\\test",
       "linux": "tsc && tsc -p tsconfig.test.json && cp test/Assets/* .test/test/Assets && cp test/mocha.opts .test && mocha --inspect-brk .test/test"
     },
-    "lint": "tslint ./src"
+    "lint": "tslint src/**/*.ts && tslint test/**/*.ts"
   },
   "repository": {
     "type": "git",

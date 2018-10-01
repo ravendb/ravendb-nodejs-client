@@ -11,7 +11,6 @@ import { OperationExecutor } from "./Operations/OperationExecutor";
 import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";
 import { DocumentSession } from "./Session/DocumentSession";
 import { HiloMultiDatabaseIdGenerator } from "./Identity/HiloMultiDatabaseIdGenerator";
-import { IDisposable } from "../Types/Contracts";
 import { IAuthOptions } from "../Auth/AuthOptions";
 import { BulkInsertOperation } from "./BulkInsertOperation";
 import { IDatabaseChanges } from "./Changes/IDatabaseChanges";

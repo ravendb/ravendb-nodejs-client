@@ -12,7 +12,7 @@ describe("With custom key case conventions set", function () {
         regularStore = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(regularStore));
 
     function getStoreWithCustomConventions(setupStore: (store: DocumentStore) => void) {
@@ -82,7 +82,7 @@ describe("With custom key case conventions set", function () {
             const session = regularStore.openSession();
             await session.store(pascalCasedObj);
             await session.saveChanges();
-        }    
+        }
 
         let store;
         try {
@@ -158,7 +158,7 @@ describe("With custom key case conventions set", function () {
 
             assert.strictEqual(loaded.Collection, stored.collection);
             assert.strictEqual(loaded.Equipment[0].Name, stored.equipment[0].name);
-            
+
             assert.ok(loaded["@metadata"]);
             assert.strictEqual(loaded["@metadata"]["@collection"], stored.collection);
             assert.strictEqual(loaded["@metadata"]["@nested-object-types"]["RegisteredAt"], "date");
@@ -182,7 +182,7 @@ describe("With custom key case conventions set", function () {
             const session = regularStore.openSession();
             await session.store(pascalCasedObj);
             await session.saveChanges();
-        }    
+        }
 
         let store: DocumentStore;
         try {
@@ -196,8 +196,8 @@ describe("With custom key case conventions set", function () {
 
             const session = store.openSession();
             const queryResults = await session.query({
-                    collection: "People"
-                })
+                collection: "People"
+            })
                 .whereEquals("Name", "John")
                 .all();
 
@@ -218,7 +218,7 @@ describe("With custom key case conventions set", function () {
             const session = regularStore.openSession();
             await session.store(pascalCasedObj);
             await session.saveChanges();
-        }    
+        }
 
         let store: DocumentStore;
         try {
@@ -234,8 +234,8 @@ describe("With custom key case conventions set", function () {
 
             // just one field
             let queryResults = await session.query({
-                    collection: "People"
-                })
+                collection: "People"
+            })
                 .whereEquals("Name", "John")
                 .selectFields("Name")
                 .all();
@@ -246,7 +246,7 @@ describe("With custom key case conventions set", function () {
 
             // multiple fields
             queryResults = await session.query({ collection: "People" })
-                .selectFields([ "Name", "Age"])
+                .selectFields(["Name", "Age"])
                 .all();
             assert.ok(queryResults.length);
             result = queryResults[0];

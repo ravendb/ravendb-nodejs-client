@@ -1,7 +1,7 @@
 import * as assert from "assert";
-import {IDocumentStore, InMemoryDocumentSessionOperations} from "../../src";
-import {disposeTestDocumentStore, testContext} from "../Utils/TestUtil";
-import {DateUtil} from "../../src/Utility/DateUtil";
+import { IDocumentStore, InMemoryDocumentSessionOperations } from "../../src";
+import { disposeTestDocumentStore, testContext } from "../Utils/TestUtil";
+import { DateUtil } from "../../src/Utility/DateUtil";
 
 describe("FirstClassPatchTest", function () {
 
@@ -66,7 +66,7 @@ describe("FirstClassPatchTest", function () {
 
     it.skip("can patch and modify", async () => {
         const user = new User();
-        user.numbers = [ 66 ];
+        user.numbers = [66];
 
         {
             const session = store.openSession();
@@ -159,7 +159,7 @@ describe("FirstClassPatchTest", function () {
     });
 
     it("can add to array", async () => {
-        const stuff = [ undefined ] as Stuff[];
+        const stuff = [undefined] as Stuff[];
 
         stuff[0] = new Stuff();
         stuff[0].key = 6;
@@ -308,10 +308,10 @@ describe("FirstClassPatchTest", function () {
 
         const user = new User();
         user.stuff = stuff;
-        user.numbers = [ 66 ];
+        user.numbers = [66];
 
         const user2 = new User();
-        user2.numbers = [ 1, 2, 3 ];
+        user2.numbers = [1, 2, 3];
         user2.stuff = stuff;
 
         const docId2 = "users/2-A";

@@ -6,6 +6,7 @@ export class UsersIndex extends AbstractIndexCreationTask {
         this.map = "from user in docs.users select new { user.name }";
     }
 }
+
 export class UsersInvalidIndex extends AbstractIndexCreationTask {
     public constructor() {
         super();

@@ -4,10 +4,10 @@ import { testContext, disposeTestDocumentStore } from "../../../../Utils/TestUti
 import {
     IDocumentStore,
 } from "../../../../../src";
-import {User} from "../../../../Assets/Entities";
-import {DocumentChange} from "../../../../../src";
-import {AsyncQueue} from "../../../../Utils/AsyncQueue";
-import {throwError} from "../../../../../src/Exceptions";
+import { User } from "../../../../Assets/Entities";
+import { DocumentChange } from "../../../../../src";
+import { AsyncQueue } from "../../../../Utils/AsyncQueue";
+import { throwError } from "../../../../../src/Exceptions";
 
 describe("ChangesTest", function () {
 

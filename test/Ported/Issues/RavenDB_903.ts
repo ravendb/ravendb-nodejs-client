@@ -1,4 +1,4 @@
-import {IDocumentQuery} from "../../../src/Documents/Session/IDocumentQuery";
+import { IDocumentQuery } from "../../../src/Documents/Session/IDocumentQuery";
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
@@ -25,9 +25,9 @@ describe("Issue RavenDB-903", function () {
                 documentType: Product,
                 indexName: TestIndex.name
             })
-            .search("description", "Hello")
-            .intersect()
-            .whereEquals("name", "Bar");
+                .search("description", "Hello")
+                .intersect()
+                .whereEquals("name", "Bar");
         });
     });
 
@@ -37,9 +37,9 @@ describe("Issue RavenDB-903", function () {
                 documentType: Product,
                 indexName: TestIndex.name
             })
-            .whereEquals("name", "Bar")
-            .intersect()
-            .search("description", "Hello");
+                .whereEquals("name", "Bar")
+                .intersect()
+                .search("description", "Hello");
         });
     });
 
@@ -78,6 +78,7 @@ describe("Issue RavenDB-903", function () {
         }
     }
 });
+
 export class Product {
     public name: string;
     public description: string;

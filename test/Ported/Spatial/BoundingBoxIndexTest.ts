@@ -1,5 +1,5 @@
-import {AbstractIndexCreationTask} from "../../../src/Documents/Indexes";
-import {SpatialBounds} from "../../../src";
+import { AbstractIndexCreationTask } from "../../../src/Documents/Indexes";
+import { SpatialBounds } from "../../../src";
 
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";

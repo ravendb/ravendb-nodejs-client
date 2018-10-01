@@ -13,6 +13,7 @@ describe("RavenDB_9676", function () {
     beforeEach(async function () {
         store = await testContext.getDocumentStore();
     });
+
     class Item {
         public name: string;
         public latitude: number;

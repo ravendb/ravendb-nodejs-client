@@ -1,5 +1,4 @@
 import { StreamResult } from "../Commands/StreamResult";
-import * as stream from "readable-stream";
 import { TypedEventEmitter } from "../../Primitives/Events";
 import { StreamQueryStatistics } from "./StreamQueryStatistics";
 

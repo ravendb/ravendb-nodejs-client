@@ -1,14 +1,13 @@
-
 import * as assert from "assert";
-import {disposeTestDocumentStore, testContext} from "../../Utils/TestUtil";
+import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
 
 import {
     IDocumentStore, IndexDefinition, PutIndexesOperation,
 } from "../../../src";
-import {Camera, FacetTestContext} from "../../Utils/FacetTestContext";
-import {FacetOptions} from "../../../src/Documents/Queries/Facets";
-import {Facet} from "../../../src/Documents/Queries/Facets/Facet";
-import {FacetSetup} from "../../../src/Documents/Queries/Facets/FacetSetup";
+import { Camera, FacetTestContext } from "../../Utils/FacetTestContext";
+import { FacetOptions } from "../../../src/Documents/Queries/Facets";
+import { Facet } from "../../../src/Documents/Queries/Facets/Facet";
+import { FacetSetup } from "../../../src/Documents/Queries/Facets/FacetSetup";
 import * as orderBy from "lodash.orderby";
 
 describe("FacetPagingTest", function () {

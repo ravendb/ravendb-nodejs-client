@@ -12,7 +12,7 @@ describe("Query with includes", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it.skip("TODO");

@@ -15,7 +15,7 @@ describe("DeleteDocumentCommand", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("can delete document", async () => {

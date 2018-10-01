@@ -1,5 +1,5 @@
 import * as sinon from "sinon";
-import {User, GeekPerson} from "../Assets/Entities";
+import { User, GeekPerson } from "../Assets/Entities";
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
@@ -16,14 +16,14 @@ describe("LoadTest - ported", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("load() can use cache", async () => {
 
-        let cacheGetSpy = 
+        let cacheGetSpy =
             store.getRequestExecutor().cache.get = sinon.spy(store.getRequestExecutor().cache, "get");
-        let cacheSetSpy = 
+        let cacheSetSpy =
             store.getRequestExecutor().cache.set = sinon.spy(store.getRequestExecutor().cache, "set");
 
         {
@@ -49,8 +49,8 @@ describe("LoadTest - ported", function () {
         }
 
         const cacheReads = cacheGetSpy.getCalls();
-        const docReads = cacheReads.filter(x => 
-                x.args[0] === store.urls[0] + `/databases/${store.database}/docs?&id=users%2F1`);
+        const docReads = cacheReads.filter(x =>
+            x.args[0] === store.urls[0] + `/databases/${store.database}/docs?&id=users%2F1`);
 
         assert.strictEqual(docReads.length, 2);
         assert.ok((docReads[1].returnValue as ReleaseCacheItem).item);
@@ -68,7 +68,7 @@ describe("LoadTest - ported", function () {
             await session.store(user, "users/1");
             await session.saveChanges();
         }
-        
+
         {
             const session = store.openSession();
             const user = await session.load<User>("users/1");
@@ -90,7 +90,7 @@ describe("LoadTest - ported", function () {
 
         {
             const session = store.openSession();
-            const users = await session.load([ "users/1", "users/2" ]);
+            const users = await session.load(["users/1", "users/2"]);
             assert.strictEqual(Object.keys(users).length, 2);
         }
     });

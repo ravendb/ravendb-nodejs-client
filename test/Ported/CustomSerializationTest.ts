@@ -1,8 +1,8 @@
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
-import {IDocumentStore} from "../../src";
-import {GetDocumentsCommand} from "../../src/Documents/Commands/GetDocumentsCommand";
+import { IDocumentStore } from "../../src";
+import { GetDocumentsCommand } from "../../src/Documents/Commands/GetDocumentsCommand";
 
 // TBD 4.1 RDBC-232
 describe.skip("CustomSerializationTest", function () {

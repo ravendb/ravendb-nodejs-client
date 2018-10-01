@@ -4,9 +4,9 @@ import {
     IndexDefinition,
     PutIndexesOperation,
 } from "../../src/index";
-import {FacetBase} from "../../src/Documents/Queries/Facets/FacetBase";
-import {Facet} from "../../src/Documents/Queries/Facets/Facet";
-import {RangeFacet} from "../../src/Documents/Queries/Facets/RangeFacet";
+import { FacetBase } from "../../src/Documents/Queries/Facets/FacetBase";
+import { Facet } from "../../src/Documents/Queries/Facets/Facet";
+import { RangeFacet } from "../../src/Documents/Queries/Facets/RangeFacet";
 
 export class FacetTestContext {
     public async createCameraCostIndex(store: IDocumentStore) {

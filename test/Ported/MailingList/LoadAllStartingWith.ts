@@ -1,7 +1,7 @@
 import * as assert from "assert";
-import {EntitiesCollectionObject, IDocumentStore} from "../../../src";
-import {disposeTestDocumentStore, testContext} from "../../Utils/TestUtil";
-import {Lazy} from "../../../src/Documents/Lazy";
+import { EntitiesCollectionObject, IDocumentStore } from "../../../src";
+import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
+import { Lazy } from "../../../src/Documents/Lazy";
 
 export class Abc {
     public id: string;
@@ -41,11 +41,11 @@ describe("LoadAllStartingWith", function () {
             const testClassesLazy: Lazy<EntitiesCollectionObject<Abc>> =
                 session.advanced.lazily.loadStartingWith<Abc>("abc/");
             const test2Classes: Xyz[] = await session.query<Xyz>({
-                collection: store.conventions.getCollectionNameForType(Xyz) 
+                collection: store.conventions.getCollectionNameForType(Xyz)
             })
-            .waitForNonStaleResults()
-            .lazily()
-            .getValue();
+                .waitForNonStaleResults()
+                .lazily()
+                .getValue();
 
             const testClasses = await testClassesLazy.getValue();
 
