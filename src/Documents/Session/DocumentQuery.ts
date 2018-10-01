@@ -540,7 +540,7 @@ export class DocumentQuery<T extends object>
         ...facets: Facet[]): IAggregationDocumentQuery<T> {
         
         if (TypeUtil.isNullOrUndefined(facetOrFacetBuilder)) {
-            throwError("InvalidArgumentException", "Aggr"); //TODO: update message!
+            throwError("InvalidArgumentException", "Facet or facet builder cannot be null.");
         }
 
         const argType = typeof facetOrFacetBuilder;

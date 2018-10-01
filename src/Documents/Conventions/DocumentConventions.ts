@@ -420,8 +420,6 @@ export class DocumentConventions {
      * @return document id
      */
     public generateDocumentId(database: string, entity: object): Promise<string> {
-        const entityTypeDescriptor: ObjectTypeDescriptor = this.getEntityTypeDescriptor(entity); //TODO: this variable is unused!
-
         for (const [typeDescriptor, idConvention] of this._registeredIdConventions) {
             if (TypeUtil.isType(entity, typeDescriptor)) {
                 return Promise.resolve(idConvention(database, entity));

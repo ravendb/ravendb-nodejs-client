@@ -43,23 +43,6 @@ export class ExplainQueryCommand extends RavenCommand<ExplainQueryResult[]> {
         };
     }
 
-    public setResponse(response: string, fromCache: boolean): void { //TODO: do we need this method?
-        if (!response) {
-            this.result = null;
-            return;
-        }
-
-        const data = this._serializer.deserialize(response);
-        const results = data["results"] as ExplainQueryResult[];
-        
-        if (!results) {
-            this._throwInvalidResponse();
-            return;
-        }
-
-        this.result = results;
-    }
-
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         if (!bodyStream) {
             this.result = null;
