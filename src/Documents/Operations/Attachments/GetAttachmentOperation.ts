@@ -105,7 +105,7 @@ export class GetAttachmentCommand extends RavenCommand<AttachmentResult> {
         this.result = new AttachmentResult(bodyStream, details, response);
         return "Manually";
     }
-    
+
     public get isReadRequest() {
         return true;
     }

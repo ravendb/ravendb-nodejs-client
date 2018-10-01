@@ -3,26 +3,26 @@ import * as stream from "readable-stream";
 export interface CollectResultStreamOptions<TResult> {
     reduceResults: (
         result: TResult,
-        next: object, 
+        next: object,
         index?: number) => TResult;
     initResult?: TResult;
 }
 
-export function lastValue(_: object, chunk: object) { 
-    return chunk["value"]; 
+export function lastValue(_: object, chunk: object) {
+    return chunk["value"];
 }
 
-export function lastChunk(_: object, chunk: object) { 
-    return chunk; 
+export function lastChunk(_: object, chunk: object) {
+    return chunk;
 }
 
 export class CollectResultStream<TResult = object> extends stream.Writable {
 
     private _resultIndex = 0;
-    private _result: TResult; 
+    private _result: TResult;
     private readonly _reduceResults: (
-        result: TResult, 
-        next: object, 
+        result: TResult,
+        next: object,
         index?: number) => TResult;
 
     private _resultPromise = new Promise((resolve, reject) => {
@@ -49,8 +49,8 @@ export class CollectResultStream<TResult = object> extends stream.Writable {
     public static collectArray<TItem>(handleEmitPath?: boolean): CollectResultStreamOptions<TItem[]> {
         return {
             initResult: [] as TItem[],
-            reduceResults: (result: TItem[], n: object) => 
-                [ ...result, handleEmitPath ? (n as any).value : n ]
+            reduceResults: (result: TItem[], n: object) =>
+                [...result, handleEmitPath ? (n as any).value : n]
         };
     }
 

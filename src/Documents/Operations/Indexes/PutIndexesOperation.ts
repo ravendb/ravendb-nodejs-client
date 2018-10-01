@@ -1,4 +1,4 @@
-import {JsonSerializer} from "../../../Mapping/Json/Serializer";
+import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 import { IMaintenanceOperation } from "../OperationAbstractions";
 import { IndexDefinition } from "../../Indexes/IndexDefinition";
 import { throwError } from "../../../Exceptions";
@@ -75,7 +75,7 @@ export class PutIndexesCommand extends RavenCommand<PutIndexResult[]> {
 
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/admin/indexes";
-        
+
         const body = this._serializer
             .serialize({ Indexes: this._indexToAdd });
 

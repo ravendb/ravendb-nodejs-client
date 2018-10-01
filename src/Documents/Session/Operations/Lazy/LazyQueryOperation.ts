@@ -19,7 +19,7 @@ export class LazyQueryOperation<T extends object> implements ILazyOperation {
     public constructor(
         conventions: DocumentConventions,
         queryOperation: QueryOperation,
-        parent: QueryEventsEmitter, 
+        parent: QueryEventsEmitter,
         clazz: ObjectTypeDescriptor<T>) {
 
         this._clazz = clazz;

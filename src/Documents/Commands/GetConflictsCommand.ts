@@ -1,4 +1,4 @@
-import {HttpRequestParameters} from "../../Primitives/Http";
+import { HttpRequestParameters } from "../../Primitives/Http";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { GetConflictsResult } from "./GetConflictsResult";
 import { ServerNode } from "../../Http/ServerNode";
@@ -18,7 +18,7 @@ export class GetConflictsCommand extends RavenCommand<GetConflictsResult> {
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
-        const uri = node.url + "/databases/" + node.database 
+        const uri = node.url + "/databases/" + node.database
             + "/replication/conflicts?docId=" + encodeURIComponent(this._id);
         return {
             method: "GET",
@@ -40,7 +40,7 @@ export class GetConflictsCommand extends RavenCommand<GetConflictsResult> {
                     }
                 });
             });
-        
+
         return body;
     }
 }

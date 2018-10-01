@@ -32,7 +32,7 @@ export class DeleteIndexCommand extends RavenCommand<void> {
         super();
 
         this._responseType = "Empty";
-        
+
         if (!indexName) {
             throwError("InvalidArgumentException", "Index name cannot be null.");
         }

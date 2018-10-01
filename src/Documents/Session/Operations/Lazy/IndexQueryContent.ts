@@ -1,4 +1,3 @@
-
 //TODO: do we need this? public class IndexQueryContent implements GetRequest.IContent {
 //     private final DocumentConventions _conventions;
 //     private final IndexQuery _query;

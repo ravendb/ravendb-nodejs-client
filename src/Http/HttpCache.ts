@@ -6,8 +6,9 @@ export interface CachedItemMetadata {
     changeVector: string;
     response: string;
 }
+
 export class HttpCache implements IDisposable {
-    
+
     private _items: Cache;
 
     constructor(maxKeysSize: number = 500) {
@@ -28,10 +29,10 @@ export class HttpCache implements IDisposable {
         httpCacheItem.cache = this;
 
         this._items.set(url, httpCacheItem);
-    } 
+    }
 
     public get<TResult>(
-        url: string, 
+        url: string,
         itemInfoCallback?: ({ changeVector, response }: CachedItemMetadata) => void): ReleaseCacheItem {
         const item: HttpCacheItem = this._items.get(url);
         if (item) {
@@ -90,7 +91,7 @@ export class ReleaseCacheItem {
     // returns millis
     public get age(): number {
         if (!this.item) {
-            return Number.MAX_VALUE; 
+            return Number.MAX_VALUE;
         }
 
         return new Date().valueOf() - this.item.lastServerUpdate.valueOf();

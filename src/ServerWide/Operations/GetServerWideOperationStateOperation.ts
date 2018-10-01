@@ -1,4 +1,4 @@
-import {HttpRequestParameters} from "../../Primitives/Http";
+import { HttpRequestParameters } from "../../Primitives/Http";
 import { IServerOperation, OperationResultType } from "../../Documents/Operations/OperationAbstractions";
 import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
 import { DocumentConventions } from "../..";
@@ -10,6 +10,7 @@ export class GetServerWideOperationStateOperation implements IServerOperation<IR
     public get resultType(): OperationResultType {
         return "CommandResult";
     }
+
     private readonly _id: number;
 
     public constructor(id: number) {

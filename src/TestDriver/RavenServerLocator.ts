@@ -8,11 +8,11 @@ export abstract class RavenServerLocator {
     public getServerPath(): string {
         const serverPath = process.env[RavenServerLocator.ENV_SERVER_PATH];
         if (!serverPath) {
-            throwError("InvalidOperationException", 
-                "Unable to find RavenDB server path. Please make sure " 
-                    + RavenServerLocator.ENV_SERVER_PATH 
-                    + " environment variable is set and is valid " +
-                    "(current value = " + serverPath + ")");
+            throwError("InvalidOperationException",
+                "Unable to find RavenDB server path. Please make sure "
+                + RavenServerLocator.ENV_SERVER_PATH
+                + " environment variable is set and is valid " +
+                "(current value = " + serverPath + ")");
         }
 
         return serverPath;

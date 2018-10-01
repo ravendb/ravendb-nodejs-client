@@ -1,4 +1,4 @@
-import {ServerNode} from "./ServerNode";
+import { ServerNode } from "./ServerNode";
 
 export class Topology {
     public etag: number = 0;

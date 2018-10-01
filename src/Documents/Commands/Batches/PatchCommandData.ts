@@ -1,7 +1,7 @@
-import {CommandType, ICommandData} from "../CommandData";
-import {PatchRequest} from "../../Operations/PatchRequest";
-import {throwError} from "../../../Exceptions";
-import {DocumentConventions} from "../../..";
+import { CommandType, ICommandData } from "../CommandData";
+import { PatchRequest } from "../../Operations/PatchRequest";
+import { throwError } from "../../../Exceptions";
+import { DocumentConventions } from "../../..";
 
 export class PatchCommandData implements ICommandData {
     public id: string;

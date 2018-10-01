@@ -1,5 +1,5 @@
-import {IRavenObject} from "../Types/IRavenObject";
-import {UriUtility} from "../Http/UriUtility";
+import { IRavenObject } from "../Types/IRavenObject";
+import { UriUtility } from "../Http/UriUtility";
 
 export type ServerNodeRole = "None" | "Promotable" | "Member" | "Rehab";
 

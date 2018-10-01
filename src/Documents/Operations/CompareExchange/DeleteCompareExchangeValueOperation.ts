@@ -73,13 +73,13 @@ export class RemoveCompareExchangeCommand<T> extends RavenCommand<CompareExchang
         let body: string = null;
         const resultPromise = this._pipeline<object>()
             .collectBody(b => body = b)
-            .parseJsonAsync([ 
+            .parseJsonAsync([
                 pick({ filter: "Value.Object" }),
                 streamValues()
             ])
             .streamKeyCaseTransform({ defaultTransform: this._conventions.entityFieldNameConvention })
             .process(bodyStream);
-        
+
         const restPromise = this._pipeline<object>()
             .parseJsonAsync([
                 ignore({ filter: "Value" }),
@@ -87,13 +87,13 @@ export class RemoveCompareExchangeCommand<T> extends RavenCommand<CompareExchang
             ])
             .streamKeyCaseTransform("camel")
             .process(bodyStream);
-        
-        const [ result, rest ] = await Promise.all([resultPromise, restPromise]);
+
+        const [result, rest] = await Promise.all([resultPromise, restPromise]);
 
         const resObj = Object.assign(
             rest as { successful: boolean, index: number },
             { value: { object: result } });
-            
+
         this.result = CompareExchangeResult.parseFromObject(resObj, this._conventions, this._clazz);
 
         return body;

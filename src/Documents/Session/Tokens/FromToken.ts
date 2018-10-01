@@ -39,7 +39,7 @@ export class FromToken extends QueryToken {
         return new FromToken(indexName, collectionName, alias);
     }
 
-    private static WHITE_SPACE_CHARS: string[] = [ " ", "\t", "\r", "\n" ];
+    private static WHITE_SPACE_CHARS: string[] = [" ", "\t", "\r", "\n"];
 
     public writeTo(writer): void {
         if (!this._indexName && !this._collectionName) {
@@ -61,9 +61,9 @@ export class FromToken extends QueryToken {
 
         } else {
             writer
-                    .append("from index '")
-                    .append(this._indexName)
-                    .append("'");
+                .append("from index '")
+                .append(this._indexName)
+                .append("'");
         }
 
         if (this._alias) {
@@ -73,7 +73,7 @@ export class FromToken extends QueryToken {
 
     // tslint:disable-next-line:function-name
     private throwInvalidCollectionName(): void {
-        throwError("InvalidArgumentException", 
+        throwError("InvalidArgumentException",
             "Collection name cannot contain a quote, but was: " + this._collectionName);
     }
 }

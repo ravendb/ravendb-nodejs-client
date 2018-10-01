@@ -6,13 +6,14 @@ import { CONSTANTS } from "../../Constants";
 import { DocumentType } from "../DocumentAbstractions";
 import { TypeInfo } from "../../Mapping/ObjectMapper";
 import { Mapping } from "../../Mapping";
-import { ObjectTypeDescriptor} from "../..";
+import { ObjectTypeDescriptor } from "../..";
 import { throwError } from "../../Exceptions";
-import {SetupDocumentBase} from "../SetupDocumentBase";
+import { SetupDocumentBase } from "../SetupDocumentBase";
 
 export class EntityToJson {
 
     private readonly _session: InMemoryDocumentSessionOperations;
+
     /**
      * All the listeners for this session
      */
@@ -29,7 +30,7 @@ export class EntityToJson {
     public convertEntityToJson(entity: object, documentInfo: DocumentInfo): object {
         const { conventions } = this._session;
         const entityMapper = conventions.entityObjectMapper;
-        
+
         let typeInfo: TypeInfo;
         let jsonNode = entityMapper.toObjectLiteral(entity, (_typeInfo) => {
             typeInfo = _typeInfo;
@@ -75,7 +76,7 @@ export class EntityToJson {
             return;
         }
 
-        if (documentInfo.metadata) { 
+        if (documentInfo.metadata) {
             documentInfo.metadata[CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES] = typeInfo.nestedTypes;
             documentInfo.metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] = typeInfo.typeName;
         }
@@ -132,10 +133,10 @@ export class EntityToJson {
 
             const entityTypeInfoFromMetadata = EntityToJson._getEntityTypeInfoFromMetadata(document);
             if (documentTypeFromConventions) {
-                const passedEntityTypeIsAssignableFromConventionsDocType = 
+                const passedEntityTypeIsAssignableFromConventionsDocType =
                     entityType
                     && ((entityType.name === documentTypeFromConventions.name)
-                        || TypeUtil.isInstanceOf(entityType, documentTypeFromConventions));
+                    || TypeUtil.isInstanceOf(entityType, documentTypeFromConventions));
                 if (passedEntityTypeIsAssignableFromConventionsDocType) {
                     const mapper = conventions.entityObjectMapper;
                     entity = mapper.fromObjectLiteral(
@@ -147,10 +148,10 @@ export class EntityToJson {
                 const mapper = conventions.entityObjectMapper;
                 let passedTypeInfo = entityTypeInfoFromMetadata;
                 if (entityType) {
-                    passedTypeInfo = 
+                    passedTypeInfo =
                         Object.assign(passedTypeInfo, { typeName: entityType.name });
                 }
-                
+
                 entity = mapper.fromObjectLiteral(
                     document, passedTypeInfo);
             }
@@ -161,9 +162,9 @@ export class EntityToJson {
 
             return entity;
         } catch (err) {
-            throwError("InvalidOperationException", 
+            throwError("InvalidOperationException",
                 `Could not convert document ${id} to entity of type `
-                + `${entityType ? entityType.name : entityType}: ${err.stack}`, 
+                + `${entityType ? entityType.name : entityType}: ${err.stack}`,
                 err);
         }
     }
@@ -176,7 +177,7 @@ export class EntityToJson {
 
         return {
             typeName: metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE],
-            nestedTypes:  metadata[CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES]
+            nestedTypes: metadata[CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES]
         };
     }
 

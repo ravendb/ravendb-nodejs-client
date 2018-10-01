@@ -9,19 +9,19 @@ export class IdTypeAndName {
         if (this === o) {
             return true;
         }
-        
-        if (!o || this.constructor !== o.constructor) { 
-            return false; 
+
+        if (!o || this.constructor !== o.constructor) {
+            return false;
         }
 
         const that = o as IdTypeAndName;
 
         if (this.id ? this.id === that.id : !!that.id) {
-             return false;
+            return false;
         }
 
-        if (this.type !== that.type) { 
-            return false; 
+        if (this.type !== that.type) {
+            return false;
         }
 
         return this.name ? this.name === that.name : !!that.name;

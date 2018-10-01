@@ -12,7 +12,7 @@ export class DocumentsChanges {
             return true;
         }
 
-        if (!o || this.constructor !== o.constructor) { 
+        if (!o || this.constructor !== o.constructor) {
             return false;
         }
 
@@ -26,15 +26,15 @@ export class DocumentsChanges {
             return false;
         }
 
-        if (this.fieldOldType !== that.fieldOldType) { 
+        if (this.fieldOldType !== that.fieldOldType) {
             return false;
         }
 
-        if (this.fieldNewType !== that.fieldNewType) { 
+        if (this.fieldNewType !== that.fieldNewType) {
             return false;
         }
 
-        if (this.change !== that.change) { 
+        if (this.change !== that.change) {
             return false;
         }
 
@@ -44,13 +44,13 @@ export class DocumentsChanges {
 }
 
 export type ChangeType =
-        "DocumentDeleted"
-        | "DocumentAdded"
-        | "FieldChanged"
-        | "NewField"
-        | "RemovedField"
-        | "ArrayValueChanged"
-        | "ArrayValueAdded"
-        | "ArrayValueRemoved"
-        | "FieldTypeChanged"
-        | "EntityTypeChanged";
+    "DocumentDeleted"
+    | "DocumentAdded"
+    | "FieldChanged"
+    | "NewField"
+    | "RemovedField"
+    | "ArrayValueChanged"
+    | "ArrayValueAdded"
+    | "ArrayValueRemoved"
+    | "FieldTypeChanged"
+    | "EntityTypeChanged";

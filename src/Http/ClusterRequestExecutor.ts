@@ -1,17 +1,17 @@
-import {GetClusterTopologyCommand} from "../ServerWide/Commands/GetClusterTopologyCommand";
-import {NodeSelector} from "./NodeSelector";
+import { GetClusterTopologyCommand } from "../ServerWide/Commands/GetClusterTopologyCommand";
+import { NodeSelector } from "./NodeSelector";
 import * as os from "os";
 import * as BluebirdPromise from "bluebird";
 import * as semaphore from "semaphore";
 import { getLogger } from "../Utility/LogUtil";
-import {RequestExecutor, IRequestExecutorOptions} from "./RequestExecutor";
+import { RequestExecutor, IRequestExecutorOptions } from "./RequestExecutor";
 import { DocumentConventions } from "..";
 import { throwError } from "../Exceptions";
 import { ServerNode } from "./ServerNode";
 import { Topology } from "./Topology";
 import { GetTcpInfoCommand } from "../ServerWide/Commands/GetTcpInfoCommand";
 import { IAuthOptions } from "../Auth/AuthOptions";
-import { acquireSemaphore } from "../Utility/SemaphoreUtil"; 
+import { acquireSemaphore } from "../Utility/SemaphoreUtil";
 
 const log = getLogger({ module: "ClusterRequestExecutor" });
 
@@ -25,14 +25,14 @@ export class ClusterRequestExecutor extends RequestExecutor {
 
     public static createForSingleNodeWithConfigurationUpdates(
         url: string, databaseName: string, opts: IRequestExecutorOptions)
-            : ClusterRequestExecutor  {
-            return throwError("NotSupportedException");
+        : ClusterRequestExecutor {
+        return throwError("NotSupportedException");
     }
 
     public static createForSingleNodeWithoutConfigurationUpdates(
         url: string, databaseName: string, opts: IRequestExecutorOptions)
-            : ClusterRequestExecutor {
-            return throwError("NotSupportedException");
+        : ClusterRequestExecutor {
+        return throwError("NotSupportedException");
     }
 
     public static createForSingleNode(
@@ -41,8 +41,8 @@ export class ClusterRequestExecutor extends RequestExecutor {
         url: string, opts: IRequestExecutorOptions): ClusterRequestExecutor;
     public static createForSingleNode(
         url: string, opts: IRequestExecutorOptions): ClusterRequestExecutor {
-        const initialUrls = [ url ];
-        
+        const initialUrls = [url];
+
         const { authOptions, documentConventions } = opts;
         const urls = this._validateUrls(initialUrls, authOptions);
 
@@ -64,13 +64,13 @@ export class ClusterRequestExecutor extends RequestExecutor {
     }
 
     public static create(
-        initialUrls: string[], 
+        initialUrls: string[],
         database: string,
         opts?: IRequestExecutorOptions): ClusterRequestExecutor;
     public static create(
         initialUrls: string[], opts?: IRequestExecutorOptions): ClusterRequestExecutor;
     public static create(
-        initialUrls: string[], 
+        initialUrls: string[],
         databaseOrOpts?: string | IRequestExecutorOptions,
         opts?: IRequestExecutorOptions): ClusterRequestExecutor {
 
@@ -115,33 +115,33 @@ export class ClusterRequestExecutor extends RequestExecutor {
                     nodeIndex: null,
                     shouldRetry: false
                 })
-                .then(() => {
-                    const results = command.result;
-                    const members = results.topology.members;
-                    const nodes = Object.keys(members)
-                        .reduce((reduceResult, clusterTag) => {
-                            const url = members[clusterTag];
-                            const serverNode = new ServerNode({ clusterTag, url });
-                            return [ ...reduceResult, serverNode ];
-                        }, []);
+                    .then(() => {
+                        const results = command.result;
+                        const members = results.topology.members;
+                        const nodes = Object.keys(members)
+                            .reduce((reduceResult, clusterTag) => {
+                                const url = members[clusterTag];
+                                const serverNode = new ServerNode({ clusterTag, url });
+                                return [...reduceResult, serverNode];
+                            }, []);
 
-                    const newTopology = new Topology(0, nodes);
-                    if (!this._nodeSelector) {
-                        this._nodeSelector = new NodeSelector(newTopology);
+                        const newTopology = new Topology(0, nodes);
+                        if (!this._nodeSelector) {
+                            this._nodeSelector = new NodeSelector(newTopology);
 
-                        if (this._readBalanceBehavior === "FastestNode") {
-                            this._nodeSelector.scheduleSpeedTest();
+                            if (this._readBalanceBehavior === "FastestNode") {
+                                this._nodeSelector.scheduleSpeedTest();
+                            }
+
+                        } else if (this._nodeSelector.onUpdateTopology(newTopology, forceUpdate)) {
+                            this._disposeAllFailedNodesTimers();
+
+                            if (this._readBalanceBehavior === "FastestNode") {
+                                this._nodeSelector.scheduleSpeedTest();
+                            }
                         }
-
-                    } else if (this._nodeSelector.onUpdateTopology(newTopology, forceUpdate)) {
-                        this._disposeAllFailedNodesTimers();
-
-                        if (this._readBalanceBehavior === "FastestNode") {
-                            this._nodeSelector.scheduleSpeedTest();
-                        }
-                    }
-                })
-                .then(() => true);
+                    })
+                    .then(() => true);
 
             }, (reason: Error) => {
                 if (reason.name === "TimeoutError") {
@@ -151,7 +151,7 @@ export class ClusterRequestExecutor extends RequestExecutor {
                 throw reason;
             })
             .finally(() => acquiredSemContext.dispose());
-        
+
         return Promise.resolve(result);
     }
 
@@ -160,13 +160,14 @@ export class ClusterRequestExecutor extends RequestExecutor {
     }
 
     protected _throwExceptions(details: string): void {
-        throwError("InvalidOperationException", 
+        throwError("InvalidOperationException",
             "Failed to retrieve cluster topology from all known nodes" + os.EOL + details);
     }
 
     public dispose(): void {
         // tslint:disable-next-line:no-empty
-        this._clusterTopologySemaphore.take(() => {});
+        this._clusterTopologySemaphore.take(() => {
+        });
         super.dispose();
     }
 }

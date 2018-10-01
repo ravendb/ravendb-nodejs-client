@@ -46,7 +46,7 @@ export class NextIdentityForCommand extends RavenCommand<number> {
 
                 this.result = results["newIdentityValue"];
             });
-            
+
         return body;
     }
 }

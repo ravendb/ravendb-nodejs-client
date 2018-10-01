@@ -52,19 +52,33 @@ export { CompactDatabaseOperation } from "./Documents/Operations/CompactDatabase
 export { PutConnectionStringOperation } from "./Documents/Operations/ConnectionStrings/PutConnectionStringOperation";
 export { PatchOperation } from "./Documents/Operations/PatchOperation";
 export { PatchByQueryOperation } from "./Documents/Operations/PatchByQueryOperation";
-export { PutCompareExchangeValueOperation } 
+export {
+    PutCompareExchangeValueOperation
+}
     from "./Documents/Operations/CompareExchange/PutCompareExchangeValueOperation";
-export { GetCompareExchangeValueOperation } 
+export {
+    GetCompareExchangeValueOperation
+}
     from "./Documents/Operations/CompareExchange/GetCompareExchangeValueOperation";
-export { CompareExchangeResult } 
+export {
+    CompareExchangeResult
+}
     from "./Documents/Operations/CompareExchange/CompareExchangeResult";
-export { CompareExchangeValue } 
+export {
+    CompareExchangeValue
+}
     from "./Documents/Operations/CompareExchange/CompareExchangeValue";
-export { CompareExchangeValueResultParser } 
+export {
+    CompareExchangeValueResultParser
+}
     from "./Documents/Operations/CompareExchange/CompareExchangeValueResultParser";
-export { GetCompareExchangeValuesOperation, GetCompareExchangeValuesParameters } 
+export {
+    GetCompareExchangeValuesOperation, GetCompareExchangeValuesParameters
+}
     from "./Documents/Operations/CompareExchange/GetCompareExchangeValuesOperation";
-export { DeleteCompareExchangeValueOperation } 
+export {
+    DeleteCompareExchangeValueOperation
+}
     from "./Documents/Operations/CompareExchange/DeleteCompareExchangeValueOperation";
 export { DeleteByQueryOperation } from "./Documents/Operations/DeleteByQueryOperation";
 export { GetCollectionStatisticsOperation } from "./Documents/Operations/GetCollectionStatisticsOperation";
@@ -102,16 +116,18 @@ export { StopIndexOperation } from "./Documents/Operations/Indexes/StopIndexOper
 export { StartIndexOperation } from "./Documents/Operations/Indexes/StartIndexOperation";
 export { ResetIndexOperation } from "./Documents/Operations/Indexes/ResetIndexOperation";
 export { DeleteIndexOperation } from "./Documents/Operations/Indexes/DeleteIndexOperation";
-export { UpdateExternalReplicationOperation } 
+export {
+    UpdateExternalReplicationOperation
+}
     from "./Documents/Operations/Replication/UpdateExternalReplicationOperation";
 export { GetConflictsCommand } from "./Documents/Commands/GetConflictsCommand";
-export { 
-    SetIndexesLockOperation, 
-    SetIndexesLockOperationParameters 
+export {
+    SetIndexesLockOperation,
+    SetIndexesLockOperationParameters
 } from "./Documents/Operations/Indexes/SetIndexesLockOperation";
 export {
-    SetIndexesPriorityOperation, 
-    SetIndexesPriorityOperationParameters 
+    SetIndexesPriorityOperation,
+    SetIndexesPriorityOperationParameters
 } from "./Documents/Operations/Indexes/SetIndexesPriorityOperation";
 
 // INDEXES
@@ -215,7 +231,9 @@ export * from "./Documents/Identity/HiloMultiDatabaseIdGenerator";
 export { TypesAwareObjectMapper } from "./Mapping/ObjectMapper";
 export { Mapping } from "./Mapping";
 import * as Json from "./Mapping/Json";
+
 export { Json };
 
 import { DocumentStore } from "./Documents/DocumentStore";
+
 export default DocumentStore;

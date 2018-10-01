@@ -33,7 +33,7 @@ export class GetCollectionStatisticsCommand extends RavenCommand<CollectionStati
         const uri = node.url + "/databases/" + node.database + "/collections/stats";
         return { uri };
     }
-    
+
     protected get _serializer(): JsonSerializer {
         return JsonSerializer.getDefault();
     }
@@ -48,7 +48,7 @@ export class GetCollectionStatisticsCommand extends RavenCommand<CollectionStati
             .collectBody()
             .streamKeyCaseTransform({
                 defaultTransform: "camel",
-                ignorePaths: [ /^collections\./i ]
+                ignorePaths: [/^collections\./i]
             })
             .process(bodyStream);
         return body;

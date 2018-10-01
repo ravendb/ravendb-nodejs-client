@@ -36,7 +36,7 @@ export class SeedIdentityForCommand extends RavenCommand<number> {
         }
         return {
             method: "POST",
-            uri    
+            uri
         };
     }
 
@@ -55,7 +55,7 @@ export class SeedIdentityForCommand extends RavenCommand<number> {
 
                 this.result = newSeedValue;
             });
-            
+
         return body;
     }
 }

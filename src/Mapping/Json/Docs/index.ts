@@ -1,4 +1,3 @@
-
 export function getIgnoreKeyCaseTransformKeysFromDocumentMetadata(metadata: object): string[] {
     const nestedTypes = metadata["@nested-object-types"] as { [path: string]: string };
     if (typeof nestedTypes !== "object") {

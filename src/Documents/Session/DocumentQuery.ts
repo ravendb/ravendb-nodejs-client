@@ -28,45 +28,45 @@ import { Facet } from "../Queries/Facets/Facet";
 import { FacetBase } from "../Queries/Facets/FacetBase";
 import { FacetBuilder } from "../Queries/Facets/FacetBuilder";
 import { AggregationDocumentQuery } from "../Queries/Facets/AggregationDocumentQuery";
-import {MoreLikeThisBase} from "../Queries/MoreLikeThis/MoreLikeThisBase";
-import {IMoreLikeThisBuilderForDocumentQuery} from "../Queries/MoreLikeThis/IMoreLikeThisBuilderForDocumentQuery";
-import {MoreLikeThisUsingDocument} from "../Queries/MoreLikeThis/MoreLikeThisUsingDocument";
-import {MoreLikeThisBuilder} from "../Queries/MoreLikeThis/MoreLikeThisBuilder";
+import { MoreLikeThisBase } from "../Queries/MoreLikeThis/MoreLikeThisBase";
+import { IMoreLikeThisBuilderForDocumentQuery } from "../Queries/MoreLikeThis/IMoreLikeThisBuilderForDocumentQuery";
+import { MoreLikeThisUsingDocument } from "../Queries/MoreLikeThis/MoreLikeThisUsingDocument";
+import { MoreLikeThisBuilder } from "../Queries/MoreLikeThis/MoreLikeThisBuilder";
 import {
     MoreLikeThisUsingDocumentForDocumentQuery
 } from "../Queries/MoreLikeThis/MoreLikeThisUsingDocumentForDocumentQuery";
-import {SuggestionBase} from "../Queries/Suggestions/SuggestionBase";
-import {ISuggestionDocumentQuery} from "../Queries/Suggestions/ISuggestionDocumentQuery";
-import {ISuggestionBuilder} from "../Queries/Suggestions/ISuggestionBuilder";
-import {SuggestionDocumentQuery} from "../Queries/Suggestions/SuggestionDocumentQuery";
-import {SuggestionBuilder} from "../Queries/Suggestions/SuggestionBuilder";
+import { SuggestionBase } from "../Queries/Suggestions/SuggestionBase";
+import { ISuggestionDocumentQuery } from "../Queries/Suggestions/ISuggestionDocumentQuery";
+import { ISuggestionBuilder } from "../Queries/Suggestions/ISuggestionBuilder";
+import { SuggestionDocumentQuery } from "../Queries/Suggestions/SuggestionDocumentQuery";
+import { SuggestionBuilder } from "../Queries/Suggestions/SuggestionBuilder";
 
-export class DocumentQuery<T extends object> 
+export class DocumentQuery<T extends object>
     extends AbstractDocumentQuery<T, DocumentQuery<T>> implements IDocumentQuery<T> {
 
     public constructor(
-        documentType: DocumentType<T>, 
-        session: InMemoryDocumentSessionOperations, 
-        indexName: string, 
-        collectionName: string, 
+        documentType: DocumentType<T>,
+        session: InMemoryDocumentSessionOperations,
+        indexName: string,
+        collectionName: string,
         isGroupBy: boolean);
     public constructor(
-        documentType: DocumentType<T>, 
-        session: InMemoryDocumentSessionOperations, 
-        indexName: string, 
-        collectionName: string, 
+        documentType: DocumentType<T>,
+        session: InMemoryDocumentSessionOperations,
+        indexName: string,
+        collectionName: string,
         isGroupBy: boolean,
-        declareToken: DeclareToken, 
-        loadTokens: LoadToken[], 
+        declareToken: DeclareToken,
+        loadTokens: LoadToken[],
         fromAlias: string);
     public constructor(
-        documentType: DocumentType<T>, 
-        session: InMemoryDocumentSessionOperations, 
-        indexName: string, 
-        collectionName: string, 
+        documentType: DocumentType<T>,
+        session: InMemoryDocumentSessionOperations,
+        indexName: string,
+        collectionName: string,
         isGroupBy: boolean,
-        declareToken?: DeclareToken, 
-        loadTokens?: LoadToken[], 
+        declareToken?: DeclareToken,
+        loadTokens?: LoadToken[],
         fromAlias?: string) {
         super(documentType, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, fromAlias);
     }
@@ -85,32 +85,32 @@ export class DocumentQuery<T extends object>
         queryData: QueryData,
         projectionType: DocumentType<TProjection>): IDocumentQuery<TProjection>;
     public selectFields<TProjection extends object>(
-        property: string, 
+        property: string,
         projectionType: DocumentType<TProjection>): IDocumentQuery<TProjection>;
     public selectFields<TProjection extends object>(
-        properties: string[], 
+        properties: string[],
         projectionType: DocumentType<TProjection>): IDocumentQuery<TProjection>;
     public selectFields<TProjection extends object>(
-        propertiesOrQueryData: string | string[] | QueryData, 
+        propertiesOrQueryData: string | string[] | QueryData,
         projectionType?: DocumentType<TProjection>): IDocumentQuery<TProjection> {
+        if (projectionType) {
+            this._theSession.conventions.tryRegisterEntityType(projectionType);
+        }
+
+        if (TypeUtil.isString(propertiesOrQueryData)) {
+            propertiesOrQueryData = [propertiesOrQueryData as string];
+        }
+
+        if (Array.isArray(propertiesOrQueryData)) {
             if (projectionType) {
-                this._theSession.conventions.tryRegisterEntityType(projectionType);
+                return this._selectFieldsByProjectionType(propertiesOrQueryData, projectionType);
             }
 
-            if (TypeUtil.isString(propertiesOrQueryData)) {
-                propertiesOrQueryData = [ propertiesOrQueryData as string ];
-            }
-
-            if (Array.isArray(propertiesOrQueryData)) {
-                if (projectionType) {
-                    return this._selectFieldsByProjectionType(propertiesOrQueryData, projectionType);
-                }
-
-                const queryData = new QueryData(propertiesOrQueryData, propertiesOrQueryData);
-                return this.selectFields(queryData, projectionType);
-            } else {
-                return this._createDocumentQueryInternal(projectionType, propertiesOrQueryData as QueryData);
-            }
+            const queryData = new QueryData(propertiesOrQueryData, propertiesOrQueryData);
+            return this.selectFields(queryData, projectionType);
+        } else {
+            return this._createDocumentQueryInternal(projectionType, propertiesOrQueryData as QueryData);
+        }
     }
 
     private _selectFieldsByProjectionType<TProjection extends object>(
@@ -125,7 +125,7 @@ export class DocumentQuery<T extends object>
 
             return this.selectFields(new QueryData(fields, projections), projectionType);
         } catch (err) {
-            throwError("RavenException", 
+            throwError("RavenException",
                 "Unable to project to type: " + projectionType, err);
         }
     }
@@ -161,7 +161,7 @@ export class DocumentQuery<T extends object>
 
     public addOrder(fieldName: string, descending: boolean): IDocumentQuery<T>;
     public addOrder(fieldName: string, descending: boolean, ordering: OrderingType): IDocumentQuery<T>;
-    public addOrder(fieldName: string, descending: boolean, ordering: OrderingType = "String"): IDocumentQuery<T>  {
+    public addOrder(fieldName: string, descending: boolean, ordering: OrderingType = "String"): IDocumentQuery<T> {
         if (descending) {
             this.orderByDescending(fieldName, ordering);
         } else {
@@ -338,8 +338,8 @@ export class DocumentQuery<T extends object>
     // tslint:disable-next-line:max-line-length
     // TBD public IDocumentQuery<T> WhereBetween<TValue>(Expression<Func<T, TValue>> propertySelector, TValue start, TValue end, bool exact = false)
 
-    public whereGreaterThanOrEqual(fieldName: string, value: any): IDocumentQuery<T>; 
-    public whereGreaterThanOrEqual(fieldName: string, value: any, exact: boolean): IDocumentQuery<T>; 
+    public whereGreaterThanOrEqual(fieldName: string, value: any): IDocumentQuery<T>;
+    public whereGreaterThanOrEqual(fieldName: string, value: any, exact: boolean): IDocumentQuery<T>;
     public whereGreaterThanOrEqual(...args: any[]): IDocumentQuery<T> {
         (this._whereGreaterThanOrEqual as any)(...args);
         return this;
@@ -430,7 +430,7 @@ export class DocumentQuery<T extends object>
         if (tResultClass) {
             this._theSession.conventions.tryRegisterEntityType(tResultClass);
         }
-        
+
         return this._createDocumentQueryInternal(tResultClass);
     }
 
@@ -453,14 +453,14 @@ export class DocumentQuery<T extends object>
     // TBD expr public IDocumentQuery<T> OrderByDescending<TValue>(
     //      params Expression<Func<T, TValue>>[] propertySelectors)
 
-    private  _createDocumentQueryInternal<TResult extends object>(
+    private _createDocumentQueryInternal<TResult extends object>(
         resultClass: DocumentType<TResult>): DocumentQuery<TResult>;
-    private  _createDocumentQueryInternal<TResult extends object>(
+    private _createDocumentQueryInternal<TResult extends object>(
         resultClass: DocumentType<TResult>, queryData: QueryData): DocumentQuery<TResult>;
-    private  _createDocumentQueryInternal<TResult extends object>(
+    private _createDocumentQueryInternal<TResult extends object>(
         resultClass: DocumentType<TResult>, queryData?: QueryData): DocumentQuery<TResult> {
         let newFieldsToFetch: FieldsToFetchToken;
-        
+
         if (queryData && queryData.fields.length > 0) {
             let { fields } = queryData;
             const identityProperty = this.conventions.getIdentityProperty(resultClass);
@@ -507,7 +507,7 @@ export class DocumentQuery<T extends object>
         query._negate = this._negate;
         //noinspection unchecked
         query._includes = new Set(this._includes);
-        query._rootTypes = new Set([ this._clazz ]);
+        query._rootTypes = new Set([this._clazz]);
 
         for (const listener of query.listeners("beforeQuery")) {
             query.on("beforeQuery", listener as any);
@@ -536,9 +536,9 @@ export class DocumentQuery<T extends object>
     public aggregateBy(facet: FacetBase): IAggregationDocumentQuery<T>;
     public aggregateBy(...facets: Facet[]): IAggregationDocumentQuery<T>;
     public aggregateBy(
-        facetOrFacetBuilder: Facet | FacetBase | ((facetBuilder: IFacetBuilder<T>) => void), 
+        facetOrFacetBuilder: Facet | FacetBase | ((facetBuilder: IFacetBuilder<T>) => void),
         ...facets: Facet[]): IAggregationDocumentQuery<T> {
-        
+
         if (TypeUtil.isNullOrUndefined(facetOrFacetBuilder)) {
             throwError("InvalidArgumentException", "Facet or facet builder cannot be null.");
         }
@@ -550,7 +550,7 @@ export class DocumentQuery<T extends object>
             return this.aggregateBy(ff.getFacet());
         }
 
-        for (const facet of [ facetOrFacetBuilder as FacetBase, ...facets ]) {
+        for (const facet of [facetOrFacetBuilder as FacetBase, ...facets]) {
             this._aggregateBy(facet);
         }
 
@@ -575,13 +575,13 @@ export class DocumentQuery<T extends object>
     // tslint:enable:max-line-length
 
     public spatial(
-        fieldName: string, 
+        fieldName: string,
         clause: (factory: SpatialCriteriaFactory) => SpatialCriteria): IDocumentQuery<T>;
     public spatial(
-        field: DynamicSpatialField, 
+        field: DynamicSpatialField,
         clause: (factory: SpatialCriteriaFactory) => SpatialCriteria): IDocumentQuery<T>;
     public spatial(
-        fieldNameOrField: string | DynamicSpatialField, 
+        fieldNameOrField: string | DynamicSpatialField,
         clause: (factory: SpatialCriteriaFactory) => SpatialCriteria): IDocumentQuery<T> {
         const criteria = clause(SpatialCriteriaFactory.INSTANCE);
         this._spatial(fieldNameOrField as any, criteria);
@@ -602,34 +602,34 @@ export class DocumentQuery<T extends object>
      * Filter matches to be inside the specified radius
      */
     public withinRadiusOf(
-        fieldName: string, 
-        radius: number, 
-        latitude: number, 
-        longitude: number, 
+        fieldName: string,
+        radius: number,
+        latitude: number,
+        longitude: number,
         radiusUnits: SpatialUnits): IDocumentQuery<T>;
     /**
      * Filter matches to be inside the specified radius
      */
     public withinRadiusOf(
-        fieldName: string, 
-        radius: number, 
-        latitude: number, 
-        longitude: number, 
-        radiusUnits: SpatialUnits, 
+        fieldName: string,
+        radius: number,
+        latitude: number,
+        longitude: number,
+        radiusUnits: SpatialUnits,
         distanceErrorPct: number): IDocumentQuery<T>;
     /**
      * Filter matches to be inside the specified radius
      */
     public withinRadiusOf(
-        fieldName: string, 
-        radius: number, 
-        latitude: number, 
-        longitude: number, 
-        radiusUnits: SpatialUnits = null, 
+        fieldName: string,
+        radius: number,
+        latitude: number,
+        longitude: number,
+        radiusUnits: SpatialUnits = null,
         distanceErrorPct: number = CONSTANTS.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT): IDocumentQuery<T> {
-            this._withinRadiusOf(fieldName, radius, latitude, longitude, radiusUnits, distanceErrorPct);
-            return this;
-        }
+        this._withinRadiusOf(fieldName, radius, latitude, longitude, radiusUnits, distanceErrorPct);
+        return this;
+    }
 
     // tslint:disable-next-line:max-line-length
     // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.RelatesToShape<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt, SpatialRelation relation, double distanceErrorPct)
@@ -639,9 +639,9 @@ export class DocumentQuery<T extends object>
     public relatesToShape(
         fieldName: string, shapeWkt: string, relation: SpatialRelation, distanceErrorPct: number): IDocumentQuery<T>;
     public relatesToShape(
-        fieldName: string, 
-        shapeWkt: string, 
-        relation: SpatialRelation, 
+        fieldName: string,
+        shapeWkt: string,
+        relation: SpatialRelation,
         distanceErrorPct: number = CONSTANTS.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT): IDocumentQuery<T> {
         this._spatialByShapeWkt(fieldName, shapeWkt, relation, distanceErrorPct);
         return this;
@@ -683,7 +683,7 @@ export class DocumentQuery<T extends object>
     public moreLikeThis(
         moreLikeThisBaseOrBuilder:
             MoreLikeThisBase
-                | ((moreLikeThisBuilder: IMoreLikeThisBuilderForDocumentQuery<T>) => void)): IDocumentQuery<T> {
+            | ((moreLikeThisBuilder: IMoreLikeThisBuilderForDocumentQuery<T>) => void)): IDocumentQuery<T> {
         if (moreLikeThisBaseOrBuilder instanceof MoreLikeThisBase) {
             const mlt = this._moreLikeThis();
 
@@ -708,7 +708,7 @@ export class DocumentQuery<T extends object>
 
                 if (innerMoreLikeThis instanceof MoreLikeThisUsingDocument) {
                     moreLikeThis.withDocument(innerMoreLikeThis.documentJson);
-                } else if (innerMoreLikeThis instanceof  MoreLikeThisUsingDocumentForDocumentQuery) {
+                } else if (innerMoreLikeThis instanceof MoreLikeThisUsingDocumentForDocumentQuery) {
                     innerMoreLikeThis.forDocumentQuery(this);
                 }
             } finally {
@@ -723,7 +723,7 @@ export class DocumentQuery<T extends object>
     public suggestUsing(action: (builder: ISuggestionBuilder<T>) => void): ISuggestionDocumentQuery<T>;
     public suggestUsing(suggestBaseOrBuilder:
                             SuggestionBase
-                                | ((builder: ISuggestionBuilder<T>) => void)): ISuggestionDocumentQuery<T> {
+                            | ((builder: ISuggestionBuilder<T>) => void)): ISuggestionDocumentQuery<T> {
 
         if (suggestBaseOrBuilder instanceof SuggestionBase) {
             this._suggestUsing(suggestBaseOrBuilder);

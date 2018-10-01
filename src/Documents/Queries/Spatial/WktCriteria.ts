@@ -10,7 +10,7 @@ export class WktCriteria extends SpatialCriteria {
         this._shapeWkt = shapeWkt;
     }
 
-    protected _getShapeToken(addQueryParameter: (o: any) => string): ShapeToken  {
+    protected _getShapeToken(addQueryParameter: (o: any) => string): ShapeToken {
         return ShapeToken.wkt(addQueryParameter(this._shapeWkt));
     }
 }

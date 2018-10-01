@@ -1,13 +1,12 @@
-
 export const CONSTANTS = {
     Documents: {
         Indexing: {
             Fields: {
-                 ALL_FIELDS: "__all_fields",
-                 DOCUMENT_ID_FIELD_NAME: "id()",
-                 REDUCE_KEY_HASH_FIELD_NAME: "hash(key())",
-                 REDUCE_KEY_KEY_VALUE_FIELD_NAME: "key()",
-                 SPATIAL_SHAPE_FIELD_NAME: "spatial(shape)",
+                ALL_FIELDS: "__all_fields",
+                DOCUMENT_ID_FIELD_NAME: "id()",
+                REDUCE_KEY_HASH_FIELD_NAME: "hash(key())",
+                REDUCE_KEY_KEY_VALUE_FIELD_NAME: "key()",
+                SPATIAL_SHAPE_FIELD_NAME: "spatial(shape)",
                 // TBD 4.1 CUSTOM_SORT_FIELD_NAME: "__customSort",
             },
             Spatial: {
@@ -16,24 +15,24 @@ export const CONSTANTS = {
             SIDE_BY_SIDE_INDEX_NAME_PREFIX: "ReplacementOf/",
         },
         Metadata: {
-             COLLECTION: "@collection",
-             PROJECTION: "@projection",
-             KEY: "@metadata",
-             ID: "@id",
-             CONFLICT: "@conflict",
-             ID_PROPERTY: "id",
-             FLAGS: "@flags",
-             ATTACHMENTS: "@attachments",
-             INDEX_SCORE: "@index-score",
-             LAST_MODIFIED: "@last-modified",
-             RAVEN_JS_TYPE: "Raven-Node-Type",
-             CHANGE_VECTOR: "@change-vector",
-             EXPIRES: "@expires",
-             EMPTY_COLLECTION: "@empty",
-             NESTED_OBJECT_TYPES: "@nested-object-types",
-             IGNORE_CASE_TRANSFORM_REGEX: 
-                    // tslint:disable-next-line:max-line-length
-                    /^@metadata(\.(@collection|@projection|@id|@conflict|@flags|Raven-Node-Type|@index-score|@last-modified|@change-vector|@expires|@nested-object-types(\.\w+)?))?$/ 
+            COLLECTION: "@collection",
+            PROJECTION: "@projection",
+            KEY: "@metadata",
+            ID: "@id",
+            CONFLICT: "@conflict",
+            ID_PROPERTY: "id",
+            FLAGS: "@flags",
+            ATTACHMENTS: "@attachments",
+            INDEX_SCORE: "@index-score",
+            LAST_MODIFIED: "@last-modified",
+            RAVEN_JS_TYPE: "Raven-Node-Type",
+            CHANGE_VECTOR: "@change-vector",
+            EXPIRES: "@expires",
+            EMPTY_COLLECTION: "@empty",
+            NESTED_OBJECT_TYPES: "@nested-object-types",
+            IGNORE_CASE_TRANSFORM_REGEX:
+            // tslint:disable-next-line:max-line-length
+                /^@metadata(\.(@collection|@projection|@id|@conflict|@flags|Raven-Node-Type|@index-score|@last-modified|@change-vector|@expires|@nested-object-types(\.\w+)?))?$/
         },
     }
 };

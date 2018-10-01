@@ -5,7 +5,7 @@ export class NegateToken extends QueryToken {
         super();
     }
 
-    public static INSTANCE: NegateToken  = new NegateToken();
+    public static INSTANCE: NegateToken = new NegateToken();
 
     public writeTo(writer) {
         writer.append("not");

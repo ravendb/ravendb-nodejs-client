@@ -2,7 +2,7 @@ import { ICommandData, CommandType } from "../CommandData";
 import { AttachmentData } from "./../../Attachments/index";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { throwError } from "../../../Exceptions";
-import {DocumentConventions} from "../../..";
+import { DocumentConventions } from "../../..";
 
 export class PutAttachmentCommandData implements ICommandData {
     public id: string;

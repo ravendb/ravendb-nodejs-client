@@ -1,4 +1,4 @@
-import {DocumentConventions} from "../..";
+import { DocumentConventions } from "../..";
 
 export class PatchRequest {
     public script: string;

@@ -1,8 +1,8 @@
-import {IMaintenanceOperation, OperationResultType} from "../OperationAbstractions";
-import {RevisionsConfiguration} from "../RevisionsConfiguration";
-import {DocumentConventions, ServerNode} from "../../..";
+import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
+import { RevisionsConfiguration } from "../RevisionsConfiguration";
+import { DocumentConventions, ServerNode } from "../../..";
 import { RavenCommand } from "../../../Http/RavenCommand";
-import {HttpRequestParameters} from "../../../Primitives/Http";
+import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as stream from "readable-stream";
 
 export class ConfigureRevisionsOperation implements IMaintenanceOperation<ConfigureRevisionsOperationResult> {

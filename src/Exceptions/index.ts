@@ -136,6 +136,7 @@ export interface ExceptionDispatcherArgs {
     error?: string;
     type?: string;
 }
+
 export class ExceptionDispatcher {
 
     private static _jsonSerializer: JsonSerializer = JsonSerializer.getDefaultForCommandPayload();

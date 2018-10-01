@@ -1,14 +1,14 @@
-import {SearchOperator} from "../Queries/SearchOperator";
-import {OrderingType} from "./OrderingType";
+import { SearchOperator } from "../Queries/SearchOperator";
+import { OrderingType } from "./OrderingType";
 import { DocumentConventions } from "../..";
 import { MethodCall } from "./MethodCall";
 import { WhereParams } from "./WhereParams";
 import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField";
 import { SpatialCriteria } from "../Queries/Spatial/SpatialCriteria";
 import { GroupBy } from "../Queries/GroupBy";
-import {DocumentType} from "../DocumentAbstractions";
-import {MoreLikeThisScope} from "../Queries/MoreLikeThis/MoreLikeThisScope";
-import {SuggestionBase} from "../Queries/Suggestions/SuggestionBase";
+import { DocumentType } from "../DocumentAbstractions";
+import { MoreLikeThisScope } from "../Queries/MoreLikeThis/MoreLikeThisScope";
+import { SuggestionBase } from "../Queries/Suggestions/SuggestionBase";
 
 export interface IAbstractDocumentQuery<T> {
 

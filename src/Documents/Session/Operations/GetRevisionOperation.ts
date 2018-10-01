@@ -1,12 +1,12 @@
-import {InMemoryDocumentSessionOperations} from "../InMemoryDocumentSessionOperations";
-import {GetRevisionsCommand} from "../../Commands/GetRevisionsCommand";
-import {throwError} from "../../../Exceptions";
-import {TypeUtil} from "../../../Utility/TypeUtil";
-import {IRavenArrayResult, IRavenObject, RevisionsCollectionObject} from "../../../Types";
-import {DocumentInfo} from "../DocumentInfo";
-import {MetadataAsDictionary} from "../../../Mapping/MetadataAsDictionary";
-import {CONSTANTS} from "../../../Constants";
-import {DocumentType} from "../../DocumentAbstractions";
+import { InMemoryDocumentSessionOperations } from "../InMemoryDocumentSessionOperations";
+import { GetRevisionsCommand } from "../../Commands/GetRevisionsCommand";
+import { throwError } from "../../../Exceptions";
+import { TypeUtil } from "../../../Utility/TypeUtil";
+import { IRavenArrayResult, IRavenObject, RevisionsCollectionObject } from "../../../Types";
+import { DocumentInfo } from "../DocumentInfo";
+import { MetadataAsDictionary } from "../../../Mapping/MetadataAsDictionary";
+import { CONSTANTS } from "../../../Constants";
+import { DocumentType } from "../../DocumentAbstractions";
 
 export class GetRevisionOperation {
 

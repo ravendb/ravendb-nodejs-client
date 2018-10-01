@@ -7,6 +7,7 @@ import { ServerWideOperationCompletionAwaiter } from "../../ServerWide/Operation
 import { getLogger } from "../../Utility/LogUtil";
 
 const log = getLogger({ module: "ServerOperationExecutor" });
+
 export class ServerOperationExecutor implements IDisposable {
 
     private _store: DocumentStoreBase;
@@ -14,17 +15,17 @@ export class ServerOperationExecutor implements IDisposable {
 
     public constructor(store: DocumentStoreBase) {
         this._store = store;
-        this._requestExecutor = store.conventions.disableTopologyUpdates 
-                ? ClusterRequestExecutor.createForSingleNode(store.urls[0], { 
-                    authOptions: store.authOptions, 
-                    documentConventions: store.conventions 
-                }) 
-                : ClusterRequestExecutor.create(store.urls, {
-                    documentConventions: store.conventions
-                });
+        this._requestExecutor = store.conventions.disableTopologyUpdates
+            ? ClusterRequestExecutor.createForSingleNode(store.urls[0], {
+                authOptions: store.authOptions,
+                documentConventions: store.conventions
+            })
+            : ClusterRequestExecutor.create(store.urls, {
+                documentConventions: store.conventions
+            });
 
-        store.once("afterDispose", 
-            (callback) => { 
+        store.once("afterDispose",
+            (callback) => {
                 log.info("Dispose request executor.");
                 this._requestExecutor.dispose();
                 callback();

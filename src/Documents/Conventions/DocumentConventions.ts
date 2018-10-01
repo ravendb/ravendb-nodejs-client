@@ -1,6 +1,6 @@
 import { TypesAwareObjectMapper } from "../../Mapping/ObjectMapper";
-import { 
-    DocumentType, 
+import {
+    DocumentType,
 } from "../DocumentAbstractions";
 import {
     ObjectTypeDescriptor,
@@ -64,7 +64,7 @@ export class DocumentConventions {
 
     private _readBalanceBehavior: ReadBalanceBehavior;
     private _maxHttpCacheSize: number;
-    
+
     private readonly _knownEntityTypes: Map<string, ObjectTypeDescriptor>;
 
     private _localEntityFieldNameConvention: CasingConvention;
@@ -78,7 +78,7 @@ export class DocumentConventions {
     public constructor() {
         this._readBalanceBehavior = "None";
         this._identityPartsSeparator = "/";
-        
+
         this._findIdentityPropertyNameFromCollectionName = () => "id";
         this._findJsType = (id: string, doc: object) => {
             const metadata = doc[CONSTANTS.Documents.Metadata.KEY];
@@ -376,7 +376,7 @@ export class DocumentConventions {
     }
 
     private _findCollectionNameForObjectLiteral: (entity: object) => string;
-    
+
     public get findCollectionNameForObjectLiteral() {
         return this._findCollectionNameForObjectLiteral;
     }
@@ -539,7 +539,7 @@ export class DocumentConventions {
     */
 
     public tryConvertValueForQuery
-        (fieldName: string, value: any, forRange: boolean, strValue: (value: any) => void) {
+    (fieldName: string, value: any, forRange: boolean, strValue: (value: any) => void) {
         for (const queryValueConverter of this._listOfQueryValueToObjectConverters) {
             if (!(value instanceof queryValueConverter.Type)) {
                 continue;
@@ -579,7 +579,7 @@ export class DocumentConventions {
     public registerEntityType(entityType: ObjectTypeDescriptor, name: string): this;
     public registerEntityType(entityType: ObjectTypeDescriptor, name?: string): this {
         if (!TypeUtil.isObjectTypeDescriptor(entityType)) {
-            throwError("InvalidArgumentException", 
+            throwError("InvalidArgumentException",
                 "Entity type must be a constructor or an object literal descriptor.");
         }
 
@@ -609,7 +609,7 @@ export class DocumentConventions {
         if (typeof(docTypeOrTypeName) !== "string") {
             return docTypeOrTypeName as ObjectTypeDescriptor<T>;
         }
-        
+
         return this._knownEntityTypes.get(docTypeOrTypeName) as ObjectLiteralDescriptor<T>;
     }
 
@@ -654,10 +654,10 @@ export class DocumentConventions {
     public validate() {
         if ((this._remoteEntityFieldNameConvention && !this._localEntityFieldNameConvention)
             || (!this._remoteEntityFieldNameConvention && this._localEntityFieldNameConvention)) {
-                throwError("ConfigurationException", 
-                "When configuring field name conventions, " 
+            throwError("ConfigurationException",
+                "When configuring field name conventions, "
                 + "one has to configure both local and remote field name convention.");
-            }
+        }
     }
 }
 

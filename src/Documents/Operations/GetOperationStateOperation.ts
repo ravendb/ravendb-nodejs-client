@@ -4,6 +4,7 @@ import { HttpRequestParameters } from "../../Primitives/Http";
 import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
 import { IMaintenanceOperation, OperationResultType } from "./OperationAbstractions";
 import * as stream from "readable-stream";
+
 export class GetOperationStateOperation implements IMaintenanceOperation<IRavenResponse> {
 
     private readonly _id: number;

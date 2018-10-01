@@ -1,5 +1,5 @@
-import {HttpRequestParameters} from "../../../Primitives/Http";
-import {OperationResultType, IMaintenanceOperation } from "../OperationAbstractions";
+import { HttpRequestParameters } from "../../../Primitives/Http";
+import { OperationResultType, IMaintenanceOperation } from "../OperationAbstractions";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
@@ -22,25 +22,25 @@ export class GetIdentitiesOperation implements IMaintenanceOperation<IdentitiesC
 
 export class GetIdentitiesCommand extends RavenCommand<IdentitiesCollection> {
 
-        public constructor() {
-            super();
-        }
+    public constructor() {
+        super();
+    }
 
-        public get isReadRequest(): boolean {
-            return true;
-        }
+    public get isReadRequest(): boolean {
+        return true;
+    }
 
-        public createRequest(node: ServerNode): HttpRequestParameters {
-            const uri = node.url + "/databases/" + node.database + "/debug/identities";
-            return { uri };
-        }
+    public createRequest(node: ServerNode): HttpRequestParameters {
+        const uri = node.url + "/databases/" + node.database + "/debug/identities";
+        return { uri };
+    }
 
-        public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
-            let body: string = null;
-            this.result = await this._pipeline<IdentitiesCollection>()
-                .parseJsonSync()
-                .collectBody(b => body = b)
-                .process(bodyStream);
-            return body;
-        }
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        let body: string = null;
+        this.result = await this._pipeline<IdentitiesCollection>()
+            .parseJsonSync()
+            .collectBody(b => body = b)
+            .process(bodyStream);
+        return body;
+    }
 }

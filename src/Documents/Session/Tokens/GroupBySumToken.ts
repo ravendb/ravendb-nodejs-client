@@ -17,22 +17,22 @@ export class GroupBySumToken extends QueryToken {
         this._projectedName = projectedName;
     }
 
-    public static create(fieldName: string, projectedName: string): GroupBySumToken  {
+    public static create(fieldName: string, projectedName: string): GroupBySumToken {
         return new GroupBySumToken(fieldName, projectedName);
     }
 
     public writeTo(writer): void {
         writer
-                .append("sum(")
-                .append(this._fieldName)
-                .append(")");
+            .append("sum(")
+            .append(this._fieldName)
+            .append(")");
 
         if (!this._projectedName) {
             return;
         }
 
         writer
-                .append(" as ")
-                .append(this._projectedName);
+            .append(" as ")
+            .append(this._projectedName);
     }
 }

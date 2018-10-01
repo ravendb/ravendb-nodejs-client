@@ -43,7 +43,7 @@ export class GetIndexesStatisticsCommand extends RavenCommand<IndexStats[]> {
                     }
                 }, new Map([[CollectionStats.name, CollectionStats]]));
 
-                this.result = obj["results"]; 
+                this.result = obj["results"];
             });
         return body;
     }

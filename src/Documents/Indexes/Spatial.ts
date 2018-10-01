@@ -141,8 +141,8 @@ export class GeographySpatialOptionsFactory {
     }
 }
 
-export type SpatialRelation =  
+export type SpatialRelation =
     "Within"
-   | "Contains"
-   | "Disjoint"
-   | "Intersects";
+    | "Contains"
+    | "Disjoint"
+    | "Intersects";

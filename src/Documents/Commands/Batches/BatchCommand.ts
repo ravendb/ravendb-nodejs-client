@@ -1,20 +1,20 @@
 import * as stream from "readable-stream";
-import {PutAttachmentCommandData} from "./PutAttachmentCommandData";
-import {PutAttachmentCommandHelper} from "./PutAttachmentCommandHelper";
-import {IRavenArrayResult} from "../../../Types";
-import {RavenCommand} from "../../../Http/RavenCommand";
-import {IDisposable} from "../../../Types/Contracts";
-import {ICommandData} from "../CommandData";
-import {BatchOptions} from "./BatchOptions";
-import {DocumentConventions} from "../../Conventions/DocumentConventions";
-import {throwError} from "../../../Exceptions";
-import {ServerNode} from "../../../Http/ServerNode";
-import {HttpRequestParameters} from "../../../Primitives/Http";
-import {HeadersBuilder} from "../../../Utility/HttpUtil";
-import {JsonSerializer} from "../../../Mapping/Json/Serializer";
-import {RavenCommandResponsePipeline} from "../../../Http/RavenCommandResponsePipeline";
-import {TimeUtil} from "../../../Utility/TimeUtil";
-import {AttachmentData} from "../../Attachments";
+import { PutAttachmentCommandData } from "./PutAttachmentCommandData";
+import { PutAttachmentCommandHelper } from "./PutAttachmentCommandHelper";
+import { IRavenArrayResult } from "../../../Types";
+import { RavenCommand } from "../../../Http/RavenCommand";
+import { IDisposable } from "../../../Types/Contracts";
+import { ICommandData } from "../CommandData";
+import { BatchOptions } from "./BatchOptions";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { throwError } from "../../../Exceptions";
+import { ServerNode } from "../../../Http/ServerNode";
+import { HttpRequestParameters } from "../../../Primitives/Http";
+import { HeadersBuilder } from "../../../Utility/HttpUtil";
+import { JsonSerializer } from "../../../Mapping/Json/Serializer";
+import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
+import { TimeUtil } from "../../../Utility/TimeUtil";
+import { AttachmentData } from "../../Attachments";
 
 export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDisposable {
 
@@ -61,28 +61,28 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
         const headers = HeadersBuilder.create().typeAppJson().build();
 
         const commandsArray = this._commands.reduce(
-            (result, command) => [ ...result, command.serialize(this._conventions) ], []);
+            (result, command) => [...result, command.serialize(this._conventions)], []);
 
         const body = JsonSerializer.getDefault().serialize({ Commands: commandsArray });
 
         const queryString = this._appendOptions();
-        const request: HttpRequestParameters = { 
-            method: "POST", 
+        const request: HttpRequestParameters = {
+            method: "POST",
             uri: uri + queryString,
         };
 
         if (this._attachmentStreams && this._attachmentStreams.size > 0) {
             const attachments = [...this._attachmentStreams]
                 .map(attStream => {
-                    return { 
+                    return {
                         body: attStream,
                         headers: {
                             "Command-Type": "AttachmentStream"
                         }
                     };
                 });
-            request.headers = Object.assign(request.headers || {},  { "Content-Type": "multipart/mixed" });
-            request.multipart = [ { headers, body }, ...attachments ];
+            request.headers = Object.assign(request.headers || {}, { "Content-Type": "multipart/mixed" });
+            request.multipart = [{ headers, body }, ...attachments];
         } else {
             request.body = body;
             request.headers = headers;
@@ -108,7 +108,7 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         if (!bodyStream) {
-            throwError("InvalidOperationException", 
+            throwError("InvalidOperationException",
                 "Got null response from the server after doing a batch,"
                 + " something is very wrong. Probably a garbled response.");
         }
@@ -119,7 +119,7 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
             .parseJsonSync()
             .streamKeyCaseTransform({
                 defaultTransform: "camel",
-                ignoreKeys: [ /^@/ ],
+                ignoreKeys: [/^@/],
             })
             .process(bodyStream);
         return body;
@@ -170,6 +170,7 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
     }
 
     // tslint:disable-next-line:no-empty
-    public dispose(): void { }
+    public dispose(): void {
+    }
 
 }

@@ -1,21 +1,21 @@
 import * as stream from "readable-stream";
 import * as os from "os";
-import {DocumentQuery} from "./DocumentQuery";
-import {MultiLoaderWithInclude} from "./Loaders/MultiLoaderWithInclude";
-import {BatchOperation} from "./Operations/BatchOperation";
+import { DocumentQuery } from "./DocumentQuery";
+import { MultiLoaderWithInclude } from "./Loaders/MultiLoaderWithInclude";
+import { BatchOperation } from "./Operations/BatchOperation";
 import * as BluebirdPromise from "bluebird";
-import { 
-    IDocumentSession, 
-    LoadOptions, 
-    ConcurrencyCheckMode, 
-    SessionLoadStartingWithOptions, 
+import {
+    IDocumentSession,
+    LoadOptions,
+    ConcurrencyCheckMode,
+    SessionLoadStartingWithOptions,
     IDocumentSessionImpl,
 } from "./IDocumentSession";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { AbstractCallback } from "../../Types/Callbacks";
 import { TypeUtil } from "../../Utility/TypeUtil";
-import { IRavenObject, EntitiesCollectionObject, ObjectTypeDescriptor} from "../../Types";
+import { IRavenObject, EntitiesCollectionObject, ObjectTypeDescriptor } from "../../Types";
 import { throwError } from "../../Exceptions";
 import { DocumentType } from "../DocumentAbstractions";
 import { LoadOperation } from "./Operations/LoadOperation";
@@ -41,16 +41,16 @@ import { GetRequest } from "../Commands/MultiGet/GetRequest";
 import { MultiGetOperation } from "./Operations/MultiGetOperation";
 import { Stopwatch } from "../../Utility/Stopwatch";
 import { GetResponse } from "../Commands/MultiGet/GetResponse";
-import {CONSTANTS, HEADERS} from "../../Constants";
+import { CONSTANTS, HEADERS } from "../../Constants";
 import { delay, passResultToCallback } from "../../Utility/PromiseUtil";
 import { ILazySessionOperations } from "./Operations/Lazy/ILazySessionOperations";
 import { LazySessionOperations } from "./Operations/Lazy/LazySessionOperations";
-import {JavaScriptArray} from "./JavaScriptArray";
-import {PatchRequest} from "../Operations/PatchRequest";
-import {PatchCommandData} from "../Commands/Batches/PatchCommandData";
-import {IdTypeAndName} from "../IdTypeAndName";
-import {IRevisionsSessionOperations} from "./IRevisionsSessionOperations";
-import {DocumentSessionRevisions} from "./DocumentSessionRevisions";
+import { JavaScriptArray } from "./JavaScriptArray";
+import { PatchRequest } from "../Operations/PatchRequest";
+import { PatchCommandData } from "../Commands/Batches/PatchCommandData";
+import { IdTypeAndName } from "../IdTypeAndName";
+import { IRevisionsSessionOperations } from "./IRevisionsSessionOperations";
+import { DocumentSessionRevisions } from "./DocumentSessionRevisions";
 import * as StreamUtil from "../../Utility/StreamUtil";
 import { StreamResult } from "../Commands/StreamResult";
 import { DocumentResultStream } from "./DocumentStreamIterable";
@@ -70,7 +70,7 @@ export interface IStoredRawEntityInfo {
     documentType: DocumentType;
 }
 
-export class DocumentSession extends InMemoryDocumentSessionOperations 
+export class DocumentSession extends InMemoryDocumentSessionOperations
     implements IDocumentSession, IDocumentSessionImpl {
 
     public constructor(dbName: string, documentStore: DocumentStore, id: string, requestExecutor: RequestExecutor) {
@@ -92,53 +92,53 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     public conventions: DocumentConventions;
 
     public async load<TEntity extends object = IRavenObject>(
-        id: string, 
+        id: string,
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
     public async load<TEntity extends object = IRavenObject>(
-        id: string, 
-        options?: LoadOptions<TEntity>, 
+        id: string,
+        options?: LoadOptions<TEntity>,
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
     public async load<TEntity extends object = IRavenObject>(
-        id: string, 
-        documentType?: DocumentType<TEntity>, 
+        id: string,
+        documentType?: DocumentType<TEntity>,
         callback?: AbstractCallback<TEntity>): Promise<TEntity>;
     public async load<TEntity extends object = IRavenObject>(
-        ids: string[], 
+        ids: string[],
         callback?: AbstractCallback<EntitiesCollectionObject<TEntity>>): Promise<EntitiesCollectionObject<TEntity>>;
     public async load<TEntity extends object = IRavenObject>(
-        ids: string[], 
-        options?: LoadOptions<TEntity>, 
-        callback?: AbstractCallback<TEntity>): 
+        ids: string[],
+        options?: LoadOptions<TEntity>,
+        callback?: AbstractCallback<TEntity>):
         Promise<EntitiesCollectionObject<TEntity>>;
     public async load<TEntity extends object = IRavenObject>(
-        ids: string[], 
-        documentType?: DocumentType<TEntity>, 
-        callback?: AbstractCallback<TEntity>): 
+        ids: string[],
+        documentType?: DocumentType<TEntity>,
+        callback?: AbstractCallback<TEntity>):
         Promise<EntitiesCollectionObject<TEntity>>;
     public async load<TEntity extends object = IRavenObject>(
         idOrIds: string | string[],
-        optionsOrCallback?: 
-            DocumentType<TEntity> | LoadOptions<TEntity> | 
+        optionsOrCallback?:
+            DocumentType<TEntity> | LoadOptions<TEntity> |
             AbstractCallback<TEntity | EntitiesCollectionObject<TEntity>>,
         callback?: AbstractCallback<TEntity | EntitiesCollectionObject<TEntity>>)
-            : Promise<TEntity | EntitiesCollectionObject<TEntity>> {
+        : Promise<TEntity | EntitiesCollectionObject<TEntity>> {
 
         const isLoadingSingle = !Array.isArray(idOrIds);
-        const ids = !isLoadingSingle ? idOrIds as string[] : [ idOrIds as string ];
+        const ids = !isLoadingSingle ? idOrIds as string[] : [idOrIds as string];
 
         let options: LoadOptions<TEntity>;
-        if (TypeUtil.isDocumentType(optionsOrCallback)) { 
+        if (TypeUtil.isDocumentType(optionsOrCallback)) {
             options = { documentType: optionsOrCallback as DocumentType<TEntity> };
         } else if (TypeUtil.isFunction(optionsOrCallback)) {
             callback = optionsOrCallback as AbstractCallback<TEntity> || TypeUtil.NOOP;
         } else if (TypeUtil.isObject(optionsOrCallback)) {
             options = optionsOrCallback as LoadOptions<TEntity>;
-        } 
+        }
 
         callback = callback || TypeUtil.NOOP;
         options = options || {};
 
-        this.conventions.tryRegisterEntityType(options.documentType); 
+        this.conventions.tryRegisterEntityType(options.documentType);
         const objType = this.conventions.findEntityType(options.documentType);
 
         const loadOperation = new LoadOperation(this);
@@ -158,19 +158,19 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     private async _loadInternal<T>( //TODO: unused!
-        ids: string[], 
+        ids: string[],
         operation: LoadOperation): Promise<void>;
     private async _loadInternal<T>(
-        ids: string[], 
+        ids: string[],
         operation: LoadOperation, writable: stream.Writable): Promise<void>;
     private async _loadInternal<T>(
-        ids: string[], 
+        ids: string[],
         operation: LoadOperation, writable?: stream.Writable)
-            : Promise<void> {  
+        : Promise<void> {
         if (!ids) {
             throwError("InvalidArgumentException", "Ids cannot be null");
         }
-        
+
         operation.byIds(ids);
 
         const command = operation.createRequest();
@@ -190,7 +190,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     public saveChanges(callback?: AbstractCallback<void>): Promise<void> {
         callback = callback || TypeUtil.NOOP;
         const saveChangeOperation = new BatchOperation(this);
-        let command: BatchCommand; 
+        let command: BatchCommand;
         const result = BluebirdPromise.resolve()
             .then(() => command = saveChangeOperation.createRequest())
             .then(() => {
@@ -223,7 +223,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
         this.incrementRequestCount();
 
-        const command = new GetDocumentsCommand({ 
+        const command = new GetDocumentsCommand({
             id: documentInfo.id,
             conventions: this.conventions
         });
@@ -258,11 +258,11 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         idPrefix: string,
         callback?: AbstractCallback<TEntity[]>): Promise<TEntity[]>;
     public async loadStartingWith<TEntity extends object>(
-        idPrefix: string, 
-        opts: SessionLoadStartingWithOptions<TEntity>, 
+        idPrefix: string,
+        opts: SessionLoadStartingWithOptions<TEntity>,
         callback?: AbstractCallback<TEntity[]>): Promise<TEntity[]>;
     public async loadStartingWith<TEntity extends object>(
-        idPrefix: string, 
+        idPrefix: string,
         optsOrCallback?: SessionLoadStartingWithOptions<TEntity> | AbstractCallback<TEntity[]>,
         callback?: AbstractCallback<TEntity[]>): Promise<TEntity[]> {
 
@@ -290,7 +290,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     public async loadStartingWithIntoStream<TEntity extends object>(
         idPrefix: string,
         writable: stream.Writable,
-        opts: SessionLoadStartingWithOptions<TEntity>, 
+        opts: SessionLoadStartingWithOptions<TEntity>,
         callback?: AbstractCallback<void>): Promise<void>;
     public async loadStartingWithIntoStream<TEntity extends object>(
         idPrefix: string,
@@ -316,8 +316,9 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         opts = opts || {};
         callback = callback || TypeUtil.NOOP;
         const result = this._loadStartingWithInternal(idPrefix, loadStartingWithOperation, opts, writable)
-            // tslint:disable-next-line:no-empty
-            .then(() => {});
+        // tslint:disable-next-line:no-empty
+            .then(() => {
+            });
         passResultToCallback(result, callback);
         return result;
     }
@@ -328,18 +329,18 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         ids: string[], writable: stream.Writable): Promise<void>;
     public async loadIntoStream(
         ids: string[], writable: stream.Writable, callback?: AbstractCallback<void>): Promise<void> {
-        const result =  this._loadInternal(ids, new LoadOperation(this), writable);
+        const result = this._loadInternal(ids, new LoadOperation(this), writable);
         passResultToCallback(result, callback);
         return result;
     }
 
     private async _loadStartingWithInternal<TEntity extends object>(
-        idPrefix: string, 
-        operation: LoadStartingWithOperation, 
+        idPrefix: string,
+        operation: LoadStartingWithOperation,
         opts: SessionLoadStartingWithOptions<TEntity>,
         writable?: stream.Writable): Promise<GetDocumentsCommand> {
-        const { matches, start, pageSize, exclude, startAfter } = 
-            opts || {} as SessionLoadStartingWithOptions<TEntity>;
+        const { matches, start, pageSize, exclude, startAfter } =
+        opts || {} as SessionLoadStartingWithOptions<TEntity>;
         operation.withStartWith(idPrefix, {
             matches, start, pageSize, exclude, startAfter
         });
@@ -349,7 +350,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             await this._requestExecutor.execute(command, this._sessionInfo);
             if (writable) {
                 return StreamUtil.pipelineAsync(
-                    StreamUtil.stringToReadable(JSON.stringify(command.result)), 
+                    StreamUtil.stringToReadable(JSON.stringify(command.result)),
                     writable);
             } else {
                 operation.setResult(command.result);
@@ -360,8 +361,8 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     public async loadInternal<TResult extends object>(
-        ids: string[], includes: string[], documentType: DocumentType<TResult>): 
-        Promise<EntitiesCollectionObject<TResult>>  {
+        ids: string[], includes: string[], documentType: DocumentType<TResult>):
+        Promise<EntitiesCollectionObject<TResult>> {
         if (!ids) {
             throwError("InvalidArgumentException", "Ids cannot be null");
         }
@@ -387,9 +388,9 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         return new MultiLoaderWithInclude(this).include(path);
     }
 
-    public increment<T extends object, UValue> (id: string, path: string, valueToAdd: UValue): void;
-    public increment<T extends object, UValue> (entity: T, path: string, valueToAdd: UValue): void;
-    public increment<T extends object, UValue> (entityOrId: T | string, path: string, valueToAdd: UValue): void {
+    public increment<T extends object, UValue>(id: string, path: string, valueToAdd: UValue): void;
+    public increment<T extends object, UValue>(entity: T, path: string, valueToAdd: UValue): void;
+    public increment<T extends object, UValue>(entityOrId: T | string, path: string, valueToAdd: UValue): void {
         let id: string;
         if (TypeUtil.isString(entityOrId)) {
             id = entityOrId;
@@ -445,7 +446,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             patchRequest = new PatchRequest();
             patchRequest.script = "this." + path + " = args.val_" + this._valsCount + ";";
             const valKey = "val_" + this._valsCount;
-            patchRequest.values = { };
+            patchRequest.values = {};
             patchRequest.values[valKey] = valueOrArrayAdder;
 
             this._valsCount++;
@@ -513,7 +514,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     public documentQuery<T extends object>(opts: AdvancedDocumentQueryOptions<T>): IDocumentQuery<T>;
-    public documentQuery<T extends object>(documentType: DocumentType<T>): IDocumentQuery<T>; 
+    public documentQuery<T extends object>(documentType: DocumentType<T>): IDocumentQuery<T>;
     public documentQuery<T extends object>(
         documentTypeOrOpts: DocumentType<T> | AdvancedDocumentQueryOptions<T>): IDocumentQuery<T> {
         let opts: AdvancedDocumentQueryOptions<T>;
@@ -539,7 +540,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         const isCollection = !!collection;
 
         if (isIndex && isCollection) {
-            throwError("InvalidOperationException", 
+            throwError("InvalidOperationException",
                 "Parameters indexName and collectionName are mutually exclusive. Please specify only one of them.");
         }
 
@@ -562,7 +563,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     public get revisions(): IRevisionsSessionOperations {
         return this._revisions;
     }
-    
+
     public get lazily(): ILazySessionOperations {
         return new LazySessionOperations(this);
     }
@@ -657,8 +658,8 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     public lazyLoadInternal<TResult extends object>(
-        ids: string[], 
-        includes: string[], 
+        ids: string[],
+        includes: string[],
         clazz: ObjectTypeDescriptor<TResult>): Lazy<EntitiesCollectionObject<TResult>> {
 
         if (this.checkIfIdAlreadyIncluded(ids, includes)) {
@@ -666,8 +667,8 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         }
 
         const loadOperation = new LoadOperation(this)
-                .byIds(ids)
-                .withIncludes(includes);
+            .byIds(ids)
+            .withIncludes(includes);
 
         const lazyOp = new LazyLoadOperation(this, loadOperation, clazz)
             .byIds(ids)
@@ -678,18 +679,18 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
     public async stream<T extends object>(query: IDocumentQuery<T>): Promise<DocumentResultStream<T>>;
     public async stream<T extends object>(
-        query: IDocumentQuery<T>, 
+        query: IDocumentQuery<T>,
         streamQueryStats: StreamQueryStatisticsCallback)
         : Promise<DocumentResultStream<T>>;
     public async stream<T extends object>(
-        query: IDocumentQuery<T>, 
+        query: IDocumentQuery<T>,
         streamQueryStats: StreamQueryStatisticsCallback,
         callback: AbstractCallback<DocumentResultStream<T>>)
         : Promise<DocumentResultStream<T>>;
     public async stream<T extends object>(query: IRawDocumentQuery<T>)
         : Promise<DocumentResultStream<T>>;
     public async stream<T extends object>(
-        query: IRawDocumentQuery<T>, 
+        query: IRawDocumentQuery<T>,
         streamQueryStats: StreamQueryStatisticsCallback)
         : Promise<DocumentResultStream<T>>;
     public async stream<T extends object>(idPrefix: string)
@@ -697,7 +698,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     public async stream<T extends object>(idPrefix: string, opts: SessionLoadStartingWithOptions<T>)
         : Promise<DocumentResultStream<T>>;
     public async stream<T extends object>(
-        idPrefix: string, 
+        idPrefix: string,
         opts: SessionLoadStartingWithOptions<T>,
         callback: AbstractCallback<DocumentResultStream<T>>)
         : Promise<DocumentResultStream<T>>;
@@ -712,7 +713,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     private async _stream<T extends object>(
-        queryOrIdPrefix: string | IDocumentQuery<T> | IRawDocumentQuery<T>, 
+        queryOrIdPrefix: string | IDocumentQuery<T> | IRawDocumentQuery<T>,
         optsOrStatsCallback?: SessionLoadStartingWithOptions<T> | StreamQueryStatisticsCallback)
         : Promise<DocumentResultStream<T>> {
         if (TypeUtil.isString(queryOrIdPrefix)) {
@@ -732,10 +733,10 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     private async _streamStartingWith<T extends object>(
         idPrefix: string,
         opts: SessionLoadStartingWithOptions<T>)
-            : Promise<DocumentResultStream<T>> {
+        : Promise<DocumentResultStream<T>> {
         const streamOperation = new StreamOperation(this);
         const command = streamOperation.createRequest(idPrefix, opts);
-        
+
         await this.requestExecutor.execute(command, this.sessionInfo);
         const docsReadable = streamOperation.setResult(command.result);
         let clazz = null;
@@ -759,21 +760,21 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
         return stream.pipeline(docsReadable, result) as DocumentResultStream<T>;
     }
-    
+
     private async _streamQueryResults<T extends object>(
         query: IDocumentQuery<T> | IRawDocumentQuery<T>,
         streamQueryStatsCallback?: StreamQueryStatisticsCallback)
-            : Promise<DocumentResultStream<T>> {
+        : Promise<DocumentResultStream<T>> {
         const streamOperation = new StreamOperation(this);
         const command = streamOperation.createRequest(query.getIndexQuery());
-        
+
         await this.requestExecutor.execute(command, this.sessionInfo);
         const docsReadable = streamOperation.setResult(command.result);
 
         const result = this._getStreamResultTransform(
             this, (query as any).getQueryType(), (query as any).fieldsToFetchToken);
 
-        docsReadable.once("stats", stats => { 
+        docsReadable.once("stats", stats => {
             (streamQueryStatsCallback || TypeUtil.NOOP)(stats);
             result.emit("stats", stats);
         });
@@ -807,7 +808,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
                 const id = metadata[CONSTANTS.Documents.Metadata.ID] || null;
                 const entity = QueryOperation.deserialize(
                     id, doc, metadata, fieldsToFetchToken || null, true, session, clazz);
-                callback(null, { 
+                callback(null, {
                     changeVector,
                     metadata,
                     id,

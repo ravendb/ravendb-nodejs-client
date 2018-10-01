@@ -23,7 +23,7 @@ export class GroupByKeyToken extends QueryToken {
         }
 
         writer
-                .append(" as ")
-                .append(this._projectedName);
+            .append(" as ")
+            .append(this._projectedName);
     }
 }

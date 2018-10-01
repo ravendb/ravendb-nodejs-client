@@ -1,5 +1,5 @@
-import {SetupDocumentBase} from "../SetupDocumentBase";
-import {ObjectUtil} from "../../Utility/ObjectUtil";
+import { SetupDocumentBase } from "../SetupDocumentBase";
+import { ObjectUtil } from "../../Utility/ObjectUtil";
 
 export class RevisionsCollectionConfiguration extends SetupDocumentBase {
 

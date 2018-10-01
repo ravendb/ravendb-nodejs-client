@@ -27,9 +27,9 @@ export class StreamCommand extends RavenCommand<StreamResultResponse> {
     }
 
     public async processResponse(
-        cache: HttpCache, 
-        response: HttpResponse, 
-        bodyStream: stream.Readable, 
+        cache: HttpCache,
+        response: HttpResponse,
+        bodyStream: stream.Readable,
         url: string): Promise<ResponseDisposeHandling> {
         this.result = {
             response,

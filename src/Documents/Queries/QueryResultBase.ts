@@ -1,4 +1,3 @@
-
 export abstract class QueryResultBase<TResult, TInclude> {
 
     public results: TResult;

@@ -1,7 +1,7 @@
 import * as qs from "qs";
 import { ServerNode } from "../../../Http/ServerNode";
 import { DateUtil } from "../../../Utility/DateUtil";
-import { RavenCommand} from "../../../Http/RavenCommand";
+import { RavenCommand } from "../../../Http/RavenCommand";
 import { throwError } from "../../../Exceptions";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as stream from "readable-stream";
@@ -14,6 +14,7 @@ export interface HiLoResult {
     serverTag: string;
     lastRangeAt: Date;
 }
+
 export class NextHiloCommand extends RavenCommand<HiLoResult> {
 
     private readonly _tag: string;

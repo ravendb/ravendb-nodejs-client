@@ -6,7 +6,8 @@ export interface MetadataAsDictionaryParentInfo {
     parentKey: string;
 }
 
-export interface MetadataAsDictionary extends IMetadataDictionary, MetadataAsDictionaryParentInfo { }
+export interface MetadataAsDictionary extends IMetadataDictionary, MetadataAsDictionaryParentInfo {
+}
 
 const metadataDirtiness = new WeakMap<IMetadataDictionary, boolean>();
 const metadataParents = new WeakMap<IMetadataDictionary, MetadataAsDictionaryParentInfo>();
@@ -30,7 +31,7 @@ class MetadataInternal {
     public isDirty(): boolean {
         return metadataDirtiness.get(metadataProxyTargets.get(this));
     }
-    
+
     public getParent() {
         const parentData = metadataParents.get(metadataProxyTargets.get(this));
         return parentData ? parentData.parent : null;
@@ -74,9 +75,9 @@ class MetadataInternal {
             },
             ownKeys(target) {
                 return Reflect.ownKeys(target)
-                    .filter(x => 
-                        x !== "getParentKey" 
-                        && x !== "getParent" 
+                    .filter(x =>
+                        x !== "getParentKey"
+                        && x !== "getParent"
                         && x !== "isDirty"
                         && x !== "_metadataConvertValue");
             }

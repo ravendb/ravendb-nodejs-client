@@ -1,4 +1,4 @@
-export interface IRawMetadataDictionary { 
+export interface IRawMetadataDictionary {
     [key: string]: any;
 }
 

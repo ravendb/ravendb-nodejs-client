@@ -18,11 +18,12 @@ export interface AttachmentDetails extends AttachmentName {
 
 export class AttachmentResult {
 
-    constructor (
-        public data: stream.Readable, 
+    constructor(
+        public data: stream.Readable,
         public details: AttachmentDetails,
-        private _response: HttpResponse) { }
-    
+        private _response: HttpResponse) {
+    }
+
     public dispose() {
         return closeHttpResponse(this._response);
     }
