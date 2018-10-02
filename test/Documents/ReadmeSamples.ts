@@ -430,6 +430,31 @@ describe("Readme query samples", function () {
 
     });
 
+    it("can use advanced.patch", async () => {
+        store.conventions.findCollectionNameForObjectLiteral = () => "users";
+
+        {
+            const session = store.openSession();
+            await session.store({ name: "Matilda", age: 17, underAge: true }, "users/1");
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            session.advanced.increment("users/1", "age", 1);
+            session.advanced.patch("users/1", "underAge", false);
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const loaded: any = await session.load("users/1");
+            assert.strictEqual(loaded.underAge, false);
+            assert.strictEqual(loaded.age, 18);
+            assert.strictEqual(loaded.name, "Matilda");
+        }
+    });
+
     describe("with revisions set up", function() {
 
         beforeEach(async () => testContext.setupRevisions(store, false, 5));

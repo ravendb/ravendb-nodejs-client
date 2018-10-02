@@ -740,7 +740,11 @@ const suggestionQueryResult = await session.query({ collection: "users" })
 ### Advanced patching
 ```javascript
 session.advanced.increment("users/1", "age", 1);
+// increments *age* field by 1
+
 session.advanced.patch("users/1", "underAge", false);
+// sets *underAge* field to *false*
+
 await session.saveChanges();
 ```
 
