@@ -258,6 +258,29 @@ describe("Session API dev experience tests", function () {
                 await session.saveChanges();
             }
         });
+
+        it("loads @metadata.Raven-Node-Type as null", async () => {
+            store.conventions.findCollectionNameForObjectLiteral =
+                (e: any) => e["collection"];
+
+            {
+                const user: any = {
+                    collection: "Users",
+                    name: "John"
+                };
+                const session = store.openSession();
+                await session.store(user, "users/1");
+                await session.saveChanges();
+            }
+
+            {
+                const session = store.openSession();
+                const loaded = await session.load("users/1");
+                assert.strictEqual(loaded["@metadata"]["Raven-Node-Type"], null);
+                assert.strictEqual(loaded["@metadata"]["@collection"], "Users");
+            }
+
+        });
     });
 
     describe("using classes", async () => {

@@ -43,6 +43,10 @@ class MetadataInternal {
     }
 
     private _metadataConvertValue(key, val) {
+        if (!val) {
+            return null;
+        }
+        
         if (typeof val !== "object") {
             return val;
         }
