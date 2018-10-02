@@ -129,6 +129,7 @@ export {
     SetIndexesPriorityOperation,
     SetIndexesPriorityOperationParameters
 } from "./Documents/Operations/Indexes/SetIndexesPriorityOperation";
+export * from "./Documents/Operations/PatchRequest";
 
 // INDEXES
 export { GetIndexOperation } from "./Documents/Operations/Indexes/GetIndexOperation";
@@ -188,6 +189,7 @@ export * from "./Documents/Session/RawDocumentQuery";
 export * from "./Documents/Session/SessionEvents";
 export * from "./Documents/Session/WhereParams";
 export *  from "./Documents/Session/IMetadataDictionary";
+export *  from "./Documents/Session/DocumentResultStream";
 export * from "./Documents/Commands/StreamResult";
 
 // QUERIES

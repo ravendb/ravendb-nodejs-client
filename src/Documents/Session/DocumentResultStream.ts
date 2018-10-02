@@ -2,10 +2,6 @@ import { StreamResult } from "../Commands/StreamResult";
 import { TypedEventEmitter } from "../../Primitives/Events";
 import { StreamQueryStatistics } from "./StreamQueryStatistics";
 
-export interface StreamingQueryEvents {
-    "afterStreamExecuted": object;
-}
-
 export interface DocumentStreamResultEvents<TEntity extends object> {
     data: StreamResult<TEntity>;
     error: Error;
