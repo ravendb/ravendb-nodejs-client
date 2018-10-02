@@ -53,7 +53,7 @@ import { IRevisionsSessionOperations } from "./IRevisionsSessionOperations";
 import { DocumentSessionRevisions } from "./DocumentSessionRevisions";
 import * as StreamUtil from "../../Utility/StreamUtil";
 import { StreamResult } from "../Commands/StreamResult";
-import { DocumentResultStream } from "./DocumentStreamIterable";
+import { DocumentResultStream } from "./DocumentResultStream";
 import { StreamOperation } from "./Operations/StreamOperation";
 import { QueryOperation } from "./Operations/QueryOperation";
 import { StreamQueryStatisticsCallback } from "./IAdvancedSessionOperations";

@@ -19,7 +19,7 @@ import { IEagerSessionOperations } from "./Operations/Lazy/IEagerSessionOperatio
 import { JavaScriptArray } from "./JavaScriptArray";
 import { IRevisionsSessionOperations } from "./IRevisionsSessionOperations";
 import * as stream from "readable-stream";
-import { DocumentResultStream } from "../Session/DocumentStreamIterable";
+import { DocumentResultStream } from "../Session/DocumentResultStream";
 
 export type StreamQueryStatisticsCallback = (stats: StreamQueryStatistics) => void;
 

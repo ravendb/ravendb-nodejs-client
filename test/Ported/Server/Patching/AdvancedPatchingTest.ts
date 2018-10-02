@@ -20,7 +20,7 @@ describe("AdvancedPatchingTest", function () {
     afterEach(async () =>
         await disposeTestDocumentStore(store));
 
-    it.skip("can test with variables", async () => {
+    it("can test with variables", async () => {
 
         {
             const session = store.openSession();

@@ -31,3 +31,5 @@ before_install:
 script:
   - npm run lint
   - npm run test
+  - npm run build
+  - node -e "require('./dist').DocumentStore"

@@ -10,6 +10,7 @@ Added support for the following features:
 - More like this
 - [Suggestions](#suggestions)
 - [Revisions](#revisions)
+- [Advanced patching](#advanced-patching)
 
 ### 4.0.2 - 2018-09-14
 Added support for the following features:
@@ -736,6 +737,16 @@ const suggestionQueryResult = await session.query({ collection: "users" })
 // { name: { name: 'name', suggestions: [ 'john' ] } }
 ```
 
+### Advanced patching
+```javascript
+session.advanced.increment("users/1", "age", 1);
+// increments *age* field by 1
+
+session.advanced.patch("users/1", "underAge", false);
+// sets *underAge* field to *false*
+
+await session.saveChanges();
+```
 
 ## Using object literals for entities
 

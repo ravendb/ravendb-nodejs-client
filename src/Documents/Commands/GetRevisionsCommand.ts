@@ -1,10 +1,12 @@
-import { DocumentConventions, IRavenArrayResult, ServerNode } from "../..";
-import { RavenCommand } from "../../../src/Http/RavenCommand";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { HttpRequestParameters } from "../../Primitives/Http";
 import { DateUtil } from "../../Utility/DateUtil";
 import * as stream from "readable-stream";
 import { GetDocumentsCommand } from "./GetDocumentsCommand";
+import { RavenCommand } from "../../Http/RavenCommand";
+import { IRavenArrayResult } from "../../Types";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { ServerNode } from "../../Http/ServerNode";
 
 export class GetRevisionsCommand extends RavenCommand<IRavenArrayResult> {
 
