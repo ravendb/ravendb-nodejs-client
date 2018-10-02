@@ -133,6 +133,11 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
 
     private _getFieldContext(parent: object, objPath: string[])
         : ObjectPropertyContext | ObjectPropertyContext[] {
+        
+        if (!parent) {
+            return null;
+        }
+        
         // tslint:disable-next-line:prefer-const
         let [field, ...fieldsPathTail] = objPath;
 
