@@ -64,7 +64,7 @@ describe("FirstClassPatchTest", function () {
         }
     });
 
-    it.skip("can patch and modify", async () => {
+    it("can patch and modify", async () => {
         const user = new User();
         user.numbers = [66];
 
@@ -84,7 +84,10 @@ describe("FirstClassPatchTest", function () {
                 await session.saveChanges();
                 assert.fail("it should have thrown");
             } catch (err) {
-                assert.strictEqual(err.name, "IllegalStateException");
+                assert.strictEqual(err.message, 
+                    // tslint:disable-next-line:max-line-length
+                    "Cannot perform save because document users/1-A has been modified by the session and is also taking part in deferred PATCH command");
+                assert.strictEqual(err.name, "InvalidOperationException");
             }
         }
     });
