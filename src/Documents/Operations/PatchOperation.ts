@@ -18,6 +18,7 @@ import { pick } from "stream-json/filters/Pick";
 import { filter } from "stream-json/filters/Filter";
 import { ignore } from "stream-json/filters/Ignore";
 import { parseRestOfOutput } from "../../Mapping/Json/Streams/Pipelines";
+import { ObjectUtil } from "../../Utility/ObjectUtil";
 
 export interface Payload {
     patch: PatchRequest;
@@ -128,7 +129,17 @@ export class PatchCommand extends RavenCommand<PatchResult> {
 
         this._id = id;
         this._changeVector = changeVector;
-        this._patch = conventions.objectMapper.toObjectLiteral({ patch, patchIfMissing });
+        this._patch = ObjectUtil.transformObjectKeys(
+            conventions.objectMapper.toObjectLiteral({ patch, patchIfMissing }),
+            {
+                defaultTransform: "pascal",
+                paths: [
+                    {
+                        transform: conventions.remoteEntityFieldNameConvention,
+                        path: /Values/i
+                    }
+                ]
+            });
         this._skipPatchIfChangeVectorMismatch = skipPatchIfChangeVectorMismatch;
         this._returnDebugInformation = returnDebugInformation;
         this._test = test;
@@ -154,7 +165,7 @@ export class PatchCommand extends RavenCommand<PatchResult> {
             uri += "&test=true";
         }
 
-        const body = this._serializer.serialize(this._patch);
+        const body = JSON.stringify(this._patch);
         const req = {
             method: "PATCH",
             uri,
