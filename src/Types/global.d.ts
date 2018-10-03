@@ -1,3 +1,6 @@
+/// <reference path="./readable-stream.d.ts" />
+/// <reference path="./string-builder.d.ts" />
+
 declare module "xregexp" {
     const a: any;
     export = a;
@@ -6,3 +9,5 @@ declare module "xregexp" {
 interface Console {
     profileEnd(label: string);
 }
+
+declare module "stream-json/filters/FilterBase"; 
