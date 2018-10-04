@@ -15,6 +15,7 @@ import { pick } from "stream-json/filters/Pick";
 import { ignore } from "stream-json/filters/Ignore";
 import { parseDocumentResults, parseRestOfOutput, parseDocumentIncludes } from "../../Mapping/Json/Streams/Pipelines";
 import { TypesAwareObjectMapper } from "../../Mapping/ObjectMapper";
+import { RavenCommandResponsePipeline } from "../../Http/RavenCommandResponsePipeline";
 
 export interface QueryCommandOptions {
     metadataOnly?: boolean;
@@ -106,12 +107,11 @@ export class QueryCommand extends RavenCommand<QueryResult> {
         fromCache: boolean,
         bodyCallback?: (body: string) => void): Promise<QueryResult> {
 
-        const resultsPromise = parseDocumentResults(bodyStream, conventions, bodyCallback);
-        const includesPromise = parseDocumentIncludes(bodyStream, conventions);
-        const restPromise = parseRestOfOutput(bodyStream, /^Results|Includes$/);
-
-        const [results, includes, rest] = await Promise.all([resultsPromise, includesPromise, restPromise]);
-        const rawResult = Object.assign({} as any, rest, { results, includes }) as QueryResult;
+        const rawResult = await RavenCommandResponsePipeline.create<QueryResult>()
+            .collectBody(bodyCallback)
+            .parseJsonAsync()
+            .transformKeys("DocumentLoad", conventions)
+            .process(bodyStream);
         const queryResult = conventions.objectMapper
             .fromObjectLiteral<QueryResult>(rawResult, {
                 typeName: QueryResult.name,

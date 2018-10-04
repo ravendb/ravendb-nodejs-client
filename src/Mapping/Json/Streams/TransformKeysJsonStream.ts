@@ -2,38 +2,33 @@
 import * as stream from "readable-stream";
 import * as FilterBase from "stream-json/filters/FilterBase";
 import { ObjectUtil, CasingConvention } from "../../../Utility/ObjectUtil";
-
-export interface TransformJsonKeysRule {
-    test?: (key: string, stack: Array<string | null | number>) => boolean;
-    transform: CasingConvention;
-}
+import { throwError } from "../../../Exceptions";
 
 export interface TransformJsonKeysStreamOptions {
-    rules?: TransformJsonKeysRule[];
+    getCurrentTransform?: (key: string, stack: Array<string | null | number>) => CasingConvention;
 }
 
 export class TransformKeysJsonStream extends FilterBase {
 
-    private _rules: TransformJsonKeysRule[];
+    private _getTransform: (key: string, stack: Array<string | null | number>) => CasingConvention;
 
     constructor(opts: TransformJsonKeysStreamOptions) {
         super();
-        opts = opts || {};
-        this._rules = opts.rules || [];
-        this._rules.reverse();
+        opts = opts || { getCurrentTransform: (key, stack) => null };
+        if (!opts.getCurrentTransform) {
+            throwError("InvalidArgumentException", "getCurrentTransform() must not be empty.");
+        }
+
+        this._getTransform = opts.getCurrentTransform;
     }
 
     private _transformKey(key) {
-        let len = this._rules.length;
-        while (len--) {
-            const rule = this._rules[len];
-            if (!rule.test || rule.test(key, this._stack)) {
-                const transform = ObjectUtil[rule.transform];
-                return transform ? transform(key) : key; 
-            }
+        const transformName = this._getTransform(key, this._stack);
+        if (!transformName) {
+            return key;
         }
 
-        return key;
+        return ObjectUtil[transformName](key);
     }
 
     private _checkChunk(chunk) {

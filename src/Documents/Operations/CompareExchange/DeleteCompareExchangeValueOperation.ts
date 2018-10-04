@@ -1,6 +1,6 @@
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { IOperation, OperationResultType } from "../OperationAbstractions";
-import { CompareExchangeResult } from "./CompareExchangeResult";
+import { CompareExchangeResult, CompareExchangeResultResponse } from "./CompareExchangeResult";
 import { ClassConstructor } from "../../../Types";
 import { IDocumentStore } from "../../IDocumentStore";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
@@ -71,31 +71,12 @@ export class RemoveCompareExchangeCommand<T> extends RavenCommand<CompareExchang
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         let body: string = null;
-        const resultPromise = this._pipeline<object>()
-            .collectBody(b => body = b)
-            .parseJsonAsync([
-                pick({ filter: "Value.Object" }),
-                streamValues()
-            ])
-            .streamKeyCaseTransform({ defaultTransform: this._conventions.entityFieldNameConvention })
+        const resObj = await this._pipeline<CompareExchangeResultResponse>()
+            .collectBody(_ => body = _)
+            .parseJsonAsync()
+            .transformKeys("CompareExchangeValue", this._conventions)
             .process(bodyStream);
-
-        const restPromise = this._pipeline<object>()
-            .parseJsonAsync([
-                ignore({ filter: "Value" }),
-                streamValues()
-            ])
-            .streamKeyCaseTransform("camel")
-            .process(bodyStream);
-
-        const [result, rest] = await Promise.all([resultPromise, restPromise]);
-
-        const resObj = Object.assign(
-            rest as { successful: boolean, index: number },
-            { value: { object: result } });
-
         this.result = CompareExchangeResult.parseFromObject(resObj, this._conventions, this._clazz);
-
         return body;
     }
 }

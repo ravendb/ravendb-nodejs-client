@@ -32,21 +32,11 @@ export class FacetQueryCommand extends QueryCommand {
         fromCache: boolean,
         bodyCallback?: (body: string) => void): Promise<QueryResult> {
 
-        const resultsPromise = RavenCommandResponsePipeline.create<object[]>()
+        const rawResult = await RavenCommandResponsePipeline.create<QueryResult>()
             .collectBody(bodyCallback)
-            .parseJsonAsync([
-                pick({ filter: "Results" }),
-                streamArray()
-            ])
-            .streamKeyCaseTransform("camel", "DOCUMENT_LOAD") // we don't care about the case in facets
-            .collectResult((result, next) => [...result, next["value"]], [])
+            .parseJsonAsync()
+            .transformKeys("FacetQuery")
             .process(bodyStream);
-
-        const includesPromise = parseDocumentIncludes(bodyStream, conventions);
-        const restPromise = parseRestOfOutput(bodyStream, /^Results|Includes$/);
-
-        const [results, includes, rest] = await Promise.all([resultsPromise, includesPromise, restPromise]);
-        const rawResult = Object.assign({} as any, rest, { results, includes }) as QueryResult;
         const queryResult = conventions.objectMapper.fromObjectLiteral<QueryResult>(rawResult, {
             typeName: QueryResult.name,
             nestedTypes: {

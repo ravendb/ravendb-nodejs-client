@@ -35,6 +35,7 @@ describe("AttachmentsRevisions", function () {
 
         // Delete document should delete all the attachments
         await store.getRequestExecutor().execute(new DeleteDocumentCommand("users/1"));
+        
         await assertRevisions(names, (session, revisions) => {
             assertNoRevisionAttachment(revisions[0], session, true);
             assertRevisionAttachments(names, 3, revisions[1], session);
@@ -225,6 +226,7 @@ describe("AttachmentsRevisions", function () {
 
     const assertRevisionAttachments =
         (names: string[], expectedCount: number, revision: User, session: IDocumentSession) => {
+            debugger;
             const metadata = session.advanced.getMetadataFor(revision);
 
             const flags = metadata[CONSTANTS.Documents.Metadata.FLAGS] as string;

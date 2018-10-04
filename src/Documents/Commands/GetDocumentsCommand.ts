@@ -214,18 +214,11 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         conventions: DocumentConventions,
         bodyCallback?: (body: string) => void): Promise<GetDocumentsResult> {
 
-        const resultsPromise = parseDocumentResults(bodyStream, conventions, bodyCallback);
-        const includesPromise = parseDocumentIncludes(bodyStream, conventions);
-        const restPromise = RavenCommandResponsePipeline.create()
-            .parseJsonAsync([
-                ignore({ filter: /^Results|Includes$/ }),
-                streamObject()
-            ])
-            .streamKeyCaseTransform("camel")
+        return RavenCommandResponsePipeline.create<GetDocumentsResult>()
+            .collectBody(bodyCallback)
+            .parseJsonAsync()
+            .transformKeys("DocumentLoad", conventions)
             .process(bodyStream);
-
-        const [results, includes, rest] = await Promise.all([resultsPromise, includesPromise, restPromise]);
-        return Object.assign({}, rest, { includes, results }) as GetDocumentsResult;
     }
 
     public get isReadRequest(): boolean {

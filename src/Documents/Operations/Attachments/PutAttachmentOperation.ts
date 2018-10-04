@@ -86,7 +86,8 @@ export class PutAttachmentCommand extends RavenCommand<AttachmentDetails> {
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         let body: string = null;
-        this.result = await this._defaultPipeline(_ => body = _).process(bodyStream);
+        this.result = await this._defaultPipeline(_ => body = _)
+            .process(bodyStream);
         return body;
     }
 

@@ -182,35 +182,12 @@ export class PatchCommand extends RavenCommand<PatchResult> {
             return;
         }
 
-        const collectResultOpts: CollectResultStreamOptions<PatchResult> = {
-            initResult: {} as PatchResult,
-            reduceResults: (reduceResult, { key, value }: { key: string, value: any }) => {
-                if (key === "ModifiedDocument") {
-                    reduceResult.modifiedDocument = value;
-                }
-
-                if (key === "OriginalDocument") {
-                    reduceResult.originalDocument = value;
-                }
-
-                return reduceResult;
-            }
-        };
-
-        let body: string = null;
-        const resultPromise = this._pipeline()
-            .collectBody(b => body = b)
-            .parseJsonAsync([
-                filter({ filter: /^ModifiedDocument|OriginalDocument$/ }),
-                streamObject()
-            ])
-            .streamKeyCaseTransform(this._conventions.entityFieldNameConvention, "DOCUMENT_LOAD")
-            .collectResult(collectResultOpts)
+        let body;
+        this.result = await this._pipeline<PatchResult>()
+            .collectBody(_ => body = _)
+            .parseJsonAsync()
+            .transformKeys("Patch", this._conventions)
             .process(bodyStream);
-
-        const restPromise = parseRestOfOutput(bodyStream, /^ModifiedDocument|OriginalDocument$/);
-        const [result, rest] = await Promise.all([resultPromise, restPromise]);
-        this.result = Object.assign(result, rest) as PatchResult;
         return body;
     }
 }

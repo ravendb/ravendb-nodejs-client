@@ -26,19 +26,20 @@ async function bench(name, attempts, run) {
 }
 
 (async function main() {
-    // {
-    //     const name = "4.0.3-load-full-pipeline";
-    //     await bench(name, 10, loadPipeline);
-    //     await bench(name, 50, loadPipeline);
-    //     await bench(name, 100, loadPipeline);
-    // }
-
     {
-        const name = "camel-everything-stream-json-including-stuff-in-metadata";
-        await bench(name, 10, enhancedStreamJson);
-        await bench(name, 50, enhancedStreamJson);
-        await bench(name, 100, enhancedStreamJson);
+        const name = "4.0.4-load-full-pipeline";
+        await bench(name, 10, loadPipeline);
+        await bench(name, 50, loadPipeline);
+        await bench(name, 100, loadPipeline);
     }
+
+    // {
+    //     const name = "stream-json-with-proper-casing";
+    //     // enhancedStreamJson();
+    //     await bench(name, 10, enhancedStreamJson);
+    //     await bench(name, 50, enhancedStreamJson);
+    //     await bench(name, 100, enhancedStreamJson);
+    // }
 
     store.dispose();
 }());
@@ -67,6 +68,8 @@ async function rawStreamJson() {
     await donePromise;
 }
 
+
+
 async function enhancedStreamJson() {
     const dataStream = fs.createReadStream("./load_data.json");
     const streams = [
@@ -82,9 +85,7 @@ async function enhancedStreamJson() {
             streamStrings: false
         }),
         new TransformKeysJsonStream({
-            rules: [
-                { transform: "camel" }
-            ]
+            getCurrentTransform: buildEntityKeysTransform("camel")
         })
     ];
     const asm = Asm.connectTo(streams[streams.length - 1]);
@@ -94,5 +95,6 @@ async function enhancedStreamJson() {
         });
     });
     await StreamUtil.pipelineAsync(streams);
-    await donePromise;
+    const result = await donePromise;
+    // console.log(JSON.stringify(result, null, 2));
 }

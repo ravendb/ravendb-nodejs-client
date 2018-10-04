@@ -58,6 +58,10 @@ export class GetIndexStatisticsCommand extends RavenCommand<IndexStats> {
         await this._defaultPipeline(_ => body = _)
             .process(bodyStream)
             .then(results => {
+                for (const r of results["results"]) {
+                    r.collections = Object.keys(r.collections)
+                        .reduce((result, next) => [ ...result, [ next, result[next] ]], []);
+                }
                 const responseObj = this._reviveResultTypes(
                     results, 
                     this._conventions,

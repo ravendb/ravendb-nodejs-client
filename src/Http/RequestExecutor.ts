@@ -790,7 +790,6 @@ export class RequestExecutor implements IDisposable {
                     req.uri as string, chosenNode, nodeIndex, command, req, response, null, error, sessionInfo)
                     .then(serverDownHandledSuccessfully => {
                         if (!serverDownHandledSuccessfully) {
-                            debugger;
                             this._throwFailedToContactAllNodes(command, req, error, null);
                         }
                     });
