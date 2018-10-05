@@ -226,7 +226,6 @@ describe("AttachmentsRevisions", function () {
 
     const assertRevisionAttachments =
         (names: string[], expectedCount: number, revision: User, session: IDocumentSession) => {
-            debugger;
             const metadata = session.advanced.getMetadataFor(revision);
 
             const flags = metadata[CONSTANTS.Documents.Metadata.FLAGS] as string;

@@ -8,13 +8,6 @@ import { ServerNode } from "../../Http/ServerNode";
 import * as StringBuilder from "string-builder";
 import { JsonSerializer } from "../../Mapping/Json/Serializer";
 import * as stream from "readable-stream";
-import { streamValues } from "stream-json/streamers/StreamValues";
-import { streamArray } from "stream-json/streamers/StreamArray";
-import { streamObject } from "stream-json/streamers/StreamObject";
-import { pick } from "stream-json/filters/Pick";
-import { ignore } from "stream-json/filters/Ignore";
-import { parseDocumentResults, parseRestOfOutput, parseDocumentIncludes } from "../../Mapping/Json/Streams/Pipelines";
-import { TypesAwareObjectMapper } from "../../Mapping/ObjectMapper";
 import { RavenCommandResponsePipeline } from "../../Http/RavenCommandResponsePipeline";
 
 export interface QueryCommandOptions {

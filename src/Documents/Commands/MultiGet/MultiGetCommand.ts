@@ -98,33 +98,7 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> {
             next.result = JSON.stringify(next.result);
             return [...result, next];
         }, []);
-        // const responsesPromise = this._pipeline<GetResponse[]>()
-        //     .parseJsonAsync([
-        //         ignore({ filter: /^Results\.\d+\.Result/ }),
-        //     ])
-        //     .streamKeyCaseTransform({
-        //         defaultTransform: "camel",
-        //         ignorePaths: [/\./],
-        //     })
-        //     .process(bodyStream);
 
-        // const responsesResultsPromise = this._pipeline<string[]>()
-        //     .parseJsonAsync([
-        //         pick({ filter: "Results" }),
-        //         pick({ filter: /^\d+\.Result\b/i }),
-        //         streamValues()
-        //     ])
-        //     .collectResult({
-        //         initResult: [] as string[],
-        //         reduceResults: (result: string[], next) => {
-        //             // TODO try read it another way
-        //             const resResult = JSON.stringify(next["value"]);
-        //             return [...result, resResult];
-        //         }
-        //     })
-        //     .process(bodyStream);
-
-        debugger;
         for (let i = 0; i < responses.length; i++) {
             const res = responses[i];
             const command = this._commands[i];

@@ -10,14 +10,6 @@ import { HttpCache } from "../../Http/HttpCache";
 import { ServerNode } from "../../Http/ServerNode";
 import { PatchResult } from "./PatchResult";
 import * as stream from "readable-stream";
-import { CollectResultStreamOptions } from "../../Mapping/Json/Streams/CollectResultStream";
-import { streamArray } from "stream-json/streamers/StreamArray";
-import { streamObject } from "stream-json/streamers/StreamObject";
-import { streamValues } from "stream-json/streamers/StreamValues";
-import { pick } from "stream-json/filters/Pick";
-import { filter } from "stream-json/filters/Filter";
-import { ignore } from "stream-json/filters/Ignore";
-import { parseRestOfOutput } from "../../Mapping/Json/Streams/Pipelines";
 import { ObjectUtil } from "../../Utility/ObjectUtil";
 
 export interface Payload {

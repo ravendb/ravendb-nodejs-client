@@ -2,7 +2,11 @@
 
 ## Current 4.0.3
 
-```
+- x10: 11226.364ms
+- x50: 56864.695ms
+- x100: 108768.546ms
+
+```javascript
 async function loadPipeline() {
     const dataStream = fs.createReadStream("./load_data.json");
     let body;
@@ -11,14 +15,13 @@ async function loadPipeline() {
 }
 ```
 
-- x10: 11226.364ms
-- x50: 56864.695ms
-- x100: 108768.546ms
-
-
 ## Raw stream-json
 
-```
+- x10: 1348.737ms
+- x50: 5675.162ms
+- x100: 11056.510ms
+
+```javascript
 async function rawStreamJson() {
     const dataStream = fs.createReadStream("./load_data.json");
     const parserStream = parser();
@@ -36,11 +39,11 @@ async function rawStreamJson() {
 }
 ```
 
-- x10: 1348.737ms
-- x50: 5675.162ms
-- x100: 11056.510ms
-
 ## camel-everything-stream-json-including-stuff-in-metadata
+
+- x10: 2526.681ms
+- x50: 11551.361ms
+- x100: 22518.508ms
 
 ```javascript
 async function enhancedStreamJson() {
@@ -74,11 +77,11 @@ async function enhancedStreamJson() {
 }
 ```
 
-- x10: 2526.681ms
-- x50: 11551.361ms
-- x100: 22518.508ms
-
 ## stream-json-with-proper-casing
+
+- x10: 2531.119ms
+- x50: 10749.968ms
+- x100: 22324.239ms
 
 ```javascript
 function buildEntityKeysTransform(entityCasingConvention) {
@@ -143,7 +146,39 @@ async function enhancedStreamJson() {
 }
 ```
 
+## 4.0.4-load-full-pipeline 
 
-- x10: 2531.119ms
-- x50: 10749.968ms
-- x100: 22324.239ms
+- x10: 1574.306ms
+- x50: 6226.822ms
+- x100: 12414.000ms
+
+```javascript
+async function enhancedStreamJson() {
+    const dataStream = fs.createReadStream("./load_data.json");
+    const streams = [
+        dataStream,
+        parser({
+            packKeys: true,
+            packStrings: true,
+            packValues: true,
+            packNumbers: true,
+            streamNumbers: false,
+            streamValues: false,
+            streamKeys: false,
+            streamStrings: false
+        }),
+        new TransformKeysJsonStream({
+            getCurrentTransform: buildEntityKeysTransform("camel")
+        })
+    ];
+    const asm = Asm.connectTo(streams[streams.length - 1]);
+    const donePromise = new Promise(resolve => {
+        asm.on('done', asm => {
+            resolve(asm.current);
+        });
+    });
+    await StreamUtil.pipelineAsync(streams);
+    const result = await donePromise;
+    // console.log(JSON.stringify(result, null, 2));
+}
+```

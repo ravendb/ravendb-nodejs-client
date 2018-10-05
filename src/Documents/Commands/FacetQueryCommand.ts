@@ -1,13 +1,6 @@
 import { QueryResult } from "../Queries/QueryResult";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import * as stream from "readable-stream";
-import { streamValues } from "stream-json/streamers/StreamValues";
-import { streamArray } from "stream-json/streamers/StreamArray";
-import { streamObject } from "stream-json/streamers/StreamObject";
-import { pick } from "stream-json/filters/Pick";
-import { ignore } from "stream-json/filters/Ignore";
-import { parseRestOfOutput, parseDocumentIncludes } from "../../Mapping/Json/Streams/Pipelines";
-import { TypesAwareObjectMapper } from "../../Mapping/ObjectMapper";
 import { QueryCommand } from "./QueryCommand";
 import { RavenCommandResponsePipeline } from "../../Http/RavenCommandResponsePipeline";
 

@@ -163,7 +163,7 @@ function buildEntityKeysTransformForPutCompareExchangeValue(entityCasingConventi
         }
 
         return entityCasingConvention; 
-    }
+    };
 }
 
 function buildEntityKeysTransformForDocumentLoad(entityCasingConvention) {

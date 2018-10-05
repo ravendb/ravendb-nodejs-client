@@ -45,14 +45,14 @@ async function bench(name, attempts, run) {
 }());
 
 async function loadPipeline() {
-    const dataStream = fs.createReadStream("./load_data.json");
+    const dataStream = fs.createReadStream("./data/load_data.json");
     let body;
     const results = await GetDocumentsCommand
         .parseDocumentsResultResponseAsync(dataStream, store.conventions, _ => body = _);
 }
 
 async function rawStreamJson() {
-    const dataStream = fs.createReadStream("./load_data.json");
+    const dataStream = fs.createReadStream("./data/load_data.json");
     const parserStream = parser();
     const asm = Asm.connectTo(parserStream);
     const donePromise = new Promise(resolve => {
@@ -71,7 +71,7 @@ async function rawStreamJson() {
 
 
 async function enhancedStreamJson() {
-    const dataStream = fs.createReadStream("./load_data.json");
+    const dataStream = fs.createReadStream("./data/load_data.json");
     const streams = [
         dataStream,
         parser({

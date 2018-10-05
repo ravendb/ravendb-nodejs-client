@@ -19,17 +19,6 @@ export function getDocumentResultsPipeline(
         .streamKeyCaseTransform(conventions.entityFieldNameConvention, "DOCUMENT_LOAD");
 }
 
-export function parseDocumentResults(
-    bodyStream: stream.Stream,
-    conventions: DocumentConventions,
-    bodyCallback?: (body: string) => void): Promise<object[]> {
-
-    return getDocumentResultsPipeline(conventions)
-        .collectBody(bodyCallback)
-        .collectResult((result, next) => [...result, next["value"]], [])
-        .process(bodyStream);
-}
-
 export function getRestOfOutputPipeline(
     bodyStream: stream.Stream,
     ignoreFields: string | RegExp): RavenCommandResponsePipeline<object> {
@@ -39,28 +28,6 @@ export function getRestOfOutputPipeline(
             streamValues()
         ])
         .streamKeyCaseTransform("camel");
-}
-
-export function parseRestOfOutput(
-    bodyStream: stream.Stream,
-    ignoreFields: string | RegExp): Promise<object> {
-    return getRestOfOutputPipeline(bodyStream, ignoreFields).process(bodyStream);
-}
-
-export function parseDocumentIncludes(
-    bodyStream: stream.Stream,
-    conventions: DocumentConventions) {
-    return RavenCommandResponsePipeline.create<{ [key: string]: object }>()
-        .parseJsonAsync([
-            pick({ filter: "Includes" }),
-            streamObject()
-        ])
-        .streamKeyCaseTransform(conventions.entityFieldNameConvention, "DOCUMENT_LOAD")
-        .collectResult((result, next) => {
-            result[next["key"]] = next["value"];
-            return result;
-        }, {})
-        .process(bodyStream);
 }
 
 export async function streamResultsIntoStream(
