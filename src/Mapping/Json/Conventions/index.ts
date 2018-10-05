@@ -7,10 +7,7 @@ import {
 } from "../Streams/ObjectKeyCaseTransformStream";
 
 export const DOCUMENT_LOAD_KEY_CASE_TRANSFORM_PROFILE: ObjectKeyCaseTransformStreamOptionsBase = {
-    extractIgnorePaths: (e) => [
-        ...getIgnoreKeyCaseTransformKeysFromDocumentMetadata(e),
-        CONSTANTS.Documents.Metadata.IGNORE_CASE_TRANSFORM_REGEX
-    ],
+    ignorePaths: [ CONSTANTS.Documents.Metadata.IGNORE_CASE_TRANSFORM_REGEX ],
     ignoreKeys: [/^@/],
     paths: [
         {

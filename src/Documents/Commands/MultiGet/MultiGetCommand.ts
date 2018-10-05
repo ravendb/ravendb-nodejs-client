@@ -79,7 +79,7 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> {
 
         const result = await this._pipeline<GetResponse[]>()
             .parseJsonAsync()
-            .transformKeys({
+            .jsonKeysTransform({
                 getCurrentTransform(key, stack) {
                     if (stack.length === 1
                         || stack.length === 2

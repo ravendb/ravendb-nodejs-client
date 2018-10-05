@@ -14,7 +14,9 @@ import { streamObject } from "stream-json/streamers/StreamObject";
 import { pick } from "stream-json/filters/Pick";
 import { ignore } from "stream-json/filters/Ignore";
 import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
-import { getDocumentResultsPipeline } from "../../../Mapping/Json/Streams/Pipelines";
+import { getDocumentResultsPipeline, getDocumentResultsAsObjects } from "../../../Mapping/Json/Streams/Pipelines";
+import { TransformKeysJsonStream } from "../../../Mapping/Json/Streams/TransformKeysJsonStream";
+import { getTransformJsonKeysProfile } from "../../../Mapping/Json/Streams/TransformJsonKeysProfiles";
 
 export class StreamOperation {
     private readonly _session: InMemoryDocumentSessionOperations;
@@ -90,16 +92,15 @@ export class StreamOperation {
             throwError("InvalidArgumentException", "The index does not exists, failed to stream results.");
         }
 
-        const result = getDocumentResultsPipeline(this._session.conventions)
-            .stream(response.stream);
-
+        const result = getDocumentResultsAsObjects(this._session.conventions).stream(response.stream);
+        
         if (this._isQueryStream) {
             RavenCommandResponsePipeline.create()
                 .parseJsonAsync([
                     ignore({ filter: /^Results|Includes$/ }),
+                    new TransformKeysJsonStream(getTransformJsonKeysProfile("CommandResponsePayload")),
                     streamValues()
                 ])
-                .streamKeyCaseTransform("camel")
                 .stream(response.stream)
                 .on("error", err => result.emit("error", err))
                 .on("data", data => {

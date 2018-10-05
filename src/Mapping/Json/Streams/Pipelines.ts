@@ -4,30 +4,37 @@ import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponse
 import { pick } from "stream-json/filters/Pick";
 import { ignore } from "stream-json/filters/Ignore";
 import { streamArray } from "stream-json/streamers/StreamArray";
+import { stringer } from "stream-json/Stringer";
 import { streamObject } from "stream-json/streamers/StreamObject";
 import { streamValues } from "stream-json/streamers/StreamValues";
 import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
+import { TransformKeysJsonStream } from "./TransformKeysJsonStream";
+import { getTransformJsonKeysProfile } from "./TransformJsonKeysProfiles";
 
-export function getDocumentResultsPipeline(
+export function getDocumentResultsAsObjects(
     conventions: DocumentConventions): RavenCommandResponsePipeline<object[]> {
 
     return RavenCommandResponsePipeline.create<object[]>()
         .parseJsonAsync([
-            pick({ filter: "Results" }),
-            streamArray(),
-        ])
-        .streamKeyCaseTransform(conventions.entityFieldNameConvention, "DOCUMENT_LOAD");
+            new TransformKeysJsonStream(getTransformJsonKeysProfile("DocumentLoad", conventions)),
+            pick({ filter: "results" }),
+            streamArray()
+        ]);
 }
 
-export function getRestOfOutputPipeline(
-    bodyStream: stream.Stream,
-    ignoreFields: string | RegExp): RavenCommandResponsePipeline<object> {
-    return RavenCommandResponsePipeline.create()
+export function getDocumentResultsPipeline(
+    conventions: DocumentConventions): RavenCommandResponsePipeline<object[]> {
+    return RavenCommandResponsePipeline.create<object[]>()
         .parseJsonAsync([
-            ignore({ filter: ignoreFields }),
-            streamValues()
-        ])
-        .streamKeyCaseTransform("camel");
+            new TransformKeysJsonStream(getTransformJsonKeysProfile("DocumentLoad", conventions)),
+                // .on("data", x => console.log("TRANSF", x)),
+                // .on("end", () => console.log("TRANSF END")),
+            stringer({ 
+                useValues: true
+            })
+            // .on("data", x => console.log("STRINGER", x.toString()))
+            // .on("end", () => console.log("STRINGER END"))
+        ]);
 }
 
 export async function streamResultsIntoStream(
@@ -35,62 +42,10 @@ export async function streamResultsIntoStream(
     conventions: DocumentConventions,
     writable: stream.Writable): Promise<void> {
 
-    const docsObjectStream = getDocumentResultsPipeline(conventions).stream(bodyStream);
-
-    let endedArray = false;
-    const restStream = stream.pipeline(
-        getRestOfOutputPipeline(bodyStream, /Results|Includes/).stream(bodyStream),
-        new stream.Transform({
-            writableObjectMode: true,
-            readableObjectMode: false,
-            write(chunk, enc, callback) {
-                const val = chunk["value"];
-                if (!val) {
-                    callback();
-                    return;
-                }
-
-                this.push("]");
-                endedArray = true;
-
-                for (const key in val) {
-                    if (val.hasOwnProperty(key)) {
-                        this.push(`,"${key}":${JSON.stringify(val[key])}`);
-                    }
-                }
-                callback();
-            },
-            flush(callback) {
-                if (!endedArray) {
-                    this.push("]");
-                }
-
-                this.push("}");
-                callback();
-            }
-        }));
-
-    let first = true;
-    const resultsStream = stream.pipeline(
-        docsObjectStream,
-        new stream.Transform({
-            writableObjectMode: true,
-            readableObjectMode: false,
-            write(chunk, enc, callback) {
-                const json = JSON.stringify(chunk["value"]);
-                if (first) {
-                    first = false;
-                    this.push(`{"results":[${json}`);
-                } else {
-                    this.push(`,${json}`);
-                }
-
-                callback();
-            },
-            flush(callback) {
-                callback();
-            }
-        }));
-    const mergedStream = StreamUtil.concatStreams(resultsStream, restStream);
-    return StreamUtil.pipelineAsync(mergedStream, writable);
+    return new Promise<void>((resolve, reject) => {
+        getDocumentResultsPipeline(conventions)
+            .stream(bodyStream, writable, (err) => {
+                err ? reject(err) : resolve();
+            });
+    });
 }

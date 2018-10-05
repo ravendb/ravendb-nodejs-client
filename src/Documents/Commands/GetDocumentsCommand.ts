@@ -210,7 +210,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         return RavenCommandResponsePipeline.create<GetDocumentsResult>()
             .collectBody(bodyCallback)
             .parseJsonAsync()
-            .transformKeys("DocumentLoad", conventions)
+            .jsonKeysTransform("DocumentLoad", conventions)
             .process(bodyStream);
     }
 

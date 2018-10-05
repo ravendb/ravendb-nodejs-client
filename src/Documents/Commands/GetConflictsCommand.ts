@@ -39,7 +39,7 @@ export class GetConflictsCommand extends RavenCommand<GetConflictsResult> {
             .then(results => {
                 this.result = this._conventions.objectMapper.fromObjectLiteral(results, {
                     nestedTypes: {
-                        "results[].lastModified": "Date"
+                        "results[].lastModified": "date"
                     }
                 });
             });

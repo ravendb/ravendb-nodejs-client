@@ -178,7 +178,7 @@ export class PatchCommand extends RavenCommand<PatchResult> {
         this.result = await this._pipeline<PatchResult>()
             .collectBody(_ => body = _)
             .parseJsonAsync()
-            .transformKeys("Patch", this._conventions)
+            .jsonKeysTransform("Patch", this._conventions)
             .process(bodyStream);
         return body;
     }

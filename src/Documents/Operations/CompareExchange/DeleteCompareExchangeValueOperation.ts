@@ -74,7 +74,7 @@ export class RemoveCompareExchangeCommand<T> extends RavenCommand<CompareExchang
         const resObj = await this._pipeline<CompareExchangeResultResponse>()
             .collectBody(_ => body = _)
             .parseJsonAsync()
-            .transformKeys("CompareExchangeValue", this._conventions)
+            .jsonKeysTransform("CompareExchangeValue", this._conventions)
             .process(bodyStream);
         this.result = CompareExchangeResult.parseFromObject(resObj, this._conventions, this._clazz);
         return body;

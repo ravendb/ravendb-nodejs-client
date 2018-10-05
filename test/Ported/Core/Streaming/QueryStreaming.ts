@@ -12,6 +12,7 @@ import * as StreamUtil from "../../../../src/Utility/StreamUtil";
 import { CONSTANTS } from "../../../../src/Constants";
 import { parseJsonVerbose } from "../../../Utils/Json";
 import { getStringWritable } from "../../../Utils/Streams";
+import * as sinon from "sinon";
 
 describe("query streaming", function () {
 
@@ -216,9 +217,10 @@ describe("query streaming", function () {
             const query = session.advanced.rawQuery<User>("from index 'Users/ByName'");
 
             const targetStream = getStringWritable();
-            let result;
-            targetStream.once("content", _ => result = _);
-            await session.advanced.streamInto(query, targetStream);
+            session.advanced.streamInto(query, targetStream);
+            await StreamUtil.finishedAsync(targetStream);
+
+            const result: string = targetStream["string"]; 
             assert.ok(result);
             const json = parseJsonVerbose(result);
             assert.ok(json);

@@ -93,7 +93,7 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
         const resObj = await this._pipeline<CompareExchangeResultResponse>()
             .collectBody(_ => body = _)
             .parseJsonAsync()
-            .transformKeys("CompareExchangeValue", this._conventions)
+            .jsonKeysTransform("CompareExchangeValue", this._conventions)
             .process(bodyStream);
 
         const type = !TypeUtil.isPrimitive(this._value)

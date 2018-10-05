@@ -28,7 +28,7 @@ export class FacetQueryCommand extends QueryCommand {
         const rawResult = await RavenCommandResponsePipeline.create<QueryResult>()
             .collectBody(bodyCallback)
             .parseJsonAsync()
-            .transformKeys("FacetQuery")
+            .jsonKeysTransform("FacetQuery")
             .process(bodyStream);
         const queryResult = conventions.objectMapper.fromObjectLiteral<QueryResult>(rawResult, {
             typeName: QueryResult.name,
