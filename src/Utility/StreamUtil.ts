@@ -1,4 +1,3 @@
-import * as merge2 from "merge2";
 import * as stream from "readable-stream";
 import * as promisify from "util.promisify";
 
@@ -28,8 +27,4 @@ export function stringToReadable(s: string) {
     result.push(s);
     result.push(null);
     return result;
-}
-
-export function concatStreams(...streams: stream.Stream[]): stream.Readable {
-    return merge2(...streams);
 }
