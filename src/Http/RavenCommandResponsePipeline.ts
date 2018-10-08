@@ -166,14 +166,7 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
 
         if (opts.jsonAsync) {
             const parser = new Parser({
-                packKeys: true,
-                packStrings: true,
-                packValues: true,
-                packNumbers: true,
-                streamNumbers: false,
-                streamValues: false,
-                streamKeys: false,
-                streamStrings: false
+                packKeys: true
             });
             streams.push(parser);
 

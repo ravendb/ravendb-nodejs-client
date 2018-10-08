@@ -27,13 +27,7 @@ export function getDocumentResultsPipeline(
     return RavenCommandResponsePipeline.create<object[]>()
         .parseJsonAsync([
             new TransformKeysJsonStream(getTransformJsonKeysProfile("DocumentLoad", conventions)),
-                // .on("data", x => console.log("TRANSF", x)),
-                // .on("end", () => console.log("TRANSF END")),
-            stringer({ 
-                useValues: true
-            })
-            // .on("data", x => console.log("STRINGER", x.toString()))
-            // .on("end", () => console.log("STRINGER END"))
+            stringer({ useValues: true })
         ]);
 }
 

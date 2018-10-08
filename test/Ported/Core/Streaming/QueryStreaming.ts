@@ -220,7 +220,7 @@ describe("query streaming", function () {
             session.advanced.streamInto(query, targetStream);
             await StreamUtil.finishedAsync(targetStream);
 
-            const result: string = targetStream["string"]; 
+            const result: string = targetStream["string"];
             assert.ok(result);
             const json = parseJsonVerbose(result);
             assert.ok(json);
