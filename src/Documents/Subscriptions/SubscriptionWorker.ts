@@ -42,7 +42,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
     private _processingCancelled = false;
     private readonly _options: SubscriptionWorkerOptions<T>;
     private _tcpClient: Socket;
-    private _parser: stream.Readable;
+    private _parser: stream.Transform;
     private _disposed: boolean = false;
     private _subscriptionTask: Promise<void>;
     private _emitter = new EventEmitter();
@@ -185,9 +185,9 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                 new ObjectKeyCaseTransformStream(transform)
             ], err => {
                 if (err) {
-                    this._emitter.emit(err);
+                    this._emitter.emit("error", err);
                 }
-            });
+            }) as stream.Transform;
 
             this._parser.pause();
         }
