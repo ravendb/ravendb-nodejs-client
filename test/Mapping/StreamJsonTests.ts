@@ -73,7 +73,14 @@ describe("stream-json parser and stringer", function () {
         readable.push(null);
 
         const parser = new Parser({
-            packKeys: true
+            packKeys: true,
+            packStrings: true,
+            packValues: true,
+            packNumbers: true,
+            streamNumbers: true,
+            streamValues: false,
+            streamKeys: false,
+            streamStrings: false
         });
 
         const stringerInstance = stringer({ useValues: true });

@@ -148,37 +148,15 @@ async function enhancedStreamJson() {
 
 ## 4.0.4-load-full-pipeline 
 
-- x10: 1574.306ms
-- x50: 6226.822ms
-- x100: 12414.000ms
+- x10: 1784.831ms
+- x50: 7229.829ms
+- x100: 14543.986ms
 
 ```javascript
-async function enhancedStreamJson() {
+async function loadPipeline() {
     const dataStream = fs.createReadStream("./load_data.json");
-    const streams = [
-        dataStream,
-        parser({
-            packKeys: true,
-            packStrings: true,
-            packValues: true,
-            packNumbers: true,
-            streamNumbers: false,
-            streamValues: false,
-            streamKeys: false,
-            streamStrings: false
-        }),
-        new TransformKeysJsonStream({
-            getCurrentTransform: buildEntityKeysTransform("camel")
-        })
-    ];
-    const asm = Asm.connectTo(streams[streams.length - 1]);
-    const donePromise = new Promise(resolve => {
-        asm.on('done', asm => {
-            resolve(asm.current);
-        });
-    });
-    await StreamUtil.pipelineAsync(streams);
-    const result = await donePromise;
-    // console.log(JSON.stringify(result, null, 2));
+    let body;
+    const results = await GetDocumentsCommand
+        .parseDocumentsResultResponseAsync(dataStream, store.conventions, _ => body = _);
 }
 ```

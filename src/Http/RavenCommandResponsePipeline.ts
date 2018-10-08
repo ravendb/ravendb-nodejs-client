@@ -166,7 +166,21 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
 
         if (opts.jsonAsync) {
             const parser = new Parser({
-                packKeys: true
+                packKeys: true,
+                packStrings: true,
+                packNumbers: true,
+                streamNumbers: true,
+                streamKeys: false,
+                streamStrings: false
+                // TODO perfect setup perf-wise below, reducing traffic by packing all values 
+                // not yet working due to issue uhop/stream-json#44 - stringer freezes
+                // we still need to stream numbers
+                // packKeys: true,
+                // packStrings: true,
+                // packNumbers: true,
+                // streamNumbers: false,
+                // streamKeys: false,
+                // streamStrings: false
             });
             streams.push(parser);
 
