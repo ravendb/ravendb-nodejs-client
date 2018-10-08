@@ -33,7 +33,7 @@ export class ObjectKeyCaseTransformStream extends stream.Transform {
     constructor(private _opts: ObjectKeyCaseTransformStreamOptions) {
         super({ objectMode: true });
 
-        _opts = Object.assign({}, DEFAULT_OBJECT_KEY_CASE_TRANSFORM_OPTS, _opts); //TODO:
+        this._opts = Object.assign({}, DEFAULT_OBJECT_KEY_CASE_TRANSFORM_OPTS, this._opts); //TODO:
         ObjectKeyCaseTransformStream._validateOpts(_opts);
 
         if (typeof _opts.extractIgnorePaths === "function") {
@@ -56,13 +56,11 @@ export class ObjectKeyCaseTransformStream extends stream.Transform {
         opts.ignorePaths = [...new Set((opts.ignorePaths || [])
             .concat(ignorePaths || []))];
 
-        process.nextTick(() => {
-            entry = ObjectUtil.transformObjectKeys(entry, opts);
-            const data = this._handleKeyValue
-                ? { key, value: entry }
-                : entry;
-            callback(null, data);
-        });
+        entry = ObjectUtil.transformObjectKeys(entry, opts);
+        const data = this._handleKeyValue
+            ? { key, value: entry }
+            : entry;
+        callback(null, data);
     }
 
     private static _validateOpts(opts: ObjectKeyCaseTransformStreamOptions) {

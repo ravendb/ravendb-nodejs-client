@@ -35,6 +35,7 @@ describe("AttachmentsRevisions", function () {
 
         // Delete document should delete all the attachments
         await store.getRequestExecutor().execute(new DeleteDocumentCommand("users/1"));
+        
         await assertRevisions(names, (session, revisions) => {
             assertNoRevisionAttachment(revisions[0], session, true);
             assertRevisionAttachments(names, 3, revisions[1], session);

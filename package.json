@@ -1,6 +1,6 @@
 {
   "name": "ravendb",
-  "version": "4.0.3",
+  "version": "4.0.4",
   "description": "RavenDB client for Node.js",
   "files": [
     "dist/"
@@ -76,7 +76,6 @@
     "bluebird": "^3.4.7",
     "change-case": "^3.0.2",
     "md5-hex": "^2.0.0",
-    "merge2": "^1.2.2",
     "moment": "^2.22.0",
     "pluralize": "^4.0.0",
     "qs": "^6.5.2",
@@ -86,7 +85,6 @@
     "semaphore": "^1.1.0",
     "stream-json": "^1.1.1",
     "string-builder": "^0.1.6",
-    "through2": "^2.0.3",
     "util.promisify": "^1.0.0",
     "uuid": "^3.2.1",
     "verror": "^1.10.0",

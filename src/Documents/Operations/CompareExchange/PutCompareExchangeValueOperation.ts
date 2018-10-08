@@ -1,6 +1,6 @@
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { IOperation, OperationResultType } from "../OperationAbstractions";
-import { CompareExchangeResult } from "./CompareExchangeResult";
+import { CompareExchangeResult, CompareExchangeResultResponse } from "./CompareExchangeResult";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { IDocumentStore } from "../../IDocumentStore";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
@@ -89,35 +89,18 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         let body: string = null;
-        const resultPromise = this._pipeline<object>()
-            .collectBody(b => body = b)
-            .parseJsonAsync([
-                pick({ filter: "Value.Object" }),
-                streamValues()
-            ])
-            .streamKeyCaseTransform(this._conventions.entityFieldNameConvention)
+
+        const resObj = await this._pipeline<CompareExchangeResultResponse>()
+            .collectBody(_ => body = _)
+            .parseJsonAsync()
+            .jsonKeysTransform("CompareExchangeValue", this._conventions)
             .process(bodyStream);
 
-        const restPromise = this._pipeline<object>()
-            .parseJsonAsync([
-                ignore({ filter: "Value" }),
-                streamValues()
-            ])
-            .streamKeyCaseTransform("camel")
-            .process(bodyStream);
-
-        await Promise.all([resultPromise, restPromise])
-            .then(([result, rest]) => {
-                const resObj = Object.assign(
-                    {},
-                    rest as { successful: boolean, index: number },
-                    { value: { object: result } });
-                const type = !TypeUtil.isPrimitive(this._value)
-                    ? this._conventions.getEntityTypeDescriptor(this._value as any) as ObjectTypeDescriptor
-                    : null;
-                const clazz: ClassConstructor<T> = TypeUtil.isClass(type) ? type as any : null;
-                this.result = CompareExchangeResult.parseFromObject(resObj, this._conventions, clazz);
-            });
+        const type = !TypeUtil.isPrimitive(this._value)
+            ? this._conventions.getEntityTypeDescriptor(this._value as any) as ObjectTypeDescriptor
+            : null;
+        const clazz: ClassConstructor<T> = TypeUtil.isClass(type) ? type as any : null;
+        this.result = CompareExchangeResult.parseFromObject(resObj, this._conventions, clazz);
 
         return body;
     }

@@ -6,3 +6,5 @@ declare module "xregexp" {
 interface Console {
     profileEnd(label: string);
 }
+
+declare module "stream-json/filters/FilterBase"; 

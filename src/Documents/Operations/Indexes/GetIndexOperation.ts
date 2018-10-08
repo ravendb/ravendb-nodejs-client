@@ -59,7 +59,7 @@ export class GetIndexCommand extends RavenCommand<IndexDefinition> {
         await this._pipeline()
             .collectBody(b => body = b)
             .parseJsonSync()
-            .streamKeyCaseTransform({
+            .objectKeysTransform({
                 defaultTransform: "camel",
                 ignorePaths: [/fields\.[^.]+$/i]
             })

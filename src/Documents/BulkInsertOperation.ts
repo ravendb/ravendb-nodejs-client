@@ -20,7 +20,6 @@ import { DocumentConventions } from "./Conventions/DocumentConventions";
 import { ServerNode } from "../Http/ServerNode";
 import { AbstractCallback } from "../Types/Callbacks";
 import { passResultToCallback } from "../Utility/PromiseUtil";
-import * as through2 from "through2";
 
 export class BulkInsertOperation {
     private readonly _generateEntityIdOnTheClient: GenerateEntityIdOnTheClient;
@@ -275,23 +274,26 @@ export class BulkInsertOperation {
 
     private _getBufferingWriteable(): stream.Transform {
         let buffer = Buffer.from([]);
-        return through2(function (chunk, enc, callback) {
-            buffer = Buffer.concat([buffer, chunk]);
+        return new stream.Transform({
+            transform(chunk, enc, callback) {
+                buffer = Buffer.concat([buffer, chunk]);
 
-            if (buffer.length > BulkInsertOperation._maxSizeInBuffer) {
-                this.push(buffer, enc);
-                buffer = Buffer.from([]);
+                if (buffer.length > BulkInsertOperation._maxSizeInBuffer) {
+                    this.push(buffer, enc);
+                    buffer = Buffer.from([]);
+                }
+
+                callback();
+            },
+            flush(callback) {
+                if (buffer.length) {
+                    // push remaining part
+                    this.push(buffer);
+                }
+                this.push(null);
+
+                callback();
             }
-
-            callback();
-        }, function (callback) {
-            if (buffer.length) {
-                // push remaining part
-                this.push(buffer);
-            }
-            this.push(null);
-
-            callback();
         });
     }
 

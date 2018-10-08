@@ -46,7 +46,7 @@ export class GetCollectionStatisticsCommand extends RavenCommand<CollectionStati
         let body: string = null;
         this.result = await this._defaultPipeline(_ => body = _)
             .collectBody()
-            .streamKeyCaseTransform({
+            .objectKeysTransform({
                 defaultTransform: "camel",
                 ignorePaths: [/^collections\./i]
             })

@@ -117,7 +117,7 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
         this.result = await RavenCommandResponsePipeline.create<IRavenArrayResult>()
             .collectBody(_ => body = _)
             .parseJsonSync()
-            .streamKeyCaseTransform({
+            .objectKeysTransform({
                 defaultTransform: "camel",
                 ignoreKeys: [/^@/],
             })

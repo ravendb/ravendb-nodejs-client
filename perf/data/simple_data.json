@@ -1,0 +1,23 @@
+{
+    "Results": [
+        {
+            "TestKey": "TestValue",
+            "NumberKey": 1,
+            "@metadata": {
+                "@collection": "hahahah",
+                "Raven-Node-Type": "TypeName",
+                "@nested-object-types": {
+                    "start": "date"
+                },
+                "@attachments": [
+                    { 
+                        "Name": "test.png",
+                        "Hash": "asdij%*(J#JSA",
+                        "ContentType": "aaaa"
+                    }
+                ]
+            }
+        }
+    ],
+    "Includes": {}
+}

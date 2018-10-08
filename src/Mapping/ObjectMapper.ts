@@ -179,7 +179,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         }
 
         if (isFieldMap) {
-            return this._getFieldContextsForMapEntries(fieldVal as Map<string, any>, fieldsPathTail);
+            return this._getFieldContextsForMapEntries(fieldVal as Map<any, any>, fieldsPathTail);
         }
 
         if (fieldsPathTail.length) {
@@ -308,11 +308,8 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         }
 
         if (fieldTypeName === "Map") {
-            const mapEntries = Object.keys(fieldVal)
-                .reduce((result, next) => {
-                    return [...result, [next, fieldVal[next]]];
-                }, []);
-            fieldContext.setValue(new Map(mapEntries));
+            const map = new Map(fieldVal);
+            fieldContext.setValue(map);
             return;
         }
 
@@ -405,13 +402,17 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
             typeInfoCallback({
                 [objPathPrefix]: "Map"
             });
-            const newObjPathPrefix = `${objPathPrefix}$MAP`;
-            const map = obj as Map<string, any>;
-            return Array.from(map.keys()).reduce((result, next) => {
-                return Object.assign(result, {
-                    [next]: this._makeObjectLiteral(map.get(next), newObjPathPrefix, typeInfoCallback, knownTypes)
-                });
-            }, {});
+            const valuePathPrefix = `${objPathPrefix}$MAP`;
+            const map = obj as Map<any, any>;
+            return Array.from(map.entries()).reduce((result, [ name, value ]) => {
+                return [
+                    ...result,
+                    [ 
+                        this._makeObjectLiteral(name, valuePathPrefix + "KEY", typeInfoCallback, knownTypes),
+                        this._makeObjectLiteral(value, valuePathPrefix, typeInfoCallback, knownTypes)
+                    ]
+                ];
+            }, []);
         }
 
         if (Array.isArray(obj)) {

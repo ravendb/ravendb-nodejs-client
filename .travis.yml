@@ -5,7 +5,8 @@ node_js:
   - "10"
 env:
   matrix:
-    - RAVENDB_TEST_SERVER_PATH=./RavenDB/Server/Raven.Server
+    - RAVENDB_SERVER_DOWNLOAD="https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest?buildType=stable&version=4.0"
+      RAVENDB_TEST_SERVER_PATH=./RavenDB/Server/Raven.Server
       RAVENDB_TEST_SERVER_CERTIFICATE_PATH=./certs/server.pfx
       RAVENDB_TEST_CLIENT_CERT_PASSPHRASE=client11
       RAVENDB_TEST_CLIENT_CERT_PATH=./certs/nodejs.pem
@@ -14,7 +15,7 @@ env:
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y libunwind8 wget libicu52 libssl-dev curl unzip gettext libcurl4-openssl-dev zlib1g uuid-dev bzip2 openssl
-  - wget -O RavenDB.tar.bz2 https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest?buildType=nightly
+  - wget -O RavenDB.tar.bz2 "$RAVENDB_SERVER_DOWNLOAD" 
   - tar xjf RavenDB.tar.bz2
   - mkdir certs; pushd certs
   - openssl genrsa -out ca.key 2048

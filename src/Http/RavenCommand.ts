@@ -79,7 +79,7 @@ export abstract class RavenCommand<TResult> {
         return this._pipeline<TResult>()
             .parseJsonSync()
             .collectBody(bodyCallback)
-            .streamKeyCaseTransform("camel");
+            .objectKeysTransform("camel");
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {

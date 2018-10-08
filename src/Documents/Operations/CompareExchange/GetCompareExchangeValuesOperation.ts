@@ -131,7 +131,7 @@ export class GetCompareExchangeValuesCommand<T> extends RavenCommand<{ [key: str
         await this._pipeline()
             .collectBody(b => body = b)
             .parseJsonSync()
-            .streamKeyCaseTransform("camel")
+            .objectKeysTransform("camel")
             .process(bodyStream)
             .then(results => {
                 this.result = CompareExchangeValueResultParser.getValues<T>(

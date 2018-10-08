@@ -10,14 +10,6 @@ import { HttpCache } from "../../Http/HttpCache";
 import { ServerNode } from "../../Http/ServerNode";
 import { PatchResult } from "./PatchResult";
 import * as stream from "readable-stream";
-import { CollectResultStreamOptions } from "../../Mapping/Json/Streams/CollectResultStream";
-import { streamArray } from "stream-json/streamers/StreamArray";
-import { streamObject } from "stream-json/streamers/StreamObject";
-import { streamValues } from "stream-json/streamers/StreamValues";
-import { pick } from "stream-json/filters/Pick";
-import { filter } from "stream-json/filters/Filter";
-import { ignore } from "stream-json/filters/Ignore";
-import { parseRestOfOutput } from "../../Mapping/Json/Streams/Pipelines";
 import { ObjectUtil } from "../../Utility/ObjectUtil";
 
 export interface Payload {
@@ -182,35 +174,12 @@ export class PatchCommand extends RavenCommand<PatchResult> {
             return;
         }
 
-        const collectResultOpts: CollectResultStreamOptions<PatchResult> = {
-            initResult: {} as PatchResult,
-            reduceResults: (reduceResult, { key, value }: { key: string, value: any }) => {
-                if (key === "ModifiedDocument") {
-                    reduceResult.modifiedDocument = value;
-                }
-
-                if (key === "OriginalDocument") {
-                    reduceResult.originalDocument = value;
-                }
-
-                return reduceResult;
-            }
-        };
-
-        let body: string = null;
-        const resultPromise = this._pipeline()
-            .collectBody(b => body = b)
-            .parseJsonAsync([
-                filter({ filter: /^ModifiedDocument|OriginalDocument$/ }),
-                streamObject()
-            ])
-            .streamKeyCaseTransform(this._conventions.entityFieldNameConvention, "DOCUMENT_LOAD")
-            .collectResult(collectResultOpts)
+        let body;
+        this.result = await this._pipeline<PatchResult>()
+            .collectBody(_ => body = _)
+            .parseJsonAsync()
+            .jsonKeysTransform("Patch", this._conventions)
             .process(bodyStream);
-
-        const restPromise = parseRestOfOutput(bodyStream, /^ModifiedDocument|OriginalDocument$/);
-        const [result, rest] = await Promise.all([resultPromise, restPromise]);
-        this.result = Object.assign(result, rest) as PatchResult;
         return body;
     }
 }

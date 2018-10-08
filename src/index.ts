@@ -235,6 +235,7 @@ export { Mapping } from "./Mapping";
 import * as Json from "./Mapping/Json";
 
 export { Json };
+export { TransformKeysJsonStream } from "./Mapping/Json/Streams/TransformKeysJsonStream";
 
 import { DocumentStore } from "./Documents/DocumentStore";
 

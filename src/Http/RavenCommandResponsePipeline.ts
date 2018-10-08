@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import { parser } from "stream-json";
+import * as Parser from "stream-json/Parser";
 import {
     ObjectKeyCaseTransformStreamOptions,
     ObjectKeyCaseTransformStream
@@ -9,7 +9,6 @@ import {
     getObjectKeyCaseTransformProfile
 } from "../Mapping/Json/Conventions";
 import { CasingConvention } from "../Utility/ObjectUtil";
-import * as through2 from "through2";
 import * as StreamUtil from "../Utility/StreamUtil";
 import * as stream from "readable-stream";
 import {
@@ -19,6 +18,16 @@ import {
 } from "../Mapping/Json/Streams/CollectResultStream";
 import { throwError } from "../Exceptions";
 import * as StringBuilder from "string-builder";
+import { 
+    TransformJsonKeysStreamOptions, 
+    TransformKeysJsonStream } from "../Mapping/Json/Streams/TransformKeysJsonStream";
+import { 
+    TransformJsonKeysProfile, 
+    getTransformJsonKeysProfile } from "../Mapping/Json/Streams/TransformJsonKeysProfiles";
+import { TypeUtil } from "../Utility/TypeUtil";
+import * as Asm from "stream-json/Assembler";
+import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
+import { AbstractCallback } from "../Types/Callbacks";
 
 export interface RavenCommandResponsePipelineOptions<TResult> {
     collectBody?: boolean | ((body: string) => void);
@@ -29,6 +38,7 @@ export interface RavenCommandResponsePipelineOptions<TResult> {
     streamKeyCaseTransform?: ObjectKeyCaseTransformStreamOptions;
     collectResult: CollectResultStreamOptions<TResult>;
     transform?: stream.Stream;
+    transformKeys?: TransformJsonKeysStreamOptions;
 }
 
 export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
@@ -45,7 +55,7 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
         return new RavenCommandResponsePipeline();
     }
 
-    public parseJsonAsync(filters: any[]) {
+    public parseJsonAsync(filters?: any[]) {
         this._opts.jsonAsync = { filters };
         return this;
     }
@@ -60,9 +70,35 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
         return this;
     }
 
-    public streamKeyCaseTransform(defaultTransform: CasingConvention, profile?: ObjectKeyCaseTransformProfile): this;
-    public streamKeyCaseTransform(opts: ObjectKeyCaseTransformStreamOptions): this;
-    public streamKeyCaseTransform(
+    public jsonKeysTransform(): this;
+    public jsonKeysTransform(profile: TransformJsonKeysProfile, conventions: DocumentConventions): this;
+    public jsonKeysTransform(profile: TransformJsonKeysProfile): this;
+    public jsonKeysTransform(opts: TransformJsonKeysStreamOptions): this;
+    public jsonKeysTransform(
+        optsOrProfile?: TransformJsonKeysStreamOptions | TransformJsonKeysProfile,
+        conventions?: DocumentConventions): this {
+
+        if (!this._opts.jsonAsync) {
+            throwError("InvalidOperationException",
+                "Cannot use transformKeys without doing parseJsonAsync() first.");
+        }
+
+        if (!optsOrProfile) {
+            throwError("InvalidArgumentException", "Must provide transform opts or profile name.");
+        }
+
+        if (TypeUtil.isString(optsOrProfile)) {
+            this._opts.transformKeys = getTransformJsonKeysProfile(optsOrProfile, conventions);
+        } else {
+            this._opts.transformKeys = optsOrProfile;
+        }
+
+        return this;
+    }
+
+    public objectKeysTransform(defaultTransform: CasingConvention, profile?: ObjectKeyCaseTransformProfile): this;
+    public objectKeysTransform(opts: ObjectKeyCaseTransformStreamOptions): this;
+    public objectKeysTransform(
         optsOrTransform: CasingConvention | ObjectKeyCaseTransformStreamOptions,
         profile?: ObjectKeyCaseTransformProfile): this {
 
@@ -102,14 +138,15 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
         return this;
     }
 
-    public customTransform(transform: stream.Transform) {
-        this._opts.transform = transform;
-        return this;
-    }
-
-    public stream(src: stream.Stream): stream.Readable {
+    public stream(src: stream.Stream): stream.Readable;
+    public stream(src: stream.Stream, dst: stream.Writable, callback: AbstractCallback<void>): stream.Stream;
+    public stream(src: stream.Stream, dst?: stream.Writable, callback?: AbstractCallback<void>): stream.Stream {
         const streams = this._buildUp(src);
-        return (stream.pipeline as any)(...streams) as stream.Readable;
+        if (dst) {
+            streams.push(dst);
+        }
+
+        return (stream.pipeline as any)(...streams, callback || TypeUtil.NOOP) as stream.Stream;
     }
 
     private _appendBody(s): void {
@@ -123,25 +160,42 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
 
         const opts = this._opts;
         const streams: stream.Stream[] = [src];
-        const appendBody = (chunk) => this._appendBody(chunk);
         if (opts.collectBody) {
-            streams.push(through2(function (chunk, enc, callback) {
-                appendBody(chunk);
-                callback(null, chunk);
-            }));
+            src.on("data", (chunk) => this._appendBody(chunk));
         }
 
         if (opts.jsonAsync) {
-            streams.push(parser());
-            streams.push(...opts.jsonAsync.filters);
+            const parser = new Parser({
+                packKeys: true,
+                packStrings: true,
+                packNumbers: true,
+                streamNumbers: true,
+                streamKeys: false,
+                streamStrings: false
+                // TODO perfect setup perf-wise below, reducing traffic by packing all values 
+                // not yet working due to issue uhop/stream-json#44 - stringer freezes
+                // we still need to stream numbers
+                // packKeys: true,
+                // packStrings: true,
+                // packNumbers: true,
+                // streamNumbers: false,
+                // streamKeys: false,
+                // streamStrings: false
+            });
+            streams.push(parser);
+
+            if (opts.jsonAsync.filters && opts.jsonAsync.filters.length) {
+                streams.push(...opts.jsonAsync.filters);
+            }
         } else if (opts.jsonSync) {
             let json = "";
-            streams.push(through2.obj(
-                function (chunk, enc, callback) {
+            streams.push(new stream.Transform({
+                readableObjectMode: true,
+                transform(chunk, enc, callback) {
                     json += chunk.toString("utf8");
                     callback();
                 },
-                function (callback) {
+                flush(callback) {
                     let result;
 
                     try {
@@ -152,7 +206,8 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
 
                     this.push(result);
                     callback();
-                }));
+                }
+            }));
         }
 
         if (opts.streamKeyCaseTransform) {
@@ -161,8 +216,8 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
             streams.push(new ObjectKeyCaseTransformStream(keyCaseOpts));
         }
 
-        if (opts.transform) {
-            streams.push(opts.transform);
+        if (opts.transformKeys) {
+            streams.push(new TransformKeysJsonStream(opts.transformKeys) as any);
         }
 
         return streams;
@@ -171,32 +226,32 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
     public process(src: stream.Stream): Promise<TStreamResult> {
         const streams = this._buildUp(src);
         const opts = this._opts;
-        let collectResultsOpts = opts.collectResult;
-        if (!collectResultsOpts || !collectResultsOpts.reduceResults) {
-            if (opts.jsonAsync) {
-                collectResultsOpts = { reduceResults: lastValue as any };
-            } else {
-                collectResultsOpts = { reduceResults: lastChunk as any };
-            }
+        let resultPromise: Promise<TStreamResult>;
+        if (opts.jsonAsync) {
+            const asm = Asm.connectTo(streams[streams.length - 1]);
+            resultPromise = new Promise(resolve => {
+                asm.on("done", asm => resolve(asm.current));
+            });
+        } else {
+            const collectResultOpts = !opts.collectResult || !opts.collectResult.reduceResults
+                ? { reduceResults: lastChunk as any } : opts.collectResult;
+            const collectResult = new CollectResultStream(collectResultOpts);
+            streams.push(collectResult);
+            resultPromise = collectResult.promise;
         }
 
-        const collectResult = new CollectResultStream(collectResultsOpts);
-        streams.push(collectResult);
-
-        const resultsPromise = collectResult.promise
-            .then(result => {
-
-                if (opts.collectBody) {
+        if (opts.collectBody) {
+            resultPromise
+                .then(() => {
                     const body = this._body.toString();
                     this.emit("body", body);
                     if (typeof opts.collectBody === "function") {
                         opts.collectBody(body);
                     }
-                }
+                });
+        }
 
-                return result;
-            });
-
-        return StreamUtil.pipelineAsync(...streams).then(() => resultsPromise);
+        return StreamUtil.pipelineAsync(...streams)
+            .then(() => resultPromise);
     }
 }

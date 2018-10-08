@@ -115,16 +115,18 @@ export class DocumentStore extends DocumentStoreBase {
                 return new BluebirdPromise((resolve, reject) => {
                     let listenersExecCallbacksCount = 0;
                     const listenersCount = this.listenerCount("afterDispose");
-                    
-                    this.emit("afterDispose", () => {
-                        if (listenersCount === ++listenersExecCallbacksCount) {
-                            resolve();
-                        }
-                    });
-
+                    if (listenersCount === 0) {
+                        resolve();
+                    } else {
+                        this.emit("afterDispose", () => {
+                            if (listenersCount === ++listenersExecCallbacksCount) {
+                                resolve();
+                            }
+                        });
+                    }
                 })
-                    .timeout(5000)
-                    .catch((err) => this._log.warn(`Error handling 'afterDispose'`, err));
+                .timeout(5000)
+                .catch((err) => this._log.warn(`Error handling 'afterDispose'`, err));
             })
             .then(() => {
                 this._log.info(`Disposing request executors ${this._requestExecutors.size}`);

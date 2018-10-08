@@ -14,6 +14,7 @@ import { pick } from "stream-json/filters/Pick";
 import { filter } from "stream-json/filters/Filter";
 import { ignore } from "stream-json/filters/Ignore";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { TransformKeysJsonStream } from "../../../Mapping/Json/Streams/TransformKeysJsonStream";
 
 export class MultiGetCommand extends RavenCommand<GetResponse[]> {
     private _cache: HttpCache;
@@ -76,44 +77,30 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> {
             this._throwInvalidResponse();
         }
 
-        const responsesPromise = this._pipeline<GetResponse[]>()
-            .parseJsonAsync([
-                ignore({ filter: /^Results\.\d+\.Result/ }),
-                pick({ filter: "Results" }),
-                streamArray()
-            ])
-            .streamKeyCaseTransform({
-                defaultTransform: "camel",
-                ignorePaths: [/\./],
-            })
-            .collectResult({
-                initResult: [] as GetResponse[],
-                reduceResults: (result: GetResponse[], next) => {
-                    return [...result, next["value"]];
+        const result = await this._pipeline<GetResponse[]>()
+            .parseJsonAsync()
+            .jsonKeysTransform({
+                getCurrentTransform(key, stack) {
+                    if (stack.length === 1
+                        || stack.length === 2
+                        || stack.length === 3) {
+                        // results.0.result
+                        return "camel";
+                    }
+
+                    return null;
                 }
             })
             .process(bodyStream);
+        
+        const responses = result["results"].reduce((result: GetResponse[], next) => {
+            // TODO try to get it directly from parser
+            next.result = JSON.stringify(next.result);
+            return [...result, next];
+        }, []);
 
-        const responsesResultsPromise = this._pipeline<string[]>()
-            .parseJsonAsync([
-                pick({ filter: "Results" }),
-                pick({ filter: /^\d+\.Result\b/i }),
-                streamValues()
-            ])
-            .collectResult({
-                initResult: [] as string[],
-                reduceResults: (result: string[], next) => {
-                    // TODO try read it another way
-                    const resResult = JSON.stringify(next["value"]);
-                    return [...result, resResult];
-                }
-            })
-            .process(bodyStream);
-
-        const [responses, responsesResults] = await Promise.all([responsesPromise, responsesResultsPromise]);
         for (let i = 0; i < responses.length; i++) {
             const res = responses[i];
-            res.result = responsesResults[i];
             const command = this._commands[i];
             this._maybeSetCache(res, command);
             this._maybeReadFromCache(res, command);

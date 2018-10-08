@@ -40,7 +40,7 @@ export function getError(
         name: errName,
         cause: errCause,
         info
-    }, message);
+    }, message.replace(/%/g, "%%"));
     return error;
 }
 
