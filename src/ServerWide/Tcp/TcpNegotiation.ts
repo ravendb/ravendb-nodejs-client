@@ -21,7 +21,6 @@ export class TcpNegotiation {
 
         let currentRef: number = parameters.version;
         while (true) {
-
             await this._sendTcpVersionInfo(socket, parameters, currentRef);
             const version = await parameters.readResponseAndGetVersionCallback(parameters.destinationUrl);
 
@@ -57,7 +56,7 @@ export class TcpNegotiation {
 
     private static async _sendTcpVersionInfo(socket: Socket,
                                              parameters: TcpNegotiateParameters,
-                                             currentVersion: number): Promise<number> {
+                                             currentVersion: number): Promise<void> {
         log.info("Send negotiation for " + parameters.operation + " in version " + currentVersion);
 
         const payload = JSON.stringify({
@@ -67,8 +66,10 @@ export class TcpNegotiation {
             OperationVersion: currentVersion
         }, null, 0);
 
-        return new Promise<number>(resolve => {
-            socket.write(payload, resolve);
+        return new Promise<void>((resolve, reject) => {
+            socket.write(payload, (err) => {
+                err ? reject(err) : resolve();
+            });
         });
     }
 }

@@ -142,9 +142,9 @@ export abstract class DocumentStoreBase
 
     public abstract bulkInsert(database?: string): BulkInsertOperation;
 
-    private readonly _subscriptions;
+    private readonly _subscriptions: DocumentSubscriptions;
 
-    public get subscriptions() {
+    public get subscriptions(): DocumentSubscriptions {
         return this._subscriptions;
     }
 

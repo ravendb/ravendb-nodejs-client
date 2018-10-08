@@ -6,7 +6,6 @@ import { SubscriptionWorkerOptions } from "./SubscriptionWorkerOptions";
 import { SubscriptionBatch } from "./SubscriptionBatch";
 import { GetTcpInfoCommand, RavenErrorType, RequestExecutor, ServerNode } from "../..";
 import { Socket } from "net";
-import * as StreamValues from "stream-json/streamers/StreamValues";
 import { StringUtil } from "../../Utility/StringUtil";
 import { getError, throwError } from "../../Exceptions";
 import { TcpUtils } from "../../Utility/TcpUtils";
@@ -29,8 +28,17 @@ import { SubscriptionConnectionClientMessage } from "./SubscriptionConnectionCli
 import { EmptyCallback } from "../../Types/Callbacks";
 import { getObjectKeyCaseTransformProfile } from "../../Mapping/Json/Conventions";
 import { delay } from "../../Utility/PromiseUtil";
+import * as Parser from "stream-json/Parser";
+import * as StreamValues from "stream-json/streamers/StreamValues";
+import { TransformKeysJsonStream } from "../../Mapping/Json/Streams/TransformKeysJsonStream";
+import { getTransformJsonKeysProfile } from "../../Mapping/Json/Streams/TransformJsonKeysProfiles";
 
-type EventTypes = "afterAcknowledgment" | "onConnectionRetry" | "batch" | "error" | "end";
+interface SubscriptionResponseParsedItem { 
+    key: number; 
+    value: SubscriptionConnectionServerMessage; 
+}
+
+type EventTypes = "afterAcknowledgment" | "connectionRetry" | "batch" | "error" | "end";
 
 export class SubscriptionWorker<T extends object> implements IDisposable {
 
@@ -115,8 +123,6 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         this._tcpClient =
             await TcpUtils.connect(command.result.url, command.result.certificate, this._store.authOptions);
 
-        this._tcpClient.on("error", error => this._emitter.emit("error", error));
-
         this._ensureParser();
 
         const databaseName = this._dbName || this._store.database;
@@ -176,51 +182,43 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
     }
 
     private _ensureParser() {
-        if (!this._parser) {
-            const transform = getObjectKeyCaseTransformProfile("camel", "DOCUMENT_LOAD");
+        this._parser = stream.pipeline([
+            this._tcpClient,
+            new Parser({ jsonStreaming: true, streamValues: false }),
+            new TransformKeysJsonStream(
+                getTransformJsonKeysProfile("SubscriptionResponsePayload", this._store.conventions)),
+            new StreamValues()
+        ], err => {
+            if (err) {
+                this._emitter.emit("error", err);
+            }
+        }) as stream.Transform;
 
-            this._parser = stream.pipeline([
-                this._tcpClient,
-                StreamValues.withParser(),
-                new ObjectKeyCaseTransformStream(transform)
-            ], err => {
-                if (err) {
-                    this._emitter.emit("error", err);
-                }
-            }) as stream.Transform;
-
-            this._parser.pause();
-        }
+        this._parser.pause();
     }
 
     // noinspection JSUnusedLocalSymbols
     private async _readServerResponseAndGetVersion(url: string): Promise<number> {
-        return new Promise<number>((resolve, reject) => {
-            this._parser.once("readable", async () => {
-                const x = this._parser.read();
-                switch (x.value.status) {
-                    case "Ok":
-                        resolve(x.value.version);
-                        return;
-                    case "AuthorizationFailed":
-                        reject(
-                            getError("AuthorizationException",
-                                "Cannot access database " + this._dbName + " because " + x.value.message));
-                        return;
-                    case "TcpVersionMismatch":
-                        if (x.value.version !== OUT_OF_RANGE_STATUS) {
-                            return x.value.version;
-                        }
-
-                        //Kindly request the server to drop the connection
-                        await this._sendDropMessage(x.value);
-                        throwError("InvalidOperationException",
-                            "Can't connect to database " + this._dbName + " because: " + x.value.message);
+        const x: any = await this._readNextObject();
+        switch (x.status) {
+            case "Ok":
+                return x.version;
+            case "AuthorizationFailed":
+                throwError("AuthorizationException",
+                        "Cannot access database " + this._dbName + " because " + x.message);
+                return;
+            case "TcpVersionMismatch":
+                if (x.version !== OUT_OF_RANGE_STATUS) {
+                    return x.version;
                 }
 
-                resolve(x.value.version);
-            });
-        });
+                //Kindly request the server to drop the connection
+                await this._sendDropMessage(x.value);
+                throwError("InvalidOperationException",
+                    "Can't connect to database " + this._dbName + " because: " + x.message);
+        }
+
+        return x.version;
     }
 
     private _sendDropMessage(reply: TcpConnectionHeaderResponse): Promise<number> {
@@ -299,13 +297,14 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             }
 
             const socket = await this._connectToServer();
+            let notifiedSubscriber = Promise.resolve();
+            let readFromServer = Promise.resolve<SubscriptionConnectionServerMessage[]>(null);
             try {
                 if (this._processingCancelled) {
                     throwError("OperationCancelledException");
                 }
 
                 const tcpClientCopy = this._tcpClient;
-
                 const connectionStatus: SubscriptionConnectionServerMessage = await this._readNextObject();
 
                 if (this._processingCancelled) {
@@ -322,14 +321,13 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                     return;
                 }
 
-                let notifiedSubscriber = Promise.resolve();
                 const batch = new SubscriptionBatch<T>(this._documentType, this._revisions,
                     this._subscriptionLocalRequestExecutor, this._store, this._dbName);
 
                 while (!this._processingCancelled) {
                     // start the read from the server
 
-                    const readFromServer = this._readSingleSubscriptionBatchFromServer(batch);
+                    readFromServer = this._readSingleSubscriptionBatchFromServer(batch);
 
                     try {
                         // and then wait for the subscriber to complete
@@ -349,42 +347,38 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                     }
 
                     const lastReceivedChangeVector = batch.initialize(incomingBatch);
-
-                    const notifyListeners = new Promise<void>((resolve, reject) => {
-                        let listenerCount = this._emitter.listenerCount("batch");
-
-                        this._emitter.emit("batch", batch, (error?: any) => {
-                            if (error) {
-                                reject(error);
-                            } else {
-                                listenerCount--;
-                                if (!listenerCount) {
-                                    resolve();
-                                }
-                            }
-                        });
-                    });
-
-                    notifiedSubscriber = notifyListeners
-                        .then(() => {
-                            if (tcpClientCopy) {
-                                return this._sendAck(lastReceivedChangeVector, tcpClientCopy);
-                            }
-                            return null;
-                        })
-                        .catch(error => {
-                            this._logger.error(error, "Subscription " + this._options.subscriptionName
+                    notifiedSubscriber = this._emitBatchAndWaitForProcessing(batch) 
+                        .catch((err) => {
+                            this._logger.error(err, "Subscription " + this._options.subscriptionName
                                 + ". Subscriber threw an exception on document batch");
 
                             if (!this._options.ignoreSubscriberErrors) {
-                                this._emitter.emit("error", getError("SubscriberErrorException",
+                                throwError("SubscriberErrorException",
                                     "Subscriber threw an exception in subscription "
-                                    + this._options.subscriptionName, error));
+                                    + this._options.subscriptionName, err);
+                            }
+                        })
+                        .then(() => {
+                            if (tcpClientCopy && tcpClientCopy.writable) {
+                                return this._sendAck(lastReceivedChangeVector, tcpClientCopy);
                             }
                         });
                 }
             } finally {
-                await socket.end();
+                socket.end();
+                this._parser.end();
+
+                try {
+                    await notifiedSubscriber;
+                } catch {
+                    // we don't care anymore about errors from it
+                }
+
+                try {
+                    await readFromServer;
+                } catch {
+                    // we don't care anymore about errors from it
+                }
             }
         } catch (err) {
             if (!this._disposed) {
@@ -395,6 +389,22 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             // isn't an error, so we don't need to treat
             // it as such
         }
+    }
+
+    private async _emitBatchAndWaitForProcessing(batch): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            let listenerCount = this._emitter.listenerCount("batch");
+            this._emitter.emit("batch", batch, (error?: any) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    listenerCount--;
+                    if (!listenerCount) {
+                        resolve();
+                    }
+                }
+            });
+        });
     }
 
     private async _readSingleSubscriptionBatchFromServer(batch: SubscriptionBatch<T>):
@@ -448,6 +458,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
     }
 
     private async _readNextObject(): Promise<SubscriptionConnectionServerMessage> {
+        const stream: NodeJS.ReadableStream = this._parser;
         if (this._processingCancelled) {
             return null;
         }
@@ -456,26 +467,49 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             return null;
         }
 
-        return new Promise<SubscriptionConnectionServerMessage>(resolve => {
-            this._parser.once("readable", async () => {
-                const x: { key: number, value: SubscriptionConnectionServerMessage} = this._parser.read();
-                resolve(x ? x.value : null);
-            });
-        });
+        if (stream.readable) {
+            const data: { key: number, value: SubscriptionConnectionServerMessage } = stream.read() as any;
+            if (data) {
+                return data.value;
+            }
+        }
+        
+        return new Promise((resolve, reject) => {
+            stream.once("readable", readableListener); 
+            stream.once("error", errorHandler);
+            stream.once("end", endHandler);
+
+            function readableListener() {
+                stream.removeListener("error", errorHandler);
+                stream.removeListener("end", endHandler);
+                resolve();
+            }
+
+            function errorHandler(err) { 
+                stream.removeListener("readable", readableListener);
+                stream.removeListener("end", endHandler);
+                reject(err);
+            }
+
+            function endHandler() {
+                stream.removeListener("readable", readableListener);
+                stream.removeListener("error", errorHandler);
+                reject(getError("SubscriptionException", "Subscription stream has ended unexpectedly."));
+            }
+        })
+        .then(() => this._readNextObject());
     }
 
-    private _sendAck(lastReceivedChangeVector, networkStream: Socket): Promise<void> {
-        const msg = {
-            changeVector: lastReceivedChangeVector,
-            type: "Acknowledge"
-        } as SubscriptionConnectionClientMessage;
+    private async _sendAck(lastReceivedChangeVector: string, networkStream: Socket): Promise<void> {
+        const payload = {
+            ChangeVector: lastReceivedChangeVector,
+            Type: "Acknowledge"
+        };
 
-        const payload = ObjectUtil.transformObjectKeys(msg, {
-            defaultTransform: "pascal"
-        });
-
-        return new Promise<void>(resolve => {
-            networkStream.write(JSON.stringify(payload, null, 0), () => resolve());
+        return new Promise<void>((resolve, reject) => {
+            networkStream.write(JSON.stringify(payload, null, 0), (err) => {
+                err ? reject(err) : resolve();
+            });
         });
     }
 
@@ -499,7 +533,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
 
                 if (this._shouldTryToReconnect(ex)) {
                     await delay(this._options.timeToWaitBeforeConnectionRetry);
-                    this._emitter.emit("onConnectionRetry", ex);
+                    this._emitter.emit("connectionRetry", ex);
                 } else {
                     this._logger.error(ex, "Connection to subscription "
                         + this._options.subscriptionName + " have been shut down because of an error.");
@@ -576,36 +610,57 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         }
     }
 
-    public on(event: "batch" | "afterAcknowledgment",
+    public on(event: "batch",
               handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void);
-    public on(event: "error" | "onConnectionRetry" | "end",
+    public on(event: "error",
+              handler: (error?: Error) => void);
+    public on(event: "end",
+              handler: (error?: Error) => void);
+    public on(event: "afterAcknowledgment",
+              handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void);
+    public on(event: "connectionRetry",
               handler: (error?: Error) => void);
     public on(event: EventTypes,
-              handler:
+              handler: 
                   ((batchOrError: SubscriptionBatch<T>, callback: EmptyCallback) => void)
                   | ((error: Error) => void)) {
         this._emitter.on(event, handler);
 
         if (event === "batch" && !this._subscriptionTask) {
             this._subscriptionTask = this._runSubscriptionAsync()
-                .catch(err => {
-                    this._emitter.emit("error", err);
-                    this._emitter.emit("end", err);
-                });
-
-            this._subscriptionTask
-                .then(() => this._emitter.emit("end"));
+                .catch(err => { this._emitter.emit("error", err); })
+                .then(() => { this._emitter.emit("end"); });
         }
+
+        return this;
     }
 
-    public off(event: "batch" | "afterAcknowledgment",
-               handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void);
-    public off(event: "error" | "onConnectionRetry",
-               handler: (error: Error) => void);
+    public off(event: "batch", handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void);
+    public off(event: "error", handler: (error?: Error) => void);
+    public off(event: "end", handler: (error?: Error) => void);
+    public off(event: "afterAcknowledgment", handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void);
+    public off(event: "connectionRetry", handler: (error?: Error) => void);
     public off(event: EventTypes,
                handler:
                   ((batchOrError: SubscriptionBatch<T>, callback: EmptyCallback) => void)
                   | ((error: Error) => void)) {
         this._emitter.off(event, handler);
+        return this;
     }
+
+    public removeListener(event: "batch", handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void);
+    public removeListener(event: "error", handler: (error?: Error) => void);
+    public removeListener(event: "end", handler: (error?: Error) => void);
+    public removeListener(
+        event: "afterAcknowledgment", handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void);
+    public removeListener(event: "connectionRetry", handler: (error?: Error) => void);
+    public removeListener(
+        event: EventTypes,
+        handler:
+            ((batchOrError: SubscriptionBatch<T>, callback: EmptyCallback) => void)
+            | ((error: Error) => void)) {
+        this.off(event as any, handler as any);
+        return this;
+    }
+
 }

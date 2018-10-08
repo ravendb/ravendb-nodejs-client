@@ -3,7 +3,7 @@ import * as assert from "assert";
 import { parser } from "stream-json/Parser";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
-import {
+import DocumentStore, {
     IDocumentStore,
 } from "../../../src";
 import { AsyncQueue } from "../../Utils/AsyncQueue";
@@ -102,7 +102,7 @@ describe("SubscriptionsBasicTest", function () {
         }
     });
 
-    it("should stream all documents after subscription creation", async () => {
+    it("should stream all documents after subscription creation", async function () {
         store.initialize();
         {
             const session = store.openSession();
@@ -471,7 +471,6 @@ describe("SubscriptionsBasicTest", function () {
         await new Promise(resolve => {
             subscription.on("error", error => {
                 assert.strictEqual(error.name, "SubscriberErrorException");
-
                 resolve();
             });
         });
@@ -696,3 +695,31 @@ describe("SubscriptionsBasicTest", function () {
     it.skip("test revisions subscription with PascalCasing");
     it.skip("should we support async handlers?");
 });
+
+// describe("Manual subscription tests", () => {
+
+//     it.only("reconnection test", function (done) {
+//         this.timeout(0);
+
+//         const store = new DocumentStore("http://127.0.0.1:8080", "subs");
+//         store.initialize();
+
+//         const sub = store.subscriptions.getSubscriptionWorker({
+//             subscriptionName: "sub1",
+//         });
+
+//         sub.on("batch", (batch, callback) => {
+//             console.log("BATCH", batch);
+//             callback();
+//         });
+
+//         sub.on("error", (err) => {
+//             console.log("ERROR", err);
+//         });
+
+//         sub.on("end", () => {
+//             done();
+//             store.dispose();
+//         });
+//     });
+// });
