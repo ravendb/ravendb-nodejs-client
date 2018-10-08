@@ -16,6 +16,7 @@ import { DocumentConventions } from "./Conventions/DocumentConventions";
 import { InMemoryDocumentSessionOperations } from "./Session/InMemoryDocumentSessionOperations";
 import { BulkInsertOperation } from "./BulkInsertOperation";
 import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
+import { DocumentSubscriptions } from "./Subscriptions/DocumentSubscriptions";
 
 export interface SessionEventsProxy {
     addSessionListener(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
@@ -169,7 +170,7 @@ export interface IDocumentStore extends IDisposable,
 
     bulkInsert(database?: string): BulkInsertOperation;
 
-    // TBD: IReliableSubscriptions Subscriptions { get; }
+    subscriptions: DocumentSubscriptions;
 
     database: string;
 

@@ -110,7 +110,7 @@ export class DocumentStore extends DocumentStoreBase {
             })
             .then(() => {
                 this._disposed = true;
-                // TBD: Subscriptions?.Dispose();
+                this.subscriptions.dispose();
 
                 return new BluebirdPromise((resolve, reject) => {
                     let listenersExecCallbacksCount = 0;

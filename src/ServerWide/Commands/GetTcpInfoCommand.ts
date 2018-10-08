@@ -15,6 +15,7 @@ export class GetTcpInfoCommand extends RavenCommand<TcpConnectionInfo> {
     public requestedNode: ServerNode;
 
     public constructor(tag: string);
+    public constructor(tag: string, dbName: string);
     public constructor(tag: string, dbName?: string) {
         super();
         this._tag = tag;
