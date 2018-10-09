@@ -15,7 +15,7 @@ describe("stream-json parser and stringer", function () {
         readable.push(null);
 
         const parser = new Parser({
-            packKeys: true
+            streamValues: false 
         });
 
         let hasNumberChunk = false;
@@ -35,8 +35,7 @@ describe("stream-json parser and stringer", function () {
             });
     });
 
-    // TODO waiting for resolution of https://github.com/uhop/stream-json/issues/44
-    it.skip("parser with streamNumbers turned off should not emit 'numberChunk' tokens", (done) => {
+    it("parser with streamNumbers turned off should not emit 'numberChunk' tokens", (done) => {
 
         const content = `{ "test": -1 }`;
         const readable = new stream.Readable();
@@ -44,14 +43,7 @@ describe("stream-json parser and stringer", function () {
         readable.push(null);
 
         const parser = new Parser({
-            packKeys: true,
-            packStrings: true,
-            packValues: true,
-            packNumbers: true,
-            streamNumbers: false,
-            streamValues: false,
-            streamKeys: false,
-            streamStrings: false
+            streamValues: false
         });
 
         let hasNumberChunk = false;
@@ -73,14 +65,7 @@ describe("stream-json parser and stringer", function () {
         readable.push(null);
 
         const parser = new Parser({
-            packKeys: true,
-            packStrings: true,
-            packValues: true,
-            packNumbers: true,
-            streamNumbers: true,
-            streamValues: false,
-            streamKeys: false,
-            streamStrings: false
+            streamValues: false
         });
 
         const stringerInstance = stringer({ useValues: true });
