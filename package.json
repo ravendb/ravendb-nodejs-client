@@ -83,7 +83,7 @@
     "request": "^2.88.0",
     "safe-memory-cache": "^1.5.1",
     "semaphore": "^1.1.0",
-    "stream-json": "^1.1.1",
+    "stream-json": "^1.1.3",
     "string-builder": "^0.1.6",
     "util.promisify": "^1.0.0",
     "uuid": "^3.2.1",
