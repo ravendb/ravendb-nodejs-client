@@ -9,7 +9,8 @@ export type TransformJsonKeysProfile =
     | "FacetQuery"
     | "Patch"
     | "CompareExchangeValue"
-    | "SubscriptionResponsePayload";
+    | "SubscriptionResponsePayload"
+    | "SubscriptionRevisionsResponsePayload";
 
 function getSimpleKeysTransform(convention: CasingConvention) {
     return {
@@ -74,6 +75,18 @@ export function getTransformJsonKeysProfile(
             return {
                 getCurrentTransform:
                     buildEntityKeysTransformForSubscriptionResponsePayload(conventions.entityFieldNameConvention)
+            };
+        }
+
+        if (profile === "SubscriptionRevisionsResponsePayload") {
+            if (!conventions) {
+                throwError("InvalidArgumentException", "Document conventions are required for this profile.");
+            }
+
+            return {
+                getCurrentTransform:
+                    buildEntityKeysTransformForSubscriptionRevisionsResponsePayload(
+                        conventions.entityFieldNameConvention)
             };
         }
 
@@ -187,37 +200,38 @@ function buildEntityKeysTransformForSubscriptionResponsePayload(entityCasingConv
         }
 
         if (stack[0] === "Data") {
+        
+            if (stack[1] === "@metadata") {
+                return handleMetadataJsonKeys(key, stack, len, 2);
+            }
 
+            return entityCasingConvention;
+        }
+
+        return "camel";
+    };
+}
+
+function buildEntityKeysTransformForSubscriptionRevisionsResponsePayload(entityCasingConvention) {
+    return function entityKeysTransform(key, stack) {
+        const len = stack.length;
+        if (len === 1) {
+            // type, Includes
+            return "camel";
+        }
+
+        const isData = stack[0] === "Data";
+        if (isData && stack[1] === "@metadata") {
+            return handleMetadataJsonKeys(key, stack, len, 2);
+        }
+
+        if (isData && (stack[1] === "Current" || stack[1] === "Previous")) {
             if (len === 2) {
-                // top document level
-                return key === "@metadata" ? null : entityCasingConvention;
+                return "camel";
             }
 
-            if (len === 3) {
-                if (stack[1] === "@metadata") {
-                    // handle @metadata object keys
-                    if (key[0] === "@" || key === "Raven-Node-Type") {
-                        return null;
-                    }
-                }
-            }
-
-            if (len === 4) {
-                // do not touch @nested-object-types keys
-                if (stack[len - 2] === "@nested-object-types") {
-                    return null;
-                }
-            }
-
-            if (len === 5) {
-                // @metadata.@attachments.[].name
-                if (stack[1] === "@metadata") {
-                    if (stack[2] === "@attachments") {
-                        return "camel";
-                    }
-
-                    return null;
-                }
+            if (stack[2] === "@metadata") {
+                return handleMetadataJsonKeys(key, stack, len, 3);
             }
 
             return entityCasingConvention;
@@ -271,4 +285,37 @@ function buildEntityKeysTransformForDocumentLoad(entityCasingConvention) {
 
         return entityCasingConvention; 
     };
+}
+
+function handleMetadataJsonKeys(key: string, stack: string[], stackLength: number, metadataKeyLevel: number) {
+    if (stackLength === metadataKeyLevel) {
+        return null; // don't touch @metadata key
+    }
+
+    if (stackLength === metadataKeyLevel + 1) {
+        if (key[0] === "@" || key === "Raven-Node-Type") {
+            return null;
+        }
+    }
+
+    if (stackLength === metadataKeyLevel + 2) {
+        // do not touch @nested-object-types keys
+        if (stack[stackLength - 2] === "@nested-object-types") {
+            return null;
+        }
+    }
+
+    if (stackLength === metadataKeyLevel + 3) {
+        // @metadata.@attachments.[].name
+        // metadataKeyLevel starts at 1, thus we do -1 to get index
+        if (stack[metadataKeyLevel - 1] === "@metadata") {
+            if (stack[metadataKeyLevel - 1 + 1] === "@attachments") {
+                return "camel";
+            }
+
+            return null;
+        }
+    }
+
+    return null;
 }

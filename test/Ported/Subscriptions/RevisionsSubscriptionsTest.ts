@@ -9,7 +9,7 @@ import { RevisionsCollectionConfiguration } from "../../../src/Documents/Operati
 import { RevisionsConfiguration } from "../../../src/Documents/Operations/RevisionsConfiguration";
 import { ConfigureRevisionsOperation } from "../../../src/Documents/Operations/Revisions/ConfigureRevisionsOperation";
 
-describe("RevisionsSubscriptionsTest", function () {
+describe.only("RevisionsSubscriptionsTest", function () {
 
     let store: IDocumentStore;
 
@@ -20,7 +20,7 @@ describe("RevisionsSubscriptionsTest", function () {
     afterEach(async () =>
         await disposeTestDocumentStore(store));
 
-    it("plain revisions subscriptions", async () => {
+    it("plain revisions subscriptions", async function() {
         const subscriptionId = await store.subscriptions.createForRevisions({
             documentType: User
         });
@@ -61,26 +61,33 @@ describe("RevisionsSubscriptionsTest", function () {
             }
         }
 
-        const sub = await store.subscriptions.getSubscriptionWorkerForRevisions<User>({
+        const sub = store.subscriptions.getSubscriptionWorkerForRevisions<User>({
             documentType: User,
             subscriptionName: subscriptionId
         });
 
         try {
-            await new Promise(resolve => {
+            await new Promise((resolve, reject) => {
                 const names = new Set<string>();
 
-                sub.on("batch", (batch, callback) => {
-                    batch.items.forEach(item => {
-                        const result = item.result;
-                        names.add(
-                            (result.current ? result.current.name : null)
-                            + (result.previous ? result.previous.name : null));
+                sub.on("error", reject);
 
-                        if (names.size === 100) {
-                            resolve();
-                        }
-                    });
+                sub.on("batch", (batch, callback) => {
+                    try {
+                        batch.items.forEach(item => {
+                            const result = item.result;
+                            names.add(
+                                (result.current ? result.current.name : null)
+                                + (result.previous ? result.previous.name : null));
+
+                            if (names.size === 100) {
+                                resolve();
+                            }
+                        });
+                    } catch (err) {
+                        callback(err);
+                        return;
+                    }
 
                     callback();
                 });

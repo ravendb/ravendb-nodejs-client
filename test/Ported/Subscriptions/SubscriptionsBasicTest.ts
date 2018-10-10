@@ -16,7 +16,7 @@ import { SubscriptionWorker } from "../../../src/Documents/Subscriptions/Subscri
 import { getError, throwError } from "../../../src/Exceptions";
 import { TypeUtil } from "../../../src/Utility/TypeUtil";
 
-describe("SubscriptionsBasicTest", function () {
+describe.only("SubscriptionsBasicTest", function () {
 
     let store: IDocumentStore;
 

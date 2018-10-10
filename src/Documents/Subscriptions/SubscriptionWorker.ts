@@ -83,6 +83,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         this._processingCancelled = true;
 
         this._closeTcpClient(); // we disconnect immediately
+        this._parser.end();
     }
 
     private _redirectNode: ServerNode;
@@ -182,11 +183,15 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
     }
 
     private _ensureParser() {
+        const keysTransformProfile = getTransformJsonKeysProfile(
+            this._revisions 
+                ? "SubscriptionRevisionsResponsePayload" 
+                : "SubscriptionResponsePayload", this._store.conventions);
+
         this._parser = stream.pipeline([
             this._tcpClient,
             new Parser({ jsonStreaming: true, streamValues: false }),
-            new TransformKeysJsonStream(
-                getTransformJsonKeysProfile("SubscriptionResponsePayload", this._store.conventions)),
+            new TransformKeysJsonStream(keysTransformProfile),
             new StreamValues()
         ], err => {
             if (err) {
@@ -346,6 +351,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                         throwError("OperationCancelledException");
                     }
 
+                    debugger;
                     const lastReceivedChangeVector = batch.initialize(incomingBatch);
                     notifiedSubscriber = this._emitBatchAndWaitForProcessing(batch) 
                         .catch((err) => {
