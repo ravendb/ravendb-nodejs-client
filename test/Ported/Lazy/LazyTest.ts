@@ -151,4 +151,47 @@ describe("LazyTest", function () {
             assert.strictEqual(user.lastName, "Oren");
         }
     });
+
+    it("doesn't lazy load already loaded values", async () => {
+        {
+            const session = store.openSession();
+
+            const user = new User();
+            user.lastName = "Oren";
+            await session.store(user, "users/1");
+
+            const user2 = new User();
+            user2.lastName = "Marcin";
+            await session.store(user2, "users/2");
+
+            const user3 = new User();
+            user3.lastName = "John";
+            await session.store(user3, "users/3");
+
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+
+            let lazyLoad = session.advanced.lazily.load(["users/2", "users/3"], User);
+            session.advanced.lazily.load(["users/1", "users/3"], User);
+
+            await session.load("users/2", User);
+            await session.load("users/3", User);
+
+            await session.advanced.eagerly.executeAllPendingLazyOperations();
+
+            assert.ok(session.advanced.isLoaded("users/1"));
+
+            const users = await lazyLoad.getValue();
+            assert.strictEqual(Object.keys(users).length, 2);
+
+            const oldRequestCount = session.advanced.numberOfRequests;
+            lazyLoad = session.advanced.lazily.load(["users/3"], User);
+            await session.advanced.eagerly.executeAllPendingLazyOperations();
+
+            assert.strictEqual(session.advanced.numberOfRequests, oldRequestCount);
+        }
+    });
 });
