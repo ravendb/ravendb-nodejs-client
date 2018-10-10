@@ -172,8 +172,11 @@ function setupRavenDbTestContext() {
 
     after(() => {
         testContext.dispose();
-        checkAgent("http", http.globalAgent);
-        checkAgent("https", https.globalAgent);
+
+        process.on("beforeExit", () => {
+            checkAgent("http", http.globalAgent);
+            checkAgent("https", https.globalAgent);
+        });
     });
 
     return testContext;

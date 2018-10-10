@@ -83,7 +83,9 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         this._processingCancelled = true;
 
         this._closeTcpClient(); // we disconnect immediately
-        this._parser.end();
+        if (this._parser) {
+            this._parser.end();
+        }
     }
 
     private _redirectNode: ServerNode;
@@ -351,7 +353,6 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                         throwError("OperationCancelledException");
                     }
 
-                    debugger;
                     const lastReceivedChangeVector = batch.initialize(incomingBatch);
                     notifiedSubscriber = this._emitBatchAndWaitForProcessing(batch) 
                         .catch((err) => {
@@ -650,7 +651,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                handler:
                   ((batchOrError: SubscriptionBatch<T>, callback: EmptyCallback) => void)
                   | ((error: Error) => void)) {
-        this._emitter.off(event, handler);
+        this._emitter.removeListener(event, handler);
         return this;
     }
 
@@ -665,7 +666,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         handler:
             ((batchOrError: SubscriptionBatch<T>, callback: EmptyCallback) => void)
             | ((error: Error) => void)) {
-        this.off(event as any, handler as any);
+        this.removeListener(event as any, handler as any);
         return this;
     }
 

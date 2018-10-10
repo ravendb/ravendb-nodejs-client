@@ -209,15 +209,6 @@ export abstract class RavenCommand<TResult> {
         }
     }
 
-    protected _parseResponseDefault<TResponse extends object>(
-        response: string, 
-        conventions: DocumentConventions, 
-        typeInfo?: TypeInfo, 
-        knownTypes?: Map<string, ObjectTypeDescriptor>) {
-        const res = this._serializer.deserialize(response);
-        return conventions.objectMapper.fromObjectLiteral<TResponse>(res, typeInfo, knownTypes);
-    }
-
     protected _reviveResultTypes<TResponse extends object>(
         raw: object, 
         conventions: DocumentConventions, 

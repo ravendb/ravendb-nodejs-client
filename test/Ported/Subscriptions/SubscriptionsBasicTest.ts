@@ -15,8 +15,7 @@ import { acquireSemaphore } from "../../../src/Utility/SemaphoreUtil";
 import { SubscriptionWorker } from "../../../src/Documents/Subscriptions/SubscriptionWorker";
 import { getError, throwError } from "../../../src/Exceptions";
 import { TypeUtil } from "../../../src/Utility/TypeUtil";
-
-describe.only("SubscriptionsBasicTest", function () {
+describe("SubscriptionsBasicTest", function () {
 
     let store: IDocumentStore;
 
@@ -324,7 +323,7 @@ describe.only("SubscriptionsBasicTest", function () {
                 allSubscription.on("batch", (batch, callback) => {
                     allCounter += batch.getNumberOfItemsInBatch();
 
-                    if (allCounter >= 100) {
+                    if (allCounter >= 500) {
                         allSemaphore.leave();
                     }
 
@@ -691,9 +690,52 @@ describe.only("SubscriptionsBasicTest", function () {
         }
     });
 
-    it.skip("test subscription with PascalCasing");
-    it.skip("test revisions subscription with PascalCasing");
-    it.skip("should we support async handlers?");
+    it("test subscription with PascalCasing", async () => {
+        const store2 = new DocumentStore(store.urls, store.database);
+        try {
+            store2.conventions.findCollectionNameForObjectLiteral = () => "test";
+            store2.conventions.entityFieldNameConvention = "camel";
+            store2.conventions.remoteEntityFieldNameConvention = "pascal";
+            store2.initialize();
+
+            {
+                const session = store2.openSession();
+                const user1 = { age: 31, name: "John" };
+                await session.store(user1);
+                const user2 = { age: 18, name: "Marika" };
+                await session.store(user2);
+                const user3 = { age: 26, name: "Meluzyna" };
+                await session.store(user3);
+
+                await session.saveChanges();
+            }
+            
+            const id = await store2.subscriptions.create({
+                query: "from test"
+            });
+
+            const subscription = store2.subscriptions.getSubscriptionWorker({
+                subscriptionName: id,
+            });
+
+            let batch;
+            await new Promise((resolve, reject) => {
+                subscription.on("error", reject);
+                subscription.on("batch", (_batch, callback) => {
+                    batch = _batch;
+                    callback();
+                    resolve();
+                });
+            });
+
+            assert.ok(batch);
+            assert.strictEqual(batch.items.length, 3);
+            assert.strictEqual(batch.items[0].rawResult.age, 31);
+            assert.strictEqual(batch.items[0].rawResult.name, "John");
+        } finally {
+            store2.dispose();
+        }
+    });
 });
 
 // describe("Manual subscription tests", () => {

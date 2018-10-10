@@ -16,7 +16,7 @@ import {
     CollectResultStreamOptions,
     lastValue, lastChunk
 } from "../Mapping/Json/Streams/CollectResultStream";
-import { throwError } from "../Exceptions";
+import { throwError, getError } from "../Exceptions";
 import * as StringBuilder from "string-builder";
 import { 
     TransformJsonKeysStreamOptions, 
@@ -173,25 +173,22 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
             }
         } else if (opts.jsonSync) {
             let json = "";
-            streams.push(new stream.Transform({
+            const parseJsonSyncTransform = new stream.Transform({
                 readableObjectMode: true,
                 transform(chunk, enc, callback) {
                     json += chunk.toString("utf8");
                     callback();
                 },
                 flush(callback) {
-                    let result;
-
                     try {
-                        result = JSON.parse(json);
+                        callback(null, JSON.parse(json));
                     } catch (err) {
-                        throwError("InvalidOperationException", `Error parsing response: '${json}'.`, err);
+                        callback(
+                            getError("InvalidOperationException", `Error parsing response: '${json}'.`, err));
                     }
-
-                    this.push(result);
-                    callback();
                 }
-            }));
+            });
+            streams.push(parseJsonSyncTransform);
         }
 
         if (opts.streamKeyCaseTransform) {
