@@ -14,6 +14,7 @@ import { acquireSemaphore } from "../../../src/Utility/SemaphoreUtil";
 import { SubscriptionWorker } from "../../../src/Documents/Subscriptions/SubscriptionWorker";
 import { getError, throwError } from "../../../src/Exceptions";
 import { TypeUtil } from "../../../src/Utility/TypeUtil";
+
 describe("SubscriptionsBasicTest", function () {
     const _reasonableWaitTime = 5 * 1000;
     this.timeout(5 * _reasonableWaitTime);
@@ -47,18 +48,22 @@ describe("SubscriptionsBasicTest", function () {
         assert.strictEqual(subscriptions.length, 0);
     });
 
-    it("should throw when opening no existing subscription", function (done) {
+    it("should throw when opening no existing subscription", async function() {
         const subscription = store.subscriptions.getSubscriptionWorker<any>({
             subscriptionName: "1",
             maxErroneousPeriod: 3000
         });
 
-        subscription.on("error", err => {
-            assert.strictEqual(err.name, "SubscriptionDoesNotExistException");
-            done();
-        });
+        subscription.on("batch", (batch, cb) => cb()); // this triggers subscription to run
+        const error = await new Promise<Error>((resolve, reject) => {
+            subscription.on("error", err => {
+                resolve(err);
+            });
+        })
 
-        subscription.on("batch", TypeUtil.NOOP); // this triggers subscription to run
+        assert.strictEqual(
+            error.name, "SubscriptionDoesNotExistException", "Expected another error but got:" + error.stack);
+
     });
 
     it("should throw on attempt to open already opened subscription", async function() {

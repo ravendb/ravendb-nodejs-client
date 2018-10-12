@@ -193,7 +193,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             new TransformKeysJsonStream(keysTransformProfile),
             new StreamValues()
         ], err => {
-            if (err) {
+            if (err && !this._tcpClient.destroyed) {
                 this._emitter.emit("error", err);
             }
         }) as stream.Transform;
