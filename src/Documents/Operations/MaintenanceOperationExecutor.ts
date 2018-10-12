@@ -10,13 +10,21 @@ export class MaintenanceOperationExecutor {
 
     private readonly _store: DocumentStoreBase;
     private readonly _databaseName: string;
-    private readonly _requestExecutor: RequestExecutor;
+    private _requestExecutor: RequestExecutor;
     private _serverOperationExecutor: ServerOperationExecutor;
 
     public constructor(store: DocumentStoreBase, databaseName?: string) {
         this._store = store;
         this._databaseName = databaseName || store.database;
-        this._requestExecutor = this._databaseName ? store.getRequestExecutor(databaseName) : null;
+    }
+
+    private get requestExecutor() {
+        if (this._requestExecutor) {
+            return this._requestExecutor;
+        }
+
+        this._requestExecutor = this._databaseName ? this._store.getRequestExecutor(this._databaseName) : null;
+        return this.requestExecutor;
     }
 
     public get server(): ServerOperationExecutor {
@@ -43,15 +51,15 @@ export class MaintenanceOperationExecutor {
         : Promise<OperationCompletionAwaiter | TResult> {
 
         this._assertDatabaseNameSet();
-        const command = operation.getCommand(this._requestExecutor.conventions);
+        const command = operation.getCommand(this.requestExecutor.conventions);
 
         return Promise.resolve()
-            .then(() => this._requestExecutor.execute(command as RavenCommand<TResult>))
+            .then(() => this.requestExecutor.execute(command as RavenCommand<TResult>))
             .then(() => {
                 if (operation.resultType === "OperationId") {
                     const idResult = command.result as OperationIdResult;
                     return new OperationCompletionAwaiter(
-                        this._requestExecutor, this._requestExecutor.conventions, idResult.operationId);
+                        this.requestExecutor, this.requestExecutor.conventions, idResult.operationId);
                 }
 
                 return command.result as TResult;
