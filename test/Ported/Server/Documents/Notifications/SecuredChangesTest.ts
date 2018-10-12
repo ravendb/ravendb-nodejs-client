@@ -49,8 +49,12 @@ describe("Secured changes test", function () {
             assert.strictEqual(documentChange.id, "users/1");
             assert.strictEqual(documentChange.type, "Put");
 
-            const secondPoll: DocumentChange = await changesList.poll(500);
-            assert.ok(!secondPoll);
+            try {
+                await changesList.poll(100);
+                assert.fail("Should have thrown");
+            } catch (err) {
+                assert.strictEqual(err.name, "TimeoutException");
+            }
         } finally {
             observable.off("data", handler);
         }
