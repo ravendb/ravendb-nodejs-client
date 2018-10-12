@@ -9,8 +9,9 @@ import { getError } from "../Exceptions";
 
 export class TcpUtils {
     public static async connect(
-        urlString: string, serverCertificate: string,
-                                clientCertificate: IAuthOptions): Promise<Socket> {
+        urlString: string, 
+        serverCertificate: string,
+        clientCertificate: IAuthOptions): Promise<Socket> {
         const url = new URL(urlString);
         const host = url.hostname;
         const port = parseInt(url.port, 10);

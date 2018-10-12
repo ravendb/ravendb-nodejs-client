@@ -25,7 +25,8 @@ export class AsyncQueue<T> {
             return head;
         }
 
-        const timeoutErr = getError("TimeoutException", `Timeout exceeded waiting for element to arrive for ${timeout}.`);
+        const timeoutErr = getError(
+            "TimeoutException", `Timeout exceeded waiting for element to arrive for ${timeout}.`);
         const timeoutPromise: Promise<T> = 
             new Promise((_, reject) => 
                 setTimeout(() => 
