@@ -62,9 +62,11 @@ export abstract class Certificate implements ICertificate {
     }
 
     public toWebSocketOptions(): WebSocket.ClientOptions {
-        return {
-            passphrase: this._passphrase
-        };
+        if (this._passphrase) {
+            return { passphrase: this._passphrase };
+        }
+
+        return {};
     }
 }
 

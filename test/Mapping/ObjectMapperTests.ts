@@ -333,7 +333,7 @@ describe("ObjectMapper", function () {
             function assertArrayEntry(actual, expected) {
                 assert.strictEqual(actual["name"], expected["name"]);
                 assert.strictEqual(
-                    actual["lastActedAt"].valueOf(), new Date(expected["lastActedAt"]).valueOf());
+                    actual["lastActedAt"].valueOf(), DateUtil.parse(expected["lastActedAt"]).valueOf());
             }
 
             for (let i = 0; i < result.characters[0].length; i++) {

@@ -33,42 +33,59 @@ describe("ChangesTest", function () {
 
         const handler = (change: DocumentChange) => changesList.push(change);
 
-        try {
-            observable.on("data", handler);
-            observable.on("error", e => throwError("InvalidOperationException", e.message));
+        const errPromise = new Promise((_, reject) => {
+            observable.on("error", err => {
+                reject(err);
+            });
+        });
+
+        await Promise.race([ errPromise, actAndAssert() ]);
+
+        async function actAndAssert() {
+            try {
+                observable.on("data", handler);
+
+                {
+                    const session = store.openSession();
+                    const user = new User();
+                    await session.store(user, "users/1");
+                    await session.saveChanges();
+                }
+
+                const documentChange = await changesList.poll(2000);
+                assert.ok(documentChange);
+
+                assert.strictEqual(documentChange.id, "users/1");
+                assert.strictEqual(documentChange.type, "Put");
+
+                try {
+                    await changesList.poll(100);
+                    assert.fail("Should have thrown");
+                } catch (err) {
+                    assert.strictEqual(err.name, "TimeoutException");
+                }
+            } finally {
+                observable.off("data", handler);
+            }
+
+            // at this point we should be unsubscribed from changes on 'users/1'
 
             {
                 const session = store.openSession();
                 const user = new User();
+                user.name = "another name";
                 await session.store(user, "users/1");
                 await session.saveChanges();
             }
 
-            const documentChange = await changesList.poll(2000);
-            assert.ok(documentChange);
-
-            assert.strictEqual(documentChange.id, "users/1");
-            assert.strictEqual(documentChange.type, "Put");
-
-            const secondPoll: DocumentChange = await changesList.poll(500);
-            assert.ok(!secondPoll);
-        } finally {
-            observable.off("data", handler);
+            // it should be empty as we destroyed subscription
+            try {
+                await changesList.poll(100);
+                assert.fail("Should have thrown");
+            } catch (err) {
+                assert.strictEqual(err.name, "TimeoutException");
+            }
         }
-
-        // at this point we should be unsubscribed from changes on 'users/1'
-
-        {
-            const session = store.openSession();
-            const user = new User();
-            user.name = "another name";
-            await session.store(user, "users/1");
-            await session.saveChanges();
-        }
-
-        // it should be empty as we destroyed subscription
-        const thirdPoll = await changesList.poll(500);
-        assert.ok(!thirdPoll);
     });
 
     it("can obtain all documents changes", async () => {
@@ -82,41 +99,59 @@ describe("ChangesTest", function () {
 
         const handler = (change: DocumentChange) => changesList.push(change);
 
-        try {
-            observable.on("data", handler);
-            observable.on("error", e => throwError("InvalidOperationException", e.message));
+        const errPromise = new Promise((_, reject) => {
+            observable.on("error", err => {
+                reject(err);
+            });
+        });
+
+        await Promise.race([errPromise, actAndAssert()]);
+
+        async function actAndAssert() {
+            try {
+                observable.on("data", handler);
+                observable.on("error", e => throwError("InvalidOperationException", e.message));
+
+                {
+                    const session = store.openSession();
+                    const user = new User();
+                    await session.store(user, "users/1");
+                    await session.saveChanges();
+                }
+
+                const documentChange = await changesList.poll(1000);
+                assert.ok(documentChange);
+                assert.strictEqual(documentChange.id, "users/1");
+                assert.strictEqual(documentChange.type, "Put");
+
+                try {
+                    await changesList.poll(100);
+                    assert.fail("Should have thrown");
+                } catch (err) {
+                    assert.strictEqual(err.name, "TimeoutException");
+                }
+            } finally {
+                observable.off("data", handler);
+            }
+
+            // at this point we should be unsubscribed from changes on 'users/1'
 
             {
                 const session = store.openSession();
                 const user = new User();
+                user.name = "another name";
                 await session.store(user, "users/1");
                 await session.saveChanges();
             }
 
-            const documentChange = await changesList.poll(1000);
-            assert.ok(documentChange);
-            assert.strictEqual(documentChange.id, "users/1");
-            assert.strictEqual(documentChange.type, "Put");
-
-            const secondPoll = await changesList.poll(500);
-            assert.ok(!secondPoll);
-        } finally {
-            observable.off("data", handler);
+            // it should be empty as we destroyed subscription
+            try {
+                await changesList.poll(100);
+                assert.fail("Should have thrown");
+            } catch (err) {
+                assert.strictEqual(err.name, "TimeoutException");
+            }
         }
-
-        // at this point we should be unsubscribed from changes on 'users/1'
-
-        {
-            const session = store.openSession();
-            const user = new User();
-            user.name = "another name";
-            await session.store(user, "users/1");
-            await session.saveChanges();
-        }
-
-        // it should be empty as we destroyed subscription
-        const thirdPoll = await changesList.poll(500);
-        assert.ok(!thirdPoll);
     });
 
     class UsersByName extends AbstractIndexCreationTask {
@@ -153,19 +188,28 @@ describe("ChangesTest", function () {
 
         const handler = (change: IndexChange) => changesList.push(change);
 
-        try {
-            observable.on("data", handler);
-            observable.on("error", e => throwError("InvalidOperationException", e.message));
+        const errPromise = new Promise((_, reject) => {
+            observable.on("error", err => {
+                reject(err);
+            });
+        });
 
-            const operation = new SetIndexesPriorityOperation(new UsersByName().getIndexName(), "Low");
-            await store.maintenance.send(operation);
+        await Promise.race([errPromise, actAndAssert()]);
 
-            const indexChange = await changesList.poll(2000);
-            assert.ok(indexChange);
+        async function actAndAssert() {
+            try {
+                observable.on("data", handler);
 
-            assert.strictEqual(indexChange.name, new UsersByName().getIndexName());
-        } finally {
-            observable.off("data", handler);
+                const operation = new SetIndexesPriorityOperation(new UsersByName().getIndexName(), "Low");
+                await store.maintenance.send(operation);
+
+                const indexChange = await changesList.poll(2000);
+                assert.ok(indexChange);
+
+                assert.strictEqual(indexChange.name, new UsersByName().getIndexName());
+            } finally {
+                observable.off("data", handler);
+            }
         }
     });
 
@@ -182,19 +226,28 @@ describe("ChangesTest", function () {
 
         const handler = (change: IndexChange) => changesList.push(change);
 
-        try {
-            observable.on("data", handler);
-            observable.on("error", e => throwError("InvalidOperationException", e.message));
+        const errPromise = new Promise((_, reject) => {
+            observable.on("error", err => {
+                reject(err);
+            });
+        });
 
-            const operation = new SetIndexesPriorityOperation(new UsersByName().getIndexName(), "Low");
-            await store.maintenance.send(operation);
+        await Promise.race([errPromise, actAndAssert()]);
 
-            const indexChange = await changesList.poll(2000);
-            assert.ok(indexChange);
+        async function actAndAssert() {
+            try {
+                observable.on("data", handler);
 
-            assert.strictEqual(indexChange.name, new UsersByName().getIndexName());
-        } finally {
-            observable.off("data", handler);
+                const operation = new SetIndexesPriorityOperation(new UsersByName().getIndexName(), "Low");
+                await store.maintenance.send(operation);
+
+                const indexChange = await changesList.poll(2000);
+                assert.ok(indexChange);
+
+                assert.strictEqual(indexChange.name, new UsersByName().getIndexName());
+            } finally {
+                observable.off("data", handler);
+            }
         }
     });
 
@@ -209,40 +262,49 @@ describe("ChangesTest", function () {
 
         const handler = (change: DocumentChange) => changesList.push(change);
 
-        try {
-            observable.on("data", handler);
-            observable.on("error", e => throwError("InvalidOperationException", e.message));
+        const errPromise = new Promise((_, reject) => {
+            observable.on("error", err => {
+                reject(err);
+            });
+        });
 
-            {
-                const session = store.openSession();
-                const user = new User();
-                await session.store(user, "users/1");
-                await session.saveChanges();
+        await Promise.race([errPromise, actAndAssert()]);
+
+        async function actAndAssert() {
+            try {
+                observable.on("data", handler);
+
+                {
+                    const session = store.openSession();
+                    const user = new User();
+                    await session.store(user, "users/1");
+                    await session.saveChanges();
+                }
+
+                {
+                    const session = store.openSession();
+                    const user = new User();
+                    await session.store(user, "differentDocumentPrefix/1");
+                    await session.saveChanges();
+                }
+
+                {
+                    const session = store.openSession();
+                    const user = new User();
+                    await session.store(user, "users/2");
+                    await session.saveChanges();
+                }
+
+                let documentChange = await changesList.poll(2000);
+                assert.ok(documentChange);
+                assert.strictEqual(documentChange.id, "users/1");
+
+                documentChange = await changesList.poll(2000);
+                assert.ok(documentChange);
+                assert.strictEqual(documentChange.id, "users/2");
+            } finally {
+                observable.off("data", handler);
             }
-
-            {
-                const session = store.openSession();
-                const user = new User();
-                await session.store(user, "differentDocumentPrefix/1");
-                await session.saveChanges();
-            }
-
-            {
-                const session = store.openSession();
-                const user = new User();
-                await session.store(user, "users/2");
-                await session.saveChanges();
-            }
-
-            let documentChange = await changesList.poll(2000);
-            assert.ok(documentChange);
-            assert.strictEqual(documentChange.id, "users/1");
-
-            documentChange = await changesList.poll(2000);
-            assert.ok(documentChange);
-            assert.strictEqual(documentChange.id, "users/2");
-        } finally {
-            observable.off("data", handler);
         }
     });
 
@@ -257,40 +319,49 @@ describe("ChangesTest", function () {
 
         const handler = (change: DocumentChange) => changesList.push(change);
 
-        try {
-            observable.on("data", handler);
-            observable.on("error", e => throwError("InvalidOperationException", e.message));
+        const errPromise = new Promise((_, reject) => {
+            observable.on("error", err => {
+                reject(err);
+            });
+        });
 
-            {
-                const session = store.openSession();
-                const user = new User();
-                await session.store(user, "users/1");
-                await session.saveChanges();
+        await Promise.race([errPromise, actAndAssert()]);
+
+        async function actAndAssert() {
+            try {
+                observable.on("data", handler);
+
+                {
+                    const session = store.openSession();
+                    const user = new User();
+                    await session.store(user, "users/1");
+                    await session.saveChanges();
+                }
+
+                {
+                    const session = store.openSession();
+                    const order = new Order();
+                    await session.store(order, "orders/1");
+                    await session.saveChanges();
+                }
+
+                {
+                    const session = store.openSession();
+                    const user = new User();
+                    await session.store(user, "users/2");
+                    await session.saveChanges();
+                }
+
+                let documentChange = await changesList.poll(2000);
+                assert.ok(documentChange);
+                assert.strictEqual(documentChange.id, "users/1");
+
+                documentChange = await changesList.poll(2000);
+                assert.ok(documentChange);
+                assert.strictEqual(documentChange.id, "users/2");
+            } finally {
+                observable.off("data", handler);
             }
-
-            {
-                const session = store.openSession();
-                const order = new Order();
-                await session.store(order, "orders/1");
-                await session.saveChanges();
-            }
-
-            {
-                const session = store.openSession();
-                const user = new User();
-                await session.store(user, "users/2");
-                await session.saveChanges();
-            }
-
-            let documentChange = await changesList.poll(2000);
-            assert.ok(documentChange);
-            assert.strictEqual(documentChange.id, "users/1");
-
-            documentChange = await changesList.poll(2000);
-            assert.ok(documentChange);
-            assert.strictEqual(documentChange.id, "users/2");
-        } finally {
-            observable.off("data", handler);
         }
     });
 

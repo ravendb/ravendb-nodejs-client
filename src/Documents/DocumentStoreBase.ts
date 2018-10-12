@@ -22,6 +22,8 @@ import { IndexCreation } from "../Documents/Indexes/IndexCreation";
 import { PutIndexesOperation } from "./Operations/Indexes/PutIndexesOperation";
 import { BulkInsertOperation } from "./BulkInsertOperation";
 import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
+import { DocumentSubscriptions } from "./Subscriptions/DocumentSubscriptions";
+import { DocumentStore } from "./DocumentStore";
 
 export abstract class DocumentStoreBase
     extends EventEmitter
@@ -34,7 +36,7 @@ export abstract class DocumentStoreBase
 
     protected constructor() {
         super();
-        // TBD: Subscriptions = new DocumentSubscriptions(this);
+        this._subscriptions = new DocumentSubscriptions(this as any as DocumentStore);
     }
 
     public abstract dispose(): void;
@@ -140,7 +142,11 @@ export abstract class DocumentStoreBase
 
     public abstract bulkInsert(database?: string): BulkInsertOperation;
 
-    // TBD: public IReliableSubscriptions Subscriptions { get; }
+    private readonly _subscriptions: DocumentSubscriptions;
+
+    public get subscriptions(): DocumentSubscriptions {
+        return this._subscriptions;
+    }
 
     protected _ensureNotDisposed(): void {
         if (this._disposed) {

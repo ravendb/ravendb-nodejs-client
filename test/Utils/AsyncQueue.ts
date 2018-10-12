@@ -1,3 +1,5 @@
+import { getError } from "../../src/Exceptions";
+
 type valueResolver<T> = (val: T) => void;
 
 export class AsyncQueue<T> {
@@ -23,8 +25,14 @@ export class AsyncQueue<T> {
             return head;
         }
 
-        const timeoutPromise: Promise<T> = new Promise((resolve, reject) => setTimeout(() => resolve(null), timeout));
-        const resultPromise: Promise<T> = new Promise(resolve => this._promises.push(resolve));
+        const timeoutErr = getError(
+            "TimeoutException", `Timeout exceeded waiting for element to arrive for ${timeout}.`);
+        const timeoutPromise: Promise<T> = 
+            new Promise((_, reject) => 
+                setTimeout(() => 
+                    reject(timeoutErr), timeout));
+        const resultPromise: Promise<T> = 
+            new Promise(resolve => this._promises.push(resolve));
         // element is not available - wait for it!
         return Promise.race([timeoutPromise, resultPromise]);
     }

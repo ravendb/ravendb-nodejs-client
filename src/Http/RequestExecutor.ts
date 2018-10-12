@@ -635,7 +635,7 @@ export class RequestExecutor implements IDisposable {
         this._log.info(`Execute command ${command.constructor.name}`);
 
         const topologyUpdate = this._firstTopologyUpdatePromise;
-        if ((topologyUpdate && topologyUpdate.isFulfilled()) || this._disableTopologyUpdates) {
+        if ((topologyUpdate && topologyUpdate.isResolved()) || this._disableTopologyUpdates) {
             const currentIndexAndNode: CurrentIndexAndNode = this.chooseNodeForRequest(command, sessionInfo);
             return this._executeOnSpecificNode(command, sessionInfo, {
                 chosenNode: currentIndexAndNode.currentNode,
