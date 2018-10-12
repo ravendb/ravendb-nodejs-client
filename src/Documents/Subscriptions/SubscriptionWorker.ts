@@ -10,7 +10,6 @@ import { StringUtil } from "../../Utility/StringUtil";
 import { getError, throwError } from "../../Exceptions";
 import { TcpUtils } from "../../Utility/TcpUtils";
 import * as stream from "readable-stream";
-import { streamValues } from "stream-json/streamers/StreamValues";
 import { TcpNegotiateParameters } from "../../ServerWide/Tcp/TcpNegotiateParameters";
 import {
     SUBSCRIPTION_TCP_VERSION,
@@ -20,13 +19,11 @@ import {
 import { OUT_OF_RANGE_STATUS, TcpNegotiation } from "../../ServerWide/Tcp/TcpNegotiation";
 import { TcpConnectionHeaderResponse } from "../../ServerWide/Tcp/TcpConnectionHeaderResponse";
 import { EventEmitter } from "events";
-import { ObjectKeyCaseTransformStream } from "../../Mapping/Json/Streams/ObjectKeyCaseTransformStream";
 import { TimeUtil } from "../../Utility/TimeUtil";
 import { ObjectUtil } from "../../Utility/ObjectUtil";
 import { SubscriptionConnectionServerMessage } from "./SubscriptionConnectionServerMessage";
 import { SubscriptionConnectionClientMessage } from "./SubscriptionConnectionClientMessage";
 import { EmptyCallback } from "../../Types/Callbacks";
-import { getObjectKeyCaseTransformProfile } from "../../Mapping/Json/Conventions";
 import { delay } from "../../Utility/PromiseUtil";
 import * as Parser from "stream-json/Parser";
 import * as StreamValues from "stream-json/streamers/StreamValues";
@@ -554,7 +551,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
     private _lastConnectionFailure: Date;
     private _supportedFeatures: SupportedFeatures;
 
-    private _assertLastConnectionFailure() {
+    private _assertLastConnectionFailure(lastError: Error) {
         if (!this._lastConnectionFailure) {
             this._lastConnectionFailure = new Date();
             return;
@@ -565,13 +562,13 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         if (new Date().getTime() - this._lastConnectionFailure.getTime() > maxErroneousPeriod) {
             throwError("SubscriptionInvalidStateException",
                 "Subscription connection was in invalid state for more than "
-                + maxErroneousPeriod + " and therefore will be terminated.");
+                + maxErroneousPeriod + " and therefore will be terminated.", lastError);
         }
     }
 
     private _shouldTryToReconnect(ex: Error) {
         if (ex.name === ("SubscriptionDoesNotBelongToNodeException" as RavenErrorType)) {
-            this._assertLastConnectionFailure();
+            this._assertLastConnectionFailure(ex);
 
             const requestExecutor = this._store.getRequestExecutor(this._dbName);
 
@@ -607,7 +604,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             return false;
         }
 
-        this._assertLastConnectionFailure();
+        this._assertLastConnectionFailure(ex);
         return true;
     }
 

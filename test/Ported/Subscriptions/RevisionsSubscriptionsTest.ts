@@ -9,8 +9,8 @@ import { RevisionsCollectionConfiguration } from "../../../src/Documents/Operati
 import { RevisionsConfiguration } from "../../../src/Documents/Operations/RevisionsConfiguration";
 import { ConfigureRevisionsOperation } from "../../../src/Documents/Operations/Revisions/ConfigureRevisionsOperation";
 import * as assert from "assert";
-
 describe("RevisionsSubscriptionsTest", function () {
+    this.timeout(5 * 10 * 1000);
 
     let store: IDocumentStore;
 
@@ -98,7 +98,7 @@ describe("RevisionsSubscriptionsTest", function () {
         }
     });
 
-    it("plain revisions subscriptions compare docs", async () => {
+    it("plain revisions subscriptions compare docs", async function() {
         const subscriptionId = await store.subscriptions.createForRevisions({
             documentType: User
         });
@@ -173,7 +173,7 @@ describe("RevisionsSubscriptionsTest", function () {
         }
     });
 
-    it("test revisions subscription with PascalCasing", async function () {
+    it("test revisions subscription with PascalCasing", async function() {
         const store2 = new DocumentStore(store.urls, store.database);
         try {
             store2.conventions.findCollectionNameForObjectLiteral = () => "test";

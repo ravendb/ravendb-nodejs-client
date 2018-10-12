@@ -8,7 +8,8 @@ import { PeerCertificate } from "tls";
 import { getError } from "../Exceptions";
 
 export class TcpUtils {
-    public static async connect(urlString: string, serverCertificate: string,
+    public static async connect(
+        urlString: string, serverCertificate: string,
                                 clientCertificate: IAuthOptions): Promise<Socket> {
         const url = new URL(urlString);
         const host = url.hostname;
@@ -17,7 +18,6 @@ export class TcpUtils {
         if (serverCertificate && clientCertificate) {
             return new Promise<Socket>((resolve, reject) => {
                 const agentOptions = Certificate.createFromOptions(clientCertificate).toAgentOptions();
-                agentOptions.ca = serverCertificate;
                 agentOptions.checkServerIdentity = (host: string, peerCertificate: PeerCertificate) => {
                     const remoteCert = peerCertificate.raw;
                     const expectedCert = Buffer.from(serverCertificate, "base64");
@@ -25,12 +25,14 @@ export class TcpUtils {
                     if (remoteCert.length !== expectedCert.length) {
                         sameCert = false;
                     }
+                    
                     for (let i = 0; i < remoteCert.length; i++) {
                         if (remoteCert[i] !== expectedCert[i]) {
                             sameCert = false;
                             break;
                         }
                     }
+
                     if (!sameCert) {
                         return getError("AuthenticationException", "Invalid server certificate.");
                     }
@@ -39,8 +41,9 @@ export class TcpUtils {
                     socket.removeListener("error", reject);
                     resolve(socket);
                 });
-                socket.setNoDelay(true);
+
                 socket.once("error", reject);
+                socket.setNoDelay(true);
             });
 
         } else {

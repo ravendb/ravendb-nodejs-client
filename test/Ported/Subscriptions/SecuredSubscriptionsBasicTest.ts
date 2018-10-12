@@ -9,6 +9,8 @@ import {
 import { AsyncQueue } from "../../Utils/AsyncQueue";
 
 describe("SecuredSubscriptionsBasicTest", function () {
+    const _reasonableWaitTime = 5 * 1000;
+    this.timeout(5 * _reasonableWaitTime);
 
     let store: IDocumentStore;
 
@@ -19,9 +21,8 @@ describe("SecuredSubscriptionsBasicTest", function () {
     afterEach(async () =>
         await disposeTestDocumentStore(store));
 
-    const _reasonableWaitTime = 10 * 1000;
 
-    it("should stream all documents after subscription creation", async () => {
+    it("should stream all documents after subscription creation", async function () {
         store.initialize();
         {
             const session = store.openSession();
@@ -44,7 +45,8 @@ describe("SecuredSubscriptionsBasicTest", function () {
 
         const subscription = store.subscriptions.getSubscriptionWorker<User>({
             subscriptionName: id,
-            documentType: User
+            documentType: User,
+            maxErroneousPeriod: 3000
         });
 
         const keys = new AsyncQueue<string>();
@@ -56,31 +58,42 @@ describe("SecuredSubscriptionsBasicTest", function () {
             callback();
         });
 
-        let key = await keys.poll(_reasonableWaitTime);
-        assert.strictEqual(key, "users/1");
+        const errPromise = new Promise((_, reject) => {
+            subscription.on("error", err => {
+                reject(err);
+            });
+        });
 
-        key = await keys.poll(_reasonableWaitTime);
-        assert.strictEqual(key, "users/12");
+        await Promise.race([errPromise, assertResults()]);
 
-        key = await keys.poll(_reasonableWaitTime);
-        assert.strictEqual(key, "users/3");
+        async function assertResults() {
+            let key = await keys.poll(_reasonableWaitTime);
+            assert.strictEqual(key, "users/1");
 
-        let age = await ages.poll(_reasonableWaitTime);
-        assert.strictEqual(age, 31);
+            key = await keys.poll(_reasonableWaitTime);
+            assert.strictEqual(key, "users/12");
 
-        age = await ages.poll(_reasonableWaitTime);
-        assert.strictEqual(age, 27);
+            key = await keys.poll(_reasonableWaitTime);
+            assert.strictEqual(key, "users/3");
 
-        age = await ages.poll(_reasonableWaitTime);
-        assert.strictEqual(age, 25);
+            let age = await ages.poll(_reasonableWaitTime);
+            assert.strictEqual(age, 31);
+
+            age = await ages.poll(_reasonableWaitTime);
+            assert.strictEqual(age, 27);
+
+            age = await ages.poll(_reasonableWaitTime);
+            assert.strictEqual(age, 25);
+        }
     });
 
-    it("should send all new and modified docs", async () => {
+    it("should send all new and modified docs", async function () {
         const id = await store.subscriptions.create(User);
 
         const subscription = store.subscriptions.getSubscriptionWorker<User>({
             subscriptionName: id,
-            documentType: User
+            documentType: User,
+            maxErroneousPeriod: 3000
         });
 
         try {
