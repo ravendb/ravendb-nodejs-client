@@ -52,7 +52,7 @@ export class NextHiloCommand extends RavenCommand<HiLoResult> {
 
     public createRequest(node: ServerNode): HttpRequestParameters {
         const lastRangeAt: string = this._lastRangeAt
-            ? DateUtil.stringify(this._lastRangeAt)
+            ? DateUtil.default.stringify(this._lastRangeAt)
             : "";
 
         const queryString = qs.stringify({

@@ -51,7 +51,7 @@ describe("FirstClassPatchTest", function () {
             const session = store.openSession();
             const loaded = await session.load<User>(_docId, User);
             assert.strictEqual(loaded.numbers[0], 31);
-            assert.strictEqual(loaded.lastLogin, DateUtil.stringify(now));
+            assert.strictEqual(loaded.lastLogin, store.conventions.dateUtil.stringify(now));
 
             session.advanced.patch(loaded, "stuff[0].phone", "123456");
             await session.saveChanges();

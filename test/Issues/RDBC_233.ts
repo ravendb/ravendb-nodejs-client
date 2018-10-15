@@ -17,10 +17,12 @@ import { PatchRequest } from "../../src/Documents/Operations/PatchRequest";
 describe("RDBC-233", function () {
 
     let mapper: TypesAwareObjectMapper;
+    let conventions;
 
     beforeEach(() => {
+        conventions = DocumentConventions.defaultConventions;
         mapper = new TypesAwareObjectMapper({
-            documentConventions: DocumentConventions.defaultConventions
+            documentConventions: conventions
         });
     });
 
@@ -45,8 +47,12 @@ describe("RDBC-233", function () {
         assert.ok(result);
         assert.strictEqual(result.date, null);
         assert.ok(result.anotherOne.start instanceof Date);
-        assert.strictEqual(result.anotherOne.start.toString(), DateUtil.parse(obj.anotherOne.start).toString());
-        assert.strictEqual(result.anotherOne.end.toString(), DateUtil.parse(obj.anotherOne.end).toString());
+        assert.strictEqual(
+            result.anotherOne.start.toString(), 
+            DocumentConventions.defaultConventions.dateUtil.parse(obj.anotherOne.start).toString());
+        assert.strictEqual(
+            result.anotherOne.end.toString(), 
+            DocumentConventions.defaultConventions.dateUtil.parse(obj.anotherOne.end).toString());
     });
 
     describe("entire flow - store, patch, load", async () => {
