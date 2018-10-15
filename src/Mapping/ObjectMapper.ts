@@ -298,7 +298,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         }
 
         if (fieldTypeName === "date") {
-            fieldContext.setValue(DateUtil.parse(fieldVal));
+            fieldContext.setValue(this._conventions.dateUtil.parse(fieldVal));
             return;
         }
 
@@ -386,7 +386,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
                 [objPathPrefix]: "date"
             });
 
-            return DateUtil.stringify(obj as Date);
+            return this._conventions.dateUtil.stringify(obj as Date);
         }
 
         if (TypeUtil.isSet(obj)) {
