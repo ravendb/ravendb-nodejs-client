@@ -691,8 +691,12 @@ describe("QueryTest", function () {
 
             const indexQuery = q.getIndexQuery();
             assert.strictEqual(indexQuery.query, "from events where date between $p0 and $p1");
-            assert.strictEqual(indexQuery.queryParameters["p0"], DateUtil.stringify(cocartFestival.date));
-            assert.strictEqual(indexQuery.queryParameters["p1"], DateUtil.stringify(offFestival.date));
+            assert.strictEqual(
+                indexQuery.queryParameters["p0"], 
+                DateUtil.default.stringify(cocartFestival.date));
+            assert.strictEqual(
+                indexQuery.queryParameters["p1"], 
+                DateUtil.default.stringify(offFestival.date));
             assert.strictEqual(indexQuery.query, "from events where date between $p0 and $p1");
 
             const festivalsHappeningBetweenCocartAndOffInclusive: any[] = await q.all();

@@ -14,11 +14,13 @@ import { TypeUtil } from "../../src/Utility/TypeUtil";
 describe("ObjectMapper", function () {
 
     let mapper: TypesAwareObjectMapper;
+    let conventions;
 
     beforeEach(() => {
+        conventions = DocumentConventions.defaultConventions;
         mapper = new TypesAwareObjectMapper({
             dateFormat: DateUtil.DEFAULT_DATE_FORMAT,
-            documentConventions: DocumentConventions.defaultConventions
+            documentConventions: conventions
         });
     });
 
@@ -333,7 +335,7 @@ describe("ObjectMapper", function () {
             function assertArrayEntry(actual, expected) {
                 assert.strictEqual(actual["name"], expected["name"]);
                 assert.strictEqual(
-                    actual["lastActedAt"].valueOf(), DateUtil.parse(expected["lastActedAt"]).valueOf());
+                    actual["lastActedAt"].valueOf(), conventions.dateUtil.parse(expected["lastActedAt"]).valueOf());
             }
 
             for (let i = 0; i < result.characters[0].length; i++) {
@@ -496,7 +498,7 @@ describe("ObjectMapper", function () {
 
             assert.deepStrictEqual(typeInfo, expectedTypeInfo);
             assert.strictEqual(typeof result.lastModified, "string");
-            assert.strictEqual(result.lastModified, DateUtil.stringify(testObject.lastModified));
+            assert.strictEqual(result.lastModified, conventions.dateUtil.stringify(testObject.lastModified));
         });
 
         it("can handle array", () => {

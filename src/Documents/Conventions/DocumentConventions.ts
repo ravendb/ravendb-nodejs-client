@@ -13,7 +13,7 @@ import { ReadBalanceBehavior } from "../../Http/ReadBalanceBehavior";
 import { throwError } from "../../Exceptions";
 import { CONSTANTS } from "../../Constants";
 import { TypeUtil } from "../../Utility/TypeUtil";
-import { DateUtil } from "../../Utility/DateUtil";
+import { DateUtil, DateUtilOpts } from "../../Utility/DateUtil";
 import { CasingConvention, ObjectUtil, ObjectChangeCaseOptions } from "../../Utility/ObjectUtil";
 import { JsonSerializer } from "../../Mapping/Json/Serializer";
 
@@ -71,6 +71,7 @@ export class DocumentConventions {
     private _remoteEntityFieldNameConvention: CasingConvention;
 
     private _objectMapper: TypesAwareObjectMapper;
+    private _dateUtil: DateUtil;
 
     private _useCompression;
 
@@ -116,6 +117,9 @@ export class DocumentConventions {
         });
 
         this._useCompression = null;
+
+        this._dateUtilOpts = {};
+        this._dateUtil = new DateUtil(this._dateUtilOpts);
     }
 
     public get objectMapper(): TypesAwareObjectMapper {
@@ -123,7 +127,12 @@ export class DocumentConventions {
     }
 
     public set objectMapper(value: TypesAwareObjectMapper) {
+        this._assertNotFrozen();
         this._objectMapper = value;
+    }
+
+    public get dateUtil(): DateUtil {
+        return this._dateUtil;
     }
 
     public get readBalanceBehavior(): ReadBalanceBehavior {
@@ -195,6 +204,26 @@ export class DocumentConventions {
         this._assertNotFrozen();
         this._useCompression = value;
     }
+
+    private _dateUtilOpts: DateUtilOpts;
+
+    public get storeDatesInUtc() {
+        return this._dateUtilOpts.useUtcDates;
+    }
+
+    public set storeDatesInUtc(value) {
+        this._assertNotFrozen();
+        this._dateUtilOpts.useUtcDates = value;
+    }
+
+    public get storeDatesWithTimezoneInfo() {
+        return this._dateUtilOpts.withTimezone;
+    }
+
+    public set storeDatesWithTimezoneInfo(value) {
+        this._assertNotFrozen();
+        this._dateUtilOpts.withTimezone = true;
+    } 
 
     /**
      * If set to 'true' then it will throw an exception when any query is performed (in session)

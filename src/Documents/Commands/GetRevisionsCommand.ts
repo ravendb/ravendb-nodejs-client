@@ -70,7 +70,7 @@ export class GetRevisionsCommand extends RavenCommand<IRavenArrayResult> {
         }
 
         if (this._before) {
-            uri += "&before=" + DateUtil.stringify(this._before);
+            uri += "&before=" + DateUtil.default.stringify(this._before);
         }
 
         if (!TypeUtil.isNullOrUndefined(this._start)) {
