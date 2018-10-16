@@ -21,7 +21,6 @@ describe("SecuredSubscriptionsBasicTest", function () {
     afterEach(async () =>
         await disposeTestDocumentStore(store));
 
-
     it("should stream all documents after subscription creation", async function () {
         store.initialize();
         {

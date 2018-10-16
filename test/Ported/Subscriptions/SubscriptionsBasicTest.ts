@@ -28,7 +28,6 @@ describe("SubscriptionsBasicTest", function () {
     afterEach(async () =>
         await disposeTestDocumentStore(store));
 
-
     it("can delete subscription", async function() {
         const id1 = await store.subscriptions.create(User);
         const id2 = await store.subscriptions.create(User);
@@ -59,7 +58,7 @@ describe("SubscriptionsBasicTest", function () {
             subscription.on("error", err => {
                 resolve(err);
             });
-        })
+        });
 
         assert.strictEqual(
             error.name, "SubscriptionDoesNotExistException", "Expected another error but got:" + error.stack);
