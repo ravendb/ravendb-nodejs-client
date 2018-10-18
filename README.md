@@ -1,8 +1,16 @@
 # RavenDB client for Node.js
 
+[![NPM](https://nodei.co/npm/ravendb.png?compact=true)](https://nodei.co/npm/ravendb/)
+
 [![build status](https://travis-ci.org/ravendb/ravendb-nodejs-client.svg?branch=v4.0)](https://travis-ci.org/ravendb/ravendb-nodejs-client) [![Known Vulnerabilities](https://snyk.io/test/github/ravendb/ravendb-nodejs-client/badge.svg)](https://snyk.io/test/github/ravendb/ravendb-nodejs-client)
 
 ## Changelog
+
+### 4.0.4 - 2018-10-18
+- added support for [Subscriptions](#subscriptions)
+- added support for storing timezone info and dates in UTC
+- enhanced load and bulk insert performance
+- other bug fixes
 
 ### 4.0.3 - 2018-10-01
 Added support for the following features:
@@ -747,13 +755,66 @@ session.advanced.patch("users/1", "underAge", false);
 
 await session.saveChanges();
 ```
+### Subscriptions
+```javascript
+// create a subscription
+const subscriptionName = await store.subscriptions.create({
+    query: "from users where age >= 30"
+});
+
+// get subscription worker for your subscription
+const subscription = store.subscriptions.getSubscriptionWorker({ subscriptionName });
+
+subscription.on("error", err => {
+    // handle errors
+});
+
+subscription.on("batch", (batch, callback) => {
+    try {
+        // do batch processing on batch.items
+        // batch.items:
+        // [ Item {
+        //     changeVector: 'A:2-r6nkF5nZtUKhcPEk6/LL+Q',
+        //     id: 'users/1-A',
+        //     rawResult:
+        //      { name: 'John',
+        //        age: 30,
+        //        registeredAt: '2017-11-11T00:00:00.0000000',
+        //        kids: [Array],
+        //        '@metadata': [Object],
+        //        id: 'users/1-A' },
+        //     rawMetadata:
+        //      { '@collection': 'Users',
+        //        '@nested-object-types': [Object],
+        //        'Raven-Node-Type': 'User',
+        //        '@change-vector': 'A:2-r6nkF5nZtUKhcPEk6/LL+Q',
+        //        '@id': 'users/1-A',
+        //        '@last-modified': '2018-10-18T11:15:51.4882011Z' },
+        //     exceptionMessage: undefined } ]
+        // ...
+
+        // call the callback, once you're done
+        callback();
+    } catch(err) {
+        // if processing fails for a particular batch
+        // pass the error to the callback
+        callback(err);
+    }
+});
+```
 
 ## Using object literals for entities
 
-In order to comfortably use object literals as entities set function getting collection name based on the content of the object - `store.conventions.findCollectionNameForObjectLiteral()`. This needs to be done *before* an `initialize()` call on `DocumentStore` instance. If you fail to do so, your entites will land up in *@empty* collection having an *UUID* for an ID. E.g.
+In order to comfortably use object literals as entities set the function getting collection name based on the content of the object - `store.conventions.findCollectionNameForObjectLiteral()`. 
+
 ```javascript
+const store = new DocumentStore(urls, database);
 store.conventions.findCollectionNameForObjectLiteral = entity => entity["collection"];
+// ...
+store.initialize();
 ```
+
+This needs to be done *before* an `initialize()` call on `DocumentStore` instance. If you fail to do so, your entites will land up in *@empty* collection having an *UUID* for an ID. E.g.
 
 ## Using classes for entities
 
