@@ -25,15 +25,22 @@ export class BulkInsertOperation {
     private readonly _generateEntityIdOnTheClient: GenerateEntityIdOnTheClient;
 
     private readonly _requestExecutor: RequestExecutor;
-    private _bulkInsertExecuteTask: Promise<void>;
-    private _pipelinePromise: Promise<void>;
+    private _bulkInsertExecuteTask: Promise<any>;
     private _completedWithError = false;
-    private _completedWithPipelineError = false;
 
     private _first: boolean = true;
     private _operationId = -1;
 
     private _useCompression: boolean = false;
+
+    private _bulkInsertAborted: Promise<void>;
+    private _abortReject: Function;
+    private _aborted: boolean;
+    private _currentWriter: stream.Readable;
+    private _requestBodyStream: stream.PassThrough;
+    private _pipelineFinished: Promise<void>;
+
+    private static readonly _maxSizeInBuffer = 1024 * 1024;
 
     public constructor(database: string, store: IDocumentStore) {
         this._conventions = store.conventions;
@@ -41,6 +48,11 @@ export class BulkInsertOperation {
 
         this._generateEntityIdOnTheClient = new GenerateEntityIdOnTheClient(this._requestExecutor.conventions,
             entity => this._requestExecutor.conventions.generateDocumentId(database, entity));
+        this._bulkInsertAborted = new Promise((_, reject) => this._abortReject = reject);
+
+        this._bulkInsertAborted.catch(err => {
+            // we're awaiting it elsewhere
+        });
     }
 
     get useCompression(): boolean {
@@ -130,7 +142,7 @@ export class BulkInsertOperation {
     private async _store(
         entity: object,
         { id, getId, metadata }: { id: string, getId: boolean, metadata: IMetadataDictionary }) {
-
+        
         id = getId ? await this._getId(entity) : id;
         BulkInsertOperation._verifyValidId(id);
 
@@ -139,16 +151,8 @@ export class BulkInsertOperation {
             await this._ensureStream();
         }
 
-        if (this._completedWithError) {
+        if (this._completedWithError || this._aborted) {
             await this._checkIfBulkInsertWasAborted();
-        }
-
-        if (this._completedWithPipelineError) {
-            try {
-                await this._pipelinePromise;
-            } catch (error) {
-                throwError("BulkInsertStreamError", "Failed to execute bulk insert", error);
-            }
         }
 
         if (!metadata) {
@@ -172,15 +176,11 @@ export class BulkInsertOperation {
             }
         }
 
-        if (!this._first) {
+        if (this._first) {
+            this._first = false;
+        } else {
             this._currentWriter.push(",");
         }
-
-        this._first = false;
-
-        this._currentWriter.push("{'Id':'");
-        this._currentWriter.push(id);
-        this._currentWriter.push("','Type':'PUT','Document':");
 
         const documentInfo = new DocumentInfo();
         documentInfo.metadataInstance = metadata;
@@ -191,9 +191,7 @@ export class BulkInsertOperation {
         }
 
         const jsonString = JsonSerializer.getDefault().serialize(json);
-        this._currentWriter.push(jsonString);
-        this._currentWriter.push("}");
-
+        this._currentWriter.push(`{"Id":"${id}","Type":"PUT","Document":${jsonString}}`);
     }
 
     private async _checkIfBulkInsertWasAborted() {
@@ -202,14 +200,16 @@ export class BulkInsertOperation {
                 await this._bulkInsertExecuteTask;
             } catch (error) {
                 await this._throwBulkInsertAborted(error);
+            } finally {
+                this._currentWriter.emit("end");
             }
         }
 
-        if (this._completedWithPipelineError) {
+        if (this._aborted) {
             try {
-                await this._pipelinePromise;
-            } catch (error) {
-                throwError("BulkInsertStreamError", "Failed to execute bulk insert.", error);
+                await this._bulkInsertAborted;
+            } finally {
+                this._currentWriter.emit("end");
             }
         }
     }
@@ -227,6 +227,9 @@ export class BulkInsertOperation {
     private async _getExceptionFromOperation(): Promise<Error> {
         const stateRequest = new GetOperationStateCommand(this._conventions, this._operationId);
         await this._requestExecutor.execute(stateRequest);
+        if (!stateRequest.result) {
+            return null;
+        }
 
         const result = stateRequest.result["result"];
 
@@ -237,64 +240,30 @@ export class BulkInsertOperation {
         return getError("BulkInsertAbortedException", result.error);
     }
 
-    private _currentWriter: stream.Readable;
-    private _requestBodyStream: stream.Readable;
-    private static readonly _maxSizeInBuffer = 1024 * 1024;
-
     private async _ensureStream() {
         try {
-
             this._currentWriter = new stream.PassThrough();
 
-            const streams: stream.Stream[] = [this._currentWriter];
-
-            this._requestBodyStream = this._getBufferingWriteable();
-            streams.push(this._requestBodyStream);
-
+            this._requestBodyStream = new stream.PassThrough();
             const bulkCommand =
                 new BulkInsertCommand(this._operationId, this._requestBodyStream, this._useCompression);
 
-            this._bulkInsertExecuteTask = this._requestExecutor.execute(bulkCommand);
+            const bulkCommandPromise = this._requestExecutor.execute(bulkCommand);
 
-            this._bulkInsertExecuteTask.catch(() => {
-                this._completedWithError = true;
-            });
-
+            this._pipelineFinished = StreamUtil.pipelineAsync(this._currentWriter, this._requestBodyStream);
             this._currentWriter.push("[");
 
-            this._pipelinePromise = StreamUtil.pipelineAsync(...streams);
+            this._bulkInsertExecuteTask = Promise.all([ 
+                bulkCommandPromise,
+                this._pipelineFinished
+            ]);
 
-            this._pipelinePromise.catch(err => {
-                this._completedWithPipelineError = true;
-            });
+            this._bulkInsertExecuteTask
+                .catch(() => this._completedWithError = true);
+            
         } catch (e) {
             throwError("RavenException", "Unable to open bulk insert stream.", e);
         }
-    }
-
-    private _getBufferingWriteable(): stream.Transform {
-        let buffer = Buffer.from([]);
-        return new stream.Transform({
-            transform(chunk, enc, callback) {
-                buffer = Buffer.concat([buffer, chunk]);
-
-                if (buffer.length > BulkInsertOperation._maxSizeInBuffer) {
-                    this.push(buffer, enc);
-                    buffer = Buffer.from([]);
-                }
-
-                callback();
-            },
-            flush(callback) {
-                if (buffer.length) {
-                    // push remaining part
-                    this.push(buffer);
-                }
-                this.push(null);
-
-                callback();
-            }
-        });
     }
 
     public async abort(): Promise<void>;
@@ -302,22 +271,27 @@ export class BulkInsertOperation {
     public async abort(callback?: AbstractCallback<void>): Promise<void> {
         const abortPromise = this._abortAsync();
         passResultToCallback(abortPromise, callback);
-        return abortPromise;
+        return await abortPromise;
     }
 
     private async _abortAsync(): Promise<void> {
-        if (this._operationId === -1) {
-            return; // nothing was done, nothing to kill
+        this._aborted = true;
+
+        if (this._operationId !== -1) {
+            await this._waitForId();
+
+            try {
+                await this._requestExecutor.execute(new KillOperationCommand(this._operationId));
+            } catch (err) {
+                const bulkInsertError = getError("BulkInsertAbortedException",
+                    "Unable to kill bulk insert operation, because it was not found on the server.", err);
+                this._abortReject(bulkInsertError);
+                return;
+            }
         }
 
-        await this._waitForId();
-
-        try {
-            await this._requestExecutor.execute(new KillOperationCommand(this._operationId));
-        } catch (err) {
-            throwError("BulkInsertAbortedException",
-                "Unable to kill ths bulk insert operation, because it was not found on the server.", err);
-        }
+        this._abortReject(getError(
+            "BulkInsertAbortedException", "Bulk insert was aborted by the user."));
     }
 
     public async finish(): Promise<void>;
@@ -339,14 +313,17 @@ export class BulkInsertOperation {
             return;
         }
 
-        if (this._bulkInsertExecuteTask !== null) {
+        if (this._completedWithError || this._aborted) {
             await this._checkIfBulkInsertWasAborted();
         }
 
-        return Promise.all([this._bulkInsertExecuteTask, this._pipelinePromise])
+        return Promise.race(
+            [
+                this._bulkInsertExecuteTask || Promise.resolve(),
+                this._bulkInsertAborted || Promise.resolve()
+            ]) 
         // tslint:disable-next-line:no-empty
-            .then(() => {
-            });
+            .then(() => {});
     }
 
     private readonly _conventions: DocumentConventions;
@@ -383,10 +360,9 @@ export class BulkInsertCommand extends RavenCommand<void> {
 
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/bulk_insert?id=" + this._id;
-
         const headers = this._headers().typeAppJson().build();
-
-        return { //TODO: useCompression ? new GzipCompressingEntity(_stream) : _stream);
+        // TODO: useCompression ? new GzipCompressingEntity(_stream) : _stream);
+        return { 
             method: "POST",
             uri,
             body: this._stream,

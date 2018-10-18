@@ -8,13 +8,10 @@ import { getLogger } from "../Utility/LogUtil";
 import { throwError } from "../Exceptions";
 import { IRavenObject } from "../Types/IRavenObject";
 import { getEtagHeader, HeadersBuilder, closeHttpResponse } from "../Utility/HttpUtil";
-import { Mapping } from "../Mapping";
-import { TypesAwareObjectMapper, TypeInfo } from "../Mapping/ObjectMapper";
+import { TypeInfo } from "../Mapping/ObjectMapper";
 import { ObjectTypeDescriptor } from "..";
 import { JsonSerializer } from "../Mapping/Json/Serializer";
 import { RavenCommandResponsePipeline } from "./RavenCommandResponsePipeline";
-import { pick } from "stream-json/filters/Pick";
-import { ignore } from "stream-json/filters/Ignore";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
 
 const log = getLogger({ module: "RavenCommand" });

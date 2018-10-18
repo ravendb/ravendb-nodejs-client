@@ -12,34 +12,18 @@ const streamValues = require("stream-json/streamers/StreamValues")
 const StreamUtil = require("../dist/Utility/StreamUtil");
 const stream = require("readable-stream");
 const Asm = require('stream-json/Assembler');
+const { bench } = require("./common");
 
 const store = new DocumentStore("http://localhost:8080", "Perf");
 store.initialize();
 
-async function bench(name, attempts, run) {
-    const benchName = `${name} x${ attempts }`;
-    console.time(benchName);
-    for (let n = 0; n < attempts; n++) {
-        await run();
-    }
-    console.timeEnd(benchName);
-}
-
 (async function main() {
     {
-        const name = "4.0.4-load-full-pipeline";
+        const name = "load-full-pipeline";
         await bench(name, 10, loadPipeline);
         await bench(name, 50, loadPipeline);
         await bench(name, 100, loadPipeline);
     }
-
-    // {
-    //     const name = "stream-json-with-proper-casing";
-    //     // enhancedStreamJson();
-    //     await bench(name, 10, enhancedStreamJson);
-    //     await bench(name, 50, enhancedStreamJson);
-    //     await bench(name, 100, enhancedStreamJson);
-    // }
 
     store.dispose();
 }());
@@ -68,8 +52,6 @@ async function rawStreamJson() {
     await donePromise;
 }
 
-
-
 async function enhancedStreamJson() {
     const dataStream = fs.createReadStream("./data/load_data.json");
     const streams = [
@@ -96,5 +78,4 @@ async function enhancedStreamJson() {
     });
     await StreamUtil.pipelineAsync(streams);
     const result = await donePromise;
-    // console.log(JSON.stringify(result, null, 2));
 }

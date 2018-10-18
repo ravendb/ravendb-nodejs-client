@@ -6,6 +6,7 @@ import DocumentStore, {
 } from "../../../src";
 import { createMetadataDictionary } from "../../../src/Mapping/MetadataAsDictionary";
 import { CONSTANTS } from "../../../src/Constants";
+import * as BluebirdPromise from "bluebird";
 import { DateUtil } from "../../../src/Utility/DateUtil";
 
 describe("bulk insert", function () {
@@ -57,12 +58,16 @@ describe("bulk insert", function () {
             assert.strictEqual(doc3.name, "Mega John");
             assert.strictEqual(doc4.name, "Mega Jane");
 
+            const docsInsertedCount = await session
+                .query({ collection: "fooBars" })
+                .count();
+            assert.strictEqual(docsInsertedCount, 4);
         } finally {
             session.dispose();
         }
     });
 
-    it("can be killed to early", async () => {
+    it("can be killed early before making connection", async () => {
         try {
             const bulkInsert = store.bulkInsert();
             await bulkInsert.store(new FooBar());
@@ -71,7 +76,48 @@ describe("bulk insert", function () {
 
             assert.fail("Should have thrown.");
         } catch (error) {
-            assert.strictEqual(error.name, "BulkInsertAbortedException");
+            assert.strictEqual(error.name, "BulkInsertAbortedException", error.message);
+            const bulkInsertCanceled = /TaskCanceledException/i.test(error.message);
+            const bulkInsertNotRegisteredYet = 
+                /Unable to kill bulk insert operation, because it was not found on the server./i.test(error.message);
+            const bulkInsertSuccessfullyKilled = 
+                /Bulk insert was aborted by the user./i.test(error.message);
+
+            // this one's racy, so it's one or the other
+            assert.ok(
+                bulkInsertCanceled 
+                || bulkInsertNotRegisteredYet 
+                || bulkInsertSuccessfullyKilled, 
+                "Unexpected error message:" + error.message);
+        }
+    });
+
+    it("can be aborted after a while", async () => {
+        try {
+            const bulkInsert = store.bulkInsert();
+            await bulkInsert.store(new FooBar());
+            await bulkInsert.store(new FooBar());
+            await bulkInsert.store(new FooBar());
+            await bulkInsert.store(new FooBar());
+            await BluebirdPromise.delay(500);
+            await bulkInsert.abort();
+            await bulkInsert.store(new FooBar());
+
+            assert.fail("Should have thrown.");
+        } catch (error) {
+            assert.strictEqual(error.name, "BulkInsertAbortedException", error.message);
+            const bulkInsertCanceled = /TaskCanceledException/i.test(error.message);
+            const bulkInsertNotRegisteredYet = 
+                /Unable to kill bulk insert operation, because it was not found on the server./i.test(error.message);
+            const bulkInsertSuccessfullyKilled = 
+                /Bulk insert was aborted by the user./i.test(error.message);
+
+            // this one's racy, so it's one or the other
+            assert.ok(
+                bulkInsertCanceled 
+                || bulkInsertNotRegisteredYet 
+                || bulkInsertSuccessfullyKilled, 
+                "Unexpected error message:" + error.message);
         }
     });
 
