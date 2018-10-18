@@ -428,6 +428,41 @@ describe("Readme query samples", function () {
             }
         });
 
+        it("can subscribe", async () => {
+
+            // create a subscription
+            const subscriptionName = await store.subscriptions.create({
+                query: "from users where age >= 30"
+            });
+
+            // get subscription worker for your subscription
+            const subscription = store.subscriptions.getSubscriptionWorker({ subscriptionName });
+
+            subscription.on("error", err => {
+                // handle errors
+            });
+
+            let done;
+            const testDone = new Promise(resolve => done = resolve);
+            subscription.on("batch", (batch, callback) => {
+                try {
+                    // do batch processing
+                    print(batch.items);
+
+                    // call the callback, once you're done
+                    callback();
+                } catch (err) {
+                    // if processing fails for a particular batch
+                    // pass the error to the callback
+                    callback(err);
+                }
+
+                done();
+            });
+
+            await testDone;
+        });
+
     });
 
     it("can use advanced.patch", async () => {
