@@ -1,36 +1,17 @@
-# RavenDB client for Node.js
+# RavenDB Client for Node.js
 
 [![NPM](https://nodei.co/npm/ravendb.png?compact=true)](https://nodei.co/npm/ravendb/)
 
 [![build status](https://travis-ci.org/ravendb/ravendb-nodejs-client.svg?branch=v4.0)](https://travis-ci.org/ravendb/ravendb-nodejs-client) [![Known Vulnerabilities](https://snyk.io/test/github/ravendb/ravendb-nodejs-client/badge.svg)](https://snyk.io/test/github/ravendb/ravendb-nodejs-client)
 
-## Changelog
-
-### 4.0.4 - 2018-10-18
-- added support for [Subscriptions](#subscriptions)
-- added support for storing timezone info and dates in UTC
-- enhanced load and bulk insert performance
-- other bug fixes
-
-### 4.0.3 - 2018-10-01
-Added support for the following features:
-- [Streaming](#streaming)
-- More like this
-- [Suggestions](#suggestions)
-- [Revisions](#revisions)
-- [Advanced patching](#advanced-patching)
-
-### 4.0.2 - 2018-09-14
-Added support for the following features:
-- [Attachments](#attachments)
-- [Bulk Insert](#bulk-insert)
-- [Changes API](#changes-api)
 
 ## Installation
 
 ```bash
 npm install --save ravendb
 ```
+
+## Releases and Changelog - [click here](https://github.com/ravendb/ravendb-nodejs-client/releases)
 
 ## Getting started
 
