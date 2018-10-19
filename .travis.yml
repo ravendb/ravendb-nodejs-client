@@ -15,9 +15,9 @@ env:
     - RAVENDB_SERVER_VERSION="4.0"
     - RAVENDB_SERVER_VERSION="4.1"
 before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y libunwind8 wget libicu52 libssl-dev curl unzip gettext libcurl4-openssl-dev zlib1g uuid-dev bzip2 openssl
-  - wget -O RavenDB.tar.bz2 "https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest?buildType=stable&version=$RAVENDB_SERVER_VERSION" 
+  - travis_retry sudo apt-get -qq update
+  - travis_retry sudo apt-get install -y libunwind8 wget libicu52 libssl-dev curl unzip gettext libcurl4-openssl-dev zlib1g uuid-dev bzip2 openssl
+  - travis_retry wget -O RavenDB.tar.bz2 "https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest?buildType=stable&version=$RAVENDB_SERVER_VERSION" 
   - tar xjf RavenDB.tar.bz2
   - mkdir certs; pushd certs
   - openssl genrsa -out ca.key 2048
