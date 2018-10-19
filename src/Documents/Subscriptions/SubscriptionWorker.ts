@@ -524,25 +524,25 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
 
                 this._logger.info("Subscription " + this._options.subscriptionName + ". Connecting to server...");
                 await this._processSubscription();
-            } catch (ex) {
+            } catch (error) {
                 if (this._processingCancelled) {
                     if (!this._disposed) {
-                        throw ex;
+                        throw error;
                     }
                     return;
                 }
 
-                this._logger.warn(ex, "Subscription "
+                this._logger.warn(error, "Subscription "
                     + this._options.subscriptionName + ". Pulling task threw the following exception. ");
 
-                if (this._shouldTryToReconnect(ex)) {
+                if (this._shouldTryToReconnect(error)) {
                     await delay(this._options.timeToWaitBeforeConnectionRetry);
-                    this._emitter.emit("connectionRetry", ex);
+                    this._emitter.emit("connectionRetry", error);
                 } else {
-                    this._logger.error(ex, "Connection to subscription "
+                    this._logger.error(error, "Connection to subscription "
                         + this._options.subscriptionName + " have been shut down because of an error.");
 
-                    throw ex;
+                    throw error;
                 }
             }
         }
@@ -558,8 +558,8 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         }
 
         const maxErroneousPeriod =  this._options.maxErroneousPeriod;
-
-        if (new Date().getTime() - this._lastConnectionFailure.getTime() > maxErroneousPeriod) {
+        const erroneousPeriodDuration = new Date().getTime() - this._lastConnectionFailure.getTime();
+        if (erroneousPeriodDuration > maxErroneousPeriod) {
             throwError("SubscriptionInvalidStateException",
                 "Subscription connection was in invalid state for more than "
                 + maxErroneousPeriod + " and therefore will be terminated.", lastError);

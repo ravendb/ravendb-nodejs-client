@@ -9,7 +9,13 @@ import { RevisionsCollectionConfiguration } from "../../../src/Documents/Operati
 import { RevisionsConfiguration } from "../../../src/Documents/Operations/RevisionsConfiguration";
 import { ConfigureRevisionsOperation } from "../../../src/Documents/Operations/Revisions/ConfigureRevisionsOperation";
 import * as assert from "assert";
-describe("RevisionsSubscriptionsTest", function () {
+
+const is41 = process.env["RAVENDB_SERVER_VERSION"] === "4.1";
+
+// skipped for the time being
+// subscriptions are not working with server version 4.1
+// due to RavenDB-12127
+(is41 ? describe.skip : describe)("RevisionsSubscriptionsTest", function () {
     this.timeout(5 * 10 * 1000);
 
     let store: IDocumentStore;

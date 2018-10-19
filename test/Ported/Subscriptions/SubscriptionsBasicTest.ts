@@ -14,8 +14,14 @@ import { acquireSemaphore } from "../../../src/Utility/SemaphoreUtil";
 import { SubscriptionWorker } from "../../../src/Documents/Subscriptions/SubscriptionWorker";
 import { getError, throwError } from "../../../src/Exceptions";
 import { TypeUtil } from "../../../src/Utility/TypeUtil";
+import { delay } from "bluebird";
 
-describe("SubscriptionsBasicTest", function () {
+const is41 = process.env["RAVENDB_SERVER_VERSION"] === "4.1";
+
+// skipped for the time being
+// subscriptions are not working with server version 4.1
+// due to RavenDB-12127
+(is41 ? describe.skip : describe)("SubscriptionsBasicTest", function () {
     const _reasonableWaitTime = 5 * 1000;
     this.timeout(5 * _reasonableWaitTime);
 
@@ -107,6 +113,14 @@ describe("SubscriptionsBasicTest", function () {
         }
     });
 
+    function subscriptionFailed(subscription) {
+        let errReject;
+        const errPromise = new Promise((_, reject) => errReject = reject);
+        subscription.on("error", err => errReject(err));
+        subscription.on("connectionRetry", err => errReject(err));
+        return errPromise;
+    }
+
     it("should stream all documents after subscription creation", async function () {
         store.initialize();
         {
@@ -131,11 +145,12 @@ describe("SubscriptionsBasicTest", function () {
         const subscription = store.subscriptions.getSubscriptionWorker<User>({
             subscriptionName: id,
             documentType: User,
-            maxErroneousPeriod: 3000
+            maxErroneousPeriod: 0,
+            timeToWaitBeforeConnectionRetry: 0
         });
 
-        const keys = new AsyncQueue<string>();
-        const ages = new AsyncQueue<number>();
+        const keys = [] as string[];
+        const ages = [] as number[];
 
         subscription.on("batch", (batch, callback) => {
             try {
@@ -147,32 +162,23 @@ describe("SubscriptionsBasicTest", function () {
             }
         });
 
-        const errPromise = new Promise((_, reject) => {
-            subscription.on("error", err => {
-                reject(err);
-            });
-        });
-
-        await Promise.race([ errPromise, assertResults() ]);
+        try {
+            await Promise.race([ subscriptionFailed(subscription), assertResults() ]);
+        } finally {
+            subscription.dispose();
+        }
 
         async function assertResults() {
-            let key = await keys.poll(_reasonableWaitTime);
-            assert.strictEqual(key, "users/1");
+            return delay(_reasonableWaitTime)
+                .then(() => {
+                    assert.strictEqual(keys.pop(), "users/3");
+                    assert.strictEqual(keys.pop(), "users/12");
+                    assert.strictEqual(keys.pop(), "users/1");
 
-            key = await keys.poll(_reasonableWaitTime);
-            assert.strictEqual(key, "users/12");
-
-            key = await keys.poll(_reasonableWaitTime);
-            assert.strictEqual(key, "users/3");
-
-            let age = await ages.poll(_reasonableWaitTime);
-            assert.strictEqual(age, 31);
-
-            age = await ages.poll(_reasonableWaitTime);
-            assert.strictEqual(age, 27);
-
-            age = await ages.poll(_reasonableWaitTime);
-            assert.strictEqual(age, 25);
+                    assert.strictEqual(ages.pop(), 25);
+                    assert.strictEqual(ages.pop(), 27);
+                    assert.strictEqual(ages.pop(), 31);
+                });
         }
     });
 
@@ -182,27 +188,34 @@ describe("SubscriptionsBasicTest", function () {
         const subscription = store.subscriptions.getSubscriptionWorker<User>({
             subscriptionName: id,
             documentType: User,
-            maxErroneousPeriod: 3000
+            maxErroneousPeriod: 0,
+            timeToWaitBeforeConnectionRetry: 0
+        });
+
+        const names = new AsyncQueue<string>();
+
+        {
+            const session = store.openSession();
+            const user = new User();
+            user.name = "James";
+            await session.store(user, "users/1");
+            await session.saveChanges();
+        }
+
+        subscription.on("batch", (batch, callback) => {
+            batch.items.forEach(x => {
+                names.push(x.result.name);
+            });
+            callback();
         });
 
         try {
-            const names = new AsyncQueue<string>();
+            await Promise.race([ subscriptionFailed(subscription), assertResults() ]);
+        } finally {
+            subscription.dispose();
+        }
 
-            {
-                const session = store.openSession();
-                const user = new User();
-                user.name = "James";
-                await session.store(user, "users/1");
-                await session.saveChanges();
-            }
-
-            subscription.on("batch", (batch, callback) => {
-                batch.items.forEach(x => {
-                    names.push(x.result.name);
-                });
-                callback();
-            });
-
+        async function assertResults() {
             let name = await names.poll(_reasonableWaitTime);
             assert.strictEqual(name, "James");
 
@@ -227,8 +240,6 @@ describe("SubscriptionsBasicTest", function () {
 
             name = await names.poll(_reasonableWaitTime);
             assert.strictEqual(name, "David");
-        } finally {
-            subscription.dispose();
         }
     });
 
@@ -266,6 +277,7 @@ describe("SubscriptionsBasicTest", function () {
                     callback();
                 });
                 subscriptionWorker.on("error", reject);
+                subscriptionWorker.on("connectionRetry", reject);
             });
         } finally {
             subscriptionWorker.dispose();
@@ -296,7 +308,9 @@ describe("SubscriptionsBasicTest", function () {
         try {
             let integer = 0;
 
-            await new Promise(resolve => {
+            await new Promise((resolve, reject) => {
+                subscription.on("error", reject);
+                subscription.on("connectionRetry", reject);
                 subscription.on("batch", (batch, callback) => {
                     integer += batch.getNumberOfItemsInBatch();
 
@@ -361,7 +375,12 @@ describe("SubscriptionsBasicTest", function () {
                     callback();
                 });
 
-                await acquireSemaphore(allSemaphore).promise;
+                await Promise.race([
+                    acquireSemaphore(allSemaphore).promise,
+                    subscriptionFailed(allSubscription),
+                    subscriptionFailed(filteredUsersSubscription)
+                ]);
+                
                 assert.ok(!usersDocs);
             } finally {
                 filteredUsersSubscription.dispose();
@@ -479,8 +498,14 @@ describe("SubscriptionsBasicTest", function () {
             callback();
         });
 
-        assert.ok(await docs.poll(_reasonableWaitTime));
-        assert.ok(await docs.poll(_reasonableWaitTime));
+        assert.ok(await Promise.race([
+            docs.poll(_reasonableWaitTime),
+            subscriptionFailed(subscription)
+        ]));
+        assert.ok(await Promise.race([
+            docs.poll(_reasonableWaitTime),
+            subscriptionFailed(subscription)
+        ]));
     });
 
     it("should stop pulling docs and close subscription on subscriber error by default", async function() {
@@ -760,6 +785,7 @@ describe("SubscriptionsBasicTest", function () {
             let batch;
             await new Promise((resolve, reject) => {
                 subscription.on("error", reject);
+                subscription.on("connectionRetry", reject);
                 subscription.on("batch", (_batch, callback) => {
                     batch = _batch;
                     callback();

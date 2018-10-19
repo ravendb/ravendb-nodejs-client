@@ -8,7 +8,12 @@ import {
 } from "../../../src";
 import { AsyncQueue } from "../../Utils/AsyncQueue";
 
-describe("SecuredSubscriptionsBasicTest", function () {
+const is41 = process.env["RAVENDB_SERVER_VERSION"] === "4.1";
+
+// skipped for the time being
+// subscriptions are not working with server version 4.1
+// due to RavenDB-12127
+(is41 ? describe.skip : describe)("SecuredSubscriptionsBasicTest", function () {
     const _reasonableWaitTime = 5 * 1000;
     this.timeout(5 * _reasonableWaitTime);
 
