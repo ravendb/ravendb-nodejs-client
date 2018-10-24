@@ -3,6 +3,8 @@ import { AbstractDocumentQuery } from "./AbstractDocumentQuery";
 import { QueryOperation } from "./Operations/QueryOperation";
 import { QueryResult } from "../Queries/QueryResult";
 import { IndexQuery } from "../Queries/IndexQuery";
+import { ValueCallback } from "../../Types/Callbacks";
+import { QueryTimings } from "../Queries/Timings/QueryTimings";
 
 export class DocumentQueryCustomization
     implements IDocumentQueryCustomization {
@@ -71,6 +73,11 @@ export class DocumentQueryCustomization
     public waitForNonStaleResults(waitTimeout: number): IDocumentQueryCustomization;
     public waitForNonStaleResults(waitTimeout?: number): IDocumentQueryCustomization {
         this._query._waitForNonStaleResults(waitTimeout);
+        return this;
+    }
+
+    public timings(timings: ValueCallback<QueryTimings>): IDocumentQueryCustomization {
+        this._query._includeTimings(timings);
         return this;
     }
 

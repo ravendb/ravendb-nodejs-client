@@ -10,7 +10,9 @@ export type IndexType =
     | "AutoMapReduce"
     | "Map"
     | "MapReduce"
-    | "Faulty";
+    | "Faulty"
+    | "JavaScriptMap"
+    | "JavaScriptMapReduce";
 
 export type FieldStorage = "Yes" | "No";
 
@@ -30,6 +32,12 @@ export type FieldIndexing =
      * value will be stored as a single term. This is useful for unique Ids like product numbers.
      */
     | "Exact"
+
+    /**
+     * Index the tokens produced by running the field's value through an Analyzer (same as Search),
+     * store them in index and track term vector positions and offsets. This is mandatory when highlighting is used.
+     */
+    | "Highlighting"
 
     /**
      *  Index this field using the default internal analyzer: LowerCaseKeywordAnalyzer

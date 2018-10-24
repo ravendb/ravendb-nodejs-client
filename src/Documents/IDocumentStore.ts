@@ -1,4 +1,4 @@
-import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";
+import { IDocumentSession } from "./Session/IDocumentSession";
 import { IStoreAuthOptions } from "../Auth/AuthOptions";
 import {
     SessionBeforeStoreEventArgs,
@@ -17,6 +17,7 @@ import { InMemoryDocumentSessionOperations } from "./Session/InMemoryDocumentSes
 import { BulkInsertOperation } from "./BulkInsertOperation";
 import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
 import { DocumentSubscriptions } from "./Subscriptions/DocumentSubscriptions";
+import { SessionOptions } from "./Session/SessionOptions";
 
 export interface SessionEventsProxy {
     addSessionListener(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
@@ -85,12 +86,12 @@ export interface IDocumentStore extends IDisposable,
     /**
      * Opens document session
      */
-    openSession(options?: ISessionOptions): IDocumentSession;
+    openSession(options?: SessionOptions): IDocumentSession;
 
     /**
      * Opens document session
      */
-    openSession(database?: string, options?: ISessionOptions): IDocumentSession;
+    openSession(database?: string, options?: SessionOptions): IDocumentSession;
 
     /**
      * Subscribe to change notifications from the server

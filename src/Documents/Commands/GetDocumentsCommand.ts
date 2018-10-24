@@ -10,8 +10,14 @@ import { IRavenObject } from "../..";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { throwError } from "../../Exceptions";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { CONSTANTS, COUNTERS } from "../../Constants";
 
-export interface GetDocumentsCommandOptionsBase {
+export interface GetDocumentsCommandCounterOptions {
+    counterIncludes?: string[];
+    includeAllCounters?: boolean;
+}
+
+export interface GetDocumentsCommandOptionsBase extends GetDocumentsCommandCounterOptions {
     conventions: DocumentConventions;
 }
 
@@ -41,6 +47,7 @@ export interface GetDocumentsStartingWithOptions
 }
 
 export interface DocumentsResult {
+    counterIncludes: IRavenObject;
     includes: IRavenObject;
     results: any[];
 }
@@ -54,7 +61,10 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
     private readonly _id: string;
 
     private readonly _ids: string[];
-    private readonly _includes: string[];
+    private readonly _includes: string[];    
+    
+    private _counters: string[];
+    private _includeAllCounters: boolean;
 
     private readonly _metadataOnly: boolean;
 
@@ -105,6 +115,19 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
                 this._metadataOnly = opts.metadataOnly;
             }
         }
+
+        if (opts.hasOwnProperty("includeAllCounters" as keyof GetDocumentsCommandCounterOptions)) {
+            this._includeAllCounters = opts.includeAllCounters;
+        }
+
+        if (opts.hasOwnProperty("counterIncludes" as keyof GetDocumentsCommandCounterOptions)) {
+            const counters = opts.counterIncludes as string[];
+            if (!counters) {
+                throwError("InvalidArgumentException", "CounterIncludes cannot be null.");
+            }
+
+            this._counters = counters;
+        }
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
@@ -142,6 +165,14 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         if (this._includes) {
             for (const include of this._includes) {
                 query += `&include=${include}`;
+            }
+        }
+
+        if (this._includeAllCounters) {
+            query += `&counter=${COUNTERS.ALL}`;
+        } else if (this._counters && this._counters.length) {
+            for (const counter of this._counters) {
+                query += `&counter=${counter}`;
             }
         }
 

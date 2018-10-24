@@ -125,7 +125,8 @@ export type RavenErrorType = "RavenException"
     | "ConfigurationException"
     | "CertificateNameMismatchException"
     | "BulkInsertStreamError"
-    | "NotSupportedException";
+    | "NotSupportedException"
+    | "AttachmentDoesNotExistException";
 
 export interface ExceptionSchema {
     url: string;
@@ -151,7 +152,7 @@ export class ExceptionDispatcher {
                 return getError("DocumentConflictException", message);
             }
 
-            return getError("ConcurrencyException", message);
+            return getError("ConcurrencyException", error);
         }
 
         const determinedType = this._getType(type) as RavenErrorType;

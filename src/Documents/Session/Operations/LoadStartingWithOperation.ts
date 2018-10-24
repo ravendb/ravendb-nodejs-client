@@ -5,6 +5,7 @@ import { DocumentInfo } from "../DocumentInfo";
 import { DocumentType } from "../../DocumentAbstractions";
 import { ObjectTypeDescriptor } from "../../..";
 import { TypeUtil } from "../../../Utility/TypeUtil";
+import { throwError } from "../../../Exceptions";
 
 export class LoadStartingWithOperation {
 
@@ -24,6 +25,8 @@ export class LoadStartingWithOperation {
     private _pageSize: number;
     private _exclude: string;
     private _startAfter: string;
+
+    private _currentLoadResults: GetDocumentsResult;
 
     private _returnedIds: string[] = [];
 
@@ -64,7 +67,15 @@ export class LoadStartingWithOperation {
     }
 
     public setResult(result: GetDocumentsResult): void {
+        if (this._session.noTracking) {
+            this._currentLoadResults = result;
+            return;
+        }
+
         for (const document of result.results) {
+            if (!document) {
+                continue;
+            }
             const newDocumentInfo = DocumentInfo.getNewDocumentInfo(document);
             this._session.documentsById.add(newDocumentInfo);
             this._returnedIds.push(newDocumentInfo.id);
@@ -73,10 +84,24 @@ export class LoadStartingWithOperation {
 
     public getDocuments<T extends object>(docType: DocumentType<T>): T[] {
         const entityType = this._session.conventions.findEntityType<T>(docType);
-        return this._returnedIds.reduce((result, id) => {
-            const doc = this._getDocument(entityType, id);
-            return [...result, doc];
-        }, []);
+
+        if (this._session.noTracking) {
+            if (!this._currentLoadResults) {
+                throwError(
+                    "InvalidOperationException", "Cannot execute getDocuments before operation execution.");
+            }
+            
+            return this._currentLoadResults.results
+                .map(doc => {
+                    const newDocumentInfo = DocumentInfo.getNewDocumentInfo(doc);
+                    return this._session.trackEntity(entityType, newDocumentInfo);
+
+                });
+        }
+
+        return this._returnedIds.map(id => {
+            return this._getDocument(entityType, id);
+        });
     }
 
     private _getDocument<T extends object>(entityType: ObjectTypeDescriptor<T>, id: string): T {

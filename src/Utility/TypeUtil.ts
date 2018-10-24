@@ -41,7 +41,7 @@ export class TypeUtil {
         return Array.isArray(value);
     }
 
-    public static isObject(value: any): boolean {
+    public static isObject(value: any): value is object {
         return value
             && typeof(value) === "object"
             && !this.isArray(value);

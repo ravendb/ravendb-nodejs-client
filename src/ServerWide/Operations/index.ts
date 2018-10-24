@@ -23,6 +23,7 @@ export interface DatabaseTopology {
     replicationFactor: number;
     dynamicNodesDistribution: boolean;
     stamp: LeaderStamp;
+    databaseTopologyIdBase64: string;
 }
 
 export interface LeaderStamp {

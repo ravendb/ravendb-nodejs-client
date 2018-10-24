@@ -2,8 +2,9 @@ import { InMemoryDocumentSessionOperations } from "../InMemoryDocumentSessionOpe
 import { getLogger } from "../../../Utility/LogUtil";
 import { ObjectTypeDescriptor, EntitiesCollectionObject } from "../../..";
 import { DocumentInfo } from "../DocumentInfo";
-import { GetDocumentsCommand, GetDocumentsResult } from "../../Commands/GetDocumentsCommand";
+import { GetDocumentsCommand, GetDocumentsResult, GetDocumentsCommandOptionsBase, GetDocumentsByIdsCommandOptions } from "../../Commands/GetDocumentsCommand";
 import { TypeUtil } from "../../../Utility/TypeUtil";
+import { throwError } from "../../../Exceptions";
 
 const log = getLogger({ module: "LoadOperation" });
 
@@ -13,7 +14,10 @@ export class LoadOperation {
 
     private _ids: string[];
     private _includes: string[];
+    private _countersToInclude: string[];
+    private _includeAllCounters: boolean;
     private _idsToCheckOnServer: string[] = [];
+    private _currentLoadResults: GetDocumentsResult;
 
     public constructor(session: InMemoryDocumentSessionOperations) {
         this._session = session;
@@ -34,12 +38,20 @@ export class LoadOperation {
         log.info("Requesting the following ids "
             + this._idsToCheckOnServer.join(",") + " from " + this._session.storeIdentifier);
 
-        return new GetDocumentsCommand({
-            ids: this._idsToCheckOnServer,
-            includes: this._includes,
-            metadataOnly: false,
-            conventions: this._session.conventions
-        });
+        const opts: GetDocumentsByIdsCommandOptions = {
+                ids: this._idsToCheckOnServer,
+                includes: this._includes,
+                metadataOnly: false,
+                conventions: this._session.conventions
+        };
+
+        if (this._includeAllCounters) {
+            opts.includeAllCounters = true;
+        } else if (this._countersToInclude) {
+            opts.counterIncludes = this._countersToInclude; 
+        }
+
+        return new GetDocumentsCommand(opts);
     }
 
     public byId(id: string): LoadOperation {
@@ -56,6 +68,18 @@ export class LoadOperation {
         }
 
         this._idsToCheckOnServer.push(id);
+        return this;
+    }
+
+    public withCounters(counters: string[]): LoadOperation {
+        if (counters) {
+            this._countersToInclude = counters;
+        }
+
+        return this;
+    }
+     public withAllCounters() {
+        this._includeAllCounters = true;
         return this;
     }
 
@@ -102,6 +126,30 @@ export class LoadOperation {
     }
 
     public getDocuments<T extends object>(clazz: ObjectTypeDescriptor<T>): EntitiesCollectionObject<T> {
+        if (this._session.noTracking) {
+            if (!this._currentLoadResults) {
+                throwError(
+                    "InvalidOperationException", "Cannot execute 'getDocuments' before operation execution.");
+            }
+
+            const results = this._ids.filter(x => !!x)
+                .reduce((result, next) => {
+                    result[next] = null;
+                    return result;
+                }, {});
+            
+            for (const document of this._currentLoadResults.results) {
+                if (!document) {
+                    continue;
+                }
+
+                const newDocumentInfo = DocumentInfo.getNewDocumentInfo(document);
+                results[newDocumentInfo.id] = this._session.trackEntity(clazz, newDocumentInfo);
+            }
+            
+            return results;
+        }
+
         return this._ids.filter(x => !!x)
             .reduce((result, id) => {
                 result[id] = this._getDocument(clazz, id);
@@ -113,8 +161,18 @@ export class LoadOperation {
         if (!result) {
             return;
         }
+        
+        if (this._session.noTracking) {
+            this._currentLoadResults = result;
+            return;
+        }
 
         this._session.registerIncludes(result.includes);
+
+        if (this._includeAllCounters || this._countersToInclude) {
+            this._session.registerCounters(
+                result.counterIncludes, this._ids, this._countersToInclude, this._includeAllCounters);
+        }
 
         for (const document of result.results) {
             if (!document || TypeUtil.isNullOrUndefined(document)) {

@@ -29,11 +29,7 @@ import * as Parser from "stream-json/Parser";
 import * as StreamValues from "stream-json/streamers/StreamValues";
 import { TransformKeysJsonStream } from "../../Mapping/Json/Streams/TransformKeysJsonStream";
 import { getTransformJsonKeysProfile } from "../../Mapping/Json/Streams/TransformJsonKeysProfiles";
-
-interface SubscriptionResponseParsedItem { 
-    key: number; 
-    value: SubscriptionConnectionServerMessage; 
-}
+import { BatchFromServer } from "./BatchFromServer";
 
 type EventTypes = "afterAcknowledgment" | "connectionRetry" | "batch" | "error" | "end";
 
@@ -302,7 +298,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
 
             const socket = await this._connectToServer();
             let notifiedSubscriber = Promise.resolve();
-            let readFromServer = Promise.resolve<SubscriptionConnectionServerMessage[]>(null);
+            let readFromServer = Promise.resolve<BatchFromServer>(null);
             try {
                 if (this._processingCancelled) {
                     throwError("OperationCancelledException");
@@ -412,8 +408,9 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
     }
 
     private async _readSingleSubscriptionBatchFromServer(batch: SubscriptionBatch<T>):
-        Promise<SubscriptionConnectionServerMessage[]> {
+        Promise<BatchFromServer> {
         const incomingBatch = [] as SubscriptionConnectionServerMessage[];
+        const includes = [];
 
         let endOfBatch = false;
 
@@ -426,6 +423,9 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             switch (receivedMessage.type) {
                 case "Data":
                     incomingBatch.push(receivedMessage);
+                    break;
+                case "Includes":
+                    includes.push(receivedMessage.includes);
                     break;
                 case "EndOfBatch":
                     endOfBatch = true;
@@ -448,7 +448,10 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
 
             }
         }
-        return incomingBatch;
+        return {
+            messages: incomingBatch,
+            includes
+        };
     }
 
     private _throwInvalidServerResponse(receivedMessage: SubscriptionConnectionServerMessage) {

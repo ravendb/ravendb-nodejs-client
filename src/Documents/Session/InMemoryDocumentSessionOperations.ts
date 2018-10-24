@@ -19,6 +19,8 @@ import {
     SaveChangesData,
     PutCommandDataWithJson
 } from "../Commands/CommandData";
+import { PutCompareExchangeCommandData } from "../Commands/Batches/PutCompareExchangeCommandData";
+import { DeleteCompareExchangeCommandData } from "../Commands/Batches/DeleteCompareExchangeCommandData";
 import { GenerateEntityIdOnTheClient } from "../Identity/GenerateEntityIdOnTheClient";
 import { tryGetConflict } from "../../Mapping/Json";
 import { CONSTANTS } from "../../Constants";
@@ -42,6 +44,14 @@ import { OperationExecutor } from "../Operations/OperationExecutor";
 import { createMetadataDictionary } from "../../Mapping/MetadataAsDictionary";
 import { IndexBatchOptions, ReplicationBatchOptions } from "./IAdvancedSessionOperations";
 import { ILazyOperation } from "./Operations/Lazy/ILazyOperation";
+import { TransactionMode } from "./TransactionMode";
+import { CounterTracking } from "./CounterInternalTypes";
+import { CaseInsensitiveKeysMap } from "../../Primitives/CaseInsensitiveKeysMap";
+import { CaseInsensitiveStringSet } from "../../Primitives/CaseInsensitiveStringSet";
+import { DocumentStore } from "../DocumentStore";
+import { SessionOptions } from "./SessionOptions";
+import { ClusterTransactionOperationsBase } from "./ClusterTransactionOperationsBase";
+import { BatchCommandResult } from "./Operations/BatchCommandResult";
 
 export abstract class InMemoryDocumentSessionOperations
     extends EventEmitter
@@ -73,9 +83,11 @@ export abstract class InMemoryDocumentSessionOperations
 
     public deletedEntities: Set<object> = new Set();
 
-    protected _knownMissingIds: Set<string> = new Set();
+    protected _knownMissingIds: Set<string> = CaseInsensitiveStringSet.create();
 
     private _externalState: Map<string, object>;
+
+    private _transactionMode: TransactionMode;
 
     public get externalState() {
         if (!this._externalState) {
@@ -106,6 +118,21 @@ export abstract class InMemoryDocumentSessionOperations
     }
 
     public documentsById: DocumentsById = new DocumentsById();
+
+    /**
+     * map holding the data required to manage Counters tracking for RavenDB's Unit of Work
+     */
+    public get countersByDocId(): Map<string, CounterTracking> {
+        if (!this._countersByDocId) {
+            this._countersByDocId = CaseInsensitiveKeysMap.create();
+        }
+
+        return this._countersByDocId;
+    }
+
+    private _countersByDocId: Map<string, CounterTracking>;
+
+    public readonly noTracking: boolean;
 
     public includedDocumentsById: Map<string, DocumentInfo> = new Map();
 
@@ -187,16 +214,17 @@ export abstract class InMemoryDocumentSessionOperations
     }
 
     protected constructor(
-        databaseName: string,
-        documentStore: DocumentStoreBase,
-        requestExecutor: RequestExecutor,
-        id: string) {
+        documentStore: DocumentStore,
+        id: string,
+        options: SessionOptions) {
         super();
 
         this._id = id;
-        this._databaseName = databaseName;
+        this._databaseName = options.database || documentStore.database;
         this._documentStore = documentStore;
-        this._requestExecutor = requestExecutor;
+        this._requestExecutor = options.requestExecutor || documentStore.getRequestExecutor();
+
+        this.noTracking = options.noTracking;
 
         this.useOptimisticConcurrency = this._requestExecutor.conventions.isUseOptimisticConcurrency();
         this.maxNumberOfRequestsPerSession = this._requestExecutor.conventions.maxNumberOfRequestsPerSession;
@@ -205,7 +233,11 @@ export abstract class InMemoryDocumentSessionOperations
                 (obj) => this._generateId(obj));
         this._entityToJson = new EntityToJson(this);
 
-        this._sessionInfo = new SessionInfo(this._clientSessionId);
+        this._sessionInfo = new SessionInfo(
+            this._clientSessionId,
+            this._documentStore.getLastTransactionIndex(this.databaseName), 
+            options.noCaching);
+        this._transactionMode = options.transactionMode;
     }
 
     protected abstract _generateId(entity: object): Promise<string>;
@@ -220,6 +252,23 @@ export abstract class InMemoryDocumentSessionOperations
 
         const documentInfo = this._getDocumentInfo(instance);
         return this._makeMetadataInstance(documentInfo);
+    }
+
+    /**
+     * Gets all counter names for the specified entity.
+     */
+    public getCountersFor<T extends object>(instance: T): string[] {
+        if (!instance) {
+            throwError("InvalidArgumentException", "Instance cannot be null.");
+        }
+
+        const documentInfo = this._getDocumentInfo(instance);
+        const countersArray = documentInfo.metadata[CONSTANTS.Documents.Metadata.COUNTERS] as string[];
+        if (!countersArray) {
+            return null;
+        }
+
+        return countersArray;
     }
 
     private _makeMetadataInstance<T extends object>(docInfo: DocumentInfo): IMetadataDictionary {
@@ -396,9 +445,6 @@ export abstract class InMemoryDocumentSessionOperations
     /**
      * Tracks the entity inside the unit of work
      */
-    // tslint:disable:max-line-length
-    //TODO ??    return (T) this.trackEntity(clazz, documentFound.id, documentFound.document, documentFound.metadata, false);
-    // tslint:enable:max-line-length
     public trackEntity<T extends object>(
         entityType: ObjectTypeDescriptor<T>, documentFound: DocumentInfo): T;
     public trackEntity<T extends object>(
@@ -417,10 +463,13 @@ export abstract class InMemoryDocumentSessionOperations
         let id: string;
         if (TypeUtil.isObject(idOrDocumentInfo)) {
             const info = idOrDocumentInfo as DocumentInfo;
-            return this.trackEntity(entityType, info.id, info.document, info.metadata, false) as T;
+            return this.trackEntity(entityType, info.id, info.document, info.metadata, this.noTracking) as T;
         } else {
             id = idOrDocumentInfo as string;
         }
+
+        // if noTracking is session-wide then we want to override the passed argument
+        noTracking = this.noTracking || noTracking;  
 
         if (!id) {
             return this._deserializeFromTransformer(entityType, null, document) as T;
@@ -483,11 +532,49 @@ export abstract class InMemoryDocumentSessionOperations
         return entity as T;
     }
 
+    public registerExternalLoadedIntoTheSession(info: DocumentInfo): void {
+        if (this.noTracking) {
+            return;
+        }
+        
+        const existing = this.documentsById.getValue(info.id);
+        if (existing) {
+            if (existing.entity === info.entity) {
+                return;
+            }
+
+            throwError(
+                "InvalidOperationException", 
+                "The document " + info.id + " is already in the session with a different entity instance.");
+        }
+        
+        const existingEntity = this.documentsByEntity.get(info.entity);
+        if (!existingEntity) {
+            if ((existingEntity.id || "").toLowerCase() === (info.id || "").toLowerCase()) {
+                return;
+            }
+            
+            throwError(
+                "InvalidOperationException", 
+                "Attempted to load an entity with id " 
+                + info.id 
+                + ", but the entity instance already exists in the session with id: " + existing.id);
+        }
+        
+        this.documentsByEntity.set(info.entity, info);
+        this.documentsById.add(info);
+        this.includedDocumentsById.delete(info.id);
+     }
+
     private _deserializeFromTransformer(clazz: ObjectTypeDescriptor, id: string, document: object): object {
         return this.entityToJson.convertToEntity(clazz, id, document);
     }
 
     public registerIncludes(includes: object): void {
+        if (this.noTracking) {
+            return;
+        }
+
         if (!includes) {
             return;
         }
@@ -509,6 +596,10 @@ export abstract class InMemoryDocumentSessionOperations
     }
 
     public registerMissingIncludes(results: object[], includes: object, includePaths: string[]): void {
+        if (this.noTracking) {
+            return;
+        }
+
         if (!includePaths || !includePaths.length) {
             return;
         }
@@ -544,11 +635,189 @@ export abstract class InMemoryDocumentSessionOperations
     }
 
     public registerMissing(id: string): void {
-        this._knownMissingIds.add(id.toLowerCase());
+        if (this.noTracking) {
+            return;
+        }
+
+        this._knownMissingIds.add(id);
     }
 
     public unregisterMissing(id: string) {
-        this._knownMissingIds.delete(id.toLowerCase());
+        this._knownMissingIds.delete(id);
+    }
+
+    public registerCounters(
+        resultCounters: object, 
+        countersToInclude: { [key: string]: string[] }): void;
+    public registerCounters(
+        resultCounters: object, 
+        ids: string[], 
+        countersToInclude: string[], 
+        gotAll: boolean): void;
+    public registerCounters(
+        resultCounters: object, 
+        idsOrCountersToInclude: string[] | { [key: string]: string[] }, 
+        countersToInclude?: string[],
+        gotAll?: boolean) {
+            if (Array.isArray(idsOrCountersToInclude)) {
+                this._registerCountersWithIdsList(resultCounters, idsOrCountersToInclude, countersToInclude, gotAll);
+            } else {
+                this._registerCountersWithCountersToIncludeObj(resultCounters, idsOrCountersToInclude);
+            }
+        }
+
+    private _registerCountersWithIdsList(
+        resultCounters: object, 
+        ids: string[], 
+        countersToInclude: string[], 
+        gotAll: boolean): void {
+        if (this.noTracking) {
+            return;
+        }
+
+        if (!resultCounters || Object.keys(resultCounters).length === 0) {
+            if (gotAll) {
+                for (const id of ids) {
+                    this._setGotAllCountersForDocument(id);
+                }
+                return;
+            }
+        } else {
+            this._registerCountersInternal(resultCounters, null, false, gotAll);
+        }
+
+        this._registerMissingCounters(ids, countersToInclude);
+    }
+
+    private _registerCountersWithCountersToIncludeObj(
+        resultCounters: object, 
+        countersToInclude: { [key: string]: string[] }): void {
+
+        if (this.noTracking) {
+            return;
+        }
+
+        if (!resultCounters || Object.keys(resultCounters).length == 0) {
+            this._setGotAllInCacheIfNeeded(countersToInclude);
+        } else {
+            this._registerCountersInternal(resultCounters, countersToInclude, true, false);
+        }
+
+        this._registerMissingCounters(countersToInclude);
+    }
+     private _registerCountersInternal(
+         resultCounters: object, 
+         countersToInclude: { [key: string]: string[] }, 
+         fromQueryResult: boolean, 
+         gotAll: boolean): void {
+         for (const [field, value] of Object.entries(resultCounters)) {
+             if (!value) {
+                 continue;
+             }
+
+             if (fromQueryResult) {
+                 const counters = countersToInclude[field];
+                 gotAll = counters && counters.length === 0;
+             }
+
+             if (value.length === 0 && !gotAll) {
+                 continue;
+             }
+
+             this._registerCountersForDocument(field, gotAll, value);
+         }
+    }
+
+    private _registerCountersForDocument(id: string, gotAll: boolean, counters: any[]): void {
+        let cache = this.countersByDocId.get(id);
+        if (!cache) {
+            cache = { gotAll, data: CaseInsensitiveKeysMap.create<number>() };
+        }
+
+        for (const counterJson of counters) {
+            const counterName = counterJson["CounterName"];
+            const totalValue = counterJson["TotalValue"];
+            if (counterName && totalValue) {
+                cache.data[counterName] = totalValue;
+            }
+        }
+
+        cache.gotAll = gotAll;
+        this._countersByDocId.set(id, cache);
+    }
+
+    private _setGotAllInCacheIfNeeded(countersToInclude: { [key: string]: string[] }): void {
+        for (const [key, value] of Object.entries(countersToInclude)) {
+            if (value.length > 0) {
+                continue;
+            }
+
+            this._setGotAllCountersForDocument(key);
+        }
+    }
+
+    private _setGotAllCountersForDocument(id: string): void {
+        let cache = this.countersByDocId.get(id);
+        if (!cache) {
+            cache = { gotAll: false, data: CaseInsensitiveKeysMap.create<number>() }
+        }
+        cache.gotAll = true;
+        this._countersByDocId.set(id, cache);
+    }
+
+    private _registerMissingCounters(ids: string[], countersToInclude: string[]): void;
+    private _registerMissingCounters(countersToInclude: { [key: string]: string[] }): void;
+    private _registerMissingCounters(
+        idsOrCountersToInclude: string[] | { [key: string]: string[] }, countersToInclude?: string[]): void {
+        if (Array.isArray(idsOrCountersToInclude)) {
+            this._registerMissingCountersWithIdsList(idsOrCountersToInclude, countersToInclude);
+        } else {
+            this._registerMissingCountersWithCountersToIncludeObj(idsOrCountersToInclude);
+        }
+    }
+
+    private _registerMissingCountersWithCountersToIncludeObj(countersToInclude: { [key: string]: string[] }): void {
+        if (!countersToInclude) {
+            return;
+        }
+
+        for (const [key, value] of Object.entries(countersToInclude)) {
+            let cache = this.countersByDocId.get(key);
+            if (!cache) {
+                cache = { gotAll: false, data: CaseInsensitiveKeysMap.create<number>() };
+                this.countersByDocId.set(key, cache);
+            }
+
+            for (const counter of value) {
+                if (cache.data.has(counter)) {
+                    continue;
+                }
+
+                cache.data.set(counter, null);
+            }
+        }
+    }
+
+    private _registerMissingCountersWithIdsList(ids: string[], countersToInclude: string[]): void {
+        if (!countersToInclude) {
+            return;
+        }
+
+        for (const counter of countersToInclude) {
+            for (const id of ids) {
+                let cache = this.countersByDocId.get(id);
+                if (!cache) {
+                    cache = { gotAll: false, data: CaseInsensitiveKeysMap.create<number>() };
+                    this.countersByDocId.set(id, cache);
+                }
+
+                if (cache.data.has(counter)) {
+                    continue;
+                }
+
+                cache.data.set(counter, null);
+            }
+        }
     }
 
     public store<TEntity extends object>(
@@ -630,12 +899,18 @@ export abstract class InMemoryDocumentSessionOperations
 
     protected _generateDocumentKeysOnStore: boolean = true;
 
-    private _storeInternal(
+    private async _storeInternal(
         entity: object,
         changeVector: string,
         id: string,
         forceConcurrencyCheck: ConcurrencyCheckMode,
         documentType: DocumentType): Promise<void> {
+        if (this.noTracking) {
+            throwError(
+                "InvalidOperationException", 
+                "Cannot store entity. Entity tracking is disabled in this session.");
+        }
+
         if (!entity) {
             throwError("InvalidArgumentException", "Entity cannot be null or undefined.");
         }
@@ -647,61 +922,53 @@ export abstract class InMemoryDocumentSessionOperations
             return;
         }
 
-        return Promise.resolve()
-            .then(() => {
-                if (!id) {
-                    if (this._generateDocumentKeysOnStore) {
-                        return this._generateEntityIdOnTheClient.generateDocumentKeyForStorage(entity);
-                    } else {
-                        this._rememberEntityForDocumentIdGeneration(entity);
-                    }
-                } else {
-                    this.generateEntityIdOnTheClient.trySetIdentity(entity, id);
-                }
+        if (!id) {
+            if (this._generateDocumentKeysOnStore) {
+                await this._generateEntityIdOnTheClient.generateDocumentKeyForStorage(entity);
+            } else {
+                this._rememberEntityForDocumentIdGeneration(entity);
+            }
+        } else {
+            this.generateEntityIdOnTheClient.trySetIdentity(entity, id);
+        }
 
-                return id;
-            })
-            // tslint:disable-next-line:no-shadowed-variable
-            .then(id => {
+        const cmdKey = IdTypeAndName.keyFor(id, "ClientAnyCommand", null);
+        if (this.deferredCommandsMap.has(cmdKey)) {
+            throwError("InvalidOperationException",
+                "Can't store document, there is a deferred command registered "
+                + "for this document in the session. Document id: " + id);
+        }
 
-                const cmdKey = IdTypeAndName.keyFor(id, "ClientAnyCommand", null);
-                if (this.deferredCommandsMap.has(cmdKey)) {
-                    throwError("InvalidOperationException",
-                        "Can't store document, there is a deferred command registered "
-                        + "for this document in the session. Document id: " + id);
-                }
+        if (this.deletedEntities.has(entity)) {
+            throwError("InvalidOperationException",
+                "Can't store object, it was already deleted in this session.  Document id: " + id);
+        }
 
-                if (this.deletedEntities.has(entity)) {
-                    throwError("InvalidOperationException",
-                        "Can't store object, it was already deleted in this session.  Document id: " + id);
-                }
+        // we make the check here even if we just generated the ID
+        // users can override the ID generation behavior, and we need
+        // to detect if they generate duplicates.
+        this._assertNoNonUniqueInstance(entity, id);
 
-                // we make the check here even if we just generated the ID
-                // users can override the ID generation behavior, and we need
-                // to detect if they generate duplicates.
-                this._assertNoNonUniqueInstance(entity, id);
+        const conventions = this._requestExecutor.conventions;
+        const collectionName: string = conventions.getCollectionNameForEntity(entity);
+        const metadata = {};
+        if (collectionName) {
+            metadata[CONSTANTS.Documents.Metadata.COLLECTION] = collectionName;
+        }
 
-                const conventions = this._requestExecutor.conventions;
-                const collectionName: string = conventions.getCollectionNameForEntity(entity);
-                const metadata = {};
-                if (collectionName) {
-                    metadata[CONSTANTS.Documents.Metadata.COLLECTION] = collectionName;
-                }
+        const entityType = documentType
+            ? conventions.findEntityType(documentType)
+            : conventions.getEntityTypeDescriptor(entity);
+        const jsType = conventions.getJsTypeName(entityType);
+        if (jsType) {
+            metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] = jsType;
+        }
 
-                const entityType = documentType
-                    ? conventions.findEntityType(documentType)
-                    : conventions.getEntityTypeDescriptor(entity);
-                const jsType = conventions.getJsTypeName(entityType);
-                if (jsType) {
-                    metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] = jsType;
-                }
+        if (id) {
+            this._knownMissingIds.delete(id);
+        }
 
-                if (id) {
-                    this._knownMissingIds.delete(id);
-                }
-
-                this._storeEntityInUnitOfWork(id, entity, changeVector, metadata, forceConcurrencyCheck, documentType);
-            });
+        this._storeEntityInUnitOfWork(id, entity, changeVector, metadata, forceConcurrencyCheck, documentType);
     }
 
     protected _storeEntityInUnitOfWork(
@@ -748,6 +1015,8 @@ export abstract class InMemoryDocumentSessionOperations
         this._prepareForEntitiesDeletion(result, null);
         this._prepareForEntitiesPuts(result);
 
+        this._prepareCompareExchangeEntities(result);
+
         if (this._deferredCommands.length) {
             // this allow OnBeforeStore to call Defer during the call to include
             // additional values during the same SaveChanges call
@@ -760,8 +1029,74 @@ export abstract class InMemoryDocumentSessionOperations
             this.deferredCommandsMap.clear();
         }
 
+        for (const deferredCommand of result.deferredCommands) {
+            if (deferredCommand.onBeforeSaveChanges) {
+                deferredCommand.onBeforeSaveChanges(this);
+            }
+        }
+
         return result;
     }
+
+    public validateClusterTransaction(result: SaveChangesData): void {
+        if (this._transactionMode !== "ClusterWide") {
+            return;
+        }
+
+        for (const commandData of result.sessionCommands) {
+            switch (commandData.type) {
+                case "PUT":
+                case "DELETE":
+                case "CompareExchangeDELETE":
+                case "CompareExchangePUT":
+                    break;
+                default:
+                    throwError(
+                        "InvalidOperationException",
+                        "The command '" + commandData.type + "' is not supported in a cluster session.");
+            }
+        }
+    }
+
+    protected _updateSessionAfterSaveChanges(result: BatchCommandResult): void {
+        const returnedTransactionIndex = result.transactionIndex;
+        this._documentStore.setLastTransactionIndex(this.databaseName, returnedTransactionIndex);
+        this.sessionInfo.lastClusterTransactionIndex = returnedTransactionIndex;
+    }
+
+    private _prepareCompareExchangeEntities(result: SaveChangesData): void {
+        const clusterTransactionOperations = this._clusterSession;
+        if (!clusterTransactionOperations || !clusterTransactionOperations.hasCommands()) {
+            return;
+        }
+
+        if (this._transactionMode !== "ClusterWide") {
+            throwError(
+                "InvalidOperationException", 
+                "Performing cluster transaction operation require the TransactionMode to be set to ClusterWide");
+        }
+
+        if (clusterTransactionOperations.storeCompareExchange) {
+            for (const [key, value] of clusterTransactionOperations.storeCompareExchange.entries()) {
+                const mapper = this.conventions.objectMapper;
+                const entityAsTree = value.entity;
+                const rootNode = { Object: entityAsTree };
+                result.sessionCommands.push(
+                    new PutCompareExchangeCommandData(key, rootNode, value.index));
+            }
+        }
+
+        if (clusterTransactionOperations.deleteCompareExchange) {
+            for (const [key, value] of clusterTransactionOperations.deleteCompareExchange.entries()) {
+                result.sessionCommands.push(
+                    new DeleteCompareExchangeCommandData(key, value));
+            }
+        }
+
+        clusterTransactionOperations.clear();
+    }
+
+    protected abstract _clusterSession: ClusterTransactionOperationsBase;
 
     private _newSaveChangesData(): SaveChangesData {
         return new SaveChangesData({
@@ -838,7 +1173,7 @@ export abstract class InMemoryDocumentSessionOperations
             }
 
             const command = result.deferredCommandsMap.get(
-                IdTypeAndName.keyFor(entityValue.id, "ClientNotAttachment", null));
+                IdTypeAndName.keyFor(entityValue.id, "ClientModifyDocumentCommand", null));
             if (command) {
                 InMemoryDocumentSessionOperations._throwInvalidModifiedDocumentWithDeferredCommand(command);
             }
@@ -924,18 +1259,17 @@ export abstract class InMemoryDocumentSessionOperations
         return dirty;
     }
 
-    public delete(id: string): Promise<void>;
-    public delete(id: string, expectedChangeVector: string): Promise<void>;
-    public delete<TEntity extends IRavenObject>(entity: TEntity): Promise<void>;
-    public delete<TEntity extends IRavenObject>(
+    public async delete(id: string): Promise<void>;
+    public async delete(id: string, expectedChangeVector: string): Promise<void>;
+    public async delete<TEntity extends IRavenObject>(entity: TEntity): Promise<void>;
+    public async delete<TEntity extends IRavenObject>(
         idOrEntity: string | TEntity, expectedChangeVector: string = null): Promise<void> {
         if (TypeUtil.isString(idOrEntity)) {
             this._deleteById(idOrEntity as string, expectedChangeVector);
-            return Promise.resolve();
+            return;
         }
 
         this._deleteByEntity(idOrEntity as TEntity);
-        return Promise.resolve();
     }
 
     /**
@@ -954,6 +1288,11 @@ export abstract class InMemoryDocumentSessionOperations
 
         this.deletedEntities.add(entity);
         this.includedDocumentsById.delete(value.id);
+        
+        if (this._countersByDocId) {
+            this._countersByDocId.delete(value.id);
+        }
+
         this._knownMissingIds.add(value.id);
     }
 
@@ -987,6 +1326,11 @@ export abstract class InMemoryDocumentSessionOperations
 
         this._knownMissingIds.add(id);
         changeVector = this.useOptimisticConcurrency ? changeVector : null;
+        
+        if (this._countersByDocId) {
+            this._countersByDocId.delete(id);
+        }
+
         this.defer(new DeleteCommandData(id, expectedChangeVector || changeVector));
     }
 
@@ -1006,9 +1350,13 @@ export abstract class InMemoryDocumentSessionOperations
         this.deferredCommandsMap.set(
             IdTypeAndName.keyFor(command.id, "ClientAnyCommand", null), command);
 
-        if (command.type !== "AttachmentPUT" && command.type !== "AttachmentDELETE") {
+        if (command.type !== "AttachmentPUT" 
+            && command.type !== "AttachmentDELETE" 
+            && command.type !== "AttachmentCOPY"
+            && command.type !== "AttachmentMOVE"
+            && command.type !== "Counters") {
             this.deferredCommandsMap.set(
-                IdTypeAndName.keyFor(command.id, "ClientNotAttachment", null), command);
+                IdTypeAndName.keyFor(command.id, "ClientModifyDocumentCommand", null), command);
         }
     }
 
@@ -1072,7 +1420,9 @@ export abstract class InMemoryDocumentSessionOperations
         this.deletedEntities.clear();
         this.documentsById.clear();
         this._knownMissingIds.clear();
-        this.includedDocumentsById.clear();
+        if (this._countersByDocId) {
+            this._countersByDocId.clear();
+        }
     }
 
     /**
@@ -1177,5 +1527,13 @@ export abstract class InMemoryDocumentSessionOperations
         }
 
         this._disposed = true;
+    }
+
+    public get transactionMode() {
+        return this._transactionMode;
+    }
+
+    public set transactionMode(value) {
+        this._transactionMode = value;
     }
 }

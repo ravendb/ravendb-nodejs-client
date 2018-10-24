@@ -1,5 +1,5 @@
 import { ShapeToken } from "../../Session/Tokens/ShapeToken";
-import { SpatialRelation } from "../../Indexes/Spatial";
+import { SpatialRelation, SpatialUnits } from "../../Indexes/Spatial";
 import { QueryToken } from "../../Session/Tokens/QueryToken";
 import { throwError } from "../../../Exceptions";
 import { WhereOperator } from "../../Session/Tokens/WhereOperator";

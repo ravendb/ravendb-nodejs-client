@@ -30,6 +30,8 @@ export const CONSTANTS = {
             EXPIRES: "@expires",
             EMPTY_COLLECTION: "@empty",
             NESTED_OBJECT_TYPES: "@nested-object-types",
+            COUNTERS: "@counters",
+            REVISION_COUNTERS: "@counters-snapshot",
             IGNORE_CASE_TRANSFORM_REGEX:
             // tslint:disable-next-line:max-line-length
                 /^@metadata(\.(@collection|@projection|@id|@conflict|@flags|Raven-Node-Type|@index-score|@last-modified|@change-vector|@expires|@nested-object-types(\.\w+)?))?$/
@@ -41,13 +43,19 @@ export const HEADERS = {
     REQUEST_TIME: "Raven-Request-Time",
     REFRESH_TOPOLOGY: "Refresh-Topology",
     TOPOLOGY_ETAG: "Topology-Etag",
+    LAST_KNOWN_CLUSTER_TRANSACTION_INDEX: "Known-Raft-Index",
     CLIENT_CONFIGURATION_ETAG: "Client-Configuration-Etag",
     REFRESH_CLIENT_CONFIGURATION: "Refresh-Client-Configuration",
     CLIENT_VERSION: "Raven-Client-Version",
+    SERVER_VERSION: "Raven-Server-Version",
     ETAG: "ETag",
     IF_NONE_MATCH: "If-None-Match",
     TRANSFER_ENCODING: "Transfer-Encoding",
     CONTENT_ENCODING: "Content-Encoding",
     CONTENT_LENGTH: "Content-Length",
     DATABASE_MISSING: "Database-Missing"
+};
+
+export const COUNTERS = {
+    ALL: "@all_counters"
 };

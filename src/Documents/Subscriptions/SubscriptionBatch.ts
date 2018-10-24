@@ -1,11 +1,4 @@
 import { DocumentType } from "../DocumentAbstractions";
-import {
-    IDocumentSession,
-    IDocumentStore,
-    IMetadataDictionary,
-    ISessionOptions,
-    RequestExecutor
-} from "../..";
 import { getLogger } from "../../Utility/LogUtil";
 import { GenerateEntityIdOnTheClient } from "../Identity/GenerateEntityIdOnTheClient";
 import { throwError } from "../../Exceptions";
@@ -14,6 +7,14 @@ import * as os from "os";
 import { CONSTANTS } from "../../Constants";
 import { StringUtil } from "../../Utility/StringUtil";
 import { createMetadataDictionary } from "../../Mapping/MetadataAsDictionary";
+import { RequestExecutor } from "../../Http/RequestExecutor";
+import { IDocumentStore } from "../IDocumentStore";
+import { IDocumentSession } from "../Session/IDocumentSession";
+import { SessionOptions } from "../Session/SessionOptions";
+import { InMemoryDocumentSessionOperations } from "../Session/InMemoryDocumentSessionOperations";
+import { DocumentInfo } from "../Session/DocumentInfo";
+import { BatchFromServer } from "./BatchFromServer";
+import { IMetadataDictionary } from "../Session/IMetadataDictionary";
 
 export class SubscriptionBatch<T extends object> {
 
@@ -27,16 +28,31 @@ export class SubscriptionBatch<T extends object> {
     private readonly _generateEntityIdOnTheClient: GenerateEntityIdOnTheClient;
     private readonly _items = [] as Array<Item<T>>;
 
+    private _includes: object[];
+
     public get items() {
         return this._items;
     }
 
-    public openSession(): IDocumentSession {
-        const sessionOptions = {
-            database: this._dbName,
-            requestExecutor: this._requestExecutor
-        } as ISessionOptions;
-        return this._store.openSession(sessionOptions);
+    // public openSession(): IDocumentSession {
+    //     const sessionOptions = {
+    //         database: this._dbName,
+    //         requestExecutor: this._requestExecutor
+    //     } as SessionOptions;
+    //     return this._store.openSession(sessionOptions);
+    // }
+
+    public openSession(options: SessionOptions): IDocumentSession {
+        SubscriptionBatch._validateSessionOptions(options);
+        options.database = this._dbName;
+        options.requestExecutor = this._requestExecutor;
+        return this._openSessionInternal(options);
+    }
+
+    private _openSessionInternal(options: SessionOptions): IDocumentSession {
+        const s = this._store.openSession(options);
+        this._loadDataToSession(s as any as InMemoryDocumentSessionOperations);
+        return s;
     }
 
     public getNumberOfItemsInBatch() {
@@ -55,12 +71,56 @@ export class SubscriptionBatch<T extends object> {
             () => throwError("InvalidOperationException", "Shouldn't be generating new ids here"));
     }
 
-    public initialize(batch: SubscriptionConnectionServerMessage[]): string {
+    private static _validateSessionOptions(options: SessionOptions): void {
+        if (options.database) {
+            throwError(
+                "InvalidOperationException", "Cannot set Database when session is opened in subscription.");
+        }
+
+        if (options.requestExecutor) {
+            throwError(
+                "InvalidOperationException", "Cannot set RequestExecutor when session is opened in subscription.");
+        }
+
+        if (options.transactionMode !== "SingleNode") {
+            throwError(
+                "InvalidOperationException", 
+                "Cannot set TransactionMode when session is opened in subscription. Only 'SingleNode' is supported.");
+        }
+    }
+
+    private _loadDataToSession(session: InMemoryDocumentSessionOperations): void {
+        if (session.noTracking) {
+            return;
+        }
+
+        if (!this._includes) {
+            return;
+        }
+         
+        for (const item of this._includes) {
+            session.registerIncludes(item);
+        }
+
+        for (const item of this._items) {
+            const documentInfo = new DocumentInfo();
+            documentInfo.id = item.id;
+            documentInfo.document = item.rawResult;
+            documentInfo.metadata = item.rawMetadata;
+            documentInfo.changeVector = item.changeVector;
+            documentInfo.entity = item.result;
+            documentInfo.newDocument = false;
+            session.registerExternalLoadedIntoTheSession(documentInfo);
+        }
+     }
+
+    public initialize(batch: BatchFromServer): string {
         this._items.length = 0;
 
         let lastReceivedChangeVector: string;
+        this._includes = batch.includes;
 
-        for (const item of batch) {
+        for (const item of batch.messages) {
             const curDoc = item.data;
             const metadata = curDoc[CONSTANTS.Documents.Metadata.KEY];
             if (!metadata) {
@@ -90,6 +150,10 @@ export class SubscriptionBatch<T extends object> {
                 if (!StringUtil.isNullOrEmpty(id)) {
                     this._generateEntityIdOnTheClient.trySetIdentity(instance, id);
                 }
+
+                // TODO: check if something's missing here
+                // tslint:disable-next-line:max-line-length
+                // https://github.com/ravendb/ravendb-jvm-client/blob/v4.1/src/main/java/net/ravendb/client/documents/subscriptions/SubscriptionBatch.java#L222
             }
 
             const itemToAdd = new Item<T>();

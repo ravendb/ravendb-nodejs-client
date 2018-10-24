@@ -1,3 +1,5 @@
+import { QueryTimings } from "../Queries/Timings/QueryTimings";
+
 export abstract class QueryResultBase<TResult, TInclude> {
 
     public results: TResult;
@@ -15,4 +17,12 @@ export abstract class QueryResultBase<TResult, TInclude> {
     public resultEtag: number;
 
     public lastQueryTime: Date;
+
+    public counterIncludes: object;
+
+    public includedCounterNames: { [key: string]: string[] };
+
+    public nodeTag: string;
+
+    public timings: QueryTimings;
 }

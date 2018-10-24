@@ -40,6 +40,14 @@ import { ISuggestionDocumentQuery } from "../Queries/Suggestions/ISuggestionDocu
 import { ISuggestionBuilder } from "../Queries/Suggestions/ISuggestionBuilder";
 import { SuggestionDocumentQuery } from "../Queries/Suggestions/SuggestionDocumentQuery";
 import { SuggestionBuilder } from "../Queries/Suggestions/SuggestionBuilder";
+import { ValueCallback } from "../../Types/Callbacks";
+import { QueryTimings } from "../Queries/Timings/QueryTimings";
+import { Explanations } from "../Queries/Explanation/Explanations";
+import { ExplanationOptions } from "../Queries/Explanation/ExplanationOptions";
+import { Highlightings } from "../Queries/Highlighting/Hightlightings";
+import { HighlightingParameters } from "../Queries/Highlighting/HighlightingParameters";
+import { IQueryIncludeBuilder } from "./Loaders/IQueryIncludeBuilder";
+import { QueryIncludeBuilder } from "./Loaders/QueryIncludeBuilder";
 
 export class DocumentQuery<T extends object>
     extends AbstractDocumentQuery<T, DocumentQuery<T>> implements IDocumentQuery<T> {
@@ -145,7 +153,26 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    // TBD 4.1 public IDocumentQuery<T> explainScores() {
+    public includeExplanations<T extends object>(
+        explanationsCallback: ValueCallback<Explanations>): IDocumentQuery<T>;
+    public includeExplanations<T extends object>(
+        options: ExplanationOptions, 
+        explanationsCallback?: ValueCallback<Explanations>): IDocumentQuery<T>;
+    public includeExplanations<T extends object>(
+        optionsOrExplanationsCallback: ExplanationOptions | ValueCallback<Explanations>, 
+        explanationsCallback?: ValueCallback<Explanations>): IDocumentQuery<T> {
+        if (TypeUtil.isFunction(optionsOrExplanationsCallback)) {
+            return this.includeExplanations(null, explanationsCallback);
+        }
+
+        this._includeExplanations(optionsOrExplanationsCallback, explanationsCallback);
+        return this;
+    }
+
+    public timings(timings: ValueCallback<QueryTimings>): IDocumentQuery<T> {
+        this._includeTimings(timings);
+        return this;
+    }
 
     public waitForNonStaleResults(): IDocumentQuery<T>;
     public waitForNonStaleResults(waitTimeout: number): IDocumentQuery<T>;
@@ -238,10 +265,18 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    // TBD 4.1 public IDocumentQuery<T> showTimings()
-
-    public include(path: string): IDocumentQuery<T> {
-        this._include(path);
+    public include(path: string): IDocumentQuery<T>;
+    public include(includes: (includeBuilder: IQueryIncludeBuilder) => void): IDocumentQuery<T>;
+    public include(pathOrIncludes: string | ((includeBuilder: IQueryIncludeBuilder) => void)): IDocumentQuery<T> {
+        if (TypeUtil.isFunction(pathOrIncludes)) {
+            const includesBuilder = new QueryIncludeBuilder(this.conventions);
+            pathOrIncludes(includesBuilder);
+            this._include(includesBuilder);
+        } else if (TypeUtil.isString(pathOrIncludes)) {
+            this._include(pathOrIncludes);
+        } else {
+            throwError("InvalidArgumentException", "include() accepts either string or function.");
+        }
         return this;
     }
 
@@ -506,7 +541,8 @@ export class DocumentQuery<T extends object>
         query._theWaitForNonStaleResults = this._theWaitForNonStaleResults;
         query._negate = this._negate;
         //noinspection unchecked
-        query._includes = new Set(this._includes);
+        query._documentIncludes = new Set(this._documentIncludes);
+        query._counterIncludesTokens = this._counterIncludesTokens;
         query._rootTypes = new Set([this._clazz]);
 
         for (const listener of query.listeners("beforeQuery")) {
@@ -517,15 +553,10 @@ export class DocumentQuery<T extends object>
             query.on("afterQuery", listener as any);
         }
 
-        /* TODO AfterStreamExecutedCallback = AfterStreamExecutedCallback, should it be implemented?
-        for: 4.1: query.HighlightedFields = new List<HighlightedField>(HighlightedFields),
-        query.HighlighterPreTags = HighlighterPreTags,
-        query.HighlighterPostTags = HighlighterPostTags,
-        */
+        query._highlightingTokens = this._highlightingTokens;
+        query._queryHighlightings = this._queryHighlightings;
         query._disableEntitiesTracking = this._disableEntitiesTracking;
         query._disableCaching = this._disableCaching;
-        // TBD ShowQueryTimings = ShowQueryTimings,
-        // TBD query.shouldExplainScores = shouldExplainScores;
         query._isIntersect = this._isIntersect;
         query._defaultOperator = this._defaultOperator;
 
@@ -562,16 +593,17 @@ export class DocumentQuery<T extends object>
         return new AggregationDocumentQuery<T>(this);
     }
 
+    public highlight(
+        parameters: HighlightingParameters, 
+        hightlightingsCallback: ValueCallback<Highlightings>): IDocumentQuery<T> {
+        this._highlight(parameters, hightlightingsCallback);
+        return this;
+    }
+
     // tslint:disable:max-line-length
-    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField)
-    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings)
-    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(string fieldName,string fieldKeyName, int fragmentLength,int fragmentCount,out FieldHighlightings highlightings)
-    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, int fragmentLength, int fragmentCount, Expression<Func<T, IEnumerable>> fragmentsPropertySelector)
-    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, int fragmentLength, int fragmentCount, out FieldHighlightings fieldHighlightings)
-    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, Expression<Func<T, TValue>> keyPropertySelector, int fragmentLength, int fragmentCount, out FieldHighlightings fieldHighlightings)
-    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.SetHighlighterTags(string preTag, string postTag)
-    // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.SetHighlighterTags(string[] preTags, string[] postTags)
-    // TBD expr public IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
+    //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(Expression<Func<T, object>> path, int fragmentLength, int fragmentCount, out Highlightings highlightings)
+    //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(Expression<Func<T, object>> path, int fragmentLength, int fragmentCount, HighlightingOptions options, out Highlightings highlightings)
+    //TBD expr public IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
     // tslint:enable:max-line-length
 
     public spatial(
@@ -639,11 +671,32 @@ export class DocumentQuery<T extends object>
     public relatesToShape(
         fieldName: string, shapeWkt: string, relation: SpatialRelation, distanceErrorPct: number): IDocumentQuery<T>;
     public relatesToShape(
-        fieldName: string,
+        fieldName: string, 
+        shapeWkt: string, 
+        relation: SpatialRelation, 
+        units: SpatialUnits,
+        distanceErrorPct: number): IDocumentQuery<T>;
+    public relatesToShape(
+        fieldName: string, 
         shapeWkt: string,
         relation: SpatialRelation,
-        distanceErrorPct: number = CONSTANTS.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT): IDocumentQuery<T> {
-        this._spatialByShapeWkt(fieldName, shapeWkt, relation, distanceErrorPct);
+        distanceErrorPctOrUnits?: SpatialUnits | number,
+        distanceErrorPct?: number): IDocumentQuery<T> {
+        
+        let units;
+        if (TypeUtil.isNullOrUndefined(distanceErrorPct)) {
+            if (TypeUtil.isString(distanceErrorPctOrUnits)) {
+                units = distanceErrorPctOrUnits as SpatialUnits;
+                distanceErrorPct = CONSTANTS.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT;
+            } else {
+                units = null;
+                distanceErrorPct = distanceErrorPctOrUnits as number;
+            }
+        } else {
+            units = distanceErrorPctOrUnits;
+        }
+
+        this._spatialByShapeWkt(fieldName, shapeWkt, relation, units, distanceErrorPct);
         return this;
     }
 

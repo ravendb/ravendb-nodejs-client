@@ -8,7 +8,8 @@ import { DocumentStoreBase } from "./DocumentStoreBase";
 import { IDocumentStore } from "./IDocumentStore";
 import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor";
 import { OperationExecutor } from "./Operations/OperationExecutor";
-import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";
+import { IDocumentSession } from "./Session/IDocumentSession";
+import { SessionOptions } from "./Session/SessionOptions";
 import { DocumentSession } from "./Session/DocumentSession";
 import { HiloMultiDatabaseIdGenerator } from "./Identity/HiloMultiDatabaseIdGenerator";
 import { IAuthOptions } from "../Auth/AuthOptions";
@@ -152,30 +153,23 @@ export class DocumentStore extends DocumentStoreBase {
     /**
      * Opens document session
      */
-    public openSession(sessionOpts: ISessionOptions): IDocumentSession;
+    public openSession(sessionOpts: SessionOptions): IDocumentSession;
     /**
      * Opens document session
      */
-    public openSession(databaseOrSessionOptions?: string | ISessionOptions): IDocumentSession {
+    public openSession(databaseOrSessionOptions?: string | SessionOptions): IDocumentSession {
         this.assertInitialized();
         this._ensureNotDisposed();
 
         if (typeof(databaseOrSessionOptions) === "string") {
-            return this.openSession({
-                database: (databaseOrSessionOptions as string)
-            });
+            return this.openSession({ database: databaseOrSessionOptions as string });
         }
 
-        let database: string;
-        let sessionOpts: ISessionOptions;
-        let requestExecutor: RequestExecutor;
-        databaseOrSessionOptions = databaseOrSessionOptions || {};
-        database = databaseOrSessionOptions.database || this._database;
-        sessionOpts = databaseOrSessionOptions as ISessionOptions;
-        requestExecutor = sessionOpts.requestExecutor || this.getRequestExecutor(database);
+        databaseOrSessionOptions = databaseOrSessionOptions || {} as any;
+        const sessionOpts = databaseOrSessionOptions as SessionOptions;
 
         const sessionId = uuid();
-        const session = new DocumentSession(database, this, sessionId, requestExecutor);
+        const session = new DocumentSession(this, sessionId, sessionOpts);
         this._registerEvents(session);
         this.emit("sessionCreated", { session });
         return session;

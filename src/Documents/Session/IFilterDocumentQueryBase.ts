@@ -309,4 +309,15 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
     // TBD IDocumentQuery<T> spatial(Function<SpatialDynamicFieldFactory<T>, DynamicSpatialField> field, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
 
     moreLikeThis(moreLikeThis: MoreLikeThisBase): IDocumentQuery<T>;
+
+    /**
+     * Filter matches based on a given shape - only documents with the shape defined in fieldName that
+     * have a relation rel with the given shapeWkt will be returned
+     */
+    relatesToShape(
+        fieldName: string, 
+        shapeWkt: string, 
+        relation: SpatialRelation, 
+        units: SpatialUnits, 
+        distanceErrorPct: number): TSelf;
 }

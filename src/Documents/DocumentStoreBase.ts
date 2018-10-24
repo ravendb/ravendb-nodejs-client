@@ -24,6 +24,7 @@ import { BulkInsertOperation } from "./BulkInsertOperation";
 import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
 import { DocumentSubscriptions } from "./Subscriptions/DocumentSubscriptions";
 import { DocumentStore } from "./DocumentStore";
+import { TypeUtil } from "../Utility/TypeUtil";
 
 export abstract class DocumentStoreBase
     extends EventEmitter
@@ -68,30 +69,6 @@ export abstract class DocumentStoreBase
         this.assertInitialized();
         return task.execute(this, this.conventions, database);
     }
-
-    // TODO: public void executeIndex(AbstractIndexCreationTask task) {
-    //     executeIndex(task, null);
-    // }
-
-    // TODO: public void executeIndex(AbstractIndexCreationTask task, String database) {
-    //     assertInitialized();
-    //     task.execute(this, conventions, database);
-    // }
-
-    // TODO: @Override
-    // public void executeIndexes(List<AbstractIndexCreationTask> tasks) {
-    //     executeIndexes(tasks, null);
-    // }
-
-    // TODO: @Override
-    // public void executeIndexes(List<AbstractIndexCreationTask> tasks, String database) {
-    //     assertInitialized();
-    //     IndexDefinition[] indexesToAdd = IndexCreation.createIndexesToAdd(tasks, conventions);
-
-    // TODO:     maintenance()
-    //             .forDatabase(ObjectUtils.firstNonNull(database, getDatabase()))
-    //             .send(new PutIndexesOperation(indexesToAdd));
-    // }
 
     private _conventions: DocumentConventions;
 
@@ -146,6 +123,28 @@ export abstract class DocumentStoreBase
 
     public get subscriptions(): DocumentSubscriptions {
         return this._subscriptions;
+    }
+
+    private _lastRaftIndexPerDatabase: Map<string, number> = new Map();
+
+    public getLastTransactionIndex(database: string): number {
+        const index = this._lastRaftIndexPerDatabase.get(database);
+        if (!index) {
+            return null;
+        }
+        
+        return index;
+    }
+
+    public setLastTransactionIndex(database: string, index: number): void {
+        if (!index) {
+            return;
+        }
+
+        const initialValue = this._lastRaftIndexPerDatabase.get(database);
+        if (TypeUtil.isUndefined(initialValue)) {
+            this._lastRaftIndexPerDatabase.set(database, Math.max(initialValue, index));
+        }
     }
 
     protected _ensureNotDisposed(): void {
@@ -256,5 +255,4 @@ export abstract class DocumentStoreBase
     protected _assertValidConfiguration(): void {
         this.conventions.validate();
     }
-
 }

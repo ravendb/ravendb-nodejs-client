@@ -1,13 +1,9 @@
 import { AttachmentName, AttachmentResult } from "../Attachments";
 import { AttachmentData } from "./../Attachments";
 import { AbstractCallback } from "../../Types/Callbacks";
+import { IAttachmentsSessionOperationsBase } from "./IAttachmentsSessionOperationsBase";
 
-export interface IAttachmentsSessionOperations {
-    /**
-     * Returns the attachments info of a document.
-     */
-    getNames(entity: object): AttachmentName[];
-
+export interface IAttachmentsSessionOperations extends IAttachmentsSessionOperationsBase {
     /**
      * Check if attachment exists
      */
@@ -48,36 +44,4 @@ export interface IAttachmentsSessionOperations {
      */
     getRevision(documentId: string, name: string, changeVector: string,
                 callback: AbstractCallback<AttachmentResult>): Promise<AttachmentResult>;
-
-    /**
-     * Stores attachment to be sent in the session.
-     */
-    store(documentId: string, name: string, stream: AttachmentData): void;
-
-    /**
-     * Stores attachment to be sent in the session.
-     */
-    store(documentId: string, name: string, stream: AttachmentData, contentType: string): void;
-
-    /**
-     * Stores attachment to be sent in the session.
-     */
-    store(entity: object, name: string, stream: AttachmentData): void;
-
-    /**
-     * Stores attachment to be sent in the session.
-     */
-    store(entity: object, name: string, stream: AttachmentData, contentType: string): void;
-
-    /**
-     * Marks the specified document's attachment for deletion. The attachment will be deleted when
-     * saveChanges is called.
-     */
-    delete(documentId: string, name: string): void;
-
-    /**
-     * Marks the specified document's attachment for deletion. The attachment will be deleted when
-     * saveChanges is called.
-     */
-    delete(entity: object, name: string): void;
 }

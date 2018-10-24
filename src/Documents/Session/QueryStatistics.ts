@@ -10,10 +10,9 @@ export class QueryStatistics {
     public indexName: string;
     public indexTimestamp: Date;
     public lastQueryTime: Date;
-    public timingsInMs: { [key: string]: number } = {};
     public resultEtag: number;
     public resultSize: number;
-    public scoreExplanations: { [key: string]: string };
+    public nodeTag: string;
 
     public updateQueryStats(qr: QueryResult): void {
         this.isStale = qr.isStale;
@@ -23,10 +22,9 @@ export class QueryStatistics {
         this.timestamp = qr.indexTimestamp;
         this.indexName = qr.indexName;
         this.indexTimestamp = qr.indexTimestamp;
-        this.timingsInMs = qr.timingsInMs;
         this.lastQueryTime = qr.lastQueryTime;
         this.resultSize = qr.resultSize;
         this.resultEtag = qr.resultEtag;
-        this.scoreExplanations = qr.scoreExplanations;
+        this.nodeTag = qr.nodeTag;
     }
 }

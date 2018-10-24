@@ -92,6 +92,12 @@ class MetadataInternal {
     }
 }
 
+export class MetadataDictionary {
+    public static create(raw?: object) {
+        return createMetadataDictionary({ raw: raw || {} });
+    }
+}
+
 export function createMetadataDictionary(
     metadataParams: MetadataParameters): MetadataAsDictionary {
     const parentInfo = metadataParams.parentInfo;

@@ -2,6 +2,8 @@ import { CommandType, ICommandData } from "../CommandData";
 import { PatchRequest } from "../../Operations/PatchRequest";
 import { throwError } from "../../../Exceptions";
 import { DocumentConventions } from "../../..";
+import { TypeUtil } from "../../../Utility/TypeUtil";
+import { InMemoryDocumentSessionOperations } from "../../Session/InMemoryDocumentSessionOperations";
 
 export class PatchCommandData implements ICommandData {
     public id: string;
@@ -10,6 +12,9 @@ export class PatchCommandData implements ICommandData {
     public patch: PatchRequest;
     public patchIfMissing: PatchRequest;
     public type: CommandType = "PATCH";
+    public returnDocument: boolean;
+
+
 
     constructor(id: string, changeVector: string, patch: PatchRequest, patchIfMissing: PatchRequest) {
         if (!id) {
@@ -27,12 +32,22 @@ export class PatchCommandData implements ICommandData {
     }
 
     public serialize(conventions: DocumentConventions): object {
-        return {
+        const result = {
             Id: this.id,
             ChangeVector: this.changeVector,
             Type: "PATCH" as CommandType,
             Patch: this.patch.serialize(conventions),
             PatchIfMissing: this.patchIfMissing ? this.patchIfMissing.serialize(conventions) : undefined
         };
+
+        if (!TypeUtil.isNullOrUndefined(this.returnDocument)) {
+            result["ReturnDocument"] = this.returnDocument;
+        }
+
+        return result;
+    }
+
+    public onBeforeSaveChanges(session: InMemoryDocumentSessionOperations): void {
+        this.returnDocument = session.isLoaded(this.id);
     }
 }

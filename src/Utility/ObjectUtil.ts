@@ -12,11 +12,22 @@ export class ObjectUtil {
         return JSON.parse(JSON.stringify(o));
     }
 
+    public static mapToLiteral<TValue>(input: Map<string, TValue>): { [key: string]: TValue };
     public static mapToLiteral<TValue, TResult>(
-        input: Map<string, TValue>, valueTransformFunc: (value: string, key: TValue) => TResult) {
-        return Array.from(input).reduce((obj, [key, value]) => (
-            Object.assign(obj, { [key]: valueTransformFunc(key, value) })
-        ), {});
+        input: Map<string, TValue>,
+        valueTransformFunc: (value: string, key: TValue) => TResult): { [key: string]: TResult };
+    public static mapToLiteral<TValue, TResult>(
+        input: Map<string, TValue>,
+        valueTransformFunc?: (value: string, key: TValue) => TResult)
+        : { [key: string]: TResult } {
+        return Array.from(input)
+            .reduce((obj, [key, value]) => (
+                Object.assign(obj, {
+                    [key]: valueTransformFunc
+                        ? valueTransformFunc(key, value)
+                        : value
+                })
+            ), {});
     }
 
     public static transformObjectKeys(

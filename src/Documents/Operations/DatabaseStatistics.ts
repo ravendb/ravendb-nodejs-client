@@ -10,6 +10,7 @@ export interface DatabaseStatistics {
     countOfTombstones: number;
     countOfConflicts: number;
     countOfAttachments: number;
+    countOfCounters: number;
     countOfUniqueAttachments: number;
 
     indexes: IndexInformation[];

@@ -30,8 +30,6 @@ export class IndexQuery extends IndexQueryWithParameters<IndexQueryParameters> {
             hasher.write(this.query);
             hasher.write(this.waitForNonStaleResults);
             hasher.write(this.skipDuplicateChecking);
-            //TBD 4.1 hasher.write(isShowTimings());
-            //TBD 4.1 hasher.write(isExplainScores());
             hasher.write(this.waitForNonStaleResultsTimeout || 0);
             hasher.write(this.start);
             hasher.write(this.pageSize);
@@ -67,16 +65,6 @@ export function writeIndexQuery(conventions: DocumentConventions, indexQuery: In
     if (indexQuery.disableCaching) {
         result["DisableCaching"] = indexQuery.disableCaching;
     }
-
-    /* TBD 4.1
-    if (query.isExplainScores()) {
-        generator.writeBooleanField("ExplainScores", query.isExplainScores());
-    }*/
-
-    /* TBD 4.1
-    if (query.isShowTimings()) {
-        generator.writeBooleanField("ShowTimings", query.isShowTimings());
-    }*/
 
     if (indexQuery.skipDuplicateChecking) {
         result["SkipDuplicateChecking"] = indexQuery.skipDuplicateChecking;

@@ -55,11 +55,6 @@ export class TestConnectionFeatures {
     public baseLine = true;
 }
 
-export class ReplicationFeatures {
-    public baseLine = true;
-    public missingAttachments: boolean;
-}
-
 export class SupportedFeatures {
     public readonly protocolVersion: number;
 

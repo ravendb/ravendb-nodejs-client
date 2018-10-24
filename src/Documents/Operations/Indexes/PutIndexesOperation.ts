@@ -4,11 +4,11 @@ import { IndexDefinition } from "../../Indexes/IndexDefinition";
 import { throwError } from "../../../Exceptions";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
-import { Mapping } from "../../../Mapping";
 import { ServerNode, OperationResultType } from "../../..";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { HeadersBuilder } from "../../../Utility/HttpUtil";
 import { ReplacerContext } from "../../../Mapping/Json/ReplacerFactory";
+import { IndexTypeExtensions } from "../../Indexes/IndexTypeExtensions";
 import * as stream from "readable-stream";
 
 export interface PutIndexResult {
@@ -38,6 +38,7 @@ export class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult
 export class PutIndexesCommand extends RavenCommand<PutIndexResult[]> {
 
     private readonly _indexToAdd: object[];
+    private _allJavaScriptIndexes: boolean;
     private readonly _conventions: DocumentConventions;
 
     public constructor(conventions: DocumentConventions, indexesToAdd: IndexDefinition[]) {
@@ -52,7 +53,13 @@ export class PutIndexesCommand extends RavenCommand<PutIndexResult[]> {
         }
 
         this._conventions = conventions;
+        this._allJavaScriptIndexes = true;
         this._indexToAdd = indexesToAdd.reduce((result, next) => {
+            // We validate on the server that it is indeed a javascript index.
+            if (!IndexTypeExtensions.isJavaScript(next.type)) {
+                this._allJavaScriptIndexes = false;
+            }
+
             if (!next.name) {
                 throwError("InvalidArgumentException", "Index name cannot be null.");
             }
@@ -76,7 +83,8 @@ export class PutIndexesCommand extends RavenCommand<PutIndexResult[]> {
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
-        const uri = node.url + "/databases/" + node.database + "/admin/indexes";
+        const uri = node.url + "/databases/" + node.database 
+            + (this._allJavaScriptIndexes ? "/indexes" : "/admin/indexes");
 
         const body = this._serializer
             .serialize({ Indexes: this._indexToAdd });

@@ -20,6 +20,8 @@ import { JavaScriptArray } from "./JavaScriptArray";
 import { IRevisionsSessionOperations } from "./IRevisionsSessionOperations";
 import * as stream from "readable-stream";
 import { DocumentResultStream } from "../Session/DocumentResultStream";
+import { TransactionMode } from "./TransactionMode";
+import { IClusterTransactionOperations } from "./IClusterTransactionOperations";
 
 export type StreamQueryStatisticsCallback = (stats: StreamQueryStatistics) => void;
 
@@ -34,6 +36,8 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     attachments: IAttachmentsSessionOperations;
 
     revisions: IRevisionsSessionOperations;
+
+    clusterTransaction: IClusterTransactionOperations;
 
     /**
      * Updates entity with latest changes from server
@@ -58,10 +62,6 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
 
     documentQuery<TEntity extends object>(documentType: DocumentType<TEntity>): IDocumentQuery<TEntity>;
 
-    // tslint:disable:max-line-length
-    // TBD void LoadStartingWithIntoStream(string idPrefix, Stream output, string matches = null, int start = 0, int pageSize = 25, string exclude = null, string startAfter = null);
-    // TBD void LoadIntoStream(IEnumerable<string> ids, Stream output);
-
     increment<TEntity extends object, UValue>(id: string, path: string, valueToAdd: UValue): void;
 
     increment<TEntity extends object, UValue>(entity: TEntity, path: string, valueToAdd: UValue): void;
@@ -70,9 +70,11 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
 
     patch<TEntity extends object, UValue>(entity: TEntity, path: string, value: UValue): void;
 
-    patch<TEntity extends object, UValue>(id: string, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
+    patch<TEntity extends object, UValue>(
+        id: string, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
 
-    patch<TEntity extends object, UValue>(entity: TEntity, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
+    patch<TEntity extends object, UValue>(
+        entity: TEntity, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
 
     loadStartingWith<T extends object>(
         idPrefix: string, opts: SessionLoadStartingWithOptions<T>, callback?: AbstractCallback<T[]>): Promise<T[]>;
@@ -80,20 +82,6 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     loadStartingWith<T extends object>(
         idPrefix: string, callback?: AbstractCallback<T[]>): Promise<T[]>;
 
-    // TBD patch API void Patch<T, U>(string id, Expression<Func<T, U>> path, U value);
-    // TBD patch API void Patch<T, U>(T entity, Expression<Func<T, U>> path, U value);
-    // TBD patch API void Patch<T, U>(T entity, Expression<Func<T, IEnumerable<U>>> path, Expression<Func<JavaScriptArray<U>, object>> arrayAdder);
-    // TBD patch API void Patch<T, U>(string id, Expression<Func<T, IEnumerable<U>>> path, Expression<Func<JavaScriptArray<U>, object>> arrayAdder);
-
-    // TBD stream IEnumerator<StreamResult<T>> Stream<T>(IQueryable<T> query);
-    // TBD stream IEnumerator<StreamResult<T>> Stream<T>(IQueryable<T> query, out StreamQueryStatistics streamQueryStats);
-    // TBD stream IEnumerator<StreamResult<T>> Stream<T>(IDocumentQuery<T> query);
-    // TBD stream IEnumerator<StreamResult<T>> Stream<T>(IRawDocumentQuery<T> query);
-    // TBD stream IEnumerator<StreamResult<T>> Stream<T>(IRawDocumentQuery<T> query, out StreamQueryStatistics streamQueryStats);
-    // TBD stream IEnumerator<StreamResult<T>> Stream<T>(IDocumentQuery<T> query, out StreamQueryStatistics streamQueryStats);
-    // TBD stream IEnumerator<StreamResult<T>> Stream<T>(string startsWith, string matches = null, int start = 0, int pageSize = int.MaxValue, string startAfter = null);
-    // TBD stream void StreamInto<T>(IDocumentQuery<T> query, Stream output);
-    // TBD stream void StreamInto<T>(IRawDocumentQuery<T> query, Stream output);
     // tslint:enable:max-line-length
 
     /**
@@ -300,6 +288,11 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
     getChangeVectorFor<T extends object>(instance: T): string;
 
     /**
+     * Gets all the counter names for the specified entity.
+     */
+    getCountersFor<T extends object>(instance: T): string[];
+
+    /**
      * Gets last modified date for the specified entity.
      * If the entity is transient, it will load the metadata from the store
      * and associate the current state of the entity with the metadata from the server.
@@ -351,4 +344,8 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
 
     entityToJson: EntityToJson;
 
+    /**
+     * Overwrite the existing transaction mode for the current session.
+     */
+    transactionMode: TransactionMode; 
 }

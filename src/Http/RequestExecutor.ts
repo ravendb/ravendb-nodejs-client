@@ -23,7 +23,7 @@ import {
     GetClientConfigurationOperationResult
 } from "../Documents/Operations/Configuration/GetClientConfigurationOperation";
 import CurrentIndexAndNode from "./CurrentIndexAndNode";
-import { HEADERS } from "../Constants";
+import { HEADERS, CONSTANTS } from "../Constants";
 import { HttpRequestParameters, HttpResponse, HttpRequestParametersWithoutUri } from "../Primitives/Http";
 import { Stopwatch } from "../Utility/Stopwatch";
 import * as PromiseUtil from "../Utility/PromiseUtil";
@@ -117,7 +117,7 @@ export class RequestExecutor implements IDisposable {
 
     private _log: ILogger;
 
-    public static readonly CLIENT_VERSION = "4.0.0";
+    public static readonly CLIENT_VERSION = "4.1.0";
 
     private _updateDatabaseTopologySemaphore = semaphore();
     private _updateClientConfigurationSemaphore = semaphore();
@@ -688,10 +688,12 @@ export class RequestExecutor implements IDisposable {
 
     private _getFromCache<TResult>(
         command: RavenCommand<TResult>,
+        useCache: boolean,
         url: string,
         cachedItemMetadataCallback: (data: CachedItemMetadata) => void) {
 
-        if (command.canCache
+        if (useCache 
+            && command.canCache
             && command.isReadRequest
             && command.responseType === "Object") {
             return this._cache.get(url, cachedItemMetadataCallback);
@@ -705,7 +707,7 @@ export class RequestExecutor implements IDisposable {
         return new ReleaseCacheItem(null);
     }
 
-    private _executeOnSpecificNode<TResult>(
+    private async _executeOnSpecificNode<TResult>(
         command: RavenCommand<TResult>,
         sessionInfo: SessionInfo = null,
         options: ExecuteOptions<TResult> = null): Promise<void> {
@@ -716,13 +718,15 @@ export class RequestExecutor implements IDisposable {
             + ` ${ shouldRetry ? "with" : "without" } retry.`);
 
         const req: HttpRequestParameters = this._createRequest(chosenNode, command);
+        const noCaching = sessionInfo ? sessionInfo.noCaching : false;
 
         let cachedChangeVector: string;
         let cachedValue: string;
-        const cachedItem = this._getFromCache(command, req.uri.toString(), (cachedItemMetadata) => {
-            cachedChangeVector = cachedItemMetadata.changeVector;
-            cachedValue = cachedItemMetadata.response;
-        });
+        const cachedItem = this._getFromCache(
+            command, !noCaching, req.uri.toString(), (cachedItemMetadata) => {
+                cachedChangeVector = cachedItemMetadata.changeVector;
+                cachedValue = cachedItemMetadata.response;
+            });
 
         if (cachedChangeVector) {
             const aggressiveCacheOptions = this.aggressiveCaching;
@@ -740,6 +744,11 @@ export class RequestExecutor implements IDisposable {
             req.headers[HEADERS.CLIENT_CONFIGURATION_ETAG] = `"${this._clientConfigurationEtag}"`;
         }
 
+        if (sessionInfo && sessionInfo.lastClusterTransactionIndex) {
+            req.headers[HEADERS.LAST_KNOWN_CLUSTER_TRANSACTION_INDEX] = 
+                sessionInfo.lastClusterTransactionIndex;
+        }
+
         if (!this._disableTopologyUpdates) {
             req.headers[HEADERS.TOPOLOGY_ETAG] = `"${this._topologyEtag}"`;
         }
@@ -749,152 +758,148 @@ export class RequestExecutor implements IDisposable {
         let responseDispose: ResponseDisposeHandling = "Automatic";
 
         let bodyStream: stream.Readable;
-        const result = BluebirdPromise.resolve()
-            .then(() => {
 
-                this.numberOfServerRequests++;
+        this.numberOfServerRequests++;
 
-                return BluebirdPromise.resolve()
-                    .then(() => this._shouldExecuteOnAll(chosenNode, command))
-                    .then(shouldExecuteOnAll => {
-                        if (shouldExecuteOnAll) {
-                            return this._executeOnAllToFigureOutTheFastest(chosenNode, command);
-                        } else {
-                            return command.send(req)
-                                .then(responseAndBody => {
-                                    bodyStream = responseAndBody.bodyStream;
-                                    return responseAndBody.response;
-                                });
+        try {
+            if (this._shouldExecuteOnAll(chosenNode, command)) {
+                response = await this._executeOnAllToFigureOutTheFastest(chosenNode, command);
+            } else {
+                const responseAndBody = await command.send(req);
+                bodyStream = responseAndBody.bodyStream;
+                response = responseAndBody.response;
+            }
+            
+            if (sessionInfo && sessionInfo.lastClusterTransactionIndex) {
+                // if we reach here it means that sometime a cluster transaction has occurred against this database.
+                // Since the current executed command can be dependent on that, 
+                // we have to wait for the cluster transaction.
+                // But we can't do that if the server is an old one.
+                const version = response.caseless.get(HEADERS.SERVER_VERSION);
+                if (version && "4.1" === version) {
+                    throwError(
+                        "ClientVersionMismatchException",
+                        "The server on " + chosenNode.url + " has an old version and can't perform "
+                        + "the command since this command dependent on a cluster transaction "
+                        + " which this node doesn't support.");
+                }
+            }
 
-                        }
-                    });
-            })
-            .then(executionResult => {
-                response = executionResult;
-                sp.stop();
-                return;
-            }, (error) => {
-                this._log.warn(
-                    error,
-                    `Error executing '${command.constructor.name}' `
-                    + `on specific node '${chosenNode.url}'`
-                    + `${chosenNode.database ? "db " + chosenNode.database : "" }.`);
+            sp.stop();
+        } catch (error) {
+            this._log.warn(
+                error,
+                `Error executing '${command.constructor.name}' `
+                + `on specific node '${chosenNode.url}'`
+                + `${chosenNode.database ? "db " + chosenNode.database : ""}.`);
 
-                if (!shouldRetry) {
-                    return BluebirdPromise.reject(error);
+            if (!shouldRetry) {
+                throw error; 
+            }
+
+            sp.stop();
+
+            const serverDownHandledSuccessfully = await this._handleServerDown(
+                req.uri as string, chosenNode, nodeIndex, command, req, response, null, error, sessionInfo);
+            
+            if (!serverDownHandledSuccessfully) {
+                this._throwFailedToContactAllNodes(command, req, error, null);
+            }
+            return;
+        }
+
+        command.statusCode = response.statusCode;
+
+        const refreshTopology = response
+            && response.caseless
+            && response.caseless.get(HEADERS.REFRESH_TOPOLOGY);
+
+        const refreshClientConfiguration = response
+            && response.caseless
+            && response.caseless.get(HEADERS.REFRESH_CLIENT_CONFIGURATION);
+
+        try {
+
+            if (response.statusCode === StatusCodes.NotModified) {
+                cachedItem.notModified();
+
+                if (command.responseType === "Object") {
+                    await command.setResponseFromCache(cachedValue);
                 }
 
-                sp.stop();
+                return;
+            }
 
-                return this._handleServerDown(
-                    req.uri as string, chosenNode, nodeIndex, command, req, response, null, error, sessionInfo)
-                    .then(serverDownHandledSuccessfully => {
-                        if (!serverDownHandledSuccessfully) {
-                            this._throwFailedToContactAllNodes(command, req, error, null);
+            if (response.statusCode >= 400) {
+                const unsuccessfulResponseHandled = await this._handleUnsuccessfulResponse(
+                    chosenNode,
+                    nodeIndex,
+                    command,
+                    req,
+                    response,
+                    bodyStream,
+                    req.uri as string,
+                    sessionInfo,
+                    shouldRetry);
+
+                if (!unsuccessfulResponseHandled) {
+
+                    const dbMissingHeader = response.caseless.get(HEADERS.DATABASE_MISSING);
+                    if (dbMissingHeader) {
+                        throwError("DatabaseDoesNotExistException", dbMissingHeader as string);
+                    }
+
+                    if (command.failedNodes.size === 0) {
+                        throwError("InvalidOperationException",
+                            "Received unsuccessful response and couldn't recover from it. "
+                            + "Also, no record of exceptions per failed nodes. "
+                            + "This is weird and should not happen.");
+                    }
+
+                    if (command.failedNodes.size === 1) {
+                        const values = [...command.failedNodes.values()];
+                        if (values && values.some(x => !!x)) {
+                            const err = values.filter(x => !!x).map(x => x)[0];
+                            throwError(err.name as RavenErrorType, err.message, err);
                         }
-                    });
-            })
-            .then(() => {
-                command.statusCode = response.statusCode;
+                    }
 
-                const refreshTopology = response
-                    && response.caseless
-                    && response.caseless.get(HEADERS.REFRESH_TOPOLOGY);
+                    throwError(
+                        "AllTopologyNodesDownException",
+                        "Received unsuccessful response from all servers"
+                        + " and couldn't recover from it.");
+                }
 
-                const refreshClientConfiguration = response
-                    && response.caseless
-                    && response.caseless.get(HEADERS.REFRESH_CLIENT_CONFIGURATION);
+                return; // we either handled this already in the unsuccessful response or we are throwing
+            }
 
-                return BluebirdPromise.resolve()
-                    .then(() => {
-                        if (response.statusCode === StatusCodes.NotModified) {
-                            cachedItem.notModified();
+            responseDispose = await command.processResponse(this._cache, response, bodyStream, req.uri as string);
+            this._lastReturnedResponse = new Date();
+        } finally {
+            if (responseDispose === "Automatic") {
+                closeHttpResponse(response);
+            }
 
-                            if (command.responseType === "Object") {
-                                return command.setResponseFromCache(cachedValue);
-                            }
+            if (refreshTopology || refreshClientConfiguration) {
+                const serverNode = new ServerNode({
+                    url: chosenNode.url,
+                    database: this._databaseName
+                });
 
-                            return;
-                        }
+                const topologyTask = refreshTopology
+                    ? BluebirdPromise.resolve(this.updateTopology(serverNode, 0))
+                        .tapCatch(err => this._log.warn(err, "Error refreshing topology."))
+                    : BluebirdPromise.resolve(false);
 
-                        if (response.statusCode >= 400) {
-                            return BluebirdPromise.resolve()
-                                .then(() => this._handleUnsuccessfulResponse(
-                                    chosenNode,
-                                    nodeIndex,
-                                    command,
-                                    req,
-                                    response,
-                                    bodyStream,
-                                    req.uri as string,
-                                    sessionInfo,
-                                    shouldRetry))
-                                .then(unsuccessfulResponseHandled => {
-                                    if (unsuccessfulResponseHandled) {
-                                        return;
-                                    }
+                const clientConfigurationTask = refreshClientConfiguration
+                    ? BluebirdPromise.resolve(this._updateClientConfiguration())
+                        .tapCatch(err => this._log.warn(err, "Error refreshing client configuration."))
+                        .then(() => true)
+                    : BluebirdPromise.resolve(false);
 
-                                    const dbMissingHeader = response.caseless.get(HEADERS.DATABASE_MISSING);
-                                    if (dbMissingHeader) {
-                                        throwError("DatabaseDoesNotExistException", dbMissingHeader as string);
-                                    }
-
-                                    if (command.failedNodes.size === 0) {
-                                        throwError("InvalidOperationException",
-                                            "Received unsuccessful response and couldn't recover from it. "
-                                            + "Also, no record of exceptions per failed nodes. "
-                                            + "This is weird and should not happen.");
-                                    }
-
-                                    if (command.failedNodes.size === 1) {
-                                        const values = [...command.failedNodes.values()];
-                                        if (values && values.some(x => !!x)) {
-                                            const err = values.filter(x => !!x).map(x => x)[0];
-                                            throwError(err.name as RavenErrorType, err.message, err);
-                                        }
-                                    }
-
-                                    throwError(
-                                        "AllTopologyNodesDownException",
-                                        "Received unsuccessful response from all servers"
-                                        + " and couldn't recover from it.");
-                                });
-                        }
-
-                        return command.processResponse(this._cache, response, bodyStream, req.uri as string)
-                            .then(_responseDispose => {
-                                responseDispose = _responseDispose;
-                                this._lastReturnedResponse = new Date();
-                            });
-                    })
-                    .finally(() => {
-                        if (responseDispose === "Automatic") {
-                            closeHttpResponse(response);
-                        }
-
-                        if (refreshTopology || refreshClientConfiguration) {
-                            const serverNode = new ServerNode({
-                                url: chosenNode.url,
-                                database: this._databaseName
-                            });
-
-                            const topologyTask = refreshTopology
-                                ? BluebirdPromise.resolve(this.updateTopology(serverNode, 0))
-                                    .tapCatch(err => this._log.warn(err, "Error refreshing topology."))
-                                : BluebirdPromise.resolve(false);
-
-                            const clientConfigurationTask = refreshClientConfiguration
-                                ? BluebirdPromise.resolve(this._updateClientConfiguration())
-                                    .tapCatch(err => this._log.warn(err, "Error refreshing client configuration."))
-                                    .then(() => true)
-                                : BluebirdPromise.resolve(false);
-
-                            return BluebirdPromise.all([topologyTask, clientConfigurationTask]);
-                        }
-                    });
-            });
-
-        return Promise.resolve(result);
+                await Promise.all([topologyTask, clientConfigurationTask]);
+            }
+        }
     }
 
     private _throwFailedToContactAllNodes<TResult>(
@@ -1071,7 +1076,7 @@ export class RequestExecutor implements IDisposable {
         return topology && topology.nodes && topology.nodes.length > 1;
     }
 
-    private _handleServerDown<TResult>(
+    private async _handleServerDown<TResult>(
         url: string,
         chosenNode: ServerNode,
         nodeIndex: number,
@@ -1089,32 +1094,30 @@ export class RequestExecutor implements IDisposable {
         RequestExecutor._addFailedResponseToCommand(chosenNode, command, req, response, body, error);
 
         if (nodeIndex === null) {
-            return Promise.resolve(false);
+            return false;
         }
 
         this._spawnHealthChecks(chosenNode, nodeIndex);
 
         if (!this._nodeSelector) {
-            return Promise.resolve(false);
+            return false;
         }
 
         this._nodeSelector.onFailedRequest(nodeIndex);
 
         const currentIndexAndNode: CurrentIndexAndNode = this._nodeSelector.getPreferredNode();
         if (command.failedNodes.has(currentIndexAndNode.currentNode)) {
-            return Promise.resolve(false) as any as Promise<boolean>;
+            return false;
             // we tried all the nodes...nothing left to do
         }
 
-        return Promise.resolve()
-            .then(() => {
-                return this._executeOnSpecificNode(command, sessionInfo, {
+        await this._executeOnSpecificNode(command, sessionInfo, {
                     chosenNode: currentIndexAndNode.currentNode,
                     nodeIndex: currentIndexAndNode.currentIndex,
                     shouldRetry: false
                 });
-            })
-            .then(() => true);
+
+        return true;
     }
 
     private static _addFailedResponseToCommand<TResult>(

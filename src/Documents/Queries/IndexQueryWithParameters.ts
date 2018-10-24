@@ -7,8 +7,4 @@ export abstract class IndexQueryWithParameters<T> extends IndexQueryBase<T> {
      */
     public skipDuplicateChecking: boolean;
 
-    //TBD 4.1 public boolean explainScores;
-
-    //TBD 4.1 public boolean showTimings;
-
 }

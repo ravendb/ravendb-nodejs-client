@@ -39,8 +39,16 @@ export class ShapeToken extends QueryToken {
             + ", 'Miles')");
     }
 
-    public static wkt(shapeWktParameterName: string): ShapeToken {
-        return new ShapeToken("spatial.wkt($" + shapeWktParameterName + ")");
+    public static wkt(shapeWktParameterName: string, units: SpatialUnits): ShapeToken {
+        if (!units) {
+            return new ShapeToken("spatial.wkt($" + shapeWktParameterName + ")");
+        }
+
+        if (units === "Kilometers") {
+            return new ShapeToken("spatial.wkt($" + shapeWktParameterName + ", 'Kilometers')");
+        }
+
+        return new ShapeToken("spatial.wkt($" + shapeWktParameterName + ", 'Miles')");
     }
 
     public writeTo(writer): void {

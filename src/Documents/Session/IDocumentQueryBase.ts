@@ -2,6 +2,12 @@ import { IQueryBase } from "./IQueryBase";
 import { IFilterDocumentQueryBase } from "./IFilterDocumentQueryBase";
 import { OrderingType } from "./OrderingType";
 import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField";
+import { ValueCallback } from "../../Types/Callbacks";
+import { Explanations } from "../Queries/Explanation/Explanations";
+import { ExplanationOptions } from "../Queries/Explanation/ExplanationOptions";
+import { Highlightings } from "../Queries/Highlighting/Hightlightings";
+import { HighlightingParameters } from "../Queries/Highlighting/HighlightingParameters";
+import { IQueryIncludeBuilder } from "../Session/Loaders/IQueryIncludeBuilder";
 
 export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQueryBase<T, TSelf>>
     extends IQueryBase<T, TSelf>, IFilterDocumentQueryBase<T, TSelf> {
@@ -34,7 +40,15 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      */
     distinct(): TSelf;
 
-    //TBD 4.1 TSelf explainScores();
+    /**
+     * Adds explanations of scores calculated for queried documents to the query result
+     */
+    includeExplanations(explanations: ValueCallback<Explanations>): TSelf;
+
+    /**
+     * Adds explanations of scores calculated for queried documents to the query result
+     */
+    includeExplanations(options: ExplanationOptions, explanations: ValueCallback<Explanations>): TSelf;
 
     /**
      * Specifies a fuzziness factor to the single word term in the last where clause
@@ -44,29 +58,19 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      */
     fuzzy(fuzzy: number): TSelf;
 
-    //TBD 4.1 TSelf Highlight(string fieldName, int fragmentLength,
-    //     int fragmentCount, string fragmentsField);
+    highlight(parameters: HighlightingParameters, hightlightingsCallback: ValueCallback<Highlightings>): TSelf; 
 
-    //TBD 4.1 TSelf Highlight(string fieldName, int fragmentLength,
-    //     int fragmentCount, out FieldHighlightings highlightings);
-
-    //TBD 4.1 TSelf Highlight(string fieldName, string fieldKeyName, int fragmentLength,
-    //     int fragmentCount, out FieldHighlightings highlightings);
-
-    //TBD 4.1 TSelf Highlight<TValue>(Expression<Func<T, TValue>> propertySelector,
-    //     int fragmentLength, int fragmentCount, Expression<Func<T, IEnumerable>> fragmentsPropertySelector);
-
-    //TBD 4.1 TSelf Highlight<TValue>(Expression<Func<T, TValue>> propertySelector,
-    //     int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
-
-    //TBD 4.1 TSelf Highlight<TValue>(Expression<Func<T, TValue>> propertySelector,
-    //     Expression<Func<T, TValue>> keyPropertySelector, int fragmentLength, int fragmentCount,
-    //     out FieldHighlightings highlightings);
+    // tslint:disable-next-line:max-line-length
+    // TBD expr TSelf Highlight(Expression<Func<T, object>> path, int fragmentLength, int fragmentCount, out Highlightings highlightings);
+    // tslint:disable-next-line:max-line-length
+    // TBD expr TSelf Highlight(Expression<Func<T, object>> path, int fragmentLength, int fragmentCount, HighlightingOptions options, out Highlightings highlightings);
 
     /**
      * Includes the specified path in the query, loading the document specified in that path
      */
     include(path: string): TSelf;
+
+    include(includes: (includeBuilder: IQueryIncludeBuilder) => void): TSelf;
 
     //TBD TSelf Include(Expression<Func<T, object>> path);
 
@@ -131,10 +135,7 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      */
     randomOrdering(seed: string): TSelf;
 
-    //TBD 4.1 TSelf customSortUsing(String typeName, boolean descending);
-
-    //TBD 4.1 TSelf SetHighlighterTags(string preTag, string postTag);
-    //TBD 4.1 TSelf SetHighlighterTags(string[] preTags, string[] postTags);
+    // TBD 4.1 TSelf customSortUsing(String typeName, boolean descending);
 
     /**
      * Sorts the query results by distance.

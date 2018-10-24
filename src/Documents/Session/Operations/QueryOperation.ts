@@ -25,7 +25,7 @@ export class QueryOperation {
     private _currentQueryResults: QueryResult;
     private readonly _fieldsToFetch: FieldsToFetchToken;
     private _sp: Stopwatch;
-    private _disableEntitiesTracking: boolean;
+    private _noTracking: boolean;
 
     public constructor(
         session: InMemoryDocumentSessionOperations,
@@ -39,7 +39,7 @@ export class QueryOperation {
         this._indexName = indexName;
         this._indexQuery = indexQuery;
         this._fieldsToFetch = fieldsToFetch;
-        this._disableEntitiesTracking = disableEntitiesTracking;
+        this._noTracking = disableEntitiesTracking;
         this._metadataOnly = metadataOnly;
         this._indexEntriesOnly = indexEntriesOnly;
 
@@ -106,7 +106,7 @@ export class QueryOperation {
     public complete<T extends object>(documentType?: DocumentType<T>): T[] {
         const queryResult = this._currentQueryResults.createSnapshot();
 
-        if (!this._disableEntitiesTracking) {
+        if (!this._noTracking) {
             this._session.registerIncludes(queryResult.includes);
         }
 
@@ -128,7 +128,7 @@ export class QueryOperation {
                         document,
                         metadata,
                         this._fieldsToFetch,
-                        this._disableEntitiesTracking,
+                        this._noTracking,
                         this._session,
                         documentType));
             }
@@ -137,7 +137,7 @@ export class QueryOperation {
             throwError("RavenException", "Unable to read json.", err);
         }
 
-        if (!this._disableEntitiesTracking) {
+        if (!this._noTracking) {
             this._session.registerMissingIncludes(
                 queryResult.results, queryResult.includes, queryResult.includedPaths);
         }
@@ -224,12 +224,20 @@ export class QueryOperation {
         return result;
     }
 
+    public get noTracking() {
+        return this._noTracking;
+    }
+
+    public set noTracking(value) {
+        this._noTracking = value;
+    }
+
     public isDisableEntitiesTracking(): boolean {
-        return this._disableEntitiesTracking;
+        return this._noTracking;
     }
 
     public setDisableEntitiesTracking(disableEntitiesTracking: boolean): void {
-        this._disableEntitiesTracking = disableEntitiesTracking;
+        this._noTracking = disableEntitiesTracking;
     }
 
     public ensureIsAcceptableAndSaveResult(result: QueryResult): void {

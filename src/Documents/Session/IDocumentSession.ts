@@ -9,12 +9,36 @@ import { IAdvancedSessionOperations } from "./IAdvancedSessionOperations";
 import { ILoaderWithInclude } from "./Loaders/ILoaderWithInclude";
 import { DocumentQueryOptions } from "./QueryOptions";
 import { IDocumentQuery } from "./IDocumentQuery";
+import { IIncludeBuilder } from "./Loaders/IIncludeBuilder";
+import { ISessionDocumentCounters } from "./ISessionDocumentCounters";
 
 export class SessionInfo {
-    public sessionId: number;
+    private _sessionId: number;
+    private _lastClusterTransactionIndex: number;
+    private _noCaching: boolean;
 
-    public constructor(sessionId?: number) {
-        this.sessionId = sessionId;
+    public get sessionId() {
+        return this._sessionId;
+    }
+
+    public get lastClusterTransactionIndex() {
+        return this._lastClusterTransactionIndex;
+    }
+
+    public set lastClusterTransactionIndex(value) {
+        this._lastClusterTransactionIndex = value;
+    }
+
+    public get noCaching() {
+        return this._noCaching;
+    }
+
+    public constructor(sessionId: number);
+    public constructor(sessionId: number, lastClusterTransactionIndex: number, noCaching: boolean);
+    public constructor(sessionId: number, lastClusterTransactionIndex?: number, noCaching?: boolean) {
+        this._sessionId = sessionId;
+        this._lastClusterTransactionIndex = lastClusterTransactionIndex || null;
+        this._noCaching = noCaching || false;
     }
 }
 
@@ -156,11 +180,10 @@ export interface IDocumentSession extends IDisposable {
      * Queries collection. Collection name is determined from documentType using document store conventions.
      */
     query<T extends object>(documentType: DocumentType<T>): IDocumentQuery<T>;
-}
 
-export interface ISessionOptions {
-    database?: string;
-    requestExecutor?: RequestExecutor;
+    countersFor(documentId: string): ISessionDocumentCounters;
+
+    countersFor(entity: object): ISessionDocumentCounters;
 }
 
 /**
@@ -190,7 +213,7 @@ export interface LoadOptions<T extends object> {
     /**
      * Ids of included documents
      */
-    includes?: string[];
+    includes?: string[] | ((includesBuilder: IIncludeBuilder) => void);
 
     /**
      * Expected change vector
@@ -216,12 +239,19 @@ export interface StartingWithOptions {
     startAfter?: string;
 }
 
+export interface SessionLoadInternalParameters<TResult extends object> {
+    includes?: string[]; 
+    documentType?: DocumentType<TResult>;
+    counterIncludes?: string[];
+    includeAllCounters?: boolean;
+}
+
 export interface IDocumentSessionImpl extends IDocumentSession {
 
     conventions: DocumentConventions;
 
     loadInternal<TResult extends object>(
-        ids: string[], includes: string[], clazz: ObjectTypeDescriptor<TResult>):
+        ids: string[], opts: SessionLoadInternalParameters<TResult>):
         Promise<EntitiesCollectionObject<TResult>>;
 
     lazyLoadInternal<TResult extends object>(

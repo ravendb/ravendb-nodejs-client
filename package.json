@@ -75,6 +75,8 @@
     "change-case": "^3.0.2",
     "md5-hex": "^2.0.0",
     "moment": "^2.22.2",
+    "object.entries": "^1.0.4",
+    "object.values": "^1.0.4",
     "pluralize": "^4.0.0",
     "qs": "^6.5.2",
     "readable-stream": "^3.0.6",

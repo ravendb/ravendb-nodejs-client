@@ -15,21 +15,34 @@ import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
 import { TimeUtil } from "../../../Utility/TimeUtil";
 import { AttachmentData } from "../../Attachments";
+import { TransactionMode } from "../../Session/TransactionMode";
+import { BatchCommandResult } from "../../Session/Operations/BatchCommandResult";
 
-export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDisposable {
+export class BatchCommand extends RavenCommand<BatchCommandResult> implements IDisposable {
 
     private readonly _commands: ICommandData[];
     private readonly _attachmentStreams: Set<AttachmentData>;
     private readonly _options: BatchOptions;
     private readonly _conventions: DocumentConventions;
+    private readonly _mode: TransactionMode;
 
     public constructor(conventions: DocumentConventions, commands: ICommandData[]);
     public constructor(conventions: DocumentConventions, commands: ICommandData[], options: BatchOptions);
-    public constructor(conventions: DocumentConventions, commands: ICommandData[], options: BatchOptions = null) {
+    public constructor(
+        conventions: DocumentConventions, 
+        commands: ICommandData[], 
+        options: BatchOptions, 
+        transactionMode: TransactionMode);
+    public constructor(
+        conventions: DocumentConventions, 
+        commands: ICommandData[], 
+        options: BatchOptions = null,
+        mode: TransactionMode = null) {
         super();
         this._commands = commands;
         this._conventions = conventions;
         this._options = options;
+        this._mode = mode;
 
         if (!conventions) {
             throwError("InvalidArgumentException", "conventions cannot be null");
@@ -63,7 +76,10 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
         const commandsArray = this._commands.reduce(
             (result, command) => [...result, command.serialize(this._conventions)], []);
 
-        const body = JsonSerializer.getDefault().serialize({ Commands: commandsArray });
+        const body = JsonSerializer.getDefault().serialize({ 
+            TransactionMode: this._mode === "ClusterWide" ? "ClusterWide" : undefined,
+            Commands: commandsArray 
+        });
 
         const queryString = this._appendOptions();
         const request: HttpRequestParameters = {
@@ -114,9 +130,9 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
         }
 
         let body: string = null;
-        this.result = await RavenCommandResponsePipeline.create<IRavenArrayResult>()
+        this.result = await RavenCommandResponsePipeline.create<BatchCommandResult>()
             .collectBody(_ => body = _)
-            .parseJsonSync()
+            .parseJsonSync() // TODO: consider parseJsonAsync()
             .objectKeysTransform({
                 defaultTransform: "camel",
                 ignoreKeys: [/^@/],

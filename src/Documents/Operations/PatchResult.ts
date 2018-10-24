@@ -9,4 +9,5 @@ export class PatchResult {
 
     public changeVector: string;
     public collection: string;
+    public lastModified: Date;
 }

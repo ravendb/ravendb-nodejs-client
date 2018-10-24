@@ -9,6 +9,11 @@ import { GroupBy } from "../Queries/GroupBy";
 import { DocumentType } from "../DocumentAbstractions";
 import { MoreLikeThisScope } from "../Queries/MoreLikeThis/MoreLikeThisScope";
 import { SuggestionBase } from "../Queries/Suggestions/SuggestionBase";
+import { HighlightingParameters } from "../Queries/Highlighting/HighlightingParameters";
+import { ValueCallback } from "../../Types/Callbacks";
+import { Highlightings } from "../Queries/Highlighting/Hightlightings";
+import { IIncludeBuilder } from "../Session/Loaders/IIncludeBuilder";
+import { IncludeBuilderBase } from "./Loaders/IncludeBuilderBase";
 
 export interface IAbstractDocumentQuery<T> {
 
@@ -55,6 +60,12 @@ export interface IAbstractDocumentQuery<T> {
      * Includes the specified path in the query, loading the document specified in that path
      */
     _include(path: string): void;
+
+    /**
+     * Includes the specified documents and/or counters in the query, specified by IncludeBuilder
+     * @param includes builder
+     */
+    _include(includes: IncludeBuilderBase): void;
 
     // TBD expr linq void Include(Expression<Func<T, object>> path);
 
@@ -263,13 +274,9 @@ export interface IAbstractDocumentQuery<T> {
 
     _orderByScoreDescending(): void;
 
-    // TBD void Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField);
-    // tslint:disable-next-line:max-line-length
-    // TBD void Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
-    // tslint:disable-next-line:max-line-length
-    // TBD void Highlight(string fieldName, string fieldKeyName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
-    // TBD void SetHighlighterTags(string preTag, string postTag);
-    // TBD void SetHighlighterTags(string[] preTags, string[] postTags);
+    _highlight(
+        parameters: HighlightingParameters, 
+        highlightingsCallback: ValueCallback<Highlightings>): void;
 
     /**
      * Perform a search for documents which fields that match the searchTerms.
@@ -340,6 +347,8 @@ export interface IAbstractDocumentQuery<T> {
     _orderByDistanceDescending(fieldName: string, shapeWkt: string): void;
 
     _moreLikeThis(): MoreLikeThisScope;
+
+    addAliasToCounterIncludesTokens(fromAlias: string): string;
 
     // TBD void AggregateBy(FacetBase facet);
     // TBD IAggregationDocumentQuery<T> AggregateBy(Action<IFacetBuilder<T>> builder);

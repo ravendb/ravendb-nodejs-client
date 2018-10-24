@@ -56,7 +56,8 @@ class TestSecuredServiceLocator extends RavenServerLocator {
         return [
             "--Security.Certificate.Path=" + certPath,
             "--ServerUrl=" + this._getHttpsServerUrl(),
-            "--ServerUrl.Tcp=" + this._getHttpsServerTcpUrl()
+            "--ServerUrl.Tcp=" + this._getHttpsServerTcpUrl(),
+            "--Features.Availability=Experimental"
         ];
     }
 

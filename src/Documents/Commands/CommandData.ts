@@ -1,6 +1,7 @@
 import { throwError } from "../../Exceptions";
 import { BatchOptions } from "./Batches/BatchOptions";
 import { DocumentConventions } from "../..";
+import { InMemoryDocumentSessionOperations } from "../Session/InMemoryDocumentSessionOperations";
 
 export type CommandType =
     "None"
@@ -9,8 +10,13 @@ export type CommandType =
     | "DELETE"
     | "AttachmentPUT"
     | "AttachmentDELETE"
+    | "AttachmentMOVE"
+    | "AttachmentCOPY"
+    | "CompareExchangePUT"
+    | "CompareExchangeDELETE"
+    | "Counters"
     | "ClientAnyCommand"
-    | "ClientNotAttachment"
+    | "ClientModifyDocumentCommand"
     ;
 
 export interface ICommandData {
@@ -20,6 +26,8 @@ export interface ICommandData {
     type: CommandType;
 
     serialize(conventions: DocumentConventions): object;
+
+    onBeforeSaveChanges?: (session: InMemoryDocumentSessionOperations) => void;
 }
 
 export class DeleteCommandData implements ICommandData {
@@ -45,7 +53,7 @@ export class DeleteCommandData implements ICommandData {
         const result = {
             Id: this.id,
             ChangeVector: this.changeVector,
-            Type: this.type
+            Type: "DELETE"
         };
 
         this._serializeExtraFields(result);
@@ -54,8 +62,7 @@ export class DeleteCommandData implements ICommandData {
     }
 
     // tslint:disable-next-line:no-empty
-    protected _serializeExtraFields(resultingObject: object) {
-    }
+    protected _serializeExtraFields(resultingObject: object) {}
 }
 
 export class PutCommandDataBase<T extends object> implements ICommandData {
@@ -85,7 +92,7 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
         return {
             Id: this.id,
             ChangeVector: this.changeVector,
-            Type: this.type,
+            Type: "PUT",
             Document: this._document
         };
     }

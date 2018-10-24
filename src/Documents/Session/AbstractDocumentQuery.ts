@@ -3,6 +3,7 @@ import { QueryOperation } from "./Operations/QueryOperation";
 import * as BluebirdPromise from "bluebird";
 import { GroupByCountToken } from "./Tokens/GroupByCountToken";
 import { GroupByToken } from "./Tokens/GroupByToken";
+import { HighlightingToken } from "./Tokens/HighlightingToken"; 
 import { FieldsToFetchToken } from "./Tokens/FieldsToFetchToken";
 import { DeclareToken } from "./Tokens/DeclareToken";
 import { LoadToken } from "./Tokens/LoadToken";
@@ -18,6 +19,7 @@ import { IAbstractDocumentQuery } from "./IAbstractDocumentQuery";
 import { GroupBy } from "../Queries/GroupBy";
 import { GroupByKeyToken } from "../Session/Tokens/GroupByKeyToken";
 import { GroupBySumToken } from "../Session/Tokens/GroupBySumToken";
+import { ExplanationToken } from "../Session/Tokens/ExplanationToken";
 import { TrueToken } from "../Session/Tokens/TrueToken";
 import { WhereToken, WhereOptions } from "../Session/Tokens/WhereToken";
 import { QueryFieldUtil } from "../Queries/QueryFieldUtil";
@@ -32,6 +34,7 @@ import { MethodCall } from "./MethodCall";
 import { QueryOperatorToken } from "./Tokens/QueryOperatorToken";
 import { OrderByToken } from "./Tokens/OrderByToken";
 import { FacetToken } from "./Tokens/FacetToken";
+import { CounterIncludesToken } from "./Tokens/CounterIncludesToken";
 import { QueryResult } from "../Queries/QueryResult";
 import { DocumentType } from "../DocumentAbstractions";
 import { QueryEventsEmitter } from "./QueryEvents";
@@ -51,7 +54,7 @@ import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField";
 import { SpatialCriteria } from "../Queries/Spatial/SpatialCriteria";
 import { SessionBeforeQueryEventArgs } from "./SessionEvents";
 import { CmpXchg } from "./CmpXchg";
-import { AbstractCallback } from "../../Types/Callbacks";
+import { AbstractCallback, ValueCallback } from "../../Types/Callbacks";
 import { DocumentQueryCustomization } from "./DocumentQueryCustomization";
 import { FacetBase } from "../Queries/Facets/FacetBase";
 import { MoreLikeThisScope } from "../Queries/MoreLikeThis/MoreLikeThisScope";
@@ -64,6 +67,19 @@ import { SuggestToken } from "./Tokens/SuggestToken";
 import { SuggestionWithTerm } from "../Queries/Suggestions/SuggestionWithTerm";
 import { SuggestionWithTerms } from "../Queries/Suggestions/SuggestionWithTerms";
 import { QueryData } from "../Queries/QueryData";
+import { QueryTimings } from "../Queries/Timings/QueryTimings";
+import { JsonSerializer } from "../../Mapping/Json/Serializer";
+import { Explanations } from "../Queries/Explanation/Explanations";
+import { Highlightings } from "../Queries/Highlighting/Hightlightings";
+import { 
+    HighlightingOptions, 
+    extractHighlightingOptionsFromParameters } from "../Queries/Highlighting/HighlightingOptions";
+import { HighlightingParameters } from "../Queries/Highlighting/HighlightingParameters";
+import { QueryHighlightings } from "../Queries/Highlighting/QueryHighlightings";
+import { ExplanationOptions } from "../Queries/Explanation/ExplanationOptions";
+import { CountersByDocId } from "./CounterInternalTypes"; 
+import { IncludeBuilder } from "./Loaders/IncludeBuilder";
+import { IncludeBuilderBase } from "./Loaders/IncludeBuilderBase";
 
 /**
  * A query against a Raven index
@@ -130,7 +146,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     protected _theWaitForNonStaleResults: boolean;
 
-    protected _includes: Set<string> = new Set();
+    protected _documentIncludes: Set<string> = new Set();
 
     private _statsCallback: (stats: QueryStatistics) => void = TypeUtil.NOOP;
 
@@ -142,6 +158,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     protected _disableEntitiesTracking: boolean;
 
     protected _disableCaching: boolean;
+
+    private _includesAlias: string;
 
     // TBD 4.1 protected boolean showQueryTimings;
 
@@ -217,7 +235,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._theSession = session;
 
         this.on("afterQueryExecuted", (result: QueryResult) => {
-            this._updateStatsAndHighlightings(result);
+            this._updateStatsAndHighlightingsAndExplanations(result);
         });
 
         this._conventions = !session ?
@@ -626,8 +644,26 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     /**
      * Includes the specified path in the query, loading the document specified in that path
      */
-    public _include(path: string): void {
-        this._includes.add(path);
+    public _include(path: string): void;
+    public _include(includes: IncludeBuilderBase): void;
+    public _include(pathOrIncludes: string | IncludeBuilderBase): void {
+        if (!pathOrIncludes) {
+            return;
+        }
+
+        if (TypeUtil.isString(pathOrIncludes)) {
+            this._documentIncludes.add(pathOrIncludes);
+            return;
+        }
+
+        const { documentsToInclude } = pathOrIncludes;
+        if (documentsToInclude) {
+            for (const doc of documentsToInclude) {
+                this._documentIncludes.add(doc);
+            }
+        }
+
+        this._includeCounters(pathOrIncludes.alias, pathOrIncludes.countersToIncludeBySourcePath);
     }
 
     // TBD: public void Include(Expression<Func<T, object>> path)
@@ -1207,8 +1243,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         indexQuery.waitForNonStaleResultsTimeout = this._timeout;
         indexQuery.queryParameters = this._queryParameters;
         indexQuery.disableCaching = this._disableCaching;
-        // TBD indexQuery.setShowTimings(showQueryTimings);
-        // TBD indexQuery.setExplainScores(shouldExplainScores);
 
         if (this._pageSize) {
             indexQuery.pageSize = this._pageSize;
@@ -1269,13 +1303,14 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     private _buildInclude(queryText: StringBuilder): void {
-        if (!this._includes || !this._includes.size) {
+        if (!this._documentIncludes.size
+            && this._highlightingTokens.length) {
             return;
         }
 
         queryText.append(" include ");
         let first = true;
-        for (const include of this._includes) {
+        for (const include of this._documentIncludes) {
             if (!first) {
                 queryText.append(",");
             }
@@ -1376,7 +1411,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
     }
 
-    private _updateStatsAndHighlightings(queryResult: QueryResult): void {
+    private _updateStatsAndHighlightingsAndExplanations(queryResult: QueryResult): void {
         this._queryStats.updateQueryStats(queryResult);
         // TBD 4.1 Highlightings.Update(queryResult);
     }
@@ -1531,26 +1566,35 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._disableCaching = true;
     }
 
-    // TBD 4.1 public void _showTimings()
-    // TBD 4.1 protected List<HighlightedField> HighlightedFields = new List<HighlightedField>();
-    // TBD 4.1 protected string[] HighlighterPreTags = new string[0];
-    // TBD 4.1 protected string[] HighlighterPostTags = new string[0];
-    // TBD 4.1 protected string HighlighterKeyName;
-    // TBD 4.1 protected QueryHighlightings Highlightings = new QueryHighlightings();
-    // TBD 4.1 public void SetHighlighterTags(string preTag, string postTag)
-    // TBD 4.1 public void Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField)
-    // TBD 4.1 public void Highlight(
-    //    string fieldName, 
-    //    int fragmentLength, 
-    //    int fragmentCount, 
-    //    out FieldHighlightings fieldHighlightings)
-    // TBD 4.1 public void Highlight(
-    //    string fieldName, 
-    //    string fieldKeyName, 
-    //    int fragmentLength, 
-    //    int fragmentCount, 
-    //    out FieldHighlightings fieldHighlightings)
-    // TBD 4.1 public void SetHighlighterTags(string[] preTags, string[] postTags)
+    protected _queryTimings: QueryTimings;
+
+    public _includeTimings(timingsCallback: (timings: QueryTimings) => void): void {
+        if (this._queryTimings) {
+            timingsCallback(this._queryTimings);
+            return;
+        }
+
+        this._queryTimings = new QueryTimings();
+        timingsCallback(this._queryTimings);
+    }
+
+    protected _highlightingTokens: HighlightingToken[] = [];
+
+    protected _queryHighlightings: QueryHighlightings = new QueryHighlightings();
+    
+    public _highlight(
+        parameters: HighlightingParameters, 
+        highlightingsCallback: ValueCallback<Highlightings>): void {
+        highlightingsCallback(this._queryHighlightings.add(parameters.fieldName));
+        const optionsParameterName = parameters
+            ? this._addQueryParameter(
+                JsonSerializer
+                    .getDefault().serialize(extractHighlightingOptionsFromParameters(parameters))) 
+            : null;
+        const token = HighlightingToken.create(
+            parameters.fieldName, parameters.fragmentLength, parameters.fragmentCount, optionsParameterName);
+        this._highlightingTokens.push(token);
+    }
 
     protected _withinRadiusOf(
         fieldName: string,
@@ -1580,14 +1624,18 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     protected _spatialByShapeWkt(
-        fieldName: string, shapeWkt: string, relation: SpatialRelation, distErrorPercent: number): void {
+        fieldName: string, 
+        shapeWkt: string, 
+        relation: SpatialRelation, 
+        units: SpatialUnits,
+        distErrorPercent: number): void {
         fieldName = this._ensureValidFieldName(fieldName, false);
 
         const tokens = this._getCurrentWhereTokens();
         this._appendOperatorIfNeeded(tokens);
         this._negateIfNeeded(tokens, fieldName);
 
-        const wktToken = ShapeToken.wkt(this._addQueryParameter(shapeWkt));
+        const wktToken = ShapeToken.wkt(this._addQueryParameter(shapeWkt), units);
 
         let whereOperator: WhereOperator;
         switch (relation) {
@@ -1616,7 +1664,9 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     public _spatial(dynamicField: DynamicSpatialField, criteria: SpatialCriteria): void;
     public _spatial(fieldName: string, criteria: SpatialCriteria): void;
-    public _spatial(fieldNameOrDynamicSpatialField: string | DynamicSpatialField, criteria: SpatialCriteria): void {
+    public _spatial(
+        fieldNameOrDynamicSpatialField: string | DynamicSpatialField, 
+        criteria: SpatialCriteria): void {
 
         let tokens: QueryToken[];
         if (typeof (fieldNameOrDynamicSpatialField) === "string") {
@@ -1957,9 +2007,85 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
     }
 
+    protected _explanations: Explanations;
+
+    protected _explanationToken: ExplanationToken;
+
+    public _includeExplanations(
+        options: ExplanationOptions, explanationsCallback: ValueCallback<Explanations>): void {
+       if (this._explanationToken) {
+           throwError("InvalidOperationException", "Duplicate IncludeExplanations method calls are forbidden.");
+       }
+
+       const optionsParameterName = options 
+            ? this._addQueryParameter(options) 
+            : null;
+       this._explanationToken = ExplanationToken.create(optionsParameterName);
+       this._explanations = new Explanations();
+       explanationsCallback(this._explanations);
+   }
+
+   protected _counterIncludesTokens: CounterIncludesToken[];
+
+    protected _includeCounters(
+        alias: string, counterToIncludeByDocId: CountersByDocId): void {
+    if (!counterToIncludeByDocId || !Object.keys(counterToIncludeByDocId).length) {
+        return;
+    }
+    this._counterIncludesTokens = [];
+    this._includesAlias = alias;
+
+    for (const [ key, val ] of Object.entries(counterToIncludeByDocId)) {
+        if (val[0]) {
+            this._counterIncludesTokens.push(CounterIncludesToken.all(key));
+            continue;
+        }
+
+        const valArr = val[1];
+        if (!valArr || !valArr.length) {
+            continue;
+        }
+
+        this._counterIncludesTokens.push(CounterIncludesToken.create(key,
+            valArr.length === 1
+                ? this._addQueryParameter(valArr[0])
+                : this._addQueryParameter(valArr)));
+    }
+}
+
     public getQueryType(): DocumentType<T> {
         return this._clazz;
     }
 
     // tslint:enable:function-name
+
+    public addFromAliasToWhereTokens(fromAlias: string): void {
+        if (!fromAlias) {
+            throwError("InvalidArgumentException", "Alias cannot be null or empty.");
+        }
+
+        const tokens = this._getCurrentWhereTokens();
+        for (const token of tokens) {
+            if (token instanceof WhereToken) {
+                token.addAlias(fromAlias);
+            }
+        }
+    }
+
+     public addAliasToCounterIncludesTokens(fromAlias: string): string {
+        if (!this._includesAlias) {
+            return fromAlias;
+        }
+
+        if (!fromAlias) {
+            fromAlias = this._includesAlias;
+            this.addFromAliasToWhereTokens(fromAlias);
+        }
+
+        for (const counterIncludesToken of this._counterIncludesTokens) {
+            counterIncludesToken.addAliasToPath(fromAlias);
+        }
+
+        return fromAlias;
+    }
 }

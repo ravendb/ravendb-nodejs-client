@@ -3,6 +3,8 @@ import { IndexQuery } from "../Queries/IndexQuery";
 import { QueryStatistics } from "./QueryStatistics";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { QueryEventsEmitter } from "../Session/QueryEvents";
+import { ValueCallback } from "../../Types/Callbacks";
+import { QueryTimings } from "../Queries/Timings/QueryTimings";
 
 export interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> extends QueryEventsEmitter {
 
@@ -22,7 +24,13 @@ export interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> extends Query
      */
     noTracking(): TSelf;
 
-    //TBD 4.1 TSelf showTimings();
+    /**
+     *  Enables calculation of timings for various parts of a query (Lucene search, loading documents, transforming
+     *  results). Default: false
+     * @param timings Reference to output parameter
+     * @return Query instance
+     */
+    timings(timings: ValueCallback<QueryTimings>): TSelf;
 
     /**
      * Skips the specified count.

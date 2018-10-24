@@ -10,6 +10,7 @@ import {
     ConcurrencyCheckMode,
     SessionLoadStartingWithOptions,
     IDocumentSessionImpl,
+    SessionLoadInternalParameters,
 } from "./IDocumentSession";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
@@ -58,6 +59,12 @@ import { StreamOperation } from "./Operations/StreamOperation";
 import { QueryOperation } from "./Operations/QueryOperation";
 import { StreamQueryStatisticsCallback } from "./IAdvancedSessionOperations";
 import { streamResultsIntoStream } from "../../Mapping/Json/Streams/Pipelines";
+import { IClusterTransactionOperations } from "./IClusterTransactionOperations";
+import { ClusterTransactionOperations } from "./ClusterTransactionOperations";
+import { ClusterTransactionOperationsBase } from "./ClusterTransactionOperationsBase";
+import { SessionOptions } from "./SessionOptions";
+import { ISessionDocumentCounters } from "./ISessionDocumentCounters";
+import { SessionDocumentCounters } from "./SessionDocumentCounters";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;
@@ -73,10 +80,9 @@ export interface IStoredRawEntityInfo {
 export class DocumentSession extends InMemoryDocumentSessionOperations
     implements IDocumentSession, IDocumentSessionImpl {
 
-    public constructor(dbName: string, documentStore: DocumentStore, id: string, requestExecutor: RequestExecutor) {
-        super(dbName, documentStore, requestExecutor, id);
-        this._attachments = new DocumentSessionAttachments(this);
-        this._revisions = new DocumentSessionRevisions(this);
+    public constructor(documentStore: DocumentStore, id: string, options: SessionOptions) {
+        super(documentStore, id, options);
+
     }
 
     public get advanced() {
@@ -185,31 +191,37 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         }
     }
 
-    public saveChanges(): Promise<void>;
-    public saveChanges(callback?: AbstractCallback<void>): Promise<void>;
-    public saveChanges(callback?: AbstractCallback<void>): Promise<void> {
+    public async saveChanges(): Promise<void>;
+    public async saveChanges(callback?: AbstractCallback<void>): Promise<void>;
+    public async saveChanges(callback?: AbstractCallback<void>): Promise<void> {
         callback = callback || TypeUtil.NOOP;
+        const result = this._saveChanges();
+        passResultToCallback(result, callback);
+        return result;
+    }
+
+    private async _saveChanges() {
         const saveChangeOperation = new BatchOperation(this);
         let command: BatchCommand;
-        const result = BluebirdPromise.resolve()
-            .then(() => command = saveChangeOperation.createRequest())
-            .then(() => {
-                if (!command) {
-                    return;
-                }
+        try {
+            command = saveChangeOperation.createRequest();
+            if (!command) {
+                return;
+            }
 
-                return this._requestExecutor.execute(command, this._sessionInfo)
-                    .then(() => saveChangeOperation.setResult(command.result));
-            })
-            .finally(() => {
-                if (command) {
-                    command.dispose();
-                }
-            })
-            .tap(() => callback())
-            .tapCatch(err => callback(err));
+            if (this.noTracking) {
+                throwError(
+                    "InvalidOperationException",
+                    "Cannot execute saveChanges when entity tracking is disabled in session.");
+            }
 
-        return Promise.resolve(result);
+            await this._requestExecutor.execute(command, this._sessionInfo);
+            saveChangeOperation.setResult(command.result);
+        } finally {
+            if (command) {
+                command.dispose();
+            }
+        }
     }
 
     /**
@@ -361,15 +373,23 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     public async loadInternal<TResult extends object>(
-        ids: string[], includes: string[], documentType: DocumentType<TResult>):
+        ids: string[], opts: SessionLoadInternalParameters<TResult>):
         Promise<EntitiesCollectionObject<TResult>> {
         if (!ids) {
             throwError("InvalidArgumentException", "Ids cannot be null");
         }
 
+        opts = opts || {};
+
         const loadOperation = new LoadOperation(this);
         loadOperation.byIds(ids);
-        loadOperation.withIncludes(includes);
+        loadOperation.withIncludes(opts.includes);
+
+        if (opts.includeAllCounters) {
+            loadOperation.withAllCounters();
+        } else {
+            loadOperation.withCounters(opts.counterIncludes);
+        }
 
         const command = loadOperation.createRequest();
         if (command) {
@@ -377,7 +397,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             loadOperation.setResult(command.result);
         }
 
-        const clazz = this.conventions.findEntityType(documentType);
+        const clazz = this.conventions.findEntityType(opts.documentType);
         return loadOperation.getDocuments(clazz);
     }
 
@@ -552,16 +572,37 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         return { indexName, collection };
     }
 
-    private readonly _attachments: IAttachmentsSessionOperations;
+    private _attachments: IAttachmentsSessionOperations;
 
     public get attachments(): IAttachmentsSessionOperations {
+        if (!this._attachments) {
+            this._attachments = new DocumentSessionAttachments(this);
+        }
+
         return this._attachments;
     }
 
-    private readonly _revisions: IRevisionsSessionOperations;
+    private _revisions: IRevisionsSessionOperations;
 
     public get revisions(): IRevisionsSessionOperations {
+        if (!this._revisions) {
+            this._revisions = new DocumentSessionRevisions(this);
+        }
+
         return this._revisions;
+    }
+
+    private _clusterTransaction: ClusterTransactionOperations;
+
+    public get clusterTransaction(): IClusterTransactionOperations {
+        if (!this._clusterTransaction) {
+            this._clusterTransaction = new ClusterTransactionOperations(this);
+        }
+        return this._clusterTransaction;
+    }
+    
+    protected get _clusterSession(): ClusterTransactionOperationsBase {
+        return this._clusterTransaction;
     }
 
     public get lazily(): ILazySessionOperations {
@@ -855,5 +896,11 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         const command = streamOperation.createRequest(query.getIndexQuery());
         await this.requestExecutor.execute(command, this._sessionInfo);
         return streamResultsIntoStream(command.result.stream, this.conventions, writable);
+    }
+
+    public countersFor(documentId: string): ISessionDocumentCounters;
+    public countersFor(entity: object): ISessionDocumentCounters;
+    public countersFor(entityOrId: string | object): ISessionDocumentCounters {
+        return new SessionDocumentCounters(this, entityOrId as any);
     }
 }

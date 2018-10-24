@@ -181,6 +181,28 @@ export class EntityToJson {
         };
     }
 
+    public populateEntity(entity: object, id: string, document: object): void {
+        if (!entity) {
+            throwError("InvalidArgumentException", "Entity cannot be null.");
+        }
+        
+        if (!id) {
+            throwError("InvalidArgumentException", "Id cannot be null.");
+        }
+        
+        if (!document) {
+            throwError("InvalidArgumentException", "Document cannot be null.");
+        }
+
+        try {
+            const entityValue = this._session.conventions.objectMapper.fromObjectLiteral(document);
+            Object.assign(entity, entityValue);
+            this._session.generateEntityIdOnTheClient.trySetIdentity(entity, id);
+        } catch (e) {
+            throwError("InvalidOperationException", "Could not populate entity.", e);
+        }
+    }
+
     private static _tryRemoveIdentityProperty(
         document: object, entityType: DocumentType, conventions: DocumentConventions): boolean {
         const identityProperty = conventions.getIdentityProperty(entityType);

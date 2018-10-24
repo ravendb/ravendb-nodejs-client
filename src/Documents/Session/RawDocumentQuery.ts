@@ -4,6 +4,8 @@ import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOper
 import { DocumentType } from "../DocumentAbstractions";
 import { QueryOperator } from "../Queries/QueryOperator";
 import { QueryStatistics } from "./QueryStatistics";
+import { QueryTimings } from "../Queries/Timings/QueryTimings";
+import { ValueCallback } from "../../Types/Callbacks";
 
 export class RawDocumentQuery<T extends object>
     extends AbstractDocumentQuery<T, RawDocumentQuery<T>> implements IRawDocumentQuery<T> {
@@ -30,7 +32,10 @@ export class RawDocumentQuery<T extends object>
         return this;
     }
 
-    // TBD 4.1 public IRawDocumentQuery<T> showTimings() {
+    public timings(timings: ValueCallback<QueryTimings>): IRawDocumentQuery<T> {
+        this._includeTimings(timings);
+        return this;
+    }
 
     public noTracking(): IRawDocumentQuery<T> {
         this._noTracking();

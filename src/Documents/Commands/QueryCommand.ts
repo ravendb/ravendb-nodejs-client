@@ -116,6 +116,11 @@ export class QueryCommand extends RavenCommand<QueryResult> {
 
         if (fromCache) {
             queryResult.durationInMs = -1;
+
+            if (queryResult.timingsInMs) {
+                queryResult.timingsInMs.durationInMs = -1;
+                queryResult.timingsInMs = null;
+            }
         }
 
         return queryResult;

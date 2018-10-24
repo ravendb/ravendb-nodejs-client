@@ -14,6 +14,7 @@ export interface DatabaseRecord {
     dataDirectory?: string;
     settings?: { [key: string]: string };
     conflictSolverConfig?: ConflictSolver;
+    truncatedClusterTransactionIndex?: number;
 }
 
 export interface DatabaseRecordWithEtag extends DatabaseRecord {
