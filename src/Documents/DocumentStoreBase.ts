@@ -63,9 +63,9 @@ export abstract class DocumentStoreBase
     public abstract openSession(database: string): IDocumentSession;
     public abstract openSession(sessionOptions: SessionOptions): IDocumentSession;
 
-    public executeIndex(task: AbstractIndexCreationTask): Promise<void>;
-    public executeIndex(task: AbstractIndexCreationTask, database?: string): Promise<void>;
-    public executeIndex(task: AbstractIndexCreationTask, database?: string): Promise<void> {
+    public executeIndex(task: AbstractIndexCreationTaskBase): Promise<void>;
+    public executeIndex(task: AbstractIndexCreationTaskBase, database?: string): Promise<void>;
+    public executeIndex(task: AbstractIndexCreationTaskBase, database?: string): Promise<void> {
         this.assertInitialized();
         return task.execute(this, this.conventions, database);
     }
@@ -233,9 +233,9 @@ export abstract class DocumentStoreBase
 
     public abstract operations: OperationExecutor;
 
-    public executeIndexes(tasks: AbstractIndexCreationTask[]): Promise<void>;
-    public executeIndexes(tasks: AbstractIndexCreationTask[], database: string): Promise<void>;
-    public executeIndexes(tasks: AbstractIndexCreationTask[], database?: string): Promise<void> {
+    public executeIndexes(tasks: AbstractIndexCreationTaskBase[]): Promise<void>;
+    public executeIndexes(tasks: AbstractIndexCreationTaskBase[], database: string): Promise<void>;
+    public executeIndexes(tasks: AbstractIndexCreationTaskBase[], database?: string): Promise<void> {
 
         this.assertInitialized();
 

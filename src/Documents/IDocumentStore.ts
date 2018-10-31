@@ -137,22 +137,22 @@ export interface IDocumentStore extends IDisposable,
     /**
      * Executes the index creation
      */
-    executeIndex(task: AbstractIndexCreationTask): Promise<void>;
+    executeIndex(task: AbstractIndexCreationTaskBase): Promise<void>;
 
     /**
      * Executes the index creation
      */
-    executeIndex(task: AbstractIndexCreationTask, database: string): Promise<void>;
+    executeIndex(task: AbstractIndexCreationTaskBase, database: string): Promise<void>;
 
     /**
      * Executes the index creation
      */
-    executeIndexes(tasks: AbstractIndexCreationTask[]): Promise<void>;
+    executeIndexes(tasks: AbstractIndexCreationTaskBase[]): Promise<void>;
 
     /**
      * Executes the index creation
      */
-    executeIndexes(tasks: AbstractIndexCreationTask[], database: string): Promise<void>;
+    executeIndexes(tasks: AbstractIndexCreationTaskBase[], database: string): Promise<void>;
 
     /**
      * Contains authentication information: client certificate data;

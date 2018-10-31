@@ -4,6 +4,7 @@ import { AbstractIndexCreationTask } from ".";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { PutIndexesOperation } from "../Operations/Indexes/PutIndexesOperation";
 import { IndexDefinition } from "./IndexDefinition";
+import { AbstractIndexCreationTaskBase } from "./AbstractIndexCreationTaskBase";
 
 const log = getLogger({ module: "DocumentStore" });
 
@@ -47,7 +48,7 @@ export class IndexCreation {
     }
 
     public static createIndexesToAdd(
-        indexCreationTasks: AbstractIndexCreationTask[], conventions: DocumentConventions)
+        indexCreationTasks: AbstractIndexCreationTaskBase[], conventions: DocumentConventions)
         : IndexDefinition[] {
         return indexCreationTasks
             .map(x => {
