@@ -24,11 +24,11 @@ export class GetRevisionOperation {
     public constructor(session: InMemoryDocumentSessionOperations, changeVectorOrChangeVectorsOrId: string | string[],
                        startOrDate?: Date | number, pageSize?: number, metadataOnly: boolean = false) {
         if (!session) {
-            throwError("InvalidArgumentException", "Session cannot be null");
+            throwError("InvalidArgumentException", "Session cannot be null.");
         }
 
         if (!changeVectorOrChangeVectorsOrId) {
-            throwError("InvalidArgumentException", "Id cannot be null");
+            throwError("InvalidArgumentException", "Id cannot be null.");
         }
 
         this._session = session;

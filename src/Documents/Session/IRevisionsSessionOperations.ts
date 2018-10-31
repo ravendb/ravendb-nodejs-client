@@ -62,6 +62,15 @@ export interface IRevisionsSessionOperations {
                    callback: AbstractCallback<MetadataAsDictionary[]>): Promise<MetadataAsDictionary[]>;
 
     /**
+     * Returns a document revision by date.
+     */
+    get<TEntity extends object>(id: string, date: Date): Promise<TEntity>;
+    /**
+     * Returns a document revision by date.
+     */
+    get<TEntity extends object>(
+        id: string, date: Date, callback: AbstractCallback<TEntity>): Promise<TEntity>;
+    /**
      * Returns a document revision by change vector.
      */
     get<TEntity extends object>(changeVector: string): Promise<TEntity>;

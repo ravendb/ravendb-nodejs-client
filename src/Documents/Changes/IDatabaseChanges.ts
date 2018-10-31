@@ -4,6 +4,7 @@ import { OperationStatusChange } from "./OperationStatusChange";
 import { IndexChange } from "./IndexChange";
 import { IChangesObservable } from "./IChangesObservable";
 import { IConnectableChanges } from "./IConnectableChanges";
+import { CounterChange } from "./CounterChange";
 
 export interface IDatabaseChanges extends IConnectableChanges<IDatabaseChanges> {
 
@@ -51,4 +52,21 @@ export interface IDatabaseChanges extends IConnectableChanges<IDatabaseChanges> 
      * Subscribe to changes for all documents that belong to specified collection (Raven-Entity-Name).
      */
     forDocumentsInCollection<T extends object>(type: ObjectTypeDescriptor<T>): IChangesObservable<DocumentChange>;
+
+    /**
+     * Subscribe for changes for all counters.
+     */
+    forAllCounters(): IChangesObservable<CounterChange>;
+    /**
+     * Subscribe to changes for all counters with a given name.
+     */
+    forCounter(counterName: string): IChangesObservable<CounterChange>;
+    /**
+     * Subscribe to changes for counter from a given document and with given name.
+     */
+    forCounterOfDocument(documentId: string, counterName: string): IChangesObservable<CounterChange>;
+    /**
+     * Subscribe to changes for all counters from a given document.
+     */
+    forCountersOfDocument(documentId: string): IChangesObservable<CounterChange>;
 }

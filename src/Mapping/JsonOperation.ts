@@ -3,6 +3,7 @@ import { DocumentInfo } from "../Documents/Session/DocumentInfo";
 import { DocumentsChanges, ChangeType } from "../Documents/Session/DocumentsChanges";
 import { CONSTANTS } from "../Constants";
 import { throwError } from "../Exceptions";
+import { StringUtil } from "../Utility/StringUtil";
 
 export class JsonOperation {
 
@@ -14,19 +15,24 @@ export class JsonOperation {
         const docChanges: DocumentsChanges[] = changes ? [] : null;
 
         if (!documentInfo.newDocument && documentInfo.document) {
-            return JsonOperation._compareJson(documentInfo.id, documentInfo.document, newObj, changes, docChanges);
+            return JsonOperation._compareJson("", documentInfo.id, documentInfo.document, newObj, changes, docChanges);
         }
 
         if (!changes) {
             return true;
         }
 
-        JsonOperation._newChange(null, null, null, docChanges, "DocumentAdded");
+        JsonOperation._newChange(null, null, null, null, docChanges, "DocumentAdded");
         changes[documentInfo.id] = docChanges;
         return true;
     }
 
+    private static _fieldPathCombine(path1: string, path2: string): string {
+        return !path1 ? path2 : path1 + "." + path2;
+    }
+
     private static _compareJson(
+        fieldPath: string,
         id: string,
         originalJson: object,
         newJson: object,
@@ -43,7 +49,7 @@ export class JsonOperation {
                 return true;
             }
 
-            JsonOperation._newChange(field, null, null, docChanges, "RemovedField");
+            JsonOperation._newChange(fieldPath, field, null, null, docChanges, "RemovedField");
         }
 
         for (const prop of newJsonProps) {
@@ -61,7 +67,7 @@ export class JsonOperation {
                     return true;
                 }
 
-                JsonOperation._newChange(prop, newJson[prop], null, docChanges, "NewField");
+                JsonOperation._newChange(fieldPath, prop, newJson[prop], null, docChanges, "NewField");
                 continue;
             }
 
@@ -81,14 +87,14 @@ export class JsonOperation {
                     return true;
                 }
 
-                JsonOperation._newChange(prop, newProp, oldProp, docChanges, "FieldChanged");
+                JsonOperation._newChange(fieldPath, prop, newProp, oldProp, docChanges, "FieldChanged");
             } else if (!newProp) {
                 if (oldProp) {
                     if (!changes) {
                         return true;
                     }
 
-                    JsonOperation._newChange(prop, null, oldProp, docChanges, "FieldChanged");
+                    JsonOperation._newChange(fieldPath, prop, null, oldProp, docChanges, "FieldChanged");
                 }
             } else if (Array.isArray(newProp)) {
                 if (!Array.isArray(oldProp)) {
@@ -96,11 +102,16 @@ export class JsonOperation {
                         return true;
                     }
 
-                    JsonOperation._newChange(prop, newProp, oldProp, docChanges, "FieldChanged");
+                    JsonOperation._newChange(fieldPath, prop, newProp, oldProp, docChanges, "FieldChanged");
                 }
 
                 changed = JsonOperation._compareJsonArray(
-                    id, oldProp as any[], newProp as any[], changes, docChanges, prop);
+                    JsonOperation._fieldPathCombine(fieldPath, prop), 
+                    oldProp as any[], 
+                    newProp as any[], 
+                    changes, 
+                    docChanges, 
+                    prop);
                 if (!changes && changed) {
                     return true;
                 }
@@ -110,10 +121,15 @@ export class JsonOperation {
                         return true;
                     }
 
-                    JsonOperation._newChange(prop, newProp, null, docChanges, "FieldChanged");
+                    JsonOperation._newChange(fieldPath, prop, newProp, null, docChanges, "FieldChanged");
                 } else {
                     changed = JsonOperation._compareJson(
-                        id, oldProp as object, newProp as object, changes, docChanges);
+                        JsonOperation._fieldPathCombine(fieldPath, prop), 
+                        id, 
+                        oldProp as object, 
+                        newProp as object, 
+                        changes, 
+                        docChanges);
 
                     if (!changes && changed) {
                         return true;
@@ -137,6 +153,7 @@ export class JsonOperation {
     }
 
     private static _compareJsonArray(
+        fieldPath: string,
         id: string,
         oldArray: any[],
         newArray: any[],
@@ -159,21 +176,46 @@ export class JsonOperation {
         while (position < oldArray.length && position < newArray.length) {
             if (TypeUtil.isObject(oldArrayItem)) {
                 if (TypeUtil.isObject(newArrayItem)) {
-                    changed = changed || this._compareJson(id, oldArrayItem, newArrayItem, changes, docChanges);
+                    changed = changed || this._compareJson(
+                        JsonOperation._addIndexFieldPath(fieldPath, position), 
+                        id, 
+                        oldArrayItem, 
+                        newArrayItem, 
+                        changes, 
+                        docChanges);
                 } else {
                     changed = true;
                     if (changes) {
-                        this._newChange(propName, newArrayItem, oldArrayItem, docChanges, "ArrayValueAdded");
+                        this._newChange(
+                            JsonOperation._addIndexFieldPath(fieldPath, position), 
+                            propName, 
+                            newArrayItem, 
+                            oldArrayItem, 
+                            docChanges, 
+                            "ArrayValueAdded");
                     }
                 }
             } else if (Array.isArray(oldArrayItem)) {
                 if (Array.isArray(newArrayItem)) {
                     changed = changed
-                        || this._compareJsonArray(id, oldArrayItem, newArrayItem, changes, docChanges, propName);
+                        || this._compareJsonArray(
+                            JsonOperation._addIndexFieldPath(fieldPath, position),
+                            id, 
+                            oldArrayItem, 
+                            newArrayItem, 
+                            changes, 
+                            docChanges, 
+                            propName);
                 } else {
                     changed = true;
                     if (changes) {
-                        this._newChange(propName, newArrayItem, oldArrayItem, docChanges, "ArrayValueChanged");
+                        this._newChange(
+                            JsonOperation._addIndexFieldPath(fieldPath, position),
+                            propName, 
+                            newArrayItem, 
+                            oldArrayItem, 
+                            docChanges, 
+                            "ArrayValueChanged");
                     }
                 }
             } else if (!oldArrayItem) {
@@ -181,14 +223,24 @@ export class JsonOperation {
                     changed = true;
                     if (changes) {
                         this._newChange(
-                            propName, newArrayItem, oldArrayItem, docChanges, "ArrayValueAdded");
+                            JsonOperation._addIndexFieldPath(fieldPath, position),
+                            propName, 
+                            newArrayItem, 
+                            oldArrayItem, 
+                            docChanges, 
+                            "ArrayValueAdded");
                     }
                 }
             } else {
                 if (oldArrayItem !== newArrayItem) {
                     if (changes) {
                         this._newChange(
-                            propName, newArrayItem, oldArrayItem, docChanges, "ArrayValueChanged");
+                            JsonOperation._addIndexFieldPath(fieldPath, position),
+                            propName, 
+                            newArrayItem,
+                            oldArrayItem, 
+                            docChanges, 
+                            "ArrayValueChanged");
                     }
 
                     changed = true;
@@ -208,25 +260,35 @@ export class JsonOperation {
 
         // if one of the arrays is larger than the other
         while (position < oldArray.length) {
-            this._newChange(propName, null, oldArray[position], docChanges, "ArrayValueRemoved");
+            this._newChange(fieldPath, propName, null, oldArray[position], docChanges, "ArrayValueRemoved");
             position++;
         }
 
         while (position < newArray.length) {
-            this._newChange(propName, newArray[position], null, docChanges, "ArrayValueAdded");
+            this._newChange(fieldPath, propName, newArray[position], null, docChanges, "ArrayValueAdded");
             position++;
         }
 
         return changed;
     }
 
+    private static _addIndexFieldPath(fieldPath: string, position: number): string {
+        return fieldPath + "[" + position + "]";
+    }
+
     private static _newChange(
-        name: string, newValue: any, oldValue: any, docChanges: DocumentsChanges[], change: ChangeType): void {
+        fieldPath: string,
+        name: string, 
+        newValue: any, 
+        oldValue: any, 
+        docChanges: DocumentsChanges[], 
+        change: ChangeType): void {
         const documentsChanges = new DocumentsChanges();
         documentsChanges.fieldName = name;
         documentsChanges.fieldNewValue = newValue;
         documentsChanges.fieldOldValue = oldValue;
         documentsChanges.change = change;
+        documentsChanges.fieldPath = fieldPath;
         docChanges.push(documentsChanges);
     }
 }

@@ -7,6 +7,7 @@ import { RavenCommand } from "../../Http/RavenCommand";
 import { IRavenArrayResult } from "../../Types";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { ServerNode } from "../../Http/ServerNode";
+import { throwError } from "../../Exceptions";
 
 export class GetRevisionsCommand extends RavenCommand<IRavenArrayResult> {
 
@@ -34,12 +35,18 @@ export class GetRevisionsCommand extends RavenCommand<IRavenArrayResult> {
         super();
 
         if (beforeOrMetadataOrStart instanceof Date) {
+            if (!changeVectorOrVectorsOrId) {
+                throwError("InvalidArgumentException", "Id cannot be null.");
+            }
             this._id = changeVectorOrVectorsOrId as string;
             this._before = beforeOrMetadataOrStart;
         } else if (TypeUtil.isArray(changeVectorOrVectorsOrId)) {
             this._changeVectors = changeVectorOrVectorsOrId;
             this._metadataOnly = metadataOnly || false;
         } else if (TypeUtil.isNumber(beforeOrMetadataOrStart)) {
+            if (!changeVectorOrVectorsOrId) {
+                throwError("InvalidArgumentException", "Id cannot be null.");
+            }
             this._id = changeVectorOrVectorsOrId;
             this._start = beforeOrMetadataOrStart;
             this._pageSize = pageSize;

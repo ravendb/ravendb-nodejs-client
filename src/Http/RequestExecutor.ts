@@ -1139,7 +1139,7 @@ export class RequestExecutor implements IDisposable {
             } catch (_) {
                 log.warn(_, "Error parsing server error.");
                 const unrecognizedErrSchema = {
-                    url: req.uri,
+                    url: req.uri as string,
                     message: "Unrecognized response from the server",
                     error: responseJson,
                     type: "Unparsable Server Response"
@@ -1155,11 +1155,11 @@ export class RequestExecutor implements IDisposable {
         const exceptionSchema = {
             url: req.uri.toString(),
             message: e.message,
-            error: e.stack,
+            error: `An exception occurred while contacting ${ req.uri } . ${ os.EOL + e.stack }`,
             type: e.name
         };
 
-        command.failedNodes.set(chosenNode, ExceptionDispatcher.get(exceptionSchema, StatusCodes.InternalServerError));
+        command.failedNodes.set(chosenNode, ExceptionDispatcher.get(exceptionSchema, StatusCodes.ServiceUnavailable));
     }
 
     private _createRequest<TResult>(node: ServerNode, command: RavenCommand<TResult>): HttpRequestParameters {

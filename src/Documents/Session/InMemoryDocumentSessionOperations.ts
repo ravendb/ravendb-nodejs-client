@@ -52,6 +52,8 @@ import { DocumentStore } from "../DocumentStore";
 import { SessionOptions } from "./SessionOptions";
 import { ClusterTransactionOperationsBase } from "./ClusterTransactionOperationsBase";
 import { BatchCommandResult } from "./Operations/BatchCommandResult";
+import { SessionOperationExecutor } from "../Operations/SessionOperationExecutor";
+import { StringUtil } from "../../Utility/StringUtil";
 
 export abstract class InMemoryDocumentSessionOperations
     extends EventEmitter
@@ -158,7 +160,7 @@ export abstract class InMemoryDocumentSessionOperations
 
     public get operations() {
         if (!this._operationExecutor) {
-            this._operationExecutor = this._documentStore.operations.forDatabase(this.databaseName);
+            this._operationExecutor = new SessionOperationExecutor(this);
         }
 
         return this._operationExecutor;
@@ -221,6 +223,11 @@ export abstract class InMemoryDocumentSessionOperations
 
         this._id = id;
         this._databaseName = options.database || documentStore.database;
+
+        if (StringUtil.isNullOrWhitespace(this._databaseName)) {
+            InMemoryDocumentSessionOperations._throwNoDatabase();
+        }
+
         this._documentStore = documentStore;
         this._requestExecutor = options.requestExecutor || documentStore.getRequestExecutor();
 
@@ -761,7 +768,7 @@ export abstract class InMemoryDocumentSessionOperations
         if (!cache) {
             cache = { gotAll: false, data: CaseInsensitiveKeysMap.create<number>() };
         }
-        
+
         cache.gotAll = true;
         this._countersByDocId.set(id, cache);
     }
@@ -1043,11 +1050,25 @@ export abstract class InMemoryDocumentSessionOperations
         if (this._transactionMode !== "ClusterWide") {
             return;
         }
+        
+        if (this.useOptimisticConcurrency) {
+            throwError(
+                "InvalidOperationException", 
+                "useOptimisticConcurrency is not supported with TransactionMode set to " 
+                    + "ClusterWide" as TransactionMode);
+        }
 
         for (const commandData of result.sessionCommands) {
             switch (commandData.type) {
                 case "PUT":
                 case "DELETE":
+                    if (commandData.changeVector) {
+                        throwError(
+                            "InvalidOperationException", 
+                            "Optimistic concurrency for " 
+                            + commandData.id + " is not supported when using a cluster transaction.");
+                    }
+                    break;
                 case "CompareExchangeDELETE":
                 case "CompareExchangePUT":
                     break;
@@ -1536,5 +1557,13 @@ export abstract class InMemoryDocumentSessionOperations
 
     public set transactionMode(value) {
         this._transactionMode = value;
+    }
+
+    private static _throwNoDatabase(): never {
+        return throwError(
+            "InvalidOperationException",
+            "Cannot open a Session without specifying a name of a database " +
+            "to operate on. Database name can be passed as an argument when Session is" +
+                " being opened or default database can be defined using 'DocumentStore.setDatabase()' method");
     }
 }

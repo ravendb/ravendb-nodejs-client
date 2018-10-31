@@ -112,12 +112,20 @@ export class WhereToken extends QueryToken {
         return token;
     }
 
-    public addAlias(alias: string): void {
+    public addAlias(alias: string): WhereToken {
         if ("id()" === this.fieldName) {
-            return;
+            return this;
         }
 
         this.fieldName = alias + "." + this.fieldName;
+
+        const whereToken = new WhereToken();
+        whereToken.fieldName = alias + "." + this.fieldName;
+        whereToken.parameterName = this.parameterName;
+        whereToken.whereOperator = this.whereOperator;
+        whereToken.options = this.options;
+        
+        return whereToken;
     }
 
     private _writeMethod(writer): boolean {

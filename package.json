@@ -73,6 +73,7 @@
     "@types/verror": "^1.10.3",
     "bluebird": "^3.4.7",
     "change-case": "^3.0.2",
+    "deprecate": "^1.1.0",
     "md5-hex": "^2.0.0",
     "moment": "^2.22.2",
     "object.entries": "^1.0.4",

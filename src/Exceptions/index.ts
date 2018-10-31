@@ -3,6 +3,7 @@ import { closeHttpResponse } from "./../Utility/HttpUtil";
 import { StatusCodes } from "../Http/StatusCode";
 import { HttpResponse } from "../Primitives/Http";
 import { JsonSerializer } from "../Mapping/Json/Serializer";
+import * as os from "os";
 
 export function printError(err: Error): string {
     return VError.fullStack(err);
@@ -126,7 +127,8 @@ export type RavenErrorType = "RavenException"
     | "CertificateNameMismatchException"
     | "BulkInsertStreamError"
     | "NotSupportedException"
-    | "AttachmentDoesNotExistException";
+    | "AttachmentDoesNotExistException"
+    | "CounterOverflowException";
 
 export interface ExceptionSchema {
     url: string;
@@ -137,6 +139,7 @@ export interface ExceptionSchema {
 
 export interface ExceptionDispatcherArgs {
     message: string;
+    url: string;
     error?: string;
     type?: string;
 }
@@ -145,17 +148,22 @@ export class ExceptionDispatcher {
 
     private static _jsonSerializer: JsonSerializer = JsonSerializer.getDefaultForCommandPayload();
 
-    public static get(opts: ExceptionDispatcherArgs, code: number): Error {
-        const { message, error, type } = opts;
+    public static get(schema: ExceptionDispatcherArgs, code: number): Error {
+        const message = schema.message;
+        const typeAsString = schema.type;
         if (code === StatusCodes.Conflict) {
-            if (type.indexOf("DocumentConflictException") !== -1) {
+            if (typeAsString.indexOf("DocumentConflictException") !== -1) {
                 return getError("DocumentConflictException", message);
             }
 
-            return getError("ConcurrencyException", error);
+            return getError("ConcurrencyException", schema.error);
         }
 
-        const determinedType = this._getType(type) as RavenErrorType;
+        const error = 
+            schema.error + os.EOL 
+            + "The server at " + schema.url + " responded with status code: " + code;
+
+        const determinedType = this._getType(typeAsString) as RavenErrorType;
         return getError(determinedType || "RavenException", error);
     }
 

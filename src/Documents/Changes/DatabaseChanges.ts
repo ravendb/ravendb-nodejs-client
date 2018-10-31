@@ -2,6 +2,7 @@ import { IDatabaseChanges } from "./IDatabaseChanges";
 import { DocumentConventions, ObjectTypeDescriptor, RequestExecutor } from "../..";
 import { IChangesObservable } from "./IChangesObservable";
 import { IndexChange } from "./IndexChange";
+import { CounterChange } from "./CounterChange";
 import { DocumentChange } from "./DocumentChange";
 import { OperationStatusChange } from "./OperationStatusChange";
 import { DatabaseConnectionState } from "./DatabaseConnectionState";
@@ -9,7 +10,7 @@ import { ChangesObservable } from "./ChangesObservable";
 import { throwError } from "../../Exceptions";
 import * as semaphore from "semaphore";
 import * as WebSocket from "ws";
-import { StringUtil } from "../../Utility/StringUtil";
+import { StringUtil, StringUtil } from "../../Utility/StringUtil";
 import { EventEmitter } from "events";
 import * as PromiseUtil from "../../Utility/PromiseUtil";
 import { IDefer } from "../../Utility/PromiseUtil";
@@ -105,6 +106,10 @@ export class DatabaseChanges implements IDatabaseChanges {
     }
 
     public forIndex(indexName: string): IChangesObservable<IndexChange> {
+        if (StringUtil.isNullOrWhitespace(indexName)) {
+            throwError("InvalidArgumentException", "IndexName cannot be null or whitespace.");
+        }
+
         const counter = this._getOrAddConnectionState("indexes/" + indexName,
             "watch-index", "unwatch-index", indexName);
 
@@ -124,6 +129,10 @@ export class DatabaseChanges implements IDatabaseChanges {
     }
 
     public forDocument(docId: string): IChangesObservable<DocumentChange> {
+        if (StringUtil.isNullOrWhitespace(docId)) {
+            throwError("InvalidArgumentException", "DocumentId cannot be null or whitespace.");
+        }
+
         const counter = this._getOrAddConnectionState("docs/" + docId, "watch-doc", "unwatch-doc", docId);
 
         return new ChangesObservable<DocumentChange, DatabaseConnectionState>("Document", counter,
@@ -160,6 +169,10 @@ export class DatabaseChanges implements IDatabaseChanges {
     }
 
     public forDocumentsStartingWith(docIdPrefix: string): IChangesObservable<DocumentChange> {
+        if (StringUtil.isNullOrWhitespace(docIdPrefix)) {
+            throwError("InvalidArgumentException", "DocumentId cannot be null or whitespace.");
+        }
+
         const counter = this._getOrAddConnectionState("prefixes/" + docIdPrefix,
             "watch-prefix", "unwatch-prefix", docIdPrefix);
         return new ChangesObservable<DocumentChange, DatabaseConnectionState>("Document", counter,
@@ -205,7 +218,7 @@ export class DatabaseChanges implements IDatabaseChanges {
         }
     }
 
-    private _getOrAddConnectionState(name: string, watchCommand: string, unwatchCommand, value: string):
+    private _getOrAddConnectionState(name: string, watchCommand: string, unwatchCommand, value: string, values: string[]):
         DatabaseConnectionState {
 
         let newValue = false;
@@ -216,7 +229,7 @@ export class DatabaseChanges implements IDatabaseChanges {
             const connectionState = new DatabaseConnectionState(() => this._send(watchCommand, value), async () => {
                 try {
                     if (this.connected) {
-                        await this._send(unwatchCommand, value);
+                        await this._send(unwatchCommand, value, values);
                     }
                 } catch (e) {
                     // if we are not connected then we unsubscribed already
@@ -242,7 +255,7 @@ export class DatabaseChanges implements IDatabaseChanges {
         return counter;
     }
 
-    private _send(command: string, value: string): Promise<void> {
+    private _send(command: string, value: string, values: string[]): Promise<void> {
         return new Promise<void>(((resolve, reject) => {
             let currentCommandId: number;
 
@@ -257,6 +270,10 @@ export class DatabaseChanges implements IDatabaseChanges {
                         Command: command,
                         Param: value
                     };
+
+                    if (values && values.length) {
+                        payload["Params"] = values;
+                    }
 
                     this._confirmations.set(currentCommandId, { resolve, reject });
                     const payloadAsString = JSON.stringify(payload, null, 0);
@@ -379,6 +396,9 @@ export class DatabaseChanges implements IDatabaseChanges {
             case "DocumentChange":
                 states.forEach(state => state.send("Document", value));
                 break;
+            case "CounterChange":
+                states.forEach(state => state.send("Counter", value));
+                break;
             case "IndexChange":
                 states.forEach(state => state.send("Index", value));
                 break;
@@ -400,5 +420,54 @@ export class DatabaseChanges implements IDatabaseChanges {
         Array.from(this._counters.values()).forEach(state => {
             state.error(e);
         });
+    }
+
+    public forAllCounters(): IChangesObservable<CounterChange> {
+        const counter = this._getOrAddConnectionState("all-counters", "watch-counters", "unwatch-counters", null);
+        const taskedObservable = new ChangesObservable<CounterChange, DatabaseConnectionState>(
+            "Counter", counter, notification => true);
+        return taskedObservable;
+    }
+
+    public forCounter(counterName: string): IChangesObservable<CounterChange> {
+        if (StringUtil.isNullOrWhitespace(counterName)) {
+            throwError("InvalidArgumentException", "CounterName cannot be null or whitespace.");
+        }
+
+        const counter = this._getOrAddConnectionState(
+            "counter/" + counterName, "watch-counter", "unwatch-counter", counterName);
+        const taskedObservable = new ChangesObservable<CounterChange, DatabaseConnectionState>(
+                "Counter", counter, notification => StringUtil.equalsIgnoreCase(counterName, notification.name));
+        return taskedObservable;
+    }
+
+    public forCounterOfDocument(documentId: string, counterName: string): IChangesObservable<CounterChange> {
+        if (StringUtil.isNullOrWhitespace(documentId)) {
+            throwError("InvalidArgumentException", "DocumentId cannot be null or whitespace.");
+        }
+
+        if (StringUtil.isNullOrWhitespace(counterName)) {
+            throwError("InvalidArgumentException", "CounterName cannot be null or whitespace.");
+        }
+
+        const counter = this._getOrAddConnectionState(
+            "document/" + documentId + "/counter/" + counterName, 
+            "watch-document-counter", 
+            "unwatch-document-counter", 
+            null, 
+            [ documentId, counterName ]);
+        ChangesObservable<CounterChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.COUNTER, counter,
+                notification -> StringUtils.equalsIgnoreCase(documentId, notification.getDocumentId()) && StringUtils.equalsIgnoreCase(counterName, notification.getName()));
+         return taskedObservable;
+    }
+     @Override
+    public IChangesObservable<CounterChange> forCountersOfDocument(String documentId) {
+        if (StringUtils.isWhitespace(documentId)) {
+            throw new IllegalArgumentException("DocumentId cannot be null or whitespace");
+        }
+         DatabaseConnectionState counter = getOrAddConnectionState("document/" + documentId + "/counter", "watch-document-counters", "unwatch-document-counters", documentId);
+        ChangesObservable<CounterChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.COUNTER, counter,
+                notification -> StringUtils.equalsIgnoreCase(documentId, notification.getDocumentId()));
+         return taskedObservable;
     }
 }

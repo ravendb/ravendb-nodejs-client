@@ -89,6 +89,10 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         return this;
     }
 
+    public get session(): InMemoryDocumentSessionOperations {
+        return this;
+    }
+
     protected _generateId(entity: object): Promise<string> {
         return this.conventions.generateDocumentId(this.databaseName, entity);
     }

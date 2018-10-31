@@ -99,6 +99,9 @@ export class DocumentSessionRevisions extends AdvancedSessionExtensionBase imple
         return operation.getRevisionsMetadataFor();
     }
 
+    public async get<TEntity extends object>(id: string, date: Date): Promise<TEntity>;
+    public async get<TEntity extends object>(
+        id: string, date: Date, callback: AbstractCallback<TEntity>): Promise<TEntity>;
     public async get<TEntity extends object>(changeVector: string): Promise<TEntity>;
     public async get<TEntity extends object>(changeVector: string,
                                              callback: AbstractCallback<TEntity>): Promise<TEntity>;
@@ -117,21 +120,39 @@ export class DocumentSessionRevisions extends AdvancedSessionExtensionBase imple
                                              documentType: DocumentType<TEntity>,
                                              callback: AbstractCallback<TEntity>)
         : Promise<RevisionsCollectionObject<TEntity>>;
-    public async get<TEntity extends object>(changeVectorOrVectors: string | string[],
-                                             documentTypeOrCallback?: DocumentType<TEntity> | AbstractCallback<TEntity>,
-                                             optionalCallback?: AbstractCallback<TEntity>)
+    public async get<TEntity extends object>(
+        changeVectorOrVectorsOrId: string | string[],
+        documentTypeOrCallbackOrDate?: DocumentType<TEntity> | AbstractCallback<TEntity> | Date,
+        optionalCallback?: AbstractCallback<TEntity>)
         : Promise<RevisionsCollectionObject<TEntity> | TEntity> {
 
-        const documentType = TypeUtil.isDocumentType(documentTypeOrCallback)
-            ? documentTypeOrCallback as DocumentType<TEntity>
+        const documentType = TypeUtil.isDocumentType(documentTypeOrCallbackOrDate)
+            ? documentTypeOrCallbackOrDate as DocumentType<TEntity>
             : undefined;
-        const callback = TypeUtil.isDocumentType(documentTypeOrCallback)
+        const callback = TypeUtil.isDocumentType(documentTypeOrCallbackOrDate)
             ? optionalCallback
-            : documentTypeOrCallback as AbstractCallback<TEntity>;
+            : documentTypeOrCallbackOrDate as AbstractCallback<TEntity>;
+        
+        let result: Promise<TEntity | RevisionsCollectionObject<TEntity>>;
+        if (TypeUtil.isDate(documentTypeOrCallbackOrDate)) {
+            result = this._getByIdAndDate(
+                changeVectorOrVectorsOrId as string, documentTypeOrCallbackOrDate as Date);
+            PromiseUtil.passResultToCallback(result, callback);
+        } else {
+            result = this._get(changeVectorOrVectorsOrId, documentType);
+            PromiseUtil.passResultToCallback(result, callback);
+        }
 
-        const result = this._get(changeVectorOrVectors, documentType);
-        PromiseUtil.passResultToCallback(result, callback);
         return result;
+    }
+
+    private async _getByIdAndDate<TEntity extends object>(
+        id: string, date: Date, clazz?: DocumentType<TEntity>) {
+        const operation = new GetRevisionOperation(this._session, id, date);
+        const command = operation.createRequest();
+        this._requestExecutor.execute(command, this._sessionInfo);
+        operation.result = command.result;
+        return operation.getRevision(clazz);
     }
 
     private async _get<TEntity extends object>(changeVectorOrVectors: string | string[],

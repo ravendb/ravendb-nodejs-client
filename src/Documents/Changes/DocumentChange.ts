@@ -5,7 +5,6 @@ export interface DocumentChange extends DatabaseChange {
     id: string;
     collectionName: string;
     changeVector: string;
-    counterName: string;
 }
 
 export type DocumentChangeTypes =
@@ -13,5 +12,4 @@ export type DocumentChangeTypes =
     | "Put"
     | "Delete"
     | "Conflict"
-    | "Common"
-    | "Counter";
+    | "Common";

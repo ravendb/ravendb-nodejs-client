@@ -33,12 +33,13 @@ export class BatchOperation {
         this._sessionCommandsCount = result.sessionCommands.length;
         result.sessionCommands.push(...result.deferredCommands);
         
+        this._session.validateClusterTransaction(result);
+        
         this._allCommandsCount = result.sessionCommands.length;
         if (this._allCommandsCount === 0) {
             return null;
         }
 
-        this._session.validateClusterTransaction(result);
         this._session.incrementRequestCount();
 
         this._entities = result.entities;

@@ -127,4 +127,13 @@ export class StringUtil {
     public static changeCase(transformName: CasingConvention, s: string) {
         return changeCase[transformName](s);
     }
+
+    public static equalsIgnoreCase(s1: string, s2: string) {
+        const s1Type = typeof s1;
+        const s2Type = typeof s2;
+        return s1Type === s2Type
+            && s1Type !== "undefined"
+            && s2Type !== "undefined"
+            && s1.toLowerCase() === s2.toLowerCase();
+    }
 }
