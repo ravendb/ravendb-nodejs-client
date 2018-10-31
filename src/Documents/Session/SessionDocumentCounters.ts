@@ -74,7 +74,7 @@ export class SessionDocumentCounters extends SessionCountersBase implements ISes
         let cache = this._session.countersByDocId.get(this._docId);
         if (cache) {
             value = cache.data.get(counter);
-            if (value) {
+            if (cache.data.has(counter)) {
                 return value;
             }
         } else {

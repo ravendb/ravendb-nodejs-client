@@ -101,24 +101,24 @@ export class GetCounterValuesCommand extends RavenCommand<CountersDetail> {
                     pathBuilder
                         .append("&counter=")
                         .append(encodeURIComponent(uniqueName));
-                } else {
-                    request = { method: "POST" } as any;
-                    const docOps = new DocumentCountersOperation();
-                    docOps.documentId = this._docId;
-                    docOps.operations = [];
-                    for (const counter of this._counters) {
-                        const counterOperation = new CounterOperation();
-                        counterOperation.type = "Get";
-                        counterOperation.counterName = counter;
-                        docOps.operations.push(counterOperation);
-                    }
-
-                    const batch = new CounterBatch();
-                    batch.documents = [docOps];
-                    request.body = JSON.stringify(batch.serialize(this._conventions));
-                    request.headers = this._headers().typeAppJson().build();
-                }
+                } 
             }
+        } else {
+            request = { method: "POST" } as any;
+            const docOps = new DocumentCountersOperation();
+            docOps.documentId = this._docId;
+            docOps.operations = [];
+            for (const counter of this._counters) {
+                const counterOperation = new CounterOperation();
+                counterOperation.type = "Get";
+                counterOperation.counterName = counter;
+                docOps.operations.push(counterOperation);
+            }
+
+            const batch = new CounterBatch();
+            batch.documents = [docOps];
+            request.body = JSON.stringify(batch.serialize(this._conventions));
+            request.headers = this._headers().typeAppJson().build();
         }
 
         return request;
