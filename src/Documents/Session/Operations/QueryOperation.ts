@@ -169,17 +169,23 @@ export class QueryOperation {
             && fieldsToFetch.projections.length === 1
             && !clazz) {
             // we only select a single field
-            let projectField = fieldsToFetch.projections[0];
+            let projectionField = fieldsToFetch.projections[0];
 
             if (fieldsToFetch.sourceAlias) {
-                // remove source-alias from projection name
-                projectField = projectField.substring(fieldsToFetch.sourceAlias.length + 1);
+                if (projectionField.startsWith(fieldsToFetch.sourceAlias)) {
+                    // remove source-alias from projection name
+                    projectionField = projectionField.substring(fieldsToFetch.sourceAlias.length + 1);
+                }
+                
+                if (projectionField.startsWith("'")) {
+                    projectionField = projectionField.substring(1, projectionField.length - 1);
+                }
             }
             if (entityFieldNameConvention) {
-                projectField = StringUtil.changeCase(entityFieldNameConvention, projectField);
+                projectionField = StringUtil.changeCase(entityFieldNameConvention, projectionField);
             }
 
-            const jsonNode = document[projectField];
+            const jsonNode = document[projectionField];
             if (TypeUtil.isNullOrUndefined(jsonNode)) {
                 return null;
             }

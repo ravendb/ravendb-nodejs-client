@@ -3,6 +3,10 @@ import { IndexPriority, FieldStorage, FieldIndexing, FieldTermVector, IndexLockM
 import { IndexFieldOptions } from "./IndexFieldOptions";
 import { SpatialOptions } from "./Spatial";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
+import * as XRegExp from "xregexp";
+import { StringUtil } from "../../Utility/StringUtil";
+
+const COMMENT_REGEX = new XRegExp("(?:/\\*(?:[^*]|(?:\\*+[^*/]))*\\*+/)|(?://.*)", "gm");
 
 export interface IndexConfiguration {
     [key: string]: string;
@@ -49,11 +53,28 @@ export class IndexDefinition {
     }
 
     private _detectStaticIndexType(): IndexType {
-        //TODO: sync with c# -> detect JS indexes as well!
-        if (!this.reduce) {
-            return "Map";
+        if (!this.maps.size) {
+            throwError("InvalidArgumentException", "Index definitions contains no Maps.");
         }
-        return "MapReduce";
+
+        const firstMap = this.maps.values().next().value
+            .replace(COMMENT_REGEX, "")
+            .trim();
+
+        if (firstMap.startsWith("from") || firstMap.startsWith("docs")) {
+            // C# indexes must start with "from" for query synatx or
+            // "docs" for method syntax
+            if (!this.reduce || StringUtil.isNullOrWhitespace(this.reduce)) {
+                return "Map";
+            }
+            return "MapReduce";
+        }
+
+        if (!this.reduce || StringUtil.isNullOrWhitespace(this.reduce)) {
+            return "JavaScriptMap";
+        }
+        
+        return "JavaScriptMapReduce";
     }
 }
 
