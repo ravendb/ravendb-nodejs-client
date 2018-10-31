@@ -35,7 +35,7 @@ export class CaseInsensitiveKeysMap {
             const [ key, ...rest ] = args;
             validateKey(key);
             return origDelete.call(result, key ? key.toLowerCase() : key, ...rest);
-        }
+        };
 
         return result;
     }

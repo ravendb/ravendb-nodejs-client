@@ -1,4 +1,4 @@
-import { InMemoryDocumentSessionOperations} from "./InMemoryDocumentSessionOperations";
+import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
 import { StringUtil } from "../../Utility/StringUtil";
 import { throwError } from "../../Exceptions";
 import { TypeUtil } from "../../Utility/TypeUtil";

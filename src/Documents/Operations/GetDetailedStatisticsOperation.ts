@@ -1,45 +1,50 @@
+import { IMaintenanceOperation, OperationResultType } from "./OperationAbstractions";
+import { DetailedDatabaseStatistics } from "./DetailedDatabaseStatistics";
+import { RavenCommand } from "../../Http/RavenCommand";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { ServerNode } from "../../Http/ServerNode";
+import { HttpRequestParameters } from "../../Primitives/Http";
+import * as stream from "readable-stream";
 
-// package net.ravendb.client.documents.operations;
-//  import net.ravendb.client.documents.conventions.DocumentConventions;
-// import net.ravendb.client.http.RavenCommand;
-// import net.ravendb.client.http.ServerNode;
-// import net.ravendb.client.primitives.Reference;
-// import org.apache.http.client.methods.HttpGet;
-// import org.apache.http.client.methods.HttpRequestBase;
-//  import java.io.IOException;
-//  public class GetDetailedStatisticsOperation implements IMaintenanceOperation<DetailedDatabaseStatistics> {
-//      private final String _debugTag;
-//      public GetDetailedStatisticsOperation() {
-//         this(null);
-//     }
-//      public GetDetailedStatisticsOperation(String debugTag) {
-//         _debugTag = debugTag;
-//     }
-//      @Override
-//     public RavenCommand<DetailedDatabaseStatistics> getCommand(DocumentConventions conventions) {
-//          return new DetailedDatabaseStatisticsCommand(_debugTag);
-//     }
-//      private static class DetailedDatabaseStatisticsCommand extends RavenCommand<DetailedDatabaseStatistics> {
-//         private final String _debugTag;
-//          public DetailedDatabaseStatisticsCommand(String debugTag) {
-//             super(DetailedDatabaseStatistics.class);
-//             _debugTag = debugTag;
-//         }
-//          @Override
-//         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-//             url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/stats/detailed";
-//              if (_debugTag != null) {
-//                 url.value += "?" + _debugTag;
-//             }
-//              return new HttpGet();
-//         }
-//          @Override
-//         public void setResponse(String response, boolean fromCache) throws IOException {
-//             result = mapper.readValue(response, DetailedDatabaseStatistics.class);
-//         }
-//          @Override
-//         public boolean isReadRequest() {
-//             return true;
-//         }
-//     }
-// }
+export class GetDetailedStatisticsOperation implements IMaintenanceOperation<DetailedDatabaseStatistics> {
+    private readonly _debugTag: string;
+
+    public constructor();
+    public constructor(debugTag: string);
+    public constructor(debugTag?: string) {
+        this._debugTag = debugTag;
+    }
+
+    public getCommand(conventions: DocumentConventions): RavenCommand<DetailedDatabaseStatistics> {
+         return new DetailedDatabaseStatisticsCommand(this._debugTag);
+    }
+
+    public get resultType(): OperationResultType {
+        return "CommandResult";
+    }
+}
+
+export class DetailedDatabaseStatisticsCommand extends RavenCommand<DetailedDatabaseStatistics> {
+    private readonly _debugTag: string;
+
+    public constructor(debugTag: string) {
+        super();
+        this._debugTag = debugTag;
+    }
+
+    public createRequest(node: ServerNode): HttpRequestParameters {
+        let uri = node.url + "/databases/" + node.database + "/stats/detailed";
+        if (this._debugTag) {
+            uri += "?" + this._debugTag;
+        }
+        return { uri };
+    }
+
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        return await this._parseResponseDefaultAsync(bodyStream);
+    }
+
+    public get isReadRequest(): boolean {
+        return false;
+    }
+}

@@ -2,7 +2,11 @@ import { InMemoryDocumentSessionOperations } from "../InMemoryDocumentSessionOpe
 import { getLogger } from "../../../Utility/LogUtil";
 import { ObjectTypeDescriptor, EntitiesCollectionObject } from "../../..";
 import { DocumentInfo } from "../DocumentInfo";
-import { GetDocumentsCommand, GetDocumentsResult, GetDocumentsCommandOptionsBase, GetDocumentsByIdsCommandOptions } from "../../Commands/GetDocumentsCommand";
+import { 
+    GetDocumentsCommand, 
+    GetDocumentsResult, 
+    GetDocumentsByIdsCommandOptions 
+} from "../../Commands/GetDocumentsCommand";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { throwError } from "../../../Exceptions";
 

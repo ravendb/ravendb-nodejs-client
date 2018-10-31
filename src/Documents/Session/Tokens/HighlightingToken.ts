@@ -41,4 +41,3 @@ export class HighlightingToken extends QueryToken {
         writer.append(")");
     }
 }
- 

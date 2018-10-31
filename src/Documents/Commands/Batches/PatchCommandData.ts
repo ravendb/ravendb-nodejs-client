@@ -14,8 +14,6 @@ export class PatchCommandData implements ICommandData {
     public type: CommandType = "PATCH";
     public returnDocument: boolean;
 
-
-
     constructor(id: string, changeVector: string, patch: PatchRequest, patchIfMissing: PatchRequest) {
         if (!id) {
             throwError("InvalidArgumentException", "Id cannot be null");

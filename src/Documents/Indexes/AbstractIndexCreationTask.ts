@@ -1,10 +1,5 @@
 import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { IndexPriority, IndexLockMode, FieldStorage, FieldIndexing, FieldTermVector } from "./Enums";
-import { SpatialOptions, SpatialOptionsFactory } from "./Spatial";
 import { IndexDefinition, IndexDefinitionBuilder } from "./IndexDefinition";
-import { CONSTANTS } from "../../Constants";
-import { PutIndexesOperation } from "../Operations/Indexes/PutIndexesOperation";
-import { IDocumentStore } from "../IDocumentStore";
 import { AbstractGenericIndexCreationTask } from "./AbstractGenericIndexCreationTask";
 
 export abstract class AbstractIndexCreationTask extends AbstractGenericIndexCreationTask {

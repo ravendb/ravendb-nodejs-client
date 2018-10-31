@@ -1,62 +1,65 @@
-// package net.ravendb.client.documents.operations.counters;
-//  import com.fasterxml.jackson.core.JsonGenerator;
-// import com.fasterxml.jackson.databind.JsonNode;
-// import net.ravendb.client.documents.IDocumentStore;
-// import net.ravendb.client.documents.conventions.DocumentConventions;
-// import net.ravendb.client.documents.operations.IOperation;
-// import net.ravendb.client.documents.session.EntityToJson;
-// import net.ravendb.client.http.HttpCache;
-// import net.ravendb.client.http.RavenCommand;
-// import net.ravendb.client.http.ServerNode;
-// import net.ravendb.client.json.ContentProviderHttpEntity;
-// import net.ravendb.client.primitives.Reference;
-// import org.apache.http.client.methods.HttpPost;
-// import org.apache.http.client.methods.HttpRequestBase;
-// import org.apache.http.entity.ContentType;
-//  import java.io.IOException;
-//  public class CounterBatchOperation implements IOperation<CountersDetail> {
-//      private final CounterBatch _counterBatch;
-//      public CounterBatchOperation(CounterBatch counterBatch) {
-//         _counterBatch = counterBatch;
-//     }
-//      @Override
-//     public RavenCommand<CountersDetail> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
-//         return new CounterBatchCommand(_counterBatch, conventions);
-//     }
-//      public static class CounterBatchCommand extends RavenCommand<CountersDetail> {
-//         private final DocumentConventions _conventions;
-//         private final CounterBatch _counterBatch;
-//          public CounterBatchCommand(CounterBatch counterBatch, DocumentConventions conventions) {
-//             super(CountersDetail.class);
-//              if (counterBatch == null) {
-//                 throw new IllegalArgumentException("CounterBatch cannot be null");
-//             }
-//             _counterBatch = counterBatch;
-//             _conventions = conventions;
-//         }
-//          @Override
-//         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-//             url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/counters";
-//              HttpPost request = new HttpPost();
-//              request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-//                 try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
-//                     _counterBatch.serialize(generator, _conventions);
-//                 } catch (IOException e) {
-//                     throw new RuntimeException(e);
-//                 }
-//             }, ContentType.APPLICATION_JSON));
-//              return request;
-//         }
-//          @Override
-//         public void setResponse(String response, boolean fromCache) throws IOException {
-//             if (response == null) {
-//                 return;
-//             }
-//              result = mapper.readValue(response, CountersDetail.class);
-//         }
-//          @Override
-//         public boolean isReadRequest() {
-//             return false;
-//         }
-//     }
-// }
+import { IOperation, OperationResultType } from "../OperationAbstractions";
+import { CountersDetail } from "./CountersDetail";
+import { CounterBatch } from "./CounterBatch";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { IDocumentStore } from "../../IDocumentStore";
+import { HttpCache } from "../../../Http/HttpCache";
+import { RavenCommand } from "../../../Http/RavenCommand";
+import { throwError } from "../../../Exceptions";
+import { ServerNode } from "../../../Http/ServerNode";
+import { HttpRequestParameters } from "../../../Primitives/Http";
+import * as stream from "readable-stream";
+
+export class CounterBatchOperation implements IOperation<CountersDetail> {
+
+    public get resultType(): OperationResultType {
+        return "CommandResult";
+    }
+
+    private readonly _counterBatch: CounterBatch;
+
+    public constructor(counterBatch: CounterBatch) {
+        this._counterBatch = counterBatch;
+    }
+
+    public getCommand(
+        store: IDocumentStore, conventions: DocumentConventions, cache: HttpCache): RavenCommand<CountersDetail> {
+        return new CounterBatchCommand(this._counterBatch, conventions);
+    }
+}
+
+export class CounterBatchCommand extends RavenCommand<CountersDetail> {
+    private readonly _conventions: DocumentConventions;
+    private readonly _counterBatch: CounterBatch;
+
+    public constructor(counterBatch: CounterBatch, conventions: DocumentConventions) {
+        super();
+        if (!counterBatch) {
+            throwError("InvalidArgumentException", "CounterBatch cannot be null.");
+        }
+
+        this._counterBatch = counterBatch;
+        this._conventions = conventions;
+    }
+
+    public createRequest(node: ServerNode): HttpRequestParameters {
+    const uri = node.url + "/databases/" + node.database + "/counters";
+    return {
+        method: "POST",
+        uri,
+        body: this._counterBatch.serialize(this._conventions),
+        headers: this._headers().typeAppJson().build()
+    };
+}
+    public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
+            return;
+        }
+
+        return await this._parseResponseDefaultAsync(bodyStream);
+    }
+
+    public get isReadRequest(): boolean {
+        return false;
+    }
+}

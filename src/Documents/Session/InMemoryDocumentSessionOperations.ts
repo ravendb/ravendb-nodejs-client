@@ -697,7 +697,7 @@ export abstract class InMemoryDocumentSessionOperations
             return;
         }
 
-        if (!resultCounters || Object.keys(resultCounters).length == 0) {
+        if (!resultCounters || Object.keys(resultCounters).length === 0) {
             this._setGotAllInCacheIfNeeded(countersToInclude);
         } else {
             this._registerCountersInternal(resultCounters, countersToInclude, true, false);
@@ -759,8 +759,9 @@ export abstract class InMemoryDocumentSessionOperations
     private _setGotAllCountersForDocument(id: string): void {
         let cache = this.countersByDocId.get(id);
         if (!cache) {
-            cache = { gotAll: false, data: CaseInsensitiveKeysMap.create<number>() }
+            cache = { gotAll: false, data: CaseInsensitiveKeysMap.create<number>() };
         }
+        
         cache.gotAll = true;
         this._countersByDocId.set(id, cache);
     }
