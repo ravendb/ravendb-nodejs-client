@@ -1,6 +1,4 @@
 import { RequestExecutor } from "../../src/Http/RequestExecutor";
-// tslint:disable-next-line:no-var-requires
-// const why = require("why-is-node-running");
 import * as fs from "fs";
 import * as path from "path";
 import * as url from "url";
@@ -9,8 +7,8 @@ import * as http from "http";
 import * as https from "https";
 import "source-map-support/register";
 import { IDisposable } from "../../src/Types/Contracts";
-import { RavenTestDriver } from "../../src/TestDriver";
-import { RavenServerLocator } from "../../src/TestDriver/RavenServerLocator";
+import { RavenTestDriver } from "../TestDriver";
+import { RavenServerLocator } from "../TestDriver/RavenServerLocator";
 import { IDocumentStore } from "../../src/Documents/IDocumentStore";
 import { throwError } from "../../src/Exceptions";
 import { IAuthOptions } from "../../src/Auth/AuthOptions";

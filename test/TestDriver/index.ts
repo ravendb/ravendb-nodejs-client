@@ -3,27 +3,27 @@ import { ChildProcess, spawn } from "child_process";
 import * as os from "os";
 import { MultiError } from "verror";
 
-import { CONSTANTS } from "../Constants";
-import { DocumentStore } from "../Documents/DocumentStore";
-import { IDocumentStore } from "../Documents/IDocumentStore";
-import { DatabaseStatistics } from "../Documents/Operations/DatabaseStatistics";
-import { GetStatisticsOperation } from "../Documents/Operations/GetStatisticsOperation";
-import { throwError, getError } from "../Exceptions";
-import { DatabaseRecord } from "../ServerWide";
-import { CreateDatabaseOperation } from "../ServerWide/Operations/CreateDatabaseOperation";
-import { DeleteDatabasesOperation } from "../ServerWide/Operations/DeleteDatabasesOperation";
-import { Todo } from "../Types";
-import { IDisposable } from "../Types/Contracts";
-import { getLogger } from "../Utility/LogUtil";
+import { CONSTANTS } from "../../src/Constants";
+import { DocumentStore } from "../../src/Documents/DocumentStore";
+import { IDocumentStore } from "../../src/Documents/IDocumentStore";
+import { DatabaseStatistics } from "../../src/Documents/Operations/DatabaseStatistics";
+import { GetStatisticsOperation } from "../../src/Documents/Operations/GetStatisticsOperation";
+import { throwError, getError } from "../../src/Exceptions";
+import { DatabaseRecord } from "../../src/ServerWide";
+import { CreateDatabaseOperation } from "../../src/ServerWide/Operations/CreateDatabaseOperation";
+import { DeleteDatabasesOperation } from "../../src/ServerWide/Operations/DeleteDatabasesOperation";
+import { Todo } from "../../src/Types";
+import { IDisposable } from "../../src/Types/Contracts";
+import { getLogger } from "../../src/Utility/LogUtil";
 import { RavenServerLocator } from "./RavenServerLocator";
 import { RavenServerRunner } from "./RavenServerRunner";
-import { TypeUtil } from "../Utility/TypeUtil";
-import { RevisionsConfiguration } from "../Documents/Operations/RevisionsConfiguration";
-import { RevisionsCollectionConfiguration } from "../Documents/Operations/RevisionsCollectionConfiguration";
+import { TypeUtil } from "../../src/Utility/TypeUtil";
+import { RevisionsConfiguration } from "../../src/Documents/Operations/RevisionsConfiguration";
+import { RevisionsCollectionConfiguration } from "../../src/Documents/Operations/RevisionsCollectionConfiguration";
 import {
     ConfigureRevisionsOperation,
     ConfigureRevisionsOperationResult
-} from "../Documents/Operations/Revisions/ConfigureRevisionsOperation";
+} from "../../src/Documents/Operations/Revisions/ConfigureRevisionsOperation";
 
 const log = getLogger({ module: "TestDriver" });
 
