@@ -297,34 +297,33 @@ export class RequestExecutor implements IDisposable {
         return executor;
     }
 
-    private _ensureNodeSelector(): Promise<void> {
-        let promise: Promise<void> = Promise.resolve();
+    private async _ensureNodeSelector(): Promise<void> {
         if (this._firstTopologyUpdatePromise
-            && !this._firstTopologyUpdatePromise.isFulfilled()) {
-            promise = Promise.resolve(this._firstTopologyUpdatePromise);
+            && (!this._firstTopologyUpdatePromise.isFulfilled() 
+                || this._firstTopologyUpdatePromise.isRejected())) {
+            
+            await Promise.resolve(this._firstTopologyUpdatePromise);
         }
 
-        return promise.then(() => {
-            if (!this._nodeSelector) {
-                const topology = new Topology(this._topologyEtag, this.getTopologyNodes().slice());
-                this._nodeSelector = new NodeSelector(topology);
-            }
-        });
+        if (!this._nodeSelector) {
+            const topology = new Topology(this._topologyEtag, this.getTopologyNodes().slice());
+            this._nodeSelector = new NodeSelector(topology);
+        }
     }
 
-    public getPreferredNode(): Promise<CurrentIndexAndNode> {
-        return this._ensureNodeSelector()
-            .then(() => this._nodeSelector.getPreferredNode());
+    public async getPreferredNode(): Promise<CurrentIndexAndNode> {
+        await this._ensureNodeSelector();
+        return this._nodeSelector.getPreferredNode();
     }
 
-    public getNodeBySessionId(sessionId: number): Promise<CurrentIndexAndNode> {
-        return this._ensureNodeSelector()
-            .then(() => this._nodeSelector.getNodeBySessionId(sessionId));
+    public async getNodeBySessionId(sessionId: number): Promise<CurrentIndexAndNode> {
+        await this._ensureNodeSelector();
+        return this._nodeSelector.getNodeBySessionId(sessionId);
     }
 
-    public getFastestNode(): Promise<CurrentIndexAndNode> {
-        return this._ensureNodeSelector()
-            .then(() => this._nodeSelector.getFastestNode());
+    public async getFastestNode(): Promise<CurrentIndexAndNode> {
+        await this._ensureNodeSelector();
+        return this._nodeSelector.getFastestNode();
     }
 
     protected _updateClientConfiguration(): PromiseLike<void> {
