@@ -8,8 +8,8 @@ export class CaseInsensitiveKeysMap {
         const origDelete = result.delete;
 
         function validateKey(key) {
-            if (!("toLowerCase" in key)) {
-                throw Error("Key must be a string");
+            if (!(key && key.toLowerCase)) {
+                throw Error("Key must be a string.");
             }
         }
 

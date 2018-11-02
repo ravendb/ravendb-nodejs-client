@@ -1,35 +1,28 @@
 import { DocumentInfo } from "./DocumentInfo";
-
-function normalizeId(id: string) {
-    if (!id) {
-        return null;
-    }
-
-    return id.toLowerCase();
-}
+import { CaseInsensitiveKeysMap } from "../../Primitives/CaseInsensitiveKeysMap";
 
 export class DocumentsById {
 
     public _inner: Map<string, DocumentInfo>;
 
     public constructor() {
-        this._inner = new Map();
+        this._inner = CaseInsensitiveKeysMap.create();
     }
 
     public getValue(id: string) {
-        return this._inner.get(normalizeId(id));
+        return this._inner.get(id);
     }
 
     public add(info: DocumentInfo): void {
-        if (this._inner.has(normalizeId(info.id))) {
+        if (this._inner.has(info.id)) {
             return;
         }
 
-        this._inner.set(normalizeId(info.id), info);
+        this._inner.set(info.id, info);
     }
 
     public remove(id: string): boolean {
-        return this._inner.delete(normalizeId(id));
+        return this._inner.delete(id);
     }
 
     public clear(): void {

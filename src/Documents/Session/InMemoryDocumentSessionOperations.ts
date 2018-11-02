@@ -136,7 +136,7 @@ export abstract class InMemoryDocumentSessionOperations
 
     public readonly noTracking: boolean;
 
-    public includedDocumentsById: Map<string, DocumentInfo> = new Map();
+    public includedDocumentsById: Map<string, DocumentInfo> = CaseInsensitiveKeysMap.create();
 
     public documentsByEntity: Map<object, DocumentInfo> = new Map();
 
@@ -333,7 +333,6 @@ export abstract class InMemoryDocumentSessionOperations
         if (!instance) {
             throwError("InvalidArgumentException", "Instance cannot be null or undefined.");
         }
-        debugger;
 
         const documentInfo: DocumentInfo = this._getDocumentInfo(instance);
         const changeVector = documentInfo.metadata[CONSTANTS.Documents.Metadata.CHANGE_VECTOR];
@@ -933,7 +932,7 @@ export abstract class InMemoryDocumentSessionOperations
 
         if (!id) {
             if (this._generateDocumentKeysOnStore) {
-                await this._generateEntityIdOnTheClient.generateDocumentKeyForStorage(entity);
+                id = await this._generateEntityIdOnTheClient.generateDocumentKeyForStorage(entity);
             } else {
                 this._rememberEntityForDocumentIdGeneration(entity);
             }

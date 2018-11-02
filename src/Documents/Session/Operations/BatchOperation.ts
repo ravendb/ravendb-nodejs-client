@@ -72,7 +72,7 @@ export class BatchOperation {
 
         const results = result.results;
         for (let i = 0; i < this._sessionCommandsCount; i++) {
-            const batchResult = results[0];
+            const batchResult = results[i];
             if (!batchResult) {
                 continue;
             }
@@ -154,7 +154,7 @@ export class BatchOperation {
     
     private _getOrAddModifications(
         id: string, documentInfo: DocumentInfo, applyModifications: boolean): DocumentInfo {
-        if (this._modifications) {
+        if (!this._modifications) {
             this._modifications = CaseInsensitiveKeysMap.create<DocumentInfo>();
         }
         
@@ -172,16 +172,17 @@ export class BatchOperation {
     }
 
     private _handleAttachmentCopy(batchResult: object): void {
-        this._handleAttachmentPutInternal(batchResult, "AttachmentCOPY", "Id", "Name");
+        this._handleAttachmentPutInternal(batchResult, "AttachmentCOPY", "id", "name");
     }
 
     private _handleAttachmentMove(batchResult: object): void {
-        this._handleAttachmentDeleteInternal(batchResult, "AttachmentMOVE", "Id", "Name");
-        this._handleAttachmentPutInternal(batchResult, "AttachmentMOVE", "DestinationId", "DestinationName");
+        this._handleAttachmentDeleteInternal(batchResult, "AttachmentMOVE", "id", "name");
+        this._handleAttachmentPutInternal(batchResult, "AttachmentMOVE", "destinationId", "destinationName");
     }
 
     private _handleAttachmentDelete(batchResult: object): void {
-        this._handleAttachmentDeleteInternal(batchResult, "AttachmentDELETE", CONSTANTS.Documents.Metadata.ID, "Name");
+        this._handleAttachmentDeleteInternal(
+            batchResult, "AttachmentDELETE", CONSTANTS.Documents.Metadata.ID, "name");
     }
 
     private _handleAttachmentDeleteInternal(
@@ -203,7 +204,7 @@ export class BatchOperation {
         documentInfo.metadata[CONSTANTS.Documents.Metadata.ATTACHMENTS] = attachments;
         for (let i = 0; i < Object.keys(attachmentsJson).length; i++) {
             const attachment = attachmentsJson[i];
-            const attachmentName = BatchOperation._getStringField(attachment, type, "Name");
+            const attachmentName = BatchOperation._getStringField(attachment, type, "name");
             if (attachmentName === name) {
                 continue;
             }
@@ -213,34 +214,36 @@ export class BatchOperation {
     }
 
     private _handleAttachmentPut(batchResult: object): void {
-        this._handleAttachmentPutInternal(batchResult, "AttachmentPUT", "Id", "Name");
+        this._handleAttachmentPutInternal(
+            batchResult, "AttachmentPUT", "id", "name");
     }
 
     private _handleAttachmentPutInternal(
         batchResult: object, type: CommandType, idFieldName: string, attachmentNameFieldName: string): void {
         const id = BatchOperation._getStringField(batchResult, type, idFieldName);
         const sessionDocumentInfo = this._session.documentsById.getValue(id);
-        if (sessionDocumentInfo) {
+        if (!sessionDocumentInfo) {
             return;
         }
+
         const documentInfo = this._getOrAddModifications(id, sessionDocumentInfo, false);
-        let attachments = documentInfo.metadata.get(CONSTANTS.Documents.Metadata.ATTACHMENTS);
+        let attachments = documentInfo.metadata[CONSTANTS.Documents.Metadata.ATTACHMENTS];
         if (!attachments) {
             attachments = [];
             documentInfo.metadata[CONSTANTS.Documents.Metadata.ATTACHMENTS] = attachments;
         }
 
         attachments.push({
-            ChangeVector: BatchOperation._getStringField(batchResult, type, "ChangeVector"),
-            ContentType: BatchOperation._getStringField(batchResult, type, "ContentType"),
-            Hash: BatchOperation._getStringField(batchResult, type, "Hash"),
-            Name: BatchOperation._getStringField(batchResult, type, "Name"),
-            Size: BatchOperation._getNumberField(batchResult, type, "Size")
+            ChangeVector: BatchOperation._getStringField(batchResult, type, "changeVector"),
+            ContentType: BatchOperation._getStringField(batchResult, type, "contentType"),
+            Hash: BatchOperation._getStringField(batchResult, type, "hash"),
+            Name: BatchOperation._getStringField(batchResult, type, "name"),
+            Size: BatchOperation._getNumberField(batchResult, type, "size")
         });
     }
 
     private _handlePatch(batchResult: object): void {
-        const status = batchResult["PatchStatus"] as PatchStatus;
+        const status = batchResult["patchStatus"] as PatchStatus;
         if (!status) {
             BatchOperation._throwMissingField("PATCH", "PatchStatus");
         }
@@ -248,20 +251,20 @@ export class BatchOperation {
         switch (status) {
             case "Created":
             case "Patched":
-                const document = batchResult["ModifiedDocument"];
+                const document = batchResult["modifiedDocument"];
                 if (!document) {
                     return;
                 }
 
-                const id = BatchOperation._getStringField(batchResult, "PUT", "Id");
+                const id = BatchOperation._getStringField(batchResult, "PUT", "id");
                 const sessionDocumentInfo = this._session.documentsById.getValue(id);
                 if (!sessionDocumentInfo) {
                     return;
                 }
 
                 const documentInfo = this._getOrAddModifications(id, sessionDocumentInfo, true);
-                const changeVector = BatchOperation._getStringField(batchResult, "PATCH", "ChangeVector");
-                const lastModified = BatchOperation._getStringField(batchResult, "PATCH", "LastModified");
+                const changeVector = BatchOperation._getStringField(batchResult, "PATCH", "changeVector");
+                const lastModified = BatchOperation._getStringField(batchResult, "PATCH", "lastModified");
                 documentInfo.changeVector = changeVector;
                 documentInfo.metadata[CONSTANTS.Documents.Metadata.ID] = id;
                 documentInfo.metadata[CONSTANTS.Documents.Metadata.CHANGE_VECTOR] = changeVector;
@@ -282,7 +285,7 @@ export class BatchOperation {
     }
 
     private _handleDeleteInternal(batchResult: object, type: CommandType): void {
-        const id = BatchOperation._getStringField(batchResult, type, "Id");
+        const id = BatchOperation._getStringField(batchResult, type, "id");
         const documentInfo = this._session.documentsById.getValue(id);
         if (!documentInfo) {
             return;
@@ -341,13 +344,13 @@ export class BatchOperation {
     }
 
     private _handleCounters(batchResult: object): void {
-        const docId = BatchOperation._getStringField(batchResult, "Counters", "Id");
-        const countersDetail = batchResult["CountersDetail"];
+        const docId = BatchOperation._getStringField(batchResult, "Counters", "id");
+        const countersDetail = batchResult["countersDetail"];
         if (!countersDetail) {
             BatchOperation._throwMissingField("Counters", "CountersDetail");
         }
 
-        const counters = countersDetail["Counters"] as object[];
+        const counters = countersDetail["counters"] as object[];
         if (!counters) {
             BatchOperation._throwMissingField("Counters", "Counters");
         }
@@ -362,8 +365,8 @@ export class BatchOperation {
         }
 
         for (const counter of counters) {
-            const name = counter["CounterName"];
-            const value = counter["TotalValue"];
+            const name = counter["counterName"];
+            const value = counter["totalValue"];
             if (name && value) {
                 cache.data.set(name, value);
             }
@@ -371,24 +374,24 @@ export class BatchOperation {
     }
 
     private static _getStringField(json: object, type: CommandType, fieldName: string): string {
-        const jsonNode = json[fieldName];
-        if (!jsonNode) {
+        if (!(fieldName in json)) {
             BatchOperation._throwMissingField(type, fieldName);
         }
 
+        const jsonNode = json[fieldName];
         if (!TypeUtil.isString(jsonNode)) {
-            throwError("InvalidOperationException", "");
+            throwError("InvalidOperationException", `Expected response field ${fieldName} to be a string.`);
         }
 
         return jsonNode;
     }
 
     private static _getNumberField(json: object, type: CommandType, fieldName: string): number {
-        const jsonNode = json[fieldName];
-        if (!jsonNode) {
+        if (!(fieldName in json)) {
             BatchOperation._throwMissingField(type, fieldName);
         }
 
+        const jsonNode = json[fieldName];
         return jsonNode;
     }
 

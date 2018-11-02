@@ -1,14 +1,14 @@
 import * as assert from "assert";
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
 
-import {
-    IDocumentStore, IndexDefinition, PutIndexesOperation,
-} from "../../../src";
 import { Camera, FacetTestContext } from "../../Utils/FacetTestContext";
 import { FacetOptions } from "../../../src/Documents/Queries/Facets";
 import { Facet } from "../../../src/Documents/Queries/Facets/Facet";
 import { FacetSetup } from "../../../src/Documents/Queries/Facets/FacetSetup";
 import * as orderBy from "lodash.orderby";
+import { IDocumentStore } from "../../../src/Documents/IDocumentStore";
+import { PutIndexesOperation } from "../../../src/Documents/Operations/Indexes/PutIndexesOperation";
+import { IndexDefinition } from "../../../src/Documents/Indexes/IndexDefinition";
 
 describe("FacetPagingTest", function () {
 
@@ -53,8 +53,8 @@ describe("FacetPagingTest", function () {
                 indexName: "CameraCost",
                 documentType: Camera
             })
-                .aggregateUsing("facets/CameraFacets")
-                .execute();
+            .aggregateUsing("facets/CameraFacets")
+            .execute();
 
             const cameraCounts: any = data.reduce((p, c) => {
                 p[c.manufacturer] = (p[c.manufacturer] || 0) + 1;
