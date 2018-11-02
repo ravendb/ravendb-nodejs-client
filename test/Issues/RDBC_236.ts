@@ -12,7 +12,8 @@ import { DateUtil } from "../../src/Utility/DateUtil";
 import { GetDocumentsCommand } from "../../src/Documents/Commands/GetDocumentsCommand";
 import { StringUtil } from "../../src/Utility/StringUtil";
 
-const LOCAL_TIMEZONE_OFFSET = -(new Date().getTimezoneOffset()); // getTimezoneOffset() returns reversed offset
+// getTimezoneOffset() returns reversed offset, hence the "-"
+const LOCAL_TIMEZONE_OFFSET = -(new Date(2018, 7, 1).getTimezoneOffset()); 
 const LOCAL_TIMEZONE_OFFSET_HOURS = LOCAL_TIMEZONE_OFFSET / 60;
 const LOCAL_TIMEZONE_STRING =
     // tslint:disable-next-line:max-line-length
