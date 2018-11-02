@@ -153,12 +153,12 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    public includeExplanations<T extends object>(
+    public includeExplanations(
         explanationsCallback: ValueCallback<Explanations>): IDocumentQuery<T>;
-    public includeExplanations<T extends object>(
+    public includeExplanations(
         options: ExplanationOptions, 
         explanationsCallback?: ValueCallback<Explanations>): IDocumentQuery<T>;
-    public includeExplanations<T extends object>(
+    public includeExplanations(
         optionsOrExplanationsCallback: ExplanationOptions | ValueCallback<Explanations>, 
         explanationsCallback?: ValueCallback<Explanations>): IDocumentQuery<T> {
         if (TypeUtil.isFunction(optionsOrExplanationsCallback)) {
@@ -458,7 +458,7 @@ export class DocumentQuery<T extends object>
     public groupBy(...args: any[]): IGroupByDocumentQuery<T> {
         (this._groupBy as any)(...args);
 
-        return new GroupByDocumentQuery(this);
+        return new GroupByDocumentQuery<T>(this);
     }
 
     public ofType<TResult extends object>(tResultClass: DocumentType<TResult>): IDocumentQuery<TResult> {

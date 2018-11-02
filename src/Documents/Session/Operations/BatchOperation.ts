@@ -320,7 +320,7 @@ export class BatchOperation {
         }
 
         for (const propertyName of Object.keys(batchResult)) {
-            if (propertyName !== "Type") {
+            if (propertyName === "type") {
                 continue;
             }
 
@@ -399,5 +399,5 @@ export class BatchOperation {
 }
 
 function getCommandType(batchResult: object): CommandType {
-    return batchResult["Type"] || "None";
+    return batchResult["type"] || "None";
 }       

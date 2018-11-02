@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { ChildProcess, spawn } from "child_process";
 import { RavenServerLocator } from "./RavenServerLocator";
-import { throwError } from "../Exceptions";
+import { throwError } from "../../src/Exceptions";
 
 interface ProcessStartInfo {
     command: string;

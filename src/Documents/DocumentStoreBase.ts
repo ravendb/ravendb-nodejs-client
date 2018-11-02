@@ -15,7 +15,6 @@ import { OperationExecutor } from "./Operations/OperationExecutor";
 import { SessionOptions } from "http2";
 import { IDocumentSession } from "./Session/IDocumentSession";
 import { DocumentSession } from "./Session/DocumentSession";
-import { AbstractIndexCreationTask } from "./Indexes";
 import { DocumentConventions } from "./Conventions/DocumentConventions";
 import { RequestExecutor } from "../Http/RequestExecutor";
 import { IndexCreation } from "../Documents/Indexes/IndexCreation";
@@ -25,6 +24,7 @@ import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
 import { DocumentSubscriptions } from "./Subscriptions/DocumentSubscriptions";
 import { DocumentStore } from "./DocumentStore";
 import { TypeUtil } from "../Utility/TypeUtil";
+import { AbstractIndexCreationTaskBase } from "./Indexes/AbstractIndexCreationTaskBase";
 
 export abstract class DocumentStoreBase
     extends EventEmitter

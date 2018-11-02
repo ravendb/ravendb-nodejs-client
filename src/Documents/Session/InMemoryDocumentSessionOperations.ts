@@ -333,6 +333,7 @@ export abstract class InMemoryDocumentSessionOperations
         if (!instance) {
             throwError("InvalidArgumentException", "Instance cannot be null or undefined.");
         }
+        debugger;
 
         const documentInfo: DocumentInfo = this._getDocumentInfo(instance);
         const changeVector = documentInfo.metadata[CONSTANTS.Documents.Metadata.CHANGE_VECTOR];
@@ -394,7 +395,7 @@ export abstract class InMemoryDocumentSessionOperations
                 // tslint:disable:max-line-length
                 `The maximum number of requests (${this.maxNumberOfRequestsPerSession}) allowed for this session has been reached.` +
                 "Raven limits the number of remote calls that a session is allowed to make as an early warning system. Sessions are expected to be short lived, and " +
-                "Raven provides facilities like load(String[] keys) to load multiple documents at once and batch saves (call SaveChanges() only once)." +
+                "Raven provides facilities like load(string[] keys) to load multiple documents at once and batch saves (call SaveChanges() only once)." +
                 "You can increase the limit by setting DocumentConvention.MaxNumberOfRequestsPerSession or MaxNumberOfRequestsPerSession, but it is" +
                 "advisable that you'll look into reducing the number of remote calls first, since that will speed up your application significantly and result in a" +
                 // tslint:enable:max-line-length

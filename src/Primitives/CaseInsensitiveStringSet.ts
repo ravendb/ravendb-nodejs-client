@@ -7,7 +7,7 @@ export class CaseInsensitiveStringSet {
         const origDelete = result.delete;
 
         function validateKey(key) {
-            if (!("toLowerCase" in key)) {
+            if (!(key && key.toLowerCase)) {
                 throw Error("Key must be a string.");
             }
         }

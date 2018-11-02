@@ -18,6 +18,7 @@ import { BulkInsertOperation } from "./BulkInsertOperation";
 import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
 import { DocumentSubscriptions } from "./Subscriptions/DocumentSubscriptions";
 import { SessionOptions } from "./Session/SessionOptions";
+import { AbstractIndexCreationTaskBase } from "./Indexes/AbstractIndexCreationTaskBase";
 
 export interface SessionEventsProxy {
     addSessionListener(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;

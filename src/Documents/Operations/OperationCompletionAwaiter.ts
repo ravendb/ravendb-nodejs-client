@@ -49,7 +49,8 @@ export class OperationCompletionAwaiter {
                                 `Operation of ID ${this._id} has been cancelled.`);
                         case "Faulted":
                             const faultResult: OperationExceptionResult = operationStatusResult.result;
-                            throw ExceptionDispatcher.get(faultResult, faultResult.statusCode);
+                            const errorSchema = Object.assign({}, faultResult, { url: this._requestExecutor.getUrl() });
+                            throw ExceptionDispatcher.get(errorSchema, faultResult.statusCode);
                     }
 
                     return BluebirdPromise.delay(500)

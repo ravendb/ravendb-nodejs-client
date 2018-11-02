@@ -106,7 +106,8 @@ export class JsonOperation {
                 }
 
                 changed = JsonOperation._compareJsonArray(
-                    JsonOperation._fieldPathCombine(fieldPath, prop), 
+                    JsonOperation._fieldPathCombine(fieldPath, prop),
+                    id, 
                     oldProp as any[], 
                     newProp as any[], 
                     changes, 

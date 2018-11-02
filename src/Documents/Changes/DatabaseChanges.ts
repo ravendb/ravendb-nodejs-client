@@ -10,7 +10,7 @@ import { ChangesObservable } from "./ChangesObservable";
 import { throwError } from "../../Exceptions";
 import * as semaphore from "semaphore";
 import * as WebSocket from "ws";
-import { StringUtil, StringUtil } from "../../Utility/StringUtil";
+import { StringUtil } from "../../Utility/StringUtil";
 import { EventEmitter } from "events";
 import * as PromiseUtil from "../../Utility/PromiseUtil";
 import { IDefer } from "../../Utility/PromiseUtil";
@@ -218,7 +218,8 @@ export class DatabaseChanges implements IDatabaseChanges {
         }
     }
 
-    private _getOrAddConnectionState(name: string, watchCommand: string, unwatchCommand, value: string, values: string[]):
+    private _getOrAddConnectionState(
+        name: string, watchCommand: string, unwatchCommand, value: string, values: string[] = null):
         DatabaseConnectionState {
 
         let newValue = false;
@@ -226,20 +227,21 @@ export class DatabaseChanges implements IDatabaseChanges {
         let counter: DatabaseConnectionState;
 
         if (!this._counters.has(name)) {
-            const connectionState = new DatabaseConnectionState(() => this._send(watchCommand, value), async () => {
-                try {
-                    if (this.connected) {
-                        await this._send(unwatchCommand, value, values);
+            const connectionState = new DatabaseConnectionState(
+                () => this._send(watchCommand, value, values), async () => {
+                    try {
+                        if (this.connected) {
+                            await this._send(unwatchCommand, value, values);
+                        }
+                    } catch (e) {
+                        // if we are not connected then we unsubscribed already
+                        // because connections drops with all subscriptions
                     }
-                } catch (e) {
-                    // if we are not connected then we unsubscribed already
-                    // because connections drops with all subscriptions
-                }
 
-                const state = this._counters.get(name);
-                this._counters.delete(name);
-                state.dispose();
-            });
+                    const state = this._counters.get(name);
+                    this._counters.delete(name);
+                    state.dispose();
+                });
             this._counters.set(name, connectionState);
             counter = connectionState;
 
@@ -456,18 +458,26 @@ export class DatabaseChanges implements IDatabaseChanges {
             "unwatch-document-counter", 
             null, 
             [ documentId, counterName ]);
-        ChangesObservable<CounterChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.COUNTER, counter,
-                notification -> StringUtils.equalsIgnoreCase(documentId, notification.getDocumentId()) && StringUtils.equalsIgnoreCase(counterName, notification.getName()));
-         return taskedObservable;
+        const taskedObservable = new ChangesObservable<CounterChange, DatabaseConnectionState>(
+            "Counter", counter,
+            notification => StringUtil.equalsIgnoreCase(documentId, notification.documentId)
+                && StringUtil.equalsIgnoreCase(counterName, notification.name));
+        return taskedObservable;
     }
-     @Override
-    public IChangesObservable<CounterChange> forCountersOfDocument(String documentId) {
-        if (StringUtils.isWhitespace(documentId)) {
-            throw new IllegalArgumentException("DocumentId cannot be null or whitespace");
+
+    public forCountersOfDocument(documentId: string): IChangesObservable<CounterChange> {
+        if (StringUtil.isNullOrWhitespace(documentId)) {
+            throwError(
+                "InvalidArgumentException", 
+                "DocumentId cannot be null or whitespace.");
         }
-         DatabaseConnectionState counter = getOrAddConnectionState("document/" + documentId + "/counter", "watch-document-counters", "unwatch-document-counters", documentId);
-        ChangesObservable<CounterChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.COUNTER, counter,
-                notification -> StringUtils.equalsIgnoreCase(documentId, notification.getDocumentId()));
-         return taskedObservable;
+        
+        const counter = this._getOrAddConnectionState(
+            "document/" + documentId + "/counter", "watch-document-counters", "unwatch-document-counters", documentId);
+        const taskedObservable = new ChangesObservable<CounterChange, DatabaseConnectionState>(
+            "Counter", 
+            counter,
+            notification => StringUtil.equalsIgnoreCase(documentId, notification.documentId));
+        return taskedObservable;
     }
 }

@@ -11,7 +11,7 @@ export class FacetBuilder<T> implements IFacetBuilder<T>, IFacetOperations<T> {
     private _range: GenericRangeFacet;
     private _default: Facet;
 
-    private static _rqlKeywords: Set<String> = new Set([
+    private static _rqlKeywords: Set<string> = new Set([
         "as",
         "select",
         "where",

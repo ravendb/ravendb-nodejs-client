@@ -10,7 +10,7 @@ function normalizeId(id: string) {
 
 export class DocumentsById {
 
-    public _inner: Map<String, DocumentInfo>;
+    public _inner: Map<string, DocumentInfo>;
 
     public constructor() {
         this._inner = new Map();

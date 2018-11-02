@@ -1,5 +1,5 @@
-import { throwError } from "../Exceptions";
-import { IAuthOptions } from "../Auth/AuthOptions";
+import { throwError } from "../../src/Exceptions";
+import { IAuthOptions } from "../../src/Auth/AuthOptions";
 
 export abstract class RavenServerLocator {
 

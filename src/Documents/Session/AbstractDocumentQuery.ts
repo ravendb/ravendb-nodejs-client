@@ -20,6 +20,7 @@ import { GroupBy } from "../Queries/GroupBy";
 import { GroupByKeyToken } from "../Session/Tokens/GroupByKeyToken";
 import { GroupBySumToken } from "../Session/Tokens/GroupBySumToken";
 import { ExplanationToken } from "../Session/Tokens/ExplanationToken";
+import { TimingsToken } from "../Session/Tokens/TimingsToken";
 import { TrueToken } from "../Session/Tokens/TrueToken";
 import { WhereToken, WhereOptions } from "../Session/Tokens/WhereToken";
 import { QueryFieldUtil } from "../Queries/QueryFieldUtil";
@@ -160,6 +161,17 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     protected _disableCaching: boolean;
 
     private _includesAlias: string;
+    
+    protected _highlightingTokens: HighlightingToken[] = [];
+    
+    protected _queryHighlightings: QueryHighlightings = new QueryHighlightings();
+
+    protected _queryTimings: QueryTimings;
+
+    protected explanations: Explanations;
+    
+    protected explanationToken: ExplanationToken;
+
 
     // TBD 4.1 protected boolean showQueryTimings;
 
@@ -1304,7 +1316,10 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     private _buildInclude(queryText: StringBuilder): void {
         if (!this._documentIncludes.size
-            && this._highlightingTokens.length) {
+            && !this._highlightingTokens.length
+            && !this._explanationToken
+            && !this._queryTimings
+            && !this._counterIncludesTokens) {
             return;
         }
 
@@ -1332,6 +1347,42 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             } else {
                 queryText.append(include);
             }
+        }
+
+        if (this._counterIncludesTokens != null) {
+            for (const counterIncludesToken of this._counterIncludesTokens) {
+                if (!first) {
+                    queryText.append(",");
+                }
+
+                first = false;
+                counterIncludesToken.writeTo(queryText);
+            }
+        }
+
+        for (const token of this._highlightingTokens) {
+            if (!first) {
+                queryText.append(",");
+            }
+            first = false;
+            token.writeTo(queryText);
+        }
+
+        if (this._explanationToken) {
+            if (!first) {
+                queryText.append(",");
+            }
+
+            first = false;
+            this._explanationToken.writeTo(queryText);
+        }
+
+        if (this._queryTimings) {
+            if (!first) {
+                queryText.append(",");
+            }
+            first = false;
+            TimingsToken.instance.writeTo(queryText);
         }
     }
 
@@ -1566,8 +1617,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._disableCaching = true;
     }
 
-    protected _queryTimings: QueryTimings;
-
     public _includeTimings(timingsCallback: (timings: QueryTimings) => void): void {
         if (this._queryTimings) {
             timingsCallback(this._queryTimings);
@@ -1578,10 +1627,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         timingsCallback(this._queryTimings);
     }
 
-    protected _highlightingTokens: HighlightingToken[] = [];
-
-    protected _queryHighlightings: QueryHighlightings = new QueryHighlightings();
-    
     public _highlight(
         parameters: HighlightingParameters, 
         highlightingsCallback: ValueCallback<Highlightings>): void {
@@ -1800,19 +1845,12 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         return this._executeActualQuery();
     }
 
-    private _executeActualQuery(): Promise<void> {
-        // TBD 4.1 let context;
-        let command;
-        const result = BluebirdPromise.resolve()
-            .then(() => {
-                // TBD 4.1 context = this._queryOperation.enterQueryContext();
-                command = this._queryOperation.createRequest();
-                return this._theSession.requestExecutor.execute(command, this._theSession.sessionInfo);
-            })
-            .then(() => {
-                this._queryOperation.setResult(command.result);
-                this.emit("afterQueryExecuted", this._queryOperation.getCurrentQueryResults());
-            });
+    private async _executeActualQuery(): Promise<void> {
+        // TBD 4.1 context = this._queryOperation.enterQueryContext();
+        const command = this._queryOperation.createRequest();
+        await this._theSession.requestExecutor.execute(command, this._theSession.sessionInfo);
+        this._queryOperation.setResult(command.result);
+        this.emit("afterQueryExecuted", this._queryOperation.getCurrentQueryResults());
         /* TBD 4.1
         .finally(() => {
             if (context) {
@@ -1820,8 +1858,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             }
         });
         */
-
-        return Promise.resolve(result);
     }
 
     public async iterator(): Promise<IterableIterator<T>> {
