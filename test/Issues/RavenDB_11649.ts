@@ -1,281 +1,209 @@
-// package net.ravendb.client.test.issues;
-//  import net.ravendb.client.RemoteTestBase;
-// import net.ravendb.client.documents.IDocumentStore;
-// import net.ravendb.client.documents.session.DocumentsChanges;
-// import net.ravendb.client.documents.session.IDocumentSession;
-// import org.junit.jupiter.api.Test;
-//  import java.util.List;
-// import java.util.Map;
-// import java.util.stream.Collectors;
-//  import static org.assertj.core.api.Assertions.assertThat;
-//  public class RavenDB_11649Test extends RemoteTestBase {
-//      public static class OuterClass {
-//         private InnerClass[][] innerClassMatrix;
-//         private InnerClass[] innerClasses;
-//         private String a;
-//         private InnerClass innerClass;
-//         private MiddleClass middleClass;
-//          public InnerClass[][] getInnerClassMatrix() {
-//             return innerClassMatrix;
-//         }
-//          public void setInnerClassMatrix(InnerClass[][] innerClassMatrix) {
-//             this.innerClassMatrix = innerClassMatrix;
-//         }
-//          public InnerClass[] getInnerClasses() {
-//             return innerClasses;
-//         }
-//          public void setInnerClasses(InnerClass[] innerClasses) {
-//             this.innerClasses = innerClasses;
-//         }
-//          public String getA() {
-//             return a;
-//         }
-//          public void setA(String a) {
-//             this.a = a;
-//         }
-//          public InnerClass getInnerClass() {
-//             return innerClass;
-//         }
-//          public void setInnerClass(InnerClass innerClass) {
-//             this.innerClass = innerClass;
-//         }
-//          public MiddleClass getMiddleClass() {
-//             return middleClass;
-//         }
-//          public void setMiddleClass(MiddleClass middleClass) {
-//             this.middleClass = middleClass;
-//         }
-//     }
-//      public static class InnerClass {
-//         private String a;
-//          public String getA() {
-//             return a;
-//         }
-//          public void setA(String a) {
-//             this.a = a;
-//         }
-//     }
-//      public static class MiddleClass {
-//         private InnerClass a;
-//          public InnerClass getA() {
-//             return a;
-//         }
-//          public void setA(InnerClass a) {
-//             this.a = a;
-//         }
-//     }
-//      @Test
-//     public void whatChanged_WhenInnerPropertyChanged_ShouldReturnThePropertyNamePlusPath() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 // arrange
-//                 OuterClass doc = new OuterClass();
-//                 doc.setA("outerValue");
-//                 InnerClass innerClass = new InnerClass();
-//                 doc.setInnerClass(innerClass);
-//                  String id = "docs/1";
-//                 session.store(doc, id);
-//                 session.saveChanges();
-//                  doc.getInnerClass().setA("newInnerValue");
-//                  // action
-//                 Map<String, List<DocumentsChanges>> changes = session.advanced().whatChanged();
-//                  // assert
-//                 List<String> changedPaths = changes.get(id)
-//                         .stream()
-//                         .map(x -> x.getFieldPath())
-//                         .collect(Collectors.toList());
-//                  assertThat(changedPaths)
-//                         .containsExactly("innerClass");
-//             }
-//         }
-//     }
-//      @Test
-//     public void whatChanged_WhenInnerPropertyChangedFromNull_ShouldReturnThePropertyNamePlusPath() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 // arrange
-//                 OuterClass doc = new OuterClass();
-//                 doc.setA("outerValue");
-//                  InnerClass innerClass = new InnerClass();
-//                 doc.setInnerClass(innerClass);
-//                 innerClass.setA(null);
-//                  String id = "docs/1";
-//                 session.store(doc, id);
-//                 session.saveChanges();
-//                  doc.getInnerClass().setA("newInnerValue");
-//                  // action
-//                 Map<String, List<DocumentsChanges>> changes = session.advanced().whatChanged();
-//                  // assert
-//                 List<String> changedPaths = changes.get(id)
-//                         .stream()
-//                         .map(x -> x.getFieldPath())
-//                         .collect(Collectors.toList());
-//                  assertThat(changedPaths)
-//                         .containsExactly("innerClass");
-//             }
-//         }
-//     }
-//      @Test
-//     public void whatChanged_WhenPropertyOfInnerPropertyChangedToNull_ShouldReturnThePropertyNamePlusPath() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 // arrange
-//                 OuterClass doc = new OuterClass();
-//                 doc.setA("outerValue");
-//                 InnerClass innerClass = new InnerClass();
-//                 innerClass.setA("innerValue");
-//                 doc.setInnerClass(innerClass);
-//                  String id = "docs/1";
-//                 session.store(doc, id);
-//                 session.saveChanges();
-//                  doc.getInnerClass().setA(null);
-//                  // action
-//                 Map<String, List<DocumentsChanges>> changes = session.advanced().whatChanged();
-//                  // assert
-//                 List<String> changedPaths = changes.get(id)
-//                         .stream()
-//                         .map(x -> x.getFieldPath())
-//                         .collect(Collectors.toList());
-//                  assertThat(changedPaths)
-//                         .containsExactly("innerClass");
-//             }
-//         }
-//     }
-//      @Test
-//     public void whatChanged_WhenOuterPropertyChanged_FieldPathShouldBeEmpty() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                  // arrange
-//                 OuterClass doc = new OuterClass();
-//                 doc.setA("outerValue");
-//                 InnerClass innerClass = new InnerClass();
-//                 innerClass.setA("innerClass");
-//                 doc.setInnerClass(innerClass);
-//                  String id = "docs/1";
-//                 session.store(doc, id);
-//                 session.saveChanges();
-//                  doc.setA("newOuterValue");
-//                  // action
-//                 Map<String, List<DocumentsChanges>> changes = session.advanced().whatChanged();
-//                  // assert
-//                 List<String> changedPaths = changes.get(id)
-//                         .stream()
-//                         .map(x -> x.getFieldPath())
-//                         .collect(Collectors.toList());
-//                  assertThat(changedPaths)
-//                         .containsExactly("");
-//             }
-//         }
-//     }
-//      @Test
-//     public void whatChanged_WhenInnerPropertyInArrayChanged_ShouldReturnWithRelevantPath() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 // arrange
-//                 OuterClass doc = new OuterClass();
-//                 doc.setA("outerValue");
-//                 InnerClass innerClass = new InnerClass();
-//                 innerClass.setA("innerValue");
-//                 doc.setInnerClasses(new InnerClass[] { innerClass });
-//                  String id = "docs/1";
-//                 session.store(doc, id);
-//                 session.saveChanges();
-//                  doc.getInnerClasses()[0].setA("newInnerValue");
-//                  // action
-//                 Map<String, List<DocumentsChanges>> changes = session.advanced().whatChanged();
-//                  // assert
-//                 List<String> changedPaths = changes.get(id)
-//                         .stream()
-//                         .map(x -> x.getFieldPath())
-//                         .collect(Collectors.toList());
-//                  assertThat(changedPaths)
-//                         .containsExactly("innerClasses[0]");
-//             }
-//         }
-//     }
-//      @Test
-//     public void whatChanged_WhenArrayPropertyInArrayChangedFromNull_ShouldReturnWithRelevantPath() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 // arrange
-//                 OuterClass doc = new OuterClass();
-//                  doc.setInnerClassMatrix(new InnerClass[][]{ new InnerClass[] {  }});
-//                 String id = "docs/1";
-//                 session.store(doc, id);
-//                 session.saveChanges();
-//                  doc.getInnerClassMatrix()[0] = new InnerClass[] { new InnerClass() };
-//                  // action
-//                 Map<String, List<DocumentsChanges>> changes = session.advanced().whatChanged();
-//                  // assert
-//                 List<String> changedPaths = changes.get(id)
-//                         .stream()
-//                         .map(x -> x.getFieldPath())
-//                         .collect(Collectors.toList());
-//                  assertThat(changedPaths)
-//                         .containsExactly("innerClassMatrix[0]");
-//             }
-//         }
-//     }
-//      @Test
-//     public void whatChanged_WhenInMatrixChanged_ShouldReturnWithRelevantPath() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 // arrange
-//                 OuterClass doc = new OuterClass();
-//                  InnerClass innerClass = new InnerClass();
-//                 innerClass.setA("oldValue");
-//                  doc.setInnerClassMatrix(new InnerClass[][]{ new InnerClass[] { innerClass }});
-//                 String id = "docs/1";
-//                 session.store(doc, id);
-//                 session.saveChanges();
-//                  doc.getInnerClassMatrix()[0][0].setA("newValue");
-//                  // action
-//                 Map<String, List<DocumentsChanges>> changes = session.advanced().whatChanged();
-//                  // assert
-//                 List<String> changedPaths = changes.get(id)
-//                         .stream()
-//                         .map(x -> x.getFieldPath())
-//                         .collect(Collectors.toList());
-//                  assertThat(changedPaths)
-//                         .containsExactly("innerClassMatrix[0][0]");
-//             }
-//         }
-//     }
-//      @Test
-//     public void whatChanged_WhenAllNamedAPropertiesChanged_ShouldReturnDifferentPaths() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 // arrange
-//                 OuterClass doc = new OuterClass();
-//                 doc.setA("outerValue");
-//                  InnerClass innerClass = new InnerClass();
-//                 innerClass.setA("innerValue");
-//                 doc.setInnerClass(innerClass);
-//                  doc.setMiddleClass(new MiddleClass());
-//                  InnerClass innerClass2 = new InnerClass();
-//                 innerClass2.setA("oldValue");
-//                  doc.setInnerClasses(new InnerClass[]{ innerClass2 });
-//                  InnerClass innerClass3 = new InnerClass();
-//                 innerClass3.setA("oldValue");
-//                 doc.setInnerClassMatrix(new InnerClass[][] { new InnerClass[] { innerClass3 }});
-//                  String id = "docs/1";
-//                 session.store(doc, id);
-//                 session.saveChanges();
-//                  doc.setA("newOuterValue");
-//                 doc.getInnerClass().setA("newInnerValue");
-//                 doc.getMiddleClass().setA(new InnerClass());
-//                 doc.getInnerClasses()[0].setA("newValue");
-//                 doc.getInnerClassMatrix()[0][0].setA("newValue");
-//                  // action
-//                 Map<String, List<DocumentsChanges>> changes = session.advanced().whatChanged();
-//                  // assert
-//                 List<String> changedPaths = changes.get(id)
-//                         .stream()
-//                         .map(x -> x.getFieldPath())
-//                         .collect(Collectors.toList());
-//                  assertThat(changedPaths)
-//                         .containsExactlyInAnyOrder("", "innerClass", "middleClass", "innerClasses[0]", "innerClassMatrix[0][0]");
-//             }
-//         }
-//     }
-// }
+import * as mocha from "mocha";
+import * as BluebirdPromise from "bluebird";
+import * as assert from "assert";
+import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+
+import {
+    RavenErrorType,
+    IDocumentStore,
+} from "../../src";
+
+describe.only("RavenDB-11649", function () {
+
+    let store: IDocumentStore;
+
+    beforeEach(async function () {
+        store = await testContext.getDocumentStore();
+    });
+
+    afterEach(async () =>
+        await disposeTestDocumentStore(store));
+
+    class OuterClass {
+        public innerClassMatrix: InnerClass[][];
+        public innerClasses: InnerClass[];
+        public a: string;
+        public innerClass: InnerClass;
+        public middleClass: MiddleClass;
+    }
+
+    class InnerClass {
+        public a: string;
+    }
+
+    class MiddleClass {
+        public a: InnerClass;
+    }
+
+    it("whatChanged_WhenInnerPropertyChanged_ShouldReturnThePropertyNamePlusPath", async () => {
+        
+        const session = store.openSession();
+        
+        // arrange
+        const doc = new OuterClass();
+        doc.a = "outerValue";
+        const innerClass = new InnerClass();
+        doc.innerClass = innerClass;
+        const id = "docs/1";
+        await session.store(doc, id);
+        await session.saveChanges();
+        doc.innerClass.a = "newInnerValue";
+
+        // action
+        const changes = session.advanced.whatChanged();
+        
+        // assert
+        const changedPaths = changes[id]
+            .map(x => x.fieldPath);
+        assert.ok(changedPaths[0] === "innerClass");
+    });
+
+    it("whatChanged_WhenInnerPropertyChangedFromNull_ShouldReturnThePropertyNamePlusPath", async function() {
+        const session = store.openSession();
+
+        // arrange
+        const doc = new OuterClass();
+        doc.a = "outerValue";
+        const innerClass = new InnerClass();
+        doc.innerClass = innerClass;
+        innerClass.a = null;
+        const id = "docs/1";
+        await session.store(doc, id);
+        await session.saveChanges();
+        doc.innerClass.a = "newInnerValue";
+
+        // action
+        const changes = session.advanced.whatChanged();
+
+        // assert
+        const changedPaths = changes[id]
+            .map(x => x.fieldPath);
+        assert.ok(changedPaths[0] === "innerClass");
+    });
+
+    it("whatChanged_WhenPropertyOfInnerPropertyChangedToNull_ShouldReturnThePropertyNamePlusPath", async function() {
+        const session = store.openSession();
+        // arrange
+        const doc = new OuterClass();
+        doc.a = "outerValue";
+        const innerClass = new InnerClass();
+        innerClass.a = "innerValue";
+        doc.innerClass = innerClass;
+        const id = "docs/1";
+        await session.store(doc, id);
+        await session.saveChanges();
+        doc.innerClass.a = null;
+
+        // action
+        const changes = session.advanced.whatChanged();
+
+        // assert
+        const changedPaths = changes[id]
+            .map(x => x.fieldPath);
+        assert.ok(changedPaths[0] === "innerClass");
+        assert.strictEqual(changedPaths.length, 1);
+    });
+
+    it("whatChanged_WhenOuterPropertyChanged_FieldPathShouldBeEmpty", async function () {
+        const session = store.openSession();
+
+        // arrange
+        const doc = new OuterClass();
+        doc.a = "outerValue";
+        const innerClass = new InnerClass();
+        innerClass.a = "innerClass";
+        doc.innerClass = innerClass;
+        const id = "docs/1";
+        await session.store(doc, id);
+        await session.saveChanges();
+        doc.a = "newOuterValue";
+
+        // action
+        const changes = session.advanced.whatChanged();
+
+        // assert
+        const changedPaths = changes[id]
+                .map(x => x.fieldPath);
+        assert.ok(changedPaths[0] === "");
+        assert.strictEqual(changedPaths.length, 1);
+    });
+
+    it("whatChanged_WhenInnerPropertyInArrayChanged_ShouldReturnWithRelevantPath", async function () {
+        const session = store.openSession();
+        const doc = new OuterClass();
+        doc.innerClassMatrix = [[]];
+        const id = "docs/1";
+        await session.store(doc, id);
+        await session.saveChanges();
+        doc.innerClassMatrix[0] = [new InnerClass()];
+
+        // action
+        const changes = session.advanced.whatChanged();
+        // assert
+        const changedPaths = changes[id]
+                        .map(x => x.fieldPath);
+        assert.strictEqual(changedPaths[0], "innerClassMatrix[0]");
+        assert.strictEqual(changedPaths.length, 1);
+
+    });
+
+    it("whatChanged_WhenInMatrixChanged_ShouldReturnWithRelevantPath", async function () {
+        const session = store.openSession();
+        // arrange
+        const doc = new OuterClass();
+        const innerClass = new InnerClass();
+        innerClass.a = "oldValue";
+        doc.innerClassMatrix = [[innerClass]];
+        const id = "docs/1";
+        await session.store(doc, id);
+        await session.saveChanges();
+        doc.innerClassMatrix[0][0].a = "newValue";
+
+        // action
+        const changes = session.advanced.whatChanged();
+        const changedPaths = changes[id]
+                        .map(x => x.fieldPath);
+        assert.strictEqual(changedPaths[0], "innerClassMatrix[0][0]");
+        assert.strictEqual(changedPaths.length, 1);
+    });
+
+    it("whatChanged_WhenAllNamedAPropertiesChanged_ShouldReturnDifferentPaths", async function () {
+        const session = store.openSession();
+
+        // arrange
+        const doc = new OuterClass();
+        doc.a = "outerValue";
+        const innerClass = new InnerClass();
+        innerClass.a = "innerValue";
+        doc.innerClass = innerClass;
+        doc.middleClass = new MiddleClass();
+        const innerClass2 = new InnerClass();
+        innerClass2.a = "oldValue";
+        doc.innerClasses = [ innerClass2 ];
+        const innerClass3 = new InnerClass();
+        innerClass3.a = "oldValue";
+        doc.innerClassMatrix = [[ innerClass3 ]];
+        const id = "docs/1";
+        await session.store(doc, id);
+        await session.saveChanges();
+        doc.a = "newOuterValue";
+        doc.innerClass.a = "newInnerValue";
+        doc.middleClass.a = new InnerClass();
+        doc.innerClasses[0].a = "newValue";
+        doc.innerClassMatrix[0][0].a = "newValue";
+
+        // action
+        const changes = session.advanced.whatChanged();
+
+        // assert
+        const changedPaths = changes[id].map(x => x.fieldPath);
+        changedPaths.sort();
+        const expected = ["", "innerClass", "middleClass", "innerClasses[0]", "innerClassMatrix[0][0]"];
+        expected.sort();
+        assert.strictEqual(changedPaths.length, expected.length);
+        for (let i = 0; i < changedPaths.length; i++) {
+            assert.strictEqual(changedPaths[i], expected[i]);
+        }
+    });
+
+});
