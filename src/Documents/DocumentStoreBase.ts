@@ -25,6 +25,7 @@ import { DocumentSubscriptions } from "./Subscriptions/DocumentSubscriptions";
 import { DocumentStore } from "./DocumentStore";
 import { TypeUtil } from "../Utility/TypeUtil";
 import { AbstractIndexCreationTaskBase } from "./Indexes/AbstractIndexCreationTaskBase";
+import { CaseInsensitiveKeysMap } from "../Primitives/CaseInsensitiveKeysMap";
 
 export abstract class DocumentStoreBase
     extends EventEmitter
@@ -125,7 +126,7 @@ export abstract class DocumentStoreBase
         return this._subscriptions;
     }
 
-    private _lastRaftIndexPerDatabase: Map<string, number> = new Map();
+    private _lastRaftIndexPerDatabase: Map<string, number> = CaseInsensitiveKeysMap.create();
 
     public getLastTransactionIndex(database: string): number {
         const index = this._lastRaftIndexPerDatabase.get(database);
@@ -142,9 +143,10 @@ export abstract class DocumentStoreBase
         }
 
         const initialValue = this._lastRaftIndexPerDatabase.get(database);
-        if (TypeUtil.isUndefined(initialValue)) {
-            this._lastRaftIndexPerDatabase.set(database, Math.max(initialValue, index));
-        }
+        const result = TypeUtil.isUndefined(initialValue)
+            ? index
+            : Math.max(initialValue, index);
+        this._lastRaftIndexPerDatabase.set(database, result);
     }
 
     protected _ensureNotDisposed(): void {

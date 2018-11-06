@@ -190,6 +190,7 @@ export * from "./Documents/Session/WhereParams";
 export *  from "./Documents/Session/IMetadataDictionary";
 export *  from "./Documents/Session/DocumentResultStream";
 export * from "./Documents/Commands/StreamResult";
+export * from "./Documents/Session/SessionOptions";
 
 // COUNTERS
 

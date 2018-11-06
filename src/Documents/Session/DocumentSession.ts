@@ -220,6 +220,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             }
 
             await this._requestExecutor.execute(command, this._sessionInfo);
+            this._updateSessionAfterSaveChanges(command.result);
             saveChangeOperation.setResult(command.result);
         } finally {
             if (command) {

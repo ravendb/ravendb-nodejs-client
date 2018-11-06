@@ -77,8 +77,8 @@ export class BatchCommand extends RavenCommand<BatchCommandResult> implements ID
             (result, command) => [...result, command.serialize(this._conventions)], []);
 
         const body = JsonSerializer.getDefault().serialize({ 
-            TransactionMode: this._mode === "ClusterWide" ? "ClusterWide" : undefined,
-            Commands: commandsArray 
+            Commands: commandsArray,
+            TransactionMode: this._mode === "ClusterWide" ? "ClusterWide" : undefined
         });
 
         const queryString = this._appendOptions();

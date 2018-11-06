@@ -1,62 +1,73 @@
-// package net.ravendb.client.test.cluster;
-//  import net.ravendb.client.RemoteTestBase;
-// import net.ravendb.client.ReplicationTestBase;
-// import net.ravendb.client.documents.DocumentStore;
-// import net.ravendb.client.documents.IDocumentStore;
-// import net.ravendb.client.documents.operations.compareExchange.CompareExchangeValue;
-// import net.ravendb.client.documents.session.IDocumentSession;
-// import net.ravendb.client.documents.session.SessionOptions;
-// import net.ravendb.client.documents.session.TransactionMode;
-// import net.ravendb.client.exceptions.RavenException;
-// import net.ravendb.client.infrastructure.entities.User;
-// import org.junit.jupiter.api.Test;
-//  import java.io.ByteArrayInputStream;
-//  import static org.assertj.core.api.Assertions.assertThat;
-// import static org.assertj.core.api.Assertions.assertThatThrownBy;
-//  public class ClusterTransactionTest extends RemoteTestBase {
-//      @Test
-//     public void canCreateClusterTransactionRequest() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             User user1 = new User();
-//             user1.setName("Karmel");
-//              User user3 = new User();
-//             user3.setName("Indych");
-//              SessionOptions sessionOptions = new SessionOptions();
-//             sessionOptions.setTransactionMode(TransactionMode.CLUSTER_WIDE);
-//              try (IDocumentSession session = store.openSession(sessionOptions)) {
-//                 session.advanced().clusterTransaction().createCompareExchangeValue("usernames/ayende", user1);
-//                 session.store(user3, "foo/bar");
-//                 session.saveChanges();
-//                  User user = session.advanced().clusterTransaction().getCompareExchangeValue(User.class, "usernames/ayende").getValue();
-//                 assertThat(user.getName())
-//                         .isEqualTo(user1.getName());
-//                 user = session.load(User.class, "foo/bar");
-//                 assertThat(user.getName())
-//                         .isEqualTo(user3.getName());
-//             }
-//         }
-//     }
-//      @Test
-//     public void testSessionSequance() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             User user1 = new User();
-//             user1.setName("Karmel");
-//              User user2 = new User();
-//             user2.setName("Indych");
-//              SessionOptions sessionOptions = new SessionOptions();
-//             sessionOptions.setTransactionMode(TransactionMode.CLUSTER_WIDE);
-//              try (IDocumentSession session = store.openSession(sessionOptions)) {
-//                 session.advanced().clusterTransaction().createCompareExchangeValue("usernames/ayende", user1);
-//                 session.store(user1, "users/1");
-//                 session.saveChanges();
-//                  session.advanced().clusterTransaction().updateCompareExchangeValue(new CompareExchangeValue<User>("usernames/ayende", ((DocumentStore) store).getLastTransactionIndex(store.getDatabase()), user2));
-//                  session.store(user2, "users/2");
-//                 user1.setAge(10);
-//                 session.store(user1, "users/1");
-//                 session.saveChanges();
-//             }
-//         }
-//     }
+import * as mocha from "mocha";
+import * as BluebirdPromise from "bluebird";
+import * as assert from "assert";
+import { User } from "../../Assets/Entities";
+import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
+
+import DocumentStore, {
+    RavenErrorType,
+    GetNextOperationIdCommand,
+    SessionOptions,
+    IDocumentStore,
+    CompareExchangeValue,
+} from "../../../src";
+
+describe.only("ClusterTransactionTest", function () {
+
+    let store: IDocumentStore;
+
+    beforeEach(async function () {
+        testContext.enableFiddler();
+        store = await testContext.getDocumentStore();
+    });
+
+    afterEach(async () => 
+        await disposeTestDocumentStore(store));
+
+    it("canCreateClusterTransactionRequest", async () => {
+        const user1 = Object.assign(new User(), { name: "Karmel" });
+        const user3 = Object.assign(new User(), { name: "Indych" });
+        const sessionOptions = {
+            transactionMode: "ClusterWide"
+        } as SessionOptions;
+        {
+            const session = store.openSession(sessionOptions);
+            session.advanced.clusterTransaction.createCompareExchangeValue("usernames/ayende", user1);
+            await session.store(user3, "foo/bar");
+            await session.saveChanges();
+            const userFromClusterTx = (
+                await session.advanced.clusterTransaction
+                    .getCompareExchangeValue<User>("usernames/ayende", User)).value;
+            assert.ok(userFromClusterTx instanceof User, "get compare exchange returned non-user");
+            assert.strictEqual(userFromClusterTx.name, user1.name);
+            const userLoaded = await session.load<User>("foo/bar");
+            assert.strictEqual(userLoaded.name, user3.name);
+        }
+    });
+
+    it.only("testSessionSequance", async function () {
+        const user1 = Object.assign(new User(), { name: "Karmel" });
+        const user2 = Object.assign(new User(), { name: "Indych" });
+
+        {
+            const session = store.openSession({ transactionMode: "ClusterWide" } as SessionOptions);
+            await session.store(user1, "users/1");
+            session.advanced.clusterTransaction.createCompareExchangeValue("usernames/ayende", user1);
+            await session.saveChanges();
+
+            const lastTransactionIndex = (store as DocumentStore).getLastTransactionIndex(store.database);
+            assert.ok(lastTransactionIndex !== null);
+            session.advanced.clusterTransaction.updateCompareExchangeValue(
+                new CompareExchangeValue<User>("usernames/ayende", lastTransactionIndex, user2));
+
+            await session.store(user2, "users/2");
+            user1.age = 10;
+            await session.store(user1, "users/1");
+            await session.saveChanges();
+        }
+    });
+});
+
 //      @Test
 //     public void throwOnUnsupportedOperations() throws Exception {
 //         try (IDocumentStore store = getDocumentStore()) {

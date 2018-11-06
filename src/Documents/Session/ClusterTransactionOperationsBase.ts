@@ -63,15 +63,9 @@ export abstract class ClusterTransactionOperationsBase {
         if (!this._storeCompareExchange) {
             this._storeCompareExchange = new Map();
         }
+        
         this._storeCompareExchange.set(item.key, new StoredCompareExchange(item.index, item.value));
     }
-    //     this._ensureNotStored(item.key);
-    //     if (!this._deleteCompareExchange) {
-    //         this._deleteCompareExchange = new Map();
-    //     }
-
-    //     this._deleteCompareExchange.set(item.key, item.index);
-    // }
 
     public deleteCompareExchangeValue(key: string, index: number): void;
     public deleteCompareExchangeValue<T>(item: CompareExchangeValue<T>): void;

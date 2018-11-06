@@ -92,8 +92,8 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
         return {
             Id: this.id,
             ChangeVector: this.changeVector,
-            Type: "PUT",
-            Document: this._document
+            Document: this._document,
+            Type: "PUT"
         };
     }
 }
