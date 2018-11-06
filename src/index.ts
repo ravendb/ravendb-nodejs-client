@@ -191,6 +191,15 @@ export *  from "./Documents/Session/IMetadataDictionary";
 export *  from "./Documents/Session/DocumentResultStream";
 export * from "./Documents/Commands/StreamResult";
 
+// COUNTERS
+
+export { CounterBatch } from "./Documents/Operations/Counters/CounterBatch";
+export { GetCountersOperation } from "./Documents/Operations/Counters/GetCountersOperation";
+export { CounterBatchOperation } from "./Documents/Operations/Counters/CounterBatchOperation";
+export { CounterOperationType } from "./Documents/Operations/Counters/CounterOperationType";
+export { CounterOperation } from "./Documents/Operations/Counters/CounterOperation";
+export { DocumentCountersOperation } from "./Documents/Operations/Counters/DocumentCountersOperation";
+
 // QUERIES
 export * from "./Documents/Queries/IndexQuery";
 export * from "./Documents/Queries/GroupBy";

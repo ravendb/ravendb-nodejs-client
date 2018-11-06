@@ -1,18 +1,33 @@
-// package net.ravendb.client.test.issues;
-//  import net.ravendb.client.RemoteTestBase;
-// import net.ravendb.client.documents.IDocumentStore;
-// import net.ravendb.client.documents.changes.*;
-// import net.ravendb.client.documents.session.IDocumentSession;
-// import net.ravendb.client.infrastructure.entities.User;
-// import net.ravendb.client.primitives.CleanCloseable;
-// import org.eclipse.jetty.util.BlockingArrayQueue;
-// import org.junit.jupiter.api.Test;
-//  import java.util.concurrent.BlockingQueue;
-// import java.util.concurrent.TimeUnit;
-//  import static org.assertj.core.api.Assertions.assertThat;
+import * as mocha from "mocha";
+import * as BluebirdPromise from "bluebird";
+import * as assert from "assert";
+import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+
+import {
+    RavenErrorType,
+    GetNextOperationIdCommand,
+    IDocumentStore,
+} from "../../src";
+
+describe("RavenDB-11703", function () {
+
+    let store: IDocumentStore;
+
+    beforeEach(async function () {
+        store = await testContext.getDocumentStore();
+    });
+
+    afterEach(async () => 
+        await disposeTestDocumentStore(store));
+
+    it("canGetNotificationAboutCounterIncrement", async () => {
+        assert.fail("TODO");
+    });
+});
+
 //  public class RavenDB_11703Test extends RemoteTestBase {
 //      @Test
-//     public void canGetNotificationAboutCounterIncrement() throws Exception {
+//     public void () throws Exception {
 //         try (IDocumentStore store = getDocumentStore()) {
 //             BlockingQueue<CounterChange> changesList = new BlockingArrayQueue<>();
 //              IDatabaseChanges changes = store.changes();

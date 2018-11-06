@@ -37,7 +37,8 @@ export class CounterOperation {
     public get delta(): number {
         return this._delta;
     }
-     public set delta(value) {
+
+    public set delta(value) {
         this._delta = value;
     }
 
@@ -55,6 +56,10 @@ export class CounterOperation {
         const operation = new CounterOperation();
         operation.counterName = counterName;
         operation.type = type;
+        if (arguments.length === 3) {
+            operation.delta = delta;
+        }
+        
         return operation;
     }
 }

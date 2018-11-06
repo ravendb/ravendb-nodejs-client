@@ -30,7 +30,11 @@ function logOnUncaughtAndUnhandled() {
 
 class TestServiceLocator extends RavenServerLocator {
     public getCommandArguments() {
-        return ["--ServerUrl=http://127.0.0.1:0", "--ServerUrl.Tcp=tcp://127.0.0.1:38884"];
+        return [
+            "--ServerUrl=http://127.0.0.1:0", 
+            "--ServerUrl.Tcp=tcp://127.0.0.1:38884",
+            "--Features.Availability=Experimental"
+        ];
     }
 }
 
@@ -55,7 +59,7 @@ class TestSecuredServiceLocator extends RavenServerLocator {
             "--Security.Certificate.Path=" + certPath,
             "--ServerUrl=" + this._getHttpsServerUrl(),
             "--ServerUrl.Tcp=" + this._getHttpsServerTcpUrl(),
-            "--FeaturesAvailability=Experimental"
+            "--Features.Availability=Experimental"
         ];
     }
 

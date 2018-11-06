@@ -8,7 +8,7 @@ import {
     IDocumentStore,
 } from "../../src";
 
-describe.only("RavenDB-11649", function () {
+describe("RavenDB-11649", function () {
 
     let store: IDocumentStore;
 
