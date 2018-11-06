@@ -229,7 +229,8 @@ export abstract class InMemoryDocumentSessionOperations
         }
 
         this._documentStore = documentStore;
-        this._requestExecutor = options.requestExecutor || documentStore.getRequestExecutor();
+        this._requestExecutor = 
+            options.requestExecutor || documentStore.getRequestExecutor(this._databaseName);
 
         this.noTracking = options.noTracking;
 

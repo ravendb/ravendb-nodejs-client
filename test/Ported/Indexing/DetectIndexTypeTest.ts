@@ -1,3 +1,30 @@
+import * as mocha from "mocha";
+import * as BluebirdPromise from "bluebird";
+import * as assert from "assert";
+import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
+
+import {
+    RavenErrorType,
+    GetNextOperationIdCommand,
+    IDocumentStore,
+} from "../../../src";
+
+describe.only("DetectIndexTypeTest", function () {
+
+    let store: IDocumentStore;
+
+    beforeEach(async function () {
+        store = await testContext.getDocumentStore();
+    });
+
+    afterEach(async () => 
+        await disposeTestDocumentStore(store));
+
+    it("can ", async () => {
+        assert.fail("do me next");
+    });
+});
+
 // package net.ravendb.client.test.client.indexing;
 //  import com.google.common.collect.Sets;
 // import net.ravendb.client.documents.indexes.IndexDefinition;
