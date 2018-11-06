@@ -17,17 +17,15 @@ export class ConfigureRevisionsOperation implements IMaintenanceOperation<Config
     }
 
     public getCommand(conventions: DocumentConventions): RavenCommand<ConfigureRevisionsOperationResult> {
-        return new ConfigureRevisionsCommand(conventions, this._configuration);
+        return new ConfigureRevisionsCommand(this._configuration);
     }
 }
 
 export class ConfigureRevisionsCommand extends RavenCommand<ConfigureRevisionsOperationResult> {
-    private readonly _conventions: DocumentConventions;
     private readonly _configuration: RevisionsConfiguration;
 
-    public constructor(conventions: DocumentConventions, configuration: RevisionsConfiguration) {
+    public constructor(configuration: RevisionsConfiguration) {
         super();
-        this._conventions = conventions;
         this._configuration = configuration;
     }
 

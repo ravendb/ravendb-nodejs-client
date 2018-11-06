@@ -20,6 +20,7 @@ import { DocumentConventions } from "./Conventions/DocumentConventions";
 import { ServerNode } from "../Http/ServerNode";
 import { AbstractCallback } from "../Types/Callbacks";
 import { passResultToCallback } from "../Utility/PromiseUtil";
+import { BatchOperation } from "./Session/Operations/BatchOperation";
 
 export class BulkInsertOperation {
     private readonly _generateEntityIdOnTheClient: GenerateEntityIdOnTheClient;
@@ -191,7 +192,23 @@ export class BulkInsertOperation {
         }
 
         const jsonString = JsonSerializer.getDefault().serialize(json);
-        this._currentWriter.push(`{"Id":"${id}","Type":"PUT","Document":${jsonString}}`);
+        this._currentWriter.push(`{"Id":"${BulkInsertOperation._writeId(id)}","Type":"PUT","Document":${jsonString}}`);
+    }
+
+    private static _writeId(input: string): string {
+        let result = "";
+        for (let i = 0; i < input.length; i++) {
+            const c = input[i];
+            if (`"` === c) {
+                if (i === 0 || input[i - 1] !== `\\`) {
+                    result += `\\`;
+                }
+            }
+
+            result += c;
+        }
+
+        return result;
     }
 
     private async _checkIfBulkInsertWasAborted() {
