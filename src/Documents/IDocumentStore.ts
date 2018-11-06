@@ -82,7 +82,7 @@ export interface IDocumentStore extends IDisposable,
     /**
      * Opens document session
      */
-    openSession(database?: string): IDocumentSession;
+    openSession(database?: string, options?: SessionOptions): IDocumentSession;
 
     /**
      * Opens document session
@@ -92,7 +92,7 @@ export interface IDocumentStore extends IDisposable,
     /**
      * Opens document session
      */
-    openSession(database?: string, options?: SessionOptions): IDocumentSession;
+    openSession(database?: string): IDocumentSession;
 
     /**
      * Subscribe to change notifications from the server

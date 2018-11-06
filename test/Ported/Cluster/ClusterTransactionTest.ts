@@ -5,14 +5,12 @@ import { User } from "../../Assets/Entities";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import DocumentStore, {
-    RavenErrorType,
-    GetNextOperationIdCommand,
     SessionOptions,
     IDocumentStore,
     CompareExchangeValue,
 } from "../../../src";
 
-describe.only("ClusterTransactionTest", function () {
+describe("ClusterTransactionTest", function () {
 
     let store: IDocumentStore;
 
@@ -45,7 +43,7 @@ describe.only("ClusterTransactionTest", function () {
         }
     });
 
-    it.only("testSessionSequance", async function () {
+    it("testSessionSequance", async function () {
         const user1 = Object.assign(new User(), { name: "Karmel" });
         const user2 = Object.assign(new User(), { name: "Indych" });
 
@@ -66,52 +64,75 @@ describe.only("ClusterTransactionTest", function () {
             await session.saveChanges();
         }
     });
-});
 
-//      @Test
-//     public void throwOnUnsupportedOperations() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             SessionOptions sessionOptions = new SessionOptions();
-//             sessionOptions.setTransactionMode(TransactionMode.CLUSTER_WIDE);
-//             try (IDocumentSession session = store.openSession()) {
-//                  ByteArrayInputStream attachmentStream = new ByteArrayInputStream(new byte[]{1, 2, 3});
-//                 session.advanced().attachments().store("asd", "test", attachmentStream);
-//                 assertThatThrownBy(() -> {
-//                     session.saveChanges();
-//                 }).isExactlyInstanceOf(RavenException.class);
-//             }
-//         }
-//     }
-//      @Test
-//     public void throwOnInvalidTransactionMode() throws Exception {
-//         User user1 = new User();
-//         user1.setName("Karmel");
-//          try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 assertThatThrownBy(() -> {
-//                     session.advanced().clusterTransaction().createCompareExchangeValue("usernames/ayende", user1);
-//                 }).isExactlyInstanceOf(IllegalStateException.class);
-//                  assertThatThrownBy(() -> {
-//                     session.advanced().clusterTransaction().updateCompareExchangeValue(new CompareExchangeValue<>("test", 0, "test"));
-//                 }).isExactlyInstanceOf(IllegalStateException.class);
-//                  assertThatThrownBy(() -> {
-//                     session.advanced().clusterTransaction().deleteCompareExchangeValue("usernames/ayende", 0);
-//                 }).isExactlyInstanceOf(IllegalStateException.class);
-//             }
-//              SessionOptions options = new SessionOptions();
-//             options.setTransactionMode(TransactionMode.CLUSTER_WIDE);
-//              try (IDocumentSession session = store.openSession(options)) {
-//                 session.advanced().clusterTransaction().createCompareExchangeValue("usernames/ayende", user1);
-//                 session.advanced().setTransactionMode(TransactionMode.SINGLE_NODE);
-//                 assertThatThrownBy(() -> {
-//                     session.saveChanges();
-//                 }).isExactlyInstanceOf(IllegalStateException.class);
-//                  session.advanced().setTransactionMode(TransactionMode.CLUSTER_WIDE);
-//                 session.saveChanges();
-//                  CompareExchangeValue<User> u = session.advanced().clusterTransaction().getCompareExchangeValue(User.class, "usernames/ayende");
-//                 assertThat(u.getValue().getName())
-//                         .isEqualTo(user1.getName());
-//             }
-//         }
-//     }
-// }
+    it("throwOnUnsupportedOperations", async function () {
+        const session = store.openSession({ transactionMode: "ClusterWide" } as SessionOptions);
+        const attachmentStream = Buffer.from([1, 2, 3]);
+        session.advanced.attachments.store("asd", "test", attachmentStream);
+        try {
+            await session.saveChanges();
+            assert.fail("should have thrown");
+        } catch (err) {
+            assert.strictEqual(err.name, "InvalidOperationException");
+            assert.ok(/The command 'AttachmentPUT' is not supported in a cluster session./i.test(err.message));
+        }
+    });
+
+    it("throwOnInvalidTransactionMode", async function () {
+        const user1 = new User();
+        user1.name = "Karmel";
+
+        const CLUSTER_OP_WARNING = "This function is part of cluster transaction session," 
+            + " in order to use it you have to open the Session with ClusterWide option"; 
+        {
+            const session = store.openSession();
+            try {
+                session.advanced.clusterTransaction.createCompareExchangeValue("usernames/ayende", user1);
+                assert.fail("should have thrown.");
+            } catch (err) {
+                assert.strictEqual(err.name, "InvalidOperationException");
+                assert.ok(err.message.includes(CLUSTER_OP_WARNING));
+            }
+
+            try {
+                session.advanced.clusterTransaction.updateCompareExchangeValue(
+                    new CompareExchangeValue("test", 0, "test"));
+                assert.fail("should have thrown.");
+            } catch (err) {
+                assert.strictEqual(err.name, "InvalidOperationException");
+                assert.ok(err.message.includes(CLUSTER_OP_WARNING));
+            }
+
+            try {
+                session.advanced.clusterTransaction.deleteCompareExchangeValue("usernames/ayende", 0);
+                assert.fail("should have thrown.");
+            } catch (err) {
+                assert.strictEqual(err.name, "InvalidOperationException");
+                assert.ok(err.message.includes(CLUSTER_OP_WARNING));
+            }
+        }
+
+        {
+            const session = store.openSession({ transactionMode: "ClusterWide" } as SessionOptions);
+            session.advanced.clusterTransaction.createCompareExchangeValue("usernames/ayende", user1);
+            session.advanced.transactionMode = "SingleNode";
+
+            try {
+                await session.saveChanges();
+                assert.fail("should have thrown");
+            } catch (err) {
+                assert.strictEqual(err.name, "InvalidOperationException");
+                assert.ok(err.message.includes(
+                    "Performing cluster transaction operation require the TransactionMode to be set to ClusterWide"), 
+                    err.message);
+            }
+
+            session.advanced.transactionMode = "ClusterWide";
+            await session.saveChanges();
+
+            const u = await session.advanced.clusterTransaction.getCompareExchangeValue<User>("usernames/ayende", User);
+            assert.strictEqual(u.value.name, user1.name);
+        }
+    });
+
+});
