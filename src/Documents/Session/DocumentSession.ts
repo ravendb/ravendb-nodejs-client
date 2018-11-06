@@ -400,7 +400,9 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         }
 
         const patchRequest = new PatchRequest();
-        patchRequest.script = "this." + path + " += args.val_" + this._valsCount + ";";
+        const variable = `this.${path}`;
+        const value = `args.val_${this._valsCount}`;
+        patchRequest.script = `${variable} = ${variable} ? ${variable} + ${value} : ${value};`;
         const valKey = "val_" + this._valsCount;
         patchRequest.values = { [valKey]: valueToAdd };
 
@@ -546,7 +548,8 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
         if (!isIndex && !isCollection) {
             const entityType = this.conventions.findEntityType(opts.documentType);
-            collection = this.conventions.getCollectionNameForType(entityType);
+            collection = this.conventions.getCollectionNameForType(entityType) 
+                || CONSTANTS.Documents.Metadata.ALL_DOCUMENTS_COLLECTION;
         }
 
         return { indexName, collection };
