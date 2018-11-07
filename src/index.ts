@@ -229,6 +229,7 @@ export * from "./Documents/Changes/DatabaseChange";
 export * from "./Documents/Changes/OperationStatusChange";
 export * from "./Documents/Changes/IDatabaseChanges";
 export * from "./Documents/Changes/IConnectableChanges";
+export * from "./Documents/Changes/IChangesObservable";
 
 // HiLo
 export * from "./Documents/Identity/HiloIdGenerator";
