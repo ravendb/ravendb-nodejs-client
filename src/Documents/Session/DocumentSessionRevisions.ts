@@ -129,7 +129,8 @@ export class DocumentSessionRevisions extends AdvancedSessionExtensionBase imple
         const documentType = TypeUtil.isDocumentType(documentTypeOrCallbackOrDate)
             ? documentTypeOrCallbackOrDate as DocumentType<TEntity>
             : undefined;
-        const callback = TypeUtil.isDocumentType(documentTypeOrCallbackOrDate)
+        const callback = (TypeUtil.isDocumentType(documentTypeOrCallbackOrDate)
+                || TypeUtil.isDate(documentTypeOrCallbackOrDate))
             ? optionalCallback
             : documentTypeOrCallbackOrDate as AbstractCallback<TEntity>;
         

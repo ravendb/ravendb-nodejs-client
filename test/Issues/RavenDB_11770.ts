@@ -1,53 +1,69 @@
-// package net.ravendb.client.test.issues;
-//  import net.ravendb.client.RemoteTestBase;
-// import net.ravendb.client.documents.IDocumentStore;
-// import net.ravendb.client.documents.session.IDocumentSession;
-// import net.ravendb.client.infrastructure.entities.Company;
-// import org.assertj.core.api.Assertions;
-// import org.junit.jupiter.api.Test;
-//  import java.util.Date;
-//  import static org.assertj.core.api.Assertions.assertThat;
-//  public class RavenDB_11770Test extends RemoteTestBase {
-//      @Test
-//     public void canGetRevisionsByDate() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             String id = "users/1";
-//              setupRevisions(store, false, 1000);
-//              try (IDocumentSession session = store.openSession()) {
-//                 Company company = new Company();
-//                 company.setName("Fitzchak");
-//                 session.store(company, id);
-//                 session.saveChanges();
-//             }
-//             Date fst = new Date();
-//              Thread.sleep(1100);
-//              for (int i = 0; i < 3; i++) {
-//                 try (IDocumentSession session = store.openSession()) {
-//                     Company user = session.load(Company.class, id);
-//                     user.setName("Fitzchak " + i);
-//                     session.saveChanges();
-//                 }
-//             }
-//              Date snd = new Date();
-//              Thread.sleep(1100);
-//              for (int i = 0; i < 3; i++) {
-//                 try (IDocumentSession session = store.openSession()) {
-//                     Company user = session.load(Company.class, id);
-//                     user.setName("Oren " + i);
-//                     session.saveChanges();
-//                 }
-//             }
-//              try (IDocumentSession session = store.openSession()) {
-//                 Company rev1 = session.advanced().revisions().get(Company.class, id, fst);
-//                 assertThat(rev1.getName())
-//                         .isEqualTo("Fitzchak");
-//                  Company rev2 = session.advanced().revisions().get(Company.class, id, snd);
-//                 assertThat(rev2.getName())
-//                         .isEqualTo("Fitzchak 2");
-//                  Company rev3 = session.advanced().revisions().get(Company.class, id, new Date());
-//                 assertThat(rev3.getName())
-//                         .isEqualTo("Oren 2");
-//             }
-//         }
-//     }
-// }
+import * as mocha from "mocha";
+import * as BluebirdPromise from "bluebird";
+import * as assert from "assert";
+import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+
+import {
+    RavenErrorType,
+    GetNextOperationIdCommand,
+    IDocumentStore,
+} from "../../src";
+import { Company } from "../Assets/Entities";
+import { delay } from "../../src/Utility/PromiseUtil";
+
+describe("RavenDB_11770Test", function () {
+
+    let store: IDocumentStore;
+
+    beforeEach(async function () {
+        store = await testContext.getDocumentStore();
+    });
+
+    afterEach(async () =>
+        await disposeTestDocumentStore(store));
+
+    it.only("canGetRevisionsByDate", async () => {
+        const id = "users/1";
+        await testContext.setupRevisions(store, false, 100);
+        {
+            const session = store.openSession();
+            const company = Object.assign(new Company(), { name: "Fitzchak" });
+            await session.store(company, id);
+            await session.saveChanges();
+        }
+
+        const fst = new Date();
+        await delay(100);
+        for (let i = 0; i < 3; i++) {
+            {
+                const session = store.openSession();
+                const company = await session.load<Company>(id);
+                company.name = "Fitzchak" + i;
+                await session.saveChanges();
+            }
+        }
+
+        const snd = new Date();
+        await delay(100);
+        for (let i = 0; i < 3; i++) {
+            {
+                const session = store.openSession();
+                const company = await session.load<Company>(id);
+                company.name = "Oren" + i;
+                await session.saveChanges();
+            }
+        }
+
+        {
+            const session = store.openSession();
+            const rev1 = await session.advanced.revisions.get<Company>(id, fst);
+            assert.strictEqual(rev1.name, "Fitzchak");
+
+            const rev2 = await session.advanced.revisions.get<Company>(id, snd);
+            assert.strictEqual(rev2.name, "Fitzchak 2");
+
+            const rev3 = await session.advanced.revisions.get<Company>(id, new Date());
+            assert.strictEqual(rev3.name, "Oren 2");
+        }
+    });
+});
