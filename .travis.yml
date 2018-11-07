@@ -12,7 +12,6 @@ env:
       RAVENDB_TEST_CA_PATH=/usr/local/share/ca-certificates/ca.crt
       RAVENDB_TEST_HTTPS_SERVER_URL=https://localhost:8989
   matrix:
-    - RAVENDB_SERVER_VERSION="4.0"
     - RAVENDB_SERVER_VERSION="4.1"
 before_install:
   - travis_retry sudo apt-get -qq update
