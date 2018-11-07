@@ -1,17 +1,13 @@
 import * as mocha from "mocha";
 import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
-import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
-    RavenErrorType,
-    GetNextOperationIdCommand,
-    IDocumentStore,
     IndexType,
     IndexDefinition,
 } from "../../../src";
 
-describe.only("DetectIndexTypeTest", function () {
+describe("DetectIndexTypeTest", function () {
 
     it("testValidMap", async () => {
         const map = "from task in docs.Tasks select new { task.assigneeId }";

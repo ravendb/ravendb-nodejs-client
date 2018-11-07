@@ -11,6 +11,7 @@ import { DocumentQueryOptions } from "./QueryOptions";
 import { IDocumentQuery } from "./IDocumentQuery";
 import { IIncludeBuilder } from "./Loaders/IIncludeBuilder";
 import { ISessionDocumentCounters } from "./ISessionDocumentCounters";
+import { SessionEventsEmitter } from "./SessionEvents";
 
 export class SessionInfo {
     private _sessionId: number;
