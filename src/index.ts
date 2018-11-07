@@ -154,6 +154,15 @@ export * from "./Documents/DocumentStoreBase";
 export * from "./Documents/IDocumentStore";
 export * from "./Documents/IdTypeAndName";
 
+// SUBSCRIBTIONS
+export * from "./Documents/Subscriptions/SubscriptionBatch";
+export * from "./Documents/Subscriptions/DocumentSubscriptions";
+export * from "./Documents/Subscriptions/SubscriptionWorker";
+export * from "./Documents/Subscriptions/SubscriptionWorkerOptions";
+export * from "./Documents/Subscriptions/SubscriptionCreationOptions";
+export * from "./Documents/Subscriptions/Revision";
+export * from "./Documents/Subscriptions/SubscriptionState";
+
 // SESSION
 export * from "./Documents/Session/AbstractDocumentQuery";
 export * from "./Documents/Session/CmpXchg";
@@ -220,6 +229,7 @@ export * from "./Documents/Changes/DatabaseChange";
 export * from "./Documents/Changes/OperationStatusChange";
 export * from "./Documents/Changes/IDatabaseChanges";
 export * from "./Documents/Changes/IConnectableChanges";
+export * from "./Documents/Changes/IChangesObservable";
 
 // HiLo
 export * from "./Documents/Identity/HiloIdGenerator";
