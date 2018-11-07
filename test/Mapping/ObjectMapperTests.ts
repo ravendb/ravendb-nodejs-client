@@ -483,6 +483,27 @@ describe("ObjectMapper", function () {
             typeInfoCallback = (_typeInfo) => typeInfo = _typeInfo;
         });
 
+        it("skips types from @metadata", () => {
+
+            class Empty {}
+
+            const testObject = {
+                "test": new Date(),
+                "@metadata": {
+                    ignoredType: new Date(),
+                    withClass: new Empty(),
+                    inner: {
+                        innerInner: new Empty()
+                    }
+                }
+            };
+
+            const result = mapper.toObjectLiteral(testObject, typeInfoCallback);
+            const fields = Object.keys(typeInfo.nestedTypes);
+            assert.strictEqual(fields.length, 1);
+            assert.strictEqual(fields[0], "test");
+        });
+
         it("can handle Date type", () => {
 
             const testObject = {

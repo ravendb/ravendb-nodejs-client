@@ -6,6 +6,7 @@ import { getLogger } from "../Utility/LogUtil";
 import { StringUtil } from "../Utility/StringUtil";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
 import { ObjectUtil } from "../Utility/ObjectUtil";
+import { CONSTANTS } from "../Constants";
 
 const log = getLogger({ module: "ObjectMapper" });
 
@@ -379,29 +380,38 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         obj: object,
         objPathPrefix: string,
         typeInfoCallback: (types: NestedTypes) => void,
-        knownTypes: ObjectTypeDescriptor[]): any {
+        knownTypes: ObjectTypeDescriptor[],
+        skipTypes: boolean = false): any {
 
         if (TypeUtil.isDate(obj)) {
-            typeInfoCallback({
-                [objPathPrefix]: "date"
-            });
+            if (!skipTypes) {
+                typeInfoCallback({
+                    [objPathPrefix]: "date"
+                });
+            }
 
             return this._conventions.dateUtil.stringify(obj as Date);
         }
 
         if (TypeUtil.isSet(obj)) {
-            typeInfoCallback({
-                [objPathPrefix]: "Set"
-            });
+            if (!skipTypes) {
+                typeInfoCallback({
+                    [objPathPrefix]: "Set"
+                });
+            }
+
             const newObjPathPrefix = `${objPathPrefix}$SET`;
             return Array.from((obj as Set<any>))
                 .map(x => this._makeObjectLiteral(x, newObjPathPrefix, typeInfoCallback, knownTypes));
         }
 
         if (TypeUtil.isMap(obj)) {
-            typeInfoCallback({
-                [objPathPrefix]: "Map"
-            });
+            if (!skipTypes) {
+                typeInfoCallback({
+                    [objPathPrefix]: "Map"
+                });
+            }
+
             const valuePathPrefix = `${objPathPrefix}$MAP`;
             const map = obj as Map<any, any>;
             return Array.from(map.entries()).reduce((result, [ name, value ]) => {
@@ -423,7 +433,8 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         if (TypeUtil.isObject(obj)) {
             if (objPathPrefix) { // if it's non-root object
                 const matchedType = TypeUtil.findType(obj, knownTypes);
-                if (matchedType
+                if (!skipTypes 
+                    && matchedType
                     && matchedType.name !== "Function") {
                     typeInfoCallback({ [objPathPrefix]: matchedType.name });
                 }
@@ -436,8 +447,12 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
                         nestedTypeInfoKey = ObjectUtil[this._conventions.remoteEntityFieldNameConvention](key);
                     }
 
+                    if (!skipTypes) {
+                        skipTypes = key === CONSTANTS.Documents.Metadata.KEY;
+                    }
+
                     const fullPath = objPathPrefix ? `${objPathPrefix}.${nestedTypeInfoKey}` : nestedTypeInfoKey;
-                    result[key] = this._makeObjectLiteral(obj[key], fullPath, typeInfoCallback, knownTypes);
+                    result[key] = this._makeObjectLiteral(obj[key], fullPath, typeInfoCallback, knownTypes, skipTypes);
                     return result;
                 }, {});
         }
