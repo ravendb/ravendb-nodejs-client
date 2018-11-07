@@ -1,5 +1,7 @@
 import * as BluebirdPromise from "bluebird";
 import { AbstractCallback } from "./../Types/Callbacks";
+import { VError } from "verror";
+import { getError } from "../Exceptions";
 
 export interface IDefer<TResult> {
     resolve: (value: TResult) => void;
@@ -54,4 +56,11 @@ export function defer<T>(): IDefer<T> {
 
 export async function delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export async function timeout(ms: number) {
+    return new Promise(
+        reject => 
+            setTimeout(() => 
+                reject(getError("TimeoutException", `Timeout after ${ms} ms.`)), ms));
 }

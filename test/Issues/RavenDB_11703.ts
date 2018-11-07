@@ -7,7 +7,12 @@ import {
     RavenErrorType,
     GetNextOperationIdCommand,
     IDocumentStore,
+    DatabaseChange,
 } from "../../src";
+import { User } from "../Assets/Entities";
+import { timeout, delay } from "../../src/Utility/PromiseUtil";
+import { CounterChange, CounterChangeTypes } from "../../src/Documents/Changes/CounterChange";
+import { IChangesObservable } from "../../src/Documents/Changes/IChangesObservable";
 
 describe("RavenDB-11703", function () {
 
@@ -21,178 +26,176 @@ describe("RavenDB-11703", function () {
         await disposeTestDocumentStore(store));
 
     it("canGetNotificationAboutCounterIncrement", async () => {
-        assert.fail("TODO");
+            const changes = store.changes();
+            await changes.ensureConnectedNow();
+            const observable = changes.forCountersOfDocument("users/1");
+
+            const changesList: CounterChange[] = [];
+            observable.on("data", d => changesList.unshift(d));
+            const errored = new Promise((_, reject) => observable.on("error", reject));
+
+            async function act() {
+                {
+                    const session = store.openSession();
+                    const user = new User();
+                    await session.store(user, "users/1");
+                    await session.saveChanges();
+                }
+                {
+                    const session = store.openSession();
+                    session.countersFor("users/1").increment("likes");
+                    await session.saveChanges();
+                }
+                {
+                    const session = store.openSession();
+                    session.countersFor("users/1").increment("likes");
+                    await session.saveChanges();
+                }
+            }
+
+            await Promise.race([ errored, timeout(2000), act() ]);
+
+            let counterChange = changesList.pop();
+            assert.ok(counterChange);
+            assert.strictEqual(counterChange.documentId, "users/1");
+            assert.strictEqual(counterChange.type, "Put");
+            assert.strictEqual(counterChange.name, "likes");
+            assert.strictEqual(counterChange.value, 1);
+            assert.ok(counterChange.changeVector);
+
+            counterChange = changesList.pop();
+            assert.ok(counterChange);
+            assert.strictEqual(counterChange.documentId, "users/1");
+            assert.strictEqual(counterChange.type, "Increment");
+            assert.strictEqual(counterChange.name, "likes");
+            assert.strictEqual(counterChange.value, 2);
+            assert.ok(counterChange.changeVector);
+    });
+
+    it("canGetNotificationAboutCounterDelete", async function () {
+            const changes = store.changes();
+            await changes.ensureConnectedNow();
+            const observable = changes.forCountersOfDocument("users/1");
+
+            const changesList: CounterChange[] = [];
+            observable.on("data", d => changesList.unshift(d));
+            const errored = new Promise((_, reject) => observable.on("error", reject));
+
+            async function act() {
+                {
+                    const session = store.openSession();
+                    const user = new User();
+                    await session.store(user, "users/1");
+                    await session.saveChanges();
+                }
+                {
+                    const session = store.openSession();
+                    session.countersFor("users/1").increment("likes");
+                    await session.saveChanges();
+                }
+                {
+                    const session = store.openSession();
+                    session.countersFor("users/1").delete("likes");
+                    await session.saveChanges();
+                }
+            }
+
+            await Promise.race([ errored, timeout(1000), act() ]);
+
+            let counterChange = changesList.pop();
+            assert.ok(counterChange);
+            assert.strictEqual(counterChange.documentId, "users/1");
+            assert.strictEqual(counterChange.type, "Put");
+            assert.strictEqual(counterChange.name, "likes");
+            assert.strictEqual(counterChange.value, 1);
+            assert.ok(counterChange.changeVector);
+
+            counterChange = changesList.pop();
+            assert.ok(counterChange);
+            assert.strictEqual(counterChange.documentId, "users/1");
+            assert.strictEqual(counterChange.type, "Delete");
+            assert.strictEqual(counterChange.name, "likes");
+            assert.strictEqual(counterChange.value, 0);
+            assert.ok(counterChange.changeVector);
+
+    });
+
+    async function gatherChangesFor<T>(observable: IChangesObservable<T>, ms: number) {
+        const changesList: T[] = [];
+        observable.on("data", d => changesList.unshift(d));
+        const errored = new Promise((_, reject) => observable.on("error", reject));
+        await Promise.race([ errored, delay(ms) ]);
+        return changesList;
+    }
+
+    it("canSubscribeToCounterChanges", async function () {
+        const changes = store.changes();
+        await changes.ensureConnectedNow();
+
+        {
+            const session = store.openSession();
+            const user = new User();
+            await session.store(user, "users/1");
+            await session.saveChanges();
+        }
+
+        let observable = changes.forAllCounters();
+        let gatherPromise = gatherChangesFor(observable, 500);
+
+        {
+            const session = store.openSession();
+            session.countersFor("users/1").increment("likes");
+            await session.saveChanges();
+        }
+
+        let changesList = await gatherPromise;
+        let counterChange = changesList.pop();
+        assert.ok(counterChange);
+
+        observable = changes.forCounter("likes");
+        gatherPromise = gatherChangesFor(observable, 500);
+
+        {
+            const session = store.openSession();
+            session.countersFor("users/1").increment("likes");
+            session.countersFor("users/1").increment("dislikes");
+            await session.saveChanges();
+        }
+
+        counterChange = (await gatherPromise).pop();
+        assert.ok(counterChange);
+        assert.strictEqual(counterChange.name, "likes");
+
+        assert.strictEqual((await gatherChangesFor(observable, 200)).length, 0);
+
+        observable = changes.forCounterOfDocument("users/1", "likes");
+        gatherPromise = gatherChangesFor(observable, 500);
+
+        {
+            const session = store.openSession();
+            session.countersFor("users/1").increment("likes");
+            session.countersFor("users/1").increment("dislikes");
+            await session.saveChanges();
+        }
+
+        counterChange = (await gatherPromise).pop();
+        assert.ok(counterChange);
+        assert.strictEqual(counterChange.name, "likes");
+
+        assert.strictEqual((await gatherChangesFor(observable, 200)).length, 0);
+
+        observable = changes.forCountersOfDocument("users/1");
+        gatherPromise = gatherChangesFor(observable, 500);
+        {
+            const session = store.openSession();
+            session.countersFor("users/1").increment("likes");
+            session.countersFor("users/1").increment("dislikes");
+            await session.saveChanges();
+        }
+
+        changesList = await gatherPromise;
+        assert.strictEqual(changesList.length, 2);
+        assert.ok(changesList.some(x => x.name === "likes"));
+        assert.ok(changesList.some(x => x.name === "dislikes"));
     });
 });
-
-//  public class RavenDB_11703Test extends RemoteTestBase {
-//      @Test
-//     public void () throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             BlockingQueue<CounterChange> changesList = new BlockingArrayQueue<>();
-//              IDatabaseChanges changes = store.changes();
-//             changes.ensureConnectedNow();
-//              IChangesObservable<CounterChange> observable = changes.forCountersOfDocument("users/1");
-//             try (CleanCloseable subscription = observable.subscribe(Observers.create(changesList::add))) {
-//                  try (IDocumentSession session = store.openSession()) {
-//                     User user = new User();
-//                     session.store(user, "users/1");
-//                     session.saveChanges();
-//                 }
-//                  try (IDocumentSession session = store.openSession()) {
-//                     session.countersFor("users/1").increment("likes");
-//                     session.saveChanges();
-//                 }
-//                  CounterChange counterChange = changesList.poll(2, TimeUnit.SECONDS);
-//                 assertThat(counterChange)
-//                         .isNotNull();
-//                  assertThat(counterChange.getDocumentId())
-//                         .isEqualTo("users/1");
-//                 assertThat(counterChange.getType())
-//                         .isEqualTo(CounterChangeTypes.PUT);
-//                 assertThat(counterChange.getName())
-//                         .isEqualTo("likes");
-//                 assertThat(counterChange.getValue())
-//                         .isEqualTo(1L);
-//                 assertThat(counterChange.getChangeVector())
-//                         .isNotNull();
-//                  try (IDocumentSession session = store.openSession()) {
-//                     session.countersFor("users/1").increment("likes");
-//                     session.saveChanges();
-//                 }
-//                  counterChange = changesList.poll(2, TimeUnit.SECONDS);
-//                 assertThat(counterChange)
-//                         .isNotNull();
-//                  assertThat(counterChange.getDocumentId())
-//                         .isEqualTo("users/1");
-//                 assertThat(counterChange.getType())
-//                         .isEqualTo(CounterChangeTypes.INCREMENT);
-//                 assertThat(counterChange.getName())
-//                         .isEqualTo("likes");
-//                 assertThat(counterChange.getValue())
-//                         .isEqualTo(2L);
-//                 assertThat(counterChange.getChangeVector())
-//                         .isNotNull();
-//             }
-//         }
-//     }
-//      @Test
-//     public void canGetNotificationAboutCounterDelete() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             BlockingQueue<CounterChange> changesList = new BlockingArrayQueue<>();
-//              IDatabaseChanges changes = store.changes();
-//             changes.ensureConnectedNow();
-//              IChangesObservable<CounterChange> observable = changes.forCountersOfDocument("users/1");
-//             try (CleanCloseable subscription = observable.subscribe(Observers.create(changesList::add))) {
-//                  try (IDocumentSession session = store.openSession()) {
-//                     User user = new User();
-//                     session.store(user, "users/1");
-//                     session.saveChanges();
-//                 }
-//                  try (IDocumentSession session = store.openSession()) {
-//                     session.countersFor("users/1").increment("likes");
-//                     session.saveChanges();
-//                 }
-//                  CounterChange counterChange = changesList.poll(2, TimeUnit.SECONDS);
-//                 assertThat(counterChange)
-//                         .isNotNull();
-//                  assertThat(counterChange.getDocumentId())
-//                         .isEqualTo("users/1");
-//                 assertThat(counterChange.getType())
-//                         .isEqualTo(CounterChangeTypes.PUT);
-//                 assertThat(counterChange.getName())
-//                         .isEqualTo("likes");
-//                 assertThat(counterChange.getValue())
-//                         .isEqualTo(1L);
-//                 assertThat(counterChange.getChangeVector())
-//                         .isNotNull();
-//                  try (IDocumentSession session = store.openSession()) {
-//                     session.countersFor("users/1").delete("likes");
-//                     session.saveChanges();
-//                 }
-//                  counterChange = changesList.poll(2, TimeUnit.SECONDS);
-//                 assertThat(counterChange)
-//                         .isNotNull();
-//                  assertThat(counterChange.getDocumentId())
-//                         .isEqualTo("users/1");
-//                 assertThat(counterChange.getType())
-//                         .isEqualTo(CounterChangeTypes.DELETE);
-//                 assertThat(counterChange.getName())
-//                         .isEqualTo("likes");
-//                 assertThat(counterChange.getValue())
-//                         .isEqualTo(0);
-//                 assertThat(counterChange.getChangeVector())
-//                         .isNotNull();
-//             }
-//         }
-//     }
-//      @Test
-//     public void canSubscribeToCounterChanges() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             BlockingQueue<CounterChange> changesList = new BlockingArrayQueue<>();
-//              IDatabaseChanges changes = store.changes();
-//             changes.ensureConnectedNow();
-//              try (IDocumentSession session = store.openSession()) {
-//                 User user = new User();
-//                 session.store(user, "users/1");
-//                 session.saveChanges();
-//             }
-//              IChangesObservable<CounterChange> observable = changes.forAllCounters();
-//             try (CleanCloseable subscription = observable.subscribe(Observers.create(changesList::add))) {
-//                  try (IDocumentSession session = store.openSession()) {
-//                     session.countersFor("users/1").increment("likes");
-//                     session.saveChanges();
-//                 }
-//                  CounterChange counterChange = changesList.poll(2, TimeUnit.SECONDS);
-//                 assertThat(counterChange)
-//                         .isNotNull();
-//             }
-//              observable = changes.forCounter("likes");
-//             try (CleanCloseable subscription = observable.subscribe(Observers.create(changesList::add))) {
-//                  try (IDocumentSession session = store.openSession()) {
-//                     session.countersFor("users/1").increment("likes");
-//                     session.countersFor("users/1").increment("dislikes");
-//                     session.saveChanges();
-//                 }
-//                  CounterChange counterChange = changesList.poll(2, TimeUnit.SECONDS);
-//                 assertThat(counterChange)
-//                         .isNotNull();
-//                 assertThat(counterChange.getName())
-//                         .isEqualTo("likes");
-//             }
-//              assertThat(changesList.poll(1, TimeUnit.SECONDS))
-//                     .isNull();
-//              observable = changes.forCounterOfDocument("users/1", "likes");
-//             try (CleanCloseable subscription = observable.subscribe(Observers.create(changesList::add))) {
-//                 try (IDocumentSession session = store.openSession()) {
-//                     session.countersFor("users/1").increment("likes");
-//                     session.countersFor("users/1").increment("dislikes");
-//                     session.saveChanges();
-//                 }
-//                  CounterChange counterChange = changesList.poll(2, TimeUnit.SECONDS);
-//                 assertThat(counterChange)
-//                         .isNotNull();
-//                 assertThat(counterChange.getName())
-//                         .isEqualTo("likes");
-//             }
-//              assertThat(changesList.poll(1, TimeUnit.SECONDS))
-//                     .isNull();
-//              observable = changes.forCountersOfDocument("users/1");
-//              try (CleanCloseable subscription = observable.subscribe(Observers.create(changesList::add))) {
-//                 try (IDocumentSession session = store.openSession()) {
-//                     session.countersFor("users/1").increment("likes");
-//                     session.countersFor("users/1").increment("dislikes");
-//                     session.saveChanges();
-//                 }
-//                  CounterChange counterChange = changesList.poll(2, TimeUnit.SECONDS);
-//                 assertThat(counterChange)
-//                         .isNotNull()
-//                         .matches(x -> x.getName().equals("likes") || x.getName().equals("dislikes"));
-//                  counterChange = changesList.poll(2, TimeUnit.SECONDS);
-//                 assertThat(counterChange)
-//                         .isNotNull()
-//                         .matches(x -> x.getName().equals("likes") || x.getName().equals("dislikes"));
-//             }
-//         }
-//     }
-// }
