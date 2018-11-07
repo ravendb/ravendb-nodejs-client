@@ -153,6 +153,15 @@ export * from "./Documents/DocumentStoreBase";
 export * from "./Documents/IDocumentStore";
 export * from "./Documents/IdTypeAndName";
 
+// SUBSCRIBTIONS
+export * from "./Documents/Subscriptions/SubscriptionBatch";
+export * from "./Documents/Subscriptions/DocumentSubscriptions";
+export * from "./Documents/Subscriptions/SubscriptionWorker";
+export * from "./Documents/Subscriptions/SubscriptionWorkerOptions";
+export * from "./Documents/Subscriptions/SubscriptionCreationOptions";
+export * from "./Documents/Subscriptions/Revision";
+export * from "./Documents/Subscriptions/SubscriptionState";
+
 // SESSION
 export * from "./Documents/Session/AbstractDocumentQuery";
 export * from "./Documents/Session/CmpXchg";
