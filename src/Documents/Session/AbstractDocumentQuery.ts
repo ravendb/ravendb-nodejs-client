@@ -389,7 +389,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     private _stringifyParameter(value: any) {
         if (TypeUtil.isDate(value)) {
-            return DateUtil.default.stringify(value);
+            return DateUtil.utc.stringify(value);
         }
 
         if (TypeUtil.isString(value)) {

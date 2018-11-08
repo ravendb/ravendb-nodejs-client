@@ -13,6 +13,8 @@ export class DateUtil {
 
     public static default: DateUtil = new DateUtil({});
 
+    public static utc: DateUtil = new DateUtil({ useUtcDates: true });
+
     public constructor(private _opts: DateUtilOpts) {}
 
     public static timestamp(): number {
