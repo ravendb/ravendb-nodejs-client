@@ -8,6 +8,9 @@ import {
 import { User } from "../../Assets/Entities";
 
 describe("DeleteDocumentCommand", function () {
+    
+    // it's the first test setting up the server
+    this.timeout(20000);
 
     let store: IDocumentStore;
 

@@ -77,7 +77,7 @@ export class GetRevisionsCommand extends RavenCommand<IRavenArrayResult> {
         }
 
         if (this._before) {
-            uri += "&before=" + DateUtil.default.stringify(this._before);
+            uri += "&before=" + DateUtil.utc.stringify(this._before);
         }
 
         if (!TypeUtil.isNullOrUndefined(this._start)) {
@@ -113,6 +113,7 @@ export class GetRevisionsCommand extends RavenCommand<IRavenArrayResult> {
             await GetDocumentsCommand.parseDocumentsResultResponseAsync(
                 bodyStream, this._conventions, b => body = b);
 
+        debugger;
         return body as string;
     }
 }

@@ -54,6 +54,9 @@ describe("AggregationTest", function () {
     let store: IDocumentStore;
 
     beforeEach(async function () {
+        testContext.customizeStore = async store => {
+            store.conventions.storeDatesInUtc = true;
+        };
         store = await testContext.getDocumentStore();
     });
 

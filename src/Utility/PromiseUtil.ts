@@ -36,7 +36,6 @@ export function passResultToCallback<T>(p: Promise<T>, callback: AbstractCallbac
     if (!callback) {
         return;
     }
-    console.log(callback);
 
     p.then(result => callback(null, result), err => callback(err));
 }

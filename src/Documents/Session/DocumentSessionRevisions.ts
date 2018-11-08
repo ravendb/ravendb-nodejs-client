@@ -151,7 +151,7 @@ export class DocumentSessionRevisions extends AdvancedSessionExtensionBase imple
         id: string, date: Date, clazz?: DocumentType<TEntity>) {
         const operation = new GetRevisionOperation(this._session, id, date);
         const command = operation.createRequest();
-        this._requestExecutor.execute(command, this._sessionInfo);
+        await this._requestExecutor.execute(command, this._sessionInfo);
         operation.result = command.result;
         return operation.getRevision(clazz);
     }
