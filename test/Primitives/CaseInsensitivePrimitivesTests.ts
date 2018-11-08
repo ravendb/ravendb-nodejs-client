@@ -15,7 +15,13 @@ describe("CaseInsensitiveKeyMap", function () {
         map.set("TEsT_KEY", 1);
         assert.strictEqual(map.get("test_keY"), 1);
         assert.ok(map.has("TeSt_kEy"));
+        
+        // gives actual set entries
+        const entries = Array.from(map.entries());
+        assert.strictEqual(entries[0][0], "TEst_KEY");
+
         assert.ok(map.delete("teST_KEY"));
+        assert.ok(!map.has("TeSt_kEy"));
     });
 });
 

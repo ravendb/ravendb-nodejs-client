@@ -1349,7 +1349,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             }
         }
 
-        if (this._counterIncludesTokens != null) {
+        if (this._counterIncludesTokens) {
             for (const counterIncludesToken of this._counterIncludesTokens) {
                 if (!first) {
                     queryText.append(",");
@@ -2065,19 +2065,19 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     protected _includeCounters(
         alias: string, counterToIncludeByDocId: CountersByDocId): void {
-    if (!counterToIncludeByDocId || !Object.keys(counterToIncludeByDocId).length) {
+    if (!counterToIncludeByDocId || !counterToIncludeByDocId.size) {
         return;
     }
     this._counterIncludesTokens = [];
     this._includesAlias = alias;
 
-    for (const [ key, val ] of Object.entries(counterToIncludeByDocId)) {
+    for (const [ key, val ] of counterToIncludeByDocId.entries()) {
         if (val[0]) {
             this._counterIncludesTokens.push(CounterIncludesToken.all(key));
             continue;
         }
 
-        const valArr = val[1];
+        const valArr = [...val[1]];
         if (!valArr || !valArr.length) {
             continue;
         }

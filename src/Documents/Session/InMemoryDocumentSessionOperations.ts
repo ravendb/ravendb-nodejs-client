@@ -743,10 +743,10 @@ export abstract class InMemoryDocumentSessionOperations
         }
 
         for (const counterJson of counters) {
-            const counterName = counterJson["CounterName"];
-            const totalValue = counterJson["TotalValue"];
+            const counterName = counterJson["CounterName"] as string;
+            const totalValue = counterJson["TotalValue"] as number;
             if (counterName && totalValue) {
-                cache.data[counterName] = totalValue;
+                cache.data.set(counterName, totalValue);
             }
         }
 

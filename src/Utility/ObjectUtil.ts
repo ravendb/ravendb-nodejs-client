@@ -20,7 +20,7 @@ export class ObjectUtil {
         input: Map<string, TValue>,
         valueTransformFunc?: (value: string, key: TValue) => TResult)
         : { [key: string]: TResult } {
-        return Array.from(input)
+        return Array.from(input.entries())
             .reduce((obj, [key, value]) => (
                 Object.assign(obj, {
                     [key]: valueTransformFunc

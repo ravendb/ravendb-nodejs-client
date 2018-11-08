@@ -13,6 +13,7 @@ import { IDocumentStore } from "../../src/Documents/IDocumentStore";
 import { throwError } from "../../src/Exceptions";
 import { IAuthOptions } from "../../src/Auth/AuthOptions";
 import * as os from "os";
+import "../../src/Utility/Polyfills";
 
 // logOnUncaughtAndUnhandled();
 

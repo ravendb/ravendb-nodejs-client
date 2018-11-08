@@ -8,4 +8,6 @@ export interface IQueryIncludeBuilder {
 
     includeAllCounters(): IQueryIncludeBuilder;
     includeAllCounters(path: string): IQueryIncludeBuilder;
+
+    includeDocuments(path: string): IQueryIncludeBuilder;
 }

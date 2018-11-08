@@ -140,6 +140,10 @@ export class QueryOperation {
         if (!this._noTracking) {
             this._session.registerMissingIncludes(
                 queryResult.results, queryResult.includes, queryResult.includedPaths);
+            
+            if (queryResult.counterIncludes) {
+                this._session.registerCounters(queryResult.counterIncludes, queryResult.includedCounterNames);
+            }
         }
 
         return list;

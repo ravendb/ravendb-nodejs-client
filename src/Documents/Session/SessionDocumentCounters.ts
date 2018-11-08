@@ -26,12 +26,12 @@ export class SessionDocumentCounters extends SessionCountersBase implements ISes
         let missingCounters = !cache.gotAll;
         const document = this._session.documentsById.getValue(this._docId);
         if (document) {
-            const metadataCounters = document.metadata.get(CONSTANTS.Documents.Metadata.COUNTERS) as object;
+            const metadataCounters = document.metadata[CONSTANTS.Documents.Metadata.COUNTERS] as string[];
             if (!metadataCounters) {
                 missingCounters = false;
-            } else if (cache.data.size >= Object.keys(metadataCounters).length) {
+            } else if (cache.data.size >= metadataCounters.length) {
                 missingCounters = false;
-                for (const c of Object.keys(metadataCounters)) {
+                for (const c of metadataCounters) {
                     if (cache.data.has(c)) {
                         continue;
                     }

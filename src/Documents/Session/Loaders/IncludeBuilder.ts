@@ -1,14 +1,6 @@
-import { IQueryIncludeBuilder } from "./IQueryIncludeBuilder";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { CountersByDocId } from "../CounterInternalTypes";
-import { TypeUtil } from "../../../Utility/TypeUtil";
-import { StringUtil } from "../../../Utility/StringUtil";
-import { throwError } from "../../../Exceptions";
-import { CaseInsensitiveKeysMap } from "../../../Primitives/CaseInsensitiveKeysMap";
-import { CaseInsensitiveStringSet } from "../../../Primitives/CaseInsensitiveStringSet";
 import { IncludeBuilderBase } from "./IncludeBuilderBase";
 import { IIncludeBuilder } from "./IIncludeBuilder";
-import { basename } from "path";
 
 export class IncludeBuilder extends IncludeBuilderBase implements IIncludeBuilder {
     public constructor(conventions: DocumentConventions) {

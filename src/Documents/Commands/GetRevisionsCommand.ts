@@ -113,7 +113,6 @@ export class GetRevisionsCommand extends RavenCommand<IRavenArrayResult> {
             await GetDocumentsCommand.parseDocumentsResultResponseAsync(
                 bodyStream, this._conventions, b => body = b);
 
-        debugger;
         return body as string;
     }
 }
