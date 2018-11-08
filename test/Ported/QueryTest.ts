@@ -18,6 +18,9 @@ describe("QueryTest", function () {
     let store: IDocumentStore;
 
     beforeEach(async function () {
+        testContext.customizeStore = async store => {
+            store.conventions.storeDatesInUtc = true;
+        };
         store = await testContext.getDocumentStore();
     });
 
@@ -663,15 +666,15 @@ describe("QueryTest", function () {
     it("query where between with dates", async () => {
         const cocartFestival = new Event({
             name: "CoCArt Festival",
-            date: moment("2018-03-08").toDate()
+            date: moment("2018-03-08T00:00:00Z").toDate()
         });
         const openerFestival = new Event({
             name: "Open'er Festival",
-            date: moment("2018-07-04").toDate()
+            date: moment("2018-07-04T00:00:00Z").toDate()
         });
         const offFestival = new Event({
             name: "OFF Festival",
-            date: moment("2018-08-03").toDate()
+            date: moment("2018-08-03T00:00:00Z").toDate()
         });
 
         {
@@ -693,10 +696,10 @@ describe("QueryTest", function () {
             assert.strictEqual(indexQuery.query, "from events where date between $p0 and $p1");
             assert.strictEqual(
                 indexQuery.queryParameters["p0"], 
-                DateUtil.default.stringify(cocartFestival.date));
+                DateUtil.utc.stringify(cocartFestival.date));
             assert.strictEqual(
                 indexQuery.queryParameters["p1"], 
-                DateUtil.default.stringify(offFestival.date));
+                DateUtil.utc.stringify(offFestival.date));
             assert.strictEqual(indexQuery.query, "from events where date between $p0 and $p1");
 
             const festivalsHappeningBetweenCocartAndOffInclusive: any[] = await q.all();
