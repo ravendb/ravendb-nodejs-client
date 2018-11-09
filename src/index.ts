@@ -141,6 +141,9 @@ export * from "./Documents/Indexes/Spatial";
 export * from "./Documents/Indexes/IndexingStatus";
 export * from "./Documents/Indexes/IndexStats";
 export * from "./Documents/Indexes";
+export * from "./Documents/Indexes/AbstractIndexCreationTask";
+export * from "./Documents/Indexes/AbstractMultiMapIndexCreationTask";
+export * from "./Documents/Indexes/AbstractJavaScriptIndexCreationTask";
 
 // REPLICATION
 export * from "./Documents/Replication/ExternalReplication";

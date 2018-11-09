@@ -96,7 +96,7 @@ export class SessionDocumentCounters extends SessionCountersBase implements ISes
             this._session.incrementRequestCount();
             const details = await this._session.operations.send(
                 new GetCountersOperation(this._docId, counter), this._session.sessionInfo);
-            if (details.counters || details.counters.length) {
+            if (details.counters && details.counters.length) {
                 value = details.counters[0].totalValue;
             }
         }

@@ -11,15 +11,20 @@ import {
     CreateDatabaseOperation,
     DatabaseRecord,
     DeleteDatabasesOperation,
+    IDocumentSession,
+    DocumentCountersOperation,
+    CounterOperation,
+    CounterBatch,
+    CounterBatchOperation,
 } from "../../../src";
-import { User } from "../../Assets/Entities";
+import { User, Company, Order } from "../../Assets/Entities";
+import { assertThat } from "../../Utils/AssertExtensions";
 
-describe("SessionCountersTest", function () {
+describe.only("SessionCountersTest", function () {
 
     let store: IDocumentStore;
 
     beforeEach(async function () {
-        testContext.enableFiddler();
         store = await testContext.getDocumentStore();
     });
 
@@ -169,859 +174,1033 @@ describe("SessionCountersTest", function () {
                 }));
         }
     });
+
+    it("getCountersFor", async function() {
+        {
+            const session = store.openSession();
+            for (const n of [1, 2, 3]) {
+                await storeDoc(session, `users/${n}-A`, { name: `Aviv${n}` }, User);
+            }
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            session.countersFor("users/1-A").increment("likes", 100);
+            session.countersFor("users/1-A").increment("downloads", 100);
+            session.countersFor("users/2-A").increment("votes", 100);
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+
+            let user = await session.load<User>("users/1-A");
+            let counters = session.advanced.getCountersFor(user);
+            assert.strictEqual(counters.length, 2);
+            assert.ok(counters.includes("downloads"));
+            assert.ok(counters.includes("likes"));
+
+            user = await session.load<User>("users/2-A");
+            counters = session.advanced.getCountersFor(user);
+            assert.strictEqual(counters.length, 1);
+            assert.ok(counters.includes("votes"));
+
+            user = await session.load<User>("users/3-A");
+            counters = session.advanced.getCountersFor(user);
+            assert.strictEqual(counters, null);
+        }
+    });
+
+    it("differentTypesOfCountersOperationsInOneSession", async function () {
+        {
+            const session = store.openSession();
+            for (const n of [ 1, 2 ]) {
+                await storeDoc(session, `users/${n}-A`, { name: `Aviv${n}` }, User);
+            }
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+            session.countersFor("users/1-A").increment("likes", 100);
+            session.countersFor("users/1-A").increment("downloads", 100);
+            session.countersFor("users/2-A").increment("votes", 1000);
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+            session.countersFor("users/1-A").increment("likes", 100);
+            session.countersFor("users/1-A").delete("downloads");
+            session.countersFor("users/2-A").increment("votes", -600);
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+
+            let val = await session.countersFor("users/1-A").get("likes");
+            assertThat(val)
+                .isEqualTo(200);
+
+            val = await session.countersFor("users/1-A").get("downloads");
+            assertThat(val)
+                .isNull();
+
+            val = await session.countersFor("users/2-A").get("votes");
+            assertThat(val)
+                .isEqualTo(400);
+        }
+
+    });
+
+    it("shouldThrow", async function () {
+        {
+            const session = store.openSession();
+            for (const n of [ 1 ]) {
+                await storeDoc(session, `users/${n}-A`, { name: `Aviv${n}` }, User);
+            }
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+            const user = await session.load("users/1-A");
+            session.countersFor(user).increment("likes", 100);
+            await session.saveChanges();
+
+            assertThat(await session.countersFor(user).get("likes"))
+                .isEqualTo(100);
+        }
+    });
+
+    it("sessionShouldTrackCounters", async function () {
+        {
+            const session = store.openSession();
+            for (const n of [ 1 ]) {
+                await storeDoc(session, `users/${n}-A`, { name: `Aviv${n}` }, User);
+            }
+            session.countersFor("users/1-A").increment("likes", 100);
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+            assertThat(session.advanced.numberOfRequests)
+                .isZero();
+
+            const val = await session.countersFor("users/1-A").get("likes");
+            assertThat(val)
+                .isEqualTo(100);
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            session.countersFor("users/1-A").get("likes");
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+        }
+
+    });
+
+    it("sessionShouldKeepNullsInCountersCache", async function () {
+        {
+
+            const session = store.openSession();
+            for (const n of [1]) {
+                await storeDoc(session, `users/${n}-A`, { name: `Aviv${n}` }, User);
+            }
+            session.countersFor("users/1-A").increment("likes", 100);
+            session.countersFor("users/1-A").increment("dislikes", 200);
+            session.countersFor("users/1-A").increment("downloads", 300);
+
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            let val = await session.countersFor("users/1-A").get("score");
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+            assertThat(val)
+                .isNull();
+
+            val = await session.countersFor("users/1-A").get("score");
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+            assertThat(val)
+                .isNull();
+
+            const dic = await session.countersFor("users/1-A").getAll();
+            // should not contain null value for "score"
+
+            assertThat(session.advanced.numberOfRequests).isEqualTo(2);
+            assertThat(dic)
+                .hasSize(3)
+                .containsEntry("likes", 100)
+                .containsEntry("dislikes", 200)
+                .containsEntry("downloads", 300);
+        }
+
+    });
+
+    it("sessionShouldKnowWhenItHasAllCountersInCacheAndAvoidTripToServer_WhenUsingEntity", async function () {
+        {
+            const session = store.openSession();
+            for (const n of [1]) {
+                await storeDoc(session, `users/${n}-A`, { name: `Aviv${n}` }, User);
+            }
+            session.countersFor("users/1-A").increment("likes", 100);
+            session.countersFor("users/1-A").increment("dislikes", 200);
+            session.countersFor("users/1-A").increment("downloads", 300);
+
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const user = await session.load("users/1-A");
+            assertThat(session.advanced.numberOfRequests)
+                        .isEqualTo(1);
+
+            const userCounters = session.countersFor(user);
+
+            let val = await userCounters.get("likes");
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(2);
+            assertThat(val)
+                .isEqualTo(100);
+
+            val = await userCounters.get("dislikes");
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(3);
+            assertThat(val)
+                .isEqualTo(200);
+
+            val = await userCounters.get("downloads");
+            // session should know at this point that it has all counters
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(4);
+            assertThat(val)
+                .isEqualTo(300);
+
+            const dic = await userCounters.getAll(); // should not go to server
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(4);
+
+            assertThat(dic)
+                .hasSize(3)
+                .containsEntry("likes", 100)
+                .containsEntry("dislikes", 200)
+                .containsEntry("downloads", 300);
+
+            val = await userCounters.get("score"); //should not go to server
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(4);
+            assertThat(val)
+                .isNull();
+        }
+    });
+
+    it("sessionShouldUpdateMissingCountersInCacheAndRemoveDeletedCounters_AfterRefresh", async function () {
+        {
+            const session = store.openSession();
+            for (const n of [1]) {
+                await storeDoc(session, `users/${n}-A`, { name: `Aviv${n}` }, User);
+            }
+            session.countersFor("users/1-A").increment("likes", 100);
+            session.countersFor("users/1-A").increment("dislikes", 200);
+            session.countersFor("users/1-A").increment("downloads", 300);
+
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+
+            const user = await session.load("users/1-A");
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            const userCounters = session.countersFor(user);
+            let dic = await userCounters.getAll();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(2);
+
+            assertThat(dic)
+                .hasSize(3)
+                .containsEntry("likes", 100)
+                .containsEntry("dislikes", 200)
+                .containsEntry("downloads", 300);
+
+            {
+                const session2 = store.openSession();
+                session2.countersFor("users/1-A").increment("likes");
+                session2.countersFor("users/1-A").delete("dislikes");
+                session2.countersFor("users/1-A").increment("score", 1000); // new counter
+                await session2.saveChanges();
+            }
+
+            await session.advanced.refresh(user);
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(3);
+
+                // Refresh updated the document in session,
+                // cache should know that it's missing 'score' by looking
+                // at the document's metadata and go to server again to get all.
+                // this should override the cache entirely and therefor
+                // 'dislikes' won't be in cache anymore
+
+            dic = await userCounters.getAll();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(4);
+
+            assertThat(dic)
+                .hasSize(3)
+                .containsEntry("likes", 101)
+                .containsEntry("downloads", 300)
+                .containsEntry("score", 1000);
+
+            // cache should know that it got all and not go to server,
+            // and it shouldn't have 'dislikes' entry anymore
+            const val = await userCounters.get("dislikes");
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(4);
+            assertThat(val)
+                .isNull();
+        }
+
+    });
+
+    it("sessionShouldUpdateMissingCountersInCacheAndRemoveDeletedCounters_AfterLoadFromServer", async function () {
+        {
+            const session = store.openSession();
+            await storeDoc(session, `users/${1}-A`, { name: `Aviv${1}` }, User);
+            session.countersFor("users/1-A").increment("likes", 100);
+            session.countersFor("users/1-A").increment("dislikes", 200);
+            session.countersFor("users/1-A").increment("downloads", 300);
+
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+            const userCounters = session.countersFor("users/1-A");
+            let dic = await userCounters.getAll();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            assertThat(dic)
+                .hasSize(3)
+                .containsEntry("likes", 100)
+                .containsEntry("dislikes", 200)
+                .containsEntry("downloads", 300);
+
+            {
+                const session2 = store.openSession();
+                session2.countersFor("users/1-A").increment("likes");
+                session2.countersFor("users/1-A").delete("dislikes");
+                session2.countersFor("users/1-A").increment("score", 1000); // new counter
+                await session2.saveChanges();
+            }
+
+            const user = await session.load("users/1-A");
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(2);
+
+            // Refresh updated the document in session,
+            // cache should know that it's missing 'score' by looking
+            // at the document's metadata and go to server again to get all.
+            // this should override the cache entirely and therefor
+            // 'dislikes' won't be in cache anymore
+
+            dic = await userCounters.getAll();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(3);
+
+            assertThat(dic)
+                .hasSize(3)
+                .containsEntry("likes", 101)
+                .containsEntry("downloads", 300)
+                .containsEntry("score", 1000);
+
+            // cache should know that it got all and not go to server,
+            // and it shouldn't have 'dislikes' entry anymore
+            const val = await userCounters.get("dislikes");
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(3);
+            assertThat(val)
+                .isNull();
+        }
+
+    });
+
+    it("sessionClearShouldClearCountersCache", async function () {
+        {
+            const session = store.openSession();
+            await storeDoc(session, `users/${1}-A`, { name: `Aviv${1}` }, User);
+            session.countersFor("users/1-A").increment("likes", 100);
+            session.countersFor("users/1-A").increment("dislikes", 200);
+            session.countersFor("users/1-A").increment("downloads", 300);
+
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+            const userCounters = session.countersFor("users/1-A");
+            let dic = await userCounters.getAll();
+            assertThat(dic)
+                .hasSize(3)
+                .containsEntry("likes", 100)
+                .containsEntry("dislikes", 200)
+                .containsEntry("downloads", 300);
+
+            {
+                const session2 = store.openSession();
+                session2.countersFor("users/1-A").increment("likes");
+                session2.countersFor("users/1-A").delete("dislikes");
+                session2.countersFor("users/1-A").increment("score", 1000); // new counter
+                await session2.saveChanges();
+            }
+
+            session.advanced.clear(); // should clear countersCache
+
+            dic = await userCounters.getAll(); // should go to server again
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(2);
+
+            assertThat(dic)
+                .hasSize(3)
+                .containsEntry("likes", 101)
+                .containsEntry("downloads", 300)
+                .containsEntry("score", 1000);
+
+        }
+    });
+
+    it("sessionEvictShouldRemoveEntryFromCountersCache", async function () {
+        {
+            const session = store.openSession();
+            await storeDoc(session, `users/${1}-A`, { name: `Aviv${1}` }, User);
+            session.countersFor("users/1-A").increment("likes", 100);
+            session.countersFor("users/1-A").increment("dislikes", 200);
+            session.countersFor("users/1-A").increment("downloads", 300);
+
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+            const user = await session.load("users/1-A");
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            const userCounters = session.countersFor("users/1-A");
+            let dic = await userCounters.getAll();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(2);
+            assertThat(dic)
+                .hasSize(3)
+                .containsEntry("likes", 100)
+                .containsEntry("dislikes", 200)
+                .containsEntry("downloads", 300);
+
+            {
+                const session2 = store.openSession();
+                session2.countersFor("users/1-A").increment("likes");
+                session2.countersFor("users/1-A").delete("dislikes");
+                session2.countersFor("users/1-A").increment("score", 1000); // new counter
+                await session2.saveChanges();
+            }
+
+            session.advanced.evict(user);  // should remove 'users/1-A' entry from CountersByDocId
+
+            dic = await userCounters.getAll(); // should go to server again
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(3);
+
+            assertThat(dic)
+                .hasSize(3)
+                .containsEntry("likes", 101)
+                .containsEntry("downloads", 300)
+                .containsEntry("score", 1000);
+        }
+    });
+
+    it("sessionShouldAlwaysLoadCountersFromCacheAfterGetAll", async function () {
+        {
+            const session = store.openSession();
+            await storeDoc(session, `users/${1}-A`, { name: `Aviv${1}` }, User);
+            session.countersFor("users/1-A").increment("likes", 100);
+            session.countersFor("users/1-A").increment("dislikes", 200);
+            session.countersFor("users/1-A").increment("downloads", 300);
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+            const dic = await session.countersFor("users/1-A").getAll();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            assertThat(dic)
+                .hasSize(3)
+                .containsEntry("likes", 100)
+                .containsEntry("dislikes", 200)
+                .containsEntry("downloads", 300);
+
+            //should not go to server after GetAll() request
+            let val = await session.countersFor("users/1-A").get("likes");
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+            assertThat(val)
+                .isEqualTo(100);
+
+            val = await session.countersFor("users/1-A").get("votes");
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+            assertThat(val)
+                .isNull();
+
+        }
+    });
+
+    it("sessionShouldOverrideExistingCounterValuesInCacheAfterGetAll", async function () {
+        {
+            const session = store.openSession();
+            await storeDoc(session, `users/${1}-A`, { name: `Aviv${1}` }, User);
+            session.countersFor("users/1-A").increment("likes", 100);
+            session.countersFor("users/1-A").increment("dislikes", 200);
+            session.countersFor("users/1-A").increment("downloads", 300);
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+            let val = await session.countersFor("users/1-A").get("likes");
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+            assertThat(val)
+                .isEqualTo(100);
+
+            val = await session.countersFor("users/1-A").get("score");
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(2);
+            assertThat(val)
+                .isNull();
+
+            const operation = new DocumentCountersOperation();
+            operation.documentId = "users/1-A";
+            operation.operations = [CounterOperation.create("likes", "Increment", 400)];
+
+            const counterBatch = new CounterBatch();
+            counterBatch.documents = [operation];
+
+            await store.operations.send(new CounterBatchOperation(counterBatch));
+
+            const dic = await session.countersFor("users/1-A").getAll();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(3);
+            assertThat(dic)
+                .hasSize(3)
+                .containsEntry("dislikes", 200)
+                .containsEntry("downloads", 300)
+                .containsEntry("likes", 500);
+
+            val = await session.countersFor("users/1-A").get("score");
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(3); // null values should still be in cache
+            assertThat(val)
+                .isNull();
+        }
+
+    });
+
+    it("sessionIncrementCounterShouldUpdateCounterValueAfterSaveChanges", async function () {
+        {
+            const session = store.openSession();
+            await storeDoc(session, `users/1-A`, { name: `Aviv1` }, User);
+            session.countersFor("users/1-A").increment("likes", 100);
+            session.countersFor("users/1-A").increment("dislikes", 300);
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+            let val = await session.countersFor("users/1-A").get("likes");
+            assertThat(val)
+                .isEqualTo(100);
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            session.countersFor("users/1-A").increment("likes", 50);  // should not increment the counter value in cache
+            val = await session.countersFor("users/1-A").get("likes");
+            assertThat(val)
+                .isEqualTo(100);
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            session.countersFor("users/1-A").increment("dislikes", 200);  // should not add the counter to cache
+            val = await session.countersFor("users/1-A").get("dislikes"); // should go to server
+            assertThat(val)
+                .isEqualTo(300);
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(2);
+
+            session.countersFor("users/1-A").increment("score", 1000);  // should not add the counter to cache
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(2);
+
+            // SaveChanges should updated counters values in cache
+            // according to increment result
+            await session.saveChanges();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(3);
+
+            // should not go to server for these
+            val = await session.countersFor("users/1-A").get("likes");
+            assertThat(val)
+                .isEqualTo(150);
+
+            val = await session.countersFor("users/1-A").get("dislikes");
+            assertThat(val)
+                .isEqualTo(500);
+
+            val = await session.countersFor("users/1-A").get("score");
+            assertThat(val)
+                .isEqualTo(1000);
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(3);
+        }
+
+    });
+
+    it("sessionShouldRemoveCounterFromCacheAfterCounterDeletion", async function () {
+        {
+            const session = store.openSession();
+            await storeDoc(session, `users/1-A`, { name: `Aviv1` }, User);
+            session.countersFor("users/1-A").increment("likes", 100);
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+            let val = await session.countersFor("users/1-A").get("likes");
+            assertThat(val)
+                .isEqualTo(100);
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            session.countersFor("users/1-A").delete("likes");
+            await session.saveChanges();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(2);
+
+            val = await session.countersFor("users/1-A").get("likes");
+            assertThat(val)
+                .isNull();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(3);
+        }
+
+    });
+
+    it("sessionShouldRemoveCountersFromCacheAfterDocumentDeletion", async function () {
+        {
+            const session = store.openSession();
+            await storeDoc(session, `users/1-A`, { name: `Aviv1` }, User);
+            session.countersFor("users/1-A").increment("likes", 100);
+            session.countersFor("users/1-A").increment("dislikes", 200);
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+            const dic = await session.countersFor("users/1-A").get(["likes", "dislikes"]);
+
+            assertThat(dic)
+                .hasSize(2)
+                .containsEntry("likes", 100)
+                .containsEntry("dislikes", 200);
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            session.delete("users/1-A");
+            await session.saveChanges();
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(2);
+
+            const val = await session.countersFor("users/1-A").get("likes");
+            assertThat(val)
+                .isNull();
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(3);
+        }
+
+    });
+
+    it("sessionIncludeSingleCounter", async function () {
+        {
+            const session = store.openSession();
+            await storeDoc(session, `users/1-A`, { name: `Aviv1` }, User);
+            session.countersFor("users/1-A").increment("likes", 100);
+            session.countersFor("users/1-A").increment("dislikes", 200);
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+
+            const user = await session.load("users/1-A", { 
+                includes:  i => i.includeCounter("likes") 
+            });
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            const counter = await session.countersFor(user).get("likes");
+            assertThat(counter)
+                .isEqualTo(100);
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+        }
+
+    });
+
+    it("sessionChainedIncludeCounter", async function () {
+        {
+            const session = store.openSession();
+            await storeDoc(session, `companies/1-A`, { name: `HR` }, Company);
+            await storeDoc(session, `orders/1-A`, { company: "companies/1-A" }, Order);
+            session.countersFor("orders/1-A").increment("likes", 100);
+            session.countersFor("orders/1-A").increment("dislikes", 200);
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+
+            const order = await session.load(
+                "orders/1-A", { 
+                    includes: i => i.includeCounter("likes")
+                                    .includeCounter("dislikes") 
+                });
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            let counter = await session.countersFor(order).get("likes");
+            assertThat(counter)
+                .isEqualTo(100);
+
+            counter = await session.countersFor(order).get("dislikes");
+            assertThat(counter)
+                .isEqualTo(200);
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+        }
+
+    });
+
 });
 
-    /* TODO
-        [Fact]
-       public void GetCountersFor()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new User { Name = "Aviv1" }, "users/1-A");
-                   session.Store(new User { Name = "Aviv2" }, "users/2-A");
-                   session.Store(new User { Name = "Aviv3" }, "users/3-A");
-                   session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   session.CountersFor("users/1-A").Increment("likes", 100);
-                   session.CountersFor("users/1-A").Increment("downloads", 100);
-                   session.CountersFor("users/2-A").Increment("votes", 1000);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var user = session.Load<User>("users/1-A");
-                   var counters = session.Advanced.GetCountersFor(user);
-                    Assert.Equal(2, counters.Count);
-                   Assert.Equal("downloads", counters[0]);
-                   Assert.Equal("likes", counters[1]);
-                    user = session.Load<User>("users/2-A");
-                   counters = session.Advanced.GetCountersFor(user);
-                    Assert.Equal(1, counters.Count);
-                   Assert.Equal("votes", counters[0]);
-                    user = session.Load<User>("users/3-A");
-                   counters = session.Advanced.GetCountersFor(user);
-                   Assert.Null(counters);
-               }
-           }
-        }
-        [Fact]
-       public void DifferentTypesOfCountersOperationsInOneSession()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new User { Name = "Aviv1" }, "users/1-A");
-                   session.Store(new User { Name = "Aviv2" }, "users/2-A");
-                   session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   session.CountersFor("users/1-A").Increment("likes", 100);
-                   session.CountersFor("users/1-A").Increment("downloads", 100);
-                   session.CountersFor("users/2-A").Increment("votes", 1000);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   session.CountersFor("users/1-A").Increment("likes", 100);
-                   session.CountersFor("users/1-A").Delete("downloads");
-                   session.CountersFor("users/2-A").Increment("votes", -600);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var val = session.CountersFor("users/1-A").Get("likes");
-                   Assert.Equal(200, val);
-                   val = session.CountersFor("users/1-A").Get("downloads");
-                   Assert.Null(val);
-                   val = session.CountersFor("users/2-A").Get("votes");
-                   Assert.Equal(400, val);
-               }
-           }
-       }
-        [Fact]
-       public void IncrementCounterAndModifyDocInOneSession()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new User { Name = "Aviv" }, "users/1-A");
-                   session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var user = session.Load<User>("users/1-A");
-                   session.CountersFor(user).Increment("likes", 100);
-                   user.Name += "2";
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var user = session.Load<User>("users/1-A");
-                   Assert.Equal("Aviv2", user.Name);
-                    var val = session.CountersFor(user).Get("likes");
-                   Assert.Equal(100, val);
-               }
-           }
-       }
-        [Fact]
-       public void ShouldThrow()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new User { Name = "Aviv" }, "users/1-A");
-                   session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var user = session.Load<User>("users/1-A");
-                   session.CountersFor(user).Increment("likes", 100);
-                   session.SaveChanges();
-                    Assert.Equal(100, session.CountersFor(user).Get("likes"));
-               }
-                using (var session = store.OpenSession())
-               {
-                   session.CountersFor("users/1-A").Increment("likes", 50);
-                   Assert.Throws<InvalidOperationException>(() => session.CountersFor("users/1-A").Delete("likes"));
-               }
-                using (var session = store.OpenSession())
-               {
-                   session.CountersFor("users/1-A").Delete("likes");
-                   Assert.Throws<InvalidOperationException>(() => session.CountersFor("users/1-A").Increment("likes", 50));
-               }
-           }
-        }
-        [Fact]
-       public void SessionShouldTrackCounters()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new User { Name = "Aviv" }, "users/1-A");
-                   session.CountersFor("users/1-A").Increment("likes", 100);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   Assert.Equal(0, session.Advanced.NumberOfRequests);
-                    var val = session.CountersFor("users/1-A").Get("likes");
-                   Assert.Equal(100, val);
-                   Assert.Equal(1, session.Advanced.NumberOfRequests);
-                    session.CountersFor("users/1-A").Get("likes");
-                   Assert.Equal(1, session.Advanced.NumberOfRequests);
-                }
-           }
-       }
-        [Fact]
-       public void SessionShouldKeepNullsInCountersCache()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new User { Name = "Aviv" }, "users/1-A");
-                   session.CountersFor("users/1-A").Increment("likes", 100);
-                   session.CountersFor("users/1-A").Increment("dislikes", 200);
-                   session.CountersFor("users/1-A").Increment("downloads", 300);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var val = session.CountersFor("users/1-A").Get("score");
-                   Assert.Equal(1, session.Advanced.NumberOfRequests);
-                   Assert.Null(val);
-                    val = session.CountersFor("users/1-A").Get("score");
-                   //should keep null values in cache
-                   Assert.Equal(1, session.Advanced.NumberOfRequests);
-                   Assert.Null(val);
-                    var dic = session.CountersFor("users/1-A").GetAll();
-                   //should not contain null value for "score"
-                   Assert.Equal(2, session.Advanced.NumberOfRequests);
-                    Assert.Equal(3, dic.Count);
-                   Assert.Equal(100, dic["likes"]);
-                   Assert.Equal(200, dic["dislikes"]);
-                   Assert.Equal(300, dic["downloads"]);
-               }
-           }
-       }
-        [Fact]
-       public void SessionShouldKnowWhenItHasAllCountersInCacheAndAvoidTripToServer_WhenUsingEntity()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new User { Name = "Aviv" }, "users/1-A");
-                   session.CountersFor("users/1-A").Increment("likes", 100);
-                   session.CountersFor("users/1-A").Increment("dislikes", 200);
-                   session.CountersFor("users/1-A").Increment("downloads", 300);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var user = session.Load<User>("users/1-A");
-                   Assert.Equal(1, session.Advanced.NumberOfRequests);
-                    var userCounters = session.CountersFor(user);
-                    var val = userCounters.Get("likes");
-                   Assert.Equal(2, session.Advanced.NumberOfRequests);
-                   Assert.Equal(100, val);
-                    val = userCounters.Get("dislikes");
-                   Assert.Equal(3, session.Advanced.NumberOfRequests);
-                   Assert.Equal(200, val);
-                    val = userCounters.Get("downloads");
-                   // session should know at this point that it has all counters
-                    Assert.Equal(4, session.Advanced.NumberOfRequests);
-                   Assert.Equal(300, val);
-                    var dic = userCounters.GetAll(); // should not go to server
-                   Assert.Equal(4, session.Advanced.NumberOfRequests);
-                    Assert.Equal(3, dic.Count);
-                   Assert.Equal(100, dic["likes"]);
-                   Assert.Equal(200, dic["dislikes"]);
-                   Assert.Equal(300, dic["downloads"]);
-                    val = userCounters.Get("score"); // should not go to server
-                   Assert.Equal(4, session.Advanced.NumberOfRequests);
-                   Assert.Null(val);
-               }
-           }
-       }
-        [Fact]
-       public void SessionShouldUpdateMissingCountersInCacheAndRemoveDeletedCounters_AfterRefresh()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new User { Name = "Aviv" }, "users/1-A");
-                   session.CountersFor("users/1-A").Increment("likes", 100);
-                   session.CountersFor("users/1-A").Increment("dislikes", 200);
-                   session.CountersFor("users/1-A").Increment("downloads", 300);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var user = session.Load<User>("users/1-A");
-                   Assert.Equal(1, session.Advanced.NumberOfRequests);
-                    var userCounters = session.CountersFor(user);
-                   var dic = userCounters.GetAll();
-                   Assert.Equal(2, session.Advanced.NumberOfRequests);
-                    Assert.Equal(3, dic.Count);
-                   Assert.Equal(100, dic["likes"]);
-                   Assert.Equal(200, dic["dislikes"]);
-                   Assert.Equal(300, dic["downloads"]);
-                    using (var session2 = store.OpenSession())
-                   {
-                       session2.CountersFor("users/1-A").Increment("likes");
-                       session2.CountersFor("users/1-A").Delete("dislikes");
-                       session2.CountersFor("users/1-A").Increment("score", 1000); // new counter
-                       session2.SaveChanges();
-                   }
-                    session.Advanced.Refresh(user);
-                   Assert.Equal(3, session.Advanced.NumberOfRequests);
-                    // Refresh updated the document in session,
-                   // cache should know that it's missing 'score' by looking
-                   // at the document's metadata and go to server again to get all.
-                   // this should override the cache entirly and therfore
-                   // 'dislikes' won't be in cache anymore
-                    dic = userCounters.GetAll();
-                   Assert.Equal(4, session.Advanced.NumberOfRequests);
-                    Assert.Equal(3, dic.Count);
-                   Assert.Equal(101, dic["likes"]);
-                   Assert.Equal(300, dic["downloads"]);
-                   Assert.Equal(1000, dic["score"]);
-                    // cache should know that it got all and not go to server,
-                   // and it shouldn't have 'dislikes' entry anymore
-                   var val = userCounters.Get("dislikes");
-                   Assert.Equal(4, session.Advanced.NumberOfRequests);
-                   Assert.Null(val);
-                }
-           }
-       }
-        [Fact]
-       public void SessionShouldUpdateMissingCountersInCacheAndRemoveDeletedCounters_AfterLoadFromServer()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new User { Name = "Aviv" }, "users/1-A");
-                   session.CountersFor("users/1-A").Increment("likes", 100);
-                   session.CountersFor("users/1-A").Increment("dislikes", 200);
-                   session.CountersFor("users/1-A").Increment("downloads", 300);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var userCounters = session.CountersFor("users/1-A");
-                   var dic = userCounters.GetAll();
-                   Assert.Equal(1, session.Advanced.NumberOfRequests);
-                   Assert.Equal(3, dic.Count);
-                   Assert.Equal(100, dic["likes"]);
-                   Assert.Equal(200, dic["dislikes"]);
-                   Assert.Equal(300, dic["downloads"]);
-                    using (var session2 = store.OpenSession())
-                   {
-                       session2.CountersFor("users/1-A").Increment("likes");
-                       session2.CountersFor("users/1-A").Delete("dislikes");
-                       session2.CountersFor("users/1-A").Increment("score", 1000); // new counter
-                       session2.SaveChanges();
-                   }
-                    session.Load<User>("users/1-A");
-                   Assert.Equal(2, session.Advanced.NumberOfRequests);
-                    // now that we have the document in the session,
-                   // cache should know that it's missing 'score' by looking at the metadata
-                   // and go to server again to get all
-                   dic = userCounters.GetAll();
-                   Assert.Equal(3, session.Advanced.NumberOfRequests);
-                   Assert.Equal(3, dic.Count);
-                    Assert.Equal(101, dic["likes"]);
-                   Assert.Equal(300, dic["downloads"]);
-                   Assert.Equal(1000, dic["score"]);
-               }
-           }
-       }
-        [Fact]
-       public void SessionClearShouldClearCountersCache()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new User { Name = "Aviv" }, "users/1-A");
-                   session.CountersFor("users/1-A").Increment("likes", 100);
-                   session.CountersFor("users/1-A").Increment("dislikes", 200);
-                   session.CountersFor("users/1-A").Increment("downloads", 300);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var userCounters = session.CountersFor("users/1-A");
-                   var dic = userCounters.GetAll();
-                   Assert.Equal(1, session.Advanced.NumberOfRequests);
-                   Assert.Equal(3, dic.Count);
-                   Assert.Equal(100, dic["likes"]);
-                   Assert.Equal(200, dic["dislikes"]);
-                   Assert.Equal(300, dic["downloads"]);
-                    using (var session2 = store.OpenSession())
-                   {
-                       session2.CountersFor("users/1-A").Increment("likes");
-                       session2.CountersFor("users/1-A").Delete("dislikes");
-                       session2.CountersFor("users/1-A").Increment("score", 1000); // new counter
-                       session2.SaveChanges();
-                   }
-                    session.Advanced.Clear(); // should clear CountersCache
-                    dic = userCounters.GetAll(); // should go to server again
-                   Assert.Equal(2, session.Advanced.NumberOfRequests);
-                    Assert.Equal(3, dic.Count);
-                   Assert.Equal(101, dic["likes"]);
-                   Assert.Equal(300, dic["downloads"]);
-                   Assert.Equal(1000, dic["score"]);
-               }
-           }
-       }
-        [Fact]
-       public void SessionEvictShouldRemoveEntryFromCountersCache()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new User { Name = "Aviv" }, "users/1-A");
-                   session.CountersFor("users/1-A").Increment("likes", 100);
-                   session.CountersFor("users/1-A").Increment("dislikes", 200);
-                   session.CountersFor("users/1-A").Increment("downloads", 300);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var user = session.Load<User>("users/1-A");
-                   Assert.Equal(1, session.Advanced.NumberOfRequests);
-                    var userCounters = session.CountersFor("users/1-A");
-                   var dic = userCounters.GetAll();
-                   Assert.Equal(2, session.Advanced.NumberOfRequests);
-                    Assert.Equal(3, dic.Count);
-                   Assert.Equal(100, dic["likes"]);
-                   Assert.Equal(200, dic["dislikes"]);
-                   Assert.Equal(300, dic["downloads"]);
-                    using (var session2 = store.OpenSession())
-                   {
-                       session2.CountersFor("users/1-A").Increment("likes");
-                       session2.CountersFor("users/1-A").Delete("dislikes");
-                       session2.CountersFor("users/1-A").Increment("score", 1000); // new counter
-                       session2.SaveChanges();
-                   }
-                    session.Advanced.Evict(user); // should remove 'users/1-A' entry from  CountersByDocId
-                    dic = userCounters.GetAll(); // should go to server again
-                   Assert.Equal(3, session.Advanced.NumberOfRequests);
-                    Assert.Equal(3, dic.Count);
-                   Assert.Equal(101, dic["likes"]);
-                   Assert.Equal(300, dic["downloads"]);
-                   Assert.Equal(1000, dic["score"]);
-               }
-           }
-       }
-        [Fact]
-       public void SessionShouldAlwaysLoadCountersFromCacheAfterGetAll()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new User { Name = "Aviv" }, "users/1-A");
-                   session.CountersFor("users/1-A").Increment("likes", 100);
-                   session.CountersFor("users/1-A").Increment("dislikes", 200);
-                   session.CountersFor("users/1-A").Increment("downloads", 300);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var dic = session.CountersFor("users/1-A").GetAll();
-                   Assert.Equal(1, session.Advanced.NumberOfRequests);
-                   Assert.Equal(3, dic.Count);
-                   Assert.Equal(100, dic["likes"]);
-                   Assert.Equal(200, dic["dislikes"]);
-                   Assert.Equal(300, dic["downloads"]);
-                    //should not go to server after GetAll() request
-                    var val = session.CountersFor("users/1-A").Get("likes");
-                   Assert.Equal(1, session.Advanced.NumberOfRequests);
-                   Assert.Equal(100, val);
-                    val = session.CountersFor("users/1-A").Get("votes");
-                   Assert.Equal(1, session.Advanced.NumberOfRequests);
-                   Assert.Null(val);
-                }
-           }
-       }
-        [Fact]
-       public void SessionShouldOverrideExistingCounterValuesInCacheAfterGetAll()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new User { Name = "Aviv" }, "users/1-A");
-                   session.CountersFor("users/1-A").Increment("likes", 100);
-                   session.CountersFor("users/1-A").Increment("dislikes", 200);
-                   session.CountersFor("users/1-A").Increment("downloads", 300);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var val = session.CountersFor("users/1-A").Get("likes");
-                   Assert.Equal(1, session.Advanced.NumberOfRequests);
-                   Assert.Equal(100, val);
-                    val = session.CountersFor("users/1-A").Get("score");
-                   Assert.Equal(2, session.Advanced.NumberOfRequests);
-                   Assert.Null(val);
-                    var counterBatch = new CounterBatch
-                   {
-                       Documents = new List<DocumentCountersOperation>()
-                       {
-                           new DocumentCountersOperation
-                           {
-                               DocumentId = "users/1-A",
-                               Operations = new List<CounterOperation>
-                               {
-                                   new CounterOperation
-                                   {
-                                       Type = CounterOperationType.Increment,
-                                       CounterName = "likes",
-                                       Delta = 400
-                                   }
-                               }
-                           }
-                       }
-                   };
-                    store.Operations.Send(new CounterBatchOperation(counterBatch));
-                    var dic = session.CountersFor("users/1-A").GetAll();
-                   Assert.Equal(3, session.Advanced.NumberOfRequests);
-                   Assert.Equal(3, dic.Count); // does not include null value for "score"
-                   Assert.Equal(200, dic["dislikes"]);
-                   Assert.Equal(300, dic["downloads"]);
-                   Assert.Equal(500, dic["likes"]); // GetAll() overrides existing values in cache
-                    val = session.CountersFor("users/1-A").Get("score");
-                   Assert.Equal(3, session.Advanced.NumberOfRequests); // null values should still be in cache
-                   Assert.Null(val);
-                }
-           }
-       }
-        [Fact]
-       public void SessionIncrementCounterShouldUpdateCounterValueAfterSaveChanges()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new User { Name = "Aviv" }, "users/1-A");
-                   session.CountersFor("users/1-A").Increment("likes", 100);
-                   session.CountersFor("users/1-A").Increment("dislikes", 300);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var val = session.CountersFor("users/1-A").Get("likes");
-                   Assert.Equal(100, val);
-                   Assert.Equal(1, session.Advanced.NumberOfRequests);
-                    session.CountersFor("users/1-A").Increment("likes", 50); // should not increment the counter value in cache
-                   val = session.CountersFor("users/1-A").Get("likes");
-                   Assert.Equal(100, val);
-                   Assert.Equal(1, session.Advanced.NumberOfRequests);
-                    session.CountersFor("users/1-A").Increment("dislikes", 200); // should not add the counter to cache
-                   val = session.CountersFor("users/1-A").Get("dislikes");  // should go to server
-                   Assert.Equal(300, val);
-                   Assert.Equal(2, session.Advanced.NumberOfRequests);
-                    session.CountersFor("users/1-A").Increment("score", 1000); // should not add the counter to cache
-                   Assert.Equal(2, session.Advanced.NumberOfRequests);
-                    // SaveChanges should updated counters values in cache
-                   // according to increment result
-                   session.SaveChanges();
-                   Assert.Equal(3, session.Advanced.NumberOfRequests);
-                    // should not go to server for these
-                   val = session.CountersFor("users/1-A").Get("likes");
-                   Assert.Equal(150, val);
-                    val = session.CountersFor("users/1-A").Get("dislikes");
-                   Assert.Equal(500, val);
-                    val = session.CountersFor("users/1-A").Get("score");
-                   Assert.Equal(1000, val);
-                    Assert.Equal(3, session.Advanced.NumberOfRequests);
-                }
-           }
-       }
-        [Fact]
-       public void SessionShouldRemoveCounterFromCacheAfterCounterDeletion()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new User { Name = "Aviv" }, "users/1-A");
-                   session.CountersFor("users/1-A").Increment("likes", 100);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var val = session.CountersFor("users/1-A").Get("likes");
-                   Assert.Equal(100, val);
-                   Assert.Equal(1, session.Advanced.NumberOfRequests);
-                    session.CountersFor("users/1-A").Delete("likes");
-                   session.SaveChanges();
-                   Assert.Equal(2, session.Advanced.NumberOfRequests);
-                    val = session.CountersFor("users/1-A").Get("likes");
-                   Assert.Null(val);
-                   Assert.Equal(3, session.Advanced.NumberOfRequests);
-                }
-           }
-       }
-        [Fact]
-       public void SessionShouldRemoveCountersFromCacheAfterDocumentDeletion()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new User { Name = "Aviv" }, "users/1-A");
-                   session.CountersFor("users/1-A").Increment("likes", 100);
-                   session.CountersFor("users/1-A").Increment("dislikes", 200);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var dic = session.CountersFor("users/1-A").Get(new[] { "likes", "dislikes" });
-                    Assert.Equal(2, dic.Count);
-                   Assert.Equal(100, dic["likes"]);
-                   Assert.Equal(200, dic["dislikes"]);
-                   Assert.Equal(1, session.Advanced.NumberOfRequests);
-                    session.Delete("users/1-A");
-                   session.SaveChanges();
-                   Assert.Equal(2, session.Advanced.NumberOfRequests);
-                    var val = session.CountersFor("users/1-A").Get("likes");
-                   Assert.Equal(3, session.Advanced.NumberOfRequests);
-                   Assert.Null(val);
-                }
-           }
-       }
-        [Fact]
-       public void SessionIncludeSingleCounter()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new User { Name = "Aviv" }, "users/1-A");
-                   session.CountersFor("users/1-A").Increment("likes", 100);
-                   session.CountersFor("users/1-A").Increment("dislikes", 200);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var user = session.Load<User>(
-                       "users/1-A",
-                       i => i.IncludeCounter("likes"));
-                    Assert.Equal(1, session.Advanced.NumberOfRequests);
-                    var counter = session.CountersFor(user).Get("likes"); // should not go to server
-                    Assert.Equal(100, counter);
-                   Assert.Equal(1, session.Advanced.NumberOfRequests);
-                }
-           }
-       }
-        [Fact]
-       public void SessionChainedIncludeCounter()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new Company { Name = "HR" }, "companies/1-A");
-                   session.Store(new Order { Company = "companies/1-A" }, "orders/1-A");
-                    session.CountersFor("orders/1-A").Increment("likes", 100);
-                   session.CountersFor("orders/1-A").Increment("dislikes", 200);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var order = session.Load<Order>(
-                       "orders/1-A",
-                       i => i.IncludeCounter("likes")
-                           .IncludeCounter("dislikes"));
-                    Assert.Equal(1, session.Advanced.NumberOfRequests);
-                    var counter = session.CountersFor(order).Get("likes"); // should not go to server
-                   Assert.Equal(100, counter);
-                    counter = session.CountersFor(order).Get("dislikes"); // should not go to server
-                   Assert.Equal(200, counter);
-                    Assert.Equal(1, session.Advanced.NumberOfRequests);
-                }
-           }
-       }
-        [Fact]
-       public void SessionChainedIncludeAndIncludeCounter()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new Company { Name = "HR" }, "companies/1-A");
-                   session.Store(new Employee { FirstName = "Aviv" }, "employees/1-A");
-                   session.Store(new Order { Company = "companies/1-A", Employee = "employees/1-A" }, "orders/1-A");
-                    session.CountersFor("orders/1-A").Increment("likes", 100);
-                   session.CountersFor("orders/1-A").Increment("dislikes", 200);
-                   session.CountersFor("orders/1-A").Increment("downloads", 300);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var order = session.Load<Order>(
-                       "orders/1-A",
-                       i => i.IncludeCounter("likes")
-                           .IncludeDocuments(o => o.Company)
-                           .IncludeCounter("dislikes")
-                           .IncludeCounter("downloads")
-                           .IncludeDocuments(o => o.Employee));
-                    var company = session.Load<Company>(order.Company);
-                   Assert.Equal("HR", company.Name);
-                    var employee = session.Load<Employee>(order.Employee);
-                   Assert.Equal("Aviv", employee.FirstName);
-                    var dic = session.CountersFor(order).GetAll(); // should not go to server
-                   Assert.Equal(3, dic.Count);
-                   Assert.Equal(100, dic["likes"]);
-                   Assert.Equal(200, dic["dislikes"]);
-                   Assert.Equal(300, dic["downloads"]);
-                    Assert.Equal(1, session.Advanced.NumberOfRequests);
-                }
-           }
-       }
-        [Fact]
-       public void SessionIncludeCounters()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new Company { Name = "HR" }, "companies/1-A");
-                   session.Store(new Order { Company = "companies/1-A" }, "orders/1-A");
-                   session.CountersFor("orders/1-A").Increment("likes", 100);
-                   session.CountersFor("orders/1-A").Increment("dislikes", 200);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var order = session.Load<Order>(
-                       "orders/1-A",
-                       i => i.IncludeDocuments("Company")
-                           .IncludeCounters(new[] { "likes", "dislikes" }));
-                    var company = session.Load<Company>(order.Company);
-                   Assert.Equal("HR", company.Name);
-                    var dic = session.CountersFor(order).GetAll(); // should not go to server
-                   Assert.Equal(2, dic.Count);
-                   Assert.Equal(100, dic["likes"]);
-                   Assert.Equal(200, dic["dislikes"]);
-                    Assert.Equal(1, session.Advanced.NumberOfRequests);
-                }
-           }
-       }
-        [Fact]
-       public void SessionIncludeAllCounters()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new Company { Name = "HR" }, "companies/1-A");
-                   session.Store(new Order { Company = "companies/1-A" }, "orders/1-A");
-                    session.CountersFor("orders/1-A").Increment("likes", 100);
-                   session.CountersFor("orders/1-A").Increment("dislikes", 200);
-                   session.CountersFor("orders/1-A").Increment("downloads", 300);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var order = session.Load<Order>(
-                       "orders/1-A",
-                       i => i.IncludeDocuments("Company")
-                           .IncludeAllCounters());
-                    var company = session.Load<Company>(order.Company);
-                   Assert.Equal("HR", company.Name);
-                    var dic = session.CountersFor(order).GetAll(); // should not go to server
-                   Assert.Equal(3, dic.Count);
-                   Assert.Equal(100, dic["likes"]);
-                   Assert.Equal(200, dic["dislikes"]);
-                   Assert.Equal(300, dic["downloads"]);
-                    Assert.Equal(1, session.Advanced.NumberOfRequests);
-                }
-           }
-       }
-        [Fact]
-       public void SessionIncludeSingleCounterAfterIncludeAllCountersShouldThrow()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new Company { Name = "HR" }, "companies/1-A");
-                   session.Store(new Order { Company = "companies/1-A" }, "orders/1-A");
-                    session.CountersFor("orders/1-A").Increment("likes", 100);
-                   session.CountersFor("orders/1-A").Increment("dislikes", 200);
-                   session.CountersFor("orders/1-A").Increment("downloads", 300);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   Assert.Throws<InvalidOperationException>(() =>
-                       session.Load<Order>(
-                           "orders/1-A",
-                           i => i.IncludeDocuments("Company")
-                               .IncludeAllCounters()
-                               .IncludeCounter("likes")));
-               }
-           }
-       }
-        [Fact]
-       public void SessionIncludeAllCountersAfterIncludeSingleCounterShouldThrow()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new Company { Name = "HR" }, "companies/1-A");
-                   session.Store(new Order { Company = "companies/1-A" }, "orders/1-A");
-                    session.CountersFor("orders/1-A").Increment("likes", 100);
-                   session.CountersFor("orders/1-A").Increment("dislikes", 200);
-                   session.CountersFor("orders/1-A").Increment("downloads", 300);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   Assert.Throws<InvalidOperationException>(() =>
-                       session.Load<Order>(
-                           "orders/1-A",
-                           i => i.IncludeDocuments("Company")
-                               .IncludeCounter("likes")
-                               .IncludeAllCounters()));
-               }
-           }
-       }
-        [Fact]
-       public void SessionIncludeCountersShouldRegisterMissingCounters()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new Company { Name = "HR" }, "companies/1-A");
-                   session.Store(new Order { Company = "companies/1-A" }, "orders/1-A");
-                    session.CountersFor("orders/1-A").Increment("likes", 100);
-                   session.CountersFor("orders/1-A").Increment("dislikes", 200);
-                   session.CountersFor("orders/1-A").Increment("downloads", 300);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var order = session.Load<Order>(
-                       "orders/1-A",
-                       i => i.IncludeDocuments("Company")
-                           .IncludeCounters(new[] { "likes", "downloads", "dances" })
-                           .IncludeCounter("dislikes")
-                           .IncludeCounter("cats"));
-                    var company = session.Load<Company>(order.Company);
-                   Assert.Equal("HR", company.Name);
-                    // should not go to server
-                   var dic = session.CountersFor(order).GetAll();
-                   Assert.Equal(1, session.Advanced.NumberOfRequests);
-                    Assert.Equal(5, dic.Count);
-                   Assert.Equal(100, dic["likes"]);
-                   Assert.Equal(200, dic["dislikes"]);
-                   Assert.Equal(300, dic["downloads"]);
-                    //missing counters should be in cache
-                   Assert.Null(dic["dances"]);
-                   Assert.Null(dic["cats"]);
-                }
-           }
-       }
-        [Fact]
-       public void SessionIncludeCountersMultipleLoads()
-       {
-           using (var store = GetDocumentStore())
-           {
-               using (var session = store.OpenSession())
-               {
-                   session.Store(new Company { Name = "HR" }, "companies/1-A");
-                   session.Store(new Order { Company = "companies/1-A" }, "orders/1-A");
-                    session.Store(new Company { Name = "HP" }, "companies/2-A");
-                   session.Store(new Order { Company = "companies/2-A" }, "orders/2-A");
-                    session.CountersFor("orders/1-A").Increment("likes", 100);
-                   session.CountersFor("orders/1-A").Increment("dislikes", 200);
-                    session.CountersFor("orders/2-A").Increment("score", 300);
-                   session.CountersFor("orders/2-A").Increment("downloads", 400);
-                    session.SaveChanges();
-               }
-                using (var session = store.OpenSession())
-               {
-                   var orders = session.Load<Order>(
-                       new[] { "orders/1-A", "orders/2-A" },
-                       i => i.IncludeDocuments(o => o.Company)
-                           .IncludeAllCounters());
-                    var order = orders["orders/1-A"];
-                   var company = session.Load<Company>(order.Company);
-                   Assert.Equal("HR", company.Name);
-                    var dic = session.CountersFor(order).GetAll(); // should not go to server
-                   Assert.Equal(2, dic.Count);
-                   Assert.Equal(100, dic["likes"]);
-                   Assert.Equal(200, dic["dislikes"]);
-                    order = orders["orders/2-A"];
-                   company = session.Load<Company>(order.Company);
-                   Assert.Equal("HP", company.Name);
-                    dic = session.CountersFor(order).GetAll(); // should not go to server
-                   Assert.Equal(2, dic.Count);
-                   Assert.Equal(300, dic["score"]);
-                   Assert.Equal(400, dic["downloads"]);
-                    Assert.Equal(1, session.Advanced.NumberOfRequests);
-                }
-           }
-       }
-     */
+async function storeDoc(session: IDocumentSession, id: string, data: any, clazz: any) {
+    await session.store(
+        Object.assign(new clazz(), data), id);
+}
+
+//     @Test
+//     public void sessionChainedIncludeAndIncludeCounter() throws Exception {
+//         try (IDocumentStore store = getDocumentStore()) {
+//             try (IDocumentSession session = store.openSession()) {
+//                 Company company = new Company();
+//                 company.setName("HR");
+//                 session.store(company, "companies/1-A");
+
+//                 Employee employee = new Employee();
+//                 employee.setFirstName("Aviv");
+//                 session.store(employee, "employees/1-A");
+
+//                 Order order = new Order();
+//                 order.setCompany("companies/1-A");
+//                 order.setEmployee("employees/1-A");
+//                 session.store(order, "orders/1-A");
+
+//                 session.countersFor("orders/1-A").increment("likes", 100);
+//                 session.countersFor("orders/1-A").increment("dislikes", 200);
+//                 session.countersFor("orders/1-A").increment("downloads", 300);
+
+//                 session.saveChanges();
+//             }
+
+//             try (IDocumentSession session = store.openSession()) {
+//                 Order order = session.load(Order.class, "orders/1-A",
+//                         i -> i.includeCounter("likes")
+//                                 .includeDocuments("company")
+//                                 .includeCounter("dislikes")
+//                                 .includeCounter("downloads")
+//                                 .includeDocuments("employee"));
+
+//                 Company company = session.load(Company.class, order.getCompany());
+//                 assertThat(company.getName())
+//                         .isEqualTo("HR");
+
+//                 Employee employee = session.load(Employee.class, order.getEmployee());
+//                 assertThat(employee.getFirstName())
+//                         .isEqualTo("Aviv");
+
+//                 Map<String, Long> dic = session.countersFor(order).getAll();
+//                 assertThat(dic)
+//                         .hasSize(3)
+//                         .containsEntry("likes", 100L)
+//                         .containsEntry("dislikes", 200L)
+//                         .containsEntry("downloads", 300L);
+
+//                 assertThat(session.advanced().getNumberOfRequests())
+//                         .isEqualTo(1);
+//             }
+//         }
+//     }
+
+//     @Test
+//     public void sessionIncludeCounters() throws Exception {
+//         try (IDocumentStore store = getDocumentStore()) {
+//             try (IDocumentSession session = store.openSession()) {
+//                 Company company = new Company();
+//                 company.setName("HR");
+//                 session.store(company, "companies/1-A");
+
+//                 Order order = new Order();
+//                 order.setCompany("companies/1-A");
+//                 session.store(order, "orders/1-A");
+
+//                 session.countersFor("orders/1-A").increment("likes", 100);
+//                 session.countersFor("orders/1-A").increment("dislikes", 200);
+
+//                 session.saveChanges();
+//             }
+
+//             try (IDocumentSession session = store.openSession()) {
+//                 Order order = session.load(Order.class, "orders/1-A", i -> i.includeDocuments("company").includeCounters(new String[]{"likes", "dislikes"}));
+
+//                 Company company = session.load(Company.class, order.getCompany());
+//                 assertThat(company.getName())
+//                         .isEqualTo("HR");
+
+//                 Map<String, Long> dic = session.countersFor(order).getAll();
+//                 assertThat(dic)
+//                         .hasSize(2)
+//                         .containsEntry("likes", 100L)
+//                         .containsEntry("dislikes", 200L);
+
+//                 assertThat(session.advanced().getNumberOfRequests())
+//                         .isEqualTo(1);
+//             }
+
+//         }
+//     }
+
+//     @Test
+//     public void sessionIncludeAllCounters() throws Exception {
+//         try (IDocumentStore store = getDocumentStore()) {
+//             try (IDocumentSession session = store.openSession()) {
+//                 Company company = new Company();
+//                 company.setName("HR");
+//                 session.store(company, "companies/1-A");
+
+//                 Order order = new Order();
+//                 order.setCompany("companies/1-A");
+//                 session.store(order, "orders/1-A");
+
+//                 session.countersFor("orders/1-A").increment("likes", 100);
+//                 session.countersFor("orders/1-A").increment("dislikes", 200);
+//                 session.countersFor("orders/1-A").increment("downloads", 300);
+
+//                 session.saveChanges();
+//             }
+
+//             try (IDocumentSession session = store.openSession()) {
+//                 Order order = session.load(Order.class, "orders/1-A", i -> i.includeDocuments("company").includeAllCounters());
+
+//                 Company company = session.load(Company.class, order.getCompany());
+//                 assertThat(company.getName())
+//                         .isEqualTo("HR");
+
+//                 Map<String, Long> dic = session.countersFor(order).getAll();
+//                 assertThat(dic)
+//                         .hasSize(3)
+//                         .containsEntry("likes", 100L)
+//                         .containsEntry("dislikes", 200L)
+//                         .containsEntry("downloads", 300L);
+
+//                 assertThat(session.advanced().getNumberOfRequests())
+//                         .isEqualTo(1);
+//             }
+
+//         }
+//     }
+
+//     @Test
+//     public void sessionIncludeSingleCounterAfterIncludeAllCountersShouldThrow() throws Exception {
+//         try (IDocumentStore store = getDocumentStore()) {
+//             try (IDocumentSession session = store.openSession()) {
+//                 Company company = new Company();
+//                 company.setName("HR");
+//                 session.store(company, "companies/1-A");
+
+//                 Order order = new Order();
+//                 order.setCompany("companies/1-A");
+//                 session.store(order, "orders/1-A");
+
+//                 session.countersFor("orders/1-A").increment("likes", 100);
+//                 session.countersFor("orders/1-A").increment("dislikes", 200);
+//                 session.countersFor("orders/1-A").increment("downloads", 300);
+
+//                 session.saveChanges();
+//             }
+
+//             try (IDocumentSession session = store.openSession()) {
+
+//                 assertThatThrownBy(() -> {
+//                     session.load(Order.class, "orders/1-A", i -> i.includeDocuments("company").includeAllCounters().includeCounter("likes"));
+//                 }).isExactlyInstanceOf(IllegalStateException.class);
+//             }
+//         }
+//     }
+
+//     @Test
+//     public void sessionIncludeAllCountersAfterIncludeSingleCounterShouldThrow() throws Exception {
+//         try (IDocumentStore store = getDocumentStore()) {
+//             try (IDocumentSession session = store.openSession()) {
+//                 Company company = new Company();
+//                 company.setName("HR");
+//                 session.store(company, "companies/1-A");
+
+//                 Order order = new Order();
+//                 order.setCompany("companies/1-A");
+//                 session.store(order, "orders/1-A");
+
+//                 session.countersFor("orders/1-A").increment("likes", 100);
+//                 session.countersFor("orders/1-A").increment("dislikes", 200);
+//                 session.countersFor("orders/1-A").increment("downloads", 300);
+
+//                 session.saveChanges();
+//             }
+
+//             try (IDocumentSession session = store.openSession()) {
+
+//                 assertThatThrownBy(() -> {
+//                     session.load(Order.class, "orders/1-A", i -> i.includeDocuments("company").includeCounter("likes").includeAllCounters());
+//                 }).isExactlyInstanceOf(IllegalStateException.class);
+//             }
+//         }
+//     }
+
+//     @Test
+//     public void sessionIncludeCountersShouldRegisterMissingCounters() throws Exception {
+//         try (IDocumentStore store = getDocumentStore()) {
+//             try (IDocumentSession session = store.openSession()) {
+//                 Company company = new Company();
+//                 company.setName("HR");
+//                 session.store(company, "companies/1-A");
+
+//                 Order order = new Order();
+//                 order.setCompany("companies/1-A");
+//                 session.store(order, "orders/1-A");
+
+//                 session.countersFor("orders/1-A").increment("likes", 100);
+//                 session.countersFor("orders/1-A").increment("dislikes", 200);
+//                 session.countersFor("orders/1-A").increment("downloads", 300);
+
+//                 session.saveChanges();
+//             }
+
+//             try (IDocumentSession session = store.openSession()) {
+//                 Order order = session.load(Order.class, "orders/1-A",
+//                         i -> i.includeDocuments("company")
+//                                 .includeCounters(new String[]{"likes", "downloads", "dances"})
+//                                 .includeCounter("dislikes")
+//                                 .includeCounter("cats"));
+
+//                 Company company = session.load(Company.class, order.getCompany());
+//                 assertThat(company.getName())
+//                         .isEqualTo("HR");
+
+//                 // should not go to server
+//                 Map<String, Long> dic = session.countersFor(order).getAll();
+//                 assertThat(session.advanced().getNumberOfRequests())
+//                         .isEqualTo(1);
+
+//                 assertThat(dic)
+//                         .hasSize(5)
+//                         .containsEntry("likes", 100L)
+//                         .containsEntry("dislikes", 200L)
+//                         .containsEntry("downloads", 300L);
+
+//                 //missing counters should be in cache
+//                 assertThat(dic.get("dances"))
+//                         .isNull();
+//                 assertThat(dic.get("cats"))
+//                         .isNull();
+
+//                 assertThat(session.advanced().getNumberOfRequests())
+//                         .isEqualTo(1);
+
+//             }
+//         }
+//     }
+
+//     @Test
+//     public void sessionIncludeCountersMultipleLoads() throws Exception {
+//         try (IDocumentStore store = getDocumentStore()) {
+//             try (IDocumentSession session = store.openSession()) {
+//                 Company company1 = new Company();
+//                 company1.setName("HR");
+//                 session.store(company1, "companies/1-A");
+
+//                 Order order1 = new Order();
+//                 order1.setCompany("companies/1-A");
+//                 session.store(order1, "orders/1-A");
+
+//                 Company company2 = new Company();
+//                 company2.setName("HP");
+//                 session.store(company2, "companies/2-A");
+
+//                 Order order2 = new Order();
+//                 order2.setCompany("companies/2-A");
+//                 session.store(order2, "orders/2-A");
+
+//                 session.countersFor("orders/1-A").increment("likes", 100);
+//                 session.countersFor("orders/1-A").increment("dislikes", 200);
+
+//                 session.countersFor("orders/2-A").increment("score", 300);
+//                 session.countersFor("orders/2-A").increment("downloads", 400);
+
+//                 session.saveChanges();
+//             }
+
+//             try (IDocumentSession session = store.openSession()) {
+//                 Map<String, Order> orders = session.load(Order.class, Arrays.asList("orders/1-A", "orders/2-A"), i -> i.includeDocuments("company").includeAllCounters());
+
+//                 Order order = orders.get("orders/1-A");
+//                 Company company = session.load(Company.class, order.getCompany());
+//                 assertThat(company.getName())
+//                         .isEqualTo("HR");
+
+//                 Map<String, Long> dic = session.countersFor(order).getAll();
+//                 assertThat(dic)
+//                         .hasSize(2)
+//                         .containsEntry("likes", 100L)
+//                         .containsEntry("dislikes", 200L);
+
+//                 order = orders.get("orders/2-A");
+//                 company = session.load(Company.class, order.getCompany());
+//                 assertThat(company.getName())
+//                         .isEqualTo("HP");
+
+//                 dic = session.countersFor(order).getAll();
+//                 assertThat(dic)
+//                         .hasSize(2)
+//                         .containsEntry("score", 300L)
+//                         .containsEntry("downloads", 400L);
+
+//                 assertThat(session.advanced().getNumberOfRequests())
+//                         .isEqualTo(1);
+//             }
+//         }
+//     }     

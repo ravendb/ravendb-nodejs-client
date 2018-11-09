@@ -1432,6 +1432,9 @@ export abstract class InMemoryDocumentSessionOperations
         }
 
         this.deletedEntities.delete(entity);
+        if (this._countersByDocId) {
+            this._countersByDocId.delete(documentInfo.id);
+        }
     }
 
     /**

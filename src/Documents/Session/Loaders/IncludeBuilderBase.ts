@@ -16,7 +16,7 @@ export class IncludeBuilderBase {
     public alias: string;
     public countersToIncludeBySourcePath: CountersByDocId;
 
-    public getCountersToInclude(): Set<string> {
+    public get countersToInclude(): Set<string> {
         if (!this.countersToIncludeBySourcePath) {
             return null;
         }
@@ -25,7 +25,7 @@ export class IncludeBuilderBase {
         return value ? value[1] : new Set();
     }
 
-    public isAllCounters(): boolean {
+    public get isAllCounters(): boolean {
         if (!this.countersToIncludeBySourcePath) {
             return false;
         }

@@ -14,6 +14,7 @@ import { throwError } from "../../src/Exceptions";
 import { IAuthOptions } from "../../src/Auth/AuthOptions";
 import * as os from "os";
 import "../../src/Utility/Polyfills";
+import { IDocumentSession } from "../../src";
 
 // logOnUncaughtAndUnhandled();
 
@@ -186,3 +187,10 @@ function setupRavenDbTestContext() {
     return testContext;
 }
 // tslint:enable:no-console
+
+export async function storeNewDoc(
+    session: IDocumentSession, data: object, id: string, clazz: any) {
+    const order = Object.assign(new clazz(), data);
+    await session.store(order, id);
+    return order;
+}

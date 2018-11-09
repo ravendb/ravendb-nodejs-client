@@ -65,6 +65,7 @@ import { ClusterTransactionOperationsBase } from "./ClusterTransactionOperations
 import { SessionOptions } from "./SessionOptions";
 import { ISessionDocumentCounters } from "./ISessionDocumentCounters";
 import { SessionDocumentCounters } from "./SessionDocumentCounters";
+import { IncludeBuilder } from "./Loaders/IncludeBuilder";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;
@@ -146,20 +147,13 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         }
 
         callback = callback || TypeUtil.NOOP;
-        options = options || {};
 
-        this.conventions.tryRegisterEntityType(options.documentType);
-        const objType = this.conventions.findEntityType(options.documentType);
-
-        const loadOperation = new LoadOperation(this);
-        const loadInternalPromise = this._loadInternal<TEntity>(ids, loadOperation, null)
-            .then(() => loadOperation.getDocuments<TEntity>(objType))
+        const internalOpts = this._prepareLoadInternalOpts(options || {});
+        const loadInternalPromise = this.loadInternal(ids, internalOpts)
             .then((docs: EntitiesCollectionObject<TEntity> | TEntity) => {
-                if (isLoadingSingle) {
-                    return docs[Object.keys(docs)[0]];
-                }
-
-                return docs;
+                return isLoadingSingle
+                    ? docs[Object.keys(docs)[0]]
+                    : docs;
             });
 
         passResultToCallback(loadInternalPromise, callback);
@@ -167,13 +161,36 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         return loadInternalPromise;
     }
 
-    private async _loadInternal<T>( //TODO: unused!
+    private _prepareLoadInternalOpts<TEntity extends object>(options: LoadOptions<TEntity>) {
+        const internalOpts: SessionLoadInternalParameters<TEntity> = { documentType: options.documentType };
+        this.conventions.tryRegisterEntityType(internalOpts.documentType);
+        if ("includes" in options) {
+            if (TypeUtil.isFunction(options.includes)) {
+                const builder = new IncludeBuilder(this.conventions);
+                options.includes(builder);
+                
+                if (builder.countersToInclude) {
+                    internalOpts.counterIncludes = [...builder.countersToInclude];
+                }
+
+                if (builder.documentsToInclude) {
+                    internalOpts.includes = [...builder.documentsToInclude];
+                }
+
+                internalOpts.includeAllCounters = builder.isAllCounters;
+            } else {
+                internalOpts.includes = options.includes as string[];
+            } 
+        }
+
+        return internalOpts;
+    }
+
+    private async _loadInternal(
         ids: string[],
-        operation: LoadOperation): Promise<void>;
-    private async _loadInternal<T>(
-        ids: string[],
-        operation: LoadOperation, writable: stream.Writable): Promise<void>;
-    private async _loadInternal<T>(
+        operation: LoadOperation, 
+        writable: stream.Writable): Promise<void>;
+    private async _loadInternal(
         ids: string[],
         operation: LoadOperation, writable?: stream.Writable)
         : Promise<void> {
@@ -388,6 +405,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
         const loadOperation = new LoadOperation(this);
         loadOperation.byIds(ids);
+
         loadOperation.withIncludes(opts.includes);
 
         if (opts.includeAllCounters) {
