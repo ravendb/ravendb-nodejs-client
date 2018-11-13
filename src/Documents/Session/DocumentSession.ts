@@ -139,11 +139,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         options = options || {};
 
         this.conventions.tryRegisterEntityType(options.documentType);
-        const objType = this.conventions.findEntityType(options.documentType);
-
-        const loadOperation = new LoadOperation(this);
-        const loadInternalPromise = this._loadInternal<TEntity>(ids, loadOperation, null)
-            .then(() => loadOperation.getDocuments<TEntity>(objType))
+        const loadInternalPromise = this.loadInternal(ids, options.includes, options.documentType)
             .then((docs: EntitiesCollectionObject<TEntity> | TEntity) => {
                 if (isLoadingSingle) {
                     return docs[Object.keys(docs)[0]];
@@ -157,13 +153,11 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         return loadInternalPromise;
     }
 
-    private async _loadInternal<T>( //TODO: unused!
+    private async _loadInternal(
         ids: string[],
-        operation: LoadOperation): Promise<void>;
-    private async _loadInternal<T>(
-        ids: string[],
-        operation: LoadOperation, writable: stream.Writable): Promise<void>;
-    private async _loadInternal<T>(
+        operation: LoadOperation, 
+        writable: stream.Writable): Promise<void>;
+    private async _loadInternal(
         ids: string[],
         operation: LoadOperation, writable?: stream.Writable)
         : Promise<void> {
@@ -361,7 +355,9 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     public async loadInternal<TResult extends object>(
-        ids: string[], includes: string[], documentType: DocumentType<TResult>):
+        ids: string[], 
+        includes: string[], 
+        documentType: DocumentType<TResult>):
         Promise<EntitiesCollectionObject<TResult>> {
         if (!ids) {
             throwError("InvalidArgumentException", "Ids cannot be null");
