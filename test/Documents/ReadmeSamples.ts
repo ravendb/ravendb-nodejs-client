@@ -12,6 +12,7 @@ import {
     QueryStatistics,
     StreamQueryStatistics,
     AbstractIndexCreationTask,
+    LoadOptions,
 } from "../../src";
 import { TypeUtil } from "../../src/Utility/TypeUtil";
 
@@ -93,6 +94,27 @@ describe("Readme query samples", function () {
             // with docs referenced in "kids" field within a single request
 
             const user2 = await session.load("users/2"); // this won't call server again
+            assert.ok(user1);
+            assert.ok(user2);
+            assert.strictEqual(session.advanced.numberOfRequests, 1);
+        });
+
+        it("loading data with passing includes", async () => {
+            // tslint:disable-next-line:no-shadowed-variable
+            const session = store.openSession();
+            // users/1
+            // {
+            //      "name": "John",
+            //      "kids": ["users/2", "users/3"]
+            // }
+
+            const user1 = await session
+                .load("users/1", { includes: [ "kids" ] } as LoadOptions<any>);
+
+            const user2 = await session.load("users/2"); // this won't call server again
+            // Document users/1 is going to be pulled along 
+            // with docs referenced in "kids" field within a single request
+
             assert.ok(user1);
             assert.ok(user2);
             assert.strictEqual(session.advanced.numberOfRequests, 1);
