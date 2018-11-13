@@ -16,8 +16,9 @@ import {
     CounterOperation,
     CounterBatch,
     CounterBatchOperation,
+    Item,
 } from "../../../src";
-import { User, Company, Order } from "../../Assets/Entities";
+import { User, Company, Order, Employee } from "../../Assets/Entities";
 import { assertThat } from "../../Utils/AssertExtensions";
 
 describe.only("SessionCountersTest", function () {
@@ -897,310 +898,307 @@ describe.only("SessionCountersTest", function () {
 
     });
 
+    it("sessionChainedIncludeAndIncludeCounter", async function () {
+        {
+            const session = store.openSession();
+            await storeDoc(session, "companies/1-A", { name: "HR" }, Company);
+            await storeDoc(session, "employees/1-A", { firstName: "Aviv" }, Employee);
+            await storeDoc(session, "orders/1-A", { 
+                company: "companies/1-A",
+                employee: "employees/1-A"
+            }, Order);
+
+            session.countersFor("orders/1-A").increment("likes", 100);
+            session.countersFor("orders/1-A").increment("dislikes", 200);
+            session.countersFor("orders/1-A").increment("downloads", 300);
+
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const order = await session.load<Order>("orders/1-A",
+            {
+                includes: i => i.includeCounter("likes")
+                    .includeDocuments("company")
+                    .includeCounter("dislikes")
+                    .includeCounter("downloads")
+                    .includeDocuments("employee")
+            });
+
+            const company = await session.load(order.company);
+            assertThat(company["name"])
+                .isEqualTo("HR");
+
+            const employee = await session.load(order.employee);
+            assertThat(employee["firstName"])
+                .isEqualTo("Aviv");
+
+            const dic = await session.countersFor(order).getAll();
+            assertThat(dic)
+                .hasSize(3)
+                .containsEntry("likes", 100)
+                .containsEntry("dislikes", 200)
+                .containsEntry("downloads", 300);
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+        }
+
+    });
+
+    it("sessionIncludeCounters", async function () {
+        {
+            const session = store.openSession();
+            await storeDoc(session, "companies/1-A", { name: "HR" }, Company);
+            await storeDoc(session, "orders/1-A", { 
+                company: "companies/1-A"
+            }, Order);
+
+            session.countersFor("orders/1-A").increment("likes", 100);
+            session.countersFor("orders/1-A").increment("dislikes", 200);
+
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const order = await session.load<Order>(
+                "orders/1-A", { 
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeCounters([ "likes", "dislikes"])
+                });
+
+            const company = await session.load<Company>(order.company);
+            assertThat(company.name)
+                .isEqualTo("HR");
+
+            const dic = await session.countersFor(order).getAll();
+            assertThat(dic)
+                .hasSize(2)
+                .containsEntry("likes", 100)
+                .containsEntry("dislikes", 200);
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+        }
+    });
+
+    it("sessionIncludeAllCounters", async function () {
+        {
+            const session = store.openSession();
+            await storeDoc(session, "companies/1-A", { name: "HR" }, Company);
+            await storeDoc(session, "orders/1-A", { 
+                company: "companies/1-A",
+            }, Order);
+
+            session.countersFor("orders/1-A").increment("likes", 100);
+            session.countersFor("orders/1-A").increment("dislikes", 200);
+            session.countersFor("orders/1-A").increment("downloads", 300);
+
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const order = await session.load<Order>("orders/1-A", { 
+                includes: i => i
+                .includeDocuments("company")
+                .includeAllCounters() 
+            });
+
+            const company = await session.load<Company>(order.company);
+            assertThat(company.name)
+                .isEqualTo("HR");
+
+            const dic = await session.countersFor(order).getAll();
+            assertThat(dic)
+                .hasSize(3)
+                .containsEntry("likes", 100)
+                .containsEntry("dislikes", 200)
+                .containsEntry("downloads", 300);
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+        }
+
+    });
+
+    it("sessionIncludeSingleCounterAfterIncludeAllCountersShouldThrow", async function () {
+        {
+            const session = store.openSession();
+            await storeDoc(session, "companies/1-A", { name: "HR" }, Company);
+            await storeDoc(session, "orders/1-A", { 
+                company: "companies/1-A",
+            }, Order);
+
+            session.countersFor("orders/1-A").increment("likes", 100);
+            session.countersFor("orders/1-A").increment("dislikes", 200);
+            session.countersFor("orders/1-A").increment("downloads", 300);
+
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            try {
+                await session.load("orders/1-A", { 
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeAllCounters()
+                        .includeCounter("likes") 
+                    });
+                assert.fail("should have thrown");
+            } catch (err) {
+                assert.strictEqual(err.name, "InvalidOperationException" as RavenErrorType)
+            }
+        }
+
+    });
+
+    it("sessionIncludeAllCountersAfterIncludeSingleCounterShouldThrow", async function () {
+        {
+            const session = store.openSession();
+            await storeDoc(session, "companies/1-A", { name: "HR" }, Company);
+            await storeDoc(session, "orders/1-A", { 
+                company: "companies/1-A",
+            }, Order);
+
+            session.countersFor("orders/1-A").increment("likes", 100);
+            session.countersFor("orders/1-A").increment("dislikes", 200);
+            session.countersFor("orders/1-A").increment("downloads", 300);
+
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            try {
+                await session.load("orders/1-A", { 
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeCounter("likes") 
+                        .includeAllCounters()
+                    });
+                assert.fail("should have thrown");
+            } catch (err) {
+                assert.strictEqual(err.name, "InvalidOperationException" as RavenErrorType);
+            }
+        }
+    });
+
+    it("sessionIncludeCountersShouldRegisterMissingCounters", async function () {
+        {
+            const session = store.openSession();
+            await storeDoc(session, "companies/1-A", { name: "HR" }, Company);
+            await storeDoc(session, "orders/1-A", { 
+                company: "companies/1-A",
+            }, Order);
+
+            session.countersFor("orders/1-A").increment("likes", 100);
+            session.countersFor("orders/1-A").increment("dislikes", 200);
+            session.countersFor("orders/1-A").increment("downloads", 300);
+
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+            const order = await session.load<Order>("orders/1-A", {
+                includes: i => i.includeDocuments("company")
+                    .includeCounters([ "likes", "downloads", "dances"])
+                    .includeCounter("dislikes")
+                    .includeCounter("cats")
+            });
+
+            const company = await session.load<Company>(order.company);
+            assertThat(company.name)
+                .isEqualTo("HR");
+
+            // should not go to server
+            const dic = await session.countersFor(order).getAll();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            assertThat(dic)
+                .hasSize(5)
+                .containsEntry("likes", 100)
+                .containsEntry("dislikes", 200)
+                .containsEntry("downloads", 300);
+
+            //missing counters should be in cache
+            assertThat(dic["dances"])
+                .isNull();
+            assertThat(dic["cats"])
+                .isNull();
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+        }
+
+    });
+
+    it("sessionIncludeCountersMultipleLoads", async function () {
+        {
+            const session = store.openSession();
+            await storeDoc(session, "companies/1-A", { name: "HR" }, Company);
+            await storeDoc(session, "orders/1-A", { 
+                company: "companies/1-A",
+            }, Order);
+
+            await storeDoc(session, "companies/2-A", { name: "HP" }, Company);
+            await storeDoc(session, "orders/2-A", { 
+                company: "companies/2-A",
+            }, Order);
+
+            session.countersFor("orders/1-A").increment("likes", 100);
+            session.countersFor("orders/1-A").increment("dislikes", 200);
+
+            session.countersFor("orders/2-A").increment("score", 300);
+            session.countersFor("orders/2-A").increment("downloads", 400);
+
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const orders = await session.load<Order>(
+                ["orders/1-A", "orders/2-A"], 
+                { includes: i => i
+                    .includeDocuments("company")
+                    .includeAllCounters() 
+                });
+
+            let order = orders["orders/1-A"];
+            let company = await session.load<Company>(order.company);
+            assertThat(company.name)
+                .isEqualTo("HR");
+
+            let dic = await session.countersFor(order).getAll();
+            assertThat(dic)
+                .hasSize(2)
+                .containsEntry("likes", 100)
+                .containsEntry("dislikes", 200);
+
+            order = orders["orders/2-A"];
+            company = await session.load<Company>(order.company);
+            assertThat(company.name)
+                .isEqualTo("HP");
+
+            dic = await session.countersFor(order).getAll();
+            assertThat(dic)
+                .hasSize(2)
+                .containsEntry("score", 300)
+                .containsEntry("downloads", 400);
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+        }
+    });
+
 });
 
 async function storeDoc(session: IDocumentSession, id: string, data: any, clazz: any) {
     await session.store(
         Object.assign(new clazz(), data), id);
 }
-
-//     @Test
-//     public void sessionChainedIncludeAndIncludeCounter() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company company = new Company();
-//                 company.setName("HR");
-//                 session.store(company, "companies/1-A");
-
-//                 Employee employee = new Employee();
-//                 employee.setFirstName("Aviv");
-//                 session.store(employee, "employees/1-A");
-
-//                 Order order = new Order();
-//                 order.setCompany("companies/1-A");
-//                 order.setEmployee("employees/1-A");
-//                 session.store(order, "orders/1-A");
-
-//                 session.countersFor("orders/1-A").increment("likes", 100);
-//                 session.countersFor("orders/1-A").increment("dislikes", 200);
-//                 session.countersFor("orders/1-A").increment("downloads", 300);
-
-//                 session.saveChanges();
-//             }
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 Order order = session.load(Order.class, "orders/1-A",
-//                         i -> i.includeCounter("likes")
-//                                 .includeDocuments("company")
-//                                 .includeCounter("dislikes")
-//                                 .includeCounter("downloads")
-//                                 .includeDocuments("employee"));
-
-//                 Company company = session.load(Company.class, order.getCompany());
-//                 assertThat(company.getName())
-//                         .isEqualTo("HR");
-
-//                 Employee employee = session.load(Employee.class, order.getEmployee());
-//                 assertThat(employee.getFirstName())
-//                         .isEqualTo("Aviv");
-
-//                 Map<String, Long> dic = session.countersFor(order).getAll();
-//                 assertThat(dic)
-//                         .hasSize(3)
-//                         .containsEntry("likes", 100L)
-//                         .containsEntry("dislikes", 200L)
-//                         .containsEntry("downloads", 300L);
-
-//                 assertThat(session.advanced().getNumberOfRequests())
-//                         .isEqualTo(1);
-//             }
-//         }
-//     }
-
-//     @Test
-//     public void sessionIncludeCounters() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company company = new Company();
-//                 company.setName("HR");
-//                 session.store(company, "companies/1-A");
-
-//                 Order order = new Order();
-//                 order.setCompany("companies/1-A");
-//                 session.store(order, "orders/1-A");
-
-//                 session.countersFor("orders/1-A").increment("likes", 100);
-//                 session.countersFor("orders/1-A").increment("dislikes", 200);
-
-//                 session.saveChanges();
-//             }
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 Order order = session.load(Order.class, "orders/1-A", i -> i.includeDocuments("company").includeCounters(new String[]{"likes", "dislikes"}));
-
-//                 Company company = session.load(Company.class, order.getCompany());
-//                 assertThat(company.getName())
-//                         .isEqualTo("HR");
-
-//                 Map<String, Long> dic = session.countersFor(order).getAll();
-//                 assertThat(dic)
-//                         .hasSize(2)
-//                         .containsEntry("likes", 100L)
-//                         .containsEntry("dislikes", 200L);
-
-//                 assertThat(session.advanced().getNumberOfRequests())
-//                         .isEqualTo(1);
-//             }
-
-//         }
-//     }
-
-//     @Test
-//     public void sessionIncludeAllCounters() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company company = new Company();
-//                 company.setName("HR");
-//                 session.store(company, "companies/1-A");
-
-//                 Order order = new Order();
-//                 order.setCompany("companies/1-A");
-//                 session.store(order, "orders/1-A");
-
-//                 session.countersFor("orders/1-A").increment("likes", 100);
-//                 session.countersFor("orders/1-A").increment("dislikes", 200);
-//                 session.countersFor("orders/1-A").increment("downloads", 300);
-
-//                 session.saveChanges();
-//             }
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 Order order = session.load(Order.class, "orders/1-A", i -> i.includeDocuments("company").includeAllCounters());
-
-//                 Company company = session.load(Company.class, order.getCompany());
-//                 assertThat(company.getName())
-//                         .isEqualTo("HR");
-
-//                 Map<String, Long> dic = session.countersFor(order).getAll();
-//                 assertThat(dic)
-//                         .hasSize(3)
-//                         .containsEntry("likes", 100L)
-//                         .containsEntry("dislikes", 200L)
-//                         .containsEntry("downloads", 300L);
-
-//                 assertThat(session.advanced().getNumberOfRequests())
-//                         .isEqualTo(1);
-//             }
-
-//         }
-//     }
-
-//     @Test
-//     public void sessionIncludeSingleCounterAfterIncludeAllCountersShouldThrow() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company company = new Company();
-//                 company.setName("HR");
-//                 session.store(company, "companies/1-A");
-
-//                 Order order = new Order();
-//                 order.setCompany("companies/1-A");
-//                 session.store(order, "orders/1-A");
-
-//                 session.countersFor("orders/1-A").increment("likes", 100);
-//                 session.countersFor("orders/1-A").increment("dislikes", 200);
-//                 session.countersFor("orders/1-A").increment("downloads", 300);
-
-//                 session.saveChanges();
-//             }
-
-//             try (IDocumentSession session = store.openSession()) {
-
-//                 assertThatThrownBy(() -> {
-//                     session.load(Order.class, "orders/1-A", i -> i.includeDocuments("company").includeAllCounters().includeCounter("likes"));
-//                 }).isExactlyInstanceOf(IllegalStateException.class);
-//             }
-//         }
-//     }
-
-//     @Test
-//     public void sessionIncludeAllCountersAfterIncludeSingleCounterShouldThrow() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company company = new Company();
-//                 company.setName("HR");
-//                 session.store(company, "companies/1-A");
-
-//                 Order order = new Order();
-//                 order.setCompany("companies/1-A");
-//                 session.store(order, "orders/1-A");
-
-//                 session.countersFor("orders/1-A").increment("likes", 100);
-//                 session.countersFor("orders/1-A").increment("dislikes", 200);
-//                 session.countersFor("orders/1-A").increment("downloads", 300);
-
-//                 session.saveChanges();
-//             }
-
-//             try (IDocumentSession session = store.openSession()) {
-
-//                 assertThatThrownBy(() -> {
-//                     session.load(Order.class, "orders/1-A", i -> i.includeDocuments("company").includeCounter("likes").includeAllCounters());
-//                 }).isExactlyInstanceOf(IllegalStateException.class);
-//             }
-//         }
-//     }
-
-//     @Test
-//     public void sessionIncludeCountersShouldRegisterMissingCounters() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company company = new Company();
-//                 company.setName("HR");
-//                 session.store(company, "companies/1-A");
-
-//                 Order order = new Order();
-//                 order.setCompany("companies/1-A");
-//                 session.store(order, "orders/1-A");
-
-//                 session.countersFor("orders/1-A").increment("likes", 100);
-//                 session.countersFor("orders/1-A").increment("dislikes", 200);
-//                 session.countersFor("orders/1-A").increment("downloads", 300);
-
-//                 session.saveChanges();
-//             }
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 Order order = session.load(Order.class, "orders/1-A",
-//                         i -> i.includeDocuments("company")
-//                                 .includeCounters(new String[]{"likes", "downloads", "dances"})
-//                                 .includeCounter("dislikes")
-//                                 .includeCounter("cats"));
-
-//                 Company company = session.load(Company.class, order.getCompany());
-//                 assertThat(company.getName())
-//                         .isEqualTo("HR");
-
-//                 // should not go to server
-//                 Map<String, Long> dic = session.countersFor(order).getAll();
-//                 assertThat(session.advanced().getNumberOfRequests())
-//                         .isEqualTo(1);
-
-//                 assertThat(dic)
-//                         .hasSize(5)
-//                         .containsEntry("likes", 100L)
-//                         .containsEntry("dislikes", 200L)
-//                         .containsEntry("downloads", 300L);
-
-//                 //missing counters should be in cache
-//                 assertThat(dic.get("dances"))
-//                         .isNull();
-//                 assertThat(dic.get("cats"))
-//                         .isNull();
-
-//                 assertThat(session.advanced().getNumberOfRequests())
-//                         .isEqualTo(1);
-
-//             }
-//         }
-//     }
-
-//     @Test
-//     public void sessionIncludeCountersMultipleLoads() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company company1 = new Company();
-//                 company1.setName("HR");
-//                 session.store(company1, "companies/1-A");
-
-//                 Order order1 = new Order();
-//                 order1.setCompany("companies/1-A");
-//                 session.store(order1, "orders/1-A");
-
-//                 Company company2 = new Company();
-//                 company2.setName("HP");
-//                 session.store(company2, "companies/2-A");
-
-//                 Order order2 = new Order();
-//                 order2.setCompany("companies/2-A");
-//                 session.store(order2, "orders/2-A");
-
-//                 session.countersFor("orders/1-A").increment("likes", 100);
-//                 session.countersFor("orders/1-A").increment("dislikes", 200);
-
-//                 session.countersFor("orders/2-A").increment("score", 300);
-//                 session.countersFor("orders/2-A").increment("downloads", 400);
-
-//                 session.saveChanges();
-//             }
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 Map<String, Order> orders = session.load(Order.class, Arrays.asList("orders/1-A", "orders/2-A"), i -> i.includeDocuments("company").includeAllCounters());
-
-//                 Order order = orders.get("orders/1-A");
-//                 Company company = session.load(Company.class, order.getCompany());
-//                 assertThat(company.getName())
-//                         .isEqualTo("HR");
-
-//                 Map<String, Long> dic = session.countersFor(order).getAll();
-//                 assertThat(dic)
-//                         .hasSize(2)
-//                         .containsEntry("likes", 100L)
-//                         .containsEntry("dislikes", 200L);
-
-//                 order = orders.get("orders/2-A");
-//                 company = session.load(Company.class, order.getCompany());
-//                 assertThat(company.getName())
-//                         .isEqualTo("HP");
-
-//                 dic = session.countersFor(order).getAll();
-//                 assertThat(dic)
-//                         .hasSize(2)
-//                         .containsEntry("score", 300L)
-//                         .containsEntry("downloads", 400L);
-
-//                 assertThat(session.advanced().getNumberOfRequests())
-//                         .isEqualTo(1);
-//             }
-//         }
-//     }     
