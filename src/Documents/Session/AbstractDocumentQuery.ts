@@ -1899,7 +1899,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         const result = BluebirdPromise.resolve()
             .then(() => this._executeQueryOperation(2))
             .then(entries => {
-                if (entries.length > 1) {
+                if (entries.length !== 1) {
                     throw getError("InvalidOperationException", "Expected single result, got: " + entries.length);
                 }
 

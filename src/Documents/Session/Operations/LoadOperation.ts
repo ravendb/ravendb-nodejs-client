@@ -173,7 +173,6 @@ export class LoadOperation {
 
         this._session.registerIncludes(result.includes);
 
-        debugger;
         if (this._includeAllCounters || this._countersToInclude) {
             this._session.registerCounters(
                 result.counterIncludes, this._ids, this._countersToInclude, this._includeAllCounters);

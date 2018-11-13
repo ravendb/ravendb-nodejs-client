@@ -12,11 +12,13 @@ import {
 } from "../../../src";
 import { CONSTANTS } from "../../../src/Constants";
 import { User } from "../../Assets/Entities";
+import { assertThat } from "../../Utils/AssertExtensions";
 
-interface Category {
-    description: string;
-    name: string;
+class Category {
+    public description: string;
+    public name: string;
 }
+
 class Product2 {
     public category: string;
     public name: string;
@@ -33,9 +35,9 @@ interface CategoryCount {
     count: number;
 }
 
-interface Product {
-    name: string;
-    available: boolean;
+class Product {
+    public name: string;
+    public available: boolean;
 }
 
 class UsersByNameWithAdditionalSources extends AbstractJavaScriptIndexCreationTask {
@@ -75,16 +77,20 @@ class FanoutByNumbersWithReduce extends AbstractJavaScriptIndexCreationTask {
         }
     }
 
-interface UsersByNameAndAnalyzedNameResult {
-    analyzedName: string;
+class UsersByNameAndAnalyzedNameResult {
+    public analyzedName: string;
 }
 class UsersByNameAndAnalyzedName extends AbstractJavaScriptIndexCreationTask {
     public constructor() {
         super();
         this.maps = new Set([`map('Users', function (u){
                                     return {
-                                        Name: u.Name,
-                                        _: {$value: u.Name, $name:'AnalyzedName', $options:{ index: true, store: true }}
+                                        name: u.name,
+                                        _: {
+                                            $value: u.name, 
+                                            $name:'analyzedName', 
+                                            $options:{ indexing: 'Search', storage: true }
+                                        }
                                     };
                                 })`]);
 
@@ -100,8 +106,8 @@ class UsersAndProductsByName extends AbstractJavaScriptIndexCreationTask {
     public constructor() {
         super();
         this.maps = new Set([
-            "map('Users', function (u){ return { name: u.name, count: 1};})",
-            "map('Products', function (p){ return { name: p.name, count: 1};})"
+            "map('Users', function (u) { return { name: u.name, count: 1}; })",
+            "map('Products', function (p) { return { name: p.name, count: 1}; })"
         ]);
     }
 }
@@ -131,12 +137,12 @@ interface ProductsByCategoryResult {
 class ProductsByCategory extends AbstractJavaScriptIndexCreationTask {
     public constructor() {
         super();
-        this.maps = new Set(["map('products', function(p){\n" +
+        this.maps = new Set(["map('product2s', function(p){\n" +
             "                        return {\n" +
             "                            category:\n" +
-            "                            load(p.category, 'Categories').name,\n" +
+                "                            load(p.category, 'categories').name,\n" +
             "                            count:\n" +
-            "                            1\n" +
+                "                            1\n" +
             "                        }\n" +
             "                    })"]);
         this.reduce = "groupBy( x => x.category )\n" +
@@ -158,6 +164,7 @@ describe("JavaScriptIndexTest", function () {
     let store: IDocumentStore;
 
     beforeEach(async function () {
+        testContext.enableFiddler();
         store = await testContext.getDocumentStore();
     });
 
@@ -201,6 +208,7 @@ describe("JavaScriptIndexTest", function () {
             const session = store.openSession();
             const single = await session.query({ indexName: index.getIndexName() })
                 .whereEquals("name", "Mr. Brendan Eich")
+                .selectFields("name")
                 .single();
             assert.ok(single);
         }
@@ -212,9 +220,9 @@ describe("JavaScriptIndexTest", function () {
         await store.executeIndex(index);
         {
             const session = store.openSession();
-            storeNewDoc(session, { foo: "Foo", numbers: [ 4, 6, 11, 9 ] }, null, Fanout);
-            storeNewDoc(session, { foo: "Foo", numbers: [ 3, 8, 5, 17 ] }, null, Fanout);
-            session.saveChanges();
+            await storeNewDoc(session, { foo: "Foo", numbers: [ 4, 6, 11, 9 ] }, null, Fanout);
+            await storeNewDoc(session, { foo: "Bar", numbers: [ 3, 8, 5, 17 ] }, null, Fanout);
+            await session.saveChanges();
         }
 
         await testContext.waitForIndexing(store);
@@ -223,144 +231,94 @@ describe("JavaScriptIndexTest", function () {
             const session = store.openSession();
             const result = await session.query({ indexName: index.getIndexName() })
                 .whereEquals("sum", 33)
+                .selectFields("sum")
                 .single();
             
             assert.ok(result);
         }
     });
+
+    it("canUseJavaScriptIndexWithDynamicFields", async function () {
+        const index = new UsersByNameAndAnalyzedName();
+        await store.executeIndex(index);
+
+        await storeBrendan(store);
+        await testContext.waitForIndexing(store);
+        {
+            const session = store.openSession();
+            const result = await session.query({ 
+                indexName: index.getIndexName()
+            })
+            .search("analyzedName", "Brendan")
+            .selectFields<UsersByNameAndAnalyzedNameResult>("analyzedName", UsersByNameAndAnalyzedNameResult)
+            .single();
+            
+            assert.ok(result);
+            assert.strictEqual(result.analyzedName, "Brendan Eich");
+        }
+    });
+
+    it("canUseJavaScriptMultiMapIndex", async function () {
+        const index = new UsersAndProductsByName();
+        await store.executeIndex(index);
+        {
+            const session = store.openSession();
+            await storeNewDoc(session, { name: "Brendan Eich" }, "users/1", User);   
+            await storeNewDoc(session, { name: "Shampoo", available: true }, "products/1", Product);   
+            await session.saveChanges();
+
+            await testContext.waitForIndexing(store);
+
+            await session.query({ indexName: "UsersAndProductsByName" })
+                .whereEquals("name", "Brendan Eich")
+                .single();
+        }
+
+    });
+
+    it("canUseJavaScriptMapReduceIndex", async function () {
+        const index = new UsersAndProductsByNameAndCount();
+        await store.executeIndex(index);
+
+        {
+            const session = store.openSession();
+            await storeNewDoc(session, { name: "Brendan Eich" }, "users/1", User);   
+            await storeNewDoc(session, { name: "Shampoo", available: true }, "products/1", Product);   
+            await session.saveChanges();
+
+            await testContext.waitForIndexing(store);
+            const result = await session.query({ indexName: index.getIndexName() })
+                .whereEquals("name", "Brendan Eich")
+                .single() as any;
+
+            assert.strictEqual(result.count, 1);
+            assert.strictEqual(result.name, "Brendan Eich");
+        }
+    });
+
+    it("outputReduceToCollection", async function () {
+        const index = new ProductsByCategory();
+        await store.executeIndex(index);
+        {
+            const session = store.openSession();
+            await storeNewDoc(session, { name: "Beverages" }, "categories/1-A", Category);   
+            await storeNewDoc(session, { name: "Seafood" }, "categories/2-A", Category);   
+            await session.store(Product2.create("categories/1-A", "Lakkalikööri", 13));
+            await session.store(Product2.create("categories/1-A", "Original Frankfurter", 16));
+            await session.store(Product2.create("categories/2-A", "Röd Kaviar", 18));
+            await session.saveChanges();
+
+            await testContext.waitForIndexing(store);
+            const res = await session.query({ indexName: index.getIndexName() })
+                .all();
+
+            const res2 = await session.query({ collection: "CategoryCounts" })
+                .all();
+
+            assert.ok(res.length && res2.length);
+            assertThat(res2.length)
+                .isEqualTo(res.length);
+        }
+
+    });
 });
-
-// @Test
-//     public void () throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             store.executeIndex(new FanoutByNumbersWithReduce());
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 Fanout fanout1 = new Fanout();
-//                 fanout1.setFoo("Foo");
-//                 fanout1.setNumbers(new int[] { 4, 6, 11, 9 });
-
-//                 Fanout fanout2 = new Fanout();
-//                 fanout2.setFoo("Bar");
-//                 fanout2.setNumbers(new int[] { 3, 8, 5, 17 });
-
-//                 session.store(fanout1);
-//                 session.store(fanout2);
-//                 session.saveChanges();
-
-//                 waitForIndexing(store);
-
-//                 session.query(FanoutByNumbersWithReduce.Result.class, index("FanoutByNumbersWithReduce"))
-//                         .whereEquals("sum", 33)
-//                         .single();
-
-//             }
-//         }
-//     }
-
-//     @Test
-//     public void canUseJavaScriptIndexWithDynamicFields() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             store.executeIndex(new UsersByNameAndAnalyzedName());
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 User user = new User();
-//                 user.setName("Brendan Eich");
-//                 session.store(user);
-//                 session.saveChanges();
-
-//                 waitForIndexing(store);
-
-//                 session.query(User.class, index("UsersByNameAndAnalyzedName"))
-//                         .ofType(UsersByNameAndAnalyzedName.Result.class)
-//                         .search("analyzedName", "Brendan")
-//                         .single();
-//             }
-//         }
-//     }
-
-//     @Test
-//     public void canUseJavaScriptMultiMapIndex() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             store.executeIndex(new UsersAndProductsByName());
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 User user = new User();
-//                 user.setName("Brendan Eich");
-//                 session.store(user);
-
-//                 Product product = new Product();
-//                 product.setName("Shampoo");
-//                 product.setAvailable(true);
-//                 session.store(product);
-
-//                 session.saveChanges();
-
-//                 waitForIndexing(store);
-
-//                 session.query(User.class, index("UsersAndProductsByName"))
-//                         .whereEquals("name", "Brendan Eich")
-//                         .single();
-//             }
-//         }
-//     }
-
-//     @Test
-//     public void canUseJavaScriptMapReduceIndex() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             store.executeIndex(new UsersAndProductsByNameAndCount());
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 User user = new User();
-//                 user.setName("Brendan Eich");
-//                 session.store(user);
-
-//                 Product product = new Product();
-//                 product.setName("Shampoo");
-//                 product.setAvailable(true);
-//                 session.store(product);
-
-//                 session.saveChanges();
-
-//                 waitForIndexing(store);
-
-//                 session.query(User.class, index("UsersAndProductsByNameAndCount"))
-//                         .whereEquals("name", "Brendan Eich")
-//                         .single();
-//             }
-//         }
-//     }
-
-//     @Test
-//     public void outputReduceToCollection() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             store.executeIndex(new Products_ByCategory());
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 Category category1 = new Category();
-//                 category1.setName("Beverages");
-//                 session.store(category1, "categories/1-A");
-
-//                 Category category2 = new Category();
-//                 category2.setName("Seafood");
-//                 session.store(category2, "categories/2-A");
-
-//                 session.store(Product2.create("categories/1-A", "Lakkalikööri", 13));
-//                 session.store(Product2.create("categories/1-A", "Original Frankfurter", 16));
-//                 session.store(Product2.create("categories/2-A", "Röd Kaviar", 18));
-
-//                 session.saveChanges();
-
-//                 waitForIndexing(store);
-
-//                 List<Products_ByCategory.Result> res = session.query(Products_ByCategory.Result.class, index("Products/ByCategory"))
-//                         .toList();
-
-//                 List<CategoryCount> res2 = session.query(CategoryCount.class)
-//                         .toList();
-
-//                 assertThat(res2.size())
-//                         .isEqualTo(res.size());
-//             }
-//         }
-//     }
