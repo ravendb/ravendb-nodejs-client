@@ -10,6 +10,7 @@ import {
     IDocumentSession,
 } from "../../../src";
 import { Order, Company, Employee } from "../../Assets/Entities";
+import { assertThat } from "../../Utils/AssertExtensions";
 
 class User {
     public name: string;
@@ -49,6 +50,43 @@ interface CounterResult7 {
     downloads: number;
     friendsDownloads: number;
     name: string;
+}
+
+async function storeNewDoc(
+    session: IDocumentSession, data: object, id: string, clazz: any) {
+    const order = Object.assign(new clazz(), data);
+    await session.store(order, id);
+    return order;
+}
+
+async function storeNewUser(session: IDocumentSession, name: string, id: string): Promise<User> {
+    const user = Object.assign(new User(), { name });
+    await session.store(user, id);
+    return user;
+}
+
+async function storeNewOrder(
+    session: IDocumentSession, data: object, id: string) {
+    const order = Object.assign(new Order(), data);
+    await session.store(order, id);
+    return order;
+}
+
+async function storeNewCompany(
+    session: IDocumentSession, data: object, id: string) {
+    const company = Object.assign(new Company(), data);
+    await session.store(company, id);
+    return company;
+}
+
+async function incCounter(
+    session: IDocumentSession, id: string, counter: string, val: number) {
+    session.countersFor(id).increment(counter, val);
+}
+
+function getFirstObjectValue(o: object) {
+    const keys = Object.keys(o);
+    return o[keys[0]];
 }
 
 describe("QueryOnCountersTest", function () {
@@ -431,315 +469,240 @@ describe("QueryOnCountersTest", function () {
         }
 
     });
+
+    it("sessionQueryIncludeCountersOfRelatedDocument", async function () {
+        {
+            const session = store.openSession();
+            for (let i = 1; i <= 3; i++) {
+                await storeNewOrder(session, {
+                    employee: `employees/${i}-A`
+                }, `orders/${i}-A`);
+            }
+            const empNames = ["Aviv", "Jerry", "Bob"];
+            for (let i = 1; i <= 3; i++) {
+                await storeNewDoc(session, {
+                    name: empNames[i - 1]
+                }, `employees/${i}-A`, Employee);
+            }
+
+            session.countersFor("employees/1-A").increment("downloads", 100);
+            session.countersFor("employees/2-A").increment("downloads", 200);
+            session.countersFor("employees/3-A").increment("downloads", 300);
+
+            session.countersFor("employees/1-A").increment("likes", 1000);
+            session.countersFor("employees/2-A").increment("likes", 2000);
+
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+            const query = session.query({ collection: "Orders" })
+                .include(i => i.includeCounters("employee", [ "downloads", "likes" ]));
+
+            assertThat(query.toString())
+                .isEqualTo("from Orders include counters(employee, $p0)");
+
+            const results = await query.all();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            // included counters should be in cache
+            let dic = await session.countersFor("employees/1-A").get(["downloads", "likes"]);
+            assertThat(dic)
+                .containsEntry("downloads", 100)
+                .containsEntry("likes", 1000);
+
+            dic = await session.countersFor("employees/2-A").get([ "downloads", "likes" ]);
+            assertThat(dic)
+                .containsEntry("downloads", 200)
+                .containsEntry("likes", 2000);
+
+            dic = await session.countersFor("employees/3-A").get(["downloads", "likes"]);
+            assertThat(dic)
+                .containsEntry("downloads", 300);
+
+            assertThat(dic["likes"])
+                .isNull();
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+        }
+    });
+
+    it("sessionQueryIncludeCountersOfDocumentAndOfRelatedDocument", async function () {
+        {
+            const session = store.openSession();
+            for (let i = 1; i <= 3; i++) {
+                await storeNewOrder(session, {
+                    employee: `employees/${i}-A`
+                }, `orders/${i}-A`);
+            }
+            const empNames = ["Aviv", "Jerry", "Bob"];
+            for (let i = 1; i <= 3; i++) {
+                await storeNewDoc(session, {
+                    name: empNames[i - 1]
+                }, `employees/${i}-A`, Employee);
+            }
+
+            session.countersFor("orders/1-A").increment("likes", 100);
+            session.countersFor("orders/2-A").increment("likes", 200);
+            session.countersFor("orders/3-A").increment("likes", 300);
+
+            session.countersFor("employees/1-A").increment("downloads", 1000);
+            session.countersFor("employees/2-A").increment("downloads", 2000);
+            session.countersFor("employees/3-A").increment("downloads", 3000);
+
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const query = session.query<Order>({ collection: "Orders" })
+                .include(i => i.includeCounter("likes").includeCounter("employee", "downloads"));
+
+            assertThat(query.toString())
+                .isEqualTo("from Orders include counters($p0),counters(employee, $p1)");
+
+            const orders = await query.all();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            // included counters should be in cache
+            let order = orders[0];
+            assertThat(order.id)
+                .isEqualTo("orders/1-A");
+            let val = await session.countersFor(order).get("likes");
+            assertThat(val)
+                .isEqualTo(100);
+
+            order = orders[1];
+            assertThat(order.id)
+                .isEqualTo("orders/2-A");
+            val = await session.countersFor(order).get("likes");
+            assertThat(val)
+                .isEqualTo(200);
+
+            order = orders[2];
+            assertThat(order.id)
+                .isEqualTo("orders/3-A");
+            val = await session.countersFor(order).get("likes");
+            assertThat(val)
+                .isEqualTo(300);
+
+            val = await session.countersFor("employees/1-A").get("downloads");
+            assertThat(val)
+                .isEqualTo(1000);
+
+            val = await session.countersFor("employees/2-A").get("downloads");
+            assertThat(val)
+                .isEqualTo(2000);
+
+            val = await session.countersFor("employees/3-A").get("downloads");
+            assertThat(val)
+                .isEqualTo(3000);
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+        }
+
+    });
+
+    it("sessionQueryIncludeAllCountersOfDocumentAndOfRelatedDocument", async function () {
+        {
+            const session = store.openSession();
+
+            for (let i = 1; i <= 3; i++) {
+                await storeNewOrder(session, {
+                    employee: `employees/${i}-A`
+                }, `orders/${i}-A`);
+            }
+            const empNames = ["Aviv", "Jerry", "Bob"];
+            for (let i = 1; i <= 3; i++) {
+                await storeNewDoc(session, {
+                    name: empNames[i - 1]
+                }, `employees/${i}-A`, Employee);
+            }
+            session.countersFor("orders/1-A").increment("likes", 100);
+            session.countersFor("orders/2-A").increment("likes", 200);
+            session.countersFor("orders/3-A").increment("likes", 300);
+
+            session.countersFor("orders/1-A").increment("downloads", 1000);
+            session.countersFor("orders/2-A").increment("downloads", 2000);
+
+            session.countersFor("employees/1-A").increment("likes", 100);
+            session.countersFor("employees/2-A").increment("likes", 200);
+            session.countersFor("employees/3-A").increment("likes", 300);
+            session.countersFor("employees/1-A").increment("downloads", 1000);
+            session.countersFor("employees/2-A").increment("downloads", 2000);
+            session.countersFor("employees/3-A").increment("cats", 5);
+
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const query = session.query<Order>({ collection: "Orders" })
+                .include(i => i
+                    .includeAllCounters()
+                    .includeAllCounters("employee"));
+
+            assertThat(query.toString())
+                .isEqualTo("from Orders include counters(),counters(employee)");
+
+            const orders = await query.all();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            // included counters should be in cache
+            let order = orders[0];
+            assertThat(order.id)
+                .isEqualTo("orders/1-A");
+            let dic = await session.countersFor(order).getAll();
+            assertThat(dic)
+                .hasSize(2)
+                .containsEntry("likes", 100)
+                .containsEntry("downloads", 1000);
+
+            order = orders[1];
+            assertThat(order.id)
+                .isEqualTo("orders/2-A");
+
+            dic = await session.countersFor(order).getAll();
+            assertThat(dic)
+                .hasSize(2)
+                .containsEntry("likes", 200)
+                .containsEntry("downloads", 2000);
+
+            order = orders[2];
+            assertThat(order.id)
+                .isEqualTo("orders/3-A");
+
+            dic = await session.countersFor(order).getAll();
+            assertThat(dic)
+                .hasSize(1)
+                .containsEntry("likes", 300);
+
+            dic = await session.countersFor("employees/1-A").getAll();
+            assertThat(dic)
+                .hasSize(2)
+                .containsEntry("likes", 100)
+                .containsEntry("downloads", 1000);
+
+            dic = await session.countersFor("employees/2-A").getAll();
+            assertThat(dic)
+                .hasSize(2)
+                .containsEntry("likes", 200)
+                .containsEntry("downloads", 2000);
+
+            dic = await session.countersFor("employees/3-A").getAll();
+            assertThat(dic)
+                .hasSize(2)
+                .containsEntry("likes", 300)
+                .containsEntry("cats", 5);
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+        }
+
+    });
 });
-
-async function storeNewDoc(
-    session: IDocumentSession, data: object, id: string, clazz: any) {
-    const order = Object.assign(new clazz(), data);
-    await session.store(order, id);
-    return order;
-}
-
-async function storeNewUser(session: IDocumentSession, name: string, id: string): Promise<User> {
-    const user = Object.assign(new User(), { name });
-    await session.store(user, id);
-    return user;
-}
-
-async function storeNewOrder(
-    session: IDocumentSession, data: object, id: string) {
-    const order = Object.assign(new Order(), data);
-    await session.store(order, id);
-    return order;
-}
-
-async function storeNewCompany(
-    session: IDocumentSession, data: object, id: string) {
-    const company = Object.assign(new Company(), data);
-    await session.store(company, id);
-    return company;
-}
-
-async function incCounter(
-    session: IDocumentSession, id: string, counter: string, val: number) {
-    session.countersFor(id).increment(counter, val);
-}
-
-function getFirstObjectValue(o: object) {
-    const keys = Object.keys(o);
-    return o[keys[0]];
-}
-
-// @Test
-//     public void sessionQueryIncludeCountersOfRelatedDocument() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 Order order1 = new Order();
-//                 order1.setEmployee("employees/1-A");
-//                 session.store(order1, "orders/1-A");
-
-//                 Order order2 = new Order();
-//                 order2.setEmployee("employees/2-A");
-//                 session.store(order2, "orders/2-A");
-
-//                 Order order3 = new Order();
-//                 order3.setEmployee("employees/3-A");
-//                 session.store(order3, "orders/3-A");
-
-//                 Employee employee1 = new Employee();
-//                 employee1.setFirstName("Aviv");
-//                 session.store(employee1, "employees/1-A");
-
-//                 Employee employee2 = new Employee();
-//                 employee2.setFirstName("Jerry");
-//                 session.store(employee2, "employees/2-A");
-
-//                 Employee employee3 = new Employee();
-//                 employee3.setFirstName("Bob");
-//                 session.store(employee3, "employees/3-A");
-
-//                 session.countersFor("employees/1-A").increment("downloads", 100);
-//                 session.countersFor("employees/2-A").increment("downloads", 200);
-//                 session.countersFor("employees/3-A").increment("downloads", 300);
-
-//                 session.countersFor("employees/1-A").increment("likes", 1000);
-//                 session.countersFor("employees/2-A").increment("likes", 2000);
-
-//                 session.saveChanges();
-//             }
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 IDocumentQuery<Order> query = session.query(Order.class)
-//                         .include(i -> i.includeCounters("employee", new String[]{"downloads", "likes"}));
-
-//                 assertThat(query.toString())
-//                         .isEqualTo("from Orders include counters(employee, $p0)");
-
-//                 List<Order> results = query.toList();
-//                 assertThat(session.advanced().getNumberOfRequests())
-//                         .isEqualTo(1);
-
-//                 // included counters should be in cache
-//                 Map<String, Long> dic = session.countersFor("employees/1-A").get(Arrays.asList("downloads", "likes"));
-//                 assertThat(dic)
-//                         .containsEntry("downloads", 100L)
-//                         .containsEntry("likes", 1000L);
-
-//                 dic = session.countersFor("employees/2-A").get(Arrays.asList("downloads", "likes"));
-//                 assertThat(dic)
-//                         .containsEntry("downloads", 200L)
-//                         .containsEntry("likes", 2000L);
-
-//                 dic = session.countersFor("employees/3-A").get(Arrays.asList("downloads", "likes"));
-//                 assertThat(dic)
-//                         .containsEntry("downloads", 300L);
-
-//                 assertThat(dic.get("likes"))
-//                         .isNull();
-
-//                 assertThat(session.advanced().getNumberOfRequests())
-//                         .isEqualTo(1);
-//             }
-//         }
-//     }
-
-//     @Test
-//     public void sessionQueryIncludeCountersOfDocumentAndOfRelatedDocument() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 Order order1 = new Order();
-//                 order1.setEmployee("employees/1-A");
-//                 session.store(order1, "orders/1-A");
-
-//                 Order order2 = new Order();
-//                 order2.setEmployee("employees/2-A");
-//                 session.store(order2, "orders/2-A");
-
-//                 Order order3 = new Order();
-//                 order3.setEmployee("employees/3-A");
-//                 session.store(order3, "orders/3-A");
-
-//                 Employee employee1 = new Employee();
-//                 employee1.setFirstName("Aviv");
-//                 session.store(employee1, "employees/1-A");
-
-//                 Employee employee2 = new Employee();
-//                 employee2.setFirstName("Jerry");
-//                 session.store(employee2, "employees/2-A");
-
-//                 Employee employee3 = new Employee();
-//                 employee3.setFirstName("Bob");
-//                 session.store(employee3, "employees/3-A");
-
-//                 session.countersFor("orders/1-A").increment("likes", 100);
-//                 session.countersFor("orders/2-A").increment("likes", 200);
-//                 session.countersFor("orders/3-A").increment("likes", 300);
-
-//                 session.countersFor("employees/1-A").increment("downloads", 1000);
-//                 session.countersFor("employees/2-A").increment("downloads", 2000);
-//                 session.countersFor("employees/3-A").increment("downloads", 3000);
-
-//                 session.saveChanges();
-//             }
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 IDocumentQuery<Order> query = session.query(Order.class)
-//                         .include(i -> i.includeCounter("likes").includeCounter("employee", "downloads"));
-
-//                 assertThat(query.toString())
-//                         .isEqualTo("from Orders include counters($p0),counters(employee, $p1)");
-
-//                 List<Order> orders = query.toList();
-//                 assertThat(session.advanced().getNumberOfRequests())
-//                         .isEqualTo(1);
-
-//                 // included counters should be in cache
-//                 Order order = orders.get(0);
-//                 assertThat(order.getId())
-//                         .isEqualTo("orders/1-A");
-//                 Long val = session.countersFor(order).get("likes");
-//                 assertThat(val)
-//                         .isEqualTo(100);
-
-//                 order = orders.get(1);
-//                 assertThat(order.getId())
-//                         .isEqualTo("orders/2-A");
-//                 val = session.countersFor(order).get("likes");
-//                 assertThat(val)
-//                         .isEqualTo(200);
-
-//                 order = orders.get(2);
-//                 assertThat(order.getId())
-//                         .isEqualTo("orders/3-A");
-//                 val = session.countersFor(order).get("likes");
-//                 assertThat(val)
-//                         .isEqualTo(300);
-
-//                 val = session.countersFor("employees/1-A").get("downloads");
-//                 assertThat(val)
-//                         .isEqualTo(1000);
-
-//                 val = session.countersFor("employees/2-A").get("downloads");
-//                 assertThat(val)
-//                         .isEqualTo(2000);
-
-//                 val = session.countersFor("employees/3-A").get("downloads");
-//                 assertThat(val)
-//                         .isEqualTo(3000);
-
-//                 assertThat(session.advanced().getNumberOfRequests())
-//                         .isEqualTo(1);
-//             }
-//         }
-//     }
-
-//     @Test
-//     public void sessionQueryIncludeAllCountersOfDocumentAndOfRelatedDocument() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 Order order1 = new Order();
-//                 order1.setEmployee("employees/1-A");
-//                 session.store(order1, "orders/1-A");
-
-//                 Order order2 = new Order();
-//                 order2.setEmployee("employees/2-A");
-//                 session.store(order2, "orders/2-A");
-
-//                 Order order3 = new Order();
-//                 order3.setEmployee("employees/3-A");
-//                 session.store(order3, "orders/3-A");
-
-//                 Employee employee1 = new Employee();
-//                 employee1.setFirstName("Aviv");
-//                 session.store(employee1, "employees/1-A");
-
-//                 Employee employee2 = new Employee();
-//                 employee2.setFirstName("Jerry");
-//                 session.store(employee2, "employees/2-A");
-
-//                 Employee employee3 = new Employee();
-//                 employee3.setFirstName("Bob");
-//                 session.store(employee3, "employees/3-A");
-
-//                 session.countersFor("orders/1-A").increment("likes", 100);
-//                 session.countersFor("orders/2-A").increment("likes", 200);
-//                 session.countersFor("orders/3-A").increment("likes", 300);
-
-//                 session.countersFor("orders/1-A").increment("downloads", 1000);
-//                 session.countersFor("orders/2-A").increment("downloads", 2000);
-
-//                 session.countersFor("employees/1-A").increment("likes", 100);
-//                 session.countersFor("employees/2-A").increment("likes", 200);
-//                 session.countersFor("employees/3-A").increment("likes", 300);
-//                 session.countersFor("employees/1-A").increment("downloads", 1000);
-//                 session.countersFor("employees/2-A").increment("downloads", 2000);
-//                 session.countersFor("employees/3-A").increment("cats", 5);
-
-//                 session.saveChanges();
-//             }
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 IDocumentQuery<Order> query = session.query(Order.class)
-//                         .include(i -> i
-//                                 .includeAllCounters()
-//                                 .includeAllCounters("employee"));
-
-//                 assertThat(query.toString())
-//                         .isEqualTo("from Orders include counters(),counters(employee)");
-
-//                 List<Order> orders = query.toList();
-//                 assertThat(session.advanced().getNumberOfRequests())
-//                         .isEqualTo(1);
-
-//                 // included counters should be in cache
-//                 Order order = orders.get(0);
-//                 assertThat(order.getId())
-//                         .isEqualTo("orders/1-A");
-//                 Map<String, Long> dic = session.countersFor(order).getAll();
-//                 assertThat(dic)
-//                         .hasSize(2)
-//                         .containsEntry("likes", 100L)
-//                         .containsEntry("downloads", 1000L);
-
-//                 order = orders.get(1);
-//                 assertThat(order.getId())
-//                         .isEqualTo("orders/2-A");
-
-//                 dic = session.countersFor(order).getAll();
-//                 assertThat(dic)
-//                         .hasSize(2)
-//                         .containsEntry("likes", 200L)
-//                         .containsEntry("downloads", 2000L);
-
-//                 order = orders.get(2);
-//                 assertThat(order.getId())
-//                         .isEqualTo("orders/3-A");
-
-//                 dic = session.countersFor(order).getAll();
-//                 assertThat(dic)
-//                         .hasSize(1)
-//                         .containsEntry("likes", 300L);
-
-//                 dic = session.countersFor("employees/1-A").getAll();
-//                 assertThat(dic)
-//                         .hasSize(2)
-//                         .containsEntry("likes", 100L)
-//                         .containsEntry("downloads", 1000L);
-
-//                 dic = session.countersFor("employees/2-A").getAll();
-//                 assertThat(dic)
-//                         .hasSize(2)
-//                         .containsEntry("likes", 200L)
-//                         .containsEntry("downloads", 2000L);
-
-//                 dic = session.countersFor("employees/3-A").getAll();
-//                 assertThat(dic)
-//                         .hasSize(2)
-//                         .containsEntry("likes", 300L)
-//                         .containsEntry("cats", 5L);
-
-//                 assertThat(session.advanced().getNumberOfRequests())
-//                         .isEqualTo(1);
-//             }
-//         }
-//     }

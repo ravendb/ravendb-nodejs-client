@@ -21,7 +21,7 @@ import {
 import { User, Company, Order, Employee } from "../../Assets/Entities";
 import { assertThat } from "../../Utils/AssertExtensions";
 
-describe.only("SessionCountersTest", function () {
+describe("SessionCountersTest", function () {
 
     let store: IDocumentStore;
 
