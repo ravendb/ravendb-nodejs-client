@@ -557,8 +557,8 @@ export abstract class InMemoryDocumentSessionOperations
         }
         
         const existingEntity = this.documentsByEntity.get(info.entity);
-        if (!existingEntity) {
-            if ((existingEntity.id || "").toLowerCase() === (info.id || "").toLowerCase()) {
+        if (existingEntity) {
+            if (StringUtil.equalsIgnoreCase(existingEntity.id, info.id)) {
                 return;
             }
             

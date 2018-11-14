@@ -60,6 +60,11 @@ export class JavaAssertionBuilder {
         return this;
     }
 
+    public isNotEmpty() {
+        assert.ok(this._value.length > 0, "Cannot be empty.");
+        return this;
+    }
+
     public hasSize(n) {
         if (this._value instanceof Map) {
             assert.strictEqual(this._value.size, n);

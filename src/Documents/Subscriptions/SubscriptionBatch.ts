@@ -34,18 +34,17 @@ export class SubscriptionBatch<T extends object> {
         return this._items;
     }
 
-    // public openSession(): IDocumentSession {
-    //     const sessionOptions = {
-    //         database: this._dbName,
-    //         requestExecutor: this._requestExecutor
-    //     } as SessionOptions;
-    //     return this._store.openSession(sessionOptions);
-    // }
+    public openSession(): IDocumentSession;
+    public openSession(options: SessionOptions): IDocumentSession;
+    public openSession(options?: SessionOptions): IDocumentSession {
+        if (options) {
+            SubscriptionBatch._validateSessionOptions(options);
+        }
 
-    public openSession(options: SessionOptions): IDocumentSession {
-        SubscriptionBatch._validateSessionOptions(options);
+        options = options || {} as SessionOptions;
         options.database = this._dbName;
         options.requestExecutor = this._requestExecutor;
+
         return this._openSessionInternal(options);
     }
 

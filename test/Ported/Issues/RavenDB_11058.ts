@@ -12,7 +12,7 @@ import {
 import { Company } from "../../Assets/Entities";
 import { assertThat, assertThrows } from "../../Utils/AssertExtensions";
 
-describe.only("RavenDB-11058", function () {
+describe("RavenDB-11058", function () {
 
     let store: IDocumentStore;
 

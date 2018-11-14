@@ -1,69 +1,87 @@
-// package net.ravendb.client.test.issues;
+import * as mocha from "mocha";
+import * as BluebirdPromise from "bluebird";
+import * as assert from "assert";
+import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
-// import net.ravendb.client.RemoteTestBase;
-// import net.ravendb.client.documents.IDocumentStore;
-// import net.ravendb.client.documents.session.IDocumentSession;
-// import net.ravendb.client.documents.subscriptions.SubscriptionBatch;
-// import net.ravendb.client.documents.subscriptions.SubscriptionCreationOptions;
-// import net.ravendb.client.documents.subscriptions.SubscriptionWorker;
-// import org.junit.jupiter.api.Test;
+import {
+    RavenErrorType,
+    GetNextOperationIdCommand,
+    IDocumentStore,
+    SubscriptionCreationOptions,
+    SubscriptionWorker,
+} from "../../../src";
+import { assertThat } from "../../Utils/AssertExtensions";
 
-// import java.util.concurrent.CompletableFuture;
-// import java.util.concurrent.Semaphore;
-// import java.util.concurrent.TimeUnit;
+class Dog {
+    public name: string;
+    public owner: string;
+}
 
-// import static org.assertj.core.api.Assertions.assertThat;
+class Person {
+    public name: string;
+}
+
+describe.only("RavenDB-11166", function () {
+
+    let store: IDocumentStore;
+
+    beforeEach(async function () {
+        store = await testContext.getDocumentStore();
+    });
+
+    afterEach(async () => 
+        await disposeTestDocumentStore(store));
+
+    it("canUseSubscriptionWithIncludes ", async () => {
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new Person(), { name: "Arava" }), "people/1");
+            await session.store(Object.assign(new Dog(), { name: "Oscar", owner: "people/1" }));
+            await session.saveChanges();
+        }
+
+        const options: SubscriptionCreationOptions = {
+            query: "from Dogs include Owner"
+        };
+        const id = await store.subscriptions.create(options);
+
+        let sub: SubscriptionWorker<Dog>; 
+        try {
+            sub = store.subscriptions.getSubscriptionWorker<Dog>(id);
+            await new Promise((resolve, reject) => {
+                sub.on("error", reject);
+                sub.on("batch", async (batch, callback) => {
+                    assertThat(batch.items)
+                        .isNotEmpty();
+
+                    try {
+                        const session = batch.openSession();
+                        for (const item of batch.items) {
+                            await session.load(item.result.owner);
+                            const dog = await session.load(item.id);
+                            assert.strictEqual(JSON.stringify(dog), JSON.stringify(item.result));
+                            assertThat(session.advanced.numberOfRequests).isZero();
+                            resolve();
+                            callback();
+                        }
+                    } catch (err) {
+                        reject(err);
+                        callback(err);
+                    }
+                });
+            });
+        } finally {
+            sub.dispose();
+        }
+    });
+});
 
 // public class RavenDB_11166Test extends RemoteTestBase {
 
-//     public static class Dog {
-//         private String name;
-//         private String owner;
-
-//         public String getName() {
-//             return name;
-//         }
-
-//         public void setName(String name) {
-//             this.name = name;
-//         }
-
-//         public String getOwner() {
-//             return owner;
-//         }
-
-//         public void setOwner(String owner) {
-//             this.owner = owner;
-//         }
-//     }
-
-//     public static class Person {
-//         private String name;
-
-//         public String getName() {
-//             return name;
-//         }
-
-//         public void setName(String name) {
-//             this.name = name;
-//         }
-//     }
 
 //     @Test
-//     public void canUseSubscriptionWithIncludes() throws Exception {
+//     public void () throws Exception {
 //         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 Person person = new Person();
-//                 person.setName("Arava");
-//                 session.store(person, "people/1");
-
-//                 Dog dog = new Dog();
-//                 dog.setName("Oscar");
-//                 dog.setOwner("people/1");
-//                 session.store(dog);
-
-//                 session.saveChanges();
-//             }
 
 //             SubscriptionCreationOptions options = new SubscriptionCreationOptions();
 //             options.setQuery("from Dogs include Owner");
