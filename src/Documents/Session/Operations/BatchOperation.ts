@@ -129,6 +129,8 @@ export class BatchOperation {
                 case "Counters":
                     this._handleCounters(batchResult);
                     break;
+                case "BatchPATCH":
+                    break;
                 default:
                     throwError("InvalidOperationException", `Command '${type}' is not supported.`);
             }

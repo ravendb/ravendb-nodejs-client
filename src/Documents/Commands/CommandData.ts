@@ -17,6 +17,7 @@ export type CommandType =
     | "Counters"
     | "ClientAnyCommand"
     | "ClientModifyDocumentCommand"
+    | "BatchPATCH"
     ;
 
 export interface ICommandData {

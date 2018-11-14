@@ -17,10 +17,12 @@ import {
     ICommandData,
     DeleteCommandData,
     SaveChangesData,
-    PutCommandDataWithJson
+    PutCommandDataWithJson,
+    CommandType
 } from "../Commands/CommandData";
 import { PutCompareExchangeCommandData } from "../Commands/Batches/PutCompareExchangeCommandData";
 import { DeleteCompareExchangeCommandData } from "../Commands/Batches/DeleteCompareExchangeCommandData";
+import { BatchPatchCommandData } from "../Commands/Batches/BatchPatchCommandData";
 import { GenerateEntityIdOnTheClient } from "../Identity/GenerateEntityIdOnTheClient";
 import { tryGetConflict } from "../../Mapping/Json";
 import { CONSTANTS } from "../../Constants";
@@ -1101,8 +1103,12 @@ export abstract class InMemoryDocumentSessionOperations
 
         if (clusterTransactionOperations.storeCompareExchange) {
             for (const [key, value] of clusterTransactionOperations.storeCompareExchange.entries()) {
-                const mapper = this.conventions.objectMapper;
-                const entityAsTree = value.entity;
+                let entityAsTree = EntityToJson.convertEntityToJson(
+                            value.entity, this.conventions, null, false);
+                if (this.conventions.remoteEntityFieldNameConvention) {
+                    entityAsTree = this.conventions.transformObjectKeysToRemoteFieldNameConvention(entityAsTree);
+                }
+                
                 const rootNode = { Object: entityAsTree };
                 result.sessionCommands.push(
                     new PutCompareExchangeCommandData(key, rootNode, value.index));
@@ -1368,18 +1374,31 @@ export abstract class InMemoryDocumentSessionOperations
     }
 
     private _deferInternal(command: ICommandData): void {
-        this.deferredCommandsMap.set(
-            IdTypeAndName.keyFor(command.id, command.type, command.name), command);
-        this.deferredCommandsMap.set(
-            IdTypeAndName.keyFor(command.id, "ClientAnyCommand", null), command);
+        if (command.type === "BatchPATCH") {
+            const batchPatchCommand = command as BatchPatchCommandData;
+            for (const kvp of batchPatchCommand.ids) {
+                this._addCommand(command, kvp.id, "PATCH", command.name);
+            }
 
-        if (command.type !== "AttachmentPUT" 
-            && command.type !== "AttachmentDELETE" 
+            return;
+        }
+
+        this._addCommand(command, command.id, command.type, command.name);
+    }
+    
+    private _addCommand(command: ICommandData, id: string, commandType: CommandType, commandName: string): void {
+        this.deferredCommandsMap.set(
+            IdTypeAndName.keyFor(id, commandType, commandName), command);
+        this.deferredCommandsMap.set(
+            IdTypeAndName.keyFor(id, "ClientAnyCommand", null), command);
+
+        if (command.type !== "AttachmentPUT"
+            && command.type !== "AttachmentDELETE"
             && command.type !== "AttachmentCOPY"
             && command.type !== "AttachmentMOVE"
             && command.type !== "Counters") {
             this.deferredCommandsMap.set(
-                IdTypeAndName.keyFor(command.id, "ClientModifyDocumentCommand", null), command);
+                IdTypeAndName.keyFor(id, "ClientModifyDocumentCommand", null), command);
         }
     }
 

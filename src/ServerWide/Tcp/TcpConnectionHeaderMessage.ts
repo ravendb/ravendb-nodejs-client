@@ -24,10 +24,11 @@ export const PING_BASE_LINE = -1;
 export const NONE_BASE_LINE = -1;
 export const DROP_BASE_LINE = -2;
 export const HEARTBEATS_BASE_LINE = 20;
+export const HEARTBEATS_41200 = 41_200;
 export const SUBSCRIPTION_BASE_LINE = 40;
 export const TEST_CONNECTION_BASE_LINE = 50;
 
-export const HEARTBEATS_TCP_VERSION = HEARTBEATS_BASE_LINE;
+export const HEARTBEATS_TCP_VERSION = HEARTBEATS_41200;
 export const SUBSCRIPTION_TCP_VERSION = SUBSCRIPTION_BASE_LINE;
 export const TEST_CONNECTION_TCP_VERSION = TEST_CONNECTION_BASE_LINE;
 
@@ -49,6 +50,7 @@ export class SubscriptionFeatures {
 
 export class HeartbeatsFeatures {
     public baseLine = true;
+    public sendChangesOnly: boolean = false;
 }
 
 export class TestConnectionFeatures {
@@ -78,7 +80,7 @@ const supportedFeaturesByProtocol = new Map<OperationTypes, Map<number, Supporte
     operationsToSupportedProtocolVersions.set("None", [NONE_BASE_LINE]);
     operationsToSupportedProtocolVersions.set("Drop", [DROP_BASE_LINE]);
     operationsToSupportedProtocolVersions.set("Subscription", [SUBSCRIPTION_BASE_LINE]);
-    operationsToSupportedProtocolVersions.set("Heartbeats", [HEARTBEATS_BASE_LINE]);
+    operationsToSupportedProtocolVersions.set("Heartbeats", [HEARTBEATS_41200, HEARTBEATS_BASE_LINE]);
     operationsToSupportedProtocolVersions.set("TestConnection", [TEST_CONNECTION_BASE_LINE]);
 
     const pingFeaturesMap = new Map<number, SupportedFeatures>();
@@ -110,6 +112,11 @@ const supportedFeaturesByProtocol = new Map<OperationTypes, Map<number, Supporte
     const heartbeatsFeatures = new SupportedFeatures(HEARTBEATS_BASE_LINE);
     heartbeatsFeatures.heartbeats = new HeartbeatsFeatures();
     heartbeatsFeaturesMap.set(HEARTBEATS_BASE_LINE, heartbeatsFeatures);
+
+    const heartbeats41200Features = new SupportedFeatures(HEARTBEATS_41200);
+    heartbeats41200Features.heartbeats = new HeartbeatsFeatures();
+    heartbeats41200Features.heartbeats.sendChangesOnly = true;
+    heartbeatsFeaturesMap.set(HEARTBEATS_41200, heartbeats41200Features);
 
     const testConnectionFeaturesMap = new Map<number, SupportedFeatures>();
     supportedFeaturesByProtocol.set("TestConnection", testConnectionFeaturesMap);

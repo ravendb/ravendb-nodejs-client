@@ -185,7 +185,7 @@ export class BulkInsertOperation {
 
         const documentInfo = new DocumentInfo();
         documentInfo.metadataInstance = metadata;
-        let json = EntityToJson.convertEntityToJson(entity, this._conventions, documentInfo);
+        let json = EntityToJson.convertEntityToJson(entity, this._conventions, documentInfo, false);
 
         if (this._conventions.remoteEntityFieldNameConvention) {
             json = this._conventions.transformObjectKeysToRemoteFieldNameConvention(json);

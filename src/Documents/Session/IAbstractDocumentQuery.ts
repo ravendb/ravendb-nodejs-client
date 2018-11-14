@@ -248,7 +248,7 @@ export interface IAbstractDocumentQuery<T> {
     _fuzzy(fuzzy: number): void;
 
     /**
-     * Specifies a proximity distance for the phrase in the last where clause
+     * Specifies a proximity distance for the phrase in the last search clause
      *
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Proximity%20Searches
      */

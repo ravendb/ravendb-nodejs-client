@@ -1140,12 +1140,17 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     public _fuzzy(fuzzy: number): void {
         const tokens = this._getCurrentWhereTokens();
         if (!tokens && !tokens.length) {
-            throwError("InvalidOperationException", "Missing where clause.");
+            throwError("InvalidOperationException", "Fuzzy can only be used right after where clause.");
         }
 
         const whereToken = tokens[tokens.length - 1];
         if (!(whereToken instanceof WhereToken)) {
-            throwError("InvalidOperationException", "Missing where clause.");
+            throwError("InvalidOperationException", "Fuzzy can only be used right after where clause.");
+        }
+
+        if ((whereToken as WhereToken).whereOperator !== "Equals" as WhereOperator) {
+            throwError("InvalidOperationException", 
+                "Fuzzy can only be used right after where clause with equals operator");
         }
 
         if (fuzzy < 0.0 || fuzzy > 1.0) {
@@ -1163,12 +1168,17 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     public _proximity(proximity: number): void {
         const tokens = this._getCurrentWhereTokens();
         if (!tokens && !tokens.length) {
-            throwError("InvalidOperationException", "Missing where clause.");
+            throwError("InvalidOperationException", "Proximity can only be used right after search clause.");
         }
 
         const whereToken = tokens[tokens.length - 1];
         if (!(whereToken instanceof WhereToken)) {
-            throwError("InvalidOperationException", "Missing where clause.");
+            throwError("InvalidOperationException", "Proximity can only be used right after search clause.");
+        }
+
+        if ((whereToken as WhereToken).whereOperator !== "Search" as WhereOperator) {
+            throwError("InvalidOperationException", 
+                "Fuzzy can only be used right after where clause with equals operator");
         }
 
         if (proximity < 1) {

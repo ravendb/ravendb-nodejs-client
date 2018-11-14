@@ -55,9 +55,15 @@ export class EntityToJson {
     public static convertEntityToJson(
         entity: object, conventions: DocumentConventions): object;
     public static convertEntityToJson(
-        entity: object, conventions: DocumentConventions, documentInfo: DocumentInfo): object;
+        entity: object, 
+        conventions: DocumentConventions, 
+        documentInfo: DocumentInfo,
+        removeIdentityProperty: boolean): object;
     public static convertEntityToJson(
-        entity: object, conventions: DocumentConventions, documentInfo?: DocumentInfo): object {
+        entity: object, 
+        conventions: DocumentConventions, 
+        documentInfo?: DocumentInfo, 
+        removeIdentityProperty: boolean = true): object {
 
         let typeInfo: TypeInfo;
         const jsonNode = conventions.objectMapper.toObjectLiteral(entity, (_typeInfo) => {
@@ -66,7 +72,9 @@ export class EntityToJson {
 
         EntityToJson._writeMetadata(jsonNode, typeInfo, documentInfo);
 
-        EntityToJson._tryRemoveIdentityProperty(jsonNode, typeInfo.typeName, conventions);
+        if (removeIdentityProperty) {
+            EntityToJson._tryRemoveIdentityProperty(jsonNode, typeInfo.typeName, conventions);
+        }
 
         return jsonNode;
     }

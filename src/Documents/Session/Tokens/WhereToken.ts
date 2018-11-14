@@ -95,7 +95,7 @@ export class WhereToken extends QueryToken {
     }
 
     public fieldName: string;
-    private whereOperator: WhereOperator;
+    public whereOperator: WhereOperator;
     public parameterName: string;
     public options: WhereOptions;
 

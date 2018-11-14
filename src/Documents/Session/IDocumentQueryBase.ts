@@ -119,7 +119,7 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
     orderByScoreDescending(): TSelf;
 
     /**
-     * Specifies a proximity distance for the phrase in the last where clause
+     * Specifies a proximity distance for the phrase in the last search clause
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Proximity%20Searches
      */
     proximity(proximity: number): TSelf;
