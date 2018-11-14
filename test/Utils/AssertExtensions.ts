@@ -15,9 +15,23 @@ export async function throwsAsync(fn, regExp) {
     }
 }
 
+export async function assertThrows(func: Function, errAssert?: (err: Error) => void) {
+    try {
+        await func();
+        assert.fail(`Function '${func.name || func.toString()}' should have thrown.`);
+    } catch (err) {
+        if (errAssert) {
+            errAssert(err);
+        }
+
+        return err;
+    }
+}
+
 export function assertThat(value) {
     return new JavaAssertionBuilder(value);
 }
+
 export class JavaAssertionBuilder {
     constructor(private _value) {}
 
@@ -33,6 +47,16 @@ export class JavaAssertionBuilder {
 
     public isZero() {
         assert.strictEqual(this._value, 0);
+        return this;
+    }
+
+    public isTrue() {
+        assert.strictEqual(this._value, true);
+        return this;
+    }
+
+    public isFalse() {
+        assert.strictEqual(this._value, false);
         return this;
     }
 

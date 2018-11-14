@@ -59,7 +59,7 @@ export interface IAttachmentsSessionOperationsBase {
      * Moves specified source document attachment to destination document. 
      * The operation will be executed when saveChanges is called.
      */
-    move(sourceDocumentId: object, sourceName: string, destinationDocumentId: object, destinationName: string): void;
+    move(sourceDocumentId: string, sourceName: string, destinationDocumentId: string, destinationName: string): void;
 
     /**
      * Copies specified source document attachment to destination document. 

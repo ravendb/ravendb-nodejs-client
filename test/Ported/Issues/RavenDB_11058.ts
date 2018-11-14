@@ -1,309 +1,291 @@
-// package net.ravendb.client.test.issues;
+import * as mocha from "mocha";
+import * as BluebirdPromise from "bluebird";
+import * as assert from "assert";
+import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
-// import net.ravendb.client.RemoteTestBase;
-// import net.ravendb.client.documents.IDocumentStore;
-// import net.ravendb.client.documents.operations.DatabaseStatistics;
-// import net.ravendb.client.documents.operations.GetStatisticsOperation;
-// import net.ravendb.client.documents.session.IDocumentSession;
-// import net.ravendb.client.exceptions.ConcurrencyException;
-// import net.ravendb.client.infrastructure.entities.Company;
-// import org.assertj.core.api.Assertions;
-// import org.junit.jupiter.api.Test;
+import {
+    RavenErrorType,
+    GetNextOperationIdCommand,
+    IDocumentStore,
+    GetStatisticsOperation,
+} from "../../../src";
+import { Company } from "../../Assets/Entities";
+import { assertThat, assertThrows } from "../../Utils/AssertExtensions";
 
-// import java.io.ByteArrayInputStream;
+describe.only("RavenDB-11058", function () {
 
-// import static org.assertj.core.api.Assertions.assertThat;
-// import static org.assertj.core.api.Assertions.assertThatThrownBy;
+    let store: IDocumentStore;
 
-// public class RavenDB_11058Test extends RemoteTestBase {
+    beforeEach(async function () {
+        store = await testContext.getDocumentStore();
+    });
 
-//     @Test
-//     public void canCopyAttachment() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company company = new Company();
-//                 company.setName("HR");
+    afterEach(async () =>
+        await disposeTestDocumentStore(store));
 
-//                 session.store(company, "companies/1");
+    it("canCopyAttachment", async () => {
+        {
+            const session = store.openSession();
+            const company = Object.assign(new Company(), { name: "HR" });
+            await session.store(company, "companies/1");
+            session.advanced.attachments.store(company, "file1", Buffer.from([1, 2, 3]));
+            session.advanced.attachments.store(company, "file10", Buffer.from([3, 2, 1]));
 
-//                 ByteArrayInputStream bais1 = new ByteArrayInputStream(new byte[]{ 1, 2, 3});
-//                 session.advanced().attachments().store(company, "file1", bais1);
+            await session.saveChanges();
+        }
 
-//                 ByteArrayInputStream bais2 = new ByteArrayInputStream(new byte[]{ 3, 2, 1 });
-//                 session.advanced().attachments().store(company, "file10", bais2);
+        let stats = await store.maintenance.send(new GetStatisticsOperation());
+        assertThat(stats.countOfAttachments)
+            .isEqualTo(2);
+        assertThat(stats.countOfUniqueAttachments)
+            .isEqualTo(2);
 
-//                 session.saveChanges();
-//             }
+        {
+            const session = store.openSession();
+            const newCompany = Object.assign(new Company(), { name: "CF" });
+            await session.store(newCompany, "companies/2");
 
+            const oldCompany = await session.load("companies/1");
+            session.advanced.attachments.copy(oldCompany, "file1", newCompany, "file2");
+            await session.saveChanges();
+        }
 
-//             DatabaseStatistics stats = store.maintenance().send(new GetStatisticsOperation());
-//             assertThat(stats.getCountOfAttachments())
-//                     .isEqualTo(2);
-//             assertThat(stats.getCountOfUniqueAttachments())
-//                     .isEqualTo(2);
+        stats = await store.maintenance.send(new GetStatisticsOperation());
+        assertThat(stats.countOfAttachments)
+            .isEqualTo(3);
+        assertThat(stats.countOfUniqueAttachments)
+            .isEqualTo(2);
 
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company newCompany = new Company();
-//                 newCompany.setName("CF");
+        {
+            const session = store.openSession();
+            assertThat(await session.advanced.attachments.exists("companies/1", "file1"))
+                .isTrue();
+            assertThat(await session.advanced.attachments.exists("companies/1", "file2"))
+                .isFalse();
+            assertThat(await session.advanced.attachments.exists("companies/1", "file10"))
+                .isTrue();
 
-//                 session.store(newCompany, "companies/2");
+            assertThat(await session.advanced.attachments.exists("companies/2", "file1"))
+                .isFalse();
+            assertThat(await session.advanced.attachments.exists("companies/2", "file2"))
+                .isTrue();
+            assertThat(await session.advanced.attachments.exists("companies/2", "file10"))
+                .isFalse();
+        }
 
-//                 Company oldCompany = session.load(Company.class, "companies/1");
-//                 session.advanced().attachments().copy(oldCompany, "file1", newCompany, "file2");
-//                 session.saveChanges();
-//             }
+        {
+            const session = store.openSession();
+            session.advanced.attachments.copy("companies/1", "file1", "companies/2", "file3");
+            await session.saveChanges();
+        }
 
-//             stats = store.maintenance().send(new GetStatisticsOperation());
-//             assertThat(stats.getCountOfAttachments())
-//                     .isEqualTo(3);
-//             assertThat(stats.getCountOfUniqueAttachments())
-//                     .isEqualTo(2);
+        stats = await store.maintenance.send(new GetStatisticsOperation());
+        assertThat(stats.countOfAttachments)
+            .isEqualTo(4);
+        assertThat(stats.countOfUniqueAttachments)
+            .isEqualTo(2);
 
-//             try (IDocumentSession session = store.openSession()) {
-//                 assertThat(session.advanced().attachments().exists("companies/1", "file1"))
-//                         .isTrue();
-//                 assertThat(session.advanced().attachments().exists("companies/1", "file2"))
-//                         .isFalse();
-//                 assertThat(session.advanced().attachments().exists("companies/1", "file10"))
-//                         .isTrue();
+        {
+            const session = store.openSession();
+            assertThat(await session.advanced.attachments.exists("companies/1", "file1"))
+                .isTrue();
+            assertThat(await session.advanced.attachments.exists("companies/1", "file2"))
+                .isFalse();
+            assertThat(await session.advanced.attachments.exists("companies/1", "file3"))
+                .isFalse();
+            assertThat(await session.advanced.attachments.exists("companies/1", "file10"))
+                .isTrue();
 
-//                 assertThat(session.advanced().attachments().exists("companies/2", "file1"))
-//                         .isFalse();
-//                 assertThat(session.advanced().attachments().exists("companies/2", "file2"))
-//                         .isTrue();
-//                 assertThat(session.advanced().attachments().exists("companies/2", "file10"))
-//                         .isFalse();
-//             }
+            assertThat(await session.advanced.attachments.exists("companies/2", "file1"))
+                .isFalse();
+            assertThat(await session.advanced.attachments.exists("companies/2", "file2"))
+                .isTrue();
+            assertThat(await session.advanced.attachments.exists("companies/2", "file3"))
+                .isTrue();
+            assertThat(await session.advanced.attachments.exists("companies/2", "file10"))
+                .isFalse();
+        }
 
-//             try (IDocumentSession session = store.openSession()) {
-//                 session.advanced().attachments().copy("companies/1", "file1", "companies/2", "file3");
-//                 session.saveChanges();
-//             }
+        {
+            const session = store.openSession();
+            session.advanced.attachments.copy("companies/1", "file1", "companies/2", "file3"); //should throw
+            await assertThrows(
+                async () => session.saveChanges(),
+                e => assert.strictEqual(e.name, "ConcurrencyException"));
+        }
+    });
 
-//             stats = store.maintenance().send(new GetStatisticsOperation());
-//             assertThat(stats.getCountOfAttachments())
-//                     .isEqualTo(4);
-//             assertThat(stats.getCountOfUniqueAttachments())
-//                     .isEqualTo(2);
+    it("canMoveAttachment", async function () {
+        {
+            const session = store.openSession();
+            const company = Object.assign(new Company(), { name: "HR" });
+            await session.store(company, "companies/1");
+            session.advanced.attachments
+                .store(company, "file1", Buffer.from([1, 2, 3]));
+            session.advanced.attachments
+                .store(company, "file10", Buffer.from([3, 2, 1]));
+            session.advanced.attachments
+                .store(company, "file20", Buffer.from([4, 5, 6]));
 
-//             try (IDocumentSession session = store.openSession()) {
-//                 assertThat(session.advanced().attachments().exists("companies/1", "file1"))
-//                         .isTrue();
-//                 assertThat(session.advanced().attachments().exists("companies/1", "file2"))
-//                         .isFalse();
-//                 assertThat(session.advanced().attachments().exists("companies/1", "file3"))
-//                         .isFalse();
-//                 assertThat(session.advanced().attachments().exists("companies/1", "file10"))
-//                         .isTrue();
+            await session.saveChanges();
+        }
 
-//                 assertThat(session.advanced().attachments().exists("companies/2", "file1"))
-//                         .isFalse();
-//                 assertThat(session.advanced().attachments().exists("companies/2", "file2"))
-//                         .isTrue();
-//                 assertThat(session.advanced().attachments().exists("companies/2", "file3"))
-//                         .isTrue();
-//                 assertThat(session.advanced().attachments().exists("companies/2", "file10"))
-//                         .isFalse();
-//             }
+        let stats = await store.maintenance.send(new GetStatisticsOperation());
+        assertThat(stats.countOfAttachments)
+            .isEqualTo(3);
+        assertThat(stats.countOfUniqueAttachments)
+            .isEqualTo(3);
 
-//             try (IDocumentSession session = store.openSession()) {
-//                 session.advanced().attachments().copy("companies/1", "file1", "companies/2", "file3"); //should throw
+        {
+            const session = store.openSession();
+            const newCompany = Object.assign(new Company(), { name: "CF" });
+            await session.store(newCompany, "companies/2");
 
-//                 assertThatThrownBy(() -> {
-//                     session.saveChanges();
-//                 }).isExactlyInstanceOf(ConcurrencyException.class);
-//             }
+            const oldCompany = await session.load("companies/1");
+            session.advanced.attachments.move(oldCompany, "file1", newCompany, "file2");
+            await session.saveChanges();
+        }
 
-//         }
-//     }
+        stats = await store.maintenance.send(new GetStatisticsOperation());
+        assertThat(stats.countOfAttachments)
+            .isEqualTo(3);
+        assertThat(stats.countOfUniqueAttachments)
+            .isEqualTo(3);
 
-//     @Test
-//     public void canMoveAttachment() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company company = new Company();
-//                 company.setName("HR");
+        {
+            const session = store.openSession();
+            assertThat(await session.advanced.attachments.exists("companies/1", "file1"))
+                .isFalse();
+            assertThat(await session.advanced.attachments.exists("companies/1", "file2"))
+                .isFalse();
+            assertThat(await session.advanced.attachments.exists("companies/1", "file10"))
+                .isTrue();
+            assertThat(await session.advanced.attachments.exists("companies/1", "file20"))
+                .isTrue();
 
-//                 session.store(company, "companies/1");
+            assertThat(await session.advanced.attachments.exists("companies/2", "file1"))
+                .isFalse();
+            assertThat(await session.advanced.attachments.exists("companies/2", "file2"))
+                .isTrue();
+            assertThat(await session.advanced.attachments.exists("companies/2", "file10"))
+                .isFalse();
+            assertThat(await session.advanced.attachments.exists("companies/2", "file20"))
+                .isFalse();
+        }
 
-//                 ByteArrayInputStream bais1 = new ByteArrayInputStream(new byte[]{ 1, 2, 3});
-//                 session.advanced().attachments().store(company, "file1", bais1);
+        {
+            const session = store.openSession();
+            session.advanced.attachments.move(
+                "companies/1", "file10", "companies/2", "file3"); //should throw
+            await session.saveChanges();
+        }
 
-//                 ByteArrayInputStream bais2 = new ByteArrayInputStream(new byte[]{ 3, 2, 1 });
-//                 session.advanced().attachments().store(company, "file10", bais2);
+        stats = await store.maintenance.send(new GetStatisticsOperation());
+        assertThat(stats.countOfAttachments)
+            .isEqualTo(3);
+        assertThat(stats.countOfUniqueAttachments)
+            .isEqualTo(3);
 
-//                 ByteArrayInputStream bais3 = new ByteArrayInputStream(new byte[]{ 4, 5, 6 });
-//                 session.advanced().attachments().store(company, "file20", bais3);
+        {
+            const session = store.openSession();
+            assertThat(await session.advanced.attachments.exists("companies/1", "file1"))
+                .isFalse();
+            assertThat(await session.advanced.attachments.exists("companies/1", "file2"))
+                .isFalse();
+            assertThat(await session.advanced.attachments.exists("companies/1", "file3"))
+                .isFalse();
+            assertThat(await session.advanced.attachments.exists("companies/1", "file10"))
+                .isFalse();
+            assertThat(await session.advanced.attachments.exists("companies/1", "file20"))
+                .isTrue();
 
-//                 session.saveChanges();
-//             }
+            assertThat(await session.advanced.attachments.exists("companies/2", "file1"))
+                .isFalse();
+            assertThat(await session.advanced.attachments.exists("companies/2", "file2"))
+                .isTrue();
+            assertThat(await session.advanced.attachments.exists("companies/2", "file3"))
+                .isTrue();
+            assertThat(await session.advanced.attachments.exists("companies/2", "file10"))
+                .isFalse();
+            assertThat(await session.advanced.attachments.exists("companies/2", "file20"))
+                .isFalse();
+        }
 
-//             DatabaseStatistics stats = store.maintenance().send(new GetStatisticsOperation());
-//             assertThat(stats.getCountOfAttachments())
-//                     .isEqualTo(3);
-//             assertThat(stats.getCountOfUniqueAttachments())
-//                     .isEqualTo(3);
+        {
+            const session = store.openSession();
+            session.advanced.attachments.move(
+                "companies/1", "file20", "companies/2", "file3"); //should throw
 
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company newCompany = new Company();
-//                 newCompany.
-//                         setName("CF");
+            await assertThrows(
+                async () => await session.saveChanges(),
+                e => assert.strictEqual(e.name, "ConcurrencyException", e.toString()));
+        }
+    });
 
-//                 session.store(newCompany, "companies/2");
+    it("canRenameAttachment", async function () {
+        {
+            const session = store.openSession();
+            const company = Object.assign(new Company(), { name: "HR" });
+            await session.store(company, "companies/1");
+            session.advanced.attachments.store(company, "file1", Buffer.from([1, 2, 3]));
+            session.advanced.attachments.store(company, "file10", Buffer.from([3, 2, 1]));
+            await session.saveChanges();
+        }
 
-//                 Company oldCompany = session.load(Company.class, "companies/1");
+        let stats = await store.maintenance.send(new GetStatisticsOperation());
+        assertThat(stats.countOfAttachments)
+            .isEqualTo(2);
+        assertThat(stats.countOfUniqueAttachments)
+            .isEqualTo(2);
 
-//                 session.advanced().attachments().move(oldCompany, "file1", newCompany, "file2");
-//                 session.saveChanges();
-//             }
+        {
+            const session = store.openSession();
+            const company = await session.load("companies/1");
+            session.advanced.attachments.rename(company, "file1", "file2");
+            await session.saveChanges();
+        }
 
-//             stats = store.maintenance().send(new GetStatisticsOperation());
-//             assertThat(stats.getCountOfAttachments())
-//                     .isEqualTo(3);
-//             assertThat(stats.getCountOfUniqueAttachments())
-//                     .isEqualTo(3);
+        stats = await store.maintenance.send(new GetStatisticsOperation());
+        assertThat(stats.countOfAttachments)
+            .isEqualTo(2);
+        assertThat(stats.countOfUniqueAttachments)
+            .isEqualTo(2);
 
-//             try (IDocumentSession session = store.openSession()) {
-//                 assertThat(session.advanced().attachments().exists("companies/1", "file1"))
-//                         .isFalse();
-//                 assertThat(session.advanced().attachments().exists("companies/1", "file2"))
-//                         .isFalse();
-//                 assertThat(session.advanced().attachments().exists("companies/1", "file10"))
-//                         .isTrue();
-//                 assertThat(session.advanced().attachments().exists("companies/1", "file20"))
-//                         .isTrue();
+        {
+            const session = store.openSession();
+            assertThat(await session.advanced.attachments.exists("companies/1", "file1"))
+                .isFalse();
+            assertThat(await session.advanced.attachments.exists("companies/1", "file2"))
+                .isTrue();
+        }
 
+        {
+            const session = store.openSession();
+            const company = await session.load("companies/1");
+            session.advanced.attachments.rename(company, "file2", "file3");
+            await session.saveChanges();
+        }
 
-//                 assertThat(session.advanced().attachments().exists("companies/2", "file1"))
-//                         .isFalse();
-//                 assertThat(session.advanced().attachments().exists("companies/2", "file2"))
-//                         .isTrue();
-//                 assertThat(session.advanced().attachments().exists("companies/2", "file10"))
-//                         .isFalse();
-//                 assertThat(session.advanced().attachments().exists("companies/2", "file20"))
-//                         .isFalse();
-//             }
+        stats = await store.maintenance.send(new GetStatisticsOperation());
+        assertThat(stats.countOfAttachments)
+            .isEqualTo(2);
+        assertThat(stats.countOfUniqueAttachments)
+            .isEqualTo(2);
 
-//             try (IDocumentSession session = store.openSession()) {
-//                 session.advanced().attachments().move("companies/1", "file10", "companies/2", "file3");
-//                 session.saveChanges();
-//             }
+        {
+            const session = store.openSession();
+            const company = await session.load("companies/1");
+            session.advanced.attachments.rename(company, "file3", "file10"); // should throw
+            await assertThrows(
+                async () => session.saveChanges(),
+                err => assert.strictEqual(err.name, "ConcurrencyException"));
+        }
 
-//             stats = store.maintenance().send(new GetStatisticsOperation());
-//             assertThat(stats.getCountOfAttachments())
-//                     .isEqualTo(3);
-//             assertThat(stats.getCountOfUniqueAttachments())
-//                     .isEqualTo(3);
+        stats = await store.maintenance.send(new GetStatisticsOperation());
+        assertThat(stats.countOfAttachments)
+            .isEqualTo(2);
+        assertThat(stats.countOfUniqueAttachments)
+            .isEqualTo(2);
 
-//             try (IDocumentSession session = store.openSession()) {
-//                 assertThat(session.advanced().attachments().exists("companies/1", "file1"))
-//                         .isFalse();
-//                 assertThat(session.advanced().attachments().exists("companies/1", "file2"))
-//                         .isFalse();
-//                 assertThat(session.advanced().attachments().exists("companies/1", "file3"))
-//                         .isFalse();
-//                 assertThat(session.advanced().attachments().exists("companies/1", "file10"))
-//                         .isFalse();
-//                 assertThat(session.advanced().attachments().exists("companies/1", "file20"))
-//                         .isTrue();
-
-
-//                 assertThat(session.advanced().attachments().exists("companies/2", "file1"))
-//                         .isFalse();
-//                 assertThat(session.advanced().attachments().exists("companies/2", "file2"))
-//                         .isTrue();
-//                 assertThat(session.advanced().attachments().exists("companies/2", "file3"))
-//                         .isTrue();
-//                 assertThat(session.advanced().attachments().exists("companies/2", "file10"))
-//                         .isFalse();
-//                 assertThat(session.advanced().attachments().exists("companies/2", "file20"))
-//                         .isFalse();
-//             }
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 session.advanced().attachments().move("companies/1", "file20", "companies/2", "file3"); //should throw
-
-//                 assertThatThrownBy(() -> {
-//                     session.saveChanges();
-//                 }).isExactlyInstanceOf(ConcurrencyException.class);
-//             }
-//         }
-//     }
-
-//     @Test
-//     public void canRenameAttachment() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company company = new Company();
-//                 company.setName("HR");
-
-//                 session.store(company, "companies/1-A");
-
-//                 ByteArrayInputStream bais1 = new ByteArrayInputStream(new byte[]{ 1, 2, 3});
-//                 session.advanced().attachments().store(company, "file1", bais1);
-
-//                 ByteArrayInputStream bais2 = new ByteArrayInputStream(new byte[]{ 3, 2, 1 });
-//                 session.advanced().attachments().store(company, "file10", bais2);
-
-//                 session.saveChanges();
-//             }
-
-//             DatabaseStatistics stats = store.maintenance().send(new GetStatisticsOperation());
-//             assertThat(stats.getCountOfAttachments())
-//                     .isEqualTo(2);
-//             assertThat(stats.getCountOfUniqueAttachments())
-//                     .isEqualTo(2);
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company company = session.load(Company.class, "companies/1-A");
-//                 session.advanced().attachments().rename(company, "file1", "file2");
-//                 session.saveChanges();
-//             }
-
-//             stats = store.maintenance().send(new GetStatisticsOperation());
-//             assertThat(stats.getCountOfAttachments())
-//                     .isEqualTo(2);
-//             assertThat(stats.getCountOfUniqueAttachments())
-//                     .isEqualTo(2);
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 assertThat(session.advanced().attachments().exists("companies/1-A", "file1"))
-//                         .isFalse();
-//                 assertThat(session.advanced().attachments().exists("companies/1-A", "file2"))
-//                         .isTrue();
-//             }
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company company = session.load(Company.class, "companies/1-A");
-//                 session.advanced().attachments().rename(company, "file2", "file3");
-//                 session.saveChanges();
-//             }
-
-//             stats = store.maintenance().send(new GetStatisticsOperation());
-//             assertThat(stats.getCountOfAttachments())
-//                     .isEqualTo(2);
-//             assertThat(stats.getCountOfUniqueAttachments())
-//                     .isEqualTo(2);
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 assertThat(session.advanced().attachments().exists("companies/1-A", "file2"))
-//                         .isFalse();
-//                 assertThat(session.advanced().attachments().exists("companies/1-A", "file3"))
-//                         .isTrue();
-//             }
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company company = session.load(Company.class, "companies/1-A");
-//                 session.advanced().attachments().rename(company, "file3", "file10"); // should throw
-//                 assertThatThrownBy(() -> session.saveChanges())
-//                         .isExactlyInstanceOf(ConcurrencyException.class);
-//             }
-
-//             stats = store.maintenance().send(new GetStatisticsOperation());
-//             assertThat(stats.getCountOfAttachments())
-//                     .isEqualTo(2);
-//             assertThat(stats.getCountOfUniqueAttachments())
-//                     .isEqualTo(2);
-//         }
-//     }
-// }
+    });
+});

@@ -188,7 +188,7 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
         }
 
         const destinationDocument = this._documentsByEntity.get(destinationEntity);
-        if (destinationDocument) {
+        if (!destinationDocument) {
             this._throwEntityNotInSession(destinationEntity);
         }
 
@@ -209,11 +209,11 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
             throwError("InvalidArgumentException", "DestinationDocumentId is required.");
         }
 
-        if (StringUtil.isWhitespace(destinationName)) {
+        if (StringUtil.isNullOrWhitespace(destinationName)) {
             throwError("InvalidArgumentException", "DestinationName is required.");
         }
         
-        if (sourceDocumentId.toLowerCase() === destinationDocumentId.toLowerCase() 
+        if (StringUtil.equalsIgnoreCase(sourceDocumentId, destinationDocumentId)
             && sourceName === destinationName) {
             return; // no-op
         }
@@ -300,7 +300,7 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
         }
 
         const destinationDocument = this._documentsByEntity.get(destinationEntity);
-        if (destinationDocument) {
+        if (!destinationDocument) {
             this._throwEntityNotInSession(destinationEntity);
         }
         
@@ -324,11 +324,11 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
             throwError("InvalidArgumentException", "DestinationDocumentId is required.");
         }
 
-        if (StringUtil.isWhitespace(destinationName)) {
+        if (StringUtil.isNullOrWhitespace(destinationName)) {
             throwError("InvalidArgumentException", "DestinationName is required.");
         }
 
-        if (sourceDocumentId.toLowerCase() === destinationDocumentId.toLowerCase() 
+        if (StringUtil.equalsIgnoreCase(sourceDocumentId, destinationDocumentId) 
             && sourceName === destinationName) {
             return; // no-op
         }

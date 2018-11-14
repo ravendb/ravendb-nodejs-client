@@ -129,6 +129,7 @@ export {
     SetIndexesPriorityOperationParameters
 } from "./Documents/Operations/Indexes/SetIndexesPriorityOperation";
 export * from "./Documents/Operations/PatchRequest";
+export * from "./Documents/Operations/GetDetailedStatisticsOperation";
 
 // INDEXES
 export { GetIndexOperation } from "./Documents/Operations/Indexes/GetIndexOperation";
