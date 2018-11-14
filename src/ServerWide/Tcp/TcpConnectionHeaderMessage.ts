@@ -26,10 +26,11 @@ export const DROP_BASE_LINE = -2;
 export const HEARTBEATS_BASE_LINE = 20;
 export const HEARTBEATS_41200 = 41_200;
 export const SUBSCRIPTION_BASE_LINE = 40;
+export const SUBSCRIPTION_INCLUDES = 41_400;
 export const TEST_CONNECTION_BASE_LINE = 50;
 
 export const HEARTBEATS_TCP_VERSION = HEARTBEATS_41200;
-export const SUBSCRIPTION_TCP_VERSION = SUBSCRIPTION_BASE_LINE;
+export const SUBSCRIPTION_TCP_VERSION = SUBSCRIPTION_INCLUDES;
 export const TEST_CONNECTION_TCP_VERSION = TEST_CONNECTION_BASE_LINE;
 
 export class PingFeatures {
@@ -46,6 +47,7 @@ export class DropFeatures {
 
 export class SubscriptionFeatures {
     public baseLine = true;
+    public includes = false;
 }
 
 export class HeartbeatsFeatures {
@@ -79,8 +81,13 @@ const supportedFeaturesByProtocol = new Map<OperationTypes, Map<number, Supporte
     operationsToSupportedProtocolVersions.set("Ping", [PING_BASE_LINE]);
     operationsToSupportedProtocolVersions.set("None", [NONE_BASE_LINE]);
     operationsToSupportedProtocolVersions.set("Drop", [DROP_BASE_LINE]);
-    operationsToSupportedProtocolVersions.set("Subscription", [SUBSCRIPTION_BASE_LINE]);
-    operationsToSupportedProtocolVersions.set("Heartbeats", [HEARTBEATS_41200, HEARTBEATS_BASE_LINE]);
+    operationsToSupportedProtocolVersions.set("Subscription", [
+        SUBSCRIPTION_INCLUDES, SUBSCRIPTION_BASE_LINE
+    ]);
+    operationsToSupportedProtocolVersions.set("Heartbeats", [
+        HEARTBEATS_41200, 
+        HEARTBEATS_BASE_LINE
+    ]);
     operationsToSupportedProtocolVersions.set("TestConnection", [TEST_CONNECTION_BASE_LINE]);
 
     const pingFeaturesMap = new Map<number, SupportedFeatures>();
@@ -106,6 +113,11 @@ const supportedFeaturesByProtocol = new Map<OperationTypes, Map<number, Supporte
     const subscriptionFeatures = new SupportedFeatures(SUBSCRIPTION_BASE_LINE);
     subscriptionFeatures.subscription = new SubscriptionFeatures();
     subscriptionFeaturesMap.set(SUBSCRIPTION_BASE_LINE, subscriptionFeatures);
+
+    const subscriptions41400Features = new SupportedFeatures(SUBSCRIPTION_INCLUDES);
+    subscriptions41400Features.subscription = new SubscriptionFeatures();
+    subscriptions41400Features.subscription.includes = true;
+    subscriptionFeaturesMap.set(SUBSCRIPTION_INCLUDES, subscriptions41400Features);
 
     const heartbeatsFeaturesMap = new Map<number, SupportedFeatures>();
     supportedFeaturesByProtocol.set("Heartbeats", heartbeatsFeaturesMap);
