@@ -1,152 +1,145 @@
-// package net.ravendb.client.test.issues;
+import * as mocha from "mocha";
+import * as BluebirdPromise from "bluebird";
+import * as assert from "assert";
+import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
-// import net.ravendb.client.RemoteTestBase;
-// import net.ravendb.client.documents.IDocumentStore;
-// import net.ravendb.client.documents.commands.batches.*;
-// import net.ravendb.client.documents.operations.PatchRequest;
-// import net.ravendb.client.documents.session.IDocumentSession;
-// import net.ravendb.client.infrastructure.entities.Company;
-// import org.assertj.core.api.Assertions;
-// import org.junit.jupiter.api.Test;
+import {
+    RavenErrorType,
+    GetNextOperationIdCommand,
+    IDocumentStore,
+    PatchRequest,
+} from "../../../src";
+import { Company } from "../../Assets/Entities";
+import { assertThat } from "../../Utils/AssertExtensions";
+import { DeleteCommandData } from "../../../src/Documents/Commands/CommandData";
+import { PatchCommandData } from "../../../src/Documents/Commands/Batches/PatchCommandData";
 
-// import java.io.ByteArrayInputStream;
-// import java.util.Date;
+describe("RavenDB-11552", function () {
 
-// import static org.assertj.core.api.Assertions.assertThat;
+    let store: IDocumentStore;
 
-// public class RavenDB_11552Test extends RemoteTestBase {
+    beforeEach(async function () {
+        store = await testContext.getDocumentStore();
+    });
 
-//     @Test
-//     public void patchWillUpdateTrackedDocumentAfterSaveChanges() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company company = new Company();
-//                 company.setName("HR");
-//                 session.store(company, "companies/1");
+    afterEach(async () => 
+        await disposeTestDocumentStore(store));
 
-//                 session.saveChanges();
-//             }
+    it("patchWillUpdateTrackedDocumentAfterSaveChanges", async () => {
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new Company(), { name: "HR" }), "companies/1");
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+            const company = await session.load<Company>("companies/1");
+            session.advanced.patch(company, "name", "CF");
 
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company company = session.load(Company.class, "companies/1");
-//                 session.advanced().patch(company, "name", "CF");
+            const cv = session.advanced.getChangeVectorFor(company);
+            const lastModified = session.advanced.getLastModifiedFor(company);
 
-//                 String cv = session.advanced().getChangeVectorFor(company);
-//                 Date lastModified = session.advanced().getLastModifiedFor(company);
+            await session.saveChanges();
 
-//                 session.saveChanges();
+            assertThat(company.name)
+                .isEqualTo("CF");
 
-//                 assertThat(company.getName())
-//                         .isEqualTo("CF");
+            assertThat(session.advanced.getChangeVectorFor(company))
+                .isNotEqualTo(cv);
+            assertThat(session.advanced.getLastModifiedFor(company))
+                .isNotEqualTo(lastModified);
 
-//                 assertThat(session.advanced().getChangeVectorFor(company))
-//                         .isNotEqualTo(cv);
-//                 assertThat(session.advanced().getLastModifiedFor(company))
-//                         .isNotEqualTo(lastModified);
+            company.phone = "123";
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+            const company = await session.load<Company>("companies/1");
 
-//                 company.setPhone(123);
-//                 session.saveChanges();
-//             }
+            assertThat(company.name)
+                .isEqualTo("CF");
+            assertThat(company.phone)
+                .isEqualTo("123");
+        }
+    });
 
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company company = session.load(Company.class, "companies/1");
+    it("deleteWillWork", async function () {
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new Company(), { name: "HR" }), "companies/1");
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+            let company = await session.load("companies/1");
 
-//                 assertThat(company.getName())
-//                         .isEqualTo("CF");
-//                 assertThat(company.getPhone())
-//                         .isEqualTo(123);
-//             }
-//         }
-//     }
+            assertThat(company)
+                .isNotNull();
 
-//     @Test
-//     public void deleteWillWork() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company company = new Company();
-//                 company.setName("HR");
-//                 session.store(company, "companies/1");
+            assertThat(session.advanced.isLoaded("companies/1"))
+                .isTrue();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
 
-//                 session.saveChanges();
-//             }
+            session.advanced.defer(new DeleteCommandData("companies/1", null));
+            await session.saveChanges();
 
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company company = session.load(Company.class, "companies/1");
+            assertThat(session.advanced.isLoaded("companies/1"))
+                .isFalse();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(2);
 
-//                 assertThat(company)
-//                         .isNotNull();
+            company = await session.load("companies/1");
+            assertThat(company)
+                .isNull();
+            assertThat(session.advanced.isLoaded("companies/1"))
+                .isFalse();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(3);
+        }
+    });
 
-//                 assertThat(session.advanced().isLoaded("companies/1"))
-//                         .isTrue();
-//                 assertThat(session.advanced().getNumberOfRequests())
-//                         .isEqualTo(1);
+    it("patchWillWork", async function () {
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new Company(), { name: "HR" }), "companies/1");
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+            const company = await session.load("companies/1");
+            assertThat(company)
+                .isNotNull();
+            assertThat(session.advanced.isLoaded("companies/1"))
+                .isTrue();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
 
-//                 session.advanced().defer(new DeleteCommandData("companies/1", null));
-//                 session.saveChanges();
+            const patchRequest = new PatchRequest();
+            patchRequest.script = "this.name = 'HR2';";
 
-//                 assertThat(session.advanced().isLoaded("companies/1"))
-//                         .isFalse();
-//                 assertThat(session.advanced().getNumberOfRequests())
-//                         .isEqualTo(2);
+            session.advanced.defer(new PatchCommandData("companies/1", null, patchRequest, null));
+            await session.saveChanges();
 
-//                 company = session.load(Company.class, "companies/1");
-//                 assertThat(company)
-//                         .isNull();
-//                 assertThat(session.advanced().isLoaded("companies/1"))
-//                         .isFalse();
-//                 assertThat(session.advanced().getNumberOfRequests())
-//                         .isEqualTo(3);
+            assertThat(session.advanced.isLoaded("companies/1"))
+                .isTrue();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(2);
 
-//             }
-//         }
-//     }
-
-//     @Test
-//     public void patchWillWork() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company company = new Company();
-//                 company.setName("HR");
-//                 session.store(company, "companies/1");
-
-//                 session.saveChanges();
-//             }
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company company = session.load(Company.class, "companies/1");
-
-//                 assertThat(company)
-//                         .isNotNull();
-//                 assertThat(session.advanced().isLoaded("companies/1"))
-//                         .isTrue();
-//                 assertThat(session.advanced().getNumberOfRequests())
-//                         .isEqualTo(1);
-
-//                 PatchRequest patchRequest = new PatchRequest();
-//                 patchRequest.setScript("this.name = 'HR2';");
-
-//                 session.advanced().defer(new PatchCommandData("companies/1", null, patchRequest, null));
-//                 session.saveChanges();
-
-//                 assertThat(session.advanced().isLoaded("companies/1"))
-//                         .isTrue();
-//                 assertThat(session.advanced().getNumberOfRequests())
-//                         .isEqualTo(2);
-
-//                 Company company2 = session.load(Company.class, "companies/1");
-//                 assertThat(company2)
-//                         .isNotNull();
-//                 assertThat(session.advanced().isLoaded("companies/1"))
-//                         .isTrue();
-//                 assertThat(session.advanced().getNumberOfRequests())
-//                         .isEqualTo(2);
-//                 assertThat(company)
-//                         .isSameAs(company2);
-//                 assertThat(company2.getName())
-//                         .isEqualTo("HR2");
-//             }
-//         }
-//     }
+            const company2 = await session.load<Company>("companies/1");
+            assertThat(company2)
+                .isNotNull();
+            assertThat(session.advanced.isLoaded("companies/1"))
+                .isTrue();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(2);
+            assertThat(company)
+                .isSameAs(company2);
+            assertThat(company2.name)
+                .isEqualTo("HR2");
+        }
+    });
+});
 
 //     @Test
 //     public void attachmentPutAndDeleteWillWork() throws Exception {

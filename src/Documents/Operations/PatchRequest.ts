@@ -1,4 +1,4 @@
-import { DocumentConventions } from "../..";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
 
 export class PatchRequest {
     public script: string;
@@ -12,13 +12,18 @@ export class PatchRequest {
     }
 
     public serialize(conventions: DocumentConventions) {
-        return {
-            Script: this.script,
-            Values: Object.keys(this.values).reduce((result, next) => {
-                const literal = conventions.objectMapper.toObjectLiteral(this.values[next]);
-                result[next] = conventions.transformObjectKeysToRemoteFieldNameConvention(literal);
-                return result;
-            }, {})
+        const result = {
+            Script: this.script
         };
+
+        if (this.values && Object.keys(this.values).length) {
+            result["Values"] = Object.entries(this.values).reduce((result, [key, val]) => {
+                const literal = conventions.objectMapper.toObjectLiteral(val);
+                result[key] = conventions.transformObjectKeysToRemoteFieldNameConvention(literal);
+                return result;
+            }, {});
+        }
+
+        return result;
     }
 }

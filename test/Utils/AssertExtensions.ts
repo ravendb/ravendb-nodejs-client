@@ -45,6 +45,11 @@ export class JavaAssertionBuilder {
         return this;
     }
 
+    public isNotEqualTo(val) {
+        assert.notStrictEqual(this._value, val);
+        return this;
+    }
+
     public isZero() {
         assert.strictEqual(this._value, 0);
         return this;
@@ -57,6 +62,15 @@ export class JavaAssertionBuilder {
 
     public isFalse() {
         assert.strictEqual(this._value, false);
+        return this;
+    }
+
+    public isSameAs(val) {
+        assert.strictEqual(this._value, val);
+    }
+
+    public isNotNull() {
+        assert.ok(this._value);
         return this;
     }
 

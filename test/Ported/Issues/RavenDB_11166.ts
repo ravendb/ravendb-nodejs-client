@@ -21,7 +21,7 @@ class Person {
     public name: string;
 }
 
-describe.only("RavenDB-11166", function () {
+describe("RavenDB-11166", function () {
 
     let store: IDocumentStore;
 

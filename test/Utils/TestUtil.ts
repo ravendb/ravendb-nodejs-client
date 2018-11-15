@@ -17,6 +17,7 @@ import "../../src/Utility/Polyfills";
 import { IDocumentSession } from "../../src";
 
 // logOnUncaughtAndUnhandled();
+const is41 = process.env["RAVENDB_SERVER_VERSION"] === "4.1";
 
 function logOnUncaughtAndUnhandled() {
     process.on("unhandledRejection", (...args) => {
@@ -32,11 +33,16 @@ function logOnUncaughtAndUnhandled() {
 
 class TestServiceLocator extends RavenServerLocator {
     public getCommandArguments() {
-        return [
+        const cliOpts = [
             "--ServerUrl=http://127.0.0.1:0", 
             "--ServerUrl.Tcp=tcp://127.0.0.1:38884",
-            "--Features.Availability=Experimental"
         ];
+
+        if (is41) {
+            cliOpts.push("--Features.Availability=Experimental");
+        }
+
+        return cliOpts;
     }
 }
 
