@@ -41,7 +41,7 @@ describe.only("RavenDB-11166", function () {
         }
 
         const options: SubscriptionCreationOptions = {
-            query: "from Dogs include Owner"
+            query: "from dogs include owner"
         };
         const id = await store.subscriptions.create(options);
 
@@ -75,43 +75,3 @@ describe.only("RavenDB-11166", function () {
         }
     });
 });
-
-// public class RavenDB_11166Test extends RemoteTestBase {
-
-
-//     @Test
-//     public void () throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-
-//             SubscriptionCreationOptions options = new SubscriptionCreationOptions();
-//             options.setQuery("from Dogs include Owner");
-//             String id = store.subscriptions().create(options);
-
-//             try (SubscriptionWorker<Dog> sub = store.subscriptions().getSubscriptionWorker(Dog.class, id)) {
-
-//                 Semaphore semaphore = new Semaphore(0);
-//                 CompletableFuture<Void> run = sub.run(batch -> {
-//                     assertThat(batch.getItems())
-//                             .isNotEmpty();
-
-//                     try (IDocumentSession s = batch.openSession()) {
-//                         for (SubscriptionBatch.Item<Dog> item : batch.getItems()) {
-//                             s.load(Person.class, item.getResult().getOwner());
-//                             Dog dog = s.load(Dog.class, item.getId());
-//                             assertThat(dog)
-//                                     .isSameAs(item.getResult());
-//                         }
-
-//                         assertThat(s.advanced().getNumberOfRequests())
-//                                 .isZero();
-
-//                         semaphore.release();
-//                     }
-//                 });
-
-//                 assertThat(semaphore.tryAcquire(15, TimeUnit.SECONDS))
-//                         .isTrue();
-//             }
-//         }
-//     }
-// }

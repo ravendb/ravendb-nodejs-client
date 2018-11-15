@@ -206,6 +206,13 @@ function buildEntityKeysTransformForSubscriptionResponsePayload(entityCasingConv
             }
 
             return entityCasingConvention;
+        } else if (stack[0] === "Includes") {
+        
+            if (stack[2] === "@metadata") {
+                return handleMetadataJsonKeys(key, stack, len, 2);
+            }
+
+            return entityCasingConvention;
         }
 
         return "camel";

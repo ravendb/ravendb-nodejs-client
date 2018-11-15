@@ -28,3 +28,14 @@ export function stringToReadable(s: string) {
     result.push(null);
     return result;
 }
+
+export function printStreamTraffic(str) {
+    // tslint:disable-next-line:no-console
+    str.on("data", d => console.log("READ", d.toString()));
+    const orgWrite = str.write;
+    str.write = (...args) => {
+        // tslint:disable-next-line:no-console
+        console.log("WRITE", args[0]);
+        return orgWrite.call(str, ...args);
+    };
+}
