@@ -233,6 +233,7 @@ export * from "./Documents/Queries/Facets/FacetBuilder";
 export * from "./Documents/Queries/Highlighting/HighlightingOptions";
 export * from "./Documents/Queries/Highlighting/HighlightingParameters";
 export * from "./Documents/Queries/Highlighting/Hightlightings";
+export * from "./Documents/Queries/Timings/QueryTimings";
 
 // ATTACHMENTS
 export * from "./Documents/Attachments";

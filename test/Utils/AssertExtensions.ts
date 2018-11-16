@@ -105,4 +105,9 @@ export class JavaAssertionBuilder {
 
         return this;
     }
+
+    public isGreaterThan(v) {
+        assert.ok(this._value > v, `${this._value} is not greater than ${v}.`);
+        return this;
+    }
 }

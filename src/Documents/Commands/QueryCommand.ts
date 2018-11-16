@@ -103,7 +103,7 @@ export class QueryCommand extends RavenCommand<QueryResult> {
         const rawResult = await RavenCommandResponsePipeline.create<QueryResult>()
             .collectBody(bodyCallback)
             .parseJsonAsync()
-            .jsonKeysTransform("DocumentLoad", conventions)
+            .jsonKeysTransform("DocumentQuery", conventions)
             .process(bodyStream);
         const queryResult = conventions.objectMapper
             .fromObjectLiteral<QueryResult>(rawResult, {

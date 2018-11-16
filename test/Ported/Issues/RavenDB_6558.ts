@@ -117,6 +117,3 @@ describe("RavenDB-6558", function () {
     });
 });
 
-
-//         }
-//     }

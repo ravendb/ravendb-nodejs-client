@@ -1,52 +1,47 @@
-// package net.ravendb.client.test.issues;
+import * as mocha from "mocha";
+import * as assert from "assert";
+import { User, Company, Order } from "../../Assets/Entities";
+import { assertThat } from "../../Utils/AssertExtensions";
+import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
-// import net.ravendb.client.RemoteTestBase;
-// import net.ravendb.client.documents.IDocumentStore;
-// import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
-// import net.ravendb.client.documents.indexes.FieldStorage;
-// import net.ravendb.client.documents.queries.explanation.ExplanationOptions;
-// import net.ravendb.client.documents.queries.explanation.Explanations;
-// import net.ravendb.client.documents.queries.timings.QueryTimings;
-// import net.ravendb.client.documents.session.IDocumentSession;
-// import net.ravendb.client.infrastructure.entities.Company;
-// import net.ravendb.client.primitives.Reference;
-// import org.junit.jupiter.api.Test;
+import {
+    RavenErrorType,
+    IDocumentStore,
+    QueryTimings,
+} from "../../../src";
 
-// import java.util.List;
+describe("RavenDB-9587", function () {
 
-// import static org.assertj.core.api.Assertions.assertThat;
+    let store: IDocumentStore;
 
-// public class RavenDB_9587Test extends RemoteTestBase {
+    beforeEach(async function () {
+        store = await testContext.getDocumentStore();
+    });
 
-//     @Test
-//     public void timingsShouldWork() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company c1 = new Company();
-//                 c1.setName("CF");
+    afterEach(async () => 
+        await disposeTestDocumentStore(store));
 
-//                 Company c2 = new Company();
-//                 c2.setName("HR");
+    it("timingsShouldWork", async () => {
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new Company(), { name: "CF" }));
+            await session.store(Object.assign(new Company(), { name: "HR" }));
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+            let timings: QueryTimings;
+            const companies = await session
+                .query({ collection: "companies" })
+                .timings(_ => timings = _)
+                .whereNotEquals("name", "HR")
+                .all();
 
-//                 session.store(c1);
-//                 session.store(c2);
-//                 session.saveChanges();
-//             }
+            assertThat(timings.durationInMs)
+                .isGreaterThan(0);
+            assertThat(timings.timings)
+                .isNotNull();
+        }
 
-//             try (IDocumentSession session = store.openSession()) {
-//                 Reference<QueryTimings> timingsReference = new Reference<>();
-
-//                 List<Company> companies = session
-//                         .query(Company.class)
-//                         .timings(timingsReference)
-//                         .whereNotEquals("name", "HR")
-//                         .toList();
-
-//                 assertThat(timingsReference.value.getDurationInMs())
-//                         .isGreaterThan(0);
-//                 assertThat(timingsReference.value.getTimings())
-//                         .isNotNull();
-//             }
-//         }
-//     }
-// }
+    });
+});

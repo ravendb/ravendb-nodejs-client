@@ -6,6 +6,7 @@ export type TransformJsonKeysProfile =
     "CommandResponsePayload"
     | "NoChange" 
     | "DocumentLoad"
+    | "DocumentQuery"
     | "FacetQuery"
     | "Patch"
     | "CompareExchangeValue"
@@ -36,6 +37,15 @@ export function getTransformJsonKeysProfile(
             }
 
             const getCurrentTransform = buildEntityKeysTransformForDocumentLoad(conventions.entityFieldNameConvention);
+            return { getCurrentTransform };
+        }
+
+        if (profile === "DocumentQuery") {
+            if (!conventions) {
+                throwError("InvalidArgumentException", "Document conventions are required for this profile.");
+            }
+
+            const getCurrentTransform = buildEntityKeysTransformForDocumentQuery(conventions.entityFieldNameConvention);
             return { getCurrentTransform };
         }
 
@@ -288,6 +298,57 @@ function buildEntityKeysTransformForDocumentLoad(entityCasingConvention) {
 
                  return null;
             }
+        }
+
+        return entityCasingConvention; 
+    };
+}
+
+function buildEntityKeysTransformForDocumentQuery(entityCasingConvention) {
+    return function entityKeysTransform(key, stack) {
+        const len = stack.length;
+        if (len === 1) {
+            // Results, Includes, Timings...
+            return "camel";
+        }
+
+        // len === 2 is array index
+        if (stack[0] === "Results" || stack[0] === "Includes") {
+            if (len === 3) {
+                // top document level
+                return key === "@metadata" ? null : entityCasingConvention;
+            }
+
+            if (len === 4) {
+                if (stack[2] === "@metadata") {
+                    // handle @metadata object keys
+                    if (key[0] === "@" || key === "Raven-Node-Type") {
+                        return null;
+                    }
+                }
+            }
+
+            if (len === 5) {
+                // do not touch @nested-object-types keys
+                if (stack[len - 2] === "@nested-object-types") {
+                    return null;
+                }
+            }
+
+            if (len === 6) {
+                // @metadata.@attachments.[].name
+                if (stack[2] === "@metadata") {
+                    if (stack[3] === "@attachments") {
+                        return "camel";
+                    }
+
+                    return null;
+                }
+            }
+        }
+
+        if (stack[0] === "Timings") {
+            return "camel";
         }
 
         return entityCasingConvention; 
