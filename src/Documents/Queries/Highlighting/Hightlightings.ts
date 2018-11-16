@@ -27,7 +27,7 @@ export class Highlightings {
     * @return Returns the list of document's field highlighting fragments.
     */
    public getFragments(key: string): string[] {
-       const result = this._highlightings[key];
+       const result = this._highlightings.get(key);
        return result || [];
    }
 

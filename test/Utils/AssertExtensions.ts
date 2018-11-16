@@ -55,6 +55,11 @@ export class JavaAssertionBuilder {
         return this;
     }
 
+    public contains(val) {
+        assert.ok(this._value.indexOf(val) !== -1, `'${this._value}' does not contain '${val}.'`);
+        return this;
+    }
+
     public isTrue() {
         assert.strictEqual(this._value, true);
         return this;

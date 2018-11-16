@@ -223,6 +223,7 @@ export abstract class RavenTestDriver implements IDisposable {
 
             // timeout if url won't show up after 5s
             return result
+                .tap(url => console.log("RavenDB server URL:", url))
                 .timeout(5000)
                 .catch((err) => {
                     throwError("UrlScrappingError", "Error scrapping URL from server process output: "

@@ -230,6 +230,9 @@ export * from "./Documents/Queries/Spatial/PointField";
 export * from "./Documents/Queries/Spatial/WktField";
 export * from "./Documents/Queries/Facets/RangeBuilder";
 export * from "./Documents/Queries/Facets/FacetBuilder";
+export * from "./Documents/Queries/Highlighting/HighlightingOptions";
+export * from "./Documents/Queries/Highlighting/HighlightingParameters";
+export * from "./Documents/Queries/Highlighting/Hightlightings";
 
 // ATTACHMENTS
 export * from "./Documents/Attachments";

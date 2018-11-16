@@ -1474,7 +1474,15 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     private _updateStatsAndHighlightingsAndExplanations(queryResult: QueryResult): void {
         this._queryStats.updateQueryStats(queryResult);
-        // TBD 4.1 Highlightings.Update(queryResult);
+        this._queryHighlightings.update(queryResult);
+        
+        if (this.explanations) {
+            this.explanations.update(queryResult);
+        }
+
+        if (this._queryTimings) {
+            this._queryTimings.update(queryResult);
+        }
     }
 
     private _buildSelect(writer: StringBuilder): void {
@@ -1643,8 +1651,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         highlightingsCallback(this._queryHighlightings.add(parameters.fieldName));
         const optionsParameterName = parameters
             ? this._addQueryParameter(
-                JsonSerializer
-                    .getDefault().serialize(extractHighlightingOptionsFromParameters(parameters))) 
+                extractHighlightingOptionsFromParameters(parameters)) 
             : null;
         const token = HighlightingToken.create(
             parameters.fieldName, parameters.fragmentLength, parameters.fragmentCount, optionsParameterName);
