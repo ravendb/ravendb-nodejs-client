@@ -1,153 +1,114 @@
-// package net.ravendb.client.test.issues;
+import * as mocha from "mocha";
+import * as assert from "assert";
+import { User, Company, Order } from "../../Assets/Entities";
+import { assertThat } from "../../Utils/AssertExtensions";
+import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
-// import com.fasterxml.jackson.databind.JsonNode;
-// import com.google.common.base.Stopwatch;
-// import net.ravendb.client.RemoteTestBase;
-// import net.ravendb.client.ReplicationTestBase;
-// import net.ravendb.client.documents.IDocumentStore;
-// import net.ravendb.client.documents.commands.QueryCommand;
-// import net.ravendb.client.documents.conventions.DocumentConventions;
-// import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
-// import net.ravendb.client.documents.indexes.FieldStorage;
-// import net.ravendb.client.documents.queries.IndexQuery;
-// import net.ravendb.client.documents.queries.QueryResult;
-// import net.ravendb.client.documents.queries.explanation.ExplanationOptions;
-// import net.ravendb.client.documents.queries.explanation.Explanations;
-// import net.ravendb.client.documents.session.IDocumentQuery;
-// import net.ravendb.client.documents.session.IDocumentSession;
-// import net.ravendb.client.exceptions.ConflictException;
-// import net.ravendb.client.exceptions.documents.DocumentConflictException;
-// import net.ravendb.client.extensions.JsonExtensions;
-// import net.ravendb.client.infrastructure.entities.Address;
-// import net.ravendb.client.infrastructure.entities.Company;
-// import net.ravendb.client.infrastructure.entities.User;
-// import net.ravendb.client.primitives.Reference;
-// import net.ravendb.client.serverwide.ConflictSolver;
-// import net.ravendb.client.serverwide.DatabaseRecord;
-// import org.junit.jupiter.api.Test;
+import {
+    RavenErrorType,
+    IDocumentStore,
+    AbstractIndexCreationTask,
+} from "../../../src";
+import { Explanations } from "../../../src/Documents/Queries/Explanation/Explanations";
+import { ExplanationOptions } from "../../../src/Documents/Queries/Explanation/ExplanationOptions";
 
-// import java.util.Collections;
-// import java.util.List;
-// import java.util.concurrent.TimeUnit;
-// import java.util.function.Consumer;
+class CompaniesByNameIndexResult {
+    public key: string;
+    public count: number;
+}
 
-// import static org.assertj.core.api.Assertions.assertThat;
-// import static org.assertj.core.api.Assertions.assertThatThrownBy;
+class CompaniesByNameIndex extends AbstractIndexCreationTask {
 
-// public class RavenDB_9745Test extends RemoteTestBase {
+    public constructor() {
+        super();
 
+        this.map = "from c in docs.companies select new { key = c.name, count = 1 }";
 
-//     @Test
-//     public void explain() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-//             new Companies_ByName().execute(store);
+        this.reduce = "from result in results " +
+            "group result by result.key " +
+            "into g " +
+            "select new " +
+            "{ " +
+            "  key = g.Key, " +
+            "  count = g.Sum(x => x.count) " +
+            "}";
 
-//             try (IDocumentSession session = store.openSession()) {
-//                 Company company1 = new Company();
-//                 company1.setName("Micro");
+        this.store("key", "Yes");
+    }
+}
 
-//                 Company company2 = new Company();
-//                 company2.setName("Microsoft");
+describe("RavenDB-9745", function () {
 
-//                 Company company3 = new Company();
-//                 company3.setName("Google");
+    let store: IDocumentStore;
 
-//                 session.store(company1);
-//                 session.store(company2);
-//                 session.store(company3);
+    beforeEach(async function () {
+        store = await testContext.getDocumentStore();
+    });
 
-//                 session.saveChanges();
-//             }
+    afterEach(async () => 
+        await disposeTestDocumentStore(store));
 
-//             waitForIndexing(store);
+    it("explain", async () => {
+        const index = new CompaniesByNameIndex();
+        await index.execute(store);
 
-//             try (IDocumentSession session = store.openSession()) {
-//                 Reference<Explanations> explanationsReference = new Reference<>();
-//                 List<Company> companies = session
-//                         .advanced()
-//                         .documentQuery(Company.class)
-//                         .includeExplanations(explanationsReference)
-//                         .search("name", "Micro*")
-//                         .toList();
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new Company(), { name: "Micro" }));
+            await session.store(Object.assign(new Company(), { name: "Microsoft" }));
+            await session.store(Object.assign(new Company(), { name: "Google" }));
+            await session.saveChanges();
+        }
 
-//                 assertThat(companies)
-//                         .hasSize(2);
+        await testContext.waitForIndexing(store);
 
-//                 String[] exp = explanationsReference.value.getExplanations(companies.get(0).getId());
-//                 assertThat(exp)
-//                         .isNotNull();
+        {
+            const session = store.openSession();
+            let explanations: Explanations;
+            const companies = await session
+                .advanced
+                .documentQuery<Company>({ collection: "companies" })
+                .includeExplanations(e => explanations = e)
+                .search("name", "Micro*")
+                .all();
 
-//                 exp = explanationsReference.value.getExplanations(companies.get(1).getId());
-//                 assertThat(exp)
-//                         .isNotNull();
-//             }
+            assertThat(companies)
+                .hasSize(2);
 
-//             try (IDocumentSession session = store.openSession()) {
+            let exp = explanations.explanations[companies[0].id];
+            assertThat(exp)
+                .isNotNull();
 
-//                 ExplanationOptions options = new ExplanationOptions();
-//                 options.setGroupKey("key");
+            exp = explanations.explanations[companies[1].id];
+            assertThat(exp)
+                .isNotNull();
+        }
 
-//                 Reference<Explanations> explanationsReference = new Reference<>();
+        {
+            const session = store.openSession();
+            const explOptions = { groupKey: "key" } as ExplanationOptions;
+            let explanationsResult;
 
-//                 List<Companies_ByName.Result> results = session
-//                         .advanced()
-//                         .documentQuery(Companies_ByName.Result.class, Companies_ByName.class)
-//                         .includeExplanations(options, explanationsReference)
-//                         .toList();
+            const results = await session.advanced
+                .documentQuery({ indexName: index.getIndexName() })
+                .includeExplanations(explOptions, e => explanationsResult = e)
+                .selectFields<CompaniesByNameIndexResult>([ "key", "count" ])
+                .all();
 
-//                 assertThat(results)
-//                         .hasSize(3);
+            assertThat(results)
+                .hasSize(3);
 
-//                 String[] exp = explanationsReference.value.getExplanations(results.get(0).getKey());
-//                 assertThat(exp)
-//                         .isNotNull();
+            let exp = explanationsResult.explanations[results[0].key];
+            assertThat(exp)
+                .isNotNull();
 
-//                 exp = explanationsReference.value.getExplanations(results.get(1).getKey());
-//                 assertThat(exp)
-//                         .isNotNull();
+            exp = explanationsResult.explanations[results[1].key];
+            assertThat(exp)
+                .isNotNull();
 
-//                 exp = explanationsReference.value.getExplanations(results.get(2).getKey());
-//                 assertThat(exp)
-//                         .isNotNull();
-//             }
-//         }
-//     }
-
-//     public static class Companies_ByName extends AbstractIndexCreationTask {
-//         public static class Result {
-//             private String key;
-//             private long count;
-
-//             public String getKey() {
-//                 return key;
-//             }
-
-//             public void setKey(String key) {
-//                 this.key = key;
-//             }
-
-//             public long getCount() {
-//                 return count;
-//             }
-
-//             public void setCount(long count) {
-//                 this.count = count;
-//             }
-//         }
-
-//         public Companies_ByName() {
-//             map = "from c in docs.Companies select new { key = c.name, count = 1 }";
-
-//             reduce = "from result in results " +
-//                     "group result by result.key " +
-//                     "into g " +
-//                     "select new " +
-//                     "{ " +
-//                     "  key = g.Key, " +
-//                     "  count = g.Sum(x => x.count) " +
-//                     "}";
-
-//             store("key", FieldStorage.YES);
-//         }
-//     }
-// }
+            exp = explanationsResult.explanations[results[2].key];
+            assertThat(exp)
+                .isNotNull();
+        }
+    });
+});

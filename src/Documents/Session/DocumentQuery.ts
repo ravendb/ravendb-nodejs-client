@@ -161,11 +161,14 @@ export class DocumentQuery<T extends object>
     public includeExplanations(
         optionsOrExplanationsCallback: ExplanationOptions | ValueCallback<Explanations>, 
         explanationsCallback?: ValueCallback<Explanations>): IDocumentQuery<T> {
-        if (TypeUtil.isFunction(optionsOrExplanationsCallback)) {
-            return this.includeExplanations(null, explanationsCallback);
+        if (arguments.length === 1) {
+            return this.includeExplanations(
+                null, optionsOrExplanationsCallback as ValueCallback<Explanations>);
         }
 
-        this._includeExplanations(optionsOrExplanationsCallback, explanationsCallback);
+        this._includeExplanations(
+            optionsOrExplanationsCallback as ExplanationOptions, explanationsCallback);
+            
         return this;
     }
 
@@ -553,8 +556,15 @@ export class DocumentQuery<T extends object>
             query.on("afterQuery", listener as any);
         }
 
-        query._highlightingTokens = this._highlightingTokens;
+        for (const listener of query.listeners("afterStreamExecuted")) {
+            query.on("afterStreamExecuted", listener as any);
+        }
+
+        query._explanations = this._explanations;
+        query._explanationToken = this._explanationToken;
+        query._queryTimings = this._queryTimings;
         query._queryHighlightings = this._queryHighlightings;
+        query._highlightingTokens = this._highlightingTokens;
         query._disableEntitiesTracking = this._disableEntitiesTracking;
         query._disableCaching = this._disableCaching;
         query._isIntersect = this._isIntersect;

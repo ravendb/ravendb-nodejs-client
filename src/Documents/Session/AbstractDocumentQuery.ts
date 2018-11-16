@@ -168,14 +168,9 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     protected _queryTimings: QueryTimings;
 
-    protected explanations: Explanations;
+    protected _explanations: Explanations;
     
-    protected explanationToken: ExplanationToken;
-
-
-    // TBD 4.1 protected boolean showQueryTimings;
-
-    // TBD 4.1 protected boolean shouldExplainScores;
+    protected _explanationToken: ExplanationToken;
 
     public get isDistinct(): boolean {
         return this._selectTokens
@@ -1476,8 +1471,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._queryStats.updateQueryStats(queryResult);
         this._queryHighlightings.update(queryResult);
         
-        if (this.explanations) {
-            this.explanations.update(queryResult);
+        if (this._explanations) {
+            this._explanations.update(queryResult);
         }
 
         if (this._queryTimings) {
@@ -2060,10 +2055,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
     }
 
-    protected _explanations: Explanations;
-
-    protected _explanationToken: ExplanationToken;
-
     public _includeExplanations(
         options: ExplanationOptions, explanationsCallback: ValueCallback<Explanations>): void {
        if (this._explanationToken) {
@@ -2075,6 +2066,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             : null;
        this._explanationToken = ExplanationToken.create(optionsParameterName);
        this._explanations = new Explanations();
+
        explanationsCallback(this._explanations);
    }
 
