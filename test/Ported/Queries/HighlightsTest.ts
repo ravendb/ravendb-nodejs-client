@@ -1,197 +1,155 @@
-// package net.ravendb.client.test.querying;
+import * as mocha from "mocha";
+import * as assert from "assert";
+import { User, Company, Order } from "../../Assets/Entities";
+import { assertThat } from "../../Utils/AssertExtensions";
+import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
-// import net.ravendb.client.RemoteTestBase;
-// import net.ravendb.client.documents.IDocumentStore;
-// import net.ravendb.client.documents.indexes.AbstractMultiMapIndexCreationTask;
-// import net.ravendb.client.documents.indexes.FieldIndexing;
-// import net.ravendb.client.documents.indexes.FieldStorage;
-// import net.ravendb.client.documents.indexes.FieldTermVector;
-// import net.ravendb.client.documents.queries.Query;
-// import net.ravendb.client.documents.queries.highlighting.HighlightingOptions;
-// import net.ravendb.client.documents.queries.highlighting.Highlightings;
-// import net.ravendb.client.documents.session.IDocumentSession;
-// import net.ravendb.client.primitives.Reference;
-// import org.junit.jupiter.api.Test;
+import {
+    RavenErrorType,
+    IDocumentStore,
+    AbstractMultiMapIndexCreationTask,
+    Highlightings,
+} from "../../../src";
 
-// import java.util.ArrayList;
-// import java.util.Arrays;
-// import java.util.List;
+interface ISearchable {
+    slug: string;
+    title: string;
+    content: string;
+}
 
-// public class HighlightesTest extends RemoteTestBase {
+class EventsItem implements ISearchable {
+    public id: string;
+    public title: string;
+    public slug: string;
+    public content: string;
+}
 
-//     private interface ISearchable {
-//         String getSlug();
-//         void setSlug(String slug);
+class SearchResults {
+    public result: ISearchable;
+    public highlights: string[];
+    public title: string;
+}
 
-//         String getTitle();
-//         void setTitle(String title);
+class ContentSearchIndex extends AbstractMultiMapIndexCreationTask {
+    public constructor() {
+        super();
 
-//         String getContent();
-//         void setContent(String content);
-//     }
+        this.addMap("docs.eventsItems.Select(doc => new {\n" +
+            "    doc = doc,\n" +
+            "    slug = Id(doc).ToString().Substring(Id(doc).ToString().IndexOf('/') + 1)\n" +
+            "}).Select(this0 => new {\n" +
+            "    slug = this0.slug,\n" +
+            "    title = this0.doc.title,\n" +
+            "    content = this0.doc.content\n" +
+            "})");
 
-//     public static class EventsItem implements ISearchable {
-//         private String id;
-//         private String title;
-//         private String slug;
-//         private String content;
+        this.index("slug", "Search");
+        this.store("slug", "Yes");
+        this.termVector("slug", "WithPositionsAndOffsets");
 
-//         public String getId() {
-//             return id;
-//         }
+        this.index("title", "Search");
+        this.store("title", "Yes");
+        this.termVector("title", "WithPositionsAndOffsets");
 
-//         public void setId(String id) {
-//             this.id = id;
-//         }
+        this.index("content", "Search");
+        this.store("content", "Yes");
+        this.termVector("content", "WithPositionsAndOffsets");
+    }
+}
 
-//         @Override
-//         public String getTitle() {
-//             return title;
-//         }
+describe("HighlightsTest", function () {
 
-//         @Override
-//         public void setTitle(String title) {
-//             this.title = title;
-//         }
+    let store: IDocumentStore;
 
-//         @Override
-//         public String getSlug() {
-//             return slug;
-//         }
+    beforeEach(async function () {
+        store = await testContext.getDocumentStore();
+    });
 
-//         @Override
-//         public void setSlug(String slug) {
-//             this.slug = slug;
-//         }
+    afterEach(async () => 
+        await disposeTestDocumentStore(store));
 
-//         @Override
-//         public String getContent() {
-//             return content;
-//         }
+    it("searchWithHighlights", async () => {
+        const q = "session";
+        const eventItem = Object.assign(new EventsItem(), {
+                slug: "ravendb-indexes-explained",
+                title: "RavenDB indexes explained",
+                // tslint:disable-next-line:max-line-length
+                content: "Itamar Syn-Hershko: Afraid of Map/Reduce? In this session, core RavenDB developer Itamar Syn-Hershko will walk through the RavenDB indexing process, grok it and much more."
+            });
 
-//         @Override
-//         public void setContent(String content) {
-//             this.content = content;
-//         }
-//     }
+        {
+            const session = store.openSession();
+            await session.store(eventItem);
 
-//     public static class SearchResults {
-//         private ISearchable result;
-//         private List<String> highlights;
-//         private String title;
+            await session.saveChanges();
+        }
 
-//         public ISearchable getResult() {
-//             return result;
-//         }
+        const index = new ContentSearchIndex();
+        await index.execute(store);
+        await testContext.waitForIndexing(store);
 
-//         public void setResult(ISearchable result) {
-//             this.result = result;
-//         }
+        {
+            const hightlightOpts = {
+                fragmentLength: 128,
+                fragmentCount: 2,
+                preTags: ["<span style='background: yellow'>"],
+                postTags: ["</span>"]
+            };
 
-//         public List<String> getHighlights() {
-//             return highlights;
-//         }
+            let titleHighlighting: Highlightings;
+            let slugHighlighting: Highlightings;
+            let contentHighlighting: Highlightings;
 
-//         public void setHighlights(List<String> highlights) {
-//             this.highlights = highlights;
-//         }
+            const session = store.openSession();
+            const results = await session.query<ISearchable>({ indexName: index.getIndexName() })
+                .waitForNonStaleResults()
+                .highlight(Object.assign({ fieldName: "title" }, hightlightOpts), _ => titleHighlighting = _)
+                .highlight(Object.assign({ fieldName: "slug" }, hightlightOpts), _ => slugHighlighting = _)
+                .highlight(Object.assign({ fieldName: "content" }, hightlightOpts), _ => contentHighlighting = _)
+                .search("slug", q).boost(15)
+                .search("title", q).boost(12)
+                .search("content", q)
+                .all();
 
-//         public String getTitle() {
-//             return title;
-//         }
+            assert.ok(results.length);
+            assert.ok(titleHighlighting);
+            assert.ok(slugHighlighting);
+            assert.ok(contentHighlighting);
 
-//         public void setTitle(String title) {
-//             this.title = title;
-//         }
-//     }
+            assert.strictEqual(titleHighlighting.fieldName, "title");
+            assert.strictEqual(titleHighlighting.getFragments(eventItem.id).length, 0);
 
-//     public static class ContentSearchIndex extends AbstractMultiMapIndexCreationTask {
-//         public ContentSearchIndex() {
+            assert.strictEqual(slugHighlighting.fieldName, "slug");
+            assert.strictEqual(slugHighlighting.getFragments(eventItem.id).length, 0);
 
-//             addMap("docs.EventsItems.Select(doc => new {\n" +
-//                     "    doc = doc,\n" +
-//                     "    slug = Id(doc).ToString().Substring(Id(doc).ToString().IndexOf('/') + 1)\n" +
-//                     "}).Select(this0 => new {\n" +
-//                     "    slug = this0.slug,\n" +
-//                     "    title = this0.doc.title,\n" +
-//                     "    content = this0.doc.content\n" +
-//                     "})");
+            assert.strictEqual(contentHighlighting.fieldName, "content");
+            const fragments = contentHighlighting.getFragments(eventItem.id);
+            assert.strictEqual(fragments.length, 1);
+            assert.ok(fragments[0].indexOf(`<span style='background: yellow'>session</span>`) !== -1);
 
-//             index("slug", FieldIndexing.SEARCH);
-//             store("slug", FieldStorage.YES);
-//             termVector("slug", FieldTermVector.WITH_POSITIONS_AND_OFFSETS);
+            const orderedResults = [];
+            for (const searchable of results) {
+                const docId = session.advanced.getDocumentId(searchable);
 
-//             index("title", FieldIndexing.SEARCH);
-//             store("title", FieldStorage.YES);
-//             termVector("title", FieldTermVector.WITH_POSITIONS_AND_OFFSETS);
+                const highlights = [];
 
-//             index("content", FieldIndexing.SEARCH);
-//             store("content", FieldStorage.YES);
-//             termVector("content", FieldTermVector.WITH_POSITIONS_AND_OFFSETS);
-//         }
-//     }
+                let title = null;
+                const titles = titleHighlighting.getFragments(docId);
+                if (titles.length === 1) {
+                    title = titles[0];
+                } else {
+                    highlights.push(...titleHighlighting.getFragments(docId));
+                }
 
-//     @Test
-//     public void searchWithHighlights() throws Exception {
-//         String q = "session";
+                highlights.push(slugHighlighting.getFragments(docId));
+                highlights.push(contentHighlighting.getFragments(docId));
 
-//         try (IDocumentStore store = getDocumentStore()) {
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 EventsItem eventsItem = new EventsItem();
-//                 eventsItem.setSlug("ravendb-indexes-explained");
-//                 eventsItem.setTitle("RavenDB indexes explained");
-//                 eventsItem.setContent("Itamar Syn-Hershko: Afraid of Map/Reduce? In this session, core RavenDB developer Itamar Syn-Hershko will walk through the RavenDB indexing process, grok it and much more.");
-//                 session.store(eventsItem);
-//                 session.saveChanges();
-//             }
-
-//             new ContentSearchIndex().execute(store);
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 HighlightingOptions options = new HighlightingOptions();
-//                 options.setPreTags(new String[] { "<span style='background: yellow'>" });
-//                 options.setPostTags(new String[] { "</span>" });
-
-//                 Reference<Highlightings> titleHighlighting = new Reference<>();
-//                 Reference<Highlightings> slugHighlighting = new Reference<>();
-//                 Reference<Highlightings> contentHighlighting = new Reference<>();
-
-
-//                 List<ISearchable> results = session.query(ISearchable.class, Query.index("ContentSearchIndex"))
-//                         .waitForNonStaleResults()
-//                         .highlight("title", 128, 2, options, titleHighlighting)
-//                         .highlight("slug", 128, 2, options, slugHighlighting)
-//                         .highlight("content", 128, 2, options, contentHighlighting)
-//                         .search("slug", q).boost(15)
-//                         .search("title", q).boost(12)
-//                         .search("content", q)
-//                         .toList();
-
-//                 List<SearchResults> orderedResults = new ArrayList<>();
-//                 for (ISearchable searchable : results) {
-//                     String docId = session.advanced().getDocumentId(searchable);
-
-//                     List<String> highlights = new ArrayList<>();
-
-//                     String title = null;
-//                     String[] titles = titleHighlighting.value.getFragments(docId);
-//                     if (titles.length == 1) {
-//                         title = titles[0];
-//                     } else {
-//                         highlights.addAll(Arrays.asList(titleHighlighting.value.getFragments(docId)));
-//                     }
-
-//                     highlights.addAll(Arrays.asList(slugHighlighting.value.getFragments(docId)));
-//                     highlights.addAll(Arrays.asList(contentHighlighting.value.getFragments(docId)));
-
-//                     SearchResults searchResults = new SearchResults();
-//                     searchResults.setResult(searchable);
-//                     searchResults.setHighlights(highlights);
-//                     searchResults.setTitle(title);
-//                     orderedResults.add(searchResults);
-//                 }
-//             }
-//         }
-//     }
-// }
+                const searchResults = new SearchResults();
+                searchResults.result = searchable;
+                searchResults.highlights = highlights;
+                searchResults.title = title;
+                orderedResults.push(searchResults);
+            }
+        }
+    });
+});
