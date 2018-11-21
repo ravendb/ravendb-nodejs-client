@@ -93,7 +93,7 @@ describe("PatchTest", function () {
         }
     });
 
-    it("throws on invalid script", async () => {
+    it("throws on invalid script", async function () {
         {
             const session = store.openSession();
             const user = new User();

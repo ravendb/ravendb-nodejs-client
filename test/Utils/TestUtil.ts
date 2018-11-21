@@ -17,7 +17,6 @@ import "../../src/Utility/Polyfills";
 import { IDocumentSession } from "../../src";
 
 // logOnUncaughtAndUnhandled();
-const is41 = process.env["RAVENDB_SERVER_VERSION"] === "4.1";
 
 function logOnUncaughtAndUnhandled() {
     process.on("unhandledRejection", (...args) => {
@@ -38,7 +37,7 @@ class TestServiceLocator extends RavenServerLocator {
             "--ServerUrl.Tcp=tcp://127.0.0.1:38884",
         ];
 
-        if (is41) {
+        if (process.env["RAVENDB_SERVER_VERSION"] === "4.1") {
             cliOpts.push("--Features.Availability=Experimental");
         }
 
@@ -122,6 +121,8 @@ export class RavenTestContext extends RavenTestDriver implements IDisposable {
     public static isPullRequest = (
         typeof(process.env["TRAVIS_PULL_REQUEST"]) === "undefined" ||
         process.env["TRAVIS_PULL_REQUEST"] === "false") === false;
+
+    public static is41 = process.env["RAVENDB_SERVER_VERSION"] === "4.1"; 
 
     public static setupServer(): RavenTestContext {
         return new RavenTestContext(new TestServiceLocator(), new TestSecuredServiceLocator());
