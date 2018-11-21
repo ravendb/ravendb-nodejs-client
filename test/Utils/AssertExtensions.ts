@@ -1,16 +1,14 @@
 import * as assert from "assert";
 
-export async function throwsAsync(fn, regExp) {
-    // tslint:disable-next-line:no-empty
-    let f = () => {
-    };
+export async function assertThrows(func: Function, errAssert?: (err: Error) => void) {
     try {
-        await fn();
-    } catch (e) {
-        f = () => {
-            throw e;
-        };
-    } finally {
-        assert.throws(f, regExp);
+        await func();
+        assert.fail(`Function '${func.name || func.toString()}' should have thrown.`);
+    } catch (err) {
+        if (errAssert) {
+            errAssert(err);
+        }
+
+        return err;
     }
 }

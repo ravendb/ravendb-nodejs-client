@@ -32,10 +32,11 @@
         "adjacent-overload-signatures": false,
         "ban-types": false,
         "no-unused-variable": false,
-        "space-before-function-paren": ["warn", "always"],
+        "space-before-function-paren": [ "warn", "always"],
         "object-curly-spacing": [true, "always"],
         "comment-format": false,
-        "no-shadowed-variable": false
+        "no-shadowed-variable": false,
+        "mocha-avoid-only": true
     },
     "rulesDirectory": [
         "node_modules/tslint-microsoft-contrib"

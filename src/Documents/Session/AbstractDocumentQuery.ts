@@ -64,6 +64,7 @@ import { SuggestToken } from "./Tokens/SuggestToken";
 import { SuggestionWithTerm } from "../Queries/Suggestions/SuggestionWithTerm";
 import { SuggestionWithTerms } from "../Queries/Suggestions/SuggestionWithTerms";
 import { QueryData } from "../Queries/QueryData";
+import { passResultToCallback } from "../../Utility/PromiseUtil";
 
 /**
  * A query against a Raven index
@@ -1800,28 +1801,51 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     public async first(callback?: AbstractCallback<T>): Promise<T> {
         callback = callback || TypeUtil.NOOP;
-        const result = BluebirdPromise.resolve()
-            .then(() => this._executeQueryOperation(2))
-            .then(entries => entries[0] || null)
-            .tap(x => callback(null, x))
-            .tapCatch(err => callback(err));
-        return Promise.resolve(result);
+        const resultPromise = this._executeQueryOperation(2)
+            .then(entries => {
+                if (entries.length === 0) {
+                    throwError("InvalidOperationException", "Expected at least one result.");
+                }
+                
+                return entries[0];
+            });
+
+        passResultToCallback(resultPromise, callback);
+        return resultPromise;
+    }
+
+    public async firstOrNull(callback?: AbstractCallback<T>): Promise<T> {
+        callback = callback || TypeUtil.NOOP;
+        const resultPromise = this._executeQueryOperation(1)
+            .then(entries => entries[0] || null);
+
+        passResultToCallback(resultPromise, callback);
+        return resultPromise;
     }
 
     public async single(callback?: AbstractCallback<T>): Promise<T> {
         callback = callback || TypeUtil.NOOP;
-        const result = BluebirdPromise.resolve()
-            .then(() => this._executeQueryOperation(2))
+        const resultPromise = this._executeQueryOperation(2)
             .then(entries => {
-                if (entries.length > 1) {
-                    throw getError("InvalidOperationException", "Expected single result, got: " + entries.length);
+                if (entries.length !== 1) {
+                    throwError("InvalidOperationException", 
+                        `Expected single result, but got ${ entries.length ? "more than that" : 0 }.`);
                 }
+                
+                return entries[0];
+            });
 
-                return entries[0] || null;
-            })
-            .tap(x => callback(null, x))
-            .tapCatch(err => callback(err));
-        return Promise.resolve(result);
+        passResultToCallback(resultPromise, callback);
+        return resultPromise;
+    }
+
+    public async singleOrNull(callback?: AbstractCallback<T>): Promise<T> {
+        callback = callback || TypeUtil.NOOP;
+        const resultPromise = this._executeQueryOperation(2)
+            .then(entries => entries.length === 1 ? entries[0] : null);
+
+        passResultToCallback(resultPromise, callback);
+        return resultPromise;
     }
 
     public async count(callback?: AbstractCallback<number>): Promise<number> {
