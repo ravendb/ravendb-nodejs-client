@@ -1,7 +1,9 @@
 import * as values from "object.values";
 import * as entries from "object.entries";
 
-(Symbol as any).asyncIterator = Symbol.asyncIterator || Symbol("Symbol.asyncIterator");
+if (!Symbol.asyncIterator) {
+    (Symbol as any).asyncIterator = Symbol("Symbol.asyncIterator");
+}
 
 if (!Object.values) {
     values.shim();
