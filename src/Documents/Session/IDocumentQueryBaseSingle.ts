@@ -10,9 +10,19 @@ export interface IDocumentQueryBaseSingle<T extends object> {
     first(callback?: AbstractCallback<T>): Promise<T>;
 
     /**
-     * Returns first element or throws if sequence is empty or contains more than one element.
+     * Returns first element if there's any or null otherwise.
+     */
+    firstOrNull(callback?: AbstractCallback<T>): Promise<T>;
+
+    /**
+     * Returns single element or throws if sequence is empty or contains more than one element.
      */
     single(callback?: AbstractCallback<T>): Promise<T>;
+
+    /**
+     * Returns single element if there's any or null otherwise.
+     */
+    singleOrNull(callback?: AbstractCallback<T>): Promise<T>;
 
     /**
      * Gets the total count of records for this query
