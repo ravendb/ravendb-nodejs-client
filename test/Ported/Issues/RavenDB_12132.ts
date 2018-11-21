@@ -11,7 +11,7 @@ import {
     SessionOptions,
 } from "../../../src";
 
-describe.only("RavenDB-12132", function () {
+describe("RavenDB-12132", function () {
 
     let store: IDocumentStore;
 

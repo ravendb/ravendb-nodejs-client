@@ -204,6 +204,16 @@ export *  from "./Documents/Session/IMetadataDictionary";
 export *  from "./Documents/Session/DocumentResultStream";
 export * from "./Documents/Commands/StreamResult";
 export * from "./Documents/Session/SessionOptions";
+export * from "./Documents/Commands/CommandData";
+export * from "./Documents/Commands/Batches/CopyAttachmentCommandData";
+export * from "./Documents/Commands/Batches/DeleteAttachmentCommandData";
+export * from "./Documents/Commands/Batches/MoveAttachmentCommandData";
+export * from "./Documents/Commands/Batches/PutAttachmentCommandData";
+export * from "./Documents/Commands/Batches/BatchPatchCommandData";
+export * from "./Documents/Commands/Batches/CountersBatchCommandData";
+export * from "./Documents/Commands/Batches/PatchCommandData";
+export * from "./Documents/Commands/Batches/PutCompareExchangeCommandData";
+export * from "./Documents/Commands/Batches/DeleteCompareExchangeCommandData";
 
 // COUNTERS
 
