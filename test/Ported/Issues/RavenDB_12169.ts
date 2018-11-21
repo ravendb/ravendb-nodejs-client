@@ -11,12 +11,11 @@ import {
     PatchRequest,
 } from "../../../src";
 
-describe.only("RavenDB-12169", function () {
+describe("RavenDB-12169", function () {
 
     let store: IDocumentStore;
 
     beforeEach(async function () {
-        testContext.enableFiddler();
         store = await testContext.getDocumentStore();
     });
 

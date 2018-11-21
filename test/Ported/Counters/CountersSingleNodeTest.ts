@@ -281,7 +281,7 @@ describe("CountersSingleNodeTest", function () {
             const session = store.openSession();
             const user = await session.load("users/1-A");
             const metadata = session.advanced.getMetadataFor(user);
-            const counters = metadata[CONSTANTS.Documents.Metadata.COUNTERS];
+            const counters = metadata["@counters"];
             assert.strictEqual(counters.length, 1);
             assert.strictEqual(counters[0], "likes");
         }
@@ -299,7 +299,7 @@ describe("CountersSingleNodeTest", function () {
             const session = store.openSession();
             const user = await session.load("users/1-A");
             const metadata = session.advanced.getMetadataFor(user);
-            const counters = metadata[CONSTANTS.Documents.Metadata.COUNTERS];
+            const counters = metadata["@counters"];
             assert.strictEqual(counters.length, 2);
             assert.ok(counters.includes("likes"));
             assert.ok(counters.includes("votes"));
@@ -318,7 +318,7 @@ describe("CountersSingleNodeTest", function () {
             const session = store.openSession();
             const user = await session.load("users/1-A");
             const metadata = session.advanced.getMetadataFor(user);
-            const counters = metadata[CONSTANTS.Documents.Metadata.COUNTERS];
+            const counters = metadata["@counters"];
             assert.strictEqual(counters.length, 1);
             assert.ok(counters.includes("votes"));
         }

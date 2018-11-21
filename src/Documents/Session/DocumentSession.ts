@@ -439,7 +439,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             id = entityOrId;
         } else {
             const metadata = this.getMetadataFor(entityOrId as T);
-            id = metadata[CONSTANTS.Documents.Metadata.ID];
+            id = metadata["@id"];
         }
 
         const patchRequest = new PatchRequest();
@@ -476,7 +476,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             id = entityOrId;
         } else {
             const metadata = this.getMetadataFor(entityOrId as TEntity);
-            id = metadata[CONSTANTS.Documents.Metadata.ID];
+            id = metadata["@id"];
         }
 
         let patchRequest: PatchRequest;

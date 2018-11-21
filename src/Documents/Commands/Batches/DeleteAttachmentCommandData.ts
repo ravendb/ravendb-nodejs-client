@@ -11,11 +11,11 @@ export class DeleteAttachmentCommandData implements ICommandData {
     public type: CommandType = "AttachmentDELETE";
 
     public constructor(documentId: string, name: string, changeVector: string) {
-        if (StringUtil.isWhitespace(documentId)) {
+        if (StringUtil.isNullOrWhitespace(documentId)) {
             throwError("InvalidArgumentException", "DocumentId cannot be null");
         }
 
-        if (StringUtil.isWhitespace(name)) {
+        if (StringUtil.isNullOrWhitespace(name)) {
             throwError("InvalidArgumentException", "Name cannot be null");
         }
 

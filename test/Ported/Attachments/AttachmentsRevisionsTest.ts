@@ -228,12 +228,12 @@ describe("AttachmentsRevisions", function () {
         (names: string[], expectedCount: number, revision: User, session: IDocumentSession) => {
             const metadata = session.advanced.getMetadataFor(revision);
 
-            const flags = metadata[CONSTANTS.Documents.Metadata.FLAGS] as string;
+            const flags = metadata["@flags"];
             assert.ok(flags.includes("HasRevisions"));
             assert.ok(flags.includes("Revision"));
             assert.ok(flags.includes("HasAttachments"));
 
-            const attachments: IMetadataDictionary[] = metadata[CONSTANTS.Documents.Metadata.ATTACHMENTS];
+            const attachments = metadata["@attachments"];
             assert.strictEqual(attachments.length, expectedCount);
 
             const orderedNames = names.slice(0);

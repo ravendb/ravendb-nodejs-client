@@ -330,8 +330,4 @@ describe("Session API dev experience tests", function () {
         assert.ok(entity["id"]);
     });
 
-    describe("when using pipe-suffixed id", async function () {
-        
-    })
-
 });

@@ -66,7 +66,7 @@ describe("RevisionsTest", function () {
             assert.strictEqual(metadataSkipFirstTakeTwo.length, 2);
 
             const user = await session.advanced.revisions
-                .get<User>(metadataSkipFirst[0][CONSTANTS.Documents.Metadata.CHANGE_VECTOR]);
+                .get<User>(metadataSkipFirst[0]["@change-vector"]);
             assert.strictEqual(user.name, "user3");
         }
     });

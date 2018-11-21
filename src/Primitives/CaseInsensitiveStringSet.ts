@@ -1,6 +1,5 @@
 import { CaseInsensitiveKeysStore } from "./CaseInsensitiveKeysStore";
 
-
 function validateKey(key) {
     if (!(key && key.toLowerCase)) {
         throw Error("Key must be a string.");

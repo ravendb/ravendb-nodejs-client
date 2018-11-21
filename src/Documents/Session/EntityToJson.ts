@@ -9,6 +9,7 @@ import { Mapping } from "../../Mapping";
 import { ObjectTypeDescriptor } from "../..";
 import { throwError } from "../../Exceptions";
 import { SetupDocumentBase } from "../SetupDocumentBase";
+import { MetadataObject } from "./MetadataObject";
 
 export class EntityToJson {
 
@@ -85,8 +86,8 @@ export class EntityToJson {
         }
 
         if (documentInfo.metadata) {
-            documentInfo.metadata[CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES] = typeInfo.nestedTypes;
-            documentInfo.metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] = typeInfo.typeName;
+            documentInfo.metadata["@nested-object-types" as keyof MetadataObject] = typeInfo.nestedTypes;
+            documentInfo.metadata["Raven-Node-Type" as keyof MetadataObject] = typeInfo.typeName;
         }
 
         if (documentInfo.metadataInstance) {
@@ -95,7 +96,7 @@ export class EntityToJson {
         }
 
         let setMetadata: boolean = false;
-        const metadataNode: object = {};
+        const metadataNode: MetadataObject = {};
 
         if (documentInfo.metadata && Object.keys(documentInfo.metadata).length > 0) {
             setMetadata = true;
@@ -116,7 +117,7 @@ export class EntityToJson {
 
         if (documentInfo.collection) {
             setMetadata = true;
-            metadataNode[CONSTANTS.Documents.Metadata.COLLECTION] = documentInfo.collection;
+            metadataNode["@collection"] = documentInfo.collection;
         }
 
         if (setMetadata) {

@@ -13,7 +13,7 @@ export interface AttachmentName {
 
 export interface AttachmentDetails extends AttachmentName {
     changeVector: string;
-    documentId: string;
+    documentId?: string;
 }
 
 export class AttachmentResult {

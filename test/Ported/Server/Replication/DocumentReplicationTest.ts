@@ -18,6 +18,7 @@ const _describe = RavenTestContext.isPullRequest ? describe.skip : describe;
 _describe(
     `${RavenTestContext.isPullRequest ? "[Skipped on PR] " : ""}` +
     "DocumentReplicationTest", function () {
+        this.timeout(20000);
 
         let store: IDocumentStore;
         let replication: ReplicationTestContext;
@@ -34,7 +35,7 @@ _describe(
 
         const _it = it;
 
-        describe("with resolveToLatest to false", () => {
+        describe("with resolveToLatest to false", function() {
 
             beforeEach(() => {
                 testContext.customizeDbRecord = r => {
@@ -48,7 +49,7 @@ _describe(
 
             afterEach(() => testContext.customizeDbRecord = null);
 
-            _it("can replicate document", async () => {
+            _it("can replicate document", async function () {
 
                 let source: DocumentStore;
                 let destination: DocumentStore;
@@ -82,9 +83,9 @@ _describe(
                 }
             });
 
-            describe("GetConflictsCommand", async () => {
+            describe("GetConflictsCommand", function () {
 
-                _it("should get document conflicts", async () => {
+                _it("should get document conflicts", async function () {
 
                     let source: DocumentStore;
                     let destination: DocumentStore;
@@ -143,9 +144,9 @@ _describe(
 
             });
 
-            describe("PutDocumentCommand", () => {
+            describe("PutDocumentCommand", function () {
 
-                _it("can resolve conflict", async () => {
+                _it("can resolve conflict", async function () {
                     let source: DocumentStore;
                     let destination: DocumentStore;
 

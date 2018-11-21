@@ -65,7 +65,6 @@ export class CaseInsensitiveKeysMap {
                 }, [])[Symbol.iterator]();
         };
             
-
         return result;
     }
 }

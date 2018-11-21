@@ -12,6 +12,7 @@ import { PatchStatus } from "../../Operations/PatchStatus";
 import { CounterTracking } from "../CounterInternalTypes";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { BatchCommandResult } from "./BatchCommandResult";
+import { AttachmentDetails, AttachmentName } from "../../Attachments";
 
 export class BatchOperation {
 
@@ -196,16 +197,15 @@ export class BatchOperation {
         }
 
         const documentInfo = this._getOrAddModifications(id, sessionDocumentInfo, true);
-        const attachmentsJson = documentInfo.metadata[CONSTANTS.Documents.Metadata.ATTACHMENTS];
+        const attachmentsJson = documentInfo.metadata["@attachments"];
         if (!attachmentsJson || !Object.keys(attachmentsJson).length) {
             return;
         }
 
         const name = BatchOperation._getStringField(batchResult, type, attachmentNameFieldName);
         const attachments = [];
-        documentInfo.metadata[CONSTANTS.Documents.Metadata.ATTACHMENTS] = attachments;
-        for (let i = 0; i < Object.keys(attachmentsJson).length; i++) {
-            const attachment = attachmentsJson[i];
+        documentInfo.metadata["@attachments"] = attachments;
+        for (const attachment of attachmentsJson) {
             const attachmentName = BatchOperation._getStringField(attachment, type, "name");
             if (attachmentName === name) {
                 continue;
@@ -229,18 +229,18 @@ export class BatchOperation {
         }
 
         const documentInfo = this._getOrAddModifications(id, sessionDocumentInfo, false);
-        let attachments = documentInfo.metadata[CONSTANTS.Documents.Metadata.ATTACHMENTS];
+        let attachments = documentInfo.metadata["@attachments"];
         if (!attachments) {
             attachments = [];
-            documentInfo.metadata[CONSTANTS.Documents.Metadata.ATTACHMENTS] = attachments;
+            documentInfo.metadata["@attachments"] = attachments;
         }
 
         attachments.push({
-            ChangeVector: BatchOperation._getStringField(batchResult, type, "changeVector"),
-            ContentType: BatchOperation._getStringField(batchResult, type, "contentType"),
-            Hash: BatchOperation._getStringField(batchResult, type, "hash"),
-            Name: BatchOperation._getStringField(batchResult, type, "name"),
-            Size: BatchOperation._getNumberField(batchResult, type, "size")
+            changeVector: BatchOperation._getStringField(batchResult, type, "changeVector"),
+            contentType: BatchOperation._getStringField(batchResult, type, "contentType"),
+            hash: BatchOperation._getStringField(batchResult, type, "hash"),
+            name: BatchOperation._getStringField(batchResult, type, "name"),
+            size: BatchOperation._getNumberField(batchResult, type, "size")
         });
     }
 

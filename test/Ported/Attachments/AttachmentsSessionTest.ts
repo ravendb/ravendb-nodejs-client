@@ -225,9 +225,9 @@ describe("Attachments Session", function () {
             const user = await session.load<User>("users/1");
             const metadata = session.advanced.getMetadataFor(user);
 
-            assert.ok(metadata[CONSTANTS.Documents.Metadata.FLAGS].includes("HasAttachments"));
+            assert.ok(metadata["@flags"].includes("HasAttachments"));
 
-            const attachments = metadata[CONSTANTS.Documents.Metadata.ATTACHMENTS];
+            const attachments = metadata["@attachments"];
             assert.strictEqual(attachments.length, 1);
 
             const result = await session.advanced.attachments.get("users/1", "file1");

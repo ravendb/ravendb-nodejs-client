@@ -84,7 +84,7 @@ export class SessionDocumentCounters extends SessionCountersBase implements ISes
         const document = this._session.documentsById.getValue(this._docId);
         let metadataHasCounterName = false;
         if (document) {
-            const metadataCounters = document.metadata[CONSTANTS.Documents.Metadata.COUNTERS];
+            const metadataCounters = document.metadata["@counters"];
             if (metadataCounters) {
                 metadataHasCounterName = metadataCounters.some(x => x === counter);
             }

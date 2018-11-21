@@ -1,3 +1,5 @@
+import { MetadataObject } from "./Documents/Session/MetadataObject";
+
 export const CONSTANTS = {
     Documents: {
         Indexing: {
@@ -15,23 +17,23 @@ export const CONSTANTS = {
             SIDE_BY_SIDE_INDEX_NAME_PREFIX: "ReplacementOf/",
         },
         Metadata: {
-            COLLECTION: "@collection",
-            PROJECTION: "@projection",
-            KEY: "@metadata",
-            ID: "@id",
+            COLLECTION: "@collection" as keyof MetadataObject,
+            PROJECTION: "@projection" as keyof MetadataObject,
+            KEY: "@metadata" as keyof MetadataObject,
+            ID: "@id" as keyof MetadataObject,
             CONFLICT: "@conflict",
             ID_PROPERTY: "id",
-            FLAGS: "@flags",
-            ATTACHMENTS: "@attachments",
-            INDEX_SCORE: "@index-score",
-            LAST_MODIFIED: "@last-modified",
-            RAVEN_JS_TYPE: "Raven-Node-Type",
-            CHANGE_VECTOR: "@change-vector",
-            EXPIRES: "@expires",
+            FLAGS: "@flags" as keyof MetadataObject,
+            ATTACHMENTS: "@attachments" as keyof MetadataObject,
+            INDEX_SCORE: "@index-score" as keyof MetadataObject,
+            LAST_MODIFIED: "@last-modified" as keyof MetadataObject,
+            RAVEN_JS_TYPE: "Raven-Node-Type" as keyof MetadataObject,
+            CHANGE_VECTOR: "@change-vector" as keyof MetadataObject,
+            EXPIRES: "@expires" as keyof MetadataObject,
             ALL_DOCUMENTS_COLLECTION: "@all_docs",
             EMPTY_COLLECTION: "@empty",
-            NESTED_OBJECT_TYPES: "@nested-object-types",
-            COUNTERS: "@counters",
+            NESTED_OBJECT_TYPES: "@nested-object-types" as keyof MetadataObject,
+            COUNTERS: "@counters" as keyof MetadataObject,
             REVISION_COUNTERS: "@counters-snapshot",
             IGNORE_CASE_TRANSFORM_REGEX:
             // tslint:disable-next-line:max-line-length

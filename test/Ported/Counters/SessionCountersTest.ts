@@ -1051,7 +1051,7 @@ describe("SessionCountersTest", function () {
                     });
                 assert.fail("should have thrown");
             } catch (err) {
-                assert.strictEqual(err.name, "InvalidOperationException" as RavenErrorType)
+                assert.strictEqual(err.name, "InvalidOperationException" as RavenErrorType);
             }
         }
 

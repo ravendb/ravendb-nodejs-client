@@ -19,12 +19,12 @@ export class PutAttachmentCommandData implements ICommandData {
         contentType: string,
         changeVector: string) {
 
-        if (StringUtil.isWhitespace(documentId)) {
-            throwError("InvalidArgumentException", "DocumentId cannot be null");
+        if (StringUtil.isNullOrWhitespace(documentId)) {
+            throwError("InvalidArgumentException", "DocumentId cannot be null.");
         }
 
-        if (StringUtil.isWhitespace(name)) {
-            throwError("InvalidArgumentException", "Name cannot be null");
+        if (StringUtil.isNullOrWhitespace(name)) {
+            throwError("InvalidArgumentException", "Name cannot be null.");
         }
 
         this.id = documentId;

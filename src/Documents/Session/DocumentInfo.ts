@@ -4,6 +4,7 @@ import { IRavenObject } from "../../Types/IRavenObject";
 import { CONSTANTS } from "../../Constants";
 import { throwError } from "../../Exceptions";
 import { TypeUtil } from "../../Utility/TypeUtil";
+import { MetadataObject } from "./MetadataObject";
 
 export class DocumentInfo {
 
@@ -15,7 +16,7 @@ export class DocumentInfo {
 
     public ignoreChanges: boolean;
 
-    public metadata: IRavenObject;
+    public metadata: MetadataObject;
     public document: IRavenObject;
 
     public metadataInstance: IMetadataDictionary;

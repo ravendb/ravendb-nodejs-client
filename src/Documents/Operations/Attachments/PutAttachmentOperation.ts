@@ -50,10 +50,10 @@ export class PutAttachmentCommand extends RavenCommand<AttachmentDetails> {
                        stream: AttachmentData, contentType: string, changeVector: string) {
         super();
 
-        if (StringUtil.isWhitespace(documentId)) {
+        if (StringUtil.isNullOrWhitespace(documentId)) {
             throwError("InvalidArgumentException", "DocumentId cannot be null or empty");
         }
-        if (StringUtil.isWhitespace(name)) {
+        if (StringUtil.isNullOrWhitespace(name)) {
             throwError("InvalidArgumentException", "Name cannot be null or empty");
         }
 

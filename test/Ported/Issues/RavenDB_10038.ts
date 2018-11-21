@@ -1,6 +1,3 @@
-import * as mocha from "mocha";
-import * as BluebirdPromise from "bluebird";
-import * as assert from "assert";
 import { testContext, disposeTestDocumentStore, storeNewDoc } from "../../Utils/TestUtil";
 
 import {

@@ -21,6 +21,7 @@ import { ServerNode } from "../Http/ServerNode";
 import { AbstractCallback } from "../Types/Callbacks";
 import { passResultToCallback } from "../Utility/PromiseUtil";
 import { BatchOperation } from "./Session/Operations/BatchOperation";
+import { MetadataObject } from "./Session/MetadataObject";
 
 export class BulkInsertOperation {
     private readonly _generateEntityIdOnTheClient: GenerateEntityIdOnTheClient;
@@ -162,18 +163,18 @@ export class BulkInsertOperation {
             });
         }
 
-        if (!(CONSTANTS.Documents.Metadata.COLLECTION in metadata)) {
+        if (!(("@collection" as keyof MetadataObject) in metadata)) {
             const collection = this._requestExecutor.conventions.getCollectionNameForEntity(entity);
             if (collection) {
-                metadata[CONSTANTS.Documents.Metadata.COLLECTION] = collection;
+                metadata["@collection"] = collection;
             }
         }
 
-        if (!(CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE in metadata)) {
+        if (!("Raven-Node-Type" as keyof MetadataObject in metadata)) {
             const descriptor = this._conventions.getEntityTypeDescriptor(entity);
             const jsType = this._requestExecutor.conventions.getJsTypeName(descriptor);
             if (jsType) {
-                metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] = jsType;
+                metadata["Raven-Node-Type"] = jsType;
             }
         }
 

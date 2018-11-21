@@ -352,7 +352,7 @@ export abstract class InMemoryDocumentSessionOperations
         }
 
         const documentInfo = this._getDocumentInfo(instance);
-        const lastModified = documentInfo.metadata[CONSTANTS.Documents.Metadata.LAST_MODIFIED];
+        const lastModified = documentInfo.metadata["@last-modified"];
         return DateUtil.default.parse(lastModified);
     }
 
