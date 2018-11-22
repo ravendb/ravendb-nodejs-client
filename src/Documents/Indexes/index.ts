@@ -7,6 +7,9 @@ import { IDocumentStore } from "../IDocumentStore";
 import { CONSTANTS } from "../../Constants";
 import { PutIndexesOperation } from "../Operations/Indexes/PutIndexesOperation";
 import { throwError } from "../../Exceptions";
+import { AbstractCallback } from "../../Types/Callbacks";
+import { TypeUtil } from "../../Utility/TypeUtil";
+import { passResultToCallback } from "../../Utility/PromiseUtil";
 
 export abstract class AbstractIndexCreationTask {
 
@@ -78,16 +81,69 @@ export abstract class AbstractIndexCreationTask {
         return indexCtorName.replace(/_/g, "/");
     }
 
-    //TODO: introduce overloads?
     /**
      * Executes the index creation against the specified document store.
      */
-    public async execute(store: IDocumentStore, conventions?: DocumentConventions, database?: string): Promise<void> {
-        if (!conventions && !database) {
-            return store.executeIndex(this);
-        } else {
-            return this._putIndex(store, conventions, database);
+    public async execute(store: IDocumentStore): Promise<void>;
+    /**
+     * Executes the index creation against the specified document store.
+     */
+    public async execute(store: IDocumentStore, callback: AbstractCallback<void>): Promise<void>;
+    /**
+     * Executes the index creation against the specified document store.
+     */
+    public async execute(store: IDocumentStore, conventions: DocumentConventions): Promise<void>;
+    /**
+     * Executes the index creation against the specified document store.
+     */
+    public async execute(
+        store: IDocumentStore, 
+        conventions: DocumentConventions, 
+        callback: AbstractCallback<void>): Promise<void>;
+    /**
+     * Executes the index creation against the specified document store.
+     */
+    public async execute(store: IDocumentStore, conventions: DocumentConventions, database: string): Promise<void>;
+    /**
+     * Executes the index creation against the specified document store.
+     */
+    public async execute(
+        store: IDocumentStore, 
+        conventions: DocumentConventions, 
+        database: string, 
+        callback: AbstractCallback<void>): Promise<void>;
+    public async execute(
+        store: IDocumentStore, 
+        conventionsOrCallback?: DocumentConventions | AbstractCallback<void>, 
+        databaseOrCallback?: string | AbstractCallback<void>,
+        callback?: AbstractCallback<void>): Promise<void> {
+       
+        let conventions: DocumentConventions;
+        let database: string;
+        if (arguments.length > 1) {
+            if (TypeUtil.isFunction(conventionsOrCallback)) {
+                callback = conventionsOrCallback;
+            } else if (TypeUtil.isFunction(databaseOrCallback)) {
+                callback = databaseOrCallback;
+                conventions = conventionsOrCallback;
+            } else {
+                conventions = conventionsOrCallback;
+                database = databaseOrCallback; 
+            }
         }
+
+        callback = callback || TypeUtil.NOOP;
+
+        let resultPromise;
+        if (!conventions && !database) {
+            resultPromise = store.executeIndex(this);
+        } else {
+            resultPromise = this._putIndex(store, conventions, database);
+        }
+
+        passResultToCallback(resultPromise, callback);
+
+        return resultPromise;
     }
 
     private _putIndex(store: IDocumentStore, conventions: DocumentConventions, database: string): Promise<void> {
