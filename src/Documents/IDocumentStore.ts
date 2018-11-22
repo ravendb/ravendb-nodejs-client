@@ -19,6 +19,7 @@ import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
 import { DocumentSubscriptions } from "./Subscriptions/DocumentSubscriptions";
 import { SessionOptions } from "./Session/SessionOptions";
 import { AbstractIndexCreationTaskBase } from "./Indexes/AbstractIndexCreationTaskBase";
+import { ErrorFirstCallback } from "../Types/Callbacks";
 
 export interface SessionEventsProxy {
     addSessionListener(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
@@ -148,12 +149,33 @@ export interface IDocumentStore extends IDisposable,
     /**
      * Executes the index creation
      */
-    executeIndexes(tasks: AbstractIndexCreationTaskBase[]): Promise<void>;
+    executeIndex(task: AbstractIndexCreationTask, callback: ErrorFirstCallback<void>): Promise<void>;
+
+    /**
+     * Executes the index creation
+     */
+    executeIndex(task: AbstractIndexCreationTask, database: string, callback: ErrorFirstCallback<void>): Promise<void>;
+
+    /**
+     * Executes the index creation
+     */
+    executeIndexes(tasks: AbstractIndexCreationTask[]): Promise<void>;
 
     /**
      * Executes the index creation
      */
     executeIndexes(tasks: AbstractIndexCreationTaskBase[], database: string): Promise<void>;
+
+    /**
+     * Executes the index creation
+     */
+    executeIndexes(tasks: AbstractIndexCreationTask[], callback: ErrorFirstCallback<void>): Promise<void>;
+
+    /**
+     * Executes the index creation
+     */
+    executeIndexes(
+        tasks: AbstractIndexCreationTask[], database: string, callback: ErrorFirstCallback<void>): Promise<void>;
 
     /**
      * Contains authentication information: client certificate data;
