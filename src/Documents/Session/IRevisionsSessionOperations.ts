@@ -100,7 +100,7 @@ export interface IRevisionsSessionOperations {
      * Returns a document revision by change vectors.
      */
     get<TEntity extends object>(changeVectors: string[],
-                                callback: ErrorFirstCallback<Map<string, TEntity>>)
+                                callback: ErrorFirstCallback<RevisionsCollectionObject<TEntity>>)
         : Promise<RevisionsCollectionObject<TEntity>>;
 
     /**
@@ -115,7 +115,7 @@ export interface IRevisionsSessionOperations {
      */
     get<TEntity extends object>(changeVectors: string[],
                                 documentType: DocumentType<TEntity>,
-                                callback: ErrorFirstCallback<Map<string, TEntity>>)
+                                callback: ErrorFirstCallback<RevisionsCollectionObject<TEntity>>)
         : Promise<RevisionsCollectionObject<TEntity>>;
 }
 
