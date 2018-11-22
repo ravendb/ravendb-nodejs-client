@@ -45,7 +45,6 @@ export class DocumentConventions {
     private _frozen: boolean;
     private _originalConfiguration: ClientConfiguration;
     private _idPropertyCache: Map<ObjectTypeDescriptor, string> = new Map(); //TODO: is it used?
-    // TODO: private _saveEnumsAsIntegers: number;
     private _identityPartsSeparator: string;
     private _disableTopologyUpdates: boolean;
 
@@ -456,10 +455,6 @@ export class DocumentConventions {
 
         return this;
     }
-
-    //TODO public registerEntityTypeChecker(typeChecker: ObjectLiteralDescriptor) {
-    //     this._registeredTypeDescriptors.push(typeChecker);
-    // }
 
     public registerEntityIdPropertyName(ctorOrTypeChecker: ObjectTypeDescriptor, idProperty: string) {
         this._registeredIdPropertyNames.set(ctorOrTypeChecker, idProperty);

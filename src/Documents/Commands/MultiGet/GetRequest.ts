@@ -1,4 +1,3 @@
-//TODO: fill missing JSDocs?
 export class GetRequest {
     private _url: string;
     private _headers: { [key: string]: string | string[] };

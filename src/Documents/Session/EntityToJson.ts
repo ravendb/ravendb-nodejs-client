@@ -37,7 +37,6 @@ export class EntityToJson {
             typeInfo = _typeInfo;
         }, conventions.knownEntityTypesByName);
 
-        // TODO handle Maps
         if (entity instanceof SetupDocumentBase) {
             jsonNode = entity.toRemoteFieldNames();
         } else {
