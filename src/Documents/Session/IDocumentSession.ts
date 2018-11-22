@@ -1,7 +1,7 @@
 import { Lazy } from "../Lazy";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { IDisposable } from "../../Types/Contracts";
-import { AbstractCallback } from "../../Types/Callbacks";
+import { ErrorFirstCallback } from "../../Types/Callbacks";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { DocumentType } from "../DocumentAbstractions";
 import { EntitiesCollectionObject, ObjectTypeDescriptor } from "../../Types";
@@ -60,7 +60,7 @@ export interface IDocumentSession extends IDisposable {
      */
     load<TEntity extends object>(
         id: string,
-        callback?: AbstractCallback<TEntity>): Promise<TEntity>;
+        callback?: ErrorFirstCallback<TEntity>): Promise<TEntity>;
 
     /**
      * Loads the entity with the specified id.
@@ -68,7 +68,7 @@ export interface IDocumentSession extends IDisposable {
     load<TEntity extends object>(
         id: string,
         documentType?: DocumentType<TEntity>,
-        callback?: AbstractCallback<TEntity>): Promise<TEntity>;
+        callback?: ErrorFirstCallback<TEntity>): Promise<TEntity>;
 
     /**
      * Loads the entity with the specified id.
@@ -76,14 +76,14 @@ export interface IDocumentSession extends IDisposable {
     load<TEntity extends object>(
         id: string,
         options?: LoadOptions<TEntity>,
-        callback?: AbstractCallback<TEntity>): Promise<TEntity>;
+        callback?: ErrorFirstCallback<TEntity>): Promise<TEntity>;
 
     /**
      * Loads multiple entities with the specified ids.
      */
     load<TEntity extends object>(
         ids: string[],
-        callback?: AbstractCallback<EntitiesCollectionObject<TEntity>>): Promise<EntitiesCollectionObject<TEntity>>;
+        callback?: ErrorFirstCallback<EntitiesCollectionObject<TEntity>>): Promise<EntitiesCollectionObject<TEntity>>;
 
     /**
      * Loads multiple entities with the specified ids.
@@ -91,7 +91,7 @@ export interface IDocumentSession extends IDisposable {
     load<TEntity extends object>(
         ids: string[],
         documentType?: DocumentType<TEntity>,
-        callback?: AbstractCallback<TEntity>):
+        callback?: ErrorFirstCallback<TEntity>):
         Promise<EntitiesCollectionObject<TEntity>>;
 
     /**
@@ -100,7 +100,7 @@ export interface IDocumentSession extends IDisposable {
     load<TEntity extends object>(
         ids: string[],
         options?: LoadOptions<TEntity>,
-        callback?: AbstractCallback<TEntity>):
+        callback?: ErrorFirstCallback<TEntity>):
         Promise<EntitiesCollectionObject<TEntity>>;
 
     /**
@@ -128,7 +128,7 @@ export interface IDocumentSession extends IDisposable {
      * Forces concurrency check if the Id is not available during extraction.
      */
     store<TEntity extends object>(
-        document: TEntity, callback?: AbstractCallback<void>): Promise<void>;
+        document: TEntity, callback?: ErrorFirstCallback<void>): Promise<void>;
 
     /**
      * Stores the specified dynamic entity, under the specified id.
@@ -136,7 +136,7 @@ export interface IDocumentSession extends IDisposable {
     store<TEntity extends object>(
         document: TEntity,
         id?: string,
-        callback?: AbstractCallback<void>): Promise<void>;
+        callback?: ErrorFirstCallback<void>): Promise<void>;
 
     /**
      * Stores the specified dynamic entity, under the specified id.
@@ -145,7 +145,7 @@ export interface IDocumentSession extends IDisposable {
         document: TEntity,
         id?: string,
         documentType?: DocumentType<TEntity>,
-        callback?: AbstractCallback<void>): Promise<void>;
+        callback?: ErrorFirstCallback<void>): Promise<void>;
 
     /**
      * Stores entity in session with given id and forces concurrency check with given change-vector (see options).
@@ -154,7 +154,7 @@ export interface IDocumentSession extends IDisposable {
         document: TEntity,
         id?: string,
         options?: StoreOptions<TEntity>,
-        callback?: AbstractCallback<void>): Promise<void>;
+        callback?: ErrorFirstCallback<void>): Promise<void>;
 
     /**
      * Begin a load while including the specified path
@@ -170,7 +170,7 @@ export interface IDocumentSession extends IDisposable {
     /**
      * Saves all the pending changes to the server.
      */
-    saveChanges(callback: AbstractCallback<void>): Promise<void>;
+    saveChanges(callback: ErrorFirstCallback<void>): Promise<void>;
 
     /**
      * Queries collection or index.

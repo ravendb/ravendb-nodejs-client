@@ -12,7 +12,7 @@ import { IRawDocumentQuery } from "./IRawDocumentQuery";
 import { SessionEventsEmitter } from "./SessionEvents";
 import { IDocumentQuery } from "./IDocumentQuery";
 import { AdvancedDocumentQueryOptions } from "./QueryOptions";
-import { AbstractCallback } from "../../Types/Callbacks";
+import { ErrorFirstCallback } from "../../Types/Callbacks";
 import { IAttachmentsSessionOperations } from "../Session/IAttachmentsSessionOperations";
 import { ILazySessionOperations } from "./Operations/Lazy/ILazySessionOperations";
 import { IEagerSessionOperations } from "./Operations/Lazy/IEagerSessionOperations";
@@ -53,10 +53,10 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     exists(id: string): Promise<boolean>;
 
     loadStartingWith<T extends object>(
-        idPrefix: string, opts: SessionLoadStartingWithOptions<T>, callback?: AbstractCallback<T[]>): Promise<T[]>;
+        idPrefix: string, opts: SessionLoadStartingWithOptions<T>, callback?: ErrorFirstCallback<T[]>): Promise<T[]>;
 
     loadStartingWith<T extends object>(
-        idPrefix: string, callback?: AbstractCallback<T[]>): Promise<T[]>;
+        idPrefix: string, callback?: ErrorFirstCallback<T[]>): Promise<T[]>;
 
     documentQuery<TEntity extends object>(opts: AdvancedDocumentQueryOptions<TEntity>): IDocumentQuery<TEntity>;
 
@@ -77,10 +77,10 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
         entity: TEntity, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
 
     loadStartingWith<T extends object>(
-        idPrefix: string, opts: SessionLoadStartingWithOptions<T>, callback?: AbstractCallback<T[]>): Promise<T[]>;
+        idPrefix: string, opts: SessionLoadStartingWithOptions<T>, callback?: ErrorFirstCallback<T[]>): Promise<T[]>;
 
     loadStartingWith<T extends object>(
-        idPrefix: string, callback?: AbstractCallback<T[]>): Promise<T[]>;
+        idPrefix: string, callback?: ErrorFirstCallback<T[]>): Promise<T[]>;
 
     // tslint:enable:max-line-length
 
@@ -98,16 +98,16 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      *  Returns the results of a query directly into stream
      */
     streamInto<T extends object>(
-        query: IDocumentQuery<T>, writable: stream.Writable, callback: AbstractCallback<void>): Promise<void>;
+        query: IDocumentQuery<T>, writable: stream.Writable, callback: ErrorFirstCallback<void>): Promise<void>;
 
     /**
      * Returns the results of a query directly into stream
      */
     streamInto<T extends object>(
-        query: IRawDocumentQuery<T>, writable: stream.Writable, callback: AbstractCallback<void>): Promise<void>;
+        query: IRawDocumentQuery<T>, writable: stream.Writable, callback: ErrorFirstCallback<void>): Promise<void>;
 
     loadIntoStream(
-        ids: string[], writable: stream.Writable, callback?: AbstractCallback<void>): Promise<void>;
+        ids: string[], writable: stream.Writable, callback?: ErrorFirstCallback<void>): Promise<void>;
 
     loadIntoStream(
         ids: string[], writable: stream.Writable): Promise<void>;
@@ -124,13 +124,13 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     loadStartingWithIntoStream<TEntity extends object>(
         idPrefix: string,
         writable: stream.Writable,
-        callback?: AbstractCallback<void>): Promise<void>;
+        callback?: ErrorFirstCallback<void>): Promise<void>;
 
     loadStartingWithIntoStream<TEntity extends object>(
         idPrefix: string,
         writable: stream.Writable,
         opts: SessionLoadStartingWithOptions<TEntity>,
-        callback?: AbstractCallback<void>): Promise<void>;
+        callback?: ErrorFirstCallback<void>): Promise<void>;
 
     /**
      * Stream the results on the query to the client.
@@ -191,7 +191,7 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     stream<T extends object>(
         idPrefix: string,
         opts: SessionLoadStartingWithOptions<T>,
-        callback: AbstractCallback<DocumentResultStream<T>>)
+        callback: ErrorFirstCallback<DocumentResultStream<T>>)
         : Promise<DocumentResultStream<T>>;
 }
 

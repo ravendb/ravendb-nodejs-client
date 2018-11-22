@@ -14,7 +14,7 @@ import {
 } from "./IDocumentSession";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { AbstractCallback } from "../../Types/Callbacks";
+import { ErrorFirstCallback } from "../../Types/Callbacks";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { IRavenObject, EntitiesCollectionObject, ObjectTypeDescriptor } from "../../Types";
 import { throwError } from "../../Exceptions";
@@ -104,34 +104,34 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
     public async load<TEntity extends object = IRavenObject>(
         id: string,
-        callback?: AbstractCallback<TEntity>): Promise<TEntity>;
+        callback?: ErrorFirstCallback<TEntity>): Promise<TEntity>;
     public async load<TEntity extends object = IRavenObject>(
         id: string,
         options?: LoadOptions<TEntity>,
-        callback?: AbstractCallback<TEntity>): Promise<TEntity>;
+        callback?: ErrorFirstCallback<TEntity>): Promise<TEntity>;
     public async load<TEntity extends object = IRavenObject>(
         id: string,
         documentType?: DocumentType<TEntity>,
-        callback?: AbstractCallback<TEntity>): Promise<TEntity>;
+        callback?: ErrorFirstCallback<TEntity>): Promise<TEntity>;
     public async load<TEntity extends object = IRavenObject>(
         ids: string[],
-        callback?: AbstractCallback<EntitiesCollectionObject<TEntity>>): Promise<EntitiesCollectionObject<TEntity>>;
+        callback?: ErrorFirstCallback<EntitiesCollectionObject<TEntity>>): Promise<EntitiesCollectionObject<TEntity>>;
     public async load<TEntity extends object = IRavenObject>(
         ids: string[],
         options?: LoadOptions<TEntity>,
-        callback?: AbstractCallback<TEntity>):
+        callback?: ErrorFirstCallback<TEntity>):
         Promise<EntitiesCollectionObject<TEntity>>;
     public async load<TEntity extends object = IRavenObject>(
         ids: string[],
         documentType?: DocumentType<TEntity>,
-        callback?: AbstractCallback<TEntity>):
+        callback?: ErrorFirstCallback<TEntity>):
         Promise<EntitiesCollectionObject<TEntity>>;
     public async load<TEntity extends object = IRavenObject>(
         idOrIds: string | string[],
         optionsOrCallback?:
             DocumentType<TEntity> | LoadOptions<TEntity> |
-            AbstractCallback<TEntity | EntitiesCollectionObject<TEntity>>,
-        callback?: AbstractCallback<TEntity | EntitiesCollectionObject<TEntity>>)
+            ErrorFirstCallback<TEntity | EntitiesCollectionObject<TEntity>>,
+        callback?: ErrorFirstCallback<TEntity | EntitiesCollectionObject<TEntity>>)
         : Promise<TEntity | EntitiesCollectionObject<TEntity>> {
 
         const isLoadingSingle = !Array.isArray(idOrIds);
@@ -141,7 +141,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         if (TypeUtil.isDocumentType(optionsOrCallback)) {
             options = { documentType: optionsOrCallback as DocumentType<TEntity> };
         } else if (TypeUtil.isFunction(optionsOrCallback)) {
-            callback = optionsOrCallback as AbstractCallback<TEntity> || TypeUtil.NOOP;
+            callback = optionsOrCallback as ErrorFirstCallback<TEntity> || TypeUtil.NOOP;
         } else if (TypeUtil.isObject(optionsOrCallback)) {
             options = optionsOrCallback as LoadOptions<TEntity>;
         }
@@ -213,8 +213,8 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     public async saveChanges(): Promise<void>;
-    public async saveChanges(callback?: AbstractCallback<void>): Promise<void>;
-    public async saveChanges(callback?: AbstractCallback<void>): Promise<void> {
+    public async saveChanges(callback?: ErrorFirstCallback<void>): Promise<void>;
+    public async saveChanges(callback?: ErrorFirstCallback<void>): Promise<void> {
         callback = callback || TypeUtil.NOOP;
         const result = this._saveChanges();
         passResultToCallback(result, callback);
@@ -290,20 +290,20 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
     public async loadStartingWith<TEntity extends object>(
         idPrefix: string,
-        callback?: AbstractCallback<TEntity[]>): Promise<TEntity[]>;
+        callback?: ErrorFirstCallback<TEntity[]>): Promise<TEntity[]>;
     public async loadStartingWith<TEntity extends object>(
         idPrefix: string,
         opts: SessionLoadStartingWithOptions<TEntity>,
-        callback?: AbstractCallback<TEntity[]>): Promise<TEntity[]>;
+        callback?: ErrorFirstCallback<TEntity[]>): Promise<TEntity[]>;
     public async loadStartingWith<TEntity extends object>(
         idPrefix: string,
-        optsOrCallback?: SessionLoadStartingWithOptions<TEntity> | AbstractCallback<TEntity[]>,
-        callback?: AbstractCallback<TEntity[]>): Promise<TEntity[]> {
+        optsOrCallback?: SessionLoadStartingWithOptions<TEntity> | ErrorFirstCallback<TEntity[]>,
+        callback?: ErrorFirstCallback<TEntity[]>): Promise<TEntity[]> {
 
         const loadStartingWithOperation = new LoadStartingWithOperation(this);
         let opts: SessionLoadStartingWithOptions<TEntity>;
         if (TypeUtil.isFunction(optsOrCallback)) {
-            callback = optsOrCallback as AbstractCallback<TEntity[]>;
+            callback = optsOrCallback as ErrorFirstCallback<TEntity[]>;
         } else {
             opts = optsOrCallback as SessionLoadStartingWithOptions<TEntity>;
         }
@@ -320,17 +320,17 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     public async loadStartingWithIntoStream<TEntity extends object>(
         idPrefix: string,
         writable: stream.Writable,
-        callback?: AbstractCallback<void>): Promise<void>;
+        callback?: ErrorFirstCallback<void>): Promise<void>;
     public async loadStartingWithIntoStream<TEntity extends object>(
         idPrefix: string,
         writable: stream.Writable,
         opts: SessionLoadStartingWithOptions<TEntity>,
-        callback?: AbstractCallback<void>): Promise<void>;
+        callback?: ErrorFirstCallback<void>): Promise<void>;
     public async loadStartingWithIntoStream<TEntity extends object>(
         idPrefix: string,
         writable: stream.Writable,
-        optsOrCallback?: SessionLoadStartingWithOptions<TEntity> | AbstractCallback<void>,
-        callback?: AbstractCallback<void>): Promise<void> {
+        optsOrCallback?: SessionLoadStartingWithOptions<TEntity> | ErrorFirstCallback<void>,
+        callback?: ErrorFirstCallback<void>): Promise<void> {
 
         if (!writable) {
             throwError("InvalidArgumentException", "writable cannot be null.");
@@ -342,7 +342,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         const loadStartingWithOperation = new LoadStartingWithOperation(this);
         let opts: SessionLoadStartingWithOptions<TEntity>;
         if (TypeUtil.isFunction(optsOrCallback)) {
-            callback = optsOrCallback as AbstractCallback<void>;
+            callback = optsOrCallback as ErrorFirstCallback<void>;
         } else {
             opts = optsOrCallback as SessionLoadStartingWithOptions<TEntity>;
         }
@@ -358,11 +358,11 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     public async loadIntoStream(
-        ids: string[], writable: stream.Writable, callback?: AbstractCallback<void>): Promise<void>;
+        ids: string[], writable: stream.Writable, callback?: ErrorFirstCallback<void>): Promise<void>;
     public async loadIntoStream(
         ids: string[], writable: stream.Writable): Promise<void>;
     public async loadIntoStream(
-        ids: string[], writable: stream.Writable, callback?: AbstractCallback<void>): Promise<void> {
+        ids: string[], writable: stream.Writable, callback?: ErrorFirstCallback<void>): Promise<void> {
         const result = this._loadInternal(ids, new LoadOperation(this), writable);
         passResultToCallback(result, callback);
         return result;
@@ -752,7 +752,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     public async stream<T extends object>(
         query: IDocumentQuery<T>,
         streamQueryStats: StreamQueryStatisticsCallback,
-        callback: AbstractCallback<DocumentResultStream<T>>)
+        callback: ErrorFirstCallback<DocumentResultStream<T>>)
         : Promise<DocumentResultStream<T>>;
     public async stream<T extends object>(query: IRawDocumentQuery<T>)
         : Promise<DocumentResultStream<T>>;
@@ -767,12 +767,12 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     public async stream<T extends object>(
         idPrefix: string,
         opts: SessionLoadStartingWithOptions<T>,
-        callback: AbstractCallback<DocumentResultStream<T>>)
+        callback: ErrorFirstCallback<DocumentResultStream<T>>)
         : Promise<DocumentResultStream<T>>;
     public async stream<T extends object>(
         queryOrIdPrefix: string | IDocumentQuery<T> | IRawDocumentQuery<T>,
         optsOrStatsCallback?: SessionLoadStartingWithOptions<T> | StreamQueryStatisticsCallback,
-        callback?: AbstractCallback<DocumentResultStream<T>>)
+        callback?: ErrorFirstCallback<DocumentResultStream<T>>)
         : Promise<DocumentResultStream<T>> {
         const result = (this._stream as any)(...Array.from(arguments) as any);
         passResultToCallback(result, callback);
@@ -897,19 +897,19 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
      *  Returns the results of a query directly into stream
      */
     public async streamInto<T extends object>(
-        query: IDocumentQuery<T>, writable: stream.Writable, callback: AbstractCallback<void>): Promise<void>;
+        query: IDocumentQuery<T>, writable: stream.Writable, callback: ErrorFirstCallback<void>): Promise<void>;
     /**
      *  Returns the results of a query directly into stream
      */
     public async streamInto<T extends object>(
-        query: IRawDocumentQuery<T>, writable: stream.Writable, callback: AbstractCallback<void>): Promise<void>;
+        query: IRawDocumentQuery<T>, writable: stream.Writable, callback: ErrorFirstCallback<void>): Promise<void>;
     /**
      *  Returns the results of a query directly into stream
      */
     public async streamInto<T extends object>(
         query: IRawDocumentQuery<T> | IDocumentQuery<T>,
         writable: stream.Writable,
-        callback?: AbstractCallback<void>): Promise<void> {
+        callback?: ErrorFirstCallback<void>): Promise<void> {
         const result = this._streamInto(query, writable);
         passResultToCallback(result, callback);
         return result;

@@ -4,7 +4,7 @@ import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOper
 import { HeadAttachmentCommand } from "../Commands/HeadAttachmentCommand";
 import { AttachmentResult } from "../Attachments";
 import { GetAttachmentOperation } from "../Operations/Attachments/GetAttachmentOperation";
-import { AbstractCallback } from "../../Types/Callbacks";
+import { ErrorFirstCallback } from "../../Types/Callbacks";
 import * as PromiseUtil from "../../Utility/PromiseUtil";
 
 export class DocumentSessionAttachments
@@ -15,8 +15,8 @@ export class DocumentSessionAttachments
     }
 
     public async exists(documentId: string, name: string): Promise<boolean>;
-    public async exists(documentId: string, name: string, callback: AbstractCallback<boolean>): Promise<boolean>;
-    public async exists(documentId: string, name: string, callback?: AbstractCallback<boolean>): Promise<boolean> {
+    public async exists(documentId: string, name: string, callback: ErrorFirstCallback<boolean>): Promise<boolean>;
+    public async exists(documentId: string, name: string, callback?: ErrorFirstCallback<boolean>): Promise<boolean> {
         const result = this._exists(documentId, name);
         PromiseUtil.passResultToCallback(result, callback);
         return result;
@@ -31,13 +31,13 @@ export class DocumentSessionAttachments
     public async get(entity: object, name: string): Promise<AttachmentResult>;
     public async get(documentId: string, name: string): Promise<AttachmentResult>;
     public async get(
-        entity: object, name: string, callback: AbstractCallback<AttachmentResult>): Promise<AttachmentResult>;
+        entity: object, name: string, callback: ErrorFirstCallback<AttachmentResult>): Promise<AttachmentResult>;
     public async get(
-        documentId: string, name: string, callback: AbstractCallback<AttachmentResult>): Promise<AttachmentResult>;
+        documentId: string, name: string, callback: ErrorFirstCallback<AttachmentResult>): Promise<AttachmentResult>;
     public async get(
         idOrEntity: string | object,
         name: string,
-        callback?: AbstractCallback<AttachmentResult>): Promise<AttachmentResult> {
+        callback?: ErrorFirstCallback<AttachmentResult>): Promise<AttachmentResult> {
         const result = this._get(idOrEntity as any, name);
         PromiseUtil.passResultToCallback(result, callback);
         return result;
@@ -63,9 +63,9 @@ export class DocumentSessionAttachments
 
     public async getRevision(documentId: string, name: string, changeVector: string): Promise<AttachmentResult>;
     public async getRevision(documentId: string, name: string, changeVector: string,
-                             callback: AbstractCallback<AttachmentResult>): Promise<AttachmentResult>;
+                             callback: ErrorFirstCallback<AttachmentResult>): Promise<AttachmentResult>;
     public async getRevision(documentId: string, name: string, changeVector: string,
-                             callback?: AbstractCallback<AttachmentResult>): Promise<AttachmentResult> {
+                             callback?: ErrorFirstCallback<AttachmentResult>): Promise<AttachmentResult> {
         const operation = new GetAttachmentOperation(documentId, name, "Revision", changeVector);
         const result = this._session.operations.send(operation, this._sessionInfo);
         PromiseUtil.passResultToCallback(result, callback);

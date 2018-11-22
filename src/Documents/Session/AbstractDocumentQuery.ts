@@ -55,7 +55,7 @@ import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField";
 import { SpatialCriteria } from "../Queries/Spatial/SpatialCriteria";
 import { SessionBeforeQueryEventArgs } from "./SessionEvents";
 import { CmpXchg } from "./CmpXchg";
-import { AbstractCallback, ValueCallback } from "../../Types/Callbacks";
+import { ErrorFirstCallback, ValueCallback } from "../../Types/Callbacks";
 import { DocumentQueryCustomization } from "./DocumentQueryCustomization";
 import { FacetBase } from "../Queries/Facets/FacetBase";
 import { MoreLikeThisScope } from "../Queries/MoreLikeThis/MoreLikeThisScope";
@@ -1879,7 +1879,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             });
     }
 
-    public async all(callback?: AbstractCallback<T[]>): Promise<T[]> {
+    public async all(callback?: ErrorFirstCallback<T[]>): Promise<T[]> {
         callback = callback || TypeUtil.NOOP;
         const result = BluebirdPromise.resolve(this.iterator())
             .then((entries) => [...entries])
@@ -1894,7 +1894,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             .then(() => this._queryOperation.getCurrentQueryResults().createSnapshot());
     }
 
-    public async first(callback?: AbstractCallback<T>): Promise<T> {
+    public async first(callback?: ErrorFirstCallback<T>): Promise<T> {
         callback = callback || TypeUtil.NOOP;
         const resultPromise = this._executeQueryOperation(2)
             .then(entries => {
@@ -1909,7 +1909,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         return resultPromise;
     }
 
-    public async firstOrNull(callback?: AbstractCallback<T>): Promise<T> {
+    public async firstOrNull(callback?: ErrorFirstCallback<T>): Promise<T> {
         callback = callback || TypeUtil.NOOP;
         const resultPromise = this._executeQueryOperation(1)
             .then(entries => entries[0] || null);
@@ -1918,7 +1918,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         return resultPromise;
     }
 
-    public async single(callback?: AbstractCallback<T>): Promise<T> {
+    public async single(callback?: ErrorFirstCallback<T>): Promise<T> {
         callback = callback || TypeUtil.NOOP;
         const resultPromise = this._executeQueryOperation(2)
             .then(entries => {
@@ -1934,7 +1934,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         return resultPromise;
     }
 
-    public async singleOrNull(callback?: AbstractCallback<T>): Promise<T> {
+    public async singleOrNull(callback?: ErrorFirstCallback<T>): Promise<T> {
         callback = callback || TypeUtil.NOOP;
         const resultPromise = this._executeQueryOperation(2)
             .then(entries => entries.length === 1 ? entries[0] : null);
@@ -1943,7 +1943,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         return resultPromise;
     }
 
-    public async count(callback?: AbstractCallback<number>): Promise<number> {
+    public async count(callback?: ErrorFirstCallback<number>): Promise<number> {
         callback = callback || TypeUtil.NOOP;
         this._take(0);
         const result = BluebirdPromise.resolve(this.getQueryResult())

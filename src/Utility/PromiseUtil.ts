@@ -1,5 +1,5 @@
 import * as BluebirdPromise from "bluebird";
-import { AbstractCallback } from "./../Types/Callbacks";
+import { ErrorFirstCallback } from "./../Types/Callbacks";
 import { VError } from "verror";
 import { getError } from "../Exceptions";
 
@@ -32,7 +32,7 @@ export function raceToResolution<TResult>(
     });
 }
 
-export function passResultToCallback<T>(p: Promise<T>, callback: AbstractCallback<T>): void {
+export function passResultToCallback<T>(p: Promise<T>, callback: ErrorFirstCallback<T>): void {
     if (!callback) {
         return;
     }

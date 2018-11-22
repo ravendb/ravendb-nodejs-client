@@ -30,7 +30,7 @@ import { DateUtil } from "../../Utility/DateUtil";
 import { ObjectUtil } from "../../Utility/ObjectUtil";
 import { IncludesUtil } from "./IncludesUtil";
 import { TypeUtil } from "../../Utility/TypeUtil";
-import { AbstractCallback } from "../../Types/Callbacks";
+import { ErrorFirstCallback } from "../../Types/Callbacks";
 import { DocumentType } from "../DocumentAbstractions";
 import { IdTypeAndName } from "../IdTypeAndName";
 import { BatchOptions } from "../Commands/Batches/BatchOptions";
@@ -835,28 +835,28 @@ export abstract class InMemoryDocumentSessionOperations
         entity: TEntity): Promise<void>;
     public store<TEntity extends object>(
         entity: TEntity,
-        callback?: AbstractCallback<void>): Promise<void>;
+        callback?: ErrorFirstCallback<void>): Promise<void>;
     public store<TEntity extends object>(
         entity: TEntity,
         id?: string,
-        callback?: AbstractCallback<void>): Promise<void>;
+        callback?: ErrorFirstCallback<void>): Promise<void>;
     public store<TEntity extends object>(
         entity: TEntity,
         id?: string,
         documentType?: DocumentType<TEntity>,
-        callback?: AbstractCallback<void>): Promise<void>;
+        callback?: ErrorFirstCallback<void>): Promise<void>;
     public store<TEntity extends object>(
         entity: TEntity,
         id?: string,
         options?: StoreOptions<TEntity>,
-        callback?: AbstractCallback<void>): Promise<void>;
+        callback?: ErrorFirstCallback<void>): Promise<void>;
     public store<TEntity extends object>(
         entity: TEntity,
         idOrCallback?:
-            string | AbstractCallback<void>,
+            string | ErrorFirstCallback<void>,
         docTypeOrOptionsOrCallback?:
-            DocumentType<TEntity> | StoreOptions<TEntity> | AbstractCallback<void>,
-        callback?: AbstractCallback<void>): Promise<void> {
+            DocumentType<TEntity> | StoreOptions<TEntity> | ErrorFirstCallback<void>,
+        callback?: ErrorFirstCallback<void>): Promise<void> {
 
         let id: string = null;
         let documentType: DocumentType<TEntity> = null;
@@ -867,7 +867,7 @@ export abstract class InMemoryDocumentSessionOperations
             // if it's a string and registered type
             id = idOrCallback as string;
         } else if (TypeUtil.isFunction(idOrCallback)) {
-            callback = idOrCallback as AbstractCallback<void>;
+            callback = idOrCallback as ErrorFirstCallback<void>;
         } else {
             throwError("InvalidArgumentException", "Invalid 2nd parameter: must be id string or callback.");
         }
@@ -876,7 +876,7 @@ export abstract class InMemoryDocumentSessionOperations
         if (TypeUtil.isDocumentType<TEntity>(docTypeOrOptionsOrCallback)) {
             documentType = docTypeOrOptionsOrCallback as DocumentType<TEntity>;
         } else if (TypeUtil.isFunction(docTypeOrOptionsOrCallback)) {
-            callback = docTypeOrOptionsOrCallback as AbstractCallback<void>;
+            callback = docTypeOrOptionsOrCallback as ErrorFirstCallback<void>;
         } else if (TypeUtil.isObject(docTypeOrOptionsOrCallback)) {
             options = docTypeOrOptionsOrCallback as StoreOptions<TEntity>;
         }
