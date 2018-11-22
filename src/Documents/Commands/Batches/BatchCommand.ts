@@ -89,21 +89,6 @@ export class BatchCommand extends RavenCommand<IRavenArrayResult> implements IDi
         }
 
         return request;
-        /* TBD: attachments - TODO: delete me?
-
-        if (_attachmentStreams != null && _attachmentStreams.Count > 0)
-        {
-            var multipartContent = new MultipartContent {request.Content};
-            foreach (var stream in _attachmentStreams)
-            {
-                PutAttachmentCommandHelper.PrepareStream(stream);
-                var streamContent = new AttachmentStreamContent(stream, CancellationToken);
-                streamContent.Headers.TryAddWithoutValidation("Command-Type", "AttachmentStream");
-                multipartContent.Add(streamContent);
-            }
-            request.Content = multipartContent;
-        }
-            */
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {

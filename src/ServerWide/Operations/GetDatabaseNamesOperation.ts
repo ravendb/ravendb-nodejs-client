@@ -44,21 +44,6 @@ export class GetDatabaseNamesCommand extends RavenCommand<string[]> {
         return { uri };
     }
 
-    public setResponse(response: string, fromCache: boolean): void { //TODO: do we need this method?
-        if (!response) {
-            this._throwInvalidResponse();
-            return;
-        }
-
-        const { databases } =
-            this._serializer.deserialize<IRavenResponse>(response) as { databases: string[] };
-        if (!databases || !Array.isArray(databases) || !databases.length) {
-            this._throwInvalidResponse();
-        }
-
-        this.result = databases;
-    }
-
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         if (!bodyStream) {
             this._throwInvalidResponse();

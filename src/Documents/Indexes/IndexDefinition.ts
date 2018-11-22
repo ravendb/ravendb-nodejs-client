@@ -26,7 +26,6 @@ export class IndexDefinition {
     public reduce: string;
     public fields: { [fieldName: string]: IndexFieldOptions } = {};
     public configuration: IndexConfiguration = {};
-    // TBD 4.1 private boolean testIndex;
     public outputReduceToCollection: string;
 
     //TODO: public toJSON() {
@@ -55,10 +54,6 @@ export class IndexDefinition {
         }
         return "MapReduce";
     }
-
-    // TODO remove? TBD 4.1 public boolean isTestIndex()
-
-    // TODO remove? TBD 4.1 public void setTestIndex(boolean testIndex)
 
 }
 
