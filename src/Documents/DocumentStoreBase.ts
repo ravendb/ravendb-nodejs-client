@@ -24,6 +24,9 @@ import { BulkInsertOperation } from "./BulkInsertOperation";
 import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
 import { DocumentSubscriptions } from "./Subscriptions/DocumentSubscriptions";
 import { DocumentStore } from "./DocumentStore";
+import { AbstractCallback } from "../Types/Callbacks";
+import { TypeUtil } from "../Utility/TypeUtil";
+import { passResultToCallback } from "../Utility/PromiseUtil";
 
 export abstract class DocumentStoreBase
     extends EventEmitter
@@ -63,35 +66,49 @@ export abstract class DocumentStoreBase
     public abstract openSession(sessionOptions: SessionOptions): IDocumentSession;
 
     public executeIndex(task: AbstractIndexCreationTask): Promise<void>;
-    public executeIndex(task: AbstractIndexCreationTask, database?: string): Promise<void>;
-    public executeIndex(task: AbstractIndexCreationTask, database?: string): Promise<void> {
+    public executeIndex(task: AbstractIndexCreationTask, database: string): Promise<void>;
+    public executeIndex(task: AbstractIndexCreationTask, callback: AbstractCallback<void>): Promise<void>;
+    public executeIndex(
+        task: AbstractIndexCreationTask, 
+        database: string, 
+        callback: AbstractCallback<void>): Promise<void>;
+    public executeIndex(
+        task: AbstractIndexCreationTask, 
+        databaseOrCallback?: string | AbstractCallback<void>, 
+        callback?: AbstractCallback<void>): Promise<void> {
         this.assertInitialized();
-        return task.execute(this, this.conventions, database);
+        const database = TypeUtil.isFunction(databaseOrCallback)
+            ? null
+            : databaseOrCallback as string;
+        const resultPromise = task.execute(this, this.conventions, database);
+        passResultToCallback(resultPromise, callback || TypeUtil.NOOP);
+        return resultPromise;
     }
 
-    // TODO: public void executeIndex(AbstractIndexCreationTask task) {
-    //     executeIndex(task, null);
-    // }
+    public async executeIndexes(tasks: AbstractIndexCreationTask[]): Promise<void>;
+    public async executeIndexes(
+        tasks: AbstractIndexCreationTask[], callback: AbstractCallback<void>): Promise<void>;
+    public async executeIndexes(tasks: AbstractIndexCreationTask[], database: string): Promise<void>;
+    public async executeIndexes(
+        tasks: AbstractIndexCreationTask[], database: string, callback: AbstractCallback<void>): Promise<void>;
+    public async executeIndexes(
+        tasks: AbstractIndexCreationTask[], 
+        databaseOrCallback?: string | AbstractCallback<void>, 
+        callback?: AbstractCallback<void>): Promise<void> {
+        this.assertInitialized();
+        const indexesToAdd = IndexCreation.createIndexesToAdd(tasks, this.conventions);
+        const database = TypeUtil.isFunction(databaseOrCallback)
+            ? null
+            : databaseOrCallback as string;
 
-    // TODO: public void executeIndex(AbstractIndexCreationTask task, String database) {
-    //     assertInitialized();
-    //     task.execute(this, conventions, database);
-    // }
-
-    // TODO: @Override
-    // public void executeIndexes(List<AbstractIndexCreationTask> tasks) {
-    //     executeIndexes(tasks, null);
-    // }
-
-    // TODO: @Override
-    // public void executeIndexes(List<AbstractIndexCreationTask> tasks, String database) {
-    //     assertInitialized();
-    //     IndexDefinition[] indexesToAdd = IndexCreation.createIndexesToAdd(tasks, conventions);
-
-    // TODO:     maintenance()
-    //             .forDatabase(ObjectUtils.firstNonNull(database, getDatabase()))
-    //             .send(new PutIndexesOperation(indexesToAdd));
-    // }
+        const resultPromise = this.maintenance
+            .forDatabase(database || this.database)
+            .send(new PutIndexesOperation(...indexesToAdd))
+            .then(() => {});
+        
+        passResultToCallback(resultPromise, callback || TypeUtil.NOOP);
+        return resultPromise;
+    }
 
     private _conventions: DocumentConventions;
 
@@ -233,25 +250,6 @@ export abstract class DocumentStoreBase
     public abstract maintenance: MaintenanceOperationExecutor;
 
     public abstract operations: OperationExecutor;
-
-    public executeIndexes(tasks: AbstractIndexCreationTask[]): Promise<void>;
-    public executeIndexes(tasks: AbstractIndexCreationTask[], database: string): Promise<void>;
-    public executeIndexes(tasks: AbstractIndexCreationTask[], database?: string): Promise<void> {
-
-        this.assertInitialized();
-
-        return Promise.resolve()
-            .then(() => {
-                const indexesToAdd = IndexCreation.createIndexesToAdd(tasks, this.conventions);
-
-                return this.maintenance
-                    .forDatabase(database || this.database)
-                    .send(new PutIndexesOperation(...indexesToAdd));
-            })
-            // tslint:disable-next-line:no-empty
-            .then(() => {
-            });
-    }
 
     protected _assertValidConfiguration(): void {
         this.conventions.validate();

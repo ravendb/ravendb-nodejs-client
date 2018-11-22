@@ -17,6 +17,7 @@ import { InMemoryDocumentSessionOperations } from "./Session/InMemoryDocumentSes
 import { BulkInsertOperation } from "./BulkInsertOperation";
 import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
 import { DocumentSubscriptions } from "./Subscriptions/DocumentSubscriptions";
+import { AbstractCallback } from "../Types/Callbacks";
 
 export interface SessionEventsProxy {
     addSessionListener(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
@@ -146,12 +147,33 @@ export interface IDocumentStore extends IDisposable,
     /**
      * Executes the index creation
      */
+    executeIndex(task: AbstractIndexCreationTask, callback: AbstractCallback<void>): Promise<void>;
+
+    /**
+     * Executes the index creation
+     */
+    executeIndex(task: AbstractIndexCreationTask, database: string, callback: AbstractCallback<void>): Promise<void>;
+
+    /**
+     * Executes the index creation
+     */
     executeIndexes(tasks: AbstractIndexCreationTask[]): Promise<void>;
 
     /**
      * Executes the index creation
      */
     executeIndexes(tasks: AbstractIndexCreationTask[], database: string): Promise<void>;
+
+    /**
+     * Executes the index creation
+     */
+    executeIndexes(tasks: AbstractIndexCreationTask[], callback: AbstractCallback<void>): Promise<void>;
+
+    /**
+     * Executes the index creation
+     */
+    executeIndexes(
+        tasks: AbstractIndexCreationTask[], database: string, callback: AbstractCallback<void>): Promise<void>;
 
     /**
      * Contains authentication information: client certificate data;
