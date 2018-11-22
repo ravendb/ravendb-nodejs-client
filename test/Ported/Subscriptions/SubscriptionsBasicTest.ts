@@ -16,12 +16,7 @@ import { getError, throwError } from "../../../src/Exceptions";
 import { TypeUtil } from "../../../src/Utility/TypeUtil";
 import { delay } from "bluebird";
 
-const is41 = process.env["RAVENDB_SERVER_VERSION"] === "4.1";
-
-// skipped for the time being
-// subscriptions are not working with server version 4.1
-// due to RavenDB-12127
-(is41 ? describe.skip : describe)("SubscriptionsBasicTest", function () {
+describe("SubscriptionsBasicTest", function () {
     const _reasonableWaitTime = 5 * 1000;
     this.timeout(5 * _reasonableWaitTime);
 
