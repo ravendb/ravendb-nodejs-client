@@ -252,6 +252,8 @@ export * from "./Documents/Operations/Attachments/GetAttachmentOperation";
 // CHANGES
 export * from "./Documents/Changes/IndexChange";
 export * from "./Documents/Changes/DocumentChange";
+export * from "./Documents/Changes/CounterChange";
+export * from "./Documents/Changes/IDatabaseChanges";
 export * from "./Documents/Changes/DatabaseChange";
 export * from "./Documents/Changes/OperationStatusChange";
 export * from "./Documents/Changes/IDatabaseChanges";
