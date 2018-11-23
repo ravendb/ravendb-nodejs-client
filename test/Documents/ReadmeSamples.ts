@@ -450,12 +450,7 @@ describe("Readme query samples", function () {
             }
         });
 
-        const is41 = process.env["RAVENDB_SERVER_VERSION"] === "4.1";
-
-        // skipped for the time being
-        // subscriptions are not working with server version 4.1
-        // due to RavenDB-12127
-        (is41 ? it.skip : it)("can subscribe", async () => {
+        it("can subscribe", async () => {
 
             // create a subscription
             const subscriptionName = await store.subscriptions.create({

@@ -5,6 +5,9 @@ import { CaseInsensitiveKeysMap } from "../../Primitives/CaseInsensitiveKeysMap"
 import { CONSTANTS } from "../../Constants";
 import { GetCountersOperation } from "../Operations/Counters/GetCountersOperation";
 import { ObjectUtil } from "../../Utility/ObjectUtil";
+import { ErrorFirstCallback } from "../../Types/Callbacks";
+import { passResultToCallback } from "../../Utility/PromiseUtil";
+import { TypeUtil } from "../../Utility/TypeUtil";
 
 export class SessionDocumentCounters extends SessionCountersBase implements ISessionDocumentCounters {
 
@@ -14,7 +17,15 @@ export class SessionDocumentCounters extends SessionCountersBase implements ISes
         super(session, entityOrId);
     }
 
-    public async getAll(): Promise<{ [key: string]: number }> {
+    public async getAll(): Promise<{ [key: string]: number }>;
+    public async getAll(callback: ErrorFirstCallback<{ [key: string]: number }>): Promise<{ [key: string]: number }>;
+    public async getAll(callback?: ErrorFirstCallback<{ [key: string]: number }>): Promise<{ [key: string]: number }> {
+        const resultPromise = this._getAll();
+        passResultToCallback(resultPromise, callback || TypeUtil.NOOP);
+        return resultPromise;
+    }
+
+    private async _getAll() {
         let cache = this._session.countersByDocId.get(this._docId);
         if (!cache) {
             cache = {
@@ -62,11 +73,19 @@ export class SessionDocumentCounters extends SessionCountersBase implements ISes
     }
 
     public async get(counter: string): Promise<number>;
+    public async get(counter: string, callback: ErrorFirstCallback<number>): Promise<number>;
     public async get(counters: string[]): Promise<{ [key: string]: number }>;
-    public async get(counters: string | string[]): Promise<any> {
-        return Array.isArray(counters)
+    public async get(
+        counters: string[], 
+        callback: ErrorFirstCallback<{ [key: string]: number }>): Promise<{ [key: string]: number }>;
+    public async get(
+        counters: string | string[], 
+        callback?: ErrorFirstCallback<number> | ErrorFirstCallback<{ [key: string]: number }>): Promise<any> {
+        const resultPromise = Array.isArray(counters)
             ? this._getCounters(counters)
             : this._getCounter(counters);
+        passResultToCallback(resultPromise as any, callback || TypeUtil.NOOP);
+        return resultPromise;
     }
 
     private async _getCounter(counter: string): Promise<number> {

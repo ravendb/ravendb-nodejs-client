@@ -1,7 +1,7 @@
 import { RevisionsCollectionObject } from "../../Types";
 import { DocumentType } from "../DocumentAbstractions";
 import { MetadataAsDictionary } from "../../Mapping/MetadataAsDictionary";
-import { AbstractCallback } from "../../Types/Callbacks";
+import { ErrorFirstCallback } from "../../Types/Callbacks";
 
 /**
  * Revisions advanced session operations
@@ -18,7 +18,7 @@ export interface IRevisionsSessionOperations {
      * Returns all previous document revisions for specified document
      *  ordered by most recent revisions first.
      */
-    getFor<TEntity extends object>(id: string, callback: AbstractCallback<TEntity[]>): Promise<TEntity[]>;
+    getFor<TEntity extends object>(id: string, callback: ErrorFirstCallback<TEntity[]>): Promise<TEntity[]>;
 
     /**
      * Returns previous document revisions for specified document (with optional paging)
@@ -34,7 +34,7 @@ export interface IRevisionsSessionOperations {
     getFor<TEntity extends object>(
         id: string,
         options: SessionRevisionsOptions<TEntity>,
-        callback: AbstractCallback<TEntity[]>): Promise<TEntity[]>;
+        callback: ErrorFirstCallback<TEntity[]>): Promise<TEntity[]>;
 
     /**
      * Returns metadata of all previous document revisions for specified document
@@ -46,7 +46,7 @@ export interface IRevisionsSessionOperations {
      * Returns metadata of all previous document revisions for specified document
      *  ordered by most recent revisions first.
      */
-    getMetadataFor(id: string, callback: AbstractCallback<MetadataAsDictionary[]>): Promise<MetadataAsDictionary[]>;
+    getMetadataFor(id: string, callback: ErrorFirstCallback<MetadataAsDictionary[]>): Promise<MetadataAsDictionary[]>;
 
     /**
      * Returns metadata of previous document revisions for specified document (with optional paging)
@@ -59,7 +59,7 @@ export interface IRevisionsSessionOperations {
      *  ordered by most recent revisions first.
      */
     getMetadataFor(id: string, options: SessionRevisionsMetadataOptions,
-                   callback: AbstractCallback<MetadataAsDictionary[]>): Promise<MetadataAsDictionary[]>;
+                   callback: ErrorFirstCallback<MetadataAsDictionary[]>): Promise<MetadataAsDictionary[]>;
 
     /**
      * Returns a document revision by date.
@@ -69,7 +69,7 @@ export interface IRevisionsSessionOperations {
      * Returns a document revision by date.
      */
     get<TEntity extends object>(
-        id: string, date: Date, callback: AbstractCallback<TEntity>): Promise<TEntity>;
+        id: string, date: Date, callback: ErrorFirstCallback<TEntity>): Promise<TEntity>;
     /**
      * Returns a document revision by change vector.
      */
@@ -78,7 +78,7 @@ export interface IRevisionsSessionOperations {
     /**
      * Returns a document revision by change vector.
      */
-    get<TEntity extends object>(changeVector: string, callback: AbstractCallback<TEntity>): Promise<TEntity>;
+    get<TEntity extends object>(changeVector: string, callback: ErrorFirstCallback<TEntity>): Promise<TEntity>;
 
     /**
      * Returns a document revision by change vector.
@@ -89,7 +89,7 @@ export interface IRevisionsSessionOperations {
      * Returns a document revision by change vector.
      */
     get<TEntity extends object>(changeVector: string, documentType: DocumentType<TEntity>,
-                                callback: AbstractCallback<TEntity>): Promise<TEntity>;
+                                callback: ErrorFirstCallback<TEntity>): Promise<TEntity>;
 
     /**
      * Returns a document revision by change vectors.
@@ -100,7 +100,7 @@ export interface IRevisionsSessionOperations {
      * Returns a document revision by change vectors.
      */
     get<TEntity extends object>(changeVectors: string[],
-                                callback: AbstractCallback<Map<string, TEntity>>)
+                                callback: ErrorFirstCallback<RevisionsCollectionObject<TEntity>>)
         : Promise<RevisionsCollectionObject<TEntity>>;
 
     /**
@@ -115,7 +115,7 @@ export interface IRevisionsSessionOperations {
      */
     get<TEntity extends object>(changeVectors: string[],
                                 documentType: DocumentType<TEntity>,
-                                callback: AbstractCallback<Map<string, TEntity>>)
+                                callback: ErrorFirstCallback<RevisionsCollectionObject<TEntity>>)
         : Promise<RevisionsCollectionObject<TEntity>>;
 }
 

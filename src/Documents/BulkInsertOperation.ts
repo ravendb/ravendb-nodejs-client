@@ -18,7 +18,7 @@ import { EntityToJson } from "./Session/EntityToJson";
 import { KillOperationCommand } from "./Commands/KillOperationCommand";
 import { DocumentConventions } from "./Conventions/DocumentConventions";
 import { ServerNode } from "../Http/ServerNode";
-import { AbstractCallback } from "../Types/Callbacks";
+import { ErrorFirstCallback } from "../Types/Callbacks";
 import { passResultToCallback } from "../Utility/PromiseUtil";
 import { BatchOperation } from "./Session/Operations/BatchOperation";
 import { MetadataObject } from "./Session/MetadataObject";
@@ -81,9 +81,9 @@ export class BulkInsertOperation {
     }
 
     private static _typeCheckStoreArgs(
-        idOrMetadataOrCallback?: string | IMetadataDictionary | AbstractCallback<void>,
-        metadataOrCallback?: IMetadataDictionary | AbstractCallback<void>,
-        callback?: AbstractCallback<void>):
+        idOrMetadataOrCallback?: string | IMetadataDictionary | ErrorFirstCallback<void>,
+        metadataOrCallback?: IMetadataDictionary | ErrorFirstCallback<void>,
+        callback?: ErrorFirstCallback<void>):
         { id: string, getId: boolean, metadata: IMetadataDictionary, cb: () => void } {
 
         let id: string;
@@ -101,7 +101,7 @@ export class BulkInsertOperation {
             }
         } else {
             metadata = idOrMetadataOrCallback;
-            callback = metadataOrCallback as AbstractCallback<void>;
+            callback = metadataOrCallback as ErrorFirstCallback<void>;
             if (metadata && (CONSTANTS.Documents.Metadata.ID in metadata)) {
                 id = metadata[CONSTANTS.Documents.Metadata.ID];
             }
@@ -115,18 +115,18 @@ export class BulkInsertOperation {
     }
 
     public async store(entity: object);
-    public async store(entity: object, callback: AbstractCallback<void>);
+    public async store(entity: object, callback: ErrorFirstCallback<void>);
     public async store(entity: object, id: string);
     public async store(entity: object, metadata: IMetadataDictionary);
     public async store(entity: object, id: string, metadata: IMetadataDictionary);
-    public async store(entity: object, id: string, callback: AbstractCallback<void>);
-    public async store(entity: object, metadata: IMetadataDictionary, callback: AbstractCallback<void>);
-    public async store(entity: object, id: string, metadata: IMetadataDictionary, callback: AbstractCallback<void>);
+    public async store(entity: object, id: string, callback: ErrorFirstCallback<void>);
+    public async store(entity: object, metadata: IMetadataDictionary, callback: ErrorFirstCallback<void>);
+    public async store(entity: object, id: string, metadata: IMetadataDictionary, callback: ErrorFirstCallback<void>);
     public async store(
         entity: object,
-        idOrMetadataOrCallback?: string | IMetadataDictionary | AbstractCallback<void>,
-        metadataOrCallback?: IMetadataDictionary | AbstractCallback<void>,
-        callback?: AbstractCallback<void>) {
+        idOrMetadataOrCallback?: string | IMetadataDictionary | ErrorFirstCallback<void>,
+        metadataOrCallback?: IMetadataDictionary | ErrorFirstCallback<void>,
+        callback?: ErrorFirstCallback<void>) {
         let opts: { id: string, getId: boolean, metadata: IMetadataDictionary, cb: () => void };
         try {
             // tslint:disable-next-line:prefer-const
@@ -285,8 +285,8 @@ export class BulkInsertOperation {
     }
 
     public async abort(): Promise<void>;
-    public async abort(callback: AbstractCallback<void>): Promise<void>;
-    public async abort(callback?: AbstractCallback<void>): Promise<void> {
+    public async abort(callback: ErrorFirstCallback<void>): Promise<void>;
+    public async abort(callback?: ErrorFirstCallback<void>): Promise<void> {
         const abortPromise = this._abortAsync();
         passResultToCallback(abortPromise, callback);
         return await abortPromise;
@@ -313,8 +313,8 @@ export class BulkInsertOperation {
     }
 
     public async finish(): Promise<void>;
-    public async finish(callback: AbstractCallback<void>): Promise<void>;
-    public async finish(callback?: AbstractCallback<void>): Promise<void> {
+    public async finish(callback: ErrorFirstCallback<void>): Promise<void>;
+    public async finish(callback?: ErrorFirstCallback<void>): Promise<void> {
         const finishPromise = this._finishAsync();
         passResultToCallback(finishPromise, callback);
         return finishPromise;

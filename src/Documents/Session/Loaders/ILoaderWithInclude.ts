@@ -1,6 +1,6 @@
 import { DocumentType } from "../../DocumentAbstractions";
 import { EntitiesCollectionObject } from "../../..";
-import { AbstractCallback } from "../../../Types/Callbacks";
+import { ErrorFirstCallback } from "../../../Types/Callbacks";
 
 export interface ILoaderWithInclude {
 
@@ -22,7 +22,7 @@ export interface ILoaderWithInclude {
     load<TResult extends object>(
         id: string,
         documentType?: DocumentType<TResult>,
-        callback?: AbstractCallback<TResult>): Promise<TResult>;
+        callback?: ErrorFirstCallback<TResult>): Promise<TResult>;
 
     /**
      * Loads the specified ids.
@@ -30,5 +30,5 @@ export interface ILoaderWithInclude {
     load<TResult extends object>(
         ids: string[],
         documentType?: DocumentType<TResult>,
-        callback?: AbstractCallback<TResult>): Promise<EntitiesCollectionObject<TResult>>;
+        callback?: ErrorFirstCallback<TResult>): Promise<EntitiesCollectionObject<TResult>>;
 }

@@ -33,7 +33,7 @@ export class ObjectKeyCaseTransformStream extends stream.Transform {
     constructor(private _opts: ObjectKeyCaseTransformStreamOptions) {
         super({ objectMode: true });
 
-        this._opts = Object.assign({}, DEFAULT_OBJECT_KEY_CASE_TRANSFORM_OPTS, this._opts); //TODO:
+        this._opts = Object.assign({}, DEFAULT_OBJECT_KEY_CASE_TRANSFORM_OPTS, this._opts);
         ObjectKeyCaseTransformStream._validateOpts(_opts);
 
         if (typeof _opts.extractIgnorePaths === "function") {

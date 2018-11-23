@@ -1,3 +1,5 @@
+import { ErrorFirstCallback } from "../../Types/Callbacks";
+
 /**
  *  Counters advanced synchronous session operations
  */
@@ -9,14 +11,29 @@ export interface ISessionDocumentCounters extends ISessionDocumentCountersBase {
     getAll(): Promise<{ [key: string]: number }>;
 
    /**
+    * Returns all the counters for a document.
+    */
+    getAll(callback: ErrorFirstCallback<{ [key: string]: number }>): Promise<{ [key: string]: number }>;
+
+   /**
     * Returns the counter by the counter name.
     */
    get(counter: string): Promise<number>;
+
+   /**
+    * Returns the counter by the counter name.
+    */
+   get(counter: string, callback: ErrorFirstCallback<number>): Promise<number>;
    
    /**
     * Returns the map of counter values by counter names
     */
    get(counters: string[]): Promise<{ [key: string]: number }>;
+
+   /**
+    * Returns the map of counter values by counter names
+    */
+   get(counters: string[], callback: ErrorFirstCallback<{ [key: string]: number }>): Promise<{ [key: string]: number }>;
 }
 
 /**

@@ -9,7 +9,7 @@ import { MetadataAsDictionary } from "../../Mapping/MetadataAsDictionary";
 import { GetRevisionOperation } from "./Operations/GetRevisionOperation";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { DocumentType } from "../DocumentAbstractions";
-import { AbstractCallback } from "../../Types/Callbacks";
+import { ErrorFirstCallback } from "../../Types/Callbacks";
 import * as PromiseUtil from "../../Utility/PromiseUtil";
 import { RevisionsCollectionObject } from "../../Types";
 
@@ -20,17 +20,18 @@ export class DocumentSessionRevisions extends AdvancedSessionExtensionBase imple
     }
 
     public async getFor<TEntity extends object>(id: string): Promise<TEntity[]>;
-    public async getFor<TEntity extends object>(id: string, callback: AbstractCallback<TEntity[]>): Promise<TEntity[]>;
+    public async getFor<TEntity extends object>(
+        id: string, callback: ErrorFirstCallback<TEntity[]>): Promise<TEntity[]>;
     public async getFor<TEntity extends object>(
         id: string, options: SessionRevisionsOptions<TEntity>): Promise<TEntity[]>;
     public async getFor<TEntity extends object>(
         id: string, options: SessionRevisionsOptions<TEntity>,
-        callback: AbstractCallback<TEntity[]>): Promise<TEntity[]>;
+        callback: ErrorFirstCallback<TEntity[]>): Promise<TEntity[]>;
     public async getFor<TEntity extends object>(
-        id: string, optionsOrCallback?: SessionRevisionsOptions<TEntity> | AbstractCallback<TEntity[]>,
-        optionalCallback?: AbstractCallback<TEntity[]>): Promise<TEntity[]> {
+        id: string, optionsOrCallback?: SessionRevisionsOptions<TEntity> | ErrorFirstCallback<TEntity[]>,
+        optionalCallback?: ErrorFirstCallback<TEntity[]>): Promise<TEntity[]> {
 
-        const callback: AbstractCallback<TEntity[]>
+        const callback: ErrorFirstCallback<TEntity[]>
             = TypeUtil.isFunction(optionsOrCallback) ? optionsOrCallback : optionalCallback;
 
         const sourceOptions = TypeUtil.isFunction(optionsOrCallback)
@@ -61,19 +62,19 @@ export class DocumentSessionRevisions extends AdvancedSessionExtensionBase imple
 
     public async getMetadataFor(id: string): Promise<MetadataAsDictionary[]>;
     public async getMetadataFor(id: string,
-                                callback: AbstractCallback<MetadataAsDictionary[]>): Promise<MetadataAsDictionary[]>;
+                                callback: ErrorFirstCallback<MetadataAsDictionary[]>): Promise<MetadataAsDictionary[]>;
     public async getMetadataFor(id: string, options: SessionRevisionsMetadataOptions):
         Promise<MetadataAsDictionary[]>;
     public async getMetadataFor(id: string, options: SessionRevisionsMetadataOptions,
-                                callback: AbstractCallback<MetadataAsDictionary[]>):
+                                callback: ErrorFirstCallback<MetadataAsDictionary[]>):
         Promise<MetadataAsDictionary[]>;
     public async getMetadataFor(id: string,
                                 optionsOrCallback?: SessionRevisionsMetadataOptions
-                                    | AbstractCallback<MetadataAsDictionary[]>,
-                                optionalCallback?: AbstractCallback<MetadataAsDictionary[]>):
+                                    | ErrorFirstCallback<MetadataAsDictionary[]>,
+                                optionalCallback?: ErrorFirstCallback<MetadataAsDictionary[]>):
         Promise<MetadataAsDictionary[]> {
 
-        const callback: AbstractCallback<MetadataAsDictionary[]>
+        const callback: ErrorFirstCallback<MetadataAsDictionary[]>
             = TypeUtil.isFunction(optionsOrCallback) ? optionsOrCallback : optionalCallback;
 
         const sourceOptions = TypeUtil.isFunction(optionsOrCallback)
@@ -101,29 +102,29 @@ export class DocumentSessionRevisions extends AdvancedSessionExtensionBase imple
 
     public async get<TEntity extends object>(id: string, date: Date): Promise<TEntity>;
     public async get<TEntity extends object>(
-        id: string, date: Date, callback: AbstractCallback<TEntity>): Promise<TEntity>;
+        id: string, date: Date, callback: ErrorFirstCallback<TEntity>): Promise<TEntity>;
     public async get<TEntity extends object>(changeVector: string): Promise<TEntity>;
     public async get<TEntity extends object>(changeVector: string,
-                                             callback: AbstractCallback<TEntity>): Promise<TEntity>;
+                                             callback: ErrorFirstCallback<TEntity>): Promise<TEntity>;
     public async get<TEntity extends object>(changeVector: string,
                                              documentType: DocumentType<TEntity>): Promise<TEntity>;
     public async get<TEntity extends object>(changeVector: string,
                                              documentType: DocumentType<TEntity>,
-                                             callback: AbstractCallback<TEntity>): Promise<TEntity>;
+                                             callback: ErrorFirstCallback<TEntity>): Promise<TEntity>;
     public async get<TEntity extends object>(changeVectors: string[])
         : Promise<RevisionsCollectionObject<TEntity>>;
-    public async get<TEntity extends object>(changeVectors: string[], callback: AbstractCallback<TEntity>)
+    public async get<TEntity extends object>(changeVectors: string[], callback: ErrorFirstCallback<TEntity>)
         : Promise<RevisionsCollectionObject<TEntity>>;
     public async get<TEntity extends object>(changeVectors: string[], documentType: DocumentType<TEntity>)
         : Promise<RevisionsCollectionObject<TEntity>>;
     public async get<TEntity extends object>(changeVectors: string[],
                                              documentType: DocumentType<TEntity>,
-                                             callback: AbstractCallback<TEntity>)
+                                             callback: ErrorFirstCallback<TEntity>)
         : Promise<RevisionsCollectionObject<TEntity>>;
     public async get<TEntity extends object>(
         changeVectorOrVectorsOrId: string | string[],
-        documentTypeOrCallbackOrDate?: DocumentType<TEntity> | AbstractCallback<TEntity> | Date,
-        optionalCallback?: AbstractCallback<TEntity>)
+        documentTypeOrCallbackOrDate?: DocumentType<TEntity> | ErrorFirstCallback<TEntity> | Date,
+        optionalCallback?: ErrorFirstCallback<TEntity>)
         : Promise<RevisionsCollectionObject<TEntity> | TEntity> {
 
         const documentType = TypeUtil.isDocumentType(documentTypeOrCallbackOrDate)
@@ -132,7 +133,7 @@ export class DocumentSessionRevisions extends AdvancedSessionExtensionBase imple
         const callback = (TypeUtil.isDocumentType(documentTypeOrCallbackOrDate)
                 || TypeUtil.isDate(documentTypeOrCallbackOrDate))
             ? optionalCallback
-            : documentTypeOrCallbackOrDate as AbstractCallback<TEntity>;
+            : documentTypeOrCallbackOrDate as ErrorFirstCallback<TEntity>;
         
         let result: Promise<TEntity | RevisionsCollectionObject<TEntity>>;
         if (TypeUtil.isDate(documentTypeOrCallbackOrDate)) {

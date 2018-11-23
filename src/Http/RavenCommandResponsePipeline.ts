@@ -27,7 +27,7 @@ import {
 import { TypeUtil } from "../Utility/TypeUtil";
 import * as Asm from "stream-json/Assembler";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
-import { AbstractCallback } from "../Types/Callbacks";
+import { ErrorFirstCallback } from "../Types/Callbacks";
 
 export interface RavenCommandResponsePipelineOptions<TResult> {
     collectBody?: boolean | ((body: string) => void);
@@ -139,8 +139,8 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
     }
 
     public stream(src: stream.Stream): stream.Readable;
-    public stream(src: stream.Stream, dst: stream.Writable, callback: AbstractCallback<void>): stream.Stream;
-    public stream(src: stream.Stream, dst?: stream.Writable, callback?: AbstractCallback<void>): stream.Stream {
+    public stream(src: stream.Stream, dst: stream.Writable, callback: ErrorFirstCallback<void>): stream.Stream;
+    public stream(src: stream.Stream, dst?: stream.Writable, callback?: ErrorFirstCallback<void>): stream.Stream {
         const streams = this._buildUp(src);
         if (dst) {
             streams.push(dst);

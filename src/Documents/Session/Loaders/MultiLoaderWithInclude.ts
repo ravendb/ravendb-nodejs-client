@@ -4,7 +4,7 @@ import { IDocumentSessionImpl } from "../IDocumentSession";
 import { DocumentType } from "../../DocumentAbstractions";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { EntitiesCollectionObject } from "../../..";
-import { AbstractCallback } from "../../../Types/Callbacks";
+import { ErrorFirstCallback } from "../../../Types/Callbacks";
 
 /**
  * Fluent implementation for specifying include paths
@@ -33,7 +33,7 @@ export class MultiLoaderWithInclude implements ILoaderWithInclude {
     public async load<TResult extends object>(
         id: string,
         documentType?: DocumentType<TResult>,
-        callback?: AbstractCallback<TResult>): Promise<TResult>;
+        callback?: ErrorFirstCallback<TResult>): Promise<TResult>;
 
     /**
      * Loads the specified ids.
@@ -47,7 +47,7 @@ export class MultiLoaderWithInclude implements ILoaderWithInclude {
     public async load<TResult extends object>(
         ids: string | string[],
         documentType?: DocumentType<TResult>,
-        callback?: AbstractCallback<TResult | EntitiesCollectionObject<TResult>>)
+        callback?: ErrorFirstCallback<TResult | EntitiesCollectionObject<TResult>>)
         : Promise<TResult | EntitiesCollectionObject<TResult>> {
         callback = callback || TypeUtil.NOOP;
 
