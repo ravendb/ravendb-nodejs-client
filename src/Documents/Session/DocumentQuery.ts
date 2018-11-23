@@ -517,11 +517,6 @@ export class DocumentQuery<T extends object>
             query.on("afterQuery", listener as any);
         }
 
-        /* TODO AfterStreamExecutedCallback = AfterStreamExecutedCallback, should it be implemented?
-        for: 4.1: query.HighlightedFields = new List<HighlightedField>(HighlightedFields),
-        query.HighlighterPreTags = HighlighterPreTags,
-        query.HighlighterPostTags = HighlighterPostTags,
-        */
         query._disableEntitiesTracking = this._disableEntitiesTracking;
         query._disableCaching = this._disableCaching;
         // TBD ShowQueryTimings = ShowQueryTimings,

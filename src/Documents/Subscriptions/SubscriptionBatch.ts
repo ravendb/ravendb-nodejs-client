@@ -85,7 +85,6 @@ export class SubscriptionBatch<T extends object> {
 
             if (!item.exception) {
                 instance = curDoc;
-                //TODO: make sure above assignment is correct when entities has custom casing
 
                 if (!StringUtil.isNullOrEmpty(id)) {
                     this._generateEntityIdOnTheClient.trySetIdentity(instance, id);
