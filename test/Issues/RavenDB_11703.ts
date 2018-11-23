@@ -1,18 +1,13 @@
-import * as mocha from "mocha";
-import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import {
-    RavenErrorType,
-    GetNextOperationIdCommand,
     IDocumentStore,
-    DatabaseChange,
+    CounterChange,
+    IChangesObservable,
 } from "../../src";
 import { User } from "../Assets/Entities";
 import { timeout, delay } from "../../src/Utility/PromiseUtil";
-import { CounterChange, CounterChangeTypes } from "../../src/Documents/Changes/CounterChange";
-import { IChangesObservable } from "../../src/Documents/Changes/IChangesObservable";
 
 describe("RavenDB-11703", function () {
 
@@ -22,101 +17,109 @@ describe("RavenDB-11703", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("canGetNotificationAboutCounterIncrement", async () => {
-            const changes = store.changes();
-            await changes.ensureConnectedNow();
-            const observable = changes.forCountersOfDocument("users/1");
+        const changes = store.changes();
+        await changes.ensureConnectedNow();
+        const observable = changes.forCountersOfDocument("users/1");
 
-            const changesList: CounterChange[] = [];
-            observable.on("data", d => changesList.unshift(d));
-            const errored = new Promise((_, reject) => observable.on("error", reject));
+        const changesList: CounterChange[] = [];
+        observable.on("data", d => changesList.unshift(d));
+        const errored = new Promise((_, reject) => observable.on("error", reject));
 
-            async function act() {
-                {
-                    const session = store.openSession();
-                    const user = new User();
-                    await session.store(user, "users/1");
-                    await session.saveChanges();
-                }
-                {
-                    const session = store.openSession();
-                    session.countersFor("users/1").increment("likes");
-                    await session.saveChanges();
-                }
-                {
-                    const session = store.openSession();
-                    session.countersFor("users/1").increment("likes");
-                    await session.saveChanges();
-                }
+        async function act() {
+            {
+                const session = store.openSession();
+                const user = new User();
+                await session.store(user, "users/1");
+                await session.saveChanges();
             }
+            {
+                const session = store.openSession();
+                session.countersFor("users/1").increment("likes");
+                await session.saveChanges();
+            }
+            {
+                const session = store.openSession();
+                session.countersFor("users/1").increment("likes");
+                await session.saveChanges();
+            }
+            
+            await delay(100);
+        }
 
-            await Promise.race([ errored, timeout(2000), act() ]);
+        await Promise.race([errored, timeout(2000), act()]);
 
-            let counterChange = changesList.pop();
-            assert.ok(counterChange);
-            assert.strictEqual(counterChange.documentId, "users/1");
-            assert.strictEqual(counterChange.type, "Put");
-            assert.strictEqual(counterChange.name, "likes");
-            assert.strictEqual(counterChange.value, 1);
-            assert.ok(counterChange.changeVector);
+        assert.strictEqual(changesList.length, 2, "Expected exactly 2 changes to show up.");
 
-            counterChange = changesList.pop();
-            assert.ok(counterChange);
-            assert.strictEqual(counterChange.documentId, "users/1");
-            assert.strictEqual(counterChange.type, "Increment");
-            assert.strictEqual(counterChange.name, "likes");
-            assert.strictEqual(counterChange.value, 2);
-            assert.ok(counterChange.changeVector);
+        let counterChange = changesList.pop();
+        assert.ok(counterChange);
+        assert.strictEqual(counterChange.documentId, "users/1");
+        assert.strictEqual(counterChange.type, "Put");
+        assert.strictEqual(counterChange.name, "likes");
+        assert.strictEqual(counterChange.value, 1);
+        assert.ok(counterChange.changeVector);
+
+        counterChange = changesList.pop();
+        assert.ok(counterChange);
+        assert.strictEqual(counterChange.documentId, "users/1");
+        assert.strictEqual(counterChange.type, "Increment");
+        assert.strictEqual(counterChange.name, "likes");
+        assert.strictEqual(counterChange.value, 2);
+        assert.ok(counterChange.changeVector);
     });
 
     it("canGetNotificationAboutCounterDelete", async function () {
-            const changes = store.changes();
-            await changes.ensureConnectedNow();
-            const observable = changes.forCountersOfDocument("users/1");
+        const changes = store.changes();
+        await changes.ensureConnectedNow();
+        const observable = changes.forCountersOfDocument("users/1");
 
-            const changesList: CounterChange[] = [];
-            observable.on("data", d => changesList.unshift(d));
-            const errored = new Promise((_, reject) => observable.on("error", reject));
+        const changesList: CounterChange[] = [];
+        observable.on("data", d => changesList.unshift(d));
+        const errored = new Promise((_, reject) => observable.on("error", reject));
 
-            async function act() {
-                {
-                    const session = store.openSession();
-                    const user = new User();
-                    await session.store(user, "users/1");
-                    await session.saveChanges();
-                }
-                {
-                    const session = store.openSession();
-                    session.countersFor("users/1").increment("likes");
-                    await session.saveChanges();
-                }
-                {
-                    const session = store.openSession();
-                    session.countersFor("users/1").delete("likes");
-                    await session.saveChanges();
-                }
+        async function act() {
+            {
+                const session = store.openSession();
+                const user = new User();
+                await session.store(user, "users/1");
+                await session.saveChanges();
+            }
+            {
+                const session = store.openSession();
+                session.countersFor("users/1").increment("likes");
+                await session.saveChanges();
+            }
+            {
+                const session = store.openSession();
+                session.countersFor("users/1").delete("likes");
+                await session.saveChanges();
             }
 
-            await Promise.race([ errored, timeout(1000), act() ]);
+            await delay(100);
+        }
 
-            let counterChange = changesList.pop();
-            assert.ok(counterChange);
-            assert.strictEqual(counterChange.documentId, "users/1");
-            assert.strictEqual(counterChange.type, "Put");
-            assert.strictEqual(counterChange.name, "likes");
-            assert.strictEqual(counterChange.value, 1);
-            assert.ok(counterChange.changeVector);
+        await Promise.race([errored, timeout(2000), act()]);
+        
+        assert.strictEqual(changesList.length, 2, "Expected exactly 2 changes to show up.");
 
-            counterChange = changesList.pop();
-            assert.ok(counterChange);
-            assert.strictEqual(counterChange.documentId, "users/1");
-            assert.strictEqual(counterChange.type, "Delete");
-            assert.strictEqual(counterChange.name, "likes");
-            assert.strictEqual(counterChange.value, 0);
-            assert.ok(counterChange.changeVector);
+        let counterChange = changesList.pop();
+        assert.ok(counterChange);
+        assert.strictEqual(counterChange.documentId, "users/1");
+        assert.strictEqual(counterChange.type, "Put");
+        assert.strictEqual(counterChange.name, "likes");
+        assert.strictEqual(counterChange.value, 1);
+        assert.ok(counterChange.changeVector);
+
+        counterChange = changesList.pop();
+        assert.ok(counterChange);
+        assert.strictEqual(counterChange.documentId, "users/1");
+        assert.strictEqual(counterChange.type, "Delete");
+        assert.strictEqual(counterChange.name, "likes");
+        assert.strictEqual(counterChange.value, 0);
+        assert.ok(counterChange.changeVector);
 
     });
 
@@ -124,7 +127,7 @@ describe("RavenDB-11703", function () {
         const changesList: T[] = [];
         observable.on("data", d => changesList.unshift(d));
         const errored = new Promise((_, reject) => observable.on("error", reject));
-        await Promise.race([ errored, delay(ms) ]);
+        await Promise.race([errored, delay(ms)]);
         return changesList;
     }
 
