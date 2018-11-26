@@ -1,4 +1,4 @@
-import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";
+import { IDocumentSession, SessionOptions } from "./Session/IDocumentSession";
 import { IStoreAuthOptions } from "../Auth/AuthOptions";
 import {
     SessionBeforeStoreEventArgs,
@@ -86,12 +86,12 @@ export interface IDocumentStore extends IDisposable,
     /**
      * Opens document session
      */
-    openSession(options?: ISessionOptions): IDocumentSession;
+    openSession(options?: SessionOptions): IDocumentSession;
 
     /**
      * Opens document session
      */
-    openSession(database?: string, options?: ISessionOptions): IDocumentSession;
+    openSession(database?: string, options?: SessionOptions): IDocumentSession;
 
     /**
      * Subscribe to change notifications from the server

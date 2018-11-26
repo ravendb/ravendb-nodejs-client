@@ -158,7 +158,7 @@ export interface IDocumentSession extends IDisposable {
     query<T extends object>(documentType: DocumentType<T>): IDocumentQuery<T>;
 }
 
-export interface ISessionOptions {
+export interface SessionOptions {
     database?: string;
     requestExecutor?: RequestExecutor;
 }

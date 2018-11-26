@@ -8,7 +8,7 @@ import { DocumentStoreBase } from "./DocumentStoreBase";
 import { IDocumentStore } from "./IDocumentStore";
 import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor";
 import { OperationExecutor } from "./Operations/OperationExecutor";
-import { IDocumentSession, ISessionOptions } from "./Session/IDocumentSession";
+import { IDocumentSession, SessionOptions } from "./Session/IDocumentSession";
 import { DocumentSession } from "./Session/DocumentSession";
 import { HiloMultiDatabaseIdGenerator } from "./Identity/HiloMultiDatabaseIdGenerator";
 import { IAuthOptions } from "../Auth/AuthOptions";
@@ -152,11 +152,11 @@ export class DocumentStore extends DocumentStoreBase {
     /**
      * Opens document session
      */
-    public openSession(sessionOpts: ISessionOptions): IDocumentSession;
+    public openSession(sessionOpts: SessionOptions): IDocumentSession;
     /**
      * Opens document session
      */
-    public openSession(databaseOrSessionOptions?: string | ISessionOptions): IDocumentSession {
+    public openSession(databaseOrSessionOptions?: string | SessionOptions): IDocumentSession {
         this.assertInitialized();
         this._ensureNotDisposed();
 
@@ -167,11 +167,11 @@ export class DocumentStore extends DocumentStoreBase {
         }
 
         let database: string;
-        let sessionOpts: ISessionOptions;
+        let sessionOpts: SessionOptions;
         let requestExecutor: RequestExecutor;
         databaseOrSessionOptions = databaseOrSessionOptions || {};
         database = databaseOrSessionOptions.database || this._database;
-        sessionOpts = databaseOrSessionOptions as ISessionOptions;
+        sessionOpts = databaseOrSessionOptions as SessionOptions;
         requestExecutor = sessionOpts.requestExecutor || this.getRequestExecutor(database);
 
         const sessionId = uuid();
