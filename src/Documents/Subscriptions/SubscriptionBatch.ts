@@ -3,7 +3,7 @@ import {
     IDocumentSession,
     IDocumentStore,
     IMetadataDictionary,
-    ISessionOptions,
+    SessionOptions,
     RequestExecutor
 } from "../..";
 import { getLogger } from "../../Utility/LogUtil";
@@ -35,7 +35,7 @@ export class SubscriptionBatch<T extends object> {
         const sessionOptions = {
             database: this._dbName,
             requestExecutor: this._requestExecutor
-        } as ISessionOptions;
+        } as SessionOptions;
         return this._store.openSession(sessionOptions);
     }
 

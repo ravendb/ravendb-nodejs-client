@@ -12,8 +12,7 @@ import {
 } from "./Session/SessionEvents";
 import { Todo } from "../Types";
 import { OperationExecutor } from "./Operations/OperationExecutor";
-import { SessionOptions } from "http2";
-import { IDocumentSession } from "./Session/IDocumentSession";
+import { IDocumentSession, SessionOptions } from "./Session/IDocumentSession";
 import { DocumentSession } from "./Session/DocumentSession";
 import { AbstractIndexCreationTask } from "./Indexes";
 import { DocumentConventions } from "./Conventions/DocumentConventions";
