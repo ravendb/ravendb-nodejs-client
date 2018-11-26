@@ -12,7 +12,6 @@ import {
 } from "./Session/SessionEvents";
 import { Todo } from "../Types";
 import { OperationExecutor } from "./Operations/OperationExecutor";
-import { SessionOptions } from "http2";
 import { IDocumentSession } from "./Session/IDocumentSession";
 import { DocumentSession } from "./Session/DocumentSession";
 import { DocumentConventions } from "./Conventions/DocumentConventions";
@@ -29,6 +28,7 @@ import { CaseInsensitiveKeysMap } from "../Primitives/CaseInsensitiveKeysMap";
 import { ErrorFirstCallback } from "../Types/Callbacks";
 import { passResultToCallback } from "../Utility/PromiseUtil";
 import { AbstractIndexCreationTask } from "./Indexes/AbstractIndexCreationTask";
+import { SessionOptions } from "./Session/SessionOptions";
 
 export abstract class DocumentStoreBase
     extends EventEmitter
