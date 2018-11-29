@@ -243,6 +243,8 @@ export * from "./Documents/Queries/Facets/FacetBuilder";
 export * from "./Documents/Queries/Facets/Facet";
 export * from "./Documents/Queries/Facets/RangeFacet";
 export * from "./Documents/Queries/Facets/FacetBase";
+export * from "./Documents/Queries/Facets/FacetSetup";
+export * from "./Documents/Queries/Facets";
 export * from "./Documents/Queries/Highlighting/HighlightingOptions";
 export * from "./Documents/Queries/Highlighting/HighlightingParameters";
 export * from "./Documents/Queries/Highlighting/Hightlightings";
