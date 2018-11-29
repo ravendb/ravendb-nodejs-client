@@ -217,6 +217,9 @@ export * from "./Documents/Queries/Spatial/PointField";
 export * from "./Documents/Queries/Spatial/WktField";
 export * from "./Documents/Queries/Facets/RangeBuilder";
 export * from "./Documents/Queries/Facets/FacetBuilder";
+export * from "./Documents/Queries/Facets/Facet";
+export * from "./Documents/Queries/Facets/RangeFacet";
+export * from "./Documents/Queries/Facets/FacetBase";
 
 // ATTACHMENTS
 export * from "./Documents/Attachments";
