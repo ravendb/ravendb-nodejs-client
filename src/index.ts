@@ -220,6 +220,8 @@ export * from "./Documents/Queries/Facets/FacetBuilder";
 export * from "./Documents/Queries/Facets/Facet";
 export * from "./Documents/Queries/Facets/RangeFacet";
 export * from "./Documents/Queries/Facets/FacetBase";
+export * from "./Documents/Queries/Facets/FacetSetup";
+export * from "./Documents/Queries/Facets";
 
 // ATTACHMENTS
 export * from "./Documents/Attachments";
