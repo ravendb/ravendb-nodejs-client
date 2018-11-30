@@ -80,6 +80,13 @@ const IGNORE_MODULES = [
     "Documents/Subscriptions/SubscriptionStateWithNodeDetails*",
     "Documents/Subscriptions/SubscriptionTryout*",
     "Documents/Commands/**",
+    "Documents/Indexes/IndexTypeExtensions*",
+    "Documents/Indexes/AbstractIndexCreationTaskBase*",
+    "Documents/Session/ClusterTransactionOperationsBase*",
+    "Documents/Session/IAttachmentsSessionOperationsBase*",
+    "Documents/Session/SessionCountersBase*",
+    "Documents/Indexes/AbstractGenericIndexCreationTask*",
+    "Documents/Subscriptions/BatchFromServer*"
 ];
 
 function main() {

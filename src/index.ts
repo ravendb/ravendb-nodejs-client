@@ -164,6 +164,8 @@ export * from "./Documents/Operations/PatchStatus";
 export * from "./Documents/Operations/Revisions/ConfigureRevisionsOperation";
 export * from "./Documents/Operations/RevisionsCollectionConfiguration";
 export * from "./Documents/Operations/RevisionsConfiguration";
+export * from "./Documents/Operations/DetailedDatabaseStatistics";
+export * from "./Documents/Operations/SessionOperationExecutor";
 
 // INDEXES
 export { GetIndexOperation } from "./Documents/Operations/Indexes/GetIndexOperation";
@@ -249,6 +251,19 @@ export * from "./Documents/Session/IAttachmentsSessionOperations";
 export * from "./Documents/Session/IDocumentQueryCustomization";
 export * from "./Documents/Session/IRevisionsSessionOperations";
 export * from "./Documents/Session/ResponseTimeInformation";
+export * from "./Documents/Session/MetadataObject";
+export * from "./Documents/Session/TransactionMode";
+export * from "./Documents/Session/IClusterTransactionOperations";
+export * from "./Documents/Session/ISessionDocumentCounters";
+export * from "./Documents/Session/ClusterTransactionOperations";
+export * from "./Documents/Session/CounterInternalTypes";
+export * from "./Documents/Session/Loaders/IIncludeBuilder";
+export * from "./Documents/Session/Loaders/IncludeBuilder";
+export * from "./Documents/Session/Loaders/IncludeBuilderBase";
+export * from "./Documents/Session/Loaders/IQueryIncludeBuilder";
+export * from "./Documents/Session/Loaders/QueryIncludeBuilder";
+export * from "./Documents/Session/Operations/BatchCommandResult";
+export * from "./Documents/Session/SessionDocumentCounters";
 
 // BATCH
 export * from "./Documents/Commands/StreamResult";
@@ -273,6 +288,8 @@ export { CounterBatchOperation } from "./Documents/Operations/Counters/CounterBa
 export { CounterOperationType } from "./Documents/Operations/Counters/CounterOperationType";
 export { CounterOperation } from "./Documents/Operations/Counters/CounterOperation";
 export { DocumentCountersOperation } from "./Documents/Operations/Counters/DocumentCountersOperation";
+export * from "./Documents/Operations/Counters/CounterDetail";
+export * from "./Documents/Operations/Counters/CountersDetail";
 
 // AUTH
 export * from "./Auth/AuthOptions";
@@ -316,6 +333,9 @@ export * from "./Documents/Queries/Facets/GenericRangeFacet";
 export * from "./Documents/Queries/Facets/IAggregationDocumentQuery";
 export * from "./Documents/Queries/Facets/IFacetBuilder";
 export * from "./Documents/Queries/Facets/IFacetOperations";
+export * from "./Documents/Queries/Explanation/ExplanationOptions";
+export * from "./Documents/Queries/Explanation/Explanations";
+export * from "./Documents/Queries/Highlighting/QueryHighlightings";
 
 // MORE LIKE THIS
 export * from "./Documents/Queries/MoreLikeThis/IMoreLikeThisBuilderBase";
