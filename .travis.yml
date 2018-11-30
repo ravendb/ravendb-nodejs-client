@@ -32,6 +32,7 @@ before_install:
   - pwd && ls
 script:
   - npm run lint
+  - npm run check-exports
   - npm run test
   - npm run build
   - node -e "require('./dist').DocumentStore"

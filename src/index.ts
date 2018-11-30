@@ -9,7 +9,6 @@ export * from "./Http/AggressiveCacheOptions";
 export * from "./Http/ClusterRequestExecutor";
 export * from "./Http/ClusterTopology";
 export * from "./Http/CurrentIndexAndNode";
-// export * from "./Http/HttpCache";
 export * from "./Http/NodeSelector";
 export * from "./Http/RavenCommand";
 export * from "./Http/ReadBalanceBehavior";
@@ -130,6 +129,43 @@ export {
 } from "./Documents/Operations/Indexes/SetIndexesPriorityOperation";
 export * from "./Documents/Operations/PatchRequest";
 export * from "./Documents/Operations/GetDetailedStatisticsOperation";
+export * from "./Documents/Commands/Batches/BatchCommand";
+export * from "./Documents/Commands/Batches/BatchOptions";
+export * from "./Documents/Commands/Batches/DeleteAttachmentCommandData";
+export * from "./Documents/Commands/Batches/PatchCommandData";
+export * from "./Documents/Commands/Batches/PutAttachmentCommandData";
+export * from "./Documents/Commands/Batches/PutAttachmentCommandHelper";
+export * from "./Documents/Commands/CommandData";
+export * from "./ServerWide/Operations/GetDatabaseRecordOperation";
+export * from "./Documents/SetupDocumentBase";
+export * from "./Documents/Commands/StreamResultResponse";
+export * from "./Documents/Commands/StreamResult";
+export * from "./Documents/Session/Operations/BatchOperation";
+export * from "./Documents/Session/Operations/GetRevisionOperation";
+export * from "./Documents/Lazy";
+export * from "./Documents/Session/Operations/Lazy/IEagerSessionOperations";
+export * from "./Documents/Session/Operations/Lazy/ILazyOperation";
+export * from "./Documents/Session/Operations/Lazy/ILazySessionOperations";
+export * from "./Documents/Session/Operations/Lazy/LazyAggregationQueryOperation";
+export * from "./Documents/Session/Operations/Lazy/LazyLoadOperation";
+export * from "./Documents/Session/Operations/Lazy/LazyQueryOperation";
+export * from "./Documents/Session/Operations/Lazy/LazySessionOperations";
+export * from "./Documents/Session/Operations/Lazy/LazyStartsWithOperation";
+export * from "./Documents/Session/Operations/Lazy/LazySuggestionQueryOperation";
+export * from "./Documents/Session/Operations/LoadOperation";
+export * from "./Documents/Session/Operations/LoadStartingWithOperation";
+export * from "./Documents/Session/Operations/MultiGetOperation";
+export * from "./Documents/Session/Operations/QueryOperation";
+export * from "./Documents/Session/Operations/StreamOperation";
+export * from "./Documents/Operations/Attachments/DeleteAttachmentOperation";
+export * from "./Documents/Operations/Attachments/PutAttachmentOperation";
+export * from "./Documents/Operations/PatchResult";
+export * from "./Documents/Operations/PatchStatus";
+export * from "./Documents/Operations/Revisions/ConfigureRevisionsOperation";
+export * from "./Documents/Operations/RevisionsCollectionConfiguration";
+export * from "./Documents/Operations/RevisionsConfiguration";
+export * from "./Documents/Operations/DetailedDatabaseStatistics";
+export * from "./Documents/Operations/SessionOperationExecutor";
 
 // INDEXES
 export { GetIndexOperation } from "./Documents/Operations/Indexes/GetIndexOperation";
@@ -165,6 +201,7 @@ export * from "./Documents/Subscriptions/SubscriptionWorkerOptions";
 export * from "./Documents/Subscriptions/SubscriptionCreationOptions";
 export * from "./Documents/Subscriptions/Revision";
 export * from "./Documents/Subscriptions/SubscriptionState";
+export * from "./Documents/Subscriptions/SubscriptionOpeningStrategy";
 
 // SESSION
 export * from "./Documents/Session/AbstractDocumentQuery";
@@ -202,6 +239,33 @@ export * from "./Documents/Session/SessionEvents";
 export * from "./Documents/Session/WhereParams";
 export *  from "./Documents/Session/IMetadataDictionary";
 export *  from "./Documents/Session/DocumentResultStream";
+export * from "./Documents/Session/Loaders/ILazyLoaderWithInclude";
+export * from "./Documents/Session/Loaders/ILoaderWithInclude";
+export * from "./Documents/Session/Loaders/LazyMultiLoaderWithInclude";
+export * from "./Documents/Session/Loaders/MultiLoaderWithInclude";
+export * from "./Documents/Session/DocumentQueryCustomization";
+export * from "./Documents/Session/DocumentSessionAttachments";
+export * from "./Documents/Session/DocumentSessionAttachmentsBase";
+export * from "./Documents/Session/DocumentSessionRevisions";
+export * from "./Documents/Session/IAttachmentsSessionOperations";
+export * from "./Documents/Session/IDocumentQueryCustomization";
+export * from "./Documents/Session/IRevisionsSessionOperations";
+export * from "./Documents/Session/ResponseTimeInformation";
+export * from "./Documents/Session/MetadataObject";
+export * from "./Documents/Session/TransactionMode";
+export * from "./Documents/Session/IClusterTransactionOperations";
+export * from "./Documents/Session/ISessionDocumentCounters";
+export * from "./Documents/Session/ClusterTransactionOperations";
+export * from "./Documents/Session/CounterInternalTypes";
+export * from "./Documents/Session/Loaders/IIncludeBuilder";
+export * from "./Documents/Session/Loaders/IncludeBuilder";
+export * from "./Documents/Session/Loaders/IncludeBuilderBase";
+export * from "./Documents/Session/Loaders/IQueryIncludeBuilder";
+export * from "./Documents/Session/Loaders/QueryIncludeBuilder";
+export * from "./Documents/Session/Operations/BatchCommandResult";
+export * from "./Documents/Session/SessionDocumentCounters";
+
+// BATCH
 export * from "./Documents/Commands/StreamResult";
 export * from "./Documents/Session/SessionOptions";
 export * from "./Documents/Commands/CommandData";
@@ -215,14 +279,25 @@ export * from "./Documents/Commands/Batches/PatchCommandData";
 export * from "./Documents/Commands/Batches/PutCompareExchangeCommandData";
 export * from "./Documents/Commands/Batches/DeleteCompareExchangeCommandData";
 
-// COUNTERS
+export * from "./Documents/Lazy";
 
+// COUNTERS
 export { CounterBatch } from "./Documents/Operations/Counters/CounterBatch";
 export { GetCountersOperation } from "./Documents/Operations/Counters/GetCountersOperation";
 export { CounterBatchOperation } from "./Documents/Operations/Counters/CounterBatchOperation";
 export { CounterOperationType } from "./Documents/Operations/Counters/CounterOperationType";
 export { CounterOperation } from "./Documents/Operations/Counters/CounterOperation";
 export { DocumentCountersOperation } from "./Documents/Operations/Counters/DocumentCountersOperation";
+export * from "./Documents/Operations/Counters/CounterDetail";
+export * from "./Documents/Operations/Counters/CountersDetail";
+
+// AUTH
+export * from "./Auth/AuthOptions";
+
+// TYPES
+export * from "./Types/Callbacks";
+export * from "./Types/Contracts";
+export * from "./Types";
 
 // QUERIES
 export * from "./Documents/Queries/IndexQuery";
@@ -240,10 +315,47 @@ export * from "./Documents/Queries/Spatial/PointField";
 export * from "./Documents/Queries/Spatial/WktField";
 export * from "./Documents/Queries/Facets/RangeBuilder";
 export * from "./Documents/Queries/Facets/FacetBuilder";
+export * from "./Documents/Queries/Facets/Facet";
+export * from "./Documents/Queries/Facets/RangeFacet";
+export * from "./Documents/Queries/Facets/FacetBase";
+export * from "./Documents/Queries/Facets/FacetSetup";
+export * from "./Documents/Queries/Facets";
+export * from "./Documents/Queries/QueryData";
+export * from "./Documents/Queries/QueryOperationOptions";
+export * from "./Documents/Queries/QueryResult";
 export * from "./Documents/Queries/Highlighting/HighlightingOptions";
 export * from "./Documents/Queries/Highlighting/HighlightingParameters";
 export * from "./Documents/Queries/Highlighting/Hightlightings";
 export * from "./Documents/Queries/Timings/QueryTimings";
+export * from "./Documents/Queries/Facets/AggregationDocumentQuery";
+export * from "./Documents/Queries/Facets/AggregationQueryBase";
+export * from "./Documents/Queries/Facets/GenericRangeFacet";
+export * from "./Documents/Queries/Facets/IAggregationDocumentQuery";
+export * from "./Documents/Queries/Facets/IFacetBuilder";
+export * from "./Documents/Queries/Facets/IFacetOperations";
+export * from "./Documents/Queries/Explanation/ExplanationOptions";
+export * from "./Documents/Queries/Explanation/Explanations";
+export * from "./Documents/Queries/Highlighting/QueryHighlightings";
+
+// MORE LIKE THIS
+export * from "./Documents/Queries/MoreLikeThis/IMoreLikeThisBuilderBase";
+export * from "./Documents/Queries/MoreLikeThis/IMoreLikeThisOperations";
+export * from "./Documents/Queries/MoreLikeThis/MoreLikeThisBase";
+export * from "./Documents/Queries/MoreLikeThis/MoreLikeThisBuilder";
+export * from "./Documents/Queries/MoreLikeThis/MoreLikeThisOptions";
+export * from "./Documents/Queries/MoreLikeThis/MoreLikeThisStopWords";
+
+// SUGGESTIONS
+export * from "./Documents/Queries/Suggestions/ISuggestionBuilder";
+export * from "./Documents/Queries/Suggestions/ISuggestionDocumentQuery";
+export * from "./Documents/Queries/Suggestions/ISuggestionOperations";
+export * from "./Documents/Queries/Suggestions/StringDistanceTypes";
+export * from "./Documents/Queries/Suggestions/SuggestionBuilder";
+export * from "./Documents/Queries/Suggestions/SuggestionDocumentQuery";
+export * from "./Documents/Queries/Suggestions/SuggestionOptions";
+export * from "./Documents/Queries/Suggestions/SuggestionBase";
+export * from "./Documents/Queries/Suggestions/SuggestionResult";
+export * from "./Documents/Queries/Suggestions/SuggestionSortMode";
 
 // ATTACHMENTS
 export * from "./Documents/Attachments";
@@ -257,8 +369,12 @@ export * from "./Documents/Changes/IDatabaseChanges";
 export * from "./Documents/Changes/DatabaseChange";
 export * from "./Documents/Changes/OperationStatusChange";
 export * from "./Documents/Changes/IDatabaseChanges";
+export * from "./Documents/Changes/DatabaseChanges";
 export * from "./Documents/Changes/IConnectableChanges";
 export * from "./Documents/Changes/IChangesObservable";
+export * from "./Documents/Changes/ChangesObservable";
+export * from "./Documents/Changes/DatabaseConnectionState";
+export * from "./Documents/Changes/IChangesConnectionState";
 
 // HiLo
 export * from "./Documents/Identity/HiloIdGenerator";

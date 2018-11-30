@@ -12,7 +12,6 @@ import { throwError, getError } from "../../src/Exceptions";
 import { DatabaseRecord } from "../../src/ServerWide";
 import { CreateDatabaseOperation } from "../../src/ServerWide/Operations/CreateDatabaseOperation";
 import { DeleteDatabasesOperation } from "../../src/ServerWide/Operations/DeleteDatabasesOperation";
-import { Todo } from "../../src/Types";
 import { IDisposable } from "../../src/Types/Contracts";
 import { getLogger } from "../../src/Utility/LogUtil";
 import { RavenServerLocator } from "./RavenServerLocator";
@@ -372,7 +371,7 @@ export abstract class RavenTestDriver implements IDisposable {
         return Promise.resolve(result);
     }
 
-    public waitForUserToContinueTheTest(store: Todo): void {
+    public waitForUserToContinueTheTest(store: DocumentStore): void {
         // TODO
 
         // String databaseNameEncoded = UrlUtils.escapeDataString(store.getDatabase());

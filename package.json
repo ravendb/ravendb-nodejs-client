@@ -1,6 +1,6 @@
 {
   "name": "ravendb",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "description": "RavenDB client for Node.js",
   "files": [
     "dist/"
@@ -23,7 +23,8 @@
       "win32": "tsc && tsc -p tsconfig.test.json && copy test\\Assets\\* .test\\test\\Assets && copy test\\mocha.opts .test && mocha --inspect-brk .test\\test",
       "linux": "tsc && tsc -p tsconfig.test.json && cp test/Assets/* .test/test/Assets && cp test/mocha.opts .test && mocha --inspect-brk .test/test"
     },
-    "lint": "tslint src/**/*.ts && tslint test/**/*.ts"
+    "lint": "tslint src/**/*.ts && tslint test/**/*.ts",
+    "check-exports": "node ./scripts/reportMissingTopLevelExports.js"
   },
   "repository": {
     "type": "git",
@@ -55,6 +56,7 @@
     "@types/sinon": "^2.3.6",
     "@types/ws": "^6.0.1",
     "cross-os": "^1.3.0",
+    "glob": "^7.1.3",
     "lodash.orderby": "^4.6.0",
     "mocha": "^5.2.0",
     "sinon": "^4.0.1",
