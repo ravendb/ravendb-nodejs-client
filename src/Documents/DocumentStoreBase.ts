@@ -10,7 +10,6 @@ import {
     SessionBeforeQueryEventArgs,
     SessionBeforeDeleteEventArgs
 } from "./Session/SessionEvents";
-import { Todo } from "../Types";
 import { OperationExecutor } from "./Operations/OperationExecutor";
 import { IDocumentSession, SessionOptions } from "./Session/IDocumentSession";
 import { DocumentSession } from "./Session/DocumentSession";
@@ -103,6 +102,7 @@ export abstract class DocumentStoreBase
         const resultPromise = this.maintenance
             .forDatabase(database || this.database)
             .send(new PutIndexesOperation(...indexesToAdd))
+            // tslint:disable-next-line:no-empty
             .then(() => {});
         
         passResultToCallback(resultPromise, callback || TypeUtil.NOOP);
@@ -227,11 +227,11 @@ export abstract class DocumentStoreBase
     public removeSessionListener(
         eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): void;
     public removeSessionListener(
-        eventName: "afterSaveChanges", eventHandler: (eventArgs: Todo) => void): void;
+        eventName: "afterSaveChanges", eventHandler: (eventArgs: SessionAfterSaveChangesEventArgs) => void): void;
     public removeSessionListener(
-        eventName: "beforeQuery", eventHandler: (eventArgs: Todo) => void): void;
+        eventName: "beforeQuery", eventHandler: (eventArgs: SessionBeforeQueryEventArgs) => void): void;
     public removeSessionListener(
-        eventName: "beforeDelete", eventHandler: (eventArgs: Todo) => void): void;
+        eventName: "beforeDelete", eventHandler: (eventArgs: SessionBeforeDeleteEventArgs) => void): void;
     public removeSessionListener(eventName: any, eventHandler: (eventArgs: any) => void): void {
         const toRemove = this._eventHandlers
             .filter(x => x[0] === eventName && x[1] === eventHandler)[0];
