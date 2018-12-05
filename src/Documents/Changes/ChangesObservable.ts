@@ -45,12 +45,14 @@ export class ChangesObservable<T, TConnectionState extends IChangesConnectionSta
                 this._errorSubscribers.add(handler as (error: Error) => void);
                 break;
         }
+
+        return this;
     }
 
     public removeListener(event: "data", handler: (value: T) => void);
     public removeListener(event: "error", handler: (error: Error) => void);
     public removeListener(event: "data" | "error", handler: ((value: T) => void) | ((error: Error) => void)) {
-        this.off(event as any, handler as any);
+        return this.off(event as any, handler as any);
     }
 
     public off(event: "data", handler: (value: T) => void);
@@ -77,6 +79,8 @@ export class ChangesObservable<T, TConnectionState extends IChangesConnectionSta
                 }
                 break;
         }
+
+        return this;
     }
 
     public send(msg: T): void {
