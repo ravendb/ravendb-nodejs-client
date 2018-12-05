@@ -161,6 +161,15 @@ export class DocumentConventions {
         this._remoteEntityFieldNameConvention = val;
     }
 
+    public set useOptimisticConcurrency(val) {
+        this._assertNotFrozen();
+        this._useOptimisticConcurrency = val;
+    }
+
+    public get useOptimisticConcurrency() {
+        return this._useOptimisticConcurrency;
+    }
+
     public deserializeEntityFromJson(documentType: ObjectTypeDescriptor, document: object): object {
         try {
             const typeName = documentType ? documentType.name : null;
