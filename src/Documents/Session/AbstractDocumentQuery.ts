@@ -2002,7 +2002,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             this._queryOperation = this._initializeQueryOperation();
         }
 
-        const clazz = this._conventions.findEntityType(this._clazz);
+        const clazz = this._conventions.getJsTypeByDocumentType(this._clazz);
         const lazyQueryOperation = new LazyQueryOperation<T>(
             this._theSession.conventions,
             this._queryOperation,
@@ -2018,7 +2018,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             this._queryOperation = this._initializeQueryOperation();
         }
 
-        const clazz = this._conventions.findEntityType(this._clazz);
+        const clazz = this._conventions.getJsTypeByDocumentType(this._clazz);
         const lazyQueryOperation =
             new LazyQueryOperation<T>(
                 this._theSession.conventions,

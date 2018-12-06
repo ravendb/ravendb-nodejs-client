@@ -97,7 +97,7 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
             .process(bodyStream);
 
         const type = !TypeUtil.isPrimitive(this._value)
-            ? this._conventions.getEntityTypeDescriptor(this._value as any) as ObjectTypeDescriptor
+            ? this._conventions.getTypeDescriptorByEntity(this._value as any) as ObjectTypeDescriptor
             : null;
         const clazz: ClassConstructor<T> = TypeUtil.isClass(type) ? type as any : null;
         this.result = CompareExchangeResult.parseFromObject(resObj, this._conventions, clazz);

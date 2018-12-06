@@ -102,7 +102,7 @@ export class DocumentSubscriptions implements IDisposable {
             criteria = {} as SubscriptionCreationOptions;
         }
 
-        const objectDescriptor = this._store.conventions.findEntityType(criteria.documentType);
+        const objectDescriptor = this._store.conventions.getJsTypeByDocumentType(criteria.documentType);
         const collectionName = this._store.conventions.getCollectionNameForType(objectDescriptor);
 
         if (!criteria.query) {

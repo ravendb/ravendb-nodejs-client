@@ -885,9 +885,9 @@ export abstract class InMemoryDocumentSessionOperations
 
         const changeVector = options.changeVector;
         documentType = documentType || options.documentType;
-        this.conventions.tryRegisterEntityType(documentType);
+        this.conventions.tryRegisterJsType(documentType);
         if (entity.constructor !== Object) {
-            this.conventions.tryRegisterEntityType(entity.constructor as ClassConstructor);
+            this.conventions.tryRegisterJsType(entity.constructor as ClassConstructor);
         }
 
         let forceConcurrencyCheck: ConcurrencyCheckMode;
@@ -968,8 +968,8 @@ export abstract class InMemoryDocumentSessionOperations
         }
 
         const entityType = documentType
-            ? conventions.findEntityType(documentType)
-            : conventions.getEntityTypeDescriptor(entity);
+                ? conventions.getJsTypeByDocumentType(documentType)
+                : conventions.getTypeDescriptorByEntity(entity);
         const jsType = conventions.getJsTypeName(entityType);
         if (jsType) {
             metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] = jsType;
@@ -1419,7 +1419,7 @@ export abstract class InMemoryDocumentSessionOperations
         }
 
         documentInfo.document = document;
-        const entityType = this.conventions.getEntityTypeDescriptor(entity);
+        const entityType = this.conventions.getTypeDescriptorByEntity(entity);
         documentInfo.entity = this.entityToJson.convertToEntity(entityType, documentInfo.id, document);
 
         Object.assign(entity, documentInfo.entity);
