@@ -57,7 +57,7 @@ export class MultiLoaderWithInclude implements ILoaderWithInclude {
             singleResult = true;
         }
 
-        const entityType = this._session.conventions.findEntityType(documentType);
+        const entityType = this._session.conventions.getJsTypeByDocumentType(documentType);
 
         const result = BluebirdPromise.resolve()
             .then(() => this._session.loadInternal(ids as string[], this._includes, entityType))
