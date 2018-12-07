@@ -78,6 +78,17 @@ export class DocumentSubscriptions implements IDisposable {
      * Creates a data subscription in a database. The subscription will expose all documents
      * that match the specified subscription options for a given type.
      */
+    public createForRevisions(documentType: DocumentType): Promise<string>;
+    /**
+     * Creates a data subscription in a database. The subscription will expose all documents
+     * that match the specified subscription options for a given type.
+     */
+    public createForRevisions(documentType: DocumentType, database: string): Promise<string>;
+
+    /**
+     * Creates a data subscription in a database. The subscription will expose all documents
+     * that match the specified subscription options for a given type.
+     */
     public createForRevisions(options: SubscriptionCreationOptions): Promise<string>;
 
     /**
@@ -90,10 +101,16 @@ export class DocumentSubscriptions implements IDisposable {
      * Creates a data subscription in a database. The subscription will expose all documents
      * that match the specified subscription options for a given type.
      */
-    public createForRevisions(options: SubscriptionCreationOptions, database?: string): Promise<string> {
-        options = options || {} as SubscriptionCreationOptions;
+    public createForRevisions(
+        optionsOrDocumentType: SubscriptionCreationOptions | DocumentType, database?: string): Promise<string> {
+        if (TypeUtil.isDocumentType(optionsOrDocumentType)) {
+            return this.createForRevisions({ documentType: optionsOrDocumentType as DocumentType }, database);
+        }
 
-        return this.create(this._ensureCriteria(options, true), database);
+        optionsOrDocumentType = optionsOrDocumentType || {} as SubscriptionCreationOptions;
+
+        return this.create(
+            this._ensureCriteria(optionsOrDocumentType as SubscriptionCreationOptions, true), database);
     }
 
     private _ensureCriteria<T extends object>(
