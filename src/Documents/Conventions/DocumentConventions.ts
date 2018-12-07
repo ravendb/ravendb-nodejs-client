@@ -471,10 +471,6 @@ export class DocumentConventions {
         return this;
     }
 
-    //TODO public registerEntityTypeChecker(typeChecker: ObjectLiteralDescriptor) {
-    //     this._registeredTypeDescriptors.push(typeChecker);
-    // }
-
     public registerEntityIdPropertyName(ctorOrTypeChecker: ObjectTypeDescriptor, idProperty: string) {
         this._registeredIdPropertyNames.set(ctorOrTypeChecker, idProperty);
     }
