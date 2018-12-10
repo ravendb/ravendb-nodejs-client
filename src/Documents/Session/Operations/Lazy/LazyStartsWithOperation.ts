@@ -34,7 +34,7 @@ export class LazyStartsWithOperation<T extends object> implements ILazyOperation
         this._pageSize = opts.pageSize;
         this._sessionOperations = sessionOperations;
         this._startAfter = opts.startAfter;
-        this._clazz = sessionOperations.conventions.findEntityType(opts.documentType);
+        this._clazz = sessionOperations.conventions.getJsTypeByDocumentType(opts.documentType);
     }
 
     public createRequest(): GetRequest {

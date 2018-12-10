@@ -90,8 +90,8 @@ export class OperationExecutor {
                     const patchResult = command.result as any as PatchResult;
                     patchOperationResult.status = patchResult.status;
                     const { conventions } = this._requestExecutor;
-                    conventions.tryRegisterEntityType(documentType);
-                    const entityType = conventions.findEntityType(documentType);
+                    conventions.tryRegisterJsType(documentType);
+                    const entityType = conventions.getJsTypeByDocumentType(documentType);
                     patchOperationResult.document = conventions.deserializeEntityFromJson(
                         entityType, patchResult.modifiedDocument) as TResult;
                     return patchOperationResult;

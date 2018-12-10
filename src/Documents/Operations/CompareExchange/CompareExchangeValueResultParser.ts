@@ -53,7 +53,7 @@ export class CompareExchangeValueResultParser {
                 if (!rawValue) {
                     results[key] = new CompareExchangeValue(key, index, null);
                 } else {
-                    const entityType = conventions.findEntityType(clazz);
+                    const entityType = conventions.getJsTypeByDocumentType(clazz);
                     if (conventions.entityFieldNameConvention) {
                         rawValue = ObjectUtil.transformObjectKeys(
                             rawValue, {

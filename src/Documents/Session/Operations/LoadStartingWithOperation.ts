@@ -72,7 +72,7 @@ export class LoadStartingWithOperation {
     }
 
     public getDocuments<T extends object>(docType: DocumentType<T>): T[] {
-        const entityType = this._session.conventions.findEntityType<T>(docType);
+        const entityType = this._session.conventions.getJsTypeByDocumentType<T>(docType);
         return this._returnedIds.reduce((result, id) => {
             const doc = this._getDocument(entityType, id);
             return [...result, doc];

@@ -94,7 +94,7 @@ export class DocumentQuery<T extends object>
         propertiesOrQueryData: string | string[] | QueryData,
         projectionType?: DocumentType<TProjection>): IDocumentQuery<TProjection> {
         if (projectionType) {
-            this._theSession.conventions.tryRegisterEntityType(projectionType);
+            this._theSession.conventions.tryRegisterJsType(projectionType);
         }
 
         if (TypeUtil.isString(propertiesOrQueryData)) {
@@ -428,7 +428,7 @@ export class DocumentQuery<T extends object>
 
     public ofType<TResult extends object>(tResultClass: DocumentType<TResult>): IDocumentQuery<TResult> {
         if (tResultClass) {
-            this._theSession.conventions.tryRegisterEntityType(tResultClass);
+            this._theSession.conventions.tryRegisterJsType(tResultClass);
         }
 
         return this._createDocumentQueryInternal(tResultClass);

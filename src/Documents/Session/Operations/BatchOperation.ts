@@ -45,7 +45,7 @@ export class BatchOperation {
 
         const results = result.results;
         for (let i = 0; i < this._sessionCommandsCount; i++) {
-            const batchResult = results[0];
+            const batchResult = results[i];
             if (!batchResult) {
                 throwError("InvalidArgumentException", "result");
             }

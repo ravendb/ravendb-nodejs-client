@@ -667,4 +667,11 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         return this;
     }
 
+    public removeAllListeners(); 
+    public removeAllListeners(event: "batch" | "error" | "end" | "connectionRetry"); 
+    public removeAllListeners(event?: "batch" | "error" | "end" | "connectionRetry") {
+        this._emitter.removeAllListeners(event);
+        return this;
+    }
+
 }
