@@ -163,7 +163,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
     private _prepareLoadInternalOpts<TEntity extends object>(options: LoadOptions<TEntity>) {
         const internalOpts: SessionLoadInternalParameters<TEntity> = { documentType: options.documentType };
-        this.conventions.tryRegisterEntityType(internalOpts.documentType);
+        this.conventions.tryRegisterJsType(internalOpts.documentType);
         if ("includes" in options) {
             if (TypeUtil.isFunction(options.includes)) {
                 const builder = new IncludeBuilder(this.conventions);
@@ -420,7 +420,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             loadOperation.setResult(command.result);
         }
 
-        const clazz = this.conventions.findEntityType(opts.documentType);
+        const clazz = this.conventions.getJsTypeByDocumentType(opts.documentType);
         return loadOperation.getDocuments(clazz);
     }
 
@@ -539,7 +539,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     public rawQuery<TEntity extends object>(
         query: string, documentType?: DocumentType<TEntity>): IRawDocumentQuery<TEntity> {
         if (documentType) {
-            this.conventions.tryRegisterEntityType(documentType);
+            this.conventions.tryRegisterJsType(documentType);
         }
 
         return new RawDocumentQuery(this, query, documentType);
@@ -570,7 +570,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         }
 
         if (opts.documentType) {
-            this.conventions.tryRegisterEntityType(opts.documentType);
+            this.conventions.tryRegisterJsType(opts.documentType);
         }
 
         const { indexName, collection } = this._processQueryParameters(opts, this.conventions);
@@ -590,7 +590,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         }
 
         if (!isIndex && !isCollection) {
-            const entityType = this.conventions.findEntityType(opts.documentType);
+            const entityType = this.conventions.getJsTypeByDocumentType(opts.documentType);
             collection = this.conventions.getCollectionNameForType(entityType) 
                 || CONSTANTS.Documents.Metadata.ALL_DOCUMENTS_COLLECTION;
         }
@@ -808,7 +808,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         const docsReadable = streamOperation.setResult(command.result);
         let clazz = null;
         if (opts && "documentType" in opts) {
-            clazz = this.conventions.findEntityType(opts.documentType);
+            clazz = this.conventions.getJsTypeByDocumentType(opts.documentType);
         }
 
         const result = this._getStreamResultTransform(this, clazz, null);

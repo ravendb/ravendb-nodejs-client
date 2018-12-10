@@ -60,7 +60,7 @@ export class CompareExchangeResult<T> {
         conventions: DocumentConventions,
         clazz?: ClassConstructor<T>): CompareExchangeResult<T> {
 
-        conventions.tryRegisterEntityType(clazz);
+        conventions.tryRegisterJsType(clazz);
 
         if (!val) {
             const emptyExchangeResult = new CompareExchangeResult<T>();
@@ -75,7 +75,7 @@ export class CompareExchangeResult<T> {
             result = val as any as T;
         } else {
             // val comes here with proper key case already
-            const entityType = conventions.findEntityType(clazz);
+            const entityType = conventions.getJsTypeByDocumentType(clazz);
             result = conventions.deserializeEntityFromJson(entityType, val) as any as T;
         }
 

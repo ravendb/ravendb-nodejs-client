@@ -102,7 +102,7 @@ export class DocumentSubscriptions implements IDisposable {
             criteria = {} as SubscriptionCreationOptions;
         }
 
-        const objectDescriptor = this._store.conventions.findEntityType(criteria.documentType);
+        const objectDescriptor = this._store.conventions.getJsTypeByDocumentType(criteria.documentType);
         const collectionName = this._store.conventions.getCollectionNameForType(objectDescriptor);
 
         if (!criteria.query) {
@@ -222,42 +222,16 @@ export class DocumentSubscriptions implements IDisposable {
      * There can be only a single client that is connected to a subscription.
      */
     public getSubscriptionWorkerForRevisions<T extends object>(
-        subscriptionName: string, documentType: DocumentType<T>): SubscriptionWorker<Revision<T>>;
-
-    /**
-     * It opens a subscription and starts pulling documents since a last processed document for that subscription.
-     * The connection options determine client and server cooperation rules like document batch sizes
-     * or a timeout in a matter of which a client needs to acknowledge that batch has been processed.
-     * The acknowledgment is sent after all documents are processed by subscription's handlers.
-     *
-     * There can be only a single client that is connected to a subscription.
-     */
-    public getSubscriptionWorkerForRevisions<T extends object>(
-        subscriptionName: string, documentType: DocumentType<T>,
-        database: string): SubscriptionWorker<Revision<T>>;
-
-    /**
-     * It opens a subscription and starts pulling documents since a last processed document for that subscription.
-     * The connection options determine client and server cooperation rules like document batch sizes
-     * or a timeout in a matter of which a client needs to acknowledge that batch has been processed.
-     * The acknowledgment is sent after all documents are processed by subscription's handlers.
-     *
-     * There can be only a single client that is connected to a subscription.
-     */
-    public getSubscriptionWorkerForRevisions<T extends object>(
         optionsOrSubscriptionName: SubscriptionWorkerOptions<T> | string,
-        documentTypeOrDatabase?: DocumentType<T> | string,
         database?: string): SubscriptionWorker<Revision<T>> {
 
         if (TypeUtil.isString(optionsOrSubscriptionName)) {
             return this.getSubscriptionWorkerForRevisions({
                 subscriptionName: optionsOrSubscriptionName,
-                documentType: documentTypeOrDatabase
             } as SubscriptionWorkerOptions<T>, database);
         }
 
         const options: SubscriptionWorkerOptions<T> = optionsOrSubscriptionName;
-        database = documentTypeOrDatabase as string;
         const subscription = new SubscriptionWorker<Revision<T>>(
             options as any as SubscriptionWorkerOptions<Revision<T>>, true, this._store, database);
 

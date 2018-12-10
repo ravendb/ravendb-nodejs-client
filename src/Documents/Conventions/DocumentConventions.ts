@@ -79,11 +79,12 @@ export class DocumentConventions {
         this._identityPartsSeparator = "/";
 
         this._findIdentityPropertyNameFromCollectionName = () => "id";
+        
         this._findJsType = (id: string, doc: object) => {
             const metadata = doc[CONSTANTS.Documents.Metadata.KEY];
             if (metadata) {
                 const jsType = metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] as string;
-                return this._knownEntityTypes.get(jsType) || null;
+                return this.getJsTypeByDocumentType(jsType);
             }
 
             return null;
@@ -94,11 +95,12 @@ export class DocumentConventions {
                 return null;
             }
 
-            if (TypeUtil.isFunction(ctorOrTypeChecker["isType"])) {
-                return (ctorOrTypeChecker as ObjectLiteralDescriptor).name;
+            const name = (ctorOrTypeChecker as ClassConstructor).name;
+            if (name === "Object") {
+                return null;
             }
 
-            return (ctorOrTypeChecker as ClassConstructor).name;
+            return name;
         };
 
         this._transformClassCollectionNameToDocumentIdPrefix =
@@ -159,6 +161,15 @@ export class DocumentConventions {
     public set remoteEntityFieldNameConvention(val) {
         this._assertNotFrozen();
         this._remoteEntityFieldNameConvention = val;
+    }
+
+    public set useOptimisticConcurrency(val) {
+        this._assertNotFrozen();
+        this._useOptimisticConcurrency = val;
+    }
+
+    public get useOptimisticConcurrency() {
+        return this._useOptimisticConcurrency;
     }
 
     public deserializeEntityFromJson(documentType: ObjectTypeDescriptor, document: object): object {
@@ -411,6 +422,10 @@ export class DocumentConventions {
         this._findCollectionNameForObjectLiteral = value;
     }
 
+    public getTypeDescriptorByEntity<T extends object>(entity: T): ObjectTypeDescriptor<T> {
+        return this.getEntityTypeDescriptor(entity);
+    }
+
     public getEntityTypeDescriptor<T extends object>(entity: T): ObjectTypeDescriptor<T> {
         if (TypeUtil.isClass(entity.constructor)) {
             return entity.constructor as ClassConstructor;
@@ -483,7 +498,7 @@ export class DocumentConventions {
      *  Gets the identity property.
      */
     public getIdentityProperty(documentType: DocumentType): string {
-        const typeDescriptor = this.findEntityType(documentType);
+        const typeDescriptor = this.getJsTypeByDocumentType(documentType);
         return this._registeredIdPropertyNames.get(typeDescriptor)
             || CONSTANTS.Documents.Metadata.ID_PROPERTY;
     }
@@ -585,16 +600,18 @@ export class DocumentConventions {
         }
     }
 
-    // TODO:
-    // public get registeredTypeDescriptors() {
-    //     return this._registeredTypeDescriptors;
-    // }
     public get knownEntityTypesByName() {
         return this._knownEntityTypes;
     }
 
     public get knownEntityTypes() {
         return Array.from(this._knownEntityTypes.values());
+    }
+
+    public registerJsType(entityType: ObjectTypeDescriptor): this;
+    public registerJsType(entityType: ObjectTypeDescriptor, name: string): this;
+    public registerJsType(entityType: ObjectTypeDescriptor, name?: string): this {
+        return this.registerEntityType(entityType, name);
     }
 
     public registerEntityType(entityType: ObjectTypeDescriptor): this;
@@ -613,26 +630,36 @@ export class DocumentConventions {
         return this;
     }
 
+    public tryRegisterJsType(docType: DocumentType): this {
+        return this.tryRegisterEntityType(docType);
+    }
+
     public tryRegisterEntityType(docType: DocumentType): this {
         if (TypeUtil.isObjectTypeDescriptor(docType)) {
-            this.registerEntityType(docType as ObjectTypeDescriptor);
+            this.registerJsType(docType as ObjectTypeDescriptor);
         }
 
         return this;
     }
 
-    public findEntityType<T extends object>(documentType: DocumentType<T>): ObjectTypeDescriptor<T>;
-    public findEntityType<T extends object>(typeName: string): ObjectTypeDescriptor<T>;
-    public findEntityType<T extends object>(docTypeOrTypeName: string | DocumentType<T>): ObjectTypeDescriptor<T> {
+    public getJsTypeByDocumentType<T extends object>(documentType: DocumentType<T>): ObjectTypeDescriptor<T>;
+    public getJsTypeByDocumentType<T extends object>(typeName: string): ObjectTypeDescriptor<T>;
+    public getJsTypeByDocumentType<T extends object>(
+        docTypeOrTypeName: string | DocumentType<T>): ObjectTypeDescriptor<T> {
         if (!docTypeOrTypeName) {
             return null;
         }
 
-        if (typeof(docTypeOrTypeName) !== "string") {
-            return docTypeOrTypeName as ObjectTypeDescriptor<T>;
+        if (typeof(docTypeOrTypeName) === "string") {
+            return this._knownEntityTypes.get(
+                docTypeOrTypeName) as ObjectLiteralDescriptor<T> || null;
         }
 
-        return this._knownEntityTypes.get(docTypeOrTypeName) as ObjectLiteralDescriptor<T>;
+        if (docTypeOrTypeName.name === "Object") {
+            return null;
+        }
+
+        return docTypeOrTypeName as ObjectTypeDescriptor<T>;
     }
 
     public transformObjectKeysToRemoteFieldNameConvention(obj: object, opts?: ObjectChangeCaseOptions) {

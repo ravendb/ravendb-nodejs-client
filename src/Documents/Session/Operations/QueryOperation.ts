@@ -162,7 +162,7 @@ export class QueryOperation {
         const { entityFieldNameConvention } = conventions;
         const projection = metadata["@projection"];
         if (TypeUtil.isNullOrUndefined(projection) || projection === false) {
-            const entityType = conventions.findEntityType(clazz);
+            const entityType = conventions.getJsTypeByDocumentType(clazz);
             return session.trackEntity(entityType, id, document, metadata, disableEntitiesTracking);
         }
 
@@ -206,7 +206,7 @@ export class QueryOperation {
         }
 
         const raw: T = conventions.objectMapper.fromObjectLiteral(document);
-        const projType = conventions.findEntityType(clazz);
+        const projType = conventions.getJsTypeByDocumentType(clazz);
         // tslint:disable-next-line:new-parens
         const result = projType ? new (Function.prototype.bind.apply(projType)) : {};
 

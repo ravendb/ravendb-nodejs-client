@@ -171,7 +171,7 @@ export class BulkInsertOperation {
         }
 
         if (!("Raven-Node-Type" as keyof MetadataObject in metadata)) {
-            const descriptor = this._conventions.getEntityTypeDescriptor(entity);
+            const descriptor = this._conventions.getTypeDescriptorByEntity(entity);
             const jsType = this._requestExecutor.conventions.getJsTypeName(descriptor);
             if (jsType) {
                 metadata["Raven-Node-Type"] = jsType;
