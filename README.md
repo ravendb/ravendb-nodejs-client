@@ -13,6 +13,10 @@ npm install --save ravendb
 
 ## Releases and Changelog - [click here](https://github.com/ravendb/ravendb-nodejs-client/releases)
 
+## Documentation
+
+Please find the official documentation on [RavenDB Documentation](https://ravendb.net/docs/article-page/4.0/nodejs/client-api/what-is-a-document-store) page.
+
 ## Getting started
 
 1. Require `DocumentStore` class from package
