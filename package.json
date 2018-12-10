@@ -1,6 +1,6 @@
 {
   "name": "ravendb",
-  "version": "4.1.1",
+  "version": "4.1.2",
   "description": "RavenDB client for Node.js",
   "files": [
     "dist/"
