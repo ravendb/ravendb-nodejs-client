@@ -2,7 +2,7 @@ import * as os from "os";
 import * as BluebirdPromise from "bluebird";
 import * as semaphore from "semaphore";
 import * as stream from "readable-stream";
-import { acquireSemaphore } from "../Utility/SemaphoreUtil";
+import { acquireSemaphore, AcquiredSemaphoreContext } from "../Utility/SemaphoreUtil";
 import { getLogger, ILogger } from "../Utility/LogUtil";
 import { Timer } from "../Primitives/Timer";
 import { ServerNode } from "./ServerNode";
@@ -326,54 +326,53 @@ export class RequestExecutor implements IDisposable {
         return this._nodeSelector.getFastestNode();
     }
 
-    protected _updateClientConfiguration(): PromiseLike<void> {
-        if (this._disposed) {
-            return BluebirdPromise.resolve(null);
-        }
+    private async _updateClientConfigurationInternal(): Promise<void> {
+        const oldDisableClientConfigurationUpdates = this._disableClientConfigurationUpdates;
+        this._disableClientConfigurationUpdates = true;
 
-        const updateClientConfigurationInternal = () => {
-            const oldDisableClientConfigurationUpdates = this._disableClientConfigurationUpdates;
-            this._disableClientConfigurationUpdates = true;
+        try {
+            if (this._disposed) {
+                return;
+            }
 
-            return BluebirdPromise.resolve()
-                .then(() => {
-
-                    if (this._disposed) {
-                        return;
-                    }
-
-                    const command = new GetClientConfigurationCommand();
-                    const currentIndexAndNode2: CurrentIndexAndNode = this.chooseNodeForRequest(command, null);
-                    return this.execute(command, null, {
-                        chosenNode: currentIndexAndNode2.currentNode,
-                        nodeIndex: currentIndexAndNode2.currentIndex,
-                        shouldRetry: false
-                    })
-                        .then(() => command.result);
-                })
-                .then((clientConfigOpResult: GetClientConfigurationOperationResult) => {
-                    if (!clientConfigOpResult) {
-                        return;
-                    }
-
-                    this._conventions.updateFrom(clientConfigOpResult.configuration);
-                    this._clientConfigurationEtag = clientConfigOpResult.etag;
-
-                })
-                .tapCatch(err => this._log.error(err, "Error getting client configuration."))
-                .finally(() => {
-                    this._disableClientConfigurationUpdates = oldDisableClientConfigurationUpdates;
-                });
-        };
-
-        const semAcquiredContext = acquireSemaphore(this._updateClientConfigurationSemaphore);
-        const result = BluebirdPromise.resolve(semAcquiredContext.promise)
-            .then(() => updateClientConfigurationInternal())
-            .finally(() => {
-                semAcquiredContext.dispose();
+            const command = new GetClientConfigurationCommand();
+            const { currentNode, currentIndex } = this.chooseNodeForRequest(command, null);
+            await this.execute(command, null, {
+                chosenNode: currentNode,
+                nodeIndex: currentIndex,
+                shouldRetry: false
             });
 
-        return Promise.resolve(result);
+            const clientConfigOpResult = command.result;
+            if (!clientConfigOpResult) {
+                return;
+            }
+
+            this._conventions.updateFrom(clientConfigOpResult.configuration);
+            this._clientConfigurationEtag = clientConfigOpResult.etag;
+        } catch (err) {
+            this._log.error(err, "Error getting client configuration.");
+        } finally {
+            this._disableClientConfigurationUpdates = oldDisableClientConfigurationUpdates;
+        }
+    }
+
+    protected async _updateClientConfiguration(): Promise<void> {
+        if (this._disposed) {
+            return;
+        }
+
+        let semAcquiredContext: AcquiredSemaphoreContext;
+
+        try {
+            semAcquiredContext = acquireSemaphore(this._updateClientConfigurationSemaphore);
+            await semAcquiredContext.promise;
+            await this._updateClientConfigurationInternal();
+        } finally {
+            if (semAcquiredContext) {
+                semAcquiredContext.dispose();
+            }
+        }
     }
 
     public updateTopology(node: ServerNode, timeout: number, forceUpdate: boolean = false): Promise<boolean> {

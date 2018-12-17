@@ -90,7 +90,7 @@ describe("With custom key case conventions set", function () {
                 s.conventions.findCollectionNameForObjectLiteral = (o) => o["collection"];
                 s.conventions.entityFieldNameConvention = "camel";
                 s.conventions.remoteEntityFieldNameConvention = "pascal";
-                s.conventions.findIdentityPropertyNameFromCollectionName = () => "Id";
+                s.conventions.identityProperty = "Id";
                 s.conventions.registerEntityIdPropertyName(Object, "Id");
             });
 
@@ -129,7 +129,7 @@ describe("With custom key case conventions set", function () {
                 s.conventions.findCollectionNameForObjectLiteral = (o) => o["collection"];
                 s.conventions.entityFieldNameConvention = "camel";
                 s.conventions.remoteEntityFieldNameConvention = "pascal";
-                s.conventions.findIdentityPropertyNameFromCollectionName = () => "Id";
+                s.conventions.identityProperty = "Id";
                 s.conventions.registerEntityIdPropertyName(Object, "Id");
             });
 
@@ -190,7 +190,7 @@ describe("With custom key case conventions set", function () {
                 s.conventions.findCollectionNameForObjectLiteral = (o) => o["collection"];
                 s.conventions.entityFieldNameConvention = "camel";
                 s.conventions.remoteEntityFieldNameConvention = "pascal";
-                s.conventions.findIdentityPropertyNameFromCollectionName = () => "Id";
+                s.conventions.identityProperty = "Id";
                 s.conventions.registerEntityIdPropertyName(Object, "Id");
             });
 
@@ -226,7 +226,7 @@ describe("With custom key case conventions set", function () {
                 s.conventions.findCollectionNameForObjectLiteral = (o) => o["collection"];
                 s.conventions.entityFieldNameConvention = "camel";
                 s.conventions.remoteEntityFieldNameConvention = "pascal";
-                s.conventions.findIdentityPropertyNameFromCollectionName = () => "Id";
+                s.conventions.identityProperty = "Id";
                 s.conventions.registerEntityIdPropertyName(Object, "Id");
             });
 
