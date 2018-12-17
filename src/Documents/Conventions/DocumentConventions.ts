@@ -50,9 +50,10 @@ export class DocumentConventions {
 
     private _transformClassCollectionNameToDocumentIdPrefix: (maybeClassCollectionName: string) => string;
     private _documentIdGenerator: IdConvention;
-    private _findIdentityPropertyNameFromCollectionName: (collectionName: string) => string;
 
     private _findCollectionName: (constructorOrTypeChecker: ObjectTypeDescriptor) => string;
+
+    private _identityProperty: string;
 
     private _findJsTypeName: (ctorOrTypeChecker: ObjectTypeDescriptor) => string;
     private _findJsType: (id: string, doc: object) => ObjectTypeDescriptor;
@@ -77,8 +78,7 @@ export class DocumentConventions {
     public constructor() {
         this._readBalanceBehavior = "None";
         this._identityPartsSeparator = "/";
-
-        this._findIdentityPropertyNameFromCollectionName = () => "id";
+        this._identityProperty = CONSTANTS.Documents.Metadata.ID_PROPERTY;
         
         this._findJsType = (id: string, doc: object) => {
             const metadata = doc[CONSTANTS.Documents.Metadata.KEY];
@@ -271,6 +271,15 @@ export class DocumentConventions {
         this._useOptimisticConcurrency = useOptimisticConcurrency;
     }
 
+    public get identityProperty() {
+        return this._identityProperty;
+    }
+
+    public set identityProperty(val) {
+        this._assertNotFrozen();
+        this._identityProperty = val;
+    }
+
     public get findJsType() {
         return this._findJsType;
     }
@@ -296,15 +305,6 @@ export class DocumentConventions {
     public set findCollectionName(value) {
         this._assertNotFrozen();
         this._findCollectionName = value;
-    }
-
-    public get findIdentityPropertyNameFromCollectionName() {
-        return this._findIdentityPropertyNameFromCollectionName;
-    }
-
-    public set findIdentityPropertyNameFromCollectionName(value) {
-        this._assertNotFrozen();
-        this._findIdentityPropertyNameFromCollectionName = value;
     }
 
     public get documentIdGenerator() {
@@ -500,7 +500,7 @@ export class DocumentConventions {
     public getIdentityProperty(documentType: DocumentType): string {
         const typeDescriptor = this.getJsTypeByDocumentType(documentType);
         return this._registeredIdPropertyNames.get(typeDescriptor)
-            || CONSTANTS.Documents.Metadata.ID_PROPERTY;
+            || this._identityProperty;
     }
 
     public updateFrom(configuration: ClientConfiguration): void {
