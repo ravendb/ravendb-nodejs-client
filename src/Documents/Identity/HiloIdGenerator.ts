@@ -3,7 +3,7 @@ import * as semaphore from "semaphore";
 
 import { IDocumentStore } from "../../Documents/IDocumentStore";
 import { DateUtil } from "../../Utility/DateUtil";
-import { acquireSemaphore } from "../../Utility/SemaphoreUtil";
+import { acquireSemaphore, AcquiredSemaphoreContext } from "../../Utility/SemaphoreUtil";
 import { StringUtil } from "../../Utility/StringUtil";
 import { HiloReturnCommand } from "./Commands/HiloReturnCommand";
 import { NextHiloCommand, HiLoResult } from "./Commands/NextHiloCommand";
@@ -44,9 +44,9 @@ export class HiloIdGenerator {
         return this._prefix + nextId + "-" + this._serverTag;
     }
 
-    public nextId(): Promise<number> {
+    public async nextId(): Promise<number> {
 
-        const getNextIdWithinRange = (): Promise<number> => {
+        const getNextIdWithinRange = async (): Promise<number> => {
             // local range is not exhausted yet
             const range = this._range;
 
@@ -55,26 +55,30 @@ export class HiloIdGenerator {
                 return Promise.resolve(id);
             }
 
-            //local range is exhausted , need to get a new range
-            const acquiredSemContext = acquireSemaphore(this._generatorLock, {
-                contextName: `${this.constructor.name}_${this._tag}`
-            });
-            return Promise.resolve(acquiredSemContext.promise)
-                .then(() => {
-
-                    const maybeNewRange = this._range;
-                    if (maybeNewRange !== range) {
-                        id = maybeNewRange.increment();
-                        if (id <= maybeNewRange.maxId) {
-                            return BluebirdPromise.resolve(id)
-                                .finally(() => acquiredSemContext.dispose());
-                        }
-                    }
-
-                    return BluebirdPromise.resolve(this._getNextRange())
-                        .finally(() => acquiredSemContext.dispose())
-                        .then(() => getNextIdWithinRange());
+            let acquiredSemContext: AcquiredSemaphoreContext;
+            try {
+                //local range is exhausted , need to get a new range
+                acquiredSemContext = acquireSemaphore(this._generatorLock, {
+                    contextName: `${this.constructor.name}_${this._tag}`
                 });
+
+                await acquiredSemContext.promise;
+
+                const maybeNewRange = this._range;
+                if (maybeNewRange !== range) {
+                    id = maybeNewRange.increment();
+                    if (id <= maybeNewRange.maxId) {
+                        return id;
+                    }
+                }
+
+                await this._getNextRange();
+                return getNextIdWithinRange();
+            } finally {
+                if (acquiredSemContext) {
+                    acquiredSemContext.dispose();
+                }
+            }
         };
 
         return getNextIdWithinRange();
