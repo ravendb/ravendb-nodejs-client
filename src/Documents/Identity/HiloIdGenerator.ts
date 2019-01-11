@@ -45,14 +45,13 @@ export class HiloIdGenerator {
     }
 
     public async nextId(): Promise<number> {
-
-        const getNextIdWithinRange = async (): Promise<number> => {
+        while (true) {
             // local range is not exhausted yet
             const range = this._range;
 
             let id = range.increment();
             if (id <= range.maxId) {
-                return Promise.resolve(id);
+                return id;
             }
 
             let acquiredSemContext: AcquiredSemaphoreContext;
@@ -73,15 +72,12 @@ export class HiloIdGenerator {
                 }
 
                 await this._getNextRange();
-                return getNextIdWithinRange();
             } finally {
                 if (acquiredSemContext) {
                     acquiredSemContext.dispose();
                 }
             }
-        };
-
-        return getNextIdWithinRange();
+        }
     }
 
     public returnUnusedRange(): Promise<void> {
@@ -91,7 +87,7 @@ export class HiloIdGenerator {
         return executor.execute(new HiloReturnCommand(this._tag, range.current, range.maxId));
     }
 
-    protected _getNextRange(): Promise<void> {
+    protected async _getNextRange(): Promise<void> {
         const hiloCmd = new NextHiloCommand(
             this._tag, 
             this._lastBatchSize, 
@@ -99,16 +95,16 @@ export class HiloIdGenerator {
             this._identityPartsSeparator, 
             this._range.maxId,
             this._store.conventions);
-        return this._store.getRequestExecutor(this._dbName).execute(hiloCmd)
-            .then(() => {
-                const result: HiLoResult = hiloCmd.result;
-                this._prefix = result.prefix;
-                this._lastBatchSize = result.lastSize;
-                this._serverTag = result.serverTag || null;
-                this._lastRangeAt = result.lastRangeAt;
+        
+        await this._store.getRequestExecutor(this._dbName).execute(hiloCmd);
 
-                this._range = new HiloRangeValue(result.low, result.high);
-            });
+        const result: HiLoResult = hiloCmd.result;
+        this._prefix = result.prefix;
+        this._lastBatchSize = result.lastSize;
+        this._serverTag = result.serverTag || null;
+        this._lastRangeAt = result.lastRangeAt;
+
+        this._range = new HiloRangeValue(result.low, result.high);
     }
 
     protected _assembleDocumentId(currentRangeValue: number): string {
