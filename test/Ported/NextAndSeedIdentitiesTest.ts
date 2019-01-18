@@ -103,5 +103,4 @@ describe("NextAndSeedIdentitiesTest", function () {
         const identities = await store.maintenance.send(new GetIdentitiesOperation());
         assert.strictEqual(identities["users|"], 1991);
     });
-
 });
