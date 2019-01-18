@@ -3,6 +3,7 @@ import { throwError } from "../../Exceptions";
 import { HttpRequestParameters } from "../../Primitives/Http";
 import { ServerNode } from "../../Http/ServerNode";
 import * as stream from "readable-stream";
+import { TypeUtil } from "../../Utility/TypeUtil";
 
 export class SeedIdentityForCommand extends RavenCommand<number> {
 
@@ -34,6 +35,7 @@ export class SeedIdentityForCommand extends RavenCommand<number> {
         if (this._forced) {
             uri += "&force=true";
         }
+
         return {
             method: "POST",
             uri
@@ -49,7 +51,7 @@ export class SeedIdentityForCommand extends RavenCommand<number> {
         await this._defaultPipeline(_ => body = _).process(bodyStream)
             .then(result => {
                 const newSeedValue = result["newSeedValue"];
-                if (!newSeedValue) {
+                if (TypeUtil.isNullOrUndefined(newSeedValue)) {
                     this._throwInvalidResponse();
                 }
 
