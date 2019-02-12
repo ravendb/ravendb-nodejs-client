@@ -359,6 +359,10 @@ export class DatabaseChanges implements IDatabaseChanges {
             const messages = Array.isArray(payloadParsed) ? payloadParsed : [payloadParsed];
             for (const message of messages) {
                 const type = message.Type;
+                if (!type) {
+                    continue;
+                }
+                
                 switch (type) {
                     case "Error":
                         const exceptionAsString = message.Exception;
