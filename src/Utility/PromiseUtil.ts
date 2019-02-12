@@ -1,5 +1,6 @@
 import * as BluebirdPromise from "bluebird";
 import { AbstractCallback } from "./../Types/Callbacks";
+import { getError } from "../Exceptions";
 
 export interface IDefer<TResult> {
     resolve: (value: TResult) => void;
@@ -54,4 +55,84 @@ export function defer<T>(): IDefer<T> {
 
 export async function delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export class AsyncTimeout {
+    public get promise() {
+        return this._promise;
+    }
+
+    public get timedOut() {
+        return this._timedOut;
+    }
+
+    private _timedOut: boolean = false;
+
+    private _timer: NodeJS.Timer;
+
+    private _promise: Promise<void>;
+
+    private _op: string;
+
+    private _resolve: () => void;
+
+    private _reject: (err: Error) => void;
+
+    public constructor(ms: number, op?: string) {
+        this._op = op;
+        this._promise = new Promise((resolve, reject) => {
+            this._resolve = resolve;
+            this._reject = reject;
+        });
+
+        this._timer = setTimeout(() => {
+            this._timedOut = true;
+            this._reject(this._getTimeoutError(ms));
+        }, ms);
+    }
+
+    private _getTimeoutError(ms) {
+        const opText = this._op ? `Operation '${this._op}'` : `Operation`;
+        const timeoutError = getError("TimeoutError", `${opText} timed out after ${ms} ms.`);
+        return timeoutError;
+    }
+
+    public cancel() {
+        if (this._timer) {
+            clearTimeout(this._timer);
+        }
+
+        this._resolve();
+    }
+}
+
+export type PromiseStatus = "PENDING" | "RESOLVED" | "REJECTED";
+export class PromiseStatusTracker<T> {
+    private _status: PromiseStatus;
+    private _promise: Promise<T>;
+
+    public constructor(promise: Promise<T>) {
+        if (!promise) {
+            throw new Error("Promise to track cannot be null.");
+        }
+
+        this._status = "PENDING";
+        this._promise = promise;
+
+        this._promise
+            .then(() => this._status = "RESOLVED")
+            .catch(() => this._status = "REJECTED");
+    }
+
+    public static track<T>(promise: Promise<T>): PromiseStatusTracker<T> {
+        return new PromiseStatusTracker(promise);
+    }
+
+    public isFullfilled() {
+        return this._status === "REJECTED" || this._status === "RESOLVED";
+    }
+
+    public isResolved() {
+        return this._status === "RESOLVED";
+    }
 }
