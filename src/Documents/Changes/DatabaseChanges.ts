@@ -65,23 +65,23 @@ export class DatabaseChanges implements IDatabaseChanges {
         return new WebSocket(url, options);
     }
 
-    private _onConnectionStatusChanged() {
+    private async _onConnectionStatusChanged() {
         const acquiredSemContext = acquireSemaphore(this._semaphore);
 
-        BluebirdPromise.resolve(acquiredSemContext.promise)
-            .then(() => {
-                if (this.connected) {
-                    this._tcs.resolve(this);
-                    return;
-                }
+        try {
+            await acquiredSemContext.promise;
+            
+            if (this.connected) {
+                this._tcs.resolve(this);
+                return;
+            }
 
-                if (this._tcs.promise.isFulfilled()) {
-                    this._tcs = PromiseUtil.defer<IDatabaseChanges>();
-                }
-            })
-            .finally(() => {
-                acquiredSemContext.dispose();
-            });
+            if (this._tcs.promise.isFulfilled()) {
+                this._tcs = PromiseUtil.defer<IDatabaseChanges>();
+            }
+        } finally {
+            acquiredSemContext.dispose();
+        }
     }
 
     public get connected() {
@@ -188,7 +188,9 @@ export class DatabaseChanges implements IDatabaseChanges {
     }
 
     public dispose(): void {
-        Array.from(this._confirmations.values()).forEach(confirmation => confirmation.reject());
+        for (const confirmation of this._confirmations.values()) {
+            confirmation.reject();
+        }
 
         this._isCancelled = true;
         if (this._client) {
@@ -243,33 +245,38 @@ export class DatabaseChanges implements IDatabaseChanges {
     }
 
     private _send(command: string, value: string): Promise<void> {
-        return new Promise<void>(((resolve, reject) => {
+        return new Promise<void>((async (resolve, reject) => {
             let currentCommandId: number;
 
-            const acquiredSemContext = acquireSemaphore(this._semaphore);
+            const acquiredSemContext = acquireSemaphore(this._semaphore, {
+                timeout: 15000,
+                contextName: "DatabaseChanges._send()"
+            });
 
-            BluebirdPromise.resolve(acquiredSemContext.promise)
-                .then(() => {
-                    currentCommandId = ++this._commandId;
+            try {
+                await acquiredSemContext.promise;
 
-                    const payload = {
-                        CommandId: currentCommandId,
-                        Command: command,
-                        Param: value
-                    };
+                currentCommandId = ++this._commandId;
 
-                    this._confirmations.set(currentCommandId, { resolve, reject });
-                    const payloadAsString = JSON.stringify(payload, null, 0);
+                const payload = {
+                    CommandId: currentCommandId,
+                    Command: command,
+                    Param: value
+                };
 
-                    this._client.send(payloadAsString);
-                })
-                .catch((err) => {
-                    if (!this._isCancelled) {
-                        throw err;
-                    }
-                })
-                .timeout(15000)
-                .finally(() => acquiredSemContext.dispose());
+                this._confirmations.set(currentCommandId, { resolve, reject });
+                const payloadAsString = JSON.stringify(payload, null, 0);
+
+                this._client.send(payloadAsString);
+            } catch (err) {
+                if (!this._isCancelled) {
+                    throw err;
+                }
+            } finally {
+                if (acquiredSemContext) {
+                    acquiredSemContext.dispose();
+                }
+            }
         }));
     }
 
@@ -317,7 +324,10 @@ export class DatabaseChanges implements IDatabaseChanges {
                     setTimeout(() => this._doWorkInternal(url), 1000);
                 }
 
-                Array.from(this._confirmations.values()).forEach(v => v.reject());
+                for (const confirm of this._confirmations.values()) {
+                    confirm.reject();
+                }
+
                 this._confirmations.clear();
             });
 
@@ -346,7 +356,8 @@ export class DatabaseChanges implements IDatabaseChanges {
         const payloadParsed = JSON.parse(data) as any[];
 
         try {
-            for (const message of (Array.isArray(payloadParsed) ? payloadParsed : [payloadParsed])) {
+            const messages = Array.isArray(payloadParsed) ? payloadParsed : [payloadParsed];
+            for (const message of messages) {
                 const type = message.Type;
                 switch (type) {
                     case "Error":
@@ -397,8 +408,8 @@ export class DatabaseChanges implements IDatabaseChanges {
 
         this._emitter.emit("error", e);
 
-        Array.from(this._counters.values()).forEach(state => {
+        for (const state of this._counters.values()) {
             state.error(e);
-        });
+        }
     }
 }

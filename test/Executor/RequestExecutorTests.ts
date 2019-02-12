@@ -139,7 +139,7 @@ describe("Request executor", function () {
             try {
                 executor = RequestExecutor.create([
                         "http://no_such_host:8080",
-                        "http://another_offlilne:8080",
+                        "http://another_offline:8080",
                         url
                     ],
                     dbName,
