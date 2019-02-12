@@ -3,7 +3,7 @@ import * as semaphore from "semaphore";
 
 import { IDocumentStore } from "../../Documents/IDocumentStore";
 import { DateUtil } from "../../Utility/DateUtil";
-import { acquireSemaphore, AcquiredSemaphoreContext } from "../../Utility/SemaphoreUtil";
+import { acquireSemaphore, SemaphoreAcquisitionContext } from "../../Utility/SemaphoreUtil";
 import { StringUtil } from "../../Utility/StringUtil";
 import { HiloReturnCommand } from "./Commands/HiloReturnCommand";
 import { NextHiloCommand, HiLoResult } from "./Commands/NextHiloCommand";
@@ -54,7 +54,7 @@ export class HiloIdGenerator {
                 return id;
             }
 
-            let acquiredSemContext: AcquiredSemaphoreContext;
+            let acquiredSemContext: SemaphoreAcquisitionContext;
             try {
                 //local range is exhausted , need to get a new range
                 acquiredSemContext = acquireSemaphore(this._generatorLock, {

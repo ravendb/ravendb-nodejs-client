@@ -2,7 +2,7 @@ import * as os from "os";
 import * as BluebirdPromise from "bluebird";
 import * as semaphore from "semaphore";
 import * as stream from "readable-stream";
-import { acquireSemaphore, AcquiredSemaphoreContext } from "../Utility/SemaphoreUtil";
+import { acquireSemaphore, SemaphoreAcquisitionContext } from "../Utility/SemaphoreUtil";
 import { getLogger, ILogger } from "../Utility/LogUtil";
 import { Timer } from "../Primitives/Timer";
 import { ServerNode } from "./ServerNode";
@@ -35,6 +35,7 @@ import { JsonSerializer } from "../Mapping/Json/Serializer";
 import { validateUri } from "../Utility/UriUtil";
 import * as StreamUtil from "../Utility/StreamUtil";
 import { closeHttpResponse } from "../Utility/HttpUtil";
+import { PromiseStatusTracker } from "../Utility/PromiseUtil";
 
 const DEFAULT_REQUEST_OPTIONS = {};
 
@@ -145,7 +146,21 @@ export class RequestExecutor implements IDisposable {
 
     protected _disposed: boolean;
 
-    protected _firstTopologyUpdatePromise: BluebirdPromise<void>;
+    private _firstTopologyUpdatePromiseInternal;
+
+    protected get _firstTopologyUpdatePromise(): Promise<void> {
+        return this._firstTopologyUpdatePromiseInternal;
+    }
+
+    protected set _firstTopologyUpdatePromise(value: Promise<void>) {
+        this._firstTopologyUpdatePromiseInternal = value;
+
+        if (value) {
+            this._firstTopologyUpdateStatus = PromiseStatusTracker.track(value);
+        }
+    }
+
+    protected _firstTopologyUpdateStatus: PromiseStatusTracker<void>;
 
     protected _lastKnownUrls: string[];
 
@@ -258,8 +273,10 @@ export class RequestExecutor implements IDisposable {
         const { authOptions, documentConventions } = opts || {} as IRequestExecutorOptions;
         const executor = new RequestExecutor(database, authOptions, documentConventions);
         executor._firstTopologyUpdatePromise = executor._firstTopologyUpdate(initialUrls);
+
         // this is just to get rid of unhandled rejection, we're handling it later on
         executor._firstTopologyUpdatePromise.catch(TypeUtil.NOOP);
+        
         return executor;
     }
 
@@ -299,10 +316,9 @@ export class RequestExecutor implements IDisposable {
 
     private async _ensureNodeSelector(): Promise<void> {
         if (this._firstTopologyUpdatePromise
-            && (!this._firstTopologyUpdatePromise.isFulfilled() 
-                || this._firstTopologyUpdatePromise.isRejected())) {
-            
-            await Promise.resolve(this._firstTopologyUpdatePromise);
+            && (!this._firstTopologyUpdateStatus.isFullfilled()
+                || this._firstTopologyUpdateStatus.isRejected())) {
+            await this._firstTopologyUpdatePromise;
         }
 
         if (!this._nodeSelector) {
@@ -362,7 +378,7 @@ export class RequestExecutor implements IDisposable {
             return;
         }
 
-        let semAcquiredContext: AcquiredSemaphoreContext;
+        let semAcquiredContext: SemaphoreAcquisitionContext;
 
         try {
             semAcquiredContext = acquireSemaphore(this._updateClientConfigurationSemaphore);
@@ -507,83 +523,76 @@ export class RequestExecutor implements IDisposable {
             });
     }
 
-    protected _firstTopologyUpdate(inputUrls: string[]): BluebirdPromise<void> {
+    protected async _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
         const initialUrls: string[] = RequestExecutor._validateUrls(inputUrls, this._authOptions);
 
         const topologyUpdateErrors: Array<{ url: string, error: Error | string }> = [];
 
-        const tryUpdateTopology = (url: string, database: string): PromiseLike<boolean> => {
+        const tryUpdateTopology = async (url: string, database: string): Promise<boolean> => {
             const serverNode = new ServerNode({ url, database });
-            return BluebirdPromise.resolve()
-                .then(() => this.updateTopology(serverNode, TypeUtil.MAX_INT32))
-                .then(() => {
-                    this._initializeUpdateTopologyTimer();
-                    this._topologyTakenFromNode = serverNode;
-                    return true;
-                })
-                .catch(error => {
-                    if ((error.name as RavenErrorType) === "DatabaseDoesNotExistException") {
-                        this._lastKnownUrls = initialUrls;
-                        throw error;
-                    }
-
-                    if (initialUrls.length === 0) {
-                        this._lastKnownUrls = initialUrls;
-                        throwError("InvalidOperationException",
-                            `Cannot get topology from server: ${url}.`, error);
-                    }
-
-                    topologyUpdateErrors.push({ url, error });
-                    return false;
-                });
-        };
-
-        const tryUpdateTopologyOnAllNodes = () => {
-            return initialUrls.reduce((reduceResult, nextUrl) => {
-                return reduceResult
-                    .then(breakLoop => {
-                        if (!breakLoop) {
-                            return tryUpdateTopology(nextUrl, this._databaseName);
-                        }
-
-                        return true;
-                    });
-            }, BluebirdPromise.resolve(false) as PromiseLike<boolean>);
-        };
-
-        return BluebirdPromise.resolve()
-            .then(() => tryUpdateTopologyOnAllNodes())
-            .then(() => {
-                const topology = new Topology();
-                topology.etag = this._topologyEtag;
-
-                let topologyNodes = this.getTopologyNodes();
-                if (!topologyNodes) {
-                    topologyNodes = initialUrls.map(url => {
-                        const serverNode = new ServerNode({
-                            url, database: this._databaseName
-                        });
-                        serverNode.clusterTag = "!";
-                        return serverNode;
-                    });
+            try {
+                await this.updateTopology(serverNode, TypeUtil.MAX_INT32);
+                this._initializeUpdateTopologyTimer();
+                this._topologyTakenFromNode = serverNode;
+                return true;
+            } catch (error) {
+                if ((error.name as RavenErrorType) === "DatabaseDoesNotExistException") {
+                    this._lastKnownUrls = initialUrls;
+                    throw error;
                 }
 
-                topology.nodes = topologyNodes;
+                if (initialUrls.length === 0) {
+                    this._lastKnownUrls = initialUrls;
+                    throwError("InvalidOperationException",
+                        `Cannot get topology from server: ${url}.`, error);
+                }
 
-                this._nodeSelector = new NodeSelector(topology);
+                topologyUpdateErrors.push({ url, error });
+                return false;
+            }
+        };
 
-                if (initialUrls && initialUrls.length > 0) {
-                    this._initializeUpdateTopologyTimer();
+        const tryUpdateTopologyOnAllNodes = async () => {
+            for (const url of initialUrls) {
+                if (await tryUpdateTopology(url, this._databaseName)) {
                     return;
                 }
+            }
 
-                this._lastKnownUrls = initialUrls;
-                const details: string = topologyUpdateErrors
-                    .map(x => `${x.url} -> ${x.error && (x.error as Error).stack ? (x.error as Error).stack : x.error}`)
-                    .join(", ");
+            return false;
+        };
 
-                this._throwExceptions(details);
+        await tryUpdateTopologyOnAllNodes();
+        const topology = new Topology();
+        topology.etag = this._topologyEtag;
+
+        let topologyNodes = this.getTopologyNodes();
+        if (!topologyNodes) {
+            topologyNodes = initialUrls.map(url => {
+                const serverNode = new ServerNode({
+                    url,
+                    database: this._databaseName
+                });
+                serverNode.clusterTag = "!";
+                return serverNode;
             });
+        }
+
+        topology.nodes = topologyNodes;
+
+        this._nodeSelector = new NodeSelector(topology);
+
+        if (initialUrls && initialUrls.length > 0) {
+            this._initializeUpdateTopologyTimer();
+            return;
+        }
+
+        this._lastKnownUrls = initialUrls;
+        const details: string = topologyUpdateErrors
+            .map(x => `${x.url} -> ${x.error && (x.error as Error).stack ? (x.error as Error).stack : x.error}`)
+            .join(", ");
+
+        this._throwExceptions(details);
     }
 
     protected _throwExceptions(details: string): void {
@@ -633,7 +642,8 @@ export class RequestExecutor implements IDisposable {
         this._log.info(`Execute command ${command.constructor.name}`);
 
         const topologyUpdate = this._firstTopologyUpdatePromise;
-        if ((topologyUpdate && topologyUpdate.isResolved()) || this._disableTopologyUpdates) {
+        const topologyUpdateStatus = this._firstTopologyUpdateStatus;
+        if ((topologyUpdate && topologyUpdateStatus.isResolved()) || this._disableTopologyUpdates) {
             const currentIndexAndNode: CurrentIndexAndNode = this.chooseNodeForRequest(command, sessionInfo);
             return this._executeOnSpecificNode(command, sessionInfo, {
                 chosenNode: currentIndexAndNode.currentNode,
@@ -645,43 +655,39 @@ export class RequestExecutor implements IDisposable {
         }
     }
 
-    private _unlikelyExecute<TResult>(
+    private async _unlikelyExecute<TResult>(
         command: RavenCommand<TResult>,
-        topologyUpdate: BluebirdPromise<void>,
+        topologyUpdate: Promise<void>,
         sessionInfo: SessionInfo): Promise<void> {
 
-        const result = BluebirdPromise.resolve()
-            .then(() => {
-                if (!this._firstTopologyUpdatePromise) {
-                    if (!this._lastKnownUrls) {
-                        throwError("InvalidOperationException",
-                            "No known topology and no previously known one, cannot proceed, likely a bug");
-                    }
-
-                    topologyUpdate = this._firstTopologyUpdate(this._lastKnownUrls);
+        try {
+            if (!this._firstTopologyUpdatePromise) {
+                if (!this._lastKnownUrls) {
+                    throwError("InvalidOperationException",
+                        "No known topology and no previously known one, cannot proceed, likely a bug");
                 }
 
-                return topologyUpdate;
-            })
-            .catch(reason => {
-                if (this._firstTopologyUpdatePromise === topologyUpdate) {
-                    this._firstTopologyUpdatePromise = null; // next request will raise it
-                }
+                topologyUpdate = this._firstTopologyUpdate(this._lastKnownUrls);
+            }
 
-                this._log.warn(reason, "Error doing topology update.");
+            await topologyUpdate;
 
-                throw reason;
-            })
-            .then(() => {
-                const currentIndexAndNode: CurrentIndexAndNode = this.chooseNodeForRequest(command, sessionInfo);
-                return this._executeOnSpecificNode(command, sessionInfo, {
-                    chosenNode: currentIndexAndNode.currentNode,
-                    nodeIndex: currentIndexAndNode.currentIndex,
-                    shouldRetry: true
-                });
-            });
+        } catch (reason) {
+            if (this._firstTopologyUpdatePromise === topologyUpdate) {
+                this._firstTopologyUpdatePromise = null; // next request will raise it
+            }
 
-        return Promise.resolve(result);
+            this._log.warn(reason, "Error doing topology update.");
+
+            throw reason;
+        }
+
+        const currentIndexAndNode: CurrentIndexAndNode = this.chooseNodeForRequest(command, sessionInfo);
+        return this._executeOnSpecificNode(command, sessionInfo, {
+            chosenNode: currentIndexAndNode.currentNode,
+            nodeIndex: currentIndexAndNode.currentIndex,
+            shouldRetry: true
+        });
     }
 
     private _getFromCache<TResult>(
