@@ -1,3 +1,7 @@
+// tslint:disable-next-line:no-var-requires
+// const why = require("why-is-node-running");
+// setTimeout(why, 30000);
+
 import { RequestExecutor } from "../../src/Http/RequestExecutor";
 import * as fs from "fs";
 import * as path from "path";
