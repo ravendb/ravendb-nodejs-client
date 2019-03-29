@@ -398,9 +398,9 @@ describe("QueryOnCountersTest", function () {
                 }, `companies/${i}-A`);
             }
 
-            incCounter(session, "orders/1-A", "Downloads", 100);
-            incCounter(session, "orders/2-A", "Downloads", 200);
-            incCounter(session, "orders/3-A", "Downloads", 300);
+            incCounter(session, "orders/1-A", "downloads", 100);
+            incCounter(session, "orders/2-A", "downloads", 200);
+            incCounter(session, "orders/3-A", "downloads", 300);
             await session.saveChanges();
         }
 
@@ -447,9 +447,9 @@ describe("QueryOnCountersTest", function () {
                     name: empNames[i - 1]
                 }, `employees/${i}-A`, Employee);
             }
-            incCounter(session, "employees/1-A", "Downloads", 100);
-            incCounter(session, "employees/2-A", "Downloads", 200);
-            incCounter(session, "employees/3-A", "Downloads", 300);
+            incCounter(session, "employees/1-A", "downloads", 100);
+            incCounter(session, "employees/2-A", "downloads", 200);
+            incCounter(session, "employees/3-A", "downloads", 300);
             await session.saveChanges();
         }
 
