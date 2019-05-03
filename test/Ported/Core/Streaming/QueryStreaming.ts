@@ -110,7 +110,8 @@ describe("query streaming", function () {
             const session = store.openSession();
             const query = session.query<User>({ indexName: usersByNameIndex.getIndexName() });
 
-            const reader = await session.advanced.stream(query, s => stats = s);
+            let statsFromCallback;
+            const reader = await session.advanced.stream(query, s => statsFromCallback = s);
 
             const items = [];
             reader.on("data", item => {
@@ -121,16 +122,24 @@ describe("query streaming", function () {
                 });
             });
 
-            let stats: StreamQueryStatistics;
-            reader.on("stats", s => stats = s);
+            let statsFromEvent: StreamQueryStatistics;
+            reader.on("stats", s => statsFromEvent = s);
 
             await StreamUtil.finishedAsync(reader);
+            
             assert.strictEqual(items.length, 100);
-            assert.ok(stats);
-            assert.strictEqual(stats.indexName, "Users/ByName");
-            assert.strictEqual(stats.totalResults, 100);
-            assert.ok(stats.indexTimestamp instanceof Date);
-            assert.strictEqual(stats.indexTimestamp.toDateString(), new Date().toDateString());
+            
+            function assertStats(stats) {
+                assert.ok(stats);
+                assert.strictEqual(stats.indexName, "Users/ByName");
+                assert.strictEqual(stats.totalResults, 100);
+                assert.ok(stats.indexTimestamp instanceof Date);
+                assert.strictEqual(stats.indexTimestamp.toDateString(), new Date().toDateString());
+            }
+
+            assertStats(statsFromEvent);
+            assertStats(statsFromCallback);
+            assert.equal(statsFromCallback, statsFromEvent);
 
             items.forEach(x => assertStreamResultEntry<User>(x, doc => {
                 assert.ok(doc instanceof User);
