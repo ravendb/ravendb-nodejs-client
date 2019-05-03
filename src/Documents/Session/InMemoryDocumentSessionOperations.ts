@@ -961,7 +961,12 @@ export abstract class InMemoryDocumentSessionOperations
         this._assertNoNonUniqueInstance(entity, id);
 
         const conventions = this._requestExecutor.conventions;
-        const collectionName: string = conventions.getCollectionNameForEntity(entity);
+        
+        const typeDesc = conventions.getJsTypeByDocumentType(documentType);
+        const collectionName: string = documentType
+            ? conventions.getCollectionNameForType(typeDesc)
+            : conventions.getCollectionNameForEntity(entity);
+
         const metadata = {};
         if (collectionName) {
             metadata[CONSTANTS.Documents.Metadata.COLLECTION] = collectionName;
