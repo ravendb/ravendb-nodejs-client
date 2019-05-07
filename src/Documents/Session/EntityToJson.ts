@@ -86,12 +86,14 @@ export class EntityToJson {
 
         if (documentInfo.metadata) {
             documentInfo.metadata["@nested-object-types" as keyof MetadataObject] = typeInfo.nestedTypes;
-            documentInfo.metadata["Raven-Node-Type" as keyof MetadataObject] = typeInfo.typeName;
+            documentInfo.metadata["Raven-Node-Type" as keyof MetadataObject] = 
+                documentInfo.metadata["Raven-Node-Type"] || typeInfo.typeName;
         }
 
         if (documentInfo.metadataInstance) {
             documentInfo.metadataInstance[CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES] = typeInfo.nestedTypes;
-            documentInfo.metadataInstance[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] = typeInfo.typeName;
+            documentInfo.metadataInstance[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] = 
+               documentInfo.metadataInstance["Raven-Node-Type"] || typeInfo.typeName;
         }
 
         let setMetadata: boolean = false;

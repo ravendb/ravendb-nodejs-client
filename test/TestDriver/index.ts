@@ -28,6 +28,12 @@ const log = getLogger({ module: "TestDriver" });
 
 export abstract class RavenTestDriver implements IDisposable {
 
+    private _serverVersion: string;
+
+    public get serverVersion() {
+        return this._serverVersion;
+    }
+
     private readonly _locator: RavenServerLocator;
     private readonly _securedLocator: RavenServerLocator;
 
@@ -194,6 +200,7 @@ export abstract class RavenTestDriver implements IDisposable {
         });
 
         const scrapServerUrl = () => {
+            const SERVER_VERSION_REGEX = /Version (4.\d)/;
             const SERVER_URL_REGEX = /Server available on:\s*(\S+)\s*$/m;
             const serverProcess = this._getGlobalProcess(secured);
             let serverOutput = "";
@@ -203,6 +210,12 @@ export abstract class RavenTestDriver implements IDisposable {
                 serverProcess.stdout
                     .on("data", (chunk) => {
                         serverOutput += chunk;
+
+                        const serverVersionMatch = serverOutput.match(SERVER_VERSION_REGEX);
+                        if (serverVersionMatch && serverVersionMatch.length) {
+                            this._serverVersion = serverVersionMatch[1];
+                        }
+
                         try {
                             const regexMatch = serverOutput.match(SERVER_URL_REGEX);
                             if (!regexMatch) {
