@@ -62,7 +62,7 @@ describe("Attachments Session", function () {
             assert.strictEqual(attachments.length, 3);
 
             const orderedNames = [...attachments];
-            orderedNames.sort((a, b) => a.name > b.name ? -1 : -1);
+            orderedNames.sort((a, b) => a.name > b.name ? 1 : -1);
 
             for (let i = 0; i < attachmentsInfo.length; i++) {
                 const { name, contentType } = orderedNames[i];

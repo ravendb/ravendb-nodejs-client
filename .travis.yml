@@ -2,6 +2,7 @@ language: node_js
 node_js:
   - "8"
   - "10"
+  - "12"
 env:
   global:
     - RAVENDB_TEST_SERVER_PATH=./RavenDB/Server/Raven.Server
@@ -10,11 +11,10 @@ env:
       RAVENDB_TEST_CLIENT_CERT_PATH=./certs/nodejs.pem
       RAVENDB_TEST_CA_PATH=/usr/local/share/ca-certificates/ca.crt
       RAVENDB_TEST_HTTPS_SERVER_URL=https://localhost:8989
+      RAVENDB_BUILD_TYPE="stable"
   matrix:
     - RAVENDB_SERVER_VERSION="4.1"
-      RAVENDB_BUILD_TYPE="stable"
     - RAVENDB_SERVER_VERSION="4.2"
-      RAVENDB_BUILD_TYPE="nightly"
 before_install:
   - travis_retry sudo apt-get -qq update
   - travis_retry sudo apt-get install -y libunwind8 wget libssl-dev curl unzip gettext libcurl4-openssl-dev zlib1g uuid-dev bzip2 openssl

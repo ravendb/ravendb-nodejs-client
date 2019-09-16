@@ -396,6 +396,10 @@ export class RequestExecutor implements IDisposable {
             return Promise.resolve(false);
         }
 
+        if (this._disableTopologyUpdates) {
+            return Promise.resolve(false);
+        }
+
         const acquiredSemContext = acquireSemaphore(this._updateDatabaseTopologySemaphore, { timeout });
         const result = BluebirdPromise.resolve(acquiredSemContext.promise)
             .then(() => {
@@ -804,7 +808,7 @@ export class RequestExecutor implements IDisposable {
             sp.stop();
 
             const serverDownHandledSuccessfully = await this._handleServerDown(
-                req.uri as string, chosenNode, nodeIndex, command, req, response, null, error, sessionInfo);
+                req.uri as string, chosenNode, nodeIndex, command, req, response, null, error, sessionInfo, shouldRetry);
             
             if (!serverDownHandledSuccessfully) {
                 this._throwFailedToContactAllNodes(command, req, error, null);
@@ -1004,7 +1008,7 @@ export class RequestExecutor implements IDisposable {
             case StatusCodes.BadGateway:
             case StatusCodes.ServiceUnavailable:
                 return this._handleServerDown(
-                    url, chosenNode, nodeIndex, command, req, response, await readBody(), null, sessionInfo);
+                    url, chosenNode, nodeIndex, command, req, response, await readBody(), null, sessionInfo, shouldRetry);
             case StatusCodes.Conflict:
                 RequestExecutor._handleConflict(response, await readBody());
                 break;
@@ -1089,7 +1093,8 @@ export class RequestExecutor implements IDisposable {
         response: HttpResponse,
         body: string,
         error: any,
-        sessionInfo: SessionInfo): Promise<boolean> {
+        sessionInfo: SessionInfo,
+        shouldRetry: boolean): Promise<boolean> {
 
         if (!command.failedNodes) {
             command.failedNodes = new Map();
@@ -1118,7 +1123,7 @@ export class RequestExecutor implements IDisposable {
         await this._executeOnSpecificNode(command, sessionInfo, {
                     chosenNode: currentIndexAndNode.currentNode,
                     nodeIndex: currentIndexAndNode.currentIndex,
-                    shouldRetry: false
+                    shouldRetry: shouldRetry
                 });
 
         return true;
