@@ -8,7 +8,7 @@ import { HttpRequestParameters } from "../../../Primitives/Http";
 import { HeadersBuilder } from "../../../Utility/HttpUtil";
 import * as stream from "readable-stream";
 
-export class IndexHasChangedOperation implements IMaintenanceOperation<Boolean> {
+export class IndexHasChangedOperation implements IMaintenanceOperation<boolean> {
 
     private readonly _definition: IndexDefinition;
 
