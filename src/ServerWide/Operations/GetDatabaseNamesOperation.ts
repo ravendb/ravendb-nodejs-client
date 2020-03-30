@@ -54,7 +54,7 @@ export class GetDatabaseNamesCommand extends RavenCommand<string[]> {
         const results = await this._defaultPipeline(_ => body = _)
             .process(bodyStream);
         const { databases } = results as any;
-        if (!databases || !Array.isArray(databases) || !databases.length) {
+        if (!databases || !Array.isArray(databases)) {
             this._throwInvalidResponse();
         }
 
