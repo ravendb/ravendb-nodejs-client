@@ -57,7 +57,8 @@ export class RemoveCompareExchangeCommand<T> extends RavenCommand<CompareExchang
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
-        const uri = node.url + "/databases/" + node.database + "/cmpxchg?key=" + this._key + "&index=" + this._index;
+        const uri = node.url + "/databases/" + node.database + "/cmpxchg?key=" + encodeURIComponent(this._key) 
+            + "&index=" + this._index;
         return {
             method: "DELETE",
             uri
