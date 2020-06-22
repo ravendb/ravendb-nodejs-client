@@ -18,7 +18,8 @@
     ],
     "types": [
       "mocha",
-      "node"
+      "node",
+      "stream-json"
     ]
   },
   "include": [
