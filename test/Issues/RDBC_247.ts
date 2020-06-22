@@ -1,6 +1,5 @@
-import * as mocha from "mocha";
 import * as assert from "assert";
-import { User, Company, Order } from "../Assets/Entities";
+import { User } from "../Assets/Entities";
 import { assertThrows } from "../Utils/AssertExtensions";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 

@@ -62,7 +62,7 @@ const IGNORE_MODULES = [
     "ServerWide/Tcp/TcpNegotiation*",
     "Documents/Queries/MoreLikeThis/IMoreLikeThisBuilderBase*",
     "Documents/Queries/MoreLikeThis/MoreLikeThisQueryResult*",
-    "Documents/Queries/MoreLikeThis/IMoreLikeThisBuilderForDocumentQuery*",,
+    "Documents/Queries/MoreLikeThis/IMoreLikeThisBuilderForDocumentQuery*",
     "Documents/Queries/MoreLikeThis/MoreLikeThisUsingDocument*",
     "Documents/Queries/MoreLikeThis/MoreLikeThisUsingAnyDocument*",
     "Documents/Queries/MoreLikeThis/MoreLikeThisScope*",

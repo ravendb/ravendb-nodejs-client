@@ -26,7 +26,6 @@ export * from "./ServerWide/ModifyOnGoingTaskResult";
 
 // SERVERWIDE OPERATIONS
 export * from "./ServerWide/Operations";
-export * from "./ServerWide/Operations/CreateDatabaseOperation";
 export * from "./ServerWide/Operations/DeleteDatabasesOperation";
 export * from "./ServerWide/Operations/GetDatabaseNamesOperation";
 export * from "./ServerWide/Operations/GetServerWideOperationStateOperation";
@@ -36,10 +35,6 @@ export { GetDatabaseTopologyCommand } from "./ServerWide/Commands/GetDatabaseTop
 export { GetClusterTopologyCommand } from "./ServerWide/Commands/GetClusterTopologyCommand";
 export { GetTcpInfoCommand } from "./ServerWide/Commands/GetTcpInfoCommand";
 export { CreateDatabaseOperation } from "./ServerWide/Operations/CreateDatabaseOperation";
-export { DeleteDatabasesOperation } from "./ServerWide/Operations/DeleteDatabasesOperation";
-export { GetDatabaseNamesOperation } from "./ServerWide/Operations/GetDatabaseNamesOperation";
-export { GetServerWideOperationStateOperation } from "./ServerWide/Operations/GetServerWideOperationStateOperation";
-export { ServerWideOperationCompletionAwaiter } from "./ServerWide/Operations/ServerWideOperationCompletionAwaiter";
 export { DatabaseRecord, ConflictSolver, ScriptResolver } from "./ServerWide";
 export * from "./ServerWide/ConnectionString";
 
