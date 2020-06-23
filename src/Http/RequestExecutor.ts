@@ -36,6 +36,8 @@ import { validateUri } from "../Utility/UriUtil";
 import * as StreamUtil from "../Utility/StreamUtil";
 import { closeHttpResponse } from "../Utility/HttpUtil";
 import { PromiseStatusTracker } from "../Utility/PromiseUtil";
+import * as http from "http";
+import * as https from "https";
 
 const DEFAULT_REQUEST_OPTIONS = {};
 
@@ -148,6 +150,14 @@ export class RequestExecutor implements IDisposable {
 
     private _firstTopologyUpdatePromiseInternal;
 
+    private _httpAgent: http.Agent;
+
+    private static readonly KEEP_ALIVE_HTTP_AGENT = new http.Agent({
+        keepAlive: true
+    });
+
+    private static readonly HTTPS_AGENT_CACHE = new Map<string, https.Agent>();
+
     protected get _firstTopologyUpdatePromise(): Promise<void> {
         return this._firstTopologyUpdatePromiseInternal;
     }
@@ -231,6 +241,34 @@ export class RequestExecutor implements IDisposable {
         return this._nodeSelector
             ? this._nodeSelector.getTopology()
             : null;
+    }
+
+    public getHttpAgent(): http.Agent {
+        if (this._httpAgent) {
+            return this._httpAgent;
+        }
+
+        return this._httpAgent = this.createHttpAgent();
+    }
+
+    private createHttpAgent(): http.Agent {
+        if (this._certificate) {
+            const agentOptions = this._certificate.toAgentOptions();
+            const cacheKey = JSON.stringify(agentOptions, null, 0);
+            if (RequestExecutor.HTTPS_AGENT_CACHE.has(cacheKey)) {
+                return RequestExecutor.HTTPS_AGENT_CACHE.get(cacheKey);
+            } else {
+                const agent = new https.Agent({
+                    keepAlive: true,
+                    ...agentOptions
+                });
+
+                RequestExecutor.HTTPS_AGENT_CACHE.set(cacheKey, agent);
+                return agent;
+            }
+        } else {
+            return RequestExecutor.KEEP_ALIVE_HTTP_AGENT;
+        }
     }
 
     public getTopologyNodes(): ServerNode[] {
@@ -773,7 +811,7 @@ export class RequestExecutor implements IDisposable {
             if (this._shouldExecuteOnAll(chosenNode, command)) {
                 response = await this._executeOnAllToFigureOutTheFastest(chosenNode, command);
             } else {
-                const responseAndBody = await command.send(req);
+                const responseAndBody = await command.send(this.getHttpAgent(), req);
                 bodyStream = responseAndBody.bodyStream;
                 response = responseAndBody.response;
             }
@@ -1034,7 +1072,7 @@ export class RequestExecutor implements IDisposable {
             task = BluebirdPromise.resolve()
                 .then(() => {
                     const req = this._createRequest(nodes[taskNumber], command);
-                    return command.send(req)
+                    return command.send(this.getHttpAgent(), req)
                         .then(responseAndBodyStream => {
                             return responseAndBodyStream.response;
                         });
@@ -1174,11 +1212,6 @@ export class RequestExecutor implements IDisposable {
     private _createRequest<TResult>(node: ServerNode, command: RavenCommand<TResult>): HttpRequestParameters {
         const req = Object.assign(command.createRequest(node), this._defaultRequestOptions);
         req.headers = req.headers || {};
-
-        if (this._authOptions) {
-            const agentOptions = this._certificate.toAgentOptions();
-            req.agentOptions = Object.assign(req.agentOptions || {}, agentOptions);
-        }
 
         if (!req.headers[HEADERS.CLIENT_VERSION]) {
             req.headers[HEADERS.CLIENT_VERSION] = RequestExecutor.CLIENT_VERSION;

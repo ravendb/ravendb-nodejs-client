@@ -187,7 +187,6 @@ export class ExceptionDispatcher {
             errorToThrow = getError("RavenException", errThrowing.message, errThrowing);
         } finally {
             closeHttpResponse(response);
-            response.request.abort();
         }
 
         throw errorToThrow;

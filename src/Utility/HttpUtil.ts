@@ -60,7 +60,7 @@ export function getHeaders() {
 }
 
 export function closeHttpResponse(response: HttpResponse) {
-    response.emit("end");
+    // node-fetch closes response for us - no action is required
 }
 
 export class HeadersBuilder {

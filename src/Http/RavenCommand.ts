@@ -14,6 +14,7 @@ import { JsonSerializer } from "../Mapping/Json/Serializer";
 import { RavenCommandResponsePipeline } from "./RavenCommandResponsePipeline";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
 import * as https from "https";
+import * as http from "http";
 
 const log = getLogger({ module: "RavenCommand" });
 
@@ -92,15 +93,12 @@ export abstract class RavenCommand<TResult> {
             this._responseType);
     }
 
-    public send(
+    public send(agent: http.Agent,
         requestOptions: HttpRequestParameters): Promise<{ response: HttpResponse, bodyStream: stream.Readable }> {
-        const { body, uri, agentOptions, ...restOptions } = requestOptions;
+        const { body, uri, ...restOptions } = requestOptions;
         log.info(`Send command ${this.constructor.name} to ${uri}${body ? " with body " + body : ""}.`);
 
-        const optionsToUse = { body, ...restOptions } as RequestInit;
-        if (agentOptions) {
-            optionsToUse.agent = new https.Agent(agentOptions);
-        }
+        const optionsToUse = { body, ...restOptions, agent } as RequestInit;
 
         return new Promise((resolve, reject) => {
             const passthrough = new stream.PassThrough();
