@@ -1,10 +1,10 @@
-import { Response as HttpResponse } from "request";
+import { Response as HttpResponse } from "node-fetch"
 import { HEADERS } from "../Constants";
 import { IncomingHttpHeaders } from "http";
 import { throwError } from "../Exceptions";
 
 export function getRequiredEtagHeader(response: HttpResponse) {
-    let etagHeader = response.caseless.get(HEADERS.ETAG);
+    let etagHeader = response.headers.get(HEADERS.ETAG);
     if (!etagHeader) {
         throwError("InvalidOperationException", "Response did't had an ETag header");
     }
@@ -18,8 +18,8 @@ export function getRequiredEtagHeader(response: HttpResponse) {
 
 export function getEtagHeader(responseOrHeaders: HttpResponse | IncomingHttpHeaders | object): string {
     let etagHeaders: string[] | string;
-    if ("caseless" in responseOrHeaders) {
-        etagHeaders = (responseOrHeaders as HttpResponse).caseless.get(HEADERS.ETAG);
+    if ("headers" in responseOrHeaders) {
+        etagHeaders = (responseOrHeaders as HttpResponse).headers.get(HEADERS.ETAG);
     } else if (HEADERS.ETAG in responseOrHeaders) {
         etagHeaders = (responseOrHeaders as IncomingHttpHeaders)[HEADERS.ETAG];
     } else if ("headers" in responseOrHeaders) {
@@ -44,7 +44,7 @@ export function etagHeaderToChangeVector(responseHeader: string) {
 }
 
 export function getBooleanHeader(response: HttpResponse, header: string): boolean {
-    const headers = response.caseless;
+    const headers = response.headers;
     let headerVal: string | string[] = headers.get(header);
     if (headerVal && Array.isArray(headerVal)) {
         headerVal = (headerVal[0] || null);

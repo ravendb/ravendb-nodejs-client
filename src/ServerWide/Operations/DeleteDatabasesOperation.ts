@@ -5,6 +5,7 @@ import { DocumentConventions } from "../..";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestParameters } from "../../Primitives/Http";
+import { HeadersBuilder } from "../../Utility/HttpUtil";
 
 export interface DeleteDatabaseResult {
     raftCommandIndex: number;
@@ -65,9 +66,9 @@ export class DeleteDatabaseCommand extends RavenCommand<DeleteDatabaseResult> {
         return {
             uri,
             method: "DELETE",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: HeadersBuilder.create()
+                .typeAppJson()
+                .build(),
             body: this._parameters,
         };
     }

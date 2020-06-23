@@ -1,8 +1,8 @@
 import { ServerNode } from "./ServerNode";
 import { HttpCache } from "../Http/HttpCache";
 import { StatusCodes } from "../Http/StatusCode";
-import * as request from "request";
 import * as stream from "readable-stream";
+import { Response, default as fetch, RequestInit } from "node-fetch";
 import { HttpRequestParameters, HttpResponse } from "../Primitives/Http";
 import { getLogger } from "../Utility/LogUtil";
 import { throwError } from "../Exceptions";
@@ -13,10 +13,11 @@ import { ObjectTypeDescriptor } from "..";
 import { JsonSerializer } from "../Mapping/Json/Serializer";
 import { RavenCommandResponsePipeline } from "./RavenCommandResponsePipeline";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
+import * as https from "https";
 
 const log = getLogger({ module: "RavenCommand" });
 
-export type RavenCommandResponse = string | request.Response;
+export type RavenCommandResponse = string | Response;
 
 export type RavenCommandResponseType = "Empty" | "Object" | "Raw";
 
@@ -93,22 +94,28 @@ export abstract class RavenCommand<TResult> {
 
     public send(
         requestOptions: HttpRequestParameters): Promise<{ response: HttpResponse, bodyStream: stream.Readable }> {
-        const { body, uri } = requestOptions;
+        const { body, uri, agentOptions, ...restOptions } = requestOptions;
         log.info(`Send command ${this.constructor.name} to ${uri}${body ? " with body " + body : ""}.`);
+
+        const optionsToUse = { body, ...restOptions } as RequestInit;
+        if (agentOptions) {
+            optionsToUse.agent = new https.Agent(agentOptions);
+        }
 
         return new Promise((resolve, reject) => {
             const passthrough = new stream.PassThrough();
             try {
-                request(requestOptions)
-                    .on("error", reject)
-                    .on("response", (res) => {
+                fetch(uri, optionsToUse)
+                    .then(response => {
                         passthrough.pause();
+                        response.body
+                            .pipe(passthrough);
                         resolve({
-                            response: res,
+                            response,
                             bodyStream: passthrough
                         });
                     })
-                    .pipe(passthrough);
+                    .catch(reject)
             } catch (err) {
                 reject(err);
             }
@@ -145,13 +152,13 @@ export abstract class RavenCommand<TResult> {
         }
 
         if (this._responseType === "Empty" ||
-            response.statusCode === StatusCodes.NoContent) {
+            response.status === StatusCodes.NoContent) {
             return "Automatic";
         }
 
         try {
             if (this._responseType === "Object") {
-                const contentLength: number = parseInt(response.caseless.get("content-length"), 10);
+                const contentLength: number = parseInt(response.headers.get("content-length"), 10);
                 if (contentLength === 0) {
                     closeHttpResponse(response);
                     return "Automatic";

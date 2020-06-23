@@ -783,7 +783,7 @@ export class RequestExecutor implements IDisposable {
                 // Since the current executed command can be dependent on that, 
                 // we have to wait for the cluster transaction.
                 // But we can't do that if the server is an old one.
-                const version = response.caseless.get(HEADERS.SERVER_VERSION);
+                const version = response.headers.get(HEADERS.SERVER_VERSION);
                 if (version && "4.1" === version) {
                     throwError(
                         "ClientVersionMismatchException",
@@ -816,19 +816,19 @@ export class RequestExecutor implements IDisposable {
             return;
         }
 
-        command.statusCode = response.statusCode;
+        command.statusCode = response.status;
 
         const refreshTopology = response
-            && response.caseless
-            && response.caseless.get(HEADERS.REFRESH_TOPOLOGY);
+            && response.headers
+            && response.headers.get(HEADERS.REFRESH_TOPOLOGY);
 
         const refreshClientConfiguration = response
-            && response.caseless
-            && response.caseless.get(HEADERS.REFRESH_CLIENT_CONFIGURATION);
+            && response.headers
+            && response.headers.get(HEADERS.REFRESH_CLIENT_CONFIGURATION);
 
         try {
 
-            if (response.statusCode === StatusCodes.NotModified) {
+            if (response.status === StatusCodes.NotModified) {
                 cachedItem.notModified();
 
                 if (command.responseType === "Object") {
@@ -838,7 +838,7 @@ export class RequestExecutor implements IDisposable {
                 return;
             }
 
-            if (response.statusCode >= 400) {
+            if (response.status >= 400) {
                 const unsuccessfulResponseHandled = await this._handleUnsuccessfulResponse(
                     chosenNode,
                     nodeIndex,
@@ -852,7 +852,7 @@ export class RequestExecutor implements IDisposable {
 
                 if (!unsuccessfulResponseHandled) {
 
-                    const dbMissingHeader = response.caseless.get(HEADERS.DATABASE_MISSING);
+                    const dbMissingHeader = response.headers.get(HEADERS.DATABASE_MISSING);
                     if (dbMissingHeader) {
                         throwError("DatabaseDoesNotExistException", dbMissingHeader as string);
                     }
@@ -966,7 +966,7 @@ export class RequestExecutor implements IDisposable {
         shouldRetry: boolean): Promise<boolean> {
         responseBodyStream.resume();
         const readBody = () => StreamUtil.readToEnd(responseBodyStream);
-        switch (response.statusCode) {
+        switch (response.status) {
             case StatusCodes.NotFound:
                 this._cache.setNotFound(url);
                 switch (command.responseType) {
@@ -1143,7 +1143,7 @@ export class RequestExecutor implements IDisposable {
                 const resExceptionSchema = JsonSerializer
                     .getDefaultForCommandPayload()
                     .deserialize<ExceptionSchema>(responseJson);
-                const readException = ExceptionDispatcher.get(resExceptionSchema, response.statusCode);
+                const readException = ExceptionDispatcher.get(resExceptionSchema, response.status);
                 command.failedNodes.set(chosenNode, readException);
             } catch (_) {
                 log.warn(_, "Error parsing server error.");
@@ -1154,7 +1154,7 @@ export class RequestExecutor implements IDisposable {
                     type: "Unparsable Server Response"
                 };
 
-                const exceptionToUse = ExceptionDispatcher.get(unrecognizedErrSchema, response.statusCode);
+                const exceptionToUse = ExceptionDispatcher.get(unrecognizedErrSchema, response.status);
                 command.failedNodes.set(chosenNode, exceptionToUse);
             }
 
@@ -1271,7 +1271,7 @@ export class RequestExecutor implements IDisposable {
         this._defaultRequestOptions = Object.assign(
             DEFAULT_REQUEST_OPTIONS,
             {
-                gzip: !(this._conventions.hasExplicitlySetCompressionUsage && !this._conventions.useCompression)
+                compress: !(this._conventions.hasExplicitlySetCompressionUsage && !this._conventions.useCompression)
             },
             this._customHttpRequestOptions);
     }

@@ -84,11 +84,11 @@ export class GetAttachmentCommand extends RavenCommand<AttachmentResult> {
         response: HttpResponse,
         bodyStream: stream.Readable,
         url: string): Promise<ResponseDisposeHandling> {
-        const contentType = response.caseless.get("content-type");
+        const contentType = response.headers.get("content-type");
         const changeVector = getEtagHeader(response);
-        const hash = response.caseless.get("attachment-hash") as string;
+        const hash = response.headers.get("attachment-hash") as string;
         let size = 0;
-        const sizeHeader = response.caseless.get("attachment-size") as string;
+        const sizeHeader = response.headers.get("attachment-size") as string;
         if (sizeHeader) {
             size = parseInt(sizeHeader, 10);
         }

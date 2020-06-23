@@ -19,6 +19,7 @@ import { IAuthOptions } from "../../src/Auth/AuthOptions";
 import * as os from "os";
 import "../../src/Utility/Polyfills";
 import { IDocumentSession } from "../../src";
+import { HttpProxyAgent } from "http-proxy-agent";
 
 // logOnUncaughtAndUnhandled();
 
@@ -134,7 +135,7 @@ export class RavenTestContext extends RavenTestDriver implements IDisposable {
 
     public enableFiddler(): IDisposable {
         RequestExecutor.requestPostProcessor = (req) => {
-            req.proxy = "http://127.0.0.1:8888";
+            req.agent = new HttpProxyAgent("http://127.0.0.1:8888") as unknown as http.Agent;
         };
 
         return {

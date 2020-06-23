@@ -17,6 +17,7 @@ import { TimeUtil } from "../../../Utility/TimeUtil";
 import { AttachmentData } from "../../Attachments";
 import { TransactionMode } from "../../Session/TransactionMode";
 import { BatchCommandResult } from "../../Session/Operations/BatchCommandResult";
+import { LengthUnawareFormData } from "../../../Utility/LengthUnawareFormData";
 
 export class BatchCommand extends RavenCommand<BatchCommandResult> implements IDisposable {
 
@@ -97,8 +98,20 @@ export class BatchCommand extends RavenCommand<BatchCommandResult> implements ID
                         }
                     };
                 });
-            request.headers = Object.assign(request.headers || {}, { "Content-Type": "multipart/mixed" });
-            request.multipart = [{ headers, body }, ...attachments];
+
+            // strip out content type, see: https://stackoverflow.com/questions/39280438/fetch-missing-boundary-in-multipart-form-data-post
+            if (request.headers && "Content-Type" in request.headers) {
+                const { "Content-Type": contentType, ...restHeaders } = request.headers;
+                request.headers = restHeaders;
+            }
+
+            const multipart = new LengthUnawareFormData();
+            multipart.append("main", body, { header: { ...headers, "Content-Type": "multipart/form-data" } });
+            for (let i = 0; i < attachments.length; i++) {
+                multipart.append("attachment_" + i, attachments[i].body, { header: attachments[i].headers });
+            }
+            request.body = multipart;
+
         } else {
             request.body = body;
             request.headers = headers;
