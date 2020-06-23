@@ -53,7 +53,6 @@
   "license": "MIT",
   "devDependencies": {
     "@types/bluebird": "^3.5.32",
-    "@types/http-proxy-agent": "^2.0.2",
     "@types/md5": "^2.2.0",
     "@types/mocha": "^7.0.2",
     "@types/pluralize": "0.0.29",

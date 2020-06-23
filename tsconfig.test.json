@@ -11,6 +11,7 @@
     "pretty": true,
     "outDir": ".test",
     "lib": [ "es2018" ],
+    "allowSyntheticDefaultImports": true,
     "typeRoots": [
       "node_modules/@types",
       "node_modules/moment",
