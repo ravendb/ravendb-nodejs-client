@@ -43,6 +43,18 @@ export const CONSTANTS = {
             // tslint:disable-next-line:max-line-length
                 /^@metadata(\.(@collection|@projection|@id|@conflict|@flags|Raven-Node-Type|@index-score|@last-modified|@change-vector|@expires|@nested-object-types(\.\w+)?))?$/
         },
+
+        PeriodicBackup: {
+            FULL_BACKUP_EXTENSION: "ravendb-full-backup",
+            SNAPSHOT_EXTENSION: "ravendb-snapshot",
+            INCREMENTAL_BACKUP_EXTENSION: "ravendb-incremental-backup",
+
+            Folders: {
+                INDEXES: "Indexes",
+                DOCUMENTS: "Documents",
+                CONFIGURATION: "Configuration"
+            }
+        }
     }
 };
 

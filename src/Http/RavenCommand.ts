@@ -98,6 +98,10 @@ export abstract class RavenCommand<TResult> {
         const { body, uri, ...restOptions } = requestOptions;
         log.info(`Send command ${this.constructor.name} to ${uri}${body ? " with body " + body : ""}.`);
 
+        if (requestOptions.agent) { // support for fiddler
+            agent = requestOptions.agent as http.Agent;
+        }
+
         const optionsToUse = { body, ...restOptions, agent } as RequestInit;
 
         return new Promise((resolve, reject) => {

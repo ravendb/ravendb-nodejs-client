@@ -20,6 +20,7 @@ import * as os from "os";
 import "../../src/Utility/Polyfills";
 import { IDocumentSession } from "../../src";
 import * as proxyAgent from "http-proxy-agent";
+import * as rimraf from "rimraf";
 
 // logOnUncaughtAndUnhandled();
 
@@ -205,4 +206,18 @@ export async function storeNewDoc(
     const order = Object.assign(new clazz(), data);
     await session.store(order, id);
     return order;
+}
+
+
+export class TemporaryDirContext implements IDisposable {
+
+    public tempDir: string;
+
+    constructor() {
+        this.tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "rdb-node-"));
+    }
+
+    dispose(): void {
+        rimraf.sync(this.tempDir);
+    }
 }

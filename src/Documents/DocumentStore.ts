@@ -16,6 +16,7 @@ import { IAuthOptions } from "../Auth/AuthOptions";
 import { BulkInsertOperation } from "./BulkInsertOperation";
 import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
 import { DatabaseChanges } from "./Changes/DatabaseChanges";
+import { DatabaseSmuggler } from "./Smuggler/DatabaseSmuggler";
 
 const log = getLogger({ module: "DocumentStore" });
 
@@ -37,6 +38,7 @@ export class DocumentStore extends DocumentStoreBase {
 
     private _maintenanceOperationExecutor: MaintenanceOperationExecutor;
     private _operationExecutor: OperationExecutor;
+    private _smuggler: DatabaseSmuggler;
 
     private _identifier: string;
     private _aggressiveCachingUsed: boolean;
@@ -331,6 +333,14 @@ export class DocumentStore extends DocumentStoreBase {
         }
 
         return this._maintenanceOperationExecutor;
+    }
+
+    public get smuggler(): DatabaseSmuggler {
+        if (this._smuggler == null) {
+            this._smuggler = new DatabaseSmuggler(this);
+        }
+
+        return this._smuggler;
     }
 
     /**

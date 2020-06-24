@@ -28,6 +28,7 @@ import { ErrorFirstCallback } from "../Types/Callbacks";
 import { passResultToCallback } from "../Utility/PromiseUtil";
 import { AbstractIndexCreationTask } from "./Indexes/AbstractIndexCreationTask";
 import { SessionOptions } from "./Session/SessionOptions";
+import { DatabaseSmuggler } from "./Smuggler/DatabaseSmuggler";
 
 export abstract class DocumentStoreBase
     extends EventEmitter
@@ -230,6 +231,8 @@ export abstract class DocumentStoreBase
         this._assertNotInitialized("authOptions");
         this._authOptions = value;
     }
+
+    public abstract get smuggler(): DatabaseSmuggler;
 
     public abstract getRequestExecutor(databaseName?: string): RequestExecutor;
 
