@@ -1,5 +1,3 @@
-
-import * as stream from "readable-stream";
 import * as FilterBase from "stream-json/filters/FilterBase";
 import { ObjectUtil, CasingConvention } from "../../../Utility/ObjectUtil";
 import { throwError } from "../../../Exceptions";

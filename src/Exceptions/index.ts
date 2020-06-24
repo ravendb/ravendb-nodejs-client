@@ -177,7 +177,7 @@ export class ExceptionDispatcher {
             const json: string = body;
             const schema: ExceptionSchema = ExceptionDispatcher._jsonSerializer.deserialize(json);
 
-            if (response.statusCode === StatusCodes.Conflict) {
+            if (response.status === StatusCodes.Conflict) {
                 errorToThrow = this._getConflictError(schema, json);
             } else {
                 const determinedType = this._getType(schema.type) as RavenErrorType;
@@ -187,7 +187,6 @@ export class ExceptionDispatcher {
             errorToThrow = getError("RavenException", errThrowing.message, errThrowing);
         } finally {
             closeHttpResponse(response);
-            response.request.abort();
         }
 
         throw errorToThrow;

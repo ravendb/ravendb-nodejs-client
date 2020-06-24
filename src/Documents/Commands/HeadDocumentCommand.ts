@@ -49,12 +49,12 @@ export class HeadDocumentCommand extends RavenCommand<string> {
         response: HttpResponse,
         bodyStream: stream.Readable,
         url: string): Promise<ResponseDisposeHandling> {
-        if (response.statusCode === StatusCodes.NotModified) {
+        if (response.status === StatusCodes.NotModified) {
             this.result = this._changeVector;
             return "Automatic";
         }
 
-        if (response.statusCode === StatusCodes.NotFound) {
+        if (response.status === StatusCodes.NotFound) {
             this.result = null;
             return "Automatic";
         }

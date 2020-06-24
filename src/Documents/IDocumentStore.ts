@@ -19,6 +19,7 @@ import { DocumentSubscriptions } from "./Subscriptions/DocumentSubscriptions";
 import { SessionOptions } from "./Session/SessionOptions";
 import { AbstractIndexCreationTaskBase } from "./Indexes/AbstractIndexCreationTaskBase";
 import { ErrorFirstCallback } from "../Types/Callbacks";
+import { DatabaseSmuggler } from "./Smuggler/DatabaseSmuggler";
 
 export interface SessionEventsProxy {
     addSessionListener(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
@@ -204,6 +205,8 @@ export interface IDocumentStore extends IDisposable,
     maintenance: MaintenanceOperationExecutor;
 
     operations: OperationExecutor;
+
+    smuggler: DatabaseSmuggler;
 
     addSessionListener(
         eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;

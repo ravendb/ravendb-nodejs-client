@@ -1,4 +1,4 @@
-import * as uuid from "uuid";
+import { v4 as uuidv4 } from "uuid";
 import * as BluebirdPromise from "bluebird";
 
 import { throwError } from "../Exceptions";
@@ -16,6 +16,7 @@ import { IAuthOptions } from "../Auth/AuthOptions";
 import { BulkInsertOperation } from "./BulkInsertOperation";
 import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
 import { DatabaseChanges } from "./Changes/DatabaseChanges";
+import { DatabaseSmuggler } from "./Smuggler/DatabaseSmuggler";
 
 const log = getLogger({ module: "DocumentStore" });
 
@@ -37,6 +38,7 @@ export class DocumentStore extends DocumentStoreBase {
 
     private _maintenanceOperationExecutor: MaintenanceOperationExecutor;
     private _operationExecutor: OperationExecutor;
+    private _smuggler: DatabaseSmuggler;
 
     private _identifier: string;
     private _aggressiveCachingUsed: boolean;
@@ -168,7 +170,7 @@ export class DocumentStore extends DocumentStoreBase {
         databaseOrSessionOptions = databaseOrSessionOptions || {} as any;
         const sessionOpts = databaseOrSessionOptions as SessionOptions;
 
-        const sessionId = uuid();
+        const sessionId = uuidv4();
         const session = new DocumentSession(this, sessionId, sessionOpts);
         this._registerEvents(session);
         this.emit("sessionCreated", { session });
@@ -331,6 +333,14 @@ export class DocumentStore extends DocumentStoreBase {
         }
 
         return this._maintenanceOperationExecutor;
+    }
+
+    public get smuggler(): DatabaseSmuggler {
+        if (this._smuggler == null) {
+            this._smuggler = new DatabaseSmuggler(this);
+        }
+
+        return this._smuggler;
     }
 
     /**

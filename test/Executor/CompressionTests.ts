@@ -25,7 +25,7 @@ describe("Compression", function () {
 
         await exec.execute(cmd);
         const reqParams = createReqSpy.lastCall.returnValue;
-        assert.ok(reqParams.gzip);
+        assert.ok(reqParams.compress);
     });
 
     it("is turned off on demand", async () => {
@@ -43,7 +43,7 @@ describe("Compression", function () {
 
             await exec.execute(cmd);
             const reqParams = createReqSpy.lastCall.returnValue;
-            assert.ok(!reqParams.gzip);
+            assert.ok(!reqParams.compress);
         } finally {
             if (store2) {
                 store2.dispose();

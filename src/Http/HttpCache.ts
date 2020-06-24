@@ -1,5 +1,5 @@
 import * as moment from "moment";
-import * as Cache from "safe-memory-cache/map";
+import { safeMemoryCache } from "safe-memory-cache";
 import { IDisposable } from "../Types/Contracts";
 
 export interface CachedItemMetadata {
@@ -9,10 +9,10 @@ export interface CachedItemMetadata {
 
 export class HttpCache implements IDisposable {
 
-    private _items: Cache;
+    private _items: safeMemoryCache;
 
     constructor(maxKeysSize: number = 500) {
-        this._items = new Cache({
+        this._items = safeMemoryCache({
             limit: maxKeysSize
         });
     }

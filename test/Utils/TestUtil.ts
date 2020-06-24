@@ -19,6 +19,8 @@ import { IAuthOptions } from "../../src/Auth/AuthOptions";
 import * as os from "os";
 import "../../src/Utility/Polyfills";
 import { IDocumentSession } from "../../src";
+import * as proxyAgent from "http-proxy-agent";
+import * as rimraf from "rimraf";
 
 // logOnUncaughtAndUnhandled();
 
@@ -134,7 +136,7 @@ export class RavenTestContext extends RavenTestDriver implements IDisposable {
 
     public enableFiddler(): IDisposable {
         RequestExecutor.requestPostProcessor = (req) => {
-            req.proxy = "http://127.0.0.1:8888";
+            req.agent = new proxyAgent.HttpProxyAgent("http://127.0.0.1:8888") as unknown as http.Agent;
         };
 
         return {
@@ -204,4 +206,18 @@ export async function storeNewDoc(
     const order = Object.assign(new clazz(), data);
     await session.store(order, id);
     return order;
+}
+
+
+export class TemporaryDirContext implements IDisposable {
+
+    public tempDir: string;
+
+    constructor() {
+        this.tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "rdb-node-"));
+    }
+
+    dispose(): void {
+        rimraf.sync(this.tempDir);
+    }
 }

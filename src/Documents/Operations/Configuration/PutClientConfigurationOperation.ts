@@ -5,6 +5,7 @@ import { RavenCommand, RavenCommandResponseType } from "../../../Http/RavenComma
 import { DocumentConventions } from "../../..";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
+import { HeadersBuilder } from "../../../Utility/HttpUtil";
 
 export class PutClientConfigurationOperation implements IMaintenanceOperation<void> {
     private readonly _configuration: ClientConfiguration;
@@ -59,9 +60,9 @@ export class PutClientConfigurationCommand extends RavenCommand<void> {
             method: "PUT",
             uri,
             body: this._configuration,
-            headers: {
-                "content-type": "application/json"
-            }
+            headers: HeadersBuilder.create()
+                .typeAppJson()
+                .build()
         };
     }
 }

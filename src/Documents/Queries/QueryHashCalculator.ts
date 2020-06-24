@@ -1,4 +1,4 @@
-import * as md5hex from "md5-hex";
+import * as md5 from "md5";
 import { TypeUtil } from "../../Utility/TypeUtil";
 
 export class QueryHashCalculator {
@@ -6,7 +6,7 @@ export class QueryHashCalculator {
     private _buffers: Buffer[] = [];
 
     public getHash(): string {
-        return md5hex(this._buffers);
+        return md5(Buffer.concat(this._buffers));
     }
 
     //TBD 4.1 public void Write(HighlightedField[] highlightedFields)

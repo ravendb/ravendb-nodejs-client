@@ -120,10 +120,6 @@ export class StringUtil {
         return !(s || "").trim().length;
     }
 
-    public static isWhitespace(s?: string): boolean {
-        return !s.trim().length;
-    }
-
     public static changeCase(transformName: CasingConvention, s: string) {
         return changeCase[transformName](s);
     }

@@ -1,5 +1,9 @@
 import { MetadataObject } from "./Documents/Session/MetadataObject";
 
+function typedKey<T, S extends keyof T>(key: S): S {
+    return key;
+}
+
 export const CONSTANTS = {
     Documents: {
         Indexing: {
@@ -17,28 +21,40 @@ export const CONSTANTS = {
             SIDE_BY_SIDE_INDEX_NAME_PREFIX: "ReplacementOf/",
         },
         Metadata: {
-            COLLECTION: "@collection" as keyof MetadataObject,
+            COLLECTION: typedKey<MetadataObject, "@collection">("@collection"),
             PROJECTION: "@projection" as keyof MetadataObject,
-            KEY: "@metadata" as keyof MetadataObject,
-            ID: "@id" as keyof MetadataObject,
+            KEY: "@metadata" as keyof MetadataObject, //tODO: check this keys!
+            ID: typedKey<MetadataObject, "@id">("@id"),
             CONFLICT: "@conflict",
             ID_PROPERTY: "id",
             FLAGS: "@flags" as keyof MetadataObject,
-            ATTACHMENTS: "@attachments" as keyof MetadataObject,
+            ATTACHMENTS: typedKey<MetadataObject, "@attachments">("@attachments"),
             INDEX_SCORE: "@index-score" as keyof MetadataObject,
-            LAST_MODIFIED: "@last-modified" as keyof MetadataObject,
-            RAVEN_JS_TYPE: "Raven-Node-Type" as keyof MetadataObject,
-            CHANGE_VECTOR: "@change-vector" as keyof MetadataObject,
-            EXPIRES: "@expires" as keyof MetadataObject,
+            LAST_MODIFIED: typedKey<MetadataObject, "@last-modified">("@last-modified"),
+            RAVEN_JS_TYPE: "Raven-Node-Type" as keyof MetadataObject & "Raven-Node-Type",
+            CHANGE_VECTOR: typedKey<MetadataObject, "@change-vector">("@change-vector"),
+            EXPIRES: typedKey<MetadataObject, "@expires">("@expires"),
             ALL_DOCUMENTS_COLLECTION: "@all_docs",
             EMPTY_COLLECTION: "@empty",
-            NESTED_OBJECT_TYPES: "@nested-object-types" as keyof MetadataObject,
-            COUNTERS: "@counters" as keyof MetadataObject,
+            NESTED_OBJECT_TYPES: typedKey<MetadataObject, "@nested-object-types">("@nested-object-types"),
+            COUNTERS: typedKey<MetadataObject, "@counters">("@counters"),
             REVISION_COUNTERS: "@counters-snapshot",
             IGNORE_CASE_TRANSFORM_REGEX:
             // tslint:disable-next-line:max-line-length
                 /^@metadata(\.(@collection|@projection|@id|@conflict|@flags|Raven-Node-Type|@index-score|@last-modified|@change-vector|@expires|@nested-object-types(\.\w+)?))?$/
         },
+
+        PeriodicBackup: {
+            FULL_BACKUP_EXTENSION: "ravendb-full-backup",
+            SNAPSHOT_EXTENSION: "ravendb-snapshot",
+            INCREMENTAL_BACKUP_EXTENSION: "ravendb-incremental-backup",
+
+            Folders: {
+                INDEXES: "Indexes",
+                DOCUMENTS: "Documents",
+                CONFIGURATION: "Configuration"
+            }
+        }
     }
 };
 
