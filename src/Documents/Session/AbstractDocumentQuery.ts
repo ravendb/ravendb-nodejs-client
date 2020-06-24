@@ -1896,7 +1896,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     public async first(callback?: ErrorFirstCallback<T>): Promise<T> {
         callback = callback || TypeUtil.NOOP;
-        const resultPromise = this._executeQueryOperation(2)
+        const resultPromise = this._executeQueryOperation(1)
             .then(entries => {
                 if (entries.length === 0) {
                     throwError("InvalidOperationException", "Expected at least one result.");
