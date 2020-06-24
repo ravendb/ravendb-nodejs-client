@@ -86,7 +86,8 @@ const IGNORE_MODULES = [
     "Documents/Session/IAttachmentsSessionOperationsBase*",
     "Documents/Session/SessionCountersBase*",
     "Documents/Indexes/AbstractGenericIndexCreationTask*",
-    "Documents/Subscriptions/BatchFromServer*"
+    "Documents/Subscriptions/BatchFromServer*",
+    "Documents/Smuggler/BackupUtils*"
 ];
 
 function main() {
