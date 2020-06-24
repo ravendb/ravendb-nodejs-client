@@ -5,6 +5,11 @@ export interface IndexChange extends DatabaseChange {
     name: string;
 }
 
+export interface TopologyChange extends DatabaseChange {
+    url: string;
+    database: string;
+}
+
 export type IndexChangeTypes =
     "None"
     | "BatchCompleted"

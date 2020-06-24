@@ -1,5 +1,5 @@
 import { IDatabaseChanges } from "./IDatabaseChanges";
-import { DocumentConventions, ObjectTypeDescriptor, RequestExecutor } from "../..";
+import { DocumentConventions, ObjectTypeDescriptor, RequestExecutor, ServerNode, TopologyChange } from "../..";
 import { IChangesObservable } from "./IChangesObservable";
 import { IndexChange } from "./IndexChange";
 import { CounterChange } from "./CounterChange";
@@ -18,6 +18,8 @@ import { acquireSemaphore } from "../../Utility/SemaphoreUtil";
 import * as BluebirdPromise from "bluebird";
 import { Certificate } from "../../Auth/Certificate";
 import { ObjectUtil } from "../../Utility/ObjectUtil";
+import CurrentIndexAndNode from "../../Http/CurrentIndexAndNode";
+import { Server } from "ws";
 
 export class DatabaseChanges implements IDatabaseChanges {
 
@@ -41,6 +43,10 @@ export class DatabaseChanges implements IDatabaseChanges {
     private readonly _confirmations: Map<number, { resolve: () => void, reject: () => void }> = new Map();
     private readonly _counters: Map<string, DatabaseConnectionState> = new Map();
     private _immediateConnection: number = 0;
+
+    private _serverNode: ServerNode;
+    private _nodeIndex: number;
+    private _url: string;
 
     constructor(requestExecutor: RequestExecutor, databaseName: string, onDispose: () => void) {
         this._requestExecuter = requestExecutor;
@@ -300,28 +306,30 @@ export class DatabaseChanges implements IDatabaseChanges {
     }
 
     private async _doWork(): Promise<void> {
+        let preferredNode: CurrentIndexAndNode;
         try {
-            await this._requestExecuter.getPreferredNode();
+            preferredNode = await this._requestExecuter.getPreferredNode();
+            this._nodeIndex = preferredNode.currentIndex;
+            this._serverNode = preferredNode.currentNode;
         } catch (e) {
-
             this._emitter.emit("connectionStatus");
             this._notifyAboutError(e);
             this._tcs.reject(e);
             return;
         }
 
-        const urlString = this._requestExecuter.getUrl() + "/databases/" + this._database + "/changes";
-        const url = StringUtil.toWebSocketPath(urlString);
-
-        this._doWorkInternal(url);
+        this._doWorkInternal(preferredNode);
     }
 
-    private _doWorkInternal(url: string): void {
+    private _doWorkInternal(preferredNode: CurrentIndexAndNode): void {
         if (this._isCancelled) {
             return;
         }
 
         if (!this.connected) {
+            const urlString = preferredNode.currentNode.url + "/databases/" + this._database + "/changes";
+            const url = StringUtil.toWebSocketPath(urlString);
+
             this._client = DatabaseChanges.createClientWebSocket(this._requestExecuter, url);
 
             this._client.on("open", async () => {
@@ -334,13 +342,14 @@ export class DatabaseChanges implements IDatabaseChanges {
                 this._emitter.emit("connectionStatus");
             });
 
-            this._client.on("error", e => {
+            this._client.on("error", async (e) => {
+                this._serverNode = await this._requestExecuter.handleServerNotResponsive(this._url, this._serverNode, this._nodeIndex, e);
                 this._notifyAboutError(e);
             });
 
             this._client.on("close", () => {
                 if (this._reconnectClient()) {
-                    setTimeout(() => this._doWorkInternal(url), 1000);
+                    setTimeout(() => this._doWorkInternal(preferredNode), 1000);
                 }
 
                 for (const confirm of this._confirmations.values()) {
@@ -350,8 +359,8 @@ export class DatabaseChanges implements IDatabaseChanges {
                 this._confirmations.clear();
             });
 
-            this._client.on("message", (data: WebSocket.Data) => {
-                this._processChanges(data as string);
+            this._client.on("message", async (data: WebSocket.Data) => {
+                await this._processChanges(data as string);
             });
         }
     }
@@ -368,7 +377,7 @@ export class DatabaseChanges implements IDatabaseChanges {
         return true;
     }
 
-    private _processChanges(data: string): void {
+    private async _processChanges(data: string): Promise<void> {
         if (this._isCancelled) {
             return;
         }
@@ -378,6 +387,12 @@ export class DatabaseChanges implements IDatabaseChanges {
             const messages = Array.isArray(payloadParsed) ? payloadParsed : [payloadParsed];
             for (const message of messages) {
                 const type = message.Type;
+                if (message.TopologyChange) {
+                    this._getOrAddConnectionState("Topology", "watch-topology-change", "", "");
+                    // noinspection ES6MissingAwait
+                    this._requestExecuter.updateTopology(this._serverNode, 0, true, "watch-topology-change");
+                    continue;
+                }
                 if (!type) {
                     continue;
                 }
@@ -421,6 +436,17 @@ export class DatabaseChanges implements IDatabaseChanges {
                 break;
             case "OperationStatusChange":
                 states.forEach(state => state.send("Operation", value));
+                break;
+            case "TopologyChange":
+                const topologyChange = value as TopologyChange;
+                if (!this._requestExecuter) {
+                    const serverNode = new ServerNode();
+                    serverNode.url = topologyChange.url;
+                    serverNode.database = topologyChange.database;
+
+                    // noinspection JSIgnoredPromiseFromCall
+                    this._requestExecuter.updateTopology(serverNode, 0, true, "topology-change-notification");
+                }
                 break;
             default:
                 throwError("NotSupportedException");

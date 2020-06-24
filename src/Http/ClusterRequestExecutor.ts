@@ -97,7 +97,7 @@ export class ClusterRequestExecutor extends RequestExecutor {
         });
     }
 
-    public updateTopology(node: ServerNode, timeout: number, forceUpdate: boolean): Promise<boolean> {
+    public updateTopology(node: ServerNode, timeout: number, forceUpdate: boolean = false, debugTag?: string): Promise<boolean> {
         if (this._disposed) {
             return Promise.resolve(false);
         }
@@ -109,7 +109,7 @@ export class ClusterRequestExecutor extends RequestExecutor {
                     return false;
                 }
 
-                const command = new GetClusterTopologyCommand();
+                const command = new GetClusterTopologyCommand(debugTag);
                 return this.execute(command, null, {
                     chosenNode: node,
                     nodeIndex: null,

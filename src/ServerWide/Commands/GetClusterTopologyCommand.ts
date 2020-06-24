@@ -12,12 +12,21 @@ export class ClusterTopologyResponse {
 
 export class GetClusterTopologyCommand extends RavenCommand<ClusterTopologyResponse> {
 
-    public constructor() {
+    private readonly _debugTag: string;
+
+    public constructor(debugTag?: string) {
         super();
+
+        this._debugTag = debugTag;
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
-        const uri = node.url + "/cluster/topology";
+        let uri = node.url + "/cluster/topology";
+
+        if (this._debugTag) {
+            uri += "?" + this._debugTag;
+        }
+
         return { uri };
     }
 

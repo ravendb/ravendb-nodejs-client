@@ -429,7 +429,7 @@ export class RequestExecutor implements IDisposable {
         }
     }
 
-    public updateTopology(node: ServerNode, timeout: number, forceUpdate: boolean = false): Promise<boolean> {
+    public updateTopology(node: ServerNode, timeout: number, forceUpdate: boolean = false, debugTag?: string): Promise<boolean> {
         if (this._disposed) {
             return Promise.resolve(false);
         }
@@ -447,7 +447,7 @@ export class RequestExecutor implements IDisposable {
 
                     this._log.info(`Update topology from ${node.url}.`);
 
-                    const getTopology = new GetDatabaseTopologyCommand();
+                    const getTopology = new GetDatabaseTopologyCommand(debugTag);
                     const getTopologyPromise = this.execute(getTopology, null, {
                         chosenNode: node,
                         nodeIndex: null,
@@ -558,7 +558,7 @@ export class RequestExecutor implements IDisposable {
             return;
         }
 
-        return this.updateTopology(serverNode, 0)
+        return this.updateTopology(serverNode, 0, false, "timer-callback")
             .catch(err => {
                 this._log.error(err, "Couldn't update topology from _updateTopologyTimer");
                 return null;
@@ -573,7 +573,7 @@ export class RequestExecutor implements IDisposable {
         const tryUpdateTopology = async (url: string, database: string): Promise<boolean> => {
             const serverNode = new ServerNode({ url, database });
             try {
-                await this.updateTopology(serverNode, TypeUtil.MAX_INT32);
+                await this.updateTopology(serverNode, TypeUtil.MAX_INT32, false, "first-topology-update");
                 this._initializeUpdateTopologyTimer();
                 this._topologyTakenFromNode = serverNode;
                 return true;
@@ -1030,7 +1030,7 @@ export class RequestExecutor implements IDisposable {
                     return false;
                 }
 
-                return this.updateTopology(chosenNode, Number.MAX_VALUE, true)
+                return this.updateTopology(chosenNode, Number.MAX_VALUE, true, "handle-unsuccessful-response")
                     .then(() => {
                         const currentIndexAndNode: CurrentIndexAndNode =
                             this.chooseNodeForRequest(command, sessionInfo);
@@ -1226,6 +1226,17 @@ export class RequestExecutor implements IDisposable {
 
     private static _handleConflict(response: HttpResponse, body: string): void {
         ExceptionDispatcher.throwException(response, body);
+    }
+
+    public async handleServerNotResponsive(url: string, chosenNode: ServerNode, nodeIndex: number, e: Error) {
+        this._spawnHealthChecks(chosenNode, nodeIndex);
+        if (this._nodeSelector) {
+            this._nodeSelector.onFailedRequest(nodeIndex);
+        }
+
+        const preferredNode = await this.getPreferredNode();
+        await this.updateTopology(preferredNode.currentNode, 0, true, "handle-server-not-responsive");
+        return preferredNode.currentNode;
     }
 
     private _spawnHealthChecks(chosenNode: ServerNode, nodeIndex: number): void {
