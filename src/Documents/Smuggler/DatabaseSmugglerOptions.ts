@@ -4,7 +4,7 @@ import { DatabaseItemType } from "./DatabaseItemType";
 export class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
     public static readonly DEFAULT_OPERATE_ON_TYPES: DatabaseItemType[] = [
         "Indexes", "Documents", "RevisionDocuments", "Conflicts", "DatabaseRecord", "Identities",
-        "CompareExchange", "Counters"
+        "CompareExchange", "Attachments", "Counters"
     ];
 
     private static readonly DEFAULT_MAX_STEPS_FOR_TRANSFORM_SCRIPT: number = 10 * 1_000;

@@ -9,6 +9,7 @@ export class QueryData {
     public declareToken: DeclareToken;
     public loadTokens: LoadToken[];
     public isCustomFunction: boolean;
+    public mapReduce: boolean;
 
     public constructor(fields: string[], projections: string[]);
     public constructor(

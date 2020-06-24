@@ -126,7 +126,7 @@ export type RavenErrorType = "RavenException"
     | "ConfigurationException"
     | "CertificateNameMismatchException"
     | "BulkInsertStreamError"
-    | "NotSupportedException"
+    | "DatabaseSchemaErrorException"
     | "AttachmentDoesNotExistException"
     | "CounterOverflowException";
 

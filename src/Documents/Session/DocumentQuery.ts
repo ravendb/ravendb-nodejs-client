@@ -501,11 +501,14 @@ export class DocumentQuery<T extends object>
 
         if (queryData && queryData.fields.length > 0) {
             let { fields } = queryData;
-            const identityProperty = this.conventions.getIdentityProperty(resultClass);
 
-            if (identityProperty) {
-                fields = queryData.fields.map(
-                    p => p === identityProperty ? CONSTANTS.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME : p);
+            if (!this._isGroupBy) {
+                const identityProperty = this.conventions.getIdentityProperty(resultClass);
+
+                if (identityProperty) {
+                    fields = queryData.fields.map(
+                        p => p === identityProperty ? CONSTANTS.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME : p);
+                }
             }
 
             let sourceAliasReference: string;
