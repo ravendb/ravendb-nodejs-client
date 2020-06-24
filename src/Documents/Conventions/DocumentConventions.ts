@@ -34,7 +34,7 @@ export class DocumentConventions {
     private static _cachedDefaultTypeCollectionNames: Map<ObjectTypeDescriptor, string> = new Map();
 
     private readonly _listOfQueryValueToObjectConverters:
-        Array<{ Type: EntityConstructor<any>; Converter: IValueForQueryConverter<any> }> = [];
+        { Type: EntityConstructor<any>; Converter: IValueForQueryConverter<any> }[] = [];
 
     private _registeredIdConventions:
         Map<ObjectTypeDescriptor, IdConvention> = new Map();

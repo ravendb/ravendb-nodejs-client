@@ -49,7 +49,7 @@ const IGNORE_MODULES = [
     "Http/HttpCache*",
     "Documents/Queries/QueryResultBase*",
     "Documents/Queries/QueryFieldUtil*",
-    "Documents/Queries/QueryHashCalculator*",
+    "Documents/Queries/HashCalculator*",
     "Documents/Session/AdvancedSessionExtensionBase*",
     "Documents/Session/JavaScriptArray*",
     "Documents/Queries/GenericQueryResult*",
@@ -86,7 +86,8 @@ const IGNORE_MODULES = [
     "Documents/Session/IAttachmentsSessionOperationsBase*",
     "Documents/Session/SessionCountersBase*",
     "Documents/Indexes/AbstractGenericIndexCreationTask*",
-    "Documents/Subscriptions/BatchFromServer*"
+    "Documents/Subscriptions/BatchFromServer*",
+    "Documents/Smuggler/BackupUtils*"
 ];
 
 function main() {

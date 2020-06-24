@@ -3,12 +3,12 @@ import { ObjectUtil, CasingConvention } from "../../../Utility/ObjectUtil";
 import { throwError } from "../../../Exceptions";
 
 export interface TransformJsonKeysStreamOptions {
-    getCurrentTransform?: (key: string, stack: Array<string | null | number>) => CasingConvention;
+    getCurrentTransform?: (key: string, stack: (string | null | number)[]) => CasingConvention;
 }
 
 export class TransformKeysJsonStream extends FilterBase {
 
-    private _getTransform: (key: string, stack: Array<string | null | number>) => CasingConvention;
+    private _getTransform: (key: string, stack: (string | null | number)[]) => CasingConvention;
 
     constructor(opts: TransformJsonKeysStreamOptions) {
         super();

@@ -75,9 +75,9 @@ export type CasingConvention =
 export interface ObjectChangeCaseOptionsBase {
     recursive?: boolean;
     arrayRecursive?: boolean;
-    ignoreKeys?: Array<string | RegExp>;
-    ignorePaths?: Array<string | RegExp>;
-    paths?: Array<{ transform: CasingConvention, path?: RegExp }>;
+    ignoreKeys?: (string | RegExp)[];
+    ignorePaths?: (string | RegExp)[];
+    paths?: { transform: CasingConvention, path?: RegExp }[];
 }
 
 export interface ObjectChangeCaseOptions extends ObjectChangeCaseOptionsBase {

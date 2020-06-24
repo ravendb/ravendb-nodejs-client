@@ -5,7 +5,7 @@ import { FacetToken } from "../../Session/Tokens/FacetToken";
 export class GenericRangeFacet extends FacetBase {
 
     private readonly _parent: FacetBase;
-    public ranges: Array<RangeBuilder<any>> = [];
+    public ranges: RangeBuilder<any>[] = [];
 
     public constructor(parent?: FacetBase) {
         super();

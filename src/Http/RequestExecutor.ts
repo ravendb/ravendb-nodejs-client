@@ -248,10 +248,10 @@ export class RequestExecutor implements IDisposable {
             return this._httpAgent;
         }
 
-        return this._httpAgent = this.createHttpAgent();
+        return this._httpAgent = this._createHttpAgent();
     }
 
-    private createHttpAgent(): http.Agent {
+    private _createHttpAgent(): http.Agent {
         if (this._certificate) {
             const agentOptions = this._certificate.toAgentOptions();
             const cacheKey = JSON.stringify(agentOptions, null, 0);
@@ -568,7 +568,7 @@ export class RequestExecutor implements IDisposable {
     protected async _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
         const initialUrls: string[] = RequestExecutor._validateUrls(inputUrls, this._authOptions);
 
-        const topologyUpdateErrors: Array<{ url: string, error: Error | string }> = [];
+        const topologyUpdateErrors: { url: string, error: Error | string }[] = [];
 
         const tryUpdateTopology = async (url: string, database: string): Promise<boolean> => {
             const serverNode = new ServerNode({ url, database });
@@ -1062,7 +1062,7 @@ export class RequestExecutor implements IDisposable {
         let preferredTask: BluebirdPromise<IndexAndResponse> = null;
 
         const nodes = this._nodeSelector.getTopology().nodes;
-        const tasks: Array<BluebirdPromise<IndexAndResponse>> = nodes.map(x => null);
+        const tasks: BluebirdPromise<IndexAndResponse>[] = nodes.map(x => null);
 
         let task: BluebirdPromise<IndexAndResponse>;
         for (let i = 0; i < nodes.length; i++) {
@@ -1161,7 +1161,7 @@ export class RequestExecutor implements IDisposable {
         await this._executeOnSpecificNode(command, sessionInfo, {
                     chosenNode: currentIndexAndNode.currentNode,
                     nodeIndex: currentIndexAndNode.currentIndex,
-                    shouldRetry: shouldRetry
+                    shouldRetry
                 });
 
         return true;

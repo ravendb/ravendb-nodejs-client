@@ -15,7 +15,7 @@ export type TransformJsonKeysProfile =
 
 function getSimpleKeysTransform(convention: CasingConvention) {
     return {
-        getCurrentTransform(key: string, stack: Array<string | number | null>): CasingConvention {
+        getCurrentTransform(key: string, stack: (string | number | null)[]): CasingConvention {
             return convention;
         }
     };

@@ -379,6 +379,16 @@ export * from "./Documents/Identity/HiloRangeValue";
 export * from "./Documents/Identity/IHiloIdGenerator";
 export * from "./Documents/Identity/HiloMultiDatabaseIdGenerator";
 
+// Smuggler
+export * from "./Documents/Smuggler/DatabaseItemType";
+export * from "./Documents/Smuggler/DatabaseSmuggler";
+export * from "./Documents/Smuggler/DatabaseSmugglerExportOptions";
+export * from "./Documents/Smuggler/IDatabaseSmugglerExportOptions";
+export * from "./Documents/Smuggler/DatabaseSmugglerImportOptions";
+export * from "./Documents/Smuggler/IDatabaseSmugglerImportOptions";
+export * from "./Documents/Smuggler/DatabaseSmugglerOptions";
+export * from "./Documents/Smuggler/IDatabaseSmugglerOptions";
+
 // MAPPING
 export { TypesAwareObjectMapper } from "./Mapping/ObjectMapper";
 export { Mapping } from "./Mapping";

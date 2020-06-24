@@ -30,5 +30,5 @@ export interface TypedEventEmitter<TEvents> extends EventEmitter {
 
     rawListeners(event: string | keyof TEvents | symbol): Function[];
 
-    eventNames(): Array<string | symbol>;
+    eventNames(): (string | symbol)[];
 }

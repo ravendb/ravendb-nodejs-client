@@ -2,7 +2,7 @@ import { RangeBuilder } from "./RangeBuilder";
 import { IFacetOperations } from "./IFacetOperations";
 
 export interface IFacetBuilder<T> {
-    byRanges(range: RangeBuilder<any>, ...ranges: Array<RangeBuilder<any>>): IFacetOperations<T>;
+    byRanges(range: RangeBuilder<any>, ...ranges: RangeBuilder<any>[]): IFacetOperations<T>;
 
     byField(fieldName: string): IFacetOperations<T>;
 

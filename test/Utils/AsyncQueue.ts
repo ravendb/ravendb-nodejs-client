@@ -5,7 +5,7 @@ type valueResolver<T> = (val: T) => void;
 export class AsyncQueue<T> {
 
     private _backingArray: T[] = [];
-    private _promises: Array<valueResolver<T>> = [];
+    private _promises: valueResolver<T>[] = [];
 
     public push(item: T) {
         const waiter = this._promises.shift();

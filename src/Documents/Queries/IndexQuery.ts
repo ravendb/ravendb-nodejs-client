@@ -1,6 +1,6 @@
 import { throwError } from "../../Exceptions";
 import { IndexQueryWithParameters } from "./IndexQueryWithParameters";
-import { QueryHashCalculator } from "./QueryHashCalculator";
+import { HashCalculator } from "./HashCalculator";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { JsonSerializer } from "../../Mapping/Json/Serializer";
@@ -25,7 +25,7 @@ export class IndexQuery extends IndexQueryWithParameters<IndexQueryParameters> {
     public disableCaching: boolean;
 
     public getQueryHash(): string {
-        const hasher = new QueryHashCalculator();
+        const hasher = new HashCalculator();
         try {
             hasher.write(this.query);
             hasher.write(this.waitForNonStaleResults);

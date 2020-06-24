@@ -238,7 +238,7 @@ export abstract class DocumentStoreBase
 
     // TBD public IDisposable AggressivelyCache(string database = null)
 
-    protected _eventHandlers: Array<[string, (eventArgs: any) => void]> = [];
+    protected _eventHandlers: [string, (eventArgs: any) => void][] = [];
 
     public addSessionListener(
         eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;

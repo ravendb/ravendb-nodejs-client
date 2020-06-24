@@ -11,7 +11,7 @@ export class BackupUtils {
     private static readonly LEGACY_INCREMENTAL_BACKUP_EXTENSION = ".ravendb-incremental-dump";
     private static readonly LEGACY_FULL_BACKUP_EXTENSION = ".ravendb-full-dump";
 
-    public static readonly BACKUP_FILE_SUFFIXES = [
+    public static BACKUP_FILE_SUFFIXES = [
         BackupUtils.LEGACY_INCREMENTAL_BACKUP_EXTENSION,
         BackupUtils.LEGACY_FULL_BACKUP_EXTENSION,
         CONSTANTS.Documents.PeriodicBackup.INCREMENTAL_BACKUP_EXTENSION,
