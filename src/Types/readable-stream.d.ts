@@ -121,7 +121,7 @@ declare module "readable-stream" {
             decodeStrings?: boolean;
             objectMode?: boolean;
             write?: (chunk: any, encoding: string, callback: Function) => any;
-            writev?: (chunks: Array<{ chunk: any, encoding: string }>, callback: Function) => any;
+            writev?: (chunks: { chunk: any, encoding: string }[], callback: Function) => any;
             destroy?: (error?: Error) => any;
             final?: (callback: (error?: Error) => void) => void;
         }
@@ -137,7 +137,7 @@ declare module "readable-stream" {
             public _write(chunk: any, encoding: string, callback: (err?: Error) => void): void;
 
             // tslint:disable-next-line:function-name
-            public _writev?(chunks: Array<{ chunk: any, encoding: string }>, callback: (err?: Error) => void): void;
+            public _writev?(chunks: { chunk: any, encoding: string }[], callback: (err?: Error) => void): void;
 
             // tslint:disable-next-line:function-name
             public _destroy(err: Error, callback: Function): void;
@@ -245,7 +245,7 @@ declare module "readable-stream" {
             public _write(chunk: any, encoding: string, callback: (err?: Error) => void): void;
 
             // tslint:disable-next-line:function-name
-            public _writev?(chunks: Array<{ chunk: any, encoding: string }>, callback: (err?: Error) => void): void;
+            public _writev?(chunks: { chunk: any, encoding: string }[], callback: (err?: Error) => void): void;
 
             // tslint:disable-next-line:function-name
             public _destroy(err: Error, callback: Function): void;
@@ -291,8 +291,8 @@ declare module "readable-stream" {
         export function pipeline<T extends NodeJS.WritableStream>(stream1: NodeJS.ReadableStream, stream2: NodeJS.ReadWriteStream, stream3: T, callback?: (err: NodeJS.ErrnoException) => void): T;
         export function pipeline<T extends NodeJS.WritableStream>(stream1: NodeJS.ReadableStream, stream2: NodeJS.ReadWriteStream, stream3: NodeJS.ReadWriteStream, stream4: T, callback?: (err: NodeJS.ErrnoException) => void): T;
         export function pipeline<T extends NodeJS.WritableStream>(stream1: NodeJS.ReadableStream, stream2: NodeJS.ReadWriteStream, stream3: NodeJS.ReadWriteStream, stream4: NodeJS.ReadWriteStream, stream5: T, callback?: (err: NodeJS.ErrnoException) => void): T;
-        export function pipeline(streams: Array<NodeJS.ReadableStream | NodeJS.WritableStream | NodeJS.ReadWriteStream>, callback?: (err: NodeJS.ErrnoException) => void): NodeJS.WritableStream;
-        export function pipeline(stream1: NodeJS.ReadableStream, stream2: NodeJS.ReadWriteStream | NodeJS.WritableStream, ...streams: Array<NodeJS.ReadWriteStream | NodeJS.WritableStream | ((err: NodeJS.ErrnoException) => void)>): NodeJS.WritableStream;
+        export function pipeline(streams: (NodeJS.ReadableStream | NodeJS.WritableStream | NodeJS.ReadWriteStream)[], callback?: (err: NodeJS.ErrnoException) => void): NodeJS.WritableStream;
+        export function pipeline(stream1: NodeJS.ReadableStream, stream2: NodeJS.ReadWriteStream | NodeJS.WritableStream, ...streams: (NodeJS.ReadWriteStream | NodeJS.WritableStream | ((err: NodeJS.ErrnoException) => void))[]): NodeJS.WritableStream;
 
         export namespace pipeline {
             // tslint:disable:function-name
@@ -300,8 +300,8 @@ declare module "readable-stream" {
             export function __promisify__<T extends NodeJS.WritableStream>(stream1: NodeJS.ReadableStream, stream2: NodeJS.ReadWriteStream, stream3: T): Promise<void>;
             export function __promisify__<T extends NodeJS.WritableStream>(stream1: NodeJS.ReadableStream, stream2: NodeJS.ReadWriteStream, stream3: NodeJS.ReadWriteStream, stream4: T): Promise<void>;
             export function __promisify__<T extends NodeJS.WritableStream>(stream1: NodeJS.ReadableStream, stream2: NodeJS.ReadWriteStream, stream3: NodeJS.ReadWriteStream, stream4: NodeJS.ReadWriteStream, stream5: T): Promise<void>;
-            export function __promisify__(streams: Array<NodeJS.ReadableStream | NodeJS.WritableStream | NodeJS.ReadWriteStream>): Promise<void>;
-            export function __promisify__(stream1: NodeJS.ReadableStream, stream2: NodeJS.ReadWriteStream | NodeJS.WritableStream, ...streams: Array<NodeJS.ReadWriteStream | NodeJS.WritableStream>): Promise<void>;
+            export function __promisify__(streams: (NodeJS.ReadableStream | NodeJS.WritableStream | NodeJS.ReadWriteStream)[]): Promise<void>;
+            export function __promisify__(stream1: NodeJS.ReadableStream, stream2: NodeJS.ReadWriteStream | NodeJS.WritableStream, ...streams: (NodeJS.ReadWriteStream | NodeJS.WritableStream)[]): Promise<void>;
             // tslint:enable:function-name
         }
 

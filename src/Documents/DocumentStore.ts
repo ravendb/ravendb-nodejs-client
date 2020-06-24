@@ -336,7 +336,7 @@ export class DocumentStore extends DocumentStoreBase {
     }
 
     public get smuggler(): DatabaseSmuggler {
-        if (this._smuggler == null) {
+        if (!this._smuggler) {
             this._smuggler = new DatabaseSmuggler(this);
         }
 

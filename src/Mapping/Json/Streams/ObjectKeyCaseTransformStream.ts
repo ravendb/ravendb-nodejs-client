@@ -8,14 +8,14 @@ import {
 import { TypeUtil } from "../../../Utility/TypeUtil";
 
 export interface ObjectKeyCaseTransformStreamOptionsBase extends ObjectChangeCaseOptionsBase {
-    extractIgnorePaths?: ((entry: object) => Array<string | RegExp>);
+    extractIgnorePaths?: ((entry: object) => (string | RegExp)[]);
     defaultTransform?: CasingConvention;
 }
 
 export interface ObjectKeyCaseTransformStreamOptions
     extends ObjectChangeCaseOptions {
     handleKeyValue?: boolean;
-    extractIgnorePaths?: ((entry: object) => Array<string | RegExp>);
+    extractIgnorePaths?: ((entry: object) => (string | RegExp)[]);
 }
 
 const DEFAULT_OBJECT_KEY_CASE_TRANSFORM_OPTS = {
@@ -25,8 +25,8 @@ const DEFAULT_OBJECT_KEY_CASE_TRANSFORM_OPTS = {
 
 export class ObjectKeyCaseTransformStream extends stream.Transform {
 
-    private _ignorePaths: Array<string | RegExp>;
-    private readonly _getIgnorePaths: (entry: object) => Array<string | RegExp> = () => this._ignorePaths;
+    private _ignorePaths: (string | RegExp)[];
+    private readonly _getIgnorePaths: (entry: object) => (string | RegExp)[] = () => this._ignorePaths;
 
     private readonly _handleKeyValue: boolean;
 

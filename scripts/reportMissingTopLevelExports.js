@@ -49,7 +49,7 @@ const IGNORE_MODULES = [
     "Http/HttpCache*",
     "Documents/Queries/QueryResultBase*",
     "Documents/Queries/QueryFieldUtil*",
-    "Documents/Queries/QueryHashCalculator*",
+    "Documents/Queries/HashCalculator*",
     "Documents/Session/AdvancedSessionExtensionBase*",
     "Documents/Session/JavaScriptArray*",
     "Documents/Queries/GenericQueryResult*",

@@ -26,7 +26,7 @@ export class SubscriptionBatch<T extends object> {
 
     private readonly _logger = getLogger({ module: "SubscriptionBatch" });
     private readonly _generateEntityIdOnTheClient: GenerateEntityIdOnTheClient;
-    private readonly _items = [] as Array<Item<T>>;
+    private readonly _items = [] as Item<T>[];
 
     private _includes: object[];
 

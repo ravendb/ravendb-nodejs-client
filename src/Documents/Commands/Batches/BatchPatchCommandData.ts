@@ -24,7 +24,7 @@ export class BatchPatchCommandData implements ICommandData {
 
     public constructor(patch: PatchRequest, patchIfMissing: PatchRequest, ...ids: string[]);
     public constructor(patch: PatchRequest, patchIfMissing: PatchRequest, ...ids: IdAndChangeVector[]);
-    public constructor(patch: PatchRequest, patchIfMissing: PatchRequest, ...ids: Array<IdAndChangeVector | string>) {
+    public constructor(patch: PatchRequest, patchIfMissing: PatchRequest, ...ids: (IdAndChangeVector | string)[]) {
         if (!patch) {
             throwError("InvalidArgumentException", "Patch cannot be null.");
         }

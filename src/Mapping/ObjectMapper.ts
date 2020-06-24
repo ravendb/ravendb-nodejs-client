@@ -264,7 +264,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
     }
 
     private _flattenFieldContexts(
-        arr: Array<ObjectPropertyContext[] | ObjectPropertyContext>): ObjectPropertyContext[] {
+        arr: (ObjectPropertyContext[] | ObjectPropertyContext)[]): ObjectPropertyContext[] {
         return arr.reduce((result: any, next) => {
             if (Array.isArray(next)) {
                 return result.concat(next as ObjectPropertyContext[]);

@@ -9,7 +9,7 @@ export interface IDefer<TResult> {
 }
 
 export function raceToResolution<TResult>(
-    promises: Array<BluebirdPromise<TResult>>,
+    promises: BluebirdPromise<TResult>[],
     onErrorCallback?: (err) => void): BluebirdPromise<TResult> {
 
     // There is no way to know which promise is rejected.

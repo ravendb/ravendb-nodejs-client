@@ -210,7 +210,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             const body = this._serializer
                 .serialize({ ids: [...uniqueIds] });
 
-            const calculateHash = GetDocumentsCommand.calculateHash(uniqueIds);
+            const calculateHash = GetDocumentsCommand._calculateHash(uniqueIds);
             newUri += `&loadHash=${encodeURIComponent(calculateHash)}`;
 
             return {
@@ -224,7 +224,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         }
     }
 
-    private static calculateHash(uniqueIds: Set<string>): string {
+    private static _calculateHash(uniqueIds: Set<string>): string {
         const hasher = new HashCalculator();
 
         for (const x of uniqueIds) {
