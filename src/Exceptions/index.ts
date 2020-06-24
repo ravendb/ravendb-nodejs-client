@@ -128,7 +128,8 @@ export type RavenErrorType = "RavenException"
     | "BulkInsertStreamError"
     | "DatabaseSchemaErrorException"
     | "AttachmentDoesNotExistException"
-    | "CounterOverflowException";
+    | "CounterOverflowException"
+    | "LicenseActivationException";
 
 export interface ExceptionSchema {
     url: string;
@@ -148,15 +149,15 @@ export class ExceptionDispatcher {
 
     private static _jsonSerializer: JsonSerializer = JsonSerializer.getDefaultForCommandPayload();
 
-    public static get(schema: ExceptionDispatcherArgs, code: number): Error {
+    public static get(schema: ExceptionDispatcherArgs, code: number, inner?: Error): Error {
         const message = schema.message;
         const typeAsString = schema.type;
         if (code === StatusCodes.Conflict) {
             if (typeAsString.indexOf("DocumentConflictException") !== -1) {
-                return getError("DocumentConflictException", message);
+                return getError("DocumentConflictException", message, inner);
             }
 
-            return getError("ConcurrencyException", schema.error);
+            return getError("ConcurrencyException", schema.error, inner);
         }
 
         const error = 
@@ -164,7 +165,7 @@ export class ExceptionDispatcher {
             + "The server at " + schema.url + " responded with status code: " + code;
 
         const determinedType = this._getType(typeAsString) as RavenErrorType;
-        return getError(determinedType || "RavenException", error);
+        return getError(determinedType || "RavenException", error, inner);
     }
 
     public static throwException(response: HttpResponse, body: string): void | never {

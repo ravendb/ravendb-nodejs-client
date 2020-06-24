@@ -1181,10 +1181,10 @@ export class RequestExecutor implements IDisposable {
                 const resExceptionSchema = JsonSerializer
                     .getDefaultForCommandPayload()
                     .deserialize<ExceptionSchema>(responseJson);
-                const readException = ExceptionDispatcher.get(resExceptionSchema, response.status);
+                const readException = ExceptionDispatcher.get(resExceptionSchema, response.status, e);
                 command.failedNodes.set(chosenNode, readException);
-            } catch (_) {
-                log.warn(_, "Error parsing server error.");
+            } catch (__) {
+                log.warn(__, "Error parsing server error.");
                 const unrecognizedErrSchema = {
                     url: req.uri as string,
                     message: "Unrecognized response from the server",
@@ -1192,7 +1192,7 @@ export class RequestExecutor implements IDisposable {
                     type: "Unparsable Server Response"
                 };
 
-                const exceptionToUse = ExceptionDispatcher.get(unrecognizedErrSchema, response.status);
+                const exceptionToUse = ExceptionDispatcher.get(unrecognizedErrSchema, response.status, e);
                 command.failedNodes.set(chosenNode, exceptionToUse);
             }
 
@@ -1206,7 +1206,7 @@ export class RequestExecutor implements IDisposable {
             type: e.name
         };
 
-        command.failedNodes.set(chosenNode, ExceptionDispatcher.get(exceptionSchema, StatusCodes.ServiceUnavailable));
+        command.failedNodes.set(chosenNode, ExceptionDispatcher.get(exceptionSchema, StatusCodes.ServiceUnavailable, e));
     }
 
     private _createRequest<TResult>(node: ServerNode, command: RavenCommand<TResult>): HttpRequestParameters {
