@@ -79,6 +79,8 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         if (this._parser) {
             this._parser.end();
         }
+
+        this._subscriptionLocalRequestExecutor?.dispose();
     }
 
     private _redirectNode: ServerNode;

@@ -42,7 +42,11 @@ export class FieldsToFetchToken extends QueryToken {
                 writer.append(", ");
             }
 
-            this._writeField(writer, fieldToFetch);
+            if (!fieldToFetch) {
+                writer.append("null");
+            } else {
+                this._writeField(writer, fieldToFetch);
+            }
 
             if (this.customFunction) {
                 continue;

@@ -442,7 +442,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
                                                                      sourceAlias: (value: string) => void) {
         sourceAlias(null);
 
-        if (fields.length !== 1) {
+        if (fields.length !== 1 || !fields[0]) {
             return;
         }
 

@@ -11,6 +11,7 @@ import { TypeUtil } from "../../Utility/TypeUtil";
 import { throwError } from "../../Exceptions";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { CONSTANTS, COUNTERS } from "../../Constants";
+import { HashCalculator } from "../Queries/HashCalculator";
 
 export interface GetDocumentsCommandCounterOptions {
     counterIncludes?: string[];
@@ -208,6 +209,10 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         } else {
             const body = this._serializer
                 .serialize({ ids: [...uniqueIds] });
+
+            const calculateHash = GetDocumentsCommand.calculateHash(uniqueIds);
+            newUri += `&loadHash=${encodeURIComponent(calculateHash)}`;
+
             return {
                 uri: newUri,
                 method: "POST",
@@ -217,6 +222,16 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
                 body
             };
         }
+    }
+
+    private static calculateHash(uniqueIds: Set<string>): string {
+        const hasher = new HashCalculator();
+
+        for (const x of uniqueIds) {
+            hasher.write(x);
+        }
+
+        return hasher.getHash();
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
