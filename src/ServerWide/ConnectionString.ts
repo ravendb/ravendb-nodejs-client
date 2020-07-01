@@ -13,3 +13,9 @@ export class RavenConnectionString extends ConnectionString {
     public topologyDiscoveryUrls: string[];
     public type: ConnectionStringType = "Raven";
 }
+
+export class SqlConnectionString extends ConnectionString {
+    public connectionString: string;
+    public factoryName: string;
+    public type: ConnectionStringType = "Sql";
+}
