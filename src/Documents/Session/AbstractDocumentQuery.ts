@@ -1116,7 +1116,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             throwError("InvalidOperationException", "Missing where clause.");
         }
 
-        if (boost <= 0.0) {
+        if (boost < 0.0) {
             throwError("InvalidArgumentException", "Boost factor must be a positive number.");
         }
 

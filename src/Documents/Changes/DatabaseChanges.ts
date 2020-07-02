@@ -29,7 +29,7 @@ export class DatabaseChanges implements IDatabaseChanges {
 
     private _semaphore = semaphore();
 
-    private readonly _requestExecuter: RequestExecutor;
+    private readonly _requestExecutor: RequestExecutor;
     private readonly _conventions: DocumentConventions;
     private readonly _database: string;
 
@@ -49,7 +49,7 @@ export class DatabaseChanges implements IDatabaseChanges {
     private _url: string;
 
     constructor(requestExecutor: RequestExecutor, databaseName: string, onDispose: () => void) {
-        this._requestExecuter = requestExecutor;
+        this._requestExecutor = requestExecutor;
         this._conventions = requestExecutor.conventions;
         this._database = databaseName;
 
@@ -308,7 +308,7 @@ export class DatabaseChanges implements IDatabaseChanges {
     private async _doWork(): Promise<void> {
         let preferredNode: CurrentIndexAndNode;
         try {
-            preferredNode = await this._requestExecuter.getPreferredNode();
+            preferredNode = await this._requestExecutor.getPreferredNode();
             this._nodeIndex = preferredNode.currentIndex;
             this._serverNode = preferredNode.currentNode;
         } catch (e) {
@@ -326,13 +326,16 @@ export class DatabaseChanges implements IDatabaseChanges {
             return;
         }
 
+        let wasConnected = false;
+
         if (!this.connected) {
             const urlString = preferredNode.currentNode.url + "/databases/" + this._database + "/changes";
             const url = StringUtil.toWebSocketPath(urlString);
 
-            this._client = DatabaseChanges.createClientWebSocket(this._requestExecuter, url);
+            this._client = DatabaseChanges.createClientWebSocket(this._requestExecutor, url);
 
             this._client.on("open", async () => {
+                wasConnected = true;
                 this._immediateConnection = 1;
 
                 for (const counter of this._counters.values()) {
@@ -343,7 +346,16 @@ export class DatabaseChanges implements IDatabaseChanges {
             });
 
             this._client.on("error", async (e) => {
-                this._serverNode = await this._requestExecuter.handleServerNotResponsive(this._url, this._serverNode, this._nodeIndex, e);
+                if (wasConnected) {
+                    this._emitter.emit("connectionStatus");
+                }
+                wasConnected = false;
+
+                try {
+                    this._serverNode = await this._requestExecutor.handleServerNotResponsive(this._url, this._serverNode, this._nodeIndex, e);
+                } catch (ee) {
+                    //We don't want to stop observe for changes if server down. we will wait for one to be up
+                }
                 this._notifyAboutError(e);
             });
 
@@ -373,7 +385,6 @@ export class DatabaseChanges implements IDatabaseChanges {
         this._client.close();
         this._immediateConnection = 0;
 
-        this._emitter.emit("connectionStatus");
         return true;
     }
 
@@ -390,7 +401,7 @@ export class DatabaseChanges implements IDatabaseChanges {
                 if (message.TopologyChange) {
                     this._getOrAddConnectionState("Topology", "watch-topology-change", "", "");
                     // noinspection ES6MissingAwait
-                    this._requestExecuter.updateTopology(this._serverNode, 0, true, "watch-topology-change");
+                    this._requestExecutor.updateTopology(this._serverNode, 0, true, "watch-topology-change");
                     continue;
                 }
                 if (!type) {
@@ -439,13 +450,13 @@ export class DatabaseChanges implements IDatabaseChanges {
                 break;
             case "TopologyChange":
                 const topologyChange = value as TopologyChange;
-                if (!this._requestExecuter) {
+                if (!this._requestExecutor) {
                     const serverNode = new ServerNode();
                     serverNode.url = topologyChange.url;
                     serverNode.database = topologyChange.database;
 
                     // noinspection JSIgnoredPromiseFromCall
-                    this._requestExecuter.updateTopology(serverNode, 0, true, "topology-change-notification");
+                    this._requestExecutor.updateTopology(serverNode, 0, true, "topology-change-notification");
                 }
                 break;
             default:

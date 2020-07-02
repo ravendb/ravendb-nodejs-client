@@ -62,7 +62,7 @@ export class BatchCommand extends RavenCommand<BatchCommandResult> implements ID
 
                 const { attStream } = putAttachmentCommandData;
                 if (this._attachmentStreams.has(attStream)) {
-                    PutAttachmentCommandHelper.throwStreamAlready();
+                    PutAttachmentCommandHelper.throwStreamWasAlreadyUsed();
                 } else {
                     this._attachmentStreams.add(attStream);
                 }

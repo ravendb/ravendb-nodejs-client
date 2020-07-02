@@ -17,7 +17,7 @@ import { Certificate, ICertificate } from "../Auth/Certificate";
 import { ReadBalanceBehavior } from "./ReadBalanceBehavior";
 import { HttpCache, CachedItemMetadata, ReleaseCacheItem } from "./HttpCache";
 import { AggressiveCacheOptions } from "./AggressiveCacheOptions";
-import { throwError, RavenErrorType, ExceptionDispatcher, ExceptionSchema } from "../Exceptions";
+import { throwError, RavenErrorType, ExceptionDispatcher, ExceptionSchema, getError } from "../Exceptions";
 import {
     GetClientConfigurationCommand,
     GetClientConfigurationOperationResult
@@ -1030,17 +1030,45 @@ export class RequestExecutor implements IDisposable {
                     return false;
                 }
 
-                return this.updateTopology(chosenNode, Number.MAX_VALUE, true, "handle-unsuccessful-response")
-                    .then(() => {
-                        const currentIndexAndNode: CurrentIndexAndNode =
-                            this.chooseNodeForRequest(command, sessionInfo);
-                        return this._executeOnSpecificNode(command, sessionInfo, {
-                            chosenNode: currentIndexAndNode.currentNode,
-                            nodeIndex: currentIndexAndNode.currentIndex,
-                            shouldRetry: false
-                        });
-                    })
-                    .then(() => true);
+                if (nodeIndex != null) {
+                    this._nodeSelector.onFailedRequest(nodeIndex);
+                }
+
+                if (!command.failedNodes) {
+                    command.failedNodes = new Map();
+                }
+
+                if (command.isFailedWithNode(chosenNode)) {
+                    command.failedNodes.set(chosenNode, getError("UnsuccessfulRequestException",
+                        "Request to " + url + "(" + req.method + ") is not relevant for this node anymore."));
+                }
+
+                let indexAndNode = this.chooseNodeForRequest(command, sessionInfo);
+
+                if (command.failedNodes.has(indexAndNode.currentNode)) {
+                    // we tried all the nodes, let's try to update topology and retry one more time
+                    const success = await this.updateTopology(chosenNode, 60 * 1000, true, "handle-unsuccessful-response");
+                    if (!success) {
+                        return false;
+                    }
+
+                    command.failedNodes.clear(); // we just update the topology
+                    indexAndNode = this.chooseNodeForRequest(command, sessionInfo);
+
+                    await this._executeOnSpecificNode(command, sessionInfo, {
+                        chosenNode: indexAndNode.currentNode,
+                        nodeIndex: indexAndNode.currentIndex,
+                        shouldRetry: false
+                    });
+                    return true;
+                }
+
+                await this._executeOnSpecificNode(command, sessionInfo, {
+                    chosenNode: indexAndNode.currentNode,
+                    nodeIndex: indexAndNode.currentIndex,
+                    shouldRetry: false
+                });
+                return true;
             case StatusCodes.GatewayTimeout:
             case StatusCodes.RequestTimeout:
             case StatusCodes.BadGateway:
