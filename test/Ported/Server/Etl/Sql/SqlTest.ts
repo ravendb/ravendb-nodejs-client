@@ -7,11 +7,13 @@ import {
     ResetEtlOperation,
     SqlEtlConfiguration, SqlEtlTable, Transformation
 } from "../../../../../src";
-import { disposeTestDocumentStore, testContext } from "../../../../Utils/TestUtil";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../../../Utils/TestUtil";
 import { User } from "../../../../Assets/Entities";
 import { assertThat } from "../../../../Utils/AssertExtensions";
 
-describe("SqlTest", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)(
+    `${RavenTestContext.isPullRequest ? "[Skipped on PR] " : ""}` +
+    "SqlTest", function () {
 
     let store: IDocumentStore;
 

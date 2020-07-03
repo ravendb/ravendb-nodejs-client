@@ -8,12 +8,14 @@ import {
     ResetEtlOperation,
     RavenEtlConfiguration, Transformation
 } from "../../../../../src";
-import { disposeTestDocumentStore, testContext } from "../../../../Utils/TestUtil";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../../../Utils/TestUtil";
 import { assertThat } from "../../../../Utils/AssertExtensions";
 import { User } from "../../../../Assets/Entities";
 import { ReplicationTestContext } from "../../../../Utils/ReplicationTestContext";
 
-describe("EtlTest", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)(
+    `${RavenTestContext.isPullRequest ? "[Skipped on PR] " : ""}` +
+    "EtlTest", function () {
 
     let store: IDocumentStore;
     let replication: ReplicationTestContext;
