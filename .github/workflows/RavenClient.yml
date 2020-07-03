@@ -1,0 +1,68 @@
+name: tests/node
+ 
+on:
+  push:
+    branches: [ v4.2 ]
+  pull_request:
+    branches: [ v4.2 ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    env: 
+      RAVENDB_TEST_SERVER_PATH: ./RavenDB/Server/Raven.Server
+      RAVENDB_TEST_SERVER_CERTIFICATE_PATH: ./certs/server.pfx
+      RAVENDB_TEST_CLIENT_CERT_PASSPHRASE: client11
+      RAVENDB_TEST_CLIENT_CERT_PATH: ./certs/nodejs.pem
+      RAVENDB_TEST_CA_PATH: /usr/local/share/ca-certificates/ca.crt
+      RAVENDB_TEST_HTTPS_SERVER_URL: https://localhost:8989
+      RAVENDB_BUILD_TYPE: stable
+      RAVEN_License: ${{ secrets.RAVEN_LICENSE }}
+    
+    strategy:
+      matrix:
+        node-version: [10.x, 12.x, 14.x]
+        serverVersion: ["4.2"]
+
+    steps:
+    - uses: actions/checkout@v2
+      
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: Download RavenDB Server
+      run: wget -O RavenDB.tar.bz2 "https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest?buildType=${{ env.RAVENDB_BUILD_TYPE }}&version=${{ matrix.serverVersion }}"
+
+    - run: mkdir certs
+    - run: openssl genrsa -out certs/ca.key 2048
+    - run: openssl req -new -x509 -key certs/ca.key -out certs/ca.crt -subj "/C=US/ST=Arizona/L=Nevada/O=RavenDB Test CA/OU=RavenDB test CA/CN=localhost/emailAddress=ravendbca@example.com"
+    - run: openssl genrsa -out certs/localhost.key 2048
+    - run: openssl req -new  -key certs/localhost.key -out certs/localhost.csr -subj "/C=US/ST=Arizona/L=Nevada/O=RavenDB Test/OU=RavenDB test/CN=localhost/emailAddress=ravendb@example.com"
+    - run: openssl x509 -req -extensions ext -extfile test/Assets/test_cert.conf -in certs/localhost.csr -CA certs/ca.crt -CAkey certs/ca.key -CAcreateserial -out certs/localhost.crt
+    - run: cat certs/localhost.key certs/localhost.crt > certs/nodejs.pem
+    - run: openssl pkcs12 -passout pass:"" -export -out certs/server.pfx -inkey certs/localhost.key -in certs/localhost.crt
+    - run: sudo cp certs/ca.crt /usr/local/share/ca-certificates/ca.crt
+    - run: sudo update-ca-certificates
+    
+    - name: Extract RavenDB Server
+      run: tar xjf RavenDB.tar.bz2
+
+    - run: npm install
+      
+    - name: Run Linter
+      run: npm run lint
+    
+    - name: Check exports
+      run: npm run check-exports
+      
+    - name: Run Tests
+      run: npm run test
+    
+    - name: Build
+      run: npm run build
+    
+    - name: Check imports
+      run: node -e "require('./dist').DocumentStore"
