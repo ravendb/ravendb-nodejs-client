@@ -9,8 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
-    env: 
+
+    env:
       RAVENDB_TEST_SERVER_PATH: ./RavenDB/Server/Raven.Server
       RAVENDB_TEST_SERVER_CERTIFICATE_PATH: ./certs/server.pfx
       RAVENDB_TEST_CLIENT_CERT_PASSPHRASE: client11
@@ -24,6 +24,7 @@ jobs:
       matrix:
         node-version: [10.x, 12.x, 14.x]
         serverVersion: ["4.2"]
+      fail-fast: false
 
     steps:
     - uses: actions/checkout@v2
