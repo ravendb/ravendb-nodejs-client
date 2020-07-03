@@ -14,6 +14,7 @@ jobs:
       matrix:
         node-version: [10.x, 12.x, 14.x]
         serverVersion: ["4.1", "4.2"]
+      fail-fast: false
 
     env: 
       RAVENDB_TEST_SERVER_PATH: ./RavenDB/Server/Raven.Server
