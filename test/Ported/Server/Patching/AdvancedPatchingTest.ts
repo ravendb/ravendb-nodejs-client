@@ -5,9 +5,9 @@ import {
     IDocumentStore,
     IndexDefinition,
     PutIndexesOperation,
+    PatchRequest,
     PatchByQueryOperation, PatchOperation,
 } from "../../../../src";
-import { PatchRequest } from "../../../../src/Documents/Operations/PatchRequest";
 
 describe("AdvancedPatchingTest", function () {
 

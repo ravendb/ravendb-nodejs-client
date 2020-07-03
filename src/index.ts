@@ -21,7 +21,7 @@ export * from "./Http/UriUtility";
 // SERVERWIDE
 export * from "./ServerWide";
 export * from "./ServerWide/CompactSettings";
-export * from "./ServerWide/ConnectionString";
+export * from "./Documents/Operations/Etl/ConnectionString";
 export * from "./ServerWide/ModifyOnGoingTaskResult";
 export * from "./ServerWide/DeletionInProgressStatus";
 
@@ -37,7 +37,7 @@ export { GetClusterTopologyCommand } from "./ServerWide/Commands/GetClusterTopol
 export { GetTcpInfoCommand } from "./ServerWide/Commands/GetTcpInfoCommand";
 export { CreateDatabaseOperation } from "./ServerWide/Operations/CreateDatabaseOperation";
 export { DatabaseRecord, ConflictSolver, ScriptResolver } from "./ServerWide";
-export * from "./ServerWide/ConnectionString";
+export * from "./Documents/Operations/Etl/ConnectionString";
 
 // OPERATIONS AND COMMANDS
 export { BulkInsertOperation } from "./Documents/BulkInsertOperation";
@@ -175,6 +175,9 @@ export * from "./Documents/Operations/Expiration/ExpirationConfiguration";
 export * from "./Documents/Operations/Replication/FeatureTaskDefinition";
 export * from "./Documents/Operations/Replication/PullReplicationAsSink";
 export * from "./Documents/Operations/Replication/PullReplicationDefinition";
+export * from "./Documents/Operations/Etl/AddEtlOperation";
+export * from "./Documents/Operations/Etl/UpdateEtlOperation";
+export * from "./Documents/Operations/Etl/ResetEtlOperation";
 
 // BACKUP
 export * from "./Documents/Operations/Backups/AmazonSettings";

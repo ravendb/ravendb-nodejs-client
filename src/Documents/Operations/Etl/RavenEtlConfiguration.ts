@@ -1,6 +1,16 @@
 import { EtlConfiguration } from "./EtlConfiguration";
-import { RavenConnectionString } from "../../..";
+import { DocumentConventions, EtlType, RavenConnectionString } from "../../..";
 
-export interface RavenEtlConfiguration extends EtlConfiguration<RavenConnectionString> {
-    loadRequestTimeoutInSec: number;
+export class RavenEtlConfiguration extends EtlConfiguration<RavenConnectionString> {
+    public loadRequestTimeoutInSec: number;
+
+    public get etlType(): EtlType {
+        return "Raven";
+    }
+
+    serialize(conventions: DocumentConventions): object {
+        const result = super.serialize(conventions) as any;
+        result.EtlType = this.etlType;
+        return result;
+    }
 }

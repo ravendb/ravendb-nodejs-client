@@ -1,12 +1,24 @@
-import { ConnectionString } from "../../..";
+import { ConnectionString, DocumentConventions, serializeTransformation } from "../../..";
 import { Transformation } from "./Transformation";
 
-export interface EtlConfiguration<T extends ConnectionString> {
-    taskId: number;
-    name: string;
-    mentorNode: string;
-    connectionStringName: string;
-    transforms: Transformation[];
-    disabled: boolean;
-    allowEtlOnNonEncryptedChannel: boolean;
+export class EtlConfiguration<T extends ConnectionString> {
+    public taskId: number;
+    public name: string;
+    public mentorNode: string;
+    public connectionStringName: string;
+    public transforms: Transformation[];
+    public disabled: boolean;
+    public allowEtlOnNonEncryptedChannel: boolean;
+
+    public serialize(conventions: DocumentConventions): object {
+        return {
+            TaskId: this.taskId,
+            Name: this.name,
+            MentorName: this.mentorNode,
+            ConnectionStringName: this.connectionStringName,
+            Transforms: this.transforms.map(x => serializeTransformation(x)),
+            Disabled: this.disabled,
+            AllowEtlOnNonEncryptedChannel: this.allowEtlOnNonEncryptedChannel
+        }
+    }
 }

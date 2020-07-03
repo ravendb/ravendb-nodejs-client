@@ -2,14 +2,12 @@ import {
     IDocumentStore,
     PutConnectionStringOperation,
     RavenConnectionString,
-    SqlConnectionString
+    SqlConnectionString,
+    GetConnectionStringsOperation,
+    RemoveConnectionStringOperation
 } from "../../../../src";
 import { disposeTestDocumentStore, testContext } from "../../../Utils/TestUtil";
-import { GetConnectionStringsOperation } from "../../../../src/Documents/Operations/ConnectionStrings/GetConnectionStringsOperation";
 import { assertThat } from "../../../Utils/AssertExtensions";
-import {
-    RemoveConnectionStringOperation
-} from "../../../../src/Documents/Operations/ConnectionStrings/RemoveConnectionStringOperation";
 
 
 describe("ConnectionStringsTest", function () {
