@@ -12,8 +12,6 @@ import {
 } from "../../../../src";
 import { ReplicationTestContext } from "../../../Utils/ReplicationTestContext";
 
-// External replication requires a proper license
-// https://docs.travis-ci.com/user/pull-requests/#Pull-Requests-and-Security-Restrictions
 const _describe = RavenTestContext.isPullRequest ? describe.skip : describe;
 _describe(
     `${RavenTestContext.isPullRequest ? "[Skipped on PR] " : ""}` +
