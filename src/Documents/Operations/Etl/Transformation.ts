@@ -1,5 +1,3 @@
-import { DocumentConventions } from "../../..";
-import { getTransformJsonKeysProfile } from "../../../Mapping/Json/Streams/TransformJsonKeysProfiles";
 
 export class Transformation {
     name: string;

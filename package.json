@@ -25,6 +25,7 @@
     },
     "lint": "tslint src/**/*.ts && tslint test/**/*.ts",
     "check-exports": "node ./scripts/reportMissingTopLevelExports.js",
+    "check-imports": "node scripts/clearGlobalExports.js && tsc -p tsconfig.imports-check.json",
     "coverage": "tsc -p tsconfig.test.json && copy test\\Assets\\* .test\\test\\Assets && nyc --exclude=.test/test/** --reporter=html --reporter=text mocha .test\\test"
   },
   "repository": {
