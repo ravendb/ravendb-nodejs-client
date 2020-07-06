@@ -1,10 +1,11 @@
 import * as BluebirdPromise from "bluebird";
 import { GetOperationStateCommand } from "./GetOperationStateOperation";
-import { RequestExecutor, DocumentConventions } from "../..";
 import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
 import { throwError } from "../../Exceptions";
 import { OperationExceptionResult } from "./OperationAbstractions";
 import { ExceptionDispatcher } from "../../Exceptions";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { RequestExecutor } from "../../Http/RequestExecutor";
 
 type OperationStatus = "Completed" | "Cancelled" | "Faulted";
 

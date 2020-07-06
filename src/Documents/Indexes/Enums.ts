@@ -76,3 +76,25 @@ export type IndexLockMode =
     "Unlock"
     | "LockedIgnore"
     | "LockedError";
+
+
+export type AggregationOperation =
+    "None"
+    | "Count"
+    | "Sum";
+
+export type AutoFieldIndexing =
+    "No"
+    | "Search"
+    | "Exact"
+    | "Highighting"
+    | "Default";
+
+export type GroupByArrayBehavior =
+    "NotApplicable"
+    | "ByContent"
+    | "ByIndividualValues";
+
+export type AutoSpatialMethodType =
+    "Point"
+    | "Wkt";

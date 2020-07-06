@@ -1,9 +1,10 @@
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 import { RevisionsConfiguration } from "../RevisionsConfiguration";
-import { DocumentConventions, ServerNode } from "../../..";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as stream from "readable-stream";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { ServerNode } from "../../../Http/ServerNode";
 
 export class ConfigureRevisionsOperation implements IMaintenanceOperation<ConfigureRevisionsOperationResult> {
     private readonly _configuration: RevisionsConfiguration;

@@ -1,6 +1,5 @@
 import { SearchOperator } from "../Queries/SearchOperator";
 import { OrderingType } from "./OrderingType";
-import { DocumentConventions } from "../..";
 import { MethodCall } from "./MethodCall";
 import { WhereParams } from "./WhereParams";
 import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField";
@@ -14,6 +13,7 @@ import { ValueCallback } from "../../Types/Callbacks";
 import { Highlightings } from "../Queries/Highlighting/Hightlightings";
 import { IIncludeBuilder } from "../Session/Loaders/IIncludeBuilder";
 import { IncludeBuilderBase } from "./Loaders/IncludeBuilderBase";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
 
 export interface IAbstractDocumentQuery<T> {
 

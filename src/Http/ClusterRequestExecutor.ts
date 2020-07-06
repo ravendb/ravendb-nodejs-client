@@ -5,13 +5,13 @@ import * as BluebirdPromise from "bluebird";
 import * as semaphore from "semaphore";
 import { getLogger } from "../Utility/LogUtil";
 import { RequestExecutor, IRequestExecutorOptions } from "./RequestExecutor";
-import { DocumentConventions } from "..";
 import { throwError } from "../Exceptions";
 import { ServerNode } from "./ServerNode";
 import { Topology } from "./Topology";
 import { GetTcpInfoCommand } from "../ServerWide/Commands/GetTcpInfoCommand";
 import { IAuthOptions } from "../Auth/AuthOptions";
 import { acquireSemaphore } from "../Utility/SemaphoreUtil";
+import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
 
 const log = getLogger({ module: "ClusterRequestExecutor" });
 
@@ -97,7 +97,7 @@ export class ClusterRequestExecutor extends RequestExecutor {
         });
     }
 
-    public updateTopology(node: ServerNode, timeout: number, forceUpdate: boolean): Promise<boolean> {
+    public updateTopology(node: ServerNode, timeout: number, forceUpdate: boolean = false, debugTag?: string): Promise<boolean> {
         if (this._disposed) {
             return Promise.resolve(false);
         }
@@ -109,7 +109,7 @@ export class ClusterRequestExecutor extends RequestExecutor {
                     return false;
                 }
 
-                const command = new GetClusterTopologyCommand();
+                const command = new GetClusterTopologyCommand(debugTag);
                 return this.execute(command, null, {
                     chosenNode: node,
                     nodeIndex: null,

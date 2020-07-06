@@ -17,5 +17,8 @@ export class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TRes
     public durationInMs: number;
     public scoreExplanations: { [key: string]: string };
     public timingsInMs: { [key: string]: number };
+    /**
+     * @deprecated ResultSize is not supported anymore. Will be removed in next major version of the product.
+     */
     public resultSize: number;
 }

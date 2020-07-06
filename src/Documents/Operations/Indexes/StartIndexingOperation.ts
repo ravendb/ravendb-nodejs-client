@@ -1,6 +1,8 @@
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
-import { RavenCommand, DocumentConventions, ServerNode } from "../../..";
 import { HttpRequestParameters } from "../../../Primitives/Http";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { RavenCommand } from "../../../Http/RavenCommand";
+import { ServerNode } from "../../../Http/ServerNode";
 
 export class StartIndexingOperation implements IMaintenanceOperation<void> {
 

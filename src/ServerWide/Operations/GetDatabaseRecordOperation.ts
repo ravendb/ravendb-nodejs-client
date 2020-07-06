@@ -1,13 +1,10 @@
-import {
-    DatabaseRecordWithEtag,
-    DocumentConventions,
-    IServerOperation,
-    OperationResultType,
-    RavenCommand,
-    ServerNode
-} from "../..";
 import { HttpRequestParameters } from "../../Primitives/Http";
 import * as stream from "readable-stream";
+import { IServerOperation, OperationResultType } from "../../Documents/Operations/OperationAbstractions";
+import { DatabaseRecordWithEtag } from "..";
+import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
+import { RavenCommand } from "../../Http/RavenCommand";
+import { ServerNode } from "../../Http/ServerNode";
 
 export class GetDatabaseRecordOperation implements IServerOperation<DatabaseRecordWithEtag> {
     private readonly _database: string;

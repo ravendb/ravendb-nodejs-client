@@ -1,15 +1,15 @@
 import { JsonSerializer } from "../../../Mapping/Json/Serializer";
-import { IMaintenanceOperation } from "../OperationAbstractions";
+import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 import { IndexDefinition } from "../../Indexes/IndexDefinition";
 import { throwError } from "../../../Exceptions";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
-import { ServerNode, OperationResultType } from "../../..";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { HeadersBuilder } from "../../../Utility/HttpUtil";
 import { ReplacerContext } from "../../../Mapping/Json/ReplacerFactory";
 import { IndexTypeExtensions } from "../../Indexes/IndexTypeExtensions";
 import * as stream from "readable-stream";
+import { ServerNode } from "../../../Http/ServerNode";
 
 export interface PutIndexResult {
     indexName: string;

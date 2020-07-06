@@ -133,7 +133,7 @@ export class GetCounterValuesCommand extends RavenCommand<CountersDetail> {
             return;
         }
 
-        let body;
+        let body = "";
         this.result = await this._defaultPipeline(_ => body += _).process(bodyStream);
         return body;
     }

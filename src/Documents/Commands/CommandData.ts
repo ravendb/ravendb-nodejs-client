@@ -1,7 +1,7 @@
 import { throwError } from "../../Exceptions";
 import { BatchOptions } from "./Batches/BatchOptions";
-import { DocumentConventions } from "../..";
 import { InMemoryDocumentSessionOperations } from "../Session/InMemoryDocumentSessionOperations";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
 
 export type CommandType =
     "None"

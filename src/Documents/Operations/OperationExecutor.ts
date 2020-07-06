@@ -12,9 +12,9 @@ import { DocumentStoreBase } from "../DocumentStoreBase";
 import { SessionInfo } from "../Session/IDocumentSession";
 import { PatchOperation, PatchOperationResult } from "./PatchOperation";
 import { DocumentType } from "../DocumentAbstractions";
-import { StatusCodes } from "../..";
 import { PatchResult } from "./PatchResult";
 import { IDocumentStore } from "../IDocumentStore";
+import { StatusCodes } from "../../Http/StatusCode";
 
 export class OperationExecutor {
 

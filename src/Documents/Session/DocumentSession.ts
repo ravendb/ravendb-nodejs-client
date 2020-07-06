@@ -667,8 +667,6 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             responseTimeDuration.computeServerTotal();
             responseTimeDuration.totalClientDuration = sw.elapsed;
             return responseTimeDuration;
-        } catch (err) {
-            throwError("RavenException", "Unable to execute pending operations.", err);
         } finally {
             this._pendingLazyOperations.length = 0;
         }

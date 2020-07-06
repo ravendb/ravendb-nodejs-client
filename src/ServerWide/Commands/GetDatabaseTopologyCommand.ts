@@ -18,6 +18,13 @@ interface TopologyDto {
 
 export class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
 
+    private readonly _debugTag: string;
+
+    constructor(debugTag?: string) {
+        super();
+        this._debugTag = debugTag;
+    }
+
     public createRequest(node: ServerNode): HttpRequestParameters {
         let uri = `${node.url}/topology?name=${node.database}`;
 
@@ -25,6 +32,10 @@ export class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
             // we want to keep the '.fiddler' stuff there so we'll keep tracking request
             // so we are going to ask the server to respect it
             uri += "&localUrl=" + encodeURIComponent(node.url);
+        }
+
+        if (this._debugTag) {
+            uri += "&" + this._debugTag;
         }
 
         return { uri };

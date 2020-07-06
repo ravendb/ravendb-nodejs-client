@@ -6,12 +6,12 @@ import {
 import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestParameters } from "../../Primitives/Http";
 import { getHeaders } from "../../Utility/HttpUtil";
-import { IRavenObject } from "../..";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { throwError } from "../../Exceptions";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { CONSTANTS, COUNTERS } from "../../Constants";
 import { HashCalculator } from "../Queries/HashCalculator";
+import { IRavenObject } from "../../Types/IRavenObject";
 
 export interface GetDocumentsCommandCounterOptions {
     counterIncludes?: string[];

@@ -1,11 +1,4 @@
 import { IDocumentStore } from "../IDocumentStore";
-import {
-    DocumentConventions, GetNextOperationIdCommand, OperationCompletionAwaiter,
-    RavenCommand,
-    RequestExecutor,
-    ResponseDisposeHandling,
-    ServerNode
-} from "../..";
 import { StringUtil } from "../../Utility/StringUtil";
 import { DatabaseSmugglerImportOptions } from "./DatabaseSmugglerImportOptions";
 import { throwError } from "../../Exceptions";
@@ -19,6 +12,12 @@ import * as StreamUtil from "../../Utility/StreamUtil";
 import { LengthUnawareFormData } from "../../Utility/LengthUnawareFormData";
 import * as path from "path";
 import { BackupUtils } from "./BackupUtils";
+import { RequestExecutor } from "../../Http/RequestExecutor";
+import { OperationCompletionAwaiter } from "../Operations/OperationCompletionAwaiter";
+import { GetNextOperationIdCommand } from "../Commands/GetNextOperationIdCommand";
+import { RavenCommand, ResponseDisposeHandling } from "../../Http/RavenCommand";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { ServerNode } from "../../Http/ServerNode";
 
 export class DatabaseSmuggler {
     private readonly _store: IDocumentStore;

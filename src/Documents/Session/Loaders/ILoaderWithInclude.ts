@@ -1,6 +1,6 @@
 import { DocumentType } from "../../DocumentAbstractions";
-import { EntitiesCollectionObject } from "../../..";
 import { ErrorFirstCallback } from "../../../Types/Callbacks";
+import { EntitiesCollectionObject } from "../../../Types";
 
 export interface ILoaderWithInclude {
 

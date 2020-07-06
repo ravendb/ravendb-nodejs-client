@@ -21,8 +21,9 @@ export * from "./Http/UriUtility";
 // SERVERWIDE
 export * from "./ServerWide";
 export * from "./ServerWide/CompactSettings";
-export * from "./ServerWide/ConnectionString";
+export * from "./Documents/Operations/Etl/ConnectionString";
 export * from "./ServerWide/ModifyOnGoingTaskResult";
+export * from "./ServerWide/DeletionInProgressStatus";
 
 // SERVERWIDE OPERATIONS
 export * from "./ServerWide/Operations";
@@ -36,7 +37,7 @@ export { GetClusterTopologyCommand } from "./ServerWide/Commands/GetClusterTopol
 export { GetTcpInfoCommand } from "./ServerWide/Commands/GetTcpInfoCommand";
 export { CreateDatabaseOperation } from "./ServerWide/Operations/CreateDatabaseOperation";
 export { DatabaseRecord, ConflictSolver, ScriptResolver } from "./ServerWide";
-export * from "./ServerWide/ConnectionString";
+export * from "./Documents/Operations/Etl/ConnectionString";
 
 // OPERATIONS AND COMMANDS
 export { BulkInsertOperation } from "./Documents/BulkInsertOperation";
@@ -161,6 +162,36 @@ export * from "./Documents/Operations/RevisionsCollectionConfiguration";
 export * from "./Documents/Operations/RevisionsConfiguration";
 export * from "./Documents/Operations/DetailedDatabaseStatistics";
 export * from "./Documents/Operations/SessionOperationExecutor";
+export * from "./Documents/Operations/Configuration/StudioConfiguration";
+export * from "./Documents/Operations/Configuration/StudioEnvironment";
+export * from "./Documents/Operations/ConnectionStrings/GetConnectionStringsOperation";
+export * from "./Documents/Operations/ConnectionStrings/RemoveConnectionStringOperation";
+export * from "./Documents/Operations/Etl/EtlConfiguration";
+export * from "./Documents/Operations/Etl/RavenEtlConfiguration";
+export * from "./Documents/Operations/Etl/Sql/SqlEtlConfiguration";
+export * from "./Documents/Operations/Etl/Sql/SqlEtlTable";
+export * from "./Documents/Operations/Etl/Transformation";
+export * from "./Documents/Operations/Expiration/ExpirationConfiguration";
+export * from "./Documents/Operations/Replication/FeatureTaskDefinition";
+export * from "./Documents/Operations/Replication/PullReplicationAsSink";
+export * from "./Documents/Operations/Replication/PullReplicationDefinition";
+export * from "./Documents/Operations/Etl/AddEtlOperation";
+export * from "./Documents/Operations/Etl/UpdateEtlOperation";
+export * from "./Documents/Operations/Etl/ResetEtlOperation";
+
+// BACKUP
+export * from "./Documents/Operations/Backups/AmazonSettings";
+export * from "./Documents/Operations/Backups/AzureSettings";
+export * from "./Documents/Operations/Backups/BackupEncryptionSettings";
+export * from "./Documents/Operations/Backups/BackupEncryptionSettings";
+export * from "./Documents/Operations/Backups/Enums";
+export * from "./Documents/Operations/Backups/FtpSettings";
+export * from "./Documents/Operations/Backups/GlacierSettings";
+export * from "./Documents/Operations/Backups/LocalSettings";
+export * from "./Documents/Operations/Backups/PeriodicBackupConfiguration";
+export * from "./Documents/Operations/Backups/S3Settings";
+export * from "./Documents/Operations/Backups/BackupSettings";
+
 
 // INDEXES
 export { GetIndexOperation } from "./Documents/Operations/Indexes/GetIndexOperation";
@@ -176,6 +207,10 @@ export * from "./Documents/Indexes";
 export * from "./Documents/Indexes/AbstractIndexCreationTask";
 export * from "./Documents/Indexes/AbstractMultiMapIndexCreationTask";
 export * from "./Documents/Indexes/AbstractJavaScriptIndexCreationTask";
+export * from "./Documents/Indexes/AutoIndexDefinition";
+export * from "./Documents/Indexes/AutoIndexFieldOptions";
+export * from "./Documents/Indexes/Spatial/AutoSpatialOptions";
+
 
 // REPLICATION
 export * from "./Documents/Replication/ExternalReplication";
@@ -188,7 +223,7 @@ export * from "./Documents/DocumentStoreBase";
 export * from "./Documents/IDocumentStore";
 export * from "./Documents/IdTypeAndName";
 
-// SUBSCRIBTIONS
+// SUBSCRIPTIONS
 export * from "./Documents/Subscriptions/SubscriptionBatch";
 export * from "./Documents/Subscriptions/DocumentSubscriptions";
 export * from "./Documents/Subscriptions/SubscriptionWorker";
@@ -331,6 +366,7 @@ export * from "./Documents/Queries/Facets/IFacetOperations";
 export * from "./Documents/Queries/Explanation/ExplanationOptions";
 export * from "./Documents/Queries/Explanation/Explanations";
 export * from "./Documents/Queries/Highlighting/QueryHighlightings";
+export * from "./Documents/Queries/Sorting/SorterDefinition";
 
 // MORE LIKE THIS
 export * from "./Documents/Queries/MoreLikeThis/IMoreLikeThisBuilderBase";

@@ -17,7 +17,7 @@ import { Certificate, ICertificate } from "../Auth/Certificate";
 import { ReadBalanceBehavior } from "./ReadBalanceBehavior";
 import { HttpCache, CachedItemMetadata, ReleaseCacheItem } from "./HttpCache";
 import { AggressiveCacheOptions } from "./AggressiveCacheOptions";
-import { throwError, RavenErrorType, ExceptionDispatcher, ExceptionSchema } from "../Exceptions";
+import { throwError, RavenErrorType, ExceptionDispatcher, ExceptionSchema, getError } from "../Exceptions";
 import {
     GetClientConfigurationCommand,
     GetClientConfigurationOperationResult
@@ -429,7 +429,7 @@ export class RequestExecutor implements IDisposable {
         }
     }
 
-    public updateTopology(node: ServerNode, timeout: number, forceUpdate: boolean = false): Promise<boolean> {
+    public updateTopology(node: ServerNode, timeout: number, forceUpdate: boolean = false, debugTag?: string): Promise<boolean> {
         if (this._disposed) {
             return Promise.resolve(false);
         }
@@ -447,7 +447,7 @@ export class RequestExecutor implements IDisposable {
 
                     this._log.info(`Update topology from ${node.url}.`);
 
-                    const getTopology = new GetDatabaseTopologyCommand();
+                    const getTopology = new GetDatabaseTopologyCommand(debugTag);
                     const getTopologyPromise = this.execute(getTopology, null, {
                         chosenNode: node,
                         nodeIndex: null,
@@ -558,7 +558,7 @@ export class RequestExecutor implements IDisposable {
             return;
         }
 
-        return this.updateTopology(serverNode, 0)
+        return this.updateTopology(serverNode, 0, false, "timer-callback")
             .catch(err => {
                 this._log.error(err, "Couldn't update topology from _updateTopologyTimer");
                 return null;
@@ -573,7 +573,7 @@ export class RequestExecutor implements IDisposable {
         const tryUpdateTopology = async (url: string, database: string): Promise<boolean> => {
             const serverNode = new ServerNode({ url, database });
             try {
-                await this.updateTopology(serverNode, TypeUtil.MAX_INT32);
+                await this.updateTopology(serverNode, TypeUtil.MAX_INT32, false, "first-topology-update");
                 this._initializeUpdateTopologyTimer();
                 this._topologyTakenFromNode = serverNode;
                 return true;
@@ -1030,17 +1030,45 @@ export class RequestExecutor implements IDisposable {
                     return false;
                 }
 
-                return this.updateTopology(chosenNode, Number.MAX_VALUE, true)
-                    .then(() => {
-                        const currentIndexAndNode: CurrentIndexAndNode =
-                            this.chooseNodeForRequest(command, sessionInfo);
-                        return this._executeOnSpecificNode(command, sessionInfo, {
-                            chosenNode: currentIndexAndNode.currentNode,
-                            nodeIndex: currentIndexAndNode.currentIndex,
-                            shouldRetry: false
-                        });
-                    })
-                    .then(() => true);
+                if (nodeIndex != null) {
+                    this._nodeSelector.onFailedRequest(nodeIndex);
+                }
+
+                if (!command.failedNodes) {
+                    command.failedNodes = new Map();
+                }
+
+                if (command.isFailedWithNode(chosenNode)) {
+                    command.failedNodes.set(chosenNode, getError("UnsuccessfulRequestException",
+                        "Request to " + url + "(" + req.method + ") is not relevant for this node anymore."));
+                }
+
+                let indexAndNode = this.chooseNodeForRequest(command, sessionInfo);
+
+                if (command.failedNodes.has(indexAndNode.currentNode)) {
+                    // we tried all the nodes, let's try to update topology and retry one more time
+                    const success = await this.updateTopology(chosenNode, 60 * 1000, true, "handle-unsuccessful-response");
+                    if (!success) {
+                        return false;
+                    }
+
+                    command.failedNodes.clear(); // we just update the topology
+                    indexAndNode = this.chooseNodeForRequest(command, sessionInfo);
+
+                    await this._executeOnSpecificNode(command, sessionInfo, {
+                        chosenNode: indexAndNode.currentNode,
+                        nodeIndex: indexAndNode.currentIndex,
+                        shouldRetry: false
+                    });
+                    return true;
+                }
+
+                await this._executeOnSpecificNode(command, sessionInfo, {
+                    chosenNode: indexAndNode.currentNode,
+                    nodeIndex: indexAndNode.currentIndex,
+                    shouldRetry: false
+                });
+                return true;
             case StatusCodes.GatewayTimeout:
             case StatusCodes.RequestTimeout:
             case StatusCodes.BadGateway:
@@ -1181,10 +1209,10 @@ export class RequestExecutor implements IDisposable {
                 const resExceptionSchema = JsonSerializer
                     .getDefaultForCommandPayload()
                     .deserialize<ExceptionSchema>(responseJson);
-                const readException = ExceptionDispatcher.get(resExceptionSchema, response.status);
+                const readException = ExceptionDispatcher.get(resExceptionSchema, response.status, e);
                 command.failedNodes.set(chosenNode, readException);
-            } catch (_) {
-                log.warn(_, "Error parsing server error.");
+            } catch (__) {
+                log.warn(__, "Error parsing server error.");
                 const unrecognizedErrSchema = {
                     url: req.uri as string,
                     message: "Unrecognized response from the server",
@@ -1192,7 +1220,7 @@ export class RequestExecutor implements IDisposable {
                     type: "Unparsable Server Response"
                 };
 
-                const exceptionToUse = ExceptionDispatcher.get(unrecognizedErrSchema, response.status);
+                const exceptionToUse = ExceptionDispatcher.get(unrecognizedErrSchema, response.status, e);
                 command.failedNodes.set(chosenNode, exceptionToUse);
             }
 
@@ -1206,7 +1234,7 @@ export class RequestExecutor implements IDisposable {
             type: e.name
         };
 
-        command.failedNodes.set(chosenNode, ExceptionDispatcher.get(exceptionSchema, StatusCodes.ServiceUnavailable));
+        command.failedNodes.set(chosenNode, ExceptionDispatcher.get(exceptionSchema, StatusCodes.ServiceUnavailable, e));
     }
 
     private _createRequest<TResult>(node: ServerNode, command: RavenCommand<TResult>): HttpRequestParameters {
@@ -1226,6 +1254,17 @@ export class RequestExecutor implements IDisposable {
 
     private static _handleConflict(response: HttpResponse, body: string): void {
         ExceptionDispatcher.throwException(response, body);
+    }
+
+    public async handleServerNotResponsive(url: string, chosenNode: ServerNode, nodeIndex: number, e: Error) {
+        this._spawnHealthChecks(chosenNode, nodeIndex);
+        if (this._nodeSelector) {
+            this._nodeSelector.onFailedRequest(nodeIndex);
+        }
+
+        const preferredNode = await this.getPreferredNode();
+        await this.updateTopology(preferredNode.currentNode, 0, true, "handle-server-not-responsive");
+        return preferredNode.currentNode;
     }
 
     private _spawnHealthChecks(chosenNode: ServerNode, nodeIndex: number): void {

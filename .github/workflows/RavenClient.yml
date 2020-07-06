@@ -67,3 +67,6 @@ jobs:
     
     - name: Check imports
       run: node -e "require('./dist').DocumentStore"
+
+    - name: Check imports
+      run: npm run check-imports

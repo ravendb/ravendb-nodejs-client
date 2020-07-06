@@ -1,10 +1,10 @@
 import { OperationCompletionAwaiter } from "./OperationCompletionAwaiter";
 import { DocumentStoreBase } from "../DocumentStoreBase";
-import { RequestExecutor } from "../..";
 import { IMaintenanceOperation, AwaitableMaintenanceOperation, OperationIdResult } from "./OperationAbstractions";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerOperationExecutor } from "./ServerOperationExecutor";
 import { throwError } from "../../Exceptions";
+import { RequestExecutor } from "../../Http/RequestExecutor";
 
 export class MaintenanceOperationExecutor {
 

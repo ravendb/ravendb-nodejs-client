@@ -2,9 +2,9 @@ import { IMaintenanceOperation, OperationResultType } from "../OperationAbstract
 import { throwError } from "../../../Exceptions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { ServerNode } from "../../..";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as stream from "readable-stream";
+import { ServerNode } from "../../../Http/ServerNode";
 
 export class GetTermsOperation implements IMaintenanceOperation<string[]> {
 

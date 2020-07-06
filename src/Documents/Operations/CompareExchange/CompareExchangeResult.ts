@@ -1,7 +1,7 @@
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { throwError } from "../../../Exceptions";
-import { ClassConstructor } from "../../..";
 import { TypeUtil } from "../../../Utility/TypeUtil";
+import { ClassConstructor } from "../../../Types";
 
 export interface CompareExchangeResultResponse {
     index: number;

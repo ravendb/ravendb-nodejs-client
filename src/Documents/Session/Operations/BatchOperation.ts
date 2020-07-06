@@ -171,7 +171,7 @@ export class BatchOperation {
             this._modifications.set(id, documentInfo);
         }
         
-        return documentInfo;
+        return modifiedDocumentInfo;
     }
 
     private _handleAttachmentCopy(batchResult: object): void {

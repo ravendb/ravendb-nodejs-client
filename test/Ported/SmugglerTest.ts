@@ -1,9 +1,12 @@
-import { GetStatisticsOperation, IDocumentStore } from "../../src";
+import {
+    GetStatisticsOperation,
+    IDocumentStore,
+    DatabaseSmugglerExportOptions,
+    DatabaseSmugglerImportOptions
+} from "../../src";
 import { disposeTestDocumentStore, TemporaryDirContext, testContext } from "../Utils/TestUtil";
 import { User } from "../Assets/Entities";
 import { UsersByName } from "./QueryTest";
-import { DatabaseSmugglerExportOptions } from "../../src/Documents/Smuggler/DatabaseSmugglerExportOptions";
-import { DatabaseSmugglerImportOptions } from "../../src/Documents/Smuggler/DatabaseSmugglerImportOptions";
 import { assertThat } from "../Utils/AssertExtensions";
 import * as fs from "fs";
 import { CONSTANTS } from "../../src/Constants";

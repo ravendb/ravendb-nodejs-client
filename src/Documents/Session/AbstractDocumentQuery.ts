@@ -937,7 +937,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         const fromParameterName = this._addQueryParameter(
             !start ? "*" : this._transformValue(startParams, true));
         const toParameterName = this._addQueryParameter(
-            !start ? "NULL" : this._transformValue(endParams, true));
+            !end ? "NULL" : this._transformValue(endParams, true));
 
         const whereToken = WhereToken.create(
             "Between", fieldName, null, new WhereOptions({
@@ -1116,7 +1116,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             throwError("InvalidOperationException", "Missing where clause.");
         }
 
-        if (boost <= 0.0) {
+        if (boost < 0.0) {
             throwError("InvalidArgumentException", "Boost factor must be a positive number.");
         }
 

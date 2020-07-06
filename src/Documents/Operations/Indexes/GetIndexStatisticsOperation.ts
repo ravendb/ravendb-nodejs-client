@@ -4,8 +4,8 @@ import { throwError } from "../../../Exceptions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { HttpRequestParameters } from "../../../Primitives/Http";
-import { ServerNode } from "../../..";
 import * as stream from "readable-stream";
+import { ServerNode } from "../../../Http/ServerNode";
 
 export class GetIndexStatisticsOperation implements IMaintenanceOperation<IndexStats> {
     private readonly _indexName: string;

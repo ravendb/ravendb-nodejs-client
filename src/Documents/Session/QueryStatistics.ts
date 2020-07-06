@@ -11,6 +11,10 @@ export class QueryStatistics {
     public indexTimestamp: Date;
     public lastQueryTime: Date;
     public resultEtag: number;
+
+    /**
+     * @deprecated ResultSize is not supported anymore. Will be removed in next major version of the product.
+     */
     public resultSize: number;
     public nodeTag: string;
 
@@ -23,7 +27,6 @@ export class QueryStatistics {
         this.indexName = qr.indexName;
         this.indexTimestamp = qr.indexTimestamp;
         this.lastQueryTime = qr.lastQueryTime;
-        this.resultSize = qr.resultSize;
         this.resultEtag = qr.resultEtag;
         this.nodeTag = qr.nodeTag;
     }

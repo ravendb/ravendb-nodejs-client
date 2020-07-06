@@ -1,5 +1,5 @@
 import { HttpRequestParameters } from "../../../Primitives/Http";
-import { ConnectionString } from "../../../ServerWide/ConnectionString";
+import { ConnectionString } from "../Etl/ConnectionString";
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";

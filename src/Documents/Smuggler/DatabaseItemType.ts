@@ -12,4 +12,5 @@ export type DatabaseItemType =
     | "LegacyAttachmentDeletions"
     | "DatabaseRecord"
     | "Unknown"
-    | "Counters";
+    | "Counters"
+    | "Attachments";

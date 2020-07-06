@@ -1,9 +1,10 @@
-import { DocumentConventions, ServerNode } from "../..";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { CreateSubscriptionResult } from "../Subscriptions/CreateSubscriptionResult";
 import { SubscriptionCreationOptions } from "../Subscriptions/SubscriptionCreationOptions";
 import { HttpRequestParameters } from "../../Primitives/Http";
 import * as stream from "readable-stream";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { ServerNode } from "../../Http/ServerNode";
 
 export class CreateSubscriptionCommand extends RavenCommand<CreateSubscriptionResult> {
     private readonly _conventions: DocumentConventions;

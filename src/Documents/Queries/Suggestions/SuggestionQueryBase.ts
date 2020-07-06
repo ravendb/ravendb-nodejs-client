@@ -1,10 +1,3 @@
-import {
-    DocumentConventions,
-    DocumentSession,
-    IndexQuery,
-    InMemoryDocumentSessionOperations,
-    SuggestionsResponseObject
-} from "../../..";
 import { Stopwatch } from "../../../Utility/Stopwatch";
 import { QueryResult } from "../QueryResult";
 import { QueryCommand } from "../../Commands/QueryCommand";
@@ -13,6 +6,11 @@ import { LazySuggestionQueryOperation } from "../../Session/Operations/Lazy/Lazy
 import { QueryOperation } from "../../Session/Operations/QueryOperation";
 import { ObjectUtil } from "../../../Utility/ObjectUtil";
 import { SuggestionResult } from "./SuggestionResult";
+import { InMemoryDocumentSessionOperations } from "../../Session/InMemoryDocumentSessionOperations";
+import { IndexQuery } from "../IndexQuery";
+import { SuggestionsResponseObject } from "../../../Types";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { DocumentSession } from "../../Session/DocumentSession";
 
 export abstract class SuggestionQueryBase {
 

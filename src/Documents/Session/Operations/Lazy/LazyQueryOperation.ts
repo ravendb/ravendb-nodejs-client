@@ -72,9 +72,12 @@ export class LazyQueryOperation<T extends object> implements ILazyOperation {
             return;
         }
 
-        const result = await QueryCommand.parseQueryResultResponseAsync(
-            stringToReadable(response.result), this._conventions, false);
-        this._handleResponse(result);
+        let queryResult: QueryResult;
+        if (response.result !== "null") {
+            queryResult = await QueryCommand.parseQueryResultResponseAsync(
+                stringToReadable(response.result), this._conventions, false);
+        }
+        this._handleResponse(queryResult);
     }
 
     private _handleResponse(queryResult: QueryResult): void {

@@ -1,6 +1,6 @@
-import { ServerNode } from "../..";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { HttpRequestParameters } from "../../Primitives/Http";
+import { ServerNode } from "../../Http/ServerNode";
 
 export class DropSubscriptionConnectionCommand extends RavenCommand<void> {
 

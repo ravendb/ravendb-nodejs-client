@@ -102,6 +102,9 @@ export class SubscriptionBatch<T extends object> {
         }
 
         for (const item of this._items) {
+            if (item.projection) {
+                continue;
+            }
             const documentInfo = new DocumentInfo();
             documentInfo.id = item.id;
             documentInfo.document = item.rawResult;
@@ -138,6 +141,8 @@ export class SubscriptionBatch<T extends object> {
 
             lastReceivedChangeVector = changeVector;
 
+            const projection = metadata[CONSTANTS.Documents.Metadata.PROJECTION] ?? false;
+
             this._logger.info("Got " + id + " (change vector: [" + lastReceivedChangeVector + "]");
 
             let instance: T = null;
@@ -161,6 +166,7 @@ export class SubscriptionBatch<T extends object> {
             itemToAdd.rawMetadata = metadata;
             itemToAdd.result = instance;
             itemToAdd.exceptionMessage = item.exception;
+            itemToAdd.projection = projection;
 
             this._items.push(itemToAdd);
         }
@@ -182,6 +188,7 @@ export class Item<T> {
     public exceptionMessage: string;
     public id: string;
     public changeVector: string;
+    public projection: boolean;
 
     private _throwItemProcessError() {
         throwError("InvalidOperationException",

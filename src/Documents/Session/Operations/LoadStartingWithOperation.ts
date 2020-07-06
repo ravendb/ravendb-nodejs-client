@@ -3,9 +3,9 @@ import { GetDocumentsCommand, GetDocumentsResult } from "../../Commands/GetDocum
 import { StartingWithOptions } from "../IDocumentSession";
 import { DocumentInfo } from "../DocumentInfo";
 import { DocumentType } from "../../DocumentAbstractions";
-import { ObjectTypeDescriptor } from "../../..";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { throwError } from "../../../Exceptions";
+import { ObjectTypeDescriptor } from "../../../Types";
 
 export class LoadStartingWithOperation {
 

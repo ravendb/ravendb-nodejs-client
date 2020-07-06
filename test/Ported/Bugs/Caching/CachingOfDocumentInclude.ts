@@ -1,7 +1,6 @@
-import { IDocumentStore } from "../../../../src";
+import { IDocumentStore, Lazy } from "../../../../src";
 import { disposeTestDocumentStore, testContext } from "../../../Utils/TestUtil";
 import * as assert from "assert";
-import { Lazy } from "../../../../src/Documents/Lazy";
 
 export class User {
     public id: string;

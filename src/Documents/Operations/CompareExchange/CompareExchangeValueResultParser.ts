@@ -2,8 +2,8 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { CompareExchangeValue } from "./CompareExchangeValue";
 import { throwError } from "../../../Exceptions";
 import { TypeUtil } from "../../../Utility/TypeUtil";
-import { ClassConstructor } from "../../..";
 import { ObjectUtil } from "../../../Utility/ObjectUtil";
+import { ClassConstructor } from "../../../Types";
 
 export interface CompareExchangeResultItem {
     index: number;

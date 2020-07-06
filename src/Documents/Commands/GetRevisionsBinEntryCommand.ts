@@ -1,8 +1,11 @@
-import { DocumentConventions, IRavenArrayResult, RavenCommand, ServerNode } from "../..";
 import { HttpRequestParameters } from "../../Primitives/Http";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import * as stream from "readable-stream";
 import { GetDocumentsCommand } from "./GetDocumentsCommand";
+import { RavenCommand } from "../../Http/RavenCommand";
+import { IRavenArrayResult } from "../../Types";
+import { ServerNode } from "../../Http/ServerNode";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
 
 export class GetRevisionsBinEntryCommand extends RavenCommand<IRavenArrayResult> {
     private readonly _conventions: DocumentConventions;
