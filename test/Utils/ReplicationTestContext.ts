@@ -8,6 +8,7 @@ import {
 } from "../../src";
 import { Stopwatch } from "../../src/Utility/Stopwatch";
 import { DocumentType } from "../../src";
+import { sleep } from "./TestUtil";
 
 export class ReplicationTestContext {
 
@@ -53,6 +54,8 @@ export class ReplicationTestContext {
             if (doc) {
                 return doc;
             }
+
+            await sleep(100);
         }
 
         return null;
