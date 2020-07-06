@@ -1,5 +1,6 @@
-import { ConnectionString, DocumentConventions, serializeTransformation } from "../../..";
-import { Transformation } from "./Transformation";
+import { Transformation, serializeTransformation } from "./Transformation";
+import { ConnectionString } from "./ConnectionString";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 export class EtlConfiguration<T extends ConnectionString> {
     public taskId: number;

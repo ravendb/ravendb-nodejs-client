@@ -1,8 +1,9 @@
-import { IMaintenanceOperation } from "../OperationAbstractions";
+import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 import { RavenCommand } from "../../../Http/RavenCommand";
-import { DocumentConventions, ServerNode, OperationResultType } from "../../..";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as stream from "readable-stream";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { ServerNode } from "../../../Http/ServerNode";
 
 export class GetIndexNamesOperation implements IMaintenanceOperation<string[]> {
 

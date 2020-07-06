@@ -1,6 +1,7 @@
 import { EtlConfiguration } from "../EtlConfiguration";
-import { DocumentConventions, EtlType, serializeSqlEtlTable, SqlConnectionString } from "../../../..";
-import { SqlEtlTable } from "./SqlEtlTable";
+import { SqlEtlTable, serializeSqlEtlTable } from "./SqlEtlTable";
+import { SqlConnectionString, EtlType } from "../ConnectionString";
+import { DocumentConventions } from "../../../Conventions/DocumentConventions";
 
 export class SqlEtlConfiguration extends EtlConfiguration<SqlConnectionString> {
     public parameterizeDeletes: boolean;

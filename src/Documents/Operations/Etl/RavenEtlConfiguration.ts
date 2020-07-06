@@ -1,5 +1,6 @@
 import { EtlConfiguration } from "./EtlConfiguration";
-import { DocumentConventions, EtlType, RavenConnectionString } from "../../..";
+import { RavenConnectionString, EtlType } from "./ConnectionString";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 export class RavenEtlConfiguration extends EtlConfiguration<RavenConnectionString> {
     public loadRequestTimeoutInSec: number;

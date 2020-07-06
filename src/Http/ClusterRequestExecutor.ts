@@ -5,13 +5,13 @@ import * as BluebirdPromise from "bluebird";
 import * as semaphore from "semaphore";
 import { getLogger } from "../Utility/LogUtil";
 import { RequestExecutor, IRequestExecutorOptions } from "./RequestExecutor";
-import { DocumentConventions } from "..";
 import { throwError } from "../Exceptions";
 import { ServerNode } from "./ServerNode";
 import { Topology } from "./Topology";
 import { GetTcpInfoCommand } from "../ServerWide/Commands/GetTcpInfoCommand";
 import { IAuthOptions } from "../Auth/AuthOptions";
 import { acquireSemaphore } from "../Utility/SemaphoreUtil";
+import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
 
 const log = getLogger({ module: "ClusterRequestExecutor" });
 

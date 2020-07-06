@@ -1,6 +1,5 @@
 import { InMemoryDocumentSessionOperations } from "../InMemoryDocumentSessionOperations";
 import { getLogger } from "../../../Utility/LogUtil";
-import { ObjectTypeDescriptor, EntitiesCollectionObject } from "../../..";
 import { DocumentInfo } from "../DocumentInfo";
 import { 
     GetDocumentsCommand, 
@@ -9,6 +8,7 @@ import {
 } from "../../Commands/GetDocumentsCommand";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { throwError } from "../../../Exceptions";
+import { ObjectTypeDescriptor, EntitiesCollectionObject } from "../../../Types";
 
 const log = getLogger({ module: "LoadOperation" });
 

@@ -1,7 +1,9 @@
 import { ISuggestionDocumentQuery } from "./ISuggestionDocumentQuery";
 import { SuggestionQueryBase } from "./SuggestionQueryBase";
-import { DocumentQuery, IndexQuery, InMemoryDocumentSessionOperations } from "../../..";
 import { QueryResult } from "../QueryResult";
+import { DocumentQuery } from "../../Session/DocumentQuery";
+import { InMemoryDocumentSessionOperations } from "../../Session/InMemoryDocumentSessionOperations";
+import { IndexQuery } from "../IndexQuery";
 
 export class SuggestionDocumentQuery<T extends object>
     extends SuggestionQueryBase implements ISuggestionDocumentQuery<T> {

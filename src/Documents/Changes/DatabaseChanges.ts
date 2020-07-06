@@ -1,7 +1,6 @@
 import { IDatabaseChanges } from "./IDatabaseChanges";
-import { DocumentConventions, ObjectTypeDescriptor, RequestExecutor, ServerNode, TopologyChange } from "../..";
 import { IChangesObservable } from "./IChangesObservable";
-import { IndexChange } from "./IndexChange";
+import { IndexChange, TopologyChange } from "./IndexChange";
 import { CounterChange } from "./CounterChange";
 import { DocumentChange } from "./DocumentChange";
 import { OperationStatusChange } from "./OperationStatusChange";
@@ -20,6 +19,10 @@ import { Certificate } from "../../Auth/Certificate";
 import { ObjectUtil } from "../../Utility/ObjectUtil";
 import CurrentIndexAndNode from "../../Http/CurrentIndexAndNode";
 import { Server } from "ws";
+import { RequestExecutor } from "../../Http/RequestExecutor";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { ServerNode } from "../../Http/ServerNode";
+import { ObjectTypeDescriptor } from "../../Types";
 
 export class DatabaseChanges implements IDatabaseChanges {
 

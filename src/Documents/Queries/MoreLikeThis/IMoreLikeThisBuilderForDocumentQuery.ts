@@ -1,6 +1,7 @@
 import { IMoreLikeThisBuilderBase } from "./IMoreLikeThisBuilderBase";
-import { IDocumentQuery, IFilterDocumentQueryBase } from "../../..";
 import { IMoreLikeThisOperations } from "./IMoreLikeThisOperations";
+import { IFilterDocumentQueryBase } from "../../Session/IFilterDocumentQueryBase";
+import { IDocumentQuery } from "../../Session/IDocumentQuery";
 
 export interface IMoreLikeThisBuilderForDocumentQuery<T extends object> extends IMoreLikeThisBuilderBase<T> {
     usingDocument(documentJson: string): IMoreLikeThisOperations<T>;

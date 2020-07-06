@@ -1,9 +1,11 @@
 import { ConnectionString } from "./ConnectionString";
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 import { EtlConfiguration } from "./EtlConfiguration";
-import { DocumentConventions, RavenCommand, ServerNode } from "../../..";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as stream from "stream";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { RavenCommand } from "../../../Http/RavenCommand";
+import { ServerNode } from "../../../Http/ServerNode";
 
 export class AddEtlOperation<T extends ConnectionString> implements IMaintenanceOperation<AddEtlOperationResult> {
     private readonly _configuration: EtlConfiguration<T>;

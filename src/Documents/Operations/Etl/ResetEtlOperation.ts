@@ -1,6 +1,8 @@
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
-import { DocumentConventions, RavenCommand, ServerNode } from "../../..";
 import { HttpRequestParameters } from "../../../Primitives/Http";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { RavenCommand } from "../../../Http/RavenCommand";
+import { ServerNode } from "../../../Http/ServerNode";
 
 export class ResetEtlOperation implements IMaintenanceOperation<void> {
     private readonly _configurationName: string;

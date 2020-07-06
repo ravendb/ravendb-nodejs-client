@@ -5,11 +5,10 @@ import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { CONSTANTS } from "../../Constants";
 import { DocumentType } from "../DocumentAbstractions";
 import { TypeInfo } from "../../Mapping/ObjectMapper";
-import { Mapping } from "../../Mapping";
-import { ObjectTypeDescriptor } from "../..";
 import { throwError } from "../../Exceptions";
 import { SetupDocumentBase } from "../SetupDocumentBase";
 import { MetadataObject } from "./MetadataObject";
+import { ObjectTypeDescriptor } from "../../Types";
 
 export class EntityToJson {
 

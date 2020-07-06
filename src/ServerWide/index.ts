@@ -1,11 +1,4 @@
 import { DatabaseTopology } from "./Operations";
-import {
-    ClientConfiguration,
-    ExternalReplication,
-    IndexDefinition,
-    RavenConnectionString,
-    RevisionsConfiguration, SqlConnectionString
-} from "..";
 import { SorterDefinition } from "../Documents/Queries/Sorting/SorterDefinition";
 import { DeletionInProgressStatus } from "./DeletionInProgressStatus";
 import { AutoIndexDefinition } from "../Documents/Indexes/AutoIndexDefinition";
@@ -16,6 +9,11 @@ import { PullReplicationDefinition } from "../Documents/Operations/Replication/P
 import { RavenEtlConfiguration } from "../Documents/Operations/Etl/RavenEtlConfiguration";
 import { SqlEtlConfiguration } from "../Documents/Operations/Etl/Sql/SqlEtlConfiguration";
 import { StudioConfiguration } from "../Documents/Operations/Configuration/StudioConfiguration";
+import { IndexDefinition } from "../Documents/Indexes/IndexDefinition";
+import { RevisionsConfiguration } from "../Documents/Operations/RevisionsConfiguration";
+import { ExternalReplication } from "../Documents/Replication/ExternalReplication";
+import { RavenConnectionString, SqlConnectionString } from "../Documents/Operations/Etl/ConnectionString";
+import { ClientConfiguration } from "../Documents/Operations/Configuration/ClientConfiguration";
 
 export interface ScriptResolver {
     script: string;

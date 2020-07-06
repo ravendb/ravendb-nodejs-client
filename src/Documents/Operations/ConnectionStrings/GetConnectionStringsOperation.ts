@@ -1,12 +1,10 @@
-import {
-    ConnectionStringType, DocumentConventions,
-    IMaintenanceOperation, OperationResultType,
-    RavenCommand,
-    RavenConnectionString, ServerNode,
-    SqlConnectionString
-} from "../../..";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as stream from "stream";
+import { ConnectionStringType, SqlConnectionString, RavenConnectionString } from "../Etl/ConnectionString";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { OperationResultType, IMaintenanceOperation } from "../OperationAbstractions";
+import { RavenCommand } from "../../../Http/RavenCommand";
+import { ServerNode } from "../../../Http/ServerNode";
 
 export interface GetConnectionStringsResult {
     ravenConnectionStrings: Record<string, RavenConnectionString>;

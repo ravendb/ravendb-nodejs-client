@@ -5,9 +5,10 @@ import { MoreLikeThisBase } from "./MoreLikeThisBase";
 import { MoreLikeThisOptions } from "./MoreLikeThisOptions";
 import { MoreLikeThisUsingAnyDocument } from "./MoreLikeThisUsingAnyDocument";
 import { MoreLikeThisUsingDocument } from "./MoreLikeThisUsingDocument";
-import { IDocumentQuery, IFilterDocumentQueryBase } from "../../..";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { MoreLikeThisUsingDocumentForDocumentQuery } from "./MoreLikeThisUsingDocumentForDocumentQuery";
+import { IFilterDocumentQueryBase } from "../../Session/IFilterDocumentQueryBase";
+import { IDocumentQuery } from "../../Session/IDocumentQuery";
 
 export class MoreLikeThisBuilder<T extends object>
     implements IMoreLikeThisOperations<T>, IMoreLikeThisBuilderForDocumentQuery<T>, IMoreLikeThisBuilderBase<T> {

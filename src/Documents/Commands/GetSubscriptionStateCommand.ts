@@ -1,8 +1,8 @@
-import { ServerNode } from "../..";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { SubscriptionState } from "../Subscriptions/SubscriptionState";
 import { HttpRequestParameters } from "../../Primitives/Http";
 import * as stream from "readable-stream";
+import { ServerNode } from "../../Http/ServerNode";
 
 export class GetSubscriptionStateCommand extends RavenCommand<SubscriptionState> {
 

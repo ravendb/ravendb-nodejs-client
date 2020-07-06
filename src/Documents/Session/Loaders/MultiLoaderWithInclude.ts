@@ -3,8 +3,8 @@ import { ILoaderWithInclude } from "./ILoaderWithInclude";
 import { IDocumentSessionImpl } from "../IDocumentSession";
 import { DocumentType } from "../../DocumentAbstractions";
 import { TypeUtil } from "../../../Utility/TypeUtil";
-import { EntitiesCollectionObject } from "../../..";
 import { ErrorFirstCallback } from "../../../Types/Callbacks";
+import { EntitiesCollectionObject } from "../../../Types";
 
 /**
  * Fluent implementation for specifying include paths

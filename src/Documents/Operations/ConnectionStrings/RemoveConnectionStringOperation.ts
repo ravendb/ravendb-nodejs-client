@@ -1,13 +1,10 @@
-import {
-    ConnectionString,
-    DocumentConventions,
-    IMaintenanceOperation,
-    OperationResultType,
-    RavenCommand,
-    ServerNode
-} from "../../..";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as stream from "stream";
+import { RavenCommand } from "../../../Http/RavenCommand";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
+import { ConnectionString } from "../Etl/ConnectionString";
+import { ServerNode } from "../../../Http/ServerNode";
 
 export class RemoveConnectionStringOperation<T extends ConnectionString>
     implements IMaintenanceOperation<RemoveConnectionStringResult> {

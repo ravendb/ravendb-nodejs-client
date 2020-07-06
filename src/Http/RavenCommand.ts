@@ -9,12 +9,11 @@ import { throwError } from "../Exceptions";
 import { IRavenObject } from "../Types/IRavenObject";
 import { getEtagHeader, HeadersBuilder, closeHttpResponse } from "../Utility/HttpUtil";
 import { TypeInfo } from "../Mapping/ObjectMapper";
-import { ObjectTypeDescriptor } from "..";
 import { JsonSerializer } from "../Mapping/Json/Serializer";
 import { RavenCommandResponsePipeline } from "./RavenCommandResponsePipeline";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
-import * as https from "https";
 import * as http from "http";
+import { ObjectTypeDescriptor } from "../Types";
 
 const log = getLogger({ module: "RavenCommand" });
 

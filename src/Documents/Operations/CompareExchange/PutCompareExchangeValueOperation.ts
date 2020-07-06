@@ -8,13 +8,9 @@ import { HttpCache } from "../../../Http/HttpCache";
 import { throwError } from "../../../Exceptions";
 import { ServerNode } from "../../../Http/ServerNode";
 import { JsonSerializer } from "../../../Mapping/Json/Serializer";
-import { ClassConstructor, ObjectTypeDescriptor } from "../../..";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import * as stream from "readable-stream";
-import { streamValues } from "stream-json/streamers/StreamValues";
-import { streamArray } from "stream-json/streamers/StreamArray";
-import { pick } from "stream-json/filters/Pick";
-import { ignore } from "stream-json/filters/Ignore";
+import { ObjectTypeDescriptor, ClassConstructor } from "../../../Types";
 
 export class PutCompareExchangeValueOperation<T> implements IOperation<CompareExchangeResult<T>> {
 

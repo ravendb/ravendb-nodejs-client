@@ -1,12 +1,14 @@
 import { IOperation, OperationResultType } from "../OperationAbstractions";
 import { AttachmentData, AttachmentDetails } from "../../Attachments";
 import { IDocumentStore } from "../../IDocumentStore";
-import { DocumentConventions, RavenCommand, ServerNode } from "../../..";
 import { HttpCache } from "../../../Http/HttpCache";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { throwError } from "../../../Exceptions";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as stream from "readable-stream";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { RavenCommand } from "../../../Http/RavenCommand";
+import { ServerNode } from "../../../Http/ServerNode";
 
 export class PutAttachmentOperation implements IOperation<AttachmentDetails> {
     private readonly _documentId: string;
