@@ -160,6 +160,31 @@ describe("HttpsTest", function () {
             storeWithOutCert.dispose();
         }
     });
+
+    it("canUseServerGeneratedCertificate", async () => {
+        const certificateRawData = await store.maintenance.server.send(
+            new CreateClientCertificateOperation("users-auth-test", { }, "Operator"));
+
+        const pfx = await extractPfx(certificateRawData);
+
+        let securedStore: DocumentStore;
+        try {
+            securedStore = new DocumentStore(store.urls, store.database, {
+                certificate: pfx,
+                type: "pfx",
+                ca: store.authOptions.ca
+            });
+
+            securedStore.initialize();
+
+            {
+                const session = securedStore.openSession();
+                await session.load("users/1");
+            }
+        } finally {
+            securedStore.dispose();
+        }
+    })
 });
 
 async function extractCertificate(certificateRawData: CertificateRawData) {
