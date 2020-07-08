@@ -578,6 +578,11 @@ export class RequestExecutor implements IDisposable {
                 this._topologyTakenFromNode = serverNode;
                 return true;
             } catch (error) {
+                if ((error.name as RavenErrorType) === "AuthorizationException") {
+                    this._lastKnownUrls = initialUrls;
+                    throw error;
+                }
+
                 if ((error.name as RavenErrorType) === "DatabaseDoesNotExistException") {
                     this._lastKnownUrls = initialUrls;
                     throw error;
