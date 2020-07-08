@@ -425,6 +425,19 @@ export * from "./Documents/Smuggler/IDatabaseSmugglerImportOptions";
 export * from "./Documents/Smuggler/DatabaseSmugglerOptions";
 export * from "./Documents/Smuggler/IDatabaseSmugglerOptions";
 
+// Certificates
+export * from "./ServerWide/Operations/Certificates/CertificateDefinition";
+export * from "./ServerWide/Operations/Certificates/CertificateRawData";
+export * from "./ServerWide/Operations/Certificates/CreateClientCertificateOperation";
+export * from "./ServerWide/Operations/Certificates/DatabaseAccess";
+export * from "./ServerWide/Operations/Certificates/DeleteCertificateOperation";
+export * from "./ServerWide/Operations/Certificates/GetCertificateOperation";
+export * from "./ServerWide/Operations/Certificates/GetCertificatesOperation";
+export * from "./ServerWide/Operations/Certificates/GetCertificatesResponse";
+export * from "./ServerWide/Operations/Certificates/PutClientCertificateOperation";
+export * from "./ServerWide/Operations/Certificates/SecurityClearance";
+
+
 // MAPPING
 export { TypesAwareObjectMapper } from "./Mapping/ObjectMapper";
 export { Mapping } from "./Mapping";
