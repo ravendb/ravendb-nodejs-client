@@ -2,17 +2,12 @@ import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import {
-    DocumentStore,
-    IDocumentStore,
+    CertificateRawData,
+    CreateClientCertificateOperation, DatabaseAccess, DeleteCertificateOperation,
+    DocumentStore, GetCertificateOperation, GetCertificatesOperation,
+    IDocumentStore, PutClientCertificateOperation,
 } from "../../src";
-import { GetCertificatesOperation } from "../../src/ServerWide/Operations/Certificates/GetCertificatesOperation";
 import { assertThat, assertThrows } from "../Utils/AssertExtensions";
-import { CreateClientCertificateOperation } from "../../src/ServerWide/Operations/Certificates/CreateClientCertificateOperation";
-import { DatabaseAccess } from "../../src/ServerWide/Operations/Certificates/DatabaseAccess";
-import { DeleteCertificateOperation } from "../../src/ServerWide/Operations/Certificates/DeleteCertificateOperation";
-import { GetCertificateOperation } from "../../src/ServerWide/Operations/Certificates/GetCertificateOperation";
-import { PutClientCertificateOperation } from "../../src/ServerWide/Operations/Certificates/PutClientCertificateOperation";
-import { CertificateRawData } from "../../src/ServerWide/Operations/Certificates/CertificateRawData";
 import * as unzipper from "unzipper";
 import { bufferToReadable, readToBuffer, readToEnd, } from "../../src/Utility/StreamUtil";
 

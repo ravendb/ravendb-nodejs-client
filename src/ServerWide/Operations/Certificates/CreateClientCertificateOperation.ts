@@ -1,4 +1,3 @@
-import { DocumentConventions, IServerOperation, OperationResultType, RavenCommand, ServerNode } from "../../..";
 import { CertificateRawData } from "./CertificateRawData";
 import { DatabaseAccess } from "./DatabaseAccess";
 import { SecurityClearance } from "./SecurityClearance";
@@ -8,6 +7,10 @@ import {getHeaders} from "../../../Utility/HttpUtil";
 import * as stream from "stream";
 import {readToBuffer} from "../../../Utility/StreamUtil";
 import * as fs from "fs";
+import { IServerOperation, OperationResultType } from "../../../Documents/Operations/OperationAbstractions";
+import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
+import { RavenCommand } from "../../../Http/RavenCommand";
+import { ServerNode } from "../../../Http/ServerNode";
 
 export class CreateClientCertificateOperation implements IServerOperation<CertificateRawData> {
     private readonly _name: string;

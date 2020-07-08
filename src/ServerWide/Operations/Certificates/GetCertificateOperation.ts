@@ -2,7 +2,10 @@ import { CertificateDefinition } from "./CertificateDefinition";
 import { throwError } from "../../../Exceptions";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as stream from "stream";
-import { DocumentConventions, IServerOperation, OperationResultType, RavenCommand, ServerNode } from "../../..";
+import { IServerOperation, OperationResultType } from "../../../Documents/Operations/OperationAbstractions";
+import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
+import { RavenCommand } from "../../../Http/RavenCommand";
+import { ServerNode } from "../../../Http/ServerNode";
 
 export class GetCertificateOperation implements IServerOperation<CertificateDefinition> {
     private readonly _thumbprint: string;

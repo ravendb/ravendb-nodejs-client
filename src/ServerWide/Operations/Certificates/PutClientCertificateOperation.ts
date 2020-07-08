@@ -1,9 +1,12 @@
-import { DocumentConventions, IServerOperation, OperationResultType, RavenCommand, ServerNode } from "../../..";
 import { DatabaseAccess } from "./DatabaseAccess";
 import { SecurityClearance } from "./SecurityClearance";
 import { throwError } from "../../../Exceptions";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { getHeaders } from "../../../Utility/HttpUtil";
+import { IServerOperation, OperationResultType } from "../../../Documents/Operations/OperationAbstractions";
+import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
+import { RavenCommand } from "../../../Http/RavenCommand";
+import { ServerNode } from "../../../Http/ServerNode";
 
 export class PutClientCertificateOperation implements IServerOperation<void> {
     private readonly _certificate: string;

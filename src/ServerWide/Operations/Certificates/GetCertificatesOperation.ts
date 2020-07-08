@@ -1,8 +1,10 @@
-import { DocumentConventions, IServerOperation, OperationResultType, RavenCommand, ServerNode } from "../../..";
 import { CertificateDefinition } from "./CertificateDefinition";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as stream from "stream";
-import {TypeUtil} from "../../../Utility/TypeUtil";
+import { IServerOperation, OperationResultType } from "../../../Documents/Operations/OperationAbstractions";
+import { RavenCommand } from "../../../Http/RavenCommand";
+import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
+import { ServerNode } from "../../../Http/ServerNode";
 
 export class GetCertificatesOperation implements IServerOperation<CertificateDefinition[]> {
 
