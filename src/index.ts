@@ -37,6 +37,7 @@ export { GetClusterTopologyCommand } from "./ServerWide/Commands/GetClusterTopol
 export { GetTcpInfoCommand } from "./ServerWide/Commands/GetTcpInfoCommand";
 export { CreateDatabaseOperation } from "./ServerWide/Operations/CreateDatabaseOperation";
 export { DatabaseRecord, ConflictSolver, ScriptResolver } from "./ServerWide";
+export * from "./ServerWide/Operations/ModifyConflictSolverOperation";
 export * from "./Documents/Operations/Etl/ConnectionString";
 
 // OPERATIONS AND COMMANDS
