@@ -5,7 +5,10 @@ import { assertThat } from "../../../Utils/AssertExtensions";
 import { User } from "../../../Assets/Entities";
 import { ReplicationTestContext } from "../../../Utils/ReplicationTestContext";
 
-(RavenTestContext.isPullRequest ? describe : describe)("ConflictSolverTest", function () {
+const _describe = RavenTestContext.isPullRequest ? describe.skip : describe;
+_describe(
+    `${RavenTestContext.isPullRequest ? "[Skipped on PR] " : ""}` +
+    "ConflictSolverTest", function () {
 
     let store: IDocumentStore;
     let replication: ReplicationTestContext;

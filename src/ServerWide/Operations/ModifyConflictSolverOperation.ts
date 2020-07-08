@@ -1,5 +1,14 @@
 import { IServerOperation, OperationResultType } from "../../Documents/Operations/OperationAbstractions";
 
+import { ConflictSolver, ScriptResolver } from "../index";
+import { throwError } from "../../Exceptions";
+import { HttpRequestParameters } from "../../Primitives/Http";
+import * as stream from "stream";
+import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
+import { RavenCommand } from "../../Http/RavenCommand";
+import { ServerNode } from "../../Http/ServerNode";
+
+
 export class ModifyConflictSolverOperation implements IServerOperation<ModifySolverResult> {
     private readonly _database: string;
     private readonly _collectionByScript: Record<string, ScriptResolver>;
@@ -74,14 +83,6 @@ class ModifyConflictSolverCommand extends RavenCommand<ModifySolverResult> {
         return this._parseResponseDefaultAsync(bodyStream);
     }
 }
-
-import { ConflictSolver, ScriptResolver } from "../index";
-import { throwError } from "../../Exceptions";
-import { HttpRequestParameters } from "../../Primitives/Http";
-import * as stream from "stream";
-import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
-import { RavenCommand } from "../../Http/RavenCommand";
-import { ServerNode } from "../../Http/ServerNode";
 
 export interface ModifySolverResult {
     key: string;
