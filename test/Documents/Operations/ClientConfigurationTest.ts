@@ -51,8 +51,6 @@ describe("Client configuration", function () {
     it("can handle no configuration", async () => {
         const operation = new GetClientConfigurationOperation();
         const result: IRavenResponse = await store.maintenance.send(operation);
-        assert.ok("configuration" in result);
-        assert.ok(!result.configuration);
         assert.ok(result.etag);
     });
 
