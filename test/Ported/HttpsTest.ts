@@ -10,6 +10,7 @@ import {
 import { assertThat, assertThrows } from "../Utils/AssertExtensions";
 import * as unzipper from "unzipper";
 import { bufferToReadable, readToBuffer, readToEnd, } from "../../src/Utility/StreamUtil";
+import { ReplaceClusterCertificateOperation } from "../../src/ServerWide/Operations/Certificates/ReplaceClusterCertificateOperation";
 
 describe("HttpsTest", function () {
 
@@ -25,8 +26,20 @@ describe("HttpsTest", function () {
     it("can connect with certificate", async () => {
         assert.strictEqual(store.urls[0].slice(0, 5), "https");
         const session = store.openSession();
-        await session.store({lastName: "Snow"}, "users/1");
+        await session.store({ lastName: "Snow" }, "users/1");
         await session.saveChanges();
+    });
+
+    it("can replace certificate", async () => {
+        // we are sending some garbage as we don't want to modify shared server certificate!
+
+        await assertThrows(async () => {
+            const bytes = Buffer.from([1, 2, 3, 4])
+            await store.maintenance.server.send(new ReplaceClusterCertificateOperation(bytes, true));
+        }, err => {
+            assertThat(err.message)
+                .contains("Unable to load the provided certificate");
+        })
     });
 
     it("can crud certificates", async () => {

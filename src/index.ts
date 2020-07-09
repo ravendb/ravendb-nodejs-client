@@ -31,6 +31,13 @@ export * from "./ServerWide/Operations/DeleteDatabasesOperation";
 export * from "./ServerWide/Operations/GetDatabaseNamesOperation";
 export * from "./ServerWide/Operations/GetServerWideOperationStateOperation";
 export * from "./ServerWide/Operations/ServerWideOperationCompletionAwaiter";
+export * from "./ServerWide/Operations/Certificates/ReplaceClusterCertificateOperation"
+export * from "./ServerWide/Operations/Configuration/GetServerWideClientConfigurationOperation"
+export * from "./ServerWide/Operations/Configuration/PutServerWideClientConfigurationOperation"
+export * from "./ServerWide/Operations/Logs/GetLogsConfigurationResult"
+export * from "./ServerWide/Operations/Logs/GetLogsConfigurationOperation"
+export * from "./ServerWide/Operations/Logs/LogMode"
+export * from "./ServerWide/Operations/Logs/SetLogsConfigurationOperation"
 
 export { GetDatabaseTopologyCommand } from "./ServerWide/Commands/GetDatabaseTopologyCommand";
 export { GetClusterTopologyCommand } from "./ServerWide/Commands/GetClusterTopologyCommand";
@@ -179,6 +186,11 @@ export * from "./Documents/Operations/Replication/PullReplicationDefinition";
 export * from "./Documents/Operations/Etl/AddEtlOperation";
 export * from "./Documents/Operations/Etl/UpdateEtlOperation";
 export * from "./Documents/Operations/Etl/ResetEtlOperation";
+export * from "./Documents/Operations/DisableDatabaseToggleResult";
+export * from "./Documents/Operations/Expiration/ConfigureExpirationOperation";
+export * from "./Documents/Operations/OngoingTasks/DeleteOngoingTaskOperation";
+export * from "./Documents/Operations/OngoingTasks/OngoingTaskType";
+export * from "./Documents/Operations/ToggleDatabasesStateOperation";
 
 // BACKUP
 export * from "./Documents/Operations/Backups/AmazonSettings";
@@ -437,6 +449,8 @@ export * from "./ServerWide/Operations/Certificates/GetCertificatesOperation";
 export * from "./ServerWide/Operations/Certificates/GetCertificatesResponse";
 export * from "./ServerWide/Operations/Certificates/PutClientCertificateOperation";
 export * from "./ServerWide/Operations/Certificates/SecurityClearance";
+export * from "./ServerWide/Operations/AddDatabaseNodeOperation";
+export * from "./ServerWide/Operations/PromoteDatabaseNodeOperation";
 
 
 // MAPPING

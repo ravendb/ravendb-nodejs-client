@@ -1,6 +1,5 @@
-import { GetConflictsCommand, IDocumentStore } from "../../../../src";
+import { GetConflictsCommand, IDocumentStore, ModifyConflictSolverOperation } from "../../../../src";
 import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../../Utils/TestUtil";
-import { ModifyConflictSolverOperation } from "../../../../src/ServerWide/Operations/ModifyConflictSolverOperation";
 import { assertThat } from "../../../Utils/AssertExtensions";
 import { User } from "../../../Assets/Entities";
 import { ReplicationTestContext } from "../../../Utils/ReplicationTestContext";
