@@ -3,12 +3,8 @@ import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
 
 import { Camera, FacetTestContext } from "../../Utils/FacetTestContext";
 import { FacetOptions } from "../../../src/Documents/Queries/Facets";
-import { Facet } from "../../../src/Documents/Queries/Facets/Facet";
-import { FacetSetup } from "../../../src/Documents/Queries/Facets/FacetSetup";
+import { Facet, FacetSetup, IDocumentStore, PutIndexesOperation, IndexDefinition } from "../../../src";
 import * as orderBy from "lodash.orderby";
-import { IDocumentStore } from "../../../src/Documents/IDocumentStore";
-import { PutIndexesOperation } from "../../../src/Documents/Operations/Indexes/PutIndexesOperation";
-import { IndexDefinition } from "../../../src/Documents/Indexes/IndexDefinition";
 
 describe("FacetPagingTest", function () {
 

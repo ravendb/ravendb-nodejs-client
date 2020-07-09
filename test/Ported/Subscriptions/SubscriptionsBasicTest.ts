@@ -4,14 +4,14 @@ import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import DocumentStore, {
     IDocumentStore,
+    SubscriptionWorkerOptions,
+    SubscriptionBatch,
+    SubscriptionCreationOptions,
+    SubscriptionWorker
 } from "../../../src";
 import { AsyncQueue } from "../../Utils/AsyncQueue";
-import { SubscriptionBatch } from "../../../src/Documents/Subscriptions/SubscriptionBatch";
-import { SubscriptionWorkerOptions } from "../../../src/Documents/Subscriptions/SubscriptionWorkerOptions";
-import { SubscriptionCreationOptions } from "../../../src/Documents/Subscriptions/SubscriptionCreationOptions";
 import * as semaphore from "semaphore";
 import { acquireSemaphore } from "../../../src/Utility/SemaphoreUtil";
-import { SubscriptionWorker } from "../../../src/Documents/Subscriptions/SubscriptionWorker";
 import { getError, throwError } from "../../../src/Exceptions";
 import { TypeUtil } from "../../../src/Utility/TypeUtil";
 import { delay } from "bluebird";

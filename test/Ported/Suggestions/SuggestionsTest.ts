@@ -1,8 +1,7 @@
 import * as assert from "assert";
 
-import { IDocumentStore, IndexDefinition, IndexFieldOptions, PutIndexesOperation } from "../../../src";
+import { IDocumentStore, IndexDefinition, IndexFieldOptions, PutIndexesOperation, SuggestionOptions } from "../../../src";
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
-import { SuggestionOptions } from "../../../src/Documents/Queries/Suggestions/SuggestionOptions";
 import { Users_ByName } from "../Indexing/IndexesFromClientTest";
 
 describe("SuggestionsTest", function () {

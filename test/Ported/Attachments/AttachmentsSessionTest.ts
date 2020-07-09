@@ -4,13 +4,13 @@ import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 import {
     AttachmentName,
     IDocumentStore,
+    DeleteAttachmentOperation,
+    DeleteCommandData
 } from "../../../src";
 import * as stream from "readable-stream";
 import { User } from "../../Assets/Entities";
 import { CONSTANTS } from "../../../src/Constants";
-import { DeleteCommandData } from "../../../src/Documents/Commands/CommandData";
 import * as StreamUtil from "../../../src/Utility/StreamUtil";
-import { DeleteAttachmentOperation } from "../../../src/Documents/Operations/Attachments/DeleteAttachmentOperation";
 
 describe("Attachments Session", function () {
 

@@ -4,10 +4,9 @@ import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 import {
     DeleteDocumentCommand,
     GetStatisticsOperation, IDocumentSession,
-    IDocumentStore, IMetadataDictionary,
+    IDocumentStore, PutAttachmentOperation
 } from "../../../src";
 import { User } from "../../Assets/Entities";
-import { PutAttachmentOperation } from "../../../src/Documents/Operations/Attachments/PutAttachmentOperation";
 import { CONSTANTS } from "../../../src/Constants";
 
 describe("AttachmentsRevisions", function () {
