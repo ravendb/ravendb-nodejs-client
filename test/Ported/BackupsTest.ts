@@ -8,6 +8,7 @@ import { GetPeriodicBackupStatusOperation } from "../../src/Documents/Operations
 import { assertThat } from "../Utils/AssertExtensions";
 import * as rimraf from "rimraf";
 import { Stopwatch } from "../../src/Utility/Stopwatch";
+import { throwError } from "../../src/Exceptions";
 
 describe("BackupsTest", function () {
 
@@ -46,6 +47,8 @@ describe("BackupsTest", function () {
 
             await waitForBackup(backupDir);
 
+            await waitForBackupStatus(store, backupOperationResult.taskId);
+
             const backupStatus = await store.maintenance.send(
                 new GetPeriodicBackupStatusOperation(backupOperationResult.taskId));
 
@@ -70,11 +73,23 @@ async function waitForBackup(backup: string) {
         const files = fs.readdirSync(backup);
         if (files.length) {
             // make sure backup was finished
-            await sleep(2000);
             return;
         }
         await sleep(200);
     }
+}
 
+async function waitForBackupStatus(store: IDocumentStore, taskId: number) {
+    const sw = Stopwatch.createStarted();
 
+    while (sw.elapsed < 10_000) {
+        const backupStatus = await store.maintenance.send(new GetPeriodicBackupStatusOperation(taskId));
+        if (backupStatus && backupStatus.status && backupStatus.status.lastFullBackup) {
+            return;
+        }
+
+        await sleep(200);
+    }
+
+    throwError("TimeoutException", "Unable to get expected backup status");
 }
