@@ -42,11 +42,9 @@ describe("BackupsTest", function () {
             const backupOperationResult = await store.maintenance.send(operation);
 
             const startBackupOperation = new StartBackupOperation(true, backupOperationResult.taskId);
-            const send = await store.maintenance.send(startBackupOperation);
+            await store.maintenance.send(startBackupOperation);
 
             await waitForBackup(backupDir);
-
-            await send.waitForCompletion();
 
             const backupStatus = await store.maintenance.send(
                 new GetPeriodicBackupStatusOperation(backupOperationResult.taskId));
@@ -57,8 +55,7 @@ describe("BackupsTest", function () {
                 .isNotNull();
             assertThat(backupStatus.status.lastFullBackup instanceof Date)
                 .isTrue();
-
-            assertThat(backupStatus.status.localBackup.lastIncrementalBackup instanceof Date)
+            assertThat(backupStatus.status.localBackup.lastFullBackup instanceof Date)
                 .isTrue();
         } finally {
             rimraf.sync(backupDir);
@@ -72,6 +69,8 @@ async function waitForBackup(backup: string) {
     while (sw.elapsed < 10_000) {
         const files = fs.readdirSync(backup);
         if (files.length) {
+            // make sure backup was finished
+            await sleep(2000);
             return;
         }
         await sleep(200);

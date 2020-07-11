@@ -14,7 +14,7 @@ export class StartBackupOperation implements IMaintenanceOperation<StartBackupOp
     }
 
     public get resultType(): OperationResultType {
-        return "OperationId";
+        return "CommandResult";
     }
 
     public getCommand(conventions: DocumentConventions): RavenCommand<StartBackupOperationResult> {
