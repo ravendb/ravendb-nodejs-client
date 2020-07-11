@@ -86,6 +86,11 @@ import { DeleteOngoingTaskOperation } from "../../../../../src/Documents/Operati
         }
     });
 
+    //TODO: Waiting for RavenDB-13309
+    it.skip("canGetTaskInfo", async () => {
+        //TODO: I think we should write test case for getting info for each type of ongoing task + query by task id and by name.
+    })
+
     it ("canAddEtlWithScript", async () => {
         let src: DocumentStore;
         let dst: DocumentStore;

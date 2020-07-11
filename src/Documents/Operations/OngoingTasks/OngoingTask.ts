@@ -1,5 +1,5 @@
 import { NodeId } from "../../Subscriptions/NodeId";
-import { BackupType, OngoingTaskType, RavenEtlConfiguration } from "../../..";
+import { BackupType, OngoingTaskType, RavenEtlConfiguration, SqlEtlConfiguration } from "../../..";
 import { RunningBackup } from "./RunningBackup";
 import { NextBackup } from "./NextBackup";
 
@@ -14,7 +14,7 @@ export interface OngoingTask {
 }
 
 export interface OngoingTaskBackup extends OngoingTask {
-    taskType: "Backup", //TODO: check me!
+    taskType: "Backup",
     backupType: BackupType;
     backupDestinations: string[];
     lastFullBackup: Date; //TODO:
@@ -48,7 +48,7 @@ export interface OngoingTaskReplication extends OngoingTask {
 
 export interface OngoingTaskSqlEtlDetails extends OngoingTask {
     taskType: "SqlEtl",
-    configuration: "SqlEtlConfiguration"
+    configuration: SqlEtlConfiguration;
 }
 
 export type OngoingTaskState =
