@@ -8,7 +8,7 @@ export interface PeriodicBackupStatus extends IDatabaseTaskStatus {
     backupType: BackupType;
     isFull: boolean;
     nodeTag: string;
-    lastFullBackup: Date; //TODO: check dates mapping!
+    lastFullBackup: Date;
     lastIncrementalBackup: Date;
     lastFullBackupInternal: Date;
     lastIncrementalBackupInternal: Date;

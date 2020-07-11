@@ -1,7 +1,8 @@
 import { UploadProgress } from "./UploadProgress";
 
 export interface BackupStatus {
-    lastIncrementalBackup: Date; //TODO: check binding
+    lastFullBackup: Date;
+    lastIncrementalBackup: Date;
     fullBackupDurationInMs: number;
     incrementalBackupDurationIsMs: number;
     exception: string;
@@ -12,7 +13,7 @@ export interface CloudUploadStatus extends BackupStatus {
     skipped: boolean;
 }
 
-export interface LocalBackup extends BackupStatus{
+export interface LocalBackup extends BackupStatus {
     backupDirectory: string;
     tempFolderUsed: boolean;
 }
