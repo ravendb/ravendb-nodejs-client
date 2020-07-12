@@ -24,6 +24,12 @@ export * from "./ServerWide/CompactSettings";
 export * from "./Documents/Operations/Etl/ConnectionString";
 export * from "./ServerWide/ModifyOnGoingTaskResult";
 export * from "./ServerWide/DeletionInProgressStatus";
+export * from "./ServerWide/IDatabaseTaskStatus";
+export * from "./ServerWide/Operations/BuildNumber";
+export * from "./ServerWide/Operations/GetBuildNumberOperation";
+export * from "./ServerWide/Operations/ReorderDatabaseMembersOperation";
+export * from "./ServerWide/Operations/UpdateDatabaseOperation";
+
 
 // SERVERWIDE OPERATIONS
 export * from "./ServerWide/Operations";
@@ -190,7 +196,13 @@ export * from "./Documents/Operations/DisableDatabaseToggleResult";
 export * from "./Documents/Operations/Expiration/ConfigureExpirationOperation";
 export * from "./Documents/Operations/OngoingTasks/DeleteOngoingTaskOperation";
 export * from "./Documents/Operations/OngoingTasks/OngoingTaskType";
+export * from "./Documents/Operations/OngoingTasks/RunningBackup";
+export * from "./Documents/Operations/OngoingTasks/NextBackup";
+export * from "./Documents/Operations/GetOngoingTaskInfoOperation";
+export * from "./Documents/Operations/OngoingTasks/ToggleOngoingTaskStateOperation";
 export * from "./Documents/Operations/ToggleDatabasesStateOperation";
+export * from "./Documents/Operations/TransactionsRecording/StartTransactionsRecordingOperation";
+export * from "./Documents/Operations/TransactionsRecording/StopTransactionsRecordingOperation";
 
 // BACKUP
 export * from "./Documents/Operations/Backups/AmazonSettings";
@@ -204,6 +216,19 @@ export * from "./Documents/Operations/Backups/LocalSettings";
 export * from "./Documents/Operations/Backups/PeriodicBackupConfiguration";
 export * from "./Documents/Operations/Backups/S3Settings";
 export * from "./Documents/Operations/Backups/BackupSettings";
+export * from "./Documents/Operations/Backups/BackupStatus";
+export * from "./Documents/Operations/Backups/GetPeriodicBackupStatusOperation";
+export * from "./Documents/Operations/Backups/GetPeriodicBackupStatusOperationResult";
+export * from "./Documents/Operations/Backups/LastRaftIndex";
+export * from "./Documents/Operations/Backups/PeriodicBackupStatus";
+export * from "./Documents/Operations/Backups/RestoreBackupConfiguration";
+export * from "./Documents/Operations/Backups/RestoreBackupOperation";
+export * from "./Documents/Operations/Backups/StartBackupOperation";
+export * from "./Documents/Operations/Backups/StartBackupOperationResult";
+export * from "./Documents/Operations/Backups/UpdatePeriodicBackupOperation";
+export * from "./Documents/Operations/Backups/UpdatePeriodicBackupOperationResult";
+export * from "./Documents/Operations/Backups/UploadProgress";
+export * from "./Documents/Operations/Backups/UploadState";
 
 
 // INDEXES

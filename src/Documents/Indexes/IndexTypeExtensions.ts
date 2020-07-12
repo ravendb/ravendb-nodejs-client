@@ -18,7 +18,7 @@ export class IndexTypeExtensions {
         return type === "AutoMap" || type === "AutoMapReduce";
     }
 
-    public static isState(type: IndexType): boolean {
+    public static isStatic(type: IndexType): boolean {
         return type === "Map"
             || type === "MapReduce"
             || type === "JavaScriptMap"
