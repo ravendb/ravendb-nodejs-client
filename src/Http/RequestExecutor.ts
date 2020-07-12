@@ -802,7 +802,6 @@ export class RequestExecutor implements IDisposable {
             req.headers[HEADERS.TOPOLOGY_ETAG] = `"${this._topologyEtag}"`;
         }
 
-        const sp = Stopwatch.createStarted();
         let response: HttpResponse = null;
         let responseDispose: ResponseDisposeHandling = "Automatic";
 
@@ -833,8 +832,6 @@ export class RequestExecutor implements IDisposable {
                         + " which this node doesn't support.");
                 }
             }
-
-            sp.stop();
         } catch (error) {
             this._log.warn(
                 error,
@@ -845,8 +842,6 @@ export class RequestExecutor implements IDisposable {
             if (!shouldRetry) {
                 throw error; 
             }
-
-            sp.stop();
 
             const serverDownHandledSuccessfully = await this._handleServerDown(
                 req.uri as string, chosenNode, nodeIndex, command, req, response, null, error, sessionInfo, shouldRetry);
