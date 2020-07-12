@@ -825,7 +825,7 @@ export class RequestExecutor implements IDisposable {
                 // we have to wait for the cluster transaction.
                 // But we can't do that if the server is an old one.
                 const version = response.headers.get(HEADERS.SERVER_VERSION);
-                if (version && "4.1" === version) {
+                if (version && "4.1".localeCompare(version) > 0) {
                     throwError(
                         "ClientVersionMismatchException",
                         "The server on " + chosenNode.url + " has an old version and can't perform "
