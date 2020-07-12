@@ -1032,6 +1032,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     public _whereLessThanOrEqual(fieldName: string, value: any): void;
     public _whereLessThanOrEqual(fieldName: string, value: any, exact: boolean): void;
     public _whereLessThanOrEqual(fieldName: string, value: any, exact: boolean = false): void {
+        fieldName = this._ensureValidFieldName(fieldName, false);
         const tokens = this._getCurrentWhereTokens();
         this._appendOperatorIfNeeded(tokens);
         this._negateIfNeeded(tokens, fieldName);
@@ -1051,6 +1052,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * Matches fields where Regex.IsMatch(filedName, pattern)
      */
     public _whereRegex(fieldName: string, pattern: string): void {
+        fieldName = this._ensureValidFieldName(fieldName, false);
         const tokens = this._getCurrentWhereTokens();
         this._appendOperatorIfNeeded(tokens);
         this._negateIfNeeded(tokens, fieldName);
