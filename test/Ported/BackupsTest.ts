@@ -1,5 +1,5 @@
 import { IDocumentStore, PeriodicBackupConfiguration } from "../../src";
-import { disposeTestDocumentStore, sleep, TemporaryDirContext, testContext } from "../Utils/TestUtil";
+import { disposeTestDocumentStore, RavenTestContext, sleep, TemporaryDirContext, testContext } from "../Utils/TestUtil";
 import * as path from "path";
 import * as fs from "fs";
 import { UpdatePeriodicBackupOperation } from "../../src/Documents/Operations/Backups/UpdatePeriodicBackupOperation";
@@ -10,7 +10,7 @@ import * as rimraf from "rimraf";
 import { Stopwatch } from "../../src/Utility/Stopwatch";
 import { throwError } from "../../src/Exceptions";
 
-describe("BackupsTest", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("BackupsTest", function () {
 
     let store: IDocumentStore;
     let temporaryDirContext: TemporaryDirContext;
