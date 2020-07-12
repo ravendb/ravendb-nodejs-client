@@ -77,7 +77,6 @@ export class LazyAggregationQueryOperation implements ILazyOperation {
     }
 
     private _handleResponse(queryResult: QueryResult): void {
-        this._parent.emit("afterQueryExecuted", queryResult);
         this.result = this._processResults(queryResult, this._conventions);
         this.queryResult = queryResult;
     }

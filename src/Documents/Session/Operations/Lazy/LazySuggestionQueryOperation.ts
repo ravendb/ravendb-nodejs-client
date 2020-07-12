@@ -78,10 +78,6 @@ export class LazySuggestionQueryOperation implements ILazyOperation {
     }
 
     private _handleResponse(queryResult: QueryResult) {
-        if (this._invokeAfterQueryExecuted) {
-            this._invokeAfterQueryExecuted(queryResult);
-        }
-
         this._result = this._processResults(queryResult, this._conventions);
         this._queryResult = queryResult;
     }
