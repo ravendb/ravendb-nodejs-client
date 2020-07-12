@@ -80,10 +80,13 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
                         //TODO: configuration: RavenEtlConfiguration;
                         break;
                     case "SqlEtl":
-                        //TODO: confifugraion: SqlEtlConfiguration
+                        //TODO: configuration: SqlEtlConfiguration
                         break;
                     case "Subscription":
-                        // nothing to do
+                        nestedTypes = {
+                            lastBatchAckTime: "date",
+                            lastClientConnectionTime: "date"
+                        }
                         break;
                     case "Backup":
                         //TODO:lastFullBackup: Date, lastIncrementalBackup: Date;, RunningBackup, NextBackup!

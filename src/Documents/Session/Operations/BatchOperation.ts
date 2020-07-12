@@ -1,18 +1,16 @@
 import { InMemoryDocumentSessionOperations } from "../InMemoryDocumentSessionOperations";
-import { IRavenObject } from "../../../Types/IRavenObject";
 import { BatchCommand } from "../../Commands/Batches/BatchCommand";
 import { throwError } from "../../../Exceptions";
 import { CONSTANTS } from "../../../Constants";
 import { SessionAfterSaveChangesEventArgs } from "../SessionEvents";
 import { DocumentInfo } from "../DocumentInfo";
-import { CommandType } from "../../Commands/CommandData";
+import { ActionsToRunOnSuccess, CommandType } from "../../Commands/CommandData";
 import { MetadataDictionary } from "../../../Mapping/MetadataAsDictionary";
 import { CaseInsensitiveKeysMap } from "../../../Primitives/CaseInsensitiveKeysMap";
 import { PatchStatus } from "../../Operations/PatchStatus";
 import { CounterTracking } from "../CounterInternalTypes";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { BatchCommandResult } from "./BatchCommandResult";
-import { AttachmentDetails, AttachmentName } from "../../Attachments";
 
 export class BatchOperation {
 
@@ -25,12 +23,14 @@ export class BatchOperation {
     private _entities: object[];
     private _sessionCommandsCount: number;
     private _allCommandsCount: number;
+    private _onSuccessfulRequest: ActionsToRunOnSuccess;
 
     private _modifications: Map<string, DocumentInfo>;
 
     public createRequest(): BatchCommand {
         const result = this._session.prepareForSaveChanges();
 
+        this._onSuccessfulRequest = result.onSuccess;
         this._sessionCommandsCount = result.sessionCommands.length;
         result.sessionCommands.push(...result.deferredCommands);
         
@@ -60,6 +60,8 @@ export class BatchOperation {
             BatchOperation._throwOnNullResults();
             return;
         }
+
+        this._onSuccessfulRequest.clearSessionStateAfterSuccessfulSaveChanges();
 
         if (this._session.transactionMode === "ClusterWide") {
             if (result.transactionIndex <= 0) {

@@ -14,6 +14,10 @@ export class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
     public removeAnalyzers: boolean;
     public transformScript: string;
     public maxStepsForTransformScript: number;
+
+    /**
+     * @deprecated
+     */
     public skipRevisionCreation: boolean;
 
     constructor() {

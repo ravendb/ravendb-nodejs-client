@@ -7,7 +7,7 @@ import DocumentStore, {
     SubscriptionWorkerOptions,
     SubscriptionBatch,
     SubscriptionCreationOptions,
-    SubscriptionWorker
+    SubscriptionWorker, ToggleOngoingTaskStateOperation
 } from "../../../src";
 import { AsyncQueue } from "../../Utils/AsyncQueue";
 import * as semaphore from "semaphore";
@@ -335,7 +335,7 @@ describe("SubscriptionsBasicTest", function () {
 
         const id = await store.subscriptions.create(User);
 
-        const subscriptionTask = await store.maintenance.send(new GetOngoingTaskInfoOperation(id, "Subscription")) as OngoingTaskSubscription;
+        let subscriptionTask = await store.maintenance.send(new GetOngoingTaskInfoOperation(id, "Subscription")) as OngoingTaskSubscription;
 
         assertThat(subscriptionTask)
             .isNotNull();
@@ -344,9 +344,13 @@ describe("SubscriptionsBasicTest", function () {
         assertThat(subscriptionTask.responsibleNode)
             .isNotNull();
 
-        //TODO: disable subscription and fetch info again
+        await store.maintenance.send(new ToggleOngoingTaskStateOperation(subscriptionTask.taskId, "Subscription", true));
 
-        //TODO: use and test ToggleOngoingTaskStateOperation
+        subscriptionTask = await store.maintenance.send(new GetOngoingTaskInfoOperation(id, "Subscription")) as OngoingTaskSubscription;
+        assertThat(subscriptionTask)
+            .isNotNull();
+        assertThat(subscriptionTask.disabled)
+            .isTrue();
     });
 
     it("will acknowledge empty batches", async function() {

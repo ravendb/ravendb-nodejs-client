@@ -62,5 +62,11 @@ export type OngoingTaskState =
 export interface OngoingTaskSubscription extends OngoingTask {
     taskType: "Subscription",
     query: string;
-
+    subscriptionName: string;
+    subscriptionId: number;
+    mentorNode: string;
+    changeVectorForNextBatchStartingPoint: string;
+    lastBatchAckTime: Date;
+    disabled: boolean;
+    lastClientConnectionTime: Date;
 }
