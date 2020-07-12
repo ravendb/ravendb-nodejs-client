@@ -1,8 +1,10 @@
 import { IServerOperation, OperationIdResult, OperationResultType } from "../OperationAbstractions";
 import { RestoreBackupConfiguration } from "./RestoreBackupConfiguration";
-import { DocumentConventions, RavenCommand, ServerNode } from "../../..";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as stream from "stream";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { RavenCommand } from "../../../Http/RavenCommand";
+import { ServerNode } from "../../../Http/ServerNode";
 
 export class RestoreBackupOperation implements IServerOperation<OperationIdResult> {
     private readonly _restoreConfiguration: RestoreBackupConfiguration;

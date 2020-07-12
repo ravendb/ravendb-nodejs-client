@@ -2,10 +2,12 @@ import { IMaintenanceOperation, OperationResultType } from "./OperationAbstracti
 import { OngoingTask } from "./OngoingTasks/OngoingTask";
 import { OngoingTaskType } from "./OngoingTasks/OngoingTaskType";
 import { TypeUtil } from "../../Utility/TypeUtil";
-import { CollectionStats, DocumentConventions, RavenCommand, ServerNode } from "../..";
 import { HttpRequestParameters } from "../../Primitives/Http";
 import * as stream from "stream";
 import { NestedTypes } from "../../Mapping/ObjectMapper";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { RavenCommand } from "../../Http/RavenCommand";
+import { ServerNode } from "../../Http/ServerNode";
 
 export class GetOngoingTaskInfoOperation implements IMaintenanceOperation<OngoingTask> {
     private readonly _taskName: string;

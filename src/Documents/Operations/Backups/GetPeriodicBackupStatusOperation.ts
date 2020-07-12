@@ -1,10 +1,10 @@
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 import { GetPeriodicBackupStatusOperationResult } from "./GetPeriodicBackupStatusOperationResult";
-import { DocumentConventions, RavenCommand, ServerNode } from "../../..";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as stream from "stream";
-import { NestedTypes } from "../../../Mapping/ObjectMapper";
-import { OngoingTask } from "../OngoingTasks/OngoingTask";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { RavenCommand } from "../../../Http/RavenCommand";
+import { ServerNode } from "../../../Http/ServerNode";
 
 export class GetPeriodicBackupStatusOperation implements IMaintenanceOperation<GetPeriodicBackupStatusOperationResult> {
     private readonly _taskId: number;

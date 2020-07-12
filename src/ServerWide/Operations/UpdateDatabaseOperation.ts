@@ -1,12 +1,10 @@
-import {
-    DatabasePutResult,
-    DatabaseRecord,
-    DocumentConventions,
-    IServerOperation,
-    OperationResultType,
-    RavenCommand
-} from "../..";
+
 import { CreateDatabaseCommand } from "./CreateDatabaseOperation";
+import { IServerOperation, OperationResultType } from "../../Documents/Operations/OperationAbstractions";
+import { DatabasePutResult } from "./index";
+import { DatabaseRecord } from "../index";
+import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
+import { RavenCommand } from "../../Http/RavenCommand";
 
 export class UpdateDatabaseOperation implements IServerOperation<DatabasePutResult> {
     private readonly _databaseRecord: DatabaseRecord;

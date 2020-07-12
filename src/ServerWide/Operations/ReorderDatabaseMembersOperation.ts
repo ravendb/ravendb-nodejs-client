@@ -1,6 +1,9 @@
-import { DocumentConventions, IServerOperation, OperationResultType, RavenCommand, ServerNode } from "../..";
 import { throwError } from "../../Exceptions";
 import { HttpRequestParameters } from "../../Primitives/Http";
+import { IServerOperation, OperationResultType } from "../../Documents/Operations/OperationAbstractions";
+import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
+import { RavenCommand } from "../../Http/RavenCommand";
+import { ServerNode } from "../../Http/ServerNode";
 
 export class ReorderDatabaseMembersOperation implements IServerOperation<void> {
     private readonly _database: string;

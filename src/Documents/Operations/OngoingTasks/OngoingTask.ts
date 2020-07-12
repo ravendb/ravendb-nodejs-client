@@ -1,7 +1,10 @@
 import { NodeId } from "../../Subscriptions/NodeId";
-import { BackupType, OngoingTaskType, RavenEtlConfiguration, SqlEtlConfiguration } from "../../..";
 import { RunningBackup } from "./RunningBackup";
 import { NextBackup } from "./NextBackup";
+import { OngoingTaskType } from "./OngoingTaskType";
+import { BackupType } from "../Backups/Enums";
+import { RavenEtlConfiguration } from "../Etl/RavenEtlConfiguration";
+import { SqlEtlConfiguration } from "../Etl/Sql/SqlEtlConfiguration";
 
 export interface OngoingTask {
     taskId: number;

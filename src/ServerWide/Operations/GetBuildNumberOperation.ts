@@ -1,7 +1,10 @@
-import { DocumentConventions, IServerOperation, OperationResultType, RavenCommand, ServerNode } from "../..";
 import { BuildNumber } from "./BuildNumber";
 import { HttpRequestParameters } from "../../Primitives/Http";
 import * as stream from "stream";
+import { IServerOperation, OperationResultType } from "../../Documents/Operations/OperationAbstractions";
+import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
+import { RavenCommand } from "../../Http/RavenCommand";
+import { ServerNode } from "../../Http/ServerNode";
 
 export class GetBuildNumberOperation implements IServerOperation<BuildNumber> {
     getCommand(conventions: DocumentConventions): RavenCommand<BuildNumber> {
