@@ -124,7 +124,7 @@ export class NodeSelector {
 
     public restoreNodeIndex(nodeIndex: number): void {
         const state = this._state;
-        if (state.failures.length < nodeIndex) {
+        if (state.failures.length <= nodeIndex) {
             return; // // the state was changed and we no longer have it?
         }
 
