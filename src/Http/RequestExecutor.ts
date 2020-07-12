@@ -586,12 +586,6 @@ export class RequestExecutor implements IDisposable {
                     throw error;
                 }
 
-                if (initialUrls.length === 0) {
-                    this._lastKnownUrls = initialUrls;
-                    throwError("InvalidOperationException",
-                        `Cannot get topology from server: ${url}.`, error);
-                }
-
                 topologyUpdateErrors.push({ url, error });
                 return false;
             }
