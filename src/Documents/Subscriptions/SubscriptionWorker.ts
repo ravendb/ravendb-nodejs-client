@@ -41,7 +41,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
     private readonly _logger = getLogger({ module: "SubscriptionWorker" });
     private readonly _store: DocumentStore;
     private readonly _dbName: string;
-    private _processingCancelled = false;
+    private _processingCanceled = false;
     private readonly _options: SubscriptionWorkerOptions<T>;
     private _tcpClient: Socket;
     private _parser: stream.Transform;
@@ -74,7 +74,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         }
 
         this._disposed = true;
-        this._processingCancelled = true;
+        this._processingCanceled = true;
 
         this._closeTcpClient(); // we disconnect immediately
         if (this._parser) {
@@ -295,22 +295,22 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
 
     private async _processSubscription() {
         try {
-            if (this._processingCancelled) {
-                throwError("OperationCancelledException");
+            if (this._processingCanceled) {
+                throwError("OperationCanceledException");
             }
 
             const socket = await this._connectToServer();
             let notifiedSubscriber = Promise.resolve();
             let readFromServer = Promise.resolve<BatchFromServer>(null);
             try {
-                if (this._processingCancelled) {
-                    throwError("OperationCancelledException");
+                if (this._processingCanceled) {
+                    throwError("OperationCanceledException");
                 }
 
                 const tcpClientCopy = this._tcpClient;
                 const connectionStatus: SubscriptionConnectionServerMessage = await this._readNextObject();
 
-                if (this._processingCancelled) {
+                if (this._processingCanceled) {
                     return;
                 }
 
@@ -320,14 +320,14 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
 
                 this._lastConnectionFailure = null;
 
-                if (this._processingCancelled) {
+                if (this._processingCanceled) {
                     return;
                 }
 
                 const batch = new SubscriptionBatch<T>(this._documentType, this._revisions,
                     this._subscriptionLocalRequestExecutor, this._store, this._dbName);
 
-                while (!this._processingCancelled) {
+                while (!this._processingCanceled) {
                     // start the read from the server
 
                     readFromServer = this._readSingleSubscriptionBatchFromServer(batch);
@@ -345,8 +345,8 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
 
                     const incomingBatch = await readFromServer;
 
-                    if (this._processingCancelled) {
-                        throwError("OperationCancelledException");
+                    if (this._processingCanceled) {
+                        throwError("OperationCanceledException");
                     }
 
                     const lastReceivedChangeVector = batch.initialize(incomingBatch);
@@ -417,9 +417,9 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
 
         let endOfBatch = false;
 
-        while (!endOfBatch && !this._processingCancelled) {
+        while (!endOfBatch && !this._processingCanceled) {
             const receivedMessage = await this._readNextObject();
-            if (!receivedMessage || this._processingCancelled) {
+            if (!receivedMessage || this._processingCanceled) {
                 break;
             }
 
@@ -469,7 +469,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
 
     private async _readNextObject(): Promise<SubscriptionConnectionServerMessage> {
         const stream: NodeJS.ReadableStream = this._parser;
-        if (this._processingCancelled) {
+        if (this._processingCanceled) {
             return null;
         }
 
@@ -524,14 +524,14 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
     }
 
     private async _runSubscriptionAsync(): Promise<void> {
-        while (!this._processingCancelled) {
+        while (!this._processingCanceled) {
             try {
                 this._closeTcpClient();
 
                 this._logger.info("Subscription " + this._options.subscriptionName + ". Connecting to server...");
                 await this._processSubscription();
             } catch (error) {
-                if (this._processingCancelled) {
+                if (this._processingCanceled) {
                     if (!this._disposed) {
                         throw error;
                     }
@@ -606,7 +606,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             || ex.name === "AuthorizationException"
             || ex.name === "AllTopologyNodesDownException"
             || ex.name === "SubscriberErrorException") {
-            this._processingCancelled = true;
+            this._processingCanceled = true;
             return false;
         }
 
