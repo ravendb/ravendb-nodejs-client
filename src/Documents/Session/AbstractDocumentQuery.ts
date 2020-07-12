@@ -462,7 +462,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             return;
         }
 
-        if (queryData.loadTokens.find(x => x.alias !== possibleAlias)) {
+        if (!queryData.loadTokens.find(x => x.alias === possibleAlias)) {
             return;
         }
 
