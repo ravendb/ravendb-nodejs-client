@@ -68,12 +68,17 @@ describe("Index operations", function () {
 
         await store.maintenance.send(new DisableIndexOperation(usersIndex.getIndexName()));
         let indexingStatus = await store.maintenance.send(new GetIndexingStatusOperation());
-        const indexStatus: IndexStatus = indexingStatus.indexes[0];
+        let indexStatus: IndexStatus = indexingStatus.indexes[0];
         assert.strictEqual(indexStatus.status, "Disabled");
 
         await store.maintenance.send(new EnableIndexOperation(usersIndex.getIndexName()));
         indexingStatus = await store.maintenance.send(new GetIndexingStatusOperation());
         assert.strictEqual(indexingStatus.status, "Running");
+
+        indexingStatus = await store.maintenance.send(new GetIndexingStatusOperation());
+        indexStatus = indexingStatus.indexes[0];
+        assertThat(indexStatus.status)
+            .isEqualTo("Running");
     });
 
     it("can get indexes", async () => {
