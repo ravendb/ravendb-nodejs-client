@@ -1,6 +1,8 @@
 import { IDocumentStore, Lazy } from "../../../../src";
 import { disposeTestDocumentStore, testContext } from "../../../Utils/TestUtil";
 import * as assert from "assert";
+import { Order, OrderLine } from "../../../Assets/Entities";
+import { assertThat } from "../../../Utils/AssertExtensions";
 
 export class User {
     public id: string;
@@ -176,4 +178,78 @@ describe("CachingOfDocumentInclude", function () {
             assert.strictEqual(session.advanced.numberOfRequests, old);
         }
     });
+
+    it("can include nested paths", async () => {
+
+        const orderLine1 = Object.assign(new OrderLine(), {
+            product: "products/1-A",
+            productName: "phone"
+        });
+
+        const orderLine2 = Object.assign(new OrderLine(), {
+            product: "products/2-A",
+            productName: "mouse"
+        });
+
+        const order = Object.assign(new Order(), {
+            lines: [orderLine1, orderLine2]
+        });
+
+        const product1 = Object.assign(new Product(), {
+            id: "products/1-A",
+            name: "phone"
+        });
+
+        const product2 = Object.assign(new Product(), {
+            id: "products/2-A",
+            name: "mouse"
+        });
+
+        {
+            const session = store.openSession();
+            await session.store(order, "orders/1-A");
+            await session.store(product1);
+            await session.store(product2);
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            assertThat(session.advanced.numberOfRequests)
+                .isZero();
+            const orders = await session.query<Order>(Order)
+                .include("lines[].product")
+                .all();
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            const product = await session.load(orders[0].lines[0].product, Product);
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+        }
+
+        {
+            const session = store.openSession();
+
+            assertThat(session.advanced.numberOfRequests)
+                .isZero();
+
+            const orders = await session.query<Order>(Order)
+                .include("lines.product")
+                .all();
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            const product = await session.load(orders[0].lines[0].product, Product);
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+        }
+    });
 });
+
+class Product {
+    public id: string;
+    public name: string;
+}
