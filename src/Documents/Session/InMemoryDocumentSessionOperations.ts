@@ -103,7 +103,7 @@ export abstract class InMemoryDocumentSessionOperations
 
     public getCurrentSessionNode(): Promise<ServerNode> {
         let result: Promise<CurrentIndexAndNode>;
-        switch (this._documentStore.conventions.readBalanceBehavior) {
+        switch (this._requestExecutor.conventions.readBalanceBehavior) {
             case "None":
                 result = this._requestExecutor.getPreferredNode();
                 break;
@@ -115,7 +115,7 @@ export abstract class InMemoryDocumentSessionOperations
                 break;
             default:
                 return Promise.reject(
-                    getError("InvalidArgumentException", this._documentStore.conventions.readBalanceBehavior));
+                    getError("InvalidArgumentException", this._requestExecutor.conventions.readBalanceBehavior));
         }
 
         return result.then(x => x.currentNode);
@@ -1480,6 +1480,14 @@ export abstract class InMemoryDocumentSessionOperations
         if (this._countersByDocId) {
             this._countersByDocId.clear();
         }
+
+        this.deferredCommands.length = 0;
+        this.deferredCommandsMap.clear();
+        if (this._clusterSession) {
+            this._clusterSession.clear();
+        }
+
+        this._pendingLazyOperations.length = 0;
     }
 
     /**
@@ -1564,8 +1572,8 @@ export abstract class InMemoryDocumentSessionOperations
     public whatChanged(): { [id: string]: DocumentsChanges[] } {
         const changes: { [id: string]: DocumentsChanges[] } = {};
 
-        this._prepareForEntitiesDeletion(null, changes);
         this._getAllEntitiesChanges(changes);
+        this._prepareForEntitiesDeletion(null, changes);
 
         return changes;
     }

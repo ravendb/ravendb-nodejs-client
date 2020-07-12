@@ -132,7 +132,6 @@ export class RequestExecutor implements IDisposable {
     protected _certificate: ICertificate = null;
 
     private _lastReturnedResponse: Date;
-    protected _readBalanceBehavior: ReadBalanceBehavior;
 
     private readonly _cache: HttpCache;
 
@@ -288,7 +287,6 @@ export class RequestExecutor implements IDisposable {
         });
 
         this._cache = new HttpCache(conventions.maxHttpCacheSize);
-        this._readBalanceBehavior = conventions.readBalanceBehavior;
         this._databaseName = database;
         this._lastReturnedResponse = new Date();
         this._conventions = conventions.clone();
@@ -459,14 +457,14 @@ export class RequestExecutor implements IDisposable {
                             if (!this._nodeSelector) {
                                 this._nodeSelector = new NodeSelector(topology);
 
-                                if (this._readBalanceBehavior === "FastestNode") {
+                                if (this.conventions.readBalanceBehavior === "FastestNode") {
                                     this._nodeSelector.scheduleSpeedTest();
                                 }
 
                             } else if (this._nodeSelector.onUpdateTopology(topology, forceUpdate)) {
                                 this._disposeAllFailedNodesTimers();
 
-                                if (this._readBalanceBehavior === "FastestNode") {
+                                if (this.conventions.readBalanceBehavior === "FastestNode") {
                                     this._nodeSelector.scheduleSpeedTest();
                                 }
                             }
@@ -661,7 +659,7 @@ export class RequestExecutor implements IDisposable {
             return this._nodeSelector.getPreferredNode();
         }
 
-        switch (this._readBalanceBehavior) {
+        switch (this.conventions.readBalanceBehavior) {
             case "None":
                 return this._nodeSelector.getPreferredNode();
             case "RoundRobin":
@@ -669,7 +667,7 @@ export class RequestExecutor implements IDisposable {
             case "FastestNode":
                 return this._nodeSelector.getFastestNode();
             default:
-                throwError("NotSupportedException", `Invalid read balance behavior: ${this._readBalanceBehavior}`);
+                throwError("NotSupportedException", `Invalid read balance behavior: ${this.conventions.readBalanceBehavior}`);
         }
     }
 
@@ -1137,7 +1135,7 @@ export class RequestExecutor implements IDisposable {
     }
 
     private _shouldExecuteOnAll<TResult>(chosenNode: ServerNode, command: RavenCommand<TResult>): boolean {
-        return this._readBalanceBehavior === "FastestNode" &&
+        return this.conventions.readBalanceBehavior === "FastestNode" &&
             this._nodeSelector &&
             this._nodeSelector.inSpeedTestPhase() &&
             this._nodeSelectorHasMultipleNodes() &&

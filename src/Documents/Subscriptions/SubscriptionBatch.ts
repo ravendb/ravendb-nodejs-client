@@ -102,7 +102,7 @@ export class SubscriptionBatch<T extends object> {
         }
 
         for (const item of this._items) {
-            if (item.projection) {
+            if (item.projection || item.revision) {
                 continue;
             }
             const documentInfo = new DocumentInfo();
@@ -117,10 +117,10 @@ export class SubscriptionBatch<T extends object> {
      }
 
     public initialize(batch: BatchFromServer): string {
+        this._includes = batch.includes;
         this._items.length = 0;
 
         let lastReceivedChangeVector: string;
-        this._includes = batch.includes;
 
         for (const item of batch.messages) {
             const curDoc = item.data;
@@ -167,6 +167,7 @@ export class SubscriptionBatch<T extends object> {
             itemToAdd.result = instance;
             itemToAdd.exceptionMessage = item.exception;
             itemToAdd.projection = projection;
+            itemToAdd.revision = this._revisions;
 
             this._items.push(itemToAdd);
         }
@@ -189,6 +190,7 @@ export class Item<T> {
     public id: string;
     public changeVector: string;
     public projection: boolean;
+    public revision: boolean;
 
     private _throwItemProcessError() {
         throwError("InvalidOperationException",
