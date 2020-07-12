@@ -28,6 +28,7 @@ import {
 } from "../../../src";
 import { UsersIndex, UsersInvalidIndex, UsersIndexWithPascalCasedFields } from "../../Assets/Indexes";
 import { TypeUtil } from "../../../src/Utility/TypeUtil";
+import { assertThat } from "../../Utils/AssertExtensions";
 
 describe("Index operations", function () {
 
@@ -182,6 +183,10 @@ describe("Index operations", function () {
 
         assert.strictEqual(indexErrors.length, 1);
         assert.strictEqual(perIndexErrors.length, 1);
+        assertThat(indexErrors[0].errors)
+            .hasSize(1);
+        assertThat(perIndexErrors[0].errors)
+            .hasSize(1);
     });
 
     it("can get index statistics", async () => {
