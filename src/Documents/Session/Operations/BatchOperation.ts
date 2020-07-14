@@ -5,12 +5,12 @@ import { CONSTANTS } from "../../../Constants";
 import { SessionAfterSaveChangesEventArgs } from "../SessionEvents";
 import { DocumentInfo } from "../DocumentInfo";
 import { ActionsToRunOnSuccess, CommandType } from "../../Commands/CommandData";
-import { MetadataDictionary } from "../../../Mapping/MetadataAsDictionary";
 import { CaseInsensitiveKeysMap } from "../../../Primitives/CaseInsensitiveKeysMap";
 import { PatchStatus } from "../../Operations/PatchStatus";
 import { CounterTracking } from "../CounterInternalTypes";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { BatchCommandResult } from "./BatchCommandResult";
+import { ObjectUtil } from "../../../Utility/ObjectUtil";
 
 export class BatchOperation {
 
@@ -153,8 +153,13 @@ export class BatchOperation {
     }
     
     private _applyMetadataModifications(id: string, documentInfo: DocumentInfo): void {
-        const metadata = MetadataDictionary.create(documentInfo.metadata);
-        documentInfo.metadataInstance = metadata;
+        documentInfo.metadataInstance = null;
+        documentInfo.metadata = ObjectUtil.clone(documentInfo.metadata);
+
+        const documentCopy = ObjectUtil.clone(documentInfo.document);
+        documentCopy[CONSTANTS.Documents.Metadata.KEY] = documentInfo.metadata;
+
+        documentInfo.document = documentCopy;
     }
     
     private _getOrAddModifications(
@@ -326,6 +331,20 @@ export class BatchOperation {
             entity = documentInfo.entity;
         }
 
+        this._handleMetadataModifications(documentInfo, batchResult, id, changeVector);
+
+        this._session.documentsById.add(documentInfo);
+
+        if (entity) {
+            this._session.generateEntityIdOnTheClient.trySetIdentity(entity, id);
+        }
+
+        const afterSaveChangesEventArgs = new SessionAfterSaveChangesEventArgs(
+            this._session, documentInfo.id, documentInfo.entity);
+        this._session.emit("afterSaveChanges", afterSaveChangesEventArgs);
+    }
+
+    private _handleMetadataModifications(documentInfo: DocumentInfo, batchResult: object, id: string, changeVector: string) {
         for (const propertyName of Object.keys(batchResult)) {
             if (propertyName === "type") {
                 continue;
@@ -337,14 +356,6 @@ export class BatchOperation {
         documentInfo.id = id;
         documentInfo.changeVector = changeVector;
         this._applyMetadataModifications(id, documentInfo);
-        this._session.documentsById.add(documentInfo);
-        if (entity) {
-            this._session.generateEntityIdOnTheClient.trySetIdentity(entity, id);
-        }
-
-        const afterSaveChangesEventArgs = new SessionAfterSaveChangesEventArgs(
-            this._session, documentInfo.id, documentInfo.entity);
-        this._session.emit("afterSaveChanges", afterSaveChangesEventArgs);
     }
 
     private _handleCounters(batchResult: object): void {
