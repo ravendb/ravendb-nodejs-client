@@ -14,18 +14,15 @@ import { NodeSelector } from "./NodeSelector";
 import { IDisposable } from "../Types/Contracts";
 import { IRequestAuthOptions, IAuthOptions } from "../Auth/AuthOptions";
 import { Certificate, ICertificate } from "../Auth/Certificate";
-import { ReadBalanceBehavior } from "./ReadBalanceBehavior";
 import { HttpCache, CachedItemMetadata, ReleaseCacheItem } from "./HttpCache";
 import { AggressiveCacheOptions } from "./AggressiveCacheOptions";
 import { throwError, RavenErrorType, ExceptionDispatcher, ExceptionSchema, getError } from "../Exceptions";
 import {
     GetClientConfigurationCommand,
-    GetClientConfigurationOperationResult
 } from "../Documents/Operations/Configuration/GetClientConfigurationOperation";
 import CurrentIndexAndNode from "./CurrentIndexAndNode";
-import { HEADERS, CONSTANTS } from "../Constants";
+import { HEADERS } from "../Constants";
 import { HttpRequestParameters, HttpResponse, HttpRequestParametersWithoutUri } from "../Primitives/Http";
-import { Stopwatch } from "../Utility/Stopwatch";
 import * as PromiseUtil from "../Utility/PromiseUtil";
 import { GetStatisticsOperation } from "../Documents/Operations/GetStatisticsOperation";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
