@@ -1,15 +1,12 @@
-import * as mocha from "mocha";
 import * as assert from "assert";
-import { User, Company, Order } from "../../Assets/Entities";
-import { assertThat } from "../../Utils/AssertExtensions";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
-    RavenErrorType,
     IDocumentStore,
     AbstractMultiMapIndexCreationTask,
     Highlightings,
 } from "../../../src";
+import { assertThat } from "../../Utils/AssertExtensions";
 
 interface ISearchable {
     slug: string;
@@ -141,14 +138,26 @@ describe("HighlightsTest", function () {
                     highlights.push(...titleHighlighting.getFragments(docId));
                 }
 
-                highlights.push(slugHighlighting.getFragments(docId));
-                highlights.push(contentHighlighting.getFragments(docId));
+                highlights.push(...slugHighlighting.getFragments(docId));
+                highlights.push(...contentHighlighting.getFragments(docId));
 
                 const searchResults = new SearchResults();
                 searchResults.result = searchable;
                 searchResults.highlights = highlights;
                 searchResults.title = title;
                 orderedResults.push(searchResults);
+
+                assertThat(orderedResults)
+                    .hasSize(1);
+                assertThat(orderedResults[0].highlights)
+                    .hasSize(1);
+
+                const firstHighlight = orderedResults[0].highlights[0];
+                assertThat(firstHighlight)
+                    .contains(">session<");
+
+                assertThat(orderedResults[0].result.title)
+                    .isEqualTo("RavenDB indexes explained");
             }
         }
     });
