@@ -6,6 +6,8 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { IndexPriority } from "../../Indexes/Enums";
 import { ServerNode } from "../../../Http/ServerNode";
 import { HttpRequestParameters } from "../../../Primitives/Http";
+import { IRaftCommand } from "../../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export class SetIndexesPriorityOperation implements IMaintenanceOperation<void> {
 
@@ -48,7 +50,7 @@ export class SetIndexesPriorityOperation implements IMaintenanceOperation<void> 
     }
 }
 
-export class SetIndexPriorityCommand extends RavenCommand<void> {
+export class SetIndexPriorityCommand extends RavenCommand<void> implements IRaftCommand {
 
     private readonly _parameters: object;
 
@@ -82,6 +84,10 @@ export class SetIndexPriorityCommand extends RavenCommand<void> {
 
     public get isReadRequest() {
         return false;
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }
 

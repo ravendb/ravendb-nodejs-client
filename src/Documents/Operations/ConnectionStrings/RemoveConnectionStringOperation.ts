@@ -5,6 +5,8 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 import { ConnectionString } from "../Etl/ConnectionString";
 import { ServerNode } from "../../../Http/ServerNode";
+import { IRaftCommand } from "../../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export class RemoveConnectionStringOperation<T extends ConnectionString>
     implements IMaintenanceOperation<RemoveConnectionStringResult> {
@@ -24,7 +26,8 @@ export class RemoveConnectionStringOperation<T extends ConnectionString>
 }
 
 export class RemoveConnectionStringCommand<T extends ConnectionString>
-    extends RavenCommand<RemoveConnectionStringResult> {
+    extends RavenCommand<RemoveConnectionStringResult>
+    implements IRaftCommand {
     private readonly _connectionString: T;
 
     public constructor(connectionString: T) {
@@ -54,8 +57,16 @@ export class RemoveConnectionStringCommand<T extends ConnectionString>
 
         return this._parseResponseDefaultAsync(bodyStream);
     }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
+    }
 }
 
 export interface RemoveConnectionStringResult {
-    eTag: number;
+    /**
+     * @deprecated ETag is not supported anymore. Will be removed in next major version of the product. Please use RaftCommandIndex instead.
+     */
+    eTag?: number;
+    raftCommandIndex: number;
 }

@@ -9,6 +9,8 @@ import { RavenCommand } from "../../../Http/RavenCommand";
 import { throwError } from "../../../Exceptions";
 import { ServerNode } from "../../../Http/ServerNode";
 import * as stream from "readable-stream";
+import { IRaftCommand } from "../../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export class DeleteCompareExchangeValueOperation<T> implements IOperation<CompareExchangeResult<T>> {
 
@@ -33,7 +35,7 @@ export class DeleteCompareExchangeValueOperation<T> implements IOperation<Compar
 
 }
 
-export class RemoveCompareExchangeCommand<T> extends RavenCommand<CompareExchangeResult<T>> {
+export class RemoveCompareExchangeCommand<T> extends RavenCommand<CompareExchangeResult<T>> implements IRaftCommand {
     private readonly _key: string;
     private readonly _index: number;
     private readonly _clazz: ClassConstructor<T>;
@@ -74,5 +76,9 @@ export class RemoveCompareExchangeCommand<T> extends RavenCommand<CompareExchang
             .process(bodyStream);
         this.result = CompareExchangeResult.parseFromObject(resObj, this._conventions, this._clazz);
         return body;
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }

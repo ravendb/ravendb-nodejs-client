@@ -51,7 +51,7 @@ export abstract class AggregationQueryBase {
                         this._processResults(queryResult, conventions)));
     }
 
-    protected abstract _getIndexQuery(): IndexQuery;
+    protected abstract _getIndexQuery(updateAfterQueryExecuted?: boolean): IndexQuery;
 
     // tslint:disable-next-line:function-name
     public abstract emit(evtName: "afterQueryExecuted", queryResult: QueryResult);
@@ -81,6 +81,6 @@ export abstract class AggregationQueryBase {
     }
 
     public toString(): string {
-        return this._getIndexQuery().toString();
+        return this._getIndexQuery(false).toString();
     }
 }

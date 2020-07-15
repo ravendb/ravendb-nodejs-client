@@ -6,6 +6,8 @@ import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestParameters } from "../../Primitives/Http";
 import { HeadersBuilder } from "../../Utility/HttpUtil";
 import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
+import { IRaftCommand } from "../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../Utility/RaftIdGenerator";
 
 export interface DeleteDatabaseResult {
     raftCommandIndex: number;
@@ -44,7 +46,7 @@ export class DeleteDatabasesOperation implements IServerOperation<DeleteDatabase
     }
 }
 
-export class DeleteDatabaseCommand extends RavenCommand<DeleteDatabaseResult> {
+export class DeleteDatabaseCommand extends RavenCommand<DeleteDatabaseResult> implements IRaftCommand {
     private readonly _parameters: string;
 
     public constructor(conventions: DocumentConventions, parameters: DeleteDatabasesParameters) {
@@ -85,5 +87,9 @@ export class DeleteDatabaseCommand extends RavenCommand<DeleteDatabaseResult> {
 
     public get isReadRequest() {
         return false;
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }

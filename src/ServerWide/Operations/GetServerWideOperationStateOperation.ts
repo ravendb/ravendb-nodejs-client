@@ -4,6 +4,7 @@ import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
 import * as stream from "readable-stream";
 import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
+import { no } from "change-case";
 
 export class GetServerWideOperationStateOperation implements IServerOperation<IRavenResponse> {
 
@@ -26,11 +27,14 @@ export class GetServerWideOperationStateCommand extends RavenCommand<IRavenRespo
     private readonly _id: number;
     private _conventions: DocumentConventions;
 
-    public constructor(conventions: DocumentConventions, id: number) {
+    public constructor(conventions: DocumentConventions, id: number)
+    public constructor(conventions: DocumentConventions, id: number, nodeTag: string)
+    public constructor(conventions: DocumentConventions, id: number, nodeTag?: string) {
         super();
 
         this._conventions = conventions;
         this._id = id;
+        this.selectedNodeTag = nodeTag;
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {

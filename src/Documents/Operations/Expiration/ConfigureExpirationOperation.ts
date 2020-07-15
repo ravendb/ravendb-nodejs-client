@@ -5,6 +5,8 @@ import * as stream from "readable-stream";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
+import { IRaftCommand } from "../../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export class ConfigureExpirationOperation implements IMaintenanceOperation<ConfigureExpirationOperationResult> {
     private readonly _configuration: ExpirationConfiguration;
@@ -22,7 +24,7 @@ export class ConfigureExpirationOperation implements IMaintenanceOperation<Confi
     }
 }
 
-class ConfigureExpirationCommand extends RavenCommand<ConfigureExpirationOperationResult> {
+class ConfigureExpirationCommand extends RavenCommand<ConfigureExpirationOperationResult> implements IRaftCommand {
     private readonly _configuration: ExpirationConfiguration;
 
     public constructor(configuration: ExpirationConfiguration) {
@@ -54,6 +56,10 @@ class ConfigureExpirationCommand extends RavenCommand<ConfigureExpirationOperati
         }
 
         return this._parseResponseDefaultAsync(bodyStream);
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }
 

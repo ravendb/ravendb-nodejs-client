@@ -22,7 +22,9 @@ export abstract class AbstractIndexCreationTask extends AbstractGenericIndexCrea
         indexDefinitionBuilder.termVectorsStrings = this.termVectorsStrings;
         indexDefinitionBuilder.spatialIndexesStrings = this.spatialOptionsStrings;
         indexDefinitionBuilder.outputReduceToCollection = this.outputReduceToCollection;
+        indexDefinitionBuilder.patternForOutputReduceToCollectionReferences = this.patternForOutputReduceToCollectionReferences;
         indexDefinitionBuilder.additionalSources = this.additionalSources;
+        indexDefinitionBuilder.configuration = this.configuration;
 
         return indexDefinitionBuilder.toIndexDefinition(this.conventions);
     }

@@ -9,6 +9,8 @@ import { HeadersBuilder } from "../../Utility/HttpUtil";
 import { DatabaseRecord } from "..";
 import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
 import { CONSTANTS, HEADERS } from "../../Constants";
+import { IRaftCommand } from "../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../Utility/RaftIdGenerator";
 
 export class CreateDatabaseOperation implements IServerOperation<DatabasePutResult> {
 
@@ -29,7 +31,7 @@ export class CreateDatabaseOperation implements IServerOperation<DatabasePutResu
     }
 }
 
-export class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> {
+export class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> implements IRaftCommand {
     private _conventions: DocumentConventions;
     private readonly _databaseRecord: DatabaseRecord;
     private readonly _replicationFactor: number;
@@ -77,5 +79,9 @@ export class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> {
 
     public get isReadRequest(): boolean {
         return false;
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }

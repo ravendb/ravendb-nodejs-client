@@ -4,6 +4,8 @@ import { IServerOperation, OperationResultType } from "../../../Documents/Operat
 import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
+import { IRaftCommand } from "../../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export class DeleteCertificateOperation implements IServerOperation<void> {
 
@@ -26,7 +28,7 @@ export class DeleteCertificateOperation implements IServerOperation<void> {
     }
 }
 
-class DeleteCertificateCommand extends RavenCommand<void> {
+class DeleteCertificateCommand extends RavenCommand<void> implements IRaftCommand {
     private readonly _thumbprint: string;
 
     public constructor(thumbprint: string) {
@@ -49,5 +51,9 @@ class DeleteCertificateCommand extends RavenCommand<void> {
             uri,
             method: "DELETE"
         }
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }

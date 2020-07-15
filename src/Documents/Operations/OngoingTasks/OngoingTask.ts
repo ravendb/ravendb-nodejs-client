@@ -14,6 +14,7 @@ export interface OngoingTask {
     taskConnectionStatus: OngoingTaskConnectionStatus;
     taskName: string;
     error: string;
+    mentorNode: string;
 }
 
 export interface OngoingTaskBackup extends OngoingTask {
@@ -44,7 +45,6 @@ export interface OngoingTaskReplication extends OngoingTask {
     destinationUrl: string;
     topologyDiscoveryUrls: string[];
     destinationDatabase: string;
-    mentorNode: string;
     connectionStringName: string;
     delayReplicationFor: string;
 }
@@ -64,7 +64,6 @@ export interface OngoingTaskSubscription extends OngoingTask {
     query: string;
     subscriptionName: string;
     subscriptionId: number;
-    mentorNode: string;
     changeVectorForNextBatchStartingPoint: string;
     lastBatchAckTime: Date;
     disabled: boolean;

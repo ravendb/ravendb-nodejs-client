@@ -6,6 +6,8 @@ import { DatabasePutResult } from "./index";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
 import { ServerNode } from "../../Http/ServerNode";
+import { IRaftCommand } from "../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../Utility/RaftIdGenerator";
 
 export class PromoteDatabaseNodeOperation implements IServerOperation<DatabasePutResult> {
     private readonly _databaseName: string;
@@ -25,7 +27,7 @@ export class PromoteDatabaseNodeOperation implements IServerOperation<DatabasePu
     }
 }
 
-class PromoteDatabaseNodeCommand extends RavenCommand<DatabasePutResult> {
+class PromoteDatabaseNodeCommand extends RavenCommand<DatabasePutResult> implements IRaftCommand {
     private readonly _databaseName: string;
     private readonly _node: string;
 
@@ -63,5 +65,9 @@ class PromoteDatabaseNodeCommand extends RavenCommand<DatabasePutResult> {
 
     get isReadRequest(): boolean {
         return false;
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }

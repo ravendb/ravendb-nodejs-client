@@ -47,7 +47,10 @@ export const CONSTANTS = {
         PeriodicBackup: {
             FULL_BACKUP_EXTENSION: "ravendb-full-backup",
             SNAPSHOT_EXTENSION: "ravendb-snapshot",
+            ENCRYPTED_FULL_BACKUP_EXTENSION: ".ravendb-encrypted-full-backup",
+            ENCRYPTED_SNAPSHOT_EXTENSION: ".ravendb-encrypted-snapshot",
             INCREMENTAL_BACKUP_EXTENSION: "ravendb-incremental-backup",
+            ENCRYPTED_INCREMENTAL_BACKUP_EXTENSION: ".ravendb-encrypted-incremental-backup",
 
             Folders: {
                 INDEXES: "Indexes",

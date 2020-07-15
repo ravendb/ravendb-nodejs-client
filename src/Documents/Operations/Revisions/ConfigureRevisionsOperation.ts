@@ -5,6 +5,8 @@ import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as stream from "readable-stream";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { ServerNode } from "../../../Http/ServerNode";
+import { IRaftCommand } from "../../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export class ConfigureRevisionsOperation implements IMaintenanceOperation<ConfigureRevisionsOperationResult> {
     private readonly _configuration: RevisionsConfiguration;
@@ -22,7 +24,7 @@ export class ConfigureRevisionsOperation implements IMaintenanceOperation<Config
     }
 }
 
-export class ConfigureRevisionsCommand extends RavenCommand<ConfigureRevisionsOperationResult> {
+export class ConfigureRevisionsCommand extends RavenCommand<ConfigureRevisionsOperationResult> implements IRaftCommand {
     private readonly _configuration: RevisionsConfiguration;
 
     public constructor(configuration: RevisionsConfiguration) {
@@ -58,6 +60,10 @@ export class ConfigureRevisionsCommand extends RavenCommand<ConfigureRevisionsOp
             });
 
         return body;
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }
 

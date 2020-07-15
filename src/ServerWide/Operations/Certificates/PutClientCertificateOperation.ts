@@ -7,6 +7,8 @@ import { IServerOperation, OperationResultType } from "../../../Documents/Operat
 import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
+import { IRaftCommand } from "../../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export class PutClientCertificateOperation implements IServerOperation<void> {
     private readonly _certificate: string;
@@ -38,7 +40,7 @@ export class PutClientCertificateOperation implements IServerOperation<void> {
     }
 }
 
-class PutClientCertificateCommand extends RavenCommand<void> {
+class PutClientCertificateCommand extends RavenCommand<void> implements IRaftCommand {
     private readonly _certificate: string;
     private readonly _permissions: Record<string, DatabaseAccess>;
     private readonly _name: string;
@@ -88,5 +90,9 @@ class PutClientCertificateCommand extends RavenCommand<void> {
                 .build(),
             body
         }
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }

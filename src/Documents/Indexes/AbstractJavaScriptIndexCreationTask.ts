@@ -35,14 +35,6 @@ export class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
         this._definition.reduce = value;
     }
 
-    public get configuration() {
-        return this._definition.configuration;
-    }
-
-    public set configuration(value) {
-        this._definition.configuration = value;
-    }
-    
     public get isMapReduce(): boolean {
         return !!this.reduce;
     }

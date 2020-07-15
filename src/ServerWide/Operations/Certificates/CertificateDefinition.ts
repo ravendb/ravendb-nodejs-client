@@ -7,6 +7,7 @@ export interface CertificateDefinition {
     password?: string;
     securityClearance: SecurityClearance;
     thumbprint: string;
+    publicKeyPinningHash: string;
     notAfter: Date;
     permissions?: Record<string, DatabaseAccess>;
     collectionPrimaryKey?: string;

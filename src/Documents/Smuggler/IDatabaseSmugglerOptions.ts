@@ -7,4 +7,5 @@ export interface IDatabaseSmugglerOptions {
     transformScript: string;
     maxStepsForTransformScript: number;
     skipRevisionCreation: boolean;
+    operateOnDatabaseRecordType: DatabaseRecordItemType[];
 }

@@ -22,13 +22,15 @@ export class DeleteByQueryOperation implements IOperation<OperationIdResult> {
 
     private readonly _options: QueryOperationOptions;
 
+    public constructor(queryToDelete: string);
     public constructor(queryToDelete: IndexQuery);
-    public constructor(queryToDelete: IndexQuery, options?: QueryOperationOptions) {
+    public constructor(queryToDelete: IndexQuery, options: QueryOperationOptions);
+    public constructor(queryToDelete: IndexQuery | string, options?: QueryOperationOptions) {
         if (!queryToDelete) {
             throwError("InvalidArgumentException", "QueryToDelete cannot be null");
         }
 
-        this._queryToDelete = queryToDelete;
+        this._queryToDelete = TypeUtil.isString(queryToDelete) ? new IndexQuery(queryToDelete) : queryToDelete;
         this._options = options;
     }
 

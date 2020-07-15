@@ -5,8 +5,10 @@ import { HttpRequestParameters } from "../../Primitives/Http";
 import * as stream from "readable-stream";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { ServerNode } from "../../Http/ServerNode";
+import { IRaftCommand } from "../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../Utility/RaftIdGenerator";
 
-export class CreateSubscriptionCommand extends RavenCommand<CreateSubscriptionResult> {
+export class CreateSubscriptionCommand extends RavenCommand<CreateSubscriptionResult> implements IRaftCommand {
     private readonly _conventions: DocumentConventions;
     private readonly _options: SubscriptionCreationOptions;
     private readonly _id: string;
@@ -40,5 +42,9 @@ export class CreateSubscriptionCommand extends RavenCommand<CreateSubscriptionRe
 
     public get isReadRequest() {
         return false;
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }

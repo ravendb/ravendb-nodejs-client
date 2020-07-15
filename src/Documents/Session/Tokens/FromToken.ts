@@ -47,18 +47,9 @@ export class FromToken extends QueryToken {
         }
 
         if (this._dynamic) {
-            writer.append("from ");
-
-            if (FromToken.WHITE_SPACE_CHARS.some(c => this._collectionName.indexOf(c) !== -1)) {
-                if (this._collectionName.indexOf("\"") !== -1) {
-                    this.throwInvalidCollectionName();
-                }
-
-                writer.append("\"").append(this._collectionName).append("\"");
-            } else {
-                this._writeField(writer, this._collectionName);
-            }
-
+            writer.append("from '");
+            writer.append(this._collectionName.replace(/'/g, "\'"));
+            writer.append("'");
         } else {
             writer
                 .append("from index '")
@@ -69,11 +60,5 @@ export class FromToken extends QueryToken {
         if (this._alias) {
             writer.append(" as ").append(this._alias);
         }
-    }
-
-    // tslint:disable-next-line:function-name
-    private throwInvalidCollectionName(): void {
-        throwError("InvalidArgumentException",
-            "Collection name cannot contain a quote, but was: " + this._collectionName);
     }
 }

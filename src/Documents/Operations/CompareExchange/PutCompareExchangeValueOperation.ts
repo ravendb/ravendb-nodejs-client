@@ -11,6 +11,8 @@ import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import * as stream from "readable-stream";
 import { ObjectTypeDescriptor, ClassConstructor } from "../../../Types";
+import { IRaftCommand } from "../../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export class PutCompareExchangeValueOperation<T> implements IOperation<CompareExchangeResult<T>> {
 
@@ -36,7 +38,7 @@ export class PutCompareExchangeValueOperation<T> implements IOperation<CompareEx
     }
 }
 
-export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExchangeResult<T>> {
+export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExchangeResult<T>> implements IRaftCommand {
     private readonly _key: string;
     private readonly _value: T;
     private readonly _index: number;
@@ -99,5 +101,9 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
         this.result = CompareExchangeResult.parseFromObject(resObj, this._conventions, clazz);
 
         return body;
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }

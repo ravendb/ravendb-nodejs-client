@@ -62,7 +62,7 @@ export abstract class SuggestionQueryBase {
             ));
     }
 
-    protected abstract _getIndexQuery(): IndexQuery;
+    protected abstract _getIndexQuery(updateAfterQueryExecuted?: boolean): IndexQuery;
 
     protected abstract _invokeAfterQueryExecuted(result: QueryResult): void;
 
@@ -74,4 +74,9 @@ export abstract class SuggestionQueryBase {
             metadataOnly: false
         });
     }
+
+    public toString(): string {
+        return this._getIndexQuery(false).toString();
+    }
+
 }

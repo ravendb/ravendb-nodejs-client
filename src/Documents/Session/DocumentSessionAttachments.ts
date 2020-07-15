@@ -46,9 +46,9 @@ export class DocumentSessionAttachments
     private async _get(idOrEntity: string | object, name: string): Promise<AttachmentResult> {
         let docId;
         if (typeof idOrEntity !== "string") {
-            const document = this._documentsByEntity.get(idOrEntity);
+            const document = this._session.documentsByEntity.get(idOrEntity);
             if (!document) {
-                this._throwEntityNotInSession(idOrEntity);
+                this.throwEntityNotInSessionOrMissingId(idOrEntity);
             }
 
             docId = document.id;

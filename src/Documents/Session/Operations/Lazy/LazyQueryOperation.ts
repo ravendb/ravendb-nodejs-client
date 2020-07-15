@@ -77,10 +77,10 @@ export class LazyQueryOperation<T extends object> implements ILazyOperation {
             queryResult = await QueryCommand.parseQueryResultResponseAsync(
                 stringToReadable(response.result), this._conventions, false);
         }
-        this._handleResponse(queryResult);
+        this._handleResponse(queryResult, response.elapsed);
     }
 
-    private _handleResponse(queryResult: QueryResult): void {
+    private _handleResponse(queryResult: QueryResult, duration: number): void {
         this._queryOperation.ensureIsAcceptableAndSaveResult(queryResult);
         this._parent.emit("afterQueryExecuted", queryResult);
         this.result = this._queryOperation.complete(this._clazz);

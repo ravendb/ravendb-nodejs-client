@@ -10,6 +10,7 @@ export class DatabaseSmugglerImportOptions extends DatabaseSmugglerOptions imple
 
         if (options) {
             this.includeExpired = options.includeExpired;
+            this.includeArtificial = options.includeArtifical;
             this.maxStepsForTransformScript = options.maxStepsForTransformScript;
             this.operateOnTypes = [ ... options.operateOnTypes ];
             this.removeAnalyzers = options.removeAnalyzers;

@@ -19,6 +19,7 @@ export abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
     protected spatialOptionsStrings: { [key: string]: SpatialOptions };
 
     protected outputReduceToCollection: string;
+    protected patternForOutputReduceToCollectionReferences: string;
 
     // noinspection TypeScriptAbstractClassConstructorCanBeMadeProtected
     public constructor() {

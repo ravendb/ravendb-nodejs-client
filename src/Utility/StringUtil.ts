@@ -23,6 +23,31 @@ export class StringUtil {
             .replace("http://", "ws://");
     }
 
+    public static isIdentifier(token: string)
+    public static isIdentifier(token: string, start: number, length: number)
+    public static isIdentifier(token: string, start?: number, length?: number) {
+        if (TypeUtil.isNullOrUndefined(start)) {
+            start = 0;
+            length = token.length;
+        }
+
+        if (length === 0 || length > 256) {
+            return false;
+        }
+
+        if (!StringUtil.isLetter(token.charAt(start)) && token.charAt(start) !== "_") {
+            return false;
+        }
+
+        for (let i = 1; i < length; i++) {
+            if (!StringUtil.isLetterOrDigit(token.charAt(start + i)) && token.charAt(start + i) !== "_") {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public static format(s: string, vars?: object | any, ...varsArray: any[]): string {
         if (TypeUtil.isObject(vars)) {
             return s.replace(

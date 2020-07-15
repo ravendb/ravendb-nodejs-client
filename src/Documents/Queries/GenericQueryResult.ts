@@ -11,6 +11,12 @@ export interface QueryResultExplanations {
 export class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TResult, TIncludes> {
 
     public totalResults: number;
+
+    /**
+     *  The total results for the query, taking into account the
+     *  offset / limit clauses for this query
+     */
+    public cappedMaxResults: number;
     public skippedResults: number;
     public highlightings: QueryResultHighlightings;
     public explanations: QueryResultExplanations;

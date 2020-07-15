@@ -16,6 +16,7 @@ export type CommandType =
     | "AttachmentCOPY"
     | "CompareExchangePUT"
     | "CompareExchangeDELETE"
+    | "ForceRevisionCreation"
     | "Counters"
     | "ClientAnyCommand"
     | "ClientModifyDocumentCommand"
@@ -103,8 +104,8 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
 
 export class PutCommandDataWithJson extends PutCommandDataBase<object> {
 
-    public constructor(id: string, changeVector: string, document: object) {
-        super(id, changeVector, document);
+    public constructor(id: string, changeVector: string, document: object, strategy: ForceRevisionStrategy) {
+        super(id, changeVector, document, strategy);
     }
 }
 

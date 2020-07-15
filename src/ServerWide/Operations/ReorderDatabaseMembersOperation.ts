@@ -4,19 +4,22 @@ import { IServerOperation, OperationResultType } from "../../Documents/Operation
 import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
+import { IRaftCommand } from "../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../Utility/RaftIdGenerator";
 
 export class ReorderDatabaseMembersOperation implements IServerOperation<void> {
     private readonly _database: string;
     private readonly _parameters: ReorderDatabaseMembersParameters;
 
-    public constructor(database: string, order: string[]) {
+    public constructor(database: string, order: string[], fixed: boolean = false) {
         if (!order || order.length === 0) {
             throwError("InvalidArgumentException", "Order list must contain values");
         }
 
         this._database = database;
         this._parameters = {
-            membersOrder: order
+            membersOrder: order,
+            fixed
         }
     }
 
@@ -29,7 +32,7 @@ export class ReorderDatabaseMembersOperation implements IServerOperation<void> {
     }
 }
 
-class ReorderDatabaseMembersCommand extends RavenCommand<void> {
+class ReorderDatabaseMembersCommand extends RavenCommand<void> implements IRaftCommand {
     private readonly _databaseName: string;
     private readonly _parameters: ReorderDatabaseMembersParameters;
 
@@ -60,8 +63,13 @@ class ReorderDatabaseMembersCommand extends RavenCommand<void> {
     get isReadRequest(): boolean {
         return false;
     }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
+    }
 }
 
 export interface ReorderDatabaseMembersParameters {
     membersOrder: string[];
+    fixed: boolean;
 }

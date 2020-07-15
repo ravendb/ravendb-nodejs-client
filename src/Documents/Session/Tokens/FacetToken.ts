@@ -7,6 +7,7 @@ import { FacetBase } from "../../Queries/Facets/FacetBase";
 import * as StringBuilder from "string-builder";
 import { GenericRangeFacet } from "../../Queries/Facets/GenericRangeFacet";
 import { RangeFacet } from "../../Queries/Facets/RangeFacet";
+import { QueryFieldUtil } from "../../Queries/QueryFieldUtil";
 
 export interface FacetTokenSetupDocumentIdOptions {
     facetSetupDocumentId: string;
@@ -82,8 +83,8 @@ export class FacetToken extends QueryToken {
         if (facetSetupDocumentIdOrFacet instanceof Facet) {
             const optionsParameterName = FacetToken._getOptionsParameterName(facet, addQueryParameter);
             const token = new FacetToken({
-                aggregateByFieldName: (facet as Facet).fieldName,
-                alias: facet.displayFieldName,
+                aggregateByFieldName: QueryFieldUtil.escapeIfNecessary((facet as Facet).fieldName),
+                alias: QueryFieldUtil.escapeIfNecessary(facet.displayFieldName),
                 optionsParameterName
             });
             FacetToken._applyAggregations(facet, token);
@@ -93,7 +94,7 @@ export class FacetToken extends QueryToken {
         if (facet instanceof RangeFacet) {
             const optionsParameterName = FacetToken._getOptionsParameterName(facet, addQueryParameter);
             const token = new FacetToken({
-                alias: facet.displayFieldName,
+                alias: QueryFieldUtil.escapeIfNecessary(facet.displayFieldName),
                 ranges: (facet as RangeFacet).ranges,
                 optionsParameterName
             });
@@ -108,7 +109,7 @@ export class FacetToken extends QueryToken {
                 ranges.push(GenericRangeFacet.parse(rangeBuilder, addQueryParameter));
             }
             const token: FacetToken = new FacetToken({
-                alias: facet.displayFieldName,
+                alias: QueryFieldUtil.escapeIfNecessary(facet.displayFieldName),
                 ranges,
                 optionsParameterName
             });
