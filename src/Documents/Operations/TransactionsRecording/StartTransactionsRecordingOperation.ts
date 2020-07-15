@@ -1,6 +1,6 @@
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 import { HttpRequestParameters } from "../../../Primitives/Http";
-import * as stream from "stream";
+import * as stream from "readable-stream";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";

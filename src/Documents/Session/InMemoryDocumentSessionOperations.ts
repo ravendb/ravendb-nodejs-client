@@ -1204,6 +1204,7 @@ export abstract class InMemoryDocumentSessionOperations
             if (entityValue.ignoreChanges) {
                 continue;
             }
+
             if (this.isDeleted(entityValue.id)) {
                 continue;
             }

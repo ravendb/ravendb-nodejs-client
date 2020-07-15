@@ -6,7 +6,6 @@ import {HttpRequestParameters, HttpResponse} from "../../../Primitives/Http";
 import {getHeaders} from "../../../Utility/HttpUtil";
 import * as stream from "stream";
 import {readToBuffer} from "../../../Utility/StreamUtil";
-import * as fs from "fs";
 import { IServerOperation, OperationResultType } from "../../../Documents/Operations/OperationAbstractions";
 import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
@@ -67,7 +66,7 @@ class CreateClientCertificateCommand extends RavenCommand<CertificateRawData> {
     }
 
     get isReadRequest(): boolean {
-        return true; //TODO false!
+        return false;
     }
 
     createRequest(node: ServerNode): HttpRequestParameters {

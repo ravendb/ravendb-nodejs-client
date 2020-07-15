@@ -2,7 +2,7 @@ import { ConnectionString } from "./ConnectionString";
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 import { EtlConfiguration } from "./EtlConfiguration";
 import { HttpRequestParameters } from "../../../Primitives/Http";
-import * as stream from "stream";
+import * as stream from "readable-stream";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { ServerNode } from "../../../Http/ServerNode";

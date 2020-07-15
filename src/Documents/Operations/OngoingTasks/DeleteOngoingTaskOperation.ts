@@ -1,7 +1,7 @@
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 import { OngoingTaskType } from "./OngoingTaskType";
 import { HttpRequestParameters } from "../../../Primitives/Http";
-import * as stream from "stream";
+import * as stream from "readable-stream";
 import { ModifyOngoingTaskResult } from "../../../ServerWide/ModifyOnGoingTaskResult";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";

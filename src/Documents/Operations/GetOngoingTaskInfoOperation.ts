@@ -3,7 +3,7 @@ import { OngoingTask } from "./OngoingTasks/OngoingTask";
 import { OngoingTaskType } from "./OngoingTasks/OngoingTaskType";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { HttpRequestParameters } from "../../Primitives/Http";
-import * as stream from "stream";
+import * as stream from "readable-stream";
 import { NestedTypes } from "../../Mapping/ObjectMapper";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { RavenCommand } from "../../Http/RavenCommand";

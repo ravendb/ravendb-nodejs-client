@@ -8,7 +8,7 @@ import {
 } from "../../src";
 import { Stopwatch } from "../../src/Utility/Stopwatch";
 import { DocumentType } from "../../src";
-import { sleep } from "./TestUtil";
+import { delay } from "../../src/Utility/PromiseUtil";
 
 export class ReplicationTestContext {
 
@@ -55,7 +55,7 @@ export class ReplicationTestContext {
                 return doc;
             }
 
-            await sleep(100);
+            await delay(100);
         }
 
         return null;

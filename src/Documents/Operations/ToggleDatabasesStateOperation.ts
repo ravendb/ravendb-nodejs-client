@@ -3,7 +3,7 @@ import { DisableDatabaseToggleResult } from "./DisableDatabaseToggleResult";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { throwError } from "../../Exceptions";
 import { HttpRequestParameters } from "../../Primitives/Http";
-import * as stream from "stream";
+import * as stream from "readable-stream";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
@@ -94,15 +94,14 @@ class ToggleDatabaseStateCommand extends RavenCommand<DisableDatabaseToggleResul
         }
 
         let body: string = null;
-        await this._defaultPipeline(_ => body = _).process(bodyStream)
-            .then(results => {
-                const status = results["status"] as DisableDatabaseToggleResult[];
-                if (!TypeUtil.isArray(status)) {
-                    this._throwInvalidResponse();
-                }
+        const results = await this._defaultPipeline(_ => body = _).process(bodyStream);
 
-                this.result = status[0];
-            });
+        const status = results["status"] as DisableDatabaseToggleResult[];
+        if (!TypeUtil.isArray(status)) {
+            this._throwInvalidResponse();
+        }
+
+        this.result = status[0];
 
         return body;
     }

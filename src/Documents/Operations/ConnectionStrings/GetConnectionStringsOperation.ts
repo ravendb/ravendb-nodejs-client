@@ -1,5 +1,5 @@
 import { HttpRequestParameters } from "../../../Primitives/Http";
-import * as stream from "stream";
+import * as stream from "readable-stream";
 import { ConnectionStringType, SqlConnectionString, RavenConnectionString } from "../Etl/ConnectionString";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { OperationResultType, IMaintenanceOperation } from "../OperationAbstractions";

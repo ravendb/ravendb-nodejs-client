@@ -36,12 +36,6 @@ function logOnUncaughtAndUnhandled() {
     });
 }
 
-export async function sleep(timeout: number) {
-    return new Promise(resolve => {
-        setTimeout(resolve, timeout);
-    });
-}
-
 class TestServiceLocator extends RavenServerLocator {
     public getCommandArguments() {
         const cliOpts = [

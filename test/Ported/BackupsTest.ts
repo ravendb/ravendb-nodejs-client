@@ -1,5 +1,5 @@
 import { IDocumentStore, PeriodicBackupConfiguration } from "../../src";
-import { disposeTestDocumentStore, RavenTestContext, sleep, TemporaryDirContext, testContext } from "../Utils/TestUtil";
+import { disposeTestDocumentStore, RavenTestContext, TemporaryDirContext, testContext } from "../Utils/TestUtil";
 import * as path from "path";
 import * as fs from "fs";
 import { UpdatePeriodicBackupOperation } from "../../src/Documents/Operations/Backups/UpdatePeriodicBackupOperation";
@@ -9,6 +9,7 @@ import { assertThat } from "../Utils/AssertExtensions";
 import * as rimraf from "rimraf";
 import { Stopwatch } from "../../src/Utility/Stopwatch";
 import { throwError } from "../../src/Exceptions";
+import { delay } from "../../src/Utility/PromiseUtil";
 
 (RavenTestContext.isPullRequest ? describe.skip : describe)("BackupsTest", function () {
 
@@ -75,7 +76,7 @@ async function waitForBackup(backup: string) {
             // make sure backup was finished
             return;
         }
-        await sleep(200);
+        await delay(200);
     }
 }
 
@@ -88,7 +89,7 @@ async function waitForBackupStatus(store: IDocumentStore, taskId: number) {
             return;
         }
 
-        await sleep(200);
+        await delay(200);
     }
 
     throwError("TimeoutException", "Unable to get expected backup status");

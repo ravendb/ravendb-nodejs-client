@@ -9,6 +9,7 @@ export class ReplaceClusterCertificateOperation implements IServerOperation<void
     private readonly _certBytes: Buffer;
     private readonly _replaceImmediately: boolean;
 
+    //TODO: add support for stream and buffer
     public constructor(certBytes: Buffer, replaceImmediately: boolean) {
         if (!certBytes) {
             throwError("InvalidArgumentException", "CertBytes cannot be null");
