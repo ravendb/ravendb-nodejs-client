@@ -160,9 +160,19 @@ export interface IAbstractDocumentQuery<T> {
     _whereStartsWith(fieldName: string, value: any): void;
 
     /**
+     * Matches fields which starts with the specified value.
+     */
+    _whereStartsWith(fieldName: string, value: any, exact: boolean): void;
+
+    /**
      * Matches fields which ends with the specified value.
      */
     _whereEndsWith(fieldName: string, value: any): void;
+
+    /**
+     * Matches fields which ends with the specified value.
+     */
+    _whereEndsWith(fieldName: string, value: any, exact: boolean): void;
 
     /**
      * Matches fields where the value is between the specified start and end, inclusive

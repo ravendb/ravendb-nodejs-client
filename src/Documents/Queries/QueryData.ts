@@ -36,7 +36,7 @@ export class QueryData {
     }
 
     public static customFunction(alias: string, func: string): QueryData {
-        return new QueryData([func], [], alias, null, null, false);
+        return new QueryData([func], [], alias, null, null, true);
     }
 
 }

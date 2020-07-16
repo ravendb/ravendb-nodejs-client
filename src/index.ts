@@ -24,6 +24,12 @@ export * from "./ServerWide/CompactSettings";
 export * from "./Documents/Operations/Etl/ConnectionString";
 export * from "./ServerWide/ModifyOnGoingTaskResult";
 export * from "./ServerWide/DeletionInProgressStatus";
+export * from "./ServerWide/IDatabaseTaskStatus";
+export * from "./ServerWide/Operations/BuildNumber";
+export * from "./ServerWide/Operations/GetBuildNumberOperation";
+export * from "./ServerWide/Operations/ReorderDatabaseMembersOperation";
+export * from "./ServerWide/Operations/UpdateDatabaseOperation";
+
 
 // SERVERWIDE OPERATIONS
 export * from "./ServerWide/Operations";
@@ -31,12 +37,20 @@ export * from "./ServerWide/Operations/DeleteDatabasesOperation";
 export * from "./ServerWide/Operations/GetDatabaseNamesOperation";
 export * from "./ServerWide/Operations/GetServerWideOperationStateOperation";
 export * from "./ServerWide/Operations/ServerWideOperationCompletionAwaiter";
+export * from "./ServerWide/Operations/Certificates/ReplaceClusterCertificateOperation"
+export * from "./ServerWide/Operations/Configuration/GetServerWideClientConfigurationOperation"
+export * from "./ServerWide/Operations/Configuration/PutServerWideClientConfigurationOperation"
+export * from "./ServerWide/Operations/Logs/GetLogsConfigurationResult"
+export * from "./ServerWide/Operations/Logs/GetLogsConfigurationOperation"
+export * from "./ServerWide/Operations/Logs/LogMode"
+export * from "./ServerWide/Operations/Logs/SetLogsConfigurationOperation"
 
 export { GetDatabaseTopologyCommand } from "./ServerWide/Commands/GetDatabaseTopologyCommand";
 export { GetClusterTopologyCommand } from "./ServerWide/Commands/GetClusterTopologyCommand";
 export { GetTcpInfoCommand } from "./ServerWide/Commands/GetTcpInfoCommand";
 export { CreateDatabaseOperation } from "./ServerWide/Operations/CreateDatabaseOperation";
 export { DatabaseRecord, ConflictSolver, ScriptResolver } from "./ServerWide";
+export * from "./ServerWide/Operations/ModifyConflictSolverOperation";
 export * from "./Documents/Operations/Etl/ConnectionString";
 
 // OPERATIONS AND COMMANDS
@@ -178,6 +192,17 @@ export * from "./Documents/Operations/Replication/PullReplicationDefinition";
 export * from "./Documents/Operations/Etl/AddEtlOperation";
 export * from "./Documents/Operations/Etl/UpdateEtlOperation";
 export * from "./Documents/Operations/Etl/ResetEtlOperation";
+export * from "./Documents/Operations/DisableDatabaseToggleResult";
+export * from "./Documents/Operations/Expiration/ConfigureExpirationOperation";
+export * from "./Documents/Operations/OngoingTasks/DeleteOngoingTaskOperation";
+export * from "./Documents/Operations/OngoingTasks/OngoingTaskType";
+export * from "./Documents/Operations/OngoingTasks/RunningBackup";
+export * from "./Documents/Operations/OngoingTasks/NextBackup";
+export * from "./Documents/Operations/GetOngoingTaskInfoOperation";
+export * from "./Documents/Operations/OngoingTasks/ToggleOngoingTaskStateOperation";
+export * from "./Documents/Operations/ToggleDatabasesStateOperation";
+export * from "./Documents/Operations/TransactionsRecording/StartTransactionsRecordingOperation";
+export * from "./Documents/Operations/TransactionsRecording/StopTransactionsRecordingOperation";
 
 // BACKUP
 export * from "./Documents/Operations/Backups/AmazonSettings";
@@ -191,6 +216,19 @@ export * from "./Documents/Operations/Backups/LocalSettings";
 export * from "./Documents/Operations/Backups/PeriodicBackupConfiguration";
 export * from "./Documents/Operations/Backups/S3Settings";
 export * from "./Documents/Operations/Backups/BackupSettings";
+export * from "./Documents/Operations/Backups/BackupStatus";
+export * from "./Documents/Operations/Backups/GetPeriodicBackupStatusOperation";
+export * from "./Documents/Operations/Backups/GetPeriodicBackupStatusOperationResult";
+export * from "./Documents/Operations/Backups/LastRaftIndex";
+export * from "./Documents/Operations/Backups/PeriodicBackupStatus";
+export * from "./Documents/Operations/Backups/RestoreBackupConfiguration";
+export * from "./Documents/Operations/Backups/RestoreBackupOperation";
+export * from "./Documents/Operations/Backups/StartBackupOperation";
+export * from "./Documents/Operations/Backups/StartBackupOperationResult";
+export * from "./Documents/Operations/Backups/UpdatePeriodicBackupOperation";
+export * from "./Documents/Operations/Backups/UpdatePeriodicBackupOperationResult";
+export * from "./Documents/Operations/Backups/UploadProgress";
+export * from "./Documents/Operations/Backups/UploadState";
 
 
 // INDEXES
@@ -424,6 +462,21 @@ export * from "./Documents/Smuggler/DatabaseSmugglerImportOptions";
 export * from "./Documents/Smuggler/IDatabaseSmugglerImportOptions";
 export * from "./Documents/Smuggler/DatabaseSmugglerOptions";
 export * from "./Documents/Smuggler/IDatabaseSmugglerOptions";
+
+// Certificates
+export * from "./ServerWide/Operations/Certificates/CertificateDefinition";
+export * from "./ServerWide/Operations/Certificates/CertificateRawData";
+export * from "./ServerWide/Operations/Certificates/CreateClientCertificateOperation";
+export * from "./ServerWide/Operations/Certificates/DatabaseAccess";
+export * from "./ServerWide/Operations/Certificates/DeleteCertificateOperation";
+export * from "./ServerWide/Operations/Certificates/GetCertificateOperation";
+export * from "./ServerWide/Operations/Certificates/GetCertificatesOperation";
+export * from "./ServerWide/Operations/Certificates/GetCertificatesResponse";
+export * from "./ServerWide/Operations/Certificates/PutClientCertificateOperation";
+export * from "./ServerWide/Operations/Certificates/SecurityClearance";
+export * from "./ServerWide/Operations/AddDatabaseNodeOperation";
+export * from "./ServerWide/Operations/PromoteDatabaseNodeOperation";
+
 
 // MAPPING
 export { TypesAwareObjectMapper } from "./Mapping/ObjectMapper";

@@ -21,7 +21,8 @@ export class ServerOperationExecutor implements IDisposable {
                 documentConventions: store.conventions
             })
             : ClusterRequestExecutor.create(store.urls, {
-                documentConventions: store.conventions
+                documentConventions: store.conventions,
+                authOptions: store.authOptions
             });
 
         store.once("afterDispose",

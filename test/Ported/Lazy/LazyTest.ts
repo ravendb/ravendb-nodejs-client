@@ -3,6 +3,7 @@ import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
 import { Company, User } from "../../Assets/Entities";
 import { Lazy } from "../../../src/Documents/Lazy";
 import * as assert from "assert";
+import { assertThat } from "../../Utils/AssertExtensions";
 
 describe("LazyTest", function () {
 
@@ -140,15 +141,16 @@ describe("LazyTest", function () {
 
         {
             const session = store.openSession();
-            const lazy: Lazy<User> = session.advanced.lazily.load<User>("users/1");
-            await lazy.getValue();
-        }
+            await session.advanced.lazily.load<User>("users/1").getValue();
 
-        {
-            const session = store.openSession();
+            const oldRequestCount = session.advanced.numberOfRequests;
+
             const lazy: Lazy<User> = session.advanced.lazily.load<User>("users/1");
             const user = await lazy.getValue();
             assert.strictEqual(user.lastName, "Oren");
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(oldRequestCount);
         }
     });
 

@@ -4,17 +4,20 @@ import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import DocumentStore, {
     IDocumentStore,
+    SubscriptionWorkerOptions,
+    SubscriptionBatch,
+    SubscriptionCreationOptions,
+    SubscriptionWorker, ToggleOngoingTaskStateOperation
 } from "../../../src";
 import { AsyncQueue } from "../../Utils/AsyncQueue";
-import { SubscriptionBatch } from "../../../src/Documents/Subscriptions/SubscriptionBatch";
-import { SubscriptionWorkerOptions } from "../../../src/Documents/Subscriptions/SubscriptionWorkerOptions";
-import { SubscriptionCreationOptions } from "../../../src/Documents/Subscriptions/SubscriptionCreationOptions";
 import * as semaphore from "semaphore";
 import { acquireSemaphore } from "../../../src/Utility/SemaphoreUtil";
-import { SubscriptionWorker } from "../../../src/Documents/Subscriptions/SubscriptionWorker";
 import { getError, throwError } from "../../../src/Exceptions";
 import { TypeUtil } from "../../../src/Utility/TypeUtil";
 import { delay } from "bluebird";
+import { GetOngoingTaskInfoOperation } from "../../../src/Documents/Operations/GetOngoingTaskInfoOperation";
+import { OngoingTaskSubscription } from "../../../src/Documents/Operations/OngoingTasks/OngoingTask";
+import { assertThat } from "../../Utils/AssertExtensions";
 
 describe("SubscriptionsBasicTest", function () {
     const _reasonableWaitTime = 5 * 1000;
@@ -318,6 +321,36 @@ describe("SubscriptionsBasicTest", function () {
         } finally {
             subscription.dispose();
         }
+    });
+
+    it("can disable subscription", async () => {
+        {
+            const session = store.openSession();
+            for (let i = 0; i < 10; i++) {
+                await session.store(new Company());
+                await session.store(new User());
+            }
+            await session.saveChanges();
+        }
+
+        const id = await store.subscriptions.create(User);
+
+        let subscriptionTask = await store.maintenance.send(new GetOngoingTaskInfoOperation(id, "Subscription")) as OngoingTaskSubscription;
+
+        assertThat(subscriptionTask)
+            .isNotNull();
+        assertThat(subscriptionTask.taskType)
+            .isEqualTo("Subscription");
+        assertThat(subscriptionTask.responsibleNode)
+            .isNotNull();
+
+        await store.maintenance.send(new ToggleOngoingTaskStateOperation(subscriptionTask.taskId, "Subscription", true));
+
+        subscriptionTask = await store.maintenance.send(new GetOngoingTaskInfoOperation(id, "Subscription")) as OngoingTaskSubscription;
+        assertThat(subscriptionTask)
+            .isNotNull();
+        assertThat(subscriptionTask.disabled)
+            .isTrue();
     });
 
     it("will acknowledge empty batches", async function() {

@@ -12,6 +12,7 @@ import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../.
 import { assertThat } from "../../../../Utils/AssertExtensions";
 import { User } from "../../../../Assets/Entities";
 import { ReplicationTestContext } from "../../../../Utils/ReplicationTestContext";
+import { DeleteOngoingTaskOperation } from "../../../../../src/Documents/Operations/OngoingTasks/DeleteOngoingTaskOperation";
 
 (RavenTestContext.isPullRequest ? describe.skip : describe)(
     `${RavenTestContext.isPullRequest ? "[Skipped on PR] " : ""}` +
@@ -71,6 +72,12 @@ import { ReplicationTestContext } from "../../../../Utils/ReplicationTestContext
                     .isGreaterThan(0);
 
                 await replication.waitForDocumentToReplicate(dst, "users/1", 10 * 1000, User); //TODO: assert document not null!
+
+                const deleteResult = await src.maintenance.send(
+                    new DeleteOngoingTaskOperation(etlResult.taskId, "RavenEtl"));
+
+                assertThat(deleteResult.taskId)
+                    .isEqualTo(etlResult.taskId);
             } finally {
                 dst.dispose()
             }
@@ -78,6 +85,11 @@ import { ReplicationTestContext } from "../../../../Utils/ReplicationTestContext
             src.dispose();
         }
     });
+
+    //TODO: Waiting for RavenDB-13309
+    it.skip("canGetTaskInfo", async () => {
+        //TODO: I think we should write test case for getting info for each type of ongoing task + query by task id and by name.
+    })
 
     it ("canAddEtlWithScript", async () => {
         let src: DocumentStore;

@@ -347,13 +347,17 @@ export class DocumentQuery<T extends object>
     // TBD public IDocumentQuery<T> WhereIn<TValue>(Expression<Func<T, TValue>> propertySelector,
     // IEnumerable<TValue> values, bool exact = false)
 
-    public whereStartsWith(fieldName: string, value: any): IDocumentQuery<T> {
-        this._whereStartsWith(fieldName, value);
+    public whereStartsWith(fieldName: string, value: any): IDocumentQuery<T>
+    public whereStartsWith(fieldName: string, value: any, exact: boolean): IDocumentQuery<T>
+    public whereStartsWith(fieldName: string, value: any, exact?: boolean): IDocumentQuery<T> {
+        this._whereStartsWith(fieldName, value, exact);
         return this;
     }
 
-    public whereEndsWith(fieldName: string, value: any): IDocumentQuery<T> {
-        this._whereEndsWith(fieldName, value);
+    public whereEndsWith(fieldName: string, value: any): IDocumentQuery<T>
+    public whereEndsWith(fieldName: string, value: any, exact: boolean): IDocumentQuery<T>
+    public whereEndsWith(fieldName: string, value: any, exact?: boolean): IDocumentQuery<T> {
+        this._whereEndsWith(fieldName, value, exact);
         return this;
     }
 

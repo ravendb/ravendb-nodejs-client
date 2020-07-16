@@ -34,11 +34,7 @@ describe("GetStatisticsCommand()", function () {
         assert.ok(stats.lastDocEtag);
         assert.ok(stats.lastDocEtag > 0);
 
-        if (testContext.serverVersion === "4.1") {
-            assert.strictEqual(stats.countOfIndexes, 3);
-        } else {
-            assert.strictEqual(stats.countOfIndexes, 4);
-        }
+        assert.ok(stats.countOfIndexes >= 3);
 
         assert.strictEqual(stats.countOfDocuments, 1059);
         assert.ok(stats.countOfRevisionDocuments > 0);

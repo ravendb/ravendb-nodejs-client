@@ -25,6 +25,7 @@ describe("GetClusterTopologyCommand", function () {
         assert.ok(result);
         assert.ok(result.leader);
         assert.ok(result.nodeTag);
+        assert.ok(result.status instanceof Map);
 
         const topology = result.topology;
         assert.ok(topology);

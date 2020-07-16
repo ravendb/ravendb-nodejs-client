@@ -28,6 +28,7 @@ import {
 } from "../../../src";
 import { UsersIndex, UsersInvalidIndex, UsersIndexWithPascalCasedFields } from "../../Assets/Indexes";
 import { TypeUtil } from "../../../src/Utility/TypeUtil";
+import { assertThat } from "../../Utils/AssertExtensions";
 
 describe("Index operations", function () {
 
@@ -67,12 +68,17 @@ describe("Index operations", function () {
 
         await store.maintenance.send(new DisableIndexOperation(usersIndex.getIndexName()));
         let indexingStatus = await store.maintenance.send(new GetIndexingStatusOperation());
-        const indexStatus: IndexStatus = indexingStatus.indexes[0];
+        let indexStatus: IndexStatus = indexingStatus.indexes[0];
         assert.strictEqual(indexStatus.status, "Disabled");
 
         await store.maintenance.send(new EnableIndexOperation(usersIndex.getIndexName()));
         indexingStatus = await store.maintenance.send(new GetIndexingStatusOperation());
         assert.strictEqual(indexingStatus.status, "Running");
+
+        indexingStatus = await store.maintenance.send(new GetIndexingStatusOperation());
+        indexStatus = indexingStatus.indexes[0];
+        assertThat(indexStatus.status)
+            .isEqualTo("Running");
     });
 
     it("can get indexes", async () => {
@@ -182,6 +188,10 @@ describe("Index operations", function () {
 
         assert.strictEqual(indexErrors.length, 1);
         assert.strictEqual(perIndexErrors.length, 1);
+        assertThat(indexErrors[0].errors)
+            .hasSize(1);
+        assertThat(perIndexErrors[0].errors)
+            .hasSize(1);
     });
 
     it("can get index statistics", async () => {

@@ -462,7 +462,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             return;
         }
 
-        if (queryData.loadTokens.find(x => x.alias !== possibleAlias)) {
+        if (!queryData.loadTokens.find(x => x.alias === possibleAlias)) {
             return;
         }
 
@@ -867,7 +867,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         tokens.push(whereToken);
     }
 
-    public _whereStartsWith(fieldName: string, value: any): void {
+    public _whereStartsWith(fieldName: string, value: any, exact: boolean = false): void {
         const whereParams = new WhereParams();
         whereParams.fieldName = fieldName;
         whereParams.value = value;
@@ -882,14 +882,16 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._negateIfNeeded(tokens, whereParams.fieldName);
 
         const whereToken = WhereToken.create(
-            "StartsWith", whereParams.fieldName, this._addQueryParameter(transformToEqualValue));
+            "StartsWith", whereParams.fieldName, this._addQueryParameter(transformToEqualValue), new WhereOptions({
+                exact
+            }));
         tokens.push(whereToken);
     }
 
     /**
      * Matches fields which ends with the specified value.
      */
-    public _whereEndsWith(fieldName: string, value: any): void {
+    public _whereEndsWith(fieldName: string, value: any, exact: boolean = false): void {
         const whereParams = new WhereParams();
         whereParams.fieldName = fieldName;
         whereParams.value = value;
@@ -904,7 +906,9 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._negateIfNeeded(tokens, whereParams.fieldName);
 
         const whereToken = WhereToken.create(
-            "EndsWith", whereParams.fieldName, this._addQueryParameter(transformToEqualValue));
+            "EndsWith", whereParams.fieldName, this._addQueryParameter(transformToEqualValue), new WhereOptions({
+                exact
+            }));
         tokens.push(whereToken);
     }
 
@@ -1117,7 +1121,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         if (boost < 0.0) {
-            throwError("InvalidArgumentException", "Boost factor must be a positive number.");
+            throwError("InvalidArgumentException", "Boost factor must be a non-negative number");
         }
 
         (whereToken as WhereToken).options.boost = boost;

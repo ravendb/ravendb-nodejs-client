@@ -34,6 +34,8 @@ export abstract class Certificate implements ICertificate {
             case Certificate.PFX:
                 certificate = this.createPfx(options.certificate, options.password, options.ca);
                 break;
+            default:
+                throwError("InvalidArgumentException", "Unsupported authOptions type: " + options.type);
         }
 
         return certificate;

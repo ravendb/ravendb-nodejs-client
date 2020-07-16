@@ -109,7 +109,8 @@ export abstract class AbstractIndexCreationTaskBase {
         const oldConventions = this.conventions;
 
         try {
-            this.conventions = conventions || this.conventions || store.conventions;
+            const databaseForConventions = database || store.database;
+            this.conventions = conventions || this.conventions || store.getRequestExecutor(databaseForConventions).conventions;
 
             const indexDefinition = this.createIndexDefinition();
             indexDefinition.name = this.getIndexName();

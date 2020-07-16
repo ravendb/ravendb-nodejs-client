@@ -8,6 +8,7 @@ import { IServerOperation, OperationResultType } from "../../Documents/Operation
 import { HeadersBuilder } from "../../Utility/HttpUtil";
 import { DatabaseRecord } from "..";
 import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
+import { CONSTANTS, HEADERS } from "../../Constants";
 
 export class CreateDatabaseOperation implements IServerOperation<DatabasePutResult> {
 
@@ -28,17 +29,19 @@ export class CreateDatabaseOperation implements IServerOperation<DatabasePutResu
     }
 }
 
-class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> {
+export class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> {
     private _conventions: DocumentConventions;
     private readonly _databaseRecord: DatabaseRecord;
     private readonly _replicationFactor: number;
+    private readonly _etag: number;
     private readonly _databaseName: string;
 
-    public constructor(conventions: DocumentConventions, databaseRecord: DatabaseRecord, replicationFactor: number) {
+    public constructor(conventions: DocumentConventions, databaseRecord: DatabaseRecord, replicationFactor: number, etag?: number) {
         super();
         this._conventions = conventions;
         this._databaseRecord = databaseRecord;
         this._replicationFactor = replicationFactor;
+        this._etag = etag;
 
         if (!databaseRecord || !databaseRecord.databaseName) {
             throwError("InvalidOperationException", "Database name is required");
@@ -58,6 +61,7 @@ class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> {
             method: "PUT",
             headers: HeadersBuilder.create()
                 .typeAppJson()
+                .with(HEADERS.ETAG, `"${this._etag}"`)
                 .build(),
             body: databaseDocumentJson
         };

@@ -18,8 +18,25 @@ export function reduceStreamToPromise<T>(
         .then(() => seed);
 }
 
+export async function readToBuffer(stream: stream.Stream): Promise<Buffer> {
+    const chunks: Uint8Array[] = [];
+    stream
+        .on("data", data => chunks.push(data));
+
+    await finishedAsync(stream);
+
+    return Buffer.concat(chunks);
+}
+
 export function readToEnd(readable: stream.Readable): Promise<string> {
     return reduceStreamToPromise(readable, (result, chunk) => result + chunk, "");
+}
+
+export function bufferToReadable(b: Buffer) {
+    const result = new stream.Readable();
+    result.push(b);
+    result.push(null);
+    return result;
 }
 
 export function stringToReadable(s: string) {

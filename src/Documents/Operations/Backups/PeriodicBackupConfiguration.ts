@@ -7,17 +7,17 @@ import { FtpSettings } from "./FtpSettings";
 import { S3Settings } from "./S3Settings";
 
 export interface PeriodicBackupConfiguration {
-    taskId: number;
-    disabled: boolean;
+    taskId?: number;
+    disabled?: boolean;
     name: string;
-    mentorNode: string;
+    mentorNode?: string;
     backupType: BackupType;
-    backupEncryptionSettings: BackupEncryptionSettings;
-    fullBackupFrequency: string;
-    incrementalBackupFrequency: string;
-    localSettings: LocalSettings;
-    s3Settings: S3Settings;
-    glacierSettings: GlacierSettings;
-    azureSettings: AzureSettings;
-    ftpSettings: FtpSettings;
+    backupEncryptionSettings?: BackupEncryptionSettings;
+    fullBackupFrequency?: string;
+    incrementalBackupFrequency?: string;
+    localSettings?: LocalSettings;
+    s3Settings?: S3Settings;
+    glacierSettings?: GlacierSettings;
+    azureSettings?: AzureSettings;
+    ftpSettings?: FtpSettings;
 }

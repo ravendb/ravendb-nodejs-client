@@ -1,13 +1,12 @@
 import { Company, User } from "../../Assets/Entities";
-import { parser } from "stream-json/Parser";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import DocumentStore, {
     IDocumentStore,
+    RevisionsCollectionConfiguration,
+    RevisionsConfiguration,
+    ConfigureRevisionsOperation
 } from "../../../src";
-import { RevisionsCollectionConfiguration } from "../../../src/Documents/Operations/RevisionsCollectionConfiguration";
-import { RevisionsConfiguration } from "../../../src/Documents/Operations/RevisionsConfiguration";
-import { ConfigureRevisionsOperation } from "../../../src/Documents/Operations/Revisions/ConfigureRevisionsOperation";
 import * as assert from "assert";
 
 // skipped for the time being

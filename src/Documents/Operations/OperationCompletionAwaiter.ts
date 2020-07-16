@@ -7,7 +7,7 @@ import { ExceptionDispatcher } from "../../Exceptions";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 
-type OperationStatus = "Completed" | "Cancelled" | "Faulted";
+type OperationStatus = "Completed" | "Canceled" | "Faulted";
 
 export class OperationCompletionAwaiter {
 
@@ -45,9 +45,9 @@ export class OperationCompletionAwaiter {
                     switch (operationStatus) {
                         case "Completed":
                             return;
-                        case "Cancelled":
-                            throwError("OperationCancelledException",
-                                `Operation of ID ${this._id} has been cancelled.`);
+                        case "Canceled":
+                            throwError("OperationCanceledException",
+                                `Operation of ID ${this._id} has been canceled.`);
                         case "Faulted":
                             const faultResult: OperationExceptionResult = operationStatusResult.result;
                             const errorSchema = Object.assign({}, faultResult, { url: this._requestExecutor.getUrl() });

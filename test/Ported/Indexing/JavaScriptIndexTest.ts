@@ -1,11 +1,7 @@
-import * as mocha from "mocha";
-import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore, storeNewDoc } from "../../Utils/TestUtil";
 
 import {
-    RavenErrorType,
-    GetNextOperationIdCommand,
     IDocumentStore,
     AbstractJavaScriptIndexCreationTask,
     IndexFieldOptions,
@@ -317,6 +313,10 @@ describe("JavaScriptIndexTest", function () {
             assert.ok(res.length && res2.length);
             assertThat(res2.length)
                 .isEqualTo(res.length);
+            assertThat(res2.length)
+                .isGreaterThan(0);
+            assertThat(res.length)
+                .isGreaterThan(0);
         }
 
     });

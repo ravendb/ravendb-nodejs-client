@@ -3,11 +3,13 @@ import { ClusterTopology } from "../../Http/ClusterTopology";
 import { HttpRequestParameters } from "../../Primitives/Http";
 import { ServerNode } from "../../Http/ServerNode";
 import * as stream from "readable-stream";
+import { NodeStatus } from "../../Http/RequestExecutor";
 
 export class ClusterTopologyResponse {
     public leader: string;
     public nodeTag: string;
     public topology: ClusterTopology;
+    public status: Map<string, NodeStatus>;
 }
 
 export class GetClusterTopologyCommand extends RavenCommand<ClusterTopologyResponse> {
@@ -40,6 +42,7 @@ export class GetClusterTopologyCommand extends RavenCommand<ClusterTopologyRespo
             .then(result => {
                 const clusterTpl = Object.assign(new ClusterTopology(), result.topology);
                 this.result = Object.assign(result as ClusterTopologyResponse, { topology: clusterTpl });
+                this.result.status = new Map(Object.entries(this.result.status));
             });
         return body;
     }

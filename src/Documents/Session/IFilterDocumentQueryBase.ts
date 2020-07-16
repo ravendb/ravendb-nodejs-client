@@ -106,6 +106,11 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
      */
     whereEndsWith(fieldName: string, value: any): TSelf;
 
+    /**
+     * Matches fields which ends with the specified value.
+     */
+    whereEndsWith(fieldName: string, value: any, exact: boolean): TSelf;
+
     //TBD TSelf WhereEndsWith<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value);
 
     /**
@@ -233,6 +238,11 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
      * Matches fields which starts with the specified value.
      */
     whereStartsWith(fieldName: string, value: any): TSelf;
+
+    /**
+     * Matches fields which starts with the specified value.
+     */
+    whereStartsWith(fieldName: string, value: any, exact: boolean): TSelf;
 
     //TBD TSelf WhereStartsWith<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value);
 

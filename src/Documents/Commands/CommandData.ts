@@ -2,6 +2,8 @@ import { throwError } from "../../Exceptions";
 import { BatchOptions } from "./Batches/BatchOptions";
 import { InMemoryDocumentSessionOperations } from "../Session/InMemoryDocumentSessionOperations";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { ClusterTransactionOperationsBase } from "../Session/ClusterTransactionOperationsBase";
+import { DocumentInfo } from "../Session/DocumentInfo";
 
 export type CommandType =
     "None"
@@ -112,14 +114,78 @@ export class SaveChangesData {
     public sessionCommands: ICommandData[] = [];
     public entities: object[] = [];
     public options: BatchOptions;
+    public onSuccess: ActionsToRunOnSuccess;
 
     public constructor(args: {
         deferredCommands: ICommandData[],
         deferredCommandsMap: Map<string, ICommandData>,
-        options: BatchOptions
+        options: BatchOptions,
+        session: InMemoryDocumentSessionOperations
     }) {
         this.deferredCommands = args.deferredCommands;
         this.deferredCommandsMap = args.deferredCommandsMap;
         this.options = args.options;
+        this.onSuccess = new ActionsToRunOnSuccess(args.session);
+    }
+}
+
+export class ActionsToRunOnSuccess {
+
+    private readonly _session: InMemoryDocumentSessionOperations;
+    private readonly _documentsByIdToRemove: string[] = [];
+    private readonly _documentsByEntityToRemove: object[] = [];
+    private readonly _documentInfosToUpdate: [DocumentInfo, object][] = [];
+
+    private _clusterTransactionOperations: ClusterTransactionOperationsBase;
+    private _clearDeletedEntities: boolean;
+
+    public constructor(session: InMemoryDocumentSessionOperations) {
+        this._session = session;
+    }
+
+    public removeDocumentById(id: string) {
+        this._documentsByIdToRemove.push(id);
+    }
+
+    public removeDocumentByEntity(entity: object) {
+        this._documentsByEntityToRemove.push(entity);
+    }
+
+    public clearClusterTransactionOperations(clusterTransactionOperations: ClusterTransactionOperationsBase) {
+        this._clusterTransactionOperations = clusterTransactionOperations;
+    }
+
+    public updateEntityDocumentInfo(documentInfo: DocumentInfo, document: object) {
+        this._documentInfosToUpdate.push([documentInfo, document]);
+    }
+
+    public clearSessionStateAfterSuccessfulSaveChanges() {
+        for (let id of this._documentsByIdToRemove) {
+            this._session.documentsById.remove(id);
+        }
+
+        for (let entity of this._documentsByEntityToRemove) {
+            this._session.documentsByEntity.delete(entity);
+        }
+
+        for (let [info, document] of this._documentInfosToUpdate) {
+            info.newDocument = false;
+            info.document = document;
+        }
+
+        if (this._clearDeletedEntities) {
+            this._session.deletedEntities.clear();
+        }
+
+        if (this._clusterTransactionOperations) {
+            this._clusterTransactionOperations.clear();
+        }
+
+        this._session.deferredCommands.length = 0;
+        this._session.deferredCommandsMap.clear();
+    }
+
+    public clearDeletedEntities() {
+        this._clearDeletedEntities = true;
     }
 }

@@ -103,7 +103,7 @@ export abstract class InMemoryDocumentSessionOperations
 
     public getCurrentSessionNode(): Promise<ServerNode> {
         let result: Promise<CurrentIndexAndNode>;
-        switch (this._documentStore.conventions.readBalanceBehavior) {
+        switch (this._requestExecutor.conventions.readBalanceBehavior) {
             case "None":
                 result = this._requestExecutor.getPreferredNode();
                 break;
@@ -115,7 +115,7 @@ export abstract class InMemoryDocumentSessionOperations
                 break;
             default:
                 return Promise.reject(
-                    getError("InvalidArgumentException", this._documentStore.conventions.readBalanceBehavior));
+                    getError("InvalidArgumentException", this._requestExecutor.conventions.readBalanceBehavior));
         }
 
         return result.then(x => x.currentNode);
@@ -194,6 +194,10 @@ export abstract class InMemoryDocumentSessionOperations
 
     // keys are produced with CommandIdTypeAndName.keyFor() method
     public deferredCommandsMap: Map<string, ICommandData> = new Map();
+
+    public get deferredCommands() {
+        return this._deferredCommands;
+    }
 
     public get deferredCommandsCount() {
         return this._deferredCommands.length;
@@ -1025,24 +1029,24 @@ export abstract class InMemoryDocumentSessionOperations
     public prepareForSaveChanges(): SaveChangesData {
         const result = this._newSaveChangesData();
 
-        this._deferredCommands.length = 0;
-        this.deferredCommandsMap.clear();
+        const deferredCommandsCount = this._deferredCommands.length;
 
         this._prepareForEntitiesDeletion(result, null);
         this._prepareForEntitiesPuts(result);
 
         this._prepareCompareExchangeEntities(result);
 
-        if (this._deferredCommands.length) {
+        if (this._deferredCommands.length > deferredCommandsCount) {
             // this allow OnBeforeStore to call Defer during the call to include
             // additional values during the same SaveChanges call
-            result.deferredCommands.push(...this._deferredCommands);
+
+            for (let i = deferredCommandsCount; i < this._deferredCommands.length; i++) {
+                result.deferredCommands.push(this._deferredCommands[i]);
+            }
+
             for (const item of this.deferredCommandsMap.entries()) {
                 result.deferredCommandsMap.set(item[0], item[1]);
             }
-
-            this._deferredCommands.length = 0;
-            this.deferredCommandsMap.clear();
         }
 
         for (const deferredCommand of result.deferredCommands) {
@@ -1127,7 +1131,8 @@ export abstract class InMemoryDocumentSessionOperations
             }
         }
 
-        clusterTransactionOperations.clear();
+
+        result.onSuccess.clearClusterTransactionOperations(clusterTransactionOperations);
     }
 
     protected abstract _clusterSession: ClusterTransactionOperationsBase;
@@ -1136,7 +1141,8 @@ export abstract class InMemoryDocumentSessionOperations
         return new SaveChangesData({
             deferredCommands: [...this._deferredCommands],
             deferredCommandsMap: new Map(this.deferredCommandsMap),
-            options: this._saveChangesOptions
+            options: this._saveChangesOptions,
+            session: this
         });
     }
 
@@ -1170,11 +1176,11 @@ export abstract class InMemoryDocumentSessionOperations
                     changeVector = documentInfo.changeVector;
 
                     if (documentInfo.entity) {
-                        this.documentsByEntity.delete(documentInfo.entity);
+                        result.onSuccess.removeDocumentByEntity(documentInfo.entity);
                         result.entities.push(documentInfo.entity);
                     }
 
-                    this.documentsById.remove(documentInfo.id);
+                    result.onSuccess.removeDocumentByEntity(documentInfo.entity);
                 }
 
                 changeVector = this.useOptimisticConcurrency ? changeVector : null;
@@ -1185,7 +1191,7 @@ export abstract class InMemoryDocumentSessionOperations
             }
 
             if (!changes) {
-                this.deletedEntities.clear();
+                result.onSuccess.clearDeletedEntities();
             }
         }
 
@@ -1196,6 +1202,10 @@ export abstract class InMemoryDocumentSessionOperations
             const [entityKey, entityValue] = entry;
 
             if (entityValue.ignoreChanges) {
+                continue;
+            }
+
+            if (this.isDeleted(entityValue.id)) {
                 continue;
             }
 
@@ -1223,14 +1233,12 @@ export abstract class InMemoryDocumentSessionOperations
                 }
             }
 
-            entityValue.newDocument = false;
             result.entities.push(entityKey);
 
             if (entityValue.id) {
-                this.documentsById.remove(entityValue.id);
+                result.onSuccess.removeDocumentById(entityValue.id);
             }
-
-            entityValue.document = document;
+            result.onSuccess.updateEntityDocumentInfo(entityValue, document);
 
             let changeVector: string;
             if (this.useOptimisticConcurrency) {
@@ -1473,6 +1481,14 @@ export abstract class InMemoryDocumentSessionOperations
         if (this._countersByDocId) {
             this._countersByDocId.clear();
         }
+
+        this.deferredCommands.length = 0;
+        this.deferredCommandsMap.clear();
+        if (this._clusterSession) {
+            this._clusterSession.clear();
+        }
+
+        this._pendingLazyOperations.length = 0;
     }
 
     /**
@@ -1557,8 +1573,8 @@ export abstract class InMemoryDocumentSessionOperations
     public whatChanged(): { [id: string]: DocumentsChanges[] } {
         const changes: { [id: string]: DocumentsChanges[] } = {};
 
-        this._prepareForEntitiesDeletion(null, changes);
         this._getAllEntitiesChanges(changes);
+        this._prepareForEntitiesDeletion(null, changes);
 
         return changes;
     }

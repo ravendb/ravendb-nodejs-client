@@ -2,9 +2,9 @@ import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 import {
     DatabaseRecordWithEtag,
-    IDocumentStore
+    IDocumentStore,
+    GetDatabaseRecordOperation
 } from "../../src";
-import { GetDatabaseRecordOperation } from "../../src/ServerWide/Operations/GetDatabaseRecordOperation";
 
 describe("GetDatabaseRecordTest", function () {
 

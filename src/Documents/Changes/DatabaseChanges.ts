@@ -40,7 +40,7 @@ export class DatabaseChanges implements IDatabaseChanges {
     private _client: WebSocket;
 
     private readonly _task;
-    private _isCancelled = false;
+    private _isCanceled = false;
     private _tcs: IDefer<IDatabaseChanges>;
 
     private readonly _confirmations: Map<number, { resolve: () => void, reject: () => void }> = new Map();
@@ -214,7 +214,7 @@ export class DatabaseChanges implements IDatabaseChanges {
             confirmation.reject();
         }
 
-        this._isCancelled = true;
+        this._isCanceled = true;
         if (this._client) {
             this._client.close();
         }
@@ -297,7 +297,7 @@ export class DatabaseChanges implements IDatabaseChanges {
 
                 this._client.send(payloadAsString);
             } catch (err) {
-                if (!this._isCancelled) {
+                if (!this._isCanceled) {
                     throw err;
                 }
             } finally {
@@ -325,7 +325,7 @@ export class DatabaseChanges implements IDatabaseChanges {
     }
 
     private _doWorkInternal(preferredNode: CurrentIndexAndNode): void {
-        if (this._isCancelled) {
+        if (this._isCanceled) {
             return;
         }
 
@@ -381,7 +381,7 @@ export class DatabaseChanges implements IDatabaseChanges {
     }
 
     private _reconnectClient(): boolean {
-        if (this._isCancelled) {
+        if (this._isCanceled) {
             return false;
         }
 
@@ -392,7 +392,7 @@ export class DatabaseChanges implements IDatabaseChanges {
     }
 
     private async _processChanges(data: string): Promise<void> {
-        if (this._isCancelled) {
+        if (this._isCanceled) {
             return;
         }
         const payloadParsed = JSON.parse(data) as any[];
@@ -468,7 +468,7 @@ export class DatabaseChanges implements IDatabaseChanges {
     }
 
     private _notifyAboutError(e: Error): void {
-        if (this._isCancelled) {
+        if (this._isCanceled) {
             return;
         }
 

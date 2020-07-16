@@ -3,10 +3,10 @@ import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
     IDocumentStore,
+    DocumentSession
 } from "../../../src";
 import { User, Person } from "../../Assets/Entities";
 import { GetDocumentsCommand } from "../../../src/Documents/Commands/GetDocumentsCommand";
-import { DocumentSession } from "../../../src/Documents/Session/DocumentSession";
 
 describe("Basic documents test", function () {
 
