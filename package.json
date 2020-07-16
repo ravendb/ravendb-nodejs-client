@@ -94,7 +94,7 @@
     "readable-stream": "^3.6.0",
     "safe-memory-cache": "^2.0.0",
     "semaphore": "^1.1.0",
-    "stream-json": "^1.5.0",
+    "stream-json": "^1.7.0",
     "string-builder": "^0.1.6",
     "util.promisify": "^1.0.1",
     "uuid": "^8.1.0",
