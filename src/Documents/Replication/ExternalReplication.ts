@@ -1,8 +1,5 @@
-import { ReplicationNode } from "./ReplicationNode";
+import { ExternalReplicationBase } from "./ExternalReplicationBase";
 
-export interface ExternalReplication extends ReplicationNode {
-    taskId?: number;
-    name?: string;
-    connectionStringName: string;
-    mentorName?: string;
+export interface ExternalReplication extends ExternalReplicationBase {
+    delayReplicationFor: number;
 }

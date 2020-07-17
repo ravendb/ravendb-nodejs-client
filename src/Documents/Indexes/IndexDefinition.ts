@@ -31,6 +31,8 @@ export class IndexDefinition {
     public fields: { [fieldName: string]: IndexFieldOptions } = {};
     public configuration: IndexConfiguration = {};
     public outputReduceToCollection: string;
+    public reduceOutputIndex: number;
+    public patternForOutputReduceToCollectionReferences: string;
 
     //TODO: public toJSON() {
     //     return Object.assign({}, this, { maps: Array.from(this.maps) });
@@ -52,29 +54,16 @@ export class IndexDefinition {
         this.indexType = indexType;
     }
 
-    private _detectStaticIndexType(): IndexType {
-        if (!this.maps.size) {
-            throwError("InvalidArgumentException", "Index definitions contains no Maps.");
-        }
-
+    public detectStaticIndexType(): IndexType {
         const firstMap = this.maps.values().next().value
             .replace(COMMENT_REGEX, "")
             .trim();
 
-        if (firstMap.startsWith("from") || firstMap.startsWith("docs")) {
-            // C# indexes must start with "from" for query synatx or
-            // "docs" for method syntax
-            if (!this.reduce || StringUtil.isNullOrWhitespace(this.reduce)) {
-                return "Map";
-            }
-            return "MapReduce";
+        if (!firstMap) {
+            throwError("InvalidArgumentException", "Index  definitions contains no Maps");
         }
 
-        if (!this.reduce || StringUtil.isNullOrWhitespace(this.reduce)) {
-            return "JavaScriptMap";
-        }
-        
-        return "JavaScriptMapReduce";
+        return IndexDefinitionHelper.detectStaticIndexType(firstMap, this.reduce);
     }
 }
 
@@ -85,7 +74,6 @@ export class IndexDefinitionBuilder {
     public reduce: string;
     public priority: IndexPriority;
     public lockMode: IndexLockMode;
-    public additionalSources: { [key: string]: string };
     public storesStrings: { [key: string]: FieldStorage };
     public indexesStrings: { [key: string]: FieldIndexing };
     public analyzersStrings: { [key: string]: string };
@@ -93,6 +81,9 @@ export class IndexDefinitionBuilder {
     public termVectorsStrings: { [key: string]: FieldTermVector };
     public spatialIndexesStrings: { [key: string]: SpatialOptions };
     public outputReduceToCollection: string;
+    public patternForOutputReduceToCollectionReferences: string;
+    public additionalSources: { [key: string]: string };
+    public configuration: IndexConfiguration;
 
     public constructor(indexName?: string) {
         this.indexName = indexName || this.constructor.name;
@@ -106,6 +97,7 @@ export class IndexDefinitionBuilder {
         this.analyzersStrings = {};
         this.termVectorsStrings = {};
         this.spatialIndexesStrings = {};
+        this.configuration = {};
     }
 
     public toIndexDefinition(conventions: DocumentConventions, validateMap?: boolean): IndexDefinition {
@@ -123,6 +115,7 @@ export class IndexDefinitionBuilder {
             indexDefinition.lockMode = this.lockMode;
             indexDefinition.priority = this.priority;
             indexDefinition.outputReduceToCollection = this.outputReduceToCollection;
+            indexDefinition.patternForOutputReduceToCollectionReferences = this.patternForOutputReduceToCollectionReferences;
 
             const suggestions: { [suggestionOption: string]: boolean } = Array.from(this.suggestionsOptions)
                 .reduce((result, item) =>
@@ -146,6 +139,7 @@ export class IndexDefinitionBuilder {
             }
 
             indexDefinition.additionalSources = this.additionalSources;
+            indexDefinition.configuration = this.configuration;
             return indexDefinition;
         } catch (err) {
             throwError("IndexCompilationException", "Failed to create index " + this.indexName, err);

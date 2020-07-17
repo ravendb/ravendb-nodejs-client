@@ -21,6 +21,9 @@ export interface LocalBackup extends BackupStatus {
 export interface UploadToAzure extends CloudUploadStatus {
 }
 
+export interface UpdateToGoogleCloud extends CloudUploadStatus {
+}
+
 export interface UploadToFtp extends CloudUploadStatus {
 }
 
@@ -33,3 +36,7 @@ export interface UploadToS3 extends CloudUploadStatus {
 export type UploadType =
     "Regular"
     | "Chunked";
+
+export interface SnapshotSettings {
+    compressionLevel: CompressionLevel;
+}

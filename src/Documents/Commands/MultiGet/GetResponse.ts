@@ -5,13 +5,22 @@ export class GetResponse {
         this._headers = {};
     }
 
-    private _headers: { [key: string]: string };
+    private _elapsed: number;
     private _result: string;
+    private _headers: { [key: string]: string };
     private _statusCode: number;
     private _forceRetry;
 
     public static create(data: object) {
         return Object.assign(new GetResponse(), data);
+    }
+
+    public get elapsed(): number {
+        return this._elapsed;
+    }
+
+    public set elapsed(elapsed: number) {
+        this._elapsed = elapsed;
     }
 
     /**

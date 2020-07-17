@@ -13,11 +13,16 @@ export interface PeriodicBackupConfiguration {
     mentorNode?: string;
     backupType: BackupType;
     backupEncryptionSettings?: BackupEncryptionSettings;
-    fullBackupFrequency?: string;
-    incrementalBackupFrequency?: string;
+    retentionPolicy?: RetentionPolicy;
+    snapshotSettings?: SnapshotSettings;
+
     localSettings?: LocalSettings;
     s3Settings?: S3Settings;
     glacierSettings?: GlacierSettings;
     azureSettings?: AzureSettings;
     ftpSettings?: FtpSettings;
+    googleCloudSettings?: GoogleCloudSettings;
+
+    fullBackupFrequency?: string;
+    incrementalBackupFrequency?: string;
 }

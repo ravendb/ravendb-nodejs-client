@@ -16,8 +16,10 @@ export interface PeriodicBackupStatus extends IDatabaseTaskStatus {
     uploadToS3: UploadToS3;
     uploadToGlacier: UploadToGlacier;
     uploadToAzure: UploadToAzure;
+    updateToGoogleCloud: UpdateToGoogleCloud;
     uploadToFtp: UploadToFtp;
     lastEtag: number;
+    lastDatabaseChangeVector: string;
     lastRaftIndex: LastRaftIndex;
     folderName: string;
     durationInMs: number;
