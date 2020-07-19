@@ -19,7 +19,7 @@ export class SuggestionDocumentQuery<T extends object>
         this._source = source;
     }
 
-    protected _getIndexQuery(): IndexQuery {
+    protected _getIndexQuery(updateAfterQueryExecuted: boolean = true): IndexQuery {
         return this._source.getIndexQuery();
     }
 

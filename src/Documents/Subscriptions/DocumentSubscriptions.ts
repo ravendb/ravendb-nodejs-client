@@ -14,6 +14,7 @@ import { StringUtil } from "../../Utility/StringUtil";
 import { GetSubscriptionStateCommand } from "../Commands/GetSubscriptionStateCommand";
 import { DropSubscriptionConnectionCommand } from "../Commands/DropSubscriptionConnectionCommand";
 import { GetSubscriptionsCommand } from "../Commands/GetSubscriptionsCommand";
+import { ToggleOngoingTaskStateOperation } from "../Operations/OngoingTasks/ToggleOngoingTaskStateOperation";
 
 export class DocumentSubscriptions implements IDisposable {
     private readonly _store: DocumentStore;
@@ -334,5 +335,21 @@ export class DocumentSubscriptions implements IDisposable {
 
         const command = new DropSubscriptionConnectionCommand(name);
         return requestExecutor.execute(command);
+    }
+
+    public async enable(name: string)
+    public async enable(name: string, database: string)
+    public async enable(name: string, database?: string) {
+        const operation = new ToggleOngoingTaskStateOperation(name, "Subscription", false);
+        await this._store.maintenance.forDatabase(database || this._store.database)
+            .send(operation);
+    }
+
+    public async disable(name: string)
+    public async disable(name: string, database: string)
+    public async disable(name: string, database?: string) {
+        const operation = new ToggleOngoingTaskStateOperation(name, "Subscription", true);
+        await this._store.maintenance.forDatabase(database || this._store.database)
+            .send(operation);
     }
 }

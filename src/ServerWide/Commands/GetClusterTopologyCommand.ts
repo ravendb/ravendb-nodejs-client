@@ -9,6 +9,7 @@ export class ClusterTopologyResponse {
     public leader: string;
     public nodeTag: string;
     public topology: ClusterTopology;
+    public etag: number;
     public status: Map<string, NodeStatus>;
 }
 
