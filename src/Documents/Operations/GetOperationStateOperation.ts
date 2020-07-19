@@ -8,13 +8,15 @@ import { DocumentConventions } from "../Conventions/DocumentConventions";
 export class GetOperationStateOperation implements IMaintenanceOperation<IRavenResponse> {
 
     private readonly _id: number;
+    private readonly _nodeTag: string;
 
-    public constructor(id: number) {
+    public constructor(id: number, nodeTag?: string) {
         this._id = id;
+        this._nodeTag = nodeTag;
     }
 
     public getCommand(conventions: DocumentConventions): RavenCommand<IRavenResponse> {
-        return new GetOperationStateCommand(DocumentConventions.defaultConventions, this._id);
+        return new GetOperationStateCommand(DocumentConventions.defaultConventions, this._id, this._nodeTag);
     }
 
     public get resultType(): OperationResultType {
@@ -32,10 +34,11 @@ export class GetOperationStateCommand extends RavenCommand<IRavenResponse> {
     private _conventions: DocumentConventions;
     private readonly _id: number;
 
-    public constructor(conventions: DocumentConventions, id: number) {
+    public constructor(conventions: DocumentConventions, id: number, nodeTag: string) {
         super();
         this._conventions = conventions;
         this._id = id;
+        this._selectedNodeTag = nodeTag;
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {

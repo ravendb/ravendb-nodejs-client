@@ -56,6 +56,7 @@ export abstract class DocumentStoreBase
 
     public abstract changes(): IDatabaseChanges;
     public abstract changes(database: string): IDatabaseChanges;
+    public abstract changes(database: string, nodeTag: string): IDatabaseChanges;
 
     // TBD: public abstract IDisposable DisableAggressiveCaching(string database = null);
 

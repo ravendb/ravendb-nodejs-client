@@ -5,6 +5,8 @@ import { GlacierSettings } from "./GlacierSettings";
 import { AzureSettings } from "./AzureSettings";
 import { FtpSettings } from "./FtpSettings";
 import { S3Settings } from "./S3Settings";
+import { RetentionPolicy } from "./RetentionPolicy";
+import { SnapshotSettings } from "./BackupStatus";
 
 export interface PeriodicBackupConfiguration {
     taskId?: number;

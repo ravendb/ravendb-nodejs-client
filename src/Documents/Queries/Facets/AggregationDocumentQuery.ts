@@ -33,7 +33,7 @@ export class AggregationDocumentQuery<T extends object> extends AggregationQuery
         return this;
     }
 
-    protected _getIndexQuery(): IndexQuery {
+    protected _getIndexQuery(updateAfterQueryExecuted: boolean = true): IndexQuery {
         return this._source.getIndexQuery();
     }
 

@@ -1,4 +1,5 @@
 import { DatabaseItemType } from "./DatabaseItemType";
+import { DatabaseRecordItemType } from "./DatabaseRecordItemType";
 
 export interface IDatabaseSmugglerOptions {
     operateOnTypes: DatabaseItemType[];

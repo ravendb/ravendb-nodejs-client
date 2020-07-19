@@ -107,6 +107,11 @@ export interface IDocumentStore extends IDisposable,
      */
     changes(database: string): IDatabaseChanges;
 
+    /**
+     * Subscribe to change notifications from the server
+     */
+    changes(database: string, nodeTag: string): IDatabaseChanges;
+
     // TBD 4.1 IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
     // TBD 4.1 IDisposable AggressivelyCache(string database = null);
 
