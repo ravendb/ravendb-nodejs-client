@@ -9,6 +9,7 @@ import {
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { throwError } from "../../../Exceptions";
 import { ObjectTypeDescriptor, EntitiesCollectionObject } from "../../../Types";
+import { StringUtil } from "../../../Utility/StringUtil";
 
 const log = getLogger({ module: "LoadOperation" });
 
@@ -20,19 +21,15 @@ export class LoadOperation {
     private _includes: string[];
     private _countersToInclude: string[];
     private _includeAllCounters: boolean;
-    private _idsToCheckOnServer: string[] = [];
-    private _currentLoadResults: GetDocumentsResult;
+
+    private _resultsSet: boolean;
+    private _results: GetDocumentsResult;
 
     public constructor(session: InMemoryDocumentSessionOperations) {
         this._session = session;
     }
 
     public createRequest(): GetDocumentsCommand {
-
-        if (this._idsToCheckOnServer.length === 0) {
-            return null;
-        }
-
         if (this._session.checkIfIdAlreadyIncluded(this._ids, this._includes)) {
             return null;
         }
@@ -40,10 +37,10 @@ export class LoadOperation {
         this._session.incrementRequestCount();
 
         log.info("Requesting the following ids "
-            + this._idsToCheckOnServer.join(",") + " from " + this._session.storeIdentifier);
+            + this._ids.join(",") + " from " + this._session.storeIdentifier);
 
         const opts: GetDocumentsByIdsCommandOptions = {
-                ids: this._idsToCheckOnServer,
+                ids: this._ids,
                 includes: this._includes,
                 metadataOnly: false,
                 conventions: this._session.conventions
@@ -59,7 +56,7 @@ export class LoadOperation {
     }
 
     public byId(id: string): LoadOperation {
-        if (!id) {
+        if (StringUtil.isNullOrEmpty(id)) {
             return this;
         }
 
@@ -67,11 +64,6 @@ export class LoadOperation {
             this._ids = [id];
         }
 
-        if (this._session.isLoadedOrDeleted(id)) {
-            return this;
-        }
-
-        this._idsToCheckOnServer.push(id);
         return this;
     }
 
@@ -93,45 +85,40 @@ export class LoadOperation {
     }
 
     public byIds(ids: string[]): LoadOperation {
-        if (!ids || !ids.length) {
-            return this;
-        }
+        const distinct = new Set(ids.filter(x => !StringUtil.isNullOrEmpty(x)));
 
-        this._ids = ids;
-
-        const distinct = new Set(ids.filter(x => !!x));
-        for (const id of distinct) {
-            this.byId(id);
-        }
+        this._ids = Array.from(distinct);
 
         return this;
     }
 
     private _getDocument<T extends object>(clazz: ObjectTypeDescriptor<T>, id: string): T {
-        if (!id) {
+        if (this._session.noTracking) {
+            if (!this._resultsSet && this._ids.length) {
+                throwError("InvalidOperationException", "Cannot execute getDocument before operation execution.");
+            }
+
+            if (this._session.isDeleted(id)) {
+                return null;
+            }
+
+            let doc = this._session.documentsById.getValue(id);
+            if (doc) {
+                return this._session.trackEntity(clazz, doc);
+            }
+
+            doc = this._session.includedDocumentsById.get(id);
+            if (doc) {
+                return this._session.trackEntity(clazz, doc);
+            }
+
             return null;
         }
-
-        if (this._session.isDeleted(id)) {
-            return null;
-        }
-
-        let doc = this._session.documentsById.getValue(id);
-        if (doc) {
-            return this._session.trackEntity(clazz, doc);
-        }
-
-        doc = this._session.includedDocumentsById.get(id);
-        if (doc) {
-            return this._session.trackEntity(clazz, doc);
-        }
-
-        return null;
     }
 
     public getDocuments<T extends object>(clazz: ObjectTypeDescriptor<T>): EntitiesCollectionObject<T> {
         if (this._session.noTracking) {
-            if (!this._currentLoadResults) {
+            if (!this._resultsSet && this._ids.length) {
                 throwError(
                     "InvalidOperationException", "Cannot execute 'getDocuments' before operation execution.");
             }
@@ -141,8 +128,12 @@ export class LoadOperation {
                     result[next] = null;
                     return result;
                 }, {});
+
+            if (!this._results || !this._results.results || !this._results.results.length) {
+                return results;
+            }
             
-            for (const document of this._currentLoadResults.results) {
+            for (const document of this._results.results) {
                 if (!document) {
                     continue;
                 }
@@ -162,12 +153,14 @@ export class LoadOperation {
     }
 
     public setResult(result: GetDocumentsResult): void {
+        this._resultsSet = true;
+
         if (!result) {
             return;
         }
         
         if (this._session.noTracking) {
-            this._currentLoadResults = result;
+            this._results = result;
             return;
         }
 

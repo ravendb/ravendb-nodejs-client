@@ -9,6 +9,7 @@ import { throwError } from "../../Exceptions";
 import { SetupDocumentBase } from "../SetupDocumentBase";
 import { MetadataObject } from "./MetadataObject";
 import { ObjectTypeDescriptor } from "../../Types";
+import { Reference } from "../../Utility/Reference";
 
 export class EntityToJson {
 
@@ -31,6 +32,29 @@ export class EntityToJson {
         const { conventions } = this._session;
         const entityMapper = conventions.objectMapper;
 
+        if (documentInfo) {
+            this._session.onBeforeConversionToDocumentInvoke(documentInfo.id, entity);
+        }
+
+        let document = EntityToJson.convertEntityToJsonInternal(entity, this._session.conventions, documentInfo);
+
+        if (documentInfo) {
+            const documentReference: Reference<object> = {
+                value: document
+            };
+            this._session.onAfterConversionToDocumentInvoke(documentInfo.id, entity, documentReference);
+            document = documentReference.value;
+        }
+
+        return document;
+    }
+
+    //TODO: fill missing properies?
+
+    //TODO: internal static object ConvertToBlittableForCompareExchangeIfNeeded(
+
+    private static convertEntityToJsonInternal(entity: object, conventions: DocumentConventions, documentInfo: DocumentInfo, removeIdentityProperty = true) {
+        const entityMapper = conventions.objectMapper;
         let typeInfo: TypeInfo;
         let jsonNode = entityMapper.toObjectLiteral(entity, (_typeInfo) => {
             typeInfo = _typeInfo;
@@ -45,11 +69,14 @@ export class EntityToJson {
         EntityToJson._writeMetadata(jsonNode, typeInfo, documentInfo);
 
         const type: DocumentType = TypeUtil.findType(entity, conventions.knownEntityTypes);
-
-        EntityToJson._tryRemoveIdentityProperty(jsonNode, type, conventions);
+        if (removeIdentityProperty) {
+            EntityToJson._tryRemoveIdentityProperty(jsonNode, type, conventions);
+        }
 
         return jsonNode;
     }
+
+    //TODO: private void RegisterMissingProperties(object o, string id, object value)
 
     public static convertEntityToJson(
         entity: object, conventions: DocumentConventions): object;
@@ -128,7 +155,9 @@ export class EntityToJson {
     /**
      * Converts a json object to an entity.
      */
-    public convertToEntity(targetEntityType: DocumentType, id: string, document: object): object {
+    public convertToEntity(targetEntityType: DocumentType, id: string, document: object): object;
+    public convertToEntity(targetEntityType: DocumentType, id: string, document: object, trackEntity: boolean): object;
+    public convertToEntity(targetEntityType: DocumentType, id: string, document: object, trackEntity: boolean = true): object {
         const conventions = this._session.conventions;
 
         const entityType: ObjectTypeDescriptor = conventions.getJsTypeByDocumentType(targetEntityType);
@@ -137,7 +166,16 @@ export class EntityToJson {
                 return document;
             }
 
+            const documentRef: Reference<object> = {
+                value: document
+            };
+            this._session.onBeforeConversionToEntityInvoke(id, entityType, documentRef);
+            document = documentRef.value;
+
             let entity;
+
+            //TODO: if track!
+
             const documentTypeFromConventions = conventions.getJsType(id, document);
 
             const entityTypeInfoFromMetadata = EntityToJson._getEntityTypeInfoFromMetadata(document);
@@ -168,6 +206,8 @@ export class EntityToJson {
             if (id) {
                 this._session.generateEntityIdOnTheClient.trySetIdentity(entity, id);
             }
+
+            this._session.onAfterConversionToEntityInvoke(id, document, entity);
 
             return entity;
         } catch (err) {
@@ -222,5 +262,13 @@ export class EntityToJson {
 
         delete document[identityProperty];
         return true;
+    }
+
+    public removeFromMissing(entity: object) {
+        this._missingDictionary.delete(entity);
+    }
+
+    public clear(): void {
+        this._missingDictionary.clear();
     }
 }

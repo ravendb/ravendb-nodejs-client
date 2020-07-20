@@ -8,7 +8,10 @@ import {
     SessionBeforeStoreEventArgs,
     SessionAfterSaveChangesEventArgs,
     SessionBeforeQueryEventArgs,
-    SessionBeforeDeleteEventArgs
+    SessionBeforeDeleteEventArgs,
+    BeforeConversionToDocumentEventArgs,
+    AfterConversionToDocumentEventArgs,
+    BeforeConversionToEntityEventArgs, AfterConversionToEntityEventArgs
 } from "./Session/SessionEvents";
 import { OperationExecutor } from "./Operations/OperationExecutor";
 import { IDocumentSession } from "./Session/IDocumentSession";
@@ -22,7 +25,6 @@ import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
 import { DocumentSubscriptions } from "./Subscriptions/DocumentSubscriptions";
 import { DocumentStore } from "./DocumentStore";
 import { TypeUtil } from "../Utility/TypeUtil";
-import { AbstractIndexCreationTaskBase } from "./Indexes/AbstractIndexCreationTaskBase";
 import { CaseInsensitiveKeysMap } from "../Primitives/CaseInsensitiveKeysMap";
 import { ErrorFirstCallback } from "../Types/Callbacks";
 import { passResultToCallback } from "../Utility/PromiseUtil";
@@ -249,6 +251,22 @@ export abstract class DocumentStoreBase
         eventName: "beforeQuery", eventHandler: (eventArgs: SessionBeforeQueryEventArgs) => void): this;
     public addSessionListener(
         eventName: "beforeDelete", eventHandler: (eventArgs: SessionBeforeDeleteEventArgs) => void): this;
+    public addSessionListener(
+        eventName: "beforeConversionToDocument",
+        eventHandler: (eventArgs: BeforeConversionToDocumentEventArgs) => void
+    ): this;
+    public addSessionListener(
+        eventName: "afterConversionToDocument",
+        eventHandler: (eventArgs: AfterConversionToDocumentEventArgs) => void
+    ): this;
+    public addSessionListener(
+        eventName: "beforeConversionToEntity",
+        eventHandler: (eventArgs: BeforeConversionToEntityEventArgs) => void
+    ): this;
+    public addSessionListener(
+        eventName: "afterConversionToEntity",
+        eventHandler: (eventArgs: AfterConversionToEntityEventArgs) => void
+    ): this;
     public addSessionListener(eventName: any, eventHandler: (eventArgs: any) => void): this {
         this._eventHandlers.push([eventName, eventHandler]);
         return this;
@@ -262,6 +280,22 @@ export abstract class DocumentStoreBase
         eventName: "beforeQuery", eventHandler: (eventArgs: SessionBeforeQueryEventArgs) => void): void;
     public removeSessionListener(
         eventName: "beforeDelete", eventHandler: (eventArgs: SessionBeforeDeleteEventArgs) => void): void;
+    public removeSessionListener(
+        eventName: "beforeConversionToDocument",
+        eventHandler: (eventArgs: BeforeConversionToDocumentEventArgs) => void
+    ): void;
+    public removeSessionListener(
+        eventName: "afterConversionToDocument",
+        eventHandler: (eventArgs: AfterConversionToDocumentEventArgs) => void
+    ): void;
+    public removeSessionListener(
+        eventName: "beforeConversionToEntity",
+        eventHandler: (eventArgs: BeforeConversionToEntityEventArgs) => void
+    ): void;
+    public removeSessionListener(
+        eventName: "afterConversionToEntity",
+        eventHandler: (eventArgs: AfterConversionToEntityEventArgs) => void
+    ): void;
     public removeSessionListener(eventName: any, eventHandler: (eventArgs: any) => void): void {
         const toRemove = this._eventHandlers
             .filter(x => x[0] === eventName && x[1] === eventHandler)[0];

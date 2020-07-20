@@ -13,6 +13,7 @@ import {
 import { CONSTANTS } from "../../../Constants";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { StringUtil } from "../../../Utility/StringUtil";
+import { Reference } from "../../../Utility/Reference";
 
 const log = getLogger({ module: "QueryOperation" });
 
@@ -22,6 +23,7 @@ export class QueryOperation {
     private readonly _indexQuery: IndexQuery;
     private readonly _metadataOnly: boolean;
     private readonly _indexEntriesOnly: boolean;
+    private readonly _isProjectInto: boolean;
     private _currentQueryResults: QueryResult;
     private readonly _fieldsToFetch: FieldsToFetchToken;
     private _sp: Stopwatch;
@@ -34,7 +36,8 @@ export class QueryOperation {
         fieldsToFetch: FieldsToFetchToken,
         disableEntitiesTracking: boolean,
         metadataOnly: boolean,
-        indexEntriesOnly: boolean) {
+        indexEntriesOnly: boolean,
+        isProjectInto: boolean) {
         this._session = session;
         this._indexName = indexName;
         this._indexQuery = indexQuery;
@@ -42,6 +45,7 @@ export class QueryOperation {
         this._noTracking = disableEntitiesTracking;
         this._metadataOnly = metadataOnly;
         this._indexEntriesOnly = indexEntriesOnly;
+        this._isProjectInto = isProjectInto;
 
         this._assertPageSizeSet();
     }
@@ -62,7 +66,7 @@ export class QueryOperation {
     }
 
     public setResult(queryResult: QueryResult): void {
-        this.ensureIsAcceptableAndSaveResult(queryResult);
+        this.ensureIsAcceptableAndSaveResult(queryResult, null);
     }
 
     private _assertPageSizeSet(): void {
@@ -106,11 +110,17 @@ export class QueryOperation {
     public complete<T extends object>(documentType?: DocumentType<T>): T[] {
         const queryResult = this._currentQueryResults.createSnapshot();
 
+        const result = [] as T[];
+
+        this._completeInternal(documentType, queryResult, x => result.push(x));
+
+        return result;
+    }
+
+    private _completeInternal<T extends object>(documentType: DocumentType<T>, queryResult: QueryResult, addToResult: (item: T) => void): void {
         if (!this._noTracking) {
             this._session.registerIncludes(queryResult.includes);
         }
-
-        const list: T[] = [];
 
         try {
             for (const document of queryResult.results) {
@@ -122,7 +132,7 @@ export class QueryOperation {
                     id = idNode;
                 }
 
-                list.push(
+                addToResult(
                     QueryOperation.deserialize(
                         id,
                         document,
@@ -130,7 +140,8 @@ export class QueryOperation {
                         this._fieldsToFetch,
                         this._noTracking,
                         this._session,
-                        documentType));
+                        documentType,
+                        this._isProjectInto));
             }
         } catch (err) {
             log.warn(err, "Unable to read query result JSON.");
@@ -145,8 +156,6 @@ export class QueryOperation {
                 this._session.registerCounters(queryResult.counterIncludes, queryResult.includedCounterNames);
             }
         }
-
-        return list;
     }
 
     public static deserialize<T extends object>(
@@ -156,7 +165,8 @@ export class QueryOperation {
         fieldsToFetch: FieldsToFetchToken,
         disableEntitiesTracking: boolean,
         session: InMemoryDocumentSessionOperations,
-        clazz?: DocumentType<T>
+        clazz?: DocumentType<T>,
+        isProjectInto?: boolean
     ) {
         const { conventions } = session;
         const { entityFieldNameConvention } = conventions;
@@ -207,6 +217,19 @@ export class QueryOperation {
 
         const raw: T = conventions.objectMapper.fromObjectLiteral(document);
         const projType = conventions.getJsTypeByDocumentType(clazz);
+
+        /* TODO
+        if (ObjectNode.class.equals(clazz)) {
+            return (T)document;
+        }
+         */
+
+        const documentRef: Reference<object> = {
+            value: document
+        };
+        session.onBeforeConversionToEntityInvoke(id, clazz, documentRef);
+        document = documentRef.value;
+
         // tslint:disable-next-line:new-parens
         const result = projType ? new (Function.prototype.bind.apply(projType)) : {};
 
@@ -231,6 +254,8 @@ export class QueryOperation {
             }
         }
 
+        session.onAfterConversionToEntityInvoke(id, document, result);
+
         return result;
     }
 
@@ -250,13 +275,25 @@ export class QueryOperation {
         this._noTracking = disableEntitiesTracking;
     }
 
-    public ensureIsAcceptableAndSaveResult(result: QueryResult): void {
+    public ensureIsAcceptableAndSaveResult(result: QueryResult, duration: Stopwatch): void {
+        if (TypeUtil.isNullOrUndefined(duration)) {
+            if (this._sp) {
+                duration = this._sp;
+            } else {
+                duration = null;
+            }
+        }
+
         if (!result) {
             throwError("IndexDoesNotExistException", `Could not find index ${this._indexName}.`);
         }
 
-        QueryOperation.ensureIsAcceptable(result, this._indexQuery.waitForNonStaleResults, this._sp, this._session);
+        QueryOperation.ensureIsAcceptable(result, this._indexQuery.waitForNonStaleResults, duration, this._session);
 
+        this._saveQueryResult(result);
+    }
+
+    private _saveQueryResult(result: QueryResult) {
         this._currentQueryResults = result;
 
         // logging
@@ -299,12 +336,12 @@ export class QueryOperation {
         waitForNonStaleResults: boolean,
         duration: Stopwatch,
         session: InMemoryDocumentSessionOperations): void {
-        if (waitForNonStaleResults && result.isStale) {
+        if (duration) {
             duration.stop();
-
+        }
+        if (waitForNonStaleResults && result.isStale) {
             const msg = "Waited for " + duration.toString() + " for the query to return non stale result.";
             throwError("TimeoutException", msg);
-
         }
     }
 

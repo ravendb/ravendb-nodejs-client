@@ -1,6 +1,8 @@
 import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
 import { IMetadataDictionary } from "./IMetadataDictionary";
 import { IDocumentQueryCustomization } from "./IDocumentQueryCustomization";
+import { DocumentType } from "../DocumentAbstractions";
+import { Reference } from "../../Utility/Reference";
 
 export interface SessionEventsEmitter {
     on(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
@@ -130,5 +132,59 @@ export class SessionAfterSaveChangesEventArgs {
         }
 
         return this._documentMetadata;
+    }
+}
+
+export class AfterConversionToDocumentEventArgs {
+    public id: string;
+    public entity: object;
+    public document: Reference<object>;
+    public session: InMemoryDocumentSessionOperations;
+
+    public constructor(session: InMemoryDocumentSessionOperations, id: string, entity: object, document: Reference<object>) {
+        this.session = session;
+        this.id = id;
+        this.entity = entity;
+        this.document = document;
+    }
+}
+
+export class AfterConversionToEntityEventArgs {
+    public id: string;
+    public document: object;
+    public entity: object;
+    public session: InMemoryDocumentSessionOperations;
+
+    public constructor(session: InMemoryDocumentSessionOperations, id: string, document: object, entity: object) {
+        this.session = session;
+        this.id = id;
+        this.document = document;
+        this.entity = entity;
+    }
+}
+
+export class BeforeConversionToDocumentEventArgs {
+    public id: string;
+    public entity: object;
+    public session: InMemoryDocumentSessionOperations;
+
+    public constructor(session: InMemoryDocumentSessionOperations, id: string, entity: object) {
+        this.session = session;
+        this.id = id;
+        this.entity = entity;
+    }
+}
+
+export class BeforeConversionToEntityEventArgs {
+    public id: string;
+    public type: DocumentType; //TODO: check if this is correct type!
+    public document: Reference<object>;
+    public session: InMemoryDocumentSessionOperations;
+
+    public constructor(session: InMemoryDocumentSessionOperations, id: string, type: DocumentType, document: Reference<object>) {
+        this.session = session;
+        this.id = id;
+        this.type = type;
+        this.document = document;
     }
 }

@@ -9,11 +9,26 @@ import {
 import { Stopwatch } from "../../src/Utility/Stopwatch";
 import { DocumentType } from "../../src";
 import { delay } from "../../src/Utility/PromiseUtil";
+import { v4 as uuidv4 } from "uuid";
+import { assertThat } from "./AssertExtensions";
 
 export class ReplicationTestContext {
 
     protected _modifyReplicationDestination(replicationNode: ReplicationNode) {
         // empty by design
+    }
+
+    public async ensureReplicating(src: IDocumentStore, dst: IDocumentStore) {
+        const id = "marker/" + uuidv4();
+
+        {
+            const s = src.openSession();
+            await s.store(new Marker(), id);
+            await s.saveChanges();
+        }
+
+        assertThat(this.waitForDocumentToReplicate(dst, id, 15_000, Marker))
+            .isNotNull();
     }
 
     public async setupReplication(fromStore: IDocumentStore, ...destinations: IDocumentStore[]): Promise<void> {
@@ -61,4 +76,8 @@ export class ReplicationTestContext {
         return null;
     }
 
+}
+
+class Marker {
+    public id: string;
 }

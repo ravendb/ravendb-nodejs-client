@@ -5,6 +5,7 @@ import { RavenCommand } from "../../../Http/RavenCommand";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
 import * as stream from "stream";
+import { ServerWideBackupConfiguration } from "./ServerWideBackupConfiguration";
 
 export class GetServerWideBackupConfigurationOperation implements IServerOperation<ServerWideBackupConfiguration> {
     private readonly _name: string;

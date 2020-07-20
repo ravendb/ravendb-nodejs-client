@@ -4,7 +4,15 @@ import { IDisposable } from "../../Types/Contracts";
 import { SessionInfo, ConcurrencyCheckMode, StoreOptions } from "./IDocumentSession";
 import { IMetadataDictionary } from "./IMetadataDictionary";
 import { ObjectTypeDescriptor, ClassConstructor } from "../../Types";
-import { SessionEventsEmitter, SessionBeforeStoreEventArgs, SessionBeforeDeleteEventArgs } from "./SessionEvents";
+import {
+    SessionEventsEmitter,
+    SessionBeforeStoreEventArgs,
+    SessionBeforeDeleteEventArgs,
+    BeforeConversionToDocumentEventArgs,
+    AfterConversionToDocumentEventArgs,
+    BeforeConversionToEntityEventArgs,
+    AfterConversionToEntityEventArgs
+} from "./SessionEvents";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { IDocumentStore } from "../IDocumentStore";
 import CurrentIndexAndNode from "../../Http/CurrentIndexAndNode";
@@ -56,6 +64,7 @@ import { ClusterTransactionOperationsBase } from "./ClusterTransactionOperations
 import { BatchCommandResult } from "./Operations/BatchCommandResult";
 import { SessionOperationExecutor } from "../Operations/SessionOperationExecutor";
 import { StringUtil } from "../../Utility/StringUtil";
+import { Reference } from "../../Utility/Reference";
 
 export abstract class InMemoryDocumentSessionOperations
     extends EventEmitter
@@ -84,8 +93,6 @@ export abstract class InMemoryDocumentSessionOperations
     public get id() {
         return this._id;
     }
-
-    public deletedEntities: Set<object> = new Set();
 
     protected _knownMissingIds: Set<string> = CaseInsensitiveStringSet.create();
 
@@ -138,9 +145,13 @@ export abstract class InMemoryDocumentSessionOperations
 
     public readonly noTracking: boolean;
 
+    public idsForCreatingForcedRevisions: Map<string, ForceRevisionStrategy> = new Map(); //TODO: check usages this is case insensitive map!
+
     public includedDocumentsById: Map<string, DocumentInfo> = CaseInsensitiveKeysMap.create();
 
-    public documentsByEntity: Map<object, DocumentInfo> = new Map();
+    public documentsByEntity: DocumentsByEntityHolder = new DocumentsByEntityHolder();
+
+    public deletedEntities: DeletedEntitiesHolder = new DeletedEntitiesHolder();
 
     protected _documentStore: DocumentStoreBase;
 
@@ -175,7 +186,7 @@ export abstract class InMemoryDocumentSessionOperations
     }
 
     public getNumberOfEntitiesInUnitOfWork() {
-        return this.documentsByEntity.size;
+        return this.documentsByEntity.length;
     }
 
     public get storeIdentifier(): string {
@@ -432,7 +443,7 @@ export abstract class InMemoryDocumentSessionOperations
                 }
             }
 
-            if (!documentInfo.entity) {
+            if (!documentInfo.entity && !documentInfo.document) {
                 return false;
             }
 
@@ -486,7 +497,7 @@ export abstract class InMemoryDocumentSessionOperations
         noTracking = this.noTracking || noTracking;  
 
         if (!id) {
-            return this._deserializeFromTransformer(entityType, null, document) as T;
+            return this._deserializeFromTransformer(entityType, null, document, false) as T;
         }
 
         let docInfo: DocumentInfo = this.documentsById.getValue(id);
@@ -495,13 +506,13 @@ export abstract class InMemoryDocumentSessionOperations
             // instance, and return that, ignoring anything new.
 
             if (!docInfo.entity) {
-                docInfo.entity = this.entityToJson.convertToEntity(entityType, id, document);
+                docInfo.entity = this.entityToJson.convertToEntity(entityType, id, document, !noTracking);
                 this._makeMetadataInstance(docInfo);
             }
 
             if (!noTracking) {
                 this.includedDocumentsById.delete(id);
-                this.documentsByEntity.set(docInfo.entity, docInfo);
+                this.documentsByEntity.put(docInfo.entity, docInfo);
             }
 
             return docInfo.entity as T;
@@ -510,20 +521,20 @@ export abstract class InMemoryDocumentSessionOperations
         docInfo = this.includedDocumentsById.get(id);
         if (docInfo) {
             if (!docInfo.entity) {
-                docInfo.entity = this.entityToJson.convertToEntity(entityType, id, document);
+                docInfo.entity = this.entityToJson.convertToEntity(entityType, id, document, !noTracking);
                 this._makeMetadataInstance(docInfo);
             }
 
             if (!noTracking) {
                 this.includedDocumentsById.delete(id);
                 this.documentsById.add(docInfo);
-                this.documentsByEntity.set(docInfo.entity, docInfo);
+                this.documentsByEntity.put(docInfo.entity, docInfo);
             }
 
             return docInfo.entity as T;
         }
 
-        const entity = this.entityToJson.convertToEntity(entityType, id, document);
+        const entity = this.entityToJson.convertToEntity(entityType, id, document, !noTracking);
 
         const changeVector = metadata[CONSTANTS.Documents.Metadata.CHANGE_VECTOR];
         if (!changeVector) {
@@ -539,7 +550,7 @@ export abstract class InMemoryDocumentSessionOperations
             newDocumentInfo.changeVector = changeVector;
 
             this.documentsById.add(newDocumentInfo);
-            this.documentsByEntity.set(entity, newDocumentInfo);
+            this.documentsByEntity.put(entity, newDocumentInfo);
             this._makeMetadataInstance(newDocumentInfo);
         }
 
@@ -575,13 +586,13 @@ export abstract class InMemoryDocumentSessionOperations
                 + ", but the entity instance already exists in the session with id: " + existing.id);
         }
         
-        this.documentsByEntity.set(info.entity, info);
+        this.documentsByEntity.put(info.entity, info);
         this.documentsById.add(info);
         this.includedDocumentsById.delete(info.id);
      }
 
-    private _deserializeFromTransformer(clazz: ObjectTypeDescriptor, id: string, document: object): object {
-        return this.entityToJson.convertToEntity(clazz, id, document);
+    private _deserializeFromTransformer(clazz: ObjectTypeDescriptor, id: string, document: object, trackEntity: boolean): object {
+        return this.entityToJson.convertToEntity(clazz, id, document, trackEntity);
     }
 
     public registerIncludes(includes: object): void {
@@ -956,7 +967,7 @@ export abstract class InMemoryDocumentSessionOperations
 
         if (this.deletedEntities.has(entity)) {
             throwError("InvalidOperationException",
-                "Can't store object, it was already deleted in this session.  Document id: " + id);
+                "Can't store object, it was already deleted in this session. Document id: " + id);
         }
 
         // we make the check here even if we just generated the ID
@@ -998,7 +1009,6 @@ export abstract class InMemoryDocumentSessionOperations
         metadata: object,
         forceConcurrencyCheck: ConcurrencyCheckMode,
         documentType: DocumentType): void {
-        this.deletedEntities.delete(entity);
 
         if (id) {
             this._knownMissingIds.delete(id);
@@ -1013,7 +1023,7 @@ export abstract class InMemoryDocumentSessionOperations
         documentInfo.newDocument = true;
         documentInfo.document = null;
 
-        this.documentsByEntity.set(entity, documentInfo);
+        this.documentsByEntity.put(entity, documentInfo);
 
         if (id) {
             this.documentsById.add(documentInfo);
@@ -1034,6 +1044,7 @@ export abstract class InMemoryDocumentSessionOperations
         this._prepareForEntitiesDeletion(result, null);
         this._prepareForEntitiesPuts(result);
 
+        this._prepareForCreatingRevisionsFromIds(result);
         this._prepareCompareExchangeEntities(result);
 
         if (this._deferredCommands.length > deferredCommandsCount) {
@@ -1098,6 +1109,38 @@ export abstract class InMemoryDocumentSessionOperations
         this.sessionInfo.lastClusterTransactionIndex = returnedTransactionIndex;
     }
 
+    public onBeforeConversionToDocumentInvoke(id: string, entity: object) {
+        const args = new BeforeConversionToDocumentEventArgs(this, id, entity);
+        this.emit("beforeConversionToDocument", args);
+    }
+
+    public onAfterConversionToDocumentInvoke(id: string, entity: object, document: Reference<object>) {
+        if (this.listenerCount("afterConversionToDocument")) {
+            const eventArgs = new AfterConversionToDocumentEventArgs(this, id, entity, document);
+            this.emit("afterConversionToDocument", eventArgs);
+
+            if (eventArgs.document.value && eventArgs.document.value !== document.value) {
+                document.value = eventArgs.document.value; //TODO
+            }
+        }
+    }
+
+    public onBeforeConversionToEntityInvoke(id: string, type: DocumentType, document: Reference<object>) {
+        if (this.listenerCount("beforeConversionToEntity")) {
+            const eventArgs = new BeforeConversionToEntityEventArgs(this, id, type, document);
+            this.emit("beforeConversionToEntity", eventArgs);
+
+            if (eventArgs.document.value && eventArgs.document.value !== document.value) { //TODO:
+                document.value = eventArgs.document.value; //TODO
+            }
+        }
+    }
+
+    public onAfterConversionToEntityInvoke(id: string, document: object, entity: object) {
+        const eventArgs = new AfterConversionToEntityEventArgs(this, id, document, entity);
+        this.emit("afterConversionToEntity", eventArgs);
+    }
+
     private _prepareCompareExchangeEntities(result: SaveChangesData): void {
         const clusterTransactionOperations = this._clusterSession;
         if (!clusterTransactionOperations || !clusterTransactionOperations.hasCommands()) {
@@ -1146,116 +1189,152 @@ export abstract class InMemoryDocumentSessionOperations
         });
     }
 
-    private _prepareForEntitiesDeletion(result: SaveChangesData, changes: { [id: string]: DocumentsChanges[] }): void {
-        for (const deletedEntity of this.deletedEntities) {
-            let documentInfo = this.documentsByEntity.get(deletedEntity);
-            if (!documentInfo) {
-                continue;
-            }
+    private _prepareForCreatingRevisionsFromIds(result: SaveChangesData) {
+        // Note: here there is no point checking 'Before' or 'After' because if there were changes then forced revision is done from the PUT command....
 
-            if (changes) {
-                const docChanges = [];
-                const change = new DocumentsChanges();
-                change.fieldNewValue = "";
-                change.fieldOldValue = "";
-                change.change = "DocumentDeleted";
-
-                docChanges.push(change);
-                changes[documentInfo.id] = docChanges;
-            } else {
-                const command: ICommandData =
-                    result.deferredCommandsMap.get(IdTypeAndName.keyFor(documentInfo.id, "ClientAnyCommand", null));
-                if (command) {
-                    InMemoryDocumentSessionOperations._throwInvalidDeletedDocumentWithDeferredCommand(command);
-                }
-
-                let changeVector = null;
-                documentInfo = this.documentsById.getValue(documentInfo.id);
-
-                if (documentInfo) {
-                    changeVector = documentInfo.changeVector;
-
-                    if (documentInfo.entity) {
-                        result.onSuccess.removeDocumentByEntity(documentInfo.entity);
-                        result.entities.push(documentInfo.entity);
-                    }
-
-                    result.onSuccess.removeDocumentByEntity(documentInfo.entity);
-                }
-
-                changeVector = this.useOptimisticConcurrency ? changeVector : null;
-                const beforeDeleteEventArgs =
-                    new SessionBeforeDeleteEventArgs(this, documentInfo.id, documentInfo.entity);
-                this.emit("beforeDelete", beforeDeleteEventArgs);
-                result.sessionCommands.push(new DeleteCommandData(documentInfo.id, changeVector));
-            }
-
-            if (!changes) {
-                result.onSuccess.clearDeletedEntities();
-            }
+        for (const idEntry of this.idsForCreatingForcedRevisions.keys()) {
+            result.sessionCommands.push(new ForceRevisionCommandData(idEntry));
         }
 
+        this.idsForCreatingForcedRevisions.clear();
+    }
+
+    private _prepareForEntitiesDeletion(result: SaveChangesData, changes: { [id: string]: DocumentsChanges[] }): void {
+        const deletes = this.deletedEntities.prepareEntitiesDeletes();
+        try {
+            for (const deletedEntity of this.deletedEntities) {
+                let documentInfo = this.documentsByEntity.get(deletedEntity);
+                if (!documentInfo) {
+                    continue;
+                }
+
+                if (changes) {
+                    const docChanges = [];
+                    const change = new DocumentsChanges();
+                    change.fieldNewValue = "";
+                    change.fieldOldValue = "";
+                    change.change = "DocumentDeleted";
+
+                    docChanges.push(change);
+                    changes[documentInfo.id] = docChanges;
+                } else {
+                    const command: ICommandData =
+                        result.deferredCommandsMap.get(IdTypeAndName.keyFor(documentInfo.id, "ClientAnyCommand", null));
+                    if (command) {
+                        InMemoryDocumentSessionOperations._throwInvalidDeletedDocumentWithDeferredCommand(command);
+                    }
+
+                    let changeVector = null;
+                    documentInfo = this.documentsById.getValue(documentInfo.id);
+
+                    if (documentInfo) {
+                        changeVector = documentInfo.changeVector;
+
+                        if (documentInfo.entity) {
+                            result.onSuccess.removeDocumentByEntity(documentInfo.entity);
+                            result.entities.push(documentInfo.entity);
+                        }
+
+                        result.onSuccess.removeDocumentByEntity(documentInfo.entity);
+                    }
+
+                    changeVector = this.useOptimisticConcurrency ? changeVector : null;
+                    const beforeDeleteEventArgs =
+                        new SessionBeforeDeleteEventArgs(this, documentInfo.id, documentInfo.entity);
+                    this.emit("beforeDelete", beforeDeleteEventArgs);
+                    result.sessionCommands.push(new DeleteCommandData(documentInfo.id, changeVector));
+                }
+
+                if (!changes) {
+                    result.onSuccess.clearDeletedEntities();
+                }
+            }
+        } finally {
+            deletes.dispose();
+        }
     }
 
     private _prepareForEntitiesPuts(result: SaveChangesData): void {
-        for (const entry of this.documentsByEntity.entries()) {
-            const [entityKey, entityValue] = entry;
+        const putsContext = this.documentsByEntity.prepareEntitiesPuts();
+        try {
+            for (const entry: DocumentsByEntityEnumeratorResult of this.documentsByEntity) {
+                //TODO: check types here!
+                const [entityKey, entityValue] = entry;
 
-            if (entityValue.ignoreChanges) {
-                continue;
-            }
-
-            if (this.isDeleted(entityValue.id)) {
-                continue;
-            }
-
-            const dirtyMetadata = InMemoryDocumentSessionOperations._updateMetadataModifications(entityValue);
-
-            let document = this.entityToJson.convertEntityToJson(entityKey, entityValue);
-            if (!this._entityChanged(document, entityValue, null) && !dirtyMetadata) {
-                continue;
-            }
-
-            const command = result.deferredCommandsMap.get(
-                IdTypeAndName.keyFor(entityValue.id, "ClientModifyDocumentCommand", null));
-            if (command) {
-                InMemoryDocumentSessionOperations._throwInvalidModifiedDocumentWithDeferredCommand(command);
-            }
-
-            const beforeStoreEventArgs = new SessionBeforeStoreEventArgs(this, entityValue.id, entityKey);
-            if (this.emit("beforeStore", beforeStoreEventArgs)) {
-                if (beforeStoreEventArgs.isMetadataAccessed()) {
-                    InMemoryDocumentSessionOperations._updateMetadataModifications(entityValue);
+                if (entityValue.ignoreChanges) {
+                    continue;
                 }
 
-                if (beforeStoreEventArgs.isMetadataAccessed() || this._entityChanged(document, entityValue, null)) {
-                    document = this.entityToJson.convertEntityToJson(entityKey, entityValue);
+                if (this.isDeleted(entityValue.id)) {
+                    continue;
                 }
-            }
 
-            result.entities.push(entityKey);
+                const dirtyMetadata = InMemoryDocumentSessionOperations._updateMetadataModifications(entityValue);
 
-            if (entityValue.id) {
-                result.onSuccess.removeDocumentById(entityValue.id);
-            }
-            result.onSuccess.updateEntityDocumentInfo(entityValue, document);
+                let document = this.entityToJson.convertEntityToJson(entityKey, entityValue);
+                if (!this._entityChanged(document, entityValue, null) && !dirtyMetadata) {
+                    continue;
+                }
 
-            let changeVector: string;
-            if (this.useOptimisticConcurrency) {
-                if (entityValue.concurrencyCheckMode !== "Disabled") {
-                    // if the user didn't provide a change vector, we'll test for an empty one
-                    changeVector = entityValue.changeVector || "";
+                const command = result.deferredCommandsMap.get(
+                    IdTypeAndName.keyFor(entityValue.id, "ClientModifyDocumentCommand", null));
+                if (command) {
+                    InMemoryDocumentSessionOperations._throwInvalidModifiedDocumentWithDeferredCommand(command);
+                }
+
+                const beforeStoreEventArgs = new SessionBeforeStoreEventArgs(this, entityValue.id, entityKey);
+
+                if (this.emit("beforeStore", beforeStoreEventArgs)) { //TODO: && entity.executeOnBeforeStore
+                    if (beforeStoreEventArgs.isMetadataAccessed()) {
+                        InMemoryDocumentSessionOperations._updateMetadataModifications(entityValue);
+                    }
+
+                    if (beforeStoreEventArgs.isMetadataAccessed() || this._entityChanged(document, entityValue, null)) {
+                        document = this.entityToJson.convertEntityToJson(entityKey, entityValue);
+                    }
+                }
+
+                result.entities.push(entityKey);
+
+                if (entityValue.id) {
+                    result.onSuccess.removeDocumentById(entityValue.id);
+                }
+                result.onSuccess.updateEntityDocumentInfo(entityValue, document);
+
+                let changeVector: string;
+                if (this.useOptimisticConcurrency) {
+                    if (entityValue.concurrencyCheckMode !== "Disabled") {
+                        // if the user didn't provide a change vector, we'll test for an empty one
+                        changeVector = entityValue.changeVector || "";
+                    } else {
+                        changeVector = null;
+                    }
+                } else if (entityValue.concurrencyCheckMode === "Forced") {
+                    changeVector = entityValue.changeVector;
                 } else {
                     changeVector = null;
                 }
-            } else if (entityValue.concurrencyCheckMode === "Forced") {
-                changeVector = entityValue.changeVector;
-            } else {
-                changeVector = null;
-            }
 
-            result.sessionCommands.push(
-                new PutCommandDataWithJson(entityValue.id, changeVector, document));
+                const forceRevisionCreationStrategy: ForceRevisionStrategy = "None";
+
+
+                /* TODO
+
+                if (entity.getValue().getId() != null) {
+                    // Check if user wants to Force a Revision
+                    ForceRevisionStrategy creationStrategy = idsForCreatingForcedRevisions.get(entity.getValue().getId());
+                    if (creationStrategy != null) {
+                        idsForCreatingForcedRevisions.remove(entity.getValue().getId());
+                        forceRevisionCreationStrategy = creationStrategy;
+                    }
+                }
+                 */
+
+                result.sessionCommands.push(
+                    new PutCommandDataWithJson(entityValue.id, changeVector, document));
+            }
+        } finally {
+            putsContext.dispose();
         }
     }
 
@@ -1433,7 +1512,7 @@ export abstract class InMemoryDocumentSessionOperations
 
         documentInfo.document = document;
         const entityType = this.conventions.getTypeDescriptorByEntity(entity);
-        documentInfo.entity = this.entityToJson.convertToEntity(entityType, documentInfo.id, document);
+        documentInfo.entity = this.entityToJson.convertToEntity(entityType, documentInfo.id, document, !this.noTracking);
 
         Object.assign(entity, documentInfo.entity);
     }
@@ -1442,7 +1521,7 @@ export abstract class InMemoryDocumentSessionOperations
      * Gets a value indicating whether any of the entities tracked by the session has changes.
      */
     public hasChanges(): boolean {
-        for (const entity of this.documentsByEntity.entries()) {
+        for (const entity: DocumentsByEntityHolder.DocumentsByEntityEnumeratorResult of this.documentsByEntity) {
             const document = this.entityToJson.convertEntityToJson(entity[0], entity[1]);
             if (this._entityChanged(document, entity[1], null)) {
                 return true;
@@ -1459,14 +1538,15 @@ export abstract class InMemoryDocumentSessionOperations
     public evict<T extends object>(entity: T): void {
         const documentInfo = this.documentsByEntity.get(entity);
         if (documentInfo) {
-            this.documentsByEntity.delete(entity);
+            this.documentsByEntity.evict(entity);
             this.documentsById.remove(documentInfo.id);
+            if (this._countersByDocId) {
+                this._countersByDocId.delete(documentInfo.id);
+            }
         }
 
-        this.deletedEntities.delete(entity);
-        if (this._countersByDocId) {
-            this._countersByDocId.delete(documentInfo.id);
-        }
+        this.deletedEntities.evict(entity);
+        this.entityToJson.removeFromMissing(entity);
     }
 
     /**
@@ -1489,6 +1569,7 @@ export abstract class InMemoryDocumentSessionOperations
         }
 
         this._pendingLazyOperations.length = 0;
+        this.entityToJson.clear();
     }
 
     /**
@@ -1610,4 +1691,201 @@ export abstract class InMemoryDocumentSessionOperations
             "to operate on. Database name can be passed as an argument when Session is" +
                 " being opened or default database can be defined using 'DocumentStore.setDatabase()' method");
     }
+}
+
+export class DocumentsByEntityHolder implements Iterable<DocumentsByEntityEnumeratorResult> {
+    private readonly _documentsByEntity = new Map<object, DocumentInfo>();
+    private _onBeforeStoreDocumentsByEntity: Map<object, DocumentInfo>;
+    private _prepareEntitiesPuts: boolean;
+
+    public get size(): number {
+        return this._documentsByEntity.size + (this._onBeforeStoreDocumentsByEntity ? this._onBeforeStoreDocumentsByEntity.size : 0);
+    }
+
+    public (entity: object) {
+        this._documentsByEntity.delete(entity);
+
+        if (this._onBeforeStoreDocumentsByEntity) {
+            this._onBeforeStoreDocumentsByEntity.delete(entity);
+        }
+    }
+
+    public evict(entity: object) {
+        if (this._prepareEntitiesPuts) {
+            throwError("InvalidArgumentException", "Cannot Evict entity during OnBeforeStore");
+        }
+
+        this._documentsByEntity.delete(entity);
+    }
+
+    public put(entity: object, documentInfo: DocumentInfo) {
+        if (!this._prepareEntitiesPuts) {
+            this._documentsByEntity.set(entity, documentInfo);
+            return;
+        }
+
+        this._createOnBeforeStoreDocumentsByEntityIfNeeded();
+        this._onBeforeStoreDocumentsByEntity.set(entity, documentInfo);
+    }
+
+    private _createOnBeforeStoreDocumentsByEntityIfNeeded() {
+        if (this._onBeforeStoreDocumentsByEntity) {
+            return;
+        }
+
+        this._onBeforeStoreDocumentsByEntity = new Map<object, DocumentInfo>();
+    }
+
+    public clear() {
+        this._documentsByEntity.clear();
+        if (this._onBeforeStoreDocumentsByEntity) {
+            this._onBeforeStoreDocumentsByEntity.clear();
+        }
+    }
+
+    public get(entity: object): DocumentInfo {
+        const documentInfo = this._documentsByEntity.get(entity);
+        if (documentInfo) {
+            return documentInfo;
+        }
+
+        if (this._onBeforeStoreDocumentsByEntity) {
+            return this._onBeforeStoreDocumentsByEntity.get(entity);
+        }
+
+        return null;
+    }
+
+    /* TODO
+     @Override
++        public Iterator<DocumentsByEntityEnumeratorResult> iterator() {
++            Iterator<DocumentsByEntityEnumeratorResult> firstIterator
++                    = Iterators.transform(_documentsByEntity.entrySet().iterator(),
++                        x -> new DocumentsByEntityEnumeratorResult(x.getKey(), x.getValue(), true));
++
++            if (_onBeforeStoreDocumentsByEntity == null) {
++                return firstIterator;
++            }
++
++            Iterator<DocumentsByEntityEnumeratorResult> secondIterator
++                    = Iterators.transform(_onBeforeStoreDocumentsByEntity.entrySet().iterator(),
++                        x -> new DocumentsByEntityEnumeratorResult(x.getKey(), x.getValue(), false));
++
++            return Iterators.concat(firstIterator, secondIterator);
++        }
+     */
+
+    public prepareEntitiesPuts(): IDisposable {
+        this._prepareEntitiesPuts = true;
+        const self = this;
+
+        return {
+            dispose(): void {
+                self._prepareEntitiesPuts = false;
+            }
+        }
+    }
+}
+
+export interface DocumentsByEntityEnumeratorResult {
+    key: object;
+    value: DocumentInfo;
+    executeOnBeforeStore: boolean;
+}
+
+export class DeletedEntitiesHolder implements Iterable<DeletedEntitiesEnumeratorResult> {
+    private readonly _deletedEntities = new Set<object>();
+
+    private _onBeforeDeletedEntities: Set<object>;
+
+    private _prepareEntitiesDeletes: boolean;
+
+    public isEmpty(): boolean {
+        return this.length === 0;
+    }
+
+    public get size() {
+        return this._deletedEntities.size + (this._onBeforeDeletedEntities ? this._onBeforeDeletedEntities.size : 0);
+    }
+
+    public add(entity: object) {
+        if (this._prepareEntitiesDeletes) {
+            if (!this._onBeforeDeletedEntities) {
+                this._onBeforeDeletedEntities = new Set<object>();
+            }
+
+            this._onBeforeDeletedEntities.add(entity);
+            return;
+        }
+
+        this._deletedEntities.add(entity);
+    }
+
+    public remove(entity: object) {
+        this._deletedEntities.delete(entity);
+        if (this._onBeforeDeletedEntities) {
+            this._onBeforeDeletedEntities.delete(entity);
+        }
+    }
+
+    public evict(entity: object) {
+        if (this._prepareEntitiesDeletes) {
+            throwError("InvalidOperationException", "Cannot Evict entity during OnBeforeDelete");
+        }
+
+        this._deletedEntities.delete(entity);
+    }
+
+    public contains(entity: object): boolean {
+        if (this._deletedEntities.has(entity)) {
+            return true;
+        }
+
+        if (!this._onBeforeDeletedEntities) {
+            return false;
+        }
+
+        return this._onBeforeDeletedEntities.has(entity);
+    }
+
+    public clear() {
+        this._deletedEntities.clear();
+        if (this._onBeforeDeletedEntities) {
+            this._onBeforeDeletedEntities.clear();
+        }
+    }
+
+    /* TOOD
+
++        @Override
++        public Iterator<DeletedEntitiesEnumeratorResult> iterator() {
++            Iterator<Object> deletedIterator = _deletedEntities.iterator();
++            Iterator<DeletedEntitiesEnumeratorResult> deletedTransformedIterator
++                    = Iterators.transform(deletedIterator, x -> new DeletedEntitiesEnumeratorResult(x, true));
++
++            if (_onBeforeDeletedEntities == null) {
++                return deletedTransformedIterator;
++            }
++
++            Iterator<DeletedEntitiesEnumeratorResult> onBeforeDeletedIterator
++                    = Iterators.transform(_deletedEntities.iterator(), x -> new DeletedEntitiesEnumeratorResult(x, false));
++
++            return Iterators.concat(deletedTransformedIterator, onBeforeDeletedIterator);
+     */
+
+    public prepareEntitiesDeletes(): IDisposable {
+        this._prepareEntitiesDeletes = true;
+        const self = this;
+
+        return {
+            dispose(): void {
+                self._prepareEntitiesDeletes = false;
+            }
+        }
+    }
+}
+
+export interface DeletedEntitiesEnumeratorResult {
+    entity: object;
+    executeOnBeforeDelete: boolean;
 }

@@ -1,4 +1,4 @@
-import { IDocumentStore, PeriodicBackupConfiguration } from "../../src";
+import { GetOngoingTaskInfoOperation, IDocumentStore, PeriodicBackupConfiguration } from "../../src";
 import { disposeTestDocumentStore, RavenTestContext, TemporaryDirContext, testContext } from "../Utils/TestUtil";
 import * as path from "path";
 import * as fs from "fs";
@@ -10,6 +10,7 @@ import * as rimraf from "rimraf";
 import { Stopwatch } from "../../src/Utility/Stopwatch";
 import { throwError } from "../../src/Exceptions";
 import { delay } from "../../src/Utility/PromiseUtil";
+import { OngoingTaskBackup } from "../../src/Documents/Operations/OngoingTasks/OngoingTask";
 
 (RavenTestContext.isPullRequest ? describe.skip : describe)("BackupsTest", function () {
 
@@ -64,6 +65,33 @@ import { delay } from "../../src/Utility/PromiseUtil";
         } finally {
             rimraf.sync(backupDir);
         }
+    });
+
+    it("canSetupRetentionPolicy", async () => {
+        const backupConfiguration: PeriodicBackupConfiguration = {
+            name: "myBackup",
+            disabled: true,
+            backupType: "Snapshot",
+            fullBackupFrequency: "20 * * * *",
+            backupEncryptionSettings: {
+                key: "QV2jJkHCPGwjbOiXuZDCNmyyj/GE4OH8OZlkg5jQPRI=",
+                encryptionMode: "UseProvidedKey"
+            },
+            retentionPolicy: {
+                disabled: false,
+                minimumBackupAgeToKeep: 3600 * 1000
+            }
+        };
+
+        const operation = new UpdatePeriodicBackupOperation(backupConfiguration);
+        await store.maintenance.send(operation);
+
+        const myBackup = await store.maintenance.send(new GetOngoingTaskInfoOperation("myBackup", "Backup")) as OngoingTaskBackup;
+
+        assertThat(myBackup.retentionPolicy.minimumBackupAgeToKeep)
+            .isEqualTo(3600 * 100);
+        assertThat(myBackup.encrypted)
+            .isTrue();
     });
 });
 

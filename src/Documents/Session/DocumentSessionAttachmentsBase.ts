@@ -219,13 +219,13 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
         }
 
         const sourceDocument = this._documentsById.getValue(sourceDocumentId);
-        if (sourceDocument && this._deletedEntities.has(sourceDocument.entity)) {
+        if (sourceDocument && this._session.deletedEntities.has(sourceDocument.entity)) {
             DocumentSessionAttachmentsBase._throwDocumentAlreadyDeleted(
                 sourceDocumentId, sourceName, "move", destinationDocumentId, sourceDocumentId);
         }
 
         const destinationDocument = this._documentsById.getValue(destinationDocumentId);
-        if (destinationDocument && this._deletedEntities.has(destinationDocument.entity)) {
+        if (destinationDocument && this._session.deletedEntities.has(destinationDocument.entity)) {
             DocumentSessionAttachmentsBase._throwDocumentAlreadyDeleted(
                 sourceDocumentId, sourceName, "move", destinationDocumentId, destinationDocumentId);
         }

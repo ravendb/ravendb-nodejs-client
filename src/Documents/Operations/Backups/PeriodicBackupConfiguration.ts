@@ -7,13 +7,14 @@ import { FtpSettings } from "./FtpSettings";
 import { S3Settings } from "./S3Settings";
 import { RetentionPolicy } from "./RetentionPolicy";
 import { SnapshotSettings } from "./BackupStatus";
+import { GoogleCloudSettings } from "./GoogleCloudSettings";
 
 export interface PeriodicBackupConfiguration {
     taskId?: number;
     disabled?: boolean;
-    name: string;
+    name?: string;
     mentorNode?: string;
-    backupType: BackupType;
+    backupType?: BackupType;
     backupEncryptionSettings?: BackupEncryptionSettings;
     retentionPolicy?: RetentionPolicy;
     snapshotSettings?: SnapshotSettings;

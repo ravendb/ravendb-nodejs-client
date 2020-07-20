@@ -103,7 +103,7 @@ describe("RavenDB_12902", function () {
 
             let stats: QueryStatistics;
 
-            const results = await session.query<User>({indexName: UsersByName.name, documentType: User})
+            const results = await session.query<User>({ indexName: UsersByName.name, documentType: User })
                 .statistics(s => stats = s)
                 .on("afterQueryExecuted", () => counter++)
                 .whereEquals("name", "Doe")
@@ -132,7 +132,7 @@ describe("RavenDB_12902", function () {
 
             let stats: QueryStatistics;
 
-            const results = await session.query<User>({indexName: UsersByName.name, documentType: User})
+            const results = await session.query<User>({ indexName: UsersByName.name, documentType: User })
                 .on("afterQueryExecuted", () => counter++)
                 .statistics(s => stats = s)
                 .suggestUsing(x => x.byField("name", "Orin"))
@@ -149,7 +149,46 @@ describe("RavenDB_12902", function () {
             assertThat(counter)
                 .isEqualTo(1);
         }
-    })
+    });
+
+    it("canGetValidStatisticsInAggregationQuery", async () => {
+        await store.executeIndex(new UsersByName());
+
+        {
+            const session = store.openSession();
+
+            let stats: QueryStatistics;
+
+            await session
+                .query<User>({ documentType: User, indexName: UsersByName.name })
+                .statistics(s => stats = s)
+                .whereEquals("name", "Doe")
+                .aggregateBy(x => x.byField("name").sumOn("count"))
+                .execute();
+
+            assertThat(stats.indexName)
+                .isNotNull();
+        }
+    });
+
+    it("canGetValidStatisticsInSuggestionQuery", async () => {
+        await store.executeIndex(new UsersByName());
+
+        {
+            const session = store.openSession();
+
+            let stats: QueryStatistics;
+
+            await session
+                .query<User>({ documentType: User, indexName: UsersByName.name })
+                .statistics(s => stats = s)
+                .suggestUsing(x => x.byField("name", "Orin"))
+                .execute();
+
+            assertThat(stats.indexName)
+                .isNotNull();
+        }
+    });
 });
 
 class UsersByName extends AbstractIndexCreationTask {
