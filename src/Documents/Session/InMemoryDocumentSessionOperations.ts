@@ -1702,7 +1702,7 @@ export class DocumentsByEntityHolder implements Iterable<DocumentsByEntityEnumer
         return this._documentsByEntity.size + (this._onBeforeStoreDocumentsByEntity ? this._onBeforeStoreDocumentsByEntity.size : 0);
     }
 
-    public (entity: object) {
+    public remove(entity: object) {
         this._documentsByEntity.delete(entity);
 
         if (this._onBeforeStoreDocumentsByEntity) {

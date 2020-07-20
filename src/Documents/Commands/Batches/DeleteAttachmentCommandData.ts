@@ -2,7 +2,6 @@ import { ICommandData, CommandType } from "../CommandData";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { throwError } from "../../../Exceptions";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { InMemoryDocumentSessionOperations } from "../../Session/InMemoryDocumentSessionOperations";
 
 export class DeleteAttachmentCommandData implements ICommandData {
     public id: string;

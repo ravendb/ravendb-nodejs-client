@@ -16,11 +16,11 @@ export type CommandType =
     | "AttachmentCOPY"
     | "CompareExchangePUT"
     | "CompareExchangeDELETE"
-    | "ForceRevisionCreation"
     | "Counters"
     | "ClientAnyCommand"
     | "ClientModifyDocumentCommand"
     | "BatchPATCH"
+    | "ForceRevisionCreation"
     ;
 
 export interface ICommandData {
@@ -78,10 +78,11 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
     public id: string;
     public name: string = null;
     public changeVector: string;
+    public forceRevisionStrategy: ForceRevisionStrategy;
 
     private readonly _document: T;
 
-    constructor(id: string, changeVector: string, document: T) {
+    constructor(id: string, changeVector: string, document: T, strategy: ForceRevisionStrategy = "None") {
 
         if (!document) {
             throwError("InvalidArgumentException", "Document cannot be null or undefined.");
@@ -90,15 +91,22 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
         this.id = id;
         this.changeVector = changeVector;
         this._document = document;
+        this.forceRevisionStrategy = strategy;
     }
 
     public serialize(conventions: DocumentConventions): object {
-        return {
+        const result = {
             Id: this.id,
             ChangeVector: this.changeVector,
             Document: this._document,
             Type: "PUT"
         };
+
+        if (this.forceRevisionStrategy !== "None") {
+            result["ForceRevisionStrategy"] = this.forceRevisionStrategy;
+        }
+
+        return result;
     }
 }
 

@@ -27,7 +27,7 @@ export class BatchOperation {
 
     private _modifications: Map<string, DocumentInfo>;
 
-    public createRequest(): BatchCommand {
+    public createRequest(): SingleNodeBatchCommand {
         const result = this._session.prepareForSaveChanges();
 
         this._onSuccessfulRequest = result.onSuccess;
@@ -45,8 +45,10 @@ export class BatchOperation {
 
         this._entities = result.entities;
 
-        return new BatchCommand(
-            this._session.conventions, result.sessionCommands, result.options, this._session.transactionMode);
+        if (this._session.transactionMode === "ClusterWide") {
+            return new ClusterWideBatchCommand(this._session.conventions, result.sessionCommands, result.options);
+        }
+        return new SingleNodeBatchCommand(this._session.conventions, result.sessionCommands, result.options);
     }
 
     private static _throwOnNullResults() {
@@ -85,6 +87,9 @@ export class BatchOperation {
             switch (type) {
                 case "PUT":
                     this._handlePut(i, batchResult, false);
+                    break;
+                case "ForceRevisionCreation":
+                    this._handleForceRevisionCreation(batchResult);
                     break;
                 case "DELETE":
                     this._handleDelete(batchResult);
@@ -128,6 +133,7 @@ export class BatchOperation {
                     break;
                 case "CompareExchangePUT":
                 case "CompareExchangeDELETE":
+                case "ForceRevisionCreation":
                     break;
                 case "Counters":
                     this._handleCounters(batchResult);
@@ -182,21 +188,21 @@ export class BatchOperation {
     }
 
     private _handleAttachmentCopy(batchResult: object): void {
-        this._handleAttachmentPutInternal(batchResult, "AttachmentCOPY", "id", "name");
+        this._handleAttachmentPutInternal(batchResult, "AttachmentCOPY", "id", "name", "documentChangeVector");
     }
 
     private _handleAttachmentMove(batchResult: object): void {
-        this._handleAttachmentDeleteInternal(batchResult, "AttachmentMOVE", "id", "name");
-        this._handleAttachmentPutInternal(batchResult, "AttachmentMOVE", "destinationId", "destinationName");
+        this._handleAttachmentDeleteInternal(batchResult, "AttachmentMOVE", "id", "name", "documentChangeVector");
+        this._handleAttachmentPutInternal(batchResult, "AttachmentMOVE", "destinationId", "destinationName", "documentChangeVector");
     }
 
     private _handleAttachmentDelete(batchResult: object): void {
         this._handleAttachmentDeleteInternal(
-            batchResult, "AttachmentDELETE", CONSTANTS.Documents.Metadata.ID, "name");
+            batchResult, "AttachmentDELETE", CONSTANTS.Documents.Metadata.ID, "name", "documentChangeVector");
     }
 
     private _handleAttachmentDeleteInternal(
-        batchResult: object, type: CommandType, idFieldName: string, attachmentNameFieldName: string) {
+        batchResult: object, type: CommandType, idFieldName: string, attachmentNameFieldName: string, documentChangeVectorFieldName: string) {
         const id = BatchOperation._getStringField(batchResult, type, idFieldName);
         const sessionDocumentInfo = this._session.documentsById.getValue(id);
         if (!sessionDocumentInfo) {
@@ -204,6 +210,12 @@ export class BatchOperation {
         }
 
         const documentInfo = this._getOrAddModifications(id, sessionDocumentInfo, true);
+
+        const documentChangeVector = BatchOperation._getStringField(batchResult, type, documentChangeVectorFieldName, false);
+        if (documentChangeVector) {
+            documentInfo.changeVector = documentChangeVector;
+        }
+
         const attachmentsJson = documentInfo.metadata["@attachments"];
         if (!attachmentsJson || !Object.keys(attachmentsJson).length) {
             return;
@@ -224,11 +236,11 @@ export class BatchOperation {
 
     private _handleAttachmentPut(batchResult: object): void {
         this._handleAttachmentPutInternal(
-            batchResult, "AttachmentPUT", "id", "name");
+            batchResult, "AttachmentPUT", "id", "name", "documentChangeVector");
     }
 
     private _handleAttachmentPutInternal(
-        batchResult: object, type: CommandType, idFieldName: string, attachmentNameFieldName: string): void {
+        batchResult: object, type: CommandType, idFieldName: string, attachmentNameFieldName: string, documentChangeVectorFieldName: string): void {
         const id = BatchOperation._getStringField(batchResult, type, idFieldName);
         const sessionDocumentInfo = this._session.documentsById.getValue(id);
         if (!sessionDocumentInfo) {
@@ -236,6 +248,11 @@ export class BatchOperation {
         }
 
         const documentInfo = this._getOrAddModifications(id, sessionDocumentInfo, false);
+        const documentChangeVector = BatchOperation._getStringField(batchResult, type, documentChangeVectorFieldName, false);
+        if (documentChangeVector) {
+            documentInfo.changeVector = documentChangeVector;
+        }
+
         let attachments = documentInfo.metadata["@attachments"];
         if (!attachments) {
             attachments = [];
@@ -283,6 +300,12 @@ export class BatchOperation {
                 if (documentInfo.entity) {
                     this._session.entityToJson.populateEntity(
                         documentInfo.entity, id, documentInfo.document);
+
+                    const afterSaveChangesEventArgs =
+                        new SessionAfterSaveChangesEventArgs(
+                            this._session, documentInfo.id, documentInfo.entity);
+
+                    this._session.emit("afterSaveChanges", afterSaveChangesEventArgs);
                 }
 
                 break;
@@ -301,9 +324,33 @@ export class BatchOperation {
         }
         this._session.documentsById.remove(id);
         if (documentInfo.entity) {
-            this._session.documentsByEntity.delete(documentInfo.entity);
-            this._session.deletedEntities.delete(documentInfo.entity);
+            this._session.documentsByEntity.remove(documentInfo.entity);
+            this._session.deletedEntities.remove(documentInfo.entity);
         }
+    }
+
+    private _handleForceRevisionCreation(batchResult: object) {
+        // When forcing a revision for a document that does Not have any revisions yet then the HasRevisions flag is added to the document.
+        // In this case we need to update the tracked entities in the session with the document new change-vector.
+
+        if (!BatchOperation._getBooleanField(batchResult, "ForceRevisionCreation", "RevisionCreated")) {
+            // no forced revision was created...nothing to update.
+            return;
+        }
+
+        const id = BatchOperation._getStringField(batchResult, "ForceRevisionCreation", CONSTANTS.Documents.Metadata.ID);
+        const changeVector = BatchOperation._getStringField(batchResult, "ForceRevisionCreation", CONSTANTS.Documents.Metadata.CHANGE_VECTOR);
+
+        const documentInfo = this._session.documentsById.getValue(id);
+        if (!documentInfo) {
+            return;
+        }
+
+        documentInfo.changeVector = changeVector;
+        this._handleMetadataModifications(documentInfo, batchResult, id, changeVector);
+
+        const afterSaveChangesEventArgs = new SessionAfterSaveChangesEventArgs(this._session, documentInfo.id, documentInfo.entity);
+        this._session.emit("afterSaveChanges", afterSaveChangesEventArgs);
     }
 
     private _handlePut(index: number, batchResult: object, isDeferred: boolean): void {
@@ -379,6 +426,14 @@ export class BatchOperation {
             this._session.countersByDocId.set(docId, cache);
         }
 
+        const changeVector = BatchOperation._getStringField(batchResult, "Counters", "documentChangeVector", false);
+        if (changeVector) {
+            const documentInfo = this._session.documentsById.getValue(docId);
+            if (documentInfo) {
+                documentInfo.changeVector = changeVector;
+            }
+        }
+
         for (const counter of counters) {
             const name = counter["counterName"];
             const value = counter["totalValue"];
@@ -388,8 +443,8 @@ export class BatchOperation {
         }
     }
 
-    private static _getStringField(json: object, type: CommandType, fieldName: string): string {
-        if (!(fieldName in json)) {
+    private static _getStringField(json: object, type: CommandType, fieldName: string, throwOnMissing: boolean  = true): string {
+        if (!(fieldName in json) && throwOnMissing) {
             BatchOperation._throwMissingField(type, fieldName);
         }
 
@@ -402,6 +457,15 @@ export class BatchOperation {
     }
 
     private static _getNumberField(json: object, type: CommandType, fieldName: string): number {
+        if (!(fieldName in json)) {
+            BatchOperation._throwMissingField(type, fieldName);
+        }
+
+        const jsonNode = json[fieldName];
+        return jsonNode;
+    }
+
+    private static _getBooleanField(json: object, type: CommandType, fieldName: string): boolean {
         if (!(fieldName in json)) {
             BatchOperation._throwMissingField(type, fieldName);
         }
