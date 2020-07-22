@@ -125,7 +125,7 @@ export class ClusterRequestExecutor extends RequestExecutor {
                                 return [...reduceResult, serverNode];
                             }, []);
 
-                        const newTopology = new Topology(0, nodes);
+                        const newTopology = new Topology(results.etag, nodes);
                         if (!this._nodeSelector) {
                             this._nodeSelector = new NodeSelector(newTopology);
 

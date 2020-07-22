@@ -17,6 +17,7 @@ import { BulkInsertOperation } from "./BulkInsertOperation";
 import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
 import { DatabaseChanges } from "./Changes/DatabaseChanges";
 import { DatabaseSmuggler } from "./Smuggler/DatabaseSmuggler";
+import { DatabaseChangesOptions } from "./Changes/DatabaseChangesOptions";
 
 const log = getLogger({ module: "DocumentStore" });
 
@@ -25,14 +26,14 @@ export class DocumentStore extends DocumentStoreBase {
     private _log =
         getLogger({ module: "DocumentStore-" + Math.floor(Math.random() * 1000) });
 
-    private readonly _databaseChanges: Map<string, IDatabaseChanges> = new Map();
+    private readonly _databaseChanges: Map<string, IDatabaseChanges> = new Map(); //TODO: check usage - it has compound key!
     // TBD: private ConcurrentDictionary<string, Lazy<EvictItemsFromCacheBasedOnChanges>> _aggressiveCacheChanges =
     // new ConcurrentDictionary<string, Lazy<EvictItemsFromCacheBasedOnChanges>>();
     // TBD: private readonly ConcurrentDictionary<string, EvictItemsFromCacheBasedOnChanges> 
     // _observeChangesAndEvictItemsFromCacheForDatabases = 
     // new ConcurrentDictionary<string, EvictItemsFromCacheBasedOnChanges>();
 
-    private _requestExecutors: Map<string, RequestExecutor> = new Map();
+    private _requestExecutors: Map<string, RequestExecutor> = new Map(); //TODO: do we want to have lazy here?
 
     private _multiDbHiLo: HiloMultiDatabaseIdGenerator;
 
@@ -55,6 +56,10 @@ export class DocumentStore extends DocumentStoreBase {
         this.urls = Array.isArray(urls)
             ? urls as string[]
             : [urls];
+    }
+
+    private getDatabaseChangesCacheKey(options: DatabaseChangesOptions) {
+        return options.databaseName.toLowerCase() + "/" + (options.nodeTag || "<null>");
     }
 
     public get identifier(): string {
@@ -194,17 +199,32 @@ export class DocumentStore extends DocumentStoreBase {
             return executor;
         }
 
-        if (!this.conventions.disableTopologyUpdates) {
-            executor = RequestExecutor.create(this.urls, database, {
+        const createRequestExecutor = () => {
+            const requestExecutor = RequestExecutor.create(this.urls, database, {
                 authOptions: this.authOptions,
                 documentConventions: this.conventions
             });
-        } else {
-            executor = RequestExecutor.createForSingleNodeWithConfigurationUpdates(
+            this._registerEvents(requestExecutor);
+
+            return requestExecutor;
+        }
+
+        const createRequestExecutorForSingleNode = () => {
+            const forSingleNode = RequestExecutor.createForSingleNodeWithConfigurationUpdates(
                 this.urls[0], database, {
                     authOptions: this.authOptions,
                     documentConventions: this.conventions
                 });
+
+            this._registerEvents(forSingleNode);
+
+            return forSingleNode;
+        }
+
+        if (!this.conventions.disableTopologyUpdates) {
+            executor = createRequestExecutor(); //TODO: lazy
+        } else {
+            executor = createRequestExecutorForSingleNode(); //TODO lazy
         }
 
         this._log.info(`New request executor for database ${database}`);
@@ -288,28 +308,39 @@ export class DocumentStore extends DocumentStoreBase {
 
     public changes(): IDatabaseChanges;
     public changes(database: string): IDatabaseChanges;
-    public changes(database?: string): IDatabaseChanges {
+    public changes(database: string, nodeTag: string): IDatabaseChanges;
+    public changes(database?: string, nodeTag?: string): IDatabaseChanges {
         this.assertInitialized();
 
-        const targetDatabase = (database || this.database).toLocaleLowerCase();
-        if (this._databaseChanges.has(targetDatabase)) {
-            return this._databaseChanges.get(targetDatabase);
+        const changesOptions: DatabaseChangesOptions = {
+            databaseName: database || this.database,
+            nodeTag
+        };
+        const cacheKey = this.getDatabaseChangesCacheKey(changesOptions);
+        if (this._databaseChanges.has(cacheKey)) {
+            return this._databaseChanges.get(cacheKey);
         }
 
-        const newChanges = this._createDatabaseChanges(targetDatabase);
-        this._databaseChanges.set(targetDatabase, newChanges);
+        const newChanges = this._createDatabaseChanges(changesOptions);
+        this._databaseChanges.set(cacheKey, newChanges);
         return newChanges;
     }
 
-    protected _createDatabaseChanges(database: string) {
-        return new DatabaseChanges(this.getRequestExecutor(database), database,
-            () => this._databaseChanges.delete(database));
+    protected _createDatabaseChanges(node: DatabaseChangesOptions) {
+        return new DatabaseChanges(this.getRequestExecutor(this.database), node.databaseName, //TODO: this.database ???
+            () => this._databaseChanges.delete(this.getDatabaseChangesCacheKey(node)), node.nodeTag);
     }
 
     public getLastDatabaseChangesStateException(): Error;
     public getLastDatabaseChangesStateException(database: string): Error;
-    public getLastDatabaseChangesStateException(database?: string): Error {
-        const databaseChanges = this._databaseChanges.get(database || this.database) as DatabaseChanges;
+    public getLastDatabaseChangesStateException(database: string, nodeTag: string): Error;
+    public getLastDatabaseChangesStateException(database?: string, nodeTag?: string): Error {
+        const node: DatabaseChangesOptions = {
+            databaseName: database || this.database,
+            nodeTag
+        };
+        const cacheKey = this.getDatabaseChangesCacheKey(node);
+        const databaseChanges = this._databaseChanges.get(cacheKey) as DatabaseChanges;
         if (databaseChanges) {
             return databaseChanges.lastConnectionStateException;
         }
