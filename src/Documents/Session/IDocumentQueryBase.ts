@@ -92,6 +92,12 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      */
     orderBy(field: string, ordering: OrderingType): TSelf;
 
+    /**
+     * Order the results by the specified fields
+     * The field is the name of the field to sort using sorterName
+     */
+    orderBy(field: string, options: { sorterName: string }): TSelf;
+
     //TBD TSelf OrderBy<TValue>(params Expression<Func<T, TValue>>[] propertySelectors);
 
     /**
@@ -105,6 +111,12 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      * The field is the name of the field to sort, defaulting to sorting by descending.
      */
     orderByDescending(field: string, ordering: OrderingType): TSelf;
+
+    /**
+     * Order the results by the specified fields
+     * The field is the name of the field to sort using sorterName
+     */
+    orderByDescending(field: string, options: { sorterName: string }): TSelf;
 
     //TBD TSelf OrderByDescending<TValue>(params Expression<Func<T, TValue>>[] propertySelectors);
 

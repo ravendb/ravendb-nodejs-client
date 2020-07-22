@@ -85,6 +85,7 @@ const supportedFeaturesByProtocol = new Map<OperationTypes, Map<number, Supporte
         SUBSCRIPTION_INCLUDES, SUBSCRIPTION_BASE_LINE
     ]);
     operationsToSupportedProtocolVersions.set("Heartbeats", [
+        HEARTBEATS_42000,
         HEARTBEATS_41200, 
         HEARTBEATS_BASE_LINE
     ]);

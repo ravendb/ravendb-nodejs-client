@@ -478,6 +478,7 @@ export class DocumentQuery<T extends object>
 
     public orderBy(field: string): IDocumentQuery<T>;
     public orderBy(field: string, ordering: OrderingType): IDocumentQuery<T>;
+    public orderBy(field: string, options: { sorterName: string }): IDocumentQuery<T>;
     public orderBy(...args: any[]): IDocumentQuery<T> {
         (this._orderBy as any)(...args);
         return this;
@@ -485,6 +486,7 @@ export class DocumentQuery<T extends object>
 
     public orderByDescending(field: string): IDocumentQuery<T>;
     public orderByDescending(field: string, ordering: OrderingType): IDocumentQuery<T>;
+    public orderByDescending(field: string, options: { sorterName: string }): IDocumentQuery<T>;
     public orderByDescending(...args: any[]): IDocumentQuery<T> {
         (this._orderByDescending as any)(...args);
         return this;

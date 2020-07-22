@@ -1199,15 +1199,23 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
      */
     public _orderBy(field: string, ordering: OrderingType): void;
-    /**
-     * Order the results by the specified fields
-     * The fields are the names of the fields to sort, defaulting to sorting by ascending.
-     * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
-     */
-    public _orderBy(field: string, ordering: OrderingType = "String"): void {
-        this._assertNoRawQuery();
-        const f = this._ensureValidFieldName(field, false);
-        this._orderByTokens.push(OrderByToken.createAscending(f, ordering));
+    public _orderBy(field: string, options: { sorterName: string });
+    public _orderBy(field: string, orderingOrOptions: OrderingType | { sorterName: string } = "String"): void {
+        if (TypeUtil.isString(orderingOrOptions)) {
+            this._assertNoRawQuery();
+            const f = this._ensureValidFieldName(field, false);
+            this._orderByTokens.push(OrderByToken.createAscending(f, { ordering: orderingOrOptions }));
+        } else {
+            const sorterName = orderingOrOptions.sorterName;
+            if (StringUtil.isNullOrEmpty(sorterName)) {
+                throwError("InvalidArgumentException", "SorterName cannot be null or empty");
+            }
+
+            this._assertNoRawQuery();
+            const f = this._ensureValidFieldName(field, false);
+            this._orderByTokens.push(OrderByToken.createAscending(f, orderingOrOptions));
+        }
+
     }
 
     /**
@@ -1222,15 +1230,22 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
      */
     public _orderByDescending(field: string, ordering: OrderingType): void;
-    /**
-     * Order the results by the specified fields
-     * The fields are the names of the fields to sort, defaulting to sorting by descending.
-     * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
-     */
-    public _orderByDescending(field: string, ordering: OrderingType = "String"): void {
-        this._assertNoRawQuery();
-        const f = this._ensureValidFieldName(field, false);
-        this._orderByTokens.push(OrderByToken.createDescending(f, ordering));
+    public _orderByDescending(field: string, options: { sorterName: string });
+    public _orderByDescending(field: string, orderingOrOptions: OrderingType | { sorterName: string } = "String"): void {
+        if (TypeUtil.isString(orderingOrOptions)) {
+            this._assertNoRawQuery();
+            const f = this._ensureValidFieldName(field, false);
+            this._orderByTokens.push(OrderByToken.createDescending(f, { ordering: orderingOrOptions }));
+        } else {
+            const sorterName = orderingOrOptions.sorterName;
+            if (StringUtil.isNullOrEmpty(sorterName)) {
+                throwError("InvalidArgumentException", "SorterName cannot be null or empty");
+            }
+
+            this._assertNoRawQuery();
+            const f = this._ensureValidFieldName(field, false);
+            this._orderByTokens.push(OrderByToken.createDescending(f, orderingOrOptions));
+        }
     }
 
     public _orderByScore(): void {
@@ -1959,16 +1974,17 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         return Promise.resolve(result);
     }
 
-    private _executeQueryOperation(take?: number): Promise<T[]> {
+    private async _executeQueryOperation(take?: number): Promise<T[]> {
+        await this._executeQueryOperationInternal(take);
+        return this.queryOperation().complete(this._clazz);
+    }
+
+    private async _executeQueryOperationInternal(take: number) {
         if ((take || take === 0) && (!this._pageSize || this._pageSize > take)) {
             this._take(take);
         }
 
-        return Promise.resolve()
-            .then(() => this._initSync())
-            .then(() => {
-                return this._queryOperation.complete<T>(this._clazz);
-            });
+        await this._initSync();
     }
 
     // tslint:enable:function-name
