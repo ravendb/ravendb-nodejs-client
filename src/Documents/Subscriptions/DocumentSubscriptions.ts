@@ -15,6 +15,9 @@ import { GetSubscriptionStateCommand } from "../Commands/GetSubscriptionStateCom
 import { DropSubscriptionConnectionCommand } from "../Commands/DropSubscriptionConnectionCommand";
 import { GetSubscriptionsCommand } from "../Commands/GetSubscriptionsCommand";
 import { ToggleOngoingTaskStateOperation } from "../Operations/OngoingTasks/ToggleOngoingTaskStateOperation";
+import { SubscriptionIncludeBuilder } from "../Session/Loaders/SubscriptionIncludeBuilder";
+import * as os from "os";
+import { IncludesUtil } from "../Session/IncludesUtil";
 
 export class DocumentSubscriptions implements IDisposable {
     private readonly _store: DocumentStore;
@@ -108,11 +111,36 @@ export class DocumentSubscriptions implements IDisposable {
 
         if (!criteria.query) {
             if (revisions) {
-                criteria.query = "from " + collectionName + " (Revisions = true) as doc";
+                criteria.query = "from '" + collectionName.replace(/'/g, "\'") + "' (Revisions = true) as doc";
             } else {
-                criteria.query = "from " + collectionName + " as doc";
+                criteria.query = "from '" + collectionName.replace(/'/g, "\'") + "' as doc";
             }
         }
+        if (criteria.includes) {
+            const builder = new SubscriptionIncludeBuilder(this._store.conventions);
+            criteria.includes(builder);
+
+            if (builder.documentsToInclude && builder.documentsToInclude.size) {
+                criteria.query += os.EOL + "include ";
+
+                let first = true;
+                for (const inc of builder.documentsToInclude) {
+                    const include = "doc." + inc;
+                    if (!first) {
+                        criteria.query += ",";
+                    }
+                    first = false;
+
+                    let escapedInclude: string;
+                    if (IncludesUtil.requiresQuotes(include, x => escapedInclude = x)) {
+                        criteria.query += "'" + escapedInclude + "'";
+                    } else {
+                        criteria.query += include;
+                    }
+                }
+            }
+        }
+
         return criteria;
     }
 

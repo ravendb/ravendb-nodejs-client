@@ -159,6 +159,8 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             }
         );
 
+        this._store.registerEvents(this._subscriptionLocalRequestExecutor);
+
         return this._tcpClient;
     }
 

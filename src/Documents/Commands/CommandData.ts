@@ -4,6 +4,7 @@ import { InMemoryDocumentSessionOperations } from "../Session/InMemoryDocumentSe
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { ClusterTransactionOperationsBase } from "../Session/ClusterTransactionOperationsBase";
 import { DocumentInfo } from "../Session/DocumentInfo";
+import { ForceRevisionStrategy } from "../Session/ForceRevisionStrategy";
 
 export type CommandType =
     "None"
@@ -78,7 +79,7 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
     public id: string;
     public name: string = null;
     public changeVector: string;
-    public forceRevisionStrategy: ForceRevisionStrategy;
+    public forceRevisionCreationStrategy: ForceRevisionStrategy;
 
     private readonly _document: T;
 
@@ -91,7 +92,7 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
         this.id = id;
         this.changeVector = changeVector;
         this._document = document;
-        this.forceRevisionStrategy = strategy;
+        this.forceRevisionCreationStrategy = strategy;
     }
 
     public serialize(conventions: DocumentConventions): object {
@@ -102,8 +103,8 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
             Type: "PUT"
         };
 
-        if (this.forceRevisionStrategy !== "None") {
-            result["ForceRevisionStrategy"] = this.forceRevisionStrategy;
+        if (this.forceRevisionCreationStrategy !== "None") {
+            result["ForceRevisionCreationStrategy"] = this.forceRevisionCreationStrategy;
         }
 
         return result;
@@ -174,7 +175,7 @@ export class ActionsToRunOnSuccess {
         }
 
         for (let entity of this._documentsByEntityToRemove) {
-            this._session.documentsByEntity.delete(entity);
+            this._session.documentsByEntity.remove(entity);
         }
 
         for (let [info, document] of this._documentInfosToUpdate) {
