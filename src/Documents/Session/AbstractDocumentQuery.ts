@@ -1772,21 +1772,25 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     public _orderByDistance(field: DynamicSpatialField, latitude: number, longitude: number): void;
     public _orderByDistance(field: DynamicSpatialField, shapeWkt: string): void;
     public _orderByDistance(fieldName: string, latitude: number, longitude: number): void;
+    public _orderByDistance(fieldName: string, latitude: number, longitude: number, roundFactor: number): void;
     public _orderByDistance(fieldName: string, shapeWkt: string): void;
+    public _orderByDistance(fieldName: string, shapeWkt: string, roundFactor: number): void;
     public _orderByDistance(
-        fieldNameOrField: string | DynamicSpatialField, shapeWktOrLatitude: string | number, longitude?: number): void {
+        fieldNameOrField: string | DynamicSpatialField, shapeWktOrLatitude: string | number, longitudeOrRoundFactor?: number, roundFactor?: number): void {
 
         if (TypeUtil.isString(fieldNameOrField)) {
             if (TypeUtil.isString(shapeWktOrLatitude)) {
+                const roundFactorParameterName = longitudeOrRoundFactor ? this._addQueryParameter(longitudeOrRoundFactor) : null;
                 this._orderByTokens.push(
                     OrderByToken.createDistanceAscending(
-                        fieldNameOrField as string, this._addQueryParameter(shapeWktOrLatitude)));
+                        fieldNameOrField as string, this._addQueryParameter(shapeWktOrLatitude), roundFactorParameterName));
 
             } else {
+                const roundFactorParameterName = roundFactor ? this._addQueryParameter(roundFactor) : null;
                 this._orderByTokens.push(
                     OrderByToken.createDistanceAscending(
                         fieldNameOrField as string,
-                        this._addQueryParameter(shapeWktOrLatitude), this._addQueryParameter(longitude)));
+                        this._addQueryParameter(shapeWktOrLatitude), this._addQueryParameter(longitudeOrRoundFactor), roundFactorParameterName));
             }
 
             return;
@@ -1806,28 +1810,31 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         } else {
             this._orderByDistance(
                 "'" + field.toField((f, isNestedPath) =>
-                    this._ensureValidFieldName(f, isNestedPath)) + "'", shapeWktOrLatitude as number, longitude);
+                    this._ensureValidFieldName(f, isNestedPath)) + "'", shapeWktOrLatitude as number, longitudeOrRoundFactor, field.roundFactor);
         }
     }
 
     public _orderByDistanceDescending(field: DynamicSpatialField, latitude: number, longitude: number): void;
     public _orderByDistanceDescending(field: DynamicSpatialField, shapeWkt: string): void;
     public _orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): void;
+    public _orderByDistanceDescending(fieldName: string, latitude: number, longitude: number, roundFactor: number): void;
     public _orderByDistanceDescending(fieldName: string, shapeWkt: string): void;
+    public _orderByDistanceDescending(fieldName: string, shapeWkt: string, roundFactor: number): void;
     public _orderByDistanceDescending(
-        fieldNameOrField: string | DynamicSpatialField, shapeWktOrLatitude: string | number, longitude?: number): void {
+        fieldNameOrField: string | DynamicSpatialField, shapeWktOrLatitude: string | number, longitudeOrRoundFactor?: number, roundFactor?: number): void {
 
         if (TypeUtil.isString(fieldNameOrField)) {
             if (TypeUtil.isString(shapeWktOrLatitude)) {
+                const roundFactorParameterName = longitudeOrRoundFactor ? this._addQueryParameter(longitudeOrRoundFactor) : null;
                 this._orderByTokens.push(
                     OrderByToken.createDistanceDescending(
-                        fieldNameOrField as string, this._addQueryParameter(shapeWktOrLatitude)));
-
+                        fieldNameOrField as string, this._addQueryParameter(shapeWktOrLatitude), roundFactorParameterName));
             } else {
+                const roundFactorParameterName = roundFactor ? this._addQueryParameter(roundFactor) : null;
                 this._orderByTokens.push(
                     OrderByToken.createDistanceDescending(
                         fieldNameOrField as string,
-                        this._addQueryParameter(shapeWktOrLatitude), this._addQueryParameter(longitude)));
+                        this._addQueryParameter(shapeWktOrLatitude), this._addQueryParameter(longitudeOrRoundFactor), roundFactorParameterName));
             }
 
             return;
@@ -1847,7 +1854,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         } else {
             this._orderByDistanceDescending(
                 "'" + field.toField((f, isNestedPath) =>
-                    this._ensureValidFieldName(f, isNestedPath)) + "'", shapeWktOrLatitude as number, longitude);
+                    this._ensureValidFieldName(f, isNestedPath)) + "'", shapeWktOrLatitude as number, longitudeOrRoundFactor, field.roundFactor);
         }
     }
 

@@ -497,11 +497,11 @@ export class DocumentQuery<T extends object>
     // TBD expr public IDocumentQuery<T> OrderByDescending<TValue>(
     //      params Expression<Func<T, TValue>>[] propertySelectors)
 
-    private _createDocumentQueryInternal<TResult extends object>(
+    public createDocumentQueryInternal<TResult extends object>(
         resultClass: DocumentType<TResult>): DocumentQuery<TResult>;
-    private _createDocumentQueryInternal<TResult extends object>(
+    public createDocumentQueryInternal<TResult extends object>(
         resultClass: DocumentType<TResult>, queryData: QueryData): DocumentQuery<TResult>;
-    private _createDocumentQueryInternal<TResult extends object>(
+    public createDocumentQueryInternal<TResult extends object>(
         resultClass: DocumentType<TResult>, queryData?: QueryData): DocumentQuery<TResult> {
         let newFieldsToFetch: FieldsToFetchToken;
 
@@ -722,6 +722,7 @@ export class DocumentQuery<T extends object>
     public orderByDistance(field: DynamicSpatialField, latitude: number, longitude: number): IDocumentQuery<T>;
     public orderByDistance(field: DynamicSpatialField, shapeWkt: string): IDocumentQuery<T>;
     public orderByDistance(fieldName: string, latitude: number, longitude: number): IDocumentQuery<T>;
+    public orderByDistance(fieldName: string, latitude: number, longitude: number, roundFactor: number): IDocumentQuery<T>;
     public orderByDistance(fieldName: string, shapeWkt: string): IDocumentQuery<T>;
     public orderByDistance(...args: any[]): IDocumentQuery<T> {
         (this._orderByDistance as any)(...args);
@@ -732,6 +733,7 @@ export class DocumentQuery<T extends object>
         field: DynamicSpatialField, latitude: number, longitude: number): IDocumentQuery<T>;
     public orderByDistanceDescending(field: DynamicSpatialField, shapeWkt: string): IDocumentQuery<T>;
     public orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): IDocumentQuery<T>;
+    public orderByDistanceDescending(fieldName: string, latitude: number, longitude: number, roundFactor: number): IDocumentQuery<T>;
     public orderByDistanceDescending(fieldName: string, shapeWkt: string): IDocumentQuery<T>;
     public orderByDistanceDescending(...args: any[]): IDocumentQuery<T> {
         (this._orderByDistanceDescending as any)(...args);

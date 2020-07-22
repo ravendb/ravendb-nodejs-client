@@ -30,6 +30,10 @@ export class JavaAssertionBuilder {
         return this;
     }
 
+    public isCloseTo(val: number, offset: number) {
+        assert.ok(Math.abs(val - this._value) <= offset, `Value ${this._value} should be close to: ${val} (max offset = ${offset})`);
+    }
+
     public isNotEqualTo(val) {
         assert.notStrictEqual(this._value, val);
         return this;

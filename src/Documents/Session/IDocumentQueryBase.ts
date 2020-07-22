@@ -169,6 +169,11 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      */
     orderByDistance(fieldName: string, latitude: number, longitude: number): TSelf;
 
+    /**
+     * Sorts the query results by distance.
+     */
+    orderByDistance(fieldName: string, latitude: number, longitude: number, roundFactor: number): TSelf;
+
     //TBD TSelf OrderByDistance<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt);
 
     /**
@@ -196,6 +201,11 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      * Sorts the query results by distance.
      */
     orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): TSelf;
+
+    /**
+     * Sorts the query results by distance.
+     */
+    orderByDistanceDescending(fieldName: string, latitude: number, longitude: number, roundFactor: number): TSelf;
 
     //TBD TSelf OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt);
 
