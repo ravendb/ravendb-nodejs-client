@@ -382,5 +382,7 @@ export interface IAbstractDocumentQuery<T> {
 
     _suggestUsing(suggestion: SuggestionBase);
 
+    parameterPrefix: string;
+
     iterator(): Promise<IterableIterator<T>>;
 }

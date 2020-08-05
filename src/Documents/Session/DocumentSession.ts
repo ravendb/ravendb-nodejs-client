@@ -660,11 +660,12 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             const sw = Stopwatch.createStarted();
             this.incrementRequestCount();
             const responseTimeDuration: ResponseTimeInformation = new ResponseTimeInformation();
-            while (await this._executeLazyOperationsSingleStep(responseTimeDuration, requests)) {
+            while (await this._executeLazyOperationsSingleStep(responseTimeDuration, requests, sw)) {
                 await delay(100);
             }
 
             responseTimeDuration.computeServerTotal();
+            sw.stop();
             responseTimeDuration.totalClientDuration = sw.elapsed;
             return responseTimeDuration;
         } finally {
@@ -673,7 +674,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     private async _executeLazyOperationsSingleStep(
-        responseTimeInformation: ResponseTimeInformation, requests: GetRequest[]): Promise<boolean> {
+        responseTimeInformation: ResponseTimeInformation, requests: GetRequest[], sw: Stopwatch): Promise<boolean> {
         const multiGetOperation = new MultiGetOperation(this);
         const multiGetCommand = multiGetOperation.createRequest(requests);
         await this.requestExecutor.execute(multiGetCommand, this._sessionInfo);
@@ -684,6 +685,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             let tempReqTime: string;
             const response = responses[i];
             tempReqTime = response.headers[HEADERS.REQUEST_TIME];
+            response.elapsed = sw.elapsed;
             totalTime = tempReqTime ? parseInt(tempReqTime, 10) : 0;
             const timeItem = {
                 url: requests[i].urlAndQuery,

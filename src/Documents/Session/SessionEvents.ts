@@ -3,6 +3,7 @@ import { IMetadataDictionary } from "./IMetadataDictionary";
 import { IDocumentQueryCustomization } from "./IDocumentQueryCustomization";
 import { DocumentType } from "../DocumentAbstractions";
 import { Reference } from "../../Utility/Reference";
+import { escapeRegExp } from "tslint/lib/utils";
 
 export interface SessionEventsEmitter {
     on(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
@@ -186,5 +187,17 @@ export class BeforeConversionToEntityEventArgs {
         this.id = id;
         this.type = type;
         this.document = document;
+    }
+}
+
+export class FailedRequestEventArgs {
+    public database: string;
+    public url: string;
+    public error: Error;
+
+    public constructor(database: string, url: string, error: Error) {
+        this.database = database;
+        this.url = url;
+        this.error = error;
     }
 }
