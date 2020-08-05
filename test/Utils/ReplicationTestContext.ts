@@ -4,13 +4,19 @@ import {
     ReplicationNode,
     ExternalReplication,
     RavenConnectionString,
-    UpdateExternalReplicationOperation
+    UpdateExternalReplicationOperation,
+    ModifyOngoingTaskResult,
+    IMaintenanceOperation,
+    DocumentStore,
+    OngoingTaskType,
+    DeleteOngoingTaskOperation
 } from "../../src";
 import { Stopwatch } from "../../src/Utility/Stopwatch";
 import { DocumentType } from "../../src";
 import { delay } from "../../src/Utility/PromiseUtil";
 import { v4 as uuidv4 } from "uuid";
 import { assertThat } from "./AssertExtensions";
+import { ExternalReplicationBase } from "../../src/Documents/Replication/ExternalReplicationBase";
 
 export class ReplicationTestContext {
 
@@ -40,21 +46,36 @@ export class ReplicationTestContext {
             };
 
             await this._modifyReplicationDestination(databaseWatcher);
-            await this._addWatcherToReplicationTopology(fromStore, databaseWatcher);
+            await ReplicationTestContext.addWatcherToReplicationTopology(fromStore, databaseWatcher);
         }
     }
 
-    private async _addWatcherToReplicationTopology(store: IDocumentStore, watcher: ExternalReplication): Promise<void> {
-
+    public static async addWatcherToReplicationTopology(store: IDocumentStore, watcher: ExternalReplicationBase, ...urls: string[]): Promise<ModifyOngoingTaskResult> {
         const connectionString = new RavenConnectionString();
         connectionString.name = watcher.connectionStringName;
         connectionString.database = watcher.database;
-        connectionString.topologyDiscoveryUrls = store.urls;
+        connectionString.topologyDiscoveryUrls = urls || store.urls;
 
         await store.maintenance.send(new PutConnectionStringOperation(connectionString));
 
-        const op = new UpdateExternalReplicationOperation(watcher);
-        await store.maintenance.send(op);
+        let op: IMaintenanceOperation<ModifyOngoingTaskResult>;
+
+        /* TODO duck typing
+          if (watcher instanceof PullReplicationAsSink) {
+            op = new UpdatePullReplicationAsSinkOperation((PullReplicationAsSink) watcher);
+        } else if (watcher instanceof ExternalReplication) {
+            op = new UpdateExternalReplicationOperation((ExternalReplication) watcher);
+        } else {
+            throw new IllegalArgumentException("Unrecognized type: " + watcher.getClass());
+        }
+         */
+
+        return await store.maintenance.send(op);
+    }
+
+    public async deleteOngoingTask(store: IDocumentStore, taskId: number, taskType: OngoingTaskType) {
+        const op = new DeleteOngoingTaskOperation(taskId, taskType);
+        return store.maintenance.send(op);
     }
 
     //TODO: review usage and check if we assert that document is not null as this method never throws!
