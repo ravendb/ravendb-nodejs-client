@@ -1,6 +1,48 @@
 import { StringUtil } from "./StringUtil";
+import { throwError } from "../Exceptions/index";
 
 export class TimeUtil {
+
+    private static _parseMiddlePart(input: string) {
+        const tokens = input.split(":");
+        const hours = parseInt(tokens[0], 10);
+        const minutes = parseInt(tokens[1], 10);
+        const seconds = parseInt(tokens[2], 10);
+
+        if (tokens.length !== 3) {
+            throwError("InvalidArgumentException", "Unexpected duration format: " + input);
+        }
+
+        const totalSeconds = seconds + minutes * 60 + hours * 3600;
+        return totalSeconds * 1000;
+    }
+
+    public static readonly MILLIS_IN_DAY = 24 * 3600 * 1000;
+
+    public static timeSpanToDuration(text: string) {
+        const hasDays = text.match(/^\d+\./);
+        const hasMillis = text.match(/.*\.\d+/);
+
+        if (hasDays && hasMillis) {
+            const tokens = text.split(".");
+
+            const days = parseInt(tokens[0], 10);
+            const millis = parseInt(tokens[2], 10);
+            return this._parseMiddlePart(tokens[1]) + millis + days * TimeUtil.MILLIS_IN_DAY;
+        } else if (hasDays) {
+            const tokens = text.split(".");
+            const days = parseInt(tokens[0], 10);
+            return this._parseMiddlePart(tokens[1]) + days * TimeUtil.MILLIS_IN_DAY;
+        } else if (hasMillis) {
+            const tokens = text.split(".");
+            let fractionString = tokens[1];
+            fractionString = fractionString.padEnd(7, "0"); //TODO: test!
+            const value = parseInt(fractionString, 10) * 100;
+            return this._parseMiddlePart(tokens[0]) + value / 1000; //TODO: test me!
+        } else {
+            return this._parseMiddlePart(text);
+        }
+    }
 
     public static millisToTimeSpan(value: number): string {
         let time = value;

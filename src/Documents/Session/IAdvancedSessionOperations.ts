@@ -8,10 +8,206 @@ import { EntityToJson } from "./EntityToJson";
 import { IMetadataDictionary } from "./IMetadataDictionary";
 import { SessionEventsEmitter } from "./SessionEvents";
 import { TransactionMode } from "./TransactionMode";
+import { IEagerSessionOperations } from "./Operations/Lazy/IEagerSessionOperations";
+import { ILazySessionOperations } from "./Operations/Lazy/ILazySessionOperations";
+import { IAttachmentsSessionOperations } from "./IAttachmentsSessionOperations";
+import { IRevisionsSessionOperations } from "./IRevisionsSessionOperations";
+import { IClusterTransactionOperations } from "./IClusterTransactionOperations";
+import { DocumentType } from "../DocumentAbstractions";
+import { IRawDocumentQuery } from "./IRawDocumentQuery";
+import { SessionLoadStartingWithOptions } from "./IDocumentSession";
+import { ErrorFirstCallback } from "../../Types/Callbacks";
+import { AdvancedDocumentQueryOptions } from "./QueryOptions";
+import { IDocumentQuery } from "./IDocumentQuery";
+import { JavaScriptArray } from "./JavaScriptArray";
+import { DocumentResultStream } from "./DocumentResultStream";
+import * as stream from "stream";
+import { IDocumentQueryBuilder } from "./IDocumentQueryBuilder";
+import { IGraphDocumentQuery } from "./IGraphDocumentQuery";
 
 export type StreamQueryStatisticsCallback = (stats: StreamQueryStatistics) => void;
 
-export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOperations {
+export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOperations, IDocumentQueryBuilder {
+
+    /**
+     *  Access the eager operations
+     */
+    eagerly: IEagerSessionOperations;
+
+    /**
+     * Access the lazy operations
+     */
+    lazily: ILazySessionOperations;
+
+    /**
+     * Access the attachments operations
+     */
+    attachments: IAttachmentsSessionOperations;
+
+    /**
+     * Access the revisions operations
+     */
+    revisions: IRevisionsSessionOperations;
+
+    /**
+     * Access cluster transaction operations
+     */
+    clusterTransaction: IClusterTransactionOperations;
+
+    /**
+     * Updates entity with latest changes from server
+     */
+    refresh<TEntity extends object>(entity: TEntity): Promise<void>;
+
+    /**
+     * Query the specified index using provided raw query
+     */
+
+    rawQuery<TResult extends object>(query: string, documentType?: DocumentType<TResult>): IRawDocumentQuery<TResult>;
+
+    graphQuery<TResult extends object>(query: string, documentType?: DocumentType<TResult>): IGraphDocumentQuery<TResult>;
+
+    exists(id: string): Promise<boolean>;
+
+    loadStartingWith<T extends object>(
+        idPrefix: string, opts: SessionLoadStartingWithOptions<T>, callback?: ErrorFirstCallback<T[]>): Promise<T[]>;
+
+    loadStartingWith<T extends object>(
+        idPrefix: string, callback?: ErrorFirstCallback<T[]>): Promise<T[]>;
+
+    increment<TEntity extends object, UValue>(id: string, path: string, valueToAdd: UValue): void;
+
+    increment<TEntity extends object, UValue>(entity: TEntity, path: string, valueToAdd: UValue): void;
+
+    patch<TEntity extends object, UValue>(id: string, path: string, value: UValue): void;
+
+    patch<TEntity extends object, UValue>(entity: TEntity, path: string, value: UValue): void;
+
+    patch<TEntity extends object, UValue>(
+        id: string, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
+
+    patch<TEntity extends object, UValue>(
+        entity: TEntity, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
+
+    loadStartingWith<T extends object>(
+        idPrefix: string, opts: SessionLoadStartingWithOptions<T>, callback?: ErrorFirstCallback<T[]>): Promise<T[]>;
+
+    loadStartingWith<T extends object>(
+        idPrefix: string, callback?: ErrorFirstCallback<T[]>): Promise<T[]>;
+
+    // tslint:enable:max-line-length
+
+    /**
+     *  Returns the results of a query directly into stream
+     */
+    streamInto<T extends object>(query: IDocumentQuery<T>, writable: stream.Writable): Promise<void>;
+
+    /**
+     * Returns the results of a query directly into stream
+     */
+    streamInto<T extends object>(query: IRawDocumentQuery<T>, writable: stream.Writable): Promise<void>;
+
+    /**
+     *  Returns the results of a query directly into stream
+     */
+    streamInto<T extends object>(
+        query: IDocumentQuery<T>, writable: stream.Writable, callback: ErrorFirstCallback<void>): Promise<void>;
+
+    /**
+     * Returns the results of a query directly into stream
+     */
+    streamInto<T extends object>(
+        query: IRawDocumentQuery<T>, writable: stream.Writable, callback: ErrorFirstCallback<void>): Promise<void>;
+
+    loadIntoStream(
+        ids: string[], writable: stream.Writable, callback?: ErrorFirstCallback<void>): Promise<void>;
+
+    loadIntoStream(
+        ids: string[], writable: stream.Writable): Promise<void>;
+
+    loadStartingWithIntoStream<TEntity extends object>(
+        idPrefix: string,
+        writable: stream.Writable): Promise<void>;
+
+    loadStartingWithIntoStream<TEntity extends object>(
+        idPrefix: string,
+        writable: stream.Writable,
+        opts: SessionLoadStartingWithOptions<TEntity>): Promise<void>;
+
+    loadStartingWithIntoStream<TEntity extends object>(
+        idPrefix: string,
+        writable: stream.Writable,
+        callback?: ErrorFirstCallback<void>): Promise<void>;
+
+    loadStartingWithIntoStream<TEntity extends object>(
+        idPrefix: string,
+        writable: stream.Writable,
+        opts: SessionLoadStartingWithOptions<TEntity>,
+        callback?: ErrorFirstCallback<void>): Promise<void>;
+
+    /**
+     * Stream the results on the query to the client.
+     *
+     * Does NOT track the entities in the session, and will not include changes there when saveChanges() is called
+     */
+    stream<T extends object>(query: IDocumentQuery<T>): Promise<DocumentResultStream<T>>;
+
+    /**
+     * Stream the results on the query to the client.
+     *
+     * Does NOT track the entities in the session, and will not include changes there when saveChanges() is called
+     */
+    stream<T extends object>(
+        query: IDocumentQuery<T>,
+        streamQueryStats: StreamQueryStatisticsCallback)
+        : Promise<DocumentResultStream<T>>;
+
+    /**
+     * Stream the results on the query to the client.
+     *
+     * Does NOT track the entities in the session, and will not include changes there when saveChanges() is called
+     */
+    stream<T extends object>(query: IRawDocumentQuery<T>)
+        : Promise<DocumentResultStream<T>>;
+
+    /**
+     * Stream the results on the query to the client.
+     *
+     * Does NOT track the entities in the session, and will not include changes there when saveChanges() is called
+     */
+    stream<T extends object>(
+        query: IRawDocumentQuery<T>,
+        streamQueryStats: StreamQueryStatisticsCallback)
+        : Promise<DocumentResultStream<T>>;
+
+    /**
+     * Stream the results on the query to the client.
+     *
+     * Does NOT track the entities in the session, and will not include changes there when saveChanges() is called
+     */
+    stream<T extends object>(idPrefix: string)
+        : Promise<DocumentResultStream<T>>;
+
+    /**
+     * Stream the results on the query to the client.
+     *
+     * Does NOT track the entities in the session, and will not include changes there when saveChanges() is called
+     */
+    stream<T extends object>(idPrefix: string, opts: SessionLoadStartingWithOptions<T>)
+        : Promise<DocumentResultStream<T>>;
+
+    /**
+     * Stream the results on the query to the client.
+     *
+     * Does NOT track the entities in the session, and will not include changes there when saveChanges() is called
+     */
+    stream<T extends object>(
+        idPrefix: string,
+        opts: SessionLoadStartingWithOptions<T>,
+        callback: ErrorFirstCallback<DocumentResultStream<T>>)
+        : Promise<DocumentResultStream<T>>;
+
+
 
 }
 

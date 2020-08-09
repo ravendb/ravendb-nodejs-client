@@ -3,20 +3,18 @@ import * as os from "os";
 import { DocumentQuery } from "./DocumentQuery";
 import { MultiLoaderWithInclude } from "./Loaders/MultiLoaderWithInclude";
 import { BatchOperation } from "./Operations/BatchOperation";
-import * as BluebirdPromise from "bluebird";
 import {
-    IDocumentSession,
-    LoadOptions,
     ConcurrencyCheckMode,
-    SessionLoadStartingWithOptions,
+    IDocumentSession,
     IDocumentSessionImpl,
+    LoadOptions,
     SessionLoadInternalParameters,
+    SessionLoadStartingWithOptions,
 } from "./IDocumentSession";
-import { RequestExecutor } from "../../Http/RequestExecutor";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { ErrorFirstCallback } from "../../Types/Callbacks";
 import { TypeUtil } from "../../Utility/TypeUtil";
-import { IRavenObject, EntitiesCollectionObject, ObjectTypeDescriptor } from "../../Types";
+import { EntitiesCollectionObject, IRavenObject, ObjectTypeDescriptor } from "../../Types";
 import { throwError } from "../../Exceptions";
 import { DocumentType } from "../DocumentAbstractions";
 import { LoadOperation } from "./Operations/LoadOperation";
@@ -66,6 +64,7 @@ import { SessionOptions } from "./SessionOptions";
 import { ISessionDocumentCounters } from "./ISessionDocumentCounters";
 import { SessionDocumentCounters } from "./SessionDocumentCounters";
 import { IncludeBuilder } from "./Loaders/IncludeBuilder";
+import { IGraphDocumentQuery } from "./IGraphDocumentQuery";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;
@@ -928,5 +927,10 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     public countersFor(entity: object): ISessionDocumentCounters;
     public countersFor(entityOrId: string | object): ISessionDocumentCounters {
         return new SessionDocumentCounters(this, entityOrId as any);
+    }
+
+    public graphQuery<TEntity extends object>(
+        query: string, documentType?: DocumentType<TEntity>): IGraphDocumentQuery<TEntity> {
+        return new GraphDocumenQuery(this, query, documentType);
     }
 }

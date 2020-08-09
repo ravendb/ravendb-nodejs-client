@@ -79,6 +79,7 @@ import { ExplanationOptions } from "../Queries/Explanation/ExplanationOptions";
 import { CountersByDocId } from "./CounterInternalTypes"; 
 import { IncludeBuilderBase } from "./Loaders/IncludeBuilderBase";
 import { passResultToCallback } from "../../Utility/PromiseUtil";
+import * as os from "os";
 
 /**
  * A query against a Raven index
@@ -131,11 +132,17 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     protected _loadTokens: LoadToken[];
     public fieldsToFetchToken: FieldsToFetchToken;
 
+    protected readonly _isProjectInto: boolean;
+
     protected _whereTokens: QueryToken[] = [];
 
     protected _groupByTokens: QueryToken[] = [];
 
     protected _orderByTokens: QueryToken[] = [];
+
+    protected _withTokens: QueryToken[] = [];
+
+    protected _graphRawQuery: QueryToken;
 
     protected _start: number;
 
@@ -157,6 +164,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     protected _disableEntitiesTracking: boolean;
 
     protected _disableCaching: boolean;
+
+    private parameterPrefix = "p";
 
     private _includesAlias: string;
     
@@ -1313,7 +1322,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         tokens.push(whereToken);
     }
 
-    public toString(): string {
+    public toString(compatibilityMode: boolean = false): string {
         if (this._queryRaw) {
             return this._queryRaw;
         }
@@ -1326,6 +1335,12 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
         const queryText = new StringBuilder();
         this._buildDeclare(queryText);
+        if (this._graphRawQuery) {
+            this._buildWith(queryText);
+            this._buildGraphQuery(queryText);
+        } else {
+            this._buildFrom(queryText);
+        }
         this._buildFrom(queryText);
         this._buildGroupBy(queryText);
         this._buildWhere(queryText);
@@ -1335,7 +1350,33 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._buildSelect(queryText);
         this._buildInclude(queryText);
 
+        if (!compatibilityMode) {
+            this._buildPagination(queryText);
+        }
+
         return queryText.toString();
+    }
+
+    private _buildGraphQuery(queryText: StringBuilder) {
+        this._graphRawQuery.writeTo(queryText);
+    }
+
+    private _buildWith(queryText: StringBuilder) {
+        //TODO: need to aggragate with parameters into this instance parameter list, assert and strip parameters from with clauses
+        for (const withToken of this._withTokens) {
+            withToken.writeTo(queryText);
+            queryText.append(os.EOL);
+        }
+    }
+
+    private _buildPagination(queryText: StringBuilder) {
+        if (this._start > 0 || this._pageSize != null) {
+            queryText
+                .append(" limit $")
+                .append(this._addQueryParameter(this._start))
+                .append(", $")
+                .append(this._addQueryParameter(this._pageSize));
+        }
     }
 
     private _buildInclude(queryText: StringBuilder): void {
@@ -2150,6 +2191,10 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     public getQueryType(): DocumentType<T> {
         return this._clazz;
+    }
+
+    public getGraphRawQuery(): QueryToken {
+        return this._graphRawQuery;
     }
 
     // tslint:enable:function-name

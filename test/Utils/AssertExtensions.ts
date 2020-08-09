@@ -99,4 +99,21 @@ export class JavaAssertionBuilder {
         assert.ok(this._value > v, `${this._value} is not greater than ${v}.`);
         return this;
     }
+
+    public allMatch(matcher: (v: any) => boolean) {
+        this._value.forEach(v => {
+            assert.ok(matcher(v));
+        });
+    }
+
+    public anyMatch(matcher: (v: any) => boolean) {
+        let hasMatch = false;
+        this._value.forEach(v => {
+            if (matcher(v)) {
+                hasMatch = true;
+            }
+        });
+
+        assert.ok(hasMatch);
+    }
 }

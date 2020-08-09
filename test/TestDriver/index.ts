@@ -23,6 +23,7 @@ import {
     ConfigureRevisionsOperation,
     ConfigureRevisionsOperationResult
 } from "../../src/Documents/Operations/Revisions/ConfigureRevisionsOperation";
+import { Dog, Entity, Genre, Movie, Rating, User } from "../Assets/Graph";
 
 const log = getLogger({ module: "TestDriver" });
 
@@ -97,6 +98,197 @@ export abstract class RavenTestDriver implements IDisposable {
         revisionsConfiguration.defaultConfig = defaultConfiguration;
         const operation = new ConfigureRevisionsOperation(revisionsConfiguration);
         return store.maintenance.send(operation);
+    }
+
+    public async createSimpleData(store: IDocumentStore) {
+        {
+            const session = store.openSession();
+
+            const entityA = Object.assign(new Entity(), {
+                id: "entity/1",
+                name: "A"
+            });
+
+            const entityB = Object.assign(new Entity(), {
+                id: "entity/2",
+                name: "B"
+            });
+
+            const entityC = Object.assign(new Entity(), {
+                id: "entity/3",
+                name: "C"
+            });
+
+            await session.store(entityA);
+            await session.store(entityB);
+            await session.store(entityC);
+
+            entityA.references = entityB.id;
+            entityB.references = entityC.id;
+            entityC.references = entityA.id;
+
+            await session.saveChanges();
+        }
+    }
+
+    public async createDogDataWithoutEdges(store: IDocumentStore) {
+        {
+            const session = store.openSession();
+
+            const arava = Object.assign(new Dog(), {
+                name: "Arava"
+            });
+
+            const oscar = Object.assign(new Dog(), {
+                name: "Oscar"
+            });
+
+            const pheobe = Object.assign(new Dog(), {
+                name: "Pheobe"
+            });
+
+            await session.store(arava);
+            await session.store(oscar);
+            await session.store(pheobe);
+
+            await session.saveChanges();
+        }
+    }
+
+    public async createDataWithMultipleEdgesOfTheSameType(store: IDocumentStore) {
+        {
+            const session = store.openSession();
+
+            const arava = Object.assign(new Dog(), {
+                name: "Arava"
+            });
+
+            const oscar = Object.assign(new Dog(), {
+                name: "Oscar"
+            });
+
+            const pheobe = Object.assign(new Dog(), {
+                name: "Pheobe"
+            });
+
+            await session.store(arava);
+            await session.store(oscar);
+            await session.store(pheobe);
+
+            //dogs/1 => dogs/2
+            arava.likes = [ oscar.id ];
+            arava.dislikes = [ pheobe.id ];
+
+            //dogs/2 => dogs/2,dogs/3 (cycle!)
+            oscar.likes = [ oscar.id, pheobe.id ];
+            oscar.dislikes = [];
+
+            //dogs/3 => dogs/2
+            pheobe.likes = [ oscar.id ];
+            pheobe.dislikes = [ arava.id ];
+
+            await session.saveChanges();
+        }
+    }
+
+    public async createMoviesData(store: IDocumentStore) {
+        {
+            const session = store.openSession();
+
+            const scifi = Object.assign(new Genre(), {
+                name: "genres/1", //tODO: scifi?
+                id: "genres/1"
+            });
+
+            const fantasy = Object.assign(new Genre(), {
+                id: "genres/2",
+                name: "Fantasy"
+            });
+
+            const adventure = Object.assign(new Genre(), {
+                id: "genres/3",
+                name: "Adventure"
+            });
+
+            await session.store(scifi);
+            await session.store(fantasy);
+            await session.store(adventure);
+
+            const starwars = Object.assign(new Movie(), {
+                id: "movies/1",
+                name: "Star Wars Ep.1",
+                genres: [ "genres/1", "genres/2" ]
+            });
+
+            const firefly = Object.assign(new Movie(), {
+                id: "movies/2",
+                name: "Firefly Serenity",
+                genres: [ "genres/2", "genres/3" ]
+            });
+
+            const indianaJones = Object.assign(new Movie(), {
+                id: "movies/3",
+                name: "Indiana Jones and the Temple Of Doom",
+                genres: [ "genres/3" ]
+            });
+
+            await session.store(starwars);
+            await session.store(firefly);
+            await session.store(indianaJones);
+
+            const user1 = Object.assign(new User(), {
+                id: "users/1",
+                name: "Jack"
+            });
+
+            const rating11 = Object.assign(new Rating(), {
+                movie: "movies/1",
+                score: 5
+            });
+
+            const rating12 = Object.assign(new Rating(), {
+                movie: "movies/2",
+                score: 7
+            });
+
+            user1.hasRated = [ rating11, rating12 ];
+            await session.store(user1);
+
+            const user2 = Object.assign(new User(), {
+                id: "users/2",
+                name: "Jill"
+            });
+
+            const rating21 = Object.assign(new Rating(), {
+                movie: "movies/2",
+                score: 7
+            });
+
+            const rating22 = Object.assign(new Rating(), {
+                movie: "movies/3",
+                score: 9
+            });
+
+            user2.hasRated = [ rating21, rating22 ]; //TODO: in java we ahe rating11 (?)
+
+            await session.store(user2);
+
+            const user3 = Object.assign(new User(), {
+                id: "users/3",
+                name: "Bob"
+            });
+
+            const rating31 = Object.assign(new Rating(), {
+                movie: "movies/3",
+                score: 5
+            });
+
+            user3.hasRated = [ rating31 ];
+
+            await session.store(user3);
+
+            await session.saveChanges();
+        }
     }
 
     public getDocumentStore(): Promise<DocumentStore>;
