@@ -59,4 +59,7 @@ class SetLogsConfigurationCommand extends RavenCommand<void> {
 
 export interface SetLogsConfigurationParameters {
     mode: LogMode;
+    retentionTime: string;
+    retentionSize?: number;
+    compress: boolean;
 }

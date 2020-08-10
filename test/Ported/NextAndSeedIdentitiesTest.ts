@@ -8,6 +8,8 @@ import {
     GetIdentitiesOperation,
 } from "../../src";
 import { User } from "../Assets/Entities";
+import { NextIdentityForOperation } from "../../src/Documents/Operations/Identities/NextIdentityForOperation";
+import { SeedIdentityForOperation } from "../../src/Documents/Operations/Identities/SeedIdentityForOperation";
 
 describe("NextAndSeedIdentitiesTest", function () {
 
@@ -23,17 +25,16 @@ describe("NextAndSeedIdentitiesTest", function () {
     it("NextIdentityForCommand should use one ID from pool", async () => {
         {
             const session = store.openSession();
-            const user = Object.assign(new User(), { lastName: "Adi" });
+            const user = Object.assign(new User(), {lastName: "Adi"});
             await session.store(user, "users|");
             await session.saveChanges();
         }
 
-        const command = new NextIdentityForCommand("users");
-        await store.getRequestExecutor().execute(command);
+        await store.maintenance.send(new NextIdentityForOperation("users"));
 
         {
             const session = store.openSession();
-            const user = Object.assign(new User(), { lastName: "Avivi" });
+            const user = Object.assign(new User(), {lastName: "Avivi"});
             await session.store(user, "users|");
             await session.saveChanges();
         }
@@ -59,19 +60,17 @@ describe("NextAndSeedIdentitiesTest", function () {
     it("SeedIdentityForCommand should set identity for given string", async () => {
         {
             const session = store.openSession();
-            const user = Object.assign(new User(), { lastName: "Adi" });
+            const user = Object.assign(new User(), {lastName: "Adi"});
             await session.store(user, "users|");
             await session.saveChanges();
         }
 
-        let command = new SeedIdentityForCommand("users", 1990);
-        await store.getRequestExecutor().execute(command);
-        let result = command.result;
-        assert.strictEqual(result, 1990);
+        const result1 = await store.maintenance.send(new SeedIdentityForOperation("users", 1990));
+        assert.strictEqual(result1, 1990);
 
         {
             const session = store.openSession();
-            const user = Object.assign(new User(), { lastName: "Avivi" });
+            const user = Object.assign(new User(), {lastName: "Avivi"});
             await session.store(user, "users|");
             await session.saveChanges();
         }
@@ -95,12 +94,17 @@ describe("NextAndSeedIdentitiesTest", function () {
             assert.strictEqual(entityWithId1991.lastName, "Avivi");
         }
 
-        command = new SeedIdentityForCommand("users", 1975);
-        await store.getRequestExecutor().execute(command);
-        result = command.result;
-        assert.strictEqual(result, 1991);
+        const result2 = await store.maintenance.send(new SeedIdentityForOperation("users", 1975));
+        assert.strictEqual(result2, 1991);
 
-        const identities = await store.maintenance.send(new GetIdentitiesOperation());
-        assert.strictEqual(identities["users|"], 1991);
+        const result3 = await store.maintenance.send(new SeedIdentityForOperation("users", 1975, true));
+        assert.strictEqual(result3, 1975);
+    });
+
+    it("nextIdentityForOperationShouldCreateANewIdentityIfThereIsNone", async () => {
+        const session = store.openSession();
+        const result = await store.maintenance.send(new NextIdentityForOperation("person|"));
+
+        assert.strictEqual(result, 1);
     });
 });

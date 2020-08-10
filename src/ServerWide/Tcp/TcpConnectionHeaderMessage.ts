@@ -6,6 +6,7 @@ export interface TcpConnectionHeaderMessage {
     operation: OperationTypes;
     operationVersion: number;
     info: string;
+    authorizeInfo: AuthorizationInfo;
 }
 
 export type OperationTypes =
@@ -25,11 +26,12 @@ export const NONE_BASE_LINE = -1;
 export const DROP_BASE_LINE = -2;
 export const HEARTBEATS_BASE_LINE = 20;
 export const HEARTBEATS_41200 = 41_200;
+export const HEARTBEATS_42000 = 42_000;
 export const SUBSCRIPTION_BASE_LINE = 40;
 export const SUBSCRIPTION_INCLUDES = 41_400;
 export const TEST_CONNECTION_BASE_LINE = 50;
 
-export const HEARTBEATS_TCP_VERSION = HEARTBEATS_41200;
+export const HEARTBEATS_TCP_VERSION = HEARTBEATS_42000;
 export const SUBSCRIPTION_TCP_VERSION = SUBSCRIPTION_INCLUDES;
 export const TEST_CONNECTION_TCP_VERSION = TEST_CONNECTION_BASE_LINE;
 
@@ -53,6 +55,7 @@ export class SubscriptionFeatures {
 export class HeartbeatsFeatures {
     public baseLine = true;
     public sendChangesOnly: boolean = false;
+    public includeServerInfo: boolean;
 }
 
 export class TestConnectionFeatures {
@@ -131,6 +134,11 @@ const supportedFeaturesByProtocol = new Map<OperationTypes, Map<number, Supporte
     heartbeats41200Features.heartbeats.sendChangesOnly = true;
     heartbeatsFeaturesMap.set(HEARTBEATS_41200, heartbeats41200Features);
 
+    const heartbeats42000Features = new SupportedFeatures(HEARTBEATS_42000);
+    heartbeats42000Features.heartbeats.sendChangesOnly = true;
+    heartbeats42000Features.heartbeats.includeServerInfo = true;
+    heartbeatsFeaturesMap.set(HEARTBEATS_42000, heartbeats42000Features);
+
     const testConnectionFeaturesMap = new Map<number, SupportedFeatures>();
     supportedFeaturesByProtocol.set("TestConnection", testConnectionFeaturesMap);
     const testConnectionFeatures = new SupportedFeatures(TEST_CONNECTION_BASE_LINE);
@@ -193,3 +201,12 @@ export function getSupportedFeaturesFor(type: OperationTypes, protocolVersion: n
     }
     return features;
 }
+
+export class AuthorizationInfo {
+    public authorizeAs: AuthorizeMethod;
+    public authorizationFor: string;
+}
+
+export type AuthorizeMethod =
+    "Server"
+    | "PullReplication";

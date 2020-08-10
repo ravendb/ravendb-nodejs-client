@@ -703,6 +703,237 @@ describe("QueryOnCountersTest", function () {
             assertThat(session.advanced.numberOfRequests)
                 .isEqualTo(1);
         }
+    });
 
+    it("countersShouldBeCachedOnCollection", async () => {
+        {
+            const session = store.openSession();
+            const order = Object.assign(new Order(), {
+                company: "companies/1-A"
+            });
+            await session.store(order, "orders/1-A");
+            session.countersFor("orders/1-A")
+                .increment("downloads", 100);
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            await session.query<Order>(Order)
+                .include(i => i.includeCounter("downloads"))
+                .all();
+
+            let counterValue = await session.countersFor("orders/1-A")
+                .get("downloads");
+            assertThat(counterValue)
+                .isEqualTo(100);
+
+            session.countersFor("orders/1-A")
+                .increment("downloads", 200);
+            await session.saveChanges();
+
+            await session.query<Order>(Order)
+                .include(i => i.includeCounters(["downloads"]))
+                .all();
+
+            counterValue = await session.countersFor("orders/1-A")
+                .get("downloads");
+            assertThat(counterValue)
+                .isEqualTo(300);
+
+            await session.countersFor("orders/1-A")
+                .increment("downloads", 200);
+            await session.saveChanges();
+
+            await session.query<Order>(Order)
+                .include(i => i.includeCounter("downloads"))
+                .all();
+
+            counterValue = await session.countersFor("orders/1-A")
+                .get("downloads");
+            assertThat(counterValue)
+                .isEqualTo(500);
+        }
+
+        {
+            const session = store.openSession();
+
+            await session.load("orders/1-A", {
+                documentType: Order,
+                includes: i => i.includeCounter("downloads")
+            });
+            let counterValue = await session.countersFor("orders/1-A")
+                .get("downloads");
+            assertThat(counterValue)
+                .isEqualTo(500);
+
+            await session.countersFor("orders/1-A")
+                .increment("downloads", 200);
+            await session.saveChanges();
+
+            await session.load("order/1-A", {
+                documentType: Order,
+                includes: i => i.includeCounter("downloads")
+            });
+            counterValue = await session.countersFor("orders/1-A")
+                .get("downloads");
+            assertThat(counterValue)
+                .isEqualTo(700);
+        }
+    });
+
+    it("countersShouldBeCachedOnAllDocsCollection", async () => {
+        {
+            const session = store.openSession();
+            const order = Object.assign(new Order(), {
+                company: "companies/1-A"
+            });
+
+            await session.store(order, "orders/1-A");
+            await session.countersFor("orders/1-A")
+                .increment("downloads", 100);
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            await session.advanced.rawQuery("from @all_docs include counters($p0)")
+                .addParameter("p0", ["downloads"])
+                .all();
+
+            let counterValue = await session.countersFor("orders/1-A")
+                .get("downloads");
+            assertThat(counterValue)
+                .isEqualTo(100);
+
+            await session.countersFor("orders/1-A")
+                .increment("downloads", 200);
+            await session.saveChanges();
+
+            await session.advanced.rawQuery("from @all_docs include counters()")
+                .all();
+
+            counterValue = await session.countersFor("orders/1-A")
+                .get("downloads");
+            assertThat(counterValue)
+                .isEqualTo(300);
+
+            await session.countersFor("orders/1-A")
+                .increment("downloads", 200);
+            await session.saveChanges();
+
+            await session
+                .advanced
+                .rawQuery("from @all_docs include counters($p0)")
+                .addParameter("p0", ["downloads"])
+                .all();
+
+            counterValue = await session.countersFor("orders/1-A")
+                .get("downloads");
+            assertThat(counterValue)
+                .isEqualTo(500);
+        }
+    });
+
+    it("countersCachingShouldHandleDeletion_includeCounterDownload", async () => {
+        await countersCachingShouldHandleDeletion(async session => {
+            await session.query(Order)
+                .include(i => i.includeCounter("downloads"))
+                .all();
+        }, null);
+    });
+
+    it("countersCachingShouldHandleDeletion_includeCounterUpload", async () => {
+        await countersCachingShouldHandleDeletion(async session => {
+            await session.query(Order)
+                .include(i => i.includeCounter("uploads"))
+                .all();
+        }, 300);
+    });
+
+    it("countersCachingShouldHandleDeletion_includeCounters", async () => {
+        await countersCachingShouldHandleDeletion(async session => {
+            await session.query(Order)
+                .include(i => i.includeCounters(["downloads", "uploads", "bugs"]))
+                .all();
+        }, null);
+    });
+
+    it("countersCachingShouldHandleDeletion_includeAllCounters", async () => {
+        await countersCachingShouldHandleDeletion(async session => {
+            await session.query(Order)
+                .include(i => i.includeAllCounters())
+                .all();
+        });
     });
 });
+
+
+async function countersCachingShouldHandleDeletion(sessionCounter: (session: IDocumentSession) => Promise<void>, expectedCounterValue: number) {
+    const store = await testContext.getDocumentStore();
+    try {
+        const session = store.openSession();
+        try {
+            const order = Object.assign(new Order(), {
+                company: "companies/1-A"
+            });
+
+            await session.store(order, "orders/1-A");
+
+            await session.countersFor("orders/1-A")
+                .increment("downloads", 100);
+            await session.countersFor("orders/1-A")
+                .increment("uploads", 123);
+            await session.countersFor("orders/1-A")
+                .increment("bugs", 0xDEAD);
+            await session.saveChanges();
+        } finally {
+            session.dispose();
+        }
+
+        {
+            const session = store.openSession();
+            await session.query<Order>(Order)
+                .include(i => i.includeCounter("downloads"))
+                .all();
+
+            let counterValue = await session.countersFor("orders/1-A")
+                .get("downloads");
+            assertThat(counterValue)
+                .isEqualTo(100);
+
+            {
+                const writeSession = store.openSession();
+                await writeSession.countersFor("orders/1-A")
+                    .increment("downloads", 200);
+                await writeSession.saveChanges();
+            }
+
+            await session.query<Order>(Order)
+                .include(i => i.includeCounter("downloads"))
+                .all();
+
+            counterValue = await session.countersFor("orders/1-A")
+                .get("downloads");
+            assertThat(counterValue)
+                .isEqualTo(300);
+            await session.saveChanges();
+
+            {
+                const writeSession = store.openSession();
+                await writeSession.countersFor("orders/1-A").delete("downloads");
+                await writeSession.saveChanges();
+            }
+
+            await sessionCounter(session);
+
+            counterValue = await session.countersFor("orders/1-A").get("downloads");
+
+            assertThat(counterValue)
+                .isEqualTo(expectedCounterValue);
+        }
+    } finally {
+        store.dispose();
+    }
+}
+

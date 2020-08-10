@@ -5,4 +5,5 @@ export interface GetLogsConfigurationResult {
     mode: LogMode;
     path: string;
     useUtcTime: boolean;
+    retentionTime: string;
 }
