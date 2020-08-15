@@ -4,12 +4,10 @@ import {
     ReplicationNode,
     ExternalReplication,
     RavenConnectionString,
-    UpdateExternalReplicationOperation,
     ModifyOngoingTaskResult,
     IMaintenanceOperation,
-    DocumentStore,
     OngoingTaskType,
-    DeleteOngoingTaskOperation
+    DeleteOngoingTaskOperation, UpdateExternalReplicationOperation
 } from "../../src";
 import { Stopwatch } from "../../src/Utility/Stopwatch";
 import { DocumentType } from "../../src";
@@ -17,6 +15,7 @@ import { delay } from "../../src/Utility/PromiseUtil";
 import { v4 as uuidv4 } from "uuid";
 import { assertThat } from "./AssertExtensions";
 import { ExternalReplicationBase } from "../../src/Documents/Replication/ExternalReplicationBase";
+import { UpdatePullReplicationAsSinkOperation } from "../../src/Documents/Operations/Replication/UpdatePullReplicationAsSinkOperation";
 
 export class ReplicationTestContext {
 
@@ -60,15 +59,11 @@ export class ReplicationTestContext {
 
         let op: IMaintenanceOperation<ModifyOngoingTaskResult>;
 
-        /* TODO duck typing
-          if (watcher instanceof PullReplicationAsSink) {
-            op = new UpdatePullReplicationAsSinkOperation((PullReplicationAsSink) watcher);
-        } else if (watcher instanceof ExternalReplication) {
-            op = new UpdateExternalReplicationOperation((ExternalReplication) watcher);
+        if ("hubDefinitionName" in watcher) {
+            op = new UpdatePullReplicationAsSinkOperation(watcher);
         } else {
-            throw new IllegalArgumentException("Unrecognized type: " + watcher.getClass());
+            op = new UpdateExternalReplicationOperation(watcher);
         }
-         */
 
         return await store.maintenance.send(op);
     }

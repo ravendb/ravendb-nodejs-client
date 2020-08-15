@@ -1,6 +1,6 @@
 import { CertificateDefinition } from "./CertificateDefinition";
 import { HttpRequestParameters } from "../../../Primitives/Http";
-import * as stream from "stream";
+import * as stream from "readable-stream";
 import { IServerOperation, OperationResultType } from "../../../Documents/Operations/OperationAbstractions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";

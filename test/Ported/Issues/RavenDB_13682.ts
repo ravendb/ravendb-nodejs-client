@@ -84,9 +84,9 @@ describe("RavenDB_13682", function () {
                 .isEqualTo("b");
         }
 
-        new SpatialIndex().execute(store);
+        await new SpatialIndex().execute(store);
 
-        await waitForIndexing(store);
+        await testContext.waitForIndexing(store);
 
         {
             const s = store.openSession();

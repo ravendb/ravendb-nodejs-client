@@ -3,7 +3,7 @@ import { TcpConnectionInfo } from "../../ServerWide/Commands/GetTcpInfoCommand";
 import { throwError } from "../../Exceptions/index";
 import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestParameters } from "../../Primitives/Http";
-import * as stream from "stream";
+import * as stream from "readable-stream";
 
 export class GetTcpInfoForRemoteTaskCommand extends RavenCommand<TcpConnectionInfo> {
     private readonly _remoteDatabase: string;

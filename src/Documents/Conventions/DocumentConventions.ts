@@ -15,13 +15,10 @@ import { CONSTANTS } from "../../Constants";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { DateUtil, DateUtilOpts } from "../../Utility/DateUtil";
 import { CasingConvention, ObjectUtil, ObjectChangeCaseOptions } from "../../Utility/ObjectUtil";
-import { JsonSerializer } from "../../Mapping/Json/Serializer";
 
 export type IdConvention = (databaseName: string, entity: object) => Promise<string>;
 export type IValueForQueryConverter<T> =
     (fieldName: string, value: T, forRange: boolean, stringValue: (value: any) => void) => boolean;
-
-//TODO: add missing JSDoc
 
 export class DocumentConventions {
 
@@ -44,7 +41,6 @@ export class DocumentConventions {
 
     private _frozen: boolean;
     private _originalConfiguration: ClientConfiguration;
-    private _idPropertyCache: Map<ObjectTypeDescriptor, string> = new Map(); //TODO: is it used?
     private _identityPartsSeparator: string;
     private _disableTopologyUpdates: boolean;
 

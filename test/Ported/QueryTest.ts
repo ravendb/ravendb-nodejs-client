@@ -693,14 +693,14 @@ describe("QueryTest", function () {
                 .whereBetween("date", cocartFestival.date, offFestival.date);
 
             const indexQuery = q.getIndexQuery();
-            assert.strictEqual(indexQuery.query, "from events where date between $p0 and $p1");
+            assert.strictEqual(indexQuery.query, "from 'events' where date between $p0 and $p1");
             assert.strictEqual(
                 indexQuery.queryParameters["p0"], 
                 DateUtil.utc.stringify(cocartFestival.date));
             assert.strictEqual(
                 indexQuery.queryParameters["p1"], 
                 DateUtil.utc.stringify(offFestival.date));
-            assert.strictEqual(indexQuery.query, "from events where date between $p0 and $p1");
+            assert.strictEqual(indexQuery.query, "from 'events' where date between $p0 and $p1");
 
             const festivalsHappeningBetweenCocartAndOffInclusive: any[] = await q.all();
 

@@ -77,7 +77,7 @@ export class GetRevisionOperation {
         documentInfo.document = document;
         documentInfo.metadata = metadata;
         documentInfo.entity = entity;
-        this._session.documentsByEntity.set(entity, documentInfo);
+        this._session.documentsByEntity.put(entity, documentInfo);
         return entity;
     }
 

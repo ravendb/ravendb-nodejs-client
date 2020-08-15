@@ -2,6 +2,7 @@ import { IDocumentStore } from "../../../src/Documents/IDocumentStore";
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
 import { assertThat } from "../../Utils/AssertExtensions";
 import moment = require("moment");
+import { DateUtil } from "../../../src/Utility/DateUtil";
 
 describe("ClientGraphQueriesTest", function () {
 
@@ -134,7 +135,7 @@ describe("ClientGraphQueriesTest", function () {
                 ]
             });
 
-            await session.store(friend2);
+            await session.store(friend2, "Friend/2");
 
             const friend3 = Object.assign(new Friend(), {
                 name: "F3",
@@ -161,15 +162,16 @@ describe("ClientGraphQueriesTest", function () {
 
             await session.saveChanges();
 
+
             const tupleResult = await session.advanced.graphQuery<FriendsTuple>("match (f1)-[l1]->(f2)", FriendsTuple)
                 .withQuery("f1", session.query(Friend))
                 .withQuery("f2", session.query(Friend))
-                .withEdges("l1", "friends", "where friendsSince >= '" + NetISO8601Utils.format(from, true) + "' select friendId")
+                .withEdges("l1", "friends", "where friendsSince >= '" + DateUtil.utc.stringify(from) + "' select friendId")
                 .waitForNonStaleResults()
                 .all();
 
             const res = tupleResult
-                //TODO.sorted(Comparator.<FriendsTuple> comparingInt(x -> x.getF1().getAge()).reversed())
+                .sort((a, b) => b.f1.age - a.f1.age)
                 .map(x => x.f1);
 
             assertThat(res)

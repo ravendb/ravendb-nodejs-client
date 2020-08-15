@@ -11,6 +11,7 @@ import { PutAttachmentCommandData } from "../Commands/Batches/PutAttachmentComma
 import { DeleteAttachmentCommandData } from "../Commands/Batches/DeleteAttachmentCommandData";
 import { MoveAttachmentCommandData } from "../Commands/Batches/MoveAttachmentCommandData";
 import { CopyAttachmentCommandData } from "../Commands/Batches/CopyAttachmentCommandData";
+import { TypeUtil } from "../../Utility/TypeUtil";
 
 export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExtensionBase {
     protected constructor(session: InMemoryDocumentSessionOperations) {
@@ -22,7 +23,11 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
             return [];
         }
 
-        const document = this._documentsByEntity.get(entity);
+        if (TypeUtil.isString(entity)) {
+            throwError("InvalidArgumentException", "getNames requires a tracked entity object, other types such as documentId are not valid.");
+        }
+
+        const document = this._session.documentsByEntity.get(entity);
         if (!document) {
             this._throwEntityNotInSession(entity);
         }
@@ -74,7 +79,7 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
         }
 
         const documentInfo: DocumentInfo = this._documentsById.getValue(documentIdOrEntity);
-        if (documentInfo && this._deletedEntities.has(documentInfo.entity)) {
+        if (documentInfo && this._session.deletedEntities.contains(documentInfo.entity)) {
             DocumentSessionAttachmentsBase._throwDocumentAlreadyDeleted(
                 documentIdOrEntity, name, "store", null, documentIdOrEntity);
         }
@@ -84,24 +89,30 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
 
     private _storeAttachmentByEntity(
         entity: object, name: string, stream: AttachmentData, contentType: string): void {
-        const document: DocumentInfo = this._documentsByEntity.get(entity);
+        const document: DocumentInfo = this._session.documentsByEntity.get(entity);
         if (!document) {
-            this._throwEntityNotInSession(entity);
+            this._throwEntityNotInSessionOrMissingId(entity);
         }
 
         return this.store(document.id, name, stream, contentType);
     }
 
-    protected _throwEntityNotInSession(entity: object): never {
+    protected _throwEntityNotInSessionOrMissingId(entity: object): never {
         return throwError("InvalidArgumentException",
             entity
             + " is not associated with the session. Use documentId instead or track the entity in the session.");
     }
 
+    protected _throwEntityNotInSession(entity: object): never {
+        return throwError("InvalidArgumentException",
+            entity
+            + " is not associated with the session. You need to track the entity in the session");
+    }
+
     private _deleteAttachmentByEntity(entity: object, name: string): void {
-        const document: DocumentInfo = this._documentsByEntity.get(entity);
+        const document: DocumentInfo = this._session.documentsByEntity.get(entity);
         if (!document) {
-            this._throwEntityNotInSession(entity);
+            this._throwEntityNotInSessionOrMissingId(entity);
         }
 
         return this.delete(document.id, name);
@@ -128,7 +139,7 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
         }
 
         const documentInfo = this._documentsById.getValue(entityOrId);
-        if (documentInfo && this._deletedEntities.has(documentInfo.entity)) {
+        if (documentInfo && this._session.deletedEntities.contains(documentInfo.entity)) {
             return;  //no-op
         }
 
@@ -182,14 +193,14 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
             throwError("InvalidArgumentException", "DestinationEntity cannot be null");
         }
 
-        const sourceDocument = this._documentsByEntity.get(sourceEntity);
+        const sourceDocument = this._session.documentsByEntity.get(sourceEntity);
         if (!sourceDocument) {
-            this._throwEntityNotInSession(sourceEntity);
+            this._throwEntityNotInSessionOrMissingId(sourceEntity);
         }
 
-        const destinationDocument = this._documentsByEntity.get(destinationEntity);
+        const destinationDocument = this._session.documentsByEntity.get(destinationEntity);
         if (!destinationDocument) {
-            this._throwEntityNotInSession(destinationEntity);
+            this._throwEntityNotInSessionOrMissingId(destinationEntity);
         }
 
         this._moveByEntityIds(sourceDocument.id, sourceName, destinationDocument.id, destinationName);
@@ -219,13 +230,13 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
         }
 
         const sourceDocument = this._documentsById.getValue(sourceDocumentId);
-        if (sourceDocument && this._session.deletedEntities.has(sourceDocument.entity)) {
+        if (sourceDocument && this._session.deletedEntities.contains(sourceDocument.entity)) {
             DocumentSessionAttachmentsBase._throwDocumentAlreadyDeleted(
                 sourceDocumentId, sourceName, "move", destinationDocumentId, sourceDocumentId);
         }
 
         const destinationDocument = this._documentsById.getValue(destinationDocumentId);
-        if (destinationDocument && this._session.deletedEntities.has(destinationDocument.entity)) {
+        if (destinationDocument && this._session.deletedEntities.contains(destinationDocument.entity)) {
             DocumentSessionAttachmentsBase._throwDocumentAlreadyDeleted(
                 sourceDocumentId, sourceName, "move", destinationDocumentId, destinationDocumentId);
         }
@@ -294,14 +305,14 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
             throwError("InvalidArgumentException", "DestinationEntity cannot be null");
         }
 
-        const sourceDocument = this._documentsByEntity.get(sourceEntity);
+        const sourceDocument = this._session.documentsByEntity.get(sourceEntity);
         if (!sourceDocument) {
-            this._throwEntityNotInSession(sourceEntity);
+            this._throwEntityNotInSessionOrMissingId(sourceEntity);
         }
 
-        const destinationDocument = this._documentsByEntity.get(destinationEntity);
+        const destinationDocument = this._session.documentsByEntity.get(destinationEntity);
         if (!destinationDocument) {
-            this._throwEntityNotInSession(destinationEntity);
+            this._throwEntityNotInSessionOrMissingId(destinationEntity);
         }
         
         this.copy(sourceDocument.id, sourceName, destinationDocument.id, destinationName);
@@ -334,13 +345,13 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
         }
 
         const sourceDocument = this._documentsById.getValue(sourceDocumentId);
-        if (sourceDocument && this._deletedEntities.has(sourceDocument.entity)) {
+        if (sourceDocument && this._session.deletedEntities.contains(sourceDocument.entity)) {
             DocumentSessionAttachmentsBase._throwDocumentAlreadyDeleted(
                 sourceDocumentId, sourceName, "copy", destinationDocumentId, sourceDocumentId);
         }
 
         const destinationDocument = this._documentsById.getValue(destinationDocumentId);
-        if (destinationDocument && this._deletedEntities.has(destinationDocument.entity)) {
+        if (destinationDocument && this._session.deletedEntities.contains(destinationDocument.entity)) {
             DocumentSessionAttachmentsBase._throwDocumentAlreadyDeleted(
                 sourceDocumentId, sourceName, "copy", destinationDocumentId, destinationDocumentId);
         }

@@ -3,6 +3,7 @@ import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { ICommandData } from "../CommandData";
 import { BatchOptions } from "./BatchOptions";
+import { SingleNodeBatchCommand } from "./SingleNodeBatchCommand";
 
 export class ClusterWideBatchCommand extends SingleNodeBatchCommand implements IRaftCommand {
     public getRaftUniqueRequestId(): string {

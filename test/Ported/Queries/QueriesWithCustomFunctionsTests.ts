@@ -47,7 +47,7 @@ describe("Queries with custom functions", function () {
                 .whereEquals("lastName", CmpXchg.value("Tom"));
 
             assert.strictEqual(
-                q.getIndexQuery().query, "from Users where name = cmpxchg($p0) and lastName = cmpxchg($p1)");
+                q.getIndexQuery().query, "from 'Users' where name = cmpxchg($p0) and lastName = cmpxchg($p1)");
 
             const queryResult = await q.all();
             assert.strictEqual(queryResult.length, 1);

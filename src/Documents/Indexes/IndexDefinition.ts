@@ -3,10 +3,7 @@ import { IndexPriority, FieldStorage, FieldIndexing, FieldTermVector, IndexLockM
 import { IndexFieldOptions } from "./IndexFieldOptions";
 import { SpatialOptions } from "./Spatial";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
-import * as XRegExp from "xregexp";
-import { StringUtil } from "../../Utility/StringUtil";
-
-const COMMENT_REGEX = new XRegExp("(?:/\\*(?:[^*]|(?:\\*+[^*/]))*\\*+/)|(?://.*)", "gm");
+import { IndexDefinitionHelper } from "./IndexDefinitionHelper";
 
 export interface IndexConfiguration {
     [key: string]: string;
@@ -44,7 +41,7 @@ export class IndexDefinition {
 
     public get type(): IndexType {
         if (!this.indexType || this.indexType === "None") {
-            this.indexType = this._detectStaticIndexType();
+            this.indexType = this.detectStaticIndexType();
         }
 
         return this.indexType;
@@ -55,9 +52,7 @@ export class IndexDefinition {
     }
 
     public detectStaticIndexType(): IndexType {
-        const firstMap = this.maps.values().next().value
-            .replace(COMMENT_REGEX, "")
-            .trim();
+        const firstMap = this.maps.values().next().value;
 
         if (!firstMap) {
             throwError("InvalidArgumentException", "Index  definitions contains no Maps");

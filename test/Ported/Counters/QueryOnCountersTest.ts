@@ -1,11 +1,7 @@
-import * as mocha from "mocha";
-import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
-    RavenErrorType,
-    GetNextOperationIdCommand,
     IDocumentStore,
     IDocumentSession,
 } from "../../../src";
@@ -79,7 +75,7 @@ async function storeNewCompany(
     return company;
 }
 
-async function incCounter(
+function incCounter(
     session: IDocumentSession, id: string, counter: string, val: number) {
     session.countersFor(id).increment(counter, val);
 }
@@ -262,7 +258,7 @@ describe("QueryOnCountersTest", function () {
             const session = store.openSession();
             const query = session.query<Order>({ collection: "orders" })
                 .include(i => i.includeCounter("downloads"));
-            assert.strictEqual(query.toString(), "from orders include counters($p0)");
+            assert.strictEqual(query.toString(), "from 'orders' include counters('downloads')");
 
             const queryResult = await query.all();
             assert.strictEqual(session.advanced.numberOfRequests, 1);
@@ -305,7 +301,7 @@ describe("QueryOnCountersTest", function () {
             const session = store.openSession();
             const query = session.query<Order>({ collection: "orders" })
                 .include(i => i.includeCounters(["downloads", "likes"]));
-            assert.strictEqual(query.toString(), "from orders include counters($p0)");
+            assert.strictEqual(query.toString(), "from 'orders' include counters('downloads'),counters('likes')");
 
             const queryResult = await query.all();
             assert.strictEqual(session.advanced.numberOfRequests, 1);
@@ -351,7 +347,7 @@ describe("QueryOnCountersTest", function () {
                 const session = store.openSession();
                 const query = session.query<Order>({ collection: "orders" })
                     .include(i => i.includeAllCounters());
-                assert.strictEqual(query.toString(), "from orders include counters()");
+                assert.strictEqual(query.toString(), "from 'orders' include counters()");
 
                 const queryResult = await query.all();
                 assert.strictEqual(session.advanced.numberOfRequests, 1);
@@ -410,7 +406,7 @@ describe("QueryOnCountersTest", function () {
                 .include(i => i
                     .includeCounter("downloads")
                     .includeDocuments("company"));
-            assert.strictEqual(query.toString(), "from Orders include company,counters($p0)");
+            assert.strictEqual(query.toString(), "from 'Orders' include company,counters('downloads')");
             const queryResult = await query.all();
 
             assert.strictEqual(session.advanced.numberOfRequests, 1);
@@ -457,7 +453,7 @@ describe("QueryOnCountersTest", function () {
             const session = store.openSession();
             const query = session.query<Order>({ collection: "Orders" })
                 .include(i => i.includeCounter("employee", "downloads"));
-            assert.strictEqual(query.toString(), "from Orders include counters(employee, $p0)");
+            assert.strictEqual(query.toString(), "from 'Orders' include counters(employee, 'downloads')");
             const queryResult = await query.all();
             assert.strictEqual(session.advanced.numberOfRequests, 1);
 
@@ -500,7 +496,7 @@ describe("QueryOnCountersTest", function () {
                 .include(i => i.includeCounters("employee", [ "downloads", "likes" ]));
 
             assertThat(query.toString())
-                .isEqualTo("from Orders include counters(employee, $p0)");
+                .isEqualTo("from 'Orders' include counters(employee, 'downloads'),counters(employee, 'likes')");
 
             const results = await query.all();
             assertThat(session.advanced.numberOfRequests)
@@ -561,7 +557,7 @@ describe("QueryOnCountersTest", function () {
                 .include(i => i.includeCounter("likes").includeCounter("employee", "downloads"));
 
             assertThat(query.toString())
-                .isEqualTo("from Orders include counters($p0),counters(employee, $p1)");
+                .isEqualTo("from 'Orders' include counters('likes'),counters(employee, 'downloads')");
 
             const orders = await query.all();
             assertThat(session.advanced.numberOfRequests)
@@ -647,7 +643,7 @@ describe("QueryOnCountersTest", function () {
                     .includeAllCounters("employee"));
 
             assertThat(query.toString())
-                .isEqualTo("from Orders include counters(),counters(employee)");
+                .isEqualTo("from 'Orders' include counters(),counters(employee)");
 
             const orders = await query.all();
             assertThat(session.advanced.numberOfRequests)
@@ -864,7 +860,7 @@ describe("QueryOnCountersTest", function () {
             await session.query(Order)
                 .include(i => i.includeAllCounters())
                 .all();
-        });
+        }, null);
     });
 });
 

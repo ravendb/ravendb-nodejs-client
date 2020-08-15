@@ -8,6 +8,7 @@ import { Stopwatch } from "../../../src/Utility/Stopwatch";
 import { throwError } from "../../../src/Exceptions/index";
 import { assertThat } from "../../Utils/AssertExtensions";
 import { delay } from "../../../src/Utility/PromiseUtil";
+import { DateUtil } from "../../../src/Utility/DateUtil";
 
 describe("RavenDB_13735", function () {
 
@@ -34,7 +35,7 @@ describe("RavenDB_13735", function () {
 
             const hourAgo = moment().add(-1, "hour");
 
-            session.advanced.getMetadataFor(user)["@refresh"] = NetISO8601Utils.format(hourAgo);
+            session.advanced.getMetadataFor(user)["@refresh"] = DateUtil.utc.stringify(hourAgo.toDate());
 
             await session.saveChanges();
 

@@ -81,7 +81,7 @@ export class LazyQueryOperation<T extends object> implements ILazyOperation {
     }
 
     private _handleResponse(queryResult: QueryResult, duration: number): void {
-        this._queryOperation.ensureIsAcceptableAndSaveResult(queryResult);
+        this._queryOperation.ensureIsAcceptableAndSaveResult(queryResult, duration);
         this._parent.emit("afterQueryExecuted", queryResult);
         this.result = this._queryOperation.complete(this._clazz);
         this.queryResult = queryResult;

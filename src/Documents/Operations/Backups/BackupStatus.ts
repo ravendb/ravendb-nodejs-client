@@ -1,4 +1,5 @@
 import { UploadProgress } from "./UploadProgress";
+import { CompressionLevel } from "./CompressionLevel";
 
 export interface BackupStatus {
     lastFullBackup: Date;

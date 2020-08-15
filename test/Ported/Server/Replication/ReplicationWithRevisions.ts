@@ -64,7 +64,7 @@ describe("ReplicationWithRevisions", function () {
 
                 {
                     const session = storeB.openSession();
-                    assertThat(session.advanced.revisions.getMetadataFor("foo/bar").length)
+                    assertThat((await session.advanced.revisions.getMetadataFor("foo/bar")).length)
                         .isZero();
                 }
 

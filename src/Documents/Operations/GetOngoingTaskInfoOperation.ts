@@ -8,6 +8,7 @@ import { NestedTypes } from "../../Mapping/ObjectMapper";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
+import { throwError } from "../../Exceptions/index";
 
 export class GetOngoingTaskInfoOperation implements IMaintenanceOperation<OngoingTask> {
     private readonly _taskName: string;
@@ -24,6 +25,11 @@ export class GetOngoingTaskInfoOperation implements IMaintenanceOperation<Ongoin
         }
 
         this._type = type;
+
+        if (type === "PullReplicationAsHub") {
+            throwError("InvalidArgumentException", "PullReplicationAsHub type is not supported. " +
+                "Please use GetPullReplicationTasksInfoOperation instead.");
+        }
     }
 
     public get resultType(): OperationResultType {
@@ -87,6 +93,9 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
                             lastBatchAckTime: "date",
                             lastClientConnectionTime: "date"
                         }
+                        break;
+                    case "PullReplicationAsSink":
+                        //TODO: add mappings
                         break;
                     case "Backup":
                         //TODO:lastFullBackup: Date, lastIncrementalBackup: Date;, RunningBackup, NextBackup!

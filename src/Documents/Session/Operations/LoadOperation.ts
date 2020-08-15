@@ -92,28 +92,48 @@ export class LoadOperation {
         return this;
     }
 
-    private _getDocument<T extends object>(clazz: ObjectTypeDescriptor<T>, id: string): T {
+    public getDocument<T extends object>(clazz: ObjectTypeDescriptor<T>): T {
         if (this._session.noTracking) {
             if (!this._resultsSet && this._ids.length) {
                 throwError("InvalidOperationException", "Cannot execute getDocument before operation execution.");
             }
 
-            if (this._session.isDeleted(id)) {
+            if (!this._results || !this._results.results || !this._results.results.length) {
                 return null;
             }
 
-            let doc = this._session.documentsById.getValue(id);
-            if (doc) {
-                return this._session.trackEntity(clazz, doc);
+            const document = this._results.results[0];
+            if (!document) {
+                return null;
             }
 
-            doc = this._session.includedDocumentsById.get(id);
-            if (doc) {
-                return this._session.trackEntity(clazz, doc);
-            }
+            const documentInfo = DocumentInfo.getNewDocumentInfo(document);
+            return this._session.trackEntity(clazz, documentInfo);
+        }
 
+        return this._getDocument(clazz, this._ids[0]);
+    }
+
+    private _getDocument<T extends object>(clazz: ObjectTypeDescriptor<T>, id: string): T {
+        if (!id) {
             return null;
         }
+
+        if (this._session.isDeleted(id)) {
+            return null;
+        }
+
+        let doc = this._session.documentsById.getValue(id);
+        if (doc) {
+            return this._session.trackEntity(clazz, doc);
+        }
+
+        doc = this._session.includedDocumentsById.get(id);
+        if (doc) {
+            return this._session.trackEntity(clazz, doc);
+        }
+
+        return null;
     }
 
     public getDocuments<T extends object>(clazz: ObjectTypeDescriptor<T>): EntitiesCollectionObject<T> {
@@ -123,14 +143,14 @@ export class LoadOperation {
                     "InvalidOperationException", "Cannot execute 'getDocuments' before operation execution.");
             }
 
-            const results = this._ids.filter(x => !!x)
+            const finalResults = this._ids.filter(x => !!x)
                 .reduce((result, next) => {
                     result[next] = null;
                     return result;
                 }, {});
 
             if (!this._results || !this._results.results || !this._results.results.length) {
-                return results;
+                return finalResults;
             }
             
             for (const document of this._results.results) {
@@ -139,10 +159,10 @@ export class LoadOperation {
                 }
 
                 const newDocumentInfo = DocumentInfo.getNewDocumentInfo(document);
-                results[newDocumentInfo.id] = this._session.trackEntity(clazz, newDocumentInfo);
+                finalResults[newDocumentInfo.id] = this._session.trackEntity(clazz, newDocumentInfo);
             }
             
-            return results;
+            return finalResults;
         }
 
         return this._ids.filter(x => !!x)

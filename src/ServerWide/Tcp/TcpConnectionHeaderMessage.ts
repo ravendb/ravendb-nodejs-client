@@ -135,6 +135,7 @@ const supportedFeaturesByProtocol = new Map<OperationTypes, Map<number, Supporte
     heartbeatsFeaturesMap.set(HEARTBEATS_41200, heartbeats41200Features);
 
     const heartbeats42000Features = new SupportedFeatures(HEARTBEATS_42000);
+    heartbeats42000Features.heartbeats = new HeartbeatsFeatures();
     heartbeats42000Features.heartbeats.sendChangesOnly = true;
     heartbeats42000Features.heartbeats.includeServerInfo = true;
     heartbeatsFeaturesMap.set(HEARTBEATS_42000, heartbeats42000Features);

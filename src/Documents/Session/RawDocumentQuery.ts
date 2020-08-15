@@ -11,7 +11,7 @@ export class RawDocumentQuery<T extends object>
     extends AbstractDocumentQuery<T, RawDocumentQuery<T>> implements IRawDocumentQuery<T> {
 
     public constructor(session: InMemoryDocumentSessionOperations, rawQuery: string, clazz?: DocumentType<T>) {
-        super(clazz, session, null, null, false, null, null, null);
+        super(clazz, session, null, null, false, null, null);
         this._queryRaw = rawQuery;
     }
 

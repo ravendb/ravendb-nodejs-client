@@ -207,10 +207,11 @@ export class QueryOperation {
             if (TypeUtil.isPrimitive(jsonNode)) {
                 return jsonNode || null;
             }
-
-            if (fieldsToFetch.fieldsToFetch[0] === fieldsToFetch.projections[0]) {
-                if (TypeUtil.isObject(jsonNode)) { // extraction from original type
-                    document = jsonNode;
+            if (!isProjectInto) {
+                if (fieldsToFetch.fieldsToFetch[0] === fieldsToFetch.projections[0]) {
+                    if (TypeUtil.isObject(jsonNode)) { // extraction from original type
+                        document = jsonNode;
+                    }
                 }
             }
         }
@@ -275,10 +276,10 @@ export class QueryOperation {
         this._noTracking = disableEntitiesTracking;
     }
 
-    public ensureIsAcceptableAndSaveResult(result: QueryResult, duration: Stopwatch): void {
+    public ensureIsAcceptableAndSaveResult(result: QueryResult, duration: number): void {
         if (TypeUtil.isNullOrUndefined(duration)) {
             if (this._sp) {
-                duration = this._sp;
+                duration = this._sp.elapsed;
             } else {
                 duration = null;
             }
@@ -334,11 +335,13 @@ export class QueryOperation {
     public static ensureIsAcceptable(
         result: QueryResult,
         waitForNonStaleResults: boolean,
-        duration: Stopwatch,
+        duration: Stopwatch | number,
         session: InMemoryDocumentSessionOperations): void {
-        if (duration) {
+        if (duration instanceof Stopwatch) {
             duration.stop();
+            return QueryOperation.ensureIsAcceptable(result, waitForNonStaleResults, duration.elapsed, session);
         }
+
         if (waitForNonStaleResults && result.isStale) {
             const msg = "Waited for " + duration.toString() + " for the query to return non stale result.";
             throwError("TimeoutException", msg);

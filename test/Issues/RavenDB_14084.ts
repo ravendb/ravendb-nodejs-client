@@ -40,7 +40,7 @@ describe("RavenDB_14084", function () {
         {
             const session = store.openSession(sessionOptions);
 
-            const companies = await session.query<Company>({ documentType: Company, indexName: Companies_ByUnknown.name })
+            const companies = await session.query<Company>({ documentType: Company, indexName: new Companies_ByUnknown().getIndexName() })
                 .whereEquals("Unknown", null)
                 .all();
 
@@ -50,7 +50,7 @@ describe("RavenDB_14084", function () {
 
         {
             const session = store.openSession(sessionOptions);
-            const companies = session.query<Company>({ documentType: Company, indexName: Companies_ByUnknown_WithIndexMissingFieldsAsNull.name })
+            const companies = await session.query<Company>({ documentType: Company, indexName: new Companies_ByUnknown_WithIndexMissingFieldsAsNull().getIndexName() })
                 .whereEquals("Unknown", null)
                 .all();
 

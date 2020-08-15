@@ -63,7 +63,8 @@ class UpdatePullReplicationDefinitionCommand extends RavenCommand<ModifyOngoingT
         return {
             method: "PUT",
             uri,
-            headers: this._headers().typeAppJson().build()
+            headers: this._headers().typeAppJson().build(),
+            body
         }
     }
 

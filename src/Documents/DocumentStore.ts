@@ -177,7 +177,7 @@ export class DocumentStore extends DocumentStoreBase {
 
         const sessionId = uuidv4();
         const session = new DocumentSession(this, sessionId, sessionOpts);
-        this._registerEvents(session);
+        this.registerEvents(session);
         this.emit("sessionCreated", { session });
         return session;
     }
@@ -204,7 +204,7 @@ export class DocumentStore extends DocumentStoreBase {
                 authOptions: this.authOptions,
                 documentConventions: this.conventions
             });
-            this._registerEvents(requestExecutor);
+            this.registerEvents(requestExecutor);
 
             return requestExecutor;
         }
@@ -216,7 +216,7 @@ export class DocumentStore extends DocumentStoreBase {
                     documentConventions: this.conventions
                 });
 
-            this._registerEvents(forSingleNode);
+            this.registerEvents(forSingleNode);
 
             return forSingleNode;
         }

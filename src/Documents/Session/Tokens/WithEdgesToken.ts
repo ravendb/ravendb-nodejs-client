@@ -20,7 +20,7 @@ export class WithEdgesToken extends QueryToken {
         writer.append(this._edgeSelector);
         writer.append(")");
 
-        if (StringUtil.isNullOrWhitespace(this._query)) {
+        if (!StringUtil.isNullOrWhitespace(this._query)) {
             writer.append(" {");
             writer.append(this._query);
             writer.append("} ");

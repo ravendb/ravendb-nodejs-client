@@ -3,7 +3,7 @@ import { QueryOperation } from "./Operations/QueryOperation";
 import * as BluebirdPromise from "bluebird";
 import { GroupByCountToken } from "./Tokens/GroupByCountToken";
 import { GroupByToken } from "./Tokens/GroupByToken";
-import { HighlightingToken } from "./Tokens/HighlightingToken"; 
+import { HighlightingToken } from "./Tokens/HighlightingToken";
 import { FieldsToFetchToken } from "./Tokens/FieldsToFetchToken";
 import { DeclareToken } from "./Tokens/DeclareToken";
 import { LoadToken } from "./Tokens/LoadToken";
@@ -71,15 +71,16 @@ import { QueryData } from "../Queries/QueryData";
 import { QueryTimings } from "../Queries/Timings/QueryTimings";
 import { Explanations } from "../Queries/Explanation/Explanations";
 import { Highlightings } from "../Queries/Highlighting/Hightlightings";
-import { 
+import {
     extractHighlightingOptionsFromParameters } from "../Queries/Highlighting/HighlightingOptions";
 import { HighlightingParameters } from "../Queries/Highlighting/HighlightingParameters";
 import { QueryHighlightings } from "../Queries/Highlighting/QueryHighlightings";
 import { ExplanationOptions } from "../Queries/Explanation/ExplanationOptions";
-import { CountersByDocId } from "./CounterInternalTypes"; 
+import { CountersByDocId } from "./CounterInternalTypes";
 import { IncludeBuilderBase } from "./Loaders/IncludeBuilderBase";
 import { passResultToCallback } from "../../Utility/PromiseUtil";
 import * as os from "os";
+import { GraphQueryToken } from "./Tokens/GraphQueryToken";
 
 /**
  * A query against a Raven index
@@ -165,7 +166,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     protected _disableCaching: boolean;
 
-    private parameterPrefix = "p";
+    private _parameterPrefix = "p";
 
     private _includesAlias: string;
     
@@ -183,6 +184,26 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         return this._selectTokens
             && this._selectTokens.length
             && this._selectTokens[0] instanceof DistinctToken;
+    }
+
+    public get theWaitForNonStaleResults() {
+        return this._theWaitForNonStaleResults;
+    }
+
+    public get timeout() {
+        return this._timeout;
+    }
+
+    public get queryParameters() {
+        return this._queryParameters;
+    }
+
+    public get selectTokens() {
+        return this._selectTokens;
+    }
+
+    public get isProjectInto() {
+        return this._isProjectInto;
     }
 
     /**
@@ -225,7 +246,9 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         isGroupBy: boolean,
         declareToken: DeclareToken,
         loadTokens: LoadToken[],
-        fromAlias: string);
+        fromAlias: string,
+        isProjectInto: boolean
+    );
     protected constructor(
         clazz: DocumentType<T>,
         session: InMemoryDocumentSessionOperations,
@@ -234,7 +257,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         isGroupBy: boolean,
         declareToken: DeclareToken,
         loadTokens: LoadToken[],
-        fromAlias: string = null) {
+        fromAlias: string = null,
+        isProjectInto: boolean = false) {
         super();
 
         this._clazz = clazz;
@@ -256,6 +280,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             new DocumentConventions() :
             session.conventions;
         // TBD _linqPathProvider = new LinqPathProvider(_conventions);
+        this._isProjectInto = isProjectInto || false;
     }
 
     // tslint:disable:function-name
@@ -381,6 +406,13 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * This shouldn't be used outside of unit tests unless you are well aware of the implications
      */
     public _waitForNonStaleResults(waitTimeout?: number): void {
+        //Graph queries may set this property multiple times
+        if (this._theWaitForNonStaleResults) {
+            if (!this._timeout || waitTimeout && this._timeout < waitTimeout) {
+                this._timeout = waitTimeout;
+            }
+            return;
+        }
         this._theWaitForNonStaleResults = true;
         this._timeout = waitTimeout || AbstractDocumentQuery._getDefaultTimeout();
     }
@@ -394,7 +426,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             this.fieldsToFetchToken,
             this._disableEntitiesTracking,
             false,
-            false);
+            false,
+            this._isProjectInto);
     }
 
     private _transformValue(whereParams: WhereParams): any;
@@ -440,7 +473,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     private _addQueryParameter(value: any): string {
-        const parameterName = "p" + Object.keys(this._queryParameters).length;
+        const parameterName = this.parameterPrefix + Object.keys(this._queryParameters).length;
         this._queryParameters[parameterName] = this._stringifyParameter(value);
         return parameterName;
     }
@@ -497,7 +530,13 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     public getIndexQuery(): IndexQuery {
-        const query = this.toString();
+        let serverVersion = null;
+        if (this._theSession && this._theSession.requestExecutor) {
+            serverVersion = this._theSession.requestExecutor.lastServerVersion;
+        }
+
+        const compatibilityMode = serverVersion && serverVersion.compare("4.2") < 0;
+        const query = this.toString(compatibilityMode);
         const indexQuery = this._generateIndexQuery(query);
         this.emit("beforeQueryExecuted", indexQuery);
         return indexQuery;
@@ -553,6 +592,10 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
                 "RawQuery was called, cannot modify this query by calling on "
                 + "operations that would modify the query (such as Where, Select, OrderBy, GroupBy, etc)");
         }
+    }
+
+    public _graphQuery(query: string) {
+        this._graphRawQuery = new GraphQueryToken(query);
     }
 
     public addParameter(name: string, value: any): void {
@@ -1341,7 +1384,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         } else {
             this._buildFrom(queryText);
         }
-        this._buildFrom(queryText);
         this._buildGroupBy(queryText);
         this._buildWhere(queryText);
         this._buildOrderBy(queryText);
@@ -1471,7 +1513,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
         const tokens = this._getCurrentWhereTokens();
         this._appendOperatorIfNeeded(tokens);
-        this._negateIfNeeded(tokens, fieldName);
+        this._negateIfNeeded(tokens, null);
+
 
         tokens.push(WhereToken.create("Exists", fieldName, null));
     }
@@ -2103,18 +2146,18 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             throwError("InvalidArgumentException", "suggestion cannot be null");
         }
 
-        this._assertCanSuggest();
+        this._assertCanSuggest(suggestion);
 
         let token: SuggestToken = null;
 
         if (suggestion instanceof SuggestionWithTerm) {
             const term = suggestion;
             token = SuggestToken.create(
-                term.field, this._addQueryParameter(term.term), this._getOptionsParameterName(term.options));
+                term.field, term.displayField, this._addQueryParameter(term.term), this._getOptionsParameterName(term.options));
         } else if (suggestion instanceof SuggestionWithTerms) {
             const terms = suggestion;
             token = SuggestToken.create(
-                terms.field, this._addQueryParameter(terms.terms), this._getOptionsParameterName(terms.options));
+                terms.field, terms.displayField, this._addQueryParameter(terms.terms), this._getOptionsParameterName(terms.options));
         } else {
             throwError("InvalidOperationException", "Unknown type of suggestion: " + suggestion);
         }
@@ -2132,13 +2175,20 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         return optionsParameterName;
     }
 
-    private _assertCanSuggest(): void {
+    private _assertCanSuggest(suggestion: SuggestionBase): void {
         if (this._whereTokens.length) {
             throwError("InvalidOperationException", "Cannot add suggest when WHERE statements are present.");
         }
 
         if (this._selectTokens.length) {
-            throwError("InvalidOperationException", "Cannot add suggest when SELECT statements are present.");
+            const lastToken = this._selectTokens[this._selectTokens.length - 1];
+            if (lastToken instanceof SuggestToken) {
+                if (lastToken.fieldName === suggestion.field) {
+                    throwError("InvalidOperationException", "Cannot add suggest for the same field again.");
+                }
+            } else {
+                throwError("InvalidOperationException", "Cannot add suggest when SELECT statements are present.");
+            }
         }
 
         if (this._orderByTokens.length) {
@@ -2182,10 +2232,9 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             continue;
         }
 
-        this._counterIncludesTokens.push(CounterIncludesToken.create(key,
-            valArr.length === 1
-                ? this._addQueryParameter(valArr[0])
-                : this._addQueryParameter(valArr)));
+        for (const name of val[1]) {
+            this._counterIncludesTokens.push(CounterIncludesToken.create(key, name));
+        }
     }
 }
 
@@ -2227,5 +2276,13 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         return fromAlias;
+    }
+
+    public get parameterPrefix() {
+        return this._parameterPrefix;
+    }
+
+    public set parameterPrefix(prefix: string) {
+        this._parameterPrefix = prefix;
     }
 }

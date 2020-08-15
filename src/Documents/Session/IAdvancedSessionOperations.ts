@@ -21,7 +21,7 @@ import { AdvancedDocumentQueryOptions } from "./QueryOptions";
 import { IDocumentQuery } from "./IDocumentQuery";
 import { JavaScriptArray } from "./JavaScriptArray";
 import { DocumentResultStream } from "./DocumentResultStream";
-import * as stream from "stream";
+import * as stream from "readable-stream";
 import { IDocumentQueryBuilder } from "./IDocumentQueryBuilder";
 import { IGraphDocumentQuery } from "./IGraphDocumentQuery";
 
@@ -206,9 +206,6 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
         opts: SessionLoadStartingWithOptions<T>,
         callback: ErrorFirstCallback<DocumentResultStream<T>>)
         : Promise<DocumentResultStream<T>>;
-
-
-
 }
 
 export interface ReplicationBatchOptions {

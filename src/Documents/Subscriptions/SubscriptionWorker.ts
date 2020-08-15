@@ -47,6 +47,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
     private _parser: stream.Transform;
     private _disposed: boolean = false;
     private _subscriptionTask: Promise<void>;
+    private _forcedTopologyUpdateAttempts = 0;
     private _emitter = new EventEmitter();
 
     public constructor(options: SubscriptionWorkerOptions<T>,

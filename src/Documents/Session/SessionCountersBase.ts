@@ -49,7 +49,7 @@ export abstract class SessionCountersBase {
         counterOp.counterName = counter;
         counterOp.delta = delta;
         const documentInfo = this._session.documentsById.getValue(this._docId);
-        if (documentInfo && this._session.deletedEntities.has(documentInfo.entity)) {
+        if (documentInfo && this._session.deletedEntities.contains(documentInfo.entity)) {
             SessionCountersBase._throwDocumentAlreadyDeletedInSession(this._docId, counter);
         }
 
@@ -79,7 +79,7 @@ export abstract class SessionCountersBase {
         }
 
         const documentInfo = this._session.documentsById.getValue(this._docId);
-        if (documentInfo && this._session.deletedEntities.has(documentInfo.entity)) {
+        if (documentInfo && this._session.deletedEntities.contains(documentInfo.entity)) {
             return;  //no-op
         }
 

@@ -36,7 +36,7 @@ class RestoreBackupCommand extends RavenCommand<OperationIdResult> {
         super();
 
         this._restoreConfiguration = restoreConfiguration;
-        this.selectedNodeTag = nodeTag;
+        this._selectedNodeTag = nodeTag;
     }
 
     get isReadRequest(): boolean {

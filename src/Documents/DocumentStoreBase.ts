@@ -11,7 +11,7 @@ import {
     SessionBeforeDeleteEventArgs,
     BeforeConversionToDocumentEventArgs,
     AfterConversionToDocumentEventArgs,
-    BeforeConversionToEntityEventArgs, AfterConversionToEntityEventArgs
+    BeforeConversionToEntityEventArgs, AfterConversionToEntityEventArgs, FailedRequestEventArgs
 } from "./Session/SessionEvents";
 import { OperationExecutor } from "./Operations/OperationExecutor";
 import { IDocumentSession } from "./Session/IDocumentSession";
@@ -244,6 +244,8 @@ export abstract class DocumentStoreBase
     protected _eventHandlers: [string, (eventArgs: any) => void][] = [];
 
     public addSessionListener(
+        eventName: "failedRequest", eventHandler: (eventArgs: FailedRequestEventArgs) => void): this;
+    public addSessionListener(
         eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
     public addSessionListener(
         eventName: "afterSaveChanges", eventHandler: (eventArgs: SessionAfterSaveChangesEventArgs) => void): this;
@@ -272,6 +274,8 @@ export abstract class DocumentStoreBase
         return this;
     }
 
+    public removeSessionListener(
+        eventName: "failedRequest", eventHandler: (eventArgs: FailedRequestEventArgs) => void): void;
     public removeSessionListener(
         eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): void;
     public removeSessionListener(
@@ -304,10 +308,16 @@ export abstract class DocumentStoreBase
         }
     }
 
-    protected _registerEvents(session: DocumentSession): void {
-        this._eventHandlers.forEach(([eventName, eventHandler]) => {
-            session.on(eventName, eventHandler);
-        });
+    public registerEvents(requestExecutor: RequestExecutor): void;
+    public registerEvents(session: DocumentSession): void;
+    public registerEvents(requestExecutorOrSession: RequestExecutor | DocumentSession): void {
+        if (requestExecutorOrSession instanceof RequestExecutor) {
+            //TODO: for (EventHandler<FailedRequestEventArgs> handler : onFailedRequest) {
+        } else {
+            this._eventHandlers.forEach(([eventName, eventHandler]) => {
+                requestExecutorOrSession.on(eventName, eventHandler);
+            });
+        }
     }
 
     public abstract maintenance: MaintenanceOperationExecutor;

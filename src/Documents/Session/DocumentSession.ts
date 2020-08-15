@@ -65,6 +65,9 @@ import { ISessionDocumentCounters } from "./ISessionDocumentCounters";
 import { SessionDocumentCounters } from "./SessionDocumentCounters";
 import { IncludeBuilder } from "./Loaders/IncludeBuilder";
 import { IGraphDocumentQuery } from "./IGraphDocumentQuery";
+import { SingleNodeBatchCommand } from "../Commands/Batches/SingleNodeBatchCommand";
+import { GraphDocumentQuery } from "./GraphDocumentQuery";
+import { AbstractDocumentQuery } from "./AbstractDocumentQuery";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;
@@ -222,7 +225,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
     private async _saveChanges() {
         const saveChangeOperation = new BatchOperation(this);
-        let command: BatchCommand;
+        let command: SingleNodeBatchCommand;
         try {
             command = saveChangeOperation.createRequest();
             if (!command) {
@@ -779,7 +782,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     private async _stream<T extends object>(
-        queryOrIdPrefix: string | IDocumentQuery<T> | IRawDocumentQuery<T>,
+        queryOrIdPrefix: string | AbstractDocumentQuery<T, any>,
         optsOrStatsCallback?: SessionLoadStartingWithOptions<T> | StreamQueryStatisticsCallback)
         : Promise<DocumentResultStream<T>> {
         if (TypeUtil.isString(queryOrIdPrefix)) {
@@ -792,7 +795,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         }
 
         return this._streamQueryResults(
-            queryOrIdPrefix as (IDocumentQuery<T> | IRawDocumentQuery<T>),
+            queryOrIdPrefix as (AbstractDocumentQuery<T, any>),
             optsOrStatsCallback as StreamQueryStatisticsCallback);
     }
 
@@ -810,7 +813,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             clazz = this.conventions.getJsTypeByDocumentType(opts.documentType);
         }
 
-        const result = this._getStreamResultTransform(this, clazz, null);
+        const result = this._getStreamResultTransform(this, clazz, null, false);
 
         result.on("newListener", (event, listener) => {
             if (event === "data") {
@@ -828,7 +831,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     private async _streamQueryResults<T extends object>(
-        query: IDocumentQuery<T> | IRawDocumentQuery<T>,
+        query: AbstractDocumentQuery<T, any>,
         streamQueryStatsCallback?: StreamQueryStatisticsCallback)
         : Promise<DocumentResultStream<T>> {
         const streamOperation = new StreamOperation(this);
@@ -838,7 +841,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         const docsReadable = streamOperation.setResult(command.result);
 
         const result = this._getStreamResultTransform(
-            this, (query as any).getQueryType(), (query as any).fieldsToFetchToken);
+            this, (query as any).getQueryType(), (query as any).fieldsToFetchToken, query.isProjectInto);
 
         docsReadable.once("stats", stats => {
             (streamQueryStatsCallback || TypeUtil.NOOP)(stats);
@@ -863,7 +866,8 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     private _getStreamResultTransform<TEntity extends object>(
         session: DocumentSession,
         clazz: ObjectTypeDescriptor<TEntity>,
-        fieldsToFetchToken: any) {
+        fieldsToFetchToken: any,
+        isProjectInto: boolean) {
         return new stream.Transform({
             objectMode: true,
             transform(chunk: object, encoding: string, callback: stream.TransformCallback) {
@@ -873,7 +877,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
                 // MapReduce indexes return reduce results that don't have @id property
                 const id = metadata[CONSTANTS.Documents.Metadata.ID] || null;
                 const entity = QueryOperation.deserialize(
-                    id, doc, metadata, fieldsToFetchToken || null, true, session, clazz);
+                    id, doc, metadata, fieldsToFetchToken || null, true, session, clazz, isProjectInto);
                 callback(null, {
                     changeVector,
                     metadata,
@@ -931,6 +935,6 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
     public graphQuery<TEntity extends object>(
         query: string, documentType?: DocumentType<TEntity>): IGraphDocumentQuery<TEntity> {
-        return new GraphDocumenQuery(this, query, documentType);
+        return new GraphDocumentQuery<TEntity>(this, query, documentType);
     }
 }

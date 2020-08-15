@@ -10,7 +10,7 @@ export class PutAttachmentCommandData implements ICommandData {
     public changeVector: string;
     public type: CommandType = "AttachmentPUT";
     public contentType: string;
-    public attStream: AttachmentData; //TODO: rename to attachment stream?
+    public attStream: AttachmentData;
 
     public constructor(
         documentId: string,

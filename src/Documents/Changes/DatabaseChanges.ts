@@ -51,7 +51,7 @@ export class DatabaseChanges implements IDatabaseChanges {
     private _nodeIndex: number;
     private _url: string;
 
-    constructor(requestExecutor: RequestExecutor, databaseName: string, onDispose: () => void) {
+    constructor(requestExecutor: RequestExecutor, databaseName: string, onDispose: () => void, nodeTag: string) {
         this._requestExecutor = requestExecutor;
         this._conventions = requestExecutor.conventions;
         this._database = databaseName;
@@ -60,7 +60,7 @@ export class DatabaseChanges implements IDatabaseChanges {
         this._onDispose = onDispose;
         this._onConnectionStatusChangedWrapped = () => this._onConnectionStatusChanged();
         this._emitter.on("connectionStatus", this._onConnectionStatusChangedWrapped);
-        this._task = this._doWork();
+        this._task = this._doWork(nodeTag);
     }
 
     public static createClientWebSocket(requestExecutor: RequestExecutor, url: string): WebSocket {
@@ -308,10 +308,10 @@ export class DatabaseChanges implements IDatabaseChanges {
         }));
     }
 
-    private async _doWork(): Promise<void> {
+    private async _doWork(nodeTag: string): Promise<void> {
         let preferredNode: CurrentIndexAndNode;
         try {
-            preferredNode = await this._requestExecutor.getPreferredNode();
+            preferredNode = nodeTag ? await this._requestExecutor.getRequestedNode(nodeTag) : await this._requestExecutor.getPreferredNode();
             this._nodeIndex = preferredNode.currentIndex;
             this._serverNode = preferredNode.currentNode;
         } catch (e) {

@@ -106,13 +106,13 @@ export class DatabaseSmuggler {
 
     public static configureOptionsFromIncrementalImport(options: DatabaseSmugglerOptions) {
         options.operateOnTypes.push("Tombstones");
+        options.operateOnTypes.push("CompareExchangeTombstones");
 
-        // we import the indexes and identities from the last file only,
-        // as the previous files can hold indexes and identities which were deleted and shouldn't be imported
+        // we import the indexes and Subscriptions from the last file only,
 
         const oldOperateOnTypes = [ ...options.operateOnTypes ];
 
-        options.operateOnTypes = options.operateOnTypes.filter(x => x !== "Indexes" && x !== "CompareExchange" && x !== "Identities");
+        options.operateOnTypes = options.operateOnTypes.filter(x => x !== "Indexes" && x !== "Subscriptions");
 
         return oldOperateOnTypes;
     }

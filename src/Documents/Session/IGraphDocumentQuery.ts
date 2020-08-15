@@ -7,7 +7,6 @@ import { GraphDocumentQueryBuilder } from "./GraphDocumentQuery";
 
 export interface IGraphDocumentQuery<T extends object> extends IQueryBase<T, IGraphDocumentQuery<T>>, IDocumentQueryBaseSingle<T>, IEnumerableQuery<T> {
 
-    //TODO: check if we should shuffle parameters order to match current API
     withQuery<TOther extends object>(alias: string, query: IDocumentQuery<TOther>): IGraphDocumentQuery<T>;
     withQuery<TOther extends object>(alias: string, rawGraphDocumentQueryBuilderQuery: string, documentType: DocumentType<TOther>): IGraphDocumentQuery<T>;
     withQuery<TOther extends object>(alias: string,

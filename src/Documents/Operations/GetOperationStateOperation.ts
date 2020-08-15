@@ -34,7 +34,7 @@ export class GetOperationStateCommand extends RavenCommand<IRavenResponse> {
     private _conventions: DocumentConventions;
     private readonly _id: number;
 
-    public constructor(conventions: DocumentConventions, id: number, nodeTag: string) {
+    public constructor(conventions: DocumentConventions, id: number, nodeTag?: string) {
         super();
         this._conventions = conventions;
         this._id = id;

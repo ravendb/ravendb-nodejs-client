@@ -126,7 +126,7 @@ describe("BasicGraphQueriesTest", function () {
     });
 
     it("can_filter_vertices_with_explicit_with_clause", async () => {
-        await testContext.createSimpleData(store);
+        await testContext.createMoviesData(store);
 
         {
             const session = store.openSession();
@@ -157,19 +157,19 @@ describe("BasicGraphQueriesTest", function () {
 
             assertThat(result)
                 .hasSize(3)
-                .anySatify(item => {
+                .anySatisfy(item => {
                     assertThat(item["e"]["name"])
                         .isEqualTo("A");
                     assertThat(item["e2"]["name"])
                         .isEqualTo("B");
                 })
-                .anySatify(item => {
+                .anySatisfy(item => {
                     assertThat(item["e"]["name"])
                         .isEqualTo("B");
                     assertThat(item["e2"]["name"])
                         .isEqualTo("C");
                 })
-                .anySatify(item => {
+                .anySatisfy(item => {
                     assertThat(item["e"]["name"])
                         .isEqualTo("C");
                     assertThat(item["e2"]["name"])
@@ -207,7 +207,7 @@ async function query<T>(documentType: DocumentType,
 
         {
             const session = store.openSession();
-            let query = session.advanced.rawQuery<T>(q, documentType);
+            let query = session.advanced.rawQuery(q, documentType);
             if (parameters.waitForNonStaleResults) {
                 query = query.waitForNonStaleResults(100 * parameters.waitForNonStaleResultsDurationInSeconds);
             }

@@ -7,7 +7,7 @@ import { IRaftCommand } from "../../../Http/IRaftCommand";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
-import * as stream from "stream";
+import * as stream from "readable-stream";
 
 export class PutServerWideBackupConfigurationOperation implements IServerOperation<PutServerWideBackupConfigurationResponse> {
     private readonly _configuration: ServerWideBackupConfiguration;

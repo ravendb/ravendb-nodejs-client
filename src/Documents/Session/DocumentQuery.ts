@@ -73,17 +73,22 @@ export class DocumentQuery<T extends object>
         indexName: string,
         collectionName: string,
         isGroupBy: boolean,
+        declareToken: DeclareToken,
+        loadTokens: LoadToken[],
+        fromAlias: string,
+        isProjectInto: boolean);
+    public constructor(
+        documentType: DocumentType<T>,
+        session: InMemoryDocumentSessionOperations,
+        indexName: string,
+        collectionName: string,
+        isGroupBy: boolean,
         declareToken?: DeclareToken,
         loadTokens?: LoadToken[],
-        fromAlias?: string) {
-        super(documentType, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, fromAlias);
+        fromAlias?: string,
+        isProjectInto?: boolean) {
+        super(documentType, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, fromAlias, isProjectInto);
     }
-
-    //TODO: public <TProjection> IDocumentQuery<TProjection> selectFields(
-    //    Class<TProjection> projectionClass, String... fields) {
-    //     QueryData queryData = new QueryData(fields, fields);
-    //     return selectFields(projectionClass, queryData);
-    // }
 
     public selectFields<TProjection extends Object>(
         property: string): IDocumentQuery<TProjection>;
@@ -115,9 +120,11 @@ export class DocumentQuery<T extends object>
             }
 
             const queryData = new QueryData(propertiesOrQueryData, propertiesOrQueryData);
+            queryData.isProjectInto = true;
             return this.selectFields(queryData, projectionType);
         } else {
-            return this._createDocumentQueryInternal(projectionType, propertiesOrQueryData as QueryData);
+            propertiesOrQueryData.isProjectInto = true;
+            return this.createDocumentQueryInternal(projectionType, propertiesOrQueryData as QueryData);
         }
     }
 
@@ -473,7 +480,7 @@ export class DocumentQuery<T extends object>
             this._theSession.conventions.tryRegisterJsType(tResultClass);
         }
 
-        return this._createDocumentQueryInternal(tResultClass);
+        return this.createDocumentQueryInternal(tResultClass);
     }
 
     public orderBy(field: string): IDocumentQuery<T>;
@@ -537,7 +544,8 @@ export class DocumentQuery<T extends object>
             this._isGroupBy,
             queryData ? queryData.declareToken : null,
             queryData ? queryData.loadTokens : null,
-            queryData ? queryData.fromAlias : null);
+            queryData ? queryData.fromAlias : null,
+            queryData ? queryData.isProjectInto : null);
 
         query._queryRaw = this._queryRaw;
         query._pageSize = this._pageSize;

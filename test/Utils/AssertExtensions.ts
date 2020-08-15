@@ -116,4 +116,19 @@ export class JavaAssertionBuilder {
 
         assert.ok(hasMatch);
     }
+
+    public anySatisfy(matcher: (v: any) => void) {
+        let satisfy = false;
+        this._value.forEach(v => {
+            try {
+                matcher(v);
+                satisfy = true;
+            } catch (e) {
+                // ignore
+            }
+        });
+
+        assert.ok(satisfy, "None of items satisfy condition");
+        return this;
+    }
 }

@@ -37,6 +37,8 @@ class DeleteServerWideBackupConfigurationCommand extends RavenCommand<void> impl
             throwError("InvalidArgumentException", "Name cannot be null");
         }
 
+        this._responseType = "Empty";
+
         this._name = name;
     }
 

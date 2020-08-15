@@ -16,8 +16,7 @@ import { throwError } from "../../Exceptions/index";
 import { WithToken } from "./Tokens/WithToken";
 
 export class GraphDocumentQuery<T extends object> extends AbstractDocumentQuery<T, GraphDocumentQuery<T>> implements IGraphDocumentQuery<T> {
-    public constructor(clazz: DocumentType<T>,
-                       session: InMemoryDocumentSessionOperations, graphQuery: string) {
+    public constructor(session: InMemoryDocumentSessionOperations, graphQuery: string, clazz: DocumentType<T>) {
         super(clazz, session, null, null, false, null, null);
 
         this._graphQuery(graphQuery);
@@ -119,14 +118,14 @@ export class GraphDocumentQuery<T extends object> extends AbstractDocumentQuery<
     withQuery<TOther extends object>(alias: string, queryRawQueryOrBuilder: IDocumentQuery<TOther> | string | ((builder: GraphDocumentQueryBuilder) => IDocumentQuery<TOther>), documentType?: DocumentType<TOther>) {
         if (TypeUtil.isString(queryRawQueryOrBuilder)) {
             const rawQuery  = queryRawQueryOrBuilder;
-            return this._withInternal(alias, documentType, this.session.advanced.rawQuery(rawQuery, documentType));
+            return this._withInternal(alias, documentType, this.session.advanced.rawQuery(rawQuery, documentType) as unknown as AbstractDocumentQuery<TOther, any>);
         } else if (queryRawQueryOrBuilder instanceof DocumentQuery) {
             //TODO: ParameterPrefix = $"w{WithTokens.Count}p
             const documentQuery = queryRawQueryOrBuilder;
             return this._withInternal(alias, documentQuery.getQueryType(), documentQuery);
         } else {
             const queryFactory = queryRawQueryOrBuilder as (builder: GraphDocumentQueryBuilder) => IDocumentQuery<TOther>;
-            const docQuery = queryFactory(new GraphDocumentQueryBuilder(this.session, "w" + this._withTokens.length + "p"));
+            const docQuery = queryFactory(new GraphDocumentQueryBuilder(this.session, "w" + this._withTokens.length + "p")) as DocumentQuery<TOther>;
             return this._withInternal(alias, docQuery.getQueryType(), docQuery);
         }
     }
@@ -141,25 +140,19 @@ export class GraphDocumentQuery<T extends object> extends AbstractDocumentQuery<
             throwError("InvalidArgumentException", "Select is not permitted in a 'with' clause in query: " + docQuery);
         }
 
-        /* TODO
-          for (Map.Entry<String, Object> keyValue : docQuery.queryParameters.entrySet()) {
-    +            queryParameters.put(keyValue.getKey(), keyValue.getValue());
-    +        }
-    */
+        for (const key of Object.keys(docQuery.queryParameters)) {
+            this._queryParameters[key] = docQuery.queryParameters[key];
+        }
 
         this._withTokens.push(new WithToken(alias, docQuery.toString()));
 
-        /* TODO
-    +
-    +        if (docQuery.theWaitForNonStaleResults) {
-    +            theWaitForNonStaleResults = true;
-    +
-    +            if (timeout == null || timeout.compareTo(docQuery.timeout) < 0) {
-    +                timeout = docQuery.timeout;
-    +            }
-    +        }
-    +
-         */
+        if (docQuery.theWaitForNonStaleResults) {
+            this._theWaitForNonStaleResults = true;
+
+            if (!this._timeout || this._timeout < docQuery.timeout) {
+                this._timeout = docQuery.timeout;
+            }
+        }
 
         return this;
     }
@@ -182,12 +175,12 @@ export class GraphDocumentQueryBuilder {
         if (TypeUtil.isDocumentType(docTypeOrOpts)) {
             const query = this._session.query({
                 documentType: docTypeOrOpts as DocumentType<T>
-            });
+            }) as DocumentQuery<T>;
             query.parameterPrefix = this._parameterPrefix;
             return query;
         }
 
-        const query = this._session.query(docTypeOrOpts as DocumentQueryOptions<T>);
+        const query = this._session.query(docTypeOrOpts as DocumentQueryOptions<T>) as DocumentQuery<T>;
         query.parameterPrefix = this._parameterPrefix;
         return query;
     }

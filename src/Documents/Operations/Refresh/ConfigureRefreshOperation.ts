@@ -6,7 +6,7 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { IRaftCommand } from "../../../Http/IRaftCommand";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
-import * as stream from "stream";
+import * as stream from "readable-stream";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export class ConfigureRefreshOperation implements IMaintenanceOperation<ConfigureRefreshOperationResult> {

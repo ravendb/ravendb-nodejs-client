@@ -1,6 +1,9 @@
 import { IndexType } from "./Enums";
 import { throwError } from "../../Exceptions/index";
 import { StringUtil } from "../../Utility/StringUtil";
+import * as XRegExp from "xregexp";
+
+const COMMENT_REGEX = new XRegExp("(?:/\\*(?:[^*]|(?:\\*+[^*/]))*\\*+/)|(?://.*)", "gm");
 
 export class IndexDefinitionHelper {
     public static detectStaticIndexType(map: string, reduce: string): IndexType {
@@ -8,7 +11,7 @@ export class IndexDefinitionHelper {
             throwError("InvalidArgumentException", "Index definitions contains no Maps");
         }
 
-        //TODO:  map = map.replaceAll("(?:/\\*(?:[^*]|(?:\\*+[^*/]))*\\*+/)|(?://.*)","");
+        map = map.replace(COMMENT_REGEX, "");
         map = map.trim();
 
         if (map.startsWith("from") || map.startsWith("docs")) {

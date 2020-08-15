@@ -59,7 +59,7 @@ export class DocumentSubscriptions implements IDisposable {
             };
             return this.create(this._ensureCriteria(options, false), database);
         } else {
-            options = optionsOrDocumentType as SubscriptionCreationOptions;
+            options = this._ensureCriteria(optionsOrDocumentType as SubscriptionCreationOptions, false);
         }
 
         if (!options) {

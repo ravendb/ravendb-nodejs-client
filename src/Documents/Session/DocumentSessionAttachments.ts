@@ -48,7 +48,7 @@ export class DocumentSessionAttachments
         if (typeof idOrEntity !== "string") {
             const document = this._session.documentsByEntity.get(idOrEntity);
             if (!document) {
-                this.throwEntityNotInSessionOrMissingId(idOrEntity);
+                this._throwEntityNotInSessionOrMissingId(idOrEntity);
             }
 
             docId = document.id;

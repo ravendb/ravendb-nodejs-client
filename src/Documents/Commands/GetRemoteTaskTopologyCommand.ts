@@ -2,6 +2,7 @@ import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
 import { throwError } from "../../Exceptions/index";
 import { HttpRequestParameters } from "../../Primitives/Http";
+import * as stream from "readable-stream";
 
 export class GetRemoteTaskTopologyCommand extends RavenCommand<string[]> {
     private readonly _remoteDatabase: string;

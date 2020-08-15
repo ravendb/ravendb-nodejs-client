@@ -104,7 +104,7 @@ describe("RavenDB_8355", function () {
     });
 });
 
-async function canUseSorterInternal(exceptionClass: RavenErrorType, store: DocumentStore, asc: string, desc: string) {
+async function canUseSorterInternal(exceptionClass: RavenErrorType, store: IDocumentStore, asc: string, desc: string) {
     {
         const session = store.openSession();
 

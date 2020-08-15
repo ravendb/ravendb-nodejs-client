@@ -36,8 +36,9 @@ export class CounterIncludesToken extends QueryToken {
         
         if (!this._all) {
             writer
-                .append("$")
-                .append(this._counterName);
+                .append("'")
+                .append(this._counterName)
+                .append("'");
         }
 
         writer.append(")");

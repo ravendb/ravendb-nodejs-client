@@ -34,7 +34,7 @@ export class GetServerWideOperationStateCommand extends RavenCommand<IRavenRespo
 
         this._conventions = conventions;
         this._id = id;
-        this.selectedNodeTag = nodeTag;
+        this._selectedNodeTag = nodeTag;
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {

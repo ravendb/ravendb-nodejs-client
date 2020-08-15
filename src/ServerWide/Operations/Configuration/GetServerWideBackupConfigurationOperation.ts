@@ -4,8 +4,9 @@ import { DocumentConventions } from "../../../Documents/Conventions/DocumentConv
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
-import * as stream from "stream";
+import * as stream from "readable-stream";
 import { ServerWideBackupConfiguration } from "./ServerWideBackupConfiguration";
+import { GetServerWideBackupConfigurationsResponse } from "../../../Documents/Operations/GetServerWideBackupConfigurationsResponse";
 
 export class GetServerWideBackupConfigurationOperation implements IServerOperation<ServerWideBackupConfiguration> {
     private readonly _name: string;
@@ -58,7 +59,7 @@ class GetServerWideBackupConfigurationCommand extends RavenCommand<ServerWideBac
         }
 
         let body: string = null;
-        const result = await this._defaultPipeline(_ => body = _).process(bodyStream);
+        const result = await this._defaultPipeline(_ => body = _).process(bodyStream) as GetServerWideBackupConfigurationsResponse;
 
         const results = result.results as ServerWideBackupConfiguration[];
 

@@ -19,14 +19,14 @@ describe("TimeUtil", function () {
         assertThat(TimeUtil.millisToTimeSpan(24 * 3600 * 1000))
             .isEqualTo("1.00:00:00");
 
-        assertThat(TimeUtil.millisToTimeSpan(2 /* days */ * 24 * 3600 * 1000)
+        assertThat(TimeUtil.millisToTimeSpan(2 /* days */ * 24 * 3600 * 1000
             + 5 /* hours */ * 3600 * 1000
             + 3 /* minutes */ * 60 * 1000
-            + 7 /* seconds */ * 1000)
+            + 7 /* seconds */ * 1000))
             .isEqualTo("2.05:03:07");
 
         assertThat(TimeUtil.millisToTimeSpan(2))
-            .isEqualTo("00:00:00.0020000");
+            .isEqualTo("00:00:00.002000");
     });
 
     it("timeSpanToDuration", () => {
@@ -40,6 +40,6 @@ describe("TimeUtil", function () {
             .isEqualTo(2 * 24 * 3600 * 1000 + 1000);
 
         assertThat(TimeUtil.timeSpanToDuration("00:00:00.1234"))
-            .isEqualTo(123);
+            .isEqualTo(123.4);
     });
 });

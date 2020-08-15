@@ -60,7 +60,7 @@ export class ServerOperationExecutor implements IDisposable {
             throwError("InvalidArgumentException", "Value cannot be null or whitespace.");
         }
 
-        if ((!nodeTag && !this._nodeTag) || StringUtil.equalsIgnoreCase(this._nodeTag, nodeTag) {
+        if ((!nodeTag && !this._nodeTag) || StringUtil.equalsIgnoreCase(this._nodeTag, nodeTag)) {
             return this;
         }
 
@@ -109,7 +109,7 @@ export class ServerOperationExecutor implements IDisposable {
                     const idResult = command.result as OperationIdResult;
                     return new ServerWideOperationCompletionAwaiter(
                         this._requestExecutor, this._requestExecutor.conventions, idResult.operationId,
-                        command.selectedNodeTag || command.result.operationNodeTag
+                        command.selectedNodeTag || idResult.operationNodeTag
                     );
                 }
 

@@ -5,6 +5,8 @@ import CurrentIndexAndNode from "../Http/CurrentIndexAndNode";
 import { Topology } from "./Topology";
 import { Timer } from "../Primitives/Timer";
 import { throwError } from "../Exceptions";
+import { StringUtil } from "../Utility/StringUtil";
+import { CurrentIndexAndNodeAndEtag } from "./CurrentIndexAndNodeAndEtag";
 
 class NodeSelectorState {
     public topology: Topology;
@@ -82,8 +84,36 @@ export class NodeSelector {
         return this.getPreferredNode();
     }
 
+    public getRequestedNode(nodeTag: string): CurrentIndexAndNode {
+        const state = this._state;
+
+        const stateFailures = state.failures;
+        const serverNodes = state.nodes;
+        const len = Math.min(serverNodes.length, stateFailures.length);
+
+        for (let i = 0; i < len; i++) {
+            if (serverNodes[i].clusterTag === nodeTag) {
+                if (stateFailures[i] === 0 && !StringUtil.isNullOrEmpty(serverNodes[i].url)) {
+                    return new CurrentIndexAndNode(i, serverNodes[i]);
+                }
+
+                throwError("RequestedNodeUnavailableException", "Requested node " + nodeTag + " current unavailable, please try again later."); //TODO: typo?
+            }
+        }
+
+        if (!state.nodes.length) {
+            throwError("AllTopologyNodesDownException", "There are no nodes in the topology at all.");
+        }
+
+        throwError("RequestedNodeUnavailableException", "Could not find requested node " + nodeTag);
+    }
+
     public getPreferredNode(): CurrentIndexAndNode {
         const state = this._state;
+        return NodeSelector.getPreferredNodeInternal(state);
+    }
+
+    public static getPreferredNodeInternal(state: NodeSelectorState): CurrentIndexAndNode {
         const stateFailures = state.failures;
         const serverNodes = state.nodes;
         const len = Math.min(serverNodes.length, stateFailures.length);
@@ -95,6 +125,17 @@ export class NodeSelector {
         }
 
         return NodeSelector._unlikelyEveryoneFaultedChoice(state);
+    }
+
+    public getPreferredNodeWithTopology(): CurrentIndexAndNodeAndEtag {
+        const state = this._state;
+        const preferredNode = NodeSelector.getPreferredNodeInternal(state);
+        const etag = state.topology ? (state.topology.etag || -2) : -2;
+        return {
+            currentIndex: preferredNode.currentIndex,
+            currentNode: preferredNode.currentNode,
+            topologyEtag: etag
+        };
     }
 
     private static _unlikelyEveryoneFaultedChoice(state: NodeSelectorState): CurrentIndexAndNode {

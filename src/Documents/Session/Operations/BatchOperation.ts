@@ -11,6 +11,8 @@ import { CounterTracking } from "../CounterInternalTypes";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { BatchCommandResult } from "./BatchCommandResult";
 import { ObjectUtil } from "../../../Utility/ObjectUtil";
+import { ClusterWideBatchCommand } from "../../Commands/Batches/ClusterWideBatchCommand";
+import { SingleNodeBatchCommand } from "../../Commands/Batches/SingleNodeBatchCommand";
 
 export class BatchOperation {
 
@@ -333,7 +335,7 @@ export class BatchOperation {
         // When forcing a revision for a document that does Not have any revisions yet then the HasRevisions flag is added to the document.
         // In this case we need to update the tracked entities in the session with the document new change-vector.
 
-        if (!BatchOperation._getBooleanField(batchResult, "ForceRevisionCreation", "RevisionCreated")) {
+        if (!BatchOperation._getBooleanField(batchResult, "ForceRevisionCreation", "revisionCreated")) {
             // no forced revision was created...nothing to update.
             return;
         }
@@ -444,12 +446,12 @@ export class BatchOperation {
     }
 
     private static _getStringField(json: object, type: CommandType, fieldName: string, throwOnMissing: boolean  = true): string {
-        if (!(fieldName in json) && throwOnMissing) {
+        if ((!(fieldName in json) || TypeUtil.isNullOrUndefined(json[fieldName])) && throwOnMissing) {
             BatchOperation._throwMissingField(type, fieldName);
         }
 
         const jsonNode = json[fieldName];
-        if (!TypeUtil.isString(jsonNode)) {
+        if (jsonNode && !TypeUtil.isString(jsonNode)) {
             throwError("InvalidOperationException", `Expected response field ${fieldName} to be a string.`);
         }
 

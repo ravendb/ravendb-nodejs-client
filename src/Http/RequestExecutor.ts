@@ -182,6 +182,8 @@ export class RequestExecutor implements IDisposable {
 
     protected _disableClientConfigurationUpdates: boolean;
 
+    protected _lastServerVersion: string;
+
     protected _customHttpRequestOptions: HttpRequestParametersWithoutUri;
 
     protected _defaultRequestOptions: HttpRequestParametersWithoutUri;
@@ -203,6 +205,10 @@ export class RequestExecutor implements IDisposable {
 
     public getTopologyEtag() {
         return this._topologyEtag;
+    }
+
+    public get lastServerVersion() {
+        return this._lastServerVersion;
     }
 
     public get conventions() {
@@ -358,6 +364,12 @@ export class RequestExecutor implements IDisposable {
             const topology = new Topology(this._topologyEtag, this.getTopologyNodes().slice());
             this._nodeSelector = new NodeSelector(topology);
         }
+    }
+
+    public async getRequestedNode(nodeTag: string): Promise<CurrentIndexAndNode> {
+        await this._ensureNodeSelector();
+
+        return this._nodeSelector.getRequestedNode(nodeTag);
     }
 
     public async getPreferredNode(): Promise<CurrentIndexAndNode> {
@@ -1161,9 +1173,8 @@ export class RequestExecutor implements IDisposable {
             return false;
         }
 
-        this._spawnHealthChecks(chosenNode, nodeIndex);
-
         if (!this._nodeSelector) {
+            this._spawnHealthChecks(chosenNode, nodeIndex);
             return false;
         }
 

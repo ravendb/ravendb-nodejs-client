@@ -38,6 +38,7 @@ describe("PullReplicationTest", function () {
 
             let hub: IDocumentStore;
             try {
+                hub = await testContext.getDocumentStore();
                 const name = "pull-replication" + sink.database;
 
                 const putOperation = new PutPullReplicationAsHubOperation(name);
@@ -68,6 +69,8 @@ describe("PullReplicationTest", function () {
 
             let hub: IDocumentStore;
             try {
+                hub = await testContext.getDocumentStore();
+
                 const name = "pull-replication" + sink.database;
 
                 const putOperation = new PutPullReplicationAsHubOperation(name);
@@ -118,6 +121,8 @@ describe("PullReplicationTest", function () {
 
             let hub: IDocumentStore;
             try {
+                hub = await testContext.getDocumentStore();
+
                 const name = "pull-replication" + sink.database;
 
                 const putOperation = new PutPullReplicationAsHubOperation(name);
@@ -160,6 +165,8 @@ describe("PullReplicationTest", function () {
 
             let hub: IDocumentStore;
             try {
+                hub = await testContext.getDocumentStore();
+
                 const name = "pull-replication" + sink.database;
 
                 const putOperation = new PutPullReplicationAsHubOperation(name);

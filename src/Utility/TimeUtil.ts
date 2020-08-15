@@ -20,14 +20,14 @@ export class TimeUtil {
     public static readonly MILLIS_IN_DAY = 24 * 3600 * 1000;
 
     public static timeSpanToDuration(text: string) {
-        const hasDays = text.match(/^\d+\./);
-        const hasMillis = text.match(/.*\.\d+/);
+        const hasDays = !!text.match(/^\d+\./);
+        const hasMillis = !!text.match(/.*\.\d+/);
 
         if (hasDays && hasMillis) {
             const tokens = text.split(".");
 
             const days = parseInt(tokens[0], 10);
-            const millis = parseInt(tokens[2], 10);
+            const millis = tokens[2] ? parseInt(tokens[2], 10) : 0;
             return this._parseMiddlePart(tokens[1]) + millis + days * TimeUtil.MILLIS_IN_DAY;
         } else if (hasDays) {
             const tokens = text.split(".");
@@ -36,9 +36,9 @@ export class TimeUtil {
         } else if (hasMillis) {
             const tokens = text.split(".");
             let fractionString = tokens[1];
-            fractionString = fractionString.padEnd(7, "0"); //TODO: test!
-            const value = parseInt(fractionString, 10) * 100;
-            return this._parseMiddlePart(tokens[0]) + value / 1000; //TODO: test me!
+            fractionString = fractionString.padEnd(7, "0");
+            const value = parseInt(fractionString, 10) / 10_000;
+            return this._parseMiddlePart(tokens[0]) + value;
         } else {
             return this._parseMiddlePart(text);
         }
