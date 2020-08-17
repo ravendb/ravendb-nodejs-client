@@ -73,6 +73,7 @@ describe("RavenDB_14084", function () {
 
 });
 
+// tslint:disable-next-line:class-name
 class Companies_ByUnknown extends AbstractIndexCreationTask {
     createIndexDefinition(): IndexDefinition {
         const indexDefinition = new IndexDefinition();
@@ -83,6 +84,7 @@ class Companies_ByUnknown extends AbstractIndexCreationTask {
     }
 }
 
+// tslint:disable-next-line:class-name
 class Companies_ByUnknown_WithIndexMissingFieldsAsNull extends AbstractIndexCreationTask {
     createIndexDefinition(): IndexDefinition {
         const indexDefinition = new IndexDefinition();

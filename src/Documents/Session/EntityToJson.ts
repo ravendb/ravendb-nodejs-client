@@ -36,7 +36,7 @@ export class EntityToJson {
             this._session.onBeforeConversionToDocumentInvoke(documentInfo.id, entity);
         }
 
-        let document = EntityToJson.convertEntityToJsonInternal(entity, this._session.conventions, documentInfo);
+        let document = EntityToJson._convertEntityToJsonInternal(entity, this._session.conventions, documentInfo);
 
         if (documentInfo) {
             const documentReference: Reference<object> = {
@@ -53,7 +53,7 @@ export class EntityToJson {
 
     //TODO: internal static object ConvertToBlittableForCompareExchangeIfNeeded(
 
-    private static convertEntityToJsonInternal(entity: object, conventions: DocumentConventions, documentInfo: DocumentInfo, removeIdentityProperty = true) {
+    private static _convertEntityToJsonInternal(entity: object, conventions: DocumentConventions, documentInfo: DocumentInfo, removeIdentityProperty = true) {
         const entityMapper = conventions.objectMapper;
         let typeInfo: TypeInfo;
         let jsonNode = entityMapper.toObjectLiteral(entity, (_typeInfo) => {

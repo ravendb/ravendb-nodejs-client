@@ -26,7 +26,7 @@ export class ServerOperationExecutor implements IDisposable {
                        cache: Map<string, ServerOperationExecutor>, nodeTag: string);
     public constructor(store: DocumentStoreBase, requestExecutor?: ClusterRequestExecutor, initialRequestExecutor?: ClusterRequestExecutor,
                        cache?: Map<string, ServerOperationExecutor>, nodeTag?: string) {
-        requestExecutor = requestExecutor || ServerOperationExecutor.createRequestExecutor(store);
+        requestExecutor = requestExecutor || ServerOperationExecutor._createRequestExecutor(store);
         cache = cache || new Map<string, ServerOperationExecutor>();
 
         if (!store) {
@@ -74,7 +74,7 @@ export class ServerOperationExecutor implements IDisposable {
         }
 
         const requestExecutor = this._initialRequestExecutor || this._requestExecutor;
-        const topology: Topology = await this.getTopology(requestExecutor);
+        const topology: Topology = await this._getTopology(requestExecutor);
 
         const node = topology.nodes
             .find(x => StringUtil.equalsIgnoreCase(x.clusterTag, nodeTag));
@@ -138,7 +138,7 @@ export class ServerOperationExecutor implements IDisposable {
         }
     }
 
-    private async getTopology(requestExecutor: ClusterRequestExecutor): Promise<Topology> {
+    private async _getTopology(requestExecutor: ClusterRequestExecutor): Promise<Topology> {
         let topology: Topology = null;
         try {
             topology = requestExecutor.getTopology();
@@ -162,7 +162,7 @@ export class ServerOperationExecutor implements IDisposable {
         return topology;
     }
 
-    private static createRequestExecutor(store: DocumentStoreBase): ClusterRequestExecutor {
+    private static _createRequestExecutor(store: DocumentStoreBase): ClusterRequestExecutor {
         return store.conventions.disableTopologyUpdates
             ? ClusterRequestExecutor.createForSingleNode(store.urls[0], {
                 authOptions: store.authOptions,

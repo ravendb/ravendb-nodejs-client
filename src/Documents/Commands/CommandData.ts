@@ -170,15 +170,15 @@ export class ActionsToRunOnSuccess {
     }
 
     public clearSessionStateAfterSuccessfulSaveChanges() {
-        for (let id of this._documentsByIdToRemove) {
+        for (const id of this._documentsByIdToRemove) {
             this._session.documentsById.remove(id);
         }
 
-        for (let entity of this._documentsByEntityToRemove) {
+        for (const entity of this._documentsByEntityToRemove) {
             this._session.documentsByEntity.remove(entity);
         }
 
-        for (let [info, document] of this._documentInfosToUpdate) {
+        for (const [info, document] of this._documentInfosToUpdate) {
             info.newDocument = false;
             info.document = document;
         }

@@ -25,7 +25,7 @@ describe("NextAndSeedIdentitiesTest", function () {
     it("NextIdentityForCommand should use one ID from pool", async () => {
         {
             const session = store.openSession();
-            const user = Object.assign(new User(), {lastName: "Adi"});
+            const user = Object.assign(new User(), { lastName: "Adi" });
             await session.store(user, "users|");
             await session.saveChanges();
         }
@@ -34,7 +34,7 @@ describe("NextAndSeedIdentitiesTest", function () {
 
         {
             const session = store.openSession();
-            const user = Object.assign(new User(), {lastName: "Avivi"});
+            const user = Object.assign(new User(), { lastName: "Avivi" });
             await session.store(user, "users|");
             await session.saveChanges();
         }
@@ -60,7 +60,7 @@ describe("NextAndSeedIdentitiesTest", function () {
     it("SeedIdentityForCommand should set identity for given string", async () => {
         {
             const session = store.openSession();
-            const user = Object.assign(new User(), {lastName: "Adi"});
+            const user = Object.assign(new User(), { lastName: "Adi" });
             await session.store(user, "users|");
             await session.saveChanges();
         }
@@ -70,7 +70,7 @@ describe("NextAndSeedIdentitiesTest", function () {
 
         {
             const session = store.openSession();
-            const user = Object.assign(new User(), {lastName: "Avivi"});
+            const user = Object.assign(new User(), { lastName: "Avivi" });
             await session.store(user, "users|");
             await session.saveChanges();
         }

@@ -1412,7 +1412,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     private _buildPagination(queryText: StringBuilder) {
-        if (this._start > 0 || this._pageSize != null) {
+        if (this._start > 0 || !TypeUtil.isNullOrUndefined(this._pageSize)) {
             queryText
                 .append(" limit $")
                 .append(this._addQueryParameter(this._start))

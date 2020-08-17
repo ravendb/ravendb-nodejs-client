@@ -241,6 +241,7 @@ export class QueryOperation {
                 : fieldsToFetch.projections;
 
             const nestedTypes = raw[NESTED_OBJECT_TYPES_PROJECTION_FIELD];
+            // tslint:disable-next-line:prefer-for-of
             for (let i = 0; i < keys.length; i++) {
                 const key = keys[i];
 

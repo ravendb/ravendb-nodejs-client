@@ -54,7 +54,7 @@ describe("RavenDB_12257", function () {
 
                 {
                     const s = batch.openSession();
-                    for (let item of batch.items) {
+                    for (const item of batch.items) {
                         await s.load<Category>(item.result.category, Category);
                         await s.load<Supplier>(item.result.supplier, Supplier);
 

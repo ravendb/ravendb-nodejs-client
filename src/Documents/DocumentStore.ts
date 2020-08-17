@@ -58,7 +58,7 @@ export class DocumentStore extends DocumentStoreBase {
             : [urls];
     }
 
-    private getDatabaseChangesCacheKey(options: DatabaseChangesOptions) {
+    private _getDatabaseChangesCacheKey(options: DatabaseChangesOptions) {
         return options.databaseName.toLowerCase() + "/" + (options.nodeTag || "<null>");
     }
 
@@ -316,7 +316,7 @@ export class DocumentStore extends DocumentStoreBase {
             databaseName: database || this.database,
             nodeTag
         };
-        const cacheKey = this.getDatabaseChangesCacheKey(changesOptions);
+        const cacheKey = this._getDatabaseChangesCacheKey(changesOptions);
         if (this._databaseChanges.has(cacheKey)) {
             return this._databaseChanges.get(cacheKey);
         }
@@ -328,7 +328,7 @@ export class DocumentStore extends DocumentStoreBase {
 
     protected _createDatabaseChanges(node: DatabaseChangesOptions) {
         return new DatabaseChanges(this.getRequestExecutor(this.database), node.databaseName, //TODO: this.database ???
-            () => this._databaseChanges.delete(this.getDatabaseChangesCacheKey(node)), node.nodeTag);
+            () => this._databaseChanges.delete(this._getDatabaseChangesCacheKey(node)), node.nodeTag);
     }
 
     public getLastDatabaseChangesStateException(): Error;
@@ -339,7 +339,7 @@ export class DocumentStore extends DocumentStoreBase {
             databaseName: database || this.database,
             nodeTag
         };
-        const cacheKey = this.getDatabaseChangesCacheKey(node);
+        const cacheKey = this._getDatabaseChangesCacheKey(node);
         const databaseChanges = this._databaseChanges.get(cacheKey) as DatabaseChanges;
         if (databaseChanges) {
             return databaseChanges.lastConnectionStateException;

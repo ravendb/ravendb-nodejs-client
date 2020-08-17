@@ -1031,6 +1031,7 @@ export class RequestExecutor implements IDisposable {
                     return false;
                 }
 
+                // tslint:disable-next-line:triple-equals
                 if (nodeIndex != null) {
                     this._nodeSelector.onFailedRequest(nodeIndex);
                 }

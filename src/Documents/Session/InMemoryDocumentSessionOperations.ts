@@ -754,7 +754,7 @@ export abstract class InMemoryDocumentSessionOperations
                      continue;
                  }
 
-                 for (let counter of counters) {
+                 for (const counter of counters) {
                      cache.data.delete(counter);
                  }
 
@@ -786,7 +786,7 @@ export abstract class InMemoryDocumentSessionOperations
         }
 
         if (deletedCounters.size > 0) {
-            for (let name of deletedCounters) {
+            for (const name of deletedCounters) {
                 cache.data.delete(name);
             }
         }

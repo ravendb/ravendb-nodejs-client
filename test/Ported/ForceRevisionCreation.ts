@@ -35,7 +35,7 @@ describe("ForceRevisionCreation", function () {
             session.advanced.revisions.forceRevisionCreationFor(companyId);
             await session.saveChanges();
 
-            const revisionsCount = (await session.advanced.revisions.getFor(companyId, Company)).length; //TODO: review api
+            const revisionsCount = (await session.advanced.revisions.getFor(companyId, { documentType: Company })).length;
             assertThat(revisionsCount)
                 .isEqualTo(1);
         }
