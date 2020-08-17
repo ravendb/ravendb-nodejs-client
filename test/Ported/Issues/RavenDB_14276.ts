@@ -8,20 +8,20 @@ describe("RavenDB_14276", function () {
 
     let store: IDocumentStore;
 
-    let _dictionary: Map<string, Map<string, number>>;
+    let _dictionary: Record<string, Record<string, number>>;
 
     beforeEach(async function () {
         store = await testContext.getDocumentStore();
 
-        _dictionary = new Map<string, Map<string, number>>();
-        const firstMap = new Map<string, number>();
-        firstMap.set("aaaa", 1);
+        _dictionary = {};
+        const firstMap: Record<string, number> = {};
+        firstMap["aaaa"] = 1;
 
-        const secondMap = new Map<string, number>();
-        secondMap.set("bbbb", 2);
+        const secondMap: Record<string, number> = {}
+        secondMap["bbbb"] = 2;
 
-        _dictionary.set("123", firstMap);
-        _dictionary.set("321", secondMap);
+        _dictionary["123"] = firstMap;
+        _dictionary["321"] = secondMap;
     });
 
     afterEach(async () =>
@@ -86,7 +86,7 @@ describe("RavenDB_14276", function () {
 function onBeforeStore(eventArgs: SessionBeforeStoreEventArgs) {
     if (eventArgs.getDocumentMetadata()["Some-MetadataEntry"]) {
         const metadata = eventArgs.session.getMetadataFor(eventArgs.getEntity());
-        metadata.put("Some-MetadataEntry", "Updated");
+        metadata["Some-MetadataEntry"] = "Updated";
     } else {
         eventArgs.getDocumentMetadata()["Some-MetadataEntry"] = "Created";
     }
@@ -103,11 +103,11 @@ async function verifyData(store: IDocumentStore, docId: string) {
         const dictionary = metadata["Custom-Metadata"];
         let nestedDictionary = dictionary["123"];
 
-        assertThat(nestedDictionary.getLong("aaaa"))
+        assertThat(nestedDictionary["aaaa"])
             .isEqualTo(1);
 
         nestedDictionary = dictionary["321"];
-        assertThat(nestedDictionary.getLong("bbbb"))
+        assertThat(nestedDictionary["bbbb"])
             .isEqualTo(2);
     }
 }

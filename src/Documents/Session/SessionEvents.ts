@@ -179,10 +179,10 @@ export class BeforeConversionToDocumentEventArgs {
 export class BeforeConversionToEntityEventArgs {
     public id: string;
     public type: DocumentType; //TODO: check if this is correct type!
-    public document: Reference<object>;
+    public document: object;
     public session: InMemoryDocumentSessionOperations;
 
-    public constructor(session: InMemoryDocumentSessionOperations, id: string, type: DocumentType, document: Reference<object>) {
+    public constructor(session: InMemoryDocumentSessionOperations, id: string, type: DocumentType, document: object) {
         this.session = session;
         this.id = id;
         this.type = type;

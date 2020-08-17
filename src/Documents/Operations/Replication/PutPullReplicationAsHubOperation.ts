@@ -58,7 +58,7 @@ class UpdatePullReplicationDefinitionCommand extends RavenCommand<ModifyOngoingT
     createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/admin/tasks/pull-replication/hub";
 
-        const body = this._serializer.serialize(this._pullReplicationDefinition); //TODO: test me!
+        const body = this._serializer.serialize(this._pullReplicationDefinition);
 
         return {
             method: "PUT",

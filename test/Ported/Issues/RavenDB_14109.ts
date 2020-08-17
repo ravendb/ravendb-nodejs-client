@@ -16,7 +16,7 @@ describe("RavenDB_14109Test", function () {
     afterEach(async () =>
         await disposeTestDocumentStore(store));
 
-    it("queryStatsShouldBeFilledBeforeCallingMoveNext", async () => {
+    it.skip("queryStatsShouldBeFilledBeforeCallingMoveNext", async () => {
         {
             const session = store.openSession();
             await session.store(new Company());

@@ -31,10 +31,6 @@ export class IndexDefinition {
     public reduceOutputIndex: number;
     public patternForOutputReduceToCollectionReferences: string;
 
-    //TODO: public toJSON() {
-    //     return Object.assign({}, this, { maps: Array.from(this.maps) });
-    // }
-
     public toString(): string {
         return this.name;
     }

@@ -19,14 +19,14 @@ describe("RavenDB_9889", function () {
         await disposeTestDocumentStore(store));
 
     it("canUseToDocumentConversionEvents", async () => {
-        store.on("beforeConversionToDocument", (event: BeforeConversionToDocumentEventArgs) => {
+        store.addSessionListener("beforeConversionToDocument", (event: BeforeConversionToDocumentEventArgs) => {
             if (event.entity instanceof Item) {
                 const item = event.entity;
                 item.before = true;
             }
         });
 
-        store.on("afterConversionToDocument", (event: AfterConversionToDocumentEventArgs) => {
+        store.addSessionListener("afterConversionToDocument", (event: AfterConversionToDocumentEventArgs) => {
             if (event.entity instanceof Item) {
                 const item = event.entity;
                 const document = ObjectUtil.clone(event.document.value);
@@ -67,14 +67,14 @@ describe("RavenDB_9889", function () {
     });
 
     it("canUseToEntityConversionEvents", async () => {
-        store.on("beforeConversionToEntity", (event: BeforeConversionToEntityEventArgs) => {
-            const document = ObjectUtil.clone(event.document.value) as Item;
+        store.addSessionListener("beforeConversionToEntity", (event: BeforeConversionToEntityEventArgs) => {
+            const document = ObjectUtil.clone(event.document) as Item;
 
             document.before = true;
-            event.document.value = document;
+            event.document = document;
         });
 
-        store.on("afterConversionToEntity", (event: AfterConversionToEntityEventArgs) => {
+        store.addSessionListener("afterConversionToEntity", (event: AfterConversionToEntityEventArgs) => {
             if (event.entity instanceof Item) {
                 const item = event.entity as Item;
                 item.after = true;

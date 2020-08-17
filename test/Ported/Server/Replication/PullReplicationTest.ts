@@ -412,7 +412,7 @@ describe("PullReplicationTest", function () {
 
                 {
                     const main = hub.openSession();
-                    await main.store(new User(), "hub/1");
+                    await main.store(new User(), "users/1");
                     await main.saveChanges();
                 }
 
@@ -441,7 +441,7 @@ describe("PullReplicationTest", function () {
                 await hub.maintenance.forDatabase(hub.database)
                     .send(new PutPullReplicationAsHubOperation(pullDefinition));
 
-                assertThat(await replication.waitForDocumentToReplicate<User>(sink, "users/2", timeout, User))
+                assertThat(await replication.waitForDocumentToReplicate<User>(sink, "users/2", 10 * timeout, User))
                     .isNotNull();
             } finally {
                 hub.dispose();
@@ -469,7 +469,7 @@ describe("PullReplicationTest", function () {
                         .send(new PutPullReplicationAsHubOperation(name));
 
                     {
-                        const session = store.openSession();
+                        const session = hub.openSession();
                         await session.store(new User(), "foo/bar");
                         await session.saveChanges();
                     }

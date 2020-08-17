@@ -30,14 +30,14 @@ export class DeleteSorterOperation implements IMaintenanceOperation<void> {
 class DeleteSorterCommand extends RavenCommand<void> implements IRaftCommand {
     private readonly _sorterName: string;
 
-    public constructor(indexName: string) { //TODO: rename this param (in java as well)
+    public constructor(sorterName: string) {
         super();
 
-        if (!indexName) {
+        if (!sorterName) {
             throwError("InvalidArgumentException", "IndexName cannot be null");
         }
 
-        this._sorterName = indexName;
+        this._sorterName = sorterName;
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {

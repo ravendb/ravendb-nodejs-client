@@ -49,6 +49,8 @@ import { HighlightingParameters } from "../Queries/Highlighting/HighlightingPara
 import { IQueryIncludeBuilder } from "./Loaders/IQueryIncludeBuilder";
 import { QueryIncludeBuilder } from "./Loaders/QueryIncludeBuilder";
 
+export const NESTED_OBJECT_TYPES_PROJECTION_FIELD = "__PROJECTED_NESTED_OBJECT_TYPES__";
+
 export class DocumentQuery<T extends object>
     extends AbstractDocumentQuery<T, DocumentQuery<T>> implements IDocumentQuery<T> {
 
@@ -124,7 +126,13 @@ export class DocumentQuery<T extends object>
             return this.selectFields(queryData, projectionType);
         } else {
             propertiesOrQueryData.isProjectInto = true;
-            return this.createDocumentQueryInternal(projectionType, propertiesOrQueryData as QueryData);
+            const queryData = propertiesOrQueryData as QueryData;
+
+            // add nested object types to result so we can properly read types
+            queryData.fields = [...queryData.fields, `${CONSTANTS.Documents.Metadata.KEY}.${CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES}`];
+            queryData.projections = [...queryData.projections, CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES_PROJECTION_FIELD];
+
+            return this.createDocumentQueryInternal(projectionType, queryData);
         }
     }
 

@@ -49,7 +49,7 @@ export class EntityToJson {
         return document;
     }
 
-    //TODO: fill missing properies?
+    //TODO: fill missing properties?
 
     //TODO: internal static object ConvertToBlittableForCompareExchangeIfNeeded(
 

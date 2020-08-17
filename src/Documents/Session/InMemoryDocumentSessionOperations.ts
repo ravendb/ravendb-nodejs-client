@@ -1151,11 +1151,11 @@ export abstract class InMemoryDocumentSessionOperations
 
     public onBeforeConversionToEntityInvoke(id: string, type: DocumentType, document: Reference<object>) {
         if (this.listenerCount("beforeConversionToEntity")) {
-            const eventArgs = new BeforeConversionToEntityEventArgs(this, id, type, document);
+            const eventArgs = new BeforeConversionToEntityEventArgs(this, id, type, document.value);
             this.emit("beforeConversionToEntity", eventArgs);
 
-            if (eventArgs.document.value && eventArgs.document.value !== document.value) {
-                document.value = eventArgs.document.value; //TODO: test if doc ref changes
+            if (eventArgs.document && eventArgs.document !== document) {
+                document.value = eventArgs.document;
             }
         }
     }

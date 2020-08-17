@@ -14,6 +14,7 @@ import { CONSTANTS } from "../../../Constants";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { Reference } from "../../../Utility/Reference";
+import { NESTED_OBJECT_TYPES_PROJECTION_FIELD } from "../DocumentQuery";
 
 const log = getLogger({ module: "QueryOperation" });
 
@@ -124,6 +125,10 @@ export class QueryOperation {
 
         try {
             for (const document of queryResult.results) {
+                if (document[`${CONSTANTS.Documents.Metadata.KEY}.${CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES}`]) {
+                    document[CONSTANTS.Documents.Metadata.KEY][CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES]
+                        = document[`${CONSTANTS.Documents.Metadata.KEY}.${CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES}`];
+                }
                 const metadata = document[CONSTANTS.Documents.Metadata.KEY];
                 const idNode = metadata[CONSTANTS.Documents.Metadata.ID];
 
@@ -180,10 +185,10 @@ export class QueryOperation {
         // if type was passed then use that even if it's only 1 field
         if (fieldsToFetch
             && fieldsToFetch.projections
-            && fieldsToFetch.projections.length === 1
+            && (fieldsToFetch.projections.length === 1 || (fieldsToFetch.projections.includes(NESTED_OBJECT_TYPES_PROJECTION_FIELD) && fieldsToFetch.projections.length === 2))
             && !clazz) {
             // we only select a single field
-            let projectionField = fieldsToFetch.projections[0];
+            let projectionField = fieldsToFetch.projections.find(x => x !== NESTED_OBJECT_TYPES_PROJECTION_FIELD);
 
             if (fieldsToFetch.sourceAlias) {
                 if (projectionField.startsWith(fieldsToFetch.sourceAlias)) {
@@ -216,20 +221,16 @@ export class QueryOperation {
             }
         }
 
-        const raw: T = conventions.objectMapper.fromObjectLiteral(document);
-        const projType = conventions.getJsTypeByDocumentType(clazz);
 
-        /* TODO
-        if (ObjectNode.class.equals(clazz)) {
-            return (T)document;
-        }
-         */
+        const projType = conventions.getJsTypeByDocumentType(clazz);
 
         const documentRef: Reference<object> = {
             value: document
         };
         session.onBeforeConversionToEntityInvoke(id, clazz, documentRef);
         document = documentRef.value;
+
+        const raw: T = conventions.objectMapper.fromObjectLiteral(document);
 
         // tslint:disable-next-line:new-parens
         const result = projType ? new (Function.prototype.bind.apply(projType)) : {};
@@ -238,8 +239,18 @@ export class QueryOperation {
             const keys = conventions.entityFieldNameConvention
                 ? fieldsToFetch.projections.map(x => StringUtil.changeCase(conventions.entityFieldNameConvention, x))
                 : fieldsToFetch.projections;
-            for (const key of keys) {
-                result[key] = raw[key];
+
+            const nestedTypes = raw[NESTED_OBJECT_TYPES_PROJECTION_FIELD];
+            for (let i = 0; i < keys.length; i++) {
+                const key = keys[i];
+
+                const mapper = conventions.objectMapper;
+                const mapped = mapper.fromObjectLiteral(raw, {
+                    typeName: "object",
+                    nestedTypes
+                })
+
+                result[key] = mapped[key];
             }
         } else {
             Object.assign(result, !entityFieldNameConvention

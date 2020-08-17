@@ -110,14 +110,6 @@ export interface DocumentStoreEventEmitter {
 
     on(eventName: "executorsDisposed", eventHandler: (callback: () => void) => void): this;
 
-    on(eventName: "beforeConversionToDocument", eventHandler: (args: BeforeConversionToDocumentEventArgs) => void): this;
-
-    on(eventName: "afterConversionToDocument", eventHandler: (args: AfterConversionToDocumentEventArgs) => void): this;
-
-    on(eventName: "beforeConversionToEntity", eventHandler: (args: BeforeConversionToEntityEventArgs) => void): this;
-
-    on(eventName: "afterConversionToEntity", eventHandler: (args: AfterConversionToEntityEventArgs) => void): this;
-
     once(eventName: "failedRequest", eventHandler: (args: FailedRequestEventArgs) => void): this;
 
     once(eventName: "sessionCreated", eventHandler: (args: SessionCreatedEventArgs) => void): this;
@@ -128,14 +120,6 @@ export interface DocumentStoreEventEmitter {
 
     once(eventName: "executorsDisposed", eventHandler: (callback: () => void) => void): this;
 
-    once(eventName: "beforeConversionToDocument", eventHandler: (args: BeforeConversionToDocumentEventArgs) => void): this;
-
-    once(eventName: "afterConversionToDocument", eventHandler: (args: AfterConversionToDocumentEventArgs) => void): this;
-
-    once(eventName: "beforeConversionToEntity", eventHandler: (args: BeforeConversionToEntityEventArgs) => void): this;
-
-    once(eventName: "afterConversionToEntity", eventHandler: (args: AfterConversionToEntityEventArgs) => void): this;
-
     removeListener(eventName: "failedRequest", eventHandler: (args: FailedRequestEventArgs) => void): this;
 
     removeListener(eventName: "sessionCreated", eventHandler: (args: SessionCreatedEventArgs) => void): void;
@@ -145,14 +129,6 @@ export interface DocumentStoreEventEmitter {
     removeListener(eventName: "afterDispose", eventHandler: (callback: () => void) => void): void;
 
     removeListener(eventName: "executorsDisposed", eventHandler: (callback: () => void) => void): void;
-
-    removeListener(eventName: "beforeConversionToDocument", eventHandler: (args: BeforeConversionToDocumentEventArgs) => void): this;
-
-    removeListener(eventName: "afterConversionToDocument", eventHandler: (args: AfterConversionToDocumentEventArgs) => void): this;
-
-    removeListener(eventName: "beforeConversionToEntity", eventHandler: (args: BeforeConversionToEntityEventArgs) => void): this;
-
-    removeListener(eventName: "afterConversionToEntity", eventHandler: (args: AfterConversionToEntityEventArgs) => void): this;
 }
 
 export interface IDocumentStore extends IDisposable,

@@ -54,6 +54,11 @@ export class DatabaseSmuggler {
                 await importOperation.waitForCompletion();
             });
         } else {
+            const directory = path.dirname(path.resolve(toFileOrToDatabase));
+            if (!fs.existsSync(directory)) {
+                fs.mkdirSync(directory, { recursive: true });
+            }
+
             return await this._export(options, async response => {
                 const fileStream = fs.createWriteStream(toFileOrToDatabase);
                 await StreamUtil.pipelineAsync(response, fileStream);

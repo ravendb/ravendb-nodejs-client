@@ -65,6 +65,11 @@ export class NodeSelector {
 
     public getNodeBySessionId(sessionId: number): CurrentIndexAndNode {
         const state = this._state;
+
+        if (state.topology.nodes.length === 0) {
+            throwError("AllTopologyNodesDownException", "There are no nodes in the topology at all");
+        }
+
         const index = sessionId % state.topology.nodes.length;
 
         for (let i = index; i < state.failures.length; i++) {
@@ -97,7 +102,7 @@ export class NodeSelector {
                     return new CurrentIndexAndNode(i, serverNodes[i]);
                 }
 
-                throwError("RequestedNodeUnavailableException", "Requested node " + nodeTag + " current unavailable, please try again later."); //TODO: typo?
+                throwError("RequestedNodeUnavailableException", "Requested node " + nodeTag + " currently unavailable, please try again later.");
             }
         }
 

@@ -4,6 +4,7 @@ import { assertThat } from "../../Utils/AssertExtensions";
 import { QueryData } from "../../../src/Documents/Queries/QueryData";
 import { DocumentResultStream } from "../../../src/Documents/Session/DocumentResultStream";
 import * as StreamUtil from "../../../src/Utility/StreamUtil";
+import { StreamResult } from "../../../src/Documents/Commands/StreamResult";
 
 describe("RavenDB_14272", function () {
 
@@ -29,8 +30,11 @@ describe("RavenDB_14272", function () {
                 .hasSize(1);
             assertThat(result[0].userDefs.size)
                 .isEqualTo(2);
-            assertThat(result[0].userDefs.keys())
-                .isEqualTo(userTalk.userDefs.keys());
+            Array.from(userTalk.userDefs.keys())
+                .forEach(val => {
+                    assertThat(Array.from(result[0].userDefs.keys()))
+                        .contains(val);
+                });
         }
     });
 
@@ -50,8 +54,11 @@ describe("RavenDB_14272", function () {
                 .hasSize(1);
             assertThat(result[0].userDefs.size)
                 .isEqualTo(2);
-            assertThat(result[0].userDefs.keys())
-                .isEqualTo(userTalk.userDefs.keys());
+            Array.from(userTalk.userDefs.keys())
+                .forEach(val => {
+                    assertThat(Array.from(result[0].userDefs.keys()))
+                        .contains(val);
+                });
         }
     });
 
@@ -85,9 +92,9 @@ describe("RavenDB_14272", function () {
 
             const items = [];
 
-            queryStream.on("data", item => {
+            queryStream.on("data", (item: StreamResult<TalkUserIds>) => {
                 items.push(item);
-                const projection: TalkUserIds = item.document.data; //TODO: check me!
+                const projection = item.document;
 
                 assertThat(projection)
                     .isNotNull();
@@ -96,8 +103,10 @@ describe("RavenDB_14272", function () {
                 assertThat(projection.userDefs)
                     .hasSize(2);
 
-                assertThat(projection[0].userDefs.keys())
-                    .isEqualTo(userTalk.userDefs.keys());
+                Array.from(userTalk.userDefs.keys()).forEach(key => {
+                    assertThat(Array.from(projection.userDefs.keys()))
+                        .contains(key);
+                });
             });
 
             await StreamUtil.finishedAsync(queryStream);

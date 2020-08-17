@@ -53,7 +53,7 @@ class PutSortersCommand extends RavenCommand<void> implements IRaftCommand {
         const uri = node.url + "/databases/" + node.database + "/admin/sorters";
 
         const body = this._serializer.serialize({
-            Sorters: this._sortersToAdd //TODO: check casing!
+            sorters: this._sortersToAdd
         });
 
         return {

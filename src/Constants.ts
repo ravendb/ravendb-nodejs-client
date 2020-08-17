@@ -1,4 +1,5 @@
 import { MetadataObject } from "./Documents/Session/MetadataObject";
+import { NESTED_OBJECT_TYPES_PROJECTION_FIELD } from "./Documents/Session/DocumentQuery";
 
 function typedKey<T, S extends keyof T>(key: S): S {
     return key;
@@ -37,6 +38,7 @@ export const CONSTANTS = {
             ALL_DOCUMENTS_COLLECTION: "@all_docs",
             EMPTY_COLLECTION: "@empty",
             NESTED_OBJECT_TYPES: typedKey<MetadataObject, "@nested-object-types">("@nested-object-types"),
+            NESTED_OBJECT_TYPES_PROJECTION_FIELD: "__PROJECTED_NESTED_OBJECT_TYPES__",
             COUNTERS: typedKey<MetadataObject, "@counters">("@counters"),
             REVISION_COUNTERS: "@counters-snapshot",
             IGNORE_CASE_TRANSFORM_REGEX:
