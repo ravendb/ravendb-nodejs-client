@@ -12,7 +12,7 @@ import { DistinctToken } from "./Tokens/DistinctToken";
 import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
 import { QueryStatistics } from "./QueryStatistics";
 import { IDocumentSession } from "./IDocumentSession";
-import { throwError, getError } from "../../Exceptions";
+import { throwError } from "../../Exceptions";
 import { QueryOperator } from "../Queries/QueryOperator";
 import { IndexQuery } from "../Queries/IndexQuery";
 import { IAbstractDocumentQuery } from "./IAbstractDocumentQuery";
@@ -81,6 +81,7 @@ import { IncludeBuilderBase } from "./Loaders/IncludeBuilderBase";
 import { passResultToCallback } from "../../Utility/PromiseUtil";
 import * as os from "os";
 import { GraphQueryToken } from "./Tokens/GraphQueryToken";
+import { IncludesUtil } from "./IncludesUtil";
 
 /**
  * A query against a Raven index
@@ -1438,19 +1439,11 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             }
             first = false;
 
-            let requiredQuotes: boolean = false;
-
-            // tslint:disable-next-line:prefer-for-of
-            for (let i = 0; i < include.length; i++) {
-                const ch = include[i];
-                if (!StringUtil.isLetterOrDigit(ch) && ch !== "_" && ch !== ".") {
-                    requiredQuotes = true;
-                    break;
-                }
-            }
-
-            if (requiredQuotes) {
-                queryText.append("'").append(include.replace(/'/g, "\'")).append("'");
+            let escapedInclude: string;
+            if (IncludesUtil.requiresQuotes(include, x => escapedInclude = x)) {
+                queryText.append("'");
+                queryText.append(escapedInclude);
+                queryText.append("'");
             } else {
                 queryText.append(include);
             }

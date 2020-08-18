@@ -26,7 +26,6 @@ import { LoadStartingWithOperation } from "./Operations/LoadStartingWithOperatio
 import { ILoaderWithInclude } from "./Loaders/ILoaderWithInclude";
 import { IRawDocumentQuery } from "./IRawDocumentQuery";
 import { RawDocumentQuery } from "./RawDocumentQuery";
-import { BatchCommand } from "../Commands/Batches/BatchCommand";
 import { AdvancedDocumentQueryOptions, DocumentQueryOptions } from "./QueryOptions";
 import { IDocumentQuery } from "./IDocumentQuery";
 import { IAttachmentsSessionOperations } from "./IAttachmentsSessionOperations";

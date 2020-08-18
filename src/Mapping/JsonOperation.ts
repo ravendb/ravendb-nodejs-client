@@ -3,7 +3,6 @@ import { DocumentInfo } from "../Documents/Session/DocumentInfo";
 import { DocumentsChanges, ChangeType } from "../Documents/Session/DocumentsChanges";
 import { CONSTANTS } from "../Constants";
 import { throwError } from "../Exceptions";
-import { StringUtil } from "../Utility/StringUtil";
 
 export class JsonOperation {
 

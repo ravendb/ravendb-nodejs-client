@@ -17,7 +17,6 @@ import { DocumentType } from "../DocumentAbstractions";
 import { IRawDocumentQuery } from "./IRawDocumentQuery";
 import { SessionLoadStartingWithOptions } from "./IDocumentSession";
 import { ErrorFirstCallback } from "../../Types/Callbacks";
-import { AdvancedDocumentQueryOptions } from "./QueryOptions";
 import { IDocumentQuery } from "./IDocumentQuery";
 import { JavaScriptArray } from "./JavaScriptArray";
 import { DocumentResultStream } from "./DocumentResultStream";

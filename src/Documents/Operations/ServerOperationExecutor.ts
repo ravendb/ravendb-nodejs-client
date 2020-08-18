@@ -8,7 +8,6 @@ import { getLogger } from "../../Utility/LogUtil";
 import { throwError } from "../../Exceptions/index";
 import { StringUtil } from "../../Utility/StringUtil";
 import { Topology } from "../../Http/Topology";
-import { DocumentStore } from "../DocumentStore";
 import { GetBuildNumberOperation } from "../../ServerWide/Operations/GetBuildNumberOperation";
 
 const log = getLogger({ module: "ServerOperationExecutor" });

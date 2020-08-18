@@ -1,4 +1,3 @@
-import * as BluebirdPromise from "bluebird";
 import * as semaphore from "semaphore";
 
 import { IDocumentStore } from "../../Documents/IDocumentStore";

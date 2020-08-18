@@ -9,7 +9,7 @@ import { getHeaders } from "../../Utility/HttpUtil";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { throwError } from "../../Exceptions";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { CONSTANTS, COUNTERS } from "../../Constants";
+import { COUNTERS } from "../../Constants";
 import { HashCalculator } from "../Queries/HashCalculator";
 import { IRavenObject } from "../../Types/IRavenObject";
 

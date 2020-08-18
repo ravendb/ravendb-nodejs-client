@@ -81,7 +81,7 @@ export class SessionDocumentCounters extends SessionCountersBase implements ISes
     public async get(
         counters: string | string[], 
         callback?: ErrorFirstCallback<number> | ErrorFirstCallback<{ [key: string]: number }>): Promise<any> {
-        const resultPromise = Array.isArray(counters)
+        const resultPromise: Promise<any> = Array.isArray(counters)
             ? this._getCounters(counters)
             : this._getCounter(counters);
         passResultToCallback(resultPromise as any, callback || TypeUtil.NOOP);

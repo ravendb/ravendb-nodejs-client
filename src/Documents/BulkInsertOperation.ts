@@ -20,7 +20,6 @@ import { DocumentConventions } from "./Conventions/DocumentConventions";
 import { ServerNode } from "../Http/ServerNode";
 import { ErrorFirstCallback } from "../Types/Callbacks";
 import { passResultToCallback } from "../Utility/PromiseUtil";
-import { BatchOperation } from "./Session/Operations/BatchOperation";
 import { MetadataObject } from "./Session/MetadataObject";
 
 export class BulkInsertOperation {

@@ -1,6 +1,6 @@
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { IndexConfiguration, IndexDefinition } from "./IndexDefinition";
-import { IndexPriority, IndexLockMode, FieldIndexing, FieldStorage, FieldTermVector } from "./Enums";
+import { IndexPriority, IndexLockMode } from "./Enums";
 import { IDocumentStore } from "../IDocumentStore";
 import { PutIndexesOperation } from "../Operations/Indexes/PutIndexesOperation";
 import { ErrorFirstCallback } from "../../Types/Callbacks";

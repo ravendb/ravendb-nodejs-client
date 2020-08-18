@@ -1,4 +1,4 @@
-import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
+import { RavenCommand } from "../../Http/RavenCommand";
 import { ClusterTopology } from "../../Http/ClusterTopology";
 import { HttpRequestParameters } from "../../Primitives/Http";
 import { ServerNode } from "../../Http/ServerNode";

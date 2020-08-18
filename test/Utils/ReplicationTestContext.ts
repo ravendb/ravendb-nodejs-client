@@ -53,7 +53,7 @@ export class ReplicationTestContext {
         const connectionString = new RavenConnectionString();
         connectionString.name = watcher.connectionStringName;
         connectionString.database = watcher.database;
-        connectionString.topologyDiscoveryUrls = urls || store.urls;
+        connectionString.topologyDiscoveryUrls = urls && urls.length ? urls : store.urls;
 
         await store.maintenance.send(new PutConnectionStringOperation(connectionString));
 

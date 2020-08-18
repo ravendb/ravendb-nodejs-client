@@ -14,7 +14,7 @@ import * as stream from "readable-stream";
 import {
     CollectResultStream,
     CollectResultStreamOptions,
-    lastValue, lastChunk
+    lastChunk
 } from "../Mapping/Json/Streams/CollectResultStream";
 import { throwError, getError } from "../Exceptions";
 import * as StringBuilder from "string-builder";

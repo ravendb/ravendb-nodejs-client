@@ -8,13 +8,10 @@ import { StartingWithOptions } from "../IDocumentSession";
 import { StreamCommand } from "../../Commands/StreamCommand";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { StreamResultResponse } from "../../Commands/StreamResultResponse";
-import { streamArray } from "stream-json/streamers/StreamArray";
 import { streamValues } from "stream-json/streamers/StreamValues";
-import { streamObject } from "stream-json/streamers/StreamObject";
-import { pick } from "stream-json/filters/Pick";
 import { ignore } from "stream-json/filters/Ignore";
 import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
-import { getDocumentResultsPipeline, getDocumentResultsAsObjects } from "../../../Mapping/Json/Streams/Pipelines";
+import { getDocumentResultsAsObjects } from "../../../Mapping/Json/Streams/Pipelines";
 import { TransformKeysJsonStream } from "../../../Mapping/Json/Streams/TransformKeysJsonStream";
 import { getTransformJsonKeysProfile } from "../../../Mapping/Json/Streams/TransformJsonKeysProfiles";
 

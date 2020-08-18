@@ -4,7 +4,6 @@ import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
 import * as stream from "readable-stream";
 import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
-import { no } from "change-case";
 
 export class GetServerWideOperationStateOperation implements IServerOperation<IRavenResponse> {
 

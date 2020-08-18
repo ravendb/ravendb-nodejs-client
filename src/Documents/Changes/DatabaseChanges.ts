@@ -14,11 +14,9 @@ import { EventEmitter } from "events";
 import * as PromiseUtil from "../../Utility/PromiseUtil";
 import { IDefer } from "../../Utility/PromiseUtil";
 import { acquireSemaphore } from "../../Utility/SemaphoreUtil";
-import * as BluebirdPromise from "bluebird";
 import { Certificate } from "../../Auth/Certificate";
 import { ObjectUtil } from "../../Utility/ObjectUtil";
 import CurrentIndexAndNode from "../../Http/CurrentIndexAndNode";
-import { Server } from "ws";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { ServerNode } from "../../Http/ServerNode";
@@ -44,7 +42,7 @@ export class DatabaseChanges implements IDatabaseChanges {
     private _tcs: IDefer<IDatabaseChanges>;
 
     private readonly _confirmations: Map<number, { resolve: () => void, reject: () => void }> = new Map();
-    private readonly _counters: Map<string, DatabaseConnectionState> = new Map();
+    private readonly _counters: Map<string, DatabaseConnectionState> = new Map(); //TODO: use DatabaseChangesOptions as key?
     private _immediateConnection: number = 0;
 
     private _serverNode: ServerNode;

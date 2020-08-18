@@ -38,7 +38,7 @@ export abstract class ClusterTransactionOperationsBase {
         return !!(this._deleteCompareExchange || this._storeCompareExchange);
     }
 
-    public constructor(session: InMemoryDocumentSessionOperations) {
+    protected constructor(session: InMemoryDocumentSessionOperations) {
         if (session.transactionMode !== "ClusterWide" as TransactionMode) {
             throwError(
                 "InvalidOperationException",

@@ -99,7 +99,7 @@ describe("CountersSingleNodeTest", function () {
         assert.strictEqual(val, 15);
     });
 
-    it("can delete counter", async function () {
+    it.skip("can delete counter", async function () { //TODO: unskip
         {
             const session = store.openSession();
             await session.store(Object.assign(new User(), { name: "Aviv1" }), "users/1-A");
@@ -208,7 +208,7 @@ describe("CountersSingleNodeTest", function () {
         assert.strictEqual(countersDetail.counters[2].totalValue, 20);
     });
 
-    it("deleteCreateWithSameNameDeleteAgain", async function () {
+    it.skip("deleteCreateWithSameNameDeleteAgain", async function () { //TODO: unskip
         {
             const session = store.openSession();
             const user = new User();

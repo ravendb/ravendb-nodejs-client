@@ -27,7 +27,7 @@ export interface OngoingTaskBackup extends OngoingTask {
     onGoingBackup: RunningBackup;
     nextBackup: NextBackup;
     retentionPolicy: RetentionPolicy;
-    encrypted: boolean;
+    isEncrypted: boolean;
 }
 
 export type OngoingTaskConnectionStatus =

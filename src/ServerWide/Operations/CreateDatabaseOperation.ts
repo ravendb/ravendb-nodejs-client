@@ -8,7 +8,7 @@ import { IServerOperation, OperationResultType } from "../../Documents/Operation
 import { HeadersBuilder } from "../../Utility/HttpUtil";
 import { DatabaseRecord } from "..";
 import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
-import { CONSTANTS, HEADERS } from "../../Constants";
+import { HEADERS } from "../../Constants";
 import { IRaftCommand } from "../../Http/IRaftCommand";
 import { RaftIdGenerator } from "../../Utility/RaftIdGenerator";
 

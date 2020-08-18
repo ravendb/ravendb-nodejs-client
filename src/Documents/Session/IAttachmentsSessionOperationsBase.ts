@@ -1,4 +1,4 @@
-import { AttachmentName, AttachmentResult } from "../Attachments";
+import { AttachmentName } from "../Attachments";
 import { AttachmentData } from "./../Attachments";
 
 export interface IAttachmentsSessionOperationsBase {

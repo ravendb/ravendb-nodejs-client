@@ -2,7 +2,6 @@ import { DocumentType } from "../DocumentAbstractions";
 import { getLogger } from "../../Utility/LogUtil";
 import { GenerateEntityIdOnTheClient } from "../Identity/GenerateEntityIdOnTheClient";
 import { throwError } from "../../Exceptions";
-import { SubscriptionConnectionServerMessage } from "./SubscriptionConnectionServerMessage";
 import * as os from "os";
 import { CONSTANTS } from "../../Constants";
 import { StringUtil } from "../../Utility/StringUtil";

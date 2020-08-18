@@ -11,7 +11,6 @@ import { SuggestionBase } from "../Queries/Suggestions/SuggestionBase";
 import { HighlightingParameters } from "../Queries/Highlighting/HighlightingParameters";
 import { ValueCallback } from "../../Types/Callbacks";
 import { Highlightings } from "../Queries/Highlighting/Hightlightings";
-import { IIncludeBuilder } from "../Session/Loaders/IIncludeBuilder";
 import { IncludeBuilderBase } from "./Loaders/IncludeBuilderBase";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 

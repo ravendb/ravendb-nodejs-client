@@ -58,6 +58,7 @@ export class OperationCompletionAwaiter {
                         case "Canceled":
                             throwError("OperationCanceledException",
                                 `Operation of ID ${this._id} has been canceled.`);
+                            break;
                         case "Faulted":
                             const faultResult: OperationExceptionResult = operationStatusResult.result;
                             const errorSchema = Object.assign({}, faultResult, { url: this._requestExecutor.getUrl() });

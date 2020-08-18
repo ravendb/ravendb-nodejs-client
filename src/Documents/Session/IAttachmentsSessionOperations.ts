@@ -1,5 +1,4 @@
-import { AttachmentName, AttachmentResult } from "../Attachments";
-import { AttachmentData } from "./../Attachments";
+import { AttachmentResult } from "../Attachments";
 import { ErrorFirstCallback } from "../../Types/Callbacks";
 import { IAttachmentsSessionOperationsBase } from "./IAttachmentsSessionOperationsBase";
 

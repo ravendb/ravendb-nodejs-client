@@ -1,5 +1,4 @@
 import { MetadataObject } from "./Documents/Session/MetadataObject";
-import { NESTED_OBJECT_TYPES_PROJECTION_FIELD } from "./Documents/Session/DocumentQuery";
 
 function typedKey<T, S extends keyof T>(key: S): S {
     return key;

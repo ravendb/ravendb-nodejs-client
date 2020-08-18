@@ -11,6 +11,7 @@ import { Stopwatch } from "../../src/Utility/Stopwatch";
 import { throwError } from "../../src/Exceptions";
 import { delay } from "../../src/Utility/PromiseUtil";
 import { OngoingTaskBackup } from "../../src/Documents/Operations/OngoingTasks/OngoingTask";
+import { TimeUtil } from "../../src/Utility/TimeUtil";
 
 (RavenTestContext.isPullRequest ? describe.skip : describe)("BackupsTest", function () {
 
@@ -79,18 +80,19 @@ import { OngoingTaskBackup } from "../../src/Documents/Operations/OngoingTasks/O
             },
             retentionPolicy: {
                 disabled: false,
-                minimumBackupAgeToKeep: 3600 * 1000
+                minimumBackupAgeToKeep: TimeUtil.millisToTimeSpan(3600 * 1000 * 25) // 25 hours
             }
         };
 
         const operation = new UpdatePeriodicBackupOperation(backupConfiguration);
         await store.maintenance.send(operation);
 
-        const myBackup = await store.maintenance.send(new GetOngoingTaskInfoOperation("myBackup", "Backup")) as OngoingTaskBackup;
+        const myBackup = await store.maintenance.send(
+            new GetOngoingTaskInfoOperation("myBackup", "Backup")) as OngoingTaskBackup;
 
         assertThat(myBackup.retentionPolicy.minimumBackupAgeToKeep)
-            .isEqualTo(3600 * 100);
-        assertThat(myBackup.encrypted)
+            .isEqualTo("1.01:00:00");
+        assertThat(myBackup.isEncrypted)
             .isTrue();
     });
 });

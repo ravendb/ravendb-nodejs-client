@@ -1,5 +1,4 @@
 import { InMemoryDocumentSessionOperations } from "../InMemoryDocumentSessionOperations";
-import { BatchCommand } from "../../Commands/Batches/BatchCommand";
 import { throwError } from "../../../Exceptions";
 import { CONSTANTS } from "../../../Constants";
 import { SessionAfterSaveChangesEventArgs } from "../SessionEvents";
@@ -314,8 +313,8 @@ export class BatchOperation {
        }
     }
 
-    private _handleDelete(batchReslt: object) {
-        this._handleDeleteInternal(batchReslt, "DELETE");
+    private _handleDelete(batchResult: object) {
+        this._handleDeleteInternal(batchResult, "DELETE");
     }
 
     private _handleDeleteInternal(batchResult: object, type: CommandType): void {

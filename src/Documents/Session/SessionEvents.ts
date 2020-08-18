@@ -3,7 +3,6 @@ import { IMetadataDictionary } from "./IMetadataDictionary";
 import { IDocumentQueryCustomization } from "./IDocumentQueryCustomization";
 import { DocumentType } from "../DocumentAbstractions";
 import { Reference } from "../../Utility/Reference";
-import { escapeRegExp } from "tslint/lib/utils";
 
 export interface SessionEventsEmitter {
     on(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;

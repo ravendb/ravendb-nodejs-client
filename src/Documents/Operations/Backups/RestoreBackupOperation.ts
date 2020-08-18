@@ -1,5 +1,4 @@
 import { IServerOperation, OperationIdResult, OperationResultType } from "../OperationAbstractions";
-import { RestoreBackupConfiguration } from "./RestoreBackupConfiguration";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as stream from "readable-stream";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
