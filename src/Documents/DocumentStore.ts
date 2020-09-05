@@ -18,6 +18,7 @@ import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
 import { DatabaseChanges } from "./Changes/DatabaseChanges";
 import { DatabaseSmuggler } from "./Smuggler/DatabaseSmuggler";
 import { DatabaseChangesOptions } from "./Changes/DatabaseChangesOptions";
+import { IDisposable } from "../Types/Contracts";
 
 const log = getLogger({ module: "DocumentStore" });
 
@@ -233,6 +234,28 @@ export class DocumentStore extends DocumentStoreBase {
         return executor;
     }
 
+    requestTimeout(timeoutInMs: number): IDisposable;
+    requestTimeout(timeoutInMs: number, database: string): IDisposable;
+    requestTimeout(timeoutInMs: number, database?: string): IDisposable {
+        this.assertInitialized();
+
+        database = database || this.database;
+
+        if (!database) {
+            throwError("InvalidOperationException", "Cannot use requestTimeout without a default database defined " +
+                "unless 'database' parameter is provided. Did you forget to pass 'database' parameter?");
+        }
+
+        const requestExecutor = this.getRequestExecutor(database)
+        const oldTimeout = requestExecutor.defaultTimeout;
+
+        requestExecutor.defaultTimeout = timeoutInMs;
+
+        return {
+            dispose: () => requestExecutor.defaultTimeout = oldTimeout
+        };
+    }
+
     /**
      * Initializes this instance.
      */
@@ -327,7 +350,7 @@ export class DocumentStore extends DocumentStoreBase {
     }
 
     protected _createDatabaseChanges(node: DatabaseChangesOptions) {
-        return new DatabaseChanges(this.getRequestExecutor(this.database), node.databaseName, //TODO: this.database ???
+        return new DatabaseChanges(this.getRequestExecutor(node.databaseName), node.databaseName,
             () => this._databaseChanges.delete(this._getDatabaseChangesCacheKey(node)), node.nodeTag);
     }
 

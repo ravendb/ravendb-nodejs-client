@@ -266,6 +266,10 @@ export interface IDocumentStore extends IDisposable,
 
     smuggler: DatabaseSmuggler;
 
+    requestTimeout(timeoutInMs: number): IDisposable;
+
+    requestTimeout(timeoutInMs: number, database: string): IDisposable;
+
     addSessionListener(
         eventName: "failedRequest", eventHandler: (args: FailedRequestEventArgs) => void): this;
 

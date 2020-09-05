@@ -31,6 +31,7 @@ import { passResultToCallback } from "../Utility/PromiseUtil";
 import { AbstractIndexCreationTask } from "./Indexes/AbstractIndexCreationTask";
 import { SessionOptions } from "./Session/SessionOptions";
 import { DatabaseSmuggler } from "./Smuggler/DatabaseSmuggler";
+import { IDisposable } from "../Types/Contracts";
 
 export abstract class DocumentStoreBase
     extends EventEmitter
@@ -312,7 +313,11 @@ export abstract class DocumentStoreBase
     public registerEvents(session: DocumentSession): void;
     public registerEvents(requestExecutorOrSession: RequestExecutor | DocumentSession): void {
         if (requestExecutorOrSession instanceof RequestExecutor) {
-            //TODO: for (EventHandler<FailedRequestEventArgs> handler : onFailedRequest) {
+            /* TODO
+             for (EventHandler<FailedRequestEventArgs> handler : onFailedRequest) {
++            requestExecutor.addOnFailedRequestListener(handler);
+         }
+             */
         } else {
             this._eventHandlers.forEach(([eventName, eventHandler]) => {
                 requestExecutorOrSession.on(eventName, eventHandler);
@@ -323,6 +328,10 @@ export abstract class DocumentStoreBase
     public abstract maintenance: MaintenanceOperationExecutor;
 
     public abstract operations: OperationExecutor;
+
+    public abstract requestTimeout(timeoutInMs: number): IDisposable;
+
+    public abstract requestTimeout(timeoutInMs: number, database: string): IDisposable;
 
     protected _assertValidConfiguration(): void {
         this.conventions.validate();

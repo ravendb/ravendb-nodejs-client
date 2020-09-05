@@ -34,9 +34,12 @@ export abstract class RavenCommand<TResult> {
     public statusCode: number;
     public failedNodes: Map<ServerNode, Error>;
     protected _responseType: RavenCommandResponseType;
+    public timeout: number | undefined;
     protected _canCache: boolean;
     protected _canCacheAggressively: boolean;
     protected _selectedNodeTag: string;
+
+    public failoverTopologyEtag = -2;
 
     public abstract get isReadRequest(): boolean;
 

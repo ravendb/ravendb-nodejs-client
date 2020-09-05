@@ -171,7 +171,7 @@ describe("Request executor", function () {
             .then(() => assert.fail("Should have failed with 'AllTopologyNodesDownException'."),
                 err => {
                     assert.ok(err);
-                    assert.strictEqual(err.name, "AllTopologyNodesDownException" as RavenErrorType, err.stack);
+                    assert.strictEqual(err.name, "RavenException" as RavenErrorType, err.stack);
                 })
             .finally(() => {
                 executor.dispose();

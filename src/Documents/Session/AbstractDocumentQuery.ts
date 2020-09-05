@@ -1405,7 +1405,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     private _buildWith(queryText: StringBuilder) {
-        //TODO: need to aggragate with parameters into this instance parameter list, assert and strip parameters from with clauses
         for (const withToken of this._withTokens) {
             withToken.writeTo(queryText);
             queryText.append(os.EOL);

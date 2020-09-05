@@ -58,6 +58,10 @@ export class DocumentConventions {
     private _throwIfQueryPageSizeIsNotSet: boolean;
     private _maxNumberOfRequestsPerSession: number;
 
+    private _requestTimeout: number | undefined;
+    private _firstBroadcastAttemptTimeout: number | undefined;
+    private _secondBroadcastAttemptTimeout: number | undefined;
+
     private _readBalanceBehavior: ReadBalanceBehavior;
     private _maxHttpCacheSize: number;
 
@@ -117,6 +121,66 @@ export class DocumentConventions {
 
         this._dateUtilOpts = {};
         this._dateUtil = new DateUtil(this._dateUtilOpts);
+
+        this._firstBroadcastAttemptTimeout = 5_000;
+        this._secondBroadcastAttemptTimeout = 30_000;
+    }
+
+    public get requestTimeout() {
+        return this._requestTimeout;
+    }
+
+    public set requestTimeout(requestTimeout: number) {
+        this._assertNotFrozen();
+        this._requestTimeout = requestTimeout;
+    }
+
+    /**
+     * Get the timeout for the second broadcast attempt.
+     * Default: 30 seconds
+     *
+     * Upon failure of the first attempt the request executor will resend the command to all nodes simultaneously.
+     * @return broadcast timeout
+     */
+    public get secondBroadcastAttemptTimeout() {
+        return this._secondBroadcastAttemptTimeout;
+    }
+
+    /**
+     * Set the timeout for the second broadcast attempt.
+     * Default: 30 seconds
+     *
+     * Upon failure of the first attempt the request executor will resend the command to all nodes simultaneously.
+     *
+     * @param secondBroadcastAttemptTimeout broadcast timeout
+     */
+    public set secondBroadcastAttemptTimeout(secondBroadcastAttemptTimeout: number) {
+        this._assertNotFrozen();
+        this._secondBroadcastAttemptTimeout = secondBroadcastAttemptTimeout;
+    }
+
+    /**
+     * Get the timeout for the first broadcast attempt.
+     * Default: 5 seconds
+     *
+     * First attempt will send a single request to a selected node.
+     * @return broadcast timeout
+     */
+    public get firstBroadcastAttemptTimeout() {
+        return this._firstBroadcastAttemptTimeout;
+    }
+
+    /**
+     * Set the timeout for the first broadcast attempt.
+     * Default: 5 seconds
+     *
+     * First attempt will send a single request to a selected node.
+     *
+     * @param firstBroadcastAttemptTimeout broadcast timeout
+     */
+    public set firstBroadcastAttemptTimeout(firstBroadcastAttemptTimeout: number) {
+        this._assertNotFrozen();
+        this._firstBroadcastAttemptTimeout = firstBroadcastAttemptTimeout;
     }
 
     public get objectMapper(): TypesAwareObjectMapper {

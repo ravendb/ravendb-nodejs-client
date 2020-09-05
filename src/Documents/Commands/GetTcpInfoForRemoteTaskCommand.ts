@@ -10,6 +10,7 @@ export class GetTcpInfoForRemoteTaskCommand extends RavenCommand<TcpConnectionIn
     private readonly _remoteTask: string;
     private readonly _tag: string;
     private _verifyDatabase: boolean;
+    private _requestedNode: ServerNode;
 
     public constructor(tag: string, remoteDatabase: string, remoteTask: string, verifyDatabase: boolean = false) {
         super();
@@ -39,6 +40,8 @@ export class GetTcpInfoForRemoteTaskCommand extends RavenCommand<TcpConnectionIn
             uri += "&verify-database=true";
         }
 
+        this._requestedNode = node;
+
         return {
             method: "GET",
             uri
@@ -51,6 +54,10 @@ export class GetTcpInfoForRemoteTaskCommand extends RavenCommand<TcpConnectionIn
         }
 
         return this._parseResponseDefaultAsync(bodyStream);
+    }
+
+    public getRequestedNode() {
+        return this._requestedNode;
     }
 
     get isReadRequest(): boolean {

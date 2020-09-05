@@ -6,6 +6,7 @@ import * as tls from "tls";
 import { Certificate } from "../Auth/Certificate";
 import { PeerCertificate } from "tls";
 import { getError } from "../Exceptions";
+import { TcpConnectionInfo } from "../ServerWide/Commands/GetTcpInfoCommand";
 
 export class TcpUtils {
     public static async connect(
@@ -60,5 +61,22 @@ export class TcpUtils {
                 socket.once("error", reject);
             });
         }
+    }
+
+    public static async connectWithPriority(info: TcpConnectionInfo, serverCertificate: string,
+                                            clientCertificate: IAuthOptions): Promise<[Socket, string]> {
+        if (info.urls) {
+            for (const url of info.urls) {
+                try {
+                    const socket = await this.connect(url, serverCertificate, clientCertificate);
+                    return [socket, url];
+                } catch {
+                    // ignored
+                }
+            }
+        }
+
+        const socket = await this.connect(info.url, serverCertificate, clientCertificate);
+        return [socket, info.url];
     }
 }

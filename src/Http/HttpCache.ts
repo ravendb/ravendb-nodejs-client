@@ -106,6 +106,7 @@ export class HttpCacheItem {
     public changeVector: string;
     public payload: string;
     public lastServerUpdate: Date;
+    public flags: ItemFlags;
 
     public cache: HttpCache;
 
@@ -113,3 +114,7 @@ export class HttpCacheItem {
         this.lastServerUpdate = moment().toDate();
     }
 }
+
+export type ItemFlags =
+    "None"
+    | "NotFound";

@@ -39,7 +39,14 @@ export class GetClusterTopologyCommand extends RavenCommand<ClusterTopologyRespo
         }
 
         let body: string = null;
-        await this._defaultPipeline(x => body = x).process(bodyStream)
+        await this._pipeline<ClusterTopologyResponse>()
+            .collectBody(b => body = b)
+            .parseJsonSync()
+            .objectKeysTransform({
+                defaultTransform: "camel",
+                ignorePaths: [/topology\.(members|promotables|watchers|allNodes)\./i]
+            })
+            .process(bodyStream)
             .then(result => {
                 const clusterTpl = Object.assign(new ClusterTopology(), result.topology);
                 this.result = Object.assign(result as ClusterTopologyResponse, { topology: clusterTpl });

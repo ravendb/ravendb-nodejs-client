@@ -49,8 +49,6 @@ export class EntityToJson {
         return document;
     }
 
-    //TODO: fill missing properties?
-
     //TODO: internal static object ConvertToBlittableForCompareExchangeIfNeeded(
 
     private static _convertEntityToJsonInternal(entity: object, conventions: DocumentConventions, documentInfo: DocumentInfo, removeIdentityProperty = true) {
@@ -174,7 +172,7 @@ export class EntityToJson {
 
             let entity;
 
-            //TODO: if track!
+            //TODO: if track! -> RegisterMissingProperties
 
             const documentTypeFromConventions = conventions.getJsType(id, document);
 
