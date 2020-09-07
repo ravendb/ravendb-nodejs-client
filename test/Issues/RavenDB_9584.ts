@@ -98,7 +98,7 @@ async function setup(store: IDocumentStore) {
     assertThat(results)
         .hasSize(1);
 
-    assertThat(results[0].indexName)
+    assertThat(results[0].index)
         .isEqualTo(indexDefinition.name);
 
     {

@@ -9,11 +9,6 @@ import { IRaftCommand } from "../../../Http/IRaftCommand";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export interface PutConnectionStringResult {
-    /**
-     * @deprecated ETag is not supported anymore. Will be removed in next major version of the product. Please use raftCommandIndex instead
-     */
-    eTag?: number;
-
     raftCommandIndex: number;
 }
 

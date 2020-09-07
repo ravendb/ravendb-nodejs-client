@@ -109,6 +109,7 @@ export class IndexDefinitionBuilder {
             indexDefinition.priority = this.priority;
             indexDefinition.outputReduceToCollection = this.outputReduceToCollection;
             indexDefinition.patternForOutputReduceToCollectionReferences = this.patternForOutputReduceToCollectionReferences;
+            indexDefinition.patternReferencesCollectionName = this.patternReferencesCollectionName;
 
             const suggestions: { [suggestionOption: string]: boolean } = Array.from(this.suggestionsOptions)
                 .reduce((result, item) =>

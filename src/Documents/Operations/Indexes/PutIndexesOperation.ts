@@ -14,7 +14,7 @@ import { IRaftCommand } from "../../../Http/IRaftCommand";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export interface PutIndexResult {
-    indexName: string;
+    index: string;
 }
 
 export class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult[]> {

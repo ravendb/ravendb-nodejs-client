@@ -64,9 +64,5 @@ export class RemoveConnectionStringCommand<T extends ConnectionString>
 }
 
 export interface RemoveConnectionStringResult {
-    /**
-     * @deprecated ETag is not supported anymore. Will be removed in next major version of the product. Please use RaftCommandIndex instead.
-     */
-    eTag?: number;
     raftCommandIndex: number;
 }

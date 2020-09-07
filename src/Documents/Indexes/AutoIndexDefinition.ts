@@ -3,7 +3,7 @@ import { AutoIndexFieldOptions } from "./AutoIndexFieldOptions";
 
 
 export interface AutoIndexDefinition {
-    indexType: IndexType;
+    type: IndexType;
     name: string;
     priority: IndexPriority;
     state: IndexState;

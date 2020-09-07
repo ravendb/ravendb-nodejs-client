@@ -50,6 +50,22 @@ export class GetDatabaseRecordCommand extends RavenCommand<DatabaseRecordWithEta
             this._throwInvalidResponse();
         }
 
-        return this._parseResponseDefaultAsync(bodyStream);
+        let body: string = null;
+        this.result = await this._defaultPipeline(_ => body = _)
+            .collectBody()
+            .objectKeysTransform({
+                defaultTransform: "camel",
+                ignorePaths: [
+                    /^indexes\.[^.]+$/i,
+                    /^sorters\.[^.]+$/i,
+                    /^autoIndexes\.[^.]+$/i,
+                    /^settings\.[^.]+$/i,
+                    /^indexesHistory\.[^.]+$/i,
+                    /^ravenConnectionStrings\.[^.]+$/i,
+                    /^sqlConnectionStrings\.[^.]+$/i,
+                ]
+            })
+            .process(bodyStream);
+        return body;
     }
 }

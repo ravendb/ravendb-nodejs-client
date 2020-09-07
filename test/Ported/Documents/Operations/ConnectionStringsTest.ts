@@ -34,8 +34,11 @@ describe("ConnectionStringsTest", function () {
             name: "s1"
         });
 
-        await store.maintenance.send(new PutConnectionStringOperation(ravenConnectionString1));
+        const putResult = await store.maintenance.send(new PutConnectionStringOperation(ravenConnectionString1));
         await store.maintenance.send(new PutConnectionStringOperation(sqlConnectionString1));
+
+        assertThat(putResult.raftCommandIndex)
+            .isGreaterThan(0);
 
         const connectionStrings = await store.maintenance.send(new GetConnectionStringsOperation());
         assertThat(connectionStrings.ravenConnectionStrings)
@@ -68,7 +71,9 @@ describe("ConnectionStringsTest", function () {
         assertThat(sqlOnly.sqlConnectionStrings)
             .hasSize(1);
 
-        await store.maintenance.send(new RemoveConnectionStringOperation(Object.values(sqlOnly.sqlConnectionStrings)[0]));
+        const removeResult = await store.maintenance.send(new RemoveConnectionStringOperation(Object.values(sqlOnly.sqlConnectionStrings)[0]));
+        assertThat(removeResult)
+            .isGreaterThan(0);
 
         const afterDelete = await store.maintenance.send(
             new GetConnectionStringsOperation("s1", "Sql"));
