@@ -94,7 +94,12 @@ async function setup(store: IDocumentStore) {
 
     const putIndexesOperation = new PutIndexesOperation(indexDefinition);
 
-    await store.maintenance.send(putIndexesOperation);
+    const results = await store.maintenance.send(putIndexesOperation);
+    assertThat(results)
+        .hasSize(1);
+
+    assertThat(results[0].indexName)
+        .isEqualTo(indexDefinition.name);
 
     {
         const session = store.openSession();
