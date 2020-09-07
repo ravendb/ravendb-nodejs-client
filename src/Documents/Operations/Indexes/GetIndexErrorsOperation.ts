@@ -43,7 +43,7 @@ export class GetIndexErrorsCommand extends RavenCommand<IndexErrors[]> {
             uri += "?";
 
             for (const indexName of this._indexNames) {
-                uri += "&name=" + indexName;
+                uri += "&name=" + this._urlEncode(indexName);
             }
         }
 

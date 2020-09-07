@@ -67,9 +67,11 @@ export class GetTermsCommand extends RavenCommand<string[]> {
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
-        const uri = node.url + "/databases/" + node.database + "/indexes/terms?name=" +
-            encodeURIComponent(this._indexName) + "&field=" + encodeURIComponent(this._field) +
-            "&fromValue=" + (this._fromValue || "") + "&pageSize=" + (this._pageSize || "");
+        const uri = node.url + "/databases/" + node.database
+            + "/indexes/terms?name=" + encodeURIComponent(this._indexName)
+            + "&field=" + encodeURIComponent(this._field)
+            + "&fromValue=" + (this._fromValue || "")
+            + "&pageSize=" + (this._pageSize || "");
 
         return { uri };
     }

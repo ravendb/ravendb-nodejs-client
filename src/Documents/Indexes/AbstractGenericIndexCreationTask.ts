@@ -20,6 +20,7 @@ export abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
 
     protected outputReduceToCollection: string;
     protected patternForOutputReduceToCollectionReferences: string;
+    protected patternReferencesCollectionName: string;
 
     // noinspection TypeScriptAbstractClassConstructorCanBeMadeProtected
     public constructor() {

@@ -194,7 +194,7 @@ export class RequestExecutor implements IDisposable {
 
     protected _lastKnownUrls: string[];
 
-    protected _clientConfigurationEtag: number = 0;
+    protected _clientConfigurationEtag: string = "0";
 
     protected _topologyEtag: number = 0;
 
@@ -607,7 +607,7 @@ export class RequestExecutor implements IDisposable {
         sessionInfo: SessionInfo): Promise<void> {
 
         try {
-            if (!this._firstTopologyUpdatePromise || topologyUpdate === this._firstTopologyUpdatePromise) {
+            if (!this._firstTopologyUpdatePromise) {
                 if (!this._lastKnownUrls) {
                     throwError("InvalidOperationException",
                         "No known topology and no previously known one, cannot proceed, likely a bug");
@@ -940,30 +940,36 @@ export class RequestExecutor implements IDisposable {
                 const cancelTask = setTimeout(() => abortController.abort(), timeout);
 
                 try {
-                    await this._send(chosenNode, command, sessionInfo, request);
+                    const response = await this._send(chosenNode, command, sessionInfo, request);
                     clearTimeout(cancelTask);
+                    return response;
                 } catch (error) {
+                    if (error.name === "AbortError") {
+                        const timeoutException = getError("TimeoutException", "The request for " + request.uri + " failed with timeout after " + TimeUtil.millisToTimeSpan(timeout), error);
+                        if (!shouldRetry) {
+                            if (!command.failedNodes) {
+                                command.failedNodes = new Map<ServerNode, Error>();
+                            }
 
-                    const timeoutException = getError("TimeoutException", "The request for " + request.uri + " failed with timeout after " + TimeUtil.millisToTimeSpan(timeout), error);
-                    if (!shouldRetry) {
-                        if (!command.failedNodes) {
-                            command.failedNodes = new Map<ServerNode, Error>();
+                            command.failedNodes.set(chosenNode, timeoutException);
+                            throw timeoutException;
                         }
 
-                        command.failedNodes.set(chosenNode, timeoutException);
-                        throw timeoutException;
+                        if (!await this._handleServerDown(url, chosenNode, nodeIndex, command, request, null,  "", timeoutException, sessionInfo, shouldRetry)) {
+                            this._throwFailedToContactAllNodes(command, request);
+                        }
+                        return null;
                     }
-
-                    if (!await this._handleServerDown(url, chosenNode, nodeIndex, command, request, null,  "", timeoutException, sessionInfo, shouldRetry)) {
-                        this._throwFailedToContactAllNodes(command, request);
-                    }
-
-                    return null;
+                    throw error;
                 }
             } else {
                 return await this._send(chosenNode, command, sessionInfo, request);
             }
         } catch (e) {
+            if (e.name === "AllTopologyNodesDownException") {
+                throw e;
+            }
+
             if (!shouldRetry) {
                 throw e;
             }
@@ -1019,7 +1025,6 @@ export class RequestExecutor implements IDisposable {
         if (!this._disableClientConfigurationUpdates) {
             req.headers[HEADERS.CLIENT_CONFIGURATION_ETAG] = `"${this._clientConfigurationEtag}"`;
         }
-
         if (sessionInfo && sessionInfo.lastClusterTransactionIndex) {
             req.headers[HEADERS.LAST_KNOWN_CLUSTER_TRANSACTION_INDEX] =
                 sessionInfo.lastClusterTransactionIndex;
@@ -1405,47 +1410,41 @@ export class RequestExecutor implements IDisposable {
 
         command.failedNodes = new Map<ServerNode, Error>(); // clean the current failures
 
-        const broadcastTasks = new Map<Promise<void>, BroadcastState<TResult>>();
+        const broadcastTasks = new Map<Promise<number>, BroadcastState<TResult>>();
 
         this._sendToAllNodes(broadcastTasks, sessionInfo, broadcastCommand);
 
         return this._waitForBroadcastResult(command, broadcastTasks);
     }
 
-    private async _waitForBroadcastResult<TResult>(command: RavenCommand<TResult>, tasks: Map<Promise<void>, BroadcastState<TResult>>): Promise<TResult> {
+    private async _waitForBroadcastResult<TResult>(command: RavenCommand<TResult>, tasks: Map<Promise<number>, BroadcastState<TResult>>): Promise<TResult> {
         while (tasks.size) {
+            let error: Error;
             try {
-                await Promise.race(Array.from(tasks.keys()));
+                const completed = await Promise.race(Array.from(tasks.keys()));
+
+                for (let state of Array.from(tasks.values())) {
+                    state.abort?.abort();
+                }
+
+                const completedItem = Array.from(tasks.values()).find(x => x.index === completed);
+
+                this._nodeSelector.restoreNodeIndex(completed);
+                return completedItem.command.result;
             } catch (e) {
-                /* TODO
-                CompletableFuture<Void> completed = tasks
-                        .keySet()
-                        .stream()
-                        .filter(CompletableFuture::isDone)
-                        .findFirst()
-                        .orElse(null);
+                error = e.error;
+                const failedIndex = e.index;
 
-                BroadcastState<TResult> failed = tasks.get(completed);
-                ServerNode node = _nodeSelector.getTopology().getNodes().get(failed.index);
+                const failedPair = Array.from(tasks.entries())
+                    .find(x => x[1].index === failedIndex);
+                const node = this._nodeSelector.getTopology().nodes[failedIndex];
 
-                command.getFailedNodes().put(node, e.getCause() != null ? (Exception) e.getCause() : e);
+                command.failedNodes.set(node, error);
 
-                _nodeSelector.onFailedRequest(failed.getIndex());
+                this._nodeSelector.onFailedRequest(failedIndex);
 
-                tasks.remove(completed);
-                continue;
-                 */
+                tasks.delete(failedPair[0]);
             }
-
-            for (let state of Array.from(tasks.values())) {
-                state.abort?.abort();
-            }
-
-
-            /* TODO
-            this._nodeSelector.restoreNodeIndex(tasks.get(command).index);
-            return tasks.get(command).command.result;
-             */
         }
 
         const exceptions = Array.from(command.failedNodes
@@ -1453,10 +1452,10 @@ export class RequestExecutor implements IDisposable {
             .map(x => x[0].url + ": " + x[1].message)
             .join(", ");
 
-        throwError("AllTopologyNodesDownException", "Broadcasting " + command + " failed: " + exceptions);
+        throwError("AllTopologyNodesDownException", "Broadcasting " + command.constructor.name + " failed: " + exceptions);
     }
 
-    private _sendToAllNodes<TResult>(tasks: Map<Promise<void>, BroadcastState<TResult>>, sessionInfo: SessionInfo, command: IBroadcast) {
+    private _sendToAllNodes<TResult>(tasks: Map<Promise<number>, BroadcastState<TResult>>, sessionInfo: SessionInfo, command: IBroadcast) {
         for (let index = 0; index < this._nodeSelector.getTopology().nodes.length; index++) {
             const state = new BroadcastState<TResult>();
             state.command = command.prepareToBroadcast(this.conventions) as unknown as RavenCommand<TResult>;
@@ -1466,12 +1465,20 @@ export class RequestExecutor implements IDisposable {
             state.command.timeout = this.secondBroadcastAttemptTimeout;
 
             let abortController: AbortController;
-            const task: Promise<void> = this.execute(state.command, sessionInfo, {
+            const task: Promise<number> = this.execute(state.command, sessionInfo, {
                 chosenNode: state.node,
                 nodeIndex: null,
                 shouldRetry: false,
                 abortRef: a => abortController = a
-            });
+            })
+                .then(() => index)
+                .catch(e => {
+                    throw {
+                        index,
+                        error: e
+                    };
+                })
+
             state.abort = abortController;
             tasks.set(task, state);
         }

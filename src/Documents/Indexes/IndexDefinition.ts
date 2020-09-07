@@ -30,6 +30,7 @@ export class IndexDefinition {
     public outputReduceToCollection: string;
     public reduceOutputIndex: number;
     public patternForOutputReduceToCollectionReferences: string;
+    public patternReferencesCollectionName: string;
 
     public toString(): string {
         return this.name;
@@ -73,6 +74,7 @@ export class IndexDefinitionBuilder {
     public spatialIndexesStrings: { [key: string]: SpatialOptions };
     public outputReduceToCollection: string;
     public patternForOutputReduceToCollectionReferences: string;
+    public patternReferencesCollectionName: string;
     public additionalSources: { [key: string]: string };
     public configuration: IndexConfiguration;
 

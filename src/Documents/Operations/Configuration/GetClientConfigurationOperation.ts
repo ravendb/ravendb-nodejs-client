@@ -37,11 +37,19 @@ export class GetClientConfigurationCommand extends RavenCommand<GetClientConfigu
             this._throwInvalidResponse();
         }
 
-        return this._parseResponseDefaultAsync(bodyStream);
+        const body = await this._parseResponseDefaultAsync(bodyStream);
+
+        // since server can send etag bigger than Number.MAX_SAFE_INTEGER we need to parse Etag as string
+        const match = body.match("\"Etag\":(-?[0-9]+)");
+        if (match) {
+            this.result.etag = match[1];
+        }
+
+        return body;
     }
 }
 
 export interface GetClientConfigurationOperationResult {
-    etag: number;
+    etag: string;
     configuration: ClientConfiguration;
 }

@@ -100,6 +100,11 @@ export class JavaAssertionBuilder {
         return this;
     }
 
+    public isLessThan(v) {
+        assert.ok(this._value < v, `${this._value} is not less than ${v}.`);
+        return this;
+    }
+
     public allMatch(matcher: (v: any) => boolean) {
         this._value.forEach(v => {
             assert.ok(matcher(v));

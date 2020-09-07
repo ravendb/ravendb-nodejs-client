@@ -14,6 +14,7 @@ export interface IndexStats {
     reduceErrors: number;
     reduceOutputCollection: string;
     reduceOutputReferencePattern: string;
+    patternReferencesCollectionName: string;
     mappedPerSecondRate: number;
     reducedPerSecondRate: number;
     maxNumberOfOutputsPerDocument: number;

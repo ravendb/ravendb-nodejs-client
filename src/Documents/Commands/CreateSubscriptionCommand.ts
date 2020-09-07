@@ -24,7 +24,7 @@ export class CreateSubscriptionCommand extends RavenCommand<CreateSubscriptionRe
         let uri = node.url + "/databases/" + node.database + "/subscriptions";
 
         if (this._id) {
-            uri += "?id=" + this._id;
+            uri += "?id=" + this._urlEncode(this._id);
         }
 
         const body = this._serializer.serialize(this._options);

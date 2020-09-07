@@ -14,7 +14,7 @@ export class GetSubscriptionStateCommand extends RavenCommand<SubscriptionState>
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
-        const uri = node.url + "/databases/" + node.database + "/subscriptions/state?name=" + this._subscriptionName;
+        const uri = node.url + "/databases/" + node.database + "/subscriptions/state?name=" + this._urlEncode(this._subscriptionName);
 
         return {
             uri

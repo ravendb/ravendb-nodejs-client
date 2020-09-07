@@ -151,11 +151,11 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             query += `&startsWith=${encodeURIComponent(this._startsWith)}`;
 
             if (this._matches) {
-                query += `&matches=${this._matches}`;
+                query += `&matches=${encodeURIComponent(this._matches)}`;
             }
 
             if (this._exclude) {
-                query += `&exclude=${this._exclude}`;
+                query += `&exclude=${encodeURIComponent(this._exclude)}`;
             }
 
             if (this._startAfter) {
@@ -165,7 +165,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
 
         if (this._includes) {
             for (const include of this._includes) {
-                query += `&include=${include}`;
+                query += `&include=${encodeURIComponent(include)}`;
             }
         }
 
@@ -173,7 +173,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             query += `&counter=${COUNTERS.ALL}`;
         } else if (this._counters && this._counters.length) {
             for (const counter of this._counters) {
-                query += `&counter=${counter}`;
+                query += `&counter=${encodeURIComponent(counter)}`;
             }
         }
 
