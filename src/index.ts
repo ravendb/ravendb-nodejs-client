@@ -283,7 +283,6 @@ export * from "./Documents/Indexes/Enums";
 export * from "./Documents/Indexes/IndexDefinition";
 export * from "./Documents/Indexes/Errors";
 export * from "./Documents/Indexes/IndexDefinitionHelper";
-export * from "./Documents/Indexes/MapReduce/OutputReduceToCollectionReference";
 export * from "./Documents/Indexes/IndexFieldOptions";
 export * from "./Documents/Indexes/Spatial";
 export * from "./Documents/Indexes/IndexingStatus";
