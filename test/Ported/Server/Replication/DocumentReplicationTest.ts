@@ -237,11 +237,23 @@ _describe(
 
                             const taskResults = await replication.setupReplication(source, destination);
 
+                            {
+                                const session = source.openSession();
+                                const user1 = new User();
+                                user1.name = "Value";
+
+                                await session.store(user1, "docs/1");
+                                await session.saveChanges();
+                            }
+
+                            await replication.waitForDocumentToReplicate(destination, "docs/1", 10_000, User);
+
                             const taskId = taskResults[0].taskId;
                             assertThat(taskId)
                                 .isGreaterThan(0);
 
-                            const ongoingTask = await source.maintenance.send(new GetOngoingTaskInfoOperation(taskId, "Replication")) as OngoingTaskReplication;
+                            const ongoingTask = await source.maintenance.send(
+                                new GetOngoingTaskInfoOperation(taskId, "Replication")) as OngoingTaskReplication;
 
                             assertThat(ongoingTask)
                                 .isNotNull();

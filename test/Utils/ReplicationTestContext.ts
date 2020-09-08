@@ -37,6 +37,7 @@ export class ReplicationTestContext {
     }
 
     public async setupReplication(fromStore: IDocumentStore, ...destinations: IDocumentStore[]): Promise<ModifyOngoingTaskResult[]> {
+        const result = [] as ModifyOngoingTaskResult[];
 
         for (const store of destinations) {
             const databaseWatcher: ExternalReplication = {
@@ -45,8 +46,10 @@ export class ReplicationTestContext {
             };
 
             await this._modifyReplicationDestination(databaseWatcher);
-            await ReplicationTestContext.addWatcherToReplicationTopology(fromStore, databaseWatcher);
+            result.push(await ReplicationTestContext.addWatcherToReplicationTopology(fromStore, databaseWatcher));
         }
+
+        return result;
     }
 
     public static async addWatcherToReplicationTopology(store: IDocumentStore, watcher: ExternalReplicationBase, ...urls: string[]): Promise<ModifyOngoingTaskResult> {
