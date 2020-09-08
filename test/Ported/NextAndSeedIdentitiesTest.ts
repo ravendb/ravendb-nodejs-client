@@ -10,6 +10,7 @@ import {
 import { User } from "../Assets/Entities";
 import { NextIdentityForOperation } from "../../src/Documents/Operations/Identities/NextIdentityForOperation";
 import { SeedIdentityForOperation } from "../../src/Documents/Operations/Identities/SeedIdentityForOperation";
+import { assertThat } from "../Utils/AssertExtensions";
 
 describe("NextAndSeedIdentitiesTest", function () {
 
@@ -38,6 +39,11 @@ describe("NextAndSeedIdentitiesTest", function () {
             await session.store(user, "users|");
             await session.saveChanges();
         }
+
+        const identities = await store.maintenance.send(new GetIdentitiesOperation());
+        assertThat(identities)
+            .hasSize(1)
+            .containsEntry("users|", 3);
 
         {
             const session = store.openSession();

@@ -46,7 +46,10 @@ import { TimeUtil } from "../../src/Utility/TimeUtil";
             const backupOperationResult = await store.maintenance.send(operation);
 
             const startBackupOperation = new StartBackupOperation(true, backupOperationResult.taskId);
-            await store.maintenance.send(startBackupOperation);
+            const send = await store.maintenance.send(startBackupOperation);
+
+            assertThat(send.operationId)
+                .isGreaterThan(0);
 
             await waitForBackup(backupDir);
 
