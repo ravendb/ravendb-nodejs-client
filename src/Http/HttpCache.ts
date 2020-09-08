@@ -22,6 +22,10 @@ export class HttpCache implements IDisposable {
         this._items = null;
     }
 
+    public clear() {
+        this._items.clear();
+    }
+
     public set(url: string, changeVector: string, result: string) {
         const httpCacheItem = new HttpCacheItem();
         httpCacheItem.changeVector = changeVector;

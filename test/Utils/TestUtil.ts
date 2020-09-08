@@ -20,8 +20,8 @@ import "../../src/Utility/Polyfills";
 import {
     CreateDatabaseOperation,
     DatabaseRecord,
-    DeleteDatabasesOperation, DocumentConventions,
-    DocumentStore, GetClusterTopologyCommand,
+    DeleteDatabasesOperation, DocumentConventions, DocumentSession,
+    DocumentStore, DocumentType, GetClusterTopologyCommand,
     IDocumentSession, ServerNode
 } from "../../src";
 import * as rimraf from "rimraf";
@@ -29,8 +29,9 @@ import { ChildProcess } from "child_process";
 import { TypeUtil } from "../../src/Utility/TypeUtil";
 import * as BluebirdPromise from "bluebird";
 import { getLogger } from "../../src/Utility/LogUtil";
-import { no } from "change-case";
 import { AdminJsConsoleOperation } from "./AdminJsConsoleOperation";
+import { Stopwatch } from "../../src/Utility/Stopwatch";
+import { delay } from "../../src/Utility/PromiseUtil";
 
 const log = getLogger({ module: "TestDriver" });
 
@@ -408,7 +409,10 @@ class TestCloudServiceLocator extends RavenServerLocator {
     }
 }
 
-export class ClusterTestContext extends RavenTestDriver {
+export class ClusterTestContext extends RavenTestDriver implements IDisposable {
+
+    private _toDispose: IDisposable[] = [];
+
     private _dbCounter = 1;
 
     public getDatabaseName(): string {
@@ -462,6 +466,81 @@ export class ClusterTestContext extends RavenTestDriver {
         }
 
         return cluster;
+    }
+
+    public async waitForDocumentInCluster<T extends object>(documentInfo: DocumentType<T>,
+                                       session: DocumentSession,
+                                       docId: string,
+                                       predicate: (value: T) => boolean,
+                                       timeout: number) {
+        const nodes = session.requestExecutor.getTopologyNodes();
+        const stores = this._getDocumentStores(nodes, true);
+
+        return this._waitForDocumentInClusterInternal(documentInfo, docId, predicate, timeout, stores);
+    }
+
+    private async _waitForDocumentInClusterInternal<T extends object>(documentInfo: DocumentType<T>, docId: string, predicate: (value: T) => boolean,
+                                                                timeout: number, stores: DocumentStore[]) {
+        for (const store of stores) {
+            await this.waitForDocument(documentInfo, store, docId, predicate, timeout);
+        }
+
+        return true;
+    }
+
+    public async waitForDocument<T extends object>(documentInfo: DocumentType<T>,
+                                             store: IDocumentStore,
+                                             docId: string,
+                                             predicate: (value: T) => void,
+                                             timeout: number) {
+        const sw = Stopwatch.createStarted();
+
+        let ex: Error;
+
+        while (sw.elapsed < timeout) {
+            const session = store.openSession(store.database);
+
+            try {
+                const doc = await session.load(docId, documentInfo);
+                if (doc) {
+                    if (!predicate || predicate(doc)) {
+                        return true;
+                    }
+                }
+            } catch (e) {
+                ex = e;
+            }
+
+            await delay(100);
+        }
+
+        return false;
+    }
+
+    private _getDocumentStores(nodes: ServerNode[], disableTopologyUpdates: boolean) {
+        const stores: DocumentStore[] = [];
+
+        for (const node of nodes) {
+            const store = new DocumentStore(node.url, node.database);
+            store.conventions.disableTopologyUpdates = disableTopologyUpdates;
+
+            store.initialize();
+            stores.push(store);
+
+            this._toDispose.push(store);
+        }
+
+        return stores;
+    }
+
+    dispose(): void {
+        for (const disposable of this._toDispose) {
+            try {
+                disposable.dispose()
+            } catch {
+                // ignore
+            }
+        }
     }
 }
 
