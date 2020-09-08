@@ -5,11 +5,12 @@ import {
     AddEtlOperation,
     UpdateEtlOperation,
     ResetEtlOperation,
-    SqlEtlConfiguration, SqlEtlTable, Transformation
+    SqlEtlConfiguration, SqlEtlTable, Transformation, GetOngoingTaskInfoOperation
 } from "../../../../../src";
 import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../../../Utils/TestUtil";
 import { User } from "../../../../Assets/Entities";
 import { assertThat } from "../../../../Utils/AssertExtensions";
+import { OngoingTaskSqlEtlDetails } from "../../../../../src/Documents/Operations/OngoingTasks/OngoingTask";
 
 (RavenTestContext.isPullRequest ? describe.skip : describe)(
     `${RavenTestContext.isPullRequest ? "[Skipped on PR] " : ""}` +
@@ -59,6 +60,36 @@ import { assertThat } from "../../../../Utils/AssertExtensions";
             .isGreaterThan(0);
         assertThat(etlResult.taskId)
             .isGreaterThan(0);
+
+        // and try to read ongoing sql task
+
+        const ongoingTask = await store.maintenance.send(new GetOngoingTaskInfoOperation(etlResult.taskId, "SqlEtl")) as OngoingTaskSqlEtlDetails;
+
+        assertThat(ongoingTask)
+            .isNotNull();
+
+        assertThat(ongoingTask.taskId)
+            .isEqualTo(etlResult.taskId);
+        assertThat(ongoingTask.taskType)
+            .isEqualTo("SqlEtl");
+        assertThat(ongoingTask.responsibleNode)
+            .isNotNull();
+        assertThat(ongoingTask.taskState)
+            .isEqualTo("Enabled");
+        assertThat(ongoingTask.taskName)
+            .isEqualTo("etlToDst");
+
+        const configuration = ongoingTask.configuration;
+        const transforms = configuration.transforms;
+        assertThat(transforms)
+            .hasSize(1);
+        assertThat(transforms[0].applyToAllDocuments)
+            .isTrue();
+
+        assertThat(configuration.sqlTables)
+            .hasSize(1);
+        assertThat(configuration.sqlTables[0].tableName)
+            .isEqualTo("Users");
     });
 
     it("canAddEtlWithScript", async () => {
