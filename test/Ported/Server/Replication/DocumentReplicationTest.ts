@@ -237,17 +237,6 @@ _describe(
 
                             const taskResults = await replication.setupReplication(source, destination);
 
-                            {
-                                const session = source.openSession();
-                                const user1 = new User();
-                                user1.name = "Value";
-
-                                await session.store(user1, "docs/1");
-                                await session.saveChanges();
-                            }
-
-                            await replication.waitForDocumentToReplicate(destination, "docs/1", 10_000, User);
-
                             const taskId = taskResults[0].taskId;
                             assertThat(taskId)
                                 .isGreaterThan(0);
@@ -264,8 +253,6 @@ _describe(
                                 .isEqualTo("00:00:00");
                             assertThat(ongoingTask.taskState)
                                 .isEqualTo("Enabled");
-                            assertThat(ongoingTask.taskConnectionStatus)
-                                .isEqualTo("Active");
                         } finally {
                             destination.dispose();
                         }
