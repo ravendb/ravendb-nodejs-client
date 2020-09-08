@@ -6,13 +6,14 @@ import {
     AddEtlOperation,
     UpdateEtlOperation,
     ResetEtlOperation,
-    RavenEtlConfiguration, Transformation
+    RavenEtlConfiguration, Transformation, GetOngoingTaskInfoOperation
 } from "../../../../../src";
 import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../../../Utils/TestUtil";
 import { assertThat } from "../../../../Utils/AssertExtensions";
 import { User } from "../../../../Assets/Entities";
 import { ReplicationTestContext } from "../../../../Utils/ReplicationTestContext";
 import { DeleteOngoingTaskOperation } from "../../../../../src/Documents/Operations/OngoingTasks/DeleteOngoingTaskOperation";
+import { OngoingTaskRavenEtlDetails } from "../../../../../src/Documents/Operations/OngoingTasks/OngoingTask";
 
 (RavenTestContext.isPullRequest ? describe.skip : describe)(
     `${RavenTestContext.isPullRequest ? "[Skipped on PR] " : ""}` +
@@ -72,6 +73,22 @@ import { DeleteOngoingTaskOperation } from "../../../../../src/Documents/Operati
                     .isGreaterThan(0);
 
                 await replication.waitForDocumentToReplicate(dst, "users/1", 10 * 1000, User); //TODO: assert document not null!
+
+                const ongoingTask = await src.maintenance.send(new GetOngoingTaskInfoOperation(etlResult.taskId, "RavenEtl")) as OngoingTaskRavenEtlDetails;
+
+                assertThat(ongoingTask)
+                    .isNotNull();
+
+                assertThat(ongoingTask.taskId)
+                    .isEqualTo(etlResult.taskId);
+                assertThat(ongoingTask.taskType)
+                    .isEqualTo("RavenEtl");
+                assertThat(ongoingTask.responsibleNode)
+                    .isNotNull();
+                assertThat(ongoingTask.taskState)
+                    .isEqualTo("Enabled");
+                assertThat(ongoingTask.taskName)
+                    .isEqualTo("etlToDst");
 
                 const deleteResult = await src.maintenance.send(
                     new DeleteOngoingTaskOperation(etlResult.taskId, "RavenEtl"));

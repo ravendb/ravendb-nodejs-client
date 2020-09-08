@@ -8,9 +8,11 @@ import {
     DocumentStore,
     ConflictSolver,
     GetConflictsCommand,
-    PutDocumentCommand,
+    PutDocumentCommand, GetOngoingTaskInfoOperation,
 } from "../../../../src";
 import { ReplicationTestContext } from "../../../Utils/ReplicationTestContext";
+import { assertThat } from "../../../Utils/AssertExtensions";
+import { OngoingTaskReplication } from "../../../../src/Documents/Operations/OngoingTasks/OngoingTask";
 
 const _describe = RavenTestContext.isPullRequest ? describe.skip : describe;
 _describe(
@@ -223,6 +225,42 @@ _describe(
 
                 });
 
+
+                _it("canGetInfoAboutReplicationTask", async () => {
+                    let source: DocumentStore;
+                    let destination: DocumentStore;
+
+                    try {
+                        source = await testContext.getDocumentStore();
+                        try {
+                            destination = await testContext.getDocumentStore();
+
+                            const taskResults = await replication.setupReplication(source, destination);
+
+                            const taskId = taskResults[0].taskId;
+                            assertThat(taskId)
+                                .isGreaterThan(0);
+
+                            const ongoingTask = await source.maintenance.send(new GetOngoingTaskInfoOperation(taskId, "Replication")) as OngoingTaskReplication;
+
+                            assertThat(ongoingTask)
+                                .isNotNull();
+
+                            assertThat(ongoingTask.destinationDatabase)
+                                .isEqualTo(destination.database);
+                            assertThat(ongoingTask.delayReplicationFor)
+                                .isEqualTo("00:00:00");
+                            assertThat(ongoingTask.taskState)
+                                .isEqualTo("Enabled");
+                            assertThat(ongoingTask.taskConnectionStatus)
+                                .isEqualTo("Active");
+                        } finally {
+                            destination.dispose();
+                        }
+                    } finally {
+                        source.dispose();
+                    }
+                });
             });
         });
     });

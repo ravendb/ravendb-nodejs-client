@@ -36,7 +36,7 @@ export class ReplicationTestContext {
             .isNotNull();
     }
 
-    public async setupReplication(fromStore: IDocumentStore, ...destinations: IDocumentStore[]): Promise<void> {
+    public async setupReplication(fromStore: IDocumentStore, ...destinations: IDocumentStore[]): Promise<ModifyOngoingTaskResult[]> {
 
         for (const store of destinations) {
             const databaseWatcher: ExternalReplication = {
