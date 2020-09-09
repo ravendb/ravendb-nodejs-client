@@ -401,11 +401,25 @@ export class RavenTestContext extends RavenTestDriver implements IDisposable {
 }
 
 class TestCloudServiceLocator extends RavenServerLocator {
+
+    private static readonly _defaultParams = {
+        ServerUrl: "http://127.0.0.1:0",
+        "Features.Availability": "Experimental"
+    };
+
+    private _extraParams: object = {};
+
+    public constructor(extraParams: Record<string, string> = {}) {
+        super();
+
+        this._extraParams = extraParams;
+    }
+
     getCommandArguments(): string[] {
-        return [
-            "--ServerUrl=http://127.0.0.1:0",
-            "--Features.Availability=Experimental"
-        ]
+        const items = Object.assign({}, TestCloudServiceLocator._defaultParams, this._extraParams);
+
+        return Object.keys(items)
+            .map(key => "--" + key + "=" + items[key]);
     }
 }
 
@@ -419,9 +433,7 @@ export class ClusterTestContext extends RavenTestDriver implements IDisposable {
         return "db_" + (++this._dbCounter);
     }
 
-    private locator = new TestCloudServiceLocator();
-
-    public async createRaftCluster(numberOfNodes: number) {
+    public async createRaftCluster(numberOfNodes: number, customSettings: Record<string, string> = {}) {
         const cluster = new ClusterController();
         cluster.nodes = [];
 
@@ -432,7 +444,7 @@ export class ClusterTestContext extends RavenTestDriver implements IDisposable {
 
         for (let i = 0 ; i < numberOfNodes; i++) {
             let process: ChildProcess;
-            const store = await this._runServerInternal(this.locator, p => process = p, null);
+            const store = await this._runServerInternal(new TestCloudServiceLocator(customSettings), p => process = p, null);
 
             //TODO: +            Runtime.getRuntime().addShutdownHook(new Thread(() -> killProcess(processReference.value)));
 
@@ -491,8 +503,8 @@ export class ClusterTestContext extends RavenTestDriver implements IDisposable {
     public async waitForDocument<T extends object>(documentInfo: DocumentType<T>,
                                              store: IDocumentStore,
                                              docId: string,
-                                             predicate: (value: T) => void,
-                                             timeout: number) {
+                                             predicate: (value: T) => void = null,
+                                             timeout: number = 10_000) {
         const sw = Stopwatch.createStarted();
 
         let ex: Error;
@@ -592,6 +604,16 @@ class ClusterController implements IDisposable {
         }
     }
 
+    public getNodeByUrl(url: string) {
+        return this.nodes.find(x => x.url === url)
+            || throwError("InvalidOperationException", "Unable to find node with url: " + url);
+    }
+
+    public getWorkingServer(): ClusterNode {
+        return this.nodes.find(x => !x.disposed)
+            || throwError("InvalidOperationException", "Unable to find working server");
+    }
+
     public getNodeByTag(nodeTag: string) {
         const node = this.nodes.find(x => x.nodeTag === nodeTag);
 
@@ -611,6 +633,7 @@ class ClusterController implements IDisposable {
 
     public async disposeServer(nodeTag: string) {
         try {
+            this.getNodeByTag(nodeTag).disposed = true;
             await this.executeJsScriptRaw(nodeTag, "server.Dispose()");
         } catch {
             // we likely throw as server won't be able to respond
@@ -621,7 +644,13 @@ class ClusterController implements IDisposable {
         return this.nodes.find(x => x.leader);
     }
 
-    public async createDatabase(databaseRecord: DatabaseRecord, replicationFactor: number, leaderUrl: string) {
+    public async createDatabase(databaseName: string, replicationFactor: number, leaderUrl: string);
+    public async createDatabase(databaseRecord: DatabaseRecord, replicationFactor: number, leaderUrl: string);
+    public async createDatabase(databaseRecordOrName: DatabaseRecord | string, replicationFactor: number, leaderUrl: string) {
+        const databaseRecord: DatabaseRecord = TypeUtil.isString(databaseRecordOrName)
+            ? { databaseName: databaseRecordOrName }
+            : databaseRecordOrName;
+
         const store = new DocumentStore(leaderUrl, databaseRecord.databaseName);
 
         try {
@@ -654,6 +683,7 @@ class ClusterNode {
     public leader: boolean;
     public store: IDocumentStore;
     public serverProcess: ChildProcess;
+    public disposed: boolean;
 }
 
 export async function disposeTestDocumentStore(store: IDocumentStore) {

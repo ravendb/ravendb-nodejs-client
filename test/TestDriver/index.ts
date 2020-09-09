@@ -22,6 +22,8 @@ import { Dog, Entity, Genre, Movie, Rating, User } from "../Assets/Graph";
 import { RequestExecutor } from "../../src/Http/RequestExecutor";
 import * as proxyAgent from "http-proxy-agent";
 import * as http from "http";
+import { Stopwatch } from "../../src/Utility/Stopwatch";
+import { delay } from "../../src/Utility/PromiseUtil";
 
 const log = getLogger({ module: "TestDriver" });
 
@@ -192,6 +194,32 @@ export abstract class RavenTestDriver {
             });
 
         return Promise.resolve(result);
+    }
+
+    public async waitForValue<T>(act: () => Promise<T>, expectedValue: T, opts: { timeout?: number; equal?: (a: T, b: T) => boolean } = {}) {
+        const timeout = opts.timeout ?? 15_000;
+        const identity = (a, b) => a === b;
+        const compare = opts.equal ?? identity;
+
+        const sw = Stopwatch.createStarted();
+
+        do {
+            try {
+                const currentVal = await act();
+                if (compare(expectedValue, currentVal)) {
+                    return currentVal;
+                }
+
+                if (sw.elapsed > timeout) {
+                    return currentVal;
+                }
+            } catch (e) {
+                if (sw.elapsed > timeout) {
+                    throwError("InvalidOperationException", e);
+                }
+            }
+            await delay(16);
+        } while (true);
     }
 
     protected static _killProcess(p: ChildProcess) {
