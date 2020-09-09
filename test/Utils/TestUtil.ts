@@ -661,6 +661,8 @@ class ClusterController implements IDisposable {
             for (const node of this.nodes) {
                 await this.executeJsScript(node.nodeTag, "server.ServerStore.Cluster.WaitForIndexNotification(\"" + putResult.raftCommandIndex + "\").Wait()");
             }
+
+            return putResult;
         } finally {
             store.dispose();
         }
