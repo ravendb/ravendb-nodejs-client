@@ -6,4 +6,6 @@ export interface GetLogsConfigurationResult {
     path: string;
     useUtcTime: boolean;
     retentionTime: string;
+    retentionSize: number;
+    compress: boolean;
 }

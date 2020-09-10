@@ -72,7 +72,7 @@ describe("ConnectionStringsTest", function () {
             .hasSize(1);
 
         const removeResult = await store.maintenance.send(new RemoveConnectionStringOperation(Object.values(sqlOnly.sqlConnectionStrings)[0]));
-        assertThat(removeResult)
+        assertThat(removeResult.raftCommandIndex)
             .isGreaterThan(0);
 
         const afterDelete = await store.maintenance.send(

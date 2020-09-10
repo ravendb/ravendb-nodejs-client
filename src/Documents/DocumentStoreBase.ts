@@ -11,7 +11,10 @@ import {
     SessionBeforeDeleteEventArgs,
     BeforeConversionToDocumentEventArgs,
     AfterConversionToDocumentEventArgs,
-    BeforeConversionToEntityEventArgs, AfterConversionToEntityEventArgs, FailedRequestEventArgs
+    BeforeConversionToEntityEventArgs,
+    AfterConversionToEntityEventArgs,
+    FailedRequestEventArgs,
+    TopologyUpdatedEventArgs
 } from "./Session/SessionEvents";
 import { OperationExecutor } from "./Operations/OperationExecutor";
 import { IDocumentSession } from "./Session/IDocumentSession";
@@ -247,6 +250,8 @@ export abstract class DocumentStoreBase
     public addSessionListener(
         eventName: "failedRequest", eventHandler: (eventArgs: FailedRequestEventArgs) => void): this;
     public addSessionListener(
+        eventName: "topologyUpdated", eventHandler: (eventArgs: TopologyUpdatedEventArgs) => void): this;
+    public addSessionListener(
         eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
     public addSessionListener(
         eventName: "afterSaveChanges", eventHandler: (eventArgs: SessionAfterSaveChangesEventArgs) => void): this;
@@ -277,6 +282,8 @@ export abstract class DocumentStoreBase
 
     public removeSessionListener(
         eventName: "failedRequest", eventHandler: (eventArgs: FailedRequestEventArgs) => void): void;
+    public removeSessionListener(
+        eventName: "topologyUpdated", eventHandler: (eventArgs: TopologyUpdatedEventArgs) => void): void;
     public removeSessionListener(
         eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): void;
     public removeSessionListener(
@@ -317,6 +324,9 @@ export abstract class DocumentStoreBase
              for (EventHandler<FailedRequestEventArgs> handler : onFailedRequest) {
 +            requestExecutor.addOnFailedRequestListener(handler);
          }
+         for (EventHandler<TopologyUpdatedEventArgs> handler : onTopologyUpdated) {
++            requestExecutor.addOnTopologyUpdatedListener(handler);
++        }
              */
         } else {
             this._eventHandlers.forEach(([eventName, eventHandler]) => {

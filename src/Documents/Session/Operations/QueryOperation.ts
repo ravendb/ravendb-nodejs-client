@@ -258,15 +258,6 @@ export class QueryOperation {
                 ? raw : conventions.transformObjectKeysToLocalFieldNameConvention(raw));
         }
 
-        if (id) {
-            // we need to make an additional check, since it is possible that a value was explicitly stated
-            // for the identity property, in which case we don't want to override it.
-            const identityProperty = conventions.getIdentityProperty(clazz);
-            if (identityProperty && !document[identityProperty]) {
-                session.generateEntityIdOnTheClient.trySetIdentity(result, id);
-            }
-        }
-
         session.onAfterConversionToEntityInvoke(id, document, result);
 
         return result;

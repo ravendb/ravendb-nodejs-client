@@ -21,6 +21,7 @@ import { RequestExecutor } from "../../Http/RequestExecutor";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { ServerNode } from "../../Http/ServerNode";
 import { ObjectTypeDescriptor } from "../../Types";
+import { UpdateTopologyParameters } from "../../Http/UpdateTopologyParameters";
 
 export class DatabaseChanges implements IDatabaseChanges {
 
@@ -401,8 +402,13 @@ export class DatabaseChanges implements IDatabaseChanges {
                 const type = message.Type;
                 if (message.TopologyChange) {
                     this._getOrAddConnectionState("Topology", "watch-topology-change", "", "");
+
+                    const updateParameters = new UpdateTopologyParameters(this._serverNode);
+                    updateParameters.timeoutInMs = 0; //TODO: check if 0 means unbounded or system default
+                    updateParameters.forceUpdate = true;
+                    updateParameters.debugTag = "watch-topology-change";
                     // noinspection ES6MissingAwait
-                    this._requestExecutor.updateTopology(this._serverNode, 0, true, "watch-topology-change");
+                    this._requestExecutor.updateTopology(updateParameters);
                     continue;
                 }
                 if (!type) {
@@ -451,13 +457,19 @@ export class DatabaseChanges implements IDatabaseChanges {
                 break;
             case "TopologyChange":
                 const topologyChange = value as TopologyChange;
-                if (!this._requestExecutor) {
-                    const serverNode = new ServerNode();
-                    serverNode.url = topologyChange.url;
-                    serverNode.database = topologyChange.database;
+                const requestExecutor = this._requestExecutor;
+                if (requestExecutor) {
+                    const node = new ServerNode({
+                        url: topologyChange.url,
+                        database: topologyChange.database
+                    });
 
-                    // noinspection JSIgnoredPromiseFromCall
-                    this._requestExecutor.updateTopology(serverNode, 0, true, "topology-change-notification");
+                    const updateParameters = new UpdateTopologyParameters(node);
+                    updateParameters.timeoutInMs = 0;
+                    updateParameters.forceUpdate = true;
+                    updateParameters.debugTag = "topology-change-notification";
+
+                    requestExecutor.updateTopology(updateParameters);
                 }
                 break;
             default:

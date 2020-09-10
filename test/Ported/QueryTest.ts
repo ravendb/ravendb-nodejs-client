@@ -168,7 +168,7 @@ describe("QueryTest", function () {
         it("query with select", async () => {
             const session = store.openSession();
             const results = await session.query(User)
-                .selectFields<User>("age", User)
+                .selectFields<User>(["age", "id"], User)
                 .all();
 
             for (const entry of results) {
@@ -259,7 +259,7 @@ describe("QueryTest", function () {
         it("query with projection 2", async () => {
             const session = store.openSession();
             const results = await session.query(User)
-                .selectFields<UserProjection>(["lastName"], UserProjection)
+                .selectFields<UserProjection>(["lastName", "id"], UserProjection)
                 .all();
 
             assert.strictEqual(results.length, 3);

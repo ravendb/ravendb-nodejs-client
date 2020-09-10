@@ -3,6 +3,7 @@ import { IMetadataDictionary } from "./IMetadataDictionary";
 import { IDocumentQueryCustomization } from "./IDocumentQueryCustomization";
 import { DocumentType } from "../DocumentAbstractions";
 import { Reference } from "../../Utility/Reference";
+import { Topology } from "../../Http/Topology";
 
 export interface SessionEventsEmitter {
     on(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
@@ -198,5 +199,13 @@ export class FailedRequestEventArgs {
         this.database = database;
         this.url = url;
         this.error = error;
+    }
+}
+
+export class TopologyUpdatedEventArgs {
+    public topology: Topology;
+
+    public constructor(topology: Topology) {
+        this.topology = topology;
     }
 }

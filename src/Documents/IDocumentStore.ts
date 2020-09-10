@@ -7,7 +7,10 @@ import {
     SessionBeforeDeleteEventArgs,
     BeforeConversionToDocumentEventArgs,
     AfterConversionToDocumentEventArgs,
-    BeforeConversionToEntityEventArgs, AfterConversionToEntityEventArgs, FailedRequestEventArgs
+    BeforeConversionToEntityEventArgs,
+    AfterConversionToEntityEventArgs,
+    FailedRequestEventArgs,
+    TopologyUpdatedEventArgs
 } from "./Session/SessionEvents";
 import { IDisposable } from "../Types/Contracts";
 import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor";
@@ -99,6 +102,9 @@ export interface SessionCreatedEventArgs {
 }
 
 export interface DocumentStoreEventEmitter {
+
+    //TODO: what's the difference between those events and addSessionListener?
+    //TODO: do we need TopologyUpdated here?
 
     on(eventName: "failedRequest", eventHandler: (args: FailedRequestEventArgs) => void): this;
 
@@ -271,6 +277,9 @@ export interface IDocumentStore extends IDisposable,
     requestTimeout(timeoutInMs: number, database: string): IDisposable;
 
     addSessionListener(
+        eventName: "topologyUpdated", eventHandler: (args: TopologyUpdatedEventArgs) => void): this;
+
+    addSessionListener(
         eventName: "failedRequest", eventHandler: (args: FailedRequestEventArgs) => void): this;
 
     addSessionListener(
@@ -296,4 +305,6 @@ export interface IDocumentStore extends IDisposable,
 
     addSessionListener(
         eventName: "afterConversionToEntity", eventHandler: (eventArgs: AfterConversionToEntityEventArgs) => void): this;
+
+    //TODO: expose remove events?
 }

@@ -201,8 +201,10 @@ export class EntityToJson {
                     document, passedTypeInfo);
             }
 
+            const isProjection = !!document[CONSTANTS.Documents.Metadata.PROJECTION];
+
             if (id) {
-                this._session.generateEntityIdOnTheClient.trySetIdentity(entity, id);
+                this._session.generateEntityIdOnTheClient.trySetIdentity(entity, id, isProjection);
             }
 
             this._session.onAfterConversionToEntityInvoke(id, document, entity);

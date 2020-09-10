@@ -64,6 +64,7 @@ describe("ClusterOperationTest", function () {
         }
     });
 
+    //TODO: disable?
     it("nextIdentityForOperationShouldBroadcastAndFail", async () => {
         const cluster = await testContext.createRaftCluster(3);
         try {

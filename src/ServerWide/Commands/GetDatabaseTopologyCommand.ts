@@ -18,11 +18,13 @@ interface TopologyDto {
 
 export class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
 
+    private readonly _applicationIdentifier: string;
     private readonly _debugTag: string;
 
-    constructor(debugTag?: string) {
+    constructor(debugTag?: string, applicationIdentifier?: string) {
         super();
         this._debugTag = debugTag;
+        this._applicationIdentifier = applicationIdentifier;
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
@@ -36,6 +38,10 @@ export class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
 
         if (this._debugTag) {
             uri += "&" + this._debugTag;
+        }
+
+        if (this._applicationIdentifier) {
+            uri += "&applicationIdentifier=" + this._urlEncode(this._applicationIdentifier);
         }
 
         return { uri };

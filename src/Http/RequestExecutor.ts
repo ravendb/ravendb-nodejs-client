@@ -41,8 +41,10 @@ import { IRaftCommand } from "./IRaftCommand";
 import AbortController from "abort-controller";
 import { URL } from "url";
 import { EventEmitter } from "events";
-import { FailedRequestEventArgs } from "../Documents/Session/SessionEvents";
+import { FailedRequestEventArgs, TopologyUpdatedEventArgs } from "../Documents/Session/SessionEvents";
 import { TimeUtil } from "../Utility/TimeUtil";
+import { UpdateTopologyParameters } from "./UpdateTopologyParameters";
+import { v4 as uuidv4 } from "uuid";
 
 const DEFAULT_REQUEST_OPTIONS = {};
 
@@ -134,6 +136,8 @@ export class NodeStatus implements IDisposable {
 
 export class RequestExecutor implements IDisposable {
     private _emitter = new EventEmitter();
+
+    private static readonly GLOBAL_APPLICATION_IDENTIFIER = uuidv4().toString();
 
     private static readonly INITIAL_TOPOLOGY_ETAG = -2;
 
@@ -263,13 +267,13 @@ export class RequestExecutor implements IDisposable {
         this._firstBroadcastAttemptTimeout = timeout;
     }
 
-    public on(event: "topologyUpdated", handler: (value: Topology) => void);
+    public on(event: "topologyUpdated", handler: (value: TopologyUpdatedEventArgs) => void);
     public on(event: "failedRequest", handler: (value: FailedRequestEventArgs) => void);
     public on(event: string, handler: (value: any) => void) {
         this._emitter.on(event, handler);
     }
 
-    public off(event: "topologyUpdated", handler: (value: Topology) => void);
+    public off(event: "topologyUpdated", handler: (value: TopologyUpdatedEventArgs) => void);
     public off(event: "failedRequest", handler: (value: FailedRequestEventArgs) => void);
     public off(event: string, handler: (value: any) => void) {
         this._emitter.off(event, handler);
@@ -384,7 +388,7 @@ export class RequestExecutor implements IDisposable {
         opts?: IRequestExecutorOptions): RequestExecutor {
         const { authOptions, documentConventions } = opts || {} as IRequestExecutorOptions;
         const executor = new RequestExecutor(database, authOptions, documentConventions);
-        executor._firstTopologyUpdatePromise = executor._firstTopologyUpdate(initialUrls);
+        executor._firstTopologyUpdatePromise = executor._firstTopologyUpdate(initialUrls, this.GLOBAL_APPLICATION_IDENTIFIER);
 
         // this is just to get rid of unhandled rejection, we're handling it later on
         executor._firstTopologyUpdatePromise.catch(TypeUtil.NOOP);
@@ -405,7 +409,7 @@ export class RequestExecutor implements IDisposable {
         url: string, database: string, opts: IRequestExecutorOptions) {
 
         const { authOptions, documentConventions } = opts;
-        const initialUrls: string[] = RequestExecutor._validateUrls([url], authOptions);
+        const initialUrls: string[] = RequestExecutor.validateUrls([url], authOptions);
 
         const executor = new RequestExecutor(database, authOptions, documentConventions);
         const topology: Topology = new Topology();
@@ -475,7 +479,23 @@ export class RequestExecutor implements IDisposable {
         }
     }
 
-    public updateTopology(node: ServerNode, timeout: number, forceUpdate: boolean = false, debugTag?: string): Promise<boolean> {
+    public updateTopology(node: ServerNode, timeout: number, forceUpdate?: boolean, debugTag?: string): Promise<boolean>;
+    public updateTopology(parameters: UpdateTopologyParameters): Promise<boolean>;
+    public updateTopology(nodeOrParameters: ServerNode | UpdateTopologyParameters, timeout?: number, forceUpdate: boolean = false, debugTag?: string): Promise<boolean> {
+        let parameters: UpdateTopologyParameters;
+        if (nodeOrParameters instanceof ServerNode) {
+            parameters = new UpdateTopologyParameters(nodeOrParameters);
+            parameters.timeoutInMs = timeout;
+            parameters.forceUpdate = forceUpdate;
+            parameters.debugTag = debugTag;
+            parameters.applicationIdentifier = null;
+        } else {
+            if (!nodeOrParameters) {
+                throwError("InvalidArgumentException", "Parameters cannot be null");
+            }
+            parameters = nodeOrParameters;
+        }
+
         if (this._disableTopologyUpdates) {
             return Promise.resolve(false);
         }
@@ -484,18 +504,18 @@ export class RequestExecutor implements IDisposable {
             return Promise.resolve(false);
         }
 
-        const acquiredSemContext = acquireSemaphore(this._updateDatabaseTopologySemaphore, { timeout });
+        const acquiredSemContext = acquireSemaphore(this._updateDatabaseTopologySemaphore, { timeout: parameters.timeoutInMs });
         const result = BluebirdPromise.resolve(acquiredSemContext.promise)
             .then(() => {
                     if (this._disposed) {
                         return false;
                     }
 
-                    this._log.info(`Update topology from ${node.url}.`);
+                    this._log.info(`Update topology from ${parameters.node.url}.`);
 
-                    const getTopology = new GetDatabaseTopologyCommand(debugTag);
+                    const getTopology = new GetDatabaseTopologyCommand(parameters.debugTag, this.conventions.sendApplicationIdentifier ? parameters.applicationIdentifier : null);
                     const getTopologyPromise = this.execute(getTopology, null, {
-                        chosenNode: node,
+                        chosenNode: parameters.node,
                         nodeIndex: null,
                         shouldRetry: false,
                     });
@@ -509,7 +529,7 @@ export class RequestExecutor implements IDisposable {
                                     this._nodeSelector.scheduleSpeedTest();
                                 }
 
-                            } else if (this._nodeSelector.onUpdateTopology(topology, forceUpdate)) {
+                            } else if (this._nodeSelector.onUpdateTopology(topology, parameters.forceUpdate)) {
                                 this._disposeAllFailedNodesTimers();
 
                                 if (this.conventions.readBalanceBehavior === "FastestNode") {
@@ -519,7 +539,7 @@ export class RequestExecutor implements IDisposable {
 
                             this._topologyEtag = this._nodeSelector.getTopology().etag;
 
-                            this._onTopologyUpdated(topology);
+                            this._onTopologyUpdatedInvoke(topology);
 
                             return true;
                         });
@@ -606,14 +626,26 @@ export class RequestExecutor implements IDisposable {
         topologyUpdate: Promise<void>,
         sessionInfo: SessionInfo): Promise<void> {
 
+        await this._waitForTopologyUpdate(topologyUpdate);
+
+        const currentIndexAndNode: CurrentIndexAndNode = this.chooseNodeForRequest(command, sessionInfo);
+        return this._executeOnSpecificNode(command, sessionInfo, {
+            chosenNode: currentIndexAndNode.currentNode,
+            nodeIndex: currentIndexAndNode.currentIndex,
+            shouldRetry: true
+        });
+    }
+
+    private async _waitForTopologyUpdate(topologyUpdate: Promise<void>) {
         try {
             if (!this._firstTopologyUpdatePromise) {
                 if (!this._lastKnownUrls) {
+                    // shouldn't happen
                     throwError("InvalidOperationException",
                         "No known topology and no previously known one, cannot proceed, likely a bug");
                 }
 
-                topologyUpdate = this._firstTopologyUpdate(this._lastKnownUrls);
+                topologyUpdate = this._firstTopologyUpdate(this._lastKnownUrls, null);
             }
 
             await topologyUpdate;
@@ -628,12 +660,7 @@ export class RequestExecutor implements IDisposable {
             throw reason;
         }
 
-        const currentIndexAndNode: CurrentIndexAndNode = this.chooseNodeForRequest(command, sessionInfo);
-        return this._executeOnSpecificNode(command, sessionInfo, {
-            chosenNode: currentIndexAndNode.currentNode,
-            nodeIndex: currentIndexAndNode.currentIndex,
-            shouldRetry: true
-        });
+
     }
 
     private _updateTopologyCallback(): Promise<void> {
@@ -657,22 +684,31 @@ export class RequestExecutor implements IDisposable {
             return;
         }
 
-        return this.updateTopology(serverNode, 0, false, "timer-callback")
+        const updateParameters = new UpdateTopologyParameters(serverNode);
+        updateParameters.timeoutInMs = 0;
+        updateParameters.debugTag = "timer-callback";
+
+        return this.updateTopology(updateParameters)
             .catch(err => {
                 this._log.error(err, "Couldn't update topology from _updateTopologyTimer");
                 return null;
             });
     }
 
-    protected async _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
-        const initialUrls: string[] = RequestExecutor._validateUrls(inputUrls, this._authOptions);
+    protected async _firstTopologyUpdate(inputUrls: string[], applicationIdentifier?: string): Promise<void> {
+        const initialUrls: string[] = RequestExecutor.validateUrls(inputUrls, this._authOptions);
 
         const topologyUpdateErrors: { url: string, error: Error | string }[] = [];
 
         const tryUpdateTopology = async (url: string, database: string): Promise<boolean> => {
             const serverNode = new ServerNode({ url, database });
             try {
-                await this.updateTopology(serverNode, TypeUtil.MAX_INT32, false, "first-topology-update");
+                const updateParameters = new UpdateTopologyParameters(serverNode);
+                updateParameters.timeoutInMs = TypeUtil.MAX_INT32;
+                updateParameters.debugTag = "first-topology-update";
+                updateParameters.applicationIdentifier = applicationIdentifier;
+
+                await this.updateTopology(updateParameters);
                 this._initializeUpdateTopologyTimer();
                 this._topologyTakenFromNode = serverNode;
                 return true;
@@ -741,7 +777,7 @@ export class RequestExecutor implements IDisposable {
             + os.EOL + details);
     }
 
-    protected static _validateUrls(initialUrls: string[], authOptions: IAuthOptions) {
+    public static validateUrls(initialUrls: string[], authOptions: IAuthOptions) {
         const cleanUrls = [...Array(initialUrls.length)];
         let requireHttps = !!authOptions;
         for (let index = 0; index < initialUrls.length; index++) {
@@ -919,7 +955,11 @@ export class RequestExecutor implements IDisposable {
                 url: chosenNode.url
             });
 
-            const topologyTask: Promise<boolean> = refreshTopology ? this.updateTopology(serverNode, 0) : null;
+            const updateParameters = new UpdateTopologyParameters(serverNode);
+            updateParameters.timeoutInMs = 0;
+            updateParameters.debugTag = refreshTopology ? "refresh-topology-header" : refreshClientConfiguration ? "refresh-client-configuration-header" : null;
+
+            const topologyTask: Promise<boolean> = refreshTopology ? this.updateTopology(updateParameters) : null;
             const clientConfiguration: Promise<void> = refreshClientConfiguration ? this._updateClientConfiguration() : null;
 
             await topologyTask;
@@ -1289,7 +1329,10 @@ export class RequestExecutor implements IDisposable {
 
                 if (command.failedNodes.has(indexAndNode.currentNode)) {
                     // we tried all the nodes, let's try to update topology and retry one more time
-                    const success = await this.updateTopology(chosenNode, 60 * 1000, true, "handle-unsuccessful-response");
+                    const updateParameters = new UpdateTopologyParameters(chosenNode);
+                    updateParameters.timeoutInMs = 60_000;
+                    updateParameters.debugTag = "handle-unsuccessful-response";
+                    const success = await this.updateTopology(updateParameters);
                     if (!success) {
                         return false;
                     }
@@ -1407,14 +1450,31 @@ export class RequestExecutor implements IDisposable {
         }
 
         const broadcastCommand = command as unknown as IBroadcast;
+        const failedNodes = command.failedNodes;
 
         command.failedNodes = new Map<ServerNode, Error>(); // clean the current failures
 
         const broadcastTasks = new Map<Promise<number>, BroadcastState<TResult>>();
 
-        this._sendToAllNodes(broadcastTasks, sessionInfo, broadcastCommand);
+        try {
+            this._sendToAllNodes(broadcastTasks, sessionInfo, broadcastCommand);
 
-        return this._waitForBroadcastResult(command, broadcastTasks);
+            return this._waitForBroadcastResult(command, broadcastTasks);
+        } finally {
+            for (const broadcastState of Array.from(broadcastTasks.entries())) {
+                const task = broadcastState[0];
+                if (task) {
+                    task.catch(throwable => {
+                        const index = broadcastState[1].index;
+                        const node = this._nodeSelector.getTopology().nodes[index];
+                        if (failedNodes.has(node)) {
+                            // if other node succeed in broadcast we need to send health checks to the original failed node
+                            this._spawnHealthChecks(node, index);
+                        }
+                    });
+                }
+            }
+        }
     }
 
     private async _waitForBroadcastResult<TResult>(command: RavenCommand<TResult>, tasks: Map<Promise<number>, BroadcastState<TResult>>): Promise<TResult> {
@@ -1442,6 +1502,7 @@ export class RequestExecutor implements IDisposable {
                 command.failedNodes.set(node, error);
 
                 this._nodeSelector.onFailedRequest(failedIndex);
+                this._spawnHealthChecks(node, failedIndex);
 
                 tasks.delete(failedPair[0]);
             }
@@ -1491,7 +1552,12 @@ export class RequestExecutor implements IDisposable {
         }
 
         const preferredNode = await this.getPreferredNode();
-        await this.updateTopology(preferredNode.currentNode, 0, true, "handle-server-not-responsive");
+        const updateParameters = new UpdateTopologyParameters(preferredNode.currentNode);
+        updateParameters.timeoutInMs = 0;
+        updateParameters.forceUpdate = true;
+        updateParameters.debugTag = "handle-server-not-responsive";
+
+        await this.updateTopology(updateParameters);
 
         this._onFailedRequestInvoke(url, e);
 
@@ -1673,8 +1739,8 @@ export class RequestExecutor implements IDisposable {
         }
     }
 
-    protected _onTopologyUpdated(newTopology: Topology) {
-        this._emitter.emit("topologyUpdated", newTopology);
+    protected _onTopologyUpdatedInvoke(newTopology: Topology) {
+        this._emitter.emit("topologyUpdated", new TopologyUpdatedEventArgs(newTopology));
     }
 }
 

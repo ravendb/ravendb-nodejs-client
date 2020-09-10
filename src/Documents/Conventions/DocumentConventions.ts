@@ -20,9 +20,18 @@ export type IdConvention = (databaseName: string, entity: object) => Promise<str
 export type IValueForQueryConverter<T> =
     (fieldName: string, value: T, forRange: boolean, stringValue: (value: any) => void) => boolean;
 
+function createServerDefaults() {
+    const conventions = new DocumentConventions();
+    conventions.sendApplicationIdentifier = false;
+    conventions.freeze();
+    return conventions;
+}
+
+
 export class DocumentConventions {
 
     private static _defaults: DocumentConventions = new DocumentConventions();
+    public static defaultForServerConventions = createServerDefaults();
 
     public static get defaultConventions() {
         return this._defaults;
@@ -73,7 +82,8 @@ export class DocumentConventions {
     private _objectMapper: TypesAwareObjectMapper;
     private _dateUtil: DateUtil;
 
-    private _useCompression;
+    private _useCompression: boolean;
+    private _sendApplicationIdentifier: boolean;
 
     public constructor() {
         this._readBalanceBehavior = "None";
@@ -124,6 +134,8 @@ export class DocumentConventions {
 
         this._firstBroadcastAttemptTimeout = 5_000;
         this._secondBroadcastAttemptTimeout = 30_000;
+
+        this._sendApplicationIdentifier = true;
     }
 
     public get requestTimeout() {
@@ -133,6 +145,25 @@ export class DocumentConventions {
     public set requestTimeout(requestTimeout: number) {
         this._assertNotFrozen();
         this._requestTimeout = requestTimeout;
+    }
+
+    /**
+     * Enables sending a unique application identifier to the RavenDB Server that is used for Client API usage tracking.
+     * It allows RavenDB Server to issue performance hint notifications e.g. during robust topology update requests which could indicate Client API misuse impacting the overall performance
+     * @return if option is enabled
+     */
+    public get sendApplicationIdentifier() {
+        return this._sendApplicationIdentifier;
+    }
+
+    /**
+     * Enables sending a unique application identifier to the RavenDB Server that is used for Client API usage tracking.
+     * It allows RavenDB Server to issue performance hint notifications e.g. during robust topology update requests which could indicate Client API misuse impacting the overall performance
+     * @param sendApplicationIdentifier if option should be enabled
+     */
+    public set sendApplicationIdentifier(sendApplicationIdentifier: boolean) {
+        this._assertNotFrozen();
+        this._sendApplicationIdentifier = sendApplicationIdentifier;
     }
 
     /**

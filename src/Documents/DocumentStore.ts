@@ -266,6 +266,8 @@ export class DocumentStore extends DocumentStoreBase {
 
         this._assertValidConfiguration();
 
+        RequestExecutor.validateUrls(this.urls, this.authOptions);
+
         try {
             if (!this.conventions.documentIdGenerator) { // don't overwrite what the user is doing
                 const generator = new HiloMultiDatabaseIdGenerator(this);
