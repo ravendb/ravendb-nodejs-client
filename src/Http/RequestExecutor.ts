@@ -430,7 +430,7 @@ export class RequestExecutor implements IDisposable {
         return executor;
     }
 
-    protected async _updateClientConfiguration(): Promise<void> {
+    protected async _updateClientConfiguration(serverNode: ServerNode): Promise<void> {
         if (this._disposed) {
             return;
         }
@@ -440,7 +440,7 @@ export class RequestExecutor implements IDisposable {
         try {
             semAcquiredContext = acquireSemaphore(this._updateClientConfigurationSemaphore);
             await semAcquiredContext.promise;
-            await this._updateClientConfigurationInternal();
+            await this._updateClientConfigurationInternal(serverNode);
         } finally {
             if (semAcquiredContext) {
                 semAcquiredContext.dispose();
@@ -448,7 +448,7 @@ export class RequestExecutor implements IDisposable {
         }
     }
 
-    private async _updateClientConfigurationInternal(): Promise<void> {
+    private async _updateClientConfigurationInternal(serverNode: ServerNode): Promise<void> {
         const oldDisableClientConfigurationUpdates = this._disableClientConfigurationUpdates;
         this._disableClientConfigurationUpdates = true;
 
@@ -458,10 +458,9 @@ export class RequestExecutor implements IDisposable {
             }
 
             const command = new GetClientConfigurationCommand();
-            const { currentNode, currentIndex } = this.chooseNodeForRequest(command, null);
             await this.execute(command, null, {
-                chosenNode: currentNode,
-                nodeIndex: currentIndex,
+                chosenNode: serverNode,
+                nodeIndex: null,
                 shouldRetry: false
             });
 
@@ -957,10 +956,10 @@ export class RequestExecutor implements IDisposable {
 
             const updateParameters = new UpdateTopologyParameters(serverNode);
             updateParameters.timeoutInMs = 0;
-            updateParameters.debugTag = refreshTopology ? "refresh-topology-header" : refreshClientConfiguration ? "refresh-client-configuration-header" : null;
+            updateParameters.debugTag = "refresh-topology-header";
 
             const topologyTask: Promise<boolean> = refreshTopology ? this.updateTopology(updateParameters) : null;
-            const clientConfiguration: Promise<void> = refreshClientConfiguration ? this._updateClientConfiguration() : null;
+            const clientConfiguration: Promise<void> = refreshClientConfiguration ? this._updateClientConfiguration(serverNode) : null;
 
             await topologyTask;
             await clientConfiguration;

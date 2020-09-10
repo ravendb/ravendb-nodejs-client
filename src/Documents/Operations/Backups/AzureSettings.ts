@@ -5,4 +5,5 @@ export interface AzureSettings extends BackupSettings {
     remoteFolderName?: string;
     accountName?: string;
     accountKey?: string;
+    sasToken?: string;
 }

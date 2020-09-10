@@ -173,7 +173,7 @@ export class ClusterRequestExecutor extends RequestExecutor {
         return Promise.resolve(result);
     }
 
-    protected _updateClientConfigurationAsync(): Promise<void> {
+    protected _updateClientConfigurationAsync(serverNode: ServerNode): Promise<void> {
         return Promise.resolve();
     }
 

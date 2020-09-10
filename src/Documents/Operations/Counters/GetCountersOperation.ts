@@ -97,11 +97,9 @@ export class GetCounterValuesCommand extends RavenCommand<CountersDetail> {
         const uniqueNames = new Set(this._counters);
         if (this._counters.reduce((result, next) => result + next.length, 0) < 1024) {
             for (const uniqueName of uniqueNames) {
-                if (uniqueName) {
-                    pathBuilder
-                        .append("&counter=")
-                        .append(encodeURIComponent(uniqueName));
-                } 
+                pathBuilder
+                    .append("&counter=")
+                    .append(encodeURIComponent(uniqueName || ""));
             }
         } else {
             request = { method: "POST" } as any;

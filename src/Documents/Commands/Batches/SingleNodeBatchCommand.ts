@@ -14,7 +14,7 @@ import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 import { ServerNode } from "../../../Http/ServerNode";
 import { LengthUnawareFormData } from "../../../Utility/LengthUnawareFormData";
 import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
-import * as stream from "stream";
+import * as stream from "readable-stream";
 import { TimeUtil } from "../../../Utility/TimeUtil";
 import { PutAttachmentCommandHelper } from "./PutAttachmentCommandHelper";
 
