@@ -73,19 +73,19 @@ export class GetCounterValuesCommand extends RavenCommand<CountersDetail> {
             .append("/counters?docId=")
             .append(encodeURIComponent(this._docId));
 
-        if (this._returnFullResults) {
-            pathBuilder.append("&full=true");
-        }
-
-        const req = { uri: null };
+        let req = { uri: null, method: "GET" } as HttpRequestParameters;
         if (this._counters.length > 0) {
 
             if (this._counters.length > 1) {
-                this._prepareRequestWithMultipleCounters(pathBuilder, req);
+                req = this._prepareRequestWithMultipleCounters(pathBuilder, req);
             } else {
                 pathBuilder.append("&counter=")
                     .append(encodeURIComponent(this._counters[0]));
             }
+        }
+        
+        if (this._returnFullResults && req.method === "GET") { // if we dropped to Post, _returnFullResults is part of the request content
+            pathBuilder.append("&full=true");
         }
 
         req.uri = pathBuilder.toString();
@@ -95,7 +95,7 @@ export class GetCounterValuesCommand extends RavenCommand<CountersDetail> {
     private _prepareRequestWithMultipleCounters(
         pathBuilder: StringBuilder, request: HttpRequestParameters): HttpRequestParameters {
         const uniqueNames = new Set(this._counters);
-        if (this._counters.reduce((result, next) => result + next.length, 0) < 1024) {
+        if (this._counters.reduce((result, next) => result + (next ? next.length : 0), 0) < 1024) {
             for (const uniqueName of uniqueNames) {
                 pathBuilder
                     .append("&counter=")
@@ -115,6 +115,7 @@ export class GetCounterValuesCommand extends RavenCommand<CountersDetail> {
 
             const batch = new CounterBatch();
             batch.documents = [docOps];
+            batch.replyWithAllNodesValues = this._returnFullResults;
             request.body = JSON.stringify(batch.serialize(this._conventions));
             request.headers = this._headers().typeAppJson().build();
         }

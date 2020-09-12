@@ -16,7 +16,7 @@ import {
 import { User, Company, Order, Employee } from "../../Assets/Entities";
 import { assertThat } from "../../Utils/AssertExtensions";
 
-describe.skip("SessionCountersTest", function () { //TODO: will be fixed in next sync
+describe("SessionCountersTest", function () {
 
     let store: IDocumentStore;
 
@@ -84,13 +84,21 @@ describe.skip("SessionCountersTest", function () { //TODO: will be fixed in next
             await session.saveChanges();
         }
 
-        ({ counters } = (await store.operations
-                   .send(new GetCountersOperation("users/1-A", ["likes", "downloads"]))));
-        assert.strictEqual(counters.length, 0);
+        let countersDetail = await store.operations.send(new GetCountersOperation("users/1-A", ["likes", "downloads"]));
 
-        ({ counters } = (await store.operations
-                   .send(new GetCountersOperation("users/1-A", ["votes"]))));
-        assert.strictEqual(counters.length, 0);
+        assertThat(countersDetail.counters)
+            .hasSize(2);
+
+        assertThat(countersDetail.counters[0])
+            .isNull();
+        assertThat(countersDetail.counters[1])
+            .isNull();
+
+        countersDetail = await store.operations.send(new GetCountersOperation("users/1-A", ["votes"]));
+        assertThat(countersDetail.counters)
+            .hasSize(1);
+        assertThat(countersDetail.counters[0])
+            .isNull();
     });
 
     it("sessionGetCounters", async function () {
