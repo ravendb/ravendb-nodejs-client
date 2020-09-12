@@ -20,6 +20,7 @@ export * from "./Http/ServerNode";
 export * from "./Http/StatusCode";
 export * from "./Http/Topology";
 export * from "./Http/UriUtility";
+export * from "./Http/UpdateTopologyParameters";
 
 // SERVERWIDE
 export * from "./ServerWide";
@@ -61,6 +62,7 @@ export * from "./ServerWide/Operations/Configuration/ServerWideBackupConfigurati
 export { GetDatabaseTopologyCommand } from "./ServerWide/Commands/GetDatabaseTopologyCommand";
 export { GetClusterTopologyCommand } from "./ServerWide/Commands/GetClusterTopologyCommand";
 export { GetTcpInfoCommand } from "./ServerWide/Commands/GetTcpInfoCommand";
+export { AddClusterNodeCommand } from "./ServerWide/Commands/Cluster/AddClusterNodeCommand";
 export { CreateDatabaseOperation } from "./ServerWide/Operations/CreateDatabaseOperation";
 export { DatabaseRecord, ConflictSolver, ScriptResolver } from "./ServerWide";
 export * from "./ServerWide/Operations/ModifyConflictSolverOperation";
@@ -68,6 +70,9 @@ export * from "./Documents/Operations/Etl/ConnectionString";
 
 // OPERATIONS AND COMMANDS
 export { BulkInsertOperation } from "./Documents/BulkInsertOperation";
+export { CollectionDetails } from "./Documents/Operations/CollectionDetails";
+export { DetailedCollectionStatistics } from "./Documents/Operations/DetailedCollectionStatistics";
+export { GetDetailedCollectionStatisticsOperation } from "./Documents/Operations/GetDetailedCollectionStatisticsOperation";
 export * from "./Documents/Operations/OperationAbstractions";
 export { CompactDatabaseOperation } from "./Documents/Operations/CompactDatabaseOperation";
 export { PutConnectionStringOperation } from "./Documents/Operations/ConnectionStrings/PutConnectionStringOperation";
