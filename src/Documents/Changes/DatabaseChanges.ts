@@ -469,6 +469,7 @@ export class DatabaseChanges implements IDatabaseChanges {
                     updateParameters.forceUpdate = true;
                     updateParameters.debugTag = "topology-change-notification";
 
+                    // noinspection JSIgnoredPromiseFromCall
                     requestExecutor.updateTopology(updateParameters);
                 }
                 break;

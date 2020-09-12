@@ -1,10 +1,8 @@
-import * as mocha from "mocha";
 import * as assert from "assert";
-import { User, Company, Order } from "../Assets/Entities";
+import { User } from "../Assets/Entities";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import {
-    RavenErrorType,
     IDocumentStore,
     SeedIdentityForCommand,
     GetIdentitiesOperation,

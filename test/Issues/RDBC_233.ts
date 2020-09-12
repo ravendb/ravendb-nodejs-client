@@ -1,17 +1,12 @@
-import * as mocha from "mocha";
-import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import DocumentStore, {
-    RavenErrorType,
-    GetNextOperationIdCommand,
     IDocumentStore,
     TypesAwareObjectMapper,
     DocumentConventions,
     PatchOperation,
 } from "../../src";
-import { DateUtil } from "../../src/Utility/DateUtil";
 import { PatchRequest } from "../../src/Documents/Operations/PatchRequest";
 
 describe("RDBC-233", function () {

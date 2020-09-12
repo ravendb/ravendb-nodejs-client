@@ -1,8 +1,6 @@
-import { testContext, disposeTestDocumentStore, storeNewDoc } from "../../Utils/TestUtil";
+import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
-    RavenErrorType,
-    GetNextOperationIdCommand,
     IDocumentStore,
     GetDetailedStatisticsOperation,
     PutCompareExchangeValueOperation,

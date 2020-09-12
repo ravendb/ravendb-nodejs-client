@@ -3,10 +3,7 @@ import * as moment from "moment";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import {
-    RavenErrorType,
-    GetNextOperationIdCommand,
     IDocumentStore,
-    PutDocumentCommand,
 } from "../../src";
 import { DateUtil } from "../../src/Utility/DateUtil";
 import { GetDocumentsCommand } from "../../src/Documents/Commands/GetDocumentsCommand";

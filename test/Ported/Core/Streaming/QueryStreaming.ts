@@ -12,7 +12,6 @@ import * as StreamUtil from "../../../../src/Utility/StreamUtil";
 import { CONSTANTS } from "../../../../src/Constants";
 import { parseJsonVerbose } from "../../../Utils/Json";
 import { getStringWritable } from "../../../Utils/Streams";
-import * as sinon from "sinon";
 
 describe("query streaming", function () {
 

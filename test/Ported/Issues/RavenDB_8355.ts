@@ -6,7 +6,6 @@ import { Company } from "../../Assets/Entities";
 import { assertThat, assertThrows } from "../../Utils/AssertExtensions";
 import { DeleteSorterOperation } from "../../../src/Documents/Operations/Sorters/DeleteSorterOperation";
 import { RavenErrorType } from "../../../src/Exceptions/index";
-import { DocumentStore } from "../../../src/Documents/DocumentStore";
 
 describe("RavenDB_8355", function () {
 

@@ -1,7 +1,6 @@
 import * as assert from "assert";
 import { IDocumentStore, InMemoryDocumentSessionOperations } from "../../src";
 import { disposeTestDocumentStore, testContext } from "../Utils/TestUtil";
-import { DateUtil } from "../../src/Utility/DateUtil";
 
 describe("FirstClassPatchTest", function () {
 

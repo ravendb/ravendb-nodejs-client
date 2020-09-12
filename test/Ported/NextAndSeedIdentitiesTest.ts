@@ -3,8 +3,6 @@ import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import {
     IDocumentStore,
-    NextIdentityForCommand,
-    SeedIdentityForCommand,
     GetIdentitiesOperation,
 } from "../../src";
 import { User } from "../Assets/Entities";

@@ -1,12 +1,5 @@
-import * as mocha from "mocha";
 import * as assert from "assert";
-import { User, Company, Order } from "../Assets/Entities";
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 import * as SemaphoreUtil from "../../src/Utility/SemaphoreUtil";
-import {
-    RavenErrorType,
-    IDocumentStore,
-} from "../../src";
 import * as semaphore from "semaphore";
 import { delay } from "bluebird";
 

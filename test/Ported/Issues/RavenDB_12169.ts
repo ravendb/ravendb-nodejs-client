@@ -1,11 +1,9 @@
-import * as mocha from "mocha";
 import * as assert from "assert";
-import { User, Company, Order } from "../../Assets/Entities";
+import { Company } from "../../Assets/Entities";
 import { assertThat, assertThrows } from "../../Utils/AssertExtensions";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
-    RavenErrorType,
     IDocumentStore,
     BatchPatchCommandData,
     PatchRequest,

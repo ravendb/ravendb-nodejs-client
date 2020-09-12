@@ -2,10 +2,7 @@ import * as stream from "readable-stream";
 import * as assert from "assert";
 import { parser } from "stream-json/Parser";
 import { pick } from "stream-json/filters/Pick";
-import { ignore } from "stream-json/filters/Ignore";
 import { streamArray } from "stream-json/streamers/StreamArray";
-import { streamObject } from "stream-json/streamers/StreamObject";
-import { streamValues } from "stream-json/streamers/StreamValues";
 
 describe("streaming tryouts", function () {
 

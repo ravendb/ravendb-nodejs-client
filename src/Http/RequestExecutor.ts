@@ -22,7 +22,7 @@ import {
 } from "../Documents/Operations/Configuration/GetClientConfigurationOperation";
 import CurrentIndexAndNode from "./CurrentIndexAndNode";
 import { HEADERS } from "../Constants";
-import { HttpRequestParameters, HttpResponse, HttpRequestParametersWithoutUri, HttpRequest } from "../Primitives/Http";
+import { HttpRequestParameters, HttpResponse, HttpRequestParametersWithoutUri } from "../Primitives/Http";
 import * as PromiseUtil from "../Utility/PromiseUtil";
 import { GetStatisticsOperation } from "../Documents/Operations/GetStatisticsOperation";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";

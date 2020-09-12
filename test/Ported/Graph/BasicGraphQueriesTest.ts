@@ -67,7 +67,10 @@ describe("BasicGraphQueriesTest", function () {
                 .all();
 
             assertThat(allVerticesQuery)
-            //TODO: .anySatisfy(x -> assertThat(x.get("_ as v")).isNull());
+                .anySatisfy(x => {
+                    assertThat(x["_ as v"])
+                        .isNull();
+                })
         }
     });
 
