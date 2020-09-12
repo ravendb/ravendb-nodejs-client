@@ -11,6 +11,7 @@ import { assertThat } from "../../Utils/AssertExtensions";
 import { RequestExecutor } from "../../../src/Http/RequestExecutor";
 import { GetStatisticsOperation } from "../../../src/Documents/Operations/GetStatisticsOperation";
 import { SessionInfo } from "../../../src/Documents/Session/IDocumentSession";
+import { UpdateTopologyParameters } from "../../../src/Http/UpdateTopologyParameters";
 
 describe("ClusterModesForRequestExecutorTest", function () {
 
@@ -69,7 +70,10 @@ describe("ClusterModesForRequestExecutorTest", function () {
                             url: initialLeader.url
                         });
 
-                        await leaderRequestExecutor.updateTopology(serverNode, 5000, true);
+                        const updateTopologyParameters = new UpdateTopologyParameters(serverNode);
+                        updateTopologyParameters.timeoutInMs = 5000;
+                        updateTopologyParameters.forceUpdate = true;
+                        await leaderRequestExecutor.updateTopology(updateTopologyParameters);
 
                         //wait until all nodes in database cluster are members (and not promotables)
                         //GetDatabaseTopologyCommand -> does not retrieve promotables
@@ -185,7 +189,11 @@ describe("ClusterModesForRequestExecutorTest", function () {
                             url: initialLeader.url
                         });
 
-                        await leaderRequestExecutor.updateTopology(serverNode, 5000, true);
+                        const updateTopologyParameters = new UpdateTopologyParameters(serverNode);
+                        updateTopologyParameters.timeoutInMs = 5000;
+                        updateTopologyParameters.forceUpdate = true;
+
+                        await leaderRequestExecutor.updateTopology(updateTopologyParameters);
 
                         //wait until all nodes in database cluster are members (and not promotables)
                         //GetDatabaseTopologyCommand -> does not retrieve promotables
