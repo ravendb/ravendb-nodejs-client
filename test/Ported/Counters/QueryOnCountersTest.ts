@@ -85,7 +85,7 @@ function getFirstObjectValue(o: object) {
     return o[keys[0]];
 }
 
-describe.skip("QueryOnCountersTest", function () { //TODO: unskip
+describe("QueryOnCountersTest", function () {
 
     let store: IDocumentStore;
 

@@ -22,6 +22,7 @@ import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { ServerNode } from "../../Http/ServerNode";
 import { ObjectTypeDescriptor } from "../../Types";
 import { UpdateTopologyParameters } from "../../Http/UpdateTopologyParameters";
+import { TypeUtil } from "../../Utility/TypeUtil";
 
 export class DatabaseChanges implements IDatabaseChanges {
 
@@ -320,10 +321,10 @@ export class DatabaseChanges implements IDatabaseChanges {
             return;
         }
 
-        this._doWorkInternal(preferredNode);
+        this._doWorkInternal();
     }
 
-    private _doWorkInternal(preferredNode: CurrentIndexAndNode): void {
+    private _doWorkInternal(): void {
         if (this._isCanceled) {
             return;
         }
@@ -331,7 +332,7 @@ export class DatabaseChanges implements IDatabaseChanges {
         let wasConnected = false;
 
         if (!this.connected) {
-            const urlString = preferredNode.currentNode.url + "/databases/" + this._database + "/changes";
+            const urlString = this._serverNode.url + "/databases/" + this._database + "/changes";
             const url = StringUtil.toWebSocketPath(urlString);
 
             this._client = DatabaseChanges.createClientWebSocket(this._requestExecutor, url);
@@ -363,7 +364,7 @@ export class DatabaseChanges implements IDatabaseChanges {
 
             this._client.on("close", () => {
                 if (this._reconnectClient()) {
-                    setTimeout(() => this._doWorkInternal(preferredNode), 1000);
+                    setTimeout(() => this._doWorkInternal(), 1000);
                 }
 
                 for (const confirm of this._confirmations.values()) {
@@ -401,7 +402,8 @@ export class DatabaseChanges implements IDatabaseChanges {
             for (const message of messages) {
                 const type = message.Type;
                 if (message.TopologyChange) {
-                    this._getOrAddConnectionState("Topology", "watch-topology-change", "", "");
+                    const state = this._getOrAddConnectionState("Topology", "watch-topology-change", "", "");
+                    state.addOnError(TypeUtil.NOOP);
 
                     const updateParameters = new UpdateTopologyParameters(this._serverNode);
                     updateParameters.timeoutInMs = 0; //TODO: check if 0 means unbounded or system default

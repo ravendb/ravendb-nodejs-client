@@ -11,6 +11,7 @@ import { GetDatabaseTopologyCommand } from "../../../src/ServerWide/Commands/Get
 import { IDocumentStore } from "../../../src/Documents/IDocumentStore";
 import { GetDatabaseRecordOperation } from "../../../src/ServerWide/Operations/GetDatabaseRecordOperation";
 import { ReorderDatabaseMembersOperation } from "../../../src/ServerWide/Operations/ReorderDatabaseMembersOperation";
+import { TypeUtil } from "../../../src/Utility/TypeUtil";
 
 describe("ClusterOperationTest", function () {
 
@@ -117,7 +118,7 @@ describe("ClusterOperationTest", function () {
         }
     }).timeout(60_000);
 
-    it("changesApiFailOver", async () => {
+    it.skip("changesApiFailOver", async () => {
         const db = "Test";
 
         const topology = {
@@ -148,6 +149,8 @@ describe("ClusterOperationTest", function () {
 
                 const taskObservable = store.changes();
                 await taskObservable.ensureConnectedNow();
+
+                taskObservable.on("error", TypeUtil.NOOP);
 
                 const observable = taskObservable.forDocument("users/1");
                 const handler = (change: DocumentChange) => changesList.push(change);

@@ -15,7 +15,7 @@ describe("RavenDB_15134", function () {
     afterEach(async () =>
         await disposeTestDocumentStore(store));
 
-    it.skip("getCountersOperationShouldReturnNullForNonExistingCounter", async () => {
+    it("getCountersOperationShouldReturnNullForNonExistingCounter", async () => {
         const docId = "users/1";
 
         {

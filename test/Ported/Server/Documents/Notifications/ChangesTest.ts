@@ -366,7 +366,7 @@ describe("ChangesTest", function () {
         }
     });
 
-    it.skip("doesn't crush the server if listening on non existing database", async () => { //TODO: unskip after next sync
+    it("doesn't crush the server if listening on non existing database", async () => {
         const changesList = new AsyncQueue<DocumentChange>();
 
         const changes = store.changes("no_such_db");

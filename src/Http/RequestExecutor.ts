@@ -1482,7 +1482,7 @@ export class RequestExecutor implements IDisposable {
             try {
                 const completed = await Promise.race(Array.from(tasks.keys()));
 
-                for (let state of Array.from(tasks.values())) {
+                for (const state of Array.from(tasks.values())) {
                     state.abort?.abort();
                 }
 

@@ -777,6 +777,9 @@ export abstract class InMemoryDocumentSessionOperations
             : (countersToInclude[id].length === 0 ? new Set(cache.data.keys()) : new Set(countersToInclude[id]));
 
         for (const counterJson of counters) {
+            if (!counterJson) {
+                continue;
+            }
             const counterName = counterJson["CounterName"] as string;
             const totalValue = counterJson["TotalValue"] as number;
             if (counterName && totalValue) {
