@@ -72,7 +72,8 @@ import { OngoingTaskRavenEtlDetails } from "../../../../../src/Documents/Operati
                 assertThat(etlResult.taskId)
                     .isGreaterThan(0);
 
-                await replication.waitForDocumentToReplicate(dst, "users/1", 10 * 1000, User); //TODO: assert document not null!
+                assertThat(await replication.waitForDocumentToReplicate(dst, "users/1", 10 * 1000, User))
+                    .isNotNull();
 
                 const ongoingTask = await src.maintenance.send(new GetOngoingTaskInfoOperation(etlResult.taskId, "RavenEtl")) as OngoingTaskRavenEtlDetails;
 
@@ -147,7 +148,8 @@ import { OngoingTaskRavenEtlDetails } from "../../../../../src/Documents/Operati
                 assertThat(etlResult.taskId)
                     .isGreaterThan(0);
 
-                await replication.waitForDocumentToReplicate(dst, "users/1", 10 * 1000, User); //TODO assert document not null
+                assertThat(await replication.waitForDocumentToReplicate(dst, "users/1", 10 * 1000, User))
+                    .isNotNull();
 
             } finally {
                 dst.dispose();
@@ -192,7 +194,8 @@ import { OngoingTaskRavenEtlDetails } from "../../../../../src/Documents/Operati
 
                 const etlResult = await src.maintenance.send(operation);
 
-                await replication.waitForDocumentToReplicate(dst, "users/1", 10 * 1000, User); //TODO: assert documetn not null!
+                assertThat(await replication.waitForDocumentToReplicate(dst, "users/1", 10 * 1000, User))
+                    .isNotNull();
 
                 // now change ETL configuration
 
@@ -217,7 +220,8 @@ import { OngoingTaskRavenEtlDetails } from "../../../../../src/Documents/Operati
                     await session.saveChanges();
                 }
 
-                await replication.waitForDocumentToReplicate(dst, "users/2", 4000, User); //TODO: assert document is null
+                assertThat(await replication.waitForDocumentToReplicate(dst, "users/2", 4000, User))
+                    .isNull();
             } finally {
                 dst.dispose();
             }

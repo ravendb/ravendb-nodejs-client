@@ -5,6 +5,7 @@ import { DatabaseRecordWithEtag } from "..";
 import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
+import { QueryResult } from "../../Documents/Queries/QueryResult";
 
 export class GetDatabaseRecordOperation implements IServerOperation<DatabaseRecordWithEtag> {
     private readonly _database: string;
@@ -66,6 +67,21 @@ export class GetDatabaseRecordCommand extends RavenCommand<DatabaseRecordWithEta
                 ]
             })
             .process(bodyStream);
+
+        const history = this.result.indexesHistory;
+        if (history) {
+            for (const indexName of Object.keys(history)) {
+                const indexHistory = history[indexName];
+
+                history[indexName] = indexHistory.map(item => this._conventions.objectMapper.fromObjectLiteral(item, {
+                    nestedTypes: {
+                        createdAt: "date"
+                    }
+                }));
+            }
+        }
+
+
         return body;
     }
 }

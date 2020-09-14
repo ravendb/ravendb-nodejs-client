@@ -406,7 +406,7 @@ export class DatabaseChanges implements IDatabaseChanges {
                     state.addOnError(TypeUtil.NOOP);
 
                     const updateParameters = new UpdateTopologyParameters(this._serverNode);
-                    updateParameters.timeoutInMs = 0; //TODO: check if 0 means unbounded or system default
+                    updateParameters.timeoutInMs = 0;
                     updateParameters.forceUpdate = true;
                     updateParameters.debugTag = "watch-topology-change";
                     // noinspection ES6MissingAwait

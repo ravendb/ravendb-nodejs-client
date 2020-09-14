@@ -178,7 +178,7 @@ export class BeforeConversionToDocumentEventArgs {
 
 export class BeforeConversionToEntityEventArgs {
     public id: string;
-    public type: DocumentType; //TODO: check if this is correct type!
+    public type: DocumentType;
     public document: object;
     public session: InMemoryDocumentSessionOperations;
 

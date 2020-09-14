@@ -80,12 +80,14 @@ describe("BasicGraphQueriesTest", function () {
         {
             const session = store.openSession();
             const allVerticesQuery = await session.advanced
-                .rawQuery("match (_ as u)-[HasRated select Movie]->(_ as m)")
+                .rawQuery("match (_ as u)-[hasRated select movie]->(_ as m)")
                 .all();
 
             assertThat(allVerticesQuery)
-            // TODO:  .allMatch(x -> x.get("m") != null)
-            // +                        .allMatch(x -> x.get("u") != null);
+                .allMatch(x => !!x.m);
+
+            assertThat(allVerticesQuery)
+                .allMatch(x => !!x.u);
         }
     });
 

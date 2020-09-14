@@ -36,7 +36,6 @@ class GetDetailedCollectionStatisticsCommand extends RavenCommand<DetailedCollec
             this._throwInvalidResponse();
         }
 
-        //TODO: check if we have proper classes!
         return this._parseResponseDefaultAsync(bodyStream);
     }
 }

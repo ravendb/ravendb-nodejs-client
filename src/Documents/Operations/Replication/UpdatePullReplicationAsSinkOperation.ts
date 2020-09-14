@@ -31,7 +31,7 @@ class UpdatePullEdgeReplication extends RavenCommand<ModifyOngoingTaskResult> im
     public constructor(pullReplication: PullReplicationAsSink) {
         super();
 
-        this._pullReplication = pullReplication; //TODO: typo in prop name in java?
+        this._pullReplication = pullReplication;
     }
 
     createRequest(node: ServerNode): HttpRequestParameters {
@@ -39,7 +39,7 @@ class UpdatePullEdgeReplication extends RavenCommand<ModifyOngoingTaskResult> im
 
         const body = this._serializer.serialize({
             PullReplicationAsSink: this._pullReplication
-        }); //TODO: test me!
+        });
 
         return {
             method: "POST",

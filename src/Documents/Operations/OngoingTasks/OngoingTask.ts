@@ -22,8 +22,8 @@ export interface OngoingTaskBackup extends OngoingTask {
     taskType: "Backup",
     backupType: BackupType;
     backupDestinations: string[];
-    lastFullBackup: Date; //TODO:
-    lastIncrementalBackup: Date; //tODO:
+    lastFullBackup: Date;
+    lastIncrementalBackup: Date;
     onGoingBackup: RunningBackup;
     nextBackup: NextBackup;
     retentionPolicy: RetentionPolicy;

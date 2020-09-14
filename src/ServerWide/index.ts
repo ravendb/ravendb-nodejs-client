@@ -62,7 +62,7 @@ export interface DatabaseRecord {
 export interface IndexHistoryEntry {
     definition: IndexDefinition;
     source: string;
-    createdAt: Date; //TODO:
+    createdAt: Date;
 }
 
 export interface DatabaseRecordWithEtag extends DatabaseRecord {

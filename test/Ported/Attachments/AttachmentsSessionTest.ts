@@ -239,13 +239,6 @@ describe("Attachments Session", function () {
         }
     });
 
-    it.skip("can release attachment resources", () => {
-        //TODO: this tests uses: 
-        // tslint:disable-next-line:max-line-length
-        // https://github.com/ravendb/ravendb-jvm-client/blob/9e979755cdac917be5eed3ee9eb61cadc5e92e58/src/main/java/net/ravendb/client/test/driver/RavenTestDriver.java#L161
-        // I'm not sure we can do this in node.js
-    });
-
     it("delete document and then its attachments. This is no op but should be supported.", async () => {
         {
             const session = store.openSession();
