@@ -1,12 +1,12 @@
 import { IDocumentStore } from "../../../../src/Documents/IDocumentStore";
-import { disposeTestDocumentStore, testContext } from "../../../Utils/TestUtil";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../../Utils/TestUtil";
 import { ReplicationTestContext } from "../../../Utils/ReplicationTestContext";
 import { RevisionsCollectionConfiguration } from "../../../../src/Documents/Operations/RevisionsCollectionConfiguration";
 import { ConfigureRevisionsForConflictsOperation } from "../../../../src/ServerWide/Operations/ConfigureRevisionsForConflictsOperation";
 import { assertThat } from "../../../Utils/AssertExtensions";
 import { Company, User } from "../../../Assets/Entities";
 
-describe("ReplicationWithRevisions", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("ReplicationWithRevisions", function () {
 
     let store: IDocumentStore;
     let replication: ReplicationTestContext;

@@ -1,5 +1,5 @@
 import { IDocumentStore } from "../../../src/Documents/IDocumentStore";
-import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil";
 import { ServerWideBackupConfiguration } from "../../../src/ServerWide/Operations/Configuration/ServerWideBackupConfiguration";
 import { PutServerWideBackupConfigurationOperation } from "../../../src/ServerWide/Operations/Configuration/PutServerWideBackupConfigurationOperation";
 import { FtpSettings } from "../../../src/Documents/Operations/Backups/FtpSettings";
@@ -12,7 +12,7 @@ import { DatabaseRecord } from "../../../src/ServerWide/index";
 import { GetServerWideBackupConfigurationOperation } from "../../../src/ServerWide/Operations/Configuration/GetServerWideBackupConfigurationOperation";
 import { DeleteServerWideBackupConfigurationOperation } from "../../../src/ServerWide/Operations/Configuration/DeleteServerWideBackupConfigurationOperation";
 
-describe("ServerWideBackup", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("ServerWideBackup", function () {
 
     let store: IDocumentStore;
 

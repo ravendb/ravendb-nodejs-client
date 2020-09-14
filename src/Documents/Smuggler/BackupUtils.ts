@@ -20,13 +20,6 @@ export class BackupUtils {
         CONSTANTS.Documents.PeriodicBackup.ENCRYPTED_FULL_BACKUP_EXTENSION
     ];
 
-    //TODO: check if we pass dot here in extension!
-    public static isFullBackupOrSnapshot(extension: string) {
-        return BackupUtils.isSnapshot(extension)
-            || StringUtil.equalsIgnoreCase(CONSTANTS.Documents.PeriodicBackup.FULL_BACKUP_EXTENSION, extension)
-            || StringUtil.equalsIgnoreCase(CONSTANTS.Documents.PeriodicBackup.ENCRYPTED_FULL_BACKUP_EXTENSION, extension);
-    }
-
     public static isSnapshot(extension: string) {
         return StringUtil.equalsIgnoreCase(CONSTANTS.Documents.PeriodicBackup.SNAPSHOT_EXTENSION, extension)
             || StringUtil.equalsIgnoreCase(CONSTANTS.Documents.PeriodicBackup.ENCRYPTED_FULL_BACKUP_EXTENSION, extension);

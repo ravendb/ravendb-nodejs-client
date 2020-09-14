@@ -1,5 +1,5 @@
 import { IDocumentStore } from "../../../../src/Documents/IDocumentStore";
-import { disposeTestDocumentStore, testContext } from "../../../Utils/TestUtil";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../../Utils/TestUtil";
 import { ReplicationTestContext } from "../../../Utils/ReplicationTestContext";
 import { PutPullReplicationAsHubOperation } from "../../../../src/Documents/Operations/Replication/PutPullReplicationAsHubOperation";
 import { User } from "../../../Assets/Entities";
@@ -11,7 +11,7 @@ import { OngoingTaskPullReplicationAsSink } from "../../../../src/Documents/Oper
 import { GetPullReplicationHubTasksInfoOperation } from "../../../../src/Documents/Operations/OngoingTasks/GetPullReplicationHubTasksInfoOperation";
 import { PullReplicationDefinition } from "../../../../src/Documents/Operations/Replication/PullReplicationDefinition";
 
-describe("PullReplicationTest", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("PullReplicationTest", function () {
 
     let store: IDocumentStore;
     let replication: ReplicationTestContext;

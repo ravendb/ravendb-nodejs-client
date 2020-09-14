@@ -5,5 +5,5 @@ export interface OngoingTaskPullReplicationAsHub extends OngoingTask {
 
     destinationUrl: string;
     destinationDatabase: string;
-    delayReplicationFor: string; //TODO: string or number?
+    delayReplicationFor: string;
 }
