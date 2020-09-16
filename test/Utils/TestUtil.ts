@@ -446,8 +446,6 @@ export class ClusterTestContext extends RavenTestDriver implements IDisposable {
             let process: ChildProcess;
             const store = await this._runServerInternal(new TestCloudServiceLocator(customSettings), p => process = p, null);
 
-            //TODO: +            Runtime.getRuntime().addShutdownHook(new Thread(() -> killProcess(processReference.value)));
-
             const clusterNode = new ClusterNode();
             clusterNode.serverProcess = process;
             clusterNode.store = store;
@@ -590,15 +588,11 @@ class ClusterController implements IDisposable {
             store.initialize();
 
             const httpAgent = store.getRequestExecutor().getHttpAgent();
-            const response = await command.send(httpAgent, request);
+            const responseAndStream = await command.send(httpAgent, request);
 
-            /* TODO
-             if (response.getEntity() != null) {
-+                    return store.getConventions().getEntityMapper().readTree(response.getEntity().getContent());
-+                }
-             */
+            await command.processResponse(null, responseAndStream.response, responseAndStream.bodyStream, request.uri);
 
-            return null;
+            return command.result;
         } finally {
             store.dispose();
         }

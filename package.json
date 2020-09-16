@@ -67,6 +67,7 @@
     "lodash.orderby": "^4.6.0",
     "mocha": "^8.0.1",
     "nyc": "^15.1.0",
+    "open": "^7.2.1",
     "rimraf": "^3.0.2",
     "sinon": "^9.0.2",
     "source-map-support": "^0.5.19",

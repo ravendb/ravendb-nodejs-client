@@ -76,8 +76,6 @@ export class ReplicationTestContext {
         return store.maintenance.send(op);
     }
 
-    //TODO: review usage and check if we assert that document is not null as this method never throws!
-
     public async waitForDocumentToReplicate<T extends object>(
         store: IDocumentStore, id: string, timeout: number, documentType: DocumentType<T>): Promise<T> {
         const sw = Stopwatch.createStarted();

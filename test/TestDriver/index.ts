@@ -24,6 +24,7 @@ import * as proxyAgent from "http-proxy-agent";
 import * as http from "http";
 import { Stopwatch } from "../../src/Utility/Stopwatch";
 import { delay } from "../../src/Utility/PromiseUtil";
+import * as open from "open";
 
 const log = getLogger({ module: "TestDriver" });
 
@@ -234,29 +235,21 @@ export abstract class RavenTestDriver {
         }
     }
 
-    public waitForUserToContinueTheTest(store: DocumentStore): void {
-        // TODO
+    public async waitForUserToContinueTheTest(store: IDocumentStore) {
+        const databaseNameEncoded = encodeURIComponent(store.database);
+        const documentsPage = store.urls[0] + "/studio/index.html#databases/documents?&database="
+            + databaseNameEncoded + "&withStop=true";
 
-        // String databaseNameEncoded = UrlUtils.escapeDataString(store.getDatabase());
-        // String documentsPage =
-        //      store.getUrls()[0] + "/studio/index.html#databases/documents?&database="
-        //      + databaseNameEncoded + "&withStop=true";
+        this._openBrowser(documentsPage);
 
-        // openBrowser(documentsPage);
+        do {
+            await delay(500);
 
-        // do {
-        //     try {
-        //         Thread.sleep(500);
-        //     } catch (InterruptedException ignored) {
-        //     }
-
-        //     try (IDocumentSession session = store.openSession()) {
-        //         if (session.load(ObjectNode.class, "Debug/Done") != null) {
-        //             break;
-        //         }
-        //     }
-
-        // } while (true);
+            const session = store.openSession();
+            if (await session.load("Debug/Done")) {
+                break;
+            }
+        } while (true);
     }
 
     protected _openBrowser(url: string): void {
@@ -264,9 +257,8 @@ export abstract class RavenTestDriver {
         console.log(url);
 
         if (os.platform() === "win32") {
-            spawn("powershell.exe", ["-c", `start-process ${url}`], {
-                detached: true
-            });
+            // noinspection JSIgnoredPromiseFromCall
+            open(url);
         } else {
             spawn("xdg-open", [url], {
                 detached: true
@@ -385,7 +377,7 @@ export abstract class RavenTestDriver {
             const session = store.openSession();
 
             const scifi = Object.assign(new Genre(), {
-                name: "genres/1", //tODO: scifi?
+                name: "Sci-Fi",
                 id: "genres/1"
             });
 
@@ -458,7 +450,7 @@ export abstract class RavenTestDriver {
                 score: 9
             });
 
-            user2.hasRated = [ rating21, rating22 ]; //TODO: in java we ahe rating11 (?)
+            user2.hasRated = [ rating21, rating22 ];
 
             await session.store(user2);
 
