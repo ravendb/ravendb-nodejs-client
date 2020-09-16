@@ -38,48 +38,7 @@ export class GraphDocumentQuery<T extends object> extends AbstractDocumentQuery<
         super.addParameter(name, value);
         return this;
     }
-
-
-    /* TODO
-    +
-    +    @Override
-    +    public IGraphDocumentQuery<T> addAfterStreamExecutedListener(Consumer<ObjectNode> action) {
-    +        _addAfterStreamExecutedListener(action);
-    +        return this;
-    +    }
-    +
-    +    @Override
-    +    public IGraphDocumentQuery<T> removeAfterStreamExecutedListener(Consumer<ObjectNode> action) {
-    +        _removeAfterStreamExecutedListener(action);
-    +        return this;
-    +    }
-    +
-    +    @Override
-    +    public IGraphDocumentQuery<T> addBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
-    +        _addBeforeQueryExecutedListener(action);
-    +        return this;
-    +    }
-    +
-    +    @Override
-    +    public IGraphDocumentQuery<T> removeBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
-    +        _removeBeforeQueryExecutedListener(action);
-    +        return this;
-    +    }
-    +
-    +    @Override
-    +    public IGraphDocumentQuery<T> addAfterQueryExecutedListener(Consumer<QueryResult> action) {
-    +        _addAfterQueryExecutedListener(action);
-    +        return this;
-    +    }
-    +
-    +    @Override
-    +    public IGraphDocumentQuery<T> removeAfterQueryExecutedListener(Consumer<QueryResult> action) {
-    +        _removeAfterQueryExecutedListener(action);
-    +        return this;
-    +    }
-    +
-    +
-    */
+    
     public skip(count: number): IGraphDocumentQuery<T> {
         this._skip(count);
         return this;

@@ -103,9 +103,6 @@ export interface SessionCreatedEventArgs {
 
 export interface DocumentStoreEventEmitter {
 
-    //TODO: what's the difference between those events and addSessionListener?
-    //TODO: do we need TopologyUpdated here?
-
     on(eventName: "failedRequest", eventHandler: (args: FailedRequestEventArgs) => void): this;
 
     on(eventName: "sessionCreated", eventHandler: (args: SessionCreatedEventArgs) => void): this;
@@ -305,6 +302,4 @@ export interface IDocumentStore extends IDisposable,
 
     addSessionListener(
         eventName: "afterConversionToEntity", eventHandler: (eventArgs: AfterConversionToEntityEventArgs) => void): this;
-
-    //TODO: expose remove events?
 }

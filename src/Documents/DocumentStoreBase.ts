@@ -319,20 +319,13 @@ export abstract class DocumentStoreBase
     public registerEvents(requestExecutor: RequestExecutor): void;
     public registerEvents(session: DocumentSession): void;
     public registerEvents(requestExecutorOrSession: RequestExecutor | DocumentSession): void {
-        if (requestExecutorOrSession instanceof RequestExecutor) {
-            /* TODO
-             for (EventHandler<FailedRequestEventArgs> handler : onFailedRequest) {
-+            requestExecutor.addOnFailedRequestListener(handler);
-         }
-         for (EventHandler<TopologyUpdatedEventArgs> handler : onTopologyUpdated) {
-+            requestExecutor.addOnTopologyUpdatedListener(handler);
-+        }
-             */
-        } else {
-            this._eventHandlers.forEach(([eventName, eventHandler]) => {
-                requestExecutorOrSession.on(eventName, eventHandler);
-            });
-        }
+        this._eventHandlers.forEach(([eventName, eventHandler]) => {
+            if (eventName === "failedRequest" || eventName === "topologyUpdated") {
+                (requestExecutorOrSession as RequestExecutor).on(eventName as any, eventHandler);
+            } else {
+                (requestExecutorOrSession as DocumentSession).on(eventName, eventHandler);
+            }
+        });
     }
 
     public abstract maintenance: MaintenanceOperationExecutor;
