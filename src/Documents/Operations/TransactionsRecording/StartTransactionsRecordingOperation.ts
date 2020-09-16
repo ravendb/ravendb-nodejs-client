@@ -21,7 +21,6 @@ export class StartTransactionsRecordingOperation implements IMaintenanceOperatio
     }
 }
 
-//TODO: return type is not void!
 class StartTransactionsRecordingCommand extends RavenCommand<void> {
     private readonly _filePath: string;
 

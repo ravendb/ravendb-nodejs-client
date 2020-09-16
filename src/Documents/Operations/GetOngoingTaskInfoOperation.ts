@@ -9,6 +9,8 @@ import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
 import { throwError } from "../../Exceptions/index";
+import { RavenEtlConfiguration } from "./Etl/RavenEtlConfiguration";
+import { SqlEtlConfiguration } from "./Etl/Sql/SqlEtlConfiguration";
 
 export class GetOngoingTaskInfoOperation implements IMaintenanceOperation<OngoingTask> {
     private readonly _taskName: string;
@@ -83,10 +85,14 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
                         // nothing to do
                         break;
                     case "RavenEtl":
-                        //TODO: configuration: RavenEtlConfiguration;
+                        nestedTypes = {
+                            configuration: "RavenEtlConfiguration"
+                        };
                         break;
                     case "SqlEtl":
-                        //TODO: configuration: SqlEtlConfiguration
+                        nestedTypes = {
+                            configuration: "SqlEtlConfiguration"
+                        };
                         break;
                     case "Subscription":
                         nestedTypes = {
@@ -95,10 +101,14 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
                         }
                         break;
                     case "PullReplicationAsSink":
-                        //TODO: add mappings
                         break;
                     case "Backup":
-                        //TODO:lastFullBackup: Date, lastIncrementalBackup: Date;, RunningBackup, NextBackup!
+                        nestedTypes = {
+                            lastFullBackup: "date",
+                            lastIncrementalBackup: "date",
+                            "onGoingBackup.startTime": "date",
+                            "nextBackup.dateTime": "date"
+                        }
                         break;
                 }
 
@@ -107,7 +117,8 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
                     this._conventions,
                     {
                         nestedTypes
-                    });
+                    },
+                    knownTypes);
             });
         return body;
     }
@@ -116,3 +127,8 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
         return false;
     }
 }
+
+const knownTypes = new Map<string, any>([
+    [RavenEtlConfiguration.name, RavenEtlConfiguration],
+    [SqlEtlConfiguration.name, SqlEtlConfiguration]
+]);

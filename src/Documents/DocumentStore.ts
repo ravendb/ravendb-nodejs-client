@@ -34,7 +34,7 @@ export class DocumentStore extends DocumentStoreBase {
     // _observeChangesAndEvictItemsFromCacheForDatabases = 
     // new ConcurrentDictionary<string, EvictItemsFromCacheBasedOnChanges>();
 
-    private _requestExecutors: Map<string, RequestExecutor> = new Map(); //TODO: do we want to have lazy here?
+    private _requestExecutors: Map<string, RequestExecutor> = new Map();
 
     private _multiDbHiLo: HiloMultiDatabaseIdGenerator;
 
@@ -223,9 +223,9 @@ export class DocumentStore extends DocumentStoreBase {
         }
 
         if (!this.conventions.disableTopologyUpdates) {
-            executor = createRequestExecutor(); //TODO: lazy
+            executor = createRequestExecutor();
         } else {
-            executor = createRequestExecutorForSingleNode(); //TODO lazy
+            executor = createRequestExecutorForSingleNode();
         }
 
         this._log.info(`New request executor for database ${database}`);

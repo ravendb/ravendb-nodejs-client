@@ -1,7 +1,7 @@
 import { OngoingTask } from "./OngoingTask";
 
 export interface OngoingTaskPullReplicationAsHub extends OngoingTask {
-    //TODO: setTaskType(OngoingTaskType.PULL_REPLICATION_AS_HUB);
+    taskType: "PullReplicationAsHub";
 
     destinationUrl: string;
     destinationDatabase: string;

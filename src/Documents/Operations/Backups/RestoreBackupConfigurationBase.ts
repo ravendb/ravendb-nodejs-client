@@ -1,4 +1,5 @@
 import { BackupEncryptionSettings } from "./BackupEncryptionSettings";
+import { RestoreType } from "./RestoreType";
 
 export interface RestoreBackupConfigurationBase {
     databaseName: string;
@@ -8,7 +9,7 @@ export interface RestoreBackupConfigurationBase {
     disableOngoingTasks: boolean;
     skipIndexes: boolean;
 
-    //TODO: protected abstract RestoreType getType();
+    type: RestoreType;
 
     backupEncryptionSettings: BackupEncryptionSettings;
 }

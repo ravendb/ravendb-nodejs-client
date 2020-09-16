@@ -106,6 +106,8 @@ import { PullReplicationDefinition } from "../../../../src/Documents/Operations/
                     .isEqualTo(sink.urls[0]);
                 assertThat(ongoing.taskConnectionStatus)
                     .isEqualTo("Active");
+                assertThat(ongoing.taskType)
+                    .isEqualTo("PullReplicationAsHub");
             } finally {
                 hub.dispose();
             }

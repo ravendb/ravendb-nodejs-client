@@ -41,7 +41,7 @@ class GetPullReplicationTasksInfoCommand extends RavenCommand<PullReplicationDef
     }
 
     async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
-        return this._parseResponseDefaultAsync(bodyStream); //TODO: check bindings!
+        return this._parseResponseDefaultAsync(bodyStream);
     }
 
     get isReadRequest(): boolean {

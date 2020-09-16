@@ -55,8 +55,6 @@ import { DeleteServerWideBackupConfigurationOperation } from "../../../src/Serve
             assertThat(serverWideBackups)
                 .hasSize(3);
 
-            //TODO: assert on props?
-
             let databaseRecord = await store.maintenance.server.send(new GetDatabaseRecordOperation(store.database));
             assertThat(databaseRecord.periodicBackups)
                 .hasSize(3);
@@ -86,10 +84,6 @@ import { DeleteServerWideBackupConfigurationOperation } from "../../../src/Serve
                 new GetServerWideBackupConfigurationOperation("Backup w/o destinations"));
             assertThat(backupConfiguration)
                 .isNotNull();
-
-            //TODO: check props?
-
-
 
         } finally {
             await cleanupServerWideBackups(store);

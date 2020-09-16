@@ -2,7 +2,7 @@ import { OngoingTask } from "./OngoingTask";
 
 
 export interface OngoingTaskPullReplicationAsSink extends OngoingTask {
-    //TODO  setTaskType(OngoingTaskType.PULL_REPLICATION_AS_SINK);
+    taskType: "PullReplicationAsSink";
 
     hubDefinitionName: string;
     destinationUrl: string;
