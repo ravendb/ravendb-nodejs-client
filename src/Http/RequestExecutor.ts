@@ -966,9 +966,14 @@ export class RequestExecutor implements IDisposable {
         }
     }
 
-    private async _sendRequestToServer<TResult>(chosenNode: ServerNode, nodeIndex: number, command: RavenCommand<TResult>,
-                                                shouldRetry: boolean, sessionInfo: SessionInfo, request: HttpRequestParameters,
-                                                url: string, abortController: AbortController) {
+    private async _sendRequestToServer<TResult>(chosenNode: ServerNode,
+                                                nodeIndex: number,
+                                                command: RavenCommand<TResult>,
+                                                shouldRetry: boolean,
+                                                sessionInfo: SessionInfo,
+                                                request: HttpRequestParameters,
+                                                url: string,
+                                                abortController: AbortController) {
         try {
             this.numberOfServerRequests++;
 

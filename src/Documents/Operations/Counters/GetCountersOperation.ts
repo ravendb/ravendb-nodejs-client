@@ -84,7 +84,8 @@ export class GetCounterValuesCommand extends RavenCommand<CountersDetail> {
             }
         }
         
-        if (this._returnFullResults && req.method === "GET") { // if we dropped to Post, _returnFullResults is part of the request content
+        if (this._returnFullResults && req.method === "GET") {
+            // if we dropped to Post, _returnFullResults is part of the request content
             pathBuilder.append("&full=true");
         }
 

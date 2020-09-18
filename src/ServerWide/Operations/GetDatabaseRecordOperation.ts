@@ -57,13 +57,7 @@ export class GetDatabaseRecordCommand extends RavenCommand<DatabaseRecordWithEta
             .objectKeysTransform({
                 defaultTransform: "camel",
                 ignorePaths: [
-                    /^indexes\.[^.]+$/i,
-                    /^sorters\.[^.]+$/i,
-                    /^autoIndexes\.[^.]+$/i,
-                    /^settings\.[^.]+$/i,
-                    /^indexesHistory\.[^.]+$/i,
-                    /^ravenConnectionStrings\.[^.]+$/i,
-                    /^sqlConnectionStrings\.[^.]+$/i,
+                    /^(indexes|sorters|autoIndexes|settings|indexesHistory|ravenConnectionStrings|sqlConnectionStrings)\.[^.]+$/i
                 ]
             })
             .process(bodyStream);

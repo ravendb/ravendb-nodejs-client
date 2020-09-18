@@ -20,9 +20,4 @@ export class BatchCommand extends SingleNodeBatchCommand implements IDisposable,
     getRaftUniqueRequestId(): string {
         return RaftIdGenerator.newId();
     }
-
-    // tslint:disable-next-line:no-empty
-    public dispose(): void {
-        super.dispose();
-    }
 }

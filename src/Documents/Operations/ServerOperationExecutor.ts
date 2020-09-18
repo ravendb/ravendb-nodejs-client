@@ -9,6 +9,7 @@ import { throwError } from "../../Exceptions/index";
 import { StringUtil } from "../../Utility/StringUtil";
 import { Topology } from "../../Http/Topology";
 import { GetBuildNumberOperation } from "../../ServerWide/Operations/GetBuildNumberOperation";
+import { IRequestExecutorOptions } from "../../Http/RequestExecutor";
 
 const log = getLogger({ module: "ServerOperationExecutor" });
 
@@ -21,10 +22,16 @@ export class ServerOperationExecutor implements IDisposable {
     private readonly _initialRequestExecutor: ClusterRequestExecutor;
 
     public constructor(store: DocumentStoreBase);
-    public constructor(store: DocumentStoreBase, requestExecutor: ClusterRequestExecutor, initialRequestExecutor: ClusterRequestExecutor,
-                       cache: Map<string, ServerOperationExecutor>, nodeTag: string);
-    public constructor(store: DocumentStoreBase, requestExecutor?: ClusterRequestExecutor, initialRequestExecutor?: ClusterRequestExecutor,
-                       cache?: Map<string, ServerOperationExecutor>, nodeTag?: string) {
+    public constructor(store: DocumentStoreBase,
+                       requestExecutor: ClusterRequestExecutor,
+                       initialRequestExecutor: ClusterRequestExecutor,
+                       cache: Map<string, ServerOperationExecutor>,
+                       nodeTag: string);
+    public constructor(store: DocumentStoreBase,
+                       requestExecutor?: ClusterRequestExecutor,
+                       initialRequestExecutor?: ClusterRequestExecutor,
+                       cache?: Map<string, ServerOperationExecutor>,
+                       nodeTag?: string) {
         requestExecutor = requestExecutor || ServerOperationExecutor._createRequestExecutor(store);
         cache = cache || new Map<string, ServerOperationExecutor>();
 
@@ -162,14 +169,12 @@ export class ServerOperationExecutor implements IDisposable {
     }
 
     private static _createRequestExecutor(store: DocumentStoreBase): ClusterRequestExecutor {
+        const args: IRequestExecutorOptions = {
+            authOptions: store.authOptions,
+            documentConventions: store.conventions
+        };
         return store.conventions.disableTopologyUpdates
-            ? ClusterRequestExecutor.createForSingleNode(store.urls[0], {
-                authOptions: store.authOptions,
-                documentConventions: store.conventions
-            })
-            : ClusterRequestExecutor.create(store.urls, {
-                documentConventions: store.conventions,
-                authOptions: store.authOptions
-            });
+            ? ClusterRequestExecutor.createForSingleNode(store.urls[0], args)
+            : ClusterRequestExecutor.create(store.urls, args);
     }
 }

@@ -147,7 +147,7 @@ export abstract class InMemoryDocumentSessionOperations
 
     public readonly noTracking: boolean;
 
-    public idsForCreatingForcedRevisions: Map<string, ForceRevisionStrategy> = new Map(); //TODO: check usages this is case insensitive map!
+    public idsForCreatingForcedRevisions: Map<string, ForceRevisionStrategy> = CaseInsensitiveKeysMap.create();
 
     public includedDocumentsById: Map<string, DocumentInfo> = CaseInsensitiveKeysMap.create();
 
