@@ -1,8 +1,10 @@
 import { RavenCommand } from "../../Http/RavenCommand";
 import { HttpRequestParameters } from "../../Primitives/Http";
 import { ServerNode } from "../../Http/ServerNode";
+import { IRaftCommand } from "../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../Utility/RaftIdGenerator";
 
-export class DeleteSubscriptionCommand extends RavenCommand<void> {
+export class DeleteSubscriptionCommand extends RavenCommand<void> implements IRaftCommand {
     private readonly _name: string;
 
     public constructor(name: string) {
@@ -20,5 +22,9 @@ export class DeleteSubscriptionCommand extends RavenCommand<void> {
 
     public get isReadRequest() {
         return false;
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }

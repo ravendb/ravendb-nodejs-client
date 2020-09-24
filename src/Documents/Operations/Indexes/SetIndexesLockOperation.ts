@@ -6,6 +6,8 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { throwError } from "../../../Exceptions";
 import { ServerNode } from "../../../Http/ServerNode";
 import { TypeUtil } from "../../../Utility/TypeUtil";
+import { IRaftCommand } from "../../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export class SetIndexesLockOperation implements IMaintenanceOperation<void> {
 
@@ -57,7 +59,7 @@ export class SetIndexesLockOperation implements IMaintenanceOperation<void> {
     }
 }
 
-export class SetIndexLockCommand extends RavenCommand<void> {
+export class SetIndexLockCommand extends RavenCommand<void> implements IRaftCommand {
 
     private readonly _parameters: object;
 
@@ -92,6 +94,10 @@ export class SetIndexLockCommand extends RavenCommand<void> {
 
     public get isReadRequest() {
         return false;
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }
 

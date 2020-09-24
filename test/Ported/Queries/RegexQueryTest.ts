@@ -35,7 +35,7 @@ describe("Regex query", function () {
 
         const iq = query.getIndexQuery();
 
-        assert.strictEqual(iq.query, "from RegexMes where regex(text, $p0)");
+        assert.strictEqual(iq.query, "from 'RegexMes' where regex(text, $p0)");
 
         assert.strictEqual(iq.queryParameters["p0"], "^[a-z ]{2,4}love");
 

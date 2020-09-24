@@ -1,36 +1,41 @@
 import { IServerOperation, OperationIdResult, OperationResultType } from "../OperationAbstractions";
-import { RestoreBackupConfiguration } from "./RestoreBackupConfiguration";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as stream from "readable-stream";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
+import { RestoreBackupConfigurationBase } from "./RestoreBackupConfigurationBase";
 
 export class RestoreBackupOperation implements IServerOperation<OperationIdResult> {
-    private readonly _restoreConfiguration: RestoreBackupConfiguration;
+    private readonly _restoreConfiguration: RestoreBackupConfigurationBase;
+    private readonly _nodeTag: string;
 
-    public constructor(restoreConfiguration: RestoreBackupConfiguration) {
+    public constructor(restoreConfiguration: RestoreBackupConfigurationBase, nodeTag?: string) {
         this._restoreConfiguration = restoreConfiguration;
+        this._nodeTag = nodeTag;
     }
 
     public getCommand(conventions: DocumentConventions): RavenCommand<OperationIdResult> {
-        return new RestoreBackupCommand(conventions, this._restoreConfiguration);
+        return new RestoreBackupCommand(conventions, this._restoreConfiguration, this._nodeTag);
     }
 
     public get resultType(): OperationResultType {
         return "OperationId";
     }
+
+    public get nodeTag(): string {
+        return this._nodeTag;
+    }
 }
 
 class RestoreBackupCommand extends RavenCommand<OperationIdResult> {
-    private readonly _conventions: DocumentConventions;
-    private readonly _restoreConfiguration: RestoreBackupConfiguration;
+    private readonly _restoreConfiguration: RestoreBackupConfigurationBase;
 
-    public constructor(conventions: DocumentConventions, restoreConfiguration: RestoreBackupConfiguration) {
+    public constructor(conventions: DocumentConventions, restoreConfiguration: RestoreBackupConfigurationBase, nodeTag: string) {
         super();
 
-        this._conventions = conventions;
         this._restoreConfiguration = restoreConfiguration;
+        this._selectedNodeTag = nodeTag;
     }
 
     get isReadRequest(): boolean {

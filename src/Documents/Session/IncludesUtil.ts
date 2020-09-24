@@ -1,3 +1,5 @@
+import { StringUtil } from "../../Utility/StringUtil";
+
 export class IncludesUtil {
 
     public static include(
@@ -29,4 +31,17 @@ export class IncludesUtil {
             }
         }
      */
+
+    public static requiresQuotes(include: string, escapedIncludeSetter: (value: string) => void): boolean {
+        for (let i = 0; i < include.length; i++) {
+            const ch = include.charAt(i);
+            if (!(StringUtil.isLetter(ch) || StringUtil.isDigit(ch)) && ch !== "_" && ch !== ".") {
+                escapedIncludeSetter(include.replace(/'/g, "\'"));
+                return true;
+            }
+        }
+
+        escapedIncludeSetter(null);
+        return false;
+    }
 }

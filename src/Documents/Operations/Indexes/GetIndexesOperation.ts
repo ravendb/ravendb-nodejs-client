@@ -63,7 +63,7 @@ export class GetIndexesCommand extends RavenCommand<IndexDefinition[]> {
             .parseJsonSync()
             .objectKeysTransform({
                 defaultTransform: "camel",
-                ignorePaths: [/fields\.[^.]+$/i]
+                ignorePaths: [/fields\.[^.]+$/i, /results\.\[]\.configuration\./i]
             })
             .process(bodyStream)
             .then((result) => {

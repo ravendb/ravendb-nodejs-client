@@ -12,6 +12,7 @@ import { GetTcpInfoCommand } from "../ServerWide/Commands/GetTcpInfoCommand";
 import { IAuthOptions } from "../Auth/AuthOptions";
 import { acquireSemaphore } from "../Utility/SemaphoreUtil";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
+import { UpdateTopologyParameters } from "./UpdateTopologyParameters";
 
 const log = getLogger({ module: "ClusterRequestExecutor" });
 
@@ -44,7 +45,7 @@ export class ClusterRequestExecutor extends RequestExecutor {
         const initialUrls = [url];
 
         const { authOptions, documentConventions } = opts;
-        const urls = this._validateUrls(initialUrls, authOptions);
+        const urls = this.validateUrls(initialUrls, authOptions);
 
         const executor = new ClusterRequestExecutor(
             authOptions, documentConventions || DocumentConventions.defaultConventions);
@@ -85,7 +86,7 @@ export class ClusterRequestExecutor extends RequestExecutor {
             documentConventions ? documentConventions : DocumentConventions.defaultConventions);
 
         executor._disableClientConfigurationUpdates = true;
-        executor._firstTopologyUpdatePromise = executor._firstTopologyUpdate(initialUrls);
+        executor._firstTopologyUpdatePromise = executor._firstTopologyUpdate(initialUrls, null);
         return executor;
     }
 
@@ -97,21 +98,36 @@ export class ClusterRequestExecutor extends RequestExecutor {
         });
     }
 
-    public updateTopology(node: ServerNode, timeout: number, forceUpdate: boolean = false, debugTag?: string): Promise<boolean> {
+    public updateTopology(node: ServerNode, timeout: number, forceUpdate?: boolean, debugTag?: string): Promise<boolean>;
+    public updateTopology(parameters: UpdateTopologyParameters): Promise<boolean>;
+    public updateTopology(nodeOrParameters: ServerNode | UpdateTopologyParameters, timeout?: number, forceUpdate: boolean = false, debugTag?: string): Promise<boolean> {
+        let parameters: UpdateTopologyParameters;
+        if (nodeOrParameters instanceof ServerNode) {
+            parameters = new UpdateTopologyParameters(nodeOrParameters);
+            parameters.timeoutInMs = timeout;
+            parameters.forceUpdate = forceUpdate;
+            parameters.debugTag = debugTag;
+            parameters.applicationIdentifier = null;
+        } else {
+            if (!nodeOrParameters) {
+                throwError("InvalidArgumentException", "Parameters cannot be null");
+            }
+            parameters = nodeOrParameters;
+        }
         if (this._disposed) {
             return Promise.resolve(false);
         }
 
-        const acquiredSemContext = acquireSemaphore(this._clusterTopologySemaphore, { timeout });
+        const acquiredSemContext = acquireSemaphore(this._clusterTopologySemaphore, { timeout: parameters.timeoutInMs });
         const result = BluebirdPromise.resolve(acquiredSemContext.promise)
             .then(() => {
                 if (this._disposed) {
                     return false;
                 }
 
-                const command = new GetClusterTopologyCommand(debugTag);
+                const command = new GetClusterTopologyCommand(parameters.debugTag);
                 return this.execute(command, null, {
-                    chosenNode: node,
+                    chosenNode: parameters.node,
                     nodeIndex: null,
                     shouldRetry: false
                 })
@@ -125,7 +141,7 @@ export class ClusterRequestExecutor extends RequestExecutor {
                                 return [...reduceResult, serverNode];
                             }, []);
 
-                        const newTopology = new Topology(0, nodes);
+                        const newTopology = new Topology(results.etag, nodes);
                         if (!this._nodeSelector) {
                             this._nodeSelector = new NodeSelector(newTopology);
 
@@ -133,13 +149,15 @@ export class ClusterRequestExecutor extends RequestExecutor {
                                 this._nodeSelector.scheduleSpeedTest();
                             }
 
-                        } else if (this._nodeSelector.onUpdateTopology(newTopology, forceUpdate)) {
+                        } else if (this._nodeSelector.onUpdateTopology(newTopology, parameters.forceUpdate)) {
                             this._disposeAllFailedNodesTimers();
 
                             if (this.conventions.readBalanceBehavior === "FastestNode") {
                                 this._nodeSelector.scheduleSpeedTest();
                             }
                         }
+
+                        this._onTopologyUpdatedInvoke(newTopology);
                     })
                     .then(() => true);
 
@@ -155,7 +173,7 @@ export class ClusterRequestExecutor extends RequestExecutor {
         return Promise.resolve(result);
     }
 
-    protected _updateClientConfigurationAsync(): Promise<void> {
+    protected _updateClientConfigurationAsync(serverNode: ServerNode): Promise<void> {
         return Promise.resolve();
     }
 

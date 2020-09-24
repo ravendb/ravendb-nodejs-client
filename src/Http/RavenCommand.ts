@@ -34,8 +34,12 @@ export abstract class RavenCommand<TResult> {
     public statusCode: number;
     public failedNodes: Map<ServerNode, Error>;
     protected _responseType: RavenCommandResponseType;
+    public timeout: number | undefined;
     protected _canCache: boolean;
     protected _canCacheAggressively: boolean;
+    protected _selectedNodeTag: string;
+
+    public failoverTopologyEtag = -2;
 
     public abstract get isReadRequest(): boolean;
 
@@ -51,10 +55,21 @@ export abstract class RavenCommand<TResult> {
         return this._canCacheAggressively;
     }
 
-    constructor() {
-        this._responseType = "Object";
-        this._canCache = true;
-        this._canCacheAggressively = true;
+    public get selectedNodeTag(): string {
+        return this._selectedNodeTag;
+    }
+
+    constructor(copy?: RavenCommand<TResult>) {
+        if (copy instanceof RavenCommand) {
+            this._canCache = copy._canCache;
+            this._canCacheAggressively = copy._canCacheAggressively;
+            this._selectedNodeTag = copy._selectedNodeTag;
+            this._responseType = copy._responseType;
+        } else {
+            this._responseType = "Object";
+            this._canCache = true;
+            this._canCacheAggressively = true;
+        }
     }
 
     public abstract createRequest(node: ServerNode): HttpRequestParameters;

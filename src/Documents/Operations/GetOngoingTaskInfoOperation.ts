@@ -8,6 +8,9 @@ import { NestedTypes } from "../../Mapping/ObjectMapper";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
+import { throwError } from "../../Exceptions/index";
+import { RavenEtlConfiguration } from "./Etl/RavenEtlConfiguration";
+import { SqlEtlConfiguration } from "./Etl/Sql/SqlEtlConfiguration";
 
 export class GetOngoingTaskInfoOperation implements IMaintenanceOperation<OngoingTask> {
     private readonly _taskName: string;
@@ -24,6 +27,11 @@ export class GetOngoingTaskInfoOperation implements IMaintenanceOperation<Ongoin
         }
 
         this._type = type;
+
+        if (type === "PullReplicationAsHub") {
+            throwError("InvalidArgumentException", "PullReplicationAsHub type is not supported. " +
+                "Please use GetPullReplicationTasksInfoOperation instead.");
+        }
     }
 
     public get resultType(): OperationResultType {
@@ -77,10 +85,14 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
                         // nothing to do
                         break;
                     case "RavenEtl":
-                        //TODO: configuration: RavenEtlConfiguration;
+                        nestedTypes = {
+                            configuration: "RavenEtlConfiguration"
+                        };
                         break;
                     case "SqlEtl":
-                        //TODO: configuration: SqlEtlConfiguration
+                        nestedTypes = {
+                            configuration: "SqlEtlConfiguration"
+                        };
                         break;
                     case "Subscription":
                         nestedTypes = {
@@ -88,8 +100,15 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
                             lastClientConnectionTime: "date"
                         }
                         break;
+                    case "PullReplicationAsSink":
+                        break;
                     case "Backup":
-                        //TODO:lastFullBackup: Date, lastIncrementalBackup: Date;, RunningBackup, NextBackup!
+                        nestedTypes = {
+                            lastFullBackup: "date",
+                            lastIncrementalBackup: "date",
+                            "onGoingBackup.startTime": "date",
+                            "nextBackup.dateTime": "date"
+                        }
                         break;
                 }
 
@@ -98,7 +117,8 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
                     this._conventions,
                     {
                         nestedTypes
-                    });
+                    },
+                    knownTypes);
             });
         return body;
     }
@@ -107,3 +127,8 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
         return false;
     }
 }
+
+const knownTypes = new Map<string, any>([
+    [RavenEtlConfiguration.name, RavenEtlConfiguration],
+    [SqlEtlConfiguration.name, SqlEtlConfiguration]
+]);

@@ -12,6 +12,11 @@ export class SuggestionBuilder<T> implements ISuggestionBuilder<T>, ISuggestionO
     private _term: SuggestionWithTerm;
     private _terms: SuggestionWithTerms;
 
+    public withDisplayName(displayName: string): ISuggestionOperations<T> {
+        this.suggestion.displayField = displayName;
+        return this;
+    }
+
     public byField(fieldName: string, term: string): ISuggestionOperations<T>;
     public byField(fieldName: string, terms: string[]): ISuggestionOperations<T>;
     public byField(fieldName: string, termOrTerms: string | string[]): ISuggestionOperations<T> {

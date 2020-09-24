@@ -30,7 +30,9 @@ import { getTransformJsonKeysProfile } from "../../Mapping/Json/Streams/Transfor
 import { BatchFromServer } from "./BatchFromServer";
 import { ServerNode } from "../../Http/ServerNode";
 import { RequestExecutor } from "../../Http/RequestExecutor";
-import { GetTcpInfoCommand } from "../../ServerWide/Commands/GetTcpInfoCommand";
+import { GetTcpInfoCommand, TcpConnectionInfo } from "../../ServerWide/Commands/GetTcpInfoCommand";
+import { GetTcpInfoForRemoteTaskCommand } from "../Commands/GetTcpInfoForRemoteTaskCommand";
+import * as os from "os";
 
 type EventTypes = "afterAcknowledgment" | "connectionRetry" | "batch" | "error" | "end";
 
@@ -47,6 +49,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
     private _parser: stream.Transform;
     private _disposed: boolean = false;
     private _subscriptionTask: Promise<void>;
+    private _forcedTopologyUpdateAttempts = 0;
     private _emitter = new EventEmitter();
 
     public constructor(options: SubscriptionWorkerOptions<T>,
@@ -96,9 +99,13 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
     }
 
     private async _connectToServer(): Promise<Socket> {
-        const command = new GetTcpInfoCommand("Subscription/" + this._dbName, this._dbName);
+        const command = new GetTcpInfoForRemoteTaskCommand(
+            "Subscription/" + this._dbName, this._dbName,
+            this._options ? this._options.subscriptionName : null, true);
 
         const requestExecutor = this._store.getRequestExecutor(this._dbName);
+
+        let tcpInfo: TcpConnectionInfo;
 
         if (this._redirectNode) {
             try {
@@ -107,20 +114,40 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                     nodeIndex: null,
                     shouldRetry: false
                 });
+                tcpInfo = command.result;
             } catch (e) {
-                // if we failed to talk to a node, we'll forget about it and let the topology to
-                // redirect us to the current node
+                if (e.name === "ClientVersionMismatchException") {
+                    tcpInfo = await this._legacyTryGetTcpInfo(requestExecutor, this._redirectNode);
+                } else {
+                    // if we failed to talk to a node, we'll forget about it and let the topology to
+                    // redirect us to the current node
 
-                this._redirectNode = null;
+                    this._redirectNode = null;
 
-                throw e;
+                    throw e;
+                }
             }
         } else {
-            await requestExecutor.execute(command);
+            try {
+                await requestExecutor.execute(command);
+                tcpInfo = command.result;
+
+                const tcpInfoUrls = tcpInfo.urls;
+
+                this._redirectNode = requestExecutor.getTopology().nodes
+                    .find(x => tcpInfoUrls.includes(x.url));
+            } catch (e) {
+                if (e.name === "ClientVersionMismatchException") {
+                    tcpInfo = await this._legacyTryGetTcpInfo(requestExecutor);
+                } else {
+                    throw e;
+                }
+            }
         }
 
-        this._tcpClient =
-            await TcpUtils.connect(command.result.url, command.result.certificate, this._store.authOptions);
+        const [socket, chosenUrl] = await TcpUtils.connectWithPriority(tcpInfo, command.result.certificate, this._store.authOptions);
+
+        this._tcpClient = socket;
 
         this._ensureParser();
 
@@ -132,7 +159,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             version: SUBSCRIPTION_TCP_VERSION,
             readResponseAndGetVersionCallback: url => this._readServerResponseAndGetVersion(url),
             destinationNodeTag: this.currentNodeTag,
-            destinationUrl: command.result.url
+            destinationUrl: chosenUrl
         } as TcpNegotiateParameters;
 
         this._supportedFeatures = await TcpNegotiation.negotiateProtocolVersion(this._tcpClient, parameters);
@@ -151,7 +178,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         }
 
         this._subscriptionLocalRequestExecutor = RequestExecutor.createForSingleNodeWithoutConfigurationUpdates(
-            command.requestedNode.url,
+            command.getRequestedNode().url,
             this._dbName,
             {
                 authOptions: requestExecutor.getAuthOptions(),
@@ -159,7 +186,29 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             }
         );
 
+        this._store.registerEvents(this._subscriptionLocalRequestExecutor);
+
         return this._tcpClient;
+    }
+
+    private async _legacyTryGetTcpInfo(requestExecutor: RequestExecutor, node?: ServerNode) {
+        const tcpCommand = new GetTcpInfoCommand("Subscription/" + this._dbName, this._dbName);
+        try {
+            if (node) {
+                await requestExecutor.execute<TcpConnectionInfo>(tcpCommand, null, {
+                    chosenNode: node,
+                    shouldRetry: false,
+                    nodeIndex: undefined
+                });
+            } else {
+                await requestExecutor.execute(tcpCommand, null);
+            }
+        } catch (e) {
+            this._redirectNode = null;
+            throw e;
+        }
+
+        return tcpCommand.result;
     }
 
     private async _sendOptions(socket: Socket, options: SubscriptionWorkerOptions<T>) {
@@ -279,9 +328,11 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             case "Redirect":
                 const data = connectionStatus.data;
                 const appropriateNode = data.redirectedTag;
+                const reasons = data.reasons;
+
                 const error = getError("SubscriptionDoesNotBelongToNodeException",
                     "Subscription with id " + this._options.subscriptionName
-                    + " cannot be processed by current node, it will be redirected to " + appropriateNode);
+                    + " cannot be processed by current node, it will be redirected to " + appropriateNode + os.EOL + reasons);
                 (error as any).appropriateNode = appropriateNode;
                 throw error;
             case "ConcurrencyReconnect":
@@ -543,6 +594,16 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
 
                 if (this._shouldTryToReconnect(error)) {
                     await delay(this._options.timeToWaitBeforeConnectionRetry);
+
+                    if (!this._redirectNode) {
+                        const reqEx = this._store.getRequestExecutor(this._dbName);
+                        const curTopology = reqEx.getTopologyNodes();
+                        const nextNodeIndex = (this._forcedTopologyUpdateAttempts++) % curTopology.length;
+                        this._redirectNode = curTopology[nextNodeIndex];
+
+                        this._logger.info("Subscription " + this._options.subscriptionName + ". Will modify redirect node from null to " + this._redirectNode.clusterTag);
+                    }
+
                     this._emitter.emit("connectionRetry", error);
                 } else {
                     this._logger.error(error, "Connection to subscription "
@@ -580,6 +641,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
 
             const appropriateNode = (ex as any).appropriateNode;
             if (!appropriateNode) {
+                this._redirectNode = null;
                 return true;
             }
 
@@ -593,6 +655,11 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             }
 
             this._redirectNode = nodeToRedirectTo;
+            return true;
+        } else if (ex.name === "NodeIsPassiveException") {
+            // if we failed to talk to a node, we'll forget about it and let the topology to
+            // redirect us to the current node
+            this._redirectNode = null;
             return true;
         } else if (ex.name === "SubscriptionChangeVectorUpdateConcurrencyException") {
             return true;

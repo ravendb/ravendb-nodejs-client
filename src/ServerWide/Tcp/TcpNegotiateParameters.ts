@@ -1,7 +1,8 @@
-import { OperationTypes } from "./TcpConnectionHeaderMessage";
+import { AuthorizationInfo, OperationTypes } from "./TcpConnectionHeaderMessage";
 
 export interface TcpNegotiateParameters {
     operation: OperationTypes;
+    authorizeInfo: AuthorizationInfo;
     version: number;
     database: string;
     sourceNodeTag?: string;

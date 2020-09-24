@@ -4,6 +4,7 @@ import { InMemoryDocumentSessionOperations } from "../Session/InMemoryDocumentSe
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { ClusterTransactionOperationsBase } from "../Session/ClusterTransactionOperationsBase";
 import { DocumentInfo } from "../Session/DocumentInfo";
+import { ForceRevisionStrategy } from "../Session/ForceRevisionStrategy";
 
 export type CommandType =
     "None"
@@ -20,6 +21,7 @@ export type CommandType =
     | "ClientAnyCommand"
     | "ClientModifyDocumentCommand"
     | "BatchPATCH"
+    | "ForceRevisionCreation"
     ;
 
 export interface ICommandData {
@@ -77,10 +79,11 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
     public id: string;
     public name: string = null;
     public changeVector: string;
+    public forceRevisionCreationStrategy: ForceRevisionStrategy;
 
     private readonly _document: T;
 
-    constructor(id: string, changeVector: string, document: T) {
+    constructor(id: string, changeVector: string, document: T, strategy: ForceRevisionStrategy = "None") {
 
         if (!document) {
             throwError("InvalidArgumentException", "Document cannot be null or undefined.");
@@ -89,22 +92,29 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
         this.id = id;
         this.changeVector = changeVector;
         this._document = document;
+        this.forceRevisionCreationStrategy = strategy;
     }
 
     public serialize(conventions: DocumentConventions): object {
-        return {
+        const result = {
             Id: this.id,
             ChangeVector: this.changeVector,
             Document: this._document,
             Type: "PUT"
         };
+
+        if (this.forceRevisionCreationStrategy !== "None") {
+            result["ForceRevisionCreationStrategy"] = this.forceRevisionCreationStrategy;
+        }
+
+        return result;
     }
 }
 
 export class PutCommandDataWithJson extends PutCommandDataBase<object> {
 
-    public constructor(id: string, changeVector: string, document: object) {
-        super(id, changeVector, document);
+    public constructor(id: string, changeVector: string, document: object, strategy: ForceRevisionStrategy) {
+        super(id, changeVector, document, strategy);
     }
 }
 
@@ -160,15 +170,15 @@ export class ActionsToRunOnSuccess {
     }
 
     public clearSessionStateAfterSuccessfulSaveChanges() {
-        for (let id of this._documentsByIdToRemove) {
+        for (const id of this._documentsByIdToRemove) {
             this._session.documentsById.remove(id);
         }
 
-        for (let entity of this._documentsByEntityToRemove) {
-            this._session.documentsByEntity.delete(entity);
+        for (const entity of this._documentsByEntityToRemove) {
+            this._session.documentsByEntity.remove(entity);
         }
 
-        for (let [info, document] of this._documentInfosToUpdate) {
+        for (const [info, document] of this._documentInfosToUpdate) {
             info.newDocument = false;
             info.document = document;
         }

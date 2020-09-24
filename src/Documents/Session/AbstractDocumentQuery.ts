@@ -3,7 +3,7 @@ import { QueryOperation } from "./Operations/QueryOperation";
 import * as BluebirdPromise from "bluebird";
 import { GroupByCountToken } from "./Tokens/GroupByCountToken";
 import { GroupByToken } from "./Tokens/GroupByToken";
-import { HighlightingToken } from "./Tokens/HighlightingToken"; 
+import { HighlightingToken } from "./Tokens/HighlightingToken";
 import { FieldsToFetchToken } from "./Tokens/FieldsToFetchToken";
 import { DeclareToken } from "./Tokens/DeclareToken";
 import { LoadToken } from "./Tokens/LoadToken";
@@ -12,7 +12,7 @@ import { DistinctToken } from "./Tokens/DistinctToken";
 import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
 import { QueryStatistics } from "./QueryStatistics";
 import { IDocumentSession } from "./IDocumentSession";
-import { throwError, getError } from "../../Exceptions";
+import { throwError } from "../../Exceptions";
 import { QueryOperator } from "../Queries/QueryOperator";
 import { IndexQuery } from "../Queries/IndexQuery";
 import { IAbstractDocumentQuery } from "./IAbstractDocumentQuery";
@@ -71,14 +71,17 @@ import { QueryData } from "../Queries/QueryData";
 import { QueryTimings } from "../Queries/Timings/QueryTimings";
 import { Explanations } from "../Queries/Explanation/Explanations";
 import { Highlightings } from "../Queries/Highlighting/Hightlightings";
-import { 
+import {
     extractHighlightingOptionsFromParameters } from "../Queries/Highlighting/HighlightingOptions";
 import { HighlightingParameters } from "../Queries/Highlighting/HighlightingParameters";
 import { QueryHighlightings } from "../Queries/Highlighting/QueryHighlightings";
 import { ExplanationOptions } from "../Queries/Explanation/ExplanationOptions";
-import { CountersByDocId } from "./CounterInternalTypes"; 
+import { CountersByDocId } from "./CounterInternalTypes";
 import { IncludeBuilderBase } from "./Loaders/IncludeBuilderBase";
 import { passResultToCallback } from "../../Utility/PromiseUtil";
+import * as os from "os";
+import { GraphQueryToken } from "./Tokens/GraphQueryToken";
+import { IncludesUtil } from "./IncludesUtil";
 
 /**
  * A query against a Raven index
@@ -131,11 +134,17 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     protected _loadTokens: LoadToken[];
     public fieldsToFetchToken: FieldsToFetchToken;
 
+    protected readonly _isProjectInto: boolean;
+
     protected _whereTokens: QueryToken[] = [];
 
     protected _groupByTokens: QueryToken[] = [];
 
     protected _orderByTokens: QueryToken[] = [];
+
+    protected _withTokens: QueryToken[] = [];
+
+    protected _graphRawQuery: QueryToken;
 
     protected _start: number;
 
@@ -158,6 +167,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     protected _disableCaching: boolean;
 
+    private _parameterPrefix = "p";
+
     private _includesAlias: string;
     
     protected _highlightingTokens: HighlightingToken[] = [];
@@ -174,6 +185,26 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         return this._selectTokens
             && this._selectTokens.length
             && this._selectTokens[0] instanceof DistinctToken;
+    }
+
+    public get theWaitForNonStaleResults() {
+        return this._theWaitForNonStaleResults;
+    }
+
+    public get timeout() {
+        return this._timeout;
+    }
+
+    public get queryParameters() {
+        return this._queryParameters;
+    }
+
+    public get selectTokens() {
+        return this._selectTokens;
+    }
+
+    public get isProjectInto() {
+        return this._isProjectInto;
     }
 
     /**
@@ -216,7 +247,9 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         isGroupBy: boolean,
         declareToken: DeclareToken,
         loadTokens: LoadToken[],
-        fromAlias: string);
+        fromAlias: string,
+        isProjectInto: boolean
+    );
     protected constructor(
         clazz: DocumentType<T>,
         session: InMemoryDocumentSessionOperations,
@@ -225,7 +258,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         isGroupBy: boolean,
         declareToken: DeclareToken,
         loadTokens: LoadToken[],
-        fromAlias: string = null) {
+        fromAlias: string = null,
+        isProjectInto: boolean = false) {
         super();
 
         this._clazz = clazz;
@@ -247,6 +281,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             new DocumentConventions() :
             session.conventions;
         // TBD _linqPathProvider = new LinqPathProvider(_conventions);
+        this._isProjectInto = isProjectInto || false;
     }
 
     // tslint:disable:function-name
@@ -372,6 +407,13 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * This shouldn't be used outside of unit tests unless you are well aware of the implications
      */
     public _waitForNonStaleResults(waitTimeout?: number): void {
+        //Graph queries may set this property multiple times
+        if (this._theWaitForNonStaleResults) {
+            if (!this._timeout || waitTimeout && this._timeout < waitTimeout) {
+                this._timeout = waitTimeout;
+            }
+            return;
+        }
         this._theWaitForNonStaleResults = true;
         this._timeout = waitTimeout || AbstractDocumentQuery._getDefaultTimeout();
     }
@@ -385,7 +427,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             this.fieldsToFetchToken,
             this._disableEntitiesTracking,
             false,
-            false);
+            false,
+            this._isProjectInto);
     }
 
     private _transformValue(whereParams: WhereParams): any;
@@ -431,7 +474,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     private _addQueryParameter(value: any): string {
-        const parameterName = "p" + Object.keys(this._queryParameters).length;
+        const parameterName = this.parameterPrefix + Object.keys(this._queryParameters).length;
         this._queryParameters[parameterName] = this._stringifyParameter(value);
         return parameterName;
     }
@@ -488,7 +531,13 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     public getIndexQuery(): IndexQuery {
-        const query = this.toString();
+        let serverVersion = null;
+        if (this._theSession && this._theSession.requestExecutor) {
+            serverVersion = this._theSession.requestExecutor.lastServerVersion;
+        }
+
+        const compatibilityMode = serverVersion && serverVersion.compare("4.2") < 0;
+        const query = this.toString(compatibilityMode);
         const indexQuery = this._generateIndexQuery(query);
         this.emit("beforeQueryExecuted", indexQuery);
         return indexQuery;
@@ -544,6 +593,10 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
                 "RawQuery was called, cannot modify this query by calling on "
                 + "operations that would modify the query (such as Where, Select, OrderBy, GroupBy, etc)");
         }
+    }
+
+    public _graphQuery(query: string) {
+        this._graphRawQuery = new GraphQueryToken(query);
     }
 
     public addParameter(name: string, value: any): void {
@@ -1032,6 +1085,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     public _whereLessThanOrEqual(fieldName: string, value: any): void;
     public _whereLessThanOrEqual(fieldName: string, value: any, exact: boolean): void;
     public _whereLessThanOrEqual(fieldName: string, value: any, exact: boolean = false): void {
+        fieldName = this._ensureValidFieldName(fieldName, false);
         const tokens = this._getCurrentWhereTokens();
         this._appendOperatorIfNeeded(tokens);
         this._negateIfNeeded(tokens, fieldName);
@@ -1051,6 +1105,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * Matches fields where Regex.IsMatch(filedName, pattern)
      */
     public _whereRegex(fieldName: string, pattern: string): void {
+        fieldName = this._ensureValidFieldName(fieldName, false);
         const tokens = this._getCurrentWhereTokens();
         this._appendOperatorIfNeeded(tokens);
         this._negateIfNeeded(tokens, fieldName);
@@ -1197,15 +1252,23 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
      */
     public _orderBy(field: string, ordering: OrderingType): void;
-    /**
-     * Order the results by the specified fields
-     * The fields are the names of the fields to sort, defaulting to sorting by ascending.
-     * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
-     */
-    public _orderBy(field: string, ordering: OrderingType = "String"): void {
-        this._assertNoRawQuery();
-        const f = this._ensureValidFieldName(field, false);
-        this._orderByTokens.push(OrderByToken.createAscending(f, ordering));
+    public _orderBy(field: string, options: { sorterName: string });
+    public _orderBy(field: string, orderingOrOptions: OrderingType | { sorterName: string } = "String"): void {
+        if (TypeUtil.isString(orderingOrOptions)) {
+            this._assertNoRawQuery();
+            const f = this._ensureValidFieldName(field, false);
+            this._orderByTokens.push(OrderByToken.createAscending(f, { ordering: orderingOrOptions }));
+        } else {
+            const sorterName = orderingOrOptions.sorterName;
+            if (StringUtil.isNullOrEmpty(sorterName)) {
+                throwError("InvalidArgumentException", "SorterName cannot be null or empty");
+            }
+
+            this._assertNoRawQuery();
+            const f = this._ensureValidFieldName(field, false);
+            this._orderByTokens.push(OrderByToken.createAscending(f, orderingOrOptions));
+        }
+
     }
 
     /**
@@ -1220,15 +1283,22 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
      */
     public _orderByDescending(field: string, ordering: OrderingType): void;
-    /**
-     * Order the results by the specified fields
-     * The fields are the names of the fields to sort, defaulting to sorting by descending.
-     * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
-     */
-    public _orderByDescending(field: string, ordering: OrderingType = "String"): void {
-        this._assertNoRawQuery();
-        const f = this._ensureValidFieldName(field, false);
-        this._orderByTokens.push(OrderByToken.createDescending(f, ordering));
+    public _orderByDescending(field: string, options: { sorterName: string });
+    public _orderByDescending(field: string, orderingOrOptions: OrderingType | { sorterName: string } = "String"): void {
+        if (TypeUtil.isString(orderingOrOptions)) {
+            this._assertNoRawQuery();
+            const f = this._ensureValidFieldName(field, false);
+            this._orderByTokens.push(OrderByToken.createDescending(f, { ordering: orderingOrOptions }));
+        } else {
+            const sorterName = orderingOrOptions.sorterName;
+            if (StringUtil.isNullOrEmpty(sorterName)) {
+                throwError("InvalidArgumentException", "SorterName cannot be null or empty");
+            }
+
+            this._assertNoRawQuery();
+            const f = this._ensureValidFieldName(field, false);
+            this._orderByTokens.push(OrderByToken.createDescending(f, orderingOrOptions));
+        }
     }
 
     public _orderByScore(): void {
@@ -1296,7 +1366,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         tokens.push(whereToken);
     }
 
-    public toString(): string {
+    public toString(compatibilityMode: boolean = false): string {
         if (this._queryRaw) {
             return this._queryRaw;
         }
@@ -1309,7 +1379,12 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
         const queryText = new StringBuilder();
         this._buildDeclare(queryText);
-        this._buildFrom(queryText);
+        if (this._graphRawQuery) {
+            this._buildWith(queryText);
+            this._buildGraphQuery(queryText);
+        } else {
+            this._buildFrom(queryText);
+        }
         this._buildGroupBy(queryText);
         this._buildWhere(queryText);
         this._buildOrderBy(queryText);
@@ -1318,7 +1393,32 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._buildSelect(queryText);
         this._buildInclude(queryText);
 
+        if (!compatibilityMode) {
+            this._buildPagination(queryText);
+        }
+
         return queryText.toString();
+    }
+
+    private _buildGraphQuery(queryText: StringBuilder) {
+        this._graphRawQuery.writeTo(queryText);
+    }
+
+    private _buildWith(queryText: StringBuilder) {
+        for (const withToken of this._withTokens) {
+            withToken.writeTo(queryText);
+            queryText.append(os.EOL);
+        }
+    }
+
+    private _buildPagination(queryText: StringBuilder) {
+        if (this._start > 0 || !TypeUtil.isNullOrUndefined(this._pageSize)) {
+            queryText
+                .append(" limit $")
+                .append(this._addQueryParameter(this._start))
+                .append(", $")
+                .append(this._addQueryParameter(this._pageSize));
+        }
     }
 
     private _buildInclude(queryText: StringBuilder): void {
@@ -1338,19 +1438,11 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             }
             first = false;
 
-            let requiredQuotes: boolean = false;
-
-            // tslint:disable-next-line:prefer-for-of
-            for (let i = 0; i < include.length; i++) {
-                const ch = include[i];
-                if (!StringUtil.isLetterOrDigit(ch) && ch !== "_" && ch !== ".") {
-                    requiredQuotes = true;
-                    break;
-                }
-            }
-
-            if (requiredQuotes) {
-                queryText.append("'").append(include.replace(/'/g, "\'")).append("'");
+            let escapedInclude: string;
+            if (IncludesUtil.requiresQuotes(include, x => escapedInclude = x)) {
+                queryText.append("'");
+                queryText.append(escapedInclude);
+                queryText.append("'");
             } else {
                 queryText.append(include);
             }
@@ -1413,7 +1505,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
         const tokens = this._getCurrentWhereTokens();
         this._appendOperatorIfNeeded(tokens);
-        this._negateIfNeeded(tokens, fieldName);
+        this._negateIfNeeded(tokens, null);
+
 
         tokens.push(WhereToken.create("Exists", fieldName, null));
     }
@@ -1755,21 +1848,25 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     public _orderByDistance(field: DynamicSpatialField, latitude: number, longitude: number): void;
     public _orderByDistance(field: DynamicSpatialField, shapeWkt: string): void;
     public _orderByDistance(fieldName: string, latitude: number, longitude: number): void;
+    public _orderByDistance(fieldName: string, latitude: number, longitude: number, roundFactor: number): void;
     public _orderByDistance(fieldName: string, shapeWkt: string): void;
+    public _orderByDistance(fieldName: string, shapeWkt: string, roundFactor: number): void;
     public _orderByDistance(
-        fieldNameOrField: string | DynamicSpatialField, shapeWktOrLatitude: string | number, longitude?: number): void {
+        fieldNameOrField: string | DynamicSpatialField, shapeWktOrLatitude: string | number, longitudeOrRoundFactor?: number, roundFactor?: number): void {
 
         if (TypeUtil.isString(fieldNameOrField)) {
             if (TypeUtil.isString(shapeWktOrLatitude)) {
+                const roundFactorParameterName = longitudeOrRoundFactor ? this._addQueryParameter(longitudeOrRoundFactor) : null;
                 this._orderByTokens.push(
                     OrderByToken.createDistanceAscending(
-                        fieldNameOrField as string, this._addQueryParameter(shapeWktOrLatitude)));
+                        fieldNameOrField as string, this._addQueryParameter(shapeWktOrLatitude), roundFactorParameterName));
 
             } else {
+                const roundFactorParameterName = roundFactor ? this._addQueryParameter(roundFactor) : null;
                 this._orderByTokens.push(
                     OrderByToken.createDistanceAscending(
                         fieldNameOrField as string,
-                        this._addQueryParameter(shapeWktOrLatitude), this._addQueryParameter(longitude)));
+                        this._addQueryParameter(shapeWktOrLatitude), this._addQueryParameter(longitudeOrRoundFactor), roundFactorParameterName));
             }
 
             return;
@@ -1789,28 +1886,31 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         } else {
             this._orderByDistance(
                 "'" + field.toField((f, isNestedPath) =>
-                    this._ensureValidFieldName(f, isNestedPath)) + "'", shapeWktOrLatitude as number, longitude);
+                    this._ensureValidFieldName(f, isNestedPath)) + "'", shapeWktOrLatitude as number, longitudeOrRoundFactor, field.roundFactor);
         }
     }
 
     public _orderByDistanceDescending(field: DynamicSpatialField, latitude: number, longitude: number): void;
     public _orderByDistanceDescending(field: DynamicSpatialField, shapeWkt: string): void;
     public _orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): void;
+    public _orderByDistanceDescending(fieldName: string, latitude: number, longitude: number, roundFactor: number): void;
     public _orderByDistanceDescending(fieldName: string, shapeWkt: string): void;
+    public _orderByDistanceDescending(fieldName: string, shapeWkt: string, roundFactor: number): void;
     public _orderByDistanceDescending(
-        fieldNameOrField: string | DynamicSpatialField, shapeWktOrLatitude: string | number, longitude?: number): void {
+        fieldNameOrField: string | DynamicSpatialField, shapeWktOrLatitude: string | number, longitudeOrRoundFactor?: number, roundFactor?: number): void {
 
         if (TypeUtil.isString(fieldNameOrField)) {
             if (TypeUtil.isString(shapeWktOrLatitude)) {
+                const roundFactorParameterName = longitudeOrRoundFactor ? this._addQueryParameter(longitudeOrRoundFactor) : null;
                 this._orderByTokens.push(
                     OrderByToken.createDistanceDescending(
-                        fieldNameOrField as string, this._addQueryParameter(shapeWktOrLatitude)));
-
+                        fieldNameOrField as string, this._addQueryParameter(shapeWktOrLatitude), roundFactorParameterName));
             } else {
+                const roundFactorParameterName = roundFactor ? this._addQueryParameter(roundFactor) : null;
                 this._orderByTokens.push(
                     OrderByToken.createDistanceDescending(
                         fieldNameOrField as string,
-                        this._addQueryParameter(shapeWktOrLatitude), this._addQueryParameter(longitude)));
+                        this._addQueryParameter(shapeWktOrLatitude), this._addQueryParameter(longitudeOrRoundFactor), roundFactorParameterName));
             }
 
             return;
@@ -1830,7 +1930,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         } else {
             this._orderByDistanceDescending(
                 "'" + field.toField((f, isNestedPath) =>
-                    this._ensureValidFieldName(f, isNestedPath)) + "'", shapeWktOrLatitude as number, longitude);
+                    this._ensureValidFieldName(f, isNestedPath)) + "'", shapeWktOrLatitude as number, longitudeOrRoundFactor, field.roundFactor);
         }
     }
 
@@ -1957,16 +2057,17 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         return Promise.resolve(result);
     }
 
-    private _executeQueryOperation(take?: number): Promise<T[]> {
+    private async _executeQueryOperation(take?: number): Promise<T[]> {
+        await this._executeQueryOperationInternal(take);
+        return this.queryOperation().complete(this._clazz);
+    }
+
+    private async _executeQueryOperationInternal(take: number) {
         if ((take || take === 0) && (!this._pageSize || this._pageSize > take)) {
             this._take(take);
         }
 
-        return Promise.resolve()
-            .then(() => this._initSync())
-            .then(() => {
-                return this._queryOperation.complete<T>(this._clazz);
-            });
+        await this._initSync();
     }
 
     // tslint:enable:function-name
@@ -2037,18 +2138,18 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             throwError("InvalidArgumentException", "suggestion cannot be null");
         }
 
-        this._assertCanSuggest();
+        this._assertCanSuggest(suggestion);
 
         let token: SuggestToken = null;
 
         if (suggestion instanceof SuggestionWithTerm) {
             const term = suggestion;
             token = SuggestToken.create(
-                term.field, this._addQueryParameter(term.term), this._getOptionsParameterName(term.options));
+                term.field, term.displayField, this._addQueryParameter(term.term), this._getOptionsParameterName(term.options));
         } else if (suggestion instanceof SuggestionWithTerms) {
             const terms = suggestion;
             token = SuggestToken.create(
-                terms.field, this._addQueryParameter(terms.terms), this._getOptionsParameterName(terms.options));
+                terms.field, terms.displayField, this._addQueryParameter(terms.terms), this._getOptionsParameterName(terms.options));
         } else {
             throwError("InvalidOperationException", "Unknown type of suggestion: " + suggestion);
         }
@@ -2066,13 +2167,20 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         return optionsParameterName;
     }
 
-    private _assertCanSuggest(): void {
+    private _assertCanSuggest(suggestion: SuggestionBase): void {
         if (this._whereTokens.length) {
             throwError("InvalidOperationException", "Cannot add suggest when WHERE statements are present.");
         }
 
         if (this._selectTokens.length) {
-            throwError("InvalidOperationException", "Cannot add suggest when SELECT statements are present.");
+            const lastToken = this._selectTokens[this._selectTokens.length - 1];
+            if (lastToken instanceof SuggestToken) {
+                if (lastToken.fieldName === suggestion.field) {
+                    throwError("InvalidOperationException", "Cannot add suggest for the same field again.");
+                }
+            } else {
+                throwError("InvalidOperationException", "Cannot add suggest when SELECT statements are present.");
+            }
         }
 
         if (this._orderByTokens.length) {
@@ -2116,15 +2224,18 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             continue;
         }
 
-        this._counterIncludesTokens.push(CounterIncludesToken.create(key,
-            valArr.length === 1
-                ? this._addQueryParameter(valArr[0])
-                : this._addQueryParameter(valArr)));
+        for (const name of val[1]) {
+            this._counterIncludesTokens.push(CounterIncludesToken.create(key, name));
+        }
     }
 }
 
     public getQueryType(): DocumentType<T> {
         return this._clazz;
+    }
+
+    public getGraphRawQuery(): QueryToken {
+        return this._graphRawQuery;
     }
 
     // tslint:enable:function-name
@@ -2157,5 +2268,13 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         return fromAlias;
+    }
+
+    public get parameterPrefix() {
+        return this._parameterPrefix;
+    }
+
+    public set parameterPrefix(prefix: string) {
+        this._parameterPrefix = prefix;
     }
 }

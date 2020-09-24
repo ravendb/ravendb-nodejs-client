@@ -6,6 +6,8 @@ import { HttpRequestParameters } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
 import { HeadersBuilder } from "../../../Utility/HttpUtil";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { IRaftCommand } from "../../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export class PutClientConfigurationOperation implements IMaintenanceOperation<void> {
     private readonly _configuration: ClientConfiguration;
@@ -29,7 +31,7 @@ export class PutClientConfigurationOperation implements IMaintenanceOperation<vo
 
 }
 
-export class PutClientConfigurationCommand extends RavenCommand<void> {
+export class PutClientConfigurationCommand extends RavenCommand<void> implements IRaftCommand {
     private readonly _configuration: string;
 
     public get isReadRequest() {
@@ -64,5 +66,9 @@ export class PutClientConfigurationCommand extends RavenCommand<void> {
                 .typeAppJson()
                 .build()
         };
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }

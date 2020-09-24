@@ -8,6 +8,7 @@ import { QueryResult } from "../../../Queries/QueryResult";
 import { GetResponse } from "../../../Commands/MultiGet/GetResponse";
 import { GetDocumentsResult, GetDocumentsCommand } from "../../../Commands/GetDocumentsCommand";
 import { stringToReadable } from "../../../../Utility/StreamUtil";
+import { StringUtil } from "../../../../Utility/StringUtil";
 
 export class LazyLoadOperation<T extends object> implements ILazyOperation {
     private readonly _clazz: ObjectTypeDescriptor<T>;
@@ -55,7 +56,7 @@ export class LazyLoadOperation<T extends object> implements ILazyOperation {
     }
 
     public byId(id: string): LazyLoadOperation<T> {
-        if (!id) {
+        if (StringUtil.isNullOrEmpty(id)) {
             return this;
         }
 
@@ -67,7 +68,7 @@ export class LazyLoadOperation<T extends object> implements ILazyOperation {
     }
 
     public byIds(ids: string[]): LazyLoadOperation<T> {
-        this._ids = ids;
+        this._ids = Array.from(new Set(ids.filter(x => !StringUtil.isNullOrEmpty(x))));
         return this;
     }
 

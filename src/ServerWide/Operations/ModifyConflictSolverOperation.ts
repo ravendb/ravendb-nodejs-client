@@ -3,10 +3,12 @@ import { IServerOperation, OperationResultType } from "../../Documents/Operation
 import { ConflictSolver, ScriptResolver } from "../index";
 import { throwError } from "../../Exceptions";
 import { HttpRequestParameters } from "../../Primitives/Http";
-import * as stream from "stream";
+import * as stream from "readable-stream";
 import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
+import { IRaftCommand } from "../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../Utility/RaftIdGenerator";
 
 
 export class ModifyConflictSolverOperation implements IServerOperation<ModifySolverResult> {
@@ -32,7 +34,7 @@ export class ModifyConflictSolverOperation implements IServerOperation<ModifySol
     }
 }
 
-class ModifyConflictSolverCommand extends RavenCommand<ModifySolverResult> {
+class ModifyConflictSolverCommand extends RavenCommand<ModifySolverResult> implements IRaftCommand {
     private readonly _database: string;
     private readonly _conventions: DocumentConventions;
     private readonly _collectionByScript: Record<string, ScriptResolver>;
@@ -81,6 +83,10 @@ class ModifyConflictSolverCommand extends RavenCommand<ModifySolverResult> {
         }
 
         return this._parseResponseDefaultAsync(bodyStream);
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }
 

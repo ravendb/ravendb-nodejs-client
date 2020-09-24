@@ -2,32 +2,40 @@ import { StreamQueryStatistics } from "../Session/StreamQueryStatistics";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { ServerNode } from "../../Http/ServerNode";
 import { ICommandData } from "../Commands/CommandData";
-import { DocumentType } from "../DocumentAbstractions";
 import { IDocumentStore } from "../IDocumentStore";
 import { DocumentsChanges } from "./DocumentsChanges";
 import { EntityToJson } from "./EntityToJson";
-import { SessionLoadStartingWithOptions } from "./IDocumentSession";
 import { IMetadataDictionary } from "./IMetadataDictionary";
-import { IRawDocumentQuery } from "./IRawDocumentQuery";
 import { SessionEventsEmitter } from "./SessionEvents";
-import { IDocumentQuery } from "./IDocumentQuery";
-import { AdvancedDocumentQueryOptions } from "./QueryOptions";
-import { ErrorFirstCallback } from "../../Types/Callbacks";
-import { IAttachmentsSessionOperations } from "../Session/IAttachmentsSessionOperations";
-import { ILazySessionOperations } from "./Operations/Lazy/ILazySessionOperations";
-import { IEagerSessionOperations } from "./Operations/Lazy/IEagerSessionOperations";
-import { JavaScriptArray } from "./JavaScriptArray";
-import { IRevisionsSessionOperations } from "./IRevisionsSessionOperations";
-import * as stream from "readable-stream";
-import { DocumentResultStream } from "../Session/DocumentResultStream";
 import { TransactionMode } from "./TransactionMode";
+import { IEagerSessionOperations } from "./Operations/Lazy/IEagerSessionOperations";
+import { ILazySessionOperations } from "./Operations/Lazy/ILazySessionOperations";
+import { IAttachmentsSessionOperations } from "./IAttachmentsSessionOperations";
+import { IRevisionsSessionOperations } from "./IRevisionsSessionOperations";
 import { IClusterTransactionOperations } from "./IClusterTransactionOperations";
+import { DocumentType } from "../DocumentAbstractions";
+import { IRawDocumentQuery } from "./IRawDocumentQuery";
+import { SessionLoadStartingWithOptions } from "./IDocumentSession";
+import { ErrorFirstCallback } from "../../Types/Callbacks";
+import { IDocumentQuery } from "./IDocumentQuery";
+import { JavaScriptArray } from "./JavaScriptArray";
+import { DocumentResultStream } from "./DocumentResultStream";
+import * as stream from "readable-stream";
+import { IDocumentQueryBuilder } from "./IDocumentQueryBuilder";
+import { IGraphDocumentQuery } from "./IGraphDocumentQuery";
 
 export type StreamQueryStatisticsCallback = (stats: StreamQueryStatistics) => void;
 
-export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOperations {
+export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOperations, IDocumentQueryBuilder {
 
+    /**
+     *  Access the eager operations
+     */
     eagerly: IEagerSessionOperations;
+
+    /**
+     * Access the lazy operations
+     */
     lazily: ILazySessionOperations;
 
     /**
@@ -35,8 +43,14 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      */
     attachments: IAttachmentsSessionOperations;
 
+    /**
+     * Access the revisions operations
+     */
     revisions: IRevisionsSessionOperations;
 
+    /**
+     * Access cluster transaction operations
+     */
     clusterTransaction: IClusterTransactionOperations;
 
     /**
@@ -50,6 +64,8 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
 
     rawQuery<TResult extends object>(query: string, documentType?: DocumentType<TResult>): IRawDocumentQuery<TResult>;
 
+    graphQuery<TResult extends object>(query: string, documentType?: DocumentType<TResult>): IGraphDocumentQuery<TResult>;
+
     exists(id: string): Promise<boolean>;
 
     loadStartingWith<T extends object>(
@@ -57,10 +73,6 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
 
     loadStartingWith<T extends object>(
         idPrefix: string, callback?: ErrorFirstCallback<T[]>): Promise<T[]>;
-
-    documentQuery<TEntity extends object>(opts: AdvancedDocumentQueryOptions<TEntity>): IDocumentQuery<TEntity>;
-
-    documentQuery<TEntity extends object>(documentType: DocumentType<TEntity>): IDocumentQuery<TEntity>;
 
     increment<TEntity extends object, UValue>(id: string, path: string, valueToAdd: UValue): void;
 

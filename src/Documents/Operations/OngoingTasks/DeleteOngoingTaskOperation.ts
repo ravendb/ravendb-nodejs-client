@@ -6,6 +6,8 @@ import { ModifyOngoingTaskResult } from "../../../ServerWide/ModifyOnGoingTaskRe
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
+import { IRaftCommand } from "../../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export class DeleteOngoingTaskOperation implements IMaintenanceOperation<ModifyOngoingTaskResult> {
     private readonly _taskId: number;
@@ -25,7 +27,7 @@ export class DeleteOngoingTaskOperation implements IMaintenanceOperation<ModifyO
     }
 }
 
-class DeleteOngoingTaskCommand extends RavenCommand<ModifyOngoingTaskResult> {
+class DeleteOngoingTaskCommand extends RavenCommand<ModifyOngoingTaskResult> implements IRaftCommand {
     private readonly _taskId: number;
     private readonly _taskType: OngoingTaskType;
 
@@ -55,5 +57,9 @@ class DeleteOngoingTaskCommand extends RavenCommand<ModifyOngoingTaskResult> {
 
     get isReadRequest(): boolean {
         return false;
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }

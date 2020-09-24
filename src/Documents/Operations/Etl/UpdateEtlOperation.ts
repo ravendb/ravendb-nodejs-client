@@ -6,6 +6,8 @@ import * as stream from "readable-stream";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { ServerNode } from "../../../Http/ServerNode";
+import { IRaftCommand } from "../../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export class UpdateEtlOperation<T extends ConnectionString> implements IMaintenanceOperation<UpdateEtlOperationResult> {
     private readonly _taskId: number;
@@ -25,7 +27,9 @@ export class UpdateEtlOperation<T extends ConnectionString> implements IMaintena
     }
 }
 
-class UpdateEtlCommand<T extends ConnectionString> extends RavenCommand<UpdateEtlOperationResult> {
+class UpdateEtlCommand<T extends ConnectionString> extends RavenCommand<UpdateEtlOperationResult>
+    implements IRaftCommand {
+
     private readonly _conventions: DocumentConventions;
     private readonly _taskId: number;
     private readonly _configuration: EtlConfiguration<T>;
@@ -62,6 +66,10 @@ class UpdateEtlCommand<T extends ConnectionString> extends RavenCommand<UpdateEt
         }
 
         return this._parseResponseDefaultAsync(bodyStream);
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }
 

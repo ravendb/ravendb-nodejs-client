@@ -6,6 +6,8 @@ import * as stream from "readable-stream";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
+import { IRaftCommand } from "../../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export class UpdatePeriodicBackupOperation implements IMaintenanceOperation<UpdatePeriodicBackupOperationResult> {
     private readonly _configuration: PeriodicBackupConfiguration;
@@ -23,7 +25,7 @@ export class UpdatePeriodicBackupOperation implements IMaintenanceOperation<Upda
     }
 }
 
-class UpdatePeriodicBackupCommand extends RavenCommand<UpdatePeriodicBackupOperationResult> {
+class UpdatePeriodicBackupCommand extends RavenCommand<UpdatePeriodicBackupOperationResult> implements IRaftCommand {
     private readonly _conventions: DocumentConventions;
     private readonly _configuration: PeriodicBackupConfiguration;
 
@@ -57,5 +59,9 @@ class UpdatePeriodicBackupCommand extends RavenCommand<UpdatePeriodicBackupOpera
         }
 
         return this._parseResponseDefaultAsync(bodyStream);
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }

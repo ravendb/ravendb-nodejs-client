@@ -54,6 +54,11 @@ export class DatabaseSmuggler {
                 await importOperation.waitForCompletion();
             });
         } else {
+            const directory = path.dirname(path.resolve(toFileOrToDatabase));
+            if (!fs.existsSync(directory)) {
+                fs.mkdirSync(directory, { recursive: true });
+            }
+
             return await this._export(options, async response => {
                 const fileStream = fs.createWriteStream(toFileOrToDatabase);
                 await StreamUtil.pipelineAsync(response, fileStream);
@@ -79,7 +84,7 @@ export class DatabaseSmuggler {
 
         await this._requestExecutor.execute(command);
 
-        return new OperationCompletionAwaiter(this._requestExecutor, this._requestExecutor.conventions, operationId);
+        return new OperationCompletionAwaiter(this._requestExecutor, this._requestExecutor.conventions, operationId, null);
     }
 
     public async importIncremental(options: DatabaseSmugglerImportOptions, fromDirectory: string) {
@@ -106,13 +111,13 @@ export class DatabaseSmuggler {
 
     public static configureOptionsFromIncrementalImport(options: DatabaseSmugglerOptions) {
         options.operateOnTypes.push("Tombstones");
+        options.operateOnTypes.push("CompareExchangeTombstones");
 
-        // we import the indexes and identities from the last file only,
-        // as the previous files can hold indexes and identities which were deleted and shouldn't be imported
+        // we import the indexes and Subscriptions from the last file only,
 
         const oldOperateOnTypes = [ ...options.operateOnTypes ];
 
-        options.operateOnTypes = options.operateOnTypes.filter(x => x !== "Indexes" && x !== "CompareExchange" && x !== "Identities");
+        options.operateOnTypes = options.operateOnTypes.filter(x => x !== "Indexes" && x !== "Subscriptions");
 
         return oldOperateOnTypes;
     }

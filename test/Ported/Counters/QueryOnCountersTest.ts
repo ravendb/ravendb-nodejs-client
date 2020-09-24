@@ -1,11 +1,7 @@
-import * as mocha from "mocha";
-import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
-    RavenErrorType,
-    GetNextOperationIdCommand,
     IDocumentStore,
     IDocumentSession,
 } from "../../../src";
@@ -79,7 +75,7 @@ async function storeNewCompany(
     return company;
 }
 
-async function incCounter(
+function incCounter(
     session: IDocumentSession, id: string, counter: string, val: number) {
     session.countersFor(id).increment(counter, val);
 }
@@ -262,7 +258,7 @@ describe("QueryOnCountersTest", function () {
             const session = store.openSession();
             const query = session.query<Order>({ collection: "orders" })
                 .include(i => i.includeCounter("downloads"));
-            assert.strictEqual(query.toString(), "from orders include counters($p0)");
+            assert.strictEqual(query.toString(), "from 'orders' include counters('downloads')");
 
             const queryResult = await query.all();
             assert.strictEqual(session.advanced.numberOfRequests, 1);
@@ -305,7 +301,7 @@ describe("QueryOnCountersTest", function () {
             const session = store.openSession();
             const query = session.query<Order>({ collection: "orders" })
                 .include(i => i.includeCounters(["downloads", "likes"]));
-            assert.strictEqual(query.toString(), "from orders include counters($p0)");
+            assert.strictEqual(query.toString(), "from 'orders' include counters('downloads'),counters('likes')");
 
             const queryResult = await query.all();
             assert.strictEqual(session.advanced.numberOfRequests, 1);
@@ -351,7 +347,7 @@ describe("QueryOnCountersTest", function () {
                 const session = store.openSession();
                 const query = session.query<Order>({ collection: "orders" })
                     .include(i => i.includeAllCounters());
-                assert.strictEqual(query.toString(), "from orders include counters()");
+                assert.strictEqual(query.toString(), "from 'orders' include counters()");
 
                 const queryResult = await query.all();
                 assert.strictEqual(session.advanced.numberOfRequests, 1);
@@ -410,7 +406,7 @@ describe("QueryOnCountersTest", function () {
                 .include(i => i
                     .includeCounter("downloads")
                     .includeDocuments("company"));
-            assert.strictEqual(query.toString(), "from Orders include company,counters($p0)");
+            assert.strictEqual(query.toString(), "from 'Orders' include company,counters('downloads')");
             const queryResult = await query.all();
 
             assert.strictEqual(session.advanced.numberOfRequests, 1);
@@ -457,7 +453,7 @@ describe("QueryOnCountersTest", function () {
             const session = store.openSession();
             const query = session.query<Order>({ collection: "Orders" })
                 .include(i => i.includeCounter("employee", "downloads"));
-            assert.strictEqual(query.toString(), "from Orders include counters(employee, $p0)");
+            assert.strictEqual(query.toString(), "from 'Orders' include counters(employee, 'downloads')");
             const queryResult = await query.all();
             assert.strictEqual(session.advanced.numberOfRequests, 1);
 
@@ -500,7 +496,7 @@ describe("QueryOnCountersTest", function () {
                 .include(i => i.includeCounters("employee", [ "downloads", "likes" ]));
 
             assertThat(query.toString())
-                .isEqualTo("from Orders include counters(employee, $p0)");
+                .isEqualTo("from 'Orders' include counters(employee, 'downloads'),counters(employee, 'likes')");
 
             const results = await query.all();
             assertThat(session.advanced.numberOfRequests)
@@ -561,7 +557,7 @@ describe("QueryOnCountersTest", function () {
                 .include(i => i.includeCounter("likes").includeCounter("employee", "downloads"));
 
             assertThat(query.toString())
-                .isEqualTo("from Orders include counters($p0),counters(employee, $p1)");
+                .isEqualTo("from 'Orders' include counters('likes'),counters(employee, 'downloads')");
 
             const orders = await query.all();
             assertThat(session.advanced.numberOfRequests)
@@ -647,7 +643,7 @@ describe("QueryOnCountersTest", function () {
                     .includeAllCounters("employee"));
 
             assertThat(query.toString())
-                .isEqualTo("from Orders include counters(),counters(employee)");
+                .isEqualTo("from 'Orders' include counters(),counters(employee)");
 
             const orders = await query.all();
             assertThat(session.advanced.numberOfRequests)
@@ -703,6 +699,237 @@ describe("QueryOnCountersTest", function () {
             assertThat(session.advanced.numberOfRequests)
                 .isEqualTo(1);
         }
+    });
 
+    it("countersShouldBeCachedOnCollection", async () => {
+        {
+            const session = store.openSession();
+            const order = Object.assign(new Order(), {
+                company: "companies/1-A"
+            });
+            await session.store(order, "orders/1-A");
+            session.countersFor("orders/1-A")
+                .increment("downloads", 100);
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            await session.query<Order>(Order)
+                .include(i => i.includeCounter("downloads"))
+                .all();
+
+            let counterValue = await session.countersFor("orders/1-A")
+                .get("downloads");
+            assertThat(counterValue)
+                .isEqualTo(100);
+
+            session.countersFor("orders/1-A")
+                .increment("downloads", 200);
+            await session.saveChanges();
+
+            await session.query<Order>(Order)
+                .include(i => i.includeCounters(["downloads"]))
+                .all();
+
+            counterValue = await session.countersFor("orders/1-A")
+                .get("downloads");
+            assertThat(counterValue)
+                .isEqualTo(300);
+
+            await session.countersFor("orders/1-A")
+                .increment("downloads", 200);
+            await session.saveChanges();
+
+            await session.query<Order>(Order)
+                .include(i => i.includeCounter("downloads"))
+                .all();
+
+            counterValue = await session.countersFor("orders/1-A")
+                .get("downloads");
+            assertThat(counterValue)
+                .isEqualTo(500);
+        }
+
+        {
+            const session = store.openSession();
+
+            await session.load("orders/1-A", {
+                documentType: Order,
+                includes: i => i.includeCounter("downloads")
+            });
+            let counterValue = await session.countersFor("orders/1-A")
+                .get("downloads");
+            assertThat(counterValue)
+                .isEqualTo(500);
+
+            await session.countersFor("orders/1-A")
+                .increment("downloads", 200);
+            await session.saveChanges();
+
+            await session.load("order/1-A", {
+                documentType: Order,
+                includes: i => i.includeCounter("downloads")
+            });
+            counterValue = await session.countersFor("orders/1-A")
+                .get("downloads");
+            assertThat(counterValue)
+                .isEqualTo(700);
+        }
+    });
+
+    it("countersShouldBeCachedOnAllDocsCollection", async () => {
+        {
+            const session = store.openSession();
+            const order = Object.assign(new Order(), {
+                company: "companies/1-A"
+            });
+
+            await session.store(order, "orders/1-A");
+            await session.countersFor("orders/1-A")
+                .increment("downloads", 100);
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            await session.advanced.rawQuery("from @all_docs include counters($p0)")
+                .addParameter("p0", ["downloads"])
+                .all();
+
+            let counterValue = await session.countersFor("orders/1-A")
+                .get("downloads");
+            assertThat(counterValue)
+                .isEqualTo(100);
+
+            await session.countersFor("orders/1-A")
+                .increment("downloads", 200);
+            await session.saveChanges();
+
+            await session.advanced.rawQuery("from @all_docs include counters()")
+                .all();
+
+            counterValue = await session.countersFor("orders/1-A")
+                .get("downloads");
+            assertThat(counterValue)
+                .isEqualTo(300);
+
+            await session.countersFor("orders/1-A")
+                .increment("downloads", 200);
+            await session.saveChanges();
+
+            await session
+                .advanced
+                .rawQuery("from @all_docs include counters($p0)")
+                .addParameter("p0", ["downloads"])
+                .all();
+
+            counterValue = await session.countersFor("orders/1-A")
+                .get("downloads");
+            assertThat(counterValue)
+                .isEqualTo(500);
+        }
+    });
+
+    it("countersCachingShouldHandleDeletion_includeCounterDownload", async () => {
+        await countersCachingShouldHandleDeletion(async session => {
+            await session.query(Order)
+                .include(i => i.includeCounter("downloads"))
+                .all();
+        }, null);
+    });
+
+    it("countersCachingShouldHandleDeletion_includeCounterUpload", async () => {
+        await countersCachingShouldHandleDeletion(async session => {
+            await session.query(Order)
+                .include(i => i.includeCounter("uploads"))
+                .all();
+        }, 300);
+    });
+
+    it("countersCachingShouldHandleDeletion_includeCounters", async () => {
+        await countersCachingShouldHandleDeletion(async session => {
+            await session.query(Order)
+                .include(i => i.includeCounters(["downloads", "uploads", "bugs"]))
+                .all();
+        }, null);
+    });
+
+    it("countersCachingShouldHandleDeletion_includeAllCounters", async () => {
+        await countersCachingShouldHandleDeletion(async session => {
+            await session.query(Order)
+                .include(i => i.includeAllCounters())
+                .all();
+        }, null);
     });
 });
+
+
+async function countersCachingShouldHandleDeletion(sessionCounter: (session: IDocumentSession) => Promise<void>, expectedCounterValue: number) {
+    const store = await testContext.getDocumentStore();
+    try {
+        const session = store.openSession();
+        try {
+            const order = Object.assign(new Order(), {
+                company: "companies/1-A"
+            });
+
+            await session.store(order, "orders/1-A");
+
+            await session.countersFor("orders/1-A")
+                .increment("downloads", 100);
+            await session.countersFor("orders/1-A")
+                .increment("uploads", 123);
+            await session.countersFor("orders/1-A")
+                .increment("bugs", 0xDEAD);
+            await session.saveChanges();
+        } finally {
+            session.dispose();
+        }
+
+        {
+            const session = store.openSession();
+            await session.query<Order>(Order)
+                .include(i => i.includeCounter("downloads"))
+                .all();
+
+            let counterValue = await session.countersFor("orders/1-A")
+                .get("downloads");
+            assertThat(counterValue)
+                .isEqualTo(100);
+
+            {
+                const writeSession = store.openSession();
+                await writeSession.countersFor("orders/1-A")
+                    .increment("downloads", 200);
+                await writeSession.saveChanges();
+            }
+
+            await session.query<Order>(Order)
+                .include(i => i.includeCounter("downloads"))
+                .all();
+
+            counterValue = await session.countersFor("orders/1-A")
+                .get("downloads");
+            assertThat(counterValue)
+                .isEqualTo(300);
+            await session.saveChanges();
+
+            {
+                const writeSession = store.openSession();
+                await writeSession.countersFor("orders/1-A").delete("downloads");
+                await writeSession.saveChanges();
+            }
+
+            await sessionCounter(session);
+
+            counterValue = await session.countersFor("orders/1-A").get("downloads");
+
+            assertThat(counterValue)
+                .isEqualTo(expectedCounterValue);
+        }
+    } finally {
+        store.dispose();
+    }
+}
+

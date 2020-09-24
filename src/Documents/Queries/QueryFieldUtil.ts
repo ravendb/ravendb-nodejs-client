@@ -3,7 +3,7 @@ import { StringUtil } from "../../Utility/StringUtil";
 
 export class QueryFieldUtil {
 
-    public static escapeIfNecessary(name: string): string {
+    public static escapeIfNecessary(name: string, isPath: boolean = false): string {
         if (!name ||
             CONSTANTS.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME === name ||
             CONSTANTS.Documents.Indexing.Fields.REDUCE_KEY_HASH_FIELD_NAME === name ||
@@ -24,19 +24,12 @@ export class QueryFieldUtil {
             }
 
             if (i === 0) {
-                if (!StringUtil.isLetter(c) && c !== "_" && c !== "@" && !insideEscaped) {
+                if (!StringUtil.isLetterOrDigit(c) && c !== "_" && c !== "-" && c !== "@" && c !== "." && c !== "[" && c !== "]" && !insideEscaped) {
                     escape = true;
                     break;
                 }
             } else {
-                if (!StringUtil.isLetterOrDigit(c)
-                    && c !== "_"
-                    && c !== "-"
-                    && c !== "@"
-                    && c !== "."
-                    && c !== "["
-                    && c !== "]"
-                    && !insideEscaped) {
+                if (isPath && c === "." && !insideEscaped) {
                     escape = true;
                     break;
                 }

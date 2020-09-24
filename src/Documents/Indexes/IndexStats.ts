@@ -6,9 +6,15 @@ export interface IndexStats {
     mapAttempts: number;
     mapSuccesses: number;
     mapErrors: number;
+    mapReferenceAttempts: number;
+    mapReferenceSuccesses: number;
+    mapReferenceErrors: number;
     reduceAttempts: number;
     reduceSuccesses: number;
     reduceErrors: number;
+    reduceOutputCollection: string;
+    reduceOutputReferencePattern: string;
+    patternReferencesCollectionName: string;
     mappedPerSecondRate: number;
     reducedPerSecondRate: number;
     maxNumberOfOutputsPerDocument: number;

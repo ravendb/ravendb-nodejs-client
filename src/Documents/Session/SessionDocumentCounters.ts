@@ -81,7 +81,7 @@ export class SessionDocumentCounters extends SessionCountersBase implements ISes
     public async get(
         counters: string | string[], 
         callback?: ErrorFirstCallback<number> | ErrorFirstCallback<{ [key: string]: number }>): Promise<any> {
-        const resultPromise = Array.isArray(counters)
+        const resultPromise: Promise<any> = Array.isArray(counters)
             ? this._getCounters(counters)
             : this._getCounter(counters);
         passResultToCallback(resultPromise as any, callback || TypeUtil.NOOP);
@@ -92,7 +92,7 @@ export class SessionDocumentCounters extends SessionCountersBase implements ISes
         let value = null;
         let cache = this._session.countersByDocId.get(this._docId);
         if (cache) {
-            value = cache.data.get(counter);
+            value = cache.data.get(counter) || null;
             if (cache.data.has(counter)) {
                 return value;
             }
@@ -116,7 +116,11 @@ export class SessionDocumentCounters extends SessionCountersBase implements ISes
             const details = await this._session.operations.send(
                 new GetCountersOperation(this._docId, counter), this._session.sessionInfo);
             if (details.counters && details.counters.length) {
-                value = details.counters[0].totalValue;
+                const counterDetail = details.counters[0];
+
+                if (counterDetail) {
+                    value = counterDetail.totalValue;
+                }
             }
         }
 

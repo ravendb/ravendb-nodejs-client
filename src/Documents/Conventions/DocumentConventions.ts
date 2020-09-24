@@ -15,17 +15,23 @@ import { CONSTANTS } from "../../Constants";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { DateUtil, DateUtilOpts } from "../../Utility/DateUtil";
 import { CasingConvention, ObjectUtil, ObjectChangeCaseOptions } from "../../Utility/ObjectUtil";
-import { JsonSerializer } from "../../Mapping/Json/Serializer";
 
 export type IdConvention = (databaseName: string, entity: object) => Promise<string>;
 export type IValueForQueryConverter<T> =
     (fieldName: string, value: T, forRange: boolean, stringValue: (value: any) => void) => boolean;
 
-//TODO: add missing JSDoc
+function createServerDefaults() {
+    const conventions = new DocumentConventions();
+    conventions.sendApplicationIdentifier = false;
+    conventions.freeze();
+    return conventions;
+}
+
 
 export class DocumentConventions {
 
     private static _defaults: DocumentConventions = new DocumentConventions();
+    public static defaultForServerConventions = createServerDefaults();
 
     public static get defaultConventions() {
         return this._defaults;
@@ -44,7 +50,6 @@ export class DocumentConventions {
 
     private _frozen: boolean;
     private _originalConfiguration: ClientConfiguration;
-    private _idPropertyCache: Map<ObjectTypeDescriptor, string> = new Map(); //TODO: is it used?
     private _identityPartsSeparator: string;
     private _disableTopologyUpdates: boolean;
 
@@ -62,6 +67,10 @@ export class DocumentConventions {
     private _throwIfQueryPageSizeIsNotSet: boolean;
     private _maxNumberOfRequestsPerSession: number;
 
+    private _requestTimeout: number | undefined;
+    private _firstBroadcastAttemptTimeout: number | undefined;
+    private _secondBroadcastAttemptTimeout: number | undefined;
+
     private _readBalanceBehavior: ReadBalanceBehavior;
     private _maxHttpCacheSize: number;
 
@@ -73,7 +82,8 @@ export class DocumentConventions {
     private _objectMapper: TypesAwareObjectMapper;
     private _dateUtil: DateUtil;
 
-    private _useCompression;
+    private _useCompression: boolean;
+    private _sendApplicationIdentifier: boolean;
 
     public constructor() {
         this._readBalanceBehavior = "None";
@@ -121,6 +131,87 @@ export class DocumentConventions {
 
         this._dateUtilOpts = {};
         this._dateUtil = new DateUtil(this._dateUtilOpts);
+
+        this._firstBroadcastAttemptTimeout = 5_000;
+        this._secondBroadcastAttemptTimeout = 30_000;
+
+        this._sendApplicationIdentifier = true;
+    }
+
+    public get requestTimeout() {
+        return this._requestTimeout;
+    }
+
+    public set requestTimeout(requestTimeout: number) {
+        this._assertNotFrozen();
+        this._requestTimeout = requestTimeout;
+    }
+
+    /**
+     * Enables sending a unique application identifier to the RavenDB Server that is used for Client API usage tracking.
+     * It allows RavenDB Server to issue performance hint notifications e.g. during robust topology update requests which could indicate Client API misuse impacting the overall performance
+     * @return if option is enabled
+     */
+    public get sendApplicationIdentifier() {
+        return this._sendApplicationIdentifier;
+    }
+
+    /**
+     * Enables sending a unique application identifier to the RavenDB Server that is used for Client API usage tracking.
+     * It allows RavenDB Server to issue performance hint notifications e.g. during robust topology update requests which could indicate Client API misuse impacting the overall performance
+     * @param sendApplicationIdentifier if option should be enabled
+     */
+    public set sendApplicationIdentifier(sendApplicationIdentifier: boolean) {
+        this._assertNotFrozen();
+        this._sendApplicationIdentifier = sendApplicationIdentifier;
+    }
+
+    /**
+     * Get the timeout for the second broadcast attempt.
+     * Default: 30 seconds
+     *
+     * Upon failure of the first attempt the request executor will resend the command to all nodes simultaneously.
+     * @return broadcast timeout
+     */
+    public get secondBroadcastAttemptTimeout() {
+        return this._secondBroadcastAttemptTimeout;
+    }
+
+    /**
+     * Set the timeout for the second broadcast attempt.
+     * Default: 30 seconds
+     *
+     * Upon failure of the first attempt the request executor will resend the command to all nodes simultaneously.
+     *
+     * @param secondBroadcastAttemptTimeout broadcast timeout
+     */
+    public set secondBroadcastAttemptTimeout(secondBroadcastAttemptTimeout: number) {
+        this._assertNotFrozen();
+        this._secondBroadcastAttemptTimeout = secondBroadcastAttemptTimeout;
+    }
+
+    /**
+     * Get the timeout for the first broadcast attempt.
+     * Default: 5 seconds
+     *
+     * First attempt will send a single request to a selected node.
+     * @return broadcast timeout
+     */
+    public get firstBroadcastAttemptTimeout() {
+        return this._firstBroadcastAttemptTimeout;
+    }
+
+    /**
+     * Set the timeout for the first broadcast attempt.
+     * Default: 5 seconds
+     *
+     * First attempt will send a single request to a selected node.
+     *
+     * @param firstBroadcastAttemptTimeout broadcast timeout
+     */
+    public set firstBroadcastAttemptTimeout(firstBroadcastAttemptTimeout: number) {
+        this._assertNotFrozen();
+        this._firstBroadcastAttemptTimeout = firstBroadcastAttemptTimeout;
     }
 
     public get objectMapper(): TypesAwareObjectMapper {

@@ -1,5 +1,4 @@
 import { ObjectTypeDescriptor, ClassConstructor, ObjectLiteralDescriptor, EntityConstructor } from "../Types";
-import { DateUtil } from "../Utility/DateUtil";
 import { throwError } from "../Exceptions";
 import { TypeUtil } from "../Utility/TypeUtil";
 import { getLogger } from "../Utility/LogUtil";

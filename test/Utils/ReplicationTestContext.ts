@@ -4,11 +4,18 @@ import {
     ReplicationNode,
     ExternalReplication,
     RavenConnectionString,
-    UpdateExternalReplicationOperation
+    ModifyOngoingTaskResult,
+    IMaintenanceOperation,
+    OngoingTaskType,
+    DeleteOngoingTaskOperation, UpdateExternalReplicationOperation
 } from "../../src";
 import { Stopwatch } from "../../src/Utility/Stopwatch";
 import { DocumentType } from "../../src";
 import { delay } from "../../src/Utility/PromiseUtil";
+import { v4 as uuidv4 } from "uuid";
+import { assertThat } from "./AssertExtensions";
+import { ExternalReplicationBase } from "../../src/Documents/Replication/ExternalReplicationBase";
+import { UpdatePullReplicationAsSinkOperation } from "../../src/Documents/Operations/Replication/UpdatePullReplicationAsSinkOperation";
 
 export class ReplicationTestContext {
 
@@ -16,7 +23,21 @@ export class ReplicationTestContext {
         // empty by design
     }
 
-    public async setupReplication(fromStore: IDocumentStore, ...destinations: IDocumentStore[]): Promise<void> {
+    public async ensureReplicating(src: IDocumentStore, dst: IDocumentStore) {
+        const id = "marker/" + uuidv4();
+
+        {
+            const s = src.openSession();
+            await s.store(new Marker(), id);
+            await s.saveChanges();
+        }
+
+        assertThat(this.waitForDocumentToReplicate(dst, id, 15_000, Marker))
+            .isNotNull();
+    }
+
+    public async setupReplication(fromStore: IDocumentStore, ...destinations: IDocumentStore[]): Promise<ModifyOngoingTaskResult[]> {
+        const result = [] as ModifyOngoingTaskResult[];
 
         for (const store of destinations) {
             const databaseWatcher: ExternalReplication = {
@@ -25,24 +46,35 @@ export class ReplicationTestContext {
             };
 
             await this._modifyReplicationDestination(databaseWatcher);
-            await this._addWatcherToReplicationTopology(fromStore, databaseWatcher);
+            result.push(await ReplicationTestContext.addWatcherToReplicationTopology(fromStore, databaseWatcher));
         }
+
+        return result;
     }
 
-    private async _addWatcherToReplicationTopology(store: IDocumentStore, watcher: ExternalReplication): Promise<void> {
-
+    public static async addWatcherToReplicationTopology(store: IDocumentStore, watcher: ExternalReplicationBase, ...urls: string[]): Promise<ModifyOngoingTaskResult> {
         const connectionString = new RavenConnectionString();
         connectionString.name = watcher.connectionStringName;
         connectionString.database = watcher.database;
-        connectionString.topologyDiscoveryUrls = store.urls;
+        connectionString.topologyDiscoveryUrls = urls && urls.length ? urls : store.urls;
 
         await store.maintenance.send(new PutConnectionStringOperation(connectionString));
 
-        const op = new UpdateExternalReplicationOperation(watcher);
-        await store.maintenance.send(op);
+        let op: IMaintenanceOperation<ModifyOngoingTaskResult>;
+
+        if ("hubDefinitionName" in watcher) {
+            op = new UpdatePullReplicationAsSinkOperation(watcher);
+        } else {
+            op = new UpdateExternalReplicationOperation(watcher);
+        }
+
+        return await store.maintenance.send(op);
     }
 
-    //TODO: review usage and check if we assert that document is not null as this method never throws!
+    public async deleteOngoingTask(store: IDocumentStore, taskId: number, taskType: OngoingTaskType) {
+        const op = new DeleteOngoingTaskOperation(taskId, taskType);
+        return store.maintenance.send(op);
+    }
 
     public async waitForDocumentToReplicate<T extends object>(
         store: IDocumentStore, id: string, timeout: number, documentType: DocumentType<T>): Promise<T> {
@@ -61,4 +93,8 @@ export class ReplicationTestContext {
         return null;
     }
 
+}
+
+class Marker {
+    public id: string;
 }

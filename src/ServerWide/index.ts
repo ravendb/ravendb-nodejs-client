@@ -14,6 +14,8 @@ import { RevisionsConfiguration } from "../Documents/Operations/RevisionsConfigu
 import { ExternalReplication } from "../Documents/Replication/ExternalReplication";
 import { RavenConnectionString, SqlConnectionString } from "../Documents/Operations/Etl/ConnectionString";
 import { ClientConfiguration } from "../Documents/Operations/Configuration/ClientConfiguration";
+import { RefreshConfiguration } from "../Documents/Operations/Refresh/RefreshConfiguration";
+import { RevisionsCollectionConfiguration } from "../Documents/Operations/RevisionsCollectionConfiguration";
 
 export interface ScriptResolver {
     script: string;
@@ -31,14 +33,18 @@ export interface DatabaseRecord {
     encrypted?: boolean;
     etagForBackup?: number;
     deletionInProgress?: { [key: string]: DeletionInProgressStatus };
+    databaseStatus?: DatabaseStateStatus;
     topology?: DatabaseTopology;
     conflictSolverConfig?: ConflictSolver;
     sorters?: { [key: string]: SorterDefinition };
     indexes?: { [key: string]: IndexDefinition };
+    indexesHistory?: { [key: string]: IndexHistoryEntry[] };
     autoIndexes?: { [key: string]: AutoIndexDefinition };
     settings?: { [key: string]: string };
     revisions?: RevisionsConfiguration;
+    revisionsForConflicts?: RevisionsCollectionConfiguration;
     expiration?: ExpirationConfiguration;
+    refresh?: RefreshConfiguration;
     periodicBackups?: PeriodicBackupConfiguration[];
     externalReplications?: ExternalReplication[];
     sinkPullReplications?: PullReplicationAsSink[];
@@ -50,8 +56,19 @@ export interface DatabaseRecord {
     client?: ClientConfiguration;
     studio?: StudioConfiguration;
     truncatedClusterTransactionIndex?: number;
+    unusedDatabaseIds?: string[];
+}
+
+export interface IndexHistoryEntry {
+    definition: IndexDefinition;
+    source: string;
+    createdAt: Date;
 }
 
 export interface DatabaseRecordWithEtag extends DatabaseRecord {
     etag: number;
 }
+
+export type DatabaseStateStatus =
+    "Normal"
+    | "RestoreInProgress";

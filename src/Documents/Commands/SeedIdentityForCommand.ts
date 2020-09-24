@@ -4,8 +4,10 @@ import { HttpRequestParameters } from "../../Primitives/Http";
 import { ServerNode } from "../../Http/ServerNode";
 import * as stream from "readable-stream";
 import { TypeUtil } from "../../Utility/TypeUtil";
+import { IRaftCommand } from "../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../Utility/RaftIdGenerator";
 
-export class SeedIdentityForCommand extends RavenCommand<number> {
+export class SeedIdentityForCommand extends RavenCommand<number> implements IRaftCommand {
 
     private readonly _id: string;
     private readonly _value: number;
@@ -59,5 +61,9 @@ export class SeedIdentityForCommand extends RavenCommand<number> {
             });
 
         return body;
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }

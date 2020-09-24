@@ -3,20 +3,18 @@ import * as os from "os";
 import { DocumentQuery } from "./DocumentQuery";
 import { MultiLoaderWithInclude } from "./Loaders/MultiLoaderWithInclude";
 import { BatchOperation } from "./Operations/BatchOperation";
-import * as BluebirdPromise from "bluebird";
 import {
-    IDocumentSession,
-    LoadOptions,
     ConcurrencyCheckMode,
-    SessionLoadStartingWithOptions,
+    IDocumentSession,
     IDocumentSessionImpl,
+    LoadOptions,
     SessionLoadInternalParameters,
+    SessionLoadStartingWithOptions,
 } from "./IDocumentSession";
-import { RequestExecutor } from "../../Http/RequestExecutor";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { ErrorFirstCallback } from "../../Types/Callbacks";
 import { TypeUtil } from "../../Utility/TypeUtil";
-import { IRavenObject, EntitiesCollectionObject, ObjectTypeDescriptor } from "../../Types";
+import { EntitiesCollectionObject, IRavenObject, ObjectTypeDescriptor } from "../../Types";
 import { throwError } from "../../Exceptions";
 import { DocumentType } from "../DocumentAbstractions";
 import { LoadOperation } from "./Operations/LoadOperation";
@@ -28,7 +26,6 @@ import { LoadStartingWithOperation } from "./Operations/LoadStartingWithOperatio
 import { ILoaderWithInclude } from "./Loaders/ILoaderWithInclude";
 import { IRawDocumentQuery } from "./IRawDocumentQuery";
 import { RawDocumentQuery } from "./RawDocumentQuery";
-import { BatchCommand } from "../Commands/Batches/BatchCommand";
 import { AdvancedDocumentQueryOptions, DocumentQueryOptions } from "./QueryOptions";
 import { IDocumentQuery } from "./IDocumentQuery";
 import { IAttachmentsSessionOperations } from "./IAttachmentsSessionOperations";
@@ -66,6 +63,10 @@ import { SessionOptions } from "./SessionOptions";
 import { ISessionDocumentCounters } from "./ISessionDocumentCounters";
 import { SessionDocumentCounters } from "./SessionDocumentCounters";
 import { IncludeBuilder } from "./Loaders/IncludeBuilder";
+import { IGraphDocumentQuery } from "./IGraphDocumentQuery";
+import { SingleNodeBatchCommand } from "../Commands/Batches/SingleNodeBatchCommand";
+import { GraphDocumentQuery } from "./GraphDocumentQuery";
+import { AbstractDocumentQuery } from "./AbstractDocumentQuery";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;
@@ -223,7 +224,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
     private async _saveChanges() {
         const saveChangeOperation = new BatchOperation(this);
-        let command: BatchCommand;
+        let command: SingleNodeBatchCommand;
         try {
             command = saveChangeOperation.createRequest();
             if (!command) {
@@ -660,11 +661,12 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             const sw = Stopwatch.createStarted();
             this.incrementRequestCount();
             const responseTimeDuration: ResponseTimeInformation = new ResponseTimeInformation();
-            while (await this._executeLazyOperationsSingleStep(responseTimeDuration, requests)) {
+            while (await this._executeLazyOperationsSingleStep(responseTimeDuration, requests, sw)) {
                 await delay(100);
             }
 
             responseTimeDuration.computeServerTotal();
+            sw.stop();
             responseTimeDuration.totalClientDuration = sw.elapsed;
             return responseTimeDuration;
         } finally {
@@ -673,7 +675,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     private async _executeLazyOperationsSingleStep(
-        responseTimeInformation: ResponseTimeInformation, requests: GetRequest[]): Promise<boolean> {
+        responseTimeInformation: ResponseTimeInformation, requests: GetRequest[], sw: Stopwatch): Promise<boolean> {
         const multiGetOperation = new MultiGetOperation(this);
         const multiGetCommand = multiGetOperation.createRequest(requests);
         await this.requestExecutor.execute(multiGetCommand, this._sessionInfo);
@@ -684,6 +686,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             let tempReqTime: string;
             const response = responses[i];
             tempReqTime = response.headers[HEADERS.REQUEST_TIME];
+            response.elapsed = sw.elapsed;
             totalTime = tempReqTime ? parseInt(tempReqTime, 10) : 0;
             const timeItem = {
                 url: requests[i].urlAndQuery,
@@ -778,7 +781,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     private async _stream<T extends object>(
-        queryOrIdPrefix: string | IDocumentQuery<T> | IRawDocumentQuery<T>,
+        queryOrIdPrefix: string | AbstractDocumentQuery<T, any>,
         optsOrStatsCallback?: SessionLoadStartingWithOptions<T> | StreamQueryStatisticsCallback)
         : Promise<DocumentResultStream<T>> {
         if (TypeUtil.isString(queryOrIdPrefix)) {
@@ -791,7 +794,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         }
 
         return this._streamQueryResults(
-            queryOrIdPrefix as (IDocumentQuery<T> | IRawDocumentQuery<T>),
+            queryOrIdPrefix as (AbstractDocumentQuery<T, any>),
             optsOrStatsCallback as StreamQueryStatisticsCallback);
     }
 
@@ -809,7 +812,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             clazz = this.conventions.getJsTypeByDocumentType(opts.documentType);
         }
 
-        const result = this._getStreamResultTransform(this, clazz, null);
+        const result = this._getStreamResultTransform(this, clazz, null, false);
 
         result.on("newListener", (event, listener) => {
             if (event === "data") {
@@ -827,7 +830,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     private async _streamQueryResults<T extends object>(
-        query: IDocumentQuery<T> | IRawDocumentQuery<T>,
+        query: AbstractDocumentQuery<T, any>,
         streamQueryStatsCallback?: StreamQueryStatisticsCallback)
         : Promise<DocumentResultStream<T>> {
         const streamOperation = new StreamOperation(this);
@@ -837,7 +840,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         const docsReadable = streamOperation.setResult(command.result);
 
         const result = this._getStreamResultTransform(
-            this, (query as any).getQueryType(), (query as any).fieldsToFetchToken);
+            this, (query as any).getQueryType(), (query as any).fieldsToFetchToken, query.isProjectInto);
 
         docsReadable.once("stats", stats => {
             (streamQueryStatsCallback || TypeUtil.NOOP)(stats);
@@ -862,7 +865,8 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     private _getStreamResultTransform<TEntity extends object>(
         session: DocumentSession,
         clazz: ObjectTypeDescriptor<TEntity>,
-        fieldsToFetchToken: any) {
+        fieldsToFetchToken: any,
+        isProjectInto: boolean) {
         return new stream.Transform({
             objectMode: true,
             transform(chunk: object, encoding: string, callback: stream.TransformCallback) {
@@ -872,7 +876,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
                 // MapReduce indexes return reduce results that don't have @id property
                 const id = metadata[CONSTANTS.Documents.Metadata.ID] || null;
                 const entity = QueryOperation.deserialize(
-                    id, doc, metadata, fieldsToFetchToken || null, true, session, clazz);
+                    id, doc, metadata, fieldsToFetchToken || null, true, session, clazz, isProjectInto);
                 callback(null, {
                     changeVector,
                     metadata,
@@ -926,5 +930,10 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     public countersFor(entity: object): ISessionDocumentCounters;
     public countersFor(entityOrId: string | object): ISessionDocumentCounters {
         return new SessionDocumentCounters(this, entityOrId as any);
+    }
+
+    public graphQuery<TEntity extends object>(
+        query: string, documentType?: DocumentType<TEntity>): IGraphDocumentQuery<TEntity> {
+        return new GraphDocumentQuery<TEntity>(this, query, documentType);
     }
 }

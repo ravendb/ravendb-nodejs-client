@@ -62,6 +62,7 @@ export class AwaitableOperation
 
 export interface OperationIdResult {
     operationId: number;
+    operationNodeTag: string;
 }
 
 export class OperationExceptionResult {

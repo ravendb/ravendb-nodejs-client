@@ -1,12 +1,8 @@
-import * as mocha from "mocha";
-import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { User } from "../../Assets/Entities";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
-    RavenErrorType,
-    GetNextOperationIdCommand,
     IDocumentStore,
     DocumentCountersOperation,
     CounterOperation,
@@ -15,6 +11,7 @@ import {
     GetCountersOperation,
 } from "../../../src";
 import { CONSTANTS } from "../../../src/Constants";
+import { assertThat } from "../../Utils/AssertExtensions";
 
 describe("CountersSingleNodeTest", function () {
 
@@ -110,28 +107,41 @@ describe("CountersSingleNodeTest", function () {
         const documentCountersOperation1 = new DocumentCountersOperation();
         documentCountersOperation1.documentId = "users/1-A";
         documentCountersOperation1.operations = [CounterOperation.create("likes", "Increment", 10)];
+
         const documentCountersOperation2 = new DocumentCountersOperation();
         documentCountersOperation2.documentId = "users/2-A";
         documentCountersOperation2.operations = [CounterOperation.create("likes", "Increment", 20)];
+
         let counterBatch = new CounterBatch();
         counterBatch.documents = [documentCountersOperation1, documentCountersOperation2];
         await store.operations.send(new CounterBatchOperation(counterBatch));
+
         let deleteCounter = new DocumentCountersOperation();
         deleteCounter.documentId = "users/1-A";
         deleteCounter.operations = [CounterOperation.create("likes", "Delete")];
+
         counterBatch = new CounterBatch();
         counterBatch.documents = [deleteCounter];
         await store.operations.send(new CounterBatchOperation(counterBatch));
-        const result = await store.operations.send(new GetCountersOperation("users/1-A", ["likes"]));
-        assert.strictEqual(result.counters.length, 0);
+
+        const countersDetail = await store.operations.send(new GetCountersOperation("users/1-A", ["likes"]));
+        assertThat(countersDetail.counters)
+            .hasSize(1);
+        assertThat(countersDetail.counters[0])
+            .isNull();
+
         deleteCounter = new DocumentCountersOperation();
         deleteCounter.documentId = "users/2-A";
         deleteCounter.operations = [CounterOperation.create("likes", "Delete")];
         counterBatch = new CounterBatch();
         counterBatch.documents = [deleteCounter];
+
         await store.operations.send(new CounterBatchOperation(counterBatch));
         const deleteResult = await store.operations.send(new GetCountersOperation("users/2-A", ["likes"]));
-        assert.strictEqual(deleteResult.counters.length, 0);
+        assertThat(countersDetail.counters)
+            .hasSize(1);
+        assertThat(countersDetail.counters[0])
+            .isNull();
     });
 
     it("multi get", async function () {
@@ -236,7 +246,11 @@ describe("CountersSingleNodeTest", function () {
         batch.documents = [documentCountersOperation1];
         await store.operations.send(new CounterBatchOperation(batch));
         result = await store.operations.send(new GetCountersOperation("users/1-A", [ "likes" ]));
-        assert.strictEqual(result.counters.length, 0);
+        assertThat(result.counters)
+            .hasSize(1);
+        assertThat(result.counters[0])
+            .isNull();
+
         documentCountersOperation1 = new DocumentCountersOperation();
         documentCountersOperation1.documentId = "users/1-A";
         documentCountersOperation1.operations = [
@@ -256,7 +270,10 @@ describe("CountersSingleNodeTest", function () {
         batch.documents = [documentCountersOperation1];
         await store.operations.send(new CounterBatchOperation(batch));
         result = await store.operations.send(new GetCountersOperation("users/1-A", ["likes"]));
-        assert.strictEqual(result.counters.length, 0);
+        assertThat(result.counters)
+            .hasSize(1);
+        assertThat(result.counters[0])
+            .isNull();
     });
 
     it("incrementAndDeleteShouldChangeDocumentMetadata", async function () {

@@ -49,6 +49,8 @@ import { HighlightingParameters } from "../Queries/Highlighting/HighlightingPara
 import { IQueryIncludeBuilder } from "./Loaders/IQueryIncludeBuilder";
 import { QueryIncludeBuilder } from "./Loaders/QueryIncludeBuilder";
 
+export const NESTED_OBJECT_TYPES_PROJECTION_FIELD = "__PROJECTED_NESTED_OBJECT_TYPES__";
+
 export class DocumentQuery<T extends object>
     extends AbstractDocumentQuery<T, DocumentQuery<T>> implements IDocumentQuery<T> {
 
@@ -73,17 +75,22 @@ export class DocumentQuery<T extends object>
         indexName: string,
         collectionName: string,
         isGroupBy: boolean,
+        declareToken: DeclareToken,
+        loadTokens: LoadToken[],
+        fromAlias: string,
+        isProjectInto: boolean);
+    public constructor(
+        documentType: DocumentType<T>,
+        session: InMemoryDocumentSessionOperations,
+        indexName: string,
+        collectionName: string,
+        isGroupBy: boolean,
         declareToken?: DeclareToken,
         loadTokens?: LoadToken[],
-        fromAlias?: string) {
-        super(documentType, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, fromAlias);
+        fromAlias?: string,
+        isProjectInto?: boolean) {
+        super(documentType, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, fromAlias, isProjectInto);
     }
-
-    //TODO: public <TProjection> IDocumentQuery<TProjection> selectFields(
-    //    Class<TProjection> projectionClass, String... fields) {
-    //     QueryData queryData = new QueryData(fields, fields);
-    //     return selectFields(projectionClass, queryData);
-    // }
 
     public selectFields<TProjection extends Object>(
         property: string): IDocumentQuery<TProjection>;
@@ -115,9 +122,17 @@ export class DocumentQuery<T extends object>
             }
 
             const queryData = new QueryData(propertiesOrQueryData, propertiesOrQueryData);
+            queryData.isProjectInto = true;
             return this.selectFields(queryData, projectionType);
         } else {
-            return this._createDocumentQueryInternal(projectionType, propertiesOrQueryData as QueryData);
+            propertiesOrQueryData.isProjectInto = true;
+            const queryData = propertiesOrQueryData as QueryData;
+
+            // add nested object types to result so we can properly read types
+            queryData.fields = [...queryData.fields, `${CONSTANTS.Documents.Metadata.KEY}.${CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES}`];
+            queryData.projections = [...queryData.projections, CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES_PROJECTION_FIELD];
+
+            return this.createDocumentQueryInternal(projectionType, queryData);
         }
     }
 
@@ -473,11 +488,12 @@ export class DocumentQuery<T extends object>
             this._theSession.conventions.tryRegisterJsType(tResultClass);
         }
 
-        return this._createDocumentQueryInternal(tResultClass);
+        return this.createDocumentQueryInternal(tResultClass);
     }
 
     public orderBy(field: string): IDocumentQuery<T>;
     public orderBy(field: string, ordering: OrderingType): IDocumentQuery<T>;
+    public orderBy(field: string, options: { sorterName: string }): IDocumentQuery<T>;
     public orderBy(...args: any[]): IDocumentQuery<T> {
         (this._orderBy as any)(...args);
         return this;
@@ -485,6 +501,7 @@ export class DocumentQuery<T extends object>
 
     public orderByDescending(field: string): IDocumentQuery<T>;
     public orderByDescending(field: string, ordering: OrderingType): IDocumentQuery<T>;
+    public orderByDescending(field: string, options: { sorterName: string }): IDocumentQuery<T>;
     public orderByDescending(...args: any[]): IDocumentQuery<T> {
         (this._orderByDescending as any)(...args);
         return this;
@@ -495,11 +512,11 @@ export class DocumentQuery<T extends object>
     // TBD expr public IDocumentQuery<T> OrderByDescending<TValue>(
     //      params Expression<Func<T, TValue>>[] propertySelectors)
 
-    private _createDocumentQueryInternal<TResult extends object>(
+    public createDocumentQueryInternal<TResult extends object>(
         resultClass: DocumentType<TResult>): DocumentQuery<TResult>;
-    private _createDocumentQueryInternal<TResult extends object>(
+    public createDocumentQueryInternal<TResult extends object>(
         resultClass: DocumentType<TResult>, queryData: QueryData): DocumentQuery<TResult>;
-    private _createDocumentQueryInternal<TResult extends object>(
+    public createDocumentQueryInternal<TResult extends object>(
         resultClass: DocumentType<TResult>, queryData?: QueryData): DocumentQuery<TResult> {
         let newFieldsToFetch: FieldsToFetchToken;
 
@@ -535,7 +552,8 @@ export class DocumentQuery<T extends object>
             this._isGroupBy,
             queryData ? queryData.declareToken : null,
             queryData ? queryData.loadTokens : null,
-            queryData ? queryData.fromAlias : null);
+            queryData ? queryData.fromAlias : null,
+            queryData ? queryData.isProjectInto : null);
 
         query._queryRaw = this._queryRaw;
         query._pageSize = this._pageSize;
@@ -720,6 +738,7 @@ export class DocumentQuery<T extends object>
     public orderByDistance(field: DynamicSpatialField, latitude: number, longitude: number): IDocumentQuery<T>;
     public orderByDistance(field: DynamicSpatialField, shapeWkt: string): IDocumentQuery<T>;
     public orderByDistance(fieldName: string, latitude: number, longitude: number): IDocumentQuery<T>;
+    public orderByDistance(fieldName: string, latitude: number, longitude: number, roundFactor: number): IDocumentQuery<T>;
     public orderByDistance(fieldName: string, shapeWkt: string): IDocumentQuery<T>;
     public orderByDistance(...args: any[]): IDocumentQuery<T> {
         (this._orderByDistance as any)(...args);
@@ -730,6 +749,7 @@ export class DocumentQuery<T extends object>
         field: DynamicSpatialField, latitude: number, longitude: number): IDocumentQuery<T>;
     public orderByDistanceDescending(field: DynamicSpatialField, shapeWkt: string): IDocumentQuery<T>;
     public orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): IDocumentQuery<T>;
+    public orderByDistanceDescending(fieldName: string, latitude: number, longitude: number, roundFactor: number): IDocumentQuery<T>;
     public orderByDistanceDescending(fieldName: string, shapeWkt: string): IDocumentQuery<T>;
     public orderByDistanceDescending(...args: any[]): IDocumentQuery<T> {
         (this._orderByDistanceDescending as any)(...args);

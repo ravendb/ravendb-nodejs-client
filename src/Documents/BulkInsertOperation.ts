@@ -20,7 +20,6 @@ import { DocumentConventions } from "./Conventions/DocumentConventions";
 import { ServerNode } from "../Http/ServerNode";
 import { ErrorFirstCallback } from "../Types/Callbacks";
 import { passResultToCallback } from "../Utility/PromiseUtil";
-import { BatchOperation } from "./Session/Operations/BatchOperation";
 import { MetadataObject } from "./Session/MetadataObject";
 
 export class BulkInsertOperation {
@@ -186,7 +185,7 @@ export class BulkInsertOperation {
 
         const documentInfo = new DocumentInfo();
         documentInfo.metadataInstance = metadata;
-        let json = EntityToJson.convertEntityToJson(entity, this._conventions, documentInfo, false);
+        let json = EntityToJson.convertEntityToJson(entity, this._conventions, documentInfo, true);
 
         if (this._conventions.remoteEntityFieldNameConvention) {
             json = this._conventions.transformObjectKeysToRemoteFieldNameConvention(json);

@@ -63,7 +63,8 @@ export class TcpNegotiation {
             DatabaseName: parameters.database,
             Operation: parameters.operation,
             SourceNodeTag: parameters.sourceNodeTag,
-            OperationVersion: currentVersion
+            OperationVersion: currentVersion,
+            AuthorizeInfo: parameters.authorizeInfo || null
         }, null, 0);
 
         return new Promise<void>((resolve, reject) => {

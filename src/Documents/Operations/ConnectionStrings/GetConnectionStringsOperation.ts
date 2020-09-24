@@ -42,14 +42,14 @@ export class GetConnectionStringCommand extends RavenCommand<GetConnectionString
     }
 
     get isReadRequest(): boolean {
-        return false;
+        return true;
     }
 
     createRequest(node: ServerNode): HttpRequestParameters {
-        let uri = node.url + "/databases/" + node.database + "/admin/connection-strings?";
+        let uri = node.url + "/databases/" + node.database + "/admin/connection-strings";
 
         if (this._connectionStringName) {
-            uri += "&connectionStringName=" + encodeURIComponent(this._connectionStringName) + "&type=" + this._type;
+            uri += "?connectionStringName=" + encodeURIComponent(this._connectionStringName) + "&type=" + this._type;
         }
 
         return {

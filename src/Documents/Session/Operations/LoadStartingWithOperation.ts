@@ -26,9 +26,9 @@ export class LoadStartingWithOperation {
     private _exclude: string;
     private _startAfter: string;
 
-    private _currentLoadResults: GetDocumentsResult;
-
     private _returnedIds: string[] = [];
+    private _resultsSet: boolean;
+    private _results: GetDocumentsResult;
 
     public constructor(session: InMemoryDocumentSessionOperations) {
         this._session = session;
@@ -67,8 +67,10 @@ export class LoadStartingWithOperation {
     }
 
     public setResult(result: GetDocumentsResult): void {
+        this._resultsSet = true;
+
         if (this._session.noTracking) {
-            this._currentLoadResults = result;
+            this._results = result;
             return;
         }
 
@@ -86,16 +88,19 @@ export class LoadStartingWithOperation {
         const entityType = this._session.conventions.getJsTypeByDocumentType<T>(docType);
 
         if (this._session.noTracking) {
-            if (!this._currentLoadResults) {
+            if (!this._results) {
                 throwError(
                     "InvalidOperationException", "Cannot execute getDocuments before operation execution.");
             }
+
+            if (!this._results || !this._results.results || !this._results.results.length) {
+                return [];
+            }
             
-            return this._currentLoadResults.results
+            return this._results.results
                 .map(doc => {
                     const newDocumentInfo = DocumentInfo.getNewDocumentInfo(doc);
                     return this._session.trackEntity(entityType, newDocumentInfo);
-
                 });
         }
 

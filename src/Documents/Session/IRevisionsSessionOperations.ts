@@ -2,6 +2,7 @@ import { RevisionsCollectionObject } from "../../Types";
 import { DocumentType } from "../DocumentAbstractions";
 import { MetadataAsDictionary } from "../../Mapping/MetadataAsDictionary";
 import { ErrorFirstCallback } from "../../Types/Callbacks";
+import { ForceRevisionStrategy } from "./ForceRevisionStrategy";
 
 /**
  * Revisions advanced session operations
@@ -117,6 +118,47 @@ export interface IRevisionsSessionOperations {
                                 documentType: DocumentType<TEntity>,
                                 callback: ErrorFirstCallback<RevisionsCollectionObject<TEntity>>)
         : Promise<RevisionsCollectionObject<TEntity>>;
+
+    /**
+     * Make the session create a revision for the specified entity.
+     * Can be used with tracked entities only.
+     * Revision will be created Even If:
+     *
+     * 1. Revisions configuration is Not set for the collection
+     * 2. Document was Not modified
+     */
+    forceRevisionCreationFor<T extends object>(entity: T): void;
+
+    /**
+     * Make the session create a revision for the specified entity.
+     * Can be used with tracked entities only.
+     * Revision will be created Even If:
+     *
+     * 1. Revisions configuration is Not set for the collection
+     * 2. Document was Not modified
+     */
+    forceRevisionCreationFor<T extends object>(entity: T, strategy: ForceRevisionStrategy): void;
+
+    /**
+     * Make the session create a revision for the specified document id.
+     * Revision will be created Even If:
+     *
+     * 1. Revisions configuration is Not set for the collection
+     * 2. Document was Not modified
+     * @param id Document id to use
+     */
+    forceRevisionCreationFor(id: string);
+
+    /**
+     * Make the session create a revision for the specified document id.
+     * Revision will be created Even If:
+     *
+     * 1. Revisions configuration is Not set for the collection
+     * 2. Document was Not modified
+     * @param id Document id to use
+     * @param strategy Strategy to use
+     */
+    forceRevisionCreationFor(id: string, strategy: ForceRevisionStrategy): void;
 }
 
 export interface SessionRevisionsOptions<T extends object> {

@@ -1,22 +1,17 @@
-import * as mocha from "mocha";
-import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
     RavenErrorType,
-    GetNextOperationIdCommand,
     IDocumentStore,
     GetCountersOperation,
     CreateDatabaseOperation,
-    DatabaseRecord,
     DeleteDatabasesOperation,
     IDocumentSession,
     DocumentCountersOperation,
     CounterOperation,
     CounterBatch,
     CounterBatchOperation,
-    Item,
 } from "../../../src";
 import { User, Company, Order, Employee } from "../../Assets/Entities";
 import { assertThat } from "../../Utils/AssertExtensions";
@@ -89,13 +84,21 @@ describe("SessionCountersTest", function () {
             await session.saveChanges();
         }
 
-        ({ counters } = (await store.operations
-                   .send(new GetCountersOperation("users/1-A", ["likes", "downloads"]))));
-        assert.strictEqual(counters.length, 0);
+        let countersDetail = await store.operations.send(new GetCountersOperation("users/1-A", ["likes", "downloads"]));
 
-        ({ counters } = (await store.operations
-                   .send(new GetCountersOperation("users/1-A", ["votes"]))));
-        assert.strictEqual(counters.length, 0);
+        assertThat(countersDetail.counters)
+            .hasSize(2);
+
+        assertThat(countersDetail.counters[0])
+            .isNull();
+        assertThat(countersDetail.counters[1])
+            .isNull();
+
+        countersDetail = await store.operations.send(new GetCountersOperation("users/1-A", ["votes"]));
+        assertThat(countersDetail.counters)
+            .hasSize(1);
+        assertThat(countersDetail.counters[0])
+            .isNull();
     });
 
     it("sessionGetCounters", async function () {

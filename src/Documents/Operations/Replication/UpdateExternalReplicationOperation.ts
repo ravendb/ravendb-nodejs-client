@@ -6,6 +6,8 @@ import { RavenCommand } from "../../../Http/RavenCommand";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { ServerNode } from "../../../Http/ServerNode";
 import * as stream from "readable-stream";
+import { IRaftCommand } from "../../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export class UpdateExternalReplicationOperation implements IMaintenanceOperation<ModifyOngoingTaskResult> {
 
@@ -24,7 +26,7 @@ export class UpdateExternalReplicationOperation implements IMaintenanceOperation
     }
 }
 
-export class UpdateExternalReplicationCommand extends RavenCommand<ModifyOngoingTaskResult> {
+export class UpdateExternalReplicationCommand extends RavenCommand<ModifyOngoingTaskResult> implements IRaftCommand {
     private readonly _newWatcher: ExternalReplication;
 
     public constructor(newWatcher: ExternalReplication) {
@@ -56,5 +58,9 @@ export class UpdateExternalReplicationCommand extends RavenCommand<ModifyOngoing
         }
 
         return this._parseResponseDefaultAsync(bodyStream);
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }

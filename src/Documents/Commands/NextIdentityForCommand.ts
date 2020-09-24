@@ -3,10 +3,15 @@ import { throwError } from "../../Exceptions";
 import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestParameters } from "../../Primitives/Http";
 import * as stream from "readable-stream";
+import { IRaftCommand } from "../../Http/IRaftCommand";
+import { IBroadcast } from "../../Http/IBroadcast";
+import { RaftIdGenerator } from "../../Utility/RaftIdGenerator";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
 
-export class NextIdentityForCommand extends RavenCommand<number> {
+export class NextIdentityForCommand extends RavenCommand<number> implements IRaftCommand, IBroadcast {
 
     private readonly _id: string;
+    private _raftUniqueRequestId: string = RaftIdGenerator.newId();
 
     public constructor(id: string) {
         super();
@@ -48,5 +53,16 @@ export class NextIdentityForCommand extends RavenCommand<number> {
             });
 
         return body;
+    }
+
+    getRaftUniqueRequestId(): string {
+        return this._raftUniqueRequestId;
+    }
+
+    prepareToBroadcast(conventions: DocumentConventions): IBroadcast {
+        const copy = new NextIdentityForCommand(this._id);
+        copy._raftUniqueRequestId = this._raftUniqueRequestId;
+
+        return copy;
     }
 }

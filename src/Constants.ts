@@ -1,9 +1,5 @@
 import { MetadataObject } from "./Documents/Session/MetadataObject";
 
-function typedKey<T, S extends keyof T>(key: S): S {
-    return key;
-}
-
 export const CONSTANTS = {
     Documents: {
         Indexing: {
@@ -21,23 +17,24 @@ export const CONSTANTS = {
             SIDE_BY_SIDE_INDEX_NAME_PREFIX: "ReplacementOf/",
         },
         Metadata: {
-            COLLECTION: typedKey<MetadataObject, "@collection">("@collection"),
-            PROJECTION: "@projection" as keyof MetadataObject,
-            KEY: "@metadata" as keyof MetadataObject, //tODO: check this keys!
-            ID: typedKey<MetadataObject, "@id">("@id"),
+            COLLECTION: "@collection",
+            PROJECTION: "@projection",
+            KEY: "@metadata",
+            ID: "@id",
             CONFLICT: "@conflict",
             ID_PROPERTY: "id",
-            FLAGS: "@flags" as keyof MetadataObject,
-            ATTACHMENTS: typedKey<MetadataObject, "@attachments">("@attachments"),
-            INDEX_SCORE: "@index-score" as keyof MetadataObject,
-            LAST_MODIFIED: typedKey<MetadataObject, "@last-modified">("@last-modified"),
+            FLAGS: "@flags",
+            ATTACHMENTS: "@attachments",
+            INDEX_SCORE: "@index-score",
+            LAST_MODIFIED: "@last-modified",
             RAVEN_JS_TYPE: "Raven-Node-Type" as keyof MetadataObject & "Raven-Node-Type",
-            CHANGE_VECTOR: typedKey<MetadataObject, "@change-vector">("@change-vector"),
-            EXPIRES: typedKey<MetadataObject, "@expires">("@expires"),
+            CHANGE_VECTOR: "@change-vector",
+            EXPIRES: "@expires",
             ALL_DOCUMENTS_COLLECTION: "@all_docs",
             EMPTY_COLLECTION: "@empty",
-            NESTED_OBJECT_TYPES: typedKey<MetadataObject, "@nested-object-types">("@nested-object-types"),
-            COUNTERS: typedKey<MetadataObject, "@counters">("@counters"),
+            NESTED_OBJECT_TYPES: "@nested-object-types",
+            NESTED_OBJECT_TYPES_PROJECTION_FIELD: "__PROJECTED_NESTED_OBJECT_TYPES__",
+            COUNTERS: "@counters",
             REVISION_COUNTERS: "@counters-snapshot",
             IGNORE_CASE_TRANSFORM_REGEX:
             // tslint:disable-next-line:max-line-length
@@ -47,7 +44,10 @@ export const CONSTANTS = {
         PeriodicBackup: {
             FULL_BACKUP_EXTENSION: "ravendb-full-backup",
             SNAPSHOT_EXTENSION: "ravendb-snapshot",
+            ENCRYPTED_FULL_BACKUP_EXTENSION: ".ravendb-encrypted-full-backup",
+            ENCRYPTED_SNAPSHOT_EXTENSION: ".ravendb-encrypted-snapshot",
             INCREMENTAL_BACKUP_EXTENSION: "ravendb-incremental-backup",
+            ENCRYPTED_INCREMENTAL_BACKUP_EXTENSION: ".ravendb-encrypted-incremental-backup",
 
             Folders: {
                 INDEXES: "Indexes",

@@ -4,7 +4,13 @@ import {
     SessionBeforeStoreEventArgs,
     SessionAfterSaveChangesEventArgs,
     SessionBeforeQueryEventArgs,
-    SessionBeforeDeleteEventArgs
+    SessionBeforeDeleteEventArgs,
+    BeforeConversionToDocumentEventArgs,
+    AfterConversionToDocumentEventArgs,
+    BeforeConversionToEntityEventArgs,
+    AfterConversionToEntityEventArgs,
+    FailedRequestEventArgs,
+    TopologyUpdatedEventArgs
 } from "./Session/SessionEvents";
 import { IDisposable } from "../Types/Contracts";
 import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor";
@@ -22,6 +28,8 @@ import { ErrorFirstCallback } from "../Types/Callbacks";
 import { DatabaseSmuggler } from "./Smuggler/DatabaseSmuggler";
 
 export interface SessionEventsProxy {
+    addSessionListener(eventName: "failedRequest", eventHandler: (eventArgs: FailedRequestEventArgs) => void): this;
+
     addSessionListener(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
 
     addSessionListener(
@@ -31,6 +39,28 @@ export interface SessionEventsProxy {
 
     addSessionListener(
         eventName: "beforeDelete", eventHandler: (eventArgs: SessionBeforeDeleteEventArgs) => void): this;
+
+    addSessionListener(
+        eventName: "beforeConversionToDocument",
+        eventHandler: (eventArgs: BeforeConversionToDocumentEventArgs) => void
+    ): this;
+
+    addSessionListener(
+        eventName: "afterConversionToDocument",
+        eventHandler: (eventArgs: AfterConversionToDocumentEventArgs) => void
+    ): this;
+
+    addSessionListener(
+        eventName: "beforeConversionToEntity",
+        eventHandler: (eventArgs: BeforeConversionToEntityEventArgs) => void
+    ): this;
+
+    addSessionListener(
+        eventName: "afterConversionToEntity",
+        eventHandler: (eventArgs: AfterConversionToEntityEventArgs) => void
+    ): this;
+
+    removeSessionListener(eventName: "failedRequest", eventHandler: (eventArgs: FailedRequestEventArgs) => void): void;
 
     removeSessionListener(
         eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): void;
@@ -43,6 +73,26 @@ export interface SessionEventsProxy {
 
     removeSessionListener(
         eventName: "beforeDelete", eventHandler: (eventArgs: SessionBeforeDeleteEventArgs) => void): void;
+
+    removeSessionListener(
+        eventName: "beforeConversionToDocument",
+        eventHandler: (eventArgs: BeforeConversionToDocumentEventArgs) => void
+    ): void;
+
+    removeSessionListener(
+        eventName: "afterConversionToDocument",
+        eventHandler: (eventArgs: AfterConversionToDocumentEventArgs) => void
+    ): void;
+
+    removeSessionListener(
+        eventName: "beforeConversionToEntity",
+        eventHandler: (eventArgs: BeforeConversionToEntityEventArgs) => void
+    ): void;
+
+    removeSessionListener(
+        eventName: "afterConversionToEntity",
+        eventHandler: (eventArgs: AfterConversionToEntityEventArgs) => void
+    ): void;
 }
 
 export type DocumentStoreEvent = "beforeDispose" | "afterDispose";
@@ -53,6 +103,8 @@ export interface SessionCreatedEventArgs {
 
 export interface DocumentStoreEventEmitter {
 
+    on(eventName: "failedRequest", eventHandler: (args: FailedRequestEventArgs) => void): this;
+
     on(eventName: "sessionCreated", eventHandler: (args: SessionCreatedEventArgs) => void): this;
 
     on(eventName: "beforeDispose", eventHandler: () => void): this;
@@ -61,6 +113,8 @@ export interface DocumentStoreEventEmitter {
 
     on(eventName: "executorsDisposed", eventHandler: (callback: () => void) => void): this;
 
+    once(eventName: "failedRequest", eventHandler: (args: FailedRequestEventArgs) => void): this;
+
     once(eventName: "sessionCreated", eventHandler: (args: SessionCreatedEventArgs) => void): this;
 
     once(eventName: "beforeDispose", eventHandler: () => void): this;
@@ -68,6 +122,8 @@ export interface DocumentStoreEventEmitter {
     once(eventName: "afterDispose", eventHandler: (callback: () => void) => void): this;
 
     once(eventName: "executorsDisposed", eventHandler: (callback: () => void) => void): this;
+
+    removeListener(eventName: "failedRequest", eventHandler: (args: FailedRequestEventArgs) => void): this;
 
     removeListener(eventName: "sessionCreated", eventHandler: (args: SessionCreatedEventArgs) => void): void;
 
@@ -106,6 +162,11 @@ export interface IDocumentStore extends IDisposable,
      * Subscribe to change notifications from the server
      */
     changes(database: string): IDatabaseChanges;
+
+    /**
+     * Subscribe to change notifications from the server
+     */
+    changes(database: string, nodeTag: string): IDatabaseChanges;
 
     // TBD 4.1 IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
     // TBD 4.1 IDisposable AggressivelyCache(string database = null);
@@ -208,6 +269,16 @@ export interface IDocumentStore extends IDisposable,
 
     smuggler: DatabaseSmuggler;
 
+    requestTimeout(timeoutInMs: number): IDisposable;
+
+    requestTimeout(timeoutInMs: number, database: string): IDisposable;
+
+    addSessionListener(
+        eventName: "topologyUpdated", eventHandler: (args: TopologyUpdatedEventArgs) => void): this;
+
+    addSessionListener(
+        eventName: "failedRequest", eventHandler: (args: FailedRequestEventArgs) => void): this;
+
     addSessionListener(
         eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
 
@@ -219,4 +290,16 @@ export interface IDocumentStore extends IDisposable,
 
     addSessionListener(
         eventName: "beforeDelete", eventHandler: (eventArgs: SessionBeforeDeleteEventArgs) => void): this;
+
+    addSessionListener(
+        eventName: "beforeConversionToDocument", eventHandler: (eventArgs: BeforeConversionToDocumentEventArgs) => void): this;
+
+    addSessionListener(
+        eventName: "afterConversionToDocument", eventHandler: (eventArgs: AfterConversionToDocumentEventArgs) => void): this;
+
+    addSessionListener(
+        eventName: "beforeConversionToEntity", eventHandler: (eventArgs: BeforeConversionToEntityEventArgs) => void): this;
+
+    addSessionListener(
+        eventName: "afterConversionToEntity", eventHandler: (eventArgs: AfterConversionToEntityEventArgs) => void): this;
 }

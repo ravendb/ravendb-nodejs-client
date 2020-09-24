@@ -14,7 +14,7 @@ export class User {
     public active: boolean;
 }
 
-describe("CachingOfDocumentInclude", function () {
+describe.skip("CachingOfDocumentInclude", function () {
 
     let store: IDocumentStore;
 

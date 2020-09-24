@@ -6,13 +6,14 @@ import {
     AddEtlOperation,
     UpdateEtlOperation,
     ResetEtlOperation,
-    RavenEtlConfiguration, Transformation
+    RavenEtlConfiguration, Transformation, GetOngoingTaskInfoOperation
 } from "../../../../../src";
 import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../../../Utils/TestUtil";
 import { assertThat } from "../../../../Utils/AssertExtensions";
 import { User } from "../../../../Assets/Entities";
 import { ReplicationTestContext } from "../../../../Utils/ReplicationTestContext";
 import { DeleteOngoingTaskOperation } from "../../../../../src/Documents/Operations/OngoingTasks/DeleteOngoingTaskOperation";
+import { OngoingTaskRavenEtlDetails } from "../../../../../src/Documents/Operations/OngoingTasks/OngoingTask";
 
 (RavenTestContext.isPullRequest ? describe.skip : describe)(
     `${RavenTestContext.isPullRequest ? "[Skipped on PR] " : ""}` +
@@ -71,7 +72,24 @@ import { DeleteOngoingTaskOperation } from "../../../../../src/Documents/Operati
                 assertThat(etlResult.taskId)
                     .isGreaterThan(0);
 
-                await replication.waitForDocumentToReplicate(dst, "users/1", 10 * 1000, User); //TODO: assert document not null!
+                assertThat(await replication.waitForDocumentToReplicate(dst, "users/1", 10 * 1000, User))
+                    .isNotNull();
+
+                const ongoingTask = await src.maintenance.send(new GetOngoingTaskInfoOperation(etlResult.taskId, "RavenEtl")) as OngoingTaskRavenEtlDetails;
+
+                assertThat(ongoingTask)
+                    .isNotNull();
+
+                assertThat(ongoingTask.taskId)
+                    .isEqualTo(etlResult.taskId);
+                assertThat(ongoingTask.taskType)
+                    .isEqualTo("RavenEtl");
+                assertThat(ongoingTask.responsibleNode)
+                    .isNotNull();
+                assertThat(ongoingTask.taskState)
+                    .isEqualTo("Enabled");
+                assertThat(ongoingTask.taskName)
+                    .isEqualTo("etlToDst");
 
                 const deleteResult = await src.maintenance.send(
                     new DeleteOngoingTaskOperation(etlResult.taskId, "RavenEtl"));
@@ -85,11 +103,6 @@ import { DeleteOngoingTaskOperation } from "../../../../../src/Documents/Operati
             src.dispose();
         }
     });
-
-    //TODO: Waiting for RavenDB-13309
-    it.skip("canGetTaskInfo", async () => {
-        //TODO: I think we should write test case for getting info for each type of ongoing task + query by task id and by name.
-    })
 
     it ("canAddEtlWithScript", async () => {
         let src: DocumentStore;
@@ -135,7 +148,8 @@ import { DeleteOngoingTaskOperation } from "../../../../../src/Documents/Operati
                 assertThat(etlResult.taskId)
                     .isGreaterThan(0);
 
-                await replication.waitForDocumentToReplicate(dst, "users/1", 10 * 1000, User); //TODO assert document not null
+                assertThat(await replication.waitForDocumentToReplicate(dst, "users/1", 10 * 1000, User))
+                    .isNotNull();
 
             } finally {
                 dst.dispose();
@@ -180,7 +194,8 @@ import { DeleteOngoingTaskOperation } from "../../../../../src/Documents/Operati
 
                 const etlResult = await src.maintenance.send(operation);
 
-                await replication.waitForDocumentToReplicate(dst, "users/1", 10 * 1000, User); //TODO: assert documetn not null!
+                assertThat(await replication.waitForDocumentToReplicate(dst, "users/1", 10 * 1000, User))
+                    .isNotNull();
 
                 // now change ETL configuration
 
@@ -205,7 +220,8 @@ import { DeleteOngoingTaskOperation } from "../../../../../src/Documents/Operati
                     await session.saveChanges();
                 }
 
-                await replication.waitForDocumentToReplicate(dst, "users/2", 4000, User); //TODO: assert document is null
+                assertThat(await replication.waitForDocumentToReplicate(dst, "users/2", 4000, User))
+                    .isNull();
             } finally {
                 dst.dispose();
             }

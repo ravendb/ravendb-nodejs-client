@@ -10,6 +10,7 @@ export class QueryData {
     public loadTokens: LoadToken[];
     public isCustomFunction: boolean;
     public mapReduce: boolean;
+    public isProjectInto: boolean;
 
     public constructor(fields: string[], projections: string[]);
     public constructor(

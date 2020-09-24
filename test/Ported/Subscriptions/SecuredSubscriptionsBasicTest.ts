@@ -1,6 +1,5 @@
 import { User } from "../../Assets/Entities";
 import * as assert from "assert";
-import { parser } from "stream-json/Parser";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {

@@ -69,7 +69,7 @@ export class DatabaseConnectionState implements IChangesConnectionState<Database
 
     public dispose(): void {
         this.set(Promise.reject(getError("InvalidOperationException",
-            "Object was disposed"))); //TODO: ObjectDisposedException?
+            "Object was disposed")));
         this._emitter.removeAllListeners("Document" as ChangesType);
         this._emitter.removeAllListeners("Index" as ChangesType);
         this._emitter.removeAllListeners("Operation" as ChangesType);

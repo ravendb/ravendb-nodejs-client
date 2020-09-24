@@ -11,6 +11,7 @@ export interface SubscriptionConnectionServerMessage {
 export interface SubscriptionRedirectData {
     currentTag: string;
     redirectedTag: string;
+    reasons: Record<string, string>;
 }
 
 export type MessageType = "None" | "ConnectionStatus" | "EndOfBatch" | "Data" | "Includes" | "Confirm" | "Error";

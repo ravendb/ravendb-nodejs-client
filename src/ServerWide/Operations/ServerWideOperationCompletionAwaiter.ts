@@ -6,11 +6,13 @@ import { DocumentConventions } from "../../Documents/Conventions/DocumentConvent
 
 export class ServerWideOperationCompletionAwaiter extends OperationCompletionAwaiter {
 
-    public constructor(requestExecutor: RequestExecutor, conventions: DocumentConventions, id: number) {
+    public constructor(requestExecutor: RequestExecutor, conventions: DocumentConventions, id: number, nodeTag?: string) {
         super(requestExecutor, conventions, id);
+
+        this.nodeTag = nodeTag;
     }
 
-    protected _getOperationStateCommand(conventions: DocumentConventions, id: number): RavenCommand<IRavenResponse> {
-        return new GetServerWideOperationStateCommand(conventions, id);
+    protected _getOperationStateCommand(conventions: DocumentConventions, id: number, nodeTag?: string): RavenCommand<IRavenResponse> {
+        return new GetServerWideOperationStateCommand(conventions, id, nodeTag);
     }
 }

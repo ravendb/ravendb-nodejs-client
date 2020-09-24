@@ -5,9 +5,11 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
 import * as stream from "readable-stream";
+import { IRaftCommand } from "../../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export interface PutConnectionStringResult {
-    eTag: number;
+    raftCommandIndex: number;
 }
 
 export class PutConnectionStringOperation<T extends ConnectionString>
@@ -28,7 +30,8 @@ export class PutConnectionStringOperation<T extends ConnectionString>
     }
 }
 
-export class PutConnectionStringCommand<T extends ConnectionString> extends RavenCommand<PutConnectionStringResult> {
+export class PutConnectionStringCommand<T extends ConnectionString>
+    extends RavenCommand<PutConnectionStringResult> implements IRaftCommand {
 
     private readonly _connectionString: T;
 
@@ -62,5 +65,9 @@ export class PutConnectionStringCommand<T extends ConnectionString> extends Rave
         }
 
         return this._parseResponseDefaultAsync(bodyStream);
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }

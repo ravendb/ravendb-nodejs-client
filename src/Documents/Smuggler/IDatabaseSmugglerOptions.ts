@@ -1,4 +1,5 @@
 import { DatabaseItemType } from "./DatabaseItemType";
+import { DatabaseRecordItemType } from "./DatabaseRecordItemType";
 
 export interface IDatabaseSmugglerOptions {
     operateOnTypes: DatabaseItemType[];
@@ -7,4 +8,5 @@ export interface IDatabaseSmugglerOptions {
     transformScript: string;
     maxStepsForTransformScript: number;
     skipRevisionCreation: boolean;
+    operateOnDatabaseRecordType: DatabaseRecordItemType[];
 }

@@ -1,11 +1,9 @@
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { CountersByDocId } from "../CounterInternalTypes";
-import { TypeUtil } from "../../../Utility/TypeUtil";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { throwError } from "../../../Exceptions";
 import { CaseInsensitiveKeysMap } from "../../../Primitives/CaseInsensitiveKeysMap";
 import { CaseInsensitiveStringSet } from "../../../Primitives/CaseInsensitiveStringSet";
-import { IIncludeBuilder } from "./IIncludeBuilder";
 
 export class IncludeBuilderBase {
 

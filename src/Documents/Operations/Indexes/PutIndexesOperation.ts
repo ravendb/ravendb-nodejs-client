@@ -10,9 +10,11 @@ import { ReplacerContext } from "../../../Mapping/Json/ReplacerFactory";
 import { IndexTypeExtensions } from "../../Indexes/IndexTypeExtensions";
 import * as stream from "readable-stream";
 import { ServerNode } from "../../../Http/ServerNode";
+import { IRaftCommand } from "../../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export interface PutIndexResult {
-    indexName: string;
+    index: string;
 }
 
 export class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult[]> {
@@ -35,7 +37,7 @@ export class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult
     }
 }
 
-export class PutIndexesCommand extends RavenCommand<PutIndexResult[]> {
+export class PutIndexesCommand extends RavenCommand<PutIndexResult[]> implements IRaftCommand {
 
     private readonly _indexToAdd: object[];
     private _allJavaScriptIndexes: boolean;
@@ -113,5 +115,9 @@ export class PutIndexesCommand extends RavenCommand<PutIndexResult[]> {
 
     public get isReadRequest(): boolean {
         return false;
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }

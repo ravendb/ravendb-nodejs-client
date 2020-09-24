@@ -129,6 +129,12 @@ export type RavenErrorType = "RavenException"
     | "DatabaseSchemaErrorException"
     | "AttachmentDoesNotExistException"
     | "CounterOverflowException"
+    | "SorterCompilationException"
+    | "RequestedNodeUnavailableException"
+    | "DatabaseIdleException"
+    | "DatabaseRestoringException"
+    | "SubscriptionNameException"
+    | "SorterDoesNotExistException"
     | "LicenseActivationException";
 
 export interface ExceptionSchema {

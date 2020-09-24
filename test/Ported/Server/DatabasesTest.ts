@@ -3,6 +3,7 @@ import { CreateDatabaseOperation, DatabaseRecord, GetDatabaseRecordOperation, ID
 import { ToggleDatabasesStateOperation } from "../../../src/Documents/Operations/ToggleDatabasesStateOperation";
 import { assertThat, assertThrows } from "../../Utils/AssertExtensions";
 import { AddDatabaseNodeOperation } from "../../../src/ServerWide/Operations/AddDatabaseNodeOperation";
+import { Genre } from "../../Assets/Graph";
 
 describe("DatabasesTest", function () {
 
@@ -58,5 +59,59 @@ describe("DatabasesTest", function () {
             assertThat(err.message)
                 .contains("Can't add node");
         });
+    });
+
+    it("canGetInfoAutoIndexInfo", async () => {
+        await testContext.createMoviesData(store);
+
+        {
+            const session = store.openSession();
+
+            await session.query(Genre)
+                .whereEquals("name", "Fantasy")
+                .all();
+        }
+
+        const record = await store.maintenance.server
+            .send(new GetDatabaseRecordOperation(store.database));
+
+        assertThat(record.autoIndexes)
+            .hasSize(1);
+        assertThat(Object.keys(record.autoIndexes))
+            .contains("Auto/Genres/Byname");
+
+        const autoIndexDefinition = record.autoIndexes["Auto/Genres/Byname"];
+        assertThat(autoIndexDefinition)
+            .isNotNull();
+
+        assertThat(autoIndexDefinition.type)
+            .isEqualTo("AutoMap");
+        assertThat(autoIndexDefinition.name)
+            .isEqualTo("Auto/Genres/Byname");
+        assertThat(autoIndexDefinition.priority)
+            .isEqualTo("Normal");
+        assertThat(autoIndexDefinition.collection)
+            .isEqualTo("Genres");
+        assertThat(autoIndexDefinition.mapFields)
+            .hasSize(1);
+        assertThat(autoIndexDefinition.groupByFields)
+            .hasSize(0);
+
+        const fieldOptions = autoIndexDefinition.mapFields["name"];
+
+        assertThat(fieldOptions.storage)
+            .isEqualTo("No");
+        assertThat(fieldOptions.indexing)
+            .isEqualTo("Default");
+        assertThat(fieldOptions.aggregation)
+            .isEqualTo("None");
+        assertThat(fieldOptions.spatial)
+            .isNull();
+        assertThat(fieldOptions.groupByArrayBehavior)
+            .isEqualTo("NotApplicable");
+        assertThat(fieldOptions.suggestions)
+            .isFalse();
+        assertThat(fieldOptions.isNameQuoted)
+            .isFalse();
     });
 });

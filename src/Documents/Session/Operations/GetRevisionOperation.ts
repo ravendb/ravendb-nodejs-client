@@ -70,14 +70,14 @@ export class GetRevisionOperation {
             changeVector = metadata[CONSTANTS.Documents.Metadata.CHANGE_VECTOR];
         }
 
-        const entity = this._session.entityToJson.convertToEntity(documentType, id, document) as any as TEntity;
+        const entity = this._session.entityToJson.convertToEntity(documentType, id, document, !this._session.noTracking) as any as TEntity;
         const documentInfo = new DocumentInfo();
         documentInfo.id = id;
         documentInfo.changeVector = changeVector;
         documentInfo.document = document;
         documentInfo.metadata = metadata;
         documentInfo.entity = entity;
-        this._session.documentsByEntity.set(entity, documentInfo);
+        this._session.documentsByEntity.put(entity, documentInfo);
         return entity;
     }
 

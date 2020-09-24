@@ -4,6 +4,8 @@ import { throwError } from "../../../Exceptions";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
+import { IRaftCommand } from "../../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export class DeleteIndexOperation implements IMaintenanceOperation<void> {
     private readonly _indexName: string;
@@ -25,7 +27,7 @@ export class DeleteIndexOperation implements IMaintenanceOperation<void> {
     }
 }
 
-export class DeleteIndexCommand extends RavenCommand<void> {
+export class DeleteIndexCommand extends RavenCommand<void> implements IRaftCommand {
     private readonly _indexName: string;
 
     public constructor(indexName: string) {
@@ -48,5 +50,9 @@ export class DeleteIndexCommand extends RavenCommand<void> {
 
     public get isReadRequest() {
         return false;
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }

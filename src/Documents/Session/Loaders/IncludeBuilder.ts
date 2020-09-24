@@ -7,6 +7,11 @@ export class IncludeBuilder extends IncludeBuilderBase implements IIncludeBuilde
         super(conventions);
     }
 
+    public includeDocuments(path: string): IIncludeBuilder {
+        this._includeDocuments(path);
+        return this;
+    }
+
     public includeCounter(name: string): IIncludeBuilder;
     public includeCounter(path: string, name: string): IIncludeBuilder;
     public includeCounter(pathOrName: string, name?: string): IIncludeBuilder {
@@ -28,11 +33,6 @@ export class IncludeBuilder extends IncludeBuilderBase implements IIncludeBuilde
             this._includeCounterWithAlias(pathOrNames as string, names);
         }
 
-        return this;
-    }
-
-    public includeDocuments(path: string): IIncludeBuilder {
-        this._includeDocuments(path);
         return this;
     }
 

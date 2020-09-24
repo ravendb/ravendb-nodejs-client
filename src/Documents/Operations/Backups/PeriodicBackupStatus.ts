@@ -1,6 +1,13 @@
 import { IDatabaseTaskStatus } from "../../../ServerWide/IDatabaseTaskStatus";
 import { BackupType } from "./Enums";
-import { LocalBackup, UploadToAzure, UploadToFtp, UploadToGlacier, UploadToS3 } from "./BackupStatus";
+import {
+    LocalBackup,
+    UpdateToGoogleCloud,
+    UploadToAzure,
+    UploadToFtp,
+    UploadToGlacier,
+    UploadToS3
+} from "./BackupStatus";
 import { LastRaftIndex } from "./LastRaftIndex";
 
 export interface PeriodicBackupStatus extends IDatabaseTaskStatus {
@@ -16,8 +23,10 @@ export interface PeriodicBackupStatus extends IDatabaseTaskStatus {
     uploadToS3: UploadToS3;
     uploadToGlacier: UploadToGlacier;
     uploadToAzure: UploadToAzure;
+    updateToGoogleCloud: UpdateToGoogleCloud;
     uploadToFtp: UploadToFtp;
     lastEtag: number;
+    lastDatabaseChangeVector: string;
     lastRaftIndex: LastRaftIndex;
     folderName: string;
     durationInMs: number;

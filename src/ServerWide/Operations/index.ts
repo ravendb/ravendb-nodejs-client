@@ -11,7 +11,10 @@ export type DatabasePromotionStatus =
     | "IndexNotUpToDate"
     | "ChangeVectorNotMerged"
     | "WaitingForResponse"
-    | "Ok";
+    | "Ok"
+    | "OutOfCpuCredits"
+    | "EarlyOutOfMemory"
+    | "HighDirtyMemory";
 
 export interface DatabaseTopology {
     members: string[];
@@ -24,6 +27,7 @@ export interface DatabaseTopology {
     dynamicNodesDistribution: boolean;
     stamp: LeaderStamp;
     databaseTopologyIdBase64: string;
+    priorityOrder: string[];
 }
 
 export interface LeaderStamp {

@@ -5,6 +5,7 @@ import { OngoingTaskType } from "./OngoingTaskType";
 import { BackupType } from "../Backups/Enums";
 import { RavenEtlConfiguration } from "../Etl/RavenEtlConfiguration";
 import { SqlEtlConfiguration } from "../Etl/Sql/SqlEtlConfiguration";
+import { RetentionPolicy } from "../Backups/RetentionPolicy";
 
 export interface OngoingTask {
     taskId: number;
@@ -14,16 +15,19 @@ export interface OngoingTask {
     taskConnectionStatus: OngoingTaskConnectionStatus;
     taskName: string;
     error: string;
+    mentorNode: string;
 }
 
 export interface OngoingTaskBackup extends OngoingTask {
     taskType: "Backup",
     backupType: BackupType;
     backupDestinations: string[];
-    lastFullBackup: Date; //TODO:
-    lastIncrementalBackup: Date; //tODO:
+    lastFullBackup: Date;
+    lastIncrementalBackup: Date;
     onGoingBackup: RunningBackup;
     nextBackup: NextBackup;
+    retentionPolicy: RetentionPolicy;
+    isEncrypted: boolean;
 }
 
 export type OngoingTaskConnectionStatus =
@@ -44,7 +48,6 @@ export interface OngoingTaskReplication extends OngoingTask {
     destinationUrl: string;
     topologyDiscoveryUrls: string[];
     destinationDatabase: string;
-    mentorNode: string;
     connectionStringName: string;
     delayReplicationFor: string;
 }
@@ -64,7 +67,6 @@ export interface OngoingTaskSubscription extends OngoingTask {
     query: string;
     subscriptionName: string;
     subscriptionId: number;
-    mentorNode: string;
     changeVectorForNextBatchStartingPoint: string;
     lastBatchAckTime: Date;
     disabled: boolean;

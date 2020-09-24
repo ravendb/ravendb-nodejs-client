@@ -12,6 +12,7 @@ import {
     ServerNode,
     IDocumentStore
 } from "../../src";
+import { UpdateTopologyParameters } from "../../src/Http/UpdateTopologyParameters";
 
 describe("Request executor", function () {
 
@@ -102,7 +103,9 @@ describe("Request executor", function () {
                 });
 
                 try {
-                    await executor.updateTopology(serverNode, 5000);
+                    const updateTopologyParameters = new UpdateTopologyParameters(serverNode);
+                    updateTopologyParameters.timeoutInMs = 5000;
+                    await executor.updateTopology(updateTopologyParameters);
                     assert.fail("Should have thrown");
                 } catch (err) {
                     assert.strictEqual(err.name, "DatabaseDoesNotExistException", err.stack);
@@ -171,7 +174,7 @@ describe("Request executor", function () {
             .then(() => assert.fail("Should have failed with 'AllTopologyNodesDownException'."),
                 err => {
                     assert.ok(err);
-                    assert.strictEqual(err.name, "AllTopologyNodesDownException" as RavenErrorType, err.stack);
+                    assert.strictEqual(err.name, "RavenException" as RavenErrorType, err.stack);
                 })
             .finally(() => {
                 executor.dispose();

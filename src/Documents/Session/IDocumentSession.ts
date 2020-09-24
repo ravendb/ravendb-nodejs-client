@@ -2,7 +2,6 @@ import { Lazy } from "../Lazy";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { IDisposable } from "../../Types/Contracts";
 import { ErrorFirstCallback } from "../../Types/Callbacks";
-import { RequestExecutor } from "../../Http/RequestExecutor";
 import { DocumentType } from "../DocumentAbstractions";
 import { EntitiesCollectionObject, ObjectTypeDescriptor } from "../../Types";
 import { IAdvancedSessionOperations } from "./IAdvancedSessionOperations";
@@ -11,7 +10,6 @@ import { DocumentQueryOptions } from "./QueryOptions";
 import { IDocumentQuery } from "./IDocumentQuery";
 import { IIncludeBuilder } from "./Loaders/IIncludeBuilder";
 import { ISessionDocumentCounters } from "./ISessionDocumentCounters";
-import { SessionEventsEmitter } from "./SessionEvents";
 
 export class SessionInfo {
     private _sessionId: number;

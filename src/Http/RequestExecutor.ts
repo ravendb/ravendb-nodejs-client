@@ -14,18 +14,15 @@ import { NodeSelector } from "./NodeSelector";
 import { IDisposable } from "../Types/Contracts";
 import { IRequestAuthOptions, IAuthOptions } from "../Auth/AuthOptions";
 import { Certificate, ICertificate } from "../Auth/Certificate";
-import { ReadBalanceBehavior } from "./ReadBalanceBehavior";
 import { HttpCache, CachedItemMetadata, ReleaseCacheItem } from "./HttpCache";
 import { AggressiveCacheOptions } from "./AggressiveCacheOptions";
 import { throwError, RavenErrorType, ExceptionDispatcher, ExceptionSchema, getError } from "../Exceptions";
 import {
     GetClientConfigurationCommand,
-    GetClientConfigurationOperationResult
 } from "../Documents/Operations/Configuration/GetClientConfigurationOperation";
 import CurrentIndexAndNode from "./CurrentIndexAndNode";
-import { HEADERS, CONSTANTS } from "../Constants";
+import { HEADERS } from "../Constants";
 import { HttpRequestParameters, HttpResponse, HttpRequestParametersWithoutUri } from "../Primitives/Http";
-import { Stopwatch } from "../Utility/Stopwatch";
 import * as PromiseUtil from "../Utility/PromiseUtil";
 import { GetStatisticsOperation } from "../Documents/Operations/GetStatisticsOperation";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
@@ -38,6 +35,16 @@ import { closeHttpResponse } from "../Utility/HttpUtil";
 import { PromiseStatusTracker } from "../Utility/PromiseUtil";
 import * as http from "http";
 import * as https from "https";
+import { IBroadcast } from "./IBroadcast";
+import { StringUtil } from "../Utility/StringUtil";
+import { IRaftCommand } from "./IRaftCommand";
+import AbortController from "abort-controller";
+import { URL } from "url";
+import { EventEmitter } from "events";
+import { FailedRequestEventArgs, TopologyUpdatedEventArgs } from "../Documents/Session/SessionEvents";
+import { TimeUtil } from "../Utility/TimeUtil";
+import { UpdateTopologyParameters } from "./UpdateTopologyParameters";
+import { v4 as uuidv4 } from "uuid";
 
 const DEFAULT_REQUEST_OPTIONS = {};
 
@@ -47,6 +54,7 @@ export interface ExecuteOptions<TResult> {
     chosenNode: ServerNode;
     nodeIndex: number;
     shouldRetry: boolean;
+    abortRef?: (controller: AbortController) => void;
 }
 
 export interface ITopologyUpdateEvent {
@@ -65,10 +73,12 @@ export interface IRequestExecutorOptions {
 class IndexAndResponse {
     public readonly index: number;
     public readonly response: HttpResponse;
+    public readonly bodyStream: stream.Readable
 
-    public constructor(index: number, response: HttpResponse) {
+    public constructor(index: number, response: HttpResponse, bodyStream: stream.Readable) {
         this.index = index;
         this.response = response;
+        this.bodyStream = bodyStream;
     }
 }
 
@@ -78,14 +88,17 @@ export class NodeStatus implements IDisposable {
     private _timerPeriodInMs: number;
     public readonly nodeIndex: number;
     public readonly node: ServerNode;
+    public readonly requestExecutor: RequestExecutor;
     private _timer: Timer;
 
     public constructor(
         nodeIndex: number,
         node: ServerNode,
+        requestExecutor: RequestExecutor,
         nodeStatusCallback: (nodeStatus: NodeStatus) => Promise<void>) {
         this.nodeIndex = nodeIndex;
         this.node = node;
+        this.requestExecutor = requestExecutor;
         this._timerPeriodInMs = 100;
         this._nodeStatusCallback = nodeStatusCallback;
     }
@@ -103,6 +116,11 @@ export class NodeStatus implements IDisposable {
     public startTimer(): void {
         const that = this;
         this._timer = new Timer(function timerActionNodeStatusCallback() {
+            if (that.requestExecutor.disposed) {
+                that.dispose();
+                return;
+            }
+
             return that._nodeStatusCallback(that);
         }, this._timerPeriodInMs);
     }
@@ -117,10 +135,15 @@ export class NodeStatus implements IDisposable {
 }
 
 export class RequestExecutor implements IDisposable {
+    private _emitter = new EventEmitter();
+
+    private static readonly GLOBAL_APPLICATION_IDENTIFIER = uuidv4().toString();
+
+    private static readonly INITIAL_TOPOLOGY_ETAG = -2;
 
     private _log: ILogger;
 
-    public static readonly CLIENT_VERSION = "4.1.0";
+    public static readonly CLIENT_VERSION = "4.2.0";
 
     private _updateDatabaseTopologySemaphore = semaphore();
     private _updateClientConfigurationSemaphore = semaphore();
@@ -142,6 +165,8 @@ export class RequestExecutor implements IDisposable {
     private _updateTopologyTimer: Timer;
 
     protected _nodeSelector: NodeSelector;
+
+    private _defaultTimeout: number | null;
 
     public numberOfServerRequests: number = 0;
 
@@ -173,7 +198,7 @@ export class RequestExecutor implements IDisposable {
 
     protected _lastKnownUrls: string[];
 
-    protected _clientConfigurationEtag: number = 0;
+    protected _clientConfigurationEtag: string = "0";
 
     protected _topologyEtag: number = 0;
 
@@ -184,6 +209,8 @@ export class RequestExecutor implements IDisposable {
     protected _disableTopologyUpdates: boolean;
 
     protected _disableClientConfigurationUpdates: boolean;
+
+    protected _lastServerVersion: string;
 
     protected _customHttpRequestOptions: HttpRequestParametersWithoutUri;
 
@@ -206,6 +233,55 @@ export class RequestExecutor implements IDisposable {
 
     public getTopologyEtag() {
         return this._topologyEtag;
+    }
+
+    public get lastServerVersion() {
+        return this._lastServerVersion;
+    }
+
+    public get defaultTimeout() {
+        return this._defaultTimeout;
+    }
+
+    public set defaultTimeout(timeout: number) {
+        this._defaultTimeout = timeout;
+    }
+
+    private _secondBroadcastAttemptTimeout: number;
+
+    public get secondBroadcastAttemptTimeout() {
+        return this._secondBroadcastAttemptTimeout;
+    }
+
+    public set secondBroadcastAttemptTimeout(timeout: number) {
+        this._secondBroadcastAttemptTimeout = timeout;
+    }
+
+    private _firstBroadcastAttemptTimeout: number;
+
+    public get firstBroadcastAttemptTimeout() {
+        return this._firstBroadcastAttemptTimeout;
+    }
+
+    public set firstBroadcastAttemptTimeout(timeout: number) {
+        this._firstBroadcastAttemptTimeout = timeout;
+    }
+
+    public on(event: "topologyUpdated", handler: (value: TopologyUpdatedEventArgs) => void);
+    public on(event: "failedRequest", handler: (value: FailedRequestEventArgs) => void);
+    public on(event: string, handler: (value: any) => void) {
+        this._emitter.on(event, handler);
+    }
+
+    public off(event: "topologyUpdated", handler: (value: TopologyUpdatedEventArgs) => void);
+    public off(event: "failedRequest", handler: (value: FailedRequestEventArgs) => void);
+    public off(event: string, handler: (value: any) => void) {
+        this._emitter.off(event, handler);
+    }
+
+    private _onFailedRequestInvoke(url: string, e: Error) {
+        const args = new FailedRequestEventArgs(this._databaseName, url, e);
+        this._emitter.emit("failedRequest", args);
     }
 
     public get conventions() {
@@ -293,6 +369,10 @@ export class RequestExecutor implements IDisposable {
         this._authOptions = authOptions;
         this._certificate = Certificate.createFromOptions(this._authOptions);
         this._setDefaultRequestOptions();
+
+        this._defaultTimeout = conventions.requestTimeout;
+        this._secondBroadcastAttemptTimeout = conventions.secondBroadcastAttemptTimeout;
+        this._firstBroadcastAttemptTimeout = conventions.firstBroadcastAttemptTimeout;
     }
 
     public static create(
@@ -308,7 +388,7 @@ export class RequestExecutor implements IDisposable {
         opts?: IRequestExecutorOptions): RequestExecutor {
         const { authOptions, documentConventions } = opts || {} as IRequestExecutorOptions;
         const executor = new RequestExecutor(database, authOptions, documentConventions);
-        executor._firstTopologyUpdatePromise = executor._firstTopologyUpdate(initialUrls);
+        executor._firstTopologyUpdatePromise = executor._firstTopologyUpdate(initialUrls, this.GLOBAL_APPLICATION_IDENTIFIER);
 
         // this is just to get rid of unhandled rejection, we're handling it later on
         executor._firstTopologyUpdatePromise.catch(TypeUtil.NOOP);
@@ -329,7 +409,7 @@ export class RequestExecutor implements IDisposable {
         url: string, database: string, opts: IRequestExecutorOptions) {
 
         const { authOptions, documentConventions } = opts;
-        const initialUrls: string[] = RequestExecutor._validateUrls([url], authOptions);
+        const initialUrls: string[] = RequestExecutor.validateUrls([url], authOptions);
 
         const executor = new RequestExecutor(database, authOptions, documentConventions);
         const topology: Topology = new Topology();
@@ -343,42 +423,32 @@ export class RequestExecutor implements IDisposable {
         topology.nodes = [serverNode];
 
         executor._nodeSelector = new NodeSelector(topology);
-        executor._topologyEtag = -2;
+        executor._topologyEtag = RequestExecutor.INITIAL_TOPOLOGY_ETAG;
         executor._disableTopologyUpdates = true;
         executor._disableClientConfigurationUpdates = true;
 
         return executor;
     }
 
-    private async _ensureNodeSelector(): Promise<void> {
-        if (this._firstTopologyUpdatePromise
-            && (!this._firstTopologyUpdateStatus.isFullfilled()
-                || this._firstTopologyUpdateStatus.isRejected())) {
-            await this._firstTopologyUpdatePromise;
+    protected async _updateClientConfiguration(serverNode: ServerNode): Promise<void> {
+        if (this._disposed) {
+            return;
         }
 
-        if (!this._nodeSelector) {
-            const topology = new Topology(this._topologyEtag, this.getTopologyNodes().slice());
-            this._nodeSelector = new NodeSelector(topology);
+        let semAcquiredContext: SemaphoreAcquisitionContext;
+
+        try {
+            semAcquiredContext = acquireSemaphore(this._updateClientConfigurationSemaphore);
+            await semAcquiredContext.promise;
+            await this._updateClientConfigurationInternal(serverNode);
+        } finally {
+            if (semAcquiredContext) {
+                semAcquiredContext.dispose();
+            }
         }
     }
 
-    public async getPreferredNode(): Promise<CurrentIndexAndNode> {
-        await this._ensureNodeSelector();
-        return this._nodeSelector.getPreferredNode();
-    }
-
-    public async getNodeBySessionId(sessionId: number): Promise<CurrentIndexAndNode> {
-        await this._ensureNodeSelector();
-        return this._nodeSelector.getNodeBySessionId(sessionId);
-    }
-
-    public async getFastestNode(): Promise<CurrentIndexAndNode> {
-        await this._ensureNodeSelector();
-        return this._nodeSelector.getFastestNode();
-    }
-
-    private async _updateClientConfigurationInternal(): Promise<void> {
+    private async _updateClientConfigurationInternal(serverNode: ServerNode): Promise<void> {
         const oldDisableClientConfigurationUpdates = this._disableClientConfigurationUpdates;
         this._disableClientConfigurationUpdates = true;
 
@@ -388,10 +458,9 @@ export class RequestExecutor implements IDisposable {
             }
 
             const command = new GetClientConfigurationCommand();
-            const { currentNode, currentIndex } = this.chooseNodeForRequest(command, null);
             await this.execute(command, null, {
-                chosenNode: currentNode,
-                nodeIndex: currentIndex,
+                chosenNode: serverNode,
+                nodeIndex: null,
                 shouldRetry: false
             });
 
@@ -409,45 +478,43 @@ export class RequestExecutor implements IDisposable {
         }
     }
 
-    protected async _updateClientConfiguration(): Promise<void> {
-        if (this._disposed) {
-            return;
-        }
-
-        let semAcquiredContext: SemaphoreAcquisitionContext;
-
-        try {
-            semAcquiredContext = acquireSemaphore(this._updateClientConfigurationSemaphore);
-            await semAcquiredContext.promise;
-            await this._updateClientConfigurationInternal();
-        } finally {
-            if (semAcquiredContext) {
-                semAcquiredContext.dispose();
+    public updateTopology(node: ServerNode, timeout: number, forceUpdate?: boolean, debugTag?: string): Promise<boolean>;
+    public updateTopology(parameters: UpdateTopologyParameters): Promise<boolean>;
+    public updateTopology(nodeOrParameters: ServerNode | UpdateTopologyParameters, timeout?: number, forceUpdate: boolean = false, debugTag?: string): Promise<boolean> {
+        let parameters: UpdateTopologyParameters;
+        if (nodeOrParameters instanceof ServerNode) {
+            parameters = new UpdateTopologyParameters(nodeOrParameters);
+            parameters.timeoutInMs = timeout;
+            parameters.forceUpdate = forceUpdate;
+            parameters.debugTag = debugTag;
+            parameters.applicationIdentifier = null;
+        } else {
+            if (!nodeOrParameters) {
+                throwError("InvalidArgumentException", "Parameters cannot be null");
             }
-        }
-    }
-
-    public updateTopology(node: ServerNode, timeout: number, forceUpdate: boolean = false, debugTag?: string): Promise<boolean> {
-        if (this._disposed) {
-            return Promise.resolve(false);
+            parameters = nodeOrParameters;
         }
 
         if (this._disableTopologyUpdates) {
             return Promise.resolve(false);
         }
 
-        const acquiredSemContext = acquireSemaphore(this._updateDatabaseTopologySemaphore, { timeout });
+        if (this._disposed) {
+            return Promise.resolve(false);
+        }
+
+        const acquiredSemContext = acquireSemaphore(this._updateDatabaseTopologySemaphore, { timeout: parameters.timeoutInMs });
         const result = BluebirdPromise.resolve(acquiredSemContext.promise)
             .then(() => {
                     if (this._disposed) {
                         return false;
                     }
 
-                    this._log.info(`Update topology from ${node.url}.`);
+                    this._log.info(`Update topology from ${parameters.node.url}.`);
 
-                    const getTopology = new GetDatabaseTopologyCommand(debugTag);
+                    const getTopology = new GetDatabaseTopologyCommand(parameters.debugTag, this.conventions.sendApplicationIdentifier ? parameters.applicationIdentifier : null);
                     const getTopologyPromise = this.execute(getTopology, null, {
-                        chosenNode: node,
+                        chosenNode: parameters.node,
                         nodeIndex: null,
                         shouldRetry: false,
                     });
@@ -461,7 +528,7 @@ export class RequestExecutor implements IDisposable {
                                     this._nodeSelector.scheduleSpeedTest();
                                 }
 
-                            } else if (this._nodeSelector.onUpdateTopology(topology, forceUpdate)) {
+                            } else if (this._nodeSelector.onUpdateTopology(topology, parameters.forceUpdate)) {
                                 this._disposeAllFailedNodesTimers();
 
                                 if (this.conventions.readBalanceBehavior === "FastestNode") {
@@ -470,6 +537,8 @@ export class RequestExecutor implements IDisposable {
                             }
 
                             this._topologyEtag = this._nodeSelector.getTopology().etag;
+
+                            this._onTopologyUpdatedInvoke(topology);
 
                             return true;
                         });
@@ -488,57 +557,115 @@ export class RequestExecutor implements IDisposable {
         return Promise.resolve(result);
     }
 
-    protected static _validateUrls(initialUrls: string[], authOptions: IAuthOptions) {
-        const cleanUrls = [...Array(initialUrls.length)];
-        let requireHttps = !!authOptions;
-        for (let index = 0; index < initialUrls.length; index++) {
-            const url = initialUrls[index];
-            validateUri(url);
-            cleanUrls[index] = url.replace(/\/$/, "");
-            requireHttps = requireHttps || url.startsWith("https://");
+    protected _disposeAllFailedNodesTimers(): void {
+        for (const item of this._failedNodesTimers) {
+            item[1].dispose();
         }
 
-        if (!requireHttps) {
-            return cleanUrls;
-        }
-
-        for (const url of initialUrls) {
-            if (!url.startsWith("http://")) {
-                continue;
-            }
-
-            if (authOptions && authOptions.certificate) {
-                throwError("InvalidOperationException",
-                    "The url " + url + " is using HTTP, but a certificate is specified, which require us to use HTTPS");
-            }
-
-            throwError("InvalidOperationException",
-                "The url " + url
-                + " is using HTTP, but other urls are using HTTPS, and mixing of HTTP and HTTPS is not allowed.");
-        }
-
-        return cleanUrls;
+        this._failedNodesTimers.clear();
     }
 
-    private _initializeUpdateTopologyTimer(): void {
-        if (this._updateTopologyTimer || this._disposed) {
-            return;
+    public execute<TResult>(command: RavenCommand<TResult>): Promise<void>;
+    public execute<TResult>(command: RavenCommand<TResult>, sessionInfo?: SessionInfo): Promise<void>;
+    public execute<TResult>(
+        command: RavenCommand<TResult>, sessionInfo?: SessionInfo, options?: ExecuteOptions<TResult>): Promise<void>;
+    public execute<TResult>(
+        command: RavenCommand<TResult>,
+        sessionInfo?: SessionInfo,
+        options?: ExecuteOptions<TResult>): Promise<void> {
+
+        if (options) {
+            return this._executeOnSpecificNode(command, sessionInfo, options);
         }
 
-        this._log.info("Initialize update topology timer.");
+        this._log.info(`Execute command ${command.constructor.name}`);
 
-        const minInMs = 60 * 1000;
-        const that = this;
-        this._updateTopologyTimer =
-            new Timer(function timerActionUpdateTopology() {
-                return that._updateTopologyCallback();
-            }, minInMs, minInMs);
+        const topologyUpdate = this._firstTopologyUpdatePromise;
+        const topologyUpdateStatus = this._firstTopologyUpdateStatus;
+        if ((topologyUpdate && topologyUpdateStatus.isResolved()) || this._disableTopologyUpdates) {
+            const currentIndexAndNode: CurrentIndexAndNode = this.chooseNodeForRequest(command, sessionInfo);
+            return this._executeOnSpecificNode(command, sessionInfo, {
+                chosenNode: currentIndexAndNode.currentNode,
+                nodeIndex: currentIndexAndNode.currentIndex,
+                shouldRetry: true
+            });
+        } else {
+            return this._unlikelyExecute(command, topologyUpdate, sessionInfo);
+        }
+    }
+
+    public chooseNodeForRequest<TResult>(cmd: RavenCommand<TResult>, sessionInfo: SessionInfo): CurrentIndexAndNode {
+        if (!this._disableTopologyUpdates) {
+            // when we disable topology updates we cannot rely on the node tag,
+            // because the initial topology will not have them
+
+            if (!StringUtil.isNullOrWhitespace(cmd.selectedNodeTag)) {
+                return this._nodeSelector.getRequestedNode(cmd.selectedNodeTag);
+            }
+        }
+
+        if (!cmd.isReadRequest) {
+            return this._nodeSelector.getPreferredNode();
+        }
+
+        switch (this.conventions.readBalanceBehavior) {
+            case "None":
+                return this._nodeSelector.getPreferredNode();
+            case "RoundRobin":
+                return this._nodeSelector.getNodeBySessionId(sessionInfo ? sessionInfo.sessionId : 0);
+            case "FastestNode":
+                return this._nodeSelector.getFastestNode();
+            default:
+                throwError("NotSupportedException", `Invalid read balance behavior: ${this.conventions.readBalanceBehavior}`);
+        }
+    }
+
+    private async _unlikelyExecute<TResult>(
+        command: RavenCommand<TResult>,
+        topologyUpdate: Promise<void>,
+        sessionInfo: SessionInfo): Promise<void> {
+
+        await this._waitForTopologyUpdate(topologyUpdate);
+
+        const currentIndexAndNode: CurrentIndexAndNode = this.chooseNodeForRequest(command, sessionInfo);
+        return this._executeOnSpecificNode(command, sessionInfo, {
+            chosenNode: currentIndexAndNode.currentNode,
+            nodeIndex: currentIndexAndNode.currentIndex,
+            shouldRetry: true
+        });
+    }
+
+    private async _waitForTopologyUpdate(topologyUpdate: Promise<void>) {
+        try {
+            if (!this._firstTopologyUpdatePromise) {
+                if (!this._lastKnownUrls) {
+                    // shouldn't happen
+                    throwError("InvalidOperationException",
+                        "No known topology and no previously known one, cannot proceed, likely a bug");
+                }
+
+                topologyUpdate = this._firstTopologyUpdate(this._lastKnownUrls, null);
+            }
+
+            await topologyUpdate;
+
+        } catch (reason) {
+            if (this._firstTopologyUpdatePromise === topologyUpdate) {
+                this._firstTopologyUpdatePromise = null; // next request will raise it
+            }
+
+            this._log.warn(reason, "Error doing topology update.");
+
+            throw reason;
+        }
+
+
     }
 
     private _updateTopologyCallback(): Promise<void> {
         const time = new Date();
-        const minInMs = 60 * 1000;
-        if (time.valueOf() - this._lastReturnedResponse.valueOf() <= minInMs) {
+        const fiveMinutes = 5 * 60 * 1000;
+        if (time.valueOf() - this._lastReturnedResponse.valueOf() <= fiveMinutes) {
             return;
         }
 
@@ -556,22 +683,31 @@ export class RequestExecutor implements IDisposable {
             return;
         }
 
-        return this.updateTopology(serverNode, 0, false, "timer-callback")
+        const updateParameters = new UpdateTopologyParameters(serverNode);
+        updateParameters.timeoutInMs = 0;
+        updateParameters.debugTag = "timer-callback";
+
+        return this.updateTopology(updateParameters)
             .catch(err => {
                 this._log.error(err, "Couldn't update topology from _updateTopologyTimer");
                 return null;
             });
     }
 
-    protected async _firstTopologyUpdate(inputUrls: string[]): Promise<void> {
-        const initialUrls: string[] = RequestExecutor._validateUrls(inputUrls, this._authOptions);
+    protected async _firstTopologyUpdate(inputUrls: string[], applicationIdentifier?: string): Promise<void> {
+        const initialUrls: string[] = RequestExecutor.validateUrls(inputUrls, this._authOptions);
 
         const topologyUpdateErrors: { url: string, error: Error | string }[] = [];
 
         const tryUpdateTopology = async (url: string, database: string): Promise<boolean> => {
             const serverNode = new ServerNode({ url, database });
             try {
-                await this.updateTopology(serverNode, TypeUtil.MAX_INT32, false, "first-topology-update");
+                const updateParameters = new UpdateTopologyParameters(serverNode);
+                updateParameters.timeoutInMs = TypeUtil.MAX_INT32;
+                updateParameters.debugTag = "first-topology-update";
+                updateParameters.applicationIdentifier = applicationIdentifier;
+
+                await this.updateTopology(updateParameters);
                 this._initializeUpdateTopologyTimer();
                 this._topologyTakenFromNode = serverNode;
                 return true;
@@ -584,12 +720,6 @@ export class RequestExecutor implements IDisposable {
                 if ((error.name as RavenErrorType) === "DatabaseDoesNotExistException") {
                     this._lastKnownUrls = initialUrls;
                     throw error;
-                }
-
-                if (initialUrls.length === 0) {
-                    this._lastKnownUrls = initialUrls;
-                    throwError("InvalidOperationException",
-                        `Cannot get topology from server: ${url}.`, error);
                 }
 
                 topologyUpdateErrors.push({ url, error });
@@ -646,127 +776,85 @@ export class RequestExecutor implements IDisposable {
             + os.EOL + details);
     }
 
-    protected _disposeAllFailedNodesTimers(): void {
-        for (const item of this._failedNodesTimers) {
-            item[1].dispose();
+    public static validateUrls(initialUrls: string[], authOptions: IAuthOptions) {
+        const cleanUrls = [...Array(initialUrls.length)];
+        let requireHttps = !!authOptions;
+        for (let index = 0; index < initialUrls.length; index++) {
+            const url = initialUrls[index];
+            validateUri(url);
+            cleanUrls[index] = url.replace(/\/$/, "");
+            requireHttps = requireHttps || url.startsWith("https://");
         }
 
-        this._failedNodesTimers.clear();
-    }
-
-    public chooseNodeForRequest<TResult>(cmd: RavenCommand<TResult>, sessionInfo: SessionInfo): CurrentIndexAndNode {
-        if (!cmd.isReadRequest) {
-            return this._nodeSelector.getPreferredNode();
+        if (!requireHttps) {
+            return cleanUrls;
         }
 
-        switch (this.conventions.readBalanceBehavior) {
-            case "None":
-                return this._nodeSelector.getPreferredNode();
-            case "RoundRobin":
-                return this._nodeSelector.getNodeBySessionId(sessionInfo ? sessionInfo.sessionId : 0);
-            case "FastestNode":
-                return this._nodeSelector.getFastestNode();
-            default:
-                throwError("NotSupportedException", `Invalid read balance behavior: ${this.conventions.readBalanceBehavior}`);
-        }
-    }
-
-    public execute<TResult>(command: RavenCommand<TResult>): Promise<void>;
-    public execute<TResult>(command: RavenCommand<TResult>, sessionInfo?: SessionInfo): Promise<void>;
-    public execute<TResult>(
-        command: RavenCommand<TResult>, sessionInfo?: SessionInfo, options?: ExecuteOptions<TResult>): Promise<void>;
-    public execute<TResult>(
-        command: RavenCommand<TResult>,
-        sessionInfo?: SessionInfo,
-        options?: ExecuteOptions<TResult>): Promise<void> {
-
-        if (options) {
-            return this._executeOnSpecificNode(command, sessionInfo, options);
-        }
-
-        this._log.info(`Execute command ${command.constructor.name}`);
-
-        const topologyUpdate = this._firstTopologyUpdatePromise;
-        const topologyUpdateStatus = this._firstTopologyUpdateStatus;
-        if ((topologyUpdate && topologyUpdateStatus.isResolved()) || this._disableTopologyUpdates) {
-            const currentIndexAndNode: CurrentIndexAndNode = this.chooseNodeForRequest(command, sessionInfo);
-            return this._executeOnSpecificNode(command, sessionInfo, {
-                chosenNode: currentIndexAndNode.currentNode,
-                nodeIndex: currentIndexAndNode.currentIndex,
-                shouldRetry: true
-            });
-        } else {
-            return this._unlikelyExecute(command, topologyUpdate, sessionInfo);
-        }
-    }
-
-    private async _unlikelyExecute<TResult>(
-        command: RavenCommand<TResult>,
-        topologyUpdate: Promise<void>,
-        sessionInfo: SessionInfo): Promise<void> {
-
-        try {
-            if (!this._firstTopologyUpdatePromise) {
-                if (!this._lastKnownUrls) {
-                    throwError("InvalidOperationException",
-                        "No known topology and no previously known one, cannot proceed, likely a bug");
-                }
-
-                topologyUpdate = this._firstTopologyUpdate(this._lastKnownUrls);
+        for (const url of initialUrls) {
+            if (!url.startsWith("http://")) {
+                continue;
             }
 
-            await topologyUpdate;
-
-        } catch (reason) {
-            if (this._firstTopologyUpdatePromise === topologyUpdate) {
-                this._firstTopologyUpdatePromise = null; // next request will raise it
+            if (authOptions && authOptions.certificate) {
+                throwError("InvalidOperationException",
+                    "The url " + url + " is using HTTP, but a certificate is specified, which require us to use HTTPS");
             }
 
-            this._log.warn(reason, "Error doing topology update.");
-
-            throw reason;
+            throwError("InvalidOperationException",
+                "The url " + url
+                + " is using HTTP, but other urls are using HTTPS, and mixing of HTTP and HTTPS is not allowed.");
         }
 
-        const currentIndexAndNode: CurrentIndexAndNode = this.chooseNodeForRequest(command, sessionInfo);
-        return this._executeOnSpecificNode(command, sessionInfo, {
-            chosenNode: currentIndexAndNode.currentNode,
-            nodeIndex: currentIndexAndNode.currentIndex,
-            shouldRetry: true
-        });
+        return cleanUrls;
     }
 
-    private _getFromCache<TResult>(
-        command: RavenCommand<TResult>,
-        useCache: boolean,
-        url: string,
-        cachedItemMetadataCallback: (data: CachedItemMetadata) => void) {
-
-        if (useCache 
-            && command.canCache
-            && command.isReadRequest
-            && command.responseType === "Object") {
-            return this._cache.get(url, cachedItemMetadataCallback);
+    private _initializeUpdateTopologyTimer(): void {
+        if (this._updateTopologyTimer || this._disposed) {
+            return;
         }
 
-        cachedItemMetadataCallback({
-            changeVector: null,
-            response: null
-        });
+        this._log.info("Initialize update topology timer.");
 
-        return new ReleaseCacheItem(null);
+        const minInMs = 60 * 1000;
+        const that = this;
+        this._updateTopologyTimer =
+            new Timer(function timerActionUpdateTopology() {
+                return that._updateTopologyCallback();
+            }, minInMs, minInMs);
     }
 
-    private async _executeOnSpecificNode<TResult>(
+    private async _executeOnSpecificNode<TResult>( // this method is called `execute` in c# and java code
         command: RavenCommand<TResult>,
         sessionInfo: SessionInfo = null,
         options: ExecuteOptions<TResult> = null): Promise<void> {
+
+        if (command.failoverTopologyEtag === RequestExecutor.INITIAL_TOPOLOGY_ETAG) {
+            command.failoverTopologyEtag = RequestExecutor.INITIAL_TOPOLOGY_ETAG;
+
+            if (this._nodeSelector && this._nodeSelector.getTopology()) {
+                const topology = this._nodeSelector.getTopology();
+                if (topology.etag) {
+                    command.failoverTopologyEtag = topology.etag;
+                }
+            }
+        }
 
         const { chosenNode, nodeIndex, shouldRetry } = options;
 
         this._log.info(`Actual execute ${command.constructor.name} on ${chosenNode.url}`
             + ` ${ shouldRetry ? "with" : "without" } retry.`);
 
-        const req: HttpRequestParameters = this._createRequest(chosenNode, command);
+        let url: string;
+        const req = this._createRequest(chosenNode, command, u => url = u);
+
+        const controller = new AbortController();
+
+        if (options?.abortRef) {
+            options.abortRef(controller);
+        }
+
+        req.signal = controller.signal;
+
         const noCaching = sessionInfo ? sessionInfo.noCaching : false;
 
         let cachedChangeVector: string;
@@ -777,90 +865,31 @@ export class RequestExecutor implements IDisposable {
                 cachedValue = cachedItemMetadata.response;
             });
 
+
         if (cachedChangeVector) {
-            const aggressiveCacheOptions = this.aggressiveCaching;
-            if (aggressiveCacheOptions
-                && cachedItem.age < aggressiveCacheOptions.duration
-                && !cachedItem.mightHaveBeenModified
-                && command.canCacheAggressively) {
-                return command.setResponseFromCache(cachedValue);
+            if (await this._tryGetFromCache(command, cachedItem, cachedValue)) {
+                return;
             }
-
-            req.headers["If-None-Match"] = `"${cachedChangeVector}"`;
         }
 
-        if (!this._disableClientConfigurationUpdates) {
-            req.headers[HEADERS.CLIENT_CONFIGURATION_ETAG] = `"${this._clientConfigurationEtag}"`;
-        }
-
-        if (sessionInfo && sessionInfo.lastClusterTransactionIndex) {
-            req.headers[HEADERS.LAST_KNOWN_CLUSTER_TRANSACTION_INDEX] = 
-                sessionInfo.lastClusterTransactionIndex;
-        }
-
-        if (!this._disableTopologyUpdates) {
-            req.headers[HEADERS.TOPOLOGY_ETAG] = `"${this._topologyEtag}"`;
-        }
-
-        let response: HttpResponse = null;
-        let responseDispose: ResponseDisposeHandling = "Automatic";
+        this._setRequestHeaders(sessionInfo, cachedChangeVector, req);
 
         let bodyStream: stream.Readable;
 
-        this.numberOfServerRequests++;
+        const responseAndStream = await this._sendRequestToServer(chosenNode, nodeIndex, command, shouldRetry, sessionInfo, req, url, controller);
 
-        try {
-            if (this._shouldExecuteOnAll(chosenNode, command)) {
-                response = await this._executeOnAllToFigureOutTheFastest(chosenNode, command);
-            } else {
-                const responseAndBody = await command.send(this.getHttpAgent(), req);
-                bodyStream = responseAndBody.bodyStream;
-                response = responseAndBody.response;
-            }
-            
-            if (sessionInfo && sessionInfo.lastClusterTransactionIndex) {
-                // if we reach here it means that sometime a cluster transaction has occurred against this database.
-                // Since the current executed command can be dependent on that, 
-                // we have to wait for the cluster transaction.
-                // But we can't do that if the server is an old one.
-                const version = response.headers.get(HEADERS.SERVER_VERSION);
-                if (version && "4.1".localeCompare(version) > 0) {
-                    throwError(
-                        "ClientVersionMismatchException",
-                        "The server on " + chosenNode.url + " has an old version and can't perform "
-                        + "the command since this command dependent on a cluster transaction "
-                        + " which this node doesn't support.");
-                }
-            }
-        } catch (error) {
-            this._log.warn(
-                error,
-                `Error executing '${command.constructor.name}' `
-                + `on specific node '${chosenNode.url}'`
-                + `${chosenNode.database ? "db " + chosenNode.database : ""}.`);
-
-            if (!shouldRetry) {
-                throw error; 
-            }
-
-            const serverDownHandledSuccessfully = await this._handleServerDown(
-                req.uri as string, chosenNode, nodeIndex, command, req, response, null, error, sessionInfo, shouldRetry);
-            
-            if (!serverDownHandledSuccessfully) {
-                this._throwFailedToContactAllNodes(command, req, error, null);
-            }
+        if (!responseAndStream) {
             return;
         }
 
+
+        const response = responseAndStream.response;
+        bodyStream = responseAndStream.bodyStream;
+        const refreshTask = this._refreshIfNeeded(chosenNode, response);
+
         command.statusCode = response.status;
 
-        const refreshTopology = response
-            && response.headers
-            && response.headers.get(HEADERS.REFRESH_TOPOLOGY);
-
-        const refreshClientConfiguration = response
-            && response.headers
-            && response.headers.get(HEADERS.REFRESH_CLIENT_CONFIGURATION);
+        let responseDispose: ResponseDisposeHandling = "Automatic";
 
         try {
 
@@ -893,25 +922,7 @@ export class RequestExecutor implements IDisposable {
                         throwError("DatabaseDoesNotExistException", dbMissingHeader as string);
                     }
 
-                    if (command.failedNodes.size === 0) {
-                        throwError("InvalidOperationException",
-                            "Received unsuccessful response and couldn't recover from it. "
-                            + "Also, no record of exceptions per failed nodes. "
-                            + "This is weird and should not happen.");
-                    }
-
-                    if (command.failedNodes.size === 1) {
-                        const values = [...command.failedNodes.values()];
-                        if (values && values.some(x => !!x)) {
-                            const err = values.filter(x => !!x).map(x => x)[0];
-                            throwError(err.name as RavenErrorType, err.message, err);
-                        }
-                    }
-
-                    throwError(
-                        "AllTopologyNodesDownException",
-                        "Received unsuccessful response from all servers"
-                        + " and couldn't recover from it.");
+                    this._throwFailedToContactAllNodes(command, req);
                 }
 
                 return; // we either handled this already in the unsuccessful response or we are throwing
@@ -924,70 +935,345 @@ export class RequestExecutor implements IDisposable {
                 closeHttpResponse(response);
             }
 
-            if (refreshTopology || refreshClientConfiguration) {
-                const serverNode = new ServerNode({
-                    url: chosenNode.url,
-                    database: this._databaseName
-                });
+            await refreshTask;
+        }
+    }
 
-                const topologyTask = refreshTopology
-                    ? BluebirdPromise.resolve(this.updateTopology(serverNode, 0))
-                        .tapCatch(err => this._log.warn(err, "Error refreshing topology."))
-                    : BluebirdPromise.resolve(false);
+    private async _refreshIfNeeded(chosenNode: ServerNode, response: HttpResponse) {
+        const refreshTopology = response
+            && response.headers
+            && response.headers.get(HEADERS.REFRESH_TOPOLOGY);
 
-                const clientConfigurationTask = refreshClientConfiguration
-                    ? BluebirdPromise.resolve(this._updateClientConfiguration())
-                        .tapCatch(err => this._log.warn(err, "Error refreshing client configuration."))
-                        .then(() => true)
-                    : BluebirdPromise.resolve(false);
+        const refreshClientConfiguration = response
+            && response.headers
+            && response.headers.get(HEADERS.REFRESH_CLIENT_CONFIGURATION);
 
-                await Promise.all([topologyTask, clientConfigurationTask]);
+        if (refreshTopology || refreshClientConfiguration) {
+            const serverNode = new ServerNode({
+                database: this._databaseName,
+                url: chosenNode.url
+            });
+
+            const updateParameters = new UpdateTopologyParameters(serverNode);
+            updateParameters.timeoutInMs = 0;
+            updateParameters.debugTag = "refresh-topology-header";
+
+            const topologyTask: Promise<boolean> = refreshTopology ? this.updateTopology(updateParameters) : null;
+            const clientConfiguration: Promise<void> = refreshClientConfiguration ? this._updateClientConfiguration(serverNode) : null;
+
+            await topologyTask;
+            await clientConfiguration;
+        }
+    }
+
+    private async _sendRequestToServer<TResult>(chosenNode: ServerNode,
+                                                nodeIndex: number,
+                                                command: RavenCommand<TResult>,
+                                                shouldRetry: boolean,
+                                                sessionInfo: SessionInfo,
+                                                request: HttpRequestParameters,
+                                                url: string,
+                                                abortController: AbortController) {
+        try {
+            this.numberOfServerRequests++;
+
+            const timeout = command.timeout || this._defaultTimeout;
+
+            if (!TypeUtil.isNullOrUndefined(timeout)) {
+
+                const cancelTask = setTimeout(() => abortController.abort(), timeout);
+
+                try {
+                    const response = await this._send(chosenNode, command, sessionInfo, request);
+                    clearTimeout(cancelTask);
+                    return response;
+                } catch (error) {
+                    if (error.name === "AbortError") {
+                        const timeoutException = getError("TimeoutException", "The request for " + request.uri + " failed with timeout after " + TimeUtil.millisToTimeSpan(timeout), error);
+                        if (!shouldRetry) {
+                            if (!command.failedNodes) {
+                                command.failedNodes = new Map<ServerNode, Error>();
+                            }
+
+                            command.failedNodes.set(chosenNode, timeoutException);
+                            throw timeoutException;
+                        }
+
+                        if (!await this._handleServerDown(url, chosenNode, nodeIndex, command, request, null,  "", timeoutException, sessionInfo, shouldRetry)) {
+                            this._throwFailedToContactAllNodes(command, request);
+                        }
+                        return null;
+                    }
+                    throw error;
+                }
+            } else {
+                return await this._send(chosenNode, command, sessionInfo, request);
+            }
+        } catch (e) {
+            if (e.name === "AllTopologyNodesDownException") {
+                throw e;
+            }
+
+            if (!shouldRetry) {
+                throw e;
+            }
+
+            if (!await this._handleServerDown(url, chosenNode, nodeIndex, command, request, null, "", e, sessionInfo, shouldRetry)) {
+                this._throwFailedToContactAllNodes(command, request);
+            }
+
+            return null;
+        }
+    }
+
+    private async _send<TResult>(chosenNode: ServerNode, command: RavenCommand<TResult>, sessionInfo: SessionInfo, request: HttpRequestParameters): Promise<{ response: HttpResponse, bodyStream: stream.Readable }> {
+        let responseAndStream: { response: HttpResponse, bodyStream: stream.Readable };
+
+        if (this._shouldExecuteOnAll(chosenNode, command)) {
+            responseAndStream = await this._executeOnAllToFigureOutTheFastest(chosenNode, command);
+        } else {
+            responseAndStream = await command.send(this.getHttpAgent(), request);
+        }
+
+        const serverVersion = await RequestExecutor._tryGetServerVersion(responseAndStream.response);
+        if (serverVersion) {
+            this._lastServerVersion = serverVersion;
+        }
+
+        if (sessionInfo && sessionInfo.lastClusterTransactionIndex) {
+            // if we reach here it means that sometime a cluster transaction has occurred against this database.
+            // Since the current executed command can be dependent on that,
+            // we have to wait for the cluster transaction.
+            // But we can't do that if the server is an old one.
+
+            const version = responseAndStream.response.headers[HEADERS.SERVER_VERSION];
+
+            if (version && "4.1".localeCompare(version) > 0) {
+                throwError(
+                    "ClientVersionMismatchException",
+                    "The server on " + chosenNode.url + " has an old version and can't perform "
+                    + "the command since this command dependent on a cluster transaction "
+                    + " which this node doesn't support.");
             }
         }
+
+        return responseAndStream;
+    }
+
+
+    private _setRequestHeaders(sessionInfo: SessionInfo, cachedChangeVector: string, req: HttpRequestParameters) {
+        if (cachedChangeVector) {
+            req.headers["If-None-Match"] = `"${cachedChangeVector}"`;
+        }
+
+        if (!this._disableClientConfigurationUpdates) {
+            req.headers[HEADERS.CLIENT_CONFIGURATION_ETAG] = `"${this._clientConfigurationEtag}"`;
+        }
+        if (sessionInfo && sessionInfo.lastClusterTransactionIndex) {
+            req.headers[HEADERS.LAST_KNOWN_CLUSTER_TRANSACTION_INDEX] =
+                sessionInfo.lastClusterTransactionIndex;
+        }
+
+        if (!this._disableTopologyUpdates) {
+            req.headers[HEADERS.TOPOLOGY_ETAG] = `"${this._topologyEtag}"`;
+        }
+
+        if (!req.headers[HEADERS.CLIENT_VERSION]) {
+            req.headers[HEADERS.CLIENT_VERSION] = RequestExecutor.CLIENT_VERSION;
+        }
+    }
+
+    private async _tryGetFromCache<TResult>(command: RavenCommand<TResult>, cachedItem: ReleaseCacheItem, cachedValue: string): Promise<boolean> {
+        const aggressiveCacheOptions = this.aggressiveCaching;
+        if (aggressiveCacheOptions
+            && cachedItem.age < aggressiveCacheOptions.duration
+            && !cachedItem.mightHaveBeenModified
+            && command.canCacheAggressively) {
+            if (cachedItem.item.flags === "NotFound") {
+                // if this is a cached delete, we only respect it if it _came_ from an aggressively cached
+                // block, otherwise, we'll run the request again
+
+                return false;
+            } else {
+                await command.setResponseFromCache(cachedValue);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static _tryGetServerVersion(response: HttpResponse) {
+        return response.headers[HEADERS.SERVER_VERSION];
     }
 
     private _throwFailedToContactAllNodes<TResult>(
         command: RavenCommand<TResult>,
-        req: HttpRequestParameters,
-        e: Error,
-        timeoutException: Error) {
+        req: HttpRequestParameters) {
+
+        if (!command.failedNodes || !command.failedNodes.size) { //precaution, should never happen at this point
+            throwError("InvalidOperationException", "Received unsuccessful response and couldn't recover from it. " +
+                "Also, no record of exceptions per failed nodes. This is weird and should not happen.");
+        }
+
+        if (command.failedNodes.size === 1) {
+            throw Array.from(command.failedNodes.values())[0];
+        }
 
         let message: string = "Tried to send "
             + command.constructor.name
             + " request via "
             + (req.method || "GET") + " "
             + req.uri + " to all configured nodes in the topology, "
-            + "all of them seem to be down or not responding. I've tried to access the following nodes: ";
+            + "none of the attempt succeeded." + os.EOL;
 
-        if (this._nodeSelector) {
-            const topology = this._nodeSelector.getTopology();
-            if (topology) {
-                message += topology.nodes.map(x => x.url).join(", ");
+        if (this._topologyTakenFromNode) {
+            message += "I was able to fetch " + this._topologyTakenFromNode.database
+                + " topology from " + this._topologyTakenFromNode.url + "." + os.EOL;
+        }
+
+        let nodes: ServerNode[];
+        if (this._nodeSelector && this._nodeSelector.getTopology()) {
+            nodes = this._nodeSelector.getTopology().nodes;
+        }
+
+        if (!nodes) {
+            message += "Topology is empty.";
+        } else {
+            message += "Topology: ";
+
+            for (const node of nodes) {
+                const error = command.failedNodes.get(node);
+
+                message += os.EOL +
+                    "[Url: " + node.url + ", " +
+                    "ClusterTag: " + node.clusterTag + ", " +
+                    "ServerRole: " + node.serverRole + ", " +
+                    "Exception: " + (error ? error.message : "No exception") + "]";
             }
         }
 
-        const tplFromNode = this._topologyTakenFromNode;
-        if (tplFromNode && this._nodeSelector) {
-            const topology = this._nodeSelector.getTopology();
-            if (topology) {
-                const nodesText = topology.nodes
-                    .map(x => `( url: ${x.url}, clusterTag: ${x.clusterTag}, serverRole: ${x.serverRole})`)
-                    .join(", ");
-
-                message += os.EOL
-                    + `I was able to fetch ${tplFromNode.database} topology from ${tplFromNode.url}.`
-                    + os.EOL
-                    + `Fetched topology: ${nodesText}`;
-            }
-        }
-
-        const innerErr = timeoutException || e;
-        throwError("AllTopologyNodesDownException", message, innerErr);
+        throwError("AllTopologyNodesDownException", message);
     }
 
     public inSpeedTestPhase() {
         return this._nodeSelector
             && this._nodeSelector.inSpeedTestPhase();
+    }
+
+    private _shouldExecuteOnAll<TResult>(chosenNode: ServerNode, command: RavenCommand<TResult>): boolean {
+        return this.conventions.readBalanceBehavior === "FastestNode" &&
+            this._nodeSelector &&
+            this._nodeSelector.inSpeedTestPhase() &&
+            this._nodeSelectorHasMultipleNodes() &&
+            command.isReadRequest &&
+            command.responseType === "Object" &&
+            !!chosenNode &&
+            !(command["prepareToBroadcast"]); // duck typing: !(command instanceof IBroadcast)
+    }
+
+    private _executeOnAllToFigureOutTheFastest<TResult>(
+        chosenNode: ServerNode,
+        command: RavenCommand<TResult>): Promise<{ response: HttpResponse, bodyStream: stream.Readable }> {
+        let preferredTask: BluebirdPromise<IndexAndResponse> = null;
+
+        const nodes = this._nodeSelector.getTopology().nodes;
+        const tasks: BluebirdPromise<IndexAndResponse>[] = nodes.map(x => null);
+
+        let task: BluebirdPromise<IndexAndResponse>;
+        for (let i = 0; i < nodes.length; i++) {
+            const taskNumber = i;
+            this.numberOfServerRequests++;
+
+            task = BluebirdPromise.resolve()
+                .then(() => {
+                    const req = this._createRequest(nodes[taskNumber], command, TypeUtil.NOOP);
+                    this._setRequestHeaders(null, null, req);
+                    return command.send(this.getHttpAgent(), req);
+                })
+                .then(commandResult => new IndexAndResponse(taskNumber, commandResult.response, commandResult.bodyStream))
+                .catch(err => {
+                    tasks[taskNumber] = null;
+                    return BluebirdPromise.reject(err);
+                });
+
+            if (nodes[i].clusterTag === chosenNode.clusterTag) {
+                preferredTask = task;
+            }
+
+            tasks[i] = task;
+        }
+
+        const result = PromiseUtil.raceToResolution(tasks)
+            .then(fastest => {
+                this._nodeSelector.recordFastest(fastest.index, nodes[fastest.index]);
+            })
+            .catch((err) => {
+                this._log.warn(err, "Error executing on all to find fastest node.");
+            })
+            .then(() => preferredTask);
+
+        return Promise.resolve(result);
+    }
+
+    private _getFromCache<TResult>(
+        command: RavenCommand<TResult>,
+        useCache: boolean,
+        url: string,
+        cachedItemMetadataCallback: (data: CachedItemMetadata) => void) {
+
+        if (useCache
+            && command.canCache
+            && command.isReadRequest
+            && command.responseType === "Object") {
+            return this._cache.get(url, cachedItemMetadataCallback);
+        }
+
+        cachedItemMetadataCallback({
+            changeVector: null,
+            response: null
+        });
+
+        return new ReleaseCacheItem(null);
+    }
+
+
+    private _nodeSelectorHasMultipleNodes() {
+        const selector = this._nodeSelector;
+        if (!selector) {
+            return false;
+        }
+        const topology = selector.getTopology();
+        return topology && topology.nodes && topology.nodes.length > 1;
+    }
+
+
+    private _createRequest<TResult>(node: ServerNode, command: RavenCommand<TResult>, urlRef: (value: string) => void): HttpRequestParameters {
+        const req = Object.assign(command.createRequest(node), this._defaultRequestOptions);
+        urlRef(req.uri);
+        req.headers = req.headers || {};
+
+        let builder = new URL(req.uri);
+
+        if (RequestExecutor.requestPostProcessor) {
+            RequestExecutor.requestPostProcessor(req);
+        }
+
+        if (command["getRaftUniqueRequestId"]) {
+            const raftCommand = command as unknown as IRaftCommand;
+
+            const raftRequestString = "raft-request-id=" + raftCommand.getRaftUniqueRequestId();
+
+            builder = new URL(builder.search ? builder.toString() + "&" + raftRequestString : builder.toString() + "?" + raftRequestString);
+        }
+
+        if (this._shouldBroadcast(command)) {
+            command.timeout = command.timeout ?? this.firstBroadcastAttemptTimeout;
+        }
+
+        req.uri = builder.toString();
+
+        return req;
     }
 
     private async _handleUnsuccessfulResponse<TResult>(
@@ -1018,9 +1304,10 @@ export class RequestExecutor implements IDisposable {
                 return true;
 
             case StatusCodes.Forbidden:
+                const msg = await readBody();
                 throwError("AuthorizationException",
                     `Forbidden access to ${chosenNode.database}@${chosenNode.url}`
-                    + `, ${req.method || "GET"} ${req.uri}`);
+                    + `, ${req.method || "GET"} ${req.uri}` + os.EOL + msg);
                 break;
             case StatusCodes.Gone:
                 // request not relevant for the chosen node - the database has been moved to a different one
@@ -1028,6 +1315,7 @@ export class RequestExecutor implements IDisposable {
                     return false;
                 }
 
+                // tslint:disable-next-line:triple-equals
                 if (nodeIndex != null) {
                     this._nodeSelector.onFailedRequest(nodeIndex);
                 }
@@ -1045,7 +1333,10 @@ export class RequestExecutor implements IDisposable {
 
                 if (command.failedNodes.has(indexAndNode.currentNode)) {
                     // we tried all the nodes, let's try to update topology and retry one more time
-                    const success = await this.updateTopology(chosenNode, 60 * 1000, true, "handle-unsuccessful-response");
+                    const updateParameters = new UpdateTopologyParameters(chosenNode);
+                    updateParameters.timeoutInMs = 60_000;
+                    updateParameters.debugTag = "handle-unsuccessful-response";
+                    const success = await this.updateTopology(updateParameters);
                     if (!success) {
                         return false;
                     }
@@ -1082,70 +1373,8 @@ export class RequestExecutor implements IDisposable {
         }
     }
 
-    private _executeOnAllToFigureOutTheFastest<TResult>(
-        chosenNode: ServerNode,
-        command: RavenCommand<TResult>): Promise<HttpResponse> {
-        let preferredTask: BluebirdPromise<IndexAndResponse> = null;
-
-        const nodes = this._nodeSelector.getTopology().nodes;
-        const tasks: BluebirdPromise<IndexAndResponse>[] = nodes.map(x => null);
-
-        let task: BluebirdPromise<IndexAndResponse>;
-        for (let i = 0; i < nodes.length; i++) {
-            const taskNumber = i;
-            this.numberOfServerRequests++;
-
-            task = BluebirdPromise.resolve()
-                .then(() => {
-                    const req = this._createRequest(nodes[taskNumber], command);
-                    return command.send(this.getHttpAgent(), req)
-                        .then(responseAndBodyStream => {
-                            return responseAndBodyStream.response;
-                        });
-                })
-                .then(commandResult => new IndexAndResponse(taskNumber, commandResult))
-                .catch(err => {
-                    tasks[taskNumber] = null;
-                    return BluebirdPromise.reject(err);
-                });
-
-            if (nodes[i].clusterTag === chosenNode.clusterTag) {
-                preferredTask = task;
-            }
-
-            tasks[i] = task;
-        }
-
-        const result = PromiseUtil.raceToResolution(tasks)
-            .then(fastest => {
-                this._nodeSelector.recordFastest(fastest.index, nodes[fastest.index]);
-            })
-            .catch((err) => {
-                this._log.warn(err, "Error executing on all to find fastest node.");
-            })
-            .then(() => preferredTask)
-            .then(taskResult => taskResult.response);
-
-        return Promise.resolve(result);
-    }
-
-    private _shouldExecuteOnAll<TResult>(chosenNode: ServerNode, command: RavenCommand<TResult>): boolean {
-        return this.conventions.readBalanceBehavior === "FastestNode" &&
-            this._nodeSelector &&
-            this._nodeSelector.inSpeedTestPhase() &&
-            this._nodeSelectorHasMultipleNodes() &&
-            command.isReadRequest &&
-            command.responseType === "Object" &&
-            !!chosenNode;
-    }
-
-    private _nodeSelectorHasMultipleNodes() {
-        const selector = this._nodeSelector;
-        if (!selector) {
-            return false;
-        }
-        const topology = selector.getTopology();
-        return topology && topology.nodes && topology.nodes.length > 1;
+    private static _handleConflict(response: HttpResponse, body: string): void {
+        ExceptionDispatcher.throwException(response, body);
     }
 
     private async _handleServerDown<TResult>(
@@ -1164,94 +1393,160 @@ export class RequestExecutor implements IDisposable {
             command.failedNodes = new Map();
         }
 
-        RequestExecutor._addFailedResponseToCommand(chosenNode, command, req, response, body, error);
+        command.failedNodes.set(chosenNode, RequestExecutor._readExceptionFromServer(req, response, body, error));
 
         if (nodeIndex === null) {
             return false;
         }
 
-        this._spawnHealthChecks(chosenNode, nodeIndex);
-
         if (!this._nodeSelector) {
+            this._spawnHealthChecks(chosenNode, nodeIndex);
             return false;
         }
 
         this._nodeSelector.onFailedRequest(nodeIndex);
 
-        const currentIndexAndNode: CurrentIndexAndNode = this._nodeSelector.getPreferredNode();
-        if (command.failedNodes.has(currentIndexAndNode.currentNode)) {
-            return false;
-            // we tried all the nodes...nothing left to do
+        if (this._shouldBroadcast(command)) {
+            command.result = await this._broadcast(command, sessionInfo);
+            return true;
         }
 
+        this._spawnHealthChecks(chosenNode, nodeIndex);
+
+        const indexAndNodeAndEtag = this._nodeSelector.getPreferredNodeWithTopology();
+
+        if (command.failoverTopologyEtag !== this._topologyEtag) {
+            command.failedNodes.clear();
+            command.failoverTopologyEtag = this._topologyEtag;
+        }
+
+        if (command.failedNodes.has(indexAndNodeAndEtag.currentNode)) {
+            return false;
+        }
+
+        this._onFailedRequestInvoke(url, error);
+
         await this._executeOnSpecificNode(command, sessionInfo, {
-                    chosenNode: currentIndexAndNode.currentNode,
-                    nodeIndex: currentIndexAndNode.currentIndex,
-                    shouldRetry
-                });
+            chosenNode: indexAndNodeAndEtag.currentNode,
+            nodeIndex: indexAndNodeAndEtag.currentIndex,
+            shouldRetry
+        });
 
         return true;
     }
 
-    private static _addFailedResponseToCommand<TResult>(
-        chosenNode: ServerNode,
-        command: RavenCommand<TResult>,
-        req: HttpRequestParameters,
-        response: HttpResponse,
-        body: string,
-        e: Error) {
+    private _shouldBroadcast<TResult>(command: RavenCommand<TResult>) {
+        if (!command["prepareToBroadcast"]) {
+            return false;
+        }
 
-        if (response && body) {
-            const responseJson: string = body;
-            try {
-                const resExceptionSchema = JsonSerializer
-                    .getDefaultForCommandPayload()
-                    .deserialize<ExceptionSchema>(responseJson);
-                const readException = ExceptionDispatcher.get(resExceptionSchema, response.status, e);
-                command.failedNodes.set(chosenNode, readException);
-            } catch (__) {
-                log.warn(__, "Error parsing server error.");
-                const unrecognizedErrSchema = {
-                    url: req.uri as string,
-                    message: "Unrecognized response from the server",
-                    error: responseJson,
-                    type: "Unparsable Server Response"
-                };
+        const topologyNodes = this.getTopologyNodes();
+        if (!topologyNodes || topologyNodes.length < 2) {
+            return false;
+        }
 
-                const exceptionToUse = ExceptionDispatcher.get(unrecognizedErrSchema, response.status, e);
-                command.failedNodes.set(chosenNode, exceptionToUse);
+        return true;
+    }
+
+    private async _broadcast<TResult>(command: RavenCommand<TResult>, sessionInfo: SessionInfo) {
+        if (!command["prepareToBroadcast"]) {
+            throwError("InvalidOperationException", "You can broadcast only commands that implement 'IBroadcast'.");
+        }
+
+        const broadcastCommand = command as unknown as IBroadcast;
+        const failedNodes = command.failedNodes;
+
+        command.failedNodes = new Map<ServerNode, Error>(); // clean the current failures
+
+        const broadcastTasks = new Map<Promise<number>, BroadcastState<TResult>>();
+
+        try {
+            this._sendToAllNodes(broadcastTasks, sessionInfo, broadcastCommand);
+
+            return this._waitForBroadcastResult(command, broadcastTasks);
+        } finally {
+            for (const broadcastState of Array.from(broadcastTasks.entries())) {
+                const task = broadcastState[0];
+                if (task) {
+                    task.catch(throwable => {
+                        const index = broadcastState[1].index;
+                        const node = this._nodeSelector.getTopology().nodes[index];
+                        if (failedNodes.has(node)) {
+                            // if other node succeed in broadcast we need to send health checks to the original failed node
+                            this._spawnHealthChecks(node, index);
+                        }
+                    });
+                }
             }
-
-            return;
         }
-
-        const exceptionSchema = {
-            url: req.uri.toString(),
-            message: e.message,
-            error: `An exception occurred while contacting ${ req.uri } . ${ os.EOL + e.stack }`,
-            type: e.name
-        };
-
-        command.failedNodes.set(chosenNode, ExceptionDispatcher.get(exceptionSchema, StatusCodes.ServiceUnavailable, e));
     }
 
-    private _createRequest<TResult>(node: ServerNode, command: RavenCommand<TResult>): HttpRequestParameters {
-        const req = Object.assign(command.createRequest(node), this._defaultRequestOptions);
-        req.headers = req.headers || {};
+    private async _waitForBroadcastResult<TResult>(command: RavenCommand<TResult>, tasks: Map<Promise<number>, BroadcastState<TResult>>): Promise<TResult> {
+        while (tasks.size) {
+            let error: Error;
+            try {
+                const completed = await Promise.race(Array.from(tasks.keys()));
 
-        if (!req.headers[HEADERS.CLIENT_VERSION]) {
-            req.headers[HEADERS.CLIENT_VERSION] = RequestExecutor.CLIENT_VERSION;
+                for (const state of Array.from(tasks.values())) {
+                    state.abort?.abort();
+                }
+
+                const completedItem = Array.from(tasks.values()).find(x => x.index === completed);
+
+                this._nodeSelector.restoreNodeIndex(completed);
+                return completedItem.command.result;
+            } catch (e) {
+                error = e.error;
+                const failedIndex = e.index;
+
+                const failedPair = Array.from(tasks.entries())
+                    .find(x => x[1].index === failedIndex);
+                const node = this._nodeSelector.getTopology().nodes[failedIndex];
+
+                command.failedNodes.set(node, error);
+
+                this._nodeSelector.onFailedRequest(failedIndex);
+                this._spawnHealthChecks(node, failedIndex);
+
+                tasks.delete(failedPair[0]);
+            }
         }
 
-        if (RequestExecutor.requestPostProcessor) {
-            RequestExecutor.requestPostProcessor(req);
-        }
+        const exceptions = Array.from(command.failedNodes
+            .entries())
+            .map(x => x[0].url + ": " + x[1].message)
+            .join(", ");
 
-        return req;
+        throwError("AllTopologyNodesDownException", "Broadcasting " + command.constructor.name + " failed: " + exceptions);
     }
 
-    private static _handleConflict(response: HttpResponse, body: string): void {
-        ExceptionDispatcher.throwException(response, body);
+    private _sendToAllNodes<TResult>(tasks: Map<Promise<number>, BroadcastState<TResult>>, sessionInfo: SessionInfo, command: IBroadcast) {
+        for (let index = 0; index < this._nodeSelector.getTopology().nodes.length; index++) {
+            const state = new BroadcastState<TResult>();
+            state.command = command.prepareToBroadcast(this.conventions) as unknown as RavenCommand<TResult>;
+            state.index = index;
+            state.node = this._nodeSelector.getTopology().nodes[index];
+
+            state.command.timeout = this.secondBroadcastAttemptTimeout;
+
+            let abortController: AbortController;
+            const task: Promise<number> = this.execute(state.command, sessionInfo, {
+                chosenNode: state.node,
+                nodeIndex: null,
+                shouldRetry: false,
+                abortRef: a => abortController = a
+            })
+                .then(() => index)
+                .catch(e => {
+                    throw {
+                        index,
+                        error: e
+                    };
+                })
+
+            state.abort = abortController;
+            tasks.set(task, state);
+        }
     }
 
     public async handleServerNotResponsive(url: string, chosenNode: ServerNode, nodeIndex: number, e: Error) {
@@ -1261,7 +1556,15 @@ export class RequestExecutor implements IDisposable {
         }
 
         const preferredNode = await this.getPreferredNode();
-        await this.updateTopology(preferredNode.currentNode, 0, true, "handle-server-not-responsive");
+        const updateParameters = new UpdateTopologyParameters(preferredNode.currentNode);
+        updateParameters.timeoutInMs = 0;
+        updateParameters.forceUpdate = true;
+        updateParameters.debugTag = "handle-server-not-responsive";
+
+        await this.updateTopology(updateParameters);
+
+        this._onFailedRequestInvoke(url, e);
+
         return preferredNode.currentNode;
     }
 
@@ -1279,6 +1582,7 @@ export class RequestExecutor implements IDisposable {
         const nodeStatus: NodeStatus = new NodeStatus(
             nodeIndex,
             chosenNode,
+            this,
             (nStatus: NodeStatus) => this._checkNodeStatusCallback(nStatus));
         this._failedNodesTimers.set(chosenNode, nodeStatus);
         nodeStatus.startTimer();
@@ -1337,6 +1641,43 @@ export class RequestExecutor implements IDisposable {
             });
     }
 
+    private static _readExceptionFromServer<TResult>(
+        req: HttpRequestParameters,
+        response: HttpResponse,
+        body: string,
+        e: Error): Error {
+
+        if (response && body) {
+            const responseJson: string = body;
+            try {
+                const resExceptionSchema = JsonSerializer
+                    .getDefaultForCommandPayload()
+                    .deserialize<ExceptionSchema>(responseJson);
+                return ExceptionDispatcher.get(resExceptionSchema, response.status, e);
+            } catch (__) {
+                log.warn(__, "Error parsing server error.");
+                const unrecognizedErrSchema = {
+                    url: req.uri as string,
+                    message: "Unrecognized response from the server",
+                    error: responseJson,
+                    type: "Unparsable Server Response"
+                };
+
+                return ExceptionDispatcher.get(unrecognizedErrSchema, response.status, e);
+            }
+        }
+
+        const exceptionSchema = {
+            url: req.uri.toString(),
+            message: e.message,
+            error: `An exception occurred while contacting ${ req.uri } . ${ os.EOL + e.stack }`,
+            type: e.name
+        };
+
+        return ExceptionDispatcher.get(exceptionSchema, StatusCodes.ServiceUnavailable, e);
+    }
+
+
     private _setDefaultRequestOptions(): void {
         this._defaultRequestOptions = Object.assign(
             DEFAULT_REQUEST_OPTIONS,
@@ -1367,4 +1708,49 @@ export class RequestExecutor implements IDisposable {
 
         this._disposeAllFailedNodesTimers();
     }
+
+    public async getRequestedNode(nodeTag: string): Promise<CurrentIndexAndNode> {
+        await this._ensureNodeSelector();
+
+        return this._nodeSelector.getRequestedNode(nodeTag);
+    }
+
+    public async getPreferredNode(): Promise<CurrentIndexAndNode> {
+        await this._ensureNodeSelector();
+        return this._nodeSelector.getPreferredNode();
+    }
+
+    public async getNodeBySessionId(sessionId: number): Promise<CurrentIndexAndNode> {
+        await this._ensureNodeSelector();
+        return this._nodeSelector.getNodeBySessionId(sessionId);
+    }
+
+    public async getFastestNode(): Promise<CurrentIndexAndNode> {
+        await this._ensureNodeSelector();
+        return this._nodeSelector.getFastestNode();
+    }
+
+    private async _ensureNodeSelector(): Promise<void> {
+        if (this._firstTopologyUpdatePromise
+            && (!this._firstTopologyUpdateStatus.isFullfilled()
+                || this._firstTopologyUpdateStatus.isRejected())) {
+            await this._firstTopologyUpdatePromise;
+        }
+
+        if (!this._nodeSelector) {
+            const topology = new Topology(this._topologyEtag, this.getTopologyNodes().slice());
+            this._nodeSelector = new NodeSelector(topology);
+        }
+    }
+
+    protected _onTopologyUpdatedInvoke(newTopology: Topology) {
+        this._emitter.emit("topologyUpdated", new TopologyUpdatedEventArgs(newTopology));
+    }
+}
+
+class BroadcastState<TResult> {
+    public command: RavenCommand<TResult>;
+    public index: number;
+    public node: ServerNode;
+    public abort: AbortController;
 }

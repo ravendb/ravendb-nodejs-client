@@ -3,6 +3,8 @@ import { HttpRequestParameters } from "../../../Primitives/Http";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
+import { IRaftCommand } from "../../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export class ResetEtlOperation implements IMaintenanceOperation<void> {
     private readonly _configurationName: string;
@@ -22,7 +24,7 @@ export class ResetEtlOperation implements IMaintenanceOperation<void> {
     }
 }
 
-class ResetEtlCommand extends RavenCommand<void> {
+class ResetEtlCommand extends RavenCommand<void> implements IRaftCommand {
     private readonly _configurationName: string;
     private readonly _transformationName: string;
 
@@ -51,5 +53,9 @@ class ResetEtlCommand extends RavenCommand<void> {
             body,
             uri
         }
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }

@@ -168,7 +168,7 @@ describe("QueryTest", function () {
         it("query with select", async () => {
             const session = store.openSession();
             const results = await session.query(User)
-                .selectFields<User>("age", User)
+                .selectFields<User>(["age", "id"], User)
                 .all();
 
             for (const entry of results) {
@@ -259,7 +259,7 @@ describe("QueryTest", function () {
         it("query with projection 2", async () => {
             const session = store.openSession();
             const results = await session.query(User)
-                .selectFields<UserProjection>(["lastName"], UserProjection)
+                .selectFields<UserProjection>(["lastName", "id"], UserProjection)
                 .all();
 
             assert.strictEqual(results.length, 3);
@@ -693,14 +693,14 @@ describe("QueryTest", function () {
                 .whereBetween("date", cocartFestival.date, offFestival.date);
 
             const indexQuery = q.getIndexQuery();
-            assert.strictEqual(indexQuery.query, "from events where date between $p0 and $p1");
+            assert.strictEqual(indexQuery.query, "from 'events' where date between $p0 and $p1");
             assert.strictEqual(
                 indexQuery.queryParameters["p0"], 
                 DateUtil.utc.stringify(cocartFestival.date));
             assert.strictEqual(
                 indexQuery.queryParameters["p1"], 
                 DateUtil.utc.stringify(offFestival.date));
-            assert.strictEqual(indexQuery.query, "from events where date between $p0 and $p1");
+            assert.strictEqual(indexQuery.query, "from 'events' where date between $p0 and $p1");
 
             const festivalsHappeningBetweenCocartAndOffInclusive: any[] = await q.all();
 

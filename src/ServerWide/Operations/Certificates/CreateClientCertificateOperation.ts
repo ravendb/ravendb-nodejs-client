@@ -2,14 +2,16 @@ import { CertificateRawData } from "./CertificateRawData";
 import { DatabaseAccess } from "./DatabaseAccess";
 import { SecurityClearance } from "./SecurityClearance";
 import { throwError } from "../../../Exceptions";
-import {HttpRequestParameters, HttpResponse} from "../../../Primitives/Http";
-import {getHeaders} from "../../../Utility/HttpUtil";
-import * as stream from "stream";
-import {readToBuffer} from "../../../Utility/StreamUtil";
+import { HttpRequestParameters, HttpResponse } from "../../../Primitives/Http";
+import { getHeaders } from "../../../Utility/HttpUtil";
+import * as stream from "readable-stream";
+import { readToBuffer } from "../../../Utility/StreamUtil";
 import { IServerOperation, OperationResultType } from "../../../Documents/Operations/OperationAbstractions";
 import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
+import { IRaftCommand } from "../../../Http/IRaftCommand";
+import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export class CreateClientCertificateOperation implements IServerOperation<CertificateRawData> {
     private readonly _name: string;
@@ -40,7 +42,7 @@ export class CreateClientCertificateOperation implements IServerOperation<Certif
     }
 }
 
-class CreateClientCertificateCommand extends RavenCommand<CertificateRawData> {
+class CreateClientCertificateCommand extends RavenCommand<CertificateRawData> implements IRaftCommand {
     private readonly _name: string;
     private readonly _permissions: Record<string, DatabaseAccess>;
     private readonly _clearance: SecurityClearance;
@@ -105,5 +107,9 @@ class CreateClientCertificateCommand extends RavenCommand<CertificateRawData> {
         };
 
         return null;
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }

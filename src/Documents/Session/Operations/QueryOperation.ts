@@ -13,6 +13,8 @@ import {
 import { CONSTANTS } from "../../../Constants";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { StringUtil } from "../../../Utility/StringUtil";
+import { Reference } from "../../../Utility/Reference";
+import { NESTED_OBJECT_TYPES_PROJECTION_FIELD } from "../DocumentQuery";
 
 const log = getLogger({ module: "QueryOperation" });
 
@@ -22,6 +24,7 @@ export class QueryOperation {
     private readonly _indexQuery: IndexQuery;
     private readonly _metadataOnly: boolean;
     private readonly _indexEntriesOnly: boolean;
+    private readonly _isProjectInto: boolean;
     private _currentQueryResults: QueryResult;
     private readonly _fieldsToFetch: FieldsToFetchToken;
     private _sp: Stopwatch;
@@ -34,7 +37,8 @@ export class QueryOperation {
         fieldsToFetch: FieldsToFetchToken,
         disableEntitiesTracking: boolean,
         metadataOnly: boolean,
-        indexEntriesOnly: boolean) {
+        indexEntriesOnly: boolean,
+        isProjectInto: boolean) {
         this._session = session;
         this._indexName = indexName;
         this._indexQuery = indexQuery;
@@ -42,6 +46,7 @@ export class QueryOperation {
         this._noTracking = disableEntitiesTracking;
         this._metadataOnly = metadataOnly;
         this._indexEntriesOnly = indexEntriesOnly;
+        this._isProjectInto = isProjectInto;
 
         this._assertPageSizeSet();
     }
@@ -62,7 +67,7 @@ export class QueryOperation {
     }
 
     public setResult(queryResult: QueryResult): void {
-        this.ensureIsAcceptableAndSaveResult(queryResult);
+        this.ensureIsAcceptableAndSaveResult(queryResult, null);
     }
 
     private _assertPageSizeSet(): void {
@@ -106,14 +111,24 @@ export class QueryOperation {
     public complete<T extends object>(documentType?: DocumentType<T>): T[] {
         const queryResult = this._currentQueryResults.createSnapshot();
 
+        const result = [] as T[];
+
+        this._completeInternal(documentType, queryResult, x => result.push(x));
+
+        return result;
+    }
+
+    private _completeInternal<T extends object>(documentType: DocumentType<T>, queryResult: QueryResult, addToResult: (item: T) => void): void {
         if (!this._noTracking) {
             this._session.registerIncludes(queryResult.includes);
         }
 
-        const list: T[] = [];
-
         try {
             for (const document of queryResult.results) {
+                if (document[`${CONSTANTS.Documents.Metadata.KEY}.${CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES}`]) {
+                    document[CONSTANTS.Documents.Metadata.KEY][CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES]
+                        = document[`${CONSTANTS.Documents.Metadata.KEY}.${CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES}`];
+                }
                 const metadata = document[CONSTANTS.Documents.Metadata.KEY];
                 const idNode = metadata[CONSTANTS.Documents.Metadata.ID];
 
@@ -122,7 +137,7 @@ export class QueryOperation {
                     id = idNode;
                 }
 
-                list.push(
+                addToResult(
                     QueryOperation.deserialize(
                         id,
                         document,
@@ -130,7 +145,8 @@ export class QueryOperation {
                         this._fieldsToFetch,
                         this._noTracking,
                         this._session,
-                        documentType));
+                        documentType,
+                        this._isProjectInto));
             }
         } catch (err) {
             log.warn(err, "Unable to read query result JSON.");
@@ -145,8 +161,6 @@ export class QueryOperation {
                 this._session.registerCounters(queryResult.counterIncludes, queryResult.includedCounterNames);
             }
         }
-
-        return list;
     }
 
     public static deserialize<T extends object>(
@@ -156,7 +170,8 @@ export class QueryOperation {
         fieldsToFetch: FieldsToFetchToken,
         disableEntitiesTracking: boolean,
         session: InMemoryDocumentSessionOperations,
-        clazz?: DocumentType<T>
+        clazz?: DocumentType<T>,
+        isProjectInto?: boolean
     ) {
         const { conventions } = session;
         const { entityFieldNameConvention } = conventions;
@@ -170,10 +185,10 @@ export class QueryOperation {
         // if type was passed then use that even if it's only 1 field
         if (fieldsToFetch
             && fieldsToFetch.projections
-            && fieldsToFetch.projections.length === 1
+            && (fieldsToFetch.projections.length === 1 || (fieldsToFetch.projections.includes(NESTED_OBJECT_TYPES_PROJECTION_FIELD) && fieldsToFetch.projections.length === 2))
             && !clazz) {
             // we only select a single field
-            let projectionField = fieldsToFetch.projections[0];
+            let projectionField = fieldsToFetch.projections.find(x => x !== NESTED_OBJECT_TYPES_PROJECTION_FIELD);
 
             if (fieldsToFetch.sourceAlias) {
                 if (projectionField.startsWith(fieldsToFetch.sourceAlias)) {
@@ -197,16 +212,26 @@ export class QueryOperation {
             if (TypeUtil.isPrimitive(jsonNode)) {
                 return jsonNode || null;
             }
-
-            if (fieldsToFetch.fieldsToFetch[0] === fieldsToFetch.projections[0]) {
-                if (TypeUtil.isObject(jsonNode)) { // extraction from original type
-                    document = jsonNode;
+            if (!isProjectInto) {
+                if (fieldsToFetch.fieldsToFetch[0] === fieldsToFetch.projections[0]) {
+                    if (TypeUtil.isObject(jsonNode)) { // extraction from original type
+                        document = jsonNode;
+                    }
                 }
             }
         }
 
-        const raw: T = conventions.objectMapper.fromObjectLiteral(document);
+
         const projType = conventions.getJsTypeByDocumentType(clazz);
+
+        const documentRef: Reference<object> = {
+            value: document
+        };
+        session.onBeforeConversionToEntityInvoke(id, clazz, documentRef);
+        document = documentRef.value;
+
+        const raw: T = conventions.objectMapper.fromObjectLiteral(document);
+
         // tslint:disable-next-line:new-parens
         const result = projType ? new (Function.prototype.bind.apply(projType)) : {};
 
@@ -214,22 +239,26 @@ export class QueryOperation {
             const keys = conventions.entityFieldNameConvention
                 ? fieldsToFetch.projections.map(x => StringUtil.changeCase(conventions.entityFieldNameConvention, x))
                 : fieldsToFetch.projections;
-            for (const key of keys) {
-                result[key] = raw[key];
+
+            const nestedTypes = raw[NESTED_OBJECT_TYPES_PROJECTION_FIELD];
+            // tslint:disable-next-line:prefer-for-of
+            for (let i = 0; i < keys.length; i++) {
+                const key = keys[i];
+
+                const mapper = conventions.objectMapper;
+                const mapped = mapper.fromObjectLiteral(raw, {
+                    typeName: "object",
+                    nestedTypes
+                })
+
+                result[key] = mapped[key];
             }
         } else {
             Object.assign(result, !entityFieldNameConvention
                 ? raw : conventions.transformObjectKeysToLocalFieldNameConvention(raw));
         }
 
-        if (id) {
-            // we need to make an additional check, since it is possible that a value was explicitly stated
-            // for the identity property, in which case we don't want to override it.
-            const identityProperty = conventions.getIdentityProperty(clazz);
-            if (identityProperty && !document[identityProperty]) {
-                session.generateEntityIdOnTheClient.trySetIdentity(result, id);
-            }
-        }
+        session.onAfterConversionToEntityInvoke(id, document, result);
 
         return result;
     }
@@ -250,13 +279,25 @@ export class QueryOperation {
         this._noTracking = disableEntitiesTracking;
     }
 
-    public ensureIsAcceptableAndSaveResult(result: QueryResult): void {
+    public ensureIsAcceptableAndSaveResult(result: QueryResult, duration: number): void {
+        if (TypeUtil.isNullOrUndefined(duration)) {
+            if (this._sp) {
+                duration = this._sp.elapsed;
+            } else {
+                duration = null;
+            }
+        }
+
         if (!result) {
             throwError("IndexDoesNotExistException", `Could not find index ${this._indexName}.`);
         }
 
-        QueryOperation.ensureIsAcceptable(result, this._indexQuery.waitForNonStaleResults, this._sp, this._session);
+        QueryOperation.ensureIsAcceptable(result, this._indexQuery.waitForNonStaleResults, duration, this._session);
 
+        this._saveQueryResult(result);
+    }
+
+    private _saveQueryResult(result: QueryResult) {
         this._currentQueryResults = result;
 
         // logging
@@ -297,14 +338,16 @@ export class QueryOperation {
     public static ensureIsAcceptable(
         result: QueryResult,
         waitForNonStaleResults: boolean,
-        duration: Stopwatch,
+        duration: Stopwatch | number,
         session: InMemoryDocumentSessionOperations): void {
-        if (waitForNonStaleResults && result.isStale) {
+        if (duration instanceof Stopwatch) {
             duration.stop();
+            return QueryOperation.ensureIsAcceptable(result, waitForNonStaleResults, duration.elapsed, session);
+        }
 
+        if (waitForNonStaleResults && result.isStale) {
             const msg = "Waited for " + duration.toString() + " for the query to return non stale result.";
             throwError("TimeoutException", msg);
-
         }
     }
 

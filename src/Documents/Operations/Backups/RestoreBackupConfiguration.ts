@@ -1,9 +1,7 @@
-export interface RestoreBackupConfiguration {
-    databaseName: string;
+import { RestoreBackupConfigurationBase } from "./RestoreBackupConfigurationBase";
+
+export interface RestoreBackupConfiguration extends RestoreBackupConfigurationBase {
     backupLocation: string;
-    lastFileNameToRestore: string;
-    dataDirectory: string;
-    encryptionKey: string;
-    disableOngoingTasks: boolean;
-    skipIndexes: boolean;
+
+    type: "Local";
 }

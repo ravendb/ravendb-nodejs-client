@@ -1,10 +1,8 @@
-import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import DocumentStore, {
     IDocumentStore, GetDatabaseNamesOperation, DeleteDatabasesOperation,
 } from "../../src";
-import { delay } from "../../src/Utility/PromiseUtil";
 
 describe("RDBC-404", function () {
 

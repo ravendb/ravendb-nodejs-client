@@ -3,8 +3,6 @@ import { GetRequest } from "../../Commands/MultiGet/GetRequest";
 import { MultiGetCommand } from "../../Commands/MultiGet/MultiGetCommand";
 
 export class MultiGetOperation {
-    //TODO: used in lazy execution
-
     private readonly _session: InMemoryDocumentSessionOperations;
 
     public constructor(session: InMemoryDocumentSessionOperations) {

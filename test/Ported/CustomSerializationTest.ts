@@ -21,9 +21,7 @@ describe.skip("CustomSerializationTest", function () {
                 module.addDeserializer(Money.class, new MoneyDeserializer());
 
                 conventions.getEntityMapper().registerModule(module);
-             */
 
-            /* TODO 
             conventions.registerQueryValueConverter<Money>(Money, (fieldName, value, forRange, objectValue) => {
                 objectValue(value.toJSON());
                 return true;

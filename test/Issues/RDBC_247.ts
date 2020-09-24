@@ -4,7 +4,6 @@ import { assertThrows } from "../Utils/AssertExtensions";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import {
-    RavenErrorType,
     IDocumentStore,
     IDocumentSession,
 } from "../../src";

@@ -6,6 +6,7 @@ import * as stream from "readable-stream";
 export class TcpConnectionInfo {
     public url: string;
     public certificate: string;
+    public urls: string[];
 }
 
 export class GetTcpInfoCommand extends RavenCommand<TcpConnectionInfo> {

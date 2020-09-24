@@ -9,6 +9,9 @@ export * from "./Http/AggressiveCacheOptions";
 export * from "./Http/ClusterRequestExecutor";
 export * from "./Http/ClusterTopology";
 export * from "./Http/CurrentIndexAndNode";
+export * from "./Http/CurrentIndexAndNodeAndEtag";
+export * from "./Http/IBroadcast";
+export * from "./Http/IRaftCommand";
 export * from "./Http/NodeSelector";
 export * from "./Http/RavenCommand";
 export * from "./Http/ReadBalanceBehavior";
@@ -17,6 +20,7 @@ export * from "./Http/ServerNode";
 export * from "./Http/StatusCode";
 export * from "./Http/Topology";
 export * from "./Http/UriUtility";
+export * from "./Http/UpdateTopologyParameters";
 
 // SERVERWIDE
 export * from "./ServerWide";
@@ -28,7 +32,11 @@ export * from "./ServerWide/IDatabaseTaskStatus";
 export * from "./ServerWide/Operations/BuildNumber";
 export * from "./ServerWide/Operations/GetBuildNumberOperation";
 export * from "./ServerWide/Operations/ReorderDatabaseMembersOperation";
+export * from "./ServerWide/Operations/ConfigureRevisionsForConflictsOperation";
 export * from "./ServerWide/Operations/UpdateDatabaseOperation";
+export * from "./ServerWide/Operations/Configuration/GetServerWideBackupConfigurationOperation";
+export * from "./ServerWide/Operations/SetDatabaseDynamicDistributionOperation";
+export * from "./ServerWide/Operations/UpdateUnusedDatabasesOperation";
 
 
 // SERVERWIDE OPERATIONS
@@ -43,11 +51,18 @@ export * from "./ServerWide/Operations/Configuration/PutServerWideClientConfigur
 export * from "./ServerWide/Operations/Logs/GetLogsConfigurationResult"
 export * from "./ServerWide/Operations/Logs/GetLogsConfigurationOperation"
 export * from "./ServerWide/Operations/Logs/LogMode"
-export * from "./ServerWide/Operations/Logs/SetLogsConfigurationOperation"
+export * from "./ServerWide/Operations/Logs/SetLogsConfigurationOperation";
+export * from "./ServerWide/Operations/Configuration/DeleteServerWideBackupConfigurationOperation";
+export * from "./ServerWide/Operations/Configuration/GetServerWideClientConfigurationOperation";
+export * from "./ServerWide/Operations/Configuration/GetServerWideBackupConfigurationsOperation";
+export * from "./ServerWide/Operations/Configuration/PutServerWideBackupConfigurationOperation";
+export * from "./ServerWide/Operations/Configuration/ServerWideBackupConfiguration";
+
 
 export { GetDatabaseTopologyCommand } from "./ServerWide/Commands/GetDatabaseTopologyCommand";
 export { GetClusterTopologyCommand } from "./ServerWide/Commands/GetClusterTopologyCommand";
 export { GetTcpInfoCommand } from "./ServerWide/Commands/GetTcpInfoCommand";
+export { AddClusterNodeCommand } from "./ServerWide/Commands/Cluster/AddClusterNodeCommand";
 export { CreateDatabaseOperation } from "./ServerWide/Operations/CreateDatabaseOperation";
 export { DatabaseRecord, ConflictSolver, ScriptResolver } from "./ServerWide";
 export * from "./ServerWide/Operations/ModifyConflictSolverOperation";
@@ -55,10 +70,15 @@ export * from "./Documents/Operations/Etl/ConnectionString";
 
 // OPERATIONS AND COMMANDS
 export { BulkInsertOperation } from "./Documents/BulkInsertOperation";
+export { CollectionDetails } from "./Documents/Operations/CollectionDetails";
+export { DetailedCollectionStatistics } from "./Documents/Operations/DetailedCollectionStatistics";
+export { GetDetailedCollectionStatisticsOperation } from "./Documents/Operations/GetDetailedCollectionStatisticsOperation";
 export * from "./Documents/Operations/OperationAbstractions";
 export { CompactDatabaseOperation } from "./Documents/Operations/CompactDatabaseOperation";
 export { PutConnectionStringOperation } from "./Documents/Operations/ConnectionStrings/PutConnectionStringOperation";
 export { PatchOperation } from "./Documents/Operations/PatchOperation";
+export { DeleteSorterOperation } from "./Documents/Operations/Sorters/DeleteSorterOperation";
+export { PutSortersOperation } from "./Documents/Operations/Sorters/PutSortersOperation";
 export { PatchByQueryOperation } from "./Documents/Operations/PatchByQueryOperation";
 export {
     PutCompareExchangeValueOperation
@@ -124,10 +144,24 @@ export { StopIndexOperation } from "./Documents/Operations/Indexes/StopIndexOper
 export { StartIndexOperation } from "./Documents/Operations/Indexes/StartIndexOperation";
 export { ResetIndexOperation } from "./Documents/Operations/Indexes/ResetIndexOperation";
 export { DeleteIndexOperation } from "./Documents/Operations/Indexes/DeleteIndexOperation";
+export { GetServerWideBackupConfigurationsResponse } from "./Documents/Operations/GetServerWideBackupConfigurationsResponse";
+export { NextIdentityForOperation } from "./Documents/Operations/Identities/NextIdentityForOperation";
+export { SeedIdentityForOperation } from "./Documents/Operations/Identities/SeedIdentityForOperation";
+export { IOperationProgress } from "./Documents/Operations/IOperationProgress";
+export { IOperationResult } from "./Documents/Operations/IOperationResult";
 export {
     UpdateExternalReplicationOperation
 }
     from "./Documents/Operations/Replication/UpdateExternalReplicationOperation";
+export {
+    PullReplicationDefinitionAndCurrentConnections
+} from "./Documents/Operations/Replication/PullReplicationDefinitionAndCurrentConnections";
+export {
+    PutPullReplicationAsHubOperation
+} from "./Documents/Operations/Replication/PutPullReplicationAsHubOperation";
+export {
+    UpdatePullReplicationAsSinkOperation
+} from "./Documents/Operations/Replication/UpdatePullReplicationAsSinkOperation";
 export { GetConflictsCommand } from "./Documents/Commands/GetConflictsCommand";
 export {
     SetIndexesLockOperation,
@@ -195,11 +229,17 @@ export * from "./Documents/Operations/Etl/ResetEtlOperation";
 export * from "./Documents/Operations/DisableDatabaseToggleResult";
 export * from "./Documents/Operations/Expiration/ConfigureExpirationOperation";
 export * from "./Documents/Operations/OngoingTasks/DeleteOngoingTaskOperation";
+export * from "./Documents/Operations/OngoingTasks/GetPullReplicationHubTasksInfoOperation";
+export * from "./Documents/Operations/OngoingTasks/OngoingTaskPullReplicationAsSink";
+export * from "./Documents/Operations/OngoingTasks/OngoingTaskPullReplicationAsHub";
 export * from "./Documents/Operations/OngoingTasks/OngoingTaskType";
 export * from "./Documents/Operations/OngoingTasks/RunningBackup";
 export * from "./Documents/Operations/OngoingTasks/NextBackup";
 export * from "./Documents/Operations/GetOngoingTaskInfoOperation";
 export * from "./Documents/Operations/OngoingTasks/ToggleOngoingTaskStateOperation";
+export * from "./Documents/Operations/Refresh/ConfigureRefreshOperation";
+export * from "./Documents/Operations/Refresh/RefreshConfiguration";
+export * from "./Documents/Operations/Refresh/ConfigureRefreshOperationResult";
 export * from "./Documents/Operations/ToggleDatabasesStateOperation";
 export * from "./Documents/Operations/TransactionsRecording/StartTransactionsRecordingOperation";
 export * from "./Documents/Operations/TransactionsRecording/StopTransactionsRecordingOperation";
@@ -229,6 +269,16 @@ export * from "./Documents/Operations/Backups/UpdatePeriodicBackupOperation";
 export * from "./Documents/Operations/Backups/UpdatePeriodicBackupOperationResult";
 export * from "./Documents/Operations/Backups/UploadProgress";
 export * from "./Documents/Operations/Backups/UploadState";
+export * from "./Documents/Operations/Backups/CompressionLevel";
+export * from "./Documents/Operations/Backups/GetBackupConfigurationScript";
+export * from "./Documents/Operations/Backups/GoogleCloudSettings";
+export * from "./Documents/Operations/Backups/RestoreBackupConfigurationBase";
+export * from "./Documents/Operations/Backups/RestoreFromAzureConfiguration";
+export * from "./Documents/Operations/Backups/RestoreFromGoogleCloudConfiguration";
+export * from "./Documents/Operations/Backups/RestoreFromS3Configuration";
+export * from "./Documents/Operations/Backups/RestoreType";
+export * from "./Documents/Operations/Backups/RetentionPolicy";
+
 
 
 // INDEXES
@@ -237,6 +287,7 @@ export { GetIndexErrorsOperation } from "./Documents/Operations/Indexes/GetIndex
 export * from "./Documents/Indexes/Enums";
 export * from "./Documents/Indexes/IndexDefinition";
 export * from "./Documents/Indexes/Errors";
+export * from "./Documents/Indexes/IndexDefinitionHelper";
 export * from "./Documents/Indexes/IndexFieldOptions";
 export * from "./Documents/Indexes/Spatial";
 export * from "./Documents/Indexes/IndexingStatus";
@@ -253,6 +304,7 @@ export * from "./Documents/Indexes/Spatial/AutoSpatialOptions";
 // REPLICATION
 export * from "./Documents/Replication/ExternalReplication";
 export * from "./Documents/Replication/ReplicationNode";
+export * from "./Documents/Replication/ExternalReplicationBase";
 
 // STORE
 export * from "./Documents/DocumentAbstractions";
@@ -281,16 +333,20 @@ export * from "./Documents/Session/DocumentsById";
 export * from "./Documents/Session/DocumentsChanges";
 export * from "./Documents/Session/DocumentSession";
 export * from "./Documents/Session/EntityToJson";
+export * from "./Documents/Session/ForceRevisionStrategy";
+export * from "./Documents/Session/GraphDocumentQuery";
 export * from "./Documents/Session/GroupByDocumentQuery";
 export * from "./Documents/Session/GroupByField";
 export * from "./Documents/Session/IAbstractDocumentQuery";
 export * from "./Documents/Session/IAdvancedSessionOperations";
 export * from "./Documents/Session/IDocumentQuery";
 export * from "./Documents/Session/IDocumentQueryBase";
+export * from "./Documents/Session/IDocumentQueryBuilder";
 export * from "./Documents/Session/IDocumentQueryBaseSingle";
 export * from "./Documents/Session/IDocumentSession";
 export * from "./Documents/Session/IEnumerableQuery";
 export * from "./Documents/Session/IFilterDocumentQueryBase";
+export * from "./Documents/Session/IGraphDocumentQuery";
 export * from "./Documents/Session/IGroupByDocumentQuery";
 export * from "./Documents/Session/IncludesUtil";
 export * from "./Documents/Session/InMemoryDocumentSessionOperations";
@@ -307,6 +363,11 @@ export * from "./Documents/Session/SessionEvents";
 export * from "./Documents/Session/WhereParams";
 export *  from "./Documents/Session/IMetadataDictionary";
 export *  from "./Documents/Session/DocumentResultStream";
+export * from "./Documents/Session/Loaders/ICounterIncludeBuilder";
+export * from "./Documents/Session/Loaders/IDocumentIncludeBuilder";
+export * from "./Documents/Session/Loaders/IGenericIncludeBuilder";
+export * from "./Documents/Session/Loaders/ISubscriptionIncludeBuilder";
+export * from "./Documents/Session/Loaders/SubscriptionIncludeBuilder";
 export * from "./Documents/Session/Loaders/ILazyLoaderWithInclude";
 export * from "./Documents/Session/Loaders/ILoaderWithInclude";
 export * from "./Documents/Session/Loaders/LazyMultiLoaderWithInclude";
@@ -432,6 +493,7 @@ export * from "./Documents/Operations/Attachments/GetAttachmentOperation";
 
 // CHANGES
 export * from "./Documents/Changes/IndexChange";
+export * from "./Documents/Changes/DatabaseChangesOptions";
 export * from "./Documents/Changes/DocumentChange";
 export * from "./Documents/Changes/CounterChange";
 export * from "./Documents/Changes/IDatabaseChanges";
@@ -455,6 +517,7 @@ export * from "./Documents/Identity/HiloMultiDatabaseIdGenerator";
 
 // Smuggler
 export * from "./Documents/Smuggler/DatabaseItemType";
+export * from "./Documents/Smuggler/DatabaseRecordItemType";
 export * from "./Documents/Smuggler/DatabaseSmuggler";
 export * from "./Documents/Smuggler/DatabaseSmugglerExportOptions";
 export * from "./Documents/Smuggler/IDatabaseSmugglerExportOptions";

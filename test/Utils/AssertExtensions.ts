@@ -30,6 +30,10 @@ export class JavaAssertionBuilder {
         return this;
     }
 
+    public isCloseTo(val: number, offset: number) {
+        assert.ok(Math.abs(val - this._value) <= offset, `Value ${this._value} should be close to: ${val} (max offset = ${offset})`);
+    }
+
     public isNotEqualTo(val) {
         assert.notStrictEqual(this._value, val);
         return this;
@@ -57,6 +61,10 @@ export class JavaAssertionBuilder {
 
     public isSameAs(val) {
         assert.strictEqual(this._value, val);
+    }
+
+    public isNotSameAs(val) {
+        assert.notStrictEqual(this._value, val);
     }
 
     public isNotNull() {
@@ -93,6 +101,43 @@ export class JavaAssertionBuilder {
 
     public isGreaterThan(v) {
         assert.ok(this._value > v, `${this._value} is not greater than ${v}.`);
+        return this;
+    }
+
+    public isLessThan(v) {
+        assert.ok(this._value < v, `${this._value} is not less than ${v}.`);
+        return this;
+    }
+
+    public allMatch(matcher: (v: any) => boolean) {
+        this._value.forEach(v => {
+            assert.ok(matcher(v));
+        });
+    }
+
+    public anyMatch(matcher: (v: any) => boolean) {
+        let hasMatch = false;
+        this._value.forEach(v => {
+            if (matcher(v)) {
+                hasMatch = true;
+            }
+        });
+
+        assert.ok(hasMatch);
+    }
+
+    public anySatisfy(matcher: (v: any) => void) {
+        let satisfy = false;
+        this._value.forEach(v => {
+            try {
+                matcher(v);
+                satisfy = true;
+            } catch (e) {
+                // ignore
+            }
+        });
+
+        assert.ok(satisfy, "None of items satisfy condition");
         return this;
     }
 }

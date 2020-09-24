@@ -14,6 +14,10 @@ import { StringUtil } from "../../Utility/StringUtil";
 import { GetSubscriptionStateCommand } from "../Commands/GetSubscriptionStateCommand";
 import { DropSubscriptionConnectionCommand } from "../Commands/DropSubscriptionConnectionCommand";
 import { GetSubscriptionsCommand } from "../Commands/GetSubscriptionsCommand";
+import { ToggleOngoingTaskStateOperation } from "../Operations/OngoingTasks/ToggleOngoingTaskStateOperation";
+import { SubscriptionIncludeBuilder } from "../Session/Loaders/SubscriptionIncludeBuilder";
+import * as os from "os";
+import { IncludesUtil } from "../Session/IncludesUtil";
 
 export class DocumentSubscriptions implements IDisposable {
     private readonly _store: DocumentStore;
@@ -55,7 +59,7 @@ export class DocumentSubscriptions implements IDisposable {
             };
             return this.create(this._ensureCriteria(options, false), database);
         } else {
-            options = optionsOrDocumentType as SubscriptionCreationOptions;
+            options = this._ensureCriteria(optionsOrDocumentType as SubscriptionCreationOptions, false);
         }
 
         if (!options) {
@@ -107,11 +111,36 @@ export class DocumentSubscriptions implements IDisposable {
 
         if (!criteria.query) {
             if (revisions) {
-                criteria.query = "from " + collectionName + " (Revisions = true) as doc";
+                criteria.query = "from '" + collectionName.replace(/'/g, "\'") + "' (Revisions = true) as doc";
             } else {
-                criteria.query = "from " + collectionName + " as doc";
+                criteria.query = "from '" + collectionName.replace(/'/g, "\'") + "' as doc";
             }
         }
+        if (criteria.includes) {
+            const builder = new SubscriptionIncludeBuilder(this._store.conventions);
+            criteria.includes(builder);
+
+            if (builder.documentsToInclude && builder.documentsToInclude.size) {
+                criteria.query += os.EOL + "include ";
+
+                let first = true;
+                for (const inc of builder.documentsToInclude) {
+                    const include = "doc." + inc;
+                    if (!first) {
+                        criteria.query += ",";
+                    }
+                    first = false;
+
+                    let escapedInclude: string;
+                    if (IncludesUtil.requiresQuotes(include, x => escapedInclude = x)) {
+                        criteria.query += "'" + escapedInclude + "'";
+                    } else {
+                        criteria.query += include;
+                    }
+                }
+            }
+        }
+
         return criteria;
     }
 
@@ -334,5 +363,21 @@ export class DocumentSubscriptions implements IDisposable {
 
         const command = new DropSubscriptionConnectionCommand(name);
         return requestExecutor.execute(command);
+    }
+
+    public async enable(name: string)
+    public async enable(name: string, database: string)
+    public async enable(name: string, database?: string) {
+        const operation = new ToggleOngoingTaskStateOperation(name, "Subscription", false);
+        await this._store.maintenance.forDatabase(database || this._store.database)
+            .send(operation);
+    }
+
+    public async disable(name: string)
+    public async disable(name: string, database: string)
+    public async disable(name: string, database?: string) {
+        const operation = new ToggleOngoingTaskStateOperation(name, "Subscription", true);
+        await this._store.maintenance.forDatabase(database || this._store.database)
+            .send(operation);
     }
 }

@@ -26,11 +26,14 @@ export class GetServerWideOperationStateCommand extends RavenCommand<IRavenRespo
     private readonly _id: number;
     private _conventions: DocumentConventions;
 
-    public constructor(conventions: DocumentConventions, id: number) {
+    public constructor(conventions: DocumentConventions, id: number)
+    public constructor(conventions: DocumentConventions, id: number, nodeTag: string)
+    public constructor(conventions: DocumentConventions, id: number, nodeTag?: string) {
         super();
 
         this._conventions = conventions;
         this._id = id;
+        this._selectedNodeTag = nodeTag;
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {

@@ -1,4 +1,4 @@
-import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
+import { RavenCommand } from "../../Http/RavenCommand";
 import { ClusterTopology } from "../../Http/ClusterTopology";
 import { HttpRequestParameters } from "../../Primitives/Http";
 import { ServerNode } from "../../Http/ServerNode";
@@ -9,6 +9,7 @@ export class ClusterTopologyResponse {
     public leader: string;
     public nodeTag: string;
     public topology: ClusterTopology;
+    public etag: number;
     public status: Map<string, NodeStatus>;
 }
 
@@ -38,7 +39,14 @@ export class GetClusterTopologyCommand extends RavenCommand<ClusterTopologyRespo
         }
 
         let body: string = null;
-        await this._defaultPipeline(x => body = x).process(bodyStream)
+        await this._pipeline<ClusterTopologyResponse>()
+            .collectBody(b => body = b)
+            .parseJsonSync()
+            .objectKeysTransform({
+                defaultTransform: "camel",
+                ignorePaths: [/topology\.(members|promotables|watchers|allNodes)\./i]
+            })
+            .process(bodyStream)
             .then(result => {
                 const clusterTpl = Object.assign(new ClusterTopology(), result.topology);
                 this.result = Object.assign(result as ClusterTopologyResponse, { topology: clusterTpl });

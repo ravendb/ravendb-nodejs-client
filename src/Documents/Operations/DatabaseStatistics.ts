@@ -3,6 +3,7 @@ import { Size } from "../../Utility/SizeUtil";
 
 export interface DatabaseStatistics {
     lastDocEtag: number;
+    lastDatabaseEtag: number;
     countOfIndexes: number;
     countOfDocuments: number;
     countOfRevisionDocuments: number;

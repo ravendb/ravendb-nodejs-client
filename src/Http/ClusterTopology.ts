@@ -2,6 +2,7 @@ export class ClusterTopology {
 
     public lastNodeId: string;
     public topologyId: string;
+    public etag: number;
 
     public members: { [key: string]: string };
     public promotables: { [key: string]: string };

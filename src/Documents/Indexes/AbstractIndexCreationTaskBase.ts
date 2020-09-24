@@ -1,14 +1,18 @@
 import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { IndexDefinition } from "./IndexDefinition";
-import { IndexPriority, IndexLockMode, FieldIndexing, FieldStorage, FieldTermVector } from "./Enums";
+import { IndexConfiguration, IndexDefinition } from "./IndexDefinition";
+import { IndexPriority, IndexLockMode } from "./Enums";
 import { IDocumentStore } from "../IDocumentStore";
 import { PutIndexesOperation } from "../Operations/Indexes/PutIndexesOperation";
-import { SpatialOptions } from "./Spatial";
 import { ErrorFirstCallback } from "../../Types/Callbacks";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { passResultToCallback } from "../../Utility/PromiseUtil";
 
 export abstract class AbstractIndexCreationTaskBase {
+
+
+    protected constructor() {
+        this.configuration = {};
+    }
 
     /**
      *  Creates the index definition.
@@ -17,6 +21,7 @@ export abstract class AbstractIndexCreationTaskBase {
     
     public conventions: DocumentConventions;
     protected additionalSources: { [key: string]: string };
+    public configuration: IndexConfiguration;
     public priority: IndexPriority;
     public lockMode: IndexLockMode;
 

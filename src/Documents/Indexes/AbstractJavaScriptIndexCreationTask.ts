@@ -35,24 +35,50 @@ export class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
         this._definition.reduce = value;
     }
 
-    public get configuration() {
-        return this._definition.configuration;
-    }
-
-    public set configuration(value) {
-        this._definition.configuration = value;
-    }
-    
     public get isMapReduce(): boolean {
         return !!this.reduce;
     }
 
+    /**
+     * @return If not null than each reduce result will be created as a document in the specified collection name.
+     */
     public get outputReduceToCollection() {
         return this._definition.outputReduceToCollection;
     }
 
+    /**
+     * @param value If not null than each reduce result will be created as a document in the specified collection name.
+     */
     public set outputReduceToCollection(value) {
         this._definition.outputReduceToCollection = value;
+    }
+
+    /**
+     * @return Defines a collection name for reference documents created based on provided pattern
+     */
+    public get patternReferencesCollectionName() {
+        return this._definition.patternReferencesCollectionName;
+    }
+
+    /**
+     * @param value Defines a collection name for reference documents created based on provided pattern
+     */
+    public set patternReferencesCollectionName(value: string) {
+        this._definition.patternReferencesCollectionName = value;
+    }
+
+    /**
+     * @return Defines a collection name for reference documents created based on provided pattern
+     */
+    public get patternForOutputReduceToCollectionReferences() {
+        return this._definition.patternForOutputReduceToCollectionReferences;
+    }
+
+    /**
+     * @param value Defines a collection name for reference documents created based on provided pattern
+     */
+    public set patternForOutputReduceToCollectionReferences(value: string) {
+        this._definition.patternForOutputReduceToCollectionReferences = value;
     }
 
     public createIndexDefinition(): IndexDefinition {

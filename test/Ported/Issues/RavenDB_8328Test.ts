@@ -36,14 +36,14 @@ describe("Issue RavenDB-8328", function () {
             let q = session.query<Item>(Item)
                 .spatial(new PointField("latitude", "longitude"), f => f.withinRadius(10, 10, 20));
             let iq = q.getIndexQuery();
-            assert.strictEqual(iq.query, "from Items " +
+            assert.strictEqual(iq.query, "from 'Items' " +
                 "where spatial.within(spatial.point(latitude, longitude), spatial.circle($p0, $p1, $p2))");
 
             q = session.query<Item>(Item)
                 .spatial(new WktField("shapeWkt"), f => f.withinRadius(10, 10, 20));
             iq = q.getIndexQuery();
             assert.strictEqual(iq.query,
-                "from Items where spatial.within(spatial.wkt(shapeWkt), spatial.circle($p0, $p1, $p2))");
+                "from 'Items' where spatial.within(spatial.wkt(shapeWkt), spatial.circle($p0, $p1, $p2))");
         }
 
         {

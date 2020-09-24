@@ -1,5 +1,4 @@
 import { CONSTANTS } from "../../../Constants";
-import { getIgnoreKeyCaseTransformKeysFromDocumentMetadata } from "../Docs";
 import { CasingConvention } from "../../../Utility/ObjectUtil";
 import {
     ObjectKeyCaseTransformStreamOptionsBase,

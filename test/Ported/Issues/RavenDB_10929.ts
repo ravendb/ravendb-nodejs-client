@@ -47,6 +47,14 @@ describe("RavenDB_10929Test", function () {
         await assertThrows(async () => {
             const session = store.openSession();
             await session.store(new Company());
+        }, err => {
+            assertThat(err.name)
+                .isEqualTo("DatabaseDisabledException");
+        })
+
+        await assertThrows(async () => {
+            const session = store.openSession();
+            await session.store(new Company(), "id");
             await session.saveChanges();
         }, err => {
             assertThat(err.name)

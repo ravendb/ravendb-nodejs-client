@@ -11,7 +11,6 @@ import { SuggestionBase } from "../Queries/Suggestions/SuggestionBase";
 import { HighlightingParameters } from "../Queries/Highlighting/HighlightingParameters";
 import { ValueCallback } from "../../Types/Callbacks";
 import { Highlightings } from "../Queries/Highlighting/Hightlightings";
-import { IIncludeBuilder } from "../Session/Loaders/IIncludeBuilder";
 import { IncludeBuilderBase } from "./Loaders/IncludeBuilderBase";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 
@@ -276,9 +275,17 @@ export interface IAbstractDocumentQuery<T> {
      */
     _orderBy(field: string, ordering: OrderingType): void;
 
+    /**
+     * Order the results by the specified fields
+     * The field is the name of the field to sort using sorterName
+     */
+    _orderBy(field: string, options: { sorterName: string }): void;
+
     _orderByDescending(field: string): void;
 
     _orderByDescending(field: string, ordering: OrderingType): void;
+
+    _orderByDescending(field: string, options: { sorterName: string }): void;
 
     _orderByScore(): void;
 
@@ -344,17 +351,25 @@ export interface IAbstractDocumentQuery<T> {
 
     _orderByDistance(fieldName: string, latitude: number, longitude: number): void;
 
+    _orderByDistance(fieldName: string, latitude: number, longitude: number, roundFactor: number): void;
+
     _orderByDistance(field: DynamicSpatialField, shapeWkt: string): void;
 
     _orderByDistance(fieldName: string, shapeWkt: string): void;
+
+    _orderByDistance(fieldName: string, shapeWkt: string, roundFactor: number): void;
 
     _orderByDistanceDescending(field: DynamicSpatialField, latitude: number, longitude: number): void;
 
     _orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): void;
 
+    _orderByDistanceDescending(fieldName: string, latitude: number, longitude: number, roundFactor: number): void;
+
     _orderByDistanceDescending(field: DynamicSpatialField, shapeWkt: string): void;
 
     _orderByDistanceDescending(fieldName: string, shapeWkt: string): void;
+
+    _orderByDistanceDescending(fieldName: string, shapeWkt: string, roundFactor: number): void;
 
     _moreLikeThis(): MoreLikeThisScope;
 
@@ -365,6 +380,8 @@ export interface IAbstractDocumentQuery<T> {
     // TBD void AggregateUsing(string facetSetupDocumentId);
 
     _suggestUsing(suggestion: SuggestionBase);
+
+    parameterPrefix: string;
 
     iterator(): Promise<IterableIterator<T>>;
 }

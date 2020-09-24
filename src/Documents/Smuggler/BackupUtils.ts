@@ -15,11 +15,19 @@ export class BackupUtils {
         BackupUtils.LEGACY_INCREMENTAL_BACKUP_EXTENSION,
         BackupUtils.LEGACY_FULL_BACKUP_EXTENSION,
         CONSTANTS.Documents.PeriodicBackup.INCREMENTAL_BACKUP_EXTENSION,
-        CONSTANTS.Documents.PeriodicBackup.FULL_BACKUP_EXTENSION
+        CONSTANTS.Documents.PeriodicBackup.ENCRYPTED_INCREMENTAL_BACKUP_EXTENSION,
+        CONSTANTS.Documents.PeriodicBackup.FULL_BACKUP_EXTENSION,
+        CONSTANTS.Documents.PeriodicBackup.ENCRYPTED_FULL_BACKUP_EXTENSION
     ];
+
+    public static isSnapshot(extension: string) {
+        return StringUtil.equalsIgnoreCase(CONSTANTS.Documents.PeriodicBackup.SNAPSHOT_EXTENSION, extension)
+            || StringUtil.equalsIgnoreCase(CONSTANTS.Documents.PeriodicBackup.ENCRYPTED_FULL_BACKUP_EXTENSION, extension);
+    }
 
     public static isIncrementalBackupFile(extension: string): boolean {
         return StringUtil.equalsIgnoreCase(CONSTANTS.Documents.PeriodicBackup.INCREMENTAL_BACKUP_EXTENSION, extension)
+            || StringUtil.equalsIgnoreCase(CONSTANTS.Documents.PeriodicBackup.ENCRYPTED_INCREMENTAL_BACKUP_EXTENSION, extension)
             || StringUtil.equalsIgnoreCase(BackupUtils.LEGACY_INCREMENTAL_BACKUP_EXTENSION, extension);
     }
 

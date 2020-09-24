@@ -32,6 +32,22 @@ describe("SubscriptionsBasicTest", function () {
     afterEach(async () =>
         await disposeTestDocumentStore(store));
 
+    it("canDisableSubscriptionViaApi", async () => {
+        const subscription = await store.subscriptions.create(User);
+
+        await store.subscriptions.disable(subscription);
+
+        let subscriptions = await store.subscriptions.getSubscriptions(0, 10);
+        assertThat(subscriptions[0].disabled)
+            .isTrue();
+
+        await store.subscriptions.enable(subscription);
+
+        subscriptions = await store.subscriptions.getSubscriptions(0, 10);
+        assertThat(subscriptions[0].disabled)
+            .isFalse();
+    });
+
     it("can delete subscription", async function() {
         const id1 = await store.subscriptions.create(User);
         const id2 = await store.subscriptions.create(User);
