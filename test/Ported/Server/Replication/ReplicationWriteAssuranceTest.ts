@@ -47,7 +47,7 @@ describe("ReplicationWriteAssuranceTest", function () {
                     store.initialize();
 
                     const session = store.openSession();
-                    assertThat(session.load("users/1", User))
+                    assertThat(await session.load("users/1", User))
                         .isNotNull();
                 } finally {
                     store.dispose();
