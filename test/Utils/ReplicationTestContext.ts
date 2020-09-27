@@ -32,7 +32,7 @@ export class ReplicationTestContext {
             await s.saveChanges();
         }
 
-        assertThat(this.waitForDocumentToReplicate(dst, id, 15_000, Marker))
+        assertThat(await this.waitForDocumentToReplicate(dst, id, 15_000, Marker))
             .isNotNull();
     }
 
