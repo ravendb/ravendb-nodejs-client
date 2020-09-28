@@ -437,6 +437,11 @@ export class ClusterTestContext extends RavenTestDriver implements IDisposable {
         const cluster = new ClusterController();
         cluster.nodes = [];
 
+        customSettings = {
+            "Cluster.ElectionTimeoutInMs": "3000",
+            ...customSettings
+        }
+
         const allowedNodeTags = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
 
         let leaderIndex = 0;
