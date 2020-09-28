@@ -42,7 +42,9 @@ describe("HttpsTest", function () {
         })
     });
 
-    it("can crud certificates", async () => {
+    it("can crud certificates", async function () {
+        this.timeout(60_000);
+
         let cert1Thumbprint: string;
         let cert2Thumbprint: string;
 
