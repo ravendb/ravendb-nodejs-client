@@ -289,7 +289,7 @@ import { PullReplicationDefinition } from "../../../../src/Documents/Operations/
                 }
 
                 await setupPullReplication(definitionName, sink, hub);
-                assertThat(replication.waitForDocumentToReplicate<User>(sink, "users/1", 3_000, User))
+                assertThat(await replication.waitForDocumentToReplicate<User>(sink, "users/1", 3_000, User))
                     .isNotNull();
 
                 const pullDefinition: PullReplicationDefinition = {
