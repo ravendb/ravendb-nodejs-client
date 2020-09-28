@@ -65,7 +65,7 @@ describe("ClusterOperationTest", function () {
         }
     });
 
-    it("nextIdentityForOperationShouldBroadcastAndFail", async () => {
+    it.skip("nextIdentityForOperationShouldBroadcastAndFail", async () => {
         const cluster = await testContext.createRaftCluster(3);
         try {
             const database = testContext.getDatabaseName();
