@@ -376,6 +376,7 @@ export * from "./Documents/Session/DocumentQueryCustomization";
 export * from "./Documents/Session/DocumentSessionAttachments";
 export * from "./Documents/Session/DocumentSessionAttachmentsBase";
 export * from "./Documents/Session/DocumentSessionRevisions";
+export * from "./Documents/Session/DocumentSessionRevisionsBase";
 export * from "./Documents/Session/IAttachmentsSessionOperations";
 export * from "./Documents/Session/IDocumentQueryCustomization";
 export * from "./Documents/Session/IRevisionsSessionOperations";
