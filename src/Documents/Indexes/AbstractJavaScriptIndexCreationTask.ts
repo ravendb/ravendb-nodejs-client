@@ -7,8 +7,6 @@ export class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
 
     protected constructor() {
         super();
-        this._definition.lockMode = "Unlock";
-        this._definition.priority = "Normal";
     }
 
     public get maps() {
@@ -83,12 +81,16 @@ export class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
 
     public createIndexDefinition(): IndexDefinition {
         this._definition.type = this.isMapReduce ? "JavaScriptMapReduce" : "JavaScriptMap";
+        this._definition.name = this.getIndexName();
 
         if (this.additionalSources) {
             this._definition.additionalSources = this.additionalSources;
         } else {
             this._definition.additionalSources = {};
         }
+        this._definition.configuration = this.configuration;
+        this._definition.lockMode = this.lockMode;
+        this._definition.priority = this.priority;
 
         return this._definition;
     }

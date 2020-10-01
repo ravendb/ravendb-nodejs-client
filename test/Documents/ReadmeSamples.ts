@@ -167,6 +167,7 @@ describe("Readme query samples", function () {
                         // attachment.data is a Readable
                         attachment.data
                             .pipe(fs.createWriteStream(".test/tubes.png"))
+                            .on("error", done)
                             .on("finish", () => {
                                 attachment.dispose();
                                 done();

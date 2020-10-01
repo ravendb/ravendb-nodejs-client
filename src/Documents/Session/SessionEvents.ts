@@ -4,6 +4,7 @@ import { IDocumentQueryCustomization } from "./IDocumentQueryCustomization";
 import { DocumentType } from "../DocumentAbstractions";
 import { Reference } from "../../Utility/Reference";
 import { Topology } from "../../Http/Topology";
+import { HttpRequest, HttpRequestParameters, HttpResponse } from "../../Primitives/Http";
 
 export interface SessionEventsEmitter {
     on(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
@@ -207,5 +208,35 @@ export class TopologyUpdatedEventArgs {
 
     public constructor(topology: Topology) {
         this.topology = topology;
+    }
+}
+
+export class BeforeRequestEventArgs {
+    public database: string;
+    public url: string;
+    public request: HttpRequestParameters;
+    public attemptNumber: number;
+
+    public constructor(database: string, url: string, request: HttpRequestParameters, attemptNumber: number) {
+        this.database = database;
+        this.url = url;
+        this.request = request;
+        this.attemptNumber = attemptNumber;
+    }
+}
+
+export class SucceedRequestEventArgs {
+    public database: string;
+    public url: string;
+    public response: HttpResponse;
+    public request: HttpRequestParameters;
+    public attemptNumber: number;
+
+    public constructor(database: string, url: string, response: HttpResponse, request: HttpRequestParameters, attemptNumber: number) {
+        this.database = database;
+        this.url = url;
+        this.response = response;
+        this.request = request;
+        this.attemptNumber = attemptNumber;
     }
 }

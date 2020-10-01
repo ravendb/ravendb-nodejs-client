@@ -163,6 +163,8 @@ export class BatchOperation {
         documentInfo.metadataInstance = null;
         documentInfo.metadata = ObjectUtil.clone(documentInfo.metadata);
 
+        documentInfo.metadata["@change-vector"] = documentInfo.changeVector;
+
         const documentCopy = ObjectUtil.clone(documentInfo.document);
         documentCopy[CONSTANTS.Documents.Metadata.KEY] = documentInfo.metadata;
 

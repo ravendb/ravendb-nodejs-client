@@ -26,6 +26,8 @@ export abstract class AbstractIndexCreationTask extends AbstractGenericIndexCrea
         indexDefinitionBuilder.patternReferencesCollectionName = this.patternReferencesCollectionName;
         indexDefinitionBuilder.additionalSources = this.additionalSources;
         indexDefinitionBuilder.configuration = this.configuration;
+        indexDefinitionBuilder.lockMode = this.lockMode;
+        indexDefinitionBuilder.priority = this.priority;
 
         return indexDefinitionBuilder.toIndexDefinition(this.conventions);
     }

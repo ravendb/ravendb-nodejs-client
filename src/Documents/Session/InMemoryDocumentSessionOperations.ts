@@ -661,12 +661,18 @@ export abstract class InMemoryDocumentSessionOperations
         }
     }
 
-    public registerMissing(id: string): void {
+    public registerMissing(idOrIds: string | string[]): void {
         if (this.noTracking) {
             return;
         }
 
-        this._knownMissingIds.add(id);
+        if (TypeUtil.isArray(idOrIds)) {
+            for (const id of idOrIds) {
+                this._knownMissingIds.add(id);
+            }
+        } else {
+            this._knownMissingIds.add(idOrIds);
+        }
     }
 
     public unregisterMissing(id: string) {
@@ -1541,6 +1547,12 @@ export abstract class InMemoryDocumentSessionOperations
         documentInfo.document = document;
 
         Object.assign(entity, documentInfo.entity);
+
+        const documentInfoById = this.documentsById.getValue(documentInfo.id);
+
+        if (documentInfoById) {
+            documentInfoById.entity = entity;
+        }
     }
 
     /**

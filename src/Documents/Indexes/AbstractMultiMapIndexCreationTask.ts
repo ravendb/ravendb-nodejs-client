@@ -34,6 +34,8 @@ export class AbstractMultiMapIndexCreationTask extends AbstractIndexCreationTask
         indexDefinitionBuilder.patternReferencesCollectionName = this.patternReferencesCollectionName;
         indexDefinitionBuilder.additionalSources = this.additionalSources;
         indexDefinitionBuilder.configuration = this.configuration;
+        indexDefinitionBuilder.lockMode = this.lockMode;
+        indexDefinitionBuilder.priority = this.priority;
 
         const indexDefinition = indexDefinitionBuilder.toIndexDefinition(this.conventions, false);
         indexDefinition.maps = new Set(this.maps);

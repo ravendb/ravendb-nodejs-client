@@ -175,12 +175,13 @@ export class LoadOperation {
     public setResult(result: GetDocumentsResult): void {
         this._resultsSet = true;
 
-        if (!result) {
-            return;
-        }
-        
         if (this._session.noTracking) {
             this._results = result;
+            return;
+        }
+
+        if (!result) {
+            this._session.registerMissing(this._ids);
             return;
         }
 
@@ -198,6 +199,13 @@ export class LoadOperation {
 
             const newDocumentInfo = DocumentInfo.getNewDocumentInfo(document);
             this._session.documentsById.add(newDocumentInfo);
+        }
+
+        for (const id of this._ids) {
+            const value = this._session.documentsById.getValue(id);
+            if (!value) {
+                this._session.registerMissing(id);
+            }
         }
 
         this._session.registerMissingIncludes(result.results, result.includes, this._includes);
