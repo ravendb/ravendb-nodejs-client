@@ -1,6 +1,7 @@
 import { IDocumentStore } from "../../../src";
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
 import { assertThat } from "../../Utils/AssertExtensions";
+import { stringToReadable } from "../../../src/Utility/StreamUtil";
 
 describe("RavenDB_15521", function () {
 
@@ -25,7 +26,7 @@ describe("RavenDB_15521", function () {
 
             const attachment = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
-            session.advanced.attachments.store(doc, "TestAttachment", attachment);
+            session.advanced.attachments.store(doc, "TestAttachment", stringToReadable(attachment));
 
             await session.saveChanges();
 
