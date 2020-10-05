@@ -28,6 +28,7 @@ export class GetTcpInfoForRemoteTaskCommand extends RavenCommand<TcpConnectionIn
         this._remoteTask = remoteTask;
         this._tag = tag;
         this._verifyDatabase = verifyDatabase;
+        this.timeout = 15_000;
     }
 
     createRequest(node: ServerNode): HttpRequestParameters {

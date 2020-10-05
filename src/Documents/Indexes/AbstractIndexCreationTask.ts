@@ -2,7 +2,12 @@ import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { IndexDefinition, IndexDefinitionBuilder } from "./IndexDefinition";
 import { AbstractGenericIndexCreationTask } from "./AbstractGenericIndexCreationTask";
 
+/**
+ * Base class for creating indexes
+ */
 export abstract class AbstractIndexCreationTask extends AbstractGenericIndexCreationTask {
+
+    public map: string;
 
     /**
      * Creates the index definition.
@@ -31,23 +36,4 @@ export abstract class AbstractIndexCreationTask extends AbstractGenericIndexCrea
 
         return indexDefinitionBuilder.toIndexDefinition(this.conventions);
     }
-
-    /**
-     * Gets a value indicating whether this instance is map reduce index definition
-     */
-    public get isMapReduce() {
-        return !!this.reduce;
-    }
-
-    /**
-     * Generates index name from type name replacing all _ with /
-     */
-    public getIndexName(): string {
-        return AbstractIndexCreationTask.getIndexNameForCtor(this.constructor.name);
-    }
-
-    public static getIndexNameForCtor(indexCtorName: string) {
-        return super.getIndexNameForCtor(indexCtorName);
-    }
-
 }

@@ -1,7 +1,7 @@
 import { IndexDefinition } from "./IndexDefinition";
 import { AbstractIndexCreationTaskBase } from "./AbstractIndexCreationTaskBase";
 
-export class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTaskBase {
+export class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTaskBase<IndexDefinition> {
 
     private readonly _definition: IndexDefinition = new IndexDefinition();
 
@@ -80,6 +80,7 @@ export class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
     }
 
     public createIndexDefinition(): IndexDefinition {
+        this._definition.name = this.getIndexName();
         this._definition.type = this.isMapReduce ? "JavaScriptMapReduce" : "JavaScriptMap";
         this._definition.name = this.getIndexName();
 

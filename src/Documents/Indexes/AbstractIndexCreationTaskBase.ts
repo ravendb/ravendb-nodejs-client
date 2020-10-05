@@ -6,43 +6,21 @@ import { PutIndexesOperation } from "../Operations/Indexes/PutIndexesOperation";
 import { ErrorFirstCallback } from "../../Types/Callbacks";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { passResultToCallback } from "../../Utility/PromiseUtil";
+import { AbstractCommonApiForIndexes } from "./AbstractCommonApiForIndexes";
+import { IAbstractIndexCreationTask } from "./IAbstractIndexCreationTask";
 
-export abstract class AbstractIndexCreationTaskBase {
+export abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends IndexDefinition>
+    extends AbstractCommonApiForIndexes implements IAbstractIndexCreationTask {
 
-
-    protected constructor() {
-        this.configuration = {};
-    }
 
     /**
      *  Creates the index definition.
      */
-    public abstract createIndexDefinition(): IndexDefinition;
+    public abstract createIndexDefinition(): TIndexDefinition;
     
     public conventions: DocumentConventions;
-    protected additionalSources: { [key: string]: string };
-    public configuration: IndexConfiguration;
     public priority: IndexPriority;
     public lockMode: IndexLockMode;
-
-    /**
-     * Gets a value indicating whether this instance is map reduce index definition
-     * @return true if index is map reduce
-     */
-    public get isMapReduce(): boolean {
-        return false;
-    }
-
-    /**
-     * Generates index name from type name replacing all _ with /
-     */
-    public getIndexName(): string {
-        return AbstractIndexCreationTaskBase.getIndexNameForCtor(this.constructor.name);
-    }
-
-    public static getIndexNameForCtor(indexCtorName: string) {
-        return indexCtorName.replace(/_/g, "/");
-    }
 
     /**
      * Executes the index creation against the specified document store.

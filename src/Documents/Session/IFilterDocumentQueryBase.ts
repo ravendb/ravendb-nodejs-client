@@ -45,7 +45,7 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
     /**
      * Negate the next operation
      */
-    negateNext(): void;
+    negateNext(): TSelf;
 
     /**
      *  Simplified method for opening a new clause within the query

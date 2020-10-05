@@ -12,6 +12,8 @@ import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { COUNTERS } from "../../Constants";
 import { HashCalculator } from "../Queries/HashCalculator";
 import { IRavenObject } from "../../Types/IRavenObject";
+import { TimeSeriesRange } from "../Operations/TimeSeries/TimeSeriesRange";
+import { DateUtil } from "../../Utility/DateUtil";
 
 export interface GetDocumentsCommandCounterOptions {
     counterIncludes?: string[];
@@ -65,6 +67,9 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
     
     private _counters: string[];
     private _includeAllCounters: boolean;
+
+    private _timeSeriesIncludes: TimeSeriesRange[];
+    private _compareExchangeValueIncludes: string[];
 
     private readonly _metadataOnly: boolean;
 
@@ -176,6 +181,20 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             }
         }
 
+        if (this._timeSeriesIncludes) {
+            for (const range of this._timeSeriesIncludes) {
+                query += "&timeseries=" + this._urlEncode(range.name)
+                    + "&from=" + (range.from ? DateUtil.utc.stringify(range.from) : "")
+                    + "&to=" + (range.to ? DateUtil.utc.stringify(range.to) : "");
+            }
+        }
+
+        if (this._compareExchangeValueIncludes) {
+            for (const compareExchangeValue of this._compareExchangeValueIncludes) {
+                query += "&cmpxchg=" + this._urlEncode(compareExchangeValue);
+            }
+        }
+
         let request: HttpRequestParameters = { method: "GET", uri: uriPath + query };
 
         if (this._id) {
@@ -193,6 +212,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         // if it is too big, we fallback to POST (note that means that we can't use the HTTP cache any longer)
         // we are fine with that, requests to load > 1024 items are going to be rare
         const isGet: boolean = Array.from(uniqueIds)
+            .filter(x => x)
             .map(x => x.length)
             .reduce((result, next) => result + next, 0) < 1024;
 

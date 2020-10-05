@@ -202,43 +202,43 @@ export interface IDocumentStore extends IDisposable,
     /**
      * Executes the index creation
      */
-    executeIndex(task: AbstractIndexCreationTaskBase): Promise<void>;
+    executeIndex(task: IAbstractIndexCreationTask): Promise<void>;
 
     /**
      * Executes the index creation
      */
-    executeIndex(task: AbstractIndexCreationTaskBase, database: string): Promise<void>;
+    executeIndex(task: IAbstractIndexCreationTask, database: string): Promise<void>;
 
     /**
      * Executes the index creation
      */
-    executeIndex(task: AbstractIndexCreationTask, callback: ErrorFirstCallback<void>): Promise<void>;
+    executeIndex(task: IAbstractIndexCreationTask, callback: ErrorFirstCallback<void>): Promise<void>;
 
     /**
      * Executes the index creation
      */
-    executeIndex(task: AbstractIndexCreationTask, database: string, callback: ErrorFirstCallback<void>): Promise<void>;
+    executeIndex(task: IAbstractIndexCreationTask, database: string, callback: ErrorFirstCallback<void>): Promise<void>;
 
     /**
      * Executes the index creation
      */
-    executeIndexes(tasks: AbstractIndexCreationTask[]): Promise<void>;
+    executeIndexes(tasks: IAbstractIndexCreationTask[]): Promise<void>;
 
     /**
      * Executes the index creation
      */
-    executeIndexes(tasks: AbstractIndexCreationTaskBase[], database: string): Promise<void>;
+    executeIndexes(tasks: IAbstractIndexCreationTask[], database: string): Promise<void>;
 
     /**
      * Executes the index creation
      */
-    executeIndexes(tasks: AbstractIndexCreationTask[], callback: ErrorFirstCallback<void>): Promise<void>;
+    executeIndexes(tasks: IAbstractIndexCreationTask[], callback: ErrorFirstCallback<void>): Promise<void>;
 
     /**
      * Executes the index creation
      */
     executeIndexes(
-        tasks: AbstractIndexCreationTask[], database: string, callback: ErrorFirstCallback<void>): Promise<void>;
+        tasks: IAbstractIndexCreationTask[], database: string, callback: ErrorFirstCallback<void>): Promise<void>;
 
     /**
      * Contains authentication information: client certificate data;

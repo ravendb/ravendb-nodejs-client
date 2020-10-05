@@ -76,15 +76,15 @@ export abstract class DocumentStoreBase
     public abstract openSession(database: string): IDocumentSession;
     public abstract openSession(sessionOptions: SessionOptions): IDocumentSession;
 
-    public executeIndex(task: AbstractIndexCreationTask): Promise<void>;
-    public executeIndex(task: AbstractIndexCreationTask, database: string): Promise<void>;
-    public executeIndex(task: AbstractIndexCreationTask, callback: ErrorFirstCallback<void>): Promise<void>;
+    public executeIndex(task: IAbstractIndexCreationTask): Promise<void>;
+    public executeIndex(task: IAbstractIndexCreationTask, database: string): Promise<void>;
+    public executeIndex(task: IAbstractIndexCreationTask, callback: ErrorFirstCallback<void>): Promise<void>;
     public executeIndex(
-        task: AbstractIndexCreationTask, 
+        task: IAbstractIndexCreationTask,
         database: string, 
         callback: ErrorFirstCallback<void>): Promise<void>;
     public executeIndex(
-        task: AbstractIndexCreationTask, 
+        task: IAbstractIndexCreationTask,
         databaseOrCallback?: string | ErrorFirstCallback<void>, 
         callback?: ErrorFirstCallback<void>): Promise<void> {
         this.assertInitialized();
@@ -96,14 +96,14 @@ export abstract class DocumentStoreBase
         return resultPromise;
     }
 
-    public async executeIndexes(tasks: AbstractIndexCreationTask[]): Promise<void>;
+    public async executeIndexes(tasks: IAbstractIndexCreationTask[]): Promise<void>;
     public async executeIndexes(
-        tasks: AbstractIndexCreationTask[], callback: ErrorFirstCallback<void>): Promise<void>;
+        tasks: IAbstractIndexCreationTask[], callback: ErrorFirstCallback<void>): Promise<void>;
     public async executeIndexes(tasks: AbstractIndexCreationTask[], database: string): Promise<void>;
     public async executeIndexes(
-        tasks: AbstractIndexCreationTask[], database: string, callback: ErrorFirstCallback<void>): Promise<void>;
+        tasks: IAbstractIndexCreationTask[], database: string, callback: ErrorFirstCallback<void>): Promise<void>;
     public async executeIndexes(
-        tasks: AbstractIndexCreationTask[], 
+        tasks: IAbstractIndexCreationTask[],
         databaseOrCallback?: string | ErrorFirstCallback<void>, 
         callback?: ErrorFirstCallback<void>): Promise<void> {
         this.assertInitialized();
@@ -120,6 +120,16 @@ export abstract class DocumentStoreBase
         
         passResultToCallback(resultPromise, callback || TypeUtil.NOOP);
         return resultPromise;
+    }
+
+    private _timeSeriesOperation: TimeSeriesOperations;
+
+    public get timeSeries() {
+        if (!this._timeSeriesOperation) {
+            this._timeSeriesOperation = new TimeSeriesOperations(this);
+        }
+
+        return this._timeSeriesOperation;
     }
 
     private _conventions: DocumentConventions;

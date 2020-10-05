@@ -1,24 +1,23 @@
 import { getLogger } from "../../Utility/LogUtil";
 import { IDocumentStore } from "../IDocumentStore";
-import { AbstractIndexCreationTask } from ".";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { PutIndexesOperation } from "../Operations/Indexes/PutIndexesOperation";
 import { IndexDefinition } from "./IndexDefinition";
-import { AbstractIndexCreationTaskBase } from "./AbstractIndexCreationTaskBase";
+import { IAbstractIndexCreationTask } from "./IAbstractIndexCreationTask";
 
 const log = getLogger({ module: "DocumentStore" });
 
 export class IndexCreation {
 
     public static createIndexes(
-        indexes: AbstractIndexCreationTask[],
+        indexes: IAbstractIndexCreationTask[],
         store: IDocumentStore): Promise<void>;
     public static createIndexes(
-        indexes: AbstractIndexCreationTask[],
+        indexes: IAbstractIndexCreationTask[],
         store: IDocumentStore,
         conventions: DocumentConventions): Promise<void>;
     public static createIndexes(
-        indexes: AbstractIndexCreationTask[],
+        indexes: IAbstractIndexCreationTask[],
         store: IDocumentStore,
         conventions?: DocumentConventions): Promise<void> {
 
@@ -48,7 +47,7 @@ export class IndexCreation {
     }
 
     public static createIndexesToAdd(
-        indexCreationTasks: AbstractIndexCreationTaskBase[], conventions: DocumentConventions)
+        indexCreationTasks: IAbstractIndexCreationTask[], conventions: DocumentConventions)
         : IndexDefinition[] {
         return indexCreationTasks
             .map(x => {

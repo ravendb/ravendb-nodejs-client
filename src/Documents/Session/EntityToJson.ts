@@ -49,8 +49,6 @@ export class EntityToJson {
         return document;
     }
 
-    //TODO: internal static object ConvertToBlittableForCompareExchangeIfNeeded(
-
     private static _convertEntityToJsonInternal(entity: object, conventions: DocumentConventions, documentInfo: DocumentInfo, removeIdentityProperty = true) {
         const entityMapper = conventions.objectMapper;
         let typeInfo: TypeInfo;

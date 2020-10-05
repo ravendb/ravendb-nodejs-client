@@ -2,13 +2,13 @@ import { AbstractIndexCreationTaskBase } from "./AbstractIndexCreationTaskBase";
 import { FieldStorage, FieldIndexing, FieldTermVector } from "./Enums";
 import { SpatialOptions, SpatialOptionsFactory } from "./Spatial";
 import { CONSTANTS } from "../../Constants";
+import { IndexDefinition } from "./IndexDefinition";
 
 /**
  * Base class for creating indexes
  */
-export abstract class AbstractGenericIndexCreationTask extends AbstractIndexCreationTaskBase {
+export abstract class AbstractGenericIndexCreationTask extends AbstractIndexCreationTaskBase<IndexDefinition> {
 
-    protected map: string;
     protected reduce: string;
 
     protected storesStrings: { [key: string]: FieldStorage };
