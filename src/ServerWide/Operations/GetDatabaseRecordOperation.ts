@@ -24,13 +24,11 @@ export class GetDatabaseRecordOperation implements IServerOperation<DatabaseReco
 }
 
 export class GetDatabaseRecordCommand extends RavenCommand<DatabaseRecordWithEtag> {
-    private readonly _conventions: DocumentConventions;
     private readonly _database: string;
 
-    public constructor(conventions: DocumentConventions, database: string) {
+    public constructor(database: string) {
         super();
 
-        this._conventions = conventions;
         this._database = database;
     }
 

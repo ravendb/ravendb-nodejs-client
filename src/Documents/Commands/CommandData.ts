@@ -22,6 +22,9 @@ export type CommandType =
     | "ClientModifyDocumentCommand"
     | "BatchPATCH"
     | "ForceRevisionCreation"
+    | "TimeSeries"
+    | "TimeSeriesBulkInsert"
+    | "TimeSeriesCopy"
     ;
 
 export interface ICommandData {

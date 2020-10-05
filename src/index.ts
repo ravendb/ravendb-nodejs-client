@@ -173,7 +173,6 @@ export {
 } from "./Documents/Operations/Indexes/SetIndexesPriorityOperation";
 export * from "./Documents/Operations/PatchRequest";
 export * from "./Documents/Operations/GetDetailedStatisticsOperation";
-export * from "./Documents/Commands/Batches/BatchCommand";
 export * from "./Documents/Commands/Batches/BatchOptions";
 export * from "./Documents/Commands/Batches/DeleteAttachmentCommandData";
 export * from "./Documents/Commands/Batches/PatchCommandData";

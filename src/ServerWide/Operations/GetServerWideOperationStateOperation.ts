@@ -18,20 +18,18 @@ export class GetServerWideOperationStateOperation implements IServerOperation<IR
     }
 
     public getCommand(conventions: DocumentConventions): RavenCommand<IRavenResponse> {
-        return new GetServerWideOperationStateCommand(DocumentConventions.defaultConventions, this._id);
+        return new GetServerWideOperationStateCommand(this._id);
     }
 }
 
 export class GetServerWideOperationStateCommand extends RavenCommand<IRavenResponse> {
     private readonly _id: number;
-    private _conventions: DocumentConventions;
 
-    public constructor(conventions: DocumentConventions, id: number)
-    public constructor(conventions: DocumentConventions, id: number, nodeTag: string)
-    public constructor(conventions: DocumentConventions, id: number, nodeTag?: string) {
+    public constructor(id: number)
+    public constructor(id: number, nodeTag: string)
+    public constructor(id: number, nodeTag?: string) {
         super();
 
-        this._conventions = conventions;
         this._id = id;
         this._selectedNodeTag = nodeTag;
     }

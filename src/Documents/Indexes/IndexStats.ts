@@ -30,6 +30,7 @@ export interface IndexStats {
     status: IndexRunningStatus;
     entriesCount: number;
     errorsCount: number;
+    sourceType: IndexSourceType;
     isTestIndex: boolean;
 }
 
