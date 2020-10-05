@@ -2,6 +2,7 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { throwError } from "../../../Exceptions";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { ClassConstructor } from "../../../Types";
+import { COMPARE_EXCHANGE } from "../../../Constants";
 
 export interface CompareExchangeResultResponse {
     index: number;
@@ -47,7 +48,7 @@ export class CompareExchangeResult<T> {
         let val = null;
 
         if (raw) {
-            val = raw["Object"];
+            val = raw[COMPARE_EXCHANGE.OBJECT_FIELD_NAME];
         }
 
         return CompareExchangeResult._create(val, index, successful, conventions, clazz);

@@ -47,13 +47,12 @@ export interface GetDocumentsStartingWithOptions
     metadataOnly?: boolean;
 }
 
-export interface DocumentsResult {
-    counterIncludes: IRavenObject;
+export interface GetDocumentsResult {
     includes: IRavenObject;
     results: any[];
-}
-
-export interface GetDocumentsResult extends DocumentsResult {
+    counterIncludes: IRavenObject;
+    timeSeriesIncludes: IRavenObject;
+    compareExchangeValueIncludes: IRavenObject;
     nextPageStart: number;
 }
 

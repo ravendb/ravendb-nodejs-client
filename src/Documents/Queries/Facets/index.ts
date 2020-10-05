@@ -12,6 +12,7 @@ export type FacetAggregation =
     | "Sum";
 
 export interface IFacetValue {
+    name: string;
     range: string;
     count: number;
     sum: number;
@@ -22,6 +23,7 @@ export interface IFacetValue {
 
 export class FacetValue implements IFacetValue {
 
+    public name: string;
     public range: string;
     public count: number;
     public sum: number;
@@ -46,6 +48,9 @@ export class FacetValue implements IFacetValue {
         }
         if (facetVal.average) {
             msg += "Average: " + facetVal.average + ",";
+        }
+        if (facetVal.name) {
+            msg += "Name: " + facetVal.name + ",";
         }
 
         return msg.replace(/;$/, "");

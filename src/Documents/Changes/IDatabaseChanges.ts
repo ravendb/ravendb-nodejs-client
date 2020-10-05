@@ -5,6 +5,7 @@ import { IndexChange } from "./IndexChange";
 import { IChangesObservable } from "./IChangesObservable";
 import { IConnectableChanges } from "./IConnectableChanges";
 import { CounterChange } from "./CounterChange";
+import { TimeSeriesChange } from "./TimeSeriesChange";
 
 export interface IDatabaseChanges extends IConnectableChanges<IDatabaseChanges> {
 
@@ -69,4 +70,28 @@ export interface IDatabaseChanges extends IConnectableChanges<IDatabaseChanges> 
      * Subscribe to changes for all counters from a given document.
      */
     forCountersOfDocument(documentId: string): IChangesObservable<CounterChange>;
+
+    /**
+     * Subscribe to changes for all timeseries.
+     */
+    forAllTimeSeries(): IChangesObservable<TimeSeriesChange>;
+
+    /**
+     * Subscribe to changes for all timeseries with a given name.
+     * @param timeSeriesName Time series name
+     */
+    forTimeSeries(timeSeriesName: string): IChangesObservable<TimeSeriesChange>;
+
+    /**
+     * Subscribe to changes for timeseries from a given document and with given name.
+     * @param documentId Document identifier
+     * @param timeSeriesName Time series name
+     */
+    forTimeSeriesOfDocument(documentId: string, timeSeriesName: string): IChangesObservable<TimeSeriesChange>;
+
+    /**
+     * Subscribe to changes for timeseries from a given document.
+     * @param documentId Document identifier
+     */
+    forTimeSeriesOfDocument(documentId): IChangesObservable<TimeSeriesChange>;
 }

@@ -9,7 +9,6 @@ import { SuggestionResult } from "./SuggestionResult";
 import { InMemoryDocumentSessionOperations } from "../../Session/InMemoryDocumentSessionOperations";
 import { IndexQuery } from "../IndexQuery";
 import { SuggestionsResponseObject } from "../../../Types";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { DocumentSession } from "../../Session/DocumentSession";
 
 export abstract class SuggestionQueryBase {
@@ -29,10 +28,10 @@ export abstract class SuggestionQueryBase {
         this._session.incrementRequestCount();
         await this._session.requestExecutor.execute(command);
 
-        return this._processResults(command.result, this._session.conventions);
+        return this._processResults(command.result);
     }
 
-    private _processResults(queryResult: QueryResult, conventions: DocumentConventions) {
+    private _processResults(queryResult: QueryResult) {
         this._invokeAfterQueryExecuted(queryResult);
 
         const results = {} as SuggestionsResponseObject;
@@ -58,7 +57,7 @@ export abstract class SuggestionQueryBase {
                 this._session.conventions,
                 this._query,
                 result => this._invokeAfterQueryExecuted(result),
-                (result, conventions) => this._processResults(result, conventions)
+                (result, conventions) => this._processResults(result)
             ));
     }
 

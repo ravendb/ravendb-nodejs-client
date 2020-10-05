@@ -23,6 +23,7 @@ import { ServerNode } from "../../Http/ServerNode";
 import { ObjectTypeDescriptor } from "../../Types";
 import { UpdateTopologyParameters } from "../../Http/UpdateTopologyParameters";
 import { TypeUtil } from "../../Utility/TypeUtil";
+import { TimeSeriesChange } from "./TimeSeriesChange";
 
 export class DatabaseChanges implements IDatabaseChanges {
 
@@ -451,6 +452,9 @@ export class DatabaseChanges implements IDatabaseChanges {
             case "CounterChange":
                 states.forEach(state => state.send("Counter", value));
                 break;
+            case "TimeSeriesChange":
+                states.forEach(state => state.send("TimeSeries", value));
+                break;
             case "IndexChange":
                 states.forEach(state => state.send("Index", value));
                 break;
@@ -548,4 +552,85 @@ export class DatabaseChanges implements IDatabaseChanges {
             notification => StringUtil.equalsIgnoreCase(documentId, notification.documentId));
         return taskedObservable;
     }
+
+    public forAllTimeSeries(): IChangesObservable<TimeSeriesChange> {
+        const counter = this._getOrAddConnectionState(
+            "all-timeseries", "watch-all-timeseries", "unwatch-all-timeseries", null);
+
+        const taskedObservable = new ChangesObservable<TimeSeriesChange, DatabaseConnectionState>(
+            "TimeSeries",
+            counter,
+            () => true
+        );
+
+        return taskedObservable;
+    }
+
+    public forTimeSeries(timeSeriesName: string): IChangesObservable<TimeSeriesChange> {
+        if (StringUtil.isNullOrWhitespace(timeSeriesName)) {
+            throwError("InvalidArgumentException", "TimeSeriesName cannot be null or whitespace.");
+        }
+
+        const counter = this._getOrAddConnectionState(
+            "timeseries/" + timeSeriesName, "watch-timeseries", "unwatch-timeseries", timeSeriesName);
+
+        const taskedObservable = new ChangesObservable<TimeSeriesChange, DatabaseConnectionState>(
+            "TimeSeries",
+            counter,
+            notification => StringUtil.equalsIgnoreCase(timeSeriesName, notification.name));
+
+        return taskedObservable;
+    }
+
+    public forTimeSeriesOfDocument(documentId: string)
+    public forTimeSeriesOfDocument(documentId: string, timeSeriesName: string)
+    public forTimeSeriesOfDocument(documentId: string, timeSeriesName?: string) {
+        if (timeSeriesName) {
+            return this._forTimeSeriesOfDocumentWithNameInternal(documentId, timeSeriesName);
+        } else {
+            return this._forTimeSeriesOfDocumentInternal(documentId);
+        }
+    }
+
+    private _forTimeSeriesOfDocumentInternal(documentId: string) {
+        if (StringUtil.isNullOrWhitespace(documentId)) {
+            throwError("InvalidArgumentException", "DocumentId cannot be null or whitespace.");
+        }
+
+        const counter = this._getOrAddConnectionState(
+            "document/" + documentId + "/timeseries", "watch-all-document-timeseries", "unwatch-all-document-timeseries", documentId);
+
+        const taskedObservable = new ChangesObservable<TimeSeriesChange, DatabaseConnectionState>(
+            "TimeSeries",
+            counter,
+            notification => StringUtil.equalsIgnoreCase(documentId, notification.documentId)
+        );
+
+        return taskedObservable;
+    }
+
+    private _forTimeSeriesOfDocumentWithNameInternal(documentId: string, timeSeriesName: string) {
+        if (StringUtil.isNullOrWhitespace(documentId)) {
+            throwError("InvalidArgumentException", "DocumentId cannot be null or whitespace.");
+        }
+
+        if (StringUtil.isNullOrWhitespace(timeSeriesName)) {
+            throwError("InvalidArgumentException", "TimeSeriesName cannot be null or whitespace.");
+        }
+
+        const counter = this._getOrAddConnectionState(
+            "document/" + documentId + "/timeseries/" + timeSeriesName,
+            "watch-document-timeseries",
+            "unwatch-document-timeseries", null, [ documentId, timeSeriesName ]);
+
+        const taskedObservable = new ChangesObservable<TimeSeriesChange, DatabaseConnectionState>(
+            "TimeSeries",
+            counter,
+            notification => StringUtil.equalsIgnoreCase(timeSeriesName, notification.name)
+                && StringUtil.equalsIgnoreCase(documentId, notification.documentId)
+        );
+
+        return taskedObservable;
+    }
+
 }

@@ -9,16 +9,16 @@ export class HiloMultiDatabaseIdGenerator extends AbstractHiloIdGenerator implem
         super(store);
     }
 
-    public generateDocumentId(dbName: string, entity: object): Promise<string> {
-        return this._getGeneratorForDatabase(dbName || this._store.database)
+    public generateDocumentId(database: string, entity: object): Promise<string> {
+        return this._getGeneratorForDatabase(database || this._store.database)
             .generateDocumentId(entity);
     }
 
-    protected _getGeneratorForDatabase(dbName: string): IHiloIdGenerator {
-        if (!(dbName in this._generators)) {
-            this._generators[dbName] = new HiloMultiTypeIdGenerator(this._store, dbName);
+    protected _getGeneratorForDatabase(database: string): IHiloIdGenerator {
+        if (!(database in this._generators)) {
+            this._generators[database] = new HiloMultiTypeIdGenerator(this._store, database);
         }
 
-        return this._generators[dbName];
+        return this._generators[database];
     }
 }

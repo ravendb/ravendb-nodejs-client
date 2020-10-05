@@ -468,6 +468,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         Promise<BatchFromServer> {
         const incomingBatch = [] as SubscriptionConnectionServerMessage[];
         const includes = [];
+        const counterIncludes: CounterIncludeItem[] = [];
 
         let endOfBatch = false;
 
@@ -483,6 +484,9 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                     break;
                 case "Includes":
                     includes.push(receivedMessage.includes);
+                    break;
+                case "CounterIncludes":
+                    counterIncludes.push(receivedMessage.counterIncludes, receivedMessage.includedCounterNames);
                     break;
                 case "EndOfBatch":
                     endOfBatch = true;
@@ -507,7 +511,8 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         }
         return {
             messages: incomingBatch,
-            includes
+            includes,
+            counterIncludes
         };
     }
 

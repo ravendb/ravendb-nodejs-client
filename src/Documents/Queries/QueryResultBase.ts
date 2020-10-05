@@ -22,6 +22,10 @@ export abstract class QueryResultBase<TResult, TInclude> {
 
     public includedCounterNames: { [key: string]: string[] };
 
+    public timeSeriesIncludes: any;
+
+    public compareExchangeValueIncludes: any;
+
     public nodeTag: string;
 
     public timings: QueryTimings;
