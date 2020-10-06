@@ -18,11 +18,11 @@ export class LazySuggestionQueryOperation implements ILazyOperation {
     private readonly _indexQuery: IndexQuery;
     private readonly _invokeAfterQueryExecuted: (result: QueryResult) => void;
     private readonly _processResults:
-        (result: QueryResult, conventions: DocumentConventions) => SuggestionsResponseObject;
+        (result: QueryResult) => SuggestionsResponseObject;
 
     public constructor(conventions: DocumentConventions, indexQuery: IndexQuery,
                        invokeAfterQueryExecuted: (result: QueryResult) => void,
-                       processResults: (result: QueryResult, conventions: DocumentConventions)
+                       processResults: (result: QueryResult)
                            => SuggestionsResponseObject) {
         this._conventions = conventions;
         this._indexQuery = indexQuery;
@@ -78,7 +78,7 @@ export class LazySuggestionQueryOperation implements ILazyOperation {
     }
 
     private _handleResponse(queryResult: QueryResult) {
-        this._result = this._processResults(queryResult, this._conventions);
+        this._result = this._processResults(queryResult);
         this._queryResult = queryResult;
     }
 }

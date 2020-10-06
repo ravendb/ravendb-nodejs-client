@@ -10,6 +10,7 @@ import { TypeUtil } from "../../../Utility/TypeUtil";
 import { throwError } from "../../../Exceptions";
 import { ObjectTypeDescriptor, EntitiesCollectionObject } from "../../../Types";
 import { StringUtil } from "../../../Utility/StringUtil";
+import { TimeSeriesRange } from "../../Operations/TimeSeries/TimeSeriesRange";
 
 const log = getLogger({ module: "LoadOperation" });
 
@@ -20,7 +21,9 @@ export class LoadOperation {
     private _ids: string[];
     private _includes: string[];
     private _countersToInclude: string[];
+    private _compareExchangeValuesToInclude: string[];
     private _includeAllCounters: boolean;
+    private _timeSeriesToInclude: TimeSeriesRange[];
 
     private _resultsSet: boolean;
     private _results: GetDocumentsResult;

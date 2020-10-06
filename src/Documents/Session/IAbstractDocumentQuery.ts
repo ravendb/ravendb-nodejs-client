@@ -141,7 +141,7 @@ export interface IAbstractDocumentQuery<T> {
     /**
      * Negate the next operation
      */
-    negateNext(): void;
+    _negateNext(): void;
 
     /**
      * Check that the field has one of the specified value
@@ -373,7 +373,7 @@ export interface IAbstractDocumentQuery<T> {
 
     _moreLikeThis(): MoreLikeThisScope;
 
-    addAliasToCounterIncludesTokens(fromAlias: string): string;
+    addAliasToIncludesTokens(fromAlias: string): string;
 
     // TBD void AggregateBy(FacetBase facet);
     // TBD IAggregationDocumentQuery<T> AggregateBy(Action<IFacetBuilder<T>> builder);

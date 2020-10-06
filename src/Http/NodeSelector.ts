@@ -70,7 +70,7 @@ export class NodeSelector {
             throwError("AllTopologyNodesDownException", "There are no nodes in the topology at all");
         }
 
-        const index = sessionId % state.topology.nodes.length;
+        const index = Math.abs(sessionId % state.topology.nodes.length);
 
         for (let i = index; i < state.failures.length; i++) {
             if (state.failures[i] === 0

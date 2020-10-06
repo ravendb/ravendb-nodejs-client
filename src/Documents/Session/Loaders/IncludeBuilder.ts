@@ -40,4 +40,16 @@ export class IncludeBuilder extends IncludeBuilderBase implements IIncludeBuilde
         this._includeAllCounters("");
         return this;
     }
+
+    public includeTimeSeries(name: string);
+    public includeTimeSeries(name: string, from: Date, to: Date);
+    public includeTimeSeries(name: string, from?: Date, to?: Date) {
+        this._includeTimeSeries("", name, from, to);
+        return this;
+    }
+
+    public includeCompareExchangeValue(path: string) {
+        this._includeCompareExchangeValue(path);
+        return this;
+    }
 }

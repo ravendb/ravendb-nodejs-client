@@ -167,25 +167,27 @@ export class FacetToken extends QueryToken {
 
     private static _applyAggregations(facet: FacetBase, token: FacetToken): void {
         for (const [aggregationKey, aggregationValue] of facet.aggregations.entries()) {
-            let aggregationToken: FacetAggregationToken;
-            switch (aggregationKey) {
-                case "Max":
-                    aggregationToken = FacetAggregationToken.max(aggregationValue);
-                    break;
-                case "Min":
-                    aggregationToken = FacetAggregationToken.min(aggregationValue);
-                    break;
-                case "Average":
-                    aggregationToken = FacetAggregationToken.average(aggregationValue);
-                    break;
-                case "Sum":
-                    aggregationToken = FacetAggregationToken.sum(aggregationValue);
-                    break;
-                default :
-                    throwError("NotImplementedException", "Unsupported aggregation method: " + aggregationKey);
-            }
+            for (let value of aggregationValue) {
+                let aggregationToken: FacetAggregationToken;
+                switch (aggregationKey) {
+                    case "Max":
+                        aggregationToken = FacetAggregationToken.max(value.name, value.displayName);
+                        break;
+                    case "Min":
+                        aggregationToken = FacetAggregationToken.min(value.name, value.displayName);
+                        break;
+                    case "Average":
+                        aggregationToken = FacetAggregationToken.average(value.name, value.displayName);
+                        break;
+                    case "Sum":
+                        aggregationToken = FacetAggregationToken.sum(value.name, value.displayName);
+                        break;
+                    default :
+                        throwError("NotImplementedException", "Unsupported aggregation method: " + aggregationKey);
+                }
 
-            token._aggregations.push(aggregationToken);
+                token._aggregations.push(aggregationToken);
+            }
         }
     }
 
@@ -240,6 +242,13 @@ export class FacetAggregationToken extends QueryToken {
             default:
                 throwError("InvalidArgumentException", "Invalid aggregation mode: " + this._aggregation);
         }
+
+        if (StringUtil.isNullOrWhitespace(this._fieldDisplayName)) {
+            return;
+        }
+
+        writer.append(" as ");
+        this._writeField(writer, this._fieldDisplayName);
     }
 
     public static max(fieldName: string): FacetAggregationToken

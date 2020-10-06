@@ -6,7 +6,7 @@ export class QueryData {
     public fields: string[];
     public projections: string[];
     public fromAlias: string;
-    public declareToken: DeclareToken;
+    public declareTokens: DeclareToken[];
     public loadTokens: LoadToken[];
     public isCustomFunction: boolean;
     public mapReduce: boolean;
@@ -17,21 +17,21 @@ export class QueryData {
         fields: string[],
         projections: string[],
         fromAlias: string,
-        declareToken: DeclareToken,
+        declareTokens: DeclareToken[],
         loadTokens: LoadToken[],
         isCustomFunction: boolean);
     public constructor(
         fields: string[],
         projections: string[],
         fromAlias: string = null,
-        declareToken: DeclareToken = null,
+        declareTokens: DeclareToken[] = null,
         loadTokens: LoadToken[] = null,
         isCustomFunction: boolean = false) {
 
         this.fields = fields;
         this.projections = projections;
         this.fromAlias = fromAlias;
-        this.declareToken = declareToken;
+        this.declareTokens = declareTokens;
         this.loadTokens = loadTokens;
         this.isCustomFunction = isCustomFunction;
     }

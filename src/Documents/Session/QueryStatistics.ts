@@ -12,10 +12,6 @@ export class QueryStatistics {
     public lastQueryTime: Date;
     public resultEtag: number;
 
-    /**
-     * @deprecated ResultSize is not supported anymore. Will be removed in next major version of the product.
-     */
-    public resultSize: number;
     public nodeTag: string;
 
     public updateQueryStats(qr: QueryResult): void {

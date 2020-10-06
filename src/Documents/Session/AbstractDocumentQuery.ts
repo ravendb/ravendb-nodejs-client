@@ -130,7 +130,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     protected _selectTokens: QueryToken[] = [];
 
     protected _fromToken: FromToken;
-    protected _declareToken: DeclareToken;
+    protected _declareTokens: DeclareToken[];
     protected _loadTokens: LoadToken[];
     public fieldsToFetchToken: FieldsToFetchToken;
 
@@ -237,7 +237,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         indexName: string,
         collectionName: string,
         isGroupBy: boolean,
-        declareToken: DeclareToken,
+        declareTokens: DeclareToken[],
         loadTokens: LoadToken[]);
     protected constructor(
         clazz: DocumentType<T>,
@@ -245,7 +245,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         indexName: string,
         collectionName: string,
         isGroupBy: boolean,
-        declareToken: DeclareToken,
+        declareTokens: DeclareToken[],
         loadTokens: LoadToken[],
         fromAlias: string,
         isProjectInto: boolean
@@ -256,7 +256,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         indexName: string,
         collectionName: string,
         isGroupBy: boolean,
-        declareToken: DeclareToken,
+        declareTokens: DeclareToken[],
         loadTokens: LoadToken[],
         fromAlias: string = null,
         isProjectInto: boolean = false) {
@@ -268,7 +268,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._indexName = indexName;
         this._collectionName = collectionName;
         this._fromToken = FromToken.create(indexName, collectionName, fromAlias);
-        this._declareToken = declareToken;
+        this._declareTokens = declareTokens;
         this._loadTokens = loadTokens;
 
         this._theSession = session;
