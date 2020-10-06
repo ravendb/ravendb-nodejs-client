@@ -48,7 +48,7 @@ export class ToggleDatabasesStateOperation implements IServerOperation<DisableDa
     }
 
     getCommand(conventions: DocumentConventions): RavenCommand<DisableDatabaseToggleResult> {
-        return new ToggleDatabaseStateCommand(conventions, this._parameters, this._disable);
+        return new ToggleDatabaseStateCommand(this._parameters, this._disable);
     }
 }
 
@@ -56,12 +56,8 @@ class ToggleDatabaseStateCommand extends RavenCommand<DisableDatabaseToggleResul
     private readonly _disable: boolean;
     private readonly _parameters: ToggleDatabasesStateParameters;
 
-    public constructor(conventions: DocumentConventions, parameters: ToggleDatabasesStateParameters, disable: boolean) {
+    public constructor(parameters: ToggleDatabasesStateParameters, disable: boolean) {
         super();
-
-        if (!conventions) {
-            throwError("InvalidArgumentException", "Conventions cannot be null");
-        }
 
         if (!parameters) {
             throwError("InvalidArgumentException", "Parameters cannot be null");

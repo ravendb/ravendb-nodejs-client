@@ -1,5 +1,5 @@
 import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { IndexConfiguration, IndexDefinition } from "./IndexDefinition";
+import { IndexDefinition } from "./IndexDefinition";
 import { IndexPriority, IndexLockMode } from "./Enums";
 import { IDocumentStore } from "../IDocumentStore";
 import { PutIndexesOperation } from "../Operations/Indexes/PutIndexesOperation";

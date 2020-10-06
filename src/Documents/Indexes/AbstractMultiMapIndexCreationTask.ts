@@ -1,9 +1,9 @@
-import { AbstractIndexCreationTask } from "./AbstractIndexCreationTask";
 import { throwError } from "../../Exceptions";
 import { IndexDefinition, IndexDefinitionBuilder } from "./IndexDefinition";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { AbstractGenericIndexCreationTask } from "./AbstractGenericIndexCreationTask";
 
-export class AbstractMultiMapIndexCreationTask extends AbstractIndexCreationTask {
+export class AbstractMultiMapIndexCreationTask extends AbstractGenericIndexCreationTask {
 
     private maps: string[] = [];
 
@@ -22,16 +22,16 @@ export class AbstractMultiMapIndexCreationTask extends AbstractIndexCreationTask
         }
 
         const indexDefinitionBuilder = new IndexDefinitionBuilder(this.getIndexName());
-        indexDefinitionBuilder.indexesStrings = this.indexesStrings;
-        indexDefinitionBuilder.analyzersStrings = this.analyzersStrings;
-        indexDefinitionBuilder.reduce = this.reduce;
-        indexDefinitionBuilder.storesStrings = this.storesStrings;
-        indexDefinitionBuilder.suggestionsOptions = this.indexSuggestions;
-        indexDefinitionBuilder.termVectorsStrings = this.termVectorsStrings;
-        indexDefinitionBuilder.spatialIndexesStrings = this.spatialOptionsStrings;
-        indexDefinitionBuilder.outputReduceToCollection = this.outputReduceToCollection;
-        indexDefinitionBuilder.patternForOutputReduceToCollectionReferences = this.patternForOutputReduceToCollectionReferences;
-        indexDefinitionBuilder.patternReferencesCollectionName = this.patternReferencesCollectionName;
+        indexDefinitionBuilder.indexesStrings = this._indexesStrings;
+        indexDefinitionBuilder.analyzersStrings = this._analyzersStrings;
+        indexDefinitionBuilder.reduce = this._reduce;
+        indexDefinitionBuilder.storesStrings = this._storesStrings;
+        indexDefinitionBuilder.suggestionsOptions = this._indexSuggestions;
+        indexDefinitionBuilder.termVectorsStrings = this._termVectorsStrings;
+        indexDefinitionBuilder.spatialIndexesStrings = this._spatialOptionsStrings;
+        indexDefinitionBuilder.outputReduceToCollection = this._outputReduceToCollection;
+        indexDefinitionBuilder.patternForOutputReduceToCollectionReferences = this._patternForOutputReduceToCollectionReferences;
+        indexDefinitionBuilder.patternReferencesCollectionName = this._patternReferencesCollectionName;
         indexDefinitionBuilder.additionalSources = this.additionalSources;
         indexDefinitionBuilder.configuration = this.configuration;
         indexDefinitionBuilder.lockMode = this.lockMode;

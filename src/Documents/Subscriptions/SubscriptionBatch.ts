@@ -12,7 +12,7 @@ import { IDocumentSession } from "../Session/IDocumentSession";
 import { SessionOptions } from "../Session/SessionOptions";
 import { InMemoryDocumentSessionOperations } from "../Session/InMemoryDocumentSessionOperations";
 import { DocumentInfo } from "../Session/DocumentInfo";
-import { BatchFromServer } from "./BatchFromServer";
+import { BatchFromServer, CounterIncludeItem } from "./BatchFromServer";
 import { IMetadataDictionary } from "../Session/IMetadataDictionary";
 
 export class SubscriptionBatch<T extends object> {
@@ -28,6 +28,7 @@ export class SubscriptionBatch<T extends object> {
     private readonly _items = [] as Item<T>[];
 
     private _includes: object[];
+    private _counterIncludes: CounterIncludeItem[];
 
     public get items() {
         return this._items;
@@ -92,12 +93,16 @@ export class SubscriptionBatch<T extends object> {
             return;
         }
 
-        if (!this._includes) {
-            return;
+        if (this._includes && this._includes.length) {
+            for (const item of this._includes) {
+                session.registerIncludes(item);
+            }
         }
-         
-        for (const item of this._includes) {
-            session.registerIncludes(item);
+
+        if (this._counterIncludes && this._counterIncludes.length) {
+            for (const item of this._counterIncludes) {
+                session.registerCounters(item.includes, item.counterIncludes);
+            }
         }
 
         for (const item of this._items) {
@@ -117,6 +122,7 @@ export class SubscriptionBatch<T extends object> {
 
     public initialize(batch: BatchFromServer): string {
         this._includes = batch.includes;
+        this._counterIncludes = batch.counterIncludes;
         this._items.length = 0;
 
         let lastReceivedChangeVector: string;

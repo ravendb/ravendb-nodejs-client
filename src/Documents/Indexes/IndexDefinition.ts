@@ -1,9 +1,10 @@
 import { throwError } from "../../Exceptions/index";
-import { IndexPriority, FieldStorage, FieldIndexing, FieldTermVector, IndexLockMode, IndexType } from "./Enums";
+import { IndexPriority, IndexLockMode, IndexType } from "./Enums";
 import { IndexFieldOptions } from "./IndexFieldOptions";
-import { SpatialOptions } from "./Spatial";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { IndexDefinitionHelper } from "./IndexDefinitionHelper";
+import { AbstractIndexDefinitionBuilder } from "./AbstractIndexDefinitionBuilder";
+import { IndexSourceType } from "./IndexSourceType";
 
 export interface IndexConfiguration {
     [key: string]: string;
@@ -26,6 +27,7 @@ export class IndexDefinition {
     public maps: Set<string> = new Set();
     public reduce: string;
     public fields: { [fieldName: string]: IndexFieldOptions } = {};
+    private _indexSourceType: IndexSourceType;
     public configuration: IndexConfiguration = {};
     public outputReduceToCollection: string;
     public reduceOutputIndex: number;
@@ -34,6 +36,18 @@ export class IndexDefinition {
 
     public toString(): string {
         return this.name;
+    }
+
+    public get sourceType() {
+        if (!this._indexSourceType || this._indexSourceType === "None") {
+            this._indexSourceType = this.detectStaticIndexSourceType();
+        }
+
+        return this._indexSourceType;
+    }
+
+    public set sourceType(value: IndexSourceType) {
+        this._indexSourceType = value;
     }
 
     public get type(): IndexType {
@@ -59,98 +73,28 @@ export class IndexDefinition {
     }
 }
 
-export class IndexDefinitionBuilder {
+export class IndexDefinitionBuilder extends AbstractIndexDefinitionBuilder<IndexDefinition>{
 
-    public indexName: string;
     public map: string;
-    public reduce: string;
-    public priority: IndexPriority;
-    public lockMode: IndexLockMode;
-    public storesStrings: { [key: string]: FieldStorage };
-    public indexesStrings: { [key: string]: FieldIndexing };
-    public analyzersStrings: { [key: string]: string };
-    public suggestionsOptions: Set<string>;
-    public termVectorsStrings: { [key: string]: FieldTermVector };
-    public spatialIndexesStrings: { [key: string]: SpatialOptions };
-    public outputReduceToCollection: string;
-    public patternForOutputReduceToCollectionReferences: string;
-    public patternReferencesCollectionName: string;
-    public additionalSources: { [key: string]: string };
-    public configuration: IndexConfiguration;
 
     public constructor(indexName?: string) {
-        this.indexName = indexName || this.constructor.name;
-        if (this.indexName.length > 256) {
-            throwError("InvalidArgumentException",
-                "The index name is limited to 256 characters, but was: " + this.indexName);
-        }
-        this.storesStrings = {};
-        this.indexesStrings = {};
-        this.suggestionsOptions = new Set();
-        this.analyzersStrings = {};
-        this.termVectorsStrings = {};
-        this.spatialIndexesStrings = {};
-        this.configuration = {};
+        super(indexName);
     }
 
-    public toIndexDefinition(conventions: DocumentConventions, validateMap?: boolean): IndexDefinition {
+    protected _newIndexDefinition(): IndexDefinition {
+        return new IndexDefinition();
+    }
+
+    public toIndexDefinition(conventions: DocumentConventions, validateMap: boolean = true) {
         if (!this.map && validateMap) {
-            throwError("InvalidOperationException",
-                "Map is required to generate an index, "
-                + " you cannot create an index without a valid Map property (in index "
-                + this.indexName + ").");
+            throwError("InvalidArgumentException",
+                "Map is required to generate an index, you cannot create an index without a valid Map property (in index " + this._indexName + ").");
         }
 
-        try {
-            const indexDefinition = new IndexDefinition();
-            indexDefinition.name = this.indexName;
-            indexDefinition.reduce = this.reduce;
-            indexDefinition.lockMode = this.lockMode;
-            indexDefinition.priority = this.priority;
-            indexDefinition.outputReduceToCollection = this.outputReduceToCollection;
-            indexDefinition.patternForOutputReduceToCollectionReferences = this.patternForOutputReduceToCollectionReferences;
-            indexDefinition.patternReferencesCollectionName = this.patternReferencesCollectionName;
-
-            const suggestions: { [suggestionOption: string]: boolean } = Array.from(this.suggestionsOptions)
-                .reduce((result, item) =>
-                    Object.assign(result, { [item]: true }), {});
-
-            this._applyValues(indexDefinition, this.indexesStrings,
-                (options, value) => options.indexing = value);
-            this._applyValues(indexDefinition, this.storesStrings,
-                (options, value) => options.storage = value);
-            this._applyValues(indexDefinition, this.analyzersStrings,
-                (options, value) => options.analyzer = value);
-            this._applyValues(indexDefinition, this.termVectorsStrings,
-                (options, value) => options.termVector = value);
-            this._applyValues(indexDefinition, this.spatialIndexesStrings,
-                (options, value) => options.spatial = value);
-            this._applyValues(indexDefinition, suggestions,
-                (options, value) => options.suggestions = value);
-
-            if (this.map) {
-                indexDefinition.maps.add(this.map);
-            }
-
-            indexDefinition.additionalSources = this.additionalSources;
-            indexDefinition.configuration = this.configuration;
-            return indexDefinition;
-        } catch (err) {
-            throwError("IndexCompilationException", "Failed to create index " + this.indexName, err);
-        }
+        return super.toIndexDefinition(conventions, validateMap);
     }
 
-    private _applyValues<T>(
-        indexDefinition: IndexDefinition,
-        values: { [fieldName: string]: T },
-        action: (options: IndexFieldOptions, val: T) => void) {
-
-        for (const fieldName of Object.keys(values)) {
-            const fieldVal: T = values[fieldName];
-            const field = indexDefinition.fields[fieldName] =
-                indexDefinition.fields[fieldName] || new IndexFieldOptions();
-
-            action(field, fieldVal);
-        }
+    protected _toIndexDefinition(indexDefinition: IndexDefinition, conventions: DocumentConventions) {
+        return this.toIndexDefinition(conventions, true);
     }
 }

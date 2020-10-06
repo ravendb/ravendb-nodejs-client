@@ -14,13 +14,13 @@ export class LazyAggregationQueryOperation implements ILazyOperation {
     private readonly _indexQuery: IndexQuery;
     private readonly _parent: AggregationQueryBase;
     private readonly _processResults:
-        (queryResult: QueryResult, conventions: DocumentConventions) => FacetResultObject;
+        (queryResult: QueryResult) => FacetResultObject;
 
     public constructor(
         conventions: DocumentConventions,
         indexQuery: IndexQuery,
         parent: AggregationQueryBase,
-        processResults: (queryResult: QueryResult, conventions: DocumentConventions) => FacetResultObject) {
+        processResults: (queryResult: QueryResult) => FacetResultObject) {
         this._conventions = conventions;
         this._indexQuery = indexQuery;
         this._processResults = processResults;
@@ -77,7 +77,7 @@ export class LazyAggregationQueryOperation implements ILazyOperation {
     }
 
     private _handleResponse(queryResult: QueryResult): void {
-        this.result = this._processResults(queryResult, this._conventions);
+        this.result = this._processResults(queryResult);
         this.queryResult = queryResult;
     }
 }

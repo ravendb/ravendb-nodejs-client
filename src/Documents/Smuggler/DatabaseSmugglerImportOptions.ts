@@ -3,6 +3,8 @@ import { DatabaseSmugglerOptions } from "./DatabaseSmugglerOptions";
 
 export class DatabaseSmugglerImportOptions extends DatabaseSmugglerOptions implements IDatabaseSmugglerImportOptions {
 
+    public skipRevisionCreation: boolean;
+
     constructor()
     constructor(options: DatabaseSmugglerOptions)
     constructor(options?: DatabaseSmugglerOptions) {

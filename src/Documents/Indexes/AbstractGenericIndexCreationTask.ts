@@ -9,36 +9,37 @@ import { IndexDefinition } from "./IndexDefinition";
  */
 export abstract class AbstractGenericIndexCreationTask extends AbstractIndexCreationTaskBase<IndexDefinition> {
 
-    protected reduce: string;
+    protected _reduce: string;
 
-    protected storesStrings: { [key: string]: FieldStorage };
-    protected indexesStrings: { [key: string]: FieldIndexing };
-    protected analyzersStrings: { [key: string]: string };
-    protected indexSuggestions: Set<string>;
-    protected termVectorsStrings: { [key: string]: FieldTermVector };
-    protected spatialOptionsStrings: { [key: string]: SpatialOptions };
+    protected _storesStrings: Record<string, FieldStorage>;
+    protected _indexesStrings: Record<string, FieldIndexing>;
+    protected _analyzersStrings: Record<string, string>;
+    protected _indexSuggestions: Set<string>;
+    protected _termVectorsStrings: Record<string, FieldTermVector>;
+    protected _spatialOptionsStrings: Record<string, SpatialOptions>;
 
-    protected outputReduceToCollection: string;
-    protected patternForOutputReduceToCollectionReferences: string;
-    protected patternReferencesCollectionName: string;
+    protected _outputReduceToCollection: string;
+    protected _patternForOutputReduceToCollectionReferences: string;
+    protected _patternReferencesCollectionName: string;
 
-    // noinspection TypeScriptAbstractClassConstructorCanBeMadeProtected
     public constructor() {
         super();
-        this.storesStrings = {};
-        this.indexesStrings = {};
-        this.analyzersStrings = {};
-        this.indexSuggestions = new Set();
-        this.termVectorsStrings = {};
-        this.spatialOptionsStrings = {};
+
+        this._storesStrings = {};
+        this._indexesStrings = {};
+        this._analyzersStrings = {};
+        this._indexSuggestions = new Set<string>();
+        this._termVectorsStrings = {};
+        this._spatialOptionsStrings = {};
     }
+
 
     /**
      * Gets a value indicating whether this instance is map reduce index definition
      * @return if index is of type: Map/Reduce
      */
     public get isMapReduce(): boolean {
-        return !!this.reduce;
+        return !!this._reduce;
     }
 
     /**
@@ -46,7 +47,7 @@ export abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
      */
     // tslint:disable-next-line:function-name
     protected index(field: string, indexing: FieldIndexing): void {
-        this.indexesStrings[field] = indexing;
+        this._indexesStrings[field] = indexing;
     }
 
     /**
@@ -54,14 +55,14 @@ export abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
      */
     // tslint:disable-next-line:function-name
     protected spatial(field: string, indexing: (spatialOptsFactory: SpatialOptionsFactory) => SpatialOptions): void {
-        this.spatialOptionsStrings[field] = indexing(new SpatialOptionsFactory());
+        this._spatialOptionsStrings[field] = indexing(new SpatialOptionsFactory());
     }
 
     // TBD protected void Store(Expression<Func<TReduceResult, object>> field, FieldStorage storage)
 
     // tslint:disable-next-line:function-name
     protected storeAllFields(storage: FieldStorage): void {
-        this.storesStrings[CONSTANTS.Documents.Indexing.Fields.ALL_FIELDS] = storage;
+        this._storesStrings[CONSTANTS.Documents.Indexing.Fields.ALL_FIELDS] = storage;
     }
 
     /**
@@ -69,7 +70,7 @@ export abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
      */
     // tslint:disable-next-line:function-name
     protected store(field: string, storage: FieldStorage): void {
-        this.storesStrings[field] = storage;
+        this._storesStrings[field] = storage;
     }
 
     /**
@@ -77,7 +78,7 @@ export abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
      */
     // tslint:disable-next-line:function-name
     protected analyze(field: string, analyzer: string): void {
-        this.analyzersStrings[field] = analyzer;
+        this._analyzersStrings[field] = analyzer;
     }
 
     /**
@@ -85,11 +86,11 @@ export abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
      */
     // tslint:disable-next-line:function-name
     protected termVector(field: string, termVector: FieldTermVector): void {
-        this.termVectorsStrings[field] = termVector;
+        this._termVectorsStrings[field] = termVector;
     }
 
     // tslint:disable-next-line:function-name
     protected suggestion(field: string): void {
-        this.indexSuggestions.add(field);
+        this._indexSuggestions.add(field);
     }
 }

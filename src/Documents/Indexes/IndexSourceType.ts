@@ -1,2 +1,2 @@
 
-export type IndexSourceType = "None" | "Docuemnts" | "TimeSeries" | "Counters";
+export type IndexSourceType = "None" | "Documents" | "TimeSeries" | "Counters";

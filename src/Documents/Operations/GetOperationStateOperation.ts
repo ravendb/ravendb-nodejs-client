@@ -16,7 +16,7 @@ export class GetOperationStateOperation implements IMaintenanceOperation<IRavenR
     }
 
     public getCommand(conventions: DocumentConventions): RavenCommand<IRavenResponse> {
-        return new GetOperationStateCommand(DocumentConventions.defaultConventions, this._id, this._nodeTag);
+        return new GetOperationStateCommand(this._id, this._nodeTag);
     }
 
     public get resultType(): OperationResultType {
@@ -31,12 +31,10 @@ export class GetOperationStateCommand extends RavenCommand<IRavenResponse> {
         return true;
     }
 
-    private _conventions: DocumentConventions;
     private readonly _id: number;
 
-    public constructor(conventions: DocumentConventions, id: number, nodeTag?: string) {
+    public constructor(id: number, nodeTag?: string) {
         super();
-        this._conventions = conventions;
         this._id = id;
         this._selectedNodeTag = nodeTag;
     }

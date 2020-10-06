@@ -201,11 +201,13 @@ export class FacetToken extends QueryToken {
 export class FacetAggregationToken extends QueryToken {
 
     private _fieldName: string;
+    private _fieldDisplayName: string;
     private readonly _aggregation: FacetAggregation;
 
-    private constructor(fieldName: string, aggregation: FacetAggregation) {
+    private constructor(fieldName: string, fieldDisplayName: string, aggregation: FacetAggregation) {
         super();
         this._fieldName = fieldName;
+        this._fieldDisplayName = fieldDisplayName;
         this._aggregation = aggregation;
     }
 
@@ -240,34 +242,42 @@ export class FacetAggregationToken extends QueryToken {
         }
     }
 
-    public static max(fieldName: string): FacetAggregationToken {
+    public static max(fieldName: string): FacetAggregationToken
+    public static max(fieldName: string, fieldDisplayName: string): FacetAggregationToken
+    public static max(fieldName: string, fieldDisplayName?: string): FacetAggregationToken {
         if (StringUtil.isNullOrWhitespace(fieldName)) {
             throwError("InvalidArgumentException", "FieldName can not be null");
         }
 
-        return new FacetAggregationToken(fieldName, "Max");
+        return new FacetAggregationToken(fieldName, fieldDisplayName, "Max");
     }
 
-    public static min(fieldName: string): FacetAggregationToken {
+    public static min(fieldName: string): FacetAggregationToken
+    public static min(fieldName: string, fieldDisplayName: string): FacetAggregationToken
+    public static min(fieldName: string, fieldDisplayName?: string): FacetAggregationToken {
         if (StringUtil.isNullOrWhitespace(fieldName)) {
             throwError("InvalidArgumentException", "FieldName can not be null");
         }
 
-        return new FacetAggregationToken(fieldName, "Min");
+        return new FacetAggregationToken(fieldName, fieldDisplayName, "Min");
     }
 
-    public static average(fieldName: string): FacetAggregationToken {
+    public static average(fieldName: string): FacetAggregationToken
+    public static average(fieldName: string, fieldDisplayName: string): FacetAggregationToken
+    public static average(fieldName: string, fieldDisplayName?: string): FacetAggregationToken {
         if (StringUtil.isNullOrWhitespace(fieldName)) {
             throwError("InvalidArgumentException", "FieldName can not be null");
         }
 
-        return new FacetAggregationToken(fieldName, "Average");
+        return new FacetAggregationToken(fieldName, fieldDisplayName, "Average");
     }
 
-    public static sum(fieldName: string): FacetAggregationToken {
+    public static sum(fieldName: string): FacetAggregationToken
+    public static sum(fieldName: string, fieldDisplayName: string): FacetAggregationToken
+    public static sum(fieldName: string, fieldDisplayName?: string): FacetAggregationToken {
         if (StringUtil.isNullOrWhitespace(fieldName)) {
             throwError("InvalidArgumentException", "FieldName can not be null");
         }
-        return new FacetAggregationToken(fieldName, "Sum");
+        return new FacetAggregationToken(fieldName, fieldDisplayName, "Sum");
     }
 }
