@@ -26,7 +26,7 @@ export class TimeSeriesEntry {
     }
 
     public asTypedEntry<T extends object>(clazz: ClassConstructor<T>) {
-        const entry = new TypedTimeSeriesEntry();
+        const entry = new TypedTimeSeriesEntry<T>();
         entry.rollup = this.rollup;
         entry.tag = this.tag;
         entry.timestamp = this.timestamp;

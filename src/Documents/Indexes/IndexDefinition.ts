@@ -38,6 +38,27 @@ export class IndexDefinition {
         return this.name;
     }
 
+    public detectStaticIndexSourceType(): IndexSourceType {
+        if (!this.maps || !this.maps.size) {
+            throwError("InvalidArgumentException", "Index definition contains no Maps");
+        }
+
+        let sourceType: IndexSourceType = "None";
+        for (const map of this.maps) {
+            const mapSourceType = IndexDefinitionHelper.detectStaticIndexSourceType(map);
+            if (sourceType === "None") {
+                sourceType = mapSourceType;
+                continue;
+            }
+
+            if (sourceType !== mapSourceType) {
+                throwError("InvalidOperationException", "Index definition cannot contain maps with different source types.");
+            }
+        }
+
+        return sourceType;
+    }
+
     public get sourceType() {
         if (!this._indexSourceType || this._indexSourceType === "None") {
             this._indexSourceType = this.detectStaticIndexSourceType();

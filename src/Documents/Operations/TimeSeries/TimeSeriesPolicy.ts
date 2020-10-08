@@ -1,6 +1,7 @@
 import { TimeValue } from "../../../Primitives/TimeValue";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { throwError } from "../../../Exceptions";
+import { TimeSeriesConfiguration } from "./TimeSeriesConfiguration";
 
 export class TimeSeriesPolicy {
     /**

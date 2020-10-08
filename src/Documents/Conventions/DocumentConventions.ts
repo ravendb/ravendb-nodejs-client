@@ -15,6 +15,8 @@ import { CONSTANTS } from "../../Constants";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { DateUtil, DateUtilOpts } from "../../Utility/DateUtil";
 import { CasingConvention, ObjectUtil, ObjectChangeCaseOptions } from "../../Utility/ObjectUtil";
+import { InMemoryDocumentSessionOperations } from "../..";
+import { LoadBalanceBehavior } from "../../Http/LoadBalanceBehavior";
 
 export type IdConvention = (databaseName: string, entity: object) => Promise<string>;
 export type IValueForQueryConverter<T> =
@@ -53,8 +55,12 @@ export class DocumentConventions {
     private _identityPartsSeparator: string;
     private _disableTopologyUpdates: boolean;
 
+    private _shouldIgnoreEntityChanges: (sessionOperations: InMemoryDocumentSessionOperations, entity: object, documentId: string) => boolean;
+
     private _transformClassCollectionNameToDocumentIdPrefix: (maybeClassCollectionName: string) => string;
     private _documentIdGenerator: IdConvention;
+
+    private _loadBalancerPerSessionContextSelector: (databaseName: string) => string;
 
     private _findCollectionName: (constructorOrTypeChecker: ObjectTypeDescriptor) => string;
 
@@ -71,6 +77,8 @@ export class DocumentConventions {
     private _firstBroadcastAttemptTimeout: number | undefined;
     private _secondBroadcastAttemptTimeout: number | undefined;
 
+    private _loadBalancerContextSeed: number;
+    private _loadBalanceBehavior: LoadBalanceBehavior;
     private _readBalanceBehavior: ReadBalanceBehavior;
     private _maxHttpCacheSize: number;
 
@@ -84,6 +92,12 @@ export class DocumentConventions {
 
     private _useCompression: boolean;
     private _sendApplicationIdentifier: boolean;
+
+    private readonly _bulkInsert: BulkInsertConventions;
+
+    public get bulkInsert() {
+        return this._bulkInsert;
+    }
 
     public constructor() {
         this._readBalanceBehavior = "None";
@@ -119,6 +133,7 @@ export class DocumentConventions {
         this._findCollectionName = type => DocumentConventions.defaultGetCollectionName(type);
 
         this._maxNumberOfRequestsPerSession = 30;
+        this._bulkInsert = new BulkInsertConventions(this, this._assertNotFrozen);
         this._maxHttpCacheSize = 128 * 1024 * 1024;
 
         this._knownEntityTypes = new Map();
@@ -234,6 +249,47 @@ export class DocumentConventions {
     public set readBalanceBehavior(value: ReadBalanceBehavior) {
         this._assertNotFrozen();
         this._readBalanceBehavior = value;
+    }
+
+    public get loadBalancerContextSeed() {
+        return this._loadBalancerContextSeed;
+    }
+
+    public set loadBalancerContextSeed(seed: number) {
+        this._assertNotFrozen();
+        this._loadBalancerContextSeed = seed;
+    }
+
+    /**
+     * We have to make this check so if admin activated this, but client code did not provide the selector,
+     * it is still disabled. Relevant if we have multiple clients / versions at once.
+     */
+    public get loadBalanceBehavior() {
+        return this._loadBalanceBehavior;
+    }
+
+    public set loadBalanceBehavior(loadBalanceBehavior: LoadBalanceBehavior) {
+        this._assertNotFrozen();
+        this._loadBalanceBehavior = loadBalanceBehavior;
+    }
+
+    /**
+     * Gets the function that allow to specialize the topology
+     * selection for a particular session. Used in load balancing
+     * scenarios
+     */
+    public get loadBalancerPerSessionContextSelector(): (databaseName: string) => string {
+        return this._loadBalancerPerSessionContextSelector;
+    }
+
+    /**
+     * Sets the function that allow to specialize the topology
+     * selection for a particular session. Used in load balancing
+     * scenarios
+     * @param selector selector to use
+     */
+    public set loadBalancerPerSessionContextSelector(selector: (databaseName: string) => string) {
+        this._loadBalancerPerSessionContextSelector = selector;
     }
 
     public get entityFieldNameConvention(): CasingConvention {
@@ -413,7 +469,22 @@ export class DocumentConventions {
 
     public set identityPartsSeparator(value: string) {
         this._assertNotFrozen();
+
+        if (this.identityPartsSeparator === "|") {
+            throwError("InvalidArgumentException", "Cannot set identity parts separator to '|");
+        }
+
         this._identityPartsSeparator = value;
+    }
+
+    public get shouldIgnoreEntityChanges() {
+        return this._shouldIgnoreEntityChanges;
+    }
+
+    public set shouldIgnoreEntityChanges(
+        shouldIgnoreEntityChanges: (sessionOperations: InMemoryDocumentSessionOperations, entity: object, documentId: string) => boolean) {
+        this._assertNotFrozen();
+        this._shouldIgnoreEntityChanges = shouldIgnoreEntityChanges;
     }
 
     public get disableTopologyUpdates(): boolean {
@@ -666,8 +737,7 @@ export class DocumentConventions {
     }
     */
 
-    public tryConvertValueForQuery
-    (fieldName: string, value: any, forRange: boolean, strValue: (value: any) => void) {
+    public tryConvertValueForQuery(fieldName: string, value: any, forRange: boolean, strValue: (value: any) => void) {
         for (const queryValueConverter of this._listOfQueryValueToObjectConverters) {
             if (!(value instanceof queryValueConverter.Type)) {
                 continue;
@@ -802,3 +872,29 @@ export class DocumentConventions {
 }
 
 DocumentConventions.defaultConventions.freeze();
+
+export class BulkInsertConventions {
+    private readonly _conventions: DocumentConventions;
+    private readonly _notFrozen: () => void;
+    private _timeSeriesBatchSize: number;
+
+    constructor(conventions: DocumentConventions, notFrozen: () => void) {
+        this._conventions = conventions;
+        this._timeSeriesBatchSize = 1024;
+        this._notFrozen = notFrozen;
+    }
+
+    public get timeSeriesBatchSize() {
+        return this._timeSeriesBatchSize;
+    }
+
+    public set timeSeriesBatchSize(batchSize: number) {
+        this._notFrozen();
+
+        if (batchSize <= 0) {
+            throwError("InvalidArgumentException", "BatchSize must be positive");
+        }
+
+        this._timeSeriesBatchSize = batchSize;
+    }
+}
