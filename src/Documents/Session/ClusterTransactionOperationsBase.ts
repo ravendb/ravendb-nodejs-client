@@ -6,6 +6,7 @@ import { ClassConstructor } from "../../Types";
 import { GetCompareExchangeValueOperation } from "../Operations/CompareExchange/GetCompareExchangeValueOperation";
 import { GetCompareExchangeValuesOperation } from "../Operations/CompareExchange/GetCompareExchangeValuesOperation";
 import { TypeUtil } from "../../Utility/TypeUtil";
+import { DocumentSession } from "./DocumentSession";
 
 export class StoredCompareExchange {
     public readonly entity: any;
@@ -20,7 +21,7 @@ export class StoredCompareExchange {
 
 export abstract class ClusterTransactionOperationsBase {
 
-    private readonly _session: InMemoryDocumentSessionOperations;
+    protected readonly _session: DocumentSession;
 
     private _storeCompareExchange: Map<string, StoredCompareExchange>;
 

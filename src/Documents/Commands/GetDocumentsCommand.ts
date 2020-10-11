@@ -36,6 +36,8 @@ export interface GetDocumentsByIdsCommandOptions
     ids: string[];
     includes?: string[];
     metadataOnly?: boolean;
+    timeSeriesIncludes: TimeSeriesRange[];
+    compareExchangeValueIncludes: string[];
 }
 
 export interface GetDocumentsStartingWithOptions
@@ -104,6 +106,8 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             this._ids = opts.ids;
             this._includes = opts.includes;
             this._metadataOnly = opts.metadataOnly;
+            this._timeSeriesIncludes = opts.timeSeriesIncludes;
+            this._compareExchangeValueIncludes = opts.compareExchangeValueIncludes;
         } else if (opts.hasOwnProperty("start") && opts.hasOwnProperty("pageSize")) {
             opts = opts as GetDocumentsStartingWithOptions;
             this._start = opts.start;

@@ -676,8 +676,11 @@ export class DocumentConventions {
         }
 
         if (configuration.disabled && orig) { // need to revert to original values
-            this._maxNumberOfRequestsPerSession = orig.maxNumberOfRequestsPerSession;
-            this._readBalanceBehavior = orig.readBalanceBehavior;
+            this._maxNumberOfRequestsPerSession = orig.maxNumberOfRequestsPerSession ?? this.maxNumberOfRequestsPerSession;
+            this._readBalanceBehavior = orig.readBalanceBehavior ?? this._readBalanceBehavior;
+            this._identityPartsSeparator = orig.identityPartsSeparator ?? this._identityPartsSeparator;
+            this._loadBalanceBehavior = orig.loadBalanceBehavior ?? this._loadBalanceBehavior;
+            this._loadBalancerContextSeed = orig.loadBalancerContextSeed ?? this._loadBalancerContextSeed;
 
             this._originalConfiguration = null;
             return;
@@ -688,14 +691,37 @@ export class DocumentConventions {
                 etag: -1,
                 maxNumberOfRequestsPerSession: this._maxNumberOfRequestsPerSession,
                 readBalanceBehavior: this._readBalanceBehavior,
+                identityPartsSeparator: this._identityPartsSeparator,
+                loadBalanceBehavior: this._loadBalanceBehavior,
+                loadBalancerContextSeed: this._loadBalancerContextSeed,
                 disabled: false
             };
         }
 
         this._maxNumberOfRequestsPerSession =
-            configuration.maxNumberOfRequestsPerSession || this._originalConfiguration.maxNumberOfRequestsPerSession;
+            configuration.maxNumberOfRequestsPerSession
+            ?? this._originalConfiguration.maxNumberOfRequestsPerSession
+            ?? this._maxNumberOfRequestsPerSession;
+
         this._readBalanceBehavior =
-            configuration.readBalanceBehavior || this._originalConfiguration.readBalanceBehavior;
+            configuration.readBalanceBehavior
+            ?? this._originalConfiguration.readBalanceBehavior
+            ?? this._readBalanceBehavior;
+
+        this._loadBalanceBehavior =
+            configuration.loadBalanceBehavior
+            ?? this._originalConfiguration.loadBalanceBehavior
+            ?? this._loadBalanceBehavior;
+
+        this._loadBalancerContextSeed =
+            configuration.loadBalancerContextSeed
+            ?? this._originalConfiguration.loadBalancerContextSeed
+            ?? this._loadBalancerContextSeed;
+
+        this._identityPartsSeparator =
+            configuration.identityPartsSeparator
+            ?? this._originalConfiguration.identityPartsSeparator
+            ?? this._identityPartsSeparator;
     }
 
     public static defaultTransformCollectionNameToDocumentIdPrefix(collectionName: string): string {
@@ -737,7 +763,7 @@ export class DocumentConventions {
     }
     */
 
-    public tryConvertValueForQuery(fieldName: string, value: any, forRange: boolean, strValue: (value: any) => void) {
+    public tryConvertValueToObjectForQuery(fieldName: string, value: any, forRange: boolean, strValue: (value: any) => void) {
         for (const queryValueConverter of this._listOfQueryValueToObjectConverters) {
             if (!(value instanceof queryValueConverter.Type)) {
                 continue;

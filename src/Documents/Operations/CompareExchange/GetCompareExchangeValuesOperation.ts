@@ -19,6 +19,8 @@ export interface GetCompareExchangeValuesParameters<T> {
     start?: number;
     pageSize?: number;
 
+    materializeMetadata: boolean;
+
     clazz?: ClassConstructor<T>;
 }
 
@@ -30,6 +32,8 @@ export class GetCompareExchangeValuesOperation<T> implements IOperation<{ [key: 
     private readonly _startWith: string;
     private readonly _start: number;
     private readonly _pageSize: number;
+
+    private readonly _materializeMetadata: boolean;
 
     public get keys(): string[] {
         return this._keys;
@@ -53,6 +57,7 @@ export class GetCompareExchangeValuesOperation<T> implements IOperation<{ [key: 
 
     public constructor(parameters: GetCompareExchangeValuesParameters<T>) {
         this._clazz = parameters.clazz;
+        this._materializeMetadata = parameters.materializeMetadata || true;
 
         if (parameters.keys) {
             if (!parameters.keys.length) {
@@ -71,7 +76,7 @@ export class GetCompareExchangeValuesOperation<T> implements IOperation<{ [key: 
 
     public getCommand(store: IDocumentStore, conventions: DocumentConventions, cache: HttpCache)
         : RavenCommand<{ [key: string]: CompareExchangeValue<T> }> {
-        return new GetCompareExchangeValuesCommand(this, conventions);
+        return new GetCompareExchangeValuesCommand(this, this._materializeMetadata, conventions);
     }
 
     public get resultType(): OperationResultType {
@@ -81,11 +86,13 @@ export class GetCompareExchangeValuesOperation<T> implements IOperation<{ [key: 
 
 export class GetCompareExchangeValuesCommand<T> extends RavenCommand<{ [key: string]: CompareExchangeValue<T> }> {
     private _operation: GetCompareExchangeValuesOperation<T>;
+    private readonly _materializeMetadata: boolean;
     private readonly _conventions: DocumentConventions;
 
-    public constructor(operation: GetCompareExchangeValuesOperation<T>, conventions: DocumentConventions) {
+    public constructor(operation: GetCompareExchangeValuesOperation<T>, materializeMetadata: boolean, conventions: DocumentConventions) {
         super();
         this._operation = operation;
+        this._materializeMetadata = materializeMetadata;
         this._conventions = conventions;
     }
 
@@ -135,7 +142,7 @@ export class GetCompareExchangeValuesCommand<T> extends RavenCommand<{ [key: str
             .process(bodyStream)
             .then(results => {
                 this.result = CompareExchangeValueResultParser.getValues<T>(
-                    results as GetCompareExchangeValuesResponse, this._conventions, this._operation.clazz);
+                    results as GetCompareExchangeValuesResponse, this._materializeMetadata, this._conventions, this._operation.clazz);
             });
         return body;
     }

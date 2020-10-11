@@ -4,6 +4,7 @@ import { StringUtil } from "../../../Utility/StringUtil";
 import { throwError } from "../../../Exceptions";
 import { CaseInsensitiveKeysMap } from "../../../Primitives/CaseInsensitiveKeysMap";
 import { CaseInsensitiveStringSet } from "../../../Primitives/CaseInsensitiveStringSet";
+import { TimeSeriesRange } from "../../Operations/TimeSeries/TimeSeriesRange";
 
 export class IncludeBuilderBase {
 
@@ -13,6 +14,16 @@ export class IncludeBuilderBase {
     public documentsToInclude: Set<string>;
     public alias: string;
     public countersToIncludeBySourcePath: CountersByDocId;
+    public timeSeriesToIncludeBySourceAlias: Map<string, Set<TimeSeriesRange>>;
+    public compareExchangeValuesToInclude: Set<string>;
+
+    public get timeSeriesToInclude(): Set<TimeSeriesRange> {
+        if (!this.timeSeriesToIncludeBySourceAlias) {
+            return null;
+        }
+
+        return this.timeSeriesToIncludeBySourceAlias.get("");
+    }
 
     public get countersToInclude(): Set<string> {
         if (!this.countersToIncludeBySourcePath) {
@@ -35,6 +46,15 @@ export class IncludeBuilderBase {
     public constructor(conventions: DocumentConventions) {
         this._conventions = conventions;
     }
+
+    protected _includeCompareExchangeValue(path: string) {
+        if (!this.compareExchangeValuesToInclude) {
+            this.compareExchangeValuesToInclude = new Set<string>();
+        }
+
+        this.compareExchangeValuesToInclude.add(path);
+    }
+
     protected _includeCounterWithAlias(path: string, name: string): void;
     protected _includeCounterWithAlias(path: string, names: string[]): void;
     protected _includeCounterWithAlias(path: string, names: string | string[]): void {

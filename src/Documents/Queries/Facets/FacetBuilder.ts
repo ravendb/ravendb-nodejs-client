@@ -6,6 +6,7 @@ import { RangeBuilder } from "./RangeBuilder";
 import { throwError } from "../../../Exceptions";
 import { FacetOptions } from ".";
 import { FacetBase } from "./FacetBase";
+import { FacetAggregationField } from "./FacetAggregationField";
 
 export class FacetBuilder<T> implements IFacetBuilder<T>, IFacetOperations<T> {
     private _range: GenericRangeFacet;
@@ -71,23 +72,79 @@ export class FacetBuilder<T> implements IFacetBuilder<T>, IFacetOperations<T> {
         return this;
     }
 
-    public sumOn(path: string): IFacetOperations<T> {
-        this.getFacet().aggregations.set("Sum", path);
+    public sumOn(path: string): IFacetOperations<T>
+    public sumOn(path: string, displayName: string): IFacetOperations<T>
+    public sumOn(path: string, displayName?: string): IFacetOperations<T> {
+        const aggregationsMap = this.getFacet().aggregations;
+        if (!aggregationsMap.has("Sum")) {
+            aggregationsMap.set("Sum", new Set<FacetAggregationField>());
+        }
+
+        const aggregations = aggregationsMap.get("Sum");
+
+        const aggregationField = new FacetAggregationField();
+        aggregationField.name = path;
+        aggregationField.displayName = displayName;
+
+        aggregations.add(aggregationField);
+
         return this;
     }
 
-    public minOn(path: string): IFacetOperations<T> {
-        this.getFacet().aggregations.set("Min", path);
+    public minOn(path: string): IFacetOperations<T>;
+    public minOn(path: string, displayName: string): IFacetOperations<T>;
+    public minOn(path: string, displayName?: string): IFacetOperations<T> {
+        const aggregationsMap = this.getFacet().aggregations;
+        if (!aggregationsMap.has("Min")) {
+            aggregationsMap.set("Min", new Set<FacetAggregationField>());
+        }
+
+        const aggregations = aggregationsMap.get("Min");
+
+        const aggregationField = new FacetAggregationField();
+        aggregationField.name = path;
+        aggregationField.displayName = displayName;
+
+        aggregations.add(aggregationField);
+
         return this;
     }
 
-    public maxOn(path: string): IFacetOperations<T> {
-        this.getFacet().aggregations.set("Max", path);
+    public maxOn(path: string): IFacetOperations<T>
+    public maxOn(path: string, displayName: string): IFacetOperations<T>
+    public maxOn(path: string, displayName?: string): IFacetOperations<T> {
+        const aggregationsMap = this.getFacet().aggregations;
+        if (!aggregationsMap.has("Max")) {
+            aggregationsMap.set("Max", new Set<FacetAggregationField>());
+        }
+
+        const aggregations = aggregationsMap.get("Max");
+
+        const aggregationField = new FacetAggregationField();
+        aggregationField.name = path;
+        aggregationField.displayName = displayName;
+
+        aggregations.add(aggregationField);
+
         return this;
     }
 
-    public averageOn(path: string): IFacetOperations<T> {
-        this.getFacet().aggregations.set("Average", path);
+    public averageOn(path: string): IFacetOperations<T>
+    public averageOn(path: string, displayName: string): IFacetOperations<T>
+    public averageOn(path: string, displayName?: string): IFacetOperations<T> {
+        const aggregationsMap = this.getFacet().aggregations;
+        if (!aggregationsMap.has("Average")) {
+            aggregationsMap.set("Average", new Set<FacetAggregationField>());
+        }
+
+        const aggregations = aggregationsMap.get("Average");
+
+        const aggregationField = new FacetAggregationField();
+        aggregationField.name = path;
+        aggregationField.displayName = displayName;
+
+        aggregations.add(aggregationField);
+
         return this;
     }
 

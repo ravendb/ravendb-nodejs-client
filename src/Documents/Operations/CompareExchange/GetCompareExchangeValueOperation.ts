@@ -14,18 +14,20 @@ import * as stream from "readable-stream";
 export class GetCompareExchangeValueOperation<T> implements IOperation<CompareExchangeValue<T>> {
 
     private readonly _key: string;
+    private readonly _materializeMetadata: boolean;
     private readonly _clazz: ClassConstructor<T>;
 
-    public constructor(key: string, clazz?: ClassConstructor<T>) {
+    public constructor(key: string, clazz?: ClassConstructor<T>, materializeMetadata: boolean = true) {
         this._key = key;
         this._clazz = clazz;
+        this._materializeMetadata = materializeMetadata;
     }
 
     public getCommand(
         store: IDocumentStore,
         conventions: DocumentConventions,
         cache: HttpCache): RavenCommand<CompareExchangeValue<T>> {
-        return new GetCompareExchangeValueCommand<T>(this._key, conventions, this._clazz);
+        return new GetCompareExchangeValueCommand<T>(this._key, this._materializeMetadata, conventions, this._clazz);
     }
 
     public get resultType(): OperationResultType {
@@ -36,9 +38,10 @@ export class GetCompareExchangeValueOperation<T> implements IOperation<CompareEx
 export class GetCompareExchangeValueCommand<T> extends RavenCommand<CompareExchangeValue<T>> {
     private readonly _key: string;
     private readonly _clazz: ClassConstructor<T>;
+    private readonly _materializeMetadata: boolean;
     private readonly _conventions: DocumentConventions;
 
-    public constructor(key: string, conventions: DocumentConventions, clazz?: ClassConstructor<T>) {
+    public constructor(key: string, materializeMetadata: boolean, conventions: DocumentConventions, clazz?: ClassConstructor<T>) {
         super();
 
         if (!key) {
@@ -47,6 +50,7 @@ export class GetCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
 
         this._key = key;
         this._clazz = clazz;
+        this._materializeMetadata = materializeMetadata;
         this._conventions = conventions;
     }
 
@@ -72,7 +76,7 @@ export class GetCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
             .process(bodyStream)
             .then(results => {
                 this.result = CompareExchangeValueResultParser.getValue(
-                    results as GetCompareExchangeValuesResponse, this._conventions, this._clazz);
+                    results as GetCompareExchangeValuesResponse, this._materializeMetadata, this._conventions, this._clazz);
             });
         return body;
     }

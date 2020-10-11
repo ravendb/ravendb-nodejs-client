@@ -205,7 +205,7 @@ export abstract class InMemoryDocumentSessionOperations
 
     protected _deferredCommands: ICommandData[] = [];
 
-    // keys are produced with CommandIdTypeAndName.keyFor() method
+    // keys are produced with IdTypeAndName.keyFor() method
     public deferredCommandsMap: Map<string, ICommandData> = new Map();
 
     public get deferredCommands() {

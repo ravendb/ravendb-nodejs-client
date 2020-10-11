@@ -51,11 +51,16 @@ export class IndexCreation {
         : IndexDefinition[] {
         return indexCreationTasks
             .map(x => {
-                x.conventions = conventions;
-                const definition = x.createIndexDefinition();
-                definition.name = x.getIndexName();
-                definition.priority = x.priority || "Normal";
-                return definition;
+                const oldConventions = x.conventions;
+                try {
+                    x.conventions = conventions;
+                    const definition = x.createIndexDefinition();
+                    definition.name = x.getIndexName();
+                    definition.priority = x.priority || "Normal";
+                    return definition;
+                } finally {
+                    x.conventions = oldConventions;
+                }
             });
     }
 }

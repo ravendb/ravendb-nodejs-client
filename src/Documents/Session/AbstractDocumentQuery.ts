@@ -82,6 +82,9 @@ import { passResultToCallback } from "../../Utility/PromiseUtil";
 import * as os from "os";
 import { GraphQueryToken } from "./Tokens/GraphQueryToken";
 import { IncludesUtil } from "./IncludesUtil";
+import { TimeSeriesIncludesToken } from "./Tokens/TimeSeriesIncludesToken";
+import { CompareExchangeValueIncludesToken } from "./Tokens/CompareExchangeValueIncludesToken";
+import { TimeSeriesRange } from "../Operations/TimeSeries/TimeSeriesRange";
 
 /**
  * A query against a Raven index
@@ -309,7 +312,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             || !this._theSession.conventions
             || isNestedPath
             || this._isGroupBy) {
-            return QueryFieldUtil.escapeIfNecessary(fieldName);
+            return QueryFieldUtil.escapeIfNecessary(fieldName, isNestedPath);
         }
 
         for (const rootType of this._rootTypes) {
@@ -461,7 +464,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
         let objectValue: string = null;
 
-        if (this._conventions.tryConvertValueForQuery(whereParams.fieldName,
+        if (this._conventions.tryConvertValueToObjectForQuery(whereParams.fieldName,
             whereParams.value, forRange, s => objectValue = s)) {
             return objectValue;
         }
@@ -739,6 +742,18 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         this._includeCounters(pathOrIncludes.alias, pathOrIncludes.countersToIncludeBySourcePath);
+
+        if (pathOrIncludes.timeSeriesToIncludeBySourceAlias) {
+            this._includeTimeSeries(pathOrIncludes.alias, pathOrIncludes.timeSeriesToIncludeBySourceAlias);
+        }
+
+        if (pathOrIncludes.compareExchangeValuesToInclude) {
+            this._compareExchangeValueIncludesTokens = [];
+
+            for (const compareExchangeValue of pathOrIncludes.compareExchangeValuesToInclude) {
+                this._compareExchangeValueIncludesTokens.push(CompareExchangeValueIncludesToken.create(compareExchangeValue));
+            }
+        }
     }
 
     // TBD: public void Include(Expression<Func<T, object>> path)
@@ -907,7 +922,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         tokens.push(whereToken);
     }
 
-    public negateNext(): void {
+    public _negateNext(): void {
         this._negate = !this._negate;
     }
 
@@ -1443,17 +1458,23 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             && !this._highlightingTokens.length
             && !this._explanationToken
             && !this._queryTimings
-            && !this._counterIncludesTokens) {
+            && !this._counterIncludesTokens
+            && !this._timeSeriesIncludesTokens
+            && !this._compareExchangeValueIncludesTokens) {
             return;
         }
 
         queryText.append(" include ");
-        let first = true;
+
+        const firstRef = {
+            value: true
+        };
+
         for (const include of this._documentIncludes) {
-            if (!first) {
+            if (!firstRef.value) {
                 queryText.append(",");
             }
-            first = false;
+            firstRef.value = false;
 
             let escapedInclude: string;
             if (IncludesUtil.requiresQuotes(include, x => escapedInclude = x)) {
@@ -1465,40 +1486,43 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             }
         }
 
-        if (this._counterIncludesTokens) {
-            for (const counterIncludesToken of this._counterIncludesTokens) {
-                if (!first) {
-                    queryText.append(",");
-                }
-
-                first = false;
-                counterIncludesToken.writeTo(queryText);
-            }
-        }
-
-        for (const token of this._highlightingTokens) {
-            if (!first) {
-                queryText.append(",");
-            }
-            first = false;
-            token.writeTo(queryText);
-        }
+        this._writeIncludeTokens(this._counterIncludesTokens, firstRef, queryText);
+        this._writeIncludeTokens(this._timeSeriesIncludesTokens, firstRef, queryText);
+        this._writeIncludeTokens(this._compareExchangeValueIncludesTokens, firstRef, queryText);
+        this._writeIncludeTokens(this._highlightingTokens, firstRef, queryText);
 
         if (this._explanationToken) {
-            if (!first) {
+            if (!firstRef.value) {
                 queryText.append(",");
             }
 
-            first = false;
+            firstRef.value = false;
             this._explanationToken.writeTo(queryText);
         }
 
         if (this._queryTimings) {
-            if (!first) {
+            if (!firstRef.value) {
                 queryText.append(",");
             }
-            first = false;
+            firstRef.value = false;
+
             TimingsToken.instance.writeTo(queryText);
+        }
+    }
+
+    private _writeIncludeTokens<TToken extends QueryToken>(tokens: TToken[], firstRef: { value: boolean }, queryText: StringBuilder) {
+        if (!tokens) {
+            return;
+        }
+
+        for (const token of tokens) {
+            if (!firstRef.value) {
+                queryText.append(",");
+            }
+
+            firstRef.value = false;
+
+            token.writeTo(queryText);
         }
     }
 
@@ -1623,8 +1647,12 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     private _buildDeclare(writer: StringBuilder): void {
-        if (this._declareToken) {
-            this._declareToken.writeTo(writer);
+        if (!this._declareTokens) {
+            return;
+        }
+
+        for (const token of this._declareTokens) {
+            token.writeTo(writer);
         }
     }
 
@@ -2208,32 +2236,53 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
        explanationsCallback(this._explanations);
    }
 
-   protected _counterIncludesTokens: CounterIncludesToken[];
+    protected _timeSeriesIncludesTokens: TimeSeriesIncludesToken[];
+
+    protected _counterIncludesTokens: CounterIncludesToken[];
+
+    protected _compareExchangeValueIncludesTokens: CompareExchangeValueIncludesToken[];
 
     protected _includeCounters(
         alias: string, counterToIncludeByDocId: CountersByDocId): void {
-    if (!counterToIncludeByDocId || !counterToIncludeByDocId.size) {
-        return;
+        if (!counterToIncludeByDocId || !counterToIncludeByDocId.size) {
+            return;
+        }
+        this._counterIncludesTokens = [];
+        this._includesAlias = alias;
+
+        for (const [ key, val ] of counterToIncludeByDocId.entries()) {
+            if (val[0]) {
+                this._counterIncludesTokens.push(CounterIncludesToken.all(key));
+                continue;
+            }
+
+            const valArr = [...val[1]];
+            if (!valArr || !valArr.length) {
+                continue;
+            }
+
+            for (const name of val[1]) {
+                this._counterIncludesTokens.push(CounterIncludesToken.create(key, name));
+            }
+        }
     }
-    this._counterIncludesTokens = [];
-    this._includesAlias = alias;
 
-    for (const [ key, val ] of counterToIncludeByDocId.entries()) {
-        if (val[0]) {
-            this._counterIncludesTokens.push(CounterIncludesToken.all(key));
-            continue;
+    private _includeTimeSeries(alias: string, timeSeriesToInclude: Map<string, Set<TimeSeriesRange>>) {
+        if (!timeSeriesToInclude || !timeSeriesToInclude.size) {
+            return;
         }
 
-        const valArr = [...val[1]];
-        if (!valArr || !valArr.length) {
-            continue;
+        this._timeSeriesIncludesTokens = [];
+        if (!this._includesAlias) {
+            this._includesAlias = alias;
         }
 
-        for (const name of val[1]) {
-            this._counterIncludesTokens.push(CounterIncludesToken.create(key, name));
+        for (const kvp of timeSeriesToInclude.entries()) {
+            for (const range of kvp[1].values()) {
+                this._timeSeriesIncludesTokens.push(TimeSeriesIncludesToken.create(kvp[0], range));
+            }
         }
     }
-}
 
     public getQueryType(): DocumentType<T> {
         return this._clazz;
@@ -2258,7 +2307,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
     }
 
-     public addAliasToCounterIncludesTokens(fromAlias: string): string {
+     public addAliasToIncludesTokens(fromAlias: string): string {
         if (!this._includesAlias) {
             return fromAlias;
         }
@@ -2268,8 +2317,16 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             this.addFromAliasToWhereTokens(fromAlias);
         }
 
-        for (const counterIncludesToken of this._counterIncludesTokens) {
-            counterIncludesToken.addAliasToPath(fromAlias);
+        if (this._counterIncludesTokens) {
+            for (const counterIncludesToken of this._counterIncludesTokens) {
+                counterIncludesToken.addAliasToPath(fromAlias);
+            }
+        }
+
+        if (this._timeSeriesIncludesTokens) {
+            for (const token of this._timeSeriesIncludesTokens) {
+                token.addAliasToPath(fromAlias);
+            }
         }
 
         return fromAlias;

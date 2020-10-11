@@ -96,7 +96,10 @@ export class BatchOperation {
                     this._handleDelete(batchResult);
                     break;
                 case "CompareExchangePUT":
+                    this._handleCompareExchangePut(batchResult);
+                    break;
                 case "CompareExchangeDELETE":
+                    this._handleCompareExchangeDelete(batchResult);
                     break;
                 default:
                     throwError("InvalidOperationException", `Command '${type}' is not supported.`);
@@ -138,6 +141,11 @@ export class BatchOperation {
                     break;
                 case "Counters":
                     this._handleCounters(batchResult);
+                    break;
+                case "TimeSeries":
+                    //TODO: RavenDB-13474 add to time series cache
+                    break;
+                case "TimeSeriesCopy":
                     break;
                 case "BatchPATCH":
                     break;
