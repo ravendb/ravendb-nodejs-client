@@ -1,4 +1,3 @@
-import { AdvancedSessionExtensionBase } from "./AdvancedSessionExtensionBase";
 import {
     IRevisionsSessionOperations,
     SessionRevisionsMetadataOptions,
@@ -12,10 +11,7 @@ import { DocumentType } from "../DocumentAbstractions";
 import { ErrorFirstCallback } from "../../Types/Callbacks";
 import * as PromiseUtil from "../../Utility/PromiseUtil";
 import { RevisionsCollectionObject } from "../../Types";
-import { ForceRevisionStrategy } from "./ForceRevisionStrategy";
-import { throwError } from "../../Exceptions/index";
-import { StringUtil } from "../../Utility/StringUtil";
-import {DocumentSessionRevisionsBase} from "./DocumentSessionRevisionsBase";
+import { DocumentSessionRevisionsBase } from "./DocumentSessionRevisionsBase";
 
 export class DocumentSessionRevisions extends DocumentSessionRevisionsBase implements IRevisionsSessionOperations {
 

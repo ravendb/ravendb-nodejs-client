@@ -14,7 +14,9 @@ import {
     BeforeConversionToEntityEventArgs,
     AfterConversionToEntityEventArgs,
     FailedRequestEventArgs,
-    TopologyUpdatedEventArgs, BeforeRequestEventArgs, SucceedRequestEventArgs
+    TopologyUpdatedEventArgs,
+    BeforeRequestEventArgs,
+    SucceedRequestEventArgs
 } from "./Session/SessionEvents";
 import { OperationExecutor } from "./Operations/OperationExecutor";
 import { IDocumentSession } from "./Session/IDocumentSession";

@@ -103,9 +103,9 @@ async function onBeforeAfterAndFailRequestInternal(failCount: number, clusterSiz
                 }
 
                 assertThat(actual)
-                    .isNotStrictEqualTo(expected);
+                    .isNotEqualTo(expected);
                 assertThat(sessionActual)
-                    .isNotStrictEqualTo(expected);
+                    .isNotEqualTo(expected);
             } finally {
                 store.dispose();
             }

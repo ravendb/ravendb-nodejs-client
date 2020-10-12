@@ -43,7 +43,8 @@ import { URL } from "url";
 import { EventEmitter } from "events";
 import {
     BeforeRequestEventArgs,
-    FailedRequestEventArgs, SucceedRequestEventArgs,
+    FailedRequestEventArgs,
+    SucceedRequestEventArgs,
     TopologyUpdatedEventArgs
 } from "../Documents/Session/SessionEvents";
 import { TimeUtil } from "../Utility/TimeUtil";
