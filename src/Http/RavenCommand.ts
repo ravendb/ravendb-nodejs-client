@@ -38,6 +38,7 @@ export abstract class RavenCommand<TResult> {
     protected _canCache: boolean;
     protected _canCacheAggressively: boolean;
     protected _selectedNodeTag: string;
+    protected _numberOfAttempts: number;
 
     public failoverTopologyEtag = -2;
 
@@ -57,6 +58,14 @@ export abstract class RavenCommand<TResult> {
 
     public get selectedNodeTag(): string {
         return this._selectedNodeTag;
+    }
+
+    public get numberOfAttempts(): number {
+        return this._numberOfAttempts;
+    }
+
+    public set numberOfAttempts(value: number) {
+        this._numberOfAttempts = value;
     }
 
     constructor(copy?: RavenCommand<TResult>) {

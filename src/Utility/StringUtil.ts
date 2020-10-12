@@ -3,6 +3,7 @@ import { TypeUtil } from "./TypeUtil";
 import { throwError } from "../Exceptions";
 import * as changeCase from "change-case";
 import { CasingConvention } from "./ObjectUtil";
+import StringBuilder = require("string-builder");
 
 export class StringUtil {
     private static readonly letterRe: RegExp = XRegExp("^\\p{L}$") as RegExp;
@@ -131,5 +132,21 @@ export class StringUtil {
             && s1Type !== "undefined"
             && s2Type !== "undefined"
             && s1.toLowerCase() === s2.toLowerCase();
+    }
+
+    public static escapeString(builder: StringBuilder, value: string) {
+        if (StringUtil.isNullOrWhitespace(value)) {
+            return;
+        }
+
+        StringUtil.escapeStringInternal(builder, value);
+    }
+
+    private static escapeStringInternal(builder: StringBuilder, value: string) {
+        let escaped = JSON.stringify(value);
+
+        escaped = escaped.replace(/'/g, "\\\'");
+
+        builder.append(escaped.substring(1, escaped.length - 1));
     }
 }

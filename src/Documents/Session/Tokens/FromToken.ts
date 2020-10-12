@@ -1,5 +1,6 @@
 import { QueryToken } from "./QueryToken";
 import { throwError } from "../../../Exceptions";
+import {StringUtil} from "../../../Utility/StringUtil";
 
 export class FromToken extends QueryToken {
 
@@ -48,7 +49,7 @@ export class FromToken extends QueryToken {
 
         if (this._dynamic) {
             writer.append("from '");
-            writer.append(this._collectionName.replace(/'/g, "\'"));
+            StringUtil.escapeString(writer, this._collectionName);
             writer.append("'");
         } else {
             writer

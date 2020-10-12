@@ -14,7 +14,9 @@ import {
     BeforeConversionToEntityEventArgs,
     AfterConversionToEntityEventArgs,
     FailedRequestEventArgs,
-    TopologyUpdatedEventArgs
+    TopologyUpdatedEventArgs,
+    BeforeRequestEventArgs,
+    SucceedRequestEventArgs
 } from "./Session/SessionEvents";
 import { OperationExecutor } from "./Operations/OperationExecutor";
 import { IDocumentSession } from "./Session/IDocumentSession";
@@ -275,6 +277,14 @@ export abstract class DocumentStoreBase
         eventName: "afterConversionToEntity",
         eventHandler: (eventArgs: AfterConversionToEntityEventArgs) => void
     ): this;
+    public addSessionListener(
+        eventName: "beforeRequest",
+        eventHandler: (eventArgs: BeforeRequestEventArgs) => void
+    ): this;
+    public addSessionListener(
+        eventName: "succeedRequest",
+        eventHandler: (eventArgs: SucceedRequestEventArgs) => void
+    ): this;
     public addSessionListener(eventName: any, eventHandler: (eventArgs: any) => void): this {
         this._eventHandlers.push([eventName, eventHandler]);
         return this;
@@ -308,6 +318,14 @@ export abstract class DocumentStoreBase
         eventName: "afterConversionToEntity",
         eventHandler: (eventArgs: AfterConversionToEntityEventArgs) => void
     ): void;
+    public removeSessionListener(
+        eventName: "beforeRequest",
+        eventHandler: (eventArgs: BeforeRequestEventArgs) => void
+    ): void;
+    public removeSessionListener(
+        eventName: "succeedRequest",
+        eventHandler: (eventArgs: SucceedRequestEventArgs) => void
+    ): void;
     public removeSessionListener(eventName: any, eventHandler: (eventArgs: any) => void): void {
         const toRemove = this._eventHandlers
             .filter(x => x[0] === eventName && x[1] === eventHandler)[0];
@@ -320,7 +338,10 @@ export abstract class DocumentStoreBase
     public registerEvents(session: DocumentSession): void;
     public registerEvents(requestExecutorOrSession: RequestExecutor | DocumentSession): void {
         this._eventHandlers.forEach(([eventName, eventHandler]) => {
-            if (eventName === "failedRequest" || eventName === "topologyUpdated") {
+            if (eventName === "failedRequest"
+                || eventName === "topologyUpdated"
+                || eventName === "beforeRequest"
+                || eventName === "succeedRequest") {
                 (requestExecutorOrSession as RequestExecutor).on(eventName as any, eventHandler);
             } else {
                 (requestExecutorOrSession as DocumentSession).on(eventName, eventHandler);

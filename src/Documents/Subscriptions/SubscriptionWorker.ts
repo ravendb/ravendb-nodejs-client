@@ -314,9 +314,12 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                     + " cannot be opened, because it's in use and the connection strategy is "
                     + this._options.strategy);
             case "Closed":
-                throwError("SubscriptionClosedException",
+                const canReconnect = connectionStatus.data.CanReconnect || false;
+                const subscriptionClosedError = getError("SubscriptionClosedException",
                     "Subscription with id " + this._options.subscriptionName
                     + " was closed. " + connectionStatus.exception);
+                (subscriptionClosedError as any).canReconnect = canReconnect;
+                throw subscriptionClosedError;
             case "Invalid":
                 throwError("SubscriptionInvalidStateException",
                     "Subscription with id " + this._options.subscriptionName
@@ -663,11 +666,17 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             return true;
         } else if (ex.name === "SubscriptionChangeVectorUpdateConcurrencyException") {
             return true;
+        } else if (ex.name === "SubscriptionClosedException") {
+            if ((ex as any).canReconnect) {
+                return true;
+            }
+
+            this._processingCanceled = true;
+            return false;
         }
 
         if (ex.name === "SubscriptionInUseException"
             || ex.name === "SubscriptionDoesNotExistException"
-            || ex.name === "SubscriptionClosedException"
             || ex.name === "SubscriptionInvalidStateException"
             || ex.name === "DatabaseDoesNotExistException"
             || ex.name === "AuthorizationException"

@@ -148,9 +148,7 @@ export class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
         if (replicationOptions) {
             result += `&waitForReplicasTimeout=${TimeUtil.millisToTimeSpan(replicationOptions.timeout)}`;
 
-            if (replicationOptions.throwOnTimeout) {
-                result += "&throwOnTimeoutInWaitForReplicas=true";
-            }
+            result += "&throwOnTimeoutInWaitForReplicas=" + (replicationOptions.throwOnTimeout ? "true" : "false");
 
             result += "&numberOfReplicasToWaitFor=";
             result += replicationOptions.majority ? "majority" : replicationOptions.replicas;

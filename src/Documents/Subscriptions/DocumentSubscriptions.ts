@@ -18,6 +18,7 @@ import { ToggleOngoingTaskStateOperation } from "../Operations/OngoingTasks/Togg
 import { SubscriptionIncludeBuilder } from "../Session/Loaders/SubscriptionIncludeBuilder";
 import * as os from "os";
 import { IncludesUtil } from "../Session/IncludesUtil";
+import StringBuilder = require("string-builder");
 
 export class DocumentSubscriptions implements IDisposable {
     private readonly _store: DocumentStore;
@@ -110,11 +111,17 @@ export class DocumentSubscriptions implements IDisposable {
         const collectionName = this._store.conventions.getCollectionNameForType(objectDescriptor);
 
         if (!criteria.query) {
+            const builder = new StringBuilder("from '");
+            StringUtil.escapeString(builder, collectionName);
+            builder.append("'");
+
             if (revisions) {
-                criteria.query = "from '" + collectionName.replace(/'/g, "\'") + "' (Revisions = true) as doc";
-            } else {
-                criteria.query = "from '" + collectionName.replace(/'/g, "\'") + "' as doc";
+                builder.append(" (Revisions = true)");
             }
+
+            builder.append(" as doc");
+
+            criteria.query = builder.toString();
         }
         if (criteria.includes) {
             const builder = new SubscriptionIncludeBuilder(this._store.conventions);

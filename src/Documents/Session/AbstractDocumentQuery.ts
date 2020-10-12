@@ -418,7 +418,24 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._timeout = waitTimeout || AbstractDocumentQuery._getDefaultTimeout();
     }
 
+    protected _getLazyQueryOperation() {
+        if (!this._queryOperation) {
+            this._queryOperation = this._initializeQueryOperation();
+        }
+
+        const clazz = this._conventions.getJsTypeByDocumentType(this._clazz);
+        return  new LazyQueryOperation<T>(
+            this._theSession.conventions,
+            this._queryOperation,
+            this,
+            clazz);
+    }
+
     protected _initializeQueryOperation(): QueryOperation {
+        const beforeQueryEventArgs = new SessionBeforeQueryEventArgs(
+            this._theSession, new DocumentQueryCustomization(this));
+        this._theSession.emit("beforeQuery", beforeQueryEventArgs);
+
         const indexQuery = this.getIndexQuery();
         return new QueryOperation(
             this._theSession,
@@ -1951,10 +1968,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             return Promise.resolve();
         }
 
-        const beforeQueryEventArgs = new SessionBeforeQueryEventArgs(
-            this._theSession, new DocumentQueryCustomization(this));
-        this._theSession.emit("beforeQuery", beforeQueryEventArgs);
-
         this._queryOperation = this._initializeQueryOperation();
         return this._executeActualQuery();
     }
@@ -2103,16 +2116,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     public lazily(): Lazy<T[]> {
-        if (!this._queryOperation) {
-            this._queryOperation = this._initializeQueryOperation();
-        }
+        const lazyQueryOperation = this._getLazyQueryOperation();
 
-        const clazz = this._conventions.getJsTypeByDocumentType(this._clazz);
-        const lazyQueryOperation = new LazyQueryOperation<T>(
-            this._theSession.conventions,
-            this._queryOperation,
-            this,
-            clazz);
         return (this._theSession as DocumentSession)
             .addLazyOperation(lazyQueryOperation);
     }

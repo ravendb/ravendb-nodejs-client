@@ -41,7 +41,12 @@ import { IRaftCommand } from "./IRaftCommand";
 import AbortController from "abort-controller";
 import { URL } from "url";
 import { EventEmitter } from "events";
-import { FailedRequestEventArgs, TopologyUpdatedEventArgs } from "../Documents/Session/SessionEvents";
+import {
+    BeforeRequestEventArgs,
+    FailedRequestEventArgs,
+    SucceedRequestEventArgs,
+    TopologyUpdatedEventArgs
+} from "../Documents/Session/SessionEvents";
 import { TimeUtil } from "../Utility/TimeUtil";
 import { UpdateTopologyParameters } from "./UpdateTopologyParameters";
 import { v4 as uuidv4 } from "uuid";
@@ -269,12 +274,16 @@ export class RequestExecutor implements IDisposable {
 
     public on(event: "topologyUpdated", handler: (value: TopologyUpdatedEventArgs) => void);
     public on(event: "failedRequest", handler: (value: FailedRequestEventArgs) => void);
+    public on(event: "beforeRequest", handler: (value: BeforeRequestEventArgs) => void);
+    public on(event: "succeedRequest", handler: (value: SucceedRequestEventArgs) => void);
     public on(event: string, handler: (value: any) => void) {
         this._emitter.on(event, handler);
     }
 
     public off(event: "topologyUpdated", handler: (value: TopologyUpdatedEventArgs) => void);
     public off(event: "failedRequest", handler: (value: FailedRequestEventArgs) => void);
+    public off(event: "beforeRequest", handler: (value: BeforeRequestEventArgs) => void);
+    public off(event: "succeedRequest", handler: (value: SucceedRequestEventArgs) => void);
     public off(event: string, handler: (value: any) => void) {
         this._emitter.off(event, handler);
     }
@@ -874,6 +883,10 @@ export class RequestExecutor implements IDisposable {
 
         this._setRequestHeaders(sessionInfo, cachedChangeVector, req);
 
+        command.numberOfAttempts++;
+        const attemptNum = command.numberOfAttempts;
+        this._emitter.emit("beforeRequest", new BeforeRequestEventArgs(this._databaseName, url, req, attemptNum));
+
         let bodyStream: stream.Readable;
 
         const responseAndStream = await this._sendRequestToServer(chosenNode, nodeIndex, command, shouldRetry, sessionInfo, req, url, controller);
@@ -894,6 +907,8 @@ export class RequestExecutor implements IDisposable {
         try {
 
             if (response.status === StatusCodes.NotModified) {
+                this._emitter.emit("succeedRequest", new SucceedRequestEventArgs(this._databaseName, url, response, req, attemptNum));
+
                 cachedItem.notModified();
 
                 if (command.responseType === "Object") {
@@ -927,6 +942,8 @@ export class RequestExecutor implements IDisposable {
 
                 return; // we either handled this already in the unsuccessful response or we are throwing
             }
+
+            this._emitter.emit("succeedRequest", new SucceedRequestEventArgs(this._databaseName, url, response, req, attemptNum));
 
             responseDispose = await command.processResponse(this._cache, response, bodyStream, req.uri as string);
             this._lastReturnedResponse = new Date();

@@ -92,7 +92,7 @@ describe("RavenDB-11552", function () {
             assertThat(company)
                 .isNull();
             assertThat(session.advanced.isLoaded("companies/1"))
-                .isFalse();
+                .isTrue();
             assertThat(session.advanced.numberOfRequests)
                 .isEqualTo(3);
         }
