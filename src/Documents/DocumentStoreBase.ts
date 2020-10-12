@@ -37,6 +37,8 @@ import { AbstractIndexCreationTask } from "./Indexes/AbstractIndexCreationTask";
 import { SessionOptions } from "./Session/SessionOptions";
 import { DatabaseSmuggler } from "./Smuggler/DatabaseSmuggler";
 import { IDisposable } from "../Types/Contracts";
+import { TimeSeriesOperations } from "./TimeSeries/TimeSeriesOperations";
+import { IAbstractIndexCreationTask } from "./Indexes/IAbstractIndexCreationTask";
 
 export abstract class DocumentStoreBase
     extends EventEmitter

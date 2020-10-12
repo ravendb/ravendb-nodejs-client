@@ -27,7 +27,7 @@ import * as Parser from "stream-json/Parser";
 import * as StreamValues from "stream-json/streamers/StreamValues";
 import { TransformKeysJsonStream } from "../../Mapping/Json/Streams/TransformKeysJsonStream";
 import { getTransformJsonKeysProfile } from "../../Mapping/Json/Streams/TransformJsonKeysProfiles";
-import { BatchFromServer } from "./BatchFromServer";
+import { BatchFromServer, CounterIncludeItem } from "./BatchFromServer";
 import { ServerNode } from "../../Http/ServerNode";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { GetTcpInfoCommand, TcpConnectionInfo } from "../../ServerWide/Commands/GetTcpInfoCommand";
@@ -486,7 +486,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                     includes.push(receivedMessage.includes);
                     break;
                 case "CounterIncludes":
-                    counterIncludes.push(receivedMessage.counterIncludes, receivedMessage.includedCounterNames);
+                    counterIncludes.push({ counterIncludes: receivedMessage.counterIncludes, includes: receivedMessage.includedCounterNames });
                     break;
                 case "EndOfBatch":
                     endOfBatch = true;

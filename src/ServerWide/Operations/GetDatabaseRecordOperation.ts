@@ -5,7 +5,6 @@ import { DatabaseRecordWithEtag } from "..";
 import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
-import { QueryResult } from "../../Documents/Queries/QueryResult";
 
 export class GetDatabaseRecordOperation implements IServerOperation<DatabaseRecordWithEtag> {
     private readonly _database: string;
@@ -24,11 +23,13 @@ export class GetDatabaseRecordOperation implements IServerOperation<DatabaseReco
 }
 
 export class GetDatabaseRecordCommand extends RavenCommand<DatabaseRecordWithEtag> {
+    private readonly _conventions: DocumentConventions;
     private readonly _database: string;
 
-    public constructor(database: string) {
+    public constructor(conventions: DocumentConventions, database: string) {
         super();
 
+        this._conventions = conventions;
         this._database = database;
     }
 

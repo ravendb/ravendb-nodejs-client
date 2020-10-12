@@ -17,6 +17,7 @@ import { ClientConfiguration } from "../Documents/Operations/Configuration/Clien
 import { RefreshConfiguration } from "../Documents/Operations/Refresh/RefreshConfiguration";
 import { RevisionsCollectionConfiguration } from "../Documents/Operations/RevisionsCollectionConfiguration";
 import { DocumentsCompressionConfiguration } from "./DocumentsCompressionConfiguration";
+import { TimeSeriesConfiguration } from "../Documents/Operations/TimeSeries/TimeSeriesConfiguration";
 
 export interface ScriptResolver {
     script: string;

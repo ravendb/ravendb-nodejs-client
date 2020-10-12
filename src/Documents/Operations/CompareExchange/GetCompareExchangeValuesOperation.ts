@@ -19,7 +19,7 @@ export interface GetCompareExchangeValuesParameters<T> {
     start?: number;
     pageSize?: number;
 
-    materializeMetadata: boolean;
+    materializeMetadata?: boolean;
 
     clazz?: ClassConstructor<T>;
 }

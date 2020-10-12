@@ -1,4 +1,3 @@
-import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
 import { TransactionMode } from "./TransactionMode";
 import { throwError } from "../../Exceptions";
 import { CompareExchangeValue } from "../Operations/CompareExchange/CompareExchangeValue";
@@ -39,7 +38,7 @@ export abstract class ClusterTransactionOperationsBase {
         return !!(this._deleteCompareExchange || this._storeCompareExchange);
     }
 
-    protected constructor(session: InMemoryDocumentSessionOperations) {
+    protected constructor(session: DocumentSession) {
         if (session.transactionMode !== "ClusterWide" as TransactionMode) {
             throwError(
                 "InvalidOperationException",

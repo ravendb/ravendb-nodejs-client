@@ -10,6 +10,9 @@ import { DocumentQueryOptions } from "./QueryOptions";
 import { IDocumentQuery } from "./IDocumentQuery";
 import { IIncludeBuilder } from "./Loaders/IIncludeBuilder";
 import { ISessionDocumentCounters } from "./ISessionDocumentCounters";
+import { ISessionDocumentTimeSeries } from "./ISessionDocumentTimeSeries";
+import { ISessionDocumentTypedTimeSeries } from "./ISessionDocumentTypedTimeSeries";
+import { ISessionDocumentRollupTypedTimeSeries } from "./ISessionDocumentRollupTypedTimeSeries";
 
 export class SessionInfo {
     private _sessionId: number;
@@ -183,6 +186,20 @@ export interface IDocumentSession extends IDisposable {
     countersFor(documentId: string): ISessionDocumentCounters;
 
     countersFor(entity: object): ISessionDocumentCounters;
+
+
+    timeSeriesFor(documentId: string, name: string): ISessionDocumentTimeSeries;
+    timeSeriesFor(entity:any, name: string): ISessionDocumentTimeSeries;
+
+    timeSeriesFor<T extends object>(documentId: string, clazz: ObjectTypeDescriptor<T>): ISessionDocumentTypedTimeSeries<T>;
+    timeSeriesFor<T extends object>(documentId: string, name: string, clazz: ObjectTypeDescriptor<T>): ISessionDocumentTypedTimeSeries<T>;
+    timeSeriesFor<T extends object>(entity: object, clazz: ObjectTypeDescriptor<T>): ISessionDocumentTypedTimeSeries<T>;
+    timeSeriesFor<T extends object>(entity: object, name: string, clazz: ObjectTypeDescriptor<T>): ISessionDocumentTypedTimeSeries<T>;
+
+    timeSeriesRollupFor<T extends object>(entity: object, policy: string, clazz: ObjectTypeDescriptor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
+    timeSeriesRollupFor<T extends object>(entity: object, policy: string, raw: string, clazz: ObjectTypeDescriptor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
+    timeSeriesRollupFor<T extends object>(documentId: string, policy: string, clazz: ObjectTypeDescriptor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
+    timeSeriesRollupFor<T extends object>(documentId: string, policy: string, raw: string, clazz: ObjectTypeDescriptor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
 }
 
 /**

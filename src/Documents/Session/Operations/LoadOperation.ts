@@ -43,10 +43,10 @@ export class LoadOperation {
             + this._ids.join(",") + " from " + this._session.storeIdentifier);
 
         const opts: GetDocumentsByIdsCommandOptions = {
-                ids: this._ids,
-                includes: this._includes,
-                metadataOnly: false,
-                conventions: this._session.conventions
+            ids: this._ids,
+            includes: this._includes,
+            metadataOnly: false,
+            conventions: this._session.conventions
         };
 
         if (this._includeAllCounters) {

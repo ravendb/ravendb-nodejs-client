@@ -26,6 +26,7 @@ import { SessionOptions } from "./Session/SessionOptions";
 import { AbstractIndexCreationTaskBase } from "./Indexes/AbstractIndexCreationTaskBase";
 import { ErrorFirstCallback } from "../Types/Callbacks";
 import { DatabaseSmuggler } from "./Smuggler/DatabaseSmuggler";
+import { IAbstractIndexCreationTask } from "./Indexes/IAbstractIndexCreationTask";
 
 export interface SessionEventsProxy {
     addSessionListener(eventName: "failedRequest", eventHandler: (eventArgs: FailedRequestEventArgs) => void): this;

@@ -1,6 +1,7 @@
 import { throwError } from "../../../Exceptions";
 import { ClassConstructor } from "../../../Types";
 import { TypedTimeSeriesEntry } from "./TypedTimeSeriesEntry";
+import { TimeSeriesValuesHelper } from "./TimeSeriesValuesHelper";
 
 export class TimeSeriesEntry {
     public timestamp: Date;

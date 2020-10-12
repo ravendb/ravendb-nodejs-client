@@ -67,6 +67,9 @@ import { IGraphDocumentQuery } from "./IGraphDocumentQuery";
 import { SingleNodeBatchCommand } from "../Commands/Batches/SingleNodeBatchCommand";
 import { GraphDocumentQuery } from "./GraphDocumentQuery";
 import { AbstractDocumentQuery } from "./AbstractDocumentQuery";
+import { ISessionDocumentTimeSeries } from "./ISessionDocumentTimeSeries";
+import { ISessionDocumentTypedTimeSeries } from "./ISessionDocumentTypedTimeSeries";
+import { ISessionDocumentRollupTypedTimeSeries } from "./ISessionDocumentRollupTypedTimeSeries";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;

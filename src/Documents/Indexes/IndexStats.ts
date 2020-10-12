@@ -1,5 +1,6 @@
 import { IndexState, IndexPriority, IndexLockMode, IndexType } from "./Enums";
 import { IndexRunningStatus } from "./IndexingStatus";
+import { IndexSourceType } from "./IndexSourceType";
 
 export interface IndexStats {
     name: string;

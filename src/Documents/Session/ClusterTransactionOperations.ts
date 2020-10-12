@@ -1,4 +1,3 @@
-import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
 import { CompareExchangeValue } from "../Operations/CompareExchange/CompareExchangeValue";
 import { ClassConstructor } from "../../Types";
 import { ClusterTransactionOperationsBase } from "./ClusterTransactionOperationsBase";
@@ -6,13 +5,19 @@ import { IClusterTransactionOperations } from "./IClusterTransactionOperations";
 import { ErrorFirstCallback } from "../../Types/Callbacks";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { passResultToCallback } from "../../Utility/PromiseUtil";
+import { LazyClusterTransactionOperations } from "./Operations/Lazy/LazyClusterTransactionOperations";
+import { DocumentSession } from "./DocumentSession";
 
 export class ClusterTransactionOperations 
     extends ClusterTransactionOperationsBase 
     implements IClusterTransactionOperations {
     
-    public constructor(session: InMemoryDocumentSessionOperations) {
+    public constructor(session: DocumentSession) {
         super(session);
+    }
+
+    public get lazily() {
+        return new LazyClusterTransactionOperations(this._session);
     }
 
     public getCompareExchangeValue<T>(key: string): Promise<CompareExchangeValue<T>>;

@@ -232,6 +232,11 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
+    public negateNext(): IDocumentQuery<T> {
+        this._negateNext();
+        return this;
+    }
+
     public search(fieldName: string, searchTerms: string): IDocumentQuery<T>;
     public search(fieldName: string, searchTerms: string, operator: SearchOperator): IDocumentQuery<T>;
     public search(fieldName: string, searchTerms: string, operator?: SearchOperator): IDocumentQuery<T> {
@@ -550,7 +555,7 @@ export class DocumentQuery<T extends object>
             this.indexName,
             this.collectionName,
             this._isGroupBy,
-            queryData ? queryData.declareToken : null,
+            queryData ? queryData.declareTokens : null,
             queryData ? queryData.loadTokens : null,
             queryData ? queryData.fromAlias : null,
             queryData ? queryData.isProjectInto : null);
