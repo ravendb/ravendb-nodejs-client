@@ -1,6 +1,41 @@
 import { IndexDefinition } from "./IndexDefinition";
 import { AbstractIndexCreationTaskBase } from "./AbstractIndexCreationTaskBase";
 
+type IndexMapDefinition<T> = (document: T) => object | object[];
+
+type AggregateResult<T> = (result: T) => object;
+
+type KeySelector<T> = (document: T) => string;
+
+interface Group<TValue>
+{
+    key: string;
+    values: TValue[];
+}
+
+class ReduceResults<TSource> {
+    private _group: KeySelector<TSource>;
+
+    constructor(selector: KeySelector<TSource>) {
+        this._group = selector;
+    }
+
+    public aggregate(selector: AggregateResult<Group<TSource>>): string {
+        let reduce = `
+            groupBy(${this._group.toString()})
+                .aggregate(${selector.toString()})
+        `
+        return reduce;
+    }
+}
+
+type LoadDocment<T> = (id: string, collection: string) => T
+
+interface MapUtils<T>
+{
+    load: LoadDocment<T> 
+}
+
 export class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTaskBase {
 
     private readonly _definition: IndexDefinition = new IndexDefinition();
@@ -79,6 +114,43 @@ export class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
      */
     public set patternForOutputReduceToCollectionReferences(value: string) {
         this._definition.patternForOutputReduceToCollectionReferences = value;
+    }
+
+    /**
+     * @param collection Collection name to index over 
+     * @param definition Index definition that maps to the indexed properties  
+     */
+    protected map<T>(collection: String, definition: IndexMapDefinition<T>) : void {
+        this.maps.add(`map(${collection}, ${definition.toString()}`);
+    }
+
+    /**
+     * 
+     * @param key 
+     * @param source Additional source script to provide to the index maps 
+     */
+    protected addSource(key: String, source: Function) : void {
+        this.additionalSources = this.additionalSources ?? {};
+
+        this.additionalSources[key.toString()] = source.toString();
+    }
+
+    /**
+     * 
+     * @param selector Group key selector for the reduce results
+     * @returns Group reducer that exposes the `aggregate` function over the grouped results 
+     */
+    protected groupBy<TSource>(selector: KeySelector<TSource>) : ReduceResults<TSource> {
+        return new ReduceResults(selector);
+    }
+
+    /**
+     * No implementation is required; The interface is only what's exposed to allow usage of helper map methods
+     * such as `load(id, collection)` etc.
+     * @returns null
+     */
+    protected getMapUtils<T>() : MapUtils<T> {
+        return null;
     }
 
     public createIndexDefinition(): IndexDefinition {

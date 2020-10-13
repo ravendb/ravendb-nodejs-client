@@ -39,8 +39,18 @@ class Product {
 class UsersByNameWithAdditionalSources extends AbstractJavaScriptIndexCreationTask {
     public constructor() {
         super();
-        this.maps = new Set(["map('Users', function(u) { return { name: mr(u.name)}; })"]);
-        this.additionalSources = { "The Script": "function mr(x) { return 'Mr. ' + x; }" };
+            
+        function mr(name: String) : String {
+            return 'Mr ' + name;
+        }
+        
+        this.map<Product>('Products', p => {
+            return ({ 
+                name: mr(p.name)
+            });
+        });
+
+        this.addSource("The Script", mr);
     }
 }
 
@@ -48,47 +58,49 @@ interface FanoutByNumbersWithReduceResult {
     foo: string;
     sum: number;
 }
+
 class FanoutByNumbersWithReduce extends AbstractJavaScriptIndexCreationTask {
-        public constructor() {
-            super();
-            this.maps = new Set([
-                `map('Fanouts', function (f) {
-                        var result = [];
-                        for(var i = 0; i < f.numbers.length; i++)
-                        {
-                            result.push({
-                                foo: f.foo,
-                                sum: f.numbers[i]
-                            });
-                        }
-                        return result;
-                        })`]);
-            this.reduce =
-                `groupBy(f => f.foo)
-                    .aggregate(g => ({  
-                        foo: g.key, 
-                        sum: g.values.reduce((total, val) => 
-                            val.sum + total,0) 
-                    }))`;
-        }
+    constructor() {
+        super();
+       
+        this.map<Fanout>('Fanouts', f => {
+            var results = [];
+
+            for (var i = 0; i < f.numbers.length; i++) {
+                results.push({
+                    foo: f.foo,
+                    sum: f.numbers[i]
+                })
+            }
+
+            return results;
+        });
+
+        this.reduce = this.groupBy<FanoutByNumbersWithReduceResult>(f => f.foo)
+            .aggregate(g => ({
+                foo: g.key,
+                sum: g.values.reduce((total, val) => 
+                    val.sum + total, 0)
+            }))
     }
+}
 
 class UsersByNameAndAnalyzedNameResult {
     public analyzedName: string;
 }
+
 class UsersByNameAndAnalyzedName extends AbstractJavaScriptIndexCreationTask {
     public constructor() {
         super();
-        this.maps = new Set([`map('Users', function (u){
-                                    return {
-                                        name: u.name,
-                                        _: {
-                                            $value: u.name, 
-                                            $name:'analyzedName', 
-                                            $options:{ indexing: 'Search', storage: true }
-                                        }
-                                    };
-                                })`]);
+
+        this.map<User>('Users', u => ({
+            name: u.name,
+            _: {
+                $value: u.name,
+                $name: 'analyzedName',
+                $options: { indexing: 'Search', storage: true }
+            }
+        }));
 
         const fieldOptions = this.fields = {};
         const indexFieldOptions = new IndexFieldOptions();
@@ -101,27 +113,44 @@ class UsersByNameAndAnalyzedName extends AbstractJavaScriptIndexCreationTask {
 class UsersAndProductsByName extends AbstractJavaScriptIndexCreationTask {
     public constructor() {
         super();
-        this.maps = new Set([
-            "map('Users', function (u) { return { name: u.name, count: 1}; })",
-            "map('Products', function (p) { return { name: p.name, count: 1}; })"
-        ]);
+
+        this.map<User>('Users', u => ({
+            name: u.name,
+            count: 1
+        }));
+
+        this.map<Product>('Products', p => ({
+            name: p.name,
+            count: 1
+        }));
     }
+}
+
+interface Entity
+{
+    name: string;
+    count: number;
 }
 
 class UsersAndProductsByNameAndCount extends AbstractJavaScriptIndexCreationTask {
     public constructor() {
         super();
-        this.maps = new Set([
-            "map('Users', function (u){ return { name: u.name, count: 1};})",
-            "map('Products', function (p){ return { name: p.name, count: 1};})"
-        ]);
-        this.reduce = `groupBy(x => x.name)
-                            .aggregate(g => {
-                                return {
-                                    name: g.key,
-                                    count: g.values.reduce((total, val) => val.count + total,0)
-                                };
-                        })`;
+
+        this.map<User>('Users', u => ({
+            name: u.name,
+            count: 1
+        }));
+
+        this.map<Product>('Products', p => ({
+            name: p.name,
+            count: 1
+        }));
+
+        this.reduce = this.groupBy<Entity>(x => x.name)
+            .aggregate(g => ({
+                name: g.key,
+                count: g.values.reduce((total, val) => val.count + total, 0)
+            }));
     }
 }
 
@@ -133,23 +162,22 @@ interface ProductsByCategoryResult {
 class ProductsByCategory extends AbstractJavaScriptIndexCreationTask {
     public constructor() {
         super();
-        this.maps = new Set(["map('product2s', function(p){\n" +
-            "                        return {\n" +
-            "                            category:\n" +
-                "                            load(p.category, 'categories').name,\n" +
-            "                            count:\n" +
-                "                            1\n" +
-            "                        }\n" +
-            "                    })"]);
-        this.reduce = "groupBy( x => x.category )\n" +
-            "                            .aggregate(g => {\n" +
-            "                                return {\n" +
-            "                                    category: g.key,\n" +
-            "                                    count: g.values.reduce((count, val) => val.count + count, 0)\n" +
-            "                               };})";
-        this.outputReduceToCollection = "CategoryCounts";
+
+        var { load } = this.getMapUtils<Product2>();
+
+        this.map<Product2>('Product2s', p => ({
+            category: load(p.category, 'categories').name,
+            count: 1
+        }));
+
+        this.reduce = this.groupBy<ProductsByCategoryResult>(x => x.category)
+            .aggregate(g => ({
+                category: g.key,
+                count: g.values.reduce((count, val) => val.count + count, 0)
+            }));
     }
 }
+
 class Fanout {
     public foo: string;
     public numbers: number[];
