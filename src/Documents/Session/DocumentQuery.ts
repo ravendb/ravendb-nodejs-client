@@ -66,7 +66,7 @@ export class DocumentQuery<T extends object>
         indexName: string,
         collectionName: string,
         isGroupBy: boolean,
-        declareToken: DeclareToken,
+        declareTokens: DeclareToken[],
         loadTokens: LoadToken[],
         fromAlias: string);
     public constructor(
@@ -75,7 +75,7 @@ export class DocumentQuery<T extends object>
         indexName: string,
         collectionName: string,
         isGroupBy: boolean,
-        declareToken: DeclareToken,
+        declareTokens: DeclareToken[],
         loadTokens: LoadToken[],
         fromAlias: string,
         isProjectInto: boolean);
@@ -85,11 +85,11 @@ export class DocumentQuery<T extends object>
         indexName: string,
         collectionName: string,
         isGroupBy: boolean,
-        declareToken?: DeclareToken,
+        declareTokens?: DeclareToken[],
         loadTokens?: LoadToken[],
         fromAlias?: string,
         isProjectInto?: boolean) {
-        super(documentType, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, fromAlias, isProjectInto);
+        super(documentType, session, indexName, collectionName, isGroupBy, declareTokens, loadTokens, fromAlias, isProjectInto);
     }
 
     public selectFields<TProjection extends Object>(
@@ -576,6 +576,8 @@ export class DocumentQuery<T extends object>
         //noinspection unchecked
         query._documentIncludes = new Set(this._documentIncludes);
         query._counterIncludesTokens = this._counterIncludesTokens;
+        query._timeSeriesIncludesTokens = this._timeSeriesIncludesTokens;
+        query._compareExchangeValueIncludesTokens = this._compareExchangeValueIncludesTokens;
         query._rootTypes = new Set([this._clazz]);
 
         for (const listener of query.listeners("beforeQuery")) {

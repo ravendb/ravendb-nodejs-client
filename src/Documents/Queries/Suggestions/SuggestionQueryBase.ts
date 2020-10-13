@@ -57,7 +57,7 @@ export abstract class SuggestionQueryBase {
                 this._session.conventions,
                 this._query,
                 result => this._invokeAfterQueryExecuted(result),
-                (result, conventions) => this._processResults(result)
+                (result) => this._processResults(result)
             ));
     }
 

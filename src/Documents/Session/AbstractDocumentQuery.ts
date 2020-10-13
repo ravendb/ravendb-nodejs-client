@@ -44,7 +44,7 @@ import * as StringBuilder from "string-builder";
 import { StringUtil } from "../../Utility/StringUtil";
 import { IntersectMarkerToken } from "./Tokens/IntersectMarkerToken";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { CONSTANTS } from "../../Constants";
+import { CONSTANTS, TIME_SERIES } from "../../Constants";
 import { WhereOperator } from "./Tokens/WhereOperator";
 import { OrderingType } from "./OrderingType";
 import { SearchOperator } from "../Queries/SearchOperator";
@@ -85,6 +85,8 @@ import { IncludesUtil } from "./IncludesUtil";
 import { TimeSeriesIncludesToken } from "./Tokens/TimeSeriesIncludesToken";
 import { CompareExchangeValueIncludesToken } from "./Tokens/CompareExchangeValueIncludesToken";
 import { TimeSeriesRange } from "../Operations/TimeSeries/TimeSeriesRange";
+import { ITimeSeriesQueryBuilder } from "../Queries/TimeSeries/ITimeSeriesQueryBuilder";
+import { TimeSeriesQueryBuilder } from "../Queries/TimeSeries/TimeSeriesQueryBuilder";
 
 /**
  * A query against a Raven index
@@ -530,6 +532,15 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         sourceAlias(possibleAlias);
+    }
+
+    protected _createTimeSeriesQueryData(timeSeriesQuery: (builder: ITimeSeriesQueryBuilder) => void) {
+        const builder = new TimeSeriesQueryBuilder();
+        timeSeriesQuery(builder);
+
+        const fields = [ TIME_SERIES.SELECT_FIELD_NAME + "(" + builder.queryText + ")"];
+        const projections = [ TIME_SERIES.QUERY_FUNCTION ];
+        return new QueryData(fields, projections);
     }
 
     protected _updateFieldsToFetchToken(fieldsToFetch: FieldsToFetchToken): void {

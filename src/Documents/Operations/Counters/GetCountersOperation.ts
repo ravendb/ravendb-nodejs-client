@@ -117,7 +117,7 @@ export class GetCounterValuesCommand extends RavenCommand<CountersDetail> {
             const batch = new CounterBatch();
             batch.documents = [docOps];
             batch.replyWithAllNodesValues = this._returnFullResults;
-            request.body = JSON.stringify(batch.serialize(this._conventions));
+            request.body = JSON.stringify(batch.serialize());
             request.headers = this._headers().typeAppJson().build();
         }
 

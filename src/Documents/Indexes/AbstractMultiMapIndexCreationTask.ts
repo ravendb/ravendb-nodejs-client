@@ -22,16 +22,16 @@ export class AbstractMultiMapIndexCreationTask extends AbstractGenericIndexCreat
         }
 
         const indexDefinitionBuilder = new IndexDefinitionBuilder(this.getIndexName());
-        indexDefinitionBuilder.indexesStrings = this._indexesStrings;
-        indexDefinitionBuilder.analyzersStrings = this._analyzersStrings;
-        indexDefinitionBuilder.reduce = this._reduce;
-        indexDefinitionBuilder.storesStrings = this._storesStrings;
-        indexDefinitionBuilder.suggestionsOptions = this._indexSuggestions;
-        indexDefinitionBuilder.termVectorsStrings = this._termVectorsStrings;
-        indexDefinitionBuilder.spatialIndexesStrings = this._spatialOptionsStrings;
-        indexDefinitionBuilder.outputReduceToCollection = this._outputReduceToCollection;
-        indexDefinitionBuilder.patternForOutputReduceToCollectionReferences = this._patternForOutputReduceToCollectionReferences;
-        indexDefinitionBuilder.patternReferencesCollectionName = this._patternReferencesCollectionName;
+        indexDefinitionBuilder.indexesStrings = this.indexesStrings;
+        indexDefinitionBuilder.analyzersStrings = this.analyzersStrings;
+        indexDefinitionBuilder.reduce = this.reduce;
+        indexDefinitionBuilder.storesStrings = this.storesStrings;
+        indexDefinitionBuilder.suggestionsOptions = this.indexSuggestions;
+        indexDefinitionBuilder.termVectorsStrings = this.termVectorsStrings;
+        indexDefinitionBuilder.spatialIndexesStrings = this.spatialOptionsStrings;
+        indexDefinitionBuilder.outputReduceToCollection = this.outputReduceToCollection;
+        indexDefinitionBuilder.patternForOutputReduceToCollectionReferences = this.patternForOutputReduceToCollectionReferences;
+        indexDefinitionBuilder.patternReferencesCollectionName = this.patternReferencesCollectionName;
         indexDefinitionBuilder.additionalSources = this.additionalSources;
         indexDefinitionBuilder.configuration = this.configuration;
         indexDefinitionBuilder.lockMode = this.lockMode;

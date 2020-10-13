@@ -36,8 +36,8 @@ export interface GetDocumentsByIdsCommandOptions
     ids: string[];
     includes?: string[];
     metadataOnly?: boolean;
-    timeSeriesIncludes: TimeSeriesRange[];
-    compareExchangeValueIncludes: string[];
+    timeSeriesIncludes?: TimeSeriesRange[];
+    compareExchangeValueIncludes?: string[];
 }
 
 export interface GetDocumentsStartingWithOptions

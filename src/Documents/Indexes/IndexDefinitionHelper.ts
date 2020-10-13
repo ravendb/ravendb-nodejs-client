@@ -2,6 +2,7 @@ import { IndexType } from "./Enums";
 import { throwError } from "../../Exceptions/index";
 import { StringUtil } from "../../Utility/StringUtil";
 import * as XRegExp from "xregexp";
+import { IndexSourceType } from "./IndexSourceType";
 
 const COMMENT_REGEX = new XRegExp("(?:/\\*(?:[^*]|(?:\\*+[^*/]))*\\*+/)|(?://.*)", "gm");
 
@@ -11,12 +12,18 @@ export class IndexDefinitionHelper {
             throwError("InvalidArgumentException", "Index definitions contains no Maps");
         }
 
-        map = map.replace(COMMENT_REGEX, "");
-        map = map.trim();
+        map = IndexDefinitionHelper.stripComments(map);
+        map = IndexDefinitionHelper.unifyWhiteSpace(map);
 
-        if (map.startsWith("from") || map.startsWith("docs")) {
+        const mapLower = map.toLocaleLowerCase();
+
+        if (mapLower.startsWith("from")
+            || mapLower.startsWith("docs")
+            || mapLower.startsWith("timeseries")
+            || mapLower.startsWith("counters")) {
             // C# indexes must start with "from" for query syntax or
             // "docs" for method syntax
+
             if (StringUtil.isNullOrWhitespace(reduce)) {
                 return "Map";
             }
@@ -28,5 +35,56 @@ export class IndexDefinitionHelper {
         }
 
         return "JavaScriptMapReduce";
+    }
+
+    public static detectStaticIndexSourceType(map: string): IndexSourceType {
+        if (StringUtil.isNullOrWhitespace(map)) {
+            throwError("InvalidArgumentException", "Value cannot be null or whitespace.");
+        }
+
+        map = IndexDefinitionHelper.stripComments(map);
+        map = IndexDefinitionHelper.unifyWhiteSpace(map);
+
+        // detect first supported syntax: timeseries.Companies.HeartRate.Where
+        const mapLower = map.toLocaleLowerCase();
+        if (mapLower.startsWith("timeseries")) {
+            return "TimeSeries";
+        }
+
+        if (mapLower.startsWith("counters")) {
+            return "Counters";
+        }
+
+        if (mapLower.startsWith("from")) {
+            // detect `from ts in timeseries` or `from ts in timeseries.Users.HeartRate`
+
+            throwError("NotImplementedException");
+
+            /* TODO
+            String[] tokens = Arrays.stream(mapLower.split(" ", 4))
+                    .filter(StringUtils::isNotEmpty)
+                    .toArray(String[]::new);
+
+            if (tokens.length >= 4 && "in".equalsIgnoreCase(tokens[2])) {
+                if (tokens[3].startsWith("timeseries")) {
+                    return IndexSourceType.TIME_SERIES;
+                }
+                if (tokens[3].startsWith("counters")) {
+                    return IndexSourceType.COUNTERS;
+                }
+            }
+             */
+        }
+
+        // fallback to documents based index
+        return "Documents";
+    }
+
+    private static stripComments(input: string): string {
+        return input.replace(COMMENT_REGEX, "").trim();
+    }
+
+    private static unifyWhiteSpace(input: string): string {
+        return input.replace(/\\s+/g, " "); //TODO: check!
     }
 }

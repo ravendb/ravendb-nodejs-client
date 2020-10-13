@@ -242,7 +242,7 @@ export class BulkInsertOperation {
     }
 
     private async _getExceptionFromOperation(): Promise<Error> {
-        const stateRequest = new GetOperationStateCommand(this._conventions, this._operationId);
+        const stateRequest = new GetOperationStateCommand(this._operationId);
         await this._requestExecutor.execute(stateRequest);
         if (!stateRequest.result) {
             return null;

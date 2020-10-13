@@ -19,6 +19,7 @@ export class CompareExchangeValueResultParser {
 
     public static getValues<T>(
         responseObj: GetCompareExchangeValuesResponse,
+        materializeMetadata: boolean,
         conventions: DocumentConventions,
         clazz?: ClassConstructor<T>)
         : { [key: string]: CompareExchangeValue<T> } {
@@ -73,13 +74,14 @@ export class CompareExchangeValueResultParser {
 
     public static getValue<T>(
         response: GetCompareExchangeValuesResponse,
+        materializeMetadata: boolean,
         conventions: DocumentConventions,
         clazz: ClassConstructor<T>): CompareExchangeValue<T> {
         if (!response) {
             return null;
         }
 
-        const values = CompareExchangeValueResultParser.getValues(response, conventions, clazz);
+        const values = CompareExchangeValueResultParser.getValues(response, materializeMetadata, conventions, clazz);
         const itemsKeys = Object.keys(values);
         if (!values || !itemsKeys.length) {
             return null;

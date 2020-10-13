@@ -13,6 +13,6 @@ export class ServerWideOperationCompletionAwaiter extends OperationCompletionAwa
     }
 
     protected _getOperationStateCommand(conventions: DocumentConventions, id: number, nodeTag?: string): RavenCommand<IRavenResponse> {
-        return new GetServerWideOperationStateCommand(conventions, id, nodeTag);
+        return new GetServerWideOperationStateCommand(id, nodeTag);
     }
 }

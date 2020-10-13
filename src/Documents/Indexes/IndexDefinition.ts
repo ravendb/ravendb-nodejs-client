@@ -116,6 +116,10 @@ export class IndexDefinitionBuilder extends AbstractIndexDefinitionBuilder<Index
     }
 
     protected _toIndexDefinition(indexDefinition: IndexDefinition, conventions: DocumentConventions) {
-        return this.toIndexDefinition(conventions, true);
+        if (!this.map) {
+            return;
+        }
+
+        indexDefinition.maps.add(this.map);
     }
 }

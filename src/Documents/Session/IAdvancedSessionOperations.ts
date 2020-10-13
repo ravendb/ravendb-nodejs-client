@@ -15,7 +15,7 @@ import { IRevisionsSessionOperations } from "./IRevisionsSessionOperations";
 import { IClusterTransactionOperations } from "./IClusterTransactionOperations";
 import { DocumentType } from "../DocumentAbstractions";
 import { IRawDocumentQuery } from "./IRawDocumentQuery";
-import { SessionLoadStartingWithOptions } from "./IDocumentSession";
+import { SessionInfo, SessionLoadStartingWithOptions } from "./IDocumentSession";
 import { ErrorFirstCallback } from "../../Types/Callbacks";
 import { IDocumentQuery } from "./IDocumentQuery";
 import { JavaScriptArray } from "./JavaScriptArray";
@@ -235,6 +235,8 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
     getCurrentSessionNode(): Promise<ServerNode>;
 
     requestExecutor: RequestExecutor;
+    
+    sessionInfo: SessionInfo;
 
     /**
      * Gets a value indicating whether any of the entities tracked by the session has changes.
@@ -303,6 +305,12 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
      * Gets all the counter names for the specified entity.
      */
     getCountersFor<T extends object>(instance: T): string[];
+
+    /**
+     * Gets all time series names for the specified entity.
+     * @param instance The instance
+     */
+    getTimeSeriesFor<T extends object>(instance: T): string[];
 
     /**
      * Gets last modified date for the specified entity.

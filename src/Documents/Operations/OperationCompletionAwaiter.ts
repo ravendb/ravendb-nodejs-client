@@ -35,7 +35,7 @@ export class OperationCompletionAwaiter {
     }
 
     protected _getOperationStateCommand(conventions: DocumentConventions, id: number, nodeTag?: string): RavenCommand<IRavenResponse> {
-        return new GetOperationStateCommand(this._conventions, this._id, nodeTag);
+        return new GetOperationStateCommand(this._id, nodeTag);
     }
 
     get nodeTag() {

@@ -17,6 +17,7 @@ import { DateUtil, DateUtilOpts } from "../../Utility/DateUtil";
 import { CasingConvention, ObjectUtil, ObjectChangeCaseOptions } from "../../Utility/ObjectUtil";
 import { InMemoryDocumentSessionOperations } from "../..";
 import { LoadBalanceBehavior } from "../../Http/LoadBalanceBehavior";
+import { BulkInsertConventions } from "./BulkInsertConventions";
 
 export type IdConvention = (databaseName: string, entity: object) => Promise<string>;
 export type IValueForQueryConverter<T> =
@@ -133,7 +134,7 @@ export class DocumentConventions {
         this._findCollectionName = type => DocumentConventions.defaultGetCollectionName(type);
 
         this._maxNumberOfRequestsPerSession = 30;
-        this._bulkInsert = new BulkInsertConventions(this, this._assertNotFrozen);
+        this._bulkInsert = new BulkInsertConventions(() => this._assertNotFrozen());
         this._maxHttpCacheSize = 128 * 1024 * 1024;
 
         this._knownEntityTypes = new Map();
@@ -897,30 +898,5 @@ export class DocumentConventions {
     }
 }
 
+
 DocumentConventions.defaultConventions.freeze();
-
-export class BulkInsertConventions {
-    private readonly _conventions: DocumentConventions;
-    private readonly _notFrozen: () => void;
-    private _timeSeriesBatchSize: number;
-
-    constructor(conventions: DocumentConventions, notFrozen: () => void) {
-        this._conventions = conventions;
-        this._timeSeriesBatchSize = 1024;
-        this._notFrozen = notFrozen;
-    }
-
-    public get timeSeriesBatchSize() {
-        return this._timeSeriesBatchSize;
-    }
-
-    public set timeSeriesBatchSize(batchSize: number) {
-        this._notFrozen();
-
-        if (batchSize <= 0) {
-            throwError("InvalidArgumentException", "BatchSize must be positive");
-        }
-
-        this._timeSeriesBatchSize = batchSize;
-    }
-}

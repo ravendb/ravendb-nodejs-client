@@ -13,6 +13,8 @@ export class RawTimeSeriesPolicy extends TimeSeriesPolicy {
         if (retentionTime && retentionTime.compareTo(TimeValue.ZERO) <= 0) {
             throwError("InvalidArgumentException", "Retention time must be greater than zero.");
         }
-        super(RawTimeSeriesPolicy.POLICY_STRING, null, retentionTime || TimeValue.MAX_VALUE);
+
+        super(RawTimeSeriesPolicy.POLICY_STRING, TimeValue.MAX_VALUE, retentionTime || TimeValue.MAX_VALUE);
+        this.aggregationTime = null; // hack - we need to class super here
     }
 }

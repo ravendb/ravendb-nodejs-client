@@ -9,28 +9,28 @@ import { IndexDefinition } from "./IndexDefinition";
  */
 export abstract class AbstractGenericIndexCreationTask extends AbstractIndexCreationTaskBase<IndexDefinition> {
 
-    protected _reduce: string;
+    protected reduce: string;
 
-    protected _storesStrings: Record<string, FieldStorage>;
-    protected _indexesStrings: Record<string, FieldIndexing>;
-    protected _analyzersStrings: Record<string, string>;
-    protected _indexSuggestions: Set<string>;
-    protected _termVectorsStrings: Record<string, FieldTermVector>;
-    protected _spatialOptionsStrings: Record<string, SpatialOptions>;
+    protected storesStrings: Record<string, FieldStorage>;
+    protected indexesStrings: Record<string, FieldIndexing>;
+    protected analyzersStrings: Record<string, string>;
+    protected indexSuggestions: Set<string>;
+    protected termVectorsStrings: Record<string, FieldTermVector>;
+    protected spatialOptionsStrings: Record<string, SpatialOptions>;
 
-    protected _outputReduceToCollection: string;
-    protected _patternForOutputReduceToCollectionReferences: string;
-    protected _patternReferencesCollectionName: string;
+    protected outputReduceToCollection: string;
+    protected patternForOutputReduceToCollectionReferences: string;
+    protected patternReferencesCollectionName: string;
 
     public constructor() {
         super();
 
-        this._storesStrings = {};
-        this._indexesStrings = {};
-        this._analyzersStrings = {};
-        this._indexSuggestions = new Set<string>();
-        this._termVectorsStrings = {};
-        this._spatialOptionsStrings = {};
+        this.storesStrings = {};
+        this.indexesStrings = {};
+        this.analyzersStrings = {};
+        this.indexSuggestions = new Set<string>();
+        this.termVectorsStrings = {};
+        this.spatialOptionsStrings = {};
     }
 
 
@@ -39,7 +39,7 @@ export abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
      * @return if index is of type: Map/Reduce
      */
     public get isMapReduce(): boolean {
-        return !!this._reduce;
+        return !!this.reduce;
     }
 
     /**
@@ -47,7 +47,7 @@ export abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
      */
     // tslint:disable-next-line:function-name
     protected index(field: string, indexing: FieldIndexing): void {
-        this._indexesStrings[field] = indexing;
+        this.indexesStrings[field] = indexing;
     }
 
     /**
@@ -55,14 +55,14 @@ export abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
      */
     // tslint:disable-next-line:function-name
     protected spatial(field: string, indexing: (spatialOptsFactory: SpatialOptionsFactory) => SpatialOptions): void {
-        this._spatialOptionsStrings[field] = indexing(new SpatialOptionsFactory());
+        this.spatialOptionsStrings[field] = indexing(new SpatialOptionsFactory());
     }
 
     // TBD protected void Store(Expression<Func<TReduceResult, object>> field, FieldStorage storage)
 
     // tslint:disable-next-line:function-name
     protected storeAllFields(storage: FieldStorage): void {
-        this._storesStrings[CONSTANTS.Documents.Indexing.Fields.ALL_FIELDS] = storage;
+        this.storesStrings[CONSTANTS.Documents.Indexing.Fields.ALL_FIELDS] = storage;
     }
 
     /**
@@ -70,7 +70,7 @@ export abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
      */
     // tslint:disable-next-line:function-name
     protected store(field: string, storage: FieldStorage): void {
-        this._storesStrings[field] = storage;
+        this.storesStrings[field] = storage;
     }
 
     /**
@@ -78,7 +78,7 @@ export abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
      */
     // tslint:disable-next-line:function-name
     protected analyze(field: string, analyzer: string): void {
-        this._analyzersStrings[field] = analyzer;
+        this.analyzersStrings[field] = analyzer;
     }
 
     /**
@@ -86,11 +86,11 @@ export abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
      */
     // tslint:disable-next-line:function-name
     protected termVector(field: string, termVector: FieldTermVector): void {
-        this._termVectorsStrings[field] = termVector;
+        this.termVectorsStrings[field] = termVector;
     }
 
     // tslint:disable-next-line:function-name
     protected suggestion(field: string): void {
-        this._indexSuggestions.add(field);
+        this.indexSuggestions.add(field);
     }
 }

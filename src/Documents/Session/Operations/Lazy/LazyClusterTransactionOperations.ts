@@ -2,6 +2,7 @@ import { ClusterTransactionOperationsBase } from "../../ClusterTransactionOperat
 import { ILazyClusterTransactionOperations } from "../../ILazyClusterTransactionOperations";
 import { ClassConstructor, CompareExchangeValue, Lazy } from "../../../..";
 import { LazyGetCompareExchangeValueOperation } from "./LazyGetCompareExchangeValueOperation";
+import { LazyGetCompareExchangeValuesOperation } from "./LazyGetCompareExchangeValuesOperation";
 
 export class LazyClusterTransactionOperations extends ClusterTransactionOperationsBase implements ILazyClusterTransactionOperations {
 

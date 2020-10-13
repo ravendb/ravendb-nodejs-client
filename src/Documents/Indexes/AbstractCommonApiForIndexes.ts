@@ -20,6 +20,10 @@ export abstract class AbstractCommonApiForIndexes {
      * Generates index name from type name replacing all _ with /
      */
     public getIndexName() {
-        return AbstractIndexCreationTask.getIndexNameForCtor(this.constructor.name); //TODO: find better place for this method?
+        return AbstractCommonApiForIndexes.getIndexNameForCtor(this.constructor.name);
+    }
+
+    public static getIndexNameForCtor(indexCtorName: string) {
+        return indexCtorName.replace(/_/g, "/");
     }
 }
