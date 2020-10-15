@@ -78,7 +78,7 @@ export class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
      * @param mapReduce Map reduce defintion provided by groupBy and aggregate operation 
      */
     protected reduce<T>(mapReduce: ReduceDefinition<T>): void {
-        this._definition.reduce = mapReduce(null).format()
+        this._definition.reduce = mapReduce(new GroupResults<T>()).format()
     }
 
     /**
