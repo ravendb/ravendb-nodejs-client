@@ -155,7 +155,7 @@ class Fanout {
     public numbers: number[];
 }
 
-describe("JavaScriptIndexTest", function () {
+describe("RawJavaScriptIndexTest", function () {
 
     let store: IDocumentStore;
 
@@ -318,6 +318,5 @@ describe("JavaScriptIndexTest", function () {
             assertThat(res.length)
                 .isGreaterThan(0);
         }
-
     });
 });
