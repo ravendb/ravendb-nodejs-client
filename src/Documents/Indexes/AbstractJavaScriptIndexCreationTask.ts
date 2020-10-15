@@ -1,41 +1,6 @@
 import { IndexDefinition } from "./IndexDefinition";
 import { AbstractIndexCreationTaskBase } from "./AbstractIndexCreationTaskBase";
 
-type IndexMapDefinition<T> = (document: T) => object | object[];
-
-type AggregateResult<T> = (result: T) => object;
-
-type KeySelector<T> = (document: T) => string;
-
-interface Group<TValue>
-{
-    key: string;
-    values: TValue[];
-}
-
-class ReduceResults<TSource> {
-    private _group: KeySelector<TSource>;
-
-    constructor(selector: KeySelector<TSource>) {
-        this._group = selector;
-    }
-
-    public aggregate(selector: AggregateResult<Group<TSource>>): string {
-        let reduce = `
-            groupBy(${this._group.toString()})
-                .aggregate(${selector.toString()})
-        `
-        return reduce;
-    }
-}
-
-type LoadDocment<T> = (id: string, collection: string) => T
-
-interface MapUtils<T>
-{
-    load: LoadDocment<T> 
-}
-
 export class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTaskBase {
 
     private readonly _definition: IndexDefinition = new IndexDefinition();
@@ -46,14 +11,6 @@ export class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
         this._definition.priority = "Normal";
     }
 
-    public get maps() {
-        return this._definition.maps;
-    }
-
-    public set maps(value) {
-        this._definition.maps = value;
-    }
-
     public get fields() {
         return this._definition.fields;
     }
@@ -62,16 +19,8 @@ export class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
         this._definition.fields = value;
     }
 
-    public get reduce() {
-        return this._definition.reduce;
-    }
-
-    public set reduce(value) {
-        this._definition.reduce = value;
-    }
-
     public get isMapReduce(): boolean {
-        return !!this.reduce;
+        return !!this._definition.reduce;
     }
 
     /**
@@ -120,13 +69,21 @@ export class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
      * @param collection Collection name to index over 
      * @param definition Index definition that maps to the indexed properties  
      */
-    protected map<T>(collection: String, definition: IndexMapDefinition<T>) : void {
-        this.maps.add(`map(${collection}, ${definition.toString()}`);
+    protected map<T>(collection: string, definition: MapDefinition<T>): void {
+        this._definition.maps.add(`map(${collection}, ${definition.toString()}`);
+    }
+
+    /**
+     * Sets the index defintion reduce
+     * @param mapReduce Map reduce defintion provided by groupBy and aggregate operation 
+     */
+    protected reduce<T>(mapReduce: ReduceDefinition<T>): void {
+        this._definition.reduce = mapReduce(null).format()
     }
 
     /**
      * 
-     * @param key 
+     * @param key A key to associated the source script with
      * @param source Additional source script to provide to the index maps 
      */
     protected addSource(key: String, source: Function) : void {
@@ -136,18 +93,8 @@ export class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
     }
 
     /**
-     * 
-     * @param selector Group key selector for the reduce results
-     * @returns Group reducer that exposes the `aggregate` function over the grouped results 
-     */
-    protected groupBy<TSource>(selector: KeySelector<TSource>) : ReduceResults<TSource> {
-        return new ReduceResults(selector);
-    }
-
-    /**
-     * No implementation is required; The interface is only what's exposed to allow usage of helper map methods
-     * such as `load(id, collection)` etc.
-     * @returns null
+     * No implementation is required here, the interface is purely meant to expose map helper methods such as `load(id, collection)` etc
+     * @returns None 
      */
     protected getMapUtils<T>() : MapUtils<T> {
         return null;
@@ -164,4 +111,56 @@ export class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
 
         return this._definition;
     }
+}
+
+type LoadDocument<T> = (id: string | string[], collection: string) => T;
+type CreateSpatialField = (lat: number, lng: number) => void;
+interface MapUtils<T>
+{
+    load: LoadDocument<T>,
+    createSpatialField: CreateSpatialField
+}
+
+type MapDefinition<T> = (document: T) => object;
+type ReduceDefinition<T> = (result: GroupResults<T>) => MapReduceFormatter<T>;
+type KeySelector<T> = (document: T) => string;
+
+interface Group<TValue>
+{
+    key: string;
+    values: TValue[];
+}
+
+class GroupResults<T> {
+    public groupBy(selector: KeySelector<T>): ReduceResults<T> {
+        return new ReduceResults<T>(selector);
+    }
+}
+
+class ReduceResults<T> {
+    private _group: KeySelector<T>;
+
+    constructor(selector: KeySelector<T>) {
+        this._group = selector;
+    }
+
+    public aggregate(reducer: MapDefinition<Group<T>>): MapReduceFormatter<T> {
+        return new MapReduceFormatter<T>(this._group, reducer);
+    }
+}
+
+class MapReduceFormatter<T> {
+    private _groupBy: KeySelector<T>;
+    private _aggregate: MapDefinition<Group<T>>;
+
+    constructor(groupBy: KeySelector<T>, aggregate: MapDefinition<Group<T>>) {
+       this._groupBy = groupBy;
+       this._aggregate = aggregate;
+    }
+
+    public format(): string {
+        let fmt = `groupBy(${this._groupBy}.${this._aggregate}`;
+
+        return fmt;
+    } 
 }

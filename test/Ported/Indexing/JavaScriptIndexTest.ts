@@ -76,12 +76,13 @@ class FanoutByNumbersWithReduce extends AbstractJavaScriptIndexCreationTask {
             return results;
         });
 
-        this.reduce = this.groupBy<FanoutByNumbersWithReduceResult>(f => f.foo)
-            .aggregate(g => ({
+        this.reduce<FanoutByNumbersWithReduceResult>(
+            r => r.groupBy(f => f.foo).aggregate(g => ({
                 foo: g.key,
                 sum: g.values.reduce((total, val) => 
                     val.sum + total, 0)
             }))
+        );
     }
 }
 
@@ -146,11 +147,11 @@ class UsersAndProductsByNameAndCount extends AbstractJavaScriptIndexCreationTask
             count: 1
         }));
 
-        this.reduce = this.groupBy<Entity>(x => x.name)
+        this.reduce<Entity>(r => r.groupBy(x => x.name)
             .aggregate(g => ({
-                name: g.key,
-                count: g.values.reduce((total, val) => val.count + total, 0)
-            }));
+                name: g.key
+            }))
+        );
     }
 }
 
@@ -163,18 +164,19 @@ class ProductsByCategory extends AbstractJavaScriptIndexCreationTask {
     public constructor() {
         super();
 
-        var { load } = this.getMapUtils<Product2>();
+        let { load } = this.getMapUtils<Product2>();
 
         this.map<Product2>('Product2s', p => ({
-            category: load(p.category, 'categories').name,
+            category: load(p.category, 'categories'),
             count: 1
         }));
 
-        this.reduce = this.groupBy<ProductsByCategoryResult>(x => x.category)
+        this.reduce<ProductsByCategoryResult>(r => r.groupBy(p => p.category)
             .aggregate(g => ({
                 category: g.key,
                 count: g.values.reduce((count, val) => val.count + count, 0)
-            }));
+            }))
+        );
     }
 }
 
@@ -346,6 +348,5 @@ describe("JavaScriptIndexTest", function () {
             assertThat(res.length)
                 .isGreaterThan(0);
         }
-
     });
 });
