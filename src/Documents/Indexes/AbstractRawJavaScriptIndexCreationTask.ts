@@ -82,7 +82,7 @@ export class AbstractRawJavaScriptIndexCreationTask extends AbstractIndexCreatio
     }
 
     public createIndexDefinition(): IndexDefinition {
-        this._definition.type = this.isMapReduce ?  "JavaScriptMapReduce" : "JavaScriptMap";
+        this._definition.type = this.isMapReduce ? "JavaScriptMapReduce" : "JavaScriptMap";
 
         if (this.additionalSources) {
             this._definition.additionalSources = this.additionalSources;
