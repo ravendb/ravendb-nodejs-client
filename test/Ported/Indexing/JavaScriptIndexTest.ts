@@ -40,14 +40,14 @@ class UsersByNameWithAdditionalSources extends AbstractJavaScriptIndexCreationTa
     public constructor() {
         super();
             
-        function mr(name: String) : String {
-            return 'Mr ' + name;
+        function mr(name: string): string {
+            return 'Mr. ' + name;
         }
         
-        this.map<Product>('Products', p => {
-            return ({ 
-                name: mr(p.name)
-            });
+        this.map<User>('Users', function(u) {
+            return { 
+                name: mr(u.name)
+            }
         });
 
         this.addSource("The Script", mr);
@@ -94,14 +94,16 @@ class UsersByNameAndAnalyzedName extends AbstractJavaScriptIndexCreationTask {
     public constructor() {
         super();
 
-        this.map<User>('Users', u => ({
-            name: u.name,
-            _: {
-                $value: u.name,
-                $name: 'analyzedName',
-                $options: { indexing: 'Search', storage: true }
+        this.map<User>('Users', function(u) {
+            return {
+                name: u.name,
+                _: {
+                    $value: u.name,
+                    $name: 'analyzedName',
+                    $options: { indexing: 'Search', storage: true }
+                }
             }
-        }));
+        });
 
         const fieldOptions = this.fields = {};
         const indexFieldOptions = new IndexFieldOptions();
@@ -115,15 +117,19 @@ class UsersAndProductsByName extends AbstractJavaScriptIndexCreationTask {
     public constructor() {
         super();
 
-        this.map<User>('Users', u => ({
-            name: u.name,
-            count: 1
-        }));
+        this.map<User>('Users', function(u) {
+            return {
+                name: u.name,
+                count: 1
+            } 
+        });
 
-        this.map<Product>('Products', p => ({
-            name: p.name,
-            count: 1
-        }));
+        this.map<Product>('Products', function(p) {
+            return {
+                name: p.name,
+                count: 1
+            }
+        });
     }
 }
 
@@ -137,19 +143,24 @@ class UsersAndProductsByNameAndCount extends AbstractJavaScriptIndexCreationTask
     public constructor() {
         super();
 
-        this.map<User>('Users', u => ({
-            name: u.name,
-            count: 1
-        }));
+        this.map<User>('Users', function(u) {
+            return {
+                name: u.name,
+                count: 1
+            }
+        });
 
-        this.map<Product>('Products', p => ({
-            name: p.name,
-            count: 1
-        }));
+        this.map<Product>('Products', function(p) {
+            return {
+                name: p.name,
+                count: 1
+            }
+        });
 
         this.reduce<Entity>(r => r.groupBy(x => x.name)
             .aggregate(g => ({
-                name: g.key
+                name: g.key,
+                count: g.values.reduce((total, val) => val.count + total, 0)
             }))
         );
     }
@@ -166,10 +177,12 @@ class ProductsByCategory extends AbstractJavaScriptIndexCreationTask {
 
         let { load } = this.getMapUtils<Product2>();
 
-        this.map<Product2>('Product2s', p => ({
-            category: load(p.category, 'categories'),
-            count: 1
-        }));
+        this.map<Product2>('Product2s', function(p) {
+            return {
+                category: load(p.category, 'categories').name,
+                count: 1
+            }
+        });
 
         this.reduce<ProductsByCategoryResult>(r => r.groupBy(p => p.category)
             .aggregate(g => ({
@@ -177,6 +190,8 @@ class ProductsByCategory extends AbstractJavaScriptIndexCreationTask {
                 count: g.values.reduce((count, val) => val.count + count, 0)
             }))
         );
+
+        this.outputReduceToCollection = "CategoryCounts";
     }
 }
 

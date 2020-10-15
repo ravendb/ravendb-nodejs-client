@@ -70,7 +70,7 @@ export class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
      * @param definition Index definition that maps to the indexed properties  
      */
     protected map<T>(collection: string, definition: MapDefinition<T>): void {
-        this._definition.maps.add(`map(${collection}, ${definition.toString()}`);
+        this._definition.maps.add(`map(\'${collection}\', ${definition.toString()})`);
     }
 
     /**
@@ -94,10 +94,10 @@ export class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
 
     /**
      * No implementation is required here, the interface is purely meant to expose map helper methods such as `load(id, collection)` etc
-     * @returns None 
+     * @returns Empty MapUtils object 
      */
     protected getMapUtils<T>() : MapUtils<T> {
-        return null;
+        return new StubMapUtils<T>();
     }
 
     public createIndexDefinition(): IndexDefinition {
@@ -115,10 +115,17 @@ export class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
 
 type LoadDocument<T> = (id: string | string[], collection: string) => T;
 type CreateSpatialField = (lat: number, lng: number) => void;
+
 interface MapUtils<T>
 {
     load: LoadDocument<T>,
     createSpatialField: CreateSpatialField
+}
+
+class StubMapUtils<T> implements MapUtils<T>
+{
+    load: LoadDocument<T>;
+    createSpatialField: CreateSpatialField;
 }
 
 type MapDefinition<T> = (document: T) => object;
@@ -159,7 +166,7 @@ class MapReduceFormatter<T> {
     }
 
     public format(): string {
-        let fmt = `groupBy(${this._groupBy}.${this._aggregate}`;
+        let fmt = `groupBy(${this._groupBy}).aggregate(${this._aggregate})`;
 
         return fmt;
     } 
