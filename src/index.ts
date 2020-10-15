@@ -296,6 +296,7 @@ export * from "./Documents/Indexes";
 export * from "./Documents/Indexes/AbstractIndexCreationTask";
 export * from "./Documents/Indexes/AbstractMultiMapIndexCreationTask";
 export * from "./Documents/Indexes/AbstractJavaScriptIndexCreationTask";
+export * from "./Documents/Indexes/AbstractRawJavaScriptIndexCreationTask";
 export * from "./Documents/Indexes/AutoIndexDefinition";
 export * from "./Documents/Indexes/AutoIndexFieldOptions";
 export * from "./Documents/Indexes/Spatial/AutoSpatialOptions";
