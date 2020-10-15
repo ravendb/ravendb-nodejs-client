@@ -49,10 +49,10 @@ interface FanoutByNumbersWithReduceResult {
     sum: number;
 }
 class FanoutByNumbersWithReduce extends AbstractRawJavaScriptIndexCreationTask {
-        public constructor() {
-            super();
-            this.maps = new Set([
-                `map('Fanouts', function (f) {
+    public constructor() {
+        super();
+        this.maps = new Set([
+            `map('Fanouts', function (f) {
                         var result = [];
                         for(var i = 0; i < f.numbers.length; i++)
                         {
@@ -63,15 +63,15 @@ class FanoutByNumbersWithReduce extends AbstractRawJavaScriptIndexCreationTask {
                         }
                         return result;
                         })`]);
-            this.reduce =
-                `groupBy(f => f.foo)
+        this.reduce =
+            `groupBy(f => f.foo)
                     .aggregate(g => ({  
                         foo: g.key, 
                         sum: g.values.reduce((total, val) => 
                             val.sum + total,0) 
                     }))`;
-        }
     }
+}
 
 class UsersByNameAndAnalyzedNameResult {
     public analyzedName: string;
@@ -136,9 +136,9 @@ class ProductsByCategory extends AbstractRawJavaScriptIndexCreationTask {
         this.maps = new Set(["map('product2s', function(p){\n" +
             "                        return {\n" +
             "                            category:\n" +
-                "                            load(p.category, 'categories').name,\n" +
+            "                            load(p.category, 'categories').name,\n" +
             "                            count:\n" +
-                "                            1\n" +
+            "                            1\n" +
             "                        }\n" +
             "                    })"]);
         this.reduce = "groupBy( x => x.category )\n" +
@@ -163,7 +163,7 @@ describe("JavaScriptIndexTest", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     async function storeBrendan(store) {
@@ -181,7 +181,7 @@ describe("JavaScriptIndexTest", function () {
                 this.maps = new Set(["map('Users', u => ({ name: u.name, count: 1 }))"]);
             }
         }
-            
+
         await store.executeIndex(new UsersByName());
         await storeBrendan(store);
         await testContext.waitForIndexing(store);
@@ -215,8 +215,8 @@ describe("JavaScriptIndexTest", function () {
         await store.executeIndex(index);
         {
             const session = store.openSession();
-            await storeNewDoc(session, { foo: "Foo", numbers: [ 4, 6, 11, 9 ] }, null, Fanout);
-            await storeNewDoc(session, { foo: "Bar", numbers: [ 3, 8, 5, 17 ] }, null, Fanout);
+            await storeNewDoc(session, { foo: "Foo", numbers: [4, 6, 11, 9] }, null, Fanout);
+            await storeNewDoc(session, { foo: "Bar", numbers: [3, 8, 5, 17] }, null, Fanout);
             await session.saveChanges();
         }
 
@@ -228,7 +228,7 @@ describe("JavaScriptIndexTest", function () {
                 .whereEquals("sum", 33)
                 .selectFields("sum")
                 .single();
-            
+
             assert.ok(result);
         }
     });
@@ -241,13 +241,13 @@ describe("JavaScriptIndexTest", function () {
         await testContext.waitForIndexing(store);
         {
             const session = store.openSession();
-            const result = await session.query({ 
+            const result = await session.query({
                 indexName: index.getIndexName()
             })
-            .search("analyzedName", "Brendan")
-            .selectFields<UsersByNameAndAnalyzedNameResult>("analyzedName", UsersByNameAndAnalyzedNameResult)
-            .single();
-            
+                .search("analyzedName", "Brendan")
+                .selectFields<UsersByNameAndAnalyzedNameResult>("analyzedName", UsersByNameAndAnalyzedNameResult)
+                .single();
+
             assert.ok(result);
             assert.strictEqual(result.analyzedName, "Brendan Eich");
         }
@@ -258,8 +258,8 @@ describe("JavaScriptIndexTest", function () {
         await store.executeIndex(index);
         {
             const session = store.openSession();
-            await storeNewDoc(session, { name: "Brendan Eich" }, "users/1", User);   
-            await storeNewDoc(session, { name: "Shampoo", available: true }, "products/1", Product);   
+            await storeNewDoc(session, { name: "Brendan Eich" }, "users/1", User);
+            await storeNewDoc(session, { name: "Shampoo", available: true }, "products/1", Product);
             await session.saveChanges();
 
             await testContext.waitForIndexing(store);
@@ -277,8 +277,8 @@ describe("JavaScriptIndexTest", function () {
 
         {
             const session = store.openSession();
-            await storeNewDoc(session, { name: "Brendan Eich" }, "users/1", User);   
-            await storeNewDoc(session, { name: "Shampoo", available: true }, "products/1", Product);   
+            await storeNewDoc(session, { name: "Brendan Eich" }, "users/1", User);
+            await storeNewDoc(session, { name: "Shampoo", available: true }, "products/1", Product);
             await session.saveChanges();
 
             await testContext.waitForIndexing(store);
@@ -296,8 +296,8 @@ describe("JavaScriptIndexTest", function () {
         await store.executeIndex(index);
         {
             const session = store.openSession();
-            await storeNewDoc(session, { name: "Beverages" }, "categories/1-A", Category);   
-            await storeNewDoc(session, { name: "Seafood" }, "categories/2-A", Category);   
+            await storeNewDoc(session, { name: "Beverages" }, "categories/1-A", Category);
+            await storeNewDoc(session, { name: "Seafood" }, "categories/2-A", Category);
             await session.store(Product2.create("categories/1-A", "Lakkalikööri", 13));
             await session.store(Product2.create("categories/1-A", "Original Frankfurter", 16));
             await session.store(Product2.create("categories/2-A", "Röd Kaviar", 18));
