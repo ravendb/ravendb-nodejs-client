@@ -208,7 +208,8 @@ describe("JavaScriptIndexTest", function () {
         class UsersByName extends AbstractJavaScriptIndexCreationTask {
             public constructor() {
                 super();
-                this.maps = new Set(["map('Users', u => ({ name: u.name, count: 1 }))"]);
+
+                this.map<User>('Users', u => ({ name: u.name, count: 1 }));
             }
         }
             
