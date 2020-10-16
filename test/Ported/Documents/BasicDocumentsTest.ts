@@ -108,8 +108,8 @@ describe("Basic documents test", function () {
 
         {
             const session = store.openSession() as DocumentSession;
-            const user1 = session.entityToJson.convertToEntity(User, "users/1", doc1) as User;
-            const user2 = session.entityToJson.convertToEntity(User, "users/2", doc2) as User;
+            const user1 = session.entityToJson.convertToEntity(User, "users/1", doc1, false) as User;
+            const user2 = session.entityToJson.convertToEntity(User, "users/2", doc2, false) as User;
 
             assert.ok(user1 instanceof User);
             assert.ok(user2 instanceof User);

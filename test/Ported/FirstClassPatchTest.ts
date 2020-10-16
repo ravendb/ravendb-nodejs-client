@@ -179,8 +179,8 @@ describe("FirstClassPatchTest", function () {
         {
             const session = store.openSession();
             // push
-            session.advanced.patch(_docId, "numbers", roles => roles.push(3));
-            session.advanced.patch(_docId, "stuff", roles => {
+            session.advanced.patchArray(_docId, "numbers", roles => roles.push(3));
+            session.advanced.patchArray(_docId, "stuff", roles => {
                 const stuff1 = new Stuff();
                 stuff1.key = 75;
                 roles.push(stuff1);
@@ -195,8 +195,8 @@ describe("FirstClassPatchTest", function () {
             assert.strictEqual(loaded.numbers[2], 3);
             assert.strictEqual(loaded.stuff[1].key, 75);
 
-            session.advanced.patch(loaded, "numbers", roles => roles.push(101, 102, 103));
-            session.advanced.patch(loaded, "stuff", roles => {
+            session.advanced.patchArray(loaded, "numbers", roles => roles.push(101, 102, 103));
+            session.advanced.patchArray(loaded, "stuff", roles => {
                 const s1 = new Stuff();
                 s1.key = 102;
 
@@ -218,7 +218,7 @@ describe("FirstClassPatchTest", function () {
             assert.strictEqual(loaded.stuff[2].key, 102);
             assert.strictEqual(loaded.stuff[3].phone, "123456");
 
-            session.advanced.patch(loaded, "numbers", roles => roles.push(201, 202, 203));
+            session.advanced.patchArray(loaded, "numbers", roles => roles.push(201, 202, 203));
             await session.saveChanges();
         }
 
@@ -250,8 +250,8 @@ describe("FirstClassPatchTest", function () {
 
         {
             const session = store.openSession();
-            session.advanced.patch(_docId, "numbers", roles => roles.removeAt(1));
-            session.advanced.patch(_docId, "stuff", roles => roles.removeAt(0));
+            session.advanced.patchArray(_docId, "numbers", roles => roles.removeAt(1));
+            session.advanced.patchArray(_docId, "stuff", roles => roles.removeAt(0));
             await session.saveChanges();
         }
 

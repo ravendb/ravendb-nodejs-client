@@ -70,6 +70,7 @@ import { AbstractDocumentQuery } from "./AbstractDocumentQuery";
 import { ISessionDocumentTimeSeries } from "./ISessionDocumentTimeSeries";
 import { ISessionDocumentTypedTimeSeries } from "./ISessionDocumentTypedTimeSeries";
 import { ISessionDocumentRollupTypedTimeSeries } from "./ISessionDocumentRollupTypedTimeSeries";
+import { JavaScriptMap } from "./JavaScriptMap";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;
@@ -533,6 +534,31 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         }
     }
 
+    patchObject<TEntity extends object, TKey, TValue>(
+        entity: TEntity, pathToObject: string, mapAdder: (map: JavaScriptMap<TKey, TValue>) => void): void;
+    patchObject<TEntity extends object, TKey, TValue>(
+        id: string, pathToObject: string, mapAdder: (map: JavaScriptMap<TKey, TValue>) => void): void;
+    patchObject<TEntity extends object, TKey, TValue>(
+        idOrEntity: string | TEntity, pathToObject: string, mapAdder: (map: JavaScriptMap<TKey, TValue>) => void): void {
+        if (TypeUtil.isString(idOrEntity)) {
+            const scriptMap = new JavaScriptMap(this._customCount++, pathToObject);
+
+            mapAdder(scriptMap);
+
+            const patchRequest = new PatchRequest();
+            patchRequest.script = scriptMap.getScript();
+            patchRequest.values = scriptMap.parameters;
+
+            if (!this._tryMergePatches(idOrEntity, patchRequest)) {
+                this.defer(new PatchCommandData(idOrEntity, null, patchRequest, null));
+            }
+        } else {
+            const metadata = this.getMetadataFor(idOrEntity);
+            const id = metadata[CONSTANTS.Documents.Metadata.ID];
+            this.patchObject(id, pathToObject, mapAdder);
+        }
+    }
+
     private _tryMergePatches(id: string, patchRequest: PatchRequest): boolean {
         const command = this.deferredCommandsMap.get(IdTypeAndName.keyFor(id, "PATCH", null));
         if (!command) {
@@ -659,7 +685,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     protected _hasClusterSession(): boolean {
-        return !!this.clusterTransaction;
+        return !!this._clusterTransaction;
     }
 
     protected _clearClusterSession(): void {

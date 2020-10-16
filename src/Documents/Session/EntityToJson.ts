@@ -270,6 +270,47 @@ export class EntityToJson {
         return true;
     }
 
+    public static convertToEntity(entityClass: DocumentType, id: string, document: object, conventions: DocumentConventions) {
+        const entityType: ObjectTypeDescriptor = conventions.getJsTypeByDocumentType(entityClass);
+        try {
+            let entity;
+            const documentTypeFromConventions = conventions.getJsType(id, document);
+
+            const entityTypeInfoFromMetadata = EntityToJson._getEntityTypeInfoFromMetadata(document);
+            if (documentTypeFromConventions) {
+                const passedEntityTypeIsAssignableFromConventionsDocType =
+                    entityType
+                    && ((entityType.name === documentTypeFromConventions.name)
+                    || TypeUtil.isInstanceOf(entityType, documentTypeFromConventions));
+                if (passedEntityTypeIsAssignableFromConventionsDocType) {
+                    const mapper = conventions.objectMapper;
+                    entity = mapper.fromObjectLiteral(
+                        document, entityTypeInfoFromMetadata);
+                }
+            }
+
+            if (!entity) {
+                const mapper = conventions.objectMapper;
+                let passedTypeInfo = entityTypeInfoFromMetadata;
+                if (entityType) {
+                    passedTypeInfo =
+                        Object.assign(passedTypeInfo, { typeName: entityType.name });
+                }
+
+                entity = mapper.fromObjectLiteral(
+                    document, passedTypeInfo);
+            }
+
+            return entity;
+
+        } catch (err) {
+            throwError("InvalidOperationException",
+                `Could not convert document ${id} to entity of type `
+                + `${entityType ? entityType.name : entityType}: ${err.stack}`,
+                err);
+        }
+    }
+
     public removeFromMissing(entity: object) {
         this._missingDictionary.delete(entity);
     }

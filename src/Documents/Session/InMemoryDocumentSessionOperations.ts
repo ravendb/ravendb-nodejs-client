@@ -1164,8 +1164,12 @@ export abstract class InMemoryDocumentSessionOperations
     }
 
     private _prepareCompareExchangeEntities(result: SaveChangesData): void {
-        const clusterTransactionOperations = this._clusterSession;
-        if (!clusterTransactionOperations || !clusterTransactionOperations.hasCommands()) {
+        if (!this._hasClusterSession()) {
+            return;
+        }
+
+        const clusterTransactionOperations = this.clusterSession;
+        if (!clusterTransactionOperations.numberOfTrackedCompareExchangeValues) {
             return;
         }
 
@@ -1175,32 +1179,14 @@ export abstract class InMemoryDocumentSessionOperations
                 "Performing cluster transaction operation require the TransactionMode to be set to ClusterWide");
         }
 
-        if (clusterTransactionOperations.storeCompareExchange) {
-            for (const [key, value] of clusterTransactionOperations.storeCompareExchange.entries()) {
-                let entityAsTree = EntityToJson.convertEntityToJson(
-                            value.entity, this.conventions, null, false);
-                if (this.conventions.remoteEntityFieldNameConvention) {
-                    entityAsTree = this.conventions.transformObjectKeysToRemoteFieldNameConvention(entityAsTree);
-                }
-                
-                const rootNode = { Object: entityAsTree };
-                result.sessionCommands.push(
-                    new PutCompareExchangeCommandData(key, rootNode, value.index));
-            }
-        }
-
-        if (clusterTransactionOperations.deleteCompareExchange) {
-            for (const [key, value] of clusterTransactionOperations.deleteCompareExchange.entries()) {
-                result.sessionCommands.push(
-                    new DeleteCompareExchangeCommandData(key, value));
-            }
-        }
-
-
-        result.onSuccess.clearClusterTransactionOperations(clusterTransactionOperations);
+        this.clusterSession.prepareCompareExchangeEntities(result);
     }
 
-    protected abstract _clusterSession: ClusterTransactionOperationsBase;
+    protected abstract _hasClusterSession(): boolean;
+
+    protected abstract _clearClusterSession(): void;
+
+    public abstract clusterSession: ClusterTransactionOperationsBase;
 
     private _newSaveChangesData(): SaveChangesData {
         return new SaveChangesData({
@@ -1279,11 +1265,19 @@ export abstract class InMemoryDocumentSessionOperations
     private _prepareForEntitiesPuts(result: SaveChangesData): void {
         const putsContext = this.documentsByEntity.prepareEntitiesPuts();
         try {
+            const shouldIgnoreEntityChanges = this.conventions.shouldIgnoreEntityChanges;
+
             for (const entry of this.documentsByEntity) {
                 const  { key: entityKey, value: entityValue } = entry;
 
                 if (entityValue.ignoreChanges) {
                     continue;
+                }
+
+                if (shouldIgnoreEntityChanges) {
+                    if (shouldIgnoreEntityChanges(this, entry.value.entity, entry.value.id)) {
+                        continue;
+                    }
                 }
 
                 if (this.isDeleted(entityValue.id)) {
@@ -1429,6 +1423,10 @@ export abstract class InMemoryDocumentSessionOperations
         
         if (this._countersByDocId) {
             this._countersByDocId.delete(value.id);
+        }
+
+        if (this._timeSeriesByDocId) {
+            this._timeSeriesByDocId.delete(value.id);
         }
 
         this._knownMissingIds.add(value.id);
@@ -1593,9 +1591,7 @@ export abstract class InMemoryDocumentSessionOperations
 
         this.deferredCommands.length = 0;
         this.deferredCommandsMap.clear();
-        if (this._clusterSession) {
-            this._clusterSession.clear();
-        }
+        this._clearClusterSession();
 
         this._pendingLazyOperations.length = 0;
         this.entityToJson.clear();

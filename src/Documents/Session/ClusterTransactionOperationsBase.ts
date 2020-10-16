@@ -6,7 +6,7 @@ import { TypeUtil } from "../../Utility/TypeUtil";
 import { DocumentSession } from "./DocumentSession";
 import { CaseInsensitiveKeysMap } from "../../Primitives/CaseInsensitiveKeysMap";
 import { CompareExchangeSessionValue } from "../Operations/CompareExchange/CompareExchangeSessionValue";
-import { SaveChangesData } from "../..";
+import { GetCompareExchangeValueOperation, SaveChangesData } from "../..";
 
 export class StoredCompareExchange {
     public readonly entity: any;
@@ -43,15 +43,21 @@ export abstract class ClusterTransactionOperationsBase {
         return this._session;
     }
 
-        this._storeCompareExchange.set(key, new StoredCompareExchange(0, item));
     }
-    public updateCompareExchangeValue<T>(item: CompareExchangeValue<T>): void {
-        this._ensureNotDeleted(item.key);
-        if (!this._storeCompareExchange) {
-            this._storeCompareExchange = new Map();
+
+    public createCompareExchangeValue<T>(key: string, item: T): CompareExchangeValue<T> {
+        if (!key) {
+            throwError("InvalidArgumentException", "Key cannot be null");
         }
-        
-        this._storeCompareExchange.set(item.key, new StoredCompareExchange(item.index, item.value));
+
+        let sessionValue: CompareExchangeSessionValue;
+
+        if (!this._tryGetCompareExchangeValueFromSession(key, x => sessionValue = x)) {
+            sessionValue = new CompareExchangeSessionValue(key, 0, "None");
+            this._state.set(key, sessionValue);
+        }
+
+        return sessionValue.create(item);
     }
 
     public deleteCompareExchangeValue(key: string, index: number): void;
@@ -66,9 +72,33 @@ export abstract class ClusterTransactionOperationsBase {
         this._ensureNotStored(key);
         if (!this._deleteCompareExchange) {
             this._deleteCompareExchange = new Map();
+    public clear(): void {
+        this._state.clear();
+    }
+
+    protected async _getCompareExchangeValueInternal<T>(key: string): Promise<CompareExchangeValue<T>>
+    protected async _getCompareExchangeValueInternal<T>(key: string, clazz: ClassConstructor<T>): Promise<CompareExchangeValue<T>>
+    protected async _getCompareExchangeValueInternal<T>(key: string, clazz?: ClassConstructor<T>): Promise<CompareExchangeValue<T>> {
+        let notTracked: boolean;
+        const v = this.getCompareExchangeValueFromSessionInternal<T>(key, t => notTracked = t, clazz);
+        if (!notTracked) {
+            return v;
         }
 
-        this._deleteCompareExchange.set(key, index);
+        this.session.incrementRequestCount();
+
+        const value = await this.session.operations.send<any>(new GetCompareExchangeValueOperation(key, null, false));
+        if (TypeUtil.isNullOrUndefined(value)) {
+            this.registerMissingCompareExchangeValue(key);
+            return null;
+        }
+
+        const sessionValue = this.registerCompareExchangeValue(value);
+        if (sessionValue) {
+            return sessionValue.getValue(clazz, this.session.conventions);
+        }
+
+        return null;
     }
 
     public clear() {
@@ -95,7 +125,14 @@ export abstract class ClusterTransactionOperationsBase {
         if (this._deleteCompareExchange && this._deleteCompareExchange.has(key)) {
             throwError("InvalidArgumentException",
                 `The key '${key}' already exists in the deletion requests.`);
+    public registerMissingCompareExchangeValue(key: string): CompareExchangeSessionValue {
+        const value = new CompareExchangeSessionValue(key, -1, "Missing");
+        if (this.session.noTracking) {
+            return value;
         }
+
+        this._state.set(key, value);
+        return value;
     }
 
     protected _ensureNotStored(key: string): void {
@@ -105,4 +142,52 @@ export abstract class ClusterTransactionOperationsBase {
         }
     }
 
+
+    public registerCompareExchangeValue(value: CompareExchangeValue<any>): CompareExchangeSessionValue {
+        if (this.session.noTracking) {
+            return new CompareExchangeSessionValue(value);
+        }
+
+        let sessionValue = this._state.get(value.key);
+
+        if (!sessionValue) {
+            sessionValue = new CompareExchangeSessionValue(value);
+            this._state.set(value.key, sessionValue);
+            return sessionValue;
+        }
+
+        sessionValue.updateValue(value, this.session.conventions.objectMapper);
+
+        return sessionValue;
+    }
+
+    private _tryGetCompareExchangeValueFromSession(key: string, valueSetter: (value: CompareExchangeSessionValue) => void) {
+        const value = this._state.get(key);
+        valueSetter(value);
+        return !TypeUtil.isNullOrUndefined(value);
+    }
+
+    public prepareCompareExchangeEntities(result: SaveChangesData) {
+        if (!this._state.size) {
+            return;
+        }
+
+        for (const [key, value] of this._state.entries()) {
+            const command = value.getCommand(this.session.conventions);
+            if (!command) {
+                continue;
+            }
+
+            result.sessionCommands.push(command);
+        }
+    }
+
+    public updateState(key: string, index: number) {
+        let sessionValue: CompareExchangeSessionValue;
+        if (!this._tryGetCompareExchangeValueFromSession(key, x => sessionValue = x)) {
+            return;
+        }
+
+        sessionValue.updateState(index);
+    }
 }

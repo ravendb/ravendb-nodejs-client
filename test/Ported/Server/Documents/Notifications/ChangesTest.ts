@@ -57,6 +57,7 @@ describe("ChangesTest", function () {
                 assert.ok(documentChange);
 
                 assert.strictEqual(documentChange.id, "users/1");
+                assert.strictEqual(documentChange.collectionName, "Users");
                 assert.strictEqual(documentChange.type, "Put");
 
                 try {

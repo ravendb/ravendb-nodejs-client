@@ -377,8 +377,8 @@ export abstract class RavenTestDriver {
             const session = store.openSession();
 
             const scifi = Object.assign(new Genre(), {
-                name: "Sci-Fi",
-                id: "genres/1"
+                id: "genres/1",
+                name: "Sci-Fi"
             });
 
             const fantasy = Object.assign(new Genre(), {
