@@ -13,34 +13,108 @@ import { ISessionDocumentCounters } from "./ISessionDocumentCounters";
 import { ISessionDocumentTimeSeries } from "./ISessionDocumentTimeSeries";
 import { ISessionDocumentTypedTimeSeries } from "./ISessionDocumentTypedTimeSeries";
 import { ISessionDocumentRollupTypedTimeSeries } from "./ISessionDocumentRollupTypedTimeSeries";
+import { TimeSeriesRange } from "../Operations/TimeSeries/TimeSeriesRange";
+import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
+import { SessionOptions } from "./SessionOptions";
+import { throwError } from "../../Exceptions";
+import { StringUtil } from "../../Utility/StringUtil";
+import { DocumentStoreBase, RequestExecutor } from "../..";
+import CurrentIndexAndNode from "../../Http/CurrentIndexAndNode";
 
 export class SessionInfo {
-    private _sessionId: number;
-    private _lastClusterTransactionIndex: number;
-    private _noCaching: boolean;
+    private static _clientSessionIdCounter: number = 0;
 
-    public get sessionId() {
+    private _sessionId: number;
+    private _sessionIdUsed: boolean;
+    private readonly _loadBalancerContextSeed: number;
+    private _canUseLoadBalanceBehavior: boolean;
+    private readonly _session: InMemoryDocumentSessionOperations;
+
+    public lastClusterTransactionIndex: number;
+    public noCaching: boolean;
+
+    public constructor(session: InMemoryDocumentSessionOperations, options: SessionOptions, documentStore: DocumentStoreBase) {
+        if (!documentStore) {
+            throwError("InvalidArgumentException", "DocumentStore cannot be null");
+        }
+
+        if (!session) {
+            throwError("InvalidArgumentException", "Session cannot be null");
+        }
+
+        this._session = session;
+        this._loadBalancerContextSeed = session.requestExecutor.conventions.loadBalancerContextSeed;
+        this._canUseLoadBalanceBehavior = session.conventions.loadBalanceBehavior === "UseSessionContext"
+            && !!session.conventions.loadBalancerPerSessionContextSelector;
+
+        this.lastClusterTransactionIndex = documentStore.getLastTransactionIndex(session.databaseName);
+
+        this.noCaching = options.noCaching;
+    }
+
+    public setContext(sessionKey: string) {
+        if (StringUtil.isNullOrWhitespace(sessionKey)) {
+            throwError("InvalidArgumentException", "Session key cannot be null or whitespace.");
+        }
+
+        this._setContextInternal(sessionKey);
+
+        this._canUseLoadBalanceBehavior = this._canUseLoadBalanceBehavior
+            || this._session.conventions.loadBalanceBehavior === "UseSessionContext";
+
+    }
+
+    private _setContextInternal(sessionKey: string) {
+        if (this._sessionIdUsed) {
+            throwError("InvalidOperationException",
+                "Unable to set the session context after it has already been used. " +
+                "The session context can only be modified before it is utilized.");
+        }
+    }
+
+    public async getCurrentSessionNode(requestExecutor: RequestExecutor) {
+        let result: CurrentIndexAndNode;
+
+        if (requestExecutor.conventions.loadBalanceBehavior === "UseSessionContext") {
+            if (this._canUseLoadBalanceBehavior) {
+                result = await requestExecutor.getNodeBySessionId(this.getSessionId());
+            }
+        }
+
+        switch (requestExecutor.conventions.readBalanceBehavior) {
+            case "None":
+                result = await requestExecutor.getPreferredNode();
+                break;
+            case "RoundRobin":
+                result = await requestExecutor.getNodeBySessionId(this.getSessionId());
+                break;
+            case "FastestNode":
+                result = await requestExecutor.getFastestNode();
+                break;
+            default:
+                throwError("InvalidArgumentException", requestExecutor.conventions.readBalanceBehavior);
+        }
+
+        return result.currentNode;
+    }
+
+    public getSessionId(): number {
+        if (!this._sessionId) {
+            let context: string;
+            const selector = this._session.conventions.loadBalancerPerSessionContextSelector;
+            if (selector) {
+                context = selector(this._session.databaseName);
+            }
+
+            this._setContextInternal(context);
+        }
+
+        this._sessionIdUsed = true;
         return this._sessionId;
     }
 
-    public get lastClusterTransactionIndex() {
-        return this._lastClusterTransactionIndex;
-    }
-
-    public set lastClusterTransactionIndex(value) {
-        this._lastClusterTransactionIndex = value;
-    }
-
-    public get noCaching() {
-        return this._noCaching;
-    }
-
-    public constructor(sessionId: number);
-    public constructor(sessionId: number, lastClusterTransactionIndex: number, noCaching: boolean);
-    public constructor(sessionId: number, lastClusterTransactionIndex?: number, noCaching?: boolean) {
-        this._sessionId = sessionId;
-        this._lastClusterTransactionIndex = lastClusterTransactionIndex || null;
-        this._noCaching = noCaching || false;
+    public canUseLoadBalanceBehavior() {
+        return this._canUseLoadBalanceBehavior;
     }
 }
 
@@ -260,6 +334,8 @@ export interface SessionLoadInternalParameters<TResult extends object> {
     documentType?: DocumentType<TResult>;
     counterIncludes?: string[];
     includeAllCounters?: boolean;
+    timeSeriesIncludes?: TimeSeriesRange[];
+    compareExchangeValueIncludes?: string[];
 }
 
 export interface IDocumentSessionImpl extends IDocumentSession {

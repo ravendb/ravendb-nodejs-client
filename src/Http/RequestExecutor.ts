@@ -597,6 +597,12 @@ export class RequestExecutor implements IDisposable {
             }
         }
 
+        if (this.conventions.loadBalanceBehavior === "UseSessionContext") {
+            if (sessionInfo && sessionInfo.canUseLoadBalanceBehavior()) {
+                return this._nodeSelector.getNodeBySessionId(sessionInfo.getSessionId());
+            }
+        }
+
         if (!cmd.isReadRequest) {
             return this._nodeSelector.getPreferredNode();
         }
@@ -605,7 +611,7 @@ export class RequestExecutor implements IDisposable {
             case "None":
                 return this._nodeSelector.getPreferredNode();
             case "RoundRobin":
-                return this._nodeSelector.getNodeBySessionId(sessionInfo ? sessionInfo.sessionId : 0);
+                return this._nodeSelector.getNodeBySessionId(sessionInfo ? sessionInfo.getSessionId() : 0);
             case "FastestNode":
                 return this._nodeSelector.getFastestNode();
             default:
@@ -839,6 +845,10 @@ export class RequestExecutor implements IDisposable {
 
         let url: string;
         const req = this._createRequest(chosenNode, command, u => url = u);
+
+        if (!req) {
+            return null;
+        }
 
         const controller = new AbortController();
 
@@ -1189,6 +1199,9 @@ export class RequestExecutor implements IDisposable {
             task = BluebirdPromise.resolve()
                 .then(() => {
                     const req = this._createRequest(nodes[taskNumber], command, TypeUtil.NOOP);
+                    if (!req) {
+                        return;
+                    }
                     this._setRequestHeaders(null, null, req);
                     return command.send(this.getHttpAgent(), req);
                 })

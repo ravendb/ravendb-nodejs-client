@@ -118,9 +118,7 @@ export class SessionDocumentCounters extends SessionCountersBase implements ISes
             if (details.counters && details.counters.length) {
                 const counterDetail = details.counters[0];
 
-                if (counterDetail) {
-                    value = counterDetail.totalValue;
-                }
+                value = counterDetail ? counterDetail.totalValue : null;
             }
         }
 
@@ -168,6 +166,9 @@ export class SessionDocumentCounters extends SessionCountersBase implements ISes
             const details = await this._session.operations.send(
                 new GetCountersOperation(this._docId, counters), this._session.sessionInfo);
             for (const counterDetail of details.counters) {
+                if (!counterDetail) {
+                    continue;
+                }
                 cache.data.set(counterDetail.counterName, counterDetail.totalValue);
                 result.set(counterDetail.counterName, counterDetail.totalValue);
             }

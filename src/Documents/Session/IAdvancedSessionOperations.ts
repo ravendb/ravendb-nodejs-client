@@ -23,6 +23,7 @@ import { DocumentResultStream } from "./DocumentResultStream";
 import * as stream from "readable-stream";
 import { IDocumentQueryBuilder } from "./IDocumentQueryBuilder";
 import { IGraphDocumentQuery } from "./IGraphDocumentQuery";
+import { JavaScriptMap } from "./JavaScriptMap";
 
 export type StreamQueryStatisticsCallback = (stats: StreamQueryStatistics) => void;
 
@@ -82,11 +83,17 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
 
     patch<TEntity extends object, UValue>(entity: TEntity, path: string, value: UValue): void;
 
-    patch<TEntity extends object, UValue>(
+    patchArray<TEntity extends object, UValue>(
         id: string, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
 
-    patch<TEntity extends object, UValue>(
+    patchArray<TEntity extends object, UValue>(
         entity: TEntity, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
+
+    patchObject<TEntity extends object, TKey, TValue>(
+        entity: TEntity, pathToObject: string, mapAdder: (map: JavaScriptMap<TKey, TValue>) => void): void;
+
+    patchObject<TEntity extends object, TKey, TValue>(
+        id: string, pathToObject: string, mapAdder: (map: JavaScriptMap<TKey, TValue>) => void): void;
 
     loadStartingWith<T extends object>(
         idPrefix: string, opts: SessionLoadStartingWithOptions<T>, callback?: ErrorFirstCallback<T[]>): Promise<T[]>;

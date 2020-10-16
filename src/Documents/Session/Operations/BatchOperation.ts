@@ -198,6 +198,28 @@ export class BatchOperation {
         return modifiedDocumentInfo;
     }
 
+    private _handleCompareExchangePut(batchResult: object) {
+        this.handleCompareExchangeInternal("CompareExchangePUT", batchResult);
+    }
+
+    private _handleCompareExchangeDelete(batchResult: object) {
+        this.handleCompareExchangeInternal("CompareExchangeDELETE", batchResult);
+    }
+
+    private handleCompareExchangeInternal(commandType: CommandType, batchResult: any) {
+        const key = batchResult.key;
+        if (!key) {
+            BatchOperation._throwMissingField(commandType, "Key");
+        }
+
+        const index = batchResult.index;
+        if (TypeUtil.isNullOrUndefined(index)) {
+            BatchOperation._throwMissingField(commandType, "Index");
+        }
+        const clusterSession = this._session.clusterSession;
+        clusterSession.updateState(key, index);
+    }
+
     private _handleAttachmentCopy(batchResult: object): void {
         this._handleAttachmentPutInternal(batchResult, "AttachmentCOPY", "id", "name", "documentChangeVector");
     }

@@ -10,7 +10,7 @@ import * as StringBuilder from "string-builder";
 import {
     DocumentType,
 } from "../../DocumentAbstractions";
-import { CONSTANTS } from "../../../Constants";
+import { CONSTANTS, TIME_SERIES } from "../../../Constants";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { Reference } from "../../../Utility/Reference";
@@ -160,6 +160,14 @@ export class QueryOperation {
             if (queryResult.counterIncludes) {
                 this._session.registerCounters(queryResult.counterIncludes, queryResult.includedCounterNames);
             }
+
+            if (queryResult.timeSeriesIncludes) {
+                this._session.registerTimeSeries(queryResult.timeSeriesIncludes);
+            }
+
+            if (queryResult.compareExchangeValueIncludes) {
+                this._session.clusterSession.registerCompareExchangeValues(queryResult.compareExchangeValueIncludes);
+            }
         }
     }
 
@@ -212,8 +220,11 @@ export class QueryOperation {
             if (TypeUtil.isPrimitive(jsonNode)) {
                 return jsonNode || null;
             }
-            if (!isProjectInto) {
-                if (fieldsToFetch.fieldsToFetch[0] === fieldsToFetch.projections[0]) {
+
+            const isTimeSeriesField = fieldsToFetch.projections[0].startsWith(TIME_SERIES.QUERY_FUNCTION);
+
+            if (!isProjectInto || isTimeSeriesField) {
+                if (isTimeSeriesField || fieldsToFetch.fieldsToFetch[0] === fieldsToFetch.projections[0]) {
                     if (TypeUtil.isObject(jsonNode)) { // extraction from original type
                         document = jsonNode;
                     }
@@ -269,14 +280,6 @@ export class QueryOperation {
 
     public set noTracking(value) {
         this._noTracking = value;
-    }
-
-    public isDisableEntitiesTracking(): boolean {
-        return this._noTracking;
-    }
-
-    public setDisableEntitiesTracking(disableEntitiesTracking: boolean): void {
-        this._noTracking = disableEntitiesTracking;
     }
 
     public ensureIsAcceptableAndSaveResult(result: QueryResult, duration: number): void {

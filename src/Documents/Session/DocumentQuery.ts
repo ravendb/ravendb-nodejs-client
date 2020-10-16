@@ -48,6 +48,7 @@ import { Highlightings } from "../Queries/Highlighting/Hightlightings";
 import { HighlightingParameters } from "../Queries/Highlighting/HighlightingParameters";
 import { IQueryIncludeBuilder } from "./Loaders/IQueryIncludeBuilder";
 import { QueryIncludeBuilder } from "./Loaders/QueryIncludeBuilder";
+import { ITimeSeriesQueryBuilder } from "../Queries/TimeSeries/ITimeSeriesQueryBuilder";
 
 export const NESTED_OBJECT_TYPES_PROJECTION_FIELD = "__PROJECTED_NESTED_OBJECT_TYPES__";
 
@@ -151,6 +152,13 @@ export class DocumentQuery<T extends object>
             throwError("RavenException",
                 "Unable to project to type: " + projectionType, err);
         }
+    }
+
+    selectTimeSeries<TTimeSeries extends object>(
+        timeSeriesQuery: (builder: ITimeSeriesQueryBuilder) => void,
+        projectionClass: DocumentType<TTimeSeries>): IDocumentQuery<TTimeSeries> {
+        const queryData = this._createTimeSeriesQueryData(timeSeriesQuery);
+        return this.selectFields(queryData, projectionClass);
     }
 
     public distinct(): IDocumentQuery<T> {

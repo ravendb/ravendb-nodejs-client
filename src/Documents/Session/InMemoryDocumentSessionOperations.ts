@@ -67,14 +67,11 @@ import { StringUtil } from "../../Utility/StringUtil";
 import { Reference } from "../../Utility/Reference";
 import { ForceRevisionStrategy } from "./ForceRevisionStrategy";
 import { ForceRevisionCommandData } from "../Commands/Batches/ForceRevisionCommandData";
+import { TimeSeriesRangeResult } from "../Operations/TimeSeries/TimeSeriesRangeResult";
 
 export abstract class InMemoryDocumentSessionOperations
     extends EventEmitter
     implements IDisposable, SessionEventsEmitter {
-
-    private static _clientSessionIdCounter: number = 0;
-
-    protected _clientSessionId: number = ++InMemoryDocumentSessionOperations._clientSessionIdCounter;
 
     protected _requestExecutor: RequestExecutor;
 
@@ -111,23 +108,8 @@ export abstract class InMemoryDocumentSessionOperations
     }
 
     public getCurrentSessionNode(): Promise<ServerNode> {
-        let result: Promise<CurrentIndexAndNode>;
-        switch (this._requestExecutor.conventions.readBalanceBehavior) {
-            case "None":
-                result = this._requestExecutor.getPreferredNode();
-                break;
-            case "RoundRobin":
-                result = this._requestExecutor.getNodeBySessionId(this._clientSessionId);
-                break;
-            case "FastestNode":
-                result = this._requestExecutor.getFastestNode();
-                break;
-            default:
-                return Promise.reject(
-                    getError("InvalidArgumentException", this._requestExecutor.conventions.readBalanceBehavior));
-        }
+        return this.sessionInfo.getCurrentSessionNode(this._requestExecutor);
 
-        return result.then(x => x.currentNode);
     }
 
     public documentsById: DocumentsById = new DocumentsById();
@@ -144,6 +126,16 @@ export abstract class InMemoryDocumentSessionOperations
     }
 
     private _countersByDocId: Map<string, CounterTracking>;
+
+    private _timeSeriesByDocId: Map<string, Map<string, TimeSeriesRangeResult[]>>;
+
+    public get timeSeriesByDocId() {
+        if (!this._timeSeriesByDocId) {
+            this._timeSeriesByDocId = CaseInsensitiveKeysMap.create();
+        }
+
+        return this._timeSeriesByDocId;
+    }
 
     public readonly noTracking: boolean;
 
@@ -171,6 +163,10 @@ export abstract class InMemoryDocumentSessionOperations
 
     public get requestExecutor(): RequestExecutor {
         return this._requestExecutor;
+    }
+
+    public get sessionInfo(): SessionInfo {
+        return this._sessionInfo;
     }
 
     public get operations() {
@@ -230,10 +226,6 @@ export abstract class InMemoryDocumentSessionOperations
 
     protected _sessionInfo: SessionInfo;
 
-    public get sessionInfo() {
-        return this._sessionInfo;
-    }
-
     protected constructor(
         documentStore: DocumentStore,
         id: string,
@@ -260,10 +252,7 @@ export abstract class InMemoryDocumentSessionOperations
                 (obj) => this._generateId(obj));
         this._entityToJson = new EntityToJson(this);
 
-        this._sessionInfo = new SessionInfo(
-            this._clientSessionId,
-            this._documentStore.getLastTransactionIndex(this.databaseName), 
-            options.noCaching);
+        this._sessionInfo = new SessionInfo(this, options, documentStore);
         this._transactionMode = options.transactionMode;
     }
 
@@ -332,7 +321,7 @@ export abstract class InMemoryDocumentSessionOperations
     protected _assertNoNonUniqueInstance(entity: object, id: string): void {
         if (!id
             || id[id.length - 1] === "|"
-            || id[id.length - 1] === "/") {
+            || id[id.length - 1] === this.conventions.identityPartsSeparator) {
             return;
         }
 

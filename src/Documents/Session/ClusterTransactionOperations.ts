@@ -60,20 +60,45 @@ export class ClusterTransactionOperations
         callback: ErrorFirstCallback<{ [key: string]: CompareExchangeValue<T> }>)
             : Promise<{ [key: string]: CompareExchangeValue<T> }>;
     public getCompareExchangeValues<T>(
-        keys: string[], 
+        startsWith: string): Promise<{ [key: string]: CompareExchangeValue<T> }>;
+    public getCompareExchangeValues<T>(
+        startsWith: string,
+        type: ClassConstructor<T>): Promise<{ [key: string]: CompareExchangeValue<T> }>;
+    public getCompareExchangeValues<T>(
+        startsWith: string,
+        type: ClassConstructor<T>,
+        start: number): Promise<{ [key: string]: CompareExchangeValue<T> }>;
+    public getCompareExchangeValues<T>(
+        startsWith: string,
+        type: ClassConstructor<T>,
+        start: number,
+        pageSize: number): Promise<{ [key: string]: CompareExchangeValue<T> }>;
+    public getCompareExchangeValues<T>(
+        keysOrStartsWith: string[] | string,
         typeOrCallback?: ClassConstructor<T> | ErrorFirstCallback<{ [key: string]: CompareExchangeValue<T> }>,
-        callback?: ErrorFirstCallback<{ [key: string]: CompareExchangeValue<T> }>)
+        callbackOrStart?: ErrorFirstCallback<{ [key: string]: CompareExchangeValue<T> }> | number,
+        pageSize?: number)
             : Promise<{ [key: string]: CompareExchangeValue<T> }> {
 
-        callback = callback || TypeUtil.NOOP;
-        let resultPromise: Promise<{ [key: string]: CompareExchangeValue<T> }>;
-        if (TypeUtil.isClass(typeOrCallback)) {
-            resultPromise = this._getCompareExchangeValuesInternal(keys, typeOrCallback as ClassConstructor<T>);
-        } else {
-            resultPromise = this._getCompareExchangeValuesInternal(keys);
-        }
+        if (TypeUtil.isArray(keysOrStartsWith)) {
+            const keys = keysOrStartsWith;
+            callbackOrStart = callbackOrStart || TypeUtil.NOOP;
+            let resultPromise: Promise<{ [key: string]: CompareExchangeValue<T> }>;
+            if (TypeUtil.isClass(typeOrCallback)) {
+                resultPromise = this._getCompareExchangeValuesInternal(keys, typeOrCallback as ClassConstructor<T>);
+            } else {
+                resultPromise = this._getCompareExchangeValuesInternal(keys);
+            }
 
-        passResultToCallback(resultPromise, callback);
-        return resultPromise;
+            passResultToCallback(resultPromise, callbackOrStart as ErrorFirstCallback<any>);
+            return resultPromise;
+        } else {
+            const startsWith = keysOrStartsWith;
+            const type = typeOrCallback as ClassConstructor<T>;
+            const start = (callbackOrStart as number) || 0;
+            pageSize = pageSize ?? 25;
+
+            return this._getCompareExchangeValuesInternal(startsWith, type, start, pageSize);
+        }
     }
 }

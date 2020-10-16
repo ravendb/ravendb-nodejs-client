@@ -50,10 +50,8 @@ describe("ClusterTransactionTest", function () {
             session.advanced.clusterTransaction.createCompareExchangeValue("usernames/ayende", user1);
             await session.saveChanges();
 
-            const lastTransactionIndex = (store as DocumentStore).getLastTransactionIndex(store.database);
-            assert.ok(lastTransactionIndex !== null);
-            session.advanced.clusterTransaction.updateCompareExchangeValue(
-                new CompareExchangeValue<User>("usernames/ayende", lastTransactionIndex, user2));
+            const value = await session.advanced.clusterTransaction.getCompareExchangeValue<User>("usernames/ayende", User);
+            value.value = user2;
 
             await session.store(user2, "users/2");
             user1.age = 10;
@@ -85,15 +83,6 @@ describe("ClusterTransactionTest", function () {
             const session = store.openSession();
             try {
                 session.advanced.clusterTransaction.createCompareExchangeValue("usernames/ayende", user1);
-                assert.fail("should have thrown.");
-            } catch (err) {
-                assert.strictEqual(err.name, "InvalidOperationException");
-                assert.ok(err.message.includes(CLUSTER_OP_WARNING));
-            }
-
-            try {
-                session.advanced.clusterTransaction.updateCompareExchangeValue(
-                    new CompareExchangeValue("test", 0, "test"));
                 assert.fail("should have thrown.");
             } catch (err) {
                 assert.strictEqual(err.name, "InvalidOperationException");

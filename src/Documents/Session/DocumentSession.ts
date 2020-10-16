@@ -181,6 +181,14 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
                     internalOpts.includes = [...builder.documentsToInclude];
                 }
 
+                if (builder.timeSeriesToInclude) {
+                    internalOpts.timeSeriesIncludes = [ ...builder.timeSeriesToInclude ];
+                }
+
+                if (builder.compareExchangeValuesToInclude) {
+                    internalOpts.compareExchangeValueIncludes = [ ...builder.compareExchangeValuesToInclude ];
+                }
+
                 internalOpts.includeAllCounters = builder.isAllCounters;
             } else {
                 internalOpts.includes = options.includes as string[];
@@ -418,6 +426,9 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             loadOperation.withCounters(opts.counterIncludes);
         }
 
+        loadOperation.withTimeSeries(opts.timeSeriesIncludes);
+        loadOperation.withCompareExchange(opts.compareExchangeValueIncludes);
+
         const command = loadOperation.createRequest();
         if (command) {
             await this._requestExecutor.execute(command, this._sessionInfo);
@@ -468,12 +479,8 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     public patch<TEntity extends object, UValue>(
         entity: TEntity, path: string, value: UValue): void;
     public patch<TEntity extends object, UValue>(
-        id: string, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
-    public patch<TEntity extends object, UValue>(
-        entity: TEntity, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
-    public patch<TEntity extends object, UValue>(
         entityOrId: TEntity | string, path: string,
-        valueOrArrayAdder: UValue | ((array: JavaScriptArray<UValue>) => void)): void {
+        value: UValue): void {
 
         let id: string;
         if (TypeUtil.isString(entityOrId)) {
@@ -484,22 +491,42 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         }
 
         let patchRequest: PatchRequest;
-        if (TypeUtil.isFunction(valueOrArrayAdder)) {
-            const scriptArray = new JavaScriptArray(this._customCount++, path);
-            valueOrArrayAdder(scriptArray);
+        patchRequest = new PatchRequest();
+        patchRequest.script = "this." + path + " = args.val_" + this._valsCount + ";";
+        const valKey = "val_" + this._valsCount;
+        patchRequest.values = {};
+        patchRequest.values[valKey] = value;
 
-            patchRequest = new PatchRequest();
-            patchRequest.script = scriptArray.script;
-            patchRequest.values = scriptArray.parameters;
-        } else { // value
-            patchRequest = new PatchRequest();
-            patchRequest.script = "this." + path + " = args.val_" + this._valsCount + ";";
-            const valKey = "val_" + this._valsCount;
-            patchRequest.values = {};
-            patchRequest.values[valKey] = valueOrArrayAdder;
+        this._valsCount++;
 
-            this._valsCount++;
+        if (!this._tryMergePatches(id, patchRequest)) {
+            this.defer(new PatchCommandData(id, null, patchRequest, null));
         }
+    }
+
+    public patchArray<TEntity extends object, UValue>(
+        id: string, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
+    public patchArray<TEntity extends object, UValue>(
+        entity: TEntity, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
+    public patchArray<TEntity extends object, UValue>(
+        entityOrId: TEntity | string, path: string,
+        arrayAdder: (array: JavaScriptArray<UValue>) => void): void {
+
+        let id: string;
+        if (TypeUtil.isString(entityOrId)) {
+            id = entityOrId;
+        } else {
+            const metadata = this.getMetadataFor(entityOrId as TEntity);
+            id = metadata["@id"];
+        }
+
+        let patchRequest: PatchRequest;
+        const scriptArray = new JavaScriptArray(this._customCount++, path);
+        arrayAdder(scriptArray);
+
+        patchRequest = new PatchRequest();
+        patchRequest.script = scriptArray.script;
+        patchRequest.values = scriptArray.parameters;
 
         if (!this._tryMergePatches(id, patchRequest)) {
             this.defer(new PatchCommandData(id, null, patchRequest, null));
@@ -630,8 +657,23 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         }
         return this._clusterTransaction;
     }
-    
-    protected get _clusterSession(): ClusterTransactionOperationsBase {
+
+    protected _hasClusterSession(): boolean {
+        return !!this.clusterTransaction;
+    }
+
+    protected _clearClusterSession(): void {
+        if (!this._hasClusterSession()) {
+            return;
+        }
+
+        this.clusterSession.clear();
+    }
+
+    public get clusterSession(): ClusterTransactionOperationsBase {
+        if (!this._clusterTransaction) {
+            this._clusterTransaction = new ClusterTransactionOperations(this);
+        }
         return this._clusterTransaction;
     }
 

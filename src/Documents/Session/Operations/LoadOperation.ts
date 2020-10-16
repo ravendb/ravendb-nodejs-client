@@ -46,7 +46,9 @@ export class LoadOperation {
             ids: this._ids,
             includes: this._includes,
             metadataOnly: false,
-            conventions: this._session.conventions
+            conventions: this._session.conventions,
+            timeSeriesIncludes: this._timeSeriesToInclude,
+            compareExchangeValueIncludes: this._compareExchangeValuesToInclude
         };
 
         if (this._includeAllCounters) {
@@ -70,6 +72,11 @@ export class LoadOperation {
         return this;
     }
 
+    public withCompareExchange(compareExchangeValues: string[]) {
+        this._compareExchangeValuesToInclude = compareExchangeValues;
+        return this;
+    }
+
     public withCounters(counters: string[]): LoadOperation {
         if (counters) {
             this._countersToInclude = counters;
@@ -77,8 +84,16 @@ export class LoadOperation {
 
         return this;
     }
-     public withAllCounters() {
+
+    public withAllCounters() {
         this._includeAllCounters = true;
+        return this;
+    }
+
+    public withTimeSeries(timeSeries: TimeSeriesRange[]) {
+        if (timeSeries) {
+            this._timeSeriesToInclude = timeSeries;
+        }
         return this;
     }
 
@@ -190,9 +205,18 @@ export class LoadOperation {
 
         this._session.registerIncludes(result.includes);
 
+
         if (this._includeAllCounters || this._countersToInclude) {
             this._session.registerCounters(
                 result.counterIncludes, this._ids, this._countersToInclude, this._includeAllCounters);
+        }
+
+        if (this._timeSeriesToInclude) {
+            this._session.registerTimeSeries(result.timeSeriesIncludes);
+        }
+
+        if (this._compareExchangeValuesToInclude) {
+            this._session.clusterSession.registerCompareExchangeValues(result.compareExchangeValueIncludes);
         }
 
         for (const document of result.results) {

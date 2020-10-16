@@ -2,10 +2,11 @@ import { TransactionMode } from "./TransactionMode";
 import { throwError } from "../../Exceptions";
 import { CompareExchangeValue } from "../Operations/CompareExchange/CompareExchangeValue";
 import { ClassConstructor } from "../../Types";
-import { GetCompareExchangeValueOperation } from "../Operations/CompareExchange/GetCompareExchangeValueOperation";
-import { GetCompareExchangeValuesOperation } from "../Operations/CompareExchange/GetCompareExchangeValuesOperation";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { DocumentSession } from "./DocumentSession";
+import { CaseInsensitiveKeysMap } from "../../Primitives/CaseInsensitiveKeysMap";
+import { CompareExchangeSessionValue } from "../Operations/CompareExchange/CompareExchangeSessionValue";
+import { SaveChangesData } from "../..";
 
 export class StoredCompareExchange {
     public readonly entity: any;
@@ -21,21 +22,10 @@ export class StoredCompareExchange {
 export abstract class ClusterTransactionOperationsBase {
 
     protected readonly _session: DocumentSession;
+    private readonly _state = CaseInsensitiveKeysMap.create<CompareExchangeSessionValue>();
 
-    private _storeCompareExchange: Map<string, StoredCompareExchange>;
-
-    public get storeCompareExchange(): Map<string, StoredCompareExchange> {
-        return this._storeCompareExchange;
-    }
-
-    private _deleteCompareExchange: Map<string, number>;
-
-    public get deleteCompareExchange(): Map<string, number> {
-        return this._deleteCompareExchange;
-    }
-
-    public hasCommands(): boolean {
-        return !!(this._deleteCompareExchange || this._storeCompareExchange);
+    public get numberOfTrackedCompareExchangeValues() {
+        return this._state.size;
     }
 
     protected constructor(session: DocumentSession) {
@@ -49,13 +39,10 @@ export abstract class ClusterTransactionOperationsBase {
         this._session = session;
     }
 
-    public createCompareExchangeValue<T>(key: string, item: T): void {
-        if (!this._storeCompareExchange) {
-            this._storeCompareExchange = new Map();
-        }
+    public get session() {
+        return this._session;
+    }
 
-        this._ensureNotDeleted(key);
-        this._ensureNotStored(key);
         this._storeCompareExchange.set(key, new StoredCompareExchange(0, item));
     }
     public updateCompareExchangeValue<T>(item: CompareExchangeValue<T>): void {

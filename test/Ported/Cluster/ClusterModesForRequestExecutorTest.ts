@@ -253,7 +253,7 @@ describe("ClusterModesForRequestExecutorTest", function () {
                             for (let sessionId = 0; sessionId < 5; sessionId++) {
                                 requestExecutor.cache.clear(); // make sure we do not use request cache
                                 const command = new GetStatisticsOperation().getCommand(new DocumentConventions());
-                                await requestExecutor.execute(command, new SessionInfo(sessionId));
+                                await requestExecutor.execute(command);
                             }
 
                         } finally {

@@ -1,6 +1,7 @@
 import { ClassConstructor } from "../../Types";
 import { CompareExchangeValue } from "../Operations/CompareExchange/CompareExchangeValue";
 import { ErrorFirstCallback } from "../../Types/Callbacks";
+import { ILazyClusterTransactionOperations } from "./ILazyClusterTransactionOperations";
 
 export interface IClusterTransactionOperations extends IClusterTransactionOperationsBase {
     
@@ -27,6 +28,22 @@ export interface IClusterTransactionOperations extends IClusterTransactionOperat
         type: ClassConstructor<T>,
         callback: ErrorFirstCallback<{ [key: string]: CompareExchangeValue<T> }>)
             : Promise<{ [key: string]: CompareExchangeValue<T> }>;
+    getCompareExchangeValues<T>(
+        startsWith: string): Promise<{ [key: string]: CompareExchangeValue<T> }>;
+    getCompareExchangeValues<T>(
+        startsWith: string,
+        type: ClassConstructor<T>): Promise<{ [key: string]: CompareExchangeValue<T> }>;
+    getCompareExchangeValues<T>(
+        startsWith: string,
+        type: ClassConstructor<T>,
+        start: number): Promise<{ [key: string]: CompareExchangeValue<T> }>;
+    getCompareExchangeValues<T>(
+        startsWith: string,
+        type: ClassConstructor<T>,
+        start: number,
+        pageSize: number): Promise<{ [key: string]: CompareExchangeValue<T> }>;
+    
+    lazily: ILazyClusterTransactionOperations;
 }
 
 export interface IClusterTransactionOperationsBase {
@@ -34,7 +51,5 @@ export interface IClusterTransactionOperationsBase {
 
     deleteCompareExchangeValue<T>(item: CompareExchangeValue<T>): void;
 
-    updateCompareExchangeValue<T>(item: CompareExchangeValue<T>): void;
-
-    createCompareExchangeValue<T>(key: string, item: T): void;
+    createCompareExchangeValue<T>(key: string, item: T): CompareExchangeValue<T>;
 }
