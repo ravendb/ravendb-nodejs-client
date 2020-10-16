@@ -114,22 +114,41 @@ export class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
 }
 
 type LoadDocument<T> = (id: string | string[], collection: string) => T;
+
 type CreateSpatialField = (lat: number, lng: number) => void;
 
 interface MapUtils<T>
 {
+    /**
+     * Loads the specified document(s) during the indexing process
+     */
     load: LoadDocument<T>,
+    /**
+     * Generates a spatial field in the index, generating a Point from the provided lat/lng coordinates
+     */
     createSpatialField: CreateSpatialField
 }
 
+/**
+ * This class is provided solely to allow typed definition of the index map 
+ */
 class StubMapUtils<T> implements MapUtils<T>
 {
     load: LoadDocument<T>;
     createSpatialField: CreateSpatialField;
 }
 
+/**
+ * Helper types and classes to facilitate the creation of typed groupBy and aggregate defintion for the maps reduce. 
+ * For ex:
+ * ```
+ * r.groupBy(f => f.foo).aggregate(g => ({ key: g.key }))
+ * ```
+ */
 type MapDefinition<T> = (document: T) => object;
+
 type ReduceDefinition<T> = (result: GroupResults<T>) => MapReduceFormatter<T>;
+
 type KeySelector<T> = (document: T) => string;
 
 interface Group<TValue>
