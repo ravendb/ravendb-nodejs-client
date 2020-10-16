@@ -5,6 +5,7 @@ import {
     IDocumentStore,
     AbstractJavaScriptIndexCreationTask,
     IndexFieldOptions,
+    QueryStatistics,
 } from "../../../src";
 import { CONSTANTS } from "../../../src/Constants";
 import { User } from "../../Assets/Entities";
@@ -200,6 +201,28 @@ class Fanout {
     public numbers: number[];
 }
 
+class Place {
+    public id: string;
+    public name: string;
+    public latitude: number;
+    public longitude: number;
+}
+
+class Places extends AbstractJavaScriptIndexCreationTask {
+    public constructor() {
+        super();
+
+        let { createSpatialField } = this.getMapUtils<any>();
+
+        this.map<Place>('Places', function(p) {
+            return {
+                name: p.name,
+                coordinates: createSpatialField(p.latitude, p.longitude)
+            }
+        });
+    }
+}
+
 describe("JavaScriptIndexTest", function () {
 
     let store: IDocumentStore;
@@ -363,6 +386,33 @@ describe("JavaScriptIndexTest", function () {
                 .isGreaterThan(0);
             assertThat(res.length)
                 .isGreaterThan(0);
+        }
+    });
+
+    it("canUseCreateSpatialFieldInJavaScriptIndex", async function() {
+        const index = new Places();
+
+        await store.executeIndex(index);
+        {
+            const session = store.openSession();
+
+            await storeNewDoc(session, { name: "Everest", latitude: 12.3456789, longitude: 12.3456789 }, "places/1-A", Place);
+
+            await session.saveChanges();
+            
+            await testContext.waitForIndexing(store);
+
+            let statsRef: QueryStatistics; 
+            const result = await session.query({ indexName: index.getIndexName() })
+                .waitForNonStaleResults()
+                .withinRadiusOf("coordinates", 200, 12.3456789, 12.3456789)
+                .statistics(stats => statsRef = stats)
+                .all();
+            
+            assertThat(statsRef.totalResults)
+                .isEqualTo(1);
+            assertThat(result.length)
+                .isEqualTo(1);
         }
     });
 });
