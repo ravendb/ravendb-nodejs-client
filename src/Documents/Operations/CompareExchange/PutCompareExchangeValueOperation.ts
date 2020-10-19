@@ -14,7 +14,8 @@ import { ObjectTypeDescriptor, ClassConstructor } from "../../../Types";
 import { IRaftCommand } from "../../../Http/IRaftCommand";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 import { IMetadataDictionary } from "../../..";
-import { COMPARE_EXCHANGE } from "../../../Constants";
+import { COMPARE_EXCHANGE, CONSTANTS } from "../../../Constants";
+import { CompareExchangeSessionValue } from "./CompareExchangeSessionValue";
 
 export class PutCompareExchangeValueOperation<T> implements IOperation<CompareExchangeResult<T>> {
 
@@ -85,6 +86,11 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
         tuple[COMPARE_EXCHANGE.OBJECT_FIELD_NAME] = TypeUtil.isPrimitive(this._value)
             ? this._value
             : this._conventions.transformObjectKeysToRemoteFieldNameConvention(this._value as any);
+
+        if (this._metadata) {
+            const metadata = CompareExchangeSessionValue.prepareMetadataForPut(this._key, this._metadata, this._conventions);
+            tuple[CONSTANTS.Documents.Metadata.KEY] = metadata;
+        }
 
         return {
             method: "PUT",

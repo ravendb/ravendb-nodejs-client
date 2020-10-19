@@ -7,7 +7,7 @@ export class JavaScriptMap<TKey, TValue> {
     private readonly _pathToMap: string;
 
     private readonly _scriptLines = [];
-    private readonly _parameters = new Map<string, any>();
+    private readonly _parameters: Record<string, any> = {};
 
     constructor(suffix: number, pathToMap: string) {
         this._suffix = suffix;
@@ -18,7 +18,7 @@ export class JavaScriptMap<TKey, TValue> {
         const argumentName = this._getNextArgumentName();
 
         this._scriptLines.push("this." + this._pathToMap + "." + key + " = args." + argumentName + ";");
-        this._parameters.set(argumentName, value);
+        this._parameters[argumentName] = value;
 
         return this;
     }

@@ -22,14 +22,14 @@ export class HiloIdGenerator {
     private _serverTag: string = null;
     private _generatorLock = semaphore();
 
-    constructor(store: IDocumentStore, dbName?: string, tag?: string) {
+    constructor(tag: string, store: IDocumentStore, dbName: string, identityPartsSeparator: string) {
         this._lastRangeAt = DateUtil.zeroDate();
         this._range = new HiloRangeValue();
         this._conventions = store.conventions;
-        this._identityPartsSeparator = this._conventions.identityPartsSeparator;
         this._tag = tag;
         this._store = store;
-        this._dbName = dbName || store.database;
+        this._dbName = dbName;
+        this._identityPartsSeparator = identityPartsSeparator;
     }
 
     // noinspection JSUnusedLocalSymbols

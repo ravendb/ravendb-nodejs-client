@@ -1,5 +1,6 @@
 import { IMetadataDictionary } from "../../..";
 import { ICompareExchangeValue } from "./ICompareExchangeValue";
+import { MetadataDictionary } from "../../../Mapping/MetadataAsDictionary";
 
 export class CompareExchangeValue<T> implements ICompareExchangeValue {
     public key: string;
@@ -15,9 +16,11 @@ export class CompareExchangeValue<T> implements ICompareExchangeValue {
     }
 
     public get metadata(): IMetadataDictionary {
+        if (!this._metadataAsDictionary) {
+            this._metadataAsDictionary = MetadataDictionary.create();
+        }
         return this._metadataAsDictionary;
     }
-
 
     public hasMetadata(): boolean {
         return !!this._metadataAsDictionary;

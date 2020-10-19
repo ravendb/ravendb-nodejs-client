@@ -509,11 +509,10 @@ export * from "./Documents/Changes/IChangesConnectionState";
 
 // HiLo
 export * from "./Documents/Identity/HiloIdGenerator";
-export * from "./Documents/Identity/HiloMultiDatabaseIdGenerator";
-export * from "./Documents/Identity/HiloMultiTypeIdGenerator";
+export * from "./Documents/Identity/MultiDatabaseHiLoIdGenerator";
+export * from "./Documents/Identity/MultiTypeHiLoIdGenerator";
 export * from "./Documents/Identity/HiloRangeValue";
-export * from "./Documents/Identity/IHiloIdGenerator";
-export * from "./Documents/Identity/HiloMultiDatabaseIdGenerator";
+export * from "./Documents/Identity/MultiDatabaseHiLoIdGenerator";
 
 // Smuggler
 export * from "./Documents/Smuggler/DatabaseItemType";

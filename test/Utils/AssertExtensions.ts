@@ -13,7 +13,9 @@ export async function assertThrows(func: Function, errAssert?: (err: Error) => v
     }
 }
 
-export function assertThat(value) {
+export function assertThat(value: Promise<any>): never; // prevent assertions on promises
+export function assertThat(value: any): JavaAssertionBuilder;
+export function assertThat(value: any) {
     return new JavaAssertionBuilder(value);
 }
 
@@ -46,6 +48,11 @@ export class JavaAssertionBuilder {
 
     public contains(val) {
         assert.ok(this._value.indexOf(val) !== -1, `'${this._value}' does not contain '${val}.'`);
+        return this;
+    }
+
+    public startsWith(val) {
+        assert.ok(this._value.indexOf(val) === 0, `'${this._value}' does not start with '${val}.'`);
         return this;
     }
 

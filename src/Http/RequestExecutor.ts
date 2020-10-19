@@ -1078,7 +1078,7 @@ export class RequestExecutor implements IDisposable {
         }
 
         if (!this._disableClientConfigurationUpdates) {
-            req.headers[HEADERS.CLIENT_CONFIGURATION_ETAG] = `"${this._clientConfigurationEtag}"`;
+            req.headers[HEADERS.CLIENT_CONFIGURATION_ETAG] = this._clientConfigurationEtag;
         }
         if (sessionInfo && sessionInfo.lastClusterTransactionIndex) {
             req.headers[HEADERS.LAST_KNOWN_CLUSTER_TRANSACTION_INDEX] =

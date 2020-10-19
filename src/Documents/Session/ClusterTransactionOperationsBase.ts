@@ -6,7 +6,7 @@ import { TypeUtil } from "../../Utility/TypeUtil";
 import { DocumentSession } from "./DocumentSession";
 import { CaseInsensitiveKeysMap } from "../../Primitives/CaseInsensitiveKeysMap";
 import { CompareExchangeSessionValue } from "../Operations/CompareExchange/CompareExchangeSessionValue";
-import { GetCompareExchangeValueOperation, SaveChangesData } from "../..";
+import { GetCompareExchangeValueOperation, GetCompareExchangeValuesOperation, SaveChangesData } from "../..";
 
 export class StoredCompareExchange {
     public readonly entity: any;
@@ -43,6 +43,8 @@ export abstract class ClusterTransactionOperationsBase {
         return this._session;
     }
 
+    public isTracked(key: string): boolean {
+        return this._tryGetCompareExchangeValueFromSession(key, TypeUtil.NOOP);
     }
 
     public createCompareExchangeValue<T>(key: string, item: T): CompareExchangeValue<T> {
@@ -63,15 +65,20 @@ export abstract class ClusterTransactionOperationsBase {
     public deleteCompareExchangeValue(key: string, index: number): void;
     public deleteCompareExchangeValue<T>(item: CompareExchangeValue<T>): void;
     public deleteCompareExchangeValue<T>(keyOrItem: string | CompareExchangeValue<T>, index?: number): void {
-
         if (!TypeUtil.isString(keyOrItem)) {
             return this.deleteCompareExchangeValue(keyOrItem.key, keyOrItem.index);
         }
 
         const key = keyOrItem as string;
-        this._ensureNotStored(key);
-        if (!this._deleteCompareExchange) {
-            this._deleteCompareExchange = new Map();
+        let sessionValue: CompareExchangeSessionValue;
+        if (!this._tryGetCompareExchangeValueFromSession(key, s => sessionValue = s)) {
+            sessionValue = new CompareExchangeSessionValue(key, 0, "None");
+            this._state.set(key, sessionValue);
+        }
+
+        sessionValue.delete(index);
+    }
+
     public clear(): void {
         this._state.clear();
     }
