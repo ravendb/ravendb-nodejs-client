@@ -94,6 +94,16 @@ export class JavaAssertionBuilder {
         return this;
     }
 
+    public containsKey(k) {
+        if (this._value instanceof Map) {
+            assert.ok(this._value.has(k));
+        } else {
+            assert.ok(k in this._value);
+        }
+
+        return this;
+    }
+
     public containsEntry(k, v) {
         if (this._value instanceof Map) {
             assert.ok(this._value.has(k));

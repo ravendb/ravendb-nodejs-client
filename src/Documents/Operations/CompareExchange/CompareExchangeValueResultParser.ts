@@ -71,7 +71,6 @@ export class CompareExchangeValueResultParser {
             return null;
         }
 
-
         const key = item.key || throwError("InvalidOperationException", "Response is invalid. Key is missing.");
 
         const index = item.index;

@@ -10,6 +10,7 @@ export type TransformJsonKeysProfile =
     | "FacetQuery"
     | "Patch"
     | "CompareExchangeValue"
+    | "GetCompareExchangeValue"
     | "SubscriptionResponsePayload"
     | "SubscriptionRevisionsResponsePayload";
 
@@ -74,6 +75,17 @@ export function getTransformJsonKeysProfile(
             return {
                 getCurrentTransform:
                     buildEntityKeysTransformForPutCompareExchangeValue(conventions.entityFieldNameConvention)
+            };
+        }
+
+        if (profile === "GetCompareExchangeValue") {
+            if (!conventions) {
+                throwError("InvalidArgumentException", "Document conventions are required for this profile.");
+            }
+
+            return {
+                getCurrentTransform:
+                    buildEntityKeysTransformForGetCompareExchangeValue(conventions.entityFieldNameConvention)
             };
         }
 
@@ -201,6 +213,17 @@ function buildEntityKeysTransformForPutCompareExchangeValue(entityCasingConventi
     };
 }
 
+function buildEntityKeysTransformForGetCompareExchangeValue(entityCasingConvention) {
+    return function getCompareExchangeValueTransform(key, stack) {
+        const len = stack.length;
+        if (len <= 4) {
+            return "camel";
+        }
+
+        return entityCasingConvention;
+    };
+}
+
 function buildEntityKeysTransformForSubscriptionResponsePayload(entityCasingConvention) {
     return function entityKeysTransform(key, stack) {
         const len = stack.length;
@@ -269,11 +292,17 @@ function buildEntityKeysTransformForDocumentLoad(entityCasingConvention) {
         // len === 2 is array index
 
         if (len === 3) {
+            if (stack[0] === "CompareExchangeValueIncludes") {
+                return "camel";
+            }
             // top document level
             return key === "@metadata" ? null : entityCasingConvention;
         }
 
         if (len === 4) {
+            if (stack[0] === "CompareExchangeValueIncludes" && stack[2] === "Value" && stack[3] === "Object") {
+                return "camel";
+            }
             if (stack[2] === "@metadata") {
                 // handle @metadata object keys
                 if (key[0] === "@" || key === "Raven-Node-Type") {
@@ -344,6 +373,18 @@ function buildEntityKeysTransformForDocumentQuery(entityCasingConvention) {
 
                     return null;
                 }
+            }
+        }
+
+        if (len === 3) {
+            if (stack[0] === "CompareExchangeValueIncludes") {
+                return "camel";
+            }
+        }
+
+        if (len === 4) {
+            if (stack[0] === "CompareExchangeValueIncludes" && stack[2] === "Value" && stack[3] === "Object") {
+                return "camel";
             }
         }
 

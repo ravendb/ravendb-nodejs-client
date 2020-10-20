@@ -5,8 +5,7 @@ import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 import {
     IDocumentStore,
     HiloIdGenerator,
-    HiloMultiDatabaseIdGenerator,
-    DocumentStore,
+    DocumentStore, MultiDatabaseHiLoIdGenerator,
 } from "../../src";
 import { ArrayUtil } from "../../src/Utility/ArrayUtil";
 
@@ -86,7 +85,7 @@ describe("HiLo", function () {
         await session.store(hiloDoc, "Raven/Hilo/users");
         await session.saveChanges();
 
-        const hiLoKeyGenerator = new HiloIdGenerator(store, store.database, "users");
+        const hiLoKeyGenerator = new HiloIdGenerator("users", store, store.database,"/");
         const ids = [];
         const firstNextId = await hiLoKeyGenerator.nextId();
         ids.push(firstNextId);
@@ -117,7 +116,7 @@ describe("HiLo", function () {
 
         await session.saveChanges();
 
-        const multiDbHilo = new HiloMultiDatabaseIdGenerator(store);
+        const multiDbHilo = new MultiDatabaseHiLoIdGenerator(store as DocumentStore);
         let generatedDocumentKey = await multiDbHilo.generateDocumentId(null, new User());
         assert.strictEqual(generatedDocumentKey, "users/65-A");
 
@@ -126,7 +125,7 @@ describe("HiLo", function () {
     });
 
     it("capacity should double", async () => {
-        const hiLoIdGenerator = new HiloIdGenerator(store, store.database, "users");
+        const hiLoIdGenerator = new HiloIdGenerator("users", store, store.database, "/");
 
         {
             const session = store.openSession();

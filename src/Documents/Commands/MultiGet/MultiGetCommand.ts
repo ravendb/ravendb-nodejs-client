@@ -9,6 +9,7 @@ import { StatusCodes } from "../../../Http/StatusCode";
 import { getEtagHeader } from "../../../Utility/HttpUtil";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RequestExecutor } from "../../..";
+import { TypeUtil } from "../../../Utility/TypeUtil";
 
 export class MultiGetCommand extends RavenCommand<GetResponse[]> {
     private _cache: HttpCache;
@@ -89,7 +90,7 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> {
         
         const responses = result["results"].reduce((result: GetResponse[], next) => {
             // TODO try to get it directly from parser
-            next.result = JSON.stringify(next.result);
+            next.result = TypeUtil.isNullOrUndefined(next.result) ? next.result : JSON.stringify(next.result);
             return [...result, next];
         }, []);
 
