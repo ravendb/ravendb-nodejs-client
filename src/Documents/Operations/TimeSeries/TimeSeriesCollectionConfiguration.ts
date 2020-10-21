@@ -1,4 +1,4 @@
-import { TimeSeriesPolicy } from "./TimeSeriesPolicy";
+import { TimeSeriesPolicy, TimeSeriesPolicyRaw } from "./TimeSeriesPolicy";
 import { RawTimeSeriesPolicy } from "./RawTimeSeriesPolicy";
 
 export class TimeSeriesCollectionConfiguration {
@@ -19,4 +19,19 @@ export class TimeSeriesCollectionConfiguration {
     public static isRaw(policy: TimeSeriesPolicy): boolean {
         return RawTimeSeriesPolicy.DEFAULT_POLICY.name === policy.name;
     }
+
+    public serialize(): TimeSeriesCollectionConfigurationRaw {
+        return {
+            Disabled: this.disabled,
+            Policies: this.policies ? this.policies.map(p => p.serialize()) : null,
+            RawPolicy: this.rawPolicy ? this.rawPolicy.serialize() : null
+        }
+    }
+}
+
+
+export interface TimeSeriesCollectionConfigurationRaw {
+    Disabled: boolean;
+    Policies: TimeSeriesPolicyRaw[];
+    RawPolicy: TimeSeriesPolicyRaw;
 }

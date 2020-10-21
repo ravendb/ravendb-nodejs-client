@@ -216,6 +216,13 @@ function buildEntityKeysTransformForPutCompareExchangeValue(entityCasingConventi
 function buildEntityKeysTransformForGetCompareExchangeValue(entityCasingConvention) {
     return function getCompareExchangeValueTransform(key, stack) {
         const len = stack.length;
+
+        if (stack[0] === "Results") {
+            if (stack[2] === "Value" && stack[3] === "@metadata") {
+                return handleMetadataJsonKeys(key, stack, len, 4);
+            }
+        }
+
         if (len <= 4) {
             return "camel";
         }

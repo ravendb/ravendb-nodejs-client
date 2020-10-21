@@ -1,4 +1,4 @@
-import { TimeValue } from "../../../Primitives/TimeValue";
+import { TimeValue, TimeValueRaw } from "../../../Primitives/TimeValue";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { throwError } from "../../../Exceptions";
 import { TimeSeriesConfiguration } from "./TimeSeriesConfiguration";
@@ -43,4 +43,19 @@ export class TimeSeriesPolicy {
         this.aggregationTime = aggregationTime;
         this.name = name;
     }
+
+    public serialize(): TimeSeriesPolicyRaw {
+        return {
+            Name: this.name,
+            RetentionTime: this.retentionTime ? this.retentionTime.serialize() : null,
+            AggregationTime: this.aggregationTime ? this.aggregationTime.serialize() : null
+        }
+    }
+}
+
+
+export interface TimeSeriesPolicyRaw {
+    Name: string;
+    RetentionTime: TimeValueRaw;
+    AggregationTime: TimeValueRaw;
 }

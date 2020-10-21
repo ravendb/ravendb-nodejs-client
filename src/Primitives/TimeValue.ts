@@ -248,4 +248,16 @@ export class TimeValue {
 
         return result;
     }
+
+    public serialize(): TimeValueRaw {
+        return {
+            Value: this.value,
+            Unit: this.unit
+        }
+    }
+}
+
+export interface TimeValueRaw {
+    Value: number;
+    Unit: TimeValueUnit;
 }

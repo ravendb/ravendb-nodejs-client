@@ -10,5 +10,6 @@ export interface MetadataObject {
     "@expires"?: string;
     "@change-vector"?: string;
     "Raven-Node-Type"?: string;
+    "@timeseries"?: string[];
     "@nested-object-types"?: { [key: string]: string };
 }

@@ -7,9 +7,10 @@ import {
     PutCompareExchangeValueOperation,
     GetCompareExchangeValuesOperation,
     DeleteCompareExchangeValueOperation,
-    CompareExchangeResult,
+    CompareExchangeResult, GetDetailedStatisticsOperation,
 } from "../../src";
 import { User } from "../Assets/Entities";
+import { assertThat } from "../Utils/AssertExtensions";
 
 describe("UniqueValuesTest", function () {
 
@@ -165,5 +166,63 @@ describe("UniqueValuesTest", function () {
         assert.ok(res2.successful);
 
         assert.strictEqual(res2.value.name, "Karmel2");
+    });
+
+    it("canAddMetadataToSimpleCompareExchange", async () => {
+        const str = "Test";
+        const num = 123.456;
+        const key = "egr/test/cmp/x/change/simple";
+
+        {
+            const session = store.openSession({
+                transactionMode: "ClusterWide"
+            });
+
+            const result = session.advanced.clusterTransaction.createCompareExchangeValue(key, 322);
+            result.metadata["TestString"] = str;
+            result.metadata["TestNumber"] = num;
+
+            await session.saveChanges();
+        }
+
+        const res = await store.operations.send(new GetCompareExchangeValueOperation(key, Number));
+        assertThat(res.metadata)
+            .isNotNull();
+        assertThat(res.value)
+            .isEqualTo(322);
+        assertThat(res.metadata["TestString"])
+            .isEqualTo(str);
+        assertThat(res.metadata["TestNumber"])
+            .isEqualTo(num);
+
+        const stats = await store.maintenance.send(new GetDetailedStatisticsOperation());
+        assertThat(stats.countOfCompareExchange)
+            .isEqualTo(1);
+    });
+
+    it("canAddMetadataToSimpleCompareExchange_array", async () => {
+        const str = "Test";
+        const key = "egr/test/cmp/x/change/simple";
+
+        {
+            const session = store.openSession({
+                transactionMode: "ClusterWide"
+            });
+
+            const result = session.advanced.clusterTransaction.createCompareExchangeValue(key, ["a", "b", "c"]);
+            result.metadata["TestString"] = str;
+
+            await session.saveChanges();
+        }
+
+        const res = await store.operations.send(new GetCompareExchangeValueOperation(key, Number));
+        assertThat(res.metadata)
+            .isNotNull();
+        assertThat(res.value)
+            .contains("a")
+            .contains("b")
+            .contains("c");
+        assertThat(res.metadata["TestString"])
+            .isEqualTo(str);
     });
 });
