@@ -322,7 +322,7 @@ export class QueryOperation {
 
                 parameters.append(parameterKey)
                     .append(" = ")
-                    .append(parameterValue);
+                    .append(parameterValue as any); //TODO: check passing 0 as number!
 
                 first = false;
             }

@@ -304,7 +304,7 @@ export class SessionTimeSeriesBase {
 
             rangesToGetFromServer.push({
                 name: this.name,
-                from: ranges[ranges.length -1].to,
+                from: ranges[ranges.length - 1].to,
                 to
             });
         }
@@ -320,7 +320,14 @@ export class SessionTimeSeriesBase {
         // merge all the missing parts we got from server
         // with all the ranges in cache that are between 'fromRange' and 'toRange'
 
-        const mergedValues = SessionTimeSeriesBase._mergeRangesWithResults(from, to, ranges, fromRangeIndex, toRangeIndex, details.values.get(this.name), r => resultToUser = r);
+        const mergedValues = SessionTimeSeriesBase._mergeRangesWithResults(
+            from,
+            to,
+            ranges,
+            fromRangeIndex,
+            toRangeIndex,
+            details.values.get(this.name),
+            r => resultToUser = r);
 
         return {
             servedFromCache: false,
@@ -388,7 +395,7 @@ export class SessionTimeSeriesBase {
                     // so we might need to trim a part of it when we return the
                     // result to the user (i.e. trim [to, toRange.to])
 
-                    for (let index = mergedValues.length == 0 ? 0 : 1; index < ranges[i].entries.length; index++) {
+                    for (let index = mergedValues.length === 0 ? 0 : 1; index < ranges[i].entries.length; index++) {
                         mergedValues.push(ranges[i].entries[index]);
                         if (DatesComparator.compare(definedDate(ranges[i].entries[index].timestamp), rightDate(to)) > 0) {
                             trim++;

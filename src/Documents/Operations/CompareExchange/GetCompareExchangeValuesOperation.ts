@@ -119,12 +119,12 @@ export class GetCompareExchangeValuesCommand<T> extends RavenCommand<{ [key: str
 
             if (this._operation.start) {
                 pathBuilder.append("&start=")
-                    .append(this._operation.start);
+                    .append(this._operation.start.toString());
             }
 
             if (this._operation.pageSize) {
                 pathBuilder.append("&pageSize=")
-                    .append(this._operation.pageSize);
+                    .append(this._operation.pageSize.toString());
             }
         }
 

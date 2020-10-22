@@ -101,8 +101,8 @@ export class LazyGetCompareExchangeValuesOperation<T extends object> implements 
                 pathBuilder.append("&startsWith=").append(encodeURIComponent(this._startsWith));
             }
 
-            pathBuilder.append("&start=").append(this._start);
-            pathBuilder.append("&pageSize=").append(this._pageSize);
+            pathBuilder.append("&start=").append((this._start || 0).toString());
+            pathBuilder.append("&pageSize=").append((this._pageSize || 0).toString());
         }
 
         if (!pathBuilder) {

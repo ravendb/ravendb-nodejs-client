@@ -6,7 +6,7 @@ declare module "string-builder" {
         // new(init?: string): StringBuilder;
         constructor(init?: string);
 
-        public append(s: string);
+        public append(s: string | boolean): this;
 
         public toString(): string;
     }

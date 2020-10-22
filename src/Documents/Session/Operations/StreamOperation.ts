@@ -73,11 +73,11 @@ export class StreamOperation {
             }
 
             if ("start" in opts) {
-                sb.append("start=").append(opts.start).append("&");
+                sb.append("start=").append(opts.start.toString()).append("&");
             }
 
             if ("pageSize" in opts && opts.pageSize !== Number.MAX_VALUE) {
-                sb.append("pageSize=").append(opts.pageSize).append("&");
+                sb.append("pageSize=").append(opts.pageSize.toString()).append("&");
             }
         }
 

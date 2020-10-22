@@ -11,6 +11,8 @@ import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as StringBuilder from "string-builder";
 import { DateUtil } from "../../../Utility/DateUtil";
 import * as stream from "readable-stream";
+import { CaseInsensitiveKeysMap } from "../../../Primitives/CaseInsensitiveKeysMap";
+import { reviveTimeSeriesRangeResult } from "./GetTimeSeriesOperation";
 
 export class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDetails> {
     private readonly _docId: string;
@@ -38,23 +40,25 @@ export class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDeta
     }
 
     getCommand(store: IDocumentStore, conventions: DocumentConventions, httpCache: HttpCache): RavenCommand<TimeSeriesDetails> {
-        return new GetMultipleTimeSeriesCommand(this._docId, this._ranges, this._start, this._pageSize);
+        return new GetMultipleTimeSeriesCommand(conventions, this._docId, this._ranges, this._start, this._pageSize);
     }
 }
 
 export class GetMultipleTimeSeriesCommand extends RavenCommand<TimeSeriesDetails> {
+    private readonly _conventions: DocumentConventions;
     private readonly _docId: string;
     private readonly _ranges: TimeSeriesRange[];
     private readonly _start: number;
     private readonly _pageSize: number;
 
-    constructor(docId: string, ranges: TimeSeriesRange[], start: number, pageSize: number) {
+    constructor(conventions: DocumentConventions, docId: string, ranges: TimeSeriesRange[], start: number, pageSize: number) {
         super();
 
         if (!docId) {
             throwError("InvalidArgumentException", "DocId cannot be null");
         }
 
+        this._conventions = conventions;
         this._docId = docId;
         this._ranges = ranges;
         this._start = start;
@@ -62,7 +66,7 @@ export class GetMultipleTimeSeriesCommand extends RavenCommand<TimeSeriesDetails
     }
 
     createRequest(node: ServerNode): HttpRequestParameters {
-        const pathBuilder = new StringBuilder();
+        const pathBuilder = new StringBuilder(node.url);
 
         pathBuilder
             .append("/databases/")
@@ -74,13 +78,13 @@ export class GetMultipleTimeSeriesCommand extends RavenCommand<TimeSeriesDetails
         if (this._start > 0) {
             pathBuilder
                 .append("&start=")
-                .append(this._start);
+                .append(this._start.toString());
         }
 
         if (this._pageSize < TypeUtil.MAX_INT32) {
             pathBuilder
                 .append("&pageSize=")
-                .append(this._pageSize);
+                .append(this._pageSize.toString());
         }
 
         if (!this._ranges.length) {
@@ -114,7 +118,19 @@ export class GetMultipleTimeSeriesCommand extends RavenCommand<TimeSeriesDetails
             return;
         }
 
-        return this._parseResponseDefaultAsync(bodyStream);
+        let body: string = null;
+        const results = await this._defaultPipeline(_ => body = _)
+            .process(bodyStream);
+
+        this.result = new TimeSeriesDetails();
+        this.result.id = results.id;
+        this.result.values = CaseInsensitiveKeysMap.create();
+
+        for (const [key, value] of Object.entries(results.values)) {
+            this.result.values.set(key, value.map(x => reviveTimeSeriesRangeResult(x, this._conventions)));
+        }
+
+        return body;
     }
 
     get isReadRequest(): boolean {

@@ -68,6 +68,8 @@ import { Reference } from "../../Utility/Reference";
 import { ForceRevisionStrategy } from "./ForceRevisionStrategy";
 import { ForceRevisionCommandData } from "../Commands/Batches/ForceRevisionCommandData";
 import { TimeSeriesRangeResult } from "../Operations/TimeSeries/TimeSeriesRangeResult";
+import { DatesComparator, leftDate, rightDate } from "../../Primitives/DatesComparator";
+import { TimeSeriesEntry } from "./TimeSeries/TimeSeriesEntry";
 
 export abstract class InMemoryDocumentSessionOperations
     extends EventEmitter
@@ -822,6 +824,301 @@ export abstract class InMemoryDocumentSessionOperations
         } else {
             this._registerMissingCountersWithCountersToIncludeObj(idsOrCountersToInclude);
         }
+    }
+
+    private static _addToCache(cache: Map<string, TimeSeriesRangeResult[]>, newRange: TimeSeriesRangeResult, name: string) {
+        const localRanges = cache.get(name);
+        if (!localRanges || !localRanges.length) {
+            // no local ranges in cache for this series
+             cache.set(name, [newRange]);
+             return;
+        }
+
+        if (DatesComparator.compare(leftDate(localRanges[0].from), rightDate(newRange.to)) > 0
+            || DatesComparator.compare(rightDate(localRanges[localRanges.length - 1].to), leftDate(newRange.from)) < 0) {
+            // the entire range [from, to] is out of cache bounds
+
+            const index = DatesComparator.compare(leftDate(localRanges[0].from), rightDate(newRange.to)) > 0 ? 0 : localRanges.length;
+            localRanges.splice(index, 0, newRange);
+            return;
+        }
+
+        let toRangeIndex;
+        let fromRangeIndex = -1;
+        let rangeAlreadyInCache = false;
+
+        for (toRangeIndex = 0; toRangeIndex < localRanges.length; toRangeIndex++) {
+            if (DatesComparator.compare(leftDate(localRanges[toRangeIndex].from), leftDate(newRange.from)) <= 0) {
+                if (DatesComparator.compare(rightDate(localRanges[toRangeIndex].to), rightDate(newRange.to)) >= 0) {
+                    rangeAlreadyInCache = true;
+                    break;
+                }
+
+                fromRangeIndex = toRangeIndex;
+                continue;
+            }
+
+            if (DatesComparator.compare(rightDate(localRanges[toRangeIndex].to), rightDate(newRange.to)) >= 0) {
+                break;
+            }
+        }
+
+        if (rangeAlreadyInCache) {
+            InMemoryDocumentSessionOperations._updateExistingRange(localRanges[toRangeIndex], newRange);
+            return;
+        }
+
+        const mergedValues = InMemoryDocumentSessionOperations._mergeRanges(fromRangeIndex, toRangeIndex, localRanges, newRange);
+        InMemoryDocumentSessionOperations.addToCache(name, newRange.from, newRange.to, fromRangeIndex, toRangeIndex, localRanges, cache, mergedValues);
+    }
+
+    public static addToCache(timeseries: string,
+                             from: Date,
+                             to: Date,
+                             fromRangeIndex: number,
+                             toRangeIndex: number,
+                             ranges: TimeSeriesRangeResult[],
+                             cache: Map<string, TimeSeriesRangeResult[]>,
+                             values: TimeSeriesEntry[]) {
+        if (fromRangeIndex === -1) {
+            // didn't find a 'fromRange' => all ranges in cache start after 'from'
+
+            if (toRangeIndex === ranges.length) {
+                // the requested range [from, to] contains all the ranges that are in cache
+
+                // e.g. if cache is : [[2,3], [4,5], [7, 10]]
+                // and the requested range is : [1, 15]
+                // after this action cache will be : [[1, 15]]
+
+                const timeSeriesRangeResult = new TimeSeriesRangeResult();
+                timeSeriesRangeResult.from = from;
+                timeSeriesRangeResult.to = to;
+                timeSeriesRangeResult.entries = values;
+
+                const result: TimeSeriesRangeResult[] = [];
+                result.push(timeSeriesRangeResult);
+                cache.set(timeseries, result);
+
+                return;
+            }
+
+            if (DatesComparator.compare(leftDate(ranges[toRangeIndex].from), rightDate(to)) > 0) {
+                // requested range ends before 'toRange' starts
+                // remove all ranges that come before 'toRange' from cache
+                // add the new range at the beginning of the list
+
+                // e.g. if cache is : [[2,3], [4,5], [7,10]]
+                // and the requested range is : [1,6]
+                // after this action cache will be : [[1,6], [7,10]]
+
+                ranges.splice(0, toRangeIndex);
+
+                const timeSeriesRangeResult = new TimeSeriesRangeResult();
+                timeSeriesRangeResult.from = from;
+                timeSeriesRangeResult.to = to;
+                timeSeriesRangeResult.entries = values;
+
+                ranges.splice(0, 0, timeSeriesRangeResult);
+
+                return;
+            }
+
+            // the requested range ends inside 'toRange'
+            // merge the result from server into 'toRange'
+            // remove all ranges that come before 'toRange' from cache
+
+            // e.g. if cache is : [[2,3], [4,5], [7,10]]
+            // and the requested range is : [1,8]
+            // after this action cache will be : [[1,10]]
+
+            ranges[toRangeIndex].from = from;
+            ranges[toRangeIndex].entries = values;
+
+            ranges.splice(0, toRangeIndex);
+
+            return;
+        }
+
+        // found a 'fromRange'
+
+        if (toRangeIndex === ranges.length) {
+            // didn't find a 'toRange' => all the ranges in cache end before 'to'
+
+            if (DatesComparator.compare(rightDate(ranges[fromRangeIndex].to), leftDate(from)) < 0) {
+                // requested range starts after 'fromRange' ends,
+                // so it needs to be placed right after it
+                // remove all the ranges that come after 'fromRange' from cache
+                // add the merged values as a new range at the end of the list
+
+                // e.g. if cache is : [[2,3], [5,6], [7,10]]
+                // and the requested range is : [4,12]
+                // then 'fromRange' is : [2,3]
+                // after this action cache will be : [[2,3], [4,12]]
+
+                ranges.splice(fromRangeIndex + 1, ranges.length - fromRangeIndex - 1);
+
+                const timeSeriesRangeResult = new TimeSeriesRangeResult();
+                timeSeriesRangeResult.from = from;
+                timeSeriesRangeResult.to = to;
+                timeSeriesRangeResult.entries = values;
+
+                ranges.push(timeSeriesRangeResult);
+
+                return;
+            }
+
+            // the requested range starts inside 'fromRange'
+            // merge result into 'fromRange'
+            // remove all the ranges from cache that come after 'fromRange'
+
+            // e.g. if cache is : [[2,3], [4,6], [7,10]]
+            // and the requested range is : [5,12]
+            // then 'fromRange' is [4,6]
+            // after this action cache will be : [[2,3], [4,12]]
+
+            ranges[fromRangeIndex].to = to;
+            ranges[fromRangeIndex].entries = values;
+            ranges.splice(fromRangeIndex + 1, ranges.length - fromRangeIndex - 1);
+
+            return;
+        }
+
+        // found both 'fromRange' and 'toRange'
+        // the requested range is inside cache bounds
+
+        if (DatesComparator.compare(rightDate(ranges[toRangeIndex].to), leftDate(from)) < 0) {
+            // requested range starts after 'fromRange' ends
+
+            if (DatesComparator.compare(leftDate(ranges[toRangeIndex].from), rightDate(to)) > 0) {
+                // requested range ends before 'toRange' starts
+
+                // remove all ranges in between 'fromRange' and 'toRange'
+                // place new range in between 'fromRange' and 'toRange'
+
+                // e.g. if cache is : [[2,3], [5,6], [7,8], [10,12]]
+                // and the requested range is : [4,9]
+                // then 'fromRange' is [2,3] and 'toRange' is [10,12]
+                // after this action cache will be : [[2,3], [4,9], [10,12]]
+
+                ranges.splice(fromRangeIndex + 1, toRangeIndex - fromRangeIndex - 1);
+
+                const timeSeriesRangeResult = new TimeSeriesRangeResult();
+                timeSeriesRangeResult.from = from;
+                timeSeriesRangeResult.to = to;
+                timeSeriesRangeResult.entries = values;
+
+                ranges.splice(fromRangeIndex + 1, 0, timeSeriesRangeResult);
+
+                return;
+            }
+
+            // requested range ends inside 'toRange'
+            // merge the new range into 'toRange'
+            // remove all ranges in between 'fromRange' and 'toRange'
+
+            // e.g. if cache is : [[2,3], [5,6], [7,10]]
+            // and the requested range is : [4,9]
+            // then 'fromRange' is [2,3] and 'toRange' is [7,10]
+            // after this action cache will be : [[2,3], [4,10]]
+
+            ranges.splice(fromRangeIndex + 1, toRangeIndex - fromRangeIndex - 1);
+            ranges[toRangeIndex].from = from;
+            ranges[toRangeIndex].entries = values;
+
+            return;
+        }
+
+        // the requested range starts inside 'fromRange'
+
+        if (DatesComparator.compare(leftDate(ranges[toRangeIndex].from), rightDate(to)) > 0) {
+            // requested range ends before 'toRange' starts
+
+            // remove all ranges in between 'fromRange' and 'toRange'
+            // merge new range into 'fromRange'
+
+            // e.g. if cache is : [[2,4], [5,6], [8,10]]
+            // and the requested range is : [3,7]
+            // then 'fromRange' is [2,4] and 'toRange' is [8,10]
+            // after this action cache will be : [[2,7], [8,10]]
+
+            ranges[fromRangeIndex].to = to;
+            ranges[fromRangeIndex].entries = values;
+            ranges.splice(fromRangeIndex + 1, toRangeIndex - fromRangeIndex - 1);
+
+            return;
+        }
+
+        // the requested range starts inside 'fromRange'
+        // and ends inside 'toRange'
+
+        // merge all ranges in between 'fromRange' and 'toRange'
+        // into a single range [fromRange.From, toRange.To]
+
+        // e.g. if cache is : [[2,4], [5,6], [8,10]]
+        // and the requested range is : [3,9]
+        // then 'fromRange' is [2,4] and 'toRange' is [8,10]
+        // after this action cache will be : [[2,10]]
+
+        ranges[fromRangeIndex].to = ranges[toRangeIndex].to;
+        ranges[fromRangeIndex].entries = values;
+        ranges.splice(fromRangeIndex + 1, toRangeIndex - fromRangeIndex);
+    }
+    private static _mergeRanges(fromRangeIndex: number,
+                                toRangeIndex: number,
+                                localRanges: TimeSeriesRangeResult[],
+                                newRange: TimeSeriesRangeResult) {
+        const mergedValues: TimeSeriesEntry[] = [];
+
+        if (fromRangeIndex !== -1 && localRanges[fromRangeIndex].to.getTime() >= newRange.from.getTime()) {
+            for (const val of localRanges[fromRangeIndex].entries) {
+                if (val.timestamp.getTime() >= newRange.from.getTime()) {
+                    break;
+                }
+
+                mergedValues.push(val);
+            }
+        }
+
+        mergedValues.push(...newRange.entries);
+
+        if (toRangeIndex < localRanges.length
+            && DatesComparator.compare(leftDate(localRanges[toRangeIndex].from), rightDate(newRange.to)) <= 0) {
+            for (const val of localRanges[toRangeIndex].entries) {
+                if (val.timestamp.getTime() <= newRange.to.getTime()) {
+                    continue;
+                }
+
+                mergedValues.push(val);
+            }
+        }
+
+        return mergedValues;
+    }
+
+    private static _updateExistingRange(localRange: TimeSeriesRangeResult, newRange: TimeSeriesRangeResult) {
+        const newValues: TimeSeriesEntry[] = [];
+
+        let index: number;
+
+        for (index = 0; index < localRange.entries.length; index++) {
+            if (localRange.entries[index].timestamp.getTime() >= newRange.from.getTime()) {
+                break;
+            }
+
+            newValues.push(localRange.entries[index]);
+        }
+
+        newValues.push(...newRange.entries);
+
+        for (let j = 0; j < localRange.entries.length; j++) {
+            if (localRange.entries[j].timestamp.getTime() <= newRange.to.getTime()) {
+                continue;
+            }
+
+            newValues.push(localRange.entries[j]);
+        }
+
+        localRange.entries = newValues;
     }
 
     private _registerMissingCountersWithCountersToIncludeObj(countersToInclude: { [key: string]: string[] }): void {

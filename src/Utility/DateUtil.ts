@@ -35,7 +35,7 @@ export class DateUtil {
         }
 
         let parsed;
-        if (this._opts.useUtcDates || this._opts.withTimezone) {
+        if (this._opts.useUtcDates || this._opts.withTimezone || dateString.endsWith("Z")) { //TODO: check me!
             parsed = moment.parseZone(dateString, DateUtil.DEFAULT_DATE_TZ_FORMAT);
         } else {
             parsed = moment(dateString, DateUtil.DEFAULT_DATE_FORMAT);
