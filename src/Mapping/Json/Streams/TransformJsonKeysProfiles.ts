@@ -291,6 +291,7 @@ function buildEntityKeysTransformForSubscriptionRevisionsResponsePayload(entityC
 function buildEntityKeysTransformForDocumentLoad(entityCasingConvention) {
     return function entityKeysTransform(key, stack) {
         const len = stack.length;
+
         if (len === 1) {
             // Results, Includes
             return "camel";
@@ -323,6 +324,10 @@ function buildEntityKeysTransformForDocumentLoad(entityCasingConvention) {
             if (stack[len - 2] === "@nested-object-types") {
                 return null;
             }
+
+            if (stack[0] === "TimeSeriesIncludes") {
+                return "camel";
+            }
         }
 
         if (len === 6) {
@@ -333,6 +338,12 @@ function buildEntityKeysTransformForDocumentLoad(entityCasingConvention) {
                  }
 
                  return null;
+            }
+        }
+
+        if (len === 7) {
+            if (stack[0] === "TimeSeriesIncludes") {
+                return "camel";
             }
         }
 

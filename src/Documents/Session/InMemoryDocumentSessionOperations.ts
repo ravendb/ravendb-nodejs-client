@@ -15,8 +15,7 @@ import {
 } from "./SessionEvents";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { IDocumentStore } from "../IDocumentStore";
-import CurrentIndexAndNode from "../../Http/CurrentIndexAndNode";
-import { throwError, getError } from "../../Exceptions";
+import { throwError } from "../../Exceptions";
 import { ServerNode } from "../../Http/ServerNode";
 import { DocumentsById } from "./DocumentsById";
 import { DocumentInfo } from "./DocumentInfo";
@@ -28,8 +27,6 @@ import {
     PutCommandDataWithJson,
     CommandType
 } from "../Commands/CommandData";
-import { PutCompareExchangeCommandData } from "../Commands/Batches/PutCompareExchangeCommandData";
-import { DeleteCompareExchangeCommandData } from "../Commands/Batches/DeleteCompareExchangeCommandData";
 import { BatchPatchCommandData } from "../Commands/Batches/BatchPatchCommandData";
 import { GenerateEntityIdOnTheClient } from "../Identity/GenerateEntityIdOnTheClient";
 import { tryGetConflict } from "../../Mapping/Json";
@@ -70,6 +67,7 @@ import { ForceRevisionCommandData } from "../Commands/Batches/ForceRevisionComma
 import { TimeSeriesRangeResult } from "../Operations/TimeSeries/TimeSeriesRangeResult";
 import { DatesComparator, leftDate, rightDate } from "../../Primitives/DatesComparator";
 import { TimeSeriesEntry } from "./TimeSeries/TimeSeriesEntry";
+import { reviveTimeSeriesRangeResult } from "../Operations/TimeSeries/GetTimeSeriesOperation";
 
 export abstract class InMemoryDocumentSessionOperations
     extends EventEmitter
@@ -287,6 +285,19 @@ export abstract class InMemoryDocumentSessionOperations
         }
 
         return countersArray;
+    }
+
+    /**
+     * Gets all time series names for the specified entity.
+     * @param instance Entity
+     */
+    public getTimeSeriesFor<T extends object>(instance: T): string[] {
+        if (!instance) {
+            throwError("InvalidArgumentException", "Instance cannot be null");
+        }
+
+        const documentInfo = this._getDocumentInfo(instance);
+        return documentInfo.metadata[CONSTANTS.Documents.Metadata.TIME_SERIES] || [];
     }
 
     private _makeMetadataInstance<T extends object>(docInfo: DocumentInfo): IMetadataDictionary {
@@ -826,6 +837,43 @@ export abstract class InMemoryDocumentSessionOperations
         }
     }
 
+    public registerTimeSeries(resultTimeSeries: Record<string, Record<string, TimeSeriesRangeResult[]>>) {
+        if (this.noTracking || !resultTimeSeries) {
+            return;
+        }
+
+        for (const [id, perDocTs] of Object.entries(resultTimeSeries)) {
+            if (!perDocTs) {
+                continue;
+            }
+
+            let cache = this.timeSeriesByDocId.get(id);
+            if (!cache) {
+                cache = CaseInsensitiveKeysMap.create();
+                this.timeSeriesByDocId.set(id, cache);
+            }
+
+            if (!TypeUtil.isObject(perDocTs)) {
+                throwError("InvalidOperationException", "Unable to read time series range results on document: '" + id + "'.");
+            }
+
+            for (const [name, perNameTs] of Object.entries(perDocTs)) {
+                if (!perNameTs) {
+                    continue;
+                }
+
+                if (!TypeUtil.isArray(perNameTs)) {
+                    throwError("InvalidOperationException", "Unable to read time series range results on document: '" + id + "', time series: '" + name + "'.");
+                }
+
+                for (const range of perNameTs) {
+                    const newRange = InMemoryDocumentSessionOperations._parseTimeSeriesRangeResult(range, id, name, this.conventions);
+                    InMemoryDocumentSessionOperations._addToCache(cache, newRange, name);
+                }
+            }
+        }
+    }
+
     private static _addToCache(cache: Map<string, TimeSeriesRangeResult[]>, newRange: TimeSeriesRangeResult, name: string) {
         const localRanges = cache.get(name);
         if (!localRanges || !localRanges.length) {
@@ -1063,6 +1111,14 @@ export abstract class InMemoryDocumentSessionOperations
         ranges[fromRangeIndex].entries = values;
         ranges.splice(fromRangeIndex + 1, toRangeIndex - fromRangeIndex);
     }
+
+    private static _parseTimeSeriesRangeResult(json: TimeSeriesRangeResult,
+                                               id: string,
+                                               databaseName: string,
+                                               conventions: DocumentConventions): TimeSeriesRangeResult {
+        return reviveTimeSeriesRangeResult(json, conventions);
+    }
+
     private static _mergeRanges(fromRangeIndex: number,
                                 toRangeIndex: number,
                                 localRanges: TimeSeriesRangeResult[],

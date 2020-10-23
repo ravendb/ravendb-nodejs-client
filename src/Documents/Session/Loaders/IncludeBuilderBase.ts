@@ -14,10 +14,10 @@ export class IncludeBuilderBase {
     public documentsToInclude: Set<string>;
     public alias: string;
     public countersToIncludeBySourcePath: CountersByDocId;
-    public timeSeriesToIncludeBySourceAlias: Map<string, Set<TimeSeriesRange>>;
+    public timeSeriesToIncludeBySourceAlias: Map<string, TimeSeriesRange[]>;
     public compareExchangeValuesToInclude: Set<string>;
 
-    public get timeSeriesToInclude(): Set<TimeSeriesRange> {
+    public get timeSeriesToInclude(): TimeSeriesRange[] {
         if (!this.timeSeriesToIncludeBySourceAlias) {
             return null;
         }
@@ -144,5 +144,35 @@ export class IncludeBuilderBase {
         if (!this.alias) {
             this.alias = "a_" + (this._nextParameterId++);
         }
+    }
+
+    protected _includeTimeSeries(alias: string, name: string, from: Date, to: Date) {
+        if (StringUtil.isNullOrWhitespace(name)) {
+            throwError("InvalidArgumentException", "Name cannot be empty");
+        }
+
+        if (!this.timeSeriesToIncludeBySourceAlias) {
+            this.timeSeriesToIncludeBySourceAlias = new Map<string, TimeSeriesRange[]>();
+        }
+
+        let hashSet = this.timeSeriesToIncludeBySourceAlias.get(alias);
+        if (!hashSet) {
+            hashSet = [];
+            this.timeSeriesToIncludeBySourceAlias.set(alias, hashSet);
+        }
+
+        const range: TimeSeriesRange = {
+            name,
+            from,
+            to
+        };
+
+        const existingItemIdx = hashSet.findIndex(x => x.name === name);
+
+        if (existingItemIdx !== -1) {
+            hashSet.splice(existingItemIdx, 1);
+        }
+
+        hashSet.push(range);
     }
 }
