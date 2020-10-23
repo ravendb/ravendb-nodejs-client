@@ -15,7 +15,6 @@ import {
 import { IDisposable } from "../Types/Contracts";
 import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor";
 import { OperationExecutor } from "./Operations/OperationExecutor";
-import { AbstractIndexCreationTask } from "./Indexes";
 import { RequestExecutor } from "../Http/RequestExecutor";
 import { DocumentConventions } from "./Conventions/DocumentConventions";
 import { InMemoryDocumentSessionOperations } from "./Session/InMemoryDocumentSessionOperations";
@@ -23,10 +22,10 @@ import { BulkInsertOperation } from "./BulkInsertOperation";
 import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
 import { DocumentSubscriptions } from "./Subscriptions/DocumentSubscriptions";
 import { SessionOptions } from "./Session/SessionOptions";
-import { AbstractIndexCreationTaskBase } from "./Indexes/AbstractIndexCreationTaskBase";
 import { ErrorFirstCallback } from "../Types/Callbacks";
 import { DatabaseSmuggler } from "./Smuggler/DatabaseSmuggler";
 import { IAbstractIndexCreationTask } from "./Indexes/IAbstractIndexCreationTask";
+import { TimeSeriesOperations } from "./TimeSeries/TimeSeriesOperations";
 
 export interface SessionEventsProxy {
     addSessionListener(eventName: "failedRequest", eventHandler: (eventArgs: FailedRequestEventArgs) => void): this;
@@ -245,6 +244,8 @@ export interface IDocumentStore extends IDisposable,
      * Contains authentication information: client certificate data;
      */
     authOptions: IStoreAuthOptions;
+
+    timeSeries: TimeSeriesOperations;
 
     /**
      * Gets the conventions

@@ -2,6 +2,7 @@ import { TimeValue, TimeValueRaw } from "../../../Primitives/TimeValue";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { throwError } from "../../../Exceptions";
 import { TimeSeriesConfiguration } from "./TimeSeriesConfiguration";
+import { RawTimeSeriesPolicy } from "./RawTimeSeriesPolicy";
 
 export class TimeSeriesPolicy {
     /**
@@ -50,6 +51,14 @@ export class TimeSeriesPolicy {
             RetentionTime: this.retentionTime ? this.retentionTime.serialize() : null,
             AggregationTime: this.aggregationTime ? this.aggregationTime.serialize() : null
         }
+    }
+
+    public static parse(policy: TimeSeriesPolicyRaw) {
+        return new TimeSeriesPolicy(
+            policy.Name,
+            TimeValue.parse(policy.AggregationTime),
+            TimeValue.parse(policy.RetentionTime)
+        );
     }
 }
 

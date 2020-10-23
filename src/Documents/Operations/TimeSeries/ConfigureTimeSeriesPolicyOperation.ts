@@ -51,8 +51,7 @@ class ConfigureTimeSeriesPolicyCommand extends RavenCommand<ConfigureTimeSeriesO
     createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/admin/timeseries/policy?collection=" + this._urlEncode(this._collection);
 
-        //TODO: serialize method?
-        const body = this._serializer.serialize(this._configuration);
+        const body = this._serializer.serialize(this._configuration.serialize());
 
         return {
             method: "PUT",

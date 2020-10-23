@@ -27,8 +27,15 @@ export class TimeSeriesCollectionConfiguration {
             RawPolicy: this.rawPolicy ? this.rawPolicy.serialize() : null
         }
     }
-}
 
+    public static parse(collectionRaw: TimeSeriesCollectionConfigurationRaw) {
+        const configuration = new TimeSeriesCollectionConfiguration();
+        configuration.disabled = collectionRaw.Disabled;
+        configuration.policies = collectionRaw.Policies.map(x => TimeSeriesPolicy.parse(x));
+        configuration.rawPolicy = RawTimeSeriesPolicy.parse(collectionRaw.RawPolicy);
+        return configuration;
+    }
+}
 
 export interface TimeSeriesCollectionConfigurationRaw {
     Disabled: boolean;

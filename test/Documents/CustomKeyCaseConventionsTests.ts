@@ -260,4 +260,6 @@ describe("With custom key case conventions set", function () {
         }
 
     });
+
+    //TODO: write test for compare exchange?
 });

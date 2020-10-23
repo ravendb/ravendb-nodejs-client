@@ -14,7 +14,7 @@ import {
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { ErrorFirstCallback } from "../../Types/Callbacks";
 import { TypeUtil } from "../../Utility/TypeUtil";
-import { EntitiesCollectionObject, IRavenObject, ObjectTypeDescriptor } from "../../Types";
+import { ClassConstructor, EntitiesCollectionObject, IRavenObject, ObjectTypeDescriptor } from "../../Types";
 import { throwError } from "../../Exceptions";
 import { DocumentType } from "../DocumentAbstractions";
 import { LoadOperation } from "./Operations/LoadOperation";
@@ -71,6 +71,10 @@ import { ISessionDocumentTimeSeries } from "./ISessionDocumentTimeSeries";
 import { ISessionDocumentTypedTimeSeries } from "./ISessionDocumentTypedTimeSeries";
 import { ISessionDocumentRollupTypedTimeSeries } from "./ISessionDocumentRollupTypedTimeSeries";
 import { JavaScriptMap } from "./JavaScriptMap";
+import { SessionDocumentTimeSeries } from "./SessionDocumentTimeSeries";
+import { TimeSeriesOperation } from "../Operations/TimeSeries/TimeSeriesOperation";
+import { TimeSeriesOperations } from "../TimeSeries/TimeSeriesOperations";
+import { SessionDocumentTypedTimeSeries } from "./SessionDocumentTypedTimeSeries";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;
@@ -1006,5 +1010,26 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     public graphQuery<TEntity extends object>(
         query: string, documentType?: DocumentType<TEntity>): IGraphDocumentQuery<TEntity> {
         return new GraphDocumentQuery<TEntity>(this, query, documentType);
+    }
+
+    public timeSeriesFor(documentId: string, name: string): ISessionDocumentTimeSeries;
+    public timeSeriesFor(entity:any, name: string): ISessionDocumentTimeSeries;
+    public timeSeriesFor<T extends object>(documentId: string, clazz: ClassConstructor<T>): ISessionDocumentTypedTimeSeries<T>;
+    public timeSeriesFor<T extends object>(documentId: string, name: string, clazz: ClassConstructor<T>): ISessionDocumentTypedTimeSeries<T>;
+    public timeSeriesFor<T extends object>(entity: object, clazz: ClassConstructor<T>): ISessionDocumentTypedTimeSeries<T>;
+    public timeSeriesFor<T extends object>(entity: object, name: string, clazz: ClassConstructor<T>): ISessionDocumentTypedTimeSeries<T>;
+    public timeSeriesFor<T extends object>(entityOrDocumentId: string | object, nameOrClass: string | ClassConstructor<T>, clazz?: ClassConstructor<T>): ISessionDocumentTypedTimeSeries<T> | ISessionDocumentTimeSeries {
+        if (clazz) {
+            const name = nameOrClass as string;
+            const tsName = name ?? TimeSeriesOperations.getTimeSeriesName(clazz, this.conventions);
+            return new SessionDocumentTypedTimeSeries(this, entityOrDocumentId, tsName, clazz);
+        }
+
+        if (TypeUtil.isString(nameOrClass)) {
+            return new SessionDocumentTimeSeries(this, entityOrDocumentId, nameOrClass);
+        } else {
+            const tsName = TimeSeriesOperations.getTimeSeriesName(nameOrClass, this.conventions);
+            return new SessionDocumentTypedTimeSeries(this, entityOrDocumentId, tsName, nameOrClass);
+        }
     }
 }

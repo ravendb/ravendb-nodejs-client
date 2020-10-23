@@ -255,6 +255,10 @@ export class TimeValue {
             Unit: this.unit
         }
     }
+
+    public static parse(raw: TimeValueRaw) {
+        return new TimeValue(raw.Value, raw.Unit);
+    }
 }
 
 export interface TimeValueRaw {

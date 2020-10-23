@@ -28,4 +28,12 @@ export class SessionDocumentTimeSeries extends SessionTimeSeriesBase implements 
             return this.getInternal(startOrFrom, toOrPageSize as Date, start ?? 0, pageSize ?? TypeUtil.MAX_INT32);
         }
     }
+
+    public append(timestamp: Date, value: number): void;
+    public append(timestamp: Date, value: number, tag: string): void;
+    public append(timestamp: Date, values: number[]): void;
+    public append(timestamp: Date, values: number[], tag: string): void;
+    public append(timestamp: Date, valueOrValues: number[] | number, tag?: string): void {
+        return this._appendInternal(timestamp, valueOrValues, tag);
+    }
 }

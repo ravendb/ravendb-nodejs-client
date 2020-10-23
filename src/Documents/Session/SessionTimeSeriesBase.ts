@@ -9,7 +9,6 @@ import { AppendOperation, DeleteOperation } from "../Operations/TimeSeries/TimeS
 import { IdTypeAndName } from "../IdTypeAndName";
 import { TimeSeriesBatchCommandData } from "../Commands/Batches/TimeSeriesBatchCommandData";
 import { TimeSeriesEntry } from "./TimeSeries/TimeSeriesEntry";
-import { isMoment } from "moment";
 import { TimeSeriesRangeResult } from "../Operations/TimeSeries/TimeSeriesRangeResult";
 import { DatesComparator, definedDate, leftDate, rightDate } from "../../Primitives/DatesComparator";
 import { GetTimeSeriesOperation } from "../Operations/TimeSeries/GetTimeSeriesOperation";
@@ -57,11 +56,7 @@ export class SessionTimeSeriesBase {
         }
     }
 
-    public append(timestamp: Date, value: number): void;
-    public append(timestamp: Date, value: number, tag: string): void;
-    public append(timestamp: Date, values: number[]): void;
-    public append(timestamp: Date, values: number[], tag: string): void;
-    public append(timestamp: Date, valueOrValues: number[] | number, tag?: string): void {
+    protected _appendInternal(timestamp: Date, valueOrValues: number[] | number, tag?: string): void {
         const values = TypeUtil.isArray(valueOrValues) ? valueOrValues : [valueOrValues];
 
         const documentInfo = this.session.documentsById.getValue(this.docId);
