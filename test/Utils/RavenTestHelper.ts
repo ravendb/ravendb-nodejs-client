@@ -21,7 +21,7 @@ export class RavenTestHelper {
             sb.append("Index Errors for '")
                 .append(indexErrors.name)
                 .append(" '(")
-                .append(indexErrors.errors.length)
+                .append(indexErrors.errors.length.toString())
                 .append(")");
             sb.append(os.EOL);
 
