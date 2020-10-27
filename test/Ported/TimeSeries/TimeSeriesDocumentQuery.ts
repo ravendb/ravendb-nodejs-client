@@ -57,7 +57,7 @@ describe("TimeSeriesDocumentQuery", function () {
 
             const result = await session.query<User>(User)
                 .whereGreaterThan("age", 21)
-                .selectTimeSeries<TimeSeriesAggregationResult>(b => b.raw(tsQueryText), TimeSeriesAggregationResult)
+                .selectTimeSeries(b => b.raw(tsQueryText), TimeSeriesAggregationResult)
                 .addParameter("start", baseLine.toDate())
                 .addParameter("end", baseLine.clone().add(3, "months").toDate())
                 .all();
@@ -72,6 +72,11 @@ describe("TimeSeriesDocumentQuery", function () {
             const agg = result[0].results;
             assertThat(agg)
                 .hasSize(2);
+
+            assertThat(agg[0].from instanceof Date)
+                .isTrue();
+            assertThat(agg[0].to instanceof Date)
+                .isTrue();
 
             assertThat(agg[0].max[0])
                 .isEqualTo(69);
@@ -125,7 +130,7 @@ describe("TimeSeriesDocumentQuery", function () {
 
             const result = await session.advanced.documentQuery(User)
                 .whereGreaterThan("age", 21)
-                .selectTimeSeries<TimeSeriesRawResult>(b => b.raw(tsQueryText), TimeSeriesRawResult)
+                .selectTimeSeries(b => b.raw(tsQueryText), TimeSeriesRawResult)
                 .addParameter("start", baseLine.toDate())
                 .addParameter("end", baseLine.clone().add(3, "months").toDate())
                 .all();
@@ -133,6 +138,7 @@ describe("TimeSeriesDocumentQuery", function () {
             assertThat(result)
                 .hasSize(1);
             assertThat(result[0] instanceof TimeSeriesRawResult)
+                .isTrue();
             assertThat(result[0].count)
                 .isEqualTo(3);
 
@@ -141,22 +147,22 @@ describe("TimeSeriesDocumentQuery", function () {
             assertThat(values)
                 .hasSize(3);
 
-            assertThat(values[0].values)
-                .isEqualTo([ 59 ]);
+            assertThat(values[0].values[0])
+                .isEqualTo(59);
             assertThat(values[0].tag)
                 .isEqualTo("watches/fitbit");
             assertThat(values[0].timestamp.getTime())
                 .isEqualTo(baseLine.clone().add(61, "minutes").toDate().getTime());
 
-            assertThat(values[1].values)
-                .isEqualTo([ 69 ]);
+            assertThat(values[1].values[0])
+                .isEqualTo(69);
             assertThat(values[1].tag)
                 .isEqualTo("watches/fitbit");
             assertThat(values[1].timestamp.getTime())
                 .isEqualTo(baseLine.clone().add(63, "minutes").toDate().getTime());
 
-            assertThat(values[2].values)
-                .isEqualTo([ 169 ]);
+            assertThat(values[2].values[0])
+                .isEqualTo(169);
             assertThat(values[2].tag)
                 .isEqualTo("watches/fitbit");
             assertThat(values[2].timestamp.getTime())

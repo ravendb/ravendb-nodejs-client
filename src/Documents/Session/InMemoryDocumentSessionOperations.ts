@@ -1034,7 +1034,7 @@ export abstract class InMemoryDocumentSessionOperations
         // found both 'fromRange' and 'toRange'
         // the requested range is inside cache bounds
 
-        if (DatesComparator.compare(rightDate(ranges[toRangeIndex].to), leftDate(from)) < 0) {
+        if (DatesComparator.compare(rightDate(ranges[fromRangeIndex].to), leftDate(from)) < 0) {
             // requested range starts after 'fromRange' ends
 
             if (DatesComparator.compare(leftDate(ranges[toRangeIndex].from), rightDate(to)) > 0) {

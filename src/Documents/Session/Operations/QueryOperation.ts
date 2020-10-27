@@ -15,6 +15,11 @@ import { TypeUtil } from "../../../Utility/TypeUtil";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { Reference } from "../../../Utility/Reference";
 import { NESTED_OBJECT_TYPES_PROJECTION_FIELD } from "../DocumentQuery";
+import { TimeSeriesAggregationResult } from "../../Queries/TimeSeries/TimeSeriesAggregationResult";
+import { TimeSeriesRawResult } from "../../Queries/TimeSeries/TimeSeriesRawResult";
+import { TimeSeriesRangeAggregation } from "../../Queries/TimeSeries/TimeSeriesRangeAggregation";
+import { ObjectUtil } from "../../../Utility/ObjectUtil";
+import { TimeSeriesEntry } from "../TimeSeries/TimeSeriesEntry";
 
 const log = getLogger({ module: "QueryOperation" });
 
@@ -193,8 +198,8 @@ export class QueryOperation {
         // if type was passed then use that even if it's only 1 field
         if (fieldsToFetch
             && fieldsToFetch.projections
-            && (fieldsToFetch.projections.length === 1 || (fieldsToFetch.projections.includes(NESTED_OBJECT_TYPES_PROJECTION_FIELD) && fieldsToFetch.projections.length === 2))
-            && !clazz) {
+            && (!clazz || clazz === TimeSeriesAggregationResult || clazz === TimeSeriesRawResult)
+            && (fieldsToFetch.projections.length === 1 || (fieldsToFetch.projections.includes(NESTED_OBJECT_TYPES_PROJECTION_FIELD) && fieldsToFetch.projections.length === 2))) {
             // we only select a single field
             let projectionField = fieldsToFetch.projections.find(x => x !== NESTED_OBJECT_TYPES_PROJECTION_FIELD);
 
@@ -232,7 +237,6 @@ export class QueryOperation {
             }
         }
 
-
         const projType = conventions.getJsTypeByDocumentType(clazz);
 
         const documentRef: Reference<object> = {
@@ -246,27 +250,78 @@ export class QueryOperation {
         // tslint:disable-next-line:new-parens
         const result = projType ? new (Function.prototype.bind.apply(projType)) : {};
 
-        if (fieldsToFetch && fieldsToFetch.projections) {
-            const keys = conventions.entityFieldNameConvention
-                ? fieldsToFetch.projections.map(x => StringUtil.changeCase(conventions.entityFieldNameConvention, x))
-                : fieldsToFetch.projections;
+        let mappingApplied = false;
 
-            const nestedTypes = raw[NESTED_OBJECT_TYPES_PROJECTION_FIELD];
-            // tslint:disable-next-line:prefer-for-of
-            for (let i = 0; i < keys.length; i++) {
-                const key = keys[i];
+        const mapper = conventions.objectMapper;
 
-                const mapper = conventions.objectMapper;
-                const mapped = mapper.fromObjectLiteral(raw, {
-                    typeName: "object",
-                    nestedTypes
-                })
+        //TODO: refactor to some generic method for deserialization such entities?
+        if (result instanceof TimeSeriesAggregationResult) {
+            const rawLower = ObjectUtil.transformObjectKeys(raw, { defaultTransform: "camel" });
+            Object.assign(result, mapper.fromObjectLiteral(rawLower, {
+                typeName: "object",
+                nestedTypes: {
+                    "results[]": "TimeSeriesRangeAggregation",
+                    "results[].from": "date",
+                    "results[].to": "date"
+                }
+            }, new Map([[TimeSeriesRangeAggregation.name, TimeSeriesRangeAggregation]])));
+            mappingApplied = true;
+        } else if (result instanceof TimeSeriesRawResult) {
+            const rawLower = ObjectUtil.transformObjectKeys(raw, { defaultTransform: "camel" });
+            Object.assign(result, mapper.fromObjectLiteral(rawLower, {
+                typeName: "object",
+                nestedTypes: {
+                    "results[]": "TimeSeriesEntry",
+                    "results[].timestamp": "date"
+                }
+            }, new Map([[TimeSeriesEntry.name, TimeSeriesEntry]])));
+            mappingApplied = true;
+        }
 
-                result[key] = mapped[key];
+        if (!mappingApplied) {
+            if (fieldsToFetch && fieldsToFetch.projections) {
+                if (result instanceof TimeSeriesAggregationResult) {
+                    const rawLower = ObjectUtil.transformObjectKeys(raw, {defaultTransform: "camel"});
+                    Object.assign(result, mapper.fromObjectLiteral(rawLower, {
+                        typeName: "object",
+                        nestedTypes: {
+                            "results[]": "TimeSeriesRangeAggregation",
+                            "results[].from": "date",
+                            "results[].to": "date"
+                        }
+                    }, new Map([[TimeSeriesRangeAggregation.name, TimeSeriesRangeAggregation]])));
+                } else if (result instanceof TimeSeriesRawResult) {
+                    const rawLower = ObjectUtil.transformObjectKeys(raw, {defaultTransform: "camel"});
+                    Object.assign(result, mapper.fromObjectLiteral(rawLower, {
+                        typeName: "object",
+                        nestedTypes: {
+                            "results[]": "TimeSeriesRangeAggregation",
+                            "results[].timestamp": "date"
+                        }
+                    }, new Map([[TimeSeriesRangeAggregation.name, TimeSeriesRangeAggregation]])));
+                } else {
+                    const keys = conventions.entityFieldNameConvention
+                        ? fieldsToFetch.projections.map(x => StringUtil.changeCase(conventions.entityFieldNameConvention, x))
+                        : fieldsToFetch.projections;
+
+                    const nestedTypes = raw[NESTED_OBJECT_TYPES_PROJECTION_FIELD];
+                    // tslint:disable-next-line:prefer-for-of
+                    for (let i = 0; i < keys.length; i++) {
+                        const key = keys[i];
+
+
+                        const mapped = mapper.fromObjectLiteral(raw, {
+                            typeName: "object",
+                            nestedTypes
+                        })
+
+                        result[key] = mapped[key];
+                    }
+                }
+            } else {
+                Object.assign(result, !entityFieldNameConvention
+                    ? raw : conventions.transformObjectKeysToLocalFieldNameConvention(raw));
             }
-        } else {
-            Object.assign(result, !entityFieldNameConvention
-                ? raw : conventions.transformObjectKeysToLocalFieldNameConvention(raw));
         }
 
         session.onAfterConversionToEntityInvoke(id, document, result);

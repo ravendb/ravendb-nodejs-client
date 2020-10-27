@@ -49,6 +49,8 @@ import { HighlightingParameters } from "../Queries/Highlighting/HighlightingPara
 import { IQueryIncludeBuilder } from "./Loaders/IQueryIncludeBuilder";
 import { QueryIncludeBuilder } from "./Loaders/QueryIncludeBuilder";
 import { ITimeSeriesQueryBuilder } from "../Queries/TimeSeries/ITimeSeriesQueryBuilder";
+import { TimeSeriesAggregationResult } from "../Queries/TimeSeries/TimeSeriesAggregationResult";
+import { TimeSeriesRawResult } from "../Queries/TimeSeries/TimeSeriesRawResult";
 
 export const NESTED_OBJECT_TYPES_PROJECTION_FIELD = "__PROJECTED_NESTED_OBJECT_TYPES__";
 
@@ -154,9 +156,15 @@ export class DocumentQuery<T extends object>
         }
     }
 
-    selectTimeSeries<TTimeSeries extends object>(
+    selectTimeSeries(
         timeSeriesQuery: (builder: ITimeSeriesQueryBuilder) => void,
-        projectionClass: DocumentType<TTimeSeries>): IDocumentQuery<TTimeSeries> {
+        projectionClass: DocumentType<TimeSeriesAggregationResult>): IDocumentQuery<TimeSeriesAggregationResult>;
+    selectTimeSeries(
+        timeSeriesQuery: (builder: ITimeSeriesQueryBuilder) => void,
+        projectionClass: DocumentType<TimeSeriesRawResult>): IDocumentQuery<TimeSeriesRawResult>;
+    selectTimeSeries(
+        timeSeriesQuery: (builder: ITimeSeriesQueryBuilder) => void,
+        projectionClass: DocumentType<TimeSeriesAggregationResult | TimeSeriesRawResult>): IDocumentQuery<TimeSeriesAggregationResult | TimeSeriesRawResult> {
         const queryData = this._createTimeSeriesQueryData(timeSeriesQuery);
         return this.selectFields(queryData, projectionClass);
     }

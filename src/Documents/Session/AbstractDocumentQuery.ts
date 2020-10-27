@@ -2278,7 +2278,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
     }
 
-    private _includeTimeSeries(alias: string, timeSeriesToInclude: Map<string, Set<TimeSeriesRange>>) {
+    private _includeTimeSeries(alias: string, timeSeriesToInclude: Map<string, TimeSeriesRange[]>) {
         if (!timeSeriesToInclude || !timeSeriesToInclude.size) {
             return;
         }

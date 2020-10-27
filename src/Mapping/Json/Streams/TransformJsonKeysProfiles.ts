@@ -1,6 +1,7 @@
 import { CasingConvention } from "../../../Utility/ObjectUtil";
 import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
 import { throwError } from "../../../Exceptions";
+import { CONSTANTS, TIME_SERIES } from "../../../Constants";
 
 export type TransformJsonKeysProfile = 
     "CommandResponsePayload"
@@ -354,6 +355,7 @@ function buildEntityKeysTransformForDocumentLoad(entityCasingConvention) {
 function buildEntityKeysTransformForDocumentQuery(entityCasingConvention) {
     return function entityKeysTransform(key, stack) {
         const len = stack.length;
+
         if (len === 1) {
             // Results, Includes, Timings...
             return "camel";
@@ -402,6 +404,18 @@ function buildEntityKeysTransformForDocumentQuery(entityCasingConvention) {
 
         if (len === 4) {
             if (stack[0] === "CompareExchangeValueIncludes" && stack[2] === "Value" && stack[3] === "Object") {
+                return "camel";
+            }
+        }
+
+        if (len === 5) {
+            if (stack[0] === "TimeSeriesIncludes") {
+                return "camel";
+            }
+        }
+
+        if (len === 7) {
+            if (stack[0] === "TimeSeriesIncludes") {
                 return "camel";
             }
         }

@@ -29,7 +29,7 @@ export class TimeSeriesIncludesToken extends QueryToken {
         writer
             .append("timeseries(");
 
-        if (StringUtil.isNullOrEmpty(this._sourcePath)) {
+        if (!StringUtil.isNullOrEmpty(this._sourcePath)) {
             writer
                 .append(this._sourcePath)
                 .append(", ");
