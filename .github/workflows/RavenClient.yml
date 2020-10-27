@@ -2,9 +2,9 @@ name: tests/node
  
 on:
   push:
-    branches: [ v4.2 ]
+    branches: [ v5.0 ]
   pull_request:
-    branches: [ v4.2 ]
+    branches: [ v5.0 ]
 
 jobs:
   build:
@@ -23,7 +23,7 @@ jobs:
     strategy:
       matrix:
         node-version: [10.x, 12.x, 14.x]
-        serverVersion: ["4.2"]
+        serverVersion: ["5.0"]
       fail-fast: false
 
     steps:
