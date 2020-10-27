@@ -1,6 +1,5 @@
 import { CONSTANTS } from "../../Constants";
 import { StringUtil } from "../../Utility/StringUtil";
-import * as StringBuilder from "string-builder";
 
 export class QueryFieldUtil {
 
@@ -38,6 +37,7 @@ export class QueryFieldUtil {
     }
 
     public static escapeIfNecessary(name: string, isPath: boolean = false): string {
+        //TODO: write / make sure we have test for this logic
         if (!name ||
             CONSTANTS.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME === name ||
             CONSTANTS.Documents.Indexing.Fields.REDUCE_KEY_HASH_FIELD_NAME === name ||
@@ -50,11 +50,41 @@ export class QueryFieldUtil {
             return name;
         }
 
-        const sb = new StringBuilder();
-        sb.append(name);
+        let sb = name;
 
+        let needEndQuote = false;
+        let lastTermStart = 0;
+
+        for (let i = 0; i < sb.length; i++) {
+            const c = sb.charAt(i);
+            if (i === 0 && !StringUtil.isLetter(c) && c !== "_" && c !== "@") {
+                sb = StringUtil.splice(sb, lastTermStart, 0, "'");
+                needEndQuote = true;
+                continue;
+            }
+
+            if (isPath && c === ".") {
+                if (needEndQuote) {
+                    needEndQuote = false;
+                    sb = StringUtil.splice(sb, i, 0, "'");
+                    i++;
+                }
+
+                lastTermStart = i + 1;
+                continue;
+            }
+
+            if (!StringUtil.isLetterOrDigit(c) && c !== "_" && c !== "-" && c !== "@" && c !== "." && c !== "[" && c !== "]" && !needEndQuote) {
+                sb = StringUtil.splice(sb, 0, lastTermStart, "'");
+                needEndQuote = true;
+                continue;
+            }
         }
 
-        return name;
+        if (needEndQuote) {
+            sb += "'";
+        }
+
+        return sb;
     }
 }

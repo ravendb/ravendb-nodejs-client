@@ -20,6 +20,7 @@ import { throwError } from "../../Exceptions";
 import { StringUtil } from "../../Utility/StringUtil";
 import { DocumentStoreBase, RequestExecutor } from "../..";
 import CurrentIndexAndNode from "../../Http/CurrentIndexAndNode";
+import { HashCalculator } from "../Queries/HashCalculator";
 
 export class SessionInfo {
     private static _clientSessionIdCounter: number = 0;
@@ -69,6 +70,17 @@ export class SessionInfo {
             throwError("InvalidOperationException",
                 "Unable to set the session context after it has already been used. " +
                 "The session context can only be modified before it is utilized.");
+        }
+
+        if (!sessionKey) {
+            SessionInfo._clientSessionIdCounter++;
+        } else {
+            const hash = new HashCalculator();
+            hash.write(sessionKey);
+            hash.write(this._loadBalancerContextSeed);
+            const buffer = Buffer.from(hash.getHash());
+            // tslint:disable-next-line:no-bitwise
+            this._sessionId = (buffer[0] << 16) + (buffer[1] << 8) + buffer[2];
         }
     }
 

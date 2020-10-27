@@ -149,4 +149,8 @@ export class StringUtil {
 
         builder.append(escaped.substring(1, escaped.length - 1));
     }
+
+    public static splice(input: string, start: number, delCount: number, newSubStr: string) {
+        return input.slice(0, start) + newSubStr + input.slice(start + Math.abs(delCount));
+    }
 }
