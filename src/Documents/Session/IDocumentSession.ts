@@ -3,7 +3,7 @@ import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { IDisposable } from "../../Types/Contracts";
 import { ErrorFirstCallback } from "../../Types/Callbacks";
 import { DocumentType } from "../DocumentAbstractions";
-import { EntitiesCollectionObject, ObjectTypeDescriptor } from "../../Types";
+import { ClassConstructor, EntitiesCollectionObject, ObjectTypeDescriptor } from "../../Types";
 import { IAdvancedSessionOperations } from "./IAdvancedSessionOperations";
 import { ILoaderWithInclude } from "./Loaders/ILoaderWithInclude";
 import { DocumentQueryOptions } from "./QueryOptions";
@@ -270,10 +270,10 @@ export interface IDocumentSession extends IDisposable {
     timeSeriesFor<T extends object>(entity: object, clazz: ObjectTypeDescriptor<T>): ISessionDocumentTypedTimeSeries<T>;
     timeSeriesFor<T extends object>(entity: object, name: string, clazz: ObjectTypeDescriptor<T>): ISessionDocumentTypedTimeSeries<T>;
 
-    timeSeriesRollupFor<T extends object>(entity: object, policy: string, clazz: ObjectTypeDescriptor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
-    timeSeriesRollupFor<T extends object>(entity: object, policy: string, raw: string, clazz: ObjectTypeDescriptor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
-    timeSeriesRollupFor<T extends object>(documentId: string, policy: string, clazz: ObjectTypeDescriptor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
-    timeSeriesRollupFor<T extends object>(documentId: string, policy: string, raw: string, clazz: ObjectTypeDescriptor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
+    timeSeriesRollupFor<T extends object>(entity: object, policy: string, clazz: ClassConstructor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
+    timeSeriesRollupFor<T extends object>(entity: object, policy: string, raw: string, clazz: ClassConstructor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
+    timeSeriesRollupFor<T extends object>(documentId: string, policy: string, clazz: ClassConstructor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
+    timeSeriesRollupFor<T extends object>(documentId: string, policy: string, raw: string, clazz: ClassConstructor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
 }
 
 /**

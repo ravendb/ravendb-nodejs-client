@@ -75,6 +75,8 @@ import { SessionDocumentTimeSeries } from "./SessionDocumentTimeSeries";
 import { TimeSeriesOperation } from "../Operations/TimeSeries/TimeSeriesOperation";
 import { TimeSeriesOperations } from "../TimeSeries/TimeSeriesOperations";
 import { SessionDocumentTypedTimeSeries } from "./SessionDocumentTypedTimeSeries";
+import { TimeSeriesConfiguration } from "../Operations/TimeSeries/TimeSeriesConfiguration";
+import { SessionDocumentRollupTypedTimeSeries } from "./SessionDocumentRollupTypedTimeSeries";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;
@@ -1031,5 +1033,20 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             const tsName = TimeSeriesOperations.getTimeSeriesName(nameOrClass, this.conventions);
             return new SessionDocumentTypedTimeSeries(this, entityOrDocumentId, tsName, nameOrClass);
         }
+    }
+
+    timeSeriesRollupFor<T extends object>(entity: object, policy: string, clazz: ClassConstructor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
+    timeSeriesRollupFor<T extends object>(entity: object, policy: string, raw: string, clazz: ClassConstructor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
+    timeSeriesRollupFor<T extends object>(documentId: string, policy: string, clazz: ClassConstructor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
+    timeSeriesRollupFor<T extends object>(documentId: string, policy: string, raw: string, clazz: ClassConstructor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
+    timeSeriesRollupFor<T extends object>(entityOrDocumentId: string | object, policy: string, rawOrClass: string | ClassConstructor<T>, clazz?: ClassConstructor<T>): ISessionDocumentRollupTypedTimeSeries<T> {
+        if (clazz) {
+            const name = rawOrClass as string;
+            const tsName = name ?? TimeSeriesOperations.getTimeSeriesName(clazz, this.conventions);
+            return new SessionDocumentRollupTypedTimeSeries(this, entityOrDocumentId, tsName + TimeSeriesConfiguration.TIME_SERIES_ROLLUP_SEPARATOR + policy, clazz);
+        }
+
+        const tsName = TimeSeriesOperations.getTimeSeriesName(rawOrClass as ClassConstructor<T>, this.conventions);
+        return new SessionDocumentRollupTypedTimeSeries(this, entityOrDocumentId, tsName + TimeSeriesConfiguration.TIME_SERIES_ROLLUP_SEPARATOR + policy, rawOrClass as ClassConstructor<T>);
     }
 }
