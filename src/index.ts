@@ -1,6 +1,7 @@
 import "./Utility/Polyfills";
 
 export { DocumentConventions } from "./Documents/Conventions/DocumentConventions";
+export { BulkInsertConventions } from "./Documents/Conventions/BulkInsertConventions";
 export { RavenErrorType } from "./Exceptions";
 export * from "./Types";
 
@@ -13,6 +14,7 @@ export * from "./Http/CurrentIndexAndNodeAndEtag";
 export * from "./Http/IBroadcast";
 export * from "./Http/IRaftCommand";
 export * from "./Http/NodeSelector";
+export * from "./Http/LoadBalanceBehavior";
 export * from "./Http/RavenCommand";
 export * from "./Http/ReadBalanceBehavior";
 export * from "./Http/RequestExecutor";
@@ -27,6 +29,7 @@ export * from "./ServerWide";
 export * from "./ServerWide/CompactSettings";
 export * from "./Documents/Operations/Etl/ConnectionString";
 export * from "./ServerWide/ModifyOnGoingTaskResult";
+export * from "./ServerWide/DocumentsCompressionConfiguration";
 export * from "./ServerWide/DeletionInProgressStatus";
 export * from "./ServerWide/IDatabaseTaskStatus";
 export * from "./ServerWide/Operations/BuildNumber";
@@ -108,6 +111,22 @@ export {
     DeleteCompareExchangeValueOperation
 }
     from "./Documents/Operations/CompareExchange/DeleteCompareExchangeValueOperation";
+export {
+    CompareExchangeSessionValue
+}
+    from "./Documents/Operations/CompareExchange/CompareExchangeSessionValue";
+export {
+    CompareExchangeValueJsonConverter
+}
+    from "./Documents/Operations/CompareExchange/CompareExchangeValueJsonConverter";
+export {
+    CompareExchangeValueState
+}
+    from "./Documents/Operations/CompareExchange/CompareExchangeValueState";
+export {
+    ICompareExchangeValue
+}
+    from "./Documents/Operations/CompareExchange/ICompareExchangeValue";
 export { DeleteByQueryOperation } from "./Documents/Operations/DeleteByQueryOperation";
 export { GetCollectionStatisticsOperation } from "./Documents/Operations/GetCollectionStatisticsOperation";
 export { CollectionStatistics } from "./Documents/Operations/CollectionStatistics";
@@ -129,6 +148,7 @@ export { GetClientConfigurationOperation } from "./Documents/Operations/Configur
 export { PutClientConfigurationOperation } from "./Documents/Operations/Configuration/PutClientConfigurationOperation";
 export { PutDocumentCommand } from "./Documents/Commands/PutDocumentCommand";
 export { GetIndexNamesOperation } from "./Documents/Operations/Indexes/GetIndexNamesOperation";
+export { DeleteIndexErrorsOperation } from "./Documents/Operations/Indexes/DeleteIndexErrorsOperation";
 export { DisableIndexOperation } from "./Documents/Operations/Indexes/DisableIndexOperation";
 export { EnableIndexOperation } from "./Documents/Operations/Indexes/EnableIndexOperation";
 export { GetIndexingStatusOperation } from "./Documents/Operations/Indexes/GetIndexingStatusOperation";
@@ -195,6 +215,10 @@ export * from "./Documents/Session/Operations/Lazy/LazyQueryOperation";
 export * from "./Documents/Session/Operations/Lazy/LazySessionOperations";
 export * from "./Documents/Session/Operations/Lazy/LazyStartsWithOperation";
 export * from "./Documents/Session/Operations/Lazy/LazySuggestionQueryOperation";
+export * from "./Documents/Session/Operations/Lazy/LazyClusterTransactionOperations";
+export * from "./Documents/Session/Operations/Lazy/LazyGetCompareExchangeValueOperation";
+export * from "./Documents/Session/Operations/Lazy/LazyGetCompareExchangeValuesOperation";
+
 export * from "./Documents/Session/Operations/LoadOperation";
 export * from "./Documents/Session/Operations/LoadStartingWithOperation";
 export * from "./Documents/Session/Operations/MultiGetOperation";
@@ -285,12 +309,16 @@ export { GetIndexOperation } from "./Documents/Operations/Indexes/GetIndexOperat
 export { GetIndexErrorsOperation } from "./Documents/Operations/Indexes/GetIndexErrorsOperation";
 export * from "./Documents/Indexes/Enums";
 export * from "./Documents/Indexes/IndexDefinition";
+export * from "./Documents/Indexes/AbstractCommonApiForIndexes";
+export * from "./Documents/Indexes/AbstractIndexDefinitionBuilder";
+export * from "./Documents/Indexes/IAbstractIndexCreationTask";
 export * from "./Documents/Indexes/Errors";
 export * from "./Documents/Indexes/IndexDefinitionHelper";
 export * from "./Documents/Indexes/IndexFieldOptions";
 export * from "./Documents/Indexes/Spatial";
 export * from "./Documents/Indexes/IndexingStatus";
 export * from "./Documents/Indexes/IndexStats";
+export * from "./Documents/Indexes/IndexSourceType";
 export * from "./Documents/Indexes";
 export * from "./Documents/Indexes/AbstractIndexCreationTask";
 export * from "./Documents/Indexes/AbstractMultiMapIndexCreationTask";
@@ -298,7 +326,16 @@ export * from "./Documents/Indexes/AbstractJavaScriptIndexCreationTask";
 export * from "./Documents/Indexes/AutoIndexDefinition";
 export * from "./Documents/Indexes/AutoIndexFieldOptions";
 export * from "./Documents/Indexes/Spatial/AutoSpatialOptions";
-
+export * from "./Documents/Indexes/Counters/AbstractCountersIndexCreationTask";
+export * from "./Documents/Indexes/Counters/AbstractGenericCountersIndexCreationTask";
+export * from "./Documents/Indexes/Counters/AbstractMultiMapCountersIndexCreationTask";
+export * from "./Documents/Indexes/Counters/CountersIndexDefinition";
+export * from "./Documents/Indexes/Counters/CountersIndexDefinitionBuilder";
+export * from "./Documents/Indexes/TimeSeries/AbstractGenericTimeSeriesIndexCreationTask";
+export * from "./Documents/Indexes/TimeSeries/AbstractMultiMapTimeSeriesIndexCreationTask";
+export * from "./Documents/Indexes/TimeSeries/AbstractTimeSeriesIndexCreationTask";
+export * from "./Documents/Indexes/TimeSeries/TimeSeriesIndexDefinition";
+export * from "./Documents/Indexes/TimeSeries/TimeSeriesIndexDefinitionBuilder";
 
 // REPLICATION
 export * from "./Documents/Replication/ExternalReplication";
@@ -320,7 +357,10 @@ export * from "./Documents/Subscriptions/SubscriptionWorkerOptions";
 export * from "./Documents/Subscriptions/SubscriptionCreationOptions";
 export * from "./Documents/Subscriptions/Revision";
 export * from "./Documents/Subscriptions/SubscriptionState";
+export * from "./Documents/Subscriptions/SubscriptionCreationOptions";
+export * from "./Documents/Subscriptions/UpdateSubscriptionResult";
 export * from "./Documents/Subscriptions/SubscriptionOpeningStrategy";
+export * from "./Documents/Subscriptions/SubscriptionUpdateOptions";
 
 // SESSION
 export * from "./Documents/Session/AbstractDocumentQuery";
@@ -360,15 +400,30 @@ export * from "./Documents/Session/StreamQueryStatistics";
 export * from "./Documents/Session/RawDocumentQuery";
 export * from "./Documents/Session/SessionEvents";
 export * from "./Documents/Session/WhereParams";
+export * from "./Documents/Session/ILazyClusterTransactionOperations";
+export * from "./Documents/Session/ISessionDocumentAppendTimeSeriesBase";
+export * from "./Documents/Session/ISessionDocumentDeleteTimeSeriesBase";
+export * from "./Documents/Session/ISessionDocumentRollupTypedAppendTimeSeriesBase";
+export * from "./Documents/Session/ISessionDocumentRollupTypedTimeSeries";
+export * from "./Documents/Session/ISessionDocumentTimeSeries";
+export * from "./Documents/Session/ISessionDocumentTypedAppendTimeSeriesBase";
+export * from "./Documents/Session/ISessionDocumentTypedTimeSeries";
+export * from "./Documents/Session/JavaScriptMap";
 export *  from "./Documents/Session/IMetadataDictionary";
 export *  from "./Documents/Session/DocumentResultStream";
+export *  from "./Documents/Session/SessionDocumentRollupTypedTimeSeries";
+export *  from "./Documents/Session/SessionDocumentTimeSeries";
+export *  from "./Documents/Session/SessionDocumentTypedTimeSeries";
+export *  from "./Documents/Session/SessionTimeSeriesBase";
 export * from "./Documents/Session/Loaders/ICounterIncludeBuilder";
+export * from "./Documents/Session/Loaders/ICompareExchangeValueIncludeBuilder";
 export * from "./Documents/Session/Loaders/IDocumentIncludeBuilder";
 export * from "./Documents/Session/Loaders/IGenericIncludeBuilder";
 export * from "./Documents/Session/Loaders/ISubscriptionIncludeBuilder";
 export * from "./Documents/Session/Loaders/SubscriptionIncludeBuilder";
 export * from "./Documents/Session/Loaders/ILazyLoaderWithInclude";
 export * from "./Documents/Session/Loaders/ILoaderWithInclude";
+export * from "./Documents/Session/Loaders/ITimeSeriesIncludeBuilder";
 export * from "./Documents/Session/Loaders/LazyMultiLoaderWithInclude";
 export * from "./Documents/Session/Loaders/MultiLoaderWithInclude";
 export * from "./Documents/Session/DocumentQueryCustomization";
@@ -391,8 +446,15 @@ export * from "./Documents/Session/Loaders/IncludeBuilder";
 export * from "./Documents/Session/Loaders/IncludeBuilderBase";
 export * from "./Documents/Session/Loaders/IQueryIncludeBuilder";
 export * from "./Documents/Session/Loaders/QueryIncludeBuilder";
+export * from "./Documents/Session/Loaders/QueryIncludeBuilder";
 export * from "./Documents/Session/Operations/BatchCommandResult";
 export * from "./Documents/Session/SessionDocumentCounters";
+export * from "./Documents/Session/TimeSeries/TimeSeriesEntry";
+export * from "./Documents/Session/TimeSeries/TimeSeriesValue";
+export * from "./Documents/Session/TimeSeries/TimeSeriesValuesHelper";
+export * from "./Documents/Session/TimeSeries/TypedTimeSeriesEntry";
+export * from "./Documents/Session/TimeSeries/TypedTimeSeriesRollupEntry";
+export * from "./Documents/TimeSeries/TimeSeriesOperations";
 
 // BATCH
 export * from "./Documents/Commands/StreamResult";
@@ -420,6 +482,29 @@ export { DocumentCountersOperation } from "./Documents/Operations/Counters/Docum
 export * from "./Documents/Operations/Counters/CounterDetail";
 export * from "./Documents/Operations/Counters/CountersDetail";
 
+// TIME SERIES
+export { AggregationType } from "./Documents/Operations/TimeSeries/AggregationType";
+export { ConfigureRawTimeSeriesPolicyOperation } from "./Documents/Operations/TimeSeries/ConfigureRawTimeSeriesPolicyOperation";
+export { ConfigureTimeSeriesOperation } from "./Documents/Operations/TimeSeries/ConfigureTimeSeriesOperation";
+export { ConfigureTimeSeriesOperationResult } from "./Documents/Operations/TimeSeries/ConfigureTimeSeriesOperationResult";
+export { ConfigureTimeSeriesPolicyOperation } from "./Documents/Operations/TimeSeries/ConfigureTimeSeriesPolicyOperation";
+export { ConfigureTimeSeriesValueNamesOperation } from "./Documents/Operations/TimeSeries/ConfigureTimeSeriesValueNamesOperation";
+export { GetMultipleTimeSeriesOperation } from "./Documents/Operations/TimeSeries/GetMultipleTimeSeriesOperation";
+export { GetTimeSeriesOperation } from "./Documents/Operations/TimeSeries/GetTimeSeriesOperation";
+export { GetTimeSeriesStatisticsOperation } from "./Documents/Operations/TimeSeries/GetTimeSeriesStatisticsOperation";
+export { RawTimeSeriesPolicy } from "./Documents/Operations/TimeSeries/RawTimeSeriesPolicy";
+export { RemoveTimeSeriesPolicyOperation } from "./Documents/Operations/TimeSeries/RemoveTimeSeriesPolicyOperation";
+export { TimeSeriesBatchOperation } from "./Documents/Operations/TimeSeries/TimeSeriesBatchOperation";
+export { TimeSeriesCollectionConfiguration } from "./Documents/Operations/TimeSeries/TimeSeriesCollectionConfiguration";
+export { TimeSeriesConfiguration } from "./Documents/Operations/TimeSeries/TimeSeriesConfiguration";
+export { TimeSeriesDetails } from "./Documents/Operations/TimeSeries/TimeSeriesDetails";
+export { TimeSeriesItemDetail } from "./Documents/Operations/TimeSeries/TimeSeriesItemDetail";
+export { TimeSeriesOperation } from "./Documents/Operations/TimeSeries/TimeSeriesOperation";
+export { TimeSeriesPolicy } from "./Documents/Operations/TimeSeries/TimeSeriesPolicy";
+export { TimeSeriesRange } from "./Documents/Operations/TimeSeries/TimeSeriesRange";
+export { TimeSeriesRangeResult } from "./Documents/Operations/TimeSeries/TimeSeriesRangeResult";
+export { TimeSeriesStatistics } from "./Documents/Operations/TimeSeries/TimeSeriesStatistics";
+
 // AUTH
 export * from "./Auth/AuthOptions";
 
@@ -444,6 +529,7 @@ export * from "./Documents/Queries/Spatial/PointField";
 export * from "./Documents/Queries/Spatial/WktField";
 export * from "./Documents/Queries/Facets/RangeBuilder";
 export * from "./Documents/Queries/Facets/FacetBuilder";
+export * from "./Documents/Queries/Facets/FacetAggregationField";
 export * from "./Documents/Queries/Facets/Facet";
 export * from "./Documents/Queries/Facets/RangeFacet";
 export * from "./Documents/Queries/Facets/FacetBase";
@@ -466,6 +552,15 @@ export * from "./Documents/Queries/Explanation/ExplanationOptions";
 export * from "./Documents/Queries/Explanation/Explanations";
 export * from "./Documents/Queries/Highlighting/QueryHighlightings";
 export * from "./Documents/Queries/Sorting/SorterDefinition";
+export * from "./Documents/Queries/TimeSeries/ITimeSeriesQueryBuilder";
+export * from "./Documents/Queries/TimeSeries/TimeSeriesAggregationResult";
+export * from "./Documents/Queries/TimeSeries/TimeSeriesQueryBuilder";
+export * from "./Documents/Queries/TimeSeries/TimeSeriesQueryResult";
+export * from "./Documents/Queries/TimeSeries/TimeSeriesRangeAggregation";
+export * from "./Documents/Queries/TimeSeries/TimeSeriesRawResult";
+export * from "./Documents/Queries/TimeSeries/TypedTimeSeriesAggregationResult";
+export * from "./Documents/Queries/TimeSeries/TypedTimeSeriesRangeAggregation";
+export * from "./Documents/Queries/TimeSeries/TypedTimeSeriesRawResult";
 
 // MORE LIKE THIS
 export * from "./Documents/Queries/MoreLikeThis/IMoreLikeThisBuilderBase";
@@ -490,11 +585,13 @@ export * from "./Documents/Queries/Suggestions/SuggestionSortMode";
 // ATTACHMENTS
 export * from "./Documents/Attachments";
 export * from "./Documents/Operations/Attachments/GetAttachmentOperation";
+export * from "./Documents/Operations/Attachments/AttachmentRequest";
 
 // CHANGES
 export * from "./Documents/Changes/IndexChange";
 export * from "./Documents/Changes/DatabaseChangesOptions";
 export * from "./Documents/Changes/DocumentChange";
+export * from "./Documents/Changes/TimeSeriesChange";
 export * from "./Documents/Changes/CounterChange";
 export * from "./Documents/Changes/IDatabaseChanges";
 export * from "./Documents/Changes/DatabaseChange";
