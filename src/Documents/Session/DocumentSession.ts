@@ -72,11 +72,10 @@ import { ISessionDocumentTypedTimeSeries } from "./ISessionDocumentTypedTimeSeri
 import { ISessionDocumentRollupTypedTimeSeries } from "./ISessionDocumentRollupTypedTimeSeries";
 import { JavaScriptMap } from "./JavaScriptMap";
 import { SessionDocumentTimeSeries } from "./SessionDocumentTimeSeries";
-import { TimeSeriesOperation } from "../Operations/TimeSeries/TimeSeriesOperation";
 import { TimeSeriesOperations } from "../TimeSeries/TimeSeriesOperations";
 import { SessionDocumentTypedTimeSeries } from "./SessionDocumentTypedTimeSeries";
-import { TimeSeriesConfiguration } from "../Operations/TimeSeries/TimeSeriesConfiguration";
 import { SessionDocumentRollupTypedTimeSeries } from "./SessionDocumentRollupTypedTimeSeries";
+import { TIME_SERIES_ROLLUP_SEPARATOR } from "../Operations/TimeSeries/RawTimeSeriesTypes";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;
@@ -1043,10 +1042,10 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         if (clazz) {
             const name = rawOrClass as string;
             const tsName = name ?? TimeSeriesOperations.getTimeSeriesName(clazz, this.conventions);
-            return new SessionDocumentRollupTypedTimeSeries(this, entityOrDocumentId, tsName + TimeSeriesConfiguration.TIME_SERIES_ROLLUP_SEPARATOR + policy, clazz);
+            return new SessionDocumentRollupTypedTimeSeries(this, entityOrDocumentId, tsName + TIME_SERIES_ROLLUP_SEPARATOR + policy, clazz);
         }
 
         const tsName = TimeSeriesOperations.getTimeSeriesName(rawOrClass as ClassConstructor<T>, this.conventions);
-        return new SessionDocumentRollupTypedTimeSeries(this, entityOrDocumentId, tsName + TimeSeriesConfiguration.TIME_SERIES_ROLLUP_SEPARATOR + policy, rawOrClass as ClassConstructor<T>);
+        return new SessionDocumentRollupTypedTimeSeries(this, entityOrDocumentId, tsName + TIME_SERIES_ROLLUP_SEPARATOR + policy, rawOrClass as ClassConstructor<T>);
     }
 }

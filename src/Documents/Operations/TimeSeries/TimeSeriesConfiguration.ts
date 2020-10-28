@@ -1,13 +1,11 @@
 import { CaseInsensitiveKeysMap } from "../../../Primitives/CaseInsensitiveKeysMap";
 import {
-    TimeSeriesCollectionConfiguration,
-    TimeSeriesCollectionConfigurationRaw
+    TimeSeriesCollectionConfiguration
 } from "./TimeSeriesCollectionConfiguration";
 import { TimeUtil } from "../../../Utility/TimeUtil";
-import { throwError } from "../../../Exceptions";
+import { TimeSeriesCollectionConfigurationRaw } from "./RawTimeSeriesTypes";
 
 export class TimeSeriesConfiguration {
-    public static TIME_SERIES_ROLLUP_SEPARATOR: string = "@";
 
     public collections: Map<string, TimeSeriesCollectionConfiguration> = CaseInsensitiveKeysMap.create();
     public policyCheckFrequencyInMs: number;

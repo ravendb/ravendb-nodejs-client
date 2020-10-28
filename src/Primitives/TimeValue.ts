@@ -2,6 +2,7 @@ import { TimeValueUnit } from "./TimeValueUnit";
 import * as StringBuilder from "string-builder";
 import { throwError } from "../Exceptions";
 import { TypeUtil } from "../Utility/TypeUtil";
+import { TimeValueRaw } from "../Documents/Operations/TimeSeries/RawTimeSeriesTypes";
 
 export class TimeValue {
 
@@ -259,9 +260,4 @@ export class TimeValue {
     public static parse(raw: TimeValueRaw) {
         return new TimeValue(raw.Value, raw.Unit);
     }
-}
-
-export interface TimeValueRaw {
-    Value: number;
-    Unit: TimeValueUnit;
 }

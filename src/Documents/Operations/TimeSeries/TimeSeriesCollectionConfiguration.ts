@@ -1,5 +1,6 @@
-import { TimeSeriesPolicy, TimeSeriesPolicyRaw } from "./TimeSeriesPolicy";
+import { TimeSeriesPolicy } from "./TimeSeriesPolicy";
 import { RawTimeSeriesPolicy } from "./RawTimeSeriesPolicy";
+import { TimeSeriesCollectionConfigurationRaw } from "./RawTimeSeriesTypes";
 
 export class TimeSeriesCollectionConfiguration {
     public disabled: boolean;
@@ -37,8 +38,3 @@ export class TimeSeriesCollectionConfiguration {
     }
 }
 
-export interface TimeSeriesCollectionConfigurationRaw {
-    Disabled: boolean;
-    Policies: TimeSeriesPolicyRaw[];
-    RawPolicy: TimeSeriesPolicyRaw;
-}

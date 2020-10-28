@@ -1,8 +1,7 @@
-import { TimeValue, TimeValueRaw } from "../../../Primitives/TimeValue";
+import { TimeValue } from "../../../Primitives/TimeValue";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { throwError } from "../../../Exceptions";
-import { TimeSeriesConfiguration } from "./TimeSeriesConfiguration";
-import { RawTimeSeriesPolicy } from "./RawTimeSeriesPolicy";
+import { TIME_SERIES_ROLLUP_SEPARATOR, TimeSeriesPolicyRaw } from "./RawTimeSeriesTypes";
 
 export class TimeSeriesPolicy {
     /**
@@ -21,7 +20,7 @@ export class TimeSeriesPolicy {
     public aggregationTime: TimeValue;
 
     public getTimeSeriesName(rawName: string): string {
-        return rawName + TimeSeriesConfiguration.TIME_SERIES_ROLLUP_SEPARATOR + this.name;
+        return rawName + TIME_SERIES_ROLLUP_SEPARATOR + this.name;
     }
 
     public constructor(name: string, aggregationTime: TimeValue);
@@ -60,11 +59,4 @@ export class TimeSeriesPolicy {
             TimeValue.parse(policy.RetentionTime)
         );
     }
-}
-
-
-export interface TimeSeriesPolicyRaw {
-    Name: string;
-    RetentionTime: TimeValueRaw;
-    AggregationTime: TimeValueRaw;
 }
