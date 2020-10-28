@@ -484,6 +484,7 @@ export * from "./Documents/Operations/Counters/CountersDetail";
 
 // TIME SERIES
 export { AggregationType } from "./Documents/Operations/TimeSeries/AggregationType";
+export { TIME_SERIES_ROLLUP_SEPARATOR } from "./Documents/Operations/TimeSeries/RawTimeSeriesTypes";
 export { ConfigureRawTimeSeriesPolicyOperation } from "./Documents/Operations/TimeSeries/ConfigureRawTimeSeriesPolicyOperation";
 export { ConfigureTimeSeriesOperation } from "./Documents/Operations/TimeSeries/ConfigureTimeSeriesOperation";
 export { ConfigureTimeSeriesOperationResult } from "./Documents/Operations/TimeSeries/ConfigureTimeSeriesOperationResult";
