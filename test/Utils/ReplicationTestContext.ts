@@ -81,7 +81,11 @@ export class ReplicationTestContext {
         const sw = Stopwatch.createStarted();
 
         while (sw.elapsed <= timeout) {
-            const session = store.openSession();
+            const session = store.openSession({
+                noCaching: true,
+                noTracking: true
+            });
+
             const doc: T = await session.load<T>(id, documentType);
             if (doc) {
                 return doc;

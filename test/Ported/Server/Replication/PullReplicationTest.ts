@@ -319,7 +319,7 @@ import { PullReplicationDefinition } from "../../../../src/Documents/Operations/
                 await hub.maintenance.forDatabase(hub.database)
                     .send(hubOperation);
 
-                assertThat(await replication.waitForDocumentToReplicate<User>(sink, "users/2", 20_000, User))
+                assertThat(await replication.waitForDocumentToReplicate<User>(sink, "users/2", 40_000, User))
                     .isNotNull();
 
             } finally {
@@ -328,7 +328,7 @@ import { PullReplicationDefinition } from "../../../../src/Documents/Operations/
         } finally {
             sink.dispose();
         }
-    });
+    }).timeout(60_000);
 
     it("disablePullReplicationOnSink", async () => {
         let sink: IDocumentStore;
