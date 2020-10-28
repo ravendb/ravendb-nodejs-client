@@ -73,7 +73,7 @@ export class SessionInfo {
         }
 
         if (!sessionKey) {
-            SessionInfo._clientSessionIdCounter++;
+            this._sessionId = ++SessionInfo._clientSessionIdCounter;
         } else {
             const hash = new HashCalculator();
             hash.write(sessionKey);

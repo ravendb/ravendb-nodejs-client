@@ -96,7 +96,7 @@ export class MultiTypeHiLoIdGenerator {
     }
 
     public async returnUnusedRange() {
-        await MultiTypeHiLoIdGenerator._returnUnusedRange(Object.values(this._idGeneratorsByTag).map(x => x[1]));
+        await MultiTypeHiLoIdGenerator._returnUnusedRange(Object.values<HiloIdGenerator>(this._idGeneratorsByTag));
     }
 
     private static async _returnUnusedRange(generators: HiloIdGenerator[]) {

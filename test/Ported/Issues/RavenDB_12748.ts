@@ -334,6 +334,7 @@ describe("RavenDB_12748", function () {
             order3.currency = "EUR";
             order3.product = "iPhone";
             order3.quantity = 7777;
+            order3.total = 3333;
 
             await session.store(order3);
             await session.saveChanges();
@@ -471,7 +472,7 @@ describe("RavenDB_12748", function () {
                 .isEqualTo(1);
             assertThat(range1.sum)
                 .isEqualTo(8);
-            assertThat(range1.sum)
+            assertThat(range2.sum)
                 .isEqualTo(7777);
             assertThat(range1.average)
                 .isNull();

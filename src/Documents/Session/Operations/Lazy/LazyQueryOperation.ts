@@ -73,7 +73,7 @@ export class LazyQueryOperation<T extends object> implements ILazyOperation {
         }
 
         let queryResult: QueryResult;
-        if (response.result !== "null") {
+        if (response.result) {
             queryResult = await QueryCommand.parseQueryResultResponseAsync(
                 stringToReadable(response.result), this._conventions, false);
         }
