@@ -2,10 +2,13 @@ import { IMaintenanceOperation, OperationResultType } from "../OperationAbstract
 import { ConfigureTimeSeriesOperationResult } from "./ConfigureTimeSeriesOperationResult";
 import { TimeSeriesConfiguration } from "./TimeSeriesConfiguration";
 import { throwError } from "../../../Exceptions";
-import { DocumentConventions, IRaftCommand, RavenCommand, ServerNode } from "../../..";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as stream from "readable-stream";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
+import { ServerNode } from "../../../Http/ServerNode";
+import { RavenCommand } from "../../../Http/RavenCommand";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { IRaftCommand } from "../../../Http/IRaftCommand";
 
 export class ConfigureTimeSeriesOperation implements IMaintenanceOperation<ConfigureTimeSeriesOperationResult> {
     private readonly _configuration: TimeSeriesConfiguration;

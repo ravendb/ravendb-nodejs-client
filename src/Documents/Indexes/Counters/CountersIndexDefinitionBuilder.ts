@@ -1,7 +1,7 @@
 import { CountersIndexDefinition } from "./CountersIndexDefinition";
 import { AbstractIndexDefinitionBuilder } from "../AbstractIndexDefinitionBuilder";
-import { DocumentConventions } from "../../..";
 import { throwError } from "../../../Exceptions";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 export class CountersIndexDefinitionBuilder extends AbstractIndexDefinitionBuilder<CountersIndexDefinition> {
     public map: string;

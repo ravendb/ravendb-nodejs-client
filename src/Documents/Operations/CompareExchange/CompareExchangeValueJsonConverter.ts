@@ -1,5 +1,6 @@
-import { DocumentConventions, EntityToJson } from "../../..";
 import { TypeUtil } from "../../../Utility/TypeUtil";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { EntityToJson } from "../../Session/EntityToJson";
 
 export class CompareExchangeValueJsonConverter {
     public static convertToJson(value: object, conventions: DocumentConventions) {

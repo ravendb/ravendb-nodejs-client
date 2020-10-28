@@ -18,9 +18,10 @@ import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOper
 import { SessionOptions } from "./SessionOptions";
 import { throwError } from "../../Exceptions";
 import { StringUtil } from "../../Utility/StringUtil";
-import { DocumentStoreBase, RequestExecutor } from "../..";
 import CurrentIndexAndNode from "../../Http/CurrentIndexAndNode";
 import { HashCalculator } from "../Queries/HashCalculator";
+import { DocumentStoreBase } from "../DocumentStoreBase";
+import { RequestExecutor } from "../../Http/RequestExecutor";
 
 export class SessionInfo {
     private static _clientSessionIdCounter: number = 0;

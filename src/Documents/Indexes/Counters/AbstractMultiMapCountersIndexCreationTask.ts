@@ -1,8 +1,8 @@
 import { AbstractGenericCountersIndexCreationTask } from "./AbstractGenericCountersIndexCreationTask";
 import { throwError } from "../../../Exceptions";
 import { CountersIndexDefinition } from "./CountersIndexDefinition";
-import { DocumentConventions } from "../../..";
 import { CountersIndexDefinitionBuilder } from "./CountersIndexDefinitionBuilder";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 export class AbstractMultiMapCountersIndexCreationTask extends AbstractGenericCountersIndexCreationTask {
     private readonly maps: string[] = [];

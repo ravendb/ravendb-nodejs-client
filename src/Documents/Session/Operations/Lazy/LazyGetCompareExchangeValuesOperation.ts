@@ -1,7 +1,6 @@
 import { ILazyOperation } from "./ILazyOperation";
 import { ClusterTransactionOperationsBase } from "../../ClusterTransactionOperationsBase";
 import { ClassConstructor } from "../../../../Types";
-import { CompareExchangeValue, CompareExchangeValueResultParser, DocumentConventions, QueryResult } from "../../../..";
 import { throwError } from "../../../../Exceptions";
 import { TypeUtil } from "../../../../Utility/TypeUtil";
 import { GetRequest } from "../../../Commands/MultiGet/GetRequest";
@@ -9,8 +8,14 @@ import { GetResponse } from "../../../Commands/MultiGet/GetResponse";
 import StringBuilder = require("string-builder");
 import { StringUtil } from "../../../../Utility/StringUtil";
 import { RavenCommandResponsePipeline } from "../../../../Http/RavenCommandResponsePipeline";
-import { GetCompareExchangeValuesResponse } from "../../../Operations/CompareExchange/CompareExchangeValueResultParser";
+import {
+    CompareExchangeValueResultParser,
+    GetCompareExchangeValuesResponse
+} from "../../../Operations/CompareExchange/CompareExchangeValueResultParser";
 import { stringToReadable } from "../../../../Utility/StreamUtil";
+import { DocumentConventions } from "../../../Conventions/DocumentConventions";
+import { QueryResult } from "../../../Queries/QueryResult";
+import { CompareExchangeValue } from "../../../Operations/CompareExchange/CompareExchangeValue";
 
 export class LazyGetCompareExchangeValuesOperation<T extends object> implements ILazyOperation {
     private readonly _clusterSession: ClusterTransactionOperationsBase;

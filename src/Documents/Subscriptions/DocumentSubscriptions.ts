@@ -432,7 +432,7 @@ export class DocumentSubscriptions implements IDisposable {
 
         const requestExecutor = this._store.getRequestExecutor(database);
         const command = new UpdateSubscriptionCommand(options);
-        await requestExecutor.execute(command,  null);
+        await requestExecutor.execute(command, null);
 
         return command.result.name;
     }

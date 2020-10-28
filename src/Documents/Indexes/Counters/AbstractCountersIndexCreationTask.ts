@@ -1,7 +1,7 @@
 import { AbstractGenericCountersIndexCreationTask } from "./AbstractGenericCountersIndexCreationTask";
 import { CountersIndexDefinition } from "./CountersIndexDefinition";
-import { DocumentConventions } from "../../..";
 import { CountersIndexDefinitionBuilder } from "./CountersIndexDefinitionBuilder";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 export class AbstractCountersIndexCreationTask extends AbstractGenericCountersIndexCreationTask {
     public map: string;

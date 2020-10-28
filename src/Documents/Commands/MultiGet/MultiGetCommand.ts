@@ -8,8 +8,8 @@ import { ServerNode } from "../../../Http/ServerNode";
 import { StatusCodes } from "../../../Http/StatusCode";
 import { getEtagHeader } from "../../../Utility/HttpUtil";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { RequestExecutor } from "../../..";
 import { TypeUtil } from "../../../Utility/TypeUtil";
+import { RequestExecutor } from "../../../Http/RequestExecutor";
 
 export class MultiGetCommand extends RavenCommand<GetResponse[]> {
     private _cache: HttpCache;

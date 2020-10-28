@@ -15,9 +15,9 @@ import { CONSTANTS } from "../../Constants";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { DateUtil, DateUtilOpts } from "../../Utility/DateUtil";
 import { CasingConvention, ObjectUtil, ObjectChangeCaseOptions } from "../../Utility/ObjectUtil";
-import { InMemoryDocumentSessionOperations } from "../..";
 import { LoadBalanceBehavior } from "../../Http/LoadBalanceBehavior";
 import { BulkInsertConventions } from "./BulkInsertConventions";
+import { InMemoryDocumentSessionOperations } from "../Session/InMemoryDocumentSessionOperations";
 
 export type IdConvention = (databaseName: string, entity: object) => Promise<string>;
 export type IValueForQueryConverter<T> =

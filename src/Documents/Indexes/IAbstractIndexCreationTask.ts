@@ -1,4 +1,8 @@
-import { DocumentConventions, ErrorFirstCallback, IDocumentStore, IndexDefinition, IndexPriority } from "../..";
+import { IndexPriority } from "./Enums";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { IndexDefinition } from "./IndexDefinition";
+import { IDocumentStore } from "../IDocumentStore";
+import { ErrorFirstCallback } from "../../Types/Callbacks";
 
 export interface IAbstractIndexCreationTask {
 

@@ -1,6 +1,6 @@
-import { IMetadataDictionary } from "../../..";
 import { ICompareExchangeValue } from "./ICompareExchangeValue";
 import { MetadataDictionary } from "../../../Mapping/MetadataAsDictionary";
+import { IMetadataDictionary } from "../../Session/IMetadataDictionary";
 
 export class CompareExchangeValue<T> implements ICompareExchangeValue {
     public key: string;

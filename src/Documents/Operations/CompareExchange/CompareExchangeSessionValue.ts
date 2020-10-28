@@ -4,15 +4,16 @@ import { CompareExchangeValueState } from "./CompareExchangeValueState";
 import { throwError } from "../../../Exceptions";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { ClassConstructor } from "../../../Types";
-import {
-    DeleteCompareExchangeCommandData,
-    DocumentConventions, EntityToJson,
-    ICommandData, IMetadataDictionary,
-    PutCompareExchangeCommandData, TypesAwareObjectMapper
-} from "../../..";
 import { CompareExchangeValueJsonConverter } from "./CompareExchangeValueJsonConverter";
 import { COMPARE_EXCHANGE, CONSTANTS } from "../../../Constants";
 import { StringUtil } from "../../../Utility/StringUtil";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { EntityToJson } from "../../Session/EntityToJson";
+import { ICommandData } from "../../Commands/CommandData";
+import { PutCompareExchangeCommandData } from "../../Commands/Batches/PutCompareExchangeCommandData";
+import { DeleteCompareExchangeCommandData } from "../../Commands/Batches/DeleteCompareExchangeCommandData";
+import { TypesAwareObjectMapper } from "../../../Mapping/ObjectMapper";
+import { IMetadataDictionary } from "../../Session/IMetadataDictionary";
 
 export class CompareExchangeSessionValue {
     private readonly _key: string;

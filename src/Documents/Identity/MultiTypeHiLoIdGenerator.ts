@@ -3,7 +3,7 @@ import * as semaphore from "semaphore";
 import { acquireSemaphore } from "../../Utility/SemaphoreUtil";
 import { IRavenObject } from "../../Types/IRavenObject";
 import { DocumentStore } from "../DocumentStore";
-import { DocumentConventions } from "../..";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
 
 export class MultiTypeHiLoIdGenerator {
     private readonly _sem: semaphore.Semaphore;

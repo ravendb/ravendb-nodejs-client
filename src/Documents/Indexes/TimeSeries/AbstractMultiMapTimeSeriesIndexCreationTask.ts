@@ -1,9 +1,8 @@
 import { throwError } from "../../../Exceptions";
-import { CountersIndexDefinition } from "../Counters/CountersIndexDefinition";
-import { DocumentConventions } from "../../..";
 import { CountersIndexDefinitionBuilder } from "../Counters/CountersIndexDefinitionBuilder";
 import { TimeSeriesIndexDefinition } from "./TimeSeriesIndexDefinition";
 import { AbstractGenericTimeSeriesIndexCreationTask } from "./AbstractGenericTimeSeriesIndexCreationTask";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 export class AbstractMultiMapTimeSeriesIndexCreationTask extends AbstractGenericTimeSeriesIndexCreationTask {
     private readonly maps: string[] = [];

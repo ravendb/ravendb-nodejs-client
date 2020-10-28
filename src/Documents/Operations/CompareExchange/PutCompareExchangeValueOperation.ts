@@ -13,9 +13,9 @@ import * as stream from "readable-stream";
 import { ObjectTypeDescriptor, ClassConstructor } from "../../../Types";
 import { IRaftCommand } from "../../../Http/IRaftCommand";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
-import { IMetadataDictionary } from "../../..";
 import { COMPARE_EXCHANGE, CONSTANTS } from "../../../Constants";
 import { CompareExchangeSessionValue } from "./CompareExchangeSessionValue";
+import { IMetadataDictionary } from "../../Session/IMetadataDictionary";
 
 export class PutCompareExchangeValueOperation<T> implements IOperation<CompareExchangeResult<T>> {
 

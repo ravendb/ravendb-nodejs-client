@@ -2,9 +2,11 @@ import { IOperation, OperationResultType } from "../OperationAbstractions";
 import { TimeSeriesOperation } from "./TimeSeriesOperation";
 import { throwError } from "../../../Exceptions";
 import { IDocumentStore } from "../../IDocumentStore";
-import { DocumentConventions, RavenCommand, ServerNode } from "../../..";
 import { HttpCache } from "../../../Http/HttpCache";
 import { HttpRequestParameters } from "../../../Primitives/Http";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { RavenCommand } from "../../../Http/RavenCommand";
+import { ServerNode } from "../../../Http/ServerNode";
 
 export class TimeSeriesBatchOperation implements IOperation<void> {
     private readonly _documentId: string;

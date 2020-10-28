@@ -1,10 +1,12 @@
 import { IOperation, OperationResultType } from "../OperationAbstractions";
 import { TimeSeriesStatistics } from "./TimeSeriesStatistics";
 import { IDocumentStore } from "../../IDocumentStore";
-import { DocumentConventions, RavenCommand, ServerNode } from "../../..";
 import { HttpCache } from "../../../Http/HttpCache";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as stream from "readable-stream";
+import { RavenCommand } from "../../../Http/RavenCommand";
+import { ServerNode } from "../../../Http/ServerNode";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 export class GetTimeSeriesStatisticsOperation implements IOperation<TimeSeriesStatistics> {
     private readonly _documentId: string;

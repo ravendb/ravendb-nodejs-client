@@ -2,7 +2,8 @@ import { IndexConfiguration, IndexDefinition } from "./IndexDefinition";
 import { FieldIndexing, FieldStorage, FieldTermVector, IndexLockMode, IndexPriority } from "./Enums";
 import { SpatialOptions } from "./Spatial";
 import { throwError } from "../../Exceptions";
-import { DocumentConventions, IndexFieldOptions } from "../..";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { IndexFieldOptions } from "./IndexFieldOptions";
 
 export abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends IndexDefinition> {
     protected readonly _indexName: string;

@@ -7,12 +7,12 @@ import { DocumentSession } from "./DocumentSession";
 import { CaseInsensitiveKeysMap } from "../../Primitives/CaseInsensitiveKeysMap";
 import { CompareExchangeSessionValue } from "../Operations/CompareExchange/CompareExchangeSessionValue";
 import {
-    CompareExchangeValueResultParser,
-    GetCompareExchangeValueOperation,
-    GetCompareExchangeValuesOperation,
-    SaveChangesData
-} from "../..";
-import { CompareExchangeResultItem } from "../Operations/CompareExchange/CompareExchangeValueResultParser";
+    CompareExchangeResultItem,
+    CompareExchangeValueResultParser
+} from "../Operations/CompareExchange/CompareExchangeValueResultParser";
+import { GetCompareExchangeValueOperation } from "../Operations/CompareExchange/GetCompareExchangeValueOperation";
+import { GetCompareExchangeValuesOperation } from "../Operations/CompareExchange/GetCompareExchangeValuesOperation";
+import { SaveChangesData } from "../Commands/CommandData";
 
 export class StoredCompareExchange {
     public readonly entity: any;

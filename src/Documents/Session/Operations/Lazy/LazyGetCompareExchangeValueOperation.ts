@@ -1,18 +1,18 @@
 import { ILazyOperation } from "./ILazyOperation";
 import { ClusterTransactionOperationsBase } from "../../ClusterTransactionOperationsBase";
-import {
-    ClassConstructor,
-    CompareExchangeValueResultParser,
-    DocumentConventions,
-    QueryResult
-} from "../../../..";
 import { throwError } from "../../../../Exceptions";
 import { GetRequest } from "../../../Commands/MultiGet/GetRequest";
 import { GetResponse } from "../../../Commands/MultiGet/GetResponse";
 import { TypeUtil } from "../../../../Utility/TypeUtil";
 import { RavenCommandResponsePipeline } from "../../../../Http/RavenCommandResponsePipeline";
 import { stringToReadable } from "../../../../Utility/StreamUtil";
-import { GetCompareExchangeValuesResponse } from "../../../Operations/CompareExchange/CompareExchangeValueResultParser";
+import {
+    CompareExchangeValueResultParser,
+    GetCompareExchangeValuesResponse
+} from "../../../Operations/CompareExchange/CompareExchangeValueResultParser";
+import { ClassConstructor } from "../../../../Types";
+import { DocumentConventions } from "../../../Conventions/DocumentConventions";
+import { QueryResult } from "../../../Queries/QueryResult";
 
 export class LazyGetCompareExchangeValueOperation<T extends object> implements ILazyOperation {
     private readonly _clusterSession: ClusterTransactionOperationsBase;

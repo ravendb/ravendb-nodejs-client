@@ -1,5 +1,4 @@
 import { IDocumentStore } from "../IDocumentStore";
-import { ClassConstructor, DocumentConventions, MaintenanceOperationExecutor } from "../..";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import {
     ConfigureTimeSeriesValueNamesOperation,
@@ -14,6 +13,9 @@ import { RawTimeSeriesPolicy } from "../Operations/TimeSeries/RawTimeSeriesPolic
 import { ConfigureRawTimeSeriesPolicyOperation } from "../Operations/TimeSeries/ConfigureRawTimeSeriesPolicyOperation";
 import { RemoveTimeSeriesPolicyOperation } from "../Operations/TimeSeries/RemoveTimeSeriesPolicyOperation";
 import { TimeSeriesValuesHelper } from "../Session/TimeSeries/TimeSeriesValuesHelper";
+import { MaintenanceOperationExecutor } from "../Operations/MaintenanceOperationExecutor";
+import { ClassConstructor } from "../../Types";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
 
 export class TimeSeriesOperations {
     private readonly _store: IDocumentStore;

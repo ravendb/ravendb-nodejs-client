@@ -1,7 +1,8 @@
 import { CommandType, ICommandData } from "../CommandData";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { throwError } from "../../../Exceptions";
-import { DocumentConventions, InMemoryDocumentSessionOperations } from "../../..";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { InMemoryDocumentSessionOperations } from "../../Session/InMemoryDocumentSessionOperations";
 
 export class CopyTimeSeriesCommandData implements ICommandData {
     public readonly id: string;

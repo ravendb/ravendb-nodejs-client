@@ -1,4 +1,6 @@
-import { ClassConstructor, CompareExchangeValue, ErrorFirstCallback, Lazy } from "../..";
+import { Lazy } from "../Lazy";
+import { CompareExchangeValue } from "../Operations/CompareExchange/CompareExchangeValue";
+import { ClassConstructor } from "../../Types";
 
 export interface ILazyClusterTransactionOperations {
     getCompareExchangeValue<T>(key: string): Lazy<CompareExchangeValue<T>>;

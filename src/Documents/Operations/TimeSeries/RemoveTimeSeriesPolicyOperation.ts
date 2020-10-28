@@ -1,10 +1,13 @@
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 import { ConfigureTimeSeriesOperationResult } from "./ConfigureTimeSeriesOperationResult";
 import { throwError } from "../../../Exceptions";
-import { DocumentConventions, IRaftCommand, RavenCommand, ServerNode } from "../../..";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as stream from "readable-stream";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { RavenCommand } from "../../../Http/RavenCommand";
+import { IRaftCommand } from "../../../Http/IRaftCommand";
+import { ServerNode } from "../../../Http/ServerNode";
 
 export class RemoveTimeSeriesPolicyOperation implements IMaintenanceOperation<ConfigureTimeSeriesOperationResult> {
     private readonly _collection: string;

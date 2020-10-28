@@ -1,7 +1,7 @@
 import { AbstractIndexDefinitionBuilder } from "../AbstractIndexDefinitionBuilder";
 import { TimeSeriesIndexDefinition } from "./TimeSeriesIndexDefinition";
-import { DocumentConventions } from "../../..";
 import { throwError } from "../../../Exceptions";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 export class TimeSeriesIndexDefinitionBuilder extends AbstractIndexDefinitionBuilder<TimeSeriesIndexDefinition> {
     public map: string;

@@ -1,7 +1,7 @@
 import { AbstractGenericTimeSeriesIndexCreationTask } from "./AbstractGenericTimeSeriesIndexCreationTask";
 import { TimeSeriesIndexDefinition } from "./TimeSeriesIndexDefinition";
-import { DocumentConventions } from "../../..";
 import { TimeSeriesIndexDefinitionBuilder } from "./TimeSeriesIndexDefinitionBuilder";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 export class AbstractTimeSeriesIndexCreationTask extends AbstractGenericTimeSeriesIndexCreationTask {
     public map: string;

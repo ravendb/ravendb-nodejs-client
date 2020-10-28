@@ -1,7 +1,8 @@
 import { CommandType, ICommandData } from "../CommandData";
 import { AppendOperation, DeleteOperation, TimeSeriesOperation } from "../../Operations/TimeSeries/TimeSeriesOperation";
 import { throwError } from "../../../Exceptions";
-import { DocumentConventions, InMemoryDocumentSessionOperations } from "../../..";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { InMemoryDocumentSessionOperations } from "../../Session/InMemoryDocumentSessionOperations";
 
 export class TimeSeriesBatchCommandData implements ICommandData {
     private _id: string;

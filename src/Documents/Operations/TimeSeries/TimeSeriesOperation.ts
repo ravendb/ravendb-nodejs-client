@@ -1,5 +1,5 @@
-import { DocumentConventions } from "../../..";
 import { DateUtil } from "../../../Utility/DateUtil";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 export class TimeSeriesOperation {
     private _appends: AppendOperation[]; //TODO: it is list sorted by timestamp
