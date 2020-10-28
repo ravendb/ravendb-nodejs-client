@@ -17,13 +17,13 @@ jobs:
       RAVENDB_TEST_CLIENT_CERT_PATH: ./certs/nodejs.pem
       RAVENDB_TEST_CA_PATH: /usr/local/share/ca-certificates/ca.crt
       RAVENDB_TEST_HTTPS_SERVER_URL: https://localhost:8989
-      RAVENDB_BUILD_TYPE: stable
+      RAVENDB_BUILD_TYPE: nightly
       RAVEN_License: ${{ secrets.RAVEN_LICENSE }}
     
     strategy:
       matrix:
         node-version: [10.x, 12.x, 14.x]
-        serverVersion: ["5.0"]
+        serverVersion: ["5.0", "5.1"]
       fail-fast: false
 
     steps:
