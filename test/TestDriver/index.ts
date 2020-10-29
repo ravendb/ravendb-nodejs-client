@@ -25,6 +25,8 @@ import * as http from "http";
 import { Stopwatch } from "../../src/Utility/Stopwatch";
 import { delay } from "../../src/Utility/PromiseUtil";
 import * as open from "open";
+import { GetIndexErrorsOperation } from "../../src";
+import { TimeUtil } from "../../src/Utility/TimeUtil";
 
 const log = getLogger({ module: "TestDriver" });
 
@@ -195,6 +197,24 @@ export abstract class RavenTestDriver {
             });
 
         return Promise.resolve(result);
+    }
+
+    public async waitForIndexingErrors(store: IDocumentStore, timeoutInMs: number, ...indexNames: string[]) {
+        const sw = Stopwatch.createStarted();
+
+        while (sw.elapsed < timeoutInMs) {
+            const indexes = await store.maintenance.send(new GetIndexErrorsOperation(indexNames));
+
+            for (const index of indexes) {
+                if (index.errors && index.errors.length) {
+                    return indexes;
+                }
+            }
+
+            await delay(32);
+        }
+
+        throwError("TimeoutException", "Got no index error from more than " + TimeUtil.millisToTimeSpan(timeoutInMs));
     }
 
     public async waitForValue<T>(act: () => Promise<T>, expectedValue: T, opts: { timeout?: number; equal?: (a: T, b: T) => boolean } = {}) {
