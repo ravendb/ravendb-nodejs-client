@@ -26,6 +26,7 @@ export class QueryResult extends GenericQueryResult<object[], object> {
         queryResult.includedCounterNames = this.includedCounterNames;
         queryResult.timeSeriesIncludes = this.timeSeriesIncludes;
         queryResult.compareExchangeValueIncludes = this.compareExchangeValueIncludes;
+        queryResult.timeSeriesFields = this.timeSeriesFields;
         return queryResult;
     }
 }

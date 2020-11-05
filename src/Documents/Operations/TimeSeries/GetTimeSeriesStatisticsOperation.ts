@@ -24,16 +24,18 @@ export class GetTimeSeriesStatisticsOperation implements IOperation<TimeSeriesSt
     }
 
     getCommand(store: IDocumentStore, conventions: DocumentConventions, httpCache: HttpCache): RavenCommand<TimeSeriesStatistics> {
-        return new GetTimeSeriesStatisticsCommand(this._documentId);
+        return new GetTimeSeriesStatisticsCommand(conventions, this._documentId);
     }
 }
 
 class GetTimeSeriesStatisticsCommand extends RavenCommand<TimeSeriesStatistics> {
+    private readonly _conventions: DocumentConventions;
     private readonly _documentId: string;
 
-    public constructor(documentId: string) {
+    public constructor(conventions: DocumentConventions, documentId: string) {
         super();
 
+        this._conventions = conventions;
         this._documentId = documentId;
     }
 
@@ -42,7 +44,7 @@ class GetTimeSeriesStatisticsCommand extends RavenCommand<TimeSeriesStatistics> 
     }
 
     createRequest(node: ServerNode): HttpRequestParameters {
-        const uri = node.url + "/databases/" + node.database + "/timeseries?stats?docId" + this._urlEncode(this._documentId);
+        const uri = node.url + "/databases/" + node.database + "/timeseries/stats?docId=" + this._urlEncode(this._documentId);
 
         return {
             method: "GET",
@@ -51,6 +53,17 @@ class GetTimeSeriesStatisticsCommand extends RavenCommand<TimeSeriesStatistics> 
     }
 
     async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
-        return this._parseResponseDefaultAsync(bodyStream);
+        let body: string = null;
+        await this._defaultPipeline(_ => body = _).process(bodyStream)
+            .then(results => {
+                this.result = this._conventions.objectMapper.fromObjectLiteral(results, {
+                    nestedTypes: {
+                        "timeSeries[].startDate": "date",
+                        "timeSeries[].endDate": "date"
+                    }
+                });
+            });
+
+        return body;
     }
 }

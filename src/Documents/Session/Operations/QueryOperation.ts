@@ -20,6 +20,7 @@ import { TimeSeriesRawResult } from "../../Queries/TimeSeries/TimeSeriesRawResul
 import { TimeSeriesRangeAggregation } from "../../Queries/TimeSeries/TimeSeriesRangeAggregation";
 import { ObjectUtil } from "../../../Utility/ObjectUtil";
 import { TimeSeriesEntry } from "../TimeSeries/TimeSeriesEntry";
+import { TypesAwareObjectMapper } from "../../..";
 
 const log = getLogger({ module: "QueryOperation" });
 
@@ -151,7 +152,8 @@ export class QueryOperation {
                         this._noTracking,
                         this._session,
                         documentType,
-                        this._isProjectInto));
+                        this._isProjectInto,
+                        queryResult.timeSeriesFields || []));
             }
         } catch (err) {
             log.warn(err, "Unable to read query result JSON.");
@@ -184,7 +186,8 @@ export class QueryOperation {
         disableEntitiesTracking: boolean,
         session: InMemoryDocumentSessionOperations,
         clazz?: DocumentType<T>,
-        isProjectInto?: boolean
+        isProjectInto?: boolean,
+        timeSeriesFields?: string[]
     ) {
         const { conventions } = session;
         const { entityFieldNameConvention } = conventions;
@@ -248,75 +251,31 @@ export class QueryOperation {
         const raw: T = conventions.objectMapper.fromObjectLiteral(document);
 
         // tslint:disable-next-line:new-parens
-        const result = projType ? new (Function.prototype.bind.apply(projType)) : {};
-
-        let mappingApplied = false;
+        let result = projType ? new (Function.prototype.bind.apply(projType)) : {};
 
         const mapper = conventions.objectMapper;
 
-        //TODO: refactor to some generic method for deserialization such entities?
         if (result instanceof TimeSeriesAggregationResult) {
-            const rawLower = ObjectUtil.transformObjectKeys(raw, { defaultTransform: "camel" });
-            Object.assign(result, mapper.fromObjectLiteral(rawLower, {
-                typeName: "object",
-                nestedTypes: {
-                    "results[]": "TimeSeriesRangeAggregation",
-                    "results[].from": "date",
-                    "results[].to": "date"
-                }
-            }, new Map([[TimeSeriesRangeAggregation.name, TimeSeriesRangeAggregation]])));
-            mappingApplied = true;
+            Object.assign(result, QueryOperation.reviveTimeSeriesAggregationResult(raw, mapper));
         } else if (result instanceof TimeSeriesRawResult) {
-            const rawLower = ObjectUtil.transformObjectKeys(raw, { defaultTransform: "camel" });
-            Object.assign(result, mapper.fromObjectLiteral(rawLower, {
-                typeName: "object",
-                nestedTypes: {
-                    "results[]": "TimeSeriesEntry",
-                    "results[].timestamp": "date"
-                }
-            }, new Map([[TimeSeriesEntry.name, TimeSeriesEntry]])));
-            mappingApplied = true;
-        }
-
-        if (!mappingApplied) {
+            Object.assign(result, QueryOperation.reviveTimeSeriesRawResult(raw, mapper));
+        } else {
             if (fieldsToFetch && fieldsToFetch.projections) {
-                if (result instanceof TimeSeriesAggregationResult) {
-                    const rawLower = ObjectUtil.transformObjectKeys(raw, {defaultTransform: "camel"});
-                    Object.assign(result, mapper.fromObjectLiteral(rawLower, {
+                const keys = conventions.entityFieldNameConvention
+                    ? fieldsToFetch.projections.map(x => StringUtil.changeCase(conventions.entityFieldNameConvention, x))
+                    : fieldsToFetch.projections;
+
+                const nestedTypes = raw[NESTED_OBJECT_TYPES_PROJECTION_FIELD];
+                // tslint:disable-next-line:prefer-for-of
+                for (let i = 0; i < keys.length; i++) {
+                    const key = keys[i];
+
+                    const mapped = mapper.fromObjectLiteral(raw, {
                         typeName: "object",
-                        nestedTypes: {
-                            "results[]": "TimeSeriesRangeAggregation",
-                            "results[].from": "date",
-                            "results[].to": "date"
-                        }
-                    }, new Map([[TimeSeriesRangeAggregation.name, TimeSeriesRangeAggregation]])));
-                } else if (result instanceof TimeSeriesRawResult) {
-                    const rawLower = ObjectUtil.transformObjectKeys(raw, {defaultTransform: "camel"});
-                    Object.assign(result, mapper.fromObjectLiteral(rawLower, {
-                        typeName: "object",
-                        nestedTypes: {
-                            "results[]": "TimeSeriesRangeAggregation",
-                            "results[].timestamp": "date"
-                        }
-                    }, new Map([[TimeSeriesRangeAggregation.name, TimeSeriesRangeAggregation]])));
-                } else {
-                    const keys = conventions.entityFieldNameConvention
-                        ? fieldsToFetch.projections.map(x => StringUtil.changeCase(conventions.entityFieldNameConvention, x))
-                        : fieldsToFetch.projections;
+                        nestedTypes
+                    })
 
-                    const nestedTypes = raw[NESTED_OBJECT_TYPES_PROJECTION_FIELD];
-                    // tslint:disable-next-line:prefer-for-of
-                    for (let i = 0; i < keys.length; i++) {
-                        const key = keys[i];
-
-
-                        const mapped = mapper.fromObjectLiteral(raw, {
-                            typeName: "object",
-                            nestedTypes
-                        })
-
-                        result[key] = mapped[key];
-                    }
+                    result[key] = mapped[key];
                 }
             } else {
                 Object.assign(result, !entityFieldNameConvention
@@ -324,9 +283,57 @@ export class QueryOperation {
             }
         }
 
+        if (timeSeriesFields && timeSeriesFields.length) {
+            for (const timeSeriesField of timeSeriesFields) {
+                const value = document[timeSeriesField];
+                if (value) {
+                    const newValue = QueryOperation.detectTimeSeriesResultType(value);
+                    if (newValue instanceof TimeSeriesAggregationResult) {
+                        Object.assign(newValue, QueryOperation.reviveTimeSeriesAggregationResult(value, mapper));
+                    } else if (newValue instanceof TimeSeriesRawResult) {
+                        Object.assign(newValue, QueryOperation.reviveTimeSeriesRawResult(value, mapper));
+                    }
+
+                    result[timeSeriesField] = newValue;
+                }
+            }
+        }
+
         session.onAfterConversionToEntityInvoke(id, document, result);
 
         return result;
+    }
+
+    private static detectTimeSeriesResultType(raw: any): TimeSeriesAggregationResult | TimeSeriesRawResult  {
+        const results = raw.Results || [];
+        // duck typing
+        if (results.length && results[0].From && results[0].To) {
+            return new TimeSeriesAggregationResult();
+        }
+        return new TimeSeriesRawResult();
+    }
+
+    private static reviveTimeSeriesAggregationResult(raw: object, mapper: TypesAwareObjectMapper) {
+        const rawLower = ObjectUtil.transformObjectKeys(raw, { defaultTransform: "camel" });
+        return mapper.fromObjectLiteral(rawLower, {
+            typeName: "object",
+            nestedTypes: {
+                "results[]": "TimeSeriesRangeAggregation",
+                "results[].from": "date",
+                "results[].to": "date"
+            }
+        }, new Map([[TimeSeriesRangeAggregation.name, TimeSeriesRangeAggregation]]));
+    }
+
+    private static reviveTimeSeriesRawResult(raw: object, mapper: TypesAwareObjectMapper) {
+        const rawLower = ObjectUtil.transformObjectKeys(raw, { defaultTransform: "camel" });
+        return mapper.fromObjectLiteral(rawLower, {
+            typeName: "object",
+            nestedTypes: {
+                "results[]": "TimeSeriesEntry",
+                "results[].timestamp": "date"
+            }
+        }, new Map([[TimeSeriesEntry.name, TimeSeriesEntry]]));
     }
 
     public get noTracking() {

@@ -70,6 +70,10 @@ describe("SmugglerTest", function () {
                 .isEqualTo(1);
             assertThat(stats.countOfDocuments)
                 .isEqualTo(3);
+            assertThat(stats.countOfTimeSeriesSegments)
+                .isEqualTo(1);
+            assertThat(stats.countOfCounterEntries)
+                .isEqualTo(1);
         } finally {
             dstStore.dispose();
         }
@@ -129,6 +133,13 @@ describe("SmugglerTest", function () {
         await session.store(user1, "users/1");
         await session.store(user2, "users/2");
         await session.store(user3, "users/3");
+
+        session.countersFor("users/1")
+            .increment("stars");
+
+        session.timeSeriesFor("users/1", "Stars")
+            .append(new Date(), 5);
+
         await session.saveChanges();
 
         await store.executeIndex(new UsersByName());

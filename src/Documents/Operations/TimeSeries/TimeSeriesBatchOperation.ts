@@ -17,11 +17,11 @@ export class TimeSeriesBatchOperation implements IOperation<void> {
     }
 
     public constructor(documentId: string, operation: TimeSeriesOperation) {
-        if (!this._documentId) {
+        if (!documentId) {
             throwError("InvalidArgumentException", "Document id cannot be null");
         }
 
-        if (!this._operation) {
+        if (!operation) {
             throwError("InvalidArgumentException", "Operation cannot be null");
         }
 
