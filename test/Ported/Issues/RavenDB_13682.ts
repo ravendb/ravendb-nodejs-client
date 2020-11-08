@@ -111,7 +111,7 @@ describe("RavenDB_13682", function () {
     });
 
     it("canUseDynamicQueryOrderBySpatial_WithAlias", async () => {
-        await store.maintenance.send(new CreateSampleDataOperation());
+        await store.maintenance.send(new CreateSampleDataOperation(["Documents", "Indexes"]));
 
         {
             const s = store.openSession();
@@ -131,7 +131,7 @@ describe("RavenDB_13682", function () {
     });
 
     it("canGetDistanceFromSpatialQuery", async () => {
-        await store.maintenance.send(new CreateSampleDataOperation());
+        await store.maintenance.send(new CreateSampleDataOperation(["Documents", "Indexes"]));
 
         await testContext.waitForIndexing(store);
 

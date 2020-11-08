@@ -62,6 +62,8 @@ export class QueryCommand extends RavenCommand<QueryResult> {
             path.append("&debug=entries");
         }
 
+        path.append("&addTimeSeriesNames=true");
+
         const uri = path.toString();
         const body = writeIndexQuery(this._conventions, this._indexQuery);
         const headers = this._headers().typeAppJson().build();

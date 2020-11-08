@@ -3,9 +3,12 @@ import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 import { CreateSampleDataOperation } from "../../Utils/CreateSampleDataOperation";
 
 import {
-    GetStatisticsCommand,
+    GetStatisticsCommand, GetStatisticsOperation,
     IDocumentStore,
 } from "../../../src";
+import { User } from "../../Assets/Entities";
+import moment = require("moment");
+import { assertThat } from "../../Utils/AssertExtensions";
 
 describe("GetStatisticsCommand()", function () {
 
@@ -22,7 +25,12 @@ describe("GetStatisticsCommand()", function () {
         const getStatsCmd = new GetStatisticsCommand();
         const executor = store.getRequestExecutor();
 
-        const sampleDataOp = new CreateSampleDataOperation();
+        const sampleDataOp = new CreateSampleDataOperation([
+            "Documents",
+            "Indexes",
+            "Attachments",
+            "RevisionDocuments"
+        ]);
         await store.maintenance.send(sampleDataOp);
 
         await testContext.waitForIndexing(store, store.database, null);
@@ -59,4 +67,33 @@ describe("GetStatisticsCommand()", function () {
             assert.ok(idx.lastIndexingTime);
         }
     });
+
+    it("canGetStatsForCountersAndTimeSeries", async () => {
+        {
+            const session = store.openSession();
+
+            await session.store(new User(), "users/1");
+
+            session.countersFor("users/1")
+                .increment("c1");
+
+            session.countersFor("users/1")
+                .increment("c2");
+
+            const tsf = session.timeSeriesFor("users/1", "Heartrate");
+            tsf.append(new Date(), 70);
+
+            tsf.append(moment().add(1, "minute").toDate(), 20);
+
+            await session.saveChanges();
+        }
+
+        const statistics = await store.maintenance.send(new GetStatisticsOperation());
+
+        assertThat(statistics.countOfCounterEntries)
+            .isEqualTo(1);
+        assertThat(statistics.countOfTimeSeriesSegments)
+            .isEqualTo(1);
+    });
+
 });

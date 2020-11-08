@@ -29,7 +29,7 @@ describe("GetDatabaseRecordTest", function () {
     });
 
     it("can map types in database record", async () => {
-        await store.maintenance.send(new CreateSampleDataOperation());
+        await store.maintenance.send(new CreateSampleDataOperation(["Documents", "Indexes"]));
 
         const databaseRecord = await store.maintenance.server.send(new GetDatabaseRecordOperation(store.database));
 

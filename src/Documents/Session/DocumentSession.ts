@@ -951,6 +951,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
                 const changeVector = metadata[CONSTANTS.Documents.Metadata.CHANGE_VECTOR];
                 // MapReduce indexes return reduce results that don't have @id property
                 const id = metadata[CONSTANTS.Documents.Metadata.ID] || null;
+                //TODO: pass timeseries fields!
                 const entity = QueryOperation.deserialize(
                     id, doc, metadata, fieldsToFetchToken || null, true, session, clazz, isProjectInto);
                 callback(null, {

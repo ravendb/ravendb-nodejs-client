@@ -71,7 +71,7 @@ export interface IDocumentQuery<T extends object>
      * If the field is not stored in index, value will come from document directly.
      */
     selectFields<TProjection extends object>(
-        queryData: QueryData, projectionClass: DocumentType<T>): IDocumentQuery<TProjection>;
+        queryData: QueryData, projectionClass: DocumentType<TProjection>): IDocumentQuery<TProjection>; //TODO: update in 4.2 as well
 
     /**
      * Selects a Time Series Aggregation based on

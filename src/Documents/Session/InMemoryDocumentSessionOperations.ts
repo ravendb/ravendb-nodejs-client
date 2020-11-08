@@ -1923,6 +1923,9 @@ export abstract class InMemoryDocumentSessionOperations
             if (this._countersByDocId) {
                 this._countersByDocId.delete(documentInfo.id);
             }
+            if (this._timeSeriesByDocId) {
+                this._timeSeriesByDocId.delete(documentInfo.id);
+            }
         }
 
         this.deletedEntities.evict(entity);

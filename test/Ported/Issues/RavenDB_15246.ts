@@ -506,9 +506,13 @@ describe("RavenDB_15426", function () {
         assertThat(res.values)
             .hasSize(1);
         assertThat(res.values.get("raven"))
-            .hasSize(1);
+            .hasSize(3);
 
         assertThat(res.values.get("raven")[0].entries)
+            .hasSize(0);
+        assertThat(res.values.get("raven")[1].entries)
+            .hasSize(0);
+        assertThat(res.values.get("raven")[2].entries)
             .hasSize(3);
     });
 });
