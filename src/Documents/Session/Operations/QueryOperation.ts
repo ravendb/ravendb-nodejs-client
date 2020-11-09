@@ -20,7 +20,7 @@ import { TimeSeriesRawResult } from "../../Queries/TimeSeries/TimeSeriesRawResul
 import { TimeSeriesRangeAggregation } from "../../Queries/TimeSeries/TimeSeriesRangeAggregation";
 import { ObjectUtil } from "../../../Utility/ObjectUtil";
 import { TimeSeriesEntry } from "../TimeSeries/TimeSeriesEntry";
-import { TypesAwareObjectMapper } from "../../..";
+import { TypesAwareObjectMapper } from "../../../Mapping/ObjectMapper";
 
 const log = getLogger({ module: "QueryOperation" });
 
