@@ -149,7 +149,7 @@ export class SessionDocumentCounters extends SessionCountersBase implements ISes
             let notInMetadata = true;
 
             if (document && metadataCounters) {
-                notInMetadata = metadataCounters.some(x => x.toLowerCase() === counter.toLowerCase());
+                notInMetadata = !metadataCounters.some(x => x.toLowerCase() === counter.toLowerCase());
             }
 
             if (hasCounter || cache.gotAll || (document && notInMetadata)) {
