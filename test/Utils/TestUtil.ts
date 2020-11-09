@@ -32,6 +32,7 @@ import { getLogger } from "../../src/Utility/LogUtil";
 import { AdminJsConsoleOperation } from "./AdminJsConsoleOperation";
 import { Stopwatch } from "../../src/Utility/Stopwatch";
 import { delay } from "../../src/Utility/PromiseUtil";
+import moment = require("moment");
 
 const log = getLogger({ module: "TestDriver" });
 
@@ -256,6 +257,10 @@ export class RavenTestContext extends RavenTestDriver implements IDisposable {
         if (store) {
             store.dispose();
         }
+    }
+
+    public utcToday() {
+        return moment().utc().startOf("day");
     }
 
     public getDocumentStore(): Promise<DocumentStore>;

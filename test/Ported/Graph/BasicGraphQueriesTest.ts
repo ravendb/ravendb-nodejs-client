@@ -202,7 +202,7 @@ async function query<T>(documentType: DocumentType,
     try {
         store = await testContext.getDocumentStore();
 
-        await store.maintenance.send(new CreateSampleDataOperation());
+        await store.maintenance.send(new CreateSampleDataOperation(["Documents", "Indexes"]));
 
         mutate?.(store);
 
