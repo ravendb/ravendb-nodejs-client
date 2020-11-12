@@ -25,14 +25,33 @@ export class AsyncQueue<T> {
             return head;
         }
 
+        // keep reference to resolve function - if timeout finishes first, we don't want to wait for value!
+        let resolveToDelete: Function;
+
         const timeoutErr = getError(
             "TimeoutException", `Timeout exceeded waiting for element to arrive for ${timeout}.`);
         const timeoutPromise: Promise<T> = 
             new Promise((_, reject) => 
-                setTimeout(() => 
-                    reject(timeoutErr), timeout));
+                setTimeout(() => {
+                    reject(timeoutErr);
+
+                    // we don't want to wait for value
+                    if (resolveToDelete) {
+                        const index = this._promises.findIndex(x => x === resolveToDelete);
+                        if (index !== -1) {
+                            this._promises.splice(index, 1);
+                        }
+                    }
+                }, timeout));
         const resultPromise: Promise<T> = 
-            new Promise(resolve => this._promises.push(resolve));
+            new Promise(resolve => {
+                resolveToDelete = resolve;
+                this._promises.push(resolve);
+            });
+
+        // when result comes first - don't mark item for deletion
+        resultPromise.then(() => resolveToDelete = null);
+
         // element is not available - wait for it!
         return Promise.race([timeoutPromise, resultPromise]);
     }

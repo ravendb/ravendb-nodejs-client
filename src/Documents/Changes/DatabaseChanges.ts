@@ -24,6 +24,7 @@ import { ObjectTypeDescriptor } from "../../Types";
 import { UpdateTopologyParameters } from "../../Http/UpdateTopologyParameters";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { TimeSeriesChange } from "./TimeSeriesChange";
+import { QueryResult } from "../..";
 
 export class DatabaseChanges implements IDatabaseChanges {
 
@@ -433,7 +434,16 @@ export class DatabaseChanges implements IDatabaseChanges {
                         break;
                     default:
                         const value = message.Value;
-                        const transformedValue = ObjectUtil.transformObjectKeys(value, { defaultTransform: "camel" });
+                        let transformedValue = ObjectUtil.transformObjectKeys(value, { defaultTransform: "camel" });
+                        if (type === "TimeSeriesChange") {
+                            transformedValue = this._conventions.objectMapper
+                                .fromObjectLiteral<QueryResult>(transformedValue, {
+                                    nestedTypes: {
+                                        from: "date",
+                                        to: "date"
+                                    }
+                                });
+                        }
                         this._notifySubscribers(type, transformedValue, Array.from(this._counters.values()));
                         break;
                 }

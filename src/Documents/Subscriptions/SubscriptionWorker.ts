@@ -486,7 +486,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                     includes.push(receivedMessage.includes);
                     break;
                 case "CounterIncludes":
-                    counterIncludes.push({ counterIncludes: receivedMessage.counterIncludes, includes: receivedMessage.includedCounterNames });
+                    counterIncludes.push({ counterIncludes: receivedMessage.includedCounterNames, includes: receivedMessage.counterIncludes });
                     break;
                 case "EndOfBatch":
                     endOfBatch = true;

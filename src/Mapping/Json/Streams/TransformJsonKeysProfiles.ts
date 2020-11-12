@@ -241,7 +241,6 @@ function buildEntityKeysTransformForSubscriptionResponsePayload(entityCasingConv
         }
 
         if (stack[0] === "Data") {
-        
             if (stack[1] === "@metadata") {
                 return handleMetadataJsonKeys(key, stack, len, 2);
             }
@@ -254,6 +253,14 @@ function buildEntityKeysTransformForSubscriptionResponsePayload(entityCasingConv
             }
 
             return entityCasingConvention;
+        } else if (stack[0] === "CounterIncludes") {
+            if (len === 2) {
+                return null;
+            }
+        } else if (stack[0] === "IncludedCounterNames") {
+            if (len === 2) {
+                return null;
+            }
         }
 
         return "camel";
@@ -285,6 +292,12 @@ function buildEntityKeysTransformForSubscriptionRevisionsResponsePayload(entityC
             return entityCasingConvention;
         }
 
+        if (stack[0] === "CounterIncludes") {
+            if (len === 2) {
+                return null;
+            }
+        }
+
         return "camel";
     };
 }
@@ -299,6 +312,11 @@ function buildEntityKeysTransformForDocumentLoad(entityCasingConvention) {
         }
 
         // len === 2 is array index
+        if (len === 2) {
+            if (stack[0] === "CounterIncludes") {
+                return null;
+            }
+        }
 
         if (len === 3) {
             if (stack[0] === "CompareExchangeValueIncludes") {
@@ -309,6 +327,9 @@ function buildEntityKeysTransformForDocumentLoad(entityCasingConvention) {
         }
 
         if (len === 4) {
+            if (stack[0] === "CounterIncludes") {
+                return "camel";
+            }
             if (stack[0] === "CompareExchangeValueIncludes" && stack[2] === "Value" && stack[3] === "Object") {
                 return "camel";
             }
@@ -393,6 +414,21 @@ function buildEntityKeysTransformForDocumentQuery(entityCasingConvention) {
 
                     return null;
                 }
+            }
+        }
+
+        if (stack[0] === "CounterIncludes") {
+            if (len === 2 || len === 3) {
+                return null;
+            }
+            if (len === 4) {
+                return "camel";
+            }
+        }
+
+        if (stack[0] === "IncludedCounterNames") {
+            if (len === 2) {
+                return null;
             }
         }
 

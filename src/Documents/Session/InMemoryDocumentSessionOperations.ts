@@ -788,8 +788,8 @@ export abstract class InMemoryDocumentSessionOperations
             if (!counterJson) {
                 continue;
             }
-            const counterName = counterJson["CounterName"] as string;
-            const totalValue = counterJson["TotalValue"] as number;
+            const counterName = counterJson["counterName"] as string;
+            const totalValue = counterJson["totalValue"] as number;
             if (counterName && totalValue) {
                 cache.data.set(counterName, totalValue);
                 deletedCounters.delete(counterName);

@@ -21,6 +21,10 @@ import { ServerNode } from "../Http/ServerNode";
 import { ErrorFirstCallback } from "../Types/Callbacks";
 import { passResultToCallback } from "../Utility/PromiseUtil";
 import { MetadataObject } from "./Session/MetadataObject";
+import { CommandType } from "./Commands/CommandData";
+import { IDisposable } from "..";
+import { TypeUtil } from "../Utility/TypeUtil";
+import { DateUtil } from "../Utility/DateUtil";
 
 export class BulkInsertOperation {
     private readonly _generateEntityIdOnTheClient: GenerateEntityIdOnTheClient;
@@ -30,9 +34,15 @@ export class BulkInsertOperation {
     private _completedWithError = false;
 
     private _first: boolean = true;
+    private _inProgressCommand: CommandType;
+    private readonly _countersOperation = new BulkInsertOperation._countersBulkInsertOperationClass(this);
+    private readonly _attachmentsOperation = new BulkInsertOperation._attachmentsBulkInsertOperationClass(this);
     private _operationId = -1;
 
     private _useCompression: boolean = false;
+    private readonly _timeSeriesBatchSize: number;
+
+    private _concurrentCheck: number = 0;
 
     private _bulkInsertAborted: Promise<void>;
     private _abortReject: Function;
@@ -41,11 +51,11 @@ export class BulkInsertOperation {
     private _requestBodyStream: stream.PassThrough;
     private _pipelineFinished: Promise<void>;
 
-    private static readonly _maxSizeInBuffer = 1024 * 1024;
-
     public constructor(database: string, store: IDocumentStore) {
         this._conventions = store.conventions;
         this._requestExecutor = store.getRequestExecutor(database);
+
+        this._timeSeriesBatchSize = this._conventions.bulkInsert.timeSeriesBatchSize;
 
         this._generateEntityIdOnTheClient = new GenerateEntityIdOnTheClient(this._requestExecutor.conventions,
             entity => this._requestExecutor.conventions.generateDocumentId(database, entity));
@@ -177,11 +187,15 @@ export class BulkInsertOperation {
             }
         }
 
+        this._endPreviousCommandIfNeeded();
+
         if (this._first) {
             this._first = false;
         } else {
-            this._currentWriter.push(",");
+            this._writeComma();
         }
+
+        this._inProgressCommand = "None";
 
         const documentInfo = new DocumentInfo();
         documentInfo.metadataInstance = metadata;
@@ -191,24 +205,75 @@ export class BulkInsertOperation {
             json = this._conventions.transformObjectKeysToRemoteFieldNameConvention(json);
         }
 
+        this._currentWriter.push(`{"Id":"`);
+        this._writeString(id);
         const jsonString = JsonSerializer.getDefault().serialize(json);
-        this._currentWriter.push(`{"Id":"${BulkInsertOperation._writeId(id)}","Type":"PUT","Document":${jsonString}}`);
+        this._currentWriter.push(`","Type":"PUT","Document":${jsonString}}`);
     }
 
-    private static _writeId(input: string): string {
+    private _handleErrors(documentId: string, e: Error) {
+        const error = this._getExceptionFromOperation();
+        if (error) {
+            throw error;
+        }
+
+        throwError("InvalidOperationException", e);
+    }
+
+    private _concurrencyCheck(): IDisposable {
+        if (!this._concurrentCheck) {
+            this._concurrentCheck = 1;
+            throwError("InvalidOperationException", "Bulk Insert store methods cannot be executed concurrently.");
+        }
+
+        return {
+            dispose(): void {
+                this._concurrentCheck = 0;
+            }
+        }
+    }
+
+    private _endPreviousCommandIfNeeded() {
+        if (this._inProgressCommand === "Counters") {
+            this._countersOperation.endPreviousCommandIfNeeded();
+        } else if (this._inProgressCommand === "TimeSeries") {
+            BulkInsertOperation.throwAlreadyRunningTimeSeries();
+        }
+    }
+
+    private _writeString(input: string): void {
         let result = "";
         for (let i = 0; i < input.length; i++) {
             const c = input[i];
             if (`"` === c) {
                 if (i === 0 || input[i - 1] !== `\\`) {
-                    result += `\\`;
+                    this._currentWriter.push("\\");
                 }
             }
 
-            result += c;
+            this._currentWriter.push(c);
+        }
+    }
+
+    private _writeComma() {
+        this._currentWriter.push(",");
+    }
+
+    private async _executeBeforeStore() {
+        if (!this._currentWriter) {
+            await this._waitForId();
+            await this._ensureStream();
         }
 
-        return result;
+        /* TODO
+        if (_bulkInsertExecuteTask.isCompletedExceptionally()) {
+            try {
+                _bulkInsertExecuteTask.get();
+            } catch (ExecutionException | InterruptedException e) {
+                throwBulkInsertAborted(e, null);
+            }
+        }
+         */
     }
 
     private async _checkIfBulkInsertWasAborted() {
@@ -320,6 +385,8 @@ export class BulkInsertOperation {
     }
 
     private async _finishAsync() {
+        this._endPreviousCommandIfNeeded();
+
         if (this._currentWriter) {
             this._currentWriter.push("]");
             this._currentWriter.push(null);
@@ -356,6 +423,331 @@ export class BulkInsertOperation {
         this._generateEntityIdOnTheClient.trySetIdentity(entity, idRef); // set id property if it was null;
         return idRef;
     }
+
+    public attachmentsFor(id: string): IAttachmentsBulkInsert {
+        if (StringUtil.isNullOrEmpty(id)) {
+            throwError("InvalidArgumentException", "Document id cannot be null or empty");
+        }
+
+        return new BulkInsertOperation._attachmentsBulkInsertClass(this, id);
+    }
+
+    public countersFor(id: string): ICountersBulkInsert {
+        if (StringUtil.isNullOrEmpty(id)) {
+            throwError("InvalidArgumentException", "Document id cannot be null or empty");
+        }
+
+        return new BulkInsertOperation._countersBulkInsertClass(this, id);
+    }
+
+    public timeSeriesFor(id: string, name: string): ITimeSeriesBulkInsert {
+        if (StringUtil.isNullOrEmpty(id)) {
+            throwError("InvalidArgumentException", "Document id cannot be null or empty");
+        }
+
+        if (StringUtil.isNullOrEmpty(name)) {
+            throwError("InvalidArgumentException", "Time series name cannot be null or empty");
+        }
+
+        return new BulkInsertOperation._timeSeriesBulkInsertClass(this, id, name);
+    }
+
+    static throwAlreadyRunningTimeSeries() {
+        throwError("InvalidOperationException", "There is an already running time series operation, did you forget to close it?");
+    }
+
+    private static readonly _countersBulkInsertClass = class CountersBulkInsert implements ICountersBulkInsert {
+        private readonly _operation: BulkInsertOperation;
+        private readonly _id: string;
+
+        public constructor(operation: BulkInsertOperation, id: string) {
+            this._operation = operation;
+            this._id = id;
+        }
+
+        public increment(name: string): Promise<void>;
+        public increment(name: string, delta: number): Promise<void>;
+        public increment(name: string, delta: number = 1): Promise<void> {
+            return this._operation._countersOperation.increment(this._id, name, delta);
+        }
+    }
+
+    private static _countersBulkInsertOperationClass = class CountersBulkInsertOperation {
+        private readonly _operation: BulkInsertOperation;
+        private _id: string;
+        private _first: boolean = true;
+        private static readonly MAX_COUNTERS_IN_BATCH = 1024;
+        private _countersInBatch = 0;
+
+        public constructor(bulkInsertOperation: BulkInsertOperation) {
+            this._operation = bulkInsertOperation;
+        }
+
+        public async increment(id: string, name: string);
+        public async increment(id: string, name: string, delta: number);
+        public async increment(id: string, name: string, delta: number = 1) {
+            const check = this._operation._concurrencyCheck();
+
+            try {
+
+                await this._operation._executeBeforeStore();
+
+                if (this._operation._inProgressCommand === "TimeSeries") {
+                    BulkInsertOperation.throwAlreadyRunningTimeSeries();
+                }
+
+                try {
+                    const isFirst = !this._id;
+
+                    if (isFirst || !StringUtil.equalsIgnoreCase(this._id, id)) {
+                        if (!isFirst) {
+                            //we need to end the command for the previous document id
+                            this._operation._currentWriter.push("]}},");
+                        } else if (!this._operation._first) {
+                            this._operation._writeComma();
+                        }
+
+                        this._operation._first = false;
+
+                        this._id = id;
+                        this._operation._inProgressCommand = "Counters";
+
+                        this._writePrefixForNewCommand();
+                    }
+
+                    if (this._countersInBatch >= CountersBulkInsertOperation.MAX_COUNTERS_IN_BATCH) {
+                        this._operation._currentWriter.push("]}},");
+
+                        this._writePrefixForNewCommand();
+                    }
+
+                    this._countersInBatch++;
+
+                    if (!this._first) {
+                        this._operation._writeComma();
+                    }
+
+                    this._first = false;
+
+                    this._operation._currentWriter.push("{\"Type\":\"Increment\",\"CounterName\":\"");
+                    this._operation._writeString(name);
+                    this._operation._currentWriter.push("\",\"Delta\":");
+                    this._operation._currentWriter.push(delta.toString());
+                    this._operation._currentWriter.push("}");
+
+                } catch (e) {
+                    this._operation._handleErrors(this._id, e);
+                }
+            } finally {
+                check.dispose();
+            }
+        }
+
+        public endPreviousCommandIfNeeded() {
+            if (!this._id) {
+                return;
+            }
+
+            this._operation._currentWriter.push("]}}");
+            this._id = null;
+        }
+
+        private _writePrefixForNewCommand() {
+            this._first = true;
+            this._countersInBatch = 0;
+
+            this._operation._currentWriter.push("{\"Id\":\"");
+            this._operation._writeString(this._id);
+            this._operation._currentWriter.push("\",\"Type\":\"Counters\",\"Counters\":{\"DocumentId\":\"");
+            this._operation._writeString(this._id);
+            this._operation._currentWriter.push("\",\"Operations\":[");
+        }
+    }
+
+    private static _timeSeriesBulkInsertClass = class TimeSeriesBulkInsert implements ITimeSeriesBulkInsert, IDisposable {
+        private readonly _operation: BulkInsertOperation;
+        private readonly _id: string;
+        private readonly _name: string;
+        private _first: boolean = true;
+        private _timeSeriesInBatch: number = 0;
+
+        public constructor(operation: BulkInsertOperation, id: string, name: string) {
+            operation._endPreviousCommandIfNeeded();
+
+            this._operation = operation;
+            this._id = id;
+            this._name = name;
+
+            this._operation._inProgressCommand = "TimeSeries";
+        }
+
+        public append(timestamp: Date, value: number): Promise<void>;
+        public append(timestamp: Date, value: number, tag: string): Promise<void>;
+        public append(timestamp: Date, values: number[]): Promise<void>;
+        public append(timestamp: Date, values: number[], tag: string): Promise<void>;
+        public append(timestamp: Date, valueOrValues: number | number[], tag?: string): Promise<void> {
+            if (TypeUtil.isArray(valueOrValues)) {
+                return this._appendInternal(timestamp, valueOrValues, tag);
+            } else {
+                return this._appendInternal(timestamp, [ valueOrValues ], tag);
+            }
+        }
+
+        private async _appendInternal(timestamp: Date, values: number[], tag: string): Promise<void> {
+            const check = this._operation._concurrencyCheck();
+            try {
+
+                await this._operation._executeBeforeStore();
+
+                try {
+                    if (this._first) {
+                        if (!this._operation._first) {
+                            this._operation._writeComma();
+                        }
+
+                        this._writePrefixForNewCommand();
+                    } else if (this._timeSeriesInBatch >= this._operation._timeSeriesBatchSize) {
+                        this._operation._currentWriter.push("]}},");
+                        this._writePrefixForNewCommand();
+                    }
+
+                    this._timeSeriesInBatch++;
+
+                    if (!this._first) {
+                        this._operation._writeComma();
+                    }
+
+                    this._first = false;
+
+                    this._operation._currentWriter.push("[");
+                    this._operation._currentWriter.push(timestamp.getTime().toString());
+                    this._operation._writeComma();
+
+                    this._operation._currentWriter.push(values.length.toString());
+                    this._operation._writeComma();
+
+                    let firstValue = true;
+
+                    for (const value of values) {
+                        if (!firstValue) {
+                            this._operation._writeComma();
+                        }
+
+                        firstValue = false;
+                        this._operation._currentWriter.push(value.toString());
+                    }
+
+                    if (tag) {
+                        this._operation._currentWriter.push(",\"");
+                        this._operation._writeString(tag);
+                        this._operation._currentWriter.push("\"");
+                    }
+
+                    this._operation._currentWriter.push("]");
+                } catch (e) {
+                    this._operation._handleErrors(this._id, e);
+                }
+            } finally {
+                check.dispose();
+            }
+        }
+
+        private _writePrefixForNewCommand() {
+            this._first = true;
+            this._timeSeriesInBatch = 0;
+
+            this._operation._currentWriter.push("{\"Id\":\"");
+            this._operation._writeString(this._id);
+            this._operation._currentWriter.push("\",\"Type\":\"TimeSeriesBulkInsert\",\"TimeSeries\":{\"Name\":\"");
+            this._operation._writeString(this._name);
+            this._operation._currentWriter.push("\",\"TimeFormat\":\"UnixTimeInMs\",\"Appends\":[");
+        }
+
+        dispose(): void {
+            this._operation._inProgressCommand = "None";
+
+            if (!this._first) {
+                this._operation._currentWriter.push("]}}");
+            }
+        }
+    }
+
+    private static _attachmentsBulkInsertClass = class AttachmentsBulkInsert implements IAttachmentsBulkInsert {
+        private readonly _operation: BulkInsertOperation;
+        private readonly _id: string;
+
+        public constructor(operation: BulkInsertOperation, id: string) {
+            this._operation = operation;
+            this._id = id;
+        }
+
+        public store(name: string, bytes: Buffer): Promise<void>;
+        public store(name: string, bytes: Buffer, contentType: string): Promise<void>;
+        public store(name: string, bytes: Buffer, contentType?: string): Promise<void> {
+            return this._operation._attachmentsOperation.store(this._id, name, bytes, contentType);
+        }
+    }
+
+    private static _attachmentsBulkInsertOperationClass = class AttachmentsBulkInsertOperation {
+        private readonly _operation: BulkInsertOperation;
+
+        public constructor(operation: BulkInsertOperation) {
+            this._operation = operation;
+        }
+
+        public async store(id: string, name: string, bytes: Buffer): Promise<void>;
+        public async store(id: string, name: string, bytes: Buffer, contentType: string): Promise<void>;
+        public async store(id: string, name: string, bytes: Buffer, contentType?: string): Promise<void> {
+            const check = this._operation._concurrencyCheck();
+
+            try {
+                await this._operation._executeBeforeStore();
+
+                try {
+                    if (!this._operation._first) {
+                        this._operation._writeComma();
+                    }
+
+                    this._operation._currentWriter.push("{\"Id\":\"");
+                    this._operation._writeString(id);
+                    this._operation._currentWriter.push("\",\"Type\":\"AttachmentPUT\",\"Name\":\"");
+                    this._operation._writeString(name);
+
+                    if (contentType) {
+                        this._operation._currentWriter.push("\",\"ContentType\":\"");
+                        this._operation._writeString(contentType);
+                    }
+
+                    this._operation._currentWriter.push("\",\"ContentLength\":");
+                    this._operation._currentWriter.push(bytes.length.toString());
+                    this._operation._currentWriter.push("}");
+
+                    this._operation._currentWriter.push(bytes);
+                } catch (e) {
+                    this._operation._handleErrors(id, e);
+                }
+            } finally {
+                check.dispose();
+            }
+        }
+    }
+}
+
+export interface ICountersBulkInsert {
+    increment(name: string): Promise<void>;
+    increment(name: string, delta: number): Promise<void>;
+}
+
+export interface ITimeSeriesBulkInsert extends IDisposable {
+    append(timestamp: Date, value: number): Promise<void>
+    append(timestamp: Date, value: number, tag: string): Promise<void>;
+    append(timestamp: Date, values: number[]): Promise<void>;
+    append(timestamp: Date, values: number[], tag: string): Promise<void>;
+}
+
+export interface IAttachmentsBulkInsert {
+    store(name: string, bytes: Buffer): Promise<void>;
+    store(name: string, bytes: Buffer, contentType: string): Promise<void>;
 }
 
 export class BulkInsertCommand extends RavenCommand<void> {

@@ -58,22 +58,17 @@ export class IndexDefinitionHelper {
         if (mapLower.startsWith("from")) {
             // detect `from ts in timeseries` or `from ts in timeseries.Users.HeartRate`
 
-            throwError("NotImplementedException");
+            const tokens = mapLower.split(" ", 4)
+                .filter(x => !StringUtil.isNullOrEmpty(x));
 
-            /* TODO
-            String[] tokens = Arrays.stream(mapLower.split(" ", 4))
-                    .filter(StringUtils::isNotEmpty)
-                    .toArray(String[]::new);
-
-            if (tokens.length >= 4 && "in".equalsIgnoreCase(tokens[2])) {
+            if (tokens.length >= 4 && "in" === tokens[2].toLocaleLowerCase()) {
                 if (tokens[3].startsWith("timeseries")) {
-                    return IndexSourceType.TIME_SERIES;
+                    return "TimeSeries";
                 }
                 if (tokens[3].startsWith("counters")) {
-                    return IndexSourceType.COUNTERS;
+                    return "Counters";
                 }
             }
-             */
         }
 
         // fallback to documents based index
@@ -85,6 +80,6 @@ export class IndexDefinitionHelper {
     }
 
     private static unifyWhiteSpace(input: string): string {
-        return input.replace(/\\s+/g, " "); //TODO: check!
+        return input.replace(/(\s+)/g, " ");
     }
 }
