@@ -24,7 +24,7 @@ import { ObjectTypeDescriptor } from "../../Types";
 import { UpdateTopologyParameters } from "../../Http/UpdateTopologyParameters";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { TimeSeriesChange } from "./TimeSeriesChange";
-import { QueryResult } from "../..";
+import { QueryResult } from "../Queries/QueryResult";
 
 export class DatabaseChanges implements IDatabaseChanges {
 

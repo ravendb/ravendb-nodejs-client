@@ -573,7 +573,7 @@ class StockPrice {
     public volume: number;
 }
 
-class HeartRateMeasure {
+export class HeartRateMeasure {
     public static readonly TIME_SERIES_VALUES: TimeSeriesValue<HeartRateMeasure> = ["heartRate"];
 
     public heartRate: number;

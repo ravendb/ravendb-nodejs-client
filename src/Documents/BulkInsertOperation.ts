@@ -22,8 +22,8 @@ import { ErrorFirstCallback } from "../Types/Callbacks";
 import { passResultToCallback } from "../Utility/PromiseUtil";
 import { MetadataObject } from "./Session/MetadataObject";
 import { CommandType } from "./Commands/CommandData";
-import { IDisposable } from "..";
 import { TypeUtil } from "../Utility/TypeUtil";
+import { IDisposable } from "../Types/Contracts";
 
 export class BulkInsertOperation {
     private readonly _generateEntityIdOnTheClient: GenerateEntityIdOnTheClient;
