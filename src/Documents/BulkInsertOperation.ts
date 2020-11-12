@@ -24,7 +24,6 @@ import { MetadataObject } from "./Session/MetadataObject";
 import { CommandType } from "./Commands/CommandData";
 import { IDisposable } from "..";
 import { TypeUtil } from "../Utility/TypeUtil";
-import { DateUtil } from "../Utility/DateUtil";
 
 export class BulkInsertOperation {
     private readonly _generateEntityIdOnTheClient: GenerateEntityIdOnTheClient;
@@ -217,19 +216,18 @@ export class BulkInsertOperation {
             throw error;
         }
 
-        throwError("InvalidOperationException", e);
+        throwError("InvalidOperationException", "Bulk insert error", e);
     }
 
     private _concurrencyCheck(): IDisposable {
-        if (!this._concurrentCheck) {
-            this._concurrentCheck = 1;
+        if (this._concurrentCheck) {
             throwError("InvalidOperationException", "Bulk Insert store methods cannot be executed concurrently.");
         }
 
+        this._concurrentCheck = 1;
+
         return {
-            dispose(): void {
-                this._concurrentCheck = 0;
-            }
+            dispose: () => this._concurrentCheck = 0
         }
     }
 
