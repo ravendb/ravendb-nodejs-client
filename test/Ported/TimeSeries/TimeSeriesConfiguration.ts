@@ -1,4 +1,4 @@
-import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil";
 import { GetDatabaseRecordOperation, IDocumentStore } from "../../../src";
 import { TimeSeriesConfiguration } from "../../../src/Documents/Operations/TimeSeries/TimeSeriesConfiguration";
 import { ConfigureTimeSeriesOperation } from "../../../src/Documents/Operations/TimeSeries/ConfigureTimeSeriesOperation";
@@ -18,7 +18,7 @@ import {
     ConfigureTimeSeriesValueNamesParameters
 } from "../../../src/Documents/Operations/TimeSeries/ConfigureTimeSeriesValueNamesOperation";
 
-describe("TimeSeriesConfiguration", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("TimeSeriesConfiguration", function () {
 
     let store: IDocumentStore;
 

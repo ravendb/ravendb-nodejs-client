@@ -1,4 +1,4 @@
-import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil";
 import { GetDatabaseRecordOperation, IDocumentStore } from "../../../src";
 import { TimeSeriesValue } from "../../../src/Documents/Session/TimeSeries/TimeSeriesValue";
 import { User } from "../../Assets/Entities";
@@ -16,7 +16,7 @@ import { delay } from "../../../src/Utility/PromiseUtil";
 import { ISessionDocumentRollupTypedTimeSeries } from "../../../src/Documents/Session/ISessionDocumentRollupTypedTimeSeries";
 import { TypedTimeSeriesRollupEntry } from "../../../src/Documents/Session/TimeSeries/TypedTimeSeriesRollupEntry";
 
-describe("TimeSeriesTypedSessionTest", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("TimeSeriesTypedSessionTest", function () {
 
     let store: IDocumentStore;
 

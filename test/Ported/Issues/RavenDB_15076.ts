@@ -5,14 +5,14 @@ import {
     RavenConnectionString,
     UpdateExternalReplicationOperation
 } from "../../../src";
-import { testContext } from "../../Utils/TestUtil";
+import { RavenTestContext, testContext } from "../../Utils/TestUtil";
 import moment = require("moment");
 import { User } from "../../Assets/Entities";
 import { HeartRateMeasure } from "../TimeSeries/TimeSeriesTypedSession";
 import { assertThat } from "../../Utils/AssertExtensions";
 import { ReplicationTestContext } from "../../Utils/ReplicationTestContext";
 
-describe("RavenDB_15076", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("RavenDB_15076", function () {
 
     let replication: ReplicationTestContext;
 
