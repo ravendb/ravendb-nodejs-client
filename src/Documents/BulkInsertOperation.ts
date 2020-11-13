@@ -263,15 +263,7 @@ export class BulkInsertOperation {
             await this._ensureStream();
         }
 
-        /* TODO
-        if (_bulkInsertExecuteTask.isCompletedExceptionally()) {
-            try {
-                _bulkInsertExecuteTask.get();
-            } catch (ExecutionException | InterruptedException e) {
-                throwBulkInsertAborted(e, null);
-            }
-        }
-         */
+        await this._checkIfBulkInsertWasAborted();
     }
 
     private async _checkIfBulkInsertWasAborted() {
@@ -699,6 +691,8 @@ export class BulkInsertOperation {
             const check = this._operation._concurrencyCheck();
 
             try {
+                this._operation._endPreviousCommandIfNeeded();
+
                 await this._operation._executeBeforeStore();
 
                 try {

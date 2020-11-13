@@ -98,7 +98,7 @@ export class MetadataDictionary {
     }
 
     public static materializeFromJson(metadata?: object) {
-        return MetadataDictionary.create(metadata); //TODO:
+        return MetadataDictionary.create(metadata);
     }
 }
 

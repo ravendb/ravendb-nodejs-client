@@ -105,7 +105,7 @@ export class SessionDocumentCounters extends SessionCountersBase implements ISes
         if (document) {
             const metadataCounters = document.metadata["@counters"];
             if (metadataCounters) {
-                metadataHasCounterName = metadataCounters.some(x => x === counter);
+                metadataHasCounterName = metadataCounters.some(x => x.toLocaleLowerCase() === counter.toLocaleLowerCase());
             }
         }
 

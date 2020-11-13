@@ -1116,22 +1116,20 @@ describe("TimeSeriesBulkInsertTest", function () {
             assertThat(timeSeriesVal.timestamp.getTime())
                 .isEqualTo(baseLine.clone().add(1, "minutes").toDate().getTime());
 
-            for (const docId of streams.keys()) {
-                for (const attachmentName of streams.get(docId).keys()) {
-                    const attachment = await session.advanced.attachments.get(docId, attachmentName);
-                    try {
-                        assertThat(attachment.data)
-                            .isNotNull();
+            for (const attachmentName of streams.get(id).keys()) {
+                const attachment = await session.advanced.attachments.get(id, attachmentName);
+                try {
+                    assertThat(attachment.data)
+                        .isNotNull();
 
-                        const expected = streams.get(docId).get(attachment.details.name);
-                        attachment.data.resume();
-                        const actual = await readToBuffer(attachment.data);
+                    const expected = streams.get(id).get(attachment.details.name);
+                    attachment.data.resume();
+                    const actual = await readToBuffer(attachment.data);
 
-                        assertThat(actual.equals(expected))
-                            .isTrue();
-                    } finally {
-                        attachment.dispose();
-                    }
+                    assertThat(actual.equals(expected))
+                        .isTrue();
+                } finally {
+                    attachment.dispose();
                 }
             }
 

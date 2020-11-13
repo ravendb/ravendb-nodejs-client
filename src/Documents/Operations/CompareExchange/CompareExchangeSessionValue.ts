@@ -217,7 +217,7 @@ export class CompareExchangeSessionValue {
                     "The value of " + CONSTANTS.Documents.Metadata.EXPIRES + " metadata for compare exchange '" + key + " is null.");
             }
 
-            if (!(obj instanceof Date) && !(obj instanceof String)) {
+            if (!TypeUtil.isDate(obj) && !TypeUtil.isString(obj)) {
                 CompareExchangeSessionValue._throwInvalidExpiresMetadata("The class of " + CONSTANTS.Documents.Metadata.EXPIRES + " metadata for compare exchange '" + key + "' is not valid. Use the following type: Date or string");
             }
         }
