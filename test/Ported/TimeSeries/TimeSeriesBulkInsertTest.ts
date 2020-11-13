@@ -730,7 +730,7 @@ describe("TimeSeriesBulkInsertTest", function () {
             assertThat(tsNames[1])
                 .isEqualTo("Pulse");
         }
-    });
+    }).timeout(60_000);
 
     it("shouldDeleteTimeSeriesUponDocumentDeletion", async () => {
         const baseLine = moment().startOf("day");
