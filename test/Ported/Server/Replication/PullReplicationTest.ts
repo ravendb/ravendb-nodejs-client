@@ -328,7 +328,7 @@ import { PullReplicationDefinition } from "../../../../src/Documents/Operations/
         } finally {
             sink.dispose();
         }
-    });
+    }).timeout(60_000);
 
     it("disablePullReplicationOnSink", async () => {
         let sink: IDocumentStore;
