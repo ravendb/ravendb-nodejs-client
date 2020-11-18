@@ -48,12 +48,16 @@ export * from "./ServerWide/Operations/DeleteDatabasesOperation";
 export * from "./ServerWide/Operations/GetDatabaseNamesOperation";
 export * from "./ServerWide/Operations/GetServerWideOperationStateOperation";
 export * from "./ServerWide/Operations/ServerWideOperationCompletionAwaiter";
-export * from "./ServerWide/Operations/Certificates/ReplaceClusterCertificateOperation"
-export * from "./ServerWide/Operations/Configuration/GetServerWideClientConfigurationOperation"
-export * from "./ServerWide/Operations/Configuration/PutServerWideClientConfigurationOperation"
-export * from "./ServerWide/Operations/Logs/GetLogsConfigurationResult"
-export * from "./ServerWide/Operations/Logs/GetLogsConfigurationOperation"
-export * from "./ServerWide/Operations/Logs/LogMode"
+export * from "./ServerWide/Operations/Certificates/CertificateMetadata";
+export * from "./ServerWide/Operations/Certificates/EditClientCertificateOperation";
+export * from "./ServerWide/Operations/Certificates/ReplaceClusterCertificateOperation";
+export * from "./ServerWide/Operations/Certificates/GetCertificateMetadataOperation";
+export * from "./ServerWide/Operations/Certificates/GetCertificatesMetadataOperation";
+export * from "./ServerWide/Operations/Configuration/GetServerWideClientConfigurationOperation";
+export * from "./ServerWide/Operations/Configuration/PutServerWideClientConfigurationOperation";
+export * from "./ServerWide/Operations/Logs/GetLogsConfigurationResult";
+export * from "./ServerWide/Operations/Logs/GetLogsConfigurationOperation";
+export * from "./ServerWide/Operations/Logs/LogMode";
 export * from "./ServerWide/Operations/Logs/SetLogsConfigurationOperation";
 export * from "./ServerWide/Operations/Configuration/DeleteServerWideBackupConfigurationOperation";
 export * from "./ServerWide/Operations/Configuration/GetServerWideClientConfigurationOperation";
@@ -74,6 +78,7 @@ export * from "./Documents/Operations/Etl/ConnectionString";
 // OPERATIONS AND COMMANDS
 export { BulkInsertOperation } from "./Documents/BulkInsertOperation";
 export { CollectionDetails } from "./Documents/Operations/CollectionDetails";
+export { DatabaseHealthCheckOperation } from "./Documents/Operations/DatabaseHealthCheckOperation";
 export { DetailedCollectionStatistics } from "./Documents/Operations/DetailedCollectionStatistics";
 export { GetDetailedCollectionStatisticsOperation } from "./Documents/Operations/GetDetailedCollectionStatisticsOperation";
 export * from "./Documents/Operations/OperationAbstractions";
