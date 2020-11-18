@@ -4,7 +4,7 @@ import { StringUtil } from "../../Utility/StringUtil";
 import * as XRegExp from "xregexp";
 import { IndexSourceType } from "./IndexSourceType";
 
-const COMMENT_REGEX = new XRegExp("(?:/\\*(?:[^*]|(?:\\*+[^*/]))*\\*+/)|(?://.*)", "gm");
+const COMMENT_REGEX = XRegExp("(?:/\\*(?:[^*]|(?:\\*+[^*/]))*\\*+/)|(?://.*)", "gm");
 
 export class IndexDefinitionHelper {
     public static detectStaticIndexType(map: string, reduce: string): IndexType {

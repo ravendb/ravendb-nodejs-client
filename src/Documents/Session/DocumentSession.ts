@@ -110,8 +110,6 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
     public numberOfRequestsInSession: number;
 
-    public conventions: DocumentConventions;
-
     public async load<TEntity extends object = IRavenObject>(
         id: string,
         callback?: ErrorFirstCallback<TEntity>): Promise<TEntity>;
