@@ -77,15 +77,17 @@ export class TimeSeriesValuesHelper {
         for (let i = 0; i < mapping.length; i++) {
             let index = i;
             const item = mapping[i];
-            if (i >= values.length) {
-                continue;
+
+            let value = Number.NaN;
+            if (index < values.length) {
+                if (asRollup) {
+                    index *= 6;
+                }
+
+                value = values[index];
             }
 
-            if (asRollup) {
-                index *= 6;
-            }
-
-            obj[item.field] = values[index];
+            obj[item.field] = value;
         }
 
         return obj;

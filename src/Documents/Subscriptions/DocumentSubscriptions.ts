@@ -75,7 +75,7 @@ export class DocumentSubscriptions implements IDisposable {
 
         const requestExecutor = this._store.getRequestExecutor(database || this._store.database);
 
-        const command = new CreateSubscriptionCommand(this._store.conventions, options);
+        const command = new CreateSubscriptionCommand(options);
         await requestExecutor.execute(command);
 
         return command.result.name;

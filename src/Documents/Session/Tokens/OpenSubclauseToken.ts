@@ -5,9 +5,16 @@ export class OpenSubclauseToken extends QueryToken {
         super();
     }
 
-    public static INSTANCE = new OpenSubclauseToken();
+    public boostParameterName: string;
+
+    public static create(): OpenSubclauseToken {
+        return new OpenSubclauseToken();
+    }
 
     public writeTo(writer) {
+        if (this.boostParameterName) {
+            writer.append("boost");
+        }
         writer.append("(");
     }
 }

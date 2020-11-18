@@ -114,6 +114,66 @@ describe("TimeSeriesRangesCacheTest", function () {
         }
     });
 
+    it("shouldGetPartialRangeFromCache2", async () => {
+        const start = 5;
+        const pageSize = 10;
+
+        const baseLine = moment().startOf("day");
+
+        {
+            const session = store.openSession();
+            const user = new User();
+            user.name = "Oren";
+            await session.store(user, "users/ayende");
+
+            session.timeSeriesFor("users/ayende", "Heartrate")
+                .append(baseLine.clone().add(1, "minutes").toDate(), 59, "watches/fitbit");
+            session.timeSeriesFor("users/ayende", "Heartrate")
+                .append(baseLine.clone().add(2, "minutes").toDate(), 60, "watches/fitbit");
+            session.timeSeriesFor("users/ayende", "Heartrate")
+                .append(baseLine.clone().add(3, "minutes").toDate(), 61, "watches/fitbit");
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            let val = await session.timeSeriesFor("users/ayende", "Heartrate")
+                .get(baseLine.clone().add(2, "days").toDate(), baseLine.clone().add(3, "days").toDate(), start, pageSize);
+
+            assertThat(val)
+                .hasSize(0);
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            val = await session.timeSeriesFor("users/ayende", "Heartrate")
+                .get(baseLine.clone().add(1, "days").toDate(), baseLine.clone().add(4, "days").toDate(), start, pageSize)
+
+            assertThat(val)
+                .hasSize(0);
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(2);
+        }
+
+        {
+            const session = store.openSession();
+            let val = await session.timeSeriesFor("users/ayende", "Heartrate")
+                .get(start, pageSize);
+
+            assertThat(val)
+                .hasSize(0);
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            val = await session.timeSeriesFor("users/ayende", "Heartrate")
+                .get(baseLine.clone().add(1, "days").toDate(), baseLine.clone().add(4, "days").toDate(), start, pageSize);
+
+            assertThat(val)
+                .hasSize(0);
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+        }
+    });
+
     it("shouldMergeTimeSeriesRangesInCache", async () => {
         const baseLine = moment().startOf("day");
 

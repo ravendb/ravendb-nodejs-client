@@ -35,6 +35,10 @@ class UpdatePullEdgeReplication extends RavenCommand<ModifyOngoingTaskResult> im
     public constructor(pullReplication: PullReplicationAsSink) {
         super();
 
+        if (!pullReplication) {
+            throwError("InvalidArgumentException", "PullReplication cannot be null");
+        }
+
         this._pullReplication = pullReplication;
     }
 

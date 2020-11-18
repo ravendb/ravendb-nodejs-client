@@ -561,6 +561,82 @@ import { TypedTimeSeriesRollupEntry } from "../../../src/Documents/Session/TimeS
                 .isEqualTo(1);
         }
     });
+
+    it("usingDifferentNumberOfValues_LargeToSmall", async () => {
+        const baseLine = moment().startOf("day").add(-1, "days");
+
+        {
+            const session = store.openSession();
+            const user = new User();
+            user.name = "Karmel";
+            await session.store(user, "users/karmel");
+
+            const big = session.timeSeriesFor<BigMeasure>("users/karmel", BigMeasure);
+            for (let i = 0; i < 5; i++) {
+                const bigMeasure = Object.assign(new BigMeasure(), {
+                    measure1: i,
+                    measure2: i,
+                    measure3: i,
+                    measure4: i,
+                    measure5: i,
+                    measure6: i
+                });
+
+                big.append(baseLine.clone().add(3 * i, "seconds").toDate(), bigMeasure, "watches/fitbit");
+            }
+
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const big = session.timeSeriesFor("users/karmel", "BigMeasures");
+
+            for (let i = 5; i < 10; i++) {
+                big.append(baseLine.clone().add(12, "hours").add(3 * i, "seconds").toDate(), i, "watches/fitbit");
+            }
+
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const big = await session.timeSeriesFor<BigMeasure>("users/karmel", BigMeasure).get();
+
+            for (let i = 0; i < 5; i++) {
+                const m = big[i].value;
+                assertThat(m.measure1)
+                    .isEqualTo(i);
+                assertThat(m.measure2)
+                    .isEqualTo(i);
+                assertThat(m.measure3)
+                    .isEqualTo(i);
+                assertThat(m.measure4)
+                    .isEqualTo(i);
+                assertThat(m.measure5)
+                    .isEqualTo(i);
+                assertThat(m.measure6)
+                    .isEqualTo(i);
+            }
+
+            for (let i = 5; i < 10; i++) {
+                const m = big[i].value;
+
+                assertThat(m.measure1)
+                    .isEqualTo(i);
+                assertThat(m.measure2)
+                    .isEqualTo(Number.NaN);
+                assertThat(m.measure3)
+                    .isEqualTo(Number.NaN);
+                assertThat(m.measure4)
+                    .isEqualTo(Number.NaN);
+                assertThat(m.measure5)
+                    .isEqualTo(Number.NaN);
+                assertThat(m.measure6)
+                    .isEqualTo(Number.NaN);
+            }
+        }
+    })
 });
 
 class StockPrice {
@@ -583,4 +659,24 @@ class HeartRateMeasureWithCustomName {
     public static readonly TIME_SERIES_VALUES: TimeSeriesValue<HeartRateMeasure> = [ { field: "heartRate", name: "HR" } ];
 
     public heartRate: number;
+}
+
+class BigMeasure {
+
+    public static readonly TIME_SERIES_VALUES: TimeSeriesValue<BigMeasure> = [
+        "measure1",
+        "measure2",
+        "measure3",
+        "measure4",
+        "measure5",
+        "measure6"
+    ];
+
+    public measure1: number;
+    public measure2: number;
+    public measure3: number;
+    public measure4: number;
+    public measure5: number;
+    public measure6: number;
+
 }

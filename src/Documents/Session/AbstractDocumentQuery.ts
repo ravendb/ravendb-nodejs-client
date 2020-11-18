@@ -802,7 +802,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._appendOperatorIfNeeded(tokens);
         this._negateIfNeeded(tokens, null);
 
-        tokens.push(OpenSubclauseToken.INSTANCE);
+        tokens.push(OpenSubclauseToken.create());
     }
 
     /**
@@ -812,7 +812,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._currentClauseDepth--;
 
         const tokens: QueryToken[] = this._getCurrentWhereTokens();
-        tokens.push(CloseSubclauseToken.INSTANCE);
+        tokens.push(CloseSubclauseToken.create());
     }
 
     public _whereEquals(fieldName: string, method: MethodCall): void;
@@ -1208,21 +1208,36 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             return;
         }
 
-        const tokens = this._getCurrentWhereTokens();
-        if (!tokens && !tokens.length) {
-            throwError("InvalidOperationException", "Missing where clause.");
-        }
-
-        const whereToken = tokens[tokens.length - 1];
-        if (!(whereToken instanceof WhereToken)) {
-            throwError("InvalidOperationException", "Missing where clause.");
-        }
-
         if (boost < 0.0) {
             throwError("InvalidArgumentException", "Boost factor must be a non-negative number");
         }
 
-        (whereToken as WhereToken).options.boost = boost;
+        const tokens = this._getCurrentWhereTokens();
+
+        let last = tokens.length ? tokens[tokens.length - 1] : null;
+
+        if (last instanceof WhereToken) {
+            last.options.boost = boost;
+        } else if (last instanceof CloseSubclauseToken) {
+            const parameter = this._addQueryParameter(boost);
+
+            const close = last;
+
+            let index = tokens.indexOf(last);
+
+            while (last && index > 0) {
+                index--;
+                last = tokens[index]; // find the previous option
+
+                if (last instanceof OpenSubclauseToken) {
+                    last.boostParameterName = parameter;
+                    close.boostParameterName = parameter;
+                    return;
+                }
+            }
+        } else {
+            throwError("InvalidOperationException", "Cannot apply boost");
+        }
     }
 
     /**

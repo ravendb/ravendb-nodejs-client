@@ -149,13 +149,10 @@ export class SessionTimeSeriesBase {
                     return rangeResult.entries;
                 }
 
-                const entryInfo: CachedEntryInfo = await this._serveFromCacheOrGetMissingPartsFromServerAndMerge(from, to, ranges, start, pageSize);
+                const resultToUser: TimeSeriesEntry[] = await this._serveFromCacheOrGetMissingPartsFromServerAndMerge(
+                    cache, from, to, ranges, start, pageSize);
 
-                if (!entryInfo.servedFromCache && !this.session.noTracking) {
-                    InMemoryDocumentSessionOperations.addToCache(this.name, from, to, entryInfo.fromRangeIndex, entryInfo.toRangeIndex, ranges, cache, entryInfo.mergedValues);
-                }
-
-                return entryInfo.resultToUser.slice(0, pageSize);
+                return resultToUser.slice(0, pageSize);
             }
         }
 
@@ -220,11 +217,12 @@ export class SessionTimeSeriesBase {
         return values;
     }
 
-    private async _serveFromCacheOrGetMissingPartsFromServerAndMerge(from: Date,
+    private async _serveFromCacheOrGetMissingPartsFromServerAndMerge(cache: Map<string, TimeSeriesRangeResult[]>,
+                                                                     from: Date,
                                                                to: Date,
                                                                ranges: TimeSeriesRangeResult[],
                                                                start: number,
-                                                               pageSize: number): Promise<CachedEntryInfo> {
+                                                               pageSize: number): Promise<TimeSeriesEntry[]> {
         // try to find a range in cache that contains [from, to]
         // if found, chop just the relevant part from it and return to the user.
 
@@ -237,7 +235,6 @@ export class SessionTimeSeriesBase {
         let fromRangeIndex = -1;
 
         let rangesToGetFromServer: TimeSeriesRange[];
-        let resultToUser: TimeSeriesEntry[];
 
         for (toRangeIndex = 0; toRangeIndex < ranges.length; toRangeIndex++) {
             if (DatesComparator.compare(leftDate(ranges[toRangeIndex].from), leftDate(from)) <= 0) {
@@ -247,14 +244,7 @@ export class SessionTimeSeriesBase {
                     // we have all the range we need
                     // or that we have all the results we need in smaller range
 
-                    resultToUser = SessionTimeSeriesBase._chopRelevantRange(ranges[toRangeIndex], from, to, start, pageSize);
-                    return {
-                        servedFromCache: true,
-                        resultToUser,
-                        mergedValues: null,
-                        fromRangeIndex: -1,
-                        toRangeIndex: -1
-                    };
+                    return SessionTimeSeriesBase._chopRelevantRange(ranges[toRangeIndex], from, to, start, pageSize);
                 }
 
                 fromRangeIndex = toRangeIndex;
@@ -315,6 +305,8 @@ export class SessionTimeSeriesBase {
         // merge all the missing parts we got from server
         // with all the ranges in cache that are between 'fromRange' and 'toRange'
 
+        let resultToUser: TimeSeriesEntry[];
+
         const mergedValues = SessionTimeSeriesBase._mergeRangesWithResults(
             from,
             to,
@@ -324,13 +316,42 @@ export class SessionTimeSeriesBase {
             details.values.get(this.name),
             r => resultToUser = r);
 
-        return {
-            servedFromCache: false,
-            resultToUser,
-            mergedValues,
-            fromRangeIndex,
-            toRangeIndex
+        if (!this.session.noTracking) {
+            const fromDates = details.values.get(this.name)
+                .map(x => x.from)
+                .filter(x => x);
+
+            if (fromDates.length) {
+                from = fromDates[0];
+
+                fromDates.forEach(d => {
+                    if (d.getTime() < from.getTime()) {
+                        from = d;
+                    }
+                });
+            } else {
+                from = null;
+            }
+
+            const toDates = details.values.get(this.name)
+                .map(x => x.to)
+                .filter(x => x);
+
+            if (toDates.length) {
+                to = toDates[0];
+                toDates.forEach(d => {
+                    if (d.getTime() > to.getTime()) {
+                        to = d;
+                    }
+                })
+            } else {
+                to = null;
+            }
+
+            InMemoryDocumentSessionOperations.addToCache(this.name, from, to, fromRangeIndex, toRangeIndex, ranges, cache, mergedValues);
         }
+
+        return resultToUser;
     }
 
     private static _mergeRangesWithResults(from: Date,
