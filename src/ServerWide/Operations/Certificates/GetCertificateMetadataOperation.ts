@@ -1,15 +1,11 @@
-import {
-    CertificateDefinition,
-    DocumentConventions,
-    IServerOperation,
-    OperationResultType,
-    RavenCommand,
-    ServerNode
-} from "../../..";
 import { CertificateMetadata } from "./CertificateMetadata";
 import { throwError } from "../../../Exceptions";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as stream from "readable-stream";
+import { IServerOperation, OperationResultType } from "../../../Documents/Operations/OperationAbstractions";
+import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
+import { RavenCommand } from "../../../Http/RavenCommand";
+import { ServerNode } from "../../../Http/ServerNode";
 
 export class GetCertificateMetadataOperation implements IServerOperation<CertificateMetadata> {
     private readonly _thumbprint: string;
