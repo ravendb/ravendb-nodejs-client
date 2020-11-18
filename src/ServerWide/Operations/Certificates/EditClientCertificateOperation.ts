@@ -1,15 +1,14 @@
-import {
-    CertificateDefinition,
-    DatabaseAccess,
-    DocumentConventions,
-    IRaftCommand,
-    IServerOperation, OperationResultType,
-    RavenCommand,
-    SecurityClearance, ServerNode
-} from "../../..";
 import { throwError } from "../../../Exceptions";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
+import { DatabaseAccess } from "./DatabaseAccess";
+import { SecurityClearance } from "./SecurityClearance";
+import { IServerOperation, OperationResultType } from "../../../Documents/Operations/OperationAbstractions";
+import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
+import { RavenCommand } from "../../../Http/RavenCommand";
+import { IRaftCommand } from "../../../Http/IRaftCommand";
+import { ServerNode } from "../../../Http/ServerNode";
+import { CertificateDefinition } from "./CertificateDefinition";
 
 export class EditClientCertificateOperation implements IServerOperation<void> {
     private readonly _thumbprint: string;

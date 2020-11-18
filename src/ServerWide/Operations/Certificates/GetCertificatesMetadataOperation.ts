@@ -1,8 +1,11 @@
-import { DocumentConventions, IServerOperation, OperationResultType, RavenCommand, ServerNode } from "../../..";
 import { CertificateMetadata } from "./CertificateMetadata";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { StringUtil } from "../../../Utility/StringUtil";
 import stream from "readable-stream";
+import { IServerOperation, OperationResultType } from "../../../Documents/Operations/OperationAbstractions";
+import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
+import { RavenCommand } from "../../../Http/RavenCommand";
+import { ServerNode } from "../../../Http/ServerNode";
 
 
 export class GetCertificatesMetadataOperation implements IServerOperation<CertificateMetadata[]> {
