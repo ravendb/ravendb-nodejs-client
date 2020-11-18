@@ -149,8 +149,8 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
         return (stream.pipeline as any)(...streams, callback || TypeUtil.NOOP) as stream.Stream;
     }
 
-    private _appendBody(s): void {
-        this._body.append(s);
+    private _appendBody(s: Buffer | string): void {
+        this._body.append(s.toString());
     }
 
     private _buildUp(src: stream.Stream) {
@@ -161,7 +161,7 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
         const opts = this._opts;
         const streams: stream.Stream[] = [src];
         if (opts.collectBody) {
-            src.on("data", (chunk) => this._appendBody(chunk));
+            src.on("data", (chunk: Buffer | string) => this._appendBody(chunk));
         }
 
         if (opts.jsonAsync) {
