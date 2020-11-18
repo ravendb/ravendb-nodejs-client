@@ -5,6 +5,7 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
 import { RestoreBackupConfigurationBase } from "./RestoreBackupConfigurationBase";
+import { throwError } from "../../../Exceptions";
 
 export class RestoreBackupOperation implements IServerOperation<OperationIdResult> {
     private readonly _restoreConfiguration: RestoreBackupConfigurationBase;
@@ -16,7 +17,7 @@ export class RestoreBackupOperation implements IServerOperation<OperationIdResul
     }
 
     public getCommand(conventions: DocumentConventions): RavenCommand<OperationIdResult> {
-        return new RestoreBackupCommand(conventions, this._restoreConfiguration, this._nodeTag);
+        return new RestoreBackupCommand(this._restoreConfiguration, this._nodeTag);
     }
 
     public get resultType(): OperationResultType {
@@ -31,8 +32,12 @@ export class RestoreBackupOperation implements IServerOperation<OperationIdResul
 class RestoreBackupCommand extends RavenCommand<OperationIdResult> {
     private readonly _restoreConfiguration: RestoreBackupConfigurationBase;
 
-    public constructor(conventions: DocumentConventions, restoreConfiguration: RestoreBackupConfigurationBase, nodeTag: string) {
+    public constructor(restoreConfiguration: RestoreBackupConfigurationBase, nodeTag: string) {
         super();
+
+        if (!restoreConfiguration) {
+            throwError("InvalidArgumentException", "RestoreConfiguration cannot be null");
+        }
 
         this._restoreConfiguration = restoreConfiguration;
         this._selectedNodeTag = nodeTag;

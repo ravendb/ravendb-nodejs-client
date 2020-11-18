@@ -30,6 +30,10 @@ export interface DatabaseTopology {
     priorityOrder: string[];
 }
 
+export function getAllNodesFromTopology(topology: DatabaseTopology) {
+    return [...topology.members, ...topology.promotables, ...topology.rehabs];
+}
+
 export interface LeaderStamp {
     index: number;
     term: number;

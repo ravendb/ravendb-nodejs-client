@@ -7,6 +7,7 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { ServerNode } from "../../../Http/ServerNode";
 import { IRaftCommand } from "../../../Http/IRaftCommand";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
+import { throwError } from "../../../Exceptions";
 
 export class ConfigureRevisionsOperation implements IMaintenanceOperation<ConfigureRevisionsOperationResult> {
     private readonly _configuration: RevisionsConfiguration;
@@ -16,6 +17,9 @@ export class ConfigureRevisionsOperation implements IMaintenanceOperation<Config
     }
 
     public constructor(configuration: RevisionsConfiguration) {
+        if (!configuration) {
+            throwError("InvalidArgumentException", "Configuration cannot be null");
+        }
         this._configuration = configuration;
     }
 

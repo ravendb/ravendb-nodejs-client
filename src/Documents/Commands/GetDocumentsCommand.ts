@@ -194,6 +194,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         // if it is too big, we fallback to POST (note that means that we can't use the HTTP cache any longer)
         // we are fine with that, requests to load > 1024 items are going to be rare
         const isGet: boolean = Array.from(uniqueIds)
+            .filter(x => x)
             .map(x => x.length)
             .reduce((result, next) => result + next, 0) < 1024;
 

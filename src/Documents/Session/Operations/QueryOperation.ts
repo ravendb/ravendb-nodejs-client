@@ -319,7 +319,7 @@ export class QueryOperation {
 
                 parameters.append(parameterKey)
                     .append(" = ")
-                    .append(parameterValue);
+                    .append(parameterValue as any);
 
                 first = false;
             }

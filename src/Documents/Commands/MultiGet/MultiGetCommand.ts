@@ -8,6 +8,7 @@ import { ServerNode } from "../../../Http/ServerNode";
 import { StatusCodes } from "../../../Http/StatusCode";
 import { getEtagHeader } from "../../../Utility/HttpUtil";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { throwError } from "../../../Exceptions";
 
 export class MultiGetCommand extends RavenCommand<GetResponse[]> {
     private _cache: HttpCache;
@@ -17,6 +18,15 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> {
 
     public constructor(cache: HttpCache, conventions: DocumentConventions, commands: GetRequest[]) {
         super();
+
+        if (!cache) {
+            throwError("InvalidArgumentException", "Cache cannot be null");
+        }
+
+        if (!commands) {
+            throwError("InvalidArgumentException", "Commands cannot be null");
+        }
+
         this._cache = cache;
         this._commands = commands;
         this._conventions = conventions;

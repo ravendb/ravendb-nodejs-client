@@ -1,15 +1,7 @@
-import { DatabaseAccess } from "./DatabaseAccess";
-import { SecurityClearance } from "./SecurityClearance";
+import { CertificateMetadata } from "./CertificateMetadata";
 
-export interface CertificateDefinition {
-    name: string;
+export interface CertificateDefinition extends CertificateMetadata {
     certificate: string;
     password?: string;
-    securityClearance: SecurityClearance;
-    thumbprint: string;
-    publicKeyPinningHash: string;
-    notAfter: Date;
-    permissions?: Record<string, DatabaseAccess>;
-    collectionPrimaryKey?: string;
-    collectionSecondaryKeys?: string[];
 }
+

@@ -67,7 +67,7 @@ export class DeleteByIndexCommand extends RavenCommand<OperationIdResult> {
 
         if (!TypeUtil.isNullOrUndefined(this._options.maxOpsPerSecond)) {
             path.append("&maxOpsPerSec=")
-                .append(this._options.maxOpsPerSecond);
+                .append(this._options.maxOpsPerSecond.toString());
         }
 
         path
@@ -76,7 +76,7 @@ export class DeleteByIndexCommand extends RavenCommand<OperationIdResult> {
 
         if (this._options.staleTimeout) {
             path.append("&staleTimeout=")
-                .append(this._options.staleTimeout);
+                .append(this._options.staleTimeout.toString());
         }
 
         const body = writeIndexQuery(this._conventions, this._queryToDelete);

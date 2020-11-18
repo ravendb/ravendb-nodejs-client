@@ -4,11 +4,15 @@ import * as stream from "readable-stream";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
+import { throwError } from "../../../Exceptions";
 
 export class StartTransactionsRecordingOperation implements IMaintenanceOperation<void> {
     private readonly _filePath: string;
 
     public constructor(filePath: string) {
+        if (!filePath) {
+            throwError("InvalidArgumentException", "FilePath cannot be null");
+        }
         this._filePath = filePath;
     }
 

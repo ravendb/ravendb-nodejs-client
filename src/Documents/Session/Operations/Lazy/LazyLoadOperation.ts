@@ -16,6 +16,7 @@ export class LazyLoadOperation<T extends object> implements ILazyOperation {
     private readonly _loadOperation: LoadOperation;
     private _ids: string[];
     private _includes: string[];
+    private _alreadyInSession: string[] = [];
     private _result: any;
     private _queryResult: QueryResult;
     private _requiresRetry: boolean;
@@ -28,8 +29,6 @@ export class LazyLoadOperation<T extends object> implements ILazyOperation {
     }
 
     public createRequest(): GetRequest {
-        const idsToCheckOnServer = this._ids
-            .filter(id => !this._session.isLoadedOrDeleted(id));
         const queryBuilder = new StringBuilder("?");
 
         if (this._includes) {
@@ -38,11 +37,18 @@ export class LazyLoadOperation<T extends object> implements ILazyOperation {
             }
         }
 
-        for (const id of idsToCheckOnServer) {
-            queryBuilder.append("&id=").append(encodeURIComponent(id));
+        let hasItems = false;
+
+        for (const id of this._ids) {
+            if (this._session.isLoadedOrDeleted(id)) {
+                this._alreadyInSession.push(id);
+            } else {
+                hasItems = true;
+                queryBuilder.append("&id=")
+                    .append(encodeURIComponent(id));
+            }
         }
 
-        const hasItems = idsToCheckOnServer.length;
         if (!hasItems) {
             // no need to hit the server
             this._result = this._loadOperation.getDocuments(this._clazz);
@@ -116,6 +122,13 @@ export class LazyLoadOperation<T extends object> implements ILazyOperation {
     }
 
     private _handleResponse(loadResult: GetDocumentsResult): void {
+        if (this._alreadyInSession.length) {
+            // push this to the session
+            new LoadOperation(this._session)
+                .byIds(this._alreadyInSession)
+                .getDocuments(this._clazz);
+        }
+
         this._loadOperation.setResult(loadResult);
 
         if (!this._requiresRetry) {
