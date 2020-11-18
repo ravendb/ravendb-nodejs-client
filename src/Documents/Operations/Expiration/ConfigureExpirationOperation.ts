@@ -7,6 +7,7 @@ import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
 import { IRaftCommand } from "../../../Http/IRaftCommand";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
+import { throwError } from "../../../Exceptions";
 
 export class ConfigureExpirationOperation implements IMaintenanceOperation<ConfigureExpirationOperationResult> {
     private readonly _configuration: ExpirationConfiguration;
@@ -29,6 +30,10 @@ class ConfigureExpirationCommand extends RavenCommand<ConfigureExpirationOperati
 
     public constructor(configuration: ExpirationConfiguration) {
         super();
+
+        if (!configuration) {
+            throwError("InvalidArgumentException", "Configuration cannot be null");
+        }
 
         this._configuration = configuration;
     }

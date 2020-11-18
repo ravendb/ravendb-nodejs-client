@@ -8,11 +8,15 @@ import { HttpRequestParameters } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
 import * as stream from "readable-stream";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
+import { throwError } from "../../../Exceptions";
 
 export class ConfigureRefreshOperation implements IMaintenanceOperation<ConfigureRefreshOperationResult> {
     private readonly _configuration: RefreshConfiguration;
 
     public constructor(configuration: RefreshConfiguration) {
+        if (!configuration) {
+            throwError("InvalidArgumentException", "Configuration cannot be null");
+        }
         this._configuration = configuration;
     }
 

@@ -7,13 +7,19 @@ export class KillOperationCommand extends RavenCommand<void> {
 
     private readonly _id: number;
 
-    public constructor(id: number) {
+    public constructor(id: number)
+    public constructor(id: number, nodeTag: string)
+    public constructor(id: number, nodeTag?: string) {
         super();
 
         if (!id) {
             throwError("InvalidArgumentException", "Id cannot be null.");
         }
         this._id = id;
+
+        if (nodeTag) {
+            this._selectedNodeTag = nodeTag;
+        }
     }
 
     public get isReadRequest(): boolean {

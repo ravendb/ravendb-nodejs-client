@@ -71,21 +71,28 @@ describe("ClientGraphQueriesTest", function () {
 
             await session.saveChanges();
 
-            const names = [ "Fi", "Fah", "Foozy" ];
+            const namesList = [
+                [ "Fi", "Fah", "Foozy" ],
+                [ "Fi", "Foozy", "Fah" ],
+                [ "Foozy", "Fi", "Fah", "Foozy" ],
+                [ "Fi", "Foozy", "Fah", "Fah", "Foozy" ]
+            ];
 
-            const res = await session.advanced.graphQuery<FooBar>("match (Foos as foo)-[bars as _]->(Bars as bar)", FooBar)
-                .withQuery("foo", b => b.query<Foo>(Foo).whereIn("name", names))
-                .withQuery("bar", session.query<Bar>(Bar).whereGreaterThanOrEqual("age", 18))
-                .waitForNonStaleResults()
-                .all();
+            for (let names of namesList) {
+                const res = await session.advanced.graphQuery<FooBar>("match (Foos as foo)-[bars as _]->(Bars as bar)", FooBar)
+                    .withQuery("foo", b => b.query<Foo>(Foo).whereIn("name", names))
+                    .withQuery("bar", session.query<Bar>(Bar).whereGreaterThanOrEqual("age", 18))
+                    .waitForNonStaleResults()
+                    .all();
 
-            assertThat(res)
-                .hasSize(1);
+                assertThat(res)
+                    .hasSize(1);
 
-            assertThat(res[0].foo.name)
-                .isEqualTo("Foozy");
-            assertThat(res[0].bar.name)
-                .isEqualTo("Barvazon");
+                assertThat(res[0].foo.name)
+                    .isEqualTo("Foozy");
+                assertThat(res[0].bar.name)
+                    .isEqualTo("Barvazon");
+            }
         }
     });
 

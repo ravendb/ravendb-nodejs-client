@@ -384,7 +384,7 @@ export class QueryOperation {
 
                 parameters.append(parameterKey)
                     .append(" = ")
-                    .append(parameterValue as any); //TODO: check passing 0 as number!
+                    .append(parameterValue as any);
 
                 first = false;
             }

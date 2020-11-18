@@ -5,6 +5,7 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
 import { RestoreBackupConfigurationBase } from "./RestoreBackupConfigurationBase";
+import { throwError } from "../../../Exceptions";
 
 export class RestoreBackupOperation implements IServerOperation<OperationIdResult> {
     private readonly _restoreConfiguration: RestoreBackupConfigurationBase;
@@ -33,6 +34,10 @@ class RestoreBackupCommand extends RavenCommand<OperationIdResult> {
 
     public constructor(restoreConfiguration: RestoreBackupConfigurationBase, nodeTag: string) {
         super();
+
+        if (!restoreConfiguration) {
+            throwError("InvalidArgumentException", "RestoreConfiguration cannot be null");
+        }
 
         this._restoreConfiguration = restoreConfiguration;
         this._selectedNodeTag = nodeTag;

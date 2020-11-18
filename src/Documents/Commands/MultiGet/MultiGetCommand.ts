@@ -10,6 +10,7 @@ import { getEtagHeader } from "../../../Utility/HttpUtil";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { RequestExecutor } from "../../../Http/RequestExecutor";
+import { throwError } from "../../../Exceptions";
 
 export class MultiGetCommand extends RavenCommand<GetResponse[]> {
     private _cache: HttpCache;
@@ -19,6 +20,15 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> {
 
     public constructor(requestExecutor: RequestExecutor, conventions: DocumentConventions, commands: GetRequest[]) {
         super();
+
+        if (!requestExecutor) {
+            throwError("InvalidArgumentException", "RequestExecutor cannot be null");
+        }
+
+        if (!commands) {
+            throwError("InvalidArgumentException", "Commands cannot be null");
+        }
+
         this._cache = requestExecutor.cache;
         this._commands = commands;
         this._conventions = conventions;

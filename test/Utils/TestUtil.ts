@@ -21,7 +21,7 @@ import {
     CreateDatabaseOperation,
     DatabaseRecord,
     DeleteDatabasesOperation, DocumentConventions, DocumentSession,
-    DocumentStore, DocumentType, GetClusterTopologyCommand,
+    DocumentStore, DocumentType, getAllNodesFromTopology, GetClusterTopologyCommand, GetDatabaseRecordOperation,
     IDocumentSession, ServerNode
 } from "../../src";
 import * as rimraf from "rimraf";
@@ -551,6 +551,14 @@ export class ClusterTestContext extends RavenTestDriver implements IDisposable {
         }
 
         return stores;
+    }
+
+    public async waitForIndexingInTheCluster(store: IDocumentStore, dbName: string, timeout: number) {
+        const record = await store.maintenance.server.send(new GetDatabaseRecordOperation(dbName || store.database));
+
+        for (const nodeTag of getAllNodesFromTopology(record.topology)) {
+            await this.waitForIndexing(store, dbName, timeout, true, nodeTag);
+        }
     }
 
     dispose(): void {

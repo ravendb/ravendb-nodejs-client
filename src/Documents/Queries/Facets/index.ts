@@ -95,6 +95,10 @@ export class FacetOptions implements IFacetOptions {
 
     private static _defaultOptions = new FacetOptions();
 
+    constructor() {
+        this.termSortMode = "ValueAsc";
+    }
+
     public static getDefaultOptions(): IFacetOptions {
         return this._defaultOptions;
     }

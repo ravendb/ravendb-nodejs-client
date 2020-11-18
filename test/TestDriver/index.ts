@@ -148,10 +148,13 @@ export abstract class RavenTestDriver {
     public waitForIndexing(
         store: IDocumentStore, database?: string, timeout?: number, throwOnIndexErrors?: boolean): Promise<void>;
     public waitForIndexing(
+        store: IDocumentStore, database?: string, timeout?: number, throwOnIndexErrors?: boolean, nodeTag?: string): Promise<void>;
+    public waitForIndexing(
         store: IDocumentStore,
         database?: string,
         timeout?: number,
-        throwOnIndexErrors: boolean = true): Promise<void> {
+        throwOnIndexErrors: boolean = true,
+        nodeTag?: string): Promise<void> {
         const admin = store.maintenance.forDatabase(database);
 
         if (!timeout) {
@@ -160,7 +163,7 @@ export abstract class RavenTestDriver {
 
         const isIndexingDone = (): Promise<boolean> => {
             return Promise.resolve()
-                .then(() => admin.send(new GetStatisticsOperation()))
+                .then(() => admin.send(new GetStatisticsOperation("wait-for-indexing", nodeTag)))
                 .then((dbStats: DatabaseStatistics) => {
                     const indexes = dbStats.indexes.filter(x => x.state !== "Disabled");
 
