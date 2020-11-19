@@ -2041,12 +2041,9 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     public async iterator(): Promise<IterableIterator<T>> {
-        return Promise.resolve()
-            .then(() => this._initSync())
-            .then(() => {
-                const results = this._queryOperation.complete<T>(this._clazz);
-                return results[Symbol.iterator]();
-            });
+        await this._initSync();
+        const results = this._queryOperation.complete<T>(this._clazz);
+        return results[Symbol.iterator]();
     }
 
     public async all(): Promise<T[]> {

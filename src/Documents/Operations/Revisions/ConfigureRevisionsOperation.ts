@@ -57,12 +57,9 @@ export class ConfigureRevisionsCommand extends RavenCommand<ConfigureRevisionsOp
         }
 
         let body: string = null;
-        await this._defaultPipeline(_ => body = _)
-            .process(bodyStream)
-            .then(results => {
-                this.result = Object.assign(new ConfigureRevisionsOperationResult(), results);
-            });
-
+        const results = await this._defaultPipeline(_ => body = _)
+            .process(bodyStream);
+        this.result = Object.assign(new ConfigureRevisionsOperationResult(), results);
         return body;
     }
 

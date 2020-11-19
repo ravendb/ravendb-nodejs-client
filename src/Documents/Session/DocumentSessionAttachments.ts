@@ -37,7 +37,7 @@ export class DocumentSessionAttachments
 
         const operation: GetAttachmentOperation =
             new GetAttachmentOperation(docId, name, "Document", null);
-        return this._session.operations.send(operation, this._sessionInfo);
+        return await this._session.operations.send(operation, this._sessionInfo);
     }
 
     public async getRevision(documentId: string, name: string, changeVector: string): Promise<AttachmentResult> {

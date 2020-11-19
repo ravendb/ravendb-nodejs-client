@@ -501,7 +501,7 @@ export class RequestExecutor implements IDisposable {
 
         const acquiredSemContext = acquireSemaphore(this._updateDatabaseTopologySemaphore, { timeout: parameters.timeoutInMs });
         const result = BluebirdPromise.resolve(acquiredSemContext.promise)
-            .then(() => {
+            .then(async () => {
                     if (this._disposed) {
                         return false;
                     }
@@ -509,35 +509,33 @@ export class RequestExecutor implements IDisposable {
                     this._log.info(`Update topology from ${parameters.node.url}.`);
 
                     const getTopology = new GetDatabaseTopologyCommand(parameters.debugTag, this.conventions.sendApplicationIdentifier ? parameters.applicationIdentifier : null);
-                    const getTopologyPromise = this.execute(getTopology, null, {
+                    await this.execute(getTopology, null, {
                         chosenNode: parameters.node,
                         nodeIndex: null,
                         shouldRetry: false,
                     });
-                    return getTopologyPromise
-                        .then(() => {
-                            const topology = getTopology.result;
-                            if (!this._nodeSelector) {
-                                this._nodeSelector = new NodeSelector(topology);
 
-                                if (this.conventions.readBalanceBehavior === "FastestNode") {
-                                    this._nodeSelector.scheduleSpeedTest();
-                                }
+                    const topology = getTopology.result;
+                    if (!this._nodeSelector) {
+                        this._nodeSelector = new NodeSelector(topology);
 
-                            } else if (this._nodeSelector.onUpdateTopology(topology, parameters.forceUpdate)) {
-                                this._disposeAllFailedNodesTimers();
+                        if (this.conventions.readBalanceBehavior === "FastestNode") {
+                            this._nodeSelector.scheduleSpeedTest();
+                        }
 
-                                if (this.conventions.readBalanceBehavior === "FastestNode") {
-                                    this._nodeSelector.scheduleSpeedTest();
-                                }
-                            }
+                    } else if (this._nodeSelector.onUpdateTopology(topology, parameters.forceUpdate)) {
+                        this._disposeAllFailedNodesTimers();
 
-                            this._topologyEtag = this._nodeSelector.getTopology().etag;
+                        if (this.conventions.readBalanceBehavior === "FastestNode") {
+                            this._nodeSelector.scheduleSpeedTest();
+                        }
+                    }
 
-                            this._onTopologyUpdatedInvoke(topology);
+                    this._topologyEtag = this._nodeSelector.getTopology().etag;
 
-                            return true;
-                        });
+                    this._onTopologyUpdatedInvoke(topology);
+
+                    return true;
                 },
                 (reason: Error) => {
                     if (reason.name === "TimeoutError") {

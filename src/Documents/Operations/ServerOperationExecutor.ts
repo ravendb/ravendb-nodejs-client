@@ -102,25 +102,24 @@ export class ServerOperationExecutor implements IDisposable {
         return new ServerOperationExecutor(this._store, clusterExecutor, requestExecutor, this._cache, node.clusterTag);
     }
 
-    public send(operation: AwaitableServerOperation): Promise<ServerWideOperationCompletionAwaiter>;
-    public send<TResult>(operation: IServerOperation<TResult>): Promise<TResult>;
-    public send<TResult>(operation: AwaitableServerOperation | IServerOperation<TResult>)
+    public async send(operation: AwaitableServerOperation): Promise<ServerWideOperationCompletionAwaiter>;
+    public async send<TResult>(operation: IServerOperation<TResult>): Promise<TResult>;
+    public async send<TResult>(operation: AwaitableServerOperation | IServerOperation<TResult>)
         : Promise<ServerWideOperationCompletionAwaiter | TResult> {
 
         const command = operation.getCommand(this._requestExecutor.conventions);
-        return Promise.resolve()
-            .then(() => this._requestExecutor.execute(command as RavenCommand<TResult>))
-            .then(() => {
-                if (operation.resultType === "OperationId") {
-                    const idResult = command.result as OperationIdResult;
-                    return new ServerWideOperationCompletionAwaiter(
-                        this._requestExecutor, this._requestExecutor.conventions, idResult.operationId,
-                        command.selectedNodeTag || idResult.operationNodeTag
-                    );
-                }
 
-                return command.result as TResult;
-            });
+        await this._requestExecutor.execute(command as RavenCommand<TResult>);
+
+        if (operation.resultType === "OperationId") {
+            const idResult = command.result as OperationIdResult;
+            return new ServerWideOperationCompletionAwaiter(
+                this._requestExecutor, this._requestExecutor.conventions, idResult.operationId,
+                command.selectedNodeTag || idResult.operationNodeTag
+            );
+        }
+
+        return command.result as TResult;
     }
 
     public dispose(): void {

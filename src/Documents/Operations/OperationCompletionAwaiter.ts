@@ -27,11 +27,10 @@ export class OperationCompletionAwaiter {
         this._nodeTag = nodeTag;
     }
 
-    private _fetchOperationStatus(): Promise<IRavenResponse> {
+    private async _fetchOperationStatus(): Promise<IRavenResponse> {
         const command: RavenCommand<IRavenResponse> = this._getOperationStateCommand(this._conventions, this._id, this._nodeTag);
-        return Promise.resolve()
-            .then(() => this._requestExecutor.execute(command))
-            .then(() => command.result);
+        await this._requestExecutor.execute(command);
+        return command.result;
     }
 
     protected _getOperationStateCommand(conventions: DocumentConventions, id: number, nodeTag?: string): RavenCommand<IRavenResponse> {

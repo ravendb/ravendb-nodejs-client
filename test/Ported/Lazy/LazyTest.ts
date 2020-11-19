@@ -125,7 +125,7 @@ describe("LazyTest", function () {
             const lazy: Lazy<User> = session.advanced.lazily.load<User>("users/1");
 
             await session.advanced.eagerly.executeAllPendingLazyOperations();
-            await lazy.getValue().then(x => user = x);
+            user = await lazy.getValue();
             assert.ok(user);
         }
     });

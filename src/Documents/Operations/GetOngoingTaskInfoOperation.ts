@@ -75,51 +75,49 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
 
     async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         let body: string = null;
-        await this._defaultPipeline(_ => body = _)
-            .process(bodyStream)
-            .then(results => {
-                let nestedTypes: NestedTypes = {};
+        const results = await this._defaultPipeline(_ => body = _)
+            .process(bodyStream);
+        let nestedTypes: NestedTypes = {};
 
-                switch (this._type) {
-                    case "Replication":
-                        // nothing to do
-                        break;
-                    case "RavenEtl":
-                        nestedTypes = {
-                            configuration: "RavenEtlConfiguration"
-                        };
-                        break;
-                    case "SqlEtl":
-                        nestedTypes = {
-                            configuration: "SqlEtlConfiguration"
-                        };
-                        break;
-                    case "Subscription":
-                        nestedTypes = {
-                            lastBatchAckTime: "date",
-                            lastClientConnectionTime: "date"
-                        }
-                        break;
-                    case "PullReplicationAsSink":
-                        break;
-                    case "Backup":
-                        nestedTypes = {
-                            lastFullBackup: "date",
-                            lastIncrementalBackup: "date",
-                            "onGoingBackup.startTime": "date",
-                            "nextBackup.dateTime": "date"
-                        }
-                        break;
+        switch (this._type) {
+            case "Replication":
+                // nothing to do
+                break;
+            case "RavenEtl":
+                nestedTypes = {
+                    configuration: "RavenEtlConfiguration"
+                };
+                break;
+            case "SqlEtl":
+                nestedTypes = {
+                    configuration: "SqlEtlConfiguration"
+                };
+                break;
+            case "Subscription":
+                nestedTypes = {
+                    lastBatchAckTime: "date",
+                    lastClientConnectionTime: "date"
                 }
+                break;
+            case "PullReplicationAsSink":
+                break;
+            case "Backup":
+                nestedTypes = {
+                    lastFullBackup: "date",
+                    lastIncrementalBackup: "date",
+                    "onGoingBackup.startTime": "date",
+                    "nextBackup.dateTime": "date"
+                }
+                break;
+        }
 
-                this.result = this._reviveResultTypes<OngoingTask>(
-                    results,
-                    this._conventions,
-                    {
-                        nestedTypes
-                    },
-                    knownTypes);
-            });
+        this.result = this._reviveResultTypes<OngoingTask>(
+            results,
+            this._conventions,
+            {
+                nestedTypes
+            },
+            knownTypes);
         return body;
     }
 

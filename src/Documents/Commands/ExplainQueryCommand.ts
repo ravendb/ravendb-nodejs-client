@@ -50,18 +50,17 @@ export class ExplainQueryCommand extends RavenCommand<ExplainQueryResult[]> {
         }
 
         let body: string = null;
-        await this._defaultPipeline(_ => body = _)
-            .process(bodyStream)
-            .then(data => {
-                const explainResults = data["results"] as ExplainQueryResult[];
-                if (!explainResults) {
-                    this._throwInvalidResponse();
-                    return;
-                }
 
-                this.result = explainResults;
-            });
+        const data = await this._defaultPipeline(_ => body = _)
+            .process(bodyStream);
 
+        const explainResults = data["results"] as ExplainQueryResult[];
+        if (!explainResults) {
+            this._throwInvalidResponse();
+            return;
+        }
+
+        this.result = explainResults;
         return body;
     }
 

@@ -48,33 +48,28 @@ export class GenerateEntityIdOnTheClient {
         }
     }
 
-    public getOrGenerateDocumentId(entity: object): Promise<string> {
+    public async getOrGenerateDocumentId(entity: object): Promise<string> {
         let id;
         this.tryGetIdFromInstance(entity, (idVal) => id = idVal);
-        return Promise.resolve()
-            .then(() => {
-                // Generate the key up front
-                return id || this._generateId(entity);
-            })
-            // tslint:disable-next-line:no-shadowed-variable
-            .then(id => {
-                if (id && id.startsWith("/")) {
-                    throwError(
-                        "InvalidOperationException",
-                        "Cannot use value '" + id + "' as a document id because it begins with a '/'");
-                }
 
-                return id;
-            });
+        // Generate the key up front
+        if (!id) {
+            id = await this._generateId(entity);
+        }
+
+        if (id && id.startsWith("/")) {
+            throwError(
+                "InvalidOperationException",
+                "Cannot use value '" + id + "' as a document id because it begins with a '/'");
+        }
+
+        return id;
     }
 
-    public generateDocumentKeyForStorage(entity: object): Promise<string> {
-        return Promise.resolve()
-            .then(() => this.getOrGenerateDocumentId(entity))
-            .then(id => {
-                this.trySetIdentity(entity, id);
-                return id;
-            });
+    public async generateDocumentKeyForStorage(entity: object): Promise<string> {
+        const id = await this.getOrGenerateDocumentId(entity);
+        this.trySetIdentity(entity, id);
+        return id;
     }
 
     /**

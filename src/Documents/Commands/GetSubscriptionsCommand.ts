@@ -32,18 +32,15 @@ export class GetSubscriptionsCommand extends RavenCommand<SubscriptionState[]> {
         }
 
         let body: string = null;
-        await this._defaultPipeline(_ => body = _)
-            .process(bodyStream)
-            .then(data => {
-                const results = data["results"] as SubscriptionState[];
-                if (!results) {
-                    this._throwInvalidResponse();
-                    return;
-                }
+        const data = await this._defaultPipeline(_ => body = _)
+            .process(bodyStream);
+        const results = data["results"] as SubscriptionState[];
+        if (!results) {
+            this._throwInvalidResponse();
+            return;
+        }
 
-                this.result = results;
-            });
-
+        this.result = results;
         return body;
     }
 

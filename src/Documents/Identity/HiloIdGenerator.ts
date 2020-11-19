@@ -33,10 +33,9 @@ export class HiloIdGenerator {
     }
 
     // noinspection JSUnusedLocalSymbols
-    public generateDocumentId(entity: object): Promise<string> {
-        return Promise.resolve()
-            .then(() => this.nextId())
-            .then((nextId) => this._getDocumentIdFromId(nextId));
+    public async generateDocumentId(entity: object): Promise<string> {
+        const nextId = await this.nextId();
+        return this._getDocumentIdFromId(nextId);
     }
 
     protected _getDocumentIdFromId(nextId: number) {

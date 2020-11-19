@@ -54,15 +54,13 @@ class GetTimeSeriesStatisticsCommand extends RavenCommand<TimeSeriesStatistics> 
 
     async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         let body: string = null;
-        await this._defaultPipeline(_ => body = _).process(bodyStream)
-            .then(results => {
-                this.result = this._conventions.objectMapper.fromObjectLiteral(results, {
-                    nestedTypes: {
-                        "timeSeries[].startDate": "date",
-                        "timeSeries[].endDate": "date"
-                    }
-                });
-            });
+        const results = await this._defaultPipeline(_ => body = _).process(bodyStream);
+        this.result = this._conventions.objectMapper.fromObjectLiteral(results, {
+            nestedTypes: {
+                "timeSeries[].startDate": "date",
+                "timeSeries[].endDate": "date"
+            }
+        });
 
         return body;
     }

@@ -183,16 +183,14 @@ describe("SubscriptionsBasicTest", function () {
         }
 
         async function assertResults() {
-            return delay(_reasonableWaitTime)
-                .then(() => {
-                    assert.strictEqual(keys.pop(), "users/3");
-                    assert.strictEqual(keys.pop(), "users/12");
-                    assert.strictEqual(keys.pop(), "users/1");
+            await delay(_reasonableWaitTime);
+            assert.strictEqual(keys.pop(), "users/3");
+            assert.strictEqual(keys.pop(), "users/12");
+            assert.strictEqual(keys.pop(), "users/1");
 
-                    assert.strictEqual(ages.pop(), 25);
-                    assert.strictEqual(ages.pop(), 27);
-                    assert.strictEqual(ages.pop(), 31);
-                });
+            assert.strictEqual(ages.pop(), 25);
+            assert.strictEqual(ages.pop(), 27);
+            assert.strictEqual(ages.pop(), 31);
         }
     });
 

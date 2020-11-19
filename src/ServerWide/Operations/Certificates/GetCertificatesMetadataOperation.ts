@@ -60,15 +60,12 @@ class GetCertificatesMetadataCommand extends RavenCommand<CertificateMetadata[]>
         }
 
         let body: string = null;
-        await this._defaultPipeline(_ => body = _).process(bodyStream)
-            .then(results => {
-
-                this.result = this._conventions.objectMapper.fromObjectLiteral<{ results: CertificateMetadata[] }>(results, {
-                    nestedTypes: {
-                        "results[].notAfter": "date"
-                    }
-                }).results;
-            });
+        const results = await this._defaultPipeline(_ => body = _).process(bodyStream);
+        this.result = this._conventions.objectMapper.fromObjectLiteral<{ results: CertificateMetadata[] }>(results, {
+            nestedTypes: {
+                "results[].notAfter": "date"
+            }
+        }).results;
 
         return body;
     }

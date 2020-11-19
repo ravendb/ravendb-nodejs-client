@@ -60,20 +60,18 @@ class GetCertificateCommand extends RavenCommand<CertificateDefinition> {
         }
 
         let body: string = null;
-        await this._defaultPipeline(_ => body = _).process(bodyStream)
-            .then(results => {
-                const mapped = this._conventions.objectMapper.fromObjectLiteral<{ results: CertificateDefinition[] }>(results, {
-                    nestedTypes: {
-                        "results[].notAfter": "date"
-                    }
-                }).results;
+        const results = await this._defaultPipeline(_ => body = _).process(bodyStream);
+        const mapped = this._conventions.objectMapper.fromObjectLiteral<{ results: CertificateDefinition[] }>(results, {
+            nestedTypes: {
+                "results[].notAfter": "date"
+            }
+        }).results;
 
-                if (mapped.length !== 1) {
-                    this._throwInvalidResponse();
-                }
+        if (mapped.length !== 1) {
+            this._throwInvalidResponse();
+        }
 
-                this.result = mapped[0];
-            });
+        this.result = mapped[0];
 
         return body;
     }

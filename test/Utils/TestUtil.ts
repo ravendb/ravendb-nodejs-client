@@ -263,91 +263,84 @@ export class RavenTestContext extends RavenTestDriver implements IDisposable {
         return moment().utc().startOf("day");
     }
 
-    public getDocumentStore(): Promise<DocumentStore>;
-    public getDocumentStore(database: string): Promise<DocumentStore>;
-    public getDocumentStore(database: string, secured: boolean): Promise<DocumentStore>;
-    public getDocumentStore(
+    public async getDocumentStore(): Promise<DocumentStore>;
+    public async getDocumentStore(database: string): Promise<DocumentStore>;
+    public async getDocumentStore(database: string, secured: boolean): Promise<DocumentStore>;
+    public async getDocumentStore(
         database: string, secured: boolean, waitForIndexingTimeoutInMs?: number): Promise<DocumentStore>;
-    public getDocumentStore(
+    public async getDocumentStore(
         database = "test_db", secured = false, waitForIndexingTimeoutInMs: number = null): Promise<DocumentStore> {
 
         const databaseName = database + "_" + (++RavenTestContext._index);
         log.info(`getDocumentStore for db ${ database }.`);
 
         let documentStore: IDocumentStore;
-        return Promise.resolve()
-            .then(() => {
-                if (!RavenTestContext._getGlobalServer(secured)) {
-                    return this._runServer(secured);
+
+        if (!RavenTestContext._getGlobalServer(secured)) {
+            await this._runServer(secured);
+        }
+
+        documentStore = RavenTestContext._getGlobalServer(secured);
+        const databaseRecord: DatabaseRecord = { databaseName };
+
+        if (this._customizeDbRecord) {
+            this._customizeDbRecord(databaseRecord);
+        }
+
+        const createDatabaseOperation = new CreateDatabaseOperation(databaseRecord);
+        const createDatabaseResult = await documentStore.maintenance.server.send(createDatabaseOperation);
+
+
+        const store = new DocumentStore(documentStore.urls, databaseName);
+        if (secured) {
+            store.authOptions = this._securedLocator.getClientAuthOptions();
+        }
+
+        if (this._customizeStore) {
+            await this._customizeStore(store);
+        }
+
+        store.initialize();
+
+        (store as IDocumentStore)
+            .once("afterDispose", async (callback) => {
+                if (!this._documentStores.has(store)) {
+                    callback();
+                    return;
                 }
-            })
-            .then(() => {
-                documentStore = RavenTestContext._getGlobalServer(secured);
-                const databaseRecord: DatabaseRecord = { databaseName };
 
-                if (this._customizeDbRecord) {
-                    this._customizeDbRecord(databaseRecord);
+                try {
+                    await store.maintenance.server.send(new DeleteDatabasesOperation({
+                        databaseNames: [store.database],
+                        hardDelete: true
+                    }));
+
+                    log.info(`Database ${store.database} deleted.`);
+                } catch (err) {
+                    if (err.name === "DatabaseDoesNotExistException"
+                        || err.name === "NoLeaderException") {
+                        return;
+                    }
+
+                    if (store.isDisposed() || !RavenTestContext._getGlobalProcess(secured)) {
+                        return;
+                    }
+
+                    throwError("TestDriverTearDownError",
+                        `Error deleting database ${ store.database }.`, err);
+                } finally {
+                    callback();
                 }
-
-                const createDatabaseOperation = new CreateDatabaseOperation(databaseRecord);
-                return documentStore.maintenance.server.send(createDatabaseOperation);
-            })
-            .then(async createDatabaseResult => {
-                const store = new DocumentStore(documentStore.urls, databaseName);
-                if (secured) {
-                    store.authOptions = this._securedLocator.getClientAuthOptions();
-                }
-
-                if (this._customizeStore) {
-                    await this._customizeStore(store);
-                }
-
-                store.initialize();
-
-                (store as IDocumentStore)
-                    .once("afterDispose", (callback) => {
-                        if (!this._documentStores.has(store)) {
-                            callback();
-                            return;
-                        }
-
-                        BluebirdPromise.resolve()
-                            .then(() => {
-                                return store.maintenance.server.send(new DeleteDatabasesOperation({
-                                    databaseNames: [store.database],
-                                    hardDelete: true
-                                }));
-                            })
-                            .tap((deleteResult) => {
-                                log.info(`Database ${store.database} deleted.`);
-                            })
-                            .catch(err => {
-                                if (err.name === "DatabaseDoesNotExistException"
-                                    || err.name === "NoLeaderException") {
-                                    return;
-                                }
-
-                                if (store.isDisposed() || !RavenTestContext._getGlobalProcess(secured)) {
-                                    return;
-                                }
-
-                                throwError("TestDriverTearDownError",
-                                    `Error deleting database ${ store.database }.`, err);
-                            })
-                            .finally(() => callback());
-                    });
-
-                return Promise.resolve()
-                    .then(() => this._setupDatabase(store))
-                    .then(() => {
-                        if (!TypeUtil.isNullOrUndefined(waitForIndexingTimeoutInMs)) {
-                            return this.waitForIndexing(store);
-                        }
-                    })
-                    .then(() => this._documentStores.add(store))
-                    .then(() => store);
-
             });
+
+        await this._setupDatabase(store);
+
+        if (!TypeUtil.isNullOrUndefined(waitForIndexingTimeoutInMs)) {
+            await this.waitForIndexing(store);
+        }
+
+        this._documentStores.add(store);
+        return store;
     }
 
     public static setupServer(): RavenTestContext {
@@ -364,22 +357,21 @@ export class RavenTestContext extends RavenTestDriver implements IDisposable {
         this._disposed = true;
 
         const STORE_DISPOSAL_TIMEOUT = 10000;
-        const storeDisposalPromises = [...this._documentStores].map((store) => {
-            return Promise.resolve()
-                .then(() => {
-                    const result = new BluebirdPromise((resolve) => {
-                        store.once("executorsDisposed", () => {
-                            resolve();
-                        });
-                    })
-                        .timeout(STORE_DISPOSAL_TIMEOUT)
-                        .then(() => null);
-
-                    store.dispose();
-                    return result;
+        const storeDisposalPromises = [...this._documentStores].map(async (store) => {
+            try {
+                const result = new BluebirdPromise((resolve) => {
+                    store.once("executorsDisposed", () => {
+                        resolve();
+                    });
                 })
-                .catch((err: Error) =>
-                    getError("TestDriverTeardownError", "Error disposing document store", err));
+                    .timeout(STORE_DISPOSAL_TIMEOUT)
+                    .then(() => null);
+
+                store.dispose();
+                return result;
+            } catch (err) {
+                return getError("TestDriverTeardownError", "Error disposing document store", err);
+            }
         });
 
         BluebirdPromise.all(storeDisposalPromises)

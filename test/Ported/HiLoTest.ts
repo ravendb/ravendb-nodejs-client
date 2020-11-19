@@ -31,10 +31,10 @@ describe("HiLo", function () {
 
     it("does not get another range, when doing parallel requests", async () => {
         const users = ArrayUtil.range(32, i => Object.assign(new User(), { name: "user" + i }));
-        const storeOps = users.map(x => {
+        const storeOps = users.map(async x => {
             const session = store.openSession();
-            return session.store(x)
-                .then(() => session.saveChanges());
+            await session.store(x);
+            await session.saveChanges();
         });
         await Promise.all(storeOps);
 
@@ -54,10 +54,10 @@ describe("HiLo", function () {
         const store1 = await testContext.getDocumentStore("hilo_continues");
         try {
             const users = ArrayUtil.range(10, i => Object.assign(new User(), { name: "user" + i }));
-            const storeOps = users.map(x => {
+            const storeOps = users.map(async x => {
                 const session = store1.openSession();
-                return session.store(x)
-                    .then(() => session.saveChanges());
+                await session.store(x);
+                await session.saveChanges();
             });
             await Promise.all(storeOps);
             await store1["_multiDbHiLo"].returnUnusedRange();

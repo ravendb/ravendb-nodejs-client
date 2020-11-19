@@ -43,15 +43,12 @@ export class NextIdentityForCommand extends RavenCommand<number> implements IRaf
         }
 
         let body: string = null;
-        await this._defaultPipeline(_ => body = _).process(bodyStream)
-            .then(results => {
-                if (!results["newIdentityValue"]) {
-                    this._throwInvalidResponse();
-                }
+        const results = await this._defaultPipeline(_ => body = _).process(bodyStream);
+        if (!results["newIdentityValue"]) {
+            this._throwInvalidResponse();
+        }
 
-                this.result = results["newIdentityValue"];
-            });
-
+        this.result = results["newIdentityValue"];
         return body;
     }
 

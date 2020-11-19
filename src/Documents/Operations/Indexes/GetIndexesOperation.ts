@@ -58,18 +58,17 @@ export class GetIndexesCommand extends RavenCommand<IndexDefinition[]> {
         }
 
         let body: string = null;
-        await this._pipeline<object>()
+        const result = await this._pipeline<object>()
             .collectBody(b => body = b)
             .parseJsonSync()
             .objectKeysTransform({
                 defaultTransform: "camel",
                 ignorePaths: [/fields\.[^.]+$/i, /results\.\[]\.configuration\./i]
             })
-            .process(bodyStream)
-            .then((result) => {
-                this.result = this._reviveResultTypes(
-                    result, this._conventions, indexDefTypeInfo, knownTypes)["results"];
-            });
+            .process(bodyStream);
+
+        this.result = this._reviveResultTypes(
+            result, this._conventions, indexDefTypeInfo, knownTypes)["results"];
         return body;
     }
 

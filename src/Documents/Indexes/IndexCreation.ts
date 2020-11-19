@@ -9,14 +9,14 @@ const log = getLogger({ module: "DocumentStore" });
 
 export class IndexCreation {
 
-    public static createIndexes(
+    public static async createIndexes(
         indexes: IAbstractIndexCreationTask[],
         store: IDocumentStore): Promise<void>;
-    public static createIndexes(
+    public static async createIndexes(
         indexes: IAbstractIndexCreationTask[],
         store: IDocumentStore,
         conventions: DocumentConventions): Promise<void>;
-    public static createIndexes(
+    public static async createIndexes(
         indexes: IAbstractIndexCreationTask[],
         store: IDocumentStore,
         conventions?: DocumentConventions): Promise<void> {
@@ -25,25 +25,18 @@ export class IndexCreation {
             conventions = store.conventions;
         }
 
-        return Promise.resolve()
-            .then(() => {
-                const indexesToAdd = this.createIndexesToAdd(indexes, conventions);
-                return store.maintenance.send(new PutIndexesOperation(...indexesToAdd));
-            })
-            .catch(err => {
-                log.warn(err,
-                    "Could not create indexes in one shot (maybe using older version of RavenDB ?)");
+        try {
+            const indexesToAdd = this.createIndexesToAdd(indexes, conventions);
+            await store.maintenance.send(new PutIndexesOperation(...indexesToAdd));
+        } catch (err) {
+            log.warn(err,
+                "Could not create indexes in one shot (maybe using older version of RavenDB ?)");
 
-                // For old servers that don't have the new endpoint for executing multiple indexes
-                return indexes.reduce((result, idx) => {
-                    return result.then(() => {
-                        return idx.execute(store, conventions);
-                    });
-                }, Promise.resolve());
-            })
-            // tslint:disable-next-line:no-empty
-            .then(() => {
-            });
+            // For old servers that don't have the new endpoint for executing multiple indexes
+            for (const index of indexes) {
+                await index.execute(store, conventions);
+            }
+        }
     }
 
     public static createIndexesToAdd(

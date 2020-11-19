@@ -50,16 +50,14 @@ export class SeedIdentityForCommand extends RavenCommand<number> implements IRaf
         }
 
         let body: string = null;
-        await this._defaultPipeline(_ => body = _).process(bodyStream)
-            .then(result => {
-                const newSeedValue = result["newSeedValue"];
-                if (TypeUtil.isNullOrUndefined(newSeedValue)) {
-                    this._throwInvalidResponse();
-                }
+        const result = await this._defaultPipeline(_ => body = _).process(bodyStream);
 
-                this.result = newSeedValue;
-            });
+        const newSeedValue = result["newSeedValue"];
+        if (TypeUtil.isNullOrUndefined(newSeedValue)) {
+            this._throwInvalidResponse();
+        }
 
+        this.result = newSeedValue;
         return body;
     }
 
