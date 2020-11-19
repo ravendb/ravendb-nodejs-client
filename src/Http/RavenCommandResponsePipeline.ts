@@ -146,7 +146,7 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
             streams.push(dst);
         }
 
-        return (stream.pipeline as any)(...streams, callback || TypeUtil.NOOP) as stream.Stream;
+        return (stream.pipeline as any)(...streams, TypeUtil.NOOP) as stream.Stream; //TODO: remove noop?
     }
 
     private _appendBody(s: Buffer | string): void {

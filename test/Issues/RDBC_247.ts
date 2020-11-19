@@ -76,10 +76,13 @@ describe("RDBC-247", function () {
             assert.strictEqual(result, null);
         });
 
-        it("should return null if more than 1 result", async function() {
-            const result = await session.query<User>({ collection: "users" })
-                .singleOrNull();
-            assert.strictEqual(result, null);
+        it("should throw if more than 1 result", async function() {
+            await assertThrows(
+                async () => await session.query({ collection: "users" }).singleOrNull(),
+                err => {
+                    assert.strictEqual(err.name, "InvalidOperationException");
+                    assert.strictEqual(err.message, "Expected single result, but got more than that.");
+                });
         });
 
         it("should return exactly 1 result", async function() {

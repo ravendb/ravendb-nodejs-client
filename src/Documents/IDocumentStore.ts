@@ -22,7 +22,6 @@ import { BulkInsertOperation } from "./BulkInsertOperation";
 import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
 import { DocumentSubscriptions } from "./Subscriptions/DocumentSubscriptions";
 import { SessionOptions } from "./Session/SessionOptions";
-import { ErrorFirstCallback } from "../Types/Callbacks";
 import { DatabaseSmuggler } from "./Smuggler/DatabaseSmuggler";
 import { IAbstractIndexCreationTask } from "./Indexes/IAbstractIndexCreationTask";
 import { TimeSeriesOperations } from "./TimeSeries/TimeSeriesOperations";
@@ -212,33 +211,12 @@ export interface IDocumentStore extends IDisposable,
     /**
      * Executes the index creation
      */
-    executeIndex(task: IAbstractIndexCreationTask, callback: ErrorFirstCallback<void>): Promise<void>;
-
-    /**
-     * Executes the index creation
-     */
-    executeIndex(task: IAbstractIndexCreationTask, database: string, callback: ErrorFirstCallback<void>): Promise<void>;
-
-    /**
-     * Executes the index creation
-     */
     executeIndexes(tasks: IAbstractIndexCreationTask[]): Promise<void>;
 
     /**
      * Executes the index creation
      */
     executeIndexes(tasks: IAbstractIndexCreationTask[], database: string): Promise<void>;
-
-    /**
-     * Executes the index creation
-     */
-    executeIndexes(tasks: IAbstractIndexCreationTask[], callback: ErrorFirstCallback<void>): Promise<void>;
-
-    /**
-     * Executes the index creation
-     */
-    executeIndexes(
-        tasks: IAbstractIndexCreationTask[], database: string, callback: ErrorFirstCallback<void>): Promise<void>;
 
     /**
      * Contains authentication information: client certificate data;

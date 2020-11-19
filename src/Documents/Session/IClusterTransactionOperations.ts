@@ -1,33 +1,16 @@
 import { ClassConstructor } from "../../Types";
 import { CompareExchangeValue } from "../Operations/CompareExchange/CompareExchangeValue";
-import { ErrorFirstCallback } from "../../Types/Callbacks";
 import { ILazyClusterTransactionOperations } from "./ILazyClusterTransactionOperations";
 
 export interface IClusterTransactionOperations extends IClusterTransactionOperationsBase {
     
     getCompareExchangeValue<T>(key: string): Promise<CompareExchangeValue<T>>;
     getCompareExchangeValue<T>(key: string, type: ClassConstructor<T>): Promise<CompareExchangeValue<T>>;
-    getCompareExchangeValue<T>(
-        key: string, 
-        callback: ErrorFirstCallback<CompareExchangeValue<T>>): Promise<CompareExchangeValue<T>>;
-    getCompareExchangeValue<T>(
-        key: string, 
-        type: ClassConstructor<T>, 
-        callback: ErrorFirstCallback<CompareExchangeValue<T>>): Promise<CompareExchangeValue<T>>;
 
     getCompareExchangeValues<T>(
         keys: string[]): Promise<{ [key: string]: CompareExchangeValue<T> }>;
     getCompareExchangeValues<T>(
         keys: string[], type: ClassConstructor<T>): Promise<{ [key: string]: CompareExchangeValue<T> }>;
-    getCompareExchangeValues<T>(
-        keys: string[], 
-        callback: ErrorFirstCallback<{ [key: string]: CompareExchangeValue<T> }>)
-            : Promise<{ [key: string]: CompareExchangeValue<T> }>;
-    getCompareExchangeValues<T>(
-        keys: string[], 
-        type: ClassConstructor<T>,
-        callback: ErrorFirstCallback<{ [key: string]: CompareExchangeValue<T> }>)
-            : Promise<{ [key: string]: CompareExchangeValue<T> }>;
     getCompareExchangeValues<T>(
         startsWith: string): Promise<{ [key: string]: CompareExchangeValue<T> }>;
     getCompareExchangeValues<T>(

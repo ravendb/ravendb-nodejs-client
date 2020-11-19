@@ -18,8 +18,6 @@ import { EntityToJson } from "./Session/EntityToJson";
 import { KillOperationCommand } from "./Commands/KillOperationCommand";
 import { DocumentConventions } from "./Conventions/DocumentConventions";
 import { ServerNode } from "../Http/ServerNode";
-import { ErrorFirstCallback } from "../Types/Callbacks";
-import { passResultToCallback } from "../Utility/PromiseUtil";
 import { MetadataObject } from "./Session/MetadataObject";
 import { CommandType } from "./Commands/CommandData";
 import { TypeUtil } from "../Utility/TypeUtil";
@@ -109,27 +107,18 @@ export class BulkInsertOperation {
     }
 
     private static _typeCheckStoreArgs(
-        idOrMetadataOrCallback?: string | IMetadataDictionary | ErrorFirstCallback<void>,
-        metadataOrCallback?: IMetadataDictionary | ErrorFirstCallback<void>,
-        callback?: ErrorFirstCallback<void>):
-        { id: string, getId: boolean, metadata: IMetadataDictionary, cb: () => void } {
+        idOrMetadata?: string | IMetadataDictionary,
+        optionalMetadata?: IMetadataDictionary): { id: string, getId: boolean, metadata: IMetadataDictionary } {
 
         let id: string;
         let metadata;
         let getId = false;
 
-        if (typeof idOrMetadataOrCallback === "function") {
-            callback = idOrMetadataOrCallback;
-        } else if (typeof idOrMetadataOrCallback === "string" || callback) {
-            id = idOrMetadataOrCallback as string;
-            if (typeof metadataOrCallback === "function") {
-                callback = metadataOrCallback;
-            } else {
-                metadata = metadataOrCallback;
-            }
+        if (typeof idOrMetadata === "string" || optionalMetadata) {
+            id = idOrMetadata as string;
+            metadata = optionalMetadata;
         } else {
-            metadata = idOrMetadataOrCallback;
-            callback = metadataOrCallback as ErrorFirstCallback<void>;
+            metadata = idOrMetadata;
             if (metadata && (CONSTANTS.Documents.Metadata.ID in metadata)) {
                 id = metadata[CONSTANTS.Documents.Metadata.ID];
             }
@@ -139,41 +128,21 @@ export class BulkInsertOperation {
             getId = true;
         }
 
-        return { id, metadata, getId, cb: callback };
+        return { id, metadata, getId };
     }
 
     public async store(entity: object);
-    public async store(entity: object, callback: ErrorFirstCallback<void>);
     public async store(entity: object, id: string);
     public async store(entity: object, metadata: IMetadataDictionary);
     public async store(entity: object, id: string, metadata: IMetadataDictionary);
-    public async store(entity: object, id: string, callback: ErrorFirstCallback<void>);
-    public async store(entity: object, metadata: IMetadataDictionary, callback: ErrorFirstCallback<void>);
-    public async store(entity: object, id: string, metadata: IMetadataDictionary, callback: ErrorFirstCallback<void>);
     public async store(
         entity: object,
-        idOrMetadataOrCallback?: string | IMetadataDictionary | ErrorFirstCallback<void>,
-        metadataOrCallback?: IMetadataDictionary | ErrorFirstCallback<void>,
-        callback?: ErrorFirstCallback<void>) {
-        let opts: { id: string, getId: boolean, metadata: IMetadataDictionary, cb: () => void };
-        try {
-            // tslint:disable-next-line:prefer-const
-            opts = BulkInsertOperation._typeCheckStoreArgs(
-                idOrMetadataOrCallback, metadataOrCallback, callback);
-        } catch (err) {
-            callback(err);
-        }
+        idOrMetadata?: string | IMetadataDictionary,
+        optionalMetadata?: IMetadataDictionary) {
+        const opts = BulkInsertOperation._typeCheckStoreArgs(idOrMetadata, optionalMetadata);
+        let metadata = opts.metadata;
 
-        const result = this._store(entity, opts);
-        passResultToCallback(result, opts.cb);
-        return result;
-    }
-
-    private async _store(
-        entity: object,
-        { id, getId, metadata }: { id: string, getId: boolean, metadata: IMetadataDictionary }) {
-        
-        id = getId ? await this._getId(entity) : id;
+        const id = opts.getId ? await this._getId(entity) : opts.id;
         BulkInsertOperation._verifyValidId(id);
 
         if (!this._currentWriter) {
@@ -359,15 +328,7 @@ export class BulkInsertOperation {
         }
     }
 
-    public async abort(): Promise<void>;
-    public async abort(callback: ErrorFirstCallback<void>): Promise<void>;
-    public async abort(callback?: ErrorFirstCallback<void>): Promise<void> {
-        const abortPromise = this._abortAsync();
-        passResultToCallback(abortPromise, callback);
-        return await abortPromise;
-    }
-
-    private async _abortAsync(): Promise<void> {
+    public async abort(): Promise<void> {
         this._aborted = true;
 
         if (this._operationId !== -1) {
@@ -387,15 +348,7 @@ export class BulkInsertOperation {
             "BulkInsertAbortedException", "Bulk insert was aborted by the user."));
     }
 
-    public async finish(): Promise<void>;
-    public async finish(callback: ErrorFirstCallback<void>): Promise<void>;
-    public async finish(callback?: ErrorFirstCallback<void>): Promise<void> {
-        const finishPromise = this._finishAsync();
-        passResultToCallback(finishPromise, callback);
-        return finishPromise;
-    }
-
-    private async _finishAsync() {
+    public async finish(): Promise<void> {
         this._endPreviousCommandIfNeeded();
 
         if (this._currentWriter) {
@@ -412,13 +365,11 @@ export class BulkInsertOperation {
             await this._checkIfBulkInsertWasAborted();
         }
 
-        return Promise.race(
+        await Promise.race(
             [
                 this._bulkInsertExecuteTask || Promise.resolve(),
                 this._bulkInsertAborted || Promise.resolve()
-            ]) 
-        // tslint:disable-next-line:no-empty
-            .then(() => {});
+            ]);
     }
 
     private readonly _conventions: DocumentConventions;

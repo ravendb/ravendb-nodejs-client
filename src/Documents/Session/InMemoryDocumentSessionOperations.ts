@@ -35,7 +35,6 @@ import { DateUtil } from "../../Utility/DateUtil";
 import { ObjectUtil } from "../../Utility/ObjectUtil";
 import { IncludesUtil } from "./IncludesUtil";
 import { TypeUtil } from "../../Utility/TypeUtil";
-import { ErrorFirstCallback } from "../../Types/Callbacks";
 import { DocumentType } from "../DocumentAbstractions";
 import { IdTypeAndName } from "../IdTypeAndName";
 import { BatchOptions } from "../Commands/Batches/BatchOptions";
@@ -1225,53 +1224,29 @@ export abstract class InMemoryDocumentSessionOperations
         entity: TEntity): Promise<void>;
     public store<TEntity extends object>(
         entity: TEntity,
-        callback?: ErrorFirstCallback<void>): Promise<void>;
+        id?: string): Promise<void>;
     public store<TEntity extends object>(
         entity: TEntity,
         id?: string,
-        callback?: ErrorFirstCallback<void>): Promise<void>;
+        documentType?: DocumentType<TEntity>): Promise<void>;
     public store<TEntity extends object>(
         entity: TEntity,
         id?: string,
-        documentType?: DocumentType<TEntity>,
-        callback?: ErrorFirstCallback<void>): Promise<void>;
+        options?: StoreOptions<TEntity>): Promise<void>;
     public store<TEntity extends object>(
         entity: TEntity,
         id?: string,
-        options?: StoreOptions<TEntity>,
-        callback?: ErrorFirstCallback<void>): Promise<void>;
-    public store<TEntity extends object>(
-        entity: TEntity,
-        idOrCallback?:
-            string | ErrorFirstCallback<void>,
-        docTypeOrOptionsOrCallback?:
-            DocumentType<TEntity> | StoreOptions<TEntity> | ErrorFirstCallback<void>,
-        callback?: ErrorFirstCallback<void>): Promise<void> {
+        docTypeOrOptions?: DocumentType<TEntity> | StoreOptions<TEntity>): Promise<void> {
 
-        let id: string = null;
         let documentType: DocumentType<TEntity> = null;
         let options: StoreOptions<TEntity> = {};
 
-        // figure out second arg
-        if (TypeUtil.isString(idOrCallback) || !idOrCallback) {
-            // if it's a string and registered type
-            id = idOrCallback as string;
-        } else if (TypeUtil.isFunction(idOrCallback)) {
-            callback = idOrCallback as ErrorFirstCallback<void>;
-        } else {
-            throwError("InvalidArgumentException", "Invalid 2nd parameter: must be id string or callback.");
-        }
-
         // figure out third arg
-        if (TypeUtil.isDocumentType<TEntity>(docTypeOrOptionsOrCallback)) {
-            documentType = docTypeOrOptionsOrCallback as DocumentType<TEntity>;
-        } else if (TypeUtil.isFunction(docTypeOrOptionsOrCallback)) {
-            callback = docTypeOrOptionsOrCallback as ErrorFirstCallback<void>;
-        } else if (TypeUtil.isObject(docTypeOrOptionsOrCallback)) {
-            options = docTypeOrOptionsOrCallback as StoreOptions<TEntity>;
+        if (TypeUtil.isDocumentType<TEntity>(docTypeOrOptions)) {
+            documentType = docTypeOrOptions as DocumentType<TEntity>;
+        } else if (TypeUtil.isObject(docTypeOrOptions)) {
+            options = docTypeOrOptions as StoreOptions<TEntity>;
         }
-
-        callback = callback || TypeUtil.NOOP;
 
         const changeVector = options.changeVector;
         documentType = documentType || options.documentType;
@@ -1290,12 +1265,7 @@ export abstract class InMemoryDocumentSessionOperations
             forceConcurrencyCheck = !hasId ? "Forced" : "Auto";
         }
 
-        const result = BluebirdPromise.resolve()
-            .then(() => this._storeInternal(entity, changeVector, id, forceConcurrencyCheck, documentType))
-            .tap(() => callback())
-            .tapCatch(err => callback(err));
-
-        return Promise.resolve(result);
+        return this._storeInternal(entity, changeVector, id, forceConcurrencyCheck, documentType);
     }
 
     protected _generateDocumentKeysOnStore: boolean = true;

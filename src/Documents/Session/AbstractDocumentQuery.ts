@@ -55,7 +55,7 @@ import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField";
 import { SpatialCriteria } from "../Queries/Spatial/SpatialCriteria";
 import { SessionBeforeQueryEventArgs } from "./SessionEvents";
 import { CmpXchg } from "./CmpXchg";
-import { ErrorFirstCallback, ValueCallback } from "../../Types/Callbacks";
+import { ValueCallback } from "../../Types/Callbacks";
 import { DocumentQueryCustomization } from "./DocumentQueryCustomization";
 import { FacetBase } from "../Queries/Facets/FacetBase";
 import { MoreLikeThisScope } from "../Queries/MoreLikeThis/MoreLikeThisScope";
@@ -78,7 +78,6 @@ import { QueryHighlightings } from "../Queries/Highlighting/QueryHighlightings";
 import { ExplanationOptions } from "../Queries/Explanation/ExplanationOptions";
 import { CountersByDocId } from "./CounterInternalTypes";
 import { IncludeBuilderBase } from "./Loaders/IncludeBuilderBase";
-import { passResultToCallback } from "../../Utility/PromiseUtil";
 import * as os from "os";
 import { GraphQueryToken } from "./Tokens/GraphQueryToken";
 import { IncludesUtil } from "./IncludesUtil";
@@ -2050,78 +2049,55 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             });
     }
 
-    public async all(callback?: ErrorFirstCallback<T[]>): Promise<T[]> {
-        callback = callback || TypeUtil.NOOP;
-        const result = BluebirdPromise.resolve(this.iterator())
-            .then((entries) => [...entries])
-            .tap(x => callback(null, x))
-            .tapCatch(err => callback(err));
-        return Promise.resolve(result);
+    public async all(): Promise<T[]> {
+        const results = await this.iterator();
+        return [...results];
     }
 
-    public getQueryResult(): Promise<QueryResult> {
-        return Promise.resolve()
-            .then(() => this._initSync())
-            .then(() => this._queryOperation.getCurrentQueryResults().createSnapshot());
+    public async getQueryResult(): Promise<QueryResult> {
+        await this._initSync();
+        return this._queryOperation.getCurrentQueryResults().createSnapshot();
     }
 
-    public async first(callback?: ErrorFirstCallback<T>): Promise<T> {
-        callback = callback || TypeUtil.NOOP;
-        const resultPromise = this._executeQueryOperation(1)
-            .then(entries => {
-                if (entries.length === 0) {
-                    throwError("InvalidOperationException", "Expected at least one result.");
-                }
-                
-                return entries[0];
-            });
+    public async first(): Promise<T> {
+        const entries = await this._executeQueryOperation(1);
 
-        passResultToCallback(resultPromise, callback);
-        return resultPromise;
+        if (entries.length === 0) {
+            throwError("InvalidOperationException", "Expected at least one result.");
+        }
+
+        return entries[0];
     }
 
-    public async firstOrNull(callback?: ErrorFirstCallback<T>): Promise<T> {
-        callback = callback || TypeUtil.NOOP;
-        const resultPromise = this._executeQueryOperation(1)
-            .then(entries => entries[0] || null);
-
-        passResultToCallback(resultPromise, callback);
-        return resultPromise;
+    public async firstOrNull(): Promise<T> {
+        const entries = await this._executeQueryOperation(1);
+        return entries[0] || null;
     }
 
-    public async single(callback?: ErrorFirstCallback<T>): Promise<T> {
-        callback = callback || TypeUtil.NOOP;
-        const resultPromise = this._executeQueryOperation(2)
-            .then(entries => {
-                if (entries.length !== 1) {
-                    throwError("InvalidOperationException", 
-                        `Expected single result, but got ${ entries.length ? "more than that" : 0 }.`);
-                }
-                
-                return entries[0];
-            });
+    public async single(): Promise<T> {
+        const entries = await this._executeQueryOperation(2);
 
-        passResultToCallback(resultPromise, callback);
-        return resultPromise;
+        if (entries.length !== 1) {
+            throwError("InvalidOperationException",
+                `Expected single result, but got ${ entries.length ? "more than that" : 0 }.`);
+        }
+
+        return entries[0];
     }
 
-    public async singleOrNull(callback?: ErrorFirstCallback<T>): Promise<T> {
-        callback = callback || TypeUtil.NOOP;
-        const resultPromise = this._executeQueryOperation(2)
-            .then(entries => entries.length === 1 ? entries[0] : null);
-
-        passResultToCallback(resultPromise, callback);
-        return resultPromise;
+    public async singleOrNull(): Promise<T> {
+        const entries = await this._executeQueryOperation(2);
+        if (entries.length === 2) {
+            throwError("InvalidOperationException",
+                `Expected single result, but got more than that.`);
+        }
+        return entries.length === 1 ? entries[0] : null;
     }
 
-    public async count(callback?: ErrorFirstCallback<number>): Promise<number> {
-        callback = callback || TypeUtil.NOOP;
+    public async count(): Promise<number> {
         this._take(0);
-        const result = BluebirdPromise.resolve(this.getQueryResult())
-            .then(queryResult => queryResult.totalResults)
-            .tap(x => callback(null, x))
-            .tapCatch(err => callback(err));
-        return Promise.resolve(result);
+        const queryResult = await this.getQueryResult();
+        return queryResult.totalResults;
     }
 
     private async _executeQueryOperation(take?: number): Promise<T[]> {

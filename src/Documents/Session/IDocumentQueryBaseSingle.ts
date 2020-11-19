@@ -1,5 +1,4 @@
 import { Lazy } from "../Lazy";
-import { ErrorFirstCallback } from "../../Types/Callbacks";
 
 export interface IDocumentQueryBaseSingle<T extends object> {
     //TBD  Lazy<int> CountLazily();
@@ -7,27 +6,27 @@ export interface IDocumentQueryBaseSingle<T extends object> {
     /**
      * Returns first element or throws if sequence is empty.
      */
-    first(callback?: ErrorFirstCallback<T>): Promise<T>;
+    first(): Promise<T>;
 
     /**
      * Returns first element if there's any or null otherwise.
      */
-    firstOrNull(callback?: ErrorFirstCallback<T>): Promise<T>;
+    firstOrNull(): Promise<T>;
 
     /**
      * Returns single element or throws if sequence is empty or contains more than one element.
      */
-    single(callback?: ErrorFirstCallback<T>): Promise<T>;
+    single(): Promise<T>;
 
     /**
      * Returns single element if there's any or null otherwise.
      */
-    singleOrNull(callback?: ErrorFirstCallback<T>): Promise<T>;
+    singleOrNull(): Promise<T>;
 
     /**
      * Gets the total count of records for this query
      */
-    count(callback?: ErrorFirstCallback<number>): Promise<number>;
+    count(): Promise<number>;
 
     /**
      * Register the query as a lazy query in the session and return a lazy

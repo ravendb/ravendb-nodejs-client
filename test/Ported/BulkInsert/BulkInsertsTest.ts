@@ -275,11 +275,6 @@ describe("BulkInsertOperation._typeCheckStoreArgs() properly parses arguments", 
     const expectedMetadata = {} as IMetadataDictionary;
     const expectedNullId = null;
 
-    it("accepts callback", () => {
-        const { cb } = typeCheckStoreArgs(expectedCallback);
-        assert.strictEqual(cb, expectedCallback);
-    });
-
     it("accepts id", () => {
         const { id, getId } = typeCheckStoreArgs(expectedId);
         assert.strictEqual(id, expectedId);
@@ -287,66 +282,22 @@ describe("BulkInsertOperation._typeCheckStoreArgs() properly parses arguments", 
     });
 
     it("accepts metadata", () => {
-        const { id, getId, metadata, cb } = typeCheckStoreArgs(expectedMetadata);
+        const { id, getId, metadata } = typeCheckStoreArgs(expectedMetadata);
         assert.strictEqual(metadata, expectedMetadata);
         assert.ok(!id);
         assert.ok(getId);
-        assert.ok(!cb);
     });
 
     it("accepts id, metadata", () => {
-        const { id, getId, metadata, cb } = typeCheckStoreArgs(expectedId, expectedMetadata);
+        const { id, getId, metadata } = typeCheckStoreArgs(expectedId, expectedMetadata);
         assert.strictEqual(metadata, expectedMetadata);
         assert.strictEqual(id, expectedId);
         assert.ok(!getId);
-        assert.ok(!cb);
     });
 
-    it("accepts id, callback", () => {
-        const { id, getId, metadata, cb } = typeCheckStoreArgs(expectedId, expectedCallback);
-        assert.strictEqual(id, expectedId);
-        assert.strictEqual(cb, expectedCallback);
-        assert.ok(!getId);
-        assert.ok(!metadata);
-    });
-
-    it("accepts metadata, callback", () => {
-        const { id, getId, metadata, cb } = typeCheckStoreArgs(expectedMetadata, expectedCallback);
+    it("accepts null id, metadata returns getId true", () => {
+        const { id, getId, metadata } = typeCheckStoreArgs(expectedNullId, expectedMetadata);
         assert.strictEqual(metadata, expectedMetadata);
-        assert.strictEqual(cb, expectedCallback);
-        assert.ok(getId);
-        assert.ok(!id);
-    });
-
-    it("accepts null metadata, callback", () => {
-        const { id, getId, metadata, cb } = typeCheckStoreArgs(null, expectedCallback);
-        assert.strictEqual(metadata, null);
-        assert.strictEqual(cb, expectedCallback);
-        assert.ok(getId);
-        assert.ok(!id);
-    });
-
-    it("accepts metadata with id, callback", () => {
-        const meta = { "@id": "aaa" } as any as IMetadataDictionary;
-        const { id, getId, metadata, cb } = typeCheckStoreArgs(meta);
-        assert.strictEqual(metadata, meta);
-        assert.strictEqual(id, meta["@id"]);
-        assert.ok(!getId);
-        assert.ok(id);
-    });
-
-    it("accepts id, metadata, callback", () => {
-        const { id, getId, metadata, cb } = typeCheckStoreArgs(expectedId, expectedMetadata, expectedCallback);
-        assert.strictEqual(metadata, expectedMetadata);
-        assert.strictEqual(cb, expectedCallback);
-        assert.strictEqual(id, expectedId);
-        assert.ok(!getId);
-    });
-
-    it("accepts null id, metadata, callback returns getId true", () => {
-        const { id, getId, metadata, cb } = typeCheckStoreArgs(expectedNullId, expectedMetadata, expectedCallback);
-        assert.strictEqual(metadata, expectedMetadata);
-        assert.strictEqual(cb, expectedCallback);
         assert.ok(!id);
         assert.ok(getId);
     });

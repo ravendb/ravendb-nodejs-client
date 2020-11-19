@@ -1,7 +1,6 @@
 import { Lazy } from "../Lazy";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { IDisposable } from "../../Types/Contracts";
-import { ErrorFirstCallback } from "../../Types/Callbacks";
 import { DocumentType } from "../DocumentAbstractions";
 import { ClassConstructor, EntitiesCollectionObject, ObjectTypeDescriptor } from "../../Types";
 import { IAdvancedSessionOperations } from "./IAdvancedSessionOperations";
@@ -146,49 +145,33 @@ export interface IDocumentSession extends IDisposable {
     /**
      * Loads entity with the specified id.
      */
-    load<TEntity extends object>(
-        id: string,
-        callback?: ErrorFirstCallback<TEntity>): Promise<TEntity>;
+    load<TEntity extends object>(id: string): Promise<TEntity>;
 
     /**
      * Loads the entity with the specified id.
      */
-    load<TEntity extends object>(
-        id: string,
-        documentType?: DocumentType<TEntity>,
-        callback?: ErrorFirstCallback<TEntity>): Promise<TEntity>;
+    load<TEntity extends object>(id: string, documentType?: DocumentType<TEntity>): Promise<TEntity>;
 
     /**
      * Loads the entity with the specified id.
      */
-    load<TEntity extends object>(
-        id: string,
-        options?: LoadOptions<TEntity>,
-        callback?: ErrorFirstCallback<TEntity>): Promise<TEntity>;
+    load<TEntity extends object>(id: string, options?: LoadOptions<TEntity>): Promise<TEntity>;
 
     /**
      * Loads multiple entities with the specified ids.
      */
-    load<TEntity extends object>(
-        ids: string[],
-        callback?: ErrorFirstCallback<EntitiesCollectionObject<TEntity>>): Promise<EntitiesCollectionObject<TEntity>>;
+    load<TEntity extends object>(ids: string[]): Promise<EntitiesCollectionObject<TEntity>>;
 
     /**
      * Loads multiple entities with the specified ids.
      */
-    load<TEntity extends object>(
-        ids: string[],
-        documentType?: DocumentType<TEntity>,
-        callback?: ErrorFirstCallback<TEntity>):
+    load<TEntity extends object>(ids: string[], documentType?: DocumentType<TEntity>):
         Promise<EntitiesCollectionObject<TEntity>>;
 
     /**
      * Loads multiple entities with the specified ids.
      */
-    load<TEntity extends object>(
-        ids: string[],
-        options?: LoadOptions<TEntity>,
-        callback?: ErrorFirstCallback<TEntity>):
+    load<TEntity extends object>(ids: string[], options?: LoadOptions<TEntity>):
         Promise<EntitiesCollectionObject<TEntity>>;
 
     /**
@@ -215,34 +198,22 @@ export interface IDocumentSession extends IDisposable {
      * Stores entity in session, extracts Id from entity using Conventions or generates new one if it is not available.
      * Forces concurrency check if the Id is not available during extraction.
      */
-    store<TEntity extends object>(
-        document: TEntity, callback?: ErrorFirstCallback<void>): Promise<void>;
+    store<TEntity extends object>(document: TEntity): Promise<void>;
 
     /**
      * Stores the specified dynamic entity, under the specified id.
      */
-    store<TEntity extends object>(
-        document: TEntity,
-        id?: string,
-        callback?: ErrorFirstCallback<void>): Promise<void>;
+    store<TEntity extends object>(document: TEntity, id?: string): Promise<void>;
 
     /**
      * Stores the specified dynamic entity, under the specified id.
      */
-    store<TEntity extends object>(
-        document: TEntity,
-        id?: string,
-        documentType?: DocumentType<TEntity>,
-        callback?: ErrorFirstCallback<void>): Promise<void>;
+    store<TEntity extends object>(document: TEntity, id?: string, documentType?: DocumentType<TEntity>): Promise<void>;
 
     /**
      * Stores entity in session with given id and forces concurrency check with given change-vector (see options).
      */
-    store<TEntity extends object>(
-        document: TEntity,
-        id?: string,
-        options?: StoreOptions<TEntity>,
-        callback?: ErrorFirstCallback<void>): Promise<void>;
+    store<TEntity extends object>(document: TEntity, id?: string, options?: StoreOptions<TEntity>): Promise<void>;
 
     /**
      * Begin a load while including the specified path
@@ -254,11 +225,6 @@ export interface IDocumentSession extends IDisposable {
      * Saves all the pending changes to the server.
      */
     saveChanges(): Promise<void>;
-
-    /**
-     * Saves all the pending changes to the server.
-     */
-    saveChanges(callback: ErrorFirstCallback<void>): Promise<void>;
 
     /**
      * Queries collection or index.
