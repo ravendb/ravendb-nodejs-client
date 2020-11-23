@@ -1,8 +1,8 @@
 import { IDocumentStore } from "../../../src/Documents/IDocumentStore";
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
-import { AbstractIndexCreationTask } from "../../../src/Documents/Indexes/AbstractIndexCreationTask";
 import { Company } from "../../Assets/Orders";
 import { assertThat } from "../../Utils/AssertExtensions";
+import { AbstractJavaScriptIndexCreationTask } from "../../../src";
 
 describe("RavenDB_12030", function () {
 
@@ -128,11 +128,15 @@ class Fox {
     public name: string;
 }
 
-class Fox_Search extends AbstractIndexCreationTask {
+class Fox_Search extends AbstractJavaScriptIndexCreationTask<Fox, Pick<Fox, "name">> {
     public constructor() {
         super();
 
-        this.map = "from f in docs.Foxes select new { f.name }";
+        this.map(Fox, f => {
+            return {
+                name: f.name
+            }
+        });
 
         this.index("name", "Search");
     }

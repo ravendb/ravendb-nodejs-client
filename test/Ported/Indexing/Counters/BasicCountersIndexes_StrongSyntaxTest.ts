@@ -56,7 +56,7 @@ class MyCounterIndex extends AbstractCountersIndexCreationTask {
     public constructor() {
         super();
 
-        this.map =  "counters.Companies.HeartRate.Select(counter => new {\n" +
+        this.map = "counters.Companies.HeartRate.Select(counter => new {\n" +
             "    heartBeat = counter.Value,\n" +
             "    name = counter.Name,\n" +
             "    user = counter.DocumentId\n" +

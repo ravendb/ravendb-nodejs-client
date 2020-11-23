@@ -2,14 +2,18 @@ import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
+    AbstractJavaScriptIndexCreationTask,
     IDocumentStore,
-    AbstractIndexCreationTask,
 } from "../../../src";
 
-class TaskIndex extends AbstractIndexCreationTask {
+class TaskIndex extends AbstractJavaScriptIndexCreationTask<Task, Pick<Task, "assigneeId">> {
     public constructor() {
         super();
-        this.map = "from task in docs.Tasks select new { task.assigneeId } ";
+        this.map(Task, task => {
+            return {
+                assigneeId: task.assigneeId
+            }
+        });
     }
 }
 
@@ -50,7 +54,7 @@ describe("lazy aggregation embedded", function () {
         await testContext.waitForIndexing(store);
 
         const query = session.query({
-            indexName: AbstractIndexCreationTask.getIndexNameForCtor(TaskIndex.name)
+            indexName: AbstractJavaScriptIndexCreationTask.getIndexNameForCtor(TaskIndex.name)
         })
             .aggregateBy(f =>
                 f.byField("assigneeId")

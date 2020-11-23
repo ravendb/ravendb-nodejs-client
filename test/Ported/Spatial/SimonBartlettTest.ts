@@ -2,10 +2,11 @@ import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
+    AbstractJavaScriptIndexCreationTask,
     IDocumentStore,
-    AbstractIndexCreationTask,
     SpatialOptions,
 } from "../../../src";
+import { SpatialField } from "../../../src/Documents/Indexes/StronglyTyped";
 
 describe("SimonBartlettTest", function () {
 
@@ -94,13 +95,17 @@ class GeoDocument {
     public WKT: string;
 }
 
-class GeoIndex extends AbstractIndexCreationTask {
+class GeoIndex extends AbstractJavaScriptIndexCreationTask<GeoDocument, { WKT: SpatialField }> {
     public constructor() {
         super();
 
-        this.map = "docs.GeoDocuments.Select(doc => new {\n" +
-            "    WKT = this.CreateSpatialField(doc.WKT)\n" +
-            "})";
+        const { createSpatialField } = this.mapUtils();
+
+        this.map(GeoDocument, doc => {
+            return {
+                WKT: createSpatialField(doc.WKT)
+            }
+        });
 
         const spatialOptions = new SpatialOptions();
         spatialOptions.strategy = "GeohashPrefixTree";

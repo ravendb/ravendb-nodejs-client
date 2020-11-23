@@ -3,12 +3,13 @@ import { testContext, disposeTestDocumentStore, storeNewDoc } from "../../Utils/
 
 import {
     IDocumentStore,
-    AbstractJavaScriptIndexCreationTask,
-    IndexFieldOptions,
+    AbstractRawJavaScriptIndexCreationTask,
 } from "../../../src";
 import { CONSTANTS } from "../../../src/Constants";
 import { User } from "../../Assets/Entities";
 import { assertThat } from "../../Utils/AssertExtensions";
+import { AbstractJavaScriptIndexCreationTask } from "../../../src/Documents/Indexes/AbstractJavaScriptIndexCreationTask";
+import { CreatedField } from "../../../src/Documents/Indexes/StronglyTyped";
 
 class Category {
     public description: string;
@@ -36,11 +37,21 @@ class Product {
     public available: boolean;
 }
 
-class UsersByNameWithAdditionalSources extends AbstractJavaScriptIndexCreationTask {
+class UsersByNameWithAdditionalSources extends AbstractJavaScriptIndexCreationTask<User, Pick<User, "name">> {
     public constructor() {
         super();
-        this.maps = new Set(["map('Users', function(u) { return { name: mr(u.name)}; })"]);
-        this.additionalSources = { "The Script": "function mr(x) { return 'Mr. ' + x; }" };
+
+        const mr = function mr(x: string) {
+            return "Mr. " + x;
+        }
+
+        this.map(User, x => {
+            return {
+                name: mr(x.name)
+            }
+        });
+
+        this.addSource("The Script", mr);
     }
 }
 
@@ -48,57 +59,55 @@ interface FanoutByNumbersWithReduceResult {
     foo: string;
     sum: number;
 }
-class FanoutByNumbersWithReduce extends AbstractJavaScriptIndexCreationTask {
+class FanoutByNumbersWithReduce extends AbstractJavaScriptIndexCreationTask<Fanout, FanoutByNumbersWithReduceResult> {
         public constructor() {
             super();
-            this.maps = new Set([
-                `map('Fanouts', function (f) {
-                        var result = [];
-                        for(var i = 0; i < f.numbers.length; i++)
-                        {
-                            result.push({
-                                foo: f.foo,
-                                sum: f.numbers[i]
-                            });
-                        }
-                        return result;
-                        })`]);
-            this.reduce =
-                `groupBy(f => f.foo)
-                    .aggregate(g => ({  
-                        foo: g.key, 
-                        sum: g.values.reduce((total, val) => 
-                            val.sum + total,0) 
-                    }))`;
+
+            this.map(Fanout, f => {
+                const result: FanoutByNumbersWithReduceResult[] = [];
+                for (let i = 0; i < f.numbers.length; i++) {
+                    result.push({
+                        foo: f.foo,
+                        sum: f.numbers[i]
+                    });
+                }
+                return result;
+            });
+
+            this.reduce(r => r.groupBy(x => x.foo).aggregate(g => ({
+                foo: g.key,
+                sum: g.values.reduce((total, val) => val.sum + total, 0)
+            })));
         }
     }
 
 class UsersByNameAndAnalyzedNameResult {
     public analyzedName: string;
 }
-class UsersByNameAndAnalyzedName extends AbstractJavaScriptIndexCreationTask {
+class UsersByNameAndAnalyzedName extends AbstractJavaScriptIndexCreationTask<User> {
     public constructor() {
         super();
-        this.maps = new Set([`map('Users', function (u){
-                                    return {
-                                        name: u.name,
-                                        _: {
-                                            $value: u.name, 
-                                            $name:'analyzedName', 
-                                            $options:{ indexing: 'Search', storage: true }
-                                        }
-                                    };
-                                })`]);
 
-        const fieldOptions = this.fields = {};
-        const indexFieldOptions = new IndexFieldOptions();
-        indexFieldOptions.indexing = "Search";
-        indexFieldOptions.analyzer = "StandardAnalyzer";
-        fieldOptions[CONSTANTS.Documents.Indexing.Fields.ALL_FIELDS] = indexFieldOptions;
+        this.map(User, u => {
+            return {
+                name: u.name,
+                _: {
+                    $value: u.name,
+                    $name: "analyzedName",
+                    $options: {
+                        indexing: "Search",
+                        storage: true
+                    }
+                } as CreatedField
+            }
+        });
+
+        this.index(CONSTANTS.Documents.Indexing.Fields.ALL_FIELDS, "Search");
+        this.analyze(CONSTANTS.Documents.Indexing.Fields.ALL_FIELDS, "StandardAnalyzer");
     }
 }
 
-class UsersAndProductsByName extends AbstractJavaScriptIndexCreationTask {
+class UsersAndProductsByName extends AbstractRawJavaScriptIndexCreationTask {
     public constructor() {
         super();
         this.maps = new Set([
@@ -108,7 +117,7 @@ class UsersAndProductsByName extends AbstractJavaScriptIndexCreationTask {
     }
 }
 
-class UsersAndProductsByNameAndCount extends AbstractJavaScriptIndexCreationTask {
+class UsersAndProductsByNameAndCount extends AbstractRawJavaScriptIndexCreationTask {
     public constructor() {
         super();
         this.maps = new Set([
@@ -130,23 +139,28 @@ interface ProductsByCategoryResult {
     count: number;
 }
 
-class ProductsByCategory extends AbstractJavaScriptIndexCreationTask {
+class ProductsByCategory extends AbstractJavaScriptIndexCreationTask<Product2, { category: string, count: number }> {
     public constructor() {
         super();
-        this.maps = new Set(["map('product2s', function(p){\n" +
-            "                        return {\n" +
-            "                            category:\n" +
-                "                            load(p.category, 'categories').name,\n" +
-            "                            count:\n" +
-                "                            1\n" +
-            "                        }\n" +
-            "                    })"]);
-        this.reduce = "groupBy( x => x.category )\n" +
-            "                            .aggregate(g => {\n" +
-            "                                return {\n" +
-            "                                    category: g.key,\n" +
-            "                                    count: g.values.reduce((count, val) => val.count + count, 0)\n" +
-            "                               };})";
+
+        const { load } = this.mapUtils();
+
+        this.map(Product2, p => {
+            return {
+                category: load<Category>(p.category, "categories").name,
+                count: 1
+            }
+        });
+
+        this.reduce(r => r.groupBy(x => x.category)
+            .aggregate(g => {
+                return {
+                    category: g.key,
+                    count: g.values.reduce((count, val) => val.count + count, 0)
+                }
+            })
+        );
+
         this.outputReduceToCollection = "CategoryCounts";
     }
 }
@@ -175,10 +189,10 @@ describe("JavaScriptIndexTest", function () {
 
     it("canUseJavaScriptIndex", async () => {
 
-        class UsersByName extends AbstractJavaScriptIndexCreationTask {
+        class UsersByName extends AbstractJavaScriptIndexCreationTask<User> {
             public constructor() {
                 super();
-                this.maps = new Set(["map('Users', u => ({ name: u.name, count: 1 }))"]);
+                this.map(User, u => ({ name: u.name, count: 1 }));
             }
         }
             

@@ -3,7 +3,7 @@ import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
     IDocumentStore,
-    AbstractMultiMapIndexCreationTask,
+    AbstractCsharpMultiMapIndexCreationTask,
     Highlightings,
 } from "../../../src";
 import { assertThat } from "../../Utils/AssertExtensions";
@@ -27,7 +27,7 @@ class SearchResults {
     public title: string;
 }
 
-class ContentSearchIndex extends AbstractMultiMapIndexCreationTask {
+class ContentSearchIndex extends AbstractCsharpMultiMapIndexCreationTask {
     public constructor() {
         super();
 

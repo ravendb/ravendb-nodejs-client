@@ -1,5 +1,4 @@
 import {
-    AbstractIndexCreationTask,
     FacetOptions, IDocumentSession,
     IDocumentStore,
     IndexQueryParameters,
@@ -8,6 +7,7 @@ import {
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
 import { HashCalculator } from "../../../src/Documents/Queries/HashCalculator";
 import { assertThat } from "../../Utils/AssertExtensions";
+import { AbstractJavaScriptIndexCreationTask } from "../../../src/Documents/Indexes/AbstractJavaScriptIndexCreationTask";
 
 describe("RavenDB_15825", function () {
 
@@ -161,11 +161,16 @@ class Contact {
     public tags: string[];
 }
 
-class ContactsIndex extends AbstractIndexCreationTask {
+class ContactsIndex extends AbstractJavaScriptIndexCreationTask<Contact, Pick<Contact, "tags" | "active" | "companyId">> {
     constructor() {
         super();
 
-        this.map = "from contact in docs.contacts select new { companyId = contact.companyId, tags = contact.tags, active = contact.active }";
+        this.map(Contact, c => {
+            return {
+                companyId: c.companyId,
+                tags: c.tags,
+                active: c.active
+            }});
     }
 }
 

@@ -1,5 +1,5 @@
 import {
-    AbstractIndexCreationTask,
+    AbstractJavaScriptIndexCreationTask,
     IDocumentStore,
     IndexDefinition,
     PutIndexesOperation,
@@ -77,18 +77,22 @@ export class FacetTestContext {
     }
 }
 
-export class CameraCostIndex extends AbstractIndexCreationTask {
+export class CameraCostIndex
+    extends AbstractJavaScriptIndexCreationTask<Camera,
+        Pick<Camera, "manufacturer" | "model" | "cost" | "dateOfListing" | "megapixels">> {
 
-    public createIndexDefinition() {
-        const indexDefinition = new IndexDefinition();
-        indexDefinition.maps = new Set(["from camera in docs.Cameras select new  { camera.manufacturer,\n" +
-        "                            camera.model,\n" +
-        "                            camera.cost,\n" +
-        "                            camera.dateOfListing,\n" +
-        "                            camera.megapixels" +
-        " }"]);
+    public constructor() {
+        super();
 
-        return indexDefinition;
+        this.map(Camera, c => {
+            return {
+                manufacturer: c.manufacturer,
+                model: c.model,
+                cost: c.cost,
+                dateOfListing: c.dateOfListing,
+                megapixels: c.megapixels
+            }
+        });
     }
 
     public getIndexName() {

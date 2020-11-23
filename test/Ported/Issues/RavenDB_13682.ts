@@ -2,9 +2,10 @@ import { IDocumentStore } from "../../../src/Documents/IDocumentStore";
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
 import { assertThat } from "../../Utils/AssertExtensions";
 import { PointField } from "../../../src/Documents/Queries/Spatial/PointField";
-import { AbstractIndexCreationTask } from "../../../src/Documents/Indexes/AbstractIndexCreationTask";
 import { CreateSampleDataOperation } from "../../Utils/CreateSampleDataOperation";
 import { Order } from "../../Assets/Orders";
+import { AbstractJavaScriptIndexCreationTask } from "../../../src/Documents/Indexes/AbstractJavaScriptIndexCreationTask";
+import { SpatialField } from "../../../src/Documents/Indexes/StronglyTyped";
 
 describe("RavenDB_13682", function () {
 
@@ -153,14 +154,18 @@ describe("RavenDB_13682", function () {
 
 });
 
-class SpatialIndex extends AbstractIndexCreationTask {
+class SpatialIndex extends AbstractJavaScriptIndexCreationTask<Item, { name: string, coordinates: SpatialField }> {
     public constructor() {
         super();
 
-        this.map = `docs.Items.Select(doc => new {
-    name = doc.name, 
-    coordinates = this.CreateSpatialField(doc.lat, doc.lng)
-})`;
+        const { createSpatialField } = this.mapUtils();
+
+        this.map(Item, doc => {
+            return {
+                name: doc.name,
+                coordinates: createSpatialField(doc.lat, doc.lng)
+            }
+        });
     }
 }
 

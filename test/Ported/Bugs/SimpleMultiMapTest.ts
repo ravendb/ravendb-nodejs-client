@@ -2,7 +2,7 @@ import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
-    AbstractMultiMapIndexCreationTask, GetIndexOperation,
+    AbstractCsharpMultiMapIndexCreationTask, GetIndexOperation,
     IDocumentStore,
 } from "../../../src";
 
@@ -57,7 +57,7 @@ describe("SimpleMultiMapTest", function () {
     });
 });
 
-export class CatsAndDogs extends AbstractMultiMapIndexCreationTask {
+export class CatsAndDogs extends AbstractCsharpMultiMapIndexCreationTask {
     public constructor() {
         super();
         this.addMap("from cat in docs.Cats select new { cat.name }");

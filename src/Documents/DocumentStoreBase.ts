@@ -31,12 +31,12 @@ import { DocumentSubscriptions } from "./Subscriptions/DocumentSubscriptions";
 import { DocumentStore } from "./DocumentStore";
 import { TypeUtil } from "../Utility/TypeUtil";
 import { CaseInsensitiveKeysMap } from "../Primitives/CaseInsensitiveKeysMap";
-import { AbstractIndexCreationTask } from "./Indexes/AbstractIndexCreationTask";
 import { SessionOptions } from "./Session/SessionOptions";
 import { DatabaseSmuggler } from "./Smuggler/DatabaseSmuggler";
 import { IDisposable } from "../Types/Contracts";
 import { TimeSeriesOperations } from "./TimeSeries/TimeSeriesOperations";
 import { IAbstractIndexCreationTask } from "./Indexes/IAbstractIndexCreationTask";
+import { AbstractJavaScriptIndexCreationTask } from "./Indexes/AbstractJavaScriptIndexCreationTask";
 
 export abstract class DocumentStoreBase
     extends EventEmitter
@@ -86,7 +86,7 @@ export abstract class DocumentStoreBase
     }
 
     public async executeIndexes(tasks: IAbstractIndexCreationTask[]): Promise<void>;
-    public async executeIndexes(tasks: AbstractIndexCreationTask[], database: string): Promise<void>;
+    public async executeIndexes(tasks: IAbstractIndexCreationTask[], database: string): Promise<void>;
     public async executeIndexes(tasks: IAbstractIndexCreationTask[], database?: string): Promise<void> {
         this.assertInitialized();
         const indexesToAdd = IndexCreation.createIndexesToAdd(tasks, this.conventions);

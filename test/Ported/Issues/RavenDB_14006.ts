@@ -1,4 +1,4 @@
-import { AbstractIndexCreationTask, IDocumentStore, QueryStatistics, SessionOptions } from "../../../src";
+import { AbstractJavaScriptIndexCreationTask, IDocumentStore, QueryStatistics, SessionOptions } from "../../../src";
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
 import { Address, Company, Employee } from "../../Assets/Orders";
 import { assertThat } from "../../Utils/AssertExtensions";
@@ -853,10 +853,14 @@ describe("RavenDB_14006", function () {
     });
 });
 
-class Companies_ByName extends AbstractIndexCreationTask {
+class Companies_ByName extends AbstractJavaScriptIndexCreationTask<Company, Pick<Company, "name">> {
     constructor() {
         super();
 
-        this.map = "from c in docs.Companies select new { name = c.name }";
+        this.map(Company, c => {
+            return {
+                name: c.name
+            }
+        });
     }
 }

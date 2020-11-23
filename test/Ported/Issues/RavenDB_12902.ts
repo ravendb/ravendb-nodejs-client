@@ -1,9 +1,9 @@
 import { IDocumentStore } from "../../../src/Documents/IDocumentStore";
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
-import { AbstractIndexCreationTask } from "../../../src/Documents/Indexes/AbstractIndexCreationTask";
 import { QueryStatistics } from "../../../src/Documents/Session/QueryStatistics";
 import { User } from "../../Assets/Entities";
 import { assertThat } from "../../Utils/AssertExtensions";
+import { AbstractJavaScriptIndexCreationTask } from "../../../src";
 
 describe("RavenDB_12902", function () {
 
@@ -191,15 +191,16 @@ describe("RavenDB_12902", function () {
     });
 });
 
-class UsersByName extends AbstractIndexCreationTask {
+class UsersByName extends AbstractJavaScriptIndexCreationTask<User, { name: string, lastname: string }> {
     public constructor() {
         super();
 
-        this.map = `from u in docs.Users select new 
-                    {
-                        firstName = u.name, 
-                        lastName = u.lastName 
-                    }`;
+        this.map(User, u => {
+            return {
+                name: u.name,
+                lastname: u.lastName
+            }
+        });
 
         this.suggestion("name");
     }

@@ -10,13 +10,13 @@ import { AbstractGenericIndexCreationTask } from "./AbstractGenericIndexCreation
 import { DocumentConventions } from "../..";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { throwError } from "../../Exceptions";
-import StringBuilder = require("string-builder");
 import { StringUtil } from "../../Utility/StringUtil";
+import StringBuilder = require("string-builder");
 
-export class AbstractJavaScriptIndexCreationTask<TDocument extends object, TMapResult extends object = any>
+export class AbstractJavaScriptMultiMapIndexCreationTask<TMapResult extends object = any>
     extends AbstractGenericIndexCreationTask<keyof TMapResult & string> {
 
-    private _map: string;
+    private _maps: string[] = [];
     private _reduce: string;
 
     protected constructor() {
@@ -25,15 +25,11 @@ export class AbstractJavaScriptIndexCreationTask<TDocument extends object, TMapR
 
     /**
      * Register map
-     * @param collection Collection name to index over
+     * @param collectionOrDocumentType Collection name to index over
      * @param definition Index definition that maps to the indexed properties
      */
-    protected map(collectionOrDocumentType: string | DocumentType<TDocument>, definition: IndexingMapDefinition<TDocument, TMapResult>) {
-        if (this._map) {
-            throwError("InvalidOperationException",
-                "Map function was already defined. " +
-                "If you are trying to create multi map index, please use AbstractJavaScriptMultiMapIndexCreationTask class.");
-        }
+    protected map<TDocument extends object>(
+        collectionOrDocumentType: string | DocumentType<TDocument>, definition: IndexingMapDefinition<TDocument, TMapResult>) {
 
         const collection = TypeUtil.isString(collectionOrDocumentType)
             ? collectionOrDocumentType
@@ -41,7 +37,7 @@ export class AbstractJavaScriptIndexCreationTask<TDocument extends object, TMapR
 
         const escapedCollection = new StringBuilder();
         StringUtil.escapeString(escapedCollection, collection);
-        this._map = `map(\'${escapedCollection.toString()}\', ${definition})`;
+        this._maps.push(`map(\'${escapedCollection.toString()}\', ${definition})`);
     }
 
     /**
@@ -83,7 +79,6 @@ export class AbstractJavaScriptIndexCreationTask<TDocument extends object, TMapR
         const indexDefinitionBuilder = new IndexDefinitionBuilder(this.getIndexName());
         indexDefinitionBuilder.indexesStrings = this.indexesStrings;
         indexDefinitionBuilder.analyzersStrings = this.analyzersStrings;
-        indexDefinitionBuilder.map = this._map;
         indexDefinitionBuilder.reduce = this._reduce;
         indexDefinitionBuilder.storesStrings = this.storesStrings;
         indexDefinitionBuilder.suggestionsOptions = this.indexSuggestions;
@@ -97,6 +92,9 @@ export class AbstractJavaScriptIndexCreationTask<TDocument extends object, TMapR
         indexDefinitionBuilder.lockMode = this.lockMode;
         indexDefinitionBuilder.priority = this.priority;
 
-        return indexDefinitionBuilder.toIndexDefinition(this.conventions);
+        const indexDefinition = indexDefinitionBuilder.toIndexDefinition(this.conventions, false);
+        indexDefinition.maps = new Set(this._maps);
+
+        return indexDefinition;
     }
 }

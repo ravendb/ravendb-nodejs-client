@@ -4,8 +4,8 @@ import { Company } from "../Assets/Entities";
 import { SessionOptions } from "../../src/Documents/Session/SessionOptions";
 import { assertThat } from "../Utils/AssertExtensions";
 import { GetIndexesOperation } from "../../src/Documents/Operations/Indexes/GetIndexesOperation";
-import { AbstractIndexCreationTask } from "../../src/Documents/Indexes/AbstractIndexCreationTask";
 import { IndexDefinition } from "../../src/Documents/Indexes/IndexDefinition";
+import { AbstractCsharpIndexCreationTask } from "../../src/Documents/Indexes";
 
 describe("RavenDB_14084", function () {
 
@@ -74,7 +74,7 @@ describe("RavenDB_14084", function () {
 });
 
 // tslint:disable-next-line:class-name
-class Companies_ByUnknown extends AbstractIndexCreationTask {
+class Companies_ByUnknown extends AbstractCsharpIndexCreationTask {
     createIndexDefinition(): IndexDefinition {
         const indexDefinition = new IndexDefinition();
         indexDefinition.name = "Companies/ByUnknown";
@@ -85,7 +85,7 @@ class Companies_ByUnknown extends AbstractIndexCreationTask {
 }
 
 // tslint:disable-next-line:class-name
-class Companies_ByUnknown_WithIndexMissingFieldsAsNull extends AbstractIndexCreationTask {
+class Companies_ByUnknown_WithIndexMissingFieldsAsNull extends AbstractCsharpIndexCreationTask {
     createIndexDefinition(): IndexDefinition {
         const indexDefinition = new IndexDefinition();
         indexDefinition.name = "Companies/ByUnknown/WithIndexMissingFieldsAsNull";

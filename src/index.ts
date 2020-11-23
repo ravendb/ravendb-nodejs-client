@@ -325,9 +325,12 @@ export * from "./Documents/Indexes/IndexingStatus";
 export * from "./Documents/Indexes/IndexStats";
 export * from "./Documents/Indexes/IndexSourceType";
 export * from "./Documents/Indexes";
-export * from "./Documents/Indexes/AbstractIndexCreationTask";
-export * from "./Documents/Indexes/AbstractMultiMapIndexCreationTask";
+export * from "./Documents/Indexes/StronglyTyped";
+export * from "./Documents/Indexes/AbstractCsharpIndexCreationTask";
+export * from "./Documents/Indexes/AbstractCsharpMultiMapIndexCreationTask";
 export * from "./Documents/Indexes/AbstractJavaScriptIndexCreationTask";
+export * from "./Documents/Indexes/AbstractJavaScriptMultiMapIndexCreationTask";
+export * from "./Documents/Indexes/AbstractRawJavaScriptIndexCreationTask";
 export * from "./Documents/Indexes/AutoIndexDefinition";
 export * from "./Documents/Indexes/AutoIndexFieldOptions";
 export * from "./Documents/Indexes/Spatial/AutoSpatialOptions";
@@ -641,6 +644,7 @@ export * from "./ServerWide/Operations/Certificates/PutClientCertificateOperatio
 export * from "./ServerWide/Operations/Certificates/SecurityClearance";
 export * from "./ServerWide/Operations/AddDatabaseNodeOperation";
 export * from "./ServerWide/Operations/PromoteDatabaseNodeOperation";
+
 
 
 // MAPPING

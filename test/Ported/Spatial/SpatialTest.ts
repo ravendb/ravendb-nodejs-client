@@ -3,9 +3,9 @@ import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
     IDocumentStore,
-    AbstractIndexCreationTask,
     QueryStatistics,
 } from "../../../src";
+import { AbstractJavaScriptIndexCreationTask } from "../../../src/Documents/Indexes/AbstractJavaScriptIndexCreationTask";
 
 describe("SpatialTest", function () {
 
@@ -36,27 +36,31 @@ describe("SpatialTest", function () {
         public longitude: number;
     }
 
-    class MyIndex extends AbstractIndexCreationTask {
+    class MyIndex extends AbstractJavaScriptIndexCreationTask<MyDocument, MyProjection> {
         public constructor() {
             super();
 
-            this.map =
-                `docs.MyDocuments.SelectMany(doc => doc.items, (doc, item) => new {
-                        doc = doc,
-                        item = item
-                    }).Select(this0 => new {
-                        this0 = this0,
-                        lat = ((double)(this0.item.latitude ?? 0))
-                    }).Select(this1 => new {
-                        this1 = this1,
-                        lng = ((double)(this1.this0.item.longitude ?? 0))
-                    }).Select(this2 => new {
-                        id = Id(this2.this1.this0.doc),
-                        date = this2.this1.this0.item.date,
-                        latitude = this2.this1.lat,
-                        longitude = this2.lng,
-                        coordinates = this.CreateSpatialField(((double ? ) this2.this1.lat), ((double ? ) this2.lng))
-                    })`;
+            const { createSpatialField } = this.mapUtils();
+
+            this.map(MyDocument, doc => {
+                const results: MyProjection[] = [];
+
+                for (let i = 0; i < doc.items.length; i++) {
+                    const item = doc.items[i];
+                    const lat = item.latitude || 0;
+                    const lng = item.longitude || 0;
+
+                    return {
+                        id: doc.id,
+                        date: item.date,
+                        latitude: lat,
+                        longitude: lng,
+                        coordinates: createSpatialField(lat, lng)
+                    }
+                }
+
+                return results;
+            });
 
             this.store("id", "Yes");
             this.store("date", "Yes");

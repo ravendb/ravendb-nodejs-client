@@ -1,5 +1,4 @@
-import { AbstractIndexCreationTask } from "../../../src/Documents/Indexes";
-import { SpatialBounds } from "../../../src";
+import { AbstractJavaScriptIndexCreationTask, SpatialBounds } from "../../../src";
 
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
@@ -7,6 +6,7 @@ import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 import {
     IDocumentStore
 } from "../../../src";
+import { SpatialField } from "../../../src/Documents/Indexes/StronglyTyped";
 
 describe("BoundingBoxIndexTest", function () {
 
@@ -124,25 +124,33 @@ export class SpatialDoc {
     public shape: string;
 }
 
-export class BBoxIndex extends AbstractIndexCreationTask {
+export class BBoxIndex extends AbstractJavaScriptIndexCreationTask<SpatialDoc, { shape: SpatialField }> {
     public constructor() {
         super();
 
-        this.map = "docs.SpatialDocs.Select(doc => new {\n" +
-            "    shape = this.CreateSpatialField(doc.shape)\n" +
-            "})";
+        const { createSpatialField } = this.mapUtils();
+
+        this.map(SpatialDoc, doc => {
+            return {
+                shape: createSpatialField(doc.shape)
+            }
+        });
 
         this.spatial("shape", x => x.cartesian().boundingBoxIndex());
     }
 }
 
-export class QuadTreeIndex extends AbstractIndexCreationTask {
+export class QuadTreeIndex extends AbstractJavaScriptIndexCreationTask<SpatialDoc, { shape: SpatialField }> {
     public constructor() {
         super();
 
-        this.map = "docs.SpatialDocs.Select(doc => new {\n" +
-            "    shape = this.CreateSpatialField(doc.shape)\n" +
-            "})";
+        const { createSpatialField } = this.mapUtils();
+
+        this.map(SpatialDoc, doc => {
+            return {
+                shape: createSpatialField(doc.shape)
+            }
+        });
 
         this.spatial("shape", x => x.cartesian().quadPrefixTreeIndex(6, new SpatialBounds(0, 0, 16, 16)));
     }

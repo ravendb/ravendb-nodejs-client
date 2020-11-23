@@ -3,10 +3,11 @@ import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
+    AbstractJavaScriptIndexCreationTask,
     IDocumentStore,
-    AbstractIndexCreationTask,
     QueryStatistics,
 } from "../../../src";
+import { SpatialField } from "../../../src/Documents/Indexes/StronglyTyped";
 
 describe("SpatialSearchTest", function () {
 
@@ -166,16 +167,20 @@ describe("SpatialSearchTest", function () {
     });
 });
 
-export class SpatialIdx extends AbstractIndexCreationTask {
+export class SpatialIdx extends AbstractJavaScriptIndexCreationTask<Event, Pick<Event, "capacity" | "venue" | "date"> & { coordinates: SpatialField }> {
     public constructor() {
         super();
 
-        this.map = `docs.Events.Select(e => new {
-                capacity = e.capacity,
-                venue = e.venue,
-                date = e.date,
-                coordinates = this.CreateSpatialField(((double ? ) e.latitude), ((double ? ) e.longitude))
-            })`;
+        const { createSpatialField } = this.mapUtils();
+
+        this.map(Event, e => {
+            return {
+                capacity: e.capacity,
+                venue: e.venue,
+                date: e.date,
+                coordinates: createSpatialField(e.latitude, e.longitude)
+            }
+        });
 
         this.index("venue", "Search");
     }

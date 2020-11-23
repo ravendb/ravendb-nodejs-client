@@ -6,9 +6,8 @@ import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 import {
     IDocumentStore,
     GetCollectionStatisticsOperation,
-    AbstractIndexCreationTask,
     GroupByField,
-    IDocumentSession
+    IDocumentSession, AbstractJavaScriptIndexCreationTask
 } from "../../src";
 import { DateUtil } from "../../src/Utility/DateUtil";
 import { TypeUtil } from "../../src/Utility/TypeUtil";
@@ -787,31 +786,36 @@ export class DogsIndexResult {
     public vaccinated: boolean;
 }
 
-export class DogsIndex extends AbstractIndexCreationTask {
+export class DogsIndex extends AbstractJavaScriptIndexCreationTask<Dog, Pick<Dog, "name" | "age" | "vaccinated">> {
     public constructor() {
         super();
-        this.map = "from dog in docs.dogs select new { dog.name, dog.age, dog.vaccinated }";
+        this.map(Dog, d => {
+            return {
+                name: d.name,
+                age: d.age,
+                vaccinated: d.vaccinated
+            }
+        });
     }
 }
 
-export class UsersByName extends AbstractIndexCreationTask {
+export class UsersByName extends AbstractJavaScriptIndexCreationTask<User, { name: string, count: number }> {
     public constructor() {
         super();
 
-        this.map = `from c in docs.Users select new 
-             {
-                c.name, 
-                count = 1 
-            }`;
+        this.map(User, c => {
+            return {
+                name: c.name,
+                count: 1
+            }
+        });
 
-        this.reduce = `from result in results 
-            group result by result.name 
-            into g 
-            select new 
-            { 
-              name = g.Key, 
-              count = g.Sum(x => x.count) 
-            }`;
+        this.reduce(c => c.groupBy(x => x.name).aggregate(g => {
+            return {
+                name: g.key,
+                count: g.values.reduce((a, b) => a + b.count, 0)
+            }
+        }));
     }
 }
 

@@ -1,5 +1,4 @@
 import { IndexConfiguration } from "./IndexDefinition";
-import { AbstractIndexCreationTask } from "./AbstractIndexCreationTask";
 
 export abstract class AbstractCommonApiForIndexes {
     additionalSources: Record<string, string>;

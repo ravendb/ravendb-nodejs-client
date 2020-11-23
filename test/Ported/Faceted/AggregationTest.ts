@@ -3,35 +3,39 @@ import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
+    AbstractJavaScriptIndexCreationTask,
     IDocumentStore,
-    AbstractIndexCreationTask,
     RangeBuilder,
 } from "../../../src";
 
 // tslint:disable-next-line:class-name
-class ItemsOrders_All extends AbstractIndexCreationTask {
+class ItemsOrders_All extends AbstractJavaScriptIndexCreationTask<ItemsOrder, Pick<ItemsOrder, "at" | "items">> {
     public constructor() {
         super();
-        this.map = `docs.ItemsOrders.Select(order => new { 
-                order.at,
-                order.items 
-            })`;
+        this.map(ItemsOrder, order => {
+            return {
+                at: order.at,
+                items: order.items
+            }
+        });
     }
 }
 
 // tslint:disable-next-line:class-name
-class Orders_All extends AbstractIndexCreationTask {
+class Orders_All extends AbstractJavaScriptIndexCreationTask<Order> {
     public constructor() {
         super();
-        this.map = `docs.Orders.Select(order => new { 
-            order.currency, 
-            order.product,
-            order.total,
-            order.quantity,
-            order.region,
-            order.at,
-            order.tax 
-        })`;
+        this.map(Order, order => {
+            return {
+                currency: order.currency,
+                product: order.product,
+                total: order.total,
+                quantity: order.quantity,
+                region: order.region,
+                at: order.at,
+                tax: order.tax
+            }
+        });
     }
 }
 
@@ -42,6 +46,9 @@ class Order {
     public product: string;
     public total: number;
     public region: number;
+    public quantity: number;
+    public at: Date;
+    public tax: number;
 }
 
 class ItemsOrder {

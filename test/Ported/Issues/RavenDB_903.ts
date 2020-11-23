@@ -4,9 +4,9 @@ import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
     IDocumentStore,
-    AbstractIndexCreationTask,
     IDocumentSession,
 } from "../../../src";
+import { AbstractJavaScriptIndexCreationTask } from "../../../src/Documents/Indexes/AbstractJavaScriptIndexCreationTask";
 
 describe("Issue RavenDB-903", function () {
 
@@ -84,11 +84,16 @@ export class Product {
     public description: string;
 }
 
-class TestIndex extends AbstractIndexCreationTask {
+class TestIndex extends AbstractJavaScriptIndexCreationTask<Product, Pick<Product, "name" | "description">> {
     public constructor() {
         super();
 
-        this.map = "from product in docs.Products select new { product.name, product.description }";
+        this.map(Product, p => {
+            return {
+                name: p.name,
+                description: p.description
+            }
+        });
 
         this.index("description", "Search");
     }

@@ -14,13 +14,16 @@ import {
     GetIndexNamesOperation,
     IndexQuery,
     ExplainQueryCommand,
-    AbstractIndexCreationTask,
     GetIndexingStatusOperation,
     StopIndexingOperation,
     StartIndexingOperation,
     StopIndexOperation,
     GetIndexesOperation,
-    GetIndexStatisticsOperation, SetIndexesLockOperation, SetIndexesPriorityOperation, GetTermsOperation,
+    GetIndexStatisticsOperation,
+    SetIndexesLockOperation,
+    SetIndexesPriorityOperation,
+    GetTermsOperation,
+    AbstractJavaScriptIndexCreationTask,
 } from "../../../src";
 import { DeleteIndexOperation } from "../../../src/Documents/Operations/Indexes/DeleteIndexOperation";
 import { QueryStatistics } from "../../../src/Documents/Session/QueryStatistics";
@@ -354,12 +357,18 @@ describe("Indexes from client", function () {
 });
 
 // tslint:disable:class-name
-export class Posts_ByTitleAndDesc extends AbstractIndexCreationTask {
+export class Posts_ByTitleAndDesc extends AbstractJavaScriptIndexCreationTask<Post, Pick<Post, "title" | "desc">> {
 
     constructor() {
         super();
 
-        this.map = "from p in docs.Posts select new { p.title, p.desc }";
+        this.map(Post, p => {
+            return {
+                title: p.title,
+                desc: p.desc
+            }
+        });
+
         this.index("title", "Search");
         this.store("title", "Yes");
         this.analyze("title", "Lucene.Net.Analysis.SimpleAnalyzer");
@@ -370,12 +379,16 @@ export class Posts_ByTitleAndDesc extends AbstractIndexCreationTask {
     }
 }
 
-export class Users_ByName extends AbstractIndexCreationTask {
+export class Users_ByName extends AbstractJavaScriptIndexCreationTask<User, Pick<User, "name">> {
 
     constructor() {
         super();
 
-        this.map = "from u in docs.Users select new { u.name }";
+        this.map(User, u => {
+            return {
+                name: u.name
+            }
+        });
 
         this.index("name", "Search");
         this.indexSuggestions.add("name");

@@ -31,18 +31,23 @@ export class ComplexProperty {
 }
 
 import {
+    AbstractJavaScriptIndexCreationTask,
     IDocumentStore,
-    AbstractIndexCreationTask,
 } from "../../../src";
 import { MoreLikeThisOptions } from "../../../src/Documents/Queries/MoreLikeThis/MoreLikeThisOptions";
 import { MoreLikeThisStopWords } from "../../../src/Documents/Queries/MoreLikeThis/MoreLikeThisStopWords";
 
-export class DataIndex extends AbstractIndexCreationTask {
+export class DataIndex extends AbstractJavaScriptIndexCreationTask<Data, Pick<Data, "body" | "whitespaceAnalyzerField">> {
 
     constructor(termVector: boolean = true, store: boolean = false) {
         super();
 
-        this.map = "from doc in docs.Data select new { doc.body, doc.whitespaceAnalyzerField }";
+        this.map(Data, doc => {
+            return {
+                body: doc.body,
+                whitespaceAnalyzerField: doc.whitespaceAnalyzerField
+            }
+        });
 
         this.analyze("body", "Lucene.Net.Analysis.Standard.StandardAnalyzer");
         this.analyze("whitespaceAnalyzerField", "Lucene.Net.Analysis.WhitespaceAnalyzer");
@@ -59,14 +64,20 @@ export class DataIndex extends AbstractIndexCreationTask {
     }
 }
 
-export class ComplexDataIndex extends AbstractIndexCreationTask {
+export class ComplexDataIndex
+    extends AbstractJavaScriptIndexCreationTask<ComplexData, Pick<ComplexData, "property"> & Pick<ComplexProperty, "body">> {
 
     constructor() {
         super();
 
-        this.map = "from doc in docs.ComplexData select new  { doc.property, doc.property.body }";
+        this.map(ComplexData, doc => {
+            return {
+                property: doc.property,
+                body: doc.property.body
+            }
+        });
 
-        this.index("map", "Search");
+        this.index("body", "Search");
     }
 }
 

@@ -1,7 +1,7 @@
 import { testContext, disposeTestDocumentStore } from "../../../Utils/TestUtil";
 
 import {
-    AbstractIndexCreationTask,
+    AbstractCsharpIndexCreationTask,
     IDocumentStore,
     StreamQueryStatistics,
     StreamResult,
@@ -243,7 +243,7 @@ describe("query streaming", function () {
 });
 
 // tslint:disable-next-line:class-name
-class Users_ByName extends AbstractIndexCreationTask {
+class Users_ByName extends AbstractCsharpIndexCreationTask {
     public constructor() {
         super();
 

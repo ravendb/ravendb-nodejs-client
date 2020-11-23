@@ -11,10 +11,10 @@ import {
     IDocumentSession,
     QueryStatistics,
     StreamQueryStatistics,
-    AbstractIndexCreationTask,
     LoadOptions,
 } from "../../src";
 import { TypeUtil } from "../../src/Utility/TypeUtil";
+import { AbstractJavaScriptIndexCreationTask } from "../../src/Documents/Indexes/AbstractJavaScriptIndexCreationTask";
 
 // tslint:disable-next-line:no-console
 let print = console.log;
@@ -431,10 +431,14 @@ describe("Readme query samples", function () {
         });
 
         it("can suggest", async () => {
-            class UsersIndex extends AbstractIndexCreationTask {
+            class UsersIndex extends AbstractJavaScriptIndexCreationTask<User, Pick<User, "name">> {
                 constructor() {
                     super();
-                    this.map = "from doc in docs.Users select new { doc.name }";
+                    this.map(User, doc => {
+                        return {
+                            name: doc.name
+                        }
+                    });
                     this.suggestion("name");
                 }
             }

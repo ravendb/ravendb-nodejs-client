@@ -4,8 +4,8 @@ import { testContext, disposeTestDocumentStore } from "../../../../Utils/TestUti
 
 import {
     IDocumentStore,
-    AbstractIndexCreationTask, SetIndexesPriorityOperation, GetStatisticsOperation,
-    DocumentChange, IndexChange
+    SetIndexesPriorityOperation, GetStatisticsOperation,
+    DocumentChange, IndexChange, AbstractJavaScriptIndexCreationTask
 } from "../../../../../src";
 import { Order, User } from "../../../../Assets/Entities";
 import { AsyncQueue } from "../../../../Utils/AsyncQueue";
@@ -156,24 +156,23 @@ describe("ChangesTest", function () {
         }
     });
 
-    class UsersByName extends AbstractIndexCreationTask {
+    class UsersByName extends AbstractJavaScriptIndexCreationTask<User, { name: string, count: number }> {
         constructor() {
             super();
 
-            this.map = "from c in docs.Users select new " +
-                " {" +
-                "    c.name, " +
-                "    count = 1" +
-                "}";
+            this.map(User, c => {
+                return {
+                    name: c.name,
+                    count: 1
+                }
+            });
 
-            this.reduce = "from result in results " +
-                "group result by result.name " +
-                "into g " +
-                "select new " +
-                "{ " +
-                "  name = g.Key, " +
-                "  count = g.Sum(x => x.count) " +
-                "}";
+            this.reduce(result => result.groupBy(x => x.name).aggregate(g => {
+                return {
+                    name: g.key,
+                    count: g.values.reduce((a, b) => a + b.count, 0)
+                }
+            }));
         }
     }
 

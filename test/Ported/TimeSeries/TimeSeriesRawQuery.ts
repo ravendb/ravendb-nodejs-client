@@ -1,5 +1,5 @@
 import {
-    AbstractIndexCreationTask,
+    AbstractJavaScriptIndexCreationTask,
     IDocumentStore,
     TimeSeriesAggregationResult,
     TimeSeriesRawResult
@@ -372,12 +372,16 @@ class Event {
     public description: string;
 }
 
-class PeopleIndex extends AbstractIndexCreationTask {
+class PeopleIndex extends AbstractJavaScriptIndexCreationTask<Person, Pick<Person, "age">> {
 
     constructor() {
         super();
 
-        this.map = "from p in docs.People select new { p.age }";
+        this.map("people", p => {
+            return {
+                age: p.age
+            }
+        });
     }
 
     getIndexName(): string {

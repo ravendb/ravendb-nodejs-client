@@ -1,4 +1,4 @@
-import { AbstractIndexCreationTask, IDocumentStore, RangeBuilder } from "../../../src";
+import { AbstractJavaScriptIndexCreationTask, IDocumentStore, RangeBuilder } from "../../../src";
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
 import { Order } from "../../Assets/Faceted";
 import { assertThat } from "../../Utils/AssertExtensions";
@@ -588,16 +588,20 @@ describe("RavenDB_12748", function () {
 });
 
 
-class Orders_All extends AbstractIndexCreationTask {
+class Orders_All extends AbstractJavaScriptIndexCreationTask<Order> {
     public constructor() {
         super();
 
-        this.map = "docs.Orders.Select(order => new { order.currency,\n" +
-            "                          order.product,\n" +
-            "                          order.total,\n" +
-            "                          order.quantity,\n" +
-            "                          order.region,\n" +
-            "                          order.at,\n" +
-            "                          order.tax })";
+        this.map(Order, order => {
+            return {
+                currency: order.currency,
+                product: order.product,
+                total: order.total,
+                quantity: order.quantity,
+                region: order.region,
+                at: order.at,
+                tax: order.tax
+            }
+        });
     }
 }
