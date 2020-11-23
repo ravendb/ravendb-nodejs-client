@@ -7,11 +7,11 @@ import {
 } from "./StronglyTyped";
 import { DocumentType } from "../DocumentAbstractions";
 import { AbstractGenericIndexCreationTask } from "./AbstractGenericIndexCreationTask";
-import { DocumentConventions } from "../..";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { throwError } from "../../Exceptions";
 import StringBuilder = require("string-builder");
 import { StringUtil } from "../../Utility/StringUtil";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
 
 export class AbstractJavaScriptIndexCreationTask<TDocument extends object, TMapResult extends object = any>
     extends AbstractGenericIndexCreationTask<keyof TMapResult & string> {

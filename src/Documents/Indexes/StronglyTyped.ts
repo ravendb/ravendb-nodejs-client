@@ -1,5 +1,5 @@
 import { FieldIndexing, FieldStorage, FieldTermVector } from "./Enums";
-import { MetadataObject } from "../..";
+import { MetadataObject } from "../Session/MetadataObject";
 
 export type IndexingMapDefinition<TInput, TOutput> = (document: TInput) => TOutput | TOutput[];
 
