@@ -21,6 +21,8 @@ export class AbstractJavaScriptIndexCreationTask<TDocument extends object, TMapR
 
     protected constructor() {
         super();
+
+        this.conventions = new DocumentConventions();
     }
 
     /**
@@ -76,10 +78,6 @@ export class AbstractJavaScriptIndexCreationTask<TDocument extends object, TMapR
     }
 
     public createIndexDefinition(): IndexDefinition {
-        if (!this.conventions) {
-            this.conventions = new DocumentConventions();
-        }
-
         const indexDefinitionBuilder = new IndexDefinitionBuilder(this.getIndexName());
         indexDefinitionBuilder.indexesStrings = this.indexesStrings;
         indexDefinitionBuilder.analyzersStrings = this.analyzersStrings;
