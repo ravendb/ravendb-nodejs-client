@@ -51,7 +51,7 @@ describe("RavenDB_12748", function () {
         {
             const session = store.openSession();
             const r = await session.query<Order>({
-                indexName: new Orders_All().getIndexName(),
+                index: Orders_All,
                 documentType: Order
             })
                 .aggregateBy(f => f.byField("region"))
@@ -126,7 +126,7 @@ describe("RavenDB_12748", function () {
         {
             const session = store.openSession();
             const r = await session.query<Order>({
-                indexName: new Orders_All().getIndexName(),
+                index: Orders_All,
                 documentType: Order
             })
                 .aggregateBy(f => f.byField("region"))
@@ -204,7 +204,7 @@ describe("RavenDB_12748", function () {
         {
             const session = store.openSession();
             const r = await session.query<Order>({
-                indexName: new Orders_All().getIndexName(),
+                index: Orders_All,
                 documentType: Order
             })
                 .aggregateBy(f => f.byField("region"))
@@ -348,7 +348,7 @@ describe("RavenDB_12748", function () {
 
             const r = await session.query<Order>({
                 documentType: Order,
-                indexName: "Orders/All"
+                index: Orders_All
             })
                 .aggregateBy(f => f.byRanges(
                     range.isLessThan(100),
@@ -421,7 +421,7 @@ describe("RavenDB_12748", function () {
 
             const r = await session.query<Order>({
                 documentType: Order,
-                indexName: "Orders/All"
+                index: Orders_All
             })
                 .aggregateBy(f => f.byRanges(
                     range.isLessThan(100),
@@ -494,7 +494,7 @@ describe("RavenDB_12748", function () {
 
             const r = await session.query<Order>({
                 documentType: Order,
-                indexName: "Orders/All"
+                index: Orders_All
             })
                 .aggregateBy(f => f.byRanges(
                     range.isLessThan(100),

@@ -103,7 +103,7 @@ describe("AggregationTest", function () {
 
             {
                 const session = store.openSession();
-                const result = await session.query({ indexName: ordersAllIndex.getIndexName() })
+                const result = await session.query({ index: Orders_All })
                     .aggregateBy(x => x.byField("region")
                         .maxOn("total")
                         .minOn("total"))
@@ -144,7 +144,7 @@ describe("AggregationTest", function () {
 
             {
                 const session = store.openSession();
-                const r = await session.query({ indexName: ordersAllIndex.getIndexName() })
+                const r = await session.query({ index: Orders_All })
                     .aggregateBy(x => x.byField("product").sumOn("total"))
                     .andAggregateBy(x => x.byField("currency").sumOn("total"))
                     .execute();
@@ -189,7 +189,7 @@ describe("AggregationTest", function () {
 
             {
                 const session = store.openSession();
-                const r = await session.query({ indexName: ordersAllIndex.getIndexName() })
+                const r = await session.query({ index: Orders_All })
                     .aggregateBy(x => x.byField("product").maxOn("total").minOn("total"))
                     .execute();
 
@@ -230,7 +230,7 @@ describe("AggregationTest", function () {
 
             {
                 const session = store.openSession();
-                const r = await session.query({ indexName: ordersAllIndex.getIndexName() })
+                const r = await session.query({ index: Orders_All })
                     .aggregateBy(x => x.byField("product")
                         .withDisplayName("productMax").maxOn("total"))
                     .andAggregateBy(x => x.byField("product").withDisplayName("productMin"))
@@ -276,7 +276,7 @@ describe("AggregationTest", function () {
 
                 const range = RangeBuilder.forPath("total");
 
-                const r = await session.query({ indexName: ordersAllIndex.getIndexName() })
+                const r = await session.query({ index: Orders_All })
                     .aggregateBy(f => f.byField("product").sumOn("total"))
                     .andAggregateBy(f => f.byRanges(
                         range.isLessThan(100),
@@ -348,7 +348,7 @@ describe("AggregationTest", function () {
         {
             const session = store.openSession();
             const builder = RangeBuilder.forPath("at");
-            const r = await session.query({ indexName: idx.getIndexName() })
+            const r = await session.query({ index: ItemsOrders_All })
                 .whereGreaterThanOrEqual("at", end0)
                 .aggregateBy(f => f.byRanges(
                     builder.isGreaterThanOrEqualTo(minValue),

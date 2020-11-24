@@ -161,7 +161,7 @@ describe("SuggestionsTest", function () {
 
             const suggestionQueryResult = await session.query({
                 documentType: User,
-                indexName: "Users/ByName"
+                index: Users_ByName
             })
                 .suggestUsing(x => x.byField("name", ["johne", "davi"]).withOptions(options))
                 .execute();

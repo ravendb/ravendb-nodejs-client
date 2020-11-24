@@ -98,7 +98,7 @@ describe("HighlightsTest", function () {
             let contentHighlighting: Highlightings;
 
             const session = store.openSession();
-            const results = await session.query<ISearchable>({ indexName: index.getIndexName() })
+            const results = await session.query<ISearchable>({ index: ContentSearchIndex })
                 .waitForNonStaleResults()
                 .highlight(Object.assign({ fieldName: "title" }, hightlightOpts), _ => titleHighlighting = _)
                 .highlight(Object.assign({ fieldName: "slug" }, hightlightOpts), _ => slugHighlighting = _)

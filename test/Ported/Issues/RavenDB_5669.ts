@@ -25,7 +25,7 @@ describe("Issue RavenDB-5669", function () {
         const session = store.openSession();
         const query = session.advanced.documentQuery({
             documentType: Animal,
-            indexName: index.getIndexName()
+            index: Animal_Index
         });
 
         query.openSubclause()
@@ -45,7 +45,7 @@ describe("Issue RavenDB-5669", function () {
 
         const query = session.advanced.documentQuery({
             documentType: Animal,
-            indexName: index.getIndexName()
+            index: Animal_Index
         });
 
         query.openSubclause()

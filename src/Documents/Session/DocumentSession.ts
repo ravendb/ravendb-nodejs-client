@@ -566,6 +566,14 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             opts = { documentType: documentTypeOrOpts as DocumentType<T> };
         } else {
             opts = documentTypeOrOpts as AdvancedDocumentQueryOptions<T>;
+
+            const { index, ...restOpts } = opts;
+            if (index) {
+                opts = {
+                    ...restOpts,
+                    indexName: new opts.index().getIndexName()
+                }
+            }
         }
 
         if (opts.documentType) {

@@ -44,7 +44,7 @@ describe("SimonBartlettTest", function () {
 
             assert.strictEqual(count, 1);
 
-            count = await session.query({ indexName: GeoIndex.name })
+            count = await session.query({ index: GeoIndex })
                 .relatesToShape("WKT", "LINESTRING (1 0, 1 1, 1 2)", "Intersects")
                 .waitForNonStaleResults()
                 .count();
@@ -72,7 +72,7 @@ describe("SimonBartlettTest", function () {
             const session = store.openSession();
             // Should not intersect, as there is 1 Degree between the two shapes
             let count = await session.query({
-                indexName: GeoIndex.name
+                index: GeoIndex
             })
                 .spatial("WKT", f => f.relatesToShape("CIRCLE(0.000000 3.000000 d=110)", "Intersects"))
                 .waitForNonStaleResults()
@@ -80,7 +80,7 @@ describe("SimonBartlettTest", function () {
 
             assert.strictEqual(count, 0);
 
-            count = await session.query({ indexName: GeoIndex.name })
+            count = await session.query({ index: GeoIndex })
                 .relatesToShape("WKT", "CIRCLE(0.000000 3.000000 d=110)", "Intersects")
                 .waitForNonStaleResults()
                 .count();

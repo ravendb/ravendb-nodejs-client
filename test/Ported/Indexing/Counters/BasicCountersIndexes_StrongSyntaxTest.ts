@@ -33,7 +33,7 @@ describe("BasicCountersIndexes_StrongSyntaxTest", function () {
         {
             const session = store.openSession();
             const results = await session.query<IndexResult>({
-                indexName: new MyCounterIndex().getIndexName(),
+                index: MyCounterIndex,
                 documentType: IndexResult
             }).all();
 

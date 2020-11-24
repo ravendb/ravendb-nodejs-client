@@ -23,7 +23,7 @@ describe("Issue RavenDB-903", function () {
         await doTest(store, session => {
             return session.advanced.documentQuery<Product>({
                 documentType: Product,
-                indexName: TestIndex.name
+                index: TestIndex
             })
                 .search("description", "Hello")
                 .intersect()
@@ -35,7 +35,7 @@ describe("Issue RavenDB-903", function () {
         await doTest(store, session => {
             return session.advanced.documentQuery<Product>({
                 documentType: Product,
-                indexName: TestIndex.name
+                index: TestIndex
             })
                 .whereEquals("name", "Bar")
                 .intersect()

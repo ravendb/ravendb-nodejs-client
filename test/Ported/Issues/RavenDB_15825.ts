@@ -142,7 +142,7 @@ async function facet(session: IDocumentSession, skip: number, take: number, stat
 
     const result = await session.query({
         documentType: Result,
-        indexName: new ContactsIndex().getIndexName()
+        index: ContactsIndex
     })
         .statistics(statsCallback)
         .orderBy("companyId", "AlphaNumeric")

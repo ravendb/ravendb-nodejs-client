@@ -90,7 +90,7 @@ describe("RavenDB-9745", function () {
             let explanationsResult;
 
             const results = await session.advanced
-                .documentQuery({ indexName: index.getIndexName() })
+                .documentQuery({ index: CompaniesByNameIndex })
                 .includeExplanations(explOptions, e => explanationsResult = e)
                 .selectFields<CompaniesByNameIndexResult>([ "key", "count" ])
                 .all();

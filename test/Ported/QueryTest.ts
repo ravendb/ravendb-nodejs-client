@@ -139,7 +139,7 @@ describe("QueryTest", function () {
         it("query map reduce index", async () => {
             const session = store.openSession();
             const results = await session.query<ReduceResult>({
-                indexName: "UsersByName",
+                index: UsersByName,
                 documentType: ReduceResult
             })
                 .orderByDescending("count")
@@ -485,7 +485,7 @@ describe("QueryTest", function () {
 
                 const queryResult = await session.advanced
                     .documentQuery<DogsIndexResult>({
-                        indexName: new DogsIndex().getIndexName(),
+                        index: DogsIndex,
                         isMapReduce: false,
                         documentType: DogsIndexResult
                     })
@@ -589,7 +589,7 @@ describe("QueryTest", function () {
             const queryResult = await session.advanced
                 .documentQuery<DogsIndexResult>({
                     documentType: DogsIndexResult,
-                    indexName: new DogsIndex().getIndexName(),
+                    index: DogsIndex,
                     isMapReduce: false
                 })
                 .whereGreaterThan("age", 2)
@@ -603,7 +603,7 @@ describe("QueryTest", function () {
             const queryResult2 = await session.advanced
                 .documentQuery<DogsIndexResult>({
                     documentType: DogsIndexResult,
-                    indexName: new DogsIndex().getIndexName(),
+                    index: DogsIndex,
                     isMapReduce: false
                 })
                 .whereLessThanOrEqual("age", 2)

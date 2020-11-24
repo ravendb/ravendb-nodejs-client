@@ -76,7 +76,7 @@ describe("query streaming", function () {
         {
             const session = store.openSession();
             const query = session.query<User>({
-                indexName: usersByNameIndex.getIndexName()
+                index: Users_ByName
             });
 
             const queryStream = await session.advanced.stream(query);
@@ -107,7 +107,7 @@ describe("query streaming", function () {
 
         {
             const session = store.openSession();
-            const query = session.query<User>({ indexName: usersByNameIndex.getIndexName() });
+            const query = session.query<User>({ index: Users_ByName });
 
             let statsFromCallback;
             const reader = await session.advanced.stream(query, s => statsFromCallback = s);

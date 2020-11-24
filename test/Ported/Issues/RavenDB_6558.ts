@@ -83,7 +83,7 @@ describe("RavenDB-6558", function () {
             const session = store.openSession();
             let titleHighlighting: Highlightings;
             let contentHighlighting: Highlightings;
-            const results = await session.query({ indexName: index.getIndexName() })
+            const results = await session.query({ index: ContentSearchIndex })
                 .waitForNonStaleResults()
                 .highlight({
                     fieldName: "title",

@@ -7,7 +7,6 @@ export type IndexingReduceDefinition<TItem> = (result: IndexingGroupResults<TIte
 
 type KeySelector<TDocument, TKey> = (document: TDocument) => TKey;
 
-//TODO: make sure we have tests for that methods
 export interface IndexingMapUtils {
     load<T = any>(documentId: string, collection: string): T;
     cmpxchg<T = any>(key: string): T;

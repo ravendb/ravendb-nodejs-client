@@ -93,7 +93,7 @@ describe("RavenDB_12030", function () {
                 .advanced
                 .documentQuery<Fox>({
                     documentType: Fox,
-                    indexName: new Fox_Search().getIndexName()
+                    index: Fox_Search
                 })
                 .search("name", "quick fox")
                 .proximity(1)
@@ -107,7 +107,7 @@ describe("RavenDB_12030", function () {
             foxes = await session
                 .advanced
                 .documentQuery<Fox>({
-                    indexName: new Fox_Search().getIndexName(),
+                    index: Fox_Search,
                     documentType: Fox
                 })
                 .search("name", "quick fox")

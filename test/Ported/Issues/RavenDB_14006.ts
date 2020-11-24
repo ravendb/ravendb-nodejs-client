@@ -611,7 +611,7 @@ describe("RavenDB_14006", function () {
             let stats: QueryStatistics;
             let companies = await session.query<Company>({
                 documentType: Company,
-                indexName: new Companies_ByName().getIndexName()
+                index: Companies_ByName
             })
                 .statistics(s => stats = s)
                 .include(i => i.includeCompareExchangeValue("externalId"))
@@ -635,7 +635,7 @@ describe("RavenDB_14006", function () {
 
             companies = await session.query<Company>({
                 documentType: Company,
-                indexName: new Companies_ByName().getIndexName()
+                index: Companies_ByName
             })
                 .statistics(s => stats = s)
                 .include(i => i.includeCompareExchangeValue("externalId"))
@@ -661,7 +661,7 @@ describe("RavenDB_14006", function () {
 
             companies = await session.query<Company>({
                 documentType: Company,
-                indexName: new Companies_ByName().getIndexName()
+                index: Companies_ByName
             })
                 .statistics(s => stats = s)
                 .include(i => i.includeCompareExchangeValue("externalId"))

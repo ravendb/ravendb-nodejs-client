@@ -57,7 +57,7 @@ describe("Indexes from client", function () {
         {
             const session = store.openSession();
             const users = await session.query({
-                indexName: "Users/ByName",
+                index: Users_ByName,
                 documentType: User
             }).all();
 
@@ -174,7 +174,7 @@ describe("Indexes from client", function () {
 
         {
             const session = store.openSession();
-            const users = await session.query<User>({ indexName: "Users/ByName" })
+            const users = await session.query<User>({ index: Users_ByName })
                 .waitForNonStaleResults()
                 .whereEquals("name", "Arek")
                 .all();
@@ -338,7 +338,7 @@ describe("Indexes from client", function () {
             } as MoreLikeThisOptions;
 
             const session = store.openSession();
-            const list = await session.query<Post>({ indexName: "Posts/ByTitleAndDesc" })
+            const list = await session.query<Post>({ index: Posts_ByTitleAndDesc })
                 .moreLikeThis(f => f.usingDocument(x => x.whereEquals("id()", "posts/1")).withOptions(options))
                 .all();
 

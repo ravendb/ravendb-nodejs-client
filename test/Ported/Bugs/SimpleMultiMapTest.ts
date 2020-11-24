@@ -44,7 +44,7 @@ describe("SimpleMultiMapTest", function () {
         {
             const session = store.openSession();
             const haveNames = await session.query<IHaveName>({
-                indexName: "CatsAndDogs"
+                index: CatsAndDogs
             })
                 .waitForNonStaleResults()
                 .orderBy("name")

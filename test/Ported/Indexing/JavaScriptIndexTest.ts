@@ -215,7 +215,7 @@ describe("JavaScriptIndexTest", function () {
         await testContext.waitForIndexing(store);
         {
             const session = store.openSession();
-            const single = await session.query({ indexName: index.getIndexName() })
+            const single = await session.query({ index: UsersByNameWithAdditionalSources })
                 .whereEquals("name", "Mr. Brendan Eich")
                 .selectFields("name")
                 .single();
@@ -238,7 +238,7 @@ describe("JavaScriptIndexTest", function () {
 
         {
             const session = store.openSession();
-            const result = await session.query({ indexName: index.getIndexName() })
+            const result = await session.query({ index: FanoutByNumbersWithReduce })
                 .whereEquals("sum", 33)
                 .selectFields("sum")
                 .single();
@@ -278,7 +278,7 @@ describe("JavaScriptIndexTest", function () {
 
             await testContext.waitForIndexing(store);
 
-            await session.query({ indexName: "UsersAndProductsByName" })
+            await session.query({ index: UsersAndProductsByName })
                 .whereEquals("name", "Brendan Eich")
                 .single();
         }
@@ -296,7 +296,7 @@ describe("JavaScriptIndexTest", function () {
             await session.saveChanges();
 
             await testContext.waitForIndexing(store);
-            const result = await session.query({ indexName: index.getIndexName() })
+            const result = await session.query({ index: UsersAndProductsByNameAndCount })
                 .whereEquals("name", "Brendan Eich")
                 .single() as any;
 

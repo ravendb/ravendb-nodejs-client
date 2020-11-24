@@ -448,7 +448,7 @@ describe("Readme query samples", function () {
 
             {
                 const session = store.openSession();
-                const suggestionQueryResult = await session.query({ indexName: "UsersIndex" })
+                const suggestionQueryResult = await session.query({ index: UsersIndex })
                     .suggestUsing(x => x.byField("name", "Jon"))
                     .execute();
                 assert.strictEqual(suggestionQueryResult.name.suggestions.length, 1);

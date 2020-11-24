@@ -26,7 +26,7 @@ describe("RavenDB_12902", function () {
 
             let stats: QueryStatistics;
 
-            const results = await session.query<User>({ indexName: UsersByName.name, documentType: User })
+            const results = await session.query<User>({ index: UsersByName, documentType: User })
                 .statistics(s => stats = s)
                 .on("afterQueryExecuted", () => counter++)
                 .whereEquals("name", "Doe")
@@ -54,7 +54,7 @@ describe("RavenDB_12902", function () {
 
             let stats: QueryStatistics;
 
-            const results = await session.query<User>({ indexName: UsersByName.name, documentType: User })
+            const results = await session.query<User>({ index: UsersByName, documentType: User })
                 .statistics(s => stats = s)
                 .on("afterQueryExecuted", () => counter++)
                 .suggestUsing(x => x.byField("name", "Orin"))
@@ -103,7 +103,7 @@ describe("RavenDB_12902", function () {
 
             let stats: QueryStatistics;
 
-            const results = await session.query<User>({ indexName: UsersByName.name, documentType: User })
+            const results = await session.query<User>({ index: UsersByName, documentType: User })
                 .statistics(s => stats = s)
                 .on("afterQueryExecuted", () => counter++)
                 .whereEquals("name", "Doe")
@@ -132,7 +132,7 @@ describe("RavenDB_12902", function () {
 
             let stats: QueryStatistics;
 
-            const results = await session.query<User>({ indexName: UsersByName.name, documentType: User })
+            const results = await session.query<User>({ index: UsersByName, documentType: User })
                 .on("afterQueryExecuted", () => counter++)
                 .statistics(s => stats = s)
                 .suggestUsing(x => x.byField("name", "Orin"))
@@ -160,7 +160,7 @@ describe("RavenDB_12902", function () {
             let stats: QueryStatistics;
 
             await session
-                .query<User>({ documentType: User, indexName: UsersByName.name })
+                .query<User>({ documentType: User, index: UsersByName })
                 .statistics(s => stats = s)
                 .whereEquals("name", "Doe")
                 .aggregateBy(x => x.byField("name").sumOn("count"))
@@ -180,7 +180,7 @@ describe("RavenDB_12902", function () {
             let stats: QueryStatistics;
 
             await session
-                .query<User>({ documentType: User, indexName: UsersByName.name })
+                .query<User>({ documentType: User, index: UsersByName })
                 .statistics(s => stats = s)
                 .suggestUsing(x => x.byField("name", "Orin"))
                 .execute();

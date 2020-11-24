@@ -1,6 +1,11 @@
 import { IndexDefinition } from "./IndexDefinition";
 import { AbstractIndexCreationTaskBase } from "./AbstractIndexCreationTaskBase";
 
+/**
+ * Utility class to create javascript based indexes using not-strongly typed syntax.
+ *
+ * Use AbstractJavaScriptIndexCreationTask for strongly-typed javascript indexes.
+ */
 export class AbstractRawJavaScriptIndexCreationTask extends AbstractIndexCreationTaskBase<IndexDefinition> {
 
     private readonly _definition: IndexDefinition = new IndexDefinition();
