@@ -7,7 +7,7 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { IDocumentStore } from "../../IDocumentStore";
 import { throwError } from "../../../Exceptions";
 import { ServerNode } from "../../../Http/ServerNode";
-import { ClassConstructor } from "../../../Types";
+import { CompareExchangeResultClass } from "../../../Types";
 import { CompareExchangeValueResultParser, GetCompareExchangeValuesResponse } from "./CompareExchangeValueResultParser";
 import * as stream from "readable-stream";
 
@@ -15,9 +15,9 @@ export class GetCompareExchangeValueOperation<T> implements IOperation<CompareEx
 
     private readonly _key: string;
     private readonly _materializeMetadata: boolean;
-    private readonly _clazz: ClassConstructor<T>;
+    private readonly _clazz: CompareExchangeResultClass<T>;
 
-    public constructor(key: string, clazz?: ClassConstructor<T>, materializeMetadata: boolean = true) {
+    public constructor(key: string, clazz?: CompareExchangeResultClass<T>, materializeMetadata: boolean = true) {
         this._key = key;
         this._clazz = clazz;
         this._materializeMetadata = materializeMetadata;
@@ -37,11 +37,11 @@ export class GetCompareExchangeValueOperation<T> implements IOperation<CompareEx
 
 export class GetCompareExchangeValueCommand<T> extends RavenCommand<CompareExchangeValue<T>> {
     private readonly _key: string;
-    private readonly _clazz: ClassConstructor<T>;
+    private readonly _clazz: CompareExchangeResultClass<T>;
     private readonly _materializeMetadata: boolean;
     private readonly _conventions: DocumentConventions;
 
-    public constructor(key: string, materializeMetadata: boolean, conventions: DocumentConventions, clazz?: ClassConstructor<T>) {
+    public constructor(key: string, materializeMetadata: boolean, conventions: DocumentConventions, clazz?: CompareExchangeResultClass<T>) {
         super();
 
         if (!key) {

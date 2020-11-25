@@ -44,7 +44,7 @@ describe("RavenDB_9676", function () {
 
         {
             const session = store.openSession();
-            let items = await session.query<Item>(Item)
+            let items = await session.query(Item)
                 .waitForNonStaleResults()
                 .spatial(new PointField("latitude", "longitude"), f => f.withinRadius(1000, 10, 10))
                 .orderByDistance(new PointField("latitude", "longitude"), 10, 10)
@@ -54,7 +54,7 @@ describe("RavenDB_9676", function () {
             assert.strictEqual(items[0].name, "Item1");
             assert.strictEqual(items[1].name, "Item2");
 
-            items = await session.query<Item>(Item)
+            items = await session.query(Item)
                 .waitForNonStaleResults()
                 .spatial(new PointField("latitude", "longitude"), f => f.withinRadius(1000, 10, 10))
                 .orderByDistanceDescending(new PointField("latitude", "longitude"), 10, 10)

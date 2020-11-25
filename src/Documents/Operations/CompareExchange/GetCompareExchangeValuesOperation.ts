@@ -3,7 +3,7 @@ import { HttpRequestParameters } from "../../../Primitives/Http";
 import { IOperation, OperationResultType } from "../OperationAbstractions";
 import { CompareExchangeValue } from "./CompareExchangeValue";
 import { throwError } from "../../../Exceptions";
-import { ClassConstructor } from "../../../Types";
+import { CompareExchangeResultClass } from "../../../Types";
 import { IDocumentStore } from "../../IDocumentStore";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { HttpCache } from "../../../Http/HttpCache";
@@ -21,12 +21,12 @@ export interface GetCompareExchangeValuesParameters<T> {
 
     materializeMetadata?: boolean;
 
-    clazz?: ClassConstructor<T>;
+    clazz?: CompareExchangeResultClass<T>;
 }
 
 export class GetCompareExchangeValuesOperation<T> implements IOperation<{ [key: string]: CompareExchangeValue<T> }> {
 
-    private readonly _clazz: ClassConstructor<T>;
+    private readonly _clazz: CompareExchangeResultClass<T>;
     private readonly _keys: string[];
 
     private readonly _startWith: string;
@@ -51,7 +51,7 @@ export class GetCompareExchangeValuesOperation<T> implements IOperation<{ [key: 
         return this._pageSize;
     }
 
-    public get clazz(): ClassConstructor<T> {
+    public get clazz(): CompareExchangeResultClass<T> {
         return this._clazz;
     }
 

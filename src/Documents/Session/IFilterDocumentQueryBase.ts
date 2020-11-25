@@ -9,6 +9,7 @@ import { SpatialCriteriaFactory } from "../Queries/Spatial/SpatialCriteriaFactor
 import { IDocumentQuery } from "./IDocumentQuery";
 import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField";
 import { MoreLikeThisBase } from "../Queries/MoreLikeThis/MoreLikeThisBase";
+import { Field } from "../../Types";
 
 export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocumentQueryBase<T, TSelf>>
     extends IQueryBase<T, TSelf> {
@@ -31,14 +32,14 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
     /**
      * Performs a query matching ALL of the provided values against the given field (AND)
      */
-    containsAll(fieldName: string, values: any[]): TSelf;
+    containsAll(fieldName: Field<T>, values: any[]): TSelf;
 
     //TBD TSelf ContainsAll<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values);
 
     /**
      * Performs a query matching ANY of the provided values against the given field (OR)
      */
-    containsAny(fieldName: string, values: any[]): TSelf;
+    containsAny(fieldName: Field<T>, values: any[]): TSelf;
 
     //TBD TSelf ContainsAny<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values);
 
@@ -64,7 +65,7 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
      * Space separated terms e.g. 'John Adam' means that we will look in selected field for 'John'
      * or 'Adam'.
      */
-    search(fieldName: string, searchTerms: string): TSelf;
+    search(fieldName: Field<T>, searchTerms: string): TSelf;
 
     /**
      * Perform a search for documents which fields that match the searchTerms.
@@ -73,7 +74,7 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
      * Space separated terms e.g. 'John Adam' means that we will look in selected field for 'John'
      * or 'Adam'.
      */
-    search(fieldName: string, searchTerms: string, operator: SearchOperator): TSelf;
+    search(fieldName: Field<T>, searchTerms: string, operator: SearchOperator): TSelf;
 
     //TBD TSelf Search<TValue>(Expression<Func<T, TValue>> propertySelector, string searchTerms,
     //     SearchOperator @operator = SearchOperator.Or);
@@ -81,22 +82,22 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
     /**
      * Filter the results from the index using the specified where clause.
      */
-    whereLucene(fieldName: string, whereClause: string): TSelf;
+    whereLucene(fieldName: Field<T>, whereClause: string): TSelf;
 
     /**
      * Filter the results from the index using the specified where clause.
      */
-    whereLucene(fieldName: string, whereClause: string, exact: boolean): TSelf;
+    whereLucene(fieldName: Field<T>, whereClause: string, exact: boolean): TSelf;
 
     /**
      * Matches fields where the value is between the specified start and end, inclusive
      */
-    whereBetween(fieldName: string, start: any, end: any): TSelf;
+    whereBetween(fieldName: Field<T>, start: any, end: any): TSelf;
 
     /**
      * Matches fields where the value is between the specified start and end, inclusive
      */
-    whereBetween(fieldName: string, start: any, end: any, exact: boolean): TSelf;
+    whereBetween(fieldName: Field<T>, start: any, end: any, exact: boolean): TSelf;
 
     //TBD TSelf WhereBetween<TValue>(Expression<Func<T, TValue>> propertySelector,
     //     TValue start, TValue end, bool exact = false);
@@ -104,34 +105,34 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
     /**
      * Matches fields which ends with the specified value.
      */
-    whereEndsWith(fieldName: string, value: any): TSelf;
+    whereEndsWith(fieldName: Field<T>, value: any): TSelf;
 
     /**
      * Matches fields which ends with the specified value.
      */
-    whereEndsWith(fieldName: string, value: any, exact: boolean): TSelf;
+    whereEndsWith(fieldName: Field<T>, value: any, exact: boolean): TSelf;
 
     //TBD TSelf WhereEndsWith<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value);
 
     /**
      * Matches value
      */
-    whereEquals(fieldName: string, value: any): TSelf;
+    whereEquals(fieldName: Field<T>, value: any): TSelf;
 
     /**
      * Matches value
      */
-    whereEquals(fieldName: string, value: any, exact: boolean): TSelf;
+    whereEquals(fieldName: Field<T>, value: any, exact: boolean): TSelf;
 
     /**
      * Matches value
      */
-    whereEquals(fieldName: string, method: MethodCall): TSelf;
+    whereEquals(fieldName: Field<T>, method: MethodCall): TSelf;
 
     /**
      * Matches value
      */
-    whereEquals(fieldName: string, method: MethodCall, exact: boolean): TSelf;
+    whereEquals(fieldName: Field<T>, method: MethodCall, exact: boolean): TSelf;
 
     //TBD TSelf WhereEquals<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false);
     //TBD TSelf WhereEquals<TValue>(Expression<Func<T, TValue>> propertySelector, MethodCall value, bool exact = false);
@@ -144,22 +145,22 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
     /**
      * Not matches value
      */
-    whereNotEquals(fieldName: string, value: any): TSelf;
+    whereNotEquals(fieldName: Field<T>, value: any): TSelf;
 
     /**
      * Not matches value
      */
-    whereNotEquals(fieldName: string, value: any, exact: boolean): TSelf;
+    whereNotEquals(fieldName: Field<T>, value: any, exact: boolean): TSelf;
 
     /**
      * Not matches value
      */
-    whereNotEquals(fieldName: string, method: MethodCall): TSelf;
+    whereNotEquals(fieldName: Field<T>, method: MethodCall): TSelf;
 
     /**
      * Not matches value
      */
-    whereNotEquals(fieldName: string, method: MethodCall, exact: boolean): TSelf;
+    whereNotEquals(fieldName: Field<T>, method: MethodCall, exact: boolean): TSelf;
 
     // TBD TSelf WhereNotEquals<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false);
     // TBD TSelf WhereNotEquals<TValue>(Expression<Func<T, TValue>> propertySelector,
@@ -173,12 +174,12 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
     /**
      * Matches fields where the value is greater than the specified value
      */
-    whereGreaterThan(fieldName: string, value: any): TSelf;
+    whereGreaterThan(fieldName: Field<T>, value: any): TSelf;
 
     /**
      * Matches fields where the value is greater than the specified value
      */
-    whereGreaterThan(fieldName: string, value: any, exact: boolean): TSelf;
+    whereGreaterThan(fieldName: Field<T>, value: any, exact: boolean): TSelf;
 
     //TBD  TSelf WhereGreaterThan<TValue>(Expression<Func<T, TValue>> propertySelector,
     //     TValue value, bool exact = false);
@@ -186,12 +187,12 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
     /**
      * Matches fields where the value is greater than or equal to the specified value
      */
-    whereGreaterThanOrEqual(fieldName: string, value: any): TSelf;
+    whereGreaterThanOrEqual(fieldName: Field<T>, value: any): TSelf;
 
     /**
      * Matches fields where the value is greater than or equal to the specified value
      */
-    whereGreaterThanOrEqual(fieldName: string, value: any, exact: boolean): TSelf;
+    whereGreaterThanOrEqual(fieldName: Field<T>, value: any, exact: boolean): TSelf;
 
     //TBD TSelf WhereGreaterThanOrEqual<TValue>(Expression<Func<T, TValue>> propertySelector,
     //     TValue value, bool exact = false);
@@ -199,12 +200,12 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
     /**
      * Check that the field has one of the specified values
      */
-    whereIn(fieldName: string, values: any[]): TSelf;
+    whereIn(fieldName: Field<T>, values: any[]): TSelf;
 
     /**
      * Check that the field has one of the specified values
      */
-    whereIn(fieldName: string, values: any[], exact: boolean): TSelf;
+    whereIn(fieldName: Field<T>, values: any[], exact: boolean): TSelf;
 
     //TBD TSelf WhereIn<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values,
     //     bool exact = false);
@@ -212,24 +213,24 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
     /**
      * Matches fields where the value is less than the specified value
      */
-    whereLessThan(fieldName: string, value: any): TSelf;
+    whereLessThan(fieldName: Field<T>, value: any): TSelf;
 
     /**
      * Matches fields where the value is less than the specified value
      */
-    whereLessThan(fieldName: string, value: any, exact: boolean): TSelf;
+    whereLessThan(fieldName: Field<T>, value: any, exact: boolean): TSelf;
 
     //TBD TSelf WhereLessThan<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false);
 
     /**
      *  Matches fields where the value is less than or equal to the specified value
      */
-    whereLessThanOrEqual(fieldName: string, value: any): TSelf;
+    whereLessThanOrEqual(fieldName: Field<T>, value: any): TSelf;
 
     /**
      *  Matches fields where the value is less than or equal to the specified value
      */
-    whereLessThanOrEqual(fieldName: string, value: any, exact: boolean): TSelf;
+    whereLessThanOrEqual(fieldName: Field<T>, value: any, exact: boolean): TSelf;
 
     //TBD TSelf WhereLessThanOrEqual<TValue>(Expression<Func<T, TValue>> propertySelector,
     //     TValue value, bool exact = false);
@@ -237,12 +238,12 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
     /**
      * Matches fields which starts with the specified value.
      */
-    whereStartsWith(fieldName: string, value: any): TSelf;
+    whereStartsWith(fieldName: Field<T>, value: any): TSelf;
 
     /**
      * Matches fields which starts with the specified value.
      */
-    whereStartsWith(fieldName: string, value: any, exact: boolean): TSelf;
+    whereStartsWith(fieldName: Field<T>, value: any, exact: boolean): TSelf;
 
     //TBD TSelf WhereStartsWith<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value);
 
@@ -251,14 +252,14 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
     /**
      * Check if the given field exists
      */
-    whereExists(fieldName: string): TSelf;
+    whereExists(fieldName: Field<T>): TSelf;
 
     //TBD TSelf WhereRegex<TValue>(Expression<Func<T, TValue>> propertySelector, string pattern);
 
     /**
      * Checks value of a given field against supplied regular expression pattern
      */
-    whereRegex(fieldName: string, pattern: string): TSelf;
+    whereRegex(fieldName: Field<T>, pattern: string): TSelf;
 
     //TBD TSelf WithinRadiusOf<TValue>(Expression<Func<T, TValue>> propertySelector, double radius,
     //     double latitude, double longitude, SpatialUnits? radiusUnits = null,
@@ -267,19 +268,19 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
     /**
      * Filter matches to be inside the specified radius
      */
-    withinRadiusOf(fieldName: string, radius: number, latitude: number, longitude: number): TSelf;
+    withinRadiusOf(fieldName: Field<T>, radius: number, latitude: number, longitude: number): TSelf;
 
     /**
      * Filter matches to be inside the specified radius
      */
     withinRadiusOf(
-        fieldName: string, radius: number, latitude: number, longitude: number, radiusUnits: SpatialUnits): TSelf;
+        fieldName: Field<T>, radius: number, latitude: number, longitude: number, radiusUnits: SpatialUnits): TSelf;
 
     /**
      * Filter matches to be inside the specified radius
      */
     withinRadiusOf(
-        fieldName: string,
+        fieldName: Field<T>,
         radius: number,
         latitude: number,
         longitude: number,
@@ -293,13 +294,13 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
      * Filter matches based on a given shape - only documents with the shape defined in fieldName that
      * have a relation rel with the given shapeWkt will be returned
      */
-    relatesToShape(fieldName: string, shapeWkt: string, relation: SpatialRelation): TSelf;
+    relatesToShape(fieldName: Field<T>, shapeWkt: string, relation: SpatialRelation): TSelf;
 
     /**
      * Filter matches based on a given shape - only documents with the shape defined in fieldName that
      * have a relation rel with the given shapeWkt will be returned
      */
-    relatesToShape(fieldName: string, shapeWkt: string, relation: SpatialRelation, distanceErrorPct: number): TSelf;
+    relatesToShape(fieldName: Field<T>, shapeWkt: string, relation: SpatialRelation, distanceErrorPct: number): TSelf;
 
     // tslint:disable-next-line:max-line-length
     // TBD IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause);
@@ -308,7 +309,7 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
      * Ability to use one factory to determine spatial shape that will be used in query.
      */
     spatial(
-        fieldName: string,
+        fieldName: Field<T>,
         clause: (spatialCriteriaFactory: SpatialCriteriaFactory) => SpatialCriteria): IDocumentQuery<T>;
 
     spatial(
@@ -325,7 +326,7 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
      * have a relation rel with the given shapeWkt will be returned
      */
     relatesToShape(
-        fieldName: string, 
+        fieldName: Field<T>,
         shapeWkt: string, 
         relation: SpatialRelation, 
         units: SpatialUnits, 

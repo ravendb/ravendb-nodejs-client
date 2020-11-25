@@ -3,7 +3,7 @@ import { ICompareExchangeValue } from "./ICompareExchangeValue";
 import { CompareExchangeValueState } from "./CompareExchangeValueState";
 import { throwError } from "../../../Exceptions";
 import { TypeUtil } from "../../../Utility/TypeUtil";
-import { ClassConstructor } from "../../../Types";
+import { CompareExchangeResultClass, EntityConstructor } from "../../../Types";
 import { CompareExchangeValueJsonConverter } from "./CompareExchangeValueJsonConverter";
 import { COMPARE_EXCHANGE, CONSTANTS } from "../../../Constants";
 import { StringUtil } from "../../../Utility/StringUtil";
@@ -18,7 +18,7 @@ import { IMetadataDictionary } from "../../Session/IMetadataDictionary";
 export class CompareExchangeSessionValue {
     private readonly _key: string;
     private _index: number;
-    private _originalValue: CompareExchangeValue<object>;
+    private _originalValue: CompareExchangeValue<any>;
 
     private _value: ICompareExchangeValue;
     private _state: CompareExchangeValueState;
@@ -45,7 +45,7 @@ export class CompareExchangeSessionValue {
         }
     }
 
-    public getValue<T>(clazz: ClassConstructor<T>, conventions: DocumentConventions): CompareExchangeValue<T> {
+    public getValue<T>(clazz: CompareExchangeResultClass<T>, conventions: DocumentConventions): CompareExchangeValue<T> {
         switch (this._state) {
             case "None":
             case "Created":
@@ -60,10 +60,10 @@ export class CompareExchangeSessionValue {
                 let entity: T;
 
                 if (this._originalValue && !TypeUtil.isNullOrUndefined(this._originalValue.value)) {
-                    if (TypeUtil.isPrimitive(clazz)) {
-                        entity = this._originalValue.value[COMPARE_EXCHANGE.OBJECT_FIELD_NAME];
+                    if (TypeUtil.isPrimitive(clazz) || !clazz) {
+                        entity = this._originalValue.value as T;
                     } else {
-                        entity = EntityToJson.convertToEntity(clazz, this._key, this._originalValue.value, conventions);
+                        entity = EntityToJson.convertToEntity(clazz as EntityConstructor, this._key, this._originalValue.value, conventions);
                     }
                 }
 

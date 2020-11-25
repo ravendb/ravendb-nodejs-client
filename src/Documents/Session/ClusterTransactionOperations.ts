@@ -1,5 +1,5 @@
 import { CompareExchangeValue } from "../Operations/CompareExchange/CompareExchangeValue";
-import { ClassConstructor } from "../../Types";
+import { CompareExchangeResultClass } from "../../Types";
 import { ClusterTransactionOperationsBase } from "./ClusterTransactionOperationsBase";
 import { IClusterTransactionOperations } from "./IClusterTransactionOperations";
 import { TypeUtil } from "../../Utility/TypeUtil";
@@ -19,10 +19,10 @@ export class ClusterTransactionOperations
     }
 
     public getCompareExchangeValue<T>(key: string): Promise<CompareExchangeValue<T>>;
-    public getCompareExchangeValue<T>(key: string, type: ClassConstructor<T>): Promise<CompareExchangeValue<T>>;
+    public getCompareExchangeValue<T>(key: string, type: CompareExchangeResultClass<T>): Promise<CompareExchangeValue<T>>;
     public async getCompareExchangeValue<T>(
         key: string, 
-        type?: ClassConstructor<T>): Promise<CompareExchangeValue<T>> {
+        type?: CompareExchangeResultClass<T>): Promise<CompareExchangeValue<T>> {
 
         return this._getCompareExchangeValueInternal(key, type);
     }
@@ -30,24 +30,24 @@ export class ClusterTransactionOperations
     public getCompareExchangeValues<T>(
         keys: string[]): Promise<{ [key: string]: CompareExchangeValue<T> }>;
     public getCompareExchangeValues<T>(
-        keys: string[], type: ClassConstructor<T>): Promise<{ [key: string]: CompareExchangeValue<T> }>;
+        keys: string[], type: CompareExchangeResultClass<T>): Promise<{ [key: string]: CompareExchangeValue<T> }>;
     public getCompareExchangeValues<T>(
         startsWith: string): Promise<{ [key: string]: CompareExchangeValue<T> }>;
     public getCompareExchangeValues<T>(
         startsWith: string,
-        type: ClassConstructor<T>): Promise<{ [key: string]: CompareExchangeValue<T> }>;
+        type: CompareExchangeResultClass<T>): Promise<{ [key: string]: CompareExchangeValue<T> }>;
     public getCompareExchangeValues<T>(
         startsWith: string,
-        type: ClassConstructor<T>,
+        type: CompareExchangeResultClass<T>,
         start: number): Promise<{ [key: string]: CompareExchangeValue<T> }>;
     public getCompareExchangeValues<T>(
         startsWith: string,
-        type: ClassConstructor<T>,
+        type: CompareExchangeResultClass<T>,
         start: number,
         pageSize: number): Promise<{ [key: string]: CompareExchangeValue<T> }>;
     public getCompareExchangeValues<T>(
         keysOrStartsWith: string[] | string,
-        type?: ClassConstructor<T>,
+        type?: CompareExchangeResultClass<T>,
         start?: number,
         pageSize?: number)
             : Promise<{ [key: string]: CompareExchangeValue<T> }> {

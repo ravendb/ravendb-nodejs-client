@@ -118,7 +118,7 @@ async function canUseSorterInternal(exceptionClass: RavenErrorType, store: IDocu
         });
 
         await assertThrows(async () => {
-            await session.query<Company>({ documentType: Company })
+            await session.query({ documentType: Company })
                 .orderBy("name", { sorterName: "MySorter" })
                 .all();
         }, err => {
@@ -139,7 +139,7 @@ async function canUseSorterInternal(exceptionClass: RavenErrorType, store: IDocu
         });
 
         await assertThrows(async () => {
-            await session.query<Company>({ documentType: Company })
+            await session.query({ documentType: Company })
                 .orderByDescending("name", { sorterName: "MySorter" })
                 .all();
         }, err => {

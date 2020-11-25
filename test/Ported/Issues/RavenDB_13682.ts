@@ -70,7 +70,7 @@ describe("RavenDB_13682", function () {
             // we sort first by spatial distance (but round it up to 25km)
             // then we sort by name ascending, so within 25 range, we can apply a different sort
 
-            const query = s.query<Item>(Item)
+            const query = s.query(Item)
                 .orderByDistance(new PointField("lat", "lng").roundTo(25), 35.1, -106.3);
 
             const result = await query.all();
@@ -94,7 +94,7 @@ describe("RavenDB_13682", function () {
             // we sort first by spatial distance (but round it up to 25km)
             // then we sort by name ascending, so within 25 range, we can apply a different sort
 
-            const query = s.query<Item>({ documentType: Item, index: SpatialIndex })
+            const query = s.query(Item, SpatialIndex)
                 .orderByDistance("coordinates", 35.1, -106.3, 25);
 
             const result = await query.all();

@@ -50,10 +50,7 @@ describe("RavenDB_12748", function () {
 
         {
             const session = store.openSession();
-            const r = await session.query<Order>({
-                index: Orders_All,
-                documentType: Order
-            })
+            const r = await session.query(Order, Orders_All)
                 .aggregateBy(f => f.byField("region"))
                 .andAggregateBy(f => f.byField("product").sumOn("total").averageOn("total").sumOn("quantity"))
                 .execute();
@@ -125,10 +122,7 @@ describe("RavenDB_12748", function () {
 
         {
             const session = store.openSession();
-            const r = await session.query<Order>({
-                index: Orders_All,
-                documentType: Order
-            })
+            const r = await session.query(Order, Orders_All)
                 .aggregateBy(f => f.byField("region"))
                 .andAggregateBy(f => f.byField("product")
                     .sumOn("total", "T1")
@@ -203,10 +197,7 @@ describe("RavenDB_12748", function () {
 
         {
             const session = store.openSession();
-            const r = await session.query<Order>({
-                index: Orders_All,
-                documentType: Order
-            })
+            const r = await session.query(Order, Orders_All)
                 .aggregateBy(f => f.byField("region"))
                 .andAggregateBy(f => f.byField("product")
                     .sumOn("total", "T1")
@@ -346,10 +337,7 @@ describe("RavenDB_12748", function () {
             const session = store.openSession();
             const range = RangeBuilder.forPath<number>("total");
 
-            const r = await session.query<Order>({
-                documentType: Order,
-                index: Orders_All
-            })
+            const r = await session.query(Order, Orders_All)
                 .aggregateBy(f => f.byRanges(
                     range.isLessThan(100),
                     range.isGreaterThanOrEqualTo(100).isLessThan(500),
@@ -419,10 +407,7 @@ describe("RavenDB_12748", function () {
             const session = store.openSession();
             const range = RangeBuilder.forPath<number>("total");
 
-            const r = await session.query<Order>({
-                documentType: Order,
-                index: Orders_All
-            })
+            const r = await session.query(Order, Orders_All)
                 .aggregateBy(f => f.byRanges(
                     range.isLessThan(100),
                     range.isGreaterThanOrEqualTo(100).isLessThan(500),
@@ -492,10 +477,7 @@ describe("RavenDB_12748", function () {
             const session = store.openSession();
             const range = RangeBuilder.forPath<number>("total");
 
-            const r = await session.query<Order>({
-                documentType: Order,
-                index: Orders_All
-            })
+            const r = await session.query(Order, Orders_All)
                 .aggregateBy(f => f.byRanges(
                     range.isLessThan(100),
                     range.isGreaterThanOrEqualTo(100).isLessThan(500),

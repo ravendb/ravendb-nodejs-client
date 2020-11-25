@@ -7,6 +7,7 @@ import { throwError } from "../../../Exceptions";
 import { FacetOptions } from ".";
 import { FacetBase } from "./FacetBase";
 import { FacetAggregationField } from "./FacetAggregationField";
+import { Field } from "../../../Types";
 
 export class FacetBuilder<T> implements IFacetBuilder<T>, IFacetOperations<T> {
     private _range: GenericRangeFacet;
@@ -40,7 +41,7 @@ export class FacetBuilder<T> implements IFacetBuilder<T>, IFacetOperations<T> {
         return this;
     }
 
-    public byField(fieldName: string): IFacetOperations<T> {
+    public byField(fieldName: Field<T>): IFacetOperations<T> {
         if (!this._default) {
             this._default = new Facet();
         }

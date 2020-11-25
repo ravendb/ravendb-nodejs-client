@@ -46,10 +46,7 @@ describe("BoundingBoxIndexTest", function () {
 
         {
             const session = store.openSession();
-            const result = await session.query<SpatialDoc>({
-                indexName: "BBoxIndex",
-                documentType: SpatialDoc
-            })
+            const result = await session.query(SpatialDoc, BBoxIndex)
                 .spatial("shape", x => x.intersects(rectangle1))
                 .count();
 
@@ -58,10 +55,7 @@ describe("BoundingBoxIndexTest", function () {
 
         {
             const session = store.openSession();
-            const result = await session.query<SpatialDoc>({
-                indexName: "BBoxIndex",
-                documentType: SpatialDoc
-            })
+            const result = await session.query(SpatialDoc, BBoxIndex)
                 .spatial("shape", x => x.intersects(rectangle2))
                 .count();
 
@@ -70,10 +64,7 @@ describe("BoundingBoxIndexTest", function () {
 
         {
             const session = store.openSession();
-            const result = await session.query<SpatialDoc>({
-                indexName: "BBoxIndex",
-                documentType: SpatialDoc
-            })
+            const result = await session.query(SpatialDoc, BBoxIndex)
                 .spatial("shape", x => x.disjoint(rectangle2))
                 .count();
 
@@ -82,10 +73,7 @@ describe("BoundingBoxIndexTest", function () {
 
         {
             const session = store.openSession();
-            const result = await session.query<SpatialDoc>({
-                indexName: "BBoxIndex",
-                documentType: SpatialDoc
-            })
+            const result = await session.query(SpatialDoc, BBoxIndex)
                 .spatial("shape", x => x.within(rectangle3))
                 .count();
 
@@ -94,10 +82,7 @@ describe("BoundingBoxIndexTest", function () {
 
         {
             const session = store.openSession();
-            const result = await session.query<SpatialDoc>({
-                indexName: "QuadTreeIndex",
-                documentType: SpatialDoc
-            })
+            const result = await session.query(SpatialDoc, QuadTreeIndex)
                 .spatial("shape", x => x.intersects(rectangle2))
                 .count();
 
@@ -106,10 +91,7 @@ describe("BoundingBoxIndexTest", function () {
 
         {
             const session = store.openSession();
-            const result = await session.query<SpatialDoc>({
-                indexName: "QuadTreeIndex",
-                documentType: SpatialDoc
-            })
+            const result = await session.query(SpatialDoc, QuadTreeIndex)
                 .spatial("shape", x => x.intersects(rectangle1))
                 .count();
 

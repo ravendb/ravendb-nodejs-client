@@ -1,4 +1,7 @@
-import { IDocumentStore, SessionOptions } from "../../../src";
+import {
+    IDocumentStore,
+    SessionOptions
+} from "../../../src";
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
 import { Address } from "../../Assets/Orders";
 import { assertThat } from "../../Utils/AssertExtensions";
@@ -31,7 +34,7 @@ describe("RavenDB_14005", function () {
         {
             const session = store.openSession(sessionOptions);
             const lazyValue = await session.advanced.clusterTransaction.lazily
-                .getCompareExchangeValue<Address>("companies/hr", Address);
+                .getCompareExchangeValue("companies/hr", Address);
 
             assertThat(lazyValue.isValueCreated())
                 .isFalse();
@@ -41,13 +44,13 @@ describe("RavenDB_14005", function () {
                 .isNull();
 
             const value = await session.advanced.clusterTransaction
-                .getCompareExchangeValue<Address>("companies/hr", Address);
+                .getCompareExchangeValue("companies/hr", Address);
 
             assertThat(value)
                 .isEqualTo(address);
 
             const lazyValues = session.advanced.clusterTransaction.lazily
-                .getCompareExchangeValues<Address>(["companies/hr", "companies/cf"], Address);
+                .getCompareExchangeValues(["companies/hr", "companies/cf"], Address);
 
             assertThat(lazyValues.isValueCreated())
                 .isFalse();
@@ -84,12 +87,12 @@ describe("RavenDB_14005", function () {
             const lazyValue = session.advanced
                 .clusterTransaction
                 .lazily
-                .getCompareExchangeValue<Address>("companies/hr");
+                .getCompareExchangeValue("companies/hr");
 
             const lazyValues = session.advanced
                 .clusterTransaction
                 .lazily
-                .getCompareExchangeValues<Address>(["companies/hr", "companies/cf"], Address);
+                .getCompareExchangeValues(["companies/hr", "companies/cf"], Address);
 
             assertThat(lazyValue.isValueCreated())
                 .isFalse();
@@ -150,7 +153,7 @@ describe("RavenDB_14005", function () {
                 .advanced
                 .clusterTransaction
                 .lazily
-                .getCompareExchangeValue<Address>("companies/hr", Address);
+                .getCompareExchangeValue("companies/hr", Address);
 
             assertThat(lazyValue.isValueCreated())
                 .isFalse();
@@ -163,7 +166,7 @@ describe("RavenDB_14005", function () {
                 .isEqualTo("Hadera");
 
 
-            const value = await session.advanced.clusterTransaction.getCompareExchangeValue<Address>("companies/hr", Address);
+            const value = await session.advanced.clusterTransaction.getCompareExchangeValue("companies/hr", Address);
             assertThat(value.value.city)
                 .isEqualTo(address.value.city);
 

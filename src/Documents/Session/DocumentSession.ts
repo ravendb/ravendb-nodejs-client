@@ -75,6 +75,7 @@ import { TimeSeriesOperations } from "../TimeSeries/TimeSeriesOperations";
 import { SessionDocumentTypedTimeSeries } from "./SessionDocumentTypedTimeSeries";
 import { SessionDocumentRollupTypedTimeSeries } from "./SessionDocumentRollupTypedTimeSeries";
 import { TIME_SERIES_ROLLUP_SEPARATOR } from "../Operations/TimeSeries/RawTimeSeriesTypes";
+import { AbstractCommonApiForIndexes, IAbstractIndexCreationTask } from "../..";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;
@@ -545,12 +546,14 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     public query<TEntity extends object>(documentType: DocumentType<TEntity>): IDocumentQuery<TEntity>;
+    public query<TEntity extends object>(documentType: DocumentType<TEntity>, index: new () => AbstractCommonApiForIndexes): IDocumentQuery<TEntity>;
     public query<TEntity extends object>(opts: DocumentQueryOptions<TEntity>): IDocumentQuery<TEntity>;
     public query<TEntity extends object>(
-        docTypeOrOpts: DocumentType<TEntity> | DocumentQueryOptions<TEntity>): IDocumentQuery<TEntity> {
+        docTypeOrOpts: DocumentType<TEntity> | DocumentQueryOptions<TEntity>, index?: new () => AbstractCommonApiForIndexes): IDocumentQuery<TEntity> {
         if (TypeUtil.isDocumentType(docTypeOrOpts)) {
             return this.documentQuery({
-                documentType: docTypeOrOpts as DocumentType<TEntity>
+                documentType: docTypeOrOpts as DocumentType<TEntity>,
+                index
             });
         }
 

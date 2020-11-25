@@ -28,7 +28,7 @@ describe("RavenDB_14811", function () {
 
         {
             const session = store.openSession();
-            const result = await session.query<User>(User)
+            const result = await session.query(User)
                 .selectFields<UserProjectionIntId>(["name"], UserProjectionIntId)
                 .firstOrNull();
 
@@ -69,7 +69,7 @@ describe("RavenDB_14811", function () {
 
         {
             const session = store.openSession();
-            const result = await session.query<User>(User)
+            const result = await session.query(User)
                 .selectFields<UserProjectionIntId>("name", UserProjectionIntId)
                 .firstOrNull();
 

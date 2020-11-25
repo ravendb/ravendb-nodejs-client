@@ -8,6 +8,7 @@ import { ExplanationOptions } from "../Queries/Explanation/ExplanationOptions";
 import { Highlightings } from "../Queries/Highlighting/Hightlightings";
 import { HighlightingParameters } from "../Queries/Highlighting/HighlightingParameters";
 import { IQueryIncludeBuilder } from "../Session/Loaders/IQueryIncludeBuilder";
+import { Field } from "../../Types";
 
 export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQueryBase<T, TSelf>>
     extends IQueryBase<T, TSelf>, IFilterDocumentQueryBase<T, TSelf> {
@@ -15,12 +16,12 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
     /**
      * Adds an ordering for a specific field to the query
      */
-    addOrder(fieldName: string, descending: boolean): TSelf;
+    addOrder(fieldName: Field<T>, descending: boolean): TSelf;
 
     /**
      * Adds an ordering for a specific field to the query
      */
-    addOrder(fieldName: string, descending: boolean, ordering: OrderingType): TSelf;
+    addOrder(fieldName: Field<T>, descending: boolean, ordering: OrderingType): TSelf;
 
     //TBD TSelf AddOrder<TValue>(Expression<Func<T, TValue>> propertySelector,
     //      bool descending = false, OrderingType ordering = OrderingType.String);
@@ -167,19 +168,19 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
     /**
      * Sorts the query results by distance.
      */
-    orderByDistance(fieldName: string, latitude: number, longitude: number): TSelf;
+    orderByDistance(fieldName: Field<T>, latitude: number, longitude: number): TSelf;
 
     /**
      * Sorts the query results by distance.
      */
-    orderByDistance(fieldName: string, latitude: number, longitude: number, roundFactor: number): TSelf;
+    orderByDistance(fieldName: Field<T>, latitude: number, longitude: number, roundFactor: number): TSelf;
 
     //TBD TSelf OrderByDistance<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt);
 
     /**
      * Sorts the query results by distance.
      */
-    orderByDistance(fieldName: string, shapeWkt: string): TSelf;
+    orderByDistance(fieldName: Field<T>, shapeWkt: string): TSelf;
 
     /**
      * Sorts the query results by distance.
@@ -200,17 +201,17 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
     /**
      * Sorts the query results by distance.
      */
-    orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): TSelf;
+    orderByDistanceDescending(fieldName: Field<T>, latitude: number, longitude: number): TSelf;
 
     /**
      * Sorts the query results by distance.
      */
-    orderByDistanceDescending(fieldName: string, latitude: number, longitude: number, roundFactor: number): TSelf;
+    orderByDistanceDescending(fieldName: Field<T>, latitude: number, longitude: number, roundFactor: number): TSelf;
 
     //TBD TSelf OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt);
 
     /**
      * Sorts the query results by distance.
      */
-    orderByDistanceDescending(fieldName: string, shapeWkt: string): TSelf;
+    orderByDistanceDescending(fieldName: Field<T>, shapeWkt: string): TSelf;
 }

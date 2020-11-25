@@ -29,8 +29,7 @@ describe("Regex query", function () {
 
     it("can do queries with regex from documentQuery", async () => {
         const session = store.openSession();
-        const query = session.advanced
-            .documentQuery(RegexMe)
+        const query = session.query(RegexMe)
             .whereRegex("text", "^[a-z ]{2,4}love");
 
         const iq = query.getIndexQuery();

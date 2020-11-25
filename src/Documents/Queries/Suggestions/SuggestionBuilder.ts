@@ -6,6 +6,7 @@ import { throwError } from "../../../Exceptions";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { SuggestionOptions } from "./SuggestionOptions";
 import { SuggestionBase } from "./SuggestionBase";
+import { Field } from "../../../Types";
 
 export class SuggestionBuilder<T> implements ISuggestionBuilder<T>, ISuggestionOperations<T> {
 
@@ -17,9 +18,9 @@ export class SuggestionBuilder<T> implements ISuggestionBuilder<T>, ISuggestionO
         return this;
     }
 
-    public byField(fieldName: string, term: string): ISuggestionOperations<T>;
-    public byField(fieldName: string, terms: string[]): ISuggestionOperations<T>;
-    public byField(fieldName: string, termOrTerms: string | string[]): ISuggestionOperations<T> {
+    public byField(fieldName: Field<T>, term: string): ISuggestionOperations<T>;
+    public byField(fieldName: Field<T>, terms: string[]): ISuggestionOperations<T>;
+    public byField(fieldName: Field<T>, termOrTerms: string | string[]): ISuggestionOperations<T> {
         if (!fieldName) {
             throwError("InvalidArgumentException", "fieldName cannot be null");
         }

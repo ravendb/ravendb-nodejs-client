@@ -159,10 +159,7 @@ describe("SuggestionsTest", function () {
                 sortMode: "Popularity"
             } as SuggestionOptions;
 
-            const suggestionQueryResult = await session.query({
-                documentType: User,
-                index: Users_ByName
-            })
+            const suggestionQueryResult = await session.query(User, Users_ByName)
                 .suggestUsing(x => x.byField("name", ["johne", "davi"]).withOptions(options))
                 .execute();
 

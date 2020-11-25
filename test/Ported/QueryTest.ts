@@ -37,7 +37,7 @@ describe("QueryTest", function () {
         await session.store(user3, "users/3");
         await session.saveChanges();
 
-        const queryResult = await session.advanced.documentQuery<User>({
+        const queryResult = await session.advanced.documentQuery({
             collection: "users",
             isMapReduce: false,
             documentType: User
@@ -102,7 +102,7 @@ describe("QueryTest", function () {
 
         it("query map reduce with count", async () => {
             const session = store.openSession();
-            const results = await session.query<User>(User)
+            const results = await session.query(User)
                 .groupBy("name")
                 .selectKey()
                 .selectCount()
@@ -120,7 +120,7 @@ describe("QueryTest", function () {
 
         it("query map reduce with sum", async () => {
             const session = store.openSession();
-            const results = await session.query<User>(User)
+            const results = await session.query(User)
                 .groupBy("name")
                 .selectKey()
                 .selectSum(new GroupByField("age"))
@@ -138,10 +138,7 @@ describe("QueryTest", function () {
 
         it("query map reduce index", async () => {
             const session = store.openSession();
-            const results = await session.query<ReduceResult>({
-                index: UsersByName,
-                documentType: ReduceResult
-            })
+            const results = await session.query(ReduceResult, UsersByName)
                 .orderByDescending("count")
                 .all();
 
@@ -188,7 +185,7 @@ describe("QueryTest", function () {
 
         it("query with where between", async () => {
             const session = store.openSession();
-            const results = await session.query<User>(User)
+            const results = await session.query(User)
                 .whereBetween("age", 4, 5)
                 .all();
 
@@ -198,7 +195,7 @@ describe("QueryTest", function () {
 
         it("query with where less than", async () => {
             const session = store.openSession();
-            const results = await session.query<User>(User)
+            const results = await session.query(User)
                 .whereLessThan("age", 3)
                 .all();
 
@@ -208,7 +205,7 @@ describe("QueryTest", function () {
 
         it("query with where less than or equal", async () => {
             const session = store.openSession();
-            const results = await session.query<User>(User)
+            const results = await session.query(User)
                 .whereLessThanOrEqual("age", 3)
                 .all();
 
@@ -217,7 +214,7 @@ describe("QueryTest", function () {
 
         it("query with where greater than", async () => {
             const session = store.openSession();
-            const results = await session.query<User>(User)
+            const results = await session.query(User)
                 .whereGreaterThan("age", 3)
                 .all();
 
@@ -227,7 +224,7 @@ describe("QueryTest", function () {
 
         it("query with where greater than or equal", async () => {
             const session = store.openSession();
-            const results = await session.query<User>(User)
+            const results = await session.query(User)
                 .whereGreaterThanOrEqual("age", 3)
                 .all();
 
@@ -285,7 +282,7 @@ describe("QueryTest", function () {
 
         it("query search with or", async () => {
             const session = store.openSession();
-            const results = await session.query<User>(User)
+            const results = await session.query(User)
                 .search("name", "Tarzan John", "OR")
                 .all();
 
@@ -294,7 +291,7 @@ describe("QueryTest", function () {
 
         it("query no tracking", async () => {
             const session = store.openSession();
-            const users = await session.query<User>(User)
+            const users = await session.query(User)
                 .noTracking()
                 .all();
 
@@ -308,7 +305,7 @@ describe("QueryTest", function () {
 
         it("query skip take", async () => {
             const session = store.openSession();
-            const users = await session.query<User>(User)
+            const users = await session.query(User)
                 .orderBy("name")
                 .skip(2)
                 .take(1)
@@ -320,7 +317,7 @@ describe("QueryTest", function () {
 
         it("raw query skip take", async () => {
             const session = store.openSession();
-            const users = await session.advanced.rawQuery<User>("from users order by name", User)
+            const users = await session.advanced.rawQuery("from users order by name", User)
                 .skip(2)
                 .take(1)
                 .all();
@@ -331,7 +328,7 @@ describe("QueryTest", function () {
 
         it("parameters in raw query", async () => {
             const session = store.openSession();
-            const users = await session.advanced.rawQuery<User>("from users where age == $p0", User)
+            const users = await session.advanced.rawQuery("from users where age == $p0", User)
                 .addParameter("p0", 5)
                 .all();
 
@@ -341,7 +338,7 @@ describe("QueryTest", function () {
 
         it("query lucene", async () => {
             const session = store.openSession();
-            const users = await session.query<User>(User)
+            const users = await session.query(User)
                 .whereLucene("name", "Tarzan")
                 .all();
 
@@ -354,19 +351,19 @@ describe("QueryTest", function () {
 
         it("query where exact", async () => {
             const session = store.openSession();
-            let users = await session.query<User>(User)
+            let users = await session.query(User)
                 .whereEquals("name", "tarzan")
                 .all();
 
             assert.strictEqual(users.length, 1);
 
-            users = await session.query<User>(User)
+            users = await session.query(User)
                 .whereEquals("name", "tarzan", true)
                 .all();
 
             assert.strictEqual(users.length, 0);
 
-            users = await session.query<User>(User)
+            users = await session.query(User)
                 .whereEquals("name", "Tarzan", true)
                 .all();
             assert.strictEqual(users.length, 1);
@@ -374,16 +371,16 @@ describe("QueryTest", function () {
 
         it("query where not", async () => {
             const session = store.openSession();
-            assert.strictEqual((await session.query<User>(User)
+            assert.strictEqual((await session.query(User)
                 .not()
                 .whereEquals("name", "tarzan")
                 .all()).length, 2);
 
-            assert.strictEqual((await session.query<User>(User)
+            assert.strictEqual((await session.query(User)
                 .whereNotEquals("name", "tarzan")
                 .all()).length, 2);
 
-            assert.strictEqual((await session.query<User>(User)
+            assert.strictEqual((await session.query(User)
                 .whereNotEquals("name", "Tarzan", true)
                 .all()).length, 2);
         });
@@ -440,7 +437,7 @@ describe("QueryTest", function () {
 
         it("query with boost", async () => {
             const session = store.openSession();
-            let users = await session.query<User>(User)
+            let users = await session.query(User)
                 .whereEquals("name", "Tarzan")
                 .boost(5)
                 .orElse()
@@ -454,7 +451,7 @@ describe("QueryTest", function () {
             let names = users.map(x => x.name);
             assert.deepStrictEqual(names, ["Tarzan", "John", "John"]);
 
-            users = await session.query<User>(User)
+            users = await session.query(User)
                 .whereEquals("name", "Tarzan")
                 .boost(2)
                 .orElse()
@@ -483,12 +480,7 @@ describe("QueryTest", function () {
             {
                 const session = store.openSession();
 
-                const queryResult = await session.advanced
-                    .documentQuery<DogsIndexResult>({
-                        index: DogsIndex,
-                        isMapReduce: false,
-                        documentType: DogsIndexResult
-                    })
+                const queryResult = await session.query(DogsIndexResult, DogsIndex)
                     .waitForNonStaleResults(null)
                     .orderBy("name", "AlphaNumeric")
                     .whereGreaterThan("age", 2)
@@ -586,12 +578,7 @@ describe("QueryTest", function () {
 
         {
             const session = store.openSession();
-            const queryResult = await session.advanced
-                .documentQuery<DogsIndexResult>({
-                    documentType: DogsIndexResult,
-                    index: DogsIndex,
-                    isMapReduce: false
-                })
+            const queryResult = await session.query(DogsIndexResult, DogsIndex)
                 .whereGreaterThan("age", 2)
                 .andAlso()
                 .whereEquals("vaccinated", false)
@@ -600,12 +587,7 @@ describe("QueryTest", function () {
             assert.strictEqual(queryResult.length, 1);
             assert.strictEqual(queryResult[0].name, "Brian");
 
-            const queryResult2 = await session.advanced
-                .documentQuery<DogsIndexResult>({
-                    documentType: DogsIndexResult,
-                    index: DogsIndex,
-                    isMapReduce: false
-                })
+            const queryResult2 = await session.query(DogsIndexResult, DogsIndex)
                 .whereLessThanOrEqual("age", 2)
                 .andAlso()
                 .whereEquals("vaccinated", false)

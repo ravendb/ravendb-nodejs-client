@@ -43,10 +43,7 @@ describe("TimeSeriesIndexStreamTest", function () {
             const session = store.openSession();
             let i = 0;
 
-            const queryStream = await session.advanced.stream(session.query<IndexResult>({
-                index: MyTsIndex,
-                documentType: IndexResult
-            }));
+            const queryStream = await session.advanced.stream(session.query(IndexResult, MyTsIndex));
 
             queryStream.on("data", (item: StreamResult<IndexResult>) => {
                 const results = item.document;

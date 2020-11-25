@@ -20,15 +20,16 @@ export interface IRavenArrayResult {
     results: any[];
 }
 
-export interface ClassConstructor<T extends Object = Object> {
+export type CompareExchangeResultClass<T> = T extends object ? EntityConstructor<T> : unknown;
+
+export interface ClassConstructor<T extends object = object> {
     name: string;
 
     new(...args: any[]): any;
 }
 
-export interface EntityConstructor<T extends object = object>
-    extends ClassConstructor<T> {
-    new(...args: any[]): T;
+export interface EntityConstructor<T extends object = object> {
+    new(...args: any): T;
 
     name: string;
 }
@@ -70,3 +71,5 @@ export abstract class PropsBasedObjectLiteralDescriptor<T extends object>
         }, true);
     }
 }
+
+export type Field<T> = keyof T & string | string;

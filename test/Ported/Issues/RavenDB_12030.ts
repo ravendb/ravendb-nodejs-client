@@ -34,8 +34,7 @@ describe("RavenDB_12030", function () {
         {
             const session = store.openSession();
             let companies = await session
-                .advanced
-                .documentQuery<Company>(Company)
+                .query(Company)
                 .whereEquals("name", "CoedForhe")
                 .fuzzy(0.5)
                 .all();
@@ -46,8 +45,7 @@ describe("RavenDB_12030", function () {
                 .isEqualTo("CodeForge");
 
             companies = await session
-                .advanced
-                .documentQuery<Company>(Company)
+                .query(Company)
                 .whereEquals("name", "Hiberanting Rinhos")
                 .fuzzy(0.5)
                 .all();
@@ -58,8 +56,7 @@ describe("RavenDB_12030", function () {
                 .isEqualTo("Hibernating Rhinos");
 
             companies = await session
-                .advanced
-                .documentQuery<Company>(Company)
+                .query(Company)
                 .whereEquals("name", "CoedForhe")
                 .fuzzy(0.99)
                 .all();
@@ -90,11 +87,7 @@ describe("RavenDB_12030", function () {
         {
             const session = store.openSession();
             let foxes = await session
-                .advanced
-                .documentQuery<Fox>({
-                    documentType: Fox,
-                    index: Fox_Search
-                })
+                .query(Fox, Fox_Search)
                 .search("name", "quick fox")
                 .proximity(1)
                 .all();
@@ -105,11 +98,7 @@ describe("RavenDB_12030", function () {
                 .isEqualTo("a quick brown fox");
 
             foxes = await session
-                .advanced
-                .documentQuery<Fox>({
-                    index: Fox_Search,
-                    documentType: Fox
-                })
+                .query(Fox, Fox_Search)
                 .search("name", "quick fox")
                 .proximity(2)
                 .all();

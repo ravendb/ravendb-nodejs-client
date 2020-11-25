@@ -4,7 +4,7 @@ import { EntityToJson } from "../../Session/EntityToJson";
 
 export class CompareExchangeValueJsonConverter {
     public static convertToJson(value: object, conventions: DocumentConventions) {
-        if (!value) {
+        if (TypeUtil.isNullOrUndefined(value)) {
             return null;
         }
 

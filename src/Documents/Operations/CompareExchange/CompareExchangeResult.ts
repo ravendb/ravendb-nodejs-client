@@ -1,8 +1,9 @@
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { throwError } from "../../../Exceptions";
 import { TypeUtil } from "../../../Utility/TypeUtil";
-import { ClassConstructor } from "../../../Types";
+import { CompareExchangeResultClass } from "../../../Types";
 import { COMPARE_EXCHANGE } from "../../../Constants";
+import { DocumentType } from "../../DocumentAbstractions";
 
 export interface CompareExchangeResultResponse {
     index: number;
@@ -21,7 +22,7 @@ export class CompareExchangeResult<T> {
     public static parseFromObject<T>(
         { index, value, successful }: CompareExchangeResultResponse,
         conventions: DocumentConventions,
-        clazz?: ClassConstructor<T>): CompareExchangeResult<T> {
+        clazz?: CompareExchangeResultClass<T>): CompareExchangeResult<T> {
         if (!index) {
             throwError("InvalidOperationException", "Response is invalid. Index is missing");
         }
@@ -33,7 +34,7 @@ export class CompareExchangeResult<T> {
     public static parseFromString<T>(
         responseString: string,
         conventions: DocumentConventions,
-        clazz?: ClassConstructor<T>): CompareExchangeResult<T> {
+        clazz?: CompareExchangeResultClass<T>): CompareExchangeResult<T> {
 
         const response = JSON.parse(responseString);
 
@@ -59,9 +60,11 @@ export class CompareExchangeResult<T> {
         index: number,
         successful: boolean,
         conventions: DocumentConventions,
-        clazz?: ClassConstructor<T>): CompareExchangeResult<T> {
+        clazz?: CompareExchangeResultClass<T>): CompareExchangeResult<T> {
 
-        conventions.tryRegisterJsType(clazz);
+        if (clazz) {
+            conventions.tryRegisterJsType(clazz as DocumentType);
+        }
 
         if (!val) {
             const emptyExchangeResult = new CompareExchangeResult<T>();
@@ -76,7 +79,7 @@ export class CompareExchangeResult<T> {
             result = val as any as T;
         } else {
             // val comes here with proper key case already
-            const entityType = conventions.getJsTypeByDocumentType(clazz);
+            const entityType = conventions.getJsTypeByDocumentType(clazz as DocumentType);
             result = conventions.deserializeEntityFromJson(entityType, val) as any as T;
         }
 

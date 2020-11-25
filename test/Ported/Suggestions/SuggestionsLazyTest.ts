@@ -48,7 +48,7 @@ describe("SuggestionsLazyTest", function () {
             const s = store.openSession();
             const oldRequests = s.advanced.numberOfRequests;
 
-            const suggestionQueryResult = s.query<User>({
+            const suggestionQueryResult = s.query({
                 indexName: "test",
                 documentType: User
             })

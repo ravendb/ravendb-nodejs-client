@@ -35,7 +35,7 @@ export class TimeSeriesOperations {
      * @param collectionClass Collection class
      * @param timeSeriesEntryClass Time-series entry class
      */
-    public register<TCollection, TTimeSeriesEntry>(
+    public register<TCollection extends object, TTimeSeriesEntry extends object>(
         collectionClass: ClassConstructor<TCollection>,
         timeSeriesEntryClass: ClassConstructor<TTimeSeriesEntry>): Promise<void>;
     /**
@@ -44,7 +44,7 @@ export class TimeSeriesOperations {
      * @param timeSeriesEntryClass Time-series entry class
      * @param name Override time series entry name
      */
-    public async register<TCollection, TTimeSeriesEntry>(
+    public async register<TCollection extends object, TTimeSeriesEntry extends object>(
         collectionClass: ClassConstructor<TCollection>,
         timeSeriesEntryClass: ClassConstructor<TTimeSeriesEntry>, name: string): Promise<void>;
     /**
@@ -53,7 +53,7 @@ export class TimeSeriesOperations {
      * @param name Time series name
      * @param valueNames Values to register
      */
-    public async register<TCollection>(
+    public async register<TCollection extends object>(
         collectionClass: ClassConstructor<TCollection>,
         name: string,
         valueNames: string[]): Promise<void>;
@@ -115,7 +115,8 @@ export class TimeSeriesOperations {
      * @param aggregation Aggregation time
      * @param retention Retention time
      */
-    public async setPolicy<TCollection>(collectionClass: ClassConstructor<TCollection>, name: string, aggregation: TimeValue, retention: TimeValue): Promise<void>;
+    public async setPolicy<TCollection extends object>(
+        collectionClass: ClassConstructor<TCollection>, name: string, aggregation: TimeValue, retention: TimeValue): Promise<void>;
     /**
      * Set rollup and retention policy
      * @param collection Collection name
@@ -123,8 +124,8 @@ export class TimeSeriesOperations {
      * @param aggregation Aggregation time
      * @param retention Retention time
      */
-    public async setPolicy<TCollection>(collection: string, name: string, aggregation: TimeValue, retention: TimeValue): Promise<void>;
-    public async setPolicy<TCollection>(collectionNameOrClass: string | ClassConstructor<TCollection>, name: string, aggregation: TimeValue, retention: TimeValue): Promise<void> {
+    public async setPolicy<TCollection extends object>(collection: string, name: string, aggregation: TimeValue, retention: TimeValue): Promise<void>;
+    public async setPolicy<TCollection extends object>(collectionNameOrClass: string | ClassConstructor<TCollection>, name: string, aggregation: TimeValue, retention: TimeValue): Promise<void> {
         const collection = TypeUtil.isString(collectionNameOrClass) ? collectionNameOrClass : this._store.conventions.findCollectionName(collectionNameOrClass);
 
         const p = new TimeSeriesPolicy(name, aggregation, retention);
@@ -136,14 +137,17 @@ export class TimeSeriesOperations {
      * @param collectionClass Collection class
      * @param retention Retention time
      */
-    public async setRawPolicy<TCollection>(collectionClass: ClassConstructor<TCollection>, retention: TimeValue): Promise<void>;
+    public async setRawPolicy<TCollection extends object>(
+        collectionClass: ClassConstructor<TCollection>, retention: TimeValue): Promise<void>;
     /**
      * Set raw retention policy
      * @param collection Collection name
      * @param retention Retention time
      */
-    public async setRawPolicy(collection: string, retention: TimeValue): Promise<void>;
-    public async setRawPolicy<TCollection>(collectionOrClass: string | ClassConstructor<TCollection>, retention: TimeValue): Promise<void> {
+    public async setRawPolicy(
+        collection: string, retention: TimeValue): Promise<void>;
+    public async setRawPolicy<TCollection extends object>(
+        collectionOrClass: string | ClassConstructor<TCollection>, retention: TimeValue): Promise<void> {
         const collection = TypeUtil.isString(collectionOrClass) ? collectionOrClass : this._store.conventions.findCollectionName(collectionOrClass);
         const p = new RawTimeSeriesPolicy(retention);
         await this._executor.send(new ConfigureRawTimeSeriesPolicyOperation(collection, p));
@@ -160,14 +164,17 @@ export class TimeSeriesOperations {
      * @param clazz Collection class
      * @param name Policy name
      */
-    public async removePolicy<TCollection>(clazz: ClassConstructor<TCollection>, name: string): Promise<void>;
-    public async removePolicy<TCollection>(clazzOrCollection: ClassConstructor<TCollection> | string, name: string): Promise<void> {
+    public async removePolicy<TCollection extends object>(
+        clazz: ClassConstructor<TCollection>, name: string): Promise<void>;
+    public async removePolicy<TCollection extends object>(
+        clazzOrCollection: ClassConstructor<TCollection> | string, name: string): Promise<void> {
         const collection = TypeUtil.isString(clazzOrCollection) ? clazzOrCollection : this._store.conventions.findCollectionName(clazzOrCollection);
 
         await this._executor.send(new RemoveTimeSeriesPolicyOperation(collection, name));
     }
 
-    public static getTimeSeriesName<TTimeSeriesEntry>(clazz: ClassConstructor<TTimeSeriesEntry>, conventions: DocumentConventions) {
+    public static getTimeSeriesName<TTimeSeriesEntry extends object>(
+        clazz: ClassConstructor<TTimeSeriesEntry>, conventions: DocumentConventions) {
         return conventions.findCollectionName(clazz);
     }
 

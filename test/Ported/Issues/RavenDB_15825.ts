@@ -140,10 +140,7 @@ async function facet(session: IDocumentSession, skip: number, take: number, stat
     facetOptions.start = skip;
     facetOptions.pageSize = take;
 
-    const result = await session.query({
-        documentType: Result,
-        index: ContactsIndex
-    })
+    const result = await session.query(Result, ContactsIndex)
         .statistics(statsCallback)
         .orderBy("companyId", "AlphaNumeric")
         .whereEquals("active", true)

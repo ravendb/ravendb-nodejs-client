@@ -48,7 +48,7 @@ describe("TimeSeriesRawQuery", function () {
         await testContext.waitForIndexing(store);
         {
             const session = store.openSession();
-            const query = session.advanced.rawQuery<RawQueryResult>(
+            const query = session.advanced.rawQuery(
                 "declare timeseries out(p)\n" +
                 "{\n" +
                 "    from p.HeartRate between $start and $end\n" +
@@ -131,7 +131,7 @@ describe("TimeSeriesRawQuery", function () {
 
         {
             const session = store.openSession();
-            const query = session.advanced.rawQuery<RawQueryResult>("declare timeseries heart_rate(doc)\n" +
+            const query = session.advanced.rawQuery("declare timeseries heart_rate(doc)\n" +
                 "{\n" +
                 "    from doc.HeartRate between $start and $end\n" +
                 "    group by 1h\n" +
@@ -234,7 +234,7 @@ describe("TimeSeriesRawQuery", function () {
 
             {
                 const session = store.openSession();
-                const query = session.advanced.rawQuery<TimeSeriesRawResult>(
+                const query = session.advanced.rawQuery(
                     "declare timeseries out(x)\n" +
                     "{\n" +
                     "    from x.HeartRate between $start and $end\n" +

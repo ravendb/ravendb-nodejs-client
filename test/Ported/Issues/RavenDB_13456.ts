@@ -198,7 +198,7 @@ describe("RavenDB_13456", function () {
 
         {
             const session = store.openSession(sessionOptions);
-            const company = await session.advanced.clusterTransaction.getCompareExchangeValue<Company>("company:", Company);
+            const company = await session.advanced.clusterTransaction.getCompareExchangeValue("company:", Company);
             company.value.name = "HR";
 
             await session.saveChanges();
@@ -206,7 +206,7 @@ describe("RavenDB_13456", function () {
 
         {
             const session = store.openSession(sessionOptions);
-            session.advanced.clusterTransaction.createCompareExchangeValue<Company>("company|", new Company());
+            session.advanced.clusterTransaction.createCompareExchangeValue("company|", new Company());
 
             await assertThrows(() => session.saveChanges(), err => {
                 assertThat(err.name)

@@ -10,7 +10,7 @@ import { ServerNode } from "../../../Http/ServerNode";
 import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import * as stream from "readable-stream";
-import { ObjectTypeDescriptor, ClassConstructor } from "../../../Types";
+import { ObjectTypeDescriptor, CompareExchangeResultClass } from "../../../Types";
 import { IRaftCommand } from "../../../Http/IRaftCommand";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 import { COMPARE_EXCHANGE, CONSTANTS } from "../../../Constants";
@@ -112,7 +112,7 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
         const type = !TypeUtil.isPrimitive(this._value)
             ? this._conventions.getTypeDescriptorByEntity(this._value as any) as ObjectTypeDescriptor
             : null;
-        const clazz: ClassConstructor<T> = TypeUtil.isClass(type) ? type as any : null;
+        const clazz: CompareExchangeResultClass<T> = TypeUtil.isClass(type) ? type as any : null;
         this.result = CompareExchangeResult.parseFromObject(resObj, this._conventions, clazz);
 
         return body;

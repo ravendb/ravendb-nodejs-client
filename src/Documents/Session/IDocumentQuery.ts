@@ -17,6 +17,7 @@ import { SuggestionBase } from "../Queries/Suggestions/SuggestionBase";
 import { ITimeSeriesQueryBuilder } from "../Queries/TimeSeries/ITimeSeriesQueryBuilder";
 import { TimeSeriesAggregationResult } from "../Queries/TimeSeries/TimeSeriesAggregationResult";
 import { TimeSeriesRawResult } from "../Queries/TimeSeries/TimeSeriesRawResult";
+import { Field } from "../../Types";
 
 /**
  * A query against a Raven index
@@ -37,6 +38,8 @@ export interface IDocumentQuery<T extends object>
      * Returns the query result. Accessing this property for the first time will execute the query.
      */
     getQueryResult(): Promise<QueryResult>;
+
+    //TODO: support for js projections?
 
     /**
      * Selects the specified fields directly from the index if the are stored.
@@ -98,7 +101,7 @@ export interface IDocumentQuery<T extends object>
      */
     ofType<TResult extends object>(resultClass: DocumentType<TResult>): IDocumentQuery<TResult>;
 
-    groupBy(fieldName: string, ...fieldNames: string[]): IGroupByDocumentQuery<T>;
+    groupBy(fieldName: Field<T>, ...fieldNames: string[]): IGroupByDocumentQuery<T>;
 
     groupBy(field: GroupBy, ...fields: GroupBy[]): IGroupByDocumentQuery<T>;
 

@@ -56,10 +56,8 @@ describe("Indexes from client", function () {
 
         {
             const session = store.openSession();
-            const users = await session.query({
-                index: Users_ByName,
-                documentType: User
-            }).all();
+            const users = await session.query(User, Users_ByName)
+                .all();
 
             assert.strictEqual(users.length, 1);
         }
@@ -220,7 +218,7 @@ describe("Indexes from client", function () {
             let statsRef: QueryStatistics;
 
             const users = await session
-                .query<User>(User)
+                .query(User)
                 .waitForNonStaleResults()
                 .statistics(s => statsRef = s)
                 .whereEquals("name", "Arek")
@@ -256,7 +254,7 @@ describe("Indexes from client", function () {
             let statsRef: QueryStatistics;
 
             const users = await session
-                .query<User>(User)
+                .query(User)
                 .waitForNonStaleResults()
                 .statistics(s => statsRef = s)
                 .whereEquals("name", "Arek")
@@ -288,12 +286,12 @@ describe("Indexes from client", function () {
             // make queries to create auto indexes 
             const session = store.openSession();
             let stats: QueryStatistics;
-            let users = await session.query<User>(User)
+            let users = await session.query(User)
                 .statistics(_stats => stats = _stats)
                 .whereEquals("name", "Arek")
                 .all();
 
-            users = await session.query<User>(User)
+            users = await session.query(User)
                 .statistics(_stats => stats = _stats)
                 .whereGreaterThan("age", 10)
                 .all();

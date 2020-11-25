@@ -77,7 +77,7 @@ describe("PatchTest", function () {
             await session.store(user, "users/1");
             await session.saveChanges();
 
-            const count = await session.query<User>(User)
+            const count = await session.query(User)
                 .countLazily().getValue();
             assert.strictEqual(count, 1);
         }

@@ -23,10 +23,7 @@ describe("Issue RavenDB-5669", function () {
 
     it("working with different search term order", async () => {
         const session = store.openSession();
-        const query = session.advanced.documentQuery({
-            documentType: Animal,
-            index: Animal_Index
-        });
+        const query = session.query(Animal, Animal_Index);
 
         query.openSubclause()
             .whereEquals("type", "Cat")
@@ -43,10 +40,7 @@ describe("Issue RavenDB-5669", function () {
     it("working with subclause", async () => {
         const session = store.openSession();
 
-        const query = session.advanced.documentQuery({
-            documentType: Animal,
-            index: Animal_Index
-        });
+        const query = session.query(Animal, Animal_Index);
 
         query.openSubclause()
             .whereEquals("type", "Cat")

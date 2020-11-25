@@ -140,10 +140,7 @@ describe("SpatialSearchTest", function () {
 
         {
             const session = store.openSession();
-            const events = await session.query<Event>({
-                documentType: Event,
-                indexName: "SpatialIdx"
-            })
+            const events = await session.query(Event, SpatialIdx)
                 .withinRadiusOf("coordinates", 6.0, 38.96939, -77.386398)
                 .orderByDistance("coordinates", 38.96939, -77.386398)
                 .addOrder("venue", false)
@@ -155,7 +152,7 @@ describe("SpatialSearchTest", function () {
 
         {
             const session = store.openSession();
-            const events = await session.query({ documentType: Event, indexName: "SpatialIdx" })
+            const events = await session.query(Event, SpatialIdx)
                 .withinRadiusOf("coordinates", 6.0, 38.96939, -77.386398)
                 .addOrder("venue", false)
                 .orderByDistance("coordinates", 38.96939, -77.386398)

@@ -51,6 +51,7 @@ import { QueryIncludeBuilder } from "./Loaders/QueryIncludeBuilder";
 import { ITimeSeriesQueryBuilder } from "../Queries/TimeSeries/ITimeSeriesQueryBuilder";
 import { TimeSeriesAggregationResult } from "../Queries/TimeSeries/TimeSeriesAggregationResult";
 import { TimeSeriesRawResult } from "../Queries/TimeSeries/TimeSeriesRawResult";
+import { Field } from "../../Types";
 
 export const NESTED_OBJECT_TYPES_PROJECTION_FIELD = "__PROJECTED_NESTED_OBJECT_TYPES__";
 
@@ -220,9 +221,9 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    public addOrder(fieldName: string, descending: boolean): IDocumentQuery<T>;
-    public addOrder(fieldName: string, descending: boolean, ordering: OrderingType): IDocumentQuery<T>;
-    public addOrder(fieldName: string, descending: boolean, ordering: OrderingType = "String"): IDocumentQuery<T> {
+    public addOrder(fieldName: Field<T>, descending: boolean): IDocumentQuery<T>;
+    public addOrder(fieldName: Field<T>, descending: boolean, ordering: OrderingType): IDocumentQuery<T>;
+    public addOrder(fieldName: Field<T>, descending: boolean, ordering: OrderingType = "String"): IDocumentQuery<T> {
         if (descending) {
             this.orderByDescending(fieldName, ordering);
         } else {
@@ -253,9 +254,9 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    public search(fieldName: string, searchTerms: string): IDocumentQuery<T>;
-    public search(fieldName: string, searchTerms: string, operator: SearchOperator): IDocumentQuery<T>;
-    public search(fieldName: string, searchTerms: string, operator?: SearchOperator): IDocumentQuery<T> {
+    public search(fieldName: Field<T>, searchTerms: string): IDocumentQuery<T>;
+    public search(fieldName: Field<T>, searchTerms: string, operator: SearchOperator): IDocumentQuery<T>;
+    public search(fieldName: Field<T>, searchTerms: string, operator?: SearchOperator): IDocumentQuery<T> {
         this._search(fieldName, searchTerms, operator);
         return this;
     }
@@ -268,7 +269,7 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    public containsAny(fieldName: string, values: any[]): IDocumentQuery<T> {
+    public containsAny(fieldName: Field<T>, values: any[]): IDocumentQuery<T> {
         this._containsAny(fieldName, values);
         return this;
     }
@@ -276,7 +277,7 @@ export class DocumentQuery<T extends object>
     // tslint:disable-next-line:max-line-length
     // TBD public IDocumentQuery<T> ContainsAny<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values)
 
-    public containsAll(fieldName: string, values): IDocumentQuery<T> {
+    public containsAll(fieldName: Field<T>, values): IDocumentQuery<T> {
         this._containsAll(fieldName, values);
         return this;
     }
@@ -336,27 +337,27 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    public whereLucene(fieldName: string, whereClause: string): IDocumentQuery<T>;
-    public whereLucene(fieldName: string, whereClause: string, exact: boolean): IDocumentQuery<T>;
-    public whereLucene(fieldName: string, whereClause: string, exact?: boolean): IDocumentQuery<T> {
+    public whereLucene(fieldName: Field<T>, whereClause: string): IDocumentQuery<T>;
+    public whereLucene(fieldName: Field<T>, whereClause: string, exact: boolean): IDocumentQuery<T>;
+    public whereLucene(fieldName: Field<T>, whereClause: string, exact?: boolean): IDocumentQuery<T> {
         this._whereLucene(fieldName, whereClause, exact);
         return this;
     }
 
-    public whereEquals(fieldName: string, method: MethodCall): IDocumentQuery<T>;
-    public whereEquals(fieldName: string, method: MethodCall, exact: boolean): IDocumentQuery<T>;
-    public whereEquals(fieldName: string, value: any): void;
-    public whereEquals(fieldName: string, value: any, exact: boolean): IDocumentQuery<T>;
+    public whereEquals(fieldName: Field<T>, method: MethodCall): IDocumentQuery<T>;
+    public whereEquals(fieldName: Field<T>, method: MethodCall, exact: boolean): IDocumentQuery<T>;
+    public whereEquals(fieldName: Field<T>, value: any): void;
+    public whereEquals(fieldName: Field<T>, value: any, exact: boolean): IDocumentQuery<T>;
     public whereEquals(whereParams: WhereParams): IDocumentQuery<T>;
     public whereEquals(...args: any[]): IDocumentQuery<T> {
         (this._whereEquals as any)(...args as any[]);
         return this;
     }
 
-    public whereNotEquals(fieldName: string, method: MethodCall): IDocumentQuery<T>;
-    public whereNotEquals(fieldName: string, method: MethodCall, exact: boolean): IDocumentQuery<T>;
-    public whereNotEquals(fieldName: string, value: any): void;
-    public whereNotEquals(fieldName: string, value: any, exact: boolean): IDocumentQuery<T>;
+    public whereNotEquals(fieldName: Field<T>, method: MethodCall): IDocumentQuery<T>;
+    public whereNotEquals(fieldName: Field<T>, method: MethodCall, exact: boolean): IDocumentQuery<T>;
+    public whereNotEquals(fieldName: Field<T>, value: any): void;
+    public whereNotEquals(fieldName: Field<T>, value: any, exact: boolean): IDocumentQuery<T>;
     public whereNotEquals(whereParams: WhereParams): IDocumentQuery<T>;
     public whereNotEquals(...args: any[]): IDocumentQuery<T> {
         (this._whereNotEquals as any)(...args);
@@ -373,8 +374,8 @@ export class DocumentQuery<T extends object>
     // tslint:disable-next-line:max-line-length
     // TBD IDocumentQuery<T> IFilterDocumentQueryBase<T, IDocumentQuery<T>>.WhereNotEquals<TValue>(Expression<Func<T, TValue>> propertySelector, MethodCall value, bool exact)
 
-    public whereIn(fieldName: string, values: any[]): IDocumentQuery<T>;
-    public whereIn(fieldName: string, values: any[], exact: boolean): IDocumentQuery<T>;
+    public whereIn(fieldName: Field<T>, values: any[]): IDocumentQuery<T>;
+    public whereIn(fieldName: Field<T>, values: any[], exact: boolean): IDocumentQuery<T>;
     public whereIn(...args: any[]): IDocumentQuery<T> {
         (this._whereIn as any)(...args);
         return this;
@@ -383,31 +384,31 @@ export class DocumentQuery<T extends object>
     // TBD public IDocumentQuery<T> WhereIn<TValue>(Expression<Func<T, TValue>> propertySelector,
     // IEnumerable<TValue> values, bool exact = false)
 
-    public whereStartsWith(fieldName: string, value: any): IDocumentQuery<T>
-    public whereStartsWith(fieldName: string, value: any, exact: boolean): IDocumentQuery<T>
-    public whereStartsWith(fieldName: string, value: any, exact?: boolean): IDocumentQuery<T> {
+    public whereStartsWith(fieldName: Field<T>, value: any): IDocumentQuery<T>
+    public whereStartsWith(fieldName: Field<T>, value: any, exact: boolean): IDocumentQuery<T>
+    public whereStartsWith(fieldName: Field<T>, value: any, exact?: boolean): IDocumentQuery<T> {
         this._whereStartsWith(fieldName, value, exact);
         return this;
     }
 
-    public whereEndsWith(fieldName: string, value: any): IDocumentQuery<T>
-    public whereEndsWith(fieldName: string, value: any, exact: boolean): IDocumentQuery<T>
-    public whereEndsWith(fieldName: string, value: any, exact?: boolean): IDocumentQuery<T> {
+    public whereEndsWith(fieldName: Field<T>, value: any): IDocumentQuery<T>
+    public whereEndsWith(fieldName: Field<T>, value: any, exact: boolean): IDocumentQuery<T>
+    public whereEndsWith(fieldName: Field<T>, value: any, exact?: boolean): IDocumentQuery<T> {
         this._whereEndsWith(fieldName, value, exact);
         return this;
     }
 
     // TBD: public IDocumentQuery<T> WhereEndsWith<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value)
 
-    public whereBetween(fieldName: string, start: any, end: any): IDocumentQuery<T>;
-    public whereBetween(fieldName: string, start: any, end: any, exact: boolean): IDocumentQuery<T>;
+    public whereBetween(fieldName: Field<T>, start: any, end: any): IDocumentQuery<T>;
+    public whereBetween(fieldName: Field<T>, start: any, end: any, exact: boolean): IDocumentQuery<T>;
     public whereBetween(...args: any[]): IDocumentQuery<T> {
         (this._whereBetween as any)(...args);
         return this;
     }
 
-    public whereGreaterThan(fieldName: string, value: any): IDocumentQuery<T>;
-    public whereGreaterThan(fieldName: string, value: any, exact: boolean): IDocumentQuery<T>;
+    public whereGreaterThan(fieldName: Field<T>, value: any): IDocumentQuery<T>;
+    public whereGreaterThan(fieldName: Field<T>, value: any, exact: boolean): IDocumentQuery<T>;
     public whereGreaterThan(...args: any[]): IDocumentQuery<T> {
         (this._whereGreaterThan as any)(...args);
         return this;
@@ -416,22 +417,22 @@ export class DocumentQuery<T extends object>
     // tslint:disable-next-line:max-line-length
     // TBD public IDocumentQuery<T> WhereBetween<TValue>(Expression<Func<T, TValue>> propertySelector, TValue start, TValue end, bool exact = false)
 
-    public whereGreaterThanOrEqual(fieldName: string, value: any): IDocumentQuery<T>;
-    public whereGreaterThanOrEqual(fieldName: string, value: any, exact: boolean): IDocumentQuery<T>;
+    public whereGreaterThanOrEqual(fieldName: Field<T>, value: any): IDocumentQuery<T>;
+    public whereGreaterThanOrEqual(fieldName: Field<T>, value: any, exact: boolean): IDocumentQuery<T>;
     public whereGreaterThanOrEqual(...args: any[]): IDocumentQuery<T> {
         (this._whereGreaterThanOrEqual as any)(...args);
         return this;
     }
 
-    public whereLessThan(fieldName: string, value: any): IDocumentQuery<T> ;
-    public whereLessThan(fieldName: string, value: any, exact: boolean): IDocumentQuery<T>;
+    public whereLessThan(fieldName: Field<T>, value: any): IDocumentQuery<T> ;
+    public whereLessThan(fieldName: Field<T>, value: any, exact: boolean): IDocumentQuery<T>;
     public whereLessThan(...args: any[]): IDocumentQuery<T> {
         (this._whereLessThan as any)(...args);
         return this;
     }
 
-    public whereLessThanOrEqual(fieldName: string, value: any): IDocumentQuery<T> ;
-    public whereLessThanOrEqual(fieldName: string, value: any, exact: boolean): IDocumentQuery<T>;
+    public whereLessThanOrEqual(fieldName: Field<T>, value: any): IDocumentQuery<T> ;
+    public whereLessThanOrEqual(fieldName: Field<T>, value: any, exact: boolean): IDocumentQuery<T>;
     public whereLessThanOrEqual(...args: any[]): IDocumentQuery<T> {
         (this._whereLessThanOrEqual as any)(...args);
         return this;
@@ -449,7 +450,7 @@ export class DocumentQuery<T extends object>
     //      Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
     // TBD public IDocumentQuery<T> WhereExists<TValue>(Expression<Func<T, TValue>> propertySelector)
 
-    public whereExists(fieldName: string): IDocumentQuery<T> {
+    public whereExists(fieldName: Field<T>): IDocumentQuery<T> {
         this._whereExists(fieldName);
         return this;
     }
@@ -457,7 +458,7 @@ export class DocumentQuery<T extends object>
     // tslint:disable-next-line:max-line-length
     // TBD IDocumentQuery<T> IFilterDocumentQueryBase<T, IDocumentQuery<T>>.WhereRegex<TValue>(Expression<Func<T, TValue>> propertySelector, string pattern)
 
-    public whereRegex(fieldName: string, pattern: string): IDocumentQuery<T> {
+    public whereRegex(fieldName: Field<T>, pattern: string): IDocumentQuery<T> {
         this._whereRegex(fieldName, pattern);
         return this;
     }
@@ -496,7 +497,7 @@ export class DocumentQuery<T extends object>
 
     // TBD 4.1 public IDocumentQuery<T> customSortUsing(String typeName, boolean descending)
 
-    public groupBy(fieldName: string, ...fieldNames: string[]): IGroupByDocumentQuery<T>;
+    public groupBy(fieldName: Field<T>, ...fieldNames: string[]): IGroupByDocumentQuery<T>;
     public groupBy(field: GroupBy, ...fields: GroupBy[]): IGroupByDocumentQuery<T>;
     public groupBy(...args: any[]): IGroupByDocumentQuery<T> {
         (this._groupBy as any)(...args);
@@ -512,17 +513,17 @@ export class DocumentQuery<T extends object>
         return this.createDocumentQueryInternal(tResultClass);
     }
 
-    public orderBy(field: string): IDocumentQuery<T>;
-    public orderBy(field: string, ordering: OrderingType): IDocumentQuery<T>;
-    public orderBy(field: string, options: { sorterName: string }): IDocumentQuery<T>;
+    public orderBy(field: Field<T>): IDocumentQuery<T>;
+    public orderBy(field: Field<T>, ordering: OrderingType): IDocumentQuery<T>;
+    public orderBy(field: Field<T>, options: { sorterName: string }): IDocumentQuery<T>;
     public orderBy(...args: any[]): IDocumentQuery<T> {
         (this._orderBy as any)(...args);
         return this;
     }
 
-    public orderByDescending(field: string): IDocumentQuery<T>;
-    public orderByDescending(field: string, ordering: OrderingType): IDocumentQuery<T>;
-    public orderByDescending(field: string, options: { sorterName: string }): IDocumentQuery<T>;
+    public orderByDescending(field: Field<T>): IDocumentQuery<T>;
+    public orderByDescending(field: Field<T>, ordering: OrderingType): IDocumentQuery<T>;
+    public orderByDescending(field: Field<T>, options: { sorterName: string }): IDocumentQuery<T>;
     public orderByDescending(...args: any[]): IDocumentQuery<T> {
         (this._orderByDescending as any)(...args);
         return this;
@@ -665,7 +666,7 @@ export class DocumentQuery<T extends object>
     // tslint:enable:max-line-length
 
     public spatial(
-        fieldName: string,
+        fieldName: Field<T>,
         clause: (factory: SpatialCriteriaFactory) => SpatialCriteria): IDocumentQuery<T>;
     public spatial(
         field: DynamicSpatialField,
@@ -687,12 +688,12 @@ export class DocumentQuery<T extends object>
      * Filter matches to be inside the specified radius
      */
     public withinRadiusOf(
-        fieldName: string, radius: number, latitude: number, longitude: number): IDocumentQuery<T>;
+        fieldName: Field<T>, radius: number, latitude: number, longitude: number): IDocumentQuery<T>;
     /**
      * Filter matches to be inside the specified radius
      */
     public withinRadiusOf(
-        fieldName: string,
+        fieldName: Field<T>,
         radius: number,
         latitude: number,
         longitude: number,
@@ -701,7 +702,7 @@ export class DocumentQuery<T extends object>
      * Filter matches to be inside the specified radius
      */
     public withinRadiusOf(
-        fieldName: string,
+        fieldName: Field<T>,
         radius: number,
         latitude: number,
         longitude: number,
@@ -711,7 +712,7 @@ export class DocumentQuery<T extends object>
      * Filter matches to be inside the specified radius
      */
     public withinRadiusOf(
-        fieldName: string,
+        fieldName: Field<T>,
         radius: number,
         latitude: number,
         longitude: number,
@@ -725,17 +726,17 @@ export class DocumentQuery<T extends object>
     // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.RelatesToShape<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt, SpatialRelation relation, double distanceErrorPct)
 
     public relatesToShape(
-        fieldName: string, shapeWkt: string, relation: SpatialRelation): IDocumentQuery<T>;
+        fieldName: Field<T>, shapeWkt: string, relation: SpatialRelation): IDocumentQuery<T>;
     public relatesToShape(
-        fieldName: string, shapeWkt: string, relation: SpatialRelation, distanceErrorPct: number): IDocumentQuery<T>;
+        fieldName: Field<T>, shapeWkt: string, relation: SpatialRelation, distanceErrorPct: number): IDocumentQuery<T>;
     public relatesToShape(
-        fieldName: string, 
+        fieldName: Field<T>,
         shapeWkt: string, 
         relation: SpatialRelation, 
         units: SpatialUnits,
         distanceErrorPct: number): IDocumentQuery<T>;
     public relatesToShape(
-        fieldName: string, 
+        fieldName: Field<T>,
         shapeWkt: string,
         relation: SpatialRelation,
         distanceErrorPctOrUnits?: SpatialUnits | number,
@@ -760,9 +761,9 @@ export class DocumentQuery<T extends object>
 
     public orderByDistance(field: DynamicSpatialField, latitude: number, longitude: number): IDocumentQuery<T>;
     public orderByDistance(field: DynamicSpatialField, shapeWkt: string): IDocumentQuery<T>;
-    public orderByDistance(fieldName: string, latitude: number, longitude: number): IDocumentQuery<T>;
-    public orderByDistance(fieldName: string, latitude: number, longitude: number, roundFactor: number): IDocumentQuery<T>;
-    public orderByDistance(fieldName: string, shapeWkt: string): IDocumentQuery<T>;
+    public orderByDistance(fieldName: Field<T>, latitude: number, longitude: number): IDocumentQuery<T>;
+    public orderByDistance(fieldName: Field<T>, latitude: number, longitude: number, roundFactor: number): IDocumentQuery<T>;
+    public orderByDistance(fieldName: Field<T>, shapeWkt: string): IDocumentQuery<T>;
     public orderByDistance(...args: any[]): IDocumentQuery<T> {
         (this._orderByDistance as any)(...args);
         return this;
@@ -771,9 +772,9 @@ export class DocumentQuery<T extends object>
     public orderByDistanceDescending(
         field: DynamicSpatialField, latitude: number, longitude: number): IDocumentQuery<T>;
     public orderByDistanceDescending(field: DynamicSpatialField, shapeWkt: string): IDocumentQuery<T>;
-    public orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): IDocumentQuery<T>;
-    public orderByDistanceDescending(fieldName: string, latitude: number, longitude: number, roundFactor: number): IDocumentQuery<T>;
-    public orderByDistanceDescending(fieldName: string, shapeWkt: string): IDocumentQuery<T>;
+    public orderByDistanceDescending(fieldName: Field<T>, latitude: number, longitude: number): IDocumentQuery<T>;
+    public orderByDistanceDescending(fieldName: Field<T>, latitude: number, longitude: number, roundFactor: number): IDocumentQuery<T>;
+    public orderByDistanceDescending(fieldName: Field<T>, shapeWkt: string): IDocumentQuery<T>;
     public orderByDistanceDescending(...args: any[]): IDocumentQuery<T> {
         (this._orderByDistanceDescending as any)(...args);
         return this;

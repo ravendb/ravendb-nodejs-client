@@ -48,7 +48,7 @@ describe("CustomEntityName", function () {
 
             {
                 const session = store.openSession();
-                const results = await session.query<User>({
+                const results = await session.query({
                     collection: store.conventions.findCollectionName(User),
                     documentType: User
                 }).all();

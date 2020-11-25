@@ -55,7 +55,7 @@ describe("TimeSeriesDocumentQuery", function () {
                 "group by '1 month'\n" +
                 "select min(), max(), avg()";
 
-            const result = await session.query<User>(User)
+            const result = await session.query(User)
                 .whereGreaterThan("age", 21)
                 .selectTimeSeries(b => b.raw(tsQueryText), TimeSeriesAggregationResult)
                 .addParameter("start", baseLine.toDate())
@@ -128,7 +128,7 @@ describe("TimeSeriesDocumentQuery", function () {
             const tsQueryText = "from Heartrate between $start and $end\n" +
                "where Tag = 'watches/fitbit'";
 
-            const result = await session.advanced.documentQuery(User)
+            const result = await session.query(User)
                 .whereGreaterThan("age", 21)
                 .selectTimeSeries(b => b.raw(tsQueryText), TimeSeriesRawResult)
                 .addParameter("start", baseLine.toDate())

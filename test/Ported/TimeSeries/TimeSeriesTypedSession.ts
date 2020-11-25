@@ -280,7 +280,7 @@ import { TypedTimeSeriesRollupEntry } from "../../../src/Documents/Session/TimeS
 
         {
             const session = store.openSession();
-            const query = session.advanced.rawQuery<TimeSeriesAggregationResult>( "declare timeseries out(u)\n" +
+            const query = session.advanced.rawQuery( "declare timeseries out(u)\n" +
                     "    {\n" +
                     "        from u.HeartRateMeasures between $start and $end\n" +
                     "        group by 1h\n" +
@@ -358,7 +358,7 @@ import { TypedTimeSeriesRollupEntry } from "../../../src/Documents/Session/TimeS
         {
             const session = store.openSession();
 
-            const result = await session.advanced.rawQuery<TimeSeriesRawResult>("declare timeseries out(x)\n" +
+            const result = await session.advanced.rawQuery("declare timeseries out(x)\n" +
                 "{\n" +
                 "    from x.HeartRateMeasures between $start and $end\n" +
                 "}\n" +
@@ -506,7 +506,7 @@ import { TypedTimeSeriesRollupEntry } from "../../../src/Documents/Session/TimeS
 
         {
             const session = store.openSession();
-            const query = session.advanced.rawQuery<TimeSeriesRawResult>("declare timeseries out()\n" +
+            const query = session.advanced.rawQuery("declare timeseries out()\n" +
                 "{\n" +
                 "    from StockPrices\n" +
                 "    between $start and $end\n" +

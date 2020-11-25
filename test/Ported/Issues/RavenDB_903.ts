@@ -21,10 +21,7 @@ describe("Issue RavenDB-903", function () {
 
     it("test1", async () => {
         await doTest(store, session => {
-            return session.advanced.documentQuery<Product>({
-                documentType: Product,
-                index: TestIndex
-            })
+            return session.query(Product, TestIndex)
                 .search("description", "Hello")
                 .intersect()
                 .whereEquals("name", "Bar");
@@ -33,10 +30,7 @@ describe("Issue RavenDB-903", function () {
 
     it("test2", async () => {
         await doTest(store, session => {
-            return session.advanced.documentQuery<Product>({
-                documentType: Product,
-                index: TestIndex
-            })
+            return session.advanced.documentQuery(Product, TestIndex)
                 .whereEquals("name", "Bar")
                 .intersect()
                 .search("description", "Hello");

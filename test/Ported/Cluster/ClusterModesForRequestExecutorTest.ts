@@ -308,7 +308,7 @@ describe("ClusterModesForRequestExecutorTest", function () {
 
                     {
                         const session = leaderStore.openSession();
-                        await session.query<User>(User)
+                        await session.query(User)
                             .whereStartsWith("name", "Jo");
                     }
                 } finally {

@@ -38,16 +38,12 @@ describe("MultiMapWithCustomProperties", function () {
 
         {
             const s = store.openSession();
-            assertThat(await s.query<Cat>({
-                documentType: Cat,
-                index: CatsAndDogs
-            }).whereEquals("catsOnlyProperty", "Miau").all())
+            assertThat(await s.query(Cat, CatsAndDogs)
+                .whereEquals("catsOnlyProperty", "Miau").all())
                 .hasSize(1);
 
-            assertThat(await s.query<Dog>({
-                documentType: Dog,
-                index: CatsAndDogs
-            }).whereEquals("name", "Oscar").all())
+            assertThat(await s.query(Dog, CatsAndDogs)
+                .whereEquals("name", "Oscar").all())
                 .hasSize(1);
         }
     });

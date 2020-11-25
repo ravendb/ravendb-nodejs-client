@@ -45,10 +45,8 @@ describe("BasicTimeSeriesIndexes_StrongSyntaxTest", function () {
 
         {
             const session = store.openSession();
-            const results = await session.query<IndexResult>({
-                index: MyTsIndex,
-                documentType: IndexResult
-            }).all();
+            const results = await session.query(IndexResult, MyTsIndex)
+                .all();
 
             assertThat(results)
                 .hasSize(1);
@@ -93,10 +91,7 @@ describe("BasicTimeSeriesIndexes_StrongSyntaxTest", function () {
 
         {
             const session = store.openSession();
-            const results = await session.query<IndexResult>({
-                documentType: IndexResult,
-                index: MyMultiMapTsIndex
-            }).all();
+            const results = await session.query(IndexResult, MyMultiMapTsIndex).all();
 
             assertThat(results)
                 .hasSize(3);

@@ -21,6 +21,7 @@ import CurrentIndexAndNode from "../../Http/CurrentIndexAndNode";
 import { HashCalculator } from "../Queries/HashCalculator";
 import { DocumentStoreBase } from "../DocumentStoreBase";
 import { RequestExecutor } from "../../Http/RequestExecutor";
+import { AbstractCommonApiForIndexes } from "../..";
 
 export class SessionInfo {
     private static _clientSessionIdCounter: number = 0;
@@ -235,6 +236,8 @@ export interface IDocumentSession extends IDisposable {
      * Queries collection. Collection name is determined from documentType using document store conventions.
      */
     query<T extends object>(documentType: DocumentType<T>): IDocumentQuery<T>;
+
+    query<T extends object>(documentType: DocumentType<T>, index: new () => AbstractCommonApiForIndexes): IDocumentQuery<T>;
 
     countersFor(documentId: string): ISessionDocumentCounters;
 

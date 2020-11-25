@@ -33,13 +33,13 @@ describe("Issue RavenDB-8328", function () {
 
         {
             const session = store.openSession();
-            let q = session.query<Item>(Item)
+            let q = session.query(Item)
                 .spatial(new PointField("latitude", "longitude"), f => f.withinRadius(10, 10, 20));
             let iq = q.getIndexQuery();
             assert.strictEqual(iq.query, "from 'Items' " +
                 "where spatial.within(spatial.point(latitude, longitude), spatial.circle($p0, $p1, $p2))");
 
-            q = session.query<Item>(Item)
+            q = session.query(Item)
                 .spatial(new WktField("shapeWkt"), f => f.withinRadius(10, 10, 20));
             iq = q.getIndexQuery();
             assert.strictEqual(iq.query,
@@ -51,7 +51,7 @@ describe("Issue RavenDB-8328", function () {
 
             let stats = null as QueryStatistics;
 
-            let results = await session.query<Item>(Item)
+            let results = await session.query(Item)
                 .statistics(x => stats = x)
                 .spatial(new PointField("latitude", "longitude"), f => f.withinRadius(10, 10, 20))
                 .all();
@@ -61,7 +61,7 @@ describe("Issue RavenDB-8328", function () {
 
             stats = null;
 
-            results = await session.query<Item>(Item)
+            results = await session.query(Item)
                 .statistics(x => stats = x)
                 .spatial(new PointField("latitude2", "longitude2"), f => f.withinRadius(10, 10, 20))
                 .all();
@@ -72,7 +72,7 @@ describe("Issue RavenDB-8328", function () {
 
             stats = null;
 
-            results = await session.query<Item>(Item)
+            results = await session.query(Item)
                 .statistics(x => stats = x)
                 .spatial(new WktField("shapeWkt"), f => f.withinRadius(10, 10, 20))
                 .all();

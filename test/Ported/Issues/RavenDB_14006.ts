@@ -33,12 +33,12 @@ describe("RavenDB_14006", function () {
 
             const address = new Address();
             address.city = "Torun";
-            session.advanced.clusterTransaction.createCompareExchangeValue<Address>(company.externalId, address);
+            session.advanced.clusterTransaction.createCompareExchangeValue(company.externalId, address);
 
             assertThat(session.advanced.numberOfRequests)
                 .isEqualTo(numberOfRequests);
 
-            const value1 = await session.advanced.clusterTransaction.getCompareExchangeValue<Address>(company.externalId, Address);
+            const value1 = await session.advanced.clusterTransaction.getCompareExchangeValue(company.externalId, Address);
 
             assertThat(session.advanced.numberOfRequests)
                 .isEqualTo(numberOfRequests);
@@ -62,7 +62,7 @@ describe("RavenDB_14006", function () {
             assertThat(value1.index)
                 .isGreaterThan(0);
 
-            const value2 = await session.advanced.clusterTransaction.getCompareExchangeValue<Address>(company.externalId, Address);
+            const value2 = await session.advanced.clusterTransaction.getCompareExchangeValue(company.externalId, Address);
 
             assertThat(session.advanced.numberOfRequests)
                 .isEqualTo(numberOfRequests + 1);
@@ -77,7 +77,7 @@ describe("RavenDB_14006", function () {
 
             session.advanced.clear();
 
-            const value3 = await session.advanced.clusterTransaction.getCompareExchangeValue<Address>(company.externalId, Address);
+            const value3 = await session.advanced.clusterTransaction.getCompareExchangeValue(company.externalId, Address);
             assertThat(value3)
                 .isNotSameAs(value2);
         }
@@ -95,17 +95,17 @@ describe("RavenDB_14006", function () {
             const session = store.openSession(sessionOptions);
             const numberOfRequests = session.advanced.numberOfRequests;
 
-            const value1 = await session.advanced.clusterTransaction.getCompareExchangeValue<Address>("companies/cf", Address);
+            const value1 = await session.advanced.clusterTransaction.getCompareExchangeValue("companies/cf", Address);
 
             assertThat(session.advanced.numberOfRequests)
                 .isEqualTo(numberOfRequests + 1);
 
-            const value2 = await session.advanced.clusterTransaction.getCompareExchangeValue<Address>("companies/hr", Address);
+            const value2 = await session.advanced.clusterTransaction.getCompareExchangeValue("companies/hr", Address);
 
             assertThat(session.advanced.numberOfRequests)
                 .isEqualTo(numberOfRequests + 2);
 
-            let values = await session.advanced.clusterTransaction.getCompareExchangeValues<Address>(["companies/cf", "companies/hr"], Address);
+            let values = await session.advanced.clusterTransaction.getCompareExchangeValues(["companies/cf", "companies/hr"], Address);
 
             assertThat(session.advanced.numberOfRequests)
                 .isEqualTo(numberOfRequests + 2);
@@ -131,7 +131,7 @@ describe("RavenDB_14006", function () {
             assertThat(values[value2.key])
                 .isSameAs(value2);
 
-            const value3 = await session.advanced.clusterTransaction.getCompareExchangeValue<Address>("companies/hx", Address);
+            const value3 = await session.advanced.clusterTransaction.getCompareExchangeValue("companies/hx", Address);
             assertThat(session.advanced.numberOfRequests)
                 .isEqualTo(numberOfRequests + 3);
 
@@ -185,12 +185,12 @@ describe("RavenDB_14006", function () {
             const session = store.openSession(sessionOptionsNoTracking);
             const numberOfRequests = session.advanced.numberOfRequests;
 
-            const value1 = await session.advanced.clusterTransaction.getCompareExchangeValue<Address>(company.externalId, Address);
+            const value1 = await session.advanced.clusterTransaction.getCompareExchangeValue(company.externalId, Address);
 
             assertThat(session.advanced.numberOfRequests)
                 .isEqualTo(numberOfRequests + 1);
 
-            const value2 = await session.advanced.clusterTransaction.getCompareExchangeValue<Address>(company.externalId, Address);
+            const value2 = await session.advanced.clusterTransaction.getCompareExchangeValue(company.externalId, Address);
 
             assertThat(session.advanced.numberOfRequests)
                 .isEqualTo(numberOfRequests + 2);
@@ -198,7 +198,7 @@ describe("RavenDB_14006", function () {
             assertThat(value2)
                 .isNotSameAs(value1);
 
-            const value3 = await session.advanced.clusterTransaction.getCompareExchangeValue<Address>(company.externalId, Address);
+            const value3 = await session.advanced.clusterTransaction.getCompareExchangeValue(company.externalId, Address);
             assertThat(value3)
                 .isNotSameAs(value2);
         }
@@ -298,7 +298,7 @@ describe("RavenDB_14006", function () {
 
             const numberOfRequests = session.advanced.numberOfRequests;
 
-            const value1 = await session.advanced.clusterTransaction.getCompareExchangeValue<Address>(company1.externalId, Address);
+            const value1 = await session.advanced.clusterTransaction.getCompareExchangeValue(company1.externalId, Address);
 
             assertThat(session.advanced.numberOfRequests)
                 .isEqualTo(numberOfRequests);
@@ -334,10 +334,10 @@ describe("RavenDB_14006", function () {
                 .isEqualTo(numberOfRequests + 1);
 
             const value2 = await session.advanced.clusterTransaction
-                .getCompareExchangeValue<Address>(employee1.notes[0], Address);
+                .getCompareExchangeValue(employee1.notes[0], Address);
 
             const value3 = await session.advanced.clusterTransaction
-                .getCompareExchangeValue<Address>(employee1.notes[1], Address);
+                .getCompareExchangeValue(employee1.notes[1], Address);
 
             assertThat(session.advanced.numberOfRequests)
                 .isEqualTo(numberOfRequests + 1);
@@ -398,7 +398,7 @@ describe("RavenDB_14006", function () {
         {
             const session = store.openSession(sessionOptions);
             let queryStats: QueryStatistics;
-            let companies = await session.query<Company>(Company)
+            let companies = await session.query(Company)
                 .statistics(s => queryStats = s)
                 .include(b => b.includeCompareExchangeValue("externalId"))
                 .all();
@@ -414,14 +414,14 @@ describe("RavenDB_14006", function () {
             const numberOfRequests = session.advanced.numberOfRequests;
 
             let value1 = await session.advanced.clusterTransaction
-                .getCompareExchangeValue<Address>(companies[0].externalId, Address);
+                .getCompareExchangeValue(companies[0].externalId, Address);
             assertThat(value1.value.city)
                 .isEqualTo("Torun");
 
             assertThat(session.advanced.numberOfRequests)
                 .isEqualTo(numberOfRequests);
 
-            companies = await session.query<Company>(Company)
+            companies = await session.query(Company)
                 .statistics(s => queryStats = s)
                 .include(b => b.includeCompareExchangeValue("externalId"))
                 .all();
@@ -436,13 +436,13 @@ describe("RavenDB_14006", function () {
             {
                 const innerSession = store.openSession(sessionOptions);
                 const value = await innerSession.advanced.clusterTransaction
-                    .getCompareExchangeValue<Address>(companies[0].externalId, Address);
+                    .getCompareExchangeValue(companies[0].externalId, Address);
                 value.value.city = "Bydgoszcz";
 
                 await innerSession.saveChanges();
             }
 
-            companies = await session.query<Company>(Company)
+            companies = await session.query(Company)
                 .statistics(s => queryStats = s)
                 .include(b => b.includeCompareExchangeValue("externalId"))
                 .all();
@@ -456,7 +456,7 @@ describe("RavenDB_14006", function () {
                 .isNotEqualTo(resultEtag);
 
             value1 = await session.advanced.clusterTransaction
-                .getCompareExchangeValue<Address>(companies[0].externalId, Address);
+                .getCompareExchangeValue(companies[0].externalId, Address);
             assertThat(value1.value.city)
                 .isEqualTo("Bydgoszcz");
         }
@@ -516,19 +516,19 @@ describe("RavenDB_14006", function () {
             const numberOfRequests = session.advanced.numberOfRequests;
 
             let value1 = await session.advanced.clusterTransaction
-                .getCompareExchangeValue<Address>(companies[0].externalId, Address);
+                .getCompareExchangeValue(companies[0].externalId, Address);
             assertThat(value1.value.city)
                 .isEqualTo("Torun");
 
             assertThat(session.advanced.numberOfRequests)
                 .isEqualTo(numberOfRequests);
 
-            companies = await session.advanced.rawQuery<Company>("declare function incl(c) {\n" +
+            companies = await session.advanced.rawQuery("declare function incl(c) {\n" +
                 "    includes.cmpxchg(c.externalId);\n" +
                 "    return c;\n" +
                 "}\n" +
                 "from Companies as c\n" +
-                "select incl(c)")
+                "select incl(c)", Company)
                 .statistics(s => stats = s)
                 .all();
 
@@ -543,18 +543,18 @@ describe("RavenDB_14006", function () {
             {
                 const innerSession = store.openSession(sessionOptions);
                 const value = await innerSession.advanced.clusterTransaction
-                    .getCompareExchangeValue<Address>(companies[0].externalId, Address);
+                    .getCompareExchangeValue(companies[0].externalId, Address);
                 value.value.city = "Bydgoszcz";
 
                 await innerSession.saveChanges();
             }
 
-            companies = await session.advanced.rawQuery<Company>("declare function incl(c) {\n" +
+            companies = await session.advanced.rawQuery("declare function incl(c) {\n" +
                 "    includes.cmpxchg(c.externalId);\n" +
                 "    return c;\n" +
                 "}\n" +
                 "from Companies as c\n" +
-                "select incl(c)")
+                "select incl(c)", Company)
                 .statistics(s => stats = s)
                 .all();
 
@@ -567,7 +567,7 @@ describe("RavenDB_14006", function () {
                 .isNotEqualTo(resultEtag);
 
             value1 = await session.advanced.clusterTransaction
-                .getCompareExchangeValue<Address>(companies[0].externalId, Address);
+                .getCompareExchangeValue(companies[0].externalId, Address);
             assertThat(value1.value.city)
                 .isEqualTo("Bydgoszcz");
         }
@@ -609,10 +609,7 @@ describe("RavenDB_14006", function () {
         {
             const session = store.openSession(sessionOptions);
             let stats: QueryStatistics;
-            let companies = await session.query<Company>({
-                documentType: Company,
-                index: Companies_ByName
-            })
+            let companies = await session.query(Company, Companies_ByName)
                 .statistics(s => stats = s)
                 .include(i => i.includeCompareExchangeValue("externalId"))
                 .all();
@@ -626,17 +623,14 @@ describe("RavenDB_14006", function () {
             const numberOfRequests = session.advanced.numberOfRequests;
 
             let value1 = await session.advanced.clusterTransaction
-                .getCompareExchangeValue<Address>(companies[0].externalId, Address);
+                .getCompareExchangeValue(companies[0].externalId, Address);
             assertThat(value1.value.city)
                 .isEqualTo("Torun");
 
             assertThat(session.advanced.numberOfRequests)
                 .isEqualTo(numberOfRequests);
 
-            companies = await session.query<Company>({
-                documentType: Company,
-                index: Companies_ByName
-            })
+            companies = await session.query(Company, Companies_ByName)
                 .statistics(s => stats = s)
                 .include(i => i.includeCompareExchangeValue("externalId"))
                 .all();
@@ -651,7 +645,7 @@ describe("RavenDB_14006", function () {
             {
                 const innerSession = store.openSession(sessionOptions);
                 const value = await innerSession.advanced.clusterTransaction
-                    .getCompareExchangeValue<Address>(companies[0].externalId, Address);
+                    .getCompareExchangeValue(companies[0].externalId, Address);
                 value.value.city = "Bydgoszcz";
 
                 await innerSession.saveChanges();
@@ -659,10 +653,7 @@ describe("RavenDB_14006", function () {
                 await testContext.waitForIndexing(store);
             }
 
-            companies = await session.query<Company>({
-                documentType: Company,
-                index: Companies_ByName
-            })
+            companies = await session.query(Company, Companies_ByName)
                 .statistics(s => stats = s)
                 .include(i => i.includeCompareExchangeValue("externalId"))
                 .all();
@@ -675,7 +666,7 @@ describe("RavenDB_14006", function () {
                 .isNotEqualTo(resultEtag);
 
             value1 = await session.advanced.clusterTransaction
-                .getCompareExchangeValue<Address>(companies[0].externalId, Address);
+                .getCompareExchangeValue(companies[0].externalId, Address);
 
             assertThat(value1.value.city)
                 .isEqualTo("Bydgoszcz");
@@ -739,7 +730,7 @@ describe("RavenDB_14006", function () {
             const numberOfRequests = session.advanced.numberOfRequests;
 
             let value1 = await session.advanced.clusterTransaction
-                .getCompareExchangeValue<Address>(companies[0].externalId, Address);
+                .getCompareExchangeValue(companies[0].externalId, Address);
 
             assertThat(value1.value.city)
                 .isEqualTo("Torun");
@@ -768,7 +759,7 @@ describe("RavenDB_14006", function () {
             {
                 const innerSession = store.openSession(sessionOptions);
                 const value = await innerSession.advanced.clusterTransaction
-                    .getCompareExchangeValue<Address>(companies[0].externalId, Address);
+                    .getCompareExchangeValue(companies[0].externalId, Address);
                 value.value.city = "Bydgoszcz";
 
                 await innerSession.saveChanges();
@@ -794,7 +785,7 @@ describe("RavenDB_14006", function () {
                 .isNotEqualTo(resultEtag);
 
             value1 = await session.advanced.clusterTransaction
-                .getCompareExchangeValue<Address>(companies[0].externalId, Address);
+                .getCompareExchangeValue(companies[0].externalId, Address);
             assertThat(value1.value.city)
                 .isEqualTo("Bydgoszcz");
         }
@@ -843,7 +834,7 @@ describe("RavenDB_14006", function () {
                 .isEqualTo(1);
 
             for (const companyId of allCompanies) {
-                const result = await session.advanced.clusterTransaction.getCompareExchangeValue<Company>(companyId, Company);
+                const result = await session.advanced.clusterTransaction.getCompareExchangeValue(companyId, Company);
                 assertThat(result.value)
                     .isNotNull();
                 assertThat(session.advanced.numberOfRequests)

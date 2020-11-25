@@ -10,20 +10,20 @@ import {
     CompareExchangeValueResultParser,
     GetCompareExchangeValuesResponse
 } from "../../../Operations/CompareExchange/CompareExchangeValueResultParser";
-import { ClassConstructor } from "../../../../Types";
+import { CompareExchangeResultClass } from "../../../../Types";
 import { DocumentConventions } from "../../../Conventions/DocumentConventions";
 import { QueryResult } from "../../../Queries/QueryResult";
 
-export class LazyGetCompareExchangeValueOperation<T extends object> implements ILazyOperation {
+export class LazyGetCompareExchangeValueOperation<T> implements ILazyOperation {
     private readonly _clusterSession: ClusterTransactionOperationsBase;
-    private readonly _clazz: ClassConstructor<T>;
+    private readonly _clazz: CompareExchangeResultClass<T>;
     private readonly _conventions: DocumentConventions;
     private readonly _key: string;
 
     private _result: object;
     private _requiresRetry: boolean;
 
-    public constructor(clusterSession: ClusterTransactionOperationsBase, clazz: ClassConstructor<T>,
+    public constructor(clusterSession: ClusterTransactionOperationsBase, clazz: CompareExchangeResultClass<T>,
                        conventions: DocumentConventions, key: string) {
         if (!clusterSession) {
             throwError("InvalidArgumentException", "Cluster Session cannot be null");

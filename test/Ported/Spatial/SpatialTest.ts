@@ -92,11 +92,7 @@ describe("SpatialTest", function () {
             const session = store.openSession();
             let stats: QueryStatistics;
 
-            const result = await session.advanced
-                .documentQuery<MyDocument>({
-                    indexName: MyIndex.name,
-                    documentType: MyDocument
-                })
+            const result = await session.query(MyProjection, MyIndex)
                 .waitForNonStaleResults()
                 .withinRadiusOf("coordinates", 0, 12.3456789, 12.3456789)
                 .statistics($ => stats = $)
@@ -132,11 +128,7 @@ describe("SpatialTest", function () {
             const session = store.openSession();
             let stats: QueryStatistics;
 
-            const result = await session.advanced
-                .documentQuery<MyDocument>({
-                    indexName: MyIndex.name,
-                    documentType: MyDocument
-                })
+            const result = await session.query(MyDocument, MyIndex)
                 .waitForNonStaleResults()
                 .withinRadiusOf("coordinates", 0, 10, 10)
                 .statistics($ => stats = $)

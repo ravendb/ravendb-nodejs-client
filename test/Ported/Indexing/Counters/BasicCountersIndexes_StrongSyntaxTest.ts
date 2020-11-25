@@ -32,10 +32,8 @@ describe("BasicCountersIndexes_StrongSyntaxTest", function () {
 
         {
             const session = store.openSession();
-            const results = await session.query<IndexResult>({
-                index: MyCounterIndex,
-                documentType: IndexResult
-            }).all();
+            const results = await session.query(IndexResult, MyCounterIndex)
+                .all();
 
             assertThat(results)
                 .hasSize(1);

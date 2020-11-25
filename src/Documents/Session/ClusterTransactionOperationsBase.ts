@@ -1,7 +1,7 @@
 import { TransactionMode } from "./TransactionMode";
 import { throwError } from "../../Exceptions";
 import { CompareExchangeValue } from "../Operations/CompareExchange/CompareExchangeValue";
-import { ClassConstructor } from "../../Types";
+import { CompareExchangeResultClass } from "../../Types";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { DocumentSession } from "./DocumentSession";
 import { CaseInsensitiveKeysMap } from "../../Primitives/CaseInsensitiveKeysMap";
@@ -90,8 +90,8 @@ export abstract class ClusterTransactionOperationsBase {
     }
 
     protected async _getCompareExchangeValueInternal<T>(key: string): Promise<CompareExchangeValue<T>>
-    protected async _getCompareExchangeValueInternal<T>(key: string, clazz: ClassConstructor<T>): Promise<CompareExchangeValue<T>>
-    protected async _getCompareExchangeValueInternal<T>(key: string, clazz?: ClassConstructor<T>): Promise<CompareExchangeValue<T>> {
+    protected async _getCompareExchangeValueInternal<T>(key: string, clazz: CompareExchangeResultClass<T>): Promise<CompareExchangeValue<T>>
+    protected async _getCompareExchangeValueInternal<T>(key: string, clazz?: CompareExchangeResultClass<T>): Promise<CompareExchangeValue<T>> {
         let notTracked: boolean;
         const v = this.getCompareExchangeValueFromSessionInternal<T>(key, t => notTracked = t, clazz);
         if (!notTracked) {
@@ -114,10 +114,10 @@ export abstract class ClusterTransactionOperationsBase {
         return null;
     }
 
-    protected async _getCompareExchangeValuesInternal<T>(startsWith: string, clazz: ClassConstructor<T>, start: number, pageSize: number): Promise<{ [key: string]: CompareExchangeValue<T> }>;
+    protected async _getCompareExchangeValuesInternal<T>(startsWith: string, clazz: CompareExchangeResultClass<T>, start: number, pageSize: number): Promise<{ [key: string]: CompareExchangeValue<T> }>;
     protected async _getCompareExchangeValuesInternal<T>(keys: string[]): Promise<{ [key: string]: CompareExchangeValue<T> }>;
-    protected async _getCompareExchangeValuesInternal<T>(keys: string[], clazz: ClassConstructor<T>): Promise<{ [key: string]: CompareExchangeValue<T> }>;
-    protected async _getCompareExchangeValuesInternal<T>(startsWithOrKeys: string | string[], clazz?: ClassConstructor<T>, start?: number, pageSize?: number): Promise<{ [key: string]: CompareExchangeValue<T> }>{
+    protected async _getCompareExchangeValuesInternal<T>(keys: string[], clazz: CompareExchangeResultClass<T>): Promise<{ [key: string]: CompareExchangeValue<T> }>;
+    protected async _getCompareExchangeValuesInternal<T>(startsWithOrKeys: string | string[], clazz?: CompareExchangeResultClass<T>, start?: number, pageSize?: number): Promise<{ [key: string]: CompareExchangeValue<T> }>{
         if (TypeUtil.isString(startsWithOrKeys)) {
             this.session.incrementRequestCount();
 
@@ -174,7 +174,7 @@ export abstract class ClusterTransactionOperationsBase {
         }
     }
 
-    public getCompareExchangeValueFromSessionInternal<T>(key: string, notTracked: (value: boolean) => void, clazz: ClassConstructor<T>): CompareExchangeValue<T> {
+    public getCompareExchangeValueFromSessionInternal<T>(key: string, notTracked: (value: boolean) => void, clazz: CompareExchangeResultClass<T>): CompareExchangeValue<T> {
         let sessionValue: CompareExchangeSessionValue;
 
         if (this._tryGetCompareExchangeValueFromSession(key, s => sessionValue = s)) {
@@ -186,7 +186,7 @@ export abstract class ClusterTransactionOperationsBase {
         return null;
     }
 
-    public getCompareExchangeValuesFromSessionInternal<T>(keys: string[], notTrackedKeysSetter: (values: Set<string>) => void, clazz: ClassConstructor<T>): { [key: string]: CompareExchangeValue<T> } {
+    public getCompareExchangeValuesFromSessionInternal<T>(keys: string[], notTrackedKeysSetter: (values: Set<string>) => void, clazz: CompareExchangeResultClass<T>): { [key: string]: CompareExchangeValue<T> } {
         let noTrackedKeys: Set<string>;
 
         const results: { [key: string]: CompareExchangeValue<T> } = {};

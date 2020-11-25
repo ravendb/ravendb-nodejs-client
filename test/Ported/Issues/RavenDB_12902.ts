@@ -3,7 +3,7 @@ import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
 import { QueryStatistics } from "../../../src/Documents/Session/QueryStatistics";
 import { User } from "../../Assets/Entities";
 import { assertThat } from "../../Utils/AssertExtensions";
-import { AbstractJavaScriptIndexCreationTask } from "../../../src";
+import { AbstractJavaScriptIndexCreationTask, DocumentType } from "../../../src";
 
 describe("RavenDB_12902", function () {
 
@@ -26,10 +26,10 @@ describe("RavenDB_12902", function () {
 
             let stats: QueryStatistics;
 
-            const results = await session.query<User>({ index: UsersByName, documentType: User })
+            const results = await session.query(User, UsersByName)
                 .statistics(s => stats = s)
                 .on("afterQueryExecuted", () => counter++)
-                .whereEquals("name", "Doe")
+                .whereEquals("lastName", "Doe")
                 .aggregateBy(x => x.byField("name").sumOn("count"))
                 .execute();
 
@@ -54,7 +54,7 @@ describe("RavenDB_12902", function () {
 
             let stats: QueryStatistics;
 
-            const results = await session.query<User>({ index: UsersByName, documentType: User })
+            const results = await session.query(User, UsersByName)
                 .statistics(s => stats = s)
                 .on("afterQueryExecuted", () => counter++)
                 .suggestUsing(x => x.byField("name", "Orin"))
@@ -79,7 +79,7 @@ describe("RavenDB_12902", function () {
 
             let stats: QueryStatistics;
 
-            const results = await session.query<User>(User)
+            const results = await session.query(User)
                 .on("afterQueryExecuted", () => counter++)
                 .statistics(s => stats = s)
                 .whereEquals("name", "Doe")
@@ -103,7 +103,7 @@ describe("RavenDB_12902", function () {
 
             let stats: QueryStatistics;
 
-            const results = await session.query<User>({ index: UsersByName, documentType: User })
+            const results = await session.query(User, UsersByName)
                 .statistics(s => stats = s)
                 .on("afterQueryExecuted", () => counter++)
                 .whereEquals("name", "Doe")
@@ -132,7 +132,7 @@ describe("RavenDB_12902", function () {
 
             let stats: QueryStatistics;
 
-            const results = await session.query<User>({ index: UsersByName, documentType: User })
+            const results = await session.query(User, UsersByName)
                 .on("afterQueryExecuted", () => counter++)
                 .statistics(s => stats = s)
                 .suggestUsing(x => x.byField("name", "Orin"))
@@ -160,7 +160,7 @@ describe("RavenDB_12902", function () {
             let stats: QueryStatistics;
 
             await session
-                .query<User>({ documentType: User, index: UsersByName })
+                .query(User, UsersByName)
                 .statistics(s => stats = s)
                 .whereEquals("name", "Doe")
                 .aggregateBy(x => x.byField("name").sumOn("count"))
@@ -180,7 +180,7 @@ describe("RavenDB_12902", function () {
             let stats: QueryStatistics;
 
             await session
-                .query<User>({ documentType: User, index: UsersByName })
+                .query(User, UsersByName)
                 .statistics(s => stats = s)
                 .suggestUsing(x => x.byField("name", "Orin"))
                 .execute();
@@ -191,14 +191,14 @@ describe("RavenDB_12902", function () {
     });
 });
 
-class UsersByName extends AbstractJavaScriptIndexCreationTask<User, { name: string, lastname: string }> {
+class UsersByName extends AbstractJavaScriptIndexCreationTask<User, { name: string, lastName: string }> {
     public constructor() {
         super();
 
         this.map(User, u => {
             return {
                 name: u.name,
-                lastname: u.lastName
+                lastName: u.lastName
             }
         });
 

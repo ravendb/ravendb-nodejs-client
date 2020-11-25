@@ -309,7 +309,7 @@ describe("TimeSeriesOperations", function () {
         
         {
             const session = store.openSession();
-            const query = session.advanced.rawQuery<RawQueryResult>(rawQuery, RawQueryResult)
+            const query = session.advanced.rawQuery(rawQuery, RawQueryResult)
                 .addParameter("start", baseLine.toDate())
                 .addParameter("end", baseLine.clone().add(1, "day").toDate());
 
@@ -359,7 +359,7 @@ describe("TimeSeriesOperations", function () {
 
             {
                 const session = store.openSession(sessionOptions);
-                const query = session.advanced.rawQuery<RawQueryResult>(rawQuery, RawQueryResult)
+                const query = session.advanced.rawQuery(rawQuery, RawQueryResult)
                     .addParameter("start", baseLine.toDate())
                     .addParameter("end", baseLine.clone().add(1, "day").toDate());
 

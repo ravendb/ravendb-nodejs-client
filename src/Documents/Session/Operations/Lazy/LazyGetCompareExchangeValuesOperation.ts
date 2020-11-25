@@ -1,6 +1,6 @@
 import { ILazyOperation } from "./ILazyOperation";
 import { ClusterTransactionOperationsBase } from "../../ClusterTransactionOperationsBase";
-import { ClassConstructor } from "../../../../Types";
+import { CompareExchangeResultClass } from "../../../../Types";
 import { throwError } from "../../../../Exceptions";
 import { TypeUtil } from "../../../../Utility/TypeUtil";
 import { GetRequest } from "../../../Commands/MultiGet/GetRequest";
@@ -17,9 +17,9 @@ import { DocumentConventions } from "../../../Conventions/DocumentConventions";
 import { QueryResult } from "../../../Queries/QueryResult";
 import { CompareExchangeValue } from "../../../Operations/CompareExchange/CompareExchangeValue";
 
-export class LazyGetCompareExchangeValuesOperation<T extends object> implements ILazyOperation {
+export class LazyGetCompareExchangeValuesOperation<T> implements ILazyOperation {
     private readonly _clusterSession: ClusterTransactionOperationsBase;
-    private readonly _clazz: ClassConstructor<T>;
+    private readonly _clazz: CompareExchangeResultClass<T>;
     private readonly _conventions: DocumentConventions;
     private readonly _startsWith: string;
     private readonly _start: number
@@ -30,17 +30,17 @@ export class LazyGetCompareExchangeValuesOperation<T extends object> implements 
 
 
     public constructor(clusterSession: ClusterTransactionOperationsBase,
-                       clazz: ClassConstructor<T>,
+                       clazz: CompareExchangeResultClass<T>,
                        conventions: DocumentConventions,
                        keys: string[]);
     public constructor(clusterSession: ClusterTransactionOperationsBase,
-                       clazz: ClassConstructor<T>,
+                       clazz: CompareExchangeResultClass<T>,
                        conventions: DocumentConventions,
                        startsWith: string,
                        start: number,
                        pageSize: number);
     public constructor(clusterSession: ClusterTransactionOperationsBase,
-                       clazz: ClassConstructor<T>,
+                       clazz: CompareExchangeResultClass<T>,
                        conventions: DocumentConventions,
                        keysOrStartsWith: string | string[],
                        start?: number,

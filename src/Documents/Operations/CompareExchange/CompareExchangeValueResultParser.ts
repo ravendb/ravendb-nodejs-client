@@ -3,9 +3,10 @@ import { CompareExchangeValue } from "./CompareExchangeValue";
 import { throwError } from "../../../Exceptions";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { ObjectUtil } from "../../../Utility/ObjectUtil";
-import { ClassConstructor } from "../../../Types";
 import { CONSTANTS } from "../../../Constants";
 import { MetadataAsDictionary, MetadataDictionary } from "../../../Mapping/MetadataAsDictionary";
+import { CompareExchangeResultClass, EntityConstructor } from "../../../Types";
+import { DocumentType } from "../../DocumentAbstractions";
 
 export interface CompareExchangeResultItem {
     index: number;
@@ -23,7 +24,7 @@ export class CompareExchangeValueResultParser {
         responseObj: GetCompareExchangeValuesResponse,
         materializeMetadata: boolean,
         conventions: DocumentConventions,
-        clazz?: ClassConstructor<T>)
+        clazz?: CompareExchangeResultClass<T>)
         : { [key: string]: CompareExchangeValue<T> } {
 
         const items = responseObj.results;
@@ -48,12 +49,12 @@ export class CompareExchangeValueResultParser {
         response: GetCompareExchangeValuesResponse,
         materializeMetadata: boolean,
         conventions: DocumentConventions,
-        clazz: ClassConstructor<T>): CompareExchangeValue<T> {
+        clazz: CompareExchangeResultClass<T>): CompareExchangeValue<T> {
         if (!response) {
             return null;
         }
 
-        const values = CompareExchangeValueResultParser.getValues(response, materializeMetadata, conventions, clazz);
+        const values = CompareExchangeValueResultParser.getValues<T>(response, materializeMetadata, conventions, clazz);
         const itemsKeys = Object.keys(values);
         if (!values || !itemsKeys.length) {
             return null;
@@ -65,7 +66,7 @@ export class CompareExchangeValueResultParser {
         item: CompareExchangeResultItem,
         materializeMetadata: boolean,
         conventions: DocumentConventions,
-        clazz: ClassConstructor<T>) {
+        clazz: CompareExchangeResultClass<T>) {
 
         if (!item) {
             return null;
@@ -97,7 +98,7 @@ export class CompareExchangeValueResultParser {
             if (!rawValue) {
                 return new CompareExchangeValue(key, index, null, metadata);
             } else {
-                const entityType = conventions.getJsTypeByDocumentType(clazz);
+                const entityType = conventions.getJsTypeByDocumentType(clazz as EntityConstructor);
                 if (conventions.entityFieldNameConvention) {
                     rawValue = ObjectUtil.transformObjectKeys(
                         rawValue, {

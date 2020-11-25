@@ -37,8 +37,8 @@ describe("ClientGraphQueriesTest", function () {
             await session.saveChanges();
 
             const res = await session.advanced
-                .graphQuery<FooBar>("match (Foos as foo)-[bars as _]->(Bars as bar)", FooBar)
-                .withQuery("foo", session.query<Foo>(Foo))
+                .graphQuery("match (Foos as foo)-[bars as _]->(Bars as bar)", FooBar)
+                .withQuery("foo", session.query(Foo))
                 .single();
 
             assertThat(res.foo.name)
@@ -79,9 +79,9 @@ describe("ClientGraphQueriesTest", function () {
             ];
 
             for (let names of namesList) {
-                const res = await session.advanced.graphQuery<FooBar>("match (Foos as foo)-[bars as _]->(Bars as bar)", FooBar)
-                    .withQuery("foo", b => b.query<Foo>(Foo).whereIn("name", names))
-                    .withQuery("bar", session.query<Bar>(Bar).whereGreaterThanOrEqual("age", 18))
+                const res = await session.advanced.graphQuery("match (Foos as foo)-[bars as _]->(Bars as bar)", FooBar)
+                    .withQuery("foo", b => b.query(Foo).whereIn("name", names))
+                    .withQuery("bar", session.query(Bar).whereGreaterThanOrEqual("age", 18))
                     .waitForNonStaleResults()
                     .all();
 
@@ -103,9 +103,9 @@ describe("ClientGraphQueriesTest", function () {
             const session = store.openSession();
             const query = session
                 .advanced
-                .graphQuery<FooBar>("match (Foos as foo)-[bars as _]->(Bars as bar)", FooBar)
-                .withQuery("foo", b => b.query<Foo>(Foo).whereIn("name", names).waitForNonStaleResults(3_000))
-                .withQuery("bar", session.query<Bar>(Bar).waitForNonStaleResults(5_000).whereGreaterThanOrEqual("age", 18))
+                .graphQuery("match (Foos as foo)-[bars as _]->(Bars as bar)", FooBar)
+                .withQuery("foo", b => b.query(Foo).whereIn("name", names).waitForNonStaleResults(3_000))
+                .withQuery("bar", session.query(Bar).waitForNonStaleResults(5_000).whereGreaterThanOrEqual("age", 18))
                 .waitForNonStaleResults()
                 .getIndexQuery();
 
@@ -170,7 +170,7 @@ describe("ClientGraphQueriesTest", function () {
             await session.saveChanges();
 
 
-            const tupleResult = await session.advanced.graphQuery<FriendsTuple>("match (f1)-[l1]->(f2)", FriendsTuple)
+            const tupleResult = await session.advanced.graphQuery("match (f1)-[l1]->(f2)", FriendsTuple)
                 .withQuery("f1", session.query(Friend))
                 .withQuery("f2", session.query(Friend))
                 .withEdges("l1", "friends", "where friendsSince >= '" + DateUtil.utc.stringify(from) + "' select friendId")

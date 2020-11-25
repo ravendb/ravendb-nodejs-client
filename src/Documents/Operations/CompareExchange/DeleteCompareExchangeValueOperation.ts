@@ -1,7 +1,7 @@
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { IOperation, OperationResultType } from "../OperationAbstractions";
 import { CompareExchangeResult, CompareExchangeResultResponse } from "./CompareExchangeResult";
-import { ClassConstructor } from "../../../Types";
+import { CompareExchangeResultClass } from "../../../Types";
 import { IDocumentStore } from "../../IDocumentStore";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { HttpCache } from "../../../Http/HttpCache";
@@ -16,9 +16,9 @@ export class DeleteCompareExchangeValueOperation<T> implements IOperation<Compar
 
     private readonly _key: string;
     private readonly _index: number;
-    private readonly _clazz: ClassConstructor<T>;
+    private readonly _clazz: CompareExchangeResultClass<T>;
 
-    public constructor(key: string, index: number, clazz?: ClassConstructor<T>) {
+    public constructor(key: string, index: number, clazz?: CompareExchangeResultClass<T>) {
         this._key = key;
         this._index = index;
         this._clazz = clazz;
@@ -38,10 +38,10 @@ export class DeleteCompareExchangeValueOperation<T> implements IOperation<Compar
 export class RemoveCompareExchangeCommand<T> extends RavenCommand<CompareExchangeResult<T>> implements IRaftCommand {
     private readonly _key: string;
     private readonly _index: number;
-    private readonly _clazz: ClassConstructor<T>;
+    private readonly _clazz: CompareExchangeResultClass<T>;
     private readonly _conventions: DocumentConventions;
 
-    public constructor(key: string, index: number, conventions: DocumentConventions, clazz?: ClassConstructor<T>) {
+    public constructor(key: string, index: number, conventions: DocumentConventions, clazz?: CompareExchangeResultClass<T>) {
         super();
 
         if (!key) {

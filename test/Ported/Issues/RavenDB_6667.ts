@@ -49,10 +49,7 @@ describe("RavenDB_6667", function () {
 
         {
             const session = store.openSession();
-            const results = await session.query({
-                documentType: Authors_ByNameAndBooksResult,
-                index: Authors_ByNameAndBooks
-            })
+            const results = await session.query(Authors_ByNameAndBooksResult, Authors_ByNameAndBooks)
                 .whereEquals("name", "Andrzej Sapkowski")
                 .ofType(Author)
                 .all();
@@ -63,10 +60,7 @@ describe("RavenDB_6667", function () {
 
         {
             const session = store.openSession();
-            const results = await session.query({
-                documentType: Authors_ByNameAndBooksResult,
-                index: Authors_ByNameAndBooks
-            })
+            const results = await session.query(Authors_ByNameAndBooksResult, Authors_ByNameAndBooks)
                 .whereEquals("name", "Andrzej Sapkowski")
                 .orElse()
                 .whereEquals("books", "The Witcher")

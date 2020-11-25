@@ -893,7 +893,7 @@ describe("TimeSeriesIncludesTest", function () {
 
         {
             const session = store.openSession();
-            const query = session.query<User>(User)
+            const query = session.query(User)
                 .include(i => i.includeTimeSeries("Heartrate"));
 
             const result = await query.all();

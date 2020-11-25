@@ -5,7 +5,7 @@ import {
 import {
     ObjectTypeDescriptor,
     ObjectLiteralDescriptor,
-    ClassConstructor, EntityConstructor
+    ClassConstructor, EntityConstructor, Field
 } from "../../Types";
 import * as pluralize from "pluralize";
 import { ClientConfiguration } from "../Operations/Configuration/ClientConfiguration";
@@ -21,7 +21,7 @@ import { InMemoryDocumentSessionOperations } from "../Session/InMemoryDocumentSe
 
 export type IdConvention = (databaseName: string, entity: object) => Promise<string>;
 export type IValueForQueryConverter<T> =
-    (fieldName: string, value: T, forRange: boolean, stringValue: (value: any) => void) => boolean;
+    (fieldName: Field<T>, value: T, forRange: boolean, stringValue: (value: any) => void) => boolean;
 
 function createServerDefaults() {
     const conventions = new DocumentConventions();

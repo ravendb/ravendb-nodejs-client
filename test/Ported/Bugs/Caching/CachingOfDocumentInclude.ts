@@ -217,7 +217,7 @@ describe.skip("CachingOfDocumentInclude", function () {
             const session = store.openSession();
             assertThat(session.advanced.numberOfRequests)
                 .isZero();
-            const orders = await session.query<Order>(Order)
+            const orders = await session.query(Order)
                 .include("lines[].product")
                 .all();
 
@@ -235,7 +235,7 @@ describe.skip("CachingOfDocumentInclude", function () {
             assertThat(session.advanced.numberOfRequests)
                 .isZero();
 
-            const orders = await session.query<Order>(Order)
+            const orders = await session.query(Order)
                 .include("lines.product")
                 .all();
 

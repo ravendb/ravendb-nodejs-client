@@ -56,7 +56,7 @@ describe("RDBC-247", function () {
         });
 
         it("should return exactly 1 result", async function() {
-            const result = await session.query<User>({ collection: "users" })
+            const result = await session.query({ collection: "users", documentType: User })
                 .whereEquals("name", "John")
                 .single();
 
@@ -70,7 +70,7 @@ describe("RDBC-247", function () {
     describe("singleOrNull()", function () {
 
         it("should return null if 0 results", async function () {
-            const result = await session.query<User>({ collection: "users" })
+            const result = await session.query({ collection: "users", documentType: User })
                 .whereEquals("name", "Merry")
                 .singleOrNull();
             assert.strictEqual(result, null);
@@ -78,7 +78,7 @@ describe("RDBC-247", function () {
 
         it("should throw if more than 1 result", async function() {
             await assertThrows(
-                async () => await session.query({ collection: "users" }).singleOrNull(),
+                async () => await session.query({ collection: "users", documentType: User }).singleOrNull(),
                 err => {
                     assert.strictEqual(err.name, "InvalidOperationException");
                     assert.strictEqual(err.message, "Expected single result, but got more than that.");
@@ -86,7 +86,7 @@ describe("RDBC-247", function () {
         });
 
         it("should return exactly 1 result", async function() {
-            const result = await session.query<User>({ collection: "users" })
+            const result = await session.query({ collection: "users", documentType: User })
                 .whereEquals("name", "John")
                 .singleOrNull();
 

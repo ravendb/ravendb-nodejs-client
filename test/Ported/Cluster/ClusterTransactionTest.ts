@@ -32,7 +32,7 @@ describe("ClusterTransactionTest", function () {
             await session.saveChanges();
             const userFromClusterTx = (
                 await session.advanced.clusterTransaction
-                    .getCompareExchangeValue<User>("usernames/ayende", User)).value;
+                    .getCompareExchangeValue("usernames/ayende", User)).value;
             assert.ok(userFromClusterTx instanceof User, "get compare exchange returned non-user");
             assert.strictEqual(userFromClusterTx.name, user1.name);
             const userLoaded = await session.load<User>("foo/bar");
@@ -50,7 +50,7 @@ describe("ClusterTransactionTest", function () {
             session.advanced.clusterTransaction.createCompareExchangeValue("usernames/ayende", user1);
             await session.saveChanges();
 
-            const value = await session.advanced.clusterTransaction.getCompareExchangeValue<User>("usernames/ayende", User);
+            const value = await session.advanced.clusterTransaction.getCompareExchangeValue("usernames/ayende", User);
             value.value = user2;
 
             await session.store(user2, "users/2");
@@ -116,7 +116,7 @@ describe("ClusterTransactionTest", function () {
             session.advanced.transactionMode = "ClusterWide";
             await session.saveChanges();
 
-            const u = await session.advanced.clusterTransaction.getCompareExchangeValue<User>("usernames/ayende", User);
+            const u = await session.advanced.clusterTransaction.getCompareExchangeValue("usernames/ayende", User);
             assert.strictEqual(u.value.name, user1.name);
         }
     });

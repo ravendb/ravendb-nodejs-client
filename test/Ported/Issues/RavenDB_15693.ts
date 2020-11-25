@@ -15,7 +15,7 @@ describe("RavenDB_15693", function () {
 
     it("canQueryOnComplexBoost", async () => {
         const s = store.openSession();
-        const q = s.advanced.documentQuery(Doc)
+        const q = s.query(Doc)
             .search("strVal1", "a")
             .andAlso()
             .openSubclause()

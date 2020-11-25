@@ -53,7 +53,7 @@ export class TimeSeriesValuesHelper {
         return null;
     }
 
-    public static getValues<T>(clazz: ClassConstructor<T>, obj: T): number[] {
+    public static getValues<T extends object>(clazz: ClassConstructor<T>, obj: T): number[] {
         const mapping = TimeSeriesValuesHelper.getFieldsMapping(clazz)
         if (!mapping) {
             return null;
@@ -62,7 +62,7 @@ export class TimeSeriesValuesHelper {
         return mapping.map(m => obj[m.field]);
     }
 
-    public static setFields<T>(clazz: ClassConstructor<T>, values: number[], asRollup: boolean = false): T {
+    public static setFields<T extends object>(clazz: ClassConstructor<T>, values: number[], asRollup: boolean = false): T {
         if (!values) {
             return null;
         }

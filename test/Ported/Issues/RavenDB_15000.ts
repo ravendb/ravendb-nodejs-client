@@ -75,7 +75,7 @@ describe("RavenDB_15000", function () {
 
         {
             const session = store.openSession();
-            const order = await session.query<Order>(Order)
+            const order = await session.query(Order)
                 .include(i => i.includeDocuments("company").includeTimeSeries("Heartrate"))
                 .first();
 

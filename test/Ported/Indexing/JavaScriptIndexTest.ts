@@ -255,8 +255,8 @@ describe("JavaScriptIndexTest", function () {
         await testContext.waitForIndexing(store);
         {
             const session = store.openSession();
-            const result = await session.query({ 
-                indexName: index.getIndexName()
+            const result = await session.query({
+                index: UsersByNameAndAnalyzedName
             })
             .search("analyzedName", "Brendan")
             .selectFields<UsersByNameAndAnalyzedNameResult>("analyzedName", UsersByNameAndAnalyzedNameResult)
@@ -318,7 +318,7 @@ describe("JavaScriptIndexTest", function () {
             await session.saveChanges();
 
             await testContext.waitForIndexing(store);
-            const res = await session.query({ indexName: index.getIndexName() })
+            const res = await session.query({ index: ProductsByCategory })
                 .all();
 
             const res2 = await session.query({ collection: "CategoryCounts" })
