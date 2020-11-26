@@ -466,7 +466,7 @@ import { TypedTimeSeriesRollupEntry } from "../../../src/Documents/Session/TimeS
 
         config.collections.set("Users", usersConfig);
 
-        config.policyCheckFrequencyInMs = 1_000;
+        config.policyCheckFrequencyInMs = 100;
 
         await store.maintenance.send(new ConfigureTimeSeriesOperation(config));
         await store.timeSeries.register(User, StockPrice);
