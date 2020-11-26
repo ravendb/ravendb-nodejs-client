@@ -30,6 +30,7 @@ import { UsersIndex, UsersInvalidIndex, UsersIndexWithPascalCasedFields } from "
 import { TypeUtil } from "../../../src/Utility/TypeUtil";
 import { assertThat } from "../../Utils/AssertExtensions";
 import { AbstractJavaScriptIndexCreationTask } from "../../../src/Documents/Indexes/AbstractJavaScriptIndexCreationTask";
+import { delay } from "../../../src/Utility/PromiseUtil";
 
 describe("Index operations", function () {
 
@@ -183,6 +184,8 @@ describe("Index operations", function () {
         await session.saveChanges();
 
         await testContext.waitForIndexing(store, store.database, null, false);
+
+        await delay(500);
 
         const indexErrors = await store.maintenance.send(new GetIndexErrorsOperation());
         const perIndexErrors = await store.maintenance.send(new GetIndexErrorsOperation([indexDef.name]));

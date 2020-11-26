@@ -10,6 +10,7 @@ import { GetOngoingTaskInfoOperation } from "../../../../src/Documents/Operation
 import { OngoingTaskPullReplicationAsSink } from "../../../../src/Documents/Operations/OngoingTasks/OngoingTaskPullReplicationAsSink";
 import { GetPullReplicationHubTasksInfoOperation } from "../../../../src/Documents/Operations/OngoingTasks/GetPullReplicationHubTasksInfoOperation";
 import { PullReplicationDefinition } from "../../../../src/Documents/Operations/Replication/PullReplicationDefinition";
+import { delay } from "../../../../src/Utility/PromiseUtil";
 
 (RavenTestContext.isPullRequest ? describe.skip : describe)("PullReplicationTest", function () {
 
@@ -143,6 +144,8 @@ import { PullReplicationDefinition } from "../../../../src/Documents/Operations/
                     .isNotNull();
 
                 await replication.deleteOngoingTask(hub, hubResult.taskId, "PullReplicationAsHub");
+
+                await delay(500);
 
                 {
                     const session = hub.openSession();
