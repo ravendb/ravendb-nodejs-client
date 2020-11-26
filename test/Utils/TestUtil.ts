@@ -137,8 +137,6 @@ export class RavenTestContext extends RavenTestDriver implements IDisposable {
 
     public static isPullRequest = !process.env["RAVEN_License"];
 
-    public static is41 = process.env["RAVENDB_SERVER_VERSION"] === "4.1"; //TODO:
-
     private readonly _locator: RavenServerLocator;
     private readonly _securedLocator: RavenServerLocator;
 

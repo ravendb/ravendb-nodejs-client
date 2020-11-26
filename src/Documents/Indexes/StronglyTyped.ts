@@ -50,7 +50,7 @@ export class IndexingReduceResults<TDocument, TKey> {
 
 export class IndexingMapReduceFormatter<TDocument> {
     private _groupBy: KeySelector<TDocument, any>;
-    private _aggregate: IndexingMapDefinition<Group<TDocument, any>, any>; //TODO:
+    private _aggregate: IndexingMapDefinition<Group<TDocument, any>, any>;
 
     public constructor(groupBy: KeySelector<TDocument, any>, aggregate: IndexingMapDefinition<Group<TDocument, any>, any>) {
         this._groupBy = groupBy;

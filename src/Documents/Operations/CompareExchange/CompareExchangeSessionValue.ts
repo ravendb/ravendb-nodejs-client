@@ -158,7 +158,7 @@ export class CompareExchangeSessionValue {
         }
     }
 
-    private _convertEntity(key: string, entity: any, objectMapper: TypesAwareObjectMapper, metadata: any) { //TODO: write test for cmp exch with string/boolean/int types
+    private _convertEntity(key: string, entity: any, objectMapper: TypesAwareObjectMapper, metadata: any) {
         return {
             [COMPARE_EXCHANGE.OBJECT_FIELD_NAME]: entity,
             [CONSTANTS.Documents.Metadata.KEY]: metadata ?? undefined

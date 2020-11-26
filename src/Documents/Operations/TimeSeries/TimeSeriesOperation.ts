@@ -2,7 +2,7 @@ import { DateUtil } from "../../../Utility/DateUtil";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 export class TimeSeriesOperation {
-    private _appends: AppendOperation[]; //TODO: it is list sorted by timestamp
+    private _appends: AppendOperation[];
     private _deletes: DeleteOperation[];
     name: string;
 
@@ -17,7 +17,7 @@ export class TimeSeriesOperation {
             this._appends
                 .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
                 .map(x => x.serialize(conventions))
-            : null; //TODO: check sort order!
+            : null;
 
         return {
             Name: this.name,

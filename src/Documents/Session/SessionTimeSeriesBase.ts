@@ -203,7 +203,7 @@ export class SessionTimeSeriesBase {
             // need to skip a part of the first range
             if (toRange && DatesComparator.compare(leftDate(toRange.from), rightDate(to)) <= 0) {
                 // also need to trim a part of the last range
-                return values.slice(skip, values.length - trim); //TODO: double check me!
+                return values.slice(skip, values.length - trim);
             }
 
             return values.slice(skip);

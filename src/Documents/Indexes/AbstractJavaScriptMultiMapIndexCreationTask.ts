@@ -56,7 +56,7 @@ export class AbstractJavaScriptMultiMapIndexCreationTask<TMapResult extends obje
         const sourceAsString = source.toString();
 
         if (!sourceAsString.includes("function")) {
-            throwError("InvalidOperationException", "Additional sources requires named function. Arrow functions are not supported.");
+            throwError("InvalidOperationException", "Additional sources require named function. Arrow functions are not supported.");
         }
 
         this.additionalSources[name] = source.toString();

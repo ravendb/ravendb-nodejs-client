@@ -206,7 +206,7 @@ describe("RavenDB_15426", function () {
             .hasSize(1);
     });
 
-    it.skip("testClientCacheWithStart", async () => { //TODO: waiting for RavenDB-15761
+    it("testClientCacheWithStart", async () => {
         const baseLine = moment().startOf("day");
 
         {
@@ -232,7 +232,7 @@ describe("RavenDB_15426", function () {
 
             let res = await ts.get(20, TypeUtil.MAX_INT32);
             assertThat(res)
-                .isNull();
+                .hasSize(0);
             assertThat(session.advanced.numberOfRequests)
                 .isEqualTo(2);
 
