@@ -21,7 +21,7 @@ import CurrentIndexAndNode from "../../Http/CurrentIndexAndNode";
 import { HashCalculator } from "../Queries/HashCalculator";
 import { DocumentStoreBase } from "../DocumentStoreBase";
 import { RequestExecutor } from "../../Http/RequestExecutor";
-import { AbstractCommonApiForIndexes } from "../..";
+import { AbstractCommonApiForIndexes } from "../Indexes/AbstractCommonApiForIndexes";
 
 export class SessionInfo {
     private static _clientSessionIdCounter: number = 0;

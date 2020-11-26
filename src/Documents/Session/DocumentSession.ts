@@ -75,7 +75,7 @@ import { TimeSeriesOperations } from "../TimeSeries/TimeSeriesOperations";
 import { SessionDocumentTypedTimeSeries } from "./SessionDocumentTypedTimeSeries";
 import { SessionDocumentRollupTypedTimeSeries } from "./SessionDocumentRollupTypedTimeSeries";
 import { TIME_SERIES_ROLLUP_SEPARATOR } from "../Operations/TimeSeries/RawTimeSeriesTypes";
-import { AbstractCommonApiForIndexes, IAbstractIndexCreationTask } from "../..";
+import { AbstractCommonApiForIndexes } from "../Indexes/AbstractCommonApiForIndexes";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;
