@@ -7,10 +7,10 @@ import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { IDocumentStore } from "../IDocumentStore";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
-import * as StringBuilder from "string-builder";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { QueryOperationOptions } from "../Queries/QueryOperationOptions";
 import * as stream from "readable-stream";
+import { StringBuilder } from "../../Utility/StringBuilder";
 
 export class DeleteByQueryOperation implements IOperation<OperationIdResult> {
 
@@ -67,7 +67,7 @@ export class DeleteByIndexCommand extends RavenCommand<OperationIdResult> {
 
         if (!TypeUtil.isNullOrUndefined(this._options.maxOpsPerSecond)) {
             path.append("&maxOpsPerSec=")
-                .append(this._options.maxOpsPerSecond.toString());
+                .append(this._options.maxOpsPerSecond);
         }
 
         path
@@ -76,7 +76,7 @@ export class DeleteByIndexCommand extends RavenCommand<OperationIdResult> {
 
         if (this._options.staleTimeout) {
             path.append("&staleTimeout=")
-                .append(this._options.staleTimeout.toString());
+                .append(this._options.staleTimeout);
         }
 
         const body = writeIndexQuery(this._conventions, this._queryToDelete);

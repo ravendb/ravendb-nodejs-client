@@ -4,10 +4,10 @@ import { StringUtil } from "../../../Utility/StringUtil";
 import { Facet } from "../../Queries/Facets/Facet";
 import { FacetAggregation, FacetOptions } from "../../Queries/Facets";
 import { FacetBase } from "../../Queries/Facets/FacetBase";
-import * as StringBuilder from "string-builder";
 import { GenericRangeFacet } from "../../Queries/Facets/GenericRangeFacet";
 import { RangeFacet } from "../../Queries/Facets/RangeFacet";
 import { QueryFieldUtil } from "../../Queries/QueryFieldUtil";
+import { StringBuilder } from "../../../Utility/StringBuilder";
 
 export interface FacetTokenSetupDocumentIdOptions {
     facetSetupDocumentId: string;

@@ -17,8 +17,7 @@ import {
     lastChunk
 } from "../Mapping/Json/Streams/CollectResultStream";
 import { throwError, getError } from "../Exceptions";
-import * as StringBuilder from "string-builder";
-import { 
+import {
     TransformJsonKeysStreamOptions, 
     TransformKeysJsonStream } from "../Mapping/Json/Streams/TransformKeysJsonStream";
 import { 
@@ -28,6 +27,7 @@ import { TypeUtil } from "../Utility/TypeUtil";
 import * as Asm from "stream-json/Assembler";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
 import { ErrorFirstCallback } from "../Types/Callbacks";
+import { StringBuilder } from "../Utility/StringBuilder";
 
 export interface RavenCommandResponsePipelineOptions<TResult> {
     collectBody?: boolean | ((body: string) => void);

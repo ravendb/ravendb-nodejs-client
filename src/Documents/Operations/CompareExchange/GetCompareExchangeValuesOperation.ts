@@ -1,4 +1,3 @@
-import * as StringBuilder from "string-builder";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { IOperation, OperationResultType } from "../OperationAbstractions";
 import { CompareExchangeValue } from "./CompareExchangeValue";
@@ -11,6 +10,7 @@ import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
 import { CompareExchangeValueResultParser, GetCompareExchangeValuesResponse } from "./CompareExchangeValueResultParser";
 import * as stream from "readable-stream";
+import { StringBuilder } from "../../../Utility/StringBuilder";
 
 export interface GetCompareExchangeValuesParameters<T> {
     keys?: string[];
@@ -112,12 +112,12 @@ export class GetCompareExchangeValuesCommand<T> extends RavenCommand<{ [key: str
 
             if (this._operation.start) {
                 pathBuilder.append("&start=")
-                    .append(this._operation.start.toString());
+                    .append(this._operation.start);
             }
 
             if (this._operation.pageSize) {
                 pathBuilder.append("&pageSize=")
-                    .append(this._operation.pageSize.toString());
+                    .append(this._operation.pageSize);
             }
         }
 

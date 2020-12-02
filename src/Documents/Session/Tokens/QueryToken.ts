@@ -1,4 +1,4 @@
-import * as StringBuilder from "string-builder";
+import { StringBuilder } from "../../../Utility/StringBuilder";
 
 export abstract class QueryToken {
 

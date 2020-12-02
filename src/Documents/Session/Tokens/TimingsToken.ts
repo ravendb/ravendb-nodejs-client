@@ -1,5 +1,5 @@
-import * as StringBuilder from "string-builder";
 import { QueryToken } from "./QueryToken";
+import { StringBuilder } from "../../../Utility/StringBuilder";
 
 export class TimingsToken extends QueryToken {
      private constructor() {

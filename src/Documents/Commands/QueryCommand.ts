@@ -5,10 +5,10 @@ import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { IndexQuery, writeIndexQuery } from "../Queries/IndexQuery";
 import { throwError } from "../../Exceptions";
 import { ServerNode } from "../../Http/ServerNode";
-import * as StringBuilder from "string-builder";
 import { JsonSerializer } from "../../Mapping/Json/Serializer";
 import * as stream from "readable-stream";
 import { RavenCommandResponsePipeline } from "../../Http/RavenCommandResponsePipeline";
+import { StringBuilder } from "../../Utility/StringBuilder";
 
 export interface QueryCommandOptions {
     metadataOnly?: boolean;

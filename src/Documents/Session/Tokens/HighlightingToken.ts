@@ -1,5 +1,5 @@
 import { QueryToken } from "./QueryToken";
-import * as StringBuilder from "string-builder";
+import { StringBuilder } from "../../../Utility/StringBuilder";
 
 export class HighlightingToken extends QueryToken {
     private readonly _fieldName: string;
@@ -29,9 +29,9 @@ export class HighlightingToken extends QueryToken {
         this._writeField(writer, this._fieldName);
         writer
             .append(",")
-            .append(this._fragmentLength.toString())
+            .append(this._fragmentLength)
             .append(",")
-            .append(this._fragmentCount.toString());
+            .append(this._fragmentCount);
         if (this._optionsParameterName) {
             writer
                 .append(",$")
