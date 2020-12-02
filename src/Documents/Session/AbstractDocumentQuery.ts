@@ -40,7 +40,6 @@ import { QueryResult } from "../Queries/QueryResult";
 import { DocumentType } from "../DocumentAbstractions";
 import { QueryEventsEmitter } from "./QueryEvents";
 import { EventEmitter } from "events";
-import * as StringBuilder from "string-builder";
 import { StringUtil } from "../../Utility/StringUtil";
 import { IntersectMarkerToken } from "./Tokens/IntersectMarkerToken";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
@@ -86,6 +85,7 @@ import { CompareExchangeValueIncludesToken } from "./Tokens/CompareExchangeValue
 import { TimeSeriesRange } from "../Operations/TimeSeries/TimeSeriesRange";
 import { ITimeSeriesQueryBuilder } from "../Queries/TimeSeries/ITimeSeriesQueryBuilder";
 import { TimeSeriesQueryBuilder } from "../Queries/TimeSeries/TimeSeriesQueryBuilder";
+import { StringBuilder } from "../../Utility/StringBuilder";
 
 /**
  * A query against a Raven index

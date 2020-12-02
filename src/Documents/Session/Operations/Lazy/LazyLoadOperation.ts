@@ -1,4 +1,3 @@
-import * as StringBuilder from "string-builder";
 import { ILazyOperation } from "./ILazyOperation";
 import { ObjectTypeDescriptor } from "../../../../Types";
 import { InMemoryDocumentSessionOperations } from "../../InMemoryDocumentSessionOperations";
@@ -9,6 +8,7 @@ import { GetResponse } from "../../../Commands/MultiGet/GetResponse";
 import { GetDocumentsResult, GetDocumentsCommand } from "../../../Commands/GetDocumentsCommand";
 import { stringToReadable } from "../../../../Utility/StreamUtil";
 import { StringUtil } from "../../../../Utility/StringUtil";
+import { StringBuilder } from "../../../../Utility/StringBuilder";
 
 export class LazyLoadOperation<T extends object> implements ILazyOperation {
     private readonly _clazz: ObjectTypeDescriptor<T>;

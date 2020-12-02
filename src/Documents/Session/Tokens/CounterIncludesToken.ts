@@ -1,5 +1,5 @@
 import { QueryToken } from "./QueryToken";
-import * as StringBuilder from "string-builder";
+import { StringBuilder } from "../../../Utility/StringBuilder";
 
 export class CounterIncludesToken extends QueryToken {
      private _sourcePath: string;

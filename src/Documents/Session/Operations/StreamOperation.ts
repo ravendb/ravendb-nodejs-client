@@ -1,5 +1,4 @@
 import * as stream from "readable-stream";
-import * as StringBuilder from "string-builder";
 import { InMemoryDocumentSessionOperations } from "../InMemoryDocumentSessionOperations";
 import { QueryStreamCommand } from "../../Commands/QueryStreamCommand";
 import { IndexQuery } from "../../Queries/IndexQuery";
@@ -14,6 +13,7 @@ import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponse
 import { getDocumentResultsAsObjects } from "../../../Mapping/Json/Streams/Pipelines";
 import { TransformKeysJsonStream } from "../../../Mapping/Json/Streams/TransformKeysJsonStream";
 import { getTransformJsonKeysProfile } from "../../../Mapping/Json/Streams/TransformJsonKeysProfiles";
+import { StringBuilder } from "../../../Utility/StringBuilder";
 
 export class StreamOperation {
     private readonly _session: InMemoryDocumentSessionOperations;
@@ -73,11 +73,11 @@ export class StreamOperation {
             }
 
             if ("start" in opts) {
-                sb.append("start=").append(opts.start.toString()).append("&");
+                sb.append("start=").append(opts.start).append("&");
             }
 
             if ("pageSize" in opts && opts.pageSize !== Number.MAX_VALUE) {
-                sb.append("pageSize=").append(opts.pageSize.toString()).append("&");
+                sb.append("pageSize=").append(opts.pageSize).append("&");
             }
         }
 

@@ -6,7 +6,6 @@ import { Stopwatch } from "../../../Utility/Stopwatch";
 import { getLogger } from "../../../Utility/LogUtil";
 import { QueryCommand } from "../../Commands/QueryCommand";
 import { throwError } from "../../../Exceptions";
-import * as StringBuilder from "string-builder";
 import {
     DocumentType,
 } from "../../DocumentAbstractions";
@@ -21,6 +20,7 @@ import { TimeSeriesRangeAggregation } from "../../Queries/TimeSeries/TimeSeriesR
 import { ObjectUtil } from "../../../Utility/ObjectUtil";
 import { TimeSeriesEntry } from "../TimeSeries/TimeSeriesEntry";
 import { TypesAwareObjectMapper } from "../../../Mapping/ObjectMapper";
+import { StringBuilder } from "../../../Utility/StringBuilder";
 
 const log = getLogger({ module: "QueryOperation" });
 

@@ -3,7 +3,7 @@ import { TypeUtil } from "./TypeUtil";
 import { throwError } from "../Exceptions";
 import * as changeCase from "change-case";
 import { CasingConvention } from "./ObjectUtil";
-import StringBuilder = require("string-builder");
+import { StringBuilder } from "./StringBuilder";
 
 export class StringUtil {
     private static readonly letterRe: RegExp = XRegExp("^\\p{L}$") as RegExp;

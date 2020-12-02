@@ -7,11 +7,11 @@ import { RavenCommand } from "../../../Http/RavenCommand";
 import { throwError } from "../../../Exceptions";
 import { ServerNode } from "../../../Http/ServerNode";
 import { HttpRequestParameters } from "../../../Primitives/Http";
-import * as StringBuilder from "string-builder";
 import { DocumentCountersOperation } from "./DocumentCountersOperation";
 import { CounterOperation } from "./CounterOperation";
 import { CounterBatch } from "./CounterBatch";
 import * as stream from "readable-stream";
+import { StringBuilder } from "../../../Utility/StringBuilder";
 
 export class GetCountersOperation implements IOperation<CountersDetail> {
     private readonly _docId: string;
