@@ -6,7 +6,6 @@ import { Stopwatch } from "../../../Utility/Stopwatch";
 import { getLogger } from "../../../Utility/LogUtil";
 import { QueryCommand } from "../../Commands/QueryCommand";
 import { throwError } from "../../../Exceptions";
-import * as StringBuilder from "string-builder";
 import {
     DocumentType,
 } from "../../DocumentAbstractions";
@@ -15,6 +14,7 @@ import { TypeUtil } from "../../../Utility/TypeUtil";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { Reference } from "../../../Utility/Reference";
 import { NESTED_OBJECT_TYPES_PROJECTION_FIELD } from "../DocumentQuery";
+import { StringBuilder } from "../../../Utility/StringBuilder";
 
 const log = getLogger({ module: "QueryOperation" });
 
@@ -319,7 +319,7 @@ export class QueryOperation {
 
                 parameters.append(parameterKey)
                     .append(" = ")
-                    .append(parameterValue);
+                    .append(parameterValue as any);
 
                 first = false;
             }

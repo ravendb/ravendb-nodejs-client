@@ -50,6 +50,7 @@ import {
 import { TimeUtil } from "../Utility/TimeUtil";
 import { UpdateTopologyParameters } from "./UpdateTopologyParameters";
 import { v4 as uuidv4 } from "uuid";
+import { DatabaseHealthCheckOperation } from "../Documents/Operations/DatabaseHealthCheckOperation";
 
 const DEFAULT_REQUEST_OPTIONS = {};
 
@@ -153,7 +154,9 @@ export class RequestExecutor implements IDisposable {
     private _updateDatabaseTopologySemaphore = semaphore();
     private _updateClientConfigurationSemaphore = semaphore();
 
-    private static _failureCheckOperation = new GetStatisticsOperation("failure=check");
+    private static _backwardCompatibilityFailureCheckOperation = new GetStatisticsOperation("failure=check");
+    private static readonly _failureCheckOperation = new DatabaseHealthCheckOperation();
+    private _useOldFailureCheckOperation = new Set<string>();
 
     private _failedNodesTimers: Map<ServerNode, NodeStatus> = new Map();
     protected _databaseName: string;
@@ -1647,9 +1650,34 @@ export class RequestExecutor implements IDisposable {
             });
     }
 
-    protected _performHealthCheck(serverNode: ServerNode, nodeIndex: number): Promise<void> {
+    protected async _performHealthCheck(serverNode: ServerNode, nodeIndex: number): Promise<void> {
+        try {
+            if (!this._useOldFailureCheckOperation.has(serverNode.url)) {
+                await this._executeOnSpecificNode(
+                    RequestExecutor._failureCheckOperation.getCommand(this._conventions),
+                    null,
+                    {
+                        chosenNode: serverNode,
+                        nodeIndex,
+                        shouldRetry: false,
+                    });
+            } else {
+                await this._executeOldHealthCheck(serverNode, nodeIndex);
+            }
+        } catch (e) {
+            if (e.message.includes("RouteNotFoundException")) {
+                this._useOldFailureCheckOperation.add(serverNode.url);
+                await this._executeOldHealthCheck(serverNode, nodeIndex);
+                return ;
+            }
+
+            throw e;
+        }
+    }
+
+    private _executeOldHealthCheck(serverNode: ServerNode, nodeIndex: number) {
         return this._executeOnSpecificNode(
-            RequestExecutor._failureCheckOperation.getCommand(this._conventions),
+            RequestExecutor._backwardCompatibilityFailureCheckOperation.getCommand(this._conventions),
             null,
             {
                 chosenNode: serverNode,

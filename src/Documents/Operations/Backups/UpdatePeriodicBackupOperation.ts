@@ -21,18 +21,16 @@ export class UpdatePeriodicBackupOperation implements IMaintenanceOperation<Upda
     }
 
     public getCommand(conventions: DocumentConventions): RavenCommand<UpdatePeriodicBackupOperationResult> {
-        return new UpdatePeriodicBackupCommand(conventions, this._configuration);
+        return new UpdatePeriodicBackupCommand(this._configuration);
     }
 }
 
 class UpdatePeriodicBackupCommand extends RavenCommand<UpdatePeriodicBackupOperationResult> implements IRaftCommand {
-    private readonly _conventions: DocumentConventions;
     private readonly _configuration: PeriodicBackupConfiguration;
 
-    public constructor(conventions: DocumentConventions, configuration: PeriodicBackupConfiguration) {
+    public constructor(configuration: PeriodicBackupConfiguration) {
         super();
 
-        this._conventions = conventions;
         this._configuration = configuration;
     }
 

@@ -7,10 +7,10 @@ import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { IDocumentStore } from "../IDocumentStore";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
-import * as StringBuilder from "string-builder";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { QueryOperationOptions } from "../Queries/QueryOperationOptions";
 import * as stream from "readable-stream";
+import { StringBuilder } from "../../Utility/StringBuilder";
 
 export class DeleteByQueryOperation implements IOperation<OperationIdResult> {
 

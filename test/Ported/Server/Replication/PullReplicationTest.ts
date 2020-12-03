@@ -269,8 +269,11 @@ import { PullReplicationDefinition } from "../../../../src/Documents/Operations/
         }
     });
 
-    it("updatePullReplicationOnHub", async () => {
+    it("updatePullReplicationOnHub", async function() {
         let sink: IDocumentStore;
+
+        this.timeout(60_000);
+
         try {
             sink = await testContext.getDocumentStore();
             let hub: IDocumentStore;

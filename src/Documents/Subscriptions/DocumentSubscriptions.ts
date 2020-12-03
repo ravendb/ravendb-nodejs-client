@@ -18,7 +18,7 @@ import { ToggleOngoingTaskStateOperation } from "../Operations/OngoingTasks/Togg
 import { SubscriptionIncludeBuilder } from "../Session/Loaders/SubscriptionIncludeBuilder";
 import * as os from "os";
 import { IncludesUtil } from "../Session/IncludesUtil";
-import StringBuilder = require("string-builder");
+import { StringBuilder } from "../../Utility/StringBuilder";
 
 export class DocumentSubscriptions implements IDisposable {
     private readonly _store: DocumentStore;

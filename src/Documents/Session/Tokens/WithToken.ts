@@ -1,5 +1,5 @@
 import { QueryToken } from "./QueryToken";
-import * as StringBuilder from "string-builder";
+import { StringBuilder } from "../../../Utility/StringBuilder";
 
 export class WithToken extends QueryToken {
     private readonly _alias: string;

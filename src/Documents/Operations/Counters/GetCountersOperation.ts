@@ -7,11 +7,11 @@ import { RavenCommand } from "../../../Http/RavenCommand";
 import { throwError } from "../../../Exceptions";
 import { ServerNode } from "../../../Http/ServerNode";
 import { HttpRequestParameters } from "../../../Primitives/Http";
-import * as StringBuilder from "string-builder";
 import { DocumentCountersOperation } from "./DocumentCountersOperation";
 import { CounterOperation } from "./CounterOperation";
 import { CounterBatch } from "./CounterBatch";
 import * as stream from "readable-stream";
+import { StringBuilder } from "../../../Utility/StringBuilder";
 
 export class GetCountersOperation implements IOperation<CountersDetail> {
     private readonly _docId: string;
@@ -76,7 +76,7 @@ export class GetCounterValuesCommand extends RavenCommand<CountersDetail> {
         let req = { uri: null, method: "GET" } as HttpRequestParameters;
         if (this._counters.length > 0) {
 
-            if (this._counters.length > 1) {
+            if (this._counters && this._counters.length > 1) {
                 req = this._prepareRequestWithMultipleCounters(pathBuilder, req);
             } else {
                 pathBuilder.append("&counter=")
@@ -95,8 +95,11 @@ export class GetCounterValuesCommand extends RavenCommand<CountersDetail> {
 
     private _prepareRequestWithMultipleCounters(
         pathBuilder: StringBuilder, request: HttpRequestParameters): HttpRequestParameters {
-        const uniqueNames = new Set(this._counters);
-        if (this._counters.reduce((result, next) => result + (next ? next.length : 0), 0) < 1024) {
+        const [uniqueNames, sumLength] = this._getOrderedUniqueNames();
+
+        // if it is too big, we drop to POST (note that means that we can't use the HTTP cache any longer)
+        // we are fine with that, such requests are going to be rare
+        if (sumLength < 1024) {
             for (const uniqueName of uniqueNames) {
                 pathBuilder
                     .append("&counter=")
@@ -107,7 +110,7 @@ export class GetCounterValuesCommand extends RavenCommand<CountersDetail> {
             const docOps = new DocumentCountersOperation();
             docOps.documentId = this._docId;
             docOps.operations = [];
-            for (const counter of this._counters) {
+            for (const counter of uniqueNames) {
                 const counterOperation = new CounterOperation();
                 counterOperation.type = "Get";
                 counterOperation.counterName = counter;
@@ -122,6 +125,24 @@ export class GetCounterValuesCommand extends RavenCommand<CountersDetail> {
         }
 
         return request;
+    }
+
+    private _getOrderedUniqueNames(): [string[], number] {
+        const uniqueNames = new Set<string>();
+        const orderedUniqueNames = [];
+
+        let sum = 0;
+
+        for (const counter of this._counters) {
+            const containsCounter = uniqueNames.has(counter);
+            if (!containsCounter) {
+                uniqueNames.add(counter);
+                orderedUniqueNames.push(counter);
+                sum += counter?.length || 0;
+            }
+        }
+
+        return [orderedUniqueNames, sum];
     }
 
     public get isReadRequest() {

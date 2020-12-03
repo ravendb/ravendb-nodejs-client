@@ -31,6 +31,7 @@ export class BulkInsertOperation {
 
     private _first: boolean = true;
     private _operationId = -1;
+    private _nodeTag: string;
 
     private _useCompression: boolean = false;
 
@@ -45,6 +46,9 @@ export class BulkInsertOperation {
 
     public constructor(database: string, store: IDocumentStore) {
         this._conventions = store.conventions;
+        if (StringUtil.isNullOrEmpty(database)) {
+            this._throwNoDatabase();
+        }
         this._requestExecutor = store.getRequestExecutor(database);
 
         this._generateEntityIdOnTheClient = new GenerateEntityIdOnTheClient(this._requestExecutor.conventions,
@@ -65,8 +69,23 @@ export class BulkInsertOperation {
     }
 
     private async _throwBulkInsertAborted(e: Error) {
-        const error = await this._getExceptionFromOperation();
-        throwError("BulkInsertAbortedException", "Failed to execute bulk insert", error || e);
+        let errorFromServer: Error;
+        try {
+            errorFromServer = await this._getExceptionFromOperation();
+        } catch (ee) {
+            // server is probably down, will propagate the original exception
+        }
+
+        if (errorFromServer) {
+            throw errorFromServer;
+        }
+
+        throwError("BulkInsertAbortedException", "Failed to execute bulk insert", e);
+    }
+
+    private _throwNoDatabase(): void {
+        throwError("InvalidOperationException", "Cannot start bulk insert operation without specifying a name of a database to operate on."
+            + "Database name can be passed as an argument when bulk insert is being created or default database can be defined using 'DocumentStore.setDatabase' method.");
     }
 
     private async _waitForId(): Promise<void> {
@@ -77,6 +96,7 @@ export class BulkInsertOperation {
         const bulkInsertGetIdRequest = new GetNextOperationIdCommand();
         await this._requestExecutor.execute(bulkInsertGetIdRequest);
         this._operationId = bulkInsertGetIdRequest.result;
+        this._nodeTag = bulkInsertGetIdRequest.nodeTag;
     }
 
     private static _typeCheckStoreArgs(
@@ -242,7 +262,7 @@ export class BulkInsertOperation {
     }
 
     private async _getExceptionFromOperation(): Promise<Error> {
-        const stateRequest = new GetOperationStateCommand(this._conventions, this._operationId);
+        const stateRequest = new GetOperationStateCommand(this._conventions, this._operationId, this._nodeTag);
         await this._requestExecutor.execute(stateRequest);
         if (!stateRequest.result) {
             return null;
@@ -263,7 +283,8 @@ export class BulkInsertOperation {
 
             this._requestBodyStream = new stream.PassThrough();
             const bulkCommand =
-                new BulkInsertCommand(this._operationId, this._requestBodyStream, this._useCompression);
+                new BulkInsertCommand(this._operationId, this._requestBodyStream, this._nodeTag);
+            bulkCommand.useCompression = this._useCompression;
 
             const bulkCommandPromise = this._requestExecutor.execute(bulkCommand);
 
@@ -298,7 +319,7 @@ export class BulkInsertOperation {
             await this._waitForId();
 
             try {
-                await this._requestExecutor.execute(new KillOperationCommand(this._operationId));
+                await this._requestExecutor.execute(new KillOperationCommand(this._operationId, this._nodeTag));
             } catch (err) {
                 const bulkInsertError = getError("BulkInsertAbortedException",
                     "Unable to kill bulk insert operation, because it was not found on the server.", err);
@@ -365,14 +386,14 @@ export class BulkInsertCommand extends RavenCommand<void> {
 
     private readonly _stream: stream.Readable;
     private readonly _id: number;
-    private _useCompression: boolean;
+    public useCompression: boolean;
 
-    public constructor(id: number, stream: stream.Readable, useCompression: boolean) {
+    public constructor(id: number, stream: stream.Readable, nodeTag: string) {
         super();
 
         this._stream = stream;
         this._id = id;
-        this._useCompression = useCompression;
+        this._selectedNodeTag = nodeTag;
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {

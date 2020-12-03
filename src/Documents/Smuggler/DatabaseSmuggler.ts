@@ -75,16 +75,16 @@ export class DatabaseSmuggler {
             throwError("InvalidOperationException", "Cannot use smuggler without a database defined, did you forget to call 'forDatabase'?");
         }
 
-        const getNextOperationIdCommand = new GetNextOperationIdCommand();
-        await this._requestExecutor.execute(getNextOperationIdCommand);
+        const getOperationIdCommand = new GetNextOperationIdCommand();
+        await this._requestExecutor.execute(getOperationIdCommand);
 
-        const operationId = getNextOperationIdCommand.result;
+        const operationId = getOperationIdCommand.result;
 
-        const command = new ExportCommand(this._requestExecutor.conventions, options, handleStreamResponse, operationId);
+        const command = new ExportCommand(this._requestExecutor.conventions, options, handleStreamResponse, operationId, getOperationIdCommand.nodeTag);
 
         await this._requestExecutor.execute(command);
 
-        return new OperationCompletionAwaiter(this._requestExecutor, this._requestExecutor.conventions, operationId, null);
+        return new OperationCompletionAwaiter(this._requestExecutor, this._requestExecutor.conventions, operationId, getOperationIdCommand.nodeTag);
     }
 
     public async importIncremental(options: DatabaseSmugglerImportOptions, fromDirectory: string) {
@@ -159,16 +159,16 @@ export class DatabaseSmuggler {
             throwError("InvalidOperationException", "Cannot use smuggler without a database defined, did you forget to call 'forDatabase'?");
         }
 
-        const getNextOperationIdCommand = new GetNextOperationIdCommand();
-        await this._requestExecutor.execute(getNextOperationIdCommand);
+        const getOperationIdCommand = new GetNextOperationIdCommand();
+        await this._requestExecutor.execute(getOperationIdCommand);
 
-        const operationId = getNextOperationIdCommand.result;
+        const operationId = getOperationIdCommand.result;
 
-        const command = new ImportCommand(this._requestExecutor.conventions, options, stream, operationId);
+        const command = new ImportCommand(this._requestExecutor.conventions, options, stream, operationId, getOperationIdCommand.nodeTag);
 
         await this._requestExecutor.execute(command);
 
-        return new OperationCompletionAwaiter(this._requestExecutor, this._requestExecutor.conventions, operationId);
+        return new OperationCompletionAwaiter(this._requestExecutor, this._requestExecutor.conventions, operationId, getOperationIdCommand.nodeTag);
     }
 }
 
@@ -178,7 +178,7 @@ class ExportCommand extends RavenCommand<void> {
     private readonly _operationId: number;
 
     public constructor(conventions: DocumentConventions, options: DatabaseSmugglerExportOptions,
-                       handleStreamResponse: (stream: NodeJS.ReadableStream) => Promise<void>, operationId: number) {
+                       handleStreamResponse: (stream: NodeJS.ReadableStream) => Promise<void>, operationId: number, nodeTag: string) {
         super();
         if (!conventions) {
             throwError("InvalidArgumentException", "Conventions cannot be null");
@@ -199,6 +199,7 @@ class ExportCommand extends RavenCommand<void> {
             ...restOptions
         });
         this._operationId = operationId;
+        this._selectedNodeTag = nodeTag;
     }
 
     get isReadRequest(): boolean {
@@ -237,7 +238,11 @@ class ImportCommand extends RavenCommand<void> {
         return false;
     }
 
-    public constructor(conventions: DocumentConventions, options: DatabaseSmugglerImportOptions, stream: NodeJS.ReadableStream, operationId: number) {
+    public constructor(conventions: DocumentConventions,
+                       options: DatabaseSmugglerImportOptions,
+                       stream: NodeJS.ReadableStream,
+                       operationId: number,
+                       nodeTag: string) {
         super();
 
         this._responseType = "Empty";
@@ -262,6 +267,7 @@ class ImportCommand extends RavenCommand<void> {
             ...restOptions
         });
         this._operationId = operationId;
+        this._selectedNodeTag = nodeTag;
     }
 
     createRequest(node: ServerNode): HttpRequestParameters {

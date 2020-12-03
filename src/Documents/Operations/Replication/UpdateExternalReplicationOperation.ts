@@ -8,12 +8,16 @@ import { ServerNode } from "../../../Http/ServerNode";
 import * as stream from "readable-stream";
 import { IRaftCommand } from "../../../Http/IRaftCommand";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
+import { throwError } from "../../../Exceptions";
 
 export class UpdateExternalReplicationOperation implements IMaintenanceOperation<ModifyOngoingTaskResult> {
 
     private readonly _newWatcher: ExternalReplication;
 
     public constructor(newWatcher: ExternalReplication) {
+        if (!newWatcher) {
+            throwError("InvalidArgumentException", "NewWatcher cannot be null");
+        }
         this._newWatcher = newWatcher;
     }
 

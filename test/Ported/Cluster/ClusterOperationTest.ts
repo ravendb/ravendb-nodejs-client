@@ -65,7 +65,9 @@ describe("ClusterOperationTest", function () {
         }
     });
 
-    it.skip("nextIdentityForOperationShouldBroadcastAndFail", async () => {
+    it.skip("nextIdentityForOperationShouldBroadcastAndFail", async function() {
+        this.timeout(60_000);
+
         const cluster = await testContext.createRaftCluster(3);
         try {
             const database = testContext.getDatabaseName();
@@ -115,7 +117,7 @@ describe("ClusterOperationTest", function () {
         } finally {
             cluster.dispose();
         }
-    }).timeout(60_000);
+    });
 
     it.skip("changesApiFailOver", async () => {
         const db = "Test";

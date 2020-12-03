@@ -40,7 +40,6 @@ import { QueryResult } from "../Queries/QueryResult";
 import { DocumentType } from "../DocumentAbstractions";
 import { QueryEventsEmitter } from "./QueryEvents";
 import { EventEmitter } from "events";
-import * as StringBuilder from "string-builder";
 import { StringUtil } from "../../Utility/StringUtil";
 import { IntersectMarkerToken } from "./Tokens/IntersectMarkerToken";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
@@ -82,6 +81,7 @@ import { passResultToCallback } from "../../Utility/PromiseUtil";
 import * as os from "os";
 import { GraphQueryToken } from "./Tokens/GraphQueryToken";
 import { IncludesUtil } from "./IncludesUtil";
+import { StringBuilder } from "../../Utility/StringBuilder";
 
 /**
  * A query against a Raven index
