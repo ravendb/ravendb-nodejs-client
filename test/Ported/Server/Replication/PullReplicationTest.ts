@@ -272,8 +272,11 @@ import { delay } from "../../../../src/Utility/PromiseUtil";
         }
     });
 
-    it("updatePullReplicationOnHub", async () => {
+    it("updatePullReplicationOnHub", async function() {
         let sink: IDocumentStore;
+
+        this.timeout(60_000);
+
         try {
             sink = await testContext.getDocumentStore();
             let hub: IDocumentStore;
@@ -331,7 +334,7 @@ import { delay } from "../../../../src/Utility/PromiseUtil";
         } finally {
             sink.dispose();
         }
-    }).timeout(60_000);
+    });
 
     it("disablePullReplicationOnSink", async () => {
         let sink: IDocumentStore;
