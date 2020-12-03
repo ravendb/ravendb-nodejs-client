@@ -18,7 +18,7 @@ const _describe = RavenTestContext.isPullRequest ? describe.skip : describe;
 _describe(
     `${RavenTestContext.isPullRequest ? "[Skipped on PR] " : ""}` +
     "DocumentReplicationTest", function () {
-        this.timeout(20000);
+        this.timeout(20_000);
 
         let store: IDocumentStore;
         let replication: ReplicationTestContext;
