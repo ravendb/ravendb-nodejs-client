@@ -224,7 +224,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             CloseWhenNoDocsLeft: options.closeWhenNoDocsLeft || false,
         };
 
-        return new Promise<number>(resolve => {
+        return new Promise<void>(resolve => {
             socket.write(JSON.stringify(payload, null, 0), () => resolve());
         });
     }
@@ -273,7 +273,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         return x.version;
     }
 
-    private _sendDropMessage(reply: TcpConnectionHeaderResponse): Promise<number> {
+    private _sendDropMessage(reply: TcpConnectionHeaderResponse): Promise<void> {
         const dropMsg = {
             operation: "Drop",
             databaseName: this._dbName,
@@ -286,7 +286,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             defaultTransform: "pascal"
         });
 
-        return new Promise<number>(resolve => {
+        return new Promise<void>(resolve => {
             this._tcpClient.write(JSON.stringify(payload, null, 0), () => resolve());
         });
     }
@@ -543,7 +543,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             }
         }
         
-        return new Promise((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
             stream.once("readable", readableListener); 
             stream.once("error", errorHandler);
             stream.once("end", endHandler);

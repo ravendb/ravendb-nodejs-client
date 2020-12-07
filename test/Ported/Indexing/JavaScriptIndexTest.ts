@@ -822,7 +822,7 @@ class UsersWithProductsByNameWithExternalLoad extends AbstractJavaScriptIndexCre
             }
         });
 
-        this.addSource("getProductName", getProductName);
+        this.addSource(getProductName);
     }
 }
 

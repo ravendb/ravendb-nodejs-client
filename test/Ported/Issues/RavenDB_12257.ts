@@ -47,7 +47,7 @@ describe("RavenDB_12257", function () {
             documentType: Product
         });
 
-        await new Promise(resolve => {
+        await new Promise<void>(resolve => {
             sub.on("batch", async (batch, cb) => {
                 assertThat(batch.items)
                     .isNotEmpty();

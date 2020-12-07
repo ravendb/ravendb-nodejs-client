@@ -388,7 +388,7 @@ describe("Readme query samples", function () {
                 assert.ok(result.length);
             });
 
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                 stream.finished(userStream, err => {
                     err ? reject(err) : resolve();
                 });
@@ -413,7 +413,7 @@ describe("Readme query samples", function () {
                 // ...
             });
 
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                 queryStream.on("end", () => {
                     try {
                         assert.ok(items.length);

@@ -6,13 +6,13 @@ import { throwError } from "../../../Exceptions";
 import { IDocumentStore } from "../../IDocumentStore";
 import { HttpCache } from "../../../Http/HttpCache";
 import { HttpRequestParameters } from "../../../Primitives/Http";
-import * as StringBuilder from "string-builder";
 import { DateUtil } from "../../../Utility/DateUtil";
 import * as stream from "readable-stream";
 import { TimeSeriesEntry } from "../../Session/TimeSeries/TimeSeriesEntry";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
+import { StringBuilder } from "../../../Utility/StringBuilder";
 
 export class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult> {
     private readonly _docId: string;

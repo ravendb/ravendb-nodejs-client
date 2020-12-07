@@ -172,7 +172,7 @@ describe("HiLo", function () {
         }
 
         async function waitForStoreDisposeFinish(store) {
-            return new Promise((resolve) =>
+            return new Promise<void>((resolve) =>
                 store.once("afterDispose", (handledCallback) => {
                     handledCallback(); 
                     resolve();

@@ -71,7 +71,7 @@ describe("RevisionsSubscriptionsTest", function () {
         });
 
         try {
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                 const names = new Set<string>();
 
                 sub.on("error", reject);
@@ -147,7 +147,7 @@ describe("RevisionsSubscriptionsTest", function () {
         });
 
         try {
-            await new Promise(resolve => {
+            await new Promise<void>(resolve => {
                 const names = new Set<string>();
 
                 let maxAge = -1;
@@ -216,7 +216,7 @@ describe("RevisionsSubscriptionsTest", function () {
             });
 
             let items;
-            await new Promise(resolve => {
+            await new Promise<void>(resolve => {
                 sub.on("batch", (batch, callback) => {
                     items = batch.items;
                     callback();

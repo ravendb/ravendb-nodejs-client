@@ -1,7 +1,7 @@
 import { GetIndexErrorsOperation, IDocumentStore } from "../../src";
-import * as StringBuilder from "string-builder";
 import * as os from "os";
 import { throwError } from "../../src/Exceptions";
+import { StringBuilder } from "../../src/Utility/StringBuilder";
 
 export class RavenTestHelper {
     public static async assertNoIndexErrors(store: IDocumentStore, databaseName?: string) {

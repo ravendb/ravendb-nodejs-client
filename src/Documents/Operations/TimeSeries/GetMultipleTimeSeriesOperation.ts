@@ -7,7 +7,6 @@ import { StringUtil } from "../../../Utility/StringUtil";
 import { IDocumentStore } from "../../IDocumentStore";
 import { HttpCache } from "../../../Http/HttpCache";
 import { HttpRequestParameters } from "../../../Primitives/Http";
-import * as StringBuilder from "string-builder";
 import { DateUtil } from "../../../Utility/DateUtil";
 import * as stream from "readable-stream";
 import { CaseInsensitiveKeysMap } from "../../../Primitives/CaseInsensitiveKeysMap";
@@ -15,6 +14,7 @@ import { reviveTimeSeriesRangeResult } from "./GetTimeSeriesOperation";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
+import { StringBuilder } from "../../../Utility/StringBuilder";
 
 export class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDetails> {
     private readonly _docId: string;

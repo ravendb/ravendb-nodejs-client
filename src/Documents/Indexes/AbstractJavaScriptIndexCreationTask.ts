@@ -9,9 +9,9 @@ import { DocumentType } from "../DocumentAbstractions";
 import { AbstractGenericIndexCreationTask } from "./AbstractGenericIndexCreationTask";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { throwError } from "../../Exceptions";
-import StringBuilder = require("string-builder");
 import { StringUtil } from "../../Utility/StringUtil";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { StringBuilder } from "../../Utility/StringBuilder";
 
 export class AbstractJavaScriptIndexCreationTask<TDocument extends object, TMapResult extends object = any>
     extends AbstractGenericIndexCreationTask<keyof TMapResult & string> {
@@ -54,8 +54,14 @@ export class AbstractJavaScriptIndexCreationTask<TDocument extends object, TMapR
         this._reduce = mapReduce(new IndexingGroupResults<TMapResult>()).format();
     }
 
-    protected addSource(name: string, source: Function): void {
+    protected addSource(source: Function): void;
+    protected addSource(name: string, source: Function): void;
+    protected addSource(nameOrFunction: string | Function, source?: Function): void {
         this.additionalSources ??= {};
+
+        if (!TypeUtil.isString(nameOrFunction)) {
+            return this.addSource(nameOrFunction.name, nameOrFunction);
+        }
 
         const sourceAsString = source.toString();
 
@@ -63,7 +69,7 @@ export class AbstractJavaScriptIndexCreationTask<TDocument extends object, TMapR
             throwError("InvalidOperationException", "Additional sources require named function. Arrow functions are not supported.");
         }
 
-        this.additionalSources[name] = source.toString();
+        this.additionalSources[nameOrFunction] = source.toString();
     }
 
     /**

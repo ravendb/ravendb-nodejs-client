@@ -115,7 +115,7 @@ describe("SubscriptionsBasicTest", function () {
                     assert.fail("We shouldn't get any data as subscription is occupied");
                 });
 
-                await new Promise(resolve => {
+                await new Promise<void>(resolve => {
                     secondSubscription.on("error", ex => {
                         assert.strictEqual(ex.name, "SubscriptionInUseException");
                         resolve();
@@ -276,7 +276,7 @@ describe("SubscriptionsBasicTest", function () {
         try {
             let totalItems = 0;
 
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                 subscriptionWorker.on("batch", (batch, callback) => {
                     totalItems += batch.getNumberOfItemsInBatch();
 
@@ -320,7 +320,7 @@ describe("SubscriptionsBasicTest", function () {
         try {
             let integer = 0;
 
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                 subscription.on("error", reject);
                 subscription.on("connectionRetry", reject);
                 subscription.on("batch", (batch, callback) => {
@@ -471,7 +471,7 @@ describe("SubscriptionsBasicTest", function () {
 
             throwingSubscriptionWorker = store.subscriptions.getSubscriptionWorker(options2);
 
-            await new Promise(resolve => {
+            await new Promise<void>(resolve => {
                 throwingSubscriptionWorker.on("error", error => {
                     assert.strictEqual(error.name, "SubscriptionInUseException");
                     resolve();
@@ -565,7 +565,7 @@ describe("SubscriptionsBasicTest", function () {
             callback();
         });
 
-        await new Promise(resolve => {
+        await new Promise<void>(resolve => {
             subscription.on("error", error => {
                 assert.strictEqual(error.name, "SubscriberErrorException");
                 resolve();
@@ -641,7 +641,7 @@ describe("SubscriptionsBasicTest", function () {
         assert.ok(await docs.poll(_reasonableWaitTime));
         assert.ok(await docs.poll(_reasonableWaitTime));
 
-        await new Promise(async resolve => {
+        await new Promise<void>(async resolve => {
             subscription.on("error", error => {
                 assert.strictEqual(error.name, "SubscriptionClosedException");
                 resolve();
@@ -825,7 +825,7 @@ describe("SubscriptionsBasicTest", function () {
             });
 
             let batch;
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                 subscription.on("error", reject);
                 subscription.on("connectionRetry", reject);
                 subscription.on("batch", (_batch, callback) => {

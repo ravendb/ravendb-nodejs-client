@@ -1,8 +1,8 @@
 import { TimeValueUnit } from "./TimeValueUnit";
-import * as StringBuilder from "string-builder";
 import { throwError } from "../Exceptions";
 import { TypeUtil } from "../Utility/TypeUtil";
 import { TimeValueRaw } from "../Documents/Operations/TimeSeries/RawTimeSeriesTypes";
+import { StringBuilder } from "../Utility/StringBuilder";
 
 export class TimeValue {
 

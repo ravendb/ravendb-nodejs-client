@@ -1,6 +1,6 @@
 import { QueryToken } from "./QueryToken";
 import { throwError } from "../../../Exceptions";
-import * as StringBuilder from "string-builder";
+import { StringBuilder } from "../../../Utility/StringBuilder";
 
 export class CompareExchangeValueIncludesToken extends QueryToken {
     private readonly _path: string;

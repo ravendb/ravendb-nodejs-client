@@ -10,8 +10,8 @@ import { AbstractGenericIndexCreationTask } from "./AbstractGenericIndexCreation
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { throwError } from "../../Exceptions";
 import { StringUtil } from "../../Utility/StringUtil";
-import StringBuilder = require("string-builder");
 import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { StringBuilder } from "../../Utility/StringBuilder";
 
 export class AbstractJavaScriptMultiMapIndexCreationTask<TMapResult extends object = any>
     extends AbstractGenericIndexCreationTask<keyof TMapResult & string> {

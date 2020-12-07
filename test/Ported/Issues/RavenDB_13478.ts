@@ -65,7 +65,7 @@ describe("RavenDB_13478", function () {
 async function assertSubscription(store: IDocumentStore, name: string, expectedNumberOfRequests: number) {
     const sub = store.subscriptions.getSubscriptionWorker<Product>(name);
     try {
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
             sub.on("error", reject)
             sub.on("batch", async (batch, callback) => {
                 assertThat(batch.items.length)

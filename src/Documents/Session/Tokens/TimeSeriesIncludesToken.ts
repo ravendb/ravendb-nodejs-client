@@ -1,8 +1,8 @@
 import { QueryToken } from "./QueryToken";
 import { TimeSeriesRange } from "../../Operations/TimeSeries/TimeSeriesRange";
 import { StringUtil } from "../../../Utility/StringUtil";
-import * as StringBuilder from "string-builder";
 import { DateUtil } from "../../../Utility/DateUtil";
+import { StringBuilder } from "../../../Utility/StringBuilder";
 
 export class TimeSeriesIncludesToken extends QueryToken {
     private _sourcePath: string;
