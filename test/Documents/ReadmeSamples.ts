@@ -448,7 +448,7 @@ describe("Readme query samples", function () {
 
             {
                 const session = store.openSession();
-                const suggestionQueryResult = await session.query({ index: UsersIndex })
+                const suggestionQueryResult = await session.query(User, UsersIndex)
                     .suggestUsing(x => x.byField("name", "Jon"))
                     .execute();
                 assert.strictEqual(suggestionQueryResult.name.suggestions.length, 1);
@@ -542,6 +542,25 @@ describe("Readme query samples", function () {
             assert.strictEqual(revisions.length, 2);
         });
 
+    });
+
+    describe("can use time series", function () {
+        it("basic", async () => {
+            {
+                const session = store.openSession();
+                await session.store({ name: "John" }, "users/1");
+                const tsf = session.timeSeriesFor("users/1", "heartbeat");
+                tsf.append(new Date(), 120);
+                await session.saveChanges();
+            }
+
+            {
+                const session = store.openSession();
+                const tsf = session.timeSeriesFor("users/1", "heartbeat");
+                const heartbeats = await tsf.get();
+                assert.strictEqual(heartbeats.length, 1);
+            }
+        })
     });
 
     async function prepareUserDataSet(store: IDocumentStore) {
