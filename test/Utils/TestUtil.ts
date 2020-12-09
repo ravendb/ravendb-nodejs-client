@@ -461,7 +461,8 @@ export class ClusterTestContext extends RavenTestDriver implements IDisposable {
             cluster.nodes.push(clusterNode);
         }
 
-        await cluster.executeJsScript(leaderNodeTag, "server.ServerStore.EnsureNotPassive(null, \"" + leaderNodeTag + "\");");
+        await cluster.executeJsScript(leaderNodeTag, "server.ServerStore.EnsureNotPassiveAsync " +
+            "? server.ServerStore.EnsureNotPassiveAsync(null, \"" + leaderNodeTag + "\").Wait() : server.ServerStore.EnsureNotPassive(null, \"" + leaderNodeTag + "\");");
 
         if (numberOfNodes > 1) {
             // add nodes to cluster
