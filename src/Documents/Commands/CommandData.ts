@@ -2,7 +2,6 @@ import { throwError } from "../../Exceptions";
 import { BatchOptions } from "./Batches/BatchOptions";
 import { InMemoryDocumentSessionOperations } from "../Session/InMemoryDocumentSessionOperations";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { ClusterTransactionOperationsBase } from "../Session/ClusterTransactionOperationsBase";
 import { DocumentInfo } from "../Session/DocumentInfo";
 import { ForceRevisionStrategy } from "../Session/ForceRevisionStrategy";
 

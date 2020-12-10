@@ -1,4 +1,4 @@
-import { DocumentConventions, IDocumentStore, ObjectTypeDescriptor } from "../../src";
+import { DocumentConventions, ObjectTypeDescriptor } from "../../src";
 import { disposeTestDocumentStore, testContext } from "../Utils/TestUtil";
 import { assertThat } from "../Utils/AssertExtensions";
 

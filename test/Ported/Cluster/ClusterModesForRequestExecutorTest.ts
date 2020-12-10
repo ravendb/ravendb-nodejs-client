@@ -10,7 +10,6 @@ import { User } from "../../Assets/Entities";
 import { assertThat } from "../../Utils/AssertExtensions";
 import { RequestExecutor } from "../../../src/Http/RequestExecutor";
 import { GetStatisticsOperation } from "../../../src/Documents/Operations/GetStatisticsOperation";
-import { SessionInfo } from "../../../src/Documents/Session/IDocumentSession";
 import { UpdateTopologyParameters } from "../../../src/Http/UpdateTopologyParameters";
 
 describe("ClusterModesForRequestExecutorTest", function () {

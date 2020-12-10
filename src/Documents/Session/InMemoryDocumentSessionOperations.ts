@@ -1,4 +1,3 @@
-import * as BluebirdPromise from "bluebird";
 import { EntityToJson } from "./EntityToJson";
 import { IDisposable } from "../../Types/Contracts";
 import { SessionInfo, ConcurrencyCheckMode, StoreOptions } from "./IDocumentSession";

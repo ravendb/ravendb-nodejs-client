@@ -1,6 +1,5 @@
 import { Lazy } from "../Lazy";
 import { QueryOperation } from "./Operations/QueryOperation";
-import * as BluebirdPromise from "bluebird";
 import { GroupByCountToken } from "./Tokens/GroupByCountToken";
 import { GroupByToken } from "./Tokens/GroupByToken";
 import { HighlightingToken } from "./Tokens/HighlightingToken";

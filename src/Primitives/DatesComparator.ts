@@ -1,4 +1,3 @@
-import { TypeUtil } from "../Utility/TypeUtil";
 import { throwError } from "../Exceptions";
 
 export type DateContext = "From" | "To";

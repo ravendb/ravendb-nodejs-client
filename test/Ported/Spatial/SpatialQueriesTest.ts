@@ -7,7 +7,6 @@ import {
     IndexDefinition,
     PutIndexesOperation,
 } from "../../../src";
-import List = Mocha.reporters.List;
 import { SpatialField } from "../../../src/Documents/Indexes/StronglyTyped";
 
 describe("SpatialQueriesTest", function () {

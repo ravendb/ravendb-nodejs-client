@@ -6,7 +6,6 @@ import { ObjectUtil } from "../../../Utility/ObjectUtil";
 import { CONSTANTS } from "../../../Constants";
 import { MetadataAsDictionary, MetadataDictionary } from "../../../Mapping/MetadataAsDictionary";
 import { CompareExchangeResultClass, EntityConstructor } from "../../../Types";
-import { DocumentType } from "../../DocumentAbstractions";
 
 export interface CompareExchangeResultItem {
     index: number;

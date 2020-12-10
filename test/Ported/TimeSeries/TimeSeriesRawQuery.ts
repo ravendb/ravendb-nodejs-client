@@ -49,15 +49,15 @@ describe("TimeSeriesRawQuery", function () {
         {
             const session = store.openSession();
             const query = session.advanced.rawQuery(
-                "declare timeseries out(p)\n" +
-                "{\n" +
-                "    from p.HeartRate between $start and $end\n" +
-                "    group by 1h\n" +
-                "    select min(), max()\n" +
-                "}\n" +
-                "from index 'People' as p\n" +
-                "where p.age > 49\n" +
-                "select out(p) as heartRate, p.name", RawQueryResult)
+                `declare timeseries out(p)
+{
+    from p.HeartRate between $start and $end
+    group by 1h
+    select min(), max()
+}
+from index 'People' as p
+where p.age > 49
+select out(p) as heartRate, p.name`, RawQueryResult)
                 .addParameter("start", baseLine.toDate())
                 .addParameter("end", baseLine.clone().add(1, "day").toDate());
 

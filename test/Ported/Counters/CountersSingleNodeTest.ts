@@ -12,7 +12,6 @@ import {
 } from "../../../src";
 import { CONSTANTS } from "../../../src/Constants";
 import { assertThat } from "../../Utils/AssertExtensions";
-import { StringUtil } from "../../../src/Utility/StringUtil";
 
 describe("CountersSingleNodeTest", function () {
 

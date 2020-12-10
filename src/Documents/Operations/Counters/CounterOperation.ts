@@ -1,5 +1,4 @@
 import { CounterOperationType } from "./CounterOperationType";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 export class CounterOperation {
     

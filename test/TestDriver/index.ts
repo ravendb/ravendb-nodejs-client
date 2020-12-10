@@ -5,7 +5,6 @@ import * as os from "os";
 import { CONSTANTS } from "../../src/Constants";
 import { DocumentStore } from "../../src/Documents/DocumentStore";
 import { IDocumentStore } from "../../src/Documents/IDocumentStore";
-import { DatabaseStatistics } from "../../src/Documents/Operations/DatabaseStatistics";
 import { GetStatisticsOperation } from "../../src/Documents/Operations/GetStatisticsOperation";
 import { throwError } from "../../src/Exceptions";
 import { IDisposable } from "../../src/Types/Contracts";

@@ -33,6 +33,10 @@ export class EditClientCertificateOperation implements IServerOperation<void> {
             throwError("InvalidArgumentException", "Permissions cannot be null");
         }
 
+        if (!parameters.clearance) {
+            throwError("InvalidArgumentException", "Clearance cannot be null");
+        }
+
         this._name = parameters.name;
         this._thumbprint = parameters.thumbprint;
         this._permissions = parameters.permissions;

@@ -1,6 +1,5 @@
 import {
     ExternalReplication,
-    IDocumentStore,
     PutConnectionStringOperation,
     RavenConnectionString,
     UpdateExternalReplicationOperation

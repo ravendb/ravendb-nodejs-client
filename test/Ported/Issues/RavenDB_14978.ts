@@ -1,5 +1,5 @@
-import { ClusterTestContext, disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
-import { DocumentStore, IDocumentStore } from "../../../src";
+import { ClusterTestContext, } from "../../Utils/TestUtil";
+import { DocumentStore } from "../../../src";
 import { User } from "../../Assets/Entities";
 import { assertThat } from "../../Utils/AssertExtensions";
 

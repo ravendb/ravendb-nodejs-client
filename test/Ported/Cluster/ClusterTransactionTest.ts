@@ -2,10 +2,9 @@ import * as assert from "assert";
 import { User } from "../../Assets/Entities";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
-import DocumentStore, {
+import {
     SessionOptions,
     IDocumentStore,
-    CompareExchangeValue,
 } from "../../../src";
 
 describe("ClusterTransactionTest", function () {

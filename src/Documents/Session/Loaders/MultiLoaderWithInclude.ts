@@ -1,4 +1,3 @@
-import * as BluebirdPromise from "bluebird";
 import { ILoaderWithInclude } from "./ILoaderWithInclude";
 import { IDocumentSessionImpl } from "../IDocumentSession";
 import { DocumentType } from "../../DocumentAbstractions";

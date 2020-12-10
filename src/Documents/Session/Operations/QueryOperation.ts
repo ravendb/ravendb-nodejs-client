@@ -197,12 +197,14 @@ export class QueryOperation {
             return session.trackEntity(entityType, id, document, metadata, disableEntitiesTracking);
         }
 
-        // return primitives only if type was not passed at all AND fields count is 1
-        // if type was passed then use that even if it's only 1 field
-        if (fieldsToFetch
+        const singleField = fieldsToFetch
             && fieldsToFetch.projections
             && (!clazz || clazz === TimeSeriesAggregationResult || clazz === TimeSeriesRawResult)
-            && (fieldsToFetch.projections.length === 1 || (fieldsToFetch.projections.includes(NESTED_OBJECT_TYPES_PROJECTION_FIELD) && fieldsToFetch.projections.length === 2))) {
+            && (fieldsToFetch.projections.length === 1 || (fieldsToFetch.projections.includes(NESTED_OBJECT_TYPES_PROJECTION_FIELD) && fieldsToFetch.projections.length === 2));
+
+        // return primitives only if type was not passed at all AND fields count is 1
+        // if type was passed then use that even if it's only 1 field
+        if (singleField) {
             // we only select a single field
             let projectionField = fieldsToFetch.projections.find(x => x !== NESTED_OBJECT_TYPES_PROJECTION_FIELD);
 

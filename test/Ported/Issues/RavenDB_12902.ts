@@ -3,7 +3,7 @@ import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
 import { QueryStatistics } from "../../../src/Documents/Session/QueryStatistics";
 import { User } from "../../Assets/Entities";
 import { assertThat } from "../../Utils/AssertExtensions";
-import { AbstractJavaScriptIndexCreationTask, DocumentType } from "../../../src";
+import { AbstractJavaScriptIndexCreationTask } from "../../../src";
 
 describe("RavenDB_12902", function () {
 

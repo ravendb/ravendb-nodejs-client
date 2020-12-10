@@ -55,7 +55,7 @@ export class ClusterTransactionOperations
         if (TypeUtil.isArray(keysOrStartsWith)) {
             return this._getCompareExchangeValuesInternal(keysOrStartsWith, type);
         } else {
-            return this._getCompareExchangeValuesInternal(keysOrStartsWith, type, start || 0, pageSize ?? 25);
+            return this._getCompareExchangeValuesInternal(keysOrStartsWith, type, start ?? 0, pageSize ?? 25);
         }
     }
 }

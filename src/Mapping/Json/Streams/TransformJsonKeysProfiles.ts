@@ -1,7 +1,6 @@
 import { CasingConvention } from "../../../Utility/ObjectUtil";
 import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
 import { throwError } from "../../../Exceptions";
-import { CONSTANTS, TIME_SERIES } from "../../../Constants";
 
 export type TransformJsonKeysProfile = 
     "CommandResponsePayload"

@@ -37,9 +37,9 @@ export abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends Ind
         database?: string): Promise<void> {
         if (!conventions && !database) {
             return store.executeIndex(this);
-        } else {
-            return this._putIndex(store, conventions, database);
         }
+
+        return this._putIndex(store, conventions, database);
     }
 
     private async _putIndex(

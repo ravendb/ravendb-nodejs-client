@@ -1,7 +1,6 @@
 import {
     AbstractJavaScriptIndexCreationTask,
     IDocumentStore,
-    IndexDefinition,
     PutIndexesOperation,
 } from "../../src/index";
 import { FacetBase } from "../../src/Documents/Queries/Facets/FacetBase";

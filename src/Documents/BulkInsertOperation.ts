@@ -491,9 +491,9 @@ export class BulkInsertOperation {
 
                     this._first = false;
 
-                    this._operation._currentWriter.push("{\"Type\":\"Increment\",\"CounterName\":\"");
+                    this._operation._currentWriter.push(`{"Type":"Increment","CounterName":"`);
                     this._operation._writeString(name);
-                    this._operation._currentWriter.push("\",\"Delta\":");
+                    this._operation._currentWriter.push(`","Delta":`);
                     this._operation._currentWriter.push(delta.toString());
                     this._operation._currentWriter.push("}");
 
@@ -518,11 +518,11 @@ export class BulkInsertOperation {
             this._first = true;
             this._countersInBatch = 0;
 
-            this._operation._currentWriter.push("{\"Id\":\"");
+            this._operation._currentWriter.push(`{"Id":"`);
             this._operation._writeString(this._id);
-            this._operation._currentWriter.push("\",\"Type\":\"Counters\",\"Counters\":{\"DocumentId\":\"");
+            this._operation._currentWriter.push(`","Type":"Counters","Counters":{"DocumentId":"`);
             this._operation._writeString(this._id);
-            this._operation._currentWriter.push("\",\"Operations\":[");
+            this._operation._currentWriter.push(`","Operations":[`);
         }
     }
 
@@ -600,9 +600,9 @@ export class BulkInsertOperation {
                     }
 
                     if (tag) {
-                        this._operation._currentWriter.push(",\"");
+                        this._operation._currentWriter.push(`,"`);
                         this._operation._writeString(tag);
-                        this._operation._currentWriter.push("\"");
+                        this._operation._currentWriter.push(`"`);
                     }
 
                     this._operation._currentWriter.push("]");
@@ -618,11 +618,11 @@ export class BulkInsertOperation {
             this._first = true;
             this._timeSeriesInBatch = 0;
 
-            this._operation._currentWriter.push("{\"Id\":\"");
+            this._operation._currentWriter.push(`{"Id":"`);
             this._operation._writeString(this._id);
-            this._operation._currentWriter.push("\",\"Type\":\"TimeSeriesBulkInsert\",\"TimeSeries\":{\"Name\":\"");
+            this._operation._currentWriter.push(`","Type":"TimeSeriesBulkInsert","TimeSeries":{"Name":"`);
             this._operation._writeString(this._name);
-            this._operation._currentWriter.push("\",\"TimeFormat\":\"UnixTimeInMs\",\"Appends\":[");
+            this._operation._currentWriter.push(`","TimeFormat":"UnixTimeInMs","Appends":[`);
         }
 
         dispose(): void {
@@ -672,17 +672,17 @@ export class BulkInsertOperation {
                         this._operation._writeComma();
                     }
 
-                    this._operation._currentWriter.push("{\"Id\":\"");
+                    this._operation._currentWriter.push(`{"Id":"`);
                     this._operation._writeString(id);
-                    this._operation._currentWriter.push("\",\"Type\":\"AttachmentPUT\",\"Name\":\"");
+                    this._operation._currentWriter.push(`","Type":"AttachmentPUT","Name":"`);
                     this._operation._writeString(name);
 
                     if (contentType) {
-                        this._operation._currentWriter.push("\",\"ContentType\":\"");
+                        this._operation._currentWriter.push(`","ContentType":"`);
                         this._operation._writeString(contentType);
                     }
 
-                    this._operation._currentWriter.push("\",\"ContentLength\":");
+                    this._operation._currentWriter.push(`","ContentLength":`);
                     this._operation._currentWriter.push(bytes.length.toString());
                     this._operation._currentWriter.push("}");
 
