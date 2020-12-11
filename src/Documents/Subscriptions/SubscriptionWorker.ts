@@ -68,7 +68,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         }
 
         this._store = documentStore;
-        this._dbName = dbName || documentStore.database;
+        this._dbName = documentStore.getEffectiveDatabase(dbName);
     }
 
     public dispose(): void {
@@ -151,7 +151,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
 
         this._ensureParser();
 
-        const databaseName = this._dbName || this._store.database;
+        const databaseName = this._store.getEffectiveDatabase(this._dbName);
 
         const parameters = {
             database: databaseName,

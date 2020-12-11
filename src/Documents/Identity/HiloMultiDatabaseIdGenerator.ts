@@ -2,6 +2,7 @@ import { IHiloIdGenerator } from "./IHiloIdGenerator";
 import { HiloMultiTypeIdGenerator } from "./HiloMultiTypeIdGenerator";
 import { AbstractHiloIdGenerator } from "./AbstractHiloIdGenerator";
 import { IDocumentStore } from "../IDocumentStore";
+import { DocumentStoreBase } from "../DocumentStoreBase";
 
 export class HiloMultiDatabaseIdGenerator extends AbstractHiloIdGenerator implements IHiloIdGenerator {
 
@@ -10,7 +11,7 @@ export class HiloMultiDatabaseIdGenerator extends AbstractHiloIdGenerator implem
     }
 
     public generateDocumentId(dbName: string, entity: object): Promise<string> {
-        return this._getGeneratorForDatabase(dbName || this._store.database)
+        return this._getGeneratorForDatabase(DocumentStoreBase.getEffectiveDatabase(this._store, dbName))
             .generateDocumentId(entity);
     }
 
