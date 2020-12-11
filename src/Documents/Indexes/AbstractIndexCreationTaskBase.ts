@@ -5,6 +5,7 @@ import { IDocumentStore } from "../IDocumentStore";
 import { PutIndexesOperation } from "../Operations/Indexes/PutIndexesOperation";
 import { AbstractCommonApiForIndexes } from "./AbstractCommonApiForIndexes";
 import { IAbstractIndexCreationTask } from "./IAbstractIndexCreationTask";
+import { DocumentStoreBase } from "../DocumentStoreBase";
 
 export abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends IndexDefinition>
     extends AbstractCommonApiForIndexes implements IAbstractIndexCreationTask {
@@ -47,8 +48,8 @@ export abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends Ind
         const oldConventions = this.conventions;
 
         try {
-            const databaseForConventions = database || store.database;
-            this.conventions = conventions || this.conventions || store.getRequestExecutor(databaseForConventions).conventions;
+            database = DocumentStoreBase.getEffectiveDatabase(store, database);
+            this.conventions = conventions || this.conventions || store.getRequestExecutor(database).conventions;
 
             const indexDefinition = this.createIndexDefinition();
             indexDefinition.name = this.getIndexName();
@@ -61,7 +62,7 @@ export abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends Ind
                 indexDefinition.priority = this.priority;
             }
 
-            await store.maintenance.forDatabase(database || store.database)
+            await store.maintenance.forDatabase(database)
                 .send(new PutIndexesOperation(indexDefinition));
         } finally {
             this.conventions = oldConventions;
