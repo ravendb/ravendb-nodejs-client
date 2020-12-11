@@ -21,6 +21,7 @@ export class GetTcpInfoCommand extends RavenCommand<TcpConnectionInfo> {
         super();
         this._tag = tag;
         this._dbName = dbName;
+        this.timeout = 15_000;
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {

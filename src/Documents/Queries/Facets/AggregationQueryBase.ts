@@ -5,7 +5,6 @@ import { FacetResult } from ".";
 import { QueryCommand } from "../../Commands/QueryCommand";
 import { FacetQueryCommand } from "../../Commands/FacetQueryCommand";
 import { QueryResult } from "../QueryResult";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { TypesAwareObjectMapper } from "../../../Mapping/ObjectMapper";
 import { QueryOperation } from "../../Session/Operations/QueryOperation";
 import { Lazy } from "../../Lazy";
@@ -36,7 +35,7 @@ export abstract class AggregationQueryBase {
         this._session.incrementRequestCount();
         await this._session.requestExecutor.execute(command);
 
-        return this._processResults(command.result, this._session.conventions);
+        return this._processResults(command.result);
     }
 
     public executeLazy(): Lazy<FacetResultObject> {
@@ -47,8 +46,8 @@ export abstract class AggregationQueryBase {
                     this._session.conventions,
                     this._query,
                     this,
-                    (queryResult: QueryResult, conventions: DocumentConventions) =>
-                        this._processResults(queryResult, conventions)));
+                    (queryResult: QueryResult) =>
+                        this._processResults(queryResult)));
     }
 
     protected abstract _getIndexQuery(updateAfterQueryExecuted?: boolean): IndexQuery;
@@ -56,7 +55,7 @@ export abstract class AggregationQueryBase {
     // tslint:disable-next-line:function-name
     public abstract emit(evtName: "afterQueryExecuted", queryResult: QueryResult);
 
-    private _processResults(queryResult: QueryResult, conventions: DocumentConventions): FacetResultObject {
+    private _processResults(queryResult: QueryResult): FacetResultObject {
         this.emit("afterQueryExecuted", queryResult);
         const results: FacetResultObject = {};
         const mapper = new TypesAwareObjectMapper();

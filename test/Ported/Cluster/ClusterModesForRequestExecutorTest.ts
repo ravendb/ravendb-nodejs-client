@@ -1,4 +1,4 @@
-import { ClusterTestContext } from "../../Utils/TestUtil";
+import { ClusterTestContext, RavenTestContext } from "../../Utils/TestUtil";
 import { DocumentStore } from "../../../src/Documents/DocumentStore";
 import { DocumentConventions } from "../../../src/Documents/Conventions/DocumentConventions";
 import { ServerNode } from "../../../src/Http/ServerNode";
@@ -10,10 +10,9 @@ import { User } from "../../Assets/Entities";
 import { assertThat } from "../../Utils/AssertExtensions";
 import { RequestExecutor } from "../../../src/Http/RequestExecutor";
 import { GetStatisticsOperation } from "../../../src/Documents/Operations/GetStatisticsOperation";
-import { SessionInfo } from "../../../src/Documents/Session/IDocumentSession";
 import { UpdateTopologyParameters } from "../../../src/Http/UpdateTopologyParameters";
 
-describe("ClusterModesForRequestExecutorTest", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("ClusterModesForRequestExecutorTest", function () {
 
     let testContext: ClusterTestContext;
 
@@ -253,7 +252,7 @@ describe("ClusterModesForRequestExecutorTest", function () {
                             for (let sessionId = 0; sessionId < 5; sessionId++) {
                                 requestExecutor.cache.clear(); // make sure we do not use request cache
                                 const command = new GetStatisticsOperation().getCommand(new DocumentConventions());
-                                await requestExecutor.execute(command, new SessionInfo(sessionId));
+                                await requestExecutor.execute(command);
                             }
 
                         } finally {
@@ -308,7 +307,7 @@ describe("ClusterModesForRequestExecutorTest", function () {
 
                     {
                         const session = leaderStore.openSession();
-                        await session.query<User>(User)
+                        await session.query(User)
                             .whereStartsWith("name", "Jo");
                     }
                 } finally {

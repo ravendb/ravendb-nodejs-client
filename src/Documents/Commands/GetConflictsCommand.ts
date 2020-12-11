@@ -35,14 +35,12 @@ export class GetConflictsCommand extends RavenCommand<GetConflictsResult> {
         }
 
         let body: string = null;
-        await this._defaultPipeline(_ => body = _).process(bodyStream)
-            .then(results => {
-                this.result = this._conventions.objectMapper.fromObjectLiteral(results, {
-                    nestedTypes: {
-                        "results[].lastModified": "date"
-                    }
-                });
-            });
+        const results = await this._defaultPipeline(_ => body = _).process(bodyStream);
+        this.result = this._conventions.objectMapper.fromObjectLiteral(results, {
+            nestedTypes: {
+                "results[].lastModified": "date"
+            }
+        });
 
         return body;
     }

@@ -122,7 +122,7 @@ describe("SpatialSortingTest", function () {
         await createData(store);
         {
             const session = store.openSession();
-            const shops = await session.query<Shop>({
+            const shops = await session.query({
                 documentType: Shop,
                 indexName: "eventsByLatLngWSpecialField"
             })
@@ -139,7 +139,7 @@ describe("SpatialSortingTest", function () {
 
         {
             const session = store.openSession();
-            const shops = await session.query<Shop>({
+            const shops = await session.query({
                 documentType: Shop,
                 indexName: "eventsByLatLng"
             })
@@ -151,7 +151,7 @@ describe("SpatialSortingTest", function () {
 
         {
             const session = store.openSession();
-            const shops = await session.query<Shop>({
+            const shops = await session.query({
                 documentType: Shop,
                 indexName: "eventsByLatLng"
             })
@@ -169,7 +169,7 @@ describe("SpatialSortingTest", function () {
 
         {
             const session = store.openSession();
-            const shops = await session.query<Shop>({
+            const shops = await session.query({
                 documentType: Shop, indexName: "eventsByLatLngWSpecialField"
             })
                 .orderByDistance("mySpacialField", FILTERED_LAT, FILTERED_LNG)
@@ -180,7 +180,7 @@ describe("SpatialSortingTest", function () {
 
         {
             const session = store.openSession();
-            const shops = await session.query<Shop>({
+            const shops = await session.query({
                 documentType: Shop,
                 indexName: "eventsByLatLngWSpecialField"
             })

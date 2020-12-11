@@ -10,27 +10,34 @@ import { ServerNode } from "../../../Http/ServerNode";
 import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import * as stream from "readable-stream";
-import { ObjectTypeDescriptor, ClassConstructor } from "../../../Types";
+import { ObjectTypeDescriptor, CompareExchangeResultClass } from "../../../Types";
 import { IRaftCommand } from "../../../Http/IRaftCommand";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
+import { COMPARE_EXCHANGE, CONSTANTS } from "../../../Constants";
+import { CompareExchangeSessionValue } from "./CompareExchangeSessionValue";
+import { IMetadataDictionary } from "../../Session/IMetadataDictionary";
 
 export class PutCompareExchangeValueOperation<T> implements IOperation<CompareExchangeResult<T>> {
 
     private readonly _key: string;
     private readonly _value: T;
     private readonly _index: number;
+    private readonly _metadata: IMetadataDictionary;
 
-    public constructor(key: string, value: T, index: number) {
+    public constructor(key: string, value: T, index: number)
+    public constructor(key: string, value: T, index: number, metadata: IMetadataDictionary)
+    public constructor(key: string, value: T, index: number, metadata?: IMetadataDictionary) {
         this._key = key;
         this._value = value;
         this._index = index;
+        this._metadata = metadata;
     }
 
     public getCommand(
         store: IDocumentStore,
         conventions: DocumentConventions,
         cache: HttpCache): RavenCommand<CompareExchangeResult<T>> {
-        return new PutCompareExchangeValueCommand<T>(this._key, this._value, this._index, conventions);
+        return new PutCompareExchangeValueCommand<T>(this._key, this._value, this._index, this._metadata, conventions);
     }
 
     public get resultType(): OperationResultType {
@@ -43,11 +50,13 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
     private readonly _value: T;
     private readonly _index: number;
     private readonly _conventions: DocumentConventions;
+    private readonly _metadata: IMetadataDictionary;
 
     public constructor(
         key: string,
         value: T,
         index: number,
+        metadata: IMetadataDictionary,
         conventions: DocumentConventions) {
         super();
 
@@ -62,6 +71,7 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
         this._key = key;
         this._value = value;
         this._index = index;
+        this._metadata = metadata;
         this._conventions = conventions || DocumentConventions.defaultConventions;
     }
 
@@ -73,9 +83,14 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
         const uri = node.url + "/databases/" + node.database + "/cmpxchg?key=" + encodeURIComponent(this._key) + "&index=" + this._index;
 
         const tuple = {};
-        tuple["Object"] = TypeUtil.isPrimitive(this._value)
+        tuple[COMPARE_EXCHANGE.OBJECT_FIELD_NAME] = TypeUtil.isPrimitive(this._value)
             ? this._value
             : this._conventions.transformObjectKeysToRemoteFieldNameConvention(this._value as any);
+
+        if (this._metadata) {
+            const metadata = CompareExchangeSessionValue.prepareMetadataForPut(this._key, this._metadata, this._conventions);
+            tuple[CONSTANTS.Documents.Metadata.KEY] = metadata;
+        }
 
         return {
             method: "PUT",
@@ -97,7 +112,7 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
         const type = !TypeUtil.isPrimitive(this._value)
             ? this._conventions.getTypeDescriptorByEntity(this._value as any) as ObjectTypeDescriptor
             : null;
-        const clazz: ClassConstructor<T> = TypeUtil.isClass(type) ? type as any : null;
+        const clazz: CompareExchangeResultClass<T> = TypeUtil.isClass(type) ? type as any : null;
         this.result = CompareExchangeResult.parseFromObject(resObj, this._conventions, clazz);
 
         return body;

@@ -2,7 +2,6 @@ import { throwError } from "../../Exceptions";
 import { BatchOptions } from "./Batches/BatchOptions";
 import { InMemoryDocumentSessionOperations } from "../Session/InMemoryDocumentSessionOperations";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { ClusterTransactionOperationsBase } from "../Session/ClusterTransactionOperationsBase";
 import { DocumentInfo } from "../Session/DocumentInfo";
 import { ForceRevisionStrategy } from "../Session/ForceRevisionStrategy";
 
@@ -22,6 +21,9 @@ export type CommandType =
     | "ClientModifyDocumentCommand"
     | "BatchPATCH"
     | "ForceRevisionCreation"
+    | "TimeSeries"
+    | "TimeSeriesBulkInsert"
+    | "TimeSeriesCopy"
     ;
 
 export interface ICommandData {
@@ -146,7 +148,6 @@ export class ActionsToRunOnSuccess {
     private readonly _documentsByEntityToRemove: object[] = [];
     private readonly _documentInfosToUpdate: [DocumentInfo, object][] = [];
 
-    private _clusterTransactionOperations: ClusterTransactionOperationsBase;
     private _clearDeletedEntities: boolean;
 
     public constructor(session: InMemoryDocumentSessionOperations) {
@@ -159,10 +160,6 @@ export class ActionsToRunOnSuccess {
 
     public removeDocumentByEntity(entity: object) {
         this._documentsByEntityToRemove.push(entity);
-    }
-
-    public clearClusterTransactionOperations(clusterTransactionOperations: ClusterTransactionOperationsBase) {
-        this._clusterTransactionOperations = clusterTransactionOperations;
     }
 
     public updateEntityDocumentInfo(documentInfo: DocumentInfo, document: object) {
@@ -185,10 +182,6 @@ export class ActionsToRunOnSuccess {
 
         if (this._clearDeletedEntities) {
             this._session.deletedEntities.clear();
-        }
-
-        if (this._clusterTransactionOperations) {
-            this._clusterTransactionOperations.clear();
         }
 
         this._session.deferredCommands.length = 0;

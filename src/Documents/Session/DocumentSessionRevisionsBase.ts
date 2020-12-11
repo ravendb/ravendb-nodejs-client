@@ -1,8 +1,8 @@
-import {ForceRevisionStrategy} from "./ForceRevisionStrategy";
-import {throwError} from "../../Exceptions";
-import {TypeUtil} from "../../Utility/TypeUtil";
-import {StringUtil} from "../../Utility/StringUtil";
-import {AdvancedSessionExtensionBase} from "./AdvancedSessionExtensionBase";
+import { ForceRevisionStrategy } from "./ForceRevisionStrategy";
+import { throwError } from "../../Exceptions";
+import { TypeUtil } from "../../Utility/TypeUtil";
+import { StringUtil } from "../../Utility/StringUtil";
+import { AdvancedSessionExtensionBase } from "./AdvancedSessionExtensionBase";
 
 export class DocumentSessionRevisionsBase extends AdvancedSessionExtensionBase {
     forceRevisionCreationFor<T extends object>(entity: T)

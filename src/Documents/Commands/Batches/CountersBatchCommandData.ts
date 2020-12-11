@@ -2,7 +2,6 @@ import { ICommandData, CommandType } from "../CommandData";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { throwError } from "../../../Exceptions";
 import { CounterOperationType } from "../../Operations/Counters/CounterOperationType";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { DocumentCountersOperation } from "../../Operations/Counters/DocumentCountersOperation";
 import { CounterOperation } from "../../Operations/Counters/CounterOperation";
 
@@ -80,10 +79,10 @@ export class CountersBatchCommandData implements ICommandData {
         return false;
     }
 
-    public serialize(conventions: DocumentConventions): object {
+    public serialize(): object {
         return {
             Id: this._id,
-            Counters: this._counters.serialize(conventions),
+            Counters: this._counters.serialize(),
             Type: "Counters",
             FromEtl: this._fromEtl || undefined
         };

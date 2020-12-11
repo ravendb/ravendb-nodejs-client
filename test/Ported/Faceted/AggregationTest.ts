@@ -3,35 +3,39 @@ import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
+    AbstractJavaScriptIndexCreationTask,
     IDocumentStore,
-    AbstractIndexCreationTask,
     RangeBuilder,
 } from "../../../src";
 
 // tslint:disable-next-line:class-name
-class ItemsOrders_All extends AbstractIndexCreationTask {
+class ItemsOrders_All extends AbstractJavaScriptIndexCreationTask<ItemsOrder, Pick<ItemsOrder, "at" | "items">> {
     public constructor() {
         super();
-        this.map = `docs.ItemsOrders.Select(order => new { 
-                order.at,
-                order.items 
-            })`;
+        this.map(ItemsOrder, order => {
+            return {
+                at: order.at,
+                items: order.items
+            }
+        });
     }
 }
 
 // tslint:disable-next-line:class-name
-class Orders_All extends AbstractIndexCreationTask {
+class Orders_All extends AbstractJavaScriptIndexCreationTask<Order> {
     public constructor() {
         super();
-        this.map = `docs.Orders.Select(order => new { 
-            order.currency, 
-            order.product,
-            order.total,
-            order.quantity,
-            order.region,
-            order.at,
-            order.tax 
-        })`;
+        this.map(Order, order => {
+            return {
+                currency: order.currency,
+                product: order.product,
+                total: order.total,
+                quantity: order.quantity,
+                region: order.region,
+                at: order.at,
+                tax: order.tax
+            }
+        });
     }
 }
 
@@ -42,6 +46,9 @@ class Order {
     public product: string;
     public total: number;
     public region: number;
+    public quantity: number;
+    public at: Date;
+    public tax: number;
 }
 
 class ItemsOrder {
@@ -96,7 +103,7 @@ describe("AggregationTest", function () {
 
             {
                 const session = store.openSession();
-                const result = await session.query({ indexName: ordersAllIndex.getIndexName() })
+                const result = await session.query({ index: Orders_All })
                     .aggregateBy(x => x.byField("region")
                         .maxOn("total")
                         .minOn("total"))
@@ -137,7 +144,7 @@ describe("AggregationTest", function () {
 
             {
                 const session = store.openSession();
-                const r = await session.query({ indexName: ordersAllIndex.getIndexName() })
+                const r = await session.query({ index: Orders_All })
                     .aggregateBy(x => x.byField("product").sumOn("total"))
                     .andAggregateBy(x => x.byField("currency").sumOn("total"))
                     .execute();
@@ -182,7 +189,7 @@ describe("AggregationTest", function () {
 
             {
                 const session = store.openSession();
-                const r = await session.query({ indexName: ordersAllIndex.getIndexName() })
+                const r = await session.query({ index: Orders_All })
                     .aggregateBy(x => x.byField("product").maxOn("total").minOn("total"))
                     .execute();
 
@@ -223,7 +230,7 @@ describe("AggregationTest", function () {
 
             {
                 const session = store.openSession();
-                const r = await session.query({ indexName: ordersAllIndex.getIndexName() })
+                const r = await session.query({ index: Orders_All })
                     .aggregateBy(x => x.byField("product")
                         .withDisplayName("productMax").maxOn("total"))
                     .andAggregateBy(x => x.byField("product").withDisplayName("productMin"))
@@ -269,7 +276,7 @@ describe("AggregationTest", function () {
 
                 const range = RangeBuilder.forPath("total");
 
-                const r = await session.query({ indexName: ordersAllIndex.getIndexName() })
+                const r = await session.query({ index: Orders_All })
                     .aggregateBy(f => f.byField("product").sumOn("total"))
                     .andAggregateBy(f => f.byRanges(
                         range.isLessThan(100),
@@ -341,7 +348,7 @@ describe("AggregationTest", function () {
         {
             const session = store.openSession();
             const builder = RangeBuilder.forPath("at");
-            const r = await session.query({ indexName: idx.getIndexName() })
+            const r = await session.query({ index: ItemsOrders_All })
                 .whereGreaterThanOrEqual("at", end0)
                 .aggregateBy(f => f.byRanges(
                     builder.isGreaterThanOrEqualTo(minValue),

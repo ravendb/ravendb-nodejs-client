@@ -1,8 +1,8 @@
-import * as StringBuilder from "string-builder";
 import { CloseSubclauseToken } from "./Tokens/CloseSubclauseToken";
 import { QueryToken } from "./Tokens/QueryToken";
 import { OpenSubclauseToken } from "./Tokens/OpenSubclauseToken";
 import { IntersectMarkerToken } from "./Tokens/IntersectMarkerToken";
+import { StringBuilder } from "../../Utility/StringBuilder";
 
 export class DocumentQueryHelper {
     public static addSpaceIfNeeded(

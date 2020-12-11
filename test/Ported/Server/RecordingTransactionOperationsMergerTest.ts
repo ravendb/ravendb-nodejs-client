@@ -22,7 +22,8 @@ describe("RecordingTransactionOperationsMergerTest", function () {
         temporaryDirContext.dispose();
     });
 
-    it("canRecordTransactions", async () => {
+    // TODO: waiting for RavenDB-15106
+    it.skip("canRecordTransactions", async () => {
         const targetFile = path.join(temporaryDirContext.tempDir, "record-tx");
 
         await store.maintenance.send(new StartTransactionsRecordingOperation(path.resolve(targetFile)));

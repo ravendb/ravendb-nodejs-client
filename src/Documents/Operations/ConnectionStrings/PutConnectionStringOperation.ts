@@ -7,6 +7,7 @@ import { ServerNode } from "../../../Http/ServerNode";
 import * as stream from "readable-stream";
 import { IRaftCommand } from "../../../Http/IRaftCommand";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
+import { throwError } from "../../../Exceptions";
 
 export interface PutConnectionStringResult {
     raftCommandIndex: number;
@@ -37,6 +38,9 @@ export class PutConnectionStringCommand<T extends ConnectionString>
 
     public constructor(connectionString: T) {
         super();
+        if (!connectionString) {
+            throwError("InvalidArgumentException", "ConnectionString cannot be null");
+        }
         this._connectionString = connectionString;
     }
 

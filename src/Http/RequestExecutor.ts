@@ -50,6 +50,7 @@ import {
 import { TimeUtil } from "../Utility/TimeUtil";
 import { UpdateTopologyParameters } from "./UpdateTopologyParameters";
 import { v4 as uuidv4 } from "uuid";
+import { DatabaseHealthCheckOperation } from "../Documents/Operations/DatabaseHealthCheckOperation";
 
 const DEFAULT_REQUEST_OPTIONS = {};
 
@@ -148,12 +149,14 @@ export class RequestExecutor implements IDisposable {
 
     private _log: ILogger;
 
-    public static readonly CLIENT_VERSION = "4.2.0";
+    public static readonly CLIENT_VERSION = "5.0.0";
 
     private _updateDatabaseTopologySemaphore = semaphore();
     private _updateClientConfigurationSemaphore = semaphore();
 
-    private static _failureCheckOperation = new GetStatisticsOperation("failure=check");
+    private static _backwardCompatibilityFailureCheckOperation = new GetStatisticsOperation("failure=check");
+    private static readonly _failureCheckOperation = new DatabaseHealthCheckOperation();
+    private _useOldFailureCheckOperation = new Set<string>();
 
     private _failedNodesTimers: Map<ServerNode, NodeStatus> = new Map();
     protected _databaseName: string;
@@ -487,23 +490,7 @@ export class RequestExecutor implements IDisposable {
         }
     }
 
-    public updateTopology(node: ServerNode, timeout: number, forceUpdate?: boolean, debugTag?: string): Promise<boolean>;
-    public updateTopology(parameters: UpdateTopologyParameters): Promise<boolean>;
-    public updateTopology(nodeOrParameters: ServerNode | UpdateTopologyParameters, timeout?: number, forceUpdate: boolean = false, debugTag?: string): Promise<boolean> {
-        let parameters: UpdateTopologyParameters;
-        if (nodeOrParameters instanceof ServerNode) {
-            parameters = new UpdateTopologyParameters(nodeOrParameters);
-            parameters.timeoutInMs = timeout;
-            parameters.forceUpdate = forceUpdate;
-            parameters.debugTag = debugTag;
-            parameters.applicationIdentifier = null;
-        } else {
-            if (!nodeOrParameters) {
-                throwError("InvalidArgumentException", "Parameters cannot be null");
-            }
-            parameters = nodeOrParameters;
-        }
-
+    public updateTopology(parameters: UpdateTopologyParameters): Promise<boolean> {
         if (this._disableTopologyUpdates) {
             return Promise.resolve(false);
         }
@@ -514,7 +501,7 @@ export class RequestExecutor implements IDisposable {
 
         const acquiredSemContext = acquireSemaphore(this._updateDatabaseTopologySemaphore, { timeout: parameters.timeoutInMs });
         const result = BluebirdPromise.resolve(acquiredSemContext.promise)
-            .then(() => {
+            .then(async () => {
                     if (this._disposed) {
                         return false;
                     }
@@ -522,35 +509,33 @@ export class RequestExecutor implements IDisposable {
                     this._log.info(`Update topology from ${parameters.node.url}.`);
 
                     const getTopology = new GetDatabaseTopologyCommand(parameters.debugTag, this.conventions.sendApplicationIdentifier ? parameters.applicationIdentifier : null);
-                    const getTopologyPromise = this.execute(getTopology, null, {
+                    await this.execute(getTopology, null, {
                         chosenNode: parameters.node,
                         nodeIndex: null,
                         shouldRetry: false,
                     });
-                    return getTopologyPromise
-                        .then(() => {
-                            const topology = getTopology.result;
-                            if (!this._nodeSelector) {
-                                this._nodeSelector = new NodeSelector(topology);
 
-                                if (this.conventions.readBalanceBehavior === "FastestNode") {
-                                    this._nodeSelector.scheduleSpeedTest();
-                                }
+                    const topology = getTopology.result;
+                    if (!this._nodeSelector) {
+                        this._nodeSelector = new NodeSelector(topology);
 
-                            } else if (this._nodeSelector.onUpdateTopology(topology, parameters.forceUpdate)) {
-                                this._disposeAllFailedNodesTimers();
+                        if (this.conventions.readBalanceBehavior === "FastestNode") {
+                            this._nodeSelector.scheduleSpeedTest();
+                        }
 
-                                if (this.conventions.readBalanceBehavior === "FastestNode") {
-                                    this._nodeSelector.scheduleSpeedTest();
-                                }
-                            }
+                    } else if (this._nodeSelector.onUpdateTopology(topology, parameters.forceUpdate)) {
+                        this._disposeAllFailedNodesTimers();
 
-                            this._topologyEtag = this._nodeSelector.getTopology().etag;
+                        if (this.conventions.readBalanceBehavior === "FastestNode") {
+                            this._nodeSelector.scheduleSpeedTest();
+                        }
+                    }
 
-                            this._onTopologyUpdatedInvoke(topology);
+                    this._topologyEtag = this._nodeSelector.getTopology().etag;
 
-                            return true;
-                        });
+                    this._onTopologyUpdatedInvoke(topology);
+
+                    return true;
                 },
                 (reason: Error) => {
                     if (reason.name === "TimeoutError") {
@@ -613,6 +598,12 @@ export class RequestExecutor implements IDisposable {
             }
         }
 
+        if (this.conventions.loadBalanceBehavior === "UseSessionContext") {
+            if (sessionInfo && sessionInfo.canUseLoadBalanceBehavior()) {
+                return this._nodeSelector.getNodeBySessionId(sessionInfo.getSessionId());
+            }
+        }
+
         if (!cmd.isReadRequest) {
             return this._nodeSelector.getPreferredNode();
         }
@@ -621,7 +612,7 @@ export class RequestExecutor implements IDisposable {
             case "None":
                 return this._nodeSelector.getPreferredNode();
             case "RoundRobin":
-                return this._nodeSelector.getNodeBySessionId(sessionInfo ? sessionInfo.sessionId : 0);
+                return this._nodeSelector.getNodeBySessionId(sessionInfo ? sessionInfo.getSessionId() : 0);
             case "FastestNode":
                 return this._nodeSelector.getFastestNode();
             default:
@@ -856,6 +847,10 @@ export class RequestExecutor implements IDisposable {
         let url: string;
         const req = this._createRequest(chosenNode, command, u => url = u);
 
+        if (!req) {
+            return null;
+        }
+
         const controller = new AbortController();
 
         if (options?.abortRef) {
@@ -1084,7 +1079,7 @@ export class RequestExecutor implements IDisposable {
         }
 
         if (!this._disableClientConfigurationUpdates) {
-            req.headers[HEADERS.CLIENT_CONFIGURATION_ETAG] = `"${this._clientConfigurationEtag}"`;
+            req.headers[HEADERS.CLIENT_CONFIGURATION_ETAG] = this._clientConfigurationEtag;
         }
         if (sessionInfo && sessionInfo.lastClusterTransactionIndex) {
             req.headers[HEADERS.LAST_KNOWN_CLUSTER_TRANSACTION_INDEX] =
@@ -1205,6 +1200,9 @@ export class RequestExecutor implements IDisposable {
             task = BluebirdPromise.resolve()
                 .then(() => {
                     const req = this._createRequest(nodes[taskNumber], command, TypeUtil.NOOP);
+                    if (!req) {
+                        return;
+                    }
                     this._setRequestHeaders(null, null, req);
                     return command.send(this.getHttpAgent(), req);
                 })
@@ -1647,9 +1645,34 @@ export class RequestExecutor implements IDisposable {
             });
     }
 
-    protected _performHealthCheck(serverNode: ServerNode, nodeIndex: number): Promise<void> {
+    protected async _performHealthCheck(serverNode: ServerNode, nodeIndex: number): Promise<void> {
+        try {
+            if (!this._useOldFailureCheckOperation.has(serverNode.url)) {
+                await this._executeOnSpecificNode(
+                    RequestExecutor._failureCheckOperation.getCommand(this._conventions),
+                    null,
+                    {
+                        chosenNode: serverNode,
+                        nodeIndex,
+                        shouldRetry: false,
+                    });
+            } else {
+                await this._executeOldHealthCheck(serverNode, nodeIndex);
+            }
+        } catch (e) {
+            if (e.message.includes("RouteNotFoundException")) {
+                this._useOldFailureCheckOperation.add(serverNode.url);
+                await this._executeOldHealthCheck(serverNode, nodeIndex);
+                return ;
+            }
+
+            throw e;
+        }
+    }
+
+    private _executeOldHealthCheck(serverNode: ServerNode, nodeIndex: number) {
         return this._executeOnSpecificNode(
-            RequestExecutor._failureCheckOperation.getCommand(this._conventions),
+            RequestExecutor._backwardCompatibilityFailureCheckOperation.getCommand(this._conventions),
             null,
             {
                 chosenNode: serverNode,

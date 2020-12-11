@@ -15,6 +15,7 @@ import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export interface PutIndexResult {
     index: string;
+    raftCommandIndex: number;
 }
 
 export class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult[]> {
@@ -105,11 +106,9 @@ export class PutIndexesCommand extends RavenCommand<PutIndexResult[]> implements
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         let body: string = null;
-        await this._defaultPipeline(x => body = x)
-            .process(bodyStream)
-            .then(results => {
-                this.result = results["results"];
-            });
+        const results = await this._defaultPipeline(x => body = x)
+            .process(bodyStream);
+        this.result = results["results"];
         return body;
     }
 

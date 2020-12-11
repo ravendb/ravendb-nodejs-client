@@ -1,6 +1,8 @@
 import { IDocumentStore } from "../../src/Documents/IDocumentStore";
 import { disposeTestDocumentStore, testContext } from "../Utils/TestUtil";
-import { AbstractIndexCreationTask } from "../../src/Documents/Indexes/AbstractIndexCreationTask";
+import {
+    AbstractCsharpIndexCreationTask,
+} from "../../src/Documents/Indexes/AbstractCsharpIndexCreationTask";
 import { assertThat } from "../Utils/AssertExtensions";
 import { GetIndexOperation } from "../../src/Documents/Operations/Indexes/GetIndexOperation";
 
@@ -31,7 +33,7 @@ describe("RavenDB_12932", function () {
 });
 
 // tslint:disable-next-line:class-name
-class Orders_ProfitByProductAndOrderedAt extends AbstractIndexCreationTask {
+class Orders_ProfitByProductAndOrderedAt extends AbstractCsharpIndexCreationTask {
     public constructor(referencesCollectionName: string) {
         super();
 

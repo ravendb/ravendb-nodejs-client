@@ -5,7 +5,7 @@ import { DatabaseRecordWithEtag } from "..";
 import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
-import { QueryResult } from "../../Documents/Queries/QueryResult";
+import { TimeSeriesConfiguration } from "../../Documents/Operations/TimeSeries/TimeSeriesConfiguration";
 
 export class GetDatabaseRecordOperation implements IServerOperation<DatabaseRecordWithEtag> {
     private readonly _database: string;
@@ -57,7 +57,8 @@ export class GetDatabaseRecordCommand extends RavenCommand<DatabaseRecordWithEta
             .objectKeysTransform({
                 defaultTransform: "camel",
                 ignorePaths: [
-                    /^(indexes|sorters|autoIndexes|settings|indexesHistory|ravenConnectionStrings|sqlConnectionStrings)\.[^.]+$/i
+                    /^(indexes|sorters|autoIndexes|settings|indexesHistory|ravenConnectionStrings|sqlConnectionStrings)\.[^.]+$/i,
+                    /^timeSeries\./i
                 ]
             })
             .process(bodyStream);
@@ -75,6 +76,9 @@ export class GetDatabaseRecordCommand extends RavenCommand<DatabaseRecordWithEta
             }
         }
 
+        if (this.result.timeSeries) {
+            this.result.timeSeries = TimeSeriesConfiguration.parse(this.result.timeSeries as any);
+        }
 
         return body;
     }

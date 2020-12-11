@@ -3,7 +3,7 @@ import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
     IDocumentStore,
-    AbstractMultiMapIndexCreationTask,
+    AbstractCsharpMultiMapIndexCreationTask,
     Highlightings,
 } from "../../../src";
 import { assertThat } from "../../Utils/AssertExtensions";
@@ -27,7 +27,7 @@ class SearchResults {
     public title: string;
 }
 
-class ContentSearchIndex extends AbstractMultiMapIndexCreationTask {
+class ContentSearchIndex extends AbstractCsharpMultiMapIndexCreationTask {
     public constructor() {
         super();
 
@@ -98,7 +98,7 @@ describe("HighlightsTest", function () {
             let contentHighlighting: Highlightings;
 
             const session = store.openSession();
-            const results = await session.query<ISearchable>({ indexName: index.getIndexName() })
+            const results = await session.query<ISearchable>({ index: ContentSearchIndex })
                 .waitForNonStaleResults()
                 .highlight(Object.assign({ fieldName: "title" }, hightlightOpts), _ => titleHighlighting = _)
                 .highlight(Object.assign({ fieldName: "slug" }, hightlightOpts), _ => slugHighlighting = _)

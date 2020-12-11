@@ -1,5 +1,6 @@
 import { IndexState, IndexPriority, IndexLockMode, IndexType } from "./Enums";
 import { IndexRunningStatus } from "./IndexingStatus";
+import { IndexSourceType } from "./IndexSourceType";
 
 export interface IndexStats {
     name: string;
@@ -30,6 +31,7 @@ export interface IndexStats {
     status: IndexRunningStatus;
     entriesCount: number;
     errorsCount: number;
+    sourceType: IndexSourceType;
     isTestIndex: boolean;
 }
 

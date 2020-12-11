@@ -258,6 +258,5 @@ describe("With custom key case conventions set", function () {
                 store.dispose();
             }
         }
-
     });
 });

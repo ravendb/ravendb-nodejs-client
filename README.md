@@ -69,15 +69,6 @@ session.load('Users/1-A')
         // here session is complete
     });
 ```
-2. Callbacks
-```javascript
-session.load('users/1-A', (user) => {
-    user.password = PBKDF2('new password');
-    session.saveChanges(() => {
-        // data is persisted
-    });
-});
-```
 
 ## CRUD example
 
@@ -162,6 +153,11 @@ const query = session.query({ collection: 'products' });
 By index name:
 ```javascript
 const query = session.query({ indexName: 'productsByCategory' });
+```
+
+By index:
+```javascript
+const query = session.query(Product, Product_ByName);
 ```
 
 Using entity type:
@@ -573,6 +569,29 @@ await session.advanced.attachments.getNames(doc);
 //     size: 4579 } ]
 ```
 
+### TimeSeries
+
+#### Store time series
+
+```javascript
+// create document with time series
+const session = store.openSession();
+await session.store({ name: "John" }, "users/1");
+const tsf = session.timeSeriesFor("users/1", "heartbeat");
+tsf.append(new Date(), 120);
+await session.saveChanges();
+```
+
+#### Get time series for document
+
+```javascript
+// load time series by document by given name
+const session = store.openSession();
+const tsf = session.timeSeriesFor("users/1", "heartbeat");
+const heartbeats = await tsf.get();
+```
+
+
 ### Bulk Insert
 
 ```javascript
@@ -713,10 +732,14 @@ const revisions = await session.advanced.revisions.getFor("users/1");
 //     id: 'users/1-A' },
 
 // and a static index like:
-class UsersIndex extends AbstractIndexCreationTask {
+class UsersIndex extends AbstractJavaScriptIndexCreationTask {
     constructor() {
         super();
-        this.map = "from doc in docs.Users select new { doc.name }";
+        this.map(User, doc => {
+            return {
+                name: doc.name
+            }
+        });
         this.suggestion("name");
     }
 }
@@ -724,7 +747,7 @@ class UsersIndex extends AbstractIndexCreationTask {
 // ...
 
 const session = store.openSession();
-const suggestionQueryResult = await session.query({ collection: "users" })
+const suggestionQueryResult = await session.query(User, UsersIndex)
     .suggestUsing(x => x.byField("name", "Jon"))
     .execute();
 // { name: { name: 'name', suggestions: [ 'john' ] } }

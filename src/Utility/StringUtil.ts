@@ -3,7 +3,7 @@ import { TypeUtil } from "./TypeUtil";
 import { throwError } from "../Exceptions";
 import * as changeCase from "change-case";
 import { CasingConvention } from "./ObjectUtil";
-import StringBuilder = require("string-builder");
+import { StringBuilder } from "./StringBuilder";
 
 export class StringUtil {
     private static readonly letterRe: RegExp = XRegExp("^\\p{L}$") as RegExp;
@@ -139,14 +139,18 @@ export class StringUtil {
             return;
         }
 
-        StringUtil.escapeStringInternal(builder, value);
+        StringUtil._escapeStringInternal(builder, value);
     }
 
-    private static escapeStringInternal(builder: StringBuilder, value: string) {
+    private static _escapeStringInternal(builder: StringBuilder, value: string) {
         let escaped = JSON.stringify(value);
 
         escaped = escaped.replace(/'/g, "\\\'");
 
         builder.append(escaped.substring(1, escaped.length - 1));
+    }
+
+    public static splice(input: string, start: number, delCount: number, newSubStr: string) {
+        return input.slice(0, start) + newSubStr + input.slice(start + Math.abs(delCount));
     }
 }

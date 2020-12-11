@@ -60,7 +60,7 @@ describe("RavenDB_13762", function () {
 
         let exception: Error;
 
-        const donePromise = new Promise(resolve => {
+        const donePromise = new Promise<void>(resolve => {
             sub.on("batch", async (x, callback) => {
                 try {
                     const session = x.openSession();

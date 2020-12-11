@@ -48,22 +48,22 @@ export class OperationExecutor {
             databaseName);
     }
 
-    public send(operation: AwaitableOperation): Promise<OperationCompletionAwaiter>;
-    public send(operation: AwaitableOperation, sessionInfo?: SessionInfo): Promise<OperationCompletionAwaiter>;
-    public send<TResult extends object>(
+    public async send(operation: AwaitableOperation): Promise<OperationCompletionAwaiter>;
+    public async send(operation: AwaitableOperation, sessionInfo?: SessionInfo): Promise<OperationCompletionAwaiter>;
+    public async send<TResult extends object>(
         patchOperation: PatchOperation): Promise<PatchOperationResult<TResult>>;
-    public send<TResult extends object>(
+    public async send<TResult extends object>(
         patchOperation: PatchOperation,
         sessionInfo: SessionInfo): Promise<PatchOperationResult<TResult>>;
-    public send<TResult extends object>(
+    public async send<TResult extends object>(
         patchOperation: PatchOperation,
         sessionInfo: SessionInfo,
         resultType: DocumentType<TResult>): Promise<PatchOperationResult<TResult>>;
-    public send<TResult>(operation: IOperation<TResult>): Promise<TResult>;
-    public send<TResult>(
+    public async send<TResult>(operation: IOperation<TResult>): Promise<TResult>;
+    public async send<TResult>(
         operation: IOperation<TResult>,
         sessionInfo?: SessionInfo): Promise<TResult>;
-    public send<TResult extends object>(
+    public async send<TResult extends object>(
         operation: AwaitableOperation | IOperation<TResult>,
         sessionInfo?: SessionInfo,
         documentType?: DocumentType<TResult>)
@@ -72,8 +72,9 @@ export class OperationExecutor {
         const command =
             operation.getCommand(this._store, this._requestExecutor.conventions, this._requestExecutor.cache);
 
+        await this._requestExecutor.execute(command as RavenCommand<TResult>, sessionInfo);
+
         const result = BluebirdPromise.resolve()
-            .then(() => this._requestExecutor.execute(command as RavenCommand<TResult>, sessionInfo))
             .then(() => {
                 if (operation.resultType === "OperationId") {
                     const idResult = command.result as OperationIdResult;

@@ -7,7 +7,7 @@ import DocumentStore, {
     SubscriptionWorkerOptions,
     SubscriptionBatch,
     SubscriptionCreationOptions,
-    SubscriptionWorker, ToggleOngoingTaskStateOperation
+    SubscriptionWorker, ToggleOngoingTaskStateOperation, SubscriptionUpdateOptions
 } from "../../../src";
 import { AsyncQueue } from "../../Utils/AsyncQueue";
 import * as semaphore from "semaphore";
@@ -17,7 +17,7 @@ import { TypeUtil } from "../../../src/Utility/TypeUtil";
 import { delay } from "bluebird";
 import { GetOngoingTaskInfoOperation } from "../../../src/Documents/Operations/GetOngoingTaskInfoOperation";
 import { OngoingTaskSubscription } from "../../../src/Documents/Operations/OngoingTasks/OngoingTask";
-import { assertThat } from "../../Utils/AssertExtensions";
+import { assertThat, assertThrows } from "../../Utils/AssertExtensions";
 
 describe("SubscriptionsBasicTest", function () {
     const _reasonableWaitTime = 5 * 1000;
@@ -115,7 +115,7 @@ describe("SubscriptionsBasicTest", function () {
                     assert.fail("We shouldn't get any data as subscription is occupied");
                 });
 
-                await new Promise(resolve => {
+                await new Promise<void>(resolve => {
                     secondSubscription.on("error", ex => {
                         assert.strictEqual(ex.name, "SubscriptionInUseException");
                         resolve();
@@ -183,16 +183,14 @@ describe("SubscriptionsBasicTest", function () {
         }
 
         async function assertResults() {
-            return delay(_reasonableWaitTime)
-                .then(() => {
-                    assert.strictEqual(keys.pop(), "users/3");
-                    assert.strictEqual(keys.pop(), "users/12");
-                    assert.strictEqual(keys.pop(), "users/1");
+            await delay(_reasonableWaitTime);
+            assert.strictEqual(keys.pop(), "users/3");
+            assert.strictEqual(keys.pop(), "users/12");
+            assert.strictEqual(keys.pop(), "users/1");
 
-                    assert.strictEqual(ages.pop(), 25);
-                    assert.strictEqual(ages.pop(), 27);
-                    assert.strictEqual(ages.pop(), 31);
-                });
+            assert.strictEqual(ages.pop(), 25);
+            assert.strictEqual(ages.pop(), 27);
+            assert.strictEqual(ages.pop(), 31);
         }
     });
 
@@ -278,7 +276,7 @@ describe("SubscriptionsBasicTest", function () {
         try {
             let totalItems = 0;
 
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                 subscriptionWorker.on("batch", (batch, callback) => {
                     totalItems += batch.getNumberOfItemsInBatch();
 
@@ -322,7 +320,7 @@ describe("SubscriptionsBasicTest", function () {
         try {
             let integer = 0;
 
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                 subscription.on("error", reject);
                 subscription.on("connectionRetry", reject);
                 subscription.on("batch", (batch, callback) => {
@@ -473,7 +471,7 @@ describe("SubscriptionsBasicTest", function () {
 
             throwingSubscriptionWorker = store.subscriptions.getSubscriptionWorker(options2);
 
-            await new Promise(resolve => {
+            await new Promise<void>(resolve => {
                 throwingSubscriptionWorker.on("error", error => {
                     assert.strictEqual(error.name, "SubscriptionInUseException");
                     resolve();
@@ -567,7 +565,7 @@ describe("SubscriptionsBasicTest", function () {
             callback();
         });
 
-        await new Promise(resolve => {
+        await new Promise<void>(resolve => {
             subscription.on("error", error => {
                 assert.strictEqual(error.name, "SubscriberErrorException");
                 resolve();
@@ -643,7 +641,7 @@ describe("SubscriptionsBasicTest", function () {
         assert.ok(await docs.poll(_reasonableWaitTime));
         assert.ok(await docs.poll(_reasonableWaitTime));
 
-        await new Promise(async resolve => {
+        await new Promise<void>(async resolve => {
             subscription.on("error", error => {
                 assert.strictEqual(error.name, "SubscriptionClosedException");
                 resolve();
@@ -827,7 +825,7 @@ describe("SubscriptionsBasicTest", function () {
             });
 
             let batch;
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                 subscription.on("error", reject);
                 subscription.on("connectionRetry", reject);
                 subscription.on("batch", (_batch, callback) => {
@@ -844,6 +842,170 @@ describe("SubscriptionsBasicTest", function () {
         } finally {
             store2.dispose();
         }
+    });
+
+    it("canUpdateSubscriptionByName", async () => {
+        const subscriptionCreationOptions: SubscriptionCreationOptions = {
+            query: "from Users",
+            name: "Created"
+        };
+
+        const subsId = await store.subscriptions.create(subscriptionCreationOptions);
+
+        const subscriptions = await store.subscriptions.getSubscriptions(0, 5);
+
+        const state = subscriptions[0];
+
+        assertThat(subscriptions)
+            .hasSize(1);
+
+        assertThat(state.subscriptionName)
+            .isEqualTo("Created");
+        assertThat(state.query)
+            .isEqualTo("from Users");
+
+        const newQuery = "from Users where age > 18";
+
+        const subscriptionUpdateOptions: SubscriptionUpdateOptions = {
+            name: subsId,
+            query: newQuery
+        };
+
+        await store.subscriptions.update(subscriptionUpdateOptions);
+
+        const newSubscriptions = await store.subscriptions.getSubscriptions(0, 5);
+        const newState = newSubscriptions[0];
+        assertThat(newSubscriptions)
+            .hasSize(1);
+        assertThat(newState.subscriptionName)
+            .isEqualTo(state.subscriptionName);
+        assertThat(newState.query)
+            .isEqualTo(newQuery);
+        assertThat(newState.subscriptionId)
+            .isEqualTo(state.subscriptionId);
+
+    });
+
+    it("canUpdateSubscriptionById", async () => {
+        const subscriptionCreationOptions: SubscriptionCreationOptions = {
+            query: "from Users",
+            name: "Created"
+        };
+
+        await store.subscriptions.create(subscriptionCreationOptions);
+
+        const subscriptions = await store.subscriptions.getSubscriptions(0, 5);
+
+        const state = subscriptions[0];
+
+        assertThat(subscriptions)
+            .hasSize(1);
+        assertThat(state.subscriptionName)
+            .isEqualTo("Created");
+        assertThat(state.query)
+            .isEqualTo("from Users");
+
+        const newQuery = "from Users where age > 18";
+
+        const subscriptionUpdateOptions: SubscriptionUpdateOptions = {
+            id: state.subscriptionId,
+            query: newQuery
+        };
+
+        await store.subscriptions.update(subscriptionUpdateOptions);
+
+        const newSubscriptions = await store.subscriptions.getSubscriptions(0, 5);
+        const newState = newSubscriptions[0];
+        assertThat(newSubscriptions)
+            .hasSize(1);
+        assertThat(newState.subscriptionName)
+            .isEqualTo(state.subscriptionName);
+        assertThat(newState.query)
+            .isEqualTo(newQuery);
+        assertThat(newState.subscriptionId)
+            .isEqualTo(state.subscriptionId);
+    });
+
+    it("updateNonExistentSubscriptionShouldThrow", async () => {
+        const name = "Update";
+        const id = 322;
+
+        await assertThrows(() => {
+            const subscriptionUpdateOptions: SubscriptionUpdateOptions = {
+                name
+            };
+
+            return store.subscriptions.update(subscriptionUpdateOptions);
+        }, err => {
+            assertThat(err.name)
+                .isEqualTo("SubscriptionDoesNotExistException");
+        });
+
+        await assertThrows(() => {
+            const subscriptionUpdateOptions: SubscriptionUpdateOptions = {
+                name,
+                id
+            };
+
+            return store.subscriptions.update(subscriptionUpdateOptions);
+        }, err => {
+            assertThat(err.name)
+                .isEqualTo("SubscriptionDoesNotExistException");
+        });
+
+        const subscriptionCreationOptions: SubscriptionCreationOptions = {
+            query: "from Users",
+            name: "Created"
+        };
+
+        const subsId = await store.subscriptions.create(subscriptionCreationOptions);
+
+        await assertThrows(() => {
+            const subscriptionUpdateOptions: SubscriptionUpdateOptions = {
+                name: subsId,
+                id
+            };
+
+            return store.subscriptions.update(subscriptionUpdateOptions);
+        }, err => {
+            assertThat(err.name)
+                .isEqualTo("SubscriptionDoesNotExistException");
+        });
+    });
+
+    it("updateSubscriptionShouldReturnNotModified", async () => {
+        const updateOptions: SubscriptionUpdateOptions = {
+            query: "from Users",
+            name: "Created"
+        };
+
+        await store.subscriptions.create(updateOptions);
+
+        const subscriptions = await store.subscriptions.getSubscriptions(0, 5);
+
+        const state = subscriptions[0];
+
+        assertThat(subscriptions)
+            .hasSize(1);
+        assertThat(state.subscriptionName)
+            .isEqualTo("Created");
+        assertThat(state.query)
+            .isEqualTo("from Users");
+
+        await store.subscriptions.update(updateOptions);
+
+        const newSubscriptions = await store.subscriptions.getSubscriptions(0, 5);
+        const newState = newSubscriptions[0];
+
+        assertThat(newSubscriptions)
+            .hasSize(1);
+
+        assertThat(newState.subscriptionName)
+            .isEqualTo(state.subscriptionName);
+        assertThat(newState.query)
+            .isEqualTo(state.query);
+        assertThat(newState.subscriptionId)
+            .isEqualTo(state.subscriptionId);
     });
 });
 

@@ -1,9 +1,7 @@
-import * as BluebirdPromise from "bluebird";
 import { ILoaderWithInclude } from "./ILoaderWithInclude";
 import { IDocumentSessionImpl } from "../IDocumentSession";
 import { DocumentType } from "../../DocumentAbstractions";
 import { TypeUtil } from "../../../Utility/TypeUtil";
-import { ErrorFirstCallback } from "../../../Types/Callbacks";
 import { EntitiesCollectionObject } from "../../../Types";
 
 /**
@@ -32,8 +30,7 @@ export class MultiLoaderWithInclude implements ILoaderWithInclude {
      */
     public async load<TResult extends object>(
         id: string,
-        documentType?: DocumentType<TResult>,
-        callback?: ErrorFirstCallback<TResult>): Promise<TResult>;
+        documentType?: DocumentType<TResult>): Promise<TResult>;
 
     /**
      * Loads the specified ids.
@@ -46,10 +43,8 @@ export class MultiLoaderWithInclude implements ILoaderWithInclude {
      */
     public async load<TResult extends object>(
         ids: string | string[],
-        documentType?: DocumentType<TResult>,
-        callback?: ErrorFirstCallback<TResult | EntitiesCollectionObject<TResult>>)
+        documentType?: DocumentType<TResult>)
         : Promise<TResult | EntitiesCollectionObject<TResult>> {
-        callback = callback || TypeUtil.NOOP;
 
         let singleResult = false;
         if (TypeUtil.isString(ids)) {
@@ -59,20 +54,14 @@ export class MultiLoaderWithInclude implements ILoaderWithInclude {
 
         const entityType = this._session.conventions.getJsTypeByDocumentType(documentType);
 
-        const result = BluebirdPromise.resolve()
-            .then(() => this._session.loadInternal(ids as string[], {
-                includes: this._includes, 
-                documentType: entityType
-            }))
-            .then(results => {
-                return singleResult ?
-                    Object.keys(results).map(x => results[x]).filter(x => x)[0] as TResult :
-                    results;
-            })
-            .tap((results) => callback(null, results))
-            .tapCatch(err => callback(err));
+        const results = await this._session.loadInternal(ids as string[], {
+            includes: this._includes,
+            documentType: entityType
+        });
 
-        return Promise.resolve(result);
+        return singleResult ?
+            Object.keys(results).map(x => results[x]).filter(x => x)[0] as TResult :
+            results;
     }
 
     /**

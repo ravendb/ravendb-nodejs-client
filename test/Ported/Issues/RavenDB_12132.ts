@@ -45,10 +45,12 @@ describe("RavenDB-12132", function () {
             session.advanced.clusterTransaction.createCompareExchangeValue<User>("usernames/ayende", user);
             await session.saveChanges();
             const userFromCluster = (await session.advanced.clusterTransaction
-                .getCompareExchangeValue<User>("usernames/ayende")).value;
+                .getCompareExchangeValue("usernames/ayende", User)).value;
             assertThat(userFromCluster.name)
                 .isEqualTo(user.name);
             assertThat(userFromCluster.id)
                 .isEqualTo(user.id);
+            assertThat(userFromCluster instanceof User)
+                .isTrue();
     });
 });

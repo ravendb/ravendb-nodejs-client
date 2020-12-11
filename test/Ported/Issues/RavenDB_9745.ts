@@ -4,31 +4,34 @@ import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
     IDocumentStore,
-    AbstractIndexCreationTask,
 } from "../../../src";
 import { Explanations } from "../../../src/Documents/Queries/Explanation/Explanations";
 import { ExplanationOptions } from "../../../src/Documents/Queries/Explanation/ExplanationOptions";
+import { AbstractJavaScriptIndexCreationTask } from "../../../src/Documents/Indexes/AbstractJavaScriptIndexCreationTask";
 
 class CompaniesByNameIndexResult {
     public key: string;
     public count: number;
 }
 
-class CompaniesByNameIndex extends AbstractIndexCreationTask {
+class CompaniesByNameIndex extends AbstractJavaScriptIndexCreationTask<Company, { key: string, count: number }> {
 
     public constructor() {
         super();
 
-        this.map = "from c in docs.companies select new { key = c.name, count = 1 }";
+        this.map(Company, c => {
+            return {
+                key: c.name,
+                count: 1
+            }
+        });
 
-        this.reduce = "from result in results " +
-            "group result by result.key " +
-            "into g " +
-            "select new " +
-            "{ " +
-            "  key = g.Key, " +
-            "  count = g.Sum(x => x.count) " +
-            "}";
+        this.reduce(result => result.groupBy(r => r.key).aggregate(g => {
+            return {
+                key: g.key,
+                count: g.values.reduce((a, b) => a + b.count, 0)
+            }
+        }));
 
         this.store("key", "Yes");
     }
@@ -87,7 +90,7 @@ describe("RavenDB-9745", function () {
             let explanationsResult;
 
             const results = await session.advanced
-                .documentQuery({ indexName: index.getIndexName() })
+                .documentQuery({ index: CompaniesByNameIndex })
                 .includeExplanations(explOptions, e => explanationsResult = e)
                 .selectFields<CompaniesByNameIndexResult>([ "key", "count" ])
                 .all();

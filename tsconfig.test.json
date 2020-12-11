@@ -26,8 +26,7 @@
   "include": [
     "test",
     "./src/Types/global.d.ts",
-    "./src/Types/readable-stream.d.ts",
-    "./src/Types/string-builder.d.ts"
+    "./src/Types/readable-stream.d.ts"
   ],
   "exclude": [
     "node_modules",

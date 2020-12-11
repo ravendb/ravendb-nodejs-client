@@ -22,7 +22,7 @@ describe("RavenDB_9584", function () {
         {
             const s = store.openSession();
 
-            const suggestionQueryResult = await s.query<User>({ documentType: User, indexName: "test" })
+            const suggestionQueryResult = await s.query({ documentType: User, indexName: "test" })
                 .suggestUsing(x => x.byField("name", "Owen"))
                 .andSuggestUsing(x => x.byField("company", "Hiberanting"))
                 .execute();
@@ -45,7 +45,7 @@ describe("RavenDB_9584", function () {
         {
             const s = store.openSession();
 
-            const suggestionQueryResult = await s.query<User>({ documentType: User, indexName: "test" })
+            const suggestionQueryResult = await s.query({ documentType: User, indexName: "test" })
                 .suggestUsing(x => x.byField("name", "Owen")
                     .withDisplayName("newName"))
                 .execute();
@@ -63,7 +63,7 @@ describe("RavenDB_9584", function () {
         {
             const s = store.openSession();
 
-            const suggestionQueryResult = await s.query<User>(User)
+            const suggestionQueryResult = await s.query(User)
                 .suggestUsing(x => x.byField("name", "Owen").withDisplayName("newName"))
                 .execute();
 

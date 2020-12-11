@@ -5,7 +5,6 @@ import * as os from "os";
 import { CONSTANTS } from "../../src/Constants";
 import { DocumentStore } from "../../src/Documents/DocumentStore";
 import { IDocumentStore } from "../../src/Documents/IDocumentStore";
-import { DatabaseStatistics } from "../../src/Documents/Operations/DatabaseStatistics";
 import { GetStatisticsOperation } from "../../src/Documents/Operations/GetStatisticsOperation";
 import { throwError } from "../../src/Exceptions";
 import { IDisposable } from "../../src/Types/Contracts";
@@ -25,6 +24,8 @@ import * as http from "http";
 import { Stopwatch } from "../../src/Utility/Stopwatch";
 import { delay } from "../../src/Utility/PromiseUtil";
 import * as open from "open";
+import { GetIndexErrorsOperation } from "../../src";
+import { TimeUtil } from "../../src/Utility/TimeUtil";
 
 const log = getLogger({ module: "TestDriver" });
 
@@ -60,7 +61,7 @@ export abstract class RavenTestDriver {
         return Promise.resolve();
     }
 
-    protected _runServerInternal(locator: RavenServerLocator,
+    protected async _runServerInternal(locator: RavenServerLocator,
                                  processRef: (process: ChildProcess) => void,
                                  configureStore: (store: DocumentStore) => void): Promise<IDocumentStore> {
 
@@ -117,27 +118,27 @@ export abstract class RavenTestDriver {
                 });
         };
 
-        return Promise.resolve()
-            .then(() => scrapServerUrl())
-            .catch((err) => {
-                try {
-                    process.kill("SIGKILL");
-                } catch (processKillErr) {
-                    log.error(processKillErr);
-                }
+        let serverUrl: string;
+        try {
+            serverUrl = await scrapServerUrl();
+        } catch (err) {
+            try {
+                process.kill("SIGKILL");
+            } catch (processKillErr) {
+                log.error(processKillErr);
+            }
 
-                throwError("InvalidOperationException", "Unable to start server.", err);
-            })
-            .then((serverUrl: string) => {
-                const store = new DocumentStore([serverUrl], "test.manager");
-                store.conventions.disableTopologyUpdates = true;
+            throwError("InvalidOperationException", "Unable to start server.", err);
+        }
 
-                if (configureStore) {
-                    configureStore(store);
-                }
+        const store = new DocumentStore([serverUrl], "test.manager");
+        store.conventions.disableTopologyUpdates = true;
 
-                return store.initialize();
-            });
+        if (configureStore) {
+            configureStore(store);
+        }
+
+        return store.initialize();
     }
 
     public waitForIndexing(store: IDocumentStore): Promise<void>;
@@ -146,46 +147,45 @@ export abstract class RavenTestDriver {
     public waitForIndexing(
         store: IDocumentStore, database?: string, timeout?: number, throwOnIndexErrors?: boolean): Promise<void>;
     public waitForIndexing(
+        store: IDocumentStore, database?: string, timeout?: number, throwOnIndexErrors?: boolean, nodeTag?: string): Promise<void>;
+    public waitForIndexing(
         store: IDocumentStore,
         database?: string,
         timeout?: number,
-        throwOnIndexErrors: boolean = true): Promise<void> {
+        throwOnIndexErrors: boolean = true,
+        nodeTag?: string): Promise<void> {
         const admin = store.maintenance.forDatabase(database);
 
         if (!timeout) {
             timeout = 60 * 1000; // minute
         }
 
-        const isIndexingDone = (): Promise<boolean> => {
-            return Promise.resolve()
-                .then(() => admin.send(new GetStatisticsOperation()))
-                .then((dbStats: DatabaseStatistics) => {
-                    const indexes = dbStats.indexes.filter(x => x.state !== "Disabled");
+        const isIndexingDone = async (): Promise<boolean> => {
+            const dbStats = await admin.send(new GetStatisticsOperation("wait-for-indexing", nodeTag));
 
-                    const errIndexes = indexes.filter(x => x.state === "Error");
-                    if (errIndexes.length && throwOnIndexErrors) {
-                        throwError("IndexInvalidException",
-                            `The following indexes are erroneous: ${errIndexes.map(x => x.name).join(", ")}`);
-                    }
+            const indexes = dbStats.indexes.filter(x => x.state !== "Disabled");
 
-                    return indexes.every(x => !x.isStale
-                        && !x.name.startsWith(CONSTANTS.Documents.Indexing.SIDE_BY_SIDE_INDEX_NAME_PREFIX));
-                });
+            const errIndexes = indexes.filter(x => x.state === "Error");
+            if (errIndexes.length && throwOnIndexErrors) {
+                throwError("IndexInvalidException",
+                    `The following indexes are erroneous: ${errIndexes.map(x => x.name).join(", ")}`);
+            }
+
+            return indexes.every(x => !x.isStale
+                && !x.name.startsWith(CONSTANTS.Documents.Indexing.SIDE_BY_SIDE_INDEX_NAME_PREFIX));
         };
 
-        const pollIndexingStatus = () => {
+        const pollIndexingStatus = async () => {
             log.info("Waiting for indexing...");
-            return BluebirdPromise.resolve()
-                .then(() => isIndexingDone())
-                .then(indexingDone => {
-                    if (!indexingDone) {
-                        return BluebirdPromise.resolve()
-                            .delay(100)
-                            .then(() => pollIndexingStatus());
-                    } else {
-                        log.info("Done waiting for indexing.");
-                    }
-                });
+
+            const indexingDone = await isIndexingDone();
+
+            if (!indexingDone) {
+                await delay(100);
+                await pollIndexingStatus();
+            } else {
+                log.info("Done waiting for indexing.");
+            }
         };
 
         const result = BluebirdPromise.resolve(pollIndexingStatus())
@@ -195,6 +195,24 @@ export abstract class RavenTestDriver {
             });
 
         return Promise.resolve(result);
+    }
+
+    public async waitForIndexingErrors(store: IDocumentStore, timeoutInMs: number, ...indexNames: string[]) {
+        const sw = Stopwatch.createStarted();
+
+        while (sw.elapsed < timeoutInMs) {
+            const indexes = await store.maintenance.send(new GetIndexErrorsOperation(indexNames));
+
+            for (const index of indexes) {
+                if (index.errors && index.errors.length) {
+                    return indexes;
+                }
+            }
+
+            await delay(32);
+        }
+
+        throwError("TimeoutException", "Got no index error from more than " + TimeUtil.millisToTimeSpan(timeoutInMs));
     }
 
     public async waitForValue<T>(act: () => Promise<T>, expectedValue: T, opts: { timeout?: number; equal?: (a: T, b: T) => boolean } = {}) {
@@ -377,8 +395,8 @@ export abstract class RavenTestDriver {
             const session = store.openSession();
 
             const scifi = Object.assign(new Genre(), {
-                name: "Sci-Fi",
-                id: "genres/1"
+                id: "genres/1",
+                name: "Sci-Fi"
             });
 
             const fantasy = Object.assign(new Genre(), {

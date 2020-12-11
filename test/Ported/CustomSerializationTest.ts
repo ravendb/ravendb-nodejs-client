@@ -69,7 +69,7 @@ describe.skip("CustomSerializationTest", function () {
         // verify if query properly serialize value
         {
             const session = store.openSession();
-            const productsForTwoDollars = await session.query<Product>(Product)
+            const productsForTwoDollars = await session.query(Product)
                 .whereEquals("price", Money.forDollars(2))
                 .all();
 

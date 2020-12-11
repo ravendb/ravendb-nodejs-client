@@ -3,8 +3,8 @@ import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
     IDocumentStore,
-    AbstractIndexCreationTask,
 } from "../../../src";
+import { AbstractJavaScriptIndexCreationTask } from "../../../src/Documents/Indexes/AbstractJavaScriptIndexCreationTask";
 
 describe("Issue RavenDB-5669", function () {
 
@@ -23,10 +23,7 @@ describe("Issue RavenDB-5669", function () {
 
     it("working with different search term order", async () => {
         const session = store.openSession();
-        const query = session.advanced.documentQuery({
-            documentType: Animal,
-            indexName: index.getIndexName()
-        });
+        const query = session.query(Animal, Animal_Index);
 
         query.openSubclause()
             .whereEquals("type", "Cat")
@@ -42,10 +39,8 @@ describe("Issue RavenDB-5669", function () {
 
     it("working with subclause", async () => {
         const session = store.openSession();
-        const query = session.advanced.documentQuery({
-            documentType: Animal,
-            indexName: index.getIndexName()
-        });
+
+        const query = session.query(Animal, Animal_Index);
 
         query.openSubclause()
             .whereEquals("type", "Cat")
@@ -92,11 +87,16 @@ class Animal {
 }
 
 // tslint:disable-next-line:class-name
-class Animal_Index extends AbstractIndexCreationTask {
+class Animal_Index extends AbstractJavaScriptIndexCreationTask<Animal, Pick<Animal, "name" | "type">> {
     public constructor() {
         super();
 
-        this.map = "from animal in docs.Animals select new { name = animal.name, type = animal.type }";
+        this.map(Animal, a => {
+            return {
+                name: a.name,
+                type: a.type
+            }
+        });
 
         this.analyze("name", "StandardAnalyzer");
         this.index("name", "Search");

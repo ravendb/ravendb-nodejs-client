@@ -1,4 +1,4 @@
-import { DocumentConventions, IDocumentStore, ObjectTypeDescriptor } from "../../src";
+import { DocumentConventions, ObjectTypeDescriptor } from "../../src";
 import { disposeTestDocumentStore, testContext } from "../Utils/TestUtil";
 import { assertThat } from "../Utils/AssertExtensions";
 
@@ -16,7 +16,7 @@ describe("CustomEntityName", function () {
 
     const getCharactersToTestWithSpecial = () => {
         const basicChars = getChars();
-        const specialChars = [ 'Ā', 'Ȁ', 'Ѐ', 'Ԁ', '؀', '܀', 'ऀ', 'ਅ', 'ଈ', 'అ', 'ഊ', 'ข', 'ဉ', 'ᄍ', 'ሎ', 'ጇ', 'ᐌ', 'ᔎ', 'ᘀ', 'ᜩ', 'ᢹ', 'ᥤ', 'ᨇ' ];
+        const specialChars = [ "Ā", "Ȁ", "Ѐ", "Ԁ", "؀", "܀", "ऀ", "ਅ", "ଈ", "అ", "ഊ", "ข", "ဉ", "ᄍ", "ሎ", "ጇ", "ᐌ", "ᔎ", "ᘀ", "ᜩ", "ᢹ", "ᥤ", "ᨇ" ];
         return [...basicChars, ...specialChars];
     }
 
@@ -48,7 +48,7 @@ describe("CustomEntityName", function () {
 
             {
                 const session = store.openSession();
-                const results = await session.query<User>({
+                const results = await session.query({
                     collection: store.conventions.findCollectionName(User),
                     documentType: User
                 }).all();

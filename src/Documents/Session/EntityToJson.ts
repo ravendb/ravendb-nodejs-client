@@ -4,7 +4,7 @@ import { TypeUtil } from "../../Utility/TypeUtil";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { CONSTANTS } from "../../Constants";
 import { DocumentType } from "../DocumentAbstractions";
-import { TypeInfo } from "../../Mapping/ObjectMapper";
+import { TypeInfo, TypesAwareObjectMapper } from "../../Mapping/ObjectMapper";
 import { throwError } from "../../Exceptions";
 import { SetupDocumentBase } from "../SetupDocumentBase";
 import { MetadataObject } from "./MetadataObject";
@@ -48,8 +48,6 @@ export class EntityToJson {
 
         return document;
     }
-
-    //TODO: internal static object ConvertToBlittableForCompareExchangeIfNeeded(
 
     private static _convertEntityToJsonInternal(entity: object, conventions: DocumentConventions, documentInfo: DocumentInfo, removeIdentityProperty = true) {
         const entityMapper = conventions.objectMapper;
@@ -153,9 +151,7 @@ export class EntityToJson {
     /**
      * Converts a json object to an entity.
      */
-    public convertToEntity(targetEntityType: DocumentType, id: string, document: object): object;
-    public convertToEntity(targetEntityType: DocumentType, id: string, document: object, trackEntity: boolean): object;
-    public convertToEntity(targetEntityType: DocumentType, id: string, document: object, trackEntity: boolean = true): object {
+    public convertToEntity(targetEntityType: DocumentType, id: string, document: object, trackEntity: boolean): object {
         const conventions = this._session.conventions;
 
         const entityType: ObjectTypeDescriptor = conventions.getJsTypeByDocumentType(targetEntityType);
@@ -231,22 +227,32 @@ export class EntityToJson {
     }
 
     public populateEntity(entity: object, id: string, document: object): void {
-        if (!entity) {
-            throwError("InvalidArgumentException", "Entity cannot be null.");
-        }
-        
         if (!id) {
             throwError("InvalidArgumentException", "Id cannot be null.");
         }
-        
+
+        EntityToJson.populateEntity(entity, document, this._session.conventions.objectMapper);
+
+        this._session.generateEntityIdOnTheClient.trySetIdentity(entity, id);
+    }
+
+    public static populateEntity(entity: object, document: object, objectMapper: TypesAwareObjectMapper) {
+        if (!entity) {
+            throwError("InvalidArgumentException", "Entity cannot be null");
+        }
+
         if (!document) {
-            throwError("InvalidArgumentException", "Document cannot be null.");
+            throwError("InvalidArgumentException", "Document cannot be null");
+        }
+
+        if (!objectMapper) {
+            throwError("InvalidArgumentException", "ObjectMapper cannot be null");
         }
 
         try {
-            const entityValue = this._session.conventions.objectMapper.fromObjectLiteral(document);
+            const entityValue = objectMapper.fromObjectLiteral(document);
             Object.assign(entity, entityValue);
-            this._session.generateEntityIdOnTheClient.trySetIdentity(entity, id);
+
         } catch (e) {
             throwError("InvalidOperationException", "Could not populate entity.", e);
         }
@@ -262,6 +268,47 @@ export class EntityToJson {
 
         delete document[identityProperty];
         return true;
+    }
+
+    public static convertToEntity(entityClass: DocumentType, id: string, document: object, conventions: DocumentConventions) {
+        const entityType: ObjectTypeDescriptor = conventions.getJsTypeByDocumentType(entityClass);
+        try {
+            let entity;
+            const documentTypeFromConventions = conventions.getJsType(id, document);
+
+            const entityTypeInfoFromMetadata = EntityToJson._getEntityTypeInfoFromMetadata(document);
+            if (documentTypeFromConventions) {
+                const passedEntityTypeIsAssignableFromConventionsDocType =
+                    entityType
+                    && ((entityType.name === documentTypeFromConventions.name)
+                    || TypeUtil.isInstanceOf(entityType, documentTypeFromConventions));
+                if (passedEntityTypeIsAssignableFromConventionsDocType) {
+                    const mapper = conventions.objectMapper;
+                    entity = mapper.fromObjectLiteral(
+                        document, entityTypeInfoFromMetadata);
+                }
+            }
+
+            if (!entity) {
+                const mapper = conventions.objectMapper;
+                let passedTypeInfo = entityTypeInfoFromMetadata;
+                if (entityType) {
+                    passedTypeInfo =
+                        Object.assign(passedTypeInfo, { typeName: entityType.name });
+                }
+
+                entity = mapper.fromObjectLiteral(
+                    document, passedTypeInfo);
+            }
+
+            return entity;
+
+        } catch (err) {
+            throwError("InvalidOperationException",
+                `Could not convert document ${id} to entity of type `
+                + `${entityType ? entityType.name : entityType}: ${err.stack}`,
+                err);
+        }
     }
 
     public removeFromMissing(entity: object) {

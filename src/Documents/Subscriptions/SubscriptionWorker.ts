@@ -27,7 +27,7 @@ import * as Parser from "stream-json/Parser";
 import * as StreamValues from "stream-json/streamers/StreamValues";
 import { TransformKeysJsonStream } from "../../Mapping/Json/Streams/TransformKeysJsonStream";
 import { getTransformJsonKeysProfile } from "../../Mapping/Json/Streams/TransformJsonKeysProfiles";
-import { BatchFromServer } from "./BatchFromServer";
+import { BatchFromServer, CounterIncludeItem } from "./BatchFromServer";
 import { ServerNode } from "../../Http/ServerNode";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { GetTcpInfoCommand, TcpConnectionInfo } from "../../ServerWide/Commands/GetTcpInfoCommand";
@@ -224,7 +224,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             CloseWhenNoDocsLeft: options.closeWhenNoDocsLeft || false,
         };
 
-        return new Promise<number>(resolve => {
+        return new Promise<void>(resolve => {
             socket.write(JSON.stringify(payload, null, 0), () => resolve());
         });
     }
@@ -273,7 +273,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         return x.version;
     }
 
-    private _sendDropMessage(reply: TcpConnectionHeaderResponse): Promise<number> {
+    private _sendDropMessage(reply: TcpConnectionHeaderResponse): Promise<void> {
         const dropMsg = {
             operation: "Drop",
             databaseName: this._dbName,
@@ -286,7 +286,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             defaultTransform: "pascal"
         });
 
-        return new Promise<number>(resolve => {
+        return new Promise<void>(resolve => {
             this._tcpClient.write(JSON.stringify(payload, null, 0), () => resolve());
         });
     }
@@ -468,6 +468,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         Promise<BatchFromServer> {
         const incomingBatch = [] as SubscriptionConnectionServerMessage[];
         const includes = [];
+        const counterIncludes: CounterIncludeItem[] = [];
 
         let endOfBatch = false;
 
@@ -483,6 +484,9 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                     break;
                 case "Includes":
                     includes.push(receivedMessage.includes);
+                    break;
+                case "CounterIncludes":
+                    counterIncludes.push({ counterIncludes: receivedMessage.includedCounterNames, includes: receivedMessage.counterIncludes });
                     break;
                 case "EndOfBatch":
                     endOfBatch = true;
@@ -507,7 +511,8 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         }
         return {
             messages: incomingBatch,
-            includes
+            includes,
+            counterIncludes
         };
     }
 
@@ -538,7 +543,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             }
         }
         
-        return new Promise((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
             stream.once("readable", readableListener); 
             stream.once("error", errorHandler);
             stream.once("end", endHandler);

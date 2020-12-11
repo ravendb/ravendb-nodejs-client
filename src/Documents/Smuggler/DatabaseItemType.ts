@@ -19,4 +19,5 @@ export type DatabaseItemType =
     | "Attachments"
     | "CounterGroups"
     | "Subscriptions"
-    | "CompareExchangeTombstones";
+    | "CompareExchangeTombstones"
+    | "TimeSeries";

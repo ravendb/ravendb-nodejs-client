@@ -5,13 +5,13 @@ import { DatabaseRecordItemType } from "./DatabaseRecordItemType";
 export class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
     public static readonly DEFAULT_OPERATE_ON_TYPES: DatabaseItemType[] = [
         "Indexes", "Documents", "RevisionDocuments", "Conflicts", "DatabaseRecord", "Identities",
-        "CompareExchange", "Attachments", "CounterGroups", "Subscriptions"
+        "CompareExchange", "Attachments", "CounterGroups", "Subscriptions", "TimeSeries"
     ];
 
     public static readonly DEFAULT_OPERATE_ON_DATABASE_RECORD_TYPES: DatabaseRecordItemType[] = [
         "Client", "Expiration", "ExternalReplications", "PeriodicBackups", "RavenConnectionStrings",
         "RavenEtls", "Revisions", "Settings", "SqlConnectionStrings", "Sorters", "SqlEtls",
-        "HubPullReplications", "SinkPullReplications"
+        "HubPullReplications", "SinkPullReplications", "TimeSeries", "DocumentsCompression"
     ];
 
     private static readonly DEFAULT_MAX_STEPS_FOR_TRANSFORM_SCRIPT: number = 10 * 1_000;
@@ -23,10 +23,6 @@ export class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
     public removeAnalyzers: boolean;
     public transformScript: string;
     public maxStepsForTransformScript: number;
-
-    /**
-     * @deprecated
-     */
     public skipRevisionCreation: boolean;
 
     public encryptionKey: string;

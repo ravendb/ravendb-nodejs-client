@@ -12,9 +12,8 @@ import {
     SessionLoadStartingWithOptions,
 } from "./IDocumentSession";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { ErrorFirstCallback } from "../../Types/Callbacks";
 import { TypeUtil } from "../../Utility/TypeUtil";
-import { EntitiesCollectionObject, IRavenObject, ObjectTypeDescriptor } from "../../Types";
+import { ClassConstructor, EntitiesCollectionObject, IRavenObject, ObjectTypeDescriptor } from "../../Types";
 import { throwError } from "../../Exceptions";
 import { DocumentType } from "../DocumentAbstractions";
 import { LoadOperation } from "./Operations/LoadOperation";
@@ -40,7 +39,7 @@ import { MultiGetOperation } from "./Operations/MultiGetOperation";
 import { Stopwatch } from "../../Utility/Stopwatch";
 import { GetResponse } from "../Commands/MultiGet/GetResponse";
 import { CONSTANTS, HEADERS } from "../../Constants";
-import { delay, passResultToCallback } from "../../Utility/PromiseUtil";
+import { delay } from "../../Utility/PromiseUtil";
 import { ILazySessionOperations } from "./Operations/Lazy/ILazySessionOperations";
 import { LazySessionOperations } from "./Operations/Lazy/LazySessionOperations";
 import { JavaScriptArray } from "./JavaScriptArray";
@@ -67,6 +66,16 @@ import { IGraphDocumentQuery } from "./IGraphDocumentQuery";
 import { SingleNodeBatchCommand } from "../Commands/Batches/SingleNodeBatchCommand";
 import { GraphDocumentQuery } from "./GraphDocumentQuery";
 import { AbstractDocumentQuery } from "./AbstractDocumentQuery";
+import { ISessionDocumentTimeSeries } from "./ISessionDocumentTimeSeries";
+import { ISessionDocumentTypedTimeSeries } from "./ISessionDocumentTypedTimeSeries";
+import { ISessionDocumentRollupTypedTimeSeries } from "./ISessionDocumentRollupTypedTimeSeries";
+import { JavaScriptMap } from "./JavaScriptMap";
+import { SessionDocumentTimeSeries } from "./SessionDocumentTimeSeries";
+import { TimeSeriesOperations } from "../TimeSeries/TimeSeriesOperations";
+import { SessionDocumentTypedTimeSeries } from "./SessionDocumentTypedTimeSeries";
+import { SessionDocumentRollupTypedTimeSeries } from "./SessionDocumentRollupTypedTimeSeries";
+import { TIME_SERIES_ROLLUP_SEPARATOR } from "../Operations/TimeSeries/RawTimeSeriesTypes";
+import { AbstractCommonApiForIndexes } from "../Indexes/AbstractCommonApiForIndexes";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;
@@ -101,65 +110,45 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
     public numberOfRequestsInSession: number;
 
-    public conventions: DocumentConventions;
-
+    public async load<TEntity extends object = IRavenObject>(
+        id: string): Promise<TEntity>;
     public async load<TEntity extends object = IRavenObject>(
         id: string,
-        callback?: ErrorFirstCallback<TEntity>): Promise<TEntity>;
+        options?: LoadOptions<TEntity>): Promise<TEntity>;
     public async load<TEntity extends object = IRavenObject>(
         id: string,
-        options?: LoadOptions<TEntity>,
-        callback?: ErrorFirstCallback<TEntity>): Promise<TEntity>;
+        documentType?: DocumentType<TEntity>): Promise<TEntity>;
     public async load<TEntity extends object = IRavenObject>(
-        id: string,
-        documentType?: DocumentType<TEntity>,
-        callback?: ErrorFirstCallback<TEntity>): Promise<TEntity>;
+        ids: string[]): Promise<EntitiesCollectionObject<TEntity>>;
     public async load<TEntity extends object = IRavenObject>(
         ids: string[],
-        callback?: ErrorFirstCallback<EntitiesCollectionObject<TEntity>>): Promise<EntitiesCollectionObject<TEntity>>;
-    public async load<TEntity extends object = IRavenObject>(
-        ids: string[],
-        options?: LoadOptions<TEntity>,
-        callback?: ErrorFirstCallback<TEntity>):
+        options?: LoadOptions<TEntity>):
         Promise<EntitiesCollectionObject<TEntity>>;
     public async load<TEntity extends object = IRavenObject>(
         ids: string[],
-        documentType?: DocumentType<TEntity>,
-        callback?: ErrorFirstCallback<TEntity>):
+        documentType?: DocumentType<TEntity>):
         Promise<EntitiesCollectionObject<TEntity>>;
     public async load<TEntity extends object = IRavenObject>(
         idOrIds: string | string[],
-        optionsOrCallback?:
-            DocumentType<TEntity> | LoadOptions<TEntity> |
-            ErrorFirstCallback<TEntity | EntitiesCollectionObject<TEntity>>,
-        callback?: ErrorFirstCallback<TEntity | EntitiesCollectionObject<TEntity>>)
+        optionsOrDocumentType?:
+            DocumentType<TEntity> | LoadOptions<TEntity>)
         : Promise<TEntity | EntitiesCollectionObject<TEntity>> {
 
         const isLoadingSingle = !Array.isArray(idOrIds);
         const ids = !isLoadingSingle ? idOrIds as string[] : [idOrIds as string];
 
         let options: LoadOptions<TEntity>;
-        if (TypeUtil.isDocumentType(optionsOrCallback)) {
-            options = { documentType: optionsOrCallback as DocumentType<TEntity> };
-        } else if (TypeUtil.isFunction(optionsOrCallback)) {
-            callback = optionsOrCallback as ErrorFirstCallback<TEntity> || TypeUtil.NOOP;
-        } else if (TypeUtil.isObject(optionsOrCallback)) {
-            options = optionsOrCallback as LoadOptions<TEntity>;
+        if (TypeUtil.isDocumentType(optionsOrDocumentType)) {
+            options = { documentType: optionsOrDocumentType as DocumentType<TEntity> };
+        } else if (TypeUtil.isObject(optionsOrDocumentType)) {
+            options = optionsOrDocumentType as LoadOptions<TEntity>;
         }
 
-        callback = callback || TypeUtil.NOOP;
-
         const internalOpts = this._prepareLoadInternalOpts(options || {});
-        const loadInternalPromise = this.loadInternal(ids, internalOpts)
-            .then((docs: EntitiesCollectionObject<TEntity> | TEntity) => {
-                return isLoadingSingle
-                    ? docs[Object.keys(docs)[0]]
-                    : docs;
-            });
-
-        passResultToCallback(loadInternalPromise, callback);
-
-        return loadInternalPromise;
+        const docs = await this.loadInternal(ids, internalOpts);
+        return isLoadingSingle
+            ? docs[Object.keys(docs)[0]]
+            : docs;
     }
 
     private _prepareLoadInternalOpts<TEntity extends object>(options: LoadOptions<TEntity>) {
@@ -176,6 +165,14 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
                 if (builder.documentsToInclude) {
                     internalOpts.includes = [...builder.documentsToInclude];
+                }
+
+                if (builder.timeSeriesToInclude) {
+                    internalOpts.timeSeriesIncludes = [ ...builder.timeSeriesToInclude ];
+                }
+
+                if (builder.compareExchangeValuesToInclude) {
+                    internalOpts.compareExchangeValueIncludes = [ ...builder.compareExchangeValuesToInclude ];
                 }
 
                 internalOpts.includeAllCounters = builder.isAllCounters;
@@ -213,16 +210,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         }
     }
 
-    public async saveChanges(): Promise<void>;
-    public async saveChanges(callback?: ErrorFirstCallback<void>): Promise<void>;
-    public async saveChanges(callback?: ErrorFirstCallback<void>): Promise<void> {
-        callback = callback || TypeUtil.NOOP;
-        const result = this._saveChanges();
-        passResultToCallback(result, callback);
-        return result;
-    }
-
-    private async _saveChanges() {
+    public async saveChanges(): Promise<void> {
         const saveChangeOperation = new BatchOperation(this);
         let command: SingleNodeBatchCommand;
         try {
@@ -290,48 +278,33 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     public async loadStartingWith<TEntity extends object>(
-        idPrefix: string,
-        callback?: ErrorFirstCallback<TEntity[]>): Promise<TEntity[]>;
+        idPrefix: string): Promise<TEntity[]>;
     public async loadStartingWith<TEntity extends object>(
         idPrefix: string,
-        opts: SessionLoadStartingWithOptions<TEntity>,
-        callback?: ErrorFirstCallback<TEntity[]>): Promise<TEntity[]>;
+        opts: SessionLoadStartingWithOptions<TEntity>): Promise<TEntity[]>;
     public async loadStartingWith<TEntity extends object>(
         idPrefix: string,
-        optsOrCallback?: SessionLoadStartingWithOptions<TEntity> | ErrorFirstCallback<TEntity[]>,
-        callback?: ErrorFirstCallback<TEntity[]>): Promise<TEntity[]> {
+        opts?: SessionLoadStartingWithOptions<TEntity>): Promise<TEntity[]> {
 
         const loadStartingWithOperation = new LoadStartingWithOperation(this);
-        let opts: SessionLoadStartingWithOptions<TEntity>;
-        if (TypeUtil.isFunction(optsOrCallback)) {
-            callback = optsOrCallback as ErrorFirstCallback<TEntity[]>;
-        } else {
-            opts = optsOrCallback as SessionLoadStartingWithOptions<TEntity>;
-        }
 
-        opts = opts || {};
-        callback = callback || TypeUtil.NOOP;
+        opts ||= {};
 
-        const result = this._loadStartingWithInternal(idPrefix, loadStartingWithOperation, opts)
-            .then(() => loadStartingWithOperation.getDocuments<TEntity>(opts.documentType));
-        passResultToCallback(result, callback);
-        return result;
+        await this._loadStartingWithInternal(idPrefix, loadStartingWithOperation, opts);
+        return loadStartingWithOperation.getDocuments<TEntity>(opts.documentType);
     }
 
     public async loadStartingWithIntoStream<TEntity extends object>(
         idPrefix: string,
-        writable: stream.Writable,
-        callback?: ErrorFirstCallback<void>): Promise<void>;
+        writable: stream.Writable): Promise<void>;
     public async loadStartingWithIntoStream<TEntity extends object>(
         idPrefix: string,
         writable: stream.Writable,
-        opts: SessionLoadStartingWithOptions<TEntity>,
-        callback?: ErrorFirstCallback<void>): Promise<void>;
+        opts: SessionLoadStartingWithOptions<TEntity>): Promise<void>;
     public async loadStartingWithIntoStream<TEntity extends object>(
         idPrefix: string,
         writable: stream.Writable,
-        optsOrCallback?: SessionLoadStartingWithOptions<TEntity> | ErrorFirstCallback<void>,
-        callback?: ErrorFirstCallback<void>): Promise<void> {
+        opts?: SessionLoadStartingWithOptions<TEntity>): Promise<void> {
 
         if (!writable) {
             throwError("InvalidArgumentException", "writable cannot be null.");
@@ -341,32 +314,14 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         }
 
         const loadStartingWithOperation = new LoadStartingWithOperation(this);
-        let opts: SessionLoadStartingWithOptions<TEntity>;
-        if (TypeUtil.isFunction(optsOrCallback)) {
-            callback = optsOrCallback as ErrorFirstCallback<void>;
-        } else {
-            opts = optsOrCallback as SessionLoadStartingWithOptions<TEntity>;
-        }
 
-        opts = opts || {};
-        callback = callback || TypeUtil.NOOP;
-        const result = this._loadStartingWithInternal(idPrefix, loadStartingWithOperation, opts, writable)
-        // tslint:disable-next-line:no-empty
-            .then(() => {
-            });
-        passResultToCallback(result, callback);
-        return result;
+        opts ||= {};
+        await this._loadStartingWithInternal(idPrefix, loadStartingWithOperation, opts, writable);
     }
 
     public async loadIntoStream(
-        ids: string[], writable: stream.Writable, callback?: ErrorFirstCallback<void>): Promise<void>;
-    public async loadIntoStream(
-        ids: string[], writable: stream.Writable): Promise<void>;
-    public async loadIntoStream(
-        ids: string[], writable: stream.Writable, callback?: ErrorFirstCallback<void>): Promise<void> {
-        const result = this._loadInternal(ids, new LoadOperation(this), writable);
-        passResultToCallback(result, callback);
-        return result;
+        ids: string[], writable: stream.Writable): Promise<void> {
+        return this._loadInternal(ids, new LoadOperation(this), writable);
     }
 
     private async _loadStartingWithInternal<TEntity extends object>(
@@ -414,6 +369,9 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         } else {
             loadOperation.withCounters(opts.counterIncludes);
         }
+
+        loadOperation.withTimeSeries(opts.timeSeriesIncludes);
+        loadOperation.withCompareExchange(opts.compareExchangeValueIncludes);
 
         const command = loadOperation.createRequest();
         if (command) {
@@ -465,12 +423,8 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     public patch<TEntity extends object, UValue>(
         entity: TEntity, path: string, value: UValue): void;
     public patch<TEntity extends object, UValue>(
-        id: string, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
-    public patch<TEntity extends object, UValue>(
-        entity: TEntity, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
-    public patch<TEntity extends object, UValue>(
         entityOrId: TEntity | string, path: string,
-        valueOrArrayAdder: UValue | ((array: JavaScriptArray<UValue>) => void)): void {
+        value: UValue): void {
 
         let id: string;
         if (TypeUtil.isString(entityOrId)) {
@@ -481,25 +435,70 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         }
 
         let patchRequest: PatchRequest;
-        if (TypeUtil.isFunction(valueOrArrayAdder)) {
-            const scriptArray = new JavaScriptArray(this._customCount++, path);
-            valueOrArrayAdder(scriptArray);
+        patchRequest = new PatchRequest();
+        patchRequest.script = "this." + path + " = args.val_" + this._valsCount + ";";
+        const valKey = "val_" + this._valsCount;
+        patchRequest.values = {};
+        patchRequest.values[valKey] = value;
 
-            patchRequest = new PatchRequest();
-            patchRequest.script = scriptArray.script;
-            patchRequest.values = scriptArray.parameters;
-        } else { // value
-            patchRequest = new PatchRequest();
-            patchRequest.script = "this." + path + " = args.val_" + this._valsCount + ";";
-            const valKey = "val_" + this._valsCount;
-            patchRequest.values = {};
-            patchRequest.values[valKey] = valueOrArrayAdder;
-
-            this._valsCount++;
-        }
+        this._valsCount++;
 
         if (!this._tryMergePatches(id, patchRequest)) {
             this.defer(new PatchCommandData(id, null, patchRequest, null));
+        }
+    }
+
+    public patchArray<TEntity extends object, UValue>(
+        id: string, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
+    public patchArray<TEntity extends object, UValue>(
+        entity: TEntity, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
+    public patchArray<TEntity extends object, UValue>(
+        entityOrId: TEntity | string, path: string,
+        arrayAdder: (array: JavaScriptArray<UValue>) => void): void {
+
+        let id: string;
+        if (TypeUtil.isString(entityOrId)) {
+            id = entityOrId;
+        } else {
+            const metadata = this.getMetadataFor(entityOrId as TEntity);
+            id = metadata["@id"];
+        }
+
+        let patchRequest: PatchRequest;
+        const scriptArray = new JavaScriptArray(this._customCount++, path);
+        arrayAdder(scriptArray);
+
+        patchRequest = new PatchRequest();
+        patchRequest.script = scriptArray.script;
+        patchRequest.values = scriptArray.parameters;
+
+        if (!this._tryMergePatches(id, patchRequest)) {
+            this.defer(new PatchCommandData(id, null, patchRequest, null));
+        }
+    }
+
+    patchObject<TEntity extends object, TKey, TValue>(
+        entity: TEntity, pathToObject: string, mapAdder: (map: JavaScriptMap<TKey, TValue>) => void): void;
+    patchObject<TEntity extends object, TKey, TValue>(
+        id: string, pathToObject: string, mapAdder: (map: JavaScriptMap<TKey, TValue>) => void): void;
+    patchObject<TEntity extends object, TKey, TValue>(
+        idOrEntity: string | TEntity, pathToObject: string, mapAdder: (map: JavaScriptMap<TKey, TValue>) => void): void {
+        if (TypeUtil.isString(idOrEntity)) {
+            const scriptMap = new JavaScriptMap(this._customCount++, pathToObject);
+
+            mapAdder(scriptMap);
+
+            const patchRequest = new PatchRequest();
+            patchRequest.script = scriptMap.getScript();
+            patchRequest.values = scriptMap.parameters;
+
+            if (!this._tryMergePatches(idOrEntity, patchRequest)) {
+                this.defer(new PatchCommandData(idOrEntity, null, patchRequest, null));
+            }
+        } else {
+            const metadata = this.getMetadataFor(idOrEntity);
+            const id = metadata[CONSTANTS.Documents.Metadata.ID];
+            this.patchObject(id, pathToObject, mapAdder);
         }
     }
 
@@ -547,12 +546,14 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     public query<TEntity extends object>(documentType: DocumentType<TEntity>): IDocumentQuery<TEntity>;
+    public query<TEntity extends object>(documentType: DocumentType<TEntity>, index: new () => AbstractCommonApiForIndexes): IDocumentQuery<TEntity>;
     public query<TEntity extends object>(opts: DocumentQueryOptions<TEntity>): IDocumentQuery<TEntity>;
     public query<TEntity extends object>(
-        docTypeOrOpts: DocumentType<TEntity> | DocumentQueryOptions<TEntity>): IDocumentQuery<TEntity> {
+        docTypeOrOpts: DocumentType<TEntity> | DocumentQueryOptions<TEntity>, index?: new () => AbstractCommonApiForIndexes): IDocumentQuery<TEntity> {
         if (TypeUtil.isDocumentType(docTypeOrOpts)) {
             return this.documentQuery({
-                documentType: docTypeOrOpts as DocumentType<TEntity>
+                documentType: docTypeOrOpts as DocumentType<TEntity>,
+                index
             });
         }
 
@@ -568,6 +569,14 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             opts = { documentType: documentTypeOrOpts as DocumentType<T> };
         } else {
             opts = documentTypeOrOpts as AdvancedDocumentQueryOptions<T>;
+
+            const { index, ...restOpts } = opts;
+            if (index) {
+                opts = {
+                    ...restOpts,
+                    indexName: new opts.index().getIndexName()
+                }
+            }
         }
 
         if (opts.documentType) {
@@ -627,8 +636,23 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         }
         return this._clusterTransaction;
     }
-    
-    protected get _clusterSession(): ClusterTransactionOperationsBase {
+
+    protected _hasClusterSession(): boolean {
+        return !!this._clusterTransaction;
+    }
+
+    protected _clearClusterSession(): void {
+        if (!this._hasClusterSession()) {
+            return;
+        }
+
+        this.clusterSession.clear();
+    }
+
+    public get clusterSession(): ClusterTransactionOperationsBase {
+        if (!this._clusterTransaction) {
+            this._clusterTransaction = new ClusterTransactionOperations(this);
+        }
         return this._clusterTransaction;
     }
 
@@ -750,11 +774,6 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         query: IDocumentQuery<T>,
         streamQueryStats: StreamQueryStatisticsCallback)
         : Promise<DocumentResultStream<T>>;
-    public async stream<T extends object>(
-        query: IDocumentQuery<T>,
-        streamQueryStats: StreamQueryStatisticsCallback,
-        callback: ErrorFirstCallback<DocumentResultStream<T>>)
-        : Promise<DocumentResultStream<T>>;
     public async stream<T extends object>(query: IRawDocumentQuery<T>)
         : Promise<DocumentResultStream<T>>;
     public async stream<T extends object>(
@@ -766,22 +785,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     public async stream<T extends object>(idPrefix: string, opts: SessionLoadStartingWithOptions<T>)
         : Promise<DocumentResultStream<T>>;
     public async stream<T extends object>(
-        idPrefix: string,
-        opts: SessionLoadStartingWithOptions<T>,
-        callback: ErrorFirstCallback<DocumentResultStream<T>>)
-        : Promise<DocumentResultStream<T>>;
-    public async stream<T extends object>(
         queryOrIdPrefix: string | IDocumentQuery<T> | IRawDocumentQuery<T>,
-        optsOrStatsCallback?: SessionLoadStartingWithOptions<T> | StreamQueryStatisticsCallback,
-        callback?: ErrorFirstCallback<DocumentResultStream<T>>)
-        : Promise<DocumentResultStream<T>> {
-        const result = (this._stream as any)(...Array.from(arguments) as any);
-        passResultToCallback(result, callback);
-        return result;
-    }
-
-    private async _stream<T extends object>(
-        queryOrIdPrefix: string | AbstractDocumentQuery<T, any>,
         optsOrStatsCallback?: SessionLoadStartingWithOptions<T> | StreamQueryStatisticsCallback)
         : Promise<DocumentResultStream<T>> {
         if (TypeUtil.isString(queryOrIdPrefix)) {
@@ -794,9 +798,10 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         }
 
         return this._streamQueryResults(
-            queryOrIdPrefix as (AbstractDocumentQuery<T, any>),
+            queryOrIdPrefix as unknown as (AbstractDocumentQuery<T, any>),
             optsOrStatsCallback as StreamQueryStatisticsCallback);
     }
+
 
     private async _streamStartingWith<T extends object>(
         idPrefix: string,
@@ -875,6 +880,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
                 const changeVector = metadata[CONSTANTS.Documents.Metadata.CHANGE_VECTOR];
                 // MapReduce indexes return reduce results that don't have @id property
                 const id = metadata[CONSTANTS.Documents.Metadata.ID] || null;
+                //TODO: pass timeseries fields!
                 const entity = QueryOperation.deserialize(
                     id, doc, metadata, fieldsToFetchToken || null, true, session, clazz, isProjectInto);
                 callback(null, {
@@ -899,25 +905,6 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
      *  Returns the results of a query directly into stream
      */
     public async streamInto<T extends object>(
-        query: IDocumentQuery<T>, writable: stream.Writable, callback: ErrorFirstCallback<void>): Promise<void>;
-    /**
-     *  Returns the results of a query directly into stream
-     */
-    public async streamInto<T extends object>(
-        query: IRawDocumentQuery<T>, writable: stream.Writable, callback: ErrorFirstCallback<void>): Promise<void>;
-    /**
-     *  Returns the results of a query directly into stream
-     */
-    public async streamInto<T extends object>(
-        query: IRawDocumentQuery<T> | IDocumentQuery<T>,
-        writable: stream.Writable,
-        callback?: ErrorFirstCallback<void>): Promise<void> {
-        const result = this._streamInto(query, writable);
-        passResultToCallback(result, callback);
-        return result;
-    }
-
-    private async _streamInto<T extends object>(
         query: IRawDocumentQuery<T> | IDocumentQuery<T>,
         writable: stream.Writable): Promise<void> {
         const streamOperation = new StreamOperation(this);
@@ -935,5 +922,41 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     public graphQuery<TEntity extends object>(
         query: string, documentType?: DocumentType<TEntity>): IGraphDocumentQuery<TEntity> {
         return new GraphDocumentQuery<TEntity>(this, query, documentType);
+    }
+
+    public timeSeriesFor(documentId: string, name: string): ISessionDocumentTimeSeries;
+    public timeSeriesFor(entity:any, name: string): ISessionDocumentTimeSeries;
+    public timeSeriesFor<T extends object>(documentId: string, clazz: ClassConstructor<T>): ISessionDocumentTypedTimeSeries<T>;
+    public timeSeriesFor<T extends object>(documentId: string, name: string, clazz: ClassConstructor<T>): ISessionDocumentTypedTimeSeries<T>;
+    public timeSeriesFor<T extends object>(entity: object, clazz: ClassConstructor<T>): ISessionDocumentTypedTimeSeries<T>;
+    public timeSeriesFor<T extends object>(entity: object, name: string, clazz: ClassConstructor<T>): ISessionDocumentTypedTimeSeries<T>;
+    public timeSeriesFor<T extends object>(entityOrDocumentId: string | object, nameOrClass: string | ClassConstructor<T>, clazz?: ClassConstructor<T>): ISessionDocumentTypedTimeSeries<T> | ISessionDocumentTimeSeries {
+        if (clazz) {
+            const name = nameOrClass as string;
+            const tsName = name ?? TimeSeriesOperations.getTimeSeriesName(clazz, this.conventions);
+            return new SessionDocumentTypedTimeSeries(this, entityOrDocumentId, tsName, clazz);
+        }
+
+        if (TypeUtil.isString(nameOrClass)) {
+            return new SessionDocumentTimeSeries(this, entityOrDocumentId, nameOrClass);
+        } else {
+            const tsName = TimeSeriesOperations.getTimeSeriesName(nameOrClass, this.conventions);
+            return new SessionDocumentTypedTimeSeries(this, entityOrDocumentId, tsName, nameOrClass);
+        }
+    }
+
+    timeSeriesRollupFor<T extends object>(entity: object, policy: string, clazz: ClassConstructor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
+    timeSeriesRollupFor<T extends object>(entity: object, policy: string, raw: string, clazz: ClassConstructor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
+    timeSeriesRollupFor<T extends object>(documentId: string, policy: string, clazz: ClassConstructor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
+    timeSeriesRollupFor<T extends object>(documentId: string, policy: string, raw: string, clazz: ClassConstructor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
+    timeSeriesRollupFor<T extends object>(entityOrDocumentId: string | object, policy: string, rawOrClass: string | ClassConstructor<T>, clazz?: ClassConstructor<T>): ISessionDocumentRollupTypedTimeSeries<T> {
+        if (clazz) {
+            const name = rawOrClass as string;
+            const tsName = name ?? TimeSeriesOperations.getTimeSeriesName(clazz, this.conventions);
+            return new SessionDocumentRollupTypedTimeSeries(this, entityOrDocumentId, tsName + TIME_SERIES_ROLLUP_SEPARATOR + policy, clazz);
+        }
+
+        const tsName = TimeSeriesOperations.getTimeSeriesName(rawOrClass as ClassConstructor<T>, this.conventions);
+        return new SessionDocumentRollupTypedTimeSeries(this, entityOrDocumentId, tsName + TIME_SERIES_ROLLUP_SEPARATOR + policy, rawOrClass as ClassConstructor<T>);
     }
 }

@@ -31,12 +31,11 @@ import { DocumentSubscriptions } from "./Subscriptions/DocumentSubscriptions";
 import { DocumentStore } from "./DocumentStore";
 import { TypeUtil } from "../Utility/TypeUtil";
 import { CaseInsensitiveKeysMap } from "../Primitives/CaseInsensitiveKeysMap";
-import { ErrorFirstCallback } from "../Types/Callbacks";
-import { passResultToCallback } from "../Utility/PromiseUtil";
-import { AbstractIndexCreationTask } from "./Indexes/AbstractIndexCreationTask";
 import { SessionOptions } from "./Session/SessionOptions";
 import { DatabaseSmuggler } from "./Smuggler/DatabaseSmuggler";
 import { IDisposable } from "../Types/Contracts";
+import { TimeSeriesOperations } from "./TimeSeries/TimeSeriesOperations";
+import { IAbstractIndexCreationTask } from "./Indexes/IAbstractIndexCreationTask";
 
 export abstract class DocumentStoreBase
     extends EventEmitter
@@ -76,50 +75,34 @@ export abstract class DocumentStoreBase
     public abstract openSession(database: string): IDocumentSession;
     public abstract openSession(sessionOptions: SessionOptions): IDocumentSession;
 
-    public executeIndex(task: AbstractIndexCreationTask): Promise<void>;
-    public executeIndex(task: AbstractIndexCreationTask, database: string): Promise<void>;
-    public executeIndex(task: AbstractIndexCreationTask, callback: ErrorFirstCallback<void>): Promise<void>;
+    public executeIndex(task: IAbstractIndexCreationTask): Promise<void>;
+    public executeIndex(task: IAbstractIndexCreationTask, database: string): Promise<void>;
     public executeIndex(
-        task: AbstractIndexCreationTask, 
-        database: string, 
-        callback: ErrorFirstCallback<void>): Promise<void>;
-    public executeIndex(
-        task: AbstractIndexCreationTask, 
-        databaseOrCallback?: string | ErrorFirstCallback<void>, 
-        callback?: ErrorFirstCallback<void>): Promise<void> {
+        task: IAbstractIndexCreationTask,
+        database?: string): Promise<void> {
         this.assertInitialized();
-        const database = TypeUtil.isFunction(databaseOrCallback)
-            ? null
-            : databaseOrCallback as string;
-        const resultPromise = task.execute(this, this.conventions, database);
-        passResultToCallback(resultPromise, callback || TypeUtil.NOOP);
-        return resultPromise;
+        return task.execute(this, this.conventions, database);
     }
 
-    public async executeIndexes(tasks: AbstractIndexCreationTask[]): Promise<void>;
-    public async executeIndexes(
-        tasks: AbstractIndexCreationTask[], callback: ErrorFirstCallback<void>): Promise<void>;
-    public async executeIndexes(tasks: AbstractIndexCreationTask[], database: string): Promise<void>;
-    public async executeIndexes(
-        tasks: AbstractIndexCreationTask[], database: string, callback: ErrorFirstCallback<void>): Promise<void>;
-    public async executeIndexes(
-        tasks: AbstractIndexCreationTask[], 
-        databaseOrCallback?: string | ErrorFirstCallback<void>, 
-        callback?: ErrorFirstCallback<void>): Promise<void> {
+    public async executeIndexes(tasks: IAbstractIndexCreationTask[]): Promise<void>;
+    public async executeIndexes(tasks: IAbstractIndexCreationTask[], database: string): Promise<void>;
+    public async executeIndexes(tasks: IAbstractIndexCreationTask[], database?: string): Promise<void> {
         this.assertInitialized();
         const indexesToAdd = IndexCreation.createIndexesToAdd(tasks, this.conventions);
-        const database = TypeUtil.isFunction(databaseOrCallback)
-            ? null
-            : databaseOrCallback as string;
 
-        const resultPromise = this.maintenance
+        await this.maintenance
             .forDatabase(database || this.database)
-            .send(new PutIndexesOperation(...indexesToAdd))
-            // tslint:disable-next-line:no-empty
-            .then(() => {});
-        
-        passResultToCallback(resultPromise, callback || TypeUtil.NOOP);
-        return resultPromise;
+            .send(new PutIndexesOperation(...indexesToAdd));
+    }
+
+    private _timeSeriesOperation: TimeSeriesOperations;
+
+    public get timeSeries() {
+        if (!this._timeSeriesOperation) {
+            this._timeSeriesOperation = new TimeSeriesOperations(this);
+        }
+
+        return this._timeSeriesOperation;
     }
 
     private _conventions: DocumentConventions;

@@ -1,2 +1,2 @@
-export * from "./AbstractIndexCreationTask";
-export * from "./AbstractMultiMapIndexCreationTask";
+export * from "./AbstractCsharpIndexCreationTask";
+export * from "./AbstractCsharpMultiMapIndexCreationTask";

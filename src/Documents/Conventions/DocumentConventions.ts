@@ -5,7 +5,7 @@ import {
 import {
     ObjectTypeDescriptor,
     ObjectLiteralDescriptor,
-    ClassConstructor, EntityConstructor
+    ClassConstructor, EntityConstructor, Field
 } from "../../Types";
 import * as pluralize from "pluralize";
 import { ClientConfiguration } from "../Operations/Configuration/ClientConfiguration";
@@ -15,10 +15,13 @@ import { CONSTANTS } from "../../Constants";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { DateUtil, DateUtilOpts } from "../../Utility/DateUtil";
 import { CasingConvention, ObjectUtil, ObjectChangeCaseOptions } from "../../Utility/ObjectUtil";
+import { LoadBalanceBehavior } from "../../Http/LoadBalanceBehavior";
+import { BulkInsertConventions } from "./BulkInsertConventions";
+import { InMemoryDocumentSessionOperations } from "../Session/InMemoryDocumentSessionOperations";
 
 export type IdConvention = (databaseName: string, entity: object) => Promise<string>;
 export type IValueForQueryConverter<T> =
-    (fieldName: string, value: T, forRange: boolean, stringValue: (value: any) => void) => boolean;
+    (fieldName: Field<T>, value: T, forRange: boolean, stringValue: (value: any) => void) => boolean;
 
 function createServerDefaults() {
     const conventions = new DocumentConventions();
@@ -53,8 +56,12 @@ export class DocumentConventions {
     private _identityPartsSeparator: string;
     private _disableTopologyUpdates: boolean;
 
+    private _shouldIgnoreEntityChanges: (sessionOperations: InMemoryDocumentSessionOperations, entity: object, documentId: string) => boolean;
+
     private _transformClassCollectionNameToDocumentIdPrefix: (maybeClassCollectionName: string) => string;
     private _documentIdGenerator: IdConvention;
+
+    private _loadBalancerPerSessionContextSelector: (databaseName: string) => string;
 
     private _findCollectionName: (constructorOrTypeChecker: ObjectTypeDescriptor) => string;
 
@@ -71,6 +78,8 @@ export class DocumentConventions {
     private _firstBroadcastAttemptTimeout: number | undefined;
     private _secondBroadcastAttemptTimeout: number | undefined;
 
+    private _loadBalancerContextSeed: number;
+    private _loadBalanceBehavior: LoadBalanceBehavior;
     private _readBalanceBehavior: ReadBalanceBehavior;
     private _maxHttpCacheSize: number;
 
@@ -84,6 +93,12 @@ export class DocumentConventions {
 
     private _useCompression: boolean;
     private _sendApplicationIdentifier: boolean;
+
+    private readonly _bulkInsert: BulkInsertConventions;
+
+    public get bulkInsert() {
+        return this._bulkInsert;
+    }
 
     public constructor() {
         this._readBalanceBehavior = "None";
@@ -119,6 +134,7 @@ export class DocumentConventions {
         this._findCollectionName = type => DocumentConventions.defaultGetCollectionName(type);
 
         this._maxNumberOfRequestsPerSession = 30;
+        this._bulkInsert = new BulkInsertConventions(() => this._assertNotFrozen());
         this._maxHttpCacheSize = 128 * 1024 * 1024;
 
         this._knownEntityTypes = new Map();
@@ -234,6 +250,47 @@ export class DocumentConventions {
     public set readBalanceBehavior(value: ReadBalanceBehavior) {
         this._assertNotFrozen();
         this._readBalanceBehavior = value;
+    }
+
+    public get loadBalancerContextSeed() {
+        return this._loadBalancerContextSeed;
+    }
+
+    public set loadBalancerContextSeed(seed: number) {
+        this._assertNotFrozen();
+        this._loadBalancerContextSeed = seed;
+    }
+
+    /**
+     * We have to make this check so if admin activated this, but client code did not provide the selector,
+     * it is still disabled. Relevant if we have multiple clients / versions at once.
+     */
+    public get loadBalanceBehavior() {
+        return this._loadBalanceBehavior;
+    }
+
+    public set loadBalanceBehavior(loadBalanceBehavior: LoadBalanceBehavior) {
+        this._assertNotFrozen();
+        this._loadBalanceBehavior = loadBalanceBehavior;
+    }
+
+    /**
+     * Gets the function that allow to specialize the topology
+     * selection for a particular session. Used in load balancing
+     * scenarios
+     */
+    public get loadBalancerPerSessionContextSelector(): (databaseName: string) => string {
+        return this._loadBalancerPerSessionContextSelector;
+    }
+
+    /**
+     * Sets the function that allow to specialize the topology
+     * selection for a particular session. Used in load balancing
+     * scenarios
+     * @param selector selector to use
+     */
+    public set loadBalancerPerSessionContextSelector(selector: (databaseName: string) => string) {
+        this._loadBalancerPerSessionContextSelector = selector;
     }
 
     public get entityFieldNameConvention(): CasingConvention {
@@ -413,7 +470,22 @@ export class DocumentConventions {
 
     public set identityPartsSeparator(value: string) {
         this._assertNotFrozen();
+
+        if (this.identityPartsSeparator === "|") {
+            throwError("InvalidArgumentException", "Cannot set identity parts separator to '|'");
+        }
+
         this._identityPartsSeparator = value;
+    }
+
+    public get shouldIgnoreEntityChanges() {
+        return this._shouldIgnoreEntityChanges;
+    }
+
+    public set shouldIgnoreEntityChanges(
+        shouldIgnoreEntityChanges: (sessionOperations: InMemoryDocumentSessionOperations, entity: object, documentId: string) => boolean) {
+        this._assertNotFrozen();
+        this._shouldIgnoreEntityChanges = shouldIgnoreEntityChanges;
     }
 
     public get disableTopologyUpdates(): boolean {
@@ -605,8 +677,11 @@ export class DocumentConventions {
         }
 
         if (configuration.disabled && orig) { // need to revert to original values
-            this._maxNumberOfRequestsPerSession = orig.maxNumberOfRequestsPerSession;
-            this._readBalanceBehavior = orig.readBalanceBehavior;
+            this._maxNumberOfRequestsPerSession = orig.maxNumberOfRequestsPerSession ?? this.maxNumberOfRequestsPerSession;
+            this._readBalanceBehavior = orig.readBalanceBehavior ?? this._readBalanceBehavior;
+            this._identityPartsSeparator = orig.identityPartsSeparator ?? this._identityPartsSeparator;
+            this._loadBalanceBehavior = orig.loadBalanceBehavior ?? this._loadBalanceBehavior;
+            this._loadBalancerContextSeed = orig.loadBalancerContextSeed ?? this._loadBalancerContextSeed;
 
             this._originalConfiguration = null;
             return;
@@ -617,14 +692,37 @@ export class DocumentConventions {
                 etag: -1,
                 maxNumberOfRequestsPerSession: this._maxNumberOfRequestsPerSession,
                 readBalanceBehavior: this._readBalanceBehavior,
+                identityPartsSeparator: this._identityPartsSeparator,
+                loadBalanceBehavior: this._loadBalanceBehavior,
+                loadBalancerContextSeed: this._loadBalancerContextSeed,
                 disabled: false
             };
         }
 
         this._maxNumberOfRequestsPerSession =
-            configuration.maxNumberOfRequestsPerSession || this._originalConfiguration.maxNumberOfRequestsPerSession;
+            configuration.maxNumberOfRequestsPerSession
+            ?? this._originalConfiguration.maxNumberOfRequestsPerSession
+            ?? this._maxNumberOfRequestsPerSession;
+
         this._readBalanceBehavior =
-            configuration.readBalanceBehavior || this._originalConfiguration.readBalanceBehavior;
+            configuration.readBalanceBehavior
+            ?? this._originalConfiguration.readBalanceBehavior
+            ?? this._readBalanceBehavior;
+
+        this._loadBalanceBehavior =
+            configuration.loadBalanceBehavior
+            ?? this._originalConfiguration.loadBalanceBehavior
+            ?? this._loadBalanceBehavior;
+
+        this._loadBalancerContextSeed =
+            configuration.loadBalancerContextSeed
+            ?? this._originalConfiguration.loadBalancerContextSeed
+            ?? this._loadBalancerContextSeed;
+
+        this._identityPartsSeparator =
+            configuration.identityPartsSeparator
+            ?? this._originalConfiguration.identityPartsSeparator
+            ?? this._identityPartsSeparator;
     }
 
     public static defaultTransformCollectionNameToDocumentIdPrefix(collectionName: string): string {
@@ -666,8 +764,7 @@ export class DocumentConventions {
     }
     */
 
-    public tryConvertValueForQuery
-    (fieldName: string, value: any, forRange: boolean, strValue: (value: any) => void) {
+    public tryConvertValueToObjectForQuery(fieldName: string, value: any, forRange: boolean, strValue: (value: any) => void) {
         for (const queryValueConverter of this._listOfQueryValueToObjectConverters) {
             if (!(value instanceof queryValueConverter.Type)) {
                 continue;
@@ -800,5 +897,6 @@ export class DocumentConventions {
         }
     }
 }
+
 
 DocumentConventions.defaultConventions.freeze();

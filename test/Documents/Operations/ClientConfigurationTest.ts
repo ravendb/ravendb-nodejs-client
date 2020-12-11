@@ -28,7 +28,9 @@ describe("Client configuration", function () {
         const configurationToSave: ClientConfiguration = {
             maxNumberOfRequestsPerSession: 80,
             readBalanceBehavior: "FastestNode",
-            disabled: true
+            disabled: true,
+            loadBalanceBehavior: "None",
+            loadBalancerContextSeed: 0
         };
 
         const saveOperation = new PutServerWideClientConfigurationOperation(configurationToSave);
@@ -44,6 +46,10 @@ describe("Client configuration", function () {
             .isTrue();
         assertThat(newConfiguration.maxNumberOfRequestsPerSession)
             .isEqualTo(80);
+        assertThat(newConfiguration.loadBalancerContextSeed)
+            .isEqualTo(0);
+        assertThat(newConfiguration.loadBalanceBehavior)
+            .isEqualTo("None");
         assertThat(newConfiguration.readBalanceBehavior)
             .isEqualTo("FastestNode");
     });

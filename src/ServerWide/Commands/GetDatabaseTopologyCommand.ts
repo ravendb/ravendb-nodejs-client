@@ -24,6 +24,7 @@ export class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
     constructor(debugTag?: string, applicationIdentifier?: string) {
         super();
         this._debugTag = debugTag;
+        this.timeout = 15_000;
         this._applicationIdentifier = applicationIdentifier;
     }
 
@@ -53,18 +54,17 @@ export class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
         }
 
         let body: string = null;
-        return this._pipeline<TopologyDto>()
+        const rawTpl = await this._pipeline<TopologyDto>()
             .collectBody(_ => body = _)
             .parseJsonSync()
             .objectKeysTransform("camel")
-            .process(bodyStream)
-            .then(rawTpl => {
-                const nodes = rawTpl.nodes
-                    ? rawTpl.nodes.map(x => Object.assign(new ServerNode(), x))
-                    : null;
-                this.result = new Topology(rawTpl.etag, nodes);
-                return body;
-            });
+            .process(bodyStream);
+
+        const nodes = rawTpl.nodes
+            ? rawTpl.nodes.map(x => Object.assign(new ServerNode(), x))
+            : null;
+        this.result = new Topology(rawTpl.etag, nodes);
+        return body;
     }
 
     public get isReadRequest(): boolean {

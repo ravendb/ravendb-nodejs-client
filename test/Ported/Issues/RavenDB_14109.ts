@@ -27,7 +27,7 @@ describe("RavenDB_14109Test", function () {
 
         {
             const session = store.openSession();
-            const query = await session.query<Company>(Company);
+            const query = await session.query(Company);
             let stats: StreamQueryStatistics;
 
             const queryStream = await session.advanced.stream(query, s => stats = s);

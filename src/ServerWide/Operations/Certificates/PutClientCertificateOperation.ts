@@ -25,6 +25,10 @@ export class PutClientCertificateOperation implements IServerOperation<void> {
             throwError("InvalidArgumentException", "Permissions cannot be null.");
         }
 
+        if (!name) {
+            throwError("InvalidArgumentException", "Name cannot be null");
+        }
+
         this._certificate = certificate;
         this._permissions = permissions;
         this._name = name;

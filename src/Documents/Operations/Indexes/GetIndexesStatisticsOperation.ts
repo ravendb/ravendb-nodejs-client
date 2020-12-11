@@ -45,21 +45,19 @@ export class GetIndexesStatisticsCommand extends RavenCommand<IndexStats[]> {
         }
 
         let body: string = null;
-        await this._defaultPipeline(_ => body = _).process(bodyStream)
-            .then(results => {
-                for (const r of results["results"]) {
-                    r.collections = Object.keys(r.collections)
-                        .reduce((result, next) => [ ...result, [ next, result[next] ]], []);
-                }
+        const results = await this._defaultPipeline(_ => body = _).process(bodyStream);
+        for (const r of results["results"]) {
+            r.collections = Object.keys(r.collections)
+                .reduce((result, next) => [ ...result, [ next, result[next] ]], []);
+        }
 
-                const obj = this._reviveResultTypes(
-                    results,
-                    this._conventions, 
-                    typeInfo, 
-                    knownTypes);
+        const obj = this._reviveResultTypes(
+            results,
+            this._conventions,
+            typeInfo,
+            knownTypes);
 
-                this.result = obj["results"];
-            });
+        this.result = obj["results"];
         return body;
     }
 

@@ -87,13 +87,11 @@ export abstract class RavenCommand<TResult> {
         return JsonSerializer.getDefaultForCommandPayload();
     }
 
-    public setResponseFromCache(cachedValue: string): Promise<void> {
+    public async setResponseFromCache(cachedValue: string): Promise<void> {
         const readable = new stream.Readable();
         readable.push(cachedValue);
         readable.push(null);
-        return this.setResponseAsync(readable, true)
-        // tslint:disable-next-line:no-empty
-            .then(() => {});
+        await this.setResponseAsync(readable, true);
     }
 
     protected _defaultPipeline(
@@ -116,7 +114,7 @@ export abstract class RavenCommand<TResult> {
             this._responseType);
     }
 
-    public send(agent: http.Agent,
+    public async send(agent: http.Agent,
         requestOptions: HttpRequestParameters): Promise<{ response: HttpResponse, bodyStream: stream.Readable }> {
         const { body, uri, ...restOptions } = requestOptions;
         log.info(`Send command ${this.constructor.name} to ${uri}${body ? " with body " + body : ""}.`);
@@ -127,24 +125,16 @@ export abstract class RavenCommand<TResult> {
 
         const optionsToUse = { body, ...restOptions, agent } as RequestInit;
 
-        return new Promise((resolve, reject) => {
-            const passthrough = new stream.PassThrough();
-            try {
-                fetch(uri, optionsToUse)
-                    .then(response => {
-                        passthrough.pause();
-                        response.body
-                            .pipe(passthrough);
-                        resolve({
-                            response,
-                            bodyStream: passthrough
-                        });
-                    })
-                    .catch(reject)
-            } catch (err) {
-                reject(err);
-            }
-        });
+        const passthrough = new stream.PassThrough();
+        const response = await fetch(uri, optionsToUse);
+        passthrough.pause();
+        response.body
+            .pipe(passthrough);
+
+        return {
+            response,
+            bodyStream: passthrough
+        };
     }
 
     public setResponseRaw(response: HttpResponse, body: string): void {

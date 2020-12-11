@@ -1,5 +1,4 @@
 import {
-    AbstractIndexCreationTask,
     DisableIndexOperation,
     GetIndexStatisticsOperation,
     IDocumentStore
@@ -7,6 +6,7 @@ import {
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
 import { assertThat, assertThrows } from "../../Utils/AssertExtensions";
 import { User } from "../../Assets/Entities";
+import { AbstractJavaScriptIndexCreationTask } from "../../../src/Documents/Indexes/AbstractJavaScriptIndexCreationTask";
 
 describe("RavenDB_15497", function () {
 
@@ -72,10 +72,14 @@ describe("RavenDB_15497", function () {
 });
 
 
-class Index extends AbstractIndexCreationTask {
+class Index extends AbstractJavaScriptIndexCreationTask<User, Pick<User, "name">> {
     constructor() {
         super();
 
-        this.map = "from u in docs.Users select new { u.name }";
+        this.map(User, u => {
+            return {
+                name: u.name
+            }
+        });
     }
 }

@@ -2,10 +2,11 @@ import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
+    AbstractJavaScriptIndexCreationTask,
     IDocumentStore,
-    AbstractIndexCreationTask,
     SpatialOptions,
 } from "../../../src";
+import { SpatialField } from "../../../src/Documents/Indexes/StronglyTyped";
 
 describe("SimonBartlettTest", function () {
 
@@ -43,7 +44,7 @@ describe("SimonBartlettTest", function () {
 
             assert.strictEqual(count, 1);
 
-            count = await session.query({ indexName: GeoIndex.name })
+            count = await session.query({ index: GeoIndex })
                 .relatesToShape("WKT", "LINESTRING (1 0, 1 1, 1 2)", "Intersects")
                 .waitForNonStaleResults()
                 .count();
@@ -71,7 +72,7 @@ describe("SimonBartlettTest", function () {
             const session = store.openSession();
             // Should not intersect, as there is 1 Degree between the two shapes
             let count = await session.query({
-                indexName: GeoIndex.name
+                index: GeoIndex
             })
                 .spatial("WKT", f => f.relatesToShape("CIRCLE(0.000000 3.000000 d=110)", "Intersects"))
                 .waitForNonStaleResults()
@@ -79,7 +80,7 @@ describe("SimonBartlettTest", function () {
 
             assert.strictEqual(count, 0);
 
-            count = await session.query({ indexName: GeoIndex.name })
+            count = await session.query({ index: GeoIndex })
                 .relatesToShape("WKT", "CIRCLE(0.000000 3.000000 d=110)", "Intersects")
                 .waitForNonStaleResults()
                 .count();
@@ -94,13 +95,17 @@ class GeoDocument {
     public WKT: string;
 }
 
-class GeoIndex extends AbstractIndexCreationTask {
+class GeoIndex extends AbstractJavaScriptIndexCreationTask<GeoDocument, { WKT: SpatialField }> {
     public constructor() {
         super();
 
-        this.map = "docs.GeoDocuments.Select(doc => new {\n" +
-            "    WKT = this.CreateSpatialField(doc.WKT)\n" +
-            "})";
+        const { createSpatialField } = this.mapUtils();
+
+        this.map(GeoDocument, doc => {
+            return {
+                WKT: createSpatialField(doc.WKT)
+            }
+        });
 
         const spatialOptions = new SpatialOptions();
         spatialOptions.strategy = "GeohashPrefixTree";

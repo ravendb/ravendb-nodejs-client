@@ -1,14 +1,20 @@
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
-import { DocumentStore, IDocumentStore } from "../../src";
+import {
+    ConfigureRevisionsOperation,
+    DocumentStore,
+    IDocumentStore,
+    RevisionsCollectionConfiguration,
+    RevisionsConfiguration
+} from "../../src";
 import { User } from "../Assets/Entities";
 // tslint:disable:max-line-length
 import { ConfigureRevisionsOperationResult } from "../../src/Documents/Operations/Revisions/ConfigureRevisionsOperation";
 // tslint:enable:max-line-length
 import { GetRevisionsBinEntryCommand } from "../../src/Documents/Commands/GetRevisionsBinEntryCommand";
 import { Company } from "../Assets/Orders";
-import { assertThat } from "../Utils/AssertExtensions";
+import { assertThat, assertThrows } from "../Utils/AssertExtensions";
 
 describe("RevisionsTest", function () {
 
@@ -176,5 +182,95 @@ describe("RevisionsTest", function () {
             assertThat(await session.advanced.revisions.get<User>("NotExistsChangeVector", User))
                 .isNull();
         }
+    });
+
+    it("collectionCaseSensitiveTest1", async () => {
+        const id = "user/1";
+        const configuration = new RevisionsConfiguration();
+
+        const collectionConfiguration = new RevisionsCollectionConfiguration();
+        collectionConfiguration.disabled = false;
+
+        configuration.collections = new Map<string, RevisionsCollectionConfiguration>();
+        configuration.collections.set("uSErs", collectionConfiguration);
+
+        await store.maintenance.send(new ConfigureRevisionsOperation(configuration));
+
+        {
+            const session = store.openSession();
+            const user = new User();
+            user.name = "raven";
+            await session.store(user, id);
+            await session.saveChanges();
+        }
+
+        for (let i = 0; i < 10; i++) {
+            const session = store.openSession();
+            const user = await session.load<Company>(id, Company);
+            user.name = "raven" + i;
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const revisionsMetadata = await session.advanced.revisions.getMetadataFor(id);
+            assertThat(revisionsMetadata)
+                .hasSize(11);
+        }
+    });
+
+    it("collectionCaseSensitiveTest2", async () => {
+        const id = "uSEr/1";
+
+        const configuration = new RevisionsConfiguration();
+
+        const collectionConfiguration = new RevisionsCollectionConfiguration();
+        collectionConfiguration.disabled = false;
+
+        configuration.collections = new Map<string, RevisionsCollectionConfiguration>();
+        configuration.collections.set("users", collectionConfiguration);
+
+        await store.maintenance.send(new ConfigureRevisionsOperation(configuration));
+
+        {
+            const session = store.openSession();
+            const user = new User();
+            user.name = "raven";
+            await session.store(user, id);
+            await session.saveChanges();
+        }
+
+        for (let i = 0; i < 10; i++) {
+            const session = store.openSession();
+            const user = await session.load<Company>(id, Company);
+            user.name = "raven " + i;
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const revisionsMetadata = await session.advanced.revisions.getMetadataFor(id);
+            assertThat(revisionsMetadata)
+                .hasSize(11);
+        }
+    });
+
+    it("collectionCaseSensitiveTest3", async () =>{
+        const configuration = new RevisionsConfiguration();
+
+        const c1 = new RevisionsCollectionConfiguration();
+        c1.disabled = false;
+
+        const c2 = new RevisionsCollectionConfiguration();
+        c2.disabled = false;
+
+        configuration.collections = new Map<string, RevisionsCollectionConfiguration>();
+        configuration.collections.set("users", c1);
+        configuration.collections.set("USERS", c2);
+
+        await assertThrows(() => store.maintenance.send(new ConfigureRevisionsOperation(configuration)), e => {
+            assertThat(e.name)
+                .isEqualTo("RavenException");
+        });
     });
 });

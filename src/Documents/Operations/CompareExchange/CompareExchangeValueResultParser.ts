@@ -3,7 +3,9 @@ import { CompareExchangeValue } from "./CompareExchangeValue";
 import { throwError } from "../../../Exceptions";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { ObjectUtil } from "../../../Utility/ObjectUtil";
-import { ClassConstructor } from "../../../Types";
+import { CONSTANTS } from "../../../Constants";
+import { MetadataAsDictionary, MetadataDictionary } from "../../../Mapping/MetadataAsDictionary";
+import { CompareExchangeResultClass, EntityConstructor } from "../../../Types";
 
 export interface CompareExchangeResultItem {
     index: number;
@@ -19,8 +21,9 @@ export class CompareExchangeValueResultParser {
 
     public static getValues<T>(
         responseObj: GetCompareExchangeValuesResponse,
+        materializeMetadata: boolean,
         conventions: DocumentConventions,
-        clazz?: ClassConstructor<T>)
+        clazz?: CompareExchangeResultClass<T>)
         : { [key: string]: CompareExchangeValue<T> } {
 
         const items = responseObj.results;
@@ -34,38 +37,8 @@ export class CompareExchangeValueResultParser {
                 throwError("InvalidOperationException", "Response is invalid. Item is null");
             }
 
-            const key = item.key || throwError("InvalidOperationException", "Response is invalid. Key is missing.");
-
-            const index = item.index;
-            if (TypeUtil.isNullOrUndefined(index)) {
-                throwError("InvalidOperationException", `Response is invalid. Index is ${item.index}.`);
-            }
-
-            const raw = item.value;
-            if (TypeUtil.isNullOrUndefined(raw)) {
-                throwError("InvalidOperationException", "Response is invalid. Value is missing.");
-            }
-
-            let rawValue = raw.object;
-            if (TypeUtil.isPrimitiveType(clazz) || !clazz) {
-                results[key] = new CompareExchangeValue(key, index, rawValue);
-            } else {
-                if (!rawValue) {
-                    results[key] = new CompareExchangeValue(key, index, null);
-                } else {
-                    const entityType = conventions.getJsTypeByDocumentType(clazz);
-                    if (conventions.entityFieldNameConvention) {
-                        rawValue = ObjectUtil.transformObjectKeys(
-                            rawValue, {
-                                defaultTransform: conventions.entityFieldNameConvention,
-                                recursive: true,
-                                arrayRecursive: true
-                            });
-                    }
-                    const entity = conventions.deserializeEntityFromJson(entityType, rawValue);
-                    results[key] = new CompareExchangeValue(key, index, entity);
-                }
-            }
+            const value: CompareExchangeValue<T> = CompareExchangeValueResultParser.getSingleValue(item, materializeMetadata, conventions, clazz);
+            results[value.key] = value;
         }
 
         return results;
@@ -73,17 +46,69 @@ export class CompareExchangeValueResultParser {
 
     public static getValue<T>(
         response: GetCompareExchangeValuesResponse,
+        materializeMetadata: boolean,
         conventions: DocumentConventions,
-        clazz: ClassConstructor<T>): CompareExchangeValue<T> {
+        clazz: CompareExchangeResultClass<T>): CompareExchangeValue<T> {
         if (!response) {
             return null;
         }
 
-        const values = CompareExchangeValueResultParser.getValues(response, conventions, clazz);
+        const values = CompareExchangeValueResultParser.getValues<T>(response, materializeMetadata, conventions, clazz);
         const itemsKeys = Object.keys(values);
         if (!values || !itemsKeys.length) {
             return null;
         }
         return values[itemsKeys[0]];
+    }
+
+    public static getSingleValue<T>(
+        item: CompareExchangeResultItem,
+        materializeMetadata: boolean,
+        conventions: DocumentConventions,
+        clazz: CompareExchangeResultClass<T>) {
+
+        if (!item) {
+            return null;
+        }
+
+        const key = item.key || throwError("InvalidOperationException", "Response is invalid. Key is missing.");
+
+        const index = item.index;
+        if (TypeUtil.isNullOrUndefined(index)) {
+            throwError("InvalidOperationException", `Response is invalid. Index is ${item.index}.`);
+        }
+
+        const raw = item.value;
+
+        if (TypeUtil.isNullOrUndefined(raw)) {
+            return new CompareExchangeValue(key, index, null);
+        }
+
+        let metadata: MetadataAsDictionary;
+        const metadataRaw = raw[CONSTANTS.Documents.Metadata.KEY];
+        if (metadataRaw && TypeUtil.isObject(metadataRaw)) {
+            metadata = !materializeMetadata ? MetadataDictionary.create(metadataRaw) : MetadataDictionary.materializeFromJson(metadataRaw);
+        }
+
+        let rawValue = raw.object;
+        if (TypeUtil.isPrimitiveType(clazz) || !clazz) {
+            return new CompareExchangeValue(key, index, rawValue, metadata);
+        } else {
+            if (!rawValue) {
+                return new CompareExchangeValue(key, index, null, metadata);
+            } else {
+                const entityType = conventions.getJsTypeByDocumentType(clazz as EntityConstructor);
+                if (conventions.entityFieldNameConvention) {
+                    rawValue = ObjectUtil.transformObjectKeys(
+                        rawValue, {
+                            defaultTransform: conventions.entityFieldNameConvention,
+                            recursive: true,
+                            arrayRecursive: true
+                        });
+                }
+                const entity = conventions.deserializeEntityFromJson(entityType, rawValue);
+                return new CompareExchangeValue(key, index, entity, metadata);
+            }
+        }
     }
 }

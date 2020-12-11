@@ -34,6 +34,14 @@ describe("RavenDB_15134", function () {
         assertThat(vals.counters)
             .hasSize(3);
 
+
+        assertThat(vals.counters.filter(x => !x).length)
+            .isGreaterThan(0);
+        assertThat(!!vals.counters.find(x => x && x.totalValue === 1))
+            .isTrue();
+        assertThat(!!vals.counters.find(x => x && x.totalValue === 2))
+            .isTrue();
+
         assertThat(vals.counters[0].totalValue)
             .isEqualTo(1);
         assertThat(vals.counters[1])
@@ -45,12 +53,10 @@ describe("RavenDB_15134", function () {
         assertThat(vals.counters)
             .hasSize(3);
 
-        assertThat(vals.counters[0].counterValues)
-            .hasSize(1);
-        assertThat(vals.counters[1])
-            .isNull();
-        assertThat(vals.counters[2].counterValues)
-            .hasSize(1);
+        assertThat(vals.counters.filter(x => !x).length)
+            .isGreaterThan(0);
+        assertThat(!!vals.counters.find(x => x && Object.keys(x.counterValues).length === 1))
+            .isTrue();
     });
 
 });

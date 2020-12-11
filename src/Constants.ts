@@ -6,8 +6,10 @@ export const CONSTANTS = {
             Fields: {
                 ALL_FIELDS: "__all_fields",
                 DOCUMENT_ID_FIELD_NAME: "id()",
+                SOURCE_DOCUMENT_ID_FIELD_NAME: "sourceDocId()",
                 REDUCE_KEY_HASH_FIELD_NAME: "hash(key())",
                 REDUCE_KEY_KEY_VALUE_FIELD_NAME: "key()",
+                VALUE_FIELD_NAME: "value()",
                 SPATIAL_SHAPE_FIELD_NAME: "spatial(shape)",
                 // TBD 4.1 CUSTOM_SORT_FIELD_NAME: "__customSort",
             },
@@ -35,7 +37,9 @@ export const CONSTANTS = {
             NESTED_OBJECT_TYPES: "@nested-object-types",
             NESTED_OBJECT_TYPES_PROJECTION_FIELD: "__PROJECTED_NESTED_OBJECT_TYPES__",
             COUNTERS: "@counters",
+            TIME_SERIES: "@timeseries",
             REVISION_COUNTERS: "@counters-snapshot",
+            REVISION_TIME_SERIES: "@timeseries-snapshot",
             IGNORE_CASE_TRANSFORM_REGEX:
             // tslint:disable-next-line:max-line-length
                 /^@metadata(\.(@collection|@projection|@id|@conflict|@flags|Raven-Node-Type|@index-score|@last-modified|@change-vector|@expires|@nested-object-types(\.\w+)?))?$/
@@ -78,3 +82,14 @@ export const HEADERS = {
 export const COUNTERS = {
     ALL: "@all_counters"
 };
+
+
+export const TIME_SERIES = {
+    SELECT_FIELD_NAME: "timeseries",
+    QUERY_FUNCTION: "__timeSeriesQueryFunction",
+    ALL: "@all_timeseries"
+}
+
+export const COMPARE_EXCHANGE = {
+    OBJECT_FIELD_NAME: "Object"
+}

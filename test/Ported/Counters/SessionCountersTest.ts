@@ -84,20 +84,23 @@ describe("SessionCountersTest", function () {
             await session.saveChanges();
         }
 
-        let countersDetail = await store.operations.send(new GetCountersOperation("users/1-A", ["likes", "downloads"]));
+        counters = (await store.operations
+            .send(new GetCountersOperation("users/1-A", ["likes", "downloads"])))
+            .counters;
 
-        assertThat(countersDetail.counters)
+        assertThat(counters)
             .hasSize(2);
-
-        assertThat(countersDetail.counters[0])
+        assertThat(counters[0])
             .isNull();
-        assertThat(countersDetail.counters[1])
+        assertThat(counters[1])
             .isNull();
 
-        countersDetail = await store.operations.send(new GetCountersOperation("users/1-A", ["votes"]));
-        assertThat(countersDetail.counters)
+        counters = (await store.operations.send(new GetCountersOperation("users/2-A", "votes")))
+            .counters;
+
+        assertThat(counters)
             .hasSize(1);
-        assertThat(countersDetail.counters[0])
+        assertThat(counters[0])
             .isNull();
     });
 

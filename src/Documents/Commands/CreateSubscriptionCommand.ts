@@ -3,19 +3,20 @@ import { CreateSubscriptionResult } from "../Subscriptions/CreateSubscriptionRes
 import { SubscriptionCreationOptions } from "../Subscriptions/SubscriptionCreationOptions";
 import { HttpRequestParameters } from "../../Primitives/Http";
 import * as stream from "readable-stream";
-import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { ServerNode } from "../../Http/ServerNode";
 import { IRaftCommand } from "../../Http/IRaftCommand";
 import { RaftIdGenerator } from "../../Utility/RaftIdGenerator";
+import { throwError } from "../../Exceptions";
 
 export class CreateSubscriptionCommand extends RavenCommand<CreateSubscriptionResult> implements IRaftCommand {
-    private readonly _conventions: DocumentConventions;
     private readonly _options: SubscriptionCreationOptions;
     private readonly _id: string;
 
-    public constructor(conventions: DocumentConventions, options: SubscriptionCreationOptions, id?: string) {
+    public constructor(options: SubscriptionCreationOptions, id?: string) {
         super();
-        this._conventions = conventions;
+        if (!options) {
+            throwError("InvalidArgumentException", "Options cannot be null");
+        }
         this._options = options;
         this._id = id;
     }

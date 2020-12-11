@@ -8,6 +8,9 @@ import { ServerNode } from "../../../Http/ServerNode";
 import { StatusCodes } from "../../../Http/StatusCode";
 import { getEtagHeader } from "../../../Utility/HttpUtil";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { TypeUtil } from "../../../Utility/TypeUtil";
+import { RequestExecutor } from "../../../Http/RequestExecutor";
+import { throwError } from "../../../Exceptions";
 
 export class MultiGetCommand extends RavenCommand<GetResponse[]> {
     private _cache: HttpCache;
@@ -15,9 +18,18 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> {
     private _conventions: DocumentConventions;
     private _baseUrl: string;
 
-    public constructor(cache: HttpCache, conventions: DocumentConventions, commands: GetRequest[]) {
+    public constructor(requestExecutor: RequestExecutor, conventions: DocumentConventions, commands: GetRequest[]) {
         super();
-        this._cache = cache;
+
+        if (!requestExecutor) {
+            throwError("InvalidArgumentException", "RequestExecutor cannot be null");
+        }
+
+        if (!commands) {
+            throwError("InvalidArgumentException", "Commands cannot be null");
+        }
+
+        this._cache = requestExecutor.cache;
         this._commands = commands;
         this._conventions = conventions;
         this._responseType = "Raw";
@@ -88,7 +100,7 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> {
         
         const responses = result["results"].reduce((result: GetResponse[], next) => {
             // TODO try to get it directly from parser
-            next.result = JSON.stringify(next.result);
+            next.result = TypeUtil.isNullOrUndefined(next.result) ? next.result : JSON.stringify(next.result);
             return [...result, next];
         }, []);
 

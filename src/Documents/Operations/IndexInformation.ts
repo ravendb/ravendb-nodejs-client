@@ -1,4 +1,5 @@
 import { IndexLockMode, IndexPriority, IndexState, IndexType } from "../Indexes/Enums";
+import { IndexSourceType } from "../Indexes/IndexSourceType";
 
 export interface IndexInformation {
     name: string;
@@ -8,4 +9,5 @@ export interface IndexInformation {
     priority: IndexPriority;
     type: IndexType;
     lastIndexingTime: Date;
+    sourceType: IndexSourceType;
 }

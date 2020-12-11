@@ -1,5 +1,4 @@
 import * as BluebirdPromise from "bluebird";
-import { ErrorFirstCallback } from "./../Types/Callbacks";
 import { getError } from "../Exceptions";
 
 export interface IDefer<TResult> {
@@ -29,14 +28,6 @@ export function raceToResolution<TResult>(
         });
         return raceToResolution(promises);
     });
-}
-
-export function passResultToCallback<T>(p: Promise<T>, callback: ErrorFirstCallback<T>): void {
-    if (!callback) {
-        return;
-    }
-
-    p.then(result => callback(null, result), err => callback(err));
 }
 
 export function defer<T>(): IDefer<T> {

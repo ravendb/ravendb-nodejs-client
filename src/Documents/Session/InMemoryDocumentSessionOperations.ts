@@ -1,4 +1,3 @@
-import * as BluebirdPromise from "bluebird";
 import { EntityToJson } from "./EntityToJson";
 import { IDisposable } from "../../Types/Contracts";
 import { SessionInfo, ConcurrencyCheckMode, StoreOptions } from "./IDocumentSession";
@@ -15,8 +14,7 @@ import {
 } from "./SessionEvents";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { IDocumentStore } from "../IDocumentStore";
-import CurrentIndexAndNode from "../../Http/CurrentIndexAndNode";
-import { throwError, getError } from "../../Exceptions";
+import { throwError } from "../../Exceptions";
 import { ServerNode } from "../../Http/ServerNode";
 import { DocumentsById } from "./DocumentsById";
 import { DocumentInfo } from "./DocumentInfo";
@@ -28,8 +26,6 @@ import {
     PutCommandDataWithJson,
     CommandType
 } from "../Commands/CommandData";
-import { PutCompareExchangeCommandData } from "../Commands/Batches/PutCompareExchangeCommandData";
-import { DeleteCompareExchangeCommandData } from "../Commands/Batches/DeleteCompareExchangeCommandData";
 import { BatchPatchCommandData } from "../Commands/Batches/BatchPatchCommandData";
 import { GenerateEntityIdOnTheClient } from "../Identity/GenerateEntityIdOnTheClient";
 import { tryGetConflict } from "../../Mapping/Json";
@@ -38,7 +34,6 @@ import { DateUtil } from "../../Utility/DateUtil";
 import { ObjectUtil } from "../../Utility/ObjectUtil";
 import { IncludesUtil } from "./IncludesUtil";
 import { TypeUtil } from "../../Utility/TypeUtil";
-import { ErrorFirstCallback } from "../../Types/Callbacks";
 import { DocumentType } from "../DocumentAbstractions";
 import { IdTypeAndName } from "../IdTypeAndName";
 import { BatchOptions } from "../Commands/Batches/BatchOptions";
@@ -67,14 +62,14 @@ import { StringUtil } from "../../Utility/StringUtil";
 import { Reference } from "../../Utility/Reference";
 import { ForceRevisionStrategy } from "./ForceRevisionStrategy";
 import { ForceRevisionCommandData } from "../Commands/Batches/ForceRevisionCommandData";
+import { TimeSeriesRangeResult } from "../Operations/TimeSeries/TimeSeriesRangeResult";
+import { DatesComparator, leftDate, rightDate } from "../../Primitives/DatesComparator";
+import { TimeSeriesEntry } from "./TimeSeries/TimeSeriesEntry";
+import { reviveTimeSeriesRangeResult } from "../Operations/TimeSeries/GetTimeSeriesOperation";
 
 export abstract class InMemoryDocumentSessionOperations
     extends EventEmitter
     implements IDisposable, SessionEventsEmitter {
-
-    private static _clientSessionIdCounter: number = 0;
-
-    protected _clientSessionId: number = ++InMemoryDocumentSessionOperations._clientSessionIdCounter;
 
     protected _requestExecutor: RequestExecutor;
 
@@ -111,23 +106,8 @@ export abstract class InMemoryDocumentSessionOperations
     }
 
     public getCurrentSessionNode(): Promise<ServerNode> {
-        let result: Promise<CurrentIndexAndNode>;
-        switch (this._requestExecutor.conventions.readBalanceBehavior) {
-            case "None":
-                result = this._requestExecutor.getPreferredNode();
-                break;
-            case "RoundRobin":
-                result = this._requestExecutor.getNodeBySessionId(this._clientSessionId);
-                break;
-            case "FastestNode":
-                result = this._requestExecutor.getFastestNode();
-                break;
-            default:
-                return Promise.reject(
-                    getError("InvalidArgumentException", this._requestExecutor.conventions.readBalanceBehavior));
-        }
+        return this.sessionInfo.getCurrentSessionNode(this._requestExecutor);
 
-        return result.then(x => x.currentNode);
     }
 
     public documentsById: DocumentsById = new DocumentsById();
@@ -144,6 +124,16 @@ export abstract class InMemoryDocumentSessionOperations
     }
 
     private _countersByDocId: Map<string, CounterTracking>;
+
+    private _timeSeriesByDocId: Map<string, Map<string, TimeSeriesRangeResult[]>>;
+
+    public get timeSeriesByDocId() {
+        if (!this._timeSeriesByDocId) {
+            this._timeSeriesByDocId = CaseInsensitiveKeysMap.create();
+        }
+
+        return this._timeSeriesByDocId;
+    }
 
     public readonly noTracking: boolean;
 
@@ -171,6 +161,10 @@ export abstract class InMemoryDocumentSessionOperations
 
     public get requestExecutor(): RequestExecutor {
         return this._requestExecutor;
+    }
+
+    public get sessionInfo(): SessionInfo {
+        return this._sessionInfo;
     }
 
     public get operations() {
@@ -205,7 +199,7 @@ export abstract class InMemoryDocumentSessionOperations
 
     protected _deferredCommands: ICommandData[] = [];
 
-    // keys are produced with CommandIdTypeAndName.keyFor() method
+    // keys are produced with IdTypeAndName.keyFor() method
     public deferredCommandsMap: Map<string, ICommandData> = new Map();
 
     public get deferredCommands() {
@@ -229,10 +223,6 @@ export abstract class InMemoryDocumentSessionOperations
     }
 
     protected _sessionInfo: SessionInfo;
-
-    public get sessionInfo() {
-        return this._sessionInfo;
-    }
 
     protected constructor(
         documentStore: DocumentStore,
@@ -260,10 +250,7 @@ export abstract class InMemoryDocumentSessionOperations
                 (obj) => this._generateId(obj));
         this._entityToJson = new EntityToJson(this);
 
-        this._sessionInfo = new SessionInfo(
-            this._clientSessionId,
-            this._documentStore.getLastTransactionIndex(this.databaseName), 
-            options.noCaching);
+        this._sessionInfo = new SessionInfo(this, options, documentStore);
         this._transactionMode = options.transactionMode;
     }
 
@@ -296,6 +283,19 @@ export abstract class InMemoryDocumentSessionOperations
         }
 
         return countersArray;
+    }
+
+    /**
+     * Gets all time series names for the specified entity.
+     * @param instance Entity
+     */
+    public getTimeSeriesFor<T extends object>(instance: T): string[] {
+        if (!instance) {
+            throwError("InvalidArgumentException", "Instance cannot be null");
+        }
+
+        const documentInfo = this._getDocumentInfo(instance);
+        return documentInfo.metadata[CONSTANTS.Documents.Metadata.TIME_SERIES] || [];
     }
 
     private _makeMetadataInstance<T extends object>(docInfo: DocumentInfo): IMetadataDictionary {
@@ -332,7 +332,7 @@ export abstract class InMemoryDocumentSessionOperations
     protected _assertNoNonUniqueInstance(entity: object, id: string): void {
         if (!id
             || id[id.length - 1] === "|"
-            || id[id.length - 1] === "/") {
+            || id[id.length - 1] === this.conventions.identityPartsSeparator) {
             return;
         }
 
@@ -786,8 +786,8 @@ export abstract class InMemoryDocumentSessionOperations
             if (!counterJson) {
                 continue;
             }
-            const counterName = counterJson["CounterName"] as string;
-            const totalValue = counterJson["TotalValue"] as number;
+            const counterName = counterJson["counterName"] as string;
+            const totalValue = counterJson["totalValue"] as number;
             if (counterName && totalValue) {
                 cache.data.set(counterName, totalValue);
                 deletedCounters.delete(counterName);
@@ -833,6 +833,346 @@ export abstract class InMemoryDocumentSessionOperations
         } else {
             this._registerMissingCountersWithCountersToIncludeObj(idsOrCountersToInclude);
         }
+    }
+
+    public registerTimeSeries(resultTimeSeries: Record<string, Record<string, TimeSeriesRangeResult[]>>) {
+        if (this.noTracking || !resultTimeSeries) {
+            return;
+        }
+
+        for (const [id, perDocTs] of Object.entries(resultTimeSeries)) {
+            if (!perDocTs) {
+                continue;
+            }
+
+            let cache = this.timeSeriesByDocId.get(id);
+            if (!cache) {
+                cache = CaseInsensitiveKeysMap.create();
+                this.timeSeriesByDocId.set(id, cache);
+            }
+
+            if (!TypeUtil.isObject(perDocTs)) {
+                throwError("InvalidOperationException", "Unable to read time series range results on document: '" + id + "'.");
+            }
+
+            for (const [name, perNameTs] of Object.entries(perDocTs)) {
+                if (!perNameTs) {
+                    continue;
+                }
+
+                if (!TypeUtil.isArray(perNameTs)) {
+                    throwError("InvalidOperationException", "Unable to read time series range results on document: '" + id + "', time series: '" + name + "'.");
+                }
+
+                for (const range of perNameTs) {
+                    const newRange = InMemoryDocumentSessionOperations._parseTimeSeriesRangeResult(range, id, name, this.conventions);
+                    InMemoryDocumentSessionOperations._addToCache(cache, newRange, name);
+                }
+            }
+        }
+    }
+
+    private static _addToCache(cache: Map<string, TimeSeriesRangeResult[]>, newRange: TimeSeriesRangeResult, name: string) {
+        const localRanges = cache.get(name);
+        if (!localRanges || !localRanges.length) {
+            // no local ranges in cache for this series
+             cache.set(name, [newRange]);
+             return;
+        }
+
+        if (DatesComparator.compare(leftDate(localRanges[0].from), rightDate(newRange.to)) > 0
+            || DatesComparator.compare(rightDate(localRanges[localRanges.length - 1].to), leftDate(newRange.from)) < 0) {
+            // the entire range [from, to] is out of cache bounds
+
+            const index = DatesComparator.compare(leftDate(localRanges[0].from), rightDate(newRange.to)) > 0 ? 0 : localRanges.length;
+            localRanges.splice(index, 0, newRange);
+            return;
+        }
+
+        let toRangeIndex;
+        let fromRangeIndex = -1;
+        let rangeAlreadyInCache = false;
+
+        for (toRangeIndex = 0; toRangeIndex < localRanges.length; toRangeIndex++) {
+            if (DatesComparator.compare(leftDate(localRanges[toRangeIndex].from), leftDate(newRange.from)) <= 0) {
+                if (DatesComparator.compare(rightDate(localRanges[toRangeIndex].to), rightDate(newRange.to)) >= 0) {
+                    rangeAlreadyInCache = true;
+                    break;
+                }
+
+                fromRangeIndex = toRangeIndex;
+                continue;
+            }
+
+            if (DatesComparator.compare(rightDate(localRanges[toRangeIndex].to), rightDate(newRange.to)) >= 0) {
+                break;
+            }
+        }
+
+        if (rangeAlreadyInCache) {
+            InMemoryDocumentSessionOperations._updateExistingRange(localRanges[toRangeIndex], newRange);
+            return;
+        }
+
+        const mergedValues = InMemoryDocumentSessionOperations._mergeRanges(fromRangeIndex, toRangeIndex, localRanges, newRange);
+        InMemoryDocumentSessionOperations.addToCache(name, newRange.from, newRange.to, fromRangeIndex, toRangeIndex, localRanges, cache, mergedValues);
+    }
+
+    public static addToCache(timeseries: string,
+                             from: Date,
+                             to: Date,
+                             fromRangeIndex: number,
+                             toRangeIndex: number,
+                             ranges: TimeSeriesRangeResult[],
+                             cache: Map<string, TimeSeriesRangeResult[]>,
+                             values: TimeSeriesEntry[]) {
+        if (fromRangeIndex === -1) {
+            // didn't find a 'fromRange' => all ranges in cache start after 'from'
+
+            if (toRangeIndex === ranges.length) {
+                // the requested range [from, to] contains all the ranges that are in cache
+
+                // e.g. if cache is : [[2,3], [4,5], [7, 10]]
+                // and the requested range is : [1, 15]
+                // after this action cache will be : [[1, 15]]
+
+                const timeSeriesRangeResult = new TimeSeriesRangeResult();
+                timeSeriesRangeResult.from = from;
+                timeSeriesRangeResult.to = to;
+                timeSeriesRangeResult.entries = values;
+
+                const result: TimeSeriesRangeResult[] = [];
+                result.push(timeSeriesRangeResult);
+                cache.set(timeseries, result);
+
+                return;
+            }
+
+            if (DatesComparator.compare(leftDate(ranges[toRangeIndex].from), rightDate(to)) > 0) {
+                // requested range ends before 'toRange' starts
+                // remove all ranges that come before 'toRange' from cache
+                // add the new range at the beginning of the list
+
+                // e.g. if cache is : [[2,3], [4,5], [7,10]]
+                // and the requested range is : [1,6]
+                // after this action cache will be : [[1,6], [7,10]]
+
+                ranges.splice(0, toRangeIndex);
+
+                const timeSeriesRangeResult = new TimeSeriesRangeResult();
+                timeSeriesRangeResult.from = from;
+                timeSeriesRangeResult.to = to;
+                timeSeriesRangeResult.entries = values;
+
+                ranges.splice(0, 0, timeSeriesRangeResult);
+
+                return;
+            }
+
+            // the requested range ends inside 'toRange'
+            // merge the result from server into 'toRange'
+            // remove all ranges that come before 'toRange' from cache
+
+            // e.g. if cache is : [[2,3], [4,5], [7,10]]
+            // and the requested range is : [1,8]
+            // after this action cache will be : [[1,10]]
+
+            ranges[toRangeIndex].from = from;
+            ranges[toRangeIndex].entries = values;
+
+            ranges.splice(0, toRangeIndex);
+
+            return;
+        }
+
+        // found a 'fromRange'
+
+        if (toRangeIndex === ranges.length) {
+            // didn't find a 'toRange' => all the ranges in cache end before 'to'
+
+            if (DatesComparator.compare(rightDate(ranges[fromRangeIndex].to), leftDate(from)) < 0) {
+                // requested range starts after 'fromRange' ends,
+                // so it needs to be placed right after it
+                // remove all the ranges that come after 'fromRange' from cache
+                // add the merged values as a new range at the end of the list
+
+                // e.g. if cache is : [[2,3], [5,6], [7,10]]
+                // and the requested range is : [4,12]
+                // then 'fromRange' is : [2,3]
+                // after this action cache will be : [[2,3], [4,12]]
+
+                ranges.splice(fromRangeIndex + 1, ranges.length - fromRangeIndex - 1);
+
+                const timeSeriesRangeResult = new TimeSeriesRangeResult();
+                timeSeriesRangeResult.from = from;
+                timeSeriesRangeResult.to = to;
+                timeSeriesRangeResult.entries = values;
+
+                ranges.push(timeSeriesRangeResult);
+
+                return;
+            }
+
+            // the requested range starts inside 'fromRange'
+            // merge result into 'fromRange'
+            // remove all the ranges from cache that come after 'fromRange'
+
+            // e.g. if cache is : [[2,3], [4,6], [7,10]]
+            // and the requested range is : [5,12]
+            // then 'fromRange' is [4,6]
+            // after this action cache will be : [[2,3], [4,12]]
+
+            ranges[fromRangeIndex].to = to;
+            ranges[fromRangeIndex].entries = values;
+            ranges.splice(fromRangeIndex + 1, ranges.length - fromRangeIndex - 1);
+
+            return;
+        }
+
+        // found both 'fromRange' and 'toRange'
+        // the requested range is inside cache bounds
+
+        if (DatesComparator.compare(rightDate(ranges[fromRangeIndex].to), leftDate(from)) < 0) {
+            // requested range starts after 'fromRange' ends
+
+            if (DatesComparator.compare(leftDate(ranges[toRangeIndex].from), rightDate(to)) > 0) {
+                // requested range ends before 'toRange' starts
+
+                // remove all ranges in between 'fromRange' and 'toRange'
+                // place new range in between 'fromRange' and 'toRange'
+
+                // e.g. if cache is : [[2,3], [5,6], [7,8], [10,12]]
+                // and the requested range is : [4,9]
+                // then 'fromRange' is [2,3] and 'toRange' is [10,12]
+                // after this action cache will be : [[2,3], [4,9], [10,12]]
+
+                ranges.splice(fromRangeIndex + 1, toRangeIndex - fromRangeIndex - 1);
+
+                const timeSeriesRangeResult = new TimeSeriesRangeResult();
+                timeSeriesRangeResult.from = from;
+                timeSeriesRangeResult.to = to;
+                timeSeriesRangeResult.entries = values;
+
+                ranges.splice(fromRangeIndex + 1, 0, timeSeriesRangeResult);
+
+                return;
+            }
+
+            // requested range ends inside 'toRange'
+            // merge the new range into 'toRange'
+            // remove all ranges in between 'fromRange' and 'toRange'
+
+            // e.g. if cache is : [[2,3], [5,6], [7,10]]
+            // and the requested range is : [4,9]
+            // then 'fromRange' is [2,3] and 'toRange' is [7,10]
+            // after this action cache will be : [[2,3], [4,10]]
+
+            ranges.splice(fromRangeIndex + 1, toRangeIndex - fromRangeIndex - 1);
+            ranges[toRangeIndex].from = from;
+            ranges[toRangeIndex].entries = values;
+
+            return;
+        }
+
+        // the requested range starts inside 'fromRange'
+
+        if (DatesComparator.compare(leftDate(ranges[toRangeIndex].from), rightDate(to)) > 0) {
+            // requested range ends before 'toRange' starts
+
+            // remove all ranges in between 'fromRange' and 'toRange'
+            // merge new range into 'fromRange'
+
+            // e.g. if cache is : [[2,4], [5,6], [8,10]]
+            // and the requested range is : [3,7]
+            // then 'fromRange' is [2,4] and 'toRange' is [8,10]
+            // after this action cache will be : [[2,7], [8,10]]
+
+            ranges[fromRangeIndex].to = to;
+            ranges[fromRangeIndex].entries = values;
+            ranges.splice(fromRangeIndex + 1, toRangeIndex - fromRangeIndex - 1);
+
+            return;
+        }
+
+        // the requested range starts inside 'fromRange'
+        // and ends inside 'toRange'
+
+        // merge all ranges in between 'fromRange' and 'toRange'
+        // into a single range [fromRange.From, toRange.To]
+
+        // e.g. if cache is : [[2,4], [5,6], [8,10]]
+        // and the requested range is : [3,9]
+        // then 'fromRange' is [2,4] and 'toRange' is [8,10]
+        // after this action cache will be : [[2,10]]
+
+        ranges[fromRangeIndex].to = ranges[toRangeIndex].to;
+        ranges[fromRangeIndex].entries = values;
+        ranges.splice(fromRangeIndex + 1, toRangeIndex - fromRangeIndex);
+    }
+
+    private static _parseTimeSeriesRangeResult(json: TimeSeriesRangeResult,
+                                               id: string,
+                                               databaseName: string,
+                                               conventions: DocumentConventions): TimeSeriesRangeResult {
+        return reviveTimeSeriesRangeResult(json, conventions);
+    }
+
+    private static _mergeRanges(fromRangeIndex: number,
+                                toRangeIndex: number,
+                                localRanges: TimeSeriesRangeResult[],
+                                newRange: TimeSeriesRangeResult) {
+        const mergedValues: TimeSeriesEntry[] = [];
+
+        if (fromRangeIndex !== -1 && localRanges[fromRangeIndex].to.getTime() >= newRange.from.getTime()) {
+            for (const val of localRanges[fromRangeIndex].entries) {
+                if (val.timestamp.getTime() >= newRange.from.getTime()) {
+                    break;
+                }
+
+                mergedValues.push(val);
+            }
+        }
+
+        mergedValues.push(...newRange.entries);
+
+        if (toRangeIndex < localRanges.length
+            && DatesComparator.compare(leftDate(localRanges[toRangeIndex].from), rightDate(newRange.to)) <= 0) {
+            for (const val of localRanges[toRangeIndex].entries) {
+                if (val.timestamp.getTime() <= newRange.to.getTime()) {
+                    continue;
+                }
+
+                mergedValues.push(val);
+            }
+        }
+
+        return mergedValues;
+    }
+
+    private static _updateExistingRange(localRange: TimeSeriesRangeResult, newRange: TimeSeriesRangeResult) {
+        const newValues: TimeSeriesEntry[] = [];
+
+        let index: number;
+
+        for (index = 0; index < localRange.entries.length; index++) {
+            if (localRange.entries[index].timestamp.getTime() >= newRange.from.getTime()) {
+                break;
+            }
+
+            newValues.push(localRange.entries[index]);
+        }
+
+        newValues.push(...newRange.entries);
+
+        localRange.entries.forEach(item => {
+            if (item.timestamp.getTime() <= newRange.to.getTime()) {
+                return;
+            }
+
+            newValues.push(item);
+        });
+
+        localRange.entries = newValues;
     }
 
     private _registerMissingCountersWithCountersToIncludeObj(countersToInclude: { [key: string]: string[] }): void {
@@ -883,53 +1223,29 @@ export abstract class InMemoryDocumentSessionOperations
         entity: TEntity): Promise<void>;
     public store<TEntity extends object>(
         entity: TEntity,
-        callback?: ErrorFirstCallback<void>): Promise<void>;
+        id?: string): Promise<void>;
     public store<TEntity extends object>(
         entity: TEntity,
         id?: string,
-        callback?: ErrorFirstCallback<void>): Promise<void>;
+        documentType?: DocumentType<TEntity>): Promise<void>;
     public store<TEntity extends object>(
         entity: TEntity,
         id?: string,
-        documentType?: DocumentType<TEntity>,
-        callback?: ErrorFirstCallback<void>): Promise<void>;
+        options?: StoreOptions<TEntity>): Promise<void>;
     public store<TEntity extends object>(
         entity: TEntity,
         id?: string,
-        options?: StoreOptions<TEntity>,
-        callback?: ErrorFirstCallback<void>): Promise<void>;
-    public store<TEntity extends object>(
-        entity: TEntity,
-        idOrCallback?:
-            string | ErrorFirstCallback<void>,
-        docTypeOrOptionsOrCallback?:
-            DocumentType<TEntity> | StoreOptions<TEntity> | ErrorFirstCallback<void>,
-        callback?: ErrorFirstCallback<void>): Promise<void> {
+        docTypeOrOptions?: DocumentType<TEntity> | StoreOptions<TEntity>): Promise<void> {
 
-        let id: string = null;
         let documentType: DocumentType<TEntity> = null;
         let options: StoreOptions<TEntity> = {};
 
-        // figure out second arg
-        if (TypeUtil.isString(idOrCallback) || !idOrCallback) {
-            // if it's a string and registered type
-            id = idOrCallback as string;
-        } else if (TypeUtil.isFunction(idOrCallback)) {
-            callback = idOrCallback as ErrorFirstCallback<void>;
-        } else {
-            throwError("InvalidArgumentException", "Invalid 2nd parameter: must be id string or callback.");
-        }
-
         // figure out third arg
-        if (TypeUtil.isDocumentType<TEntity>(docTypeOrOptionsOrCallback)) {
-            documentType = docTypeOrOptionsOrCallback as DocumentType<TEntity>;
-        } else if (TypeUtil.isFunction(docTypeOrOptionsOrCallback)) {
-            callback = docTypeOrOptionsOrCallback as ErrorFirstCallback<void>;
-        } else if (TypeUtil.isObject(docTypeOrOptionsOrCallback)) {
-            options = docTypeOrOptionsOrCallback as StoreOptions<TEntity>;
+        if (TypeUtil.isDocumentType<TEntity>(docTypeOrOptions)) {
+            documentType = docTypeOrOptions as DocumentType<TEntity>;
+        } else if (TypeUtil.isObject(docTypeOrOptions)) {
+            options = docTypeOrOptions as StoreOptions<TEntity>;
         }
-
-        callback = callback || TypeUtil.NOOP;
 
         const changeVector = options.changeVector;
         documentType = documentType || options.documentType;
@@ -948,12 +1264,7 @@ export abstract class InMemoryDocumentSessionOperations
             forceConcurrencyCheck = !hasId ? "Forced" : "Auto";
         }
 
-        const result = BluebirdPromise.resolve()
-            .then(() => this._storeInternal(entity, changeVector, id, forceConcurrencyCheck, documentType))
-            .tap(() => callback())
-            .tapCatch(err => callback(err));
-
-        return Promise.resolve(result);
+        return this._storeInternal(entity, changeVector, id, forceConcurrencyCheck, documentType);
     }
 
     protected _generateDocumentKeysOnStore: boolean = true;
@@ -1175,8 +1486,12 @@ export abstract class InMemoryDocumentSessionOperations
     }
 
     private _prepareCompareExchangeEntities(result: SaveChangesData): void {
-        const clusterTransactionOperations = this._clusterSession;
-        if (!clusterTransactionOperations || !clusterTransactionOperations.hasCommands()) {
+        if (!this._hasClusterSession()) {
+            return;
+        }
+
+        const clusterTransactionOperations = this.clusterSession;
+        if (!clusterTransactionOperations.numberOfTrackedCompareExchangeValues) {
             return;
         }
 
@@ -1186,32 +1501,14 @@ export abstract class InMemoryDocumentSessionOperations
                 "Performing cluster transaction operation require the TransactionMode to be set to ClusterWide");
         }
 
-        if (clusterTransactionOperations.storeCompareExchange) {
-            for (const [key, value] of clusterTransactionOperations.storeCompareExchange.entries()) {
-                let entityAsTree = EntityToJson.convertEntityToJson(
-                            value.entity, this.conventions, null, false);
-                if (this.conventions.remoteEntityFieldNameConvention) {
-                    entityAsTree = this.conventions.transformObjectKeysToRemoteFieldNameConvention(entityAsTree);
-                }
-                
-                const rootNode = { Object: entityAsTree };
-                result.sessionCommands.push(
-                    new PutCompareExchangeCommandData(key, rootNode, value.index));
-            }
-        }
-
-        if (clusterTransactionOperations.deleteCompareExchange) {
-            for (const [key, value] of clusterTransactionOperations.deleteCompareExchange.entries()) {
-                result.sessionCommands.push(
-                    new DeleteCompareExchangeCommandData(key, value));
-            }
-        }
-
-
-        result.onSuccess.clearClusterTransactionOperations(clusterTransactionOperations);
+        this.clusterSession.prepareCompareExchangeEntities(result);
     }
 
-    protected abstract _clusterSession: ClusterTransactionOperationsBase;
+    protected abstract _hasClusterSession(): boolean;
+
+    protected abstract _clearClusterSession(): void;
+
+    public abstract clusterSession: ClusterTransactionOperationsBase;
 
     private _newSaveChangesData(): SaveChangesData {
         return new SaveChangesData({
@@ -1290,11 +1587,19 @@ export abstract class InMemoryDocumentSessionOperations
     private _prepareForEntitiesPuts(result: SaveChangesData): void {
         const putsContext = this.documentsByEntity.prepareEntitiesPuts();
         try {
+            const shouldIgnoreEntityChanges = this.conventions.shouldIgnoreEntityChanges;
+
             for (const entry of this.documentsByEntity) {
                 const  { key: entityKey, value: entityValue } = entry;
 
                 if (entityValue.ignoreChanges) {
                     continue;
+                }
+
+                if (shouldIgnoreEntityChanges) {
+                    if (shouldIgnoreEntityChanges(this, entry.value.entity, entry.value.id)) {
+                        continue;
+                    }
                 }
 
                 if (this.isDeleted(entityValue.id)) {
@@ -1442,6 +1747,10 @@ export abstract class InMemoryDocumentSessionOperations
             this._countersByDocId.delete(value.id);
         }
 
+        if (this._timeSeriesByDocId) {
+            this._timeSeriesByDocId.delete(value.id);
+        }
+
         this._knownMissingIds.add(value.id);
     }
 
@@ -1516,7 +1825,9 @@ export abstract class InMemoryDocumentSessionOperations
             && command.type !== "AttachmentDELETE"
             && command.type !== "AttachmentCOPY"
             && command.type !== "AttachmentMOVE"
-            && command.type !== "Counters") {
+            && command.type !== "Counters"
+            && command.type !== "TimeSeries"
+            && command.type !== "TimeSeriesCopy") {
             this.deferredCommandsMap.set(
                 IdTypeAndName.keyFor(id, "ClientModifyDocumentCommand", null), command);
         }
@@ -1581,6 +1892,9 @@ export abstract class InMemoryDocumentSessionOperations
             if (this._countersByDocId) {
                 this._countersByDocId.delete(documentInfo.id);
             }
+            if (this._timeSeriesByDocId) {
+                this._timeSeriesByDocId.delete(documentInfo.id);
+            }
         }
 
         this.deletedEntities.evict(entity);
@@ -1602,9 +1916,7 @@ export abstract class InMemoryDocumentSessionOperations
 
         this.deferredCommands.length = 0;
         this.deferredCommandsMap.clear();
-        if (this._clusterSession) {
-            this._clusterSession.clear();
-        }
+        this._clearClusterSession();
 
         this._pendingLazyOperations.length = 0;
         this.entityToJson.clear();

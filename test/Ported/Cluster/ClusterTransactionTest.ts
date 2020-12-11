@@ -2,10 +2,9 @@ import * as assert from "assert";
 import { User } from "../../Assets/Entities";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
-import DocumentStore, {
+import {
     SessionOptions,
     IDocumentStore,
-    CompareExchangeValue,
 } from "../../../src";
 
 describe("ClusterTransactionTest", function () {
@@ -32,7 +31,7 @@ describe("ClusterTransactionTest", function () {
             await session.saveChanges();
             const userFromClusterTx = (
                 await session.advanced.clusterTransaction
-                    .getCompareExchangeValue<User>("usernames/ayende", User)).value;
+                    .getCompareExchangeValue("usernames/ayende", User)).value;
             assert.ok(userFromClusterTx instanceof User, "get compare exchange returned non-user");
             assert.strictEqual(userFromClusterTx.name, user1.name);
             const userLoaded = await session.load<User>("foo/bar");
@@ -50,10 +49,8 @@ describe("ClusterTransactionTest", function () {
             session.advanced.clusterTransaction.createCompareExchangeValue("usernames/ayende", user1);
             await session.saveChanges();
 
-            const lastTransactionIndex = (store as DocumentStore).getLastTransactionIndex(store.database);
-            assert.ok(lastTransactionIndex !== null);
-            session.advanced.clusterTransaction.updateCompareExchangeValue(
-                new CompareExchangeValue<User>("usernames/ayende", lastTransactionIndex, user2));
+            const value = await session.advanced.clusterTransaction.getCompareExchangeValue("usernames/ayende", User);
+            value.value = user2;
 
             await session.store(user2, "users/2");
             user1.age = 10;
@@ -92,15 +89,6 @@ describe("ClusterTransactionTest", function () {
             }
 
             try {
-                session.advanced.clusterTransaction.updateCompareExchangeValue(
-                    new CompareExchangeValue("test", 0, "test"));
-                assert.fail("should have thrown.");
-            } catch (err) {
-                assert.strictEqual(err.name, "InvalidOperationException");
-                assert.ok(err.message.includes(CLUSTER_OP_WARNING));
-            }
-
-            try {
                 session.advanced.clusterTransaction.deleteCompareExchangeValue("usernames/ayende", 0);
                 assert.fail("should have thrown.");
             } catch (err) {
@@ -127,7 +115,7 @@ describe("ClusterTransactionTest", function () {
             session.advanced.transactionMode = "ClusterWide";
             await session.saveChanges();
 
-            const u = await session.advanced.clusterTransaction.getCompareExchangeValue<User>("usernames/ayende", User);
+            const u = await session.advanced.clusterTransaction.getCompareExchangeValue("usernames/ayende", User);
             assert.strictEqual(u.value.name, user1.name);
         }
     });

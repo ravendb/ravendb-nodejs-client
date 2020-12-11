@@ -1,10 +1,10 @@
 import { testContext, disposeTestDocumentStore } from "../../../Utils/TestUtil";
 
 import {
-    AbstractIndexCreationTask,
+    AbstractCsharpIndexCreationTask,
     IDocumentStore,
     StreamQueryStatistics,
-    StreamResult,
+    StreamResult, TimeSeriesRawResult,
 } from "../../../../src";
 import * as assert from "assert";
 import { User } from "../../../Assets/Entities";
@@ -12,6 +12,7 @@ import * as StreamUtil from "../../../../src/Utility/StreamUtil";
 import { CONSTANTS } from "../../../../src/Constants";
 import { parseJsonVerbose } from "../../../Utils/Json";
 import { getStringWritable } from "../../../Utils/Streams";
+import { assertThat } from "../../../Utils/AssertExtensions";
 
 describe("query streaming", function () {
 
@@ -34,14 +35,20 @@ describe("query streaming", function () {
         throw new Error("Arg is required.");
     }
 
-    async function prepareData(n: number = argError()) {
+    async function prepareData(n: number = argError(), withTimeSeries: boolean = false) {
         const session = store.openSession();
 
         for (let i = 0; i < n; i++) {
-            await session.store(Object.assign(new User(), {
+            const user = Object.assign(new User(), {
                 name: "jon" + i,
                 lastName: "snow" + i
-            }));
+            });
+            await session.store(user);
+
+            if (withTimeSeries) {
+                session.timeSeriesFor(user, "Heartrate")
+                    .append(new Date(), i);
+            }
         }
         await session.saveChanges();
     }
@@ -76,7 +83,7 @@ describe("query streaming", function () {
         {
             const session = store.openSession();
             const query = session.query<User>({
-                indexName: usersByNameIndex.getIndexName()
+                index: Users_ByName
             });
 
             const queryStream = await session.advanced.stream(query);
@@ -97,6 +104,39 @@ describe("query streaming", function () {
         }
     });
 
+    it.skip("can stream query results with time series", async () => {
+        await prepareData(200, true);
+
+        await usersByNameIndex.execute(store);
+
+        await testContext.waitForIndexing(store);
+
+        {
+            const session = store.openSession();
+            const query = session.query({ documentType: User })
+                .selectTimeSeries(x => x.raw("from Heartrate"), TimeSeriesRawResult);
+
+            const queryStream = await session.advanced.stream(query);
+
+            const items = [];
+            queryStream.on("data", item => {
+                assertThat(item.document instanceof TimeSeriesRawResult)
+                    .isTrue();
+                const result = item.document as TimeSeriesRawResult;
+                assertThat(result.results)
+                    .hasSize(1);
+                assertThat(result.results[0].value)
+                    .isEqualTo(items.length);
+
+                items.push(item);
+            });
+
+            await StreamUtil.finishedAsync(queryStream);
+
+            assert.strictEqual(items.length, 200);
+        }
+    });
+
     it("can stream query results with query statistics", async () => {
         await Promise.all([
             prepareData(100),
@@ -107,7 +147,7 @@ describe("query streaming", function () {
 
         {
             const session = store.openSession();
-            const query = session.query<User>({ indexName: usersByNameIndex.getIndexName() });
+            const query = session.query(User, Users_ByName);
 
             let statsFromCallback;
             const reader = await session.advanced.stream(query, s => statsFromCallback = s);
@@ -243,7 +283,7 @@ describe("query streaming", function () {
 });
 
 // tslint:disable-next-line:class-name
-class Users_ByName extends AbstractIndexCreationTask {
+class Users_ByName extends AbstractCsharpIndexCreationTask {
     public constructor() {
         super();
 

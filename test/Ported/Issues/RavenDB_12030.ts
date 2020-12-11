@@ -1,8 +1,8 @@
 import { IDocumentStore } from "../../../src/Documents/IDocumentStore";
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
-import { AbstractIndexCreationTask } from "../../../src/Documents/Indexes/AbstractIndexCreationTask";
 import { Company } from "../../Assets/Orders";
 import { assertThat } from "../../Utils/AssertExtensions";
+import { AbstractJavaScriptIndexCreationTask } from "../../../src";
 
 describe("RavenDB_12030", function () {
 
@@ -34,8 +34,7 @@ describe("RavenDB_12030", function () {
         {
             const session = store.openSession();
             let companies = await session
-                .advanced
-                .documentQuery<Company>(Company)
+                .query(Company)
                 .whereEquals("name", "CoedForhe")
                 .fuzzy(0.5)
                 .all();
@@ -46,8 +45,7 @@ describe("RavenDB_12030", function () {
                 .isEqualTo("CodeForge");
 
             companies = await session
-                .advanced
-                .documentQuery<Company>(Company)
+                .query(Company)
                 .whereEquals("name", "Hiberanting Rinhos")
                 .fuzzy(0.5)
                 .all();
@@ -58,8 +56,7 @@ describe("RavenDB_12030", function () {
                 .isEqualTo("Hibernating Rhinos");
 
             companies = await session
-                .advanced
-                .documentQuery<Company>(Company)
+                .query(Company)
                 .whereEquals("name", "CoedForhe")
                 .fuzzy(0.99)
                 .all();
@@ -90,11 +87,7 @@ describe("RavenDB_12030", function () {
         {
             const session = store.openSession();
             let foxes = await session
-                .advanced
-                .documentQuery<Fox>({
-                    documentType: Fox,
-                    indexName: new Fox_Search().getIndexName()
-                })
+                .query(Fox, Fox_Search)
                 .search("name", "quick fox")
                 .proximity(1)
                 .all();
@@ -105,11 +98,7 @@ describe("RavenDB_12030", function () {
                 .isEqualTo("a quick brown fox");
 
             foxes = await session
-                .advanced
-                .documentQuery<Fox>({
-                    indexName: new Fox_Search().getIndexName(),
-                    documentType: Fox
-                })
+                .query(Fox, Fox_Search)
                 .search("name", "quick fox")
                 .proximity(2)
                 .all();
@@ -128,11 +117,16 @@ class Fox {
     public name: string;
 }
 
-class Fox_Search extends AbstractIndexCreationTask {
+// tslint:disable-next-line:class-name
+class Fox_Search extends AbstractJavaScriptIndexCreationTask<Fox, Pick<Fox, "name">> {
     public constructor() {
         super();
 
-        this.map = "from f in docs.Foxes select new { f.name }";
+        this.map(Fox, f => {
+            return {
+                name: f.name
+            }
+        });
 
         this.index("name", "Search");
     }

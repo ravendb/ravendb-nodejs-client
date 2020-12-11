@@ -44,7 +44,7 @@ describe("RavenDB-11166", function () {
         let sub: SubscriptionWorker<Dog>; 
         try {
             sub = store.subscriptions.getSubscriptionWorker<Dog>(id);
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                 sub.on("error", reject);
                 sub.on("batch", async (batch, callback) => {
                     assertThat(batch.items)

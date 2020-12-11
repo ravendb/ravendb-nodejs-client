@@ -11,7 +11,6 @@ import { OperationExecutor } from "./Operations/OperationExecutor";
 import { IDocumentSession } from "./Session/IDocumentSession";
 import { SessionOptions } from "./Session/SessionOptions";
 import { DocumentSession } from "./Session/DocumentSession";
-import { HiloMultiDatabaseIdGenerator } from "./Identity/HiloMultiDatabaseIdGenerator";
 import { IAuthOptions } from "../Auth/AuthOptions";
 import { BulkInsertOperation } from "./BulkInsertOperation";
 import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
@@ -19,6 +18,7 @@ import { DatabaseChanges } from "./Changes/DatabaseChanges";
 import { DatabaseSmuggler } from "./Smuggler/DatabaseSmuggler";
 import { DatabaseChangesOptions } from "./Changes/DatabaseChangesOptions";
 import { IDisposable } from "../Types/Contracts";
+import { MultiDatabaseHiLoIdGenerator } from "./Identity/MultiDatabaseHiLoIdGenerator";
 
 const log = getLogger({ module: "DocumentStore" });
 
@@ -36,7 +36,7 @@ export class DocumentStore extends DocumentStoreBase {
 
     private _requestExecutors: Map<string, RequestExecutor> = new Map();
 
-    private _multiDbHiLo: HiloMultiDatabaseIdGenerator;
+    private _multiDbHiLo: MultiDatabaseHiLoIdGenerator;
 
     private _maintenanceOperationExecutor: MaintenanceOperationExecutor;
     private _operationExecutor: OperationExecutor;
@@ -270,7 +270,7 @@ export class DocumentStore extends DocumentStoreBase {
 
         try {
             if (!this.conventions.documentIdGenerator) { // don't overwrite what the user is doing
-                const generator = new HiloMultiDatabaseIdGenerator(this);
+                const generator = new MultiDatabaseHiLoIdGenerator(this);
                 this._multiDbHiLo = generator;
 
                 this.conventions.documentIdGenerator =

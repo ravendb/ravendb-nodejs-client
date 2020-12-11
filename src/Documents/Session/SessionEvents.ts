@@ -4,7 +4,7 @@ import { IDocumentQueryCustomization } from "./IDocumentQueryCustomization";
 import { DocumentType } from "../DocumentAbstractions";
 import { Reference } from "../../Utility/Reference";
 import { Topology } from "../../Http/Topology";
-import { HttpRequest, HttpRequestParameters, HttpResponse } from "../../Primitives/Http";
+import { HttpRequestParameters, HttpResponse } from "../../Primitives/Http";
 
 export interface SessionEventsEmitter {
     on(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;

@@ -2,50 +2,44 @@ import { AbstractIndexCreationTaskBase } from "./AbstractIndexCreationTaskBase";
 import { FieldStorage, FieldIndexing, FieldTermVector } from "./Enums";
 import { SpatialOptions, SpatialOptionsFactory } from "./Spatial";
 import { CONSTANTS } from "../../Constants";
+import { IndexDefinition } from "./IndexDefinition";
+
+type FieldOrAllFields<TField> = TField | "__all_fields";
 
 /**
  * Base class for creating indexes
  */
-export abstract class AbstractGenericIndexCreationTask extends AbstractIndexCreationTaskBase {
+export abstract class AbstractGenericIndexCreationTask<TField extends string = string> extends AbstractIndexCreationTaskBase<IndexDefinition> {
 
-    protected map: string;
-    protected reduce: string;
-
-    protected storesStrings: { [key: string]: FieldStorage };
-    protected indexesStrings: { [key: string]: FieldIndexing };
-    protected analyzersStrings: { [key: string]: string };
-    protected indexSuggestions: Set<string>;
-    protected termVectorsStrings: { [key: string]: FieldTermVector };
-    protected spatialOptionsStrings: { [key: string]: SpatialOptions };
+    protected storesStrings: Record<FieldOrAllFields<TField>, FieldStorage>;
+    protected indexesStrings: Record<FieldOrAllFields<TField>, FieldIndexing>;
+    protected analyzersStrings: Record<FieldOrAllFields<TField>, string>;
+    protected indexSuggestions: Set<FieldOrAllFields<TField>>;
+    protected termVectorsStrings: Record<FieldOrAllFields<TField>, FieldTermVector>;
+    protected spatialOptionsStrings: Record<FieldOrAllFields<TField>, SpatialOptions>;
 
     protected outputReduceToCollection: string;
     protected patternForOutputReduceToCollectionReferences: string;
     protected patternReferencesCollectionName: string;
 
-    // noinspection TypeScriptAbstractClassConstructorCanBeMadeProtected
     public constructor() {
         super();
-        this.storesStrings = {};
-        this.indexesStrings = {};
-        this.analyzersStrings = {};
-        this.indexSuggestions = new Set();
-        this.termVectorsStrings = {};
-        this.spatialOptionsStrings = {};
+
+        this.storesStrings = {} as Record<FieldOrAllFields<TField>, FieldStorage>;
+        this.indexesStrings = {} as Record<FieldOrAllFields<TField>, FieldIndexing>;
+        this.analyzersStrings = {} as Record<FieldOrAllFields<TField>, string>;
+        this.indexSuggestions = new Set<FieldOrAllFields<TField>>();
+        this.termVectorsStrings = {} as Record<FieldOrAllFields<TField>, FieldTermVector>;
+        this.spatialOptionsStrings = {} as Record<FieldOrAllFields<TField>, SpatialOptions>;
     }
 
-    /**
-     * Gets a value indicating whether this instance is map reduce index definition
-     * @return if index is of type: Map/Reduce
-     */
-    public get isMapReduce(): boolean {
-        return !!this.reduce;
-    }
+    abstract get isMapReduce(): boolean;
 
     /**
      * Register a field to be indexed
      */
     // tslint:disable-next-line:function-name
-    protected index(field: string, indexing: FieldIndexing): void {
+    protected index(field: FieldOrAllFields<TField>, indexing: FieldIndexing): void {
         this.indexesStrings[field] = indexing;
     }
 
@@ -53,7 +47,7 @@ export abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
      * Register a field to be spatially indexed
      */
     // tslint:disable-next-line:function-name
-    protected spatial(field: string, indexing: (spatialOptsFactory: SpatialOptionsFactory) => SpatialOptions): void {
+    protected spatial(field: FieldOrAllFields<TField>, indexing: (spatialOptsFactory: SpatialOptionsFactory) => SpatialOptions): void {
         this.spatialOptionsStrings[field] = indexing(new SpatialOptionsFactory());
     }
 
@@ -68,7 +62,7 @@ export abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
      * Register a field to be stored
      */
     // tslint:disable-next-line:function-name
-    protected store(field: string, storage: FieldStorage): void {
+    protected store(field: TField, storage: FieldStorage): void {
         this.storesStrings[field] = storage;
     }
 
@@ -76,7 +70,7 @@ export abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
      * Register a field to be analyzed
      */
     // tslint:disable-next-line:function-name
-    protected analyze(field: string, analyzer: string): void {
+    protected analyze(field: FieldOrAllFields<TField>, analyzer: string): void {
         this.analyzersStrings[field] = analyzer;
     }
 
@@ -84,12 +78,12 @@ export abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
      * Register a field to have term vectors
      */
     // tslint:disable-next-line:function-name
-    protected termVector(field: string, termVector: FieldTermVector): void {
+    protected termVector(field: FieldOrAllFields<TField>, termVector: FieldTermVector): void {
         this.termVectorsStrings[field] = termVector;
     }
 
     // tslint:disable-next-line:function-name
-    protected suggestion(field: string): void {
+    protected suggestion(field: FieldOrAllFields<TField>): void {
         this.indexSuggestions.add(field);
     }
 }

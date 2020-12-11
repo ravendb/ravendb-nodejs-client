@@ -6,15 +6,21 @@ import { Stopwatch } from "../../../Utility/Stopwatch";
 import { getLogger } from "../../../Utility/LogUtil";
 import { QueryCommand } from "../../Commands/QueryCommand";
 import { throwError } from "../../../Exceptions";
-import * as StringBuilder from "string-builder";
 import {
     DocumentType,
 } from "../../DocumentAbstractions";
-import { CONSTANTS } from "../../../Constants";
+import { CONSTANTS, TIME_SERIES } from "../../../Constants";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { Reference } from "../../../Utility/Reference";
 import { NESTED_OBJECT_TYPES_PROJECTION_FIELD } from "../DocumentQuery";
+import { TimeSeriesAggregationResult } from "../../Queries/TimeSeries/TimeSeriesAggregationResult";
+import { TimeSeriesRawResult } from "../../Queries/TimeSeries/TimeSeriesRawResult";
+import { TimeSeriesRangeAggregation } from "../../Queries/TimeSeries/TimeSeriesRangeAggregation";
+import { ObjectUtil } from "../../../Utility/ObjectUtil";
+import { TimeSeriesEntry } from "../TimeSeries/TimeSeriesEntry";
+import { TypesAwareObjectMapper } from "../../../Mapping/ObjectMapper";
+import { StringBuilder } from "../../../Utility/StringBuilder";
 
 const log = getLogger({ module: "QueryOperation" });
 
@@ -146,7 +152,8 @@ export class QueryOperation {
                         this._noTracking,
                         this._session,
                         documentType,
-                        this._isProjectInto));
+                        this._isProjectInto,
+                        queryResult.timeSeriesFields || []));
             }
         } catch (err) {
             log.warn(err, "Unable to read query result JSON.");
@@ -160,6 +167,14 @@ export class QueryOperation {
             if (queryResult.counterIncludes) {
                 this._session.registerCounters(queryResult.counterIncludes, queryResult.includedCounterNames);
             }
+
+            if (queryResult.timeSeriesIncludes) {
+                this._session.registerTimeSeries(queryResult.timeSeriesIncludes);
+            }
+
+            if (queryResult.compareExchangeValueIncludes) {
+                this._session.clusterSession.registerCompareExchangeValues(queryResult.compareExchangeValueIncludes);
+            }
         }
     }
 
@@ -171,7 +186,8 @@ export class QueryOperation {
         disableEntitiesTracking: boolean,
         session: InMemoryDocumentSessionOperations,
         clazz?: DocumentType<T>,
-        isProjectInto?: boolean
+        isProjectInto?: boolean,
+        timeSeriesFields?: string[]
     ) {
         const { conventions } = session;
         const { entityFieldNameConvention } = conventions;
@@ -181,12 +197,14 @@ export class QueryOperation {
             return session.trackEntity(entityType, id, document, metadata, disableEntitiesTracking);
         }
 
+        const singleField = fieldsToFetch
+            && fieldsToFetch.projections
+            && (!clazz || clazz === TimeSeriesAggregationResult || clazz === TimeSeriesRawResult)
+            && (fieldsToFetch.projections.length === 1 || (fieldsToFetch.projections.includes(NESTED_OBJECT_TYPES_PROJECTION_FIELD) && fieldsToFetch.projections.length === 2));
+
         // return primitives only if type was not passed at all AND fields count is 1
         // if type was passed then use that even if it's only 1 field
-        if (fieldsToFetch
-            && fieldsToFetch.projections
-            && (fieldsToFetch.projections.length === 1 || (fieldsToFetch.projections.includes(NESTED_OBJECT_TYPES_PROJECTION_FIELD) && fieldsToFetch.projections.length === 2))
-            && !clazz) {
+        if (singleField) {
             // we only select a single field
             let projectionField = fieldsToFetch.projections.find(x => x !== NESTED_OBJECT_TYPES_PROJECTION_FIELD);
 
@@ -212,15 +230,17 @@ export class QueryOperation {
             if (TypeUtil.isPrimitive(jsonNode)) {
                 return jsonNode || null;
             }
-            if (!isProjectInto) {
-                if (fieldsToFetch.fieldsToFetch[0] === fieldsToFetch.projections[0]) {
+
+            const isTimeSeriesField = fieldsToFetch.projections[0].startsWith(TIME_SERIES.QUERY_FUNCTION);
+
+            if (!isProjectInto || isTimeSeriesField) {
+                if (isTimeSeriesField || fieldsToFetch.fieldsToFetch[0] === fieldsToFetch.projections[0]) {
                     if (TypeUtil.isObject(jsonNode)) { // extraction from original type
                         document = jsonNode;
                     }
                 }
             }
         }
-
 
         const projType = conventions.getJsTypeByDocumentType(clazz);
 
@@ -235,32 +255,87 @@ export class QueryOperation {
         // tslint:disable-next-line:new-parens
         const result = projType ? new (Function.prototype.bind.apply(projType)) : {};
 
-        if (fieldsToFetch && fieldsToFetch.projections) {
-            const keys = conventions.entityFieldNameConvention
-                ? fieldsToFetch.projections.map(x => StringUtil.changeCase(conventions.entityFieldNameConvention, x))
-                : fieldsToFetch.projections;
+        const mapper = conventions.objectMapper;
 
-            const nestedTypes = raw[NESTED_OBJECT_TYPES_PROJECTION_FIELD];
-            // tslint:disable-next-line:prefer-for-of
-            for (let i = 0; i < keys.length; i++) {
-                const key = keys[i];
-
-                const mapper = conventions.objectMapper;
-                const mapped = mapper.fromObjectLiteral(raw, {
-                    typeName: "object",
-                    nestedTypes
-                })
-
-                result[key] = mapped[key];
-            }
+        if (result instanceof TimeSeriesAggregationResult) {
+            Object.assign(result, QueryOperation._reviveTimeSeriesAggregationResult(raw, mapper));
+        } else if (result instanceof TimeSeriesRawResult) {
+            Object.assign(result, QueryOperation._reviveTimeSeriesRawResult(raw, mapper));
         } else {
-            Object.assign(result, !entityFieldNameConvention
-                ? raw : conventions.transformObjectKeysToLocalFieldNameConvention(raw));
+            if (fieldsToFetch && fieldsToFetch.projections) {
+                const keys = conventions.entityFieldNameConvention
+                    ? fieldsToFetch.projections.map(x => StringUtil.changeCase(conventions.entityFieldNameConvention, x))
+                    : fieldsToFetch.projections;
+
+                const nestedTypes = raw[NESTED_OBJECT_TYPES_PROJECTION_FIELD];
+                // tslint:disable-next-line:prefer-for-of
+                for (let i = 0; i < keys.length; i++) {
+                    const key = keys[i];
+
+                    const mapped = mapper.fromObjectLiteral(raw, {
+                        typeName: "object",
+                        nestedTypes
+                    })
+
+                    result[key] = mapped[key];
+                }
+            } else {
+                Object.assign(result, !entityFieldNameConvention
+                    ? raw : conventions.transformObjectKeysToLocalFieldNameConvention(raw));
+            }
+        }
+
+        if (timeSeriesFields && timeSeriesFields.length) {
+            for (const timeSeriesField of timeSeriesFields) {
+                const value = document[timeSeriesField];
+                if (value) {
+                    const newValue = QueryOperation._detectTimeSeriesResultType(value);
+                    if (newValue instanceof TimeSeriesAggregationResult) {
+                        Object.assign(newValue, QueryOperation._reviveTimeSeriesAggregationResult(value, mapper));
+                    } else if (newValue instanceof TimeSeriesRawResult) {
+                        Object.assign(newValue, QueryOperation._reviveTimeSeriesRawResult(value, mapper));
+                    }
+
+                    result[timeSeriesField] = newValue;
+                }
+            }
         }
 
         session.onAfterConversionToEntityInvoke(id, document, result);
 
         return result;
+    }
+
+    private static _detectTimeSeriesResultType(raw: any): TimeSeriesAggregationResult | TimeSeriesRawResult  {
+        const results = raw.Results || [];
+        // duck typing
+        if (results.length && results[0].From && results[0].To) {
+            return new TimeSeriesAggregationResult();
+        }
+        return new TimeSeriesRawResult();
+    }
+
+    private static _reviveTimeSeriesAggregationResult(raw: object, mapper: TypesAwareObjectMapper) {
+        const rawLower = ObjectUtil.transformObjectKeys(raw, { defaultTransform: "camel" });
+        return mapper.fromObjectLiteral(rawLower, {
+            typeName: "object",
+            nestedTypes: {
+                "results[]": "TimeSeriesRangeAggregation",
+                "results[].from": "date",
+                "results[].to": "date"
+            }
+        }, new Map([[TimeSeriesRangeAggregation.name, TimeSeriesRangeAggregation]]));
+    }
+
+    private static _reviveTimeSeriesRawResult(raw: object, mapper: TypesAwareObjectMapper) {
+        const rawLower = ObjectUtil.transformObjectKeys(raw, { defaultTransform: "camel" });
+        return mapper.fromObjectLiteral(rawLower, {
+            typeName: "object",
+            nestedTypes: {
+                "results[]": "TimeSeriesEntry",
+                "results[].timestamp": "date"
+            }
+        }, new Map([[TimeSeriesEntry.name, TimeSeriesEntry]]));
     }
 
     public get noTracking() {
@@ -269,14 +344,6 @@ export class QueryOperation {
 
     public set noTracking(value) {
         this._noTracking = value;
-    }
-
-    public isDisableEntitiesTracking(): boolean {
-        return this._noTracking;
-    }
-
-    public setDisableEntitiesTracking(disableEntitiesTracking: boolean): void {
-        this._noTracking = disableEntitiesTracking;
     }
 
     public ensureIsAcceptableAndSaveResult(result: QueryResult, duration: number): void {
@@ -319,7 +386,7 @@ export class QueryOperation {
 
                 parameters.append(parameterKey)
                     .append(" = ")
-                    .append(parameterValue);
+                    .append(parameterValue as any);
 
                 first = false;
             }

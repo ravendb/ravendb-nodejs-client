@@ -22,21 +22,20 @@ export class HiloIdGenerator {
     private _serverTag: string = null;
     private _generatorLock = semaphore();
 
-    constructor(store: IDocumentStore, dbName?: string, tag?: string) {
+    constructor(tag: string, store: IDocumentStore, dbName: string, identityPartsSeparator: string) {
         this._lastRangeAt = DateUtil.zeroDate();
         this._range = new HiloRangeValue();
         this._conventions = store.conventions;
-        this._identityPartsSeparator = this._conventions.identityPartsSeparator;
         this._tag = tag;
         this._store = store;
-        this._dbName = dbName || store.database;
+        this._dbName = dbName;
+        this._identityPartsSeparator = identityPartsSeparator;
     }
 
     // noinspection JSUnusedLocalSymbols
-    public generateDocumentId(entity: object): Promise<string> {
-        return Promise.resolve()
-            .then(() => this.nextId())
-            .then((nextId) => this._getDocumentIdFromId(nextId));
+    public async generateDocumentId(entity: object): Promise<string> {
+        const nextId = await this.nextId();
+        return this._getDocumentIdFromId(nextId);
     }
 
     protected _getDocumentIdFromId(nextId: number) {

@@ -3,6 +3,7 @@ import { ObjectLiteralDescriptor, ObjectTypeDescriptor, ClassConstructor, Entity
 
 export class TypeUtil {
     public static readonly MAX_INT32 = 2147483647;
+    public static readonly MIN_INT32 = -2147483648;
 
     // tslint:disable-next-line:no-empty
     public static NOOP: (...args: any[]) => any = () => {};

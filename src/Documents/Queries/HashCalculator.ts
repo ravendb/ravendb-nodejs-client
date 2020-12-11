@@ -1,5 +1,6 @@
 import * as md5 from "md5";
 import { TypeUtil } from "../../Utility/TypeUtil";
+import { JsonSerializer } from "../../Mapping/Json/Serializer";
 
 export class HashCalculator {
 
@@ -33,7 +34,7 @@ export class HashCalculator {
                 this.write(o[key]);
             }
         } else {
-            this.write(o.toString());
+            this.write(JsonSerializer.getDefaultForEntities().serialize(o));
         }
     }
 }

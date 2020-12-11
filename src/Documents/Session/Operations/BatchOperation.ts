@@ -96,7 +96,10 @@ export class BatchOperation {
                     this._handleDelete(batchResult);
                     break;
                 case "CompareExchangePUT":
+                    this._handleCompareExchangePut(batchResult);
+                    break;
                 case "CompareExchangeDELETE":
+                    this._handleCompareExchangeDelete(batchResult);
                     break;
                 default:
                     throwError("InvalidOperationException", `Command '${type}' is not supported.`);
@@ -138,6 +141,11 @@ export class BatchOperation {
                     break;
                 case "Counters":
                     this._handleCounters(batchResult);
+                    break;
+                case "TimeSeries":
+                    //TODO: RavenDB-13474 add to time series cache
+                    break;
+                case "TimeSeriesCopy":
                     break;
                 case "BatchPATCH":
                     break;
@@ -188,6 +196,28 @@ export class BatchOperation {
         }
         
         return modifiedDocumentInfo;
+    }
+
+    private _handleCompareExchangePut(batchResult: object) {
+        this._handleCompareExchangeInternal("CompareExchangePUT", batchResult);
+    }
+
+    private _handleCompareExchangeDelete(batchResult: object) {
+        this._handleCompareExchangeInternal("CompareExchangeDELETE", batchResult);
+    }
+
+    private _handleCompareExchangeInternal(commandType: CommandType, batchResult: any) {
+        const key = batchResult.key;
+        if (!key) {
+            BatchOperation._throwMissingField(commandType, "Key");
+        }
+
+        const index = batchResult.index;
+        if (TypeUtil.isNullOrUndefined(index)) {
+            BatchOperation._throwMissingField(commandType, "Index");
+        }
+        const clusterSession = this._session.clusterSession;
+        clusterSession.updateState(key, index);
     }
 
     private _handleAttachmentCopy(batchResult: object): void {

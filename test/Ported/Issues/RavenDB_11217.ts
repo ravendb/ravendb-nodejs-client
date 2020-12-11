@@ -130,7 +130,7 @@ describe("RavenDB_11217Test", function () {
             assertThat(session.advanced.numberOfRequests)
                 .isEqualTo(0);
 
-            let products = await session.query<Product>(Product)
+            let products = await session.query(Product)
                 .include("supplier")
                 .all();
 
@@ -158,7 +158,7 @@ describe("RavenDB_11217Test", function () {
                 .isFalse();
 
             products = await session
-                .query<Product>(Product)
+                .query(Product)
                 .include("supplier")
                 .all();
 
@@ -211,7 +211,7 @@ describe("RavenDB_11217Test", function () {
         {
             const session = store.openSession();
             let stats: QueryStatistics;
-            await session.query<Product>(Product)
+            await session.query(Product)
                 .statistics(s => stats = s)
                 .whereEquals("name", "HR")
                 .all();
@@ -219,7 +219,7 @@ describe("RavenDB_11217Test", function () {
             assertThat(stats.durationInMs)
                 .isGreaterThan(-0.01);
 
-            await session.query<Product>(Product)
+            await session.query(Product)
                 .statistics(s => stats = s)
                 .whereEquals("name", "HR")
                 .all();
@@ -236,7 +236,7 @@ describe("RavenDB_11217Test", function () {
             const session = store.openSession(noCacheOptions);
             let stats: QueryStatistics;
 
-            await session.query<Product>(Product)
+            await session.query(Product)
                 .statistics(s => stats = s)
                 .whereEquals("name", "HR")
                 .all();

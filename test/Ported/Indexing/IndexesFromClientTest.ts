@@ -14,13 +14,16 @@ import {
     GetIndexNamesOperation,
     IndexQuery,
     ExplainQueryCommand,
-    AbstractIndexCreationTask,
     GetIndexingStatusOperation,
     StopIndexingOperation,
     StartIndexingOperation,
     StopIndexOperation,
     GetIndexesOperation,
-    GetIndexStatisticsOperation, SetIndexesLockOperation, SetIndexesPriorityOperation, GetTermsOperation,
+    GetIndexStatisticsOperation,
+    SetIndexesLockOperation,
+    SetIndexesPriorityOperation,
+    GetTermsOperation,
+    AbstractJavaScriptIndexCreationTask,
 } from "../../../src";
 import { DeleteIndexOperation } from "../../../src/Documents/Operations/Indexes/DeleteIndexOperation";
 import { QueryStatistics } from "../../../src/Documents/Session/QueryStatistics";
@@ -53,10 +56,8 @@ describe("Indexes from client", function () {
 
         {
             const session = store.openSession();
-            const users = await session.query({
-                indexName: "Users/ByName",
-                documentType: User
-            }).all();
+            const users = await session.query(User, Users_ByName)
+                .all();
 
             assert.strictEqual(users.length, 1);
         }
@@ -171,7 +172,7 @@ describe("Indexes from client", function () {
 
         {
             const session = store.openSession();
-            const users = await session.query<User>({ indexName: "Users/ByName" })
+            const users = await session.query<User>({ index: Users_ByName })
                 .waitForNonStaleResults()
                 .whereEquals("name", "Arek")
                 .all();
@@ -217,7 +218,7 @@ describe("Indexes from client", function () {
             let statsRef: QueryStatistics;
 
             const users = await session
-                .query<User>(User)
+                .query(User)
                 .waitForNonStaleResults()
                 .statistics(s => statsRef = s)
                 .whereEquals("name", "Arek")
@@ -253,7 +254,7 @@ describe("Indexes from client", function () {
             let statsRef: QueryStatistics;
 
             const users = await session
-                .query<User>(User)
+                .query(User)
                 .waitForNonStaleResults()
                 .statistics(s => statsRef = s)
                 .whereEquals("name", "Arek")
@@ -285,12 +286,12 @@ describe("Indexes from client", function () {
             // make queries to create auto indexes 
             const session = store.openSession();
             let stats: QueryStatistics;
-            let users = await session.query<User>(User)
+            let users = await session.query(User)
                 .statistics(_stats => stats = _stats)
                 .whereEquals("name", "Arek")
                 .all();
 
-            users = await session.query<User>(User)
+            users = await session.query(User)
                 .statistics(_stats => stats = _stats)
                 .whereGreaterThan("age", 10)
                 .all();
@@ -335,7 +336,7 @@ describe("Indexes from client", function () {
             } as MoreLikeThisOptions;
 
             const session = store.openSession();
-            const list = await session.query<Post>({ indexName: "Posts/ByTitleAndDesc" })
+            const list = await session.query<Post>({ index: Posts_ByTitleAndDesc })
                 .moreLikeThis(f => f.usingDocument(x => x.whereEquals("id()", "posts/1")).withOptions(options))
                 .all();
 
@@ -354,12 +355,18 @@ describe("Indexes from client", function () {
 });
 
 // tslint:disable:class-name
-export class Posts_ByTitleAndDesc extends AbstractIndexCreationTask {
+export class Posts_ByTitleAndDesc extends AbstractJavaScriptIndexCreationTask<Post, Pick<Post, "title" | "desc">> {
 
     constructor() {
         super();
 
-        this.map = "from p in docs.Posts select new { p.title, p.desc }";
+        this.map(Post, p => {
+            return {
+                title: p.title,
+                desc: p.desc
+            }
+        });
+
         this.index("title", "Search");
         this.store("title", "Yes");
         this.analyze("title", "Lucene.Net.Analysis.SimpleAnalyzer");
@@ -370,12 +377,16 @@ export class Posts_ByTitleAndDesc extends AbstractIndexCreationTask {
     }
 }
 
-export class Users_ByName extends AbstractIndexCreationTask {
+export class Users_ByName extends AbstractJavaScriptIndexCreationTask<User, Pick<User, "name">> {
 
     constructor() {
         super();
 
-        this.map = "from u in docs.Users select new { u.name }";
+        this.map(User, u => {
+            return {
+                name: u.name
+            }
+        });
 
         this.index("name", "Search");
         this.indexSuggestions.add("name");

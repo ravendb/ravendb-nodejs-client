@@ -1,4 +1,4 @@
-import { ClusterTestContext } from "../../Utils/TestUtil";
+import { ClusterTestContext, RavenTestContext } from "../../Utils/TestUtil";
 import { DocumentStore } from "../../../src/Documents/DocumentStore";
 import { NextIdentityForOperation } from "../../../src/Documents/Operations/Identities/NextIdentityForOperation";
 import { assertThat, assertThrows } from "../../Utils/AssertExtensions";
@@ -13,9 +13,9 @@ import { GetDatabaseRecordOperation } from "../../../src/ServerWide/Operations/G
 import { ReorderDatabaseMembersOperation } from "../../../src/ServerWide/Operations/ReorderDatabaseMembersOperation";
 import { TypeUtil } from "../../../src/Utility/TypeUtil";
 
-describe("ClusterOperationTest", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("ClusterOperationTest", function () {
 
-    let testContext = new ClusterTestContext();
+    const testContext = new ClusterTestContext();
 
     it("nextIdentityForOperationShouldBroadcast", async () => {
         const cluster = await testContext.createRaftCluster(3);
@@ -65,7 +65,9 @@ describe("ClusterOperationTest", function () {
         }
     });
 
-    it.skip("nextIdentityForOperationShouldBroadcastAndFail", async () => {
+    it.skip("nextIdentityForOperationShouldBroadcastAndFail", async function() {
+        this.timeout(60_000);
+
         const cluster = await testContext.createRaftCluster(3);
         try {
             const database = testContext.getDatabaseName();
@@ -80,7 +82,7 @@ describe("ClusterOperationTest", function () {
                 store.initialize();
 
                 const re = store.getRequestExecutor(database);
-                let result = await store.maintenance.forDatabase(database).send(new NextIdentityForOperation("person|"));
+                const result = await store.maintenance.forDatabase(database).send(new NextIdentityForOperation("person|"));
                 assertThat(result)
                     .isEqualTo(1);
 
@@ -115,7 +117,7 @@ describe("ClusterOperationTest", function () {
         } finally {
             cluster.dispose();
         }
-    }).timeout(60_000);
+    });
 
     it.skip("changesApiFailOver", async () => {
         const db = "Test";

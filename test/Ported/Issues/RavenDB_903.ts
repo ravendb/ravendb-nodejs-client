@@ -4,9 +4,9 @@ import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
     IDocumentStore,
-    AbstractIndexCreationTask,
     IDocumentSession,
 } from "../../../src";
+import { AbstractJavaScriptIndexCreationTask } from "../../../src/Documents/Indexes/AbstractJavaScriptIndexCreationTask";
 
 describe("Issue RavenDB-903", function () {
 
@@ -21,10 +21,7 @@ describe("Issue RavenDB-903", function () {
 
     it("test1", async () => {
         await doTest(store, session => {
-            return session.advanced.documentQuery<Product>({
-                documentType: Product,
-                indexName: TestIndex.name
-            })
+            return session.query(Product, TestIndex)
                 .search("description", "Hello")
                 .intersect()
                 .whereEquals("name", "Bar");
@@ -33,10 +30,7 @@ describe("Issue RavenDB-903", function () {
 
     it("test2", async () => {
         await doTest(store, session => {
-            return session.advanced.documentQuery<Product>({
-                documentType: Product,
-                indexName: TestIndex.name
-            })
+            return session.advanced.documentQuery(Product, TestIndex)
                 .whereEquals("name", "Bar")
                 .intersect()
                 .search("description", "Hello");
@@ -84,11 +78,16 @@ export class Product {
     public description: string;
 }
 
-class TestIndex extends AbstractIndexCreationTask {
+class TestIndex extends AbstractJavaScriptIndexCreationTask<Product, Pick<Product, "name" | "description">> {
     public constructor() {
         super();
 
-        this.map = "from product in docs.Products select new { product.name, product.description }";
+        this.map(Product, p => {
+            return {
+                name: p.name,
+                description: p.description
+            }
+        });
 
         this.index("description", "Search");
     }

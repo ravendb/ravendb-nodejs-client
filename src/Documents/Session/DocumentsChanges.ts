@@ -2,16 +2,6 @@ export class DocumentsChanges {
 
     public fieldOldValue: any;
     public fieldNewValue: any;
-
-    /**
-     * @deprecated FieldOldType is not supported anymore. Will be removed in next major version of the product.
-     */
-    public fieldOldType: string;
-
-    /**
-     * @deprecated FieldNewType is not supported anymore. Will be removed in next major version of the product.
-     */
-    public fieldNewType: string;
     public change: ChangeType;
     public fieldName: string;
     public fieldPath: string;
@@ -29,6 +19,4 @@ export type ChangeType =
     | "RemovedField"
     | "ArrayValueChanged"
     | "ArrayValueAdded"
-    | "ArrayValueRemoved"
-    | "FieldTypeChanged"
-    | "EntityTypeChanged";
+    | "ArrayValueRemoved";

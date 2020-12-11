@@ -16,6 +16,8 @@ import { RavenConnectionString, SqlConnectionString } from "../Documents/Operati
 import { ClientConfiguration } from "../Documents/Operations/Configuration/ClientConfiguration";
 import { RefreshConfiguration } from "../Documents/Operations/Refresh/RefreshConfiguration";
 import { RevisionsCollectionConfiguration } from "../Documents/Operations/RevisionsCollectionConfiguration";
+import { DocumentsCompressionConfiguration } from "./DocumentsCompressionConfiguration";
+import { TimeSeriesConfiguration } from "../Documents/Operations/TimeSeries/TimeSeriesConfiguration";
 
 export interface ScriptResolver {
     script: string;
@@ -36,12 +38,14 @@ export interface DatabaseRecord {
     databaseStatus?: DatabaseStateStatus;
     topology?: DatabaseTopology;
     conflictSolverConfig?: ConflictSolver;
+    documentsCompression?: DocumentsCompressionConfiguration;
     sorters?: { [key: string]: SorterDefinition };
     indexes?: { [key: string]: IndexDefinition };
     indexesHistory?: { [key: string]: IndexHistoryEntry[] };
     autoIndexes?: { [key: string]: AutoIndexDefinition };
     settings?: { [key: string]: string };
     revisions?: RevisionsConfiguration;
+    timeSeries?: TimeSeriesConfiguration;
     revisionsForConflicts?: RevisionsCollectionConfiguration;
     expiration?: ExpirationConfiguration;
     refresh?: RefreshConfiguration;

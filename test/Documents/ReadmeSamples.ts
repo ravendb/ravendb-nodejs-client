@@ -11,10 +11,10 @@ import {
     IDocumentSession,
     QueryStatistics,
     StreamQueryStatistics,
-    AbstractIndexCreationTask,
     LoadOptions,
 } from "../../src";
 import { TypeUtil } from "../../src/Utility/TypeUtil";
+import { AbstractJavaScriptIndexCreationTask } from "../../src/Documents/Indexes/AbstractJavaScriptIndexCreationTask";
 
 // tslint:disable-next-line:no-console
 let print = console.log;
@@ -388,7 +388,7 @@ describe("Readme query samples", function () {
                 assert.ok(result.length);
             });
 
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                 stream.finished(userStream, err => {
                     err ? reject(err) : resolve();
                 });
@@ -413,7 +413,7 @@ describe("Readme query samples", function () {
                 // ...
             });
 
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                 queryStream.on("end", () => {
                     try {
                         assert.ok(items.length);
@@ -431,10 +431,14 @@ describe("Readme query samples", function () {
         });
 
         it("can suggest", async () => {
-            class UsersIndex extends AbstractIndexCreationTask {
+            class UsersIndex extends AbstractJavaScriptIndexCreationTask<User, Pick<User, "name">> {
                 constructor() {
                     super();
-                    this.map = "from doc in docs.Users select new { doc.name }";
+                    this.map(User, doc => {
+                        return {
+                            name: doc.name
+                        }
+                    });
                     this.suggestion("name");
                 }
             }
@@ -444,7 +448,7 @@ describe("Readme query samples", function () {
 
             {
                 const session = store.openSession();
-                const suggestionQueryResult = await session.query({ indexName: "UsersIndex" })
+                const suggestionQueryResult = await session.query(User, UsersIndex)
                     .suggestUsing(x => x.byField("name", "Jon"))
                     .execute();
                 assert.strictEqual(suggestionQueryResult.name.suggestions.length, 1);
@@ -538,6 +542,25 @@ describe("Readme query samples", function () {
             assert.strictEqual(revisions.length, 2);
         });
 
+    });
+
+    describe("can use time series", function () {
+        it("basic", async () => {
+            {
+                const session = store.openSession();
+                await session.store({ name: "John" }, "users/1");
+                const tsf = session.timeSeriesFor("users/1", "heartbeat");
+                tsf.append(new Date(), 120);
+                await session.saveChanges();
+            }
+
+            {
+                const session = store.openSession();
+                const tsf = session.timeSeriesFor("users/1", "heartbeat");
+                const heartbeats = await tsf.get();
+                assert.strictEqual(heartbeats.length, 1);
+            }
+        })
     });
 
     async function prepareUserDataSet(store: IDocumentStore) {

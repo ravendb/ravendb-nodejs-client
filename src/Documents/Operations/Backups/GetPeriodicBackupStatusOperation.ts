@@ -52,25 +52,24 @@ class GetPeriodicBackupStatusCommand extends RavenCommand<GetPeriodicBackupStatu
         }
 
         let body: string = null;
-        await this._defaultPipeline(_ => body = _)
-            .process(bodyStream)
-            .then(results => {
-                this.result = this._reviveResultTypes<GetPeriodicBackupStatusOperationResult>(
-                    results,
-                    this._conventions,
-                    {
-                        nestedTypes: {
-                            "status.lastFullBackup": "date",
-                            "status.lastIncrementalBackup": "date",
-                            "status.lastFullBackupInternal": "date",
-                            "status.lastIncrementalBackupInternal": "date",
-                            "status.localBackup.lastIncrementalBackup": "date",
-                            "status.localBackup.lastFullBackup": "date",
-                            "status.nextBackup.dateTime": "date",
-                            "status.onGoingBackup.startTime": "date",
-                            "status.error.at": "date"
-                        }
-                    });
+        const results = await this._defaultPipeline(_ => body = _)
+            .process(bodyStream);
+
+        this.result = this._reviveResultTypes<GetPeriodicBackupStatusOperationResult>(
+            results,
+            this._conventions,
+            {
+                nestedTypes: {
+                    "status.lastFullBackup": "date",
+                    "status.lastIncrementalBackup": "date",
+                    "status.lastFullBackupInternal": "date",
+                    "status.lastIncrementalBackupInternal": "date",
+                    "status.localBackup.lastIncrementalBackup": "date",
+                    "status.localBackup.lastFullBackup": "date",
+                    "status.nextBackup.dateTime": "date",
+                    "status.onGoingBackup.startTime": "date",
+                    "status.error.at": "date"
+                }
             });
         return body;
     }

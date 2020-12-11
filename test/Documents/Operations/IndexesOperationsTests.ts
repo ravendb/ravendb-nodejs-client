@@ -8,7 +8,6 @@ import {
     GetIndexingStatusOperation,
     IndexStatus,
     EnableIndexOperation,
-    AbstractIndexCreationTask,
     IndexDefinition,
     GetIndexesOperation,
     GetIndexesStatisticsOperation,
@@ -25,10 +24,13 @@ import {
     SetIndexesPriorityOperation,
     GetIndexErrorsOperation,
     GetIndexStatisticsOperation,
+    AbstractCsharpIndexCreationTask,
 } from "../../../src";
 import { UsersIndex, UsersInvalidIndex, UsersIndexWithPascalCasedFields } from "../../Assets/Indexes";
 import { TypeUtil } from "../../../src/Utility/TypeUtil";
 import { assertThat } from "../../Utils/AssertExtensions";
+import { AbstractJavaScriptIndexCreationTask } from "../../../src/Documents/Indexes/AbstractJavaScriptIndexCreationTask";
+import { delay } from "../../../src/Utility/PromiseUtil";
 
 describe("Index operations", function () {
 
@@ -46,9 +48,9 @@ describe("Index operations", function () {
     afterEach(async () =>
         await disposeTestDocumentStore(store));
 
-    let usersIndex: AbstractIndexCreationTask;
-    let invalidUsersIndex: AbstractIndexCreationTask;
-    let usersIndexWithPascalCasedFields: AbstractIndexCreationTask;
+    let usersIndex: AbstractJavaScriptIndexCreationTask<User>;
+    let invalidUsersIndex: AbstractCsharpIndexCreationTask;
+    let usersIndexWithPascalCasedFields: AbstractJavaScriptIndexCreationTask<any>;
 
     beforeEach(() => {
         usersIndex = new UsersIndex();
@@ -182,6 +184,8 @@ describe("Index operations", function () {
         await session.saveChanges();
 
         await testContext.waitForIndexing(store, store.database, null, false);
+
+        await delay(500);
 
         const indexErrors = await store.maintenance.send(new GetIndexErrorsOperation());
         const perIndexErrors = await store.maintenance.send(new GetIndexErrorsOperation([indexDef.name]));

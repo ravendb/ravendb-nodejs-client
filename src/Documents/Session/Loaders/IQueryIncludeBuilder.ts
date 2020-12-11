@@ -10,4 +10,9 @@ export interface IQueryIncludeBuilder extends IGenericIncludeBuilder<IQueryInclu
 
     includeAllCounters(): IQueryIncludeBuilder;
     includeAllCounters(path: string): IQueryIncludeBuilder;
+
+    includeTimeSeries(name: string): IQueryIncludeBuilder;
+    includeTimeSeries(name: string, from: Date, to: Date): IQueryIncludeBuilder;
+    includeTimeSeries(path: string, name: string): IQueryIncludeBuilder;
+    includeTimeSeries(path: string, name: string, from: Date, to: Date): IQueryIncludeBuilder;
 }

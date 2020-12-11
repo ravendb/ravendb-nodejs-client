@@ -5,9 +5,6 @@ import { CaseInsensitiveKeysMap } from "../../Primitives/CaseInsensitiveKeysMap"
 import { CONSTANTS } from "../../Constants";
 import { GetCountersOperation } from "../Operations/Counters/GetCountersOperation";
 import { ObjectUtil } from "../../Utility/ObjectUtil";
-import { ErrorFirstCallback } from "../../Types/Callbacks";
-import { passResultToCallback } from "../../Utility/PromiseUtil";
-import { TypeUtil } from "../../Utility/TypeUtil";
 
 export class SessionDocumentCounters extends SessionCountersBase implements ISessionDocumentCounters {
 
@@ -17,15 +14,7 @@ export class SessionDocumentCounters extends SessionCountersBase implements ISes
         super(session, entityOrId);
     }
 
-    public async getAll(): Promise<{ [key: string]: number }>;
-    public async getAll(callback: ErrorFirstCallback<{ [key: string]: number }>): Promise<{ [key: string]: number }>;
-    public async getAll(callback?: ErrorFirstCallback<{ [key: string]: number }>): Promise<{ [key: string]: number }> {
-        const resultPromise = this._getAll();
-        passResultToCallback(resultPromise, callback || TypeUtil.NOOP);
-        return resultPromise;
-    }
-
-    private async _getAll() {
+    public async getAll(): Promise<{ [key: string]: number }> {
         let cache = this._session.countersByDocId.get(this._docId);
         if (!cache) {
             cache = {
@@ -73,19 +62,11 @@ export class SessionDocumentCounters extends SessionCountersBase implements ISes
     }
 
     public async get(counter: string): Promise<number>;
-    public async get(counter: string, callback: ErrorFirstCallback<number>): Promise<number>;
     public async get(counters: string[]): Promise<{ [key: string]: number }>;
-    public async get(
-        counters: string[], 
-        callback: ErrorFirstCallback<{ [key: string]: number }>): Promise<{ [key: string]: number }>;
-    public async get(
-        counters: string | string[], 
-        callback?: ErrorFirstCallback<number> | ErrorFirstCallback<{ [key: string]: number }>): Promise<any> {
-        const resultPromise: Promise<any> = Array.isArray(counters)
+    public async get(counters: string | string[]): Promise<any> {
+        return Array.isArray(counters)
             ? this._getCounters(counters)
             : this._getCounter(counters);
-        passResultToCallback(resultPromise as any, callback || TypeUtil.NOOP);
-        return resultPromise;
     }
 
     private async _getCounter(counter: string): Promise<number> {
@@ -105,7 +86,7 @@ export class SessionDocumentCounters extends SessionCountersBase implements ISes
         if (document) {
             const metadataCounters = document.metadata["@counters"];
             if (metadataCounters) {
-                metadataHasCounterName = metadataCounters.some(x => x === counter);
+                metadataHasCounterName = metadataCounters.some(x => x.toLocaleLowerCase() === counter.toLocaleLowerCase());
             }
         }
 
@@ -118,9 +99,7 @@ export class SessionDocumentCounters extends SessionCountersBase implements ISes
             if (details.counters && details.counters.length) {
                 const counterDetail = details.counters[0];
 
-                if (counterDetail) {
-                    value = counterDetail.totalValue;
-                }
+                value = counterDetail ? counterDetail.totalValue : null;
             }
         }
 
@@ -151,7 +130,7 @@ export class SessionDocumentCounters extends SessionCountersBase implements ISes
             let notInMetadata = true;
 
             if (document && metadataCounters) {
-                notInMetadata = metadataCounters.some(x => x.toLowerCase() === counter.toLowerCase());
+                notInMetadata = !metadataCounters.some(x => x.toLowerCase() === counter.toLowerCase());
             }
 
             if (hasCounter || cache.gotAll || (document && notInMetadata)) {
@@ -168,6 +147,9 @@ export class SessionDocumentCounters extends SessionCountersBase implements ISes
             const details = await this._session.operations.send(
                 new GetCountersOperation(this._docId, counters), this._session.sessionInfo);
             for (const counterDetail of details.counters) {
+                if (!counterDetail) {
+                    continue;
+                }
                 cache.data.set(counterDetail.counterName, counterDetail.totalValue);
                 result.set(counterDetail.counterName, counterDetail.totalValue);
             }

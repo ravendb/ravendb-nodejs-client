@@ -27,4 +27,5 @@ export class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TRes
      * @deprecated ResultSize is not supported anymore. Will be removed in next major version of the product.
      */
     public resultSize: number;
+    public timeSeriesFields: string[];
 }

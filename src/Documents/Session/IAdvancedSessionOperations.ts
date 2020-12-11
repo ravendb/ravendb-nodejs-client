@@ -15,14 +15,14 @@ import { IRevisionsSessionOperations } from "./IRevisionsSessionOperations";
 import { IClusterTransactionOperations } from "./IClusterTransactionOperations";
 import { DocumentType } from "../DocumentAbstractions";
 import { IRawDocumentQuery } from "./IRawDocumentQuery";
-import { SessionLoadStartingWithOptions } from "./IDocumentSession";
-import { ErrorFirstCallback } from "../../Types/Callbacks";
+import { SessionInfo, SessionLoadStartingWithOptions } from "./IDocumentSession";
 import { IDocumentQuery } from "./IDocumentQuery";
 import { JavaScriptArray } from "./JavaScriptArray";
 import { DocumentResultStream } from "./DocumentResultStream";
 import * as stream from "readable-stream";
 import { IDocumentQueryBuilder } from "./IDocumentQueryBuilder";
 import { IGraphDocumentQuery } from "./IGraphDocumentQuery";
+import { JavaScriptMap } from "./JavaScriptMap";
 
 export type StreamQueryStatisticsCallback = (stats: StreamQueryStatistics) => void;
 
@@ -68,11 +68,9 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
 
     exists(id: string): Promise<boolean>;
 
-    loadStartingWith<T extends object>(
-        idPrefix: string, opts: SessionLoadStartingWithOptions<T>, callback?: ErrorFirstCallback<T[]>): Promise<T[]>;
+    loadStartingWith<T extends object>(idPrefix: string, opts: SessionLoadStartingWithOptions<T>): Promise<T[]>;
 
-    loadStartingWith<T extends object>(
-        idPrefix: string, callback?: ErrorFirstCallback<T[]>): Promise<T[]>;
+    loadStartingWith<T extends object>(idPrefix: string): Promise<T[]>;
 
     increment<TEntity extends object, UValue>(id: string, path: string, valueToAdd: UValue): void;
 
@@ -82,17 +80,18 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
 
     patch<TEntity extends object, UValue>(entity: TEntity, path: string, value: UValue): void;
 
-    patch<TEntity extends object, UValue>(
+    patchArray<TEntity extends object, UValue>(
         id: string, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
 
-    patch<TEntity extends object, UValue>(
+    patchArray<TEntity extends object, UValue>(
         entity: TEntity, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
 
-    loadStartingWith<T extends object>(
-        idPrefix: string, opts: SessionLoadStartingWithOptions<T>, callback?: ErrorFirstCallback<T[]>): Promise<T[]>;
+    patchObject<TEntity extends object, TKey, TValue>(
+        entity: TEntity, pathToObject: string, mapAdder: (map: JavaScriptMap<TKey, TValue>) => void): void;
 
-    loadStartingWith<T extends object>(
-        idPrefix: string, callback?: ErrorFirstCallback<T[]>): Promise<T[]>;
+    patchObject<TEntity extends object, TKey, TValue>(
+        id: string, pathToObject: string, mapAdder: (map: JavaScriptMap<TKey, TValue>) => void): void;
+
 
     // tslint:enable:max-line-length
 
@@ -106,21 +105,6 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      */
     streamInto<T extends object>(query: IRawDocumentQuery<T>, writable: stream.Writable): Promise<void>;
 
-    /**
-     *  Returns the results of a query directly into stream
-     */
-    streamInto<T extends object>(
-        query: IDocumentQuery<T>, writable: stream.Writable, callback: ErrorFirstCallback<void>): Promise<void>;
-
-    /**
-     * Returns the results of a query directly into stream
-     */
-    streamInto<T extends object>(
-        query: IRawDocumentQuery<T>, writable: stream.Writable, callback: ErrorFirstCallback<void>): Promise<void>;
-
-    loadIntoStream(
-        ids: string[], writable: stream.Writable, callback?: ErrorFirstCallback<void>): Promise<void>;
-
     loadIntoStream(
         ids: string[], writable: stream.Writable): Promise<void>;
 
@@ -132,17 +116,6 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
         idPrefix: string,
         writable: stream.Writable,
         opts: SessionLoadStartingWithOptions<TEntity>): Promise<void>;
-
-    loadStartingWithIntoStream<TEntity extends object>(
-        idPrefix: string,
-        writable: stream.Writable,
-        callback?: ErrorFirstCallback<void>): Promise<void>;
-
-    loadStartingWithIntoStream<TEntity extends object>(
-        idPrefix: string,
-        writable: stream.Writable,
-        opts: SessionLoadStartingWithOptions<TEntity>,
-        callback?: ErrorFirstCallback<void>): Promise<void>;
 
     /**
      * Stream the results on the query to the client.
@@ -194,17 +167,6 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      */
     stream<T extends object>(idPrefix: string, opts: SessionLoadStartingWithOptions<T>)
         : Promise<DocumentResultStream<T>>;
-
-    /**
-     * Stream the results on the query to the client.
-     *
-     * Does NOT track the entities in the session, and will not include changes there when saveChanges() is called
-     */
-    stream<T extends object>(
-        idPrefix: string,
-        opts: SessionLoadStartingWithOptions<T>,
-        callback: ErrorFirstCallback<DocumentResultStream<T>>)
-        : Promise<DocumentResultStream<T>>;
 }
 
 export interface ReplicationBatchOptions {
@@ -235,6 +197,8 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
     getCurrentSessionNode(): Promise<ServerNode>;
 
     requestExecutor: RequestExecutor;
+    
+    sessionInfo: SessionInfo;
 
     /**
      * Gets a value indicating whether any of the entities tracked by the session has changes.
@@ -303,6 +267,12 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
      * Gets all the counter names for the specified entity.
      */
     getCountersFor<T extends object>(instance: T): string[];
+
+    /**
+     * Gets all time series names for the specified entity.
+     * @param instance The instance
+     */
+    getTimeSeriesFor<T extends object>(instance: T): string[];
 
     /**
      * Gets last modified date for the specified entity.

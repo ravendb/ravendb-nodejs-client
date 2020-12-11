@@ -44,27 +44,25 @@ export class MaintenanceOperationExecutor {
         return new MaintenanceOperationExecutor(this._store, databaseName);
     }
 
-    public send(operation: AwaitableMaintenanceOperation): Promise<OperationCompletionAwaiter>;
-    public send<TResult>(operation: IMaintenanceOperation<TResult>): Promise<TResult>;
-    public send<TResult>(
+    public async send(operation: AwaitableMaintenanceOperation): Promise<OperationCompletionAwaiter>;
+    public async send<TResult>(operation: IMaintenanceOperation<TResult>): Promise<TResult>;
+    public async send<TResult>(
         operation: AwaitableMaintenanceOperation | IMaintenanceOperation<TResult>)
         : Promise<OperationCompletionAwaiter | TResult> {
 
         this._assertDatabaseNameSet();
         const command = operation.getCommand(this.requestExecutor.conventions);
 
-        return Promise.resolve()
-            .then(() => this.requestExecutor.execute(command as RavenCommand<TResult>))
-            .then(() => {
-                if (operation.resultType === "OperationId") {
-                    const idResult = command.result as OperationIdResult;
-                    return new OperationCompletionAwaiter(
-                        this.requestExecutor, this.requestExecutor.conventions, idResult.operationId,
-                        command.selectedNodeTag || idResult.operationNodeTag);
-                }
+        await this.requestExecutor.execute(command as RavenCommand<TResult>);
 
-                return command.result as TResult;
-            });
+        if (operation.resultType === "OperationId") {
+            const idResult = command.result as OperationIdResult;
+            return new OperationCompletionAwaiter(
+                this.requestExecutor, this.requestExecutor.conventions, idResult.operationId,
+                command.selectedNodeTag || idResult.operationNodeTag);
+        }
+
+        return command.result as TResult;
     }
 
     private _assertDatabaseNameSet(): void {

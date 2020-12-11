@@ -13,13 +13,18 @@ export class GetStatisticsOperation implements IMaintenanceOperation<DatabaseSta
     }
 
     private readonly _debugTag: string;
+    private readonly _nodeTag: string;
 
-    public constructor(debugTag?: string) {
+    public constructor()
+    public constructor(debugTag: string)
+    public constructor(debugTag: string, nodeTag: string)
+    public constructor(debugTag?: string, nodeTag?: string) {
         this._debugTag = debugTag;
+        this._nodeTag = nodeTag;
     }
 
     public getCommand(conventions: DocumentConventions): RavenCommand<DatabaseStatistics> {
-        return new GetStatisticsCommand(this._debugTag);
+        return new GetStatisticsCommand(this._debugTag, this._nodeTag);
     }
 }
 
@@ -27,9 +32,10 @@ export class GetStatisticsCommand extends RavenCommand<DatabaseStatistics> {
 
     private readonly _debugTag: string;
 
-    public constructor(debugTag?: string) {
+    public constructor(debugTag?: string, nodeTag?: string) {
         super();
         this._debugTag = debugTag;
+        this._selectedNodeTag = nodeTag;
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {

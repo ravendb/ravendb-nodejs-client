@@ -7,25 +7,27 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { IDocumentStore } from "../../IDocumentStore";
 import { throwError } from "../../../Exceptions";
 import { ServerNode } from "../../../Http/ServerNode";
-import { ClassConstructor } from "../../../Types";
+import { CompareExchangeResultClass } from "../../../Types";
 import { CompareExchangeValueResultParser, GetCompareExchangeValuesResponse } from "./CompareExchangeValueResultParser";
 import * as stream from "readable-stream";
 
 export class GetCompareExchangeValueOperation<T> implements IOperation<CompareExchangeValue<T>> {
 
     private readonly _key: string;
-    private readonly _clazz: ClassConstructor<T>;
+    private readonly _materializeMetadata: boolean;
+    private readonly _clazz: CompareExchangeResultClass<T>;
 
-    public constructor(key: string, clazz?: ClassConstructor<T>) {
+    public constructor(key: string, clazz?: CompareExchangeResultClass<T>, materializeMetadata: boolean = true) {
         this._key = key;
         this._clazz = clazz;
+        this._materializeMetadata = materializeMetadata;
     }
 
     public getCommand(
         store: IDocumentStore,
         conventions: DocumentConventions,
         cache: HttpCache): RavenCommand<CompareExchangeValue<T>> {
-        return new GetCompareExchangeValueCommand<T>(this._key, conventions, this._clazz);
+        return new GetCompareExchangeValueCommand<T>(this._key, this._materializeMetadata, conventions, this._clazz);
     }
 
     public get resultType(): OperationResultType {
@@ -35,10 +37,11 @@ export class GetCompareExchangeValueOperation<T> implements IOperation<CompareEx
 
 export class GetCompareExchangeValueCommand<T> extends RavenCommand<CompareExchangeValue<T>> {
     private readonly _key: string;
-    private readonly _clazz: ClassConstructor<T>;
+    private readonly _clazz: CompareExchangeResultClass<T>;
+    private readonly _materializeMetadata: boolean;
     private readonly _conventions: DocumentConventions;
 
-    public constructor(key: string, conventions: DocumentConventions, clazz?: ClassConstructor<T>) {
+    public constructor(key: string, materializeMetadata: boolean, conventions: DocumentConventions, clazz?: CompareExchangeResultClass<T>) {
         super();
 
         if (!key) {
@@ -47,6 +50,7 @@ export class GetCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
 
         this._key = key;
         this._clazz = clazz;
+        this._materializeMetadata = materializeMetadata;
         this._conventions = conventions;
     }
 
@@ -65,15 +69,14 @@ export class GetCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
         }
 
         let body: string = null;
-        await this._pipeline<object>()
+        const results = await this._pipeline<GetCompareExchangeValuesResponse>()
             .collectBody(x => body = x)
-            .parseJsonSync()
-            .objectKeysTransform("camel")
-            .process(bodyStream)
-            .then(results => {
-                this.result = CompareExchangeValueResultParser.getValue(
-                    results as GetCompareExchangeValuesResponse, this._conventions, this._clazz);
-            });
+            .parseJsonAsync()
+            .jsonKeysTransform("GetCompareExchangeValue", this._conventions)
+            .process(bodyStream);
+
+        this.result = CompareExchangeValueResultParser.getValue(
+                results as GetCompareExchangeValuesResponse, this._materializeMetadata, this._conventions, this._clazz);
         return body;
     }
 }

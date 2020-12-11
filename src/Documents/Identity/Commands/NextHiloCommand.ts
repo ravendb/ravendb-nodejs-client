@@ -69,16 +69,14 @@ export class NextHiloCommand extends RavenCommand<HiLoResult> {
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         let body: string = null;
-        await this._defaultPipeline(_ => body = _).process(bodyStream)
-            .then(results => {
-                this.result = this._reviveResultTypes(
-                    results, 
-                    this._conventions, 
-                    {
-                        nestedTypes: {
-                            lastRangeAt: "date"
-                        }
-                    });
+        const results = await this._defaultPipeline(_ => body = _).process(bodyStream);
+        this.result = this._reviveResultTypes(
+            results,
+            this._conventions,
+            {
+                nestedTypes: {
+                    lastRangeAt: "date"
+                }
             });
         return body;
     }

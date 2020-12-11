@@ -79,7 +79,7 @@ export class GraphDocumentQuery<T extends object> extends AbstractDocumentQuery<
             const rawQuery  = queryRawQueryOrBuilder;
             return this._withInternal(alias, documentType, this.session.advanced.rawQuery(rawQuery, documentType) as unknown as AbstractDocumentQuery<TOther, any>);
         } else if (queryRawQueryOrBuilder instanceof DocumentQuery) {
-            //TODO: ParameterPrefix = $"w{WithTokens.Count}p
+            this.parameterPrefix = "w" + this._withTokens.length + "p";
             const documentQuery = queryRawQueryOrBuilder;
             return this._withInternal(alias, documentQuery.getQueryType(), documentQuery);
         } else {

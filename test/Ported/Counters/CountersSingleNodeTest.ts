@@ -70,6 +70,38 @@ describe("CountersSingleNodeTest", function () {
         assert.strictEqual(val, 7);
     });
 
+    it("getCounterValueUsingPOST", async () => {
+        {
+            const session = store.openSession();
+            const user = new User();
+            user.name = "Aviv";
+            await session.store(user, "users/1-A");
+            await session.saveChanges();
+        }
+
+        const longCounterName = "a".repeat(500);
+
+        const documentCountersOperation = new DocumentCountersOperation();
+        documentCountersOperation.documentId = "users/1-A";
+        documentCountersOperation.operations = [
+            CounterOperation.create(longCounterName, "Increment", 5)
+        ];
+
+        const counterBatch = new CounterBatch();
+        counterBatch.documents = [ documentCountersOperation ];
+
+        await store.operations.send(new CounterBatchOperation(counterBatch));
+
+        {
+            const session = store.openSession();
+            const dic = await session.countersFor("users/1-A")
+                .get([longCounterName, "no_such"]);
+            assertThat(dic)
+                .hasSize(1)
+                .containsEntry(longCounterName, 5);
+        }
+    });
+
     it("can get counter value", async function () {
         {
             const session = store.openSession();

@@ -1,5 +1,4 @@
 import { CounterOperationType } from "./CounterOperationType";
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 export class CounterOperation {
     
@@ -11,7 +10,7 @@ export class CounterOperation {
     
     protected _changeVector: string;
     
-    public serialize(conventions: DocumentConventions): object {
+    public serialize(): object {
         return {
             Type: this._type,
             CounterName: this._counterName,

@@ -10,6 +10,7 @@ import { GetOngoingTaskInfoOperation } from "../../../../src/Documents/Operation
 import { OngoingTaskPullReplicationAsSink } from "../../../../src/Documents/Operations/OngoingTasks/OngoingTaskPullReplicationAsSink";
 import { GetPullReplicationHubTasksInfoOperation } from "../../../../src/Documents/Operations/OngoingTasks/GetPullReplicationHubTasksInfoOperation";
 import { PullReplicationDefinition } from "../../../../src/Documents/Operations/Replication/PullReplicationDefinition";
+import { delay } from "../../../../src/Utility/PromiseUtil";
 
 (RavenTestContext.isPullRequest ? describe.skip : describe)("PullReplicationTest", function () {
 
@@ -144,6 +145,8 @@ import { PullReplicationDefinition } from "../../../../src/Documents/Operations/
 
                 await replication.deleteOngoingTask(hub, hubResult.taskId, "PullReplicationAsHub");
 
+                await delay(500);
+
                 {
                     const session = hub.openSession();
                     await session.store(new User(), "foo/bar2");
@@ -269,8 +272,11 @@ import { PullReplicationDefinition } from "../../../../src/Documents/Operations/
         }
     });
 
-    it("updatePullReplicationOnHub", async () => {
+    it("updatePullReplicationOnHub", async function() {
         let sink: IDocumentStore;
+
+        this.timeout(60_000);
+
         try {
             sink = await testContext.getDocumentStore();
             let hub: IDocumentStore;
@@ -319,7 +325,7 @@ import { PullReplicationDefinition } from "../../../../src/Documents/Operations/
                 await hub.maintenance.forDatabase(hub.database)
                     .send(hubOperation);
 
-                assertThat(await replication.waitForDocumentToReplicate<User>(sink, "users/2", 20_000, User))
+                assertThat(await replication.waitForDocumentToReplicate<User>(sink, "users/2", 40_000, User))
                     .isNotNull();
 
             } finally {

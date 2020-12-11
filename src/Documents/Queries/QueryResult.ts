@@ -18,12 +18,15 @@ export class QueryResult extends GenericQueryResult<object[], object> {
         queryResult.highlightings = this.highlightings;
         queryResult.explanations = this.explanations;
         queryResult.timingsInMs = this.timingsInMs;
-        queryResult.nodeTag = this.nodeTag;
-        queryResult.counterIncludes = this.counterIncludes;
-        queryResult.includedCounterNames = this.includedCounterNames;
         queryResult.lastQueryTime = this.lastQueryTime;
         queryResult.durationInMs = this.durationInMs;
         queryResult.resultEtag = this.resultEtag;
+        queryResult.nodeTag = this.nodeTag;
+        queryResult.counterIncludes = this.counterIncludes;
+        queryResult.includedCounterNames = this.includedCounterNames;
+        queryResult.timeSeriesIncludes = this.timeSeriesIncludes;
+        queryResult.compareExchangeValueIncludes = this.compareExchangeValueIncludes;
+        queryResult.timeSeriesFields = this.timeSeriesFields;
         return queryResult;
     }
 }

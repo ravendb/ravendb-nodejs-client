@@ -4,7 +4,7 @@ import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import {
     IDocumentStore,
-    CompactDatabaseOperation,
+    CompactDatabaseOperation, CompactSettings,
 } from "../../src";
 
 describe("CompactTest", function () {
@@ -25,7 +25,7 @@ describe("CompactTest", function () {
         await session.store(user1, "users/1");
         await session.saveChanges();
 
-        const compactSettings = {
+        const compactSettings: CompactSettings = {
             databaseName: store.database,
             documents: true
         };

@@ -715,7 +715,7 @@ describe("QueryOnCountersTest", function () {
 
         {
             const session = store.openSession();
-            await session.query<Order>(Order)
+            await session.query(Order)
                 .include(i => i.includeCounter("downloads"))
                 .all();
 
@@ -728,7 +728,7 @@ describe("QueryOnCountersTest", function () {
                 .increment("downloads", 200);
             await session.saveChanges();
 
-            await session.query<Order>(Order)
+            await session.query(Order)
                 .include(i => i.includeCounters(["downloads"]))
                 .all();
 
@@ -741,7 +741,7 @@ describe("QueryOnCountersTest", function () {
                 .increment("downloads", 200);
             await session.saveChanges();
 
-            await session.query<Order>(Order)
+            await session.query(Order)
                 .include(i => i.includeCounter("downloads"))
                 .all();
 
@@ -889,7 +889,7 @@ async function countersCachingShouldHandleDeletion(sessionCounter: (session: IDo
 
         {
             const session = store.openSession();
-            await session.query<Order>(Order)
+            await session.query(Order)
                 .include(i => i.includeCounter("downloads"))
                 .all();
 
@@ -905,7 +905,7 @@ async function countersCachingShouldHandleDeletion(sessionCounter: (session: IDo
                 await writeSession.saveChanges();
             }
 
-            await session.query<Order>(Order)
+            await session.query(Order)
                 .include(i => i.includeCounter("downloads"))
                 .all();
 

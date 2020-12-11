@@ -55,30 +55,28 @@ export class GetIndexStatisticsCommand extends RavenCommand<IndexStats> {
         }
 
         let body: string = null;
-        await this._defaultPipeline(_ => body = _)
-            .process(bodyStream)
-            .then(results => {
-                for (const r of results["results"]) {
-                    r.collections = Object.keys(r.collections)
-                        .reduce((result, next) => [ ...result, [ next, result[next] ]], []);
+        const results = await this._defaultPipeline(_ => body = _)
+            .process(bodyStream);
+        for (const r of results["results"]) {
+            r.collections = Object.keys(r.collections)
+                .reduce((result, next) => [ ...result, [ next, result[next] ]], []);
+        }
+        const responseObj = this._reviveResultTypes(
+            results,
+            this._conventions,
+            {
+                nestedTypes: {
+                    "results[].collections": "Map",
+                    "results[].collections$MAP": "CollectionStats"
                 }
-                const responseObj = this._reviveResultTypes(
-                    results, 
-                    this._conventions,
-                    {
-                        nestedTypes: {
-                            "results[].collections": "Map",
-                            "results[].collections$MAP": "CollectionStats"
-                        }
-                    }, new Map([[CollectionStats.name, CollectionStats]]));
+            }, new Map([[CollectionStats.name, CollectionStats]]));
 
-                const indexStatsResults = responseObj["results"];
-                if (!indexStatsResults.length) {
-                    this._throwInvalidResponse();
-                }
+        const indexStatsResults = responseObj["results"];
+        if (!indexStatsResults.length) {
+            this._throwInvalidResponse();
+        }
 
-                this.result = indexStatsResults[0];
-            });
+        this.result = indexStatsResults[0];
         return body;
     }
 

@@ -18,7 +18,9 @@ import { ToggleOngoingTaskStateOperation } from "../Operations/OngoingTasks/Togg
 import { SubscriptionIncludeBuilder } from "../Session/Loaders/SubscriptionIncludeBuilder";
 import * as os from "os";
 import { IncludesUtil } from "../Session/IncludesUtil";
-import StringBuilder = require("string-builder");
+import { StringBuilder } from "../../Utility/StringBuilder";
+import { SubscriptionUpdateOptions } from "./SubscriptionUpdateOptions";
+import { UpdateSubscriptionCommand } from "../Commands/UpdateSubscriptionCommand";
 
 export class DocumentSubscriptions implements IDisposable {
     private readonly _store: DocumentStore;
@@ -73,7 +75,7 @@ export class DocumentSubscriptions implements IDisposable {
 
         const requestExecutor = this._store.getRequestExecutor(database || this._store.database);
 
-        const command = new CreateSubscriptionCommand(this._store.conventions, options);
+        const command = new CreateSubscriptionCommand(options);
         await requestExecutor.execute(command);
 
         return command.result.name;
@@ -127,16 +129,16 @@ export class DocumentSubscriptions implements IDisposable {
             const builder = new SubscriptionIncludeBuilder(this._store.conventions);
             criteria.includes(builder);
 
+            let numberOfIncludesAdded = 0;
+
             if (builder.documentsToInclude && builder.documentsToInclude.size) {
                 criteria.query += os.EOL + "include ";
 
-                let first = true;
                 for (const inc of builder.documentsToInclude) {
                     const include = "doc." + inc;
-                    if (!first) {
+                    if (numberOfIncludesAdded > 0) {
                         criteria.query += ",";
                     }
-                    first = false;
 
                     let escapedInclude: string;
                     if (IncludesUtil.requiresQuotes(include, x => escapedInclude = x)) {
@@ -144,6 +146,35 @@ export class DocumentSubscriptions implements IDisposable {
                     } else {
                         criteria.query += include;
                     }
+
+                    numberOfIncludesAdded++;
+                }
+            }
+
+            if (builder.isAllCounters) {
+                if (!numberOfIncludesAdded) {
+                    criteria.query += os.EOL + " include ";
+                }
+
+                criteria.query += "counters()";
+                numberOfIncludesAdded++;
+            } else if (builder.countersToInclude && builder.countersToInclude.size) {
+                if (!numberOfIncludesAdded) {
+                    criteria.query += os.EOL + " include ";
+                }
+
+                for (const counterName of builder.countersToInclude) {
+                    if (numberOfIncludesAdded > 0) {
+                        criteria.query += ",";
+                    }
+                    let escapedCounterName: string;
+                    if (IncludesUtil.requiresQuotes(counterName, x => escapedCounterName = x)) {
+                        criteria.query += "counters(" + escapedCounterName + ")";
+                    } else {
+                        criteria.query += "counters(" + counterName + ")";
+                    }
+
+                    numberOfIncludesAdded++;
                 }
             }
         }
@@ -386,5 +417,23 @@ export class DocumentSubscriptions implements IDisposable {
         const operation = new ToggleOngoingTaskStateOperation(name, "Subscription", true);
         await this._store.maintenance.forDatabase(database || this._store.database)
             .send(operation);
+    }
+
+    public async update(options: SubscriptionUpdateOptions): Promise<string>;
+    public async update(options: SubscriptionUpdateOptions, database: string): Promise<string>;
+    public async update(options: SubscriptionUpdateOptions, database?: string): Promise<string> {
+        if (!options) {
+            throwError("InvalidArgumentException", "Cannot update a subscription if options is null");
+        }
+
+        if (StringUtil.isNullOrEmpty(options.name) && !options.id) {
+            throwError("InvalidArgumentException", "Cannot update a subscription if both options.name and options.if are null");
+        }
+
+        const requestExecutor = this._store.getRequestExecutor(database);
+        const command = new UpdateSubscriptionCommand(options);
+        await requestExecutor.execute(command, null);
+
+        return command.result.name;
     }
 }

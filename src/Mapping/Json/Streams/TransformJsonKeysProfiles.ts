@@ -10,6 +10,7 @@ export type TransformJsonKeysProfile =
     | "FacetQuery"
     | "Patch"
     | "CompareExchangeValue"
+    | "GetCompareExchangeValue"
     | "SubscriptionResponsePayload"
     | "SubscriptionRevisionsResponsePayload";
 
@@ -74,6 +75,17 @@ export function getTransformJsonKeysProfile(
             return {
                 getCurrentTransform:
                     buildEntityKeysTransformForPutCompareExchangeValue(conventions.entityFieldNameConvention)
+            };
+        }
+
+        if (profile === "GetCompareExchangeValue") {
+            if (!conventions) {
+                throwError("InvalidArgumentException", "Document conventions are required for this profile.");
+            }
+
+            return {
+                getCurrentTransform:
+                    buildEntityKeysTransformForGetCompareExchangeValue(conventions.entityFieldNameConvention)
             };
         }
 
@@ -201,6 +213,24 @@ function buildEntityKeysTransformForPutCompareExchangeValue(entityCasingConventi
     };
 }
 
+function buildEntityKeysTransformForGetCompareExchangeValue(entityCasingConvention) {
+    return function getCompareExchangeValueTransform(key, stack) {
+        const len = stack.length;
+
+        if (stack[0] === "Results") {
+            if (stack[2] === "Value" && stack[3] === "@metadata") {
+                return handleMetadataJsonKeys(key, stack, len, 4);
+            }
+        }
+
+        if (len <= 4) {
+            return "camel";
+        }
+
+        return entityCasingConvention;
+    };
+}
+
 function buildEntityKeysTransformForSubscriptionResponsePayload(entityCasingConvention) {
     return function entityKeysTransform(key, stack) {
         const len = stack.length;
@@ -210,7 +240,6 @@ function buildEntityKeysTransformForSubscriptionResponsePayload(entityCasingConv
         }
 
         if (stack[0] === "Data") {
-        
             if (stack[1] === "@metadata") {
                 return handleMetadataJsonKeys(key, stack, len, 2);
             }
@@ -223,6 +252,14 @@ function buildEntityKeysTransformForSubscriptionResponsePayload(entityCasingConv
             }
 
             return entityCasingConvention;
+        } else if (stack[0] === "CounterIncludes") {
+            if (len === 2) {
+                return null;
+            }
+        } else if (stack[0] === "IncludedCounterNames") {
+            if (len === 2) {
+                return null;
+            }
         }
 
         return "camel";
@@ -254,6 +291,12 @@ function buildEntityKeysTransformForSubscriptionRevisionsResponsePayload(entityC
             return entityCasingConvention;
         }
 
+        if (stack[0] === "CounterIncludes") {
+            if (len === 2) {
+                return null;
+            }
+        }
+
         return "camel";
     };
 }
@@ -261,19 +304,34 @@ function buildEntityKeysTransformForSubscriptionRevisionsResponsePayload(entityC
 function buildEntityKeysTransformForDocumentLoad(entityCasingConvention) {
     return function entityKeysTransform(key, stack) {
         const len = stack.length;
+
         if (len === 1) {
             // Results, Includes
             return "camel";
         }
 
         // len === 2 is array index
+        if (len === 2) {
+            if (stack[0] === "CounterIncludes") {
+                return null;
+            }
+        }
 
         if (len === 3) {
+            if (stack[0] === "CompareExchangeValueIncludes") {
+                return "camel";
+            }
             // top document level
             return key === "@metadata" ? null : entityCasingConvention;
         }
 
         if (len === 4) {
+            if (stack[0] === "CounterIncludes") {
+                return "camel";
+            }
+            if (stack[0] === "CompareExchangeValueIncludes" && stack[2] === "Value" && stack[3] === "Object") {
+                return "camel";
+            }
             if (stack[2] === "@metadata") {
                 // handle @metadata object keys
                 if (key[0] === "@" || key === "Raven-Node-Type") {
@@ -286,6 +344,10 @@ function buildEntityKeysTransformForDocumentLoad(entityCasingConvention) {
             // do not touch @nested-object-types keys
             if (stack[len - 2] === "@nested-object-types") {
                 return null;
+            }
+
+            if (stack[0] === "TimeSeriesIncludes") {
+                return "camel";
             }
         }
 
@@ -300,6 +362,12 @@ function buildEntityKeysTransformForDocumentLoad(entityCasingConvention) {
             }
         }
 
+        if (len === 7) {
+            if (stack[0] === "TimeSeriesIncludes") {
+                return "camel";
+            }
+        }
+
         return entityCasingConvention; 
     };
 }
@@ -307,6 +375,7 @@ function buildEntityKeysTransformForDocumentLoad(entityCasingConvention) {
 function buildEntityKeysTransformForDocumentQuery(entityCasingConvention) {
     return function entityKeysTransform(key, stack) {
         const len = stack.length;
+
         if (len === 1) {
             // Results, Includes, Timings...
             return "camel";
@@ -344,6 +413,45 @@ function buildEntityKeysTransformForDocumentQuery(entityCasingConvention) {
 
                     return null;
                 }
+            }
+        }
+
+        if (stack[0] === "CounterIncludes") {
+            if (len === 2 || len === 3) {
+                return null;
+            }
+            if (len === 4) {
+                return "camel";
+            }
+        }
+
+        if (stack[0] === "IncludedCounterNames") {
+            if (len === 2) {
+                return null;
+            }
+        }
+
+        if (len === 3) {
+            if (stack[0] === "CompareExchangeValueIncludes") {
+                return "camel";
+            }
+        }
+
+        if (len === 4) {
+            if (stack[0] === "CompareExchangeValueIncludes" && stack[2] === "Value" && stack[3] === "Object") {
+                return "camel";
+            }
+        }
+
+        if (len === 5) {
+            if (stack[0] === "TimeSeriesIncludes") {
+                return "camel";
+            }
+        }
+
+        if (len === 7) {
+            if (stack[0] === "TimeSeriesIncludes") {
+                return "camel";
             }
         }
 

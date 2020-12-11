@@ -41,8 +41,7 @@ describe("Queries with custom functions", function () {
         {
             const session = store.openSession();
 
-            const q = session.advanced
-                .documentQuery<User>(User)
+            const q = session.query(User)
                 .whereEquals("name", CmpXchg.value("Hera"))
                 .whereEquals("lastName", CmpXchg.value("Tom"));
 
@@ -53,15 +52,14 @@ describe("Queries with custom functions", function () {
             assert.strictEqual(queryResult.length, 1);
             assert.strictEqual(queryResult[0].name, "Zeus");
 
-            const user = await session.advanced
-                .documentQuery<User>(User)
+            const user = await session.query(User)
                 .whereNotEquals("name", CmpXchg.value("Hera"))
                 .all();
             assert.strictEqual(user.length, 1);
             assert.strictEqual(user[0].name, "Jerry");
 
             const users = await session.advanced
-                .rawQuery<User>("from Users where name = cmpxchg(\"Hera\")", User)
+                .rawQuery("from Users where name = cmpxchg(\"Hera\")", User)
                 .all();
             assert.strictEqual(users.length, 1);
             assert.strictEqual(users[0].name, "Zeus");

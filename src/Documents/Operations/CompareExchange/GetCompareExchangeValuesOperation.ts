@@ -1,9 +1,8 @@
-import * as StringBuilder from "string-builder";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { IOperation, OperationResultType } from "../OperationAbstractions";
 import { CompareExchangeValue } from "./CompareExchangeValue";
 import { throwError } from "../../../Exceptions";
-import { ClassConstructor } from "../../../Types";
+import { CompareExchangeResultClass } from "../../../Types";
 import { IDocumentStore } from "../../IDocumentStore";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { HttpCache } from "../../../Http/HttpCache";
@@ -11,6 +10,7 @@ import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
 import { CompareExchangeValueResultParser, GetCompareExchangeValuesResponse } from "./CompareExchangeValueResultParser";
 import * as stream from "readable-stream";
+import { StringBuilder } from "../../../Utility/StringBuilder";
 
 export interface GetCompareExchangeValuesParameters<T> {
     keys?: string[];
@@ -19,17 +19,21 @@ export interface GetCompareExchangeValuesParameters<T> {
     start?: number;
     pageSize?: number;
 
-    clazz?: ClassConstructor<T>;
+    materializeMetadata?: boolean;
+
+    clazz?: CompareExchangeResultClass<T>;
 }
 
 export class GetCompareExchangeValuesOperation<T> implements IOperation<{ [key: string]: CompareExchangeValue<T> }> {
 
-    private readonly _clazz: ClassConstructor<T>;
+    private readonly _clazz: CompareExchangeResultClass<T>;
     private readonly _keys: string[];
 
     private readonly _startWith: string;
     private readonly _start: number;
     private readonly _pageSize: number;
+
+    private readonly _materializeMetadata: boolean;
 
     public get keys(): string[] {
         return this._keys;
@@ -47,12 +51,13 @@ export class GetCompareExchangeValuesOperation<T> implements IOperation<{ [key: 
         return this._pageSize;
     }
 
-    public get clazz(): ClassConstructor<T> {
+    public get clazz(): CompareExchangeResultClass<T> {
         return this._clazz;
     }
 
     public constructor(parameters: GetCompareExchangeValuesParameters<T>) {
         this._clazz = parameters.clazz;
+        this._materializeMetadata = parameters.materializeMetadata || true;
 
         if (parameters.keys) {
             if (!parameters.keys.length) {
@@ -71,7 +76,7 @@ export class GetCompareExchangeValuesOperation<T> implements IOperation<{ [key: 
 
     public getCommand(store: IDocumentStore, conventions: DocumentConventions, cache: HttpCache)
         : RavenCommand<{ [key: string]: CompareExchangeValue<T> }> {
-        return new GetCompareExchangeValuesCommand(this, conventions);
+        return new GetCompareExchangeValuesCommand(this, this._materializeMetadata, conventions);
     }
 
     public get resultType(): OperationResultType {
@@ -81,11 +86,13 @@ export class GetCompareExchangeValuesOperation<T> implements IOperation<{ [key: 
 
 export class GetCompareExchangeValuesCommand<T> extends RavenCommand<{ [key: string]: CompareExchangeValue<T> }> {
     private _operation: GetCompareExchangeValuesOperation<T>;
+    private readonly _materializeMetadata: boolean;
     private readonly _conventions: DocumentConventions;
 
-    public constructor(operation: GetCompareExchangeValuesOperation<T>, conventions: DocumentConventions) {
+    public constructor(operation: GetCompareExchangeValuesOperation<T>, materializeMetadata: boolean, conventions: DocumentConventions) {
         super();
         this._operation = operation;
+        this._materializeMetadata = materializeMetadata;
         this._conventions = conventions;
     }
 
@@ -128,15 +135,21 @@ export class GetCompareExchangeValuesCommand<T> extends RavenCommand<{ [key: str
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         let body: string = null;
-        await this._pipeline()
+
+        if (!bodyStream) {
+            this.result = {};
+            return body;
+        }
+
+        const results = await this._pipeline<GetCompareExchangeValuesResponse>()
             .collectBody(b => body = b)
-            .parseJsonSync()
-            .objectKeysTransform("camel")
-            .process(bodyStream)
-            .then(results => {
-                this.result = CompareExchangeValueResultParser.getValues<T>(
-                    results as GetCompareExchangeValuesResponse, this._conventions, this._operation.clazz);
-            });
+            .parseJsonAsync()
+            .jsonKeysTransform("GetCompareExchangeValue", this._conventions)
+            .process(bodyStream);
+
+        this.result = CompareExchangeValueResultParser.getValues<T>(
+            results, this._materializeMetadata, this._conventions, this._operation.clazz);
+
         return body;
     }
 }

@@ -20,96 +20,27 @@ describe("Session API dev experience tests", function () {
 
     describe("store()", () => {
 
-        describe("using callbacks", () => {
+        let session: IDocumentSession;
+        let user: User;
 
-            let session: IDocumentSession;
-            let user: User;
-
-            beforeEach(() => {
-                session = store.openSession();
-                user = Object.assign(new User(), { name: "Jon" });
-            });
-
-            it("passing only callback", (done) => {
-                session.store(user, (err) => {
-                    if (err) {
-                        done(err);
-                    }
-
-                    assert.strictEqual(user.id, "users/1-A");
-                    done();
-                });
-            });
-
-            it("passing id and callback", (done) => {
-                session.store(user, "users/1", (err) => {
-                    if (err) {
-                        done(err);
-                    }
-
-                    assert.strictEqual(user.id, "users/1");
-                    done();
-                });
-            });
-
-            it("passing id, type, callback", (done) => {
-                session.store(user, "users/1", User, (err) => {
-                    if (err) {
-                        done(err);
-                    }
-
-                    assert.strictEqual(user.id, "users/1");
-                    done();
-                });
-            });
-
-            it("passing id, options, callback", (done) => {
-                session.store(user, null, { changeVector: "ccc" }, (err) => {
-                    if (err) {
-                        done(err);
-                    }
-
-                    assert.strictEqual(user.id, "users/1-A");
-                    done();
-                });
-            });
-
-            it("passing store id, opts, callback", (done) => {
-                session.store(user, "users/1", { changeVector: "aaa" }, (err) => {
-                    if (err) {
-                        done(err);
-                    }
-
-                    assert.strictEqual(user.id, "users/1");
-                    done();
-                });
-            });
+        beforeEach(() => {
+            session = store.openSession();
+            user = Object.assign(new User(), { name: "Jon" });
         });
 
-        describe("using async/promises", () => {
+        it("id and opts", async () => {
+            await session.store(user, "users/1", { changeVector: "aaa" });
+            assert.strictEqual(user.id, "users/1");
+        });
 
-            let session: IDocumentSession;
-            let user: User;
+        it("id and type", async () => {
+            await session.store(user, "users/1", User);
+            assert.strictEqual(user.id, "users/1");
+        });
 
-            beforeEach(() => {
-                session = store.openSession();
-                user = Object.assign(new User(), { name: "Jon" });
-            });
-
-            it("id and opts", async () => {
-                await session.store(user, "users/1", { changeVector: "aaa" });
-                assert.strictEqual(user.id, "users/1");
-            });
-
-            it("id and type", async () => {
-                await session.store(user, "users/1", User);
-                assert.strictEqual(user.id, "users/1");
-            });
-
-            it("only id", async () => {
-                await session.store(user, "users/1");
-                assert.strictEqual(user.id, "users/1");
-            });
+        it("only id", async () => {
+            await session.store(user, "users/1");
+            assert.strictEqual(user.id, "users/1");
         });
 
     });
@@ -127,10 +58,6 @@ describe("Session API dev experience tests", function () {
 
         it("using promise", async () => {
             await session.saveChanges();
-        });
-
-        it("using callback", (done) => {
-            session.saveChanges((err) => err ? done(err) : done());
         });
     });
 
@@ -152,46 +79,6 @@ describe("Session API dev experience tests", function () {
             assert.ok(result);
             assert.strictEqual(result.name, user.name);
         }
-
-        describe("can use callbacks", () => {
-
-            it("pass only id and callback", (done) => {
-                session.load(user.id, (err, result) => {
-                    if (err) {
-                        done(err);
-                        return;
-                    }
-
-                    assertLoadResult(result);
-                    done();
-                });
-            });
-
-            it("pass id, type, callback", (done) => {
-                session.load(user.id, User, (err, result) => {
-                    if (err) {
-                        done(err);
-                        return;
-                    }
-
-                    assertLoadResult(result);
-                    done();
-                });
-            });
-
-            it("pass id, opts, callback", (done) => {
-                session.load(user.id, { documentType: User }, (err, result) => {
-                    if (err) {
-                        done(err);
-                        return;
-                    }
-
-                    assertLoadResult(result);
-                    done();
-                });
-            });
-
-        });
 
         describe("can use async/promises", () => {
 

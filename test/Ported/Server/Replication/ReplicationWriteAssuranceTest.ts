@@ -1,11 +1,11 @@
-import { ClusterTestContext } from "../../../Utils/TestUtil";
+import { ClusterTestContext, RavenTestContext } from "../../../Utils/TestUtil";
 import { DocumentStore } from "../../../../src/Documents/DocumentStore";
 import { User } from "../../../Assets/Entities";
 import { assertThat } from "../../../Utils/AssertExtensions";
 
-describe("ReplicationWriteAssuranceTest", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("ReplicationWriteAssuranceTest", function () {
 
-    let testContext = new ClusterTestContext();
+    const testContext = new ClusterTestContext();
 
     it("serverSideWriteAssurance", async () => {
         const cluster = await testContext.createRaftCluster(3);

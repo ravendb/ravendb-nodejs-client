@@ -21,7 +21,7 @@ import {
     CreateDatabaseOperation,
     DatabaseRecord,
     DeleteDatabasesOperation, DocumentConventions, DocumentSession,
-    DocumentStore, DocumentType, GetClusterTopologyCommand,
+    DocumentStore, DocumentType, getAllNodesFromTopology, GetClusterTopologyCommand, GetDatabaseRecordOperation,
     IDocumentSession, ServerNode
 } from "../../src";
 import * as rimraf from "rimraf";
@@ -32,6 +32,7 @@ import { getLogger } from "../../src/Utility/LogUtil";
 import { AdminJsConsoleOperation } from "./AdminJsConsoleOperation";
 import { Stopwatch } from "../../src/Utility/Stopwatch";
 import { delay } from "../../src/Utility/PromiseUtil";
+import moment = require("moment");
 
 const log = getLogger({ module: "TestDriver" });
 
@@ -136,8 +137,6 @@ export class RavenTestContext extends RavenTestDriver implements IDisposable {
 
     public static isPullRequest = !process.env["RAVEN_License"];
 
-    public static is41 = process.env["RAVENDB_SERVER_VERSION"] === "4.1";
-
     private readonly _locator: RavenServerLocator;
     private readonly _securedLocator: RavenServerLocator;
 
@@ -224,6 +223,7 @@ export class RavenTestContext extends RavenTestDriver implements IDisposable {
 
     private static _killGlobalServerProcess(secured: boolean): void {
         let p: ChildProcess;
+        // tslint:disable-next-line:prefer-const
         let store;
         if (secured) {
             p = this._globalSecuredServerProcess;
@@ -258,91 +258,88 @@ export class RavenTestContext extends RavenTestDriver implements IDisposable {
         }
     }
 
-    public getDocumentStore(): Promise<DocumentStore>;
-    public getDocumentStore(database: string): Promise<DocumentStore>;
-    public getDocumentStore(database: string, secured: boolean): Promise<DocumentStore>;
-    public getDocumentStore(
+    public utcToday() {
+        return moment().utc().startOf("day");
+    }
+
+    public async getDocumentStore(): Promise<DocumentStore>;
+    public async getDocumentStore(database: string): Promise<DocumentStore>;
+    public async getDocumentStore(database: string, secured: boolean): Promise<DocumentStore>;
+    public async getDocumentStore(
         database: string, secured: boolean, waitForIndexingTimeoutInMs?: number): Promise<DocumentStore>;
-    public getDocumentStore(
+    public async getDocumentStore(
         database = "test_db", secured = false, waitForIndexingTimeoutInMs: number = null): Promise<DocumentStore> {
 
         const databaseName = database + "_" + (++RavenTestContext._index);
         log.info(`getDocumentStore for db ${ database }.`);
 
         let documentStore: IDocumentStore;
-        return Promise.resolve()
-            .then(() => {
-                if (!RavenTestContext._getGlobalServer(secured)) {
-                    return this._runServer(secured);
+
+        if (!RavenTestContext._getGlobalServer(secured)) {
+            await this._runServer(secured);
+        }
+
+        documentStore = RavenTestContext._getGlobalServer(secured);
+        const databaseRecord: DatabaseRecord = { databaseName };
+
+        if (this._customizeDbRecord) {
+            this._customizeDbRecord(databaseRecord);
+        }
+
+        const createDatabaseOperation = new CreateDatabaseOperation(databaseRecord);
+        const createDatabaseResult = await documentStore.maintenance.server.send(createDatabaseOperation);
+
+
+        const store = new DocumentStore(documentStore.urls, databaseName);
+        if (secured) {
+            store.authOptions = this._securedLocator.getClientAuthOptions();
+        }
+
+        if (this._customizeStore) {
+            await this._customizeStore(store);
+        }
+
+        store.initialize();
+
+        (store as IDocumentStore)
+            .once("afterDispose", async (callback) => {
+                if (!this._documentStores.has(store)) {
+                    callback();
+                    return;
                 }
-            })
-            .then(() => {
-                documentStore = RavenTestContext._getGlobalServer(secured);
-                const databaseRecord: DatabaseRecord = { databaseName };
 
-                if (this._customizeDbRecord) {
-                    this._customizeDbRecord(databaseRecord);
+                try {
+                    await store.maintenance.server.send(new DeleteDatabasesOperation({
+                        databaseNames: [store.database],
+                        hardDelete: true
+                    }));
+
+                    log.info(`Database ${store.database} deleted.`);
+                } catch (err) {
+                    if (err.name === "DatabaseDoesNotExistException"
+                        || err.name === "NoLeaderException") {
+                        return;
+                    }
+
+                    if (store.isDisposed() || !RavenTestContext._getGlobalProcess(secured)) {
+                        return;
+                    }
+
+                    throwError("TestDriverTearDownError",
+                        `Error deleting database ${ store.database }.`, err);
+                } finally {
+                    callback();
                 }
-
-                const createDatabaseOperation = new CreateDatabaseOperation(databaseRecord);
-                return documentStore.maintenance.server.send(createDatabaseOperation);
-            })
-            .then(async createDatabaseResult => {
-                const store = new DocumentStore(documentStore.urls, databaseName);
-                if (secured) {
-                    store.authOptions = this._securedLocator.getClientAuthOptions();
-                }
-
-                if (this._customizeStore) {
-                    await this._customizeStore(store);
-                }
-
-                store.initialize();
-
-                (store as IDocumentStore)
-                    .once("afterDispose", (callback) => {
-                        if (!this._documentStores.has(store)) {
-                            callback();
-                            return;
-                        }
-
-                        BluebirdPromise.resolve()
-                            .then(() => {
-                                return store.maintenance.server.send(new DeleteDatabasesOperation({
-                                    databaseNames: [store.database],
-                                    hardDelete: true
-                                }));
-                            })
-                            .tap((deleteResult) => {
-                                log.info(`Database ${store.database} deleted.`);
-                            })
-                            .catch(err => {
-                                if (err.name === "DatabaseDoesNotExistException"
-                                    || err.name === "NoLeaderException") {
-                                    return;
-                                }
-
-                                if (store.isDisposed() || !RavenTestContext._getGlobalProcess(secured)) {
-                                    return;
-                                }
-
-                                throwError("TestDriverTearDownError",
-                                    `Error deleting database ${ store.database }.`, err);
-                            })
-                            .finally(() => callback());
-                    });
-
-                return Promise.resolve()
-                    .then(() => this._setupDatabase(store))
-                    .then(() => {
-                        if (!TypeUtil.isNullOrUndefined(waitForIndexingTimeoutInMs)) {
-                            return this.waitForIndexing(store);
-                        }
-                    })
-                    .then(() => this._documentStores.add(store))
-                    .then(() => store);
-
             });
+
+        await this._setupDatabase(store);
+
+        if (!TypeUtil.isNullOrUndefined(waitForIndexingTimeoutInMs)) {
+            await this.waitForIndexing(store);
+        }
+
+        this._documentStores.add(store);
+        return store;
     }
 
     public static setupServer(): RavenTestContext {
@@ -359,22 +356,21 @@ export class RavenTestContext extends RavenTestDriver implements IDisposable {
         this._disposed = true;
 
         const STORE_DISPOSAL_TIMEOUT = 10000;
-        const storeDisposalPromises = [...this._documentStores].map((store) => {
-            return Promise.resolve()
-                .then(() => {
-                    const result = new BluebirdPromise((resolve) => {
-                        store.once("executorsDisposed", () => {
-                            resolve();
-                        });
-                    })
-                        .timeout(STORE_DISPOSAL_TIMEOUT)
-                        .then(() => null);
-
-                    store.dispose();
-                    return result;
+        const storeDisposalPromises = [...this._documentStores].map(async (store) => {
+            try {
+                const result = new BluebirdPromise((resolve) => {
+                    store.once("executorsDisposed", () => {
+                        resolve();
+                    });
                 })
-                .catch((err: Error) =>
-                    getError("TestDriverTeardownError", "Error disposing document store", err));
+                    .timeout(STORE_DISPOSAL_TIMEOUT)
+                    .then(() => null);
+
+                store.dispose();
+                return result;
+            } catch (err) {
+                return getError("TestDriverTeardownError", "Error disposing document store", err);
+            }
         });
 
         BluebirdPromise.all(storeDisposalPromises)
@@ -444,7 +440,7 @@ export class ClusterTestContext extends RavenTestDriver implements IDisposable {
 
         const allowedNodeTags = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
 
-        let leaderIndex = 0;
+        const leaderIndex = 0;
         const leaderNodeTag = allowedNodeTags[leaderIndex];
 
         for (let i = 0 ; i < numberOfNodes; i++) {
@@ -461,7 +457,7 @@ export class ClusterTestContext extends RavenTestDriver implements IDisposable {
             cluster.nodes.push(clusterNode);
         }
 
-        await cluster.executeJsScript(leaderNodeTag, "server.ServerStore.EnsureNotPassive(null, \"" + leaderNodeTag + "\");");
+        await cluster.executeJsScript(leaderNodeTag, "server.ServerStore.EnsureNotPassiveAsync(null, \"" + leaderNodeTag + "\").Wait();");
 
         if (numberOfNodes > 1) {
             // add nodes to cluster
@@ -546,6 +542,14 @@ export class ClusterTestContext extends RavenTestDriver implements IDisposable {
         }
 
         return stores;
+    }
+
+    public async waitForIndexingInTheCluster(store: IDocumentStore, dbName: string, timeout: number) {
+        const record = await store.maintenance.server.send(new GetDatabaseRecordOperation(dbName || store.database));
+
+        for (const nodeTag of getAllNodesFromTopology(record.topology)) {
+            await this.waitForIndexing(store, dbName, timeout, true, nodeTag);
+        }
     }
 
     dispose(): void {

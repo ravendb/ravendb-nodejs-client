@@ -96,6 +96,10 @@ export class MetadataDictionary {
     public static create(raw?: object) {
         return createMetadataDictionary({ raw: raw || {} });
     }
+
+    public static materializeFromJson(metadata?: object) {
+        return MetadataDictionary.create(metadata);
+    }
 }
 
 export function createMetadataDictionary(

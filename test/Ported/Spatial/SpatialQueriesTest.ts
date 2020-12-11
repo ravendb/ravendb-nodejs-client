@@ -2,11 +2,12 @@ import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
+    AbstractJavaScriptIndexCreationTask,
     IDocumentStore,
-    AbstractIndexCreationTask,
     IndexDefinition,
     PutIndexesOperation,
 } from "../../../src";
+import { SpatialField } from "../../../src/Documents/Indexes/StronglyTyped";
 
 describe("SpatialQueriesTest", function () {
 
@@ -149,17 +150,19 @@ export class DummyGeoDoc {
     }
 }
 
-class SpatialQueriesInMemoryTestIdx extends AbstractIndexCreationTask {
+class SpatialQueriesInMemoryTestIdx extends AbstractJavaScriptIndexCreationTask<Listing, Listing & { coordinates: SpatialField }> {
     public constructor() {
         super();
 
-        this.map = `docs.Listings.Select(listingItem => new {
-                classCodes = listingItem.classCodes,
-                latitude = listingItem.latitude,
-                longitude = listingItem.longitude,
-                coordinates = this.CreateSpatialField(
-                    ((double ? )((double)(listingItem.latitude))), 
-                    ((double ? )((double)(listingItem.longitude))))
-            })`;
+        const { createSpatialField } = this.mapUtils();
+
+        this.map(Listing, listingItem => {
+            return {
+                classCodes: listingItem.classCodes,
+                latitude: listingItem.latitude,
+                longitude: listingItem.longitude,
+                coordinates: createSpatialField(listingItem.latitude, listingItem.longitude)
+            }
+        });
     }
 }

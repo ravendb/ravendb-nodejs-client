@@ -1,4 +1,3 @@
-import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { CounterOperation } from "./CounterOperation";
 
 export class DocumentCountersOperation {
@@ -6,10 +5,10 @@ export class DocumentCountersOperation {
 
     public documentId: string;
 
-    public serialize(conventions: DocumentConventions): object {
+    public serialize(): object {
         const result = {
             DocumentId: this.documentId,
-            Operations: this.operations.map(op => op.serialize(conventions))
+            Operations: this.operations.map(op => op.serialize())
         };
 
         return result;

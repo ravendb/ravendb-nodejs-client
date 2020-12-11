@@ -108,7 +108,7 @@ describe("RavenDB_9889", function () {
         // queries
         {
             const session = store.openSession();
-            const items = await session.query<Item>(Item).all();
+            const items = await session.query(Item).all();
 
             assertThat(items)
                 .hasSize(2);
@@ -125,7 +125,7 @@ describe("RavenDB_9889", function () {
 
         {
             const session = store.openSession();
-            const items = await session.query<Item>(Item)
+            const items = await session.query(Item)
                 .selectFields<ProjectedItem>(["before", "after"], ProjectedItem)
                 .all();
 

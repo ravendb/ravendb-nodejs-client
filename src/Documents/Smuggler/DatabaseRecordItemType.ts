@@ -13,4 +13,6 @@ export type DatabaseRecordItemType =
     | "Client"
     | "Sorters"
     | "SinkPullReplications"
-    | "HubPullReplications";
+    | "HubPullReplications"
+    | "TimeSeries"
+    | "DocumentsCompression";

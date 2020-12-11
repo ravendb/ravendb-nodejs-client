@@ -36,6 +36,9 @@ export class LazyMultiLoaderWithInclude implements ILazyLoaderWithInclude {
             return result;
         }
 
-        return new Lazy(() => result.getValue().then(x => x[Object.keys(x)[0]]));
+        return new Lazy(async () => {
+            const x = await result.getValue();
+            return x[Object.keys(x)[0]];
+        });
     }
 }

@@ -1,43 +1,133 @@
 import { Lazy } from "../Lazy";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { IDisposable } from "../../Types/Contracts";
-import { ErrorFirstCallback } from "../../Types/Callbacks";
 import { DocumentType } from "../DocumentAbstractions";
-import { EntitiesCollectionObject, ObjectTypeDescriptor } from "../../Types";
+import { ClassConstructor, EntitiesCollectionObject, ObjectTypeDescriptor } from "../../Types";
 import { IAdvancedSessionOperations } from "./IAdvancedSessionOperations";
 import { ILoaderWithInclude } from "./Loaders/ILoaderWithInclude";
 import { DocumentQueryOptions } from "./QueryOptions";
 import { IDocumentQuery } from "./IDocumentQuery";
 import { IIncludeBuilder } from "./Loaders/IIncludeBuilder";
 import { ISessionDocumentCounters } from "./ISessionDocumentCounters";
+import { ISessionDocumentTimeSeries } from "./ISessionDocumentTimeSeries";
+import { ISessionDocumentTypedTimeSeries } from "./ISessionDocumentTypedTimeSeries";
+import { ISessionDocumentRollupTypedTimeSeries } from "./ISessionDocumentRollupTypedTimeSeries";
+import { TimeSeriesRange } from "../Operations/TimeSeries/TimeSeriesRange";
+import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
+import { SessionOptions } from "./SessionOptions";
+import { throwError } from "../../Exceptions";
+import { StringUtil } from "../../Utility/StringUtil";
+import CurrentIndexAndNode from "../../Http/CurrentIndexAndNode";
+import { HashCalculator } from "../Queries/HashCalculator";
+import { DocumentStoreBase } from "../DocumentStoreBase";
+import { RequestExecutor } from "../../Http/RequestExecutor";
+import { AbstractCommonApiForIndexes } from "../Indexes/AbstractCommonApiForIndexes";
 
 export class SessionInfo {
-    private _sessionId: number;
-    private _lastClusterTransactionIndex: number;
-    private _noCaching: boolean;
+    private static _clientSessionIdCounter: number = 0;
 
-    public get sessionId() {
+    private _sessionId: number;
+    private _sessionIdUsed: boolean;
+    private readonly _loadBalancerContextSeed: number;
+    private _canUseLoadBalanceBehavior: boolean;
+    private readonly _session: InMemoryDocumentSessionOperations;
+
+    public lastClusterTransactionIndex: number;
+    public noCaching: boolean;
+
+    public constructor(session: InMemoryDocumentSessionOperations, options: SessionOptions, documentStore: DocumentStoreBase) {
+        if (!documentStore) {
+            throwError("InvalidArgumentException", "DocumentStore cannot be null");
+        }
+
+        if (!session) {
+            throwError("InvalidArgumentException", "Session cannot be null");
+        }
+
+        this._session = session;
+        this._loadBalancerContextSeed = session.requestExecutor.conventions.loadBalancerContextSeed;
+        this._canUseLoadBalanceBehavior = session.conventions.loadBalanceBehavior === "UseSessionContext"
+            && !!session.conventions.loadBalancerPerSessionContextSelector;
+
+        this.lastClusterTransactionIndex = documentStore.getLastTransactionIndex(session.databaseName);
+
+        this.noCaching = options.noCaching;
+    }
+
+    public setContext(sessionKey: string) {
+        if (StringUtil.isNullOrWhitespace(sessionKey)) {
+            throwError("InvalidArgumentException", "Session key cannot be null or whitespace.");
+        }
+
+        this._setContextInternal(sessionKey);
+
+        this._canUseLoadBalanceBehavior = this._canUseLoadBalanceBehavior
+            || this._session.conventions.loadBalanceBehavior === "UseSessionContext";
+
+    }
+
+    private _setContextInternal(sessionKey: string) {
+        if (this._sessionIdUsed) {
+            throwError("InvalidOperationException",
+                "Unable to set the session context after it has already been used. " +
+                "The session context can only be modified before it is utilized.");
+        }
+
+        if (!sessionKey) {
+            this._sessionId = ++SessionInfo._clientSessionIdCounter;
+        } else {
+            const hash = new HashCalculator();
+            hash.write(sessionKey);
+            hash.write(this._loadBalancerContextSeed);
+            const buffer = Buffer.from(hash.getHash());
+            // tslint:disable-next-line:no-bitwise
+            this._sessionId = (buffer[0] << 16) + (buffer[1] << 8) + buffer[2];
+        }
+    }
+
+    public async getCurrentSessionNode(requestExecutor: RequestExecutor) {
+        let result: CurrentIndexAndNode;
+
+        if (requestExecutor.conventions.loadBalanceBehavior === "UseSessionContext") {
+            if (this._canUseLoadBalanceBehavior) {
+                result = await requestExecutor.getNodeBySessionId(this.getSessionId());
+            }
+        }
+
+        switch (requestExecutor.conventions.readBalanceBehavior) {
+            case "None":
+                result = await requestExecutor.getPreferredNode();
+                break;
+            case "RoundRobin":
+                result = await requestExecutor.getNodeBySessionId(this.getSessionId());
+                break;
+            case "FastestNode":
+                result = await requestExecutor.getFastestNode();
+                break;
+            default:
+                throwError("InvalidArgumentException", requestExecutor.conventions.readBalanceBehavior);
+        }
+
+        return result.currentNode;
+    }
+
+    public getSessionId(): number {
+        if (!this._sessionId) {
+            let context: string;
+            const selector = this._session.conventions.loadBalancerPerSessionContextSelector;
+            if (selector) {
+                context = selector(this._session.databaseName);
+            }
+
+            this._setContextInternal(context);
+        }
+
+        this._sessionIdUsed = true;
         return this._sessionId;
     }
 
-    public get lastClusterTransactionIndex() {
-        return this._lastClusterTransactionIndex;
-    }
-
-    public set lastClusterTransactionIndex(value) {
-        this._lastClusterTransactionIndex = value;
-    }
-
-    public get noCaching() {
-        return this._noCaching;
-    }
-
-    public constructor(sessionId: number);
-    public constructor(sessionId: number, lastClusterTransactionIndex: number, noCaching: boolean);
-    public constructor(sessionId: number, lastClusterTransactionIndex?: number, noCaching?: boolean) {
-        this._sessionId = sessionId;
-        this._lastClusterTransactionIndex = lastClusterTransactionIndex || null;
-        this._noCaching = noCaching || false;
+    public canUseLoadBalanceBehavior() {
+        return this._canUseLoadBalanceBehavior;
     }
 }
 
@@ -56,49 +146,33 @@ export interface IDocumentSession extends IDisposable {
     /**
      * Loads entity with the specified id.
      */
-    load<TEntity extends object>(
-        id: string,
-        callback?: ErrorFirstCallback<TEntity>): Promise<TEntity>;
+    load<TEntity extends object>(id: string): Promise<TEntity>;
 
     /**
      * Loads the entity with the specified id.
      */
-    load<TEntity extends object>(
-        id: string,
-        documentType?: DocumentType<TEntity>,
-        callback?: ErrorFirstCallback<TEntity>): Promise<TEntity>;
+    load<TEntity extends object>(id: string, documentType?: DocumentType<TEntity>): Promise<TEntity>;
 
     /**
      * Loads the entity with the specified id.
      */
-    load<TEntity extends object>(
-        id: string,
-        options?: LoadOptions<TEntity>,
-        callback?: ErrorFirstCallback<TEntity>): Promise<TEntity>;
+    load<TEntity extends object>(id: string, options?: LoadOptions<TEntity>): Promise<TEntity>;
 
     /**
      * Loads multiple entities with the specified ids.
      */
-    load<TEntity extends object>(
-        ids: string[],
-        callback?: ErrorFirstCallback<EntitiesCollectionObject<TEntity>>): Promise<EntitiesCollectionObject<TEntity>>;
+    load<TEntity extends object>(ids: string[]): Promise<EntitiesCollectionObject<TEntity>>;
 
     /**
      * Loads multiple entities with the specified ids.
      */
-    load<TEntity extends object>(
-        ids: string[],
-        documentType?: DocumentType<TEntity>,
-        callback?: ErrorFirstCallback<TEntity>):
+    load<TEntity extends object>(ids: string[], documentType?: DocumentType<TEntity>):
         Promise<EntitiesCollectionObject<TEntity>>;
 
     /**
      * Loads multiple entities with the specified ids.
      */
-    load<TEntity extends object>(
-        ids: string[],
-        options?: LoadOptions<TEntity>,
-        callback?: ErrorFirstCallback<TEntity>):
+    load<TEntity extends object>(ids: string[], options?: LoadOptions<TEntity>):
         Promise<EntitiesCollectionObject<TEntity>>;
 
     /**
@@ -125,34 +199,22 @@ export interface IDocumentSession extends IDisposable {
      * Stores entity in session, extracts Id from entity using Conventions or generates new one if it is not available.
      * Forces concurrency check if the Id is not available during extraction.
      */
-    store<TEntity extends object>(
-        document: TEntity, callback?: ErrorFirstCallback<void>): Promise<void>;
+    store<TEntity extends object>(document: TEntity): Promise<void>;
 
     /**
      * Stores the specified dynamic entity, under the specified id.
      */
-    store<TEntity extends object>(
-        document: TEntity,
-        id?: string,
-        callback?: ErrorFirstCallback<void>): Promise<void>;
+    store<TEntity extends object>(document: TEntity, id?: string): Promise<void>;
 
     /**
      * Stores the specified dynamic entity, under the specified id.
      */
-    store<TEntity extends object>(
-        document: TEntity,
-        id?: string,
-        documentType?: DocumentType<TEntity>,
-        callback?: ErrorFirstCallback<void>): Promise<void>;
+    store<TEntity extends object>(document: TEntity, id?: string, documentType?: DocumentType<TEntity>): Promise<void>;
 
     /**
      * Stores entity in session with given id and forces concurrency check with given change-vector (see options).
      */
-    store<TEntity extends object>(
-        document: TEntity,
-        id?: string,
-        options?: StoreOptions<TEntity>,
-        callback?: ErrorFirstCallback<void>): Promise<void>;
+    store<TEntity extends object>(document: TEntity, id?: string, options?: StoreOptions<TEntity>): Promise<void>;
 
     /**
      * Begin a load while including the specified path
@@ -166,11 +228,6 @@ export interface IDocumentSession extends IDisposable {
     saveChanges(): Promise<void>;
 
     /**
-     * Saves all the pending changes to the server.
-     */
-    saveChanges(callback: ErrorFirstCallback<void>): Promise<void>;
-
-    /**
      * Queries collection or index.
      */
     query<T extends object>(opts: DocumentQueryOptions<T>): IDocumentQuery<T>;
@@ -180,9 +237,25 @@ export interface IDocumentSession extends IDisposable {
      */
     query<T extends object>(documentType: DocumentType<T>): IDocumentQuery<T>;
 
+    query<T extends object>(documentType: DocumentType<T>, index: new () => AbstractCommonApiForIndexes): IDocumentQuery<T>;
+
     countersFor(documentId: string): ISessionDocumentCounters;
 
     countersFor(entity: object): ISessionDocumentCounters;
+
+
+    timeSeriesFor(documentId: string, name: string): ISessionDocumentTimeSeries;
+    timeSeriesFor(entity:any, name: string): ISessionDocumentTimeSeries;
+
+    timeSeriesFor<T extends object>(documentId: string, clazz: ObjectTypeDescriptor<T>): ISessionDocumentTypedTimeSeries<T>;
+    timeSeriesFor<T extends object>(documentId: string, name: string, clazz: ObjectTypeDescriptor<T>): ISessionDocumentTypedTimeSeries<T>;
+    timeSeriesFor<T extends object>(entity: object, clazz: ObjectTypeDescriptor<T>): ISessionDocumentTypedTimeSeries<T>;
+    timeSeriesFor<T extends object>(entity: object, name: string, clazz: ObjectTypeDescriptor<T>): ISessionDocumentTypedTimeSeries<T>;
+
+    timeSeriesRollupFor<T extends object>(entity: object, policy: string, clazz: ClassConstructor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
+    timeSeriesRollupFor<T extends object>(entity: object, policy: string, raw: string, clazz: ClassConstructor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
+    timeSeriesRollupFor<T extends object>(documentId: string, policy: string, clazz: ClassConstructor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
+    timeSeriesRollupFor<T extends object>(documentId: string, policy: string, raw: string, clazz: ClassConstructor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
 }
 
 /**
@@ -243,6 +316,8 @@ export interface SessionLoadInternalParameters<TResult extends object> {
     documentType?: DocumentType<TResult>;
     counterIncludes?: string[];
     includeAllCounters?: boolean;
+    timeSeriesIncludes?: TimeSeriesRange[];
+    compareExchangeValueIncludes?: string[];
 }
 
 export interface IDocumentSessionImpl extends IDocumentSession {

@@ -10,6 +10,7 @@ import { TypeUtil } from "../../../Utility/TypeUtil";
 import { throwError } from "../../../Exceptions";
 import { ObjectTypeDescriptor, EntitiesCollectionObject } from "../../../Types";
 import { StringUtil } from "../../../Utility/StringUtil";
+import { TimeSeriesRange } from "../../Operations/TimeSeries/TimeSeriesRange";
 
 const log = getLogger({ module: "LoadOperation" });
 
@@ -20,7 +21,9 @@ export class LoadOperation {
     private _ids: string[];
     private _includes: string[];
     private _countersToInclude: string[];
+    private _compareExchangeValuesToInclude: string[];
     private _includeAllCounters: boolean;
+    private _timeSeriesToInclude: TimeSeriesRange[];
 
     private _resultsSet: boolean;
     private _results: GetDocumentsResult;
@@ -40,10 +43,12 @@ export class LoadOperation {
             + this._ids.join(",") + " from " + this._session.storeIdentifier);
 
         const opts: GetDocumentsByIdsCommandOptions = {
-                ids: this._ids,
-                includes: this._includes,
-                metadataOnly: false,
-                conventions: this._session.conventions
+            ids: this._ids,
+            includes: this._includes,
+            metadataOnly: false,
+            conventions: this._session.conventions,
+            timeSeriesIncludes: this._timeSeriesToInclude,
+            compareExchangeValueIncludes: this._compareExchangeValuesToInclude
         };
 
         if (this._includeAllCounters) {
@@ -67,6 +72,11 @@ export class LoadOperation {
         return this;
     }
 
+    public withCompareExchange(compareExchangeValues: string[]) {
+        this._compareExchangeValuesToInclude = compareExchangeValues;
+        return this;
+    }
+
     public withCounters(counters: string[]): LoadOperation {
         if (counters) {
             this._countersToInclude = counters;
@@ -74,8 +84,16 @@ export class LoadOperation {
 
         return this;
     }
-     public withAllCounters() {
+
+    public withAllCounters() {
         this._includeAllCounters = true;
+        return this;
+    }
+
+    public withTimeSeries(timeSeries: TimeSeriesRange[]) {
+        if (timeSeries) {
+            this._timeSeriesToInclude = timeSeries;
+        }
         return this;
     }
 
@@ -187,9 +205,18 @@ export class LoadOperation {
 
         this._session.registerIncludes(result.includes);
 
+
         if (this._includeAllCounters || this._countersToInclude) {
             this._session.registerCounters(
                 result.counterIncludes, this._ids, this._countersToInclude, this._includeAllCounters);
+        }
+
+        if (this._timeSeriesToInclude) {
+            this._session.registerTimeSeries(result.timeSeriesIncludes);
+        }
+
+        if (this._compareExchangeValuesToInclude) {
+            this._session.clusterSession.registerCompareExchangeValues(result.compareExchangeValueIncludes);
         }
 
         for (const document of result.results) {

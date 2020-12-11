@@ -1,6 +1,5 @@
 import { Lazy } from "../Lazy";
 import { QueryOperation } from "./Operations/QueryOperation";
-import * as BluebirdPromise from "bluebird";
 import { GroupByCountToken } from "./Tokens/GroupByCountToken";
 import { GroupByToken } from "./Tokens/GroupByToken";
 import { HighlightingToken } from "./Tokens/HighlightingToken";
@@ -40,11 +39,10 @@ import { QueryResult } from "../Queries/QueryResult";
 import { DocumentType } from "../DocumentAbstractions";
 import { QueryEventsEmitter } from "./QueryEvents";
 import { EventEmitter } from "events";
-import * as StringBuilder from "string-builder";
 import { StringUtil } from "../../Utility/StringUtil";
 import { IntersectMarkerToken } from "./Tokens/IntersectMarkerToken";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { CONSTANTS } from "../../Constants";
+import { CONSTANTS, TIME_SERIES } from "../../Constants";
 import { WhereOperator } from "./Tokens/WhereOperator";
 import { OrderingType } from "./OrderingType";
 import { SearchOperator } from "../Queries/SearchOperator";
@@ -55,7 +53,7 @@ import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField";
 import { SpatialCriteria } from "../Queries/Spatial/SpatialCriteria";
 import { SessionBeforeQueryEventArgs } from "./SessionEvents";
 import { CmpXchg } from "./CmpXchg";
-import { ErrorFirstCallback, ValueCallback } from "../../Types/Callbacks";
+import { ValueCallback } from "../../Types/Callbacks";
 import { DocumentQueryCustomization } from "./DocumentQueryCustomization";
 import { FacetBase } from "../Queries/Facets/FacetBase";
 import { MoreLikeThisScope } from "../Queries/MoreLikeThis/MoreLikeThisScope";
@@ -78,10 +76,15 @@ import { QueryHighlightings } from "../Queries/Highlighting/QueryHighlightings";
 import { ExplanationOptions } from "../Queries/Explanation/ExplanationOptions";
 import { CountersByDocId } from "./CounterInternalTypes";
 import { IncludeBuilderBase } from "./Loaders/IncludeBuilderBase";
-import { passResultToCallback } from "../../Utility/PromiseUtil";
 import * as os from "os";
 import { GraphQueryToken } from "./Tokens/GraphQueryToken";
 import { IncludesUtil } from "./IncludesUtil";
+import { TimeSeriesIncludesToken } from "./Tokens/TimeSeriesIncludesToken";
+import { CompareExchangeValueIncludesToken } from "./Tokens/CompareExchangeValueIncludesToken";
+import { TimeSeriesRange } from "../Operations/TimeSeries/TimeSeriesRange";
+import { ITimeSeriesQueryBuilder } from "../Queries/TimeSeries/ITimeSeriesQueryBuilder";
+import { TimeSeriesQueryBuilder } from "../Queries/TimeSeries/TimeSeriesQueryBuilder";
+import { StringBuilder } from "../../Utility/StringBuilder";
 
 /**
  * A query against a Raven index
@@ -130,7 +133,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     protected _selectTokens: QueryToken[] = [];
 
     protected _fromToken: FromToken;
-    protected _declareToken: DeclareToken;
+    protected _declareTokens: DeclareToken[];
     protected _loadTokens: LoadToken[];
     public fieldsToFetchToken: FieldsToFetchToken;
 
@@ -237,7 +240,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         indexName: string,
         collectionName: string,
         isGroupBy: boolean,
-        declareToken: DeclareToken,
+        declareTokens: DeclareToken[],
         loadTokens: LoadToken[]);
     protected constructor(
         clazz: DocumentType<T>,
@@ -245,7 +248,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         indexName: string,
         collectionName: string,
         isGroupBy: boolean,
-        declareToken: DeclareToken,
+        declareTokens: DeclareToken[],
         loadTokens: LoadToken[],
         fromAlias: string,
         isProjectInto: boolean
@@ -256,7 +259,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         indexName: string,
         collectionName: string,
         isGroupBy: boolean,
-        declareToken: DeclareToken,
+        declareTokens: DeclareToken[],
         loadTokens: LoadToken[],
         fromAlias: string = null,
         isProjectInto: boolean = false) {
@@ -268,7 +271,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._indexName = indexName;
         this._collectionName = collectionName;
         this._fromToken = FromToken.create(indexName, collectionName, fromAlias);
-        this._declareToken = declareToken;
+        this._declareTokens = declareTokens;
         this._loadTokens = loadTokens;
 
         this._theSession = session;
@@ -309,7 +312,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             || !this._theSession.conventions
             || isNestedPath
             || this._isGroupBy) {
-            return QueryFieldUtil.escapeIfNecessary(fieldName);
+            return QueryFieldUtil.escapeIfNecessary(fieldName, isNestedPath);
         }
 
         for (const rootType of this._rootTypes) {
@@ -461,7 +464,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
         let objectValue: string = null;
 
-        if (this._conventions.tryConvertValueForQuery(whereParams.fieldName,
+        if (this._conventions.tryConvertValueToObjectForQuery(whereParams.fieldName,
             whereParams.value, forRange, s => objectValue = s)) {
             return objectValue;
         }
@@ -527,6 +530,15 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         sourceAlias(possibleAlias);
+    }
+
+    protected _createTimeSeriesQueryData(timeSeriesQuery: (builder: ITimeSeriesQueryBuilder) => void) {
+        const builder = new TimeSeriesQueryBuilder();
+        timeSeriesQuery(builder);
+
+        const fields = [ TIME_SERIES.SELECT_FIELD_NAME + "(" + builder.queryText + ")"];
+        const projections = [ TIME_SERIES.QUERY_FUNCTION ];
+        return new QueryData(fields, projections);
     }
 
     protected _updateFieldsToFetchToken(fieldsToFetch: FieldsToFetchToken): void {
@@ -739,6 +751,18 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         this._includeCounters(pathOrIncludes.alias, pathOrIncludes.countersToIncludeBySourcePath);
+
+        if (pathOrIncludes.timeSeriesToIncludeBySourceAlias) {
+            this._includeTimeSeries(pathOrIncludes.alias, pathOrIncludes.timeSeriesToIncludeBySourceAlias);
+        }
+
+        if (pathOrIncludes.compareExchangeValuesToInclude) {
+            this._compareExchangeValueIncludesTokens = [];
+
+            for (const compareExchangeValue of pathOrIncludes.compareExchangeValuesToInclude) {
+                this._compareExchangeValueIncludesTokens.push(CompareExchangeValueIncludesToken.create(compareExchangeValue));
+            }
+        }
     }
 
     // TBD: public void Include(Expression<Func<T, object>> path)
@@ -776,7 +800,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._appendOperatorIfNeeded(tokens);
         this._negateIfNeeded(tokens, null);
 
-        tokens.push(OpenSubclauseToken.INSTANCE);
+        tokens.push(OpenSubclauseToken.create());
     }
 
     /**
@@ -786,7 +810,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._currentClauseDepth--;
 
         const tokens: QueryToken[] = this._getCurrentWhereTokens();
-        tokens.push(CloseSubclauseToken.INSTANCE);
+        tokens.push(CloseSubclauseToken.create());
     }
 
     public _whereEquals(fieldName: string, method: MethodCall): void;
@@ -907,7 +931,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         tokens.push(whereToken);
     }
 
-    public negateNext(): void {
+    public _negateNext(): void {
         this._negate = !this._negate;
     }
 
@@ -1182,21 +1206,36 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             return;
         }
 
-        const tokens = this._getCurrentWhereTokens();
-        if (!tokens && !tokens.length) {
-            throwError("InvalidOperationException", "Missing where clause.");
-        }
-
-        const whereToken = tokens[tokens.length - 1];
-        if (!(whereToken instanceof WhereToken)) {
-            throwError("InvalidOperationException", "Missing where clause.");
-        }
-
         if (boost < 0.0) {
             throwError("InvalidArgumentException", "Boost factor must be a non-negative number");
         }
 
-        (whereToken as WhereToken).options.boost = boost;
+        const tokens = this._getCurrentWhereTokens();
+
+        let last = tokens.length ? tokens[tokens.length - 1] : null;
+
+        if (last instanceof WhereToken) {
+            last.options.boost = boost;
+        } else if (last instanceof CloseSubclauseToken) {
+            const parameter = this._addQueryParameter(boost);
+
+            const close = last;
+
+            let index = tokens.indexOf(last);
+
+            while (last && index > 0) {
+                index--;
+                last = tokens[index]; // find the previous option
+
+                if (last instanceof OpenSubclauseToken) {
+                    last.boostParameterName = parameter;
+                    close.boostParameterName = parameter;
+                    return;
+                }
+            }
+        } else {
+            throwError("InvalidOperationException", "Cannot apply boost");
+        }
     }
 
     /**
@@ -1443,17 +1482,23 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             && !this._highlightingTokens.length
             && !this._explanationToken
             && !this._queryTimings
-            && !this._counterIncludesTokens) {
+            && !this._counterIncludesTokens
+            && !this._timeSeriesIncludesTokens
+            && !this._compareExchangeValueIncludesTokens) {
             return;
         }
 
         queryText.append(" include ");
-        let first = true;
+
+        const firstRef = {
+            value: true
+        };
+
         for (const include of this._documentIncludes) {
-            if (!first) {
+            if (!firstRef.value) {
                 queryText.append(",");
             }
-            first = false;
+            firstRef.value = false;
 
             let escapedInclude: string;
             if (IncludesUtil.requiresQuotes(include, x => escapedInclude = x)) {
@@ -1465,40 +1510,43 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             }
         }
 
-        if (this._counterIncludesTokens) {
-            for (const counterIncludesToken of this._counterIncludesTokens) {
-                if (!first) {
-                    queryText.append(",");
-                }
-
-                first = false;
-                counterIncludesToken.writeTo(queryText);
-            }
-        }
-
-        for (const token of this._highlightingTokens) {
-            if (!first) {
-                queryText.append(",");
-            }
-            first = false;
-            token.writeTo(queryText);
-        }
+        this._writeIncludeTokens(this._counterIncludesTokens, firstRef, queryText);
+        this._writeIncludeTokens(this._timeSeriesIncludesTokens, firstRef, queryText);
+        this._writeIncludeTokens(this._compareExchangeValueIncludesTokens, firstRef, queryText);
+        this._writeIncludeTokens(this._highlightingTokens, firstRef, queryText);
 
         if (this._explanationToken) {
-            if (!first) {
+            if (!firstRef.value) {
                 queryText.append(",");
             }
 
-            first = false;
+            firstRef.value = false;
             this._explanationToken.writeTo(queryText);
         }
 
         if (this._queryTimings) {
-            if (!first) {
+            if (!firstRef.value) {
                 queryText.append(",");
             }
-            first = false;
+            firstRef.value = false;
+
             TimingsToken.instance.writeTo(queryText);
+        }
+    }
+
+    private _writeIncludeTokens<TToken extends QueryToken>(tokens: TToken[], firstRef: { value: boolean }, queryText: StringBuilder) {
+        if (!tokens) {
+            return;
+        }
+
+        for (const token of tokens) {
+            if (!firstRef.value) {
+                queryText.append(",");
+            }
+
+            firstRef.value = false;
+
+            token.writeTo(queryText);
         }
     }
 
@@ -1623,8 +1671,12 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     private _buildDeclare(writer: StringBuilder): void {
-        if (this._declareToken) {
-            this._declareToken.writeTo(writer);
+        if (!this._declareTokens) {
+            return;
+        }
+
+        for (const token of this._declareTokens) {
+            token.writeTo(writer);
         }
     }
 
@@ -1988,86 +2040,60 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     public async iterator(): Promise<IterableIterator<T>> {
-        return Promise.resolve()
-            .then(() => this._initSync())
-            .then(() => {
-                const results = this._queryOperation.complete<T>(this._clazz);
-                return results[Symbol.iterator]();
-            });
+        await this._initSync();
+        const results = this._queryOperation.complete<T>(this._clazz);
+        return results[Symbol.iterator]();
     }
 
-    public async all(callback?: ErrorFirstCallback<T[]>): Promise<T[]> {
-        callback = callback || TypeUtil.NOOP;
-        const result = BluebirdPromise.resolve(this.iterator())
-            .then((entries) => [...entries])
-            .tap(x => callback(null, x))
-            .tapCatch(err => callback(err));
-        return Promise.resolve(result);
+    public async all(): Promise<T[]> {
+        const results = await this.iterator();
+        return [...results];
     }
 
-    public getQueryResult(): Promise<QueryResult> {
-        return Promise.resolve()
-            .then(() => this._initSync())
-            .then(() => this._queryOperation.getCurrentQueryResults().createSnapshot());
+    public async getQueryResult(): Promise<QueryResult> {
+        await this._initSync();
+        return this._queryOperation.getCurrentQueryResults().createSnapshot();
     }
 
-    public async first(callback?: ErrorFirstCallback<T>): Promise<T> {
-        callback = callback || TypeUtil.NOOP;
-        const resultPromise = this._executeQueryOperation(1)
-            .then(entries => {
-                if (entries.length === 0) {
-                    throwError("InvalidOperationException", "Expected at least one result.");
-                }
-                
-                return entries[0];
-            });
+    public async first(): Promise<T> {
+        const entries = await this._executeQueryOperation(1);
 
-        passResultToCallback(resultPromise, callback);
-        return resultPromise;
+        if (entries.length === 0) {
+            throwError("InvalidOperationException", "Expected at least one result.");
+        }
+
+        return entries[0];
     }
 
-    public async firstOrNull(callback?: ErrorFirstCallback<T>): Promise<T> {
-        callback = callback || TypeUtil.NOOP;
-        const resultPromise = this._executeQueryOperation(1)
-            .then(entries => entries[0] || null);
-
-        passResultToCallback(resultPromise, callback);
-        return resultPromise;
+    public async firstOrNull(): Promise<T> {
+        const entries = await this._executeQueryOperation(1);
+        return entries[0] || null;
     }
 
-    public async single(callback?: ErrorFirstCallback<T>): Promise<T> {
-        callback = callback || TypeUtil.NOOP;
-        const resultPromise = this._executeQueryOperation(2)
-            .then(entries => {
-                if (entries.length !== 1) {
-                    throwError("InvalidOperationException", 
-                        `Expected single result, but got ${ entries.length ? "more than that" : 0 }.`);
-                }
-                
-                return entries[0];
-            });
+    public async single(): Promise<T> {
+        const entries = await this._executeQueryOperation(2);
 
-        passResultToCallback(resultPromise, callback);
-        return resultPromise;
+        if (entries.length !== 1) {
+            throwError("InvalidOperationException",
+                `Expected single result, but got ${ entries.length ? "more than that" : 0 }.`);
+        }
+
+        return entries[0];
     }
 
-    public async singleOrNull(callback?: ErrorFirstCallback<T>): Promise<T> {
-        callback = callback || TypeUtil.NOOP;
-        const resultPromise = this._executeQueryOperation(2)
-            .then(entries => entries.length === 1 ? entries[0] : null);
-
-        passResultToCallback(resultPromise, callback);
-        return resultPromise;
+    public async singleOrNull(): Promise<T> {
+        const entries = await this._executeQueryOperation(2);
+        if (entries.length === 2) {
+            throwError("InvalidOperationException",
+                `Expected single result, but got more than that.`);
+        }
+        return entries.length === 1 ? entries[0] : null;
     }
 
-    public async count(callback?: ErrorFirstCallback<number>): Promise<number> {
-        callback = callback || TypeUtil.NOOP;
+    public async count(): Promise<number> {
         this._take(0);
-        const result = BluebirdPromise.resolve(this.getQueryResult())
-            .then(queryResult => queryResult.totalResults)
-            .tap(x => callback(null, x))
-            .tapCatch(err => callback(err));
-        return Promise.resolve(result);
+        const queryResult = await this.getQueryResult();
+        return queryResult.totalResults;
     }
 
     private async _executeQueryOperation(take?: number): Promise<T[]> {
@@ -2208,32 +2234,53 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
        explanationsCallback(this._explanations);
    }
 
-   protected _counterIncludesTokens: CounterIncludesToken[];
+    protected _timeSeriesIncludesTokens: TimeSeriesIncludesToken[];
+
+    protected _counterIncludesTokens: CounterIncludesToken[];
+
+    protected _compareExchangeValueIncludesTokens: CompareExchangeValueIncludesToken[];
 
     protected _includeCounters(
         alias: string, counterToIncludeByDocId: CountersByDocId): void {
-    if (!counterToIncludeByDocId || !counterToIncludeByDocId.size) {
-        return;
+        if (!counterToIncludeByDocId || !counterToIncludeByDocId.size) {
+            return;
+        }
+        this._counterIncludesTokens = [];
+        this._includesAlias = alias;
+
+        for (const [ key, val ] of counterToIncludeByDocId.entries()) {
+            if (val[0]) {
+                this._counterIncludesTokens.push(CounterIncludesToken.all(key));
+                continue;
+            }
+
+            const valArr = [...val[1]];
+            if (!valArr || !valArr.length) {
+                continue;
+            }
+
+            for (const name of val[1]) {
+                this._counterIncludesTokens.push(CounterIncludesToken.create(key, name));
+            }
+        }
     }
-    this._counterIncludesTokens = [];
-    this._includesAlias = alias;
 
-    for (const [ key, val ] of counterToIncludeByDocId.entries()) {
-        if (val[0]) {
-            this._counterIncludesTokens.push(CounterIncludesToken.all(key));
-            continue;
+    private _includeTimeSeries(alias: string, timeSeriesToInclude: Map<string, TimeSeriesRange[]>) {
+        if (!timeSeriesToInclude || !timeSeriesToInclude.size) {
+            return;
         }
 
-        const valArr = [...val[1]];
-        if (!valArr || !valArr.length) {
-            continue;
+        this._timeSeriesIncludesTokens = [];
+        if (!this._includesAlias) {
+            this._includesAlias = alias;
         }
 
-        for (const name of val[1]) {
-            this._counterIncludesTokens.push(CounterIncludesToken.create(key, name));
+        for (const kvp of timeSeriesToInclude.entries()) {
+            for (const range of kvp[1].values()) {
+                this._timeSeriesIncludesTokens.push(TimeSeriesIncludesToken.create(kvp[0], range));
+            }
         }
     }
-}
 
     public getQueryType(): DocumentType<T> {
         return this._clazz;
@@ -2258,7 +2305,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
     }
 
-     public addAliasToCounterIncludesTokens(fromAlias: string): string {
+     public addAliasToIncludesTokens(fromAlias: string): string {
         if (!this._includesAlias) {
             return fromAlias;
         }
@@ -2268,8 +2315,16 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             this.addFromAliasToWhereTokens(fromAlias);
         }
 
-        for (const counterIncludesToken of this._counterIncludesTokens) {
-            counterIncludesToken.addAliasToPath(fromAlias);
+        if (this._counterIncludesTokens) {
+            for (const counterIncludesToken of this._counterIncludesTokens) {
+                counterIncludesToken.addAliasToPath(fromAlias);
+            }
+        }
+
+        if (this._timeSeriesIncludesTokens) {
+            for (const token of this._timeSeriesIncludesTokens) {
+                token.addAliasToPath(fromAlias);
+            }
         }
 
         return fromAlias;

@@ -5,12 +5,20 @@ import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
 import { IRaftCommand } from "../../../Http/IRaftCommand";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
+import { throwError } from "../../../Exceptions";
 
 export class ResetEtlOperation implements IMaintenanceOperation<void> {
     private readonly _configurationName: string;
     private readonly _transformationName: string;
 
     public constructor(configurationName: string, transformationName: string) {
+        if (!configurationName) {
+            throwError("InvalidArgumentException", "ConfigurationName cannot be null");
+        }
+
+        if (!transformationName) {
+            throwError("InvalidArgumentException", "TransformationName cannot be null");
+        }
         this._configurationName = configurationName;
         this._transformationName = transformationName;
     }

@@ -11,8 +11,9 @@ export interface DatabaseStatistics {
     countOfTombstones: number;
     countOfConflicts: number;
     countOfAttachments: number;
-    countOfCounters: number;
     countOfUniqueAttachments: number;
+    countOfCounterEntries: number;
+    countOfTimeSeriesSegments: number;
 
     indexes: IndexInformation[];
 

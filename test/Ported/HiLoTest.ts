@@ -5,8 +5,7 @@ import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 import {
     IDocumentStore,
     HiloIdGenerator,
-    HiloMultiDatabaseIdGenerator,
-    DocumentStore,
+    DocumentStore, MultiDatabaseHiLoIdGenerator,
 } from "../../src";
 import { ArrayUtil } from "../../src/Utility/ArrayUtil";
 
@@ -32,10 +31,10 @@ describe("HiLo", function () {
 
     it("does not get another range, when doing parallel requests", async () => {
         const users = ArrayUtil.range(32, i => Object.assign(new User(), { name: "user" + i }));
-        const storeOps = users.map(x => {
+        const storeOps = users.map(async x => {
             const session = store.openSession();
-            return session.store(x)
-                .then(() => session.saveChanges());
+            await session.store(x);
+            await session.saveChanges();
         });
         await Promise.all(storeOps);
 
@@ -55,10 +54,10 @@ describe("HiLo", function () {
         const store1 = await testContext.getDocumentStore("hilo_continues");
         try {
             const users = ArrayUtil.range(10, i => Object.assign(new User(), { name: "user" + i }));
-            const storeOps = users.map(x => {
+            const storeOps = users.map(async x => {
                 const session = store1.openSession();
-                return session.store(x)
-                    .then(() => session.saveChanges());
+                await session.store(x);
+                await session.saveChanges();
             });
             await Promise.all(storeOps);
             await store1["_multiDbHiLo"].returnUnusedRange();
@@ -86,7 +85,7 @@ describe("HiLo", function () {
         await session.store(hiloDoc, "Raven/Hilo/users");
         await session.saveChanges();
 
-        const hiLoKeyGenerator = new HiloIdGenerator(store, store.database, "users");
+        const hiLoKeyGenerator = new HiloIdGenerator("users", store, store.database,"/");
         const ids = [];
         const firstNextId = await hiLoKeyGenerator.nextId();
         ids.push(firstNextId);
@@ -117,7 +116,7 @@ describe("HiLo", function () {
 
         await session.saveChanges();
 
-        const multiDbHilo = new HiloMultiDatabaseIdGenerator(store);
+        const multiDbHilo = new MultiDatabaseHiLoIdGenerator(store as DocumentStore);
         let generatedDocumentKey = await multiDbHilo.generateDocumentId(null, new User());
         assert.strictEqual(generatedDocumentKey, "users/65-A");
 
@@ -126,7 +125,7 @@ describe("HiLo", function () {
     });
 
     it("capacity should double", async () => {
-        const hiLoIdGenerator = new HiloIdGenerator(store, store.database, "users");
+        const hiLoIdGenerator = new HiloIdGenerator("users", store, store.database, "/");
 
         {
             const session = store.openSession();
@@ -173,7 +172,7 @@ describe("HiLo", function () {
         }
 
         async function waitForStoreDisposeFinish(store) {
-            return new Promise((resolve) =>
+            return new Promise<void>((resolve) =>
                 store.once("afterDispose", (handledCallback) => {
                     handledCallback(); 
                     resolve();

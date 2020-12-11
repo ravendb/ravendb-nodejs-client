@@ -84,8 +84,7 @@ import { throwError } from "../../../src/Exceptions";
 
                         {
                             const session = destination.openSession();
-                            const documentQuery = session.advanced
-                                .documentQuery<User>(User)
+                            const documentQuery = session.query(User)
                                 .include("addressId");
 
                             const iq = documentQuery.getIndexQuery();

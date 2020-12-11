@@ -58,6 +58,7 @@ describe("RavenDB-11703", function () {
         assert.ok(counterChange);
         assert.strictEqual(counterChange.documentId, "users/1");
         assert.strictEqual(counterChange.type, "Put");
+        assert.strictEqual(counterChange.collectionName, "Users");
         assert.strictEqual(counterChange.name, "likes");
         assert.strictEqual(counterChange.value, 1);
         assert.ok(counterChange.changeVector);

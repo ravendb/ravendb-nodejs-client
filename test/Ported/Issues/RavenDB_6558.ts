@@ -3,7 +3,7 @@ import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
     IDocumentStore,
-    AbstractMultiMapIndexCreationTask,
+    AbstractCsharpMultiMapIndexCreationTask,
     Highlightings,
 } from "../../../src";
 
@@ -26,7 +26,7 @@ class SearchResults {
     private title: string;
 }
 
-class ContentSearchIndex extends AbstractMultiMapIndexCreationTask {
+class ContentSearchIndex extends AbstractCsharpMultiMapIndexCreationTask {
     public constructor() {
         super();
         this.addMap("docs.EventsItems.Select(doc => new {\n" +
@@ -83,7 +83,7 @@ describe("RavenDB-6558", function () {
             const session = store.openSession();
             let titleHighlighting: Highlightings;
             let contentHighlighting: Highlightings;
-            const results = await session.query({ indexName: index.getIndexName() })
+            const results = await session.query({ index: ContentSearchIndex })
                 .waitForNonStaleResults()
                 .highlight({
                     fieldName: "title",

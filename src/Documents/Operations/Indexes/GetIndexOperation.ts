@@ -56,25 +56,23 @@ export class GetIndexCommand extends RavenCommand<IndexDefinition> {
         }
 
         let body: string = null;
-        await this._pipeline()
+        const result = await this._pipeline<object>()
             .collectBody(b => body = b)
             .parseJsonSync()
             .objectKeysTransform({
                 defaultTransform: "camel",
                 ignorePaths: [/fields\.[^.]+$/i]
             })
-            .process(bodyStream)
-            .then((result: object) => {
-                const indexDefTypeInfo = {
-                    nestedTypes: {
-                        "results[]": "IndexDefinition",
-                        "results[].maps": "Set"
-                    },
-                };
-                const knownTypes = new Map([[IndexDefinition.name, IndexDefinition]]);
-                const allResults = this._reviveResultTypes(result, this._conventions, indexDefTypeInfo, knownTypes);
-                this.result = allResults["results"][0] || null;
-            });
+            .process(bodyStream);
+        const indexDefTypeInfo = {
+            nestedTypes: {
+                "results[]": "IndexDefinition",
+                "results[].maps": "Set"
+            },
+        };
+        const knownTypes = new Map([[IndexDefinition.name, IndexDefinition]]);
+        const allResults = this._reviveResultTypes(result, this._conventions, indexDefTypeInfo, knownTypes);
+        this.result = allResults["results"][0] || null;
 
         return body;
     }

@@ -11,6 +11,12 @@ import { assertThat, assertThrows } from "../Utils/AssertExtensions";
 import * as unzipper from "unzipper";
 import { bufferToReadable, readToBuffer, readToEnd, } from "../../src/Utility/StreamUtil";
 import { ReplaceClusterCertificateOperation } from "../../src/ServerWide/Operations/Certificates/ReplaceClusterCertificateOperation";
+import {
+    EditClientCertificateOperation,
+    EditClientCertificateParameters
+} from "../../src/ServerWide/Operations/Certificates/EditClientCertificateOperation";
+import { GetCertificateMetadataOperation } from "../../src/ServerWide/Operations/Certificates/GetCertificateMetadataOperation";
+import { GetCertificatesMetadataOperation } from "../../src/ServerWide/Operations/Certificates/GetCertificatesMetadataOperation";
 
 describe("HttpsTest", function () {
 
@@ -136,6 +142,40 @@ describe("HttpsTest", function () {
             assertThat(certificateDefinitions.find(x => x.name === "cert3"))
                 .isNotNull();
 
+            // and try to use edit
+            const parameters: EditClientCertificateParameters = {
+                name: "cert3-newName",
+                thumbprint: cert1Thumbprint,
+                permissions: {},
+                clearance: "ValidUser"
+            };
+
+            await store.maintenance.server.send(new EditClientCertificateOperation(parameters));
+
+            certificateDefinitions = await store.maintenance.server.send(new GetCertificatesOperation(0, 20));
+
+            const names = certificateDefinitions.map(x => x.name);
+            assertThat(names)
+                .contains("cert3-newName");
+            assertThat(!!names.find(x => x === "cert3"))
+                .isFalse();
+
+            const certificateMetadata = await store.maintenance.server.send(new GetCertificateMetadataOperation(cert1Thumbprint));
+
+            assertThat(certificateMetadata)
+                .isNotNull();
+            assertThat(certificateMetadata.securityClearance)
+                .isEqualTo("ValidUser");
+
+            const certificatesMetadata = await store.maintenance.server.send(
+                new GetCertificatesMetadataOperation(certificateMetadata.name));
+
+            assertThat(certificatesMetadata)
+                .hasSize(1);
+            assertThat(certificatesMetadata[0])
+                .isNotNull();
+            assertThat(certificatesMetadata[0].securityClearance)
+                .isEqualTo("ValidUser");
         } finally {
             // try to clean up
             if (cert1Thumbprint) {

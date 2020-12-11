@@ -15,7 +15,6 @@ import {
 import { IDisposable } from "../Types/Contracts";
 import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor";
 import { OperationExecutor } from "./Operations/OperationExecutor";
-import { AbstractIndexCreationTask } from "./Indexes";
 import { RequestExecutor } from "../Http/RequestExecutor";
 import { DocumentConventions } from "./Conventions/DocumentConventions";
 import { InMemoryDocumentSessionOperations } from "./Session/InMemoryDocumentSessionOperations";
@@ -23,9 +22,9 @@ import { BulkInsertOperation } from "./BulkInsertOperation";
 import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
 import { DocumentSubscriptions } from "./Subscriptions/DocumentSubscriptions";
 import { SessionOptions } from "./Session/SessionOptions";
-import { AbstractIndexCreationTaskBase } from "./Indexes/AbstractIndexCreationTaskBase";
-import { ErrorFirstCallback } from "../Types/Callbacks";
 import { DatabaseSmuggler } from "./Smuggler/DatabaseSmuggler";
+import { IAbstractIndexCreationTask } from "./Indexes/IAbstractIndexCreationTask";
+import { TimeSeriesOperations } from "./TimeSeries/TimeSeriesOperations";
 
 export interface SessionEventsProxy {
     addSessionListener(eventName: "failedRequest", eventHandler: (eventArgs: FailedRequestEventArgs) => void): this;
@@ -202,48 +201,29 @@ export interface IDocumentStore extends IDisposable,
     /**
      * Executes the index creation
      */
-    executeIndex(task: AbstractIndexCreationTaskBase): Promise<void>;
+    executeIndex(task: IAbstractIndexCreationTask): Promise<void>;
 
     /**
      * Executes the index creation
      */
-    executeIndex(task: AbstractIndexCreationTaskBase, database: string): Promise<void>;
+    executeIndex(task: IAbstractIndexCreationTask, database: string): Promise<void>;
 
     /**
      * Executes the index creation
      */
-    executeIndex(task: AbstractIndexCreationTask, callback: ErrorFirstCallback<void>): Promise<void>;
+    executeIndexes(tasks: IAbstractIndexCreationTask[]): Promise<void>;
 
     /**
      * Executes the index creation
      */
-    executeIndex(task: AbstractIndexCreationTask, database: string, callback: ErrorFirstCallback<void>): Promise<void>;
-
-    /**
-     * Executes the index creation
-     */
-    executeIndexes(tasks: AbstractIndexCreationTask[]): Promise<void>;
-
-    /**
-     * Executes the index creation
-     */
-    executeIndexes(tasks: AbstractIndexCreationTaskBase[], database: string): Promise<void>;
-
-    /**
-     * Executes the index creation
-     */
-    executeIndexes(tasks: AbstractIndexCreationTask[], callback: ErrorFirstCallback<void>): Promise<void>;
-
-    /**
-     * Executes the index creation
-     */
-    executeIndexes(
-        tasks: AbstractIndexCreationTask[], database: string, callback: ErrorFirstCallback<void>): Promise<void>;
+    executeIndexes(tasks: IAbstractIndexCreationTask[], database: string): Promise<void>;
 
     /**
      * Contains authentication information: client certificate data;
      */
     authOptions: IStoreAuthOptions;
+
+    timeSeries: TimeSeriesOperations;
 
     /**
      * Gets the conventions

@@ -8,11 +8,15 @@ import { ServerNode } from "../../../Http/ServerNode";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import * as stream from "readable-stream";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
+import { throwError } from "../../../Exceptions";
 
 export class UpdatePullReplicationAsSinkOperation implements IMaintenanceOperation<ModifyOngoingTaskResult> {
     private readonly _pullReplication: PullReplicationAsSink;
 
     public constructor(pullReplication: PullReplicationAsSink) {
+        if (!pullReplication) {
+            throwError("InvalidArgumentException", "PullReplication cannot be null");
+        }
         this._pullReplication = pullReplication;
     }
 
@@ -30,6 +34,10 @@ class UpdatePullEdgeReplication extends RavenCommand<ModifyOngoingTaskResult> im
 
     public constructor(pullReplication: PullReplicationAsSink) {
         super();
+
+        if (!pullReplication) {
+            throwError("InvalidArgumentException", "PullReplication cannot be null");
+        }
 
         this._pullReplication = pullReplication;
     }

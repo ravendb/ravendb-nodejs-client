@@ -4,10 +4,10 @@ import { StringUtil } from "../../../Utility/StringUtil";
 import { Facet } from "../../Queries/Facets/Facet";
 import { FacetAggregation, FacetOptions } from "../../Queries/Facets";
 import { FacetBase } from "../../Queries/Facets/FacetBase";
-import * as StringBuilder from "string-builder";
 import { GenericRangeFacet } from "../../Queries/Facets/GenericRangeFacet";
 import { RangeFacet } from "../../Queries/Facets/RangeFacet";
 import { QueryFieldUtil } from "../../Queries/QueryFieldUtil";
+import { StringBuilder } from "../../../Utility/StringBuilder";
 
 export interface FacetTokenSetupDocumentIdOptions {
     facetSetupDocumentId: string;
@@ -167,25 +167,27 @@ export class FacetToken extends QueryToken {
 
     private static _applyAggregations(facet: FacetBase, token: FacetToken): void {
         for (const [aggregationKey, aggregationValue] of facet.aggregations.entries()) {
-            let aggregationToken: FacetAggregationToken;
-            switch (aggregationKey) {
-                case "Max":
-                    aggregationToken = FacetAggregationToken.max(aggregationValue);
-                    break;
-                case "Min":
-                    aggregationToken = FacetAggregationToken.min(aggregationValue);
-                    break;
-                case "Average":
-                    aggregationToken = FacetAggregationToken.average(aggregationValue);
-                    break;
-                case "Sum":
-                    aggregationToken = FacetAggregationToken.sum(aggregationValue);
-                    break;
-                default :
-                    throwError("NotImplementedException", "Unsupported aggregation method: " + aggregationKey);
-            }
+            for (const value of aggregationValue) {
+                let aggregationToken: FacetAggregationToken;
+                switch (aggregationKey) {
+                    case "Max":
+                        aggregationToken = FacetAggregationToken.max(value.name, value.displayName);
+                        break;
+                    case "Min":
+                        aggregationToken = FacetAggregationToken.min(value.name, value.displayName);
+                        break;
+                    case "Average":
+                        aggregationToken = FacetAggregationToken.average(value.name, value.displayName);
+                        break;
+                    case "Sum":
+                        aggregationToken = FacetAggregationToken.sum(value.name, value.displayName);
+                        break;
+                    default :
+                        throwError("NotImplementedException", "Unsupported aggregation method: " + aggregationKey);
+                }
 
-            token._aggregations.push(aggregationToken);
+                token._aggregations.push(aggregationToken);
+            }
         }
     }
 
@@ -201,11 +203,13 @@ export class FacetToken extends QueryToken {
 export class FacetAggregationToken extends QueryToken {
 
     private _fieldName: string;
+    private _fieldDisplayName: string;
     private readonly _aggregation: FacetAggregation;
 
-    private constructor(fieldName: string, aggregation: FacetAggregation) {
+    private constructor(fieldName: string, fieldDisplayName: string, aggregation: FacetAggregation) {
         super();
         this._fieldName = fieldName;
+        this._fieldDisplayName = fieldDisplayName;
         this._aggregation = aggregation;
     }
 
@@ -238,36 +242,51 @@ export class FacetAggregationToken extends QueryToken {
             default:
                 throwError("InvalidArgumentException", "Invalid aggregation mode: " + this._aggregation);
         }
+
+        if (StringUtil.isNullOrWhitespace(this._fieldDisplayName)) {
+            return;
+        }
+
+        writer.append(" as ");
+        this._writeField(writer, this._fieldDisplayName);
     }
 
-    public static max(fieldName: string): FacetAggregationToken {
+    public static max(fieldName: string): FacetAggregationToken
+    public static max(fieldName: string, fieldDisplayName: string): FacetAggregationToken
+    public static max(fieldName: string, fieldDisplayName?: string): FacetAggregationToken {
         if (StringUtil.isNullOrWhitespace(fieldName)) {
             throwError("InvalidArgumentException", "FieldName can not be null");
         }
 
-        return new FacetAggregationToken(fieldName, "Max");
+        return new FacetAggregationToken(fieldName, fieldDisplayName, "Max");
     }
 
-    public static min(fieldName: string): FacetAggregationToken {
+    public static min(fieldName: string): FacetAggregationToken
+    public static min(fieldName: string, fieldDisplayName: string): FacetAggregationToken
+    public static min(fieldName: string, fieldDisplayName?: string): FacetAggregationToken {
         if (StringUtil.isNullOrWhitespace(fieldName)) {
             throwError("InvalidArgumentException", "FieldName can not be null");
         }
 
-        return new FacetAggregationToken(fieldName, "Min");
+        return new FacetAggregationToken(fieldName, fieldDisplayName, "Min");
     }
 
-    public static average(fieldName: string): FacetAggregationToken {
+    public static average(fieldName: string): FacetAggregationToken
+    public static average(fieldName: string, fieldDisplayName: string): FacetAggregationToken
+    public static average(fieldName: string, fieldDisplayName?: string): FacetAggregationToken {
         if (StringUtil.isNullOrWhitespace(fieldName)) {
             throwError("InvalidArgumentException", "FieldName can not be null");
         }
 
-        return new FacetAggregationToken(fieldName, "Average");
+        return new FacetAggregationToken(fieldName, fieldDisplayName, "Average");
     }
 
-    public static sum(fieldName: string): FacetAggregationToken {
+    public static sum(fieldName: string): FacetAggregationToken
+    public static sum(fieldName: string, fieldDisplayName: string): FacetAggregationToken
+    public static sum(fieldName: string, fieldDisplayName?: string): FacetAggregationToken {
         if (StringUtil.isNullOrWhitespace(fieldName)) {
             throwError("InvalidArgumentException", "FieldName can not be null");
         }
-        return new FacetAggregationToken(fieldName, "Sum");
+        return new FacetAggregationToken(fieldName, fieldDisplayName, "Sum");
     }
 }

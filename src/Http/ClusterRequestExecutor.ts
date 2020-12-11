@@ -98,22 +98,7 @@ export class ClusterRequestExecutor extends RequestExecutor {
         });
     }
 
-    public updateTopology(node: ServerNode, timeout: number, forceUpdate?: boolean, debugTag?: string): Promise<boolean>;
-    public updateTopology(parameters: UpdateTopologyParameters): Promise<boolean>;
-    public updateTopology(nodeOrParameters: ServerNode | UpdateTopologyParameters, timeout?: number, forceUpdate: boolean = false, debugTag?: string): Promise<boolean> {
-        let parameters: UpdateTopologyParameters;
-        if (nodeOrParameters instanceof ServerNode) {
-            parameters = new UpdateTopologyParameters(nodeOrParameters);
-            parameters.timeoutInMs = timeout;
-            parameters.forceUpdate = forceUpdate;
-            parameters.debugTag = debugTag;
-            parameters.applicationIdentifier = null;
-        } else {
-            if (!nodeOrParameters) {
-                throwError("InvalidArgumentException", "Parameters cannot be null");
-            }
-            parameters = nodeOrParameters;
-        }
+    public updateTopology(parameters: UpdateTopologyParameters): Promise<boolean> {
         if (this._disposed) {
             return Promise.resolve(false);
         }

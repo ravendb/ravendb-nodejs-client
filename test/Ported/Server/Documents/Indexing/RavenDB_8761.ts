@@ -31,8 +31,7 @@ describe("RavenDB-8761", function () {
                 .waitForNonStaleResults()
                 .all();
 
-            const productCounts2 = await session.advanced
-                .documentQuery<Order>(Order)
+            const productCounts2 = await session.query(Order)
                 .groupBy("lines[].product")
                 .selectKey(null, "productName")
                 .selectCount()
@@ -77,7 +76,7 @@ describe("RavenDB-8761", function () {
 
             assertQueryResults(productCounts1);
 
-            const productCounts2 = await session.advanced.documentQuery(Order)
+            const productCounts2 = await session.query(Order)
                 .groupBy("lines[].product", "shipTo.country")
                 .selectKey("lines[].product", "productName")
                 .selectKey("shipTo.country", "country")
@@ -116,7 +115,7 @@ describe("RavenDB-8761", function () {
 
             assertQueryResults(productCounts1);
 
-            const productCounts2 = await session.advanced.documentQuery(Order)
+            const productCounts2 = await session.query(Order)
                 .groupBy("lines[].product", "lines[].quantity")
                 .selectKey("lines[].product", "productName")
                 .selectKey("lines[].quantity", "quantity")
@@ -174,8 +173,7 @@ describe("RavenDB-8761", function () {
 
             assertQueryResults(productCounts1);
 
-            const productCounts2 = await session.advanced
-                .documentQuery(Order)
+            const productCounts2 = await session.query(Order)
                 .groupBy(GroupBy.array("lines[].product"))
                 .selectKey(null, "products")
                 .selectCount()
@@ -212,8 +210,7 @@ describe("RavenDB-8761", function () {
             assertQueryResults(productCounts1);
 
             const productCounts2 = await session
-                .advanced
-                .documentQuery(Order)
+                .query(Order)
                 .groupBy(GroupBy.array("lines[].product"), GroupBy.field("shipTo.country"))
                 .selectKey("lines[].product", "products")
                 .selectCount()
@@ -240,8 +237,7 @@ describe("RavenDB-8761", function () {
             assertQueryResults(productCounts1);
 
             const productCounts2 = await session
-                .advanced
-                .documentQuery(Order)
+                .query(Order)
                 .groupBy(GroupBy.array("lines[].product"), GroupBy.array("lines[].quantity"))
                 .selectKey("lines[].product", "products")
                 .selectKey("lines[].quantity", "quantities")

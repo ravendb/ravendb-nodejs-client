@@ -1,4 +1,3 @@
-import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
@@ -163,21 +162,20 @@ describe("Request executor", function () {
 
     });
 
-    it("fails when server is offline", function () {
+    it("fails when server is offline", async function () {
         const documentConventions = new DocumentConventions();
         const executor = RequestExecutor.create(["http://no_such_host:8081"], "db1", {
             documentConventions
         });
         const getTopology = new GetDatabaseTopologyCommand();
-        return BluebirdPromise.resolve()
-            .then(() => executor.execute(getTopology))
-            .then(() => assert.fail("Should have failed with 'AllTopologyNodesDownException'."),
-                err => {
-                    assert.ok(err);
-                    assert.strictEqual(err.name, "RavenException" as RavenErrorType, err.stack);
-                })
-            .finally(() => {
-                executor.dispose();
-            });
+        try {
+            await executor.execute(getTopology);
+            assert.fail("Should have failed with 'AllTopologyNodesDownException'.")
+        } catch (err) {
+            assert.ok(err);
+            assert.strictEqual(err.name, "RavenException" as RavenErrorType, err.stack);
+        } finally {
+            executor.dispose();
+        }
     });
 });

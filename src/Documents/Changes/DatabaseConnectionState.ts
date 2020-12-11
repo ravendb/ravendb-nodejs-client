@@ -74,6 +74,7 @@ export class DatabaseConnectionState implements IChangesConnectionState<Database
         this._emitter.removeAllListeners("Index" as ChangesType);
         this._emitter.removeAllListeners("Operation" as ChangesType);
         this._emitter.removeAllListeners("Counter" as ChangesType);
+        this._emitter.removeAllListeners("TimeSeries" as ChangesType);
         this._emitter.removeAllListeners(DatabaseConnectionState.ERROR_EVENT);
     }
 
