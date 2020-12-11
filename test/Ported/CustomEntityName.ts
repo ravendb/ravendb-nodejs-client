@@ -16,7 +16,7 @@ describe("CustomEntityName", function () {
 
     const getCharactersToTestWithSpecial = () => {
         const basicChars = getChars();
-        const specialChars = [ 'Ā', 'Ȁ', 'Ѐ', 'Ԁ', '؀', '܀', 'ऀ', 'ਅ', 'ଈ', 'అ', 'ഊ', 'ข', 'ဉ', 'ᄍ', 'ሎ', 'ጇ', 'ᐌ', 'ᔎ', 'ᘀ', 'ᜩ', 'ᢹ', 'ᥤ', 'ᨇ' ];
+        const specialChars = [ "Ā", "Ȁ", "Ѐ", "Ԁ", "؀", "܀", "ऀ", "ਅ", "ଈ", "అ", "ഊ", "ข", "ဉ", "ᄍ", "ሎ", "ጇ", "ᐌ", "ᔎ", "ᘀ", "ᜩ", "ᢹ", "ᥤ", "ᨇ" ];
         return [...basicChars, ...specialChars];
     }
 

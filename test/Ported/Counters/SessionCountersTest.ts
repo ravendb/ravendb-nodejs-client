@@ -72,7 +72,7 @@ describe("SessionCountersTest", function () {
             await session.saveChanges();
         }
 
-        let { counters } = (await store.operations
+        const { counters } = (await store.operations
                    .send(new GetCountersOperation("users/1-A", ["likes", "downloads"])));
         assert.strictEqual(counters.length, 2);
 

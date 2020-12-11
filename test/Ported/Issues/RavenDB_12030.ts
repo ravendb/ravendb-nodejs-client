@@ -128,6 +128,7 @@ class Fox {
     public name: string;
 }
 
+// tslint:disable-next-line:class-name
 class Fox_Search extends AbstractIndexCreationTask {
     public constructor() {
         super();

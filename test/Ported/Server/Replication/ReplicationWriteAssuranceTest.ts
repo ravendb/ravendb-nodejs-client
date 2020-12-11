@@ -5,7 +5,7 @@ import { assertThat } from "../../../Utils/AssertExtensions";
 
 describe("ReplicationWriteAssuranceTest", function () {
 
-    let testContext = new ClusterTestContext();
+    const testContext = new ClusterTestContext();
 
     it("serverSideWriteAssurance", async () => {
         const cluster = await testContext.createRaftCluster(3);
