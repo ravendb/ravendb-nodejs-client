@@ -1,5 +1,5 @@
 import { DocumentStore, EntityToJson, IDocumentStore, PutDocumentCommand } from "../../src";
-import { ClusterTestContext, disposeTestDocumentStore, testContext } from "../Utils/TestUtil";
+import { ClusterTestContext, disposeTestDocumentStore, RavenTestContext, testContext } from "../Utils/TestUtil";
 import { throwError } from "../../src/Exceptions";
 import { HttpRequestParameters, HttpResponse } from "../../src/Primitives/Http";
 import * as stream from "readable-stream";
@@ -7,7 +7,7 @@ import * as http from "http";
 import { User } from "../Assets/Entities";
 import { assertThat } from "../Utils/AssertExtensions";
 
-describe("RequestExecutor", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("RequestExecutor", function () {
 
     let store: IDocumentStore;
 
