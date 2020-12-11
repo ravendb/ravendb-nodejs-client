@@ -1,9 +1,9 @@
-import { ClusterTestContext, } from "../../Utils/TestUtil";
+import { ClusterTestContext, RavenTestContext, } from "../../Utils/TestUtil";
 import { DocumentStore } from "../../../src";
 import { User } from "../../Assets/Entities";
 import { assertThat } from "../../Utils/AssertExtensions";
 
-describe("RavenDB_14978", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("RavenDB_14978", function () {
 
     let testContext: ClusterTestContext;
 
