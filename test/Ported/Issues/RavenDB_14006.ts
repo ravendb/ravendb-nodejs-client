@@ -844,6 +844,7 @@ describe("RavenDB_14006", function () {
     });
 });
 
+// tslint:disable-next-line:class-name
 class Companies_ByName extends AbstractJavaScriptIndexCreationTask<Company, Pick<Company, "name">> {
     constructor() {
         super();

@@ -74,5 +74,6 @@ export class TimeSeriesBatchCommandData implements ICommandData {
     }
 
     onBeforeSaveChanges(session: InMemoryDocumentSessionOperations) {
+        // empty by design
     }
 }

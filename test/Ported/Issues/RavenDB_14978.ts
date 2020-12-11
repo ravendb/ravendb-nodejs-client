@@ -66,7 +66,7 @@ describe("RavenDB_14978", function () {
                 assertThat(s3Ctx)
                     .isNotEqualTo(s2Ctx);
 
-                let s4Ctx = -1;
+                const s4Ctx = -1;
 
                 {
                     const s4 = store.openSession();

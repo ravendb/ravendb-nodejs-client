@@ -522,7 +522,7 @@ import { TypedTimeSeriesRollupEntry } from "../../../src/Documents/Session/TimeS
             assertThat(result.results.length)
                 .isGreaterThan(0);
 
-            for (let res of result.results) {
+            for (const res of result.results) {
                 if (res.rollup) {
                     assertThat(res.values.length)
                         .isGreaterThan(0);

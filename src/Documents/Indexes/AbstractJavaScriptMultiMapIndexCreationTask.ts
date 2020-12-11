@@ -30,7 +30,7 @@ export class AbstractJavaScriptMultiMapIndexCreationTask<TMapResult extends obje
      * @param collectionOrDocumentType Collection name to index over
      * @param definition Index definition that maps to the indexed properties
      */
-    protected map<TDocument extends object>(
+    public map<TDocument extends object>(
         collectionOrDocumentType: string | DocumentType<TDocument>, definition: IndexingMapDefinition<TDocument, TMapResult>) {
 
         const collection = TypeUtil.isString(collectionOrDocumentType)
@@ -46,11 +46,11 @@ export class AbstractJavaScriptMultiMapIndexCreationTask<TMapResult extends obje
      * Sets the index definition reduce
      * @param mapReduce Reduce definition
      */
-    protected reduce(mapReduce: IndexingReduceDefinition<TMapResult>) {
+    public reduce(mapReduce: IndexingReduceDefinition<TMapResult>) {
         this._reduce = mapReduce(new IndexingGroupResults<TMapResult>()).format();
     }
 
-    protected addSource(name: string, source: Function): void {
+    public addSource(name: string, source: Function): void {
         this.additionalSources ??= {};
 
         const sourceAsString = source.toString();
@@ -65,7 +65,7 @@ export class AbstractJavaScriptMultiMapIndexCreationTask<TMapResult extends obje
     /**
      * No implementation is required here, the interface is purely meant to expose map helper methods such as `load(id, collection)` etc
      */
-    protected mapUtils(): IndexingMapUtils {
+    public mapUtils(): IndexingMapUtils {
         return new StubMapUtils();
     }
 

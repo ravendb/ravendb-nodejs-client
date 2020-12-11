@@ -25,13 +25,13 @@ export class TypedTimeSeriesRollupEntry<TValues extends object> {
     }
 
 
-    private createInstance(): TValues {
+    private _createInstance(): TValues {
         return new this._clazz();
     }
 
     public get max(): TValues {
         if (!this._max) {
-            this._max = this.createInstance();
+            this._max = this._createInstance();
         }
 
         return this._max;
@@ -39,7 +39,7 @@ export class TypedTimeSeriesRollupEntry<TValues extends object> {
 
     public get min(): TValues {
         if (!this._min) {
-            this._min = this.createInstance();
+            this._min = this._createInstance();
         }
 
         return this._min;
@@ -47,7 +47,7 @@ export class TypedTimeSeriesRollupEntry<TValues extends object> {
 
     public get count(): TValues {
         if (!this._count) {
-            this._count = this.createInstance();
+            this._count = this._createInstance();
         }
 
         return this._count;
@@ -55,7 +55,7 @@ export class TypedTimeSeriesRollupEntry<TValues extends object> {
 
     public get first(): TValues {
         if (!this._first) {
-            this._first = this.createInstance();
+            this._first = this._createInstance();
         }
 
         return this._first;
@@ -63,7 +63,7 @@ export class TypedTimeSeriesRollupEntry<TValues extends object> {
 
     public get last(): TValues {
         if (!this._last) {
-            this._last = this.createInstance();
+            this._last = this._createInstance();
         }
 
         return this._last;
@@ -71,7 +71,7 @@ export class TypedTimeSeriesRollupEntry<TValues extends object> {
 
     public get sum(): TValues {
         if (!this._sum) {
-            this._sum = this.createInstance();
+            this._sum = this._createInstance();
         }
 
         return this._sum;

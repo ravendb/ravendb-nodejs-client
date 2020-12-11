@@ -15,7 +15,7 @@ import { TypeUtil } from "../../../src/Utility/TypeUtil";
 
 describe("ClusterOperationTest", function () {
 
-    let testContext = new ClusterTestContext();
+    const testContext = new ClusterTestContext();
 
     it("nextIdentityForOperationShouldBroadcast", async () => {
         const cluster = await testContext.createRaftCluster(3);
@@ -82,7 +82,7 @@ describe("ClusterOperationTest", function () {
                 store.initialize();
 
                 const re = store.getRequestExecutor(database);
-                let result = await store.maintenance.forDatabase(database).send(new NextIdentityForOperation("person|"));
+                const result = await store.maintenance.forDatabase(database).send(new NextIdentityForOperation("person|"));
                 assertThat(result)
                     .isEqualTo(1);
 

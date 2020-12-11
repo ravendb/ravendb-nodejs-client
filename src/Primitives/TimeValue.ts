@@ -56,7 +56,7 @@ export class TimeValue {
         return new TimeValue(years * 12, "Month");
     }
 
-    private append(builder: StringBuilder, value: number, singular: string) {
+    private _append(builder: StringBuilder, value: number, singular: string) {
         if (value <= 0) {
             return;
         }
@@ -101,32 +101,32 @@ export class TimeValue {
 
                 if (remainingSeconds > TimeValue.SECONDS_PER_DAY) {
                     const days = Math.floor(this._value / TimeValue.SECONDS_PER_DAY);
-                    this.append(str, days, "day");
+                    this._append(str, days, "day");
                     remainingSeconds -= days * TimeValue.SECONDS_PER_DAY;
                 }
 
                 if (remainingSeconds > 3_600) {
                     const hours = Math.floor(remainingSeconds / 3_600);
-                    this.append(str, hours, "hour");
+                    this._append(str, hours, "hour");
                     remainingSeconds -= hours * 3_600;
                 }
 
                 if (remainingSeconds > 60) {
                     const minutes = remainingSeconds / 60;
-                    this.append(str, minutes, "minute");
+                    this._append(str, minutes, "minute");
                     remainingSeconds -= minutes *  60;
                 }
 
                 if (remainingSeconds > 0) {
-                    this.append(str, remainingSeconds, "second");
+                    this._append(str, remainingSeconds, "second");
                 }
                 break;
             case "Month":
                 if (this._value >= 12) {
-                    this.append(str, Math.floor(this._value / 12), "year");
+                    this._append(str, Math.floor(this._value / 12), "year");
                 }
                 if (this._value % 12 > 0) {
-                    this.append(str, this._value % 12, "month");
+                    this._append(str, this._value % 12, "month");
                 }
                 break;
             default:
@@ -136,13 +136,13 @@ export class TimeValue {
         return str.toString().trim();
     }
 
-    private assertSeconds() {
+    private _assertSeconds() {
         if (this._unit !== "Second") {
             throwError("InvalidArgumentException", "The value must be seconds");
         }
     }
 
-    private static assertValidUnit(unit: TimeValueUnit) {
+    private static _assertValidUnit(unit: TimeValueUnit) {
         if (unit === "Month" || unit === "Second") {
             return;
         }
@@ -150,7 +150,7 @@ export class TimeValue {
         throwError("InvalidArgumentException", "Invalid time unit: " + unit);
     }
 
-    private static assertSameUnits(a: TimeValue, b: TimeValue) {
+    private static _assertSameUnits(a: TimeValue, b: TimeValue) {
         if (a.unit !== b.unit) {
             throwError("InvalidArgumentException", "Unit isn't the same " + a.unit + " != " + b.unit);
         }

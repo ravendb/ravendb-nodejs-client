@@ -131,7 +131,7 @@ describe("RavenDB_14230", function () {
                 await session.saveChanges();
             }
 
-            let date = new Date();
+            const date = new Date();
 
             {
                 const session = store.openSession();

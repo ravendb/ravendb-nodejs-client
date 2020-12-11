@@ -167,7 +167,7 @@ export class FacetToken extends QueryToken {
 
     private static _applyAggregations(facet: FacetBase, token: FacetToken): void {
         for (const [aggregationKey, aggregationValue] of facet.aggregations.entries()) {
-            for (let value of aggregationValue) {
+            for (const value of aggregationValue) {
                 let aggregationToken: FacetAggregationToken;
                 switch (aggregationKey) {
                     case "Max":

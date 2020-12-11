@@ -1164,13 +1164,13 @@ export abstract class InMemoryDocumentSessionOperations
 
         newValues.push(...newRange.entries);
 
-        for (let j = 0; j < localRange.entries.length; j++) {
-            if (localRange.entries[j].timestamp.getTime() <= newRange.to.getTime()) {
-                continue;
+        localRange.entries.forEach(item => {
+            if (item.timestamp.getTime() <= newRange.to.getTime()) {
+                return;
             }
 
-            newValues.push(localRange.entries[j]);
-        }
+            newValues.push(item);
+        });
 
         localRange.entries = newValues;
     }

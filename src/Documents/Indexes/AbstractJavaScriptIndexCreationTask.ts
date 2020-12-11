@@ -27,10 +27,10 @@ export class AbstractJavaScriptIndexCreationTask<TDocument extends object, TMapR
 
     /**
      * Register map
-     * @param collection Collection name to index over
+     * @param collectionOrDocumentType Collection name to index over
      * @param definition Index definition that maps to the indexed properties
      */
-    protected map(collectionOrDocumentType: string | DocumentType<TDocument>, definition: IndexingMapDefinition<TDocument, TMapResult>) {
+    public map(collectionOrDocumentType: string | DocumentType<TDocument>, definition: IndexingMapDefinition<TDocument, TMapResult>) {
         if (this._map) {
             throwError("InvalidOperationException",
                 "Map function was already defined. " +
@@ -50,13 +50,13 @@ export class AbstractJavaScriptIndexCreationTask<TDocument extends object, TMapR
      * Sets the index definition reduce
      * @param mapReduce Reduce definition
      */
-    protected reduce(mapReduce: IndexingReduceDefinition<TMapResult>) {
+    public reduce(mapReduce: IndexingReduceDefinition<TMapResult>) {
         this._reduce = mapReduce(new IndexingGroupResults<TMapResult>()).format();
     }
 
-    protected addSource(source: Function): void;
-    protected addSource(name: string, source: Function): void;
-    protected addSource(nameOrFunction: string | Function, source?: Function): void {
+    public addSource(source: Function): void;
+    public addSource(name: string, source: Function): void;
+    public addSource(nameOrFunction: string | Function, source?: Function): void {
         this.additionalSources ??= {};
 
         if (!TypeUtil.isString(nameOrFunction)) {
@@ -75,7 +75,7 @@ export class AbstractJavaScriptIndexCreationTask<TDocument extends object, TMapR
     /**
      * No implementation is required here, the interface is purely meant to expose map helper methods such as `load(id, collection)` etc
      */
-    protected mapUtils(): IndexingMapUtils {
+    public mapUtils(): IndexingMapUtils {
         return new StubMapUtils();
     }
 

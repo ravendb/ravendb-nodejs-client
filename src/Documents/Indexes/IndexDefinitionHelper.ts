@@ -12,8 +12,8 @@ export class IndexDefinitionHelper {
             throwError("InvalidArgumentException", "Index definitions contains no Maps");
         }
 
-        map = IndexDefinitionHelper.stripComments(map);
-        map = IndexDefinitionHelper.unifyWhiteSpace(map);
+        map = IndexDefinitionHelper._stripComments(map);
+        map = IndexDefinitionHelper._unifyWhiteSpace(map);
 
         const mapLower = map.toLocaleLowerCase();
 
@@ -42,8 +42,8 @@ export class IndexDefinitionHelper {
             throwError("InvalidArgumentException", "Value cannot be null or whitespace.");
         }
 
-        map = IndexDefinitionHelper.stripComments(map);
-        map = IndexDefinitionHelper.unifyWhiteSpace(map);
+        map = IndexDefinitionHelper._stripComments(map);
+        map = IndexDefinitionHelper._unifyWhiteSpace(map);
 
         // detect first supported syntax: timeseries.Companies.HeartRate.Where
         const mapLower = map.toLocaleLowerCase();
@@ -75,11 +75,11 @@ export class IndexDefinitionHelper {
         return "Documents";
     }
 
-    private static stripComments(input: string): string {
+    private static _stripComments(input: string): string {
         return input.replace(COMMENT_REGEX, "").trim();
     }
 
-    private static unifyWhiteSpace(input: string): string {
+    private static _unifyWhiteSpace(input: string): string {
         return input.replace(/(\s+)/g, " ");
     }
 }

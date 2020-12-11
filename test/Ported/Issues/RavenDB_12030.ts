@@ -117,6 +117,7 @@ class Fox {
     public name: string;
 }
 
+// tslint:disable-next-line:class-name
 class Fox_Search extends AbstractJavaScriptIndexCreationTask<Fox, Pick<Fox, "name">> {
     public constructor() {
         super();

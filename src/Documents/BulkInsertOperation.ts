@@ -229,7 +229,6 @@ export class BulkInsertOperation {
     }
 
     private _writeString(input: string): void {
-        let result = "";
         for (let i = 0; i < input.length; i++) {
             const c = input[i];
             if (`"` === c) {

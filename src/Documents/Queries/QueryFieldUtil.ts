@@ -3,7 +3,7 @@ import { StringUtil } from "../../Utility/StringUtil";
 
 export class QueryFieldUtil {
 
-    private static shouldEscape(s: string, isPath = false): boolean {
+    private static _shouldEscape(s: string, isPath = false): boolean {
         let escape = false;
         let insideEscaped = false;
 
@@ -46,7 +46,7 @@ export class QueryFieldUtil {
             return name;
         }
 
-        if (!QueryFieldUtil.shouldEscape(name, isPath)) {
+        if (!QueryFieldUtil._shouldEscape(name, isPath)) {
             return name;
         }
 

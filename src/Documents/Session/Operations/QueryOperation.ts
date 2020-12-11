@@ -253,14 +253,14 @@ export class QueryOperation {
         const raw: T = conventions.objectMapper.fromObjectLiteral(document);
 
         // tslint:disable-next-line:new-parens
-        let result = projType ? new (Function.prototype.bind.apply(projType)) : {};
+        const result = projType ? new (Function.prototype.bind.apply(projType)) : {};
 
         const mapper = conventions.objectMapper;
 
         if (result instanceof TimeSeriesAggregationResult) {
-            Object.assign(result, QueryOperation.reviveTimeSeriesAggregationResult(raw, mapper));
+            Object.assign(result, QueryOperation._reviveTimeSeriesAggregationResult(raw, mapper));
         } else if (result instanceof TimeSeriesRawResult) {
-            Object.assign(result, QueryOperation.reviveTimeSeriesRawResult(raw, mapper));
+            Object.assign(result, QueryOperation._reviveTimeSeriesRawResult(raw, mapper));
         } else {
             if (fieldsToFetch && fieldsToFetch.projections) {
                 const keys = conventions.entityFieldNameConvention
@@ -289,11 +289,11 @@ export class QueryOperation {
             for (const timeSeriesField of timeSeriesFields) {
                 const value = document[timeSeriesField];
                 if (value) {
-                    const newValue = QueryOperation.detectTimeSeriesResultType(value);
+                    const newValue = QueryOperation._detectTimeSeriesResultType(value);
                     if (newValue instanceof TimeSeriesAggregationResult) {
-                        Object.assign(newValue, QueryOperation.reviveTimeSeriesAggregationResult(value, mapper));
+                        Object.assign(newValue, QueryOperation._reviveTimeSeriesAggregationResult(value, mapper));
                     } else if (newValue instanceof TimeSeriesRawResult) {
-                        Object.assign(newValue, QueryOperation.reviveTimeSeriesRawResult(value, mapper));
+                        Object.assign(newValue, QueryOperation._reviveTimeSeriesRawResult(value, mapper));
                     }
 
                     result[timeSeriesField] = newValue;
@@ -306,7 +306,7 @@ export class QueryOperation {
         return result;
     }
 
-    private static detectTimeSeriesResultType(raw: any): TimeSeriesAggregationResult | TimeSeriesRawResult  {
+    private static _detectTimeSeriesResultType(raw: any): TimeSeriesAggregationResult | TimeSeriesRawResult  {
         const results = raw.Results || [];
         // duck typing
         if (results.length && results[0].From && results[0].To) {
@@ -315,7 +315,7 @@ export class QueryOperation {
         return new TimeSeriesRawResult();
     }
 
-    private static reviveTimeSeriesAggregationResult(raw: object, mapper: TypesAwareObjectMapper) {
+    private static _reviveTimeSeriesAggregationResult(raw: object, mapper: TypesAwareObjectMapper) {
         const rawLower = ObjectUtil.transformObjectKeys(raw, { defaultTransform: "camel" });
         return mapper.fromObjectLiteral(rawLower, {
             typeName: "object",
@@ -327,7 +327,7 @@ export class QueryOperation {
         }, new Map([[TimeSeriesRangeAggregation.name, TimeSeriesRangeAggregation]]));
     }
 
-    private static reviveTimeSeriesRawResult(raw: object, mapper: TypesAwareObjectMapper) {
+    private static _reviveTimeSeriesRawResult(raw: object, mapper: TypesAwareObjectMapper) {
         const rawLower = ObjectUtil.transformObjectKeys(raw, { defaultTransform: "camel" });
         return mapper.fromObjectLiteral(rawLower, {
             typeName: "object",

@@ -199,14 +199,14 @@ export class BatchOperation {
     }
 
     private _handleCompareExchangePut(batchResult: object) {
-        this.handleCompareExchangeInternal("CompareExchangePUT", batchResult);
+        this._handleCompareExchangeInternal("CompareExchangePUT", batchResult);
     }
 
     private _handleCompareExchangeDelete(batchResult: object) {
-        this.handleCompareExchangeInternal("CompareExchangeDELETE", batchResult);
+        this._handleCompareExchangeInternal("CompareExchangeDELETE", batchResult);
     }
 
-    private handleCompareExchangeInternal(commandType: CommandType, batchResult: any) {
+    private _handleCompareExchangeInternal(commandType: CommandType, batchResult: any) {
         const key = batchResult.key;
         if (!key) {
             BatchOperation._throwMissingField(commandType, "Key");
