@@ -7,21 +7,22 @@ import { GetRequest } from "../../../Commands/MultiGet/GetRequest";
 import { GetResponse } from "../../../Commands/MultiGet/GetResponse";
 import { FacetQueryCommand } from "../../../Commands/FacetQueryCommand";
 import { stringToReadable } from "../../../../Utility/StreamUtil";
+import { InMemoryDocumentSessionOperations } from "../../InMemoryDocumentSessionOperations";
 
 export class LazyAggregationQueryOperation implements ILazyOperation {
 
-    private readonly _conventions: DocumentConventions;
+    private readonly _session: InMemoryDocumentSessionOperations;
     private readonly _indexQuery: IndexQuery;
     private readonly _parent: AggregationQueryBase;
     private readonly _processResults:
         (queryResult: QueryResult) => FacetResultObject;
 
     public constructor(
-        conventions: DocumentConventions,
+        session: InMemoryDocumentSessionOperations,
         indexQuery: IndexQuery,
         parent: AggregationQueryBase,
         processResults: (queryResult: QueryResult) => FacetResultObject) {
-        this._conventions = conventions;
+        this._session = session;
         this._indexQuery = indexQuery;
         this._processResults = processResults;
         this._parent = parent;
@@ -32,7 +33,7 @@ export class LazyAggregationQueryOperation implements ILazyOperation {
         request.url = "/queries";
         request.method = "POST";
         request.query = "?queryHash=" + this._indexQuery.getQueryHash();
-        request.body = writeIndexQuery(this._conventions, this._indexQuery);
+        request.body = writeIndexQuery(this._session.conventions, this._indexQuery);
         return request;
     }
 
@@ -72,7 +73,7 @@ export class LazyAggregationQueryOperation implements ILazyOperation {
         }
 
         const result = await FacetQueryCommand.parseQueryResultResponseAsync(
-            stringToReadable(response.result), this._conventions, false);
+            stringToReadable(response.result), this._session.conventions, false);
         this._handleResponse(result);
     }
 

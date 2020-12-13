@@ -54,7 +54,7 @@ export abstract class SuggestionQueryBase {
 
         return (this._session as DocumentSession).addLazyOperation(
             new LazySuggestionQueryOperation(
-                this._session.conventions,
+                this._session,
                 this._query,
                 result => this._invokeAfterQueryExecuted(result),
                 (result) => this._processResults(result)

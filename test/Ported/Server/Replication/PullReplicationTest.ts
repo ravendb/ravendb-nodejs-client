@@ -244,6 +244,8 @@ import { delay } from "../../../../src/Utility/PromiseUtil";
 
                     await ReplicationTestContext.addWatcherToReplicationTopology(sink, pull, ...hub2.urls);
 
+                    await delay(500); // wait a bit to process updates
+
                     {
                         const main = hub.openSession();
                         await main.store(new User(), "hub1/2");

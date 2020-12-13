@@ -43,7 +43,7 @@ export abstract class AggregationQueryBase {
         return (this._session as DocumentSession)
             .addLazyOperation(
                 new LazyAggregationQueryOperation(
-                    this._session.conventions,
+                    this._session,
                     this._query,
                     this,
                     (queryResult: QueryResult) =>
@@ -64,6 +64,8 @@ export abstract class AggregationQueryBase {
                 result, FACET_RESULT_TYPE_INFO, FACET_RESULT_TYPES_MAP);
             results[facetResult.name] = facetResult;
         }
+
+        this._session.registerIncludes(queryResult.includes);
 
         QueryOperation.ensureIsAcceptable(
             queryResult, this._query.waitForNonStaleResults, this._duration, this._session);

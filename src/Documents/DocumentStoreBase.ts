@@ -36,6 +36,7 @@ import { DatabaseSmuggler } from "./Smuggler/DatabaseSmuggler";
 import { IDisposable } from "../Types/Contracts";
 import { TimeSeriesOperations } from "./TimeSeries/TimeSeriesOperations";
 import { IAbstractIndexCreationTask } from "./Indexes/IAbstractIndexCreationTask";
+import { StringUtil } from "../Utility/StringUtil";
 
 export abstract class DocumentStoreBase
     extends EventEmitter

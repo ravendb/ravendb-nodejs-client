@@ -9,8 +9,7 @@ import { DocumentStoreBase } from "../DocumentStoreBase";
 
 export abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends IndexDefinition>
     extends AbstractCommonApiForIndexes implements IAbstractIndexCreationTask {
-
-
+    
     /**
      *  Creates the index definition.
      */
