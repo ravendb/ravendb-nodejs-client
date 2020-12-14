@@ -7,6 +7,7 @@ import { stringToReadable } from "../../../../Utility/StreamUtil";
 import { DocumentConventions } from "../../../Conventions/DocumentConventions";
 import { IndexQuery, writeIndexQuery } from "../../../Queries/IndexQuery";
 import { SuggestionsResponseObject } from "../../../../Types";
+import { InMemoryDocumentSessionOperations } from "../../InMemoryDocumentSessionOperations";
 
 export class LazySuggestionQueryOperation implements ILazyOperation {
 
@@ -14,17 +15,17 @@ export class LazySuggestionQueryOperation implements ILazyOperation {
     private _queryResult: QueryResult;
     private _requiresRetry: boolean;
 
-    private readonly _conventions: DocumentConventions;
+    private readonly _session: InMemoryDocumentSessionOperations;
     private readonly _indexQuery: IndexQuery;
     private readonly _invokeAfterQueryExecuted: (result: QueryResult) => void;
     private readonly _processResults:
         (result: QueryResult) => SuggestionsResponseObject;
 
-    public constructor(conventions: DocumentConventions, indexQuery: IndexQuery,
+    public constructor(session: InMemoryDocumentSessionOperations, indexQuery: IndexQuery,
                        invokeAfterQueryExecuted: (result: QueryResult) => void,
                        processResults: (result: QueryResult)
                            => SuggestionsResponseObject) {
-        this._conventions = conventions;
+        this._session = session;
         this._indexQuery = indexQuery;
         this._invokeAfterQueryExecuted = invokeAfterQueryExecuted;
         this._processResults = processResults;
@@ -35,7 +36,7 @@ export class LazySuggestionQueryOperation implements ILazyOperation {
         request.url = "/queries";
         request.method = "POST";
         request.query = "?queryHash=" + this._indexQuery.getQueryHash();
-        request.body = writeIndexQuery(this._conventions, this._indexQuery);
+        request.body = writeIndexQuery(this._session.conventions, this._indexQuery);
 
         return request;
     }
@@ -72,7 +73,7 @@ export class LazySuggestionQueryOperation implements ILazyOperation {
         }
 
         const result = await QueryCommand.parseQueryResultResponseAsync(
-            stringToReadable(response.result), this._conventions, false);
+            stringToReadable(response.result), this._session.conventions, false);
 
         this._handleResponse(result);
     }

@@ -1,6 +1,7 @@
 import { CasingConvention } from "../../../Utility/ObjectUtil";
 import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
 import { throwError } from "../../../Exceptions";
+import { CONSTANTS } from "../../../Constants";
 
 export type TransformJsonKeysProfile = 
     "CommandResponsePayload"
@@ -116,6 +117,15 @@ export function getTransformJsonKeysProfile(
 }
 
 function facetQueryGetTransform(key, stack) {
+    const len = stack.length;
+
+
+    if (stack[0] === "Includes") {
+        if (len >= 3 && stack[2] === "@metadata") {
+            return handleMetadataJsonKeys(key, stack, stack.length, 3);
+        }
+    }
+
     return "camel";
 }
 

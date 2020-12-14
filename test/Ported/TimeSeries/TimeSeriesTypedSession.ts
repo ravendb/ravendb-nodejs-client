@@ -636,7 +636,75 @@ import { TypedTimeSeriesRollupEntry } from "../../../src/Documents/Session/TimeS
                     .isEqualTo(Number.NaN);
             }
         }
-    })
+    });
+
+    it("canWorkWithRollupTimeSeries2", async () => {
+        const rawHours = 24;
+
+        const raw = new RawTimeSeriesPolicy(TimeValue.ofHours(rawHours));
+
+        const p1 = new TimeSeriesPolicy("By6Hours", TimeValue.ofHours(6), TimeValue.ofHours(rawHours * 4));
+        const p2 = new TimeSeriesPolicy("By1Day", TimeValue.ofDays(1), TimeValue.ofHours(rawHours * 5));
+        const p3 = new TimeSeriesPolicy("By30Minutes", TimeValue.ofMinutes(30), TimeValue.ofHours(rawHours * 2));
+        const p4 = new TimeSeriesPolicy("By1Hour", TimeValue.ofMinutes(60), TimeValue.ofHours(rawHours * 3));
+
+        const usersConfig = new TimeSeriesCollectionConfiguration();
+        usersConfig.rawPolicy = raw;
+        usersConfig.policies = [p1, p2, p3, p4];
+
+        const config = new TimeSeriesConfiguration();
+        config.policyCheckFrequencyInMs = 100;
+        config.collections = new Map<string, TimeSeriesCollectionConfiguration>();
+        config.collections.set("Users", usersConfig);
+
+        await store.maintenance.send(new ConfigureTimeSeriesOperation(config));
+        await store.timeSeries.register(User, StockPrice);
+
+        const now = moment().startOf("day");
+        const baseline = now.clone().add(-12, "days");
+        const total = 60 * 24 * 12;
+
+        {
+            const session = store.openSession()
+            const user = new User();
+            user.name = "Karmel";
+            await session.store(user, "users/karmel");
+            const ts = session.timeSeriesFor("users/karmel", StockPrice);
+
+            const entry = new StockPrice();
+            for (let i = 0; i <= total; i++) {
+                entry.open = i;
+                entry.close = i + 100_000;
+                entry.high = i + 200_000;
+                entry.low = i + 300_000;
+                entry.volume = i + 400_000;
+
+                ts.append(baseline.clone().add(i, "minutes").toDate(), entry, "watches/fitbit");
+            }
+
+            await session.saveChanges();
+        }
+
+        await delay(1500); // wait for rollups
+
+        {
+            const session = store.openSession();
+            const ts1 = session.timeSeriesRollupFor("users/karmel", p1.name, StockPrice);
+            const r = (await ts1.get())[0];
+            assertThat(r.first)
+                .isNotNull();
+            assertThat(r.last)
+                .isNotNull();
+            assertThat(r.min)
+                .isNotNull();
+            assertThat(r.max)
+                .isNotNull();
+            assertThat(r.count)
+                .isNotNull();
+            assertThat(r.average)
+                .isNotNull();
+        }
+    });
 });
 
 class StockPrice {

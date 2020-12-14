@@ -86,7 +86,7 @@ export class TimeSeriesOperations {
 
                 const mapping = TimeSeriesValuesHelper.getFieldsMapping(timeSeriesEntryClassOrName);
                 if (!mapping) {
-                    throwError("InvalidOperationException", TimeSeriesOperations.getTimeSeriesName(timeSeriesEntryClassOrName, this._store.conventions) + " must contain "); //TODO:
+                    throwError("InvalidOperationException", TimeSeriesOperations.getTimeSeriesName(timeSeriesEntryClassOrName, this._store.conventions) + " must contain valid mapping");
                 }
 
                 const collection = this._store.conventions.findCollectionName(collectionClass);

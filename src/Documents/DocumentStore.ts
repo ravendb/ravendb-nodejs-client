@@ -189,9 +189,7 @@ export class DocumentStore extends DocumentStoreBase {
     public getRequestExecutor(database?: string): RequestExecutor {
         this.assertInitialized();
 
-        if (!database) {
-            database = this.database;
-        }
+        database = this.getEffectiveDatabase(database);
 
         const databaseLower = database.toLowerCase();
 
@@ -239,7 +237,7 @@ export class DocumentStore extends DocumentStoreBase {
     requestTimeout(timeoutInMs: number, database?: string): IDisposable {
         this.assertInitialized();
 
-        database = database || this.database;
+        database = this.getEffectiveDatabase(database);
 
         if (!database) {
             throwError("InvalidOperationException", "Cannot use requestTimeout without a default database defined " +
@@ -415,6 +413,6 @@ export class DocumentStore extends DocumentStoreBase {
     public bulkInsert(database?: string): BulkInsertOperation {
         this.assertInitialized();
 
-        return new BulkInsertOperation(database || this.database, this);
+        return new BulkInsertOperation(this.getEffectiveDatabase(database), this);
     }
 }

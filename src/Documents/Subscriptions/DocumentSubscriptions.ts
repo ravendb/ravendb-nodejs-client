@@ -73,7 +73,7 @@ export class DocumentSubscriptions implements IDisposable {
             throwError("InvalidArgumentException", "Cannot create a subscription if the script is null");
         }
 
-        const requestExecutor = this._store.getRequestExecutor(database || this._store.database);
+        const requestExecutor = this._store.getRequestExecutor(this._store.getEffectiveDatabase(database));
 
         const command = new CreateSubscriptionCommand(options);
         await requestExecutor.execute(command);
@@ -322,7 +322,7 @@ export class DocumentSubscriptions implements IDisposable {
      * It downloads a list of all existing subscriptions in a database.
      */
     public async getSubscriptions(start: number, take: number, database?: string): Promise<SubscriptionState[]> {
-        const requestExecutor = this._store.getRequestExecutor(database || this._store.database);
+        const requestExecutor = this._store.getRequestExecutor(this._store.getEffectiveDatabase(database));
 
         const command = new GetSubscriptionsCommand(start, take);
         await requestExecutor.execute(command);
@@ -344,7 +344,7 @@ export class DocumentSubscriptions implements IDisposable {
      * Delete a subscription.
      */
     public async delete(name: string, database?: string): Promise<void> {
-        const requestExecutor = this._store.getRequestExecutor(database || this._store.database);
+        const requestExecutor = this._store.getRequestExecutor(this._store.getEffectiveDatabase(database));
 
         const command = new DeleteSubscriptionCommand(name);
         return requestExecutor.execute(command);
@@ -368,7 +368,7 @@ export class DocumentSubscriptions implements IDisposable {
             throwError("InvalidArgumentException", "SubscriptionName cannot be null");
         }
 
-        const requestExecutor = this._store.getRequestExecutor(database || this._store.database);
+        const requestExecutor = this._store.getRequestExecutor(this._store.getEffectiveDatabase(database));
 
         const command = new GetSubscriptionStateCommand(subscriptionName);
         await requestExecutor.execute(command);
@@ -397,7 +397,7 @@ export class DocumentSubscriptions implements IDisposable {
      * Force server to close current client subscription connection to the server
      */
     public async dropConnection(name: string, database?: string): Promise<void> {
-        const requestExecutor = this._store.getRequestExecutor(database || this._store.database);
+        const requestExecutor = this._store.getRequestExecutor(this._store.getEffectiveDatabase(database));
 
         const command = new DropSubscriptionConnectionCommand(name);
         return requestExecutor.execute(command);
@@ -407,7 +407,7 @@ export class DocumentSubscriptions implements IDisposable {
     public async enable(name: string, database: string)
     public async enable(name: string, database?: string) {
         const operation = new ToggleOngoingTaskStateOperation(name, "Subscription", false);
-        await this._store.maintenance.forDatabase(database || this._store.database)
+        await this._store.maintenance.forDatabase(this._store.getEffectiveDatabase(database))
             .send(operation);
     }
 
@@ -415,7 +415,7 @@ export class DocumentSubscriptions implements IDisposable {
     public async disable(name: string, database: string)
     public async disable(name: string, database?: string) {
         const operation = new ToggleOngoingTaskStateOperation(name, "Subscription", true);
-        await this._store.maintenance.forDatabase(database || this._store.database)
+        await this._store.maintenance.forDatabase(this._store.getEffectiveDatabase(database))
             .send(operation);
     }
 

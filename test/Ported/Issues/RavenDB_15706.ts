@@ -21,7 +21,7 @@ describe("RavenDB_15706", function () {
 
             await assertThrows(() => store.bulkInsert(), err => {
                 assertThat(err.name)
-                    .isEqualTo("InvalidOperationException");
+                    .isEqualTo("InvalidArgumentException");
             })
         } finally {
             outerStore.dispose();

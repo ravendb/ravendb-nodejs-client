@@ -1,6 +1,7 @@
 import { MultiTypeHiLoIdGenerator } from "./MultiTypeHiLoIdGenerator";
 import { DocumentStore } from "../DocumentStore";
 import { IRavenObject } from "../../Types/IRavenObject";
+import { DocumentStoreBase } from "../DocumentStoreBase";
 
 export class MultiDatabaseHiLoIdGenerator {
 
@@ -13,7 +14,7 @@ export class MultiDatabaseHiLoIdGenerator {
     }
 
     public generateDocumentId(database: string, entity: object): Promise<string> {
-        return this._getGeneratorForDatabase(database || this._store.database)
+        return this._getGeneratorForDatabase(DocumentStoreBase.getEffectiveDatabase(this._store, database))
             .generateDocumentId(entity);
     }
 

@@ -428,7 +428,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
         const clazz = this._conventions.getJsTypeByDocumentType(this._clazz);
         return  new LazyQueryOperation<T>(
-            this._theSession.conventions,
+            this._theSession,
             this._queryOperation,
             this,
             clazz);
@@ -2157,7 +2157,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         const clazz = this._conventions.getJsTypeByDocumentType(this._clazz);
         const lazyQueryOperation =
             new LazyQueryOperation<T>(
-                this._theSession.conventions,
+                this._theSession,
                 this._queryOperation,
                 this,
                 clazz);
