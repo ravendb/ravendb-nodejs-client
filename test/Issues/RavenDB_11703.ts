@@ -11,6 +11,8 @@ import { timeout, delay } from "../../src/Utility/PromiseUtil";
 
 describe("RavenDB-11703", function () {
 
+    this.retries(3);
+
     let store: IDocumentStore;
 
     beforeEach(async function () {
@@ -132,6 +134,7 @@ describe("RavenDB-11703", function () {
     }
 
     it("canSubscribeToCounterChanges", async function () {
+
         const changes = store.changes();
         await changes.ensureConnectedNow();
 
