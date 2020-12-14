@@ -78,7 +78,7 @@ describe("ClientGraphQueriesTest", function () {
                 [ "Fi", "Foozy", "Fah", "Fah", "Foozy" ]
             ];
 
-            for (let names of namesList) {
+            for (const names of namesList) {
                 const res = await session.advanced.graphQuery<FooBar>("match (Foos as foo)-[bars as _]->(Bars as bar)", FooBar)
                     .withQuery("foo", b => b.query<Foo>(Foo).whereIn("name", names))
                     .withQuery("bar", session.query<Bar>(Bar).whereGreaterThanOrEqual("age", 18))

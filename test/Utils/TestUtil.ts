@@ -224,6 +224,7 @@ export class RavenTestContext extends RavenTestDriver implements IDisposable {
 
     private static _killGlobalServerProcess(secured: boolean): void {
         let p: ChildProcess;
+        // tslint:disable-next-line:prefer-const
         let store;
         if (secured) {
             p = this._globalSecuredServerProcess;
@@ -444,7 +445,7 @@ export class ClusterTestContext extends RavenTestDriver implements IDisposable {
 
         const allowedNodeTags = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
 
-        let leaderIndex = 0;
+        const leaderIndex = 0;
         const leaderNodeTag = allowedNodeTags[leaderIndex];
 
         for (let i = 0 ; i < numberOfNodes; i++) {

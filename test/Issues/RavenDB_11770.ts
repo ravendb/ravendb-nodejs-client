@@ -29,19 +29,23 @@ describe("RavenDB_11770Test", function () {
             await session.saveChanges();
         }
 
+        await delay(2);
+
         const fst = new Date();
-        await delay(1000);
+
         for (let i = 0; i < 3; i++) {
             {
                 const session = store.openSession();
                 const company = await session.load<Company>(id);
                 company.name = "Fitzchak" + i;
                 await session.saveChanges();
+
+                await delay(2);
             }
         }
 
         const snd = new Date();
-        await delay(1000);
+
         for (let i = 0; i < 3; i++) {
             {
                 const session = store.openSession();
@@ -49,6 +53,8 @@ describe("RavenDB_11770Test", function () {
                 company.name = "Oren" + i;
                 await session.saveChanges();
             }
+
+            await delay(2);
         }
 
         {

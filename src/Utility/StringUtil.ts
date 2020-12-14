@@ -139,10 +139,10 @@ export class StringUtil {
             return;
         }
 
-        StringUtil.escapeStringInternal(builder, value);
+        StringUtil._escapeStringInternal(builder, value);
     }
 
-    private static escapeStringInternal(builder: StringBuilder, value: string) {
+    private static _escapeStringInternal(builder: StringBuilder, value: string) {
         let escaped = JSON.stringify(value);
 
         escaped = escaped.replace(/'/g, "\\\'");

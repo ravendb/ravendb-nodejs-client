@@ -37,6 +37,7 @@ import { AbstractIndexCreationTask } from "./Indexes/AbstractIndexCreationTask";
 import { SessionOptions } from "./Session/SessionOptions";
 import { DatabaseSmuggler } from "./Smuggler/DatabaseSmuggler";
 import { IDisposable } from "../Types/Contracts";
+import { StringUtil } from "../Utility/StringUtil";
 
 export abstract class DocumentStoreBase
     extends EventEmitter
@@ -113,7 +114,7 @@ export abstract class DocumentStoreBase
             : databaseOrCallback as string;
 
         const resultPromise = this.maintenance
-            .forDatabase(database || this.database)
+            .forDatabase(this.getEffectiveDatabase(database))
             .send(new PutIndexesOperation(...indexesToAdd))
             // tslint:disable-next-line:no-empty
             .then(() => {});
@@ -359,5 +360,24 @@ export abstract class DocumentStoreBase
 
     protected _assertValidConfiguration(): void {
         this.conventions.validate();
+    }
+
+    public getEffectiveDatabase(database: string): string {
+        return DocumentStoreBase.getEffectiveDatabase(this, database);
+    }
+
+    public static getEffectiveDatabase(store: IDocumentStore, database: string) {
+        if (!database) {
+            database = store.database;
+        }
+
+        if (!StringUtil.isNullOrWhitespace(database)) {
+            return database;
+        }
+
+        throwError("InvalidArgumentException", "Cannot determine database to operate on. " +
+            "Please either specify 'database' directly as an action parameter " +
+            "or set the default database to operate on using 'DocumentStore.database' property. " +
+            "Did you forget to pass 'database' parameter?");
     }
 }

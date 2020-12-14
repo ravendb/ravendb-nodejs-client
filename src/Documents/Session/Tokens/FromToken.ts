@@ -1,6 +1,6 @@
 import { QueryToken } from "./QueryToken";
 import { throwError } from "../../../Exceptions";
-import {StringUtil} from "../../../Utility/StringUtil";
+import { StringUtil } from "../../../Utility/StringUtil";
 
 export class FromToken extends QueryToken {
 

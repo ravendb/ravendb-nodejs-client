@@ -15,6 +15,7 @@ import { DocumentType } from "../DocumentAbstractions";
 import { PatchResult } from "./PatchResult";
 import { IDocumentStore } from "../IDocumentStore";
 import { StatusCodes } from "../../Http/StatusCode";
+import { StringUtil } from "../../Utility/StringUtil";
 
 export class OperationExecutor {
 
@@ -27,7 +28,7 @@ export class OperationExecutor {
     public constructor(store: DocumentStoreBase, databaseName?: string) {
         this._store = store;
         this._databaseName = databaseName ? databaseName : store.database;
-        if (this._databaseName) {
+        if (!StringUtil.isNullOrWhitespace(this._databaseName)) {
             this._requestExecutor = store.getRequestExecutor(this._databaseName);
         } else {
             throwError("InvalidOperationException",
