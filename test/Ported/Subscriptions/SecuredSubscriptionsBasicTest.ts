@@ -8,6 +8,9 @@ import {
 import { AsyncQueue } from "../../Utils/AsyncQueue";
 
 describe("SecuredSubscriptionsBasicTest", function () {
+
+    this.retries(3);
+
     const _reasonableWaitTime = 5 * 1000;
     this.timeout(5 * _reasonableWaitTime);
 
