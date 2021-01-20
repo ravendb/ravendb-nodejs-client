@@ -54,7 +54,7 @@ session
 1. async / await 
 ```javascript
 const session = store.openSession();
-let user = await store.load('users/1-A');
+let user = await session.load('users/1-A');
 user.password = PBKDF2('new password');
 await session.saveChanges();
 ```
