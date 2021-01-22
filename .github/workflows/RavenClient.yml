@@ -5,6 +5,8 @@ on:
     branches: [ v5.0 ]
   pull_request:
     branches: [ v5.0 ]
+  schedule:
+    - cron: '0 10 * * 6'
 
 jobs:
   build:
