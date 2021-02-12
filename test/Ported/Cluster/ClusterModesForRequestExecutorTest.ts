@@ -1,4 +1,4 @@
-import { ClusterTestContext } from "../../Utils/TestUtil";
+import { ClusterTestContext, RavenTestContext } from "../../Utils/TestUtil";
 import { DocumentStore } from "../../../src/Documents/DocumentStore";
 import { DocumentConventions } from "../../../src/Documents/Conventions/DocumentConventions";
 import { ServerNode } from "../../../src/Http/ServerNode";
@@ -13,7 +13,7 @@ import { GetStatisticsOperation } from "../../../src/Documents/Operations/GetSta
 import { SessionInfo } from "../../../src/Documents/Session/IDocumentSession";
 import { UpdateTopologyParameters } from "../../../src/Http/UpdateTopologyParameters";
 
-describe("ClusterModesForRequestExecutorTest", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("ClusterModesForRequestExecutorTest", function () {
 
     let testContext: ClusterTestContext;
 
