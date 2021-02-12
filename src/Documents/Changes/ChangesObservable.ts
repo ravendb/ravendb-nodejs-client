@@ -59,11 +59,12 @@ export class ChangesObservable<T, TConnectionState extends IChangesConnectionSta
     public off(event: "error", handler: (error: Error) => void);
     public off(event: "data" | "error", handler: ((value: T) => void) | ((error: Error) => void)) {
 
-        this._connectionState.dec();
-
         switch (event) {
             case "data":
-                this._subscribers.delete(handler as (value: T) => void);
+                if (this._subscribers.delete(handler as (value: T) => void)) {
+                    this._connectionState.dec();
+                }
+
                 if (!this._subscribers.size) {
                     // no more subscribers left - remove from parent
                     this._connectionState.removeOnChangeNotification(this._type, this._sendHandler);
