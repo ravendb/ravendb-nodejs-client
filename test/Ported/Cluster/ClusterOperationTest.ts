@@ -1,4 +1,4 @@
-import { ClusterTestContext } from "../../Utils/TestUtil";
+import { ClusterTestContext, RavenTestContext } from "../../Utils/TestUtil";
 import { DocumentStore } from "../../../src/Documents/DocumentStore";
 import { NextIdentityForOperation } from "../../../src/Documents/Operations/Identities/NextIdentityForOperation";
 import { assertThat, assertThrows } from "../../Utils/AssertExtensions";
@@ -13,7 +13,7 @@ import { GetDatabaseRecordOperation } from "../../../src/ServerWide/Operations/G
 import { ReorderDatabaseMembersOperation } from "../../../src/ServerWide/Operations/ReorderDatabaseMembersOperation";
 import { TypeUtil } from "../../../src/Utility/TypeUtil";
 
-describe("ClusterOperationTest", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("ClusterOperationTest", function () {
 
     const testContext = new ClusterTestContext();
 
