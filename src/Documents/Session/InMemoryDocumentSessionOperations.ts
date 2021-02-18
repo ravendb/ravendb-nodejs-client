@@ -460,7 +460,7 @@ export abstract class InMemoryDocumentSessionOperations
                     hasAll = hasAll && this.isLoaded(includeId);
                 });
 
-                if (!hasAll[0]) {
+                if (!hasAll) {
                     return false;
                 }
             }
