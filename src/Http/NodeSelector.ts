@@ -52,7 +52,7 @@ export class NodeSelector {
         }
 
         const stateEtag: number = this._state.topology.etag || 0;
-        const topologyEtag: number = this._state.topology.etag || 0;
+        const topologyEtag: number = topology.etag || 0;
 
         if (stateEtag >= topologyEtag && !forceUpdate) {
             return false;
