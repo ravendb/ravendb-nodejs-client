@@ -11,7 +11,7 @@ export class TransformKeysJsonStream extends FilterBase {
     private _getTransform: (key: string, stack: (string | null | number)[]) => CasingConvention;
 
     constructor(opts: TransformJsonKeysStreamOptions) {
-        super();
+        super(null);
         opts = opts || { getCurrentTransform: (key, stack) => null };
         if (!opts.getCurrentTransform) {
             throwError("InvalidArgumentException", "getCurrentTransform() must not be empty.");
@@ -21,7 +21,7 @@ export class TransformKeysJsonStream extends FilterBase {
     }
 
     private _transformKey(key) {
-        const transformName = this._getTransform(key, this._stack);
+        const transformName = this._getTransform(key, (this as any)._stack); // HACK: access private field
         if (!transformName) {
             return key;
         }
