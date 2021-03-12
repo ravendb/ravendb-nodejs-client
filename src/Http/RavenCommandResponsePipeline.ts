@@ -209,7 +209,7 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
         const opts = this._opts;
         let resultPromise: Promise<TStreamResult>;
         if (opts.jsonAsync) {
-            const asm = Asm.connectTo(streams[streams.length - 1]);
+            const asm = Asm.connectTo(streams[streams.length - 1] as any);
             resultPromise = new Promise(resolve => {
                 asm.on("done", asm => resolve(asm.current));
             });
