@@ -20,11 +20,10 @@ import CurrentIndexAndNode from "../../Http/CurrentIndexAndNode";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { ServerNode } from "../../Http/ServerNode";
-import { ObjectTypeDescriptor } from "../../Types";
+import { ObjectTypeDescriptor, ServerResponse } from "../../Types";
 import { UpdateTopologyParameters } from "../../Http/UpdateTopologyParameters";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { TimeSeriesChange } from "./TimeSeriesChange";
-import { QueryResult } from "../Queries/QueryResult";
 
 export class DatabaseChanges implements IDatabaseChanges {
 
@@ -436,13 +435,16 @@ export class DatabaseChanges implements IDatabaseChanges {
                         const value = message.Value;
                         let transformedValue = ObjectUtil.transformObjectKeys(value, { defaultTransform: "camel" });
                         if (type === "TimeSeriesChange") {
-                            transformedValue = this._conventions.objectMapper
-                                .fromObjectLiteral<QueryResult>(transformedValue, {
-                                    nestedTypes: {
-                                        from: "date",
-                                        to: "date"
-                                    }
-                                });
+                            const dateUtil = this._conventions.dateUtil;
+
+                            const timeSeriesValue = transformedValue as ServerResponse<TimeSeriesChange>;
+
+                            const overrides: Partial<TimeSeriesChange> = {
+                                from: dateUtil.parse(timeSeriesValue.from),
+                                to: dateUtil.parse(timeSeriesValue.to)
+                            };
+
+                            transformedValue = Object.assign(transformedValue, overrides);
                         }
                         this._notifySubscribers(type, transformedValue, Array.from(this._counters.values()));
                         break;

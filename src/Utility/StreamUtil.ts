@@ -28,8 +28,12 @@ export async function readToBuffer(stream: stream.Stream): Promise<Buffer> {
     return Buffer.concat(chunks);
 }
 
-export function readToEnd(readable: stream.Readable): Promise<string> {
-    return reduceStreamToPromise(readable, (result, chunk) => result + chunk, "");
+export async function readToEnd(readable: stream.Readable | stream.Stream): Promise<string> {
+    const chunks = [];
+    readable.on("data", chunk => chunks.push(chunk));
+
+    await finishedAsync(readable);
+    return chunks.join("");
 }
 
 export function bufferToReadable(b: Buffer) {

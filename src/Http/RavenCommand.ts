@@ -13,7 +13,7 @@ import { JsonSerializer } from "../Mapping/Json/Serializer";
 import { RavenCommandResponsePipeline } from "./RavenCommandResponsePipeline";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
 import * as http from "http";
-import { ObjectTypeDescriptor } from "../Types";
+import { ObjectTypeDescriptor, ServerResponse } from "../Types";
 
 const log = getLogger({ module: "RavenCommand" });
 
@@ -94,9 +94,9 @@ export abstract class RavenCommand<TResult> {
         await this.setResponseAsync(readable, true);
     }
 
-    protected _defaultPipeline(
-        bodyCallback?: (body: string) => void): RavenCommandResponsePipeline<TResult> {
-        return this._pipeline<TResult>()
+    protected _defaultPipeline<T = TResult>(
+        bodyCallback?: (body: string) => void): RavenCommandResponsePipeline<T> {
+        return this._pipeline<T>()
             .parseJsonSync()
             .collectBody(bodyCallback)
             .objectKeysTransform("camel");

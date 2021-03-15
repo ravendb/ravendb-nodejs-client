@@ -38,6 +38,12 @@ describe("RavenDB-9587", function () {
                 .isGreaterThan(0);
             assertThat(timings.timings)
                 .isNotNull();
+            assertThat(timings instanceof QueryTimings)
+                .isTrue();
+            Object.keys(timings.timings).forEach(key => {
+                assertThat(timings.timings[key] instanceof QueryTimings)
+                    .isTrue();
+            });
         }
 
     });

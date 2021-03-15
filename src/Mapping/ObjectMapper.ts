@@ -56,7 +56,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
     public fromObjectLiteral<TResult extends object>(
         rawResult: object, typeInfo?: TypeInfo, knownTypes?: Map<string, ObjectTypeDescriptor>): TResult {
 
-        rawResult = ObjectUtil.clone(rawResult);
+        rawResult = ObjectUtil.deepLiteralClone(rawResult);
         const typeName = typeInfo ? typeInfo.typeName : null;
         const nestedTypes = typeInfo ? typeInfo.nestedTypes : null;
         const types = knownTypes || this._conventions.knownEntityTypesByName;

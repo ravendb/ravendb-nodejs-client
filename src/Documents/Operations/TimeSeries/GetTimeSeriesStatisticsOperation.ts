@@ -7,6 +7,7 @@ import * as stream from "readable-stream";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { ServerResponse } from "../../../Types";
 
 export class GetTimeSeriesStatisticsOperation implements IOperation<TimeSeriesStatistics> {
     private readonly _documentId: string;
@@ -54,13 +55,23 @@ class GetTimeSeriesStatisticsCommand extends RavenCommand<TimeSeriesStatistics> 
 
     async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         let body: string = null;
-        const results = await this._defaultPipeline(_ => body = _).process(bodyStream);
-        this.result = this._conventions.objectMapper.fromObjectLiteral(results, {
-            nestedTypes: {
-                "timeSeries[].startDate": "date",
-                "timeSeries[].endDate": "date"
-            }
-        });
+        const results = await this._defaultPipeline<ServerResponse<TimeSeriesStatistics>>(_ => body = _).process(bodyStream);
+
+        const { timeSeries, ...restProps } = results;
+
+        const dateUtil = this._conventions.dateUtil;
+
+        this.result = {
+            ...restProps,
+            timeSeries: timeSeries.map(t => {
+                const { startDate, endDate } = t;
+                return {
+                    ...t,
+                    startDate: dateUtil.parse(startDate),
+                    endDate: dateUtil.parse(endDate)
+                }
+            })
+        }
 
         return body;
     }

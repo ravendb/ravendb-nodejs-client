@@ -1,7 +1,6 @@
 import { CasingConvention } from "../../../Utility/ObjectUtil";
 import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
 import { throwError } from "../../../Exceptions";
-import { CONSTANTS } from "../../../Constants";
 
 export type TransformJsonKeysProfile = 
     "CommandResponsePayload"
@@ -24,7 +23,7 @@ function getSimpleKeysTransform(convention: CasingConvention) {
 }
 
 export function getTransformJsonKeysProfile(
-    profile: TransformJsonKeysProfile, conventions?: DocumentConventions) {
+    profile: TransformJsonKeysProfile, conventions?: DocumentConventions): { getCurrentTransform: (key: any, stack: any) => CasingConvention } {
         if (profile === "CommandResponsePayload") {
             return getSimpleKeysTransform("camel");
         }
@@ -116,7 +115,7 @@ export function getTransformJsonKeysProfile(
         throwError("NotSupportedException", `Invalid profile name ${profile}`);
 }
 
-function facetQueryGetTransform(key, stack) {
+function facetQueryGetTransform(key, stack): CasingConvention {
     const len = stack.length;
 
 
@@ -382,7 +381,7 @@ function buildEntityKeysTransformForDocumentLoad(entityCasingConvention) {
     };
 }
 
-function buildEntityKeysTransformForDocumentQuery(entityCasingConvention) {
+function buildEntityKeysTransformForDocumentQuery(entityCasingConvention: CasingConvention) {
     return function entityKeysTransform(key, stack) {
         const len = stack.length;
 
@@ -473,7 +472,7 @@ function buildEntityKeysTransformForDocumentQuery(entityCasingConvention) {
     };
 }
 
-function handleMetadataJsonKeys(key: string, stack: string[], stackLength: number, metadataKeyLevel: number) {
+function handleMetadataJsonKeys(key: string, stack: string[], stackLength: number, metadataKeyLevel: number): CasingConvention {
     if (stackLength === metadataKeyLevel) {
         return null; // don't touch @metadata key
     }

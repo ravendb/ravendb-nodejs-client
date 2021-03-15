@@ -3,6 +3,7 @@ import { DocumentConventions } from "../Conventions/DocumentConventions";
 import * as stream from "readable-stream";
 import { QueryCommand } from "./QueryCommand";
 import { RavenCommandResponsePipeline } from "../../Http/RavenCommandResponsePipeline";
+import { ServerResponse } from "../../Types";
 
 export class FacetQueryCommand extends QueryCommand {
 
@@ -25,18 +26,18 @@ export class FacetQueryCommand extends QueryCommand {
         fromCache: boolean,
         bodyCallback?: (body: string) => void): Promise<QueryResult> {
 
-        const rawResult = await RavenCommandResponsePipeline.create<QueryResult>()
+        const rawResult = await RavenCommandResponsePipeline.create<ServerResponse<QueryResult>>()
             .collectBody(bodyCallback)
             .parseJsonAsync()
             .jsonKeysTransform("FacetQuery")
             .process(bodyStream);
-        const queryResult = conventions.objectMapper.fromObjectLiteral<QueryResult>(rawResult, {
-            typeName: QueryResult.name,
-            nestedTypes: {
-                indexTimestamp: "date",
-                lastQueryTime: "date"
-            }
-        }, new Map([[QueryResult.name, QueryResult]]));
+
+        const overrides: Partial<QueryResult> = {
+            indexTimestamp: conventions.dateUtil.parse(rawResult.indexTimestamp),
+            lastQueryTime: conventions.dateUtil.parse(rawResult.lastQueryTime)
+        };
+
+        const queryResult = Object.assign(new QueryResult(), rawResult, overrides) as QueryResult;
 
         if (fromCache) {
             queryResult.durationInMs = -1;

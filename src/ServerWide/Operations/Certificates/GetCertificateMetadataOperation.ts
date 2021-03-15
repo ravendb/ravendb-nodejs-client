@@ -6,6 +6,7 @@ import { IServerOperation, OperationResultType } from "../../../Documents/Operat
 import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
+import { ServerResponse } from "../../../Types";
 
 export class GetCertificateMetadataOperation implements IServerOperation<CertificateMetadata> {
     private readonly _thumbprint: string;
@@ -59,12 +60,18 @@ class GetCertificateMetadataCommand extends RavenCommand<CertificateMetadata> {
         }
 
         let body: string = null;
-        const results = await this._defaultPipeline(_ => body = _).process(bodyStream);
-        const resultsMapped = this._conventions.objectMapper.fromObjectLiteral<{ results: CertificateMetadata[] }>(results, {
-            nestedTypes: {
-                "results[].notAfter": "date"
+        const response = await this._defaultPipeline<ServerResponse<{ results: CertificateMetadata[] }>>(_ => body = _).process(bodyStream);
+
+        const dateUtil = this._conventions.dateUtil;
+
+        const resultsMapped: CertificateMetadata[] = response.results.map(cert => {
+            const { notAfter } = cert;
+
+            return {
+                ...cert,
+                notAfter: dateUtil.parse(notAfter)
             }
-        }).results;
+        })
 
         if (resultsMapped.length !== 1) {
             this._throwInvalidResponse();

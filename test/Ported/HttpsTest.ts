@@ -166,6 +166,8 @@ describe("HttpsTest", function () {
                 .isNotNull();
             assertThat(certificateMetadata.securityClearance)
                 .isEqualTo("ValidUser");
+            assertThat(certificateMetadata.notAfter instanceof Date)
+                .isTrue();
 
             const certificatesMetadata = await store.maintenance.server.send(
                 new GetCertificatesMetadataOperation(certificateMetadata.name));

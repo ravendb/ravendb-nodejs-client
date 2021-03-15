@@ -2,7 +2,7 @@ import { EntityToJson } from "./EntityToJson";
 import { IDisposable } from "../../Types/Contracts";
 import { SessionInfo, ConcurrencyCheckMode, StoreOptions } from "./IDocumentSession";
 import { IMetadataDictionary } from "./IMetadataDictionary";
-import { ObjectTypeDescriptor, ClassConstructor } from "../../Types";
+import { ObjectTypeDescriptor, ClassConstructor, ServerResponse } from "../../Types";
 import {
     SessionEventsEmitter,
     SessionBeforeStoreEventArgs,
@@ -835,7 +835,7 @@ export abstract class InMemoryDocumentSessionOperations
         }
     }
 
-    public registerTimeSeries(resultTimeSeries: Record<string, Record<string, TimeSeriesRangeResult[]>>) {
+    public registerTimeSeries(resultTimeSeries: Record<string, Record<string, ServerResponse<TimeSeriesRangeResult>[]>>) {
         if (this.noTracking || !resultTimeSeries) {
             return;
         }
@@ -1110,7 +1110,7 @@ export abstract class InMemoryDocumentSessionOperations
         ranges.splice(fromRangeIndex + 1, toRangeIndex - fromRangeIndex);
     }
 
-    private static _parseTimeSeriesRangeResult(json: TimeSeriesRangeResult,
+    private static _parseTimeSeriesRangeResult(json: ServerResponse<TimeSeriesRangeResult>,
                                                id: string,
                                                databaseName: string,
                                                conventions: DocumentConventions): TimeSeriesRangeResult {
@@ -1706,7 +1706,7 @@ export abstract class InMemoryDocumentSessionOperations
                     dirty = true;
                 }
 
-                documentInfo.metadata[prop] = ObjectUtil.clone(documentInfo.metadataInstance[prop]);
+                documentInfo.metadata[prop] = ObjectUtil.deepJsonClone(documentInfo.metadataInstance[prop]);
             }
         }
 

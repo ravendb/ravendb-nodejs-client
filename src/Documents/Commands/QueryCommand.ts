@@ -9,6 +9,9 @@ import { JsonSerializer } from "../../Mapping/Json/Serializer";
 import * as stream from "readable-stream";
 import { RavenCommandResponsePipeline } from "../../Http/RavenCommandResponsePipeline";
 import { StringBuilder } from "../../Utility/StringBuilder";
+import { ServerResponse } from "../../Types";
+import { QueryTimings } from "../Queries/Timings/QueryTimings";
+import { StringUtil } from "../../Utility/StringUtil";
 
 export interface QueryCommandOptions {
     metadataOnly?: boolean;
@@ -102,19 +105,13 @@ export class QueryCommand extends RavenCommand<QueryResult> {
         fromCache: boolean,
         bodyCallback?: (body: string) => void): Promise<QueryResult> {
 
-        const rawResult = await RavenCommandResponsePipeline.create<QueryResult>()
+        const rawResult = await RavenCommandResponsePipeline.create<ServerResponse<QueryResult>>()
             .collectBody(bodyCallback)
             .parseJsonAsync()
             .jsonKeysTransform("DocumentQuery", conventions)
             .process(bodyStream);
-        const queryResult = conventions.objectMapper
-            .fromObjectLiteral<QueryResult>(rawResult, {
-                typeName: QueryResult.name,
-                nestedTypes: {
-                    indexTimestamp: "date",
-                    lastQueryTime: "date"
-                }
-            }, new Map([[QueryResult.name, QueryResult]]));
+
+        const queryResult = QueryCommand._mapToLocalObject(rawResult, conventions);
 
         if (fromCache) {
             queryResult.durationInMs = -1;
@@ -126,5 +123,33 @@ export class QueryCommand extends RavenCommand<QueryResult> {
         }
 
         return queryResult;
+    }
+
+    private static _mapToLocalObject(json: ServerResponse<QueryResult>, conventions: DocumentConventions): QueryResult {
+        const { indexTimestamp, lastQueryTime, timings, ...otherProps } = json;
+
+        const overrides: Partial<QueryResult> = {
+            indexTimestamp: conventions.dateUtil.parse(indexTimestamp),
+            lastQueryTime: conventions.dateUtil.parse(lastQueryTime),
+            timings: QueryCommand._mapTimingsToLocalObject(timings)
+        };
+
+        return Object.assign(new QueryResult(), otherProps, overrides);
+    }
+
+    private static _mapTimingsToLocalObject(timings: ServerResponse<QueryTimings>) {
+        if (!timings) {
+            return undefined;
+        }
+
+        const mapped = new QueryTimings();
+        mapped.durationInMs = timings.durationInMs;
+        mapped.timings = timings.timings ? {} : undefined;
+        if (timings.timings) {
+            Object.keys(timings.timings).forEach(time => {
+                mapped.timings[StringUtil.uncapitalize(time)] = QueryCommand._mapTimingsToLocalObject(timings.timings[time]);
+            });
+        }
+        return mapped;
     }
 }

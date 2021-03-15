@@ -1,4 +1,5 @@
 import * as changeCase from "change-case";
+import { TypeUtil } from "./TypeUtil";
 
 function iden(x, locale) {
     return x;
@@ -8,8 +9,40 @@ export class ObjectUtil {
 
     // WARNING: some methods are assigned below dynamically
 
+    /**
+     * @deprecated Use deepJsonClone or deepLiteralClone for better performance
+     * @param o Object to clone
+     */
     public static clone(o) {
         return JSON.parse(JSON.stringify(o));
+    }
+
+    public static deepJsonClone(o) {
+        return JSON.parse(JSON.stringify(o));
+    }
+
+    public static deepLiteralClone(item) {
+        if (!item) {
+            return item;
+        }
+
+        let result;
+
+        if (Array.isArray(item)) {
+            result = [];
+            for (let index = 0; index < item.length; index++) {
+                result[index] = ObjectUtil.deepLiteralClone(item[index]);
+            }
+        } else if (TypeUtil.isObject(item)) {
+            result = {};
+            for (const prop in item) {
+                result[prop] = ObjectUtil.deepLiteralClone(item[prop]);
+            }
+        } else {
+            result = item;
+        }
+
+        return result;
     }
 
     public static mapToLiteral<TValue>(input: Map<string, TValue>): { [key: string]: TValue };
