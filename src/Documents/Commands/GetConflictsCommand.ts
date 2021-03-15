@@ -4,6 +4,7 @@ import { GetConflictsResult } from "./GetConflictsResult";
 import { ServerNode } from "../../Http/ServerNode";
 import * as stream from "readable-stream";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { ServerResponse } from "../../Types";
 
 export class GetConflictsCommand extends RavenCommand<GetConflictsResult> {
 
@@ -35,12 +36,18 @@ export class GetConflictsCommand extends RavenCommand<GetConflictsResult> {
         }
 
         let body: string = null;
-        const results = await this._defaultPipeline(_ => body = _).process(bodyStream);
-        this.result = this._conventions.objectMapper.fromObjectLiteral(results, {
-            nestedTypes: {
-                "results[].lastModified": "date"
-            }
-        });
+        const payload = await this._defaultPipeline<ServerResponse<GetConflictsResult>>(_ => body = _).process(bodyStream);
+        const dateUtil = this._conventions.dateUtil;
+
+        const { results, ...otherProps } = payload;
+
+        this.result = {
+            ...otherProps,
+            results: results.map(r => ({
+                ...r,
+                lastModified: dateUtil.parse(r.lastModified)
+            }))
+        };
 
         return body;
     }

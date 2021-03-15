@@ -1,11 +1,12 @@
 import { HttpRequestParameters } from "../../Primitives/Http";
 import * as stream from "readable-stream";
 import { IServerOperation, OperationResultType } from "../../Documents/Operations/OperationAbstractions";
-import { DatabaseRecordWithEtag } from "..";
+import { DatabaseRecordWithEtag, IndexHistoryEntry } from "..";
 import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
 import { TimeSeriesConfiguration } from "../../Documents/Operations/TimeSeries/TimeSeriesConfiguration";
+import { ServerResponse } from "../../Types";
 
 export class GetDatabaseRecordOperation implements IServerOperation<DatabaseRecordWithEtag> {
     private readonly _database: string;
@@ -63,16 +64,21 @@ export class GetDatabaseRecordCommand extends RavenCommand<DatabaseRecordWithEta
             })
             .process(bodyStream);
 
+
         const history = this.result.indexesHistory;
         if (history) {
+            const dateUtil = this._conventions.dateUtil;
             for (const indexName of Object.keys(history)) {
                 const indexHistory = history[indexName];
 
-                history[indexName] = indexHistory.map(item => this._conventions.objectMapper.fromObjectLiteral(item, {
-                    nestedTypes: {
-                        createdAt: "date"
-                    }
-                }));
+                history[indexName] = indexHistory.map(item => {
+                    const { createdAt, ...otherHistoryProps } = item as unknown as ServerResponse<IndexHistoryEntry>;
+
+                    return {
+                        ...otherHistoryProps,
+                        createdAt: dateUtil.parse(createdAt)
+                    } as IndexHistoryEntry;
+                });
             }
         }
 

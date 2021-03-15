@@ -15,9 +15,6 @@ export interface FacetResultObject {
     [key: string]: FacetResult;
 }
 
-const FACET_RESULT_TYPE_INFO = { typeName: FacetResult.name };
-const FACET_RESULT_TYPES_MAP = new Map([[FacetResult.name, FacetResult]]);
-
 export abstract class AggregationQueryBase {
 
     private readonly _session: InMemoryDocumentSessionOperations;
@@ -60,8 +57,7 @@ export abstract class AggregationQueryBase {
         const results: FacetResultObject = {};
         const mapper = new TypesAwareObjectMapper();
         for (const result of queryResult.results) {
-            const facetResult = mapper.fromObjectLiteral<FacetResult>(
-                result, FACET_RESULT_TYPE_INFO, FACET_RESULT_TYPES_MAP);
+            const facetResult = Object.assign(new FacetResult(), result);
             results[facetResult.name] = facetResult;
         }
 

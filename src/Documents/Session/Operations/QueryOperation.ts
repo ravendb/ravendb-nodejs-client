@@ -19,8 +19,8 @@ import { TimeSeriesRawResult } from "../../Queries/TimeSeries/TimeSeriesRawResul
 import { TimeSeriesRangeAggregation } from "../../Queries/TimeSeries/TimeSeriesRangeAggregation";
 import { ObjectUtil } from "../../../Utility/ObjectUtil";
 import { TimeSeriesEntry } from "../TimeSeries/TimeSeriesEntry";
-import { TypesAwareObjectMapper } from "../../../Mapping/ObjectMapper";
 import { StringBuilder } from "../../../Utility/StringBuilder";
+import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 const log = getLogger({ module: "QueryOperation" });
 
@@ -258,9 +258,9 @@ export class QueryOperation {
         const mapper = conventions.objectMapper;
 
         if (result instanceof TimeSeriesAggregationResult) {
-            Object.assign(result, QueryOperation._reviveTimeSeriesAggregationResult(raw, mapper));
+            Object.assign(result, QueryOperation._reviveTimeSeriesAggregationResult(raw, conventions));
         } else if (result instanceof TimeSeriesRawResult) {
-            Object.assign(result, QueryOperation._reviveTimeSeriesRawResult(raw, mapper));
+            Object.assign(result, QueryOperation._reviveTimeSeriesRawResult(raw, conventions));
         } else {
             if (fieldsToFetch && fieldsToFetch.projections) {
                 const keys = conventions.entityFieldNameConvention
@@ -291,9 +291,9 @@ export class QueryOperation {
                 if (value) {
                     const newValue = QueryOperation._detectTimeSeriesResultType(value);
                     if (newValue instanceof TimeSeriesAggregationResult) {
-                        Object.assign(newValue, QueryOperation._reviveTimeSeriesAggregationResult(value, mapper));
+                        Object.assign(newValue, QueryOperation._reviveTimeSeriesAggregationResult(value, conventions));
                     } else if (newValue instanceof TimeSeriesRawResult) {
-                        Object.assign(newValue, QueryOperation._reviveTimeSeriesRawResult(value, mapper));
+                        Object.assign(newValue, QueryOperation._reviveTimeSeriesRawResult(value, conventions));
                     }
 
                     result[timeSeriesField] = newValue;
@@ -315,27 +315,47 @@ export class QueryOperation {
         return new TimeSeriesRawResult();
     }
 
-    private static _reviveTimeSeriesAggregationResult(raw: object, mapper: TypesAwareObjectMapper) {
-        const rawLower = ObjectUtil.transformObjectKeys(raw, { defaultTransform: "camel" });
-        return mapper.fromObjectLiteral(rawLower, {
-            typeName: "object",
-            nestedTypes: {
-                "results[]": "TimeSeriesRangeAggregation",
-                "results[].from": "date",
-                "results[].to": "date"
-            }
-        }, new Map([[TimeSeriesRangeAggregation.name, TimeSeriesRangeAggregation]]));
+    private static _reviveTimeSeriesAggregationResult(raw: object, conventions: DocumentConventions) {
+        const rawLower = ObjectUtil.transformObjectKeys(raw, { defaultTransform: "camel" }) as any;
+
+        const { results, ...otherProps } = rawLower;
+
+        const mappedResults: TimeSeriesRangeAggregation[] = results.map(r => {
+            const { from, to, ...otherRangeProps } = r;
+
+            const overrides: Partial<TimeSeriesRangeAggregation> = {
+                from: conventions.dateUtil.parse(from),
+                to: conventions.dateUtil.parse(to)
+            };
+
+            return Object.assign(new TimeSeriesRangeAggregation(), otherRangeProps, overrides);
+        });
+
+        return {
+            ...otherProps,
+            results: mappedResults
+        }
     }
 
-    private static _reviveTimeSeriesRawResult(raw: object, mapper: TypesAwareObjectMapper) {
-        const rawLower = ObjectUtil.transformObjectKeys(raw, { defaultTransform: "camel" });
-        return mapper.fromObjectLiteral(rawLower, {
-            typeName: "object",
-            nestedTypes: {
-                "results[]": "TimeSeriesEntry",
-                "results[].timestamp": "date"
-            }
-        }, new Map([[TimeSeriesEntry.name, TimeSeriesEntry]]));
+    private static _reviveTimeSeriesRawResult(raw: object, conventions: DocumentConventions) {
+        const rawLower = ObjectUtil.transformObjectKeys(raw, { defaultTransform: "camel" }) as any;
+
+        const { results, ...otherProps } = rawLower;
+
+        const mappedResults: TimeSeriesRangeAggregation[] = results.map(r => {
+            const { timestamp, ...otherRangeProps } = r;
+
+            const overrides: Partial<TimeSeriesEntry> = {
+                timestamp: conventions.dateUtil.parse(timestamp),
+            };
+
+            return Object.assign(new TimeSeriesEntry(), otherRangeProps, overrides);
+        });
+
+        return {
+            ...otherProps,
+            results: mappedResults
+        }
     }
 
     public get noTracking() {

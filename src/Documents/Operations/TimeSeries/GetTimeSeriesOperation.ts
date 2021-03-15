@@ -13,6 +13,7 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
 import { StringBuilder } from "../../../Utility/StringBuilder";
+import { ServerResponse } from "../../../Types";
 
 export class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult> {
     private readonly _docId: string;
@@ -125,7 +126,7 @@ class GetTimeSeriesCommand extends RavenCommand<TimeSeriesRangeResult> {
         }
 
         let body: string = null;
-        const results = await this._defaultPipeline(_ => body = _)
+        const results = await this._defaultPipeline<ServerResponse<TimeSeriesRangeResult>>(_ => body = _)
             .process(bodyStream);
 
         this.result = reviveTimeSeriesRangeResult(results, this._conventions);
@@ -138,13 +139,25 @@ class GetTimeSeriesCommand extends RavenCommand<TimeSeriesRangeResult> {
     }
 }
 
-export function reviveTimeSeriesRangeResult(result: TimeSeriesRangeResult, conventions: DocumentConventions) {
-    return Object.assign(new TimeSeriesRangeResult(), conventions.objectMapper.fromObjectLiteral<TimeSeriesRangeResult>(result, {
-        nestedTypes: {
-            "from": "date",
-            "to": "date",
-            "entries": "TimeSeriesEntry",
-            "entries[].timestamp": "date"
+export function reviveTimeSeriesRangeResult(result: ServerResponse<TimeSeriesRangeResult>, conventions: DocumentConventions): TimeSeriesRangeResult {
+    const { entries, from, to, ...restProps } = result;
+
+    const entryMapper = (rawEntry: ServerResponse<TimeSeriesEntry>) => {
+        const result = new TimeSeriesEntry();
+
+        const entryOverrides: Partial<TimeSeriesEntry> = {
+            timestamp: conventions.dateUtil.parse(rawEntry.timestamp)
         }
-    }, new Map([[TimeSeriesEntry.name, TimeSeriesEntry]])));
+
+        return Object.assign(result, rawEntry, entryOverrides) as TimeSeriesEntry;
+    }
+
+    const overrides: Partial<TimeSeriesRangeResult> = {
+        ...restProps,
+        to: conventions.dateUtil.parse(result.to),
+        from: conventions.dateUtil.parse(result.from),
+        entries: entries.map(entryMapper),
+    }
+
+    return Object.assign(new TimeSeriesRangeResult(), overrides);
 }

@@ -1,8 +1,8 @@
-export class CounterDetail {
-    public documentId: string;
-    public counterName: string;
-    public totalValue: number;
-    public etag: number;
-    public counterValues: { [key: string]: number };
-    public changeVector: string;
+export interface CounterDetail {
+    documentId: string;
+    counterName: string;
+    totalValue: number;
+    etag?: number;
+    counterValues?: { [key: string]: number };
+    changeVector?: string;
 } 

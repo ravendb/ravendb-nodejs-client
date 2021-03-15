@@ -7,7 +7,7 @@ export class TimeSeriesEntry {
     public timestamp: Date;
     public tag: string;
     public values: number[];
-    public rollup: boolean;
+    public isRollup: boolean;
 
     public get value(): number {
         if (this.values.length === 1) {
@@ -28,11 +28,11 @@ export class TimeSeriesEntry {
 
     public asTypedEntry<T extends object>(clazz: ClassConstructor<T>) {
         const entry = new TypedTimeSeriesEntry<T>();
-        entry.rollup = this.rollup;
+        entry.isRollup = this.isRollup;
         entry.tag = this.tag;
         entry.timestamp = this.timestamp;
         entry.values = this.values;
-        entry.value = TimeSeriesValuesHelper.setFields(clazz, this.values, this.rollup);
+        entry.value = TimeSeriesValuesHelper.setFields(clazz, this.values, this.isRollup);
         return entry;
     }
 }

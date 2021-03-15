@@ -523,7 +523,7 @@ import { TypedTimeSeriesRollupEntry } from "../../../src/Documents/Session/TimeS
                 .isGreaterThan(0);
 
             for (const res of result.results) {
-                if (res.rollup) {
+                if (res.isRollup) {
                     assertThat(res.values.length)
                         .isGreaterThan(0);
                     assertThat(res.value.low)
