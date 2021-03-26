@@ -12,6 +12,12 @@ import { StringBuilder } from "../../Utility/StringBuilder";
 import { ServerResponse } from "../../Types";
 import { QueryTimings } from "../Queries/Timings/QueryTimings";
 import { StringUtil } from "../../Utility/StringUtil";
+import { CounterDetail } from "../Operations/Counters/CounterDetail";
+import { CompareExchangeResultItem } from "../Operations/CompareExchange/CompareExchangeValueResultParser";
+import { TimeSeriesRangeResult } from "../Operations/TimeSeries/TimeSeriesRangeResult";
+import { TimeSeriesEntry } from "../Session/TimeSeries/TimeSeriesEntry";
+import { readToEnd, stringToReadable } from "../../Utility/StreamUtil";
+import { ObjectUtil } from "../../Utility/ObjectUtil";
 
 export interface QueryCommandOptions {
     metadataOnly?: boolean;
@@ -105,13 +111,21 @@ export class QueryCommand extends RavenCommand<QueryResult> {
         fromCache: boolean,
         bodyCallback?: (body: string) => void): Promise<QueryResult> {
 
-        const rawResult = await RavenCommandResponsePipeline.create<ServerResponse<QueryResult>>()
-            .collectBody(bodyCallback)
-            .parseJsonAsync()
-            .jsonKeysTransform("DocumentQuery", conventions)
-            .process(bodyStream);
+        const body = await readToEnd(bodyStream);
+        bodyCallback?.(body);
 
-        const queryResult = QueryCommand._mapToLocalObject(rawResult, conventions);
+        let parsedJson: any;
+        if (body.length > conventions.syncJsonParseLimit) {
+            const bodyStreamCopy = stringToReadable(body);
+            // response is quite big - fallback to async (slower) parsing to avoid blocking event loop
+            parsedJson = await RavenCommandResponsePipeline.create<ServerResponse<QueryResult>>()
+                .parseJsonAsync()
+                .process(bodyStreamCopy);
+        } else {
+            parsedJson = JSON.parse(body);
+        }
+
+        const queryResult = QueryCommand._mapToLocalObject(parsedJson, conventions);
 
         if (fromCache) {
             queryResult.durationInMs = -1;
@@ -125,31 +139,57 @@ export class QueryCommand extends RavenCommand<QueryResult> {
         return queryResult;
     }
 
-    private static _mapToLocalObject(json: ServerResponse<QueryResult>, conventions: DocumentConventions): QueryResult {
-        const { indexTimestamp, lastQueryTime, timings, ...otherProps } = json;
-
-        const overrides: Partial<QueryResult> = {
-            indexTimestamp: conventions.dateUtil.parse(indexTimestamp),
-            lastQueryTime: conventions.dateUtil.parse(lastQueryTime),
-            timings: QueryCommand._mapTimingsToLocalObject(timings)
-        };
-
-        return Object.assign(new QueryResult(), otherProps, overrides);
-    }
-
-    private static _mapTimingsToLocalObject(timings: ServerResponse<QueryTimings>) {
+    //TODO: use ServerCasing<QueryTimings> instead of any, after upgrading to TS 4.2
+    private static _mapTimingsToLocalObject(timings: any) {
         if (!timings) {
             return undefined;
         }
 
         const mapped = new QueryTimings();
-        mapped.durationInMs = timings.durationInMs;
-        mapped.timings = timings.timings ? {} : undefined;
-        if (timings.timings) {
-            Object.keys(timings.timings).forEach(time => {
-                mapped.timings[StringUtil.uncapitalize(time)] = QueryCommand._mapTimingsToLocalObject(timings.timings[time]);
+        mapped.durationInMs = timings.DurationInMs;
+        mapped.timings = timings.Timings ? {} : undefined;
+        if (timings.Timings) {
+            Object.keys(timings.Timings).forEach(time => {
+                mapped.timings[StringUtil.uncapitalize(time)] = QueryCommand._mapTimingsToLocalObject(timings.Timings[time]);
             });
         }
         return mapped;
+    }
+
+
+    //TODO: use ServerCasing<ServerResponse<QueryResult>> instead of any, after upgrading to TS 4.2
+    private static _mapToLocalObject(json: any, conventions: DocumentConventions): QueryResult {
+        const mappedIncludes: Record<string, any> = {};
+        if (json.Includes) {
+            for (const [key, value] of Object.entries(json.Includes)) {
+                mappedIncludes[key] = ObjectUtil.transformDocumentKeys(value, conventions);
+            }
+        }
+
+        const props: Omit<QueryResult, "scoreExplanations" | "cappedMaxResults" | "createSnapshot" | "resultSize"> = {
+            results: json.Results.map(x => ObjectUtil.transformDocumentKeys(x, conventions)),
+            includes: mappedIncludes,
+            indexName: json.IndexName,
+            indexTimestamp: conventions.dateUtil.parse(json.IndexTimestamp),
+            includedPaths: json.IncludedPaths,
+            isStale: json.IsStale,
+            skippedResults: json.SkippedResults,
+            totalResults: json.TotalResults,
+            highlightings: json.Highlightings,
+            explanations: json.Explanations,
+            timingsInMs: json.TimingsInMs,
+            lastQueryTime: conventions.dateUtil.parse(json.LastQueryTime),
+            durationInMs: json.DurationInMs,
+            resultEtag: json.ResultEtag,
+            nodeTag: json.NodeTag,
+            counterIncludes: ObjectUtil.mapCounterIncludesToLocalObject(json.CounterIncludes),
+            includedCounterNames: json.IncludedCounterNames,
+            timeSeriesIncludes: ObjectUtil.mapTimeSeriesIncludesToLocalObject(json.TimeSeriesIncludes),
+            compareExchangeValueIncludes: ObjectUtil.mapCompareExchangeToLocalObject(json.CompareExchangeValueIncludes),
+            timeSeriesFields: json.TimeSeriesFields,
+            timings: QueryCommand._mapTimingsToLocalObject(json.Timings)
+        }
+
+        return Object.assign(new QueryResult(), props);
     }
 }

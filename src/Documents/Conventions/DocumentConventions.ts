@@ -90,6 +90,7 @@ export class DocumentConventions {
 
     private _objectMapper: TypesAwareObjectMapper;
     private _dateUtil: DateUtil;
+    private _syncJsonParseLimit: number;
 
     private _useCompression: boolean;
     private _sendApplicationIdentifier: boolean;
@@ -147,6 +148,7 @@ export class DocumentConventions {
 
         this._dateUtilOpts = {};
         this._dateUtil = new DateUtil(this._dateUtilOpts);
+        this._syncJsonParseLimit = 2 * 1_024 * 1_024;
 
         this._firstBroadcastAttemptTimeout = 5_000;
         this._secondBroadcastAttemptTimeout = 30_000;
@@ -237,6 +239,23 @@ export class DocumentConventions {
     public set objectMapper(value: TypesAwareObjectMapper) {
         this._assertNotFrozen();
         this._objectMapper = value;
+    }
+
+    /**
+     * Sets json length limit for sync parsing. Beyond that size
+     * we fallback to async parsing
+     */
+    public get syncJsonParseLimit(): number {
+        return this._syncJsonParseLimit;
+    }
+
+    /**
+     * Gets json length limit for sync parsing. Beyond that size
+     * we fallback to async parsing
+     */
+    public set syncJsonParseLimit(value: number) {
+        this._assertNotFrozen();
+        this._syncJsonParseLimit = value;
     }
 
     public get dateUtil(): DateUtil {

@@ -3,6 +3,7 @@ import * as assert from "assert";
 import DocumentStore, {
     IDocumentStore,
 } from "../../src";
+import { assertThat } from "../Utils/AssertExtensions";
 
 describe("With custom key case conventions set", function () {
 
@@ -23,12 +24,19 @@ describe("With custom key case conventions set", function () {
     }
 
     let pascalCasedObj;
+    let pascalCasedIncludeObj;
     let camelCasedObj;
+    let camelCasedIncludeObj;
+
+    let pascalCasedCmpXchObj;
+    let camelCasedCmpXchObj;
 
     beforeEach(() => {
         pascalCasedObj = {
             Name: "John",
             Age: 25,
+            Skill: "skills/1",
+            Email: "cmp/1",
             Equipment: [
                 {
                     Name: "Headphones",
@@ -48,12 +56,24 @@ describe("With custom key case conventions set", function () {
         };
 
         pascalCasedObj["@metadata"] = {
-            "@collection": "People"
+            "@collection": "People",
+            "CustomField": "Pascal"
         };
+
+        pascalCasedIncludeObj = {
+            Name: "Java"
+        };
+
+        pascalCasedIncludeObj["@metadata"] = {
+            "@collection": "Skills",
+            "CustomSkill": "Meta"
+        }
 
         camelCasedObj = {
             name: "John",
             age: 25,
+            skill: "skills/1",
+            email: "cmp/1",
             equipment: [
                 {
                     name: "Headphones",
@@ -73,18 +93,37 @@ describe("With custom key case conventions set", function () {
         };
 
         camelCasedObj["@metadata"] = {
-            "@collection": "People"
+            "@collection": "People",
+            "customField": "Pascal"
         };
+
+        camelCasedIncludeObj = {
+            name: "Java"
+        };
+
+        camelCasedIncludeObj["@metadata"] = {
+            "@collection": "Skills",
+            "customSkill": "Meta"
+        }
+
+        pascalCasedCmpXchObj = {
+            Email: "test@example.com"
+        }
+
+        camelCasedCmpXchObj = {
+            email: "test@example.com"
+        }
     });
 
     it("loads PascalCased entities as camelCased", async () => {
         {
             const session = regularStore.openSession();
             await session.store(pascalCasedObj);
+            await session.store(pascalCasedIncludeObj, "skills/1");
             await session.saveChanges();
         }
 
-        let store;
+        let store: DocumentStore;
         try {
             store = getStoreWithCustomConventions((s) => {
                 s.conventions.findCollectionNameForObjectLiteral = (o) => o["collection"];
@@ -100,7 +139,7 @@ describe("With custom key case conventions set", function () {
 
             {
                 const session = store.openSession();
-                const loaded: any = await session.load(pascalCasedObj["id"]);
+                const loaded: any = await session.include("Skill").load(pascalCasedObj["id"])
                 assert.ok(loaded);
                 assert.ok(loaded["@metadata"]);
                 assert.strictEqual(loaded["@metadata"]["@nested-object-types"]["RegisteredAt"], "date");
@@ -109,8 +148,19 @@ describe("With custom key case conventions set", function () {
                 assert.strictEqual(loaded.registeredAt.constructor, Date);
                 assert.strictEqual(loaded.registeredAt.valueOf(), pascalCasedObj.RegisteredAt.valueOf());
                 assert.strictEqual(loaded["@metadata"]["@collection"], pascalCasedObj.Collection);
+                assert.strictEqual(loaded["@metadata"]["customSkill"], camelCasedObj["@metadata"]["customSkill"]);
                 assert.strictEqual(loaded.collection, pascalCasedObj.Collection);
                 assert.strictEqual(loaded.equipment[0].name, pascalCasedObj.Equipment[0].Name);
+
+
+                const included: any = await session.load("skills/1");
+                assert.strictEqual(included.name, pascalCasedIncludeObj.Name);
+
+                assert.ok(included["@metadata"]);
+                assert.strictEqual(included["@metadata"]["customSkill"], camelCasedIncludeObj["@metadata"].customSkill);
+
+                assertThat(session.advanced.numberOfRequests)
+                    .isEqualTo(1);
             }
 
         } finally {
@@ -136,6 +186,7 @@ describe("With custom key case conventions set", function () {
             {
                 const session = customCaseStore.openSession();
                 await session.store(camelCasedObj, "people/1");
+                await session.store(pascalCasedIncludeObj, "skills/1");
                 await session.saveChanges();
             }
 
@@ -179,8 +230,12 @@ describe("With custom key case conventions set", function () {
 
     it("query pascal cased stuff, retrieving camel case", async () => {
         {
-            const session = regularStore.openSession();
-            await session.store(pascalCasedObj);
+            const session = regularStore.openSession({
+                transactionMode: "ClusterWide"
+            });
+            await session.store(pascalCasedObj, "people/1");
+            await session.store(pascalCasedIncludeObj, "skills/1");
+            await session.advanced.clusterTransaction.createCompareExchangeValue("cmp/1", pascalCasedCmpXchObj);
             await session.saveChanges();
         }
 
@@ -194,17 +249,34 @@ describe("With custom key case conventions set", function () {
                 s.conventions.registerEntityIdPropertyName(Object, "Id");
             });
 
-            const session = store.openSession();
+            const session = store.openSession({
+                transactionMode: "ClusterWide"
+            });
             const queryResults = await session.query({
                 collection: "People"
             })
                 .whereEquals("Name", "John")
+                .include(x => {
+                    x.includeDocuments("Skill");
+                    x.includeCompareExchangeValue("Email");
+                })
                 .all();
 
             assert.ok(queryResults.length);
             const result: any = queryResults[0];
             assert.strictEqual(result.name, pascalCasedObj.Name);
             assert.strictEqual(result.age, pascalCasedObj.Age);
+
+            const included: any = await session.load("skills/1");
+            assert.strictEqual(included.name, pascalCasedIncludeObj.Name);
+
+
+            const cmp = await session.advanced.clusterTransaction.getCompareExchangeValue<typeof pascalCasedCmpXchObj>("cmp/1");
+            // we don't transform casing for cmpXchValues
+            assert.strictEqual(cmp.value.Email, pascalCasedCmpXchObj.Email);
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
         } finally {
             if (store) {
                 store.dispose();
