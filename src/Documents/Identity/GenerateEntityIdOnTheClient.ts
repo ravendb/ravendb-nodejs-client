@@ -76,10 +76,6 @@ export class GenerateEntityIdOnTheClient {
      * Tries to set the identity property
      */
     public trySetIdentity(entity: object, id: string, isProjection: boolean = false): void {
-        this._trySetIdentityInternal(entity, id, isProjection);
-    }
-
-    private _trySetIdentityInternal(entity: object, id: string, isProjection): void {
         const docType: DocumentType = TypeUtil.findType(entity, this._conventions.knownEntityTypes);
         const identityProperty = this._conventions.getIdentityProperty(docType);
 

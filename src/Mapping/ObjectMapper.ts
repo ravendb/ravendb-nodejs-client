@@ -372,7 +372,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         }
 
         // tslint:disable-next-line:new-parens
-        return new (Function.prototype.bind.apply(ctor)) as TResult;
+        return new ctor() as TResult;
     }
 
     private _makeObjectLiteral(
