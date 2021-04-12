@@ -35,7 +35,7 @@ export interface DatabaseRecord {
     encrypted?: boolean;
     etagForBackup?: number;
     deletionInProgress?: { [key: string]: DeletionInProgressStatus };
-    databaseStatus?: DatabaseStateStatus;
+    databaseState?: DatabaseStateStatus;
     topology?: DatabaseTopology;
     conflictSolverConfig?: ConflictSolver;
     documentsCompression?: DocumentsCompressionConfiguration;
