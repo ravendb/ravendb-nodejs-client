@@ -25,6 +25,7 @@ describe("GetDatabaseRecordTest", function () {
             new GetDatabaseRecordOperation(store.database));
 
         assert.ok(databaseRecord);
+        assert.strictEqual(databaseRecord.databaseState, "Normal");
         assert.strictEqual(databaseRecord.databaseName, store.database);
     });
 
