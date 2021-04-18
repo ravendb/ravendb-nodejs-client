@@ -331,4 +331,63 @@ describe("With custom key case conventions set", function () {
             }
         }
     });
+
+    it("loads PascalCased cmpXchg as camelCased", async () => {
+        {
+            const session = regularStore.openSession({
+                transactionMode: "ClusterWide"
+            });
+            await session.advanced.clusterTransaction.createCompareExchangeValue("cmp/1", pascalCasedObj);
+            await session.saveChanges();
+        }
+
+        let store: IDocumentStore;
+        try {
+            store = getStoreWithCustomConventions((s) => {
+                s.conventions.findCollectionNameForObjectLiteral = (o) => o["collection"];
+                s.conventions.entityFieldNameConvention = "camel";
+                s.conventions.remoteEntityFieldNameConvention = "pascal";
+            });
+
+            const session = store.openSession({
+                transactionMode: "ClusterWide"
+            });
+            const loadedCmp = await session.advanced.clusterTransaction.getCompareExchangeValue<any>("cmp/1");
+            const loaded = loadedCmp.value;
+            assert.strictEqual(loaded.name, pascalCasedObj.Name);
+            assert.strictEqual(loaded.equipment[0].name, pascalCasedObj.Equipment[0].Name);
+        } finally {
+            store?.dispose();
+        }
+    });
+
+    it.skip("stores camelCased cmpXChg as PascalCased", async () => {
+        let customCaseStore: IDocumentStore;
+        const stored = camelCasedObj;
+        try {
+            customCaseStore = getStoreWithCustomConventions((s) => {
+                s.conventions.findCollectionNameForObjectLiteral = (o) => o["collection"];
+                s.conventions.entityFieldNameConvention = "camel";
+                s.conventions.remoteEntityFieldNameConvention = "pascal";
+            });
+
+            {
+                const session = customCaseStore.openSession({ transactionMode: "ClusterWide" });
+                await session.advanced.clusterTransaction.createCompareExchangeValue("cmp/1", camelCasedObj);
+                await session.saveChanges();
+            }
+        } finally {
+            if (customCaseStore) {
+                customCaseStore.dispose();
+            }
+        }
+
+        {
+            const session = regularStore.openSession({ transactionMode: "ClusterWide" });
+            const loadedCmp = await session.advanced.clusterTransaction.getCompareExchangeValue<any>("cmp/1");
+            const loaded = loadedCmp.value;
+            assert.strictEqual(loaded.Name, stored.name);
+            assert.strictEqual(loaded.Equipment[0].Name, stored.equipment[0].name);
+        }
+    });
 });
