@@ -1,5 +1,14 @@
 import * as changeCase from "change-case";
 import { TypeUtil } from "./TypeUtil";
+import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
+import { CONSTANTS } from "../Constants";
+import { MetadataObject } from "../Documents/Session/MetadataObject";
+import { CompareExchangeResultItem } from "../Documents/Operations/CompareExchange/CompareExchangeValueResultParser";
+import { ServerResponse } from "../Types";
+import { TimeSeriesRangeResult } from "../Documents/Operations/TimeSeries/TimeSeriesRangeResult";
+import { TimeSeriesEntry } from "../Documents/Session/TimeSeries/TimeSeriesEntry";
+import { CounterDetail } from "../Documents/Operations/Counters/CounterDetail";
+import { AttachmentDetails } from "../Documents/Attachments";
 
 function iden(x, locale) {
     return x;
@@ -67,6 +76,152 @@ export class ObjectUtil {
         obj: object, opts?: ObjectChangeCaseOptions): object {
         const options: any = setDefaults(opts, DEFAULT_CHANGE_CASE_OPTIONS);
         return transformObjectKeys(obj, options, []);
+    }
+
+    public static transformDocumentKeys(obj: any, conventions: DocumentConventions) {
+        if (!obj) {
+            return obj;
+        }
+        const metadata = obj[CONSTANTS.Documents.Metadata.KEY];
+        const transformedMetadata = metadata ? ObjectUtil.transformMetadataKeys(metadata, conventions) : null;
+
+        if (!conventions.entityFieldNameConvention) {
+            // fast path - no need to transform entity - transform metadata only
+            return {
+                ...obj,
+                [CONSTANTS.Documents.Metadata.KEY]: transformedMetadata
+            }
+        }
+
+
+        const transformed = ObjectUtil.transformObjectKeys(obj, {
+            defaultTransform: conventions.entityFieldNameConvention
+        });
+
+        transformed[CONSTANTS.Documents.Metadata.KEY] = transformedMetadata;
+
+        return transformed;
+    }
+
+    public static transformMetadataKeys(metadata: MetadataObject, conventions: DocumentConventions) {
+        if (!metadata) {
+            return metadata;
+        }
+
+        let result: MetadataObject = {};
+
+        const userMetadataFieldsToTransform: any = {};
+        const needsCaseTransformation = !!conventions.entityFieldNameConvention;
+
+        for (const [key, value] of Object.entries(metadata)) {
+            if (key === CONSTANTS.Documents.Metadata.ATTACHMENTS) {
+                result[CONSTANTS.Documents.Metadata.ATTACHMENTS] = value ? value.map(x => ObjectUtil.mapAttachmentDetailsToLocalObject(x)) : null
+            } else if (key[0] === "@" || key === "Raven-Node-Type") {
+                result[key] = value;
+            } else {
+                if (needsCaseTransformation) {
+                    userMetadataFieldsToTransform[key] = value;
+                } else {
+                    result[key] = value;
+                }
+            }
+        }
+
+        if (Object.keys(userMetadataFieldsToTransform)) {
+            const transformedUserFields = ObjectUtil.transformObjectKeys(userMetadataFieldsToTransform, {
+                defaultTransform: conventions.entityFieldNameConvention
+            });
+
+            result = Object.assign(result, transformedUserFields);
+        }
+
+        return result;
+    }
+
+    public static mapAttachmentDetailsToLocalObject(json: any): AttachmentDetails {
+        return {
+            changeVector: json.ChangeVector,
+            contentType: json.ContentType,
+            documentId: json.DocumentId,
+            hash: json.Hash,
+            name: json.Name,
+            size: json.Size
+        };
+    }
+
+    //TODO: use ServerCasing<CompareExchangeResultItem> instead of any, after upgrading to TS 4.2
+    public static mapCompareExchangeToLocalObject(json: Record<string, any>) {
+        if (!json) {
+            return undefined;
+        }
+
+        const result: Record<string, CompareExchangeResultItem> = {};
+
+        for (const [key, value] of Object.entries(json)) {
+            result[key] = {
+                index: value.Index,
+                key: value.Key,
+                value: {
+                    object: value.Value?.Object
+                }
+            }
+        }
+
+        return result;
+    }
+
+    //TODO: use ServerCasing<ServerResponse<TimeSeriesRangeResult> instead of any, after upgrading to TS 4.2
+    public static mapTimeSeriesIncludesToLocalObject(json: Record<string, Record<string, any[]>>) {
+        if (!json) {
+            return undefined;
+        }
+
+        const result: Record<string, Record<string, ServerResponse<TimeSeriesRangeResult>[]>> = {};
+
+        for (const [docId, perDocumentTimeSeries] of Object.entries(json)) {
+            const perDocumentResult: Record<string, ServerResponse<TimeSeriesRangeResult>[]> = {};
+
+            for (const [tsName, tsData] of Object.entries(perDocumentTimeSeries)) {
+                perDocumentResult[tsName] = tsData.map(ts => {
+                    return {
+                        from: ts.From,
+                        to: ts.To,
+                        totalResults: ts.TotalResults,
+                        entries: ts.Entries.map(entry => ({
+                            timestamp: entry.Timestamp,
+                            isRollup: entry.IsRollup,
+                            tag: entry.Tag,
+                            values: entry.Values,
+                        } as ServerResponse<TimeSeriesEntry>))
+                    };
+                })
+            }
+
+            result[docId] = perDocumentResult;
+        }
+
+        return result;
+    }
+
+    public static mapCounterIncludesToLocalObject(json: Record<string, any[]>) {
+        const result: Record<string, CounterDetail[]> = json ? {} : undefined;
+
+        if (json) {
+            for (const [key, value] of Object.entries(json)) {
+                result[key] = value.map(c => {
+                    return c ? {
+                        changeVector: c.ChangeVector,
+                        counterName: c.CounterName,
+                        counterValues: c.CounterValues,
+                        documentId: c.DocumentId,
+                        etag: c.Etag,
+                        totalValue: c.TotalValue
+                    } : null;
+                });
+            }
+        }
+
+        return result;
     }
 
 }

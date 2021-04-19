@@ -14,6 +14,11 @@ import { HashCalculator } from "../Queries/HashCalculator";
 import { IRavenObject } from "../../Types/IRavenObject";
 import { TimeSeriesRange } from "../Operations/TimeSeries/TimeSeriesRange";
 import { DateUtil } from "../../Utility/DateUtil";
+import { readToEnd, stringToReadable } from "../../Utility/StreamUtil";
+import { ServerResponse } from "../../Types";
+import { QueryResult } from "../Queries/QueryResult";
+import { QueryCommand } from "./QueryCommand";
+import { ObjectUtil } from "../../Utility/ObjectUtil";
 
 export interface GetDocumentsCommandCounterOptions {
     counterIncludes?: string[];
@@ -274,11 +279,39 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         conventions: DocumentConventions,
         bodyCallback?: (body: string) => void): Promise<GetDocumentsResult> {
 
-        return RavenCommandResponsePipeline.create<GetDocumentsResult>()
-            .collectBody(bodyCallback)
-            .parseJsonAsync()
-            .jsonKeysTransform("DocumentLoad", conventions)
-            .process(bodyStream);
+        const body = await readToEnd(bodyStream);
+        bodyCallback?.(body);
+
+        let parsedJson: any;
+        if (body.length > conventions.syncJsonParseLimit) {
+            const bodyStreamCopy = stringToReadable(body);
+            // response is quite big - fallback to async (slower) parsing to avoid blocking event loop
+            parsedJson = await RavenCommandResponsePipeline.create<ServerResponse<GetDocumentsResult>>()
+                .parseJsonAsync()
+                .process(bodyStreamCopy);
+        } else {
+            parsedJson = JSON.parse(body);
+        }
+
+        return GetDocumentsCommand._mapToLocalObject(parsedJson, conventions);
+    }
+
+    private static _mapToLocalObject(json: any, conventions: DocumentConventions): GetDocumentsResult {
+        const mappedIncludes: Record<string, any> = {};
+        if (json.Includes) {
+            for (const [key, value] of Object.entries(json.Includes)) {
+                mappedIncludes[key] = ObjectUtil.transformDocumentKeys(value, conventions);
+            }
+        }
+
+        return {
+            results: json.Results.map(x => ObjectUtil.transformDocumentKeys(x, conventions)),
+            includes: mappedIncludes,
+            compareExchangeValueIncludes: ObjectUtil.mapCompareExchangeToLocalObject(json.CompareExchangeValueIncludes),
+            timeSeriesIncludes: ObjectUtil.mapTimeSeriesIncludesToLocalObject(json.TimeSeriesIncludes),
+            counterIncludes: ObjectUtil.mapCounterIncludesToLocalObject(json.CounterIncludes),
+            nextPageStart: json.NextPageStart
+        };
     }
 
     public get isReadRequest(): boolean {
