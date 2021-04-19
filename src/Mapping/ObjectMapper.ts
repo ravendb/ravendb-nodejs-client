@@ -371,7 +371,6 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
             throwError("InvalidArgumentException", "ctor argument must not be null or undefined.");
         }
 
-        // tslint:disable-next-line:new-parens
         return new ctor() as TResult;
     }
 
