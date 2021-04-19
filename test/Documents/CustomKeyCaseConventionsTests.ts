@@ -361,6 +361,7 @@ describe("With custom key case conventions set", function () {
         }
     });
 
+    //TODO: RDBC-448
     it.skip("stores camelCased cmpXChg as PascalCased", async () => {
         let customCaseStore: IDocumentStore;
         const stored = camelCasedObj;
