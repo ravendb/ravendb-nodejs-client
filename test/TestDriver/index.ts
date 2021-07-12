@@ -246,7 +246,7 @@ export abstract class RavenTestDriver {
             log.info("Kill global server");
 
             try {
-                p.kill();
+                p.kill("SIGKILL");
             } catch (err) {
                 log.error(err);
             }
