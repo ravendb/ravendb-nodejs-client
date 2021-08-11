@@ -7,6 +7,8 @@ export interface CachedItemMetadata {
     response: string;
 }
 
+const NOT_FOUND_RESPONSE = "404 Response";
+
 export class HttpCache implements IDisposable {
 
     private _items: safeMemoryCache;
@@ -62,7 +64,7 @@ export class HttpCache implements IDisposable {
 
     public setNotFound(url: string) {
         const httpCacheItem = new HttpCacheItem();
-        httpCacheItem.changeVector = "404 response";
+        httpCacheItem.changeVector = NOT_FOUND_RESPONSE;
         httpCacheItem.cache = this;
 
         this._items.set(url, httpCacheItem);

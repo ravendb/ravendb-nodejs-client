@@ -55,7 +55,7 @@ export abstract class SuggestionQueryBase {
 
         return (this._session as DocumentSession).addLazyOperation(
             new LazySuggestionQueryOperation(
-                this._session.conventions,
+                this._session,
                 this._query,
                 result => this._invokeAfterQueryExecuted(result),
                 (result, conventions) => this._processResults(result, conventions)
@@ -69,7 +69,7 @@ export abstract class SuggestionQueryBase {
     private _getCommand(): QueryCommand {
         this._query = this._getIndexQuery();
 
-        return new QueryCommand(this._session.conventions, this._query, {
+        return new QueryCommand(this._session, this._query, {
             indexEntriesOnly: false,
             metadataOnly: false
         });

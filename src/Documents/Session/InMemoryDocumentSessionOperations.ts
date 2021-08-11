@@ -1649,7 +1649,7 @@ export abstract class InMemoryDocumentSessionOperations
             replicas: opts.replicas || 1,
             throwOnTimeout: TypeUtil.isUndefined(opts.throwOnTimeout) ? true : opts.throwOnTimeout,
             majority: TypeUtil.isNullOrUndefined(opts.majority) ? false : opts.majority,
-            timeout: opts.timeout || 15000
+            timeout: opts.timeout || this.conventions.waitForReplicationAfterSaveChangesTimeout
         } as ReplicationBatchOptions;
     }
 
@@ -1677,7 +1677,7 @@ export abstract class InMemoryDocumentSessionOperations
         this._saveChangesOptions.indexOptions = {
             indexes: opts.indexes || [],
             throwOnTimeout: TypeUtil.isNullOrUndefined(opts.throwOnTimeout) ? true : opts.throwOnTimeout,
-            timeout: opts.timeout || 15000
+            timeout: opts.timeout || this.conventions.waitForIndexesAfterSaveChangesTimeout
         };
     }
 

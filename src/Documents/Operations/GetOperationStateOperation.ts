@@ -39,6 +39,8 @@ export class GetOperationStateCommand extends RavenCommand<IRavenResponse> {
         this._conventions = conventions;
         this._id = id;
         this._selectedNodeTag = nodeTag;
+
+        this.timeout = 15_000;
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {

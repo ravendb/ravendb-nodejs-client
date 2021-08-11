@@ -6,6 +6,8 @@ import { QueryOperator } from "../Queries/QueryOperator";
 import { QueryStatistics } from "./QueryStatistics";
 import { QueryTimings } from "../Queries/Timings/QueryTimings";
 import { ValueCallback } from "../../Types/Callbacks";
+import { FacetResult } from "../Queries/Facets";
+import { AggregationRawDocumentQuery } from "../Queries/Facets/AggregationRawDocumentQuery";
 
 export class RawDocumentQuery<T extends object>
     extends AbstractDocumentQuery<T, RawDocumentQuery<T>> implements IRawDocumentQuery<T> {
@@ -60,5 +62,10 @@ export class RawDocumentQuery<T extends object>
     public addParameter(name: string, value: any): IRawDocumentQuery<T> {
         super.addParameter(name, value);
         return this;
+    }
+
+    executeAggregation(): Promise<Record<string, FacetResult>> {
+        const query = new AggregationRawDocumentQuery(this, this._theSession);
+        return query.execute();
     }
 }

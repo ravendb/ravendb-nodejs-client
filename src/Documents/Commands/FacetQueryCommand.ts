@@ -14,7 +14,7 @@ export class FacetQueryCommand extends QueryCommand {
 
         let body: string = null;
         this.result = await FacetQueryCommand.parseQueryResultResponseAsync(
-            bodyStream, this._conventions, fromCache, b => body = b);
+            bodyStream, this._session.conventions, fromCache, b => body = b);
 
         return body;
     }

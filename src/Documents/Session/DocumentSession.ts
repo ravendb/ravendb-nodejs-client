@@ -659,7 +659,6 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
         try {
             const sw = Stopwatch.createStarted();
-            this.incrementRequestCount();
             const responseTimeDuration: ResponseTimeInformation = new ResponseTimeInformation();
             while (await this._executeLazyOperationsSingleStep(responseTimeDuration, requests, sw)) {
                 await delay(100);
@@ -678,32 +677,40 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         responseTimeInformation: ResponseTimeInformation, requests: GetRequest[], sw: Stopwatch): Promise<boolean> {
         const multiGetOperation = new MultiGetOperation(this);
         const multiGetCommand = multiGetOperation.createRequest(requests);
-        await this.requestExecutor.execute(multiGetCommand, this._sessionInfo);
-        const responses: GetResponse[] = multiGetCommand.result;
+        try {
+            await this.requestExecutor.execute(multiGetCommand, this._sessionInfo);
+            const responses: GetResponse[] = multiGetCommand.result;
 
-        for (let i = 0; i < this._pendingLazyOperations.length; i++) {
-            let totalTime: number;
-            let tempReqTime: string;
-            const response = responses[i];
-            tempReqTime = response.headers[HEADERS.REQUEST_TIME];
-            response.elapsed = sw.elapsed;
-            totalTime = tempReqTime ? parseInt(tempReqTime, 10) : 0;
-            const timeItem = {
-                url: requests[i].urlAndQuery,
-                duration: totalTime
-            };
-
-            responseTimeInformation.durationBreakdown.push(timeItem);
-            if (response.requestHasErrors()) {
-                throwError(
-                    "InvalidOperationException",
-                    "Got an error from server, status code: " + response.statusCode + os.EOL + response.result);
+            if (!multiGetCommand.aggressivelyCached) {
+                this.incrementRequestCount();
             }
 
-            await this._pendingLazyOperations[i].handleResponseAsync(response);
-            if (this._pendingLazyOperations[i].requiresRetry) {
-                return true;
+            for (let i = 0; i < this._pendingLazyOperations.length; i++) {
+                let totalTime: number;
+                let tempReqTime: string;
+                const response = responses[i];
+                tempReqTime = response.headers[HEADERS.REQUEST_TIME];
+                response.elapsed = sw.elapsed;
+                totalTime = tempReqTime ? parseInt(tempReqTime, 10) : 0;
+                const timeItem = {
+                    url: requests[i].urlAndQuery,
+                    duration: totalTime
+                };
+
+                responseTimeInformation.durationBreakdown.push(timeItem);
+                if (response.requestHasErrors()) {
+                    throwError(
+                        "InvalidOperationException",
+                        "Got an error from server, status code: " + response.statusCode + os.EOL + response.result);
+                }
+
+                await this._pendingLazyOperations[i].handleResponseAsync(response);
+                if (this._pendingLazyOperations[i].requiresRetry) {
+                    return true;
+                }
             }
+        } finally {
+            multiGetCommand.dispose();
         }
 
         return false;

@@ -24,6 +24,7 @@ export class DocumentSessionAttachments
 
     private async _exists(documentId: string, name: string): Promise<boolean> {
         const command = new HeadAttachmentCommand(documentId, name, null);
+        this._session.incrementRequestCount();
         await this._requestExecutor.execute(command, this._sessionInfo);
         return !!command.result;
     }
@@ -58,6 +59,7 @@ export class DocumentSessionAttachments
 
         const operation: GetAttachmentOperation =
             new GetAttachmentOperation(docId, name, "Document", null);
+        this._session.incrementRequestCount();
         return this._session.operations.send(operation, this._sessionInfo);
     }
 
@@ -67,6 +69,7 @@ export class DocumentSessionAttachments
     public async getRevision(documentId: string, name: string, changeVector: string,
                              callback?: ErrorFirstCallback<AttachmentResult>): Promise<AttachmentResult> {
         const operation = new GetAttachmentOperation(documentId, name, "Revision", changeVector);
+        this._session.incrementRequestCount();
         const result = this._session.operations.send(operation, this._sessionInfo);
         PromiseUtil.passResultToCallback(result, callback);
         return result;

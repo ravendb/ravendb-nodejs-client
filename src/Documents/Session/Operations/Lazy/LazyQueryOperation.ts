@@ -9,31 +9,33 @@ import { GetResponse } from "../../../Commands/MultiGet/GetResponse";
 import { QueryCommand } from "../../../Commands/QueryCommand";
 import { stringToReadable } from "../../../../Utility/StreamUtil";
 import { QueryEventsEmitter } from "../../../Session/QueryEvents";
+import { InMemoryDocumentSessionOperations } from "../../InMemoryDocumentSessionOperations";
 
 export class LazyQueryOperation<T extends object> implements ILazyOperation {
     private readonly _clazz: ObjectTypeDescriptor<T>;
-    private readonly _conventions: DocumentConventions;
+    private readonly _session: InMemoryDocumentSessionOperations;
     private readonly _queryOperation: QueryOperation;
     private readonly _parent: QueryEventsEmitter;
 
     public constructor(
-        conventions: DocumentConventions,
+        session: InMemoryDocumentSessionOperations,
         queryOperation: QueryOperation,
         parent: QueryEventsEmitter,
         clazz: ObjectTypeDescriptor<T>) {
 
         this._clazz = clazz;
-        this._conventions = conventions;
+        this._session = session;
         this._queryOperation = queryOperation;
         this._parent = parent;
     }
 
     public createRequest(): GetRequest {
         const request = new GetRequest();
+        request.canCacheAggressively = !this._queryOperation.indexQuery.disableCaching && !this._queryOperation.indexQuery.waitForNonStaleResults;
         request.url = "/queries";
         request.method = "POST";
-        request.query = "?queryHash=" + this._queryOperation.indexQuery.getQueryHash();
-        request.body = writeIndexQuery(this._conventions, this._queryOperation.indexQuery);
+        request.query = "?queryHash=" + this._queryOperation.indexQuery.getQueryHash(this._session.conventions.objectMapper);
+        request.body = writeIndexQuery(this._session.conventions, this._queryOperation.indexQuery);
         return request;
     }
 
@@ -75,7 +77,7 @@ export class LazyQueryOperation<T extends object> implements ILazyOperation {
         let queryResult: QueryResult;
         if (response.result !== "null") {
             queryResult = await QueryCommand.parseQueryResultResponseAsync(
-                stringToReadable(response.result), this._conventions, false);
+                stringToReadable(response.result), this._session.conventions, false);
         }
         this._handleResponse(queryResult, response.elapsed);
     }

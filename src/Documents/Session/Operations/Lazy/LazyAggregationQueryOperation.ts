@@ -7,21 +7,22 @@ import { GetRequest } from "../../../Commands/MultiGet/GetRequest";
 import { GetResponse } from "../../../Commands/MultiGet/GetResponse";
 import { FacetQueryCommand } from "../../../Commands/FacetQueryCommand";
 import { stringToReadable } from "../../../../Utility/StreamUtil";
+import { InMemoryDocumentSessionOperations } from "../../InMemoryDocumentSessionOperations";
 
 export class LazyAggregationQueryOperation implements ILazyOperation {
 
-    private readonly _conventions: DocumentConventions;
+    private readonly _session: InMemoryDocumentSessionOperations;
     private readonly _indexQuery: IndexQuery;
     private readonly _parent: AggregationQueryBase;
     private readonly _processResults:
         (queryResult: QueryResult, conventions: DocumentConventions) => FacetResultObject;
 
     public constructor(
-        conventions: DocumentConventions,
+        session: InMemoryDocumentSessionOperations,
         indexQuery: IndexQuery,
         parent: AggregationQueryBase,
         processResults: (queryResult: QueryResult, conventions: DocumentConventions) => FacetResultObject) {
-        this._conventions = conventions;
+        this._session = session;
         this._indexQuery = indexQuery;
         this._processResults = processResults;
         this._parent = parent;
@@ -31,8 +32,8 @@ export class LazyAggregationQueryOperation implements ILazyOperation {
         const request = new GetRequest();
         request.url = "/queries";
         request.method = "POST";
-        request.query = "?queryHash=" + this._indexQuery.getQueryHash();
-        request.body = writeIndexQuery(this._conventions, this._indexQuery);
+        request.query = "?queryHash=" + this._indexQuery.getQueryHash(this._session.conventions.objectMapper);
+        request.body = writeIndexQuery(this._session.conventions, this._indexQuery);
         return request;
     }
 
@@ -72,12 +73,12 @@ export class LazyAggregationQueryOperation implements ILazyOperation {
         }
 
         const result = await FacetQueryCommand.parseQueryResultResponseAsync(
-            stringToReadable(response.result), this._conventions, false);
+            stringToReadable(response.result), this._session.conventions, false);
         this._handleResponse(result);
     }
 
     private _handleResponse(queryResult: QueryResult): void {
-        this.result = this._processResults(queryResult, this._conventions);
+        this.result = this._processResults(queryResult, this._session.conventions);
         this.queryResult = queryResult;
     }
 }
