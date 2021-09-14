@@ -1,4 +1,5 @@
 import {
+    DocumentConventions,
     FacetOptions, IDocumentSession,
     IDocumentStore,
     IndexQueryParameters,
@@ -103,7 +104,7 @@ describe("RavenDB_15825", function () {
         };
 
         const hashCalculator = new HashCalculator();
-        hashCalculator.write(p);
+        hashCalculator.write(p, DocumentConventions.defaultConventions.objectMapper);
         const hash1 = hashCalculator.getHash();
 
         // create second object with same props
@@ -117,13 +118,13 @@ describe("RavenDB_15825", function () {
         };
 
         const hashCalculator2 = new HashCalculator();
-        hashCalculator2.write(p2);
+        hashCalculator2.write(p2, DocumentConventions.defaultConventions.objectMapper);
         const hash2 = hashCalculator2.getHash();
 
         // modify original object - it should change hash
         facetOptions.start = 2;
         const hashCalculator3 = new HashCalculator();
-        hashCalculator3.write(p);
+        hashCalculator3.write(p, DocumentConventions.defaultConventions.objectMapper);
         const hash3 = hashCalculator3.getHash();
 
         assertThat(hash1) // structural equality

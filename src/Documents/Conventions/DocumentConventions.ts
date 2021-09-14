@@ -77,6 +77,9 @@ export class DocumentConventions {
     private _requestTimeout: number | undefined;
     private _firstBroadcastAttemptTimeout: number | undefined;
     private _secondBroadcastAttemptTimeout: number | undefined;
+    private _waitForIndexesAfterSaveChangesTimeout: number | undefined;
+    private _waitForReplicationAfterSaveChangesTimeout: number | undefined;
+    private _waitForNonStaleResultsTimeout: number | undefined;
 
     private _loadBalancerContextSeed: number;
     private _loadBalanceBehavior: LoadBalanceBehavior;
@@ -152,6 +155,10 @@ export class DocumentConventions {
 
         this._firstBroadcastAttemptTimeout = 5_000;
         this._secondBroadcastAttemptTimeout = 30_000;
+
+        this._waitForIndexesAfterSaveChangesTimeout = 15_000;
+        this._waitForReplicationAfterSaveChangesTimeout = 15_000;
+        this._waitForNonStaleResultsTimeout = 15_000;
 
         this._sendApplicationIdentifier = true;
     }
@@ -367,6 +374,33 @@ export class DocumentConventions {
 
     public get hasExplicitlySetCompressionUsage() {
         return this._useCompression !== null;
+    }
+
+    public get waitForIndexesAfterSaveChangesTimeout() {
+        return this._waitForIndexesAfterSaveChangesTimeout;
+    }
+
+    public set waitForIndexesAfterSaveChangesTimeout(value: number) {
+        this._assertNotFrozen();
+        this._waitForIndexesAfterSaveChangesTimeout = value;
+    }
+
+    public get waitForNonStaleResultsTimeout() {
+        return this._waitForNonStaleResultsTimeout;
+    }
+
+    public set waitForNonStaleResultsTimeout(value: number) {
+        this._assertNotFrozen();
+        this._waitForNonStaleResultsTimeout = value;
+    }
+
+    public get waitForReplicationAfterSaveChangesTimeout() {
+        return this._waitForNonStaleResultsTimeout;
+    }
+
+    public set waitForReplicationAfterSaveChangesTimeout(value: number) {
+        this._assertNotFrozen();
+        this._waitForReplicationAfterSaveChangesTimeout = value;
     }
 
     public get useCompression() {

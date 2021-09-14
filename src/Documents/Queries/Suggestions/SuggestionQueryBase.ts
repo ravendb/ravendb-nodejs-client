@@ -68,7 +68,7 @@ export abstract class SuggestionQueryBase {
     private _getCommand(): QueryCommand {
         this._query = this._getIndexQuery();
 
-        return new QueryCommand(this._session.conventions, this._query, {
+        return new QueryCommand(this._session, this._query, {
             indexEntriesOnly: false,
             metadataOnly: false
         });

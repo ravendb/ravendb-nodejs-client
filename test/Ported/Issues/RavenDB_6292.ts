@@ -5,8 +5,7 @@ import { RavenTestContext, testContext, disposeTestDocumentStore } from "../../U
 import {
     IDocumentStore,
     ConflictSolver,
-    DocumentStore,
-    DocumentConventions,
+    DocumentStore, InMemoryDocumentSessionOperations,
 } from "../../../src";
 import { ReplicationTestContext } from "../../Utils/ReplicationTestContext";
 import { Address, User } from "../../Assets/Entities";
@@ -101,7 +100,7 @@ import { throwError } from "../../../src/Exceptions";
                             }
 
                             const queryCommand = new QueryCommand(
-                                DocumentConventions.defaultConventions, iq, {
+                                session as unknown as InMemoryDocumentSessionOperations, iq, {
                                     indexEntriesOnly: false,
                                     metadataOnly: false
                                 });

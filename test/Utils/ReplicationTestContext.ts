@@ -7,7 +7,7 @@ import {
     ModifyOngoingTaskResult,
     IMaintenanceOperation,
     OngoingTaskType,
-    DeleteOngoingTaskOperation, UpdateExternalReplicationOperation
+    DeleteOngoingTaskOperation, UpdateExternalReplicationOperation, GetDatabaseRecordOperation
 } from "../../src";
 import { Stopwatch } from "../../src/Utility/Stopwatch";
 import { DocumentType } from "../../src";
@@ -97,6 +97,41 @@ export class ReplicationTestContext {
         return null;
     }
 
+    protected static async getPromotableCount(store: IDocumentStore, databaseName: string): Promise<number> {
+        const res = await store.maintenance.server.send(new GetDatabaseRecordOperation(databaseName));
+        if (!res) {
+            return -1;
+        }
+
+        return res.topology.promotables.length;
+    }
+
+    protected static async getRehabCount(store: IDocumentStore, databaseName: string): Promise<number> {
+        const res = await store.maintenance.server.send(new GetDatabaseRecordOperation(databaseName));
+        if (!res) {
+            return -1;
+        }
+
+        return res.topology.rehabs.length;
+    }
+
+    protected static async getMembersCount(store: IDocumentStore, databaseName: string): Promise<number> {
+        const res = await store.maintenance.server.send(new GetDatabaseRecordOperation(databaseName));
+        if (!res) {
+            return -1;
+        }
+
+        return res.topology.members.length;
+    }
+
+    protected static async getDeletionCount(store: IDocumentStore, databaseName: string): Promise<number> {
+        const res = await store.maintenance.server.send(new GetDatabaseRecordOperation(databaseName));
+        if (!res) {
+            return -1;
+        }
+
+        return Object.keys(res.deletionInProgress).length;
+    }
 }
 
 class Marker {

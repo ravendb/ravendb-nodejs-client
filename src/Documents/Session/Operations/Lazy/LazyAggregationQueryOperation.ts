@@ -32,7 +32,7 @@ export class LazyAggregationQueryOperation implements ILazyOperation {
         const request = new GetRequest();
         request.url = "/queries";
         request.method = "POST";
-        request.query = "?queryHash=" + this._indexQuery.getQueryHash();
+        request.query = "?queryHash=" + this._indexQuery.getQueryHash(this._session.conventions.objectMapper);
         request.body = writeIndexQuery(this._session.conventions, this._indexQuery);
         return request;
     }

@@ -88,6 +88,10 @@ export abstract class RavenCommand<TResult> {
     }
 
     public async setResponseFromCache(cachedValue: string): Promise<void> {
+        if (!cachedValue) {
+            this.result = null;
+            return;
+        }
         const readable = new stream.Readable();
         readable.push(cachedValue);
         readable.push(null);

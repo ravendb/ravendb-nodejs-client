@@ -544,6 +544,7 @@ export * from "./Documents/Queries/Facets/RangeFacet";
 export * from "./Documents/Queries/Facets/FacetBase";
 export * from "./Documents/Queries/Facets/FacetSetup";
 export * from "./Documents/Queries/Facets";
+export * from "./Documents/Queries/Facets/AggregationRawDocumentQuery";
 export * from "./Documents/Queries/QueryData";
 export * from "./Documents/Queries/QueryOperationOptions";
 export * from "./Documents/Queries/QueryResult";

@@ -185,7 +185,7 @@ import { TypeUtil } from "../../../src/Utility/TypeUtil";
                     await session.saveChanges();
                 }
 
-                value = await testContext.waitForValue(async () => changesList.length, 2);
+                value = await ClusterTestContext.waitForValue(async () => changesList.length, 2);
                 assertThat(value)
                     .isEqualTo(2);
 
@@ -203,7 +203,7 @@ import { TypeUtil } from "../../../src/Utility/TypeUtil";
                     await session.saveChanges();
                 }
 
-                value = await testContext.waitForValue(async () => changesList.length, 2);
+                value = await ClusterTestContext.waitForValue(async () => changesList.length, 2);
                 assertThat(value)
                     .isEqualTo(3);
             } finally {
@@ -286,7 +286,7 @@ async function waitForTopologyStabilization(context: ClusterTestContext, s: stri
         tempStore.conventions.disableTopologyUpdates = true;
         tempStore.initialize();
 
-        const value = await context.waitForValue<[number, number]>(async () => {
+        const value = await ClusterTestContext.waitForValue<[number, number]>(async () => {
             const topologyGetCommand = new GetDatabaseTopologyCommand();
             await tempStore.getRequestExecutor().execute(topologyGetCommand);
             const topo = topologyGetCommand.result;

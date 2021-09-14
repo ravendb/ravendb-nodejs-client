@@ -149,14 +149,14 @@ export class RequestExecutor implements IDisposable {
 
     private _log: ILogger;
 
-    public static readonly CLIENT_VERSION = "5.0.0";
+    public static readonly CLIENT_VERSION = "5.2.0";
 
     private _updateDatabaseTopologySemaphore = semaphore();
     private _updateClientConfigurationSemaphore = semaphore();
 
     private static _backwardCompatibilityFailureCheckOperation = new GetStatisticsOperation("failure=check");
     private static readonly _failureCheckOperation = new DatabaseHealthCheckOperation();
-    private _useOldFailureCheckOperation = new Set<string>();
+    private static _useOldFailureCheckOperation = new Set<string>();
 
     private _failedNodesTimers: Map<ServerNode, NodeStatus> = new Map();
     protected _databaseName: string;
@@ -1264,7 +1264,13 @@ export class RequestExecutor implements IDisposable {
 
 
     private _createRequest<TResult>(node: ServerNode, command: RavenCommand<TResult>, urlRef: (value: string) => void): HttpRequestParameters {
-        const req = Object.assign(command.createRequest(node), this._defaultRequestOptions);
+        const request = command.createRequest(node);
+
+        if (!request) {
+            return null;
+        }
+
+        const req = Object.assign(request, this._defaultRequestOptions);
         urlRef(req.uri);
         req.headers = req.headers || {};
 
@@ -1571,12 +1577,17 @@ export class RequestExecutor implements IDisposable {
         }
 
         const preferredNode = await this.getPreferredNode();
-        const updateParameters = new UpdateTopologyParameters(preferredNode.currentNode);
-        updateParameters.timeoutInMs = 0;
-        updateParameters.forceUpdate = true;
-        updateParameters.debugTag = "handle-server-not-responsive";
 
-        await this.updateTopology(updateParameters);
+        if (this._disableTopologyUpdates) {
+            await this._performHealthCheck(chosenNode, nodeIndex);
+        } else {
+            const updateParameters = new UpdateTopologyParameters(preferredNode.currentNode);
+            updateParameters.timeoutInMs = 0;
+            updateParameters.forceUpdate = true;
+            updateParameters.debugTag = "handle-server-not-responsive";
+
+            await this.updateTopology(updateParameters);
+        }
 
         this._onFailedRequestInvoke(url, e);
 
@@ -1585,6 +1596,10 @@ export class RequestExecutor implements IDisposable {
 
     private _spawnHealthChecks(chosenNode: ServerNode, nodeIndex: number): void {
         if (this._disposed) {
+            return;
+        }
+
+        if (this._nodeSelector && this._nodeSelector.getTopology().nodes.length < 2) {
             return;
         }
 
@@ -1647,7 +1662,7 @@ export class RequestExecutor implements IDisposable {
 
     protected async _performHealthCheck(serverNode: ServerNode, nodeIndex: number): Promise<void> {
         try {
-            if (!this._useOldFailureCheckOperation.has(serverNode.url)) {
+            if (!RequestExecutor._useOldFailureCheckOperation.has(serverNode.url)) {
                 await this._executeOnSpecificNode(
                     RequestExecutor._failureCheckOperation.getCommand(this._conventions),
                     null,
@@ -1661,7 +1676,7 @@ export class RequestExecutor implements IDisposable {
             }
         } catch (e) {
             if (e.message.includes("RouteNotFoundException")) {
-                this._useOldFailureCheckOperation.add(serverNode.url);
+                RequestExecutor._useOldFailureCheckOperation.add(serverNode.url);
                 await this._executeOldHealthCheck(serverNode, nodeIndex);
                 return ;
             }
@@ -1771,6 +1786,9 @@ export class RequestExecutor implements IDisposable {
     }
 
     private async _ensureNodeSelector(): Promise<void> {
+        if (!this._disableTopologyUpdates) {
+            await this._waitForTopologyUpdate(this._firstTopologyUpdatePromise);
+        }
         if (this._firstTopologyUpdatePromise
             && (!this._firstTopologyUpdateStatus.isFullfilled()
                 || this._firstTopologyUpdateStatus.isRejected())) {

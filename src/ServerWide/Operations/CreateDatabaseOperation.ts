@@ -21,9 +21,18 @@ export class CreateDatabaseOperation implements IServerOperation<DatabasePutResu
     private readonly _databaseRecord: DatabaseRecord;
     private readonly _replicationFactor: number;
 
-    public constructor(databaseRecord: DatabaseRecord, replicationFactor = 1) {
+    public constructor(databaseRecord: DatabaseRecord, replicationFactor?: number) {
         this._databaseRecord = databaseRecord;
-        this._replicationFactor = replicationFactor;
+        const topology = databaseRecord.topology;
+        if (replicationFactor) {
+            this._replicationFactor = replicationFactor;
+        } else {
+            if (topology) {
+                this._replicationFactor = topology.replicationFactor > 0 ? topology.replicationFactor : 1;
+            } else {
+                this._replicationFactor = 1;
+            }
+        }
     }
 
     public getCommand(conventions: DocumentConventions): RavenCommand<DatabasePutResult> {

@@ -24,6 +24,9 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 const log = getLogger({ module: "QueryOperation" });
 
+const facetResultFields = ["Name", "Values", "RemainingHits", "RemainingTermsCount", "RemainingTerms"];
+
+// noinspection ExceptionCaughtLocallyJS
 export class QueryOperation {
     private readonly _session: InMemoryDocumentSessionOperations;
     private readonly _indexName: string;
@@ -62,7 +65,7 @@ export class QueryOperation {
 
         this.logQuery();
 
-        return new QueryCommand(this._session.conventions, this._indexQuery, {
+        return new QueryCommand(this._session, this._indexQuery, {
             metadataOnly: this._metadataOnly,
             indexEntriesOnly: this._indexEntriesOnly
         });
@@ -136,24 +139,38 @@ export class QueryOperation {
                         = document[`${CONSTANTS.Documents.Metadata.KEY}.${CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES}`];
                 }
                 const metadata = document[CONSTANTS.Documents.Metadata.KEY];
-                const idNode = metadata[CONSTANTS.Documents.Metadata.ID];
+                try {
+                    const idNode = metadata[CONSTANTS.Documents.Metadata.ID];
 
-                let id = null;
-                if (idNode && TypeUtil.isString(idNode)) {
-                    id = idNode;
-                }
+                    let id = null;
+                    if (idNode && TypeUtil.isString(idNode)) {
+                        id = idNode;
+                    }
 
-                addToResult(
-                    QueryOperation.deserialize(
-                        id,
-                        document,
-                        metadata,
-                        this._fieldsToFetch,
-                        this._noTracking,
-                        this._session,
-                        documentType,
-                        this._isProjectInto,
+                    addToResult(
+                        QueryOperation.deserialize(
+                            id,
+                            document,
+                            metadata,
+                            this._fieldsToFetch,
+                            this._noTracking,
+                            this._session,
+                            documentType,
+                            this._isProjectInto,
                         queryResult.timeSeriesFields || []));
+                } catch (e) {
+                    if (Object.keys(document).length !== facetResultFields.length) {
+                        throw e;
+                    }
+
+                    for (const prop of facetResultFields) {
+                        if (!(prop in document)) {
+                            throw e;
+                        }
+                    }
+
+                    throwError("InvalidArgumentException", "Raw query with aggregation by facet should be called by executeAggregation method.");
+                }
             }
         } catch (err) {
             log.warn(err, "Unable to read query result JSON.");

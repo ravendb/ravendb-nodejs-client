@@ -31,9 +31,10 @@ export class LazyQueryOperation<T extends object> implements ILazyOperation {
 
     public createRequest(): GetRequest {
         const request = new GetRequest();
+        request.canCacheAggressively = !this._queryOperation.indexQuery.disableCaching && !this._queryOperation.indexQuery.waitForNonStaleResults;
         request.url = "/queries";
         request.method = "POST";
-        request.query = "?queryHash=" + this._queryOperation.indexQuery.getQueryHash();
+        request.query = "?queryHash=" + this._queryOperation.indexQuery.getQueryHash(this._session.conventions.objectMapper);
         request.body = writeIndexQuery(this._session.conventions, this._queryOperation.indexQuery);
         return request;
     }

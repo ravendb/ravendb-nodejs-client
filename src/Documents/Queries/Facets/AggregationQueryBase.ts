@@ -71,7 +71,7 @@ export abstract class AggregationQueryBase {
 
     private _getCommand(): QueryCommand {
         this._query = this._getIndexQuery();
-        return new FacetQueryCommand(this._session.conventions, this._query, {
+        return new FacetQueryCommand(this._session, this._query, {
             metadataOnly: false,
             indexEntriesOnly: false
         });

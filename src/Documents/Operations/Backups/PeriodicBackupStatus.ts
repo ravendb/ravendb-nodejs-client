@@ -30,6 +30,7 @@ export interface PeriodicBackupStatus extends IDatabaseTaskStatus {
     lastRaftIndex: LastRaftIndex;
     folderName: string;
     durationInMs: number;
+    localRetentionDurationInMs: number;
     version: number;
     error: PeriodicBackupError;
     lastOperationId: number;

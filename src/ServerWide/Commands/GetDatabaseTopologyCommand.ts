@@ -26,6 +26,8 @@ export class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
         this._debugTag = debugTag;
         this.timeout = 15_000;
         this._applicationIdentifier = applicationIdentifier;
+
+        this.timeout = 15_000;
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {

@@ -14,6 +14,7 @@ export class DocumentSessionAttachments
 
     public async exists(documentId: string, name: string): Promise<boolean> {
         const command = new HeadAttachmentCommand(documentId, name, null);
+        this._session.incrementRequestCount();
         await this._requestExecutor.execute(command, this._sessionInfo);
         return !!command.result;
     }
@@ -37,11 +38,13 @@ export class DocumentSessionAttachments
 
         const operation: GetAttachmentOperation =
             new GetAttachmentOperation(docId, name, "Document", null);
+        this._session.incrementRequestCount();
         return await this._session.operations.send(operation, this._sessionInfo);
     }
 
     public async getRevision(documentId: string, name: string, changeVector: string): Promise<AttachmentResult> {
         const operation = new GetAttachmentOperation(documentId, name, "Revision", changeVector);
+        this._session.incrementRequestCount();
         return this._session.operations.send(operation, this._sessionInfo);
     }
 }

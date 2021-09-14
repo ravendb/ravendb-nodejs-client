@@ -132,10 +132,12 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                 await requestExecutor.execute(command);
                 tcpInfo = command.result;
 
-                const tcpInfoUrls = tcpInfo.urls;
+                if (tcpInfo.nodeTag) {
+                    const tcpInfoUrls = tcpInfo.urls;
 
-                this._redirectNode = requestExecutor.getTopology().nodes
-                    .find(x => tcpInfoUrls.includes(x.url));
+                    this._redirectNode = requestExecutor.getTopology().nodes
+                        .find(x => x.clusterTag === tcpInfo.nodeTag);
+                }
             } catch (e) {
                 if (e.name === "ClientVersionMismatchException") {
                     tcpInfo = await this._legacyTryGetTcpInfo(requestExecutor);
@@ -331,11 +333,12 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             case "Redirect":
                 const data = connectionStatus.data;
                 const appropriateNode = data.redirectedTag;
+                const currentNode = data.currentTag;
                 const reasons = data.reasons;
 
                 const error = getError("SubscriptionDoesNotBelongToNodeException",
-                    "Subscription with id " + this._options.subscriptionName
-                    + " cannot be processed by current node, it will be redirected to " + appropriateNode + os.EOL + reasons);
+                    "Subscription with id '" + this._options.subscriptionName
+                    + "' cannot be processed by current node '" + currentNode + "', it will be redirected to " + appropriateNode + os.EOL + reasons);
                 (error as any).appropriateNode = appropriateNode;
                 throw error;
             case "ConcurrencyReconnect":
@@ -607,9 +610,14 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                         const reqEx = this._store.getRequestExecutor(this._dbName);
                         const curTopology = reqEx.getTopologyNodes();
                         const nextNodeIndex = (this._forcedTopologyUpdateAttempts++) % curTopology.length;
-                        this._redirectNode = curTopology[nextNodeIndex];
+                        try {
+                            this._redirectNode = curTopology[nextNodeIndex];
 
-                        this._logger.info("Subscription " + this._options.subscriptionName + ". Will modify redirect node from null to " + this._redirectNode.clusterTag);
+                            this._logger.info("Subscription " + this._options.subscriptionName + ". Will modify redirect node from null to " + this._redirectNode.clusterTag);
+                        } catch (e) {
+                            // will let topology to decide
+                            this._logger.info("Subscription '" + this._options.subscriptionName + "'. Could not select the redirect node will keep it null.");
+                        }
                     }
 
                     this._emitter.emit("connectionRetry", error);
@@ -643,12 +651,12 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
 
     private _shouldTryToReconnect(ex: Error) {
         if (ex.name === ("SubscriptionDoesNotBelongToNodeException" as RavenErrorType)) {
-            this._assertLastConnectionFailure(ex);
 
             const requestExecutor = this._store.getRequestExecutor(this._dbName);
 
             const appropriateNode = (ex as any).appropriateNode;
             if (!appropriateNode) {
+                this._assertLastConnectionFailure(ex);
                 this._redirectNode = null;
                 return true;
             }
