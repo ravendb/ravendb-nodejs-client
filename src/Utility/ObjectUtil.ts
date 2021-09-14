@@ -83,22 +83,28 @@ export class ObjectUtil {
             return obj;
         }
         const metadata = obj[CONSTANTS.Documents.Metadata.KEY];
-        const transformedMetadata = metadata ? ObjectUtil.transformMetadataKeys(metadata, conventions) : null;
+        const hasMetadata = CONSTANTS.Documents.Metadata.KEY in obj;
+        const transformedMetadata = hasMetadata ? ObjectUtil.transformMetadataKeys(metadata, conventions) : null;
 
         if (!conventions.entityFieldNameConvention) {
             // fast path - no need to transform entity - transform metadata only
-            return {
-                ...obj,
-                [CONSTANTS.Documents.Metadata.KEY]: transformedMetadata
+            if (hasMetadata) {
+                return {
+                    ...obj,
+                    [CONSTANTS.Documents.Metadata.KEY]: transformedMetadata
+                };
+            } else {
+                return obj;
             }
         }
-
 
         const transformed = ObjectUtil.transformObjectKeys(obj, {
             defaultTransform: conventions.entityFieldNameConvention
         });
 
-        transformed[CONSTANTS.Documents.Metadata.KEY] = transformedMetadata;
+        if (hasMetadata) {
+            transformed[CONSTANTS.Documents.Metadata.KEY] = transformedMetadata;
+        }
 
         return transformed;
     }

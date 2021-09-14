@@ -1,5 +1,5 @@
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
-import { GetCountersOperation, IDocumentStore } from "../../../src";
+import { ConflictSolver, GetCountersOperation, IDocumentStore } from "../../../src";
 import { User } from "../../Assets/Entities";
 import { assertThat, assertThrows } from "../../Utils/AssertExtensions";
 import { readToBuffer } from "../../../src/Utility/StreamUtil";
@@ -9,12 +9,23 @@ describe("BulkInsertAttachmentsTest", function () {
 
     let store: IDocumentStore;
 
+    beforeEach(() => {
+        testContext.customizeStore = async s => {
+            // we don't have support for fetching multiple attachments
+            s.conventions.maxNumberOfRequestsPerSession = 2000;
+        }
+    });
+
     beforeEach(async function () {
         store = await testContext.getDocumentStore();
     });
 
     afterEach(async () =>
         await disposeTestDocumentStore(store));
+
+
+
+    afterEach(() => testContext.customizeStore = null);
 
     it("storeManyAttachments1", async () => {
         await storeManyAttachments(1, 32 * 1024);

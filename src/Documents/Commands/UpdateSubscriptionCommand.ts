@@ -29,6 +29,12 @@ export class UpdateSubscriptionCommand extends RavenCommand<UpdateSubscriptionRe
         }
     }
 
+    async setResponseFromCache(cachedValue: string): Promise<void> {
+        this.result = {
+            name: this._options.name
+        }
+    }
+
     async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         if (fromCache) {
             this.result = {
