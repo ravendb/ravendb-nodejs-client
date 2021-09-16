@@ -14,6 +14,7 @@ import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
 import { StringBuilder } from "../../../Utility/StringBuilder";
 import { ServerResponse } from "../../../Types";
+import { ITimeSeriesIncludeBuilder } from "../../Session/Loaders/ITimeSeriesIncludeBuilder";
 
 export class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult> {
     private readonly _docId: string;
@@ -22,12 +23,15 @@ export class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
     private readonly _pageSize: number;
     private readonly _from: Date;
     private readonly _to: Date;
+    private readonly _includes: (includeBuilder: ITimeSeriesIncludeBuilder) => void;
 
     public constructor(docId: string, timeseries: string);
     public constructor(docId: string, timeseries: string, from: Date, to: Date);
     public constructor(docId: string, timeseries: string, from: Date, to: Date, start: number);
     public constructor(docId: string, timeseries: string, from: Date, to: Date, start: number, pageSize: number);
-    public constructor(docId: string, timeseries: string, from?: Date, to?: Date, start: number = 0, pageSize: number = TypeUtil.MAX_INT32) {
+    public constructor(docId: string, timeseries: string, from: Date, to: Date, start: number, pageSize: number, includes: (includeBuilder: ITimeSeriesIncludeBuilder) => void);
+    public constructor(docId: string, timeseries: string, from?: Date, to?: Date, start: number = 0, pageSize: number = TypeUtil.MAX_INT32,
+                       includes?: (includeBuilder: ITimeSeriesIncludeBuilder) => void) {
         if (StringUtil.isNullOrEmpty(docId)) {
             throwError("InvalidArgumentException", "DocId cannot be null or empty");
         }
@@ -42,6 +46,7 @@ export class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
         this._name = timeseries;
         this._from = from;
         this._to = to;
+        this._includes = includes;
     }
 
     public get resultType(): OperationResultType {
@@ -49,11 +54,11 @@ export class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
     }
 
     getCommand(store: IDocumentStore, conventions: DocumentConventions, httpCache: HttpCache): RavenCommand<TimeSeriesRangeResult> {
-        return new GetTimeSeriesCommand(conventions, this._docId, this._name, this._from, this._to, this._start, this._pageSize);
+        return new GetTimeSeriesCommand(conventions, this._docId, this._name, this._from, this._to, this._start, this._pageSize, this._includes);
     }
 }
 
-class GetTimeSeriesCommand extends RavenCommand<TimeSeriesRangeResult> {
+export class GetTimeSeriesCommand extends RavenCommand<TimeSeriesRangeResult> {
     private readonly _conventions: DocumentConventions;
     private readonly _docId: string;
     private readonly _name: string;
@@ -61,8 +66,10 @@ class GetTimeSeriesCommand extends RavenCommand<TimeSeriesRangeResult> {
     private readonly _pageSize: number;
     private readonly _from: Date;
     private readonly _to: Date;
+    private readonly _includes: (includeBuilder: ITimeSeriesIncludeBuilder) => void;
 
-    public constructor(conventions: DocumentConventions, docId: string, name: string, from: Date, to: Date, start: number, pageSize: number) {
+    public constructor(conventions: DocumentConventions, docId: string, name: string, from: Date, to: Date, start: number, pageSize: number,
+                       includes?: (includeBuilder: ITimeSeriesIncludeBuilder) => void) {
         super();
 
         this._conventions = conventions;
@@ -72,6 +79,7 @@ class GetTimeSeriesCommand extends RavenCommand<TimeSeriesRangeResult> {
         this._pageSize = pageSize;
         this._from = from;
         this._to = to;
+        this._includes = includes;
     }
 
     createRequest(node: ServerNode): HttpRequestParameters {
@@ -110,6 +118,10 @@ class GetTimeSeriesCommand extends RavenCommand<TimeSeriesRangeResult> {
             pathBuilder
                 .append("&to=")
                 .append(encodeURIComponent(DateUtil.utc.stringify(this._to)));
+        }
+
+        if (this._includes) {
+            GetTimeSeriesCommand.addIncludesToRequest(pathBuilder, this._includes);
         }
 
         const uri = pathBuilder.toString();

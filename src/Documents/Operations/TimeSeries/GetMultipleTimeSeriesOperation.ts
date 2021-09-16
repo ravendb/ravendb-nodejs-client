@@ -10,21 +10,24 @@ import { HttpRequestParameters } from "../../../Primitives/Http";
 import { DateUtil } from "../../../Utility/DateUtil";
 import * as stream from "readable-stream";
 import { CaseInsensitiveKeysMap } from "../../../Primitives/CaseInsensitiveKeysMap";
-import { reviveTimeSeriesRangeResult } from "./GetTimeSeriesOperation";
+import { GetTimeSeriesCommand, GetTimeSeriesOperation, reviveTimeSeriesRangeResult } from "./GetTimeSeriesOperation";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
 import { StringBuilder } from "../../../Utility/StringBuilder";
+import { ITimeSeriesIncludeBuilder } from "../../Session/Loaders/ITimeSeriesIncludeBuilder";
 
 export class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDetails> {
     private readonly _docId: string;
     private _ranges: TimeSeriesRange[];
     private readonly _start: number;
     private readonly _pageSize: number;
+    private readonly _includes: (includeBuilder: ITimeSeriesIncludeBuilder) => void;
 
     public constructor(docId: string, ranges: TimeSeriesRange[])
     public constructor(docId: string, ranges: TimeSeriesRange[], start: number, pageSize: number)
-    public constructor(docId: string, ranges: TimeSeriesRange[], start?: number, pageSize?: number) {
+    public constructor(docId: string, ranges: TimeSeriesRange[], start: number, pageSize: number, includes: (includeBuilder: ITimeSeriesIncludeBuilder) => void)
+    public constructor(docId: string, ranges: TimeSeriesRange[], start?: number, pageSize?: number, includes?: (includeBuilder: ITimeSeriesIncludeBuilder) => void) {
         if (!ranges) {
             throwError("InvalidArgumentException", "Ranges cannot be null");
         }
@@ -35,6 +38,7 @@ export class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDeta
         this._start = start ?? 0;
         this._pageSize = pageSize ?? TypeUtil.MAX_INT32;
         this._ranges = ranges;
+        this._includes = includes;
     }
 
     public get resultType(): OperationResultType {
@@ -42,7 +46,7 @@ export class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDeta
     }
 
     getCommand(store: IDocumentStore, conventions: DocumentConventions, httpCache: HttpCache): RavenCommand<TimeSeriesDetails> {
-        return new GetMultipleTimeSeriesCommand(conventions, this._docId, this._ranges, this._start, this._pageSize);
+        return new GetMultipleTimeSeriesCommand(conventions, this._docId, this._ranges, this._start, this._pageSize, this._includes);
     }
 }
 
@@ -52,8 +56,15 @@ export class GetMultipleTimeSeriesCommand extends RavenCommand<TimeSeriesDetails
     private readonly _ranges: TimeSeriesRange[];
     private readonly _start: number;
     private readonly _pageSize: number;
+    private readonly _includes: (includeBuilder: ITimeSeriesIncludeBuilder) => void;
 
-    constructor(conventions: DocumentConventions, docId: string, ranges: TimeSeriesRange[], start: number, pageSize: number) {
+    constructor(
+        conventions: DocumentConventions,
+        docId: string,
+        ranges: TimeSeriesRange[],
+        start: number,
+        pageSize: number,
+        includes: (includeBuilder: ITimeSeriesIncludeBuilder) => void) {
         super();
 
         if (!docId) {
@@ -65,6 +76,7 @@ export class GetMultipleTimeSeriesCommand extends RavenCommand<TimeSeriesDetails
         this._ranges = ranges;
         this._start = start;
         this._pageSize = pageSize;
+        this._includes = includes;
     }
 
     createRequest(node: ServerNode): HttpRequestParameters {
@@ -105,6 +117,10 @@ export class GetMultipleTimeSeriesCommand extends RavenCommand<TimeSeriesDetails
                 .append(range.from ? DateUtil.utc.stringify(range.from) : "")
                 .append("&to=")
                 .append(range.to ? DateUtil.utc.stringify(range.to) : "")
+        }
+
+        if (this._includes) {
+            GetTimeSeriesCommand.addIncludesToRequest(pathBuilder, this._includes);
         }
 
         const uri = pathBuilder.toString();

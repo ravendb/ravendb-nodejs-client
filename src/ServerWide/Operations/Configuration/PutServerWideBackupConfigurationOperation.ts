@@ -8,6 +8,7 @@ import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
 import * as stream from "readable-stream";
+import { ServerWideTaskResponse } from "../OngoingTasks/ServerWideTaskResponse";
 
 export class PutServerWideBackupConfigurationOperation implements IServerOperation<PutServerWideBackupConfigurationResponse> {
     private readonly _configuration: ServerWideBackupConfiguration;
@@ -21,7 +22,7 @@ export class PutServerWideBackupConfigurationOperation implements IServerOperati
     }
 
     getCommand(conventions: DocumentConventions): RavenCommand<PutServerWideBackupConfigurationResponse> {
-        return new PutServerWideClientConfigurationCommand(this._configuration);
+        return new PutServerWideBackupConfigurationCommand(this._configuration);
     }
 
     public get resultType(): OperationResultType {
@@ -29,7 +30,7 @@ export class PutServerWideBackupConfigurationOperation implements IServerOperati
     }
 }
 
-class PutServerWideClientConfigurationCommand extends RavenCommand<PutServerWideBackupConfigurationResponse> implements IRaftCommand {
+class PutServerWideBackupConfigurationCommand extends RavenCommand<PutServerWideBackupConfigurationResponse> implements IRaftCommand {
     private readonly _configuration: ServerWideBackupConfiguration;
 
     public constructor(configuration: ServerWideBackupConfiguration) {
@@ -68,7 +69,5 @@ class PutServerWideClientConfigurationCommand extends RavenCommand<PutServerWide
     }
 }
 
-export interface PutServerWideBackupConfigurationResponse {
-    name: string;
-    raftCommandIndex: number;
+export interface PutServerWideBackupConfigurationResponse extends ServerWideTaskResponse {
 }

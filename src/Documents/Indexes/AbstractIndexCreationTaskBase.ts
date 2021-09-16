@@ -65,6 +65,14 @@ export abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends Ind
                 indexDefinition.priority = this.priority;
             }
 
+            if (this.state) {
+                indexDefinition.state = this.state;
+            }
+
+            if (this.deploymentMode) {
+                indexDefinition.deploymentMode = this.deploymentMode;
+            }
+
             await store.maintenance.forDatabase(database)
                 .send(new PutIndexesOperation(indexDefinition));
         } finally {

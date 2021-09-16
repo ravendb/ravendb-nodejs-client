@@ -1,12 +1,12 @@
 import { IDocumentIncludeBuilder } from "./IDocumentIncludeBuilder";
 import { ICounterIncludeBuilder } from "./ICounterIncludeBuilder";
-import { ITimeSeriesIncludeBuilder } from "./ITimeSeriesIncludeBuilder";
 import { ICompareExchangeValueIncludeBuilder } from "./ICompareExchangeValueIncludeBuilder";
+import { IGenericTimeSeriesIncludeBuilder } from "./IGenericTimeSeriesIncludeBuilder";
 
 export interface IGenericIncludeBuilder<TBuilder>
     extends IDocumentIncludeBuilder<TBuilder>,
         ICounterIncludeBuilder<TBuilder>,
-        ITimeSeriesIncludeBuilder<TBuilder>,
+        IGenericTimeSeriesIncludeBuilder<TBuilder>,
         ICompareExchangeValueIncludeBuilder<TBuilder> {
     
 }

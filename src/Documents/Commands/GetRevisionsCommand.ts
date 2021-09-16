@@ -66,6 +66,16 @@ export class GetRevisionsCommand extends RavenCommand<IRavenArrayResult> {
     public createRequest(node: ServerNode): HttpRequestParameters {
         let uri = node.url + "/databases/" + node.database + "/revisions?";
 
+        uri += this.getRequestQueryString();
+
+        return {
+            uri,
+            method: "GET"
+        };
+    }
+
+    public getRequestQueryString(): string {
+        let uri = "";
         if (this._id) {
             uri += "&id=" + encodeURIComponent(this._id);
         } else if (this._changeVector) {
@@ -92,10 +102,7 @@ export class GetRevisionsCommand extends RavenCommand<IRavenArrayResult> {
             uri += "&metadataOnly=true";
         }
 
-        return {
-            uri,
-            method: "GET"
-        };
+        return uri;
     }
 
     public get isReadRequest(): boolean {

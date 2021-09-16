@@ -14,7 +14,7 @@ import * as stream from "readable-stream";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 
 export class PutPullReplicationAsHubOperation implements IMaintenanceOperation<ModifyOngoingTaskResult> {
-    private readonly _pullReplicationDefinition: FeatureTaskDefinition;
+    private readonly _pullReplicationDefinition: PullReplicationDefinition;
 
     public constructor(name: string)
     public constructor(pullReplicationDefinition: PullReplicationDefinition)
@@ -48,9 +48,9 @@ export class PutPullReplicationAsHubOperation implements IMaintenanceOperation<M
 }
 
 class UpdatePullReplicationDefinitionCommand extends RavenCommand<ModifyOngoingTaskResult> implements IRaftCommand {
-    private readonly _pullReplicationDefinition: FeatureTaskDefinition;
+    private readonly _pullReplicationDefinition: PullReplicationDefinition;
 
-    public constructor(pullReplicationDefinition: FeatureTaskDefinition) {
+    public constructor(pullReplicationDefinition: PullReplicationDefinition) {
         super();
         this._pullReplicationDefinition = pullReplicationDefinition;
     }

@@ -44,7 +44,7 @@ export class IncludeBuilder extends IncludeBuilderBase implements IIncludeBuilde
     public includeTimeSeries(name: string);
     public includeTimeSeries(name: string, from: Date, to: Date);
     public includeTimeSeries(name: string, from?: Date, to?: Date) {
-        this._includeTimeSeries("", name, from, to);
+        this._includeTimeSeriesFromTo("", name, from, to);
         return this;
     }
 

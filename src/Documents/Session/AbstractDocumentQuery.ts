@@ -81,7 +81,6 @@ import { GraphQueryToken } from "./Tokens/GraphQueryToken";
 import { IncludesUtil } from "./IncludesUtil";
 import { TimeSeriesIncludesToken } from "./Tokens/TimeSeriesIncludesToken";
 import { CompareExchangeValueIncludesToken } from "./Tokens/CompareExchangeValueIncludesToken";
-import { TimeSeriesRange } from "../Operations/TimeSeries/TimeSeriesRange";
 import { ITimeSeriesQueryBuilder } from "../Queries/TimeSeries/ITimeSeriesQueryBuilder";
 import { TimeSeriesQueryBuilder } from "../Queries/TimeSeries/TimeSeriesQueryBuilder";
 import { StringBuilder } from "../../Utility/StringBuilder";
@@ -1406,6 +1405,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         indexQuery.waitForNonStaleResultsTimeout = this._timeout;
         indexQuery.queryParameters = this._queryParameters;
         indexQuery.disableCaching = this._disableCaching;
+        indexQuery.projectionBehavior = this.projectionBehavior;
 
         if (this._pageSize) {
             indexQuery.pageSize = this._pageSize;

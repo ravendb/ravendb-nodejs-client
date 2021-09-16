@@ -19,9 +19,10 @@ import { TimeUtil } from "../../../Utility/TimeUtil";
 import { PutAttachmentCommandHelper } from "./PutAttachmentCommandHelper";
 
 export class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> implements IDisposable {
+    private _supportsAtomicWrites: boolean;
+    private readonly _attachmentStreams: Set<AttachmentData>;
     private readonly _conventions: DocumentConventions;
     private readonly _commands: ICommandData[];
-    private readonly _attachmentStreams: Set<AttachmentData>;
     private readonly _options: BatchOptions;
     private readonly _mode: TransactionMode;
 
@@ -69,7 +70,7 @@ export class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
-        const uri = node.url + "/databases/" + node.database + "/bulk_docs";
+        const uri = node.url + "/databases/" + node.database + "/bulk_docs?";
         const headers = HeadersBuilder.create().typeAppJson().build();
 
         const commandsArray = this._commands.reduce(
@@ -142,7 +143,7 @@ export class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
             return "";
         }
 
-        let result = "?";
+        let result = "";
 
         const replicationOptions = this._options.replicationOptions;
         if (replicationOptions) {
