@@ -16,6 +16,7 @@ export interface CloudUploadStatus extends BackupStatus {
 
 export interface LocalBackup extends BackupStatus {
     backupDirectory: string;
+    fileName: string;
     tempFolderUsed: boolean;
 }
 

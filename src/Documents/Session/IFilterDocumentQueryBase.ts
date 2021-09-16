@@ -25,6 +25,11 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
     andAlso(): TSelf;
 
     /**
+     *  Add an AND to the query
+     */
+    andAlso(wrapPreviousQueryClauses: boolean): TSelf;
+
+    /**
      * Simplified method for closing a clause within the query
      */
     closeSubclause(): TSelf;

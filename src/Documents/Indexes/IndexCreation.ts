@@ -50,6 +50,7 @@ export class IndexCreation {
                     const definition = x.createIndexDefinition();
                     definition.name = x.getIndexName();
                     definition.priority = x.priority || "Normal";
+                    definition.state = x.state || "Normal";
                     return definition;
                 } finally {
                     x.conventions = oldConventions;

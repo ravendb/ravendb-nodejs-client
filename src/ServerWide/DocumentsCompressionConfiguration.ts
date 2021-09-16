@@ -1,5 +1,6 @@
 
 export interface DocumentsCompressionConfiguration {
     collections: string[];
-    compressRevisions: boolean;
+    compressRevisions?: boolean;
+    compressAllCollections?: boolean;
 }

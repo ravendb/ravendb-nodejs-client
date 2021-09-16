@@ -1,0 +1,2 @@
+
+export type OlapEtlFileFormat = "Parquet";

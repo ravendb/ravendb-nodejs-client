@@ -3,6 +3,7 @@ import { StringUtil } from "../../../Utility/StringUtil";
 import { throwError } from "../../../Exceptions";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { InMemoryDocumentSessionOperations } from "../../Session/InMemoryDocumentSessionOperations";
+import { DateUtil } from "../../../Utility/DateUtil";
 
 export class CopyTimeSeriesCommandData implements ICommandData {
     public readonly id: string;
@@ -10,12 +11,15 @@ export class CopyTimeSeriesCommandData implements ICommandData {
     public changeVector: string;
     public readonly destinationId: string;
     public readonly destinationName: string;
+    public readonly from?: Date;
+    public readonly to?: Date;
 
     public get type(): CommandType {
         return "TimeSeriesCopy";
     }
 
-    public constructor(sourceDocumentId: string, sourceName: string, destinationDocumentId: string, destinationName: string) {
+    public constructor(sourceDocumentId: string, sourceName: string, destinationDocumentId: string, destinationName: string,
+                       from?: Date, to?: Date) {
         if (StringUtil.isNullOrWhitespace(sourceDocumentId)) {
             throwError("InvalidArgumentException", "SourceDocumentId cannot be null or whitespace.");
         }
@@ -33,6 +37,8 @@ export class CopyTimeSeriesCommandData implements ICommandData {
         this.name = sourceName;
         this.destinationId = destinationDocumentId;
         this.destinationName = destinationName;
+        this.from = from;
+        this.to = to;
     }
 
     serialize(conventions: DocumentConventions): object {
@@ -41,6 +47,8 @@ export class CopyTimeSeriesCommandData implements ICommandData {
             Name: this.name,
             DestinationId: this.destinationId,
             DestinationName: this.destinationName,
+            From: this.from ? DateUtil.utc.stringify(this.from) : null,
+            To: this.to ? DateUtil.utc.stringify(this.to) : null,
             Type: "TimeSeriesCopy"
         }
     }

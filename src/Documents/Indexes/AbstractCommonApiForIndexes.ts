@@ -1,7 +1,9 @@
 import { IndexConfiguration } from "./IndexDefinition";
+import { AdditionalAssembly } from "./AdditionalAssembly";
 
 export abstract class AbstractCommonApiForIndexes {
     additionalSources: Record<string, string>;
+    additionalAssemblies: AdditionalAssembly[];
     configuration: IndexConfiguration;
 
     protected constructor() {

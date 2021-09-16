@@ -1,10 +1,12 @@
 import { throwError } from "../../Exceptions/index";
-import { IndexPriority, IndexLockMode, IndexType } from "./Enums";
+import { IndexPriority, IndexLockMode, IndexType, IndexState } from "./Enums";
 import { IndexFieldOptions } from "./IndexFieldOptions";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { IndexDefinitionHelper } from "./IndexDefinitionHelper";
 import { AbstractIndexDefinitionBuilder } from "./AbstractIndexDefinitionBuilder";
 import { IndexSourceType } from "./IndexSourceType";
+import { AdditionalAssembly } from "./AdditionalAssembly";
+import { IndexDeploymentMode } from "./IndexDeploymentMode";
 
 export interface IndexConfiguration {
     [key: string]: string;
@@ -14,6 +16,7 @@ export class IndexDefinition {
 
     public name: string;
     public priority: IndexPriority;
+    public state: IndexState;
 
     /**
      * Index lock mode:
@@ -24,6 +27,7 @@ export class IndexDefinition {
     public lockMode: IndexLockMode;
     public indexType: IndexType;
     public additionalSources: { [key: string]: string } = {};
+    public additionalAssemblies: AdditionalAssembly[] = [];
     public maps: Set<string> = new Set();
     public reduce: string;
     public fields: { [fieldName: string]: IndexFieldOptions } = {};
@@ -33,6 +37,7 @@ export class IndexDefinition {
     public reduceOutputIndex: number;
     public patternForOutputReduceToCollectionReferences: string;
     public patternReferencesCollectionName: string;
+    public deploymentMode: IndexDeploymentMode;
 
     public toString(): string {
         return this.name;

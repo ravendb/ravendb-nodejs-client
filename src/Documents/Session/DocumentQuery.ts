@@ -624,9 +624,9 @@ export class DocumentQuery<T extends object>
 
     public aggregateBy(builder: (facetBuilder: IFacetBuilder<T>) => void): IAggregationDocumentQuery<T>;
     public aggregateBy(facet: FacetBase): IAggregationDocumentQuery<T>;
-    public aggregateBy(...facets: Facet[]): IAggregationDocumentQuery<T>;
+    public aggregateBy(...facets: FacetBase[]): IAggregationDocumentQuery<T>;
     public aggregateBy(
-        facetOrFacetBuilder: Facet | FacetBase | ((facetBuilder: IFacetBuilder<T>) => void),
+        facetOrFacetBuilder: FacetBase[] | FacetBase | ((facetBuilder: IFacetBuilder<T>) => void),
         ...facets: Facet[]): IAggregationDocumentQuery<T> {
 
         if (TypeUtil.isNullOrUndefined(facetOrFacetBuilder)) {

@@ -7,4 +7,5 @@ export interface SessionOptions {
     noTracking?: boolean;
     noCaching?: boolean;
     transactionMode?: TransactionMode;
+    disableAtomicDocumentWritesInClusterWideTransaction?: boolean;
 }

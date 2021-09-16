@@ -11,6 +11,7 @@ import { throwError } from "../../../Exceptions";
 import { ObjectTypeDescriptor, EntitiesCollectionObject } from "../../../Types";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { TimeSeriesRange } from "../../Operations/TimeSeries/TimeSeriesRange";
+import { AbstractTimeSeriesRange } from "../../Operations/TimeSeries/AbstractTimeSeriesRange";
 
 const log = getLogger({ module: "LoadOperation" });
 
@@ -23,7 +24,7 @@ export class LoadOperation {
     private _countersToInclude: string[];
     private _compareExchangeValuesToInclude: string[];
     private _includeAllCounters: boolean;
-    private _timeSeriesToInclude: TimeSeriesRange[];
+    private _timeSeriesToInclude: AbstractTimeSeriesRange[];
 
     private _resultsSet: boolean;
     private _results: GetDocumentsResult;
@@ -90,7 +91,7 @@ export class LoadOperation {
         return this;
     }
 
-    public withTimeSeries(timeSeries: TimeSeriesRange[]) {
+    public withTimeSeries(timeSeries: AbstractTimeSeriesRange[]) {
         if (timeSeries) {
             this._timeSeriesToInclude = timeSeries;
         }

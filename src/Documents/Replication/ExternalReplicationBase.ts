@@ -5,5 +5,5 @@ export interface ExternalReplicationBase extends ReplicationNode {
     taskId?: number;
     name?: string;
     connectionStringName: string;
-    mentorName?: string;
+    mentorNode?: string;
 }

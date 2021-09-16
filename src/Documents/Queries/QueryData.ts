@@ -1,5 +1,6 @@
 import { DeclareToken } from "../Session/Tokens/DeclareToken";
 import { LoadToken } from "../Session/Tokens/LoadToken";
+import { ProjectionBehavior } from "./ProjectionBehavior";
 
 export class QueryData {
 
@@ -11,6 +12,7 @@ export class QueryData {
     public isCustomFunction: boolean;
     public mapReduce: boolean;
     public isProjectInto: boolean;
+    public projectionBehavior: ProjectionBehavior;
 
     public constructor(fields: string[], projections: string[]);
     public constructor(

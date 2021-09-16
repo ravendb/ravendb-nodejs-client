@@ -24,4 +24,5 @@ export type IndexChangeTypes =
     | "IndexPaused"
     | "LockModeChanged"
     | "PriorityChanged"
+    | "RollingIndexChanged"
     ;

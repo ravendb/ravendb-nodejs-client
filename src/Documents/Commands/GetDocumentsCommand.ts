@@ -19,6 +19,7 @@ import { ServerResponse } from "../../Types";
 import { QueryResult } from "../Queries/QueryResult";
 import { QueryCommand } from "./QueryCommand";
 import { ObjectUtil } from "../../Utility/ObjectUtil";
+import { AbstractTimeSeriesRange } from "../Operations/TimeSeries/AbstractTimeSeriesRange";
 
 export interface GetDocumentsCommandCounterOptions {
     counterIncludes?: string[];
@@ -41,7 +42,7 @@ export interface GetDocumentsByIdsCommandOptions
     ids: string[];
     includes?: string[];
     metadataOnly?: boolean;
-    timeSeriesIncludes?: TimeSeriesRange[];
+    timeSeriesIncludes?: AbstractTimeSeriesRange[];
     compareExchangeValueIncludes?: string[];
 }
 
@@ -75,7 +76,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
     private _counters: string[];
     private _includeAllCounters: boolean;
 
-    private _timeSeriesIncludes: TimeSeriesRange[];
+    private _timeSeriesIncludes: AbstractTimeSeriesRange[];
     private _compareExchangeValueIncludes: string[];
 
     private readonly _metadataOnly: boolean;

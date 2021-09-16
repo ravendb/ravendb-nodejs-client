@@ -15,4 +15,8 @@ export type DatabaseRecordItemType =
     | "SinkPullReplications"
     | "HubPullReplications"
     | "TimeSeries"
-    | "DocumentsCompression";
+    | "DocumentsCompression"
+    | "Analyzers"
+    | "LockMode"
+    | "OlapConnectionStrings"
+    | "OlapEtls";

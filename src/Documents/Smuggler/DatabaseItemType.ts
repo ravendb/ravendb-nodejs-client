@@ -20,4 +20,5 @@ export type DatabaseItemType =
     | "CounterGroups"
     | "Subscriptions"
     | "CompareExchangeTombstones"
-    | "TimeSeries";
+    | "TimeSeries"
+    | "ReplicationHubCertificates";

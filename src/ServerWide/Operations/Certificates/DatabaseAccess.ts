@@ -1,4 +1,5 @@
 
 export type DatabaseAccess =
     "ReadWrite"
-    | "Admin";
+    | "Admin"
+    | "Read";

@@ -5,4 +5,9 @@ export type AggregationType =
     | "Max"
     | "Sum"
     | "Count"
-    | "Average";
+    | "Average"
+    | "Percentile"
+    | "Slope"
+    | "StandardDeviation"
+    ;
+

@@ -192,6 +192,7 @@ export class ObjectUtil {
                     return {
                         from: ts.From,
                         to: ts.To,
+                        includes: ts.Includes,
                         totalResults: ts.TotalResults,
                         entries: ts.Entries.map(entry => ({
                             timestamp: entry.Timestamp,

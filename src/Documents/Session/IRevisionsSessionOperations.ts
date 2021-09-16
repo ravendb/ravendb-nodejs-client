@@ -2,6 +2,7 @@ import { RevisionsCollectionObject } from "../../Types";
 import { DocumentType } from "../DocumentAbstractions";
 import { MetadataAsDictionary } from "../../Mapping/MetadataAsDictionary";
 import { ForceRevisionStrategy } from "./ForceRevisionStrategy";
+import { ILazySessionOperations } from "./Operations/Lazy/ILazySessionOperations";
 
 /**
  * Revisions advanced session operations
@@ -100,6 +101,18 @@ export interface IRevisionsSessionOperations {
      * @param strategy Strategy to use
      */
     forceRevisionCreationFor(id: string, strategy: ForceRevisionStrategy): void;
+
+
+    /**
+     * Returns the number of revisions for specified document.
+     * @param id Document id to use
+     */
+    getCountFor(id: string): Promise<number>;
+
+    /**
+     * Access the lazy revisions operations
+     */
+    lazily(): ILazySessionOperations;
 }
 
 export interface SessionRevisionsOptions<T extends object> {

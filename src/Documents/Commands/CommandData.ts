@@ -42,18 +42,21 @@ export class DeleteCommandData implements ICommandData {
     public id: string;
     public name: string;
     public changeVector: string;
+    public originalChangeVector: string;
+    public document: any;
 
     public get type(): CommandType {
         return "DELETE";
     }
 
-    constructor(id: string, changeVector?: string) {
+    constructor(id: string, changeVector?: string, originalChangeVector?: string) {
         this.id = id;
         if (!id) {
             throwError("InvalidArgumentException", "Id cannot be null or undefined.");
         }
 
         this.changeVector = changeVector;
+        this.originalChangeVector = originalChangeVector;
     }
 
     public serialize(conventions: DocumentConventions): object {

@@ -12,12 +12,20 @@ import { StudioConfiguration } from "../Documents/Operations/Configuration/Studi
 import { IndexDefinition } from "../Documents/Indexes/IndexDefinition";
 import { RevisionsConfiguration } from "../Documents/Operations/RevisionsConfiguration";
 import { ExternalReplication } from "../Documents/Replication/ExternalReplication";
-import { RavenConnectionString, SqlConnectionString } from "../Documents/Operations/Etl/ConnectionString";
+import {
+    OlapConnectionString,
+    RavenConnectionString,
+    SqlConnectionString
+} from "../Documents/Operations/Etl/ConnectionString";
 import { ClientConfiguration } from "../Documents/Operations/Configuration/ClientConfiguration";
 import { RefreshConfiguration } from "../Documents/Operations/Refresh/RefreshConfiguration";
 import { RevisionsCollectionConfiguration } from "../Documents/Operations/RevisionsCollectionConfiguration";
 import { DocumentsCompressionConfiguration } from "./DocumentsCompressionConfiguration";
 import { TimeSeriesConfiguration } from "../Documents/Operations/TimeSeries/TimeSeriesConfiguration";
+import { RollingIndexDeployment } from "../Documents/Indexes/RollingIndexDeployment";
+import { RollingIndex } from "../Documents/Indexes/RollingIndex";
+import { AnalyzerDefinition } from "../Documents/Indexes/Analysis/AnalyzerDefinition";
+import { OlapEtlConfiguration } from "../Documents/Operations/Etl/Olap/OlapEtlConfiguration";
 
 export interface ScriptResolver {
     script: string;
@@ -35,11 +43,14 @@ export interface DatabaseRecord {
     encrypted?: boolean;
     etagForBackup?: number;
     deletionInProgress?: { [key: string]: DeletionInProgressStatus };
+    rollingIndexes?: { [key: string]: RollingIndex };
     databaseState?: DatabaseStateStatus;
+    lockMode?: DatabaseLockMode;
     topology?: DatabaseTopology;
     conflictSolverConfig?: ConflictSolver;
     documentsCompression?: DocumentsCompressionConfiguration;
     sorters?: { [key: string]: SorterDefinition };
+    analyzers?: { [key: string]: AnalyzerDefinition };
     indexes?: { [key: string]: IndexDefinition };
     indexesHistory?: { [key: string]: IndexHistoryEntry[] };
     autoIndexes?: { [key: string]: AutoIndexDefinition };
@@ -55,8 +66,10 @@ export interface DatabaseRecord {
     hubPullReplications?: PullReplicationDefinition[];
     ravenConnectionStrings?: { [key: string]: RavenConnectionString };
     sqlConnectionStrings?: { [key: string]: SqlConnectionString };
+    olapConnectionStrings?: { [key: string]: OlapConnectionString };
     ravenEtls?: RavenEtlConfiguration[];
     sqlEtls?: SqlEtlConfiguration[];
+    olapEtls?: OlapEtlConfiguration[];
     client?: ClientConfiguration;
     studio?: StudioConfiguration;
     truncatedClusterTransactionIndex?: number;
@@ -67,6 +80,7 @@ export interface IndexHistoryEntry {
     definition: IndexDefinition;
     source: string;
     createdAt: Date;
+    rollingDeployment: Record<string, RollingIndexDeployment>;
 }
 
 export interface DatabaseRecordWithEtag extends DatabaseRecord {
@@ -76,3 +90,8 @@ export interface DatabaseRecordWithEtag extends DatabaseRecord {
 export type DatabaseStateStatus =
     "Normal"
     | "RestoreInProgress";
+
+export type DatabaseLockMode =
+    "Unlock"
+    | "PreventDeletesIgnore"
+    | "PreventDeletesError";

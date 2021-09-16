@@ -1,5 +1,6 @@
 import { IIndexQuery } from "./IIndexQuery";
 import { TypeUtil } from "../../Utility/TypeUtil";
+import { ProjectionBehavior } from "./ProjectionBehavior";
 
 export class IndexQueryBase<T> implements IIndexQuery {
 
@@ -9,6 +10,7 @@ export class IndexQueryBase<T> implements IIndexQuery {
     public pageSize: number = TypeUtil.MAX_INT32;
     public query: string;
     public queryParameters: T;
+    public projectionBehavior: ProjectionBehavior;
     /**
      * @deprecated use OFFSET in RQL instead
      */

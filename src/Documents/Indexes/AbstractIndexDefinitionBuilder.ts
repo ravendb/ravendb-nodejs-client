@@ -1,9 +1,11 @@
 import { IndexConfiguration, IndexDefinition } from "./IndexDefinition";
-import { FieldIndexing, FieldStorage, FieldTermVector, IndexLockMode, IndexPriority } from "./Enums";
+import { FieldIndexing, FieldStorage, FieldTermVector, IndexLockMode, IndexPriority, IndexState } from "./Enums";
 import { SpatialOptions } from "./Spatial";
 import { throwError } from "../../Exceptions";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { IndexFieldOptions } from "./IndexFieldOptions";
+import { IndexDeploymentMode } from "./IndexDeploymentMode";
+import { AdditionalAssembly } from "./AdditionalAssembly";
 
 export abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends IndexDefinition> {
     protected readonly _indexName: string;
@@ -19,11 +21,14 @@ export abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
 
     public lockMode: IndexLockMode;
     public priority: IndexPriority;
+    public state: IndexState;
+    public deploymentMode: IndexDeploymentMode;
     public outputReduceToCollection: string;
     public patternForOutputReduceToCollectionReferences: string;
     public patternReferencesCollectionName: string;
 
     public additionalSources: Record<string, string>;
+    public additionalAssemblies: AdditionalAssembly[];
     public configuration: IndexConfiguration;
 
 
@@ -49,6 +54,8 @@ export abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
             indexDefinition.reduce = this.reduce;
             indexDefinition.lockMode = this.lockMode;
             indexDefinition.priority = this.priority;
+            indexDefinition.deploymentMode = this.deploymentMode;
+            indexDefinition.state = this.state;
             indexDefinition.outputReduceToCollection = this.outputReduceToCollection;
             indexDefinition.patternForOutputReduceToCollectionReferences = this.patternForOutputReduceToCollectionReferences;
             indexDefinition.patternReferencesCollectionName = this.patternReferencesCollectionName;
@@ -71,6 +78,7 @@ export abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
                 (options, value) => options.suggestions = value);
 
             indexDefinition.additionalSources = this.additionalSources;
+            indexDefinition.additionalAssemblies = this.additionalAssemblies;
             indexDefinition.configuration = this.configuration;
 
             this._toIndexDefinition(indexDefinition, conventions);

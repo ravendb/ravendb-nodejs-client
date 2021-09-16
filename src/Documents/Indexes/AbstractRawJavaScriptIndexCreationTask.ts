@@ -94,9 +94,14 @@ export class AbstractRawJavaScriptIndexCreationTask extends AbstractIndexCreatio
         } else {
             this._definition.additionalSources = {};
         }
+
+        this._definition.additionalAssemblies = this.additionalAssemblies || [];
+
         this._definition.configuration = this.configuration;
         this._definition.lockMode = this.lockMode;
         this._definition.priority = this.priority;
+        this._definition.state = this.state;
+        this._definition.deploymentMode = this.deploymentMode;
 
         return this._definition;
     }

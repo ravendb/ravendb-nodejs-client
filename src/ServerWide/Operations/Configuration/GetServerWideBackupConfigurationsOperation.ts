@@ -22,7 +22,7 @@ class GetServerWideBackupConfigurationsCommand extends RavenCommand<ServerWideBa
     }
 
     createRequest(node: ServerNode): HttpRequestParameters {
-        const uri = node.url + "/admin/configuration/server-wide/backup";
+        const uri = node.url + "/admin/configuration/server-wide/tasks?type=Backup";
 
         return {
             method: "GET",

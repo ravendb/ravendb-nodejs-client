@@ -24,7 +24,6 @@ export class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
     constructor(debugTag?: string, applicationIdentifier?: string) {
         super();
         this._debugTag = debugTag;
-        this.timeout = 15_000;
         this._applicationIdentifier = applicationIdentifier;
 
         this.timeout = 15_000;

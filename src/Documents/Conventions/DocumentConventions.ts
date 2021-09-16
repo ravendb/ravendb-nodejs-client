@@ -56,6 +56,7 @@ export class DocumentConventions {
     private _identityPartsSeparator: string;
     private _disableTopologyUpdates: boolean;
 
+    private _disableAtomicDocumentWritesInClusterWideTransaction: boolean;
     private _shouldIgnoreEntityChanges: (sessionOperations: InMemoryDocumentSessionOperations, entity: object, documentId: string) => boolean;
 
     private _transformClassCollectionNameToDocumentIdPrefix: (maybeClassCollectionName: string) => string;
@@ -703,6 +704,23 @@ export class DocumentConventions {
      */
     public getJsTypeName(entityType: ObjectTypeDescriptor): string {
         return this._findJsTypeName(entityType);
+    }
+
+    /**
+     * EXPERT: Disable automatic atomic writes with cluster write transactions. If set to 'true', will only consider explicitly
+     * added compare exchange values to validate cluster wide transactions.
+     */
+    public get disableAtomicDocumentWritesInClusterWideTransaction() {
+        return this._disableAtomicDocumentWritesInClusterWideTransaction;
+    }
+
+    /**
+     * EXPERT: Disable automatic atomic writes with cluster write transactions. If set to 'true', will only consider explicitly
+     * added compare exchange values to validate cluster wide transactions.
+     */
+    public set disableAtomicDocumentWritesInClusterWideTransaction(disableAtomicDocumentWritesInClusterWideTransaction: boolean) {
+        this._assertNotFrozen();
+        this._disableAtomicDocumentWritesInClusterWideTransaction = disableAtomicDocumentWritesInClusterWideTransaction;
     }
 
     public clone(): DocumentConventions {

@@ -85,6 +85,8 @@ import { TimeSeriesRange } from "../Operations/TimeSeries/TimeSeriesRange";
 import { ITimeSeriesQueryBuilder } from "../Queries/TimeSeries/ITimeSeriesQueryBuilder";
 import { TimeSeriesQueryBuilder } from "../Queries/TimeSeries/TimeSeriesQueryBuilder";
 import { StringBuilder } from "../../Utility/StringBuilder";
+import { ProjectionBehavior } from "../Queries/ProjectionBehavior";
+import { AbstractTimeSeriesRange } from "../Operations/TimeSeries/AbstractTimeSeriesRange";
 
 /**
  * A query against a Raven index
@@ -137,7 +139,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     protected _loadTokens: LoadToken[];
     public fieldsToFetchToken: FieldsToFetchToken;
 
-    protected readonly _isProjectInto: boolean;
+    public _isProjectInto: boolean;
 
     protected _whereTokens: QueryToken[] = [];
 
@@ -169,6 +171,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     protected _disableEntitiesTracking: boolean;
 
     protected _disableCaching: boolean;
+
+    protected projectionBehavior: ProjectionBehavior;
 
     private _parameterPrefix = "p";
 
@@ -208,6 +212,10 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     public get isProjectInto() {
         return this._isProjectInto;
+    }
+
+    public set isProjectInto(value: boolean) {
+        this._isProjectInto = value;
     }
 
     /**
@@ -423,7 +431,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     protected _getLazyQueryOperation() {
         if (!this._queryOperation) {
-            this._queryOperation = this._initializeQueryOperation();
+            this._queryOperation = this.initializeQueryOperation();
         }
 
         const clazz = this._conventions.getJsTypeByDocumentType(this._clazz);
@@ -434,7 +442,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             clazz);
     }
 
-    protected _initializeQueryOperation(): QueryOperation {
+    public initializeQueryOperation(): QueryOperation {
         const beforeQueryEventArgs = new SessionBeforeQueryEventArgs(
             this._theSession, new DocumentQueryCustomization(this));
         this._theSession.emit("beforeQuery", beforeQueryEventArgs);
@@ -611,6 +619,10 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     // TBD public void _customSortUsing(String typeName)
     // TBD public void _customSortUsing(String typeName, boolean descending)
+
+    protected _projection(projectionBehavior: ProjectionBehavior) {
+        this.projectionBehavior = projectionBehavior;
+    }
 
     protected addGroupByAlias(fieldName: string, projectedName: string): void {
         this._aliasToGroupByFieldName[projectedName] = fieldName;
@@ -1162,7 +1174,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         tokens.push(whereToken);
     }
 
-    public _andAlso(): void {
+    public _andAlso(wrapPreviousQueryClauses: boolean = false): void {
         const tokens = this._getCurrentWhereTokens();
         if (!tokens && !tokens.length) {
             return;
@@ -1173,7 +1185,13 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
                 "Cannot add AND, previous token was already an operator token.");
         }
 
-        tokens.push(QueryOperatorToken.AND);
+        if (wrapPreviousQueryClauses) {
+            tokens.unshift(OpenSubclauseToken.create());
+            tokens.push(CloseSubclauseToken.create());
+            tokens.push(QueryOperatorToken.AND);
+        } else {
+            tokens.push(QueryOperatorToken.AND);
+        }
     }
 
     /**
@@ -2020,7 +2038,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             return Promise.resolve();
         }
 
-        this._queryOperation = this._initializeQueryOperation();
+        this._queryOperation = this.initializeQueryOperation();
         return this._executeActualQuery();
     }
 
@@ -2111,6 +2129,12 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     // tslint:enable:function-name
 
+    public async longCount(): Promise<number> {
+        this._take(0);
+        const queryResult = await this.getQueryResult();
+        return queryResult.longTotalResults;
+    }
+
     public async any(): Promise<boolean> {
         if (this.isDistinct) {
             // for distinct it is cheaper to do count 1
@@ -2151,7 +2175,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     public countLazily(): Lazy<number> {
         if (!this._queryOperation) {
             this._take(0);
-            this._queryOperation = this._initializeQueryOperation();
+            this._queryOperation = this.initializeQueryOperation();
         }
 
         const clazz = this._conventions.getJsTypeByDocumentType(this._clazz);
@@ -2265,7 +2289,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
     }
 
-    private _includeTimeSeries(alias: string, timeSeriesToInclude: Map<string, TimeSeriesRange[]>) {
+    private _includeTimeSeries(alias: string, timeSeriesToInclude: Map<string, AbstractTimeSeriesRange[]>) {
         if (!timeSeriesToInclude || !timeSeriesToInclude.size) {
             return;
         }

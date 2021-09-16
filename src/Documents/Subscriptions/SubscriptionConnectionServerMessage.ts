@@ -6,6 +6,7 @@ export interface SubscriptionConnectionServerMessage {
     includes: any;
     counterIncludes: any;
     includedCounterNames: Record<string, string[]>;
+    timeSeriesIncludes: any;
     exception: string;
     message: string;
 }
@@ -22,6 +23,7 @@ export type MessageType = "None"
     | "Data"
     | "Includes"
     | "CounterIncludes"
+    | "TimeSeriesIncludes"
     | "Confirm"
     | "Error";
 

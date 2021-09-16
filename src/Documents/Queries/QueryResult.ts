@@ -15,6 +15,7 @@ export class QueryResult extends GenericQueryResult<object[], object> {
         queryResult.isStale = this.isStale;
         queryResult.skippedResults = this.skippedResults;
         queryResult.totalResults = this.totalResults;
+        queryResult.longTotalResults = this.longTotalResults;
         queryResult.highlightings = this.highlightings;
         queryResult.explanations = this.explanations;
         queryResult.timingsInMs = this.timingsInMs;

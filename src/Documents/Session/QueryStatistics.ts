@@ -5,6 +5,7 @@ export class QueryStatistics {
     public isStale: boolean;
     public durationInMs: number;
     public totalResults: number;
+    public longTotalResults: number;
     public skippedResults: number;
     public timestamp: Date;
     public indexName: string;
@@ -18,6 +19,7 @@ export class QueryStatistics {
         this.isStale = qr.isStale;
         this.durationInMs = qr.durationInMs;
         this.totalResults = qr.totalResults;
+        this.longTotalResults = qr.longTotalResults;
         this.skippedResults = qr.skippedResults;
         this.timestamp = qr.indexTimestamp;
         this.indexName = qr.indexName;

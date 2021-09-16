@@ -3,6 +3,8 @@ import { FieldStorage, FieldIndexing, FieldTermVector } from "./Enums";
 import { SpatialOptions, SpatialOptionsFactory } from "./Spatial";
 import { CONSTANTS } from "../../Constants";
 import { IndexDefinition } from "./IndexDefinition";
+import { AdditionalAssembly } from "./AdditionalAssembly";
+import { throwError } from "../../Exceptions";
 
 type FieldOrAllFields<TField> = TField | "__all_fields";
 
@@ -85,5 +87,17 @@ export abstract class AbstractGenericIndexCreationTask<TField extends string = s
     // tslint:disable-next-line:function-name
     protected suggestion(field: FieldOrAllFields<TField>): void {
         this.indexSuggestions.add(field);
+    }
+
+    protected addAssembly(assembly: AdditionalAssembly) {
+        if (!assembly) {
+            throwError("InvalidArgumentException", "Assembly cannot be null");
+        }
+
+        if (!this.additionalAssemblies) {
+            this.additionalAssemblies = [];
+        }
+
+        this.additionalAssemblies.push(assembly);
     }
 }

@@ -8,6 +8,7 @@ import { QueryTimings } from "../Queries/Timings/QueryTimings";
 import { ValueCallback } from "../../Types/Callbacks";
 import { FacetResult } from "../Queries/Facets";
 import { AggregationRawDocumentQuery } from "../Queries/Facets/AggregationRawDocumentQuery";
+import { ProjectionBehavior } from "../Queries/ProjectionBehavior";
 
 export class RawDocumentQuery<T extends object>
     extends AbstractDocumentQuery<T, RawDocumentQuery<T>> implements IRawDocumentQuery<T> {
@@ -64,8 +65,13 @@ export class RawDocumentQuery<T extends object>
         return this;
     }
 
-    executeAggregation(): Promise<Record<string, FacetResult>> {
+    public executeAggregation(): Promise<Record<string, FacetResult>> {
         const query = new AggregationRawDocumentQuery(this, this._theSession);
         return query.execute();
+    }
+
+    public projection(projectionBehavior: ProjectionBehavior): IRawDocumentQuery<T> {
+        this._projection(projectionBehavior);
+        return this;
     }
 }

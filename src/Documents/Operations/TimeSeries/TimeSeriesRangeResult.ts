@@ -5,4 +5,5 @@ export class TimeSeriesRangeResult {
     public to: Date;
     public entries: TimeSeriesEntry[];
     public totalResults: number;
+    public includes: any;
 }

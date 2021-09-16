@@ -47,7 +47,12 @@ export class BatchOperation {
         this._entities = result.entities;
 
         if (this._session.transactionMode === "ClusterWide") {
-            return new ClusterWideBatchCommand(this._session.conventions, result.sessionCommands, result.options);
+            return new ClusterWideBatchCommand(
+                this._session.conventions,
+                result.sessionCommands,
+                result.options,
+                this._session.disableAtomicDocumentWritesInClusterWideTransaction
+            );
         }
         return new SingleNodeBatchCommand(this._session.conventions, result.sessionCommands, result.options);
     }

@@ -1,4 +1,5 @@
 import { throwError } from "../../Exceptions";
+import { DetailedReplicationHubAccess } from "../../Documents/Operations/Replication/DetailedReplicationHubAccess";
 
 export interface TcpConnectionHeaderMessage {
     databaseName: string;
@@ -7,6 +8,7 @@ export interface TcpConnectionHeaderMessage {
     operationVersion: number;
     info: string;
     authorizeInfo: AuthorizationInfo;
+    replicationHubAccess: DetailedReplicationHubAccess;
 }
 
 export type OperationTypes =
@@ -30,10 +32,11 @@ export const HEARTBEATS_42000 = 42_000;
 export const SUBSCRIPTION_BASE_LINE = 40;
 export const SUBSCRIPTION_INCLUDES = 41_400;
 export const SUBSCRIPTION_COUNTER_INCLUDES = 50_000;
+export const SUBSCRIPTION_TIME_SERIES_INCLUDES = 51_000;
 export const TEST_CONNECTION_BASE_LINE = 50;
 
 export const HEARTBEATS_TCP_VERSION = HEARTBEATS_42000;
-export const SUBSCRIPTION_TCP_VERSION = SUBSCRIPTION_COUNTER_INCLUDES;
+export const SUBSCRIPTION_TCP_VERSION = SUBSCRIPTION_TIME_SERIES_INCLUDES;
 export const TEST_CONNECTION_TCP_VERSION = TEST_CONNECTION_BASE_LINE;
 
 export class PingFeatures {
@@ -52,6 +55,7 @@ export class SubscriptionFeatures {
     public baseLine = true;
     public includes = false;
     public counterIncludes = false;
+    public timeSeriesIncludes = false;
 }
 
 export class HeartbeatsFeatures {
@@ -87,7 +91,7 @@ const supportedFeaturesByProtocol = new Map<OperationTypes, Map<number, Supporte
     operationsToSupportedProtocolVersions.set("None", [NONE_BASE_LINE]);
     operationsToSupportedProtocolVersions.set("Drop", [DROP_BASE_LINE]);
     operationsToSupportedProtocolVersions.set("Subscription", [
-        SUBSCRIPTION_COUNTER_INCLUDES, SUBSCRIPTION_INCLUDES, SUBSCRIPTION_BASE_LINE
+        SUBSCRIPTION_TIME_SERIES_INCLUDES, SUBSCRIPTION_COUNTER_INCLUDES, SUBSCRIPTION_INCLUDES, SUBSCRIPTION_BASE_LINE
     ]);
     operationsToSupportedProtocolVersions.set("Heartbeats", [
         HEARTBEATS_42000,
@@ -130,6 +134,13 @@ const supportedFeaturesByProtocol = new Map<OperationTypes, Map<number, Supporte
     subscriptions50000Features.subscription.includes = true;
     subscriptions50000Features.subscription.counterIncludes = true;
     subscriptionFeaturesMap.set(SUBSCRIPTION_COUNTER_INCLUDES, subscriptions50000Features);
+
+    const subscriptions51000Features = new SupportedFeatures(SUBSCRIPTION_TIME_SERIES_INCLUDES);
+    subscriptions51000Features.subscription = new SubscriptionFeatures();
+    subscriptions51000Features.subscription.includes = true;
+    subscriptions51000Features.subscription.counterIncludes = true;
+    subscriptions51000Features.subscription.timeSeriesIncludes = true;
+    subscriptionFeaturesMap.set(SUBSCRIPTION_TIME_SERIES_INCLUDES, subscriptions51000Features);
 
     const heartbeatsFeaturesMap = new Map<number, SupportedFeatures>();
     supportedFeaturesByProtocol.set("Heartbeats", heartbeatsFeaturesMap);
@@ -218,4 +229,5 @@ export class AuthorizationInfo {
 
 export type AuthorizeMethod =
     "Server"
-    | "PullReplication";
+    | "PullReplication"
+    | "PushReplication";

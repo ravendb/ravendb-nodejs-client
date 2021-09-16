@@ -29,6 +29,11 @@ export interface IDocumentQueryBaseSingle<T extends object> {
     count(): Promise<number>;
 
     /**
+     * Gets the total count of records for this query as long
+     */
+    longCount(): Promise<number>;
+
+    /**
      * Register the query as a lazy query in the session and return a lazy
      * instance that will evaluate the query only when needed.
      */

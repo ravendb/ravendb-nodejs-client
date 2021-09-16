@@ -1,11 +1,12 @@
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { IndexDefinition } from "./IndexDefinition";
-import { IndexPriority, IndexLockMode } from "./Enums";
+import { IndexPriority, IndexLockMode, IndexState } from "./Enums";
 import { IDocumentStore } from "../IDocumentStore";
 import { PutIndexesOperation } from "../Operations/Indexes/PutIndexesOperation";
 import { AbstractCommonApiForIndexes } from "./AbstractCommonApiForIndexes";
 import { IAbstractIndexCreationTask } from "./IAbstractIndexCreationTask";
 import { DocumentStoreBase } from "../DocumentStoreBase";
+import { IndexDeploymentMode } from "./IndexDeploymentMode";
 
 export abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends IndexDefinition>
     extends AbstractCommonApiForIndexes implements IAbstractIndexCreationTask {
@@ -18,6 +19,9 @@ export abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends Ind
     public conventions: DocumentConventions;
     public priority: IndexPriority;
     public lockMode: IndexLockMode;
+
+    public deploymentMode: IndexDeploymentMode;
+    public state: IndexState;
 
     /**
      * Executes the index creation against the specified document store.

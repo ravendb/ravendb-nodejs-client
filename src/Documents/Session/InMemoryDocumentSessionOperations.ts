@@ -95,6 +95,8 @@ export abstract class InMemoryDocumentSessionOperations
 
     private _externalState: Map<string, object>;
 
+    public disableAtomicDocumentWritesInClusterWideTransaction: boolean;
+
     private _transactionMode: TransactionMode;
 
     public get externalState() {
@@ -252,6 +254,7 @@ export abstract class InMemoryDocumentSessionOperations
 
         this._sessionInfo = new SessionInfo(this, options, documentStore);
         this._transactionMode = options.transactionMode;
+        this.disableAtomicDocumentWritesInClusterWideTransaction = options.disableAtomicDocumentWritesInClusterWideTransaction;
     }
 
     protected abstract _generateId(entity: object): Promise<string>;
@@ -1789,7 +1792,11 @@ export abstract class InMemoryDocumentSessionOperations
             this._countersByDocId.delete(id);
         }
 
-        this.defer(new DeleteCommandData(id, expectedChangeVector || changeVector));
+        this.defer(new DeleteCommandData(
+            id,
+            expectedChangeVector || changeVector,
+            expectedChangeVector || documentInfo?.changeVector
+        ));
     }
 
     /**
@@ -2022,6 +2029,8 @@ export abstract class InMemoryDocumentSessionOperations
         if (this._disposed) {
             return;
         }
+
+        this.emit("sessionClosing", { session: this });
 
         this._disposed = true;
     }

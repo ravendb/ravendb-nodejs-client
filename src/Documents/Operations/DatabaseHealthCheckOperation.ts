@@ -16,7 +16,6 @@ export class DatabaseHealthCheckOperation implements IMaintenanceOperation<void>
 
 class DatabaseHealthCheckCommand extends RavenCommand<void> {
 
-
     constructor() {
         super();
 

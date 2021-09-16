@@ -7,6 +7,9 @@ import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
 
+/**
+ * @deprecated Please use DeleteServerWideTaskOperation instead.
+ */
 export class DeleteServerWideBackupConfigurationOperation implements IServerOperation<void> {
     private readonly _name: string;
 

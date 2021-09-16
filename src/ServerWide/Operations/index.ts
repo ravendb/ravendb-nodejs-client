@@ -27,6 +27,7 @@ export interface DatabaseTopology {
     dynamicNodesDistribution: boolean;
     stamp: LeaderStamp;
     databaseTopologyIdBase64: string;
+    clusterTransactionIdBase64: string;
     priorityOrder: string[];
 }
 

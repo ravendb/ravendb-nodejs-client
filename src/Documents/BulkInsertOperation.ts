@@ -22,6 +22,10 @@ import { MetadataObject } from "./Session/MetadataObject";
 import { CommandType } from "./Commands/CommandData";
 import { TypeUtil } from "../Utility/TypeUtil";
 import { IDisposable } from "../Types/Contracts";
+import { TypedTimeSeriesEntry } from "./Session/TimeSeries/TypedTimeSeriesEntry";
+import { ClassConstructor } from "../Types";
+import { TimeSeriesOperations } from "./TimeSeries/TimeSeriesOperations";
+import { TimeSeriesValuesHelper } from "./Session/TimeSeries/TimeSeriesValuesHelper";
 
 export class BulkInsertOperation {
     private readonly _generateEntityIdOnTheClient: GenerateEntityIdOnTheClient;
@@ -393,6 +397,35 @@ export class BulkInsertOperation {
         return new BulkInsertOperation._attachmentsBulkInsertClass(this, id);
     }
 
+    public timeSeriesFor(id: string, name);
+    public timeSeriesFor<T extends object>(clazz: ClassConstructor<T>, id: string)
+    public timeSeriesFor<T extends object>(clazz: ClassConstructor<T>, id: string, name: string)
+    public timeSeriesFor<T extends object>(classOrId: ClassConstructor<T> | string, idOrName: string, name?: string) {
+        if (TypeUtil.isString(classOrId)) {
+            return this._timeSeriesFor(classOrId, idOrName);
+        } else {
+            return this._typedTimeSeriesFor(classOrId, idOrName, name);
+        }
+    }
+
+    private _typedTimeSeriesFor<T extends object>(clazz: ClassConstructor<T>, id: string, name: string = null) {
+        if (StringUtil.isNullOrEmpty(id)) {
+            throwError("InvalidArgumentException", "Document id cannot be null or empty");
+        }
+
+        let tsName = name;
+        if (!tsName) {
+            tsName = TimeSeriesOperations.getTimeSeriesName(clazz, this._conventions);
+        }
+
+        if (StringUtil.isNullOrEmpty(tsName)) {
+            throwError("InvalidArgumentException", "Time series name cannot be null or empty");
+        }
+
+        return new BulkInsertOperation._typedTimeSeriesBulkInsertClass(this, clazz, id, tsName);
+
+    }
+
     public countersFor(id: string): ICountersBulkInsert {
         if (StringUtil.isNullOrEmpty(id)) {
             throwError("InvalidArgumentException", "Document id cannot be null or empty");
@@ -401,7 +434,7 @@ export class BulkInsertOperation {
         return new BulkInsertOperation._countersBulkInsertClass(this, id);
     }
 
-    public timeSeriesFor(id: string, name: string): ITimeSeriesBulkInsert {
+    private _timeSeriesFor(id: string, name: string): ITimeSeriesBulkInsert {
         if (StringUtil.isNullOrEmpty(id)) {
             throwError("InvalidArgumentException", "Document id cannot be null or empty");
         }
@@ -525,14 +558,14 @@ export class BulkInsertOperation {
         }
     }
 
-    private static _timeSeriesBulkInsertClass = class TimeSeriesBulkInsert implements ITimeSeriesBulkInsert, IDisposable {
+    private static _timeSeriesBulkInsertBaseClass = class TimeSeriesBulkInsertBase implements IDisposable {
         private readonly _operation: BulkInsertOperation;
         private readonly _id: string;
         private readonly _name: string;
         private _first: boolean = true;
         private _timeSeriesInBatch: number = 0;
 
-        public constructor(operation: BulkInsertOperation, id: string, name: string) {
+        protected constructor(operation: BulkInsertOperation, id: string, name: string) {
             operation._endPreviousCommandIfNeeded();
 
             this._operation = operation;
@@ -542,19 +575,7 @@ export class BulkInsertOperation {
             this._operation._inProgressCommand = "TimeSeries";
         }
 
-        public append(timestamp: Date, value: number): Promise<void>;
-        public append(timestamp: Date, value: number, tag: string): Promise<void>;
-        public append(timestamp: Date, values: number[]): Promise<void>;
-        public append(timestamp: Date, values: number[], tag: string): Promise<void>;
-        public append(timestamp: Date, valueOrValues: number | number[], tag?: string): Promise<void> {
-            if (TypeUtil.isArray(valueOrValues)) {
-                return this._appendInternal(timestamp, valueOrValues, tag);
-            } else {
-                return this._appendInternal(timestamp, [ valueOrValues ], tag);
-            }
-        }
-
-        private async _appendInternal(timestamp: Date, values: number[], tag: string): Promise<void> {
+        protected async _appendInternal(timestamp: Date, values: number[], tag: string): Promise<void> {
             const check = this._operation._concurrencyCheck();
             try {
 
@@ -633,6 +654,47 @@ export class BulkInsertOperation {
         }
     }
 
+    private static _timeSeriesBulkInsertClass = class TimeSeriesBulkInsert extends BulkInsertOperation._timeSeriesBulkInsertBaseClass implements ITimeSeriesBulkInsert {
+        public constructor(operation: BulkInsertOperation, id: string, name: string) {
+            super(operation, id, name);
+        }
+
+        public append(timestamp: Date, value: number): Promise<void>;
+        public append(timestamp: Date, value: number, tag: string): Promise<void>;
+        public append(timestamp: Date, values: number[]): Promise<void>;
+        public append(timestamp: Date, values: number[], tag: string): Promise<void>;
+        public append(timestamp: Date, valueOrValues: number | number[], tag?: string): Promise<void> {
+            if (TypeUtil.isArray(valueOrValues)) {
+                return this._appendInternal(timestamp, valueOrValues, tag);
+            } else {
+                return this._appendInternal(timestamp, [ valueOrValues ], tag);
+            }
+        }
+    }
+
+    private static _typedTimeSeriesBulkInsertClass = class TypedTimeSeriesBulkInsert<T extends object> extends BulkInsertOperation._timeSeriesBulkInsertBaseClass implements ITypedTimeSeriesBulkInsert<T> {
+
+        private readonly clazz: ClassConstructor<T>;
+
+        public constructor(operation: BulkInsertOperation, clazz: ClassConstructor<T>, id: string, name: string) {
+            super(operation, id, name);
+
+            this.clazz = clazz;
+        }
+
+        append(timestamp: Date, value: T): Promise<void>;
+        append(timestamp: Date, value: T, tag: string): Promise<void>;
+        append(entry: TypedTimeSeriesEntry<T>): Promise<void>;
+        append(timestampOrEntry: Date | TypedTimeSeriesEntry<T>, value?: T, tag?: string): Promise<void> {
+            if (timestampOrEntry instanceof TypedTimeSeriesEntry) {
+                return this.append(timestampOrEntry.timestamp, timestampOrEntry.value, timestampOrEntry.tag);
+            } else  {
+                const values = TimeSeriesValuesHelper.getValues(this.clazz, value);
+                return this._appendInternal(timestampOrEntry, values, tag);
+            }
+        }
+    }
+
     private static _attachmentsBulkInsertClass = class AttachmentsBulkInsert implements IAttachmentsBulkInsert {
         private readonly _operation: BulkInsertOperation;
         private readonly _id: string;
@@ -706,6 +768,12 @@ export interface ITimeSeriesBulkInsert extends IDisposable {
     append(timestamp: Date, value: number, tag: string): Promise<void>;
     append(timestamp: Date, values: number[]): Promise<void>;
     append(timestamp: Date, values: number[], tag: string): Promise<void>;
+}
+
+export interface ITypedTimeSeriesBulkInsert<T extends object> extends IDisposable {
+    append(timestamp: Date, value: T): Promise<void>;
+    append(timestamp: Date, value: T, tag: string): Promise<void>;
+    append(entry: TypedTimeSeriesEntry<T>): Promise<void>;
 }
 
 export interface IAttachmentsBulkInsert {

@@ -22,6 +22,7 @@ import { HashCalculator } from "../Queries/HashCalculator";
 import { DocumentStoreBase } from "../DocumentStoreBase";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { AbstractCommonApiForIndexes } from "../Indexes/AbstractCommonApiForIndexes";
+import { AbstractTimeSeriesRange } from "../Operations/TimeSeries/AbstractTimeSeriesRange";
 
 export class SessionInfo {
     private static _clientSessionIdCounter: number = 0;
@@ -316,7 +317,7 @@ export interface SessionLoadInternalParameters<TResult extends object> {
     documentType?: DocumentType<TResult>;
     counterIncludes?: string[];
     includeAllCounters?: boolean;
-    timeSeriesIncludes?: TimeSeriesRange[];
+    timeSeriesIncludes?: AbstractTimeSeriesRange[];
     compareExchangeValueIncludes?: string[];
 }
 

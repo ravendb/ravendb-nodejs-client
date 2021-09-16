@@ -166,11 +166,21 @@ export class DocumentStore extends DocumentStoreBase {
      * Opens document session
      */
     public openSession(databaseOrSessionOptions?: string | SessionOptions): IDocumentSession {
+        if (!databaseOrSessionOptions) {
+            const sessionOptions: SessionOptions = {
+                disableAtomicDocumentWritesInClusterWideTransaction: this.conventions.disableAtomicDocumentWritesInClusterWideTransaction
+            };
+            return this.openSession(sessionOptions);
+        }
+
         this.assertInitialized();
         this._ensureNotDisposed();
 
         if (typeof(databaseOrSessionOptions) === "string") {
-            return this.openSession({ database: databaseOrSessionOptions as string });
+            return this.openSession({
+                database: databaseOrSessionOptions,
+                disableAtomicDocumentWritesInClusterWideTransaction: this.conventions.disableAtomicDocumentWritesInClusterWideTransaction
+            });
         }
 
         databaseOrSessionOptions = databaseOrSessionOptions || {} as any;

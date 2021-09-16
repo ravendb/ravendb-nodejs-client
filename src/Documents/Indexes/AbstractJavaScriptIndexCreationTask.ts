@@ -97,9 +97,12 @@ export class AbstractJavaScriptIndexCreationTask<TDocument extends object, TMapR
         indexDefinitionBuilder.patternForOutputReduceToCollectionReferences = this.patternForOutputReduceToCollectionReferences;
         indexDefinitionBuilder.patternReferencesCollectionName = this.patternReferencesCollectionName;
         indexDefinitionBuilder.additionalSources = this.additionalSources;
+        indexDefinitionBuilder.additionalAssemblies = this.additionalAssemblies;
         indexDefinitionBuilder.configuration = this.configuration;
         indexDefinitionBuilder.lockMode = this.lockMode;
         indexDefinitionBuilder.priority = this.priority;
+        indexDefinitionBuilder.state = this.state;
+        indexDefinitionBuilder.deploymentMode = this.deploymentMode;
 
         return indexDefinitionBuilder.toIndexDefinition(this.conventions);
     }

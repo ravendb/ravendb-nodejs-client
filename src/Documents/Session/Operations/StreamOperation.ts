@@ -86,7 +86,7 @@ export class StreamOperation {
 
     public setResult(response: StreamResultResponse): stream.Readable {
         if (!response) {
-            throwError("InvalidArgumentException", "The index does not exists, failed to stream results.");
+            throwError("IndexDoesNotExistException", "The index does not exists, failed to stream results.");
         }
 
         const result = getDocumentResultsAsObjects(this._session.conventions).stream(response.stream);

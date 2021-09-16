@@ -172,6 +172,7 @@ export class QueryCommand extends RavenCommand<QueryResult> {
             isStale: json.IsStale,
             skippedResults: json.SkippedResults,
             totalResults: json.TotalResults,
+            longTotalResults: json.LongTotalResults,
             highlightings: json.Highlightings,
             explanations: json.Explanations,
             timingsInMs: json.TimingsInMs,
