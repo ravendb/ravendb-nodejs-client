@@ -52,11 +52,12 @@ import { ITimeSeriesQueryBuilder } from "../Queries/TimeSeries/ITimeSeriesQueryB
 import { TimeSeriesAggregationResult } from "../Queries/TimeSeries/TimeSeriesAggregationResult";
 import { TimeSeriesRawResult } from "../Queries/TimeSeries/TimeSeriesRawResult";
 import { Field } from "../../Types";
+import { IAbstractDocumentQueryImpl } from "./IAbstractDocumentQueryImpl";
 
 export const NESTED_OBJECT_TYPES_PROJECTION_FIELD = "__PROJECTED_NESTED_OBJECT_TYPES__";
 
 export class DocumentQuery<T extends object>
-    extends AbstractDocumentQuery<T, DocumentQuery<T>> implements IDocumentQuery<T> {
+    extends AbstractDocumentQuery<T, DocumentQuery<T>> implements IDocumentQuery<T>, IAbstractDocumentQueryImpl<T> {
 
     public constructor(
         documentType: DocumentType<T>,

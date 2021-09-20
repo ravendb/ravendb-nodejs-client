@@ -57,9 +57,9 @@ export class QueryIncludeBuilder extends IncludeBuilderBase implements IQueryInc
     public includeTimeSeries(nameOrPath: string, fromOrName?: string | Date, toOrFrom?: Date, to?: Date): IQueryIncludeBuilder {
         if (TypeUtil.isString(fromOrName)) {
             this._withAlias();
-            this._includeTimeSeries(nameOrPath, fromOrName, toOrFrom, to);
+            this._includeTimeSeriesFromTo(nameOrPath, fromOrName, toOrFrom, to);
         } else {
-            this._includeTimeSeries("", nameOrPath, fromOrName, toOrFrom);
+            this._includeTimeSeriesFromTo("", nameOrPath, fromOrName, toOrFrom);
         }
 
         return this;

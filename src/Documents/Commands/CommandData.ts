@@ -84,11 +84,12 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
     public id: string;
     public name: string = null;
     public changeVector: string;
+    public readonly originalChangeVector: string;
     public forceRevisionCreationStrategy: ForceRevisionStrategy;
 
     private readonly _document: T;
 
-    constructor(id: string, changeVector: string, document: T, strategy: ForceRevisionStrategy = "None") {
+    constructor(id: string, changeVector: string, originalChangeVector: string, document: T, strategy: ForceRevisionStrategy = "None") {
 
         if (!document) {
             throwError("InvalidArgumentException", "Document cannot be null or undefined.");
@@ -96,6 +97,7 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
 
         this.id = id;
         this.changeVector = changeVector;
+        this.originalChangeVector = originalChangeVector;
         this._document = document;
         this.forceRevisionCreationStrategy = strategy;
     }
@@ -104,6 +106,7 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
         const result = {
             Id: this.id,
             ChangeVector: this.changeVector,
+            OriginalChangeVector: this.originalChangeVector,
             Document: this._document,
             Type: "PUT"
         };
@@ -118,8 +121,8 @@ export class PutCommandDataBase<T extends object> implements ICommandData {
 
 export class PutCommandDataWithJson extends PutCommandDataBase<object> {
 
-    public constructor(id: string, changeVector: string, document: object, strategy: ForceRevisionStrategy) {
-        super(id, changeVector, document, strategy);
+    public constructor(id: string, changeVector: string, originalChangeVector: string, document: object, strategy: ForceRevisionStrategy) {
+        super(id, changeVector, originalChangeVector, document, strategy);
     }
 }
 

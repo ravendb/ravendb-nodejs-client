@@ -10,11 +10,19 @@ import { TypeUtil } from "../../Utility/TypeUtil";
 import { DocumentType } from "../DocumentAbstractions";
 import { RevisionsCollectionObject } from "../../Types";
 import { DocumentSessionRevisionsBase } from "./DocumentSessionRevisionsBase";
+import { LazyRevisionOperations } from "./Operations/Lazy/LazyRevisionOperations";
+import { ILazySessionOperations } from "./Operations/Lazy/ILazySessionOperations";
+import { DocumentSession } from "./DocumentSession";
+import { GetRevisionsCountOperation } from "./Operations/GetRevisionsCountOperation";
 
 export class DocumentSessionRevisions extends DocumentSessionRevisionsBase implements IRevisionsSessionOperations {
 
     public constructor(session: InMemoryDocumentSessionOperations) {
         super(session);
+    }
+
+    lazily(): ILazySessionOperations {
+        return new LazyRevisionOperations(this._session as DocumentSession);
     }
 
     public async getFor<TEntity extends object>(id: string): Promise<TEntity[]>;
@@ -96,5 +104,10 @@ export class DocumentSessionRevisions extends DocumentSessionRevisionsBase imple
             : operation.getRevision(documentType);
     }
 
-
+    public async getCountFor(id: string): Promise<number> {
+        const operation = new GetRevisionsCountOperation(id);
+        const command = operation.createRequest();
+        await this._requestExecutor.execute(command, this._sessionInfo);
+        return command.result;
+    }
 }

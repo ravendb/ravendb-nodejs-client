@@ -5,6 +5,7 @@ import { throwError } from "../../../Exceptions";
 import { CaseInsensitiveKeysMap } from "../../../Primitives/CaseInsensitiveKeysMap";
 import { CaseInsensitiveStringSet } from "../../../Primitives/CaseInsensitiveStringSet";
 import { TimeSeriesRange } from "../../Operations/TimeSeries/TimeSeriesRange";
+import { AbstractTimeSeriesRange } from "../../Operations/TimeSeries/AbstractTimeSeriesRange";
 
 export class IncludeBuilderBase {
 
@@ -14,10 +15,12 @@ export class IncludeBuilderBase {
     public documentsToInclude: Set<string>;
     public alias: string;
     public countersToIncludeBySourcePath: CountersByDocId;
-    public timeSeriesToIncludeBySourceAlias: Map<string, TimeSeriesRange[]>;
+    public timeSeriesToIncludeBySourceAlias: Map<string, AbstractTimeSeriesRange[]>;
     public compareExchangeValuesToInclude: Set<string>;
+    public includeTimeSeriesTags: boolean;
+    public includeTimeSeriesDocument: boolean;
 
-    public get timeSeriesToInclude(): TimeSeriesRange[] {
+    public get timeSeriesToInclude(): AbstractTimeSeriesRange[] {
         if (!this.timeSeriesToIncludeBySourceAlias) {
             return null;
         }
@@ -146,13 +149,11 @@ export class IncludeBuilderBase {
         }
     }
 
-    protected _includeTimeSeries(alias: string, name: string, from: Date, to: Date) {
-        if (StringUtil.isNullOrWhitespace(name)) {
-            throwError("InvalidArgumentException", "Name cannot be empty");
-        }
+    protected _includeTimeSeriesFromTo(alias: string, name: string, from: Date, to: Date) {
+        this.assertValid(alias, name);
 
         if (!this.timeSeriesToIncludeBySourceAlias) {
-            this.timeSeriesToIncludeBySourceAlias = new Map<string, TimeSeriesRange[]>();
+            this.timeSeriesToIncludeBySourceAlias = new Map<string, AbstractTimeSeriesRange[]>();
         }
 
         let hashSet = this.timeSeriesToIncludeBySourceAlias.get(alias);

@@ -8,13 +8,14 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 export class PatchCommandData implements ICommandData {
     public id: string;
     public name: string = null;
+    public createIfMissing: any;
     public changeVector: string;
     public patch: PatchRequest;
     public patchIfMissing: PatchRequest;
     public type: CommandType = "PATCH";
     public returnDocument: boolean;
 
-    constructor(id: string, changeVector: string, patch: PatchRequest, patchIfMissing: PatchRequest) {
+    constructor(id: string, changeVector: string, patch: PatchRequest, patchIfMissing?: PatchRequest) {
         if (!id) {
             throwError("InvalidArgumentException", "Id cannot be null");
         }
@@ -37,6 +38,10 @@ export class PatchCommandData implements ICommandData {
             Patch: this.patch.serialize(conventions),
             PatchIfMissing: this.patchIfMissing ? this.patchIfMissing.serialize(conventions) : undefined
         };
+
+        if (!TypeUtil.isNullOrUndefined(this.createIfMissing)) {
+            result["CreateIfMissing"] = this.createIfMissing;
+        }
 
         if (!TypeUtil.isNullOrUndefined(this.returnDocument)) {
             result["ReturnDocument"] = this.returnDocument;

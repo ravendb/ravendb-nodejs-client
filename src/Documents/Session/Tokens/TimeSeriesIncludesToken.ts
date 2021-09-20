@@ -3,19 +3,20 @@ import { TimeSeriesRange } from "../../Operations/TimeSeries/TimeSeriesRange";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { DateUtil } from "../../../Utility/DateUtil";
 import { StringBuilder } from "../../../Utility/StringBuilder";
+import { AbstractTimeSeriesRange } from "../../Operations/TimeSeries/AbstractTimeSeriesRange";
 
 export class TimeSeriesIncludesToken extends QueryToken {
     private _sourcePath: string;
-    private readonly _range: TimeSeriesRange;
+    private readonly _range: AbstractTimeSeriesRange;
 
-    private constructor(sourcePath: string, range: TimeSeriesRange) {
+    private constructor(sourcePath: string, range: AbstractTimeSeriesRange) {
         super();
 
         this._range = range;
         this._sourcePath = sourcePath;
     }
 
-    public static create(sourcePath: string, range: TimeSeriesRange) {
+    public static create(sourcePath: string, range: AbstractTimeSeriesRange) {
         return new TimeSeriesIncludesToken(sourcePath, range);
     }
 

@@ -19,8 +19,8 @@ export class IndexDefinitionHelper {
 
         if (mapLower.startsWith("from")
             || mapLower.startsWith("docs")
-            || mapLower.startsWith("timeseries")
-            || mapLower.startsWith("counters")) {
+            || (mapLower.startsWith("timeseries") && !mapLower.startsWith("timeseries.map"))
+            || (mapLower.startsWith("counters") && !mapLower.startsWith("counters.map"))) {
             // C# indexes must start with "from" for query syntax or
             // "docs" for method syntax
 

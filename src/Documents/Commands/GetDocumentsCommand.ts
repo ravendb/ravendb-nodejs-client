@@ -20,6 +20,8 @@ import { QueryResult } from "../Queries/QueryResult";
 import { QueryCommand } from "./QueryCommand";
 import { ObjectUtil } from "../../Utility/ObjectUtil";
 import { AbstractTimeSeriesRange } from "../Operations/TimeSeries/AbstractTimeSeriesRange";
+import { TimeSeriesTimeRange } from "../Operations/TimeSeries/TimeSeriesTimeRange";
+import { TimeSeriesCountRange } from "../Operations/TimeSeries/TimeSeriesCountRange";
 
 export interface GetDocumentsCommandCounterOptions {
     counterIncludes?: string[];

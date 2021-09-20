@@ -23,6 +23,8 @@ import * as stream from "readable-stream";
 import { IDocumentQueryBuilder } from "./IDocumentQueryBuilder";
 import { IGraphDocumentQuery } from "./IGraphDocumentQuery";
 import { JavaScriptMap } from "./JavaScriptMap";
+import { ClassConstructor } from "../../Types";
+import { ConditionalLoadResult } from "./ConditionalLoadResult";
 
 export type StreamQueryStatisticsCallback = (stats: StreamQueryStatistics) => void;
 
@@ -92,6 +94,12 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     patchObject<TEntity extends object, TKey, TValue>(
         id: string, pathToObject: string, mapAdder: (map: JavaScriptMap<TKey, TValue>) => void): void;
 
+    addOrPatch<TEntity extends object, UValue>(id: string, entity: TEntity, pathToObject: string, value: UValue): void;
+
+    addOrPatchArray<TEntity extends object, UValue>(
+        id: string, entity: TEntity, pathToObject: string, arrayAdder: (array: JavaScriptArray<UValue>) => void): void;
+
+    addOrIncrement<TEntity extends object, UValue>(id: string, entity: TEntity, pathToObject: string, valToAdd: UValue): void;
 
     // tslint:enable:max-line-length
 
@@ -167,6 +175,15 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      */
     stream<T extends object>(idPrefix: string, opts: SessionLoadStartingWithOptions<T>)
         : Promise<DocumentResultStream<T>>;
+
+    /**
+     * Loads the specified entity with the specified id and changeVector.
+     * If the entity is loaded into the session, the tracked entity will be returned otherwise the entity will be loaded only if it is fresher then the provided changeVector.
+     * @param id Identifier of a entity that will be conditional loaded.
+     * @param changeVector Change vector of a entity that will be conditional loaded.
+     * @param clazz Result class
+     */
+    conditionalLoad<T>(id: string, changeVector: string, clazz: ClassConstructor<T>): ConditionalLoadResult<T>;
 }
 
 export interface ReplicationBatchOptions {

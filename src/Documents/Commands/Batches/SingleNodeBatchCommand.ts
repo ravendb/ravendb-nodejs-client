@@ -17,9 +17,10 @@ import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponse
 import * as stream from "readable-stream";
 import { TimeUtil } from "../../../Utility/TimeUtil";
 import { PutAttachmentCommandHelper } from "./PutAttachmentCommandHelper";
+import { TypeUtil } from "../../../Utility/TypeUtil";
 
 export class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> implements IDisposable {
-    private _supportsAtomicWrites: boolean;
+    private _supportsAtomicWrites: boolean | null;
     private readonly _attachmentStreams: Set<AttachmentData>;
     private readonly _conventions: DocumentConventions;
     private readonly _commands: ICommandData[];
@@ -73,6 +74,9 @@ export class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
         const uri = node.url + "/databases/" + node.database + "/bulk_docs?";
         const headers = HeadersBuilder.create().typeAppJson().build();
 
+        if (TypeUtil.isNullOrUndefined(this._supportsAtomicWrites) || node.supportsAtomicClusterWrites !== this._supportsAtomicWrites) {
+            this._supportsAtomicWrites = node.supportsAtomicClusterWrites;
+        }
         const commandsArray = this._commands.reduce(
             (result, command) => [...result, command.serialize(this._conventions)], []);
 

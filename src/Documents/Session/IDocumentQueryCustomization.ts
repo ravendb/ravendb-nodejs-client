@@ -3,6 +3,7 @@ import { IndexQuery } from "../Queries/IndexQuery";
 import { QueryResult } from "../Queries/QueryResult";
 import { ValueCallback } from "../../Types/Callbacks";
 import { QueryTimings } from "../Queries/Timings/QueryTimings";
+import { ProjectionBehavior } from "../Queries/ProjectionBehavior";
 
 export interface IDocumentQueryCustomization {
 
@@ -77,6 +78,8 @@ export interface IDocumentQueryCustomization {
      * This shouldn't be used outside of unit tests unless you are well aware of the implications
      */
     waitForNonStaleResults(waitTimeout: number): IDocumentQueryCustomization;
+
+    projection(projectionBehavior: ProjectionBehavior): IDocumentQueryCustomization;
 
     timings(timings: ValueCallback<QueryTimings>): IDocumentQueryCustomization;
 }
