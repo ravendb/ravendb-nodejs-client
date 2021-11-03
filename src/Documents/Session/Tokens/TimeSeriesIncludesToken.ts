@@ -4,6 +4,9 @@ import { StringUtil } from "../../../Utility/StringUtil";
 import { DateUtil } from "../../../Utility/DateUtil";
 import { StringBuilder } from "../../../Utility/StringBuilder";
 import { AbstractTimeSeriesRange } from "../../Operations/TimeSeries/AbstractTimeSeriesRange";
+import { TimeSeriesTimeRange } from "../../Operations/TimeSeries/TimeSeriesTimeRange";
+import { throwError } from "../../../Exceptions";
+import { TimeSeriesCountRange } from "../../Operations/TimeSeries/TimeSeriesCountRange";
 
 export class TimeSeriesIncludesToken extends QueryToken {
     private _sourcePath: string;
@@ -36,16 +39,65 @@ export class TimeSeriesIncludesToken extends QueryToken {
                 .append(", ");
         }
 
-        writer
-            .append("'")
-            .append(this._range.name)
-            .append("'")
-            .append(", ");
-
-        if (this._range.from) {
+        if (StringUtil.isNullOrEmpty(this._range.name)) {
             writer
                 .append("'")
-                .append(DateUtil.utc.stringify(this._range.from))
+                .append(this._range.name)
+                .append("'")
+                .append(", ");
+        }
+
+        if ("count" in this._range) {
+            TimeSeriesIncludesToken.writeCountRangeTo(writer, this._range);
+        } else if ("time" in this._range) {
+            TimeSeriesIncludesToken.writeTimeRangeTo(writer, this._range);
+        } else if ("from" in this._range && "to" in this._range) {
+            TimeSeriesIncludesToken.writeRangeTo(writer, this._range);
+        } else {
+            throwError("InvalidArgumentException", "Not supported time range type: " + this._range);
+        }
+
+        writer
+            .append(")");
+    }
+
+    private static writeTimeRangeTo(writer: StringBuilder, range: TimeSeriesTimeRange) {
+        switch (range.type) {
+            case "Last":
+                writer
+                    .append("last(");
+                break;
+            default:
+                throwError("InvalidArgumentException", "Not supported time range type: " + range.type);
+        }
+
+        writer
+            .append(range.time.value)
+            .append(", '")
+            .append(range.time.unit)
+            .append("')");
+    }
+
+    private static writeCountRangeTo(writer: StringBuilder, range: TimeSeriesCountRange) {
+        switch (range.type) {
+            case "Last":
+                writer
+                    .append("last(");
+                break;
+            default:
+                throwError("InvalidArgumentException", "Not supported time range type: " + range.type);
+        }
+
+        writer
+            .append(range.count)
+            .append(")");
+    }
+
+    private static writeRangeTo(writer: StringBuilder, range: TimeSeriesRange) {
+        if (range.from) {
+            writer
+                .append("'")
+                .append(DateUtil.utc.stringify(range.from))
                 .append("'")
                 .append(", ");
         } else {
@@ -53,17 +105,14 @@ export class TimeSeriesIncludesToken extends QueryToken {
                 .append("null,");
         }
 
-        if (this._range.to) {
+        if (range.to) {
             writer
                 .append("'")
-                .append(DateUtil.utc.stringify(this._range.to))
+                .append(DateUtil.utc.stringify(range.to))
                 .append("'");
         } else {
             writer
                 .append("null");
         }
-
-        writer
-            .append(")");
     }
 }

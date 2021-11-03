@@ -3,3 +3,4 @@ root = true
 [lib/**.ts]
 indent_style = space
 indent_size = 4
+ij_typescript_spaces_within_imports = true

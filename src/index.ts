@@ -248,7 +248,6 @@ export * from "./Documents/Operations/Etl/Sql/SqlEtlConfiguration";
 export * from "./Documents/Operations/Etl/Sql/SqlEtlTable";
 export * from "./Documents/Operations/Etl/Transformation";
 export * from "./Documents/Operations/Expiration/ExpirationConfiguration";
-export * from "./Documents/Operations/Replication/FeatureTaskDefinition";
 export * from "./Documents/Operations/Replication/PullReplicationAsSink";
 export * from "./Documents/Operations/Replication/PullReplicationDefinition";
 export * from "./Documents/Operations/Etl/AddEtlOperation";

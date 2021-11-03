@@ -43,6 +43,7 @@ class DeleteServerWideTaskCommand extends RavenCommand<void> implements IRaftCom
 
         this._name = name;
         this._type = type;
+        this._responseType = "Empty";
     }
 
     get isReadRequest(): boolean {

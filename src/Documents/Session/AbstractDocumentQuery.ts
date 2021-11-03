@@ -86,13 +86,14 @@ import { TimeSeriesQueryBuilder } from "../Queries/TimeSeries/TimeSeriesQueryBui
 import { StringBuilder } from "../../Utility/StringBuilder";
 import { ProjectionBehavior } from "../Queries/ProjectionBehavior";
 import { AbstractTimeSeriesRange } from "../Operations/TimeSeries/AbstractTimeSeriesRange";
+import { IAbstractDocumentQueryImpl } from "./IAbstractDocumentQueryImpl";
 
 /**
  * A query against a Raven index
  */
 export abstract class AbstractDocumentQuery<T extends object, TSelf extends AbstractDocumentQuery<T, TSelf>>
     extends EventEmitter
-    implements QueryEventsEmitter, IAbstractDocumentQuery<T> {
+    implements QueryEventsEmitter, IAbstractDocumentQuery<T>, IAbstractDocumentQueryImpl<T> {
 
     protected _clazz: DocumentType<T>;
 
@@ -619,7 +620,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     // TBD public void _customSortUsing(String typeName)
     // TBD public void _customSortUsing(String typeName, boolean descending)
 
-    protected _projection(projectionBehavior: ProjectionBehavior) {
+    public _projection(projectionBehavior: ProjectionBehavior) {
         this.projectionBehavior = projectionBehavior;
     }
 

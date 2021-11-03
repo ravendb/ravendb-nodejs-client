@@ -4,6 +4,7 @@ import { InMemoryDocumentSessionOperations } from "../Session/InMemoryDocumentSe
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { DocumentInfo } from "../Session/DocumentInfo";
 import { ForceRevisionStrategy } from "../Session/ForceRevisionStrategy";
+import { SessionBeforeDeleteEventArgs } from "../Session/SessionEvents";
 
 export type CommandType =
     "None"
@@ -60,15 +61,24 @@ export class DeleteCommandData implements ICommandData {
     }
 
     public serialize(conventions: DocumentConventions): object {
-        const result = {
+        const result: any = {
             Id: this.id,
             ChangeVector: this.changeVector,
-            Type: "DELETE"
+            Type: "DELETE",
+            Document: this.document
         };
+
+        if (this.originalChangeVector) {
+            result.OriginalChangeVector = this.originalChangeVector;
+        }
 
         this._serializeExtraFields(result);
 
         return result;
+    }
+
+    onBeforeSaveChanges(session: InMemoryDocumentSessionOperations): void {
+        session.emit("beforeDelete", new SessionBeforeDeleteEventArgs(session, this.id, null));
     }
 
     // tslint:disable-next-line:no-empty

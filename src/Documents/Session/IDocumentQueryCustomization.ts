@@ -4,6 +4,7 @@ import { QueryResult } from "../Queries/QueryResult";
 import { ValueCallback } from "../../Types/Callbacks";
 import { QueryTimings } from "../Queries/Timings/QueryTimings";
 import { ProjectionBehavior } from "../Queries/ProjectionBehavior";
+import { AbstractDocumentQuery } from "./AbstractDocumentQuery";
 
 export interface IDocumentQueryCustomization {
 
@@ -11,6 +12,11 @@ export interface IDocumentQueryCustomization {
      * Get the raw query operation that will be sent to the server
      */
     getQueryOperation(): QueryOperation;
+
+    /**
+     * Get current query
+     */
+    getQuery(): AbstractDocumentQuery<any, any>;
 
     /**
      * Allow you to modify the index query before it is executed

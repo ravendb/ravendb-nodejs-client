@@ -3,6 +3,7 @@ import { DocumentType } from "../DocumentAbstractions";
 import { MetadataAsDictionary } from "../../Mapping/MetadataAsDictionary";
 import { ForceRevisionStrategy } from "./ForceRevisionStrategy";
 import { ILazySessionOperations } from "./Operations/Lazy/ILazySessionOperations";
+import { ILazyRevisionsOperations } from "./ILazyRevisionsOperations";
 
 /**
  * Revisions advanced session operations
@@ -112,7 +113,7 @@ export interface IRevisionsSessionOperations {
     /**
      * Access the lazy revisions operations
      */
-    lazily(): ILazySessionOperations;
+    lazily(): ILazyRevisionsOperations;
 }
 
 export interface SessionRevisionsOptions<T extends object> {

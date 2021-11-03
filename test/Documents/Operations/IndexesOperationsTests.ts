@@ -185,7 +185,10 @@ describe("Index operations", function () {
 
         await testContext.waitForIndexing(store, store.database, null, false);
 
-        await delay(500);
+        await testContext.waitForValue(async () => {
+            const errors = await store.maintenance.send(new GetIndexErrorsOperation());
+            return errors[0].errors.length;
+        }, 1);
 
         const indexErrors = await store.maintenance.send(new GetIndexErrorsOperation());
         const perIndexErrors = await store.maintenance.send(new GetIndexErrorsOperation([indexDef.name]));

@@ -6,6 +6,7 @@ import {
     SessionOptions,
     IDocumentStore,
 } from "../../../src";
+import { assertThat } from "../../Utils/AssertExtensions";
 
 describe("ClusterTransactionTest", function () {
 
@@ -21,9 +22,10 @@ describe("ClusterTransactionTest", function () {
     it("canCreateClusterTransactionRequest", async () => {
         const user1 = Object.assign(new User(), { name: "Karmel" });
         const user3 = Object.assign(new User(), { name: "Indych" });
-        const sessionOptions = {
-            transactionMode: "ClusterWide"
-        } as SessionOptions;
+        const sessionOptions: SessionOptions = {
+            transactionMode: "ClusterWide",
+            disableAtomicDocumentWritesInClusterWideTransaction: true
+        };
         {
             const session = store.openSession(sessionOptions);
             session.advanced.clusterTransaction.createCompareExchangeValue("usernames/ayende", user1);
@@ -39,12 +41,57 @@ describe("ClusterTransactionTest", function () {
         }
     });
 
+    it("canDeleteCompareExchangeValue", async function () {
+        const user1 = Object.assign(new User(), { name: "Karmel" });
+        const user3 = Object.assign(new User(), { name: "Indych" });
+        const sessionOptions: SessionOptions = {
+            transactionMode: "ClusterWide",
+            disableAtomicDocumentWritesInClusterWideTransaction: true
+        };
+
+        {
+            const session = store.openSession(sessionOptions);
+            session.advanced.clusterTransaction.createCompareExchangeValue("usernames/ayende", user1);
+            session.advanced.clusterTransaction.createCompareExchangeValue("usernames/marcin", user3);
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession(sessionOptions);
+            const compareExchangeValue = await session.advanced.clusterTransaction.getCompareExchangeValue("usernames/ayende", User);
+            assertThat(compareExchangeValue)
+                .isNotNull();
+            session.advanced.clusterTransaction.deleteCompareExchangeValue(compareExchangeValue);
+
+            const compareExchangeValue2 = await session.advanced.clusterTransaction.getCompareExchangeValue("usernames/marcin", User);
+            assertThat(compareExchangeValue2)
+                .isNotNull();
+            session.advanced.clusterTransaction.deleteCompareExchangeValue("usernames/marcin", compareExchangeValue2.index);
+
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession(sessionOptions);
+            const compareExchangeValue = await session.advanced.clusterTransaction.getCompareExchangeValue("usernames/ayende", User);
+            const compareExchangeValue2 = await session.advanced.clusterTransaction.getCompareExchangeValue("usernames/marcin", User);
+
+            assertThat(compareExchangeValue)
+                .isNull();
+            assertThat(compareExchangeValue2)
+                .isNull();
+        }
+    });
+
     it("testSessionSequance", async function () {
         const user1 = Object.assign(new User(), { name: "Karmel" });
         const user2 = Object.assign(new User(), { name: "Indych" });
 
         {
-            const session = store.openSession({ transactionMode: "ClusterWide" } as SessionOptions);
+            const session = store.openSession({
+                transactionMode: "ClusterWide",
+                disableAtomicDocumentWritesInClusterWideTransaction: true
+            });
             await session.store(user1, "users/1");
             session.advanced.clusterTransaction.createCompareExchangeValue("usernames/ayende", user1);
             await session.saveChanges();
@@ -60,7 +107,10 @@ describe("ClusterTransactionTest", function () {
     });
 
     it("throwOnUnsupportedOperations", async function () {
-        const session = store.openSession({ transactionMode: "ClusterWide" } as SessionOptions);
+        const session = store.openSession({
+            transactionMode: "ClusterWide",
+            disableAtomicDocumentWritesInClusterWideTransaction: true
+        });
         const attachmentStream = Buffer.from([1, 2, 3]);
         session.advanced.attachments.store("asd", "test", attachmentStream);
         try {
@@ -98,7 +148,10 @@ describe("ClusterTransactionTest", function () {
         }
 
         {
-            const session = store.openSession({ transactionMode: "ClusterWide" } as SessionOptions);
+            const session = store.openSession({
+                transactionMode: "ClusterWide",
+                disableAtomicDocumentWritesInClusterWideTransaction: true
+            });
             session.advanced.clusterTransaction.createCompareExchangeValue("usernames/ayende", user1);
             session.advanced.transactionMode = "SingleNode";
 

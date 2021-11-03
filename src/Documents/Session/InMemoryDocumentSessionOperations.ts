@@ -1667,7 +1667,11 @@ export abstract class InMemoryDocumentSessionOperations
                 }
 
                 result.sessionCommands.push(
-                    new PutCommandDataWithJson(entityValue.id, changeVector, document, forceRevisionCreationStrategy));
+                    new PutCommandDataWithJson(entityValue.id,
+                        changeVector,
+                        entityValue.changeVector,
+                        document,
+                        forceRevisionCreationStrategy));
             }
         } finally {
             putsContext.dispose();

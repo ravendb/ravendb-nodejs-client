@@ -183,7 +183,7 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * @param changeVector Change vector of a entity that will be conditional loaded.
      * @param clazz Result class
      */
-    conditionalLoad<T>(id: string, changeVector: string, clazz: ClassConstructor<T>): ConditionalLoadResult<T>;
+    conditionalLoad<T extends object>(id: string, changeVector: string, clazz: DocumentType<T>): Promise<ConditionalLoadResult<T>>;
 }
 
 export interface ReplicationBatchOptions {

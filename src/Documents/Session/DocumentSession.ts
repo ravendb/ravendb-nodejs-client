@@ -966,4 +966,56 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         const tsName = TimeSeriesOperations.getTimeSeriesName(rawOrClass as ClassConstructor<T>, this.conventions);
         return new SessionDocumentRollupTypedTimeSeries(this, entityOrDocumentId, tsName + TIME_SERIES_ROLLUP_SEPARATOR + policy, rawOrClass as ClassConstructor<T>);
     }
+
+    async conditionalLoad<T extends object>(id: string, changeVector: string, clazz: ClassConstructor<T>): Promise<ConditionalLoadResult<T>> {
+        if (StringUtil.isNullOrEmpty(id)) {
+            throwError("InvalidArgumentException", "Id cannot be null");
+        }
+
+        if (this.advanced.isLoaded(id)) {
+            const entity = await this.load(id, clazz);
+            if (!entity) {
+                return {
+                    entity: null,
+                    changeVector: null
+                }
+            }
+
+            const cv = this.advanced.getChangeVectorFor(entity);
+            return {
+                entity,
+                changeVector: cv
+            };
+        }
+
+        if (StringUtil.isNullOrEmpty(changeVector)) {
+            throwError("InvalidArgumentException", "The requested document with id '" + id + "' is not loaded into the session and could not conditional load when changeVector is null or empty.");
+        }
+
+        this.incrementRequestCount();
+
+        const cmd = new ConditionalGetDocumentsCommand(id, changeVector, this.conventions);
+        await this.advanced.requestExecutor.execute(cmd);
+
+        switch (cmd.statusCode) {
+            case StatusCodes.NotModified:
+                return {
+                    entity: null, // value not changed
+                    changeVector
+                }
+            case StatusCodes.NotFound:
+                this.registerMissing(id);
+                return {
+                    entity: null,
+                    changeVector: null // value is missing
+                }
+        }
+
+        const documentInfo = DocumentInfo.getNewDocumentInfo(cmd.result.results[0]);
+        const r = this.trackEntity(clazz, documentInfo);
+        return {
+            entity: r,
+            changeVector: cmd.result.changeVector
+        };
+    }
 }

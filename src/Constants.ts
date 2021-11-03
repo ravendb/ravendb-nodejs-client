@@ -60,7 +60,7 @@ export const CONSTANTS = {
             }
         }
     }
-};
+} as const;
 
 export const HEADERS = {
     REQUEST_TIME: "Raven-Request-Time",
@@ -77,19 +77,20 @@ export const HEADERS = {
     CONTENT_ENCODING: "Content-Encoding",
     CONTENT_LENGTH: "Content-Length",
     DATABASE_MISSING: "Database-Missing"
-};
+} as const;
 
 export const COUNTERS = {
     ALL: "@all_counters"
-};
+} as const;
 
 
 export const TIME_SERIES = {
     SELECT_FIELD_NAME: "timeseries",
     QUERY_FUNCTION: "__timeSeriesQueryFunction",
     ALL: "@all_timeseries"
-}
+} as const;
+
 
 export const COMPARE_EXCHANGE = {
     OBJECT_FIELD_NAME: "Object"
-}
+} as const;

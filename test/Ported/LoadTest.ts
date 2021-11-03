@@ -7,6 +7,7 @@ import {
     IDocumentStore,
 } from "../../src";
 import { ReleaseCacheItem } from "../../src/Http/HttpCache";
+import { assertThat } from "../Utils/AssertExtensions";
 
 describe("LoadTest - ported", function () {
 
@@ -58,6 +59,24 @@ describe("LoadTest - ported", function () {
 
         cacheGetSpy = null;
         cacheSetSpy = null;
+    });
+
+    it("load_Document_And_Expect_Null_User", async function () {
+        {
+            const session = store.openSession();
+            let nullId: string;
+            const user1 = await session.load(nullId, User);
+            assertThat(user1)
+                .isNull();
+
+            const user2 = await session.load("", User);
+            assertThat(user2)
+                .isNull();
+
+            const user3 = await session.load(" ", User);
+            assertThat(user3)
+                .isNull();
+        }
     });
 
     it("can load document by id", async () => {

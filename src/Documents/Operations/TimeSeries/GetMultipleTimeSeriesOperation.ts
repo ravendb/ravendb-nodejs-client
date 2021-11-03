@@ -64,7 +64,7 @@ export class GetMultipleTimeSeriesCommand extends RavenCommand<TimeSeriesDetails
         ranges: TimeSeriesRange[],
         start: number,
         pageSize: number,
-        includes: (includeBuilder: ITimeSeriesIncludeBuilder) => void) {
+        includes?: (includeBuilder: ITimeSeriesIncludeBuilder) => void) {
         super();
 
         if (!docId) {

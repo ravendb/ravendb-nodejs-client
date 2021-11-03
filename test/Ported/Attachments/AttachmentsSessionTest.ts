@@ -158,6 +158,7 @@ describe("Attachments Session", function () {
             {
                 const attachmentResult = await session.advanced.attachments.get("users/1", "file2");
                 assert.strictEqual(attachmentResult.details.name, "file2");
+                attachmentResult.dispose();
             }
 
             session.advanced.attachments.delete("users/1", "file2");

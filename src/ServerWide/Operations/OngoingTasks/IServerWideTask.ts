@@ -1,4 +1,4 @@
 
 export interface IServerWideTask {
-    excludedDatabases: string[];
+    excludedDatabases?: string[];
 }

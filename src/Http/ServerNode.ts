@@ -8,6 +8,7 @@ export class ServerNode {
     public url: string;
     public clusterTag?: string = null;
     public serverRole: ServerNodeRole;
+    public supportsAtomicClusterWrites: boolean;
 
     public constructor(opts?: { database?: string, url?: string, clusterTag?: string }) {
         if (opts) {

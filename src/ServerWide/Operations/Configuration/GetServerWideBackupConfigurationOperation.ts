@@ -59,7 +59,7 @@ class GetServerWideBackupConfigurationCommand extends RavenCommand<ServerWideBac
         }
 
         let body: string = null;
-        const result = await this._defaultPipeline(_ => body = _).process(bodyStream) as GetServerWideBackupConfigurationsResponse;
+        const result = await this._defaultPipeline<GetServerWideBackupConfigurationsResponse>(_ => body = _).process(bodyStream);
 
         const results = result.results as ServerWideBackupConfiguration[];
 

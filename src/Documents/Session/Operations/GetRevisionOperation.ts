@@ -54,6 +54,10 @@ export class GetRevisionOperation {
         this._result = result;
     }
 
+    public get command() {
+        return this._command;
+    }
+
     private _getRevision<TEntity extends object>(documentType: DocumentType<TEntity>, document: IRavenObject): TEntity {
         if (!document) {
             return null;

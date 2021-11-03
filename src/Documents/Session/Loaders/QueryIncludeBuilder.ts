@@ -2,6 +2,10 @@ import { IncludeBuilderBase } from "./IncludeBuilderBase";
 import { IQueryIncludeBuilder } from "./IQueryIncludeBuilder";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { TypeUtil } from "../../../Utility/TypeUtil";
+import { TimeSeriesRangeType } from "../../Operations/TimeSeries/TimeSeriesRangeType";
+import { TimeValue } from "../../../Primitives/TimeValue";
+import { IIncludeBuilder } from "./IIncludeBuilder";
+import { TIME_SERIES } from "../../../Constants";
 
 export class QueryIncludeBuilder extends IncludeBuilderBase implements IQueryIncludeBuilder {
 
@@ -54,12 +58,26 @@ export class QueryIncludeBuilder extends IncludeBuilderBase implements IQueryInc
     public includeTimeSeries(name: string, from: Date, to: Date): IQueryIncludeBuilder;
     public includeTimeSeries(path: string, name: string): IQueryIncludeBuilder;
     public includeTimeSeries(path: string, name: string, from: Date, to: Date): IQueryIncludeBuilder;
-    public includeTimeSeries(nameOrPath: string, fromOrName?: string | Date, toOrFrom?: Date, to?: Date): IQueryIncludeBuilder {
-        if (TypeUtil.isString(fromOrName)) {
+    public includeTimeSeries(name: string, type: TimeSeriesRangeType, time: TimeValue): IQueryIncludeBuilder;
+    public includeTimeSeries(name: string, type: TimeSeriesRangeType, count: number): IQueryIncludeBuilder;
+    public includeTimeSeries(names: string[], type: TimeSeriesRangeType, time: TimeValue): IQueryIncludeBuilder;
+    public includeTimeSeries(names: string[], type: TimeSeriesRangeType, count: number): IQueryIncludeBuilder;
+    public includeTimeSeries(nameOrPathOrNames: string | string[], fromOrNameOrType?: string | Date | TimeSeriesRangeType, toOrFromOrTimeOrCount?: Date | TimeValue | number, to?: Date): IQueryIncludeBuilder {
+        if (TypeUtil.isArray(nameOrPathOrNames)) {
+            if (TypeUtil.isNumber(toOrFromOrTimeOrCount)) {
+                this._includeArrayOfTimeSeriesByRangeTypeAndCount(nameOrPathOrNames, fromOrNameOrType as TimeSeriesRangeType, toOrFromOrTimeOrCount);
+            } else { // names + time
+                this._includeArrayOfTimeSeriesByRangeTypeAndTime(nameOrPathOrNames, fromOrNameOrType as TimeSeriesRangeType, toOrFromOrTimeOrCount as TimeValue);
+            }
+        } else if (toOrFromOrTimeOrCount instanceof TimeValue) {
+            this._includeTimeSeriesByRangeTypeAndTime("", nameOrPathOrNames, fromOrNameOrType as TimeSeriesRangeType, toOrFromOrTimeOrCount as TimeValue);
+        } else if (TypeUtil.isNumber(toOrFromOrTimeOrCount)) {
+            this._includeTimeSeriesByRangeTypeAndCount("", nameOrPathOrNames, fromOrNameOrType as TimeSeriesRangeType, toOrFromOrTimeOrCount);
+        } else if (TypeUtil.isString(fromOrNameOrType)) {
             this._withAlias();
-            this._includeTimeSeriesFromTo(nameOrPath, fromOrName, toOrFrom, to);
+            this._includeTimeSeriesFromTo(nameOrPathOrNames, fromOrNameOrType, toOrFromOrTimeOrCount, to);
         } else {
-            this._includeTimeSeriesFromTo("", nameOrPath, fromOrName, toOrFrom);
+            this._includeTimeSeriesFromTo("", nameOrPathOrNames, fromOrNameOrType, toOrFromOrTimeOrCount);
         }
 
         return this;
@@ -67,6 +85,18 @@ export class QueryIncludeBuilder extends IncludeBuilderBase implements IQueryInc
 
     public includeCompareExchangeValue(path: string): IQueryIncludeBuilder {
         this._includeCompareExchangeValue(path);
+        return this;
+    }
+
+    public includeAllTimeSeries(type: TimeSeriesRangeType, time: TimeValue): IQueryIncludeBuilder;
+    public includeAllTimeSeries(type: TimeSeriesRangeType, count: number): IQueryIncludeBuilder;
+    public includeAllTimeSeries(type: TimeSeriesRangeType, timeOrCount: number | TimeValue): IQueryIncludeBuilder {
+        if (TypeUtil.isNumber(timeOrCount)) {
+            this._includeTimeSeriesByRangeTypeAndCount("", TIME_SERIES.ALL, type, timeOrCount);
+        } else {
+            this._includeTimeSeriesByRangeTypeAndTime("", TIME_SERIES.ALL, type, timeOrCount);
+        }
+
         return this;
     }
 }

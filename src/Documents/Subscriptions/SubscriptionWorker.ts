@@ -312,24 +312,24 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                 break;
             case "InUse":
                 throwError("SubscriptionInUseException",
-                    "Subscription with id " + this._options.subscriptionName
-                    + " cannot be opened, because it's in use and the connection strategy is "
+                    "Subscription with id '" + this._options.subscriptionName
+                    + "' cannot be opened, because it's in use and the connection strategy is "
                     + this._options.strategy);
             case "Closed":
                 const canReconnect = connectionStatus.data.CanReconnect || false;
                 const subscriptionClosedError = getError("SubscriptionClosedException",
-                    "Subscription with id " + this._options.subscriptionName
-                    + " was closed. " + connectionStatus.exception);
+                    "Subscription with id '" + this._options.subscriptionName
+                    + "' was closed. " + connectionStatus.exception);
                 (subscriptionClosedError as any).canReconnect = canReconnect;
                 throw subscriptionClosedError;
             case "Invalid":
                 throwError("SubscriptionInvalidStateException",
-                    "Subscription with id " + this._options.subscriptionName
-                    + " cannot be opened, because it is in invalid state. " + connectionStatus.exception);
+                    "Subscription with id '" + this._options.subscriptionName
+                    + "' cannot be opened, because it is in invalid state. " + connectionStatus.exception);
             case "NotFound":
                 throwError("SubscriptionDoesNotExistException",
-                    "Subscription with id " + this._options.subscriptionName
-                    + " cannot be opened, because it does not exist. " + connectionStatus.exception);
+                    "Subscription with id '" + this._options.subscriptionName
+                    + "' cannot be opened, because it does not exist. " + connectionStatus.exception);
             case "Redirect":
                 const data = connectionStatus.data;
                 const appropriateNode = data.redirectedTag;
@@ -345,8 +345,8 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                 throwError("SubscriptionChangeVectorUpdateConcurrencyException", connectionStatus.message);
             default:
                 throwError("InvalidOperationException",
-                    "Subscription " + this._options.subscriptionName
-                    + " could not be opened, reason: " + connectionStatus.status);
+                    "Subscription '" + this._options.subscriptionName
+                    + "' could not be opened, reason: " + connectionStatus.status);
         }
     }
 
@@ -385,7 +385,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                     this._subscriptionLocalRequestExecutor, this._store, this._dbName);
 
                 while (!this._processingCanceled) {
-                    // start the read from the server
+                    // start reading next batch from server on 1'st thread (can be before client started processing)
 
                     readFromServer = this._readSingleSubscriptionBatchFromServer(batch);
 
@@ -445,9 +445,8 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                 throw err;
             }
 
-            // otherwise this is thrown when shutting down, it
-            // isn't an error, so we don't need to treat
-            // it as such
+            // otherwise this is thrown when shutting down,
+            // it isn't an error, so we don't need to treat it as such
         }
     }
 
@@ -470,8 +469,9 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
     private async _readSingleSubscriptionBatchFromServer(batch: SubscriptionBatch<T>):
         Promise<BatchFromServer> {
         const incomingBatch = [] as SubscriptionConnectionServerMessage[];
-        const includes = [];
+        const includes: any[] = [];
         const counterIncludes: CounterIncludeItem[] = [];
+        const timeSeriesIncludes: any = [];
 
         let endOfBatch = false;
 
@@ -490,6 +490,9 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                     break;
                 case "CounterIncludes":
                     counterIncludes.push({ counterIncludes: receivedMessage.includedCounterNames, includes: receivedMessage.counterIncludes });
+                    break;
+                case "TimeSeriesIncludes":
+                    timeSeriesIncludes.push(receivedMessage.timeSeriesIncludes);
                     break;
                 case "EndOfBatch":
                     endOfBatch = true;
@@ -515,7 +518,8 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         return {
             messages: incomingBatch,
             includes,
-            counterIncludes
+            counterIncludes,
+            timeSeriesIncludes
         };
     }
 

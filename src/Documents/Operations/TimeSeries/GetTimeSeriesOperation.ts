@@ -15,6 +15,7 @@ import { ServerNode } from "../../../Http/ServerNode";
 import { StringBuilder } from "../../../Utility/StringBuilder";
 import { ServerResponse } from "../../../Types";
 import { ITimeSeriesIncludeBuilder } from "../../Session/Loaders/ITimeSeriesIncludeBuilder";
+import { TimeSeriesIncludeBuilder } from "../../Session/Loaders/TimeSeriesIncludeBuilder";
 
 export class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult> {
     private readonly _docId: string;
@@ -129,6 +130,22 @@ export class GetTimeSeriesCommand extends RavenCommand<TimeSeriesRangeResult> {
         return {
             method: "GET",
             uri
+        }
+    }
+
+    public static addIncludesToRequest(pathBuilder: StringBuilder, includes: (includeBuilder: ITimeSeriesIncludeBuilder) => void): void {
+        const includeBuilder = new TimeSeriesIncludeBuilder(DocumentConventions.defaultConventions);
+
+        includes(includeBuilder);
+
+        if (includeBuilder.includeTimeSeriesDocument) {
+            pathBuilder
+                .append("&includeDocument=true");
+        }
+
+        if (includeBuilder.includeTimeSeriesTags) {
+            pathBuilder
+                .append("&includeTags=true");
         }
     }
 

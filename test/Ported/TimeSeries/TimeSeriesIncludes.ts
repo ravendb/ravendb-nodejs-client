@@ -3,6 +3,8 @@ import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
 import moment = require("moment");
 import { Company, Order } from "../../Assets/Entities";
 import { assertThat } from "../../Utils/AssertExtensions";
+import { TimeValue } from "../../../src/Primitives/TimeValue";
+import { DateUtil } from "../../../src/Utility/DateUtil";
 
 describe("TimeSeriesIncludesTest", function () {
 
@@ -389,6 +391,43 @@ describe("TimeSeriesIncludesTest", function () {
                 .isEqualTo(baseLine.clone().add(0, "minutes").toDate().getTime());
             assertThat(ranges[0].to.getTime())
                 .isEqualTo(baseLine.clone().add(50, "minutes").toDate().getTime());
+
+            // evict just the document
+            sessionOperations.documentsByEntity.evict(user);
+            sessionOperations.documentsById.remove(documentId);
+
+            // should go to server to get range [50, ∞]
+            // and merge the result with existing range [0, 50] into single range [0, ∞]
+
+            user = await session.load<User>(documentId, {
+                documentType: User,
+                includes: i => i.includeTimeSeries("heartrate", "Last", TimeValue.ofMinutes(10))
+            });
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(8);
+
+            // should not go to server
+            vals = await session.timeSeriesFor(documentId, "heartrate")
+                .get(baseLine.clone().add(50, "minutes").toDate(), null);
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(8);
+
+            assertThat(vals)
+                .hasSize(60);
+
+            assertThat(vals[0].timestamp.getTime())
+                .isEqualTo(baseLine.clone().add(50, "minutes").toDate().getTime());
+            assertThat(vals[59].timestamp.getTime())
+                .isEqualTo(baseLine.clone().add(59, "minutes").add(50, "seconds").toDate().getTime());
+
+            assertThat(ranges)
+                .hasSize(1);
+            assertThat(ranges[0].from.getTime())
+                .isEqualTo(baseLine.toDate().getTime());
+            assertThat(ranges[0].to)
+                .isNull();
         }
     });
 

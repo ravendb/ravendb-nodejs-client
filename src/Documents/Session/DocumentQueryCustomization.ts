@@ -5,6 +5,7 @@ import { QueryResult } from "../Queries/QueryResult";
 import { IndexQuery } from "../Queries/IndexQuery";
 import { ValueCallback } from "../../Types/Callbacks";
 import { QueryTimings } from "../Queries/Timings/QueryTimings";
+import { ProjectionBehavior } from "../Queries/ProjectionBehavior";
 
 export class DocumentQueryCustomization
     implements IDocumentQueryCustomization {
@@ -13,6 +14,10 @@ export class DocumentQueryCustomization
 
     public constructor(query: AbstractDocumentQuery<any, any>) {
         this._query = query;
+    }
+
+    getQuery(): AbstractDocumentQuery<any, any> {
+        return this._query;
     }
 
     public getQueryOperation(): QueryOperation {
@@ -78,6 +83,11 @@ export class DocumentQueryCustomization
 
     public timings(timings: ValueCallback<QueryTimings>): IDocumentQueryCustomization {
         this._query._includeTimings(timings);
+        return this;
+    }
+
+    public projection(projectionBehavior: ProjectionBehavior): IDocumentQueryCustomization {
+        this._query._projection(projectionBehavior);
         return this;
     }
 

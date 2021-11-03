@@ -6,6 +6,11 @@ import { CaseInsensitiveKeysMap } from "../../../Primitives/CaseInsensitiveKeysM
 import { CaseInsensitiveStringSet } from "../../../Primitives/CaseInsensitiveStringSet";
 import { TimeSeriesRange } from "../../Operations/TimeSeries/TimeSeriesRange";
 import { AbstractTimeSeriesRange } from "../../Operations/TimeSeries/AbstractTimeSeriesRange";
+import { TIME_SERIES } from "../../../Constants";
+import { TimeSeriesRangeType } from "../../Operations/TimeSeries/TimeSeriesRangeType";
+import { TimeValue } from "../../../Primitives/TimeValue";
+import { TimeSeriesTimeRange } from "../../Operations/TimeSeries/TimeSeriesTimeRange";
+import { TimeSeriesCountRange } from "../../Operations/TimeSeries/TimeSeriesCountRange";
 
 export class IncludeBuilderBase {
 
@@ -150,7 +155,7 @@ export class IncludeBuilderBase {
     }
 
     protected _includeTimeSeriesFromTo(alias: string, name: string, from: Date, to: Date) {
-        this.assertValid(alias, name);
+        this._assertValid(alias, name);
 
         if (!this.timeSeriesToIncludeBySourceAlias) {
             this.timeSeriesToIncludeBySourceAlias = new Map<string, AbstractTimeSeriesRange[]>();
@@ -175,5 +180,122 @@ export class IncludeBuilderBase {
         }
 
         hashSet.push(range);
+    }
+
+    protected _includeTimeSeriesByRangeTypeAndTime(alias: string, name: string, type: TimeSeriesRangeType, time: TimeValue) {
+        this._assertValid(alias, name);
+        IncludeBuilderBase._assertValidType(type, time);
+
+        if (!this.timeSeriesToIncludeBySourceAlias) {
+            this.timeSeriesToIncludeBySourceAlias = new Map<string, AbstractTimeSeriesRange[]>();
+        }
+
+        let hashSet = this.timeSeriesToIncludeBySourceAlias.get(alias);
+        if (!hashSet) {
+            hashSet = [];
+            this.timeSeriesToIncludeBySourceAlias.set(alias, hashSet);
+        }
+
+        const timeRange: TimeSeriesTimeRange = {
+            name,
+            type,
+            time
+        };
+
+        hashSet.push(timeRange);
+    }
+
+    private static _assertValidType(type: TimeSeriesRangeType, time: TimeValue): void {
+        switch (type) {
+            case "None":
+                throwError("InvalidArgumentException", "Time range type cannot be set to NONE when time is specified.");
+            case "Last":
+                if (time) {
+                    if (time.value <= 0) {
+                        throwError("InvalidArgumentException", "Time range type cannot be set to LAST when time is negative or zero.");
+                    }
+
+                    return;
+                }
+                throwError("InvalidArgumentException", "Time range type cannot be set to LAST when time is not specified.");
+            default:
+                throwError("NotSupportedException", "Not supported time range type: " + type);
+        }
+    }
+
+    protected _includeTimeSeriesByRangeTypeAndCount(alias: string, name: string, type: TimeSeriesRangeType, count: number): void {
+        this._assertValid(alias, name);
+        IncludeBuilderBase._assertValidTypeAndCount(type, count);
+
+        if (!this.timeSeriesToIncludeBySourceAlias) {
+            this.timeSeriesToIncludeBySourceAlias = new Map<string, AbstractTimeSeriesRange[]>();
+        }
+
+        let hashSet = this.timeSeriesToIncludeBySourceAlias.get(alias);
+        if (!hashSet) {
+            hashSet = [];
+            this.timeSeriesToIncludeBySourceAlias.set(alias, hashSet);
+        }
+
+        const countRange: TimeSeriesCountRange = {
+            name,
+            count,
+            type
+        };
+
+        hashSet.push(countRange);
+    }
+
+    private static _assertValidTypeAndCount(type: TimeSeriesRangeType, count: number): void {
+        switch (type) {
+            case "None":
+                throwError("InvalidArgumentException", "Time range type cannot be set to 'None' when count is specified.");
+            case "Last":
+                if (count <= 0) {
+                    throwError("InvalidArgumentException", "Count have to be positive.");
+                }
+                break;
+            default:
+                throwError("NotSupportedException", "Not supported time range type: " + type);
+        }
+    }
+
+    protected _includeArrayOfTimeSeriesByRangeTypeAndTime(names: string[], type: TimeSeriesRangeType, time: TimeValue): void {
+        if (!names) {
+            throwError("InvalidArgumentException", "Names cannot be null");
+        }
+
+        for (const name of names) {
+            this._includeTimeSeriesByRangeTypeAndTime("", name, type, time);
+        }
+    }
+
+    protected _includeArrayOfTimeSeriesByRangeTypeAndCount(names: string[], type: TimeSeriesRangeType, count: number): void {
+        if (!names) {
+            throwError("InvalidArgumentException", "Names cannot be null");
+        }
+
+        for (const name of names) {
+            this._includeTimeSeriesByRangeTypeAndCount("", name, type, count);
+        }
+    }
+
+    private _assertValid(alias: string, name: string): void {
+        if (StringUtil.isNullOrEmpty(name)) {
+            throwError("InvalidArgumentException", "Name cannot be null or empty");
+        }
+
+        if (this.timeSeriesToIncludeBySourceAlias) {
+            const hashSet2 = this.timeSeriesToIncludeBySourceAlias.get(alias);
+            if (hashSet2 && hashSet2.length) {
+                if (TIME_SERIES.ALL === name) {
+                    throwError("InvalidArgumentException", "IIncludeBuilder: Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
+                }
+
+                if (hashSet2.find(x => x.name === TIME_SERIES.ALL)) {
+                    throwError("InvalidArgumentException", "IIncludeBuilder : Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
+                }
+            }
+        }
     }
 }

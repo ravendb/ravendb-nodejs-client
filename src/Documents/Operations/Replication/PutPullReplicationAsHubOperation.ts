@@ -1,5 +1,4 @@
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
-import { FeatureTaskDefinition } from "./FeatureTaskDefinition";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { throwError } from "../../../Exceptions/index";
 import { PullReplicationDefinition } from "./PullReplicationDefinition";

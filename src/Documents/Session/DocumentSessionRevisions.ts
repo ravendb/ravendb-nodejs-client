@@ -11,9 +11,9 @@ import { DocumentType } from "../DocumentAbstractions";
 import { RevisionsCollectionObject } from "../../Types";
 import { DocumentSessionRevisionsBase } from "./DocumentSessionRevisionsBase";
 import { LazyRevisionOperations } from "./Operations/Lazy/LazyRevisionOperations";
-import { ILazySessionOperations } from "./Operations/Lazy/ILazySessionOperations";
 import { DocumentSession } from "./DocumentSession";
 import { GetRevisionsCountOperation } from "./Operations/GetRevisionsCountOperation";
+import { ILazyRevisionsOperations } from "./ILazyRevisionsOperations";
 
 export class DocumentSessionRevisions extends DocumentSessionRevisionsBase implements IRevisionsSessionOperations {
 
@@ -21,7 +21,7 @@ export class DocumentSessionRevisions extends DocumentSessionRevisionsBase imple
         super(session);
     }
 
-    lazily(): ILazySessionOperations {
+    lazily(): ILazyRevisionsOperations {
         return new LazyRevisionOperations(this._session as DocumentSession);
     }
 

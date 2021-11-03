@@ -10,7 +10,7 @@ import { GetDatabaseRecordOperation } from "../../../src/ServerWide/Operations/G
 import { CreateDatabaseOperation } from "../../../src/ServerWide/Operations/CreateDatabaseOperation";
 import { DatabaseRecord } from "../../../src/ServerWide/index";
 import { GetServerWideBackupConfigurationOperation } from "../../../src/ServerWide/Operations/Configuration/GetServerWideBackupConfigurationOperation";
-import { DeleteServerWideBackupConfigurationOperation } from "../../../src/ServerWide/Operations/Configuration/DeleteServerWideBackupConfigurationOperation";
+import { DeleteServerWideTaskOperation } from "../../../src/ServerWide/Operations/OngoingTasks/DeleteServerWideTaskOperation";
 
 (RavenTestContext.isPullRequest ? describe.skip : describe)("ServerWideBackup", function () {
 
@@ -97,7 +97,7 @@ async function cleanupServerWideBackups(store: IDocumentStore) {
         .map(x => x.name);
 
     for (const name of names) {
-        await store.maintenance.server.send(new DeleteServerWideBackupConfigurationOperation(name));
+        await store.maintenance.server.send(new DeleteServerWideTaskOperation(name, "Backup"));
     }
 
     assertThat(await store.maintenance.server.send(new GetServerWideBackupConfigurationsOperation()))

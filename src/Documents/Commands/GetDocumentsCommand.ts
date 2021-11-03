@@ -16,8 +16,6 @@ import { TimeSeriesRange } from "../Operations/TimeSeries/TimeSeriesRange";
 import { DateUtil } from "../../Utility/DateUtil";
 import { readToEnd, stringToReadable } from "../../Utility/StreamUtil";
 import { ServerResponse } from "../../Types";
-import { QueryResult } from "../Queries/QueryResult";
-import { QueryCommand } from "./QueryCommand";
 import { ObjectUtil } from "../../Utility/ObjectUtil";
 import { AbstractTimeSeriesRange } from "../Operations/TimeSeries/AbstractTimeSeriesRange";
 import { TimeSeriesTimeRange } from "../Operations/TimeSeries/TimeSeriesTimeRange";
@@ -194,10 +192,35 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         }
 
         if (this._timeSeriesIncludes) {
-            for (const range of this._timeSeriesIncludes) {
-                query += "&timeseries=" + this._urlEncode(range.name)
-                    + "&from=" + (range.from ? DateUtil.utc.stringify(range.from) : "")
-                    + "&to=" + (range.to ? DateUtil.utc.stringify(range.to) : "");
+            for (const tsInclude of this._timeSeriesIncludes) {
+                if ("from" in tsInclude) {
+                    const range = tsInclude as TimeSeriesRange;
+                    query += "&timeseries=" + this._urlEncode(range.name)
+                        + "&from=" + (range.from ? DateUtil.utc.stringify(range.from) : "")
+                        + "&to=" + (range.to ? DateUtil.utc.stringify(range.to) : "");
+                } else if ("time" in tsInclude) {
+                    const timeRange = tsInclude as TimeSeriesTimeRange;
+                    query +=
+                        "&timeseriestime="
+                        + this._urlEncode(timeRange.name)
+                        + "&timeType="
+                        + this._urlEncode(timeRange.type)
+                        + "&timeValue="
+                        + timeRange.time.value
+                        + "&timeUnit="
+                        + this._urlEncode(timeRange.time.unit);
+                } else if ("count" in tsInclude) {
+                    const countRange = tsInclude as TimeSeriesCountRange;
+                    query +=
+                        "&timeseriescount="
+                        + this._urlEncode(countRange.name)
+                        + "&countType="
+                        + this._urlEncode(countRange.type)
+                        + "&countValue="
+                        + countRange.count;
+                } else {
+                    throwError("InvalidArgumentException", "Unexpected TimeSeries range: " + tsInclude);
+                }
             }
         }
 
