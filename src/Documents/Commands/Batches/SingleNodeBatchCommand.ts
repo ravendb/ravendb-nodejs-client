@@ -142,7 +142,7 @@ export class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
         return body;
     }
 
-    private _appendOptions(): string {
+    protected _appendOptions(): string {
         if (!this._options) {
             return "";
         }

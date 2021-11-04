@@ -21,6 +21,8 @@ import { IncludesUtil } from "../Session/IncludesUtil";
 import { StringBuilder } from "../../Utility/StringBuilder";
 import { SubscriptionUpdateOptions } from "./SubscriptionUpdateOptions";
 import { UpdateSubscriptionCommand } from "../Commands/UpdateSubscriptionCommand";
+import { CounterIncludesToken } from "../Session/Tokens/CounterIncludesToken";
+import { TimeSeriesIncludesToken } from "../Session/Tokens/TimeSeriesIncludesToken";
 
 export class DocumentSubscriptions implements IDisposable {
     private readonly _store: DocumentStore;
@@ -111,20 +113,22 @@ export class DocumentSubscriptions implements IDisposable {
 
         const objectDescriptor = this._store.conventions.getJsTypeByDocumentType(criteria.documentType);
         const collectionName = this._store.conventions.getCollectionNameForType(objectDescriptor);
+        let queryBuilder: StringBuilder;
 
-        if (!criteria.query) {
-            const builder = new StringBuilder("from '");
-            StringUtil.escapeString(builder, collectionName);
-            builder.append("'");
+        if (criteria.query) {
+            queryBuilder = new StringBuilder(criteria.query);
+        } else {
+            queryBuilder = new StringBuilder("`from '`");
+            StringUtil.escapeString(queryBuilder, collectionName);
+            queryBuilder.append("'");
 
             if (revisions) {
-                builder.append(" (Revisions = true)");
+                queryBuilder.append(" (Revisions = true)");
             }
 
-            builder.append(" as doc");
-
-            criteria.query = builder.toString();
+            queryBuilder.append(" as doc");
         }
+
         if (criteria.includes) {
             const builder = new SubscriptionIncludeBuilder(this._store.conventions);
             criteria.includes(builder);
@@ -132,19 +136,23 @@ export class DocumentSubscriptions implements IDisposable {
             let numberOfIncludesAdded = 0;
 
             if (builder.documentsToInclude && builder.documentsToInclude.size) {
-                criteria.query += os.EOL + "include ";
+                queryBuilder.append(os.EOL + "include ");
 
                 for (const inc of builder.documentsToInclude) {
                     const include = "doc." + inc;
                     if (numberOfIncludesAdded > 0) {
-                        criteria.query += ",";
+                        queryBuilder.append(",");
                     }
 
                     let escapedInclude: string;
                     if (IncludesUtil.requiresQuotes(include, x => escapedInclude = x)) {
-                        criteria.query += "'" + escapedInclude + "'";
+                        queryBuilder
+                            .append("'")
+                            .append(escapedInclude)
+                            .append("'");
                     } else {
-                        criteria.query += include;
+                        queryBuilder
+                            .append(include);
                     }
 
                     numberOfIncludesAdded++;
@@ -153,31 +161,54 @@ export class DocumentSubscriptions implements IDisposable {
 
             if (builder.isAllCounters) {
                 if (!numberOfIncludesAdded) {
-                    criteria.query += os.EOL + " include ";
+                    queryBuilder
+                        .append(os.EOL)
+                        .append("include ");
                 }
 
-                criteria.query += "counters()";
+                const token = CounterIncludesToken.all("");
+                token.writeTo(queryBuilder);
                 numberOfIncludesAdded++;
             } else if (builder.countersToInclude && builder.countersToInclude.size) {
                 if (!numberOfIncludesAdded) {
-                    criteria.query += os.EOL + " include ";
+                    queryBuilder
+                        .append(os.EOL)
+                        .append(" include");
                 }
 
                 for (const counterName of builder.countersToInclude) {
                     if (numberOfIncludesAdded > 0) {
-                        criteria.query += ",";
+                        queryBuilder.append(",");
                     }
-                    let escapedCounterName: string;
-                    if (IncludesUtil.requiresQuotes(counterName, x => escapedCounterName = x)) {
-                        criteria.query += "counters(" + escapedCounterName + ")";
-                    } else {
-                        criteria.query += "counters(" + counterName + ")";
+
+                    const token = CounterIncludesToken.create("", counterName);
+                    token.writeTo(queryBuilder);
+
+                    numberOfIncludesAdded++;
+                }
+            }
+
+            if (builder.timeSeriesToInclude) {
+                for (const timeSeriesRange of builder.timeSeriesToInclude) {
+                    if (numberOfIncludesAdded === 0) {
+                        queryBuilder
+                            .append(os.EOL)
+                            .append("include ");
                     }
+
+                    if (numberOfIncludesAdded > 0) {
+                        queryBuilder.append(",");
+                    }
+
+                    const token = TimeSeriesIncludesToken.create("", timeSeriesRange)
+                    token.writeTo(queryBuilder);
 
                     numberOfIncludesAdded++;
                 }
             }
         }
+
+        criteria.query = queryBuilder.toString();
 
         return criteria;
     }

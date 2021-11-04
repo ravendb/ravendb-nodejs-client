@@ -18,6 +18,7 @@ import { ITimeSeriesQueryBuilder } from "../Queries/TimeSeries/ITimeSeriesQueryB
 import { TimeSeriesAggregationResult } from "../Queries/TimeSeries/TimeSeriesAggregationResult";
 import { TimeSeriesRawResult } from "../Queries/TimeSeries/TimeSeriesRawResult";
 import { Field } from "../../Types";
+import { ProjectionBehavior } from "../Queries/ProjectionBehavior";
 
 /**
  * A query against a Raven index
@@ -59,6 +60,14 @@ export interface IDocumentQuery<T extends object>
 
     /**
      * Selects the specified fields directly from the index if the are stored.
+     * If the field is not stored in index, value
+     * will come from document directly.
+     */
+    selectFields<TProjection extends object>(
+        properties: string[], projectionClass: DocumentType<TProjection>, projectionBehavior: ProjectionBehavior): IDocumentQuery<TProjection>;
+
+    /**
+     * Selects the specified fields directly from the index if the are stored.
      * If the field is not stored in index, value will come from document directly.
      */
     selectFields<TProjection extends object>(properties: string[]): IDocumentQuery<TProjection>;
@@ -75,6 +84,13 @@ export interface IDocumentQuery<T extends object>
      */
     selectFields<TProjection extends object>(
         queryData: QueryData, projectionClass: DocumentType<TProjection>): IDocumentQuery<TProjection>;
+
+    /**
+     * Selects the specified fields directly from the index if the are stored.
+     * If the field is not stored in index, value will come from document directly.
+     */
+    selectFields<TProjection extends object>(
+        queryData: QueryData, projectionClass: DocumentType<TProjection>, projectionBehavior: ProjectionBehavior): IDocumentQuery<TProjection>;
 
     /**
      * Selects a Time Series Aggregation based on

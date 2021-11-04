@@ -22,8 +22,13 @@ export class SessionDocumentRollupTypedTimeSeries<T extends object> extends Sess
     public async get(from: Date, to: Date, start: number): Promise<TypedTimeSeriesRollupEntry<T>[]>;
     public async get(from: Date, to: Date, start: number, pageSize: number): Promise<TypedTimeSeriesRollupEntry<T>[]>
     public async get(from?: Date, to?: Date, start: number = 0, pageSize: number = TypeUtil.MAX_INT32): Promise<TypedTimeSeriesRollupEntry<T>[]> {
-        const results = await this.getInternal(from, to, start, pageSize);
+        if (this._notInCache(from, to)) {
+            const results = await this.getTimeSeriesAndIncludes(from, to, null, start, pageSize);
 
+            return results.map(x => TypedTimeSeriesRollupEntry.fromEntry(x, this._clazz));
+        }
+
+        const results = await this._getFromCache(from, to, null, start, pageSize);
         return results
             .map(x => TypedTimeSeriesRollupEntry.fromEntry(x, this._clazz));
     }

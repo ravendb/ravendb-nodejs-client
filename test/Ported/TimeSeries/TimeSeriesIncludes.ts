@@ -2,7 +2,7 @@ import { IDocumentStore, InMemoryDocumentSessionOperations } from "../../../src"
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
 import moment = require("moment");
 import { Company, Order } from "../../Assets/Entities";
-import { assertThat } from "../../Utils/AssertExtensions";
+import { assertThat, assertThrows } from "../../Utils/AssertExtensions";
 import { TimeValue } from "../../../src/Primitives/TimeValue";
 import { DateUtil } from "../../../src/Utility/DateUtil";
 
@@ -963,7 +963,771 @@ describe("TimeSeriesIncludesTest", function () {
                 .isEqualTo(baseLine.clone().add(30, "minutes").toDate().getTime());
         }
     });
+
+    it("canLoadAsyncWithIncludeTimeSeries_LastRange_ByCount", async function () {
+        const baseline = moment().startOf("day").add(12, "hours");
+
+        {
+            const session = store.openSession();
+            const company = new Company();
+            company.name = "HR";
+            await session.store(company, "companies/1-A");
+
+            const order = new Order();
+            order.company = "companies/1-A";
+            await session.store(order, "orders/1-A");
+
+            const tsf = session.timeSeriesFor("orders/1-A", "heartrate");
+
+            for (let i = 0; i < 15; i++) {
+                tsf.append(baseline.clone().add(-i, "minutes").toDate(), i, "watches/fitbit");
+            }
+
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const order = await session.load("orders/1-A", {
+                documentType: Order,
+                includes: i => i.includeDocuments("company")
+                    .includeTimeSeries("heartrate", "Last", 11)
+            });
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            // should not go to server
+
+            const company = await session.load(order.company, Company);
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+            assertThat(company.name)
+                .isEqualTo("HR");
+
+            // should not go to server
+            const values = await session.timeSeriesFor(order, "heartrate")
+                .get(baseline.clone().add(-10, "minutes").toDate(), null);
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+            assertThat(values)
+                .hasSize(11);
+
+            for (let i = 0; i < values.length; i++) {
+                assertThat(values[i].values)
+                    .hasSize(1);
+                assertThat(values[i].values[0])
+                    .isEqualTo(values.length - 1 - i);
+                assertThat(values[i].tag)
+                    .isEqualTo("watches/fitbit");
+                assertThat(values[i].timestamp.getTime())
+                    .isEqualTo(baseline.clone().add(-(values.length - 1 - i), "minutes").toDate().getTime());
+
+            }
+        }
+    });
+
+    it("canLoadAsyncWithInclude_AllTimeSeries_LastRange_ByTime", async function () {
+        const baseline = moment().startOf("day");
+
+        {
+            const session = store.openSession();
+            const company = new Company();
+            company.name = "HR";
+            await session.store(company, "companies/1-A");
+
+            const order = new Order();
+            order.company = "companies/1-A";
+            await session.store(order, "orders/1-A");
+
+            const tsf = session.timeSeriesFor("orders/1-A", "heartrate");
+
+            for (let i = 0; i < 15; i++) {
+                tsf.append(baseline.clone().add(-i, "minutes").toDate(), i, "watches/bitfit");
+            }
+
+            const tsf2 = session.timeSeriesFor("orders/1-A", "speedrate");
+            for (let i = 0; i < 15; i++) {
+                tsf2.append(baseline.clone().add(-i, "minutes").toDate(), i, "watches/fitbit");
+            }
+            
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const order = await session.load<Order>("orders/1-A", {
+                documentType: Order,
+                includes: i => i.includeDocuments("company").includeAllTimeSeries("Last", TimeValue.ofMinutes(10))
+            });
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            // should not go to server
+            const company = await session.load(order.company, Company);
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            assertThat(company.name)
+                .isEqualTo("HR");
+
+            // should not go to server
+            const heartrateValues = await session.timeSeriesFor(order, "heartrate")
+                .get(baseline.clone().add(-10, "minutes").toDate(), null);
+
+            assertThat(heartrateValues)
+                .hasSize(11);
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            const speedrateValues = await session.timeSeriesFor(order, "speedrate")
+                .get(baseline.clone().add(-10, "minutes").toDate(), null);
+
+            assertThat(speedrateValues)
+                .hasSize(11);
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            for (let i = 0; i < heartrateValues.length; i++) {
+                assertThat(heartrateValues[i].values)
+                    .hasSize(1);
+                assertThat(heartrateValues[i].values[0])
+                    .isEqualTo(heartrateValues.length - 1 - i);
+                assertThat(heartrateValues[i].tag)
+                    .isEqualTo("watches/bitfit");
+                assertThat(heartrateValues[i].timestamp.getTime())
+                    .isEqualTo(baseline.clone().add(-(heartrateValues.length - 1 - i), "minutes").toDate().getTime());
+            }
+
+            for (let i = 0; i < speedrateValues.length; i++) {
+                assertThat(speedrateValues[i].values)
+                    .hasSize(1);
+                assertThat(speedrateValues[i].values[0])
+                    .isEqualTo(speedrateValues.length - 1 - i);
+                assertThat(speedrateValues[i].tag)
+                    .isEqualTo("watches/fitbit");
+                assertThat(speedrateValues[i].timestamp.getTime())
+                    .isEqualTo(baseline.clone().add(-(speedrateValues.length - 1 - i), "minutes").toDate().getTime());
+            }
+        }
+    });
+
+    it("canLoadAsyncWithInclude_AllTimeSeries_LastRange_ByCount", async function () {
+        const baseline = moment().startOf("day").add(3, "hours");
+
+        {
+            const session = store.openSession();
+            const company = new Company();
+            company.name = "HR";
+            await session.store(company, "companies/1-A");
+
+            const order = new Order();
+            order.company = "companies/1-A";
+            await session.store(order, "orders/1-A");
+
+            const tsf = session.timeSeriesFor("orders/1-A", "heartrate");
+            for (let i = 0; i < 15; i++) {
+                tsf.append(baseline.clone().add(-i, "minutes").toDate(), i, "watches/bitfit");
+            }
+
+            const tsf2 = session.timeSeriesFor("orders/1-A", "speedrate");
+            for (let i = 0; i < 15; i++) {
+                tsf2.append(baseline.clone().add(-i, "minutes").toDate(), i, "watches/fitbit");
+            }
+
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+
+            const order = await session.load<Order>("orders/1-A", {
+                documentType: Order,
+                includes: i => i.includeDocuments("company").includeAllTimeSeries("Last", 11)
+            });
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            // should not go to server
+            const company = await session.load(order.company, Company);
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            assertThat(company.name)
+                .isEqualTo("HR");
+
+            // should not go to server
+            const heartrateValues = await session.timeSeriesFor(order, "heartrate")
+                .get(baseline.clone().add(-10, "minutes").toDate(), null);
+
+            assertThat(heartrateValues)
+                .hasSize(11);
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            const speedrateValues = await session.timeSeriesFor(order, "speedrate")
+                .get(baseline.clone().add(-10, "minutes").toDate(), null);
+
+            assertThat(speedrateValues)
+                .hasSize(11);
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+
+            for (let i = 0; i < heartrateValues.length; i++) {
+                assertThat(heartrateValues[i].values)
+                    .hasSize(1);
+                assertThat(heartrateValues[i].values[0])
+                    .isEqualTo(heartrateValues.length - 1 - i);
+                assertThat(heartrateValues[i].tag)
+                    .isEqualTo("watches/bitfit");
+                assertThat(heartrateValues[i].timestamp.getTime())
+                    .isEqualTo(baseline.clone().add(-(heartrateValues.length - 1 - i), "minutes").toDate().getTime());
+            }
+
+            for (let i = 0; i < speedrateValues.length; i++) {
+                assertThat(speedrateValues[i].values)
+                    .hasSize(1);
+                assertThat(speedrateValues[i].values[0])
+                    .isEqualTo(speedrateValues.length - 1 - i);
+                assertThat(speedrateValues[i].tag)
+                    .isEqualTo("watches/fitbit");
+                assertThat(speedrateValues[i].timestamp.getTime())
+                    .isEqualTo(baseline.clone().add(-(speedrateValues.length - 1 - i), "minutes").toDate().getTime());
+            }
+        }
+    });
+
+    it("shouldThrowOnIncludeAllTimeSeriesAfterIncludingTimeSeries", async function () {
+        {
+            const session = store.openSession();
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeAllTimeSeries("Last", 11)
+                        .includeAllTimeSeries("Last", TimeValue.ofMinutes(10))
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("IIncludeBuilder: Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
+            });
+
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeAllTimeSeries("Last", Number.MAX_SAFE_INTEGER)
+                        .includeAllTimeSeries("Last", 11)
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("IIncludeBuilder: Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
+            });
+
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeTimeSeries("heartrate", "Last", Number.MAX_SAFE_INTEGER)
+                        .includeAllTimeSeries("Last", TimeValue.ofMinutes(10))
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("IIncludeBuilder: Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
+            });
+
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeTimeSeries("heartrate", "Last", Number.MAX_SAFE_INTEGER)
+                        .includeAllTimeSeries("Last", 11)
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("IIncludeBuilder: Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
+            });
+
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeTimeSeries("heartrate", "Last", 1)
+                        .includeAllTimeSeries("Last", TimeValue.ofMinutes(10))
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("IIncludeBuilder: Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
+            });
+
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeTimeSeries("heartrate", "Last", 11)
+                        .includeAllTimeSeries("Last", 11)
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("IIncludeBuilder: Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
+            });
+        }
+    });
+
+    it("shouldThrowOnIncludingTimeSeriesAfterIncludeAllTimeSeries", async function() {
+        {
+            const session = store.openSession();
+
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeAllTimeSeries("Last", 11)
+                        .includeAllTimeSeries("Last", TimeValue.ofMinutes(10))
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("IIncludeBuilder: Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
+            });
+
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeAllTimeSeries("Last", Number.MAX_SAFE_INTEGER)
+                        .includeAllTimeSeries("Last", 11)
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("IIncludeBuilder: Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
+            });
+
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeAllTimeSeries("Last", TimeValue.ofMinutes(10))
+                        .includeTimeSeries("heartrate", "Last", Number.MAX_SAFE_INTEGER)
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("IIncludeBuilder: Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
+            });
+
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeAllTimeSeries("Last", 11)
+                        .includeTimeSeries("heartrate", "Last", Number.MAX_SAFE_INTEGER)
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("IIncludeBuilder: Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
+            });
+
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeAllTimeSeries("Last", TimeValue.ofMinutes(10))
+                        .includeTimeSeries("heartrate", "Last", 11)
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("IIncludeBuilder: Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
+            });
+
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeAllTimeSeries("Last", 11)
+                        .includeTimeSeries("heartrate", "Last", 11)
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("IIncludeBuilder: Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
+            });
+
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeAllTimeSeries("Last", 11)
+                        .includeAllTimeSeries("Last", TimeValue.ofMinutes(10))
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("IIncludeBuilder: Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
+            });
+
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeAllTimeSeries("Last", TimeValue.ofMinutes(10))
+                        .includeTimeSeries("heartrate", "Last", Number.MAX_SAFE_INTEGER)
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("IIncludeBuilder: Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
+            });
+
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeAllTimeSeries("Last", 11)
+                        .includeTimeSeries("heartrate", "Last", TimeValue.MAX_VALUE)
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("IIncludeBuilder: Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
+            });
+
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeAllTimeSeries("Last", TimeValue.ofMinutes(10))
+                        .includeTimeSeries("heartrate", "Last", 11)
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("IIncludeBuilder: Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
+            });
+
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeAllTimeSeries("Last", 11)
+                        .includeTimeSeries("heartrate", "Last", 11)
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("IIncludeBuilder: Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
+            });
+
+
+            assertThat(session.advanced.numberOfRequests)
+                .isZero();
+        }
+    });
+
+    it("shouldThrowOnIncludingTimeSeriesWithLastRangeZeroOrNegativeTime", async function () {
+        {
+            const session = store.openSession();
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeAllTimeSeries("Last", TimeValue.MIN_VALUE)
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("Time range type cannot be set to 'Last' when time is negative or zero.");
+            });
+
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeAllTimeSeries("Last", TimeValue.ZERO)
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("Time range type cannot be set to 'Last' when time is negative or zero.");
+            });
+
+            assertThat(session.advanced.numberOfRequests)
+                .isZero();
+        }
+    });
+
+    it("shouldThrowOnIncludingTimeSeriesWithNoneRange", async function () {
+        {
+            const session = store.openSession();
+
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeAllTimeSeries("None", TimeValue.ofMinutes(-30))
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("Time range type cannot be set to 'None' when time is specified.");
+            });
+
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeAllTimeSeries("None", TimeValue.ZERO)
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("Time range type cannot be set to 'None' when time is specified.");
+            });
+
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeAllTimeSeries("None", 1024)
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("Time range type cannot be set to 'None' when count is specified.");
+            });
+
+            await assertThrows(async () => {
+                await session.load<Order>("orders/1-A", {
+                    documentType: Order,
+                    includes: i => i
+                        .includeDocuments("company")
+                        .includeAllTimeSeries("None", TimeValue.ofMinutes(30))
+                })
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("InvalidArgumentException");
+                assertThat(err.message)
+                    .startsWith("Time range type cannot be set to 'None' when time is specified.");
+            });
+
+            assertThat(session.advanced.numberOfRequests)
+                .isZero();
+        }
+    });
+
+    it("shouldThrowOnIncludingTimeSeriesWithNegativeCount", async function () {
+        const session = store.openSession();
+
+        await assertThrows(async () => {
+            await session.load<Order>("orders/1-A", {
+                documentType: Order,
+                includes: i => i
+                    .includeDocuments("company")
+                    .includeAllTimeSeries("Last", -1024)
+            })
+        }, err => {
+            assertThat(err.name)
+                .isEqualTo("InvalidArgumentException");
+            assertThat(err.message)
+                .startsWith("Count have to be positive.");
+        });
+    });
+
+    it("canLoadAsyncWithInclude_ArrayOfTimeSeriesLastRangeByTime", () => canLoadAsyncWithInclude_ArrayOfTimeSeriesLastRange(store, true));
+
+    it("canLoadAsyncWithInclude_ArrayOfTimeSeriesLastRangeByCount", () => canLoadAsyncWithInclude_ArrayOfTimeSeriesLastRange(store, false));
 });
+
+async function canLoadAsyncWithInclude_ArrayOfTimeSeriesLastRange(store: IDocumentStore, byTime: boolean) {
+
+    const baseline = byTime ? moment() : moment().startOf("day");
+
+    {
+        const session = store.openSession();
+        const company = new Company();
+        company.name = "HR";
+        await session.store(company, "companies/1-A");
+
+        const order = new Order();
+        order.company = "companies/1-A";
+        await session.store(order, "orders/1-A");
+
+        const tsf = session.timeSeriesFor("orders/1-A", "heartrate");
+        tsf.append(baseline.toDate(), 67, "watches/apple");
+        tsf.append(baseline.clone().add(-5, "minutes").toDate(), 64, "watches/apple");
+        tsf.append(baseline.clone().add(-10, "minutes").toDate(), 65, "watches/fitbit");
+
+        const tsf2 = session.timeSeriesFor("orders/1-A", "speedrate");
+        tsf2.append(baseline.clone().add(-15, "minutes").toDate(), 6, "watches/bitfit");
+        tsf2.append(baseline.clone().add(-10, "minutes").toDate(), 7, "watches/bitfit");
+        tsf2.append(baseline.clone().add(-9, "minutes").toDate(), 7, "watches/bitfit");
+        tsf2.append(baseline.clone().add(-8, "minutes").toDate(), 6, "watches/bitfit");
+
+        await session.saveChanges();
+    }
+
+    {
+        const session = store.openSession();
+        let order: Order;
+
+        if (byTime) {
+            order = await session.load<Order>("orders/1-A", {
+                documentType: Order,
+                includes: i => i
+                    .includeDocuments("company")
+                    .includeTimeSeries(["heartrate", "speedrate"], "Last", TimeValue.ofMinutes(10))
+            });
+        } else {
+            order = await session.load<Order>("orders/1-A", {
+                documentType: Order,
+                includes: i => i
+                    .includeDocuments("company")
+                    .includeTimeSeries(["heartrate", "speedrate"], "Last", 3)
+            });
+        }
+
+        assertThat(session.advanced.numberOfRequests)
+            .isEqualTo(1);
+
+        // should not go to server
+        const company = await session.load(order.company, Company);
+
+        assertThat(session.advanced.numberOfRequests)
+            .isEqualTo(1);
+        assertThat(company.name)
+            .isEqualTo("HR");
+
+        // should not go to server
+        const heartrateValues = await session.timeSeriesFor(order, "heartrate")
+            .get(baseline.clone().add(-10, "minutes").toDate(), null);
+
+        assertThat(session.advanced.numberOfRequests)
+            .isEqualTo(1);
+        assertThat(heartrateValues)
+            .hasSize(3);
+
+        assertThat(heartrateValues[0].values)
+            .hasSize(1);
+        assertThat(heartrateValues[0].values[0])
+            .isEqualTo(65);
+        assertThat(heartrateValues[0].tag)
+            .isEqualTo("watches/fitbit");
+        assertThat(heartrateValues[0].timestamp.getTime())
+            .isEqualTo(baseline.clone().add(-10, "minutes").toDate().getTime());
+
+        assertThat(heartrateValues[1].values)
+            .hasSize(1);
+        assertThat(heartrateValues[1].values[0])
+            .isEqualTo(64);
+        assertThat(heartrateValues[1].tag)
+            .isEqualTo("watches/apple");
+        assertThat(heartrateValues[1].timestamp.getTime())
+            .isEqualTo(baseline.clone().add(-5, "minutes").toDate().getTime());
+
+        assertThat(heartrateValues[2].values)
+            .hasSize(1);
+        assertThat(heartrateValues[2].values[0])
+            .isEqualTo(67);
+        assertThat(heartrateValues[2].tag)
+            .isEqualTo("watches/apple");
+        assertThat(heartrateValues[2].timestamp.getTime())
+            .isEqualTo(baseline.toDate().getTime());
+
+        // should not go to server
+        const speedrateValues = await session.timeSeriesFor(order, "speedrate")
+            .get(baseline.clone().add(-10, "minutes").toDate(), null);
+
+        assertThat(session.advanced.numberOfRequests)
+            .isEqualTo(1);
+        assertThat(speedrateValues)
+            .hasSize(3);
+
+        assertThat(speedrateValues[0].values)
+            .hasSize(1);
+        assertThat(speedrateValues[0].values[0])
+            .isEqualTo(7);
+        assertThat(speedrateValues[0].tag)
+            .isEqualTo("watches/bitfit");
+        assertThat(speedrateValues[0].timestamp.getTime())
+            .isEqualTo(baseline.clone().add(-10, "minutes").toDate().getTime());
+
+        assertThat(speedrateValues[1].values)
+            .hasSize(1);
+        assertThat(speedrateValues[1].values[0])
+            .isEqualTo(7);
+        assertThat(speedrateValues[1].tag)
+            .isEqualTo("watches/bitfit");
+        assertThat(speedrateValues[1].timestamp.getTime())
+            .isEqualTo(baseline.clone().add(-9, "minutes").toDate().getTime());
+
+        assertThat(speedrateValues[2].values)
+            .hasSize(1);
+        assertThat(speedrateValues[2].values[0])
+            .isEqualTo(6);
+        assertThat(speedrateValues[2].tag)
+            .isEqualTo("watches/bitfit");
+        assertThat(speedrateValues[2].timestamp.getTime())
+            .isEqualTo(baseline.clone().add(-8, "minutes").toDate().getTime());
+    }
+}
 
 class User {
     public name: string;

@@ -3,6 +3,7 @@ import { ISessionDocumentTimeSeries } from "./ISessionDocumentTimeSeries";
 import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
 import { TimeSeriesEntry } from "./TimeSeries/TimeSeriesEntry";
 import { TypeUtil } from "../../Utility/TypeUtil";
+import { ITimeSeriesIncludeBuilder } from "./Loaders/ITimeSeriesIncludeBuilder";
 
 export class SessionDocumentTimeSeries extends SessionTimeSeriesBase implements ISessionDocumentTimeSeries {
 
@@ -17,16 +18,43 @@ export class SessionDocumentTimeSeries extends SessionTimeSeriesBase implements 
     public get(from: Date, to: Date): Promise<TimeSeriesEntry[]>;
     public get(from: Date, to: Date, start: number): Promise<TimeSeriesEntry[]>;
     public get(from: Date, to: Date, start: number, pageSize: number): Promise<TimeSeriesEntry[]>;
-    public get(startOrFrom?: number | Date, toOrPageSize?: number | Date, start?: number, pageSize?: number) {
+    public get(from: Date, to: Date, includes: (builder: ITimeSeriesIncludeBuilder) => void): Promise<TimeSeriesEntry[]>;
+    public get(from: Date, to: Date, includes: (builder: ITimeSeriesIncludeBuilder) => void, start: number): Promise<TimeSeriesEntry[]>;
+    public get(from: Date, to: Date, includes: (builder: ITimeSeriesIncludeBuilder) => void, start: number, pageSize: number): Promise<TimeSeriesEntry[]>;
+    public get(
+        startOrFrom?: number | Date,
+        toOrPageSize?: number | Date,
+        startOrIncludes?: number | ((builder: ITimeSeriesIncludeBuilder) => void),
+        startOrPageSize?: number,
+        pageSize?: number) {
         if (TypeUtil.isNullOrUndefined(startOrFrom)) {
             // get()
-            return this.getInternal(null, null, 0, TypeUtil.MAX_INT32);
+            return this._getInternal(null, null, null,0, TypeUtil.MAX_INT32);
         } else if (TypeUtil.isNumber(startOrFrom)) {
             // get(start: number, pageSize: number)
-            return this.getInternal(null, null, startOrFrom, toOrPageSize as number);
+            return this._getInternal(null, null, null, startOrFrom, toOrPageSize as number);
+        } else if (TypeUtil.isFunction(startOrIncludes)) {
+            return this._getInternal(startOrFrom, toOrPageSize as Date, startOrIncludes, startOrPageSize, pageSize);
+        } else if (TypeUtil.isNumber(startOrIncludes)) {
+            return this._getInternal(startOrFrom, toOrPageSize as Date, null, startOrPageSize, pageSize);
         } else {
-            return this.getInternal(startOrFrom, toOrPageSize as Date, start ?? 0, pageSize ?? TypeUtil.MAX_INT32);
+            // 3-rd parameter is null
+            return this._getInternal(startOrFrom, toOrPageSize as Date, null, 0, TypeUtil.MAX_INT32);
         }
+    }
+
+    private async _getInternal(from: Date, to: Date, includes: (builder: ITimeSeriesIncludeBuilder) => void, start: number, pageSize: number): Promise<TimeSeriesEntry[]> {
+        if (this._notInCache(from, to)) {
+            return this.getTimeSeriesAndIncludes(from, to, includes, start, pageSize);
+        }
+
+        const resultsToUser = await this._serveFromCache(from, to, start, pageSize, includes);
+
+        if (!resultsToUser) {
+            return null;
+        }
+
+        return resultsToUser.slice(0, pageSize);
     }
 
     public append(timestamp: Date, value: number): void;

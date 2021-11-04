@@ -34,8 +34,17 @@ export class SessionDocumentTypedTimeSeries<T extends object> extends SessionTim
     }
 
     private async _getTyped(from: Date, to: Date, start: number, pageSize: number): Promise<TypedTimeSeriesEntry<T>[]> {
-        const result = await this.getInternal(from, to, start, pageSize);
-        return result.map(x => x.asTypedEntry(this._clazz));
+        if (this._notInCache(from, to)) {
+            const entries = await this.getTimeSeriesAndIncludes(from, to, null, start, pageSize);
+            if (!entries) {
+                return null;
+            }
+
+            return entries.map(x => x.asTypedEntry(this._clazz));
+        }
+
+        const results = await this._getFromCache(from, to, null, start, pageSize);
+        return results.map(x => x.asTypedEntry(this._clazz));
     }
 
     public append(timestamp: Date, entry: T): void;

@@ -39,7 +39,7 @@ export class TimeSeriesIncludesToken extends QueryToken {
                 .append(", ");
         }
 
-        if (StringUtil.isNullOrEmpty(this._range.name)) {
+        if (!StringUtil.isNullOrEmpty(this._range.name)) {
             writer
                 .append("'")
                 .append(this._range.name)

@@ -29,6 +29,7 @@ export class SubscriptionBatch<T extends object> {
 
     private _includes: object[];
     private _counterIncludes: CounterIncludeItem[];
+    private _timeSeriesIncludes: any[];
 
     public get items() {
         return this._items;
@@ -105,6 +106,12 @@ export class SubscriptionBatch<T extends object> {
             }
         }
 
+        if (this._timeSeriesIncludes && this._timeSeriesIncludes.length > 0) {
+            for (const item of this._timeSeriesIncludes) {
+                session.registerTimeSeries(item);
+            }
+        }
+
         for (const item of this._items) {
             if (item.projection || item.revision) {
                 continue;
@@ -123,6 +130,7 @@ export class SubscriptionBatch<T extends object> {
     public initialize(batch: BatchFromServer): string {
         this._includes = batch.includes;
         this._counterIncludes = batch.counterIncludes;
+        this._timeSeriesIncludes = batch.timeSeriesIncludes;
         this._items.length = 0;
 
         let lastReceivedChangeVector: string;

@@ -208,16 +208,16 @@ export class IncludeBuilderBase {
     private static _assertValidType(type: TimeSeriesRangeType, time: TimeValue): void {
         switch (type) {
             case "None":
-                throwError("InvalidArgumentException", "Time range type cannot be set to NONE when time is specified.");
+                throwError("InvalidArgumentException", "Time range type cannot be set to 'None' when time is specified.");
             case "Last":
                 if (time) {
                     if (time.value <= 0) {
-                        throwError("InvalidArgumentException", "Time range type cannot be set to LAST when time is negative or zero.");
+                        throwError("InvalidArgumentException", "Time range type cannot be set to 'Last' when time is negative or zero.");
                     }
 
                     return;
                 }
-                throwError("InvalidArgumentException", "Time range type cannot be set to LAST when time is not specified.");
+                throwError("InvalidArgumentException", "Time range type cannot be set to 'Last' when time is not specified.");
             default:
                 throwError("NotSupportedException", "Not supported time range type: " + type);
         }
@@ -293,7 +293,7 @@ export class IncludeBuilderBase {
                 }
 
                 if (hashSet2.find(x => x.name === TIME_SERIES.ALL)) {
-                    throwError("InvalidArgumentException", "IIncludeBuilder : Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
+                    throwError("InvalidArgumentException", "IIncludeBuilder: Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
                 }
             }
         }

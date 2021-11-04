@@ -76,6 +76,12 @@ import { SessionDocumentTypedTimeSeries } from "./SessionDocumentTypedTimeSeries
 import { SessionDocumentRollupTypedTimeSeries } from "./SessionDocumentRollupTypedTimeSeries";
 import { TIME_SERIES_ROLLUP_SEPARATOR } from "../Operations/TimeSeries/RawTimeSeriesTypes";
 import { AbstractCommonApiForIndexes } from "../Indexes/AbstractCommonApiForIndexes";
+import { DocumentInfo } from "./DocumentInfo";
+import { MetadataAsDictionary, MetadataDictionary } from "../../Mapping/MetadataAsDictionary";
+import { ConditionalLoadResult } from "./ConditionalLoadResult";
+import { StringUtil } from "../../Utility/StringUtil";
+import { ConditionalGetDocumentsCommand } from "../Commands/ConditionalGetDocumentsCommand";
+import { StatusCodes } from "../../Http/StatusCode";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;
@@ -135,7 +141,10 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         : Promise<TEntity | EntitiesCollectionObject<TEntity>> {
 
         const isLoadingSingle = !Array.isArray(idOrIds);
-        const ids = !isLoadingSingle ? idOrIds as string[] : [idOrIds as string];
+        if (isLoadingSingle && StringUtil.isNullOrWhitespace(idOrIds as string)) {
+            return null;
+        }
+        const ids = isLoadingSingle ? [idOrIds as string] : idOrIds as string[];
 
         let options: LoadOptions<TEntity>;
         if (TypeUtil.isDocumentType(optionsOrDocumentType)) {
@@ -415,6 +424,40 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         }
     }
 
+    public addOrIncrement<T extends object, UValue>(id: string, entity: T, pathToObject: string, valToAdd: UValue) {
+        const variable = "this." + pathToObject;
+        const value = "args.val_" + this._valsCount;
+
+        const patchRequest = new PatchRequest();
+        patchRequest.script = variable + " = " + variable + " ? " + variable + " + " + value + " : " + value;
+        patchRequest.values = {
+            ["val_" + this._valsCount]: valToAdd
+        };
+
+        const collectionName = this._requestExecutor.conventions.getCollectionNameForEntity(entity);
+
+        const metadataAsDictionary = MetadataDictionary.create();
+        metadataAsDictionary[CONSTANTS.Documents.Metadata.COLLECTION] = collectionName;
+
+        const descriptor = this._requestExecutor.conventions.getTypeDescriptorByEntity(entity);
+        const jsType = this._requestExecutor.conventions.getJsTypeName(descriptor);
+        if (jsType) {
+            metadataAsDictionary[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] = jsType;
+        }
+
+        const documentInfo = new DocumentInfo();
+        documentInfo.id = id;
+        documentInfo.collection = collectionName;
+        documentInfo.metadataInstance = metadataAsDictionary;
+
+
+        const newInstance = this.entityToJson.convertEntityToJson(entity, documentInfo);
+        this._valsCount++;
+
+        const patchCommandData = new PatchCommandData(id, null, patchRequest);
+        patchCommandData.createIfMissing = newInstance;
+        this.defer(patchCommandData);
+    }
     private _valsCount: number = 0;
     private _customCount: number = 0;
 
@@ -769,7 +812,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             .byIds(ids)
             .withIncludes(includes);
 
-        const lazyOp = new LazyLoadOperation(this, loadOperation, clazz)
+        const lazyOp = new LazyLoadOperation<TResult>(this, loadOperation, clazz)
             .byIds(ids)
             .withIncludes(includes);
 

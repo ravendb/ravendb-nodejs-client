@@ -53,6 +53,7 @@ import { TimeSeriesAggregationResult } from "../Queries/TimeSeries/TimeSeriesAgg
 import { TimeSeriesRawResult } from "../Queries/TimeSeries/TimeSeriesRawResult";
 import { Field } from "../../Types";
 import { IAbstractDocumentQueryImpl } from "./IAbstractDocumentQueryImpl";
+import { ProjectionBehavior } from "../Queries/ProjectionBehavior";
 
 export const NESTED_OBJECT_TYPES_PROJECTION_FIELD = "__PROJECTED_NESTED_OBJECT_TYPES__";
 
@@ -111,8 +112,20 @@ export class DocumentQuery<T extends object>
         properties: string[],
         projectionType: DocumentType<TProjection>): IDocumentQuery<TProjection>;
     public selectFields<TProjection extends object>(
+        property: string,
+        projectionType: DocumentType<TProjection>,
+        projectionBehavior: ProjectionBehavior): IDocumentQuery<TProjection>;
+    public selectFields<TProjection extends object>(
+        properties: string[],
+        projectionType: DocumentType<TProjection>,
+        projectionBehavior: ProjectionBehavior): IDocumentQuery<TProjection>;
+    public selectFields<TProjection extends object>(
         propertiesOrQueryData: string | string[] | QueryData,
-        projectionType?: DocumentType<TProjection>): IDocumentQuery<TProjection> {
+        projectionType?: DocumentType<TProjection>,
+        projectionBehavior?: ProjectionBehavior): IDocumentQuery<TProjection> {
+
+        projectionBehavior ??= "Default";
+
         if (projectionType) {
             this._theSession.conventions.tryRegisterJsType(projectionType);
         }
@@ -123,11 +136,12 @@ export class DocumentQuery<T extends object>
 
         if (Array.isArray(propertiesOrQueryData)) {
             if (projectionType) {
-                return this._selectFieldsByProjectionType(propertiesOrQueryData, projectionType);
+                return this._selectFieldsByProjectionType(propertiesOrQueryData, projectionType, projectionBehavior);
             }
 
             const queryData = new QueryData(propertiesOrQueryData, propertiesOrQueryData);
             queryData.isProjectInto = true;
+            queryData.projectionBehavior = projectionBehavior;
             return this.selectFields(queryData, projectionType);
         } else {
             propertiesOrQueryData.isProjectInto = true;
@@ -136,13 +150,14 @@ export class DocumentQuery<T extends object>
             // add nested object types to result so we can properly read types
             queryData.fields = [...queryData.fields, `${CONSTANTS.Documents.Metadata.KEY}.${CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES}`];
             queryData.projections = [...queryData.projections, CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES_PROJECTION_FIELD];
+            queryData.projectionBehavior = projectionBehavior;
 
             return this.createDocumentQueryInternal(projectionType, queryData);
         }
     }
 
     private _selectFieldsByProjectionType<TProjection extends object>(
-        properties: string[], projectionType: DocumentType<TProjection>): IDocumentQuery<TProjection> {
+        properties: string[], projectionType: DocumentType<TProjection>, projectionBehavior: ProjectionBehavior): IDocumentQuery<TProjection> {
         if (!properties || !properties.length) {
             throwError("InvalidArgumentException", "Fields cannot be null or empty.");
         }
@@ -151,7 +166,10 @@ export class DocumentQuery<T extends object>
             const projections = properties;
             const fields = properties.map(x => x);
 
-            return this.selectFields(new QueryData(fields, projections), projectionType);
+            const queryData = new QueryData(fields, projections);
+            queryData.projectionBehavior = projectionBehavior;
+
+            return this.selectFields(queryData, projectionType);
         } catch (err) {
             throwError("RavenException",
                 "Unable to project to type: " + projectionType, err);
@@ -464,8 +482,10 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    public andAlso(): IDocumentQuery<T> {
-        this._andAlso();
+    public andAlso(): IDocumentQuery<T>;
+    public andAlso(wrapPreviousQueryClauses: boolean): IDocumentQuery<T>;
+    public andAlso(wrapPreviousQueryClauses?: boolean): IDocumentQuery<T> {
+        this._andAlso(wrapPreviousQueryClauses);
         return this;
     }
 
@@ -617,6 +637,7 @@ export class DocumentQuery<T extends object>
         query._highlightingTokens = this._highlightingTokens;
         query._disableEntitiesTracking = this._disableEntitiesTracking;
         query._disableCaching = this._disableCaching;
+        query.projectionBehavior = queryData ? queryData.projectionBehavior : this.projectionBehavior;
         query._isIntersect = this._isIntersect;
         query._defaultOperator = this._defaultOperator;
 

@@ -16,6 +16,8 @@ import { CaseInsensitiveKeysMap } from "../../Primitives/CaseInsensitiveKeysMap"
 import { TimeSeriesRange } from "../Operations/TimeSeries/TimeSeriesRange";
 import { GetMultipleTimeSeriesOperation } from "../Operations/TimeSeries/GetMultipleTimeSeriesOperation";
 import { CONSTANTS } from "../../Constants";
+import { ITimeSeriesIncludeBuilder } from "./Loaders/ITimeSeriesIncludeBuilder";
+import { TimeSeriesDetails } from "../Operations/TimeSeries/TimeSeriesDetails";
 
 export class SessionTimeSeriesBase {
     protected docId: string;
@@ -40,9 +42,12 @@ export class SessionTimeSeriesBase {
             this.session = session;
         } else {
             const entity = documentIdOrEntity;
+            if (!entity) {
+                throwError("InvalidArgumentException", "Entity cannot be null");
+            }
             const documentInfo = session.documentsByEntity.get(entity);
             if (!documentInfo) {
-                this._throwEntityNotInSession(entity);
+                this._throwEntityNotInSession();
                 return;
             }
 
@@ -107,53 +112,14 @@ export class SessionTimeSeriesBase {
             + " of document " + documentId + ", the document was already deleted in this session");
     }
 
-    protected _throwEntityNotInSession(entity: any) {
-        throwError("InvalidArgumentException", "Entity is not associated with the session, cannot add timeseries to it. "
+    protected _throwEntityNotInSession() {
+        throwError("InvalidArgumentException", "Entity is not associated with the session, cannot perform timeseries operations to it. "
             + "Use documentId instead or track the entity in the session.");
     }
 
-    public async getInternal(from: Date, to: Date, start: number, pageSize: number): Promise<TimeSeriesEntry[]> {
-        let rangeResult: TimeSeriesRangeResult;
-
+    public async getTimeSeriesAndIncludes(from: Date, to: Date, includes: (builder: ITimeSeriesIncludeBuilder) => void, start: number, pageSize: number): Promise<TimeSeriesEntry[]> {
         if (pageSize === 0) {
             return [];
-        }
-
-        const cache = this.session.timeSeriesByDocId.get(this.docId);
-        if (cache) {
-            const ranges = cache.get(this.name);
-            if (ranges && ranges.length) {
-                if (DatesComparator.compare(leftDate(ranges[0].from), rightDate(to)) > 0
-                    || DatesComparator.compare(rightDate(ranges[ranges.length - 1].to), leftDate(from)) < 0) {
-                    // the entire range [from, to] is out of cache bounds
-
-                    // e.g. if cache is : [[2,3], [4,6], [8,9]]
-                    // and requested range is : [12, 15]
-                    // then ranges[ranges.Count - 1].To < from
-                    // so we need to get [12,15] from server and place it
-                    // at the end of the cache list
-
-                    this.session.incrementRequestCount();
-
-                    rangeResult = await this.session.operations.send(new GetTimeSeriesOperation(this.docId, this.name, from, to, start, pageSize), this.session.sessionInfo);
-
-                    if (!rangeResult) {
-                        return null;
-                    }
-
-                    if (!this.session.noTracking) {
-                        const index = DatesComparator.compare(leftDate(ranges[0].from), rightDate(to)) > 0 ? 0 : ranges.length;
-                        ranges.splice(index, 0, rangeResult);
-                    }
-
-                    return rangeResult.entries;
-                }
-
-                const resultToUser: TimeSeriesEntry[] = await this._serveFromCacheOrGetMissingPartsFromServerAndMerge(
-                    cache, from, to, ranges, start, pageSize);
-
-                return resultToUser.slice(0, pageSize);
-            }
         }
 
         const document = this.session.documentsById.getValue(this.docId);
@@ -171,25 +137,44 @@ export class SessionTimeSeriesBase {
 
         this.session.incrementRequestCount();
 
-        rangeResult = await this.session.operations.send(new GetTimeSeriesOperation(this.docId, this.name, from, to, start, pageSize), this.session.sessionInfo);
+        const rangeResult = await this.session.operations.send(new GetTimeSeriesOperation(this.docId, this.name, from, to, start, pageSize, includes), this.session.sessionInfo);
 
         if (!rangeResult) {
             return null;
         }
 
         if (!this.session.noTracking) {
-            let trackingCache = this.session.timeSeriesByDocId.get(this.docId);
-            if (!trackingCache) {
-                trackingCache = CaseInsensitiveKeysMap.create();
-                this.session.timeSeriesByDocId.set(this.docId, trackingCache);
+            this._handleIncludes(rangeResult);
+
+            let cache = this.session.timeSeriesByDocId.get(this.docId);
+            if (!cache) {
+                cache = CaseInsensitiveKeysMap.create();
+                this.session.timeSeriesByDocId.set(this.docId, cache);
             }
 
-            const result: TimeSeriesRangeResult[] = [];
-            result.push(rangeResult);
-            trackingCache.set(this.name, result);
+            const ranges = cache.get(this.name);
+            if (ranges && ranges.length > 0) {
+                // update
+                const index = DatesComparator.compare(leftDate(ranges[0].from), rightDate(to)) > 0 ? 0 : ranges.length;
+                ranges.splice(index, 0, rangeResult);
+            } else {
+                const item: TimeSeriesRangeResult[] = [];
+                item.push(rangeResult);
+                cache.set(this.name, item);
+            }
         }
 
         return rangeResult.entries;
+    }
+
+    private _handleIncludes(rangeResult: TimeSeriesRangeResult) {
+        if (!rangeResult.includes) {
+            return;
+        }
+
+        this.session.registerIncludes(rangeResult.includes);
+
+        rangeResult.includes = null;
     }
 
     private static _skipAndTrimRangeIfNeeded(from: Date,
@@ -217,12 +202,9 @@ export class SessionTimeSeriesBase {
         return values;
     }
 
-    private async _serveFromCacheOrGetMissingPartsFromServerAndMerge(cache: Map<string, TimeSeriesRangeResult[]>,
-                                                                     from: Date,
-                                                               to: Date,
-                                                               ranges: TimeSeriesRangeResult[],
-                                                               start: number,
-                                                               pageSize: number): Promise<TimeSeriesEntry[]> {
+    protected async _serveFromCache(from: Date, to: Date, start: number, pageSize: number, includes: (builder: ITimeSeriesIncludeBuilder) => void) {
+        const cache = this.session.timeSeriesByDocId.get(this.docId);
+        const ranges = cache.get(this.name);
         // try to find a range in cache that contains [from, to]
         // if found, chop just the relevant part from it and return to the user.
 
@@ -299,8 +281,11 @@ export class SessionTimeSeriesBase {
         this.session.incrementRequestCount();
 
         const details = await this.session.operations.send(
-            new GetMultipleTimeSeriesOperation(this.docId, rangesToGetFromServer, start, pageSize), this.session.sessionInfo);
+            new GetMultipleTimeSeriesOperation(this.docId, rangesToGetFromServer, start, pageSize, includes), this.session.sessionInfo);
 
+        if (includes) {
+            this._registerIncludes(details);
+        }
 
         // merge all the missing parts we got from server
         // with all the ranges in cache that are between 'fromRange' and 'toRange'
@@ -352,6 +337,12 @@ export class SessionTimeSeriesBase {
         }
 
         return resultToUser;
+    }
+
+    private _registerIncludes(details: TimeSeriesDetails) {
+        for (let rangeResult of details.values.get(this.name)) {
+            this._handleIncludes(rangeResult);
+        }
     }
 
     private static _mergeRangesWithResults(from: Date,
@@ -479,6 +470,33 @@ export class SessionTimeSeriesBase {
         }
 
         return result;
+    }
+
+    protected async _getFromCache(from: Date, to: Date, includes: (builder: ITimeSeriesIncludeBuilder) => void, start: number, pageSize: number) {
+        // RavenDB-16060
+        // Typed TimeSeries results need special handling when served from cache
+        // since we cache the results untyped
+
+        // in node we return untyped entries here
+
+        const resultToUser = await this._serveFromCache(from, to, start, pageSize, includes);
+        return resultToUser;
+    }
+
+    protected _notInCache(from: Date, to: Date) {
+        const cache = this.session.timeSeriesByDocId.get(this.docId);
+        if (!cache) {
+            return true;
+        }
+
+        const ranges = cache.get(this.name);
+        if (!ranges) {
+            return true;
+        }
+
+        return ranges.length === 0
+            || DatesComparator.compare(leftDate(ranges[0].from), rightDate(to)) > 0
+            || DatesComparator.compare(rightDate(ranges[ranges.length - 1].to), leftDate(from)) < 0;
     }
 }
 
