@@ -61,5 +61,11 @@ describe("RavenDB_14881", function () {
             .isEqualTo(20);
         assertThat(companies.size.sizeInBytes)
             .isGreaterThan(0);
+        assertThat(companies.documentsSize.sizeInBytes)
+            .isGreaterThan(0);
+        assertThat(companies.revisionsSize.sizeInBytes)
+            .isGreaterThan(0);
+        assertThat(companies.size.sizeInBytes)
+            .isEqualTo(companies.documentsSize.sizeInBytes + companies.revisionsSize.sizeInBytes + companies.tombstonesSize.sizeInBytes);
     });
 });

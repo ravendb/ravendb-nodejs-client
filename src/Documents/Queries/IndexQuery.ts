@@ -77,5 +77,9 @@ export function writeIndexQuery(conventions: DocumentConventions, indexQuery: In
         result["QueryParameters"] = indexQuery.queryParameters;
     }
 
+    if (indexQuery.projectionBehavior && indexQuery.projectionBehavior !== "Default") {
+        result["ProjectionBehavior"] = indexQuery.projectionBehavior;
+    }
+
     return JsonSerializer.getDefault().serialize(result);
 }

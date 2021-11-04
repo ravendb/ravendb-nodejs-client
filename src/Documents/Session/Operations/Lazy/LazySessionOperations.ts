@@ -7,6 +7,9 @@ import { Lazy } from "../../../Lazy";
 import { SessionLoadStartingWithOptions } from "../../IDocumentSession";
 import { LazyStartsWithOperation } from "./LazyStartsWithOperation";
 import { LoadStartingWithOperation } from "../LoadStartingWithOperation";
+import { ConditionalLoadResult } from "../../ConditionalLoadResult";
+import { StringUtil } from "../../../../Utility/StringUtil";
+import { throwError } from "../../../../Exceptions";
 
 export class LazySessionOperations implements ILazySessionOperations {
 

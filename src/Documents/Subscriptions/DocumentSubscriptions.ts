@@ -118,7 +118,7 @@ export class DocumentSubscriptions implements IDisposable {
         if (criteria.query) {
             queryBuilder = new StringBuilder(criteria.query);
         } else {
-            queryBuilder = new StringBuilder("`from '`");
+            queryBuilder = new StringBuilder("from '");
             StringUtil.escapeString(queryBuilder, collectionName);
             queryBuilder.append("'");
 
@@ -173,7 +173,7 @@ export class DocumentSubscriptions implements IDisposable {
                 if (!numberOfIncludesAdded) {
                     queryBuilder
                         .append(os.EOL)
-                        .append(" include");
+                        .append("include ");
                 }
 
                 for (const counterName of builder.countersToInclude) {

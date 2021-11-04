@@ -479,8 +479,10 @@ export class ClusterTestContext extends RavenTestDriver implements IDisposable {
         // wait for license to activate
         for (const node of cluster.nodes) {
             await this.waitForValue(
-                async () => cluster.executeJsScript(node.nodeTag, "return server.ServerStore.LicenseManager.LicenseStatus.Type !== 'Invalid'"),
-                true, {
+                async () => {
+                    const response = await cluster.executeJsScript(node.nodeTag, "return server.ServerStore.LicenseManager.LicenseStatus.Type !== 'Invalid'");
+                    return response.result;
+                }, true, {
                     timeout: 30_000
                 });
         }

@@ -151,7 +151,7 @@ async function canUseSorterInternal(exceptionClass: RavenErrorType, store: IDocu
     }
 }
 
-const sorterCode = `using System;
+export const sorterCode = `using System;
 using System.Collections.Generic;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
