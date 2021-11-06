@@ -18,13 +18,13 @@ export class TimeSeriesRangeAggregation {
 
         typedEntry.from = this.from;
         typedEntry.to = this.to;
-        typedEntry.min = this.min ? TimeSeriesValuesHelper.setFields(clazz, this.min, true) : null;
-        typedEntry.max = this.max ? TimeSeriesValuesHelper.setFields(clazz, this.max, true) : null;
-        typedEntry.first = this.first ? TimeSeriesValuesHelper.setFields(clazz, this.first, true) : null;
-        typedEntry.last = this.last ? TimeSeriesValuesHelper.setFields(clazz, this.last, true) : null;
-        typedEntry.sum = this.sum ? TimeSeriesValuesHelper.setFields(clazz, this.sum, true) : null;
-        typedEntry.count = this.count ? TimeSeriesValuesHelper.setFields(clazz, this.count, true) : null;
-        typedEntry.average = this.average ? TimeSeriesValuesHelper.setFields(clazz, this.average, true) : null;
+        typedEntry.min = this.min ? TimeSeriesValuesHelper.setFields(clazz, this.min, false) : null;
+        typedEntry.max = this.max ? TimeSeriesValuesHelper.setFields(clazz, this.max, false) : null;
+        typedEntry.first = this.first ? TimeSeriesValuesHelper.setFields(clazz, this.first, false) : null;
+        typedEntry.last = this.last ? TimeSeriesValuesHelper.setFields(clazz, this.last, false) : null;
+        typedEntry.sum = this.sum ? TimeSeriesValuesHelper.setFields(clazz, this.sum, false) : null;
+        typedEntry.count = this.count ? TimeSeriesValuesHelper.setFields(clazz, this.count, false) : null;
+        typedEntry.average = this.average ? TimeSeriesValuesHelper.setFields(clazz, this.average, false) : null;
 
         return typedEntry;
     }
