@@ -12,6 +12,8 @@ import { GenerateCertificateOperation } from "../Infrastructure/GenerateCertific
 import { assertThat } from "../Utils/AssertExtensions";
 import { User } from "../Assets/Entities";
 import moment = require("moment");
+import { UnregisterReplicationHubAccessOperation } from "../../src/Documents/Operations/Replication/UnregisterReplicationHubAccessOperation";
+import { GetReplicationHubAccessOperation } from "../../src/Documents/Operations/Replication/GetReplicationHubAccessOperation";
 
 (RavenTestContext.isPullRequest ? describe.skip : describe)("FilteredReplicationTest", function () {
 
@@ -100,6 +102,41 @@ import moment = require("moment");
                     assertThat(await session.load("prices/eu/1", Item))
                         .isNull();
                 }
+
+                const hubConfig = await hooper.maintenance.send(new GetReplicationHubAccessOperation("Franchises"));
+                assertThat(hubConfig)
+                    .hasSize(1);
+
+                const firstHubConfig = hubConfig[0];
+                assertThat(firstHubConfig)
+                    .isNotNull();
+                assertThat(firstHubConfig.thumbprint.toLocaleLowerCase())
+                    .isEqualTo(certificate.thumbprint.toLocaleLowerCase());
+                assertThat(firstHubConfig.notAfter instanceof Date)
+                    .isTrue();
+                assertThat(firstHubConfig.notBefore instanceof Date)
+                    .isTrue();
+
+                assertThat(firstHubConfig.allowedHubToSinkPaths)
+                    .hasSize(3);
+
+                assertThat(firstHubConfig.allowedHubToSinkPaths[0])
+                    .isEqualTo("menus/*");
+                assertThat(firstHubConfig.allowedHubToSinkPaths[1])
+                    .isEqualTo("prices/eastus/*");
+                assertThat(firstHubConfig.allowedHubToSinkPaths[2])
+                    .isEqualTo("recipes/*");
+
+                assertThat(firstHubConfig.allowedSinkToHubPaths)
+                    .hasSize(1);
+                assertThat(firstHubConfig.allowedSinkToHubPaths[0])
+                    .isEqualTo("orders/bert/*");
+
+                await hooper.maintenance.send(new UnregisterReplicationHubAccessOperation("Franchises", certificate.thumbprint));
+
+                const hubConfigAfterCleanup = await hooper.maintenance.send(new GetReplicationHubAccessOperation("Franchises"));
+                assertThat(hubConfigAfterCleanup)
+                    .hasSize(0);
             } finally {
                 bert.dispose();
             }

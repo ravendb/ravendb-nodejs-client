@@ -15,7 +15,7 @@ export interface DeleteDatabaseResult {
 }
 
 export interface DeleteDatabasesParameters {
-    databaseNames: string | string[];
+    databaseNames: string[];
     hardDelete: boolean;
     fromNodes?: string | string[];
     timeToWaitForConfirmation?: number;
@@ -81,7 +81,7 @@ export class DeleteDatabaseCommand extends RavenCommand<DeleteDatabaseResult> im
         }
 
         let body: string = null;
-        await this._defaultPipeline(x => body = x).process(bodyStream);
+        this.result = await this._defaultPipeline(x => body = x).process(bodyStream);
         return body;
     }
 

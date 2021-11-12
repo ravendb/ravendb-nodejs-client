@@ -276,7 +276,7 @@ export abstract class RavenTestDriver {
     public async waitForUserToContinueTheTest(store: IDocumentStore) {
         const databaseNameEncoded = encodeURIComponent(store.database);
         const documentsPage = store.urls[0] + "/studio/index.html#databases/documents?&database="
-            + databaseNameEncoded + "&withStop=true";
+            + databaseNameEncoded + "&withStop=true&disableAnalytics=true";
 
         this._openBrowser(documentsPage);
 
