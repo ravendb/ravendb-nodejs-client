@@ -148,8 +148,11 @@ export class DocumentQuery<T extends object>
             const queryData = propertiesOrQueryData as QueryData;
 
             // add nested object types to result so we can properly read types
-            queryData.fields = [...queryData.fields, `${CONSTANTS.Documents.Metadata.KEY}.${CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES}`];
-            queryData.projections = [...queryData.projections, CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES_PROJECTION_FIELD];
+            if (!queryData.isCustomFunction) {
+                queryData.fields = [...queryData.fields, `${CONSTANTS.Documents.Metadata.KEY}.${CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES}`];
+                queryData.projections = [...queryData.projections, CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES_PROJECTION_FIELD];
+            }
+
             queryData.projectionBehavior = projectionBehavior;
 
             return this.createDocumentQueryInternal(projectionType, queryData);

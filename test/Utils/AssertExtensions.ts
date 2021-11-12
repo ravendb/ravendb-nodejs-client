@@ -56,6 +56,11 @@ export class JavaAssertionBuilder {
         return this;
     }
 
+    public endsWith(val) {
+        assert.ok(this._value.indexOf(val) === this._value.length - val.length, `'${this._value}' does not end with '${val}.'`);
+        return this;
+    }
+
     public isTrue() {
         assert.strictEqual(this._value, true);
         return this;

@@ -3,4 +3,5 @@
 export type PullReplicationMode =
     "None"
     | "HubToSink"
-    | "SinkToHub";
+    | "SinkToHub"
+    | "HubToSink,SinkToHub";

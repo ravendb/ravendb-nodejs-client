@@ -279,7 +279,7 @@ export class QueryOperation {
         } else if (result instanceof TimeSeriesRawResult) {
             Object.assign(result, QueryOperation._reviveTimeSeriesRawResult(raw, conventions));
         } else {
-            if (fieldsToFetch && fieldsToFetch.projections) {
+            if (fieldsToFetch && fieldsToFetch.projections && fieldsToFetch.projections.length) {
                 const keys = conventions.entityFieldNameConvention
                     ? fieldsToFetch.projections.map(x => StringUtil.changeCase(conventions.entityFieldNameConvention, x))
                     : fieldsToFetch.projections;

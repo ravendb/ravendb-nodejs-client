@@ -216,6 +216,21 @@ export abstract class RavenTestDriver {
         throwError("TimeoutException", "Got no index error from more than " + TimeUtil.millisToTimeSpan(timeoutInMs));
     }
 
+    public async waitForDocumentDeletion(store: IDocumentStore, id: string) {
+        const sw = Stopwatch.createStarted();
+
+        while (sw.elapsed <= 10_000) {
+            const session = store.openSession();
+            if (!await session.advanced.exists(id)) {
+                return true;
+            }
+
+            await delay(100);
+        }
+
+        return false;
+    }
+
     public async waitForValue<T>(act: () => Promise<T>, expectedValue: T, opts: { timeout?: number; equal?: (a: T, b: T) => boolean } = {}) {
         return ClusterTestContext.waitForValue(act, expectedValue, opts);
     }

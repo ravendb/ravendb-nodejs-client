@@ -10,6 +10,7 @@ import { LoadStartingWithOperation } from "../LoadStartingWithOperation";
 import { ConditionalLoadResult } from "../../ConditionalLoadResult";
 import { StringUtil } from "../../../../Utility/StringUtil";
 import { throwError } from "../../../../Exceptions";
+import { LazyConditionalLoadOperation } from "./LazyConditionalLoadOperation";
 
 export class LazySessionOperations implements ILazySessionOperations {
 
@@ -58,8 +59,40 @@ export class LazySessionOperations implements ILazySessionOperations {
         Lazy<EntitiesCollectionObject<TEntity>> {
         opts = opts || null;
         opts = Object.assign({}, LoadStartingWithOperation.DEFAULT, opts);
-        const operation = new LazyStartsWithOperation(idPrefix, opts, this._delegate);
+        const operation = new LazyStartsWithOperation<TEntity>(idPrefix, opts, this._delegate);
         return this._delegate.addLazyOperation(operation);
+    }
+
+    public conditionalLoad<TEntity extends object>(id: string, changeVector: string, clazz: ObjectTypeDescriptor<TEntity>): Lazy<ConditionalLoadResult<TEntity>> {
+        if (StringUtil.isNullOrEmpty(id)) {
+            throwError("InvalidArgumentException", "Id cannot be null");
+        }
+
+        if (this._delegate.isLoaded(id)) {
+            return new Lazy<ConditionalLoadResult<TEntity>>(async () => {
+                const entity = await this._delegate.load(id, clazz);
+                if (!entity) {
+                    return {
+                        entity: null,
+                        changeVector: null
+                    }
+                }
+
+                const cv = this._delegate.advanced.getChangeVectorFor(entity);
+                return {
+                    entity,
+                    changeVector: cv
+                }
+            });
+        }
+
+        if (StringUtil.isNullOrEmpty(changeVector)) {
+            throwError("InvalidArgumentException", "The requested document with id '"
+                + id + "' is not loaded into the session and could not conditional load when changeVector is null or empty.");
+        }
+
+        const lazyLoadOperation = new LazyConditionalLoadOperation<TEntity>(this._delegate, id, changeVector, clazz);
+        return this._delegate.addLazyOperation(lazyLoadOperation);
     }
 
     // TBD expr ILazyLoaderWithInclude<T> ILazySessionOperations.Include<T>(

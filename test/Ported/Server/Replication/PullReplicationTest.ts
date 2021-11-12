@@ -240,7 +240,7 @@ import { delay } from "../../../../src/Utility/PromiseUtil";
                         connectionStringName: "ConnectionString2-" + sink.database,
                         hubDefinitionName: definitionName2,
                         taskId: pullTasks[0].taskId,
-                        mode: [ "HubToSink" ]
+                        mode: "HubToSink"
                     };
 
                     await ReplicationTestContext.addWatcherToReplicationTopology(sink, pull, ...hub2.urls);
@@ -369,7 +369,7 @@ import { delay } from "../../../../src/Utility/PromiseUtil";
                     hubDefinitionName: definitionName,
                     disabled: true,
                     taskId: pullTasks[0].taskId,
-                    mode: [ "HubToSink" ]
+                    mode: "HubToSink"
                 };
 
                 await ReplicationTestContext.addWatcherToReplicationTopology(sink, pull, ...hub.urls);
@@ -516,7 +516,7 @@ async function setupPullReplication(remoteName: string, sink: IDocumentStore, ..
             database: store.database,
             connectionStringName: "ConnectionString-" + store.database,
             hubDefinitionName: remoteName,
-            mode: [ "HubToSink" ]
+            mode: "HubToSink"
         };
 
         resList.push(await ReplicationTestContext.addWatcherToReplicationTopology(sink, pull, ...store.urls));

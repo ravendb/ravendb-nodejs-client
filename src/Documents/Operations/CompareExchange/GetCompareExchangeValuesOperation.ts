@@ -11,6 +11,7 @@ import { ServerNode } from "../../../Http/ServerNode";
 import { CompareExchangeValueResultParser, GetCompareExchangeValuesResponse } from "./CompareExchangeValueResultParser";
 import * as stream from "readable-stream";
 import { StringBuilder } from "../../../Utility/StringBuilder";
+import { TypeUtil } from "../../../Utility/TypeUtil";
 
 export interface GetCompareExchangeValuesParameters<T> {
     keys?: string[];
@@ -65,7 +66,7 @@ export class GetCompareExchangeValuesOperation<T> implements IOperation<{ [key: 
             }
 
             this._keys = parameters.keys;
-        } else if (parameters.startWith) {
+        } else if (!TypeUtil.isNullOrUndefined(parameters.startWith)) {
             this._startWith = parameters.startWith;
             this._start = parameters.start;
             this._pageSize = parameters.pageSize;

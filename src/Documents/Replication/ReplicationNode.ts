@@ -1,5 +1,5 @@
 export interface ReplicationNode {
     url?: string;
-    database: string;
+    database?: string;
     disabled?: boolean;
 }
