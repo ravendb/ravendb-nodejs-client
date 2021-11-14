@@ -113,7 +113,7 @@ export interface IRevisionsSessionOperations {
     /**
      * Access the lazy revisions operations
      */
-    lazily(): ILazyRevisionsOperations;
+    lazily: ILazyRevisionsOperations;
 }
 
 export interface SessionRevisionsOptions<T extends object> {

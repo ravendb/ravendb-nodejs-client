@@ -458,6 +458,73 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         patchCommandData.createIfMissing = newInstance;
         this.defer(patchCommandData);
     }
+
+    public addOrPatchArray<T extends object, UValue>(id: string, entity: T, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void) {
+        const scriptArray = new JavaScriptArray(this._customCount++, pathToArray);
+
+        arrayAdder(scriptArray);
+
+        const patchRequest = new PatchRequest();
+        patchRequest.script = scriptArray.script;
+        patchRequest.values = scriptArray.parameters;
+
+        const collectionName = this._requestExecutor.conventions.getCollectionNameForEntity(entity);
+
+        const metadataAsDictionary = MetadataDictionary.create();
+        metadataAsDictionary[CONSTANTS.Documents.Metadata.COLLECTION] = collectionName;
+
+        const descriptor = this._requestExecutor.conventions.getTypeDescriptorByEntity(entity);
+        const jsType = this._requestExecutor.conventions.getJsTypeName(descriptor);
+        if (jsType) {
+            metadataAsDictionary[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] = jsType;
+        }
+
+        const documentInfo = new DocumentInfo();
+        documentInfo.id = id;
+        documentInfo.collection = collectionName;
+        documentInfo.metadataInstance = metadataAsDictionary;
+
+        const newInstance = this.entityToJson.convertEntityToJson(entity, documentInfo);
+
+        this._valsCount++;
+
+        const patchCommandData = new PatchCommandData(id, null, patchRequest);
+        patchCommandData.createIfMissing = newInstance;
+        this.defer(patchCommandData);
+    }
+
+    public addOrPatch<T extends object, UValue>(id: string, entity: T, pathToObject: string, value: UValue) {
+        const patchRequest = new PatchRequest();
+        patchRequest.script = "this." + pathToObject + " = args.val_" + this._valsCount;
+        patchRequest.values = {
+            ["val_" + this._valsCount]: value
+        };
+
+        const collectionName = this._requestExecutor.conventions.getCollectionNameForEntity(entity);
+
+        const metadataAsDictionary = MetadataDictionary.create();
+        metadataAsDictionary[CONSTANTS.Documents.Metadata.COLLECTION] = collectionName;
+
+        const descriptor = this._requestExecutor.conventions.getTypeDescriptorByEntity(entity);
+        const jsType = this._requestExecutor.conventions.getJsTypeName(descriptor);
+        if (jsType) {
+            metadataAsDictionary[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] = jsType;
+        }
+
+        const documentInfo = new DocumentInfo();
+        documentInfo.id = id;
+        documentInfo.collection = collectionName;
+        documentInfo.metadataInstance = metadataAsDictionary;
+
+
+        const newInstance = this.entityToJson.convertEntityToJson(entity, documentInfo);
+        this._valsCount++;
+
+        const patchCommandData = new PatchCommandData(id, null, patchRequest);
+        patchCommandData.createIfMissing = newInstance;
+        this.defer(patchCommandData);
+    }
+
     private _valsCount: number = 0;
     private _customCount: number = 0;
 

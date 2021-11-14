@@ -5,6 +5,7 @@ import { DocumentType } from "../DocumentAbstractions";
 import { Reference } from "../../Utility/Reference";
 import { Topology } from "../../Http/Topology";
 import { HttpRequestParameters, HttpResponse } from "../../Primitives/Http";
+import { SessionDisposingEventArgs } from "../IDocumentStore";
 
 export interface SessionEventsEmitter {
     on(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
@@ -15,6 +16,8 @@ export interface SessionEventsEmitter {
 
     on(eventName: "beforeDelete", eventHandler: (eventArgs: SessionBeforeDeleteEventArgs) => void): this;
 
+    on(eventName: "sessionDisposing", eventHandler: (eventArgs: SessionDisposingEventArgs) => void): this;
+
     removeListener(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
 
     removeListener(
@@ -24,6 +27,8 @@ export interface SessionEventsEmitter {
 
     removeListener(eventName: "beforeDelete", eventHandler: (eventArgs: SessionBeforeDeleteEventArgs) => void): this;
 
+    removeListener(eventName: "sessionDisposing", eventHandler: (eventArgs: SessionDisposingEventArgs) => void): this;
+
     emit(eventName: "beforeStore", eventArgs: SessionBeforeStoreEventArgs);
 
     emit(eventName: "afterSaveChanges", eventArgs: SessionAfterSaveChangesEventArgs);
@@ -31,6 +36,8 @@ export interface SessionEventsEmitter {
     emit(eventName: "beforeQuery", eventArgs: SessionBeforeQueryEventArgs);
 
     emit(eventName: "beforeDelete", eventArgs: SessionBeforeDeleteEventArgs);
+
+    emit(eventName: "sessionDisposing", eventArgs: SessionDisposingEventArgs);
 }
 
 export class SessionBeforeStoreEventArgs {

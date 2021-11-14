@@ -21,7 +21,7 @@ export class DocumentSessionRevisions extends DocumentSessionRevisionsBase imple
         super(session);
     }
 
-    lazily(): ILazyRevisionsOperations {
+    get lazily(): ILazyRevisionsOperations {
         return new LazyRevisionOperations(this._session as DocumentSession);
     }
 

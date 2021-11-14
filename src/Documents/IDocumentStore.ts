@@ -100,7 +100,7 @@ export interface SessionCreatedEventArgs {
     session: InMemoryDocumentSessionOperations;
 }
 
-export interface SessionClosingEventArgs {
+export interface SessionDisposingEventArgs {
     session: InMemoryDocumentSessionOperations;
 }
 
@@ -109,8 +109,6 @@ export interface DocumentStoreEventEmitter {
     on(eventName: "failedRequest", eventHandler: (args: FailedRequestEventArgs) => void): this;
 
     on(eventName: "sessionCreated", eventHandler: (args: SessionCreatedEventArgs) => void): this;
-
-    on(eventName: "sessionClosing", eventHandler: (args: SessionClosingEventArgs) => void): this;
 
     on(eventName: "beforeDispose", eventHandler: () => void): this;
 
@@ -122,8 +120,6 @@ export interface DocumentStoreEventEmitter {
 
     once(eventName: "sessionCreated", eventHandler: (args: SessionCreatedEventArgs) => void): this;
 
-    once(eventName: "sessionClosing", eventHandler: (args: SessionClosingEventArgs) => void): this;
-
     once(eventName: "beforeDispose", eventHandler: () => void): this;
 
     once(eventName: "afterDispose", eventHandler: (callback: () => void) => void): this;
@@ -133,8 +129,6 @@ export interface DocumentStoreEventEmitter {
     removeListener(eventName: "failedRequest", eventHandler: (args: FailedRequestEventArgs) => void): this;
 
     removeListener(eventName: "sessionCreated", eventHandler: (args: SessionCreatedEventArgs) => void): void;
-
-    removeListener(eventName: "sessionClosing", eventHandler: (args: SessionClosingEventArgs) => void): void;
 
     removeListener(eventName: "beforeDispose", eventHandler: () => void): void;
 
@@ -262,6 +256,9 @@ export interface IDocumentStore extends IDisposable,
     requestTimeout(timeoutInMs: number): IDisposable;
 
     requestTimeout(timeoutInMs: number, database: string): IDisposable;
+
+    addSessionListener(
+        eventName: "sessionDisposing", eventHandler: (args: SessionDisposingEventArgs) => void): this;
 
     addSessionListener(
         eventName: "topologyUpdated", eventHandler: (args: TopologyUpdatedEventArgs) => void): this;

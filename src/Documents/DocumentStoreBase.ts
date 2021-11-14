@@ -1,6 +1,6 @@
 import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor";
 import { EventEmitter } from "events";
-import { IDocumentStore } from "./IDocumentStore";
+import { IDocumentStore, SessionDisposingEventArgs } from "./IDocumentStore";
 import { throwError } from "../Exceptions";
 import { validateUri } from "../Utility/UriUtil";
 import { IAuthOptions } from "../Auth/AuthOptions";
@@ -233,6 +233,8 @@ export abstract class DocumentStoreBase
 
     protected _eventHandlers: [string, (eventArgs: any) => void][] = [];
 
+    public addSessionListener(
+        eventName: "sessionDisposing", eventHandler: (eventArgs: SessionDisposingEventArgs) => void): this;
     public addSessionListener(
         eventName: "failedRequest", eventHandler: (eventArgs: FailedRequestEventArgs) => void): this;
     public addSessionListener(

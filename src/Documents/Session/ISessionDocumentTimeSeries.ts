@@ -50,7 +50,7 @@ export interface ISessionDocumentTimeSeries extends ISessionDocumentAppendTimeSe
      * @param to range end
      * @param includes includes
      */
-    get(from: Date, to: Date, includes: (includeBuilder: ITimeSeriesIncludeBuilder) => void);
+    get(from: Date, to: Date, includes: (includeBuilder: ITimeSeriesIncludeBuilder) => void): Promise<TimeSeriesEntry[]>;
 
     /**
      * Return the time series values for the provided range
@@ -59,7 +59,7 @@ export interface ISessionDocumentTimeSeries extends ISessionDocumentAppendTimeSe
      * @param includes includes
      * @param start start
      */
-    get(from: Date, to: Date, includes: (includeBuilder: ITimeSeriesIncludeBuilder) => void, start: number);
+    get(from: Date, to: Date, includes: (includeBuilder: ITimeSeriesIncludeBuilder) => void, start: number): Promise<TimeSeriesEntry[]>;
 
     /**
      * Return the time series values for the provided range
@@ -69,6 +69,6 @@ export interface ISessionDocumentTimeSeries extends ISessionDocumentAppendTimeSe
      * @param start start
      * @param pageSize page size
      */
-    get(from: Date, to: Date, includes: (includeBuilder: ITimeSeriesIncludeBuilder) => void, start: number, pageSize: number);
+    get(from: Date, to: Date, includes: (includeBuilder: ITimeSeriesIncludeBuilder) => void, start: number, pageSize: number): Promise<TimeSeriesEntry[]>;
 
 }

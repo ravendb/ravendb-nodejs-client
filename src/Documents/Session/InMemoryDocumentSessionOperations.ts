@@ -2034,7 +2034,7 @@ export abstract class InMemoryDocumentSessionOperations
             return;
         }
 
-        this.emit("sessionClosing", { session: this });
+        this.emit("sessionDisposing", { session: this });
 
         this._disposed = true;
     }
