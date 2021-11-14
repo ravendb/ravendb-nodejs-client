@@ -1,6 +1,6 @@
 
 export interface ServerWideTaskResponse {
-    name: String;
+    name: string;
     raftCommandIndex: number;
 }
 
