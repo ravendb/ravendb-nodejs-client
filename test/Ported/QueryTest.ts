@@ -7,10 +7,11 @@ import {
     IDocumentStore,
     GetCollectionStatisticsOperation,
     GroupByField,
-    IDocumentSession, AbstractJavaScriptIndexCreationTask
+    IDocumentSession, AbstractJavaScriptIndexCreationTask, DocumentQuery
 } from "../../src";
 import { DateUtil } from "../../src/Utility/DateUtil";
 import { TypeUtil } from "../../src/Utility/TypeUtil";
+import { assertThat } from "../Utils/AssertExtensions";
 
 describe("QueryTest", function () {
 
@@ -25,6 +26,84 @@ describe("QueryTest", function () {
 
     afterEach(async () =>
         await disposeTestDocumentStore(store));
+
+    it("query_CreateClausesForQueryDynamicallyWithOnBeforeQueryEvent", async function () {
+        const id1 = "users/1";
+        const id2 = "users/2";
+
+        {
+            const session = store.openSession();
+            const article1 = new Article();
+            article1.title = "foo";
+            article1.description = "bar";
+            article1.isDeleted = false;
+            await session.store(article1, id1);
+
+            const article2 = new Article();
+            article2.title = "foo";
+            article2.description = "bar";
+            article2.isDeleted = true;
+            await session.store(article2, id2);
+
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            session.advanced.on("beforeQuery", eventArgs => {
+                const queryToBeExecuted = eventArgs.queryCustomization.getQuery() as DocumentQuery<Article>;
+                queryToBeExecuted.andAlso(true);
+                queryToBeExecuted.whereEquals("isDeleted", true);
+            });
+
+            const query = session.query(Article)
+                .search("title", "foo")
+                .search("description", "bar", "OR");
+
+            const result = await query.all();
+
+            assertThat(query.toString())
+                .isEqualTo("from 'Articles' where (search(title, $p0) or search(description, $p1)) and isDeleted = $p2");
+
+            assertThat(result)
+                .hasSize(1);
+        }
+    });
+
+    it("query_CreateClausesForQueryDynamicallyWhenTheQueryEmpty", async function () {
+        const id1 = "users/1";
+        const id2 = "users/2";
+
+        {
+            const session = store.openSession();
+            const article1 = new Article();
+            article1.title = "foo";
+            article1.description = "bar";
+            article1.isDeleted = false;
+            await session.store(article1, id1);
+
+            const article2 = new Article();
+            article2.title = "foo";
+            article2.description = "bar";
+            article2.isDeleted = true;
+            await session.store(article2, id2);
+
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const query = session.advanced.documentQuery(Article)
+                .andAlso(true);
+
+            assertThat(query.toString())
+                .isEqualTo("from 'Articles'");
+
+            const queryResult = await query.all();
+            assertThat(queryResult)
+                .hasSize(2);
+        }
+    });
 
     it("query simple", async () => {
         const session = store.openSession();
@@ -829,4 +908,11 @@ class ReduceResult {
     public count: number;
     public name: string;
     public age: number;
+}
+
+
+class Article {
+    public title: string;
+    public description: string;
+    public isDeleted: boolean;
 }

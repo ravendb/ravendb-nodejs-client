@@ -707,7 +707,7 @@ import { TypedTimeSeriesRollupEntry } from "../../../src/Documents/Session/TimeS
     });
 });
 
-class StockPrice {
+export class StockPrice {
     public static readonly TIME_SERIES_VALUES: TimeSeriesValue<StockPrice> = ["open", "close", "high", "low", "volume"];
 
     public open: number;

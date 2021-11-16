@@ -2,7 +2,7 @@ import { DateUtil } from "../../../Utility/DateUtil";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 export class TimeSeriesOperation {
-    private _appends: AppendOperation[];
+    private _appends: Map<number, AppendOperation>; // using map in node - for performance 
     private _deletes: DeleteOperation[];
     name: string;
 
@@ -14,7 +14,7 @@ export class TimeSeriesOperation {
 
     public serialize(conventions: DocumentConventions): object {
         const sortedAppends = this._appends ?
-            this._appends
+            Array.from(this._appends.values())
                 .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
                 .map(x => x.serialize(conventions))
             : null;
@@ -28,15 +28,15 @@ export class TimeSeriesOperation {
 
     public append(appendOperation: AppendOperation): void {
         if (!this._appends) {
-            this._appends = [];
+            this._appends = new Map<number, AppendOperation>();
         }
 
-        const existingItemIdx = this._appends.findIndex(x => x.timestamp.getTime() === appendOperation.timestamp.getTime());
-        if (existingItemIdx !== -1) {
-            this._appends.splice(existingItemIdx, 1);
+        const time = appendOperation.timestamp.getTime();
+        if (this._appends.has(time)) {
+            this._appends.delete(time);
         }
 
-        this._appends.push(appendOperation);
+        this._appends.set(time, appendOperation);
     }
 
     public delete(deleteOperation: DeleteOperation) {

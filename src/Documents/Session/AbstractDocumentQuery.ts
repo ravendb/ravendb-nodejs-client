@@ -1176,7 +1176,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     public _andAlso(wrapPreviousQueryClauses: boolean = false): void {
         const tokens = this._getCurrentWhereTokens();
-        if (!tokens && !tokens.length) {
+        if (!tokens || !tokens.length) {
             return;
         }
 

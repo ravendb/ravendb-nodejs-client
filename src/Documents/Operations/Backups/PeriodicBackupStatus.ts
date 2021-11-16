@@ -34,6 +34,7 @@ export interface PeriodicBackupStatus extends IDatabaseTaskStatus {
     version: number;
     error: PeriodicBackupError;
     lastOperationId: number;
+    isEncrypted: boolean;
 }
 
 export class PeriodicBackupError {

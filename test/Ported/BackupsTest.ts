@@ -66,6 +66,8 @@ import { TimeUtil } from "../../src/Utility/TimeUtil";
                 .isTrue();
             assertThat(backupStatus.status.localBackup.lastFullBackup instanceof Date)
                 .isTrue();
+            assertThat(backupStatus.status.isEncrypted)
+                .isFalse();
         } finally {
             rimraf.sync(backupDir);
         }
