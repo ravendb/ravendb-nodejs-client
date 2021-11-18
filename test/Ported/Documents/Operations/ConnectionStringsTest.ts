@@ -4,7 +4,7 @@ import {
     RavenConnectionString,
     SqlConnectionString,
     GetConnectionStringsOperation,
-    RemoveConnectionStringOperation
+    RemoveConnectionStringOperation, OlapConnectionString
 } from "../../../../src";
 import { disposeTestDocumentStore, testContext } from "../../../Utils/TestUtil";
 import { assertThat } from "../../../Utils/AssertExtensions";
@@ -34,8 +34,13 @@ describe("ConnectionStringsTest", function () {
             name: "s1"
         });
 
+        const olapConnectionString1 = Object.assign(new OlapConnectionString(), {
+            name: "o1",
+        });
+
         const putResult = await store.maintenance.send(new PutConnectionStringOperation(ravenConnectionString1));
         await store.maintenance.send(new PutConnectionStringOperation(sqlConnectionString1));
+        await store.maintenance.send(new PutConnectionStringOperation(olapConnectionString1));
 
         assertThat(putResult.raftCommandIndex)
             .isGreaterThan(0);
@@ -49,6 +54,11 @@ describe("ConnectionStringsTest", function () {
         assertThat(connectionStrings.sqlConnectionStrings)
             .hasSize(1);
         assertThat(connectionStrings.sqlConnectionStrings["s1"] instanceof SqlConnectionString)
+            .isTrue();
+
+        assertThat(connectionStrings.olapConnectionStrings)
+            .hasSize(1);
+        assertThat(connectionStrings.olapConnectionStrings["o1"] instanceof OlapConnectionString)
             .isTrue();
 
         const ravenOnly = await store.maintenance.send(
@@ -69,6 +79,18 @@ describe("ConnectionStringsTest", function () {
         assertThat(sqlOnly.sqlConnectionStrings["s1"] instanceof SqlConnectionString)
             .isTrue();
         assertThat(sqlOnly.sqlConnectionStrings)
+            .hasSize(1);
+
+        const olapOnly = await store.maintenance.send(
+            new GetConnectionStringsOperation("o1", "Olap"));
+
+        assertThat(olapOnly.ravenConnectionStrings)
+            .hasSize(0);
+        assertThat(olapOnly.sqlConnectionStrings)
+            .hasSize(0);
+        assertThat(olapOnly.olapConnectionStrings["o1"] instanceof OlapConnectionString)
+            .isTrue();
+        assertThat(olapOnly.olapConnectionStrings)
             .hasSize(1);
 
         const removeResult = await store.maintenance.send(new RemoveConnectionStringOperation(Object.values(sqlOnly.sqlConnectionStrings)[0]));

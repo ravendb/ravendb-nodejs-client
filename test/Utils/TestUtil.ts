@@ -262,6 +262,35 @@ export class RavenTestContext extends RavenTestDriver implements IDisposable {
         return moment().utc().startOf("day");
     }
 
+    public async waitForDocument<T extends object>(documentInfo: DocumentType<T>,
+                                                   store: IDocumentStore,
+                                                   docId: string,
+                                                   predicate: (value: T) => void = null,
+                                                   timeout: number = 10_000) {
+        const sw = Stopwatch.createStarted();
+
+        let ex: Error;
+
+        while (sw.elapsed < timeout) {
+            const session = store.openSession(store.database);
+
+            try {
+                const doc = await session.load(docId, documentInfo);
+                if (doc) {
+                    if (!predicate || predicate(doc)) {
+                        return true;
+                    }
+                }
+            } catch (e) {
+                ex = e;
+            }
+
+            await delay(100);
+        }
+
+        return false;
+    }
+
     public async getDocumentStore(): Promise<DocumentStore>;
     public async getDocumentStore(database: string): Promise<DocumentStore>;
     public async getDocumentStore(database: string, secured: boolean): Promise<DocumentStore>;

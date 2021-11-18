@@ -77,8 +77,15 @@ export class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
         if (TypeUtil.isNullOrUndefined(this._supportsAtomicWrites) || node.supportsAtomicClusterWrites !== this._supportsAtomicWrites) {
             this._supportsAtomicWrites = node.supportsAtomicClusterWrites;
         }
-        const commandsArray = this._commands.reduce(
-            (result, command) => [...result, command.serialize(this._conventions)], []);
+
+        const commandsArray = this._commands.map(x => {
+            const serialized = x.serialize(this._conventions);
+            if (!this._supportsAtomicWrites) {
+                delete serialized["OriginalChangeVector"];
+            }
+
+            return serialized;
+        })
 
         const body = JsonSerializer.getDefault().serialize({
             Commands: commandsArray,

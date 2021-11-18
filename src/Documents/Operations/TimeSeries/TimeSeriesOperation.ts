@@ -2,7 +2,7 @@ import { DateUtil } from "../../../Utility/DateUtil";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 export class TimeSeriesOperation {
-    private _appends: Map<number, AppendOperation>; // using map in node - for performance 
+    private _appends: Map<number, AppendOperation>; // using map in node - for performance
     private _deletes: DeleteOperation[];
     name: string;
 

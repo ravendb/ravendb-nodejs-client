@@ -16,6 +16,7 @@ import { StringBuilder } from "../../../Utility/StringBuilder";
 import { ServerResponse } from "../../../Types";
 import { ITimeSeriesIncludeBuilder } from "../../Session/Loaders/ITimeSeriesIncludeBuilder";
 import { TimeSeriesIncludeBuilder } from "../../Session/Loaders/TimeSeriesIncludeBuilder";
+import { ObjectUtil } from "../../../Utility/ObjectUtil";
 
 export class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult> {
     private readonly _docId: string;
@@ -155,10 +156,15 @@ export class GetTimeSeriesCommand extends RavenCommand<TimeSeriesRangeResult> {
         }
 
         let body: string = null;
-        const results = await this._defaultPipeline<ServerResponse<TimeSeriesRangeResult>>(_ => body = _)
+
+        const results = await this._pipeline<any>()
+            .parseJsonSync()
+            .collectBody(b => body = b)
             .process(bodyStream);
 
-        this.result = reviveTimeSeriesRangeResult(results, this._conventions);
+        const transformedResults = GetTimeSeriesCommand.mapToLocalObject(results, this._conventions);
+
+        this.result = reviveTimeSeriesRangeResult(transformedResults, this._conventions);
 
         return body;
     }
@@ -166,27 +172,46 @@ export class GetTimeSeriesCommand extends RavenCommand<TimeSeriesRangeResult> {
     get isReadRequest(): boolean {
         return true;
     }
+
+    static mapToLocalObject(json: any, conventions: DocumentConventions): ServerResponse<TimeSeriesRangeResult> {
+        const result: ServerResponse<TimeSeriesRangeResult> = {
+            to: json.To,
+            from: json.From,
+            includes: json.Includes,
+            totalResults: json.TotalResults,
+            entries: json.Entries.map(entry => ({
+                timestamp: entry.Timestamp,
+                tag: entry.Tag,
+                values: entry.Values,
+                isRollup: entry.IsRollup
+            }))
+        };
+
+        return result;
+    }
 }
 
-export function reviveTimeSeriesRangeResult(result: ServerResponse<TimeSeriesRangeResult>, conventions: DocumentConventions): TimeSeriesRangeResult {
-    const { entries, from, to, ...restProps } = result;
+export function reviveTimeSeriesRangeResult(json: ServerResponse<TimeSeriesRangeResult>, conventions: DocumentConventions): TimeSeriesRangeResult {
+    const result = new TimeSeriesRangeResult();
+
+    const { to, from, entries, ...restProps } = json;
 
     const entryMapper = (rawEntry: ServerResponse<TimeSeriesEntry>) => {
         const result = new TimeSeriesEntry();
+        result.timestamp = conventions.dateUtil.parse(rawEntry.timestamp);
+        result.isRollup = rawEntry.isRollup;
+        result.tag = rawEntry.tag;
+        result.values = rawEntry.values;
 
-        const entryOverrides: Partial<TimeSeriesEntry> = {
-            timestamp: conventions.dateUtil.parse(rawEntry.timestamp)
-        }
-
-        return Object.assign(result, rawEntry, entryOverrides) as TimeSeriesEntry;
-    }
+        return result;
+    };
 
     const overrides: Partial<TimeSeriesRangeResult> = {
         ...restProps,
-        to: conventions.dateUtil.parse(result.to),
-        from: conventions.dateUtil.parse(result.from),
+        to: conventions.dateUtil.parse(to),
+        from: conventions.dateUtil.parse(from),
         entries: entries.map(entryMapper),
     }
 
-    return Object.assign(new TimeSeriesRangeResult(), overrides);
+    return Object.assign(result, overrides);
 }

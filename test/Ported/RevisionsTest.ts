@@ -3,7 +3,7 @@ import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import {
     ConfigureRevisionsOperation,
-    DocumentStore,
+    DocumentStore, GetStatisticsOperation,
     IDocumentStore,
     RevisionsCollectionConfiguration,
     RevisionsConfiguration
@@ -15,6 +15,12 @@ import { ConfigureRevisionsOperationResult } from "../../src/Documents/Operation
 import { GetRevisionsBinEntryCommand } from "../../src/Documents/Commands/GetRevisionsBinEntryCommand";
 import { Company } from "../Assets/Orders";
 import { assertThat, assertThrows } from "../Utils/AssertExtensions";
+import {
+    GetRevisionsOperation,
+    GetRevisionsParameters
+} from "../../src/Documents/Operations/Revisions/GetRevisionsOperation";
+import { RevisionsResult } from "../../src/Documents/Operations/Revisions/RevisionsResult";
+
 
 describe("RevisionsTest", function () {
 
@@ -45,6 +51,7 @@ describe("RevisionsTest", function () {
             const session = store.openSession();
             const allRevisions = await session.advanced.revisions.getFor<User>("users/1");
             assert.strictEqual(allRevisions.length, 4);
+            assert.strictEqual(allRevisions[0] instanceof User, true);
             assert.strictEqual(allRevisions[0].name, "user4");
             assert.strictEqual(allRevisions[1].name, "user3");
             assert.strictEqual(allRevisions[2].name, "user2");
@@ -272,5 +279,412 @@ describe("RevisionsTest", function () {
             assertThat(e.name)
                 .isEqualTo("RavenException");
         });
+    });
+
+    it("canGetNonExistingRevisionsByChangeVectorAsyncLazily", async function() {
+        const session = store.openSession();
+        const lazy = session.advanced.revisions.lazily.get("dummy", User);
+        const user = await lazy.getValue();
+
+        assertThat(session.advanced.numberOfRequests)
+            .isEqualTo(1);
+        assertThat(user)
+            .isNull();
+    });
+
+    it("canGetRevisionsByChangeVectorsLazily", async function () {
+        const id = "users/1";
+        await testContext.setupRevisions(store, false, 123);
+
+        {
+            const session = store.openSession();
+            const user = new User();
+            user.name = "Omer";
+            await session.store(user, id);
+            await session.saveChanges();
+        }
+
+        for (let i = 0; i < 10; i++) {
+            const session = store.openSession();
+            const user = await session.load(id, Company);
+            user.name = "Omer" + i;
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const revisionsMetadata = await session.advanced.revisions.getMetadataFor(id);
+            assertThat(revisionsMetadata)
+                .hasSize(11);
+
+            const changeVectors = revisionsMetadata.map(x => x["@change-vector"]);
+            const changeVectors2 = revisionsMetadata.map(x => x["@change-vector"]);
+
+            const revisionsLazy = session.advanced.revisions.lazily.get(changeVectors, User);
+            const revisionsLazy2 = session.advanced.revisions.lazily.get(changeVectors2, User);
+
+            const lazyResult = await revisionsLazy.getValue();
+            const revisions = await session.advanced.revisions.get(changeVectors, User);
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(3);
+            assertThat(Object.keys(lazyResult).length)
+                .isEqualTo(Object.keys(revisions).length);
+        }
+    });
+
+    it("canGetForLazily", async function () {
+        const id = "users/1";
+        const id2 = "users/2";
+
+        await testContext.setupRevisions(store, false, 123);
+
+        {
+            const session = store.openSession();
+            const user1 = new User();
+            user1.name = "Omer";
+            await session.store(user1, id);
+
+            const user2 = new User();
+            user2.name = "Rhinos";
+            await session.store(user2, id2);
+
+            await session.saveChanges();
+        }
+
+        for (let i = 0; i < 10; i++) {
+            const session = store.openSession();
+            const user = await session.load(id, Company);
+            user.name = "Omer" + i;
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const revision = await session.advanced.revisions.getFor<User>("users/1", {
+                documentType: User
+            });
+            const revisionsLazy = session.advanced.revisions.lazily.getFor<User>("users/1", {
+                documentType: User
+            });
+            session.advanced.revisions.lazily.getFor<User>("users/2", {
+                documentType: User
+            });
+
+            const revisionsLazilyResult = await revisionsLazy.getValue();
+
+            assertThat(revisionsLazilyResult[0] instanceof Company)
+                .isTrue();
+
+            assertThat(revision.map(x => x.name).join(","))
+                .isEqualTo(revisionsLazilyResult.map(x => x.name).join(","));
+            assertThat(revision.map(x => x.id).join(","))
+                .isEqualTo(revisionsLazilyResult.map(x => x.id).join(","));
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(2);
+        }
+    });
+
+    it("canGetRevisionsByIdAndTimeLazily", async function () {
+        const id = "users/1";
+        const id2 = "users/2";
+
+        await testContext.setupRevisions(store, false, 123);
+
+        {
+            const session = store.openSession();
+            const user1 = new User();
+            user1.name = "Omer";
+            await session.store(user1, id);
+
+            const user2 = new User();
+            user2.name = "Rhinos";
+            await session.store(user2, id2);
+
+            await session.saveChanges();
+        }
+
+        for (let i = 0; i < 10; i++) {
+            const session = store.openSession();
+            const user = await session.load(id, Company);
+            user.name = "Omer" + i;
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const revision = await session.advanced.revisions.get<User>("users/1", new Date());
+            const revisionLazily = await session.advanced.revisions.lazily.get<User>("users/1", new Date());
+
+            session.advanced.revisions.lazily.get<User>("users/2", new Date());
+
+            const revisionLazilyResult = await revisionLazily.getValue();
+            assertThat(revisionLazilyResult instanceof User)
+                .isTrue();
+            assertThat(revision.id)
+                .isEqualTo(revisionLazilyResult.id);
+            assertThat(revision.name)
+                .isEqualTo(revisionLazilyResult.name);
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(2);
+        }
+    });
+
+    it("canGetMetadataForLazily", async function () {
+        const id = "users/1";
+        const id2 = "users/2";
+
+        await testContext.setupRevisions(store, false, 123);
+
+        {
+            const session = store.openSession();
+            const user1 = new User();
+            user1.name = "Omer";
+            await session.store(user1, id);
+
+            const user2 = new User();
+            user2.name = "Rhinos";
+            await session.store(user2, id2);
+
+            await session.saveChanges();
+        }
+
+        for (let i = 0; i < 10; i++) {
+            const session = store.openSession();
+            const user = await session.load(id, Company);
+            user.name = "Omer" + i;
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const revisionsMetadata = await session.advanced.revisions.getMetadataFor(id);
+            const revisionsMetaDataLazily = session.advanced.revisions.lazily.getMetadataFor(id);
+            const revisionsMetaDataLazily2 = session.advanced.revisions.lazily.getMetadataFor(id2);
+            const revisionsMetaDataLazilyResult = await revisionsMetaDataLazily.getValue();
+
+            assertThat(revisionsMetadata.map(x => x["@id"]).join(","))
+                .isEqualTo(revisionsMetaDataLazilyResult.map(x => x["@id"]).join(","));
+
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(2);
+        }
+    });
+
+    it("canGetRevisionsByChangeVectorLazily", async function () {
+        const id = "users/1";
+        const id2 = "users/2";
+
+        await testContext.setupRevisions(store, false, 123);
+
+        {
+            const session = store.openSession();
+            const user1 = new User();
+            user1.name = "Omer";
+            await session.store(user1, id);
+
+            const user2 = new User();
+            user2.name = "Rhinos";
+            await session.store(user2, id2);
+
+            await session.saveChanges();
+        }
+
+        for (let i = 0; i < 10; i++) {
+            const session = store.openSession();
+            const user = await session.load(id, Company);
+            user.name = "Omer" + i;
+            await session.saveChanges();
+        }
+
+        const stats = await store.maintenance.send(new GetStatisticsOperation());
+        const dbId = stats.databaseId;
+
+        const cv = "A:23-" + dbId;
+        const cv2 = "A:3-" + dbId;
+
+        {
+            const session = store.openSession();
+            const revisions = await session.advanced.revisions.get(cv, User);
+            const revisionsLazily = await session.advanced.revisions.lazily.get(cv, User);
+            const revisionsLazily1 = await session.advanced.revisions.lazily.get(cv2, User);
+
+            const revisionsLazilyValue = await revisionsLazily.getValue();
+
+            assertThat(revisionsLazilyValue instanceof User)
+                .isTrue();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(2);
+            assertThat(revisionsLazilyValue.id)
+                .isEqualTo(revisions.id);
+            assertThat(revisionsLazilyValue.name)
+                .isEqualTo(revisions.name);
+        }
+    });
+
+    it("canGetAllRevisionsForDocument_UsingStoreOperation", async function () {
+        const company = new Company();
+        company.name = "Company Name";
+
+        await testContext.setupRevisions(store, false, 123);
+
+        {
+            const session = store.openSession();
+            await session.store(company);
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const company3 = await session.load(company.id, Company);
+            company3.name = "Hibernating Rhinos";
+            await session.saveChanges();
+        }
+
+        const revisionsResult: RevisionsResult<Company> = await store.operations.send(
+            new GetRevisionsOperation<Company>(company.id, {
+            documentType: Company
+        }));
+        assertThat(revisionsResult.totalResults)
+            .isEqualTo(2);
+
+        const companiesRevisions = revisionsResult.results;
+        assertThat(companiesRevisions)
+            .hasSize(2);
+        assertThat(companiesRevisions[0] instanceof Company)
+            .isTrue();
+        assertThat(companiesRevisions[0].name)
+            .isEqualTo("Hibernating Rhinos");
+        assertThat(companiesRevisions[1].name)
+            .isEqualTo("Company Name");
+    });
+
+    it("canGetRevisionsWithPaging_UsingStoreOperation", async function () {
+        await testContext.setupRevisions(store, false, 123);
+
+        const id = "companies/1";
+
+        {
+            const session = store.openSession();
+            await session.store(new Company(), id);
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const company2 = await session.load(id, Company);
+            company2.name = "Hibernating";
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const company3 = await session.load(id, Company);
+            company3.name = "Hibernating Rhinos";
+            await session.saveChanges();
+        }
+
+        for (let i = 0; i < 10; i++) {
+            const session = store.openSession();
+            const company = await session.load(id, Company);
+            company.name = "HR" + i;
+            await session.saveChanges();
+        }
+
+        const parameters: GetRevisionsParameters<Company> = {
+            documentType: Company,
+            start: 10
+        };
+
+        const revisionsResult = await store.operations.send(new GetRevisionsOperation(id, parameters));
+
+        assertThat(revisionsResult.totalResults)
+            .isEqualTo(13);
+
+        const companiesRevisions = revisionsResult.results;
+        assertThat(companiesRevisions)
+            .hasSize(3);
+
+        assertThat(companiesRevisions[0] instanceof Company)
+            .isTrue();
+
+        assertThat(companiesRevisions[0].name)
+            .isEqualTo("Hibernating Rhinos");
+        assertThat(companiesRevisions[1].name)
+            .isEqualTo("Hibernating");
+        assertThat(companiesRevisions[2].name)
+            .isNull();
+    });
+
+    it("canGetRevisionsWithPaging2_UsingStoreOperation", async function () {
+        await testContext.setupRevisions(store, false, 100);
+
+        const id = "companies/1";
+
+        {
+            const session = store.openSession();
+            await session.store(new Company(), id);
+            await session.saveChanges();
+        }
+
+        for (let i = 0; i < 99; i++) {
+            const session = store.openSession();
+            const company = await session.load(id, Company);
+            company.name = "HR" + i;
+            await session.saveChanges();
+        }
+
+        const revisionsResult = await store.operations.send(new GetRevisionsOperation<Company>(id, {
+            start: 50,
+            pageSize: 10,
+            documentType: Company
+        }));
+        assertThat(revisionsResult.totalResults)
+            .isEqualTo(100);
+
+        const companiesRevisions = revisionsResult.results;
+        assertThat(companiesRevisions)
+            .hasSize(10);
+
+        let count = 0 ;
+        for (let i = 48; i > 38; i--) {
+            assertThat(companiesRevisions[count] instanceof Company)
+                .isTrue();
+            assertThat((await companiesRevisions[count++]).name)
+                .isEqualTo("HR" + i);
+        }
+    });
+
+    it("canGetRevisionsCountFor", async function () {
+        const company = new Company();
+        company.name = "Company Name";
+
+        await testContext.setupRevisions(store, false, 100);
+
+        {
+            const session = store.openSession();
+            await session.store(company);
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const company2 = await session.load(company.id, Company);
+            company2.name = "Israel";
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const company3 = await session.load(company.id, Company);
+            company3.name = "Hibernating Rhinos";
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+            const companiesRevisionsCount = await session.advanced.revisions.getCountFor(company.id);
+            assertThat(companiesRevisionsCount)
+                .isEqualTo(3);
+        }
     });
 });

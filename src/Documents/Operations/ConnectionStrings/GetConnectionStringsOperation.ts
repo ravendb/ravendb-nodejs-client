@@ -10,10 +10,12 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { OperationResultType, IMaintenanceOperation } from "../OperationAbstractions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
+import { OlapEtlConfiguration } from "../Etl/Olap/OlapEtlConfiguration";
 
 export interface GetConnectionStringsResult {
     ravenConnectionStrings: Record<string, RavenConnectionString>;
     sqlConnectionStrings: Record<string, SqlConnectionString>;
+    olapConnectionStrings: Record<string, OlapConnectionString>;
 }
 
 export class GetConnectionStringsOperation implements IMaintenanceOperation<GetConnectionStringsResult> {
@@ -85,6 +87,14 @@ export class GetConnectionStringCommand extends RavenCommand<GetConnectionString
                     previousValue[currentValue[0]] = Object.assign(new SqlConnectionString(), currentValue[1]);
                     return previousValue;
                 }), {} as Record<string, SqlConnectionString>);
+        }
+
+        if (this.result.olapConnectionStrings) {
+            this.result.olapConnectionStrings = Object.entries(this.result.olapConnectionStrings)
+                .reduce(((previousValue, currentValue) => {
+                    previousValue[currentValue[0]] = Object.assign(new OlapConnectionString(), currentValue[1]);
+                    return previousValue;
+                }), {} as Record<string, OlapConnectionString>);
         }
 
         return body;

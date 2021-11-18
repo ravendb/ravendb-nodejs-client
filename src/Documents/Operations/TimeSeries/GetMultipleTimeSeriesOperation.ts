@@ -137,15 +137,18 @@ export class GetMultipleTimeSeriesCommand extends RavenCommand<TimeSeriesDetails
         }
 
         let body: string = null;
-        const results = await this._defaultPipeline(_ => body = _)
+        const results = await this._pipeline<any>()
+            .parseJsonSync()
+            .collectBody(b => body = b)
             .process(bodyStream);
 
         this.result = new TimeSeriesDetails();
-        this.result.id = results.id;
+        this.result.id = results.Id;
         this.result.values = CaseInsensitiveKeysMap.create();
 
-        for (const [key, value] of Object.entries(results.values)) {
-            this.result.values.set(key, value.map(x => reviveTimeSeriesRangeResult(x, this._conventions)));
+        for (const [key, value] of Object.entries(results.Values)) {
+            const mapped = (value as any).map(x => reviveTimeSeriesRangeResult(GetTimeSeriesCommand.mapToLocalObject(x, this._conventions), this._conventions));
+            this.result.values.set(key, mapped);
         }
 
         return body;
