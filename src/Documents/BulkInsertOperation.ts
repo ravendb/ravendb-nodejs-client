@@ -23,7 +23,7 @@ import { CommandType } from "./Commands/CommandData";
 import { TypeUtil } from "../Utility/TypeUtil";
 import { IDisposable } from "../Types/Contracts";
 import { TypedTimeSeriesEntry } from "./Session/TimeSeries/TypedTimeSeriesEntry";
-import { ClassConstructor } from "../Types";
+import { ClassConstructor, EntityConstructor } from "../Types";
 import { TimeSeriesOperations } from "./TimeSeries/TimeSeriesOperations";
 import { TimeSeriesValuesHelper } from "./Session/TimeSeries/TimeSeriesValuesHelper";
 
@@ -397,10 +397,10 @@ export class BulkInsertOperation {
         return new BulkInsertOperation._attachmentsBulkInsertClass(this, id);
     }
 
-    public timeSeriesFor(id: string, name);
-    public timeSeriesFor<T extends object>(clazz: ClassConstructor<T>, id: string)
-    public timeSeriesFor<T extends object>(clazz: ClassConstructor<T>, id: string, name: string)
-    public timeSeriesFor<T extends object>(classOrId: ClassConstructor<T> | string, idOrName: string, name?: string) {
+    public timeSeriesFor(id: string, name): ITimeSeriesBulkInsert;
+    public timeSeriesFor<T extends object>(clazz: EntityConstructor<T>, id: string): ITypedTimeSeriesBulkInsert<T>;
+    public timeSeriesFor<T extends object>(clazz: EntityConstructor<T>, id: string, name: string): ITypedTimeSeriesBulkInsert<T>;
+    public timeSeriesFor<T extends object>(classOrId: EntityConstructor<T> | string, idOrName: string, name?: string) {
         if (TypeUtil.isString(classOrId)) {
             return this._timeSeriesFor(classOrId, idOrName);
         } else {
@@ -408,7 +408,7 @@ export class BulkInsertOperation {
         }
     }
 
-    private _typedTimeSeriesFor<T extends object>(clazz: ClassConstructor<T>, id: string, name: string = null) {
+    private _typedTimeSeriesFor<T extends object>(clazz: EntityConstructor<T>, id: string, name: string = null) {
         if (StringUtil.isNullOrEmpty(id)) {
             throwError("InvalidArgumentException", "Document id cannot be null or empty");
         }
@@ -616,7 +616,7 @@ export class BulkInsertOperation {
                         }
 
                         firstValue = false;
-                        this._operation._currentWriter.push(value.toString());
+                        this._operation._currentWriter.push((value ?? 0).toString());
                     }
 
                     if (tag) {

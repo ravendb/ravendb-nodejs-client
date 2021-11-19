@@ -42,7 +42,7 @@ describe("TimeSeriesSessionTest", function () {
             assertThat(val.tag)
                 .isEqualTo("watches/fitbit");
             assertThat(val.timestamp.getTime())
-                .isEqualTo(baseLine.add(1, "minute").toDate().getTime());
+                .isEqualTo(baseLine.clone().add(1, "minute").toDate().getTime());
         }
     });
 

@@ -96,7 +96,7 @@ select out(p) as heartRate, p.name`, RawQueryResult)
 
     it("canQueryTimeSeriesAggregation_DeclareSyntax_MultipleSeries", async () => {
         const baseLine = moment().startOf("day");
-        const baseLine2 = baseLine.add(-1, "day");
+        const baseLine2 = baseLine.clone().add(-1, "day");
 
         {
             const session = store.openSession();

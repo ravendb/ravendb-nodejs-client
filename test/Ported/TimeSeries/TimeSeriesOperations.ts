@@ -848,7 +848,7 @@ describe("TimeSeriesOperations", function () {
         for (let i = 0; i <= 10; i++) {
             timeSeriesOp.append(
                 new AppendOperation(
-                    baseLine.add(i * 10, "minutes").toDate(), [ 72 ], "watches/fitbit"));
+                    baseLine.clone().add(i * 10, "minutes").toDate(), [ 72 ], "watches/fitbit"));
         }
 
         const timeSeriesBatch = new TimeSeriesBatchOperation(documentId, timeSeriesOp);
