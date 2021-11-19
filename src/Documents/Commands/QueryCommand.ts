@@ -9,6 +9,7 @@ import { JsonSerializer } from "../../Mapping/Json/Serializer";
 import * as stream from "readable-stream";
 import { RavenCommandResponsePipeline } from "../../Http/RavenCommandResponsePipeline";
 import { StringBuilder } from "../../Utility/StringBuilder";
+import { InMemoryDocumentSessionOperations } from "../Session/InMemoryDocumentSessionOperations";
 
 export interface QueryCommandOptions {
     metadataOnly?: boolean;
@@ -17,16 +18,16 @@ export interface QueryCommandOptions {
 
 export class QueryCommand extends RavenCommand<QueryResult> {
 
-    protected _conventions: DocumentConventions;
+    protected _session: InMemoryDocumentSessionOperations;
     private readonly _indexQuery: IndexQuery;
     private readonly _metadataOnly: boolean;
     private readonly _indexEntriesOnly: boolean;
 
     public constructor(
-        conventions: DocumentConventions, indexQuery: IndexQuery, opts: QueryCommandOptions) {
+        session: InMemoryDocumentSessionOperations, indexQuery: IndexQuery, opts: QueryCommandOptions) {
         super();
 
-        this._conventions = conventions;
+        this._session = session;
 
         if (!indexQuery) {
             throwError("InvalidArgumentException", "indexQuery cannot be null.");
@@ -52,7 +53,7 @@ export class QueryCommand extends RavenCommand<QueryResult> {
             // we need to add a query hash because we are using POST queries
             // so we need to unique parameter per query so the query cache will
             // work properly
-            .append(this._indexQuery.getQueryHash());
+            .append(this._indexQuery.getQueryHash(this._session.conventions.objectMapper));
 
         if (this._metadataOnly) {
             path.append("&metadataOnly=true");
@@ -63,7 +64,7 @@ export class QueryCommand extends RavenCommand<QueryResult> {
         }
 
         const uri = path.toString();
-        const body = writeIndexQuery(this._conventions, this._indexQuery);
+        const body = writeIndexQuery(this._session.conventions, this._indexQuery);
         const headers = this._headers().typeAppJson().build();
         return {
             method: "POST",
@@ -85,7 +86,7 @@ export class QueryCommand extends RavenCommand<QueryResult> {
 
         let body: string = null;
         this.result = await QueryCommand.parseQueryResultResponseAsync(
-            bodyStream, this._conventions, fromCache, b => body = b);
+            bodyStream, this._session.conventions, fromCache, b => body = b);
 
         return body;
     }

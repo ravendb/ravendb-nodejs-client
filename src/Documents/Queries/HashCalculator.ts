@@ -1,6 +1,6 @@
 import * as md5 from "md5";
 import { TypeUtil } from "../../Utility/TypeUtil";
-import { JsonSerializer } from "../../Mapping/Json/Serializer";
+import { TypesAwareObjectMapper } from "../../Mapping/ObjectMapper";
 
 export class HashCalculator {
 
@@ -12,7 +12,7 @@ export class HashCalculator {
 
     //TBD 4.1 public void Write(HighlightedField[] highlightedFields)
 
-    public write(o: any) {
+    public write(o: any, mapper?: TypesAwareObjectMapper) {
         if (TypeUtil.isNullOrUndefined(o)) {
             this._buffers.push(Buffer.from("null"));
             return;
@@ -26,15 +26,15 @@ export class HashCalculator {
             this._buffers.push(Buffer.from(o ? [1] : [2]));
         } else if (Array.isArray(o)) {
             for (const item of o) {
-                this.write(item);
+                this.write(item, mapper);
             }
         } else if (typeof o === "object") {
             for (const key of Object.keys(o)) {
-                this.write(key);
-                this.write(o[key]);
+                this.write(key, mapper);
+                this.write(o[key], mapper);
             }
         } else {
-            this.write(JsonSerializer.getDefaultForEntities().serialize(o));
+            this.write(mapper.toObjectLiteral(o), mapper);
         }
     }
 }

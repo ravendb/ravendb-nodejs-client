@@ -67,7 +67,7 @@ export class NodeSelector {
         const state = this._state;
 
         if (state.topology.nodes.length === 0) {
-            throwError("AllTopologyNodesDownException", "There are no nodes in the topology at all");
+            throwError("DatabaseDoesNotExistException", "There are no nodes in the topology at all");
         }
 
         const index = sessionId % state.topology.nodes.length;
@@ -147,7 +147,7 @@ export class NodeSelector {
         // if there are all marked as failed, we'll chose the first
         // one so the user will get an error (or recover :-) );
         if (state.nodes.length === 0) {
-            throwError("AllTopologyNodesDownException", "There are no nodes in the topology at all.");
+            throwError("DatabaseDoesNotExistException", "There are no nodes in the topology at all.");
         }
 
         return new CurrentIndexAndNode(0, state.nodes[0]);

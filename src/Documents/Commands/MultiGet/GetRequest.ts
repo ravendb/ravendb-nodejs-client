@@ -3,6 +3,7 @@ export class GetRequest {
     private _headers: { [key: string]: string | string[] };
     private _query: string;
     private _method: string;
+    private _canCacheAggressively: boolean = true;
 
     /**
      * Concatenated Url and Query.
@@ -81,5 +82,13 @@ export class GetRequest {
 
     public set body(content) {
         this._content = content;
+    }
+
+    public get canCacheAggressively() {
+        return this._canCacheAggressively;
+    }
+
+    public set canCacheAggressively(value: boolean) {
+        this._canCacheAggressively = value;
     }
 }

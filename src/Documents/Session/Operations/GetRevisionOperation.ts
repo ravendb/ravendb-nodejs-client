@@ -46,6 +46,7 @@ export class GetRevisionOperation {
     }
 
     public createRequest() {
+        this._session.incrementRequestCount();
         return this._command;
     }
 

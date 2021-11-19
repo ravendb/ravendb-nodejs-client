@@ -4,6 +4,7 @@ import { HashCalculator } from "./HashCalculator";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { JsonSerializer } from "../../Mapping/Json/Serializer";
+import { TypesAwareObjectMapper } from "../../Mapping/ObjectMapper";
 
 export interface IndexQueryParameters {
     [key: string]: object;
@@ -24,16 +25,16 @@ export class IndexQuery extends IndexQueryWithParameters<IndexQueryParameters> {
      */
     public disableCaching: boolean;
 
-    public getQueryHash(): string {
+    public getQueryHash(mapper: TypesAwareObjectMapper): string {
         const hasher = new HashCalculator();
         try {
-            hasher.write(this.query);
+            hasher.write(this.query, mapper);
             hasher.write(this.waitForNonStaleResults);
             hasher.write(this.skipDuplicateChecking);
             hasher.write(this.waitForNonStaleResultsTimeout || 0);
             hasher.write(this.start);
             hasher.write(this.pageSize);
-            hasher.write(this.queryParameters);
+            hasher.write(this.queryParameters, mapper);
             return hasher.getHash();
         } catch (err) {
             throwError("RavenException", "Unable to calculate hash", err);

@@ -16,6 +16,13 @@ export class DatabaseHealthCheckOperation implements IMaintenanceOperation<void>
 
 class DatabaseHealthCheckCommand extends RavenCommand<void> {
 
+
+    constructor() {
+        super();
+
+        this.timeout = 15_000;
+    }
+
     get isReadRequest(): boolean {
         return true;
     }

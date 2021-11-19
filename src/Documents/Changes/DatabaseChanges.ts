@@ -219,6 +219,10 @@ export class DatabaseChanges implements IDatabaseChanges {
             this._client.close();
         }
 
+        for (const value of this._counters.values()) {
+            value.dispose();
+        }
+
         this._counters.clear();
 
         this._emitter.emit("connectionStatus");
@@ -311,7 +315,9 @@ export class DatabaseChanges implements IDatabaseChanges {
     private async _doWork(nodeTag: string): Promise<void> {
         let preferredNode: CurrentIndexAndNode;
         try {
-            preferredNode = nodeTag ? await this._requestExecutor.getRequestedNode(nodeTag) : await this._requestExecutor.getPreferredNode();
+            preferredNode = nodeTag || this._requestExecutor.conventions.disableTopologyUpdates
+                ? await this._requestExecutor.getRequestedNode(nodeTag)
+                : await this._requestExecutor.getPreferredNode();
             this._nodeIndex = preferredNode.currentIndex;
             this._serverNode = preferredNode.currentNode;
         } catch (e) {
@@ -357,7 +363,12 @@ export class DatabaseChanges implements IDatabaseChanges {
                 try {
                     this._serverNode = await this._requestExecutor.handleServerNotResponsive(this._url, this._serverNode, this._nodeIndex, e);
                 } catch (ee) {
-                    //We don't want to stop observe for changes if server down. we will wait for one to be up
+                    if (ee.name === "DatabaseDoesNotExistException") {
+                        e = ee;
+                        throw ee;
+                    } else {
+                        //We don't want to stop observe for changes if server down. we will wait for one to be up
+                    }
                 }
                 this._notifyAboutError(e);
             });

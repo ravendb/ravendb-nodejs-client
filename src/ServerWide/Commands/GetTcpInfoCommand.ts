@@ -7,6 +7,7 @@ export class TcpConnectionInfo {
     public url: string;
     public certificate: string;
     public urls: string[];
+    public nodeTag: string;
 }
 
 export class GetTcpInfoCommand extends RavenCommand<TcpConnectionInfo> {
@@ -21,6 +22,8 @@ export class GetTcpInfoCommand extends RavenCommand<TcpConnectionInfo> {
         super();
         this._tag = tag;
         this._dbName = dbName;
+
+        this.timeout = 15_000;
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {

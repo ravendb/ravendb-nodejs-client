@@ -25,6 +25,7 @@ import * as http from "http";
 import { Stopwatch } from "../../src/Utility/Stopwatch";
 import { delay } from "../../src/Utility/PromiseUtil";
 import * as open from "open";
+import { ClusterTestContext } from "../Utils/TestUtil";
 
 const log = getLogger({ module: "TestDriver" });
 
@@ -201,6 +202,10 @@ export abstract class RavenTestDriver {
     }
 
     public async waitForValue<T>(act: () => Promise<T>, expectedValue: T, opts: { timeout?: number; equal?: (a: T, b: T) => boolean } = {}) {
+        return ClusterTestContext.waitForValue(act, expectedValue, opts);
+    }
+
+    public static async waitForValue<T>(act: () => Promise<T>, expectedValue: T, opts: { timeout?: number; equal?: (a: T, b: T) => boolean } = {}) {
         const timeout = opts.timeout ?? 15_000;
         const identity = (a, b) => a === b;
         const compare = opts.equal ?? identity;

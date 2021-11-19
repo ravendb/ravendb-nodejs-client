@@ -11,7 +11,7 @@ describe("SecuredSubscriptionsBasicTest", function () {
 
     this.retries(3);
 
-    const _reasonableWaitTime = 15 * 1000;
+    const _reasonableWaitTime = 15 * 1000; // default time between connections is retry is 5 seconds
     this.timeout(5 * _reasonableWaitTime);
 
     let store: IDocumentStore;

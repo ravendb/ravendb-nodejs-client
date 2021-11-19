@@ -227,8 +227,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     private _isInMoreLikeThis: boolean;
 
-    private static _getDefaultTimeout(): number {
-        return 25 * 1000;
+    private _getDefaultTimeout(): number {
+        return this._conventions.waitForNonStaleResultsTimeout;
     }
 
     protected constructor(
@@ -415,7 +415,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             return;
         }
         this._theWaitForNonStaleResults = true;
-        this._timeout = waitTimeout || AbstractDocumentQuery._getDefaultTimeout();
+        this._timeout = waitTimeout || this._getDefaultTimeout();
     }
 
     protected _getLazyQueryOperation() {
@@ -425,7 +425,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
         const clazz = this._conventions.getJsTypeByDocumentType(this._clazz);
         return  new LazyQueryOperation<T>(
-            this._theSession.conventions,
+            this._theSession,
             this._queryOperation,
             this,
             clazz);
@@ -2131,7 +2131,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         const clazz = this._conventions.getJsTypeByDocumentType(this._clazz);
         const lazyQueryOperation =
             new LazyQueryOperation<T>(
-                this._theSession.conventions,
+                this._theSession,
                 this._queryOperation,
                 this,
                 clazz);

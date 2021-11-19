@@ -10,6 +10,7 @@ import { GetOngoingTaskInfoOperation } from "../../../../src/Documents/Operation
 import { OngoingTaskPullReplicationAsSink } from "../../../../src/Documents/Operations/OngoingTasks/OngoingTaskPullReplicationAsSink";
 import { GetPullReplicationHubTasksInfoOperation } from "../../../../src/Documents/Operations/OngoingTasks/GetPullReplicationHubTasksInfoOperation";
 import { PullReplicationDefinition } from "../../../../src/Documents/Operations/Replication/PullReplicationDefinition";
+import { delay } from "../../../../src/Utility/PromiseUtil";
 
 (RavenTestContext.isPullRequest ? describe.skip : describe)("PullReplicationTest", function () {
 
@@ -241,6 +242,8 @@ import { PullReplicationDefinition } from "../../../../src/Documents/Operations/
 
                     await ReplicationTestContext.addWatcherToReplicationTopology(sink, pull, ...hub2.urls);
 
+                    await delay(500); // wait a bit to process update
+
                     {
                         const main = hub.openSession();
                         await main.store(new User(), "hub1/2");
@@ -322,7 +325,7 @@ import { PullReplicationDefinition } from "../../../../src/Documents/Operations/
                 await hub.maintenance.forDatabase(hub.database)
                     .send(hubOperation);
 
-                assertThat(await replication.waitForDocumentToReplicate<User>(sink, "users/2", 20_000, User))
+                assertThat(await replication.waitForDocumentToReplicate<User>(sink, "users/2", 40_000, User))
                     .isNotNull();
 
             } finally {
