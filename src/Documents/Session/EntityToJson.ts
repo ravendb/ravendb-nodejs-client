@@ -112,15 +112,16 @@ export class EntityToJson {
                 documentInfo.metadata[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] || typeInfo.typeName;
         }
 
-        function differentNestedTypes() {
-            const existing =
-                documentInfo.metadataInstance[CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES];
-            if(existing == null)
+        function differentNestedTypes(): boolean {
+            const existing = documentInfo.metadataInstance[CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES];
+            if (!existing) {
                 return true;
-            if(Object.keys(existing).length != Object.keys(typeInfo.nestedTypes).length)
+            }
+            if (Object.keys(existing).length !== Object.keys(typeInfo.nestedTypes).length) {
                 return true;
-            for (const key in typeInfo.nestedTypes){
-                if(typeInfo.nestedTypes[key] != existing[key]) {
+            }
+            for (const key in typeInfo.nestedTypes) {
+                if (typeInfo.nestedTypes[key] !== existing[key]) {
                     return true;
                 }
             }
@@ -128,11 +129,11 @@ export class EntityToJson {
         }
 
         if (documentInfo.metadataInstance) {
-            if(differentNestedTypes()){
+            if (differentNestedTypes()) {
                 documentInfo.metadataInstance[CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES] = typeInfo.nestedTypes;
             }
-            var nodeType = documentInfo.metadataInstance[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] || typeInfo.typeName;
-            if(documentInfo.metadataInstance[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] !== nodeType){
+            const nodeType = documentInfo.metadataInstance[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] || typeInfo.typeName;
+            if (documentInfo.metadataInstance[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] !== nodeType) {
                 documentInfo.metadataInstance[CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE] = nodeType;
             }
         }

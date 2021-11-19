@@ -1,18 +1,18 @@
-import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
     IDocumentStore,
 } from "../../../src";
+import { assertThat } from "../../Utils/AssertExtensions";
 
-class item{
+class Item {
+    v: string;
 
-    constructor(v : string){
+    constructor(v: string) {
         this.v = v;
     }
-
-    v : string;
 }
+
 describe("SpuriousSaveChanges", function () {
 
     let store: IDocumentStore;
@@ -28,21 +28,23 @@ describe("SpuriousSaveChanges", function () {
     it("willNotSaveUnmodifiedDocuments", async () => {
 
         await createData(store);
+
         {
             const session = store.openSession();
-            const result = await session.query<item>({ collection: "items" })
+            const result = await session.query<Item>({ collection: "items" })
                 .all();
-            assert.ok(!session.advanced.hasChanged(result[0]));
-            var old = session.advanced.numberOfRequests;
+            assertThat(session.advanced.hasChanged(result[0]))
+                .isFalse();
+            const old = session.advanced.numberOfRequests;
             await session.saveChanges();
-            assert.strictEqual(old, session.advanced.numberOfRequests);
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(old);
         }
     });
 
     async function createData(store: IDocumentStore): Promise<void> {
         const session = store.openSession();
-        await session.store(new item("f"), "items/1");
+        await session.store(new Item("f"), "items/1");
         await session.saveChanges();
     }
-
 });
