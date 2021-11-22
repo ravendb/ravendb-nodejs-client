@@ -1,5 +1,5 @@
 import { disposeTestDocumentStore, testContext } from "../../../Utils/TestUtil";
-import { AbstractCountersIndexCreationTask, IDocumentStore } from "../../../../src";
+import { AbstractCsharpCountersIndexCreationTask, IDocumentStore } from "../../../../src";
 import { Company } from "../../../Assets/Orders";
 import { assertThat } from "../../../Utils/AssertExtensions";
 
@@ -50,7 +50,7 @@ describe("BasicCountersIndexes_StrongSyntaxTest", function () {
     });
 });
 
-class MyCounterIndex extends AbstractCountersIndexCreationTask {
+class MyCounterIndex extends AbstractCsharpCountersIndexCreationTask {
     public constructor() {
         super();
 

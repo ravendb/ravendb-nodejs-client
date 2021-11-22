@@ -10,12 +10,54 @@ export class ServerNode {
     public serverRole: ServerNodeRole;
     public supportsAtomicClusterWrites: boolean;
 
+    private _lastServerVersionCheck: number = 0;
+    private _lastServerVersion: string;
+
     public constructor(opts?: { database?: string, url?: string, clusterTag?: string }) {
         if (opts) {
             this.database = opts.database;
             this.url = opts.url;
             this.clusterTag = opts.clusterTag;
         }
+    }
+
+    public shouldUpdateServerVersion(): boolean {
+        if (!this._lastServerVersion || this._lastServerVersionCheck > 100) {
+            return true;
+        }
+
+        this._lastServerVersionCheck++;
+        return false;
+    }
+
+    public updateServerVersion(serverVersion: string): void {
+        this._lastServerVersion = serverVersion;
+        this._lastServerVersionCheck = 0;
+
+        this.supportsAtomicClusterWrites = false;
+
+        if (serverVersion) {
+            const tokens = serverVersion.split(".");
+            try {
+                const major = parseInt(tokens[0], 10);
+                const minor = parseInt(tokens[1], 10);
+
+                if (major > 5 || (major === 5 && minor >= 2)) {
+                    this.supportsAtomicClusterWrites = true;
+                }
+            } catch {
+                // ignore
+            }
+        }
+    }
+
+    public discardServerVersion(): void {
+        this._lastServerVersion = null;
+        this._lastServerVersionCheck = 0;
+    }
+
+    public get lastServerVersion() {
+        return this._lastServerVersion;
     }
 
     public get isSecure(): boolean {

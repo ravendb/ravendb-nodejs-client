@@ -1,19 +1,10 @@
 import { AbstractGenericCountersIndexCreationTask } from "./AbstractGenericCountersIndexCreationTask";
-import { throwError } from "../../../Exceptions";
 import { CountersIndexDefinition } from "./CountersIndexDefinition";
 import { CountersIndexDefinitionBuilder } from "./CountersIndexDefinitionBuilder";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
-export abstract class AbstractMultiMapCountersIndexCreationTask extends AbstractGenericCountersIndexCreationTask {
-    private readonly maps: string[] = [];
-
-    protected _addMap(map: string) {
-        if (!map) {
-            throwError("InvalidArgumentException", "Map cannot be null");
-        }
-
-        this.maps.push(map);
-    }
+export abstract class AbstractCsharpCountersIndexCreationTask extends AbstractGenericCountersIndexCreationTask {
+    public map: string;
 
     createIndexDefinition(): CountersIndexDefinition {
         if (!this.conventions) {
@@ -21,9 +12,9 @@ export abstract class AbstractMultiMapCountersIndexCreationTask extends Abstract
         }
 
         const indexDefinitionBuilder = new CountersIndexDefinitionBuilder(this.getIndexName());
-
         indexDefinitionBuilder.indexesStrings = this._indexesStrings;
         indexDefinitionBuilder.analyzersStrings = this._analyzersStrings;
+        indexDefinitionBuilder.map = this.map;
         indexDefinitionBuilder.reduce = this._reduce;
         indexDefinitionBuilder.storesStrings = this._storesStrings;
         indexDefinitionBuilder.suggestionsOptions = this._indexSuggestions;
@@ -40,10 +31,6 @@ export abstract class AbstractMultiMapCountersIndexCreationTask extends Abstract
         indexDefinitionBuilder.state = this.state;
         indexDefinitionBuilder.deploymentMode = this.deploymentMode;
 
-        const indexDefinition = indexDefinitionBuilder.toIndexDefinition(this.conventions, false);
-        indexDefinition.maps = new Set(this.maps);
-
-        return indexDefinition;
+        return indexDefinitionBuilder.toIndexDefinition(this.conventions);
     }
 }
-

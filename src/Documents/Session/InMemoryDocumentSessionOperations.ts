@@ -1571,7 +1571,9 @@ export abstract class InMemoryDocumentSessionOperations
                         result.onSuccess.removeDocumentByEntity(documentInfo.entity);
                     }
 
-                    changeVector = this.useOptimisticConcurrency ? changeVector : null;
+                    if (!this.useOptimisticConcurrency) {
+                        changeVector = null;
+                    }
                     const beforeDeleteEventArgs =
                         new SessionBeforeDeleteEventArgs(this, documentInfo.id, documentInfo.entity);
                     this.emit("beforeDelete", beforeDeleteEventArgs);

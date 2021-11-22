@@ -20,6 +20,7 @@ import {
     GetRevisionsParameters
 } from "../../src/Documents/Operations/Revisions/GetRevisionsOperation";
 import { RevisionsResult } from "../../src/Documents/Operations/Revisions/RevisionsResult";
+import { delay } from "../../src/Utility/PromiseUtil";
 
 
 describe("RevisionsTest", function () {
@@ -409,13 +410,14 @@ describe("RevisionsTest", function () {
             const user = await session.load(id, Company);
             user.name = "Omer" + i;
             await session.saveChanges();
+
+            await delay(2);
         }
 
         {
             const session = store.openSession();
             const revision = await session.advanced.revisions.get<User>("users/1", new Date());
             const revisionLazily = await session.advanced.revisions.lazily.get<User>("users/1", new Date());
-
             session.advanced.revisions.lazily.get<User>("users/2", new Date());
 
             const revisionLazilyResult = await revisionLazily.getValue();

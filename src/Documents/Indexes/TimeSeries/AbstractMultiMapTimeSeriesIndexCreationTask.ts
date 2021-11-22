@@ -4,7 +4,7 @@ import { TimeSeriesIndexDefinition } from "./TimeSeriesIndexDefinition";
 import { AbstractGenericTimeSeriesIndexCreationTask } from "./AbstractGenericTimeSeriesIndexCreationTask";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
-export class AbstractMultiMapTimeSeriesIndexCreationTask extends AbstractGenericTimeSeriesIndexCreationTask {
+export abstract class AbstractMultiMapTimeSeriesIndexCreationTask extends AbstractGenericTimeSeriesIndexCreationTask {
     private readonly maps: string[] = [];
 
     protected _addMap(map: string) {

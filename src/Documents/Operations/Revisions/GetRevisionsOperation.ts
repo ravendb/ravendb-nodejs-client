@@ -39,7 +39,7 @@ class GetRevisionsResultCommand<T extends object> extends RavenCommand<Revisions
         this.conventions = conventions;
         this._id = id;
         this._parameters = parameters;
-        this._cmd = new GetRevisionsCommand(conventions, id, parameters.start, parameters.pageSize);
+        this._cmd = new GetRevisionsCommand(conventions, id, parameters.start || 0, parameters.pageSize);
     }
 
     get isReadRequest(): boolean {
@@ -49,7 +49,6 @@ class GetRevisionsResultCommand<T extends object> extends RavenCommand<Revisions
     createRequest(node: ServerNode): HttpRequestParameters {
         return this._cmd.createRequest(node);
     }
-
 
     async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         if (!bodyStream) {

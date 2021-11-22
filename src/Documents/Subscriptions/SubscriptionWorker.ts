@@ -34,7 +34,7 @@ import { GetTcpInfoCommand, TcpConnectionInfo } from "../../ServerWide/Commands/
 import { GetTcpInfoForRemoteTaskCommand } from "../Commands/GetTcpInfoForRemoteTaskCommand";
 import * as os from "os";
 
-type EventTypes = "afterAcknowledgment" | "connectionRetry" | "batch" | "error" | "end";
+type EventTypes = "afterAcknowledgment" | "connectionRetry" | "batch" | "error" | "end" | "unexpectedSubscriptionError";
 
 export class SubscriptionWorker<T extends object> implements IDisposable {
 
@@ -133,8 +133,6 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                 tcpInfo = command.result;
 
                 if (tcpInfo.nodeTag) {
-                    const tcpInfoUrls = tcpInfo.urls;
-
                     this._redirectNode = requestExecutor.getTopology().nodes
                         .find(x => x.clusterTag === tcpInfo.nodeTag);
                 }
@@ -703,6 +701,8 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             return false;
         }
 
+        this._emitter.emit("unexpectedSubscriptionError", ex);
+
         this._assertLastConnectionFailure(ex);
         return true;
     }
@@ -718,6 +718,8 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
     public on(event: "error",
               handler: (error?: Error) => void);
     public on(event: "end",
+              handler: (error?: Error) => void);
+    public on(event: "unexpectedSubscriptionError",
               handler: (error?: Error) => void);
     public on(event: "afterAcknowledgment",
               handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void);
@@ -740,6 +742,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
 
     public off(event: "batch", handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void);
     public off(event: "error", handler: (error?: Error) => void);
+    public off(event: "unexpectedSubscriptionError", handler: (error?: Error) => void);
     public off(event: "end", handler: (error?: Error) => void);
     public off(event: "afterAcknowledgment", handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void);
     public off(event: "connectionRetry", handler: (error?: Error) => void);
@@ -753,6 +756,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
 
     public removeListener(event: "batch", handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void);
     public removeListener(event: "error", handler: (error?: Error) => void);
+    public removeListener(event: "unexpectedSubscriptionError", handler: (error?: Error) => void);
     public removeListener(event: "end", handler: (error?: Error) => void);
     public removeListener(
         event: "afterAcknowledgment", handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void);

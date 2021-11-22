@@ -15,6 +15,7 @@ export type StatusCode = 200
     | 409
     | 410
     | 417
+    | 425
     | 500
     | 502
     | 503
@@ -38,6 +39,7 @@ export class StatusCodes {
     public static readonly Conflict: StatusCode = 409;
     public static readonly PreconditionFailed: StatusCode = 412;
     public static readonly ExpectationFailed: StatusCode = 417;
+    public static readonly TooEarly: StatusCode = 425;
     public static readonly InternalServerError: StatusCode = 500;
     public static readonly BadGateway: StatusCode = 502;
     public static readonly ServiceUnavailable: StatusCode = 503;

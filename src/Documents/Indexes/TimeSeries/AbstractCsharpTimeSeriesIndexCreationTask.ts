@@ -1,29 +1,21 @@
-import { AbstractGenericCountersIndexCreationTask } from "./AbstractGenericCountersIndexCreationTask";
-import { throwError } from "../../../Exceptions";
-import { CountersIndexDefinition } from "./CountersIndexDefinition";
-import { CountersIndexDefinitionBuilder } from "./CountersIndexDefinitionBuilder";
+import { AbstractGenericTimeSeriesIndexCreationTask } from "./AbstractGenericTimeSeriesIndexCreationTask";
+import { TimeSeriesIndexDefinition } from "./TimeSeriesIndexDefinition";
+import { TimeSeriesIndexDefinitionBuilder } from "./TimeSeriesIndexDefinitionBuilder";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
+import { AbstractTimeSeriesIndexCreationTask } from "./AbstractTimeSeriesIndexCreationTask";
 
-export abstract class AbstractMultiMapCountersIndexCreationTask extends AbstractGenericCountersIndexCreationTask {
-    private readonly maps: string[] = [];
+export abstract class AbstractCsharpTimeSeriesIndexCreationTask extends AbstractGenericTimeSeriesIndexCreationTask {
+    public map: string;
 
-    protected _addMap(map: string) {
-        if (!map) {
-            throwError("InvalidArgumentException", "Map cannot be null");
-        }
-
-        this.maps.push(map);
-    }
-
-    createIndexDefinition(): CountersIndexDefinition {
+    createIndexDefinition(): TimeSeriesIndexDefinition {
         if (!this.conventions) {
             this.conventions = new DocumentConventions();
         }
 
-        const indexDefinitionBuilder = new CountersIndexDefinitionBuilder(this.getIndexName());
-
+        const indexDefinitionBuilder = new TimeSeriesIndexDefinitionBuilder(this.getIndexName());
         indexDefinitionBuilder.indexesStrings = this._indexesStrings;
         indexDefinitionBuilder.analyzersStrings = this._analyzersStrings;
+        indexDefinitionBuilder.map = this.map;
         indexDefinitionBuilder.reduce = this._reduce;
         indexDefinitionBuilder.storesStrings = this._storesStrings;
         indexDefinitionBuilder.suggestionsOptions = this._indexSuggestions;
@@ -40,10 +32,6 @@ export abstract class AbstractMultiMapCountersIndexCreationTask extends Abstract
         indexDefinitionBuilder.state = this.state;
         indexDefinitionBuilder.deploymentMode = this.deploymentMode;
 
-        const indexDefinition = indexDefinitionBuilder.toIndexDefinition(this.conventions, false);
-        indexDefinition.maps = new Set(this.maps);
-
-        return indexDefinition;
+        return indexDefinitionBuilder.toIndexDefinition(this.conventions);
     }
 }
-

@@ -1047,10 +1047,19 @@ export class RequestExecutor implements IDisposable {
             responseAndStream = await command.send(this.getHttpAgent(), request);
         }
 
-        const serverVersion = await RequestExecutor._tryGetServerVersion(responseAndStream.response);
-        if (serverVersion) {
-            this._lastServerVersion = serverVersion;
+        // PERF: The reason to avoid rechecking every time is that servers wont change so rapidly
+        //       and therefore we dimish its cost by orders of magnitude just doing it
+        //       once in a while. We dont care also about the potential race conditions that may happen
+        //       here mainly because the idea is to have a lax mechanism to recheck that is at least
+        //       orders of magnitude faster than currently.
+        if (chosenNode.shouldUpdateServerVersion()) {
+            const serverVersion = RequestExecutor._tryGetServerVersion(responseAndStream.response);
+            if (serverVersion) {
+                chosenNode.updateServerVersion(serverVersion);
+            }
         }
+
+        this._lastServerVersion = chosenNode.lastServerVersion;
 
         if (sessionInfo && sessionInfo.lastClusterTransactionIndex) {
             // if we reach here it means that sometime a cluster transaction has occurred against this database.
@@ -1058,9 +1067,7 @@ export class RequestExecutor implements IDisposable {
             // we have to wait for the cluster transaction.
             // But we can't do that if the server is an old one.
 
-            const version = responseAndStream.response.headers[HEADERS.SERVER_VERSION];
-
-            if (version && "4.1".localeCompare(version) > 0) {
+            if (this._lastServerVersion && "4.1".localeCompare(this._lastServerVersion) > 0) {
                 throwError(
                     "ClientVersionMismatchException",
                     "The server on " + chosenNode.url + " has an old version and can't perform "
@@ -1388,6 +1395,34 @@ export class RequestExecutor implements IDisposable {
             case StatusCodes.Conflict:
                 RequestExecutor._handleConflict(response, await readBody());
                 break;
+            case StatusCodes.TooEarly:
+                if (!shouldRetry) {
+                    return false;
+                }
+
+                if (!TypeUtil.isNullOrUndefined(nodeIndex)) {
+                    this._nodeSelector.onFailedRequest(nodeIndex);
+                }
+
+                command.failedNodes ??= new Map<ServerNode, Error>();
+
+                if (!command.isFailedWithNode(chosenNode)) {
+                    command.failedNodes.set(chosenNode, getError("UnsuccessfulRequestException", "Request to '" + req.uri + "' (" + req.method + ") is processing and not yet available on that node."));
+                }
+
+                const nextNode = this.chooseNodeForRequest(command, sessionInfo);
+
+                await this._executeOnSpecificNode(command, sessionInfo, {
+                    chosenNode: nextNode.currentNode,
+                    nodeIndex: nextNode.currentIndex,
+                    shouldRetry: true
+                });
+
+                if (!TypeUtil.isNullOrUndefined(nodeIndex)) {
+                    this._nodeSelector.restoreNodeIndex(nodeIndex);
+                }
+
+                return true;
             default:
                 command.onResponseFailure(response);
                 ExceptionDispatcher.throwException(response, await readBody());
@@ -1424,6 +1459,9 @@ export class RequestExecutor implements IDisposable {
             this._spawnHealthChecks(chosenNode, nodeIndex);
             return false;
         }
+
+        // As the server is down, we discard the server version to ensure we update when it goes up.
+        chosenNode.discardServerVersion();
 
         this._nodeSelector.onFailedRequest(nodeIndex);
 
@@ -1788,11 +1826,6 @@ export class RequestExecutor implements IDisposable {
     private async _ensureNodeSelector(): Promise<void> {
         if (!this._disableTopologyUpdates) {
             await this._waitForTopologyUpdate(this._firstTopologyUpdatePromise);
-        }
-        if (this._firstTopologyUpdatePromise
-            && (!this._firstTopologyUpdateStatus.isFullfilled()
-                || this._firstTopologyUpdateStatus.isRejected())) {
-            await this._firstTopologyUpdatePromise;
         }
 
         if (!this._nodeSelector) {
