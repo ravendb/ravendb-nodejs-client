@@ -57,9 +57,16 @@ export class LazyRevisionOperations implements ILazyRevisionsOperations {
     private _get<TEntity extends object>(changeVectorOrVectors: string | string[],
                                                documentType?: DocumentType<TEntity>)
         : Lazy<RevisionsCollectionObject<TEntity> | TEntity> {
-        const operation = new GetRevisionOperation(this.delegate, changeVectorOrVectors as string);
-        const lazyRevisionOperation = new LazyRevisionOperation(documentType, operation, "Map");
-        return this.delegate.addLazyOperation(lazyRevisionOperation);
+        if (TypeUtil.isArray(changeVectorOrVectors)) {
+            const operation = new GetRevisionOperation(this.delegate, changeVectorOrVectors);
+            const lazyRevisionOperation = new LazyRevisionOperation(documentType, operation, "Map");
+            return this.delegate.addLazyOperation(lazyRevisionOperation);
+        } else {
+            const operation = new GetRevisionOperation(this.delegate, changeVectorOrVectors);
+            const lazyRevisionOperation = new LazyRevisionOperation(documentType, operation, "Single");
+            return this.delegate.addLazyOperation(lazyRevisionOperation);
+        }
+
     }
 
     private _getByIdAndDate<TEntity extends object>(id: string, date: Date, clazz?: DocumentType<TEntity>): Lazy<TEntity> {

@@ -372,7 +372,7 @@ describe("RevisionsTest", function () {
 
             const revisionsLazilyResult = await revisionsLazy.getValue();
 
-            assertThat(revisionsLazilyResult[0] instanceof Company)
+            assertThat(revisionsLazilyResult[0] instanceof User)
                 .isTrue();
 
             assertThat(revision.map(x => x.name).join(","))
